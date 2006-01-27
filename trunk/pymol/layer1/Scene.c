@@ -5181,21 +5181,27 @@ int SceneRenderCached(PyMOLGlobals *G)
   return(renderedFlag);
 }
 
-float SceneGetSpecularValue(PyMOLGlobals *G,float spec)
+float SceneGetSpecularValue(PyMOLGlobals *G,float spec,int limit)
 {
-  int n_light = SettingGetGlobal_i(G,cSetting_light_count);  
+  int n_light = SettingGetGlobal_i(G,cSetting_spec_count);  
+  if(n_light<0)
+    n_light = SettingGetGlobal_i(G,cSetting_light_count);  
+  if(n_light>limit)
+    n_light = limit;
   if(n_light>2) {
     spec = spec/pow(n_light-1,0.6F);
   }
   return spec;
 }
 
-float SceneGetReflectValue(PyMOLGlobals *G)
+float SceneGetReflectValue(PyMOLGlobals *G,int limit)
 {
   float reflect = SettingGetGlobal_f(G,cSetting_reflect);
 
   register float _1 = 1.0F;
   int n_light = SettingGetGlobal_i(G,cSetting_light_count);  
+  if(n_light>limit)
+    n_light = limit;
   if(n_light>1) {
     float tmp[3];
     float sum = 0.0F;
@@ -5229,6 +5235,18 @@ float SceneGetReflectValue(PyMOLGlobals *G)
                 copy3f(SettingGetGlobal_3fv(G,cSetting_light7),tmp);
                 normalize3f(tmp);
                 sum += _1 - tmp[2];
+                
+                if(n_light>8) {
+                  copy3f(SettingGetGlobal_3fv(G,cSetting_light8),tmp);
+                  normalize3f(tmp);
+                  sum += _1 - tmp[2];
+                }
+
+                if(n_light>9) {
+                  copy3f(SettingGetGlobal_3fv(G,cSetting_light9),tmp);
+                  normalize3f(tmp);
+                  sum += _1 - tmp[2];
+                }
               }
             }
           }
@@ -5251,13 +5269,13 @@ static void SceneProgramLighting(PyMOLGlobals *G)
   float direct = SettingGetGlobal_f(G,cSetting_direct);
   float f;
   float vv[4];
-  float reflect = SceneGetReflectValue(G);
+  float reflect = SceneGetReflectValue(G,8);
   float spec_value = SettingGet(G,cSetting_specular);
   if(spec_value == 1.0F) {
     spec_value=SettingGet(G,cSetting_specular_intensity);
   }
   if(spec_value<R_SMALL4) spec_value = 0.0F;
-  spec_value = SceneGetSpecularValue(G,spec_value);
+  spec_value = SceneGetSpecularValue(G,spec_value,8);
 
   /* lighting */
   
@@ -5327,6 +5345,7 @@ static void SceneProgramLighting(PyMOLGlobals *G)
                 normalize3f(vv);
                 invert3f(vv);
                 glLightfv(GL_LIGHT7,GL_POSITION,vv);
+
               }
             }
           }
@@ -5397,45 +5416,76 @@ static void SceneProgramLighting(PyMOLGlobals *G)
     float spec[4];
     if(n_light>1) { 
       float diff[4];
-      float ambient[4] = { 0.0F, 0.0F, 0.0F, 1.0F }; /* no ambient */
+      float zero[4] = { 0.0F, 0.0F, 0.0F, 1.0F }; /* no ambient */
+      int spec_count = SettingGetGlobal_i(G,cSetting_spec_count);  
+      if(spec_count<0)
+        spec_count = SettingGetGlobal_i(G,cSetting_light_count);  
       
       spec[0] = spec[1] = spec[2] = spec_value;
       spec[3] = 1.0F;
       diff[0] = diff[1] = diff[2] = reflect;
       diff[3] = 1.0F;
       glEnable(GL_LIGHT1);
-      glLightfv(GL_LIGHT1,GL_SPECULAR,spec);
-      glLightfv(GL_LIGHT1,GL_AMBIENT,ambient);
+      if(spec_count>=1) {
+        glLightfv(GL_LIGHT1,GL_SPECULAR,spec);
+      } else {
+        glLightfv(GL_LIGHT1,GL_SPECULAR,zero);
+      }
+      glLightfv(GL_LIGHT1,GL_AMBIENT,zero);
       glLightfv(GL_LIGHT1,GL_DIFFUSE,diff);
       if(n_light>2) {
         glEnable(GL_LIGHT2);
-        glLightfv(GL_LIGHT2,GL_SPECULAR,spec);
-        glLightfv(GL_LIGHT2,GL_AMBIENT,ambient);
+        if(spec_count>=2) {
+          glLightfv(GL_LIGHT2,GL_SPECULAR,spec);
+        } else {
+          glLightfv(GL_LIGHT2,GL_SPECULAR,zero);
+        }
+        glLightfv(GL_LIGHT2,GL_AMBIENT,zero);
         glLightfv(GL_LIGHT2,GL_DIFFUSE,diff);
         if(n_light>3) {
           glEnable(GL_LIGHT3);
-          glLightfv(GL_LIGHT3,GL_SPECULAR,spec);
-          glLightfv(GL_LIGHT3,GL_AMBIENT,ambient);
+          if(spec_count>=3) {
+            glLightfv(GL_LIGHT3,GL_SPECULAR,spec);
+          } else {
+            glLightfv(GL_LIGHT3,GL_SPECULAR,zero);
+          }
+          glLightfv(GL_LIGHT3,GL_AMBIENT,zero);
           glLightfv(GL_LIGHT3,GL_DIFFUSE,diff);
           if(n_light>4) {
             glEnable(GL_LIGHT4);
-            glLightfv(GL_LIGHT4,GL_SPECULAR,spec);
-            glLightfv(GL_LIGHT4,GL_AMBIENT,ambient);
+            if(spec_count>=4) {
+              glLightfv(GL_LIGHT4,GL_SPECULAR,spec);
+            } else {
+              glLightfv(GL_LIGHT4,GL_SPECULAR,zero);
+            }
+            glLightfv(GL_LIGHT4,GL_AMBIENT,zero);
             glLightfv(GL_LIGHT4,GL_DIFFUSE,diff);
             if(n_light>5) {
               glEnable(GL_LIGHT5);
-              glLightfv(GL_LIGHT5,GL_SPECULAR,spec);
-              glLightfv(GL_LIGHT5,GL_AMBIENT,ambient);
+              if(spec_count>=5) {
+                glLightfv(GL_LIGHT5,GL_SPECULAR,spec);
+              } else {
+                glLightfv(GL_LIGHT5,GL_SPECULAR,zero);
+              }
+              glLightfv(GL_LIGHT5,GL_AMBIENT,zero);
               glLightfv(GL_LIGHT5,GL_DIFFUSE,diff);
               if(n_light>6) {
                 glEnable(GL_LIGHT6);
-                glLightfv(GL_LIGHT6,GL_SPECULAR,spec);
-                glLightfv(GL_LIGHT6,GL_AMBIENT,ambient);
+                if(spec_count>=6) {
+                  glLightfv(GL_LIGHT6,GL_SPECULAR,spec);
+                } else {
+                  glLightfv(GL_LIGHT6,GL_SPECULAR,zero);
+                }
+                glLightfv(GL_LIGHT6,GL_AMBIENT,zero);
                 glLightfv(GL_LIGHT6,GL_DIFFUSE,diff);
-                if(n_light>6) {
+                if(n_light>7) {
                   glEnable(GL_LIGHT7);
-                  glLightfv(GL_LIGHT7,GL_SPECULAR,spec);
-                  glLightfv(GL_LIGHT7,GL_AMBIENT,ambient);
+                  if(spec_count>=7) {
+                    glLightfv(GL_LIGHT7,GL_SPECULAR,spec);
+                  } else {
+                    glLightfv(GL_LIGHT7,GL_SPECULAR,zero);
+                  }
+                  glLightfv(GL_LIGHT7,GL_AMBIENT,zero);
                   glLightfv(GL_LIGHT7,GL_DIFFUSE,diff);
                 }
               }

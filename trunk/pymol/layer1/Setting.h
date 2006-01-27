@@ -638,6 +638,12 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_sculpt_tri_max             484
 #define cSetting_sculpt_tri_mode            485
 #define cSetting_pdb_echo_tags              486
+#define cSetting_connect_bonded             487
+#define cSetting_spec_direct_power          488
+#define cSetting_light8                     489
+#define cSetting_light9                     490
+#define cSetting_ray_shadow_decay_range     491
+#define cSetting_spec_count                 492
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -647,7 +653,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       487
+#define cSetting_INIT                       494
 
 #endif
 

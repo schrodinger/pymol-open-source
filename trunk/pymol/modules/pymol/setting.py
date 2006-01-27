@@ -520,6 +520,12 @@ if __name__=='pymol.setting':
         sculpt_tri_max            = (484, '')
         sculpt_tri_mode           = (485, '')
         pdb_echo_tags             = (486, '')
+        connect_bonded            = (487, '')
+        spec_direct_power         = (488, '')
+        light8                    = (489, '')
+        light9                    = (490, '')
+        ray_shadow_decay_range    = (491, '')
+        spec_count                = (492, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

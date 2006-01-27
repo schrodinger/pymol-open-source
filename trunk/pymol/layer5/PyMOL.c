@@ -625,6 +625,12 @@ typedef struct _CPyMOL {
   ov_word lex_sculpt_tri_max;
   ov_word lex_sculpt_tri_mode;
   ov_word lex_pdb_echo_tags;
+  ov_word lex_connect_bonded;
+  ov_word lex_spec_direct_power;
+  ov_word lex_light8;
+  ov_word lex_light9;
+  ov_word lex_ray_shadow_decay_range;
+  ov_word lex_spec_count;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1254,6 +1260,12 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(sculpt_tri_max, 484);
   LEX_SETTING(sculpt_tri_mode, 485);
   LEX_SETTING(pdb_echo_tags, 486);
+  LEX_SETTING(connect_bonded, 487);
+  LEX_SETTING(spec_direct_power, 488);
+  LEX_SETTING(light8, 489);
+  LEX_SETTING(light9, 490);
+  LEX_SETTING(ray_shadow_decay_range, 491);
+  LEX_SETTING(spec_count, 492);
   return_OVstatus_SUCCESS;
 }
 

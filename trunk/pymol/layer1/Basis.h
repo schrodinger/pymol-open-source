@@ -82,6 +82,7 @@ typedef struct {
   float back;
   float excl_trans;
   int trans_shadows;
+  int nearest_shadow;
   int check_interior;
   int label_shadow_mode;
   CPrimitive *prim;
