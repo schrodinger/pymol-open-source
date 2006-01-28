@@ -1,15 +1,35 @@
 
-Contrib Directory Copyright Notice
-==================================
+Contrib Directory Disclaimer Notice
+===================================
 
------------------------------------------------------------------------
-Although all source code in the "contrib" directory has been released
-under the "Python" license (or equivalent) and is considered part of
-the PyMOL Molecular Graphics System, individual packages are protected
-under the copyrights of their respective authors.  Please see the
-source code and any LICENSE files for more specific information
-regarding each package.
------------------------------------------------------------------------
+All software in the PyMOL "contrib" directory is either under a
+PyMOL-compatible BSD-like unrestricted open-source license or has been
+released under terms which specifically permit inclusion with PyMOL.
+DeLano Scientific LLC believes that you have permission to use the
+code contained herein with PyMOL without incurring any additional
+costs or obligations, but we do not warrant or guarantee this
+assertion.
+
+----------------------------------------------------------------------
+USE OF PYMOL CONTRIB SOFTWARE IS ENTIRELY AT YOUR OWN RISK.  
+
+WARREN LYFORD DELANO AND DELANO SCIENTIFIC LLC DISCLAIM ALL WARRANTIES
+WITH REGARD TO PYMOL CONTRIB SOFTWARE, INCLUDING ALL IMPLIED
+WARRANTIES OF MERCHANTABILITY, FITNESS, OWNERSHIP, AND NONINFRINGEMENT
+OF THIRD PARTY RIGHTS.  IN NO EVENT SHALL WARREN LYFORD DELANO OR
+DELANO SCIENTIFIC LLC BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF PYMOL CONTRIB SOFTWARE.
+
+Individual contrib packages are protected under the copyrights of
+their respective authors.  Please see the source code and any LICENSE
+or COPYING files for specific information regarding each contrib
+package.
+----------------------------------------------------------------------
+
+
 
 
 
