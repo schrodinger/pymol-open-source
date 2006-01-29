@@ -336,7 +336,7 @@ int PAlterAtomState(PyMOLGlobals *G,float *v,char *expr,int read_only,
   PyObject *flags_id1=NULL,*flags_id2=NULL;
   int flags;
   dict = PyDict_New();
-
+  
   if(at) {
     if(at->hetatm)
       strcpy(atype,"HETATM");
@@ -399,8 +399,10 @@ int PAlterAtomState(PyMOLGlobals *G,float *v,char *expr,int read_only,
         result=false;
       else if(!(z_id2 = PyDict_GetItemString(dict,"z")))
         result=false;
-      else if(!(flags_id2 = PyDict_GetItemString(dict,"flags")))
-        result=false;
+      else if(at) {
+        if(!(flags_id2 = PyDict_GetItemString(dict,"flags")))
+          result=false;
+      }
       if(PyErr_Occurred()) {
         PyErr_Print();
         result=false;

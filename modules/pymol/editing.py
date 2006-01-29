@@ -1115,7 +1115,7 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def alter_state(state,selection,expression,quiet=1,space=cmd.pymol.__dict__):
+    def alter_state(state,selection,expression,quiet=1,space=cmd.pymol.__dict__,atomic=1):
         '''
 DESCRIPTION
 
@@ -1141,18 +1141,17 @@ SEE ALSO
         # preprocess selection
         selection = selector.process(selection)
         #
-        atomic_props = 1
         state = int(state)
         try:
             lock()
             r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",str(expression),
-                                        0,int(atomic_props),int(quiet),dict(space))
+                                        0,int(atomic),int(quiet),dict(space))
         finally:
             unlock(r)   
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def iterate_state(state,selection,expression,quiet=1,space=cmd.pymol.__dict__):
+    def iterate_state(state,selection,expression,quiet=1,space=cmd.pymol.__dict__,atomic=1):
         '''
 DESCRIPTION
 
@@ -1175,11 +1174,10 @@ SEE ALSO
         selection = selector.process(selection)
         state = int(state)
         #
-        atomic_props = 1
         try:
             lock()
             r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",
-                                        str(expression),1,int(atomic_props),
+                                        str(expression),1,int(atomic),
                                         int(quiet),dict(space))
         finally:
             unlock(r)   
