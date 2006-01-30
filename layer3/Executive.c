@@ -5656,7 +5656,6 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,in
   PDBInfoRec pdb_info;
   ObjectMolecule *obj = NULL;
 
-
   UtilZeroMem((void*)&pdb_info,sizeof(PDBInfoRec));
   ObjectMoleculeOpRecInit(&op1);
   sele1=SelectorIndexByName(G,s1);
@@ -5669,6 +5668,7 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,in
   }
   op1.i2 = 0;
   op1.charVLA=VLAlloc(char,10000);
+
   if(state==-2) { /* multimodel PDB */
     n_state = ExecutiveCountStates(G,s1);
   }

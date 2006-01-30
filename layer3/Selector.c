@@ -5277,7 +5277,7 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
     s = obj->AtomInfo[at].selEntry;
     if(SelectorIsMember(G,s,sele)) 
       {
-        if(state<obj->NCSet) 
+        if((state>=0)&&(state<obj->NCSet)) 
           cs=obj->CSet[state];
         else
           cs=NULL;
@@ -5319,7 +5319,7 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
     for(a=cNDummyModels;a<I->NModel;a++) {
       obj=I->Obj[a];
       ii1=obj->Bond;
-      if(state<obj->NCSet) 
+      if((state>=0)&&(state<obj->NCSet))
         cs=obj->CSet[state];
       else
         cs=NULL;
