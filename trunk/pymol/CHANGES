@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta38
+
+    * fixed field width bug in PDB writer
+
     beta37
 
     beta36

@@ -570,6 +570,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
   int rl;
   int literal = (int)SettingGet(G,cSetting_pdb_literal_names);
   int reformat = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
+  WordType x,y,z;
 
   strcpy(resn,ai->resn); 
   if(SettingGetGlobal_b(G,cSetting_pdb_truncate_residue_name)) {
@@ -732,10 +733,12 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
     cnt=99998;
 
   if((!pdb_info)||(!pdb_info->is_pqr_file)) { /* relying upon short-circuit */
-
-    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
+    sprintf(x,"%8.3f",v[0]); x[8]=0;
+    sprintf(y,"%8.3f",v[1]); y[8]=0;
+    sprintf(z,"%8.3f",v[2]); z[8]=0;
+    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s%6.2f%6.2f      %-4s%2s\n",
                   aType,cnt+1,name,ai->alt,resn,
-                  ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi,ai->elem);
+                  ai->chain,resi,x,y,z,ai->q,ai->b,ai->segi,ai->elem);
   } else {
     if(pdb_info->is_pqr_file && pdb_info->pqr_workarounds) {
       int non_num = false;
@@ -762,10 +765,13 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
       chain[0] = ai->chain[0];
       chain[1] = 0;
     }
+    sprintf(x,"%8.3f",v[0]); x[8]=0;
+    sprintf(y,"%8.3f",v[1]); y[8]=0;
+    sprintf(z,"%8.3f",v[2]); z[8]=0;
       
-    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %8.3f%8.3f%8.3f %7.3f %7.3f\n",
+    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s %7.3f %7.3f\n",
                   aType,cnt+1,name,ai->alt,resn,
-                  chain,resi,*v,*(v+1),*(v+2),ai->partialCharge,ai->bohr_radius);
+                  chain,resi,x,y,z,ai->partialCharge,ai->bohr_radius);
   }
   
 }
