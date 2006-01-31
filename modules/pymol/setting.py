@@ -526,6 +526,10 @@ if __name__=='pymol.setting':
         light9                    = (490, '')
         ray_shadow_decay_range    = (491, '')
         spec_count                = (492, '')
+        sculpt_min_scale          = (493, '')
+        sculpt_min_weight         = (494, '')
+        sculpt_min_min            = (495, '')
+        sculpt_min_max            = (496, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

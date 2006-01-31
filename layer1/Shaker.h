@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #define cShakerDistBond 0
 #define cShakerDistAngle 1
 #define cShakerDistLimit 2
+#define cShakerDistMinim 3
 
 typedef struct {
   int at0,at1;

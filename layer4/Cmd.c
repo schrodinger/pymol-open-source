@@ -707,12 +707,12 @@ static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args)
 static PyObject *CmdSculptActivate(PyObject *self, PyObject *args)
 {
   int ok=true;
-  int int1;
+  int int1,int2;
   char *str1;
-  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
   if(ok) {
     APIEntry();
-    ok = ExecutiveSculptActivate(TempPyMOLGlobals,str1,int1);
+    ok = ExecutiveSculptActivate(TempPyMOLGlobals,str1,int1,int2);
     APIExit();
   }
   return APIResultOk(ok);

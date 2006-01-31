@@ -631,6 +631,10 @@ typedef struct _CPyMOL {
   ov_word lex_light9;
   ov_word lex_ray_shadow_decay_range;
   ov_word lex_spec_count;
+  ov_word lex_sculpt_min_scale;
+  ov_word lex_sculpt_min_weight;
+  ov_word lex_sculpt_min_min;
+  ov_word lex_sculpt_min_max;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1266,6 +1270,11 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(light9, 490);
   LEX_SETTING(ray_shadow_decay_range, 491);
   LEX_SETTING(spec_count, 492);
+  LEX_SETTING(sculpt_min_scale, 493);
+  LEX_SETTING(sculpt_min_weight, 494);
+  LEX_SETTING(sculpt_min_min, 495);
+  LEX_SETTING(sculpt_min_max, 496);
+
   return_OVstatus_SUCCESS;
 }
 
