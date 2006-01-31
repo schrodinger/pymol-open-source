@@ -766,6 +766,57 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                 ai1->temp1 = false;
                 if((n_qual_branch>2)&&(!adj_site)) {
                   site[b0] = true;
+                } else if(!adj_site) {
+                  switch(ai1->name[0]) {
+                  case 'C':
+                    switch(ai1->name[1]) {
+                    case 'Z':
+                      switch(ai1->name[2]) {
+                      case 0:
+                        if(strcmp(ai1->resn,"ARG")==0) site[b0] = true;  /* ARG/CZ */
+                        else if(strcmp(ai1->resn,"TYR")==0) site[b0] = true; /* TYR/CZ */
+                        else if(strcmp(ai1->resn,"PHE")==0) site[b0] = true; /* PHE/CZ */
+                        break;
+                      }
+                      break;
+                    case 'E':
+                      switch(ai1->name[2]) {
+                      case 0:
+                        if(strcmp(ai1->resn,"LYS")==0) site[b0] = true;  /* LYS/CE */
+                        break;
+                      }
+                      break;
+                    case 'D':
+                      switch(ai1->name[2]) {
+                      case 0:
+                        if(strcmp(ai1->resn,"GLU")==0) site[b0] = true;  /* GLU/CD */
+                        else if(strcmp(ai1->resn,"GLN")==0) site[b0] = true;  /* GLN/CD */
+                        break;
+                      }
+                      break;
+                    case 'G':
+                      switch(ai1->name[2]) {
+                      case 0:
+                        if(strcmp(ai1->resn,"LEU")==0) site[b0] = true;  /* LEU/CG */
+                        else if(strcmp(ai1->resn,"ASP")==0) site[b0] = true;  /* ASP/CG */
+                        else if(strcmp(ai1->resn,"ASN")==0) site[b0] = true;  /* ASN/CG */
+                        break;
+                      }
+                      break;
+                    }
+                    break;
+                  case 'S':
+                    switch(ai1->name[1]) {
+                    case 'D':
+                      switch(ai1->name[2]) {
+                      case 0:
+                        if(strcmp(ai1->resn,"MET")==0) site[b0] = true;  /* MET/SD */
+                        break;
+                      }
+                      break;
+                    }
+                    break;
+                  }
                 }
                 ai1++;
               }
