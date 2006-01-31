@@ -725,6 +725,8 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
             if(cs2) {
               float minim_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_min);
               float minim_max = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_max);
+              float maxim_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_max_min);
+              float maxim_max = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_max_max);
 
               int *site = Calloc(int,obj->NAtom);            
               /* first, find candidate atoms with sufficient connectivity */
@@ -793,12 +795,16 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                         float *v1a = cs->Coord + 3*i1a;
                         float *v0b = cs2->Coord + 3*i0b;
                         float *v1b = cs2->Coord + 3*i1b;
-                        float dist0,dist1,min_dist;
+                        float dist0,dist1,min_dist,max_dist;
                         dist0 = diff3f(v0a,v1a);
                         dist1 = diff3f(v0b,v1b);
                         min_dist = (dist0<dist1) ? dist0 : dist1;
                         if((min_dist>=minim_min)&&(min_dist<=minim_max)) {
                           ShakerAddDistCon(I->Shaker,b0,b1,min_dist,cShakerDistMinim);
+                        }
+                        max_dist = (dist0>dist1) ? dist0 : dist1;
+                        if((max_dist>=maxim_min)&&(max_dist<=maxim_max)) {
+                          ShakerAddDistCon(I->Shaker,b0,b1,max_dist,cShakerDistMaxim);
                         }
                       }
                     }
@@ -1462,6 +1468,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   float vdw_vis_min=0.0F,vdw_vis_mid=0.0F,vdw_vis_max=0.0F;
   float tri_sc, tri_wt;
   float min_sc, min_wt;
+  float max_sc = 1.025F, max_wt=0.75F;
   float *cs_coord;
   PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
@@ -1498,6 +1505,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
 
     min_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_weight);
     min_sc =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_scale);
+    max_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_max_weight);
+    max_sc =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_max_scale);
 
     mask = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
     hb_overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
@@ -1616,6 +1625,10 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
               eval_flag = cSculptMin & mask;
               wt = min_wt;
               break;
+            case cShakerDistMaxim:
+              eval_flag = cSculptMax & mask;
+              wt = max_wt;
+              break;
             default:
               eval_flag = false;
               wt=0.0F;
@@ -1631,6 +1644,15 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                 switch(sdc->type) {
                 case cShakerDistLimit:
                   strain = ShakerDoDistLimit(sdc->targ*tri_sc,v1,v2,disp+b1*3,disp+b2*3,wt);
+                  if(strain>0.0F) {
+                    cnt[b1]++;
+                    cnt[b2]++;
+                    total_strain+=strain;
+                    total_count++;
+                  }
+                  break;
+                case cShakerDistMaxim:
+                  strain = ShakerDoDistLimit(sdc->targ*max_sc,v1,v2,disp+b1*3,disp+b2*3,wt);
                   if(strain>0.0F) {
                     cnt[b1]++;
                     cnt[b2]++;
