@@ -1336,7 +1336,10 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     I->SP = NULL;
   } else {
 
-    I->cullFlag = (int)SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
+    I->cullFlag = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
+    if(I->cullFlag<0) {
+      I->cullFlag = !(obj->NCSet>1);
+    }
     if(spheroidFlag || (!sp) ) I->cullFlag=false;
     if((I->cullFlag<2)&&
        (SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpting))) 

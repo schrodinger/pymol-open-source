@@ -49,14 +49,14 @@ if __name__=='pymol.editing':
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def sculpt_activate(object,state=0):
+    def sculpt_activate(object,state=0,match_state=-1):
         '''
     undocumented.
     '''
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.sculpt_activate(str(object),int(state)-1)
+            r = _cmd.sculpt_activate(str(object),int(state)-1,int(match_state)-1)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            

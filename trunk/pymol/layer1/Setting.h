@@ -644,6 +644,10 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_light9                     490
 #define cSetting_ray_shadow_decay_range     491
 #define cSetting_spec_count                 492
+#define cSetting_sculpt_min_scale           493
+#define cSetting_sculpt_min_weight          494
+#define cSetting_sculpt_min_min             495
+#define cSetting_sculpt_min_max             496
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -653,7 +657,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       494
+#define cSetting_INIT                       497
 
 #endif
 

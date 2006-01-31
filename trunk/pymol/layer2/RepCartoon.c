@@ -1825,115 +1825,121 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
       }
     }
     
-    if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_normals)) {
-
-      /* first, make sure vectors are roughly tangential */
-
-      v1 = tv+3;
-      vo = pvo+3;
-      s = seg+1;
-      for(a=1;a<(nAt-1);a++) { 
-        if((*s==*(s-1))&&(*s==*(s+1))) {
+    {
+      int refine_normals = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_normals);
+      if(refine_normals<0) /* default setting is not to refine normals for multistate objects */
+        refine_normals = !(obj->NCSet>1);
+      
+      if(refine_normals) {
+        
+        /* first, make sure vectors are roughly tangential */
+        
+        v1 = tv+3;
+        vo = pvo+3;
+        s = seg+1;
+        for(a=1;a<(nAt-1);a++) { 
+          if((*s==*(s-1))&&(*s==*(s+1))) {
+            
+            remove_component3f(vo,v1,t0);
+            copy3f(t0,vo);
+            
+            /* go on to next vertex */
+          }
+          v1+=3;
+          vo+=3;
+          s++;
+        }
+        
+        /* now generate alternative orientation vectors */
+        
+        v1 = tv;
+        va = pva;
+        vo = pvo;
+        ss = sstype;
+        for(a=0;a<nAt;a++) { 
           
-          remove_component3f(vo,v1,t0);
-          copy3f(t0,vo);
+          
+          /* original */
+          copy3f(vo,va);
+          va+=3;
+          
+          /* inverse */
+          copy3f(vo,va);
+          if(*ss!=1)
+            invert3f(va);
+          va+=3;
           
           /* go on to next vertex */
+          
+          v1+=3;
+          vo+=3;
+          ss++;
         }
-        v1+=3;
-        vo+=3;
-        s++;
-      }
-      
-      /* now generate alternative orientation vectors */
         
-      v1 = tv;
-      va = pva;
-      vo = pvo;
-      ss = sstype;
-      for(a=0;a<nAt;a++) { 
+        /* now iterate through pairs*/
         
-
-        /* original */
-        copy3f(vo,va);
-        va+=3;
-          
-        /* inverse */
-        copy3f(vo,va);
-        if(*ss!=1)
-          invert3f(va);
-        va+=3;
-          
-        /* go on to next vertex */
-          
-        v1+=3;
-        vo+=3;
-        ss++;
-      }
-      
-      /* now iterate through pairs*/
+        vo = pvo;
+        va = pva;
+        v  = nv; /* normals in direction of chain */
+        s = seg;
         
-      vo = pvo;
-      va = pva;
-      v  = nv; /* normals in direction of chain */
-      s = seg;
-
-      for(a=1;a<nAt;a++) {
-
-        if(*s==*(s+1)) { /* only operate within distinct segments */         
-          v1 = va+6; /* orientation vectors for next CA */
-          remove_component3f(vo  ,v,o0);
-          normalize3f(o0);
-          remove_component3f(v1  ,v,o1  ); 
-          remove_component3f(v1+3,v,o1+3);
-          normalize3f(o1);
-          normalize3f(o1+3);
-          max_dot = dot_product3f(o0,o1);
-          v0 = v1;
+        for(a=1;a<nAt;a++) {
           
-          dp = dot_product3f(o0,o1+3);
-          if(dp>max_dot) {
-            v0 = v1+3;
-            max_dot = dp;
-          }
-          
-          copy3f(v0,vo+3); /* update with optimal orientation vector */
-        }
-        vo+=3;
-        va+=6; /* candidate orientation vectors */
-        v+=3; /* normal */
-        s++;
-      }
-
-      /* now soften up the kinks */
-
-      v1 = tv+3;
-      vo = pvo+3;
-      s = seg+1;
-      for(a=1;a<(nAt-1);a++) {
-        if((*s==*(s-1))&&(*s==*(s+1))) {
-          dp = (dot_product3f(vo,vo+3)*
-                dot_product3f(vo,vo-3));
-          if(dp<-0.10F) { 
-            cross_product3f(vo-3,vo+3,t0);
-            normalize3f(t0);
-            if(dot_product3f(vo,t1)<0.0F) {
-              subtract3f(vo,t0,t2);
-            } else {
-              add3f(vo,t0,t2);
+          if(*s==*(s+1)) { /* only operate within distinct segments */         
+            v1 = va+6; /* orientation vectors for next CA */
+            remove_component3f(vo  ,v,o0);
+            normalize3f(o0);
+            remove_component3f(v1  ,v,o1  ); 
+            remove_component3f(v1+3,v,o1+3);
+            normalize3f(o1);
+            normalize3f(o1+3);
+            max_dot = dot_product3f(o0,o1);
+            v0 = v1;
+            
+            dp = dot_product3f(o0,o1+3);
+            if(dp>max_dot) {
+              v0 = v1+3;
+              max_dot = dp;
             }
-            normalize3f(t2);
-            dp = 2*(-0.10F-dp);
-            if(dp>1.0F)
-              dp=1.0F;
-            mix3f(vo,t2,dp,t3);
-            copy3f(t3,vo);
+            
+            copy3f(v0,vo+3); /* update with optimal orientation vector */
           }
+          vo+=3;
+          va+=6; /* candidate orientation vectors */
+          v+=3; /* normal */
+          s++;
         }
-        v1+=3;
-        vo+=3;
-        va+=6;
-        s++;
+        
+        /* now soften up the kinks */
+        
+        v1 = tv+3;
+        vo = pvo+3;
+        s = seg+1;
+        for(a=1;a<(nAt-1);a++) {
+          if((*s==*(s-1))&&(*s==*(s+1))) {
+            dp = (dot_product3f(vo,vo+3)*
+                  dot_product3f(vo,vo-3));
+            if(dp<-0.10F) { 
+              cross_product3f(vo-3,vo+3,t0);
+              normalize3f(t0);
+              if(dot_product3f(vo,t1)<0.0F) {
+                subtract3f(vo,t0,t2);
+              } else {
+                add3f(vo,t0,t2);
+              }
+              normalize3f(t2);
+              dp = 2*(-0.10F-dp);
+              if(dp>1.0F)
+                dp=1.0F;
+              mix3f(vo,t2,dp,t3);
+              copy3f(t3,vo);
+            }
+          }
+          v1+=3;
+          vo+=3;
+          va+=6;
+          s++;
+        }
       }
     }
 

@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #define cSculptVDW14 0x040
 #define cSculptTors  0x080
 #define cSculptTri   0x100
+#define cSculptMin   0x200
 
 typedef struct CSculpt {
   PyMOLGlobals *G;
@@ -43,7 +44,7 @@ typedef struct CSculpt {
 } CSculpt;
 
 CSculpt *SculptNew(PyMOLGlobals *G);
-void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state);
+void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_state);
 float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                           int state,int n_cycle,float *center);
 

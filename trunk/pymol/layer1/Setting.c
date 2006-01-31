@@ -1937,7 +1937,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_b(I,cSetting_trim_dots, 1);
 
-  set_b(I,cSetting_cull_spheres,  G->Option->sphere_mode<0);
+  if(G->Option->sphere_mode<0) 
+    set_i(I,cSetting_cull_spheres,-1);
+  else
+    set_i(I,cSetting_cull_spheres,0);
 
   set_f(I,cSetting_test1, -56.6F);
 
@@ -2105,7 +2108,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_b(I,cSetting_cartoon_round_helices, 1);
 
-  set_b(I,cSetting_cartoon_refine_normals, 1);
+  set_i(I,cSetting_cartoon_refine_normals, -1);
   
   set_b(I,cSetting_cartoon_flat_sheets, 1);
 
@@ -2722,6 +2725,11 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_3f(I,cSetting_light9, -1.7F, -0.5F, 1.2F);
   set_f(I,cSetting_ray_shadow_decay_range, 1.8F);
   set_i(I,cSetting_spec_count,-1);
+  set_f(I,cSetting_sculpt_min_scale,0.975F);
+  set_f(I,cSetting_sculpt_min_weight, 0.75F);
+  set_f(I,cSetting_sculpt_min_min, 4.0F);
+  set_f(I,cSetting_sculpt_min_max, 12.0F);
+
 }
 
 

@@ -245,6 +245,31 @@ static float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,flo
   }
 }
 
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static float ShakerDoDistMinim(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
+{
+  float d[3],push[3];
+  register float len,dev,dev_2,sc;
+
+  subtract3f(v0,v1,d);
+  len = (float)length3f(d);
+  dev = len-target;
+
+  if(dev<0.0F) { /* assuming len is non-zero since it is above target */
+    dev_2 = -wt*dev*0.5F;
+    sc = dev_2/len;
+    scale3f(d,sc,push);
+    add3f(push,d0to1,d0to1);
+    subtract3f(d1to0,push,d1to0);
+    return -dev;
+  } else {
+    return 0.0F;
+  }
+}
+
+
 CSculpt *SculptNew(PyMOLGlobals *G)
 {
   OOAlloc(G,CSculpt);
@@ -265,6 +290,12 @@ CSculpt *SculptNew(PyMOLGlobals *G)
 }
 
 typedef struct {
+  int *neighbor;
+  AtomInfoType *ai;
+  int *atm2idx1,*atm2idx2;
+} CountCall;
+
+typedef struct {
   PyMOLGlobals *G;
   CShaker *Shaker;
   AtomInfoType *ai;
@@ -275,6 +306,31 @@ typedef struct {
   int atom0;
   int min,max,mode;
 } ATLCall;
+
+static int count_branch(CountCall *CNT, int atom, int limit)
+{
+  AtomInfoType *ai = CNT->ai + atom;
+  int count = 0;
+
+  if(!ai->temp1) {
+    count = (ai->hydrogen ? 0 : 1);
+    if(count) {
+      if((CNT->atm2idx1[atom]<0)||(CNT->atm2idx2[atom]<0))
+        count = 0;
+    }
+    if(count && (limit>0)) {
+      int n0 = CNT->neighbor[atom]+1;
+      int b1;
+      ai->temp1 = true;
+      while( (b1 = CNT->neighbor[n0]) >=0 ) {
+        count += count_branch(CNT, b1, limit-1);
+        n0+=2;
+      }
+      ai->temp1 = false;
+    }
+  }
+  return count;
+}
 
 static void add_triangle_limits(ATLCall *ATL, int prev, int cur, float dist, int count)
 {
@@ -357,7 +413,7 @@ static void add_triangle_limits(ATLCall *ATL, int prev, int cur, float dist, int
   }
 }
 
-void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
+void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_state)
 {
   PyMOLGlobals *G=I->G;
   int a,a0,a1,a2,a3,b0,b1,b2,b3;
@@ -374,10 +430,13 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   AtomInfoType *ai,*ai1,*ai2,*oai;
   int xoffset;
   int use_cache = 1;
-
+  
   PRINTFD(G,FB_Sculpt)
     " SculptMeasureObject-Debug: entered.\n"
     ENDFD;
+
+  if(match_state==-1)
+    match_state = state;
 
   ShakerReset(I->Shaker);
 
@@ -625,6 +684,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
             atl.Shaker = I->Shaker;
             atl.ai = obj->AtomInfo;
             atl.cSet = cs;
+            
             if(obj->DiscreteFlag) {
               atl.atm2idx = obj->DiscreteAtmToIdx;
               atl.discCSet = obj->DiscreteCSet;
@@ -658,6 +718,97 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
             }
           }
 
+          /* if we have a match state, establish minimum distances */
+          if((match_state>=0)&&(match_state<obj->NCSet)&&(!obj->DiscreteFlag)) {
+            CoordSet *cs2 = obj->CSet[match_state];
+            int n_site = 0;
+            if(cs2) {
+              float minim_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_min);
+              float minim_max = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_max);
+
+              int *site = Calloc(int,obj->NAtom);            
+              /* first, find candidate atoms with sufficient connectivity */
+              CountCall cnt;
+
+              cnt.ai = obj->AtomInfo;
+              cnt.neighbor = obj->Neighbor;
+              cnt.atm2idx1 = cs->AtmToIdx;
+              cnt.atm2idx2 = cs2->AtmToIdx;
+
+              {
+                int aa;
+                ai = obj->AtomInfo;
+                for(aa=0;aa<obj->NAtom;aa++) {
+                  ai->temp1 = false;
+                  ai++;
+                }
+              }
+              
+              ai1 = obj->AtomInfo;
+              for(b0=0;b0<obj->NAtom;b0++) {
+                int n_qual_branch = 0,cb;
+                int adj_site = false;
+                ai1->temp1 = true;
+                n0 = obj->Neighbor[b0]+1;
+                while( (b1 = obj->Neighbor[n0]) >=0) {
+                  if(site[b1]) {
+                    adj_site = true;
+                    break;
+                  }
+                  cb = count_branch(&cnt, b1, 3);
+                  if(cb>3) {
+                    n_qual_branch++;
+                  }
+                  n0+=2;
+                }
+                ai1->temp1 = false;
+                if((n_qual_branch>2)&&(!adj_site)) {
+                  site[b0] = true;
+                }
+                ai1++;
+              }
+              
+              for(b0=0;b0<obj->NAtom;b0++) {
+                if(site[b0]) {
+                  site[n_site] = b0;
+                  n_site++;
+                }
+              }
+
+              {
+                
+                for(a0=0;a0<n_site;a0++) {
+                  for(a1=a0+1;a1<n_site;a1++) {
+                    b0 = site[a0];
+                    b1 = site[a1];
+                    
+                    {
+                      int i0a = cs->AtmToIdx[b0];
+                      int i1a = cs->AtmToIdx[b1];
+                      int i0b = cs2->AtmToIdx[b0];
+                      int i1b = cs2->AtmToIdx[b1];
+                      
+                      if((i0a>=0)&&(i1a>=0)&&(i0b>=0)&&(i1b>=0)) {
+                        float *v0a = cs->Coord + 3*i0a;
+                        float *v1a = cs->Coord + 3*i1a;
+                        float *v0b = cs2->Coord + 3*i0b;
+                        float *v1b = cs2->Coord + 3*i1b;
+                        float dist0,dist1,min_dist;
+                        dist0 = diff3f(v0a,v1a);
+                        dist1 = diff3f(v0b,v1b);
+                        min_dist = (dist0<dist1) ? dist0 : dist1;
+                        if((min_dist>=minim_min)&&(min_dist<=minim_max)) {
+                          ShakerAddDistCon(I->Shaker,b0,b1,min_dist,cShakerDistMinim);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              
+              FreeP(site);
+            }
+          }
           /* now pick up those 1-3 interations */
           
           /* b1-b0-b2 */
@@ -1310,6 +1461,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   int vdw_vis_mode;
   float vdw_vis_min=0.0F,vdw_vis_mid=0.0F,vdw_vis_max=0.0F;
   float tri_sc, tri_wt;
+  float min_sc, min_wt;
   float *cs_coord;
   PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
@@ -1343,6 +1495,9 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     line_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_line_weight);
     tri_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_weight);
     tri_sc =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_scale);
+
+    min_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_weight);
+    min_sc =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_scale);
 
     mask = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
     hb_overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
@@ -1438,60 +1593,74 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
         /* apply distance constraints */
 
         {
-	  register ShakerDistCon *sdc=shk->DistCon;
-	  int ndc = shk->NDistCon;
-	  for(a=0;a<ndc;a++) {
-	    b1 = sdc->at0;
-	    b2 = sdc->at1;
-	    
-	    switch(sdc->type) {
-	    case cShakerDistBond:
-	      eval_flag = cSculptBond & mask;
-	      wt = bond_wt;
-	      break;
-	    case cShakerDistAngle:
-	      eval_flag = cSculptAngl & mask;
-	      wt = angl_wt;
-	      break;
-	    case cShakerDistLimit:
-	      eval_flag = cSculptTri & mask;
-	      wt = tri_wt;
-	      break;
-	    default:
-	      eval_flag = false;
-	      wt=0.0F;
-	      break;
-	    }
-              
-	    if(eval_flag) {
-	      a1 = atm2idx[b1]; /* coordinate set indices */
-	      a2 = atm2idx[b2];
-	      if((a1>=0)&&(a2>=0))
-		{
-		  v1 = cs_coord+3*a1;
-		  v2 = cs_coord+3*a2;
-		  if(sdc->type!=cShakerDistLimit) {
-		    total_strain+=ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
-		    cnt[b1]++;
-		    cnt[b2]++;
-		    total_count++;
-		  } else {
-		    strain = ShakerDoDistLimit(sdc->targ*tri_sc,v1,v2,disp+b1*3,disp+b2*3,wt);
-		    if(strain>0.0F) {
-		      cnt[b1]++;
-		      cnt[b2]++;
-		      total_strain+=strain;
-		      total_count++;
-		    }
-		  }
-		}
-	    }
-	    sdc++;
-	  }
-	}
-        /* apply line constraints */
+          register ShakerDistCon *sdc=shk->DistCon;
+          int ndc = shk->NDistCon;
+          for(a=0;a<ndc;a++) {
+            b1 = sdc->at0;
+            b2 = sdc->at1;
+
+            switch(sdc->type) {
+            case cShakerDistBond:
+              eval_flag = cSculptBond & mask;
+              wt = bond_wt;
+              break;
+            case cShakerDistAngle:
+              eval_flag = cSculptAngl & mask;
+              wt = angl_wt;
+              break;
+            case cShakerDistLimit:
+              eval_flag = cSculptTri & mask;
+              wt = tri_wt;
+              break;
+            case cShakerDistMinim:
+              eval_flag = cSculptMin & mask;
+              wt = min_wt;
+              break;
+            default:
+              eval_flag = false;
+              wt=0.0F;
+              break;
+            }
             
-        if(cSculptLine & mask) {
+            if(eval_flag) {
+              a1 = atm2idx[b1]; /* coordinate set indices */
+              a2 = atm2idx[b2];
+              if((a1>=0)&&(a2>=0)) {
+                v1 = cs_coord+3*a1;
+                v2 = cs_coord+3*a2;
+                switch(sdc->type) {
+                case cShakerDistLimit:
+                  strain = ShakerDoDistLimit(sdc->targ*tri_sc,v1,v2,disp+b1*3,disp+b2*3,wt);
+                  if(strain>0.0F) {
+                    cnt[b1]++;
+                    cnt[b2]++;
+                    total_strain+=strain;
+                    total_count++;
+                  }
+                  break;
+                case cShakerDistMinim:
+                  strain = ShakerDoDistMinim(sdc->targ*min_sc,v1,v2,disp+b1*3,disp+b2*3,wt);
+                  if(strain>0.0F) {
+                    cnt[b1]++;
+                    cnt[b2]++;
+                    total_strain+=strain;
+                    total_count++;
+                  }
+                  break;
+                default:
+                  total_strain+=ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                  cnt[b1]++;
+                  cnt[b2]++;
+                  total_count++;
+                }
+              }
+            }
+            sdc++;
+          }
+        }
+        /* apply line constraints */
+      
+      if(cSculptLine & mask) {
 	  register ShakerLineCon *slc=shk->LineCon;
 	  int nlc = shk->NLineCon;
           for(a=0;a<nlc;a++) {

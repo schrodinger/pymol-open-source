@@ -1830,7 +1830,7 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,
     if(SettingGet(G,cSetting_auto_sculpt)) {
       SettingSet(G,cSetting_sculpting,1);
       if(!I->DragObject->Sculpt)
-        ObjectMoleculeSculptImprint(I->DragObject,state);
+        ObjectMoleculeSculptImprint(I->DragObject,state,-1);
     }
   }
   if(log_trans) PLogFlush();
