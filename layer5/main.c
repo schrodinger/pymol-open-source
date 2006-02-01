@@ -1414,7 +1414,7 @@ static void launch(CPyMOLOptions *options,int own_the_options)
   
   if(G->Option->multisample)
     multisample_mask = P_GLUT_MULTISAMPLE;
-  
+
   /* if were running GLUT, then we have the ability to increase the
    * size of the window in order to accomodate the context */
 
