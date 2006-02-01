@@ -1120,8 +1120,8 @@ void PInitEmbedded(int argc,char **argv)
       case we need to consult the registry regarding the location of
       the install */
     
-    /* embedded version of PyMOL currently ships with Python 2.3 */
-#define EMBEDDED_PYTHONHOME "\\py23"
+    /* embedded version of PyMOL currently ships with Python 2.4 */
+#define EMBEDDED_PYTHONHOME "\\py24"
         
     OrthoLineType path_buffer;
     static char line1[4000];
