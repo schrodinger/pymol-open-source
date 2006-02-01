@@ -106,7 +106,7 @@ float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1t
 
 #endif
 
-void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target,int type)
+void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target,int type,float wt)
 {
   ShakerDistCon *sdc;
 
@@ -116,6 +116,7 @@ void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target,int type)
   sdc->at1=atom1;
   sdc->targ = target;
   sdc->type = type;
+  sdc->weight = wt;
   I->NDistCon++;
 }
 

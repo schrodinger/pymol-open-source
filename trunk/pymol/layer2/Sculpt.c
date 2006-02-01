@@ -377,7 +377,7 @@ static void add_triangle_limits(ATLCall *ATL, int prev, int cur, float dist, int
               register float *va = I->coord + 3*ia;
               register float *vb = I->coord + 3*ib;
               dist_limit = dist + diff3f(va,vb);
-              ShakerAddDistCon(I->Shaker,I->atom0,atom1,dist_limit,cShakerDistLimit);
+              ShakerAddDistCon(I->Shaker,I->atom0,atom1,dist_limit,cShakerDistLimit,1.0F);
             }
           }
           I->ai[atom1].temp1 = 1;
@@ -669,7 +669,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                                        oai[b1].sculpt_id,
                                        oai[b2].sculpt_id,0,0,d);
                   }
-                  ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistBond); 
+                  ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistBond,1.0F); 
                   /* NOTE: storing atom indices, not coord. ind.! */
                 }
               b++;
@@ -729,6 +729,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
               float maxim_max = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_max_max);
 
               int *site = Calloc(int,obj->NAtom);            
+              float *weight = Calloc(float,obj->NAtom);
               /* first, find candidate atoms with sufficient connectivity */
               CountCall cnt;
 
@@ -765,41 +766,45 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                 }
                 ai1->temp1 = false;
                 if((n_qual_branch>2)&&(!adj_site)) {
-                  site[b0] = true;
+                  site[b0] = 10;
                 } else if(!adj_site) {
                   switch(ai1->name[0]) {
+                  case 'O':
+                    if(!ai1->name[1])
+                      if(AtomInfoKnownPolymerResName(G,ai1->resn)) site[b0] = 40;  /* main-chain carbonyl */
+                    break;
                   case 'C':
                     switch(ai1->name[1]) {
                     case 'Z':
                       switch(ai1->name[2]) {
                       case 0:
-                        if(strcmp(ai1->resn,"ARG")==0) site[b0] = true;  /* ARG/CZ */
-                        else if(strcmp(ai1->resn,"TYR")==0) site[b0] = true; /* TYR/CZ */
-                        else if(strcmp(ai1->resn,"PHE")==0) site[b0] = true; /* PHE/CZ */
+                        if(strcmp(ai1->resn,"ARG")==0) site[b0] = 20;  /* ARG/CZ */
+                        else if(strcmp(ai1->resn,"TYR")==0) site[b0] = 20; /* TYR/CZ */
+                        else if(strcmp(ai1->resn,"PHE")==0) site[b0] = 20; /* PHE/CZ */
                         break;
                       }
                       break;
                     case 'E':
                       switch(ai1->name[2]) {
                       case 0:
-                        if(strcmp(ai1->resn,"LYS")==0) site[b0] = true;  /* LYS/CE */
+                        if(strcmp(ai1->resn,"LYS")==0) site[b0] = 20;  /* LYS/CE */
                         break;
                       }
                       break;
                     case 'D':
                       switch(ai1->name[2]) {
                       case 0:
-                        if(strcmp(ai1->resn,"GLU")==0) site[b0] = true;  /* GLU/CD */
-                        else if(strcmp(ai1->resn,"GLN")==0) site[b0] = true;  /* GLN/CD */
+                        if(strcmp(ai1->resn,"GLU")==0) site[b0] = 20;  /* GLU/CD */
+                        else if(strcmp(ai1->resn,"GLN")==0) site[b0] = 20;  /* GLN/CD */
                         break;
                       }
                       break;
                     case 'G':
                       switch(ai1->name[2]) {
                       case 0:
-                        if(strcmp(ai1->resn,"LEU")==0) site[b0] = true;  /* LEU/CG */
-                        else if(strcmp(ai1->resn,"ASP")==0) site[b0] = true;  /* ASP/CG */
-                        else if(strcmp(ai1->resn,"ASN")==0) site[b0] = true;  /* ASN/CG */
+                        if(strcmp(ai1->resn,"LEU")==0) site[b0] = 20;  /* LEU/CG */
+                        else if(strcmp(ai1->resn,"ASP")==0) site[b0] = 20;  /* ASP/CG */
+                        else if(strcmp(ai1->resn,"ASN")==0) site[b0] = 20;  /* ASN/CG */
                         break;
                       }
                       break;
@@ -810,7 +815,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                     case 'D':
                       switch(ai1->name[2]) {
                       case 0:
-                        if(strcmp(ai1->resn,"MET")==0) site[b0] = true;  /* MET/SD */
+                        if(strcmp(ai1->resn,"MET")==0) site[b0] = 20;  /* MET/SD */
                         break;
                       }
                       break;
@@ -823,6 +828,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
               
               for(b0=0;b0<obj->NAtom;b0++) {
                 if(site[b0]) {
+                  weight[n_site]=10.0F/site[b0];
                   site[n_site] = b0;
                   n_site++;
                 }
@@ -832,6 +838,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                 
                 for(a0=0;a0<n_site;a0++) {
                   for(a1=a0+1;a1<n_site;a1++) {
+                    float wt = weight[a0]*weight[a1];
                     b0 = site[a0];
                     b1 = site[a1];
                     
@@ -851,18 +858,18 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                         dist1 = diff3f(v0b,v1b);
                         min_dist = (dist0<dist1) ? dist0 : dist1;
                         if((min_dist>=minim_min)&&(min_dist<=minim_max)) {
-                          ShakerAddDistCon(I->Shaker,b0,b1,min_dist,cShakerDistMinim);
+                          ShakerAddDistCon(I->Shaker,b0,b1,min_dist,cShakerDistMinim,wt);
                         }
                         max_dist = (dist0>dist1) ? dist0 : dist1;
                         if((max_dist>=maxim_min)&&(max_dist<=maxim_max)) {
-                          ShakerAddDistCon(I->Shaker,b0,b1,max_dist,cShakerDistMaxim);
+                          ShakerAddDistCon(I->Shaker,b0,b1,max_dist,cShakerDistMaxim,wt);
                         }
                       }
                     }
                   }
                 }
               }
-              
+                FreeP(weight);
               FreeP(site);
             }
           }
@@ -924,7 +931,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                                        oai[b1].sculpt_id,
                                        oai[b2].sculpt_id,0,d);
                   }
-                  ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistAngle); 
+                  ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistAngle,1.0F); 
 
 
                   if(linear[b0]&&(linear[b1]||linear[b2])) {
@@ -1674,11 +1681,11 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
               break;
             case cShakerDistMinim:
               eval_flag = cSculptMin & mask;
-              wt = min_wt;
+              wt = min_wt * sdc->weight;
               break;
             case cShakerDistMaxim:
               eval_flag = cSculptMax & mask;
-              wt = max_wt;
+              wt = max_wt * sdc->weight;
               break;
             default:
               eval_flag = false;
@@ -2328,7 +2335,7 @@ static int SculptDoBump14(float target,float actual,float *d,
                             v3 = cs->Coord+3*a3;
                             v4 = cs->Coord+3*a4;
                             d = diff3f(v0,v1)+diff3f(v0,v2)+diff3f(v2,v3)+diff3f(v3,v4);
-                            ShakerAddDistCon(I->Shaker,b0,b1,d,cShakerDistLimit); 
+                            ShakerAddDistCon(I->Shaker,b0,b1,d,cShakerDistLimit,1.0F); 
                           }   
                         }
                         n3+=2;
