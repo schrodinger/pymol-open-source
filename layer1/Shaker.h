@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 typedef struct {
   int at0,at1;
   int type;
-  float targ,targ2;
+  float targ,targ2,weight;
 } ShakerDistCon;
 
 #define cShakerTorsAlkane 1
@@ -70,7 +70,7 @@ typedef struct {
 
 CShaker *ShakerNew(PyMOLGlobals *G);
 void ShakerReset(CShaker *I);
-void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float dist,int type);
+void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float dist,int type,float weight);
 void ShakerAddTorsCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,int type);
 void ShakerAddPyraCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float target);
 void ShakerAddPlanCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float target, int fixed);

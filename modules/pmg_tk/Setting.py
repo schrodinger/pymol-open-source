@@ -300,7 +300,7 @@ class Setting:
             'valence':
             (lambda s,t: (s.valence.set(t[1][0]>0.0))),
             'auto_zoom':
-            (lambda s,t: (s.auto_zoom.set(int(t[1][0])))), 
+            (lambda s,t: (s.auto_zoom.set(int(t[1][0])!=0))), 
             'auto_show_selections':
             (lambda s,t: (s.auto_show_selections.set(int(t[1][0])))), 
             'auto_hide_selections':

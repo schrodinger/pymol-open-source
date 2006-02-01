@@ -70,6 +70,9 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   int stereo_mode = SettingGetGlobal_i(G,cSetting_stereo_mode);
   int stereo_double_pump_mono = SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono);
   int show_progress = SettingGetGlobal_b(G,cSetting_show_progress);
+  int defer_updates = SettingGetGlobal_b(G,cSetting_defer_updates);
+  int suspend_updates = SettingGetGlobal_b(G,cSetting_suspend_updates);
+
   register CSetting *I=G->Setting;
   if(list)
     if(PyList_Check(list)) 
@@ -92,7 +95,9 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_b(I,cSetting_stereo_double_pump_mono,stereo_double_pump_mono);
   SettingSet_b(I,cSetting_full_screen,full_screen);
   SettingSet_b(I,cSetting_show_progress,show_progress);
-     
+  SettingSet_b(I,cSetting_defer_updates,defer_updates);
+  SettingSet_b(I,cSetting_suspend_updates,suspend_updates);
+
   if(G->Option->presentation) {
       SettingSet_b(I,cSetting_full_screen,full_screen);
       SettingSet_b(I,cSetting_presentation,1);

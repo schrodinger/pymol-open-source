@@ -796,7 +796,10 @@ def sele_align(s):
               [ 1, 'to selection', align_to_sele(s) ],
               [ 0, '', None ],
               [ 1, 'enabled to this', 'util.mass_align("'+s+'",1)' ],                                 
-              [ 1, 'all to this', 'util.mass_align("'+s+'",0)' ],                      
+              [ 1, 'all to this', 'util.mass_align("'+s+'",0)' ],
+              [ 0, '', None ],
+              [ 1, 'states (*/ca)', 'cmd.intra_fit("('+s+') and name ca")' ],                        
+              [ 1, 'states', 'cmd.intra_fit("'+s+'")' ],
               ]
 
 def mol_align(s):
@@ -806,6 +809,9 @@ def mol_align(s):
               [ 0, '', None ],
               [ 1, 'enabled to this', 'util.mass_align("'+s+'",1)' ],                                 
               [ 1, 'all to this', 'util.mass_align("'+s+'",0)' ],
+              [ 0, '', None ],
+              [ 1, 'states (*/ca)', 'cmd.intra_fit("('+s+') and name ca")' ],                        
+              [ 1, 'states', 'cmd.intra_fit("'+s+'")' ],
               [ 0, '', None ],
               [ 1, 'matrix from', mat_tran(s,1) ],
               [ 1, 'matrix to', mat_tran(s,0) ],
