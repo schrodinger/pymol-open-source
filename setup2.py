@@ -17,7 +17,7 @@ if sys.platform=='win32':
 elif sys.platform=='cygwin':
    launch_script = "pymol"
 else:
-   launch_script = "pymol.com"
+   launch_script = "pymol"
 
 help_str = '''
 The scripts "setup.py" and "setup2.py" are for performing a
