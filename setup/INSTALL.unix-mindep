@@ -1,29 +1,26 @@
-----------------------------------------------------------------------
-PyMOL (C) 1998-2002 by Warren L. DeLano of DeLano Scientific.
-http://www.pymol.org       EMAIL: warren@delanoscientific.com
-----------------------------------------------------------------------
-INSTALLATION GUIDE for Unix Minimal Dependency Distribution
+INSTALLATION of the PyMOL Executable Build for Unix
 
-1) Extract the archive
+1) Extract the appropriate archive.
 
-   tar -zxvf pymol-0_xx-bin-linux-libc6-i386.tgz
+   tar -zxvf pymol-0_99-bin-linux-x86-glibc23.tgz
 
-2) Change directory into the root level of the archive (important).
+2) Change directory into the root level of the archive.
 
    cd pymol
 
-3) Run "./setup.sh" which will create "pymol.com" with a record of
+3) Run "./setup.sh" which will create "./pymol" with a record of
    the current working directory.
 
    ./setup.sh
 
-4) Link or copy "pymol.com" into a directory that is in your path.
+4) Link or copy ./pymol into a directory that is in your path.
    
-   ln -s $PWD/pymol.com /usr/local/bin/pymol
+   ln -s `pwd`/pymol /usr/local/bin/pymol
       (or perhaps)
-   cp pymol.com /usr/local/bin/pymol
+   cp pymol /usr/local/bin/pymol
 
 5) Now try it!
 
+   ./pymol
 
 

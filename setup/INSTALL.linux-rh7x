@@ -11,7 +11,8 @@ rpm -q libpng
 rpm -q zlib
 rpm -q Mesa-devel
 
-# Step 2: Extract the PyMOL archive and change to that directory.
+# Step 2: Extract the PyMOL archive into some directory 
+# (e.g. /usr/local) and change to that directory.
 
 cd /usr/local/pymol
 
@@ -31,19 +32,19 @@ make pmw
 
 (in /usr/local/pymol)
 
-cp setup/pymol.com.linux-rh7x pymol.com
+cp setup/pymol.com.linux-rh7x pymol
 
 # Step 7: Test it.
 
-./pymol.com
+./pymol
 
 # Step 8: (optional) Make PyMOL available to all users.
 
-ln -s /usr/local/pymol/pymol.com /usr/local/bin/pymol
+ln -s /usr/local/pymol/pymol /usr/local/bin/pymol
 
 #######
 
 # If you'd like to put PyMOL somewhere else, then change the paths in
-# "Rules.make" and "pymol.com" prior to compilation.
+# "Rules.make" and "pymol" prior to compilation.
 
 
