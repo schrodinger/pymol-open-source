@@ -21,13 +21,13 @@ You should be able to compile PyMOL for fink as follows:
 (from the PyMOL directory)
 
 a) cp setup/Rules.osx-fink Rules.make
-   cp setup/pymol.com.osx-fink pymol.com
+   cp setup/pymol.com.osx-fink pymol
 
 b) Edit both of these files and set PYMOL_PATH appropriately
 
 c) make
 
-d) test with ./pymol.com
+d) test with ./pymol
 
 ========================================================================
 Approach 2: Distutils (for packaging)
@@ -37,12 +37,13 @@ broken under Fink.
 
 python setup.py build install
 python setup2.py
-./pymol.com
+./pymol
 
 The files you need are:
 
-   ./pymol.com, which can become /sw/bin/pymol
+   ./pymol, which can become /sw/bin/pymol
 
 and 
 
    /sw/lib/python2.2/site-packages/pymol
+
