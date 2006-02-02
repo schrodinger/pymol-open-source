@@ -1,7 +1,7 @@
 #!/bin/sh
 echo ' '
 echo '============================================'
-echo 'Creating "./pymol.com" startup script with '
+echo 'Creating "./pymol" startup script with '
 echo "PYMOL_PATH=`pwd`"
 echo '============================================'
 echo 'If you must move HelperPyMOL in the future,'
@@ -9,21 +9,21 @@ echo 'then re-run "./setup.sh" again afterwards.'
 echo '============================================'
 echo 'Enjoy!'
 echo ' '
-echo '#!/bin/sh' > pymol.com
-echo '#' >> pymol.com
-echo '# PyMOL startup script' >> ./pymol.com
-echo '#' >> ./pymol.com
-echo '# Set PYMOL_PATH to point to this directory' >> ./pymol.com
-echo '#' >> ./pymol.com
-echo '# ================================================' >> ./pymol.com
-echo "PYMOL_PATH=`pwd`" >> ./pymol.com
-echo '# ================================================' >> ./pymol.com
-echo '#' >> ./pymol.com
-echo 'export PYMOL_PATH' >> ./pymol.com
-echo 'PYTHONHOME=$PYMOL_PATH/ext' >> ./pymol.com
-echo 'export PYTHONHOME' >> ./pymol.com
-echo '$PYMOL_PATH/pymol.exe -A5 $* >/dev/null 2>&1' >> ./pymol.com
-chmod 755 ./pymol.com
+echo '#!/bin/sh' > pymol
+echo '#' >> pymol
+echo '# PyMOL startup script' >> ./pymol
+echo '#' >> ./pymol
+echo '# Set PYMOL_PATH to point to this directory' >> ./pymol
+echo '#' >> ./pymol
+echo '# ================================================' >> ./pymol
+echo "PYMOL_PATH=`pwd`" >> ./pymol
+echo '# ================================================' >> ./pymol
+echo '#' >> ./pymol
+echo 'export PYMOL_PATH' >> ./pymol
+echo 'PYTHONHOME=$PYMOL_PATH/ext' >> ./pymol
+echo 'export PYTHONHOME' >> ./pymol
+echo '$PYMOL_PATH/pymol.exe -A5 $* >/dev/null 2>&1' >> ./pymol
+chmod 755 ./pymol
 
 
 

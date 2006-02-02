@@ -110,6 +110,7 @@ unix-beta: unix-mindep
 
 unix-product: unix-mindep
 	cp epymol/data/pymol/splash.png $(MDP)/data/pymol/splash.png
+	cp epymol/LICENSE.txt $(MDP)/LICENSE
 	cd $(MINDEP);chown -R nobody pymol
 	cd $(MINDEP);chgrp -R nobody pymol
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
