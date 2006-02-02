@@ -12,6 +12,8 @@ Changes up to 0.99
     * Now running Python 2.4 on Windows, Linux, IRIX, and Solaris
       Mac remains at 2.3 in order to match built-in Mac OS X Python
 
+    * fixed GUI bug in pmg/tk & added new alignment option for states.
+
     beta38
 
     * fixed field width bug in PDB writer
