@@ -4,6 +4,14 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    pre01
+
+    * WARNING: One annoying GOTCHA!  Launch script "./pymol.com" is now
+      just plain old "./pymol" -- sorry for the resulting config hassles.
+
+    * Now running Python 2.4 on Windows, Linux, IRIX, and Solaris
+      Mac remains at 2.3 in order to match built-in Mac OS X Python
+
     beta38
 
     * fixed field width bug in PDB writer

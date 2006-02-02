@@ -36,7 +36,7 @@ if len(argv):
 # ---
 
 pymol = "pymol"
-cmd = "../pymol.com "
+cmd = "../pymol "
 cmp = "cmp"
 ref = "ref"
 inp = "inp"
