@@ -2,14 +2,14 @@
 
   Author: Greg Landrum (Landrum@RationalDiscovery.com)
   Created:       January 2002
-  $LastChangedDate: 2004-07-31 07:35:39 -0700 (Sat, 31 Jul 2004) $
+  $LastChangedDate: 2005-01-24 13:14:31 -0800 (Mon, 24 Jan 2005) $
   License:  PyMol
   Requires:
             - a python xmlrpclib distribution containing the SimpleXMLRPCServer
               module (1.0 or greater should be fine)
             - python with threading enabled  
              
-  RD Version: $Rev: 3617 $            
+  RD Version: $Rev: 4272 $            
 """
 import SimpleXMLRPCServer
 import threading,sys,time,types
@@ -246,7 +246,7 @@ def colorObj(objName,colorScheme):
     res = 0
   return res
 
-def rpcLoadMolBlock(data,objName,colorScheme=''):
+def rpcLoadMolBlock(data,objName,colorScheme='',replace=1):
   """ loads a molecule from a mol block
 
     Arguments:
@@ -255,15 +255,18 @@ def rpcLoadMolBlock(data,objName,colorScheme=''):
       colorScheme: (OPTIONAL) name of the color scheme to use
         for the molecule (should be either 'std' or one of the
         color schemes defined in pymol.utils)
-
+      replace: (OPTIONAL) if an object with the same name already
+        exists, delete it before adding this one
 
   """
   from pymol import util
+  if replace:
+    cmd.delete(objName)
   res = cmd.read_molstr(data,objName)
   colorObj(objName,colorScheme)
   return res
 
-def rpcLoadFile(fileName,objName='',format='',colorScheme=''):
+def rpcLoadFile(fileName,objName='',format='',colorScheme='',replace=1):
   """ loads an object from a file
 
     Arguments:
@@ -273,9 +276,13 @@ def rpcLoadFile(fileName,objName='',format='',colorScheme=''):
       colorScheme: (OPTIONAL) name of the color scheme to use
         for the object (should be either 'std' or one of the
         color schemes defined in pymol.utils)
+      replace: (OPTIONAL) if an object with the same name already
+        exists, delete it before adding this one
   """
   if not objName:
     objName = fileName.split('.')[0]
+  if replace:
+    cmd.delete(objName)
   res = cmd.load(fileName,objName,format=format)
   colorObj(objName,colorScheme)
   return res
@@ -355,6 +362,11 @@ def rpcIdAtom(what='all',mode=0):
   """ returns the results of cmd.id_atom(what) """
   return cmd.id_atom(what,mode=mode)
 
+def rpcGetAtomCoords(what='all',state=0):
+  """ returns the results of cmd.get_atom_coords(what,state) """
+  return cmd.get_atom_coords(what,state=state)
+
+
 def rpcHelp(what=''):
   """ returns general help text or help on a particular command """
   global serv
@@ -431,6 +443,8 @@ def launch_XMLRPC(hostname='localhost',port=_xmlPort,nToTry=_nPortsToTry):
     serv.register_function(rpcCountAtoms,'countAtoms')
     serv.register_function(rpcIdAtom,'idAtom')
     serv.register_function(rpcHelp,'help')
+    serv.register_function(rpcGetAtomCoords,'getAtomCoords')
+    serv.register_introspection_functions()
     t = threading.Thread(target=serv.serve_forever)
     t.setDaemon(1)
     t.start()

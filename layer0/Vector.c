@@ -1619,6 +1619,22 @@ int slow_within3fsq(float *v1,float *v2,float dist,float dist2)
   return((dx*dx + dy*dy + dz*dz)<=(dist2));
 }
 
+int slow_within3fret(float *v1,float *v2,float cutoff, float cutoff2, float *diff, float *dist)
+{
+  register float dx,dy,dz,dist2;
+  dx = (float)fabs( (diff[0] = v1[0]-v2[0]) );
+  dy = (float)fabs( (diff[1] = v1[1]-v2[1]) );
+  if(dx>cutoff) return 0;
+  dz = (float)fabs( (diff[2] = v1[2]-v2[2]) );
+  dx = dx * dx;
+  if(dy>cutoff) return 0;
+  dy = dy * dy;
+  if(dz>cutoff) return 0;
+  if((dist2 = ((dx + dy) + dz*dz))>cutoff2) 
+    return 0;
+  *dist = (float)sqrt1f(dist2);
+  return 1;
+}
 
 void slow_remove_component3f ( float *v1, float *unit, float *result)
 {
