@@ -413,6 +413,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             case 5: 
             case 4:
             case 3:
+            case 8:
               glEnable(GL_POINT_SMOOTH);
               glAlphaFunc(GL_GREATER, 0.5F);
               glEnable(GL_ALPHA_TEST);
@@ -421,6 +422,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               pixel_scale *= 2.0F;
               break;
             case 2:
+            case 7:
               glHint(GL_POINT_SMOOTH_HINT,GL_FASTEST);
               glDisable(GL_POINT_SMOOTH);
               glDisable(GL_ALPHA_TEST);
@@ -490,6 +492,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               case 3:
               case 4:
               case 5:
+              case 7:
+              case 8:
                 if(!skip) {
                   if(last_radius!=(cur_radius=v[6])) {
                     size = cur_radius*pixel_scale;
@@ -518,6 +522,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             switch(sphere_mode) {
             case 3:
             case 4:
+            case 8:
               glDisable(GL_POINT_SMOOTH);
               glAlphaFunc(GL_GREATER, 0.05F);
               break;
@@ -541,7 +546,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
         v=I->VC;
         c=I->NC;
           
-        if((sphere_mode>=2)&&(sphere_mode<=3)) { 
+        if(((sphere_mode>=2)&&(sphere_mode<=3))||
+           ((sphere_mode>=7)&&(sphere_mode<=8))) { 
           if(I->R.displayList) { 
             if(I->LastVertexScale != info->vertex_scale) {
               glDeleteLists(I->R.displayList,1);
@@ -577,6 +583,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           case 2:
           case 3:
           case 4:
+          case 7:
+          case 8:
 #ifdef _PYMOL_OPENGL_SHADERS
           case 5:
 #endif
@@ -598,7 +606,9 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                 
               case 2:
               case 3:
-                if(sphere_mode==3) {
+              case 7:
+              case 8:
+                if((sphere_mode==3)||(sphere_mode==8)) {
                   pixel_scale *= 2.0F;
                   glEnable(GL_POINT_SMOOTH);
                   glAlphaFunc(GL_GREATER, 0.5F);
@@ -611,6 +621,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   glDisable(GL_ALPHA_TEST);
                   pixel_scale *= 1.4F;
                 }
+                if((sphere_mode==7)||(sphere_mode==8))
+                  glEnable(GL_LIGHTING);
                 glBegin(GL_POINTS);
                 while(c--) {
                   if(last_radius!=(cur_radius=v[6])) {
@@ -625,6 +637,10 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   }
                   glColor3fv(v);
                   v+=3;
+                  if(vn) {
+                    glNormal3fv(vn);
+                    vn+=3;
+                  }
                   glVertex3fv(v);
                   v+=4;
                 }
@@ -1363,51 +1379,75 @@ Rep *RepSphereNew(CoordSet *cs,int state)
       FreeP(pk_tmp);
     }
 
-    if((sphere_mode==6) && I->NC) {
+    if((sphere_mode>=6) && (sphere_mode<9) && I->NC) {
       /* compute sphere normals to approximate a surface */
-
-      float normal_range = 8.0F;
+      register float range = 6.0F;
       float *vc = I->VC;
+      float *dot = G->Sphere->Sphere[1]->dot[0];
+      int n_dot = G->Sphere->Sphere[1]->nDot;
       int nc = I->NC;
+      int *active = Alloc(int,2*n_dot);
+      MapType *map = MapNew(G,range,vc,nc,NULL);
       I->VN = Alloc(float,I->NC*3);
-      MapType *map = MapNew(G,normal_range,vc,nc,NULL);
       if(map && I->VN) {
-        MapSetupExpress(map);
-        register float dst,*vv;
+        float dst;
+        register float *vv;
         register int nbr_flag;
+        register int n_dot_active,*da;
+        register float cut_mult = -1.0F;
+        register float range2 = range * range;
+
+        MapSetupExpress(map);
         v = vc + 3;
         v0 = I->VN;
-          
+        
+        for(a=1;a<n_dot;a++) {
+          float t_dot = dot_product3f(dot,dot+a*3);
+          if(cut_mult<t_dot)
+            cut_mult=t_dot;
+        }
         for(a=0;a<nc;a++) {
           nbr_flag = false;
           MapLocus(map,v,&h,&k,&l);
-          zero3f(v0);
-
+          da = active;
+          for(b=0;b<n_dot;b++) {
+            *(da++)=b*3;
+          }
+          n_dot_active = n_dot;
           i=*(MapEStart(map,h,k,l));
           if(i) {
             j=map->EList[i++];
             while(j>=0) {
               if(j!=a) {
                 vv = vc + 3*j;
-                subtract3f(v,vv,v1);
-                dst = length3f(v1);
-
-                if(dst < normal_range) {
-                  dst = normal_range - dst;
-                  normalize3f(v1);
-                  scale3f(v1,dst,v1);
-                  add3f(v1,v0,v0);
-                  nbr_flag = true;
+                if(within3fret(vv,v,range,range2,v1,&dst)) {
+                  register float cutoff = dst * cut_mult;
+                  b = 0;
+                  while(b<n_dot_active) {
+                    vv = dot+active[b];
+                    if(dot_product3f(v1,vv)>cutoff) {
+                      n_dot_active--;
+                      active[b] = active[n_dot_active];
+                    }
+                    b++;
+                  }
                 }
               }
               j=map->EList[i++];
             }
           }
-          if(!nbr_flag) {
+          if(!n_dot_active) {
             v0[0]=0.0F;
             v0[1]=0.0F;
             v0[2]=1.0F;
           } else {
+            zero3f(v0);
+            b = 0;
+            while(b<n_dot_active) {
+              vv = dot+active[b];
+              add3f(vv,v0,v0);
+              b++;
+            }
             normalize3f(v0);
           }
           v+=7;
@@ -1416,6 +1456,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
       }
       MapFree(map);
       map = NULL;
+      FreeP(active);
     }
 
     I->cullFlag = false;

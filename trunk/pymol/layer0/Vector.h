@@ -77,6 +77,7 @@ double slow_diffsq3f ( float *v1, float *v2 );
 double slow_diff3f ( float *v1, float *v2 );
 int slow_within3f(float *v1,float *v2,float dist);
 int slow_within3fsq(float *v1,float *v2,float dist,float dist2);
+int slow_within3fret(float *v1,float *v2,float cutoff, float cutoff2, float *diff, float *dist);
 
 int equal3f(float *v1,float *v2);
 
@@ -277,12 +278,13 @@ static const double R_SMALLd_inline = 0.000000001;
 #define diffsq3f inline_diffsq3f
 #define within3f inline_within3f
 #define within3fsq inline_within3fsq
+#define within3fret inline_within3fret
 #define remove_component3f inline_remove_component3f
 #define project3f inline_project3f
 
 __inline__ static double inline_sqrt1f(float f) { /* no good as a macro because f is used twice */
   if(f>_0f_inline)
-	 return(sqrt(f));
+    return(sqrt(f));
   else
 	 return(_0d_inline);
 }
@@ -366,6 +368,22 @@ __inline__ static int inline_within3fsq(float *v1,float *v2,float dist,float dis
   return((dx + dz)<=(dist2));
 }
 
+__inline__ static int inline_within3fret(float *v1,float *v2,float cutoff, float cutoff2, float *diff, float *dist)
+{
+  register float dx,dy,dz,dist2;
+  dx = (float)fabs( (diff[0] = v1[0]-v2[0]) );
+  dy = (float)fabs( (diff[1] = v1[1]-v2[1]) );
+  if(dx>cutoff) return 0;
+  dz = (float)fabs( (diff[2] = v1[2]-v2[2]) );
+  dx = dx * dx;
+  if(dy>cutoff) return 0;
+  dy = dy * dy;
+  if(dz>cutoff) return 0;
+  if((dist2 = ((dx + dy) + dz*dz))>cutoff2) 
+    return 0;
+  *dist = (float)sqrt1f(dist2);
+  return 1;
+}
 
 __inline__ static void inline_remove_component3f ( float *v1, float *unit, float *result)
 {
@@ -398,6 +416,7 @@ __inline__ static float inline_project3f ( float *v1, float *v2, float *proj )
 #define diffsq3f slow_diffsq3f
 #define within3f slow_within3f
 #define within3fsq slow_within3fsq
+#define within3fret slow_within3fret
 #define project3f slow_project3f
 #define remove_component3f slow_remove_component3f
 
