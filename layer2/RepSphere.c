@@ -35,8 +35,9 @@
 
 typedef struct RepSphere {
   Rep R;
-  float *V;
-  float *VC;
+  float *V; /* triangle vertices (if any) */
+  float *VC; /* sphere centers, colors, and radii */
+  float *VN; /* normals (if any) */
   SphereRec *SP;
   int *NT;
   int N,NC,NP;
@@ -228,6 +229,7 @@ void RepSphereFree(RepSphere *I)
 
   FreeP(I->VC);
   FreeP(I->V);
+  FreeP(I->VN);
   FreeP(I->NT);
   FreeP(I->LastColor);
   FreeP(I->LastVisib);
@@ -299,7 +301,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
-  float *v=I->V,*vc;
+  float *v=I->V,*vc,*vn=I->VN;
   int c=I->N;
   int cc=0,*nt=NULL;
   int a;
@@ -854,18 +856,46 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_point_size));
             glBegin(GL_POINTS);
             if(alpha==1.0) {
-              while(c--) {
-                glColor3fv(v);
-                v+=3;
-                glVertex3fv(v);
-                v+=4;
+              if(vn) {
+                glEnd();
+                glEnable(GL_LIGHTING);
+                glBegin(GL_POINTS);
+                while(c--) {
+                  glColor3fv(v);
+                  v+=3;
+                  glNormal3fv(vn);
+                  vn+=3;
+                  glVertex3fv(v);
+                  v+=4;
+                }
+              } else {
+                while(c--) {
+                  glColor3fv(v);
+                  v+=3;
+                  glVertex3fv(v);
+                  v+=4;
+                }
               }
             } else {
-              while(c--) {
-                glColor4f(v[0],v[1],v[2],alpha);
-                v+=3;
-                glVertex3fv(v);
-                v+=4;
+              if(vn) {
+                glEnd();
+                glEnable(GL_LIGHTING);
+                glBegin(GL_POINTS);
+                while(c--) {
+                  glColor4f(v[0],v[1],v[2],alpha);
+                  v+=3;
+                  glNormal3fv(vn);
+                  vn+=3;
+                  glVertex3fv(v);
+                  v+=4;
+                }
+              } else {
+                while(c--) {
+                  glColor4f(v[0],v[1],v[2],alpha);
+                  v+=3;
+                  glVertex3fv(v);
+                  v+=4;
+                }
               }
             }
             glEnd();
@@ -1087,7 +1117,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
   float tn[3],vt1[3],vt2[3],xtn[3],*tn0,*tn1,*tn2;
 #endif
 
-  OOAlloc(G,RepSphere);
+  OOCalloc(G,RepSphere);
 
   obj = cs->Obj;
   vFlag=false;
@@ -1196,13 +1226,17 @@ Rep *RepSphereNew(CoordSet *cs,int state)
   I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepSphereFree;
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSphereSameVis;
-  I->R.fRecolor=NULL;
-  I->LastVisib=NULL;
-  I->LastColor=NULL;
+
+  /* automatic --  OOcalloc 
+     I->R.fRecolor=NULL;
+     I->LastVisib=NULL;
+     I->LastColor=NULL;
+     I->NP = 0; 
+  */
+
   I->LastVertexScale = -1.0F;
   I->R.obj=(CObject*)obj;
   I->R.cs = cs;
-  I->NP = 0;
   I->R.context.object = (void*)obj;
   I->R.context.state = state;
 
@@ -1304,7 +1338,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     I->R.P[0].index = I->NP;
   }
 
-  if(!sp) {
+  if(!sp) { /* if sp==null, then we're drawing a point-based sphere rep */
 
     /* sort the vertices by radius */
     if(I->NC && I->VC && (!spheroidFlag) && (sphere_mode>1)) {
@@ -1327,13 +1361,70 @@ Rep *RepSphereNew(CoordSet *cs,int state)
       FreeP(vc_tmp);
       FreeP(ix);
       FreeP(pk_tmp);
-
     }
+
+    if((sphere_mode==6) && I->NC) {
+      /* compute sphere normals to approximate a surface */
+
+      float normal_range = 8.0F;
+      float *vc = I->VC;
+      int nc = I->NC;
+      I->VN = Alloc(float,I->NC*3);
+      MapType *map = MapNew(G,normal_range,vc,nc,NULL);
+      if(map && I->VN) {
+        MapSetupExpress(map);
+        register float dst,*vv;
+        register int nbr_flag;
+        v = vc + 3;
+        v0 = I->VN;
+          
+        for(a=0;a<nc;a++) {
+          nbr_flag = false;
+          MapLocus(map,v,&h,&k,&l);
+          zero3f(v0);
+
+          i=*(MapEStart(map,h,k,l));
+          if(i) {
+            j=map->EList[i++];
+            while(j>=0) {
+              if(j!=a) {
+                vv = vc + 3*j;
+                subtract3f(v,vv,v1);
+                dst = length3f(v1);
+
+                if(dst < normal_range) {
+                  dst = normal_range - dst;
+                  normalize3f(v1);
+                  scale3f(v1,dst,v1);
+                  add3f(v1,v0,v0);
+                  nbr_flag = true;
+                }
+              }
+              j=map->EList[i++];
+            }
+          }
+          if(!nbr_flag) {
+            v0[0]=0.0F;
+            v0[1]=0.0F;
+            v0[2]=1.0F;
+          } else {
+            normalize3f(v0);
+          }
+          v+=7;
+          v0+=3;
+        }
+      }
+      MapFree(map);
+      map = NULL;
+    }
+
     I->cullFlag = false;
     I->V = NULL;
     I->NT = NULL;
     I->N = 0;
     I->SP = NULL;
+
+    
   } else {
 
     I->cullFlag = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
