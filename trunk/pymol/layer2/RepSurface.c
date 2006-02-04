@@ -1311,7 +1311,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   float v1[3];
   float vdw;
 #endif
-  OOAlloc(G,RepSurface);
+  OOCalloc(G,RepSurface);
 
   obj = cs->Obj;
   I->R.context.object = (void*)obj;
@@ -1424,18 +1424,23 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   }
   probe_rad_less2 = probe_rad_less * probe_rad_less;
 
-  I->N=0;
-  I->NT=0;
-  I->S=NULL;
-  I->V=NULL;
-  I->VC=NULL;
-  I->Vis=NULL;
-  I->VN=NULL;
-  I->T=NULL;
-  I->Dot=NULL;
-  I->NDot=0;
-  I->LastVisib=NULL;
-  I->LastColor=NULL;
+  /* OOCalloc takes care of all this 
+
+     I->N=0;
+     I->NT=0;
+     I->S=NULL;
+     I->V=NULL;
+     I->VC=NULL;
+     I->Vis=NULL;
+     I->VN=NULL;
+     I->T=NULL;
+     I->Dot=NULL;
+     I->NDot=0;
+     I->LastVisib=NULL;
+     I->LastColor=NULL;
+     I->debug = NULL;
+  */
+
   I->R.fRender=(void (*)(struct Rep *, RenderInfo *info))RepSurfaceRender;
   I->R.fFree=(void (*)(struct Rep *))RepSurfaceFree;
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepSurfaceColor;
@@ -1443,7 +1448,6 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   I->R.obj = (CObject*)(cs->Obj);
   I->R.cs = cs;
   I->allVisibleFlag=true;
-  I->debug = NULL;
   obj = cs->Obj;
 
   /* don't waist time computing a Surface unless we need it!! */
