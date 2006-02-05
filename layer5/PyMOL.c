@@ -2167,6 +2167,21 @@ static void init_python(int argc, char *argv[])
 	PyRun_SimpleString("import sys");
 	PyRun_SimpleString("import os");
 	PyRun_SimpleString("sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')");
+
+#ifdef _MACPYMOL_XCODE
+    { /* add an architecture-dependent search path for platform-specific binary modules
+		here we're cheating by using endianness instead of figuring out how to get the
+		true architecture from OS X */
+		unsigned int val = 0x01020304;
+		unsigned int *i_ptr=&val;
+		char *c_ptr = (char*)i_ptr;
+		if(*c_ptr==0x01) {
+			PyRun_SimpleString("sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules/ppc')");
+		} else {
+			PyRun_SimpleString("sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules/i386')");
+		}
+	}
+#endif
 	PyRun_SimpleString("import __main__");
     {
 		PyObject *P_main = PyImport_AddModule("__main__");
