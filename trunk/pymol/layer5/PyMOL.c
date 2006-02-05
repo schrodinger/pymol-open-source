@@ -102,6 +102,7 @@ typedef struct _CPyMOL {
   int Progress[PYMOL_PROGRESS_SIZE];
   int ProgressChanged;
   int IdleAndReady;
+  int ExpireCount;
   PyMOLSwapBuffersFn *SwapFn;
 
 /* Python stuff */
@@ -2165,7 +2166,7 @@ static void init_python(int argc, char *argv[])
     PyUnicode_SetDefaultEncoding("utf-8"); /* is this safe & legal? */
 	PyRun_SimpleString("import sys");
 	PyRun_SimpleString("import os");
-	PyRun_SimpleString("sys.path.append(os.environ['PYMOL_PATH']+'/modules')");
+	PyRun_SimpleString("sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')");
 	PyRun_SimpleString("import __main__");
     {
 		PyObject *P_main = PyImport_AddModule("__main__");
@@ -2600,6 +2601,7 @@ void PyMOL_Reshape(CPyMOL *I,int width, int height, int force)
   PYMOL_API_LOCK
   PyMOLGlobals *G = I->G;
 
+
   G->Option->winX = width;
   G->Option->winY = height;
 
@@ -2646,6 +2648,9 @@ int PyMOL_Idle(CPyMOL *I)
 	} else {
 		I->PythonInitStage=-1;
 		PBlock();
+#ifdef _MACPYMOL_XCODE
+        PRunString("launch_gui()");
+#endif
 		PRunString("adapt_to_hardware()");
 		PRunString("exec_deferred()");
 		PUnblock();
@@ -2657,6 +2662,32 @@ int PyMOL_Idle(CPyMOL *I)
   PYMOL_API_UNLOCK_NO_FLUSH
 
   return did_work;
+}
+
+void PyMOL_ExpireIfIdle(CPyMOL *I)
+{
+  PYMOL_API_LOCK
+
+  PyMOLGlobals *G = I->G;
+  int final_init_done = true;
+#ifndef _PYMOL_NOPY
+  final_init_done = (I->PythonInitStage==-1);
+#endif
+
+  if(!G->HaveGUI) {
+    if(final_init_done) {
+      if(!OrthoCommandWaiting(G)) {
+	if((!G->Option->keep_thread_alive)&&
+	   (!G->Option->read_stdin)) {
+	  I->ExpireCount++;
+	  if(I->ExpireCount==10) {
+	    PParse("_quit");
+	  }
+	}
+      }
+    }
+  }
+  PYMOL_API_UNLOCK;
 }
 
 void PyMOL_NeedFakeDrag(CPyMOL *I)
@@ -2676,13 +2707,44 @@ void PyMOL_NeedSwap(CPyMOL *I)
 
 void PyMOL_NeedReshape(CPyMOL *I,int mode, int x, int y, int width, int height)
 {
-  I->ReshapeFlag = true;
-  I->Reshape[0] = mode;
-  I->Reshape[1] = x;
-  I->Reshape[2] = y;
-  I->Reshape[3] = width;
-  I->Reshape[4] = height;
-  PyMOL_NeedRedisplay(I);
+  PyMOLGlobals *G = I->G;
+  if(width<0) {
+    int h;
+    BlockGetSize(SceneGetBlock(G),&width,&h);
+    if(SettingGetGlobal_b(G,cSetting_internal_gui))
+      width+=SettingGetGlobal_i(G,cSetting_internal_gui_width);
+  }
+  
+  /* if height is negative, force a reshape based on the current height */
+  
+  if(height<0) { 
+    int w;
+    int internal_feedback;
+    BlockGetSize(SceneGetBlock(G),&w,&height);
+    internal_feedback = (int)SettingGet(G,cSetting_internal_feedback);
+    if(internal_feedback)
+      height+=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
+    if(SettingGetGlobal_b(G,cSetting_seq_view)&&!SettingGetGlobal_b(G,cSetting_seq_view_overlay))
+      height+=SeqGetHeight(G);
+  }
+
+  if(G->HaveGUI) {
+    I->ReshapeFlag = true;
+    I->Reshape[0] = mode;
+    I->Reshape[1] = x;
+    I->Reshape[2] = y;
+    I->Reshape[3] = width;
+    I->Reshape[4] = height;
+    PyMOL_NeedRedisplay(I);
+  } else {
+    /* if no gui, then force immediate reshape */
+    PyMOLGlobals *G = I->G;
+    
+    G->Option->winX = width;
+    G->Option->winY = height;
+    
+    OrthoReshape(G,width,height,true);
+  }
 }
 
 int PyMOL_GetIdleAndReady(CPyMOL *I)

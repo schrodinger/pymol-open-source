@@ -1279,9 +1279,12 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
 static void SceneImageFinish(PyMOLGlobals *G,char *image)
 {
   register CScene *I=G->Scene;
-
-  if(I->Image->data!=(unsigned char*)image) /* purge the image if this isn't the active copy */
+  if(I->Image) {
+    if(I->Image->data!=(unsigned char*)image) /* purge the image if this isn't the active copy */
+      FreeP(image);
+  } else {
     FreeP(image);
+  }
 }
 
 void SceneGetImageSize(PyMOLGlobals *G,int *width,int *height)
@@ -1302,7 +1305,7 @@ int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsign
   register CScene *I=G->Scene;
   int result=false;
   int i,j;
-  if(image&&(I->Image->width==width)&&(I->Image->height==height)) {
+  if(image&&I->Image&&(I->Image->width==width)&&(I->Image->height==height)) {
     for (i=0; i< height; i++)
       {
         unsigned char *dst = dest + i * (rowbytes);
@@ -1361,7 +1364,7 @@ void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet)
 {
   register CScene *I=G->Scene;
   GLvoid *image = SceneImagePrepare(G);
-  if(image) {
+  if(image && I->Image) {
     int width = I->Image->width;
     int height = I->Image->height;
     unsigned char *save_image = image;
@@ -4509,8 +4512,8 @@ int  SceneInit(PyMOLGlobals *G)
     I->version[0]=0;
     SceneRestartTimers(G);
 
-    I->Width = 400; /* sensible defaults */
-    I->Height = 300;
+    I->Width = 640; /* standard defaults */
+    I->Height = 480;
 
     I->n_ani_elem = 0;
     I->cur_ani_elem = 0;

@@ -22,6 +22,8 @@ import traceback
 import Queue
 import __builtin__
 
+# ensure that PyMOL seach path is used...
+
 from Tkinter import *
 from tkFileDialog import *
 import tkMessageBox
@@ -91,10 +93,16 @@ class PMGApp(Pmw.MegaWidget):
         if self.allow_after:
             self.root.after(20,self.flush_fifo) # 50X a second
         
-    def run(self):
+    def run(self,poll=0):
         # this call to mainloop needs to be replaced with something revocable
         self.flush_fifo_once()
-        self.root.mainloop()
+        if poll:
+            import time
+            while 1:
+                self.root.update()
+                time.sleep(0.05)
+        else:
+            self.root.mainloop()
         self.quit_app()
 
     def execute(self,cmmd): 

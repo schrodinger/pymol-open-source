@@ -1435,7 +1435,7 @@ void PInitEmbedded(int argc,char **argv)
 #endif
 
 #ifdef WIN32
-  PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
+  PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n");
 #endif
 
   P_main = PyImport_AddModule("__main__");
@@ -1450,7 +1450,7 @@ void PInitEmbedded(int argc,char **argv)
   /* copy arguments to __main__.pymol_argv */
   PyObject_SetAttrString(P_main,"pymol_argv",args);
   
-  PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n"); /* needed for semistatic pymol */
+  PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n"); /* needed for semistatic pymol */
 
   PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
 

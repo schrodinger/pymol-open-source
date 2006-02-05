@@ -278,6 +278,7 @@ class Normal(PMGSkin):
         self.balloon.bind(self.entry, 'Command Input Area')
         
         self.focus_entry=0
+        self.refocus_entry=0
         if self.app.allow_after:
             self.output.after(1000,self.update_feedback)
             self.output.after(1000,self.update_menus)
@@ -297,11 +298,29 @@ class Normal(PMGSkin):
         self.app.bind_all('<F10>',lambda e,s=self: s.cmd.do("cmd._special(10,0,0)"))
         self.app.bind_all('<F11>',lambda e,s=self: s.cmd.do("cmd._special(11,0,0)"))
         self.app.bind_all('<F12>',lambda e,s=self: s.cmd.do("cmd._special(12,0,0)"))
-
         self.entry.bind('<Prior>',lambda e,s=self: s.cmd.do("cmd._special(104,0,0)"))
         self.entry.bind('<Next>',lambda e,s=self: s.cmd.do("cmd._special(105,0,0)"))
         self.entry.bind('<Home>',lambda e,s=self: s.cmd.do("cmd._special(106,0,0)"))
         self.entry.bind('<End>',lambda e,s=self: s.cmd.do("cmd._special(107,0,0)"))
+        if sys.platform=='darwin':
+            if self.app.pymol.invocation.options.external_gui==3:
+                self.root.bind_all('<Leave>',lambda e,s=self: s.left(e)) # for MacPyMOLX11Hybrid
+                self.root.bind_all('<Enter>',lambda e,s=self: s.focus_in(e))
+    
+    def focus_in(self,event):
+        if self.refocus_entry:
+            self.cmd.do("_ cmd.window('defocus')")
+            self.refocus_entry = 0
+            self.entry.focus_set()
+
+    def left(self,event):
+        if id(event.widget) == id(self.root):
+            if ((event.y<0) or 
+                (event.x>event.widget.winfo_width()) or
+                (event.y>event.widget.winfo_height())):
+                self.cmd.do("_ cmd.window('focus')")
+                self.root.focus_set()
+                self.refocus_entry = 1
 
     def update_feedback(self):
         if self.focus_entry:
@@ -324,7 +343,6 @@ class Normal(PMGSkin):
             self.messageBar.resetmessages("busy")
         if self.app.allow_after:
             self.output.after(100,self.update_feedback) # 10X a second
-        
 
     def toggleFrame(self, frame, startup=0):
         if frame not in self.dataArea.slaves():
@@ -451,7 +469,7 @@ class Normal(PMGSkin):
         if len(ofile):
             self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
             self.log_file = re.sub(r"^.*[^\/\\]","",ofile)
-            os.chdir(self.initialdir)	         
+            os.chdir(self.initialdir)                 
             self.cmd.resume(ofile)
 
     def log_append(self,append_only=0):
@@ -468,7 +486,7 @@ class Normal(PMGSkin):
         if len(ofile):
             self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
             self.log_file = re.sub(r"^.*[^\/\\]","",ofile)
-            os.chdir(self.initialdir)	         
+            os.chdir(self.initialdir)                 
             self.cmd.log_open(ofile,'a')
 
     def session_save(self):
@@ -554,7 +572,7 @@ class Normal(PMGSkin):
                                         ])
         if len(ofile):
             dir = re.sub(r"[^\/\\]*$","",ofile)
-            os.chdir(dir)	
+            os.chdir(dir)        
             if re.search("\.pym*$|\.PYM*$",ofile):
                 self.cmd.do("run "+ofile);      
             else:

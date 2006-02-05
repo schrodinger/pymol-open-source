@@ -22,7 +22,7 @@ echo '#' >> ./pymol
 echo 'export PYMOL_PATH' >> ./pymol
 echo 'PYTHONHOME=$PYMOL_PATH/ext' >> ./pymol
 echo 'export PYTHONHOME' >> ./pymol
-echo '$PYMOL_PATH/pymol.exe -A5 $* >/dev/null 2>&1' >> ./pymol
+echo '$PYMOL_PATH/pymol.exe -A5 "$@" >/dev/null 2>&1' >> ./pymol
 chmod 755 ./pymol
 
 
