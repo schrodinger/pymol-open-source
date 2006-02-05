@@ -18,7 +18,8 @@ if sys.platform=='win32':
    lib_dirs=["win32/lib"]
    def_macros=[("_PYMOL_MODULE",None),
                   ("WIN32",None),
-                  ("_HAVE_LIBPNG",None)]
+                  ("_HAVE_LIBPNG",None),
+               ]
    ext_comp_args=[]
    ext_link_args=['/NODEFAULTLIB:"LIBC"']
 elif sys.platform=='cygwin':
@@ -65,10 +66,10 @@ else:
    inc_dirs=["ov/src",
              "layer0","layer1","layer2",
              "layer3","layer4","layer5",
+             "/usr/include/freetype2",
 #             "/home/warren/ext/include"
              ]
-   libs=["GL","GLU","glut","png",
-	"z"
+   libs=["GL","GLU","glut","png","z","freetype"
 	]	
    pyogl_libs = ["GL","GLU","glut"]
    lib_dirs=[
@@ -77,6 +78,7 @@ else:
       ]
    def_macros=[("_PYMOL_MODULE",None),
                ("_PYMOL_INLINE",None),
+               ("_PYMOL_FREETYPE",None),
 #                  ("_PYMOL_NUMPY",None),
                   ("_HAVE_LIBPNG",None)]
    ext_comp_args=["-ffast-math","-funroll-loops","-O3"]
