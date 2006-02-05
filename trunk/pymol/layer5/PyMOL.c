@@ -2649,6 +2649,8 @@ int PyMOL_Idle(CPyMOL *I)
 		I->PythonInitStage=-1;
 		PBlock();
 #ifdef _MACPYMOL_XCODE
+    /* restore working directory if asked to */
+        PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
         PRunString("launch_gui()");
 #endif
 		PRunString("adapt_to_hardware()");
