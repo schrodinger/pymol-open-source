@@ -317,15 +317,19 @@ if pymol_launch != 3: # if this isn't a dry run
         # NEED SOME CONTRIBUTIONS HERE!
 
         def launch_gui():
+	    if sys.platform=='darwin':
+		poll=1
+	    else:
+		poll=0
             if invocation.options.external_gui==1:
                 __import__(invocation.options.gui)
-                sys.modules[invocation.options.gui].__init__(sys.modules['pymol'])
+                sys.modules[invocation.options.gui].__init__(sys.modules['pymol'],poll)
             elif invocation.options.external_gui==3:
                 os.environ['DISPLAY']=':0.0'
 		os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+"/ext/lib/tcl8.4"
 		os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+"/ext/lib/tk8.4"
                 __import__(invocation.options.gui)
-                sys.modules[invocation.options.gui].__init__(sys.modules['pymol'],1)
+                sys.modules[invocation.options.gui].__init__(sys.modules['pymol'],poll)
 
         # -- Greg Landrum's RPC stuff
             if invocation.options.rpcServer:

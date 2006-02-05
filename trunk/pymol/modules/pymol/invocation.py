@@ -68,7 +68,7 @@ if __name__=='pymol.invocation':
     if sys.platform[0:4] == 'irix':
         options.win_py = 240
     elif sys.platform == 'darwin':
-        options.win_py = 236
+        options.win_py = 214
     elif sys.platform != 'win32':
         options.win_py = 200
     else:

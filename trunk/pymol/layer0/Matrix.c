@@ -1606,7 +1606,7 @@ integer *ierr;
     /* Local variables */
      doublereal norm;
      integer i__, j, k, l=0, m=0;
-     doublereal p, q=0.0, r__=0.0, s, t, w, x, y;
+     doublereal p=0.0, q=0.0, r__=0.0, s, t, w, x, y;
      integer na, en, ll, mm;
      doublereal zz;
      logical notlas;
@@ -1960,11 +1960,11 @@ integer *ierr;
     /* Local variables */
      doublereal norm;
      integer i__, j, k, l=0, m=0;
-     doublereal p, q, r__=0.0, s=0.0, t, w, x, y;
+     doublereal p=0.0, q=0.0, r__=0.0, s=0.0, t, w, x, y;
      integer na, ii, en, jj;
      doublereal ra, sa;
      integer ll, mm, nn;
-     doublereal vi, vr, zz;
+     doublereal vi, vr, zz=0.0;
      logical notlas;
      integer mp2, itn, its, enm2;
      doublereal tst1, tst2;
