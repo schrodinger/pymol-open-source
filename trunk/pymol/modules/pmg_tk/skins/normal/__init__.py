@@ -306,7 +306,7 @@ class Normal(PMGSkin):
             if self.app.pymol.invocation.options.external_gui==3:
                 self.root.bind_all('<Leave>',lambda e,s=self: s.left(e)) # for MacPyMOLX11Hybrid
                 self.root.bind_all('<Enter>',lambda e,s=self: s.focus_in(e))
-    
+
     def focus_in(self,event):
         if self.refocus_entry:
             self.cmd.do("_ cmd.window('defocus')")
@@ -315,9 +315,7 @@ class Normal(PMGSkin):
 
     def left(self,event):
         if id(event.widget) == id(self.root):
-            if ((event.y<0) or 
-                (event.x>event.widget.winfo_width()) or
-                (event.y>event.widget.winfo_height())):
+            if ((event.y>event.widget.winfo_height())):
                 self.cmd.do("_ cmd.window('focus')")
                 self.root.focus_set()
                 self.refocus_entry = 1
