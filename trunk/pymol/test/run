@@ -37,6 +37,8 @@ if len(argv):
 
 pymol = "pymol"
 cmd = "../pymol "
+if not os.path.exists(cmd):
+   cmd = "../../Contents/MacOS/MacPyMOL"
 cmp = "cmp"
 ref = "ref"
 inp = "inp"
