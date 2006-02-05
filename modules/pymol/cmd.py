@@ -150,7 +150,8 @@ if __name__=='pymol.cmd':
         space_sc = Shortcut(['cmyk','rgb','pymol'])
 
         window_dict = { 'show' : 1, 'hide' : 0, 'position' : 2, 'size' : 3,
-                             'box' : 4, 'maximize' : 5, 'fit' : 6 }
+                        'box' : 4, 'maximize' : 5, 'fit' : 6, 'focus' : 7,
+                        'defocus' : 8 }
         window_sc = Shortcut(window_dict.keys())
 
         repres = {

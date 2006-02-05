@@ -222,8 +222,13 @@ if __name__=='pymol.invocation':
                 if "x" in a:
                     options.external_gui = 0
                 if "m" in a: # mac external GUI
-                    options.external_gui = 2
-                    options.win_py = 184 # was 200            
+                    if options.external_gui == 2:
+                        options.external_gui = 3
+                        if options.win_py == 184: # mac external GUI default
+                            options.win_py = 216
+                    else:
+                        options.external_gui = 2
+                        options.win_py = 184 
                 if "n" in a:
                     options.incentive_product = 1
                 if "t" in a:

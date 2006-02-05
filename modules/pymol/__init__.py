@@ -103,7 +103,7 @@ if pymol_launch != 3: # if this isn't a dry run
         if try_again:
             try:
                 sys.exc_clear()
-                sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+                sys.path.insert(0,os.path.dirname(os.path.dirname(__file__)))
             except:
                 pass
             import pymol
@@ -188,12 +188,11 @@ if pymol_launch != 3: # if this isn't a dry run
             loc2 = os.environ['PYMOL_PATH']+'/modules'
             if os.path.exists(loc2):
                 if loc2 not in sys.path:
-                    sys.path.append(loc2)
+                    sys.path.insert(0,loc2)
             # include installed numpy
             loc1 = os.environ['PYMOL_PATH']+'/modules/numeric'
             if os.path.exists(loc1):
-                sys.path.append(loc1)
-
+                sys.path.insert(0,loc1)
 
         if '' not in sys.path: # make sure cwd is in path like normal Python
             sys.path.insert(0,'') 
@@ -321,7 +320,11 @@ if pymol_launch != 3: # if this isn't a dry run
             if invocation.options.external_gui==1:
                 __import__(invocation.options.gui)
                 sys.modules[invocation.options.gui].__init__(sys.modules['pymol'])
-                
+            elif invocation.options.external_gui==3:
+                os.environ['DISPLAY']=':0.0'
+                __import__(invocation.options.gui)
+                sys.modules[invocation.options.gui].__init__(sys.modules['pymol'],1)
+
         # -- Greg Landrum's RPC stuff
             if invocation.options.rpcServer:
                 import rpc

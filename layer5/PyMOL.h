@@ -181,6 +181,8 @@ void PyMOL_Button(CPyMOL *I,int button, int state,int x, int y, int modifiers);
 int  PyMOL_Idle(CPyMOL *I); /* return true if PyMOL is busy doing real
                                work (not simply racing the CPU) */
 
+void PyMOL_ExpireIfIdle(CPyMOL *I); /* auto-termination for command-line mode */
+
 typedef void PyMOLSwapBuffersFn(void);
 
 void PyMOL_SetSwapBuffersFn(CPyMOL *I, PyMOLSwapBuffersFn *fn);

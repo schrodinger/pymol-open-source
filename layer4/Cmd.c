@@ -4168,9 +4168,7 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
 #ifndef _PYMOL_NO_MAIN
     MainDoReshape(w,h); /* should be moved into Executive */
 #else
-    if((w>0)&&(h>0)) { 
-		PyMOL_NeedReshape(TempPyMOLGlobals->PyMOL,2,0,0,w,h);
-	}
+    PyMOL_NeedReshape(TempPyMOLGlobals->PyMOL,2,0,0,w,h);
 #endif
     APIExit();
   }
@@ -5754,8 +5752,8 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"iiiii",&int1,&x,&y,&width,&height);
   if (ok) {
     APIEntry();
-#ifndef _PYMOL_NO_MAIN
     switch(int1) {
+#ifndef _PYMOL_NO_MAIN
     case 0:
     case 1:
       MainSetWindowVisibility(int1);
@@ -5782,9 +5780,14 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
     case 6:
       MainCheckWindowFit(TempPyMOLGlobals);
       break;
-      
-    }
 #endif 
+#ifdef _MACPYMOL_XCODE
+    default:
+	   do_window(int1,x,y,width,height);
+	   break;
+#endif	  
+	}
+   
     APIExit();
   }
   return APIResultOk(ok);  
