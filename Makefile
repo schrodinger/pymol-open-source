@@ -74,7 +74,6 @@ unix: .includes .depends .update
 	/bin/rm -f .update .includes
 	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
-
 semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) static
@@ -115,34 +114,17 @@ unix-product: unix-mindep
 	cd $(MINDEP);chgrp -R nobody pymol
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
 
+mac-product: unix-mindep
+	cp setup/setup.sh.macosx-x11 $(MDP)/setup.sh
+	cp epymol/data/pymol/splash.png $(MDP)/data/pymol/splash.png
+	cp epymol/LICENSE.txt $(MDP)/LICENSE
+	cd $(MINDEP);chown -R nobody pymol
+	cd $(MINDEP);chgrp -R nobody pymol
+	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
 
 unix-helper: unix-mindep-build
 	cp setup/setup.sh.unix-helper $(MDP)/setup.sh
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../helperpymol-0_xx-bin-xxxxx-mindep.tgz
-
-irix-mindep: semistatic
-	$(PYTHON_EXE) modules/compile_pymol.py
-	/bin/rm -rf $(MINDEP)
-	mkdir products/unix-mindep
-	mkdir products/unix-mindep/pymol
-	mkdir products/unix-mindep/pymol/ext
-	mkdir products/unix-mindep/pymol/ext/lib
-	cp -r modules $(MDP)
-	cp -r test $(MDP)
-	cp -r data $(MDP)	
-	cp -r examples $(MDP)
-	cp -r pymol.exe $(MDP)
-	cp -r ext/lib/python2.3 $(MDP)/ext/lib
-	cp -r ext/lib/tcl8.4 $(MDP)/ext/lib
-	cp -r ext/lib/tk8.4 $(MDP)/ext/lib
-	/bin/rm -f $(MDP)/ext/lib/python2.3/config/libpython2.3.a
-	/bin/rm -rf $(MDP)/ext/lib/python2.3/test
-	cp LICENSE $(MDP)
-	cp README $(MDP)
-	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
-	cp setup/setup.sh.unix-mindep $(MDP)/setup.sh
-	cd $(MINDEP);chown -R nobody.nobody pymol
-	cd $(MINDEP);tar -cvf - pymol |gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
 
 # Sharp3D display running under linux
 
@@ -240,125 +222,4 @@ pmw:
 compileall:
 	$(PYTHON_EXE) modules/compile_pymol.py
 
-# Everything below here is for the MacPyMOL Incentive Product
-# Compilation of MacPyMOL requires layerOSX source code (closed source)
 
-OSXPROD=products/MacPyMOL.app
-OSXVIEWER=products/PyMOLViewer.app
-OSXHYBRID=products/PyMOLX11Hybrid.app
-OSXHELPER=products/HelperPyMOL.app
-OSXFRWK=products/FrameworkPyMOL.app
-OSXDEMO=products/MacPyMOL\ Demos
-OSXPYMOL=$(OSXPROD)/pymol
-OSXEXE=$(OSXPROD)/Contents/MacOS/PyMOL
-OSXPY=$(OSXPROD)/py23
-
-osx-wrap:
-	/bin/rm -rf $(OSXPYMOL) $(OSXEXE) $(OSXPY)
-	$(PYMOL_PATH)/layerOSX/tar -czvf layerOSX/bundle/app.hfstar $(OSXPROD)
-
-osx-unwrap:
-	/bin/rm -rf $(OSXPROD)
-	$(PYMOL_PATH)/layerOSX/tar -xzvf layerOSX/bundle/app.hfstar
-
-osx-python-framework:
-	cc layerOSX/bundle/python.c -o $(OSXEXE) $(DEFS)\
-$(PYTHON_INC_DIR) \
--framework CoreFoundation -framework Python -lc -Wno-long-double
-
-osx-python-standalone:
-	cc layerOSX/bundle/python.c -o $(OSXEXE) $(DEFS)\
-$(PYTHON_INC_DIR) -Lext/lib -Lext/lib/python2.3/config -lpython2.3 \
--framework CoreFoundation -lc -Wno-long-double -D_PYMOL_OSX_PYTHONHOME -force_flat_namespace
-
-
-osx: 
-	cd layerOSX/src; $(MAKE)
-	$(MAKE) 
-
-osx-dev: osx
-	cp modules/pymol/_cmd.so $(OSXPYMOL)/modules/pymol
-
-osx-pdev:
-	/bin/rm -rf $(OSXPYMOL)/modules/pymol
-	cp -R modules/pymol $(OSXPYMOL)/modules/pymol
-	cp -R layerOSX/plugin/pmg_aqua $(OSXPYMOL)/modules/
-
-osx-bundle: osx 
-	$(PYTHON_EXE) modules/compile_pymol.py
-	/bin/rm -rf $(OSXPYMOL)
-	install -d $(OSXPYMOL)
-	cp -R modules $(OSXPYMOL)/
-	cp -R layerOSX/plugin/pmg_aqua $(OSXPYMOL)/modules/
-	cp -R test $(OSXPYMOL)/
-	cp -R data $(OSXPYMOL)/	
-	cp -R scripts $(OSXPYMOL)/	
-	cp -R examples $(OSXPYMOL)/
-	cp LICENSE $(OSXPYMOL)/
-	cp README $(OSXPYMOL)/
-
-
-osx-standalone: osx-unwrap osx-python-standalone osx-bundle
-	/bin/rm -rf $(OSXPY)
-	install -d $(OSXPY)/lib
-	cp -R ext/lib/python2.3 $(OSXPY)/lib/
-
-mac-wrap-demos:
-	/usr/local/bin/tar -czvf layerOSX/applescript.hfstar $(OSXDEMO)
-
-mac-unwrap-demos:
-	/usr/local/bin/tar -xzvf layerOSX/applescript.hfstar
-
-mac-demo-data:
-	install -d $(OSXPYMOL)/data/demo
-	cp -R demo_data/* $(OSXPYMOL)/data/demo/
-
-mac-demo: osx-standalone mac-demo-data mac-unwrap-demos 
-
-mac-framework: osx-unwrap osx-python-framework osx-bundle
-	/bin/rm -rf $(OSXFRWK)
-	/bin/cp -R $(OSXPROD) $(OSXFRWK)
-	sed 's/MacPyMOL/FrameworkPyMOL/' $(OSXFRWK)/Contents/Info.plist > $(OSXFRWK)/Contents/Info.plist.tmp
-	mv $(OSXFRWK)/Contents/Info.plist.tmp $(OSXFRWK)/Contents/Info.plist
-	/bin/rm -r $(OSXFRWK)/Contents/Resources/English.lproj/MainMenu.nib
-	/bin/rm -r $(OSXFRWK)/Contents/Resources/English.lproj/MainMenu~.nib
-
-mac-product: osx-standalone
-	/bin/cp epymol/data/pymol/splash.png $(OSXPYMOL)/data/pymol/
-
-mac-helper: mac
-	/bin/rm -rf $(OSXHELPER)
-	/bin/cp -R $(OSXPROD) $(OSXHELPER)
-	sed 's/MacPyMOL/HelperPyMOL/' $(OSXHELPER)/Contents/Info.plist > $(OSXHELPER)/Contents/Info.plist.tmp
-	mv $(OSXHELPER)/Contents/Info.plist.tmp $(OSXHELPER)/Contents/Info.plist
-	/bin/cp data/pymol/splash.png $(OSXHELPER)/pymol/data/pymol/
-	/bin/rm -r $(OSXHELPER)/Contents/Resources/English.lproj/MainMenu.nib
-	/bin/rm -r $(OSXHELPER)/Contents/Resources/English.lproj/MainMenu~.nib
-
-mac-viewer: mac
-	/bin/rm -rf $(OSXVIEWER)
-	/bin/cp -R $(OSXPROD) $(OSXVIEWER)
-	sed 's/MacPyMOL/PyMOLViewer/' $(OSXVIEWER)/Contents/Info.plist > $(OSXVIEWER)/Contents/Info.plist.tmp
-	mv $(OSXVIEWER)/Contents/Info.plist.tmp $(OSXVIEWER)/Contents/Info.plist
-	/bin/cp data/pymol/splash.png $(OSXVIEWER)/pymol/data/pymol/
-	/bin/rm -r $(OSXVIEWER)/Contents/Resources/English.lproj/MainMenu.nib
-	/bin/rm -r $(OSXVIEWER)/Contents/Resources/English.lproj/MainMenu~.nib
-
-mac-hybrid: mac
-	/bin/rm -rf $(OSXHYBRID)
-	/bin/cp -R $(OSXPROD) $(OSXHYBRID)
-	sed 's/MacPyMOL/PyMOLX11Hybrid/' $(OSXHYBRID)/Contents/Info.plist > $(OSXHYBRID)/Contents/Info.plist.tmp
-	mv $(OSXHYBRID)/Contents/Info.plist.tmp $(OSXHYBRID)/Contents/Info.plist
-	/bin/cp epymol/data/pymol/splash.png $(OSXHYBRID)/pymol/data/pymol/
-	/bin/rm -r $(OSXHYBRID)/Contents/Resources/English.lproj/MainMenu.nib
-	/bin/rm -r $(OSXHYBRID)/Contents/Resources/English.lproj/MainMenu~.nib
-	/bin/cp -r ext/lib/tcl8.4 $(OSXHYBRID)
-	/bin/cp -r ext/lib/tk8.4 $(OSXHYBRID)
-
-
-mac-hybrid-beta: mac-hybrid
-	/bin/cp epymol/data/pymol/beta/splash.png $(OSXHYBRID)/pymol/data/pymol/
-
-mac-beta:
-	make distclean
-	make mac
