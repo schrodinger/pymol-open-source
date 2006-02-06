@@ -32,12 +32,12 @@ Approach 2 is recommended if:
 
 To use Approach 1:
 
-   You must have OpenGL, glut, libpng, tcl/tk, python, and Pmw already
-   installed on your system for this to work.
+   You must have OpenGL, glut, libpng, tcl/tk, python, freetype2, and
+   Pmw already installed on your system for this to work.
 
    python setup.py install
-   python setup2.py
-   ./pymol.com
+   python setup2.py install
+   ./pymol
 
 To use Approach 2:
 
