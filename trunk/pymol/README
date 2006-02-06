@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------
 PyMOL is Copyright (C) 1998-2003 by Warren L. DeLano and Copyright (C)
-2003-2005 DeLano Scientific LLC, South San Francisco, CA, USA.
+2003-2006 DeLano Scientific LLC, South San Francisco, CA, USA.
 http://www.pymol.org EMAIL: warren@delanoscientific.com
 ----------------------------------------------------------------------
 PyMOL is an OPEN SOURCE program distributed under the "Python" license.
@@ -10,12 +10,13 @@ See INSTALL for installation instructions
 ----------------------------------------------------------------------
 PyMOL has the following external dependencies:
   1. OpenGL
-  2. GLUT library for OpenGL
-  3. Python (v 1.5.2 or better) compiled WITH thread support
+  2. GLUT library for OpenGL (or freeglut)
+  3. Python (v 2.1 or better) compiled with threads support
   4. libpng (can compiled without it, but image saves won't work)
-  5. Tcl/Tk (technically optional)
+  5. Tcl/Tk (for the external GUI)
   6. Numerical Python (technically optional)
   7. Python megawidgets (Pmw -- only required for the "external" GUI)
+  8. FreeType2 (if you want nice fonts)
 ----------------------------------------------------------------------
 The PyMOL Team:
 
@@ -23,14 +24,14 @@ NOTE: this list has not been updated since Fall 2003.  Since then, the
 PyMOL effort has grown to such an extent that it is no longer
 practical to recognize everyone individually.  Fortunately, a public
 record of participation exists and can be appreciated on the internet,
-and especially via the PyMOL mailing list archives. Suffice it to say
+and especially via the PyMOL mailing list archives.  Suffice it to say
 that the PyMOL user community now numbers well into the thousands and
 includes scientists, students, and educators worldwide, spread
 throughout academia and the biotechnology and pharmaceutical
 industries.  Though DeLano Scientific LLC specifically supports and
 maintains the PyMOL code base, the project can only continue to
 succeed through the sponsorship and participation of the broader
-community.  
+community.
 
    Founder and Principal Author:
 
@@ -206,19 +207,31 @@ community.
 ----------------------------------------------------------------------
 Specific Acknowledgments:
 
+* Thanks to Joni W. Lam for making the business work.
+
+* Thanks to John Stone and John Furr for being such excellent
+  colleagues.
+
+* Thanks to Ragu Bharadwaj and Marcin Joachimiak for Java expertise
+  and encouragement.
+
 * Thanks to Apple Computer for continued encouragement, assistance, 
-  and HLAs in support of Mac development.
+  and HLAs in support of Mac development.  Thanks especially to
+  Robert Kehrer for creating so many fun opportunities over the years.
 
 * Thanks to Aaron Miller (GlaxoSmithKline) for a continuous stream of
   thoughtful opinions and suggestions.
 
 * Thanks to Dave Weininger for suggesting the "roving" feature and for
-  being just an ordinary friend at just the right times.
+  being such an inspirational friend and mentor.
+
+* Thanks to Matt Hahn and Dave Rogers for proving that it can also be
+  done, again.
 
 * Thanks to Mick Savage for providing experienced practical advice on
   the marketing of scientific software.
 
-* Thanks to Ian Matthew for outside experience and perspective.
+* Thanks to Ian Matthew for 3D experience and perspective.
 
 * Thanks for Jeff Blaney for numerous insightful discussions.
 
@@ -246,7 +259,7 @@ Specific Acknowledgments:
   space group and symmetry handling module.
 
 * Thanks to the scientists and management of Sunesis Pharmaceuticals 
-  for supporting PyMOL development since its inception.
+  for supporting PyMOL development since program inception.
 
 * Thanks to the Computational Crystallography Initiative (LBNL) 
   developers for their encouragement, ideas, and support. 
@@ -254,9 +267,8 @@ Specific Acknowledgments:
 * Thanks to Scott Walsh for being the first individual to provide 
   financial support for PyMOL.  
 
-* Thanks to the anonymous pharmacetical companies who have provided 
-  financial support for hardware and development expenses (you know
-  who you are!).
+* Thanks to the hundreds of individuals, companies, and institutions
+  that have provided financial support for the project.
 
 * Thanks to Brian Paul and the Precision Insight team for development
   of Mesa/DRI which greatly assisted in the early development of PyMOL.

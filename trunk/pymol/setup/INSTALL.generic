@@ -24,7 +24,7 @@ to replace "$HOME" with an appropriate path.
 STEP (1) 
 
 A compiled copy of the external dependencies package ("ext") is
-required, but only needs to be downloaded once (10 MB).  This package
+required, but only needs to be downloaded once (20 MB).  This package
 contains everything you will need to run PyMOL all in one place so
 that you won't have to hunt down the individual components.  
 
@@ -36,7 +36,7 @@ NOTE:
    to work.
 
 You will need to compile the external dependencies from the sources
-(currently in the file "ext-0.79-req-src.tgz"). See the ext package
+(currently in the file "ext-0.99-src.tgz"). See the ext package
 release notes for more information.
 
 http://sourceforge.net/project/showfiles.php?group_id=4546
@@ -45,7 +45,7 @@ The external dependencies can be installed in an "ext" subdirectory
 within the main pymol directory.
 
    cd $HOME/pymol
-   gunzip < ext-0.79-req-src.tgz | tar -xvf -
+   gunzip < ext-0.99-src.tgz | tar -xvf -
    cd ext
 
   **READ INSTALL in that directory for "ext" building instructions.**
@@ -54,7 +54,7 @@ Alternatively, you can put the external dependencies into a different
 directory and then use a symbolic link to "ext" in the pymol directory.
 
    cd $HOME
-   gunzip < ext-0.79-req-src.tgz | tar -xvf -
+   gunzip < ext-0.99-src.tgz | tar -xvf -
    cd $HOME/pymol
    ln -s ../ext ext
    cd ext
