@@ -111,7 +111,7 @@ unix-product: unix-mindep
 	cp epymol/data/pymol/splash.png $(MDP)/data/pymol/splash.png
 	cp epymol/LICENSE.txt $(MDP)/LICENSE
 	find $(MINDEP)/pymol -type d -name CVS | awk '{printf "/bin/rm -rf ";print;}' | sh
-	/bin/rm $(MINDEP)/pymol/test/pdb
+	/bin/rm -f $(MINDEP)/pymol/test/pdb
 	cd $(MINDEP);chown -R nobody pymol
 	cd $(MINDEP);chgrp -R nobody pymol
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
