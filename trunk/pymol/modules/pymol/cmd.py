@@ -123,11 +123,14 @@ if __name__=='pymol.cmd':
         sanitize_list_re = re.compile(r"[^0-9\.\-\[\]\,]+")
         sanitize_alpha_list_re = re.compile(r"[^a-zA-Z0-9\'\"\.\-\[\]\,]+")
         nt_hidden_path_re = re.compile(r"\$[\/\\]")
-        
+        quote_alpha_list_re = re.compile(r'''([\[\,]\s*)([a-zA-Z][a-zA-Z0-9\ ]*[a-zA-Z0-9]*)(\s*[\,\]])''')
         def safe_list_eval(st):
             return eval(sanitize_list_re.sub('',st))
 
         def safe_alpha_list_eval(st):
+            st = sanitize_alpha_list_re.sub('',st)
+            st = quote_alpha_list_re.sub(r'\1"\2"\3',st) # need to do this twice
+            st = quote_alpha_list_re.sub(r'\1"\2"\3',st)
             return eval(sanitize_alpha_list_re.sub('',st))
 
         QuietException = parsing.QuietException
