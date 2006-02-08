@@ -153,6 +153,7 @@ void CGOChar(CGO *I,char c);
 void CGOIndent(CGO *I,char c,float dir);
 void CGOWrite(CGO *I,char *str);
 void CGOWriteLeft(CGO *I,char *str);
+void CGOWriteIndent(CGO *I,char *str,float indent);
 
 /*void CGOFontScale(CGO *I,float v);
   void CGOFont(CGO *I,float size,int face,int style);*/

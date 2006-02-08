@@ -108,7 +108,7 @@ if __name__=='pymol.creating':
         if is_list(color):
             for a in color:
                 if not is_list(a):
-                    new_color.append(list(cmd.get_color_tuple(a)))
+                    new_color.append(list(cmd.get_color_tuple(a,4))) # incl negative RGB special colors
                 else:
                     new_color.append(a)
         elif is_string(color):
@@ -467,7 +467,7 @@ USAGE
         return r
 
     def create(name,selection,source_state=0,
-               target_state=0,discrete=0,zoom=-1,quiet=1,singletons=0):
+               target_state=0,discrete=0,zoom=-1,quiet=1,singletons=0,extract=None):
         '''
 DESCRIPTION
 
@@ -516,10 +516,19 @@ SEE ALSO
                             int(discrete),int(zoom),int(quiet),int(singletons))
         finally:
             unlock(r)
+        if not is_error(r): # temporary inefficient implementation
+            if extract not in (None, 0, '0'):
+                if extract not in (1, '1'):
+                    extract = selector.process(extract)
+                else:
+                    extract = selection
+                cmd.remove("(("+extract+") in (%s)) and not (%s)"%(name,name))
         if _raising(r): raise pymol.CmdException                                    
         return r
 
-
-
-
+    def extract(*arg,**kw):
+        kw['extract'] = 1
+        return apply(create,arg,kw)
+    
+    
 

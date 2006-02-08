@@ -8142,6 +8142,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                    ai0 = I->AtomInfo + a + offset;
                    if(AtomInfoSameResidue(G,ai,ai0)) {
                      ai0->color = op->ii1[c];
+                     hit_flag=true;
                    } else 
                      break;
                    offset--;
@@ -8151,6 +8152,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                    ai0 = I->AtomInfo + a + offset;
                    if(AtomInfoSameResidue(G,ai,ai0)) {
                      ai0->color = op->ii1[c];
+                     hit_flag=true;
                    } else 
                      break;
                    offset++;
@@ -8439,6 +8441,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                   ai->color=ai->atomic_color;
                 else
                   ai->color=op->i1;
+                hit_flag=true;
                 op->i2++;
                 break;
               case OMOP_TTTF:
@@ -8953,6 +8956,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	}
 	if(hit_flag) {
 	  switch(op->code) {
+      case OMOP_COLR:
+        ExecutiveUpdateColorDepends(I->Obj.G,I);
+        break;
 	  case OMOP_TTTF:
        ObjectMoleculeTransformTTTf(I,op->ttt,-1);
        break;
@@ -9230,7 +9236,6 @@ int ObjectMoleculeMoveAtomLabel(ObjectMolecule *I,int state,int index,float *v,i
     if(cs) {
       result = CoordSetMoveAtomLabel(I->CSet[state],index,v,mode);
       cs->fInvalidateRep(cs,cRepLabel,cRepInvCoord);
-      /*      ExecutiveUpdateCoordDepends(I->Obj.G,I);*/
     }
   }
 #if 0

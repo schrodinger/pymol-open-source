@@ -680,6 +680,26 @@ void CGOWriteLeft(CGO *I,char *str)
   }
 }
 
+void CGOWriteIndent(CGO *I,char *str,float indent)
+{
+  float *pc;
+  char *s;
+  s = str;
+  while(*s) {
+    pc = CGO_add(I,3);
+    CGO_write_int(pc,CGO_INDENT);
+    *(pc++)=(float)*(s++);
+    *(pc++)=indent;
+  }
+  s = str;
+  while(*s) {
+    pc = CGO_add(I,2);
+    CGO_write_int(pc,CGO_CHAR);
+    *(pc++)=(float)*(s++);
+  }
+}
+
+
 void CGONormalv(CGO *I,float *v)
 {
   float *pc = CGO_add(I,4);

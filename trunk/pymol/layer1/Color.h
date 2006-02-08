@@ -29,6 +29,7 @@ typedef char ColorName[24];
 
 #define cColorGadgetRamp  1
 
+#define cColorDefault     -1
 #define cColorNewAuto     -2
 #define cColorCurAuto     -3
 #define cColorAtomic      -4
@@ -70,6 +71,7 @@ int ColorGetNext(PyMOLGlobals *G);
 int ColorGetCurrent(PyMOLGlobals *G);
 int ColorGetIndex(PyMOLGlobals *G,char *name);
 float *ColorGet(PyMOLGlobals *G,int index); /* pointer maybe invalid after creating a new color */
+float *ColorGetSpecial(PyMOLGlobals *G,int index);
 float *ColorGetNamed(PyMOLGlobals *G,char *name);
 void ColorDef(PyMOLGlobals *G,char *name,float *v);
 int ColorGetNColor(PyMOLGlobals *G);

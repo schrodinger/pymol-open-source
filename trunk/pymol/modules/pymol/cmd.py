@@ -1258,6 +1258,7 @@ SEE ALSO
         from creating import \
               copy,               \
               create,             \
+              extract,            \
               fragment,           \
               isodot,             \
               isolevel,           \
@@ -1644,6 +1645,7 @@ SEE ALSO
             'enable'        : [ enable            , 0 , 0 , ''  , parsing.STRICT ],
             'ending'        : [ ending            , 0 , 0 , ''  , parsing.STRICT ],
             'except'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],      
+            'extract'       : [ extract           , 0 , 0 , ''  , parsing.STRICT ],            
             'exec'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
             'export_dots'   : [ export_dots       , 0 , 0 , ''  , parsing.STRICT ],
             'extend'        : [ extend            , 0 , 0 , ''  , parsing.STRICT ],

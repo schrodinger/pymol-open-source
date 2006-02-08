@@ -40,6 +40,8 @@ void ObjectGadgetRampFree(ObjectGadgetRamp *I) {
   ColorForgetExt(I->Gadget.Obj.G,I->Gadget.Obj.Name);
   VLAFreeP(I->Level);
   VLAFreeP(I->Color);
+  VLAFreeP(I->Special);
+  VLAFreeP(I->Extreme);
   ObjectGadgetPurge(&I->Gadget);
   OOFreeP(I);
 }
@@ -54,129 +56,9 @@ void ObjectGadgetRampFree(ObjectGadgetRamp *I) {
 #define ShapeColor(cgo,a,b) CGONormal(cgo,(float)a,(float)b,0.0F)
 #define LKP 2.0F
 
-
-PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I)
-{
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
-  PyObject *result = NULL;
-
-  result = PyList_New(9);
-
-  PyList_SetItem(result,0,ObjectGadgetPlainAsPyList(&I->Gadget));
-  PyList_SetItem(result,1,PyInt_FromLong(I->RampType));
-  PyList_SetItem(result,2,PyInt_FromLong(I->NLevel));
-  if(I->Level&&I->NLevel) {
-    PyList_SetItem(result,3,PConvFloatVLAToPyList(I->Level));
-  } else {
-    PyList_SetItem(result,3,PConvAutoNone(NULL));
-  }
-  if(I->Color&&I->NLevel) {
-    PyList_SetItem(result,4,PConvFloatVLAToPyList(I->Color));
-  } else {
-    PyList_SetItem(result,4,PConvAutoNone(NULL));
-  }
-  PyList_SetItem(result,5,PyInt_FromLong(I->var_index));
-  PyList_SetItem(result,6,PyString_FromString(I->SrcName));
-  PyList_SetItem(result,7,PyInt_FromLong(I->SrcState));
-  PyList_SetItem(result,8,PyInt_FromLong(I->CalcMode));
-
-  return(PConvAutoNone(result));  
+#ifdef _PYMOL_INLINE 
+__inline__
 #endif
-}
-
-int ObjectGadgetRampNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadgetRamp **result,int version)
-{
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
-  ObjectGadgetRamp *I = NULL;
-  int ok = true;
-  int ll = 0;
-
-  if(ok) I=ObjectGadgetRampNew(G);
-  if(ok) ok = (I!=NULL);
-  if(ok) ok = (list!=NULL);
-  if(ok) ok = PyList_Check(list);
-  if(ok) ll = PyList_Size(list);
-  /* TO SUPPORT BACKWARDS COMPATIBILITY...
-   Always check ll when adding new PyList_GetItem's */
-
-  if(ok) ok = ObjectGadgetInitFromPyList(G,PyList_GetItem(list,0),&I->Gadget,version);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->RampType);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NLevel);
-  if(ok&&I->NLevel) ok = PConvPyListToFloatVLA(PyList_GetItem(list,3),&I->Level);
-  if(ok&&I->NLevel) {
-    PyObject *item = PyList_GetItem(list,4);
-    if(item!=Py_None) {
-      ok = PConvPyListToFloatVLA(item,&I->Color);
-    }
-  }
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,5),&I->var_index);
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,6),I->SrcName,ObjNameMax);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,7),&I->SrcState);
-  if(ok&&(ll>8)) ok=PConvPyIntToInt(PyList_GetItem(list,8),&I->CalcMode);
-  /*  if(ok) ObjectGadgetRampBuild(I);
-      if(ok) ObjectGadgetRampUpdate(I);*/
-  if(ok) ObjectGadgetUpdateStates(&I->Gadget);
-  if(ok) ObjectGadgetUpdateExtents(&I->Gadget);
-  if(ok) (*result)=I;
-  return(ok);
-#endif
-}
-
-int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int state)
-{
-  float level;
-  int ok=true;
-  switch(I->RampType) {
-  case cRampMap:
-    if(!I->Map)
-      I->Map = ExecutiveFindObjectMapByName(I->Gadget.Obj.G,I->SrcName);
-    if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Map,cObjectMap))
-      ok=false;
-    else {
-      if(ok) ok = (I->Map!=NULL);
-      if(ok) ok = ObjectMapInterpolate(I->Map,I->SrcState,pos,&level,NULL,1);
-      if(ok) ok = ObjectGadgetRampInterpolate(I,level,color);
-    }
-    break;
-  case cRampMol:
-    if(!I->Mol)
-      I->Mol = ExecutiveFindObjectMoleculeByName(I->Gadget.Obj.G,I->SrcName);
-    
-    if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Mol,cObjectMolecule))
-      ok=false;
-    else  {
-      float cutoff = 1.0F;
-      if(state<0) state = SceneGetState(I->Gadget.Obj.G);
-      if(I->Level&&I->NLevel)
-        cutoff = I->Level[I->NLevel-1];
-      if(ok) ok = (I->Mol!=NULL);      
-      if(ok) {
-        int index = ObjectMoleculeGetNearestAtomIndex(I->Mol, pos, cutoff, state);
-        if(index>=0) {
-          float *rgb =  ColorGet(I->Gadget.Obj.G,I->Mol->AtomInfo[index].color);
-          copy3f(rgb,color);
-        } else {
-          if(I->Color) { 
-            copy3f(I->Color,color);
-          }
-        }
-      }
-    }
-    break;
-  default:
-    ok=false;
-    break;
-  }
-  return(ok);
-}
-
-
 static void ObjectGadgetRampCalculate(ObjectGadgetRamp *I, float v,float *result)
 {
   int i;
@@ -246,50 +128,92 @@ static void ObjectGadgetRampCalculate(ObjectGadgetRamp *I, float v,float *result
   }
 }
 
-int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
+#ifdef _PYMOL_INLINE 
+__inline__
+#endif
+static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
 {
-  int i=0;
-  int ok=true;
-  int below=0;
-  int above=0;
-  float d,x0,x1;
-  int a;
+  register float *i_level = I->Level;
+  register int n_level = I->NLevel;
+  register float *i_color = I->Color;
   const float _0 = 0.0F;
   const float _1 = 1.0F;
+  int ok=true;
 
-  if(I->Level&&I->Color) {
-    while(i<I->NLevel) {
-      if(I->Level[i]>level) {
-        above=i;
+  if(i_level&&i_color) {
+    register float *i_extreme = I->Extreme;
+    register int level_is_ge = -1;
+    register int level_is_le = n_level; 
+    register int i=0;
+    i = n_level-1;
+    while(i>=0) { 
+      register float f = i_level[i];
+      if(level>=f) {
+        level_is_ge = i;
         break;
-      } else {
-        below=i;
-        above=i;
       }
-      i++;
+      i--;
     }
-    if(above!=below) {
-      d=I->Level[above]-I->Level[below];
-      if(fabs(d)>R_SMALL8) {
-        x0=(level-I->Level[below])/d;
-        x1=1.0F-x0;
-        for(a=0;a<3;a++) {
-          color[a]=x0*I->Color[3*above+a]+x1*I->Color[3*below+a];
+    i = 0;
+    while(i<n_level) {
+      register float f = i_level[i];
+      if(level<=f) {
+        level_is_le = i;
+        break;
+      } else 
+        i++;
+    }
+#if 0
+    printf("%9.2f %2i %9.2f %2i %9.2f\n",
+           level, 
+           level_is_ge,
+           ((level_is_ge>=0) && (level_is_ge<n_level)) ? i_level[level_is_ge] : 1000.0F,  
+           level_is_le, 
+           ((level_is_le>=0) && (level_is_le<n_level)) ? i_level[level_is_le] : -1000.0F);
+#endif
+      
+    if(level_is_ge!=level_is_le) {
+      if(level_is_le==0) { /* lower extreme */
+        register float *v;
+        if(i_extreme) {
+          v = i_extreme;
+        } else {
+          v = i_color;
         }
-        clamp3f(color);
+        copy3f(v,color);
+      } else if(level_is_ge==(n_level-1)) { /* upper extreme */
+        register float *v;
+        if(i_extreme) {
+          v = i_extreme + 3;
+        } else {
+          v = i_color + 3*(n_level-1);
+        }
+        copy3f(v,color);
       } else {
-        copy3f(I->Color+3*above,color);
-        clamp3f(color);
+        register float d,x0,x1;
+
+        d = i_level[level_is_ge] - i_level[level_is_le];
+        if(fabs(d)>R_SMALL8) {
+          x0=(level-i_level[level_is_le])/d;
+          x1=1.0F-x0;
+          for(i=0;i<3;i++) {
+            color[i]= x0*I->Color[3*level_is_ge+i] + x1*I->Color[3*level_is_le+i];
+          }
+          clamp3f(color);
+        } else {
+          register float *v = i_color+3*level_is_ge;
+          copy3f(v,color);
+        }
       }
-    } else {
-      copy3f(I->Color+3*above,color);
-     clamp3f(color);
+    } else { /* dead on the specified level */
+      copy3f(I->Color+3*level_is_ge,color);
+      clamp3f(color);
     }
   } else {
     float base,range;
-    if(I->NLevel&&I->Level) {
-      base=I->Level[0];
-      range=I->Level[I->NLevel-1]-base;
+    if(n_level&&i_level) {
+      base=i_level[0];
+      range=i_level[n_level-1]-base;
       if(fabs(range)<R_SMALL8)
         range=_1;
     } else {
@@ -302,6 +226,240 @@ int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
   return(ok);
 }
 
+#ifdef _PYMOL_INLINE 
+__inline__
+#endif
+static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float level,float *color,
+                                                  float *atomic, float *object,float *vertex, int state)
+{
+  register float *i_level = I->Level;
+  register float *i_color = I->Color;
+  register int *i_special = I->Special;
+
+  if(i_level && i_color && i_special) {
+    register int i = 0;
+    register int n_level = I->NLevel;
+    register float *i_extreme = I->Extreme;
+     /* mix special coloring into the table */
+    while(i<n_level) {
+      register int index = i_special[i];
+      switch(index) {
+      case cColorDefault:
+      case cColorAtomic: 
+        {
+          register float *v=I->Color+3*i;
+          copy3f(atomic,v);
+        }
+        break;
+      case cColorObject:
+        { 
+          register float *v=I->Color+3*i;
+          copy3f(object,v);          
+        }
+        break;
+      default: /* allow nested ramps */
+        if(index<0) {
+          if(ColorCheckRamped(I->Gadget.Obj.G,index)) {
+            ColorGetRamped(I->Gadget.Obj.G,index,vertex,I->Color+3*i,state);
+          }
+        }
+        break;
+      }
+      i++;
+    }
+    /* mix extreme colors in (if present) */
+    if(i_extreme) {
+      i = 0;
+      while(i<2) {
+        register int index = i_special[i+n_level];
+        switch(index) {
+        case cColorDefault:
+        case cColorAtomic: 
+          {
+            register float *v=i_extreme+3*i;
+            copy3f(atomic,v);
+          }
+          break;
+        case cColorObject:
+          { 
+            register float *v=i_extreme+3*i;
+            copy3f(object,v);          
+          }
+          break;
+        default: /* allow nested ramps */
+          if(index<0) {
+            if(ColorCheckRamped(I->Gadget.Obj.G,index)) {
+              ColorGetRamped(I->Gadget.Obj.G,index,vertex,I->Color+3*i,state);
+            }
+          }
+          break;
+        }
+        i++;
+      }
+    }
+  }
+  /* now interpolate like normal */
+  return ObjectGadgetRampInterpolate(I,level,color);
+}
+
+int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
+{
+  return _ObjectGadgetRampInterpolate(I,level,color);
+}
+
+PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I)
+{
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
+  PyObject *result = NULL;
+
+  result = PyList_New(11);
+
+  PyList_SetItem(result,0,ObjectGadgetPlainAsPyList(&I->Gadget));
+  PyList_SetItem(result,1,PyInt_FromLong(I->RampType));
+  PyList_SetItem(result,2,PyInt_FromLong(I->NLevel));
+  if(I->Level&&I->NLevel) {
+    PyList_SetItem(result,3,PConvFloatVLAToPyList(I->Level));
+  } else {
+    PyList_SetItem(result,3,PConvAutoNone(NULL));
+  }
+  if(I->Color&&I->NLevel) {
+    PyList_SetItem(result,4,PConvFloatVLAToPyList(I->Color));
+  } else {
+    PyList_SetItem(result,4,PConvAutoNone(NULL));
+  }
+  PyList_SetItem(result,5,PyInt_FromLong(I->var_index));
+  PyList_SetItem(result,6,PyString_FromString(I->SrcName));
+  PyList_SetItem(result,7,PyInt_FromLong(I->SrcState));
+  PyList_SetItem(result,8,PyInt_FromLong(I->CalcMode));
+  if(I->Special&&I->NLevel) {
+    PyList_SetItem(result,9,PConvIntVLAToPyList(I->Special));
+  } else {
+    PyList_SetItem(result,9,PConvAutoNone(NULL));
+  }
+  if(I->Extreme&&I->NLevel) {
+    PyList_SetItem(result,10,PConvFloatVLAToPyList(I->Extreme));
+  } else {
+    PyList_SetItem(result,10,PConvAutoNone(NULL));
+  }
+  return(PConvAutoNone(result));  
+#endif
+}
+
+
+int ObjectGadgetRampNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadgetRamp **result,int version)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
+  ObjectGadgetRamp *I = NULL;
+  int ok = true;
+  int ll = 0;
+
+  if(ok) I=ObjectGadgetRampNew(G);
+  if(ok) ok = (I!=NULL);
+  if(ok) ok = (list!=NULL);
+  if(ok) ok = PyList_Check(list);
+  if(ok) ll = PyList_Size(list);
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
+
+  if(ok) ok = ObjectGadgetInitFromPyList(G,PyList_GetItem(list,0),&I->Gadget,version);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->RampType);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NLevel);
+  if(ok&&I->NLevel) ok = PConvPyListToFloatVLA(PyList_GetItem(list,3),&I->Level);
+  if(ok&&I->NLevel) {
+    PyObject *item = PyList_GetItem(list,4);
+    if(item!=Py_None) {
+      ok = PConvPyListToFloatVLA(item,&I->Color);
+    }
+  }
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,5),&I->var_index);
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,6),I->SrcName,ObjNameMax);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,7),&I->SrcState);
+  if(ok&&(ll>8)) ok=PConvPyIntToInt(PyList_GetItem(list,8),&I->CalcMode);
+  if(ok&&(ll>9)) {
+    PyObject *item = PyList_GetItem(list,9);
+    if(item!=Py_None) {
+      ok = PConvPyListToIntVLA(item,&I->Special);
+    }
+  } else {
+    I->Special = NULL;
+  }
+  if(ok&&I->NLevel&&(ll>10)) {
+    PyObject *item = PyList_GetItem(list,10);
+    if(item!=Py_None) {
+      ok = PConvPyListToFloatVLA(item,&I->Extreme);
+    }
+  } else {
+    I->Extreme = NULL;
+  }
+  /*  if(ok) ObjectGadgetRampBuild(I);
+      if(ok) ObjectGadgetRampUpdate(I);*/
+  if(ok) ObjectGadgetUpdateStates(&I->Gadget);
+  if(ok) ObjectGadgetUpdateExtents(&I->Gadget);
+  if(ok) (*result)=I;
+  return(ok);
+#endif
+}
+
+int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int state)
+{
+  float level;
+  int ok=true;
+  switch(I->RampType) {
+  case cRampMap:
+    if(!I->Map)
+      I->Map = ExecutiveFindObjectMapByName(I->Gadget.Obj.G,I->SrcName);
+    if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Map,cObjectMap))
+      ok=false;
+    else {
+      if(ok) ok = (I->Map!=NULL);
+      if(ok) ok = ObjectMapInterpolate(I->Map,I->SrcState,pos,&level,NULL,1);
+      if(ok) ok = ObjectGadgetRampInterpolate(I,level,color);
+    }
+    break;
+  case cRampMol:
+    if(!I->Mol)
+      I->Mol = ExecutiveFindObjectMoleculeByName(I->Gadget.Obj.G,I->SrcName);
+    if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Mol,cObjectMolecule))
+      ok=false;
+    else  {
+      float cutoff = 1.0F;
+      float dist;
+      if(state<0) state = SceneGetState(I->Gadget.Obj.G);
+      if(I->Level&&I->NLevel)
+        cutoff = I->Level[I->NLevel-1];
+      if(ok) ok = (I->Mol!=NULL);      
+      if(ok) {
+        int index = ObjectMoleculeGetNearestAtomIndex(I->Mol, pos, cutoff, state, &dist);
+        if(index>=0) {
+          float *atomic =  ColorGet(I->Gadget.Obj.G,I->Mol->AtomInfo[index].color);
+          float *object =  ColorGet(I->Gadget.Obj.G,I->Mol->Obj.Color);
+          if(!ObjectGadgetRampInterpolateWithSpecial(I,dist,color,atomic,object,pos,state)) {
+            copy3f(I->Color,color);
+          }
+        } else {
+          float white[3] = {1.0F, 1.0F, 1.0F};
+          if(!ObjectGadgetRampInterpolateWithSpecial(I,cutoff+1.0F,color,white,white,pos,state)) {
+            copy3f(I->Color,color);
+          }
+        }
+      }
+    }
+    break;
+  default:
+    ok=false;
+    break;
+  }
+  return(ok);
+}
+
+
+
 static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
 {
   CGO *cgo;
@@ -309,6 +467,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   int a,c=0;
   float *p;
   char buffer[255];
+  float white[3] = {1.0F,1.0F,1.0F};
 
   cgo = CGONewSized(I->Gadget.Obj.G,100);
 
@@ -328,6 +487,13 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
 
 
   if(I->Level&&I->NLevel) {
+    /*
+    for(a=0;a<I->NLevel;a++) {
+      sprintf(buffer,"%0.3f",I->Level[a]);
+      ShapeFVertex(cgo,REL,11+a);
+      CGOWriteIndent(cgo,buffer, -(I->NLevel-a)/(float)a);
+    }
+    */
     sprintf(buffer,"%0.3f",I->Level[0]);
     ShapeFVertex(cgo,REL,11);
     CGOWrite(cgo,buffer);
@@ -336,40 +502,71 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
     CGOWriteLeft(cgo,buffer);
   }
 
-
   CGOBegin(cgo,GL_TRIANGLE_STRIP);
   ShapeNormal(cgo,LKP,2);
 
   if(I->Color) {
 
     n_extra = 3*I->NLevel;
-    
-    if(I->NLevel<2) {
-      /* TO DO */
-    } else {
+    if(n_extra<6)
+      n_extra = 6;
+
+    {
       VLACheck(gs->Coord,float,(I->var_index+n_extra)*3);      
       c = I->var_index;
       p=gs->Coord+3*c;
-      for(a=0;a<I->NLevel;a++) {
+      if(I->NLevel>1) {
+        for(a=0;a<I->NLevel;a++) {
+          
+          if(I->Special&&(I->Special[a]<0)) {
+            CGOColorv(cgo,white);
+          } else {
+            CGOColorv(cgo,I->Color+3*a);
+          }
+          
+          *(p++) = I->border + (I->width * a)/(I->NLevel-1);
+          *(p++) = -I->border;
+          *(p++) = I->border;
+          ShapeVertex(cgo,REL,c);
+          c++;
+          
+          *(p++) = I->border + (I->width * a)/(I->NLevel-1);
+          *(p++) = -(I->border+I->bar_height);
+          *(p++) = I->border;
+          ShapeVertex(cgo,REL,c);
+          c++;
+          
+          *(p++) = I->border + (I->width * a)/(I->NLevel-1);
+          *(p++) = -(I->border+I->height+I->height);
+          *(p++) = I->border;
+          c++;
+        }
+      } else {
+        for(a=0;a<2;a++) {
+          if(I->Special&&(I->Special[0]<0)) {
+            CGOColorv(cgo,white);
+          } else {
+            CGOColorv(cgo,I->Color);
+          }
+          
+          *(p++) = I->border + (I->width * a);
+          *(p++) = -I->border;
+          *(p++) = I->border;
+          ShapeVertex(cgo,REL,c);
+          c++;
+          
+          *(p++) = I->border + (I->width * a);
+          *(p++) = -(I->border+I->bar_height);
+          *(p++) = I->border;
+          ShapeVertex(cgo,REL,c);
+          c++;
+          
+          *(p++) = I->border + (I->width * a);
+          *(p++) = -(I->border+I->height+I->height);
+          *(p++) = I->border;
+          c++;
+        }
         
-        CGOColorv(cgo,I->Color+3*a);
-        
-        *(p++) = I->border + (I->width * a)/(I->NLevel-1);
-        *(p++) = -I->border;
-        *(p++) = I->border;
-        ShapeVertex(cgo,REL,c);
-        c++;
-        
-        *(p++) = I->border + (I->width * a)/(I->NLevel-1);
-        *(p++) = -(I->border+I->bar_height);
-        *(p++) = I->border;
-        ShapeVertex(cgo,REL,c);
-        c++;
-        
-        *(p++) = I->border + (I->width * a)/(I->NLevel-1);
-        *(p++) = -(I->border+I->height+I->height);
-        *(p++) = I->border;
-        c++;
       }
     }
   } else {
@@ -529,11 +726,11 @@ static void ObjectGadgetRampBuild(ObjectGadgetRamp *I)
   int ix=0;
 
   float normal[] = {
-    1.0, 0.0, 0.0,
-    0.0, 1.0, 0.0,
+    1.0, 0.0, 0.1,
+    0.0, 1.0, 0.1,
     0.0, 0.0, 1.0,
-   -1.0, 0.0, 0.0,
-    0.0,-1.0, 0.0,
+   -1.0, 0.0, 0.1,
+    0.0,-1.0, 0.1,
   };
 #define VV(a,b,c) {coord[ix++]=a;coord[ix++]=b;coord[ix++]=c;};
 
@@ -574,9 +771,11 @@ VV(    I->width+I->border,I->text_border-(I->border+I->height), I->border+I->tex
 
   gs->NNormal = 5;
   gs->Normal = VLAlloc(float,gs->NNormal*3);
-  for(a=0;a<gs->NNormal*3;a++) {
-    gs->Normal[a]=normal[a];
+  for(a=0;a<gs->NNormal;a++) {
+    copy3f(normal+3*a,gs->Normal+3*a);
+    normalize3f(gs->Normal+3*a);
   }
+
 
   og->GSet[0] = gs;
   og->NGSet = 1;
@@ -599,15 +798,30 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
     scale = (1.0F+5*I->Gadget.GSet[0]->Coord[13*3]);
     
     I->Gadget.GSet[0]->Coord[13*3] = 0.0;
-    if(I->NLevel==2) {
-      float mean = (I->Level[0]+I->Level[1])/2.0F;
-      I->Level[0]=(I->Level[0]-mean)*scale+mean;
-      I->Level[2]=(I->Level[1]-mean)*scale+mean;
-      ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
-    } else if(I->NLevel==3) {
-      I->Level[0]=(I->Level[0]-I->Level[1])*scale+I->Level[1];
-      I->Level[2]=(I->Level[2]-I->Level[1])*scale+I->Level[1];
-      ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
+    switch(I->RampType) {
+    case cRampMol:
+      {
+        int a;
+        for(a=0;a<I->NLevel;a++) {
+          I->Level[a]=I->Level[a]*scale;
+        }
+        ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
+      }
+      break;
+    default:
+      if(I->NLevel==2) {
+        {
+          float mean = (I->Level[0]+I->Level[1])/2.0F;
+          I->Level[0]=(I->Level[0]-mean)*scale+mean;
+          I->Level[2]=(I->Level[1]-mean)*scale+mean;
+          ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
+        }
+        break;
+      } else if(I->NLevel==3) {
+        I->Level[0]=(I->Level[0]-I->Level[1])*scale+I->Level[1];
+        I->Level[2]=(I->Level[2]-I->Level[1])*scale+I->Level[1];
+        ExecutiveInvalidateRep(I->Gadget.Obj.G,cKeywordAll,cRepAll,cRepInvColor);
+      }
     }
     if(I->Gadget.NGSet)
       if(I->Gadget.GSet[0]) {
@@ -618,6 +832,67 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
     I->Gadget.Changed=false;
     SceneChanged(I->Gadget.Obj.G);
   }
+}
+
+static int ObjectGadgetRampHandleInputColors(ObjectGadgetRamp *I)
+{
+  int ok=true;
+  if(I->NLevel<1) {
+    I->Level=VLASetSize(I->Level,1);
+    I->NLevel = 1;
+    I->Level[0] = 0.0F;
+  }
+  if(ok&&I->Color) { /* handle cases where number of colors doesn't make expectation */
+    int n_color = VLAGetSize(I->Color)/3;
+
+    if(!n_color) {
+      I->Color = VLASetSize(I->Color,3);
+      I->Color[0] = I->Color[1] = I->Color[2] = 1.0F;
+      n_color++;
+    }
+
+    if(n_color<I->NLevel) {
+      I->Color = VLASetSize(I->Color,3*I->NLevel);
+      while(n_color<I->NLevel) {
+        float *v0 = I->Color + 3*(n_color-1);
+        float *v1 = v0+3;
+        copy3f(v0,v1);
+        n_color++;
+      }
+    } else if(n_color>I->NLevel) {
+      I->Extreme = VLAlloc(float,6); /* above/below extreme values */
+      if(I->Extreme) {
+        if(n_color==I->NLevel+1) { /* upper extreme only */
+          copy3f(I->Color,I->Extreme);
+          copy3f(I->Color+3*I->NLevel,I->Extreme+3);
+        } else { /* both extremes */
+          copy3f(I->Color+(3*I->NLevel),I->Extreme);
+          copy3f(I->Color+(3*I->NLevel)+3,I->Extreme+3);
+        }
+      }
+      I->Color = VLASetSize(I->Color,3*I->NLevel);
+    }
+  }
+  if(ok && I->Color && I->NLevel) { /* detect default coloring as negative R */
+    I->Special = VLACalloc(int,I->NLevel+2);
+    if(I->Special&&I->Color) {
+      int a;
+      for(a=0;a<I->NLevel;a++) {
+        if(I->Color[a*3]<0.0F) {
+          I->Special[a] = (int)I->Color[a*3];
+        }
+      }
+      if(I->Extreme) { /* Extremes */
+        for(a=0;a<2;a++) {
+          if(I->Extreme[a*3]<0.0F) { /* is red negative? then color is special */ 
+            I->Special[I->NLevel+a] = (int)I->Extreme[a*3];
+          }
+        }
+      } 
+    }
+  }
+  
+  return ok;
 }
 
 
@@ -671,6 +946,8 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
     }
   }
   if(ok) I->NLevel=VLAGetSize(I->Level);
+  if(ok) ok = ObjectGadgetRampHandleInputColors(I);
+
   ObjectGadgetRampBuild(I);
   UtilNCopy(I->SrcName,map->Obj.Name,ObjNameMax);
   I->SrcState=map_state;
@@ -697,7 +974,6 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
     dump3f(test,"test color");
   }
   */
-
   PUnblock();
   return(I);
 #endif
@@ -730,6 +1006,7 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
     ok = PConvPyListToFloatVLA(level,&I->Level);
   }
   if(ok) I->NLevel=VLAGetSize(I->Level);
+  if(ok) ok = ObjectGadgetRampHandleInputColors(I);
 
   ObjectGadgetRampBuild(I);
   UtilNCopy(I->SrcName,mol->Obj.Name,ObjNameMax);
@@ -757,6 +1034,8 @@ ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals *G)
   I->NLevel = 0;
   I->Level = NULL;
   I->Color = NULL;
+  I->Special = NULL;
+  I->Extreme = NULL;
   I->SrcName[0] = 0;
 
   I->Gadget.Obj.fUpdate =(void (*)(struct CObject *)) ObjectGadgetRampUpdate;

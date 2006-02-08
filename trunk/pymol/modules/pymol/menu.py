@@ -18,6 +18,13 @@
 
 import cmd
 
+def extract(s):
+    return [[ 2, 'Extract', '' ],
+            [ 1, 'object', 'cmd.create(None,"'+s+'",extract="'+s+'")' ],
+            [ 1, 'extend 1', 'cmd.create(None,"('+s+') extend 1",extract="'+s+'")' ],
+            [ 1, 'byres extend 1', 'cmd.create(None,"byres (('+s+') extend 1)",extract="'+s+'")' ],            
+            ]
+            
 def all_motion(s):
     return [[ 2, 'Camera Motions:'     , ''                       ],     
               [ 1, 'store'         , 'cmd.mview("store")'      ],
@@ -851,6 +858,7 @@ def sele_action(s):
               [ 0, ''          ,''                                              ],
               [ 1, 'duplicate'      ,'cmd.select("'+s+'")'          ],
               [ 1, 'create object'  ,'cmd.create(None,"'+s+'")'     ],
+              [ 1, 'extract' ,extract(s)],
               [ 0, ''          ,''                                  ],
               [ 1, 'masking'        , masking(s)         ],
               [ 1, 'movement'       , movement(s)         ],
@@ -876,7 +884,8 @@ def sele_action2(s):
               [ 0, ''          ,''                                              ],
               [ 1, 'duplicate selection'      ,'cmd.select("'+s+'")'          ],
               [ 1, 'create object'  ,'cmd.create(None,"'+s+'")'     ],           
-              [ 0, ''          ,''                                  ],
+              [ 1, 'extract' ,extract(s)],
+            [ 0, ''          ,''                                  ],
               [ 1, 'masking'      , masking(s)         ],
               [ 1, 'movement'       , movement(s)         ],
               [ 1, 'compute'        , compute(s)         ],           
@@ -1201,6 +1210,7 @@ def pick_sele_sub(s):
         [ 1, 'clear'    , 'cmd.select("'+s+'","none")' ],
         [ 1, 'delete selection', 'cmd.delete("'+s+'")' ],
         [ 1, 'create object','cmd.create(None,"'+s+'")'            ],
+        [ 1, 'extract' ,extract(s)],
         [ 1, 'remove atoms'  , 'cmd.remove("'+s+'")' ],     
         ]
     return result
@@ -1257,7 +1267,8 @@ def pick_option(title,s,object=0):
         result.extend([
             [ 1, 'remove atoms' , 'cmd.remove("'+s+'")' ],     
             [ 0, ''             , ''                      ],      
-            [ 1, 'create object','cmd.create(None,"'+s+'")'            ],      
+            [ 1, 'create object','cmd.create(None,"'+s+'")'            ],
+            [ 1, 'extract' , extract(s)],
             ])
     return result
 
@@ -1333,7 +1344,8 @@ def seq_option(title,s,object=0):
     else:
         result.extend([
         [ 0, ''             , ''                      ],      
-        [ 1, 'create object','cmd.create(None,"'+s+'")'            ],            
+        [ 1, 'create object','cmd.create(None,"'+s+'")'            ],
+        [ 1, 'extract' ,extract(s)],
         [ 0, ''             , ''                      ],
         [ 1, 'remove atoms' , 'cmd.remove("'+s+'")' ],     
                           ])

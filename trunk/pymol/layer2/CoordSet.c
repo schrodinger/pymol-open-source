@@ -1006,15 +1006,23 @@ static void CoordSetUpdate(CoordSet *I,int state)
 /*========================================================================*/
 void CoordSetUpdateCoord2IdxMap(CoordSet *I, float cutoff)
 {
-  if(I->Coord2Idx) {
-    MapType *map = I->Coord2Idx;
-    if(map->Div<cutoff) {
-      MapFree(map);
-      I->Coord2Idx = NULL;
+  if(cutoff<R_SMALL4)
+    cutoff = R_SMALL4;
+  if(I->NIndex>10) {
+    if(I->Coord2Idx) {
+      if((I->Coord2IdxDiv<cutoff)||
+         (((cutoff-I->Coord2IdxReq)/I->Coord2IdxReq)<-0.5F)) {
+        MapFree(I->Coord2Idx);
+        I->Coord2Idx = NULL;
+      }
     }
-  }
-  if(I->NIndex && (!I->Coord2Idx)) { /* NOTE: map based on stored coords */
-    I->Coord2Idx = MapNew(I->State.G, cutoff, I->Coord, I->NIndex, NULL);
+    if(I->NIndex && (!I->Coord2Idx)) { /* NOTE: map based on stored coords */
+      I->Coord2IdxReq = cutoff;
+      I->Coord2IdxDiv = cutoff * 1.25F;
+      I->Coord2Idx = MapNew(I->State.G, I->Coord2IdxDiv, I->Coord, I->NIndex, NULL);
+      if(I->Coord2IdxDiv<I->Coord2Idx->Div) 
+        I->Coord2IdxDiv = I->Coord2Idx->Div;
+    }
   }
 }
 /*========================================================================*/
@@ -1383,6 +1391,7 @@ void CoordSetFree(CoordSet *I)
     FreeP(I->AtmToIdx);
     FreeP(I->IdxToAtm);
     VLAFreeP(I->Color);
+    MapFree(I->Coord2Idx);
     VLAFreeP(I->Coord);
     /*    VLAFreeP(I->Rep);*/
     VLAFreeP(I->TmpBond);

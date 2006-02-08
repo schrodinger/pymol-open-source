@@ -602,12 +602,12 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
     
-    def get_color_tuple(name):
+    def get_color_tuple(name,mode=0):
         name=str(name)
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.get_color(name,0)
+            r = _cmd.get_color(name,mode)
             if r==None:
                 if _feedback(fb_module.cmd,fb_mask.errors):         
                     print "cmd-Error: Unknown color '%s'."%name
