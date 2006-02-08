@@ -361,7 +361,7 @@ class Benchmark(Wizard):
             [ 2, 'Cartoon', 'cmd.get_wizard().delay_launch("cartoon")'],
             [ 2, 'Blits', 'cmd.get_wizard().delay_launch("blits")'],                                    
             [ 2, 'Surface Calculation', 'cmd.get_wizard().delay_launch("surface_calculation")'],
-            [ 2, 'Mesh Calculation', 'cmd.get_wizard().delay_launch("surface_calculation")'],
+            [ 2, 'Mesh Calculation', 'cmd.get_wizard().delay_launch("mesh_calculation")'],
             [ 2, 'Ray Tracing', 'cmd.get_wizard().delay_launch("ray_trace0")'],
             [ 2, 'End Demonstration', 'cmd.set_wizard()' ]
             ]

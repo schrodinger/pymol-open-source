@@ -132,16 +132,20 @@ int GadgetSetFetchColor(GadgetSet *I,float *inp,float *out)
   int ok=true;
   float *v;
   int idx;
-  if(inp[0]<1.1) {/* explicit color */
+  if(inp[0]<1.1F) {/* explicit color */
     copy3f(inp,out);
   } else {
     idx = (int)inp[1];
     /* lookup color */
-    if(idx<I->NColor) {
+    if((idx>0)&&(idx<I->NColor)) {
       v=I->Color+3*idx;
       copy3f(v,out);
-    } else 
-      ok=false;
+    } else if(idx<0) { /* negatives go white */
+      out[0]=1.0F;
+      out[1]=1.0F;
+      out[2]=1.0F;
+    }
+    ok=false;
   }
   return(ok);
 }

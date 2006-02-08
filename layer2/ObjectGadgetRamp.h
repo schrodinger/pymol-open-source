@@ -38,6 +38,8 @@ typedef struct ObjectGadgetRamp {
   int NLevel;
   float *Level;
   float *Color;
+  int *Special;
+  float *Extreme;
   int var_index;
 
   /* cRampMap */

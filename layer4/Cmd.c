@@ -868,6 +868,15 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
       result = PyInt_FromLong(ColorGetIndex(TempPyMOLGlobals,name));
       PUnblock();
       break;
+    case 4: /* by name or index, return floats including negative R for special colors */
+      index = ColorGetIndex(TempPyMOLGlobals,name);
+      rgb = ColorGetSpecial(TempPyMOLGlobals,index);
+      tup = PyTuple_New(3);
+      PyTuple_SetItem(tup,0,PyFloat_FromDouble(*(rgb++)));
+      PyTuple_SetItem(tup,1,PyFloat_FromDouble(*(rgb++)));
+      PyTuple_SetItem(tup,2,PyFloat_FromDouble(*rgb));
+      result=tup;
+      break;
     }
     APIExit();
   }

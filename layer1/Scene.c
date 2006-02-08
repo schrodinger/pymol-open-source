@@ -3726,45 +3726,46 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     obj=(CObject*)I->LastPicked.context.object;
     if(obj)
       switch(obj->type) {
-      case cObjectGadget: {
-        ObjectGadget *gad;
-        gad = (ObjectGadget*)obj;
-
-        ObjectGadgetGetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v1);
-
-        vScale = SceneGetScreenVertexScale(G,v1);
-        if(side_by_side(I->StereoMode)) {
-          x = get_stereo_x(x,&I->LastX,I->Width);
-        }
-        
-        /* transform into model coodinate space */
-        switch(obj->Context) {
-        case 1:
-          {
-            float divisor;
-            divisor = (float)I->Width;
-            if(I->Height<I->Width)
-              divisor = (float)I->Height;
-            v2[0] = (x-I->LastX)/divisor;
-            v2[1] = (y-I->LastY)/divisor;
-            v2[2] = 0;
+      case cObjectGadget: 
+        {
+          ObjectGadget *gad;
+          gad = (ObjectGadget*)obj;
+          
+          ObjectGadgetGetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v1);
+          
+          vScale = SceneGetScreenVertexScale(G,v1);
+          if(side_by_side(I->StereoMode)) {
+            x = get_stereo_x(x,&I->LastX,I->Width);
           }
-          break;
-        default:
-        case 0:
-          v2[0] = (x-I->LastX)*vScale;
-          v2[1] = (y-I->LastY)*vScale;
-          v2[2] = 0;
-          MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
-          break;
+          
+          /* transform into model coodinate space */
+          switch(obj->Context) {
+          case 1:
+            {
+              float divisor;
+              divisor = (float)I->Width;
+              if(I->Height<I->Width)
+                divisor = (float)I->Height;
+              v2[0] = (x-I->LastX)/divisor;
+              v2[1] = (y-I->LastY)/divisor;
+              v2[2] = 0;
+            }
+            break;
+          default:
+          case 0:
+            v2[0] = (x-I->LastX)*vScale;
+            v2[1] = (y-I->LastY)*vScale;
+            v2[2] = 0;
+            MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
+            break;
+          }
+          add3f(v1,v2,v2);
+          ObjectGadgetSetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v2);
+          if(gad->Obj.fUpdate)
+            gad->Obj.fUpdate((CObject*)gad);
+          SceneChanged(G);
         }
-        add3f(v1,v2,v2);
-        ObjectGadgetSetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v2);
-        if(gad->Obj.fUpdate)
-          gad->Obj.fUpdate((CObject*)gad);
-        SceneChanged(G);
-      }
-      break;
+        break;
       }
     I->LastX=x;
     I->LastY=y;
@@ -3893,6 +3894,46 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
       }
       if(!I->Threshold)
         switch(obj->type) {
+        case cObjectGadget:  /* note repeated above */
+          {
+            ObjectGadget *gad;
+            gad = (ObjectGadget*)obj;
+            
+            ObjectGadgetGetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v1);
+            
+            vScale = SceneGetScreenVertexScale(G,v1);
+            if(side_by_side(I->StereoMode)) {
+              x = get_stereo_x(x,&I->LastX,I->Width);
+            }
+            
+            /* transform into model coodinate space */
+            switch(obj->Context) {
+            case 1:
+              {
+                float divisor;
+                divisor = (float)I->Width;
+                if(I->Height<I->Width)
+                  divisor = (float)I->Height;
+                v2[0] = (x-I->LastX)/divisor;
+                v2[1] = (y-I->LastY)/divisor;
+                v2[2] = 0;
+              }
+              break;
+            default:
+            case 0:
+              v2[0] = (x-I->LastX)*vScale;
+              v2[1] = (y-I->LastY)*vScale;
+              v2[2] = 0;
+              MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
+              break;
+            }
+            add3f(v1,v2,v2);
+            ObjectGadgetSetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v2);
+            if(gad->Obj.fUpdate)
+              gad->Obj.fUpdate((CObject*)gad);
+            SceneChanged(G);
+          }
+          break;
         case cObjectMolecule:
           if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule*)obj,
                                          SettingGetGlobal_i(G,cSetting_state)-1,

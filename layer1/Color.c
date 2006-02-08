@@ -2395,6 +2395,19 @@ int ColorInit(PyMOLGlobals *G)
 }
 
 /*========================================================================*/
+float *ColorGetSpecial(PyMOLGlobals *G,int index)
+{
+  if(index>=0) 
+    return ColorGet(G,index);
+  else {
+    register CColor *I=G->Color;
+    I->RGBColor[0] = (float)index;
+    I->RGBColor[1] = -1.0F;
+    I->RGBColor[2] = -1.0F;
+    return I->RGBColor;
+  }
+}
+
 float *ColorGet(PyMOLGlobals *G,int index)
 {
   register CColor *I=G->Color;

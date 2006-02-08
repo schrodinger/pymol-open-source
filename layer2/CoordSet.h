@@ -64,6 +64,7 @@ typedef struct CoordSet {
   /* not saved in state */
   CGO *SculptCGO;
   MapType *Coord2Idx;
+  float Coord2IdxReq,Coord2IdxDiv;
 } CoordSet;
 
 #define cCSet_NoPeriodicity 0

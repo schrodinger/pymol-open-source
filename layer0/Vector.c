@@ -275,6 +275,13 @@ void zero3f(float *v1)
 	v1[2]=_0;
 }
 
+void ones3f(float *v1)
+{
+  v1[0]=_1;
+  v1[1]=_1;
+  v1[2]=_1;
+}
+
 float dot_product3f ( float *v1, float *v2 )
 {
   return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
