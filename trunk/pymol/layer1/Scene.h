@@ -70,8 +70,8 @@ void SceneFree(PyMOLGlobals *G);
 void SceneRay(PyMOLGlobals *G,int width,int height,int mode,
               char **headerVLA,char **charVLA,
               float angle,float shift,int quiet,
-              G3dPrimitive **g3d);
-void SceneMakeMovieImage(PyMOLGlobals *G);
+              G3dPrimitive **g3d,int show_timing);
+void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing);
 
 void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet);
 int SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsigned char *dest);

@@ -1575,7 +1575,7 @@ Block *SceneGetBlock(PyMOLGlobals *G)
   return(I->Block);
 }
 /*========================================================================*/
-void SceneMakeMovieImage(PyMOLGlobals *G) {
+void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing) {
   register CScene *I=G->Scene;
   float *v;
 
@@ -1586,7 +1586,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
   I->DirtyFlag=false;
   if(SettingGet(G,cSetting_ray_trace_frames)) {
 	SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,
-            0.0F,0.0F,false,NULL); 
+            0.0F,0.0F,false,NULL,show_timing); 
   } else if(SettingGet(G,cSetting_draw_frames)) {
     SceneMakeSizedImage(G,0,0,SettingGetGlobal_i(G,cSetting_antialias));
   } else {
@@ -4696,7 +4696,7 @@ void SceneRay(PyMOLGlobals *G,
               int ray_width,int ray_height,int mode,
               char **headerVLA_ptr,
               char **charVLA_ptr,float angle,float shift,int quiet,
-              G3dPrimitive **g3d)
+              G3dPrimitive **g3d,int show_timing)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
@@ -5073,9 +5073,9 @@ void SceneRay(PyMOLGlobals *G,
   if(mode!=2) { /* don't show timings for tests */
     accumTiming += timing; 
     
-      if(!quiet) {
+      if(show_timing && !quiet) {
         PRINTFB(G,FB_Ray,FB_Details)
-          " Ray: total time: %4.2f sec. = %3.1f frames/hour (%4.2f sec. accum.).\n", 
+          " Ray: render time: %4.2f sec. = %3.1f frames/hour (%4.2f sec. accum.).\n", 
           timing,3600/timing, 
           accumTiming 
           ENDFB(G);
@@ -5201,11 +5201,11 @@ int SceneRenderCached(PyMOLGlobals *G)
         OrthoDirty(G);
         renderedFlag=true;
       } else {
-        SceneMakeMovieImage(G);
+        SceneMakeMovieImage(G,true);
         renderedFlag=true;
       }
 	} else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_ray_trace_frames)) {
-	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false,NULL); 
+	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false,NULL,true); 
 	}  else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_draw_frames)) {
       SceneMakeSizedImage(G,0,0,SettingGetGlobal_i(G,cSetting_antialias));
 	} else if(I->CopyFlag) {

@@ -9,10 +9,12 @@ G* Please see the accompanying LICENSE file for further information.
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
 -*   Larry Coopet (various optimizations)
--* 
+-*   Chris Want (RayRenderVRML2, via the public domain )
 -*
 Z* -------------------------------------------------------------------
 */
+
+
 #include"os_predef.h"
 #include"os_std.h"
 
@@ -860,7 +862,9 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
   VLASize(jprim,G3dPrimitive,n_jp);
   return jprim;
 }
-void RayRenderVRML2(CRay *I,int width,int height,
+
+#if 0
+void RayRenderVRML1(CRay *I,int width,int height,
                     char **vla_ptr,float front,float back,
 		    float fov, float angle,float z_corr)
 {
@@ -926,6 +930,292 @@ void RayRenderVRML2(CRay *I,int width,int height,
     }
 
     UtilConcatVLA(&vla,&cc,"}\n");
+  }
+  
+  *vla_ptr=vla;
+}
+#endif
+
+void RayRenderVRML2(CRay *I,int width,int height,
+                    char **vla_ptr,float front,float back,
+		    float fov, float angle,float z_corr)
+{
+
+  /* 
+
+  From: pymol-users-admin@lists.sourceforge.net on behalf of Chris Want
+  Sent: Tuesday, February 07, 2006 1:47 PM
+  To: pymol-users@lists.sourceforge.net
+  Subject: [PyMOL] VRML patch
+  
+  Hi Warren,
+  
+  I took your advice and modified the RayRenderVRML2() function to
+  support triangles. I also threw out the sphere code that was already
+  there and rewrote it (the code there was for VRML1, not
+  VRML2). While I was at it, I also implemented export for cylinders
+  and sausages.
+  
+  The code in the attached patch (diff-ed against cvs, and tested with
+  two VRML2 readers) can be regarded as being in the public domain.
+  
+  Regards,
+  Chris
+
+  cwant_at_ualberta.ca
+
+  */
+
+  char *vla = *vla_ptr;
+  int cc = 0; /* character count */
+  OrthoLineType buffer;
+  
+  RayExpandPrimitives(I);
+  RayTransformFirst(I,0);
+
+  strcpy(buffer,"#VRML V2.0 ascii\n\n");
+  UtilConcatVLA(&vla,&cc,buffer);
+
+  { 
+    int a, b;
+    CPrimitive *prim;
+    float *vert;
+    int mesh_obj = false, mesh_start;
+
+    CBasis *base = I->Basis+1;
+
+    for(a=0;a<I->NPrimitive;a++) {
+      prim = I->Primitive+a;
+      vert = base->Vertex+3*(prim->vert);
+
+      if(prim->type==cPrimTriangle) {
+        if(!mesh_obj) {
+          /* start mesh */
+          mesh_start = a;
+          UtilConcatVLA(&vla,&cc, 
+                        "Shape {\n"
+                        " geometry IndexedFaceSet {\n"
+                        "  coord Coordinate {\n"
+                        "   point [\n");
+          mesh_obj=true;
+        }
+      } else if(mesh_obj) {
+        int tri = 0;
+        /* output connectivity */
+        UtilConcatVLA(&vla,&cc, 
+                      "   ]\n"
+                      "  }\n"
+                      "  coordIndex [\n");
+        for(b=mesh_start;b<a;b++) {
+          sprintf(buffer,"%d %d %d -1,\n", tri, tri+1, tri+2);
+          UtilConcatVLA(&vla,&cc,buffer);        
+          tri+=3;
+        }
+
+        /* output vertex colors */
+        UtilConcatVLA(&vla,&cc, 
+                      "  ]\n"
+                      "  colorPerVertex TRUE\n"
+                      "  color Color {\n"
+                      "   color [\n");
+        for(b=mesh_start;b<a;b++) {
+          CPrimitive *cprim;
+          cprim = I->Primitive+b;
+          sprintf(buffer,
+                  "%6.4f %6.4f %6.4f,\n"
+                  "%6.4f %6.4f %6.4f,\n"
+                  "%6.4f %6.4f %6.4f,\n", 
+                  cprim->c1[0],cprim->c1[1],cprim->c1[2],
+                  cprim->c2[0],cprim->c2[1],cprim->c2[2],
+                  cprim->c3[0],cprim->c3[1],cprim->c3[2]);
+          UtilConcatVLA(&vla,&cc,buffer);
+        }
+
+        /* close mesh */
+        UtilConcatVLA(&vla,&cc,
+                      "   ]\n"
+                      "  }\n"
+                      " }\n"
+                      "}\n");
+        mesh_obj=false;
+      }
+
+      switch(prim->type) {
+      case cPrimSphere:
+        sprintf(buffer,
+                "Transform {\n"
+                " translation %8.6f %8.6f %8.6f\n"
+                " children Shape {\n"
+                "  geometry Sphere { radius %8.6f }\n"
+                "  appearance Appearance {\n"
+                "   material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
+                "  }\n"
+                " }\n"
+                "}\n",        
+                vert[0],vert[1],vert[2]-z_corr,
+                prim->r1,
+                prim->c1[0],prim->c1[1],prim->c1[2]);
+        UtilConcatVLA(&vla,&cc,buffer);    
+        break;
+      case cPrimCylinder:
+      case cPrimSausage:
+        {
+          float *d, vert2[3], axis[3], angle;
+          OrthoLineType geometry;
+          /* find the axis and angle that will rotate the y axis onto
+           * the direction of the length of the cylinder
+           */
+          d=base->Normal+3*base->Vert2Normal[prim->vert];
+          if ((d[0]*d[0] + d[2]*d[2]) < 0.000001) {
+            /* parallel with y */
+            axis[0] = 1.0;
+            axis[1] = 0.0;
+            axis[2] = 0.0;
+            if (d[1] > 0) {
+              angle = 0.0;
+            }
+            else {
+              angle = cPI;
+            }
+          }
+          else {
+            axis[0] =  d[2];
+            axis[1] =  0.0;
+            axis[2] = -d[0];
+            normalize3f(axis);
+            angle = d[1];
+            if (angle > 1.0) angle = 1.0;
+            else if (angle < -1.0) angle = -1.0;
+            angle = acos(angle);
+          }
+          /* vrml cylinders have origin in middle, not tip, that is why we
+           * use prim->l1/2
+           */
+          scale3f(d,prim->l1/2,vert2);
+          add3f(vert,vert2,vert2);
+          if (prim->type==cPrimSausage) {
+            sprintf(geometry,
+                    "  Shape {\n"
+                    "   geometry Cylinder {\n"
+                    "    radius %8.6f\n"
+                    "    height %8.6f\n"
+                    "    bottom FALSE\n"
+                    "    top    FALSE\n"
+                    "   }\n"
+                    "   appearance Appearance {\n"
+                    "    material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
+                    "   }\n"
+                    "  }\n"
+                    "  Transform {\n"
+                    "   translation 0.0 %8.6f 0.0\n"
+                    "   children Shape {\n"
+                    "    geometry Sphere { radius %8.6f }\n"
+                    "    appearance Appearance {\n"
+                    "     material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
+                    "    }\n"
+                    "   }\n"
+                    "  }\n"
+                    "  Transform {\n"
+                    "   translation 0.0 %8.6f 0.0\n"
+                    "   children Shape {\n"
+                    "    geometry Sphere { radius %8.6f }\n"
+                    "    appearance Appearance {\n"
+                    "     material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
+                    "    }\n"
+                    "   }\n"
+                    "  }\n", 
+                    prim->r1, prim->l1,
+                    (prim->c1[0]+prim->c2[0])/2,
+                    (prim->c1[1]+prim->c2[1])/2,
+                    (prim->c1[2]+prim->c2[2])/2,
+                    prim->l1/2, prim->r1,  
+                    prim->c1[0],prim->c1[1],prim->c1[2],
+                    -prim->l1/2, prim->r1,  
+                    prim->c2[0],prim->c2[1],prim->c2[2]);
+          }
+          else {
+            sprintf(geometry,
+                    "  Shape {\n"
+                    "   geometry Cylinder {\n"
+                    "    radius %8.6f\n"
+                    "    height %8.6f\n"
+                    "   }\n"
+                    "   appearance Appearance {\n"
+                    "    material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
+                    "   }\n"
+                    "  }\n",
+                    prim->r1, prim->l1,
+                    (prim->c1[0]+prim->c2[0])/2,
+                    (prim->c1[1]+prim->c2[1])/2,
+                    (prim->c1[2]+prim->c2[2])/2);
+          }
+          sprintf(buffer,
+                  "Transform {\n"
+                  " translation %8.6f %8.6f %8.6f\n"
+                  " rotation %8.6f %8.6f %8.6f %8.6f\n"
+                  " children [\n"
+                  "%s"
+                  " ]\n"
+                  "}\n", 
+                  vert2[0], vert2[1], vert2[2]-z_corr,
+                  axis[0], axis[1], axis[2], angle,
+                  geometry);
+          UtilConcatVLA(&vla,&cc,buffer);
+        }
+        break;
+      case cPrimTriangle:
+        /* output coords. connectivity and vertex colors handled above/below */
+        sprintf(buffer,
+                "%8.6f %8.6f %8.6f,\n    %8.6f %8.6f %8.6f,\n    %8.6f %8.6f %8.6f,\n", 
+                vert[0], vert[1], vert[2]-z_corr,
+                vert[3], vert[4], vert[5]-z_corr,
+                vert[6], vert[7], vert[8]-z_corr);
+        UtilConcatVLA(&vla,&cc,buffer);    
+        break;
+      }
+    }
+
+    if(mesh_obj) {
+      int tri = 0;
+      /* output connectivity */
+      UtilConcatVLA(&vla,&cc, 
+                    "   ]\n"
+                    "  }\n"
+                    "  coordIndex [\n");
+      for(b=mesh_start;b<a;b++) {
+        sprintf(buffer,
+                "%d %d %d -1,\n", tri, tri+1, tri+2);
+        UtilConcatVLA(&vla,&cc,buffer);
+        tri+=3;
+      }
+
+      /* output vertex colors */
+      UtilConcatVLA(&vla,&cc,
+                    "  ]\n"
+                    "  colorPerVertex TRUE\n"
+                    "  color Color {\n"
+                    "   color [\n");
+      for(b=mesh_start;b<a;b++) {
+        CPrimitive *cprim;
+        cprim = I->Primitive+b;
+        sprintf(buffer,
+                "%6.4f %6.4f %6.4f,\n"
+                "%6.4f %6.4f %6.4f,\n"
+                "%6.4f %6.4f %6.4f,\n", 
+                cprim->c1[0],cprim->c1[1],cprim->c1[2],
+                cprim->c2[0],cprim->c2[1],cprim->c2[2],
+                cprim->c3[0],cprim->c3[1],cprim->c3[2]);
+        UtilConcatVLA(&vla,&cc,buffer);
+      }
+
+      /* close mesh */
+      UtilConcatVLA(&vla,&cc,
+                    "   ]\n"
+                    "  }\n"
+                    " }\n"
+                    "}\n");
+      mesh_obj=false;
+    }
   }
   
   *vla_ptr=vla;

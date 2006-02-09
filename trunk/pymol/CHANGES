@@ -2,7 +2,19 @@
 CHANGE LOG
 =========================================================================
 
+
+Changes up to 1.00
+
+    beta01  
+
+    * massive reworking of ramp_new for molecular objects
+
+    * VRML2 support from Chris Want.
+
+    * fixed button in benchmark wizard
+
 Changes up to 0.99
+
 
     pre01
 

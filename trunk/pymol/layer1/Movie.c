@@ -142,7 +142,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
     VLACheck(I->Image,ImageType*,i);
     if(!I->Image[i]) {
       SceneUpdate(G);
-	  SceneMakeMovieImage(G);
+	  SceneMakeMovieImage(G,true);
     }
     if(!I->Image[i]) {
       PRINTFB(G,FB_Movie,FB_Errors) 
@@ -472,6 +472,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
   char fname[255];
   char buffer[255];
   int nFrame;
+  double accumTiming = 0.0;
 
   save = (int)SettingGet(G,cSetting_cache_frames); 
   if(!save)
@@ -494,8 +495,10 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
   MoviePlay(G,cMoviePlay);
   VLACheck(I->Image,ImageType*,nFrame);
 
+
   OrthoBusySlow(G,0,nFrame);
   for(a=0;a<nFrame;a++) {
+    double timing = UtilGetSeconds(G); /* start timing the process */
     PRINTFB(G,FB_Movie,FB_Debugging)
       " MoviePNG-DEBUG: Cycle %d...\n",a
       ENDFB(G);
@@ -508,7 +511,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
     if((a>=start)&&(a<=stop)) { /* only render frames in the specified interval */
       if(!I->Image[i]) {
         SceneUpdate(G);
-        SceneMakeMovieImage(G);
+        SceneMakeMovieImage(G,false);
       }
       if(!I->Image[i]) {
         PRINTFB(G,FB_Movie,FB_Errors) 
@@ -530,6 +533,21 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
     if(I->Image[i]) {
       FreeP(I->Image[i]->data);
       FreeP(I->Image[i]);
+    }
+    timing = UtilGetSeconds(G)-timing;
+    accumTiming += timing; 
+    { 
+
+      double est =       ((nFrame-a)/(float)(a+1))*accumTiming;
+      
+      PRINTFB(G,FB_Movie,FB_Details)
+        " Movie: frame %4d, %4.2f sec. = %3.1f/hour (complete in %02d:%02d:%02d).\n", 
+        a+1,
+        timing,3600/timing, 
+        (int)(est/3600),
+        ((int)(est/60)) % 60,
+        ((int)est) % 60
+        ENDFB(G);
     }
   }
   SceneInvalidate(G); /* important */
