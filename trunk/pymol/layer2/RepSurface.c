@@ -2229,7 +2229,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 
                                     n[0] = vx[0] * xcos + vy[0] * ysin;
                                     n[1] = vx[1] * xcos + vy[1] * ysin;
-                                    n[2] = vx[2] * xcos * vy[2] * ysin;
+                                    n[2] = vx[2] * xcos + vy[2] * ysin;
 
                                     dotCnt++;
                                     v+=3;
