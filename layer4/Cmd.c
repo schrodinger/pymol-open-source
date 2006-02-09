@@ -1817,7 +1817,7 @@ static PyObject *CmdGetVRML(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   char *vla = NULL;
   APIEntry();
-  SceneRay(TempPyMOLGlobals,0,0,4,NULL,&vla,0.0F,0.0F,false,NULL);
+  SceneRay(TempPyMOLGlobals,0,0,4,NULL,&vla,0.0F,0.0F,false,NULL,false);
   APIExit();
   if(vla) {
     result = Py_BuildValue("s",vla);
@@ -1831,7 +1831,7 @@ static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   char *header=NULL,*geom=NULL;
   APIEntry();
-  SceneRay(TempPyMOLGlobals,0,0,1,&header,&geom,0.0F,0.0F,false,NULL);
+  SceneRay(TempPyMOLGlobals,0,0,1,&header,&geom,0.0F,0.0F,false,NULL,false);
   APIExit();
   if(header&&geom) {
     result = Py_BuildValue("(ss)",header,geom);
@@ -1846,7 +1846,7 @@ static PyObject *CmdGetMtlObj(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   char *obj=NULL,*mtl=NULL;
   APIEntry();
-  SceneRay(TempPyMOLGlobals,0,0,5,&obj,&mtl,0.0F,0.0F,false,NULL);
+  SceneRay(TempPyMOLGlobals,0,0,5,&obj,&mtl,0.0F,0.0F,false,NULL,false);
   APIExit();
   if(obj&&mtl) {
     result = Py_BuildValue("(ss)",mtl,obj);

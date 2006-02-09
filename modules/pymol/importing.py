@@ -486,6 +486,15 @@ SEE ALSO
                     ftype = loadable.p1m
                 elif re.search("\.png$",filename,re.I):
                     ftype = loadable.png
+                elif re.search("\.map$",filename,re.I):
+                    r = DEFAULT_ERROR
+                    print 'Error: .map is ambiguous.  Please add format or use another extension:'
+                    print 'Error: For example, "load fofc.map, format=ccp4" or "load 2fofc.xplor".'
+                    
+                    if _raising(r):
+                        raise pymol.CmdException
+                    else:
+                        return r
                 else:
                     ftype = loadable.pdb # default is PDB
             elif cmd.is_string(type):
