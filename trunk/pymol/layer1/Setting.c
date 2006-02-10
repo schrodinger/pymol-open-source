@@ -1470,6 +1470,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     break;
   case cSetting_surface_quality:
   case cSetting_surface_mode:
+  case cSetting_surface_normal:
   case cSetting_surface_type:
   case cSetting_surface_carve_state:
   case cSetting_surface_carve_cutoff:
@@ -1479,6 +1480,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_surface_clear_selection:
   case cSetting_surface_trim_cutoff:
   case cSetting_surface_trim_factor:
+  case cSetting_surface_circumscribe:
   case cSetting_surface_solvent:
   case cSetting_surface_proximity:
   case cSetting_cavity_cull:
@@ -2741,7 +2743,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_sculpt_max_weight, 0.75F);
   set_f(I,cSetting_sculpt_max_min, 4.0F);
   set_f(I,cSetting_sculpt_max_max, 12.0F);
-
+  set_i(I,cSetting_surface_circumscribe, -1);
 }
 
 

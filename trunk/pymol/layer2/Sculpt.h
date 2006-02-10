@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #define cSculptTri   0x100
 #define cSculptMin   0x200
 #define cSculptMax   0x400
+#define cSculptAvoid 0x800
 
 typedef struct CSculpt {
   PyMOLGlobals *G;

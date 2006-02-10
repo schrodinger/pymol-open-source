@@ -184,7 +184,7 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
             vc+=3;
             v+=3;
           }
-    } else if(I->Type==0) { /* solid surface */
+    } else if((I->Type==0)||(I->Type==3)||(I->Type==4)) { /* solid surface */
       c=I->NT;
 
       if(I->oneColorFlag) {
@@ -1350,23 +1350,23 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   I->max_vdw = ObjectMoleculeGetMaxVDW(obj);
 
   RepInit(G,&I->R);
-
+  circumscribe = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_circumscribe);
   surface_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
   if(surface_quality>=4) { /* totally impractical */
     minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/4;
     sp = G->Sphere->Sphere[4];
     ssp = G->Sphere->Sphere[4];
-    circumscribe = 120;
+    /*    if(circumscribe<0) circumscribe = 120;*/
   } else if(surface_quality>=3) { /* nearly impractical */
     minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
     sp = G->Sphere->Sphere[4];
     ssp = G->Sphere->Sphere[3];
-    circumscribe = 90;
+    /*    if(circumscribe<0) circumscribe = 90;*/
   } else if(surface_quality>=2) { /* nearly perfect */
     minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/2;
     sp = G->Sphere->Sphere[3];
     ssp = G->Sphere->Sphere[3];
-    circumscribe = 60;
+    /*    if(circumscribe<0) circumscribe = 60;*/
   } else if(surface_quality>=1) { /* good */
     minimum_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best);
     sp = G->Sphere->Sphere[2];
@@ -1393,6 +1393,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
     ssp = G->Sphere->Sphere[1];
   }
 
+  if(circumscribe<0) circumscribe=0;
 
   probe_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   if(!surface_solvent) {
@@ -1410,9 +1411,10 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   probe_rad_more = probe_radius*(1.0F+solv_tole);
   probe_rad_more2 = probe_rad_more * probe_rad_more;
 
-  if(surface_type!=0) { /* not a solid surface */
-    probe_rad_less = probe_radius*(1.0F-solv_tole);
-  } else { /* solid surface */
+  switch(surface_type) {
+  case 0: /* solid */
+  case 3:
+  case 4:
     if(surface_quality>2) {
       probe_rad_less = probe_radius*(1.0F-solv_tole/2);
     } else if(surface_quality>1) {
@@ -1420,8 +1422,12 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
     } else {
       probe_rad_less = probe_radius;
     }
-    
+    break;
+  default:
+    probe_rad_less = probe_radius*(1.0F-solv_tole);
+    break;
   }
+  
   probe_rad_less2 = probe_rad_less * probe_rad_less;
 
   /* OOCalloc takes care of all this 
@@ -1488,6 +1494,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
     if(!I->allVisibleFlag) {
       /* optimize the space over which we calculate a surface */
       
+
       /* first find out which atoms are really present */
 
       present = Alloc(int,cs->NIndex); 
@@ -1594,12 +1601,32 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       return NULL;
     }
 	 I->N=0;
-    v=I->V;
-    vn=I->VN;
+     v=I->V;
+     vn=I->VN;
+
+
 
     RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent,present,circumscribe);
 
     if(!surface_solvent) {
+
+      if(surface_type==4) { /* effectively double-weights atom points */
+        if(I->NDot) { 
+          v0 = I->Dot;
+          n0 = I->DotNormal;
+          for(a=0;a<I->NDot;a++) {
+            scale3f(n0,-probe_radius,v);
+            add3f(v0,v,v);
+            copy3f(n0,vn);
+            v+=3;
+            vn+=3;
+            n0+=3;
+            v0+=3;
+            I->N++;
+          }
+        }
+      }
+
       map=MapNewFlagged(G,I->max_vdw+probe_rad_more,cs->Coord,cs->NIndex,extent,present);
       
       solv_map=MapNew(G,probe_rad_less,I->Dot,I->NDot,extent);
@@ -1625,96 +1652,96 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
               scale3f(sp->dot[b],probe_radius,dot[b]);
             }
             v0 = I->Dot;
-            
-            for(a=0;a<I->NDot;a++)
-              {
-                OrthoBusyFast(G,a+I->NDot*2,I->NDot*5); /* 2/5 to 3/5 */
-                for(b=0;b<sp->nDot;b++)
-                  {
-                    register int ii;
-                    v[0]=v0[0]+dot[b][0];
-                    v[1]=v0[1]+dot[b][1];
-                    v[2]=v0[2]+dot[b][2];
-                    flag=true;
-                    ii=*(MapLocusEStart(solv_map,v));
-                    if(ii) {
-                      register int jj;
-                      register int *elist = solv_map->EList;
-                      register float *i_dot = I->Dot;
-                      register float v_0=v[0], v_1=v[1], v_2=v[2];
-                      register float dist=probe_rad_less;
-                      register float dist2=probe_rad_less2;
-                      register float *v1,dx,dy,dz;
-                      jj=elist[ii++];
-                      v1 = i_dot + 3*jj;                          
-                      while(jj>=0) {
-                        if(jj!=a) 
-                          {
-                            /* huge bottleneck -- optimized for superscaler processors */
-                            dx = v1[0]-v_0;
-                            dy = v1[1]-v_1;
-                            dz = v1[2]-v_2;
-                            dx = (float)fabs(dx);
-                            dy = (float)fabs(dy);
-                            if(!(dx>dist)) {
-                              dx = dx * dx;
-                              if(!(dy>dist)) {
-                                dz = (float)fabs(dz);
-                                dy = dy * dy;
-                                if(!(dz>dist)) {
-                                  dx = dx + dy;
-                                  dz = dz * dz;
-                                  if(!(dx>dist2)) 
-                                    if((dx + dz)<=dist2) 
-                                      {
-                                        flag = false; 
-                                        break; 
-                                      }
-                                }
+            n0 = I->DotNormal;
+            for(a=0;a<I->NDot;a++) {
+              OrthoBusyFast(G,a+I->NDot*2,I->NDot*5); /* 2/5 to 3/5 */
+              for(b=0;b<sp->nDot;b++) {
+                  register int ii;
+                  v[0]=v0[0]+dot[b][0];
+                  v[1]=v0[1]+dot[b][1];
+                  v[2]=v0[2]+dot[b][2];
+                  flag=true;
+                  ii=*(MapLocusEStart(solv_map,v));
+                  if(ii) {
+                    register int jj;
+                    register int *elist = solv_map->EList;
+                    register float *i_dot = I->Dot;
+                    register float v_0=v[0], v_1=v[1], v_2=v[2];
+                    register float dist=probe_rad_less;
+                    register float dist2=probe_rad_less2;
+                    register float *v1,dx,dy,dz;
+                    jj=elist[ii++];
+                    v1 = i_dot + 3*jj;                          
+                    while(jj>=0) {
+                      if(jj!=a) 
+                        {
+                          /* huge bottleneck -- optimized for superscaler processors */
+                          dx = v1[0]-v_0;
+                          dy = v1[1]-v_1;
+                          dz = v1[2]-v_2;
+                          dx = (float)fabs(dx);
+                          dy = (float)fabs(dy);
+                          if(!(dx>dist)) {
+                            dx = dx * dx;
+                            if(!(dy>dist)) {
+                              dz = (float)fabs(dz);
+                              dy = dy * dy;
+                              if(!(dz>dist)) {
+                                dx = dx + dy;
+                                dz = dz * dz;
+                                if(!(dx>dist2)) 
+                                  if((dx + dz)<=dist2) 
+                                    {
+                                      flag = false; 
+                                      break; 
+                                    }
                               }
                             }
                           }
-                        jj=elist[ii++];
-                        v1 = i_dot + 3*jj;                          
+                        }
+                      jj=elist[ii++];
+                      v1 = i_dot + 3*jj;                          
+                    }
+                  }
+                 
+                  
+                  if(flag)
+                    {
+                      i=*(MapLocusEStart(map,v));
+                      if(i) {
+                        j=map->EList[i++];
+                        while(j>=0) {
+                          ai2 = obj->AtomInfo + cs->IdxToAtm[j];
+                          if(present)
+                            pres_flag=present[j];
+                          else
+                            pres_flag=((inclH||(!ai2->hydrogen))&&
+                                       ((!cullByFlag)||
+                                        (!(ai2->flags&cAtomFlag_ignore))));
+                          if(pres_flag)
+                            if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_rad_more))
+                              {
+                                flag=false;
+                                break;
+                              }
+                          j=map->EList[i++];
+                        }
+                      }
+                      if(!flag) {
+                        vn[0]=-sp->dot[b][0];
+                        vn[1]=-sp->dot[b][1];
+                        vn[2]=-sp->dot[b][2];
+                        if(I->N<MaxN) {
+                          I->N++;
+                          v+=3;
+                          vn+=3;
+                        }
                       }
                     }
-                    
-                    if(flag)
-                      {
-                        i=*(MapLocusEStart(map,v));
-                        if(i) {
-                          j=map->EList[i++];
-                          while(j>=0) {
-                            ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-                            if(present)
-                              pres_flag=present[j];
-                            else
-                              pres_flag=((inclH||(!ai2->hydrogen))&&
-                                         ((!cullByFlag)||
-                                          (!(ai2->flags&cAtomFlag_ignore))));
-                            if(pres_flag)
-                              if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_rad_more))
-                                {
-                                  flag=false;
-                                  break;
-                                }
-                            j=map->EList[i++];
-                          }
-                        }
-                        if(!flag) {
-                          vn[0]=-sp->dot[b][0];
-                          vn[1]=-sp->dot[b][1];
-                          vn[2]=-sp->dot[b][2];
-                          if(I->N<MaxN) {
-                            I->N++;
-                            v+=3;
-                            vn+=3;
-                          }
-                        }
-                      }
-                  }
-                v0 +=3;
-              }
+                }
+              v0 +=3;
+              n0 +=3;
+            }
             FreeP(dot);
           }
           MapFree(solv_map);
@@ -1757,41 +1784,95 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       {
         int repeat_flag=true;
         dot_flag=Alloc(int,I->N);
-
+        float min_dot = 0.1F;
         while(repeat_flag) {
-          repeat_flag=false;
-          
-          for(a=0;a<I->N;a++) dot_flag[a]=1;
-          map=MapNew(G,minimum_sep,I->V,I->N,extent);
-          MapSetupExpress(map);		  
-          v=I->V;
-          vn=I->VN;
-          for(a=0;a<I->N;a++) {
-            if(dot_flag[a]) {
-              i=*(MapLocusEStart(map,v));
-              if(i) {
-                j=map->EList[i++];
-                while(j>=0) {
-                  if(j!=a) 
-                    {
+          repeat_flag = false;
+
+          if(surface_type>=3) {
+            register int jj;
+            float dist;
+            register float nearest;
+            register float min_sep2 = minimum_sep*minimum_sep;
+            float diff[3];
+            for(a=0;a<I->N;a++) dot_flag[a]=1;
+            map=MapNew(G,minimum_sep+0.05F,I->V,I->N,extent);
+            MapSetupExpress(map);		  
+            v=I->V;
+            vn=I->VN;
+            for(a=0;a<I->N;a++) {
+              if(dot_flag[a]) {
+                i=*(MapLocusEStart(map,v));
+                if(i) {
+                  j=map->EList[i++];
+                  jj=I->N;
+                  nearest = minimum_sep+1.0F;
+                  while(j>=0) {
+                    if(j>a) {
                       if(dot_flag[j]) {
-                        if(within3f(I->V+(3*j),v,minimum_sep)) {
-                          dot_flag[j]=0;
-                          add3f(vn,I->VN+(3*j),vn);
-                          average3f(I->V+(3*j),v,v);
-                          repeat_flag=true;
-                        } 
+                        if(dot_product3f(I->VN+(3*j),vn)>min_dot) {
+                          if(within3fret(I->V+(3*j),v,minimum_sep,min_sep2,diff,&dist)) {
+                            repeat_flag = true;
+                            if(dist<nearest) { 
+                              /* try to be as determinstic as possible
+                                 in terms of how we collapse points */
+                              jj = j;
+                              nearest = dist;
+                            } else if((j<jj)&&(fabs(dist-nearest)<R_SMALL4)) { 
+                              jj = j;
+                              nearest = dist;
+                            }
+                          }
+                        }
                       }
                     }
-                  j=map->EList[i++];
+                    j=map->EList[i++];
+                  }
+                  
+                  if(jj<I->N) {
+                    dot_flag[jj]=0;
+                    add3f(vn,I->VN+(3*jj),vn);
+                    average3f(I->V+(3*jj),v,v);
+                    repeat_flag=true;
+                  }
                 }
               }
+              v+=3;
+              vn+=3;
             }
-            v+=3;
-            vn+=3;
+            MapFree(map);
+          } else {          
+
+            for(a=0;a<I->N;a++) dot_flag[a]=1;
+            map=MapNew(G,-minimum_sep,I->V,I->N,extent);
+            MapSetupExpress(map);		  
+            v=I->V;
+            vn=I->VN;
+            for(a=0;a<I->N;a++) {
+              if(dot_flag[a]) {
+                i=*(MapLocusEStart(map,v));
+                if(i) {
+                  j=map->EList[i++];
+                  while(j>=0) {
+                    if(j!=a) 
+                      {
+                        if(dot_flag[j]) {
+                          if(within3f(I->V+(3*j),v,minimum_sep)) {
+                            dot_flag[j]=0;
+                            add3f(vn,I->VN+(3*j),vn);
+                            average3f(I->V+(3*j),v,v);
+                            repeat_flag=true;
+                          }
+                        }
+                      }
+                    j=map->EList[i++];
+                  }
+                }
+              }
+              v+=3;
+              vn+=3;
+            }
+            MapFree(map);
           }
-          MapFree(map);
-          
           v0=I->V;
           v=I->V;
           vn0=I->VN;
@@ -1816,6 +1897,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
               }
             }
         }
+
         FreeP(dot_flag);
         
         if(I->N) {	
@@ -1826,7 +1908,9 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   
     /* now eliminate troublesome vertices in regions of extremely high curvature */
 
-    if(I->N&&(trim_cutoff>0.0F)&&(trim_factor>0.0F))
+    if((surface_type<3)&&
+       I->N && (trim_cutoff>0.0F)&&
+       (trim_factor>0.0F))
       {
         int repeat_flag=true;
         float neighborhood = trim_factor*minimum_sep;
@@ -2000,7 +2084,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
 		MapSetupExpress(map);
 		maxCnt=0;
 		v=I->Dot;
-      n=I->DotNormal;
+        n=I->DotNormal;
 		for(a=0;a<cs->NIndex;a++)
 		  {
 			 OrthoBusyFast(G,a,cs->NIndex*5);
@@ -2169,7 +2253,8 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                                                   (tri_s-tri_b)*(tri_s-tri_c));
                               float radius = (2*area)/dist;
                               float adj = (float)sqrt1f(vdw2 - radius*radius);
-                              
+                              radius*=0.05;
+
                               subtract3f(v2,v0,vz);
                               get_system1f3f(vz,vx,vy);
                               

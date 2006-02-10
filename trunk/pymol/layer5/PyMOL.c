@@ -640,6 +640,7 @@ typedef struct _CPyMOL {
   ov_word lex_sculpt_max_weight;
   ov_word lex_sculpt_max_min;
   ov_word lex_sculpt_max_max;
+  ov_word lex_surface_circumscribe;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1283,6 +1284,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(sculpt_max_weight, 498);
   LEX_SETTING(sculpt_max_min, 499);
   LEX_SETTING(sculpt_max_max, 500);
+  LEX_SETTING(surface_circumscribe, -1);
 
   return_OVstatus_SUCCESS;
 }
