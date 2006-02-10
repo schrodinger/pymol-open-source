@@ -2744,7 +2744,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_sculpt_max_min, 4.0F);
   set_f(I,cSetting_sculpt_max_max, 12.0F);
   set_i(I,cSetting_surface_circumscribe, -1);
-  set_f(I,cSetting_sculpt_avd_weight, 2.0F);
+  set_f(I,cSetting_sculpt_avd_weight, 3.0F);
   set_f(I,cSetting_sculpt_avd_gap,-1.0F);
   set_f(I,cSetting_sculpt_avd_range, -1.0F);
   set_i(I,cSetting_sculpt_avd_excl, 7);
