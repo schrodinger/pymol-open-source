@@ -535,6 +535,10 @@ if __name__=='pymol.setting':
         sculpt_max_min            = (499, '')
         sculpt_max_max            = (500, '')
         surface_circumscribe      = (501, '')
+        sculpt_avd_weight         = (502, '')
+        sculpt_avd_gap            = (503, '')
+        sculpt_avd_range          = (504, '')
+        sculpt_avd_excl           = (505, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

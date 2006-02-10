@@ -231,7 +231,7 @@ static void ScenePurgeImage(PyMOLGlobals *G)
   I->CopyFlag = false;
 }
 
-static void SceneInvalidateCopy(PyMOLGlobals *G,int free_buffer)
+void SceneInvalidateCopy(PyMOLGlobals *G,int free_buffer)
 {
   register CScene *I=G->Scene;
   if(I) {

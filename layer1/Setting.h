@@ -653,8 +653,12 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_sculpt_max_min             499
 #define cSetting_sculpt_max_max             500
 #define cSetting_surface_circumscribe       501
+#define cSetting_sculpt_avd_weight          502
+#define cSetting_sculpt_avd_gap             503
+#define cSetting_sculpt_avd_range           504
+#define cSetting_sculpt_avd_excl            505
 
-/* when you add a new settingg also remember:
+/* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py
   layer5/PyMOL.c 
@@ -662,7 +666,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       502
+#define cSetting_INIT                       506
 
 #endif
 

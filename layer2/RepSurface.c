@@ -1783,8 +1783,8 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
     if(I->N)
       {
         int repeat_flag=true;
-        dot_flag=Alloc(int,I->N);
         float min_dot = 0.1F;
+        dot_flag=Alloc(int,I->N);
         while(repeat_flag) {
           repeat_flag = false;
 
