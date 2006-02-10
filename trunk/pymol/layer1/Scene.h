@@ -115,6 +115,7 @@ void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem);
 void SceneGetPos(PyMOLGlobals *G,float *pos);
 void SceneGetWidthHeight(PyMOLGlobals *G,int *width,int *height);
 int SceneMultipick(PyMOLGlobals *G,Multipick *smp);
+void SceneInvalidateCopy(PyMOLGlobals *G,int free_buffer);
 
 void SceneSetCardInfo(PyMOLGlobals *G,char *vendor,char *renderer,char *version);
 void SceneGetCardInfo(PyMOLGlobals *G,char **vendor,char **renderer,char **version);

@@ -1295,13 +1295,17 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
           }
 
           {
-          /* longer-range exclusions  -- only store when needed */
+          /* longer-range exclusions (1-5,1-6,1-7,1-8,1-9) -- only locate & store when needed */
             
             int mask = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
-            if(cSculptAvoid & mask ) {
-              int b_stack[8];
-              int n_stack[8];
-              int stop_depth=6;
+            int max_excl = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_avd_excl);
+            if(max_excl>9)
+              max_excl = 9;
+
+            if((cSculptAvoid & mask)&&(max_excl>4)) {
+              int b_stack[10];
+              int n_stack[10];
+              int stop_depth = max_excl-1;
               int depth;
               int bd,skip;
               for(b0=0;b0<obj->NAtom;b0++) {
@@ -1640,6 +1644,9 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   float max_sc = 1.025F, max_wt=0.75F;
   float *cs_coord;
   float solvent_radius;
+  float avd_wt, avd_gp, avd_rg;
+  int avd_ex;
+
   PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
     ENDFD;
@@ -1673,6 +1680,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     tri_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_weight);
     tri_sc =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_scale);
 
+
     min_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_weight);
     min_sc =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_scale);
     max_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_max_weight);
@@ -1685,6 +1693,16 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     tors_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_weight);
     vdw_vis_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_mode);
     solvent_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
+
+    avd_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_avd_weight);
+    avd_gp = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_avd_gap);
+    avd_rg = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_avd_range);
+    avd_ex = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_avd_excl);
+    if(avd_gp<0.0F)
+      avd_gp = 1.5F*solvent_radius;
+    if(avd_rg<0.0F)
+      avd_rg = 0.75F*solvent_radius;
+    
     if(vdw_vis_mode) {
       vdw_vis_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_min);
       vdw_vis_mid =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_mid);
@@ -2179,16 +2197,15 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                               }
                             }
                           }
-                          if(ex>7) {  /* either non-covalent or extended chain */
+                          if(ex>avd_ex) {  /* either non-covalent or extended chain */
                             ai1=obj->AtomInfo+b1;
-                            target = ai0->vdw+ai1->vdw+1.5*solvent_radius;
-                            wt = 4.0F;
+                            target = ai0->vdw+ai1->vdw+avd_gp;
                             a1 = atm2idx[b1];
                             v1 = cs_coord+3*a1;
                             
-                            if(SculptCheckAvoid(v0,v1,diff,&len,target,range)) {
+                            if(SculptCheckAvoid(v0,v1,diff,&len,target,avd_rg)) {
                               if(SculptDoAvoid(target,range,len,diff,
-                                              disp+b0*3,disp+b1*3,wt,&total_strain)) {
+                                              disp+b0*3,disp+b1*3,avd_wt,&total_strain)) {
                                 cnt[b0]++;
                                 cnt[b1]++;
                                 total_count++;

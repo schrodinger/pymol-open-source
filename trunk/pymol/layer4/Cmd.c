@@ -4040,6 +4040,7 @@ static PyObject *CmdMClear(PyObject *self, 	PyObject *args)
 static PyObject *CmdRefresh(PyObject *self, 	PyObject *args)
 {
   APIEntry();
+  SceneInvalidateCopy(TempPyMOLGlobals,false);
   ExecutiveDrawNow(TempPyMOLGlobals); /* TODO STATUS */
   APIExit();
   return APISuccess();
@@ -4049,7 +4050,7 @@ static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args)
 {
   APIEntry();
   PyMOL_PushValidContext(TempPyMOLGlobals->PyMOL); /* we're trusting the caller on this... */
-
+  SceneInvalidateCopy(TempPyMOLGlobals,false);
   ExecutiveDrawNow(TempPyMOLGlobals); /* TODO STATUS */
 #ifndef _PYMOL_NO_MAIN
   MainRefreshNow();
