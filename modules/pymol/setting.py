@@ -534,6 +534,7 @@ if __name__=='pymol.setting':
         sculpt_max_weight         = (498, '')
         sculpt_max_min            = (499, '')
         sculpt_max_max            = (500, '')
+        surface_circumscribe      = (501, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

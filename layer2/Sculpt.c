@@ -1293,6 +1293,62 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
               n0+=2;
             }
           }
+
+          {
+          /* longer-range exclusions  -- only store when needed */
+            
+            int mask = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
+            if(cSculptAvoid & mask ) {
+              int b_stack[8];
+              int n_stack[8];
+              int stop_depth=6;
+              int depth;
+              int bd,skip;
+              for(b0=0;b0<obj->NAtom;b0++) {
+                b_stack[0] = b0;
+                n_stack[0] = obj->Neighbor[b_stack[0]]+1;
+                depth = 0;
+                while(depth>=0) {
+                  if((bd = obj->Neighbor[n_stack[depth]])<0) {
+                    depth--;
+                    if(depth>=0) { /* iterate next atom */
+                      n_stack[depth] += 2;
+                    }
+                  } else {
+                    skip = (depth==stop_depth);
+                    if(!skip) {
+                      for(a=0;a<depth;a++) {
+                        if(b_stack[a]==bd) {
+                          skip=true;
+                          break;
+                        }
+                      }
+                    }
+                    if(!skip) {
+                      depth++;
+                      b_stack[depth] = bd;
+                      n_stack[depth] = obj->Neighbor[bd] + 1;
+                      if((depth>3)&&(b0<bd)) {
+
+                        xhash = ex_hash(b0,bd);
+                      
+                        VLACheck(I->EXList,int,nex+3);
+                        j = I->EXList+nex;
+                        *(j++)=*(I->EXHash+xhash);
+                        *(j++)=b0;
+                        *(j++)=bd;
+                        *(j++)= depth+1; /* 1-5, 1-6, 1-7 etc. */
+                        *(I->EXHash+xhash)=nex;
+                        nex+=4;
+                      }
+                    } else {
+                      n_stack[depth] += 2;
+                    }
+                  }
+                }
+              }
+            }
+          }
           FreeP(planer);
           FreeP(linear);
           FreeP(single);
@@ -1474,8 +1530,63 @@ static int SculptDoBump(float target,float actual,float *d,
   return 0;
 }
 
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static int SculptCheckAvoid(float *v1,float *v2,float *diff,
+                            float *dist, float avoid,float range)
+{
+  register float d2,l2;
+  register float cutoff = avoid+range;
+  register float low_cutoff;
+  diff[0] = (v1[0]-v2[0]);
+  diff[1] = (v1[1]-v2[1]);
+  if(fabs(diff[0])>cutoff) return(false);
+  diff[2] = (v1[2]-v2[2]);
+  if(fabs(diff[1])>cutoff) return(false);
+  low_cutoff = avoid-range;
+  if(fabs(diff[2])>cutoff) return(false);
+  l2 = low_cutoff * low_cutoff;
+  d2 = (diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]);
+  if((d2<(cutoff*cutoff))&&(d2>l2)) { /* we are in the avoid range */
+    *dist = (float)sqrt(d2);
+    return(true);
+  }
+  return(false);
+}
 
-       
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static int SculptDoAvoid(float avoid, float range, float actual,float *d,
+                 float *d0to1,float *d1to0,float wt,float *strain)
+{
+  float push[3];
+  float dev,dev_2,sc,abs_dev;
+  float target;
+  if(actual>avoid) {
+    target = avoid+range;
+  } else {
+    target = avoid-range;
+  }
+  dev = target-actual;
+  if((abs_dev=(float)fabs(dev))>R_SMALL8) {
+    dev_2 = wt*dev/2.0F;
+    (*strain) += abs_dev;
+    if(actual>R_SMALL8) { /* nonoverlapping */
+      sc = dev_2/actual;
+      scale3f(d,sc,push);
+      add3f(push,d0to1,d0to1);
+      subtract3f(d1to0,push,d1to0);
+    } else { /* overlapping, so just push along X */
+      d0to1[0]-=dev_2;
+      d1to0[0]+=dev_2;
+    }
+    return 1;
+  }
+  return 0;
+}
+
 float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                           int state,int n_cycle,float *center)
 {
@@ -1528,6 +1639,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   float min_sc, min_wt;
   float max_sc = 1.025F, max_wt=0.75F;
   float *cs_coord;
+  float solvent_radius;
   PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
     ENDFD;
@@ -1572,7 +1684,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     tors_tole = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_tolerance);
     tors_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_weight);
     vdw_vis_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_mode);
-    
+    solvent_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
     if(vdw_vis_mode) {
       vdw_vis_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_min);
       vdw_vis_mid =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_mid);
@@ -1899,12 +2011,12 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
           int x0i;
           int don_b0;
           int acc_b0;
-
+          
           vdw_magnified = vdw_magnify;
           vdw_magnify = 1.0F;
 
           nb_skip_count = nb_skip;
-          if((cSculptVDW|cSculptVDW14)&mask) {
+          if((cSculptVDW|cSculptVDW14|cSculptAvoid)&mask) {
             /* compute non-bonded interations */
                 
             /* construct nonbonded hash */
@@ -1925,24 +2037,23 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
             }
                 
             /* find neighbors for each atom */
-                
-            for(aa=0;aa<n_active;aa++) {
-              b0 = active[aa];
-              a0 = atm2idx[b0];
-              ai0=obj->AtomInfo+b0;
-              v0 = cs_coord+3*a0;
-              don_b0 = I->Don[b0];
-              acc_b0 = I->Acc[b0];
-              v0i = (int)(*v0);
-              v1i = (int)(*(v0+1));
-              v2i = (int)(*(v0+2));
-              x0i = ex_hash_i0(b0);
-              for(h=-4;h<5;h+=4) {
-                nb_off0 = nb_hash_off_i0(v0i,h);
-                for(k=-4;k<5;k+=4) {
-                  nb_off1 = nb_off0 | nb_hash_off_i1(v1i,k);
-                  for(l=-4;l<5;l+=4) { 
-                    {
+            if((cSculptVDW|cSculptVDW14)&mask) {
+              for(aa=0;aa<n_active;aa++) {
+                b0 = active[aa];
+                a0 = atm2idx[b0];
+                ai0=obj->AtomInfo+b0;
+                v0 = cs_coord+3*a0;
+                don_b0 = I->Don[b0];
+                acc_b0 = I->Acc[b0];
+                v0i = (int)(*v0);
+                v1i = (int)(*(v0+1));
+                v2i = (int)(*(v0+2));
+                x0i = ex_hash_i0(b0);
+                for(h=-4;h<5;h+=4) {
+                  nb_off0 = nb_hash_off_i0(v0i,h);
+                  for(k=-4;k<5;k+=4) {
+                    nb_off1 = nb_off0 | nb_hash_off_i1(v1i,k);
+                    for(l=-4;l<5;l+=4) { 
                       /*  offset = *(I->NBHash+nb_hash_off(v0,h,k,l));*/
                       offset = *(I->NBHash + (nb_off1 | nb_hash_off_i2(v2i,l)));
                       while(offset) {
@@ -1964,11 +2075,11 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                           if(ex>3) {
                             ai1=obj->AtomInfo+b1;
                             cutoff = ai0->vdw+ai1->vdw;
-
+                          
                             if(ex==4) { /* 1-4 interation */
                               cutoff*=vdw14;
                               wt = vdw_wt14 * vdw_magnified;
-
+                            
                               if(cSculptVDW14 & mask) {
                                 a1 = atm2idx[b1];
                                 v1 = cs_coord+3*a1;
@@ -2015,6 +2126,72 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                                     cnt[b1]++;
                                     total_count++;
                                   }
+                              }
+                            }
+                          }
+                        }
+                        offset=(*i);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+            if(cSculptAvoid&mask) {
+              float target;
+              float range = solvent_radius*0.75;
+              /* tweak nb distances to avoid
+                 sitting in the surface
+                 rendition danger zone for too
+                 long (vdw1+vdw2+0.75*solvent) */
+              for(aa=0;aa<n_active;aa++) {
+                b0 = active[aa];
+                a0 = atm2idx[b0];
+                ai0=obj->AtomInfo+b0;
+                v0 = cs_coord+3*a0;
+                don_b0 = I->Don[b0];
+                acc_b0 = I->Acc[b0];
+                v0i = (int)(*v0);
+                v1i = (int)(*(v0+1));
+                v2i = (int)(*(v0+2));
+                x0i = ex_hash_i0(b0);
+                for(h=-8;h<9;h+=4) {
+                  nb_off0 = nb_hash_off_i0(v0i,h);
+                  for(k=-8;k<9;k+=4) {
+                    nb_off1 = nb_off0 | nb_hash_off_i1(v1i,k);
+                    for(l=-8;l<9;l+=4) {
+                      /*  offset = *(I->NBHash+nb_hash_off(v0,h,k,l));*/
+                      offset = *(I->NBHash + (nb_off1 | nb_hash_off_i2(v2i,l)));
+                      while(offset) {
+                        i = I->NBList + offset;
+                        b1 = *(i+2);
+                        if(b1>b0) { 
+                          /* determine exclusion (if any) */
+                          xoffset = *(I->EXHash+ (x0i | ex_hash_i1(b1)));
+                          ex = 10;
+                          while(xoffset) {
+                            xoffset = (*(j = I->EXList + xoffset));
+                            if((*(j+1)==b0)&&(*(j+2)==b1)) {
+                              ex1 = *(j+3);
+                              if(ex1<ex) {
+                                ex=ex1;
+                              }
+                            }
+                          }
+                          if(ex>7) {  /* either non-covalent or extended chain */
+                            ai1=obj->AtomInfo+b1;
+                            target = ai0->vdw+ai1->vdw+1.5*solvent_radius;
+                            wt = 4.0F;
+                            a1 = atm2idx[b1];
+                            v1 = cs_coord+3*a1;
+                            
+                            if(SculptCheckAvoid(v0,v1,diff,&len,target,range)) {
+                              if(SculptDoAvoid(target,range,len,diff,
+                                              disp+b0*3,disp+b1*3,wt,&total_strain)) {
+                                cnt[b0]++;
+                                cnt[b1]++;
+                                total_count++;
                               }
                             }
                           }
