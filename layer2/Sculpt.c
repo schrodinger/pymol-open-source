@@ -1701,7 +1701,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     if(avd_gp<0.0F)
       avd_gp = 1.5F*solvent_radius;
     if(avd_rg<0.0F)
-      avd_rg = 0.75F*solvent_radius;
+      avd_rg = solvent_radius;
     
     if(vdw_vis_mode) {
       vdw_vis_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_min);
