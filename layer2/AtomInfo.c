@@ -586,9 +586,23 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals *G,char *resn)
 
 /*========================================================================*/
 
-int AtomInfoInOrder(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2);
-int AtomInfoInOrigOrder(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2);
-int AtomInfoInOrderIgnoreHet(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2);
+static int AtomInfoInOrder(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2)
+{
+  return(AtomInfoCompare(G,atom+atom1,atom+atom2)<=0);
+}
+
+static int AtomInfoInOrderIgnoreHet(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2)
+{
+  return(AtomInfoCompareIgnoreHet(G,atom+atom1,atom+atom2)<=0);
+}
+
+static int AtomInfoInOrigOrder(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2)
+{
+  if(atom[atom1].rank!=atom[atom2].rank)
+    return (atom[atom1].rank<atom[atom2].rank);
+  else
+    return(AtomInfoCompare(G,atom+atom1,atom+atom2)<=0);
+}
 
 int AtomResvFromResi(char *resi)
 {
@@ -1730,23 +1744,6 @@ int AtomInfoNameOrder(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
   return(result);
 }
 
-int AtomInfoInOrder(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2)
-{
-  return(AtomInfoCompare(G,atom+atom1,atom+atom2)<=0);
-}
-
-int AtomInfoInOrderIgnoreHet(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2)
-{
-  return(AtomInfoCompareIgnoreHet(G,atom+atom1,atom+atom2)<=0);
-}
-
-int AtomInfoInOrigOrder(PyMOLGlobals *G,AtomInfoType *atom,int atom1,int atom2)
-{
-  if(atom[atom1].rank!=atom[atom2].rank)
-    return (atom[atom1].rank<atom[atom2].rank);
-  else
-    return(AtomInfoCompare(G,atom+atom1,atom+atom2)<=0);
-}
 
 int AtomInfoSameResidue(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 {

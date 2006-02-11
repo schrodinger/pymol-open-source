@@ -3697,59 +3697,74 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
 /*========================================================================*/
 void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
 {
-  int *index,*outdex;
-  int a,b;
+  int *index;
+  int *outdex=NULL;
+  register int a,b;
   CoordSet *cs,**dcs;
   AtomInfoType *atInfo;
   int *dAtmToIdx;
-
   if(!I->DiscreteFlag) { /* currently, discrete objects are never sorted */
-
-    index=AtomInfoGetSortedIndex(I->Obj.G,I->AtomInfo,I->NAtom,&outdex);
-    for(a=0;a<I->NBond;a++) { /* bonds */
-      I->Bond[a].index[0]=outdex[I->Bond[a].index[0]];
-      I->Bond[a].index[1]=outdex[I->Bond[a].index[1]];
+    int n_bytes = sizeof(int)*I->NAtom;
+    int already_in_order = true;
+    int i_NAtom = I->NAtom;
+    index=AtomInfoGetSortedIndex(I->Obj.G,I->AtomInfo,i_NAtom,&outdex);
+    for(a=0;a<i_NAtom;a++) {
+      if(index[a]!=a) {
+        already_in_order = false;
+        break;
+      }
     }
-    
-    for(a=-1;a<I->NCSet;a++) { /* coordinate set mapping */
-      if(a<0) {
-        cs=I->CSTmpl;
-      } else {
-        cs=I->CSet[a];
+    if(!already_in_order) { /* if we aren't already in perfect order */
+
+      for(a=0;a<I->NBond;a++) { /* bonds */
+        I->Bond[a].index[0]=outdex[I->Bond[a].index[0]];
+        I->Bond[a].index[1]=outdex[I->Bond[a].index[1]];
       }
       
-      if(cs) {
-        for(b=0;b<cs->NIndex;b++)
-          cs->IdxToAtm[b]=outdex[cs->IdxToAtm[b]];
-        if(cs->AtmToIdx) {
-          for(b=0;b<I->NAtom;b++)
-            cs->AtmToIdx[b]=-1;
-          for(b=0;b<cs->NIndex;b++) {
-            cs->AtmToIdx[cs->IdxToAtm[b]]=b;
+      for(a=-1;a<I->NCSet;a++) { /* coordinate set mapping */
+        if(a<0) {
+          cs=I->CSTmpl;
+        } else {
+          cs=I->CSet[a];
+        }
+        
+        if(cs) {
+          register int cs_NIndex = cs->NIndex;
+          register int *cs_IdxToAtm = cs->IdxToAtm;
+          register int *cs_AtmToIdx = cs->AtmToIdx;
+          for(b=0;b<cs_NIndex;b++)
+            cs_IdxToAtm[b]=outdex[cs_IdxToAtm[b]];
+          if(cs_AtmToIdx) {
+            memset(cs_AtmToIdx, -1, n_bytes);
+            /*          for(b=0;b<i_NAtom;b++)
+                        cs_AtmToIdx[b]=-1;*/
+            for(b=0;b<cs_NIndex;b++) {
+              cs_AtmToIdx[cs_IdxToAtm[b]]=b;
+            }
           }
         }
       }
-    }
-    
-    atInfo=(AtomInfoType*)VLAMalloc(I->NAtom,sizeof(AtomInfoType),5,true);
-    /* autozero here is important */
-    for(a=0;a<I->NAtom;a++)
-      atInfo[a]=I->AtomInfo[index[a]];
-    VLAFreeP(I->AtomInfo);
-    I->AtomInfo=atInfo;
-    
-    if(I->DiscreteFlag) {
-      dcs = VLAlloc(CoordSet*,I->NAtom);
-      dAtmToIdx = VLAlloc(int,I->NAtom);
-      for(a=0;a<I->NAtom;a++) {
-        b=index[a];
-        dcs[a] = I->DiscreteCSet[b];
-        dAtmToIdx[a] = I->DiscreteAtmToIdx[b];
+      
+      atInfo=(AtomInfoType*)VLAMalloc(i_NAtom,sizeof(AtomInfoType),5,true);
+      /* autozero here is important */
+      for(a=0;a<i_NAtom;a++)
+        atInfo[a]=I->AtomInfo[index[a]];
+      VLAFreeP(I->AtomInfo);
+      I->AtomInfo=atInfo;
+      
+      if(I->DiscreteFlag) {
+        dcs = VLAlloc(CoordSet*,i_NAtom);
+        dAtmToIdx = VLAlloc(int,i_NAtom);
+        for(a=0;a<i_NAtom;a++) {
+          b=index[a];
+          dcs[a] = I->DiscreteCSet[b];
+          dAtmToIdx[a] = I->DiscreteAtmToIdx[b];
+        }
+        VLAFreeP(I->DiscreteCSet);
+        VLAFreeP(I->DiscreteAtmToIdx);
+        I->DiscreteCSet = dcs;
+        I->DiscreteAtmToIdx = dAtmToIdx;
       }
-      VLAFreeP(I->DiscreteCSet);
-      VLAFreeP(I->DiscreteAtmToIdx);
-      I->DiscreteCSet = dcs;
-      I->DiscreteAtmToIdx = dAtmToIdx;
     }
     AtomInfoFreeSortedIndexes(I->Obj.G,index,outdex);
     
