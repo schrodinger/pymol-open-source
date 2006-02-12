@@ -332,6 +332,9 @@ if __name__=='pymol.cmd':
         def unlock_c():
             lock_api_c.release()
 
+        def lock_status_attempt():
+            return lock_api_status.acquire(0)
+
         def lock_status(): 
             lock_api_status.acquire(1)
 
@@ -367,8 +370,7 @@ if __name__=='pymol.cmd':
     #      print "lock: acquired by 0x%x"%thread.get_ident()
 
         def lock_attempt(): # INTERNAL
-            result = lock_api.acquire(blocking=0)
-            return result
+            return lock_api.acquire(blocking=0)
 
         def unlock(result=None): # INTERNAL
             if (thread.get_ident() == pymol.glutThread):
@@ -745,19 +747,20 @@ DEVELOPMENT TO DO
                     info = thread_info.pop(0)
                     list_lock.release()
                 _cmd.coordset_update_thread(info)
-        
+
         def _coordset_update_spawn(thread_info,n_thread):
             # WARNING: internal routine, subject to change
             if len(thread_info):
                 list_lock = threading.Lock() # mutex for list
                 thread_list = []
-                for a in range(0,n_thread):
+                for a in range(1,n_thread):
                     t = threading.Thread(target=_coordset_update_thread,
                                                 args=(list_lock,thread_info))
                     t.setDaemon(1)
                     thread_list.append(t)
                 for t in thread_list:
                     t.start()
+                _coordset_update_thread(list_lock,thread_info)
                 for t in thread_list:
                     t.join()
 
@@ -778,30 +781,14 @@ DEVELOPMENT TO DO
             if len(thread_info):
                 list_lock = threading.Lock() # mutex for list
                 thread_list = []
-                for a in range(0,n_thread):
+                for a in range(1,n_thread):
                     t = threading.Thread(target=_object_update_thread,
                                                 args=(list_lock,thread_info))
                     t.setDaemon(1)
                     thread_list.append(t)
                 for t in thread_list:
                     t.start()
-                while 1: # update the progress bar periodically
-                    alive = 0
-                    for t in thread_list:
-                        if t.isAlive():
-                            alive = 1
-                            break
-                    if not alive: # draw the busy counter
-                        break
-                    else:
-                        t.join(0.2)
-                        if not t.isAlive():
-                           thread_list.remove(t)
-                        try:
-                            lock()
-                            _cmd.busy_draw(0)
-                        finally:
-                            unlock(-1)
+                _object_update_thread(list_lock,thread_info)
                 for t in thread_list:
                     t.join()
 
