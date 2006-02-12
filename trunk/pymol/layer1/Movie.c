@@ -526,7 +526,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
           " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]->data
           ENDFB(G);
         if(Feedback(G,FB_Movie,FB_Actions)) {
-          printf(" MoviePNG: wrote %s\n",fname);
+          printf(" Movie: wrote %s\n",fname);
         }
       }
     }
@@ -537,16 +537,19 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
     timing = UtilGetSeconds(G)-timing;
     accumTiming += timing; 
     { 
-
-      double est =       ((nFrame-a)/(float)(a+1))*accumTiming;
+      double est1 =       (nFrame-a)*timing;
+      double est2 =       ((nFrame-a)/(float)(a+1))*accumTiming;
       
       PRINTFB(G,FB_Movie,FB_Details)
-        " Movie: frame %4d of %4d, %4.2f sec. = %3.1f/hour (est. %d:%02d:%02d to go).\n", 
+        " Movie: frame %4d of %4d, %4.2f sec. (%d:%02d:%02d - %d:%02d:%02d to go).\n", 
         a+1,nFrame,
-        timing,3600/timing, 
-        (int)(est/3600),
-        ((int)(est/60)) % 60,
-        ((int)est) % 60
+        timing,
+        (int)(est1/3600),
+        ((int)(est1/60)) % 60,
+        ((int)est1) % 60,
+        (int)(est2/3600),
+        ((int)(est2/60)) % 60,
+        ((int)est2) % 60
         ENDFB(G);
     }
   }
