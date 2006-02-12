@@ -5219,8 +5219,15 @@ void SceneUpdate(PyMOLGlobals *G)
       /* purge graphics representation when no longer used */
       if(I->LastStateBuilt>=0) {
         while(ListIterate(I->Obj,rec,next))
-          if(rec->obj->fInvalidate) 
-            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,I->LastStateBuilt);
+          if(rec->obj->fInvalidate) {
+            int static_singletons = SettingGet_b(G,rec->obj->Setting,NULL,cSetting_static_singletons);
+            int nFrame = 0;
+            if(rec->obj->fGetNFrame)
+              nFrame = rec->obj->fGetNFrame(rec->obj);
+            if((nFrame>1)||(!static_singletons)) {
+              rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,I->LastStateBuilt);
+            }
+          }
       }
     }
     I->LastStateBuilt = cur_state;
