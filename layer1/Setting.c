@@ -1949,9 +1949,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   else
     set_i(I,cSetting_cull_spheres,0);
 
-  set_f(I,cSetting_test1, -56.6F);
+  set_b(I,cSetting_test1, 0);
 
-  set_f(I,cSetting_test2, 1.0F);
+  set_f(I,cSetting_test2, 0.0F);
 
   set_f(I,cSetting_surface_best, 0.25F);
 
@@ -2748,6 +2748,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_sculpt_avd_gap,-1.0F);
   set_f(I,cSetting_sculpt_avd_range, -1.0F);
   set_i(I,cSetting_sculpt_avd_excl, 7);
+  set_b(I,cSetting_async_builds, 0);
 }
 
 

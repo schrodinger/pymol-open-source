@@ -645,6 +645,7 @@ typedef struct _CPyMOL {
   ov_word lex_sculpt_avd_gap;  
   ov_word lex_sculpt_avd_range;
   ov_word lex_sculpt_avd_excl;
+  ov_word lex_async_builds;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1293,6 +1294,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(sculpt_avd_gap, 503);
   LEX_SETTING(sculpt_avd_range, 504);
   LEX_SETTING(sculpt_avd_excl, 505);
+  LEX_SETTING(async_builds, 506);
 
   return_OVstatus_SUCCESS;
 }

@@ -104,6 +104,10 @@ void CoordSetMerge(CoordSet *I,CoordSet *cs); /* must be non-overlapping */
 void CoordSetRecordTxfApplied(CoordSet *I,float *TTT, int homogenous);
 void CoordSetUpdateCoord2IdxMap(CoordSet *I, float cutoff);
 
+typedef struct _CCoordSetUpdateThreadInfo CCoordSetUpdateThreadInfo;
+
+void CoordSetUpdateThread(CCoordSetUpdateThreadInfo *T);
+
 #endif
 
 

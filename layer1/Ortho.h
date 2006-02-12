@@ -67,6 +67,7 @@ void OrthoUngrab(PyMOLGlobals *G);
 void OrthoSetLoopRect(PyMOLGlobals *G,int flag, BlockRect *rect);
 
 void OrthoRestorePrompt(PyMOLGlobals *G);
+void OrthoBusyDraw(PyMOLGlobals *G,int force);
 
 void OrthoDirty(PyMOLGlobals *G);
 int OrthoGetDirty(PyMOLGlobals *G);

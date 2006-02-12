@@ -1127,6 +1127,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
   AtomInfoType *ati1;
   int vis_flag;
   int sphere_mode;
+  int *marked = NULL;
 
 #ifdef _this_code_is_not_used
   float vv0[3],vv1[3],vv2[3];
@@ -1149,7 +1150,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     OOFreeP(I);
     return(NULL); /* skip if no dots are visible */
   }
-
+  marked = Calloc(int,obj->NAtom);
   RepInit(G,&I->R);
   I->shader_flag = false;
 
@@ -1306,7 +1307,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
             vis_flag=false;
         }
       }
-      ati1->temp1 = vis_flag; /* store temporary visibility information */
+      marked[a1] = vis_flag; /* store temporary visibility information */
 
       if(vis_flag)
         {
@@ -1511,7 +1512,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
       {
 		a1 = cs->IdxToAtm[a];
         ati1 = obj->AtomInfo+a1;
-        vis_flag = ati1->temp1;
+        vis_flag = marked[a1];
         
         /* don't show backbone atoms if side_chain_helper is on */
         
@@ -1548,7 +1549,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
                     j=map->EList[i++];
                     while(j>=0) {
                       a2 = cs->IdxToAtm[j];
-                      if(obj->AtomInfo[a2].temp1) {
+                      if(marked[a2]) {
                         if(j!=a)
                           if(within3f(cs->Coord+3*j,v1,
                                       cs->Obj->AtomInfo[a2].vdw*
@@ -1600,7 +1601,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
                       j=map->EList[i++];
                       while(j>=0) {
                         a2 = cs->IdxToAtm[j];
-                        if(obj->AtomInfo[a2].temp1) {
+                        if(marked[a2]) {
                           if(j!=a)
                             if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale+sphere_add))
                               {
@@ -1740,13 +1741,13 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     if(one_color==-1) 
       for(a=0;a<cs->NIndex;a++)
         {
-          *(lv++) = (ai2 + cs->IdxToAtm[a])->temp1;
+          *(lv++) = marked[cs->IdxToAtm[a]];
           *(lc++) = *(cc++);
         }
     else 
       for(a=0;a<cs->NIndex;a++)
         {
-          *(lv++) = (ai2 + cs->IdxToAtm[a])->temp1;
+          *(lv++) = marked[cs->IdxToAtm[a]];
           *(lc++) = one_color;
         }
   }
@@ -1763,7 +1764,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
 		if(I->NT) I->NT=ReallocForSure(I->NT,int,1);
       }
   }
-
+  FreeP(marked);
   FreeP(visFlag);
   FreeP(map_flag);
   if(map)  MapFree(map);

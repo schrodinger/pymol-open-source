@@ -492,6 +492,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
   int ribbon_side_chain_helper = 0;
   int line_stick_helper = 0;
   int na_mode;
+  int *marked = NULL;
 
   OOAlloc(G,RepWireBond);
   obj = cs->Obj;
@@ -518,7 +519,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
     OOFreeP(I);
     return(NULL); /* skip if no dots are visible */
   }
-
+  marked = Calloc(int,obj->NAtom);
   valence = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_valence);
   if(valence==1.0F) /* backwards compatibility... */
     valence = SettingGet_f(G,cs->Setting,
@@ -599,37 +600,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
 	 ErrChkPtr(G,I->V);
 
     if(cartoon_side_chain_helper || ribbon_side_chain_helper) {
-      /* several extra passes required for these fancy features */
-
-      /* pass 1, clear the temp1 field for all bonded atoms */
-
-      b=obj->Bond;
-      for(a=0;a<obj->NBond;a++)
-        {
-          b1 = b->index[0];
-          b2 = b->index[1];
-          ord = b->order;
-          b++;
-          
-          if(obj->DiscreteFlag) {
-            if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-              a1=obj->DiscreteAtmToIdx[b1];
-              a2=obj->DiscreteAtmToIdx[b2];
-            } else {
-              a1=-1;
-              a2=-1;
-            }
-          } else {
-            a1=cs->AtmToIdx[b1];
-            a2=cs->AtmToIdx[b2];
-          }
-          if((a1>=0)&&(a2>=0)) {
-            obj->AtomInfo[b1].temp1 = 0;
-            obj->AtomInfo[b2].temp1 = 0;
-          }
-        }
-
-      /* pass 2, set the temp1 field for atoms that are bonded to atoms without a
+      /* mark atoms that are bonded to atoms without a
          visible cartoon or ribbon */
 
       b=obj->Bond;
@@ -659,11 +630,11 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
             if((!ati1->hetatm) && (!ati2->hetatm)) {
               if(((cartoon_side_chain_helper && ati1->visRep[cRepCartoon] && !ati2->visRep[cRepCartoon]) ||
                   (ribbon_side_chain_helper && ati1->visRep[cRepRibbon] && !ati2->visRep[cRepRibbon]))) {
-                ati1->temp1 = 1;
+                marked[b1] = 1;
               }
               if(((cartoon_side_chain_helper && ati2->visRep[cRepCartoon] && !ati1->visRep[cRepCartoon]) ||
                   (ribbon_side_chain_helper && ati2->visRep[cRepRibbon] && !ati1->visRep[cRepRibbon]))) {
-                ati2->temp1 = 1;
+                marked[b2] = 1;
               }
             }
           }
@@ -740,7 +711,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                         if(prot2 == cAN_C) { 
                           if((name2[1]=='B')&&(name2[0]=='C')&&(!name2[2]))
                             c1 = c2;  /* CA-CB */
-                          else if((!name2[1])&&(name2[0]=='C')&&(!ati2->temp1))
+                          else if((!name2[1])&&(name2[0]=='C')&&(!marked[b2]))
                             s1 = s2 = 0; /* suppress CA-C */
                         } else if(prot2 == cAN_H) 
                           s1 = s2 = 0; /* suppress all CA-hydrogens */
@@ -760,9 +731,9 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                         if(prot2 == cAN_C) {
                           if((name2[1]=='D')&&(name2[0]=='C')&&(!name2[2])) 
                             c1 = c2; /* N->CD in PRO */
-                          else if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])&&(!ati1->temp1))
+                          else if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])&&(!marked[b1]))
                             s1 = s2 = 0; /* suppress N-CA */
-                          else if((!name2[1])&&(name2[0]=='C')&&(!ati1->temp1))
+                          else if((!name2[1])&&(name2[0]=='C')&&(!marked[b1]))
                             s1 = s2 = 0; /* suppress N-C */
                         } else if(prot2 == cAN_H)
                           s1 = s2 = 0; /* suppress all N-hydrogens */
@@ -771,7 +742,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                       if((!name2[1])&&(name2[0]=='C')&&
                          (((!name1[1])&&(name1[0]=='O'))||
                           ((name1[3]==0)&&(name1[2]=='T')&&(name1[1]=='X')&&(name1[0]=='O')))
-                         &&(!ati2->temp1))
+                         &&(!marked[b2]))
                         s1 = s2 = 0; /* suppress C-O,OXT */
                       else if(na_mode==1) {
                         if((((name2[3]==0)&&
@@ -805,7 +776,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                         if(prot1 == cAN_C) { 
                           if((name1[1]=='B')&&(name1[0]=='C')&&(!name1[2]))
                             c2 = c1; /* CA-CB */
-                          else if((!name1[1])&&(name1[0]=='C')&&(!ati1->temp1))
+                          else if((!name1[1])&&(name1[0]=='C')&&(!marked[b1]))
                             s1 = s2 = 0; /* suppress CA-C */
                         } else if(prot1 == cAN_H) 
                           s1 = s2 = 0; /* suppress all CA-hydrogens */
@@ -825,9 +796,9 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                         if(prot1 == cAN_C) { 
                           if((name1[1]=='D')&&(name1[0]=='C')&&(!name1[2]))
                             c2 = c1; /* N->CD in PRO */
-                          else if((name1[1]=='A')&&(name1[0]=='C')&&(ati2->temp1))
+                          else if((name1[1]=='A')&&(name1[0]=='C')&&(marked[b2]))
                             s1 = s2 = 0; /* suppress N-CA */
-                          else if((!name1[1])&&(name1[0]=='C')&&(!ati2->temp1))
+                          else if((!name1[1])&&(name1[0]=='C')&&(!marked[b2]))
                             s1 = s2 = 0; /* suppress N-C */
                         } else if(prot1 == cAN_H)
                           s1 = s2 = 0; /* suppress all N-hydrogens */
@@ -836,7 +807,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                       if((!name1[1])&&(name1[0]=='C')&&
                          (((!name2[1])&&(name2[0]=='O'))||
                           ((name2[3]==0)&&(name2[2]=='T')&&(name2[1]=='X')&&(name2[0]=='O')))
-                         &&(!ati1->temp1))
+                         &&(!marked[b1]))
                         s1 = s2 = 0; /* suppress C-O,OXT */
                       else if (na_mode==1) {
                         if((((name1[3]==0)&&
@@ -1062,6 +1033,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
 		I->VP = ReallocForSure(I->VP,float,(v-I->VP));
 	 }
   }
+  FreeP(marked);
   FreeP(other);
   return((void*)(struct Rep*)I);
 }

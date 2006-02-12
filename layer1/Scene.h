@@ -146,6 +146,7 @@ int SceneMustDrawBoth(PyMOLGlobals *G);
 float SceneGetReflectValue(PyMOLGlobals *G,int limit);
 float SceneGetSpecularValue(PyMOLGlobals *G,float spec,int limit);
 void SceneAbortAnimation(PyMOLGlobals *G);
+void SceneObjectUpdateThread(CObjectUpdateThreadInfo *T);
 
 #endif
 

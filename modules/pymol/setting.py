@@ -539,6 +539,7 @@ if __name__=='pymol.setting':
         sculpt_avd_gap            = (503, '')
         sculpt_avd_range          = (504, '')
         sculpt_avd_excl           = (505, '')
+        async_builds              = (506, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

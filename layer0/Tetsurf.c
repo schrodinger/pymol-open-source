@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Crystal.h"
 #include"Vector.h"
 #include"Feedback.h"
+#include"P.h"
 
 #define Trace_OFF
 
@@ -218,7 +219,7 @@ static int ProcessTetrahedron(int *edge,int nv,int v0,int v1,int v2,int v3,
   return nv;
 }
 /*===========================================================================*/
-int	TetsurfInit(PyMOLGlobals *G)
+static CTetsurf *TetsurfNew(PyMOLGlobals *G)
 {
 
    /* there are six tetrahedrons in each cube, and there are 
@@ -314,14 +315,12 @@ int	TetsurfInit(PyMOLGlobals *G)
 #define cM_101_111 0x20000
 #define cM_110_111 0x40000
 
-   register CTetsurf *I;
-	int	ok=true;
-	int	c;
+   register CTetsurf *I = Calloc(CTetsurf,1);
+   int	c;
    int   nv=1;
    int   last_nv;
    int v000,v100,v010,v110,v001,v101,v011,v111;
 
-   I = (G->Tetsurf = Calloc(CTetsurf,1));
    I->G=G;
    I->Tri = NULL;
    I->PtLink = NULL;
@@ -408,15 +407,24 @@ int	TetsurfInit(PyMOLGlobals *G)
         }
         }
    */
-	return(ok);
+   return I;
+}
+int	TetsurfInit(PyMOLGlobals *G)
+{
+  G->Tetsurf = TetsurfNew(G);
+  return 1;
+}
+/*===========================================================================*/
+static void  _TetsurfFree(CTetsurf *I)
+{
+  FreeP(I);
 }
 
-/*===========================================================================*/
 void  TetsurfFree(PyMOLGlobals *G)
 {
-  FreeP(G->Tetsurf);
+  _TetsurfFree(G->Tetsurf);
+  G->Tetsurf = NULL;
 }
-
 /*===========================================================================*/
 void TetsurfGetRange(PyMOLGlobals *G,
                      Isofield *field,CCrystal *cryst,
@@ -553,52 +561,61 @@ int	TetsurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **
                     int *range,int mode,MapType *voxelmap,float *a_vert,
                     float carvebuffer, int side)
 {
-  register CTetsurf *I=G->Tetsurf;
+  
+  register CTetsurf *I;
+  if(PIsGlutThread()) {
+    I = G->Tetsurf;
+  } else {
+    I = TetsurfNew(G);
+  }
+
+  {
 	int	ok=true;
 	int	Steps[3];
 	int	c,i,j,k;
-   int range_store[6];
-   int n_strip = 0;
-   int n_vert = 0;
-
-   if(mode==3) 
-     IsofieldComputeGradients(G,field);
-
-   I->TotPrim=0;
-   if(range) {
-     for(c=0;c<3;c++)
-       {
-         I->AbsDim[c]=field->dimensions[c];
-         I->CurDim[c]=TetsurfSubSize+1;
-         Steps[c]=1+((range[3+c]-range[c])-1)/TetsurfSubSize;
-       }     
-   } else {
-     range=range_store;
-     for(c=0;c<3;c++)
-       {
-         range[c]=0;
-         range[3+c]=field->dimensions[c];
-         I->AbsDim[c]=field->dimensions[c];
-         I->CurDim[c]=TetsurfSubSize+1;
-         Steps[c]=1+(I->AbsDim[c]-1)/TetsurfSubSize;
-       }
-   }
-   
-   /*   for(c=0;c<3;c++) {
-        printf("range %d %d %d\n",c,range[c],range[c+3]);
-        printf("steps %d\n",Steps[c]);
+    int range_store[6];
+    int n_strip = 0;
+    int n_vert = 0;
+    int tot_prim = 0;
+    
+    if(mode==3) 
+      IsofieldComputeGradients(G,field);
+    
+    I->TotPrim=0;
+    if(range) {
+      for(c=0;c<3;c++)
+        {
+          I->AbsDim[c]=field->dimensions[c];
+          I->CurDim[c]=TetsurfSubSize+1;
+          Steps[c]=1+((range[3+c]-range[c])-1)/TetsurfSubSize;
+        }     
+    } else {
+      range=range_store;
+      for(c=0;c<3;c++)
+        {
+          range[c]=0;
+          range[3+c]=field->dimensions[c];
+          I->AbsDim[c]=field->dimensions[c];
+          I->CurDim[c]=TetsurfSubSize+1;
+          Steps[c]=1+(I->AbsDim[c]-1)/TetsurfSubSize;
         }
-   */
-     
+    }
+    
+    /*   for(c=0;c<3;c++) {
+         printf("range %d %d %d\n",c,range[c],range[c+3]);
+         printf("steps %d\n",Steps[c]);
+         }
+    */
+    
 	I->Coord=field->points;
 	I->Grad=field->gradients;
 	I->Data=field->data;
 	I->Level=level;
 	if(ok) ok=TetsurfAlloc(I);
-
+    
 	if(ok)
-		{
-
+      {
+        
 		for(i=0;i<Steps[0];i++)
 		for(j=0;j<Steps[1];j++)
 		for(k=0;k<Steps[2];k++)
@@ -649,7 +666,13 @@ int	TetsurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **
    VLASize(*vert,float,n_vert*3);
    VLASize(*num,int,n_strip);
 
-	return(I->TotPrim);
+   tot_prim = I->TotPrim;
+   
+   if(!PIsGlutThread()) {
+     _TetsurfFree(I);
+   }
+   return(tot_prim);
+  }
 }
 /*===========================================================================*/
 static int	TetsurfAlloc(CTetsurf *II)
