@@ -2959,7 +2959,10 @@ static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
       ExecutiveRebuildAll(TempPyMOLGlobals);
     else {
       ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
-      ExecutiveInvalidateRep(TempPyMOLGlobals,s1,rep,cRepInvAll);
+      if(SettingGetGlobal_b(TempPyMOLGlobals,cSetting_defer_builds_mode))
+        ExecutiveInvalidateRep(TempPyMOLGlobals,s1,rep,cRepInvPurge);        
+      else
+        ExecutiveInvalidateRep(TempPyMOLGlobals,s1,rep,cRepInvAll);
       SelectorFreeTmp(TempPyMOLGlobals,s1); 
     }
     APIExit();

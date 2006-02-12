@@ -1848,11 +1848,11 @@ void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
   if(!obj) {
     while(ListIterate(I->Obj,rec,next)) {
       if(rec) {
-	if(defer_builds_mode == 3) { 
-	  /* purge graphics representation when no longer used */
-	  if(rec->obj->fInvalidate) 
-	    rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,-1);
-	}
+        if(defer_builds_mode == 3) { 
+          /* purge graphics representation when no longer used */
+          if(rec->obj->fInvalidate) 
+            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,-1);
+        }
         ListDetach(I->Obj,rec,next,ObjRec);
         ListElemFree(rec);
       }
@@ -1863,9 +1863,9 @@ void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
         break;
     if(rec) {
       if(defer_builds_mode == 3) { 
-	/* purge graphics representation when no longer used */
-	if(rec->obj->fInvalidate) 
-	  rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,-1);
+        /* purge graphics representation when no longer used */
+        if(rec->obj->fInvalidate) 
+          rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,-1);
       }
       rec->obj->Enabled=false;
       ListDetach(I->Obj,rec,next,ObjRec);
@@ -5183,7 +5183,7 @@ void SceneUpdate(PyMOLGlobals *G)
     {
       int n_thread  = SettingGetGlobal_i(G,cSetting_max_threads);
       int multithread = SettingGetGlobal_i(G,cSetting_async_builds);
-      if((n_thread>2)&&(I->NFrame>1))
+      if((n_thread>2)&&(I->NFrame>1)&&(!SettingGetGlobal_b(G,cSetting_defer_builds_mode)))
         n_thread = 2; /* prevent n_thread * n_thread */
 
       if(multithread&&(n_thread>1)) {

@@ -4961,7 +4961,10 @@ void ExecutiveRebuildAll(PyMOLGlobals *G)
     if(rec->type==cExecObject) {
       switch(rec->obj->type) {
       case cObjectMolecule:
-        ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvRep,-1);
+        if(SettingGetGlobal_b(G,cSetting_defer_builds_mode))
+          ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvPurge,-1);
+        else
+          ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvRep,-1);           
         break;
       case cObjectDist:
         ObjectDistInvalidateRep((ObjectDist*)rec->obj,cRepAll);
