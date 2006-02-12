@@ -658,6 +658,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_sculpt_avd_range           504
 #define cSetting_sculpt_avd_excl            505
 #define cSetting_async_builds               506
+#define cSetting_fetch_path                 507
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -667,7 +668,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       507
+#define cSetting_INIT                       508
 
 #endif
 

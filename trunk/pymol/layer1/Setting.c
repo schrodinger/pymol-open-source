@@ -2749,6 +2749,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_sculpt_avd_range, -1.0F);
   set_i(I,cSetting_sculpt_avd_excl, 7);
   set_b(I,cSetting_async_builds, 0);
+  set_s(I,cSetting_fetch_path, ".");
+
 }
 
 
