@@ -80,7 +80,7 @@ struct _COrtho {
   int SavedPC,SavedCC;
   float TextColor[3],OverlayColor[3],WizardBackColor[3],WizardTextColor[3];
   int DirtyFlag;
-  double BusyLast;
+  double BusyLast, BusyLastUpdate;
   int BusyStatus[4];
   char BusyMessage[255];
   char *WizardPromptVLA;
@@ -375,21 +375,25 @@ void OrthoBusyMessage(PyMOLGlobals *G,char *message)
 void OrthoBusySlow(PyMOLGlobals *G,int progress,int total)
 {
 	register COrtho *I=G->Ortho;
+    double   time_yet = (-I->BusyLastUpdate) + UtilGetSeconds(G);
+
 	PRINTFD(G,FB_Ortho)
 		" OrthoBusySlow-DEBUG: progress %d total %d\n",progress,total
 		ENDFD;
 	I->BusyStatus[0]=progress;
 	I->BusyStatus[1]=total;
-	if(SettingGetGlobal_b(G,cSetting_show_progress)) {
+	if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.1)) {
 		if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
 #ifndef _PYMOL_NOPY
 			int blocked = PAutoBlock();
-			PLockStatus();
+			if(PLockStatusAttempt()) {
 #endif
-			
 			PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_SLOW,progress,total);
+            I->BusyLastUpdate = UtilGetSeconds(G);
+
 #ifndef _PYMOL_NOPY
 			PUnlockStatus();
+            }
 			PAutoUnblock(blocked);
 #endif
 		}
@@ -400,20 +404,23 @@ void OrthoBusySlow(PyMOLGlobals *G,int progress,int total)
 void OrthoBusyFast(PyMOLGlobals *G,int progress,int total)
 {
 	register COrtho *I=G->Ortho;
+    double   time_yet = (-I->BusyLastUpdate) + UtilGetSeconds(G);
 	PRINTFD(G,FB_Ortho)
 		" OrthoBusyFast-DEBUG: progress %d total %d\n",progress,total
 		ENDFD;
 	I->BusyStatus[2]=progress;
 	I->BusyStatus[3]=total;
-	if(SettingGetGlobal_b(G,cSetting_show_progress)) {
+	if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.1)) {
 		if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
 #ifndef _PYMOL_NOPY
 			int blocked = PAutoBlock();
-			PLockStatus();
+			if(PLockStatusAttempt()) {
 #endif
 			PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_FAST,progress,total);
+            I->BusyLastUpdate = UtilGetSeconds(G);
 #ifndef _PYMOL_NOPY
 			PUnlockStatus();
+            }
 			PAutoUnblock(blocked);
 #endif
 		}
@@ -429,6 +436,7 @@ void OrthoBusyPrime(PyMOLGlobals *G)
 	 I->BusyStatus[a]=0;
   I->BusyMessage[0]=0;
   I->BusyLast = UtilGetSeconds(G);
+  I->BusyLastUpdate = UtilGetSeconds(G);
 }
 #ifdef _MACPYMOL_XCODE
 void MacPyMOLSetProgress(float value);

@@ -43,6 +43,7 @@ Z* -------------------------------------------------------------------
 #define PUnlockAPIAsGlutNoFlush()
 
 #define PLockStatus()
+#define PLockStatusAttempt() 1
 #define PUnlockStatus()
 
 #define PBlockAndUnlockAPI()
@@ -111,6 +112,7 @@ void PUnlockAPIAsGlut(void);
 void PUnlockAPIAsGlutNoFlush(void);
 
 void PLockStatus(void);
+int  PLockStatusAttempt(void);
 void PUnlockStatus(void);
 
 void PBlock(void);

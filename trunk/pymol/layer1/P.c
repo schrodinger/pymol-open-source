@@ -78,6 +78,7 @@ static PyObject *P_lock_c = NULL; /* C locks */
 static PyObject *P_unlock_c = NULL;
 
 static PyObject *P_lock_status = NULL; /* status locks */
+static PyObject *P_lock_status_attempt = NULL; /* status locks */
 static PyObject *P_unlock_status = NULL;
 
 static PyObject *P_lock_glut = NULL; /* GLUT locks */
@@ -109,6 +110,18 @@ void PLockStatus(void) /* assumes we have the GIL */
   PXDecRef(PyObject_CallFunction(P_lock_status,NULL));
 }
 
+int PLockStatusAttempt(void) /* assumes we have the GIL */
+{
+  int result = true;
+  PyObject *got_lock = PyObject_CallFunction(P_lock_status_attempt,NULL);
+  if(got_lock) {
+    if(!PyInt_AsLong(got_lock)) {
+      result = false;
+    }
+    Py_DECREF(got_lock);
+  }
+  return result;
+}
 void PUnlockStatus(void) /* assumes we have the GIL */
 {
   PXDecRef(PyObject_CallFunction(P_unlock_status,NULL));
@@ -1612,6 +1625,9 @@ void PInit(PyMOLGlobals *G)
 
   P_lock_status = PyObject_GetAttrString(P_cmd,"lock_status");
   if(!P_lock_status) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.lock_status()'");
+
+  P_lock_status_attempt = PyObject_GetAttrString(P_cmd,"lock_status_attempt");
+  if(!P_lock_status_attempt) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.lock_status_attempt()'");
 
   P_unlock_status = PyObject_GetAttrString(P_cmd,"unlock_status");
   if(!P_unlock_status) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.unlock_status()'");
