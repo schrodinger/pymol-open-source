@@ -2273,15 +2273,16 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                   int group_id,int block_base,
                   int perspective,float front)
 {
-  float *v,*vv,*d;
+  register float *v,*vv,*d;
   float ll;
   CPrimitive *prm;
-  int a,b,c,i,n,h,q,x,y,z,j,k,l,e;
+  register int i;
+  register int *sp,*ip,*tempRef;
+  int a,b,c,n,h,q,x,y,z,j,k,l,e;
   int extra_vert = 0;
   float p[3],dd[3],*d1,*d2,vd[3],cx[3],cy[3];
   float *tempVertex;
   float xs,ys;
-  int *tempRef,*ip,*sp;
   int remapMode = true; /* remap mode means that some objects will span more
                          * than one voxel, so we have to worry about populating
                          * those voxels and also about eliminating duplicates 
@@ -2680,17 +2681,16 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                           ip   = I->Map->EList+h; 
                           sp   = ip;
                           i   = *(sp++);
-                          while(i>=0)
-                            {
-                              if(i >= I->NVertex) /* reference -- remap */
-                                i   = tempRef[i];
-                           
-                              if(!tempRef[i]) { /*eliminate duplicates */
-                                *(ip++)      = i;
-                                tempRef[i]   = 1;
-                              } 
-                              i   = *(sp++);
-                            }
+                          while(i>=0) {
+                            register int ii = *(sp++);
+                            if(i >= I->NVertex) /* reference -- remap */
+                              i   = tempRef[i];
+                            if(!tempRef[i]) { /*eliminate duplicates */
+                              *(ip++)      = i;
+                              tempRef[i]   = 1;
+                            } 
+                            i = ii;
+                          }
                      
                           *(ip)   = -1; /* terminate list */
                           /* now reset flags efficiently */
@@ -2748,19 +2748,15 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                           h      = *start;
                           if(h > 0)
                             {
-                              int      ii;
-                              
                               ip   = mapPtr->EList + h; 
                               sp   = ip;
                               i   = *(sp++);
                               
                               while(i >= 0)
                                 {
+                                  register int ii   = *(sp++);
                                   if(i >= I->NVertex)
                                     i   = tempRef[i];
-                                  
-                                  ii   = *(sp++);
-                                  
                                   if(!tempRef[i]) { /*eliminate duplicates */
                                     *(ip++)      = i;
                                     tempRef[i]   = 1;
@@ -2823,18 +2819,16 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                                   h      = *start;
                                   if(h > 0)
                                     {
-                                      int      ii;
-                                        
                                       ip   = mapPtr->EList + h; 
                                       sp   = ip;
                                       i   = *(sp++);
                                         
                                       while(i >= 0)
                                         {
-                                          if(i >= I->NVertex)
-                                            i   = tempRef[i];
+                                          register int ii = *(sp++);
                                             
-                                          ii   = *(sp++);
+                                          if(i >= I->NVertex)
+                                            i = tempRef[i];
                                             
                                           if(!tempRef[i]) { /*eliminate duplicates */
                                             *(ip++)      = i;
