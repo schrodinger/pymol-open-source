@@ -1604,13 +1604,13 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   float diff[3],len;
   int *atm2idx = NULL;
   int *cnt = NULL;
-  int *i,*j;
+  int *i;
   int hash;
   int nb_next;
   int h,k,l;
-  int offset,xoffset;
+  int offset;
   float cutoff,vdw_cutoff;
-  int ex,ex1;
+  int ex;
   int eval_flag;
   int mask;
   float wt;
@@ -2079,14 +2079,20 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                         b1 = *(i+2);
                         if(b1>b0) { 
                           /* determine exclusion (if any) */
-                          xoffset = *(I->EXHash+ (x0i | ex_hash_i1(b1)));
-                          ex = 10;
-                          while(xoffset) {
-                            xoffset = (*(j = I->EXList + xoffset));
-                            if((*(j+1)==b0)&&(*(j+2)==b1)) {
-                              ex1 = *(j+3);
-                              if(ex1<ex) {
-                                ex=ex1;
+                          {
+                            register int xoffset;
+                            register int *I_EXList = I->EXList;
+                            register int ex1;
+                            register int *j;
+                            xoffset = *(I->EXHash+ (x0i | ex_hash_i1(b1)));
+                            ex = 10;
+                            while(xoffset) {
+                              xoffset = (*(j = I_EXList + xoffset));
+                              if((*(j+1)==b0)&&(*(j+2)==b1)) {
+                                ex1 = *(j+3);
+                                if(ex1<ex) {
+                                  ex=ex1;
+                                }
                               }
                             }
                           }
@@ -2186,14 +2192,20 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                         b1 = *(i+2);
                         if(b1>b0) { 
                           /* determine exclusion (if any) */
-                          xoffset = *(I->EXHash+ (x0i | ex_hash_i1(b1)));
-                          ex = 10;
-                          while(xoffset) {
-                            xoffset = (*(j = I->EXList + xoffset));
-                            if((*(j+1)==b0)&&(*(j+2)==b1)) {
-                              ex1 = *(j+3);
-                              if(ex1<ex) {
-                                ex=ex1;
+                          {
+                            register int xoffset;
+                            register int *I_EXList = I->EXList;
+                            register int ex1;
+                            register int *j;
+                            xoffset = *(I->EXHash+ (x0i | ex_hash_i1(b1)));
+                            ex = 10;
+                            while(xoffset) {
+                              xoffset = (*(j = I_EXList + xoffset));
+                              if((*(j+1)==b0)&&(*(j+2)==b1)) {
+                                ex1 = *(j+3);
+                                if(ex1<ex) {
+                                  ex=ex1;
+                                }
                               }
                             }
                           }

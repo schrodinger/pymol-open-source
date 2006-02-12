@@ -142,7 +142,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
     VLACheck(I->Image,ImageType*,i);
     if(!I->Image[i]) {
       SceneUpdate(G);
-	  SceneMakeMovieImage(G,true);
+	  SceneMakeMovieImage(G,false);
     }
     if(!I->Image[i]) {
       PRINTFB(G,FB_Movie,FB_Errors) 
@@ -541,8 +541,8 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
       double est =       ((nFrame-a)/(float)(a+1))*accumTiming;
       
       PRINTFB(G,FB_Movie,FB_Details)
-        " Movie: frame %4d, %4.2f sec. = %3.1f/hour (complete in %02d:%02d:%02d).\n", 
-        a+1,
+        " Movie: frame %4d of %4d, %4.2f sec. = %3.1f/hour (est. %02d:%02d:%02d to go).\n", 
+        a+1,nFrame,
         timing,3600/timing, 
         (int)(est/3600),
         ((int)(est/60)) % 60,
