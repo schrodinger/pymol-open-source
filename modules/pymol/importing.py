@@ -23,6 +23,7 @@ if __name__=='pymol.importing':
           file_ext_re,safe_oname_re, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
           _load, is_list, space_sc, safe_list_eval, is_string
+    import setting
     
     import selector
     try:
@@ -906,11 +907,13 @@ PYMOL API
         fobj = None
         fname = None
         auto_close_file = 1
+        if path and not file:
+            file = 1
         if (file==1) or (file=='1') or (file=='auto'):
             if path:
-                fname = os.path.join(path,string.lower(code)+".pdb")
+                fname = os.path.join(path,string.lower(code)+"."+type)
             else:
-                fname = string.lower(code)+".pdb"
+                fname = string.lower(code)+"."+type
         elif is_string(file):
             fname = file
         elif file:
@@ -940,12 +943,13 @@ PYMOL API
                             try:
                                 abort = 0
                                 pdb_str = gzip.open(filename).read()
+                                print fname, fobj
                                 if fname and not fobj:
                                     fobj = open(fname,'wb')
                                 if fobj:
                                     fobj.write(pdb_str)
                                     fobj.flush()
-                                    if close_file:
+                                    if auto_close_file:
                                         fobj.close()
                                 r = cmd.read_pdbstr(pdb_str,name,state,finish,discrete,quiet,
                                                     multiplex,zoom)
@@ -974,11 +978,11 @@ PYMOL API
                 else:
                     obj_name = name
                 r = _fetch(obj_code,obj_name,state,finish,
-                           discrete,multiplex,zoom,type,file,path,quiet)
+                           discrete,multiplex,zoom,type,path,file,quiet)
         return r
     
     def fetch(code, name='', state=0,finish=1, discrete=-1,
-              multiplex=-2,zoom=-1, type='pdb', async=-1, path=None, file=None, quiet=1):
+              multiplex=-2,zoom=-1, type='pdb', async=-1, path=-1, file=None, quiet=1):
         '''
 DESCRIPTION
 
@@ -987,6 +991,8 @@ DESCRIPTION
         '''
         import threading
         r = DEFAULT_SUCCESS
+        if path==-1:
+            path = setting.get('fetch_path')
         if async<0: # by default, run asynch when interactive, sync when not
             async = not quiet
         if not int(async):
