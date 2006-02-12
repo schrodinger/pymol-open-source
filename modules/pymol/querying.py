@@ -465,9 +465,22 @@ PYMOL API
             r = _cmd.get_mtl_obj()
         finally:
             unlock(r)
-        if not r:
-            if cmd._raising(): raise pymol.CmdException
         if _raising(r): raise pymol.CmdException
+        return r
+    
+    def get_version(quiet=1):
+        r = DEFAULT_ERROR
+        try:
+            lock()   
+            r = _cmd.get_version()
+        finally:
+            unlock(r)
+        if _raising(r):
+            raise pymol.CmdException
+        else:
+            if not quiet:
+                if _feedback(fb_module.cmd,fb_mask.results):
+                    print " version: %s (%8.6f)"%r
         return r
     
     def get_vrml(): 

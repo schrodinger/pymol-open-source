@@ -10,7 +10,8 @@ def bench_fn(action):
     cmd.do("_ wizard benchmark,%s"%action)
 
 def report(name,value):
-    print "PyMOL Benchmark: %30s = %10.5f"%(name,value)
+    ver = cmd.get_version[0]
+    print "PyMOL %s benchmark: %30s = %10.5f"%(ver,name,value)
     
 class Benchmark(Wizard):
 

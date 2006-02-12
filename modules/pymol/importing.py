@@ -22,7 +22,7 @@ if __name__=='pymol.importing':
           _feedback,fb_module,fb_mask, \
           file_ext_re,safe_oname_re, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
-          _load, is_list, space_sc, safe_list_eval
+          _load, is_list, space_sc, safe_list_eval, is_string
     
     import selector
     try:
@@ -896,13 +896,30 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
-    def _fetch(code,name,state,finish,discrete,multiplex,zoom,type,quiet):
+    def _fetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet):
         import urllib
         import gzip
         import os
         import string
         import time
         
+        fobj = None
+        fname = None
+        auto_close_file = 1
+        if (file==1) or (file=='1') or (file=='auto'):
+            if path:
+                fname = os.path.join(path,string.lower(code)+".pdb"_)
+            else:
+                fname = string.lower(code)+".pdb"
+        elif is_string(file):
+            fname = file
+        elif if file:
+            fobj = file
+            auto_close_file = 0
+        if fname and not fobj:
+            if os.path.exists(fname):
+                return cmd.load(fname,name,state,'pdb',finish,discrete,quiet,
+                                multiplex,zoom)
         tries = 0
         r = DEFAULT_ERROR
         done = 0
@@ -923,8 +940,15 @@ PYMOL API
                             try:
                                 abort = 0
                                 pdb_str = gzip.open(filename).read()
+                                if fname and not fobj:
+                                    fobj = open(fname,'wb')
+                                if fobj:
+                                    fobj.write(pdb_str)
+                                    fobj.flush()
+                                    if close_file:
+                                        fobj.close()
                                 r = cmd.read_pdbstr(pdb_str,name,state,finish,discrete,quiet,
-                                                multiplex,zoom)
+                                                    multiplex,zoom)
                                 done = 1
                             except IOError:
                                 pass
@@ -938,7 +962,7 @@ PYMOL API
             print "Error-fetch: unable to load '%s'"%code
         return r
     
-    def _multifetch(code,name,state,finish,discrete,multiplex,zoom,type,quiet):
+    def _multifetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet):
         import string
         r = DEFAULT_SUCCESS
         code_list = string.split(code)
@@ -950,11 +974,11 @@ PYMOL API
                 else:
                     obj_name = name
                 r = _fetch(obj_code,obj_name,state,finish,
-                           discrete,multiplex,zoom,type,quiet)        
+                           discrete,multiplex,zoom,type,file,path,quiet)
         return r
     
     def fetch(code, name='', state=0,finish=1, discrete=-1,
-              multiplex=-2,zoom=-1, type='pdb', async=-1, quiet=1):
+              multiplex=-2,zoom=-1, type='pdb', async=-1, path=None, file=None, quiet=1):
         '''
 DESCRIPTION
 
@@ -967,11 +991,11 @@ DESCRIPTION
             async = not quiet
         if not int(async):
             r = _multifetch(code,name,state,finish,
-                            discrete,multiplex,zoom,type,quiet)
+                            discrete,multiplex,zoom,type,path,file,quiet)
         else:
             t = threading.Thread(target=_multifetch,
                                  args=(code,name,state,finish,
-                                       discrete,multiplex,zoom,type,quiet))
+                                       discrete,multiplex,zoom,type,path,file,quiet))
             t.setDaemon(1)
             t.start()
         return r
