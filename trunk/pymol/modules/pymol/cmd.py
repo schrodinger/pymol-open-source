@@ -734,6 +734,77 @@ DEVELOPMENT TO DO
             for t in thread_list:
                 t.join()
 
+        def _coordset_update_thread(list_lock,thread_info):
+            # WARNING: internal routine, subject to change
+            while 1:
+                list_lock.acquire()
+                if not len(thread_info):
+                    list_lock.release()
+                    break
+                else:
+                    info = thread_info.pop(0)
+                    list_lock.release()
+                _cmd.coordset_update_thread(info)
+        
+        def _coordset_update_spawn(thread_info,n_thread):
+            # WARNING: internal routine, subject to change
+            if len(thread_info):
+                list_lock = threading.Lock() # mutex for list
+                thread_list = []
+                for a in range(0,n_thread):
+                    t = threading.Thread(target=_coordset_update_thread,
+                                                args=(list_lock,thread_info))
+                    t.setDaemon(1)
+                    thread_list.append(t)
+                for t in thread_list:
+                    t.start()
+                for t in thread_list:
+                    t.join()
+
+        def _object_update_thread(list_lock,thread_info):
+            # WARNING: internal routine, subject to change
+            while 1:
+                list_lock.acquire()
+                if not len(thread_info):
+                    list_lock.release()
+                    break
+                else:
+                    info = thread_info.pop(0)
+                    list_lock.release()
+                _cmd.object_update_thread(info)
+        
+        def _object_update_spawn(thread_info,n_thread):
+            # WARNING: internal routine, subject to change
+            if len(thread_info):
+                list_lock = threading.Lock() # mutex for list
+                thread_list = []
+                for a in range(0,n_thread):
+                    t = threading.Thread(target=_object_update_thread,
+                                                args=(list_lock,thread_info))
+                    t.setDaemon(1)
+                    thread_list.append(t)
+                for t in thread_list:
+                    t.start()
+                while 1: # update the progress bar periodically
+                    alive = 0
+                    for t in thread_list:
+                        if t.isAlive():
+                            alive = 1
+                            break
+                    if not alive: # draw the busy counter
+                        break
+                    else:
+                        t.join(0.2)
+                        if not t.isAlive():
+                           thread_list.remove(t)
+                        try:
+                            lock()
+                            _cmd.busy_draw(0)
+                        finally:
+                            unlock(-1)
+                for t in thread_list:
+                    t.join()
+
         # status reporting
 
         def _feedback(module,mask): # feedback query routine

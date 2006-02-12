@@ -52,6 +52,7 @@ Z* -------------------------------------------------------------------
 #include"Text.h"
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
+#include"PConv.h"
 
 #ifdef _PYMOL_SHARP3D
 #define cSliceMin 0.1F
@@ -5124,6 +5125,44 @@ int SceneRovingCheckDirty(PyMOLGlobals *G)
 
   return(I->RovingDirtyFlag);
 }
+
+struct _CObjectUpdateThreadInfo {
+  CObject *obj;
+};
+
+void SceneObjectUpdateThread(CObjectUpdateThreadInfo *T)
+{
+  if(T->obj && T->obj->fUpdate) {
+    T->obj->fUpdate(T->obj);
+  }
+}
+
+#ifndef _PYMOL_NOPY
+static void SceneObjectUpdateSpawn(PyMOLGlobals *G,CObjectUpdateThreadInfo *Thread,int n_thread,int n_total)
+{
+  if(n_total==1) {
+    SceneObjectUpdateThread(Thread);
+  } else if(n_total){
+    int blocked;
+    PyObject *info_list;
+    int a,n=0;
+    blocked = PAutoBlock();
+    
+    PRINTFB(G,FB_Scene,FB_Blather)
+      " Scene: updating objects with %d threads...\n",n_thread
+      ENDFB(G);
+    info_list = PyList_New(n_total);
+    for(a=0;a<n_total;a++) {
+      PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
+      n++;
+    }
+    PXDecRef(PyObject_CallMethod(P_cmd,"_object_update_spawn","Oi",info_list,n_thread));
+    Py_DECREF(info_list);
+    PAutoUnblock(blocked);
+  }
+}
+#endif
+
 /*========================================================================*/
 void SceneUpdate(PyMOLGlobals *G)
 {
@@ -5142,10 +5181,36 @@ void SceneUpdate(PyMOLGlobals *G)
     SceneCountFrames(G);
     PyMOL_SetBusy(G->PyMOL,true); /*  race condition -- may need to be fixed */
     {
-      rec = NULL;
-      while(ListIterate(I->Obj,rec,next))
-        if(rec->obj->fUpdate) 
-          rec->obj->fUpdate(rec->obj);
+      int n_thread  = SettingGetGlobal_i(G,cSetting_max_threads);
+      int multithread = SettingGetGlobal_i(G,cSetting_async_builds);
+      if((n_thread>2)&&(I->NFrame>1))
+        n_thread = 2; /* prevent n_thread * n_thread */
+
+      if(multithread&&(n_thread>1)) {
+        /* multi-threaded geometry update */
+        int cnt = 0;
+
+        rec = NULL;
+        while(ListIterate(I->Obj,rec,next))
+          cnt++;
+        
+        if(cnt) {
+          CObjectUpdateThreadInfo *thread_info = Alloc(CObjectUpdateThreadInfo, cnt);
+          if(thread_info) {
+            cnt = 0;
+            while(ListIterate(I->Obj,rec,next))
+              thread_info[cnt++].obj = rec->obj;
+            SceneObjectUpdateSpawn(G,thread_info,n_thread,cnt);
+            FreeP(thread_info);
+          }
+        }
+      } else {
+        /* single-threaded update */
+        rec = NULL;
+        while(ListIterate(I->Obj,rec,next))
+          if(rec->obj->fUpdate) 
+            rec->obj->fUpdate(rec->obj);
+      }
     }
     PyMOL_SetBusy(G->PyMOL,false); /*  race condition -- may need to be fixed */
 	 I->ChangedFlag = false;

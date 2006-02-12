@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Feedback.h"
 #include"PConv.h"
+#include"P.h"
 
 #define Trace_OFF
 
@@ -95,9 +96,15 @@ static int	IsosurfPoints(CIsosurf *II);
 
 #define IsosurfSubSize		50
 
+static void  _IsosurfFree(CIsosurf *I)
+{
+  FreeP(I);
+}
+
 void  IsosurfFree(PyMOLGlobals *G)
 {
-  FreeP(G->Isosurf);
+  _IsosurfFree(G->Isosurf);
+  G->Isosurf = NULL;
 }
 /*===========================================================================*/
 PyObject *IsosurfAsPyList(Isofield *field)
@@ -327,7 +334,6 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
 /*===========================================================================*/
 Isofield *IsosurfFieldAlloc(PyMOLGlobals *G,int *dims)
 {
-  /*  register CIsosurf *I = G->Isosurf;*/
   int dim4[4];
   int a;
   Isofield *result;
@@ -354,8 +360,6 @@ Isofield *IsosurfFieldAlloc(PyMOLGlobals *G,int *dims)
 /*===========================================================================*/
 void IsosurfFieldFree(PyMOLGlobals *G,Isofield *field)
 {
-  /*  register CIsosurf *I = G->Isosurf;*/
-
   if(field->gradients)
     FieldFree(field->gradients);
   FieldFree(field->points);
@@ -404,13 +408,10 @@ static void	IsosurfCode(CIsosurf *II,char *bits1,char *bits2)
 #endif
 }
 /*===========================================================================*/
-int	IsosurfInit(PyMOLGlobals *G)
+static CIsosurf *IsosurfNew(PyMOLGlobals *G)
 {
-	int	ok=true;
 	int	c;
-   register CIsosurf *I;
-
-   I = (G->Isosurf = Calloc(CIsosurf,1));
+   register CIsosurf *I = Calloc(CIsosurf,1);
               
 	I->VertexCodes=NULL;
 	I->ActiveEdges=NULL;
@@ -493,9 +494,13 @@ int	IsosurfInit(PyMOLGlobals *G)
 	IsosurfCode(I,"00100010","000001");
 	IsosurfCode(I,"00010001","000001");
 	
-	return(ok);
+	return(I);
 }
-
+int IsosurfInit(PyMOLGlobals *G)
+{
+  G->Isosurf = IsosurfNew(G);
+  return 1;
+}
 /*===========================================================================*/
 void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,
                      CCrystal *cryst,
@@ -602,7 +607,13 @@ void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,
 /*===========================================================================*/
 int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **vert,int *range,int mode)
 {
-  register CIsosurf *I = G->Isosurf;
+  register CIsosurf *I;
+  if(PIsGlutThread()) {
+    I = G->Isosurf;
+  } else {
+    I = IsosurfNew(G);
+  }
+  {
 
 	int	ok=true;
 	int	Steps[3];
@@ -705,8 +716,12 @@ int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **
    I->Num[I->NSeg]=0;  /* important - must terminate the segment list */
    
 	*vert = I->Line;
-	*num = I->Num;
+	*num = I->Num;  
+    if(!PIsGlutThread()) {
+      _IsosurfFree(I);
+    }
 	return(ok);
+  }
 }
 /*===========================================================================*/
 static int	IsosurfAlloc(PyMOLGlobals *G,CIsosurf *II)

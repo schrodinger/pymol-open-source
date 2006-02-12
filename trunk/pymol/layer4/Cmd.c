@@ -286,6 +286,41 @@ static PyObject *CmdRayTraceThread(PyObject *self, 	PyObject *args)
   }
   return APIResultOk(ok);
 }
+static PyObject *CmdCoordSetUpdateThread(PyObject *self, 	PyObject *args)
+{
+  int ok=true;
+  PyObject *py_thread_info;
+
+  CCoordSetUpdateThreadInfo *thread_info = NULL;
+
+  ok = PyArg_ParseTuple(args,"O",&py_thread_info);
+  if(ok) ok = PyCObject_Check(py_thread_info);
+  if(ok) ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info))!=NULL);
+  if (ok) {
+    PUnblock();
+    CoordSetUpdateThread(thread_info);
+    PBlock();
+  }
+  return APIResultOk(ok);
+}
+
+static PyObject *CmdObjectUpdateThread(PyObject *self, 	PyObject *args)
+{
+  int ok=true;
+  PyObject *py_thread_info;
+
+  CObjectUpdateThreadInfo *thread_info = NULL;
+
+  ok = PyArg_ParseTuple(args,"O",&py_thread_info);
+  if(ok) ok = PyCObject_Check(py_thread_info);
+  if(ok) ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info))!=NULL);
+  if (ok) {
+    PUnblock();
+    SceneObjectUpdateThread(thread_info);
+    PBlock();
+  }
+  return APIResultOk(ok);
+}
 
 static PyObject *CmdGetMovieLocked(PyObject *self, 	PyObject *args)
 {
@@ -3677,6 +3712,17 @@ static PyObject *CmdRock(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdBusyDraw(PyObject *self, PyObject *args)
+{
+  int int1;
+  int ok=true;
+  ok = PyArg_ParseTuple(args,"i",&int1);
+  APIEntry();
+  OrthoBusyDraw(TempPyMOLGlobals,int1);
+  APIExit();
+  return APIResultOk(ok);
+}
+
 static PyObject *CmdSetBusy(PyObject *self, PyObject *args)
 {
   int int1;
@@ -5823,6 +5869,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"attach",                CmdAttach,               METH_VARARGS },
    {"bg_color",              CmdBackgroundColor,      METH_VARARGS },
 	{"bond",                  CmdBond,                 METH_VARARGS },
+   {"busy_draw",             CmdBusyDraw,             METH_VARARGS },
    {"button",                CmdButton,               METH_VARARGS },
    {"cartoon",               CmdCartoon,              METH_VARARGS },
    {"center",                CmdCenter,               METH_VARARGS },
@@ -5831,6 +5878,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"color",	              CmdColor,                METH_VARARGS },
 	{"colordef",	           CmdColorDef,             METH_VARARGS },
    {"combine_object_ttt",    CmdCombineObjectTTT,     METH_VARARGS },
+    {"coordset_update_thread",  CmdCoordSetUpdateThread,       METH_VARARGS },
 	{"copy",                  CmdCopy,                 METH_VARARGS },
 	{"create",                CmdCreate,               METH_VARARGS },
 	{"count_states",          CmdCountStates,          METH_VARARGS },
@@ -5953,6 +6001,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"mmatrix",	              CmdMMatrix,              METH_VARARGS },
 	{"multisave",             CmdMultiSave,            METH_VARARGS },
 	{"mview",	              CmdMView,                METH_VARARGS },
+    {"object_update_thread",  CmdObjectUpdateThread,       METH_VARARGS },
 	{"origin",	              CmdOrigin,               METH_VARARGS },
 	{"orient",	              CmdOrient,               METH_VARARGS },
 	{"onoff",                 CmdOnOff,                METH_VARARGS },
@@ -5994,6 +6043,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"select_list",           CmdSelectList,           METH_VARARGS },
 	{"set",	                 CmdSet,                  METH_VARARGS },
 	{"legacy_set",            CmdLegacySet,            METH_VARARGS },
+
 	{"sculpt_deactivate",     CmdSculptDeactivate,     METH_VARARGS },
 	{"sculpt_activate",       CmdSculptActivate,       METH_VARARGS },
 	{"sculpt_iterate",        CmdSculptIterate,        METH_VARARGS },

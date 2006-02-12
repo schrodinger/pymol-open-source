@@ -109,6 +109,8 @@ void ObjectStateRightCombineMatrixR44d(CObjectState *I, double *matrix);
 void ObjectStateLeftCombineMatrixR44d(CObjectState *I, double *matrix);
 void ObjectStateCombineMatrixTTT(CObjectState *I, float *matrix);
 
+typedef struct _CObjectUpdateThreadInfo CObjectUpdateThreadInfo;
+
 #endif
 
 

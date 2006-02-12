@@ -9084,6 +9084,45 @@ int ObjectMoleculeGetNFrames(ObjectMolecule *I)
 {
   return I->NCSet;
 }
+
+struct _CCoordSetUpdateThreadInfo {
+  CoordSet *cs;
+  int a;
+};
+
+void CoordSetUpdateThread(CCoordSetUpdateThreadInfo *T)
+{
+  if(T->cs && T->cs->fUpdate) {
+    T->cs->fUpdate(T->cs,T->a);
+  }
+}
+
+#ifndef _PYMOL_NOPY
+static void ObjMolCoordSetUpdateSpawn(PyMOLGlobals *G,CCoordSetUpdateThreadInfo *Thread,int n_thread,int n_total)
+{
+  if(n_total==1) {
+    CoordSetUpdateThread(Thread);
+  } else if(n_total){
+    int blocked;
+    PyObject *info_list;
+    int a,n=0;
+    blocked = PAutoBlock();
+    
+    PRINTFB(G,FB_Scene,FB_Blather)
+      " Scene: updating coordinate sets with %d threads...\n",n_thread
+      ENDFB(G);
+    info_list = PyList_New(n_total);
+    for(a=0;a<n_total;a++) {
+      PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
+      n++;
+    }
+    PXDecRef(PyObject_CallMethod(P_cmd,"_coordset_update_spawn","Oi",info_list,n_thread));
+    Py_DECREF(info_list);
+    PAutoUnblock(blocked);
+  }
+}
+#endif
+
 /*========================================================================*/
 void ObjectMoleculeUpdate(ObjectMolecule *I)
 {
@@ -9119,17 +9158,43 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
       start=0;
       stop=1;
     }
-
-    for(a=start;a<stop;a++)
-      if(I->CSet[a]) {	
-        OrthoBusySlow(I->Obj.G,a,I->NCSet);
-        PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Blather)
-          " ObjectMolecule-DEBUG: updating representations for state %d of \"%s\".\n" 
-          , a+1, I->Obj.Name
-          ENDFB(I->Obj.G);
-        if(I->CSet[a]->fUpdate)
-          I->CSet[a]->fUpdate(I->CSet[a],a);
+    {
+      int n_thread  = SettingGetGlobal_i(I->Obj.G,cSetting_max_threads);
+      int multithread = SettingGetGlobal_i(I->Obj.G,cSetting_async_builds);
+      if(multithread&&(n_thread)&&(stop-start)>1) {
+        int cnt = 0;
+        for(a=start;a<stop;a++)
+          if(I->CSet[a]) cnt++;
+        {
+          CCoordSetUpdateThreadInfo *thread_info = Alloc(CCoordSetUpdateThreadInfo, cnt);
+          if(thread_info) {
+            cnt = 0;
+            for(a=start;a<stop;a++) {
+              if(I->CSet[a]) {
+                thread_info[cnt].cs = I->CSet[a];
+                thread_info[cnt].a = a;
+                cnt++;
+              }
+            }
+            ObjMolCoordSetUpdateSpawn(I->Obj.G,thread_info,n_thread,cnt);
+            FreeP(thread_info);
+          }
+          
+        }
+        
+      } else {
+        for(a=start;a<stop;a++)
+          if(I->CSet[a]) {	
+            OrthoBusySlow(I->Obj.G,a,I->NCSet);
+            PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Blather)
+              " ObjectMolecule-DEBUG: updating representations for state %d of \"%s\".\n" 
+              , a+1, I->Obj.Name
+              ENDFB(I->Obj.G);
+            if(I->CSet[a]->fUpdate)
+              I->CSet[a]->fUpdate(I->CSet[a],a);
+          }
       }
+    }
     if(I->Obj.RepVis[cRepCell]) {
       if(I->Symmetry) {
         if(I->Symmetry->Crystal) {

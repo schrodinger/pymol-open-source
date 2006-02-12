@@ -961,7 +961,6 @@ static void CoordSetUpdate(CoordSet *I,int state)
   ObjectMolecule *obj;
   obj=I->Obj;
 
-
   if(!I->Color) /* colors invalidated */
 	 {
 		I->Color=VLAlloc(int,I->NIndex);

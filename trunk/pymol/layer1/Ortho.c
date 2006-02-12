@@ -98,7 +98,6 @@ struct _COrtho {
   GLenum ActiveGLBuffer;
 };
 
-static void OrthoBusyDraw(PyMOLGlobals *G,int force);
 
 void OrthoParseCurrentLine(PyMOLGlobals *G);
 static void OrthoDrawWizardPrompt(PyMOLGlobals *G);
@@ -435,7 +434,7 @@ void OrthoBusyPrime(PyMOLGlobals *G)
 void MacPyMOLSetProgress(float value);
 #endif
 /*========================================================================*/
-static void OrthoBusyDraw(PyMOLGlobals *G,int force)
+void OrthoBusyDraw(PyMOLGlobals *G,int force)
 {
   register COrtho *I=G->Ortho;
   double now;
@@ -453,10 +452,10 @@ static void OrthoBusyDraw(PyMOLGlobals *G,int force)
 #ifdef _MACPYMOL_XCODE
       float busyValue;
       if(I->BusyStatus[1]) {
-	busyValue=(I->BusyStatus[0]*1.0F/I->BusyStatus[1]);
+        busyValue=(I->BusyStatus[0]*1.0F/I->BusyStatus[1]);
       }
       if(I->BusyStatus[3]) {
-	busyValue=(I->BusyStatus[2]*1.0F/I->BusyStatus[3]);
+        busyValue=(I->BusyStatus[2]*1.0F/I->BusyStatus[3]);
       }
       MacPyMOLSetProgress(busyValue);
 #else

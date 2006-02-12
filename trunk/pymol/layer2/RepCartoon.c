@@ -130,7 +130,8 @@ static float smooth(float x,float power)
 static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj, 
                     CoordSet *cs, float width, CGO *cgo, int ring_color, int ring_mode,
                     float ladder_radius, int ladder_color, int ladder_mode, int finder,
-                    int sc_helper, int *nuc_flag, int na_mode, float ring_alpha, float alpha)
+                    int sc_helper, int *nuc_flag, int na_mode, float ring_alpha, 
+                    float alpha, int *marked)
 {
   float *v_i[MAX_RING_ATOM];
   float *col[MAX_RING_ATOM];
@@ -179,7 +180,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
              ((ai->name[1]>='0')&&(ai->name[1]<='9')))
             have_C_number = a1;
         }
-        if(!ai->temp1)
+        if(!marked[a1])
           all_marked=false;
       }
       if(!have_atom) {
@@ -208,7 +209,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           a1 = atix[i];
           if(!nf) nf = nuc_flag[a1];
           ai = atomInfo+a1;
-          if((ai->protons == cAN_C) && (!ai->temp1) && 
+          if((ai->protons == cAN_C) && (!marked[a1]) && 
              (WordMatchExact(G,"C3*",ai->name,1)||
               WordMatchExact(G,"C3'",ai->name,1))) {
             sugar_at = a1;
@@ -216,14 +217,14 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
             nbr[0]= neighbor[mem0]+1;
             while((mem1 = neighbor[nbr[0]])>=0) {
               if((atomInfo[mem1].protons==cAN_O) &&
-                 (!atomInfo[mem1].temp1)) {  
+                 (!marked[mem1])) {  
                 ai = atomInfo+mem1;
                 if(WordMatchExact(G,"O3*",ai->name,1)||
                    WordMatchExact(G,"O3'",ai->name,1))
                   o3_at = mem1;
                 nbr[1] = neighbor[mem1]+1;
                 while((mem2 = neighbor[nbr[1]])>=0) {
-                  if((mem2!=mem0)&& (!atomInfo[mem2].temp1) && 
+                  if((mem2!=mem0)&& (!marked[mem2]) && 
                      (atomInfo[mem2].protons==cAN_P)) { 
                     phos3_at = mem2;
                   }
@@ -232,7 +233,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
               }
                 
               if((atomInfo[mem1].protons==cAN_C) &&
-                 (!atomInfo[mem1].temp1)) {
+                 (!marked[mem1])) {
                 ai2 = atomInfo+mem1;  
                 if(WordMatchExact(G,NUCLEIC_NORMAL1,ai2->name,1)||
                    WordMatchExact(G,NUCLEIC_NORMAL2,ai2->name,1))
@@ -240,7 +241,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                   
                 nbr[1] = neighbor[mem1]+1;
                 while((mem2 = neighbor[nbr[1]])>=0) {
-                  if((mem2!=mem0)&& (!atomInfo[mem2].temp1) && 
+                  if((mem2!=mem0)&& (!marked[mem2]) && 
                      (atomInfo[mem2].protons==cAN_C)) { 
                     ai = atomInfo+mem2;
                     if(WordMatchExact(G,"C1*",ai->name,1)||
@@ -250,7 +251,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                     while((mem3 = neighbor[nbr[2]])>=0) {
                       if((mem3!=mem1)&&(mem3!=mem0)) {
                         if((atomInfo[mem3].protons==cAN_O) &&
-                           (!atomInfo[mem3].temp1)) {  
+                           (!marked[mem3])) {  
                           ai = atomInfo+mem3;
                           if(WordMatchExact(G,"O5*",ai->name,1)||
                              WordMatchExact(G,"O5'",ai->name,1))
@@ -258,7 +259,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                   
                           nbr[3] = neighbor[mem3]+1;
                           while((mem4 = neighbor[nbr[3]])>=0) {
-                            if((mem4!=mem2)&& (!atomInfo[mem4].temp1) && 
+                            if((mem4!=mem2)&& (!marked[mem4]) && 
                                (atomInfo[mem4].protons==cAN_P)) { 
                               phos5_at = mem4;
                             }
@@ -269,7 +270,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                             
                           if(ring_mode) {
                             ai2 = atomInfo + mem3;
-                            if((!ai2->temp1) && (WordMatchExact(G,"N1",ai2->name,1)||
+                            if((!marked[mem3]) && (WordMatchExact(G,"N1",ai2->name,1)||
                                                  WordMatchExact(G,"N9",ai2->name,1))) {
                               base_at = mem3;
                               if(ring_mode!=3) {
@@ -287,7 +288,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                                 nbr[4] = neighbor[mem4]+1;              
                                 while((mem5 = neighbor[nbr[4]])>=0) {
                                   if((mem5!=mem3)&&(mem5!=mem2)&&(mem5!=mem1)&&(mem5!=mem0)&&
-                                     (atomInfo[mem5].protons==cAN_N)&&(atomInfo[mem5].temp1)) { /* must be in a mapped ring */
+                                     (atomInfo[mem5].protons==cAN_N)&&(marked[mem5])) { /* must be in a mapped ring */
                                     /* clear flag here */
                                     purine_flag = false;
                                       
@@ -295,13 +296,13 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                                     while((mem6 = neighbor[nbr[5]])>=0) {
                                       if((mem6!=mem4)&&(mem6!=mem3)&&(mem6!=mem2)&&
                                          (mem6!=mem1)&&(mem6!=mem0)&&
-                                         (atomInfo[mem6].protons==cAN_C)&&(atomInfo[mem6].temp1)) { 
+                                         (atomInfo[mem6].protons==cAN_C)&&(marked[mem6])) { 
                                         nbr[6] = neighbor[mem6]+1;              
                                         while((mem7 = neighbor[nbr[6]])>=0) {
                                           ai2 = atomInfo + mem7;
                                           if((mem7!=mem5)&&(mem7!=mem4)&&(mem7!=mem3)&&(mem7!=mem2)&&
                                              (mem7!=mem2)&&(mem7!=mem1)&&(mem7!=mem0)&&
-                                             (ai2->protons==cAN_N)&&(ai2->temp1))   {
+                                             (ai2->protons==cAN_N)&&(marked[mem7]))   {
                                             if(WordMatchExact(G,"N1",ai2->name,1)) {
                                               /* and set flag */
                                               base_at = mem7;
@@ -316,7 +317,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                                       
                                     if(!purine_flag) {
                                       ai2 = atomInfo + mem5;
-                                      if(ai2->temp1 && WordMatchExact(G,"N3",ai2->name,1)) {
+                                      if(marked[mem5] && WordMatchExact(G,"N3",ai2->name,1)) {
                                         base_at = mem5;
                                       }
                                     }
@@ -345,17 +346,17 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           a1 = atix[i];
           if(!nf) nf = nuc_flag[a1];
           ai = atomInfo+a1;
-          if((ai->protons == cAN_N) && (!ai->temp1) &&
+          if((ai->protons == cAN_N) && (!marked[a1]) &&
              (WordMatchExact(G,"N1",ai->name,1)||
               WordMatchExact(G,"N3",ai->name,1))) {
             mem0 = a1;
             nbr[0]= neighbor[mem0]+1;
             while((mem1 = neighbor[nbr[0]])>=0) {
               if((atomInfo[mem1].protons==cAN_C) && 
-                 (!atomInfo[mem1].temp1)) {  
+                 (!marked[mem1])) {  
                 nbr[1] = neighbor[mem1]+1;
                 while((mem2 = neighbor[nbr[1]])>=0) {
-                  if((mem2!=mem0)&& (!atomInfo[mem2].temp1) && 
+                  if((mem2!=mem0)&& (!marked[mem2]) && 
                      (atomInfo[mem2].protons==cAN_N)) { 
                     nbr[2] = neighbor[mem2]+1;
                     while((mem3 = neighbor[nbr[2]])>=0) {
@@ -368,7 +369,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                               nbr[4] = neighbor[mem4]+1;              
                               while((mem5 = neighbor[nbr[4]])>=0) {
                                 if((mem5!=mem3)&&(mem5!=mem2)&&(mem5!=mem1)&&(mem5!=mem0)&&
-                                   (atomInfo[mem5].temp1)&& 
+                                   (marked[mem5])&& 
                                    (atomInfo[mem5].protons==cAN_C)) {
                                   nbr[5] = neighbor[mem5]+1;              
                                   while((mem6 = neighbor[nbr[5]])>=0) {
@@ -376,13 +377,13 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                                        (mem6!=mem1)&&(mem6!=mem0)&&
                                        ((atomInfo[mem6].protons==cAN_C)||
                                         (atomInfo[mem6].protons==cAN_O))
-                                       &&(atomInfo[mem6].temp1)) { 
+                                       &&(marked[mem6])) { 
                                       nbr[6] = neighbor[mem6]+1;              
                                       while((mem7 = neighbor[nbr[6]])>=0) {
                                         ai2 = atomInfo + mem7;
                                         if((mem7!=mem5)&&(mem7!=mem4)&&(mem7!=mem3)&&(mem7!=mem2)&&
                                            (mem7!=mem2)&&(mem7!=mem1)&&(mem7!=mem0)&&
-                                           (ai2->protons==cAN_C)&&(ai2->temp1))   {
+                                           (ai2->protons==cAN_C)&&(marked[mem7]))   {
                                           if(WordMatchExact(G,NUCLEIC_NORMAL1,ai2->name,1)||
                                              WordMatchExact(G,NUCLEIC_NORMAL2,ai2->name,1)) {
                                             base_at = a1;
@@ -399,13 +400,13 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                               }
                             } else if(((atomInfo[mem4].protons==cAN_C)||
                                        (atomInfo[mem4].protons==cAN_O))&&
-                                      (atomInfo[mem4].temp1)) { /* pyrimidine case */
+                                      (marked[mem4])) { /* pyrimidine case */
                               
                               nbr[4] = neighbor[mem4]+1;              
                               while((mem5 = neighbor[nbr[4]])>=0) {
                                 ai2 = atomInfo + mem5;
                                 if((mem5!=mem3)&&(mem5!=mem2)&&(mem5!=mem1)&&(mem5!=mem0)&&
-                                   (ai2->protons==cAN_C)&&(ai2->temp1)) {
+                                   (ai2->protons==cAN_C)&&(marked[mem5])) {
                                   if(WordMatchExact(G,NUCLEIC_NORMAL1,ai2->name,1)||
                                      WordMatchExact(G,NUCLEIC_NORMAL2,ai2->name,1)) {
                                     base_at = a1;
@@ -441,7 +442,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           nbr[0]= neighbor[mem0]+1;
           while((mem1 = neighbor[nbr[0]])>=0) {
             if((atomInfo[mem1].protons==cAN_C) &&
-               (!atomInfo[mem1].temp1)) {  
+               (!marked[mem1])) {  
               ai = atomInfo + mem1;
               if(!(WordMatchExact(G,"C3*",ai->name,1)||
                    WordMatchExact(G,"C3'",ai->name,1))) {
@@ -458,26 +459,26 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           nbr[0]= neighbor[mem0]+1;
           while((mem1 = neighbor[nbr[0]])>=0) {
             if((atomInfo[mem1].protons==cAN_O) &&
-               (!atomInfo[mem1].temp1)) {  
+               (!marked[mem1])) {  
               ai = atomInfo+mem1;
               if(WordMatchExact(G,"O3*",ai->name,1)||
                  WordMatchExact(G,"O3'",ai->name,1))
                 o3_at = mem1;
               nbr[1] = neighbor[mem1]+1;
               while((mem2 = neighbor[nbr[1]])>=0) {
-                if((mem2!=mem0)&& (!atomInfo[mem2].temp1) && 
+                if((mem2!=mem0)&& (!marked[mem2]) && 
                    (atomInfo[mem2].protons==cAN_P)) { 
                   phos3_at = mem2;
                 }
                 nbr[1]+=2;
               }
             }
-            if((atomInfo[mem1].protons==cAN_C) && (atomInfo[mem1].temp1)) {
+            if((atomInfo[mem1].protons==cAN_C) && (marked[mem1])) {
 
               nbr[1] = neighbor[mem1]+1;
               while((mem2 = neighbor[nbr[1]])>=0) {
 
-                if((mem2!=mem0)&&(!atomInfo[mem2].temp1) && 
+                if((mem2!=mem0)&&(!marked[mem2]) && 
                    (atomInfo[mem2].protons==cAN_C)) { 
                   ai = atomInfo+mem2;
                   if(WordMatchExact(G,"C1*",ai->name,1)||
@@ -488,14 +489,14 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                   while((mem3 = neighbor[nbr[2]])>=0) {
                     if((mem3!=mem1)&&(mem3!=mem0)&&
                        (atomInfo[mem3].protons==cAN_O)&&
-                       (!atomInfo[mem3].temp1)) {  
+                       (!marked[mem3])) {  
                       ai = atomInfo+mem3;
                       if(WordMatchExact(G,"O5*",ai->name,1)||
                          WordMatchExact(G,"O5'",ai->name,1))
                         o5_at = mem3;
                       nbr[3] = neighbor[mem3]+1;
                       while((mem4 = neighbor[nbr[3]])>=0) {
-                        if((mem4!=mem2)&& (!atomInfo[mem4].temp1) && 
+                        if((mem4!=mem2)&& (!marked[mem4]) && 
                            (atomInfo[mem4].protons==cAN_P)) { 
                           phos5_at = mem4;
                         }
@@ -692,10 +693,10 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
       }
     }
     if((!ring_mode)||(finder==2)) {
-      if(ladder_mode) { /* mark sure all rings traversed are marked */
+      if(ladder_mode) { /* mark sure all rings traversed are mark */
         int i;
         for(i=0;i<=n_atom;i++) {
-          ai_i[i]->temp1 = true;
+          marked[atix[i]] = true;
         }
       }
     }
@@ -793,7 +794,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
       for(i=0;i<n_atom;i++) {
         add3f(avg,v_i[i],avg);
         add3f(avg_col,col[i],avg_col);
-        ai_i[i]->temp1 = true;
+        marked[i] = true;
       }
       scale3f(avg,1.0F/n_atom,avg);
       scale3f(avg_col,1.0F/n_atom,avg_col);
@@ -2965,6 +2966,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
     int mem[8];
     int nbr[7];
     int *neighbor;
+    int *marked = Calloc(int,obj->NAtom);
     register int escape_count; 
     register int *atmToIdx = NULL;
     
@@ -2972,13 +2974,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
 
     ObjectMoleculeUpdateNeighbors(obj);
     neighbor = obj->Neighbor;  
-    { /* clear the flags */
-      ai=obj->AtomInfo;
-      for(a=0;a<obj->NAtom;a++) {
-        ai->temp1 = false;
-        ai++;
-      }
-    }
+    
     escape_count = ESCAPE_MAX; /* don't get bogged down with structures 
                                   that have unreasonable connectivity */
     for(ring_i=0;ring_i<n_ring;ring_i++) {
@@ -3013,7 +3009,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                           do_ring(G,5,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
                                   ladder_radius, ladder_color, ladder_mode, ring_finder,
                                   cartoon_side_chain_helper, nuc_flag, na_mode, 
-                                  ring_alpha, alpha);
+                                  ring_alpha, alpha, marked);
 
                         }
                         
@@ -3032,7 +3028,8 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                                  ); */
                               do_ring(G,6,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
                                       ladder_radius, ladder_color, ladder_mode, ring_finder,
-                                      cartoon_side_chain_helper, nuc_flag, na_mode, ring_alpha, alpha);
+                                      cartoon_side_chain_helper, nuc_flag, na_mode, 
+                                      ring_alpha, alpha, marked);
                             }
                             nbr[6] = neighbor[mem[6]]+1;              
                             while(((mem[7] = neighbor[nbr[6]])>=0)&&
@@ -3042,7 +3039,8 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                                 if(mem[7]==mem[0]) {
                                   do_ring(G,7,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
                                           ladder_radius, ladder_color, ladder_mode, ring_finder,
-                                          cartoon_side_chain_helper, nuc_flag, na_mode, ring_alpha, alpha);
+                                          cartoon_side_chain_helper, nuc_flag, na_mode,
+                                          ring_alpha, alpha, marked);
                                 }
                               }
                               nbr[6]+=2;
@@ -3068,6 +3066,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
       escape_count = ESCAPE_MAX; /* don't get bogged down with structures 
                                     that have unreasonable connectivity */
     }
+    FreeP(marked);
   }
   CGOStop(I->ray);
   I->std = CGOSimplify(I->ray,0);
