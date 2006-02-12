@@ -45,7 +45,7 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 #include"os_gl.h"
 #include"os_std.h"
-
+#include"Version.h"
 #include"MemoryDebug.h"
 #include"Err.h"
 #include"Util.h"
@@ -1100,6 +1100,11 @@ static PyObject *CmdGetRenderer(PyObject *self, PyObject *args)
   SceneGetCardInfo(TempPyMOLGlobals,&vendor,&renderer,&version);
   APIExit();
   return Py_BuildValue("(sss)",vendor,renderer,version);
+}
+
+static PyObject *CmdGetVersion(PyObject *self, PyObject *args)
+{
+  return Py_BuildValue("(sd)",_PyMOL_VERSION,_PyMOL_VERSION_double);
 }
 
 static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
@@ -5961,6 +5966,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_state",             CmdGetState,             METH_VARARGS },
    {"get_title",             CmdGetTitle,             METH_VARARGS },
 	{"get_type",              CmdGetType,              METH_VARARGS },
+   {"get_version",           CmdGetVersion,           METH_VARARGS },
    {"get_view",              CmdGetView,              METH_VARARGS },
    {"get_vis",               CmdGetVis,               METH_VARARGS },
    {"get_vrml",	             CmdGetVRML,            METH_VARARGS },

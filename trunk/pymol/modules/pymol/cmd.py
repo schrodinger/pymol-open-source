@@ -1389,6 +1389,7 @@ SEE ALSO
               get_symmetry,       \
               get_title,          \
               get_type,           \
+              get_version,        \
               get_vrml,           \
               id_atom,            \
               identify,           \
@@ -1732,6 +1733,7 @@ SEE ALSO
             'get_symmetry'  : [ get_symmetry      , 0 , 0 , ''  , parsing.STRICT ],
             'get_title'     : [ get_title         , 0 , 0 , ''  , parsing.STRICT ],   
             'get_type'      : [ get_type          , 0 , 0 , ''  , parsing.STRICT ],
+            'get_version'   : [ get_version       , 0 , 0 , ''  , parsing.STRICT ],            
             'get_view'      : [ get_view          , 0 , 0 , ''  , parsing.STRICT ],
             'global'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
             'h_add'         : [ h_add             , 0 , 0 , ''  , parsing.STRICT ],
