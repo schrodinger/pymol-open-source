@@ -908,12 +908,12 @@ PYMOL API
         auto_close_file = 1
         if (file==1) or (file=='1') or (file=='auto'):
             if path:
-                fname = os.path.join(path,string.lower(code)+".pdb"_)
+                fname = os.path.join(path,string.lower(code)+".pdb")
             else:
                 fname = string.lower(code)+".pdb"
         elif is_string(file):
             fname = file
-        elif if file:
+        elif file:
             fobj = file
             auto_close_file = 0
         if fname and not fobj:
