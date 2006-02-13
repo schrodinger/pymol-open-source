@@ -541,6 +541,7 @@ if __name__=='pymol.setting':
         sculpt_avd_excl           = (505, '')
         async_builds              = (506, '')
         fetch_path                = (507, '')
+        cartoon_ring_radius       = (508, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
