@@ -382,7 +382,7 @@ void OrthoBusySlow(PyMOLGlobals *G,int progress,int total)
 		ENDFD;
 	I->BusyStatus[0]=progress;
 	I->BusyStatus[1]=total;
-	if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.1)) {
+	if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.15F)) {
 		if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
 #ifndef _PYMOL_NOPY
 			int blocked = PAutoBlock();
@@ -410,7 +410,7 @@ void OrthoBusyFast(PyMOLGlobals *G,int progress,int total)
 		ENDFD;
 	I->BusyStatus[2]=progress;
 	I->BusyStatus[3]=total;
-	if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.1)) {
+	if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.15F)) {
 		if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
 #ifndef _PYMOL_NOPY
 			int blocked = PAutoBlock();
