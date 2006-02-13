@@ -647,6 +647,7 @@ typedef struct _CPyMOL {
   ov_word lex_sculpt_avd_excl;
   ov_word lex_async_builds;
   ov_word lex_fetch_path;
+  ov_word lex_cartoon_ring_radius;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1297,7 +1298,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(sculpt_avd_excl, 505);
   LEX_SETTING(async_builds, 506);
   LEX_SETTING(fetch_path, 507);
-
+  LEX_SETTING(cartoon_ring_radius, 508);
   return_OVstatus_SUCCESS;
 }
 

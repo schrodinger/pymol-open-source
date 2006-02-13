@@ -1546,6 +1546,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_cartoon_putty_scale_power:
   case cSetting_cartoon_power:
   case cSetting_cartoon_power_b:
+  case cSetting_cartoon_ring_radius:
   case cSetting_cartoon_rect_length:
   case cSetting_cartoon_rect_width:
   case cSetting_cartoon_oval_length:
@@ -2750,7 +2751,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_i(I,cSetting_sculpt_avd_excl, 7);
   set_b(I,cSetting_async_builds, 0);
   set_s(I,cSetting_fetch_path, ".");
-
+  set_f(I,cSetting_cartoon_ring_radius,-1.0F);
 }
 
 

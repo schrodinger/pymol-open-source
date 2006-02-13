@@ -131,7 +131,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                     CoordSet *cs, float width, CGO *cgo, int ring_color, int ring_mode,
                     float ladder_radius, int ladder_color, int ladder_mode, int finder,
                     int sc_helper, int *nuc_flag, int na_mode, float ring_alpha, 
-                    float alpha, int *marked)
+                    float alpha, int *marked, float *moved, float ring_radius)
 {
   float *v_i[MAX_RING_ATOM];
   float *col[MAX_RING_ATOM];
@@ -203,7 +203,12 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
       int phos3_at=-1,phos5_at=-1;
       int o3_at=-1,o5_at=-1,c1_at=-1;
       int purine_flag = false;
-      
+      int c1 = -1, c1_linked = -1;
+      int c2 = -1, c2_linked = -1;
+      int c3 = -1, c3_linked = -1;
+      int c4 = -1, c4_linked = -1;
+      int c5 = -1, c5_linked = -1;
+
       if(n_atom==5) { /* going from the sugar to the base */
         for(i=0;i<n_atom;i++) {
           a1 = atix[i];
@@ -346,6 +351,9 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           a1 = atix[i];
           if(!nf) nf = nuc_flag[a1];
           ai = atomInfo+a1;
+
+          /* base-hunting */
+
           if((ai->protons == cAN_N) && (!marked[a1]) &&
              (WordMatchExact(G,"N1",ai->name,1)||
               WordMatchExact(G,"N3",ai->name,1))) {
@@ -431,6 +439,124 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           }
         }
       }
+      if(n_atom==6) {
+        
+        for(i=0;i<n_atom;i++) { 
+          a1 = atix[i];
+          ai = atomInfo+a1;
+
+          
+          /* glycosylation hunting */
+          
+          if((ai->protons == cAN_C) && (!marked[a1])) { /* unmarked C in ring */
+            mem0 = a1;
+            nbr[0]= neighbor[mem0]+1;
+            while((mem1 = neighbor[nbr[0]])>=0) {
+              if((atomInfo[mem1].protons==cAN_C) && /* exocyclic C */
+                 (!marked[mem1])) {  
+                nbr[1] = neighbor[mem1]+1;
+                while((mem2 = neighbor[nbr[1]])>=0) {
+                  if((mem2!=mem0)&& (!marked[mem2]) && 
+                     (atomInfo[mem2].protons==cAN_O)) { /* exocyclic O */
+                    nbr[2] = neighbor[mem2]+1;
+                    while((mem3 = neighbor[nbr[2]])>=0) {
+                      if((mem3!=mem1)&&(mem3!=mem0)&&
+                         (marked[mem3])&&
+                         (atomInfo[mem3].protons==cAN_C)) { /* cyclic C */
+                        if(WordMatchExact(G,"C5",ai->name,1)&&
+                           WordMatchExact(G,"C6",atomInfo[mem1].name,1)) {
+                          printf("found c5\n");
+                          c5_linked = mem3;
+                          c5 = mem0;
+                        }
+                      }
+                      nbr[2]+=2;
+                    }
+                  }
+                  nbr[1]+=2;
+                }
+              } else if((atomInfo[mem1].protons==cAN_O) && /* exocyclic O */
+                        (!marked[mem1])) {  
+                nbr[1] = neighbor[mem1]+1;
+                while((mem2 = neighbor[nbr[1]])>=0) {
+                  if((mem2!=mem0)&& (marked[mem2]) && 
+                     (atomInfo[mem2].protons==cAN_C)) { /* cyclic C */
+                    /* cyclic C */
+                    if(WordMatchExact(G,"C1",ai->name,1)) {
+                      c1_linked = mem2;
+                      c1 = mem0;
+                    } else if(WordMatchExact(G,"C2",ai->name,1)) {
+                      c2_linked = mem2;
+                      c2 = mem0;
+                    } else if(WordMatchExact(G,"C3",ai->name,1)) {
+                      c3_linked = mem2;
+                      c3 = mem0;
+                    } else if(WordMatchExact(G,"C4",ai->name,1)) {
+                      c4_linked = mem2;
+                      c4 = mem0;
+                    }
+                  } else if((mem2!=mem0)&& (!marked[mem2]) && 
+                            (atomInfo[mem2].protons==cAN_C)) { /* exocyclic C */
+                    nbr[2] = neighbor[mem2]+1;
+                    while((mem3 = neighbor[nbr[2]])>=0) {
+                      if((mem3!=mem1)&&(mem3!=mem0)&&
+                         (marked[mem3])&&
+                         (atomInfo[mem3].protons==cAN_C)) { /* cyclic C */
+                        if(WordMatchExact(G,"C5",atomInfo[mem3].name,1)&&
+                           WordMatchExact(G,"C6",atomInfo[mem2].name,1)) {
+                          c5 = mem0;
+                          c5_linked = mem3;
+                        }
+                      } else if((mem3!=mem1)&&(mem3!=mem0)&&
+                                (!marked[mem3])&&
+                                (atomInfo[mem3].protons==cAN_C)) { /* exocyclic */
+                        if(WordMatchExact(G,"C1",ai->name,1)&&
+                           WordMatchExact(G,"CA",atomInfo[mem3].name,1)) {
+                          c1 = mem0;
+                          c1_linked = mem3;
+                        }
+                      }
+                      nbr[2]+=2;
+                    }
+                  }
+                  nbr[1]+=2;
+                }
+              } else if((atomInfo[mem1].protons==cAN_N) && /* exocyclic N */
+                        (!marked[mem1])) {  
+                nbr[1] = neighbor[mem1]+1;
+                while((mem2 = neighbor[nbr[1]])>=0) {
+                  if((mem2!=mem0)&& (!marked[mem2]) && 
+                     (atomInfo[mem2].protons==cAN_C)) { /* exocyclic C */
+                    nbr[2] = neighbor[mem2]+1;
+                    while((mem3 = neighbor[nbr[2]])>=0) {
+                      if((mem3!=mem1)&&(mem3!=mem0)&&
+                         (!marked[mem3])&&
+                         (atomInfo[mem3].protons==cAN_C)) { /* exocyclic */
+                        nbr[3] = neighbor[mem3]+1;
+                        while((mem4 = neighbor[nbr[3]])>=0) {
+                          if((mem4!=mem2)&&(mem3!=mem1)&&
+                             (!marked[mem4])&&
+                             (atomInfo[mem4].protons==cAN_C)) { /* exocyclic */
+                            if(WordMatchExact(G,"C1",ai->name,1)&&
+                               WordMatchExact(G,"CA",atomInfo[mem4].name,1)) {
+                              c1 = mem0;
+                              c1_linked = mem4;
+                             }
+                          }
+                          nbr[3]+=2;}
+                      }
+                      nbr[2]+=2;
+                    }
+                  }
+                  nbr[1]+=2;
+                }
+              }
+              nbr[0]+=2;
+            }
+          }
+        }
+      }
+
       if(sugar_at>=0) { /* still need to find the phosphates... */
         int c3_index = -1;
         ai = atomInfo + sugar_at;
@@ -513,6 +639,107 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           }
         }         
       }
+      /* glycosylation connectors */
+      if(1) {
+        if((ring_mode)&&(finder>=3)) {
+          if(finder>=3) {
+            int b;
+            float glyco_radius;
+            switch(ring_mode) {
+            case 3:
+            case 4:
+              glyco_radius = width * 3;
+              break;
+            case 5:
+              glyco_radius = ladder_radius;
+              break;
+            default:
+              glyco_radius = width * 1.5;
+              break;
+            }
+
+            for(b=0;b<5;b++) {
+              int g1=-1, g2 = -1;
+              switch(b) {
+              case 0: g1 = c1; g2 = c1_linked; break;
+              case 1: g1 = c2; g2 = c2_linked; break;
+              case 2: g1 = c3; g2 = c3_linked; break;
+              case 3: g1 = c4; g2 = c4_linked; break;
+              case 4: g1 = c5; g2 = c5_linked; break;
+              }
+
+              if((g1>=0) && (g2>=0)) {
+                AtomInfoType *g1_ai = atomInfo + g1;
+                AtomInfoType *g2_ai = atomInfo + g2;
+                if((g1_ai->visRep[cRepCartoon]) && 
+                   (g2_ai->visRep[cRepCartoon]) &&
+                   ((!sc_helper)||!(g1_ai->visRep[cRepLine]||
+                                    g1_ai->visRep[cRepCyl]||
+                                    g1_ai->visRep[cRepSphere]))) {
+                
+                  float *g1p,*g2p;
+                  float *color;
+                  float avg[3];
+                  
+                  if((!((ring_mode==0)||(ring_mode==4)||(ring_mode==5)))||
+                     (!marked[g2])) {
+                    int g1_x,g2_x;
+                    
+                    if(obj->DiscreteFlag) {
+                      if(cs==obj->DiscreteCSet[g1] &&
+                         cs==obj->DiscreteCSet[g2]) {
+                        g1_x=obj->DiscreteAtmToIdx[g1];
+                        g2_x=obj->DiscreteAtmToIdx[g2];
+                      } else {
+                        g1_x = -1;
+                        g2_x = -1;
+                      }
+                    } else {
+                      g1_x=cs->AtmToIdx[g1];
+                      g2_x=cs->AtmToIdx[g2];
+                    }
+                    g1p = cs->Coord+3*g1_x;
+                    g2p = cs->Coord+3*g2_x;
+                  } else {
+                    g2p = moved + 3*g2;
+                  }
+                  if((ring_mode==0)||(ring_mode==4)||(ring_mode==5)) { /* ring center */
+                    int i;
+                    /* compute average coordinate and mark atoms so that ring is only drawn once */
+                    zero3f(avg);
+                    for(i=0;i<n_atom;i++) {
+                      add3f(avg,v_i[i],avg);
+                    }
+                    scale3f(avg,1.0F/n_atom,avg);
+                    g1p = avg;
+                  }
+                  
+                  if(!g1_ai->masked)
+                    CGOPickColor(cgo,g1,cPickableAtom);
+                
+                  if(ladder_color>=0) {
+                    color=ColorGet(G,ladder_color);
+                    CGOCustomCylinderv(cgo,g1p,
+                                       g2p,
+                                       glyco_radius,
+                                       color,
+                                       color,
+                                       2.0F,2.0F);
+                  } else {
+                    CGOCustomCylinderv(cgo,g1p,
+                                       g2p,
+                                       glyco_radius,
+                                       ColorGet(G,g1_ai->color),
+                                       ColorGet(G,g2_ai->color),
+                                       2.0F,2.0F);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
       /* see if any of the neighbors are confirmed nucleic acids... */
       if(sugar_at>=0) {
         if(!nf) {
@@ -551,6 +778,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
             nbr[0]+=2;
           }
         }
+
         if(nf) {
           if((ring_mode)&&((finder==1)||(finder>=3))) {
             if((c1_at>=0)&&(base_at>=0)) {
@@ -775,179 +1003,213 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         }
       }
     }
-    if((nf||(!ladder_mode)||(finder>=3)) && 
-       ring_mode && 
-       (((finder==1)&&((have_C4>=0)||(have_C4_prime>=0)))||
-        ((finder==2)&&((have_C4>=0)))||
-        ((finder==3)&&((have_C_number>=0)))|| 
-        ((finder==4)))) {
-      
+    if(n_atom) { /* store center of ring */
+
       float avg[3];
       float avg_col[3];
       int i;
       float up[3],upi[3];
       float vc0[3],vc1[3];
-
+      float *color = NULL;
       /* compute average coordinate and mark atoms so that ring is only drawn once */
       zero3f(avg);
       zero3f(avg_col);
+
       for(i=0;i<n_atom;i++) {
         add3f(avg,v_i[i],avg);
         add3f(avg_col,col[i],avg_col);
-        marked[i] = true;
+        marked[atix[i]] = true;
       }
+
       scale3f(avg,1.0F/n_atom,avg);
       scale3f(avg_col,1.0F/n_atom,avg_col);
 
-      /* clear the normals */
-
-      for(i=0;i<=n_atom;i++) {
-        zero3f(n_up[i]);
-        zero3f(n_dn[i]);
+      for(i=0;i<n_atom;i++) {
+        float *v_moved = moved + atix[i]*3;
+        copy3f(avg, v_moved); /* store ring center for later use */
       }
-
-      /* compute average normals */
-
-      {
-        float acc[3];
-        int ii;
-
-        zero3f(acc);
-        for(i=0;i<n_atom;i++) {
-          ii=i+1;
-          subtract3f(v_i[i],avg,vc0);
-          subtract3f(v_i[ii],avg,vc1);
-          cross_product3f(vc0,vc1,up);
-          add3f(up,n_up[i],n_up[i]);
-          add3f(up,n_up[ii],n_dn[ii]);
-          if(!i) {
-            add3f(up,n_up[n_atom],n_up[n_atom]);
-          } else if(ii==n_atom) {
-            add3f(up,n_up[0],n_up[0]);
-          }
-          add3f(up,acc,acc);
-        }
-        normalize3f(up);
-        scale3f(up,-1.0F,upi);
-      }
-
-      for(i=0;i<=n_atom;i++) {
-        normalize3f(n_up[i]);
-        scale3f(n_up[i],-1.0F,n_dn[i]);
-      }
-
-      {
-        int ii;
-        float mid[3];
-        float up_add[3];
-        float ct[3],cb[3];
-        float v0t[3],v0b[3];
-        float v1t[3],v1b[3];
-        float out[3];
-        float *color = NULL;
-
+     
+      if((nf||(!ladder_mode)||(finder>=3)) && 
+         ring_mode && 
+         (((finder==1)&&((have_C4>=0)||(have_C4_prime>=0)))||
+          ((finder==2)&&((have_C4>=0)))||
+          ((finder==3)&&((have_C_number>=0)))|| 
+          ((finder==4)))) {
+        
+        
         if((alpha!=1.0F)||(ring_alpha!=alpha))
           CGOAlpha(cgo,ring_alpha);
-
+        
         if(ring_color>=0) {
           color=ColorGet(G,ring_color);
         } else {
           color=avg_col;
         }
+        
         CGOColorv(cgo,color);
-
-        CGOBegin(cgo,GL_TRIANGLES);
         
-        for(i=0;i<n_atom;i++) {
-          ii=i+1;
-          average3f(v_i[ii],v_i[i],mid);
-
-          subtract3f(mid,avg,out); /* compute outward-facing normal */
-          normalize3f(out);
-
-          scale3f(up,width,up_add);
-
-          add3f(avg, up_add, ct);
-          subtract3f(avg, up_add, cb);
-
-          add3f(v_i[i], up_add, v0t);
-          subtract3f(v_i[i], up_add, v0b);
-
-          add3f(v_i[ii], up_add, v1t);
-          subtract3f(v_i[ii], up_add, v1b);
-        
-          CGONormalv(cgo,up);
-          if(ring_color<0) CGOColorv(cgo,color);
-          CGOPickColor(cgo,atix[i],cPickableAtom); /* TODO: masking for cartoons! */
-          CGOVertexv(cgo,ct);
-          CGONormalv(cgo,n_up[i]);
-          if(ring_color<0) CGOColorv(cgo,col[i]);
-          CGOPickColor(cgo,atix[i],cPickableAtom);
-          CGOVertexv(cgo,v0t);
-          CGONormalv(cgo,n_up[ii]);
-          if(ring_color<0) CGOColorv(cgo,col[ii]);
-          CGOPickColor(cgo,atix[ii],cPickableAtom);
-          CGOVertexv(cgo,v1t);
-        
-          if(ring_mode>1) {
-            CGONormalv(cgo,out);
-
-            if(ring_color<0) CGOColorv(cgo,col[i]);
-            CGOPickColor(cgo,atix[i],cPickableAtom);
-            CGOVertexv(cgo,v0t);
-            CGOVertexv(cgo,v0b);
-            if(ring_color<0) CGOColorv(cgo,col[ii]);
-            CGOPickColor(cgo,atix[ii],cPickableAtom);
-            CGOVertexv(cgo,v1t);
-            CGOVertexv(cgo,v1t);
-            if(ring_color<0) CGOColorv(cgo,col[i]);
-            CGOPickColor(cgo,atix[i],cPickableAtom);  
-            CGOVertexv(cgo,v0b);
-            if(ring_color<0) CGOColorv(cgo,col[ii]);
-            CGOPickColor(cgo,atix[ii],cPickableAtom);
-            CGOVertexv(cgo,v1b);
-          }
-        
-          CGONormalv(cgo,upi);
-          if(ring_color<0) CGOColorv(cgo,color);
-          CGOPickColor(cgo,atix[i],cPickableAtom);
-          CGOVertexv(cgo,cb);
-          CGONormalv(cgo,n_dn[ii]);
-          if(ring_color<0) CGOColorv(cgo,col[ii]);
-          CGOPickColor(cgo,atix[ii],cPickableAtom);
-          CGOVertexv(cgo,v1b);
-          CGONormalv(cgo,n_dn[i]);
-          if(ring_color<0) CGOColorv(cgo,col[i]);
-          CGOPickColor(cgo,atix[i],cPickableAtom);
-          CGOVertexv(cgo,v0b);
-        
-        }
-        CGOEnd(cgo);
-
-        if((alpha!=1.0F)||(ring_alpha!=alpha))
-          CGOAlpha(cgo,alpha);
-
-        if(ring_mode==1) {
-          for(i=0;i<n_atom;i++) {
-            ii=i+1;
-            CGOPickColor(cgo,atix[i],cPickableAtom);
-            if(ring_color<0) {
-              CGOSausage(cgo,v_i[i], v_i[ii], width, col[i],col[ii]);
+        if((ring_mode==4)||(ring_mode==5)) { /* spherical ring  */
+          float radius = ring_radius;
+          if(radius<0.0F) {
+            radius = 0.0F;
+            if(ring_mode==4) {
+              for(i=0;i<n_atom;i++) {
+                float dist = diff3f(avg,v_i[i]);
+                if(radius<dist) radius = dist;
+              }
             } else {
-              CGOSausage(cgo,v_i[i], v_i[ii], width, color,color);
+              radius = ladder_radius;
             }
           }
-        } else if(ring_mode==3) {
-          for(i=0;i<n_atom;i++) {
-            ii=i+1;
-            CGOPickColor(cgo,atix[i],cPickableAtom);
-            if(ring_color<0) {
-              CGOSausage(cgo,v_i[i], v_i[ii], 3*width, col[i],col[ii]);
-            } else {
-              CGOSausage(cgo,v_i[i], v_i[ii], 3*width, color,color);
-            }
+            
+          if(n_atom) {
+            add3f(avg_col,col[i],avg_col);
+            if(!ai_i[0]->masked)
+              CGOPickColor(cgo,atix[0],cPickableAtom);
+            CGOSphere(cgo,avg,radius);
           }
           
+        } else {
+      
+          /* clear the normals */
+
+          for(i=0;i<=n_atom;i++) {
+            zero3f(n_up[i]);
+            zero3f(n_dn[i]);
+          }
+
+          /* compute average normals */
+
+          {
+            float acc[3];
+            int ii;
+
+            zero3f(acc);
+            for(i=0;i<n_atom;i++) {
+              ii=i+1;
+              subtract3f(v_i[i],avg,vc0);
+              subtract3f(v_i[ii],avg,vc1);
+              cross_product3f(vc0,vc1,up);
+              add3f(up,n_up[i],n_up[i]);
+              add3f(up,n_up[ii],n_dn[ii]);
+              if(!i) {
+                add3f(up,n_up[n_atom],n_up[n_atom]);
+              } else if(ii==n_atom) {
+                add3f(up,n_up[0],n_up[0]);
+              }
+              add3f(up,acc,acc);
+            }
+            normalize3f(up);
+            scale3f(up,-1.0F,upi);
+          }
+
+          for(i=0;i<=n_atom;i++) {
+            normalize3f(n_up[i]);
+            scale3f(n_up[i],-1.0F,n_dn[i]);
+          }
+
+          {
+            int ii;
+            float mid[3];
+            float up_add[3];
+            float ct[3],cb[3];
+            float v0t[3],v0b[3];
+            float v1t[3],v1b[3];
+            float out[3];
+
+            CGOBegin(cgo,GL_TRIANGLES);
+        
+            for(i=0;i<n_atom;i++) {
+              ii=i+1;
+              average3f(v_i[ii],v_i[i],mid);
+
+              subtract3f(mid,avg,out); /* compute outward-facing normal */
+              normalize3f(out);
+
+              scale3f(up,width,up_add);
+
+              add3f(avg, up_add, ct);
+              subtract3f(avg, up_add, cb);
+
+              add3f(v_i[i], up_add, v0t);
+              subtract3f(v_i[i], up_add, v0b);
+
+              add3f(v_i[ii], up_add, v1t);
+              subtract3f(v_i[ii], up_add, v1b);
+        
+              CGONormalv(cgo,up);
+              if(ring_color<0) CGOColorv(cgo,color);
+              CGOPickColor(cgo,atix[i],cPickableAtom); /* TODO: masking for cartoons! */
+              CGOVertexv(cgo,ct);
+              CGONormalv(cgo,n_up[i]);
+              if(ring_color<0) CGOColorv(cgo,col[i]);
+              CGOPickColor(cgo,atix[i],cPickableAtom);
+              CGOVertexv(cgo,v0t);
+              CGONormalv(cgo,n_up[ii]);
+              if(ring_color<0) CGOColorv(cgo,col[ii]);
+              CGOPickColor(cgo,atix[ii],cPickableAtom);
+              CGOVertexv(cgo,v1t);
+        
+              if(ring_mode>1) {
+                CGONormalv(cgo,out);
+
+                if(ring_color<0) CGOColorv(cgo,col[i]);
+                CGOPickColor(cgo,atix[i],cPickableAtom);
+                CGOVertexv(cgo,v0t);
+                CGOVertexv(cgo,v0b);
+                if(ring_color<0) CGOColorv(cgo,col[ii]);
+                CGOPickColor(cgo,atix[ii],cPickableAtom);
+                CGOVertexv(cgo,v1t);
+                CGOVertexv(cgo,v1t);
+                if(ring_color<0) CGOColorv(cgo,col[i]);
+                CGOPickColor(cgo,atix[i],cPickableAtom);  
+                CGOVertexv(cgo,v0b);
+                if(ring_color<0) CGOColorv(cgo,col[ii]);
+                CGOPickColor(cgo,atix[ii],cPickableAtom);
+                CGOVertexv(cgo,v1b);
+              }
+        
+              CGONormalv(cgo,upi);
+              if(ring_color<0) CGOColorv(cgo,color);
+              CGOPickColor(cgo,atix[i],cPickableAtom);
+              CGOVertexv(cgo,cb);
+              CGONormalv(cgo,n_dn[ii]);
+              if(ring_color<0) CGOColorv(cgo,col[ii]);
+              CGOPickColor(cgo,atix[ii],cPickableAtom);
+              CGOVertexv(cgo,v1b);
+              CGONormalv(cgo,n_dn[i]);
+              if(ring_color<0) CGOColorv(cgo,col[i]);
+              CGOPickColor(cgo,atix[i],cPickableAtom);
+              CGOVertexv(cgo,v0b);
+        
+            }
+            CGOEnd(cgo);
+
+            if((alpha!=1.0F)||(ring_alpha!=alpha))
+              CGOAlpha(cgo,alpha);
+
+            if(ring_mode==1) {
+              for(i=0;i<n_atom;i++) {
+                ii=i+1;
+                CGOPickColor(cgo,atix[i],cPickableAtom);
+                if(ring_color<0) {
+                  CGOSausage(cgo,v_i[i], v_i[ii], width, col[i],col[ii]);
+                } else {
+                  CGOSausage(cgo,v_i[i], v_i[ii], width, color,color);
+                }
+              }
+            } else if(ring_mode==3) {
+              for(i=0;i<n_atom;i++) {
+                ii=i+1;
+                CGOPickColor(cgo,atix[i],cPickableAtom);
+                if(ring_color<0) {
+                  CGOSausage(cgo,v_i[i], v_i[ii], 3*width, col[i],col[ii]);
+                } else {
+                  CGOSausage(cgo,v_i[i], v_i[ii], 3*width, color,color);
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -1143,7 +1405,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
   int cartoon_color,highlight_color;
   int cartoon_side_chain_helper;
   int ladder_mode,ladder_color;
-  float ladder_radius;
+  float ladder_radius,ring_radius;
   int round_helices;
   int smooth_loops;
   int na_mode;
@@ -1291,7 +1553,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
   ladder_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ladder_mode); 
   ladder_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ladder_radius);
   ladder_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ladder_color);
-
+  ring_radius =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_radius);
   
   if(ladder_color==-1)
     ladder_color = cartoon_color;
@@ -2967,6 +3229,8 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
     int nbr[7];
     int *neighbor;
     int *marked = Calloc(int,obj->NAtom);
+    float *moved = Calloc(float,obj->NAtom*3);
+    
     register int escape_count; 
     register int *atmToIdx = NULL;
     
@@ -3009,7 +3273,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                           do_ring(G,5,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
                                   ladder_radius, ladder_color, ladder_mode, ring_finder,
                                   cartoon_side_chain_helper, nuc_flag, na_mode, 
-                                  ring_alpha, alpha, marked);
+                                  ring_alpha, alpha, marked, moved, ring_radius);
 
                         }
                         
@@ -3029,7 +3293,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                               do_ring(G,6,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
                                       ladder_radius, ladder_color, ladder_mode, ring_finder,
                                       cartoon_side_chain_helper, nuc_flag, na_mode, 
-                                      ring_alpha, alpha, marked);
+                                      ring_alpha, alpha, marked, moved, ring_radius);
                             }
                             nbr[6] = neighbor[mem[6]]+1;              
                             while(((mem[7] = neighbor[nbr[6]])>=0)&&
@@ -3040,7 +3304,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                                   do_ring(G,7,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
                                           ladder_radius, ladder_color, ladder_mode, ring_finder,
                                           cartoon_side_chain_helper, nuc_flag, na_mode,
-                                          ring_alpha, alpha, marked);
+                                          ring_alpha, alpha, marked, moved, ring_radius);
                                 }
                               }
                               nbr[6]+=2;
@@ -3067,6 +3331,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                                     that have unreasonable connectivity */
     }
     FreeP(marked);
+    FreeP(moved);
   }
   CGOStop(I->ray);
   I->std = CGOSimplify(I->ray,0);
