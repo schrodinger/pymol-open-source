@@ -26,6 +26,7 @@ void UtilNConcat(char *dst,char *str,int n);
 void UtilConcatVLA(char **vla,int *cc,char *str);
 void UtilFillVLA(char **vla,int *cc,char what,int len);
 void UtilNCopy(char *dst,char *src,int n); /* up to N-1 chars */
+void UtilNCopyToLower(char *dst,char *src,int n); /* up to N-1 chars */
 void UtilCleanStr(char *s);
 int UtilCountStringVLA(char *vla);
 

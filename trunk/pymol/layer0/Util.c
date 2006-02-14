@@ -131,6 +131,18 @@ void UtilNCopy(char *dst,char *src,int n) { /* copies up to N-1 chars */
   *dst=0;
 }
 
+void UtilNCopyToLower(char *dst,char *src,int n)
+{
+  n--;
+  while((n--)>=0) {
+    if(!*src)
+      break;
+    else
+      *(dst++)=tolower(*(src++));
+  }
+  *dst=0;
+}
+
 void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 {
   char *p,*q;

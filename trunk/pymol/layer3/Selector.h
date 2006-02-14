@@ -130,6 +130,7 @@ ObjectMolecule *SelectorGetCachedSingleAtom(PyMOLGlobals *G,int sele,int *theAto
 ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals *G,int sele,int *index);
 ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals *G,int sele);
 MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals *G,int sele,int state,float cutoff,float **coord_vla);
+int SelectorNameIsKeyword(PyMOLGlobals *G, char *name);
 
 
 typedef struct {
