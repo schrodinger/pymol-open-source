@@ -7253,9 +7253,11 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
             } else if(ac>0) { /* atom after current -- no good */
               break;
             }
-            b--;
             lb = b;
+            b--;
           }
+          if(b<0)
+            b=0;
         }
       }
       if(found) {

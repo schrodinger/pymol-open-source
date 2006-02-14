@@ -39,6 +39,11 @@ if __name__=='pymol.parser':
     
     pymol_names = pymol.__dict__
 
+    py_delims = { '=' : 1, '+='  : 1, '-='  : 1, '*=' : 1,
+                      '/=' :1, '//=' : 1, '%='  : 1, '&=' : 1,
+                      '|=' :1, '^='  : 1, '>>=' : 1,'<<=' : 1,
+                      '**=':1 }
+
     # parsing state implemented with dictionaries to enable safe recursion
     # to arbitrary depths
 
@@ -56,7 +61,7 @@ if __name__=='pymol.parser':
     embed_dict = {}
     embed_list = {}
     embed_sentinel = {}
-    
+
     # The resulting value from a pymol command (if any) is stored in the
     # parser.result global variable.  However, script developers will
     # geerally want to switch to the Python API for any of this kind of
@@ -137,10 +142,11 @@ if __name__=='pymol.parser':
     # com2[nest] now a full non-compound command            
                     com2[nest] = next[nest][0]
                     input[nest] = string.split(com2[nest],' ',1)
-                    if len(input[nest]):
+                    lin = len(input[nest])
+                    if lin:
                         input[nest][0] = string.strip(input[nest][0])
                         com = input[nest][0]
-                        if com[0:1]=='/':
+                        if (com[0:1]=='/'):
                             # explicit literal python 
                             com2[nest] = string.strip(com2[nest][1:])
                             if len(com2[nest])>0:
@@ -149,6 +155,12 @@ if __name__=='pymol.parser':
                                 else:
                                     print 'Error: Python expressions disallowed in this file.'
                                     return None
+                        elif lin>1 and py_delims.has_key(string.split(input[nest][-1:][0],' ',1)[0]):
+                            if not secure:
+                                exec(com2[nest]+"\n",pymol_names,pymol_names)
+                            else:
+                                print 'Error: Python expressions disallowed in this file.'
+                                return None
                         else:
                             # try to find a keyword which matches
                             if cmd.kwhash.has_key(com):

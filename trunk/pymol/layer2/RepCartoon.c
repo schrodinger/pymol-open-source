@@ -658,6 +658,9 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
               break;
             }
 
+            if((alpha!=1.0F)||(ring_alpha!=alpha))
+              CGOAlpha(cgo,alpha);
+
             for(b=0;b<5;b++) {
               int g1=-1, g2 = -1;
               switch(b) {
