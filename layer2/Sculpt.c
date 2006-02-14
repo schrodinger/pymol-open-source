@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"SculptCache.h"
 #include"Scene.h"
 #include"Vector.h"
+#include"Word.h"
 
 #include"CGO.h"
 
@@ -1048,11 +1049,13 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                         if(((oai[b1].protons == cAN_H)&&single[b1]&&
                             (oai[b0].protons == cAN_N)&&
                             (oai[b2].protons == cAN_C)&&
-                            (oai[b3].protons == cAN_O)&&planer[b3])||
+                            (oai[b3].protons == cAN_O)&&planer[b3]&&
+                            (!WordMatchExact(G,oai[b0].resn,"PRO",true)))||
                            ((oai[b1].protons == cAN_O)&&planer[b1]&&
                             (oai[b0].protons == cAN_C)&&
                             (oai[b2].protons == cAN_N)&&
-                            (oai[b3].protons == cAN_H)&&single[b3])) {
+                            (oai[b3].protons == cAN_H)&&single[b3]&&
+                           (!WordMatchExact(G,oai[b2].resn,"PRO",true)))) {
                           ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,cShakerTorsAmide);
                         }
                       }
@@ -1265,22 +1268,29 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                               }
                             }
 #endif
+                            /* don't get jacked by pseudo-planar PRO */
 
-                            if(use_cache) {
-                              if(!SculptCacheQuery(G,cSculptPlan,
+                            if(((oai[b0].protons!=cAN_N)||
+                                (!WordMatchExact(G,oai[b0].resn,"PRO",true)))&&
+                               ((oai[b2].protons!=cAN_N)||
+                                (!WordMatchExact(G,oai[b2].resn,"PRO",true)))) {
+                                     
+                              if(use_cache) {
+                                if(!SculptCacheQuery(G,cSculptPlan,
+                                                     oai[b1].sculpt_id,
+                                                     oai[b0].sculpt_id,
+                                                     oai[b2].sculpt_id,
+                                                     oai[b3].sculpt_id,
+                                                     &d))
+                                  SculptCacheStore(G,cSculptPlan,
                                                    oai[b1].sculpt_id,
                                                    oai[b0].sculpt_id,
                                                    oai[b2].sculpt_id,
                                                    oai[b3].sculpt_id,
-                                                   &d))
-                                SculptCacheStore(G,cSculptPlan,
-                                                 oai[b1].sculpt_id,
-                                                 oai[b0].sculpt_id,
-                                                 oai[b2].sculpt_id,
-                                                 oai[b3].sculpt_id,
-                                                 d);
+                                                   d);
+                              }
+                              ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3,d,fixed); 
                             }
-                            ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3,d,fixed); 
                           }
                         }
                       }

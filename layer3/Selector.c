@@ -295,9 +295,9 @@ static WordKeyValue Keyword[] =
   {  "l;",       SELE_LIK2 },
   {  "l.",       SELE_LIK2 },
 
-  {  "all",      SELE_ALLz }, /* 0 parameter */
+  {  cKeywordAll,      SELE_ALLz }, /* 0 parameter */
 
-  {  "none",     SELE_NONz }, /* 0 parameter */
+  {  cKeywordNone,     SELE_NONz }, /* 0 parameter */
   {  "hetatm",   SELE_HETz }, /* 0 parameter */
   {  "het",      SELE_HETz }, /* 0 parameter */
 
@@ -374,7 +374,7 @@ static WordKeyValue Keyword[] =
   {  "c;",       SELE_CHNs },/* deprecated */
   {  "c.",       SELE_CHNs },
 
-  {  "center",   SELE_CENz },
+  {  cKeywordCenter,   SELE_CENz },
   {  "bonded",   SELE_BNDz },
 
   {  "segid",    SELE_SEGs },
@@ -389,7 +389,7 @@ static WordKeyValue Keyword[] =
   {  "object",   SELE_MODs },
   {  "o.",       SELE_MODs },
 
-  {  "origin",   SELE_ORIz },
+  {  cKeywordOrigin,   SELE_ORIz },
 
   {  "model",    SELE_MODs },
   {  "m;",       SELE_MODs },/* deprecated */
@@ -462,6 +462,20 @@ static WordKeyValue AtOper[] =
  { "=",      SCMP_EQAL },
  { "", 0 }
 };
+
+int SelectorNameIsKeyword(PyMOLGlobals *G, char *name)
+{
+  register CSelector *I = G->Selector;
+  WordType lower_name;
+  OVreturn_word result;
+  UtilNCopyToLower(lower_name,name,sizeof(WordType));
+  if(OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,lower_name)))) {
+    if(OVreturn_IS_OK( (result = OVOneToAny_GetKey(I->Key, result.word)))) {
+      return 1;
+    }
+  }
+  return 0;
+}
 
 static int IntInOrder(int *list,int a,int b)
 {

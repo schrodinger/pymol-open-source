@@ -931,48 +931,66 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
   SpecRec *rec = NULL;
   register CExecutive *I = G->Executive;
   int found = false;
-  if(!new_name[0]) 
+  WordType name;
+  UtilNCopy(name,new_name,sizeof(WordType));
+  ObjectMakeValidName(name);
+
+  if(!name[0]) {
+    PRINTFB(G,FB_Executive,FB_Errors)
+      "SetName-Error: blank names not allowed.\n"
+      ENDFB(G);
     ok=false;
-  else if(!WordMatchExact(G,new_name,old_name,true)) {
-    while(ListIterate(I->Spec,rec,next)) {
-      if(found)
-        break;
-      switch(rec->type) {
-      case cExecObject:
-        if(WordMatchExact(G,rec->obj->Name,old_name,true)) {
-          ExecutiveDelKey(I,rec);
-          ExecutiveDelete(G,new_name);
-          ObjectSetName(rec->obj,new_name);
-          UtilNCopy(rec->name,rec->obj->Name,ObjNameMax);
-          ExecutiveAddKey(I,rec);          
-          if(rec->obj->type == cObjectMolecule) {
-            /*
-              SelectorDelete(G,old_name);
-              ExecutiveUpdateObjectSelection(G,rec->obj);
-            */
-            SelectorSetName(G,new_name, old_name);
-            SceneChanged(G);
-            SeqChanged(G);
-            found = true;
-          }
-        }
-        break;
-      case cExecSelection:
-        if(WordMatchExact(G,rec->name,old_name,true)) {
-          if(SelectorSetName(G,new_name, old_name)) {
-            ExecutiveDelete(G,new_name); /* just in case */
-            ExecutiveDelKey(I,rec);
-            UtilNCopy(rec->name,new_name,ObjNameMax);
-            ExecutiveAddKey(I,rec);
-            found = true;
-            OrthoDirty(G);
-          }
-        }
-        break;
-      }
-    }
-    if(!found)
+  } else if(WordMatchExact(G,name,cKeywordSame,true)||
+     SelectorNameIsKeyword(G,name)) {
+    PRINTFB(G,FB_Executive,FB_Errors)
+      "SetName-Error: name '%s' is a selection keyword.\n",name
+      ENDFB(G);
+    ok = false;
+  }
+  if(ok) {   
+    if(!name[0]) 
       ok=false;
+    else if(!WordMatchExact(G,name,old_name,true)) {
+      while(ListIterate(I->Spec,rec,next)) {
+        if(found)
+          break;
+        switch(rec->type) {
+        case cExecObject:
+          if(WordMatchExact(G,rec->obj->Name,old_name,true)) {
+            ExecutiveDelKey(I,rec);
+            ExecutiveDelete(G,name);
+            ObjectSetName(rec->obj,name);
+            UtilNCopy(rec->name,rec->obj->Name,ObjNameMax);
+            ExecutiveAddKey(I,rec);          
+            if(rec->obj->type == cObjectMolecule) {
+              /*
+                SelectorDelete(G,old_name);
+                ExecutiveUpdateObjectSelection(G,rec->obj);
+              */
+              SelectorSetName(G,name, old_name);
+              SceneChanged(G);
+              SeqChanged(G);
+              found = true;
+            }
+          }
+          break;
+        case cExecSelection:
+          if(WordMatchExact(G,rec->name,old_name,true)) {
+            if(SelectorSetName(G,name, old_name)) {
+              ExecutiveDelete(G,name); /* just in case */
+              ExecutiveDelKey(I,rec);
+              UtilNCopy(rec->name,name,ObjNameMax);
+              ExecutiveAddKey(I,rec);
+              found = true;
+              OrthoDirty(G);
+            }
+          }
+          break;
+        }
+      }
+      if(!found)
+        ok=false;
+    }
   }
   return ok; 
 }

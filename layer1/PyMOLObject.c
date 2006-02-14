@@ -297,7 +297,7 @@ void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
   }
 }
 
-static void ObjectMakeValidName(char *name)
+void ObjectMakeValidName(char *name)
 {
   char *p=name,*q;
   if(p) {
