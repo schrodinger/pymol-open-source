@@ -7157,6 +7157,7 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
   return(I);
 }
 /*========================================================================*/
+typedef int CompareFn(PyMOLGlobals *,AtomInfoType *,AtomInfoType *);
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
                          CoordSet *cs,int bondSearchFlag,int aic_mask,
                          int invalidate)
@@ -7201,46 +7202,69 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
     register int n_index = cs->NIndex;
     register int n_atom = I->NAtom;
     register AtomInfoType *atInfo = I->AtomInfo,*ai_a;
+    CompareFn *fCompare;
+
+    if(SettingGetGlobal_b(G,cSetting_pdb_hetatm_sort)) {
+      fCompare = AtomInfoCompareIgnoreRank;
+    } else {
+      fCompare = AtomInfoCompareIgnoreRankHet;
+    }
 
     c=0;
     b=0;  
     lb = 0;
 
     for(a=0;a<n_index;a++) {
+      register int reverse = false;
       ai_a = ai + a;
       found=false;
       if(!I->DiscreteFlag) { /* don't even try matching for discrete objects */
-	while(b<n_atom) {
-	  ac=(AtomInfoCompareIgnoreRank(G,ai_a,atInfo+b));
-	  if(!ac) {
-	    found=true;
-	    break;
-	  } else if(ac<0) { /* atom is before current, so try going the other way */
-	    break;
-	  } else if(!b) {
-	    int idx;
-	    ac=(AtomInfoCompareIgnoreRank(G,ai_a,atInfo+n_atom-1));
-	    if(ac>0) /* atom is after all atoms in list, so don't even bother searching */
-	      break;
-	    /* next, try to jump to an appropriate position in the list */
-	    idx = ((a*n_atom)/n_index)-1;
-	    if((idx>0)&&(b!=idx)&&(idx<n_atom)) {
-	      ac=(AtomInfoCompareIgnoreRank(G,ai_a,atInfo+idx));
-	      if(ac>0) 
-		b = idx;
-	    }
-	  }
-	  lb = b; /* last b before atom */
-	  b++;
-	}
+        while(b<n_atom) {
+          ac=(fCompare(G,ai_a,atInfo+b));
+          if(!ac) {
+            found=true;
+            break;
+          } else if(ac<0) { /* atom is before current, so try going the other way */
+            reverse = true;
+            break;
+          } else if(!b) {
+            int idx;
+            ac=(fCompare(G,ai_a,atInfo+n_atom-1));
+            if(ac>0) { /* atom is after all atoms in list, so don't even bother searching */
+              break;
+            }
+            /* next, try to jump to an appropriate position in the list */
+            idx = ((a*n_atom)/n_index)-1;
+            if((idx>0)&&(b!=idx)&&(idx<n_atom)) {
+              ac=(fCompare(G,ai_a,atInfo+idx));
+              if(ac>0) 
+                b = idx;
+            }
+          }
+          lb = b; /* last b before atom */
+          b++;
+        }
+        if(reverse&&!found) { /* searching going backwards... */
+          while(b>=0) {
+            ac=(fCompare(G,ai_a,atInfo+b));
+            if(!ac) {
+              found=true;
+              break;
+            } else if(ac>0) { /* atom after current -- no good */
+              break;
+            }
+            b--;
+            lb = b;
+          }
+        }
       }
       if(found) {
-	index[a] = b; /* store real atom index b for a in index[a] */
-	b++;
+        index[a] = b; /* store real atom index b for a in index[a] */
+        b++;
       } else {
-	index[a]=I->NAtom+c; /* otherwise, this is a new atom */
-	c++;
-	b=lb;
+        index[a]=I->NAtom+c; /* otherwise, this is a new atom */
+        c++;
+        b=lb;
       }
     }
   }
