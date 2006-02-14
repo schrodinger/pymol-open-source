@@ -2695,7 +2695,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_cartoon_ladder_radius, 0.25F);
   set_color(I,cSetting_cartoon_ladder_color, "-1");
   set_color(I,cSetting_cartoon_nucleic_acid_color, "-1");
-  set_f(I,cSetting_cartoon_ring_transparency, 0.0F);
+  set_f(I,cSetting_cartoon_ring_transparency, -1.0F);
   set_f(I,cSetting_label_size, 14.0F);
   set_f(I,cSetting_spec_direct, 0.0F);
   set_i(I,cSetting_light_count, 2);
