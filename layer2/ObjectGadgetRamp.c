@@ -131,16 +131,14 @@ static void ObjectGadgetRampCalculate(ObjectGadgetRamp *I, float v,float *result
 #ifdef _PYMOL_INLINE 
 __inline__
 #endif
-static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
+static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color,float *table)
 {
   register float *i_level = I->Level;
   register int n_level = I->NLevel;
-  register float *i_color = I->Color;
   const float _0 = 0.0F;
   const float _1 = 1.0F;
   int ok=true;
-
-  if(i_level&&i_color) {
+  if(i_level&&table) {
     register float *i_extreme = I->Extreme;
     register int level_is_ge = -1;
     register int level_is_le = n_level; 
@@ -178,7 +176,7 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *c
         if(i_extreme) {
           v = i_extreme;
         } else {
-          v = i_color;
+          v = table;
         }
         copy3f(v,color);
       } else if(level_is_ge==(n_level-1)) { /* upper extreme */
@@ -186,7 +184,7 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *c
         if(i_extreme) {
           v = i_extreme + 3;
         } else {
-          v = i_color + 3*(n_level-1);
+          v = table + 3*(n_level-1);
         }
         copy3f(v,color);
       } else {
@@ -201,7 +199,7 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *c
           }
           clamp3f(color);
         } else {
-          register float *v = i_color+3*level_is_ge;
+          register float *v = table+3*level_is_ge;
           copy3f(v,color);
         }
       }
@@ -226,12 +224,17 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *c
   return(ok);
 }
 
+#define MAX_COLORS 64
+
 #ifdef _PYMOL_INLINE 
 __inline__
 #endif
 static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float level,float *color,
                                                   float *atomic, float *object,float *vertex, int state)
 {
+  /* now thread-safe...via stack copy of colors */
+
+  float stack_color[MAX_COLORS*3];
   register float *i_level = I->Level;
   register float *i_color = I->Color;
   register int *i_special = I->Special;
@@ -239,32 +242,37 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
     register int i = 0;
     register int n_level = I->NLevel;
     register float *i_extreme = I->Extreme;
-     /* mix special coloring into the table */
+    /* mix special coloring into the table */
+    register float *src = i_color,*dst = stack_color;
+    if((n_level+2)>MAX_COLORS)
+      n_level = MAX_COLORS - 2;
     while(i<n_level) {
       register int index = i_special[i];
-
       switch(index) {
       case 0:
+        *(dst++) = *(src++);
+        *(dst++) = *(src++);
+        *(dst++) = *(src++);
         break;
       case cColorDefault:
       case cColorAtomic: 
-        {
-          register float *v=I->Color+3*i;
-          copy3f(atomic,v);
-        }
+        copy3f(atomic,dst);
+        src+=3;
+        dst+=3;
         break;
       case cColorObject:
-        { 
-          register float *v=I->Color+3*i;
-          copy3f(object,v);          
-        }
+        copy3f(object,dst);
+        dst+=3;
+        src+=3;
         break;
       default: /* allow nested ramps */
-        if(index<0) {
-          if(ColorCheckRamped(I->Gadget.Obj.G,index)) {
-            ColorGetRamped(I->Gadget.Obj.G,index,vertex,I->Color+3*i,state);
-          }
+        if(ColorCheckRamped(I->Gadget.Obj.G,index)) {
+          ColorGetRamped(I->Gadget.Obj.G,index,vertex,dst,state);
+        } else {
+          copy3f(src,dst);
         }
+        dst+=3;
+        src+=3;
         break;
       }
       i++;
@@ -272,43 +280,49 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
     /* mix extreme colors in (if present) */
     if(i_extreme) {
       i = 0;
+      src = I->Extreme;
       while(i<2) {
         register int index = i_special[i+n_level];
         switch(index) {
         case 0:
+          *(dst++)=*(src++);
+          *(dst++)=*(src++);
+          *(dst++)=*(src++);
           break;
         case cColorDefault:
         case cColorAtomic: 
-          {
-            register float *v=i_extreme+3*i;
-            copy3f(atomic,v);
-          }
+          copy3f(atomic,dst);
+          dst+=3;
+          src+=3;
           break;
         case cColorObject:
-          { 
-            register float *v=i_extreme+3*i;
-            copy3f(object,v);          
-          }
+          copy3f(object,dst);          
+          dst+=3;
+          src+=3;
           break;
         default: /* allow nested ramps */
-          if(index<0) {
-            if(ColorCheckRamped(I->Gadget.Obj.G,index)) {
-              ColorGetRamped(I->Gadget.Obj.G,index,vertex,I->Color+3*i,state);
-            }
+          if(ColorCheckRamped(I->Gadget.Obj.G,index)) {
+            ColorGetRamped(I->Gadget.Obj.G,index,vertex,I->Color+3*i,state);
+          } else {
+            copy3f(src,dst);
           }
+          dst+=3;
+          src+=3;
           break;
         }
         i++;
       }
     }
-  }
-  /* now interpolate like normal */
-  return ObjectGadgetRampInterpolate(I,level,color);
+    /* now interpolate using copy */
+    return _ObjectGadgetRampInterpolate(I,level,color,stack_color);
+  } else 
+    /* now interpolate like normal */
+    return _ObjectGadgetRampInterpolate(I,level,color,i_color);
 }
 
 int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
 {
-  return _ObjectGadgetRampInterpolate(I,level,color);
+  return _ObjectGadgetRampInterpolate(I,level,color,I->Color);
 }
 
 PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I)
