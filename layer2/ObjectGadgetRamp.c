@@ -452,15 +452,28 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int 
     else  {
       float cutoff = 1.0F;
       float dist;
+      int sub_vdw = false;
       if(state<0) state = SceneGetState(I->Gadget.Obj.G);
-      if(I->Level&&I->NLevel)
+      if(I->Level&&I->NLevel) {
         cutoff = I->Level[I->NLevel-1];
+        if(I->Level[0]<0.0F) {
+          sub_vdw=true;
+          cutoff+=MAX_VDW;
+        }
+      }
       if(ok) ok = (I->Mol!=NULL);      
       if(ok) {
         int index = ObjectMoleculeGetNearestAtomIndex(I->Mol, pos, cutoff, state, &dist);
         if(index>=0) {
           float *atomic =  ColorGet(I->Gadget.Obj.G,I->Mol->AtomInfo[index].color);
           float *object =  ColorGet(I->Gadget.Obj.G,I->Mol->Obj.Color);
+          
+          if(sub_vdw) {
+            dist-=I->Mol->AtomInfo[index].vdw;
+            if(dist<0.0F)
+              dist = 0.0F;
+          }
+          
           if(!ObjectGadgetRampInterpolateWithSpecial(I,dist,color,atomic,object,pos,state)) {
             copy3f(I->Color,color);
           }

@@ -86,7 +86,7 @@ struct _CRay {
   void (*fWobble)( CRay *ray,int mode,float *par);
   void (*fTransparentf)( CRay *ray,float t);
   void (*fCharacter)( CRay *ray,int char_id);
-  void (*fInteriorColor3fv) (CRay *ray, float *v);
+  void (*fInteriorColor3fv) (CRay *ray, float *v, int passive);
 
   /* everything below should be private */
   PyMOLGlobals *G;
@@ -110,6 +110,7 @@ struct _CRay {
   float *TTTStackVLA;
   int TTTStackDepth;
   int Context;
+  int CheckInterior;
   float AspRatio;
   float PixelRadius;
   float min_box[3];

@@ -243,6 +243,7 @@ static void ObjectSurfaceStateFree(ObjectSurfaceState *ms)
   VLAFreeP(ms->N);
   VLAFreeP(ms->V);
   FreeP(ms->VC);
+  FreeP(ms->RC);
   VLAFreeP(ms->AtomVertex);
   if(ms->UnitCellCGO)
     CGOFree(ms->UnitCellCGO);
@@ -344,8 +345,10 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
 {
   if(ms->V) {
     int index = I->Obj.Color;
+    int ramped_flag = false;
     float *v = ms->V;
     float *vc;
+    int *rc;
     int a;
     int state = ms - I->State;
     switch(ms->Mode) {
@@ -356,18 +359,30 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
         
         if(ms->VC && (ms->VCsize<n_vert)) {
           FreeP(ms->VC);
+          FreeP(ms->RC);
         }
         
         if(!ms->VC) {
           ms->VCsize = n_vert;
           ms->VC = Alloc(float,n_vert*3);
         }
-
+        if(!ms->RC) {
+          ms->RC = Alloc(int,n_vert);
+        }
+        rc = ms->RC;
         vc = ms->VC;
         v+=3;
         if(vc) {
           for(a=0;a<n_vert;a++) {
-            ColorGetRamped(I->Obj.G,index,v,vc,state);
+            if(ColorCheckRamped(I->Obj.G,index)) {
+              ColorGetRamped(I->Obj.G,index,v,vc,state);
+              *rc = index;
+              ramped_flag=true;
+            } else {
+              float *col = ColorGet(I->Obj.G,index);
+              copy3f(col,vc);
+            }
+            rc++;
             vc+=3;
             v+=6; /* alternates with normals */
           }
@@ -382,17 +397,29 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
 
         if(ms->VC && (ms->VCsize<n_vert)) {
           FreeP(ms->VC);
+          FreeP(ms->RC);
         }
         
         if(!ms->VC) {
           ms->VCsize = n_vert;
           ms->VC = Alloc(float,n_vert*3);
         }
-        
+        if(!ms->RC) {
+          ms->RC = Alloc(int,n_vert);
+        }
+        rc = ms->RC;
         vc = ms->VC;
         if(vc) {
           for(a=0;a<n_vert;a++) {
-            ColorGetRamped(I->Obj.G,index,v,vc,state);
+            if(ColorCheckRamped(I->Obj.G,index)) {
+              ColorGetRamped(I->Obj.G,index,v,vc,state);
+              *rc = index;
+              ramped_flag=true;
+            } else {
+              float *col = ColorGet(I->Obj.G,index);
+              copy3f(col,vc);
+            }
+            rc++;
             vc+=3;
             v+=3; 
           }
@@ -400,7 +427,11 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
       }
       break;
     }
+    if( (!ramped_flag) || (!SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_ray_color_ramps))) {
+      FreeP(ms->RC);
+    }
   }
+
 }
 
 static void ObjectSurfaceUpdate(ObjectSurface *I) 
@@ -553,7 +584,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
             ObjectSurfaceStateUpdateColors(I,ms);
           else if(ms->VC) {
             FreeP(ms->VC);
-            ms->VC=NULL;
+            FreeP(ms->RC);
           }
           ms->RecolorFlag=false;
         }
@@ -582,6 +613,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
   int pass = info->pass;
   float *v = NULL;
   float *vc = NULL;
+  int *rc = NULL;
   float *col;
   int *n = NULL;
   int c;
@@ -628,8 +660,11 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
           }
           
           if(n&&v&&I->Obj.RepVis[cRepSurface]) {
-            float *cc = ColorGet(G,I->Obj.Color);
+            float cc[3];
+            float colA[3],colB[3],colC[3];
+            ColorGetEncoded(G,I->Obj.Color,cc);
             vc = ms->VC;
+            rc = ms->RC;
             while(*n)
               {
                 c=*(n++);
@@ -641,9 +676,16 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                   c-=4;
                   while(c>0) {
                     if(vc) {
+                      register float *cA=vc-6, *cB=vc-3, *cC=vc;
+                      if(rc) {
+                        if(rc[0]<-1) ColorGetEncoded(G,rc[0], (cA=colA));
+                        if(rc[1]<-1) ColorGetEncoded(G,rc[1], (cB=colB));
+                        if(rc[2]<-1) ColorGetEncoded(G,rc[2], (cC=colC));
+                        rc++;
+                      }
                       ray->fTriangle3fv(ray,v-9,v-3,v+3,
                                         v-12,v-6,v,
-                                        vc-6,vc-3,vc);
+                                        cA,cB,cC);
                       vc+=3;
                     } else {
                       ray->fTriangle3fv(ray,v-9,v-3,v+3,
@@ -660,7 +702,13 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                   if(vc) vc+=3;
                   while(c>0) {
                     if(vc) {
-                      ray->fSausage3fv(ray,v-3,v,ms->Radius,vc-3,vc);
+                      register float *cA=vc-3, *cB=vc;
+                      if(rc) {
+                        if(rc[0]<-1) ColorGetEncoded(G,rc[0], (cA=colA));
+                        if(rc[1]<-1) ColorGetEncoded(G,rc[1], (cB=colB));
+                        rc++;
+                      }
+                      ray->fSausage3fv(ray,v-3,v,ms->Radius,cA,cB);
                       vc+=3;
                     } else 
                       ray->fSausage3fv(ray,v-3,v,ms->Radius,cc,cc);
@@ -987,6 +1035,7 @@ void ObjectSurfaceStateInit(PyMOLGlobals *G,ObjectSurfaceState *ms)
   ms->N[0]=0;
   ms->nT=0;
   ms->VC = NULL;
+  ms->RC = NULL;
   ms->VCsize = 0;
   ms->Active=true;
   ms->ResurfaceFlag=true;

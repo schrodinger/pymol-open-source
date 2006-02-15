@@ -40,6 +40,7 @@ typedef struct {
   int char_id;
   char type,cap1,cap2,cull;
   char wobble;
+  char ramped;
   /* float wobble_param[3] eliminated to save space */
 } CPrimitive;
 

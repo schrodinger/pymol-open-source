@@ -130,6 +130,8 @@ void transform44f3f ( float  *m1, float  *m2,  float  *m3 );
 void transform44f4f ( float  *m1, float  *m2,  float  *m3 );
 
 void transform44d3f ( double  *m1, float  *m2,  float  *m3 );
+void inverse_transformC44f3f (float *m1, float *m2, float *m3);
+void inverse_transform44f3f (float *m1, float *m2, float *m3);
 void inverse_transform44d3f (double *m1, float *m2, float *m3);
 void inverse_transform44d3d (double *m1, double *m2, double *m3);
 void transform44f3fas33f3f (float *m1, float *m2, float *m3);
@@ -141,6 +143,8 @@ void multiply33d33d ( double *m1, double *m2, double  *m3 );
 /* as matrix types */
 
 void matrix_transform33f3f ( Matrix33f m1,float *v1,float *v2);
+void matrix_inverse_transform33f3f ( Matrix33f m1,float *v1,float *v2);
+
 void rotation_to_matrix33f (float *axis, float angle, Matrix33f mat);
 void matrix_multiply33f33f ( Matrix33f m1,Matrix33f m2,Matrix33f m3);
 void matrix_multiply33d33d ( Matrix33d m1,Matrix33d m2,Matrix33d m3);
