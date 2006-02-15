@@ -1473,7 +1473,8 @@ SEE ALSO
               unbond,             \
               undo,               \
               unpick,             \
-              update
+              update,             \
+              vdw_fit 
 
         #--------------------------------------------------------------------
 
@@ -1878,6 +1879,7 @@ SEE ALSO
             'unprotect'     : [ deprotect         , 0 , 0 , ''  , parsing.STRICT ],
             'unset'         : [ unset             , 0 , 0 , ''  , parsing.STRICT ],   
             'update'        : [ update            , 0 , 0 , ''  , parsing.STRICT ],
+            'vdw_fit'       : [ vdw_fit           , 0 , 0 , ''  , parsing.STRICT ],   
             'view'          : [ view              , 0 , 0 , ''  , parsing.STRICT ],   
             'viewport'      : [ viewport          , 0 , 0 , ''  , parsing.STRICT ],
             'window'        : [ window            , 0 , 0 , ''  , parsing.STRICT ],         

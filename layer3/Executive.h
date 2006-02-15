@@ -118,6 +118,7 @@ int  ExecutiveDist(PyMOLGlobals *G,float *result,
                    float cutoff,int labels,int quiet,
                    int reset,int state,int zoom);
 void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add);
+int ExecutiveVdwFit(PyMOLGlobals *G,char *s1,int state1,char *s2,int state2,float buffer, int quiet);
 int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet,PyObject *space);
 int ExecutiveIterateList(PyMOLGlobals *G,char *s1,PyObject *list,int read_only,int quiet,PyObject *space);
 int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,
