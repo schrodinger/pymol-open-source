@@ -2800,6 +2800,27 @@ static PyObject *CmdBond(PyObject *dummy, PyObject *args)
   return APIResultOk(ok);  
 }
 
+static PyObject *CmdVdwFit(PyObject *dummy, PyObject *args)
+{
+  char *str1,*str2;
+  int state1,state2,quiet;
+  float buffer;
+  OrthoLineType s1,s2;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"sisifi",&str1,&state1,&str2,&state2,&buffer,&quiet);
+  if (ok) {
+    APIEntry();
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0));
+    if(ok) 
+      ok = ExecutiveVdwFit(TempPyMOLGlobals,s1,state1,s2,state2,buffer,quiet); 
+    SelectorFreeTmp(TempPyMOLGlobals,s1);
+    SelectorFreeTmp(TempPyMOLGlobals,s2);
+    APIExit();
+  }
+  return APIResultOk(ok);  
+}
+
 static PyObject *CmdLabel(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
@@ -6096,6 +6117,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"translate_object_ttt",  CmdTranslateObjectTTT,   METH_VARARGS },
 	{"turn",	                 CmdTurn,                 METH_VARARGS },
 	{"viewport",              CmdViewport,             METH_VARARGS },
+    {"vdw_fit",               CmdVdwFit,               METH_VARARGS },
 	{"undo",                  CmdUndo,                 METH_VARARGS },
 	{"unpick",                CmdUnpick,               METH_VARARGS },
 	{"unset",                 CmdUnset,                METH_VARARGS },

@@ -1863,4 +1863,24 @@ RESERVED FLAGS
         if _raising(r): raise pymol.CmdException            
         return r
 
+    def vdw_fit(selection1,selection2,state1=1,state2=1,buffer=0.24,quiet=1):
+    #
+    #   UNSUPPORTED FEATURE - LIKELY TO CHANGE
+    #
+        # preprocess selections
+        selection1 = selector.process(selection1)
+        selection2 = selector.process(selection2)
+        #
+        r = DEFAULT_ERROR
+        try:
+            lock()
+            r = _cmd.vdw_fit(str(selection1),int(state1)-1,
+                             str(selection2),int(state2)-1,
+                             float(buffer),int(quiet))
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException
+        return r
+
     import pymol
+

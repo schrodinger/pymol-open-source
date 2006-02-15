@@ -51,6 +51,8 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
 PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state);
 float SelectorSumVDWOverlap(PyMOLGlobals *G,int sele1,int state1,
                             int sele2,int state2,float adjust);
+int SelectorVdwFit(PyMOLGlobals *G,int sele1,int state1, int sele2,int state2, float buffer, int quiet);
+
 DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
                             int sele1,int state1,int sele2,
                             int state2,int mode,

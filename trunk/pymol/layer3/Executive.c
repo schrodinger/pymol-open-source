@@ -129,6 +129,21 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
+int ExecutiveVdwFit(PyMOLGlobals *G,char *s1,int state1,char *s2,int state2,float buffer, int quiet)
+{
+  int sele1=SelectorIndexByName(G,s1);
+  int sele2=SelectorIndexByName(G,s2);
+  int ok=true;
+
+  if((sele1>=0)&&(sele2>=0)) {
+    ok = SelectorVdwFit(G,sele1,state1,sele2,state2,buffer,quiet);
+  } else {
+    ok =false;
+  }
+  return ok;
+
+}
+
 static int get_op_cnt(PyMOLGlobals *G)
 {
   int result = 5;

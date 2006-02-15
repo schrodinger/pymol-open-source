@@ -2708,6 +2708,101 @@ int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list)
 
 }
 
+int SelectorVdwFit(PyMOLGlobals *G,int sele1,int state1, int sele2,int state2, float buffer, int quiet)
+{
+  int ok=true;
+  register CSelector *I=G->Selector;
+  int *vla=NULL;
+  int c;
+  float sumVDW=0.0,dist;
+  int a1,a2;
+  AtomInfoType *ai1,*ai2;
+  int at1,at2;
+  CoordSet *cs1,*cs2;
+  ObjectMolecule *obj1,*obj2;
+  int idx1,idx2;
+  float *adj = NULL;
+  int a;
+
+  if(state1<0) state1=0;
+  if(state2<0) state2=0;
+
+  SelectorUpdateTable(G);
+  c=SelectorGetInterstateVLA(G,sele1,state1,sele2,state2,2*MAX_VDW+buffer,&vla);
+  if(c) {
+    adj = Calloc(float,2*c);
+    for(a=0;a<c;a++) {
+      a1=vla[a*2];
+      a2=vla[a*2+1];
+      
+      at1=I->Table[a1].atom;
+      at2=I->Table[a2].atom;
+      
+      obj1=I->Obj[I->Table[a1].model];
+      obj2=I->Obj[I->Table[a2].model];
+      
+      if((state1<obj1->NCSet)&&(state2<obj2->NCSet)) {
+        cs1=obj1->CSet[state1];
+        cs2=obj2->CSet[state2];
+        if(cs1&&cs2) { /* should always be true */
+          
+          ai1=obj1->AtomInfo+at1;
+          ai2=obj2->AtomInfo+at2;
+          
+          idx1=cs1->AtmToIdx[at1]; /* these are also pre-validated */
+          idx2=cs2->AtmToIdx[at2];
+          
+          sumVDW=ai1->vdw+ai2->vdw;
+          dist=(float)diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
+          
+          if(dist<(sumVDW+buffer)) {
+            float shift = (dist-(sumVDW+buffer))/2.0F;
+            adj[2*a] = ai1->vdw + shift;
+            adj[2*a+1] = ai2->vdw + shift;
+          } else {
+            adj[2*a] = ai1->vdw;
+            adj[2*a+1] = ai2->vdw;
+          }
+          
+        }
+      }
+    }
+    
+    for(a=0;a<c;a++) {
+      a1=vla[a*2];
+      a2=vla[a*2+1];
+      
+      at1=I->Table[a1].atom;
+      at2=I->Table[a2].atom;
+      
+      obj1=I->Obj[I->Table[a1].model];
+      obj2=I->Obj[I->Table[a2].model];
+      
+      if((state1<obj1->NCSet)&&(state2<obj2->NCSet)) {
+        cs1=obj1->CSet[state1];
+        cs2=obj2->CSet[state2];
+        if(cs1&&cs2) { /* should always be true */
+          
+          ai1=obj1->AtomInfo+at1;
+          ai2=obj2->AtomInfo+at2;
+          
+          if(adj[2*a] < ai1->vdw) {
+            ai1->vdw = adj[2*a];
+          } 
+          
+          if(adj[2*a+1] < ai2->vdw) {
+            ai2->vdw = adj[2*a+1];
+          }
+          
+        }
+      }
+    }
+  }
+ 
+  VLAFreeP(vla);
+  FreeP(adj);
+  return ok;
+}
 
 /*========================================================================*/
 
