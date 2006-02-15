@@ -121,9 +121,10 @@ if __name__=='pymol.cmd':
         reaper = None
         safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
         sanitize_list_re = re.compile(r"[^0-9\.\-\[\]\,]+")
-        sanitize_alpha_list_re = re.compile(r"[^a-zA-Z0-9\'\"\.\-\[\]\,]+")
+        sanitize_alpha_list_re = re.compile(r"[^a-zA-Z0-9_\'\"\.\-\[\]\,]+")
         nt_hidden_path_re = re.compile(r"\$[\/\\]")
-        quote_alpha_list_re = re.compile(r'''([\[\,]\s*)([a-zA-Z][a-zA-Z0-9\ ]*[a-zA-Z0-9]*)(\s*[\,\]])''')
+        quote_alpha_list_re = re.compile(
+            r'''([\[\,]\s*)([a-zA-Z_][a-zA-Z0-9_\ ]*[a-zA-Z0-9_]*)(\s*[\,\]])''')
         def safe_list_eval(st):
             return eval(sanitize_list_re.sub('',st))
 

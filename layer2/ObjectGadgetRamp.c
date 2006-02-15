@@ -235,7 +235,6 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
   register float *i_level = I->Level;
   register float *i_color = I->Color;
   register int *i_special = I->Special;
-
   if(i_level && i_color && i_special) {
     register int i = 0;
     register int n_level = I->NLevel;
@@ -243,7 +242,10 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
      /* mix special coloring into the table */
     while(i<n_level) {
       register int index = i_special[i];
+
       switch(index) {
+      case 0:
+        break;
       case cColorDefault:
       case cColorAtomic: 
         {
@@ -273,6 +275,8 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
       while(i<2) {
         register int index = i_special[i+n_level];
         switch(index) {
+        case 0:
+          break;
         case cColorDefault:
         case cColorAtomic: 
           {
