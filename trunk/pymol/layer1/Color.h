@@ -35,6 +35,9 @@ typedef char ColorName[24];
 #define cColorAtomic      -4
 #define cColorObject      -5
 
+#define cColorExtCutoff (-10)
+
+
 #define cColor_TRGB_Bits  0x40000000
 #define cColor_TRGB_Mask  0xC0000000
 
@@ -97,6 +100,7 @@ int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet);
 void ColorUpdateClamp(PyMOLGlobals *G,int index);
 void ColorGetBkrdContColor(PyMOLGlobals *G,float *rgb, int invert_flag);
 unsigned int ColorGet32BitWord(PyMOLGlobals *G,float *rgba);
+int ColorGetEncoded(PyMOLGlobals *G,int index,float *color);
 
 #endif
 

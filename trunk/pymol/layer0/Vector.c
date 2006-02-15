@@ -709,6 +709,26 @@ void transform44f3fas33f3f (float *m1, float *m2, float *m3)
   m3[2] =  (m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2);
 }
 
+void inverse_transformC44f3f (float *m1, float *m2, float *m3)
+{
+  register float m2r0 = m2[0] - m1[12];
+  register float m2r1 = m2[1] - m1[13];
+  register float m2r2 = m2[2] - m1[14];
+  m3[0] = (float) (m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2);
+  m3[1] = (float) (m1[ 4] * m2r0 + m1[ 5] * m2r1 + m1[ 6] * m2r2);
+  m3[2] = (float) (m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2);
+}
+
+void inverse_transform44f3f (float *m1, float *m2, float *m3)
+{
+  register float m2r0 = m2[0] - m1[3];
+  register float m2r1 = m2[1] - m1[7];
+  register float m2r2 = m2[2] - m1[11];
+  m3[0] = (float) (m1[ 0] * m2r0 + m1[ 4] * m2r1 + m1[ 8] * m2r2);
+  m3[1] = (float) (m1[ 1] * m2r0 + m1[ 5] * m2r1 + m1[ 9] * m2r2);
+  m3[2] = (float) (m1[ 2] * m2r0 + m1[ 6] * m2r1 + m1[10] * m2r2);
+}
+
 void inverse_transform44d3f (double *m1, float *m2, float *m3)
 {
   register double m2r0 = m2[0] - m1[3];
@@ -739,7 +759,6 @@ void transform44f4f (float *m1, float *m2, float *m3)
   m3[2] = m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2 + m1[11] * m2r3;
   m3[3] = m1[12] * m2r0 + m1[13] * m2r1 + m1[14] * m2r2 + m1[15] * m2r3; 
 }
-
 
 
 void initializeTTT44f ( float *m )
@@ -1702,16 +1721,18 @@ double distance_halfline2point3f(float *base,float *normal,float *point,float *a
 
 void matrix_transform33f3f(Matrix33f m1,float *v1,float *v2)
 {
-#if 0
-	int b;
-	for(b=0;b<3;b++)
-		v2[b] = m1[b][0]*v1[0] + m1[b][1]*v1[1] + m1[b][2]*v1[2];
-#else
-	v2[0] = m1[0][0]*v1[0] + m1[0][1]*v1[1] + m1[0][2]*v1[2];
-	v2[1] = m1[1][0]*v1[0] + m1[1][1]*v1[1] + m1[1][2]*v1[2];
-	v2[2] = m1[2][0]*v1[0] + m1[2][1]*v1[1] + m1[2][2]*v1[2];
-#endif
+  v2[0] = m1[0][0]*v1[0] + m1[0][1]*v1[1] + m1[0][2]*v1[2];
+  v2[1] = m1[1][0]*v1[0] + m1[1][1]*v1[1] + m1[1][2]*v1[2];
+  v2[2] = m1[2][0]*v1[0] + m1[2][1]*v1[1] + m1[2][2]*v1[2];
 }
+
+void matrix_inverse_transform33f3f(Matrix33f m1,float *v1,float *v2)
+{
+	v2[0] = m1[0][0]*v1[0] + m1[1][0]*v1[1] + m1[2][0]*v1[2];
+	v2[1] = m1[0][1]*v1[0] + m1[1][1]*v1[1] + m1[2][1]*v1[2];
+	v2[2] = m1[0][2]*v1[0] + m1[1][2]*v1[1] + m1[2][2]*v1[2];
+}
+
 
 #if 0
 double matdiffsq ( float *v1, oMatrix5f m, float *v2 )

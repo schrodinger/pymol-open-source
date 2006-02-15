@@ -323,7 +323,6 @@ int SettingGetTextValue(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,
 {
   int type;
   int ok=true;
-  int tmp1;
   float *ptr;
   type = SettingGetType(G,index);
   switch(type) {
@@ -345,14 +344,33 @@ int SettingGetTextValue(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,
             ptr[0],ptr[1],ptr[2]);
     break;
   case cSetting_color:
-    tmp1 = SettingGet_color(G,set1,set2,index);
-    if(tmp1<0) {
-      if(tmp1==cColorAtomic)
-        strcpy(buffer,"atomic");        
-      else
-        strcpy(buffer,"default");
-    } else
-      strcpy(buffer,ColorGetName(G,tmp1));
+    {
+      int color = SettingGet_color(G,set1,set2,index);
+      if(color<0) {
+        switch(color) {
+        case cColorAtomic:
+          strcpy(buffer,"atomic");        
+          break;
+        case cColorObject:
+          strcpy(buffer,"object");        
+          break;
+        default:
+          if(color>cColorExtCutoff) {
+            strcpy(buffer,"default");
+          } else {
+            char *st = ColorGetName(G,color);
+            if(st)
+              strcpy(buffer,st);
+            else
+              strcpy(buffer,"invalid");
+          }
+          break;
+        }
+      } else {
+        /* assuming valid color */
+        strcpy(buffer,ColorGetName(G,color));
+      }
+    }
     break;
   case cSetting_string:
     strcpy(buffer,SettingGet_s(G,set1,set2,index));
@@ -2752,6 +2770,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_async_builds, 0);
   set_s(I,cSetting_fetch_path, ".");
   set_f(I,cSetting_cartoon_ring_radius,-1.0F);
+  set_b(I,cSetting_ray_color_ramps,0);
 }
 
 

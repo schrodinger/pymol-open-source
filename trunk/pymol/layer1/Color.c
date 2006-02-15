@@ -78,8 +78,6 @@ static int AutoColor[] = {
 
 static int nAutoColor = 40;
 
-#define cColorExtCutoff (-10)
-
 void ColorGetBkrdContColor(PyMOLGlobals *G,float *rgb, int invert_flag) 
 {
   float *bkrd=SettingGetfv(G,cSetting_bg_rgb);
@@ -577,8 +575,14 @@ char *ColorGetName(PyMOLGlobals *G,int index)
     else /* else */
       sprintf(I->RGBName,"%06x",index);
     return I->RGBName;
-  } else
-    return(NULL);
+  } else if(index<=cColorExtCutoff) {
+    int a = cColorExtCutoff - index;
+    if(a<I->NExt) {
+      return I->Ext[a].Name;
+    } else 
+      return NULL;
+  }
+  return(NULL);
 }
 /*========================================================================*/
 int ColorGetStatus(PyMOLGlobals *G,int index)
@@ -2429,5 +2433,37 @@ float *ColorGet(PyMOLGlobals *G,int index)
             /* invalid color id, then simply return white */
 	 return(I->Color[0].Color);
   }
+}
+
+int ColorGetEncoded(PyMOLGlobals *G,int index,float *color)
+{
+  register CColor *I=G->Color;
+  float *ptr;
+  if((index>=0)&&(index<I->NColor)) {
+    if(I->Color[index].ClampedFlag&&SettingGetGlobal_b(G,cSetting_clamp_colors))
+       ptr = I->Color[index].Clamped;
+     else
+       ptr = I->Color[index].Color;
+     copy3f(ptr,color);
+   } else if((index&cColor_TRGB_Mask)==cColor_TRGB_Bits) { /* a 24-bit RGB color */
+     float rgb_color[3];
+     rgb_color[0] = ((index&0x00FF0000) >> 16) / 255.0F;
+     rgb_color[1] = ((index&0x0000FF00) >> 8 ) / 255.0F;
+     rgb_color[2] = ((index&0x000000FF)      ) / 255.0F;
+     if(I->ColorTable)
+       clamp_color(I->ColorTable, rgb_color, rgb_color, I->BigEndian);
+     copy3f(rgb_color,color);
+   } else if(index<=cColorExtCutoff) {
+     color[0]=(float)index;
+     color[1]=0.0F;
+     color[2]=0.0F;
+   } else {
+     color[0] = 1.0F;
+     color[1] = 1.0F;
+     color[2] = 1.0F;
+     /* invalid color id, then simply return white */
+    return 0;
+  }
+  return 1;
 }
 

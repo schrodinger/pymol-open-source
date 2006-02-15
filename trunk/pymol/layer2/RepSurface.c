@@ -47,6 +47,7 @@ typedef struct RepSurface {
   int NT;
   int proximity;
   float *V,*VN,*VC;
+  int *RC;
   int *Vis;
   int *T,*S; /* S=strips */
   int NDot;
@@ -74,6 +75,7 @@ void RepSurfaceFree(RepSurface *I)
   FreeP(I->V);
   FreeP(I->VN);
   FreeP(I->VC);
+  FreeP(I->RC);
   FreeP(I->Vis);
   FreeP(I->LastColor);
   FreeP(I->LastVisib);
@@ -142,11 +144,11 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
   float *v=I->V;
   float *vn=I->VN;
   float *vc=I->VC;
+  int *rc=I->RC;
   int *t=I->T;
   int *s=I->S;
   int c=I->N;
   int *vi=I->Vis;
-  float *col;
   float alpha;
   int t_mode;
   alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency);
@@ -169,27 +171,29 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
       }
       
       if(I->oneColorFlag) {
-        ray->fColor3fv(ray,ColorGet(G,I->oneColor));
+        float col[3];
+        ColorGetEncoded(G,I->oneColor,col);
+        ray->fColor3fv(ray,col);
       }
       
       if(c) 
-        while(c--)
-          {
-            if(*vi) {
-              if(!I->oneColorFlag) {
-                ray->fColor3fv(ray,vc);
-              }
-              ray->fSphere3fv(ray,v,radius);
+        while(c--) {
+          if(*vi) {
+            if(!I->oneColorFlag) {
+              ray->fColor3fv(ray,vc);
             }
-            vi++;
-            vc+=3;
-            v+=3;
+            ray->fSphere3fv(ray,v,radius);
           }
+          vi++;
+          vc+=3;
+          v+=3;
+        }
     } else if((I->Type==0)||(I->Type==3)||(I->Type==4)) { /* solid surface */
       c=I->NT;
 
       if(I->oneColorFlag) {
-        col=ColorGet(G,I->oneColor);
+        float col[3];
+        ColorGetEncoded(G,I->oneColor,col);
         while(c--)
           {
             if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
@@ -200,16 +204,25 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
             t+=3;
           }
       } else {
-        while(c--)
-          {
-            if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
-              if((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2)))))
-                ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
-                                  vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
-                                  vc+(*t)*3,vc+(*(t+1))*3,vc+(*(t+2))*3);
-            t+=3;
+        float colA[3],colB[3],colC[3];
+        while(c--) {
+          register int ttA = *t,ttB = *(t+1),ttC = *(t+2);
+          if((I->proximity&&((*(vi+ttA))||(*(vi+ttB))||(*(vi+ttC))))||
+             ((*(vi+ttA))&&(*(vi+ttB))&&(*(vi+ttC)))) {
+            register int ttA3 = ttA*3, ttB3 = ttB*3, ttC3 = ttC*3;
+            register float *cA=vc+ttA3, *cB=vc+ttB3, *cC=vc+ttC3;
+            if(rc) {
+              if(rc[ttA]<-1) ColorGetEncoded(G,rc[ttA], (cA=colA));
+              if(rc[ttB]<-1) ColorGetEncoded(G,rc[ttB], (cB=colB));
+              if(rc[ttC]<-1) ColorGetEncoded(G,rc[ttC], (cC=colC));
+            }
+            if((*(vi+ttA))||(*(vi+ttB))||(*(vi+ttC)))
+              ray->fTriangle3fv(ray,v+ttA3,v+ttB3,v+ttC3,
+                                vn+ttA3,vn+ttB3,vn+ttC3,
+                                cA, cB, cC);
           }
+          t+=3;
+        }
       }
     } else if(I->Type==2) { /* triangle mesh surface */
 
@@ -228,7 +241,8 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
 
       c=I->NT;      
       if(I->oneColorFlag) {
-        col=ColorGet(G,I->oneColor);
+        float col[3];
+        ColorGetEncoded(G,I->oneColor,col);
         while(c--)
           {
             t0 = (*t);
@@ -546,8 +560,9 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
 
             c=n_tri;
             if(I->oneColorFlag) {
-              col=ColorGet(G,I->oneColor);
-          
+              float col[3];
+              ColorGetEncoded(G,I->oneColor,col);
+
               glColor4f(col[0],col[1],col[2],alpha);
               glBegin(GL_TRIANGLES);
               for(c=0;c<n_tri;c++) {
@@ -598,7 +613,9 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
                         glDepthMask(GL_FALSE);*/
             if(I->allVisibleFlag) {
               if(I->oneColorFlag) {
-                col = ColorGet(G,I->oneColor);
+                float col[3];
+                ColorGetEncoded(G,I->oneColor,col);
+
                 glColor4f(col[0],col[1],col[2],alpha);
                 c=*(s++);
                 while(c) {
@@ -621,6 +638,8 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
               } else {
                 c=*(s++);
                 while(c) {
+                  float *col;
+
                   glBegin(GL_TRIANGLE_STRIP);
                   col = vc+(*s)*3;
                   glColor4f(col[0],col[1],col[2],alpha);            
@@ -651,10 +670,12 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
                 glBegin(GL_TRIANGLES);
             
                 if(I->oneColorFlag) {
-                  col = ColorGet(G,I->oneColor);
-                  glColor4f(col[0],col[1],col[2],alpha);
-                  while(c--) {
+                  float color[3];
+                  float *col;
+                  ColorGetEncoded(G,I->oneColor,color);
 
+                  glColor4f(color[0],color[1],color[2],alpha);
+                  while(c--) {
                     if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
                        ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
 
@@ -674,6 +695,7 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
                       t+=3;
                   }
                 } else {
+                  float *col;
                   while(c--) {
                     if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
                        ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
@@ -987,7 +1009,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   int surface_mode;
   int surface_color;
   int *present=NULL,*ap;
-
+  int *rc;
+  int ramped_flag = false;
   int carve_state = 0;
   int carve_flag = false;
   float carve_cutoff;
@@ -1060,6 +1083,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 
     if(!I->VC) I->VC = Alloc(float,3*I->N);
     vc=I->VC;
+    if(!I->RC) I->RC = Alloc(int,I->N);
+    rc=I->RC;
     if(!I->Vis) I->Vis = Alloc(int,I->N);
     vi=I->Vis;
     
@@ -1218,16 +1243,20 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
                 scale3f(v_above,probe_radius,v_above);
                 add3f(v0,v_above,v_above);
                 v_pos = v_above;
+                rc[0] = -1;
                 break;
               default:
                 v_pos = v0;
+                rc[0] = c1;
+                ramped_flag=true;
                 break;
               }
               ColorGetRamped(G,c1,v_pos,vc,state);
               vc+=3;
-            } else {
+              rc++;
+            }else {
               c0 = ColorGet(G,c1);
-              
+              *(rc++) = c1;
               *(vc++) = *(c0++);
               *(vc++) = *(c0++);
               *(vc++) = *(c0++);
@@ -1266,6 +1295,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   if(clear_map)
     MapFree(clear_map);
   VLAFreeP(clear_vla);
+  if( (!ramped_flag) || (!SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_ray_color_ramps)))
+    FreeP(I->RC);
   FreeP(present);
 }
 

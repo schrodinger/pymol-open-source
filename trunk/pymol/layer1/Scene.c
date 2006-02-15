@@ -4888,10 +4888,28 @@ void SceneRay(PyMOLGlobals *G,
       while(ListIterate(I->Obj,rec,next))
         {
           if(rec->obj->fRender) {
-            float *color = ColorGet(G,rec->obj->Color);
+            int obj_color = rec->obj->Color;
+            float color[3];
+            int icx;
+            ColorGetEncoded(G,obj_color,color);
             RaySetContext(ray,rec->obj->Context);
             ray->fColor3fv(ray,color);
-            ray->fInteriorColor3fv(ray,color);
+
+            if(SettingGetIfDefined_i(G,rec->obj->Setting,cSetting_ray_interior_color,&icx)) {
+              float icolor[3];
+              if(icx!=-1) {
+                if(icx==cColorObject) {
+                  ray->fInteriorColor3fv(ray,color,false);              
+                } else {
+                  ColorGetEncoded(G,icx,icolor);
+                  ray->fInteriorColor3fv(ray,icolor,false);              
+                }
+              } else {
+                ray->fInteriorColor3fv(ray,color,true);
+              }
+            } else {
+              ray->fInteriorColor3fv(ray,color,true);
+            }
             info.state = ObjectGetCurrentState(rec->obj,false);
             rec->obj->fRender(rec->obj,&info);
           }

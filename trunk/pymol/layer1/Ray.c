@@ -117,7 +117,7 @@ void RaySphere3fv(CRay *I,float *v,float r);
 void RayCharacter(CRay *I,int char_id);
 void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
 void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
-void RayInteriorColor3fv(CRay *I,float *v);
+void RayInteriorColor3fv(CRay *I,float *v,int passive);
 
 void RayTriangle3fv(CRay *I,
 						  float *v1,float *v2,float *v3,
@@ -622,7 +622,8 @@ static void RayTransformFirst(CRay *I,int perspective)
   
   if((SettingGet(I->G,cSetting_two_sided_lighting)||
       (SettingGet(I->G,cSetting_transparency_mode)==1)||
-      (SettingGet(I->G,cSetting_ray_interior_color)!=-1)))
+      (SettingGet(I->G,cSetting_ray_interior_color)!=-1)||
+      I->CheckInterior))
      backface_cull=0;
 
   basis0 = I->Basis;
@@ -711,23 +712,21 @@ void RayTransformBasis(CRay *I,CBasis *basis1,int group_id)
   VLACacheSize(I->G,basis1->Radius2,float,basis0->NVertex,group_id,cCache_basis_radius2);
   v0=basis0->Vertex;
   v1=basis1->Vertex;
-  for(a=0;a<basis0->NVertex;a++)
-	 {
-		matrix_transform33f3f(basis1->Matrix,v0,v1);
-		v0+=3;
-		v1+=3;
-		basis1->Radius[a]=basis0->Radius[a];
-		basis1->Radius2[a]=basis0->Radius2[a];
-		basis1->Vert2Normal[a]=basis0->Vert2Normal[a];
-	 }
+  for(a=0;a<basis0->NVertex;a++) {
+    matrix_transform33f3f(basis1->Matrix,v0,v1);
+    v0+=3;
+    v1+=3;
+    basis1->Radius[a]=basis0->Radius[a];
+    basis1->Radius2[a]=basis0->Radius2[a];
+    basis1->Vert2Normal[a]=basis0->Vert2Normal[a];
+  }
   v0=basis0->Normal;
   v1=basis1->Normal;
-  for(a=0;a<basis0->NNormal;a++)
-	 {
-		matrix_transform33f3f(basis1->Matrix,v0,v1);
-		v0+=3;
-		v1+=3;
-	 }
+  for(a=0;a<basis0->NNormal;a++) {
+    matrix_transform33f3f(basis1->Matrix,v0,v1);
+    v0+=3;
+    v1+=3;
+  }
   basis1->MaxRadius=basis0->MaxRadius;
   basis1->MinVoxel=basis0->MinVoxel;
   basis1->NVertex=basis0->NVertex;
@@ -1836,6 +1835,70 @@ static int find_edge(unsigned int *ptr,float *depth, unsigned int width,
   return 0;
 }
 
+static void RayPrimGetColorRamped(PyMOLGlobals *G, float *matrix,RayInfo *r,float *fc)
+{
+  float fc1[3],fc2[3],fc3[3];
+  register float *c1, *c2, *c3, w2;
+  float back_pact[3];
+  const float _0 = 0.0F, _1 = 1.0F, _01 = 0.1F;
+  CPrimitive   *lprim   = r->prim;
+  inverse_transformC44f3f(matrix,r->impact,back_pact);
+  
+  switch(lprim->type) {
+  case cPrimTriangle:
+    w2 = 1.0F - (r->tri1 + r->tri2);
+    c1 = lprim->c1;
+    if(c1[0]<=_0) {
+      ColorGetRamped(G,(int)(c1[0]-_01),back_pact,fc1,-1);
+      c1 = fc1;  
+    }
+    c2 = lprim->c2;
+    if(c2[0]<=_0) {
+      ColorGetRamped(G,(int)(c2[0]-_01),back_pact,fc2,-1);
+      c2 = fc2;  
+    }
+    c3 = lprim->c3;
+    if(c3[0]<=_0) {
+      ColorGetRamped(G,(int)(c3[0]-_01),back_pact,fc3,-1);
+      c3 = fc3;  
+    }
+    fc[0] = (c2[0]*r->tri1)+(c3[0]*r->tri2)+(c1[0]*w2);
+    fc[1] = (c2[1]*r->tri1)+(c3[1]*r->tri2)+(c1[1]*w2);
+    fc[2] = (c2[2]*r->tri1)+(c3[2]*r->tri2)+(c1[2]*w2);
+    break;
+  case cPrimSphere:
+    c1 = lprim->c1;
+    if(c1[0]<=_0) {
+      ColorGetRamped(G,(int)(c1[0]-_01),back_pact,fc1,-1);
+      c1 = fc1;  
+    }
+    copy3f(c1,fc);
+    break;
+  case cPrimCylinder:
+  case cPrimSausage:
+    w2 = r->tri1;
+    c1 = lprim->c1;
+    if(c1[0]<=_0) {
+      ColorGetRamped(G,(int)(c1[0]-_01),back_pact,fc1,-1);
+      c1 = fc1;  
+    }
+    c2 = lprim->c2;
+    if(c2[0]<=_0) {
+      ColorGetRamped(G,(int)(c2[0]-_01),back_pact,fc2,-1);
+      c2 = fc2;  
+    }
+    fc[0]=(c1[0]*(_1-w2))+(c2[0]*w2);
+    fc[1]=(c1[1]*(_1-w2))+(c2[1]*w2);
+    fc[2]=(c1[2]*(_1-w2))+(c2[2]*w2);
+    break;
+  default:
+    fc[0] = _1;
+    fc[1] = _1;
+    fc[2] = _1;
+    break;
+  }
+}
+
 int RayTraceThread(CRayThreadInfo *T)
 {
 	CRay *I=T->ray;
@@ -1853,7 +1916,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	int n_hit=0;
 	int two_sided_lighting;
 	float fog;
-	float *inter=NULL;
+    float inter[3] = {0.0F,0.0F,0.0F};
 	float fog_start=0.0F;
    /*	float gamma,inp,sig=1.0F;*/
 	float persist,persist_inv;
@@ -1912,7 +1975,7 @@ int RayTraceThread(CRayThreadInfo *T)
    int perspective = T->perspective;
    float eye[3];
    float half_height, front_ratio;
-   float start[3],nudge[3];
+   float start[3],nudge[3],back_pact[3];
    float *depth = T->depth;
    float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);
    float shadow_range = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_range);
@@ -2018,7 +2081,7 @@ int RayTraceThread(CRayThreadInfo *T)
      settingSpecReflect = 0.0F;
    }
    
-	if((interior_color!=-1)||(two_sided_lighting)||(trans_mode==1))
+	if((interior_color!=-1)||(two_sided_lighting)||(trans_mode==1)||I->CheckInterior)
 		backface_cull	= 0;
 
 	shadow_fudge = SettingGet(I->G,cSetting_ray_shadow_fudge);
@@ -2100,12 +2163,9 @@ int RayTraceThread(CRayThreadInfo *T)
      offset = offset - (offset % T->n_thread) + T->phase;
    }
    
-   if(interior_color!=-1) {
-     if(interior_color<0) {
-       inter = ColorGet(I->G,0);
-     } else {
-       inter = ColorGet(I->G,interior_color);
-     }
+   if((interior_color!=-1)||I->CheckInterior) {
+     if(interior_color!=-1)
+       ColorGetEncoded(I->G,interior_color,inter);
      if(bp2) {
        interior_normal[0] = interior_reflect*bp2->LightNormal[0];
        interior_normal[1] = interior_reflect*bp2->LightNormal[1];
@@ -2128,7 +2188,7 @@ int RayTraceThread(CRayThreadInfo *T)
    BasisCall[0].back = T->back;
    BasisCall[0].trans_shadows = trans_shadows;
    BasisCall[0].nearest_shadow = (shadow_decay!=_0);
-   BasisCall[0].check_interior = (interior_color != -1);
+   BasisCall[0].check_interior = ((interior_color != -1) || I->CheckInterior);
    BasisCall[0].fudge0 = BasisFudge0;
    BasisCall[0].fudge1 = BasisFudge1;
 
@@ -2289,7 +2349,7 @@ int RayTraceThread(CRayThreadInfo *T)
                  r1.dir[0] = (r1.base[0] - eye[0]);
                  r1.dir[1] = (r1.base[1] - eye[1]);
                  r1.dir[2] = (r1.base[2] - eye[2]);
-                 if(interior_color!=-1) {
+                 if(BasisCall[0].check_interior) {
                    start[0] = r1.base[0];
                    start[1] = r1.base[1];
                    start[2] = r1.base[2];
@@ -2359,7 +2419,7 @@ int RayTraceThread(CRayThreadInfo *T)
                            RayReflectAndTexture(I,&r1,perspective);
                         
                          dotgle = -r1.dotgle;
-                         if(interior_color<0) {
+                         if((interior_color<0)&&(interior_color>cColorExtCutoff)) {
                            copy3f(r1.prim->ic,fc);
                          } else {
                            copy3f(inter,fc);
@@ -2372,6 +2432,9 @@ int RayTraceThread(CRayThreadInfo *T)
                           
                            BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
                           
+                           if(r1.prim->ramped) {
+                             RayPrimGetColorRamped(I->G, I->ModelView,&r1,fc);
+                           }
                            if(bp2) {
                              RayProjectTriangle(I, &r1, bp2->LightNormal,
                                                 bp1->Vertex+i*3,
@@ -2404,8 +2467,9 @@ int RayTraceThread(CRayThreadInfo *T)
                              RayReflectAndTexture(I,&r1,perspective);
                            }
                           
-                           if((r1.prim->type==cPrimCylinder) || (r1.prim->type==cPrimSausage)) {
-
+                           if(r1.prim->ramped) {
+                             RayPrimGetColorRamped(I->G, I->ModelView,&r1,fc);
+                           } else if((r1.prim->type==cPrimCylinder) || (r1.prim->type==cPrimSausage)) {
                              ft = r1.tri1;
                              fc[0]=(r1.prim->c1[0]*(_1-ft))+(r1.prim->c2[0]*ft);
                              fc[1]=(r1.prim->c1[1]*(_1-ft))+(r1.prim->c2[1]*ft);
@@ -2444,11 +2508,12 @@ int RayTraceThread(CRayThreadInfo *T)
                                    RayReflectAndTexture(I,&r1,perspective);
                                 
                                  dotgle	= -r1.dotgle;
-                                 if(interior_color<0) {
+                                 if((interior_color<0)&&(interior_color>cColorExtCutoff)) {
                                    copy3f(r1.prim->ic,fc);
                                  } else {
                                    copy3f(inter,fc);
                                  }
+
                                }
                            }
                         
@@ -2548,6 +2613,11 @@ int RayTraceThread(CRayThreadInfo *T)
                              }
                            }
                          }
+                       }
+                       
+                       if(fc[0]<=((float)cColorExtCutoff)) { /* ramped color */
+                         inverse_transformC44f3f(I->ModelView,r1.impact,back_pact);
+                         ColorGetRamped(I->G,(int)(fc[0]-0.1F),back_pact,fc,-1);
                        }
                       
                        bright = ambient +
@@ -4278,11 +4348,13 @@ void RayTransparentf(CRay *I,float v)
   I->Trans=v;
 }
 
-void RayInteriorColor3fv(CRay *I,float *v)
+void RayInteriorColor3fv(CRay *I,float *v,int passive)
 {
   I->IntColor[0]=(*v++);
   I->IntColor[1]=(*v++);
   I->IntColor[2]=(*v++);
+  if(!passive) 
+    I->CheckInterior=true;
 }
 /*========================================================================*/
 void RayColor3fv(CRay *I,float *v)
@@ -4305,6 +4377,7 @@ void RaySphere3fv(CRay *I,float *v,float r)
   p->r1=r;
   p->trans=I->Trans;
   p->wobble=I->Wobble;
+  p->ramped=(I->CurColor[0]<0.0F);
   /* 
     copy3f(I->WobbleParam,p->wobble_param);*/
   vv=p->v1;
@@ -4378,6 +4451,7 @@ void RayCharacter(CRay *I,int char_id)
   p->trans=I->Trans;
   p->char_id = char_id;
   p->wobble=I->Wobble;
+  p->ramped=0;
   /*
     copy3f(I->WobbleParam,p->wobble_param);*/
 
@@ -4505,6 +4579,7 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   p->cap1=cCylCapFlat;
   p->cap2=cCylCapFlat;
   p->wobble=I->Wobble;
+  p->ramped = ((c1[0]<0.0F)||(c2[0]<0.0F));
   /* 
  copy3f(I->WobbleParam,p->wobble_param);*/
 
@@ -4564,6 +4639,7 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
   p->cap1=cap1;
   p->cap2=cap2;
   p->wobble=I->Wobble;
+  p->ramped = ((c1[0]<0.0F)||(c2[0]<0.0F));
   /*
   copy3f(I->WobbleParam,p->wobble_param);*/
 
@@ -4620,6 +4696,7 @@ void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   p->r1=r;
   p->trans=I->Trans;
   p->wobble=I->Wobble;
+  p->ramped = ((c1[0]<0.0F)||(c2[0]<0.0F));
   /*  
     copy3f(I->WobbleParam,p->wobble_param);*/
 
@@ -4690,6 +4767,7 @@ void RayTriangle3fv(CRay *I,
   p->type = cPrimTriangle;
   p->trans=I->Trans;
   p->wobble=I->Wobble;
+  p->ramped = ((c1[0]<0.0F)||(c2[0]<0.0F)||(c3[0]<0.0F));
   /*
     copy3f(I->WobbleParam,p->wobble_param);*/
 
@@ -4838,6 +4916,7 @@ CRay *RayNew(PyMOLGlobals *G)
   I->fTransparentf=RayTransparentf;
   I->TTTStackVLA = NULL;
   I->TTTStackDepth = 0;
+  I->CheckInterior=false;
   I->Sampling = SettingGetGlobal_i(I->G,cSetting_antialias);
   if(I->Sampling<2) /* always supersample fonts by at least 2X */
     I->Sampling=2;

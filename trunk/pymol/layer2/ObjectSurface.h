@@ -27,6 +27,7 @@ typedef struct {
   int *N,nT;
   float *V;
   float *VC;
+  int *RC;
   int VCsize;
   int Range[6];
   float ExtentMin[3],ExtentMax[3];

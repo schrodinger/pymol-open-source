@@ -660,6 +660,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_async_builds               506
 #define cSetting_fetch_path                 507
 #define cSetting_cartoon_ring_radius        508
+#define cSetting_ray_color_ramps            509
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -669,7 +670,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       509
+#define cSetting_INIT                       510
 
 #endif
 

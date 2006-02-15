@@ -45,6 +45,7 @@ if __name__=='pymol.creating':
         "rainbow" : 6,
         "afmhot" : 7,
         "grayscale" : 8,
+        "object" : [[-1.0,-1.0,-1.0]]
         }
     
     ramp_spectrum_sc = Shortcut(ramp_spectrum_dict.keys())
