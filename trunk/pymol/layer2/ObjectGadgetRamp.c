@@ -131,7 +131,8 @@ static void ObjectGadgetRampCalculate(ObjectGadgetRamp *I, float v,float *result
 #ifdef _PYMOL_INLINE 
 __inline__
 #endif
-static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color,float *table)
+static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color,
+                                        float *table,float *extreme)
 {
   register float *i_level = I->Level;
   register int n_level = I->NLevel;
@@ -139,7 +140,6 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *c
   const float _1 = 1.0F;
   int ok=true;
   if(i_level&&table) {
-    register float *i_extreme = I->Extreme;
     register int level_is_ge = -1;
     register int level_is_le = n_level; 
     register int i=0;
@@ -173,16 +173,16 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *c
     if(level_is_ge!=level_is_le) {
       if(level_is_le==0) { /* lower extreme */
         register float *v;
-        if(i_extreme) {
-          v = i_extreme;
+        if(extreme) {
+          v = extreme;
         } else {
           v = table;
         }
         copy3f(v,color);
       } else if(level_is_ge==(n_level-1)) { /* upper extreme */
         register float *v;
-        if(i_extreme) {
-          v = i_extreme + 3;
+        if(extreme) {
+          v = extreme + 3;
         } else {
           v = table + 3*(n_level-1);
         }
@@ -195,7 +195,7 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *c
           x0=(level-i_level[level_is_le])/d;
           x1=1.0F-x0;
           for(i=0;i<3;i++) {
-            color[i]= x0*I->Color[3*level_is_ge+i] + x1*I->Color[3*level_is_le+i];
+            color[i]= x0*table[3*level_is_ge+i] + x1*table[3*level_is_le+i];
           }
           clamp3f(color);
         } else {
@@ -204,7 +204,7 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *c
         }
       }
     } else { /* dead on the specified level */
-      copy3f(I->Color+3*level_is_ge,color);
+      copy3f(table+3*level_is_ge,color);
       clamp3f(color);
     }
   } else {
@@ -235,6 +235,7 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
   /* now thread-safe...via stack copy of colors */
 
   float stack_color[MAX_COLORS*3];
+  float stack_extreme[6];
   register float *i_level = I->Level;
   register float *i_color = I->Color;
   register int *i_special = I->Special;
@@ -242,6 +243,7 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
     register int i = 0;
     register int n_level = I->NLevel;
     register float *i_extreme = I->Extreme;
+    register float *extreme = i_extreme;
     /* mix special coloring into the table */
     register float *src = i_color,*dst = stack_color;
     if((n_level+2)>MAX_COLORS)
@@ -280,7 +282,9 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
     /* mix extreme colors in (if present) */
     if(i_extreme) {
       i = 0;
-      src = I->Extreme;
+      extreme = stack_extreme;
+      src = i_extreme;
+      dst = stack_extreme;
       while(i<2) {
         register int index = i_special[i+n_level];
         switch(index) {
@@ -302,7 +306,7 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
           break;
         default: /* allow nested ramps */
           if(ColorCheckRamped(I->Gadget.Obj.G,index)) {
-            ColorGetRamped(I->Gadget.Obj.G,index,vertex,I->Color+3*i,state);
+            ColorGetRamped(I->Gadget.Obj.G,index,vertex,dst,state);
           } else {
             copy3f(src,dst);
           }
@@ -313,16 +317,16 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
         i++;
       }
     }
-    /* now interpolate using copy */
-    return _ObjectGadgetRampInterpolate(I,level,color,stack_color);
+    /* interpolate using stack tables */
+    return _ObjectGadgetRampInterpolate(I,level,color,stack_color,extreme);
   } else 
-    /* now interpolate like normal */
-    return _ObjectGadgetRampInterpolate(I,level,color,i_color);
+    /* interplate using static tables */
+    return _ObjectGadgetRampInterpolate(I,level,color,i_color,I->Extreme);
 }
 
 int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
 {
-  return _ObjectGadgetRampInterpolate(I,level,color,I->Color);
+  return _ObjectGadgetRampInterpolate(I,level,color,I->Color,I->Extreme);
 }
 
 PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I)
