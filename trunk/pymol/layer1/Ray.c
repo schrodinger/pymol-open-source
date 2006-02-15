@@ -2162,8 +2162,9 @@ int RayTraceThread(CRayThreadInfo *T)
      offset = (T->phase * render_height/T->n_thread);
      offset = offset - (offset % T->n_thread) + T->phase;
    }
-   
    if((interior_color!=-1)||I->CheckInterior) {
+
+
      if(interior_color!=-1)
        ColorGetEncoded(I->G,interior_color,inter);
      if(bp2) {
@@ -2484,7 +2485,7 @@ int RayTraceThread(CRayThreadInfo *T)
                         
                          if(r1.flat_dotgle < _0)
                            {
-                             if((!two_sided_lighting) && (interior_color!=-1) && (interior_mode!=2))
+                             if((!two_sided_lighting) && (BasisCall[0].check_interior) && (interior_mode!=2))
                                {
                                  interior_flag		= true;
                                  copy3f(interior_normal,r1.surfnormal);
