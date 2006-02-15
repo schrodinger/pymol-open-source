@@ -108,7 +108,6 @@ if __name__=='pymol.creating':
         if is_list(color):
             for a in color:
                 if not is_list(a):
-                    print a,cmd.get_color_tuple(a,4)
                     new_color.append(list(cmd.get_color_tuple(a,4))) # incl negative RGB special colors
                 else:
                     new_color.append(a)
