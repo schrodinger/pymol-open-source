@@ -117,7 +117,6 @@ if __name__=='pymol.creating':
             new_color=int(color)
         try:
             lock()
-            print new_color
             r = _cmd.ramp_new(str(name),str(map_name),list(safe_list_eval(str(range))),new_color,
                                     int(map_state)-1,str(selection),float(beyond),float(within),
                                     float(sigma),int(zero))
