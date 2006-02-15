@@ -108,6 +108,7 @@ if __name__=='pymol.creating':
         if is_list(color):
             for a in color:
                 if not is_list(a):
+                    print a,cmd.get_color_tuple(a,4)
                     new_color.append(list(cmd.get_color_tuple(a,4))) # incl negative RGB special colors
                 else:
                     new_color.append(a)
@@ -117,6 +118,7 @@ if __name__=='pymol.creating':
             new_color=int(color)
         try:
             lock()
+            print new_color
             r = _cmd.ramp_new(str(name),str(map_name),list(safe_list_eval(str(range))),new_color,
                                     int(map_state)-1,str(selection),float(beyond),float(within),
                                     float(sigma),int(zero))
