@@ -26,9 +26,23 @@ Z* -------------------------------------------------------------------
 
 #define GDB_ENTRY
 
-void *MemoryReallocForSure(void *ptr, unsigned int newSize)
+void *MemoryReallocForSureSafe(void *ptr, unsigned int newSize, unsigned int oldSize)
 {
-  float *tmp = malloc(newSize);
+  if(newSize<oldSize) {
+    float *tmp = mmalloc(newSize);
+    if(tmp && newSize && oldSize) {
+        memcpy(tmp, ptr, newSize);
+    }
+    FreeP(ptr);
+    return tmp;
+  } else {
+    return mrealloc(ptr,newSize);
+  }
+}
+
+void *MemoryReallocForSure(void *ptr, unsigned int newSize) /* unsafe -- replace with above */
+{
+  float *tmp = mmalloc(newSize);
   if(tmp)
     memcpy(tmp,ptr,newSize);
   FreeP(ptr);
@@ -312,6 +326,39 @@ void *VLACacheSetSize(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_i
 	 }
   return((void*)&(vla[1]));
 }
+void *VLACacheSetSizeForSure(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_id,int block_id)
+{
+  VLARec *vla;
+  char *start=NULL;
+  char *stop;
+  unsigned int soffset=0;
+  vla = &((VLARec*)ptr)[-1];
+  if(vla->autoZero) {
+	 soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+  }
+  if(newSize<vla->nAlloc) {
+    vla->nAlloc = newSize;
+    vla=(void*)_MemoryCacheShrinkForSure(G,vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec),
+                                         group_id,block_id MD_FILE_LINE_Call);
+  } else {
+    vla->nAlloc = newSize;
+    vla=(void*)_MemoryCacheRealloc(G,vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec),
+                                   group_id,block_id MD_FILE_LINE_Call);
+  }
+  if(!vla)
+	 {
+		printf("VLASetSize-ERR: realloc failed.\n");
+      DieOutOfMemory();
+	 }
+  if(vla->autoZero)
+	 {
+      start = ((char*)vla)+soffset;
+		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+		if(start<stop)
+		  MemoryZero(start,stop);
+	 }
+  return((void*)&(vla[1]));
+}
 #endif
 
 
@@ -339,6 +386,38 @@ void *VLASetSize(void *ptr,unsigned int newSize)
 		if(start<stop)
 		  MemoryZero(start,stop);
 	 }
+  return((void*)&(vla[1]));
+}
+
+void *VLASetSizeForSure(void *ptr,unsigned int newSize)
+{
+  VLARec *vla;
+  char *start=NULL;
+  char *stop;
+  unsigned int soffset=0;
+  vla = &((VLARec*)ptr)[-1];
+  if(vla->autoZero) {
+    soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+  }
+  if(newSize<vla->nAlloc) {
+    vla=MemoryReallocForSureSafe(vla,
+                                 (vla->recSize*newSize)+sizeof(VLARec),
+                                 (vla->recSize*vla->nAlloc)+sizeof(VLARec));
+    vla->nAlloc = newSize;
+  } else {
+    vla->nAlloc = newSize;
+    vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
+  }
+  if(!vla) {
+    printf("VLASetSize-ERR: realloc failed.\n");
+    DieOutOfMemory();
+  }
+  if(vla->autoZero) {
+    start = ((char*)vla)+soffset;
+    stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+    if(start<stop)
+      MemoryZero(start,stop);
+  }
   return((void*)&(vla[1]));
 }
 
@@ -754,6 +833,76 @@ void *MemoryDebugReallocForSure(void *ptr,size_t size,const char *file,
 				}
 		  }
     }
+  return(ptr);
+}
+
+void *MemoryDebugReallocForSureSafe(void *ptr,size_t size,size_t old_size,
+                                    const char *file,int line,int type)
+{
+  DebugRec *rec,*new_rec;
+
+  if(InitFlag) MemoryDebugInit();
+  if((!ptr)&&(!size)) {
+    printf(
+           "MemoryDebug-ERR: realloc given (NULL,zero) (%s:%i)\n",
+           file,line);
+#ifdef GDB_ENTRY
+    MemoryDebugDump();
+    abort();
+#endif
+    exit(EXIT_FAILURE);
+  }
+  if(!ptr)
+    return(MemoryDebugMalloc(size,file,line,type));
+  else if(!size) {
+    MemoryDebugFree(ptr,file,line,type);
+    return(NULL);
+  }  else    {
+    rec=MemoryDebugHashRemove(ptr);
+    if(!rec) {
+      printf(
+             "MemoryDebug-ERR: realloc() corrupted tree or bad ptr! (%s:%i @%p)\n",
+             file,line,ptr);
+#ifdef GDB_ENTRY
+      MemoryDebugDump();
+      abort();
+#endif
+      exit(EXIT_FAILURE);
+    } else {
+      if(rec->type!=type) {
+        printf("MemoryDebug-ERR: ptr %p is of wrong type: %i!=%i (%s:%i)\n",
+               ptr,rec->type,type,file,line);
+#ifdef GDB_ENTRY
+        MemoryDebugDump();
+        abort();
+#endif
+        exit(EXIT_FAILURE);
+      }
+      if(old_size>size) {
+        new_rec=malloc(size+sizeof(DebugRec));
+        if(new_rec)
+          memcpy(new_rec,rec,size+sizeof(DebugRec));
+        free(rec);
+        rec=new_rec;
+      } else {
+        rec=realloc(rec,size+sizeof(DebugRec));
+      }
+      if(!rec) {
+        printf("MemoryDebug-ERR: realloc() failed reallocation! (%s:%i)\n",
+               file,line);
+#ifdef GDB_ENTRY
+        MemoryDebugDump();
+        abort();
+#endif
+        DieOutOfMemory();
+      } else {
+        MemoryDebugHashAdd(rec);
+        rec->size=size;
+        rec++;
+        return((void*)rec);
+      }
+    }
+  }
   return(ptr);
 }
 

@@ -80,6 +80,7 @@ void MemoryCacheDone(PyMOLGlobals *G);
 void *_MemoryCacheMalloc(PyMOLGlobals *G,unsigned int size,int group_id,int block_id MD_FILE_LINE_Decl);
 void *_MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,int group_id,int block_id MD_FILE_LINE_Decl);
 void *_MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id MD_FILE_LINE_Decl);
+void *_MemoryCacheShrinkForSure(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id MD_FILE_LINE_Decl);
 void _MemoryCacheFree(PyMOLGlobals *G,void *ptr,int group_id, int block_id,int force MD_FILE_LINE_Decl);
 
 #define CacheAlloc(G,type,size,thread,id) (type*)_MemoryCacheMalloc(G,sizeof(type)*(size),thread,id MD_FILE_LINE_Call)
@@ -91,6 +92,7 @@ void _MemoryCacheFree(PyMOLGlobals *G,void *ptr,int group_id, int block_id,int f
 #define VLACacheAlloc(G,type,initSize,t,i) (type*)VLACacheMalloc(G,initSize,sizeof(type),3,0,t,i)
 #define VLACacheFreeP(G,ptr,t,i,f) {if(ptr) {VLACacheFree(G,ptr,t,i,f);ptr=NULL;}}
 #define VLACacheSize(G,ptr,type,size,t,i) {ptr=(type*)VLACacheSetSize(G,ptr,size,t,i);}
+#define VLACacheSizeForSure(G,ptr,type,size,t,i) {ptr=(type*)VLACacheSetSizeForSure(G,ptr,size,t,i);}
 
 
 #ifndef _MemoryDebug_ON
@@ -104,6 +106,7 @@ void *_VLACacheMalloc(PyMOLGlobals *G,const char *file,int line,unsigned int ini
 
 void VLACacheFree(PyMOLGlobals *G,void *ptr,int thread,int id,int force);
 void *VLACacheSetSize(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_id,int block_id);
+void *VLACacheSetSizeForSure(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_id,int block_id);
 void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index,int block_id);
 
 #else
@@ -113,6 +116,7 @@ void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index
 #define VLACacheAlloc(G,type,initSize,t,i) VLAlloc(type,initSize)
 #define VLACacheFreeP(G,ptr,t,i,f) VLAFreeP(ptr)
 #define VLACacheSize(G,ptr,type,size,t,i) VLASize(ptr,type,size)
+#define VLACacheSizeForSure(G,ptr,type,size,t,i) VLASizeForSure(ptr,type,size)
 #define VLACacheExpand(G,ptr,rec,thread_index,i) VLAExpand(ptr,rec)
 
 #define MemoryCacheInit(x)

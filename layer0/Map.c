@@ -317,7 +317,7 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
     ENDFB(G);
 
 	I->NEElem=n;
-	VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
+	VLACacheSizeForSure(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
 	PRINTFD(G,FB_Map)
 		" MapSetupExpressXY-Debug: leaving...\n"
 	ENDFD;
@@ -423,6 +423,8 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
     ENDFB(G);
 
 	I->NEElem = n;
+    VLACacheSizeForSure(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
+
 	PRINTFD(G,FB_Map)
 		" MapSetupExpressXYVert-Debug: leaving...\n"
 	ENDFD;
@@ -545,7 +547,8 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint)
     " MapSetupExpressPerp: %d rows in express table\n",n
     ENDFB(G);
   I->NEElem=n;
-  VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
+  VLACacheSizeForSure(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
+
   PRINTFD(G,FB_Map)
     " MapSetupExpress-Debug: leaving...n=%d\n",n
     ENDFD;
@@ -624,7 +627,8 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
     }
   }
   I->EList = e_list;
-
+  I->NEElem=n;
+  VLACacheSizeForSure(G,I->EList,int,I->NEElem,group_id,block_offset);
   PRINTFD(G,FB_Map)
     " MapSetupExpress-Debug: leaving...n=%d\n",n
     ENDFD;
@@ -691,13 +695,20 @@ int MapExclLocus(MapType *I,float *v,int *a,int *b,int *c)
 float MapGetSeparation(PyMOLGlobals *G,float range,float *mx,float *mn,float *diagonal)
 {
   float maxSize;
-  float size,subDiv;
-
+  float size,maxSubDiv,divSize, subDiv[3];
+  float maxCubed, subDivCubed;
+  int a;
   maxSize = SettingGet(G,cSetting_hash_max);
+
+  maxCubed = maxSize * maxSize * maxSize;
 
   /* find longest axis */
 
   subtract3f(mx,mn,diagonal);
+  diagonal[0] = fabs(diagonal[0]);
+  diagonal[1] = fabs(diagonal[1]);
+  diagonal[2] = fabs(diagonal[2]);
+  
   size=diagonal[0];
   if(diagonal[1]>size) size=diagonal[1];
   if(diagonal[2]>size) size=diagonal[2];
@@ -708,21 +719,41 @@ float MapGetSeparation(PyMOLGlobals *G,float range,float *mx,float *mn,float *di
     diagonal[2]=1.0;
     size = 1.0;
   }
+
   /* compute maximum number of subdivisions */
-  subDiv = (float)(size/(range+MapSafety)); 
-  if(subDiv>maxSize ) subDiv = maxSize; /* keep it reasonable - we're talking N^3 here... */
-  if(subDiv<1.0) subDiv = 1.0;
+  maxSubDiv = (float)(size/(range+MapSafety));
+  if(maxSubDiv<1.0F)
+    maxSubDiv = 1.0F;
+
+  /* find resulting divSize */
+  divSize = size/maxSubDiv;
+  if(divSize<MapSafety)
+    divSize = MapSafety;
+  for(a=0;a<3;a++) {
+    subDiv[a] = (float)((int)((diagonal[a] / divSize)+0.5F));
+    subDiv[a] = (subDiv[a] < 1.0F) ? 1.0F : subDiv[a];
+  }
+  subDivCubed = subDiv[0]*subDiv[1]*subDiv[2];
+
+  if(subDivCubed>maxCubed) {
+    divSize = divSize / pow(maxCubed/subDivCubed,0.33333F);
+  } else if(subDivCubed<maxCubed) {
+    divSize = divSize * pow(subDivCubed/maxCubed,0.33333F);    
+  }
+
+  if(divSize<(range+MapSafety))
+    divSize = range+MapSafety;
 
   if(Feedback(G,FB_Map,FB_Debugging)) {
     PRINTF
-      " MapGetSeparation: range %8.3f maxSize %8.3f subDiv %8.3f size %8.3f\n",range,maxSize,subDiv,size
+      " MapGetSeparation: range %8.3f divSize %8.3f size %8.3f\n",range,divSize,size
       ENDF(G);
-    dump3f(mx,"mx");
+    /*    dump3f(mx,"mx");
     dump3f(mn,"mn");
-    dump3f(diagonal,"diagonal");
+    dump3f(diagonal,"diagonal");*/
   }
 
-  return(size/subDiv);
+  return(divSize);
 }
 
 MapType *MapNew(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent)

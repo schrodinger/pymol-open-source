@@ -421,13 +421,13 @@ void RayExpandPrimitives(CRay *I)
 
   basis = I->Basis;
   
-  VLACacheSize(I->G,basis->Vertex,float,3*nVert,0,cCache_basis_vertex);
-  VLACacheSize(I->G,basis->Radius,float,nVert,0,cCache_basis_radius);
-  VLACacheSize(I->G,basis->Radius2,float,nVert,0,cCache_basis_radius2);
-  VLACacheSize(I->G,basis->Vert2Normal,int,nVert,0,cCache_basis_vert2normal);
-  VLACacheSize(I->G,basis->Normal,float,3*nNorm,0,cCache_basis_normal);
+  VLACacheSizeForSure(I->G,basis->Vertex,float,3*nVert,0,cCache_basis_vertex);
+  VLACacheSizeForSure(I->G,basis->Radius,float,nVert,0,cCache_basis_radius);
+  VLACacheSizeForSure(I->G,basis->Radius2,float,nVert,0,cCache_basis_radius2);
+  VLACacheSizeForSure(I->G,basis->Vert2Normal,int,nVert,0,cCache_basis_vert2normal);
+  VLACacheSizeForSure(I->G,basis->Normal,float,3*nNorm,0,cCache_basis_normal);
 
-  VLACacheSize(I->G,I->Vert2Prim,int,nVert,0,cCache_ray_vert2prim);
+  VLACacheSizeForSure(I->G,I->Vert2Prim,int,nVert,0,cCache_ray_vert2prim);
 
   voxel_floor=I->PixelRadius/2.0F;
 
@@ -629,12 +629,12 @@ static void RayTransformFirst(CRay *I,int perspective)
   basis0 = I->Basis;
   basis1 = I->Basis+1;
   
-  VLACacheSize(I->G,basis1->Vertex,float,3*basis0->NVertex,1,cCache_basis_vertex);
-  VLACacheSize(I->G,basis1->Normal,float,3*basis0->NNormal,1,cCache_basis_normal);
-  VLACacheSize(I->G,basis1->Precomp,float,3*basis0->NNormal,1,cCache_basis_precomp);
-  VLACacheSize(I->G,basis1->Vert2Normal,int,basis0->NVertex,1,cCache_basis_vert2normal);
-  VLACacheSize(I->G,basis1->Radius,float,basis0->NVertex,1,cCache_basis_radius);
-  VLACacheSize(I->G,basis1->Radius2,float,basis0->NVertex,1,cCache_basis_radius2);
+  VLACacheSizeForSure(I->G,basis1->Vertex,float,3*basis0->NVertex,1,cCache_basis_vertex);
+  VLACacheSizeForSure(I->G,basis1->Normal,float,3*basis0->NNormal,1,cCache_basis_normal);
+  VLACacheSizeForSure(I->G,basis1->Precomp,float,3*basis0->NNormal,1,cCache_basis_precomp);
+  VLACacheSizeForSure(I->G,basis1->Vert2Normal,int,basis0->NVertex,1,cCache_basis_vert2normal);
+  VLACacheSizeForSure(I->G,basis1->Radius,float,basis0->NVertex,1,cCache_basis_radius);
+  VLACacheSizeForSure(I->G,basis1->Radius2,float,basis0->NVertex,1,cCache_basis_radius2);
   
   RayApplyMatrix33(basis0->NVertex,(float3*)basis1->Vertex,
 					  I->ModelView,(float3*)basis0->Vertex);
@@ -704,12 +704,12 @@ void RayTransformBasis(CRay *I,CBasis *basis1,int group_id)
 
   basis0 = I->Basis+1;
 
-  VLACacheSize(I->G,basis1->Vertex,float,3*basis0->NVertex,group_id,cCache_basis_vertex);
-  VLACacheSize(I->G,basis1->Normal,float,3*basis0->NNormal,group_id,cCache_basis_normal);
-  VLACacheSize(I->G,basis1->Precomp,float,3*basis0->NNormal,group_id,cCache_basis_precomp);
-  VLACacheSize(I->G,basis1->Vert2Normal,int,basis0->NVertex,group_id,cCache_basis_vert2normal);
-  VLACacheSize(I->G,basis1->Radius,float,basis0->NVertex,group_id,cCache_basis_radius);
-  VLACacheSize(I->G,basis1->Radius2,float,basis0->NVertex,group_id,cCache_basis_radius2);
+  VLACacheSizeForSure(I->G,basis1->Vertex,float,3*basis0->NVertex,group_id,cCache_basis_vertex);
+  VLACacheSizeForSure(I->G,basis1->Normal,float,3*basis0->NNormal,group_id,cCache_basis_normal);
+  VLACacheSizeForSure(I->G,basis1->Precomp,float,3*basis0->NNormal,group_id,cCache_basis_precomp);
+  VLACacheSizeForSure(I->G,basis1->Vert2Normal,int,basis0->NVertex,group_id,cCache_basis_vert2normal);
+  VLACacheSizeForSure(I->G,basis1->Radius,float,basis0->NVertex,group_id,cCache_basis_radius);
+  VLACacheSizeForSure(I->G,basis1->Radius2,float,basis0->NVertex,group_id,cCache_basis_radius2);
   v0=basis0->Vertex;
   v1=basis1->Vertex;
   for(a=0;a<basis0->NVertex;a++) {
@@ -1988,8 +1988,10 @@ int RayTraceThread(CRayThreadInfo *T)
     const float _p499 = 0.499F;
 	const float _persistLimit	= 0.0001F;
     float legacy_1m = _1 - legacy;
-    
     int n_basis = I->NBasis;
+    
+      MemoryDebugDump();
+
     {
       float fudge = SettingGet(I->G,cSetting_ray_triangle_fudge);
       
@@ -3481,7 +3483,7 @@ int opaque_back=0;
   int trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
   if(n_light>10) n_light = 10;
-    
+  
   if(perspective<0)
     perspective = SettingGetGlobal_b(I->G,cSetting_ortho);
   perspective = !perspective;

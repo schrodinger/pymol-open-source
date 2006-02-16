@@ -70,6 +70,7 @@ typedef struct VLARec {
 #define VLACalloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,1)
 #define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
 #define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,size);}
+#define VLASizeForSure(ptr,type,size) {ptr=(type*)VLASetSizeForSure(ptr,size);}
 #define VLACopy(ptr,type) (type*)VLANewCopy(ptr);
 
 #define Alloc(type,size) (type*)mmalloc(sizeof(type)*(size))
@@ -80,6 +81,7 @@ typedef struct VLARec {
 
 void *VLAExpand(void *ptr,unsigned int rec); /* NOTE: rec is index (total-1) */
 void *MemoryReallocForSure(void *ptr, unsigned int newSize);
+void *MemoryReallocForSureSafe(void *ptr, unsigned int newSize, unsigned int oldSize);
 
 #ifndef _MemoryDebug_ON
 void *VLAMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
@@ -93,6 +95,7 @@ void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int re
 
 void VLAFree(void *ptr);
 void *VLASetSize(void *ptr,unsigned int newSize);
+void *VLASetSizeForSure(void *ptr,unsigned int newSize);
 
 unsigned int VLAGetSize(void *ptr);
 void *VLANewCopy(void *ptr);
@@ -108,6 +111,7 @@ void MemoryZero(char *p,char *q);
 #define mregister(x,y) 
 #define mforget(x)
 #define ReallocForSure(ptr,type,size) (type*)MemoryReallocForSure(ptr,sizeof(type)*(size))
+#define ReallocForSureSafe(ptr,type,size,old_size) (type*)MemoryReallocForSure(ptr,sizeof(type)*(size),sizeof(type)*(old_size))
 
 #define MemoryDebugDump()
 
@@ -144,6 +148,8 @@ extern "C" {
 #define mregister(x,y) MemoryDebugRegister((void*)x,y,__FILE__,__LINE__)
 #define mforget(x) MemoryDebugForget((void*)x,__FILE__,__LINE__)
 #define ReallocForSure(ptr,type,size) (type*)MemoryDebugReallocForSure(ptr,sizeof(type)*(size),__FILE__,__LINE__,_MDPointer)
+#define ReallocForSureSafe(ptr,type,size,old_size) (type*)MemoryDebugReallocForSureSafe(ptr,sizeof(type)*(size),\
+                    sizeof(type)*(old_size),__FILE__,__LINE__,_MDPointer)
 
 void MemoryDebugRegister(void *addr,const char *note,
                          const char *file,int line);
