@@ -1237,9 +1237,9 @@ int BasisHitPerspective(BasisCallRec *BC)
             break;
         }
       
-        ip   = elist + h;
+        ip = elist + h;
         last_a = a;
-        i   = *(ip++);
+        i = *(ip++);
         last_b = b;
         do_loop = ((i>=0)&&(i<n_vert));
         last_c = c;
