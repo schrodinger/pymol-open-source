@@ -1152,18 +1152,25 @@ int BasisHitPerspective(BasisCallRec *BC)
       step2 = r->dir[2]*div;
     }
 
-    base0 = (r->skip[0] * iDiv);
-    base1 = (r->skip[1] * iDiv);
-    base2 = (r->skip[2] * iDiv);
+    base0 = (r->skip[0] * iDiv) - min0;
+    base1 = (r->skip[1] * iDiv) - min1;
+    base2 = (r->skip[2] * iDiv) - min2;
     
     allow_break = false;
     while(1) {
-      int inside_code = 1;
-      register int clamped = false;
+      int inside_code;
+      register int clamped;
 
-      a	= (int)(base0 - min0) + MapBorder;
-      b	= (int)(base1 - min1) + MapBorder;
+      a	= ((int)base0);
+      b	= ((int)base1);
+      c	= ((int)base2);
 
+      inside_code = 1;
+      clamped = false;
+      
+      a += MapBorder;
+      b += MapBorder;
+      c += MapBorder;
 #define EDGE_ALLOWANCE 1
 
       if(a < iMin0)  {
@@ -1181,8 +1188,6 @@ int BasisHitPerspective(BasisCallRec *BC)
           clamped = true;
         }
       }
-      c	= (int)(base2 - min2) + MapBorder;
-
       if(b < iMin1) { 
         if(((iMin1 - b) > EDGE_ALLOWANCE) && allow_break)
           break;

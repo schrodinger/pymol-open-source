@@ -432,10 +432,10 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int 
 {
   PyMOLGlobals *G=I->G;
   int n=0;
-  int a,b,c,d,e,f,i;
+  int a,b,c,i;
 
   unsigned int mapSize;
-  int st,flag;
+  int st;
   int      n_alloc = nVertHint * 15; /* emprical est. */
 
   register int iMin0 = I->iMin[0];
@@ -471,66 +471,79 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int 
   n=1;
   for(a=(I->iMin[0]-1);a<=(I->iMax[0]+1);a++)
     for(b=(I->iMin[1]-1);b<=(I->iMax[1]+1);b++)
-      for(c=(I->iMin[2]-1);c<=(I->iMax[2]+1);c++)
-        {
-          /* compute a "shadow" mask for all vertices */
+      for(c=(I->iMin[2]-1);c<=(I->iMax[2]+1);c++) {
 
-          i=*MapFirst(I,a,b,c);
-          while(i>=0) {
-            v0 = vert + 3*i;
-            perp_factor = premult/v0[2];
-            base0 = v0[0] * perp_factor;
-            base1 = v0[1] * perp_factor;
-            
-            d	= (int)(base0 - min0) + MapBorder;
-            e	= (int)(base1 - min1) + MapBorder;
-            
-            if(d < iMin0) {
-              d = iMin0; 
-            } else if(d > iMax0) { 
-              d = iMax0; 
-            }
-            
-            if(e < iMin1) { 
-              e = iMin1;
-            } else if(e > iMax1) {
-              e = iMax1;
-            }
-            i = link[i];
-            ptr2 = (ptr1 = emask + dim1*(d-1) + (e-1));
-            *(ptr2++) = true;
-            *(ptr2++) = true;
-            *(ptr2++) = true;
-            ptr2 = (ptr1 += dim1);
-            *(ptr2++) = true;
-            *(ptr2++) = true;
-            *(ptr2++) = true;
-            ptr2 = (ptr1 += dim1);
-            *(ptr2++) = true;
-            *(ptr2++) = true;
-            *(ptr2++) = true;
+        register int d,e,f;
+        
+        /* compute a "shadow" mask for all vertices */
+        
+        i=*MapFirst(I,a,b,c);
+        while(i>=0) {
+          v0 = vert + 3*i;
+          perp_factor = premult/v0[2];
+          base0 = v0[0] * perp_factor;
+          base1 = v0[1] * perp_factor;
+          
+          d	= (int)(base0 - min0);
+          e	= (int)(base1 - min1);
+          
+          d += MapBorder;
+          e += MapBorder;
+          
+          if(d < iMin0) {
+            d = iMin0; 
+          } else if(d > iMax0) { 
+            d = iMax0; 
           }
-
-            
+          
+          if(e < iMin1) { 
+            e = iMin1;
+          } else if(e > iMax1) {
+            e = iMax1;
+          }
+          i = link[i];
+          ptr2 = (ptr1 = emask + dim1*(d-1) + (e-1));
+          *(ptr2++) = true;
+          *(ptr2++) = true;
+          *(ptr2++) = true;
+          ptr2 = (ptr1 += dim1);
+          *(ptr2++) = true;
+          *(ptr2++) = true;
+          *(ptr2++) = true;
+          ptr2 = (ptr1 += dim1);
+          *(ptr2++) = true;
+          *(ptr2++) = true;
+          *(ptr2++) = true;
+        }
+        
+        {
+          const int am1=a-1, ap1=a+1, bm1=b-1, bp1=b+1, cm1=c-1, cp1=c+1;
+          const int dim2 = I->Dim[2];
+          register int flag=false;
+          register int *hPtr1	= I->Head + ((am1) * I->D1D2) + ((bm1)*dim2) + cm1;
           st=n;
-          flag=false;
-          for(d=a-1;d<=a+1;d++)
-            for(e=b-1;e<=b+1;e++)
-              for(f=c-1;f<=c+1;f++)
-                {
-                  i=*MapFirst(I,d,e,f);
-                  if(i>=0) {
-                    flag=true;
-                    while(i>=0) {
-                      VLACacheCheck(G,I->EList,int,n,I->group_id,
-                                    I->block_base + cCache_map_elist_offset);
-                      I->EList[n]=i;
-                      i=link[i];
-                      n++;
-                    }
+          for(d=am1;d<=ap1;d++) {
+            register int *hPtr2 = hPtr1;
+            for(e=bm1;e<=bp1;e++) {
+              register int *hPtr3 = hPtr2;
+              for(f=cm1;f<=cp1;f++) {
+                i = *(hPtr3++);
+                /*                i=*MapFirst(I,d,e,f);*/
+                if(i>=0) {
+                  flag=true;
+                  while(i>=0) {
+                    VLACacheCheck(G,I->EList,int,n,I->group_id,
+                                  I->block_base + cCache_map_elist_offset);
+                    I->EList[n]=i;
+                    i=link[i];
+                    n++;
                   }
                 }
-
+              }
+              hPtr2 += dim2;
+            }
+            hPtr1 += I->D1D2;
+          }
           if(flag) {
             *(MapEStart(I,a,b,c)) = negative_start ? -st : st;
             VLACacheCheck(G,I->EList,int,n,I->group_id,
@@ -539,6 +552,7 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int 
             n++;
           }
         }
+      }
   PRINTFB(G,FB_Map,FB_Blather)
     " MapSetupExpressPerp: %d rows in express table\n",n
     ENDFB(G);
