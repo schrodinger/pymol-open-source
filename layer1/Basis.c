@@ -1078,6 +1078,9 @@ int BasisHitPerspective(BasisCallRec *BC)
   RayInfo *r = BC->rr;
 
   MapCache *cache = &BC->cache;   
+  int *cache_cache = cache->Cache;
+  int *cache_CacheLink = cache->CacheLink;
+
   CPrimitive *r_prim = NULL;  
 
   if(new_ray) { /* see if we can eliminate this ray right away using the mask */
@@ -1113,6 +1116,9 @@ int BasisHitPerspective(BasisCallRec *BC)
     int      excl_trans_flag;
     int      *elist, local_iflag = false;
     int terminal = -1;
+    int *ehead = map->EHead;
+    int d1d2 = map->D1D2;
+    int d2 = map->Dim[2];
     const int *vert2prim = BC->vert2prim;
     const float excl_trans = BC->excl_trans;
     const float BasisFudge0 = BC->fudge0;
@@ -1130,8 +1136,6 @@ int BasisHitPerspective(BasisCallRec *BC)
     float *BI_Normal = BI->Normal;
     float *BI_Radius = BI->Radius;
     float *BI_Radius2 = BI->Radius2;
-	const int one = 1;
-
     copy3f(r->base, vt);
 
     elist   = map->EList;
@@ -1221,10 +1225,10 @@ int BasisHitPerspective(BasisCallRec *BC)
         }
       }
       if(inside_code && (((a!=last_a)||(b!=last_b)||(c!=last_c))) &&
-         ((h  = *(map->EHead + (a * map->D1D2) + (b * map->Dim[2]) + c))>0)) {
-      
+         ((h  = *(ehead + (a * d1d2) + (b * d2) + c))>0)) {
+        
         register int new_min_index = -1;      
-
+        int do_loop;
         if(!clamped) /* don't discard a ray until it has hit the objective at least once */
           allow_break = true;
       
@@ -1237,21 +1241,23 @@ int BasisHitPerspective(BasisCallRec *BC)
         last_a = a;
         i   = *(ip++);
         last_b = b;
+        do_loop = ((i>=0)&&(i<n_vert));
         last_c = c;
             
-        while((i>=0)&&(i<n_vert)) /* n_vert checking is a bug workaround */
+        while(do_loop) /* n_vert checking is a bug workaround */
           {
-            v2p = vert2prim[i];
             ii = *(ip++);
+            v2p = vert2prim[i];
+            do_loop = ((ii>=0)&&(ii<n_vert));
             if((v2p != except) && (!MapCached(cache,v2p))) 
               {
                 register CPrimitive *prm = BC_prim + v2p;
 				int prm_type;
 				
                 /*MapCache(cache,v2p);*/
-				cache->Cache[v2p] = one;
+				cache_cache[v2p] = 1;
 				prm_type = prm->type;
-				cache->CacheLink[v2p] = cache->CacheStart;
+				cache_CacheLink[v2p] = cache->CacheStart;
                 cache->CacheStart = v2p;
 				
                 switch(prm_type)  {
@@ -1823,14 +1829,15 @@ int BasisHitShadow(BasisCallRec *BC)
       const float BasisFudge0 = BC->fudge0;
       const float BasisFudge1 = BC->fudge1;
       const int label_shadow_mode = BC->label_shadow_mode;
-      MapCache *cache = &BC->cache;
+      register MapCache *cache = &BC->cache;
+      int *cache_cache = cache->Cache;
+      int *cache_CacheLink = cache->CacheLink;
       register CPrimitive *BC_prim = BC->prim;
     
       register float r_tri1=_0, r_tri2=_0, r_dist;  /* zero inits to suppress compiler warnings */
       register float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
       register float r_trans = _0;
       CPrimitive *r_prim = NULL;
-      const int one = 1;
 	  
       check_interior_flag   = BC->check_interior;
       
@@ -1856,25 +1863,26 @@ int BasisHitShadow(BasisCallRec *BC)
       {
          h   = *xxtmp;
          if( h > 0 ) {
+           int do_loop;
             ip   = elist + h;
             i   = *(ip++);
-
-            while(i >= 0) 
+            do_loop = (i>=0);
+            while(do_loop) 
             {
-               v2p      = vert2prim[i];
                ii      = *(ip++);
-               
+               v2p      = vert2prim[i];
+               do_loop = (ii>=0);
                if( (v2p != except) && !MapCached(cache,v2p) ) 
                {
                   register CPrimitive *prm = BC_prim + v2p;
 				  int prm_type;
 				  
                  /*MapCache(cache,v2p);*/
-				 cache->Cache[v2p] = one;
+				 cache_cache[v2p] = 1;
 				 prm_type = prm->type;
-				 cache->CacheLink[v2p] = cache->CacheStart;
+				 cache_CacheLink[v2p] = cache->CacheStart;
                  cache->CacheStart = v2p; 
-                  
+                 
                   switch(prm_type) 
                   {
                   case cPrimCharacter: /* will need special handling for character shadows */

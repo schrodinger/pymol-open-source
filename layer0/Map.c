@@ -57,15 +57,14 @@ void MapFree(MapType *I)
 void MapCacheInit(MapCache *M,MapType *I,int group_id,int block_base)
 {
   PyMOLGlobals *G=I->G;
-  int a,*p;
   M->G = G;
   M->block_base = I->block_base;
-  M->Cache = CacheAlloc(G,int,I->NVert,group_id,block_base + cCache_map_cache_offset);
+  M->Cache = CacheCalloc(G,int,I->NVert,group_id,block_base + cCache_map_cache_offset);
   M->CacheLink = CacheAlloc(G,int,I->NVert,group_id,block_base + cCache_map_cache_link_offset);
   M->CacheStart = -1;
-  p=M->Cache;
+  /*  p=M->Cache;
   for(a=0;a<I->NVert;a++)
-	 *(p++) = 0;
+  *(p++) = 0;*/
 }
 
 void MapCacheReset(MapCache *M)
