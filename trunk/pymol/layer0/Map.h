@@ -52,7 +52,7 @@ MapType *MapNewCached(PyMOLGlobals *G,float range,float *vert,int nVert,float *e
 
 MapType *MapNewFlagged(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent,int *flag);
 void MapSetupExpress(MapType *I);
-void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint);
+void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int negative_start);
 
 void MapFree(MapType *I);
 
@@ -79,9 +79,9 @@ float MapGetDiv(MapType *I);
 int MapInside(MapType *I,float *v,int *a,int *b,int *c);
 
 int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c); 
-void MapSetupExpressXY(MapType *I,int n_vert);
+void MapSetupExpressXY(MapType *I,int n_vert,int negative_start);
 
-void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert);
+void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert, int negative_start);
 
 #endif
 

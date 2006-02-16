@@ -238,7 +238,7 @@ int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for
 
 #define ELIST_GROW_FACTOR 3
 
-void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors for each square */
+void MapSetupExpressXY(MapType *I,int n_vert, int negative_start) /* setup a list of XY neighbors for each square */
 {
    PyMOLGlobals *G=I->G;
 	int n, a,b,c,flag;
@@ -300,13 +300,12 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 					iPtr1 += I->D1D2;
 				}
 				
-				if(flag) 
-				{
-					*(I->EMask + I->Dim[1]*a + b) = true;
-					*(MapEStart(I,a,b,c))=st;
-					VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
-					I->EList[n]=-1;
-					n++;
+				if(flag) {
+                  *(I->EMask + I->Dim[1]*a + b) = true;
+                  *(MapEStart(I,a,b,c))= negative_start ? -st : st;
+                  VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+                  I->EList[n]=-1;
+                  n++;
 				}
 			}
 		}
@@ -325,7 +324,7 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 
 
 
-void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of XY neighbors for each square */
+void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert,int negative_start) /* setup a list of XY neighbors for each square */
 {
    PyMOLGlobals *G=I->G;
 	int		h, n, a,b,c;
@@ -398,13 +397,12 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 						hPtr1	+= I->D1D2;
 					}					
 					
-					if(flag) 
-					{
-						*(I->EMask + I->Dim[1]*a + b) = true;
-						*(MapEStart(I,a,b,c))	= st;
-						VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
-						I->EList[n] = -1;
-						n++;
+					if(flag) {
+                      *(I->EMask + I->Dim[1]*a + b) = true;
+                      *(MapEStart(I,a,b,c))=  negative_start ? -st : st;
+                      VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+                      I->EList[n] = -1;
+                      n++;
 					}
 				}
 				
@@ -430,7 +428,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 	ENDFD;
 }
 
-void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint)
+void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int negative_start)
 {
   PyMOLGlobals *G=I->G;
   int n=0;
@@ -534,13 +532,11 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint)
                 }
 
           if(flag) {
-            *(MapEStart(I,a,b,c))=st;
+            *(MapEStart(I,a,b,c)) = negative_start ? -st : st;
             VLACacheCheck(G,I->EList,int,n,I->group_id,
                           I->block_base + cCache_map_elist_offset);
             I->EList[n]=-1;
             n++;
-          } else {
-            *(MapEStart(I,a,b,c))=0;
           }
         }
   PRINTFB(G,FB_Map,FB_Blather)
@@ -752,7 +748,7 @@ float MapGetSeparation(PyMOLGlobals *G,float range,float *mx,float *mn,float *di
     dump3f(mn,"mn");
     dump3f(diagonal,"diagonal");*/
   }
-
+  printf("%8.3f\n",divSize);
   return(divSize);
 }
 

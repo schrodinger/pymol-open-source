@@ -2636,20 +2636,20 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
     n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
     
     if(perspective) {
-      MapSetupExpressPerp(I->Map,tempVertex,front,n);
+      MapSetupExpressPerp(I->Map,tempVertex,front,n,true);
     } else if(n_voxel < (3*n)) {
-      MapSetupExpressXY(I->Map,n);      
+      MapSetupExpressXY(I->Map,n,true);      
     } else {
-      MapSetupExpressXYVert(I->Map,tempVertex,n);
+      MapSetupExpressXYVert(I->Map,tempVertex,n,true);
     }
     
     {
       register MapType *map = I->Map;
-      register int *sp,*ip,*ip0;
-      register int *ehead_new = CacheCalloc(I->G,int,(map->Dim[0]*map->Dim[1]*map->Dim[2]),
-                                            group_id,block_base + cCache_map_ehead_new_offset);
-      register int *elist_new = VLACacheAlloc(I->G,int,map->NEElem,group_id,block_base + cCache_map_elist_new_offset);
+      register int *sp,*ip,*ip0,ii;
       register int *elist = map->EList, *ehead = map->EHead;
+      register int *elist_new = elist, *ehead_new = ehead;
+
+
       register int nelem = 0;
       const int iMin0=map->iMin[0];
       const int iMin1=map->iMin[1];
@@ -2657,7 +2657,12 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       const int iMax0=map->iMax[0];
       const int iMax1=map->iMax[1];
       const int iMax2=map->iMax[2];
-
+      
+#if 0
+      elist_new = VLACacheAlloc(I->G,int,map->NEElem,group_id,block_base + cCache_map_elist_new_offset);
+      ehead_new = CacheCalloc(I->G,int,(map->Dim[0]*map->Dim[1]*map->Dim[2]),
+                                            group_id,block_base + cCache_map_ehead_new_offset);
+#endif
       /* now do a filter-reassignment pass to remap fake vertices
          to the original line vertex while deleting duplicate entries */
       
@@ -2670,10 +2675,16 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
             for(c = iMin2; c <= iMax2; c++) {
               start   = MapEStart(map,a,b,c);
               h = *start;
-              if(h > 0) {
-                ehead_new[(start - ehead)] = nelem;
-                ip = ip0 = (elist_new+nelem);
-                sp = elist+h;
+              if(h < 0) {
+                sp = elist-h;
+                *start = -h; /* flip sign */
+                if(ehead_new!=ehead) {
+                  ehead_new[(start - ehead)] = nelem;
+                  ip = ip0 = (elist_new+nelem);
+                } else {
+                  ip = ip0 = sp;
+                }
+                  
                 i = *(sp++);
                 while(i>=0) {
                   register int ii = *(sp++);
@@ -2691,9 +2702,18 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
 
                 /* now reset flags efficiently */
                 i = *(ip0++);
-                while(i>=0) {
-                  tempRef[i] = 0;
-                  i = *(ip0++);
+                while(i >= 0)  { /* unroll */
+                  ii = *(ip0++);
+                  tempRef[i]   = 0;
+                  if((i=ii)>=0) {
+                    ii = *(ip0++);
+                    tempRef[i]   = 0;
+                    if((i=ii)>=0) {
+                      ii = *(ip0++);
+                      tempRef[i]   = 0;
+                      i=ii;
+                    }
+                  }                            
                 }
               }
             }   /* for c */
@@ -2724,13 +2744,16 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                         start   = iPtr3;
                         /*start   = MapEStart(map,a,b,c);*/
                         h      = *start;
-                        if(h > 0)  {
-                          (*start) = -1; /* no repeat visits */
+                        if(h < 0)  {
+                          sp = elist - h;
+                          (*start) = -h; /* no repeat visits */
+                          if(ehead_new!=ehead) {
+                            ehead_new[(start - ehead)] = nelem;
+                            ip = ip0 = (elist_new+nelem);
+                          } else {
+                            ip = ip0 = sp;
+                          }
                           
-                          ehead_new[(start - ehead)] = nelem;
-                          ip = ip0 = (elist_new+nelem);
-                          
-                          sp = elist + h;
                           i  = *(sp++);
                           
                           while(i >= 0)  {
@@ -2750,9 +2773,18 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                           /* now reset flags efficiently */
                           i = *(ip0++);
                           
-                          while(i >= 0) {
+                          while(i >= 0)  { /* unroll */
+                            ii = *(ip0++);
                             tempRef[i]   = 0;
-                            i = *(ip0++);
+                            if((i=ii)>=0) {
+                              ii = *(ip0++);
+                              tempRef[i] = 0;
+                              if((i=ii)>=0) {
+                                ii = *(ip0++);
+                                tempRef[i] = 0;
+                                i=ii;
+                              }
+                            }                            
                           }
                         }   /* h > 0 */
                       }
@@ -2779,13 +2811,15 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                       start   = iPtr2;
                       /*start   = MapEStart(map,a,b,c);*/
                       h      = *start;
-                      if(h > 0) {
-                        (*start) = -1; /* no repeat visits */
-
-                        ehead_new[(start - ehead)] = nelem;
-                        ip = ip0 = (elist_new+nelem);
-                          
-                        sp   = elist + h;
+                      if(h < 0) {
+                        sp   = elist - h;
+                        (*start) = -h; /* no repeat visits */
+                        if(ehead_new!=ehead) {
+                          ehead_new[(start - ehead)] = nelem;
+                          ip = ip0 = (elist_new+nelem);
+                        } else {
+                          ip = ip0 = sp;
+                        }
                         i   = *(sp++);
                       
                         while(i >= 0)  {
@@ -2806,9 +2840,18 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
 
                         /* now reset flags efficiently */
                         i = *(ip0++);
-                        while(i >= 0)  {
+                        while(i >= 0)  { /* unroll */
+                          ii = *(ip0++);
                           tempRef[i]   = 0;
-                          i = *(ip0++);
+                          if((i=ii)>=0) {
+                            ii = *(ip0++);
+                            tempRef[i]   = 0;
+                            if((i=ii)>=0) {
+                               ii = *(ip0++);
+                               tempRef[i]   = 0;
+                               i = ii;
+                            }
+                          }                            
                         }
                       }   /* h > 0 */
                     }
@@ -2822,14 +2865,16 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
           v += 3;   /* happens for EVERY e! */
         }   /* for e */
       }
-      CacheFreeP(I->G,map->EHead,group_id,block_base + cCache_map_ehead_offset,false);
-      VLACacheFreeP(I->G,map->EList,group_id,block_base + cCache_map_elist_offset,false);    
-      map->EList = elist_new;
-      map->EHead = ehead_new;
-      map->NEElem = nelem;
-      MemoryCacheReplaceBlock(I->G, group_id, block_base + cCache_map_ehead_new_offset, block_base + cCache_map_ehead_offset);
-      MemoryCacheReplaceBlock(I->G, group_id, block_base + cCache_map_elist_new_offset, block_base + cCache_map_elist_offset);
-      VLACacheSize(G,map->EList,int,map->NEElem,group_id,block_base + cCache_map_elist_offset);
+      if(ehead!=ehead_new) {
+        CacheFreeP(I->G,map->EHead,group_id,block_base + cCache_map_ehead_offset,false);
+        VLACacheFreeP(I->G,map->EList,group_id,block_base + cCache_map_elist_offset,false);    
+        map->EList = elist_new;
+        map->EHead = ehead_new;
+        map->NEElem = nelem;
+        MemoryCacheReplaceBlock(I->G, group_id, block_base + cCache_map_ehead_new_offset, block_base + cCache_map_ehead_offset);
+        MemoryCacheReplaceBlock(I->G, group_id, block_base + cCache_map_elist_new_offset, block_base + cCache_map_elist_offset);
+        VLACacheSize(G,map->EList,int,map->NEElem,group_id,block_base + cCache_map_elist_offset);
+      }
     }
       
     CacheFreeP(I->G,tempVertex,group_id,cCache_basis_tempVertex,false);
@@ -2839,9 +2884,9 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
     /* simple sphere mode */
     I->Map   = MapNewCached(I->G,-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
     if(perspective) {
-      MapSetupExpressPerp(I->Map,I->Vertex,front,I->NVertex);
+      MapSetupExpressPerp(I->Map,I->Vertex,front,I->NVertex,false);
     } else {
-      MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex);
+      MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex,false);
     }
   }
 }
