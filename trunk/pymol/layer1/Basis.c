@@ -2286,7 +2286,7 @@ void BasisOptimizeMap(CBasis *I,float *vertex,int n,int *vert2prim)
 /*========================================================================*/
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                   int group_id,int block_base,
-                  int perspective,float front)
+                  int perspective,float front,float size_hint)
 {
   register float *v;
   float ll;
@@ -2317,7 +2317,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
     I->Vertex[0],I->Vertex[1],I->Vertex[2]
     ENDFD;
    
-  sep   = I->MinVoxel;
+  sep = I->MinVoxel;
   if(sep == _0) {
     remapMode   = false;
     sep         = I->MaxRadius; /* also will imply no remapping of vertices */
@@ -2401,12 +2401,15 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
 
   sep = MapGetSeparation(I->G,sep,max,min,diagonal); /* this needs to be a minimum 
                                                       * estimate of the actual value */
-  
   /* here we have to carry out a complicated work-around in order to
    * efficiently encode our primitives into the map in a way that doesn't
    * require expanding the map cutoff to the size of the largest object*/
   if(remapMode) {
     register int a,b,c;
+
+    if(sep<size_hint) /* this keeps us from wasting time & memory on unnecessary subdivision */
+      sep = size_hint;
+
     for(a = 0; a < I->NVertex; a++) {
       prm   = prim + vert2prim[a];
       
