@@ -2663,7 +2663,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       
       memset( tempRef, 0, sizeof(int) * I->NVertex );
 
-      if(n_voxel < (4*n)) { /* faster to traverse the entire map */
+      if(n_voxel < (3*n)) { /* faster to traverse the entire map */
         int   *start;
         for(a = iMin0; a <= iMax0; a++) {
           for(b = iMin1; b <= iMax1; b++) {
@@ -2829,7 +2829,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       map->NEElem = nelem;
       MemoryCacheReplaceBlock(I->G, group_id, block_base + cCache_map_ehead_new_offset, block_base + cCache_map_ehead_offset);
       MemoryCacheReplaceBlock(I->G, group_id, block_base + cCache_map_elist_new_offset, block_base + cCache_map_elist_offset);
-      VLACacheSizeForSure(G,map->EList,int,map->NEElem,group_id,block_base + cCache_map_elist_offset);
+      VLACacheSize(G,map->EList,int,map->NEElem,group_id,block_base + cCache_map_elist_offset);
     }
       
     CacheFreeP(I->G,tempVertex,group_id,cCache_basis_tempVertex,false);

@@ -943,7 +943,6 @@ PYMOL API
                             try:
                                 abort = 0
                                 pdb_str = gzip.open(filename).read()
-                                print fname, fobj
                                 if fname and not fobj:
                                     fobj = open(fname,'wb')
                                 if fobj:
