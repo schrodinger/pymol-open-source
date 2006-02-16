@@ -95,6 +95,7 @@ struct _CRayThreadInfo {
    int perspective;
    float front;
    int phase;
+   float size_hint;
    CRay *ray;
  };
 
@@ -1706,7 +1707,7 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
 int RayHashThread(CRayHashThreadInfo *T)
 {
   BasisMakeMap(T->basis,T->vert2prim,T->prim,T->clipBox,T->phase,
-               cCache_ray_map,T->perspective,T->front);
+               cCache_ray_map,T->perspective,T->front,T->size_hint);
 
   /* utilize a little extra wasted CPU time in thread 0 which computes the smaller map... */
 
@@ -3615,6 +3616,13 @@ int opaque_back=0;
     fill(image,background,width * (unsigned int)height);
   } else {
     
+    if(I->PrimSizeCnt) {
+      I->PrimSize = I->PrimSize/(I->PrimSizeCnt*2.75F);
+      printf("avg dist %8.7f\n",I->PrimSize);
+    } else {
+      I->PrimSize = 0.0F;
+    }
+
     RayExpandPrimitives(I);
     RayTransformFirst(I,perspective);
 
@@ -3720,7 +3728,7 @@ int opaque_back=0;
       thread_info[0].background = background;
       thread_info[0].bytes = width * (unsigned int)height;
       thread_info[0].ray = I; /* for compute box */
-
+      thread_info[0].size_hint = I->PrimSize;
       /* shadow map */
 
       {
@@ -3733,6 +3741,7 @@ int opaque_back=0;
           thread_info[bc-1].phase = bc-1;
           thread_info[bc-1].perspective = false; 
           thread_info[bc-1].front = _0;
+          thread_info[bc-1].size_hint = I->PrimSize;
         }
       }
 
@@ -3745,12 +3754,12 @@ int opaque_back=0;
       { /* serial execution */
         BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,
                      I->Volume,0,cCache_ray_map,
-                     perspective,front);
+                     perspective,front,I->PrimSize);
         if(shadows) {
           int bc;
           for(bc=2;bc<I->NBasis;bc++) {
             BasisMakeMap(I->Basis+bc,I->Vert2Prim,I->Primitive,
-                         NULL,bc-1,cCache_ray_map,false,_0);
+                         NULL,bc-1,cCache_ray_map,false,_0,I->PrimSize);
           }
         }
         
@@ -4378,12 +4387,16 @@ void RaySphere3fv(CRay *I,float *v,float r)
 
   VLACacheCheck(I->G,I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
-
+  
   p->type = cPrimSphere;
   p->r1=r;
   p->trans=I->Trans;
   p->wobble=I->Wobble;
   p->ramped=(I->CurColor[0]<0.0F);
+
+  I->PrimSize += 2*r;
+  I->PrimSizeCnt++;
+
   /* 
     copy3f(I->WobbleParam,p->wobble_param);*/
   vv=p->v1;
@@ -4531,6 +4544,9 @@ void RayCharacter(CRay *I,int char_id)
 
     add3f(p->v1,xn,p->v2);
     add3f(p->v1,yn,p->v3);
+
+    I->PrimSize += 2*(diff3f(p->v1,p->v2) + diff3f(p->v1,p->v3) + diff3f(p->v2,p->v3));
+    I->PrimSizeCnt += 6;
     
     /* encode characters coordinates in the colors  */
 
@@ -4598,6 +4614,9 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   (*vv++)=(*v2++);
   (*vv++)=(*v2++);
 
+  I->PrimSize += diff3f(p->v1,p->v2) + 2*r;
+  I->PrimSizeCnt++;
+
   if(I->TTTFlag) {
     transformTTT44f3f(I->TTT,p->v1,p->v1);
     transformTTT44f3f(I->TTT,p->v2,p->v2);
@@ -4658,6 +4677,9 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
   (*vv++)=(*v2++);
   (*vv++)=(*v2++);
 
+  I->PrimSize += diff3f(p->v1,p->v2) + 2*r;
+  I->PrimSizeCnt++;
+
   if(I->TTTFlag) {
     transformTTT44f3f(I->TTT,p->v1,p->v1);
     transformTTT44f3f(I->TTT,p->v2,p->v2);
@@ -4714,6 +4736,9 @@ void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   (*vv++)=(*v2++);
   (*vv++)=(*v2++);
   (*vv++)=(*v2++);
+
+  I->PrimSize += diff3f(p->v1,p->v2) + 2*r;
+  I->PrimSizeCnt++;
 
   if(I->TTTFlag) {
     transformTTT44f3f(I->TTT,p->v1,p->v1);
@@ -4825,6 +4850,9 @@ void RayTriangle3fv(CRay *I,
   (*vv++)=(*v3++);
   (*vv++)=(*v3++);
   (*vv++)=(*v3++);
+
+  I->PrimSize += diff3f(p->v1,p->v2) + diff3f(p->v1,p->v3) + diff3f(p->v2,p->v3);
+  I->PrimSizeCnt += 3;
 
   vv=p->c1;
   (*vv++)=(*c1++);
@@ -4986,6 +5014,8 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   I->PixelRatio = pixel_ratio;
   I->Magnified = magnified;
   I->FrontBackRatio = front_back_ratio;
+  I->PrimSizeCnt = 0;
+  I->PrimSize = 0.0;
 }
 /*========================================================================*/
 

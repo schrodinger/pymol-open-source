@@ -119,6 +119,8 @@ struct _CRay {
   float PixelRatio;
   float Magnified; /* ray pixels to screen pixels */
   float FrontBackRatio;
+  double PrimSize;
+  int PrimSizeCnt;
 };
 
 
