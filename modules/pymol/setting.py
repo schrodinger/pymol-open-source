@@ -543,6 +543,8 @@ if __name__=='pymol.setting':
         fetch_path                = (507, '')
         cartoon_ring_radius       = (508, '')
         ray_color_ramps           = (509, '')
+        ray_hint_camera           = (510, '')
+        ray_hint_shadow           = (511, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

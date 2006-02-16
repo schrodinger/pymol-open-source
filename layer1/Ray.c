@@ -3617,8 +3617,9 @@ int opaque_back=0;
   } else {
     
     if(I->PrimSizeCnt) {
-      I->PrimSize = I->PrimSize/(I->PrimSizeCnt*2.75F);
-      printf("avg dist %8.7f\n",I->PrimSize);
+      float factor = SettingGetGlobal_f(I->G,cSetting_ray_hint_camera);
+      I->PrimSize = I->PrimSize/(I->PrimSizeCnt*factor);
+      /*      printf("avg dist %8.7f\n",I->PrimSize);*/
     } else {
       I->PrimSize = 0.0F;
     }
@@ -3733,6 +3734,7 @@ int opaque_back=0;
 
       {
         int bc;
+        float factor = SettingGetGlobal_f(I->G,cSetting_ray_hint_shadow);
         for(bc=2;bc<I->NBasis;bc++) {
           thread_info[bc-1].basis = I->Basis+bc;
           thread_info[bc-1].vert2prim = I->Vert2Prim;
@@ -3741,7 +3743,8 @@ int opaque_back=0;
           thread_info[bc-1].phase = bc-1;
           thread_info[bc-1].perspective = false; 
           thread_info[bc-1].front = _0;
-          thread_info[bc-1].size_hint = I->PrimSize;
+          /* allowing these maps to be more fine helps performance */
+          thread_info[bc-1].size_hint = I->PrimSize*factor;
         }
       }
 

@@ -649,6 +649,8 @@ typedef struct _CPyMOL {
   ov_word lex_fetch_path;
   ov_word lex_cartoon_ring_radius;
   ov_word lex_ray_color_ramps;
+  ov_word lex_ray_hint_camera;
+  ov_word lex_ray_hint_shadow;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1301,6 +1303,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(fetch_path, 507);
   LEX_SETTING(cartoon_ring_radius, 508);
   LEX_SETTING(ray_color_ramps,509);
+  LEX_SETTING(ray_hint_camera,510);
+  LEX_SETTING(ray_hint_shadow,511);
   return_OVstatus_SUCCESS;
 }
 

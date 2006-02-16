@@ -1968,9 +1968,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   else
     set_i(I,cSetting_cull_spheres,0);
 
-  set_b(I,cSetting_test1, 0);
+  set_f(I,cSetting_test1, 1.41F);
 
-  set_f(I,cSetting_test2, 0.0F);
+  set_f(I,cSetting_test2, 0.65F);
 
   set_f(I,cSetting_surface_best, 0.25F);
 
@@ -2771,6 +2771,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_s(I,cSetting_fetch_path, ".");
   set_f(I,cSetting_cartoon_ring_radius,-1.0F);
   set_b(I,cSetting_ray_color_ramps,0);
+  set_f(I,cSetting_ray_hint_camera,2.15F);
+  set_f(I,cSetting_ray_hint_shadow,0.65F);
 }
 
 
