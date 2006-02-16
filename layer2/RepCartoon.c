@@ -684,8 +684,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                   float *color;
                   float avg[3];
                   
-                  if((!((ring_mode==0)||(ring_mode==4)||(ring_mode==5)))||
-                     (!marked[g2])) {
+                  {
                     int g1_x,g2_x;
                     
                     if(obj->DiscreteFlag) {
@@ -703,7 +702,10 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                     }
                     g1p = cs->Coord+3*g1_x;
                     g2p = cs->Coord+3*g2_x;
-                  } else {
+                  }
+                  
+                  if(!((!((ring_mode==0)||(ring_mode==4)||(ring_mode==5)))||
+                       (!marked[g2]))) {
                     g2p = moved + 3*g2;
                   }
                   if((ring_mode==0)||(ring_mode==4)||(ring_mode==5)) { /* ring center */
