@@ -1104,7 +1104,10 @@ static PyObject *CmdGetRenderer(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetVersion(PyObject *self, PyObject *args)
 {
-  return Py_BuildValue("(sd)",_PyMOL_VERSION,_PyMOL_VERSION_double);
+  double ver_num = _PyMOL_VERSION_double;
+  WordType ver_str;
+  strcpy(ver_str,_PyMOL_VERSION);
+  return Py_BuildValue("(sd)",ver_str, ver_num);
 }
 
 static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)

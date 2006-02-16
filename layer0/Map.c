@@ -469,8 +469,8 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int 
   premult = -front*iDiv;
 
   n=1;
-  for(a=(I->iMin[0]-1);a<=(I->iMax[0]+1);a++)
-    for(b=(I->iMin[1]-1);b<=(I->iMax[1]+1);b++)
+  for(a=(iMin0-1);a<=(iMax0+1);a++)
+    for(b=(iMin1-1);b<=(iMax1+1);b++)
       for(c=(I->iMin[2]-1);c<=(I->iMax[2]+1);c++) {
 
         register int d,e,f;

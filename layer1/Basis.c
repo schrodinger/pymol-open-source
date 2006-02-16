@@ -1079,15 +1079,16 @@ int BasisHitPerspective(BasisCallRec *BC)
 
   MapCache *cache = &BC->cache;   
   CPrimitive *r_prim = NULL;  
-  base0 = r->base[0] * iDiv;
-  base1 = r->base[1] * iDiv;
-  base2 = r->base[2] * iDiv;
 
   if(new_ray) { /* see if we can eliminate this ray right away using the mask */
+
+    base0 = (r->base[0] * iDiv) - min0;
+    base1 = (r->base[1] * iDiv) - min1;
     
-    a = (int)(base0 - min0) + MapBorder;
-    b = (int)(base1 - min1) + MapBorder;
-    
+    a = (int)base0;
+    b = (int)base1;
+    a += MapBorder;
+    b += MapBorder;
     if(a < iMin0) a = iMin0; 
     else if(a > iMax0) a = iMax0; 
     if(b < iMin1) b = iMin1;
