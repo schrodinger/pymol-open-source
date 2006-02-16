@@ -453,7 +453,7 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int 
     ENDFD;
 
   mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
-  I->EHead=CacheAlloc(G,int,mapSize,
+  I->EHead=CacheCalloc(G,int,mapSize,
                  I->group_id,I->block_base + cCache_map_ehead_offset);
   ErrChkPtr(G,I->EHead);
   I->EList=VLACacheMalloc(G,n_alloc,sizeof(int),ELIST_GROW_FACTOR,0,
@@ -587,7 +587,7 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
     ENDFD;
 
   mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
-  I->EHead=CacheAlloc(G,int,mapSize,group_id,I->block_base + cCache_map_ehead_offset);
+  I->EHead=CacheCalloc(G,int,mapSize,group_id,I->block_base + cCache_map_ehead_offset);
   ErrChkPtr(G,I->EHead);
   e_list=VLACacheMalloc(G,1000,sizeof(int),5,0,group_id,block_offset);
 

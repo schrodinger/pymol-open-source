@@ -44,10 +44,11 @@ def load():
         sys.__stderr__.flush()
         n = cmd.count_states()
         cmd.ray(160,120)
+	cmd.dirty()
+	time.sleep(0.1)
         if n>1:
             sys.__stderr__.write("\n")
             sys.__stderr__.flush()
-        cmd.refresh()
 try:
     load()
 except:
