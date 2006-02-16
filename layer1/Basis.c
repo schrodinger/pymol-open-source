@@ -2648,9 +2648,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       register int *sp,*ip,*ip0,ii;
       register int *elist = map->EList, *ehead = map->EHead;
       register int *elist_new = elist, *ehead_new = ehead;
-
-
       register int nelem = 0;
+      register int i_nVertex = I->NVertex;
       const int iMin0=map->iMin[0];
       const int iMin1=map->iMin[1];
       const int iMin2=map->iMin[2];
@@ -2666,34 +2665,35 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       /* now do a filter-reassignment pass to remap fake vertices
          to the original line vertex while deleting duplicate entries */
       
-      memset( tempRef, 0, sizeof(int) * I->NVertex );
+      memset( tempRef, 0, sizeof(int) * i_nVertex );
 
       if(n_voxel < (3*n)) { /* faster to traverse the entire map */
-        int   *start;
+        int   *start = ehead;
         for(a = iMin0; a <= iMax0; a++) {
           for(b = iMin1; b <= iMax1; b++) {
             for(c = iMin2; c <= iMax2; c++) {
-              start   = MapEStart(map,a,b,c);
-              h = *start;
+              /*              start   = MapEStart(map,a,b,c);*/
+              h = *(start++);
               if(h < 0) {
                 sp = elist-h;
-                *start = -h; /* flip sign */
+                start[-1] = -h; /* flip sign */
+                i = *(sp++);
                 if(ehead_new!=ehead) {
-                  ehead_new[(start - ehead)] = nelem;
+                  ehead_new[(start - ehead)-1] = nelem;
                   ip = ip0 = (elist_new+nelem);
                 } else {
-                  ip = ip0 = sp;
+                  ip = ip0 = (sp-1);
                 }
                   
-                i = *(sp++);
                 while(i>=0) {
                   register int ii = *(sp++);
-                  if(i >= I->NVertex) /* reference -- remap */
+                  if(i >= i_nVertex) /* reference -- remap */
                     i = tempRef[i];
                   if(!tempRef[i]) { /*eliminate duplicates */
-                    *(ip++)      = i;
                     tempRef[i]   = 1;
+                    *(ip++) = i;
                   } 
+                  sp++;
                   i = ii;
                 }
               
@@ -2721,6 +2721,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
         }   /* for a */
       } else {
         int      *start;
+        int jm1,jp1,km1,kp1,lm1,lp1;
         MapType   *map   = I->Map;
       
         v         = tempVertex;
@@ -2728,17 +2729,23 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
         for(e = 0; e < n; e++) { 
         
           MapLocus(map,v, &j, &k, &l);
+          jm1 = j-1; 
+          jp1 = j+1;
+          km1 = k-1;
+          kp1 = k+1;
+          lm1 = l-1;
+          lp1 = l+1;
           
           if(perspective) { /* for normal maps */
             
-            int   *iPtr1   = map->EHead + ((j-1) * map->D1D2) + ((k-1) * map->Dim[2]) + (l-1);
-            for(a = j-1; a <= j+1; a++) {
+            register int   *iPtr1   = map->EHead + ((j-1) * map->D1D2) + ((k-1) * map->Dim[2]) + (l-1);
+            for(a = jm1; a <= jp1; a++) {
+              register int   *iPtr2   = iPtr1;
               if( (a >= iMin0) && (a <= iMax0) ) {
-                int   *iPtr2   = iPtr1;
-                for(b = k-1; b <= k+1; b++) {
+                for(b = km1; b <= kp1; b++) {
+                  register int   *iPtr3   = iPtr2;
                   if( (b >= iMin1) && (b <= iMax1) ) {
-                    int   *iPtr3   = iPtr2;
-                    for(c = l-1; c <= l+1; c++) {
+                    for(c = lm1; c <= lp1; c++) {
                       if( (c >= iMin2) && (c <= iMax2) ) {
                         
                         start   = iPtr3;
@@ -2747,22 +2754,21 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                         if(h < 0)  {
                           sp = elist - h;
                           (*start) = -h; /* no repeat visits */
+                          i  = *(sp++);
                           if(ehead_new!=ehead) {
                             ehead_new[(start - ehead)] = nelem;
                             ip = ip0 = (elist_new+nelem);
                           } else {
-                            ip = ip0 = sp;
+                            ip = ip0 = (sp-1);
                           }
                           
-                          i  = *(sp++);
-                          
                           while(i >= 0)  {
-                            register int ii   = *(sp++);
-                            if(i >= I->NVertex)
+                            register int ii = *(sp++);
+                            if(i >= i_nVertex)
                               i = tempRef[i];
                             if(!tempRef[i]) { /*eliminate duplicates */
-                              *(ip++)      = i;
                               tempRef[i]   = 1;
+                              *(ip++) = i;
                             }
                             i = ii;
                           }
@@ -2799,67 +2805,69 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
           } else { /* for XY maps... */
           
             c = l;
-            if((c >= iMin2) && (c <= iMax2))  {
-              int   *iPtr1   = ehead + ((j-1) * map->D1D2) + ((k-1) * map->Dim[2]) + c;
-            
-              for(a = j-1; a <= j+1; a++) {
-                if( (a >= iMin0) && (a <= iMax0) ) {
-                  int   *iPtr2   = iPtr1;
+            {
+              register int   *iPtr1   = ehead + ((j-1) * map->D1D2) + ((k-1) * map->Dim[2]) + c;
+              if((c >= iMin2) && (c <= iMax2))  {
                 
-                  for(b = k-1; b <= k+1; b++)  {
-                    if( (b >= iMin1) && (b <= iMax1) ) {
-                      start   = iPtr2;
-                      /*start   = MapEStart(map,a,b,c);*/
-                      h      = *start;
-                      if(h < 0) {
-                        sp   = elist - h;
-                        (*start) = -h; /* no repeat visits */
-                        if(ehead_new!=ehead) {
-                          ehead_new[(start - ehead)] = nelem;
-                          ip = ip0 = (elist_new+nelem);
-                        } else {
-                          ip = ip0 = sp;
-                        }
-                        i   = *(sp++);
-                      
-                        while(i >= 0)  {
-                          register int ii = *(sp++);
-                        
-                          if(i >= I->NVertex)
-                            i = tempRef[i];
-                        
-                          if(!tempRef[i]) { /*eliminate duplicates */
-                            *(ip++)      = i;
-                            tempRef[i]   = 1;
+                for(a = jm1; a <= jp1; a++) {
+                  register int   *iPtr2   = iPtr1;
+                  if( (a >= iMin0) && (a <= iMax0) ) {
+                    
+                    for(b = km1; b <= kp1; b++)  {
+                      if( (b >= iMin1) && (b <= iMax1) ) {
+                        start   = iPtr2;
+                        /*start   = MapEStart(map,a,b,c);*/
+                        h      = *start;
+                        if(h < 0) {
+                          sp   = elist - h;
+                          (*start) = -h; /* no repeat visits */
+                          i = *(sp++);
+                          if(ehead_new!=ehead) {
+                            ehead_new[(start - ehead)] = nelem;
+                            ip = ip0 = (elist_new+nelem);
+                          } else {
+                            ip = ip0 = sp-1;
                           }
-                          i = ii;
-                        }
-                      
-                        *(ip++)   = -1; /* terminate list */
-                        nelem+= (ip-ip0);
-
-                        /* now reset flags efficiently */
-                        i = *(ip0++);
-                        while(i >= 0)  { /* unroll */
-                          ii = *(ip0++);
-                          tempRef[i]   = 0;
-                          if((i=ii)>=0) {
+                          
+                          while(i >= 0)  {
+                            register int ii = *(sp++);
+                            
+                            if(i >= i_nVertex)
+                              i = tempRef[i];
+                            
+                            if(!tempRef[i]) { /*eliminate duplicates */
+                              tempRef[i]  = 1;
+                              *(ip++) = i;
+                            }
+                            i = ii;
+                          }
+                          
+                          *(ip++)   = -1; /* terminate list */
+                          nelem+= (ip-ip0);
+                          
+                          /* now reset flags efficiently */
+                          i = *(ip0++);
+                          while(i >= 0)  { /* unroll */
                             ii = *(ip0++);
                             tempRef[i]   = 0;
                             if((i=ii)>=0) {
-                               ii = *(ip0++);
-                               tempRef[i]   = 0;
-                               i = ii;
-                            }
-                          }                            
-                        }
-                      }   /* h > 0 */
-                    }
-                    iPtr2   += map->Dim[2];
-                  }   /* for b */
-                }
-                iPtr1   += map->D1D2;
-              }   /* for a */
+                              ii = *(ip0++);
+                              tempRef[i]   = 0;
+                              if((i=ii)>=0) {
+                                ii = *(ip0++);
+                                tempRef[i]   = 0;
+                                i = ii;
+                              }
+                            }                            
+                          }
+                        }   /* h > 0 */
+                      }
+                      iPtr2   += map->Dim[2];
+                    }   /* for b */
+                  }
+                  iPtr1   += map->D1D2;
+                }   /* for a */
+              }
             }
           }
           v += 3;   /* happens for EVERY e! */
