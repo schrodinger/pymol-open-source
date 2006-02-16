@@ -86,6 +86,19 @@ void *_MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,
     return(rec->ptr);
   }
 }
+void MemoryCacheReplaceBlock(PyMOLGlobals *G,void *ptr, int group_id, int old_block_id, int new_block_id)
+{
+  if((group_id<0)||(!SettingGetGlobal_b(G,cSetting_cache_memory)))
+    return;
+  {
+    register CMemoryCache *I = G->MemoryCache;
+    register MemoryCacheRec *old_rec = &I->Cache[group_id][old_block_id];
+    register MemoryCacheRec *new_rec = &I->Cache[group_id][new_block_id];
+    if(new_rec->ptr) mfree(new_new->ptr);
+    *(new_rec)  = *(old_rec);
+    old_rec->ptr = NULL;
+  }
+}
 
 void *_MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id MD_FILE_LINE_Decl)
 {

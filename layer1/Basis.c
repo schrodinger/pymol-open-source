@@ -2267,18 +2267,17 @@ void BasisOptimizeMap(CBasis *I,float *vertex,int n,int *vert2prim)
 }
 #endif
 
-
 /*========================================================================*/
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                   int group_id,int block_base,
                   int perspective,float front)
 {
-  register float *v,*vv,*d;
+  register float *v;
   float ll;
   CPrimitive *prm;
   register int i;
-  register int *sp,*ip,*tempRef;
-  int a,b,c,n,h,q,x,y,z,j,k,l,e;
+  register int *tempRef;
+  int n,h,q,x,y,z,j,k,l,e;
   int extra_vert = 0;
   float p[3],dd[3],*d1,*d2,vd[3],cx[3],cy[3];
   float *tempVertex;
@@ -2303,11 +2302,10 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
     ENDFD;
    
   sep   = I->MinVoxel;
-  if(sep == _0)
-    {
-      remapMode   = false;
-      sep         = I->MaxRadius; /* also will imply no remapping of vertices */
-    }
+  if(sep == _0) {
+    remapMode   = false;
+    sep         = I->MaxRadius; /* also will imply no remapping of vertices */
+  }
   /* we need to get a sense of the actual size in order to avoid sep being too small */
    
   v   = I->Vertex;
@@ -2317,20 +2315,23 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
   min[2] = max[2] = v[2];
    
   v   += 3;
-   
-  for(a = 1; a < I->NVertex; a++)
-    {
-      if(min[0] > v[0])      min[0]   = v[0];
-      if(max[0] < v[0])      max[0]   = v[0];
 
-      if(min[1] > v[1])      min[1]   = v[1];
-      if(max[1] < v[1])      max[1]   = v[1];
-
-      if(min[2] > v[2])      min[2]   = v[2];
-      if(max[2] < v[2])      max[2]   = v[2];
-
-      v   += 3;
-    }
+  {
+    register int a;
+    for(a = 1; a < I->NVertex; a++)
+      {
+        if(min[0] > v[0])      min[0]   = v[0];
+        if(max[0] < v[0])      max[0]   = v[0];
+        
+        if(min[1] > v[1])      min[1]   = v[1];
+        if(max[1] < v[1])      max[1]   = v[1];
+        
+        if(min[2] > v[2])      min[2]   = v[2];
+        if(max[2] < v[2])      max[2]   = v[2];
+        
+        v   += 3;
+      }
+  }
    
   if(volume)
     {
@@ -2359,23 +2360,22 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
    
   /* don't break up space unnecessarily if we only have a few vertices... */
 
-  if(I->NVertex)
-    {
-      l1 = (float)fabs(max[0]-min[0]);
-      l2 = (float)fabs(max[1]-min[1]);
-      
-      if(l1 < l2) l1 = l2;  
-      
-      l2 = (float)fabs(max[2]-min[2]);
-      
-      if(l1 < l2) l1 = l2;
-      
-      if(l1 < kR_SMALL4) l1 = 100.0;
-      
-      if(I->NVertex < (l1/sep))
-        sep   = (l1/I->NVertex);
-    }
-
+  if(I->NVertex) {
+    l1 = (float)fabs(max[0]-min[0]);
+    l2 = (float)fabs(max[1]-min[1]);
+    
+    if(l1 < l2) l1 = l2;  
+    
+    l2 = (float)fabs(max[2]-min[2]);
+    
+    if(l1 < l2) l1 = l2;
+    
+    if(l1 < kR_SMALL4) l1 = 100.0;
+    
+    if(I->NVertex < (l1/sep))
+      sep   = (l1/I->NVertex);
+  }
+  
   if(Feedback(I->G,FB_Ray,FB_Debugging)) {
     dump3f(min," BasisMakeMap: min");
     dump3f(max," BasisMakeMap: max");
@@ -2385,519 +2385,465 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
 
   sep = MapGetSeparation(I->G,sep,max,min,diagonal); /* this needs to be a minimum 
                                                       * estimate of the actual value */
-   
+  
   /* here we have to carry out a complicated work-around in order to
    * efficiently encode our primitives into the map in a way that doesn't
    * require expanding the map cutoff to the size of the largest object*/
-  if(remapMode) 
-    {
-      for(a = 0; a < I->NVertex; a++)
-        {
-          prm   = prim + vert2prim[a];
-          
-          switch(prm->type)
-            {
-            case cPrimTriangle:
-            case cPrimCharacter:
-              if(a == prm->vert) { /* only do this calculation for one of the three vertices */
-                l1   = (float)length3f(I->Precomp+I->Vert2Normal[a]*3);
-                l2   = (float)length3f(I->Precomp+I->Vert2Normal[a]*3+3);
-                if((l1>=sep)||(l2>=sep)) {
-                  b   = (int)ceil(l1/sep)+1;
-                  c   = (int)ceil(l2/sep)+1;
-                  extra_vert += 4*b*c;
-                }
-              }
-              break;
-             
-            case cPrimCylinder:
-            case cPrimSausage:
-              if((prm->l1+2*prm->r1)>=sep) {
-                q = ((int)(2*(floor(prm->r1/sep)+1)))+1;
-                q = q * q * ((int)ceil((prm->l1+2*prm->r1)/sep)+2);
-                extra_vert+= q;
-              }
-              break;
-             
-            case cPrimSphere:
-              if(prm->r1>=sep) {
-                b = (int)(2*floor(prm->r1/sep)+1);
-                extra_vert   += (b*b*b);
-              }
-              break;
-            }
-        }   /* for */
+  if(remapMode) {
+    register int a,b,c;
+    for(a = 0; a < I->NVertex; a++) {
+      prm   = prim + vert2prim[a];
       
-      extra_vert   += I->NVertex;
-      tempVertex   = CacheAlloc(I->G,float,extra_vert*3,group_id,cCache_basis_tempVertex);
-      tempRef      = CacheAlloc(I->G,int,extra_vert,group_id,cCache_basis_tempRef); 
-      
-      ErrChkPtr(I->G,tempVertex); /* can happen if extra vert is unreasonable */
-      ErrChkPtr(I->G,tempRef);
-      
-      /* lower indexes->flags, top is ref->lower index*/
-      
-      n   = I->NVertex;
+      switch(prm->type) {
+      case cPrimTriangle:
+      case cPrimCharacter:
+        if(a == prm->vert) { /* only do this calculation for one of the three vertices */
+          l1   = (float)length3f(I->Precomp+I->Vert2Normal[a]*3);
+          l2   = (float)length3f(I->Precomp+I->Vert2Normal[a]*3+3);
+          if((l1>=sep)||(l2>=sep)) {
+            b   = (int)ceil(l1/sep)+1;
+            c   = (int)ceil(l2/sep)+1;
+            extra_vert += 4*b*c;
+          }
+        }
+        break;
+        
+      case cPrimCylinder:
+      case cPrimSausage:
+        if((prm->l1+2*prm->r1)>=sep) {
+          q = ((int)(2*(floor(prm->r1/sep)+1)))+1;
+          q = q * q * ((int)ceil((prm->l1+2*prm->r1)/sep)+2);
+          extra_vert+= q;
+        }
+        break;
+        
+      case cPrimSphere:
+        if(prm->r1>=sep) {
+          b = (int)(2*floor(prm->r1/sep)+1);
+          extra_vert   += (b*b*b);
+        }
+        break;
+      }
+    }   /* for */
+    
+    extra_vert   += I->NVertex;
+    tempVertex   = CacheAlloc(I->G,float,extra_vert*3,group_id,cCache_basis_tempVertex);
+    tempRef      = CacheAlloc(I->G,int,extra_vert,group_id,cCache_basis_tempRef); 
+    
+    ErrChkPtr(I->G,tempVertex); /* can happen if extra vert is unreasonable */
+    ErrChkPtr(I->G,tempRef);
+    
+    /* lower indexes->flags, top is ref->lower index*/
 
+    {
+      register float *vv,*d;    
+      n   = I->NVertex;
+      
       v   = tempVertex;
       vv   = I->Vertex;
-
+      
       memcpy( v, vv, n * sizeof(float) * 3 );
       vv   += n * 3;
       v   += n * 3;
-
-      for(a = 0; a < I->NVertex; a++)
-        {
-          prm   = prim + vert2prim[a];
-         
-          switch(prm->type)  {
-          case cPrimTriangle:
-          case cPrimCharacter:
-            if(a == prm->vert)
-              {
-                /* only do this calculation for one of the three vertices */
-                d1   = I->Precomp + I->Vert2Normal[a]*3;
-                d2   = I->Precomp + I->Vert2Normal[a]*3+3;
-                vv   = I->Vertex + a*3;
-                l1   = (float)length3f(d1);
-                l2   = (float)length3f(d2);
-                if((l1>=sep)||(l2>=sep)) {
-                  b   = (int)floor(l1/sep)+1;
-                  c   = (int)floor(l2/sep)+1;
-                  extra_vert += b*c;
-                  bh   = (float)(b/2)+1;
-                  ch   = (float)(c/2)+1;
-                    
-                  for(x = 0; x < bh; x++)
-                    {
-                      const float   xb   = (float)x / b;
-                        
-                      for(y = 0; y < ch; y++) 
-                        {
-                          const float   yc   = (float)y / c;
-                            
-                          *(v++)   = vv[0] + (d1[0] * xb) + (d2[0] * yc);
-                          *(v++)   = vv[1] + (d1[1] * xb) + (d2[1] * yc);
-                          *(v++)   = vv[2] + (d1[2] * xb) + (d2[2] * yc);
-                            
-                          tempRef[n++]   = a;
-                        }
-                    }
-                    
-                  for(x = 0; x < bh; x++)
-                    {
-                      const float   xb   = (float)x / b;
-                        
-                      for(y = 0; y < ch; y++) 
-                        {
-                          const float   yc   = (float)y/c;
-                            
-                          if( (xb + yc) < _p5 )
-                            {
-                              *(v++)   = vv[0] + d1[0] * (_p5 + xb) + (d2[0]*yc);
-                              *(v++)   = vv[1] + d1[1] * (_p5 + xb) + (d2[1]*yc);
-                              *(v++)   = vv[2] + d1[2] * (_p5 + xb) + (d2[2]*yc);
-                                
-                              tempRef[n++]   = a; 
-                                
-                              *(v++)   = vv[0] + (d1[0]*xb) + d2[0]*(_p5 + yc);
-                              *(v++)   = vv[1] + (d1[1]*xb) + d2[1]*(_p5 + yc);
-                              *(v++)   = vv[2] + (d1[2]*xb) + d2[2]*(_p5 + yc);
-                                
-                              tempRef[n++] = a;
-                            }
-                        }
-                    }
-                }
-              }   /* if */
-            break;
-          
-          case cPrimCylinder:
-          case cPrimSausage:
+      
+      for(a = 0; a < I->NVertex; a++) {
+      
+        prm   = prim + vert2prim[a];
+      
+        switch(prm->type)  {
+        case cPrimTriangle:
+        case cPrimCharacter:
+          if(a == prm->vert) {
+            /* only do this calculation for one of the three vertices */
+            d1   = I->Precomp + I->Vert2Normal[a]*3;
+            d2   = I->Precomp + I->Vert2Normal[a]*3+3;
+            vv   = I->Vertex + a*3;
+            l1   = (float)length3f(d1);
+            l2   = (float)length3f(d2);
+            if((l1>=sep)||(l2>=sep)) {
+              b   = (int)floor(l1/sep)+1;
+              c   = (int)floor(l2/sep)+1;
+              extra_vert += b*c;
+              bh   = (float)(b/2)+1;
+              ch   = (float)(c/2)+1;
             
-            ll   = prm->l1+2*prm->r1;
-
-            if(ll>=sep) {
-              d   = I->Normal+3*I->Vert2Normal[a];
-              vv   = I->Vertex+a*3;
-              get_system1f3f(d,cx,cy); /* creates an orthogonal system about d */
-                 
-              p[0]   = vv[0]-d[0]*prm->r1;
-              p[1]   = vv[1]-d[1]*prm->r1;
-              p[2]   = vv[2]-d[2]*prm->r1;
-              dd[0]   = d[0]*sep;
-              dd[1]   = d[1]*sep;
-              dd[2]   = d[2]*sep;
-                 
-              q   = (int)floor(prm->r1 / sep) + 1;
-                 
-              while(1)
-                {
-                  vd[0]   = (p[0] += dd[0]);
-                  vd[1]   = (p[1] += dd[1]);
-                  vd[2]   = (p[2] += dd[2]);
-                     
-                  for(x = -q; x <= q; x++)
-                    {
-                      for(y = -q; y <= q; y++)
-                        {
-                          xs      = x*sep;
-                          ys      = y*sep;
-                          *(v++)   = vd[0] + xs*cx[0] + ys*cy[0];
-                          *(v++)   = vd[1] + xs*cx[1] + ys*cy[1];
-                          *(v++)   = vd[2] + xs*cx[2] + ys*cy[2];
-                             
-                          tempRef[n++]   = a;
-                        }
-                    }
-                     
-                  if(ll <= _0)
-                    break;
-                  ll   -= sep;
-                }
-            }
-            break;
-          
-          case cPrimSphere:
-            if(prm->r1>=sep) {
-              q   = (int)floor(prm->r1 / sep);
-              vv   = I->Vertex + a*3;
+              for(x = 0; x < bh; x++) {
+                const float   xb   = (float)x / b;
+              
+                for(y = 0; y < ch; y++)  {
+                  const float   yc   = (float)y / c;
                 
-              for(x = -q; x <= q; x++)
-                {
-                  for(y = -q; y <= q; y++)
-                    {
-                      for( z = -q; z <= q; z++)
-                        {
-                          *(v++)   = vv[0] + x * sep;
-                          *(v++)   = vv[1] + y * sep;
-                          *(v++)   = vv[2] + z * sep;
-                            
-                          tempRef[n++]   = a;
-                        }
-                    }
+                  *(v++)   = vv[0] + (d1[0] * xb) + (d2[0] * yc);
+                  *(v++)   = vv[1] + (d1[1] * xb) + (d2[1] * yc);
+                  *(v++)   = vv[2] + (d1[2] * xb) + (d2[2] * yc);
+                
+                  tempRef[n++]   = a;
                 }
+              }
+            
+              for(x = 0; x < bh; x++)                {
+                const float   xb   = (float)x / b;
+              
+                for(y = 0; y < ch; y++) {
+                  const float   yc   = (float)y/c;
+                
+                  if( (xb + yc) < _p5 ) {
+                    *(v++)   = vv[0] + d1[0] * (_p5 + xb) + (d2[0]*yc);
+                    *(v++)   = vv[1] + d1[1] * (_p5 + xb) + (d2[1]*yc);
+                    *(v++)   = vv[2] + d1[2] * (_p5 + xb) + (d2[2]*yc);
+                  
+                    tempRef[n++]   = a; 
+                  
+                    *(v++)   = vv[0] + (d1[0]*xb) + d2[0]*(_p5 + yc);
+                    *(v++)   = vv[1] + (d1[1]*xb) + d2[1]*(_p5 + yc);
+                    *(v++)   = vv[2] + (d1[2]*xb) + d2[2]*(_p5 + yc);
+                  
+                    tempRef[n++] = a;
+                  }
+                }
+              }
             }
-            break;
-          }   /* end of switch */
-        }
+          }   /* if */
+          break;
+        case cPrimCylinder:
+        case cPrimSausage:
+            
+          ll   = prm->l1+2*prm->r1;
 
-
-      if(n > extra_vert) {
-        printf("BasisMakeMap: %d>%d\n",n,extra_vert);
-        ErrFatal(I->G,"BasisMakeMap","used too many extra vertices (this indicates a bug)...\n");
+          if(ll>=sep) {
+            d   = I->Normal+3*I->Vert2Normal[a];
+            vv   = I->Vertex+a*3;
+            get_system1f3f(d,cx,cy); /* creates an orthogonal system about d */
+                 
+            p[0]   = vv[0]-d[0]*prm->r1;
+            p[1]   = vv[1]-d[1]*prm->r1;
+            p[2]   = vv[2]-d[2]*prm->r1;
+            dd[0]   = d[0]*sep;
+            dd[1]   = d[1]*sep;
+            dd[2]   = d[2]*sep;
+                 
+            q   = (int)floor(prm->r1 / sep) + 1;
+          
+            while(1) {
+              vd[0]   = (p[0] += dd[0]);
+              vd[1]   = (p[1] += dd[1]);
+              vd[2]   = (p[2] += dd[2]);
+            
+              for(x = -q; x <= q; x++) {
+                for(y = -q; y <= q; y++) {
+                  xs      = x*sep;
+                  ys      = y*sep;
+                  *(v++)   = vd[0] + xs*cx[0] + ys*cy[0];
+                  *(v++)   = vd[1] + xs*cx[1] + ys*cy[1];
+                  *(v++)   = vd[2] + xs*cx[2] + ys*cy[2];
+                
+                  tempRef[n++]   = a;
+                }
+              }
+            
+              if(ll <= _0)
+                break;
+              ll   -= sep;
+            }
+          }
+          break;
+          
+        case cPrimSphere:
+          if(prm->r1>=sep) {
+            q   = (int)floor(prm->r1 / sep);
+            vv   = I->Vertex + a*3;
+                
+            for(x = -q; x <= q; x++)  {
+              for(y = -q; y <= q; y++)  {
+                for( z = -q; z <= q; z++)  {
+                  *(v++)   = vv[0] + x * sep;
+                  *(v++)   = vv[1] + y * sep;
+                  *(v++)   = vv[2] + z * sep;
+                
+                  tempRef[n++]   = a;
+                }
+              }
+            }
+          }
+          break;
+        }   /* end of switch */
       }
+    }
+    if(n > extra_vert) {
+      printf("BasisMakeMap: %d>%d\n",n,extra_vert);
+      ErrFatal(I->G,"BasisMakeMap","used too many extra vertices (this indicates a bug)...\n");
+    }
+    PRINTFB(I->G,FB_Ray,FB_Blather)
+      " BasisMakeMap: %d total vertices\n",n
+      ENDFB(I->G);
+    
+    if(volume) {
+      v   = tempVertex;
+      
+      min[0]   = max[0]   = v[0];
+      min[1]   = max[1]   = v[1];
+      min[2]   = max[2]   = v[2];
+      
+      v += 3;
+      
+      if(Feedback(I->G,FB_Ray,FB_Debugging)) {
+        dump3f(min," BasisMakeMap: remapped min");
+        dump3f(max," BasisMakeMap: remapped max");
+        fflush(stdout);
+      }
+      
+      for(a = 1; a < n; a++) {
+        if(min[0] > v[0])   min[0]   = v[0];
+        if(max[0] < v[0])   max[0]   = v[0];
+        
+        if(min[1] > v[1])   min[1]   = v[1];
+        if(max[1] < v[1])   max[1]   = v[1];
+        
+        if(min[2] > v[2])   min[2]   = v[2];
+        if(max[2] < v[2])   max[2]   = v[2];
+        v   += 3;
+      }
+      
+      if(Feedback(I->G,FB_Ray,FB_Debugging)) {
+        dump3f(min," BasisMakeMap: remapped min");
+        dump3f(max," BasisMakeMap: remapped max");
+        fflush(stdout);
+      }
+      if(min[0] < volume[0])      min[0]   = volume[0];
+      if(max[0] > volume[1])      max[0]   = volume[1];
+      if(min[1] < volume[2])      min[1]   = volume[2];
+      if(max[1] > volume[3])      max[1]   = volume[3];
+      
+      if(min[2] < (-volume[5]))   min[2]   = (-volume[5]);
+      if(max[2] > (-volume[4]))   max[2]   = (-volume[4]);
+      
+      extent[0]   = min[0];
+      extent[1]   = max[0];
+      extent[2]   = min[1];
+      extent[3]   = max[1];
+      extent[4]   = min[2];
+      extent[5]   = max[2];
       PRINTFB(I->G,FB_Ray,FB_Blather)
-        " BasisMakeMap: %d total vertices\n",n
+        " BasisMakeMap: Extent [%8.2f %8.2f] [%8.2f %8.2f] [%8.2f %8.2f]\n",
+        extent[0],extent[1],extent[2],extent[3],extent[4],extent[5]
         ENDFB(I->G);
+      I->Map   = MapNewCached(I->G,-sep,tempVertex,n,extent,group_id,block_base);
       
-      if(volume) {
-        v   = tempVertex;
-        
-        min[0]   = max[0]   = v[0];
-        min[1]   = max[1]   = v[1];
-        min[2]   = max[2]   = v[2];
-        
-        v += 3;
-        
-        if(Feedback(I->G,FB_Ray,FB_Debugging)) {
-          dump3f(min," BasisMakeMap: remapped min");
-          dump3f(max," BasisMakeMap: remapped max");
-          fflush(stdout);
-        }
-        
-        
-        for(a = 1; a < n; a++) {
-          if(min[0] > v[0])   min[0]   = v[0];
-          if(max[0] < v[0])   max[0]   = v[0];
-          
-          if(min[1] > v[1])   min[1]   = v[1];
-          if(max[1] < v[1])   max[1]   = v[1];
-          
-          if(min[2] > v[2])   min[2]   = v[2];
-          if(max[2] < v[2])   max[2]   = v[2];
-          v   += 3;
-        }
-        
-        if(Feedback(I->G,FB_Ray,FB_Debugging)) {
-          dump3f(min," BasisMakeMap: remapped min");
-          dump3f(max," BasisMakeMap: remapped max");
-          fflush(stdout);
-        }
-        
-        
-        if(min[0] < volume[0])      min[0]   = volume[0];
-        if(max[0] > volume[1])      max[0]   = volume[1];
-        if(min[1] < volume[2])      min[1]   = volume[2];
-        if(max[1] > volume[3])      max[1]   = volume[3];
-        
-        if(min[2] < (-volume[5]))   min[2]   = (-volume[5]);
-        if(max[2] > (-volume[4]))   max[2]   = (-volume[4]);
-        
-        extent[0]   = min[0];
-        extent[1]   = max[0];
-        extent[2]   = min[1];
-        extent[3]   = max[1];
-        extent[4]   = min[2];
-        extent[5]   = max[2];
-        PRINTFB(I->G,FB_Ray,FB_Blather)
-          " BasisMakeMap: Extent [%8.2f %8.2f] [%8.2f %8.2f] [%8.2f %8.2f]\n",
-          extent[0],extent[1],extent[2],extent[3],extent[4],extent[5]
-          ENDFB(I->G);
-        I->Map   = MapNewCached(I->G,-sep,tempVertex,n,extent,group_id,block_base);
-        
-      } else {
-        I->Map   = MapNewCached(I->G,sep,tempVertex,n,NULL,group_id,block_base);
-      }
-      
-      n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
-
-      if(perspective) {
-        MapSetupExpressPerp(I->Map,tempVertex,front,n);
-      } else if(n_voxel < (3*n)) {
-        MapSetupExpressXY(I->Map,n);      
-      } else {
-        MapSetupExpressXYVert(I->Map,tempVertex,n);
-      }
+    } else {
+      I->Map   = MapNewCached(I->G,sep,tempVertex,n,NULL,group_id,block_base);
+    }
+    
+    n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
+    
+    if(perspective) {
+      MapSetupExpressPerp(I->Map,tempVertex,front,n);
+    } else if(n_voxel < (3*n)) {
+      MapSetupExpressXY(I->Map,n);      
+    } else {
+      MapSetupExpressXYVert(I->Map,tempVertex,n);
+    }
+    
+    {
+      register MapType *map = I->Map;
+      register int *sp,*ip,*ip0;
+      register int *ehead_new = CacheCalloc(I->G,int,(map->Dim[0]*map->Dim[1]*map->Dim[2]),
+                                            group_id,block_base + cCache_map_ehead_new_offset);
+      register int *elist_new = VLACacheAlloc(I->G,int,map->NEElem,group_id,block_base + cCache_map_elist_new_offset);
+      register int *elist = map->EList, *ehead = map->EHead;
+      register int nelem = 0;
+      const int iMin0=map->iMin[0];
+      const int iMin1=map->iMin[1];
+      const int iMin2=map->iMin[2];
+      const int iMax0=map->iMax[0];
+      const int iMax1=map->iMax[1];
+      const int iMax2=map->iMax[2];
 
       /* now do a filter-reassignment pass to remap fake vertices
          to the original line vertex while deleting duplicate entries */
       
       memset( tempRef, 0, sizeof(int) * I->NVertex );
 
-      if(n_voxel < (3*n))
-        {
-          int   *start;
-          for(a = I->Map->iMin[0]; a <= I->Map->iMax[0]; a++)
-            {
-              for(b = I->Map->iMin[1]; b <= I->Map->iMax[1]; b++)
-                {
-                  for(c = I->Map->iMin[2]; c <= I->Map->iMax[2]; c++)
-                    {
-                      start   = MapEStart(I->Map,a,b,c);
-                      h      = *start;
-                      if(h > 0)
-                        {
-                          ip   = I->Map->EList+h; 
-                          sp   = ip;
-                          i   = *(sp++);
-                          while(i>=0) {
-                            register int ii = *(sp++);
-                            if(i >= I->NVertex) /* reference -- remap */
-                              i   = tempRef[i];
+      if(n_voxel < (4*n)) { /* faster to traverse the entire map */
+        int   *start;
+        for(a = iMin0; a <= iMax0; a++) {
+          for(b = iMin1; b <= iMax1; b++) {
+            for(c = iMin2; c <= iMax2; c++) {
+              start   = MapEStart(map,a,b,c);
+              h = *start;
+              if(h > 0) {
+                ehead_new[(start - ehead)] = nelem;
+                ip = ip0 = (elist_new+nelem);
+                sp = elist+h;
+                i = *(sp++);
+                while(i>=0) {
+                  register int ii = *(sp++);
+                  if(i >= I->NVertex) /* reference -- remap */
+                    i = tempRef[i];
+                  if(!tempRef[i]) { /*eliminate duplicates */
+                    *(ip++)      = i;
+                    tempRef[i]   = 1;
+                  } 
+                  i = ii;
+                }
+              
+                *(ip++)   = -1; /* terminate list */
+                nelem+= (ip-ip0);
+
+                /* now reset flags efficiently */
+                i = *(ip0++);
+                while(i>=0) {
+                  tempRef[i] = 0;
+                  i = *(ip0++);
+                }
+              }
+            }   /* for c */
+          }   /* for b */
+        }   /* for a */
+      } else {
+        int      *start;
+        MapType   *map   = I->Map;
+      
+        v         = tempVertex;
+      
+        for(e = 0; e < n; e++) { 
+        
+          MapLocus(map,v, &j, &k, &l);
+          
+          if(perspective) { /* for normal maps */
+            
+            int   *iPtr1   = map->EHead + ((j-1) * map->D1D2) + ((k-1) * map->Dim[2]) + (l-1);
+            for(a = j-1; a <= j+1; a++) {
+              if( (a >= iMin0) && (a <= iMax0) ) {
+                int   *iPtr2   = iPtr1;
+                for(b = k-1; b <= k+1; b++) {
+                  if( (b >= iMin1) && (b <= iMax1) ) {
+                    int   *iPtr3   = iPtr2;
+                    for(c = l-1; c <= l+1; c++) {
+                      if( (c >= iMin2) && (c <= iMax2) ) {
+                        
+                        start   = iPtr3;
+                        /*start   = MapEStart(map,a,b,c);*/
+                        h      = *start;
+                        if(h > 0)  {
+                          (*start) = -1; /* no repeat visits */
+                          
+                          ehead_new[(start - ehead)] = nelem;
+                          ip = ip0 = (elist_new+nelem);
+                          
+                          sp = elist + h;
+                          i  = *(sp++);
+                          
+                          while(i >= 0)  {
+                            register int ii   = *(sp++);
+                            if(i >= I->NVertex)
+                              i = tempRef[i];
                             if(!tempRef[i]) { /*eliminate duplicates */
                               *(ip++)      = i;
                               tempRef[i]   = 1;
-                            } 
+                            }
                             i = ii;
                           }
-                     
-                          *(ip)   = -1; /* terminate list */
-                          /* now reset flags efficiently */
-                          h   = *(start);
-                          ip   = I->Map->EList+h;
-                          i   = *(ip++);
-                     
-                          while(i>=0)
-                            {
-                              tempRef[i]   = 0;
-                              i = *(ip++);
-                            }
-                        }
-                    }   /* for c */
-                }   /* for b */
-            }   /* for a */
-        }
-      else
-        {
-          int      **site_p, **site = NULL;
-          int      *value_p, *value = NULL;
-          int      max_site;
-          int      *start;
-          int      n_site = 0;
-
-
-          MapType   *mapPtr   = I->Map;
-         
-          max_site   = extra_vert;
-          site      = CacheAlloc(I->G,int*,max_site,group_id,cCache_basis_site);
-          value      = CacheAlloc(I->G,int,max_site,group_id,cCache_basis_value);
-         
-          site_p      = site;
-          value_p      = value;
-          v         = tempVertex;
-         
-          for(e = 0; e < n; e++) { 
-
-            MapLocus(mapPtr,v, &j, &k, &l);
-
-            if(perspective) { /* for normal maps */
-              
-              int   *iPtr1   = mapPtr->EHead + ((j-1) * mapPtr->D1D2) + ((k-1) * mapPtr->Dim[2]) + (l-1);
-              for(a = j-1; a <= j+1; a++) {
-                if( (a >= mapPtr->iMin[0]) && (a <= mapPtr->iMax[0]) ) {
-                  int   *iPtr2   = iPtr1;
-                  for(b = k-1; b <= k+1; b++) {
-                    if( (b >= mapPtr->iMin[1]) && (b <= mapPtr->iMax[1]) ) {
-                      int   *iPtr3   = iPtr2;
-                      for(c = l-1; c <= l+1; c++) {
-                        if( (c >= mapPtr->iMin[2]) && (c <= mapPtr->iMax[2]) ) {
                           
-                          start   = iPtr3;
-                          /*start   = MapEStart(mapPtr,a,b,c);*/
-                          h      = *start;
-                          if(h > 0)
-                            {
-                              ip   = mapPtr->EList + h; 
-                              sp   = ip;
-                              i   = *(sp++);
-                              
-                              while(i >= 0)
-                                {
-                                  register int ii   = *(sp++);
-                                  if(i >= I->NVertex)
-                                    i   = tempRef[i];
-                                  if(!tempRef[i]) { /*eliminate duplicates */
-                                    *(ip++)      = i;
-                                    tempRef[i]   = 1;
-                                  }
-                                  i = ii;
-                                }
-                              
-                              *(ip)   = -1; /* terminate list */
-                              /* now reset flags efficiently */
-                              /*h      = *(start);*/
-                              ip      = mapPtr->EList + h;
-                              i      = *(ip++);
-                              
-                              while(i >= 0)
-                                {
-                                  tempRef[i]   = 0;
-                                  i = *(ip++);
-                                }
-                              
-                              if((h > 0) && (n_site < max_site))
-                                {
-                                  *(value_p++)  = (*start);
-                                  *(site_p++)  = start; /* remember which indexes we've negated */
-                                  (*start)    = -1;
-                                  n_site++;
-                                } 
-                            }   /* h > 0 */
-                        }
-
-                        iPtr3   ++;
+                          *(ip++)   = -1; /* terminate list */
+                          nelem+= (ip-ip0);
+                          
+                          /* now reset flags efficiently */
+                          i = *(ip0++);
+                          
+                          while(i >= 0) {
+                            tempRef[i]   = 0;
+                            i = *(ip0++);
+                          }
+                        }   /* h > 0 */
                       }
-                      
+                      iPtr3   ++;
                     }
-                    iPtr2   += mapPtr->Dim[2];
                   }
-                  
+                  iPtr2   += map->Dim[2];
                 }
-                iPtr1   += mapPtr->D1D2;
-                
               }
-            } else { /* for XY maps... */
-
-              c = l;
-              if((c >= mapPtr->iMin[2]) && (c <= mapPtr->iMax[2]))
-                {
-                  int   *iPtr1   = mapPtr->EHead + ((j-1) * mapPtr->D1D2) + ((k-1) * mapPtr->Dim[2]) + c;
-                    
-                  for(a = j-1; a <= j+1; a++)
-                    {
-                      if( (a >= mapPtr->iMin[0]) && (a <= mapPtr->iMax[0]) )
-                        {
-                          int   *iPtr2   = iPtr1;
-                            
-                          for(b = k-1; b <= k+1; b++)
-                            {
-                              if( (b >= mapPtr->iMin[1]) && (b <= mapPtr->iMax[1]) )
-                                {
-                                  start   = iPtr2;
-                                  /*start   = MapEStart(mapPtr,a,b,c);*/
-                                  h      = *start;
-                                  if(h > 0)
-                                    {
-                                      ip   = mapPtr->EList + h; 
-                                      sp   = ip;
-                                      i   = *(sp++);
-                                        
-                                      while(i >= 0)
-                                        {
-                                          register int ii = *(sp++);
-                                            
-                                          if(i >= I->NVertex)
-                                            i = tempRef[i];
-                                            
-                                          if(!tempRef[i]) { /*eliminate duplicates */
-                                            *(ip++)      = i;
-                                            tempRef[i]   = 1;
-                                          }
-                                          i = ii;
-                                        }
-                                        
-                                      *(ip)   = -1; /* terminate list */
-                                      /* now reset flags efficiently */
-                                      /*h      = *(start);*/
-                                      ip      = mapPtr->EList + h;
-                                      i      = *(ip++);
-                                        
-                                      while(i >= 0)
-                                        {
-                                          tempRef[i]   = 0;
-                                          i = *(ip++);
-                                        }
-                                        
-                                      if((h > 0) && (n_site < max_site))
-                                        {
-                                          *(value_p++)  = (*start);
-                                          *(site_p++)  = start; /* remember which indexes we've negated */
-                                          (*start)    = -1;
-                                          n_site++;
-                                        } 
-                                    }   /* h > 0 */
-                                }
-                                
-                              iPtr2   += mapPtr->Dim[2];
-                                
-                            }   /* for b */
-                        }
-                        
-                      iPtr1   += mapPtr->D1D2;
-                        
-                    }   /* for a */
-                }
+              iPtr1   += map->D1D2;
             }
-            v   += 3;   /* happens for EVERY e! */
+          } else { /* for XY maps... */
+          
+            c = l;
+            if((c >= iMin2) && (c <= iMax2))  {
+              int   *iPtr1   = ehead + ((j-1) * map->D1D2) + ((k-1) * map->Dim[2]) + c;
             
-          }   /* for e */
-          
-          value_p   = value;
-          site_p   = site;
-          
-          while( n_site-- )
-            {
-              **(site_p++)   = *(value_p++);
+              for(a = j-1; a <= j+1; a++) {
+                if( (a >= iMin0) && (a <= iMax0) ) {
+                  int   *iPtr2   = iPtr1;
+                
+                  for(b = k-1; b <= k+1; b++)  {
+                    if( (b >= iMin1) && (b <= iMax1) ) {
+                      start   = iPtr2;
+                      /*start   = MapEStart(map,a,b,c);*/
+                      h      = *start;
+                      if(h > 0) {
+                        (*start) = -1; /* no repeat visits */
+
+                        ehead_new[(start - ehead)] = nelem;
+                        ip = ip0 = (elist_new+nelem);
+                          
+                        sp   = elist + h;
+                        i   = *(sp++);
+                      
+                        while(i >= 0)  {
+                          register int ii = *(sp++);
+                        
+                          if(i >= I->NVertex)
+                            i = tempRef[i];
+                        
+                          if(!tempRef[i]) { /*eliminate duplicates */
+                            *(ip++)      = i;
+                            tempRef[i]   = 1;
+                          }
+                          i = ii;
+                        }
+                      
+                        *(ip++)   = -1; /* terminate list */
+                        nelem+= (ip-ip0);
+
+                        /* now reset flags efficiently */
+                        i = *(ip0++);
+                        while(i >= 0)  {
+                          tempRef[i]   = 0;
+                          i = *(ip0++);
+                        }
+                      }   /* h > 0 */
+                    }
+                    iPtr2   += map->Dim[2];
+                  }   /* for b */
+                }
+                iPtr1   += map->D1D2;
+              }   /* for a */
             }
-          
-          CacheFreeP(I->G,value,group_id,cCache_basis_value,false);
-          CacheFreeP(I->G,site,group_id,cCache_basis_site,false);
-        }
-      
-      CacheFreeP(I->G,tempVertex,group_id,cCache_basis_tempVertex,false);
-      CacheFreeP(I->G,tempRef,group_id,cCache_basis_tempRef,false);
-    }
-  else
-    {
-      /* simple sphere mode */
-      I->Map   = MapNewCached(I->G,-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
-      if(perspective) {
-        MapSetupExpressPerp(I->Map,I->Vertex,front,I->NVertex);
-      } else {
-        MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex);
+          }
+          v += 3;   /* happens for EVERY e! */
+        }   /* for e */
       }
+      CacheFreeP(I->G,map->EHead,group_id,block_base + cCache_map_ehead_offset,false);
+      VLACacheFreeP(I->G,map->EList,group_id,block_base + cCache_map_elist_offset,false);    
+      map->EList = elist_new;
+      map->EHead = ehead_new;
+      map->NEElem = nelem;
+      MemoryCacheReplaceBlock(I->G, group_id, block_base + cCache_map_ehead_new_offset, block_base + cCache_map_ehead_offset);
+      MemoryCacheReplaceBlock(I->G, group_id, block_base + cCache_map_elist_new_offset, block_base + cCache_map_elist_offset);
+      VLACacheSizeForSure(G,map->EList,int,map->NEElem,group_id,block_base + cCache_map_elist_offset);
     }
+      
+    CacheFreeP(I->G,tempVertex,group_id,cCache_basis_tempVertex,false);
+    CacheFreeP(I->G,tempRef,group_id,cCache_basis_tempRef,false);
+      
+  }  else    {
+    /* simple sphere mode */
+    I->Map   = MapNewCached(I->G,-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
+    if(perspective) {
+      MapSetupExpressPerp(I->Map,I->Vertex,front,I->NVertex);
+    } else {
+      MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex);
+    }
+  }
 }
 
 /*========================================================================*/

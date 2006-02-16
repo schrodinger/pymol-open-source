@@ -50,6 +50,8 @@ Z* -------------------------------------------------------------------
 #define cCache_map_ehead_offset                          3
 #define cCache_map_emask_offset                          4
 #define cCache_map_elist_offset                          5
+#define cCache_map_ehead_new_offset                      6
+#define cCache_map_elist_new_offset                      7
 
 #define cCache_basis_tempVertex                          31
 #define cCache_basis_tempRef                             32
@@ -76,6 +78,7 @@ Z* -------------------------------------------------------------------
 
 void MemoryCacheInit(PyMOLGlobals *G);
 void MemoryCacheDone(PyMOLGlobals *G);
+void MemoryCacheReplaceBlock(PyMOLGlobals *G,int group_id, int old_block_id, int new_block_id);
 
 void *_MemoryCacheMalloc(PyMOLGlobals *G,unsigned int size,int group_id,int block_id MD_FILE_LINE_Decl);
 void *_MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,int group_id,int block_id MD_FILE_LINE_Decl);
@@ -121,6 +124,7 @@ void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index
 
 #define MemoryCacheInit(x)
 #define MemoryCacheDone(x)
+#define MemoryCacheReplaceBlock(G,g,o,n)
 
 #define VLACacheMalloc(G,a,b,c,d,t,i) VLAMalloc(a,b,c,d)
 #define VLACacheFree(G,p,t,i,f) VLAFree(p)

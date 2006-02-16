@@ -39,10 +39,9 @@ typedef struct {
   float trans;
   int char_id;
   char type,cap1,cap2,cull;
-  char wobble;
-  char ramped;
+  char wobble,ramped;
   /* float wobble_param[3] eliminated to save space */
-} CPrimitive;
+} CPrimitive; /* currently 160 bytes -> appoximately 6.7 million primitives per gigabyte */
 
 typedef struct {
   PyMOLGlobals *G;
