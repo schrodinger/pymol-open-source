@@ -1221,7 +1221,7 @@ int BasisHitPerspective(BasisCallRec *BC)
         }
       }
       if(inside_code && (((a!=last_a)||(b!=last_b)||(c!=last_c))) &&
-         (h  = *(map->EHead + (a * map->D1D2) + (b * map->Dim[2]) + c))) {
+         ((h  = *(map->EHead + (a * map->D1D2) + (b * map->Dim[2]) + c))>0)) {
       
         register int new_min_index = -1;      
 
@@ -1556,8 +1556,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
       while(c >= MapBorder) 
       {
          h   = *xxtmp;      
-         if(h)
-         {
+         if( h > 0 ) {
             ip   = elist + h;
             i   = *(ip++);
 
@@ -1856,8 +1855,7 @@ int BasisHitShadow(BasisCallRec *BC)
       while(c >= MapBorder) 
       {
          h   = *xxtmp;
-         if( h )
-         {
+         if( h > 0 ) {
             ip   = elist + h;
             i   = *(ip++);
 
@@ -2674,15 +2672,15 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       memset( tempRef, 0, sizeof(int) * i_nVertex );
 
       if(n_voxel < (3*n)) { /* faster to traverse the entire map */
-        int   *start = ehead;
+        int   *start;
         for(a = iMin0; a <= iMax0; a++) {
           for(b = iMin1; b <= iMax1; b++) {
             for(c = iMin2; c <= iMax2; c++) {
-              /*              start   = MapEStart(map,a,b,c);*/
-              h = *(start++);
+              start = MapEStart(map,a,b,c);
+              h = *start;
               if(h < 0) {
                 sp = elist-h;
-                start[-1] = -h; /* flip sign */
+                *(start) = -h; /* flip sign */
                 i = *(sp++);
                 if(ehead_new!=ehead) {
                   ehead_new[(start - ehead)-1] = nelem;
@@ -2699,7 +2697,6 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                     tempRef[i]   = 1;
                     *(ip++) = i;
                   } 
-                  sp++;
                   i = ii;
                 }
               
