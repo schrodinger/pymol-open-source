@@ -1125,7 +1125,7 @@ int BasisHitPerspective(BasisCallRec *BC)
     const float BasisFudge1 = BC->fudge1;
     int     v2p;
     int     i,ii;
-    int    n_vert = BI->NVertex;
+    int    n_vert = BI->NVertex, n_elem = map->NEElem;
     int except = BC->except;
     int check_interior_flag   = BC->check_interior;
     float   sph[3],vt[3],tri1,tri2; 
@@ -1224,265 +1224,269 @@ int BasisHitPerspective(BasisCallRec *BC)
           clamped = true;
         }
       }
-      if(inside_code && (((a!=last_a)||(b!=last_b)||(c!=last_c))) &&
-         ((h  = *(ehead + (a * d1d2) + (b * d2) + c))>0)) {
+      if(inside_code && (((a!=last_a)||(b!=last_b)||(c!=last_c)))) {
+        register int new_min_index;   
+        h  = *(ehead + (a * d1d2) + (b * d2) + c);
         
-        register int new_min_index = -1;      
-        int do_loop;
+        new_min_index = -1;     
+        
         if(!clamped) /* don't discard a ray until it has hit the objective at least once */
           allow_break = true;
-      
+        
         if((terminal>0)&&(last_c!=c)) {
           if(!terminal--)
             break;
         }
-      
-        ip = elist + h;
-        last_a = a;
-        i = *(ip++);
-        last_b = b;
-        do_loop = ((i>=0)&&(i<n_vert));
-        last_c = c;
-            
-        while(do_loop) /* n_vert checking is a bug workaround */
-          {
-            ii = *(ip++);
-            v2p = vert2prim[i];
-            do_loop = ((ii>=0)&&(ii<n_vert));
-            if((v2p != except) && (!MapCached(cache,v2p))) 
-              {
-                register CPrimitive *prm = BC_prim + v2p;
-				int prm_type;
-				
-                /*MapCache(cache,v2p);*/
-				cache_cache[v2p] = 1;
-				prm_type = prm->type;
-				cache_CacheLink[v2p] = cache->CacheStart;
-                cache->CacheStart = v2p;
-				
-                switch(prm_type)  {
-                case cPrimTriangle:
-                case cPrimCharacter:
-                  {
-                    float *dir = r->dir;
-                    float *d10 = BI_Precomp + BI_Vert2Normal[i] * 3;
-                    float *d20 = d10+3;
-                    register float det, inv_det;
-                    register float pvec0,pvec1, pvec2;
-                    register float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
-                    register float d20_0 = d20[0], d20_1 = d20[1], d20_2 = d20[2];
-                    register float d10_0 = d10[0], d10_1 = d10[1], d10_2 = d10[2];
-
-                    /* cross_product3f(dir, d20, pvec); */
-
-                    pvec0 = dir1*d20_2 - dir2*d20_1;
-                    pvec1 = dir2*d20_0 - dir0*d20_2;
-                    pvec2 = dir0*d20_1 - dir1*d20_0;
-
-                    /* det = dot_product3f(pvec, d10); */
-
-                    det = pvec0 * d10_0 + pvec1 * d10_1 + pvec2 * d10_2;
+        if((h>0) && (h<n_elem)) {
+          int do_loop;
+          
+          ip = elist + h;
+          last_a = a;
+          i = *(ip++);
+          last_b = b;
+          do_loop = ((i>=0)&&(i<n_vert));
+          last_c = c;
+          
+          while(do_loop) /* n_vert checking is a bug workaround */
+            {
+              ii = *(ip++);
+              v2p = vert2prim[i];
+              do_loop = ((ii>=0)&&(ii<n_vert));
+              if((v2p != except) && (!MapCached(cache,v2p))) 
+                {
+                  register CPrimitive *prm = BC_prim + v2p;
+                  int prm_type;
                   
-                    if(fabs(det) >= EPSILON) {
-                      float *v0 = BI_Vertex + prm->vert*3;
-                      register float tvec0, tvec1, tvec2;
-                      register float qvec0, qvec1, qvec2;
-
-                      inv_det = _1/det;
-
-                      /* subtract3f(vt,v0,tvec); */
-                    
-                      tvec0 = vt[0] - v0[0];
-                      tvec1 = vt[1] - v0[1];
-                      tvec2 = vt[2] - v0[2];
-                    
-                      /* dot_product3f(tvec,pvec) * inv_det; */
-                      tri1 = (tvec0 * pvec0 + tvec1 * pvec1 + tvec2 * pvec2) * inv_det;
-                    
-                      /* cross_product3f(tvec,d10,qvec); */
-
-                      qvec0 = tvec1*d10_2 - tvec2*d10_1;
-                      qvec1 = tvec2*d10_0 - tvec0*d10_2;
-
-                      if( (tri1>= BasisFudge0) && (tri1<=BasisFudge1)) {
-                        qvec2 = tvec0*d10_1 - tvec1*d10_0;
+                  /*MapCache(cache,v2p);*/
+                  cache_cache[v2p] = 1;
+                  prm_type = prm->type;
+                  cache_CacheLink[v2p] = cache->CacheStart;
+                  cache->CacheStart = v2p;
+                  
+                  switch(prm_type)  {
+                  case cPrimTriangle:
+                  case cPrimCharacter:
+                    {
+                      float *dir = r->dir;
+                      float *d10 = BI_Precomp + BI_Vert2Normal[i] * 3;
+                      float *d20 = d10+3;
+                      register float det, inv_det;
+                      register float pvec0,pvec1, pvec2;
+                      register float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
+                      register float d20_0 = d20[0], d20_1 = d20[1], d20_2 = d20[2];
+                      register float d10_0 = d10[0], d10_1 = d10[1], d10_2 = d10[2];
                       
-                        /* dot_product3f(dir, qvec) * inv_det; */
-                        tri2 = (dir0 * qvec0 + dir1 * qvec1 + dir2 * qvec2) * inv_det;
+                      /* cross_product3f(dir, d20, pvec); */
                       
-                        /* dot_product3f(d20, qvec) * inv_det; */
-                        dist = (d20_0 * qvec0 + d20_1 * qvec1 + d20_2 * qvec2) * inv_det;
+                      pvec0 = dir1*d20_2 - dir2*d20_1;
+                      pvec1 = dir2*d20_0 - dir0*d20_2;
+                      pvec2 = dir0*d20_1 - dir1*d20_0;
 
-                        if( (tri2 >= BasisFudge0) && (tri2 <= BasisFudge1) && ((tri1 + tri2) <= BasisFudge1))
-                          {
-                            if( (dist < r_dist) && (dist >= _0) && 
-                                (dist <= back_dist) && (prm->trans != _1) ) 
-                              {
-                                new_min_index   = prm->vert;
-                                r_tri1      = tri1;
-                                r_tri2      = tri2;
-                                r_dist      = dist;
-                              }
-                          }
+                      /* det = dot_product3f(pvec, d10); */
+                      
+                      det = pvec0 * d10_0 + pvec1 * d10_1 + pvec2 * d10_2;
+                      
+                      if(fabs(det) >= EPSILON) {
+                        float *v0 = BI_Vertex + prm->vert*3;
+                        register float tvec0, tvec1, tvec2;
+                        register float qvec0, qvec1, qvec2;
+                        
+                        inv_det = _1/det;
+                        
+                        /* subtract3f(vt,v0,tvec); */
+                        
+                        tvec0 = vt[0] - v0[0];
+                        tvec1 = vt[1] - v0[1];
+                        tvec2 = vt[2] - v0[2];
+                        
+                        /* dot_product3f(tvec,pvec) * inv_det; */
+                        tri1 = (tvec0 * pvec0 + tvec1 * pvec1 + tvec2 * pvec2) * inv_det;
+                        
+                        /* cross_product3f(tvec,d10,qvec); */
+                        
+                        qvec0 = tvec1*d10_2 - tvec2*d10_1;
+                        qvec1 = tvec2*d10_0 - tvec0*d10_2;
+
+                        if( (tri1>= BasisFudge0) && (tri1<=BasisFudge1)) {
+                          qvec2 = tvec0*d10_1 - tvec1*d10_0;
+                      
+                          /* dot_product3f(dir, qvec) * inv_det; */
+                          tri2 = (dir0 * qvec0 + dir1 * qvec1 + dir2 * qvec2) * inv_det;
+                      
+                          /* dot_product3f(d20, qvec) * inv_det; */
+                          dist = (d20_0 * qvec0 + d20_1 * qvec1 + d20_2 * qvec2) * inv_det;
+
+                          if( (tri2 >= BasisFudge0) && (tri2 <= BasisFudge1) && ((tri1 + tri2) <= BasisFudge1))
+                            {
+                              if( (dist < r_dist) && (dist >= _0) && 
+                                  (dist <= back_dist) && (prm->trans != _1) ) 
+                                {
+                                  new_min_index   = prm->vert;
+                                  r_tri1      = tri1;
+                                  r_tri2      = tri2;
+                                  r_dist      = dist;
+                                }
+                            }
+                        }
                       }
                     }
-                  }
-                  break;
-                case cPrimSphere:
-                  {
-
-                    if(LineClipPoint( r->base, r->dir, BI_Vertex + i*3, &dist, BI_Radius[i] , BI_Radius2[i]))
-                      {
-                        if((dist < r_dist) && (prm->trans != _1))
-                          {
-                            if((dist >= _0) && (dist <= back_dist)) {
-                              new_min_index = prm->vert;
-                              r_dist      = dist;
-                            } else if(check_interior_flag && (dist<=back_dist))  {
-                              if(diffsq3f(vt,BI_Vertex+i*3) < BI_Radius2[i]) {
-                              
-                                local_iflag   = true;
-                                r_prim      = prm;
-                                r_dist    = _0;
-                                new_min_index   = prm->vert;
-                              }
-                            }
-                          }
-                      }
-                  }
-                  break;
-                
-                case cPrimCylinder:
-                  if(LineToSphereCapped(r->base,r->dir,BI_Vertex+i*3, 
-                                        BI_Normal+BI_Vert2Normal[i]*3,
-                                        BI_Radius[i], prm->l1,sph,&tri1,
-                                        prm->cap1,prm->cap2))
+                    break;
+                  case cPrimSphere:
                     {
-                      if(LineClipPoint(r->base,r->dir,sph,&dist,BI_Radius[i],BI_Radius2[i]))
+
+                      if(LineClipPoint( r->base, r->dir, BI_Vertex + i*3, &dist, BI_Radius[i] , BI_Radius2[i]))
                         {
                           if((dist < r_dist) && (prm->trans != _1))
                             {
-                              if((dist >= _0) && (dist <= back_dist)) 
-                                {
-                                  if(prm->l1 > kR_SMALL4)
-                                    r_tri1   = tri1 / prm->l1;
-                                
-                                  r_sphere0   = sph[0];
-                                  r_sphere1   = sph[1];                              
-                                  r_sphere2   = sph[2];
+                              if((dist >= _0) && (dist <= back_dist)) {
+                                new_min_index = prm->vert;
+                                r_dist      = dist;
+                              } else if(check_interior_flag && (dist<=back_dist))  {
+                                if(diffsq3f(vt,BI_Vertex+i*3) < BI_Radius2[i]) {
+                              
+                                  local_iflag   = true;
+                                  r_prim      = prm;
+                                  r_dist    = _0;
                                   new_min_index   = prm->vert;
-                                  r_dist      = dist;
                                 }
-                              else if(check_interior_flag && (dist<=back_dist))
-                                {
-                                  if(FrontToInteriorSphereCapped(vt,
-                                                                 BI_Vertex+i*3,
-                                                                 BI_Normal+BI_Vert2Normal[i]*3,
-                                                                 BI_Radius[i],
-                                                                 BI_Radius2[i],
-                                                                 prm->l1,
-                                                                 prm->cap1,
-                                                                 prm->cap2)) 
-                                    {
-                                      local_iflag   = true;
-                                      r_prim      = prm;
-                                      r_dist      = _0;
-                                    
-                                      new_min_index   = prm->vert;
-                                    }
-                                }
+                              }
                             }
                         }
                     }
-                  break;
+                    break;
                 
-                case cPrimSausage:
-                  if(LineToSphere(r->base,r->dir, BI_Vertex+i*3,BI_Normal+BI_Vert2Normal[i]*3,
-                                  BI_Radius[i],prm->l1,sph,&tri1))
-                    {
-
-                      if(LineClipPoint(r->base,r->dir,sph,&dist,BI_Radius[i],BI_Radius2[i])) 
-                        {
-
-
-                          int   tmp_flag = false;
-                          if((dist<r_dist)  && (prm->trans != _1) )
-                            {
-                              if((dist >= _0) && (dist <= back_dist)) 
-                                {
-                                  tmp_flag = true;
-                                  if(excl_trans_flag) 
-                                    {
-                                      if( (prm->trans > _0) && (dist < excl_trans) )
-                                        tmp_flag = false;
-                                    }
-                                  if(tmp_flag) 
-                                    {
-
-                                      if(prm->l1 > kR_SMALL4)
-                                        r_tri1   = tri1 / prm->l1;
+                  case cPrimCylinder:
+                    if(LineToSphereCapped(r->base,r->dir,BI_Vertex+i*3, 
+                                          BI_Normal+BI_Vert2Normal[i]*3,
+                                          BI_Radius[i], prm->l1,sph,&tri1,
+                                          prm->cap1,prm->cap2))
+                      {
+                        if(LineClipPoint(r->base,r->dir,sph,&dist,BI_Radius[i],BI_Radius2[i]))
+                          {
+                            if((dist < r_dist) && (prm->trans != _1))
+                              {
+                                if((dist >= _0) && (dist <= back_dist)) 
+                                  {
+                                    if(prm->l1 > kR_SMALL4)
+                                      r_tri1   = tri1 / prm->l1;
+                                
+                                    r_sphere0   = sph[0];
+                                    r_sphere1   = sph[1];                              
+                                    r_sphere2   = sph[2];
+                                    new_min_index   = prm->vert;
+                                    r_dist      = dist;
+                                  }
+                                else if(check_interior_flag && (dist<=back_dist))
+                                  {
+                                    if(FrontToInteriorSphereCapped(vt,
+                                                                   BI_Vertex+i*3,
+                                                                   BI_Normal+BI_Vert2Normal[i]*3,
+                                                                   BI_Radius[i],
+                                                                   BI_Radius2[i],
+                                                                   prm->l1,
+                                                                   prm->cap1,
+                                                                   prm->cap2)) 
+                                      {
+                                        local_iflag   = true;
+                                        r_prim      = prm;
+                                        r_dist      = _0;
                                     
-                                      r_sphere0   = sph[0];
-                                      r_sphere1   = sph[1];                              
-                                      r_sphere2   = sph[2];
-                                      new_min_index      = prm->vert;
-                                      r_dist         = dist;
+                                        new_min_index   = prm->vert;
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                    break;
+                
+                  case cPrimSausage:
+                    if(LineToSphere(r->base,r->dir, BI_Vertex+i*3,BI_Normal+BI_Vert2Normal[i]*3,
+                                    BI_Radius[i],prm->l1,sph,&tri1))
+                      {
+
+                        if(LineClipPoint(r->base,r->dir,sph,&dist,BI_Radius[i],BI_Radius2[i])) 
+                          {
+
+
+                            int   tmp_flag = false;
+                            if((dist<r_dist)  && (prm->trans != _1) )
+                              {
+                                if((dist >= _0) && (dist <= back_dist)) 
+                                  {
+                                    tmp_flag = true;
+                                    if(excl_trans_flag) 
+                                      {
+                                        if( (prm->trans > _0) && (dist < excl_trans) )
+                                          tmp_flag = false;
+                                      }
+                                    if(tmp_flag) 
+                                      {
+
+                                        if(prm->l1 > kR_SMALL4)
+                                          r_tri1   = tri1 / prm->l1;
+                                    
+                                        r_sphere0   = sph[0];
+                                        r_sphere1   = sph[1];                              
+                                        r_sphere2   = sph[2];
+                                        new_min_index      = prm->vert;
+                                        r_dist         = dist;
 
                                     
-                                    }
-                                }
-                              else if(check_interior_flag &&( dist<=back_dist) ) 
-                                {
-                                  if(FrontToInteriorSphere(vt, BI_Vertex+i*3, BI_Normal+BI_Vert2Normal[i]*3,
-                                                           BI_Radius[i], BI_Radius2[i], prm->l1)) 
-                                    {
-                                      local_iflag   = true;
-                                      r_prim      = prm;
-                                      r_dist      = _0;
-                                      new_min_index   = prm->vert;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                  break;
-                }   /* end of switch */
-              }   /* end of if */
+                                      }
+                                  }
+                                else if(check_interior_flag &&( dist<=back_dist) ) 
+                                  {
+                                    if(FrontToInteriorSphere(vt, BI_Vertex+i*3, BI_Normal+BI_Vert2Normal[i]*3,
+                                                             BI_Radius[i], BI_Radius2[i], prm->l1)) 
+                                      {
+                                        local_iflag   = true;
+                                        r_prim      = prm;
+                                        r_dist      = _0;
+                                        new_min_index   = prm->vert;
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                    break;
+                  }   /* end of switch */
+                }   /* end of if */
           
-            i = ii;
+              i = ii;
           
-          } /* end of while */
-      
-        if(local_iflag) {
-          r->prim = r_prim;
-          r->dist = r_dist;
-          
-          break;
-        }
+            } /* end of while */
 
-        if( new_min_index > -1 ) {
+          if(local_iflag) {
+            r->prim = r_prim;
+            r->dist = r_dist;
+          
+            break;
+          }
+
+          if( new_min_index > -1 ) {
         
-          minIndex = new_min_index;
+            minIndex = new_min_index;
         
-          r_prim = BC_prim + vert2prim[minIndex];
+            r_prim = BC_prim + vert2prim[minIndex];
         
-          if(r_prim->type == cPrimSphere) 
-            {
-              const float   *vv   = BI->Vertex + minIndex * 3;
-              r_sphere0   = vv[0];
-              r_sphere1   = vv[1];
-              r_sphere2   = vv[2];
-            }
+            if(r_prim->type == cPrimSphere) 
+              {
+                const float   *vv   = BI->Vertex + minIndex * 3;
+                r_sphere0   = vv[0];
+                r_sphere1   = vv[1];
+                r_sphere2   = vv[2];
+              }
         
-          BC->interior_flag = local_iflag;   
-          r->tri1 = r_tri1;
-          r->tri2 = r_tri2;
-          r->prim = r_prim;
-          r->dist = r_dist;
-          r->sphere[0] = r_sphere0;
-          r->sphere[1] = r_sphere1;
-          r->sphere[2] = r_sphere2;
-        }
+            BC->interior_flag = local_iflag;   
+            r->tri1 = r_tri1;
+            r->tri2 = r_tri2;
+            r->prim = r_prim;
+            r->dist = r_dist;
+            r->sphere[0] = r_sphere0;
+            r->sphere[1] = r_sphere1;
+            r->sphere[2] = r_sphere2;
+          }       
+        } /* if -- h valid */
       } /* end of if */   
     
       if(minIndex > -1) {
