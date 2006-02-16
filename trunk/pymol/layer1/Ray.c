@@ -404,18 +404,18 @@ void RayExpandPrimitives(CRay *I)
   for(a=0;a<I->NPrimitive;a++) {
 	 switch(I->Primitive[a].type) {
 	 case cPrimSphere:
-		nVert++;
-		break;
+       nVert++;
+       break;
 	 case cPrimCylinder:
-    case cPrimSausage:
-		nVert++;
-		nNorm++;
-		break;
+     case cPrimSausage:
+       nVert++;
+       nNorm++;
+       break;
 	 case cPrimTriangle:
 	 case cPrimCharacter:
-		nVert+=3;
-		nNorm+=4;
-		break;
+       nVert+=3;
+       nNorm+=4;
+       break;
 	 }
   }
 
@@ -1981,28 +1981,30 @@ int RayTraceThread(CRayThreadInfo *T)
    float shadow_range = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_range);
    float legacy = SettingGetGlobal_f(I->G,cSetting_ray_legacy_lighting);
    int spec_count = SettingGetGlobal_i(I->G,cSetting_spec_count);
-	const float _0		= 0.0F;
-	const float _1		= 1.0F;
-	const float _p5		= 0.5F;
-	const float _255	= 255.0F;
-    const float _p499 = 0.499F;
-	const float _persistLimit	= 0.0001F;
-    float legacy_1m = _1 - legacy;
-    int n_basis = I->NBasis;
-    
-      MemoryDebugDump();
+   const float _0		= 0.0F;
+   const float _1		= 1.0F;
+   const float _p5		= 0.5F;
+   const float _255	= 255.0F;
+   const float _p499 = 0.499F;
+   const float _persistLimit	= 0.0001F;
+   float legacy_1m = _1 - legacy;
+   int n_basis = I->NBasis;
+   
+   /*   MemoryDebugDump();
+   printf("%d\n",sizeof(CPrimitive));
+   */
 
-    {
-      float fudge = SettingGet(I->G,cSetting_ray_triangle_fudge);
-      
-      BasisFudge0 = 0.0F-fudge;
+   {
+     float fudge = SettingGet(I->G,cSetting_ray_triangle_fudge);
+     
+     BasisFudge0 = 0.0F-fudge;
      BasisFudge1 = 1.0F+fudge;
-    }
-  	if(spec_count<0) {
-      spec_count = SettingGetGlobal_i(I->G,cSetting_light_count);
-    }
-	/* SETUP */
-	
+   }
+   if(spec_count<0) {
+     spec_count = SettingGetGlobal_i(I->G,cSetting_light_count);
+   }
+   /* SETUP */
+   
 	/*  if(T->n_thread>1)
 	printf(" Ray: Thread %d: Spawned.\n",T->phase+1);
 	*/
@@ -3487,7 +3489,8 @@ int opaque_back=0;
   if(perspective<0)
     perspective = SettingGetGlobal_b(I->G,cSetting_ortho);
   perspective = !perspective;
-      
+
+  VLACacheSizeForSure(I->G,I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
 #ifdef PROFILE_BASIS
   n_cells = 0;
   n_prims = 0;
