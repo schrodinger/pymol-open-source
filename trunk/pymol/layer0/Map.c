@@ -746,9 +746,10 @@ float MapGetSeparation(PyMOLGlobals *G,float range,float *mx,float *mn,float *di
       ENDF(G);
     /*    dump3f(mx,"mx");
     dump3f(mn,"mn");
-    dump3f(diagonal,"diagonal");*/
+    dump3f(diagonal,"diagonal");
+    printf("%8.3f\n",divSize);
+    */
   }
-  printf("%8.3f\n",divSize);
   return(divSize);
 }
 
