@@ -781,9 +781,14 @@ void SceneSetStereo(PyMOLGlobals *G,int flag)
     I->StereoMode=0;
   }
 
-  if((cur_stereo!=I->StereoMode)&&((cur_stereo==4)||(I->StereoMode==4)))
+  if((cur_stereo!=I->StereoMode)&&((cur_stereo==4)||(I->StereoMode==4))) {
     OrthoReshape(G,G->Option->winX,G->Option->winY,true);
-
+#ifndef _PYMOL_NOPY
+    if((cur_stereo==4)&&I->StereoMode) {
+      PParse("viewport");
+    }
+#endif
+  }
   SettingSetGlobal_b(G,cSetting_stereo,flag);
   SceneInvalidate(G);
 }

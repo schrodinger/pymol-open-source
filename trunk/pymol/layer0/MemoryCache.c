@@ -109,6 +109,31 @@ void *_MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group
     return(rec->ptr);
   }
 }
+void *_MemoryShrinkForSure(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id MD_FILE_LINE_Decl)
+{
+  /* no checking done */
+
+  if((group_id<0)||(!SettingGetGlobal_b(G,cSetting_cache_memory)))
+    return(ReallocForSure(ptr,size)); /* NOTE: fatal if new ptr is larger than old... */
+  {
+    register CMemoryCache *I = G->MemoryCache;
+    register MemoryCacheRec *rec = &I->Cache[group_id][block_id];
+
+    if(ptr!=rec->ptr)
+      printf("Error: Memory Cache Mismatch 2 %d %d\n",group_id,block_id);
+    if(!rec->ptr) { /* not currently cache-allocated... this should never happen */
+      rec->size= size;
+      rec->ptr = mrealloc(ptr,size);
+    } else if(rec->size<size) {
+      rec->ptr = MemoryReallocForSureSafe(ptr,size,rec->size);
+      rec->size = size;
+    } else { /* expanding size...should never happen... this should never happen*/
+      rec->size = size;
+      rec->ptr = mrealloc(ptr,size);
+    }
+    return(rec->ptr);
+  }
+}
 
 void _MemoryCacheFree(PyMOLGlobals *G,void *ptr,int group_id, int block_id,int force MD_FILE_LINE_Decl)
 {
