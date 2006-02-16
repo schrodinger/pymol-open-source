@@ -317,7 +317,7 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
     ENDFB(G);
 
 	I->NEElem=n;
-	VLACacheSizeForSure(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
+	VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
 	PRINTFD(G,FB_Map)
 		" MapSetupExpressXY-Debug: leaving...\n"
 	ENDFD;
@@ -423,7 +423,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
     ENDFB(G);
 
 	I->NEElem = n;
-    VLACacheSizeForSure(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
+    VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
 
 	PRINTFD(G,FB_Map)
 		" MapSetupExpressXYVert-Debug: leaving...\n"
@@ -547,7 +547,7 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint)
     " MapSetupExpressPerp: %d rows in express table\n",n
     ENDFB(G);
   I->NEElem=n;
-  VLACacheSizeForSure(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
+  VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
 
   PRINTFD(G,FB_Map)
     " MapSetupExpress-Debug: leaving...n=%d\n",n
@@ -628,7 +628,7 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
   }
   I->EList = e_list;
   I->NEElem=n;
-  VLACacheSizeForSure(G,I->EList,int,I->NEElem,group_id,block_offset);
+  VLACacheSize(G,I->EList,int,I->NEElem,group_id,block_offset);
   PRINTFD(G,FB_Map)
     " MapSetupExpress-Debug: leaving...n=%d\n",n
     ENDFD;

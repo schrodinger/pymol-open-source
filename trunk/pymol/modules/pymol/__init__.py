@@ -291,11 +291,11 @@ if pymol_launch != 3: # if this isn't a dry run
                                 elif ll[0][0:10]=='hw.physmem':
                                     mem = int(ll[-1:][0])
                                     if mem>1000000000: # Gig or more
-                                        cmd.set("hash_max",160)
+                                        cmd.set("hash_max",130)
                                     elif mem>500000000:
-                                        cmd.set("hash_max",120)
+                                        cmd.set("hash_max",100)
                                     elif mem<256000000:
-                                        cmd.set("hash_max",80)
+                                        cmd.set("hash_max",70)
                 elif sys.platform[0:5]=='linux':
                     f=os.popen("egrep -c '^processor[^A-Za-z0-9:]*: [0-9]' /proc/cpuinfo")
                     l=f.readlines()
