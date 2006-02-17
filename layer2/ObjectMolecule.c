@@ -6266,12 +6266,13 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,
   }
   while(*p) { /* read M  CHG records */
     p=ncopy(cc,p,6);
-    if(!strcmp(cc,"M  END")) {
+    if(cc[5]==' ') cc[5] = 0;
+    if((!strcmp(cc,"M  END"))||(!strcmp(cc,"M END"))) {
       /* denotes end of MOL block */
       p=nextline(p);
       break;
     }
-    if(!strcmp(cc,"M  CHG")) {
+    if((!strcmp(cc,"M  CHG"))||(!strcmp(cc,"M CHG"))) {
       p=ncopy(cc,p,3);
       if(sscanf(cc,"%d",&cnt)==1) {
         while(cnt--) {

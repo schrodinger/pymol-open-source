@@ -35,7 +35,7 @@ class SDFRec:
         l = 0
         while l<ll:
             mol.append(sdflist[l])
-            if sdflist[l][0:6]=='M  END':
+            if (sdflist[l][0:6]=='M  END') or (sdflist[l][0:5]=='M END'):
                 break;
             if sdflist[l][0:1]=='>':
                 mol[len(mol)-1]='M  END\n'
