@@ -9,6 +9,7 @@ import time
 from pymol import cmd
 import sys, os, os.path
 import random
+import traceback
 
 ent_dir = "pdb"
 
