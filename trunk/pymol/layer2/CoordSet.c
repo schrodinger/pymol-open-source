@@ -769,7 +769,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
     sprintf(y,"%8.3f",v[1]); y[8]=0;
     sprintf(z,"%8.3f",v[2]); z[8]=0;
       
-    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s %7.3f %7.3f\n",
+    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s %11.8f %7.3f\n",
                   aType,cnt+1,name,ai->alt,resn,
                   chain,resi,x,y,z,ai->partialCharge,ai->bohr_radius);
   }
