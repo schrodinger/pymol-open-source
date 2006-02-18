@@ -707,9 +707,9 @@ float MapGetSeparation(PyMOLGlobals *G,float range,float *mx,float *mn,float *di
   /* find longest axis */
 
   subtract3f(mx,mn,diagonal);
-  diagonal[0] = fabs(diagonal[0]);
-  diagonal[1] = fabs(diagonal[1]);
-  diagonal[2] = fabs(diagonal[2]);
+  diagonal[0] = (float)fabs(diagonal[0]);
+  diagonal[1] = (float)fabs(diagonal[1]);
+  diagonal[2] = (float)fabs(diagonal[2]);
   
   size=diagonal[0];
   if(diagonal[1]>size) size=diagonal[1];
@@ -738,9 +738,9 @@ float MapGetSeparation(PyMOLGlobals *G,float range,float *mx,float *mn,float *di
   subDivCubed = subDiv[0]*subDiv[1]*subDiv[2];
 
   if(subDivCubed>maxCubed) {
-    divSize = divSize / pow(maxCubed/subDivCubed,0.33333F);
+    divSize = (float)(divSize / pow(maxCubed/subDivCubed,0.33333F));
   } else if(subDivCubed<maxCubed) {
-    divSize = divSize * pow(subDivCubed/maxCubed,0.33333F);    
+    divSize = (float)(divSize * pow(subDivCubed/maxCubed,0.33333F));    
   }
 
   if(divSize<(range+MapSafety))

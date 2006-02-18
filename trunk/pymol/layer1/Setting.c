@@ -14,6 +14,10 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#ifdef WIN32
+#include<windows.h>
+#endif
+
 #include"os_predef.h"
 #include"os_std.h"
 
@@ -2470,7 +2474,22 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_i(I,cSetting_cartoon_smooth_cycles,2);
   set_i(I,cSetting_cartoon_flat_cycles,4);
 
+#ifdef WIN32
+ {
+   SYSTEM_INFO SysInfo;
+   GetSystemInfo ( &SysInfo );
+   {
+      DWORD count = SysInfo.dwNumberOfProcessors;
+      if(count>1) {
+        set_i(I,cSetting_max_threads, count);
+      } else {
+        set_i(I,cSetting_max_threads, 1);
+      }
+   }
+ }
+#else
   set_i(I,cSetting_max_threads, 1);
+#endif
 
   set_i(I,cSetting_show_progress, 1);
 
