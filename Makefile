@@ -166,16 +166,6 @@ unix-s3d-build: unix-s3d-semistatic
 unix-s3d-product: unix-s3d-build
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-sharp3d.tgz
 
-#windows: .includes .depends .update 
-#
-#	echo "EXPORTS" > _cmd.def
-#	nm --demangle --defined-only */*.o | grep ' T ' | sed 's/.* T //' >> _cmd.def 
-#	dllwrap --dllname _cmd.pyd --driver-name gcc $(BUILD) --def _cmd.def -o _cmd.pyd */*.o -s --entry _DllMain@12 --target=i386-mingw32 $(LIB_DIRS) $(LIBS) 
-#	/bin/rm -f .update .includes
-
-#cygwin: .includes .depends .update
-#	$(CC) -shared -W1,--enable-auto-image-base */*.o $(LIB_DIRS) $(LIBS) $(DEST)
-
 fast: .update
 	/bin/rm -f .update 
 	$(CC) $(BUILD) */*.o ov/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)

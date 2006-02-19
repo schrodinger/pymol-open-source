@@ -265,9 +265,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);
 void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int invalidate);
 
 ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x,PDBInfoRec *pdb_info);
 ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,
                                           int frame,char *sepPrefix,int discrete);
 ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
@@ -285,12 +283,6 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals *G,ObjectMolecule *I,PyObj
 
 ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals *G,ObjectMolecule *obj,CRaw *pmo,int frame,int discrete);
 
-ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,
-                                         int frame,int discrete,int finish);
-ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
-                                          char *MOLStr,int frame,int discrete,
-                                          int quiet,int multiplex, char *new_name,
-                                          char **next_entry);
 ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
                                    char *st,int content_format, int frame,int discrete,
                                    int quiet,int multiplex, char *new_name,
@@ -377,6 +369,8 @@ int ObjectMoleculeGetBondPath(ObjectMolecule *I,int atom,int max,ObjectMoleculeB
 int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,int *dim);
 
 int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,struct CoordSet *cs,int searchFlag);
+int ObjectMoleculeSetDiscrete(PyMOLGlobals *G,ObjectMolecule *I,int discrete);
+
 float ObjectMoleculeGetMaxVDW(ObjectMolecule *I);
 int ObjectMoleculeGetCheckHBond(ObjectMolecule *don_obj,
                                 int don_atom,
@@ -424,6 +418,23 @@ typedef struct {
   int stereo;
 } BondType083;
 #endif
+
+#if 0
+ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
+                                          char *MOLStr,int frame,int discrete,
+                                          int quiet,int multiplex, char *new_name,
+                                          char **next_entry);
+
+
+ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,
+                                         int frame,int discrete,int finish);
+
+ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
+
+ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x,PDBInfoRec *pdb_info);
+
+#endif
+
 
 #endif
 

@@ -3,9 +3,11 @@ CHANGE LOG
 =========================================================================
 
 
-Changes up to 1.00
+Changes up to 0.99rcX
 
-    beta01  
+    * mol2 file reading fixes
+
+    * single-molecule mol, mol2, sdf now not discrete by default.
 
     * parallel geometry builds
 

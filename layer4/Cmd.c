@@ -4918,11 +4918,12 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         discrete=0;
       else {
         switch(type) {
-        case cLoadTypeSDF2:
+        case cLoadTypeSDF2: /* SDF files currently default to discrete */
         case cLoadTypeSDF2Str:
+          break;
         case cLoadTypeMOL2:
         case cLoadTypeMOL2Str:
-          discrete = 1;  /* discrete default */
+          discrete = -1;  /* content-dependent behavior...*/
           break;
         default:
           discrete = 0;
