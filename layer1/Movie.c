@@ -759,26 +759,28 @@ int MovieView(PyMOLGlobals *G,int action,int first,
   case 3:
     {
       CViewElem *first_view=NULL,*last_view=NULL;
+
       if(first<0)
         first = 0;
       /* note that we're leaving a blank frame at the end... */
 
       if(last<0) {
         last = SceneGetNFrame(G);
-        if(last && !wrap)
+        if(last && (!wrap))
           last--;
       }
-      if(last>I->NFrame) {
+      if(last>=I->NFrame) {
         last = I->NFrame;
-        if(last && !wrap)
+        if(last && (!wrap))
           last--;
       }
 
       VLACheck(I->ViewElem,CViewElem,last);
       
-      if(last == I->NFrame) { /* if we're interpolating beyond the
-                                 last frame, then wrap by copying
-                                 first to last */
+      if(wrap && (last == I->NFrame)) {
+        /* if we're interpolating beyond the
+           last frame, then wrap by copying
+           first to last */
         I->ViewElem[last] = I->ViewElem[0]; 
       }
 

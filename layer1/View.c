@@ -328,7 +328,7 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,
   float firstC44f[16], firstRTTT[16], firstR44f[16];
   float lastC44f[16], lastRTTT[16], lastR44f[16];
   int linear = false;
-  int debug = false;
+  int debug = true;
 
   if(power<0.0F) {
     parabolic = false;
@@ -498,6 +498,12 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,
       if(fabs(translate_angle)<0.0001F) {
         linear = true;
         if(debug) printf("no significant rotation\n");
+      }
+      
+      if((translate_angle * angle)<0.0F) {
+        /* if motions are in opposing directions, then flip translation axis and location */
+        invert3f(bisect);
+        invert3f(trans_axis);
       }
 
     }

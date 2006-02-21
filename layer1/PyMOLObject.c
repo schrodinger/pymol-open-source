@@ -198,7 +198,7 @@ int ObjectView(CObject *I,int action,int first,
         if(last && !wrap)
           last--;
       }
-      if(last>nFrame) {
+      if(last>=nFrame) {
         last = nFrame;
         if(last && !wrap)
           last--;
@@ -206,7 +206,7 @@ int ObjectView(CObject *I,int action,int first,
 
       VLACheck(I->ViewElem,CViewElem,last);
       
-      if(last == nFrame) { /* if we're interpolating beyond the
+      if(wrap && (last == nFrame)) { /* if we're interpolating beyond the
                                  last frame, then wrap by copying
                                  first to last */
         I->ViewElem[last] = I->ViewElem[0]; 
