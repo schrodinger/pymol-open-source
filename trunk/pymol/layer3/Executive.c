@@ -2601,7 +2601,7 @@ static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
     SettingSetGlobal_f(G,cSetting_cartoon_nucleic_acid_mode,1);
     {
       float old_sulfur[3] = {1.0, 0.5, 0.0};
-      ColorDef(G,"sulfur",old_sulfur);  
+      ColorDef(G,"sulfur",old_sulfur,0);  
     }
   }
   if(session_version<98) { /* produce expected rendering quality & performance with old sessions */

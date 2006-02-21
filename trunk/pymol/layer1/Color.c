@@ -311,13 +311,14 @@ PyObject *ColorAsPyList(PyMOLGlobals *G)
   color=I->Color;
   for(a=0;a<I->NColor;a++) {
     if(color->Custom||color->ClampedFlag) {
-      list = PyList_New(6);
+      list = PyList_New(7);
       PyList_SetItem(list,0,PyString_FromString(color->Name));
       PyList_SetItem(list,1,PyInt_FromLong(a));
       PyList_SetItem(list,2,PConvFloatArrayToPyList(color->Color,3));
       PyList_SetItem(list,3,PyInt_FromLong((int)color->Custom));
       PyList_SetItem(list,4,PyInt_FromLong((int)color->ClampedFlag));
       PyList_SetItem(list,5,PConvFloatArrayToPyList(color->Clamped,3));
+      PyList_SetItem(list,6,PyInt_FromLong((int)color->Fixed));
       PyList_SetItem(result,c,list);
       c++;
     }
@@ -408,6 +409,11 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
           if(ok) {color->Custom=true;}
         }
       }
+      if(ok&&(ll>6)) {
+          if(ok) ok=PConvPyIntToChar(PyList_GetItem(rec,6),&color->Fixed);
+      } else {
+        color->Fixed =false;
+      }
       if(!ok) break;
     }
   }
@@ -416,7 +422,7 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
 }
 
 /*========================================================================*/
-void ColorDef(PyMOLGlobals *G,char *name,float *v)
+void ColorDef(PyMOLGlobals *G,char *name,float *v,int mode)
 {
   register CColor *I=G->Color;
   int color=-1;
@@ -439,9 +445,20 @@ void ColorDef(PyMOLGlobals *G,char *name,float *v)
     I->NColor++;
   }
   strcpy(I->Color[color].Name,name);
+
   I->Color[color].Color[0]=v[0];
   I->Color[color].Color[1]=v[1];
   I->Color[color].Color[2]=v[2];
+  
+  switch(mode) {
+  case 1:
+    I->Color[color].Fixed=true;
+    break;
+  default:
+    I->Color[color].Fixed=false;
+    break;
+  }
+
   I->Color[color].Custom=true;
   ColorUpdateClamp(G,color);
 
@@ -2230,6 +2247,23 @@ int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet)
   }
   return(ok);
 }
+#if 0
+static void unclamp_color(unsigned int *table, float *in, float *out, int big_endian)
+{
+  /* simple iterative approach to finding closest input for a desired
+   output given the current color mapping table */
+  
+  float cur_in[3], cur_out[3], diff[3];
+  copy3f(in, cur_in);
+  for(a=0;a<10;a++) {
+    clamp_color(table,cur_in,cur_out,big_endian);
+    diff3f(cur_out,in,diff);
+    scale3f(0.5,diff,diff);
+    subtract3f(cur_in,diff,cur_in);
+  }
+  copy3f(cur_in,out);
+}
+#endif
 
 static void clamp_color(unsigned int *table, float *in, float *out, int big_endian)
 {
@@ -2355,7 +2389,7 @@ void ColorUpdateClamp(PyMOLGlobals *G,int index)
     if(index<I->NColor) {
       if(!I->ColorTable) {
         I->Color[index].ClampedFlag = false;
-      } else {
+      } else if(!I->Color[index].Fixed) {
         color = I->Color[index].Color;
         new_color = I->Color[index].Clamped;
         clamp_color(I->ColorTable, color, new_color, I->BigEndian);
