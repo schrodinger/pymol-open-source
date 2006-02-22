@@ -5,6 +5,10 @@ CHANGE LOG
 
 Changes up to 0.99rcX
 
+    * fixed selection argument to rotate command
+
+    * fixed mview-based object animation loops
+
     * mol2 file reading fixes
 
     * single-molecule mol, mol2, sdf now not discrete by default.
