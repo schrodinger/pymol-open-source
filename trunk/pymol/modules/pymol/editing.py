@@ -1466,6 +1466,7 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
 
         '''
         r = DEFAULT_ERROR
+        selection = selector.process(selection)                
         if int(transpose):
             matrix = [ matrix[0], matrix[4], matrix[8 ], matrix[12],
                           matrix[1], matrix[5], matrix[9 ], matrix[13],
