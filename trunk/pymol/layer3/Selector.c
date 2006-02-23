@@ -237,6 +237,7 @@ static int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *o
 #define SELE_PEPs ( 0x3D00 | STYP_SEL1 | 0x80 )
 #define SELE_ACCz ( 0x3E00 | STYP_SEL0 | 0x90 )
 #define SELE_DONz ( 0x3F00 | STYP_SEL0 | 0x90 )
+#define SELE_LST1 ( 0x4000 | STYP_OPR1 | 0x30 )
 
 #define SEL_PREMAX 0x8
 
@@ -284,6 +285,7 @@ static WordKeyValue Keyword[] =
   {  "bca.",     SELE_CAS1 },
 
   {  "first",    SELE_FST1 },
+  {  "last",     SELE_LST1 },
 
   {  "and",      SELE_AND2 },
   {  "&",        SELE_AND2 },
@@ -8721,7 +8723,23 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
       }
       FreeP(base[1].sele);
       break;      
-	 }
+    case SELE_LST1: 
+      {
+        int last = -1;
+        base[1].sele=base[0].sele;
+        base[0].sele=Calloc(int,n_atom);
+        for(a=cNDummyAtoms;a<n_atom;a++) {
+          if(base[1].sele[a]) {
+            last = a;
+          break;
+          }
+        }
+        if(last>=0)
+          base[0].sele[last] = true;
+      }
+      FreeP(base[1].sele);
+      break;      	
+ }
   PRINTFD(G,FB_Selector)
 	 " SelectorLogic1: %d atoms selected.\n",c
     ENDFD;
