@@ -328,7 +328,7 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,
   float firstC44f[16], firstRTTT[16], firstR44f[16];
   float lastC44f[16], lastRTTT[16], lastR44f[16];
   int linear = false;
-  int debug = true;
+  int debug = false;
 
   if(power<0.0F) {
     parabolic = false;
