@@ -8731,7 +8731,6 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
         for(a=cNDummyAtoms;a<n_atom;a++) {
           if(base[1].sele[a]) {
             last = a;
-          break;
           }
         }
         if(last>=0)
