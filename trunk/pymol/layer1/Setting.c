@@ -1404,6 +1404,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_stick_nub:
   case cSetting_stick_ball_ratio:
   case cSetting_stick_fixed_radius:
+  case cSetting_stick_valence_scale:
   case cSetting_stick_quality:
   case cSetting_stick_overlap:
   case cSetting_stick_color:
@@ -2792,6 +2793,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_ray_color_ramps,0);
   set_f(I,cSetting_ray_hint_camera,2.15F);
   set_f(I,cSetting_ray_hint_shadow,0.65F);
+  set_f(I,cSetting_stick_valence_scale, 1.0F);
 }
 
 
