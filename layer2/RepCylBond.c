@@ -333,7 +333,8 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
                        float overlap,
                        float nub,
                        int half_bonds,
-                       int fixed_r)
+                       int fixed_r,
+		       float scale_r)
 {
 
   float d[3],t[3],p0[3],p1[3],p2[3],*vv;
@@ -342,7 +343,6 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
   int n = *n_ptr,nr = *nr_ptr;
   int a3;
   int double_sided;
-
       
   /* First, we need to construct a coordinate system */
 
@@ -397,8 +397,10 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
       float overlap_r;
       float nub_r;
       if(!fixed_r) {
+	radius*=scale_r;
         radius/=2.5;
       }
+
       overlap_r = radius*overlap;
       nub_r = radius*nub;
 
@@ -561,8 +563,10 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
       float overlap_r;
       float nub_r;
       if(!fixed_r) {
+	radius*=scale_r;
         radius/=3.5;
       }
+
       overlap_r = radius*overlap;
       nub_r = radius*nub;
 
@@ -794,6 +798,7 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
       float inner2b = 1.0F-inner1a;
 
       if(!fixed_r) {
+	radius*=scale_r;
         radius2=radius/2.5F;
         t[0] = p2[0]*1.5F*radius;
         t[1] = p2[1]*1.5F*radius;
@@ -1172,6 +1177,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
   int ribbon_side_chain_helper = 1;
   int na_mode;
   int *marked = NULL;
+  float scale_r = 1.0F;
   OOAlloc(G,RepCylBond);
 
   PRINTFD(G,FB_RepCylBond)
@@ -1332,6 +1338,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
     if(valence_flag) {/* build list of up to 2 connected atoms for each atom */
       other=ObjectMoleculeGetPrioritizedOtherIndexList(obj,cs);
       fixed_radius = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_stick_fixed_radius);
+      scale_r = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_valence_scale);
     }
     
     /* OpenGL */
@@ -1675,7 +1682,8 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
                              overlap,
                              nub,
                              false,
-                             fixed_radius);
+                             fixed_radius,
+			     scale_r);
                 } else {
 
                   rgb1 = NULL;
@@ -1708,7 +1716,8 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
                              overlap,
                              nub,
                              true,
-                             fixed_radius);
+                             fixed_radius,
+			     scale_r);
                 }
                   
               } else {

@@ -651,6 +651,7 @@ typedef struct _CPyMOL {
   ov_word lex_ray_color_ramps;
   ov_word lex_ray_hint_camera;
   ov_word lex_ray_hint_shadow;
+  ov_word lex_stick_valence_scale;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1305,6 +1306,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_color_ramps,509);
   LEX_SETTING(ray_hint_camera,510);
   LEX_SETTING(ray_hint_shadow,511);
+  LEX_SETTING(stick_valence_scale,512);
+
   return_OVstatus_SUCCESS;
 }
 

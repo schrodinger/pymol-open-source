@@ -545,6 +545,7 @@ if __name__=='pymol.setting':
         ray_color_ramps           = (509, '')
         ray_hint_camera           = (510, '')
         ray_hint_shadow           = (511, '')
+        stick_valence_scale       = (512, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

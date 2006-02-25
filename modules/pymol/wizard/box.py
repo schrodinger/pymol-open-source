@@ -89,6 +89,68 @@ class Box(Wizard):
         self.new_name = ''
         cmd.refresh_wizard()
 
+    def auto_position(self,fract=0.75,size=1.0):
+
+        if self.points_name in cmd.get_names():
+
+	    if fract<0.5: fract = 1.0 - fract
+	    if fract>0.995: fract = 0.995 # minimum 1% distance from clipping planes
+	    
+            fov = float(cmd.get_setting_legacy("field_of_view"))
+	    
+	    tan_half_fov = math.tan(math.pi*fov/360.0)
+	    
+            model = cmd.get_model(self.points_name)
+
+	    view = cmd.get_view()
+
+	    # locate box 1/4 and 3/4 distance from clipping plane
+	    
+	    one_minus_fract = 1.0 - fract
+
+	    plane_z1 = - (view[11] + (one_minus_fract*view[15] + fract*view[16]))
+	    plane_z2 = - (view[11] + (fract*view[15] + one_minus_fract*view[16]))
+	    normal = [ 0.0, 0.0, 1.0 ]
+
+	    # choose the size of the plane (larger than the fov, but not by much)
+
+	    plane_size = size*(one_minus_fract*view[15] + fract*view[16])*tan_half_fov
+
+	    obj = []
+	    plane = [
+		[ -plane_size, -plane_size, plane_z1 ],
+		[ -plane_size,  plane_size, plane_z1 ],
+		[  plane_size, -plane_size, plane_z1 ],
+		[ -plane_size, -plane_size, plane_z2 ],		
+		]
+
+	    # then transform plane coordinates into model space 
+
+	    plane = map( lambda p,v=view: [
+	       v[0] * p[0] + v[1] * p[1] + v[2]* p[2],
+	       v[3] * p[0] + v[4] * p[1] + v[5]* p[2],
+	       v[6] * p[0] + v[7] * p[1] + v[8]* p[2]
+	       ], plane )
+
+	    normal = apply( lambda p,v=view:[
+	       v[0] * p[0] + v[1] * p[1] + v[2]* p[2],
+	       v[3] * p[0] + v[4] * p[1] + v[5]* p[2],
+	       v[6] * p[0] + v[7] * p[1] + v[8]* p[2]
+	       ], (normal,) )
+
+	    plane = map( lambda p,v=view: [
+	       v[12] + p[0], v[13] + p[1], v[14] + p[2]
+	       ], plane )
+
+	    model.atom[0].coord = plane[0]
+	    model.atom[1].coord = plane[1]
+	    model.atom[2].coord = plane[2]
+	    model.atom[3].coord = plane[3]
+
+	    cmd.load_model(model, '_tmp', zoom=0)
+	    cmd.update(self.points_name,"_tmp")
+	    cmd.delete("_tmp")
+
     def set_name(self,name):
 
         hidden_name = None
@@ -120,15 +182,19 @@ class Box(Wizard):
                 new_atom.coord[0] = new_atom.coord[0] + origin[0]
                 new_atom.coord[1] = new_atom.coord[1] + origin[1]
                 new_atom.coord[2] = new_atom.coord[2] + origin[2]
+		new_atom.flags = 0x2200000 # set surface ignore flag
                 model.atom.append(new_atom)
                 
             cmd.load_model(model,self.points_name,zoom=0)
+	    cmd.set("surface_mode",0,self.points_name) # make sure no surface is shown
             self.coord = None
             cmd.color("green","%s`1"%self.points_name)
             cmd.color("green","%s`2"%self.points_name)
             cmd.color("red"  ,"%s`3"%self.points_name)
             cmd.color("blue" ,"%s`4"%self.points_name)
             cmd.as("nb_spheres",self.points_name)
+	    
+	    self.auto_position(0.75,0.5)
 
         cmd.enable(self.points_name)
         self.points_enabled = 1
@@ -136,7 +202,7 @@ class Box(Wizard):
     def update_box(self):
 
         if self.points_name in cmd.get_names():
-            
+
             model = cmd.get_model(self.points_name)
 
             self.coord = (
@@ -324,7 +390,9 @@ class Box(Wizard):
             [ 2, 'Change Name','cmd.get_wizard().edit_name()'],
             [ 2, 'Copy Box','cmd.get_wizard().edit_name(copying=1)'],
             [ 2, 'Toggle Points','cmd.get_wizard().toggle_points()'],
-            [ 2, 'Update','cmd.get_wizard().update_box()'],
+#            [ 2, 'Update','cmd.get_wizard().update_box()'],
+            [ 2, 'Auto-Position (50%)','cmd.get_wizard().auto_position(0.75)'],
+            [ 2, 'Auto-Position (99%)','cmd.get_wizard().auto_position(0.99)'],
             [ 2, 'Done','cmd.set_wizard()'],
             ]
 
