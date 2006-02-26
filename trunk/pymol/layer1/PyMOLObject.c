@@ -131,7 +131,8 @@ static void TTTFromViewElem(float *TTT,CViewElem *elem)
 
 int ObjectView(CObject *I,int action,int first,
                int last,float power,float bias,
-               int simple, float linear,int wrap,int hand)
+               int simple, float linear,int wrap,
+               int hand,int window,int cycles)
 {
   register PyMOLGlobals *G = I->G;
   int frame;
@@ -264,7 +265,27 @@ int ObjectView(CObject *I,int action,int first,
       }
     }
     break;
-  }
+   case 4: /* smooth */
+   {
+      if(first<0)
+        first = 0;
+
+      if(last<0) {
+        last = nFrame;
+      }
+      if(last>=nFrame) {
+        last = nFrame-1;
+      }
+      if(first<=last) {
+        int a;
+        VLACheck(I->ViewElem,CViewElem,last);
+        for(a=0;a<cycles;a++) {
+          ViewElemSmooth(I->ViewElem+first, I->ViewElem + last, window,wrap);
+        }
+      }
+      break;
+   }
+ }
   return 1;
 }
 

@@ -89,7 +89,8 @@ int ObjectGetCurrentState(CObject *I,int ignore_all_states);
 void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop);
 int ObjectView(CObject *I,int action,int first,
                int last,float power,float bias,
-               int simple, float linear,int wrap,int hand);
+               int simple, float linear,int wrap,
+               int hand,int window,int cycles);
 
 typedef struct CObjectState {
   PyMOLGlobals *G;

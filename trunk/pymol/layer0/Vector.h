@@ -69,6 +69,10 @@ void get_system2f3f(float *x,float *y,float *z); /* make system in direction of 
 double dot_product3d ( double *v1, double *v2 );
 float slow_project3f ( float *v1, float *v2, float *proj );
 void slow_remove_component3f ( float *v1, float *unit, float *result);
+void remove_component3d ( double *v1, double *unit, double *result);
+void cross_product3d ( double *v1, double *v2, double *cross );
+void scale3d ( double *v1, double v0, double *v2);
+void add3d ( double *v1, double *v0, double *v2);
 
 double distance_line2point3f(float *base,float *normal,float *point,float *alongNormalSq);
 double distance_halfline2point3f(float *base,float *normal,float *point,float *alongNormalSq);
@@ -166,6 +170,8 @@ void right_multiply44d44d( double *left, double *right);
 void multiply44f44f44f( float *left, float *right, float *product);
 void left_multiply44f44f( float *left, float *right);
 void right_multiply44f44f( float *left, float *right);
+
+void reorient44d(double *matrix);
 
 void recondition33d(double *matrix);
 void recondition44d(double *matrix);

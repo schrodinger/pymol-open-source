@@ -718,7 +718,7 @@ void MovieSetCommand(PyMOLGlobals *G,int frame,char *command)
 /*========================================================================*/
 int MovieView(PyMOLGlobals *G,int action,int first,
               int last,float power,float bias,
-              int simple, float linear,int wrap,int hand)
+              int simple, float linear,int wrap,int hand,int window,int cycles)
 {
   register CMovie *I=G->Movie;
   int frame;
@@ -762,6 +762,11 @@ int MovieView(PyMOLGlobals *G,int action,int first,
 
       if(first<0)
         first = 0;
+
+      if(first>I->NFrame) {
+        first = I->NFrame-1;
+      }
+
       /* note that we're leaving a blank frame at the end... */
 
       if(last<0) {
@@ -835,6 +840,26 @@ int MovieView(PyMOLGlobals *G,int action,int first,
       }
     }
     break;
+  case 4: /* smooth */
+   {
+      if(first<0)
+        first = 0;
+
+      if(last<0) {
+        last = SceneGetNFrame(G) -1;
+      }
+      if(last>=I->NFrame) {
+        last = I->NFrame-1;
+      }
+      if(first<=last) {
+        int a;
+        VLACheck(I->ViewElem,CViewElem,last);
+        for(a=0;a<cycles;a++) {
+          ViewElemSmooth(I->ViewElem+first, I->ViewElem + last, window,wrap);
+        }
+      }
+   }
+   break;
   }
   return 1;
 }

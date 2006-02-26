@@ -310,6 +310,77 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
   float restart;
   float alpha;
 
+#ifdef _PYMOL_OPENGL_SHADERS
+  /* TO DO -- garbage collect -- IMPORTANT! */
+  {
+    int sphere_mode = SettingGet_i(G,I->R.cs->Setting,
+                                   I->R.obj->Setting,
+                                   cSetting_sphere_mode);
+    
+    
+    if((!ray) && (sphere_mode==5) && G->HaveGUI && G->ValidContext &&
+       (!(I->programs[0]||I->programs[1]))) {
+      char *vp = read_code_str(vert_prog);
+      char *fp = read_code_str(frag_prog);
+#ifdef WIN32
+      
+      if(!(glGenProgramsARB && glBindProgramARB && 
+         glDeleteProgramsARB && glProgramStringARB && 
+           glProgramEnvParameter4fARB)) {
+        glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
+        glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
+        glDeleteProgramsARB = (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
+        glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
+        glProgramEnvParameter4fARB = (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
+        glGetProgramivARB = (PFNGLGETPROGRAMIVARBPROC) wglGetProcAddress("glGetProgramivARB");
+      }
+
+      if(glGenProgramsARB && glBindProgramARB && 
+         glDeleteProgramsARB && glProgramStringARB && 
+         glProgramEnvParameter4fARB)
+#endif
+        {
+          /*                  
+                              char *vp = read_file("vert.txt");
+                              char *fp = read_file("frag.txt");
+          */
+          if(vp&&fp) {            
+            int ok=true;
+            glGenProgramsARB(2,(GLuint*)I->programs);
+            
+            /* load the vertex program */
+            glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
+            
+            ok = ok && (ProgramStringIsNative(G,GL_VERTEX_PROGRAM_ARB, 
+                                              GL_PROGRAM_FORMAT_ASCII_ARB, 
+                                              strlen(vp),vp));
+            
+            if(Feedback(G,FB_OpenGL,FB_Debugging))
+              PyMOLCheckOpenGLErr("loading vertex program");
+            
+            /* load the fragment program */
+            glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
+            
+            ok = ok && (ProgramStringIsNative(G,GL_FRAGMENT_PROGRAM_ARB, 
+                                              GL_PROGRAM_FORMAT_ASCII_ARB, 
+                                              strlen(fp),fp));
+            
+            if(Feedback(G,FB_OpenGL,FB_Debugging))
+              PyMOLCheckOpenGLErr("loading fragment program");
+            if(ok) {
+              I->shader_flag=true;
+            } else {
+              I->shader_flag=false;
+              glDeleteProgramsARB(2,(GLuint*)I->programs);
+            }
+        }
+          FreeP(vp);
+          FreeP(fp);
+        }
+    }
+  }
+#endif
+
   alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
@@ -1153,6 +1224,8 @@ Rep *RepSphereNew(CoordSet *cs,int state)
   marked = Calloc(int,obj->NAtom);
   RepInit(G,&I->R);
   I->shader_flag = false;
+  I->programs[0] = 0;
+  I->programs[1] = 0;
 
   ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
   sphere_mode = SettingGet_i(G,cs->Setting,    obj->Obj.Setting,
@@ -1166,65 +1239,6 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     sp = G->Sphere->Sphere[ds];
   }
 
-#ifdef _PYMOL_OPENGL_SHADERS
-  if(sphere_mode==5) {
-    char *vp = read_code_str(vert_prog);
-    char *fp = read_code_str(frag_prog);
-
-#ifdef WIN32
-          
-    glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
-    glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
-    glDeleteProgramsARB = (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
-    glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
-    glProgramEnvParameter4fARB = (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
-    glGetProgramivARB = (PFNGLGETPROGRAMIVARBPROC) wglGetProcAddress("glGetProgramivARB");
-
-    if(glGenProgramsARB && glBindProgramARB && 
-        glDeleteProgramsARB && glProgramStringARB && 
-        glProgramEnvParameter4fARB)
-#endif
-        {
-        /*                  
-        char *vp = read_file("vert.txt");
-        char *fp = read_file("frag.txt");
-        */
-        if(vp&&fp) {            
-          int ok=true;
-          glGenProgramsARB(2,(GLuint*)I->programs);
-          
-          /* load the vertex program */
-          glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
-          
-          ok = ok && (ProgramStringIsNative(G,GL_VERTEX_PROGRAM_ARB, 
-                                            GL_PROGRAM_FORMAT_ASCII_ARB, 
-                                            strlen(vp),vp));
-          
-          if(Feedback(G,FB_OpenGL,FB_Debugging))
-               PyMOLCheckOpenGLErr("loading vertex program");
-            
-          /* load the fragment program */
-          glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
-          
-          ok = ok && (ProgramStringIsNative(G,GL_FRAGMENT_PROGRAM_ARB, 
-                                            GL_PROGRAM_FORMAT_ASCII_ARB, 
-                                            strlen(fp),fp));
-          
-          if(Feedback(G,FB_OpenGL,FB_Debugging))
-            PyMOLCheckOpenGLErr("loading fragment program");
-          if(ok) {
-            I->shader_flag=true;
-          } else {
-            I->shader_flag=false;
-            glDeleteProgramsARB(2,(GLuint*)I->programs);
-          }
-        }
-        FreeP(vp);
-        FreeP(fp);
-    }
-  }
-
-#endif
 
   one_color=SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
   cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
