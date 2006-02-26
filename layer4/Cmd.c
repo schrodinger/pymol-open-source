@@ -4192,11 +4192,12 @@ static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
 static PyObject *CmdMView(PyObject *self, 	PyObject *args)
 {
   int ok=false;
-  int action,first,last, simple,wrap;
+  int action,first,last, simple,wrap,window,cycles;
   float power,bias,linear,hand;
   char *object;
-  ok = PyArg_ParseTuple(args,"iiiffifsii",&action,&first,&last,&power,
-                        &bias,&simple,&linear,&object,&wrap,&hand);
+  ok = PyArg_ParseTuple(args,"iiiffifsiiii",&action,&first,&last,&power,
+                        &bias,&simple,&linear,&object,&wrap,&hand,
+                        &window,&cycles);
   if (ok) {
     APIEntry();
     if(wrap<0) {
@@ -4208,11 +4209,11 @@ static PyObject *CmdMView(PyObject *self, 	PyObject *args)
         ok = false;
       } else {
         if(simple<0) simple = 0; 
-        ok = ObjectView(obj,action,first,last,power,bias,simple,linear,wrap,hand);
+        ok = ObjectView(obj,action,first,last,power,bias,simple,linear,wrap,hand,window,cycles);
       }
     } else {
       simple = true; /* force this because camera matrix does't work like a TTT */
-      ok = MovieView(TempPyMOLGlobals,action,first,last,power,bias,simple,linear,wrap,hand);
+      ok = MovieView(TempPyMOLGlobals,action,first,last,power,bias,simple,linear,wrap,hand,window,cycles);
     }
     APIExit();
   }

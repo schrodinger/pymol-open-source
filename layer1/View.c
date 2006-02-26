@@ -301,6 +301,118 @@ static void matrix_interpolate(Matrix53f imat,Matrix53f mat,
   }
 }
 
+int ViewElemSmooth(CViewElem *first,CViewElem *last,int window,int loop)
+{
+  int n = (last-first)+1;
+  int delta;
+  loop = 0; /* FOR NOW */
+  if(window>n)
+    window=n;
+  delta = (window-1)/2;
+  if(n&&delta) {
+    CViewElem *cpy = Alloc(CViewElem,(n+2*delta));
+    CViewElem *src,*dst;
+    int a,b,c,cnt;
+    memcpy(cpy+delta,first,sizeof(CViewElem)*n);
+    if(loop) {
+      for(a=0;a<delta;a++) {
+        memcpy(cpy+a,last-delta+a,sizeof(CViewElem));
+        memcpy(cpy+(delta+n)+a,first+delta-a,sizeof(CViewElem));
+      }
+    } else {
+      for(a=0;a<delta;a++) {
+        memcpy(cpy+a,first,sizeof(CViewElem));
+        memcpy(cpy+(delta+n)+a,last,sizeof(CViewElem));
+      }
+    }
+    for(a=0;a<n;a++) {
+      dst = first+a;
+      int above,below;
+      
+      above = delta;
+      below = delta;
+      if(above>a) above = a;
+      if(below>((n-1)-a)) below = (n-1)-a;
+
+      if(dst->specification_level) { /* has to be specified */
+
+        if(dst->matrix_flag) {
+          cnt=1;
+          for(b=-below;b<=above;b++) {
+            if(b) {
+              src = cpy+delta+a+b;
+              if(src->matrix_flag) {
+                cnt++;
+                for(c=0;c<16;c++) {
+                  dst->matrix[c]+= src->matrix[c];
+                }
+              }
+            }
+          }
+          for(c=0;c<16;c++) {
+            dst->matrix[c] /= cnt;
+          }
+          reorient44d(dst->matrix); /* convert those averages into a valid matrix */
+        }
+        
+        if(dst->pre_flag) {
+          cnt=1;
+          for(b=-below;b<=above;b++) {
+            if(b) {
+              src = cpy+delta+a+b;
+              if(src->pre_flag) {
+                cnt++;
+                for(c=0;c<3;c++) {
+                  dst->pre[c]+= src->pre[c];
+                }
+              }
+            }
+          }
+          for(c=0;c<3;c++) {
+            dst->pre[c] /= cnt;
+          }
+        }
+
+        if(dst->post_flag) {
+          cnt=1;
+          for(b=-below;b<=above;b++) {
+            if(b) {
+              src = cpy+delta+a+b;
+              if(src->post_flag) {
+                cnt++;
+                for(c=0;c<3;c++) {
+                  dst->post[c]+= src->post[c];
+                }
+              }
+            }
+          }
+          for(c=0;c<3;c++) {
+            dst->post[c] /= cnt;
+          }
+        }
+
+        if(dst->clip_flag) {
+          cnt=1;
+          for(b=-below;b<=above;b++) {
+            if(b) {
+              src = cpy+delta+a+b;
+              if(src->clip_flag) {
+                cnt++;
+                dst->front += src->front;
+                dst->back += src->back;
+              }
+            }
+          }
+          dst->front /= cnt;
+          dst->back /= cnt;
+        }
+        
+      }
+    }
+  }
+  return 1;
+}
+
 int ViewElemInterpolate(CViewElem *first,CViewElem *last,
                         float power,float bias,
                         int simple, float linearity,int hand)

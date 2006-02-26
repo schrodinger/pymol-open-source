@@ -326,6 +326,7 @@ void copy3d ( double *v1,double *v2)
 }
 
 
+
 void add3f ( float *v1, float *v2, float *v3 )
 {
   v3[0]=v1[0]+v2[0];
@@ -1262,6 +1263,102 @@ static void normalize3dp( double *v1, double *v2, double *v3 )
 		v3[2]=_0;
 	 }
 } 
+
+static void normalize3df( float *v1, float *v2, float *v3 )
+{
+  float vlen = (float)sqrt1f((v1[0]*v1[0]) + 
+                             (v2[0]*v2[0]) + 
+                             (v3[0]*v3[0]));
+  if(vlen>R_SMALL)
+    {
+      v1[0]/=vlen;
+      v2[0]/=vlen;
+      v3[0]/=vlen;
+    }
+  else
+    {
+      v1[0]=_0;
+      v2[1]=_0;
+      v3[2]=_0;
+    }
+} 
+
+void scale3d ( double *v1,double v0,double *v2)
+{
+  v2[0]=v1[0]*v0;
+  v2[1]=v1[1]*v0;
+  v2[2]=v1[2]*v0;
+}
+
+void add3d ( double *v1, double *v2, double *v3 )
+{
+  v3[0]=v1[0]+v2[0];
+  v3[1]=v1[1]+v2[1];
+  v3[2]=v1[2]+v2[2];
+}
+
+void cross_product3d ( double *v1, double *v2, double *cross )
+{
+  cross[0] = (v1[1]*v2[2]) - (v1[2]*v2[1]);
+  cross[1] = (v1[2]*v2[0]) - (v1[0]*v2[2]);
+  cross[2] = (v1[0]*v2[1]) - (v1[1]*v2[0]);
+}
+
+void remove_component3d ( double *v1, double *unit, double *result)
+{
+  double dot;
+
+  dot = v1[0]*unit[0] + v1[1]*unit[1] + v1[2]*unit[2];
+  result[0]=v1[0]-unit[0]*dot;
+  result[1]=v1[1]-unit[1]*dot;
+  result[2]=v1[2]-unit[2]*dot;  
+}
+
+void reorient44d(double *matrix)
+{
+  double tmp[16];
+  int a;
+
+  /* restore orthogonality and recondition */
+
+  for(a=0;a<3;a++) {
+    normalize3d(matrix);
+    normalize3d(matrix+4);
+    normalize3d(matrix+8);
+    cross_product3d(matrix+4, matrix+8, tmp);
+    cross_product3d(matrix+8, matrix, tmp+4);
+    cross_product3d(matrix, matrix+4, tmp+8);
+    normalize3d(tmp);
+    normalize3d(tmp+4);
+    normalize3d(tmp+8);
+    scale3d(tmp,2.0,tmp);
+    scale3d(tmp+4,2.0,tmp+4);
+    scale3d(tmp+8,2.0,tmp+8);
+    add3d(matrix,tmp,tmp);
+    add3d(matrix+4,tmp+4,tmp+4);
+    add3d(matrix+8,tmp+8,tmp+8);
+    copy3d(tmp,matrix);
+    copy3d(tmp+4,matrix+4);
+    copy3d(tmp+8,matrix+8);
+  }
+   
+  normalize3d(matrix);
+  normalize3d(matrix+4);
+  normalize3d(matrix+8);
+  
+  copy3d(matrix,tmp);
+  remove_component3d(matrix+4,tmp,tmp+4);
+  cross_product3d(tmp, tmp+4, tmp+8);    
+  normalize3d(tmp+4);
+  normalize3d(tmp+8);
+  
+  recondition44d(tmp);
+
+  copy3d(tmp,matrix);
+  copy3d(tmp+4,matrix+4);
+  copy3d(tmp+8,matrix+8);
+  
+}
 
 void recondition33d(double *matrix)
 {
