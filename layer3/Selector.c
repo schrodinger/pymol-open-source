@@ -5314,10 +5314,6 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
   register CSelector *I=G->Selector;
 
   int a,b,b1,b2,c,d,s,idx,at,a1,a2;
-  BondType *ii1;
-  BondType *bond=NULL;
-  int nBond=0;
-  int newline;
   int use_ter = (int)SettingGet(G,cSetting_pdb_use_ter_records);
   int retain_ids = (int)SettingGet(G,cSetting_pdb_retain_ids);
   int conect_all = (int)SettingGet(G,cSetting_pdb_conect_all);
@@ -5425,6 +5421,11 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
       }
   }
   if(conectFlag&&!(pdb_info->is_pqr_file)) {
+    register BondType *bond=NULL;
+    register BondType *ii1;
+    int nBond=0;
+    int newline;
+
     nBond = 0;
     bond = VLAlloc(BondType,1000);
     for(a=cNDummyModels;a<I->NModel;a++) {
@@ -5456,7 +5457,7 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
             b1+=obj->SeleBase;
             b2+=obj->SeleBase;
             if(I->Table[b1].index&&I->Table[b2].index) {
-              VLACheck(bond,BondType,2*(nBond+ii1->order+2)); /* ??? */
+              VLACheck(bond,BondType,nBond+(2*ii1->order)+2);
               b1=I->Table[b1].index;
               b2=I->Table[b2].index;
               for(d=0;d<ii1->order;d++) {
@@ -5473,35 +5474,46 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
         }
       }
     }
-    UtilSortInPlace(G,bond,nBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
-    ii1=bond;
-    b1=-1;
-	 b2=-1;
-    newline = false;
-    for(a=0;a<nBond;a++) {
-      if(a<(nBond-1)) 
-        if((ii1->index[0]==(ii1+1)->index[0])&&(ii1->index[1]==(ii1+1)->index[1])) newline=true;
-      if((b1!=ii1->index[0])||((b1==ii1->index[0])&&(b2==ii1->index[1]))||newline) {
-        VLACheck((*charVLA),char,cLen+255);
-        if(a) cLen+=sprintf((*charVLA)+cLen,"\n");
-        cLen+=sprintf((*charVLA)+cLen,"CONECT%5d%5d",
-                      ii1->index[0],ii1->index[1]);
-        b1=ii1->index[0];
-		  b2=ii1->index[1];
-        newline=false;
-        if(a>0)
-          if(((ii1-1)->index[0]==ii1->index[0])&&((ii1-1)->index[1]==ii1->index[1])) newline=true;        
-      } else {
-        cLen+=sprintf((*charVLA)+cLen,"%5d",
-                      ii1->index[1]);
+    {
+      register char *reg_cVLA = *charVLA;
+      register int reg_cLen = cLen;
+      UtilSortInPlace(G,bond,nBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
+      ii1=bond;
+      b1=-1;
+      b2=-1;
+      newline = false;
+      for(a=0;a<nBond;a++) {
+        if(a<(nBond-1)) {
+          if((ii1->index[0]==(ii1+1)->index[0])&&(ii1->index[1]==(ii1+1)->index[1])) 
+            newline=true;
+        }
+        if((b1!=ii1->index[0])||((b1==ii1->index[0])&&(b2==ii1->index[1]))||newline) {
+          VLACheck(reg_cVLA,char,reg_cLen+255);
+          if(a) reg_cLen+=sprintf(reg_cVLA+reg_cLen,"\n");
+          reg_cLen+=sprintf(reg_cVLA+reg_cLen,"CONECT%5d%5d",
+                        ii1->index[0],ii1->index[1]);
+          b1=ii1->index[0];
+          b2=ii1->index[1];
+          newline=false;
+          if(a>0) {
+            if(((ii1-1)->index[0]==ii1->index[0])&&((ii1-1)->index[1]==ii1->index[1])) 
+              newline=true;        
+          }
+        } else {
+          VLACheck(reg_cVLA,char,reg_cLen+255);
+          reg_cLen+=sprintf(reg_cVLA+reg_cLen,"%5d",
+                        ii1->index[1]);
+        }
+        b2=ii1->index[1];
+        ii1++;
       }
-      b2=ii1->index[1];
-      ii1++;
-    }
-    if(cLen) {
-      VLACheck((*charVLA),char,cLen+4);
-      if(*((*charVLA)+cLen-1)!='\n')
-        cLen+=sprintf((*charVLA)+cLen,"\n");
+      if(reg_cLen) {
+        VLACheck(reg_cVLA,char,reg_cLen+255);
+        if(*(reg_cVLA+reg_cLen-1)!='\n')
+          reg_cLen+=sprintf(reg_cVLA+reg_cLen,"\n");
+      }
+      (*charVLA) = reg_cVLA;
+      cLen = reg_cLen;
     }
     VLAFree(bond);
   }

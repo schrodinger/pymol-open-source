@@ -59,7 +59,7 @@ void UtilMemCpy(void *dst,void *src,unsigned int *size);
 typedef struct VLARec {
   unsigned int nAlloc;
   unsigned int recSize;
-  unsigned int growFactor;
+  float growFactor;
   int autoZero;
 } VLARec;
 
