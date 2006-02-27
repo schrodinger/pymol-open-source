@@ -297,7 +297,7 @@ void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
     if(SceneObjectIsActive(I->G,I))
       defer_builds_mode=2;
   }
-  switch(SettingGet_i(I->G,NULL,I->Setting,cSetting_defer_builds_mode)) {
+  switch(defer_builds_mode) {
   case 1: /* defer geometry builds until needed */
   case 2: /* defer and destroy continuously for increase memory conservation */
     {
