@@ -5,6 +5,8 @@ CHANGE LOG
 
 Changes up to 0.99rcX
 
+    * fixed 32-bit memory allocation bug
+
     * fixed selection argument to rotate command
 
     * fixed mview-based object animation loops
