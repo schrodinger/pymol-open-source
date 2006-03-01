@@ -148,9 +148,11 @@ int SelectorIsMemberSlow(PyMOLGlobals *G,int start,int sele);
 
 #else
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_WIN32
 #define __inline__ __inline
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 __inline__ static int SelectorIsMember(PyMOLGlobals *G,int s, int sele) 
 {

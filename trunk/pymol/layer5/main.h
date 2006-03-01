@@ -22,11 +22,13 @@ int  MainSavingUnderWhileIdle(void);
 
 #ifdef _PYMOL_NO_MAIN
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef _MACPYMOL_XCODE
 #include"os_python.h"
 #include"PyMOLGlobals.h"
 PyObject *MainAsPyList(void);
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 #else
 
@@ -50,8 +52,10 @@ void MainMaximizeWindow(PyMOLGlobals *G);
 void MainSetWindowSize(PyMOLGlobals *G,int w,int h);
 void MainSetWindowPosition(PyMOLGlobals *G,int x,int y);
 void MainCheckWindowFit(PyMOLGlobals *G);
-#ifdef _PYMOL_OSX
 
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+#ifdef _PYMOL_OSX
 int MainCheckRedundantOpen(char *file);
 void MainRunString(char *str);
 PyObject *MainGetStringResult(char *str);
@@ -66,6 +70,7 @@ void MainMovieCopyFinish(void);
 void MainSceneGetSize(int *width,int *height);
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr);
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 #define PYMOL_MAX_OPT_STR  1025
 

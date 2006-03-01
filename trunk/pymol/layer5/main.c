@@ -311,8 +311,8 @@ static void DrawBlueLine(PyMOLGlobals *G)
 }
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-/* SPECIAL HOOKS FOR MacPyMOL */
 #ifdef _PYMOL_OSX
+/* SPECIAL HOOKS FOR MacPyMOL */
 
 int MainCheckRedundantOpen(char *file)
 {
