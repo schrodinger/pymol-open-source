@@ -28,12 +28,19 @@ Z* -------------------------------------------------------------------
  * beyond the scope of the PyMOL Open-Source Project as we define it.
  *
  * We deem compilation of PyMOL source code on proprietary platforms
- * to be a proprietary business issue that serves as a robust logical
- * foundation for productive business relationships resulting in
- * mutual benefits.  In other words, if you depend on PyMOL to run
+ * to be a proprietary business matter that serves as a robust logical
+ * foundation for productive business relationships with mutual and
+ * defined benefits.  In other words, if you depend on PyMOL to run
  * well on proprietary operating systems, then it is generally in your
  * interest to engage our business on business terms, such as via paid
  * software licenses, development partnerships, or joint ventures.
+ *
+ * However, if you still feel that you must compile open-source PyMOL
+ * source code on proprietary operating systems, then we suggest use
+ * of Linux-like tools and environments, such as Red Hat's Cygwin on
+ * Windows and X11/Fink on Mac OS X, since they provide for the
+ * greatest compatibility with open-source PyMOL.  Use of our
+ * proprietary code segments should be avoided whenever possible.
  *
  * THE FOLLOWING CODE SEGMENT AND ALL OTHERS MARKED "PROPRIETARY" ARE
  * PROVIDED AS IS AND FOR USE AT YOUR OWN RISK WITH NO ASSURANCES OF
