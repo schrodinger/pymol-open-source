@@ -438,9 +438,13 @@ void OrthoBusyPrime(PyMOLGlobals *G)
   I->BusyLast = UtilGetSeconds(G);
   I->BusyLastUpdate = UtilGetSeconds(G);
 }
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
 void MacPyMOLSetProgress(float value);
 #endif
+/* END PROPRIETARY CODE SEGMENT */
+
 /*========================================================================*/
 void OrthoBusyDraw(PyMOLGlobals *G,int force)
 {
@@ -457,7 +461,9 @@ void OrthoBusyDraw(PyMOLGlobals *G,int force)
     
     I->BusyLast=now;
     if(PIsGlutThread()) {
+
 #ifdef _MACPYMOL_XCODE
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
       float busyValue;
       if(I->BusyStatus[1]) {
         busyValue=(I->BusyStatus[0]*1.0F/I->BusyStatus[1]);
@@ -466,6 +472,7 @@ void OrthoBusyDraw(PyMOLGlobals *G,int force)
         busyValue=(I->BusyStatus[2]*1.0F/I->BusyStatus[3]);
       }
       MacPyMOLSetProgress(busyValue);
+/* END PROPRIETARY CODE SEGMENT */
 #else
       if(G->HaveGUI && G->ValidContext) {      
         char *c;

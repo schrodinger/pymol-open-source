@@ -66,17 +66,21 @@
 PyMOLGlobals *TempPyMOLGlobals = NULL;
 #endif
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifndef _PYMOL_NOPY
 #ifdef _MACPYMOL_XCODE
 extern int *MacPyMOLReady;
 extern CPyMOLOptions *MacPyMOLOption;
 #endif
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 #ifdef _MACPYMOL_XCODE
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #define PYMOL_API_LOCK if((I->PythonInitStage)&&PLockAPIAsGlut(true)) {
 #define PYMOL_API_UNLOCK PUnlockAPIAsGlut(); }
 #define PYMOL_API_UNLOCK_NO_FLUSH PUnlockAPIAsGlutNoFlush(); }
+/* END PROPRIETARY CODE SEGMENT */
 #else 
 #define PYMOL_API_LOCK {
 #define PYMOL_API_UNLOCK }
@@ -2163,6 +2167,7 @@ static void init_python(int argc, char *argv[])
 	  PySys_SetArgv(argc,argv);
     }
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
     /* there appears to be a bug or a race collection in the garbage
        collector of the Python version that ships with Mac OS --
@@ -2173,6 +2178,8 @@ static void init_python(int argc, char *argv[])
     PyRun_SimpleString("import gc");
     PyRun_SimpleString("gc.disable()");
 #endif
+/* END PROPRIETARY CODE SEGMENT */
+
 	PyEval_InitThreads();
 	
 #ifdef _PYMOL_OWN_INTERP
@@ -2192,6 +2199,7 @@ static void init_python(int argc, char *argv[])
 	PyRun_SimpleString("import os");
 	PyRun_SimpleString("sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')");
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
     { /* add an architecture-dependent search path for platform-specific binary modules
 		here we're cheating by using endianness instead of figuring out how to get the
@@ -2206,6 +2214,8 @@ static void init_python(int argc, char *argv[])
 		}
 	}
 #endif
+/* END PROPRIETARY CODE SEGMENT */
+
 	PyRun_SimpleString("import __main__");
     {
 		PyObject *P_main = PyImport_AddModule("__main__");
@@ -2394,6 +2404,7 @@ void PyMOL_Start(CPyMOL *I)
   TrackerUnitTest(G);
 #endif
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
 	SettingSetGlobal_b(G,cSetting_stereo_double_pump_mono, true);
     if(G->Option->stereo_capable) {
@@ -2401,6 +2412,7 @@ void PyMOL_Start(CPyMOL *I)
        }
     /*    	SettingSetGlobal_i(G,cSetting_show_progress, 0);  */
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
   I->RedisplayFlag = true;
   G->Ready = true; 
@@ -2408,12 +2420,14 @@ void PyMOL_Start(CPyMOL *I)
 
 #ifndef _PYMOL_NOPY
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
 void init_cmd(void);
 void initExtensionClass(void);
 void initsglite(void);
 void init_champ(void);
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 void PyMOL_StartWithPython(CPyMOL *I)
 {
@@ -2428,12 +2442,15 @@ void PyMOL_StartWithPython(CPyMOL *I)
     }
 	
 	/* initialize our embedded C modules */
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE	
     init_cmd();
 	initExtensionClass();
     initsglite();
 	init_champ();
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 	/* launch pymol's Python subsystems */
 	
@@ -2447,10 +2464,12 @@ void PyMOL_StartWithPython(CPyMOL *I)
 	
 	I->PythonInitStage = 1;
 	
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
   MacPyMOLOption = I->G->Option;
   MacPyMOLReady = &I->G->Ready;
 #endif  
+/* END PROPRIETARY CODE SEGMENT */
 }
 #endif
 
@@ -2566,6 +2585,7 @@ void PyMOL_Draw(CPyMOL *I)
     glDisable(GL_NORMALIZE);
     glDisable(GL_POLYGON_SMOOTH);
     
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
     { /* on a mac, this can change if we've switched contexts...*/
       GLboolean state;
@@ -2573,6 +2593,7 @@ void PyMOL_Draw(CPyMOL *I)
       G->StereoCapable = (int) state;
     }
 #endif
+/* END PROPRIETARY CODE SEGMENT */
     
   }
   
@@ -2687,11 +2708,15 @@ int PyMOL_Idle(CPyMOL *I)
 	} else {
 		I->PythonInitStage=-1;
 		PBlock();
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
     /* restore working directory if asked to */
         PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
         PRunString("launch_gui()");
 #endif
+/* END PROPRIETARY CODE SEGMENT */
+
 		PRunString("adapt_to_hardware()");
 		PRunString("exec_deferred()");
 		PUnblock();

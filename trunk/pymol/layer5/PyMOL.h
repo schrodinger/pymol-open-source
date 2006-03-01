@@ -31,8 +31,8 @@ Z* -------------------------------------------------------------------
  * For all of these reasons, please do not use this API.  
  *
  * Note that we are developing a C-based "CMol" API or controlling
- * PyMOL that is designed for external usage.  Please contact DeLano
- * Scientific LLC directly for more information about it.
+ * PyMOL that will be intended for external usage.  Please contact
+ * DeLano Scientific LLC directly for more information about it.
  */
 
 #define PYMOL_BUTTON_DOWN           0

@@ -1178,9 +1178,6 @@ static void CGO_gl_reset_normal(CCGORenderer *I,float *pc)
 
 static void CGO_gl_null(CCGORenderer *I,float *pc) {
 }
-#ifdef CYGWIN
-#define WIN32
-#endif
 
 static void CGO_gl_vertex(CCGORenderer *I,float *v) {
   glVertex3fv(v);

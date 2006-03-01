@@ -17,9 +17,11 @@
 #include "os_predef.h"
 #include "os_python.h"
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
 #include <signal.h>
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 #include "os_std.h"
 #include "os_gl.h"
@@ -172,11 +174,12 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
 #else
 
 
-
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_OSX
 int *MacPyMOLReady = NULL;
 CPyMOLOptions *MacPyMOLOption = NULL;
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 void MainFree(void);
 void MainReshape(int width, int height);
@@ -246,11 +249,11 @@ static void DrawBlueLine(PyMOLGlobals *G)
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_LINE_STIPPLE);
     glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_STENCIL_TEST);
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_OSX
     glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
-#endif
-    glDisable(GL_STENCIL_TEST);
-#ifdef _PYMOL_OSX
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_TEXTURE_3D);
@@ -258,7 +261,8 @@ static void DrawBlueLine(PyMOLGlobals *G)
     glDisable(GL_TEXTURE_RECTANGLE_EXT);
     glDisable(GL_VERTEX_PROGRAM_ARB);
 #endif
-  
+/* END PROPRIETARY CODE SEGMENT */
+
     for(buffer = GL_BACK_LEFT; buffer <= GL_BACK_RIGHT; buffer++) {
       GLint matrixMode;
       GLint vp[4];
@@ -306,10 +310,9 @@ static void DrawBlueLine(PyMOLGlobals *G)
   }
 }
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 /* SPECIAL HOOKS FOR MacPyMOL */
-
 #ifdef _PYMOL_OSX
-
 
 int MainCheckRedundantOpen(char *file)
 {
@@ -366,7 +369,6 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
   }
   return result;
 }
-/*========================================================================*/
 void MainDoCommand(char *str1)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
@@ -387,7 +389,6 @@ void MainDoCommand(char *str1)
     PUnlockAPIAsGlut();
   }
 }
-/*========================================================================*/
 void MainRunCommand(char *str1)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
@@ -413,8 +414,6 @@ void MainRunCommand(char *str1)
     PUnlockAPIAsGlut();
   }
 }
-
-/*========================================================================*/
 void MainFlushAsync(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
@@ -423,7 +422,6 @@ void MainFlushAsync(void)
     PUnlockAPIAsGlut();
   }
 }
-/*========================================================================*/
 void MainFlush(void) /* assumes GIL held */
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
@@ -435,7 +433,6 @@ void MainFlush(void) /* assumes GIL held */
   MainPopValidContext(G);
 
 }
-/*========================================================================*/
 void MainRunString(char *str)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
@@ -446,7 +443,6 @@ void MainRunString(char *str)
   MainPopValidContext(G);
   PUnblock();
 }
-/*========================================================================*/
 PyObject *MainGetStringResult(char *str)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
@@ -458,6 +454,7 @@ PyObject *MainGetStringResult(char *str)
 }
 
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 /*========================================================================*/
 
@@ -472,9 +469,11 @@ void MainOnExit(void)
   if(!G->Terminating) {
     G->Terminating=true;
 	printf(" PyMOL: abrupt program termination.\n");
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
 	TerminateProcess(GetCurrentProcess(),0); /* only way to avoid a crash */
 #endif
+/* END PROPRIETARY CODE SEGMENT */
     exit(EXIT_SUCCESS);
   }
 }
@@ -627,10 +626,12 @@ static void MainDrawLocked(void)
     /* restore working directory if asked to */
     PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
     
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_OSX
     PRunString("if os.getcwd()[-23:]=='.app/Contents/Resources': os.chdir('../../..')");
 #endif
-    
+/* END PROPRIETARY CODE SEGMENT */    
+
     PRunString("launch_gui()");
     
     /*#ifndef _PYMOL_WX_GLUT
@@ -1054,6 +1055,8 @@ void MainFree(void)
     
   int show_splash = G->Option->show_splash;
   CPyMOLOptions *owned_options = G->Main->OwnedOptions;
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
    int haveGUI = G->HaveGUI;
    int theWindow = G->Main->TheWindow;
@@ -1063,6 +1066,7 @@ void MainFree(void)
    int haveGUI = G->HaveGUI;
    int theWindow = G->Main->TheWindow;
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
    PyMOL_PushValidContext(PyMOLInstance);
    PyMOL_Stop(PyMOLInstance);
@@ -1079,7 +1083,7 @@ void MainFree(void)
    if(show_splash) {
      printf(" PyMOL: normal program termination.\n");
    }
-  
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */   
 #ifdef WIN32
   if(haveGUI) p_glutDestroyWindow(theWindow);
   TerminateProcess(GetCurrentProcess(),0); /* only way to avoid a crash */
@@ -1102,6 +1106,7 @@ void MainFree(void)
       p_glutDestroyWindow(theWindow);
   }
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 }
 /*========================================================================*/
@@ -1377,6 +1382,7 @@ void MainCheckWindowFit(PyMOLGlobals *G)
 }
 /*========================================================================*/
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
 BOOL WINAPI HandlerRoutine(
 						     DWORD dwCtrlType   //  control signal type
@@ -1407,10 +1413,12 @@ static void launch(CPyMOLOptions *options,int own_the_options)
   PyMOLInstance = PyMOL_NewWithOptions(options);
   G = PyMOL_GetGlobals(PyMOLInstance);
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_OSX
   MacPyMOLOption = G->Option;
   MacPyMOLReady = &G->Ready;
 #endif
+/* END PROPRIETARY CODE SEGMENT */
   
   if(G->Option->multisample)
     multisample_mask = P_GLUT_MULTISAMPLE;
@@ -1430,6 +1438,7 @@ static void launch(CPyMOLOptions *options,int own_the_options)
                                  when GLUT spontaneously kills us */
     #endif
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
 SetConsoleCtrlHandler(
   HandlerRoutine,  // address of handler function
