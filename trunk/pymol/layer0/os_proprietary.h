@@ -39,8 +39,9 @@ Z* -------------------------------------------------------------------
  * source code on proprietary operating systems, then we suggest use
  * of Linux-like tools and environments, such as Red Hat's Cygwin on
  * Windows and X11/Fink on Mac OS X, since they provide for the
- * greatest compatibility with open-source PyMOL.  Use of our
- * proprietary code segments should be avoided whenever possible.
+ * greatest compatibility with open-source PyMOL.  Regardless of the
+ * approach you choose, use of our proprietary code segments should be
+ * avoided wherever possible.
  *
  * THE FOLLOWING CODE SEGMENT AND ALL OTHERS MARKED "PROPRIETARY" ARE
  * PROVIDED AS IS AND FOR USE AT YOUR OWN RISK WITH NO ASSURANCES OF
