@@ -2011,6 +2011,9 @@ class Normal(PMGSkin):
                                          label='2 Button Editing Mode',
                                          command = lambda s=self: s.cmd.mouse('two_button_editing'))
 
+        self.menuBar.addmenuitem('Mouse', 'command', '1 Button Viewing Mode',
+                                         label='1 Button Viewing Mode',
+                                         command = lambda s=self: s.cmd.mouse('one_button_viewing'))
 
         self.menuBar.addmenuitem('Mouse', 'separator', '')
 

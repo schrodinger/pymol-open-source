@@ -326,8 +326,8 @@ int ViewElemSmooth(CViewElem *first,CViewElem *last,int window,int loop)
       }
     }
     for(a=0;a<n;a++) {
-      dst = first+a;
       int above,below;
+      dst = first+a;
       
       above = delta;
       below = delta;
