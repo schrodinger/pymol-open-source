@@ -16,18 +16,24 @@ Z* -------------------------------------------------------------------
 
 /* meaning of defines 
 
-_PYMOL_MONOLITHIC:  means that we're building PyMOL and its Python C dependencies as one C library.  That means we need to explicitly call the initialization functions for these libraries on startup.
+_PYMOL_MONOLITHIC: means that we're building PyMOL and its Python C
+dependencies as one C library.  That means we need to explicitly call
+the initialization functions for these libraries on startup.
 
 */
 
 #ifndef _PYMOL_NOPY
 
 #include"os_predef.h"
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 #include<windows.h>
 #include<process.h>
 #include<winappc.h>
 #endif
+/* END PROPRIETARY CODE SEGMENT */
+
 #include"os_python.h"
 
 #include"os_std.h"
@@ -86,10 +92,12 @@ static PyObject *P_unlock_glut = NULL;
 
 static PyObject *P_do = NULL;
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 static PyObject *P_time = NULL;
 static PyObject *P_sleep = NULL;
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 static PyObject *P_main = NULL;
 static PyObject *P_vfont = NULL;
@@ -270,9 +278,11 @@ void PSleepWhileBusy(int usec)
     " PSleep-DEBUG: nap over.\n"
   ENDFD;
 #else
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
   PBlock();
   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
   PUnblock();
+/* END PROPRIETARY CODE SEGMENT */
 #endif
 }
 
@@ -290,9 +300,11 @@ void PSleepUnlocked(int usec)
     " PSleep-DEBUG: nap over.\n"
   ENDFD;
 #else
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
   PBlock();
   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
   PUnblock();
+/* END PROPRIETARY CODE SEGMENT */
 #endif
 }
 
@@ -312,9 +324,11 @@ void PSleep(int usec)
   ENDFD;
   PLockAPIAsGlut(true);
 #else
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
   PBlockAndUnlockAPI();
   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
   PLockAPIAndUnblock();
+/* END PROPRIETARY CODE SEGMENT */
 #endif
 
 }
@@ -1028,7 +1042,9 @@ int PLockAPIAsGlut(int block_if_busy)
       PBlock(); 
     } 
 #else
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
     PXDecRef(PyObject_CallFunction(P_sleep,"f",0.050));
+/* END PROPRIETARY CODE SEGMENT */
 #endif
 
     if(!get_api_lock(block_if_busy)) {
@@ -1070,6 +1086,7 @@ void    initopenglutil_num(void);
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
 #ifndef _EPYMOL
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 void	init_numpy();
 void	initmultiarray();
@@ -1079,6 +1096,7 @@ void	initumath();
 void	initranlib();
 void  init_champ();
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 #endif
 #endif
 #endif
@@ -1099,7 +1117,7 @@ void    initopenglutil_num(void);
 #endif
 #endif
 #endif
-
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 static int IsSecurityRequired()
 {
@@ -1112,12 +1130,14 @@ static int IsSecurityRequired()
   return TRUE;
 }
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 void PInitEmbedded(int argc,char **argv)
 {
   /* This routine is called if we are running with an embedded Python interpreter */
   PyObject *args, *pymol;
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
     
   { /* automatically hide the window if this process
@@ -1269,6 +1289,8 @@ void PInitEmbedded(int argc,char **argv)
   }
 
 #endif
+/* END PROPRIETARY CODE SEGMENT */
+
 
   /* compatibility for old compile-time defines */
 
@@ -1368,6 +1390,7 @@ void PInitEmbedded(int argc,char **argv)
   initsglite();
   /* initialize champ */
   init_champ();
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
   /* initialize numeric python */
   init_numpy();
@@ -1377,6 +1400,7 @@ void PInitEmbedded(int argc,char **argv)
   initumath();
   initranlib();
 #endif
+/* END PROPRIETARY CODE SEGMENT */
   init_opengl();
   init_opengl_num();
   init_glu();
@@ -1389,7 +1413,7 @@ void PInitEmbedded(int argc,char **argv)
 #endif
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
-
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 #if 0
   {
@@ -1415,6 +1439,7 @@ void PInitEmbedded(int argc,char **argv)
 #endif
   PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 #ifdef _PYMOL_SETUP_TCLTK83
   /* used by semistatic pymol */
@@ -1446,10 +1471,11 @@ void PInitEmbedded(int argc,char **argv)
   PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'static/ext')<0,sys.path)"); /* clean bogus entries in sys.path */
 #endif
 #endif
-
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n");
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
   P_main = PyImport_AddModule("__main__");
   if(!P_main) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find '__main__'");
@@ -1544,6 +1570,7 @@ void PInit(PyMOLGlobals *G)
    PyEval_InitThreads();
 #endif
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
@@ -1553,6 +1580,7 @@ void PInit(PyMOLGlobals *G)
 #endif
 #endif
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 #ifdef _PYMOL_INIT_MODULES
 	/* Win32 module build: includes pyopengl, numpy, and sglite */
@@ -1659,6 +1687,7 @@ void PInit(PyMOLGlobals *G)
   if(!P_xray) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'xray'");
 #endif
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
   PRunString("import time\n");  
   P_time = PyDict_GetItemString(P_globals,"time");
@@ -1667,6 +1696,7 @@ void PInit(PyMOLGlobals *G)
   P_sleep = PyObject_GetAttrString(P_time,"sleep");
   if(!P_sleep) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'time.sleep()'");
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
   PRunString("import parser\n");  
   P_parser = PyDict_GetItemString(P_globals,"parser");

@@ -4592,6 +4592,8 @@ void SceneReshape(Block *block,int width,int height)
     height -= I->Block->margin.top;
     y = height;
   }
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_OSX
 #ifndef _MACPYMOL_XCODE
   /* workaround for broken pixel handling under OSX 
@@ -4599,6 +4601,7 @@ void SceneReshape(Block *block,int width,int height)
   width = 8*(width/8);
 #endif
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
   I->Width = width;
 
@@ -5425,11 +5428,15 @@ static void SceneProgramLighting(PyMOLGlobals *G)
   vv[2] = 1.0F;
   /* workaround for flickering of specular reflections on Mac OSX 10.3.8 with nVidia hardware */
   vv[3] = 0.0F;
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifndef _MACPYMOL_XCODE
 #ifdef _PYMOL_OSX
   vv[3] = 0.000001F;
 #endif
 #endif
+/* END PROPRIETARY CODE SEGMENT */
+
   glLightfv(GL_LIGHT0,GL_POSITION,vv);
 
 
@@ -5437,11 +5444,14 @@ static void SceneProgramLighting(PyMOLGlobals *G)
 
     /* workaround for flickering of specular reflections on Mac OSX 10.3.8 with nVidia hardware */
     vv[3] = 0.0F;
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifndef _MACPYMOL_XCODE
 #ifdef _PYMOL_OSX
     vv[3] = 0.000001F;
 #endif
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
     copy3f(SettingGetGlobal_3fv(G,cSetting_light),vv);
     normalize3f(vv);
@@ -5789,26 +5799,26 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
             glMatrixMode(GL_MODELVIEW);
             glLoadIdentity();
 #ifndef _PYMOL_OSX
-   /* workaround for MacOSX 10.4.3 */
             glPopAttrib();
 #else  
+/* workaround for MacOSX 10.4.3 */
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 	        SceneProgramLighting(G); /* an expensive workaround... */
-		if(pickVLA) {
-		  glDisable(GL_FOG);
-		  glDisable(GL_COLOR_MATERIAL);
-		  glDisable(GL_LIGHTING);
-		  glDisable(GL_DITHER);
-		  glDisable(GL_BLEND);
-		  glDisable(GL_LINE_SMOOTH);
-		  glDisable(GL_POLYGON_SMOOTH);
-		  if(G->Option->multisample)    
-		    glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
-		  glShadeModel(GL_FLAT);
-		}
-
+            if(pickVLA) {
+              glDisable(GL_FOG);
+              glDisable(GL_COLOR_MATERIAL);
+              glDisable(GL_LIGHTING);
+              glDisable(GL_DITHER);
+              glDisable(GL_BLEND);
+              glDisable(GL_LINE_SMOOTH);
+              glDisable(GL_POLYGON_SMOOTH);
+              if(G->Option->multisample)    
+                glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
+              glShadeModel(GL_FLAT);
+            }
+/* END PROPRIETARY CODE SEGMENT */
 #endif
             glPopMatrix();
-
           }
           break;
         case 2:

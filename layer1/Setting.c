@@ -14,9 +14,7 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-#ifdef WIN32
-#include<windows.h>
-#endif
+#include"os_proprietary.h"
 
 #include"os_predef.h"
 #include"os_std.h"
@@ -2014,7 +2012,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_no_idle, 10000.0F); /* 1/100 of a sec. */ 
 
 #ifdef _PYMOL_OSX
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
   set_f(I,cSetting_slow_idle, 40000.0F); /* 1/25 of a sec. */
+/* END PROPRIETARY CODE SEGMENT */
 #else
   set_f(I,cSetting_slow_idle, 200000.0F); /* 1/5 of a sec. */
 #endif
@@ -2056,9 +2056,11 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_auto_show_nonbonded, G->Option->sphere_mode<0);
 
   set_f(I,cSetting_mesh_radius, 0.000F);
- 
+
 #ifdef WIN32
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
   set_b(I,cSetting_cache_display, 0);
+/* END PROPRIETARY CODE SEGMENT */
 #else
   set_b(I,cSetting_cache_display, 1);
 #endif
@@ -2476,6 +2478,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_i(I,cSetting_cartoon_flat_cycles,4);
 
 #ifdef WIN32
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
  {
    SYSTEM_INFO SysInfo;
    GetSystemInfo ( &SysInfo );
@@ -2488,6 +2491,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
       }
    }
  }
+/* END PROPRIETARY CODE SEGMENT */
 #else
   set_i(I,cSetting_max_threads, 1);
 #endif

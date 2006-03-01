@@ -6553,7 +6553,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
                 else {
                   while(ok&&(nMember>0)) {
                     p=ParseWordCopy(cc,p,20);
-                    if((!cc[0])&&(!*p)) {
+                    if((!cc[0])&&(!*p)) {x
                       ok=false;
                       break;
                     }

@@ -112,9 +112,11 @@ static void APIEntry(void) /* assumes API is locked */
     ENDFD;
 
   if(TempPyMOLGlobals->Terminating) {/* try to bail */
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
     abort();
 #endif
+/* END PROPRIETARY CODE SEGMENT */
     exit(0);
   }
 
@@ -130,9 +132,11 @@ static void APIEnterBlocked(void) /* assumes API is locked */
     ENDFD;
 
   if(TempPyMOLGlobals->Terminating) {/* try to bail */
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
     abort();
 #endif
+/* END PROPRIETARY CODE SEGMENT */
     exit(0);
   }
 
@@ -3304,9 +3308,11 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
     int ok;
     
     if(TempPyMOLGlobals->Terminating) { /* try to bail */
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
       abort();
 #endif
+/* END PROPRIETARY CODE SEGMENT */
       exit(0);
     }
     APIEnterBlocked();
@@ -4307,7 +4313,7 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
   float v[3];
   int ok=false;
   int mode;
-  ok = PyArg_ParseTuple(args,"sfffi",&color,v,v+1,v+2,mode);
+  ok = PyArg_ParseTuple(args,"sfffi",&color,v,v+1,v+2,&mode);
   if (ok) {
     APIEntry();
     ColorDef(TempPyMOLGlobals,color,v,mode);

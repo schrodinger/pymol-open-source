@@ -53,7 +53,7 @@ typedef struct RepSphere {
 
 #ifdef _PYMOL_OPENGL_SHADERS
 
-
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
 static PFNGLGENPROGRAMSARBPROC glGenProgramsARB;
 static PFNGLBINDPROGRAMARBPROC glBindProgramARB;
@@ -62,6 +62,7 @@ static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB;
 static PFNGLPROGRAMENVPARAMETER4FARBPROC glProgramEnvParameter4fARB;
 static PFNGLGETPROGRAMIVARBPROC glGetProgramivARB;
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 /* NOTE -- right now this shader program only runs in perspective mode */
 
@@ -322,8 +323,9 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
        (!(I->programs[0]||I->programs[1]))) {
       char *vp = read_code_str(vert_prog);
       char *fp = read_code_str(frag_prog);
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
-      
       if(!(glGenProgramsARB && glBindProgramARB && 
          glDeleteProgramsARB && glProgramStringARB && 
            glProgramEnvParameter4fARB)) {
@@ -339,6 +341,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
          glDeleteProgramsARB && glProgramStringARB && 
          glProgramEnvParameter4fARB)
 #endif
+/* END PROPRIETARY CODE SEGMENT */
+
         {
           /*                  
                               char *vp = read_file("vert.txt");
