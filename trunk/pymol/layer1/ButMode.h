@@ -95,28 +95,104 @@ Z* -------------------------------------------------------------------
 #define cButModeLeftNone   0
 #define cButModeMiddleNone 1
 #define cButModeRightNone  2
+
 #define cButModeLeftShft   3
 #define cButModeMiddleShft 4
 #define cButModeRightShft  5
+
 #define cButModeLeftCtrl   6
 #define cButModeMiddleCtrl 7
 #define cButModeRightCtrl  8
+
 #define cButModeLeftCtSh   9
 #define cButModeMiddleCtSh 10
 #define cButModeRightCtSh  11
+
 #define cButModeWheelNone  12
 #define cButModeWheelShft  13
 #define cButModeWheelCtrl  14
 #define cButModeWheelCtSh  15
-#define cButModeLeftDouble 16
+
+#define cButModeLeftDouble   16
 #define cButModeMiddleDouble 17
 #define cButModeRightDouble  18
 #define cButModeLeftSingle   19
 #define cButModeMiddleSingle 20
 #define cButModeRightSingle  21
 
-typedef char CodeType[10];
+#define cButModeLeftShftDouble    22
+#define cButModeMiddleShftDouble  23
+#define cButModeRightShftDouble   24
+#define cButModeLeftShftSingle    25
+#define cButModeMiddleShftSingle  26
+#define cButModeRightShftSingle   27
 
+#define cButModeLeftCtrlDouble    28
+#define cButModeMiddleCtrlDouble  29
+#define cButModeRightCtrlDouble   30
+#define cButModeLeftCtrlSingle    31
+#define cButModeMiddleCtrlSingle  32
+#define cButModeRightCtrlSingle   33
+
+#define cButModeLeftCtShDouble    34
+#define cButModeMiddleCtShDouble  35
+#define cButModeRightCtShDouble   36
+#define cButModeLeftCtShSingle    37
+#define cButModeMiddleCtShSingle  38
+#define cButModeRightCtShSingle   39
+
+#define cButModeLeftAltDouble     40
+#define cButModeMiddleAltDouble   41
+#define cButModeRightAltDouble    42
+#define cButModeLeftAltSingle     43
+#define cButModeMiddleAltSingle   44
+#define cButModeRightAltSingle    45
+
+#define cButModeLeftAltShftDouble    46
+#define cButModeMiddleAltShftDouble  47
+#define cButModeRightAltShftDouble   48
+#define cButModeLeftAltShftSingle    49
+#define cButModeMiddleAltShftSingle  50
+#define cButModeRightAltShftSingle   51
+
+#define cButModeLeftCtrlAltDouble    52
+#define cButModeMiddleCtrlAltDouble  53
+#define cButModeRightCtrlAltDouble   54
+#define cButModeLeftCtrlAltSingle    55
+#define cButModeMiddleCtrlAltSingle  56
+#define cButModeRightCtrlAltSingle   57
+
+#define cButModeLeftCtrlAltShftDouble    58
+#define cButModeMiddleCtrlAltShftDouble  59
+#define cButModeRightCtrlAltShftDouble   60
+#define cButModeLeftCtrlAltShftSingle    61
+#define cButModeMiddleCtrlAltShftSingle  62
+#define cButModeRightCtrlAltShftSingle   63
+
+#define cButModeWheelAlt   64
+#define cButModeWheelAltShft 65
+#define cButModeWheelCtrlAlt  66
+#define cButModeWheelCtrlAltShft  67
+
+#define cButModeLeftAlt    68
+#define cButModeMiddleAlt  69
+#define cButModeRightAlt   70
+
+#define CButModeLeftAltShft 71
+#define CButModeMiddleAltShft 72
+#define CButModeRightAltShft 73
+
+#define CButModeLeftCtrlAlt  74
+#define CButModeMiddleCtrlAlt 75
+#define CButModeRightCtrlAlt 76
+
+#define CButModeLeftCtrlAltShft 77
+#define CButModeMiddleCtrlAltShft 78
+#define CButModeRightCtrlAltShft 79
+
+#define cButModeInputCount 80
+
+typedef char CodeType[10];
 
 int ButModeInit(PyMOLGlobals *G);
 void ButModeFree(PyMOLGlobals *G);

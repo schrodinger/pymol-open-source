@@ -36,7 +36,7 @@ struct _CButMode {
   Block *Block;
   CodeType Code[cButModeCount+1];
   int NCode;
-  int Mode[23];
+  int Mode[cButModeInputCount];
   int NBut;
   float Rate,RateShown;
   float Samples;
@@ -68,6 +68,7 @@ void ButModeSet(PyMOLGlobals *G,int button,int action)
   if((button>=0)&&(button<I->NBut)&&
      (action>=0)&&(action<I->NCode)) {
     I->Mode[button]=action;
+    printf("%d -> %d\n",button,action);
     OrthoDirty(G);
   }
 }
@@ -380,8 +381,6 @@ static void ButModeDraw(Block *block)
   }
 }
 
-
-
 /*========================================================================*/
 int ButModeInit(PyMOLGlobals *G)
 {
@@ -397,7 +396,7 @@ int ButModeInit(PyMOLGlobals *G)
     I->Caption[0] = 0;
 
     I->NCode = cButModeCount;
-    I->NBut = 22;
+    I->NBut = cButModeInputCount;
 
     for(a=0;a<I->NBut;a++) {
       I->Mode[a]=-1;
@@ -511,6 +510,7 @@ int ButModeTranslate(PyMOLGlobals *G,int button, int mod)
     case (cOrthoCTRL+cOrthoSHIFT):
       mode = 15;
     }
+    mod = 0;
     switch(I->Mode[mode]) {
     case cButModeScaleSlab:
       if(button==P_GLUT_BUTTON_SCROLL_FORWARD) {
@@ -544,27 +544,54 @@ int ButModeTranslate(PyMOLGlobals *G,int button, int mod)
     return -1;
     break;
   case P_GLUT_DOUBLE_LEFT:
-    mode = 16;
-    mod = 0;
-    break;
   case P_GLUT_DOUBLE_MIDDLE:
-    mode = 17;
-    mod = 0;
-    break;
   case P_GLUT_DOUBLE_RIGHT:
-    mode = 18;
-    mod = 0;
-    break;
   case P_GLUT_SINGLE_LEFT:
-    mode = 19;
-    mod = 0;
-    break;
   case P_GLUT_SINGLE_MIDDLE:
-    mode = 20;
-    mod = 0;
-    break;
   case P_GLUT_SINGLE_RIGHT:
-    mode = 21;
+    switch(button) {
+    case P_GLUT_DOUBLE_LEFT:
+      mode = 16;
+      break;
+    case P_GLUT_DOUBLE_MIDDLE:
+      mode = 17;
+      break;
+    case P_GLUT_DOUBLE_RIGHT:
+      mode = 18;
+      break;
+    case P_GLUT_SINGLE_LEFT:
+      mode = 19;
+      break;
+    case P_GLUT_SINGLE_MIDDLE:
+      mode = 20;
+      break;
+    case P_GLUT_SINGLE_RIGHT:
+      mode = 21;
+      break;
+    }
+    switch(mod) {
+    case cOrthoSHIFT:
+      mode+=6;
+      break;
+    case cOrthoCTRL:
+      mode+=12;
+      break;
+    case (cOrthoCTRL+cOrthoSHIFT):
+      mode+=18;
+      break;
+    case cOrthoALT: 
+      mode+=24;
+      break;
+    case (cOrthoALT+cOrthoSHIFT):
+      mode+=30;
+      break;
+    case (cOrthoALT+cOrthoCTRL):
+      mode+=36;
+      break;
+    case (cOrthoALT+cOrthoCTRL+cOrthoSHIFT):
+      mode+=42;
+      break;
+    }
     mod = 0;
     break;
   }
@@ -579,6 +606,18 @@ int ButModeTranslate(PyMOLGlobals *G,int button, int mod)
     break;
   case (cOrthoCTRL+cOrthoSHIFT):
     mode+=9;
+    break;
+  case cOrthoALT:
+    mode+=68;
+    break;
+  case (cOrthoALT+cOrthoSHIFT):
+    mode+=71;
+    break;
+  case (cOrthoALT+cOrthoCTRL):
+    mode+=74;
+    break;
+  case (cOrthoALT+cOrthoCTRL+cOrthoSHIFT):
+    mode+=77;
     break;
   }
   return(I->Mode[mode]);

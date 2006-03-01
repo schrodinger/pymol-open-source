@@ -112,7 +112,7 @@ struct _CScene {
   int StartX,StartY;
   int LastWinX,LastWinY;
   double LastClickTime;
-  int LastButton;
+  int LastButton, LastMod;
   int PossibleSingleClick;
   double LastReleaseTime;
   double SingleClickDelay;
@@ -170,7 +170,7 @@ int SceneMustDrawBoth(PyMOLGlobals *G)
            SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono)));
 }
 
-static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when);
+static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when,int mod);
 
 static int side_by_side(int stereo_mode)
 {
@@ -1646,7 +1646,8 @@ void SceneIdle(PyMOLGlobals *G)
       SceneDeferClickWhen(I->Block, 
                           I->LastButton + P_GLUT_SINGLE_LEFT,
                           I->LastWinX, I->LastWinY,
-                          I->LastClickTime); /* push a click onto the queue */
+                          I->LastClickTime,
+			  I->LastMod); /* push a click onto the queue */
       
       I->PossibleSingleClick = 0;
       OrthoDirty(G); /* force an update */
@@ -2644,14 +2645,21 @@ static int SceneClick(Block *block,int button,int x,int y,
     
     if(!mod)
       I->PossibleSingleClick = 1;
-    else
-      I->PossibleSingleClick = 0;
+    else {
+      char *but_mode_name = SettingGetGlobal_s(G,cSetting_button_mode_name);
+      if(but_mode_name && but_mode_name[0]=='1') {
+	I->PossibleSingleClick = 1;
+      } else {
+	I->PossibleSingleClick = 0;
+      }
+    }
   }
 
   I->LastWinX = x;
   I->LastWinY = y;
   I->LastClickTime = when;
   I->LastButton = button;
+  I->LastMod = mod;
   I->Threshold = 0;
 
   mode = ButModeTranslate(G,button,mod); 
@@ -4381,7 +4389,7 @@ int SceneDeferClick(Block *block, int button, int x, int y, int mod)
 }
 
 
-static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when)
+static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when,int mod)
 {
   PyMOLGlobals *G=block->G;
   DeferredMouse *dm = Calloc(DeferredMouse,1);
@@ -4392,6 +4400,7 @@ static int SceneDeferClickWhen(Block *block, int button, int x, int y, double wh
     dm->x = x;
     dm->y = y;
     dm->when = when;
+    dm->mod = mod;
     dm->deferred.fn = (DeferredFn*)SceneDeferredClick;
   }
   OrthoDefer(G,&dm->deferred);
