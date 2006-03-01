@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_predef
 #define _H_os_predef
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+
 #ifdef WIN32
 #define __inline__ __inline
 #endif
@@ -102,6 +104,7 @@ Z* -------------------------------------------------------------------
 
 #endif
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 #endif
 

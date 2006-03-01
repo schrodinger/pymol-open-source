@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"os_proprietary.h"
 
 #ifndef _PYMOL_OSX
+
 #ifdef _PYMOL_OPENGL_SHADERS
 #ifndef WIN32
 #define GL_GLEXT_PROTOTYPES
@@ -30,29 +31,29 @@ Z* -------------------------------------------------------------------
 #include<GL/gl.h>
 #include<GL/glu.h>
 #endif
-#else
 
-#ifdef _MACPYMOL_XCODE
+#else
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+#ifdef _MACPYMOL_XCODE
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/glext.h>
-/* END PROPRIETARY CODE SEGMENT */
 #else
 #include<gl.h>
 #include<glu.h>
 #include <glext.h>
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 #endif
 
-#ifdef WIN32
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+#ifdef WIN32
 #include<GL/glu.h>
 #ifdef _PYMOL_OPENGL_SHADERS
 #include<GL/glext.h>
 #endif
-/* END PROPRIETARY CODE SEGMENT */
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 void PyMOLReadPixels(GLint x,
                   GLint y,

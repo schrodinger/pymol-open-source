@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
  * source code on open-source operating systems with open-source
  * development tools.
  *
- * We do not support, but nor do we necessarily preclude, compilation
+ * We do not support, nor do we necessarily preclude, compilation
  * of our open-source PyMOL source code on proprietary operating
  * systems such as Microsoft Windows using proprietary development
  * tools such as Microsoft Visual Studio.  Such activities are simply
