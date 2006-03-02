@@ -17,9 +17,9 @@ Z* -------------------------------------------------------------------
 
 /* PROPRIETARY CODE SEGMENT DISCLAIMER:
  *
- * DeLano Scientific LLC supports compilation of open-source PyMOL
- * source code on open-source operating systems with open-source
- * development tools.
+ * DeLano Scientific LLC supports and strongly encourages compilation
+ * of open-source PyMOL source code on open-source operating systems
+ * with open-source development tools (e.g. Linux/XFree86 with GCC).
  *
  * We do not support, nor do we necessarily preclude, compilation
  * of our open-source PyMOL source code on proprietary operating
@@ -31,17 +31,19 @@ Z* -------------------------------------------------------------------
  * to be a proprietary business matter that serves as a robust logical
  * foundation for productive business relationships with mutual and
  * defined benefits.  In other words, if you depend on PyMOL to run
- * well on proprietary operating systems, then it is generally in your
- * interest to engage our business on business terms, such as via paid
- * software licenses, development partnerships, or joint ventures.
+ * well on proprietary operating systems, then we maintain that it is
+ * in your interest to engage our business on business terms, such as
+ * through paid software subscriptions and licenses, through software
+ * development partnerships, or by launching joint business ventures.
  *
- * However, if you still feel that you must compile open-source PyMOL
+ * If, however, you still feel that you must compile open-source PyMOL
  * source code on proprietary operating systems, then we suggest use
  * of Linux-like tools and environments, such as Red Hat's Cygwin on
- * Windows and X11/Fink on Mac OS X, since they provide for the
- * greatest compatibility with open-source PyMOL.  Regardless of the
- * approach you choose, use of our proprietary code segments should be
- * avoided wherever possible.
+ * Windows and X11/GCC/Fink on Mac OS X, since they will provide for
+ * the greatest compatibility and synergy with the Open-Source PyMOL
+ * project.  Regardless of the approach you choose, use of and
+ * reliance upon our proprietary code segments should be avoided
+ * wherever and whenever possible.
  *
  * THE FOLLOWING CODE SEGMENT AND ALL OTHERS MARKED "PROPRIETARY" ARE
  * PROVIDED AS IS AND FOR USE AT YOUR OWN RISK WITH NO ASSURANCES OF
