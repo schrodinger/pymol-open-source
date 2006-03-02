@@ -89,6 +89,7 @@ unix-mindep: semistatic
 	cp -r test $(MDP)
 	cp -r data $(MDP)	
 	cp -r examples $(MDP)
+	/bin/rm -rf $(MDP)/examples/package
 	cp -r scripts $(MDP)
 	cp -r pymol.exe $(MDP)
 	cp -r ext/lib/python2.4 $(MDP)/ext/lib

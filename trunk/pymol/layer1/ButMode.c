@@ -68,7 +68,6 @@ void ButModeSet(PyMOLGlobals *G,int button,int action)
   if((button>=0)&&(button<I->NBut)&&
      (action>=0)&&(action<I->NCode)) {
     I->Mode[button]=action;
-    printf("%d -> %d\n",button,action);
     OrthoDirty(G);
   }
 }
