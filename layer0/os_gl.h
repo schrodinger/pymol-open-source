@@ -119,6 +119,10 @@ int PyMOLCheckOpenGLErr(char *pos);
 #include<glut.h>
 #endif
 
+#ifdef FREEGLUT
+#include<GL/freeglut_ext.h>
+#endif
+
 /* These are the only glut constants and functions that PyMOL uses ... */
 
 #define P_GLUT_ACTIVE_ALT               GLUT_ACTIVE_ALT                 
@@ -148,6 +152,8 @@ int PyMOLCheckOpenGLErr(char *pos);
 #define P_GLUT_WINDOW_HEIGHT            GLUT_WINDOW_HEIGHT
 #define P_GLUT_SCREEN_HEIGHT            GLUT_SCREEN_HEIGHT
 #define P_GLUT_SCREEN_WIDTH             GLUT_SCREEN_WIDTH
+#define P_GLUT_WINDOW_BORDER_WIDTH      GLUT_WINDOW_BORDER_WIDTH
+#define P_GLUT_WINDOW_HEADER_HEIGHT     GLUT_WINDOW_HEADER_HEIGHT
 
 #define p_glutGameModeString       glutGameModeString
 #define p_glutEnterGameMode        glutEnterGameMode
@@ -264,6 +270,8 @@ int p_glutGetRedisplay(void);
 #define P_GLUT_WINDOW_HEIGHT            8
 #define P_GLUT_SCREEN_WIDTH             9
 #define P_GLUT_SCREEN_HEIGHT            10
+#define P_GLUT_WINDOW_BORDER_WIDTH             11
+#define P_GLUT_WINDOW_HEADER_HEIGHT            12
 
 
 #ifndef _PYMOL_NO_GLUT

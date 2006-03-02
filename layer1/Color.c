@@ -380,7 +380,7 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
   int ll;
   register CColor *I=G->Color;
   PyObject *rec;
-  ColorRec *color;
+  ColorRec *color = NULL;
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
   if(ok) {
@@ -410,8 +410,8 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
         }
       }
       if(ok&&(ll>6)) {
-          if(ok) ok=PConvPyIntToChar(PyList_GetItem(rec,6),&color->Fixed);
-      } else {
+        if(ok) ok=PConvPyIntToChar(PyList_GetItem(rec,6),&color->Fixed);
+      } else if(ok&&color) {
         color->Fixed =false;
       }
       if(!ok) break;

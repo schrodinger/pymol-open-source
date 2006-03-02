@@ -9292,14 +9292,21 @@ void ExecutiveFullScreen(PyMOLGlobals *G,int flag)
 #ifndef _PYMOL_NO_GLUT
   register CExecutive *I = G->Executive;
   if(G->HaveGUI && G->ValidContext) {
-    if(!SettingGet(G,cSetting_full_screen))
-      {
-        I->oldPX = p_glutGet(P_GLUT_WINDOW_X);
-        I->oldPY = p_glutGet(P_GLUT_WINDOW_Y);
-        I->oldWidth = p_glutGet(P_GLUT_WINDOW_WIDTH);
-        I->oldHeight = p_glutGet(P_GLUT_WINDOW_HEIGHT);
-        I->sizeFlag = true;
-      }
+    if(!SettingGet(G,cSetting_full_screen)) {
+      I->oldPX = p_glutGet(P_GLUT_WINDOW_X) 
+#ifdef FREEGLUT
+        - p_glutGet(P_GLUT_WINDOW_BORDER_WIDTH)
+#endif
+        ;
+      I->oldPY = p_glutGet(P_GLUT_WINDOW_Y) 
+#ifdef FREEGLUT
+        - p_glutGet(P_GLUT_WINDOW_HEADER_HEIGHT)
+#endif
+        ;
+      I->oldWidth = p_glutGet(P_GLUT_WINDOW_WIDTH);
+      I->oldHeight = p_glutGet(P_GLUT_WINDOW_HEIGHT);
+      I->sizeFlag = true;
+    }
       
     SettingSet(G,cSetting_full_screen,(float)flag);
     if(flag) {

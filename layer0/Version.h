@@ -1,9 +1,9 @@
 #ifndef _PyMOL_VERSION
-#define _PyMOL_VERSION "0.99pre05"
+#define _PyMOL_VERSION "0.99pre06"
 #endif
 
 #ifndef _PyMOL_VERSION_double
-#define _PyMOL_VERSION_double 0.990401
+#define _PyMOL_VERSION_double 0.990501
 #endif
 
 /* for session file compatibility */
