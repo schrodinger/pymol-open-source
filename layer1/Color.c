@@ -377,7 +377,7 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
   int a;
   int index=0;
   int ok=true;
-  int ll;
+  int ll=0;
   register CColor *I=G->Color;
   PyObject *rec;
   ColorRec *color = NULL;
