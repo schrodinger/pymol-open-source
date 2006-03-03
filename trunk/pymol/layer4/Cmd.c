@@ -4300,7 +4300,9 @@ static PyObject *CmdColor(PyObject *self, 	PyObject *args)
   if (ok) {
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
-    ok = ExecutiveColor(TempPyMOLGlobals,s1,color,flags,quiet);
+    if(ok) {
+      ok = ExecutiveColor(TempPyMOLGlobals,s1,color,flags,quiet);
+    }
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
