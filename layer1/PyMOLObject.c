@@ -771,6 +771,17 @@ void ObjectStateInit(PyMOLGlobals *G,CObjectState *I)
   I->Matrix = NULL;
 }
 
+void ObjectStateCopy(CObjectState *dst, CObjectState *src)
+{
+  *dst = *src;
+  if(src->Matrix) {
+    dst->Matrix = Alloc(double,16);
+    if(dst->Matrix) {
+      copy44d(src->Matrix,dst->Matrix);
+    }
+  }
+}
+
 void ObjectStatePurge(CObjectState *I)
 {
   FreeP(I->Matrix);
