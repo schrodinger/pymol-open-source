@@ -18,21 +18,22 @@ Z* -------------------------------------------------------------------
 #define _H_CPyMOL
 
 /* WARNING: Do not write applications against this API.  It is a
- * *private* internal interface to PyMOL for the exclusive internal
- * use of DeLano Scientific LLC in development of wrapped PyMOL
- * applications and as an interface layer for supporting stable public
- * APIs.
+ * *private* internal interface to PyMOL for the exclusive use of
+ * DeLano Scientific LLC in development of wrapped PyMOL applications
+ * and as an interface layer for supporting more stable public APIs.
  *
  * DeLano Scientific LLC will change this interface regularly and
- * without notice.  It may even vanish altogether.  Any and all code
- * you develop against this interface is guaranteed to be fragile,
- * time-consuming, and expensive to maintain.
- * 
- * For all of these reasons, please do not use this API.  
+ * without notice.  It may even vanish altogether.  Code you develop
+ * against this interface is guaranteed to be fragile, time-consuming,
+ * and expensive to maintain. 
  *
- * Note that we are developing a C-based "CMol" API or controlling
- * PyMOL that will be intended for external usage.  Please contact
- * DeLano Scientific LLC directly for more information about it.
+ * If you feel that you absolutely must rely upon this API, then
+ * please be sure to create your own lightweight wrapper layer around
+ * it so that the rest of your can be relatively insensitive to
+ * changes made here.  Failure to do so will almost certainly result
+ * in code that is impossible to maintain over time.
+ *
+ * You have been warned!
  */
 
 #define PYMOL_BUTTON_DOWN           0
