@@ -1224,9 +1224,11 @@ CoordSet *CoordSetCopy(CoordSet *cs)
   OOAlloc(cs->State.G,CoordSet);
 
   (*I)=(*cs);
+  ObjectStateCopy(&cs->State,&I->State);
   I->Symmetry=SymmetryCopy(cs->Symmetry);
   if(I->PeriodicBox) I->PeriodicBox=CrystalCopy(I->PeriodicBox);
   I->Coord = VLAlloc(float,I->NIndex*3);
+  
   v0=I->Coord;
   v1=cs->Coord;
   for(a=0;a<I->NIndex;a++) {
@@ -1245,6 +1247,14 @@ CoordSet *CoordSetCopy(CoordSet *cs)
     i1=cs->AtmToIdx;
     for(a=0;a<nAtom;a++)
       *(i0++)=*(i1++);
+  }
+  
+  
+  if(cs->MatrixVLA) { /* not used yet */
+    I->MatrixVLA = VLAlloc(double,16*cs->NMatrix*sizeof(double));
+    if(I->MatrixVLA) {
+      UtilCopyMem(I->MatrixVLA,cs->MatrixVLA,sizeof(double)*16*cs->NMatrix);
+    }
   }
 
   I->IdxToAtm = Alloc(int,I->NIndex);

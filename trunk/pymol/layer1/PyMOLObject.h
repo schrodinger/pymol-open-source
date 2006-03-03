@@ -98,6 +98,7 @@ typedef struct CObjectState {
 } CObjectState;
 
 void ObjectStateInit(PyMOLGlobals *G,CObjectState *I);
+void ObjectStateCopy(CObjectState *dst, CObjectState *src);
 void ObjectStatePurge(CObjectState *I);
 void ObjectStateSetMatrix(CObjectState *I, double *matrix);
 double *ObjectStateGetMatrix(CObjectState *I);
