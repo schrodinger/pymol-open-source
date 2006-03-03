@@ -29,7 +29,7 @@ Z* -------------------------------------------------------------------
  *
  * If you feel that you absolutely must rely upon this API, then
  * please be sure to create your own lightweight wrapper layer around
- * it so that the rest of your can be relatively insensitive to
+ * it so that the rest of your code will be relatively insensitive to
  * changes made here.  Failure to do so will almost certainly result
  * in code that is impossible to maintain over time.
  *
