@@ -1647,7 +1647,7 @@ void SceneIdle(PyMOLGlobals *G)
                           I->LastButton + P_GLUT_SINGLE_LEFT,
                           I->LastWinX, I->LastWinY,
                           I->LastClickTime,
-			  I->LastMod); /* push a click onto the queue */
+                          I->LastMod); /* push a click onto the queue */
       
       I->PossibleSingleClick = 0;
       OrthoDirty(G); /* force an update */
@@ -2623,34 +2623,37 @@ static int SceneClick(Block *block,int button,int x,int y,
                          ( button == P_GLUT_SINGLE_RIGHT  ));
 
   if(!is_single_click) {
-    if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&((when-I->LastClickTime)<cDoubleTime))
-      {
-        int dx,dy;
-        dx = abs(I->LastWinX - x);
-        dy = abs(I->LastWinY - y);
-        if((dx<10)&&(dy<10)&&(I->LastButton==button)) {
-          switch(button) {
-          case P_GLUT_LEFT_BUTTON:
-            button = P_GLUT_DOUBLE_LEFT;
-            break;
-          case P_GLUT_MIDDLE_BUTTON:
-            button = P_GLUT_DOUBLE_MIDDLE;
-            break;
-          case P_GLUT_RIGHT_BUTTON:
-            button = P_GLUT_DOUBLE_RIGHT;
-            break;
-          }
+
+    if( ((ButModeTranslate(G,button,mod) == cButModePotentialClick) || (!mod)) 
+        &&((when-I->LastClickTime)<cDoubleTime)) {
+      int dx,dy;
+      dx = abs(I->LastWinX - x);
+      dy = abs(I->LastWinY - y);
+      if((dx<10)&&(dy<10)&&(I->LastButton==button)) {
+        switch(button) {
+        case P_GLUT_LEFT_BUTTON:
+          button = P_GLUT_DOUBLE_LEFT;
+          break;
+        case P_GLUT_MIDDLE_BUTTON:
+          button = P_GLUT_DOUBLE_MIDDLE;
+          break;
+        case P_GLUT_RIGHT_BUTTON:
+          button = P_GLUT_DOUBLE_RIGHT;
+          break;
         }
       }
-    
-    if(!mod)
+    }
+
+    if(ButModeTranslate(G,button,mod) == cButModePotentialClick) {
       I->PossibleSingleClick = 1;
-    else {
+    } else if(!mod) {
+      I->PossibleSingleClick = 1;
+    } else {
       char *but_mode_name = SettingGetGlobal_s(G,cSetting_button_mode_name);
       if(but_mode_name && but_mode_name[0]=='1') {
-	I->PossibleSingleClick = 1;
+        I->PossibleSingleClick = 1;
       } else {
-	I->PossibleSingleClick = 0;
+        I->PossibleSingleClick = 0;
       }
     }
   }
@@ -3173,7 +3176,7 @@ static int SceneClick(Block *block,int button,int x,int y,
         }
         switch(mode) {
         case cButModeSimpleClick:
-          PyMOL_SetClickReady(G->PyMOL,obj->Name,I->LastPicked.src.index);
+          PyMOL_SetClickReady(G->PyMOL,obj->Name,I->LastPicked.src.index,button,mod);
           break;
         case cButModeLB:
         case cButModeMB:
@@ -5216,6 +5219,7 @@ void SceneUpdate(PyMOLGlobals *G)
     SceneCountFrames(G);
     PyMOL_SetBusy(G->PyMOL,true); /*  race condition -- may need to be fixed */
     {
+#ifndef _PYMOL_NOPY
       int n_thread  = SettingGetGlobal_i(G,cSetting_max_threads);
       int multithread = SettingGetGlobal_i(G,cSetting_async_builds);
       if((n_thread>2)&&(I->NFrame>1)&&(!SettingGetGlobal_b(G,cSetting_defer_builds_mode)))
@@ -5239,13 +5243,15 @@ void SceneUpdate(PyMOLGlobals *G)
             FreeP(thread_info);
           }
         }
-      } else {
-        /* single-threaded update */
-        rec = NULL;
-        while(ListIterate(I->Obj,rec,next))
-          if(rec->obj->fUpdate) 
-            rec->obj->fUpdate(rec->obj);
-      }
+      } else 
+#endif
+        {
+          /* single-threaded update */
+          rec = NULL;
+          while(ListIterate(I->Obj,rec,next))
+            if(rec->obj->fUpdate) 
+              rec->obj->fUpdate(rec->obj);
+        }
     }
     PyMOL_SetBusy(G->PyMOL,false); /*  race condition -- may need to be fixed */
 	 I->ChangedFlag = false;

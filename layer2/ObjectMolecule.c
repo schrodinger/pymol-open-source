@@ -8383,12 +8383,30 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                     ai->visRep[cRepLabel]=false;
                     hit_flag=true;
                   } else {
-                    if(PLabelAtom(I->Obj.G,&I->AtomInfo[a],op->s1,a)) {
-                      op->i1++;
-                      ai->visRep[cRepLabel]=true;
-                      hit_flag=true;
-                    } else
-                      ok=false;
+                    if(op->i2) {
+                      /* python label expression evaluation */
+                      if(PLabelAtom(I->Obj.G,&I->AtomInfo[a],op->s1,a)) {
+                        op->i1++;
+                        ai->visRep[cRepLabel]=true;
+                        hit_flag=true;
+                      } else
+                        ok=false;
+                    } else {
+                      /* simple string label text */
+                      AtomInfoType *ai = I->AtomInfo + a;
+                      char *label = op->s1;
+                      if(ai->label) {
+                        OVLexicon_DecRef(I->Obj.G->Lexicon,ai->label);
+                      }
+                      ai->label = 0;
+                      if(label && label[0]) {
+                        OVreturn_word ret = OVLexicon_GetFromCString(
+                                              G->Lexicon,label);
+                        if(OVreturn_IS_OK(ret)) {
+                          ai->label = ret.word;
+                        }
+                      }
+                    }
                   }
                 }
                 break;
@@ -9084,8 +9102,10 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
       stop=1;
     }
     {
+#ifndef _PYMOL_NOPY
       int n_thread  = SettingGetGlobal_i(I->Obj.G,cSetting_max_threads);
       int multithread = SettingGetGlobal_i(I->Obj.G,cSetting_async_builds);
+      
       if(multithread&&(n_thread)&&(stop-start)>1) {
         int cnt = 0;
         for(a=start;a<stop;a++)
@@ -9107,18 +9127,20 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
           
         }
         
-      } else {
-        for(a=start;a<stop;a++)
-          if(I->CSet[a]) {	
-            OrthoBusySlow(I->Obj.G,a,I->NCSet);
-            PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Blather)
-              " ObjectMolecule-DEBUG: updating representations for state %d of \"%s\".\n" 
-              , a+1, I->Obj.Name
-              ENDFB(I->Obj.G);
-            if(I->CSet[a]->fUpdate)
-              I->CSet[a]->fUpdate(I->CSet[a],a);
-          }
-      }
+      } else
+#endif
+        { /* single thread */
+          for(a=start;a<stop;a++)
+            if(I->CSet[a]) {	
+              OrthoBusySlow(I->Obj.G,a,I->NCSet);
+              PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Blather)
+                " ObjectMolecule-DEBUG: updating representations for state %d of \"%s\".\n" 
+                , a+1, I->Obj.Name
+                ENDFB(I->Obj.G);
+              if(I->CSet[a]->fUpdate)
+                I->CSet[a]->fUpdate(I->CSet[a],a);
+            }
+        }
     }
     if(I->Obj.RepVis[cRepCell]) {
       if(I->Symmetry) {
