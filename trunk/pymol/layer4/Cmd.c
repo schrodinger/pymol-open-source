@@ -2838,7 +2838,7 @@ static PyObject *CmdLabel(PyObject *self,   PyObject *args)
   if (ok) {
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
-    if(ok) ExecutiveLabel(TempPyMOLGlobals,s1,str2,quiet); /* TODO STATUS */
+    if(ok) ok=ExecutiveLabel(TempPyMOLGlobals,s1,str2,quiet,true); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }

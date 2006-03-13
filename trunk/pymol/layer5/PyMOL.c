@@ -100,7 +100,7 @@ typedef struct _CPyMOL {
   int ReshapeFlag;
   int ClickReadyFlag;
   char ClickedObject[ObjNameMax];  
-  int ClickedIndex;
+  int ClickedIndex, ClickedButton, ClickedModifiers;
   int DraggedFlag;
   int Reshape[PYMOL_RESHAPE_SIZE];
   int Progress[PYMOL_PROGRESS_SIZE];
@@ -1573,6 +1573,18 @@ PyMOLreturn_status PyMOL_CmdClip(CPyMOL *I,char *mode, float amount, char *selec
   return return_status_ok(ok);
 }
 
+PyMOLreturn_status PyMOL_CmdLabel(CPyMOL *I,char *selection, char *text, int quiet)
+{
+  int ok;
+  PYMOL_API_LOCK
+  OrthoLineType s1;
+  SelectorGetTmp(I->G,selection,s1);
+  ok = ExecutiveLabel(I->G,s1,text,quiet,0);
+  SelectorFreeTmp(I->G,s1);
+  PYMOL_API_UNLOCK
+  return return_status_ok(ok);
+}
+
 PyMOLreturn_status PyMOL_CmdSelect(CPyMOL *I,char *name, char *selection, int quiet)
 {
   int ok;
@@ -2845,13 +2857,15 @@ void PyMOL_SetPassive(CPyMOL *I,int onOff)
   I->PassiveFlag = onOff;
 }
 
-void PyMOL_SetClickReady(CPyMOL *I, char *name, int index)
+void PyMOL_SetClickReady(CPyMOL *I, char *name, int index, int button, int mod)
 {
 
   if(name && name[0]) {
     I->ClickReadyFlag = true;
     strcpy(I->ClickedObject,name);
     I->ClickedIndex = index;
+    I->ClickedButton = button;
+    I->ClickedModifiers = mod;
   } else {
     I->ClickReadyFlag = false;
   }
@@ -2877,10 +2891,43 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
     ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(I->G,I->ClickedObject);
     if(obj && (I->ClickedIndex < obj->NAtom)) {
       AtomInfoType *ai = obj->AtomInfo + I->ClickedIndex;
+      WordType butstr="left", modstr="";
+      switch(I->ClickedButton) {
+      case P_GLUT_SINGLE_LEFT:
+        strcpy(butstr,"single_left");
+        break;
+      case P_GLUT_SINGLE_MIDDLE:
+        strcpy(butstr,"single_middle");
+        break;
+      case P_GLUT_SINGLE_RIGHT:
+        strcpy(butstr,"single_right");
+        break;
+      case P_GLUT_DOUBLE_LEFT:
+        strcpy(butstr,"double_left");
+        break;
+      case P_GLUT_DOUBLE_MIDDLE:
+        strcpy(butstr,"double_middle");
+        break;
+      case P_GLUT_DOUBLE_RIGHT:
+        strcpy(butstr,"double_right");
+        break;
+      }
+      if(cOrthoCTRL & I->ClickedModifiers) {
+        if(modstr[0]) strcat(modstr," ");
+        strcat(modstr,"ctrl");
+      }
+      if(cOrthoALT & I->ClickedModifiers) {
+        if(modstr[0]) strcat(modstr," ");
+        strcat(modstr,"alt");
+      }
+      if(cOrthoSHIFT & I->ClickedModifiers) {
+        if(modstr[0]) strcat(modstr," ");
+        strcat(modstr,"shift");
+      }
       result = Alloc(char, OrthoLineLength+1);
       if(result) {
         sprintf(result,
-                "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\n",
+                "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\nbutton=%s\nmod_keys=%s\n",
                 I->ClickedObject,
                 I->ClickedIndex+1,
                 ai->rank,
@@ -2890,7 +2937,9 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
                 ai->resn,
                 ai->resi,
                 ai->name,
-                ai->alt);
+                ai->alt,
+                butstr,
+                modstr);
       }
     }
   }
@@ -3031,18 +3080,46 @@ void PyMOL_SetDefaultMouse(CPyMOL *I)
   PYMOL_API_LOCK
   PyMOLGlobals *G = I->G;
 
-  ButModeSet(G,0,cButModeRotXYZ);
-  ButModeSet(G,1,cButModeTransXY);
-  ButModeSet(G,2,cButModeTransZ);
-  ButModeSet(G,12,cButModeScaleSlab);
-  ButModeSet(G,13,cButModeMoveSlab);
-  ButModeSet(G,5,cButModeClipNF);
-  ButModeSet(G,14,cButModeMoveSlabAndZoom);
-  ButModeSet(G,15,cButModeTransZ);
-  ButModeSet(G,20,cButModeCent);
-  ButModeSet(G,10,cButModeOrigAt);
-  ButModeSet(G,19,cButModeSimpleClick);
+  ButModeSet(G,cButModeLeftNone,cButModeRotXYZ);
+  ButModeSet(G,cButModeMiddleNone,cButModeTransXY);
+  ButModeSet(G,cButModeRightNone,cButModeTransZ);
 
+  ButModeSet(G,cButModeLeftShft,cButModePotentialClick);
+  ButModeSet(G,cButModeMiddleShft,cButModePotentialClick);
+  ButModeSet(G,cButModeRightShft,cButModeClipNF);
+
+  ButModeSet(G,cButModeLeftCtrl,cButModePotentialClick);
+  ButModeSet(G,cButModeMiddleCtrl,cButModePotentialClick);
+  ButModeSet(G,cButModeRightCtrl,cButModePotentialClick);
+
+  ButModeSet(G,cButModeLeftCtSh,cButModePotentialClick);
+  ButModeSet(G,cButModeMiddleCtSh,cButModePotentialClick);
+  ButModeSet(G,cButModeRightCtSh,cButModePotentialClick);
+
+  ButModeSet(G,cButModeWheelNone,cButModeScaleSlab);
+  ButModeSet(G,cButModeWheelShft,cButModeMoveSlab);
+  ButModeSet(G,cButModeWheelCtrl,cButModeMoveSlabAndZoom);
+  ButModeSet(G,cButModeWheelCtSh,cButModeTransZ);
+
+  ButModeSet(G,cButModeMiddleCtSh,cButModeOrigAt);
+
+  ButModeSet(G,cButModeLeftSingle,cButModeSimpleClick);
+  ButModeSet(G,cButModeMiddleSingle,cButModeCent);
+  ButModeSet(G,cButModeRightSingle,cButModeSimpleClick);
+
+  ButModeSet(G,cButModeLeftDouble,cButModeSimpleClick);
+  ButModeSet(G,cButModeRightDouble,cButModeSimpleClick);
+  
+  {
+    int a;
+    for(a=cButModeLeftShftDouble;a<=cButModeRightCtrlAltShftSingle;a++) {
+      ButModeSet(G,a,cButModeSimpleClick);
+    }
+    for(a=cButModeLeftAlt;a<=cButModeRightCtrlAltShft;a++) {
+      ButModeSet(G,a,cButModePotentialClick);
+    }
+
+  }
   G->Feedback->Mask[FB_Scene] &= ~(FB_Results); /* suppress click messages */
   PYMOL_API_UNLOCK
 }

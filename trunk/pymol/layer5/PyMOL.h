@@ -159,7 +159,7 @@ void PyMOL_Stop(CPyMOL *I);
 void PyMOL_NeedFakeDrag(CPyMOL *I);
 void PyMOL_NeedRedisplay(CPyMOL *I);
 void PyMOL_NeedSwap(CPyMOL *I);
-void PyMOL_SetClickReady(CPyMOL *I, char *name, int index);
+void PyMOL_SetClickReady(CPyMOL *I, char *name, int index, int button, int mod);
 void PyMOL_SetPassive(CPyMOL *I, int onOff);
 void PyMOL_NeedReshape(CPyMOL *I,int mode, int x, int y, int width, int height);
 
@@ -285,6 +285,8 @@ PyMOLreturn_status PyMOL_CmdSet(CPyMOL *I,char *setting, char *value, char *sele
                                 int state, int quiet, int side_effects);
 
 PyMOLreturn_status PyMOL_CmdColor(CPyMOL *I,char *color, char *selection, int flags, int quiet);
+
+PyMOLreturn_status PyMOL_CmdLabel(CPyMOL *I,char *selection, char *text, int quiet);
 
 PyMOLreturn_status PyMOL_CmdSelect(CPyMOL *I,char *name, char *selection, int quiet);
 

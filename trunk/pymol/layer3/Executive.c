@@ -6000,7 +6000,7 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
   }
 }
 /*========================================================================*/
-void ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr,int quiet)
+int ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr, int quiet, int eval)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
@@ -6012,6 +6012,7 @@ void ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr,int quiet)
     op1.code = OMOP_LABL;
     op1.s1 = expr;
     op1.i1 = 0;
+    op1.i2 = eval;
     ExecutiveObjMolSeleOp(G,sele1,&op1);
     cnt = op1.i1;
     op1.code=OMOP_VISI;
@@ -6030,9 +6031,10 @@ void ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr,int quiet)
     }
   } else {
     PRINTFB(G,FB_Executive,FB_Warnings)
-      " Label: no atoms selections.\n"
+      " Label: no atoms selected.\n"
       ENDFB(G);
   }
+  return 1;
 }
 /*========================================================================*/
 int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet,PyObject *space)

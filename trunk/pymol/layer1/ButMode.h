@@ -77,7 +77,9 @@ Z* -------------------------------------------------------------------
 #define cButModeMovView 46
 #define cButModeMovViewZ 47
 
-#define cButModeCount    48
+#define cButModePotentialClick 48
+
+#define cButModeCount    49
 
 /* remainder only used in scene... */
 
@@ -178,17 +180,17 @@ Z* -------------------------------------------------------------------
 #define cButModeMiddleAlt  69
 #define cButModeRightAlt   70
 
-#define CButModeLeftAltShft 71
-#define CButModeMiddleAltShft 72
-#define CButModeRightAltShft 73
+#define cButModeLeftAltShft 71
+#define cButModeMiddleAltShft 72
+#define cButModeRightAltShft 73
 
-#define CButModeLeftCtrlAlt  74
-#define CButModeMiddleCtrlAlt 75
-#define CButModeRightCtrlAlt 76
+#define cButModeLeftCtrlAlt  74
+#define cButModeMiddleCtrlAlt 75
+#define cButModeRightCtrlAlt 76
 
-#define CButModeLeftCtrlAltShft 77
-#define CButModeMiddleCtrlAltShft 78
-#define CButModeRightCtrlAltShft 79
+#define cButModeLeftCtrlAltShft 77
+#define cButModeMiddleCtrlAltShft 78
+#define cButModeRightCtrlAltShft 79
 
 #define cButModeInputCount 80
 
