@@ -30,6 +30,9 @@ int *SelectorSelect(PyMOLGlobals *G,char *sele);
 int SelectorCreate(PyMOLGlobals *G,char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp);
 int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele);
 int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx); 
+int SelectorCreateOrderedFromMultiObjectIdxPri(PyMOLGlobals *G,
+                                               char *sname, ObjectMolecule **obj, int **pri_idx, int *n_idx, int n_obj);
+
 /* if n_idx is negative, then looks for negative *idx as the sentinel */
 int SelectorMoveMember(PyMOLGlobals *G,int s,int sele_old,int sele_new);
 int SelectorCreateEmpty(PyMOLGlobals *G,char *name);

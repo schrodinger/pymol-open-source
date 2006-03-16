@@ -479,6 +479,95 @@ int SelectorNameIsKeyword(PyMOLGlobals *G, char *name)
   return 0;
 }
 
+static int *SelectorUpdateTableMultiObjectIdxPri(PyMOLGlobals *G,
+                                                 ObjectMolecule **obj_list,
+                                                 int no_dummies,
+                                                 int **idx_list,int *n_idx_list,
+                                                 int n_obj)
+{
+  int a=0;
+  int b;
+  int c=0;
+  int modelCnt;
+  int *result = NULL;
+  register CSelector *I=G->Selector;
+  ObjectMolecule *obj;
+  int *idx,n_idx;
+
+  PRINTFD(G,FB_Selector)
+    "SelectorUpdateTableSingleObject-Debug: entered for %s...\n",obj->Obj.Name
+    ENDFD;
+ 
+  SelectorClean(G);
+
+  I->NCSet = 0;
+  if(no_dummies) {
+    modelCnt = 0;
+    c = 0;
+  } else {
+    modelCnt=cNDummyModels;
+    c=cNDummyAtoms;
+  }
+  for(b=0;b<n_obj;b++) {
+    obj = obj_list[b];
+    c+=obj->NAtom;
+    if(I->NCSet<obj->NCSet) I->NCSet=obj->NCSet;
+    modelCnt++;
+  }
+  result = Calloc(int,c);
+  I->Table=Alloc(TableRec,c);
+  ErrChkPtr(G,I->Table);
+  I->Obj=Calloc(ObjectMolecule*,modelCnt);
+  ErrChkPtr(G,I->Obj);
+  if(no_dummies) {
+    modelCnt = 0;
+    c = 0;
+  } else {
+    c=cNDummyAtoms;
+    modelCnt=cNDummyModels;
+  }
+  for(b=0;b<n_obj;b++) {
+    obj = obj_list[b];
+    idx = idx_list[b];
+    n_idx = n_idx_list[b];
+    
+    I->Obj[modelCnt]=obj;
+    obj->SeleBase=c; 
+    for(a=0;a<obj->NAtom;a++)
+      {
+        I->Table[c].model=modelCnt;
+        I->Table[c].atom=a;
+        c++;
+      }
+    if(idx&&n_idx) {
+      if(n_idx>0) {
+        for(a=0; a< n_idx; a++) {
+          int at = idx[2*a]; /* index first */
+          int pri = idx[2*a+1]; /* then priority */
+          if((at>=0)&&(at<obj->NAtom)) { 
+            result[obj->SeleBase + at] = pri;
+          }
+        }
+      }
+    }
+    modelCnt++;
+    I->NModel=modelCnt;
+  }
+  I->NAtom=c;
+  I->Flag1=Alloc(int,c);
+  ErrChkPtr(G,I->Flag1);
+  I->Flag2=Alloc(int,c);
+  ErrChkPtr(G,I->Flag2);
+  I->Vertex=Alloc(float,c*3);
+  ErrChkPtr(G,I->Vertex);
+  
+  PRINTFD(G,FB_Selector)
+    "SelectorUpdateTableSingleObject-Debug: leaving...\n"
+    ENDFD;
+  
+  return(result);
+}
+
 static int IntInOrder(int *list,int a,int b)
 {
   return(list[a]<=list[b]);
@@ -6534,15 +6623,16 @@ static int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp)
 }
 /*========================================================================*/
 
-static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule *obj,
+static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule **obj,
                            int quiet,Multipick *mp,CSeqRow *rowVLA,
-                           int nRow,int *obj_idx,int n_idx)
+                           int nRow,int **obj_idx,int *n_idx,int n_obj)
 {
   int *atom=NULL;
   OrthoLineType name;
   int ok=true;
   int c=0;
   int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
+  ObjectMolecule *embed_obj = NULL;
 
   PRINTFD(G,FB_Selector)
     "SelectorCreate-Debug: entered...\n"
@@ -6556,28 +6646,35 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
     name[0]=0; /* force error */
   }
   UtilCleanStr(name);
-  if(!name[0])
-	 {
-      PRINTFB(G,FB_Selector,FB_Errors)
-        "Selector-Error: Invalid selection name \"%s\".\n",sname
-        ENDFB(G);
-		OrthoRestorePrompt(G);
-	 }
-  if(ok)
-	 {
-	   if(sele) {
-        atom=SelectorSelect(G,sele);
-        if(!atom) ok=false;
-	   } else if(obj) { /* optimized full-object selection */
-        atom=SelectorUpdateTableSingleObject(G,obj,false,obj_idx,n_idx);
-	   } else if(mp) {
-        atom=SelectorApplyMultipick(G,mp);
-      } else if(rowVLA) {
-        atom=SelectorApplySeqRowVLA(G,rowVLA,nRow);
-      } else 
-        ok=false;
-	 }
-  if(ok)	c=SelectorEmbedSelection(G,atom,name,obj,false);
+  if(!name[0]) {
+    PRINTFB(G,FB_Selector,FB_Errors)
+      "Selector-Error: Invalid selection name \"%s\".\n",sname
+      ENDFB(G);
+    OrthoRestorePrompt(G);
+  }
+  if(ok) {
+    if(sele) {
+      atom=SelectorSelect(G,sele);
+      if(!atom) ok=false;
+    } else if(obj && obj[0]) { /* optimized full-object selection */
+      if(!n_obj) {
+        embed_obj = *obj;
+        if(obj_idx && n_idx) {
+          atom=SelectorUpdateTableSingleObject(G,embed_obj,false,*obj_idx,*n_idx);
+        } else {
+          atom=SelectorUpdateTableSingleObject(G,embed_obj,false,NULL,0);
+        }
+      } else {
+        atom=SelectorUpdateTableMultiObjectIdxPri(G,obj,false,obj_idx,n_idx,n_obj);
+      }
+    } else if(mp) {
+      atom=SelectorApplyMultipick(G,mp);
+    } else if(rowVLA) {
+      atom=SelectorApplySeqRowVLA(G,rowVLA,nRow);
+    } else 
+      ok=false;
+  }
+  if(ok) c=SelectorEmbedSelection(G,atom,name,embed_obj,false);
   FreeP(atom);
   SelectorClean(G);
   if(!quiet) {
@@ -6604,25 +6701,32 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
 }
 int SelectorCreateEmpty(PyMOLGlobals *G,char *name)
 {
-  return _SelectorCreate(G,name, "none", NULL, 1, NULL, NULL, 0, NULL, 0);
+  return _SelectorCreate(G,name, "none", NULL, 1, NULL, NULL, 0, NULL, 0, 0);
 }
 int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele)
 {
-  return _SelectorCreate(G,name, sele, NULL, 1, NULL, NULL, 0, NULL, 0);  
+  return _SelectorCreate(G,name, sele, NULL, 1, NULL, NULL, 0, NULL, 0, 0);  
 }
 int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx)
 {
-  return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,idx,n_idx);
+  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,0);
+}
+int SelectorCreateOrderedFromMultiObjectIdxPri(PyMOLGlobals *G,char *sname, 
+                                               ObjectMolecule **obj,
+                                               int **pri_idx,
+                                               int *n_idx, int n_obj)
+{
+  return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,pri_idx,n_idx,n_obj);
 }
 int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow);
 int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow)
 {
-  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0);
+  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0,0);
 }
 
 int SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp)
 {
-  return _SelectorCreate(G,sname,sele,obj,quiet,mp,NULL,0,NULL,0);
+  return _SelectorCreate(G,sname,sele,&obj,quiet,mp,NULL,0,NULL,0,0);
 }
 
 /*========================================================================*/
@@ -6664,7 +6768,7 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,int no_
   modelCnt++;
   I->Table=Alloc(TableRec,c);
   ErrChkPtr(G,I->Table);
-  I->Obj=Alloc(ObjectMolecule*,modelCnt);
+  I->Obj=Calloc(ObjectMolecule*,modelCnt);
   ErrChkPtr(G,I->Obj);
   if(no_dummies) {
     modelCnt = 0;
@@ -6673,7 +6777,6 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,int no_
     c=cNDummyAtoms;
     modelCnt=cNDummyModels;
   }
-  I->Obj[modelCnt]=NULL;
   I->Obj[modelCnt]=obj;
   obj->SeleBase=c; 
   for(a=0;a<obj->NAtom;a++)

@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #define cObjectGadget       8
 #define cObjectCalculator   9
 #define cObjectSlice        10
+#define cObjectAlignment    11
 
 /* 
    the object base class is in the process of being converted to support

@@ -131,8 +131,8 @@ static void SeqReshape(Block *block,int width, int height)
     int a;
     I->Size=0;
     for(a=0;a<I->NRow;a++) {
-      if(I->Row[a].len>I->Size)
-        I->Size = I->Row[a].len;
+      if(I->Row[a].ext_len>I->Size)
+        I->Size = I->Row[a].ext_len;
     }
   }
 
@@ -499,7 +499,11 @@ static void SeqDraw(Block *block)
                   else 
                     cur_color = ColorGet(G,col->color); /* is this safe? should be for single-threading */ 
                 } else if((!col->inverse)&&(mode)) {
-                  stop = (width*col->offset)/max_len;
+                  if(b) {
+                    stop = (width*(col[-1].offset+col[-1].stop-col[-1].start))/max_len;
+                  } else {
+                    stop = (width*col->offset)/max_len;
+                  }
                   if((stop-start)<1.0F) {
                     cent = (stop+start)*0.5F;
                     start = cent-0.5F;
@@ -516,7 +520,11 @@ static void SeqDraw(Block *block)
                   mode = 0;
                 } else if(col->inverse&&mode) {
                   if(last_color!=col->color) {
-                    stop = (width*col->offset)/max_len;
+                    if(b) {
+                      stop = (width*(col[-1].offset+col[-1].stop-col[-1].start))/max_len;
+                    } else {
+                      stop = (width*col->offset)/max_len;
+                    }
                     if((stop-start)<1.0F) {
                       cent = (stop+start)*0.5F;
                       start = cent-0.5F;
