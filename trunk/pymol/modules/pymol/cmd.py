@@ -2211,6 +2211,7 @@ SEE ALSO
             'view'           : [ viewing.view_dict_sc   , 'view'            , ''   ],                              
             'unmask'         : [ selection_sc           , 'selection'       , ''   ],
             'unset'          : [ setting.setting_sc     , 'setting'         , ','  ],
+            'update'         : [ selection_sc           , 'selection'       , ''   ],
             'window'         : [ window_sc              , 'action'          , ','  ],      
             'zoom'           : [ selection_sc           , 'selection'       , ''   ],
             },
@@ -2241,6 +2242,7 @@ SEE ALSO
             'view'           : [ viewing.view_sc        , 'view action'     , ''   ],
             'scene'          : [ viewing.scene_action_sc, 'scene action'    , ','   ],                  
             'unset'          : [ selection_sc           , 'selection'        , ','  ],
+            'update'         : [ selection_sc           , 'selection'       , ''   ],
             'ramp_new'       : [ map_sc                 , 'map object'       , ''   ],      
             },
     #3rd

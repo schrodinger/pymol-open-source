@@ -922,8 +922,8 @@ char SeekerGetAbbr(PyMOLGlobals *G,char *abbr)
 
 static int SeekerFindColor(PyMOLGlobals *G,AtomInfoType *ai,int n_more)
 {
-  int result = ai->color; /* default -- use first atom color */
-  AtomInfoType *ai0 =ai;
+  register int result = ai->color; /* default -- use first atom color */
+  register AtomInfoType *ai0 =ai;
   while(1) {
     if(ai0->flags & cAtomFlag_guide) /* best use guide color */
       return ai0->color;
@@ -933,6 +933,46 @@ static int SeekerFindColor(PyMOLGlobals *G,AtomInfoType *ai,int n_more)
     if(n_more>0) {
       ai0++;
       if(!AtomInfoSameResidueP(G,ai,ai0))
+        break;
+    } else 
+      break;
+  }
+  return result;
+}
+
+static int SeekerFindTag(PyMOLGlobals *G,AtomInfoType *ai,int sele, int codes,int n_more)
+{
+  register int result = 0;/* default -- no tag */
+  register AtomInfoType *ai0 =ai;
+  while(1) {
+    int tag = SelectorIsMember(G,ai0->selEntry, sele);
+    if(tag && (codes<2) && (ai0->flags & cAtomFlag_guide)) /* use guide atom if present */
+      return tag;
+    if(result<tag) {
+      if(!result)
+        result = tag;
+      else if((codes<2) && (ai0->flags & cAtomFlag_guide)) /* residue based and on guide atom */
+        result = tag;
+    }
+    n_more--;
+    if(n_more>0) {
+      int do_break = false;
+      ai0++;
+      switch(codes) {
+      case 0:
+      case 1:
+        if(!AtomInfoSameResidueP(G,ai,ai0))
+          do_break = true;
+        break;
+      case 2: /* atoms */
+        do_break = true;
+        break;
+      case 3: /* chains */
+        if(!AtomInfoSameChainP(G,ai,ai0))
+          do_break = true;
+        break;
+      }
+      if(do_break)
         break;
     } else 
       break;
@@ -953,10 +993,17 @@ void SeekerUpdate(PyMOLGlobals *G)
   int codes = 0;
   int max_row = 50;
   int default_color = 0;
+  int align_sele = -1; /* alignment selection */
+
   CSeqRow *row_vla,*row,*lab=NULL;
   row_vla = VLACalloc(CSeqRow,10);
   /* FIRST PASS: get all the residues represented properly */
   label_mode = SettingGetGlobal_i(G,cSetting_seq_view_label_mode);
+
+#if 0
+  align_sele = SelectorIndexByName(G,"align");
+  printf("%d\n",align_sele);
+#endif
 
   while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
     if(obj->Obj.Enabled&&(SettingGet_b(G,obj->Obj.Setting,NULL,cSetting_seq_view))&&
@@ -1203,6 +1250,11 @@ void SeekerUpdate(PyMOLGlobals *G)
               r1->color = SeekerFindColor(G,ai,obj->NAtom-a);
             else
               r1->color = default_color;
+            if(align_sele>=0) {
+              r1->tag = SeekerFindTag(G,ai,align_sele,codes,obj->NAtom-a);
+            } else {
+              r1->tag = 0;
+            }
             nCol++;
             last_abbr=abbr[0];
           }
@@ -1228,6 +1280,11 @@ void SeekerUpdate(PyMOLGlobals *G)
               r1->color = SeekerFindColor(G,ai,obj->NAtom-a);
             else
               r1->color = default_color;
+            if(align_sele>=0) {
+              r1->tag = SeekerFindTag(G,ai,align_sele,codes,obj->NAtom-a);
+            } else {
+              r1->tag = 0;
+            }
             UtilConcatVLA(&row->txt,&row->len," ");
             nCol++;
           }
@@ -1246,6 +1303,11 @@ void SeekerUpdate(PyMOLGlobals *G)
             r1->color = ai->color;
           else
             r1->color = default_color;
+          if(align_sele>=0) {
+            r1->tag = SeekerFindTag(G,ai,align_sele,codes,obj->NAtom-a);
+          } else {
+            r1->tag = 0;
+          }
           UtilConcatVLA(&row->txt,&row->len," ");
           nCol++;
           break;
@@ -1267,6 +1329,12 @@ void SeekerUpdate(PyMOLGlobals *G)
               r1->color = SeekerFindColor(G,ai,obj->NAtom-a);
             else
               r1->color = default_color;
+            if(align_sele>=0) {
+              r1->tag = SeekerFindTag(G,ai,align_sele,codes,obj->NAtom-a);
+              printf("%d\n",r1->tag);
+            } else {
+              r1->tag = 0;
+            }
             UtilConcatVLA(&row->txt,&row->len," ");
             nCol++;
           }
@@ -1380,14 +1448,13 @@ void SeekerUpdate(PyMOLGlobals *G)
   }
 
   /* SECOND PASS: align columns to reflect current alignment and fixed labels */
-  if(nRow)
-    {
+  if(nRow) {
     int a,b;
     int nCol;
     int maxCol = 0;
     int done_flag = false;
     /* find out the maximum number of columns */
-
+    
     for(a=0;a<nRow;a++) {
       row = row_vla + a;
       nCol = row->nCol;
@@ -1399,7 +1466,13 @@ void SeekerUpdate(PyMOLGlobals *G)
 
     /* in the simplest mode, just start each sequence in the same column */
 
-    switch(0) {
+    switch(
+#if 0
+1
+#else
+0
+#endif
+) {
     case 0:
       b = 0;
       while(!done_flag) {
@@ -1408,7 +1481,7 @@ void SeekerUpdate(PyMOLGlobals *G)
         for(a=0;a<nRow;a++) {
           row = row_vla + a;
           if(!row->label_flag) {
-            if(b< row->nCol) {
+            if(b < row->nCol) {
               CSeqCol *r1 = row->col + b;
               done_flag = false;
               
@@ -1423,7 +1496,7 @@ void SeekerUpdate(PyMOLGlobals *G)
           if(!row->label_flag) {
             if(b<row->nCol) {
               CSeqCol *r1 = row->col + b;
-              if(b<3) {
+              if(b<3) { 
                 if(r1->offset<max_offset) {
                   row->accum += max_offset - r1->offset;
                 }
@@ -1435,8 +1508,90 @@ void SeekerUpdate(PyMOLGlobals *G)
         b++;
       }
       break;
+    case 1: /* alignment mode -- aligned atoms (only) appear in the same column */
+      {
+        /* intialize current columns and get the starting character */
+        int current = 0;
+        int first = true;
+        for(a=0;a<nRow;a++) {       
+          row = row_vla + a;
+          row->cCol = 0;
+          if((!row->label_flag) && ((row->cCol < row->nCol))) {
+            if(current < row->accum)
+              current = row->accum;
+          }
+        }
+        
+        done_flag = false;
+        while(!done_flag) {
+          done_flag = true;
+          {
+            /* first insert untagged entries into their own columns */
+            int untagged_flag = true;
+            while(untagged_flag) {
+              int found = false;
+              untagged_flag = false;
+              for(a=0;a<nRow;a++) {       
+                row = row_vla + a;
+                if((!row->label_flag) && (row->cCol < row->nCol)) {
+                  CSeqCol *r1 = row->col + row->cCol;
+                  if(!r1->tag) { /* not aligned */
+                    untagged_flag = true;
+                    done_flag = false;
+                    if(codes&&(!first)&&(!found))
+                      current++;
+                    first = false;
+                    found = true;
+                    r1->offset = current;
+                    current += (r1->stop-r1->start);
+                    row->cCol++;
+                  }
+                }
+              }
+            }
+          }
+
+          {
+            /* next insert match-tagged entries into the same column */
+            int min_tag = 0;
+            for(a=0;a<nRow;a++) {       
+              row = row_vla + a;
+              if((!row->label_flag) && (row->cCol < row->nCol)) {
+                CSeqCol *r1 = row->col + row->cCol;
+                if(r1->tag && ((min_tag>r1->tag)||(!min_tag))) {
+                  min_tag = r1->tag;
+                }
+              }
+            }
+            
+            if(min_tag) {
+              int width, max_width = 0;
+              int found = false;
+              for(a=0;a<nRow;a++) {       
+                row = row_vla + a;
+                if((!row->label_flag) && (row->cCol < row->nCol)) {
+                  CSeqCol *r1 = row->col + row->cCol;
+                  if(r1->tag == min_tag) {
+                    if(codes&&(!first)&&(!found))
+                      current++;
+                    done_flag = false;
+                    first = false;
+                    found = true;
+                    r1->offset = current;
+                    width =  (r1->stop-r1->start);
+                    if(max_width<width)
+                      max_width = width;
+                    row->cCol++;
+                  }
+                }
+              }
+              current+=width;
+            }
+          }
+        }
+      }
+      break;
     }
-    
 
     for(a=0;a<nRow;a++) {
       row = row_vla + a;
@@ -1456,7 +1611,7 @@ void SeekerUpdate(PyMOLGlobals *G)
       }
     }
     
-    }
+  }
 
   /* THIRD PASS: fill in labels, based on actual residue spacing */
 

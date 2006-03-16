@@ -29,6 +29,7 @@ typedef struct {
   int spacer;
   int state;
   int color;
+  int tag;
 } CSeqCol;
   
 typedef struct {
@@ -37,7 +38,7 @@ typedef struct {
   int color;
   char *txt;
   CSeqCol *col;
-  int nCol;
+  int nCol,cCol;
   int *char2col;
   int *atom_lists;
   char name[ObjNameMax]; /* associated object */

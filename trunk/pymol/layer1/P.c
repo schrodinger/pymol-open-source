@@ -1176,6 +1176,11 @@ void PInitEmbedded(int argc,char **argv)
       r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,
                       "Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
                       0,KEY_EXECUTE,&phkResult);
+      if(r1!=ERROR_SUCCESS) {
+        r1=RegOpenKeyEx(HKEY_CURRENT_USER,
+                        "Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
+                        0,KEY_EXECUTE,&phkResult);
+      }  
       if(r1==ERROR_SUCCESS) {
         r2 = RegQueryValueEx(phkResult,"",NULL,
                              &lpType,path_buffer,&lpcbData);

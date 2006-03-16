@@ -6380,10 +6380,6 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
 
   ObjectMoleculeOpRecInit(&op1);
   ObjectMoleculeOpRecInit(&op2);
-  op1.vv1=NULL;
-  op1.vc1=NULL;
-  op2.vv1=NULL;
-  op2.vc1=NULL;
 
   /* this function operates on stored coordinates -- thus transformation 
    matrices will need to be applied to the resulting atoms */
@@ -6398,7 +6394,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
     op1.nvv1=0;
     op1.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
-    if(matchmaker) 
+    if(matchmaker||(oname&&oname[0])) 
       op1.ai1VLA=(AtomInfoType**)VLAMalloc(1000,sizeof(AtomInfoType*),5,1);
     if(ordered_selections)
       op1.vp1=VLAlloc(int,1000);
@@ -6429,7 +6425,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
     op2.nvv1=0;
     op2.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
-    if(matchmaker) 
+    if(matchmaker||(oname&&oname[0])) 
       op2.ai1VLA=(AtomInfoType**)VLAMalloc(1000,sizeof(AtomInfoType*),5,1);
     if(ordered_selections)
       op2.vp1=VLAlloc(int,1000);
@@ -6649,7 +6645,6 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
       if(n_pair) {
         /* okay -- we're on track to do an alignment */
 
-
         if(ordered_selections&&op1.vp1&&op2.vp1) {
           /* if we expected ordered selections and have priorities, 
              then we may need to sort vertices */
@@ -6740,6 +6735,8 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
               break;
             if((refine>R_SMALL4)&&(rms>R_SMALL4)) {
               int n_next = n_pair;
+              AtomInfoType **ai1,**ai2;
+              
               flag=Alloc(int,n_pair);
               
               if(flag) {          
@@ -6755,6 +6752,8 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                 }
                 f1 = op1.vv1;
                 f2 = op2.vv1;
+                ai1 = op1.ai1VLA;
+                ai2 = op2.ai1VLA;
                 for(a=0;a<n_pair;a++) {
                   if(!flag[a]) {
                     n_next--;
@@ -6763,6 +6762,10 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                     copy3f(op2.vv1+(3*a),f2);
                     f1+=3;
                     f2+=3;
+                    if(ai1&&ai2) { /* make sure we keep track of which atoms are aligned */
+                      *(ai1++) = op1.ai1VLA[a];
+                      *(ai2++) = op2.ai1VLA[a];
+                    }
                   }
                 }
                 if(!quiet&&(n_next!=n_pair)) {
@@ -6805,33 +6808,64 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
             " Executive: RMS = %8.3f (%d to %d atoms)\n", rms,n_pair,n_pair
             ENDFB(G);
         }
-        if(oname) 
-          if(oname[0]) {
-            CGO *cgo = NULL;
-            ObjectCGO *ocgo;
-            int auto_save;
-
-            cgo=CGONew(G);
-            /*             CGOColor(cgo,1.0,1.0,0.0); 
-                           CGOLinewidth(cgo,3.0);*/
-            CGOBegin(cgo,GL_LINES);
-            for(a=0;a<n_pair;a++) {
-              CGOVertexv(cgo,op2.vv1+(a*3));
-              MatrixTransformTTTfN3f(1,v1,op2.ttt,op1.vv1+(a*3));
-              CGOVertexv(cgo,v1);
-            }
-            CGOEnd(cgo);
-            CGOStop(cgo);
-            ocgo = ObjectCGOFromCGO(G,NULL,cgo,0);
-            ocgo->Obj.Color = ColorGetIndex(G,"yellow");
-            ObjectSetName((CObject*)ocgo,oname);
-            ExecutiveDelete(G,oname);
-            auto_save = (int)SettingGet(G,cSetting_auto_zoom);
-            SettingSet(G,cSetting_auto_zoom,0);
-            ExecutiveManageObject(G,(CObject*)ocgo,-1,false);
-            SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
-            SceneInvalidate(G);
+        if(oname && oname[0]) {
+#if 1
+          CGO *cgo = NULL;
+          ObjectCGO *ocgo;
+          int auto_save;
+          
+          cgo=CGONew(G);
+          /*             CGOColor(cgo,1.0,1.0,0.0); 
+                         CGOLinewidth(cgo,3.0);*/
+          CGOBegin(cgo,GL_LINES);
+          for(a=0;a<n_pair;a++) {
+            CGOVertexv(cgo,op2.vv1+(a*3));
+            MatrixTransformTTTfN3f(1,v1,op2.ttt,op1.vv1+(a*3));
+            CGOVertexv(cgo,v1);
           }
+          CGOEnd(cgo);
+          CGOStop(cgo);
+          ocgo = ObjectCGOFromCGO(G,NULL,cgo,0);
+          ocgo->Obj.Color = ColorGetIndex(G,"yellow");
+          ObjectSetName((CObject*)ocgo,oname);
+          ExecutiveDelete(G,oname);
+          auto_save = (int)SettingGet(G,cSetting_auto_zoom);
+          SettingSet(G,cSetting_auto_zoom,0);
+          ExecutiveManageObject(G,(CObject*)ocgo,-1,false);
+          SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
+          SceneInvalidate(G);
+#else
+          /* create an ordered selection with the pair mapping  */
+
+          ObjectMolecule *obj_list[2];
+          obj_list[0] = SelectorGetSingleObjectMolecule(G,sele1); 
+          obj_list[1] = SelectorGetSingleObjectMolecule(G,sele2);
+            
+          if(obj_list[0] && obj_list[1] && op1.ai1VLA && op2.ai1VLA) {
+            int *idx_list[2];
+            idx_list[0] = Alloc(int,n_pair*2);
+            idx_list[1] = Alloc(int,n_pair*2);
+            if(idx_list[0] && idx_list[1]) {
+              int n_idx_list[2];
+              n_idx_list[0] = n_pair;
+              n_idx_list[1] = n_pair;
+              int i;
+              for(i=0;i<n_pair;i++) {
+                idx_list[0][2*i] = op1.ai1VLA[i]->temp1; /* KLUDGE ALERT! */
+                idx_list[0][2*i+1] = i+1;
+                idx_list[1][2*i] = op2.ai1VLA[i]->temp1; /* KLUDGE ALERT! */
+                idx_list[1][2*i+1] = i+1;
+              }
+              SelectorCreateOrderedFromMultiObjectIdxPri(G,oname,
+                                                         obj_list,
+                                                         idx_list,
+                                                         n_idx_list,2);
+            }
+            FreeP(idx_list[0]);
+            FreeP(idx_list[1]);
+          }
+#endif
+        }
         if(ok && mode==2) { 
           if(matrix_mode) {
 
@@ -6894,8 +6928,8 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
   VLAFreeP(op2.vc1);
   VLAFreeP(op1.vp1);
   VLAFreeP(op2.vp1);
-  VLAFreeP(op1.ai);
-  VLAFreeP(op2.ai);
+  VLAFreeP(op1.ai1VLA);
+  VLAFreeP(op2.ai1VLA);
   return(ok);
 }
 /*========================================================================*/
