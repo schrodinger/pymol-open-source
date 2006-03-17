@@ -936,9 +936,24 @@ void RayRenderVRML1(CRay *I,int width,int height,
 }
 #endif
 
+
+static int TriangleReverse(CPrimitive *p)
+{
+  float s1[3], s2[3], n0[3];
+
+  subtract3f(p->v1,p->v2,s1);
+  subtract3f(p->v3,p->v2,s2);
+  cross_product3f(s1,s2,n0);
+  
+  if (dot_product3f(p->n0,n0) < 0)
+    return 0;
+  else
+    return 1;
+}
+
 void RayRenderVRML2(CRay *I,int width,int height,
                     char **vla_ptr,float front,float back,
-		    float fov, float angle,float z_corr)
+                    float fov, float angle,float z_corr)
 {
 
   /* 
@@ -969,13 +984,47 @@ void RayRenderVRML2(CRay *I,int width,int height,
   char *vla = *vla_ptr;
   int cc = 0; /* character count */
   OrthoLineType buffer;
+  float mid[3], wid[3];
   
   RayExpandPrimitives(I);
   RayTransformFirst(I,0);
 
-  strcpy(buffer,"#VRML V2.0 ascii\n\n");
-  UtilConcatVLA(&vla,&cc,buffer);
+  RayComputeBox(I);
+  mid[0] = (I->max_box[0] + I->min_box[0]) / 2.0;
+  mid[1] = (I->max_box[1] + I->min_box[1]) / 2.0;
+  mid[2] = (I->max_box[2] + I->min_box[2]) / 2.0;
+  wid[0]  = (I->max_box[0] - I->min_box[0]);
+  wid[1]  = (I->max_box[1] - I->min_box[1]);
+  wid[2]  = (I->max_box[2] - I->min_box[2]);
 
+  UtilConcatVLA(&vla,&cc,
+                "#VRML V2.0 utf8\n" /* WLD: most VRML2 readers req. utf8 */
+                "\n");
+  sprintf(buffer,
+          "Viewpoint {\n"
+          " position 0 0 %6.8f\n"
+          " orientation 1 0 0 0\n"
+          " description \"Z view\"\n"
+          "}\n"
+          "Viewpoint {\n"
+          " position %6.8f 0 0\n"
+          " orientation 0 1 0 1.570796\n"
+          " description \"X view\"\n"
+          "}\n"
+          "Viewpoint {\n"
+          " position 0 %6.8f 0\n"
+          " orientation 0 -0.707106 -0.7071061 3.141592\n"
+          " description \"Y view\"\n"
+          "}\n",
+          (wid[2] + wid[1]),
+          (wid[0] + wid[1]),
+          (wid[1] + wid[2]));
+  UtilConcatVLA(&vla,&cc,buffer);
+  UtilConcatVLA(&vla,&cc,
+                "NavigationInfo {\n"
+                " headlight TRUE\n"
+                " type \"EXAMINE\"\n"
+                "}\n");
   { 
     int a, b;
     CPrimitive *prim;
@@ -994,12 +1043,16 @@ void RayRenderVRML2(CRay *I,int width,int height,
           mesh_start = a;
           UtilConcatVLA(&vla,&cc, 
                         "Shape {\n"
+                        " appearance Appearance {\n"
+                        "  material Material { diffuseColor 1.0 1.0 1.0 }\n"
+                        " }\n"
                         " geometry IndexedFaceSet {\n"
                         "  coord Coordinate {\n"
                         "   point [\n");
           mesh_obj=true;
         }
       } else if(mesh_obj) {
+        CPrimitive *cprim;
         int tri = 0;
         /* output connectivity */
         UtilConcatVLA(&vla,&cc, 
@@ -1007,7 +1060,11 @@ void RayRenderVRML2(CRay *I,int width,int height,
                       "  }\n"
                       "  coordIndex [\n");
         for(b=mesh_start;b<a;b++) {
-          sprintf(buffer,"%d %d %d -1,\n", tri, tri+1, tri+2);
+          cprim = I->Primitive+b;
+          if (TriangleReverse(cprim))
+            sprintf(buffer,"%d %d %d -1,\n", tri, tri+2, tri+1);
+          else
+            sprintf(buffer,"%d %d %d -1,\n", tri, tri+1, tri+2);
           UtilConcatVLA(&vla,&cc,buffer);        
           tri+=3;
         }
@@ -1019,7 +1076,6 @@ void RayRenderVRML2(CRay *I,int width,int height,
                       "  color Color {\n"
                       "   color [\n");
         for(b=mesh_start;b<a;b++) {
-          CPrimitive *cprim;
           cprim = I->Primitive+b;
           sprintf(buffer,
                   "%6.4f %6.4f %6.4f,\n"
@@ -1052,7 +1108,9 @@ void RayRenderVRML2(CRay *I,int width,int height,
                 "  }\n"
                 " }\n"
                 "}\n",        
-                vert[0],vert[1],vert[2]-z_corr,
+                vert[0]-mid[0],
+                vert[1]-mid[1],
+                vert[2]-mid[2],
                 prim->r1,
                 prim->c1[0],prim->c1[1],prim->c1[2]);
         UtilConcatVLA(&vla,&cc,buffer);    
@@ -1094,6 +1152,7 @@ void RayRenderVRML2(CRay *I,int width,int height,
           scale3f(d,prim->l1/2,vert2);
           add3f(vert,vert2,vert2);
           if (prim->type==cPrimSausage) {
+            OrthoLineType geom_add;
             sprintf(geometry,
                     "  Shape {\n"
                     "   geometry Cylinder {\n"
@@ -1114,7 +1173,16 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "     material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
                     "    }\n"
                     "   }\n"
-                    "  }\n"
+                    "  }\n",
+                    prim->r1, prim->l1,
+                    (prim->c1[0]+prim->c2[0])/2,
+                    (prim->c1[1]+prim->c2[1])/2,
+                    (prim->c1[2]+prim->c2[2])/2,
+                    prim->l1/2, prim->r1,  
+                    prim->c1[0],prim->c1[1],prim->c1[2]
+                    );
+            /* WLD: format string split to comply with ISO C89 standards */
+            sprintf(geom_add,
                     "  Transform {\n"
                     "   translation 0.0 %8.6f 0.0\n"
                     "   children Shape {\n"
@@ -1124,14 +1192,9 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "    }\n"
                     "   }\n"
                     "  }\n", 
-                    prim->r1, prim->l1,
-                    (prim->c1[0]+prim->c2[0])/2,
-                    (prim->c1[1]+prim->c2[1])/2,
-                    (prim->c1[2]+prim->c2[2])/2,
-                    prim->l1/2, prim->r1,  
-                    prim->c1[0],prim->c1[1],prim->c1[2],
                     -prim->l1/2, prim->r1,  
                     prim->c2[0],prim->c2[1],prim->c2[2]);
+            strcat(geometry,geom_add);
           }
           else {
             sprintf(geometry,
@@ -1157,7 +1220,9 @@ void RayRenderVRML2(CRay *I,int width,int height,
                   "%s"
                   " ]\n"
                   "}\n", 
-                  vert2[0], vert2[1], vert2[2]-z_corr,
+                  vert2[0]-mid[0],
+                  vert2[1]-mid[1],
+                  vert2[2]-mid[2],
                   axis[0], axis[1], axis[2], angle,
                   geometry);
           UtilConcatVLA(&vla,&cc,buffer);
@@ -1166,16 +1231,19 @@ void RayRenderVRML2(CRay *I,int width,int height,
       case cPrimTriangle:
         /* output coords. connectivity and vertex colors handled above/below */
         sprintf(buffer,
-                "%8.6f %8.6f %8.6f,\n    %8.6f %8.6f %8.6f,\n    %8.6f %8.6f %8.6f,\n", 
-                vert[0], vert[1], vert[2]-z_corr,
-                vert[3], vert[4], vert[5]-z_corr,
-                vert[6], vert[7], vert[8]-z_corr);
+                "%8.6f %8.6f %8.6f,\n"
+                "%8.6f %8.6f %8.6f,\n"
+                "%8.6f %8.6f %8.6f,\n", 
+                vert[0] - mid[0], vert[1] - mid[1], vert[2] - mid[2],
+                vert[3] - mid[0], vert[4] - mid[1], vert[5] - mid[2],
+                vert[6] - mid[0], vert[7] - mid[1], vert[8] - mid[2]);
         UtilConcatVLA(&vla,&cc,buffer);    
         break;
       }
     }
 
     if(mesh_obj) {
+      CPrimitive *cprim;
       int tri = 0;
       /* output connectivity */
       UtilConcatVLA(&vla,&cc, 
@@ -1183,8 +1251,11 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "  }\n"
                     "  coordIndex [\n");
       for(b=mesh_start;b<a;b++) {
-        sprintf(buffer,
-                "%d %d %d -1,\n", tri, tri+1, tri+2);
+        cprim = I->Primitive+b;
+        if (TriangleReverse(cprim))
+          sprintf(buffer,"%d %d %d -1,\n", tri, tri+2, tri+1);
+        else
+          sprintf(buffer,"%d %d %d -1,\n", tri, tri+1, tri+2);
         UtilConcatVLA(&vla,&cc,buffer);
         tri+=3;
       }
@@ -1196,7 +1267,6 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "  color Color {\n"
                     "   color [\n");
       for(b=mesh_start;b<a;b++) {
-        CPrimitive *cprim;
         cprim = I->Primitive+b;
         sprintf(buffer,
                 "%6.4f %6.4f %6.4f,\n"
