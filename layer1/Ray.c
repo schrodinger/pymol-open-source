@@ -1087,10 +1087,40 @@ void RayRenderVRML2(CRay *I,int width,int height,
           UtilConcatVLA(&vla,&cc,buffer);
         }
 
+        /* output vertex normals */
+        UtilConcatVLA(&vla,&cc, 
+                      "  ] } \n"
+                      "  normalPerVertex TRUE\n"
+                      "  normal Normal {\n"
+                      "   vector [\n");
+        for(b=mesh_start;b<a;b++) {
+          cprim = I->Primitive+b;
+          sprintf(buffer,
+                  "%6.4f %6.4f %6.4f,\n"
+                  "%6.4f %6.4f %6.4f,\n"
+                  "%6.4f %6.4f %6.4f,\n", 
+                  cprim->n1[0],cprim->n1[1],cprim->n1[2],
+                  cprim->n2[0],cprim->n2[1],cprim->n2[2],
+                  cprim->n3[0],cprim->n3[1],cprim->n3[2]);
+          UtilConcatVLA(&vla,&cc,buffer);
+        }
+        UtilConcatVLA(&vla,&cc, 
+                      "  ] }\n"
+                      "  normalIndex [ \n");
+        tri=0;
+        for(b=mesh_start;b<a;b++) {
+          cprim = I->Primitive+b;
+          if (TriangleReverse(cprim))
+            sprintf(buffer,"%d %d %d -1,\n", tri, tri+2, tri+1);
+          else
+            sprintf(buffer,"%d %d %d -1,\n", tri, tri+1, tri+2);
+          UtilConcatVLA(&vla,&cc,buffer);
+          tri+=3;
+        }
+        
         /* close mesh */
         UtilConcatVLA(&vla,&cc,
-                      "   ]\n"
-                      "  }\n"
+                      " ] \n"
                       " }\n"
                       "}\n");
         mesh_obj=false;
@@ -1278,10 +1308,40 @@ void RayRenderVRML2(CRay *I,int width,int height,
         UtilConcatVLA(&vla,&cc,buffer);
       }
 
+      /* output vertex normals */
+      UtilConcatVLA(&vla,&cc, 
+                    "  ] } \n"
+                    "  normalPerVertex TRUE\n"
+                    "  normal Normal {\n"
+                    "   vector [\n");
+      for(b=mesh_start;b<a;b++) {
+        cprim = I->Primitive+b;
+        sprintf(buffer,
+                "%6.4f %6.4f %6.4f,\n"
+                "%6.4f %6.4f %6.4f,\n"
+                "%6.4f %6.4f %6.4f,\n", 
+                cprim->n1[0],cprim->n1[1],cprim->n1[2],
+                cprim->n2[0],cprim->n2[1],cprim->n2[2],
+                cprim->n3[0],cprim->n3[1],cprim->n3[2]);
+        UtilConcatVLA(&vla,&cc,buffer);
+      }
+      UtilConcatVLA(&vla,&cc, 
+                    "  ] }\n"
+                    "  normalIndex [ \n");
+      tri=0;
+      for(b=mesh_start;b<a;b++) {
+        cprim = I->Primitive+b;
+        if (TriangleReverse(cprim))
+          sprintf(buffer,"%d %d %d -1,\n", tri, tri+2, tri+1);
+        else
+          sprintf(buffer,"%d %d %d -1,\n", tri, tri+1, tri+2);
+        UtilConcatVLA(&vla,&cc,buffer);
+        tri+=3;
+      }
+    
       /* close mesh */
       UtilConcatVLA(&vla,&cc,
-                    "   ]\n"
-                    "  }\n"
+                    " ] \n"
                     " }\n"
                     "}\n");
       mesh_obj=false;

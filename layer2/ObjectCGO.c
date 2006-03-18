@@ -431,9 +431,11 @@ ObjectCGO *ObjectCGODefine(PyMOLGlobals *G,ObjectCGO *obj,PyObject *pycgo,int st
 
   if(I->State[state].std) {
     CGOFree(I->State[state].std);
+    I->State[state].std = NULL;
   }
   if(I->State[state].ray) {
     CGOFree(I->State[state].ray);
+    I->State[state].ray = NULL;
   }
   if(PyList_Check(pycgo)) {
     if(PyList_Size(pycgo)) {
