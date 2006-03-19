@@ -1029,7 +1029,7 @@ void RayRenderVRML2(CRay *I,int width,int height,
     int a, b;
     CPrimitive *prim;
     float *vert;
-    int mesh_obj = false, mesh_start;
+    int mesh_obj = false, mesh_start=0;
 
     CBasis *base = I->Basis+1;
 
