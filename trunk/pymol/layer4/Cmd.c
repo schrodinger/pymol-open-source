@@ -4317,8 +4317,8 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
   int mode;
   ok = PyArg_ParseTuple(args,"sfffi",&color,v,v+1,v+2,&mode);
   if (ok) {
-    APIEntry();
-    ColorDef(TempPyMOLGlobals,color,v,mode);
+    APIEntry();  
+    ColorDef(TempPyMOLGlobals,color,v,mode,false); /* TO DO: Quiet */
     APIExit();
   }
   return APIResultOk(ok);

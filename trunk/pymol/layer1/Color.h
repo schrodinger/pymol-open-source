@@ -76,7 +76,7 @@ int ColorGetIndex(PyMOLGlobals *G,char *name);
 float *ColorGet(PyMOLGlobals *G,int index); /* pointer maybe invalid after creating a new color */
 float *ColorGetSpecial(PyMOLGlobals *G,int index);
 float *ColorGetNamed(PyMOLGlobals *G,char *name);
-void ColorDef(PyMOLGlobals *G,char *name,float *v,int mode);
+void ColorDef(PyMOLGlobals *G,char *name,float *v,int mode,int quiet);
 int ColorGetNColor(PyMOLGlobals *G);
 char *ColorGetName(PyMOLGlobals *G,int index);
 int ColorGetStatus(PyMOLGlobals *G,int index);

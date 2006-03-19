@@ -422,7 +422,7 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
 }
 
 /*========================================================================*/
-void ColorDef(PyMOLGlobals *G,char *name,float *v,int mode)
+void ColorDef(PyMOLGlobals *G,char *name,float *v,int mode,int quiet)
 {
   register CColor *I=G->Color;
   int color=-1;
@@ -462,9 +462,13 @@ void ColorDef(PyMOLGlobals *G,char *name,float *v,int mode)
   I->Color[color].Custom=true;
   ColorUpdateClamp(G,color);
 
-  PRINTFB(G,FB_Executive,FB_Actions)
-    " Color: \"%s\" defined as [ %3.3f, %3.3f, %3.3f ].\n",name,v[0],v[1],v[2] 
-    ENDFB(G);
+  if(!quiet) {
+    PRINTFB(G,FB_Executive,FB_Actions)
+      " Color: \"%s\" defined as [ %3.3f, %3.3f, %3.3f ].\n",name,v[0],v[1],v[2] 
+      ENDFB(G);
+
+  }
+
   PRINTFD(G,FB_Color) 
     " Color: and assigned number %d.\n",color
     ENDFD;
