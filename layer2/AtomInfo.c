@@ -26,6 +26,8 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"PConv.h"
 #include"Ortho.h"
+#include"OVOneToAny.h"
+#include"OVContext.h"
 
 struct _CAtomInfo {
   int NColor,CColor,DColor,HColor,OColor,SColor;
@@ -34,23 +36,64 @@ struct _CAtomInfo {
   int CuColor, FeColor, ZnColor;
   int SeColor;
   int DefaultColor;
-  
+  int NextUniqueID;
+  OVOneToAny *ActiveIDs;
 };
+
+static int AtomInfoPrimeUniqueIDs(PyMOLGlobals *G)
+{
+  CAtomInfo *I=G->AtomInfo;
+  if(!I->ActiveIDs) {
+    OVContext *C = G->Context;
+    I->ActiveIDs = OVOneToAny_New(C->heap);
+  }
+  return (I->ActiveIDs!=NULL);
+}
+
+static int AtomInfoGetNewUniqueID(PyMOLGlobals *G)
+{
+  CAtomInfo *I=G->AtomInfo;
+  int result = 0;
+  AtomInfoPrimeUniqueIDs(G);
+  if(I->ActiveIDs) {
+    while(1) {
+      result = I->NextUniqueID++;
+      if(result) { /* skip zero */
+        if(OVOneToAny_GetKey(I->ActiveIDs,result).status == OVstatus_NOT_FOUND) {
+          if(OVreturn_IS_ERROR( OVOneToAny_SetKey(I->ActiveIDs, result, 1) ))
+            result = 0;
+          break;
+        }
+      }
+    }
+  }
+  return result;
+}
+
+int AtomInfoCheckUniqueID(PyMOLGlobals *G, AtomInfoType *ai)
+{
+  if(!ai->unique_id) 
+    ai->unique_id = AtomInfoGetNewUniqueID(G);
+  return ai->unique_id;
+}
 
 int AtomInfoInit(PyMOLGlobals *G)
 {
   register CAtomInfo *I=NULL;
   if( (I=(G->AtomInfo=Calloc(CAtomInfo,1)))) {
     AtomInfoPrimeColors(G);
+    I->NextUniqueID = 1;
     return 1;
   } else
     return 0;
 }
+
 void AtomInfoFree(PyMOLGlobals *G)
 {
+  CAtomInfo *I = G->AtomInfo;
+  OVOneToAny_DEL_AUTO_NULL(I->ActiveIDs);
   FreeP(G->AtomInfo);
 }
-
 /*========================================================================*/
 void AtomInfoGetPDB3LetHydroName(PyMOLGlobals *G,char *resn, char *iname, char *oname) 
 {
@@ -670,7 +713,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result,29,PyInt_FromLong((int)I->masked));
   PyList_SetItem(result,30,PyInt_FromLong((int)I->protekted));
   PyList_SetItem(result,31,PyInt_FromLong((int)I->protons));
-  PyList_SetItem(result,32,PyInt_FromLong(I->sculpt_id));
+  PyList_SetItem(result,32,PyInt_FromLong(I->unique_id));
   PyList_SetItem(result,33,PyInt_FromLong((char)I->stereo));
   PyList_SetItem(result,34,PyInt_FromLong(I->discrete_state));
   PyList_SetItem(result,35,PyFloat_FromDouble(I->bohr_radius));
@@ -746,7 +789,12 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,29),(char*)&I->masked); 
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,30),(char*)&I->protekted); 
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,31),(char*)&I->protons); 
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,32),&I->sculpt_id); 
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,32),&I->unique_id); 
+  if(ok && I->unique_id) { /* reserve existing IDs */
+    CAtomInfo *II = G->AtomInfo;
+    AtomInfoPrimeUniqueIDs(G);
+    OVOneToAny_SetKey(II->ActiveIDs, I->unique_id, 1);
+  }
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,33),(char*)&I->stereo); 
   if(ok&&(ll>34)) ok = PConvPyIntToInt(PyList_GetItem(list,34),&I->discrete_state);  
   if(ok&&(ll>35)) ok = PConvPyFloatToFloat(PyList_GetItem(list,35),&I->bohr_radius); 
@@ -765,8 +813,12 @@ return(ok);
 
 void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai)
 {
+  CAtomInfo *I=G->AtomInfo;  
   if(ai->textType) {
     OVLexicon_DecRef(G->Lexicon,ai->textType);
+  }
+  if(ai->unique_id && I->ActiveIDs) {
+    OVOneToAny_DelKey(I->ActiveIDs, ai->unique_id);
   }
   if(ai->label) {
     /*    printf("purging %d [%s]\n", OVLexicon_GetNActive(G->Lexicon),
@@ -798,7 +850,7 @@ void AtomInfoCombine(PyMOLGlobals *G,AtomInfoType *dst,AtomInfoType *src,int mas
   if(mask&cAIC_state) dst->discrete_state = src->discrete_state;
   if(mask&cAIC_rank) dst->rank = src->rank;
   dst->temp1 = src->temp1;
-  dst->sculpt_id = src->sculpt_id;
+  dst->unique_id = src->unique_id;
   /* keep all existing names, identifiers, etc. */
   /* also keep all existing selections,
      colors, masks, and visible representations*/

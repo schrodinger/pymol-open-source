@@ -131,7 +131,7 @@ typedef struct AtomInfoType {
   int id; 
   unsigned int flags;
   int temp1; /* kludge fields - to remove */
-  int sculpt_id; /* introduced in version 0.77 */
+  int unique_id; /* introduced in version 0.77 */
   int discrete_state; /* state+1 for atoms in discrete objects */
   float bohr_radius;
   int rank;
@@ -173,7 +173,7 @@ void AtomInfoFree(PyMOLGlobals *G);
 int AtomInfoInit(PyMOLGlobals *G);
 void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai);
 
-
+int AtomInfoCheckUniqueID(PyMOLGlobals *G, AtomInfoType *ai);
 int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex);
 void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I);
 void AtomInfoFreeSortedIndexes(PyMOLGlobals *G,int *index,int *outdex);

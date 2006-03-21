@@ -455,8 +455,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
         for(a=0;a<obj->NAtom;a++) {
           I->Don[a]=false;
           I->Acc[a]=false;
-          if(!ai->sculpt_id) /* insure all atoms have unique sculpt IDs */
-            ai->sculpt_id=SculptCacheNewID(G);
+          AtomInfoCheckUniqueID(G,ai);
           ai++;
         }
         
@@ -664,11 +663,11 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                   d = (float)diff3f(v1,v2);
                   if(use_cache) {
                     if(!SculptCacheQuery(G,cSculptBond,
-                                         oai[b1].sculpt_id,
-                                         oai[b2].sculpt_id,0,0,&d))
+                                         oai[b1].unique_id,
+                                         oai[b2].unique_id,0,0,&d))
                       SculptCacheStore(G,cSculptBond,
-                                       oai[b1].sculpt_id,
-                                       oai[b2].sculpt_id,0,0,d);
+                                       oai[b1].unique_id,
+                                       oai[b2].unique_id,0,0,d);
                   }
                   ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistBond,1.0F); 
                   /* NOTE: storing atom indices, not coord. ind.! */
@@ -924,13 +923,13 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                   d = (float)diff3f(v1,v2);
                   if(use_cache) {
                     if(!SculptCacheQuery(G,cSculptAngl,
-                                         oai[b0].sculpt_id,
-                                         oai[b1].sculpt_id,
-                                         oai[b2].sculpt_id,0,&d))
+                                         oai[b0].unique_id,
+                                         oai[b1].unique_id,
+                                         oai[b2].unique_id,0,&d))
                       SculptCacheStore(G,cSculptAngl,
-                                       oai[b0].sculpt_id,
-                                       oai[b1].sculpt_id,
-                                       oai[b2].sculpt_id,0,d);
+                                       oai[b0].unique_id,
+                                       oai[b1].unique_id,
+                                       oai[b2].unique_id,0,d);
                   }
                   ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistAngle,1.0F); 
 
@@ -939,13 +938,13 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                     
                     if(use_cache) {
                       if(!SculptCacheQuery(G,cSculptLine,
-                                           oai[b1].sculpt_id,
-                                           oai[b0].sculpt_id,
-                                           oai[b2].sculpt_id,0,&dummy))
+                                           oai[b1].unique_id,
+                                           oai[b0].unique_id,
+                                           oai[b2].unique_id,0,&dummy))
                         SculptCacheStore(G,cSculptLine,
-                                         oai[b1].sculpt_id,
-                                         oai[b0].sculpt_id,
-                                         oai[b2].sculpt_id,0,0.0);
+                                         oai[b1].unique_id,
+                                         oai[b0].unique_id,
+                                         oai[b2].unique_id,0,0.0);
                     }
                     ShakerAddLineCon(I->Shaker,b1,b0,b2); 
                   }
@@ -1003,16 +1002,16 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                       d=0.0;
                     if(use_cache) {
                       if(!SculptCacheQuery(G,cSculptPyra,
-                                           oai[b1].sculpt_id,
-                                           oai[b0].sculpt_id,
-                                           oai[b2].sculpt_id,
-                                           oai[b3].sculpt_id,
+                                           oai[b1].unique_id,
+                                           oai[b0].unique_id,
+                                           oai[b2].unique_id,
+                                           oai[b3].unique_id,
                                            &d))
                         SculptCacheStore(G,cSculptPyra,
-                                         oai[b1].sculpt_id,
-                                         oai[b0].sculpt_id,
-                                         oai[b2].sculpt_id,
-                                         oai[b3].sculpt_id,
+                                         oai[b1].unique_id,
+                                         oai[b0].unique_id,
+                                         oai[b2].unique_id,
+                                         oai[b3].unique_id,
                                          d);
                     }
                     ShakerAddPyraCon(I->Shaker,b0,b1,b2,b3,d); 
@@ -1277,16 +1276,16 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                                      
                               if(use_cache) {
                                 if(!SculptCacheQuery(G,cSculptPlan,
-                                                     oai[b1].sculpt_id,
-                                                     oai[b0].sculpt_id,
-                                                     oai[b2].sculpt_id,
-                                                     oai[b3].sculpt_id,
+                                                     oai[b1].unique_id,
+                                                     oai[b0].unique_id,
+                                                     oai[b2].unique_id,
+                                                     oai[b3].unique_id,
                                                      &d))
                                   SculptCacheStore(G,cSculptPlan,
-                                                   oai[b1].sculpt_id,
-                                                   oai[b0].sculpt_id,
-                                                   oai[b2].sculpt_id,
-                                                   oai[b3].sculpt_id,
+                                                   oai[b1].unique_id,
+                                                   oai[b0].unique_id,
+                                                   oai[b2].unique_id,
+                                                   oai[b3].unique_id,
                                                    d);
                               }
                               ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3,d,fixed); 

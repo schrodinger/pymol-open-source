@@ -51,11 +51,11 @@ static void SeekerBuildSeleFromAtomList(PyMOLGlobals *G,char *obj_name,int *atom
   ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G,obj_name);
 
   if(start_fresh) {
-    SelectorCreateOrderedFromObjectIndices(G,sele_name, obj, atom_list,-1);
+    SelectorCreateFromObjectIndices(G,sele_name, obj, atom_list,-1);
   } else {
     OrthoLineType buf1;
 
-    SelectorCreateOrderedFromObjectIndices(G,cTempSeekerSele2, obj,atom_list,-1);    
+    SelectorCreateFromObjectIndices(G,cTempSeekerSele2, obj,atom_list,-1);    
 
     sprintf(buf1,"?%s|?%s",sele_name,cTempSeekerSele2);
     SelectorCreate(G,sele_name,buf1,NULL,true,NULL);      
@@ -338,7 +338,6 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
             PLog(buf2,cPLog_no_flush);
           }
           SeqDirty(G);
-          
         }
       }
       I->LastClickTime = UtilGetSeconds(G);
@@ -1331,7 +1330,6 @@ void SeekerUpdate(PyMOLGlobals *G)
               r1->color = default_color;
             if(align_sele>=0) {
               r1->tag = SeekerFindTag(G,ai,align_sele,codes,obj->NAtom-a);
-              printf("%d\n",r1->tag);
             } else {
               r1->tag = 0;
             }
@@ -1467,8 +1465,8 @@ void SeekerUpdate(PyMOLGlobals *G)
     /* in the simplest mode, just start each sequence in the same column */
 
     switch(
-#if 0
-1
+#if 1
+0
 #else
 0
 #endif
@@ -1563,7 +1561,6 @@ void SeekerUpdate(PyMOLGlobals *G)
                 }
               }
             }
-            
             if(min_tag) {
               int width, max_width = 0;
               int found = false;
@@ -1585,7 +1582,7 @@ void SeekerUpdate(PyMOLGlobals *G)
                   }
                 }
               }
-              current+=width;
+              current+=max_width;
             }
           }
         }
