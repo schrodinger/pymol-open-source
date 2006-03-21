@@ -491,11 +491,11 @@ static int *SelectorUpdateTableMultiObjectIdxPri(PyMOLGlobals *G,
   int modelCnt;
   int *result = NULL;
   register CSelector *I=G->Selector;
-  ObjectMolecule *obj;
+  ObjectMolecule *obj = NULL;
   int *idx,n_idx;
 
   PRINTFD(G,FB_Selector)
-    "SelectorUpdateTableSingleObject-Debug: entered for %s...\n",obj->Obj.Name
+    "SelectorUpdateTableSingleObject-Debug: entered ...\n"
     ENDFD;
  
   SelectorClean(G);
