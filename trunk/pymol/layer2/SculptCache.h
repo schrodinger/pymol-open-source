@@ -30,14 +30,12 @@ struct _CSculptCache {
   int NCached;
   int *Hash;
   SculptCacheEntry *List;
-  int SculptID;
 };
 
 int SculptCacheInit(PyMOLGlobals *G);
 void SculptCacheFree(PyMOLGlobals *G);
 void SculptCachePurge(PyMOLGlobals *G);
 
-int SculptCacheNewID(PyMOLGlobals *G);
 int SculptCacheQuery(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int id3,float *value);
 void SculptCacheStore(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int id3,float value);
 

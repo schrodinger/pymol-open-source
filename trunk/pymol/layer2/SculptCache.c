@@ -39,12 +39,6 @@ static void SculptCacheCheck(PyMOLGlobals *G)
   }
 }
 
-int SculptCacheNewID(PyMOLGlobals *G)
-{
-  register CSculptCache *I=G->SculptCache;
-  if(!I->Hash) SculptCacheCheck(G);
-  return(I->SculptID++);
-}
 
 int SculptCacheInit(PyMOLGlobals *G)
 {
@@ -52,7 +46,6 @@ int SculptCacheInit(PyMOLGlobals *G)
   if( (I=(G->SculptCache=Calloc(CSculptCache,1)))) {
     I->Hash = NULL; /* don't allocate until we need it */
     I->List = VLAlloc(SculptCacheEntry,16);
-    I->SculptID=1;
     I->NCached=1;
     return 1;
   } else {
@@ -64,7 +57,6 @@ void SculptCachePurge(PyMOLGlobals *G)
 {
   register CSculptCache *I=G->SculptCache;
   if(!I->Hash) SculptCacheCheck(G);
-  I->SculptID=1;
   I->NCached=1;
   UtilZeroMem(I->Hash,CACHE_HASH_SIZE*sizeof(int));
 }

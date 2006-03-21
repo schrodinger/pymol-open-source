@@ -29,8 +29,9 @@ int SelectorInit(PyMOLGlobals *G);
 int *SelectorSelect(PyMOLGlobals *G,char *sele);
 int SelectorCreate(PyMOLGlobals *G,char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp);
 int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele);
+int SelectorCreateFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx);
 int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx); 
-int SelectorCreateOrderedFromMultiObjectIdxPri(PyMOLGlobals *G,
+int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals *G,
                                                char *sname, ObjectMolecule **obj, int **pri_idx, int *n_idx, int n_obj);
 
 /* if n_idx is negative, then looks for negative *idx as the sentinel */
@@ -40,7 +41,7 @@ void SelectorToggle(PyMOLGlobals *G,int rep,char *name);
 void SelectorCylinder(PyMOLGlobals *G,char *sele,char *onoff);
 int SelectorUpdateTable(PyMOLGlobals *G);
 int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
-                                     int no_dummies,int *idx,int n_idx);
+                                     int no_dummies,int *idx,int n_idx,int numbered_tags);
 
 int SelectorIndexByName(PyMOLGlobals *G,char *sele);
 char *SelectorGetNameFromIndex(PyMOLGlobals *G,int index);
@@ -137,10 +138,13 @@ ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals *G,int sele);
 MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals *G,int sele,int state,float cutoff,float **coord_vla);
 int SelectorNameIsKeyword(PyMOLGlobals *G, char *name);
 
+/* reserve special meaning for tags 1-15 and note that 0 is disallowed */
+
+#define SELECTOR_BASE_TAG 0x10
 
 typedef struct {
   int selection;
-  int priority; /* must not be zero since it is also used as a boolean test for membership */
+  int tag; /* must not be zero since it is also used as a boolean test for membership */
   int next;
 } MemberType;
 
@@ -170,7 +174,7 @@ __inline__ static int SelectorIsMember(PyMOLGlobals *G,int s, int sele)
       test_sele = mem->selection;
       s_reg = mem->next;
       if(test_sele==sele_reg) {
-        return mem->priority;
+        return mem->tag;
       }
       mem = member + s_reg;
     } while(s_reg);

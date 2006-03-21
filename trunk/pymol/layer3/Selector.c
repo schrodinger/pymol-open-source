@@ -479,7 +479,7 @@ int SelectorNameIsKeyword(PyMOLGlobals *G, char *name)
   return 0;
 }
 
-static int *SelectorUpdateTableMultiObjectIdxPri(PyMOLGlobals *G,
+static int *SelectorUpdateTableMultiObjectIdxTag(PyMOLGlobals *G,
                                                  ObjectMolecule **obj_list,
                                                  int no_dummies,
                                                  int **idx_list,int *n_idx_list,
@@ -495,7 +495,7 @@ static int *SelectorUpdateTableMultiObjectIdxPri(PyMOLGlobals *G,
   int *idx,n_idx;
 
   PRINTFD(G,FB_Selector)
-    "SelectorUpdateTableSingleObject-Debug: entered ...\n"
+    "SelectorUpdateTableMultiObject-Debug: entered ...\n"
     ENDFD;
  
   SelectorClean(G);
@@ -562,7 +562,7 @@ static int *SelectorUpdateTableMultiObjectIdxPri(PyMOLGlobals *G,
   ErrChkPtr(G,I->Vertex);
   
   PRINTFD(G,FB_Selector)
-    "SelectorUpdateTableSingleObject-Debug: leaving...\n"
+    "SelectorUpdateTableMultiObject-Debug: leaving...\n"
     ENDFD;
   
   return(result);
@@ -611,7 +611,7 @@ int SelectorClassifyAtoms(PyMOLGlobals *G,int sele, int preserve,ObjectMolecule 
   int n_dummies = 0;
 
   if(only_object) {
-    SelectorUpdateTableSingleObject(G,only_object,true,NULL,0);  
+    SelectorUpdateTableSingleObject(G,only_object,true,NULL,0,false);  
     n_dummies = 0;
   } else {
     SelectorUpdateTable(G);
@@ -872,7 +872,7 @@ void SelectorComputeFragPos(PyMOLGlobals *G,ObjectMolecule *obj,int state,int n_
   WordType name;
   int *sele;
   int *cnt;
-  SelectorUpdateTableSingleObject(G,obj,true,NULL,0);
+  SelectorUpdateTableSingleObject(G,obj,true,NULL,0,false);
   sele = Alloc(int,n_frag);
   cnt = Calloc(int,n_frag);
   VLACheck(*vla,float,n_frag*3+2);
@@ -1061,7 +1061,7 @@ void SelectorSelectByID(PyMOLGlobals *G,char *name,ObjectMolecule *obj,int *id,i
   /* this routine only works if IDs cover a reasonable range --
      should rewrite using a hash table */
 
-  SelectorUpdateTableSingleObject(G,obj,true,NULL,0);
+  SelectorUpdateTableSingleObject(G,obj,true,NULL,0,false);
   atom = Calloc(int,I->NAtom);
   if(I->NAtom) {
 
@@ -2418,7 +2418,7 @@ PyObject *SelectorColorectionGet(PyMOLGlobals *G,char *prefix)
           VLACheck(I->Member,MemberType,m);
         }
         I->Member[m].selection = used[0].sele;
-        I->Member[m].priority = 1;
+        I->Member[m].tag = 1;
         I->Member[m].next = ai->selEntry;
         ai->selEntry = m;
         break;
@@ -2613,6 +2613,10 @@ int SelectorSecretsFromPyList(PyMOLGlobals *G,PyObject *list)
 #endif
 }
 
+typedef struct {
+  int atom;
+  int tag;
+} SelAtomTag;
 
 PyObject *SelectorAsPyList(PyMOLGlobals *G,int sele1)
 { /* assumes SelectorUpdateTable has been called */
@@ -2623,7 +2627,7 @@ PyObject *SelectorAsPyList(PyMOLGlobals *G,int sele1)
   int a,b;
   int at;
   int s;
-  int **vla_list = NULL;
+  SelAtomTag **vla_list = NULL;
   int n_obj = 0;
   int n_idx = 0;
   int cur = -1;
@@ -2632,52 +2636,57 @@ PyObject *SelectorAsPyList(PyMOLGlobals *G,int sele1)
   PyObject *result = NULL;
   PyObject *obj_pyobj;
   PyObject *idx_pyobj;
+  PyObject *tag_pyobj;
 
-  vla_list = VLAMalloc(10,sizeof(int*),5,true);
+  vla_list = VLAMalloc(10,sizeof(SelAtomTag*),5,true);
   obj_list = VLAlloc(ObjectMolecule*,10);
 
   n_idx = 0;
   for(a=cNDummyAtoms;a<I->NAtom;a++) {
+    int tag;
     at=I->Table[a].atom;
     obj=I->Obj[I->Table[a].model];
     s=obj->AtomInfo[at].selEntry;
-    if(SelectorIsMember(G,s,sele1))
-      {
-        if(cur_obj!=obj) {
-          if(n_idx) {
-            VLASize(vla_list[cur],int,n_idx);
-          }
-          cur++;
-          VLACheck(vla_list,int*,n_obj);
-          vla_list[cur] = VLAlloc(int,1000);
-          VLACheck(obj_list,ObjectMolecule*,n_obj);
-          obj_list[cur] = obj;
-          cur_obj = obj;
-          n_obj++;
-          n_idx=0;
+    if( (tag = SelectorIsMember(G,s,sele1)) ) {
+      if(cur_obj!=obj) {
+        if(n_idx) {
+          VLASize(vla_list[cur],SelAtomTag,n_idx);
         }
-        VLACheck(vla_list[cur],int,n_idx);
-        vla_list[cur][n_idx]=at;
-        n_idx++;
+        cur++;
+        VLACheck(vla_list,SelAtomTag*,n_obj);
+        vla_list[cur] = VLAlloc(SelAtomTag,1000);
+        VLACheck(obj_list,ObjectMolecule*,n_obj);
+        obj_list[cur] = obj;
+        cur_obj = obj;
+        n_obj++;
+        n_idx=0;
       }
+      VLACheck(vla_list[cur],SelAtomTag,n_idx);
+      vla_list[cur][n_idx].atom = at;
+      vla_list[cur][n_idx].tag = tag;
+      n_idx++;
+    }
   }
   if(cur_obj) {
     if(n_idx) {
-      VLASize(vla_list[cur],int,n_idx);
+      VLASize(vla_list[cur],SelAtomTag,n_idx);
     }
   }
   if(n_obj) {
     result = PyList_New(n_obj);
     for(a=0;a<n_obj;a++) {
-      obj_pyobj= PyList_New(2);
+      obj_pyobj= PyList_New(3);
       n_idx = VLAGetSize(vla_list[a]);
       idx_pyobj = PyList_New(n_idx);
+      tag_pyobj = PyList_New(n_idx);
       for(b=0;b<n_idx;b++) {
-        PyList_SetItem(idx_pyobj,b,PyInt_FromLong(vla_list[a][b]));
+        PyList_SetItem(idx_pyobj,b,PyInt_FromLong(vla_list[a][b].atom));
+        PyList_SetItem(tag_pyobj,b,PyInt_FromLong(vla_list[a][b].tag));
       }
       VLAFreeP(vla_list[a]);
       PyList_SetItem(obj_pyobj,0,PyString_FromString(obj_list[a]->Obj.Name));
       PyList_SetItem(obj_pyobj,1,idx_pyobj);
+      PyList_SetItem(obj_pyobj,2,tag_pyobj);
       PyList_SetItem(result,a,obj_pyobj);
     }
   } else {
@@ -2698,10 +2707,10 @@ int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list)
 
   int ok=true;
   register CSelector *I=G->Selector;
-  int n,a,b,m,sele;
+  int n,a,b,m,sele,ll;
   PyObject *obj_list=NULL;
-  PyObject *idx_list;
-  int n_obj=0,n_idx=0,idx;
+  PyObject *idx_list,*tag_list;
+  int n_obj=0,n_idx=0,idx,tag;
   char *oname;
   ObjectMolecule *obj;
   int singleAtomFlag = true;
@@ -2731,17 +2740,27 @@ int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list)
   I->NActive++;
   if(ok) {
     for(a=0;a<n_obj;a++) {
+      ll = 0;
       if(ok) obj_list = PyList_GetItem(list,a);
       if(ok) ok = PyList_Check(obj_list);
+      if(ok) ll = PyList_Size(obj_list);
       if(ok) ok = PConvPyStrToStrPtr(PyList_GetItem(obj_list,0),&oname);
       obj=NULL;
       if(ok) obj = ExecutiveFindObjectMoleculeByName(G,oname);
       if(ok&&obj) {
         if(ok) idx_list = PyList_GetItem(obj_list,1);
+        if(ll>2)
+          tag_list = PyList_GetItem(obj_list,2);
+        else
+          tag_list = NULL;
         if(ok) ok = PyList_Check(idx_list);
         if(ok) n_idx = PyList_Size(idx_list);
         for(b=0;b<n_idx;b++) {
           if(ok) ok = PConvPyIntToInt(PyList_GetItem(idx_list,b),&idx);
+          if(tag_list) 
+            PConvPyIntToInt(PyList_GetItem(tag_list,b),&tag);
+          else
+            tag = 1;
           if(ok&&(idx<obj->NAtom)) {
             ai=obj->AtomInfo+idx;
             if(I->FreeMember>0) {
@@ -2753,7 +2772,7 @@ int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list)
               VLACheck(I->Member,MemberType,m);
             }
             I->Member[m].selection = sele;
-            I->Member[m].priority = 1; /* all restored selections are currently unordered */
+            I->Member[m].tag = tag; 
             I->Member[m].next = ai->selEntry;
             ai->selEntry = m;
 
@@ -3401,7 +3420,7 @@ int SelectorIsMemberSlow(PyMOLGlobals *G,int s,int sele)
     {
       mem = member+s;
       if(mem->selection==sele) {
-        return mem->priority;
+        return mem->tag;
         break;
       }
       s = mem->next;
@@ -6451,7 +6470,7 @@ static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, Object
   /* either atom or obj should be NULL, not both and not neither */
 
   register CSelector *I=G->Selector;
-  int priority;
+  int tag;
   int newFlag=true;
   int n,a,m,sele;
   int c=0;
@@ -6489,60 +6508,58 @@ static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, Object
   } else {
     start = cNDummyAtoms;
   }
-  for(a=start;a<I->NAtom;a++)
-    {
-      priority = false;
-      if(atom) {
-        if(atom[a]) priority = atom[a];
-      } else {
-        if(I->Obj[I->Table[a].model]==obj) priority = 1;
-      }
-      if(priority)
-        {
-          selObj = I->Obj[I->Table[a].model];
-          index = I->Table[a].atom;
-          ai = selObj->AtomInfo+index;
-
-          if(singleObjectFlag) {
-            if(singleObject) {
-              if(selObj!=singleObject) {
-                singleObjectFlag = false;
-              }
-            } else {
-              singleObject = selObj;
-            }
-          }
-
-          if(singleAtomFlag) {
-            if(singleAtom>=0) {
-              if(index!=singleAtom) {
-                singleAtomFlag = false;
-              }
-            } else {
-              singleAtom = index;
-            }
-          }
-
-          c++;
-          if(I->FreeMember>0) {
-            m=I->FreeMember;
-            I->FreeMember=I->Member[m].next;
-          } else {
-            I->NMember++;
-            m=I->NMember;
-            VLACheck(I->Member,MemberType,m);
-          }
-          I->Member[m].selection = sele;
-          I->Member[m].priority = priority; 
-          /* at runtime, selections can now have transient ordering --
-             but these are not yet persistent through session saves & restores */
-          I->Member[m].next = ai->selEntry;
-          ai->selEntry = m;
-        }
+  for(a=start;a<I->NAtom;a++) {
+    tag = false;
+    if(atom) {
+      if(atom[a]) tag = atom[a];
+    } else {
+      if(I->Obj[I->Table[a].model]==obj) tag = 1;
     }
-
+    if(tag) {
+      selObj = I->Obj[I->Table[a].model];
+      index = I->Table[a].atom;
+      ai = selObj->AtomInfo+index;
+      
+      if(singleObjectFlag) {
+        if(singleObject) {
+          if(selObj!=singleObject) {
+            singleObjectFlag = false;
+          }
+        } else {
+          singleObject = selObj;
+        }
+      }
+      
+      if(singleAtomFlag) {
+        if(singleAtom>=0) {
+          if(index!=singleAtom) {
+            singleAtomFlag = false;
+          }
+        } else {
+          singleAtom = index;
+        }
+      }
+      
+      c++;
+      if(I->FreeMember>0) {
+        m=I->FreeMember;
+        I->FreeMember=I->Member[m].next;
+      } else {
+        I->NMember++;
+        m=I->NMember;
+        VLACheck(I->Member,MemberType,m);
+      }
+      I->Member[m].selection = sele;
+      I->Member[m].tag = tag;
+      /* at runtime, selections can now have transient ordering --
+         but these are not yet persistent through session saves & restores */
+      I->Member[m].next = ai->selEntry;
+      ai->selEntry = m;
+    }
+  }
+  
   if(c) { /* if selection contains just one atom/object, then take note */
-
+    
     SelectionInfoRec *info = I->Info + (I->NActive-1);
     if( singleObjectFlag ) {
       info->justOneObjectFlag = true;
@@ -6553,7 +6570,7 @@ static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, Object
       }
     }
   }
-
+  
   if(atom) { /* only manage selections defined via atom masks */
     if(newFlag)
       ExecutiveManageSelection(G,name);
@@ -6657,15 +6674,15 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
       atom=SelectorSelect(G,sele);
       if(!atom) ok=false;
     } else if(obj && obj[0]) { /* optimized full-object selection */
-      if(!n_obj) {
+      if(n_obj<=0) {
         embed_obj = *obj;
         if(obj_idx && n_idx) {
-          atom=SelectorUpdateTableSingleObject(G,embed_obj,false,*obj_idx,*n_idx);
+          atom=SelectorUpdateTableSingleObject(G,embed_obj,false,*obj_idx,*n_idx, (n_obj==0));
         } else {
-          atom=SelectorUpdateTableSingleObject(G,embed_obj,false,NULL,0);
+          atom=SelectorUpdateTableSingleObject(G,embed_obj,false,NULL,0, (n_obj==0));
         }
       } else {
-        atom=SelectorUpdateTableMultiObjectIdxPri(G,obj,false,obj_idx,n_idx,n_obj);
+        atom=SelectorUpdateTableMultiObjectIdxTag(G,obj,false,obj_idx,n_idx,n_obj);
       }
     } else if(mp) {
       atom=SelectorApplyMultipick(G,mp);
@@ -6707,16 +6724,20 @@ int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele)
 {
   return _SelectorCreate(G,name, sele, NULL, 1, NULL, NULL, 0, NULL, 0, 0);  
 }
+int SelectorCreateFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx)
+{
+  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,-1); /* n_obj = -1 disables numbered tags */
+}
 int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx)
 {
-  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,0);
+  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,0); /* assigned numbered tags */
 }
-int SelectorCreateOrderedFromMultiObjectIdxPri(PyMOLGlobals *G,char *sname, 
+int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals *G,char *sname, 
                                                ObjectMolecule **obj,
-                                               int **pri_idx,
+                                               int **idx_tag,
                                                int *n_idx, int n_obj)
 {
-  return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,pri_idx,n_idx,n_obj);
+  return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,idx_tag,n_idx,n_obj);
 }
 int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow);
 int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow)
@@ -6741,12 +6762,15 @@ static void SelectorClean(PyMOLGlobals *G)
   I->NAtom = 0;
 }
 /*========================================================================*/
-int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,int no_dummies,int *idx,int n_idx)
+int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
+                                     int no_dummies,int *idx,
+                                     int n_idx,int numbered_tags)
 {
   int a=0;
   int c=0;
   int modelCnt;
   int *result = NULL;
+  int tag=true;
   register CSelector *I=G->Selector;
 
   PRINTFD(G,FB_Selector)
@@ -6790,17 +6814,22 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,int no_
     if(n_idx>0) {
       for(a=0; a< n_idx; a++) {
         int at = idx[a];
+        if(numbered_tags)
+          tag = a+SELECTOR_BASE_TAG;
         if((at>=0)&&(at<obj->NAtom)) { /* create an ordered selection based on the input order of the object indices */
-        result[obj->SeleBase + at] = a+1; 
+          result[obj->SeleBase + at] = tag;
         }
       }
-    } else {
+    } else { /* -1 terminated list */
       int *at_idx = idx;
       int at;
-      a=0;
+      a=SELECTOR_BASE_TAG+1;
       while((at=*(at_idx++))>=0) {
+        if(numbered_tags) {
+          tag = a++;
+        }
         if((at>=0)&&(at<obj->NAtom)) { /* create an ordered selection based on the input order of the object indices */
-          result[obj->SeleBase + at] = (++a);
+          result[obj->SeleBase + at] = tag;
         }
       }
     }
@@ -7297,56 +7326,53 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
       static_singletons = (int)SettingGet(G,cSetting_static_singletons);
       flag=false;
       cs = NULL;
-      for(a=cNDummyAtoms;a<I->NAtom;a++)
-        {
-          base[0].sele[a]=false;
-          obj = i_obj[i_table[a].model];
-          if(obj!=cur_obj) { /* different object */
-            if(state>=obj->NCSet)
-              flag=false;
-            else if(!obj->CSet[state]) 
-              flag=false;
-            else {
-              cs = obj->CSet[state];
-              flag=true; /* valid state */
-            }
-            if(!flag)
-              if(I->NCSet==1)
-                if(static_singletons) {
-                  cs = obj->CSet[0];
-                  flag=true;
-                }
-            cur_obj = obj;
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
+        base[0].sele[a]=false;
+        obj = i_obj[i_table[a].model];
+        if(obj!=cur_obj) { /* different object */
+          if(state>=obj->NCSet)
+            flag=false;
+          else if(!obj->CSet[state]) 
+            flag=false;
+          else {
+            cs = obj->CSet[state];
+            flag=true; /* valid state */
           }
-          if(flag&&cs) {
-            at_idx = i_table[a].atom;
-            if(obj->DiscreteFlag) {
-              if(cs==obj->DiscreteCSet[at_idx]) {
-                if(obj->DiscreteAtmToIdx[at_idx]>=0) {
-                  base[0].sele[a]=true;
-                  c++;
-                }
-              } 
-            } else if(cs->AtmToIdx[at_idx]>=0) {
-              base[0].sele[a]=true;
-              c++;
-            }
+          if(!flag)
+            if(I->NCSet==1)
+              if(static_singletons) {
+                cs = obj->CSet[0];
+                flag=true;
+              }
+          cur_obj = obj;
+        }
+        if(flag&&cs) {
+          at_idx = i_table[a].atom;
+          if(obj->DiscreteFlag) {
+            if(cs==obj->DiscreteCSet[at_idx]) {
+              if(obj->DiscreteAtmToIdx[at_idx]>=0) {
+                base[0].sele[a]=true;
+                c++;
+              }
+            } 
+          } else if(cs->AtmToIdx[at_idx]>=0) {
+            base[0].sele[a]=true;
+            c++;
           }
         }
+      }
       break;
 	 case SELE_ALLz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-		  {
-			 base[0].sele[a]=true;
-			 c++;
-		  }
-      break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++) {
+         base[0].sele[a]=true;
+         c++;
+       }
+       break;
 	 case SELE_ORIz:
-		for(a=0;a<I->NAtom;a++)
-		  {
-			 base[0].sele[a]=false;
-			 c++;
-		  }
+       for(a=0;a<I->NAtom;a++) {
+         base[0].sele[a]=false;
+         c++;
+       }
       if(I->Origin)
         ObjectMoleculeDummyUpdate(I->Origin,cObjectMoleculeDummyOrigin);
       base[0].sele[cDummyOrigin]=true; 
@@ -7418,14 +7444,13 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
       }
       break;
 	 case SELE_ENAz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-		  {
-          flag = (i_obj[i_table[a].model]->Obj.Enabled);
-          base[0].sele[a]=flag;
-          if(flag)
-            c++;
-        }
-		break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++) {
+         flag = (i_obj[i_table[a].model]->Obj.Enabled);
+         base[0].sele[a]=flag;
+         if(flag)
+           c++;
+       }
+       break;
 	 }
   PRINTFD(G,FB_Selector)
 	 " SelectorSelect0: %d atoms selected.\n",c
@@ -8048,21 +8073,18 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
                  ((!enabled_only)||
                   ExecutiveGetActiveSeleName(G,list[idx],false))) {
                 sele=I->Info[idx].ID;
-                for(a=cNDummyAtoms;a<I->NAtom;a++)
-                  {
-                    s=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].selEntry;
-                    while(s)
-                      {
-                        if(I->Member[s].selection==sele)
-                          {
-                            if(!base[0].sele[a]) {
-                              base[0].sele[a]=true;
-                              c++;
-                            }
-                          }
-                        s=I->Member[s].next;
+                for(a=cNDummyAtoms;a<I->NAtom;a++) {
+                  s=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].selEntry;
+                  while(s) {
+                    if(I->Member[s].selection==sele) {
+                      if(!base[0].sele[a]) {
+                        base[0].sele[a] = I->Member[s].tag;
+                        c++;
                       }
+                    }
+                    s=I->Member[s].next;
                   }
+                }
               }
             }
             idx++;
@@ -8082,7 +8104,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
                     {
                       if(I->Member[s].selection==sele)
                         {
-                          base[0].sele[a]=true;
+                          base[0].sele[a] = I->Member[s].tag;
                           c++;
                         }
                       s=I->Member[s].next;
@@ -8419,7 +8441,8 @@ static int SelectorImplicitOr(PyMOLGlobals *G,EvalElem *base)
   
   for(a=0;a<n_atom;a++)
     {
-      if( (*base_0_sele_a = (*base_0_sele_a) || (*base_1_sele_a)))
+      if( ((*base_0_sele_a)= (((*base_0_sele_a) > (*base_1_sele_a)) ?
+                              (*base_0_sele_a) : (*base_1_sele_a))) ) /* use higher tag */
         c++;
       base_0_sele_a++;
       base_1_sele_a++;
@@ -8435,7 +8458,7 @@ static int SelectorImplicitOr(PyMOLGlobals *G,EvalElem *base)
 static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
 {
   register CSelector *I=G->Selector;
-  register int a,b;
+  register int a,b,tag;
   register int c=0;
   register int flag;
   register EvalElem *base = inp_base;
@@ -8444,8 +8467,6 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
   register ObjectMolecule **i_obj = I->Obj;
   register int n_atom = I->NAtom;
   register int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
-
-
   int n;
   int a0,a1,a2;
   ObjectMolecule *lastObj = NULL;
@@ -8453,409 +8474,409 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
   base[0].sele=base[1].sele;
   base[1].sele=NULL;
   base[0].type=STYP_LIST;
-  switch(base->code)
-	 {
-	 case SELE_NOT1:
-      {
-        register int *base_0_sele_a;
-
-        base_0_sele_a = base[0].sele;
-        for(a=0;a<n_atom;a++) {
-          if( (*base_0_sele_a = ! *base_0_sele_a) )
-            c++;
-          base_0_sele_a ++;
+  switch(base->code) {
+  case SELE_NOT1:
+    {
+      register int *base_0_sele_a;
+      
+      base_0_sele_a = base[0].sele;
+      for(a=0;a<n_atom;a++) {
+        if( (*base_0_sele_a = ! *base_0_sele_a) )
+          c++;
+        base_0_sele_a ++;
+      }
+    }
+    break;
+  case SELE_NGH1:
+    base[1].sele=base[0].sele;
+    base[0].sele=Calloc(int,n_atom);
+    
+    table_a = i_table + cNDummyAtoms;
+    for(a=cNDummyAtoms;a<n_atom;a++) {
+      if( (tag=base[1].sele[a]) ) {
+        if(i_obj[ table_a->model]!=lastObj) {
+          lastObj = i_obj[table_a->model];
+          ObjectMoleculeUpdateNeighbors(lastObj);
+        }
+        a0= table_a->atom;
+        n=lastObj->Neighbor[a0];
+        n++;
+        while(1) {
+          a1=lastObj->Neighbor[n];
+          if(a1<0) break;
+          a2 = a1+lastObj->SeleBase;
+          if(!base[1].sele[a2])
+            base[0].sele[a2] = tag;
+          n+=2;
         }
       }
-		break;
-    case SELE_NGH1:
-      base[1].sele=base[0].sele;
-      base[0].sele=Calloc(int,n_atom);
-
-      table_a = i_table + cNDummyAtoms;
-      for(a=cNDummyAtoms;a<n_atom;a++) {
-        if(base[1].sele[a]) {
-          if(i_obj[ table_a->model]!=lastObj) {
-            lastObj = i_obj[table_a->model];
-            ObjectMoleculeUpdateNeighbors(lastObj);
-          }
-          a0= table_a->atom;
-          n=lastObj->Neighbor[a0];
-          n++;
-          while(1) {
-            a1=lastObj->Neighbor[n];
-            if(a1<0) break;
-            a2 = a1+lastObj->SeleBase;
-            if(!base[1].sele[a2])
-              base[0].sele[a2] =1;
-            n+=2;
-          }
+      table_a++;
+    }
+    FreeP(base[1].sele);
+    break;
+  case SELE_BON1:
+    base[1].sele=base[0].sele;
+    base[0].sele=Calloc(int,n_atom);
+    table_a = i_table + cNDummyAtoms;
+    for(a=cNDummyAtoms;a<n_atom;a++) {
+      if( (tag=base[1].sele[a]) ) {
+        if(i_obj[table_a->model]!=lastObj) {
+          lastObj = i_obj[table_a->model];
+          ObjectMoleculeUpdateNeighbors(lastObj);
         }
-        table_a++;
-      }
-      FreeP(base[1].sele);
-      break;
-    case SELE_BON1:
-      base[1].sele=base[0].sele;
-      base[0].sele=Calloc(int,n_atom);
-      table_a = i_table + cNDummyAtoms;
-      for(a=cNDummyAtoms;a<n_atom;a++) {
-        if(base[1].sele[a]) {
-          if(i_obj[table_a->model]!=lastObj) {
-            lastObj = i_obj[table_a->model];
-            ObjectMoleculeUpdateNeighbors(lastObj);
-          }
-          a0= table_a->atom;
-          n=lastObj->Neighbor[a0];
-          n++;
-          while(1) {
-            a1=lastObj->Neighbor[n];
-            if(a1<0) break;
-            a2 = a1+lastObj->SeleBase;
-            base[0].sele[a2] =1;
-            n+=2;
-          }
+        a0= table_a->atom;
+        n=lastObj->Neighbor[a0];
+        n++;
+        while(1) {
+          a1=lastObj->Neighbor[n];
+          if(a1<0) break;
+          a2 = a1+lastObj->SeleBase;
+          if(!base[0].sele[a2]) 
+            base[0].sele[a2]=1;
+          n+=2;
         }
-        table_a++;
       }
-      FreeP(base[1].sele);
-      break;
-    case SELE_BYO1: 
-      base[1].sele=base[0].sele;
-      base[0].sele=Calloc(int,n_atom);
-      for(a=cNDummyAtoms;a<n_atom;a++) {
-        if(base[1].sele[a]) {
-          if(i_obj[i_table[a].model]!=lastObj) {
-            lastObj = i_obj[i_table[a].model];
-            b = a;
-            while(b>=0) {
-              if(i_obj[i_table[b].model]!=lastObj) 
-                break;
-              base[0].sele[b]=1;
-              b--;
-            }
-            b=a+1;
-            while(b<n_atom) {
-              if(i_obj[i_table[b].model]!=lastObj) 
-                break;
-              base[0].sele[b]=1;
-              b++;
-            }
+      table_a++;
+    }
+    FreeP(base[1].sele);
+    break;
+  case SELE_BYO1: 
+    base[1].sele=base[0].sele;
+    base[0].sele=Calloc(int,n_atom);
+    for(a=cNDummyAtoms;a<n_atom;a++) {
+      if(base[1].sele[a]) {
+        if(i_obj[i_table[a].model]!=lastObj) {
+          lastObj = i_obj[i_table[a].model];
+          b = a;
+          while(b>=0) {
+            if(i_obj[i_table[b].model]!=lastObj) 
+              break;
+            base[0].sele[b]=1;
+            b--;
+          }
+          b=a+1;
+          while(b<n_atom) {
+            if(i_obj[i_table[b].model]!=lastObj) 
+              break;
+            base[0].sele[b]=1;
+            b++;
           }
         }
       }
-      FreeP(base[1].sele);
-      break;      
-	 case SELE_BYR1: /* ASSUMES atoms are sorted by residue */
-	 case SELE_CAS1: 
-      table_a = i_table + cNDummyAtoms;
-		for(a=cNDummyAtoms;a<n_atom;a++)
-		  {
-			 if(base[0].sele[a]) 
-			   {
-              at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
-              b = a-1;
-              while(b>=0) {
-                if(!base[0].sele[b]) {
-                  flag = false;
-                  if(table_a->model==i_table[b].model)
-                    {
-                      at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-                      if(at1->chain[0]==at2->chain[0])
-                        if(at1->resv==at2->resv)
-                          if(at1->discrete_state==at2->discrete_state)
-                            if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
-                              if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
-                                if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                                  base[0].sele[b]=true;
-                                  c++;
-                                  flag=1;
-                                }
-                    }
-                  if(!flag)
-                    break;
-                }
-                b--;
-              }
-              b = a + 1;
-              while(b<n_atom) {
-                if(!base[0].sele[b]) {
-                  flag=false;
-                  if(table_a->model==i_table[b].model)
-                    {
-                      at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-                      if(at1->chain[0]==at2->chain[0])
-                        if(at1->resv==at2->resv)
-                          if(at1->discrete_state==at2->discrete_state)
-                            if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
-                              if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
-                                if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                                  base[0].sele[b]=true;
-                                  c++;
-                                  flag=1;
-                                }
-                    }
-                  if(!flag)
-                    break;
-                }
-                b++;
-              }
-			   }
-          table_a++;
-		  }
-      if(base->code==SELE_CAS1) {
-        c=0;
-        table_a = i_table + cNDummyAtoms;
-        for(a=cNDummyAtoms;a<n_atom;a++) {
-          if(base[0].sele[a])
-            {
-              base[0].sele[a]=false;
-              
-              if(i_obj[table_a->model]->AtomInfo[table_a->atom].protons == cAN_C)
-                if(WordMatchCommaExact(G,"CA",
-                                       i_obj[table_a->model]->AtomInfo[table_a->atom].name,
-                                       ignore_case)<0)
-                  {
-                    base[0].sele[a]=true;
-                    c++;
-                  }
-            }
-          table_a++;
-        }
-      }
-		break;
-	 case SELE_BYC1: /* ASSUMES atoms are sorted by chain */
-      table_a = i_table + cNDummyAtoms;
-		for(a=cNDummyAtoms;a<n_atom;a++)
-		  {
-			 if(base[0].sele[a]) 
-			   {
-              at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
-              b = a-1;
-              while(b>=0) {
-                if(!base[0].sele[b]) {
-                  flag = false;
-                  if(table_a->model==i_table[b].model)
-                    {
-                      at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-                        if(at1->chain[0]==at2->chain[0])
-                          if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                            base[0].sele[b]=true;
-                            c++;
-                            flag=1;
-                          }
-                    }
-                  if(!flag)
-                    break;
-                }
-                b--;
-              }
-              b = a + 1;
-              while(b<n_atom) {
-                if(!base[0].sele[b]) {
-                  flag=false;
-                  if(table_a->model==i_table[b].model)
-                    {
-                      at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-                      if(at1->chain[0]==at2->chain[0])
+    }
+    FreeP(base[1].sele);
+    break;      
+  case SELE_BYR1: /* ASSUMES atoms are sorted by residue */
+  case SELE_CAS1: 
+    table_a = i_table + cNDummyAtoms;
+    for(a=cNDummyAtoms;a<n_atom;a++) {
+      
+      if( (tag = base[0].sele[a]) ) {
+        at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
+        b = a-1;
+        while(b>=0) {
+          if(!base[0].sele[b]) {
+            flag = false;
+            if(table_a->model==i_table[b].model) {
+              at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+              if(at1->chain[0]==at2->chain[0])
+                if(at1->resv==at2->resv)
+                  if(at1->discrete_state==at2->discrete_state)
+                    if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
+                      if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
                         if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                          base[0].sele[b]=true;
+                          base[0].sele[b]=tag;
                           c++;
                           flag=1;
                         }
-                    }
-                  if(!flag)
-                    break;
-                }
-                b++;
-              }
-			   }
-        table_a++;
-		  }
-		break;
-	 case SELE_BYS1: /* ASSUMES atoms are sorted by segi */
+            }
+            if(!flag)
+              break;
+          }
+          b--;
+        }
+        b = a + 1;
+        while(b<n_atom) {
+          if(!base[0].sele[b]) {
+            flag=false;
+            if(table_a->model==i_table[b].model) {
+              at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+              if(at1->chain[0]==at2->chain[0])
+                if(at1->resv==at2->resv)
+                  if(at1->discrete_state==at2->discrete_state)
+                    if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
+                      if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
+                        if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                          base[0].sele[b]=tag;
+                          c++;
+                          flag=1;
+                        }
+            }
+            if(!flag)
+              break;
+          }
+          b++;
+        }
+      }
+      table_a++;
+    }
+    if(base->code==SELE_CAS1) {
+      c=0;
       table_a = i_table + cNDummyAtoms;
-		for(a=cNDummyAtoms;a<n_atom;a++)
-		  {
-			 if(base[0].sele[a]) 
-			   {
-              at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
-              b = a-1;
-              while(b>=0) {
-                if(!base[0].sele[b]) {
-                  flag = false;
-                  if(table_a->model==i_table[b].model)
-                    {
-                      at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-                      if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                        base[0].sele[b]=true;
-                        c++;
-                        flag=1;
-                      }
-                    }
-                  if(!flag)
-                    break;
+      for(a=cNDummyAtoms;a<n_atom;a++) {
+        if(base[0].sele[a])
+          {
+            base[0].sele[a]=false;
+              
+            if(i_obj[table_a->model]->AtomInfo[table_a->atom].protons == cAN_C)
+              if(WordMatchCommaExact(G,"CA",
+                                     i_obj[table_a->model]->AtomInfo[table_a->atom].name,
+                                     ignore_case)<0)
+                {
+                  base[0].sele[a]=true;
+                  c++;
                 }
-                b--;
-              }
-              b = a + 1;
-              while(b<n_atom) {
-                if(!base[0].sele[b]) {
-                  flag=false;
-                  if(table_a->model==i_table[b].model)
-                    {
-                      at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-                      if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                        base[0].sele[b]=true;
-                        c++;
-                        flag=1;
-                      }
-                    }
-                  if(!flag)
-                    break;
-                }
-                b++;
-              }
-			   }
-          table_a++;
-		  }
-		break;
-    case SELE_BYF1: /* first, identify all atom by fragment selection */
-      {
-        int n_frag = EditorGetNFrag(G);
-
-        base[1].sele=base[0].sele;
-        base[0].sele=Calloc(int,n_atom);
-        
-        if(n_frag) {
-          int a,f,at,s;
-          int *fsele;
-          WordType name;
-          ObjectMolecule *obj;
-
-          fsele = Alloc(int,n_frag+1);
-          
-          for(f=0;f<n_frag;f++) {
-            sprintf(name,"%s%1d",cEditorFragPref,f+1);
-            fsele[f] = SelectorIndexByName(G,name);
           }
-          
-          /* mark atoms by fragment */
-          for(a=0;a<n_atom;a++) {
-            at=i_table[a].atom;
-            obj=i_obj[i_table[a].model];
-            s=obj->AtomInfo[at].selEntry;
-            for(f=0;f<n_frag;f++) {
-              if(SelectorIsMember(G,s,fsele[f])) {
-                base[0].sele[a] = f+1;
-              }
-            }
-          }
-
-          /* mark fragments we keep */
-          for(f=0;f<=n_frag;f++) {
-            fsele[f] = 0;
-          }
-          for(a=0;a<n_atom;a++) { 
-            int f = base[0].sele[a];
-            if(base[1].sele[a]&&f)
-              fsele[f] = 1;
-          }
-          
-          /* now set flags */
-          for(a=0;a<n_atom;a++) {
-            c+= (base[0].sele[a] = fsele[base[0].sele[a]]);
-          }
-
-          FreeP(fsele);
-        }
-        FreeP(base[1].sele);
+        table_a++;
       }
-      break;
-    case SELE_BYM1:
+    }
+    break;
+  case SELE_BYC1: /* ASSUMES atoms are sorted by chain */
+    table_a = i_table + cNDummyAtoms;
+    for(a=cNDummyAtoms;a<n_atom;a++)
       {
-        int s;
-        int c = 0;
-        int a,at,a1,aa;
-        AtomInfoType *ai;
-        ObjectMolecule *obj,*lastObj=NULL;
-        int *stk;
-        int stkDepth = 0;
-        base[1].sele=base[0].sele;
-        base[0].sele=Calloc(int,n_atom);
-        
-        stk = VLAlloc(int,50);
-        
-        for(a=0;a<n_atom;a++) {
-          if(base[1].sele[a]&&(!base[0].sele[a])) {
-            VLACheck(stk,int,stkDepth);
-            stk[stkDepth]=a;
-            stkDepth++;
-
-            obj=i_obj[i_table[a].model];
-            if(obj!=lastObj) {
-              lastObj = obj;
-              ObjectMoleculeUpdateNeighbors(obj);
-            }
-            
-            while(stkDepth) { /* this will explore a tree */
-              stkDepth--;
-              a=stk[stkDepth];
-              base[0].sele[a]=1;
-              c++;
-              at=i_table[a].atom; /* start walk from this location */
-              ai=obj->AtomInfo+at;
-
-              s=obj->Neighbor[at]; /* add neighbors onto the stack */
-              s++; /* skip count */              
-              while(1) {
-                a1 = obj->Neighbor[s];
-                if(a1>=0) {
-                  aa = obj->SeleBase + a1;
-                  if(!base[0].sele[aa]) {
-                    VLACheck(stk,int,stkDepth);
-                    stk[stkDepth]=aa; /* add index in selector space */
-                    stkDepth++;
+        if( (tag=base[0].sele[a]) ) 
+          {
+            at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
+            b = a-1;
+            while(b>=0) {
+              if(!base[0].sele[b]) {
+                flag = false;
+                if(table_a->model==i_table[b].model)
+                  {
+                    at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+                    if(at1->chain[0]==at2->chain[0])
+                      if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                        base[0].sele[b]=tag;
+                        c++;
+                        flag=1;
+                      }
                   }
-                } else 
+                if(!flag)
                   break;
-                s+=2;
               }
+              b--;
+            }
+            b = a + 1;
+            while(b<n_atom) {
+              if(!base[0].sele[b]) {
+                flag=false;
+                if(table_a->model==i_table[b].model)
+                  {
+                    at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+                    if(at1->chain[0]==at2->chain[0])
+                      if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                        base[0].sele[b]=tag;
+                        c++;
+                        flag=1;
+                      }
+                  }
+                if(!flag)
+                  break;
+              }
+              b++;
+            }
+          }
+        table_a++;
+      }
+    break;
+  case SELE_BYS1: /* ASSUMES atoms are sorted by segi */
+    table_a = i_table + cNDummyAtoms;
+    for(a=cNDummyAtoms;a<n_atom;a++)
+      {
+        if( (tag=base[0].sele[a] ))
+          {
+            at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
+            b = a-1;
+            while(b>=0) {
+              if(!base[0].sele[b]) {
+                flag = false;
+                if(table_a->model==i_table[b].model)
+                  {
+                    at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+                    if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                      base[0].sele[b]=tag;
+                      c++;
+                      flag=1;
+                    }
+                  }
+                if(!flag)
+                  break;
+              }
+              b--;
+            }
+            b = a + 1;
+            while(b<n_atom) {
+              if(!base[0].sele[b]) {
+                flag=false;
+                if(table_a->model==i_table[b].model)
+                  {
+                    at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+                    if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                      base[0].sele[b]=tag;
+                      c++;
+                      flag=1;
+                    }
+                  }
+                if(!flag)
+                  break;
+              }
+              b++;
+            }
+          }
+        table_a++;
+      }
+    break;
+  case SELE_BYF1: /* first, identify all atom by fragment selection */
+    {
+      /* NOTE: this algorithm looks incompatible with selection
+         tags...need to do some more thinking & work... */
+
+      int n_frag = EditorGetNFrag(G);
+
+      base[1].sele=base[0].sele;
+      base[0].sele=Calloc(int,n_atom);
+        
+      if(n_frag) {
+        int a,f,at,s;
+        int *fsele;
+        WordType name;
+        ObjectMolecule *obj;
+
+        fsele = Alloc(int,n_frag+1);
+          
+        for(f=0;f<n_frag;f++) {
+          sprintf(name,"%s%1d",cEditorFragPref,f+1);
+          fsele[f] = SelectorIndexByName(G,name);
+        }
+          
+        /* mark atoms by fragment */
+        for(a=0;a<n_atom;a++) {
+          at=i_table[a].atom;
+          obj=i_obj[i_table[a].model];
+          s=obj->AtomInfo[at].selEntry;
+          for(f=0;f<n_frag;f++) {
+            if(SelectorIsMember(G,s,fsele[f])) {
+              base[0].sele[a] = f+1;
             }
           }
         }
-        FreeP(base[1].sele);
-        VLAFreeP(stk);
+
+        /* mark fragments we keep */
+        for(f=0;f<=n_frag;f++) {
+          fsele[f] = 0;
+        }
+        for(a=0;a<n_atom;a++) { 
+          int f = base[0].sele[a];
+          if(base[1].sele[a]&&f)
+            fsele[f] = 1;
+        }
+          
+        /* now set flags */
+        for(a=0;a<n_atom;a++) {
+          c+= (base[0].sele[a] = fsele[base[0].sele[a]]);
+        }
+
+        FreeP(fsele);
       }
-      break;
-    case SELE_FST1: 
+      FreeP(base[1].sele);
+    }
+    break;
+  case SELE_BYM1:
+    {
+      int s;
+      int c = 0;
+      int a,at,a1,aa;
+      AtomInfoType *ai;
+      ObjectMolecule *obj,*lastObj=NULL;
+      int *stk;
+      int stkDepth = 0;
+      base[1].sele=base[0].sele;
+      base[0].sele=Calloc(int,n_atom);
+        
+      stk = VLAlloc(int,50);
+        
+      for(a=0;a<n_atom;a++) {
+        if( (tag=base[1].sele[a]) &&(!base[0].sele[a])) {
+          VLACheck(stk,int,stkDepth);
+          stk[stkDepth]=a;
+          stkDepth++;
+
+          obj=i_obj[i_table[a].model];
+          if(obj!=lastObj) {
+            lastObj = obj;
+            ObjectMoleculeUpdateNeighbors(obj);
+          }
+            
+          while(stkDepth) { /* this will explore a tree */
+            stkDepth--;
+            a=stk[stkDepth];
+            base[0].sele[a]=tag;
+            c++;
+            at=i_table[a].atom; /* start walk from this location */
+            ai=obj->AtomInfo+at;
+
+            s=obj->Neighbor[at]; /* add neighbors onto the stack */
+            s++; /* skip count */              
+            while(1) {
+              a1 = obj->Neighbor[s];
+              if(a1>=0) {
+                aa = obj->SeleBase + a1;
+                if(!base[0].sele[aa]) {
+                  VLACheck(stk,int,stkDepth);
+                  stk[stkDepth]=aa; /* add index in selector space */
+                  stkDepth++;
+                }
+              } else 
+                break;
+              s+=2;
+            }
+          }
+        }
+      }
+      FreeP(base[1].sele);
+      VLAFreeP(stk);
+    }
+    break;
+  case SELE_FST1: 
+    base[1].sele=base[0].sele;
+    base[0].sele=Calloc(int,n_atom);
+    for(a=cNDummyAtoms;a<n_atom;a++) {
+      if(base[1].sele[a]) {
+        base[0].sele[a] = base[1].sele[a]; /* preserve tag */
+        break;
+      }
+    }
+    FreeP(base[1].sele);
+    break;      
+  case SELE_LST1: 
+    {
+      int last = -1;
       base[1].sele=base[0].sele;
       base[0].sele=Calloc(int,n_atom);
       for(a=cNDummyAtoms;a<n_atom;a++) {
         if(base[1].sele[a]) {
-          base[0].sele[a] = true;
-          break;
+          last = a;
         }
       }
-      FreeP(base[1].sele);
-      break;      
-    case SELE_LST1: 
-      {
-        int last = -1;
-        base[1].sele=base[0].sele;
-        base[0].sele=Calloc(int,n_atom);
-        for(a=cNDummyAtoms;a<n_atom;a++) {
-          if(base[1].sele[a]) {
-            last = a;
-          }
-        }
-        if(last>=0)
-          base[0].sele[last] = true;
-      }
-      FreeP(base[1].sele);
-      break;      	
- }
+      if(last>=0)
+        base[0].sele[last] = base[1].sele[last]; /* preserve tag */
+    }
+    FreeP(base[1].sele);
+    break;      	
+  }
   PRINTFD(G,FB_Selector)
-	 " SelectorLogic1: %d atoms selected.\n",c
+    " SelectorLogic1: %d atoms selected.\n",c
     ENDFD;
   return(1);
 }
@@ -8863,7 +8884,7 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
 static int SelectorLogic2(PyMOLGlobals *G,EvalElem *base)
 {
   register CSelector *I=G->Selector;
-  register int a,b;
+  register int a,b,tag;
   register int c=0;
   register int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
   register int *base_0_sele_a,*base_2_sele_a;
@@ -8873,103 +8894,108 @@ static int SelectorLogic2(PyMOLGlobals *G,EvalElem *base)
 
   AtomInfoType *at1,*at2;
   
-  switch(base[1].code)
-	 {
-	 case SELE_OR_2:
-      {
-        base_0_sele_a = base[0].sele;
-        base_2_sele_a = base[2].sele;
-
-        for(a=0;a<n_atom;a++)
-          {
-            if( (*base_0_sele_a = (*base_0_sele_a) || (*base_2_sele_a)))
-              c++;
-            base_0_sele_a++;
-            base_2_sele_a++;
-          }
+  switch(base[1].code) {
+    
+  case SELE_OR_2:
+    {
+      base_0_sele_a = base[0].sele;
+      base_2_sele_a = base[2].sele;
+      
+      for(a=0;a<n_atom;a++) {
+        if( ((*base_0_sele_a)= (((*base_0_sele_a) > (*base_2_sele_a)) ?
+                                (*base_0_sele_a) : (*base_2_sele_a))) ) /* use higher tag */
+          c++;
+        base_0_sele_a++;
+        base_2_sele_a++;
       }
-		break;
-	 case SELE_AND2:
-		
-        base_0_sele_a = base[0].sele;
-        base_2_sele_a = base[2].sele;
-
-        for(a=0;a<n_atom;a++) {
-            if( (*base_0_sele_a = (*base_0_sele_a) && (*base_2_sele_a)))
-              c++;
-            base_0_sele_a++;
-            base_2_sele_a++;
-          }
-		break;
-	 case SELE_IN_2:
-      {
-        register int *base_2_sele_b;
-        base_0_sele_a = &base[0].sele[cNDummyAtoms];
-        table_a = i_table + cNDummyAtoms;
-        for(a=cNDummyAtoms;a<n_atom;a++) {
-          if(*base_0_sele_a) {
-            at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
-            *base_0_sele_a = 0;
-            table_b = i_table + cNDummyAtoms;
-            base_2_sele_b = &base[2].sele[cNDummyAtoms];
-            for(b=cNDummyAtoms;b<n_atom;b++) {
-              if(*base_2_sele_b) {
-                at2=&i_obj[table_b->model]->AtomInfo[table_b->atom];
-                if(at1->resv==at2->resv)
-                  if((tolower(at1->chain[0]))==(tolower(at2->chain[0])))
-                    if(WordMatch(G,at1->name,at2->name,ignore_case)<0)
-                      if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
-                        if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
-                          if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                            *base_0_sele_a = 1;
-                            break;
-                          }
-              }
-              base_2_sele_b++;
-              table_b++;
-            }
-          }
-          if( *(base_0_sele_a++) )
-            c++;
-          table_a++;
-        }
+    }
+    break;
+  case SELE_AND2:
+    
+    base_0_sele_a = base[0].sele;
+    base_2_sele_a = base[2].sele;
+    
+    for(a=0;a<n_atom;a++) {
+      if( (*base_0_sele_a) && (*base_2_sele_a) ) {
+        (*base_0_sele_a) = (((*base_0_sele_a) > (*base_2_sele_a)) ?
+                            (*base_0_sele_a) : (*base_2_sele_a)); /* use higher tag */
+        c++;
+      } else {
+        (*base_0_sele_a) = 0;
       }
-      break;
-	 case SELE_LIK2:
-      {
-        register int *base_2_sele_b;
-        base_0_sele_a = &base[0].sele[cNDummyAtoms];
-        table_a = i_table + cNDummyAtoms;
-        for(a=cNDummyAtoms;a<n_atom;a++) {
-          if(*base_0_sele_a) {
-            at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
-            *base_0_sele_a = 0;
-            table_b = i_table + cNDummyAtoms;
-            base_2_sele_b = &base[2].sele[cNDummyAtoms];
-            for(b=cNDummyAtoms;b<n_atom;b++) {
-              if(*base_2_sele_b) {
-                at2=&i_obj[table_b->model]->AtomInfo[table_b->atom];
-                if(at1->resv==at2->resv)
+      base_0_sele_a++;
+      base_2_sele_a++;
+    }
+    break;
+  case SELE_IN_2:
+    {
+      register int *base_2_sele_b;
+      base_0_sele_a = &base[0].sele[cNDummyAtoms];
+      table_a = i_table + cNDummyAtoms;
+      for(a=cNDummyAtoms;a<n_atom;a++) {
+        if( (tag=*base_0_sele_a) ) {
+          at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
+          *base_0_sele_a = 0;
+          table_b = i_table + cNDummyAtoms;
+          base_2_sele_b = &base[2].sele[cNDummyAtoms];
+          for(b=cNDummyAtoms;b<n_atom;b++) {
+            if(*base_2_sele_b) {
+              at2=&i_obj[table_b->model]->AtomInfo[table_b->atom];
+              if(at1->resv==at2->resv)
+                if((tolower(at1->chain[0]))==(tolower(at2->chain[0])))
                   if(WordMatch(G,at1->name,at2->name,ignore_case)<0)
-                    if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0) {
-                      *base_0_sele_a = 1;
-                      break;
-                    }
-              }
-              base_2_sele_b++;
-              table_b++;
+                    if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
+                      if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
+                        if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                          *base_0_sele_a = tag;
+                          break;
+                        }
             }
+            base_2_sele_b++;
+            table_b++;
           }
-          if( *(base_0_sele_a++) )
-            c++;
-          table_a++;
         }
+        if( *(base_0_sele_a++) )
+          c++;
+        table_a++;
       }
-		break;
-	 }
+    }
+    break;
+  case SELE_LIK2:
+    {
+      register int *base_2_sele_b;
+      base_0_sele_a = &base[0].sele[cNDummyAtoms];
+      table_a = i_table + cNDummyAtoms;
+      for(a=cNDummyAtoms;a<n_atom;a++) {
+        if( (tag=*base_0_sele_a) ) {
+          at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
+          *base_0_sele_a = 0;
+          table_b = i_table + cNDummyAtoms;
+          base_2_sele_b = &base[2].sele[cNDummyAtoms];
+          for(b=cNDummyAtoms;b<n_atom;b++) {
+            if(*base_2_sele_b) {
+              at2=&i_obj[table_b->model]->AtomInfo[table_b->atom];
+              if(at1->resv==at2->resv)
+                if(WordMatch(G,at1->name,at2->name,ignore_case)<0)
+                  if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0) {
+                    *base_0_sele_a = tag;
+                    break;
+                  }
+            }
+            base_2_sele_b++;
+            table_b++;
+          }
+        }
+        if( *(base_0_sele_a++) )
+          c++;
+        table_a++;
+      }
+    }
+    break;
+  }
   FreeP(base[2].sele);
   PRINTFD(G,FB_Selector)
-	 " SelectorLogic2: %d atoms selected.\n",c
+    " SelectorLogic2: %d atoms selected.\n",c
     ENDFD;
   return(1);
 }

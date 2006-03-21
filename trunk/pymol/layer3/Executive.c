@@ -6852,11 +6852,11 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
               int i;
               for(i=0;i<n_pair;i++) {
                 idx_list[0][2*i] = op1.ai1VLA[i]->temp1; /* KLUDGE ALERT! */
-                idx_list[0][2*i+1] = i+1;
+                idx_list[0][2*i+1] = i+SELECTOR_BASE_TAG;
                 idx_list[1][2*i] = op2.ai1VLA[i]->temp1; /* KLUDGE ALERT! */
-                idx_list[1][2*i+1] = i+1;
+                idx_list[1][2*i+1] = i+SELECTOR_BASE_TAG;
               }
-              SelectorCreateOrderedFromMultiObjectIdxPri(G,oname,
+              SelectorCreateOrderedFromMultiObjectIdxTag(G,oname,
                                                          obj_list,
                                                          idx_list,
                                                          n_idx_list,2);
