@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"DistSet.h"
 #include"ObjectMap.h"
+#include"OVOneToAny.h"
 
 #define cSelectionAll 0
 #define cSelectionNone 1
@@ -33,6 +34,8 @@ int SelectorCreateFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule 
 int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx); 
 int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals *G,
                                                char *sname, ObjectMolecule **obj, int **pri_idx, int *n_idx, int n_obj);
+
+int SelectorCreateFromTagDict(PyMOLGlobals *G,char *sname, OVOneToAny *id2tag);
 
 /* if n_idx is negative, then looks for negative *idx as the sentinel */
 int SelectorMoveMember(PyMOLGlobals *G,int s,int sele_old,int sele_new);

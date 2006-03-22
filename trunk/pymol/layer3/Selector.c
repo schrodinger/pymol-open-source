@@ -6639,10 +6639,37 @@ static int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp)
   return(result);
 }
 /*========================================================================*/
+static int *SelectorSelectFromTagDict(PyMOLGlobals *G,OVOneToAny *id2tag)
+{
+  register CSelector *I=G->Selector;
+  int *result=NULL;
+  register TableRec *i_table = I->Table, *table_a;
+  register ObjectMolecule **i_obj = I->Obj;
+  register int a;
+  register AtomInfoType *ai;
+  OVreturn_word ret;
+  
+  SelectorUpdateTable(G); /* for now, update the entire table */
+  result = Calloc(int,I->NAtom);
+  if(result) {
+    table_a = i_table + cNDummyAtoms;
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+      ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
+      if(ai->unique_id) {
+        if(!OVreturn_IS_ERROR(ret = OVOneToAny_GetKey(id2tag,ai->unique_id)))
+          result[a]=ret.word;
+      }
+      table_a++;
+    }
+  }
+  return(result);
+}
+
+/*========================================================================*/
 
 static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule **obj,
                            int quiet,Multipick *mp,CSeqRow *rowVLA,
-                           int nRow,int **obj_idx,int *n_idx,int n_obj)
+                           int nRow,int **obj_idx,int *n_idx,int n_obj,OVOneToAny *id2tag)
 {
   int *atom=NULL;
   OrthoLineType name;
@@ -6673,6 +6700,8 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
     if(sele) {
       atom=SelectorSelect(G,sele);
       if(!atom) ok=false;
+    } else if(id2tag) {
+      atom=SelectorSelectFromTagDict(G,id2tag);
     } else if(obj && obj[0]) { /* optimized full-object selection */
       if(n_obj<=0) {
         embed_obj = *obj;
@@ -6716,38 +6745,44 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
     c=-1;
   return(c);
 }
+
+int SelectorCreateFromTagDict(PyMOLGlobals *G,char *sname, OVOneToAny *id2tag)
+{
+  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,NULL,0,NULL, NULL,0,id2tag);
+}
+
 int SelectorCreateEmpty(PyMOLGlobals *G,char *name)
 {
-  return _SelectorCreate(G,name, "none", NULL, 1, NULL, NULL, 0, NULL, 0, 0);
+  return _SelectorCreate(G,name, "none", NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL);
 }
 int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele)
 {
-  return _SelectorCreate(G,name, sele, NULL, 1, NULL, NULL, 0, NULL, 0, 0);  
+  return _SelectorCreate(G,name, sele, NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL);  
 }
 int SelectorCreateFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx)
 {
-  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,-1); /* n_obj = -1 disables numbered tags */
+  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,-1,NULL); /* n_obj = -1 disables numbered tags */
 }
 int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx)
 {
-  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,0); /* assigned numbered tags */
+  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,0,NULL); /* assigned numbered tags */
 }
 int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals *G,char *sname, 
                                                ObjectMolecule **obj,
                                                int **idx_tag,
                                                int *n_idx, int n_obj)
 {
-  return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,idx_tag,n_idx,n_obj);
+  return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,idx_tag,n_idx,n_obj,NULL);
 }
 int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow);
 int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow)
 {
-  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0,0);
+  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0,0,NULL);
 }
 
 int SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp)
 {
-  return _SelectorCreate(G,sname,sele,&obj,quiet,mp,NULL,0,NULL,0,0);
+  return _SelectorCreate(G,sname,sele,&obj,quiet,mp,NULL,0,NULL,0,0,NULL);
 }
 
 /*========================================================================*/
@@ -6874,16 +6909,14 @@ int SelectorUpdateTable(PyMOLGlobals *G)
 
   modelCnt=cNDummyModels;
   c=cNDummyAtoms;
-  while(ExecutiveIterateObject(G,&o,&hidden))
-	 {
-		if(o->type==cObjectMolecule)
-		  {
-			 obj=(ObjectMolecule*)o;
-			 c+=obj->NAtom;
-			 if(I->NCSet<obj->NCSet) I->NCSet=obj->NCSet;
-          modelCnt++;
-		  }
-	 }
+  while(ExecutiveIterateObject(G,&o,&hidden)) {
+    if(o->type==cObjectMolecule) {
+      obj=(ObjectMolecule*)o;
+      c+=obj->NAtom;
+      if(I->NCSet<obj->NCSet) I->NCSet=obj->NCSet;
+      modelCnt++;
+    }
+  }
   I->Table=Alloc(TableRec,c);
   ErrChkPtr(G,I->Table);
   I->Obj=Calloc(ObjectMolecule*,modelCnt);
@@ -6896,12 +6929,11 @@ int SelectorUpdateTable(PyMOLGlobals *G)
   if(obj) {
     I->Obj[modelCnt] = I->Origin;
     obj->SeleBase=c; /* make note of where this object starts */
-    for(a=0;a<obj->NAtom;a++)
-      {
-        I->Table[c].model=modelCnt;
-        I->Table[c].atom=a;
-        c++;
-      }
+    for(a=0;a<obj->NAtom;a++) {
+      I->Table[c].model=modelCnt;
+      I->Table[c].atom=a;
+      c++;
+    }
     modelCnt++;
   }
 
@@ -6918,26 +6950,24 @@ int SelectorUpdateTable(PyMOLGlobals *G)
     modelCnt++;
   }
 
-  while(ExecutiveIterateObject(G,&o,&hidden))
-	 {
-		if(o->type==cObjectMolecule)
-		  {
-			 obj=(ObjectMolecule*)o;
-			 I->Obj[modelCnt]=obj;
-          obj->SeleBase=c; /* make note of where this object starts */
-          { 
-            register int n_atom = obj->NAtom;
-            register TableRec *rec = I->Table + c;
-            for(a=0;a<n_atom;a++) {
-              rec->model=modelCnt;
-              rec->atom = a;
-              rec++;
-            }
-            c+=n_atom;
-            modelCnt++;
-          }
+  while(ExecutiveIterateObject(G,&o,&hidden)) {
+    if(o->type==cObjectMolecule) {
+      obj=(ObjectMolecule*)o;
+      I->Obj[modelCnt]=obj;
+      obj->SeleBase=c; /* make note of where this object starts */
+      { 
+        register int n_atom = obj->NAtom;
+        register TableRec *rec = I->Table + c;
+        for(a=0;a<n_atom;a++) {
+          rec->model = modelCnt;
+          rec->atom = a;
+          rec++;
         }
+        c+=n_atom;
+        modelCnt++;
+      }
     }
+  }
   I->NModel=modelCnt;
   I->NAtom=c;
   I->Flag1=Alloc(int,c);
