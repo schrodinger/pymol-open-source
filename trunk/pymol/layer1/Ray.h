@@ -26,7 +26,7 @@ typedef struct _CRayAntiThreadInfo CRayAntiThreadInfo;
 typedef struct _CRayHashThreadInfo CRayHashThreadInfo;
 typedef struct _CRayThreadInfo     CRayThreadInfo;
 
-CRay *RayNew(PyMOLGlobals *G);
+CRay *RayNew(PyMOLGlobals *G,int antialias);
 void RayFree(CRay *I);
 void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float v3,float v4,float v5,float *mat,float *rotMat,
@@ -35,9 +35,10 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float back_ratio, float magnified);
 void RayRender(CRay *I,int width,int height,unsigned int *image,
                float front,float back,double timing,float angle,
-               float fov,float *pos);
+               float fov,float *pos,int antialias);
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA,
-                  char **charVLA,float front,float back,float fov,float angle);
+                  char **charVLA,float front,float back,float fov,float angle,
+                  int antialias);
 void RayRenderVRML2(CRay *I,int width,int height,
                     char **vla_ptr,float front,float back,
 		    float fov, float angle, float z_corr);

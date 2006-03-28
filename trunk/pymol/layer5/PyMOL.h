@@ -196,6 +196,7 @@ int PyMOL_GetRedisplay(CPyMOL *I, int reset);
 int PyMOL_GetPassive(CPyMOL *I, int reset);
 int PyMOL_GetSwap(CPyMOL *I, int reset);
 int PyMOL_GetClickReady(CPyMOL *I, int reset);
+int PyMOL_GetImageReady(CPyMOL *I, int reset);
 int PyMOL_GetReshape(CPyMOL *I);
 int PyMOL_GetIdleAndReady(CPyMOL *I);
 

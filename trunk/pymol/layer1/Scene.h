@@ -70,7 +70,7 @@ void SceneFree(PyMOLGlobals *G);
 void SceneRay(PyMOLGlobals *G,int width,int height,int mode,
               char **headerVLA,char **charVLA,
               float angle,float shift,int quiet,
-              G3dPrimitive **g3d,int show_timing);
+              G3dPrimitive **g3d,int show_timing,int antialias);
 void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing);
 
 void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet);

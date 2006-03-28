@@ -1441,9 +1441,8 @@ void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
 /*========================================================================*/
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
                   char **charVLA_ptr,float front,float back,float fov,
-                  float angle)
+                  float angle,int antialias)
 {
-  int antialias;
   int fogFlag=false;
   int fogRangeFlag=false;
   float fog;
@@ -1512,7 +1511,9 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
 
   /* SETUP */
   
-  antialias = (int)SettingGet(I->G,cSetting_antialias);
+  if(antialias<0) 
+    antialias = (int)SettingGet(I->G,cSetting_antialias);
+
   bkrd=SettingGetfv(I->G,cSetting_bg_rgb);
 
   RayExpandPrimitives(I);
@@ -3594,14 +3595,13 @@ extern int n_skipped;
 /*========================================================================*/
 void RayRender(CRay *I,int width,int height,unsigned int *image,
                float front,float back,double timing,float angle,
-               float fov,float *pos)
+               float fov,float *pos,int antialias)
 {
   int a;
   unsigned int *image_copy = NULL;
   unsigned int back_mask,fore_mask=0;
   unsigned int background,buffer_size;
-  int antialias;
-int opaque_back=0;
+  int opaque_back=0;
   int n_hit=0;
   float *bkrd_ptr,bkrd[3];
   double now;
@@ -3647,7 +3647,9 @@ int opaque_back=0;
 
   oversample_cutoff = SettingGetGlobal_i(I->G,cSetting_ray_oversample_cutoff);
 
-  antialias = SettingGetGlobal_i(I->G,cSetting_antialias);
+  if(antialias<0) {
+    antialias = SettingGetGlobal_i(I->G,cSetting_antialias);
+  }
   
   if(trace_mode && (antialias==1))
     antialias=2;
@@ -5045,7 +5047,7 @@ void RayTriangle3fv(CRay *I,
 
 }
 /*========================================================================*/
-CRay *RayNew(PyMOLGlobals *G)
+CRay *RayNew(PyMOLGlobals *G,int antialias)
 {
   unsigned int test;
   unsigned char *testPtr;
@@ -5084,7 +5086,8 @@ CRay *RayNew(PyMOLGlobals *G)
   I->TTTStackVLA = NULL;
   I->TTTStackDepth = 0;
   I->CheckInterior=false;
-  I->Sampling = SettingGetGlobal_i(I->G,cSetting_antialias);
+  if(antialias<0) antialias = SettingGetGlobal_i(I->G,cSetting_antialias);
+  I->Sampling = antialias;
   if(I->Sampling<2) /* always supersample fonts by at least 2X */
     I->Sampling=2;
   for(a=0;a<256;a++) {

@@ -1739,14 +1739,16 @@ NOTES
         if _raising(r): raise QuietException
         return r
 
-    def _ray(width,height,renderer,angle,shift,quiet):
+    def _ray(width,height,renderer,angle,shift,quiet,antialias):
         r = DEFAULT_ERROR
         try:
             lock_without_glut()
             try:
                 _cmd.set_busy(1)
                 r = _cmd.render(int(width),int(height),
-                      int(renderer),float(angle),float(shift),int(quiet))
+                                int(renderer),float(angle),
+                                float(shift),int(quiet),
+                                int(antialias))
             finally:
                 _cmd.set_busy(0)
         finally:
@@ -1766,13 +1768,16 @@ NOTES
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.draw(int(width),int(height),int(antialias),int(quiet))
+            r = _cmd.draw(int(width),int(height),
+                          int(antialias),int(quiet))
         finally:
             unlock(r)      
         if _raising(r): raise QuietException
         return r
 
-    def ray(width=0,height=0,renderer=-1,angle=0.0,shift=0.0,quiet=1,async=0):
+    def ray(width=0,height=0,renderer=-1,
+            angle=0.0,shift=0.0,quiet=1,
+            async=0,antialias=-1):
         '''
 DESCRIPTION
 
@@ -1813,7 +1818,7 @@ SEE ALSO
         '''
         arg_tup = (int(width),int(height),
                       int(renderer),float(angle),
-                      float(shift),int(quiet))
+                      float(shift),int(quiet),int(antialias))
         # stop movies and sculpting if they're on...
         if cmd.get_movie_playing():
             cmd.mstop()
