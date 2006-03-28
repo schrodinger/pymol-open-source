@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectDist.h"
 #include"ObjectSurface.h"
 #include"ObjectSlice.h"
+#include"ObjectAlignment.h"
 #include"ListMacros.h"
 #include"Ortho.h"
 #include"Scene.h"
@@ -328,6 +329,46 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals *G,char *name,int allow
   if(iter_id) TrackerDelIter(I->Tracker, iter_id);
   return result;
 }
+
+int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals *G, 
+                                           ExecutiveObjectOffset **return_vla, 
+                                           OVOneToOne **return_dict)
+{
+  register CExecutive *I = G->Executive;
+  OVOneToOne *o2o = OVOneToOne_New(G->Context->heap);
+  ExecutiveObjectOffset *vla = VLAlloc(ExecutiveObjectOffset,1000);
+  int n_oi = 0;
+  {
+    SpecRec *rec = NULL;
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type == cExecObject) {
+        if(rec->obj->type == cObjectMolecule) {
+          ObjectMolecule *obj = (ObjectMolecule*)rec->obj;
+          register int a, id, n_atom = obj->NAtom;
+          register AtomInfoType *ai = obj->AtomInfo;
+          for(a=0;a<n_atom;a++) {
+            if( (id=ai->unique_id) ) {
+              if(OVOneToOne_GetForward(o2o,id).status == OVstatus_NOT_FOUND) {
+                if(OVreturn_IS_OK(OVOneToOne_Set(o2o,id,n_oi))) {
+                  VLACheck(vla,ExecutiveObjectOffset,n_oi);
+                  vla[n_oi].obj = obj;
+                  vla[n_oi].offset = a;
+                  n_oi++;
+                }
+              }
+            }
+            ai++;
+          }
+        }
+      }
+    }
+  }
+  *return_dict = o2o;
+  VLASize(vla,ExecutiveObjectOffset,n_oi);
+  *return_vla = vla;
+  return 1;
+}
+
 
 int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int quiet)
 {
@@ -5005,6 +5046,7 @@ void ExecutiveRebuildAll(PyMOLGlobals *G)
       case cObjectSurface:
       case cObjectMesh:
       case cObjectSlice:
+      case cObjectAlignment:
         if(rec->obj->fInvalidate) {
           rec->obj->fInvalidate((CObject*)rec->obj,cRepAll,cRepInvAll,-1);
         }
@@ -6835,7 +6877,60 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
           SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
           SceneInvalidate(G);
 #else
-          /* create an ordered selection with the pair mapping  */
+#if 1
+          {
+            int align_state = state2;
+            
+            if(align_state<0) {
+              align_state = SceneGetState(G);
+            }
+            
+            /* we're going to create/update an alignment object */
+            
+            {
+              /* Get unique ids and construct the alignment vla */
+              int *align_vla = VLAlloc(int, n_pair*3);
+              
+              {
+                int *id_p = align_vla;
+                int i;
+                for(i=0;i<n_pair;i++) {
+                  id_p[0] = AtomInfoCheckUniqueID(G,op2.ai1VLA[i]); /* target */
+                  id_p[1] = AtomInfoCheckUniqueID(G,op1.ai1VLA[i]);
+                  id_p[2] = 0;
+                  id_p+=3;
+                }
+                VLASize(align_vla, int, n_pair*3);
+              }
+              {
+                ObjectAlignment *obj = NULL;
+
+                /* does object already exist? */
+                {
+                  CObject *execObj = ExecutiveFindObjectByName(G,oname);
+                  if(execObj && (execObj->type != cObjectAlignment))
+                    ExecutiveDelete(G,oname);
+                  else
+                    obj = (ObjectAlignment*)execObj;
+                }
+                obj = ObjectAlignmentDefine(G,obj,align_vla,align_state,true,NULL);
+                obj->Obj.Color = ColorGetIndex(G,"yellow");
+                ObjectSetName((CObject*)obj,oname);
+                ExecutiveManageObject(G,(CObject*)obj,0,false);
+                SceneInvalidate(G);
+              }
+              VLAFreeP(align_vla);
+            }
+          }
+#else
+          for(i=0;i<n_pair;i++) {
+            
+            
+            idx_list[0][2*i] = op1.ai1VLA[i]->temp1; /* KLUDGE ALERT! */
+            idx_list[0][2*i+1] = i+SELECTOR_BASE_TAG;
+            idx_list[1][2*i] = op2.ai1VLA[i]->temp1; /* KLUDGE ALERT! */
+            idx_list[1][2*i+1] = i+SELECTOR_BASE_TAG;
+          }
 
           ObjectMolecule *obj_list[2];
           obj_list[0] = SelectorGetSingleObjectMolecule(G,sele1); 
@@ -6864,6 +6959,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
             FreeP(idx_list[0]);
             FreeP(idx_list[1]);
           }
+#endif
 #endif
         }
         if(ok && mode==2) { 

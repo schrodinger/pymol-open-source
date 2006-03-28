@@ -79,6 +79,7 @@ if __name__=='pymol.importing':
         sdf2str = 38  # SDF ditto
         png = 39      # png image
         psw = 40      #
+        moe = 41      # Chemical Computing Group ".moe" format (proprietary)
         
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -487,6 +488,8 @@ SEE ALSO
                     ftype = loadable.p1m
                 elif re.search("\.png$",filename,re.I):
                     ftype = loadable.png
+                elif re.search("\.moe$",filename,re.I):
+                    ftype = loadable.moe
                 elif re.search("\.map$",filename,re.I):
                     r = DEFAULT_ERROR
                     print 'Error: .map is ambiguous.  Please add format or use another extension:'
@@ -537,7 +540,7 @@ SEE ALSO
  
     # png images 
             if ftype == loadable.png:
-		r = cmd.load_png(str(fname),quiet=quiet)
+                r = cmd.load_png(str(fname),quiet=quiet)
                 ftype = -1
 
     # p1m embedded data script files

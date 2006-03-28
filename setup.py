@@ -179,6 +179,7 @@ setup ( # Distribution meta-data
    "layer2/CoordSet.c",
    "layer2/GadgetSet.c",   
    "layer2/DistSet.c",
+   "layer2/ObjectAlignment.c",
    "layer2/ObjectCGO.c",
    "layer2/ObjectCallback.c",
    "layer2/ObjectDist.c",
