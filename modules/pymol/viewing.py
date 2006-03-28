@@ -1739,16 +1739,17 @@ NOTES
         if _raising(r): raise QuietException
         return r
 
-    def _ray(width,height,renderer,angle,shift,quiet,antialias):
+    def _ray(width,height,antialias,angle,shift,renderer,quiet):
         r = DEFAULT_ERROR
         try:
             lock_without_glut()
             try:
                 _cmd.set_busy(1)
                 r = _cmd.render(int(width),int(height),
-                                int(renderer),float(angle),
-                                float(shift),int(quiet),
-                                int(antialias))
+                                int(antialias),
+                                float(angle),
+                                float(shift),int(renderer),
+                                int(quiet))
             finally:
                 _cmd.set_busy(0)
         finally:
@@ -1775,9 +1776,9 @@ NOTES
         if _raising(r): raise QuietException
         return r
 
-    def ray(width=0,height=0,renderer=-1,
-            angle=0.0,shift=0.0,quiet=1,
-            async=0,antialias=-1):
+    def ray(width=0, height=0, antialias=-1,
+            angle=0.0, shift=0.0,
+            renderer=-1, quiet=1, async=0):
         '''
 DESCRIPTION
 
@@ -1787,7 +1788,7 @@ DESCRIPTION
 
 USAGE
 
-    ray [width,height [,renderer [,angle [,shift ]]]
+    ray [ width, height, renderer, antialias, angle, shift, quiet, async ]
 
     angle and shift can be used to generate matched stereo pairs
     
@@ -1799,7 +1800,9 @@ EXAMPLES
 
 PYMOL API
 
-    cmd.ray(int width,int height,int renderer=-1,float shift=0)
+    cmd.ray(width=0, height=0, antialias=-1,
+            angle=0.0, shift=0.0,
+            renderer=-1, quiet=1, async=0)
 
 NOTES
 
@@ -1817,8 +1820,8 @@ SEE ALSO
 
         '''
         arg_tup = (int(width),int(height),
-                      int(renderer),float(angle),
-                      float(shift),int(quiet),int(antialias))
+                   int(antialias),float(angle),
+                   float(shift),int(renderer),int(quiet))
         # stop movies and sculpting if they're on...
         if cmd.get_movie_playing():
             cmd.mstop()

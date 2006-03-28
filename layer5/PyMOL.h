@@ -359,6 +359,13 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
 PyMOLreturn_status PyMOL_CmdSetView(CPyMOL *I, float *view, int view_len, float animate, int quiet);
 PyMOLreturn_float_array PyMOL_CmdGetView(CPyMOL *I,int quiet);
 
+PyMOLreturn_status PyMOL_CmdDraw(CPyMOL *I,int width, int height,
+                                 int antialias, int quiet);
+
+PyMOLreturn_status PyMOL_CmdRay(CPyMOL *I,int width, int height,int antialias,
+                                float angle, float shift,int renderer, int quiet);
+
+
 /* releasing returned values */
 
 int PyMOL_FreeResultArray(CPyMOL *I,void *array);

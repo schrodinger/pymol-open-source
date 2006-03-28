@@ -101,7 +101,7 @@ typedef struct _CPyMOL {
   int ClickReadyFlag;
   char ClickedObject[ObjNameMax];  
   int ClickedIndex, ClickedButton, ClickedModifiers;
-  int ImageReadyFlag;
+  int ImageRequestedFlag,ImageReadyFlag;
   int DraggedFlag;
   int Reshape[PYMOL_RESHAPE_SIZE];
   int Progress[PYMOL_PROGRESS_SIZE];
@@ -1353,6 +1353,37 @@ int PyMOL_FreeResultArray(CPyMOL *I,void *array)
   } else {
     return PyMOLstatus_FAILURE; 
   }
+}
+
+PyMOLreturn_status PyMOL_CmdDraw(CPyMOL *I,int width, int height,
+                                 int antialias, int quiet)
+{
+  PyMOLreturn_status result;
+  PYMOL_API_LOCK
+  result.status = get_status_ok(ExecutiveDrawCmd(I->G,width,height,antialias,quiet));
+  I->ImageRequestedFlag = true;
+  I->ImageReadyFlag = false;
+  PYMOL_API_UNLOCK
+  return result;
+}
+
+PyMOLreturn_status PyMOL_CmdRay(CPyMOL *I,int width, int height,int antialias,
+                                float angle, float shift,int renderer, int quiet)
+{
+  PyMOLreturn_status result;
+  PYMOL_API_LOCK
+  printf("here quiet %d %d %d %8.3f %8.3f %d %d\n",
+         width, height, antialias, angle, shift, renderer, quiet);
+  if(renderer<0) renderer=SettingGetGlobal_i(I->G,cSetting_ray_default_renderer);
+  result.status = get_status_ok(ExecutiveRay(I->G,width,height,renderer,angle,shift,quiet,antialias));
+  I->ImageRequestedFlag = false;
+  if(SceneHasImage(I->G)) {
+    I->ImageReadyFlag = true;
+  } else {
+    I->ImageReadyFlag = false;
+  }
+  PYMOL_API_UNLOCK
+  return result;
 }
 
 PyMOLreturn_status PyMOL_CmdSetView(CPyMOL *I, float *view, int view_len,
@@ -2614,6 +2645,17 @@ void PyMOL_Draw(CPyMOL *I)
   
   OrthoBusyPrime(G);
   ExecutiveDrawNow(G);
+
+  if(I->ImageRequestedFlag) {
+    if(SceneHasImage(G)) {
+      I->ImageReadyFlag = true;
+    } else {
+      I->ImageReadyFlag = false;
+    }
+  } else if(I->ImageReadyFlag) {
+    if(!SceneHasImage(G)) 
+      I->ImageReadyFlag = false;
+  }
 
   if(G->HaveGUI) PyMOL_PopValidContext(I);
   
