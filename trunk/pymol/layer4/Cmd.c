@@ -4347,8 +4347,9 @@ static PyObject *CmdRay(PyObject *self, 	PyObject *args)
   int ok=false;
   int quiet;
   int antialias;
-  ok = PyArg_ParseTuple(args,"iiiffii",&w,&h,&mode,
-                        &angle,&shift,&quiet,&antialias);
+  ok = PyArg_ParseTuple(args,"iiiffii", &w, &h,
+                        &antialias, 
+                        &angle, &shift, &mode, &quiet);
   if (ok) {
     APIEntry();
     if(mode<0)

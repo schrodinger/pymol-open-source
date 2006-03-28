@@ -42,6 +42,7 @@ typedef float SceneViewType[cSceneViewSize];
    24    = orthoscopic flag 
 */
 
+int SceneHasImage(PyMOLGlobals *G);
 int SceneInit(PyMOLGlobals *G);
 void SceneDone(PyMOLGlobals *G);
 void SceneUpdate(PyMOLGlobals *G);

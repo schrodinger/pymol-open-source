@@ -162,6 +162,12 @@ typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
 } SceneUnitContext;
 
+int SceneHasImage(PyMOLGlobals *G)
+{
+  CScene *I=G->Scene;
+  return(I->Image && I->Image->data);
+}
+
 int SceneMustDrawBoth(PyMOLGlobals *G)
 {
   CScene *I=G->Scene;
