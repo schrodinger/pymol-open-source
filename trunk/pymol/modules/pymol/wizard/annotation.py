@@ -84,6 +84,7 @@ def load_annotated_sdf(filename, object=None, state=1):
         for key in sdf_rec.kees:
             if (key!='MOL'):
                 data = sdf_rec.data[key]
+                print key,data
                 anno_list.append("  \\595%s: \\559%s"%(
                     key,
                     string.join(map(string.strip,sdf_rec.data[key]))))

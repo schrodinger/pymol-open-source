@@ -72,6 +72,7 @@ typedef struct ObjectMolecule {
   struct CSculpt *Sculpt;
   signed char RepVisCache[cRepCnt]; /* for transient storage during updates */
 
+  /* not stored */
 } ObjectMolecule;
 
 typedef struct ObjectMoleculeOpRec {

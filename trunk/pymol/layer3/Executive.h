@@ -69,6 +69,12 @@ Z* -------------------------------------------------------------------
    ExecutiveLoad
 */
 
+
+typedef struct {
+  ObjectMolecule *obj;
+  int offset;
+} ExecutiveObjectOffset;
+
 int *ExecutiveGetG3d(PyMOLGlobals *G);
 int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort, int location);
 int ExecutiveFixChemistry(PyMOLGlobals *G,char *s1,char *s2,int invalidate, int quiet);
@@ -76,6 +82,10 @@ int ExecutiveGetAtomVertex(PyMOLGlobals *G,char *s1,int state,int index,float *v
 int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char *oname,
                              int frame, int discrete,int finish,OrthoLineType buf,
                              PDBInfoRec *pdb_info,int quiet,int is_string,int multiplex,int zoom);
+
+int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals *G, 
+                                            ExecutiveObjectOffset **vla, 
+                                            OVOneToOne **dict);
 
 #if 0
 void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,

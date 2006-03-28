@@ -151,7 +151,10 @@ static int SelectorOperator22(PyMOLGlobals *G,EvalElem *base);
 static int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word);
 static SelectorWordType *SelectorParse(PyMOLGlobals *G,char *s);
 static void SelectorPurgeMembers(PyMOLGlobals *G,int sele);
-static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, ObjectMolecule *obj,int no_dummies);
+static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, 
+                                   ObjectMolecule *obj,int no_dummies,
+                                   int exec_manage);
+
 static void SelectorClean(PyMOLGlobals *G);
 static int *SelectorGetIndexVLA(PyMOLGlobals *G,int sele);
 static int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp);
@@ -1118,7 +1121,7 @@ void SelectorSelectByID(PyMOLGlobals *G,char *name,ObjectMolecule *obj,int *id,i
     }
   }
 
-  SelectorEmbedSelection(G,atom,name,NULL,true);
+  SelectorEmbedSelection(G,atom,name,NULL,true, -1);
   FreeP(atom);
   FreeP(lookup);
   SelectorClean(G);
@@ -3127,8 +3130,8 @@ int  SelectorCreateAlignments(PyMOLGlobals *G,
       }
     }
     if(cnt) {
-      SelectorEmbedSelection(G,flag1,name1,NULL,false);
-      SelectorEmbedSelection(G,flag2,name2,NULL,false);
+      SelectorEmbedSelection(G,flag1,name1,NULL,false, -1);
+      SelectorEmbedSelection(G,flag2,name2,NULL,false, -1);
     }
     FreeP(flag1);
     FreeP(flag2);
@@ -4098,7 +4101,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
           atom1_base[a0] = 1; /* create selection for this atom alone as fragment base atom */
           comp1_base[a0] = 1;
           sprintf(name,"%s%1d",fragPref,nFrag+1);
-          SelectorEmbedSelection(G,atom,name,NULL,false);
+          SelectorEmbedSelection(G,atom,name,NULL,false,-1);
           c = SelectorWalkTree(G,atom1_base,comp1_base,toDo1_base,&stk,stkDepth,obj1,sele1,sele2,-1,-1) + 1;
           sprintf(name,"%s%1d",pref,nFrag+1);
           
@@ -4145,7 +4148,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
               c = SelectorWalkTree(G,atom1_base,comp1_base,toDo1_base,&stk,stkDepth,obj1,sele1,sele2,-1,-1) + 1;
             }
           }
-          SelectorEmbedSelection(G,atom,name,NULL,false);
+          SelectorEmbedSelection(G,atom,name,NULL,false,-1);
           nFrag++;
         }
         
@@ -4172,10 +4175,10 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
             atom1_base[a0] = 1; /* create selection for this atom alone as fragment base atom */
             comp1_base[a0] = 1;
             sprintf(name,"%s%1d",fragPref,nFrag+1);
-            SelectorEmbedSelection(G,atom,name,NULL,false);
+            SelectorEmbedSelection(G,atom,name,NULL,false,-1);
             c = SelectorWalkTree(G,atom1_base,comp1_base,toDo1_base,&stk,stkDepth,obj1,sele1,sele2,-1,-1) + 1;
             sprintf(name,"%s%1d",pref,nFrag+1);
-            SelectorEmbedSelection(G,atom,name,NULL,false);
+            SelectorEmbedSelection(G,atom,name,NULL,false,-1);
             nFrag++;
           }
         }
@@ -4207,7 +4210,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
               atom1_base[a1] = 1; /* create selection for this atom alone as fragment base atom */
               comp1_base[a1] = 1;
               sprintf(name,"%s%1d",fragPref,nFrag+1);
-              SelectorEmbedSelection(G,atom,name,NULL,false);
+              SelectorEmbedSelection(G,atom,name,NULL,false,-1);
               atom1_base[a1] = 0;
               c = SelectorWalkTreeDepth(G,atom1_base,comp1_base,toDo1_base,&stk,
                                         stkDepth,obj1,sele1,sele2,sele3,sele4,
@@ -4215,7 +4218,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
               if(c) {
                 nFrag++;
                 sprintf(name,"%s%1d",pref,nFrag);
-                SelectorEmbedSelection(G,atom,name,NULL,false);
+                SelectorEmbedSelection(G,atom,name,NULL,false,-1);
                 update_min_walk_depth(&minWalk,
                                       nFrag, &curWalk, 
                                       sele1, sele2, sele3, sele4);
@@ -4246,7 +4249,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
               atom2_base[a1] = 1; /* create selection for this atom alone as fragment base atom */
               comp2_base[a1] = 1;
               sprintf(name,"%s%1d",fragPref,nFrag+1);
-              SelectorEmbedSelection(G,atom,name,NULL,false);
+              SelectorEmbedSelection(G,atom,name,NULL,false,-1);
               atom2_base[a1] = 0;
               c = SelectorWalkTreeDepth(G,atom2_base,comp2_base,toDo2_base,&stk,
                                         stkDepth,obj2,sele1,sele2,sele3,sele4,
@@ -4254,7 +4257,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
               if(c) {
                 nFrag++;
                 sprintf(name,"%s%1d",pref,nFrag);
-                SelectorEmbedSelection(G,atom,name,NULL,false);
+                SelectorEmbedSelection(G,atom,name,NULL,false,-1);
                 update_min_walk_depth(&minWalk,
                                       nFrag, &curWalk, 
                                       sele1, sele2, sele3, sele4);
@@ -4285,7 +4288,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
               atom3_base[a1] = 1; /* create selection for this atom alone as fragment base atom */
               comp3_base[a1] = 1;
               sprintf(name,"%s%1d",fragPref,nFrag+1);
-              SelectorEmbedSelection(G,atom,name,NULL,false);
+              SelectorEmbedSelection(G,atom,name,NULL,false,-1);
               atom3_base[a1] = 0;
               c = SelectorWalkTreeDepth(G,atom3_base,comp3_base,toDo3_base,&stk,
                                         stkDepth,obj3,sele1,sele2,sele3,sele4,
@@ -4293,7 +4296,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
               if(c) {
                 nFrag++;
                 sprintf(name,"%s%1d",pref,nFrag);
-                SelectorEmbedSelection(G,atom,name,NULL,false);
+                SelectorEmbedSelection(G,atom,name,NULL,false,-1);
                 update_min_walk_depth(&minWalk,
                                       nFrag, &curWalk, 
                                       sele1, sele2, sele3, sele4);
@@ -4325,7 +4328,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
               atom4_base[a1] = 1; /* create selection for this atom alone as fragment base atom */
               comp4_base[a1] = 1;
               sprintf(name,"%s%1d",fragPref,nFrag+1);
-              SelectorEmbedSelection(G,atom,name,NULL,false);
+              SelectorEmbedSelection(G,atom,name,NULL,false,-1);
               atom4_base[a1] = 0;
               c = SelectorWalkTreeDepth(G,atom4_base,comp4_base,toDo4_base,&stk,
                                         stkDepth,obj4,sele1,sele2,sele3,sele4,
@@ -4333,7 +4336,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
               if(c) {
                 nFrag++;
                 sprintf(name,"%s%1d",pref,nFrag);
-                SelectorEmbedSelection(G,atom,name,NULL,false);
+                SelectorEmbedSelection(G,atom,name,NULL,false,-1);
                 update_min_walk_depth(&minWalk,
                                       nFrag, &curWalk, 
                                       sele1, sele2, sele3, sele4);
@@ -4351,11 +4354,11 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
     }
     
     if(set_cnt>1) {
-      SelectorEmbedSelection(G,pkset,cEditorSet,NULL,false);                
+      SelectorEmbedSelection(G,pkset,cEditorSet,NULL,false,-1);                
     }
     
     if(nFrag) {
-      SelectorEmbedSelection(G,comp,compName,NULL,false);
+      SelectorEmbedSelection(G,comp,compName,NULL,false,-1);
     }
     
     if(link_sele[0])
@@ -6465,7 +6468,8 @@ void SelectorFreeTmp(PyMOLGlobals *G,char *name) /* remove temporary selections 
     }
 }
 /*========================================================================*/
-static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, ObjectMolecule *obj,int no_dummies)
+static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name,
+                                   ObjectMolecule *obj,int no_dummies, int exec_managed )
 {
   /* either atom or obj should be NULL, not both and not neither */
 
@@ -6480,6 +6484,13 @@ static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, Object
   ObjectMolecule *singleObject = NULL,*selObj;
   int singleAtom = -1;
   int index;
+
+  if(exec_managed<0) {
+    if(atom) /* automatic behavior: manage selections defined via atom masks */
+      exec_managed=true;
+    else
+      exec_managed=false;
+  }
 
   AtomInfoType *ai;
   n=SelectGetNameOffset(G,name,999,SettingGetGlobal_b(G,cSetting_ignore_case)); /* already exist? */
@@ -6571,7 +6582,7 @@ static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, Object
     }
   }
   
-  if(atom) { /* only manage selections defined via atom masks */
+  if(exec_managed) { 
     if(newFlag)
       ExecutiveManageSelection(G,name);
     else
@@ -6643,23 +6654,26 @@ static int *SelectorSelectFromTagDict(PyMOLGlobals *G,OVOneToAny *id2tag)
 {
   register CSelector *I=G->Selector;
   int *result=NULL;
-  register TableRec *i_table = I->Table, *table_a;
-  register ObjectMolecule **i_obj = I->Obj;
   register int a;
   register AtomInfoType *ai;
   OVreturn_word ret;
   
   SelectorUpdateTable(G); /* for now, update the entire table */
-  result = Calloc(int,I->NAtom);
-  if(result) {
-    table_a = i_table + cNDummyAtoms;
-    for(a=cNDummyAtoms;a<I->NAtom;a++) {
-      ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
-      if(ai->unique_id) {
-        if(!OVreturn_IS_ERROR(ret = OVOneToAny_GetKey(id2tag,ai->unique_id)))
-          result[a]=ret.word;
+  {
+    register TableRec *i_table = I->Table, *table_a;
+    register ObjectMolecule **i_obj = I->Obj;
+    
+    result = Calloc(int,I->NAtom);
+    if(result) {
+      table_a = i_table + cNDummyAtoms;
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
+        ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
+        if(ai->unique_id) {
+          if(!OVreturn_IS_ERROR(ret = OVOneToAny_GetKey(id2tag,ai->unique_id)))
+            result[a]=ret.word;
+        }
+        table_a++;
       }
-      table_a++;
     }
   }
   return(result);
@@ -6667,9 +6681,11 @@ static int *SelectorSelectFromTagDict(PyMOLGlobals *G,OVOneToAny *id2tag)
 
 /*========================================================================*/
 
+
 static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule **obj,
                            int quiet,Multipick *mp,CSeqRow *rowVLA,
-                           int nRow,int **obj_idx,int *n_idx,int n_obj,OVOneToAny *id2tag)
+                           int nRow,int **obj_idx,int *n_idx,int n_obj,
+                           OVOneToAny *id2tag, int executive_manage)
 {
   int *atom=NULL;
   OrthoLineType name;
@@ -6720,7 +6736,8 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
     } else 
       ok=false;
   }
-  if(ok) c=SelectorEmbedSelection(G,atom,name,embed_obj,false);
+  if(ok) c=SelectorEmbedSelection(G,atom,name,embed_obj,false, 
+                                  executive_manage);
   FreeP(atom);
   SelectorClean(G);
   if(!quiet) {
@@ -6746,43 +6763,42 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
   return(c);
 }
 
-int SelectorCreateFromTagDict(PyMOLGlobals *G,char *sname, OVOneToAny *id2tag)
+int SelectorCreateFromTagDict(PyMOLGlobals *G,char *sname, OVOneToAny *id2tag, int exec_managed)
 {
-  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,NULL,0,NULL, NULL,0,id2tag);
+  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,NULL,0,NULL, NULL,0,id2tag, exec_managed);
 }
 
 int SelectorCreateEmpty(PyMOLGlobals *G,char *name)
 {
-  return _SelectorCreate(G,name, "none", NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL);
+  return _SelectorCreate(G,name, "none", NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL, -1);
 }
 int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele)
 {
-  return _SelectorCreate(G,name, sele, NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL);  
+  return _SelectorCreate(G,name, sele, NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL, -1);  
 }
 int SelectorCreateFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx)
 {
-  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,-1,NULL); /* n_obj = -1 disables numbered tags */
+  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,-1,NULL, -1); /* n_obj = -1 disables numbered tags */
 }
 int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx)
 {
-  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,0,NULL); /* assigned numbered tags */
+  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,0,NULL,-1); /* assigned numbered tags */
 }
 int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals *G,char *sname, 
                                                ObjectMolecule **obj,
                                                int **idx_tag,
                                                int *n_idx, int n_obj)
 {
-  return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,idx_tag,n_idx,n_obj,NULL);
+  return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,idx_tag,n_idx,n_obj,NULL,-1);
 }
-int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow);
-int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow)
+static int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow)
 {
-  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0,0,NULL);
+  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0,0,NULL,-1);
 }
 
 int SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp)
 {
-  return _SelectorCreate(G,sname,sele,&obj,quiet,mp,NULL,0,NULL,0,0,NULL);
+  return _SelectorCreate(G,sname,sele,&obj,quiet,mp,NULL,0,NULL,0,0,NULL,-1);
 }
 
 /*========================================================================*/
@@ -9780,7 +9796,6 @@ static void SelectorInit2(PyMOLGlobals *G)
   I->Lex = OVLexicon_New(G->Context->heap);
   I->Key = OVOneToAny_New(G->Context->heap);
   I->NameOffset = OVOneToOne_New(G->Context->heap);
-
 
   {  /* create placeholder "all" selection, which is selection 0
       and "none" selection, which is selection 1 */

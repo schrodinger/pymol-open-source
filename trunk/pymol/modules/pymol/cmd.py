@@ -106,6 +106,7 @@ if __name__=='pymol.cmd':
             r"\.pse$|\.PSE$|", # PyMOL session (pickled dictionary)
             r"\.pmo$|", # Experimental molecular object format
             r"\.PMO$|",
+            r"\.moe$|\.MOE$|", # MOE (proprietary)
             r"\.ccp4$|\.CCP4$|", # CCP4
             r"\.top$|\.TOP$|", # AMBER Topology
             r"\.trj$|\.TRJ$|", # AMBER Trajectory
@@ -856,7 +857,26 @@ DEVELOPMENT TO DO
                     if obj:
                         r = _cmd.load_object(str(oname),obj,int(state)-1,loadable.model,
                                               int(finish),int(discrete),
-                                              int(quiet),int(zoom))            
+                                              int(quiet),int(zoom))
+                elif ftype == loadable.moe:
+                    try:
+                        # BEGIN PROPRIETARY CODE SEGMENT
+                        from epymol import moe
+
+                        if (string.find(finfo,":")>1):
+                            moe_file = urllib.urlopen(finfo)
+                        else:
+                            moe_file = open(finfo)
+                        moe_str = moe_file.read()
+                        moe_file.close()
+                        r = moe.read_moestr(moe_str,str(oname),int(state),
+                                        int(finish),int(discrete),int(quiet),int(zoom))
+                        
+                        # END PROPRIETARY CODE SEGMENT
+                    except ImportError:
+                        print " Error: .MOE format not supported by this PyMOL build."
+                        if _raising(-1): raise pymol.CmdException
+                        
                 else:
                     if ftype in _load2str.keys() and (string.find(finfo,":")>1):
                         try:
@@ -868,6 +888,7 @@ DEVELOPMENT TO DO
                         finfo = tmp_file.read(tmp_file) # WARNING: will block and hang -- thread instead?
                         ftype = _load2str[ftype]
                         tmp_file.close()
+                        
                     r = _cmd.load(str(oname),finfo,int(state)-1,int(ftype),
                                       int(finish),int(discrete),int(quiet),
                                       int(multiplex),int(zoom))
@@ -2266,12 +2287,12 @@ SEE ALSO
         color_sc = None
 
         _load2str = { loadable.pdb : loadable.pdbstr,
-                          loadable.mol : loadable.molstr,
-                          loadable.xplor : loadable.xplorstr,
-                          loadable.mol2 : loadable.mol2str,
-                          loadable.mmod : loadable.mmodstr,
-                          loadable.ccp4 : loadable.ccp4str,
-                          loadable.sdf2 : loadable.sdf2str}
+                      loadable.mol : loadable.molstr,
+                      loadable.xplor : loadable.xplorstr,
+                      loadable.mol2 : loadable.mol2str,
+                      loadable.mmod : loadable.mmodstr,
+                      loadable.ccp4 : loadable.ccp4str,
+                      loadable.sdf2 : loadable.sdf2str}
 
     except:
         print "Error: unable to initalize the pymol.cmd module"

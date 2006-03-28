@@ -726,6 +726,7 @@ void CGOStop(CGO *I)
   #define CGO_STOP_ZEROS 16
 
   float *pc = CGO_size(I,I->c+CGO_STOP_ZEROS); 
+
   UtilZeroMem(pc,sizeof(float)*CGO_STOP_ZEROS);
 }
 
