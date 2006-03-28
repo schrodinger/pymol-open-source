@@ -6484,6 +6484,7 @@ static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name,
   ObjectMolecule *singleObject = NULL,*selObj;
   int singleAtom = -1;
   int index;
+  AtomInfoType *ai;
 
   if(exec_managed<0) {
     if(atom) /* automatic behavior: manage selections defined via atom masks */
@@ -6492,7 +6493,6 @@ static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name,
       exec_managed=false;
   }
 
-  AtomInfoType *ai;
   n=SelectGetNameOffset(G,name,999,SettingGetGlobal_b(G,cSetting_ignore_case)); /* already exist? */
   if(n==0) /* don't allow redefinition of "all" */
     return 0;
@@ -6791,10 +6791,12 @@ int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals *G,char *sname,
 {
   return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,idx_tag,n_idx,n_obj,NULL,-1);
 }
+#if 0
 static int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow)
 {
   return _SelectorCreate(G,sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0,0,NULL,-1);
 }
+#endif
 
 int SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp)
 {
