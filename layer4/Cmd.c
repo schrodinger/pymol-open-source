@@ -1864,7 +1864,8 @@ static PyObject *CmdGetVRML(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   char *vla = NULL;
   APIEntry();
-  SceneRay(TempPyMOLGlobals,0,0,4,NULL,&vla,0.0F,0.0F,false,NULL,false);
+  SceneRay(TempPyMOLGlobals,0,0,4,NULL,
+           &vla,0.0F,0.0F,false,NULL,false,-1);
   APIExit();
   if(vla) {
     result = Py_BuildValue("s",vla);
@@ -1878,7 +1879,8 @@ static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   char *header=NULL,*geom=NULL;
   APIEntry();
-  SceneRay(TempPyMOLGlobals,0,0,1,&header,&geom,0.0F,0.0F,false,NULL,false);
+  SceneRay(TempPyMOLGlobals,0,0,1,&header,
+           &geom,0.0F,0.0F,false,NULL,false,-1);
   APIExit();
   if(header&&geom) {
     result = Py_BuildValue("(ss)",header,geom);
@@ -1893,7 +1895,8 @@ static PyObject *CmdGetMtlObj(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   char *obj=NULL,*mtl=NULL;
   APIEntry();
-  SceneRay(TempPyMOLGlobals,0,0,5,&obj,&mtl,0.0F,0.0F,false,NULL,false);
+  SceneRay(TempPyMOLGlobals,0,0,5,&obj,
+           &mtl,0.0F,0.0F,false,NULL,false,-1);
   APIExit();
   if(obj&&mtl) {
     result = Py_BuildValue("(ss)",mtl,obj);
@@ -4343,12 +4346,13 @@ static PyObject *CmdRay(PyObject *self, 	PyObject *args)
   float angle,shift;
   int ok=false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"iiiffi",&w,&h,&mode,&angle,&shift,&quiet);
+  ok = PyArg_ParseTuple(args,"iiiffii",&w,&h,&mode,
+                        &angle,&shift,&quiet,&antialias);
   if (ok) {
     APIEntry();
     if(mode<0)
       mode=(int)SettingGet(TempPyMOLGlobals,cSetting_ray_default_renderer);
-    ExecutiveRay(TempPyMOLGlobals,w,h,mode,angle,shift,quiet); /* TODO STATUS */
+    ExecutiveRay(TempPyMOLGlobals,w,h,mode,angle,shift,-1,quiet,antialias); /* TODO STATUS */
     APIExit();
   }
   return APIResultOk(ok);

@@ -1591,8 +1591,9 @@ void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing) {
 
   I->DirtyFlag=false;
   if(SettingGet(G,cSetting_ray_trace_frames)) {
-	SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,
-            0.0F,0.0F,false,NULL,show_timing); 
+	SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),
+             NULL,NULL,
+             0.0F,0.0F,false,NULL,show_timing,-1); 
   } else if(SettingGet(G,cSetting_draw_frames)) {
     SceneMakeSizedImage(G,0,0,SettingGetGlobal_i(G,cSetting_antialias));
   } else {
@@ -4716,8 +4717,10 @@ static double accumTiming = 0.0;
 void SceneRay(PyMOLGlobals *G,
               int ray_width,int ray_height,int mode,
               char **headerVLA_ptr,
-              char **charVLA_ptr,float angle,float shift,int quiet,
-              G3dPrimitive **g3d,int show_timing)
+              char **charVLA_ptr,float angle,
+              float shift,int quiet,
+              G3dPrimitive **g3d,int show_timing,
+              int antialias)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
@@ -4733,11 +4736,15 @@ void SceneRay(PyMOLGlobals *G,
   char *headerVLA = NULL;
   float fov;
   int stereo_hand = 0;
+  
   ImageType *stereo_image = NULL;
   OrthoLineType prefix = "";
   SceneUnitContext context;
 
-
+  if(antialias<0) {
+    antialias = (int)SettingGet(G,cSetting_antialias);
+    
+  }
   if((!ray_width)||(!ray_height)) {
     if(ray_width&&(!ray_height)) {
       ray_height = (ray_width*I->Height)/I->Width;
@@ -4785,7 +4792,7 @@ void SceneRay(PyMOLGlobals *G,
     /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
     identity44f(rayView);
 
-    ray = RayNew(G);
+    ray = RayNew(G,antialias);
     if(!ray) break;
 
     if(stereo_hand) {
@@ -4952,8 +4959,9 @@ void SceneRay(PyMOLGlobals *G,
       buffer=(GLvoid*)Alloc(char,buffer_size);
       ErrChkPtr(G,buffer);
       
-      RayRender(ray,ray_width,ray_height,buffer,I->FrontSafe,I->BackSafe,timing,angle,
-                fov,I->Pos);
+      RayRender(ray,ray_width,ray_height,buffer,
+                I->FrontSafe,I->BackSafe,timing,angle,
+                fov,I->Pos,antialias);
       SceneApplyImageGamma(G,buffer,ray_width,ray_height);
       
       /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
@@ -4976,11 +4984,11 @@ void SceneRay(PyMOLGlobals *G,
       charVLA=VLACalloc(char,100000); 
       headerVLA=VLACalloc(char,2000);
       RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,
-                   I->FrontSafe,I->BackSafe,fov,angle);
+                   I->FrontSafe,I->BackSafe,fov,angle,antialias);
       if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
         strcpy(prefix,SettingGet_s(G,NULL,NULL,cSetting_batch_prefix));
         if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,
-                         ray_height,(int)SettingGet(G,cSetting_antialias))) {
+                         ray_height,antialias)) {
           strcat(prefix,".png");
           SceneLoadPNG(G,prefix,false,0,false);
           I->DirtyFlag=false;
@@ -5318,7 +5326,8 @@ int SceneRenderCached(PyMOLGlobals *G)
         renderedFlag=true;
       }
 	} else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_ray_trace_frames)) {
-	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false,NULL,true); 
+	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),
+               NULL,NULL,0.0F,0.0F,false,NULL,true,-1); 
 	}  else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_draw_frames)) {
       SceneMakeSizedImage(G,0,0,SettingGetGlobal_i(G,cSetting_antialias));
 	} else if(I->CopyFlag) {

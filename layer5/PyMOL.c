@@ -101,6 +101,7 @@ typedef struct _CPyMOL {
   int ClickReadyFlag;
   char ClickedObject[ObjNameMax];  
   int ClickedIndex, ClickedButton, ClickedModifiers;
+  int ImageReadyFlag;
   int DraggedFlag;
   int Reshape[PYMOL_RESHAPE_SIZE];
   int Progress[PYMOL_PROGRESS_SIZE];
@@ -2945,6 +2946,15 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
   }
   PYMOL_API_UNLOCK
   return(result);
+}
+
+int PyMOL_GetImageReady(CPyMOL *I, int reset)
+{
+  int result = I->ImageReadyFlag;
+  if(reset) {
+    I->ImageReadyFlag = false;
+  }
+  return result;
 }
 
 int PyMOL_FreeResultString(CPyMOL *I,char *st)
