@@ -4346,13 +4346,14 @@ static PyObject *CmdRay(PyObject *self, 	PyObject *args)
   float angle,shift;
   int ok=false;
   int quiet;
+  int antialias;
   ok = PyArg_ParseTuple(args,"iiiffii",&w,&h,&mode,
                         &angle,&shift,&quiet,&antialias);
   if (ok) {
     APIEntry();
     if(mode<0)
       mode=(int)SettingGet(TempPyMOLGlobals,cSetting_ray_default_renderer);
-    ExecutiveRay(TempPyMOLGlobals,w,h,mode,angle,shift,-1,quiet,antialias); /* TODO STATUS */
+    ExecutiveRay(TempPyMOLGlobals,w,h,mode,angle,shift,quiet,antialias); /* TODO STATUS */
     APIExit();
   }
   return APIResultOk(ok);
