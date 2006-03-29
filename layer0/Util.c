@@ -106,8 +106,7 @@ void UtilConcatVLA(char **vla,int *cc,char *str)
 void UtilFillVLA(char **vla,int *cc,char what,int len)
 {
   char *where;
-
-  VLACheck((*vla),char,len+*cc+1); 
+  VLACheck((*vla),char,len+(*cc)+1); 
   where = (*cc)+(*vla);
   *(cc)+=len;
   while((len--)>0)

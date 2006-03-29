@@ -190,6 +190,8 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
                 if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
                   if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
                     VLACheck(result,int,n_result);
+                    result[n_result] = id;
+                    n_result++;
                   }
                 }
                 new_start++;
@@ -207,6 +209,8 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
                 if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
                   if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
                     VLACheck(result,int,n_result);
+                    result[n_result] = id;
+                    n_result++;
                   }
                 }
                 new_start++;
@@ -219,6 +223,8 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
                 if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
                   if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
                     VLACheck(result,int,n_result);
+                    result[n_result] = id;
+                    n_result++;
                   }
                 }
                 cur_start++;
@@ -236,6 +242,8 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
                 if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
                   if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
                     VLACheck(result,int,n_result);
+                    result[n_result] = id;
+                    n_result++;
                   }
                 }
                 cur_start++;
@@ -256,6 +264,12 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
     OVOneToOne_DEL_AUTO_NULL(id2eoo);
     VLAFreeP(eoo);
   }
+  if(result && n_result && (!result[n_result-1])) {
+    VLACheck(result,int,n_result);
+    result[n_result] = 0;
+    n_result++;
+  }
+  VLASize(result,int,n_result);
   return result;
 }
 

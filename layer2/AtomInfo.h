@@ -172,6 +172,7 @@ typedef struct AtomInfoType {
 void AtomInfoFree(PyMOLGlobals *G);
 int AtomInfoInit(PyMOLGlobals *G);
 void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai);
+void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst);
 
 int AtomInfoCheckUniqueID(PyMOLGlobals *G, AtomInfoType *ai);
 int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex);

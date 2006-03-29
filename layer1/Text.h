@@ -103,5 +103,6 @@ void TextAdvance(PyMOLGlobals *G,float advance);
 void TextSetPos2i(PyMOLGlobals *G,int x,int y);
 void TextDrawChar(PyMOLGlobals *G,char ch);
 void TextDrawSubStrFast(PyMOLGlobals *G,char *c,int x,int y,int start,int n);
+void TextDrawCharRepeat(PyMOLGlobals *G,char c,int x,int y,int start,int n);
 
 #endif

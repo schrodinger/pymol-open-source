@@ -320,6 +320,7 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name);
 int ExecutiveSetDrag(PyMOLGlobals *G,char *name, int quiet);
 int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new);
 int ExecutiveGetActiveSele(PyMOLGlobals *G);
+int ExecutiveGetActiveAlignmentSele(PyMOLGlobals *G);
 CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type);
 int ExecutiveAngle(PyMOLGlobals *G,float *result,
                      char *nam,char *s1,char *s2,char *s3,int mode,

@@ -546,6 +546,12 @@ if __name__=='pymol.setting':
         ray_hint_camera           = (510, '')
         ray_hint_shadow           = (511, '')
         stick_valence_scale       = (512, '')
+        seq_view_alignment        = (513, '')
+        seq_view_unaligned_mode   = (514, '')
+        seq_view_unaligned_color  = (515, '')
+        seq_view_fill_char        = (516, '')
+        seq_view_fill_color       = (517, '')
+        seq_view_label_color      = (518, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

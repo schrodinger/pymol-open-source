@@ -106,6 +106,15 @@ void TextDrawSubStrFast(PyMOLGlobals *G,char *c,int x,int y,int start,int n)
       if(n<=0) break;
     }
 }
+void TextDrawCharRepeat(PyMOLGlobals *G,char c,int x,int y,int start,int n)
+{
+  c+=start;
+  TextSetPos2i(G,x,y);
+  while(n) {
+    n--;
+    TextDrawChar(G,c);
+  }
+}
 
 void TextSetPos2i(PyMOLGlobals *G,int x,int y)
 {

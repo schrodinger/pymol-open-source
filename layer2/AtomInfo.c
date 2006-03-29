@@ -811,6 +811,21 @@ return(ok);
 #endif
 }
 
+void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst)
+{
+  /* copy, handling resource management issues... */
+
+  *dst=*src;
+  dst->unique_id=0;
+  dst->selEntry=0;
+  if(dst->label) {
+    OVLexicon_IncRef(G->Lexicon,dst->label);
+  }
+  if(dst->textType) {
+    OVLexicon_IncRef(G->Lexicon,dst->textType);
+  }
+}
+
 void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai)
 {
   CAtomInfo *I=G->AtomInfo;  
