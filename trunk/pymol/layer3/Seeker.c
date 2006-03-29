@@ -993,15 +993,13 @@ void SeekerUpdate(PyMOLGlobals *G)
   int max_row = 50;
   int default_color = 0;
   int align_sele = -1; /* alignment selection */
-
   CSeqRow *row_vla,*row,*lab=NULL;
   row_vla = VLACalloc(CSeqRow,10);
   /* FIRST PASS: get all the residues represented properly */
   label_mode = SettingGetGlobal_i(G,cSetting_seq_view_label_mode);
 
-#if 0
-  align_sele = SelectorIndexByName(G,"align");
-  printf("%d\n",align_sele);
+#if 1
+  align_sele = ExecutiveGetActiveAlignmentSele(G);
 #endif
 
   while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
@@ -1037,15 +1035,14 @@ void SeekerUpdate(PyMOLGlobals *G)
       */
 
       VLACheck(row_vla,CSeqRow,nRow);
-      if((label_mode==2)||((label_mode==1)&&(!nRow)))
-        {
+      if((label_mode==2)||((label_mode==1)&&(!nRow))) {
           lab = row_vla + nRow++;
           lab->txt = VLAlloc(char,est_char);
           lab->col = VLACalloc(CSeqCol,est_col);
           lab->label_flag = true;
-        }
-      else
+      } else {
         lab = NULL;
+      }
 
       VLACheck(row_vla,CSeqRow,nRow);
 
@@ -1053,6 +1050,7 @@ void SeekerUpdate(PyMOLGlobals *G)
       if(lab) lab = row-1; /* critical! */
       row->txt = VLAlloc(char,est_char);
       row->col = VLACalloc(CSeqCol,est_col);
+      row->fill = VLACalloc(CSeqCol,est_col/8);
       row->atom_lists = VLACalloc(int,obj->NAtom+est_col+1);
       row->atom_lists[0] = -1; /* terminate the blank listQ (IMPORTANT!) */
       row->char2col = VLACalloc(int,est_char);
@@ -1462,16 +1460,9 @@ void SeekerUpdate(PyMOLGlobals *G)
         maxCol = nCol;
     }
 
-    /* in the simplest mode, just start each sequence in the same column */
+    if(align_sele<0) {
+      /* in the simplest mode, just start each sequence in the same column */
 
-    switch(
-#if 1
-0
-#else
-1
-#endif
-) {
-    case 0:
       b = 0;
       while(!done_flag) {
         int max_offset = 0;
@@ -1505,89 +1496,217 @@ void SeekerUpdate(PyMOLGlobals *G)
         }
         b++;
       }
-      break;
-    case 1: /* alignment mode -- aligned atoms (only) appear in the same column */
-      {
-        /* intialize current columns and get the starting character */
-        int current = 0;
-        int first = true;
-        for(a=0;a<nRow;a++) {       
-          row = row_vla + a;
-          row->cCol = 0;
-          if((!row->label_flag) && ((row->cCol < row->nCol))) {
-            if(current < row->accum)
-              current = row->accum;
-          }
+    } else {
+      /* in alignment mode, line up the tags */
+      int stagger = false;
+      /* intialize current columns and get the starting character */
+      int current = 0;
+      int first = true;
+      switch(SettingGetGlobal_i(G,cSetting_seq_view_unaligned_mode)) {
+      case 0:
+      case 1:
+      case 2:
+        stagger = false;
+        break;
+      default:
+        stagger = true;
+        break;
+      }
+      for(a=0;a<nRow;a++) {       
+        row = row_vla + a;
+        row->cCol = 0;
+        if((!row->label_flag) && ((row->cCol < row->nCol))) {
+          if(current < row->accum)
+            current = row->accum;
         }
-        
-        done_flag = false;
-        while(!done_flag) {
-          done_flag = true;
-          {
-            /* first insert untagged entries into their own columns */
-            int untagged_flag = true;
-            while(untagged_flag) {
-              int found = false;
-              untagged_flag = false;
-              for(a=0;a<nRow;a++) {       
-                row = row_vla + a;
-                if((!row->label_flag) && (row->cCol < row->nCol)) {
-                  CSeqCol *r1 = row->col + row->cCol;
-                  if(!r1->tag) { /* not aligned */
-                    untagged_flag = true;
-                    done_flag = false;
-                    if(codes&&(!first)&&(!found))
-                      current++;
-                    first = false;
-                    found = true;
-                    r1->offset = current;
-                    current += (r1->stop-r1->start);
-                    row->cCol++;
-                  }
-                }
-              }
-            }
-          }
-
-          {
-            /* next insert match-tagged entries into the same column */
-            int min_tag = 0;
+      }
+      
+      done_flag = false;
+      while(!done_flag) {
+        done_flag = true;
+        { 
+          int all_spacers = true;
+          while(all_spacers) {
+            int allow_repeat = false;
             for(a=0;a<nRow;a++) {       
               row = row_vla + a;
               if((!row->label_flag) && (row->cCol < row->nCol)) {
                 CSeqCol *r1 = row->col + row->cCol;
-                if(r1->tag && ((min_tag>r1->tag)||(!min_tag))) {
-                  min_tag = r1->tag;
+                if(r1->tag||(!r1->spacer)) {
+                  all_spacers=false;
+                  break;
                 }
               }
             }
-            if(min_tag) {
+            if(all_spacers) {
+              /* this column is only spacers, so line them up like normal */
               int width, max_width = 0;
               int found = false;
               for(a=0;a<nRow;a++) {       
                 row = row_vla + a;
                 if((!row->label_flag) && (row->cCol < row->nCol)) {
                   CSeqCol *r1 = row->col + row->cCol;
-                  if(r1->tag == min_tag) {
-                    if(codes&&(!first)&&(!found))
-                      current++;
-                    done_flag = false;
-                    first = false;
-                    found = true;
-                    r1->offset = current;
-                    width =  (r1->stop-r1->start);
-                    if(max_width<width)
-                      max_width = width;
-                    row->cCol++;
-                  }
+                  if(codes&&(!first)&&(!found))
+                    current++;
+                  done_flag = false;
+                  first = false;
+                  found = true;
+                  r1->offset = current;
+                  width =  (r1->stop-r1->start);
+                  if(max_width<width)
+                    max_width = width;
+                  row->cCol++;
+                  allow_repeat = true;
                 }
               }
               current+=max_width;
             }
+            if(!allow_repeat)
+              break;
+          }
+          
+          /* insert untagged entries into their own columns */
+          int untagged_flag = true;
+          while(untagged_flag) {
+            int found = false;
+            int max_width = 0;
+            untagged_flag = false;
+            for(a=0;a<nRow;a++) {       
+              row = row_vla + a;
+              if((!row->label_flag) && (row->cCol < row->nCol)) {
+                CSeqCol *r1 = row->col + row->cCol;
+                if(!r1->tag) { /* not aligned */
+                  int text_len = (r1->stop-r1->start);
+                  untagged_flag = true;
+                  done_flag = false;
+                  if(codes&&(!first)&&(!found)) /* insert space */
+                    current++;
+                  first = false;
+                  found = true;
+                  r1->offset = current;
+                  r1->unaligned = true;
+                  
+                  if(!r1->spacer) {
+                    int aa;
+                    for(aa=0;aa<nRow;aa++) { /* infill populate other rows with dashes */
+                      if(aa!=a) {       
+                        CSeqRow *row2 = row_vla + aa;
+                        if(!row2->label_flag) { 
+                          if(row2->cCol < row2->nCol) {
+                            CSeqCol *r2 = row2->col + row2->cCol;
+                            if(stagger||r2->tag) {
+                              VLACheck(row2->fill,CSeqCol,row2->nFill);
+                              r2 = row2->fill + row2->nFill;
+                              r2->stop = text_len;
+                              r2->offset = current;
+                              row2->nFill++;
+                            }
+                          } else {
+                            CSeqCol *r2 = row2->col + row2->cCol;
+                            VLACheck(row2->fill,CSeqCol,row2->nFill);
+                            r2 = row2->fill + row2->nFill;
+                            r2->stop = text_len;
+                            r2->offset = current;
+                            row2->nFill++;
+                          }
+                        }
+                      }
+                    }
+                  }
+                  if(stagger) 
+                    current += text_len;
+                  else if(max_width<text_len)
+                    max_width = text_len;
+                }
+              }
+            }
+            if(!stagger) 
+              current += max_width;
+            for(a=0;a<nRow;a++) {       
+              row = row_vla + a;
+              if((!row->label_flag) && (row->cCol < row->nCol)) {
+                CSeqCol *r1 = row->col + row->cCol;
+                if(!r1->tag) {
+                  row->cCol++;
+                }
+              }
+            }
+          }
+        }
+
+        
+        {
+          /* next insert match-tagged entries into the same column */
+          int min_tag = 0;
+          for(a=0;a<nRow;a++) {       
+            row = row_vla + a;
+            if((!row->label_flag) && (row->cCol < row->nCol)) {
+              CSeqCol *r1 = row->col + row->cCol;
+              if(r1->tag && ((min_tag>r1->tag)||(!min_tag))) {
+                min_tag = r1->tag;
+              }
+            }
+          }
+          if(min_tag) {
+            int width, max_width = 0;
+            int found = false;
+            for(a=0;a<nRow;a++) {       
+              row = row_vla + a;
+              if((!row->label_flag) && (row->cCol < row->nCol)) {
+                CSeqCol *r1 = row->col + row->cCol;
+                if(r1->tag == min_tag) {
+                  if(codes&&(!first)&&(!found)) /* space */
+                    current++;
+                  done_flag = false;
+                  first = false;
+                  found = true;
+                  r1->offset = current;
+                  width = (r1->stop-r1->start);
+                  if(max_width<width)
+                    max_width = width;
+                  /*   row->cCol++;  */
+                }
+              }
+            }
+            {
+              int aa;
+              for(aa=0;aa<nRow;aa++) { /* infill populate other rows with dashes */
+                CSeqRow *row2 = row_vla + aa;
+                if(!row2->label_flag) {
+                  if(row2->cCol < row2->nCol) {
+                    CSeqCol *r1 = row2->col + row2->cCol;
+                    if( r1->tag != min_tag) {
+                      CSeqCol *r2;
+                      VLACheck(row2->fill,CSeqCol,row2->nFill);
+                      r2 = row2->fill + row2->nFill;
+                      r2->stop = max_width;
+                      r2->offset = current;
+                      row2->nFill++;
+                    }
+                  } else {
+                    CSeqCol *r2;
+                    VLACheck(row2->fill,CSeqCol,row2->nFill);
+                    r2 = row2->fill + row2->nFill;
+                    r2->stop = max_width;
+                    r2->offset = current;
+                    row2->nFill++;
+                  }
+                }
+              }
+            }
+            for(a=0;a<nRow;a++) {       
+              row = row_vla + a;
+              if((!row->label_flag) && (row->cCol < row->nCol)) {
+                CSeqCol *r1 = row->col + row->cCol;
+                if(r1->tag == min_tag) {
+                  row->cCol++;
+                }
+              }
+            }
+            current+=max_width;
           }
         }
       }
-      break;
     }
 
     for(a=0;a<nRow;a++) {
@@ -1599,7 +1718,8 @@ void SeekerUpdate(PyMOLGlobals *G)
         for(b=0;b<nCol;b++) {
           CSeqCol *r1 = row->col + b,*l1=NULL;
           if(lab) { 
-            l1 = lab->col + b; /* if a fixed label is present, get the final offset from the residue line */
+            l1 = lab->col + b; /* if a fixed label is present, 
+                                  get the final offset from the residue line */
             if(l1->stop) 
               l1->offset = r1->offset;
           }
@@ -1667,6 +1787,11 @@ void SeekerUpdate(PyMOLGlobals *G)
               n_skipped = 0;
               last_ai = ai;
               l1->start = lab->len;
+              if(codes==2) {
+                UtilConcatVLA(&lab->txt,&lab->len,ai->resn);
+                UtilConcatVLA(&lab->txt,&lab->len,"`");
+              }
+                
               UtilConcatVLA(&lab->txt,&lab->len,ai->resi);
               l1->stop = lab->len;
               st_len = l1->stop - l1->start + 1;

@@ -26,6 +26,7 @@ typedef struct {
   int offset; 
   int atom_at; /* starting offset in list */
   int inverse;
+  int unaligned;
   int spacer;
   int state;
   int color;
@@ -37,8 +38,9 @@ typedef struct {
   int label_flag,column_label_flag;
   int color;
   char *txt;
-  CSeqCol *col;
+  CSeqCol *col,*fill;
   int nCol,cCol;
+  int nFill;
   int *char2col;
   int *atom_lists;
   char name[ObjNameMax]; /* associated object */

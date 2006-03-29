@@ -657,6 +657,12 @@ typedef struct _CPyMOL {
   ov_word lex_ray_hint_camera;
   ov_word lex_ray_hint_shadow;
   ov_word lex_stick_valence_scale;
+  ov_word lex_seq_view_alignment;
+  ov_word lex_seq_view_unaligned_mode;
+  ov_word lex_seq_view_unaligned_color;
+  ov_word lex_seq_view_fill_char;
+  ov_word lex_seq_view_fill_color;
+  ov_word lex_seq_view_label_color;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1312,7 +1318,12 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_hint_camera,510);
   LEX_SETTING(ray_hint_shadow,511);
   LEX_SETTING(stick_valence_scale,512);
-
+  LEX_SETTING(seq_view_alignment,513);
+  LEX_SETTING(seq_view_unaligned_mode,514);
+  LEX_SETTING(seq_view_unaligned_color,515);
+  LEX_SETTING(seq_view_fill_char,516);
+  LEX_SETTING(seq_view_fill_color,517);
+  LEX_SETTING(seq_view_label_color,518);
   return_OVstatus_SUCCESS;
 }
 

@@ -664,6 +664,12 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_ray_hint_camera            510
 #define cSetting_ray_hint_shadow            511
 #define cSetting_stick_valence_scale        512
+#define cSetting_seq_view_alignment         513
+#define cSetting_seq_view_unaligned_mode    514
+#define cSetting_seq_view_unaligned_color   515
+#define cSetting_seq_view_fill_char         516
+#define cSetting_seq_view_fill_color        517
+#define cSetting_seq_view_label_color       518
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -673,7 +679,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       513
+#define cSetting_INIT                       519
 
 #endif
 

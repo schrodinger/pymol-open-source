@@ -897,6 +897,30 @@ int ExecutivePop(PyMOLGlobals *G,char *target,char *source,int quiet)
     return result;
 }
 
+int ExecutiveGetActiveAlignmentSele(PyMOLGlobals *G)
+{
+  char *alignment = SettingGetGlobal_s(G,cSetting_seq_view_alignment);
+  int align_sele = -1;
+  if( alignment && alignment[0] ) { /* explicit alignment setting name */
+    align_sele = SelectorIndexByName(G,alignment);
+  } else { /* otherwise, use the first active alignment */
+    SpecRec *rec = NULL;
+    register CExecutive *I = G->Executive;
+
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->visible) {
+        if(rec->type==cExecObject)
+          if(rec->obj->type==cObjectAlignment) {
+            align_sele = SelectorIndexByName(G,rec->obj->Name);
+            if(align_sele>=0)
+              break;
+          }
+      }
+    }
+  }
+  return align_sele;
+}
+
 int ExecutiveGetActiveSele(PyMOLGlobals *G)
 {
 
@@ -6850,7 +6874,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
             ENDFB(G);
         }
         if(oname && oname[0]) {
-#if 1
+#if 0
           CGO *cgo = NULL;
           ObjectCGO *ocgo;
           int auto_save;

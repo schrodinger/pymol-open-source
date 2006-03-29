@@ -303,15 +303,16 @@ static void SeqDraw(Block *block)
     int x = I->Block->rect.left;
     int y = I->Block->rect.bottom+I->ScrollBarMargin+1;
     float *bg_color,overlay_color[3] = {1.0F,1.0F,1.0F};
-
+    int label_color_index = SettingGetGlobal_color(G,cSetting_seq_view_label_color);
+    float *label_color = ColorGet(G,label_color_index);
+    copy3f(label_color,overlay_color);
     bg_color=SettingGet_3fv(G,NULL,NULL,cSetting_bg_rgb);
-    
-    overlay_color[0]=1.0F-bg_color[0];
-    overlay_color[1]=1.0F-bg_color[1];
-    overlay_color[2]=1.0F-bg_color[2];
+    overlay_color[0]=overlay_color[0]-bg_color[0];
+    overlay_color[1]=overlay_color[1]-bg_color[1];
+    overlay_color[2]=overlay_color[2]-bg_color[2];
     if(diff3f(overlay_color,bg_color)<0.25)
       zero3f(overlay_color);
-
+    
     if(I->ScrollBarActive) {
       ScrollBarSetBox(I->ScrollBar,I->Block->rect.bottom+I->ScrollBarWidth,
                       I->Block->rect.left+I->ScrollBarMargin,
@@ -337,7 +338,37 @@ static void SeqDraw(Block *block)
       int vis_size = I->VisSize;
       int first_allowed;
       int max_title_width = 0;
+      char fill_char, *fill_str = SettingGetGlobal_s(G,cSetting_seq_view_fill_char);
+      int unaligned_color_index = SettingGetGlobal_color(G,cSetting_seq_view_unaligned_color);
+      int fill_color_index = SettingGetGlobal_color(G,cSetting_seq_view_fill_color);
+      int unaligned_mode = SettingGetGlobal_i(G,cSetting_seq_view_unaligned_mode);
+      float *unaligned_color;
+      float *fill_color;
 
+      if(unaligned_color_index==-1) {
+        switch(unaligned_mode) {
+        case 3:
+          unaligned_color_index = -1;
+          break;
+        default:
+          unaligned_color_index = fill_color_index;
+          break;
+        }
+      }
+      fill_color = ColorGet(G,fill_color_index);
+      if(unaligned_color_index<0) {
+        unaligned_color = NULL;
+      } else {
+        unaligned_color = ColorGet(G,unaligned_color_index);
+      }
+      
+      if(fill_str && fill_str[0]) {
+        fill_char = fill_str[0];
+        if(fill_char==' ')
+          fill_char=0;
+      }
+      else
+        fill_char = 0;
       /* measure titles */
 
       for(a=I->NRow-1;a>=0;a--) {
@@ -371,7 +402,7 @@ static void SeqDraw(Block *block)
         }
         y1+=I->LineHeight;
       }
-
+      
       y1 = y;
       for(a=I->NRow-1;a>=0;a--) {
         row = I->Row+a;
@@ -382,16 +413,20 @@ static void SeqDraw(Block *block)
           max_len = row->ext_len;
         if(!row->label_flag)
           n_real++;
-        for(b=1;b<row->nCol;b++) {
-          col = row->col+b;
-          if(row->label_flag || row->column_label_flag) { 
-            if(b>1) 
-              first_allowed = I->NSkip + max_title_width + 1;
-            else
-              first_allowed = I->NSkip + max_title_width;
-          } else
-            first_allowed = I->NSkip;
 
+        if(row->label_flag) { 
+          first_allowed = I->NSkip + max_title_width;
+        } else if(row->column_label_flag) {
+          first_allowed = I->NSkip + max_title_width + 1;          
+        } else 
+          first_allowed = I->NSkip;
+
+        for(b=1;b<row->nCol;b++) {
+          
+          if(row->label_flag && (b>1))
+            first_allowed = I->NSkip + max_title_width + 1;
+
+          col = row->col+b;
           if(col->offset>=first_allowed) {
             xx=x+I->CharMargin+I->CharWidth*(col->offset-I->NSkip);
             ch_wid = (col->stop-col->start);
@@ -401,9 +436,28 @@ static void SeqDraw(Block *block)
               if(row->label_flag) {
                 TextSetColor(G,cur_color);
                 glColor3fv(cur_color);
-
-              }
-              else {
+              } else if(col->unaligned && unaligned_color) {
+                float tmp_color[3];
+                float *v = ColorGet(G,col->color);
+                switch(unaligned_mode) {
+                case 1:
+                case 4:
+                  average3f(v,bg_color,tmp_color);
+                  TextSetColor(G,tmp_color);
+                  glColor3fv(tmp_color);
+                  break;
+                case 2:
+                case 5:
+                  average3f(v,unaligned_color,tmp_color);
+                  TextSetColor(G,tmp_color);
+                  glColor3fv(tmp_color);
+                  break;
+                default:
+                  TextSetColor(G,unaligned_color);
+                  glColor3fv(unaligned_color);
+                  break;
+                }
+              } else {
                 float *v = ColorGet(G,col->color);
                 TextSetColor(G,v);
                 glColor3fv(v);
@@ -418,11 +472,33 @@ static void SeqDraw(Block *block)
                 TextSetColor(G,black);
               }
               TextDrawSubStrFast(G,row->txt,xx,y1,
-                                 col->start,ch_wid);
-              
+                               col->start,ch_wid);
             }
           }
         }
+
+        if(fill_char) {
+          
+          TextSetColor(G,fill_color);
+
+          for(b=0;b<row->nFill;b++) {
+
+            col = row->fill+b;
+            if(col->offset>=first_allowed) {
+              xx=x+I->CharMargin+I->CharWidth*(col->offset-I->NSkip);
+              ch_wid = (col->stop-col->start);
+              pix_wid = I->CharWidth * ch_wid;
+              tot_len = col->offset+ch_wid-I->NSkip;
+              if(tot_len<=vis_size) {
+                TextDrawCharRepeat(G,fill_char,xx,y1,
+                                   col->start,ch_wid);
+              }
+            }
+          }
+        }
+
+
+        
         y1+=I->LineHeight;
       }
 
@@ -625,6 +701,7 @@ static void SeqPurgeRowVLA(PyMOLGlobals *G)
         row = I->Row+a;
         VLAFreeP(row->txt);
         VLAFreeP(row->col);
+        VLAFreeP(row->fill);
         VLAFreeP(row->char2col);
         VLAFreeP(row->atom_lists);
       }

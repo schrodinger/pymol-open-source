@@ -6080,21 +6080,12 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
   /* copy the atom info records and create new zero-based IDs */
   c=0;
   {
-    AtomInfoType *ai;
     for(a=cNDummyAtoms;a<I->NAtom;a++) {
       if(I->Table[a].index>=0) {
         obj=I->Obj[I->Table[a].model];
         at=I->Table[a].atom;
         VLACheck(atInfo,AtomInfoType,c);
-        ai = atInfo + c;
-        *(ai) = obj->AtomInfo[at];
-        ai->selEntry=0;
-        if(ai->label) {
-          OVLexicon_IncRef(G->Lexicon,ai->label);
-        }
-        if(ai->textType) {
-          OVLexicon_IncRef(G->Lexicon,ai->textType);
-        }
+        AtomInfoCopy(G, obj->AtomInfo+at, atInfo+c);
         c++;
       }
     }

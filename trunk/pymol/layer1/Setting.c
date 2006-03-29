@@ -1274,7 +1274,13 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_seq_view_label_start:
   case cSetting_seq_view_format:
   case cSetting_seq_view_color:
+  case cSetting_seq_view_unaligned_mode:
     SeqChanged(G);
+    break;
+  case cSetting_seq_view_fill_color:
+  case cSetting_seq_view_fill_char:
+  case cSetting_seq_view_label_color:
+    OrthoDirty(G);
     break;
   case cSetting_static_singletons:
     SeqChanged(G);
@@ -2798,6 +2804,12 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_ray_hint_camera,2.15F);
   set_f(I,cSetting_ray_hint_shadow,0.65F);
   set_f(I,cSetting_stick_valence_scale, 1.0F);
+  set_s(I,cSetting_seq_view_alignment,"");
+  set_i(I,cSetting_seq_view_unaligned_mode,0);
+  set_color(I,cSetting_seq_view_unaligned_color, "-1");
+  set_s(I,cSetting_seq_view_fill_char,"-");  
+  set_color(I,cSetting_seq_view_fill_color, "104"); /* grey50 */
+  set_color(I,cSetting_seq_view_label_color, "white"); /* grey50 */
 }
 
 
