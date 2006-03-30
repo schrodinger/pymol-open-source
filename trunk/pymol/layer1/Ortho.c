@@ -1686,44 +1686,68 @@ int OrthoDrag(PyMOLGlobals *G,int x, int y,int mod)
 /*========================================================================*/
 void OrthoSplash(PyMOLGlobals *G) 
 {
-  printf("\n"); /* only add this newline to stdout, not the output window */
-  /* OrthoNewLine(G,NULL,true);*/
-  if(G->Option->incentive_product) {
+  printf("\n"); 
+
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+#ifdef _IPYMOL
+  /* Splash message for restricted access incentive versions... */
+  PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2006 DeLano Scientific LLC.\n \n" ENDF(G);
+  PRINTF " This PyMOL Incentive Product Executable Build is exclusively available to\n" ENDF(G);
+  PRINTF " PyMOL Sponsors with current PyMOL Maintenance and/or Support Subscriptions.\n \n" ENDF(G);
+  PRINTF " Only designated PyMOL Power, Casual, and Developer Users covered within the\n" ENDF(G);
+  PRINTF " scope of such a Subscription may legally use this PyMOL Incentive Product.\n" ENDF(G);
+  PRINTF " All other usage is strictly prohibited and may constitute a violation of\n" ENDF(G);
+  PRINTF " United States and International Copyright laws.\n \n" ENDF(G);
+  PRINTF " This Executable Build incorporates and extends Open-Source PyMOL " ENDF(G);
+  PRINTF _PyMOL_VERSION ENDF(G);
+  PRINTF ".\n" ENDF(G);
+#else
+#ifndef _EPYMOL
+  if(G->Option->incentive_product)
+#else
+  if(1)
+#endif
+  {
+    /* Splash message for evaluation access incentive versions... */
     PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2006 DeLano Scientific LLC.\n \n" ENDF(G);
     PRINTF " A current PyMOL Maintenance and/or Support Subscription may be required\n" ENDF(G);
     PRINTF " for legal use of this Build beyond a finite honor-system evaluation period.\n" ENDF(G);
     PRINTF " Please visit http://www.pymol.org/funding.html for more information.\n \n"ENDF(G);
-    PRINTF " This PyMOL Executable Build incorporates Open-Source PyMOL " ENDF(G);
+    PRINTF " This Executable Build incorporates and extends Open-Source PyMOL " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
     PRINTF ".\n" ENDF(G);
-  } else {
-    PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF(G);
-    PRINTF _PyMOL_VERSION ENDF(G);
-    PRINTF ".\n" ENDF(G);
-    PRINTF " Copyright (C) 2006 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF(G);
-    
-    PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF(G);
-    
-    PRINTF "    Other Major Authors and Contributors:\n\n" ENDF(G);
-    PRINTF "       Ralf W. Grosse-Kunstleve, Ph.D.\n \n" ENDF(G);
-    
-    PRINTF "    PyMOL is user-supported open-source software.  Although some versions\n" ENDF(G);
-    PRINTF "    are freely available, PyMOL is not in the public domain.\n \n" ENDF(G);
-    
-    PRINTF "    If PyMOL is helpful in your work or study, then please volunteer \n" ENDF(G);
-    PRINTF "    support for our ongoing efforts to create open and affordable scientific\n" ENDF(G);
-    PRINTF "    software by purchasing a PyMOL Maintenance and/or Support subscription.\n\n" ENDF(G);
-    
-    PRINTF "    More information can be found at \"http://www.pymol.org\".\n \n" ENDF(G);
-    
-    PRINTF "    Enter \"help\" for a list of commands.\n" ENDF(G);
-    PRINTF 
-      "    Enter \"help <command-name>\" for information on a specific command.\n\n"
-      ENDF(G);
+  } else
+  /* END PROPRIETARY CODE SEGMENT */
 
-    PRINTF " Hit ESC anytime to toggle between text and graphics.\n\n" ENDF(G);
-  }
-
+    {
+    /* Splash message for unrestricted acess open-source versions... */
+      PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF(G);
+      PRINTF _PyMOL_VERSION ENDF(G);
+      PRINTF ".\n" ENDF(G);
+      PRINTF " Copyright (C) 2006 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF(G);
+      
+      PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF(G);
+      
+      PRINTF "    Other Major Authors and Contributors:\n\n" ENDF(G);
+      PRINTF "       Ralf W. Grosse-Kunstleve, Ph.D.\n \n" ENDF(G);
+      
+      PRINTF "    PyMOL is user-supported open-source software.  Although some versions\n" ENDF(G);
+      PRINTF "    are freely available, PyMOL is not in the public domain.\n \n" ENDF(G);
+      
+      PRINTF "    If PyMOL is helpful in your work or study, then please volunteer \n" ENDF(G);
+      PRINTF "    support for our ongoing efforts to create open and affordable scientific\n" ENDF(G);
+      PRINTF "    software by purchasing a PyMOL Maintenance and/or Support subscription.\n\n" ENDF(G);
+      
+      PRINTF "    More information can be found at \"http://www.pymol.org\".\n \n" ENDF(G);
+      
+      PRINTF "    Enter \"help\" for a list of commands.\n" ENDF(G);
+      PRINTF 
+        "    Enter \"help <command-name>\" for information on a specific command.\n\n"
+        ENDF(G);
+      
+      PRINTF " Hit ESC anytime to toggle between text and graphics.\n\n" ENDF(G);
+    }
+#endif
 }
 /*========================================================================*/
 int OrthoInit(PyMOLGlobals *G,int showSplash)

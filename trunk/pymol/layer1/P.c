@@ -1535,7 +1535,7 @@ void PGetOptions(CPyMOLOptions *rec)
   rec->auto_reinitialize = PyInt_AsLong(PyObject_GetAttrString(options,"auto_reinitialize"));
   rec->keep_thread_alive = PyInt_AsLong(PyObject_GetAttrString(options,"keep_thread_alive"));
   rec->quiet = PyInt_AsLong(PyObject_GetAttrString(options,"quiet"));
-#ifdef _PYMOL_INCENTIVE
+#ifdef _IPYMOL
   rec->incentive_product = true;
 #else
   rec->incentive_product = PyInt_AsLong(PyObject_GetAttrString(options,"incentive_product"));

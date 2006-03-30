@@ -6697,7 +6697,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
               if(sscanf(cc,"%d",&root)!=1)
                 ok=ErrMessage(G,"ReadMOL2File","bad target root atom id");
               else
-                root--;
+                root--; /* convert 1-based to 0-based */
             }
             
             /* optional data */
@@ -6835,6 +6835,10 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
               
               if(ok) {
                 if(resi_flag||chain_flag||resn_flag||seg_flag) {
+#if 0
+                  OVLexi
+                  
+#else
                   int b,delta = -1;
                   ResIdent start_resi;
                   strcpy(start_resi,atInfo[root].resi);
@@ -6867,6 +6871,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
                       b = root+1;
                     }
                   }
+#endif
                 }
               }
             }

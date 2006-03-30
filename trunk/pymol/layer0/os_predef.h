@@ -104,6 +104,13 @@ Z* -------------------------------------------------------------------
 
 #endif
 #endif
+
+#ifndef _IPYMOL
+#ifdef _PYMOL_INCENTIVE
+#define _IPYMOL
+#endif
+#endif
+
 /* END PROPRIETARY CODE SEGMENT */
 
 #endif

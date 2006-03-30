@@ -1987,10 +1987,22 @@ static PyObject *CmdDirtyWizard(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdSplash(PyObject *dummy, PyObject *args)
 {
-  APIEntry();
-  OrthoSplash(TempPyMOLGlobals);
-  APIExit();
-  return APISuccess();  
+  int query;
+  int result=1;
+  
+  result = PyArg_ParseTuple(args,"i",&query);
+  if(!query) {
+    APIEntry();
+    OrthoSplash(TempPyMOLGlobals);
+    APIExit();
+  } else {
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+#ifdef _IPYMOL
+    result=0;
+#endif
+/* END PROPRIETARY CODE SEGMENT */
+  }
+  return APIResultCode(result);
 }
 
 static PyObject *CmdCls(PyObject *dummy, PyObject *args)
