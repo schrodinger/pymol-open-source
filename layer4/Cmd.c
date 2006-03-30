@@ -93,7 +93,7 @@ static int run_only_once = true;
 #endif
 #ifdef _PYMOL_WX_GLUT
 #ifndef _PYMOL_ACTIVEX
-#ifndef _EPYMOL
+#ifndef _PYMOL_EMBEDDED
 static int run_only_once = true;
 #endif
 #endif
@@ -3096,7 +3096,7 @@ static PyObject *CmdRunWXPyMOL(PyObject *dummy, PyObject *args)
 {
 #ifdef _PYMOL_WX_GLUT
 #ifndef _PYMOL_ACTIVEX
-#ifndef _EPYMOL
+#ifndef _PYMOL_EMBEDDED
   if(run_only_once) {
     run_only_once=false;
     was_main();

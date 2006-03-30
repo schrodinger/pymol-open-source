@@ -1069,7 +1069,7 @@ int PLockAPIAsGlut(int block_if_busy)
 
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
 #ifndef _PYMOL_ACTIVEX
-#ifndef _EPYMOL
+#ifndef _PYMOL_EMBEDDED
 void	initExtensionClass(void);
 void	initsglite(void);
 void  init_champ(void);
@@ -1085,7 +1085,7 @@ void    initopenglutil_num(void);
 
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
-#ifndef _EPYMOL
+#ifndef _PYMOL_EMBEDDED
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 void	init_numpy();
@@ -1103,7 +1103,7 @@ void  init_champ();
 
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
-#ifndef _EPYMOL
+#ifndef _PYMOL_EMBEDDED
 void	initExtensionClass(void);
 void	initsglite(void);
 void  init_champ(void);
@@ -1379,7 +1379,7 @@ void PInitEmbedded(int argc,char **argv)
 #endif
 
 #ifndef _PYMOL_ACTIVEX
-#ifndef _EPYMOL
+#ifndef _PYMOL_EMBEDDED
   Py_Initialize();
   PyEval_InitThreads();
   PyUnicode_SetDefaultEncoding("utf-8"); /* is this safe & legal? */
@@ -1390,7 +1390,7 @@ void PInitEmbedded(int argc,char **argv)
   init_cmd();
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
-#ifndef _EPYMOL
+#ifndef _PYMOL_EMBEDDED
   initExtensionClass();
   initsglite();
   /* initialize champ */
@@ -1579,7 +1579,7 @@ void PInit(PyMOLGlobals *G)
 #ifdef WIN32
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
-#ifndef _EPYMOL
+#ifndef _PYMOL_EMBEDDED
 #define _PYMOL_INIT_MODULES
 #endif
 #endif
@@ -1944,7 +1944,7 @@ void PBlock(void)
 int PAutoBlock(void)
 {
 #ifndef _PYMOL_ACTIVEX
-#ifndef _EPYMOL
+#ifndef _PYMOL_EMBEDDED
   int a,id;
   /* synchronize python */
 
@@ -2028,7 +2028,7 @@ int PIsGlutThread(void)
 void PUnblock(void)
 {
 #ifndef _PYMOL_ACTIVEX
-#ifndef _EPYMOL
+#ifndef _PYMOL_EMBEDDED
   int a;
   /* NOTE: ASSUMES a locked API */
 
