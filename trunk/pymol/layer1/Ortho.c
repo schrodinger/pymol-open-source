@@ -1720,7 +1720,7 @@ void OrthoSplash(PyMOLGlobals *G)
   /* END PROPRIETARY CODE SEGMENT */
 
     {
-    /* Splash message for unrestricted acess open-source versions... */
+    /* Splash message for unrestricted access open-source versions... */
       PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF(G);
       PRINTF _PyMOL_VERSION ENDF(G);
       PRINTF ".\n" ENDF(G);
