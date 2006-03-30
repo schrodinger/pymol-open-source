@@ -26,8 +26,9 @@ Z* -------------------------------------------------------------------
 typedef struct ObjectAlignmentState {
   CObjectState state;
   int *alignVLA;
-  int valid;
+  WordType guide; /*only used for selections*/
   /* not stored */
+  int valid;
   OVOneToAny *id2tag;
   CGO *std;
   CGO *ray;

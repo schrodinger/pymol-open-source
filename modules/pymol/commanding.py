@@ -121,9 +121,19 @@ USAGE
         r = DEFAULT_ERROR
         mode = int(mode)
         if mode == 1: # just show PNG
-            png_path = cmd.exp_path("$PYMOL_PATH/data/pymol/splash.png")
-            if os.path.exists(png_path):
-                cmd.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
+            show_splash = 1
+            try:
+                lock()
+                show_splash = _cmd.splash(1)
+            finally:
+                unlock(0)
+            if show_splash:
+                png_path = cmd.exp_path("$PYMOL_PATH/data/pymol/splash.png")
+                if os.path.exists(png_path):
+                    cmd.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
+                    r = DEFAULT_SUCCESS
+
+            else:
                 r = DEFAULT_SUCCESS
         else:
             if cmd.get_setting_legacy("internal_feedback")>0.1:
@@ -131,7 +141,7 @@ USAGE
             print
             try:
                 lock()
-                r = _cmd.splash()
+                r = _cmd.splash(0)
             finally:
                 unlock(r)
         if _raising(r): raise pymol.CmdException
