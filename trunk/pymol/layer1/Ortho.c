@@ -1705,7 +1705,7 @@ void OrthoSplash(PyMOLGlobals *G)
 #ifndef _EPYMOL
   if(G->Option->incentive_product)
 #else
-  if(1)
+  if(1) /* force the issue */
 #endif
   {
     /* Splash message for evaluation access incentive versions... */
