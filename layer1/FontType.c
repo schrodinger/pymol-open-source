@@ -41,15 +41,17 @@ static char *_FontTypeRenderOpenGL(RenderInfo *info,
 {
   register PyMOLGlobals *G = I->Font.G;
   if(G->ValidContext) {
-    int c;
+    unsigned int c;
     int pushed = OrthoGetPushed(G);
     int kern_flag = false;
-    int last_c = -1;
+    unsigned int last_c = 0;
     int sampling = 1;
     const float _0 = 0.0F, _1 = 1.0F, _m1 = -1.0F;
     float x_indent=0.0F, y_indent=0.0F, z_indent = 0.0F;
+    int unicode = 0;
+    int unicnt = 0;
 
-      sampling = info->sampling;
+    sampling = info->sampling;
     if(st&&(*st)) {
       float origin[3], v_scale;
       SceneOriginGet(G,origin);
@@ -66,35 +68,51 @@ static char *_FontTypeRenderOpenGL(RenderInfo *info,
           if(factor<_m1) factor = -_1;
           if(factor>_0) factor = _0;
           while((c=*(sst++))) {
-            
-            CharFngrprnt fprnt;
-            unsigned char *rgba;
-            UtilZeroMem(&fprnt,sizeof(fprnt));
-            fprnt.u.i.text_id = I->Font.TextID;
-            fprnt.u.i.size = (int)(size*64*sampling);
-            rgba = fprnt.u.i.color;
-            TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
-            rgba = fprnt.u.i.outline_color;
-            TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
-            fprnt.u.i.ch = c;
-            fprnt.u.i.flat = flat;
-            {
-              int id = CharacterFind(G,&fprnt);
-              if(!id) {
-                id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
+            if(unicnt) {
+              if(!(c&0x80)) /* corrupt UTF8 */
+                unicnt=0;
+              else {
+                unicode = (unicode<<6) | (0x3F&c);
+                unicnt--;
+                c = unicode;
               }
-              if(id) {
-                if(kern_flag) {
-                  x_indent -= factor * (TypeFaceGetKerning(I->TypeFace, 
-                                                           (unsigned int)last_c,
-                                                           (unsigned int)c,
-                                                           size)/sampling);
-                }
-                x_indent -= factor * CharacterGetAdvance(G,sampling,id);
+            } else if(c&0x80) {
+              while(c&0x80) {
+                c = (c<<1)&0xFF;
+                unicnt++;
               }
+              unicode = (c>>(unicnt--));
             }
-            kern_flag = true;
-            last_c = c;
+            if(!unicnt) {
+              CharFngrprnt fprnt;
+              unsigned char *rgba;
+              UtilZeroMem(&fprnt,sizeof(fprnt));
+              fprnt.u.i.text_id = I->Font.TextID;
+              fprnt.u.i.size = (int)(size*64*sampling);
+              rgba = fprnt.u.i.color;
+              TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
+              rgba = fprnt.u.i.outline_color;
+              TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
+              fprnt.u.i.ch = c;
+              fprnt.u.i.flat = flat;
+              {
+                int id = CharacterFind(G,&fprnt);
+                if(!id) {
+                  id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
+                }
+                if(id) {
+                  if(kern_flag) {
+                    x_indent -= factor * (TypeFaceGetKerning(I->TypeFace, 
+                                                             last_c,
+                                                             c,
+                                                             size)/sampling);
+                  }
+                  x_indent -= factor * CharacterGetAdvance(G,sampling,id);
+                }
+              }
+              kern_flag = true;
+              last_c = c;
+            }
           }
         }
         if(rpos[0]<_m1) {
@@ -139,35 +157,51 @@ static char *_FontTypeRenderOpenGL(RenderInfo *info,
         TextIndent(G,x_indent,y_indent);
       }
       while((c=*(st++))) {
-
-        CharFngrprnt fprnt;
-        unsigned char *rgba;
-        UtilZeroMem(&fprnt,sizeof(fprnt));
-        fprnt.u.i.text_id = I->Font.TextID;
-        fprnt.u.i.size = (int)(size*64*sampling);
-        rgba = fprnt.u.i.color;
-        TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
-        rgba = fprnt.u.i.outline_color;
-        TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
-        fprnt.u.i.ch = c;
-        fprnt.u.i.flat = flat;
-        {
-          int id = CharacterFind(G,&fprnt);
-          if(!id) {
-            id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
+        if(unicnt) {
+          if(!(c&0x80)) /* corrupt UTF8 */
+            unicnt=0;
+          else {
+            unicode = (unicode<<6) | (0x3F&c);
+            unicnt--;
+            c = unicode;
           }
-          if(id) {
-            if(kern_flag) {
-              TextAdvance(G, TypeFaceGetKerning(I->TypeFace, 
-                                                (unsigned int)last_c,
-                                                (unsigned int)c,
-                                                size)/sampling);
-            }
-            CharacterRenderOpenGL(G,info,id); /* handles advance */
+        } else if(c&0x80) {
+          while(c&0x80) {
+            c = (c<<1)&0xFF;
+            unicnt++;
           }
+          unicode = (c>>(unicnt--));
         }
-        kern_flag = true;
-        last_c = c;
+        if(!unicnt) {
+          CharFngrprnt fprnt;
+          unsigned char *rgba;
+          UtilZeroMem(&fprnt,sizeof(fprnt));
+          fprnt.u.i.text_id = I->Font.TextID;
+          fprnt.u.i.size = (int)(size*64*sampling);
+          rgba = fprnt.u.i.color;
+          TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
+          rgba = fprnt.u.i.outline_color;
+          TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
+          fprnt.u.i.ch = c;
+          fprnt.u.i.flat = flat;
+          {
+            int id = CharacterFind(G,&fprnt);
+            if(!id) {
+              id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
+            }
+            if(id) {
+              if(kern_flag) {
+                TextAdvance(G, TypeFaceGetKerning(I->TypeFace, 
+                                                  last_c,
+                                                  c,
+                                                  size)/sampling);
+              }
+              CharacterRenderOpenGL(G,info,id); /* handles advance */
+            }
+          }
+          kern_flag = true;
+          last_c = c;
+        }
       }
       if(!pushed) {
         ScenePopRasterMatrix(G);
@@ -189,13 +223,15 @@ static char *FontTypeRenderOpenGLFlat(RenderInfo *info, CFontType *I,char *st,fl
 static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, float *rpos)
 {
   register PyMOLGlobals *G = I->Font.G;
-  int c;
+  unsigned int c;
   int kern_flag = false;
-  int last_c = -1;
+  unsigned int last_c = 0;
   int sampling = ray->Sampling;
   const float _0 = 0.0F, _1 = 1.0F, _m1 = -1.0F;
   float x_indent=0.0F, y_indent=0.0F, z_indent=0.0F;
   float xn[3], yn[3], x_adj[3], y_adj[3], pos[3], *v;
+  int unicode = 0;
+  int unicnt = 0;
 
   if(st&&(*st)) {
     float origin[3],v_scale;
@@ -235,32 +271,48 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
         if(factor<_m1) factor = -_1;
         if(factor>_0) factor = _0;
         while((c=*(sst++))) {
-          
-          CharFngrprnt fprnt;
-          unsigned char *rgba;
-          UtilZeroMem(&fprnt,sizeof(fprnt));
-          fprnt.u.i.text_id = I->Font.TextID;
-          fprnt.u.i.size = (int)(size*64*sampling);
-          rgba = fprnt.u.i.color;
-          TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
-          rgba = fprnt.u.i.outline_color;
-          TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
-          fprnt.u.i.ch = c;
-          {
-            int id = CharacterFind(G,&fprnt);
-            if(!id) {
-              id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
+          if(unicnt) {
+            if(!(c&0x80)) /* corrupt UTF8 */
+              unicnt=0;
+            else {
+              unicode = (unicode<<6) | (0x3F&c);
+              unicnt--;
+              c = unicode;
             }
-            if(id) {
-              if(kern_flag) {
-                x_indent -= factor * TypeFaceGetKerning(I->TypeFace, 
-                                                        (unsigned int)last_c,
-                                                        (unsigned int)c,
-                                                        size*sampling)/sampling;
+          } else if(c&0x80) {
+            while(c&0x80) {
+              c = (c<<1)&0xFF;
+              unicnt++;
+            }
+            unicode = (c>>(unicnt--));
+          }
+          if(!unicnt) {
+            CharFngrprnt fprnt;
+            unsigned char *rgba;
+            UtilZeroMem(&fprnt,sizeof(fprnt));
+            fprnt.u.i.text_id = I->Font.TextID;
+            fprnt.u.i.size = (int)(size*64*sampling);
+            rgba = fprnt.u.i.color;
+            TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
+            rgba = fprnt.u.i.outline_color;
+            TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
+            fprnt.u.i.ch = c;
+            {
+              int id = CharacterFind(G,&fprnt);
+              if(!id) {
+                id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
               }
-              x_indent -= factor * CharacterGetAdvance(G,1,id);
-              kern_flag = true;
-              last_c = c;
+              if(id) {
+                if(kern_flag) {
+                  x_indent -= factor * TypeFaceGetKerning(I->TypeFace, 
+                                                          last_c,
+                                                          c,
+                                                          size*sampling)/sampling;
+                }
+                x_indent -= factor * CharacterGetAdvance(G,1,id);
+                kern_flag = true;
+                last_c = c;
+              }
             }
           }
         }
@@ -291,37 +343,53 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
     kern_flag = false;
 
     while((c=*(st++))) {
-      
-      CharFngrprnt fprnt;
-      unsigned char *rgba;
-      UtilZeroMem(&fprnt,sizeof(fprnt));
-      fprnt.u.i.text_id = I->Font.TextID;
-      fprnt.u.i.size = (int)(size*64*sampling);
-      rgba = fprnt.u.i.color;
-      TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
-      rgba = fprnt.u.i.outline_color;
-      TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
-      fprnt.u.i.ch = c;
-      {
-        int id = CharacterFind(G,&fprnt);
-        if(!id) {
-          id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
+      if(unicnt) {
+        if(!(c&0x80)) /* corrupt UTF8 */
+          unicnt=0;
+        else {
+          unicode = (unicode<<6) | (0x3F&c);
+          unicnt--;
+          c = unicode;
         }
-        if(id) {
-          if(kern_flag) {
-            float kern = TypeFaceGetKerning(I->TypeFace, 
-                                            (unsigned int)last_c,
-                                            (unsigned int)c,
-                                            size*sampling)/sampling;
-            v = TextGetPos(I->G);
-            scale3f(xn, kern, x_adj);
-            add3f(v,x_adj,pos);
-            TextSetPos(I->G,pos);
+      } else if(c&0x80) {
+        while(c&0x80) {
+          c = (c<<1)&0xFF;
+          unicnt++;
+        }
+        unicode = (c>>(unicnt--));
+      }
+      if(!unicnt) {
+        CharFngrprnt fprnt;
+        unsigned char *rgba;
+        UtilZeroMem(&fprnt,sizeof(fprnt));
+        fprnt.u.i.text_id = I->Font.TextID;
+        fprnt.u.i.size = (int)(size*64*sampling);
+        rgba = fprnt.u.i.color;
+        TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
+        rgba = fprnt.u.i.outline_color;
+        TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
+        fprnt.u.i.ch = c;
+        {
+          int id = CharacterFind(G,&fprnt);
+          if(!id) {
+            id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
           }
-          ray->fCharacter(ray,id); /* handles advance */
-
-          kern_flag = true;
-          last_c = c;
+          if(id) {
+            if(kern_flag) {
+              float kern = TypeFaceGetKerning(I->TypeFace, 
+                                              last_c,
+                                              c,
+                                              size*sampling)/sampling;
+              v = TextGetPos(I->G);
+              scale3f(xn, kern, x_adj);
+              add3f(v,x_adj,pos);
+              TextSetPos(I->G,pos);
+            }
+            ray->fCharacter(ray,id); /* handles advance */
+            
+            kern_flag = true;
+            last_c = c;
+          }
         }
       }
     }

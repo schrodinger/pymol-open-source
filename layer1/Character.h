@@ -23,16 +23,17 @@ typedef unsigned char CharColor[4];
 
 
 typedef struct {
-  int text_id; /* 32 bits */
-  short int ch; /* 16 bits */
-  short int size; /* 16 bits */
-  CharColor color; /* 32 bits */
-  CharColor outline_color; /* 32 bits */
-  short int flat; /* 16 bits */
-} CharInfo; /* 9 short ints */
+  int text_id; /* 32 bits (+ 2)*/
+  unsigned int ch; /* 32 bits (+ 2)*/
+  short int size; /* 16 bits (+ 1) */
+  CharColor color; /* 32 bits (+ 2)*/
+  CharColor outline_color; /* 32 bits (+ 2)*/
+  short int flat; /* 16 bits (+ 1) */
+} CharInfo; /* 10 short ints 
+             * if you change this, update hash functions in Character.c */
 
 typedef struct {
-  unsigned short int data[9];
+  unsigned short int data[10];
 } CharData;
 
 typedef union {
