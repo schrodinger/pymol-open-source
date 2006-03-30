@@ -189,7 +189,7 @@ static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float s
                 fprnt.u.i.size = sampling;
                 rgba = fprnt.u.i.color;
                 TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
-                fprnt.u.i.ch = c;
+                fprnt.u.i.ch = (unsigned int)c;
                 {
                   int id = CharacterFind(G,&fprnt);
                   if(!id) {
@@ -270,7 +270,7 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st,float size, floa
         if(factor>_0) factor = _0;
         
         while((c=*(sst++))) {
-          fprnt.u.i.ch = c;
+          fprnt.u.i.ch = (unsigned int) c;
           ch = font_info->ch[c - first];
           if (ch) {
             x_indent -= 2*factor * ch->advance;
@@ -314,7 +314,7 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st,float size, floa
         {
           ch = font_info->ch[c - first];
           if (ch) {
-            fprnt.u.i.ch = c;
+            fprnt.u.i.ch = (unsigned int)c;
             {
               int id = CharacterFind(G,&fprnt);
               if(!id) {

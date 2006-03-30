@@ -46,16 +46,16 @@ int TypeFaceCharacterNew(CTypeFace *I,CharFngrprnt *fprnt,float size)
                               72 ); /* vertical device resolution */
     
   }
- if(!FT_Load_Char( I->Face, fprnt->u.i.ch, FT_LOAD_RENDER ))
+  if(!FT_Load_Char( I->Face, fprnt->u.i.ch, FT_LOAD_RENDER )) 
     return CharacterNewFromBytemap(I->G,
-                                 slot->bitmap.width,
-                                 slot->bitmap.rows,
-                                 -slot->bitmap.pitch,
-                                 slot->bitmap.buffer + ((slot->bitmap.rows-1) * slot->bitmap.pitch),
+                                   slot->bitmap.width,
+                                   slot->bitmap.rows,
+                                   -slot->bitmap.pitch,
+                                   slot->bitmap.buffer + ((slot->bitmap.rows-1) * slot->bitmap.pitch),
                                    (float)-slot->bitmap_left,
-                                 (float)slot->bitmap.rows-slot->bitmap_top, 
-                                 slot->advance.x / 64.0F,
-                                 fprnt);
+                                   (float)slot->bitmap.rows-slot->bitmap_top, 
+                                   slot->advance.x / 64.0F,
+                                   fprnt);
   else
     return 0;
 }
@@ -77,6 +77,12 @@ CTypeFace *TypeFaceLoad(PyMOLGlobals *G,unsigned char *dat,unsigned int len)
                                 (int)(result->LastSize*64), /* char_height in 1/64th of points */
                                 72, /* horizontal device resolution */
                                 72 ); /* vertical device resolution */
+
+      if(error) {
+        ok = false;
+      } else {
+        error = FT_Select_Charmap( result->Face, FT_ENCODING_UNICODE );
+      }
     }
   }
   if(!ok) {
@@ -94,10 +100,10 @@ float TypeFaceGetKerning(CTypeFace *I,unsigned int last, unsigned int current, f
   if(I->LastSize!=size) {
     I->LastSize = size;
     FT_Set_Char_Size( I->Face, /* handle to face object */
-                              0, /* char_width in 1/64th of points */
-                              (int)(size*64), /* char_height in 1/64th of points */
-                              72, /* horizontal device resolution */
-                              72 ); /* vertical device resolution */
+                      0, /* char_width in 1/64th of points */
+                      (int)(size*64), /* char_height in 1/64th of points */
+                      72, /* horizontal device resolution */
+                      72 ); /* vertical device resolution */
     
   }
   if(use_kerning) {

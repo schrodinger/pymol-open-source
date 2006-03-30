@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 
 #ifdef _PYMOL_FREETYPE
 #include "FontTTF.h"
+#include "FontTTF2.h"
 #endif
 
 #define FONT_NAME_MAX 255
@@ -217,7 +218,8 @@ void TextGetOutlineColor(PyMOLGlobals *G,
   *blue = I->OutlineColor[2];
   *alpha = I->OutlineColor[3];
 }
-    
+
+
 char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,float size, float *rpos)
 {
   register CText *I=G->Text;
@@ -453,6 +455,25 @@ int TextInit(PyMOLGlobals *G)
       I->Active[I->NActive].Font->TextID = I->NActive;
       I->NActive++;
     }
+
+    /* 15 */
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_GenR102_dat, TTF_GenR102_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 16 */
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_GenI102_dat, TTF_GenI102_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
 #endif
 
     return 1;

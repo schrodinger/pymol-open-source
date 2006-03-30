@@ -39,7 +39,8 @@ static unsigned int get_hash(CharFngrprnt *fprnt)
   result = ((result<<13) + data[5]) + (result>>16);
   result = ((result<<15) + data[6]) + (result>>16);
   result = ((result<<15) + data[7]) + (result>>16);
-  result = ((result<< 1) + data[8]) + (result>>16);
+  result = ((result<<15) + data[8]) + (result>>16);
+  result = ((result<< 1) + data[9]) + (result>>16);
   return (HASH_MASK&result);
 }
 
@@ -48,6 +49,9 @@ static int equal_fprnt(CharFngrprnt *f1, CharFngrprnt *f2)
   register unsigned short int *data1 = f1->u.d.data;
   register unsigned short int *data2 = f2->u.d.data;
 
+  /* must compare all fields in fingerprint */
+
+  if(*(data1++)!=*(data2++)) return 0;
   if(*(data1++)!=*(data2++)) return 0;
   if(*(data1++)!=*(data2++)) return 0;
   if(*(data1++)!=*(data2++)) return 0;
