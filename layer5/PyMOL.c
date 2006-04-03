@@ -100,7 +100,7 @@ typedef struct _CPyMOL {
   int ReshapeFlag;
   int ClickReadyFlag;
   char ClickedObject[ObjNameMax];  
-  int ClickedIndex, ClickedButton, ClickedModifiers;
+  int ClickedIndex, ClickedButton, ClickedModifiers, ClickedX, ClickedY;
   int ImageRequestedFlag,ImageReadyFlag;
   int DraggedFlag;
   int Reshape[PYMOL_RESHAPE_SIZE];
@@ -1379,19 +1379,24 @@ PyMOLreturn_status PyMOL_CmdDraw(CPyMOL *I,int width, int height,
 }
 
 PyMOLreturn_status PyMOL_CmdRay(CPyMOL *I,int width, int height,int antialias,
-                                float angle, float shift,int renderer, int quiet)
+                                float angle, float shift,int renderer, int defer, int quiet)
 {
   PyMOLreturn_status result;
   PYMOL_API_LOCK
-  printf("here quiet %d %d %d %8.3f %8.3f %d %d\n",
-         width, height, antialias, angle, shift, renderer, quiet);
+  
   if(renderer<0) renderer=SettingGetGlobal_i(I->G,cSetting_ray_default_renderer);
-  result.status = get_status_ok(ExecutiveRay(I->G,width,height,renderer,angle,shift,quiet,antialias));
-  I->ImageRequestedFlag = false;
-  if(SceneHasImage(I->G)) {
-    I->ImageReadyFlag = true;
-  } else {
+  SceneInvalidateCopy(I->G,true);
+  result.status = get_status_ok(ExecutiveRay(I->G,width,height,renderer,angle,shift,quiet,defer,antialias));
+  if(defer) {
+    I->ImageRequestedFlag = true;
     I->ImageReadyFlag = false;
+  } else {
+    I->ImageRequestedFlag = false;
+    if(SceneHasImage(I->G)) {
+      I->ImageReadyFlag = true;
+    } else {
+      I->ImageReadyFlag = false;
+    }
   }
   PYMOL_API_UNLOCK
   return result;
@@ -2660,6 +2665,12 @@ void PyMOL_Draw(CPyMOL *I)
   if(I->ImageRequestedFlag) {
     if(SceneHasImage(G)) {
       I->ImageReadyFlag = true;
+      I->ImageRequestedFlag = false;
+      {
+        int w, h;
+        SceneGetImageSize(I->G,&w,&h);
+      }
+
     } else {
       I->ImageReadyFlag = false;
     }
@@ -2911,17 +2922,25 @@ void PyMOL_SetPassive(CPyMOL *I,int onOff)
   I->PassiveFlag = onOff;
 }
 
-void PyMOL_SetClickReady(CPyMOL *I, char *name, int index, int button, int mod)
+void PyMOL_SetClickReady(CPyMOL *I, char *name, int index, int button, int mod,int x,int y)
 {
 
-  if(name && name[0]) {
+  if(name && name[0] && (index>=0)) {
     I->ClickReadyFlag = true;
     strcpy(I->ClickedObject,name);
     I->ClickedIndex = index;
     I->ClickedButton = button;
     I->ClickedModifiers = mod;
+    I->ClickedX = x;
+    I->ClickedY = y;
   } else {
-    I->ClickReadyFlag = false;
+    I->ClickedObject[0] = 0;
+    I->ClickReadyFlag = true;
+    I->ClickedX = x;
+    I->ClickedY = y;
+    I->ClickedIndex = index;
+    I->ClickedButton = button;
+    I->ClickedModifiers = mod;
   }
 }
 
@@ -2942,10 +2961,10 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
   if(reset)
     I->ClickReadyFlag = false;
   if(ready) {
-    ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(I->G,I->ClickedObject);
-    if(obj && (I->ClickedIndex < obj->NAtom)) {
-      AtomInfoType *ai = obj->AtomInfo + I->ClickedIndex;
+    result = Alloc(char, OrthoLineLength+1);
+    if(result) {
       WordType butstr="left", modstr="";
+      result[0]=0;
       switch(I->ClickedButton) {
       case P_GLUT_SINGLE_LEFT:
         strcpy(butstr,"single_left");
@@ -2960,8 +2979,8 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
         strcpy(butstr,"double_left");
         break;
       case P_GLUT_DOUBLE_MIDDLE:
-        strcpy(butstr,"double_middle");
-        break;
+      strcpy(butstr,"double_middle");
+      break;
       case P_GLUT_DOUBLE_RIGHT:
         strcpy(butstr,"double_right");
         break;
@@ -2978,22 +2997,34 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
         if(modstr[0]) strcat(modstr," ");
         strcat(modstr,"shift");
       }
-      result = Alloc(char, OrthoLineLength+1);
-      if(result) {
-        sprintf(result,
-                "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\nbutton=%s\nmod_keys=%s\n",
-                I->ClickedObject,
-                I->ClickedIndex+1,
-                ai->rank,
-                ai->id,
-                ai->segi,
-                ai->chain,
-                ai->resn,
-                ai->resi,
-                ai->name,
-                ai->alt,
-                butstr,
-                modstr);
+      if(!I->ClickedObject[0]) {
+          sprintf(result,
+                  "type=none\nbutton=%s\nmod_keys=%s\nx=%d\ny=%d\n",
+                  butstr,
+                  modstr,
+                  I->ClickedX,
+                  I->ClickedY);
+      } else { 
+        ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(I->G,I->ClickedObject);
+        if(obj && (I->ClickedIndex < obj->NAtom)) {
+          AtomInfoType *ai = obj->AtomInfo + I->ClickedIndex;
+          sprintf(result,
+                  "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\nbutton=%s\nmod_keys=%s\nx=%d\ny=%d\n",
+                  I->ClickedObject,
+                  I->ClickedIndex+1,
+                  ai->rank,
+                  ai->id,
+                  ai->segi,
+                  ai->chain,
+                  ai->resn,
+                  ai->resi,
+                  ai->name,
+                  ai->alt,
+                  butstr,
+                  modstr,
+                  I->ClickedX,
+                  I->ClickedY);
+        }
       }
     }
   }
@@ -3008,6 +3039,33 @@ int PyMOL_GetImageReady(CPyMOL *I, int reset)
     I->ImageReadyFlag = false;
   }
   return result;
+}
+
+PyMOLreturn_int_array PyMOL_GetImageInfo(CPyMOL *I)
+{
+  PyMOLreturn_int_array result = { PyMOLstatus_SUCCESS, 2, NULL };
+  PYMOL_API_LOCK
+  result.array = VLAlloc(int,2);
+  if(!result.array) {
+    result.status = PyMOLstatus_FAILURE;
+  } else {
+    SceneGetImageSize(I->G,result.array,result.array+1);
+  }
+  PYMOL_API_UNLOCK
+  return result;
+}
+
+int PyMOL_GetImageData(CPyMOL *I, 
+                       int width, int height,
+                       int row_bytes, void *buffer, int reset)
+{
+  int ok=true;
+  PYMOL_API_LOCK
+  if(reset)
+    I->ImageReadyFlag=false;
+  ok = SceneCopyExternal(I->G,width, height, row_bytes,(unsigned char *)buffer);
+  PYMOL_API_UNLOCK
+  return get_status_ok(ok);
 }
 
 int PyMOL_FreeResultString(CPyMOL *I,char *st)

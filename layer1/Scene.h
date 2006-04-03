@@ -72,6 +72,15 @@ void SceneRay(PyMOLGlobals *G,int width,int height,int mode,
               char **headerVLA,char **charVLA,
               float angle,float shift,int quiet,
               G3dPrimitive **g3d,int show_timing,int antialias);
+int SceneDeferRay(PyMOLGlobals *G,
+                   int ray_width,
+                   int ray_height,
+                   int mode,
+                   float angle,
+                   float shift,
+                   int quiet,
+                   int show_timing,
+                   int antialias);
 void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing);
 
 void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet);
@@ -136,7 +145,7 @@ void SceneSuppressMovieFrame(PyMOLGlobals *G);
 int SceneDeferClick(Block *block,int button,int x,int y,int mod);
 int SceneDeferRelease(Block *block,int button,int x,int y,int mod);
 int SceneDeferDrag(Block *block,int x,int y,int mod);
-int SceneDeferPNG(PyMOLGlobals *G,int width, int height, char *filename,int antialias, float dpi,int quiet);
+int SceneDeferImage(PyMOLGlobals *G,int width, int height, char *filename,int antialias, float dpi,int quiet);
 char *SceneGetSeleModeKeyword(PyMOLGlobals *G);
 void SceneUpdateStereo(PyMOLGlobals *G);
 void ScenePushRasterMatrix(PyMOLGlobals *G,float *v);

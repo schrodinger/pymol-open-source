@@ -159,7 +159,7 @@ void PyMOL_Stop(CPyMOL *I);
 void PyMOL_NeedFakeDrag(CPyMOL *I);
 void PyMOL_NeedRedisplay(CPyMOL *I);
 void PyMOL_NeedSwap(CPyMOL *I);
-void PyMOL_SetClickReady(CPyMOL *I, char *name, int index, int button, int mod);
+void PyMOL_SetClickReady(CPyMOL *I, char *name, int index, int button, int mod,int x,int y);
 void PyMOL_SetPassive(CPyMOL *I, int onOff);
 void PyMOL_NeedReshape(CPyMOL *I,int mode, int x, int y, int width, int height);
 
@@ -196,7 +196,11 @@ int PyMOL_GetRedisplay(CPyMOL *I, int reset);
 int PyMOL_GetPassive(CPyMOL *I, int reset);
 int PyMOL_GetSwap(CPyMOL *I, int reset);
 int PyMOL_GetClickReady(CPyMOL *I, int reset);
+
 int PyMOL_GetImageReady(CPyMOL *I, int reset);
+PyMOLreturn_int_array PyMOL_GetImageInfo(CPyMOL *I);
+int PyMOL_GetImageData(CPyMOL *I, int width, int height, int row_bytes, void *buffer, int reset);
+
 int PyMOL_GetReshape(CPyMOL *I);
 int PyMOL_GetIdleAndReady(CPyMOL *I);
 
@@ -363,7 +367,7 @@ PyMOLreturn_status PyMOL_CmdDraw(CPyMOL *I,int width, int height,
                                  int antialias, int quiet);
 
 PyMOLreturn_status PyMOL_CmdRay(CPyMOL *I,int width, int height,int antialias,
-                                float angle, float shift,int renderer, int quiet);
+                                float angle, float shift,int renderer, int defer, int quiet);
 
 
 /* releasing returned values */
