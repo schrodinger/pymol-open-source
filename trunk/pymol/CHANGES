@@ -5,6 +5,8 @@ CHANGE LOG
 
 Changes up to 1.00b02
 
+    * CVS->SVN migration
+
     * preliminary sequence alignment objects (incomplete)
 
     * UTF8 support with two new fonts having Greek symbols
