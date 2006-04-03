@@ -45,6 +45,9 @@ Z* -------------------------------------------------------------------
 #include"Editor.h"
 #include"Selector.h"
 #include"Sculpt.h"
+#include"OVContext.h"
+#include"OVOneToOne.h"
+#include"OVLexicon.h"
 
 #define cMaxNegResi 100
 
@@ -6667,6 +6670,35 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
           int id, dict_type, root, resv;
           int end_line, seg_flag, subst_flag, resi_flag;
           int chain_flag, resn_flag, resv_flag;
+          OVLexicon *lex = OVLexicon_New(G->Context->heap);
+          OVOneToOne *o2o = OVOneToOne_New(G->Context->heap);
+
+          {
+            /* create linked list of atoms for each residue id */
+            OVreturn_word result;
+            int b;
+            AtomInfoType *ai = atInfo;
+            for(b=0;b<nAtom;b++) {
+              ai->temp1=-1;
+              ai++;
+            }
+            ai=atInfo;
+            for(b=0;b<nAtom;b++) {
+              if(OVreturn_IS_OK( (result=OVLexicon_BorrowFromCString(lex,ai->resi)) )) {
+                if(OVreturn_IS_OK( (result=OVOneToOne_GetForward(o2o,result.word)) )) {
+                  atInfo[b].temp1 = atInfo[result.word].temp1;
+                  atInfo[result.word].temp1 = b;
+                }
+              } else {
+                if(OVreturn_IS_OK( (result=OVLexicon_GetFromCString(lex,ai->resi)) ))
+                  OVOneToOne_Set(o2o, result.word, b);
+              }
+              ai++;
+            }
+          }
+
+
+
           for(a=0;a<nSubst;a++) {
             segment[0]=0;
             subst_name[0]=0;
@@ -6746,7 +6778,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
                     break;
                   pp++;
                 }
-                /* trim them them off */
+                /* trim them off */
                 while(pp>=resn) {
                   if(((*pp)>='0')&&((*pp)<='9'))
                     *pp = 0;
@@ -6835,9 +6867,27 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
               
               if(ok) {
                 if(resi_flag||chain_flag||resn_flag||seg_flag) {
-#if 0
-                  OVLexi
-                  
+#if 1
+                  OVreturn_word result;
+                  if(OVreturn_IS_OK( (result=OVLexicon_BorrowFromCString(lex,atInfo[root].resi)) )) {
+                    if(OVreturn_IS_OK( (result=OVOneToOne_GetForward(o2o,result.word)) )) {
+                      /* traverse linked list for resi */
+                      int b = result.word;
+                      while((b>=0)&&(b<nAtom)) {
+                        AtomInfoType *ai = atInfo + b;
+                        if(resi_flag)
+                          UtilNCopy(ai->resi,resi,cResiLen);                        
+                        if(chain_flag) {
+                          ai->chain[0]=chain[0];
+                        }
+                        if(resn_flag)
+                          UtilNCopy(ai->resn,resn,cResnLen);                                                
+                        if(seg_flag)
+                          UtilNCopy(ai->segi,segment,cSegiLen);
+                        b = ai->temp1;
+                      }
+                    }
+                  }
 #else
                   int b,delta = -1;
                   ResIdent start_resi;
@@ -6879,6 +6929,8 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
               break;
             p=ParseNextLine(p);
           }
+          OVLexicon_DEL_AUTO_NULL(lex);
+          OVOneToOne_DEL_AUTO_NULL(o2o);
         }
       } else       
         p=ParseNextLine(p);
