@@ -5,6 +5,8 @@ CHANGE LOG
 
 Changes up to 1.00b02
 
+    * MOL2 fixes
+
     * CVS->SVN migration
 
     * preliminary sequence alignment objects (incomplete)
