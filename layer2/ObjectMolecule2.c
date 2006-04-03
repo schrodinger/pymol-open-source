@@ -1056,42 +1056,57 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
     while(*p)
       {
         if(n_tags && !quiet) {
-          /* fast unrolled string match */
-          register int tc = 0;
-          register char *q;
-          register int same;
-          while(tc<n_tags) {
-            same = true;
-            q = tag_start[tc];
-            if(p[0] != q[0])
-              same = false;
-            else if(p[0]&&q[0]) {
-              if((p[1] != q[1])&&!((p[1]==' ')&&!q[1]))
+          int skip=false;
+          
+          if((p[0]=='H')&& 
+             (p[1]=='E')&&
+             (p[2]=='A')&&
+             (p[3]=='D')&&
+             (p[4]=='E')&&
+             (p[5]=='R')) {
+            if(nAtom>0) { 
+              /* don't print HEADER until next time*/
+              skip=true;
+            }
+          }
+          if(!skip) {
+            /* fast unrolled string match */
+            register int tc = 0;
+            register char *q;
+            register int same;
+            while(tc<n_tags) {
+              same = true;
+              q = tag_start[tc];
+              if(p[0] != q[0])
                 same = false;
-              else if(p[1]&&q[1]) {
-                if((p[2] != q[2])&&!((p[2]==' ')&&!q[2]))
+              else if(p[0]&&q[0]) {
+                if((p[1] != q[1])&&!((p[1]==' ')&&!q[1]))
                   same = false;
-                else if(p[3]&&q[3]) {
-                  if((p[3] != q[3])&&!((p[3]==' ')&&!q[3]))
+                else if(p[1]&&q[1]) {
+                  if((p[2] != q[2])&&!((p[2]==' ')&&!q[2]))
                     same = false;
-                  else if(p[4]&&q[4]) {
-                    if((p[4] != q[4])&&!((p[4]==' ')&&!q[4]))
+                  else if(p[3]&&q[3]) {
+                    if((p[3] != q[3])&&!((p[3]==' ')&&!q[3]))
                       same = false;
-                    else if(p[5]&&q[5]) {
-                      if((p[5] != q[5])&&!((p[5]==' ')&&!q[5]))
+                    else if(p[4]&&q[4]) {
+                      if((p[4] != q[4])&&!((p[4]==' ')&&!q[4]))
                         same = false;
+                      else if(p[5]&&q[5]) {
+                        if((p[5] != q[5])&&!((p[5]==' ')&&!q[5]))
+                          same = false;
+                      }
                     }
                   }
                 }
               }
+              if(same) {
+                ParseNTrimRight(cc,p,MAXLINELEN-1);
+                /*              OrthoAddOutput(G," PDB: ");*/
+                OrthoAddOutput(G,cc);
+                OrthoNewLine(G,NULL,true);
+              }
+              tc++;
             }
-            if(same) {
-	      ParseNTrimRight(cc,p,MAXLINELEN-1);
-         /*              OrthoAddOutput(G," PDB: ");*/
-              OrthoAddOutput(G,cc);
-              OrthoNewLine(G,NULL,true);
-            }
-            tc++;
           }
         }
         if(((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M'))|| /* ATOM */

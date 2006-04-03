@@ -1565,69 +1565,71 @@ void SeekerUpdate(PyMOLGlobals *G)
               break;
           }
           
-          /* insert untagged entries into their own columns */
-          int untagged_flag = true;
-          while(untagged_flag) {
-            int found = false;
-            int max_width = 0;
-            untagged_flag = false;
-            for(a=0;a<nRow;a++) {       
-              row = row_vla + a;
-              if((!row->label_flag) && (row->cCol < row->nCol)) {
-                CSeqCol *r1 = row->col + row->cCol;
-                if(!r1->tag) { /* not aligned */
-                  int text_len = (r1->stop-r1->start);
-                  untagged_flag = true;
-                  done_flag = false;
-                  if(codes&&(!first)&&(!found)) /* insert space */
-                    current++;
-                  first = false;
-                  found = true;
-                  r1->offset = current;
-                  r1->unaligned = true;
+          {
+            /* insert untagged entries into their own columns */
+            int untagged_flag = true;
+            while(untagged_flag) {
+              int found = false;
+              int max_width = 0;
+              untagged_flag = false;
+              for(a=0;a<nRow;a++) {       
+                row = row_vla + a;
+                if((!row->label_flag) && (row->cCol < row->nCol)) {
+                  CSeqCol *r1 = row->col + row->cCol;
+                  if(!r1->tag) { /* not aligned */
+                    int text_len = (r1->stop-r1->start);
+                    untagged_flag = true;
+                    done_flag = false;
+                    if(codes&&(!first)&&(!found)) /* insert space */
+                      current++;
+                    first = false;
+                    found = true;
+                    r1->offset = current;
+                    r1->unaligned = true;
                   
-                  if(!r1->spacer) {
-                    int aa;
-                    for(aa=0;aa<nRow;aa++) { /* infill populate other rows with dashes */
-                      if(aa!=a) {       
-                        CSeqRow *row2 = row_vla + aa;
-                        if(!row2->label_flag) { 
-                          if(row2->cCol < row2->nCol) {
-                            CSeqCol *r2 = row2->col + row2->cCol;
-                            if(stagger||r2->tag) {
+                    if(!r1->spacer) {
+                      int aa;
+                      for(aa=0;aa<nRow;aa++) { /* infill populate other rows with dashes */
+                        if(aa!=a) {       
+                          CSeqRow *row2 = row_vla + aa;
+                          if(!row2->label_flag) { 
+                            if(row2->cCol < row2->nCol) {
+                              CSeqCol *r2 = row2->col + row2->cCol;
+                              if(stagger||r2->tag) {
+                                VLACheck(row2->fill,CSeqCol,row2->nFill);
+                                r2 = row2->fill + row2->nFill;
+                                r2->stop = text_len;
+                                r2->offset = current;
+                                row2->nFill++;
+                              }
+                            } else {
+                              CSeqCol *r2 = row2->col + row2->cCol;
                               VLACheck(row2->fill,CSeqCol,row2->nFill);
                               r2 = row2->fill + row2->nFill;
                               r2->stop = text_len;
                               r2->offset = current;
                               row2->nFill++;
                             }
-                          } else {
-                            CSeqCol *r2 = row2->col + row2->cCol;
-                            VLACheck(row2->fill,CSeqCol,row2->nFill);
-                            r2 = row2->fill + row2->nFill;
-                            r2->stop = text_len;
-                            r2->offset = current;
-                            row2->nFill++;
                           }
                         }
                       }
                     }
+                    if(stagger) 
+                      current += text_len;
+                    else if(max_width<text_len)
+                      max_width = text_len;
                   }
-                  if(stagger) 
-                    current += text_len;
-                  else if(max_width<text_len)
-                    max_width = text_len;
                 }
               }
-            }
-            if(!stagger) 
-              current += max_width;
-            for(a=0;a<nRow;a++) {       
-              row = row_vla + a;
-              if((!row->label_flag) && (row->cCol < row->nCol)) {
-                CSeqCol *r1 = row->col + row->cCol;
-                if(!r1->tag) {
-                  row->cCol++;
+              if(!stagger) 
+                current += max_width;
+              for(a=0;a<nRow;a++) {       
+                row = row_vla + a;
+                if((!row->label_flag) && (row->cCol < row->nCol)) {
+                  CSeqCol *r1 = row->col + row->cCol;
+                  if(!r1->tag) {
+                    row->cCol++;
+                  }
                 }
               }
             }
