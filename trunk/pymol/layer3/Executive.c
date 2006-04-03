@@ -376,7 +376,7 @@ int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int q
   }
   if(antialias<0)
     antialias = SettingGetGlobal_i(G,cSetting_antialias);
-  SceneDeferPNG(G,width,height,NULL,antialias, -1.0, quiet);
+  SceneDeferImage(G,width,height,NULL,antialias, -1.0, quiet);
   return 1;
 }
 
@@ -7288,7 +7288,8 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
     " ExecutiveDrawNow: entered.\n"
     ENDFD;
 
-  OrthoExecDeferred(G);
+  if(PyMOL_GetIdleAndReady(G->PyMOL))
+    OrthoExecDeferred(G);
 
   if(!SettingGet(G,cSetting_suspend_updates)) {
 
@@ -7398,9 +7399,13 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1)
 }
 /*========================================================================*/
 int ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,
-                  float angle,float shift,int quiet,int antialias)
+                  float angle,float shift,int quiet,int defer, int antialias)
 {
-  SceneRay(G,width,height,mode,NULL,NULL,angle,shift,quiet,NULL,true,antialias);
+  if(defer && (mode==0)) {
+    SceneDeferRay(G,width,height,mode,angle,shift,quiet,true,antialias);
+  } else {
+    SceneRay(G,width,height,mode,NULL,NULL,angle,shift,quiet,NULL,true,antialias);
+  }
   return 1;
 }
 /*========================================================================*/

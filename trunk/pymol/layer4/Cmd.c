@@ -4171,7 +4171,7 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
     APIEntry();
     ExecutiveDrawNow(TempPyMOLGlobals);		 /* TODO STATUS */
     if(width||height) {
-      SceneDeferPNG(TempPyMOLGlobals,width,height,str1,-1,dpi,quiet);
+      SceneDeferImage(TempPyMOLGlobals,width,height,str1,-1,dpi,quiet);
     } else {
       ScenePNG(TempPyMOLGlobals,str1,dpi,quiet);
     }
@@ -4366,7 +4366,7 @@ static PyObject *CmdRay(PyObject *self, 	PyObject *args)
     APIEntry();
     if(mode<0)
       mode=(int)SettingGet(TempPyMOLGlobals,cSetting_ray_default_renderer);
-    ExecutiveRay(TempPyMOLGlobals,w,h,mode,angle,shift,quiet,antialias); /* TODO STATUS */
+    ExecutiveRay(TempPyMOLGlobals,w,h,mode,angle,shift,quiet,false,antialias); /* TODO STATUS */
     APIExit();
   }
   return APIResultOk(ok);

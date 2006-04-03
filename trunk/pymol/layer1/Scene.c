@@ -92,6 +92,19 @@ typedef struct {
   float dpi;
 } DeferredImage;
 
+typedef struct {
+  CDeferred deferred;
+  PyMOLGlobals *G;
+  int ray_width;
+  int ray_height;
+  int mode;
+  float angle;
+  float shift;
+  int quiet;
+  int show_timing;
+  int antialias;
+} DeferredRay;
+
 /* allow up to 10 seconds at 30 FPS */
 
 #define TRN_BKG 0x30
@@ -167,7 +180,6 @@ int SceneHasImage(PyMOLGlobals *G)
   CScene *I=G->Scene;
   return(I->Image && I->Image->data);
 }
-
 int SceneMustDrawBoth(PyMOLGlobals *G)
 {
   CScene *I=G->Scene;
@@ -1222,6 +1234,7 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
   
   if(!I->CopyFlag) {
     unsigned int buffer_size;
+
     buffer_size = 4*I->Width*I->Height;
     if(save_stereo)
       image = (GLvoid*)Alloc(char,buffer_size*2);
@@ -1253,7 +1266,7 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
 
     } else {
        PRINTFB(G,FB_Scene,FB_Errors)
-         " ScenePNG-WARNING: writing a blank image buffer.\n"
+         " ScenePNG-WARNING: invalid context or no image.\n"
          ENDFB(G);
      }
   } else {
@@ -1401,6 +1414,7 @@ void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet)
         png
         ENDFB(G);
     }
+
     if(save_image && (save_image!=image))
       FreeP(save_image);
   }
@@ -3183,7 +3197,8 @@ static int SceneClick(Block *block,int button,int x,int y,
         }
         switch(mode) {
         case cButModeSimpleClick:
-          PyMOL_SetClickReady(G->PyMOL,obj->Name,I->LastPicked.src.index,button,mod);
+          PyMOL_SetClickReady(G->PyMOL,obj->Name,I->LastPicked.src.index,
+                              button,mod,I->LastWinX,I->Height-(I->LastWinY+1));
           break;
         case cButModeLB:
         case cButModeMB:
@@ -3277,6 +3292,9 @@ static int SceneClick(Block *block,int button,int x,int y,
             }
           }
         }
+        break;
+      case cButModeSimpleClick:
+        PyMOL_SetClickReady(G->PyMOL,"",-1,button,mod,I->LastWinX,I->Height-(I->LastWinY+1));
         break;
       }
       PRINTFB(G,FB_Scene,FB_Blather) 
@@ -4347,7 +4365,7 @@ static int SceneDeferredClick(DeferredMouse *dm)
     }
   return 1;
 }
-static int SceneDeferredPNG(DeferredImage *di)
+static int SceneDeferredImage(DeferredImage *di)
 {
   PyMOLGlobals *G=di->G;
   SceneMakeSizedImage(G,di->width, di->height,di->antialias);
@@ -4357,7 +4375,7 @@ static int SceneDeferredPNG(DeferredImage *di)
   }
   return 1;
 }
-int SceneDeferPNG(PyMOLGlobals *G,int width, int height, 
+int SceneDeferImage(PyMOLGlobals *G,int width, int height, 
                   char *filename, int antialias, float dpi, int quiet)
 {
   DeferredImage *di = Calloc(DeferredImage,1);
@@ -4367,7 +4385,7 @@ int SceneDeferPNG(PyMOLGlobals *G,int width, int height,
     di->width = width;
     di->height = height;
     di->antialias = antialias;
-    di->deferred.fn = (DeferredFn*)SceneDeferredPNG;
+    di->deferred.fn = (DeferredFn*)SceneDeferredImage;
     di->dpi = dpi;
     di->quiet = quiet;
     if(filename) {
@@ -4720,6 +4738,44 @@ static void SceneApplyImageGamma(PyMOLGlobals *G,unsigned int *buffer, int width
 
 static double accumTiming = 0.0; 
 
+static int SceneDeferredRay(DeferredRay *dr)
+{
+  PyMOLGlobals *G=dr->G;
+  SceneRay(G, dr->ray_width, dr->ray_height, dr->mode,
+           NULL, NULL, dr->angle, dr->shift, dr->quiet, 
+           NULL, dr->show_timing, dr->antialias);
+  return 1;
+}
+
+int SceneDeferRay(PyMOLGlobals *G,
+                   int ray_width,
+                   int ray_height,
+                   int mode,
+                   float angle,
+                   float shift,
+                   int quiet,
+                   int show_timing,
+                   int antialias)
+{
+  DeferredRay *dr = Calloc(DeferredRay,1);
+  if(dr) {
+    DeferredInit(G,&dr->deferred);
+    dr->G = G;
+    dr->ray_width = ray_width;
+    dr->ray_height = ray_height;
+    dr->mode = mode;
+    dr->angle = angle;
+    dr->shift = shift;
+    dr->quiet = quiet;
+    dr->show_timing = show_timing;
+    dr->antialias = antialias;
+    dr->deferred.fn = (DeferredFn*)SceneDeferredRay;
+  }
+  OrthoDefer(G,&dr->deferred);
+  return 1;
+}
+
+
 void SceneRay(PyMOLGlobals *G,
               int ray_width,int ray_height,int mode,
               char **headerVLA_ptr,
@@ -4749,8 +4805,9 @@ void SceneRay(PyMOLGlobals *G,
 
   if(antialias<0) {
     antialias = (int)SettingGet(G,cSetting_antialias);
-    
   }
+  if(ray_width<0) ray_width = 0;
+  if(ray_height<0) ray_height = 0;
   if((!ray_width)||(!ray_height)) {
     if(ray_width&&(!ray_height)) {
       ray_height = (ray_width*I->Height)/I->Width;
