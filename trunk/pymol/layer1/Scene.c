@@ -1332,7 +1332,6 @@ int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,
   int result=false;
   int i,j;
   int premultiply_alpha = true;
-  int pack_mode = 0;
   int red_index=0,blue_index=1,green_index=2,alpha_index=3;
   int no_alpha = SettingGetGlobal_b(G,cSetting_opaque_background);
 
