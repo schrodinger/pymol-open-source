@@ -84,7 +84,8 @@ int SceneDeferRay(PyMOLGlobals *G,
 void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing);
 
 void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet);
-int SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsigned char *dest);
+int SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,
+		      unsigned char *dest,int mode);
 
 void SceneResetMatrix(PyMOLGlobals *G);
 

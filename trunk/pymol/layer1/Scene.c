@@ -1324,25 +1324,56 @@ void SceneGetImageSize(PyMOLGlobals *G,int *width,int *height)
 	}
 }
 
-int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsigned char *dest)
+int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,
+		       int rowbytes,unsigned char *dest,int mode)
 {
   GLvoid *image = SceneImagePrepare(G);
   register CScene *I=G->Scene;
   int result=false;
   int i,j;
+  int premultiply_alpha = true;
+  int pack_mode = 0;
+  int red_index=0,blue_index=1,green_index=2,alpha_index=3;
+  int no_alpha = SettingGetGlobal_b(G,cSetting_opaque_background);
+
+  if(mode&0x1) {
+    int index=0;
+    while(index<4) {
+      if(dest[index]=='R') red_index = index;
+      if(dest[index]=='G') green_index = index;
+      if(dest[index]=='B') blue_index = index;
+      if(dest[index]=='A') alpha_index = index;
+      index++;
+    }
+  }
+  if(mode&0x2) {
+    premultiply_alpha = false;
+  }
   if(image&&I->Image&&(I->Image->width==width)&&(I->Image->height==height)) {
     for (i=0; i< height; i++)
       {
-        unsigned char *dst = dest + i * (rowbytes);
-        unsigned char *src = ((unsigned char*)image) + ((height-1)-i) * width*4;
-        for (j = 0; j < width; j++)
-          {
-            *dst++ = ((unsigned int)src[0]*src[3])/255; /* premultiply alpha */
-            *dst++ = ((unsigned int)src[1]*src[3])/255;
-            *dst++ = ((unsigned int)src[2]*src[3])/255;
-            *dst++ = src[3];
-            src+=4;
-          }
+	unsigned char *dst = dest + i * (rowbytes);
+	unsigned char *src = ((unsigned char*)image) + ((height-1)-i) * width*4;
+	for (j = 0; j < width; j++) {
+	  if(no_alpha) {
+	    dst[red_index]   = src[0]; /* no alpha */
+	    dst[green_index] = src[1];
+	    dst[blue_index]  = src[2];
+	    dst[alpha_index] = 0xFF;
+	  } else if(premultiply_alpha) {
+	    dst[red_index]   = (((unsigned int)src[0])*src[3])/255; /* premultiply alpha */
+	    dst[green_index] = (((unsigned int)src[1])*src[3])/255;
+	    dst[blue_index]  = (((unsigned int)src[2])*src[3])/255;
+	    dst[alpha_index] = src[3];
+	  } else {
+	    dst[red_index]   = src[0]; /* standard alpha */
+	    dst[green_index] = src[1];
+	    dst[blue_index]  = src[2];
+	    dst[alpha_index] = src[3];
+	  }
+	  dst+=4;
+	  src+=4;
+	}
       }
     result=true;
   }

@@ -3057,13 +3057,14 @@ PyMOLreturn_int_array PyMOL_GetImageInfo(CPyMOL *I)
 
 int PyMOL_GetImageData(CPyMOL *I, 
                        int width, int height,
-                       int row_bytes, void *buffer, int reset)
+                       int row_bytes, void *buffer, 
+		       int mode, int reset)
 {
   int ok=true;
   PYMOL_API_LOCK
   if(reset)
     I->ImageReadyFlag=false;
-  ok = SceneCopyExternal(I->G,width, height, row_bytes,(unsigned char *)buffer);
+  ok = SceneCopyExternal(I->G,width, height, row_bytes,(unsigned char *)buffer,mode);
   PYMOL_API_UNLOCK
   return get_status_ok(ok);
 }
