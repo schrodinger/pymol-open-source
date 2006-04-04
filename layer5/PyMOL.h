@@ -199,7 +199,8 @@ int PyMOL_GetClickReady(CPyMOL *I, int reset);
 
 int PyMOL_GetImageReady(CPyMOL *I, int reset);
 PyMOLreturn_int_array PyMOL_GetImageInfo(CPyMOL *I);
-int PyMOL_GetImageData(CPyMOL *I, int width, int height, int row_bytes, void *buffer, int reset);
+int PyMOL_GetImageData(CPyMOL *I, int width, int height, int row_bytes, 
+		       void *buffer, int mode, int reset);
 
 int PyMOL_GetReshape(CPyMOL *I);
 int PyMOL_GetIdleAndReady(CPyMOL *I);
