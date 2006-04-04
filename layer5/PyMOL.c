@@ -2999,7 +2999,7 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
       }
       if(!I->ClickedObject[0]) {
           sprintf(result,
-                  "type=none\nbutton=%s\nmod_keys=%s\nx=%d\ny=%d\n",
+                  "type=none\nclick=%s\nmod_keys=%s\nx=%d\ny=%d\n",
                   butstr,
                   modstr,
                   I->ClickedX,
@@ -3009,7 +3009,7 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
         if(obj && (I->ClickedIndex < obj->NAtom)) {
           AtomInfoType *ai = obj->AtomInfo + I->ClickedIndex;
           sprintf(result,
-                  "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\nbutton=%s\nmod_keys=%s\nx=%d\ny=%d\n",
+                  "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\nclick=%s\nmod_keys=%s\nx=%d\ny=%d\n",
                   I->ClickedObject,
                   I->ClickedIndex+1,
                   ai->rank,
