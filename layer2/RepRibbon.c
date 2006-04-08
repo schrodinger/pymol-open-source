@@ -257,7 +257,7 @@ Rep *RepRibbonNew(CoordSet *cs,int state)
   float throw;
   int visFlag;
   float dev;
-  int trace;
+  int trace,trace_mode;
   int ribbon_color;
   int na_mode;
   AtomInfoType *ai,*last_ai=NULL;
@@ -287,6 +287,7 @@ Rep *RepRibbonNew(CoordSet *cs,int state)
   power_b=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_power_b);
   throw=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_throw);
   trace=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace_atoms);
+  trace_mode=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_trace_atoms_mode);
   na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_nucleic_acid_mode);
 
   ribbon_color=SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_color);
@@ -340,7 +341,7 @@ Rep *RepRibbonNew(CoordSet *cs,int state)
                                         (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
                                         (!WordMatch(G,obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
               if(trace) {
-                if(!AtomInfoSequential(G,obj->AtomInfo+a2,obj->AtomInfo+a1))
+                if(!AtomInfoSequential(G,obj->AtomInfo+a2,obj->AtomInfo+a1,trace_mode))
                   a2=-1;
               } else {
                 if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */

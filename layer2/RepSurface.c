@@ -1014,6 +1014,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   int carve_state = 0;
   int carve_flag = false;
   float carve_cutoff;
+  float carve_normal_cutoff;
+  int carve_normal_flag;
   char *carve_selection = NULL;
   float *carve_vla = NULL;
   MapType *carve_map = NULL;
@@ -1039,8 +1041,11 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   I->proximity = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
   carve_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
   clear_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_clear_cutoff);
+  carve_normal_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_normal_cutoff);
+  carve_normal_flag = carve_normal_cutoff>(-1.0F);
+  
   cutoff = I->max_vdw+2*probe_radius;
-
+  
   if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
   if(!I->LastColor) I->LastColor = Alloc(int,cs->NIndex);
   lv = I->LastVisib;
@@ -1206,9 +1211,19 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
                 if(i) {
                   j=carve_map->EList[i++];
                   while(j>=0) {
-                    if(within3f(carve_vla+3*j,v0,carve_cutoff)) {
-                      *vi=1;
-                      break;
+                    register float *v_targ = carve_vla+3*j;
+                    if(within3f(v_targ,v0,carve_cutoff)) {
+                      if(!carve_normal_flag) {
+                        *vi=1;
+                        break;
+                      } else {
+                        float v_to[3];
+                        subtract3f(v_targ,v0,v_to);
+                        if(dot_product3f(v_to,n0)>=carve_normal_cutoff) {
+                          *vi = 1;
+                          break;
+                        }
+                      }
                     }
                     j=carve_map->EList[i++];
                   }

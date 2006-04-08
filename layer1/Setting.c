@@ -1502,6 +1502,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_surface_carve_state:
   case cSetting_surface_carve_cutoff:
   case cSetting_surface_carve_selection:
+  case cSetting_surface_carve_normal_cutoff:
   case cSetting_surface_clear_state:
   case cSetting_surface_clear_cutoff:
   case cSetting_surface_clear_selection:
@@ -1520,6 +1521,11 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepDot,cRepInvRep);
     SceneChanged(G);
     break;
+  case cSetting_trace_atoms_mode:
+    ExecutiveInvalidateRep(G,inv_sele,cRepRibbon,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepCartoon,cRepInvRep);
+    SceneChanged(G);
+   break;
   case cSetting_ribbon_smooth:
   case cSetting_ribbon_power:
   case cSetting_ribbon_power_b:
@@ -2810,6 +2816,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_s(I,cSetting_seq_view_fill_char,"-");  
   set_color(I,cSetting_seq_view_fill_color, "104"); /* grey50 */
   set_color(I,cSetting_seq_view_label_color, "white"); /* grey50 */
+  set_f(I,cSetting_surface_carve_normal_cutoff, -1.0F);
+  set_i(I,cSetting_trace_atoms_mode,5);
 }
 
 
