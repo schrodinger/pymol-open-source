@@ -1421,7 +1421,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
   float *sampling_tmp;
   int *flag_tmp;
   int smooth_first,smooth_last,smooth_cycles,flat_cycles;
-  int trace;
+  int trace,trace_mode;
   int skip_to;
   AtomInfoType *ai,*last_ai=NULL;
   float alpha;
@@ -1473,6 +1473,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
   length=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_length);
   width=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_width);
   trace=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_trace_atoms);
+  trace_mode=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_trace_atoms_mode);
 
   alpha=1.0F - SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_transparency);
   throw=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_throw);
@@ -1653,7 +1654,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
               trailing_O3p_ai = NULL;
             }
 
-            if(!trace) 
+            if(!trace) {
               if(a2>=0) {
                 /*
                   if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
@@ -1663,6 +1664,10 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                   a2=-1;
                   
               }
+            } else {
+              if(!AtomInfoSequential(G,obj->AtomInfo+a2,obj->AtomInfo+a1,trace_mode))
+                a2=-1;
+            }
             last_ai = ai;
                 
             PRINTFD(G,FB_RepCartoon)

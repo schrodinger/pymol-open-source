@@ -1948,32 +1948,51 @@ int AtomInfoSameSegmentP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
   return 0;
 }
 
-int AtomInfoSequential(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
+int AtomInfoSequential(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2,int mode)
 {
   char last1=0,last2=0;
   char *p;
-  if(at1->hetatm==at2->hetatm)
-    if(at1->chain[0]==at2->chain[0]) {
-      if(WordMatch(G,at1->segi,at2->segi,true)<0) {
-        if(at1->resv==at2->resv) {
-          p=at1->resi;
-          while(*p) {
-            last1=(*p++);
+  if(mode>0) {
+    if(at1->hetatm==at2->hetatm) {
+      if(mode>1) {
+        if(WordMatch(G,at1->segi,at2->segi,true)<0) {
+          if(mode>2) {
+            if(at1->chain[0]==at2->chain[0]) {
+              if(mode>3) {
+                if(at1->resv==at2->resv) {
+                  if(mode>4) {
+                    p=at1->resi;
+                    while(*p) {
+                      last1=(*p++);
+                    }
+                    p=at2->resi;
+                    while(*p) {
+                      last2=(*p++);
+                    }
+                    if(last1==last2)
+                      return 1;
+                    if((last1+1)==last2)
+                      return 1;
+                  } else {
+                    return 1; /* no resi check */
+                  }
+                } else if((at1->resv+1)==at2->resv)
+                  return 1; 
+              } else {
+                return 1; /* no resv check */
+              }
+            }
+          } else {
+            return 1; /* no chain check */
           }
-          p=at2->resi;
-          while(*p) {
-            last2=(*p++);
-          }
-          if(last1==last2)
-            return 1;
-          if((last1+1)==last2)
-            return 1;
-        } else {
-          if((at1->resv+1)==at2->resv)
-            return 1;
-        }
+        } 
+      } else {
+        return 1; /* no segi check */
       }
     }
+  } else {
+    return 1; /* no hetatm check */
+  }
   return 0;
 }
 

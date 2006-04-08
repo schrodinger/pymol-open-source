@@ -195,7 +195,7 @@ int AtomInfoSameResidue(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoSameResidueP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoSameChainP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoSameSegmentP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoSequential(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoSequential(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2,int mode);
 
 void AtomInfoBracketResidue(PyMOLGlobals *G,AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd);
 void AtomInfoBracketResidueFast(PyMOLGlobals *G,AtomInfoType *ai0,int n0,int cur,int *st,int *nd);

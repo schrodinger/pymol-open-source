@@ -552,6 +552,8 @@ if __name__=='pymol.setting':
         seq_view_fill_char        = (516, '')
         seq_view_fill_color       = (517, '')
         seq_view_label_color      = (518, '')
+        surface_carve_normal_cutoff = (519, '')
+        trace_atoms_mode          = (520,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
