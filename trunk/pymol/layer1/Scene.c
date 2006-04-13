@@ -5363,11 +5363,27 @@ void SceneUpdate(PyMOLGlobals *G)
         while(ListIterate(I->Obj,rec,next))
           if(rec->obj->fInvalidate) {
             int static_singletons = SettingGet_b(G,rec->obj->Setting,NULL,cSetting_static_singletons);
+            int async_builds = SettingGet_b(G,rec->obj->Setting,NULL,cSetting_async_builds);
+            int max_threads =  SettingGet_i(G,rec->obj->Setting,NULL,cSetting_max_threads); 
             int nFrame = 0;
             if(rec->obj->fGetNFrame)
               nFrame = rec->obj->fGetNFrame(rec->obj);
             if((nFrame>1)||(!static_singletons)) {
-              rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,I->LastStateBuilt);
+              int start = I->LastStateBuilt;
+              int stop = start+1;
+              int ste;
+              if(async_builds&&(max_threads>1)) {
+                if( (start/max_threads) == (cur_state/max_threads)) {
+                  stop = start; /* don't purge current batch */
+                } else {
+                  int base = start/max_threads; /* now purge previous batch */
+                  start = base * max_threads;
+                  stop = (base+1) * max_threads;
+                }
+              }
+              for(ste=start;ste<stop;ste++) {
+                rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,ste);
+              }
             }
           }
       }

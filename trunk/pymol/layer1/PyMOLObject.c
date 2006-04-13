@@ -310,7 +310,9 @@ void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
       if((!async_builds)||(max_threads<1)) {
         *stop = *start + 1;
       } else {
-        *stop = ((*start / max_threads)+1) * max_threads;
+        int base = (*start / max_threads);
+        *start = (base) * max_threads;
+        *stop = (base+1) * max_threads;
       }
       if(*start<min) *start = min;
       if(*start>max) *start = max;
