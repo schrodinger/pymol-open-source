@@ -293,6 +293,8 @@ void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
 {
   /* on entry, start and stop should hold the valid range for the object */
   int defer_builds_mode = SettingGet_i(I->G,NULL,I->Setting,cSetting_defer_builds_mode);
+  int async_builds = SettingGet_b(I->G,NULL,I->Setting,cSetting_async_builds);
+  int max_threads =  SettingGet_i(I->G,NULL,I->Setting,cSetting_max_threads);
   if(defer_builds_mode==3) {
     if(SceneObjectIsActive(I->G,I))
       defer_builds_mode=2;
@@ -305,7 +307,11 @@ void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
       int max = *stop;
 
       *start = ObjectGetCurrentState(I,false);
-      *stop = *start + 1;
+      if((!async_builds)||(max_threads<1)) {
+        *stop = *start + 1;
+      } else {
+        *stop = *start + max_threads;
+      }
       if(*start<min) *start = min;
       if(*start>max) *start = max;
       if(*stop <min)  *stop  = min;
