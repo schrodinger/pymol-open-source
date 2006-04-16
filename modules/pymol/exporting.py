@@ -162,7 +162,7 @@ SEE ALSO
         #   
         r = DEFAULT_ERROR
         if format=='':
-            format = 'pdb'
+            format = 'unknown'
             lc_filename=string.lower(filename)
             if re.search("\.pdb$|\.ent$",lc_filename):
                 format = 'pdb'
@@ -186,14 +186,18 @@ SEE ALSO
                 format = 'png'
             elif re.search("\.pse$|\.psw$",lc_filename):
                 format = 'pse'
-	    elif re.search("\.obj$",lc_filename):
-		format = 'obj'
-	    elif re.search("\.mtl$",lc_filename):
-		format = 'mtl'
-	    elif re.search("\.wrl$",lc_filename):
-		format = 'wrl'
+        elif re.search("\.obj$",lc_filename):
+            format = 'obj'
+        elif re.search("\.mtl$",lc_filename):
+            format = 'mtl'
+        elif re.search("\.wrl$",lc_filename):
+            format = 'wrl'
         else:
             format = str(format)
+        if format=='unknown':
+            if not quiet:
+                print " Save-Warning: Unrecognized file type -- defaulting to PDB format."
+            format='pdb'
         filename = cmd.exp_path(filename)
         if format=='pdb': # standard PDB file 
             f=open(filename,"w")
