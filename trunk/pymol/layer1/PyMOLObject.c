@@ -547,6 +547,37 @@ void ObjectResetTTT(CObject *I)
   I->TTTFlag=false;
 }
 /*========================================================================*/
+int ObjectGetTotalMatrix(CObject *I, int state, int history, double *matrix)
+{
+  int result = 0;
+  if(I->TTTFlag) {
+    convertTTTfR44d(I->TTT,matrix);
+    result = true;
+  }
+  
+  {
+    int use_matrices = SettingGet_b(I->G,I->Setting,NULL,cSetting_matrix_mode);
+    if(use_matrices||history) {
+      if(I->fGetObjectState) {
+        CObjectState *obj_state = I->fGetObjectState(I,state);
+        if(obj_state) {
+          double *state_matrix = obj_state->Matrix;
+          if(state_matrix) {
+            if(result) {
+              right_multiply44d44d(matrix,state_matrix);
+            } else {
+              copy44d(state_matrix, matrix);
+            }
+            result = true;
+          }
+        }
+      }
+    }
+  }
+  return result;
+}
+
+/*========================================================================*/
 void ObjectPrepareContext(CObject *I,CRay *ray)
 {
   if(I->ViewElem) {
@@ -756,6 +787,7 @@ void ObjectInit(PyMOLGlobals *G,CObject *I)
   I->fGetSettingHandle = ObjectGetSettingHandle;
   I->fInvalidate = ObjectInvalidate;
   I->fGetCaption = NULL;
+  I->fGetObjectState = NULL;
   I->Name[0]=0;
   I->Color=0; /* white */
   I->ExtentFlag=false;

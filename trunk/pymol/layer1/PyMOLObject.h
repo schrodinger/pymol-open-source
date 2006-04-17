@@ -44,6 +44,10 @@ Z* -------------------------------------------------------------------
    for simplified implementation of future multi-state objects.
  */
 
+typedef struct CObjectState {
+  PyMOLGlobals *G;
+  double *Matrix;
+} CObjectState;
 
 typedef struct CObject {
   PyMOLGlobals *G;
@@ -55,6 +59,7 @@ typedef struct CObject {
   void (*fInvalidate)(struct CObject *I,int rep,int level,int state);
   CSetting **(*fGetSettingHandle)(struct CObject *I,int state);
   char *(*fGetCaption)(struct CObject *I);
+  CObjectState *(*fGetObjectState)(struct CObject *I,int state);
   int type;
   char Name[ObjNameMax];
   int Color;
@@ -80,6 +85,7 @@ void ObjectToggleRepVis(CObject *I,int rep);
 void ObjectPrepareContext(CObject *I,CRay *ray);
 void ObjectSetTTT(CObject *I,float *ttt,int state);
 int ObjectGetTTT(CObject *I,float **ttt,int state);
+int ObjectGetTotalMatrix(CObject *I, int state, int history, double *matrix);
 void ObjectCombineTTT(CObject *I,float *ttt,int reverse_order);
 void ObjectTranslateTTT(CObject *T, float *v);
 void ObjectSetTTTOrigin(CObject *I,float *origin);
@@ -93,10 +99,6 @@ int ObjectView(CObject *I,int action,int first,
                int simple, float linear,int wrap,
                int hand,int window,int cycles);
 
-typedef struct CObjectState {
-  PyMOLGlobals *G;
-  double *Matrix;
-} CObjectState;
 
 void ObjectStateInit(PyMOLGlobals *G,CObjectState *I);
 void ObjectStateCopy(CObjectState *dst, CObjectState *src);

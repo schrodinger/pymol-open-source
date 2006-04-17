@@ -301,6 +301,9 @@ if __name__=='pymol.cmd':
         def is_tuple(obj):
             return isinstance(obj,types.TupleType)
 
+        def is_sequence(obj):
+            return isinstance(obj,types.ListType) or isinstance(obj,types.TupleType)
+
         #-------------------------------------------------------------------
         # path expansion, including our fixes for Win32
 

@@ -401,7 +401,7 @@ static PyObject *CmdGetOrigin(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"s",&object);
   if (ok) {
     APIEnterBlocked();
-    if(!object[0]) {
+    if((!object)||(!object[0])) {
       SceneOriginGet(TempPyMOLGlobals,origin);
     } else {
       CObject *obj = ExecutiveFindObjectByName(TempPyMOLGlobals,object);
@@ -3345,15 +3345,18 @@ static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
   char *str1;
   char *pdb = NULL;
   int state;
+  int quiet;
+  char *ref_object = NULL;
+  int ref_state;
   int mode;
   OrthoLineType s1 = "";
   PyObject *result = NULL;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&state,&mode);
+  ok = PyArg_ParseTuple(args,"siisii",&str1,&state,&mode,&ref_object,&ref_state,&quiet);
   if (ok) {
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
-    pdb=ExecutiveSeleToPDBStr(TempPyMOLGlobals,s1,state,true,mode);
+    pdb=ExecutiveSeleToPDBStr(TempPyMOLGlobals,s1,state,true,mode,ref_object,ref_state,quiet);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
     if(pdb) result = Py_BuildValue("s",pdb);
