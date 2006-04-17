@@ -5420,7 +5420,7 @@ int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float cuto
 
 /*========================================================================*/
 int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
-                   int conectFlag,PDBInfoRec *pdb_info,int *counter)
+                   int conectFlag,PDBInfoRec *pdb_info,int *counter, double *ref)
 {
   register CSelector *I=G->Selector;
 
@@ -5428,7 +5428,10 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
   int use_ter = (int)SettingGet(G,cSetting_pdb_use_ter_records);
   int retain_ids = (int)SettingGet(G,cSetting_pdb_retain_ids);
   int conect_all = (int)SettingGet(G,cSetting_pdb_conect_all);
-  CoordSet *cs;
+  double matrix[16];
+  int matrix_flag = false;
+  float v_tmp[3],*v_ptr;
+  CoordSet *cs,*mat_cs = NULL;
   ObjectMolecule *obj;
   AtomInfoType *atInfo,*ai,*last = NULL;
   SelectorUpdateTable(G);
@@ -5508,6 +5511,23 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
           } else 
             idx=cs->AtmToIdx[at];
           if(idx>=0) {
+
+            if(mat_cs!=cs) {
+              /* compute the effective matrix for output coordinates */
+
+              matrix_flag = false;
+              if(ObjectGetTotalMatrix(&obj->Obj,state,false,matrix)) {
+                if(ref) {
+                  left_multiply44d44d(ref,matrix);
+                }
+                matrix_flag=true;
+              } else if(ref) {
+                copy44d(ref,matrix);
+                matrix_flag=true;
+              }
+              mat_cs = cs;
+            }
+
             ai = obj->AtomInfo+at;
             if(last)
               if(!last->hetatm)
@@ -5523,8 +5543,12 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
             } else {
               I->Table[a].index = c+1; /* NOTE marking with "1" based indexes here */
             }
-            CoordSetAtomToPDBStrVLA(G,charVLA,&cLen,ai,
-                                    obj->CSet[state]->Coord+(3*idx),c,pdb_info);
+            v_ptr = cs->Coord+(3*idx);
+            if(matrix_flag) {
+              transform44d3f(matrix,v_ptr,v_tmp);
+              v_ptr = v_tmp;
+            }
+            CoordSetAtomToPDBStrVLA(G,charVLA,&cLen,ai,v_ptr,c,pdb_info);
             last = ai;
             c++;
           }

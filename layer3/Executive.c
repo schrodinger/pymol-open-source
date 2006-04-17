@@ -392,7 +392,11 @@ int ExecutiveMatrixTransfer(PyMOLGlobals *G,
       mode 2: state matrix */
   int ok = true;
   int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
-  if(source_mode<0)
+  int copy_ttt_too = false;
+  if((source_mode<0)&&(target_mode<0)) {
+    copy_ttt_too = true;
+  }
+  if(source_mode<0) 
     source_mode = matrix_mode;
   if(target_mode<0)
     target_mode = matrix_mode;
@@ -430,6 +434,13 @@ int ExecutiveMatrixTransfer(PyMOLGlobals *G,
                 ExecutiveTransformObjectSelection(G,
                                                   target_name, target_state, 
                                                   "",log,historyf,true);
+              }
+            }
+            if(copy_ttt_too) {
+              float *tttf;
+              int found = ExecutiveGetObjectTTT(G,source_name,&tttf,-1,quiet);
+              if(found) {
+                ExecutiveSetObjectTTT(G,target_name,tttf,-1,quiet);
               }
             }
           }
@@ -499,9 +510,16 @@ int ExecutiveMatrixTransfer(PyMOLGlobals *G,
             ExecutiveSetObjectTTT(G,target_name,NULL,-1,quiet);
           }
           break;
-      case 2: /* State */
-        ok = ExecutiveSetObjectMatrix(G,target_name,target_state,homo);
-        break;
+        case 2: /* State */
+          ok = ExecutiveSetObjectMatrix(G,target_name,target_state,homo);
+          if(copy_ttt_too) {
+            float *tttf;
+            int found = ExecutiveGetObjectTTT(G,source_name,&tttf,-1,quiet);
+            if(found) {
+              ExecutiveSetObjectTTT(G,target_name,tttf,-1,quiet);
+            }
+          }
+          break;
         }
       }
       break;
@@ -5767,7 +5785,8 @@ float ExecutiveDistance(PyMOLGlobals *G,char *s1,char *s2)
   return(dist);
 }
 /*========================================================================*/
-char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,int mode)
+char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
+                            int mode,char *ref_object,int ref_state,int quiet)
 {
   char *result=NULL;
   ObjectMoleculeOpRec op1;
@@ -5779,6 +5798,26 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,in
   int a;
   char model_record[50];
   int count=0,*counter=NULL;
+  double matrix[16], inverse[16], *ref_mat = NULL;
+  CObject *base = NULL;
+
+
+  if(ref_object) {
+    base=ExecutiveFindObjectByName(G,ref_object);
+    if(base) {
+      if(ref_state<-1) {
+        ref_state = state;
+      }
+      if(ref_state<0) {
+        ref_state = ObjectGetCurrentState(base,true);
+      }
+      if(ObjectGetTotalMatrix(base,ref_state,true,matrix)) {
+        invert_special44d44d(matrix,inverse);
+        ref_mat = inverse;
+      }
+    }
+  }
+
   PDBInfoRec pdb_info;
   ObjectMolecule *obj = NULL;
 
@@ -5821,7 +5860,7 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,in
     
     if(conectFlag) {
       op1.i2=SelectorGetPDB(G,&op1.charVLA,op1.i2,sele1,
-                            actual_state,conectFlag,&pdb_info,counter);
+                            actual_state,conectFlag,&pdb_info,counter,ref_mat);
     } else {
       op1.i3 = 0; /* atIndex */
       if(sele1>=0) {

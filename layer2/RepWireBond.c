@@ -361,7 +361,7 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
 
     float radius;
     
-    if(I->Radius==0.0F) {
+    if(I->Radius<=0.0F) {
       radius = ray->PixelRadius*I->Width/2.0F;
     } else {
       radius = I->Radius;

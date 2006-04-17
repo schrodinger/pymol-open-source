@@ -113,28 +113,41 @@ void dump4f( float *v, char *prefix ) /* for debugging */
 
 void dump33f( float *m, char *prefix ) /* for debugging */
 {
-  printf("%s:0 %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2]);
-  printf("%s:1 %8.3f %8.3f %8.3f\n",prefix,m[3],m[4],m[5]);
-  printf("%s:2 %8.3f %8.3f %8.3f\n",prefix,m[6],m[7],m[8]);
+  if(m) {
+    printf("%s:0 %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2]);
+    printf("%s:1 %8.3f %8.3f %8.3f\n",prefix,m[3],m[4],m[5]);
+    printf("%s:2 %8.3f %8.3f %8.3f\n",prefix,m[6],m[7],m[8]);
+  } else {
+    printf("%s: (null matrix pointer)\n",prefix);
+  }
 }
 
 void dump44f( float *m, char *prefix ) /* for debugging */
 {
-  if(prefix) {
+  if(m) {
+    if(prefix) {
+      printf("%s:0 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2],m[3]);
+      printf("%s:1 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[4],m[5],m[6],m[7]);
+      printf("%s:2 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[8],m[9],m[10],m[11]);
+      printf("%s:3 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[12],m[13],m[14],m[15]);
+    } else {
+    }
+  } else {
+    printf("%s: (null matrix pointer)\n",prefix);
+  }
+
+}
+
+void dump44d( double *m, char *prefix ) /* for debugging */
+{
+  if(m) {
     printf("%s:0 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2],m[3]);
     printf("%s:1 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[4],m[5],m[6],m[7]);
     printf("%s:2 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[8],m[9],m[10],m[11]);
     printf("%s:3 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[12],m[13],m[14],m[15]);
   } else {
+    printf("%s: (null matrix pointer)\n",prefix);
   }
-}
-
-void dump44d( double *m, char *prefix ) /* for debugging */
-{
-  printf("%s:0 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2],m[3]);
-  printf("%s:1 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[4],m[5],m[6],m[7]);
-  printf("%s:2 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[8],m[9],m[10],m[11]);
-  printf("%s:3 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[12],m[13],m[14],m[15]);
 }
 
 void dump33d( double *m, char *prefix ) /* for debugging */

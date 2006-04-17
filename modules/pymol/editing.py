@@ -19,7 +19,7 @@ if __name__=='pymol.editing':
     import selector
     import cmd
     from cmd import _cmd,lock,unlock,Shortcut,is_string, \
-          boolean_sc,boolean_dict,safe_list_eval, \
+          boolean_sc,boolean_dict,safe_list_eval, is_sequence, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error              
     from chempy import cpv
 
@@ -1256,9 +1256,9 @@ NOTES
                     unlock(r)
             elif object_mode==1: # transform object coordinates & history matrix
                 matrix = [1.0, 0.0, 0.0, shift[0],
-                             0.0, 1.0, 0.0, shift[1],
-                             0.0, 0.0, 1.0, shift[2],
-                             0.0, 0.0, 0.0, 1.0]
+                          0.0, 1.0, 0.0, shift[1],
+                          0.0, 0.0, 1.0, shift[2],
+                          0.0, 0.0, 0.0, 1.0]
                 try:
                     lock()
                     r = _cmd.transform_object(str(object),int(state)-1,
@@ -1292,7 +1292,7 @@ DESCRIPTION
 USAGE
 
     rotate axis, angle [,selection [,state [,camera [,object [,origin]]]]]
-
+    
 PYMOL API
 
     cmd.rotate(list-or-string axis, float angle,
@@ -1311,6 +1311,7 @@ NOTES
         '''
         r = DEFAULT_ERROR
         object_mode = int(object_mode)
+        have_origin = 0
         if axis in ['x','X']:
             axis = [1.0,0.0,0.0]
         elif axis in ['y','Y']:
@@ -1327,8 +1328,16 @@ NOTES
             angle = math.pi*float(angle)/180.0
             view = cmd.get_view(0)
             if origin!=None:
+                have_origin = 1
                 if cmd.is_string(origin):
-                    origin = safe_list_eval(origin) # should be a sequence of floats
+                    if ',' in origin:
+                        origin = safe_list_eval(origin) # should be a sequence of floats
+                    else:
+                        lock()
+                        try:
+                            origin = _cmd.get_origin(str(origin))
+                        finally:
+                            unlock(-1)
                 origin = [float(origin[0]),float(origin[1]),float(origin[2])]
             else:
                 origin = [view[12],view[13],view[14]]
@@ -1339,24 +1348,32 @@ NOTES
             mat = cpv.rotation_matrix(angle,axis)
             if object==None:
                 ttt = [mat[0][0],mat[0][1],mat[0][2],origin[0],                   
-                         mat[1][0],mat[1][1],mat[1][2],origin[1],
-                         mat[2][0],mat[2][1],mat[2][2],origin[2],
-                         -origin[0],-origin[1],-origin[2], 1.0]
+                       mat[1][0],mat[1][1],mat[1][2],origin[1],
+                       mat[2][0],mat[2][1],mat[2][2],origin[2],
+                       -origin[0],-origin[1],-origin[2], 1.0]
                 r=cmd.transform_selection(selection,ttt,state=state)
             elif object_mode==0:
                 lock()
-                origin = _cmd.get_origin(str(object))
-                ttt = [mat[0][0],mat[0][1],mat[0][2], origin[0],
-                         mat[1][0],mat[1][1],mat[1][2], origin[1],
-                         mat[2][0],mat[2][1],mat[2][2], origin[2],
-                         -origin[0], -origin[1], -origin[2], 1.0]
-                r=_cmd.combine_object_ttt(str(object),ttt)
-                unlock(r)
+                try:
+                    if not have_origin:
+                        origin = _cmd.get_origin(str(object))
+                    if is_sequence(origin):
+                        ttt = [mat[0][0],mat[0][1],mat[0][2], origin[0],
+                               mat[1][0],mat[1][1],mat[1][2], origin[1],
+                               mat[2][0],mat[2][1],mat[2][2], origin[2],
+                               -origin[0], -origin[1], -origin[2], 1.0]
+                        r=_cmd.combine_object_ttt(str(object),ttt)
+                finally:
+                    unlock(r)
+                if not is_sequence(origin):
+                    print " Error: rotate: unknown object '%s'."%object
+                    if _raising(r): raise pymol.CmdException                                
             elif object_mode==1:
+                
                 matrix = [mat[0][0],mat[0][1],mat[0][2], origin[0],     
-                             mat[1][0],mat[1][1],mat[1][2], origin[1],
-                             mat[2][0],mat[2][1],mat[2][2], origin[2],
-                             -origin[0],-origin[1],-origin[2], 1.0]
+                          mat[1][0],mat[1][1],mat[1][2], origin[1],
+                          mat[2][0],mat[2][1],mat[2][2], origin[2],
+                          -origin[0],-origin[1],-origin[2], 1.0]
                 try:
                     lock()
                     r = _cmd.transform_object(str(object),int(state)-1,

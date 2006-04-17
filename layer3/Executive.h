@@ -204,7 +204,8 @@ char *ExecutiveGetChains(PyMOLGlobals *G,char *sele,int state,int *null_chain);
 
 void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
                      int state,float animate,int complete,float buffer,int quiet);
-char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,int mode);
+char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
+                            int mode,char *ref_object,int ref_state,int quiet);
 int ExecutiveStereo(PyMOLGlobals *G,int flag);
 void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst,int zoom);
 float ExecutiveOverlap(PyMOLGlobals *G,char *s1,int state1,char *s2,int state2,float adjust);

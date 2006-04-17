@@ -28,7 +28,7 @@ if __name__=='pymol.exporting':
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     import traceback
 
-    def get_pdbstr(selection="all", state=0):
+    def get_pdbstr(selection="all", state=0, ref='', ref_state=-1, quiet=1):
         '''
 DESCRIPTION
 
@@ -50,7 +50,7 @@ NOTES
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.get_pdb(str(selection),int(state)-1,0)
+            r = _cmd.get_pdb(str(selection),int(state)-1,0,str(ref),int(ref_state),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise QuietException         
@@ -127,7 +127,7 @@ PYMOL API
         if _raising(r): raise QuietException
         return r
 
-    def save(filename,selection='(all)',state=0,format='',quiet=1):
+    def save(filename,selection='(all)',state=0,format='',ref='',ref_state=-1,quiet=1):
         '''
 DESCRIPTION
 
@@ -161,9 +161,9 @@ SEE ALSO
         selection = selector.process(selection)
         #   
         r = DEFAULT_ERROR
+        lc_filename=string.lower(filename)
         if format=='':
             format = 'unknown'
-            lc_filename=string.lower(filename)
             if re.search("\.pdb$|\.ent$",lc_filename):
                 format = 'pdb'
             elif re.search("\.pqr$",lc_filename):
@@ -202,26 +202,30 @@ SEE ALSO
         if format=='pdb': # standard PDB file 
             f=open(filename,"w")
             if f:
+                st = ''
                 try:
                     lock()
-                    st = _cmd.get_pdb("("+str(selection)+")",int(state)-1,0)
+                    st = _cmd.get_pdb("("+str(selection)+")",int(state)-1,0,
+                                      str(ref),int(ref_state)-1,int(quiet))
                 finally:
                     unlock()
-                    f.write(st)
-                    f.close()
+                f.write(st)
+                f.close()
                 r = DEFAULT_SUCCESS
                 if not quiet:
                     print " Save: wrote \""+filename+"\"."
         elif format=='pqr': # PQR (modified PDB file)
             f=open(filename,"w")
             if f:
+                st = ''
                 try:
                     lock()
-                    st = _cmd.get_pdb("("+str(selection)+")",int(state)-1,1)
+                    st = _cmd.get_pdb("("+str(selection)+")",int(state)-1,1,
+                                      str(ref),int(ref_state)-1,int(quiet))
                 finally:
                     unlock()
-                    f.write(st)
-                    f.close()
+                f.write(st)
+                f.close()
                 r = DEFAULT_SUCCESS
                 if not quiet:
                     print " Save: wrote \""+filename+"\"."

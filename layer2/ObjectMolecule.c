@@ -2538,6 +2538,21 @@ void ObjectGotoState(ObjectMolecule *I,int state)
   }
 }
 /*========================================================================*/
+CObjectState *ObjectMoleculeGetObjectState(ObjectMolecule *I,int state)
+{
+  CObjectState *result = NULL;
+  if(state<0) {
+    state = ObjectGetCurrentState(&I->Obj,true);
+  }
+  if(state>=0) {
+    if(state<I->NCSet) {
+      CoordSet *cs = I->CSet[state];    
+      result = &cs->State;
+    }
+  }
+  return result;
+}
+/*========================================================================*/
 CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state)
 {
   
@@ -9714,6 +9729,9 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals *G,int discreteFlag)
     ObjectMoleculeDescribeElement;
   I->Obj.fGetSettingHandle = (CSetting **(*)(struct CObject *,int state))
     ObjectMoleculeGetSettingHandle;
+  I->Obj.fGetObjectState = (CObjectState *(*)(struct CObject *,int state))
+    ObjectMoleculeGetObjectState;
+
   I->Obj.fGetCaption = (char *(*)(struct CObject *))ObjectMoleculeGetCaption;
   I->AtomInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
   I->CurCSet=0;
