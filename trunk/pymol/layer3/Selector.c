@@ -48,8 +48,6 @@ Z* -------------------------------------------------------------------
 #define SelectorWordLength 1024
 typedef char SelectorWordType[SelectorWordLength];
 
-#define SelectorMaxDepth 1000
-
 #define cSelectorTmpPrefix "_sel_tmp_"
 #define cSelectorTmpPattern "_sel_tmp_*"
 
@@ -241,6 +239,7 @@ static int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *o
 #define SELE_ACCz ( 0x3E00 | STYP_SEL0 | 0x90 )
 #define SELE_DONz ( 0x3F00 | STYP_SEL0 | 0x90 )
 #define SELE_LST1 ( 0x4000 | STYP_OPR1 | 0x30 )
+#define SELE_NTO_ ( 0x4100 | STYP_OP22 | 0x30 ) 
 
 #define SEL_PREMAX 0x8
 
@@ -408,6 +407,9 @@ static WordKeyValue Keyword[] =
 
   {  "within",   SELE_WIT_ },
   {  "w.",       SELE_WIT_ },
+
+  {  "near_to",  SELE_NTO_ },
+  {  "nto."   ,  SELE_NTO_ },
 
   {  "beyond",   SELE_BEY_ },
   {  "be.",      SELE_BEY_ },
@@ -9078,120 +9080,110 @@ int SelectorOperator22(PyMOLGlobals *G,EvalElem *base)
   MapType *map;
   int i,j,h,k,l;
   int n1,at,idx;
-
-  switch(base[1].code)
+  int code = base[1].code;
+  switch(code)
 	 {
 	 case SELE_WIT_:
-    case SELE_BEY_:
-		if(!sscanf(base[2].text,"%f",&dist))
-		  ok=ErrMessage(G,"Selector","Invalid distance.");
-		if(ok)
-		  {
-          if(dist<0.0) dist = 0.0;
-          
-          /* copy starting mask */
-          switch(base[1].code) {
-          case SELE_WIT_:
-            for(a=0;a<I->NAtom;a++) {
-              I->Flag2[a]=base[0].sele[a];
-              base[0].sele[a]=false;
-            }
-            break;
-          case SELE_BEY_:
-            for(a=0;a<I->NAtom;a++) {
-              I->Flag2[a]=base[0].sele[a];
-              base[0].sele[a]=false;
-            }
-            break;
-          }
-			 for(d=0;d<I->NCSet;d++)
-				{
-				  n1=0;
- 				  for(a=0;a<I->NAtom;a++) {
-                I->Flag1[a]=false;
-					 at=I->Table[a].atom;
-					 obj=I->Obj[I->Table[a].model];
-                if(d<obj->NCSet) 
-                  cs=obj->CSet[d];
-                else
-                  cs=NULL;
-					 if(cs) {
-                  if(obj->DiscreteFlag) {
-                    if(cs==obj->DiscreteCSet[at])
-                      idx=obj->DiscreteAtmToIdx[at];
-                    else
-                      idx=-1;
-                  } else 
-                    idx=cs->AtmToIdx[at];
-						if(idx>=0) {
-						  copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
-						  I->Flag1[a]=true;
-						  n1++;
-						}
-					 }
-				  }
-				  if(n1) {
-					 map=MapNewFlagged(G,-dist,I->Vertex,I->NAtom,NULL,I->Flag1);
-					 if(map) {
-						MapSetupExpress(map);
-						nCSet=SelectorGetArrayNCSet(G,base[4].sele);
-						for(e=0;e<nCSet;e++) {
-						  for(a=0;a<I->NAtom;a++) {
-							 if(base[4].sele[a])
-								{
-								  at=I->Table[a].atom;
-								  obj=I->Obj[I->Table[a].model];
-                          if(e<obj->NCSet) 
-                            cs=obj->CSet[e];
-                          else
-                            cs=NULL;
-								  if(cs) {
-                            if(obj->DiscreteFlag) {
-                              if(cs==obj->DiscreteCSet[at])
-                                idx=obj->DiscreteAtmToIdx[at];
-                              else
-                                idx=-1;
-                            } else 
-                              idx=cs->AtmToIdx[at];
-									 if(idx>=0) {
-										v2 = cs->Coord+(3*idx);
-										MapLocus(map,v2,&h,&k,&l);
-										i=*(MapEStart(map,h,k,l));
-										if(i) {
-										  j=map->EList[i++];
+     case SELE_BEY_:
+     case SELE_NTO_:
+       if(!sscanf(base[2].text,"%f",&dist))
+         ok=ErrMessage(G,"Selector","Invalid distance.");
+       if(ok) {
+         if(dist<0.0) dist = 0.0;
+         
+         /* copy starting mask */
+         for(a=0;a<I->NAtom;a++) {
+           I->Flag2[a]=base[0].sele[a];
+           base[0].sele[a]=false;
+         }
 
-                                while(j>=0) {
-                                  if(!base[0].sele[j])
-                                    if(I->Flag2[j])
-                                      if(within3f(I->Vertex+3*j,v2,dist)) 
-                                        base[0].sele[j]=true;
-                                  j=map->EList[i++];
-                                }
-										}
-									 }
-								  }
-								}
-						  }
-						}
-						MapFree(map);
-					 }
-				  }
-            }
-          if(base[1].code==SELE_BEY_) {
-            for(a=0;a<I->NAtom;a++) {
-              if(I->Flag2[a])
-                base[0].sele[a] = !base[0].sele[a];
-            }
-          }
-
-          for(a=cNDummyAtoms;a<I->NAtom;a++)
-            if(base[0].sele[a]) c++;
-        }
-      break;
-    }
+         for(d=0;d<I->NCSet;d++) {
+           n1=0;
+           for(a=0;a<I->NAtom;a++) {
+             I->Flag1[a]=false;
+             at=I->Table[a].atom;
+             obj=I->Obj[I->Table[a].model];
+             if(d<obj->NCSet) 
+               cs=obj->CSet[d];
+             else
+               cs=NULL;
+             if(cs) {
+               if(obj->DiscreteFlag) {
+                 if(cs==obj->DiscreteCSet[at])
+                   idx=obj->DiscreteAtmToIdx[at];
+                 else
+                   idx=-1;
+               } else 
+                 idx=cs->AtmToIdx[at];
+               if(idx>=0) {
+                 copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
+                 I->Flag1[a]=true;
+                 n1++;
+               }
+             }
+           }
+           if(n1) {
+             map=MapNewFlagged(G,-dist,I->Vertex,I->NAtom,NULL,I->Flag1);
+             if(map) {
+               MapSetupExpress(map);
+               nCSet=SelectorGetArrayNCSet(G,base[4].sele);
+               for(e=0;e<nCSet;e++) {
+                 for(a=0;a<I->NAtom;a++) {
+                   if(base[4].sele[a]) {
+                     at=I->Table[a].atom;
+                     obj=I->Obj[I->Table[a].model];
+                     if(e<obj->NCSet) 
+                       cs=obj->CSet[e];
+                     else
+                       cs=NULL;
+                     if(cs) {
+                       if(obj->DiscreteFlag) {
+                         if(cs==obj->DiscreteCSet[at])
+                           idx=obj->DiscreteAtmToIdx[at];
+                         else
+                           idx=-1;
+                       } else 
+                         idx=cs->AtmToIdx[at];
+                       if(idx>=0) {
+                         v2 = cs->Coord+(3*idx);
+                         MapLocus(map,v2,&h,&k,&l);
+                         i=*(MapEStart(map,h,k,l));
+                         if(i) {
+                           j=map->EList[i++];
+                           
+                           while(j>=0) {
+                             if(!base[0].sele[j])
+                               if(I->Flag2[j])
+                                 if(within3f(I->Vertex+3*j,v2,dist)) {
+                                   if((code!=SELE_NTO_)||(a!=j))
+                                     base[0].sele[j]=true;
+                                 }
+                             j=map->EList[i++];
+                           }
+                         }
+                       }
+                     }
+                   }
+                 }
+               }
+               MapFree(map);
+             }
+           }
+         }
+         if(code==SELE_BEY_) {
+           for(a=0;a<I->NAtom;a++) {
+             if(I->Flag2[a])
+               base[0].sele[a] = !base[0].sele[a];
+           }
+         }
+         for(a=cNDummyAtoms;a<I->NAtom;a++)
+           if(base[0].sele[a]) c++;
+       }
+       break;
+     }
   FreeP(base[4].sele);
   PRINTFD(G,FB_Selector)
-	 " SelectorOperator22: %d atoms selected.\n",c
+    " SelectorOperator22: %d atoms selected.\n",c
     ENDFD;
   return(1);
 }
@@ -9260,329 +9252,318 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
   char *np;
 
   register int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
-  OrthoLineType line;
   EvalElem *Stack=NULL,*e;
   SelectorWordType tmpKW;
-  Stack = Alloc(EvalElem,SelectorMaxDepth);
+  Stack = VLAlloc(EvalElem,100);
 
   Stack[0].sele=NULL;
   Stack[0].type=0;
   Stack[0].level=0;
 
   /* converts all keywords into code, adds them into a operation list */
-  while(ok&&word[c][0])
-    {
-
-      if(word[c][0]=='#') {
-        if((!valueFlag)&&(!level)) {
-          word[c][0]=0; /* terminate selection if we encounter a comment */
-          word[c+1][0]=0;
-          break;
-        }
+  while(ok&&word[c][0]) {
+    if(word[c][0]=='#') {
+      if((!valueFlag)&&(!level)) {
+        word[c][0]=0; /* terminate selection if we encounter a comment */
+        word[c+1][0]=0;
+        break;
       }
-      switch(word[c][0])
-        {
-        case 0:
-          break;
-        case '(':
-          if(valueFlag)	ok=ErrMessage(G,"Selector","Misplaced (.");
-          if(ok) level++;
-          break;
-        case ')':
-          if(valueFlag)	ok=ErrMessage(G,"Selector","Misplaced ).");
-          if(ok)
-            {
-              level--;
-              if(level<0)
-                ok=ErrMessage(G,"Selector","Syntax error.");
-            }
-          if(ok&&depth) Stack[depth].level--;
-          break;
-        default:
-          if(valueFlag>0) /* standard operand */
-            {
-              depth++;
-              e=Stack+depth;
-              e->level=(level<<4)+1; /* each nested paren is 16 levels of priority */
-              e->type=STYP_VALU;
-              cc1 = word[c];
-              cc2 = e->text;
-              strcpy(e->text,cc1);
-              remove_quotes(e->text);
-              valueFlag--;
-            }
-          else if(valueFlag<0) /* operation parameter i.e. around X<-- */
-            {
-              depth++;
-              e=Stack+depth;
-              e->level=(level<<4)+1;
-              e->type=STYP_PVAL;
-              strcpy(e->text,word[c]);
-              valueFlag++;
-            } 
-          else /* possible keyword... */
-            {
-              if((word[c][0]=='*')&&(!word[c][1]))
-                code = SELE_ALLz;
-              else
-                code = WordKey(G,Keyword,word[c],4,ignore_case,&exact);
-              if(!code) {
-                b=strlen(word[c])-1;
-                if((b>2)&&(word[c][b]==';')) {
-                  /* kludge to accomodate unnec. ';' usage */
-                  word[c][b]=0;
-                  code=WordKey(G,Keyword,word[c],4,ignore_case,&exact);
-                }
-              }
-              PRINTFD(G,FB_Selector)
-                " Selector: code %x\n",code
-                ENDFD;
-              if((code>0)&&(!exact))  
-                if(SelectorIndexByName(G,word[c])>=0)
-                  code=0; /* favor selections over partial keyword matches */
-              if(code) 
-                { /* this is a known operation */
-                  depth++;
-                  e=Stack+depth;
-                  e->code=code;
-                  e->level=(level<<4)+((e->code&0xF0)>>4);
-                  e->type=(e->code&0xF);
-                  switch(e->type)
-                    {
-                    case STYP_SEL0:
-                      valueFlag=0;
-                      break;
-                    case STYP_SEL1:
-                      valueFlag=1;
-                      break;
-                    case STYP_SEL2:
-                      valueFlag=2;
-                      break;
-                    case STYP_OPR1:
-                      valueFlag=0;
-                      break;
-                    case STYP_OPR2:
-                      valueFlag=0;
-                      break;
-                    case STYP_PRP1: 
-                      valueFlag=-1;
-                      break;
-                    case STYP_OP22: 
-                      valueFlag=-2;
-                      break;
-                    }
-                } else {
-                  strcpy(tmpKW,word[c]); /* handle <object-name>[`index] syntax */
-                  if((np=strstr(tmpKW,"`"))) { /* must be an object name */
-                    *np=0;
-                    
-                    depth++;
-                    e=Stack+depth;
-                    e->code=SELE_MODs;
-                    e->level=(level<<4)+((e->code&0xF0)>>4);
-                    e->type=STYP_SEL1;
-                    valueFlag=1;
-                    c--;
-
-                  } else { /* handle <selection-name> syntax */
-
-                    depth++;
-                    e=Stack+depth;
-                    e->code=SELE_SELs;
-                    e->level=(level<<4)+((e->code&0xF0)>>4);
-                    e->type=STYP_SEL1;
-                    valueFlag=1;
-                    c--;
-
-                  }
-                }
-            }
-          break;
-        }
-      if(ok) c++; /* go onto next word */
     }
+    switch(word[c][0]) {
+      case 0:
+        break;
+      case '(':
+        if(valueFlag)	ok=ErrMessage(G,"Selector","Misplaced (.");
+        if(ok) level++;
+        break;
+      case ')':
+        if(valueFlag)	ok=ErrMessage(G,"Selector","Misplaced ).");
+        if(ok) {
+          level--;
+          if(level<0)
+            ok=ErrMessage(G,"Selector","Syntax error.");
+        }
+        if(ok&&depth) Stack[depth].level--;
+        break;
+      default:
+        if(valueFlag>0) { /* standard operand */
+          depth++;
+          VLACheck(Stack,EvalElem,depth);
+          e=Stack+depth;
+          e->level=(level<<4)+1; /* each nested paren is 16 levels of priority */
+          e->type=STYP_VALU;
+          cc1 = word[c];
+          cc2 = e->text;
+          strcpy(e->text,cc1);
+          remove_quotes(e->text);
+          valueFlag--;
+        } else if(valueFlag<0) { /* operation parameter i.e. around X<-- */
+          depth++;
+          VLACheck(Stack,EvalElem,depth);
+          e=Stack+depth;
+          e->level=(level<<4)+1;
+          e->type=STYP_PVAL;
+          strcpy(e->text,word[c]);
+          valueFlag++;
+        } else { /* possible keyword... */
+          if((word[c][0]=='*')&&(!word[c][1]))
+              code = SELE_ALLz;
+            else
+              code = WordKey(G,Keyword,word[c],4,ignore_case,&exact);
+            if(!code) {
+              b=strlen(word[c])-1;
+              if((b>2)&&(word[c][b]==';')) {
+                /* kludge to accomodate unnec. ';' usage */
+                word[c][b]=0;
+                code=WordKey(G,Keyword,word[c],4,ignore_case,&exact);
+              }
+            }
+            PRINTFD(G,FB_Selector)
+              " Selector: code %x\n",code
+              ENDFD;
+            if((code>0)&&(!exact))  
+              if(SelectorIndexByName(G,word[c])>=0)
+                code=0; /* favor selections over partial keyword matches */
+            if(code) {
+              /* this is a known operation */
+              depth++;
+              VLACheck(Stack,EvalElem,depth);
+              e=Stack+depth;
+              e->code=code;
+              e->level=(level<<4)+((e->code&0xF0)>>4);
+              e->type=(e->code&0xF);
+              switch(e->type)
+                {
+                case STYP_SEL0:
+                  valueFlag=0;
+                  break;
+                case STYP_SEL1:
+                  valueFlag=1;
+                  break;
+                case STYP_SEL2:
+                  valueFlag=2;
+                  break;
+                case STYP_OPR1:
+                  valueFlag=0;
+                  break;
+                case STYP_OPR2:
+                  valueFlag=0;
+                  break;
+                case STYP_PRP1: 
+                  valueFlag=-1;
+                  break;
+                case STYP_OP22: 
+                  valueFlag=-2;
+                  break;
+                }
+            } else {
+              strcpy(tmpKW,word[c]); /* handle <object-name>[`index] syntax */
+              if((np=strstr(tmpKW,"`"))) { /* must be an object name */
+                *np=0;
+                depth++;
+                VLACheck(Stack,EvalElem,depth);
+                e=Stack+depth;
+                e->code=SELE_MODs;
+                e->level=(level<<4)+((e->code&0xF0)>>4);
+                e->type=STYP_SEL1;
+                valueFlag=1;
+                c--;
+              } else { /* handle <selection-name> syntax */
+                depth++;
+                VLACheck(Stack,EvalElem,depth);
+                e=Stack+depth;
+                e->code=SELE_SELs;
+                e->level=(level<<4)+((e->code&0xF0)>>4);
+                e->type=STYP_SEL1;
+                valueFlag=1;
+                c--;
+                  
+              }
+            }
+        }
+        break;
+    }
+    if(ok) c++; /* go onto next word */
+  }
   if(level>0)
     ok=ErrMessage(G,"Selector","Malformed selection.");		
-  if(ok) /* this is the main operation loop */
-    {
-      totDepth=depth;
-      opFlag=true;
-      maxLevel=-1;
-      for(a=1;a<=totDepth;a++) {
-        PRINTFD(G,FB_Selector)
-          " Selector initial stack %d-%p lv: %x co: %d type: %x sele %p\n",
-          a,(void*)(Stack+a),Stack[a].level,Stack[a].code,
-          Stack[a].type,(void*)Stack[a].sele
-          ENDFD;
-                 
-        if(Stack[a].level>maxLevel) 
-          maxLevel=Stack[a].level;
-      }
-      level=maxLevel;
+  if(ok) {/* this is the main operation loop */
+    totDepth=depth;
+    opFlag=true;
+    maxLevel=-1;
+    for(a=1;a<=totDepth;a++) {
       PRINTFD(G,FB_Selector)
-        " Selector: maxLevel %d %d\n",maxLevel,totDepth
+        " Selector initial stack %d-%p lv: %x co: %d type: %x sele %p\n",
+        a,(void*)(Stack+a),Stack[a].level,Stack[a].code,
+        Stack[a].type,(void*)Stack[a].sele
         ENDFD;
-      if(level>=0) 
-        while(ok) { /* loop until all ops at all levels have been tried */
+      
+      if(Stack[a].level>maxLevel) 
+        maxLevel=Stack[a].level;
+    }
+    level=maxLevel;
+    PRINTFD(G,FB_Selector)
+      " Selector: maxLevel %d %d\n",maxLevel,totDepth
+      ENDFD;
+    if(level>=0) 
+      while(ok) { /* loop until all ops at all levels have been tried */
+
+        /* order & efficiency of this algorithm could be improved... */
+
+        PRINTFD(G,FB_Selector)
+          " Selector: new cycle...\n"
+          ENDFD;
+        depth = 1;
+        opFlag=true;
+        while(ok&&opFlag) { /* loop through all entries looking for ops at the current level */
           PRINTFD(G,FB_Selector)
-            " Selector: new cycle...\n"
+            " Selector: lvl: %d de:%d-%p slv:%d co: %x typ %x sele %p td: %d\n",
+            level,depth,(void*)(Stack+depth),Stack[depth].level,
+            Stack[depth].code,
+            Stack[depth].type,(void*)Stack[depth].sele,totDepth
             ENDFD;
-          depth = 1;
-          opFlag=true;
-          while(ok&&opFlag) { /* loop through all entries looking for ops at the current level */
-            PRINTFD(G,FB_Selector)
-              " Selector: lvl: %d de:%d-%p slv:%d co: %x typ %x sele %p td: %d\n",
-              level,depth,(void*)(Stack+depth),Stack[depth].level,
-              Stack[depth].code,
-              Stack[depth].type,(void*)Stack[depth].sele,totDepth
-              ENDFD;
           
-            opFlag=false;
+          opFlag=false;
             
-            if(Stack[depth].level>=level) {
-              Stack[depth].level=level; /* trim peaks */
-            }
-            if(ok) 
-              if(depth>0)
-                if((!opFlag)&&(Stack[depth].type==STYP_SEL0))
-                  {
-                    opFlag=true;
-                    ok=SelectorSelect0(G,&Stack[depth]);
-                  }
-            if(ok)
-              if(depth>1)
-                if(Stack[depth-1].level>=Stack[depth].level)
-                  {
-                    if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_SEL1)
-                       &&(Stack[depth].type==STYP_VALU))
-                      { /* 1 argument selection operator */
-                        opFlag=true;
-                        ok=SelectorSelect1(G,&Stack[depth-1]);
-                        for(a=depth+1;a<=totDepth;a++) 
-                          Stack[a-1]=Stack[a];
-                        totDepth--;
-                      }
-                    else if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_OPR1)
-                            &&(Stack[depth].type==STYP_LIST))
-                      { /* 1 argument logical operator */
-                        opFlag=true;
-                        ok=SelectorLogic1(G,&Stack[depth-1]);
-                        for(a=depth+1;a<=totDepth;a++) 
-                          Stack[a-1]=Stack[a];
-                        totDepth--;
-                      }
-                    else if((Stack[depth-1].type==STYP_LIST)&&
-                            (Stack[depth].type==STYP_LIST)&&
-                            (!((Stack[depth-1].level & 0xF) ||
-                               (Stack[depth].level & 0xF)))) {
-                      /* two adjacent lists at zeroth priority level
-                         for the scope (lowest nibble of level is
-                         zero) is an implicit OR action */
+          if(Stack[depth].level>=level) {
+            Stack[depth].level=level; /* trim peaks */
+          }
+          if(ok) 
+            if(depth>0)
+              if((!opFlag)&&(Stack[depth].type==STYP_SEL0)) {
+                opFlag=true;
+                ok=SelectorSelect0(G,&Stack[depth]);
+              }
+          if(ok)
+            if(depth>1)
+              if(Stack[depth-1].level>=Stack[depth].level) {
+                  if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_SEL1)
+                     &&(Stack[depth].type==STYP_VALU)) {
+                    /* 1 argument selection operator */
                       opFlag=true;
-                      ok=SelectorImplicitOr(G,&Stack[depth-1]);
+                      ok=SelectorSelect1(G,&Stack[depth-1]);
                       for(a=depth+1;a<=totDepth;a++) 
                         Stack[a-1]=Stack[a];
                       totDepth--;
-                    }
+                    } else if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_OPR1)
+                          &&(Stack[depth].type==STYP_LIST)) {
+                     /* 1 argument logical operator */
+                      opFlag=true;
+                      ok=SelectorLogic1(G,&Stack[depth-1]);
+                      for(a=depth+1;a<=totDepth;a++) 
+                        Stack[a-1]=Stack[a];
+                      totDepth--;
+                    } else if((Stack[depth-1].type==STYP_LIST)&&
+                          (Stack[depth].type==STYP_LIST)&&
+                          (!((Stack[depth-1].level & 0xF) ||
+                             (Stack[depth].level & 0xF)))) {
+                    /* two adjacent lists at zeroth priority level
+                       for the scope (lowest nibble of level is
+                       zero) is an implicit OR action */
+                    opFlag=true;
+                    ok=SelectorImplicitOr(G,&Stack[depth-1]);
+                    for(a=depth+1;a<=totDepth;a++) 
+                      Stack[a-1]=Stack[a];
+                    totDepth--;
                   }
-            if(ok)
-              if(depth>2)
-                if((Stack[depth-1].level>=Stack[depth].level)&&
-                   (Stack[depth-1].level>=Stack[depth-2].level))
-                  {
-                    if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_OPR2)
-                       &&(Stack[depth].type==STYP_LIST)
-                       &&(Stack[depth-2].type==STYP_LIST))
-                      { /* 2 argument logical operator */
-                        ok=SelectorLogic2(G,&Stack[depth-2]);
-                        opFlag=true;
-                        for(a=depth+1;a<=totDepth;a++) 
-                          Stack[a-2]=Stack[a];
-                        totDepth-=2;
-                      }
-                    else if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_PRP1)
-                            &&(Stack[depth].type==STYP_PVAL)
-                            &&(Stack[depth-2].type==STYP_LIST))
-                      { /* 2 argument logical operator */
-                        ok=SelectorModulate1(G,&Stack[depth-2]);
-                        opFlag=true;
-                        for(a=depth+1;a<=totDepth;a++) 
-                          Stack[a-2]=Stack[a];
-                        totDepth-=2;
-                      }
-                  }
-            if(ok)
-              if(depth>2)
-                if((Stack[depth-2].level>=Stack[depth-1].level)&&
-                   (Stack[depth-2].level>=Stack[depth].level))
-                  {            
-                    if(ok&&(!opFlag)&&(Stack[depth-2].type==STYP_SEL2)
-                       &&(Stack[depth-1].type==STYP_VALU)
-                       &&(Stack[depth].type==STYP_VALU))
-                      { /* 2 argument value operator */
-                        ok=SelectorSelect2(G,&Stack[depth-2]);
-                        opFlag=true;
-                        for(a=depth+1;a<=totDepth;a++) 
-                          Stack[a-2]=Stack[a];
-                        totDepth-=2;
-                      }
-                  }
-            if(ok)
-              if(depth>3)
-                if((Stack[depth-3].level>=Stack[depth].level)&&
-                   (Stack[depth-3].level>=Stack[depth-1].level)&&
-                   (Stack[depth-3].level>=Stack[depth-2].level))
-                  {
-                    if(ok&&(!opFlag)&&(Stack[depth-3].type==STYP_SEL3)
-                       &&(Stack[depth].type==STYP_VALU)
-                       &&(Stack[depth-1].type==STYP_VALU)
-                       &&(Stack[depth-2].type==STYP_VALU))
-                      { /* 2 argument logical operator */
-                        /*								ok=SelectorSelect3(G,&Stack[depth-3]);*/
-                        opFlag=true;
-                        for(a=depth+1;a<=totDepth;a++) 
-                          Stack[a-3]=Stack[a];
-                        totDepth-=3;
-                      }
-                  }
-            if(ok)
-              if(depth>4)
-                if((Stack[depth-3].level>=Stack[depth].level)&&
-                   (Stack[depth-3].level>=Stack[depth-1].level)&&
-                   (Stack[depth-3].level>=Stack[depth-2].level)&&
-                   (Stack[depth-3].level>=Stack[depth-4].level))
-                  {
-                    if(ok&&(!opFlag)&&(Stack[depth-3].type==STYP_OP22)
-                       &&(Stack[depth-1].type==STYP_VALU)
-                       &&(Stack[depth-2].type==STYP_VALU)
-                       &&(Stack[depth].type==STYP_LIST)
-                       &&(Stack[depth-4].type==STYP_LIST))
-                      { 
-                        ok=SelectorOperator22(G,&Stack[depth-4]);
-                        opFlag=true;
-                        for(a=depth+1;a<=totDepth;a++) 
-                          Stack[a-4]=Stack[a];
-                        totDepth-=4;
-                      }
+                }
+          if(ok)
+            if(depth>2)
+              if((Stack[depth-1].level>=Stack[depth].level)&&
+                 (Stack[depth-1].level>=Stack[depth-2].level)) {
 
+                  if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_OPR2)
+                     &&(Stack[depth].type==STYP_LIST)
+                     &&(Stack[depth-2].type==STYP_LIST)) {
+                    /* 2 argument logical operator */
+                      ok=SelectorLogic2(G,&Stack[depth-2]);
+                      opFlag=true;
+                      for(a=depth+1;a<=totDepth;a++) 
+                        Stack[a-2]=Stack[a];
+                      totDepth-=2;
+                  } else if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_PRP1)
+                            &&(Stack[depth].type==STYP_PVAL)
+                            &&(Stack[depth-2].type==STYP_LIST)) {
+                    /* 2 argument logical operator */
+                    ok=SelectorModulate1(G,&Stack[depth-2]);
+                    opFlag=true;
+                    for(a=depth+1;a<=totDepth;a++) 
+                      Stack[a-2]=Stack[a];
+                    totDepth-=2;
                   }
-            if(opFlag) {
-              opFlag2=true; /* make note that we performed an operation */
-              depth = 1; /* start back at the left hand side */
-            } else {
-              depth = depth + 1;
-              opFlag=true;
-              if(depth>totDepth)
-                break;
-            }
+              }
+          if(ok)
+            if(depth>2)
+              if((Stack[depth-2].level>=Stack[depth-1].level)&&
+                 (Stack[depth-2].level>=Stack[depth].level)) {
+
+                if(ok&&(!opFlag)&&(Stack[depth-2].type==STYP_SEL2)
+                   &&(Stack[depth-1].type==STYP_VALU)
+                   &&(Stack[depth].type==STYP_VALU)) {
+                  /* 2 argument value operator */
+                  ok=SelectorSelect2(G,&Stack[depth-2]);
+                  opFlag=true;
+                  for(a=depth+1;a<=totDepth;a++) 
+                    Stack[a-2]=Stack[a];
+                  totDepth-=2;
+                }
+              }
+          if(ok)
+            if(depth>3)
+              if((Stack[depth-3].level>=Stack[depth].level)&&
+                 (Stack[depth-3].level>=Stack[depth-1].level)&&
+                 (Stack[depth-3].level>=Stack[depth-2].level)) {
+                
+                if(ok&&(!opFlag)&&(Stack[depth-3].type==STYP_SEL3)
+                   &&(Stack[depth].type==STYP_VALU)
+                   &&(Stack[depth-1].type==STYP_VALU)
+                   &&(Stack[depth-2].type==STYP_VALU)) {
+                  /* 2 argument logical operator */
+                  /*								ok=SelectorSelect3(G,&Stack[depth-3]);*/
+                  opFlag=true;
+                  for(a=depth+1;a<=totDepth;a++) 
+                    Stack[a-3]=Stack[a];
+                  totDepth-=3;
+                }
+              }
+          if(ok)
+            if(depth>4)
+              if((Stack[depth-3].level>=Stack[depth].level)&&
+                 (Stack[depth-3].level>=Stack[depth-1].level)&&
+                 (Stack[depth-3].level>=Stack[depth-2].level)&&
+                 (Stack[depth-3].level>=Stack[depth-4].level)) {
+                
+                if(ok&&(!opFlag)&&(Stack[depth-3].type==STYP_OP22)
+                   &&(Stack[depth-1].type==STYP_VALU)
+                   &&(Stack[depth-2].type==STYP_VALU)
+                   &&(Stack[depth].type==STYP_LIST)
+                   &&(Stack[depth-4].type==STYP_LIST)) {
+                     
+                  ok=SelectorOperator22(G,&Stack[depth-4]);
+                  opFlag=true;
+                  for(a=depth+1;a<=totDepth;a++) 
+                    Stack[a-4]=Stack[a];
+                  totDepth-=4;
+                }
+
+              }
+          if(opFlag) {
+            opFlag2=true; /* make note that we performed an operation */
+            depth = 1; /* start back at the left hand side */
+          } else {
+            depth = depth + 1;
+            opFlag=true;
+            if(depth>totDepth)
+              break;
           }
-          if(level)
-            level--;
-          else
-            break;
         }
-      depth=totDepth;
-    }
+        if(level)
+          level--;
+        else
+          break;
+      }
+    depth=totDepth;
+  }
   if(ok) {
     if(depth!=1) {
       ok=ErrMessage(G,"Selector","Malformed selection.");
@@ -9600,21 +9581,26 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
         FreeP(Stack[a].sele);
     }
     depth=0;
-    q=line;
-    *q=0;
-    for(a=0;a<=c;a++)
-      {
+    {
+      OrthoLineType line;
+      for(a=0;a<=c;a++) {
+        q=line;
         if(a&&word[a][0])
           q=UtilConcat(q," ");
         q=UtilConcat(q,word[a]);
+        PRINTFB(G,FB_Selector,FB_Errors) 
+          "%s",line
+          ENDFB(G);
       }
-    q=UtilConcat(q,"<--");
-    PRINTFB(G,FB_Selector,FB_Errors) 
-      "%s\n",line
-      ENDFB(G);
+      q=line;
+      q=UtilConcat(q,"<--");
+      PRINTFB(G,FB_Selector,FB_Errors) 
+        "%s",line
+        ENDFB(G);
       OrthoRestorePrompt(G);
+    }
   }
-  FreeP(Stack);
+  VLAFreeP(Stack);
   if(!ok) {
     FreeP(result);
     result = NULL;

@@ -555,7 +555,7 @@ class Normal(PMGSkin):
         else:
             sels = self.dialog.getcurselection()
             if len(sels)!=0:
-                sfile = sels[0]+".pdb"
+                sfile = sels[0] +".pdb"
                 self.my_withdraw(self.dialog)
                 del self.dialog
                 if result=='OK':
@@ -571,7 +571,7 @@ class Normal(PMGSkin):
                         self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
                         self.cmd.log("save %s,(%s)\n"%(sfile,sels[0]),
                                   "cmd.save('%s','(%s)')\n"%(sfile,sels[0]))
-                        self.cmd.save(sfile,"(%s)"%sels[0])
+                        self.cmd.save(sfile,"(%s)"%sels[0],quiet=0)
 
     def hide_sele(self):
         self.cmd.log("util.hide_sele()\n","util.hide_sele()\n")
