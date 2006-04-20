@@ -1695,9 +1695,9 @@ void OrthoSplash(PyMOLGlobals *G)
   PRINTF " This PyMOL Incentive Product Executable Build is exclusively available to\n" ENDF(G);
   PRINTF " PyMOL Sponsors with current PyMOL Maintenance and/or Support Subscriptions.\n \n" ENDF(G);
   PRINTF " Only designated PyMOL Power, Casual, and Developer Users covered within the\n" ENDF(G);
-  PRINTF " scope of such a Subscription may legally use this PyMOL Incentive Product.\n" ENDF(G);
-  PRINTF " All other usage is strictly prohibited and may constitute a violation of\n" ENDF(G);
-  PRINTF " United States and International Copyright laws.\n \n" ENDF(G);
+  PRINTF " scope of such a Subscription may legally use this PyMOL Executable Build.\n" ENDF(G);
+  PRINTF " Any other usage is specifically prohibited and may constitute a violation\n" ENDF(G);
+  PRINTF " of United States and international Copyright laws.\n \n" ENDF(G);
   PRINTF " This Executable Build incorporates and extends Open-Source PyMOL " ENDF(G);
   PRINTF _PyMOL_VERSION ENDF(G);
   PRINTF ".\n" ENDF(G);
