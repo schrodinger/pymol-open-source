@@ -1,6 +1,6 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+#C* copyright 1998-2006 by Warren Lyford Delano of DeLano Scientific. 
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
@@ -8,105 +8,139 @@
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
 #-*
-#-* NOTE: Based on code by John E. Grayson which was in turn 
-#-* based on code written by Doug Hellmann. 
+#-* Kenneth Lind
 #Z* -------------------------------------------------------------------
 
-# this section is devoted to making sure that Tkinter variables which
-# correspond to Menu-displayed settings are kept synchronized with
-# PyMOL
+# Master editor for all pymol settings
+# (includes filter)
 
 from Tkinter import *
-import Pmw
 from pymol import cmd
 import pymol.setting
-import string
-import copy
 
-class SingleEdit:
-    def __init__(self,app,name,parent):
-        self.app = app
-        self.parent = parent
-        self.name = name
-        items = []
+# nItem defines the number of label/entry widgets displayed on screen
+# for scrolling.  Change to smaller number if performance is poor.
+nItem = 15
 
-        prompt = name
-        
-        self.dialog = Pmw.PromptDialog(self.app.root,title=prompt,
-                                  buttons = ('Set', 'Cancel'),
-                                              defaultbutton='Set',
-                                  buttonboxpos=S,
-                                  command = self.command)
-        self.dialog.geometry("300x120")
-        self.entryfield = self.dialog.component('entryfield')
-        self.entry = self.entryfield.component('entry')
-
-        txt = cmd.get_setting_text(name)
-        self.entryfield.setentry(txt)
-        self.entry.selection_range(0,len(txt))
-        self.dialog.protocol('WM_DELETE_WINDOW',self.cancel)
-
-        app.my_activate(self.dialog,focus=self.entry)
-
-    def cancel(self,event=None):
-        self.command(result='Done')
-
-    def command(self,result=None):
-        if result=='Set':
-            st = string.strip(self.entry.get())
-            if len(st):
-                cmd.set(self.name,st,log=1)
-            self.parent.update(self.name)
-        self.app.my_deactivate(self.dialog)
-                
 class SetEditor:
 
-    def __init__(self,app):
+    def __init__(self, app):
 
-        self.app = app
-        self.list = []
-        for a in  pymol.setting.get_index_list():
-            self.list.append("%-30s %s"%(pymol.setting._get_name(a),
-                          cmd.get_setting_text(a,'',-1)))
-
+        #====================
+        # get a list of settings and create dictionary with setting:value items
+        self.list = pymol.setting.get_name_list()
+        self.list.sort()
         self.index = {}
-        c = 0
-        for a in pymol.setting.get_name_list():
-            self.index[a] = c
-            c = c + 1
-            
-        self.dialog = Pmw.SelectionDialog(self.app.root,title="Settings",
-                                  buttons = ('Edit', 'Done'),
-                                              defaultbutton='Edit',
-                                  scrolledlist_labelpos=N,
-                                  label_text='Double click to edit',
-                                  scrolledlist_items = self.list,
-                                  command = self.command)
-        self.dialog.geometry("500x400")
-        self.listbox = self.dialog.component('scrolledlist')
-        self.listbox.component('listbox').configure(font=app.my_fw_font)
-        self.dialog.protocol('WM_DELETE_WINDOW',self.cancel)
-        app.my_show(self.dialog)
+        for i in self.list:
+            self.index[i] = cmd.get(i)
 
-    def cancel(self,event=None):
-        self.command(result='Done')
-        
-    def update(self,name):
-        if self.index.has_key(name):
-            idx = self.index[name]
-            self.listbox.delete(idx,idx)
-            self.listbox.insert(idx,"%-30s %s"%(name,
-                          cmd.get_setting_text(pymol.setting._get_index(name))))
-            self.listbox.selection_clear()
-            self.listbox.selection_set(idx)
-            
-    def command(self,result):
-        if result=='Done':
-            self.app.my_withdraw(self.dialog)
-        else:
-            sels = self.dialog.getcurselection()
-            if len(sels)!=0:
-                setting = string.strip(sels[0][0:30])
-                SingleEdit(self.app,setting,self)
+        #====================
+        # create main frames and scale widget to use as scrollbar
+        top = Toplevel()
+        top.title( "PyMOL Settings" )
+        top.geometry( "+100+200" )
+        l = Label(top, text="Edit item and hit <Enter> to set value", bd=1, relief=RAISED )
+        l.pack( side=TOP, fill=X, expand=1 )
 
-                    
+        f1 = Frame(top)
+        f1.pack( side=TOP, fill=BOTH, expand=1 )
+        frame = Frame(f1)
+        frame.pack( side=LEFT, fill=Y, expand=1 )
+
+        self.scale = Scale( f1, to=len(self.list)-nItem, showvalue=0, command=self.updateLabels )
+        self.scale.pack( side=RIGHT, fill=Y )
+
+        #====================
+        # create nItem label and entry widgets to hold setting name and values
+        # the text in these widgets will change as the scaler is moved, 
+        # giving a scrollbar effect
+        self.labels = []
+        self.values = []
+        for i in range(nItem):
+            l = Label( frame, text=self.list[i], width=30, anchor=E )
+            l.grid( row=i, column=0, sticky=E )
+            self.labels.append(l)
+
+            e = Entry( frame, width=30 )
+            e.insert( END, self.index[ self.list[i] ] )
+            e.grid( row=i, column=1, sticky=W+E )
+            e.bind( "<Return>", lambda event, i=i, e=e, s=self: s.onSet( i, e ) )
+            self.values.append(e)
+
+        #====================
+        # create filter frame
+        f2 = Frame( top, bd=1, relief=SUNKEN )
+        f2.pack( side=BOTTOM, fill=X, expand=1 )
+        l = Label( f2, text="Filter:", width=5, anchor=E )
+        l.grid ( row=0, column=0 )
+        self.filter = Entry( f2, width=48 )
+        self.filter.bind( "<KeyRelease>", self.onFilter )
+        self.filter.grid (row=0, column=1, sticky=W+E )
+        b = Button( f2, text="Filter", width=5, command=self.onFilter )
+        b.grid (row=0, column=2 )
+        b = Button( f2, text="Reset", width=5, command=self.onResetFilter )
+        b.grid (row=0, column=3 )
+
+        top.focus_set()
+
+    def updateLabels(self, *event):
+        """update the labels and values in the window whenever the
+        scale widget is 'scrolled', or whenever the filter is applied
+        """
+        if len(self.list) < nItem:
+            self.scale.set(0)
+
+        pos = self.scale.get()
+
+        for i in range(nItem):
+            try:
+                self.labels[i].config( text=self.list[i+pos] )
+            except:
+                self.labels[i].config( text="" )
+
+            self.values[i].delete(0,END)
+            try:
+                self.values[i].insert( END, self.index[ self.list[i+pos] ] )
+            except:
+                pass
+
+    def onSet(self, offset, entry):
+        """set the pymol setting to value in the entry widget where
+        the enter key was pressed
+        """
+        try:
+            lab = self.list[ self.scale.get()+offset ]
+        except:
+            return      # if trying to edit a blank entry
+
+        val = entry.get()
+        origVal = cmd.get( lab )
+        try:
+            cmd.set( lab, val, quiet=0 )
+            self.index[lab] = val
+        except:
+            entry.delete( 0,END )
+            entry.insert( END, origVal )
+
+    def onFilter(self, *event):
+        """get list of pymol settings that match filter"""
+        val = self.filter.get()
+        if not val: self.onResetFilter() # WLD
+        newL = []
+        for l in pymol.setting.get_name_list():
+            if l.find( val ) != -1:
+                newL.append( l )
+
+        self.list = newL
+        self.scale.set(0)
+        self.scale.config( to=len(self.list)-nItem )
+        self.updateLabels()
+
+    def onResetFilter(self):
+        """reset to full list of pymol settings"""
+        self.list = pymol.setting.get_name_list()
+        self.list.sort()
+        self.scale.set(0)
+        self.scale.config( to=len(self.list)-nItem )
+        self.updateLabels()
+
