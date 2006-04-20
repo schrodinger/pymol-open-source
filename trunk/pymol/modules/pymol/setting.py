@@ -554,6 +554,8 @@ if __name__=='pymol.setting':
         seq_view_label_color      = (518, '')
         surface_carve_normal_cutoff = (519, '')
         trace_atoms_mode          = (520,'')
+# dkw
+        session_changed           = (521,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
@@ -839,7 +841,8 @@ PYMOL API
     
     def get_setting_tuple(name,object='',state=0): # INTERNAL
         r = DEFAULT_ERROR
-        if is_string(name):      i = _get_index(name)
+        if is_string(name):
+            i = _get_index(name)
         else:
             i = int(name)
         if i<0:
@@ -848,6 +851,57 @@ PYMOL API
         try:
             lock()
             r = _cmd.get_setting_tuple(i,str(object),int(state)-1)
+        finally:
+            unlock()
+        if _raising(r): raise QuietException
+        return r
+    
+    def get_setting_boolean(name,object='',state=0): # INTERNAL
+        r = DEFAULT_ERROR
+        if is_string(name):
+            i = _get_index(name)
+        else:
+            i = int(name)
+        if i<0:
+            print "Error: unknown setting"
+            raise QuietException
+        try:
+            lock()
+            r = _cmd.get_setting_of_type(i,str(object),int(state)-1,1)
+        finally:
+            unlock()
+        if _raising(r): raise QuietException
+        return r
+    
+    def get_setting_int(name,object='',state=0): # INTERNAL
+        r = DEFAULT_ERROR
+        if is_string(name):
+            i = _get_index(name)
+        else:
+            i = int(name)
+        if i<0:
+            print "Error: unknown setting"
+            raise QuietException
+        try:
+            lock()
+            r = _cmd.get_setting_of_type(i,str(object),int(state)-1,2)
+        finally:
+            unlock()
+        if _raising(r): raise QuietException
+        return r
+    
+    def get_setting_float(name,object='',state=0): # INTERNAL
+        r = DEFAULT_ERROR
+        if is_string(name):
+            i = _get_index(name)
+        else:
+            i = int(name)
+        if i<0:
+            print "Error: unknown setting"
+            raise QuietException
+        try:
+            lock()
+            r = _cmd.get_setting_of_type(i,str(object),int(state)-1,3)
         finally:
             unlock()
         if _raising(r): raise QuietException

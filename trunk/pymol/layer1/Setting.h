@@ -672,6 +672,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_seq_view_label_color       518
 #define cSetting_surface_carve_normal_cutoff 519
 #define cSetting_trace_atoms_mode           520
+#define cSetting_session_changed            521
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -681,7 +682,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       521
+#define cSetting_INIT                       522
 
 #endif
 

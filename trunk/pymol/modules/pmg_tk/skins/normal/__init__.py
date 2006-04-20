@@ -7,6 +7,8 @@ import os
 
 from Tkinter import *
 from tkFileDialog import *
+import tkMessageBox
+
 import Pmw
 
 from pymol import parser
@@ -25,8 +27,8 @@ class Normal(PMGSkin):
     pad = ' ' # extra space in menus
     
     appname        = 'PyMOL Tcl/Tk GUI'
-    appversion     = '0.98'
-    copyright      = ('Copyright (C) 1998-2005 by Warren DeLano and \n'+
+    appversion     = '0.99'
+    copyright      = ('Copyright (C) 1998-2006 by Warren DeLano and \n'+
                             'DeLano Scientific LLC. All rights reserved.')
     contactweb     = 'http://www.pymol.org'
     contactemail   = 'warren@delanoscientific.com'
@@ -77,10 +79,22 @@ class Normal(PMGSkin):
         self.__messageBar.pack(side=LEFT, expand=NO, fill=X)
 
 
-    def confirm_quit(self):
-        check = tkMessageBox.askokcancel("Quit", "Really quit?")
-        if check:
-            self.root.quit()
+    def confirm_quit(self,e=None):
+        if int(self.cmd.get_setting_legacy("session_changed")):
+            session_file = self.cmd.get_setting_text("session_file")
+            if session_file != '':
+                message = "Save the current session '%s'?"%os.path.split(session_file)[1]
+            else:
+                message = "Save the current session?"
+            check = tkMessageBox._show("Save Session", message,
+                                       tkMessageBox.QUESTION, tkMessageBox.YESNOCANCEL)
+            if check==tkMessageBox.YES:
+                if self.session_save():
+                    self.quit_app()
+            elif check==tkMessageBox.NO:
+                self.quit_app()
+        else:
+            self.quit_app()
 
     def quit_app(self):
         self.cmd.log_close()
@@ -246,7 +260,8 @@ class Normal(PMGSkin):
         self.entry.bind('<Tab>', lambda e, s=self: s.complete(e))
         self.entry.bind('<Up>', lambda e, s=self: s.back())
         self.entry.bind('<Down>', lambda e, s=self: s.forward())
-
+        self.root.protocol("WM_DELETE_WINDOW", lambda s=self: s.confirm_quit())
+        
         self.initialdir = os.getcwd()
         self.log_file = "log.pml"      
 
@@ -488,14 +503,17 @@ class Normal(PMGSkin):
             self.cmd.log_open(ofile,'a')
 
     def session_save(self):
+        self.save_file = self.cmd.get_setting_text("session_file")
         if self.save_file!='':
             self.cmd.log("save %s,format=pse\n"%(self.save_file),
                       "cmd.save('%s',format='pse')\n"%(self.save_file))
             self.cmd.save(self.save_file,"","pse",quiet=0)
+            return 0
         else:
-            self.session_save_as()
+            return self.session_save_as()
 
     def session_save_as(self):
+        (self.initialdir, self.save_file) = os.path.split(self.cmd.get_setting_text("session_file"))
         sfile = asksaveasfilename(initialfile = self.save_file,
                                           initialdir = self.initialdir,
                                           filetypes=[
@@ -510,6 +528,10 @@ class Normal(PMGSkin):
                       "cmd.save('%s',format='pse')\n"%(sfile))
             self.cmd.save(sfile,"",format='pse',quiet=0)
             self.save_file = sfile
+            self.cmd.set("session_file",self.save_file,quiet=1)
+            return 1
+        else:
+            return 0
     
     def file_save(self):
         lst = self.cmd.get_names('all')
@@ -766,7 +788,7 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('File', 'command', 'Quit PyMOL',
                                 label=self.pad+'Quit',
-                                command=self.quit_app)
+                                command=self.confirm_quit)
 
         self.menuBar.addmenuitem('File', 'command', 'Reinitialize PyMOL',
                                 label=self.pad+'Reinitialize',

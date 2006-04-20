@@ -76,6 +76,7 @@ class PMGApp(Pmw.MegaWidget):
         self.root.option_add('*Listbox*selectForeground', 'white')
         
     def quit_app(self):
+        print "here"
         self.pymol.cmd.log_close()
         self.pymol.cmd.quit()  # avoid logging this - it's inconvenient...
 
@@ -96,13 +97,15 @@ class PMGApp(Pmw.MegaWidget):
     def run(self,poll=0):
         # this call to mainloop needs to be replaced with something revocable
         self.flush_fifo_once()
+        keep_alive = 1
         if poll:
             import time
-            while 1:
+            while keep_alive:
                 self.root.update()
                 time.sleep(0.05)
         else:
             self.root.mainloop()
+            
         self.quit_app()
 
     def execute(self,cmmd): 

@@ -4307,6 +4307,95 @@ float *ExecutiveGetVertexVLA(PyMOLGlobals *G,char *s1,int state)
   return(result);
 }
 /*========================================================================*/
+PyObject *ExecutiveGetSettingOfType(PyMOLGlobals *G,int index,
+                                    char *object,int state,int type)
+{ 
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  /* Assumes blocked Python interpreter */
+  PyObject *result = NULL;
+  CObject *obj = NULL;
+  CSetting **handle=NULL,*set_ptr1=NULL,*set_ptr2=NULL;
+  int ok=true;
+
+  if(object)
+    if(object[0]) {
+      obj=ExecutiveFindObjectByName(G,object);
+      if(!obj) 
+        ok=false;
+    } 
+  if(!ok) {
+    PRINTFB(G,FB_Executive,FB_Errors)
+      " SettingGet-Error: object \"%s\" not found.\n",object
+      ENDFB(G);
+    ok=false;
+  } else if(obj) {
+    handle = obj->fGetSettingHandle(obj,-1);
+    if(handle) set_ptr1 = *handle;
+    if(state>=0) {
+      handle = obj->fGetSettingHandle(obj,state);
+      if(handle) 
+        set_ptr2 = *handle;
+      else {
+        PRINTFB(G,FB_Executive,FB_Errors)
+          " SettingGet-Error: object \"%s\" lacks state %d.\n",object,state+1
+          ENDFB(G);
+        ok=false;
+      }
+    }
+  }
+  if(ok) {
+    switch(type) {
+    case cSetting_boolean:
+      {
+        int value = SettingGet_b(G,set_ptr2,set_ptr1,index);
+        result=Py_BuildValue("i",value);
+      }
+      break;
+    case cSetting_int:
+      {
+        int value = SettingGet_i(G,set_ptr2,set_ptr1,index);
+        result=Py_BuildValue("i",value);
+      }
+      break;
+    case cSetting_float:
+      {
+        float value = SettingGet_f(G,set_ptr2,set_ptr1,index);
+        result=Py_BuildValue("f",value);
+      }
+      break;
+    case cSetting_float3:
+      {
+         float value[3];
+         SettingGet_3f(G,set_ptr2,set_ptr1,index,value);
+         result=Py_BuildValue("fff",value[0],value[1],value[2]);
+      }
+      break;
+    case cSetting_color:
+      {
+        int value = SettingGet_color(G,set_ptr2,set_ptr1,index);
+        result=Py_BuildValue("i",value);
+      }
+      break;
+    case cSetting_string:
+      {  
+        OrthoLineType buffer = "";
+        buffer[0]=0;
+        SettingGetTextValue(G,set_ptr2,set_ptr1,index,buffer);
+        result=Py_BuildValue("s",buffer);
+      }
+      break;
+    default:
+      result=Py_BuildValue("i",0);
+      break;
+    }
+  } 
+  return(result);
+#endif
+
+}
+/*========================================================================*/
 PyObject *ExecutiveGetSettingText(PyMOLGlobals *G,int index,char *object,int state)
 { 
 #ifdef _PYMOL_NOPY

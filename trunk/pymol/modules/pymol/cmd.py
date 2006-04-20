@@ -1629,6 +1629,9 @@ SEE ALSO
               set,                 \
               get,                 \
               unset,               \
+              get_setting_boolean, \
+              get_setting_int,     \
+              get_setting_float,   \
               get_setting_legacy,  \
               get_setting_tuple,   \
               get_setting_updates, \

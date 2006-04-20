@@ -1171,7 +1171,8 @@ DEVELOPMENT TO DO
                         if len(list)>3:
                             cmd.set_colorection_name(list[3],key,new_key)
                         print" scene: '%s' renamed to '%s'."%(key,new_key)
-                        scene_dict_sc = Shortcut(scene_dict.keys())                  
+                        scene_dict_sc = Shortcut(scene_dict.keys())
+                        cmd.set("session_changed",1,quiet=1)
                 elif action=='insert_after':
                     key = _scene_get_unique_key()            
                     cur_scene = setting.get("scene_current_name")
@@ -1303,6 +1304,7 @@ DEVELOPMENT TO DO
                         print " scene: scene stored as \"%s\"."%key
                     cmd.set("scenes_changed",1,quiet=1);
                     cmd.set('scene_current_name',key,quiet=1)
+                    cmd.set("session_changed",1,quiet=1)                    
                 elif action=='clear':
                     if key=='auto':
                         key = setting.get("scene_current_name")
@@ -1321,6 +1323,7 @@ DEVELOPMENT TO DO
                         scene_dict_sc = Shortcut(scene_dict.keys())            
                         if _feedback(fb_module.scene,fb_mask.actions):
                             print " scene: '%s' deleted."%key
+                    cmd.set("session_changed",1,quiet=1)                                                                    
                 elif action=='next':
                     lst = _scene_validate_list()
                     cur_scene = setting.get('scene_current_name',quiet=1)

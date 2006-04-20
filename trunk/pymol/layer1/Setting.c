@@ -100,6 +100,8 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_b(I,cSetting_defer_updates,defer_updates);
   SettingSet_b(I,cSetting_suspend_updates,suspend_updates);
 
+  SettingSet_b(I,cSetting_session_changed,0); 
+
   if(G->Option->presentation) {
       SettingSet_b(I,cSetting_full_screen,full_screen);
       SettingSet_b(I,cSetting_presentation,1);
@@ -2818,6 +2820,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_color(I,cSetting_seq_view_label_color, "white"); /* grey50 */
   set_f(I,cSetting_surface_carve_normal_cutoff, -1.0F);
   set_i(I,cSetting_trace_atoms_mode,5);
+  set_b(I,cSetting_session_changed,0);
+
 }
 
 
