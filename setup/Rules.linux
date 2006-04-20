@@ -15,8 +15,8 @@ XINC_DIR = -I/usr/X11R6/include
 PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
 PYTHON_LIB =
 PYTHON_LIB_DIR = 
-PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.3 \
-	-I$(PYMOL_PATH)/ext/include/python2.3/Numeric
+PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.4 \
+	-I$(PYMOL_PATH)/ext/include/python2.4/Numeric
 #--- Other external dependencies
 EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include
 EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
