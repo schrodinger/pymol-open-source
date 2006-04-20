@@ -3894,6 +3894,21 @@ static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args)
   return APIAutoNone(result);
 }
 
+static PyObject *CmdGetSettingOfType(PyObject *self, 	PyObject *args)
+{
+  PyObject *result = Py_None;
+  int int1,int2,int3;
+  char *str1;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"isii",&int1,&str1,&int2,&int3); /* setting, object, state */
+  if (ok) {
+    APIEnterBlocked();
+    result =  ExecutiveGetSettingOfType(TempPyMOLGlobals,int1,str1,int2,int3);
+    APIExitBlocked();
+  }
+  return APIAutoNone(result);
+}
+
 static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args)
 {
   PyObject *result = Py_None;
@@ -6014,6 +6029,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_renderer",          CmdGetRenderer,          METH_VARARGS },
    {"get_session",           CmdGetSession,           METH_VARARGS },
 	{"get_setting",           CmdGetSetting,           METH_VARARGS },
+	{"get_setting_of_type",   CmdGetSettingOfType,    METH_VARARGS },
 	{"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
 	{"get_setting_text",      CmdGetSettingText,       METH_VARARGS },
    {"get_setting_updates",   CmdGetSettingUpdates,    METH_VARARGS },
