@@ -2538,7 +2538,7 @@ void ObjectGotoState(ObjectMolecule *I,int state)
   }
 }
 /*========================================================================*/
-CObjectState *ObjectMoleculeGetObjectState(ObjectMolecule *I,int state)
+static CObjectState *ObjectMoleculeGetObjectState(ObjectMolecule *I,int state)
 {
   CObjectState *result = NULL;
   if(state<0) {
