@@ -2081,7 +2081,7 @@ EXAMPLES
         if _raising(r): raise QuietException
         return r
     
-    def set_color(name,rgb,mode=0):
+    def set_color(name,rgb,mode=0,quiet=0):
         '''
 DESCRIPTION
 
@@ -2117,7 +2117,7 @@ EXAMPLES
                 lock()
 
                 if len(rgb)==3:
-                    r = _cmd.colordef(str(name),rgb[0],rgb[1],rgb[2],int(mode))
+                    r = _cmd.colordef(str(name),rgb[0],rgb[1],rgb[2],int(mode),int(quiet))
                     cmd._invalidate_color_sc()
                 else:
                     print "Error: invalid color."
