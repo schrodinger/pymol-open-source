@@ -1144,10 +1144,9 @@ PYMOL API
                                 ("( %6.1f, %6.1f )"%r[a])+
                                 "'%(resn+'-'+resi+':')")
                 cmd.feedback('pop')
-        if _raising(r):
-            raise pymol.CmdException
         elif _feedback(fb_module.cmd,fb_mask.errors):      
             print "cmd-Error: can't compute phi_psi"
+        if _raising(r): raise pymol.CmdException
         return r
 
 
