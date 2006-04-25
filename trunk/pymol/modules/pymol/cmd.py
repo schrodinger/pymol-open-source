@@ -809,7 +809,7 @@ DEVELOPMENT TO DO
                     lock()
                     r = _cmd.feedback(module,mask)
                 finally:
-                    unlock()
+                    unlock(-1)
             else:
                 if fb_dict.has_key(module):
                     r = fb_dict[module]&mask
@@ -832,7 +832,7 @@ DEVELOPMENT TO DO
                 fname = exp_path(fname)
                 r = _cmd.mpng_(str(fname),int(arg[1]),int(arg[2]))
             finally:
-                unlock()
+                unlock(-1)
             return r
 
         # loading
@@ -969,7 +969,7 @@ DEVELOPMENT TO DO
                 fname = exp_path(fname)
                 r = _cmd.png(str(fname),int(width),int(height),float(dpi),int(quiet))
             finally:
-                unlock()
+                unlock(-1)
             return r
 
         # quitting (thread-specific)
@@ -995,7 +995,7 @@ DEVELOPMENT TO DO
                         pass
                 r = _cmd.quit()
             finally:
-                unlock()
+                unlock(-1)
             return r
 
         # screen redraws (thread-specific)
@@ -1013,7 +1013,7 @@ DEVELOPMENT TO DO
                 else:
                     print "Error: Ignoring an unsafe call to cmd._refresh"
             finally:
-                unlock()
+                unlock(-1)
             return r
 
         # stereo (platform dependent )
@@ -1073,7 +1073,7 @@ DEVELOPMENT TO DO
                         l.append(r)
                         r = _cmd.get_feedback()
                 finally:
-                    unlock()
+                    unlock(-1)
             return l
         get_feedback = _get_feedback # for legacy compatibility
 
@@ -1082,7 +1082,7 @@ DEVELOPMENT TO DO
             try:
                 _cmd.fake_drag()
             finally:
-                unlock()
+                unlock(-1)
             return 1
 
         def interrupt(): # asynch -- no locking!

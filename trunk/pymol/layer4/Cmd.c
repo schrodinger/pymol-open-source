@@ -849,7 +849,7 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
   PyObject *tup;
   ok = PyArg_ParseTuple(args,"si",&name,&mode);
   if(ok) {
-    APIEntry();
+    APIEnterBlocked();
     switch(mode) {
     case 0: /* by name or index, return floats */
       index = ColorGetIndex(TempPyMOLGlobals,name);
@@ -863,7 +863,6 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
       }
       break;
     case 1: /* get color names with NO NUMBERS in their names */
-      PBlock();
       nc=ColorGetNColor(TempPyMOLGlobals);
       nvc=0;
       for(a=0;a<nc;a++) {
@@ -880,10 +879,8 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
           PyList_SetItem(result,nvc++,tup);
         }
       }
-      PUnblock();
       break;
     case 2: /* get all colors */
-      PBlock();
       nc=ColorGetNColor(TempPyMOLGlobals);
       nvc=0;
       for(a=0;a<nc;a++) {
@@ -900,12 +897,9 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
           PyList_SetItem(result,nvc++,tup);
         }
       }
-      PUnblock();
       break;
     case 3: /* get a single color index */
-      PBlock();
       result = PyInt_FromLong(ColorGetIndex(TempPyMOLGlobals,name));
-      PUnblock();
       break;
     case 4: /* by name or index, return floats including negative R for special colors */
       index = ColorGetIndex(TempPyMOLGlobals,name);
@@ -917,7 +911,7 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
       result=tup;
       break;
     }
-    APIExit();
+    APIExitBlocked();
   }
   return(APIAutoNone(result));
 }
