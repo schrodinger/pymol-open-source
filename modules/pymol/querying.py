@@ -440,8 +440,6 @@ PYMOL API
             r = _cmd.get_povray()
         finally:
             unlock(r)
-        if not r:
-            if cmd._raising(): raise pymol.CmdException
         if _raising(r): raise pymol.CmdException
         return r
 
@@ -502,8 +500,6 @@ PYMOL API
             r = _cmd.get_vrml()
         finally:
             unlock(r)
-        if not r:
-            if cmd._raising(): raise pymol.CmdException
         if _raising(r): raise pymol.CmdException
         return r
 
@@ -626,8 +622,6 @@ SEE ALSO
                     print "cmd-Error: Unknown color '%s'."%name
         finally:
             unlock(r)
-        if not r:
-            if cmd._raising(): raise pymol.CmdException
         if _raising(r): raise pymol.CmdException
         return r
 
@@ -641,8 +635,6 @@ SEE ALSO
                 r = _cmd.get_color('',1)            
         finally:
             unlock(r)
-        if not r:
-            if cmd._raising(): raise pymol.CmdException
         if _raising(r): raise pymol.CmdException
         return r
 
@@ -653,8 +645,6 @@ SEE ALSO
             r = _cmd.get_color(str(color),3)
         finally:
             unlock(r)
-        if r == None:
-            if cmd._raising(): raise pymol.CmdException
         if _raising(r): raise pymol.CmdException
         return r
             
@@ -678,8 +668,6 @@ SEE ALSO
             r = _cmd.get_phipsi("("+str(selection)+")",int(state)-1)
         finally:
             unlock(r)
-        if not r:
-            if cmd._raising(): raise pymol.CmdException
         if _raising(r): raise pymol.CmdException
         return r
 
@@ -707,11 +695,10 @@ SEE ALSO
             r = _cmd.get_position()
         finally:
             unlock(r)
-        if r==None:
-            if cmd._raising(): raise pymol.CmdException
+        if _raising(r):
+            raise pymol.CmdException
         elif not quiet:
             print " cmd.get_position: [%8.3f,%8.3f,%8.3f]"%(r[0],r[1],r[2])
-        if _raising(r): raise pymol.CmdException
         return r
 
     def get_distance(atom1="pk1",atom2="pk2",state=0,quiet=1):
@@ -747,11 +734,10 @@ PYMOL API
             r = _cmd.get_distance(str(atom1),str(atom2),int(state)-1)
         finally:
             unlock(r)
-        if r==None:
-            if cmd._raising(): raise pymol.CmdException
+        if _raising(r):
+            raise pymol.CmdException
         elif not quiet:
             print " cmd.get_distance: %5.3f Angstroms."%r
-        if _raising(r): raise pymol.CmdException
         return r
 
     def get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=0,quiet=1):
@@ -787,11 +773,10 @@ PYMOL API
             r = _cmd.get_angle(str(atom1),str(atom2),str(atom3),int(state)-1)
         finally:
             unlock(r)
-        if r==None:
-            if cmd._raising(): raise pymol.CmdException
+        if _raising(r):
+            raise pymol.CmdException
         elif not quiet:
             print " cmd.get_angle: %5.3f degrees."%r
-        if _raising(r): raise pymol.CmdException
         return r
         
     def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=0,quiet=1):
@@ -831,11 +816,10 @@ PYMOL API
             r = _cmd.get_dihe(str(atom1),str(atom2),str(atom3),str(atom4),int(state)-1)
         finally:
             unlock(r)
-        if r==None:
-            if cmd._raising(): raise pymol.CmdException
+        if _raising(r):
+            raise pymol.CmdException
         elif not quiet:
             print " cmd.get_dihedral: %5.3f degrees."%r
-        if _raising(r): raise pymol.CmdException
         return r
 
     def get_model(selection="(all)",state=1):
@@ -878,8 +862,8 @@ PYMOL API
             unlock(r)
         if r<0.0: # negative area signals error condition
             if cmd._raising(): raise pymol.CmdException
-        elif not quiet: print " cmd.get_area: %5.3f Angstroms^2."%r
-        if _raising(r): raise pymol.CmdException
+        elif not quiet:
+            print " cmd.get_area: %5.3f Angstroms^2."%r
         return r
 
     def get_chains(selection="(all)",state=0,quiet=1):
@@ -899,8 +883,10 @@ PYMOL API
             unlock(r)
         if r==None:
             return []
-        elif not quiet: print " cmd.get_chains: ",str(r)
-        if _raising(r): raise pymol.CmdException
+        if _raising(r):
+            raise pymol.CmdException
+        elif not quiet:
+            print " cmd.get_chains: ",str(r)
         return r
 
 
@@ -981,7 +967,6 @@ SEE ALSO
                 print "cmd-Error: unrecognized name."
         elif not quiet:
             print r
-        if cmd._raising(r): raise pymol.CmdException
         if _raising(r): raise pymol.CmdException
         return r
 
@@ -1159,9 +1144,10 @@ PYMOL API
                                 ("( %6.1f, %6.1f )"%r[a])+
                                 "'%(resn+'-'+resi+':')")
                 cmd.feedback('pop')
+        if _raising(r):
+            raise pymol.CmdException
         elif _feedback(fb_module.cmd,fb_mask.errors):      
             print "cmd-Error: can't compute phi_psi"
-        if _raising(r): raise pymol.CmdException
         return r
 
 

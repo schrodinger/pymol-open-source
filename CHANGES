@@ -2,7 +2,13 @@
 CHANGE LOG
 =========================================================================
 
+Changes up to 1.00b04
+
+    * fixed race condition in color querying
+
 Changes up to 1.00b03
+
+    * near_to selection operator
 
     * surface_carve_normal_cutoff setting
 
