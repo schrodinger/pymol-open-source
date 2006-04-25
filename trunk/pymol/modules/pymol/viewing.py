@@ -2081,7 +2081,7 @@ EXAMPLES
         if _raising(r): raise QuietException
         return r
     
-    def set_color(name,rgb,mode=0,quiet=0):
+    def set_color(name,rgb,mode=0,quiet=1):
         '''
 DESCRIPTION
 
