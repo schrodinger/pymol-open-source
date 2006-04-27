@@ -10504,7 +10504,7 @@ void ExecutiveMemoryDump(PyMOLGlobals *G)
 void ExecutiveDoZoom(PyMOLGlobals *G,CObject *obj,int is_new, int zoom,int quiet)
 {
   if(zoom) {/* -1 = use setting, 0 = never, 1 = zoom new, 
-               2 = zoom always, 3 = zoom current, 4 = zoom all */
+               2 = zoom always, 3 = zoom current, 4 = zoom all, 5= first object */
     if(zoom<0) {
       zoom = SettingGetGlobal_i(G,cSetting_auto_zoom);
       if(zoom<0) {
