@@ -1,13 +1,15 @@
+/* MACHINE PROCESSED SOURCE CODE -- DO NOT EDIT */
+
 #ifndef _H_ov_port
 #define _H_ov_port
 
 /* headers */
 
-#include<stdio.h>
-#include<math.h>
-#include<string.h>
-#include<stdlib.h>
-#include<ctype.h>
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 #ifndef OV_NULL
 #define OV_NULL ((void*)0)
@@ -20,6 +22,10 @@
 #ifndef OV_TRUE
 #define OV_TRUE 1
 #endif
+
+/* how do we inline functions in header files? */
+
+#define OV_INLINE __inline__ static
 
 /* memory management */
 
@@ -34,6 +40,7 @@
 #define ov_port_exit exit
 
 /* header-dependent types */
+
 #define ov_port_size_t size_t
 
 #endif
