@@ -2378,6 +2378,9 @@ static PyObject *ExecutiveGetExecObject(PyMOLGlobals *G,SpecRec *rec)
   case cObjectCGO:
     PyList_SetItem(result,5,ObjectCGOAsPyList((ObjectCGO*)rec->obj));
     break;
+  case cObjectAlignment:
+    PyList_SetItem(result,5,ObjectAlignmentAsPyList((ObjectAlignment*)rec->obj));
+    break;
   default: 
     PyList_SetItem(result,5,PConvAutoNone(NULL));
     break;
@@ -2440,6 +2443,9 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
           break;
         case cObjectGadget:
           if(ok) ok = ObjectGadgetNewFromPyList(G,PyList_GetItem(cur,5),(ObjectGadget**)&rec->obj,version);
+          break;
+        case cObjectAlignment:
+          if(ok) ok = ObjectAlignmentNewFromPyList(G,PyList_GetItem(cur,5),(ObjectAlignment**)&rec->obj,version);
           break;
         default:
           PRINTFB(G,FB_Executive,FB_Errors)
@@ -5874,6 +5880,42 @@ float ExecutiveDistance(PyMOLGlobals *G,char *s1,char *s2)
   return(dist);
 }
 /*========================================================================*/
+char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals *G,char *name,int state,int format,int quiet)
+{
+  char *result=NULL;    
+  if((!name)||(!name[0])||(strcmp(name,"(all)")==0)) {
+    /* use current alignment as the default */
+    name = SettingGetGlobal_s(G,cSetting_seq_view_alignment);
+    if(name[0]==0) {
+      SpecRec *rec = NULL;
+      register CExecutive *I = G->Executive;
+      while(ListIterate(I->Spec,rec,next)) {
+        if(rec->visible) {
+          if(rec->type==cExecObject)
+            if(rec->obj->type==cObjectAlignment) {
+              name = rec->obj->Name;              
+              break;
+            }
+        }
+      }
+    }
+  }
+  if(!name) {
+    ErrMessage(G," Executive","invalid alignment object name.");
+  } else {
+    CObject *obj=ExecutiveFindObjectByName(G,name);
+    
+    if(!obj) {
+      ErrMessage(G," Executive","alignment object not found.");
+    } else if(obj->type != cObjectAlignment) {
+      ErrMessage(G," Executive","invalid object type.");
+    } else {
+      ObjectAlignmentAsStrVLA(G,(ObjectAlignment*)obj, state,format,&result);
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
 char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
                             int mode,char *ref_object,int ref_state,int quiet)
 {
@@ -6575,7 +6617,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
   ObjectMoleculeOpRecInit(&op2);
 
   /* this function operates on stored coordinates -- thus transformation 
-   matrices will need to be applied to the resulting atoms */
+     matrices will need to be applied to the resulting atoms */
 
   if(sele1>=0) {
     if(state1<0) {
@@ -7031,7 +7073,8 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
 #if 1
           {
             int align_state = state2;
-            
+            ObjectMolecule *trg_obj = SelectorGetSingleObjectMolecule(G,sele2);            
+
             if(align_state<0) {
               align_state = SceneGetState(G);
             }
@@ -7064,7 +7107,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                   else
                     obj = (ObjectAlignment*)execObj;
                 }
-                obj = ObjectAlignmentDefine(G,obj,align_vla,align_state,true,NULL);
+                obj = ObjectAlignmentDefine(G,obj,align_vla,align_state,true,trg_obj);
                 obj->Obj.Color = ColorGetIndex(G,"yellow");
                 ObjectSetName((CObject*)obj,oname);
                 ExecutiveManageObject(G,(CObject*)obj,0,false);
@@ -10718,7 +10761,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 int mx = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
                 t = (op_cnt-t)-1;
                 switch(t) {
-                case 0:
+                case 0: /* action */
                   switch(rec->type) {
                   case cExecAll:
                     MenuActivate(G,mx,my,x,y,false,"all_action",rec->name);
@@ -10743,6 +10786,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectDist:
                     case cObjectCGO:
                     case cObjectCallback:
+                    case cObjectAlignment:
                       MenuActivate(G,mx,my,x,y,false,"simple_action",rec->obj->Name);
                       break;
                     case cObjectSlice:
@@ -10769,6 +10813,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                       MenuActivate(G,mx,my,x,y,false,"mol_show",rec->obj->Name);
                       break;
                     case cObjectCGO:
+                    case cObjectAlignment:
                       MenuActivate(G,mx,my,x,y,false,"cgo_show",rec->obj->Name);
                       break;
                     case cObjectDist:
@@ -10805,6 +10850,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                       MenuActivate(G,mx,my,x,y,false,"mol_hide",rec->obj->Name);
                       break;
                     case cObjectCGO:
+                    case cObjectAlignment:
                       MenuActivate(G,mx,my,x,y,false,"cgo_hide",rec->obj->Name);
                       break;
                     case cObjectDist:

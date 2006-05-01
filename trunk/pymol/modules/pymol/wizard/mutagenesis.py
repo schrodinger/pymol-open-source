@@ -40,6 +40,7 @@ class Mutagenesis(Wizard):
         self.load_library()
         self.status = 0 # 0 no selection, 1 mutagenizing
         self.bump_check = 1
+        self.auto_center = 1
         self.error = None
         self.object_name = None
         self.modes = [
@@ -233,13 +234,14 @@ class Mutagenesis(Wizard):
         cmd.feedback("push")
         cmd.feedback("disable","selector","everythin")
         cmd.feedback("disable","editor","actions")
-
         self.prompt = [ 'Loading rotamers...']
         
         auto_zoom = cmd.get_setting_text('auto_zoom')
         cmd.set('auto_zoom',"0",quiet=1)
         cmd.frame(0)
         cmd.delete(tmp_name)
+        if self.auto_center:
+            cmd.center(sele_name,animate=-1)
         if self.mode=="current":
             pymol.stored.resn=""
             cmd.iterate("(%s and n;ca)"%sele_name,"stored.resn=resn")
