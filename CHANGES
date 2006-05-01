@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 1.00b04
 
+    * fixed formal charges & valences on nucleic acid backbone
+
     * fixed race condition in color querying
 
 Changes up to 1.00b03

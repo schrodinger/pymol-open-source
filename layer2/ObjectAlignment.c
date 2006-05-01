@@ -88,6 +88,32 @@ static int GroupOrderKnown(ExecutiveObjectOffset *eoo,
   return order_known;
 }
 
+int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int format, char **str_vla)
+{
+  int ok=true;
+  int len = 0;
+  char *vla = VLAlloc(char, 1000);
+
+  if(state<0) state=ObjectGetCurrentState(I,false);
+  if(state<0) state=SceneGetState(G);    
+  if((state>=0)&&(state<I->NState)) {
+    ObjectAlignmentState *oas = I->State + state;
+    if(oas->alignVLA) {
+      
+      switch(format) {
+      case 0: /* aln */
+        UtilConcatVLA(&vla, &len,"CLUSTAL\n\n");
+        
+        break;
+      }
+    }
+  }
+  VLASize(vla,char,len+1);
+  vla[len]=0;
+  *str_vla = vla;
+  return ok;
+}
+
 static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMolecule *guide)
 {
   /* curVLA and newVLA must be properly sized and zero terminated...*/
@@ -127,7 +153,7 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
           action = 1;
         }
         
-        if( (cur_start<n_cur)&& (new_start<n_new) &&
+        if( (cur_start<n_cur) && (new_start<n_new) &&
             curVLA[cur_start] && newVLA[new_start]) {
            /* both lists active */
           
@@ -276,22 +302,16 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
 #ifndef _PYMOL_NOPY
 static PyObject *ObjectAlignmentStateAsPyList(ObjectAlignmentState *I)
 {
-
   PyObject *result = NULL;
 
-  result = PyList_New(0);
-#if 0
-  if(I->std) 
-    PyList_SetItem(result,0,CGOAsPyList(I->std));
-  else
-    PyList_SetItem(result,0,PConvAutoNone(NULL));
-  if(I->ray) 
-    PyList_SetItem(result,1,CGOAsPyList(I->ray));
-  else
-    PyList_SetItem(result,1,PConvAutoNone(NULL));
-#endif
+  result = PyList_New(2);
+  if(I->alignVLA) {
+    PyList_SetItem(result, 0, PConvIntVLAToPyList(I->alignVLA));
+  } else {
+    PyList_SetItem(result, 0, PConvAutoNone(NULL));
+  }
+  PyList_SetItem(result, 1, PyString_FromString(I->guide));
   return(PConvAutoNone(result));  
-
 }
 
 static PyObject *ObjectAlignmentAllStatesAsPyList(ObjectAlignment *I)
@@ -310,28 +330,16 @@ static PyObject *ObjectAlignmentAllStatesAsPyList(ObjectAlignment *I)
 static int ObjectAlignmentStateFromPyList(PyMOLGlobals *G,ObjectAlignmentState *I,PyObject *list,int version)
 {
   int ok=true;
-  int ll;
+  int ll = 0;
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
   if(ok) ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */
-#if 0
-  if(ok) {
-    tmp = PyList_GetItem(list,0);
-    if(tmp == Py_None)
-      I->std = NULL;
-    else 
-      ok = ((I->std=CGONewFromPyList(G,PyList_GetItem(list,0),version))!=NULL);
+  if(ok && (ll>1)) {
+    PConvPyListToIntVLA(PyList_GetItem(list,0),&I->alignVLA);
+    strcpy(I->guide,PyString_AsString(PyList_GetItem(list,1)));
   }
-  if(ok) {
-    tmp = PyList_GetItem(list,1);
-    if(tmp == Py_None)
-      I->ray = NULL;
-    else 
-      ok = ((I->ray=CGONewFromPyList(G,PyList_GetItem(list,1),version))!=NULL);
-  }
-#endif
   return(ok);
 }
 
@@ -461,7 +469,10 @@ static void ObjectAlignmentUpdate(ObjectAlignment *I)
       for(a=0;a<I->NState;a++) {
         ObjectAlignmentState *oas = I->State + a;
         if(!oas->valid) {
-
+          ObjectMolecule *guide_obj = NULL;
+          if(oas->guide[0]) {
+            guide_obj = ExecutiveFindObjectMoleculeByName(G,oas->guide);
+          }
           if(I->SelectionState == a )
             I->SelectionState = -1;
 
@@ -486,7 +497,7 @@ static void ObjectAlignmentUpdate(ObjectAlignment *I)
               int id, b=0, c;
               int *vla = oas->alignVLA;
               int n_id = VLAGetSize(vla);
-              float mean[3], vert[3];
+              float mean[3], vert[3], gvert[3];
               int n_coord = 0;
               int tag = SELECTOR_BASE_TAG+1;
               OVOneToAny *id2tag = oas->id2tag;
@@ -494,14 +505,16 @@ static void ObjectAlignmentUpdate(ObjectAlignment *I)
 
               while(b<n_id) {
 
+                int gvert_valid;
                 while( (b<n_id) && (!vla[b]) ) 
                   b++;
-
+                
                 if(!(b<n_id))
                   break;
-
+                
                 c = b;
                 n_coord = 0;
+                gvert_valid = false;
                 zero3f(mean);
                 while( (id=vla[c++]) ) {
                   if(OVreturn_IS_OK( offset=OVOneToOne_GetForward(id2eoo, id)) ) {
@@ -509,11 +522,15 @@ static void ObjectAlignmentUpdate(ObjectAlignment *I)
                                                    eoo[offset.word].offset,vert)) {
                       n_coord++;
                       add3f(vert,mean,mean);
+                      if(eoo[offset.word].obj == guide_obj) {
+                        copy3f(vert,gvert);
+                        gvert_valid = true;
+                      }
                     }
                   }
                 }
 
-                if(n_coord>2) { /* >2 points, then draw to mean */
+                if(n_coord>2) { /* >2 points, then draw to mean or guide vertex */
                   float scale = 1.0F/n_coord;
 
                   scale3f(mean, scale, mean);
@@ -525,8 +542,15 @@ static void ObjectAlignmentUpdate(ObjectAlignment *I)
                     if(OVreturn_IS_OK( offset=OVOneToOne_GetForward(id2eoo, id) )) {
                       if(ObjectMoleculeGetAtomVertex(eoo[offset.word].obj, a, 
                                                      eoo[offset.word].offset,vert)) {
-                        CGOVertexv(cgo,mean);
-                        CGOVertexv(cgo,vert);
+                        if(gvert_valid) {
+                          if(eoo[offset.word].obj != guide_obj) {
+                            CGOVertexv(cgo,gvert);                          
+                            CGOVertexv(cgo,vert);
+                          }
+                        }  else {
+                          CGOVertexv(cgo,mean);
+                          CGOVertexv(cgo,vert);
+                        }
                       }
                     }
                   }
@@ -744,7 +768,9 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals *G,
   {
     ObjectAlignmentState *oas = I->State + state;
     oas->valid = false;
-
+    if(guide) {
+      strcpy(oas->guide, guide->Obj.Name);
+    }
     if(align_vla) {
       if(merge && oas->alignVLA) {
         int *new_vla = AlignmentMerge(G, oas->alignVLA, align_vla, guide);
@@ -760,6 +786,7 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals *G,
         UtilCopyMem(oas->alignVLA, align_vla, sizeof(int)*size);
         VLASize(oas->alignVLA, int, size);
       }
+
     } else {
       VLAFreeP(oas->alignVLA);
     }

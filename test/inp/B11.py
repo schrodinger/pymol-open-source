@@ -30,7 +30,7 @@ def load():
       passed = time.time()-start
       print "%3d structures/%5.1f sec = %8.1f atom/sec over %6d atoms"%(count,passed,atoms/passed,atoms)
       count = count + 1
-      if count>1000: break
+      if count>100: break
       x = x + 1
       if x>7:
          x = 0

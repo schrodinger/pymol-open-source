@@ -101,6 +101,7 @@ int OrthoDeferredWaiting(PyMOLGlobals *G);
 void OrthoSetLoop(PyMOLGlobals *G,int flag, int l, int r, int t, int b);
 int OrthoGetRenderMode(PyMOLGlobals *G);
 void OrthoDrawBuffer(PyMOLGlobals *G,GLenum mode);
+
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];
 

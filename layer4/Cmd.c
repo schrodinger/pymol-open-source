@@ -3334,6 +3334,26 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
   }
 }
 
+static PyObject *CmdGetSeqAlignStr(PyObject *dummy, PyObject *args)
+{
+  char *str1;
+  char *seq = NULL;
+  int state;
+  int format;
+  int quiet;
+  PyObject *result = NULL;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"siii",&str1,&state,&format,&quiet);
+  if (ok) {
+    APIEntry();
+    seq=ExecutiveNameToSeqAlignStrVLA(TempPyMOLGlobals,str1,state,format,quiet);
+    APIExit();
+    if(seq) result = Py_BuildValue("s",seq);
+    VLAFreeP(seq);
+  }
+  return(APIAutoNone(result));
+}
+
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
 {
   char *str1;
@@ -6022,6 +6042,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
    {"get_phipsi",            CmdGetPhiPsi,            METH_VARARGS },
    {"get_renderer",          CmdGetRenderer,          METH_VARARGS },
+   {"get_seq_align_str",     CmdGetSeqAlignStr,          METH_VARARGS },
    {"get_session",           CmdGetSession,           METH_VARARGS },
 	{"get_setting",           CmdGetSetting,           METH_VARARGS },
 	{"get_setting_of_type",   CmdGetSettingOfType,    METH_VARARGS },

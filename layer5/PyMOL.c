@@ -1329,7 +1329,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(seq_view_label_color,518);
   LEX_SETTING(surface_carve_normal_cutoff,519);
   LEX_SETTING(trace_atoms_mode,520);
-  LEX_SETTING(session_changed,512);
+  LEX_SETTING(session_changed,521);
   return_OVstatus_SUCCESS;
 }
 

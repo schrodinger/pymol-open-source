@@ -186,14 +186,16 @@ SEE ALSO
                 format = 'png'
             elif re.search("\.pse$|\.psw$",lc_filename):
                 format = 'pse'
-        elif re.search("\.obj$",lc_filename):
-            format = 'obj'
-        elif re.search("\.mtl$",lc_filename):
-            format = 'mtl'
-        elif re.search("\.wrl$",lc_filename):
-            format = 'wrl'
-        else:
-            format = str(format)
+            elif re.search("\.aln$",lc_filename):
+                format = 'aln'
+            elif re.search("\.obj$",lc_filename):
+                format = 'obj'
+            elif re.search("\.mtl$",lc_filename):
+                format = 'mtl'
+            elif re.search("\.wrl$",lc_filename):
+                format = 'wrl'
+            else:
+                format = str(format)
         if format=='unknown':
             if not quiet:
                 print " Save-Warning: Unrecognized file type -- defaulting to PDB format."
@@ -214,6 +216,22 @@ SEE ALSO
                 r = DEFAULT_SUCCESS
                 if not quiet:
                     print " Save: wrote \""+filename+"\"."
+        elif format=='aln':
+            st = ''
+            try:
+                lock()
+                st = _cmd.get_seq_align_str(str(selection),int(state)-1,0,int(quiet))
+            finally:
+                unlock()
+            if st!=None:
+                f=open(filename,"w")
+                f.write(st)
+                f.close()
+                r = DEFAULT_SUCCESS
+                if not quiet:
+                    print " Save: wrote \""+filename+"\"."
+            else:
+                r = DEFAULT_ERROR
         elif format=='pqr': # PQR (modified PDB file)
             f=open(filename,"w")
             if f:
@@ -265,21 +283,21 @@ SEE ALSO
             f.flush()
             f.close()
             r = DEFAULT_SUCCESS
-	elif format=='obj':
+        elif format=='obj':
             tup = cmd.get_mtl_obj()
             f=open(filename,"w")
             f.write(tup[1])
             f.flush()
             f.close()
             r = DEFAULT_SUCCESS
-	elif format=='mtl':
+        elif format=='mtl':
             tup = cmd.get_mtl_obj()
             f=open(filename,"w")
             f.write(tup[0])
             f.flush()
             f.close()
             r = DEFAULT_SUCCESS
-	elif format=='wrl':
+        elif format=='wrl':
             txt = cmd.get_vrml()
             f=open(filename,"w")
             f.write(txt)

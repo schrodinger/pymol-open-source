@@ -26,7 +26,7 @@ Z* -------------------------------------------------------------------
 typedef struct ObjectAlignmentState {
   CObjectState state;
   int *alignVLA;
-  WordType guide; /*only used for selections*/
+  WordType guide; 
   /* not stored */
   int valid;
   OVOneToAny *id2tag;
@@ -57,6 +57,7 @@ PyObject *ObjectAlignmentAsPyList(ObjectAlignment *I);
 int ObjectAlignmentNewFromPyList(PyMOLGlobals *G,PyObject *list,
                                  ObjectAlignment **result,int version);
 
+int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int format, char **str_vla);
 
 #endif
 
