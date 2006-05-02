@@ -1587,7 +1587,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
   pv = Alloc(float,cs->NAtIndex*3);
   tmp = Alloc(float,cs->NAtIndex*3);
   pvo = Alloc(float,cs->NAtIndex*3); /* orientation vector */
-  pva = Alloc(float,cs->NAtIndex*6); /* alternative orientation vectors */
+  pva = Alloc(float,cs->NAtIndex*6); /* alternative orientation vectors, two per atom */
   seg = Alloc(int,cs->NAtIndex);
   car = Alloc(int,cs->NAtIndex);
   sstype = Alloc(int,cs->NAtIndex);
@@ -2105,17 +2105,18 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
       
       if(refine_normals) {
         
-        /* first, make sure vectors are roughly tangential */
+        /* first, make sure orientiation vectors are orthogonal to the tangent */
         
         v1 = tv+3;
         vo = pvo+3;
         s = seg+1;
         for(a=1;a<(nAt-1);a++) { 
-          if((*s==*(s-1))&&(*s==*(s+1))) {
+          if((*s==*(s-1))&&(*s==*(s+1))) { /* only operate on vectors within the cartoon itself --
+                                              not the end vectors */
             
             remove_component3f(vo,v1,t0);
-            copy3f(t0,vo);
-            
+            normalize23f(t0,vo);
+
             /* go on to next vertex */
           }
           v1+=3;
@@ -2130,7 +2131,6 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
         vo = pvo;
         ss = sstype;
         for(a=0;a<nAt;a++) { 
-          
           
           /* original */
           copy3f(vo,va);
@@ -2156,11 +2156,11 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
         v  = nv; /* normals in direction of chain */
         s = seg;
         
-        for(a=1;a<nAt;a++) {
+        for(a=0;a<(nAt-1);a++) {
           
-          if(*s==*(s+1)) { /* only operate within distinct segments */         
+          if(*s==*(s+1)) { /* only operate within a segment */         
             v1 = va+6; /* orientation vectors for next CA */
-            remove_component3f(vo  ,v,o0);
+            remove_component3f(vo  ,v,o0); 
             normalize3f(o0);
             remove_component3f(v1  ,v,o1  ); 
             remove_component3f(v1+3,v,o1+3);
@@ -2174,7 +2174,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
               v0 = v1+3;
               max_dot = dp;
             }
-            
+
             copy3f(v0,vo+3); /* update with optimal orientation vector */
           }
           vo+=3;
@@ -2182,20 +2182,19 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
           v+=3; /* normal */
           s++;
         }
-        
+
         /* now soften up the kinks */
-        
-        v1 = tv+3;
         vo = pvo+3;
         s = seg+1;
         for(a=1;a<(nAt-1);a++) {
           if((*s==*(s-1))&&(*s==*(s+1))) {
+            
             dp = (dot_product3f(vo,vo+3)*
                   dot_product3f(vo,vo-3));
             if(dp<-0.10F) { 
               cross_product3f(vo-3,vo+3,t0);
               normalize3f(t0);
-              if(dot_product3f(vo,t1)<0.0F) {
+              if(dot_product3f(vo,t0)<0.0F) {
                 subtract3f(vo,t0,t2);
               } else {
                 add3f(vo,t0,t2);
@@ -2207,12 +2206,12 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
               mix3f(vo,t2,dp,t3);
               copy3f(t3,vo);
             }
+
           }
-          v1+=3;
           vo+=3;
-          va+=6;
           s++;
         }
+
       }
     }
 
@@ -2235,43 +2234,46 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
             } else if(*ss!=2) {
               end_flag=true;
             }
-            if(a==(nAt-1))
+            if(a==(nAt-1)) {
               end_flag=1;
+            }
           }
-          if(end_flag && (cur_car!=cCartoon_loop)&&(cur_car!=cCartoon_tube)) {
-            f=1;
-            for(c=0;c<flat_cycles;c++) {
-              for(b=first+f;b<=last-f;b++) { /* iterative averaging */
-                zero3f(t0);
-                for(e=-f;e<=f;e++) {
-                  add3f(pv+3*(b+e),t0,t0);
+          if(end_flag) {
+            if ((cur_car!=cCartoon_loop)&&(cur_car!=cCartoon_tube)) {
+              
+              f=1;
+              for(c=0;c<flat_cycles;c++) {
+                for(b=first+f;b<=last-f;b++) { /* iterative averaging */
+                  zero3f(t0);
+                  for(e=-f;e<=f;e++) {
+                    add3f(pv+3*(b+e),t0,t0);
+                  }
+                  scale3f(t0,1.0F/(f*2+1),tmp+b*3);
                 }
-                scale3f(t0,1.0F/(f*2+1),tmp+b*3);
-              }
-              for(b=first+f;b<=last-f;b++) {
-                if(!((*(flag_tmp+b)&cAtomFlag_no_smooth))) {
-                  copy3f(tmp+b*3,pv+b*3);
+                for(b=first+f;b<=last-f;b++) {
+                  if(!((*(flag_tmp+b)&cAtomFlag_no_smooth))) {
+                    copy3f(tmp+b*3,pv+b*3);
+                  }
                 }
-              }
-              for(b=first+f;b<=last-f;b++) { 
-                zero3f(t0);
-                for(e=-f;e<=f;e++) {
-                  add3f(pvo+3*(b+e),t0,t0);
+                for(b=first+f;b<=last-f;b++) { 
+                  zero3f(t0);
+                  for(e=-f;e<=f;e++) {
+                    add3f(pvo+3*(b+e),t0,t0);
+                  }
+                  scale3f(t0,1.0F/(f*2+1),tmp+b*3);
                 }
-                scale3f(t0,1.0F/(f*2+1),tmp+b*3);
-              }
-              for(b=first+f;b<=last-f;b++) {
-                copy3f(tmp+b*3,pvo+b*3);
-                /*                  normalize3f(pvo+b*3);*/
-              }
-              for(b=first+f;b<=last-f;b++) {
-                subtract3f(pv+(b+1)*3,pv+(b-1)*3,tmp+b*3);
-                normalize3f(tmp+b*3);
-                remove_component3f(pvo+b*3,tmp+b*3,pvo+b*3);
-                normalize3f(pvo+b*3);
+                for(b=first+f;b<=last-f;b++) {
+                  copy3f(tmp+b*3,pvo+b*3);
+                  /*                  normalize3f(pvo+b*3);*/
+                }
+                for(b=first+f;b<=last-f;b++) {
+                  subtract3f(pv+(b+1)*3,pv+(b-1)*3,tmp+b*3);
+                  normalize3f(tmp+b*3);
+                  remove_component3f(pvo+b*3,tmp+b*3,pvo+b*3);
+                  normalize3f(pvo+b*3);
+                }
               }
             }
-
             first = -1;
             last = -1;
             end_flag=false;

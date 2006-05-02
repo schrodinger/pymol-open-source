@@ -1462,6 +1462,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     break;
   case cSetting_cull_spheres:
   case cSetting_sphere_scale:
+  case cSetting_sphere_transparency:
   case cSetting_sphere_solvent:
   case cSetting_sphere_mode:
   case cSetting_sphere_point_max_size:
@@ -1638,7 +1639,6 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     break;
   case cSetting_line_smooth:
   case cSetting_transparency:
-  case cSetting_sphere_transparency:
   case cSetting_ortho:
   case cSetting_reflect:
   case cSetting_direct:
