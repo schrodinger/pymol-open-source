@@ -81,6 +81,7 @@ if __name__=='pymol.parsing':
     ABORT       = 4  # terminates command script
     PYTHON      = 5  # pass entire line to python
     EMBED       = 6  # embedded data
+    PYTHON_BLOCK = 7 # embedded python block
     NO_CHECK    = 10 # no error checking 
     STRICT      = 11 # strict name->argument checking
     SECURE      = 12 # command not available in "secure" mode

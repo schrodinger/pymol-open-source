@@ -1885,14 +1885,14 @@ void ObjectMoleculeSculptClear(ObjectMolecule *I)
   I->Sculpt=NULL;
 }
 
-void ObjectMoleculeSculptImprint(ObjectMolecule *I,int state,int match_state)
+void ObjectMoleculeSculptImprint(ObjectMolecule *I,int state,int match_state,int match_by_segment)
 {
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
     " ObjectMoleculeUpdateSculpt: entered.\n"
     ENDFD;
 
   if(!I->Sculpt) I->Sculpt = SculptNew(I->Obj.G);
-  SculptMeasureObject(I->Sculpt,I,state,match_state);
+  SculptMeasureObject(I->Sculpt,I,state,match_state,match_by_segment);
 }
 
 float ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle, float *center)
