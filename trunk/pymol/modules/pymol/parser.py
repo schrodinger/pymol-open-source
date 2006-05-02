@@ -61,7 +61,8 @@ if __name__=='pymol.parser':
     embed_dict = {}
     embed_list = {}
     embed_sentinel = {}
-
+    embed_python = {}
+    
     # The resulting value from a pymol command (if any) is stored in the
     # parser.result global variable.  However, script developers will
     # geerally want to switch to the Python API for any of this kind of
@@ -115,10 +116,21 @@ if __name__=='pymol.parser':
             traceback.print_exc()
             sys.exc_clear()
         if embed_sentinel[nest]!=None:
-            if string.strip(s)==embed_sentinel[nest]:
-                print " Embed: read %d lines."%(len(embed_list[nest]))
-                embed_sentinel[nest]=None
+            if string.strip(s) == embed_sentinel[nest]:
+                if embed_python[nest]==0:
+                    print " Embed: read %d lines."%(len(embed_list[nest]))
+                    embed_sentinel[nest]=None
+                else:
+                    print "PyMOL>"+string.rstrip(s)                    
+                    py_block = string.join(embed_list[nest],'')
+                    del embed_list[nest]
+                    embed_sentinel[nest]=None
+                    exec(py_block,pymol_names,pymol_names)                    
             else:
+                if embed_python[nest]:
+                    epn = embed_python[nest]
+                    print "%5d:%s"%(epn,string.rstrip(s))
+                    embed_python[nest] = epn + 1
                 embed_list[nest].append(string.rstrip(s)+"\n")
             return 1
         p_result = 1
@@ -318,8 +330,23 @@ if __name__=='pymol.parser':
                                                 dict[key] = ( format, list )
                                                 embed_dict[nest] = dict
                                                 embed_list[nest] = list
+                                                embed_python[nest] = 0 # not a python block
                                             else:
                                                 print 'Error: embed only legal in p1m files'
+                                                raise None
+                                        elif (kw[nest][4]==parsing.PYTHON_BLOCK):
+                                            next[nest] = ()
+                                            if not secure: 
+                                                l = len(args[nest])
+                                                if l>0:
+                                                    embed_sentinel[nest] = args[nest][0]
+                                                else:
+                                                    embed_sentinel[nest] = "python end"
+                                                list = []
+                                                embed_list[nest] = list
+                                                embed_python[nest] = 1 # python block
+                                            else:
+                                                print 'Error: Python blocks disallowed in this file.'
                                                 raise None
                                         else:
                                             print 'Error: unknown keyword mode: '+str(kw[nest][4])

@@ -414,7 +414,7 @@ static void add_triangle_limits(ATLCall *ATL, int prev, int cur, float dist, int
   }
 }
 
-void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_state)
+void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_state,int match_by_segment)
 {
   PyMOLGlobals *G=I->G;
   int a,a0,a1,a2,a3,b0,b1,b2,b3;
@@ -848,7 +848,8 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                       int i0b = cs2->AtmToIdx[b0];
                       int i1b = cs2->AtmToIdx[b1];
                       
-                      if((i0a>=0)&&(i1a>=0)&&(i0b>=0)&&(i1b>=0)) {
+                      if((i0a>=0)&&(i1a>=0)&&(i0b>=0)&&(i1b>=0)&&
+                         ((!match_by_segment)||(!strcmp(oai[b0].segi,oai[b1].segi)))) {
                         float *v0a = cs->Coord + 3*i0a;
                         float *v1a = cs->Coord + 3*i1a;
                         float *v0b = cs2->Coord + 3*i0b;

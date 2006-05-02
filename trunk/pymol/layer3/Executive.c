@@ -3639,7 +3639,7 @@ float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle)
   return(total_strain);
 }
 /*========================================================================*/
-int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state,int match_state)
+int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state,int match_state,int match_by_segment)
 {
   CObject *obj = ExecutiveFindObjectByName(G,name);
   SpecRec *rec = NULL;
@@ -3653,7 +3653,7 @@ int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state,int match_state
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           objMol =(ObjectMolecule*)rec->obj;
-          ObjectMoleculeSculptImprint(objMol,state,match_state);
+          ObjectMoleculeSculptImprint(objMol,state,match_state,match_by_segment);
         }
       }
     }
@@ -3668,7 +3668,7 @@ int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state,int match_state
       ENDFB(G);
     ok=false;
   } else {
-    ObjectMoleculeSculptImprint((ObjectMolecule*)obj,state,match_state);
+    ObjectMoleculeSculptImprint((ObjectMolecule*)obj,state,match_state,match_by_segment);
   }
   return(ok);
 }

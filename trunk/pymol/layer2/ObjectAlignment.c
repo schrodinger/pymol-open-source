@@ -94,7 +94,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
   int len = 0;
   char *vla = VLAlloc(char, 1000);
 
-  if(state<0) state=ObjectGetCurrentState(I,false);
+  if(state<0) state=ObjectGetCurrentState(&I->Obj,false);
   if(state<0) state=SceneGetState(G);    
   if((state>=0)&&(state<I->NState)) {
     ObjectAlignmentState *oas = I->State + state;

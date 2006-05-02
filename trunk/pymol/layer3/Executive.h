@@ -282,7 +282,7 @@ int ExecutiveSculptIterateAll(PyMOLGlobals *G);
 int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,
                     int first, int last, int ends,int quiet);
 int ExecutiveSculptDeactivate(PyMOLGlobals *G,char *name);
-int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state,int match_state);
+int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state,int match_state,int match_by_segment);
 float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle);
 int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,char *sele,
                     float buffer,float *minCorner,float *maxCorner,

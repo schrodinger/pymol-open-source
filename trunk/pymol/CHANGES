@@ -3,6 +3,8 @@ CHANGE LOG
 =========================================================================
 
 Changes up to 1.00b04
+    
+    * python blocks
 
     * fixed formal charges & valences on nucleic acid backbone
 

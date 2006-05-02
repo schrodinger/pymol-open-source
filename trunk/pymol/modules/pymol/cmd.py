@@ -1834,6 +1834,7 @@ SEE ALSO
             'protect'       : [ protect           , 0 , 0 , ''  , parsing.STRICT ],
             'push_undo'     : [ push_undo         , 0 , 0 , ''  , parsing.STRICT ],   
             'pwd'           : [ pwd               , 0 , 0 , ''  , parsing.STRICT ],
+            'python'        : [ dummy             , 0 , 3 , ',' , parsing.PYTHON_BLOCK ],      
             'raise'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
             'ramp_new'      : [ ramp_new          , 0 , 0 , ''  , parsing.STRICT ],      
             'ray'           : [ ray               , 0 , 0 , ''  , parsing.STRICT ],

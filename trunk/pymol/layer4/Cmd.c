@@ -746,12 +746,12 @@ static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args)
 static PyObject *CmdSculptActivate(PyObject *self, PyObject *args)
 {
   int ok=true;
-  int int1,int2;
+  int int1,int2,int3;
   char *str1;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
+  ok = PyArg_ParseTuple(args,"siii",&str1,&int1,&int2,&int3);
   if(ok) {
     APIEntry();
-    ok = ExecutiveSculptActivate(TempPyMOLGlobals,str1,int1,int2);
+    ok = ExecutiveSculptActivate(TempPyMOLGlobals,str1,int1,int2,int3);
     APIExit();
   }
   return APIResultOk(ok);
