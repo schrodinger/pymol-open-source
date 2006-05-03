@@ -1163,7 +1163,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
             break;
           }
         } else if((p[0]== 'C')&&(p[1]=='O')&&(p[2]=='N')&&
-                  (p[3]=='E')&&(p[4]=='C')&&(p[5]=='T'))
+                  (p[3]=='E')&&(p[4]=='C')&&(p[5]=='T')) /* CONECT */
           bondFlag=true;
 		else if((p[0]== 'U')&&(p[1]=='S')&&(p[2]=='E')&&
                 (p[3]=='R')&&(!*restart_model)) {
@@ -1559,7 +1559,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               (p[3]=='E')&&
               (p[4]=='C')&&
               (p[5]=='T')&&
-              bondFlag&&(!ignore_conect)) {
+              bondFlag&&(!ignore_conect)&&
+              ((!*restart_model)||(!in_model))) {
       p=nskip(p,6);
       p=ncopy(cc,p,5);
       if(sscanf(cc,"%d",&b1)==1)
@@ -3063,6 +3064,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   int repeat = true;
   int discrete_chains = SettingGetGlobal_i(G,cSetting_pdb_discrete_chains);
   int connect_bonded = SettingGetGlobal_b(G,cSetting_connect_bonded);
+  int connect_mode = SettingGetGlobal_i(G,cSetting_connect_mode);
   cutoff_v=SettingGet(G,cSetting_connect_cutoff);
   cutoff_s=cutoff_v + 0.2F;
   cutoff_h=cutoff_v - 0.2F;
@@ -3086,7 +3088,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                  a,cs->Coord[a*3],cs->Coord[a*3+1],cs->Coord[a*3+2]);
       }
       
-      switch((int)SettingGet(G,cSetting_connect_mode)) {
+      switch(connect_mode) {
       case 0: {
         /* distance-based bond location  */
         int violations = 0;
@@ -3631,10 +3633,27 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
     }
   }
   if(cs->NTmpBond&&cs->TmpBond) {
-      PRINTFB(G,FB_ObjectMolecule,FB_Blather) 
+    int check_conect_all = false;
+    int pdb_conect_all = false;
+    PRINTFB(G,FB_ObjectMolecule,FB_Blather) 
       " ObjectMoleculeConnect: incorporating explicit bonds. %d %d\n",
-             nBond,cs->NTmpBond
-        ENDFB(G);
+      nBond,cs->NTmpBond
+      ENDFB(G);
+    if((nBond==0) && (cs->NTmpBond>0) &&
+       bondSearchFlag && (connect_mode == 0) && cs->NIndex) {
+      /* if we were no bonds were found, and we have explicit connectivity,
+       * try to determine if we need to set pdb_conect_mode */
+      for(i=0;i<cs->NIndex;i++) {
+        a1=cs->IdxToAtm[i];
+        ai1=ai+a1;
+        if(ai1->bonded && (!ai1->hetatm)) { 
+          /* apparent PDB ATOM record with explicit bonding... */
+          check_conect_all = true;
+          break;
+        }
+      }
+    }
+
     VLACheck((*bond),BondType,(nBond+cs->NTmpBond));
     ii1=(*bond)+nBond;
     ii2=cs->TmpBond;
@@ -3642,6 +3661,13 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
       {
         a1 = cs->IdxToAtm[ii2->index[0]]; /* convert bonds from index space */
         a2 = cs->IdxToAtm[ii2->index[1]]; /* to atom space */
+        if(check_conect_all) { 
+          if((!ai[a1].hetatm)&&(!ai[a2].hetatm)) { 
+            /* found bond between non-HETATMs -- so tell PyMOL to CONECT all ATOMs
+             * when writing out a PDB file */
+            pdb_conect_all = true;
+          }
+        }
         ai[a1].bonded=true;
         ai[a2].bonded=true;
         ii1->index[0]=a1;
@@ -3652,9 +3678,24 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
         ii2++;
 
       }
+
     nBond=nBond+cs->NTmpBond;
     VLAFreeP(cs->TmpBond);
     cs->NTmpBond=0;
+
+    if(pdb_conect_all) { 
+      int dummy;
+      if(!SettingGetIfDefined_b(G,I->Obj.Setting,cSetting_pdb_conect_all,&dummy)) {
+        CSetting **handle = NULL;
+        if(I->Obj.fGetSettingHandle) {
+          handle = I->Obj.fGetSettingHandle(&I->Obj,-1);
+          if(handle) {
+            SettingCheckHandle(G,handle);        
+            SettingSet_b(*handle,cSetting_pdb_conect_all,true);
+          }
+        }
+      }
+    }
   }
 
 

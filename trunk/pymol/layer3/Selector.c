@@ -5434,7 +5434,7 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
   int matrix_flag = false;
   float v_tmp[3],*v_ptr;
   CoordSet *cs,*mat_cs = NULL;
-  ObjectMolecule *obj;
+  ObjectMolecule *obj,*last_obj=NULL;
   AtomInfoType *atInfo,*ai,*last = NULL;
   SelectorUpdateTable(G);
 
@@ -5553,6 +5553,17 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
             CoordSetAtomToPDBStrVLA(G,charVLA,&cLen,ai,v_ptr,c,pdb_info);
             last = ai;
             c++;
+
+            if(!conect_all) {
+              int conect_all_tmp = 0;
+              if(last_obj!=obj) {
+                if(SettingGetIfDefined_b(G,obj->Obj.Setting,cSetting_pdb_conect_all,&conect_all_tmp)) {
+                  if(conect_all_tmp)
+                    conect_all = true;
+                }
+              }
+              last_obj = obj;
+            }
           }
         }
       }
@@ -7708,7 +7719,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             /* allow objects to have their own atom_name_wildcards...this is a tricky workaround
              for handling nucleic acid structures that use "*" in atom names */
 
-            atom_name_wildcard = SettingGet_s(G,obj->Obj.Setting,NULL,cSetting_atom_name_wildcard);
+            char *atom_name_wildcard = SettingGet_s(G,obj->Obj.Setting,NULL,cSetting_atom_name_wildcard);
             
             if(!atom_name_wildcard[0]) 
               atom_name_wildcard = wildcard;
