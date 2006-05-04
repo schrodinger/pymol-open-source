@@ -2529,7 +2529,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_i(I,cSetting_cartoon_trace_atoms,0);
 
-  set_i(I,cSetting_ray_oversample_cutoff,160);
+  set_i(I,cSetting_ray_oversample_cutoff,120);
 
   set_f(I,cSetting_gaussian_resolution,2.0F);
 
