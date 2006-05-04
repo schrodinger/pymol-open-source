@@ -1692,7 +1692,7 @@ void OrthoSplash(PyMOLGlobals *G)
   /* Splash message for restricted access incentive versions... */
   PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2006 DeLano Scientific LLC.\n \n" ENDF(G);
   {
-    char *lic = getenv("PYMOL_LICENSE"); /* provide customers with the ability to print a custom message */
+    char *lic = getenv("PYMOL_MESSAGE"); /* provide customers with the ability to print a custom message */
     FILE *lic_file;
     if(lic && (lic_file=fopen(lic,"r"))) {
       OrthoLineType buffer;
@@ -1701,6 +1701,7 @@ void OrthoSplash(PyMOLGlobals *G)
         fgets(buffer,sizeof(OrthoLineType),lic_file);
         OrthoAddOutput(G,buffer);        
       }
+      OrthoAddOutput(G,"\n");
       fclose(lic_file);
       /* allow environment variables to */
     } else {
