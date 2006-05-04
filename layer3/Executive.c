@@ -5931,7 +5931,8 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
   int count=0,*counter=NULL;
   double matrix[16], inverse[16], *ref_mat = NULL;
   CObject *base = NULL;
-
+  PDBInfoRec pdb_info;
+  ObjectMolecule *obj = NULL;
 
   if(ref_object) {
     base=ExecutiveFindObjectByName(G,ref_object);
@@ -5949,8 +5950,6 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
     }
   }
 
-  PDBInfoRec pdb_info;
-  ObjectMolecule *obj = NULL;
 
   UtilZeroMem((void*)&pdb_info,sizeof(PDBInfoRec));
   ObjectMoleculeOpRecInit(&op1);
