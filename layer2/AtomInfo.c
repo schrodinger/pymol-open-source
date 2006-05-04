@@ -890,6 +890,10 @@ void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfo
   ai1=atInfo1;
   lai0=NULL; /* last atom compared against in each object */
   lai1=NULL;
+  st0 = 0;
+  nd0 = 0;
+  st1 = 0;
+  nd1 = 0;
   c=1;
   /* ai1->name is the atom we're currently on */
 
@@ -913,6 +917,7 @@ void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfo
         AtomInfoBracketResidue(G,atInfo1,n1,ai1,&st1,&nd1);
         lai1=ai1;
       }
+      
       ai0 = atInfo1 + st1;
       for(a=st1;a<=nd1;a++) {
         if(strcmp(ai1->name,ai0->name))
