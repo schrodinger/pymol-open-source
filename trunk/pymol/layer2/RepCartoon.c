@@ -2161,7 +2161,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
           if(*s==*(s+1)) { /* only operate within a segment */         
             v1 = va+6; /* orientation vectors for next CA */
             remove_component3f(vo  ,v,o0); 
-            normalize3f(o0);
+            normalize3f(o0); 
             remove_component3f(v1  ,v,o1  ); 
             remove_component3f(v1+3,v,o1+3);
             normalize3f(o1);
@@ -2184,15 +2184,19 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
         }
 
         /* now soften up the kinks */
+        v1 = tv+3;
+        va = pva+6;
         vo = pvo+3;
         s = seg+1;
         for(a=1;a<(nAt-1);a++) {
           if((*s==*(s-1))&&(*s==*(s+1))) {
-            
             dp = (dot_product3f(vo,vo+3)*
                   dot_product3f(vo,vo-3));
             if(dp<-0.10F) { 
-              cross_product3f(vo-3,vo+3,t0);
+              add3f(vo+3,vo-3,t0);
+              scale3f(vo,0.001,t1);
+              add3f(t1,t0,t0);
+              remove_component3f(t0,v1,t0);
               normalize3f(t0);
               if(dot_product3f(vo,t0)<0.0F) {
                 subtract3f(vo,t0,t2);
@@ -2204,11 +2208,27 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
               if(dp>1.0F)
                 dp=1.0F;
               mix3f(vo,t2,dp,t3);
-              copy3f(t3,vo);
+              copy3f(t3,va); /* store modified vector */
+              invert3f3f(va,va+3);
+            } else {
+              copy3f(vo,va); /* keep as is */
             }
-
+          }
+          v1+=3;
+          vo+=3;
+          va+=6;
+          s++;
+        }
+        /* now update */
+        va = pva+6;
+        vo = pvo+3;
+        s = seg+1;
+        for(a=1;a<(nAt-1);a++) {
+          if((*s==*(s-1))&&(*s==*(s+1))) {
+            copy3f(va,vo);
           }
           vo+=3;
+          va+=6;
           s++;
         }
 
