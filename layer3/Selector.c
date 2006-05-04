@@ -310,8 +310,8 @@ static WordKeyValue Keyword[] =
   {  "h;",       SELE_HYDz }, /* deprecated */
   {  "h.",       SELE_HYDz }, /* 0 parameter */
 
-  {  "hba",      SELE_HBAs },
-  {  "hbd",      SELE_HBDs },
+  {  "hba.",     SELE_HBAs },
+  {  "hbd.",     SELE_HBDs },
 
   {  "visible",  SELE_VISz }, /* 0 parameter */
   {  "v;",       SELE_VISz }, /* 0 parameter */

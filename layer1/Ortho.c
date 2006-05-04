@@ -1706,7 +1706,7 @@ void OrthoSplash(PyMOLGlobals *G)
       /* allow environment variables to */
     } else {
       PRINTF " This PyMOL Incentive Product Executable Build is exclusively available to\n" ENDF(G);
-      PRINTF " PyMOL Sponsors with current PyMOL Maintenance and/or Support Subscriptions.\n \n" ENDF(G);
+      PRINTF " PyMOL Sponsors with current PyMOL Maintenance and/or Support Subscriptions.\n" ENDF(G);
       PRINTF " Only designated PyMOL Power, Casual, and Developer Users covered within the\n" ENDF(G);
       PRINTF " scope of such a Subscription may legally use this PyMOL Executable Build.\n" ENDF(G);
       PRINTF " Any other usage is specifically prohibited and may constitute a violation\n" ENDF(G);
