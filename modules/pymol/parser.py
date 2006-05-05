@@ -61,7 +61,8 @@ if __name__=='pymol.parser':
     embed_dict = {}
     embed_list = {}
     embed_sentinel = {}
-    embed_python = {}
+    embed_type = {}
+    embed_line = {}
     
     # The resulting value from a pymol command (if any) is stored in the
     # parser.result global variable.  However, script developers will
@@ -117,21 +118,30 @@ if __name__=='pymol.parser':
             sys.exc_clear()
         if embed_sentinel[nest]!=None:
             if string.strip(s) == embed_sentinel[nest]:
-                if embed_python[nest]==0:
+                etn = embed_type[nest]
+                if etn == 0: # embedded data
                     print " Embed: read %d lines."%(len(embed_list[nest]))
                     embed_sentinel[nest]=None
-                else:
+                elif etn == 1: # python block
                     print "PyMOL>"+string.rstrip(s)                    
                     py_block = string.join(embed_list[nest],'')
                     del embed_list[nest]
                     embed_sentinel[nest]=None
-                    exec(py_block,pymol_names,pymol_names)                    
+                    exec(py_block,pymol_names,pymol_names)
+                elif etn == 2: # skip block
+                    print " Skip: skipped %d lines."%(embed_line[nest])
+                    embed_sentinel[nest]=None
             else:
-                if embed_python[nest]:
-                    epn = embed_python[nest]
-                    print "%5d:%s"%(epn,string.rstrip(s))
-                    embed_python[nest] = epn + 1
-                embed_list[nest].append(string.rstrip(s)+"\n")
+                etn = embed_type[nest]
+                if etn == 0: # normal embedded data
+                    embed_list[nest].append(string.rstrip(s)+"\n")
+                elif etn == 1: # python block
+                    el = embed_line[nest] + 1
+                    print "%5d:%s"%(el,string.rstrip(s))
+                    embed_line[nest] = el
+                    embed_list[nest].append(string.rstrip(s)+"\n")
+                elif etn == 2:
+                    embed_line[nest] = embed_line[nest] + 1
             return 1
         p_result = 1
         com0[nest] = s
@@ -330,10 +340,19 @@ if __name__=='pymol.parser':
                                                 dict[key] = ( format, list )
                                                 embed_dict[nest] = dict
                                                 embed_list[nest] = list
-                                                embed_python[nest] = 0 # not a python block
+                                                embed_type[nest] = 0 # not a python block
                                             else:
                                                 print 'Error: embed only legal in p1m files'
                                                 raise None
+                                        elif (kw[nest][4]==parsing.SKIP):
+                                            next[nest] = ()
+                                            l = len(args[nest])
+                                            if l>0:
+                                                embed_sentinel[nest] = args[nest][0]
+                                            else:
+                                                embed_sentinel[nest] = "skip end"
+                                            embed_type[nest] = 2 # skip block
+                                            embed_line[nest] = 0                                            
                                         elif (kw[nest][4]==parsing.PYTHON_BLOCK):
                                             next[nest] = ()
                                             if not secure: 
@@ -344,7 +363,8 @@ if __name__=='pymol.parser':
                                                     embed_sentinel[nest] = "python end"
                                                 list = []
                                                 embed_list[nest] = list
-                                                embed_python[nest] = 1 # python block
+                                                embed_type[nest] = 1 # python block
+                                                embed_line[nest] = 0
                                             else:
                                                 print 'Error: Python blocks disallowed in this file.'
                                                 raise None
