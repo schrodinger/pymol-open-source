@@ -4385,7 +4385,6 @@ int SelectorGetSeleNCSet(PyMOLGlobals *G,int sele)
 {
   register CSelector *I=G->Selector;
 
-
   int a,s,at;
   ObjectMolecule *obj,*last_obj = NULL;
   int result=0;
@@ -9019,10 +9018,10 @@ static int SelectorLogic2(PyMOLGlobals *G,EvalElem *base)
               at2=&i_obj[table_b->model]->AtomInfo[table_b->atom];
               if(at1->resv==at2->resv)
                 if((tolower(at1->chain[0]))==(tolower(at2->chain[0])))
-                  if(WordMatch(G,at1->name,at2->name,ignore_case)<0)
-                    if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
-                      if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
-                        if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                  if(WordMatchNoWild(G,at1->name,at2->name,ignore_case)<0)
+                    if(WordMatchNoWild(G,at1->resi,at2->resi,ignore_case)<0)
+                      if(WordMatchNoWild(G,at1->resn,at2->resn,ignore_case)<0)
+                        if(WordMatchNoWild(G,at1->segi,at2->segi,ignore_case)<0) {
                           *base_0_sele_a = tag;
                           break;
                         }
@@ -9052,8 +9051,8 @@ static int SelectorLogic2(PyMOLGlobals *G,EvalElem *base)
             if(*base_2_sele_b) {
               at2=&i_obj[table_b->model]->AtomInfo[table_b->atom];
               if(at1->resv==at2->resv)
-                if(WordMatch(G,at1->name,at2->name,ignore_case)<0)
-                  if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0) {
+                if(WordMatchNoWild(G,at1->name,at2->name,ignore_case)<0)
+                  if(WordMatchNoWild(G,at1->resi,at2->resi,ignore_case)<0) {
                     *base_0_sele_a = tag;
                     break;
                   }
