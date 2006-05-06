@@ -9192,6 +9192,11 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
       
       if(multithread&&(n_thread)&&(stop-start)>1) {
         int cnt = 0;
+
+        ObjectMoleculeUpdateNeighbors(I); /* must precalculate to
+         avoid race-condition since this isn't mutexed yet and
+         neighbors are needed by cartoons */
+ 
         for(a=start;a<stop;a++)
           if(I->CSet[a]) cnt++;
         {
