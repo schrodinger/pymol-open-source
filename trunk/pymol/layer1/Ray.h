@@ -29,13 +29,14 @@ typedef struct _CRayThreadInfo     CRayThreadInfo;
 CRay *RayNew(PyMOLGlobals *G,int antialias);
 void RayFree(CRay *I);
 void RayPrepare(CRay *I,float v0,float v1,float v2,
-                float v3,float v4,float v5,float *mat,float *rotMat,
-                float aspRat,int width, 
+                float v3,float v4,float v5,
+                float fov, float *pos, 
+                float *mat,float *rotMat,
+                float aspRat,int width, int height,
                 float pixel_scale,int ortho,float pixel_ratio,
                 float back_ratio, float magnified);
-void RayRender(CRay *I,int width,int height,unsigned int *image,
-               float front,float back,double timing,float angle,
-               float fov,float *pos,int antialias);
+void RayRender(CRay *I,unsigned int *image,
+               double timing,float angle,int antialias);
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA,
                   char **charVLA,float front,float back,float fov,float angle,
                   int antialias);
@@ -113,6 +114,7 @@ struct _CRay {
   int Context;
   int CheckInterior;
   float AspRatio;
+  int Width,Height;
   float PixelRadius;
   float min_box[3];
   float max_box[3];
@@ -122,6 +124,7 @@ struct _CRay {
   float FrontBackRatio;
   double PrimSize;
   int PrimSizeCnt;
+  float Fov,Pos[3];
 };
 
 

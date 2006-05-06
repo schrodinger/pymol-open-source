@@ -150,6 +150,19 @@ void RaySetContext(CRay *I,int context)
 void RayApplyContextToNormal(CRay *I,float *v);
 void RayApplyContextToVertex(CRay *I,float *v);
 
+static float RayGetScreenVertexScale(CRay *I,float *v1)
+{
+  /* what size should a screen pixel be at the coordinate provided? */
+
+  float vt[3];
+  float front_size,ratio;
+  RayApplyMatrix33(1,(float3*)vt,I->ModelView,(float3*)v1);
+
+  front_size = 2*I->Volume[4]*((float)tan((I->Fov/2.0F)*PI/180.0F))/(I->Height);
+  ratio = front_size*(-vt[2]/I->Volume[4]);
+  return ratio;
+}
+
 void RayApplyContextToVertex(CRay *I,float *v)
 {
   switch(I->Context) {
@@ -2106,7 +2119,6 @@ int RayTraceThread(CRayThreadInfo *T)
    float BasisFudge0,BasisFudge1;
    int perspective = T->perspective;
    float eye[3];
-   float half_height, front_ratio;
    float start[3],nudge[3],back_pact[3];
    float *depth = T->depth;
    float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);
@@ -2267,12 +2279,14 @@ int RayTraceThread(CRayThreadInfo *T)
      float height_range, width_range;
 
      zero3f(eye);
-     half_height = -T->pos[2] * (float)tan((T->fov/2.0F)*PI/180.0F);
-     front_ratio = -T->front/T->pos[2];
-     height_range = front_ratio*2*half_height;
+
+     /* subpixel-offsets for antialiasing naturally correspond to
+        effective pixel sizes at the front of the visible slab...*/
+
+     height_range = (T->front)*2*((float)tan((T->fov/2.0F)*PI/180.0F));
      width_range = height_range*(I->Range[0]/I->Range[1]);
-     invWdthRange        = invWdth * width_range;
-     invHgtRange         = invHgt * height_range;
+     invWdthRange = invWdth * width_range;
+     invHgtRange = invHgt * height_range;
      vol0 = eye[0] - width_range/2.0F;
      vol2 = eye[1] - height_range/2.0F;
    } else {
@@ -3593,9 +3607,8 @@ extern int n_skipped;
 #endif
 
 /*========================================================================*/
-void RayRender(CRay *I,int width,int height,unsigned int *image,
-               float front,float back,double timing,float angle,
-               float fov,float *pos,int antialias)
+void RayRender(CRay *I,unsigned int *image,double timing,
+               float angle,int antialias)
 {
   int a;
   unsigned int *image_copy = NULL;
@@ -3613,6 +3626,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int n_light = SettingGetGlobal_i(I->G,cSetting_light_count);
   float ambient;
   float *depth = NULL;
+  float front = I->Volume[4];
+  float back = I->Volume[5];
+  float fov  = I->Fov;
+  float *pos = I->Pos;
+  int width = I->Width;
+  int height = I->Height;
   int trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
   if(n_light>10) n_light = 10;
@@ -4578,7 +4597,7 @@ void RayGetScaledAxes(CRay *I,float *xn,float *yn)
     copy3f(v,vt);
   }
 
-  v_scale = SceneGetScreenVertexScale(I->G,vt)/I->Sampling;
+  v_scale =  RayGetScreenVertexScale(I,vt)/I->Sampling;
 
   RayApplyMatrixInverse33(1,(float3*)xn0,I->Rotation,(float3*)xn0);    
   RayApplyMatrixInverse33(1,(float3*)yn0,I->Rotation,(float3*)yn0);    
@@ -4619,7 +4638,9 @@ void RayCharacter(CRay *I,int char_id)
   }
   /* what's the width of 1 screen window pixel at this point in space? */
 
-  v_scale = SceneGetScreenVertexScale(I->G,p->v1)/I->Sampling;
+  v_scale =  RayGetScreenVertexScale(I,p->v1)/I->Sampling;
+
+  RayGetScreenVertexScale(I,vt);
 
   if(I->Context) {
     RayApplyContextToVertex(I,p->v1);
@@ -5108,8 +5129,9 @@ CRay *RayNew(PyMOLGlobals *G,int antialias)
 /*========================================================================*/
 void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float v3,float v4,float v5,
+                float fov, float *pos, 
                 float *mat,float *rotMat,float aspRat,
-                int width, float pixel_scale,int ortho,
+                int width, int height, float pixel_scale,int ortho,
                 float pixel_ratio,float front_back_ratio,float magnified)
 	  /*prepare for vertex calls */
 {
@@ -5128,6 +5150,8 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   I->Range[1]=I->Volume[3]-I->Volume[2];
   I->Range[2]=I->Volume[5]-I->Volume[4];
   I->AspRatio=aspRat;
+  I->Width=width;
+  I->Height=height;
   CharacterSetRetention(I->G,true);
 
   if(mat)  
@@ -5152,6 +5176,8 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   I->FrontBackRatio = front_back_ratio;
   I->PrimSizeCnt = 0;
   I->PrimSize = 0.0;
+  I->Fov = fov;
+  copy3f(pos,I->Pos);
 }
 /*========================================================================*/
 

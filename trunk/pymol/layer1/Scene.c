@@ -175,6 +175,8 @@ typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
 } SceneUnitContext;
 
+static float SceneGetExactScreenVertexScale(PyMOLGlobals *G,float *v1);
+
 int SceneHasImage(PyMOLGlobals *G)
 {
   CScene *I=G->Scene;
@@ -3344,7 +3346,7 @@ static int SceneClick(Block *block,int button,int x,int y,
 void ScenePushRasterMatrix(PyMOLGlobals *G,float *v) 
 {
   register CScene *I=G->Scene;
-  float scale = SceneGetScreenVertexScale(G,v);
+  float scale = SceneGetExactScreenVertexScale(G,v);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glTranslatef(v[0],v[1],v[2]); /* go to this position */
@@ -3364,22 +3366,55 @@ void SceneGetEyeNormal(PyMOLGlobals *G,float *v1,float *normal)
 {
   register CScene *I=G->Scene;
   float p1[4],p2[4];
+  float modelView[16];
+  
+  identity44f(modelView);
+  MatrixTranslateC44f(modelView,I->Pos[0],I->Pos[1],I->Pos[2]);
+  MatrixMultiplyC44f(I->RotMatrix,modelView);
+  MatrixTranslateC44f(modelView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
+
   copy3f(v1,p1);
   p1[3] = 1.0;
+#if 1
+  MatrixTransformC44f4f(modelView,p1,p2); /* modelview transformation */
+#else
   MatrixTransformC44f4f(I->ModMatrix,p1,p2); /* modelview transformation */
+#endif
   copy3f(p2,p1);
   normalize3f(p1);
   MatrixInvTransformC44fAs33f3f(I->RotMatrix,p1,p2); 
   invert3f3f(p2,normal);
 }
 /*========================================================================*/
-float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
+float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1) 
+  /* does not require OpenGL-provided matrices */
+{
+    float front_size,ratio;
+    register CScene *I=G->Scene;
+    float vt[3];
+    float fov=SettingGet(G,cSetting_field_of_view);
+    float modelView[16];
+
+    identity44f(modelView);
+    MatrixTranslateC44f(modelView,I->Pos[0],I->Pos[1],I->Pos[2]);
+    MatrixMultiplyC44f(I->RotMatrix,modelView);
+    MatrixTranslateC44f(modelView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
+
+    MatrixTransformC44f3f(modelView, v1,vt);
+    front_size = 2*I->FrontSafe*((float)tan((fov/2.0F)*PI/180.0F))/(I->Height);
+    ratio = front_size*(-vt[2]/I->FrontSafe);
+    return ratio;
+}
+
+static float SceneGetExactScreenVertexScale(PyMOLGlobals *G,float *v1)
+/* requires the OpenGL-computed matrices */
 {
   /* get conversion factor from screen point to atomic coodinate */
   register CScene *I=G->Scene;
   float vl,p1[4],p2[4];
   float height_factor = I->Height/2.0F;
 
+  return SceneGetScreenVertexScale(G,v1);
   if(!v1) v1 = I->Origin;
 
   /* now, scale properly given the current projection matrix */
@@ -3397,17 +3432,6 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
   p2[1]=p2[1]/p2[3];
   p1[1]=(p1[1]+1.0F)*(height_factor); /* viewport transformation */
   p2[1]=(p2[1]+1.0F)*(height_factor);
-  /*
-    p1[1]=p1[1]/p1[3];
-    p2[1]=p2[1]/p2[3];
-    p1[2]=0.0;
-    p2[2]=0.0;
-    p1[1]=(p1[1]+1.0F)*(I->Height/2.0F);
-    p2[1]=(p2[1]+1.0F)*(I->Height/2.0F);
-    dump3f(p1,"p1");
-    dump3f(p2,"p2");
-    vl=(float)diff3f(p1,p2);
-  */
   vl = (float)fabs(p1[1]-p2[1]);
 
   if(vl<R_SMALL4)
@@ -3805,7 +3829,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
           
           ObjectGadgetGetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v1);
           
-          vScale = SceneGetScreenVertexScale(G,v1);
+          vScale = SceneGetExactScreenVertexScale(G,v1);
           if(side_by_side(I->StereoMode)) {
             x = get_stereo_x(x,&I->LastX,I->Width);
           }
@@ -3914,7 +3938,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     if(!I->Threshold) {
 
       copy3f(I->Origin,v1);
-      vScale = SceneGetScreenVertexScale(G,v1);
+      vScale = SceneGetExactScreenVertexScale(G,v1);
     if(side_by_side(I->StereoMode)) {
         x = get_stereo_x(x,&I->LastX,I->Width);
       }
@@ -3973,7 +3997,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             
             ObjectGadgetGetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v1);
             
-            vScale = SceneGetScreenVertexScale(G,v1);
+            vScale = SceneGetExactScreenVertexScale(G,v1);
             if(side_by_side(I->StereoMode)) {
               x = get_stereo_x(x,&I->LastX,I->Width);
             }
@@ -4011,7 +4035,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
                                          SettingGetGlobal_i(G,cSetting_state)-1,
                                          I->LastPicked.src.index,v1)) {
             /* scale properly given the current projection matrix */
-            vScale = SceneGetScreenVertexScale(G,v1);
+            vScale = SceneGetExactScreenVertexScale(G,v1);
             if(side_by_side(I->StereoMode)) {
               x = get_stereo_x(x,&I->LastX,I->Width);
             }
@@ -4068,7 +4092,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               
               copy3f(I->LastPickVertex,v1);
 
-              vScale = SceneGetScreenVertexScale(G,v1);
+              vScale = SceneGetExactScreenVertexScale(G,v1);
 
               if(side_by_side(I->StereoMode)) {
                 x = get_stereo_x(x,&I->LastX,I->Width);
@@ -4095,7 +4119,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
                                           SettingGetGlobal_i(G,cSetting_state)-1,
                                           I->LastPicked.src.index,v1)) {
             /* scale properly given the current projection matrix */
-            vScale = SceneGetScreenVertexScale(G,v1);
+            vScale = SceneGetExactScreenVertexScale(G,v1);
             if(side_by_side(I->StereoMode)) {
               x = get_stereo_x(x,&I->LastX,I->Width);
             }
@@ -4144,7 +4168,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
     SceneNoteMouseInteraction(G);
 
-    vScale = SceneGetScreenVertexScale(G,I->Origin);
+    vScale = SceneGetExactScreenVertexScale(G,I->Origin);
     if(side_by_side(I->StereoMode)) {
 
       x = get_stereo_x(x,&I->LastX,I->Width);
@@ -4971,6 +4995,7 @@ void SceneRay(PyMOLGlobals *G,
     {
       int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
       float pixel_scale_value = SettingGetGlobal_f(G,cSetting_ray_pixel_scale);
+      float fov=SettingGet(G,cSetting_field_of_view);
       
       if(pixel_scale_value<0) pixel_scale_value = 1.0F;
 
@@ -4980,23 +5005,34 @@ void SceneRay(PyMOLGlobals *G,
 
       if(ortho) {
         RayPrepare(ray,-width,width,-height,height,
-                   I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,
-                   ray_width, pixel_scale_value,true,1.0F,1.0F,((float)ray_height)/I->Height);
+                   I->FrontSafe,I->BackSafe,
+                   fov, I->Pos, 
+                   rayView,I->RotMatrix,aspRat,
+                   ray_width, ray_height, 
+                   pixel_scale_value, true,
+                   1.0F,1.0F,((float)ray_height)/I->Height);
       } else {        
         float back_ratio;
         float back_height;
         float back_width;
         float pos;
+        float fov=SettingGet(G,cSetting_field_of_view);
         pos = I->Pos[2];
-        if((-pos)<I->FrontSafe)
-          pos = -I->FrontSafe;
+        if((-pos)<I->FrontSafe) pos = -I->FrontSafe;
         back_ratio = -I->Back/pos;
         back_height = back_ratio*height;
         back_width = aspRat * back_height;
-        RayPrepare(ray,-back_width, back_width, -back_height, back_height,
-                   I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,
-                   ray_width, pixel_scale_value,false,
-                   height/back_height,I->FrontSafe/I->BackSafe,((float)ray_height)/I->Height);
+        RayPrepare(ray,
+                   -back_width, back_width, 
+                   -back_height, back_height,
+                   I->FrontSafe,I->BackSafe,
+                   fov, I->Pos,
+                   rayView,I->RotMatrix,aspRat,
+                   ray_width, ray_height, 
+                   pixel_scale_value, false,
+                   height/back_height,
+                   I->FrontSafe/I->BackSafe,
+                   ((float)ray_height)/I->Height);
       }
     }
     
@@ -5052,9 +5088,7 @@ void SceneRay(PyMOLGlobals *G,
       buffer=(GLvoid*)Alloc(char,buffer_size);
       ErrChkPtr(G,buffer);
       
-      RayRender(ray,ray_width,ray_height,buffer,
-                I->FrontSafe,I->BackSafe,timing,angle,
-                fov,I->Pos,antialias);
+      RayRender(ray,buffer,timing,angle,antialias);
       SceneApplyImageGamma(G,buffer,ray_width,ray_height);
       
       /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
@@ -6198,7 +6232,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
     multiply44f44f44f(I->ModMatrix,I->ProMatrix,I->PmvMatrix);
 
-    /* make note of how large pixels are at the origin (should this be Pos instead?) */
+    /* make note of how large pixels are at the origin  */
 
     I->VertexScale = SceneGetScreenVertexScale(G,I->Origin);
 
