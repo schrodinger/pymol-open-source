@@ -1,5 +1,6 @@
+# NOTE: This file is old and outdated
 #---------------------------------------------------------------------
-# PyMOL Makefile Rules 
+# PyMOL Makefile Rules
 #---------------------------------------------------------------------
 #
 # This version is for Tru64 Unix with Numeric Python
