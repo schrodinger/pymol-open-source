@@ -301,7 +301,7 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
   if(grid<0.01F)
     grid=0.01F;
   
-  /* for the given map, compute a new set of interpolated point with accompanying levels */
+  /* for the given map, compute a new set of interpolated points with accompanying levels */
 
   /* first, find the limits of the enclosing rectangle, starting at the slice origin, 
      via a simple brute-force approach... */

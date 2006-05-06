@@ -78,10 +78,8 @@ static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float s
       SceneOriginGet(G,origin);
       v_scale = SceneGetScreenVertexScale(G,origin);
       
-      
       first = font_info->first;
       last = first + font_info->num_chars;
-      
  
       if(rpos) {
         if(rpos[0]<_1) { /* we need to measure the string width before starting to draw */
