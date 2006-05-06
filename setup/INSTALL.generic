@@ -2,6 +2,8 @@
 INSTALLATION VIA COMPILATION (Generic)
 ----------------------------------------------------------------------
 
+First please read the INSTALL file in the main PyMOL directory.
+
 NOTE: 
 
 These are the general installation instructions for a platform which
@@ -15,7 +17,7 @@ the setup directory.
 WARNING: You will need some basic knowledge of Makefiles, compilation
 flags, libraries, python, environment variables, and paths in order to
 compile PyMOL.  If you don't feel comfortable with this, then try out
-the MS-Windows version, which you can download from the web site.
+the Mac or Windows version, which you can download from the web site.
 
 The following instructions assume you are installing PyMOL in your
 home directory.  You can of course put it anywhere, but you will need
@@ -73,6 +75,9 @@ standalone application.
    cd $HOME/pymol
    cp setup/Rules.<platform> Rules.make
    vi Rules.make
+
+Edit the file appropriately to reflect your system (here is where
+your know-how counts).
 
 STEP (3) 
 
