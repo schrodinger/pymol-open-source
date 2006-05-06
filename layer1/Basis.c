@@ -1039,6 +1039,11 @@ void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc,int perspective
    fc[2] = fc2;
 }
 
+/*========================================================================*/
+static void BasisGetTriangleImpactColor(CBasis *I,RayInfo *r,int i,float *fc)
+{
+}
+
 
 
 #ifdef PROFILE_BASIS
@@ -1890,8 +1895,15 @@ int BasisHitShadow(BasisCallRec *BC)
                            r->dist = dist;
                            r->prim = prm;
 
-                           BasisGetTriangleNormal(BI,r,minIndex,fc,false);
-                                
+                           {
+                             float w2;
+                             w2 = 1.0F - (r->tri1 + r->tri2);
+                             
+                             fc[0] = (prm->c2[0]*r->tri1)+(prm->c3[0]*r->tri2)+(prm->c1[0]*w2);
+                             fc[1] = (prm->c2[1]*r->tri1)+(prm->c3[1]*r->tri2)+(prm->c1[1]*w2);
+                             fc[2] = (prm->c2[2]*r->tri1)+(prm->c3[2]*r->tri2)+(prm->c1[2]*w2);
+                           }
+
                            trans = CharacterInterpolate(BI->G,prm->char_id,fc);
 
                            if(trans == _0)  { /* opaque? return immed. */
