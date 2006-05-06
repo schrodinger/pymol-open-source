@@ -3395,6 +3395,7 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
     float fov=SettingGet(G,cSetting_field_of_view);
     float modelView[16];
 
+    if(!v1) v1 = I->Origin;
     identity44f(modelView);
     MatrixTranslateC44f(modelView,I->Pos[0],I->Pos[1],I->Pos[2]);
     MatrixMultiplyC44f(I->RotMatrix,modelView);
