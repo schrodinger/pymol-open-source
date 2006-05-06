@@ -2490,6 +2490,18 @@ int ObjectMoleculeCheckBondSep(ObjectMolecule *I,int a0,int a1,int dist)
   if(dist>MAX_BOND_DIST)
     return false;
   
+  /* NOTE: undealtwith crash log: fix this!
+
+0   com.delsci.macpymol      	0x00135590 ObjectMoleculeCheckBondSep + 304 (crt.c:355)
+1   <<00000000>> 	0x00000002 0 + 2
+2   com.delsci.macpymol      	0x001acb58 RepCartoonNew + 6936 (crt.c:355)
+3   com.delsci.macpymol      	0x001009f4 CoordSetUpdate + 1108 (crt.c:355)
+4   com.delsci.macpymol      	0x001f061c CmdCoordSetUpdateThread + 108 (crt.c:355)
+  
+   presumably a race condition with UpdateNeighbors, which need to be mutexed somehow.
+
+*/
+
   ObjectMoleculeUpdateNeighbors(I);
 
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
