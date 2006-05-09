@@ -2,13 +2,13 @@
 INSTALLATION VIA COMPILATION 
 ----------------------------------------------------------------------
 
-There are now approaches for building PyMOL from source:
+There are now two approaches for building PyMOL from source:
 
    1. Using Python Distutils, so that PyMOL gets installed in the 
       Python library directory (without source code).
 
    2. Using standard Makefiles, so that PyMOL remains standalone, and
-      is based out of the current directory (with source code).
+      is based out of the current directory (with source code). 
 
 Approach 1 is recommended if:
 

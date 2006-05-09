@@ -41,8 +41,8 @@ if __name__=='pymol.viewing':
                      "cartoon","ribbon","labels","slice"]
 
     scene_action_sc = Shortcut(['store','recall','clear','insert_before',
-                              'insert_after','next','previous',
-                              'start', 'update','rename'])
+                                'insert_after','next','previous',
+                                'start', 'update','rename','delete'])
     scene_action_dict = {}
     scene_action_dict_sc = Shortcut([])
 
@@ -1016,8 +1016,8 @@ SEE ALSO
         return 0
     
     def scene(key='auto',action='recall',message=None,
-                 view=1,color=1,active=1,rep=1,frame=1,animate=-1,
-                 new_key=None, hand=1, quiet=1,):
+              view=1,color=1,active=1,rep=1,frame=1,animate=-1,
+              new_key=None, hand=1, quiet=1,):
         '''
 DESCRIPTION
 
@@ -1114,7 +1114,8 @@ DEVELOPMENT TO DO
                     if len(lst):
                         key = lst[0]
                         action='recall'
-                        
+            if action == 'delete':
+                action='clear'             
             if key=='*':
                 action = scene_action_sc.auto_err(action,'action')
                 if action=='clear':
@@ -1308,19 +1309,24 @@ DEVELOPMENT TO DO
                 elif action=='clear':
                     if key=='auto':
                         key = setting.get("scene_current_name")
-                    key = scene_dict_sc.auto_err(key,'view')
+                    key = scene_dict_sc.auto_err(key,'scene')
                     if scene_dict.has_key(key):
                         list = scene_dict[key]
                         if len(list)>3:
                             colorection = list[3]
                             if colorection!=None:
                                 cmd.del_colorection(colorection,key) # important -- free RAM
-                        
+                        lst = _scene_validate_list()
+                        if key == setting.get("scene_current_name"):
+                            ix = lst.index(key) - 1
+                            if ix>=0:
+                                setting.set("scene_current_name",lst[ix],quiet=1)
                         cmd.set("scenes_changed",1,quiet=1);               
                         del scene_dict[key]
                         name = "_scene_"+key+"_*"
                         cmd.delete(name)
-                        scene_dict_sc = Shortcut(scene_dict.keys())            
+                        scene_dict_sc = Shortcut(scene_dict.keys())
+                        _scene_validate_list()
                         if _feedback(fb_module.scene,fb_mask.actions):
                             print " scene: '%s' deleted."%key
                     cmd.set("session_changed",1,quiet=1)                                                                    
