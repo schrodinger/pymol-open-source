@@ -1963,7 +1963,7 @@ int BasisHitShadow(BasisCallRec *BC)
 
                            if(prm->trans == _0) {
                              if(dist > -kR_SMALL4) {
-                               if(nearest_shadow) {
+                               if(nearest_shadow) { /* do we need the nearest shadow? */
                                  if(dist < r_dist) {
                                    minIndex   = prm->vert;
                                    r_tri1      = tri1;

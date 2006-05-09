@@ -2821,7 +2821,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_surface_carve_normal_cutoff, -1.0F);
   set_i(I,cSetting_trace_atoms_mode,5);
   set_b(I,cSetting_session_changed,0);
-
+  set_b(I,cSetting_ray_clip_shadows,0);
 }
 
 
