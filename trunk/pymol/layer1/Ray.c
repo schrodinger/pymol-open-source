@@ -1581,7 +1581,9 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
       opaque_back			= SettingGetGlobal_i(I->G,cSetting_opaque_background);      
     
     if(opaque_back) { /* drop a plane into the background for the background color */
-      sprintf(buffer,"plane{z , %6.4f \n pigment{color rgb<%6.4f,%6.4f,%6.4f>}\n finish{phong 0 specular 0 diffuse 0 ambient 1.0}}\n",-back,bkrd[0],bkrd[1],bkrd[2]);
+      sprintf(buffer,
+              "plane{z , %6.4f \n pigment{color rgb<%6.4f,%6.4f,%6.4f>}\n finish{phong 0 specular 0 diffuse 0 ambient 1.0}}\n"
+              ,-back,bkrd[0],bkrd[1],bkrd[2]);
       UtilConcatVLA(&headerVLA,&hc,buffer);
     } 
   }
@@ -2121,8 +2123,9 @@ int RayTraceThread(CRayThreadInfo *T)
    float eye[3];
    float start[3],nudge[3],back_pact[3];
    float *depth = T->depth;
-   float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);
-   float shadow_range = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_range);
+   const float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);
+   const float shadow_range = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_range);
+   const int clip_shadows = SettingGetGlobal_b(I->G,cSetting_ray_clip_shadows);
    float legacy = SettingGetGlobal_f(I->G,cSetting_ray_legacy_lighting);
    int spec_count = SettingGetGlobal_i(I->G,cSetting_spec_count);
    const float _0		= 0.0F;
@@ -2149,25 +2152,26 @@ int RayTraceThread(CRayThreadInfo *T)
    }
    /* SETUP */
    
-	/*  if(T->n_thread>1)
-	printf(" Ray: Thread %d: Spawned.\n",T->phase+1);
-	*/
-	
-	interior_shadows	= SettingGetGlobal_i(I->G,cSetting_ray_interior_shadows);
-	interior_wobble	= SettingGetGlobal_i(I->G,cSetting_ray_interior_texture);
-	interior_color		= SettingGetGlobal_i(I->G,cSetting_ray_interior_color);
-    interior_reflect  = 1.0F - SettingGet(I->G,cSetting_ray_interior_reflect);
-	interior_mode = SettingGetGlobal_i(I->G,cSetting_ray_interior_mode);
-    label_shadow_mode =  SettingGetGlobal_i(I->G,cSetting_label_shadow_mode);
-	project_triangle	= SettingGet(I->G,cSetting_ray_improve_shadows);
-	shadows				= SettingGetGlobal_i(I->G,cSetting_ray_shadows);
-	trans_shadows		= SettingGetGlobal_i(I->G,cSetting_ray_transparency_shadows);
-	backface_cull		= SettingGetGlobal_i(I->G,cSetting_backface_cull);
-	opaque_back			= SettingGetGlobal_i(I->G,cSetting_ray_opaque_background);
-    if(opaque_back<0)
-      opaque_back			= SettingGetGlobal_i(I->G,cSetting_opaque_background);      
-	two_sided_lighting	= SettingGetGlobal_i(I->G,cSetting_two_sided_lighting);
-	ray_trans_spec		= SettingGet(I->G,cSetting_ray_transparency_specular);
+   /*  if(T->n_thread>1)
+       printf(" Ray: Thread %d: Spawned.\n",T->phase+1);
+   */
+   
+   interior_shadows	= SettingGetGlobal_i(I->G,cSetting_ray_interior_shadows);
+   interior_wobble	= SettingGetGlobal_i(I->G,cSetting_ray_interior_texture);
+   interior_color		= SettingGetGlobal_i(I->G,cSetting_ray_interior_color);
+   interior_reflect  = 1.0F - SettingGet(I->G,cSetting_ray_interior_reflect);
+   interior_mode = SettingGetGlobal_i(I->G,cSetting_ray_interior_mode);
+   label_shadow_mode =  SettingGetGlobal_i(I->G,cSetting_label_shadow_mode);
+   project_triangle	= SettingGet(I->G,cSetting_ray_improve_shadows);
+   shadows				= SettingGetGlobal_i(I->G,cSetting_ray_shadows);
+   trans_shadows		= SettingGetGlobal_i(I->G,cSetting_ray_transparency_shadows);
+
+   backface_cull		= SettingGetGlobal_i(I->G,cSetting_backface_cull);
+   opaque_back			= SettingGetGlobal_i(I->G,cSetting_ray_opaque_background);
+   if(opaque_back<0)
+     opaque_back			= SettingGetGlobal_i(I->G,cSetting_opaque_background);      
+   two_sided_lighting	= SettingGetGlobal_i(I->G,cSetting_two_sided_lighting);
+   ray_trans_spec		= SettingGet(I->G,cSetting_ray_transparency_specular);
    trans_cont        = SettingGetGlobal_f(I->G,cSetting_ray_transparency_contrast);
    trans_mode        = SettingGetGlobal_i(I->G,cSetting_transparency_mode);
    if(trans_mode==1) two_sided_lighting = true;
@@ -2357,7 +2361,7 @@ int RayTraceThread(CRayThreadInfo *T)
        BasisCall[bc].back = _0;
        BasisCall[bc].excl_trans = _0;
        BasisCall[bc].trans_shadows = trans_shadows;
-       BasisCall[bc].nearest_shadow =  (shadow_decay!=_0);
+       BasisCall[bc].nearest_shadow =  (shadow_decay!=_0) || (clip_shadows);
        BasisCall[bc].check_interior = false;
        BasisCall[bc].fudge0 = BasisFudge0;
        BasisCall[bc].fudge1 = BasisFudge1;
@@ -2730,12 +2734,15 @@ int RayTraceThread(CRayThreadInfo *T)
                              r2.base[2]-=shadow_fudge;
                              BasisCall[bc].except = i;
                              if(BasisHitShadow(&BasisCall[bc]) > -1) {
-                               lit = (float) pow(r2.trans, _p5);
-                               if((shadow_decay != _0) && (r2.dist>shadow_range)) {
-                                 if(shadow_decay>0) {
-                                   lit += ((_1-lit) * (_1 - _1 / exp((r2.dist-shadow_range) * shadow_decay)));
-                                 } else {
-                                   lit += ((_1-lit) * (_1 - _1 / pow(r2.dist/shadow_range,-shadow_decay)));
+                               if( (!clip_shadows) || (bp->LightNormal[2]>=_0) || 
+                                   ((T->front + r1.impact[2] - (r2.dist*bp->LightNormal[2]))<_0)) {
+                                 lit = (float) pow(r2.trans, _p5);
+                                 if((shadow_decay != _0) && (r2.dist>shadow_range)) {
+                                   if(shadow_decay>0) {
+                                     lit += ((_1-lit) * (_1 - _1 / exp((r2.dist-shadow_range) * shadow_decay)));
+                                   } else {
+                                     lit += ((_1-lit) * (_1 - _1 / pow(r2.dist/shadow_range,-shadow_decay)));
+                                   }
                                  }
                                }
                              }

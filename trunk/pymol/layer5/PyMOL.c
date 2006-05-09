@@ -666,6 +666,8 @@ typedef struct _CPyMOL {
   ov_word lex_surface_carve_normal_cutoff;
   ov_word lex_trace_atoms_mode;
   ov_word lex_session_changed;
+  ov_word lex_ray_clip_shadows;
+
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1330,6 +1332,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(surface_carve_normal_cutoff,519);
   LEX_SETTING(trace_atoms_mode,520);
   LEX_SETTING(session_changed,521);
+  LEX_SETTING(ray_clip_shadows,522);
   return_OVstatus_SUCCESS;
 }
 

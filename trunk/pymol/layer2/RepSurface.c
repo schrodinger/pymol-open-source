@@ -188,7 +188,7 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
           vc+=3;
           v+=3;
         }
-    } else if((I->Type==0)||(I->Type==3)||(I->Type==4)) { /* solid surface */
+    } else if((I->Type==0)||(I->Type==3)||(I->Type==4)||(I->Type==5)) { /* solid surface */
       c=I->NT;
 
       if(I->oneColorFlag) {
@@ -1721,7 +1721,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
             v0 = I->Dot;
             n0 = I->DotNormal;
             for(a=0;a<I->NDot;a++) {
-              if(dc[a]||(surface_type<5)) {
+              if(dc[a]||(surface_type<5)) { /* surface type 5 is completely scribed */
               OrthoBusyFast(G,a+I->NDot*2,I->NDot*5); /* 2/5 to 3/5 */
               for(b=0;b<sp->nDot;b++) {
                   register int ii;
@@ -1865,7 +1865,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
         while(repeat_flag) {
           repeat_flag = false;
 
-          if(surface_type>=3) {
+          if(surface_type>=3) { 
             register int jj;
             float dist;
             register float nearest;
@@ -1917,7 +1917,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
               vn+=3;
             }
             MapFree(map);
-          } else {          
+          } else { /* surface types < 3 */
 
             for(a=0;a<I->N;a++) dot_flag[a]=1;
             map=MapNew(G,-point_sep,I->V,I->N,extent);
@@ -1994,7 +1994,10 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
         float *v0,dot_sum;
         int n_nbr;
         dot_flag=Alloc(int,I->N);
-
+        if(surface_type==5) { /* emprical tweaks */
+          trim_factor*=2.5;
+          trim_cutoff*=1.5;
+        }
         while(repeat_flag) {
           repeat_flag=false;
           
