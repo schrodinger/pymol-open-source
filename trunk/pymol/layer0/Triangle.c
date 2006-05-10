@@ -274,10 +274,7 @@ static int *TriangleMakeStripVLA(TriangleSurfaceRec *II,float *v,float *vn,int n
   return(strip);
 }
 
-
-
-
-static void TriangleAdjustNormals(TriangleSurfaceRec *II,float *v,float *vn,int n)
+static void TriangleAdjustNormals(TriangleSurfaceRec *II,float *v,float *vn,int n,int final_pass)
 {
   register TriangleSurfaceRec *I=II;
   /* points all normals to the average of the intersecting triangles in order to maximum surface smoothness */
@@ -345,6 +342,69 @@ static void TriangleAdjustNormals(TriangleSurfaceRec *II,float *v,float *vn,int 
 		normalize3f(vn0);
 	 vn0+=3;
   }
+  /* now ensure that no normal is allowed to point behind a triangle...*/
+  if(final_pass) {
+    int repeat = true;
+    int max_cyc =5;
+    float *va = Alloc(float,3*I->nTri),*va0,*va1,*va2;
+    float vt[3];
+    while(repeat && max_cyc) {
+      repeat = false;
+      va0 = va;
+      for(a=0;a<n;a++) {
+        vFlag[a]=0;
+        *(va0++)=0.0F;
+        *(va0++)=0.0F;
+        *(va0++)=0.0F;
+      }
+      max_cyc--;
+      t=I->tri;
+      tn=tNorm;
+      for(a=0;a<I->nTri;a++) {
+        i0 = *(t++);
+        i1 = *(t++);
+        i2 = *(t++);
+        tn0 = vn+i0*3; /* triangle normal */
+        tn1 = vn+i1*3;
+        tn2 = vn+i2*3;
+        va0 = va+i0*3; /* adjustment */
+        va1 = va+i1*3;
+        va2 = va+i2*3;
+        if(dot_product3f(tn0,tn)<0.0F) {
+          remove_component3f(tn0,tn,vt);
+          normalize3f(vt);
+          add3f(vt,va0,va0);
+          vFlag[i0]=true;
+          repeat = true;
+        }
+        if(dot_product3f(tn1,tn)<0.0F) {
+          remove_component3f(tn1,tn,vt);
+          normalize3f(vt);
+          add3f(vt,va1,va1);
+          vFlag[i1]=true;
+          repeat = true;
+        }
+        if(dot_product3f(tn2,tn)<0.0F) {
+          remove_component3f(tn2,tn,vt);
+          normalize3f(vt);
+          add3f(vt,va2,va2);
+          vFlag[i2]=true;
+          repeat = true;
+        }
+        tn+=3;
+      }
+      vn0=vn;
+      va0=va;
+      for(a=0;a<n;a++) {
+        if(vFlag[a]) {
+          normalize23f(va0,vn0);
+        }
+        vn0+=3;
+        va0+=3;
+      }
+    }
+  }
+
   FreeP(vFlag);
   FreeP(tWght);
   FreeP(tNorm);
@@ -367,6 +427,31 @@ static int TriangleActivateEdges(TriangleSurfaceRec *II,int low)
 	 l=I->link[l].next;
   }
   return(0);
+}
+
+static void TriangleDeleteEdge(TriangleSurfaceRec *II,int i1,int i2)
+{
+  register TriangleSurfaceRec *I=II;
+  int l,low,high;
+  int prev = 0;
+  low = ( i1>i2 ? i2 : i1 );
+  high = ( i1>i2 ? i1 : i2 );
+
+  /*  printf("set: %i %i %i\n",i1,i2,value);*/
+  l=I->edgeStatus[low]; 
+  while(l) {
+	 if(I->link[l].index == high) {
+       if(prev) {
+         I->link[prev].next = I->link[l].next; /* leaks, but that's no big deal */
+         return;
+       } else {
+         I->edgeStatus[low] = I->link[l].next; /* leaks, but that's no big deal */
+       }
+	 }
+     prev = l;
+     l=I->link[l].next;
+  }
+  return;
 }
 
 static void TriangleEdgeSetStatus(TriangleSurfaceRec *II,int i1,int i2,int value) 
@@ -433,6 +518,27 @@ static void TriangleMove(TriangleSurfaceRec *II,int from,int to)
 }
 
 #define max_edge_len 2.5
+static void TriangleRectify(TriangleSurfaceRec *I, int t, float *v,float *vn)
+{
+  int i0 = I->tri[t*3+0];
+  int i1 = I->tri[t*3+1];
+  int i2 = I->tri[t*3+2],it;
+  float *n0 = vn+3*i0, *n1 = vn+3*i1, *n2 = vn+3*i2;							 
+  float *v0 = v +3*i0, *v1 = v +3*i1, *v2 = v +3*i2;
+  float tNorm[3], vt1[3],vt2[3],vt[3];
+
+  add3f(n0,n1,tNorm);
+  add3f(n2,tNorm,tNorm);
+
+  subtract3f(v1,v0,vt1);
+  subtract3f(v2,v0,vt2);
+  cross_product3f(vt1,vt2,vt);
+  if(dot_product3f(vt,tNorm)<0.0) { /* if wrong, then interchange */
+    it=i1; i1=i2; i2=it;
+    I->tri[t*3+1] = i1;
+    I->tri[t*3+2] = i2;
+  }
+}
 
 static void AddActive(TriangleSurfaceRec *II,int i1,int i2) {
   int t;
@@ -1542,6 +1648,195 @@ static void TriangleFill(TriangleSurfaceRec *II,float *v,float *vn,int n,int fir
 
 }
 
+static void TriangleTxfFolds(TriangleSurfaceRec *II,float *v,float *vn,int n) 
+{
+  register TriangleSurfaceRec *I=II;
+  int a,b,c,d,l,s01,s02,t1,t2;
+  float *v0,*v1,*v2,*v3,d10[3],n10[3],d20[3],d30[3],d21[3],d31[3],d32[3];
+  float x1020[3],x1030[3],x2132[3],x2032[3],s2[3],s3[3],nt[3];
+  float old_dp, new_dp, old_conv,new_conv;
+  for(a=0;a<n;a++) { /* first vertex */
+    l=I->edgeStatus[a]; 
+    while(l) {
+      if( (s01 = I->link[l].value)<0 ) { /* closed edge */
+        s01 = -s01;
+        b=I->link[l].index; /* second vertex */
+        v0 = v+a*3;
+        v1 = v+b*3;
+        c = I->edge[s01].vert3;
+        d = I->edge[s01].vert4;
+        v2 = v+c*3;
+        v3 = v+d*3;
+        subtract3f(v1,v0,d10);
+        subtract3f(v2,v0,d20);
+        subtract3f(v3,v0,d30);
+        cross_product3f(d10,d20,x1020);
+        cross_product3f(d10,d30,x1030);
+        normalize3f(x1020);
+        normalize3f(x1030);
+        if( (old_dp = dot_product3f(x1020,x1030)) >0.5F) { /* triangles are nearly opposing one another */
+
+          /*
+          CGOLinewidth(I->G->DebugCGO,5.0);
+          CGOBegin(I->G->DebugCGO,GL_LINES);
+          CGOVertexv(I->G->DebugCGO,v0);
+          CGOVertexv(I->G->DebugCGO,v1);
+          CGOEnd(I->G->DebugCGO);
+          CGOLinewidth(I->G->DebugCGO,3.0);
+          CGOBegin(I->G->DebugCGO,GL_LINES);            
+          CGOVertexv(I->G->DebugCGO,v2);
+          CGOVertexv(I->G->DebugCGO,v3);
+          CGOEnd(I->G->DebugCGO);*/
+
+          normalize23f(d10,n10);
+          subtract3f(v2,v1,d21);
+          subtract3f(v3,v1,d31);
+          add3f(d21,d20,s2);
+          add3f(d31,d30,s3);
+          remove_component3f(s2,n10,s2);
+          remove_component3f(s3,n10,s3);
+          normalize3f(s2);
+          normalize3f(s3);
+          if(dot_product3f(s2,s3)>0.5F) {
+            /* 2 & 3 on same side of 01 */
+            subtract3f(v3,v2,d32);
+            cross_product3f(d21,d32,x2132);
+            cross_product3f(d20,d32,x2032);
+            normalize3f(x2132);
+            normalize3f(x2032);
+            if( (new_dp = dot_product3f(x2132,x2032)) < old_dp) {
+              int legal = true;
+              s02 = TriangleEdgeStatus(I,a,d);
+              if(s02<0) {
+                s02 = -s02;
+                if((I->edge[s02].vert3==c) || (I->edge[s02].vert4==c))
+                  legal = false;
+              }
+              s02 = TriangleEdgeStatus(I,b,d);
+              if(s02<0) {
+                s02 = -s02;
+                if((I->edge[s02].vert3==c) || (I->edge[s02].vert4==c))
+                  legal = false;
+              }
+              s02 = TriangleEdgeStatus(I,a,c);
+              if(s02<0) {
+                s02 = -s02;
+                if((I->edge[s02].vert3==d) || (I->edge[s02].vert4==d))
+                  legal = false;
+              }
+              s02 = TriangleEdgeStatus(I,b,c);
+              if(s02<0) {
+                s02 = -s02;
+                if((I->edge[s02].vert3==d) || (I->edge[s02].vert4==d))
+                  legal = false;
+              }
+              if(legal) {
+
+                /* how consistent are the normals (old versus new) ? */
+
+                copy3f(vn+a*3,nt);
+                add3f(vn+b*3,nt,nt);
+                add3f(vn+c*3,nt,nt);
+                old_conv = dot_product3f(x1020,nt);
+                copy3f(vn+a*3,nt);
+                add3f(vn+b*3,nt,nt);
+                add3f(vn+d*3,nt,nt);
+                old_conv += -dot_product3f(x1030,nt);
+                old_conv = fabs(old_conv);
+
+                copy3f(vn+a*3,nt);
+                add3f(vn+c*3,nt,nt);
+                add3f(vn+d*3,nt,nt);
+                new_conv = dot_product3f(x2032,nt);
+                copy3f(vn+b*3,nt);
+                add3f(vn+c*3,nt,nt);
+                add3f(vn+d*3,nt,nt);
+                new_conv += -dot_product3f(x2132,nt);
+                new_conv = fabs(new_conv);
+
+                if((old_conv<new_conv)) {
+                  /* switch the edges and triangles around */
+                  
+                  TriangleDeleteEdge(I,a,b);
+                  TriangleEdgeSetStatus(I,c,d,-s01);
+                  I->edge[s01].vert3 = a;
+                  I->edge[s01].vert4 = b;
+                  t1 = I->edge[s01].tri1;
+                  t2 = I->edge[s01].tri2;
+
+                  {
+                    int i;
+                    for(i=0;i<3;i++) {
+                      if(I->tri[3*t1+i]==b) {
+                        I->tri[3*t1+i]=d;
+                      }
+                      if(I->tri[3*t2+i]==a) {
+                        I->tri[3*t2+i]=c;
+                      }
+                    }
+                    TriangleRectify(I,t1,v,vn);
+                    TriangleRectify(I,t2,v,vn);
+                  }
+
+                  s01 = TriangleEdgeStatus(I,a,d);
+                  if(s01<0) {
+                    s01 = -s01;
+                    if(I->edge[s01].vert3==b) {
+                      I->edge[s01].vert3=c;
+                      I->edge[s01].tri1=t1;
+                    } else if(I->edge[s01].vert4==b) {
+                      I->edge[s01].vert4=c;
+                      I->edge[s01].tri2=t1;
+                    }
+                  }
+                  
+                  s01 = TriangleEdgeStatus(I,a,c);
+                  if(s01<0) {
+                    s01 = -s01;
+                    if(I->edge[s01].vert3==b) {
+                      I->edge[s01].vert3=d;
+                      I->edge[s01].tri1=t1;
+                    } else if(I->edge[s01].vert4==b) {
+                      I->edge[s01].vert4=d;
+                      I->edge[s01].tri2=t1;
+                    }
+                  }
+                  
+                  s01 = TriangleEdgeStatus(I,b,c);
+                  if(s01<0) {
+                    s01 = -s01;
+                    if(I->edge[s01].vert3==a) {
+                      I->edge[s01].vert3=d;
+                      I->edge[s01].tri1=t2;
+                    } else if(I->edge[s01].vert4==a) {
+                      I->edge[s01].vert4=d;
+                      I->edge[s01].tri2=t2;
+                    }
+                  }
+                  
+                  s01 = TriangleEdgeStatus(I,b,d);
+                  if(s01<0) {
+                    s01 = -s01;
+                    if(I->edge[s01].vert3==a) {
+                      I->edge[s01].vert3=c;
+                      I->edge[s01].tri1=t2;
+                    } else if(I->edge[s01].vert4==a) {
+                      I->edge[s01].vert4=c;
+                      I->edge[s01].tri2=t2;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      l=I->link[l].next;
+    }
+  }
+  CGOStop(I->G->DebugCGO);
+}
+
 static void TriangleFixProblems(TriangleSurfaceRec *II,float *v,float *vn,int n) 
 {
   register TriangleSurfaceRec *I=II;
@@ -1650,8 +1945,8 @@ static void TriangleFixProblems(TriangleSurfaceRec *II,float *v,float *vn,int n)
 		  }
 		}
 		
-		TriangleAdjustNormals(I,v,vn,n);
-		TriangleFill(I,v,vn,n,false);
+		TriangleAdjustNormals(I,v,vn,n,false);
+        TriangleFill(I,v,vn,n,false);
 
 	 }
   FreeP(vFlag);
@@ -1825,6 +2120,7 @@ int *TrianglePointsToSurface(PyMOLGlobals *G,float *v,float *vn,int n,float cuto
           printf(" TrianglePTS-DEBUG: before fix %i %i\n",a,I->vertActive[a]);
     }
 
+    TriangleTxfFolds(I,v,vn,n);
 
     TriangleFixProblems(I,v,vn,n);  
 
@@ -1835,7 +2131,7 @@ int *TrianglePointsToSurface(PyMOLGlobals *G,float *v,float *vn,int n,float cuto
     }
     TriangleBruteForceClosure(I,v,vn,n); /* abandon algorithm, just CLOSE THOSE GAPS! */
 
-    TriangleAdjustNormals(I,v,vn,n);
+    TriangleAdjustNormals(I,v,vn,n,true);
 
     *(stripPtr) = TriangleMakeStripVLA(I,v,vn,n);
 

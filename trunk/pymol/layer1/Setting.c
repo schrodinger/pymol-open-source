@@ -1985,9 +1985,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   else
     set_i(I,cSetting_cull_spheres,0);
 
-  set_f(I,cSetting_test1, 1.41F);
+  set_f(I,cSetting_test1, 3.0F);
 
-  set_f(I,cSetting_test2, 0.65F);
+  set_f(I,cSetting_test2, -0.5F);
 
   set_f(I,cSetting_surface_best, 0.25F);
 
