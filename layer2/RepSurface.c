@@ -919,7 +919,7 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
         c=I->NT;
         if(c) {
           glColor3f(0.0,1.0,0.0);
-        
+          glLineWidth(1.0F);
           while(c--)
             {
               glBegin(GL_LINE_STRIP);
@@ -1671,8 +1671,6 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
      v=I->V;
      vn=I->VN;
 
-
-
     RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent,present,circumscribe);
 
     if(!surface_solvent) {
@@ -1844,6 +1842,106 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
     FreeP(I->DotNormal);
     FreeP(I->DotCode);
 
+    {
+      int refine,ref_count = 1;
+
+      if((surface_type==0) && (circumscribe)) {
+        ref_count = 3;
+      }
+
+      for(refine=0;refine<ref_count;refine++) {
+
+   /* add new vertices in regions where curvature is very high
+       or where there are gaps with no points */
+    
+        if(I->N && (surface_type==0) && (circumscribe)) {
+      int n_new = 0;
+      float neighborhood = 2.6*point_sep;
+      float dot_cutoff = 0.666;
+      float insert_cutoff = 1.5*point_sep;
+      float map_cutoff = neighborhood;
+      float *v0,*vv0;
+      int ii,jj;
+      if(map_cutoff<(2.9*point_sep)) {
+        map_cutoff = 2.9*point_sep;
+      }
+      float *new_dot = VLAlloc(float,1000),*v1,*n1;
+      map=MapNew(G,map_cutoff,I->V,I->N,extent);
+      MapSetupExpress(map);		  
+      v=I->V;
+      vn=I->VN;
+      for(a=0;a<I->N;a++) {
+        i=*(MapLocusEStart(map,v));
+        if(i) {
+          j=map->EList[i++];
+          while(j>=0) {
+            if(j>a) {
+              v0 = I->V+3*j;
+              if(within3f(v0,v,map_cutoff)) {
+                int add_new = false;
+                int found = false;
+                n0 = I->VN + 3*j;
+                VLACheck(new_dot,float,n_new*6+5);
+                v1 = new_dot+n_new*6;
+                average3f(v,v0,v1);
+                if((dot_product3f(n0,vn)<dot_cutoff)&&(within3f(v0,v,neighborhood)))
+                  add_new = true;
+                else {
+                  /* if points are too far apart, insert a new one */
+                  ii=*(MapLocusEStart(map,v1));
+                  if(ii) {
+                    jj=map->EList[ii++];
+                    int found=false;
+                    while(jj>=0) {
+                      if(jj!=j) {
+                        vv0 = I->V+3*jj;
+                        if(within3f(vv0,v1,insert_cutoff)) {
+                          found = true;
+                          break;
+                        }
+                      }
+                      jj=map->EList[ii++];
+                    }
+                    if(!found) add_new =true;
+                  }
+                }
+                if(add_new) {
+                  /* highly divergent */
+                  n1 = v1+3;
+                  n_new ++;
+                  average3f(vn,n0,n1);
+                  normalize3f(n1);
+                }
+              }
+            }
+            j=map->EList[i++];
+          }
+        }
+        v+=3;
+        vn+=3;
+      }
+      MapFree(map);
+      if(n_new) {
+        /*        printf("%d new dots\n",n_new);*/
+        I->V = Realloc(I->V,float,3*(I->N+n_new));
+        I->VN = Realloc(I->VN,float,3*(I->N+n_new));
+        v = I->V + 3*I->N;
+        vn = I->VN + 3*I->N;
+        n1 = new_dot+3;
+        v1 = new_dot;
+        I->N+=n_new;
+        while(n_new--) {
+          copy3f(v1,v);
+          copy3f(n1,vn);
+          v+=3;
+          vn+=3;
+          v1+=6;
+          n1+=6;
+        }
+      }
+      VLAFreeP(new_dot);
+    }
+    
 	 /* now, eliminate dots that are too close to each other*/
 
     /*    CGOColor(I->debug,0.0,1.0,0.0);
@@ -1857,8 +1955,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       " RepSurface: %i surface points.\n",I->N
       ENDFB(G);
 
-    if(I->N)
-      {
+    if(I->N) {
         int repeat_flag=true;
         float min_dot = 0.1F;
         dot_flag=Alloc(int,I->N);
@@ -1981,8 +2078,8 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
           I->V = ReallocForSure(I->V,float,(v0-I->V));
           I->VN = ReallocForSure(I->VN,float,(vn0-I->VN));
         }
-      }
-  
+    }
+    
     /* now eliminate troublesome vertices in regions of extremely high curvature */
 
     if((surface_type!=3)&&
@@ -2075,13 +2172,12 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
           I->VN = ReallocForSure(I->VN,float,(vn0-I->VN));
         }
       }
-  
-
-
+      }
+    }
     PRINTFD(G,FB_RepSurface)
       " RepSurfaceNew-DEBUG: %i surface points after trimming.\n",I->N
       ENDFD;
-
+    
 	 RepSurfaceColor(I,cs);
 
     PRINTFD(G,FB_RepSurface)
