@@ -667,7 +667,8 @@ typedef struct _CPyMOL {
   ov_word lex_trace_atoms_mode;
   ov_word lex_session_changed;
   ov_word lex_ray_clip_shadows;
-
+  ov_word lex_mouse_wheel_scale;
+  ov_word lex_nonbonded_transparency;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1333,6 +1334,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(trace_atoms_mode,520);
   LEX_SETTING(session_changed,521);
   LEX_SETTING(ray_clip_shadows,522);
+  LEX_SETTING(mouse_wheel_scale,523);
+  LEX_SETTING(nonbonded_transparency,524);
   return_OVstatus_SUCCESS;
 }
 

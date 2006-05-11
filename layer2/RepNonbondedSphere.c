@@ -68,7 +68,15 @@ static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
   int i,j;
   Pickable *p;
 
+  float alpha;
+
+  alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_nonbonded_transparency);
+  alpha=1.0F-alpha;
+  if(fabs(alpha-1.0)<R_SMALL4)
+    alpha=1.0F;
+  
   if(ray) {
+    ray->fTransparentf(ray,1.0F-alpha);
 	 v=I->VC;
 	 c=I->NC;
 	 while(c--) {
@@ -77,6 +85,7 @@ static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
 		ray->fSphere3fv(ray,v,*(v+3));
 		v+=4;
 	 }
+     ray->fTransparentf(ray,0.0);
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
 
@@ -132,7 +141,11 @@ static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
       sp=I->SP;
       while(c--)
         {
-          glColor3fv(v);
+          if(alpha==1.0) {
+            glColor3fv(v);
+          } else {
+            glColor4f(v[0],v[1],v[2],alpha);
+          }
           v+=3;
           for(a=0;a<sp->NStrip;a++) {
             glBegin(GL_TRIANGLE_STRIP);
@@ -202,6 +215,8 @@ Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
   I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepNonbondedSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepNonbondedSphereFree;
   I->R.fRecolor=NULL;
+  I->R.obj = (CObject*)(cs->Obj);
+  I->R.cs = cs;
   I->N=0;
   I->NC=0;
   I->V=NULL;

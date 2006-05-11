@@ -1834,7 +1834,7 @@ static void TriangleTxfFolds(TriangleSurfaceRec *II,float *v,float *vn,int n)
       l=I->link[l].next;
     }
   }
-  CGOStop(I->G->DebugCGO);
+  /*  CGOStop(I->G->DebugCGO);*/
 }
 
 static void TriangleFixProblems(TriangleSurfaceRec *II,float *v,float *vn,int n) 
