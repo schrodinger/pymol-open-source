@@ -55,10 +55,15 @@ static void RepNonbondedRender(RepNonbonded *I,RenderInfo *info)
   int c=I->N;
   unsigned int i,j;
   Pickable *p;
+  float alpha;
 
+  alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_nonbonded_transparency);
+  alpha=1.0F-alpha;
+  if(fabs(alpha-1.0)<R_SMALL4)
+    alpha=1.0F;
   if(ray) {
-
     float radius;
+    ray->fTransparentf(ray,1.0F-alpha);
     
     if(I->Radius==0.0F) {
       radius = ray->PixelRadius*I->Width/2.0F;
@@ -76,7 +81,7 @@ static void RepNonbondedRender(RepNonbonded *I,RenderInfo *info)
       ray->fSausage3fv(ray,v+15,v+18,radius,v,v);
 		v+=21;
 	 }
-
+    ray->fTransparentf(ray,0.0);
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
 
@@ -156,8 +161,12 @@ static void RepNonbondedRender(RepNonbonded *I,RenderInfo *info)
           glBegin(GL_LINES);	 
           SceneResetNormal(G,true);
           while(c--) {
-        
-            glColor3fv(v);
+
+            if(alpha==1.0) {
+              glColor3fv(v);
+            } else {
+              glColor4f(v[0],v[1],v[2],alpha);
+            }
             v+=3;
         
             glVertex3fv(v);
@@ -232,6 +241,8 @@ Rep *RepNonbondedNew(CoordSet *cs,int state)
   I->VP=NULL;
   I->R.P=NULL;
   I->R.fRecolor=NULL;
+  I->R.obj = (CObject*)(cs->Obj);
+  I->R.cs = cs;
 
   I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_width);
   I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_radius);

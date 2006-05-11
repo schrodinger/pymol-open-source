@@ -2725,11 +2725,11 @@ static int SceneClick(Block *block,int button,int x,int y,
   switch(mode) {
   case cButModeScaleSlabExpand:
     SceneNoteMouseInteraction(G);
-    SceneClip(G,5,1.2F,NULL,0);
+    SceneClip(G,5,1.0F+(0.2*SettingGetGlobal_f(G,cSetting_mouse_wheel_scale)),NULL,0);
     break;
   case cButModeScaleSlabShrink:
     SceneNoteMouseInteraction(G);
-    SceneClip(G,5,0.8F,NULL,0);
+    SceneClip(G,5,0.8F-(0.2*SettingGetGlobal_f(G,cSetting_mouse_wheel_scale)),NULL,0);
     break;
   case cButModeMoveSlabForward:
     SceneNoteMouseInteraction(G);
@@ -2737,7 +2737,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       float old_front = I->Front;
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
-      SceneClip(G,6,0.1F,NULL,0);
+      SceneClip(G,6,0.1F*SettingGetGlobal_f(G,cSetting_mouse_wheel_scale),NULL,0);
       SceneDoRoving(G,old_front,old_back,old_origin,true,false);
     }
     break;
@@ -2748,14 +2748,15 @@ static int SceneClick(Block *block,int button,int x,int y,
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
 
-      SceneClip(G,6,-0.1F,NULL,0);
+      SceneClip(G,6,-0.1F*SettingGetGlobal_f(G,cSetting_mouse_wheel_scale),NULL,0);
       SceneDoRoving(G,old_front,old_back,old_origin,true,false);
     }
     break;
   case cButModeZoomForward:
     SceneNoteMouseInteraction(G);
     {
-      float factor = -((I->FrontSafe+I->BackSafe)/2)*0.1F;
+      float factor = -((I->FrontSafe+I->BackSafe)/2)*0.1*
+        SettingGetGlobal_f(G,cSetting_mouse_wheel_scale);
       if(factor<=0.0F) {
         I->Pos[2]+=factor;
         I->Front-=factor;
@@ -2768,7 +2769,8 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeZoomBackward:
     SceneNoteMouseInteraction(G);
     {
-      float factor = ((I->FrontSafe+I->BackSafe)/2)*0.1F;
+      float factor = ((I->FrontSafe+I->BackSafe)/2)*0.1F
+        *SettingGetGlobal_f(G,cSetting_mouse_wheel_scale);
       if(factor>=0.0F) {
         I->Pos[2]+=factor;
         I->Front-=factor;
@@ -2784,7 +2786,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       float old_front = I->Front;
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
-      SceneClip(G,6,0.1F,NULL,0);
+      SceneClip(G,6,0.1F*SettingGetGlobal_f(G,cSetting_mouse_wheel_scale),NULL,0);
       SceneDoRoving(G,old_front,old_back,old_origin,true,true);
     }
     break;
@@ -2794,7 +2796,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       float old_front = I->Front;
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
-      SceneClip(G,6,-0.1F,NULL,0);
+      SceneClip(G,6,-0.1F*SettingGetGlobal_f(G,cSetting_mouse_wheel_scale),NULL,0);
       SceneDoRoving(G,old_front,old_back,old_origin,true,true);
     }
     break;

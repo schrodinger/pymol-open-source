@@ -556,6 +556,8 @@ if __name__=='pymol.setting':
         trace_atoms_mode          = (520,'')
         session_changed           = (521,'')
         ray_clip_shadows          = (522,'')
+        mouse_wheel_scale         = (523,'')
+        nonbonded_transparency    = (524,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
