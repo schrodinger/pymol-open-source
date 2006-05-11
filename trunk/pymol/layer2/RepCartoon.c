@@ -1665,8 +1665,10 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                   
               }
             } else {
-              if(!AtomInfoSequential(G,obj->AtomInfo+a2,obj->AtomInfo+a1,trace_mode))
-                a2=-1;
+              if(a2>=0) {
+                if(!AtomInfoSequential(G,obj->AtomInfo+a2,obj->AtomInfo+a1,trace_mode))
+                  a2=-1;
+              }
             }
             last_ai = ai;
                 

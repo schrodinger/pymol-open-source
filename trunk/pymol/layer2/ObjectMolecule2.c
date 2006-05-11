@@ -470,6 +470,10 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
                 }
               case 0:
                 if(ai1->resn[1]==0) {
+                  if(!strcmp(ai1->name,"O2P")) 
+                                      ai1->formalCharge=-1;
+                                    else if(!strcmp(ai2->name,"O2P")) 
+                                      ai2->formalCharge=-1;
                   if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
                      ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
                     order=2;
@@ -486,15 +490,17 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
                   else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O1P")))||
                           ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O1P")))) 
                     order=2;
-                  else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O2P")))||
-                          ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O2P")))) 
-                    order=2;
+                 
                 }
                 break;
               }
               break;
             case 'C':
               if(ai1->resn[1]==0) {
+                if(!strcmp(ai1->name,"O2P")) 
+                  ai1->formalCharge=-1;
+                else if(!strcmp(ai2->name,"O2P")) 
+                  ai2->formalCharge=-1;
                 if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
                    ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
                   order=2;
@@ -507,9 +513,6 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
                   order=2;
                 else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O1P")))||
                         ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O1P")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O2P")))||
-                        ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O2P")))) 
                   order=2;
               }
               break;
@@ -533,6 +536,10 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
                 }
                 break;
               case 0:
+                if(!strcmp(ai1->name,"O2P")) 
+                  ai1->formalCharge=-1;
+                else if(!strcmp(ai2->name,"O2P")) 
+                  ai2->formalCharge=-1;
                 if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"O6")))||
                    ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"O6")))) 
                   order=2;
@@ -547,10 +554,7 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
                   order=2;
                 else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O1P")))||
                         ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O1P")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O2P")))||
-                        ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O2P")))) 
-                  order=2;
+                  order=2;                
                 break;
               }
               break;
@@ -590,6 +594,10 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
               break;
             case 'I':
               if(ai1->resn[1]==0) {
+                if(!strcmp(ai1->name,"O2P")) 
+                  ai1->formalCharge=-1;
+                else if(!strcmp(ai2->name,"O2P")) 
+                  ai2->formalCharge=-1;
                 if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
                    ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
                   order=2;
@@ -673,6 +681,10 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
                 }
                 break;
               case 0:
+                if(!strcmp(ai1->name,"O2P")) 
+                  ai1->formalCharge=-1;
+                else if(!strcmp(ai2->name,"O2P")) 
+                  ai2->formalCharge=-1;
                 if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
                    ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
                   order=2;
@@ -686,13 +698,14 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
                 else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O1P")))||
                         ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O1P")))) 
                   order=2;
-                else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O2P")))||
-                        ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O2P")))) 
-                  order=2;
                 break;
               }
               break;
             case 'U':
+              if(!strcmp(ai1->name,"O2P")) 
+                ai1->formalCharge=-1;
+              else if(!strcmp(ai2->name,"O2P")) 
+                ai2->formalCharge=-1;
               if(ai1->resn[1]==0) {
                 if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
                    ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
@@ -707,13 +720,8 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
                 else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O1P")))||
                         ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O1P")))) 
                   order=2;
-                else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O2P")))||
-                        ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O2P")))) 
-                  order=2;
-
               }
               break;
-              
             }
           }
         }

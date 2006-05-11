@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 1.00b04
 
+    * fixed cartoon_trace_atoms crash bug
+
     * fixed some horridly complicated rendering bugs with labels
     
     * fixed some cartoon drawing glitches
