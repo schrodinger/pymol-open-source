@@ -42,7 +42,7 @@ if __name__=='pymol.viewing':
 
     scene_action_sc = Shortcut(['store','recall','clear','insert_before',
                                 'insert_after','next','previous',
-                                'start', 'update','rename','delete'])
+                                'start', 'update','rename','delete', 'append'])
     scene_action_dict = {}
     scene_action_dict_sc = Shortcut([])
 
@@ -985,6 +985,12 @@ SEE ALSO
             if not new_dict.has_key(a):
                 new_list.append(a)
         scene_order = new_list
+        r = DEFAULT_ERROR
+        try:
+            lock()
+            r = _cmd._set_scene_names(scene_order)
+        finally:
+            unlock(r);
         return scene_order
 
     def chain_session():
@@ -1017,7 +1023,7 @@ SEE ALSO
     
     def scene(key='auto',action='recall',message=None,
               view=1,color=1,active=1,rep=1,frame=1,animate=-1,
-              new_key=None, hand=1, quiet=1,):
+              new_key=None, hand=1, quiet=1):
         '''
 DESCRIPTION
 
@@ -1116,6 +1122,8 @@ DEVELOPMENT TO DO
                         action='recall'
             if action == 'delete':
                 action='clear'             
+            if action == 'append':
+                action='store'
             if key=='*':
                 action = scene_action_sc.auto_err(action,'action')
                 if action=='clear':
@@ -1131,6 +1139,7 @@ DEVELOPMENT TO DO
                     scene_dict = {}
                     scene_dict_sc = Shortcut(scene_dict.keys())
                     scene_order = []
+                    _scene_validate_list()
                 else:
                     print " scene: stored scenes:"
                     lst = _scene_validate_list()
@@ -1146,6 +1155,7 @@ DEVELOPMENT TO DO
                     else:
                         ix = 0
                     scene_order.insert(ix,key)
+                    _scene_validate_list()                                            
                     action='store'
                 elif action=='rename':
                     if not scene_dict.has_key(key):
@@ -1182,8 +1192,8 @@ DEVELOPMENT TO DO
                     else:
                         ix = len(scene_order)
                     scene_order.insert(ix,key)
+                    _scene_validate_list()                    
                     action='store'
-                    
                 if action=='recall':
                     cmd.set("scenes_changed",1,quiet=1);
                     key = scene_dict_sc.auto_err(key,'scene')
@@ -1303,9 +1313,10 @@ DEVELOPMENT TO DO
                     scene_dict[key]=entry
                     if _feedback(fb_module.scene,fb_mask.actions):
                         print " scene: scene stored as \"%s\"."%key
+                    _scene_validate_list()                        
                     cmd.set("scenes_changed",1,quiet=1);
                     cmd.set('scene_current_name',key,quiet=1)
-                    cmd.set("session_changed",1,quiet=1)                    
+                    cmd.set("session_changed",1,quiet=1)
                 elif action=='clear':
                     if key=='auto':
                         key = setting.get("scene_current_name")
@@ -1517,7 +1528,7 @@ SEE ALSO
         return r
 
 
-    def full_screen(toggle=1):
+    def full_screen(toggle=-1):
         '''
 DESCRIPTION
 
@@ -1831,11 +1842,13 @@ SEE ALSO
         arg_tup = (int(width),int(height),
                    int(antialias),float(angle),
                    float(shift),int(renderer),int(quiet))
-        # stop movies and sculpting if they're on...
+        # stop movies, rocking, and sculpting if they're on...
         if cmd.get_movie_playing():
             cmd.mstop()
         if int(cmd.get_setting_legacy("sculpting"))!=0:
             cmd.set("sculpting","off",quiet=1)
+        if cmd.rock(-2)>0:
+            cmd.rock(0)
         #
         r = DEFAULT_ERROR
         if not async:

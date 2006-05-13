@@ -23,7 +23,7 @@ void ControlFree(PyMOLGlobals *G);
 Block *ControlGetBlock(PyMOLGlobals *G);
 int ControlIdling(PyMOLGlobals *G);
 void ControlInterrupt(PyMOLGlobals *G);
-void ControlRock(PyMOLGlobals *G,int mode);
+int ControlRock(PyMOLGlobals *G,int mode);
 int ControlRocking(PyMOLGlobals *G);
 
 #endif

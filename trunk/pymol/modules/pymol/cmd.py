@@ -143,7 +143,7 @@ if __name__=='pymol.cmd':
         #--------------------------------------------------------------------
         # shortcuts...
 
-        toggle_dict = {'on':1,'off':0,'1':1,'0':0}
+        toggle_dict = {'on':1,'off':0,'1':1,'0':0,'toggle':-1, '-1':-1}
         toggle_sc = Shortcut(toggle_dict.keys())
 
         stereo_dict = {'on':1,'off':0,'1':1,'0':0,'swap':-1,

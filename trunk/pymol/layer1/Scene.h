@@ -50,6 +50,7 @@ int SceneRenderCached(PyMOLGlobals *G);
 void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
                  Multipick *smp,int oversize_width, int oversize_height);
 void SceneSetFrame(PyMOLGlobals *G,int mode,int frame);
+int SceneSetNames(PyMOLGlobals *G,PyObject *list);
 int SceneGetFrame(PyMOLGlobals *G);
 int SceneGetState(PyMOLGlobals *G);
 

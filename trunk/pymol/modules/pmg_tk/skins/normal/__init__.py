@@ -482,7 +482,7 @@ class Normal(PMGSkin):
         if len(ofile):
             self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
             self.log_file = re.sub(r"^.*[^\/\\]","",ofile)
-            os.chdir(self.initialdir)                 
+#            os.chdir(self.initialdir)                 
             self.cmd.resume(ofile)
 
     def log_append(self,append_only=0):
@@ -499,7 +499,7 @@ class Normal(PMGSkin):
         if len(ofile):
             self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
             self.log_file = re.sub(r"^.*[^\/\\]","",ofile)
-            os.chdir(self.initialdir)                 
+#            os.chdir(self.initialdir)                 
             self.cmd.log_open(ofile,'a')
 
     def session_save(self):
@@ -592,7 +592,8 @@ class Normal(PMGSkin):
                                         ])
         if len(ofile):
             dir = re.sub(r"[^\/\\]*$","",ofile)
-            os.chdir(dir)        
+            self.__script__ = ofile
+#            os.chdir(dir)        
             if re.search("\.pym*$|\.PYM*$",ofile):
                 self.cmd.do("run "+ofile);      
             else:

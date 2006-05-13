@@ -53,6 +53,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
 #include"PConv.h"
+#include"ScrollBar.h"
 
 #ifdef _PYMOL_SHARP3D
 #define cSliceMin 0.1F
@@ -104,6 +105,11 @@ typedef struct {
   int show_timing;
   int antialias;
 } DeferredRay;
+
+typedef struct {
+  int len;
+  char *name;
+} SceneElem;
 
 /* allow up to 10 seconds at 30 FPS */
 
@@ -169,6 +175,17 @@ struct _CScene {
   float VertexScale;
   float FogStart;
   float FogEnd;
+
+  /* Scene Names */
+
+  int Over, Pressed, DragMode, HowFarDown, NSkip;
+  int ScrollBarActive;
+  int ReorderFlag;
+  OrthoLineType ReorderLog;
+  struct CScrollBar *ScrollBar;
+  char *SceneNameVLA;
+  SceneElem *SceneVLA;
+  int NScene;
 };
 
 typedef struct {
@@ -2011,7 +2028,226 @@ int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet
   return (value>0xFF) ? 0xFF : value;
 }
 */
+
+#define SceneClickMargin 2
+#define SceneTopMargin 0
+#define SceneToggleMargin 2
+#define SceneRightMargin 0
+#define SceneToggleWidth 17
+#define SceneToggleSize 16
+#define SceneToggleTextShift 4
+#define SceneTextLeftMargin 1
+#define SceneScrollBarMargin 1
+#define SceneScrollBarWidth 13
+
+static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, float *inside)
+{
+  glColor3fv(light);
+  glBegin(GL_POLYGON);
+  glVertex2i(x2,y2);
+  glVertex2i(x2,y2+h);
+  glVertex2i(x2+w,y2+h);
+  glVertex2i(x2+w,y2);
+  glEnd();
+  
+  glColor3fv(dark);
+  glBegin(GL_POLYGON);
+  glVertex2i(x2+1,y2);
+  glVertex2i(x2+1,y2+h-1);
+  glVertex2i(x2+w,y2+h-1);
+  glVertex2i(x2+w,y2);
+  glEnd();
+  
+  if(inside) {
+    glColor3fv(inside);
+    glBegin(GL_POLYGON);
+    glVertex2i(x2+1,y2+1);
+    glVertex2i(x2+1,y2+h-1);
+    glVertex2i(x2+w-1,y2+h-1);
+    glVertex2i(x2+w-1,y2+1);
+    glEnd();
+  } else { /* rainbow */
+    glBegin(GL_POLYGON);
+    glColor3f(1.0F,0.1F,0.1F);
+    glVertex2i(x2+1,y2+1);
+    glColor3f(0.1F,1.0F,0.1F);
+    glVertex2i(x2+1,y2+h-1);
+    glColor3f(1.0F,1.0F,0.1F);
+    glVertex2i(x2+w-1,y2+h-1);
+    glColor3f(0.1F,0.1F,1.0F);
+    glVertex2i(x2+w-1,y2+1);
+    glEnd();
+  }
+
+}
+int SceneSetNames(PyMOLGlobals *G,PyObject *list)
+{
+#ifndef _PYMOL_NOPY
+  register CScene *I = G->Scene;
+  int ok = PConvPyListToStrVLAList(list, &I->SceneNameVLA, &I->NScene);
+  if(ok) {
+    VLACheck(I->SceneVLA, SceneElem, I->NScene);
+    {
+      int a;
+      char *c = I->SceneNameVLA;
+      SceneElem *elem = I->SceneVLA;
+      for(a=0;a<I->NScene;a++) {
+        elem->name = c;
+        elem->len = strlen(c);
+        c += elem->len+1;
+        elem++;
+      }
+    }
+  }
+  OrthoDirty(G);
+  return ok;
+#else
+  return 0;
+#endif
+}
+
 /*========================================================================*/
+static void SceneDrawButtons(Block *block)
+{
+#ifndef _PYMOL_NOPY  
+  PyMOLGlobals *G=block->G;
+  register CScene *I = G->Scene;
+  int x,y,xx,x2,y2;
+  char *c=NULL;
+  float enabledColor[3] = { 0.5F, 0.5F, 0.5F };
+  float pressedColor[3] = { 0.7F, 0.7F, 0.7F };
+  float disabledColor[3] = { 0.3F, 0.3F, 0.3F };
+  float lightEdge[3] = {0.6F, 0.6F, 0.6F };
+  float darkEdge[3] = {0.35F, 0.35F, 0.35F };
+  int charWidth = 8;
+  int n_ent;
+  int n_disp;
+  int skip=0;
+  int row = -1;
+  int lineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
+  int text_lift = (lineHeight/2)-5;
+  int op_cnt = 1;
+
+  if(G->HaveGUI && G->ValidContext && ((block->rect.right-block->rect.left)>6)) {
+    int max_char;
+    int nChar;
+    /* do we have enough structures to warrant a scroll bar? */
+    n_ent = I->NScene;
+    n_disp = ((I->Block->rect.top-I->Block->rect.bottom)-(SceneTopMargin))/lineHeight;
+    if(n_disp<1) n_disp=1;
+      
+    if(n_ent>n_disp) {
+      int bar_maxed = ScrollBarIsMaxed(I->ScrollBar);
+      if(!I->ScrollBarActive) {
+        ScrollBarSetLimits(I->ScrollBar,n_ent,n_disp);
+        if(bar_maxed) {
+          ScrollBarMaxOut(I->ScrollBar);
+          I->NSkip = (int)ScrollBarGetValue(I->ScrollBar);
+        } else {
+          ScrollBarSetValue(I->ScrollBar,0);
+          I->NSkip =0;
+        }
+      } else {
+        ScrollBarSetLimits(I->ScrollBar,n_ent,n_disp);
+        if(bar_maxed)
+          ScrollBarMaxOut(I->ScrollBar);
+        I->NSkip = (int)ScrollBarGetValue(I->ScrollBar);
+      }
+      I->ScrollBarActive = 1;
+
+    } else {
+      I->ScrollBarActive = 0;
+      I->NSkip =0;
+    }
+
+    max_char = (((I->Block->rect.right-I->Block->rect.left)-(SceneTextLeftMargin+SceneRightMargin+4)) -
+                     (op_cnt*SceneToggleWidth));
+    if(I->ScrollBarActive) {
+      max_char -= (SceneScrollBarMargin+SceneScrollBarWidth);
+    }      
+    max_char/=charWidth;
+
+    if(I->ScrollBarActive) {
+      ScrollBarSetBox(I->ScrollBar,I->Block->rect.top-SceneScrollBarMargin,
+                      I->Block->rect.left+SceneScrollBarMargin,
+                      I->Block->rect.bottom+2,
+                      I->Block->rect.left+SceneScrollBarMargin+SceneScrollBarWidth);
+      ScrollBarDoDraw(I->ScrollBar);
+    }
+    
+    x = I->Block->rect.left+SceneTextLeftMargin;
+    y = (I->Block->rect.top-lineHeight)-SceneTopMargin;
+    /*    xx = I->Block->rect.right-SceneRightMargin-SceneToggleWidth*(cRepCnt+op_cnt);*/
+    xx = I->Block->rect.right-SceneRightMargin-SceneToggleWidth*(op_cnt);
+
+    if(I->ScrollBarActive) {
+      x+=SceneScrollBarWidth+SceneScrollBarMargin;
+    }
+    skip=I->NSkip;
+    {
+      int i;
+      for(i=0;i<n_ent;i++) {
+        if(skip) {
+          skip--;
+        } else {
+          row++;
+          x2=xx;
+          y2=y;
+          nChar = max_char;
+          
+          if((x-SceneToggleMargin)-(xx-SceneToggleMargin)>-10) {
+            x2 = x+10;
+          }
+          {
+            float toggleColor[3] = { 0.5F, 0.5F, 1.0F };
+           
+            glColor3fv(toggleColor);
+            
+            TextSetColor(G,I->Block->TextColor);
+            TextSetPos2i(G,x+2,y2+text_lift);
+            {
+              int hilight = 0;
+              int visible = 1;
+              int len;
+              c = I->SceneVLA[i].name;
+              len = I->SceneVLA[i].len;
+
+              y2=y;
+              x2 = xx;
+              if(len>max_char)
+                len = max_char;
+              x2 = x + len * charWidth + 6;
+              
+              if(hilight||(row==I->Over)) {
+                draw_button(x,y2,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,pressedColor);
+              } else if(visible) {
+                draw_button(x,y2,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,enabledColor);
+              } else {
+                draw_button(x,y2,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,disabledColor);
+              }
+              
+              TextSetColor(G,I->Block->TextColor);
+              
+              if(c)
+                while(*c) {
+                  if((nChar--)>0)
+                    TextDrawChar(G,*(c++));
+                  else
+                    break;
+                }
+            }
+          }
+          y-=lineHeight;
+          if(y<(I->Block->rect.bottom))
+            break;
+        }
+      }
+    }
+    I->HowFarDown = y;
+  }
+#endif
+}
+
 void SceneDraw(Block *block)
 {
   PyMOLGlobals *G=block->G;
@@ -2296,6 +2532,8 @@ void SceneDraw(Block *block)
       I->RenderTime += I->LastRender;
       ButModeSetRate(G,(float)I->RenderTime);
     }
+
+    /*    SceneDrawButtons(block);*/
   }
 }
 /*========================================================================*/
@@ -4542,12 +4780,16 @@ int SceneDeferRelease(Block *block,int button,int x,int y,int mod)
 void SceneFree(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
+  if(I->ScrollBar)
+    ScrollBarFree(I->ScrollBar);
+  VLAFreeP(I->SceneVLA);
+  VLAFreeP(I->SceneNameVLA);
   OrthoFreeBlock(G,I->Block);
   ListFree(I->Obj,next,ObjRec);
+
   ScenePurgeImage(G);
   CGOFree(G->DebugCGO);
   FreeP(G->Scene);
-  
 }
 /*========================================================================*/
 void SceneResetMatrix(PyMOLGlobals *G)
@@ -4604,6 +4846,7 @@ int  SceneInit(PyMOLGlobals *G)
 
     ListInit(I->Obj);
     
+
     I->LoopFlag = false;
     I->RockTime=0;
     I->TextColor[0]=0.2F;
@@ -4664,6 +4907,20 @@ int  SceneInit(PyMOLGlobals *G)
     I->AnimationStartFlag = false;
     I->ApproxRenderTime = 0.0;
     I->VertexScale = 0.01F;
+
+    /* scene list */
+
+    I->ScrollBarActive = 0;
+    I->ScrollBar=ScrollBarNew(G,false);
+    I->Pressed = -1;
+    I->Over = -1;
+    I->ReorderFlag=false;
+    I->NSkip=0;
+    I->HowFarDown=0;
+    I->DragMode = 0;
+    I->SceneNameVLA = VLAlloc(char,10);
+    I->SceneVLA = VLAlloc(SceneElem,10);
+    I->NScene = 0;
 
     return 1;
   } else 

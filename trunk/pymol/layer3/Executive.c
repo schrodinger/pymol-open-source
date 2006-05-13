@@ -9621,39 +9621,43 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
 /*========================================================================*/
 void ExecutiveFullScreen(PyMOLGlobals *G,int flag)
 {
+  if(flag<0)
+    flag = ! SettingGetGlobal_b(G,cSetting_full_screen);
 #ifndef _PYMOL_NO_GLUT
-  register CExecutive *I = G->Executive;
-  if(G->HaveGUI && G->ValidContext) {
-    if(!SettingGet(G,cSetting_full_screen)) {
-      I->oldPX = p_glutGet(P_GLUT_WINDOW_X) 
+ {
+   register CExecutive *I = G->Executive;
+   if(G->HaveGUI && G->ValidContext) {
+     if(!SettingGet(G,cSetting_full_screen)) {
+       I->oldPX = p_glutGet(P_GLUT_WINDOW_X) 
 #ifdef FREEGLUT
-        - p_glutGet(P_GLUT_WINDOW_BORDER_WIDTH)
+         - p_glutGet(P_GLUT_WINDOW_BORDER_WIDTH)
 #endif
-        ;
-      I->oldPY = p_glutGet(P_GLUT_WINDOW_Y) 
+         ;
+       I->oldPY = p_glutGet(P_GLUT_WINDOW_Y) 
 #ifdef FREEGLUT
-        - p_glutGet(P_GLUT_WINDOW_HEADER_HEIGHT)
+         - p_glutGet(P_GLUT_WINDOW_HEADER_HEIGHT)
 #endif
-        ;
-      I->oldWidth = p_glutGet(P_GLUT_WINDOW_WIDTH);
-      I->oldHeight = p_glutGet(P_GLUT_WINDOW_HEIGHT);
-      I->sizeFlag = true;
-    }
-      
-    SettingSet(G,cSetting_full_screen,(float)flag);
-    if(flag) {
-      p_glutFullScreen();
-    } else {
-      if(I->sizeFlag) {
-        p_glutPositionWindow(I->oldPX,I->oldPY);
-        p_glutReshapeWindow(I->oldWidth,I->oldHeight);
-      } else {
+         ;
+       I->oldWidth = p_glutGet(P_GLUT_WINDOW_WIDTH);
+       I->oldHeight = p_glutGet(P_GLUT_WINDOW_HEIGHT);
+       I->sizeFlag = true;
+     }
+     
+     SettingSet(G,cSetting_full_screen,(float)flag);
+     if(flag) {
+       p_glutFullScreen();
+     } else {
+       if(I->sizeFlag) {
+         p_glutPositionWindow(I->oldPX,I->oldPY);
+         p_glutReshapeWindow(I->oldWidth,I->oldHeight);
+       } else {
 #ifndef _PYMOL_NO_MAIN
-        MainRepositionWindowDefault(G);
+         MainRepositionWindowDefault(G);
 #endif
-      }
-    }
-  }
+       }
+     }
+   }
+ }
 #endif
   SettingSet(G,cSetting_full_screen,(float)flag);
   if(flag) {
