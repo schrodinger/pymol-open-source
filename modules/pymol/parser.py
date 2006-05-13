@@ -76,7 +76,8 @@ if __name__=='pymol.parser':
     nest=0
     com0[nest]=""
     cont[nest]=""
-    sc_path[nest]="default"
+    sc_path[nest]="toplevel"
+    pymol.__script__="toplevel"
     embed_sentinel[nest]=None
 
     def stdin_reader(): # dedicated thread for reading standard input
@@ -300,7 +301,7 @@ if __name__=='pymol.parser':
                                                 next[nest] = ()                                    
                                                 print 'Error: spawn disallowed in this file.'
                                                 return None
-                                        elif kw[nest][4]==parsing.RUN:
+                                        elif kw[nest][4]==parsing.RUN: # synchronous
                                             if not secure:
                                                 # run command
                                                 if len(args[nest])==1: # default: global
@@ -315,6 +316,7 @@ if __name__=='pymol.parser':
                                                     parsing.run_file(exp_path(args[nest][0]),pymol_names,pymol_names)
                                                 elif args[nest][1]=='module':
                                                     parsing.run_file_as_module(exp_path(args[nest][0]),spawn=0)
+                                                pymol.__script__ = sc_path[nest]                                                    
                                             else:
                                                 next[nest] = ()                                    
                                                 print 'Error: run disallowed in this file.'
@@ -384,6 +386,7 @@ if __name__=='pymol.parser':
                                     else:
                                         nest_secure = secure
                                     script[nest] = open(path,'r')
+                                    pymol.__script__ = path
                                     nest=nest+1
                                     cont[nest]=''
                                     sc_path[nest]=path
@@ -410,6 +413,7 @@ if __name__=='pymol.parser':
                                                 break;
                                     nest=nest-1
                                     script[nest].close()
+                                    pymol.__script__ = sc_path[nest]
                                 else: # nothing found, try literal python
                                     com2[nest] = string.strip(com2[nest])
                                     if len(com2[nest])>0:

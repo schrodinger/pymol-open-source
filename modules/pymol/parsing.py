@@ -405,6 +405,7 @@ if __name__=='pymol.parsing':
     # launching routines
 
     def run_file(file,global_ns,local_ns):
+        pymol.__script__ = file
         try:
             execfile(file,global_ns,local_ns)
         except pymol.CmdException:
@@ -418,6 +419,7 @@ if __name__=='pymol.parsing':
         name = re.sub('[^A-Za-z0-9]','_',file)
         mod = new.module(name)
         mod.__file__ = file
+        mod.__script__ = file
         sys.modules[name]=mod
         if spawn:
             t = threading.Thread(target=execfile,
@@ -434,6 +436,7 @@ if __name__=='pymol.parsing':
             del mod
 
     def spawn_file(args,global_ns,local_ns):
+        local_ns['__script__'] = args
         t = threading.Thread(target=execfile,args=(args,global_ns,local_ns))
         t.setDaemon(1)
         t.start()

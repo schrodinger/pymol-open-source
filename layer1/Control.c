@@ -53,6 +53,7 @@ struct _CControl {
   int SaveWidth;
   double LastClickTime;
   int SkipRelease;
+  int NButton;
 };
 
 int ControlRocking(PyMOLGlobals *G)
@@ -80,8 +81,7 @@ static int which_button(CControl *I,int x,int y)
   if(x>=0) 
     if((y<=0)&&(y>(-cControlBoxSize))) {
       int control_width = I->Block->rect.right - (I->Block->rect.left+cControlLeftMargin);
-      int nButton = 8;
-      result = (nButton*x)/control_width;
+      result = (I->NButton*x)/control_width;
     }
   return result;
 }
@@ -190,11 +190,15 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
   case 7:
     I->Rocking=!I->Rocking;
     if(I->Rocking)
-      PLog("cmd.set('rocking',1)",cPLog_pym);
+      PLog("cmd.rock(1)",cPLog_pym);
     else
-      PLog("cmd.set('rocking',0)",cPLog_pym);
+      PLog("cmd.rock(0)",cPLog_pym);
     SceneRestartTimers(G);
     OrthoDirty(G);
+    break;
+  case 8:
+    PLog("cmd.fullscreen()",cPLog_pym);
+    ExecutiveFullScreen(G,-1);
     break;
   }
   OrthoDirty(G);
@@ -203,7 +207,6 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
   I->DragFlag=false;
   I->Active = -1;
   I->Pressed = -1;
-
   }
   return(1);
 }
@@ -234,10 +237,12 @@ void ControlFree(PyMOLGlobals *G)
   FreeP(G->Control);
 }
 /*========================================================================*/
-void ControlRock(PyMOLGlobals *G,int mode)
+int ControlRock(PyMOLGlobals *G,int mode)
 {
   register CControl *I=G->Control;
   switch(mode) {
+  case -2: 
+    break;
   case -1:
 	I->Rocking=!I->Rocking;
 	break;
@@ -248,8 +253,11 @@ void ControlRock(PyMOLGlobals *G,int mode)
 	I->Rocking=true;
 	break;
   }
-  SceneRestartTimers(G);
-  OrthoDirty(G);
+  if(mode!=-2) {
+    SceneRestartTimers(G);
+    OrthoDirty(G);
+  }
+  return I->Rocking;
 }
 
 /*========================================================================*/
@@ -323,11 +331,11 @@ static void ControlDraw(Block *block)
   PyMOLGlobals *G=block->G;
   register CControl *I=G->Control;
   int x,y;
-  int nButton = 8;
+  int nButton = I->NButton;
   int but_num;
-  float lightEdge[3] = { 0.7F, 0.7F, 0.7F};
+  float lightEdge[3] = { 0.65F, 0.65F, 0.65F};
   float darkEdge[3] = {0.3F, 0.3F, 0.3F};
-  float active[3] = {0.8F,0.8F,0.8F};
+  float pushed[3] = {0.8F,0.8F,0.8F};
 
   if(G->HaveGUI && G->ValidContext ) {
 
@@ -389,10 +397,11 @@ static void ControlDraw(Block *block)
 
       if( ( but_num==I->Active ) ) {
         draw_button(but_left,but_bottom,
-                    but_width, but_height, lightEdge,darkEdge,active);
+                    but_width, but_height, lightEdge,darkEdge,pushed);
       } else if(((but_num==6)&&((int)SettingGet(G,cSetting_seq_view))) ||
                 ((but_num==3)&&(MoviePlaying(G))) ||
-                ((but_num==7)&&(I->Rocking))) {
+                ((but_num==7)&&(I->Rocking))||
+                ((but_num==8)&&(SettingGetGlobal_b(G,cSetting_full_screen)))) {
         draw_button(but_left,but_bottom,
                     but_width, but_height, lightEdge,darkEdge,I->ActiveColor);
       } else {
@@ -478,14 +487,21 @@ static void ControlDraw(Block *block)
                     y-cControlBoxSize+cControlInnerMargin+1);
         break;
       case 7:
-        glBegin(GL_POLYGON);
+        /*
+        TextDrawStrAt(G,"R",x+cControlInnerMargin,
+        y-cControlBoxSize+cControlInnerMargin+1);*/
+                    glBegin(GL_POLYGON);
         glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
                    y-cControlInnerMargin);
         glVertex2i(x+(cControlBoxSize/2),
                    y-(cControlBoxSize)+cControlInnerMargin);
         glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
                    y-cControlInnerMargin);
-        glEnd();
+                   glEnd();
+        break;
+      case 8:
+        TextDrawStrAt(G,"F",x+cControlInnerMargin,
+                    y-cControlBoxSize+cControlInnerMargin+1);
         break;
       }
     }
@@ -515,15 +531,16 @@ int ControlInit(PyMOLGlobals *G)
     I->ButtonColor[0]=0.5F;
     I->ButtonColor[1]=0.5F;
     I->ButtonColor[2]=0.5F;
-    I->ActiveColor[0]=0.7F;
-    I->ActiveColor[1]=0.7F;
-    I->ActiveColor[2]=0.7F;
+    I->ActiveColor[0]=0.65F;
+    I->ActiveColor[1]=0.65F;
+    I->ActiveColor[2]=0.65F;
     I->Pressed = -1;
     I->Active = -1;
     OrthoAttach(G,I->Block,cOrthoTool);
     I->SaveWidth = 0;
     I->Rocking=false;
     I->LastClickTime = UtilGetSeconds(G);
+    I->NButton=9;
     return 1;
   } else 
     return 0;

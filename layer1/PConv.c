@@ -58,6 +58,37 @@ int PConvPyListToExtent(PyObject *obj,float *mn,float *mx) /* [[min_x,min_y,min_
   return(ok);
 }
 
+int PConvPyListToStrVLAList(PyObject *obj,char **vla, int *n_str)
+{
+  int ok=false;
+  PyObject *t;
+  int n_st = 0, n_ch = 0, nn_ch, l, i;
+  if(!*vla)
+    *vla = VLAlloc(char,10);
+  if((!obj)||(!*vla)) {
+    ok=false;
+  } else if(PyList_Check(obj)) {
+    n_st = PyList_Size(obj);
+    ok = true;
+    for(i=0;i<n_st;i++) {
+      t = PyList_GetItem(obj,i);
+      if(PyString_Check(t)) {
+        l = PyString_Size(t);
+        nn_ch = n_ch+l+1;
+        VLACheck(*vla, char, nn_ch);
+        UtilNCopy((*vla)+n_ch,PyString_AsString(t),l+1);
+        n_ch = nn_ch;
+      } else {
+        VLACheck(*vla, char, n_ch+1);
+        (*vla)[n_ch] = 0;
+        n_ch++;
+      }
+    }
+  }
+  *n_str = n_st;
+  return(ok);
+}
+
 int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *f,int ll)
 {
   int ok=true;

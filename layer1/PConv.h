@@ -54,6 +54,7 @@ int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *ff,int ll);
 int PConvAttrToPtr(PyObject *obj,char *name,void **cobj);
 
 int PConvCObjectToPtr(PyObject *obj,void **ptr);
+int PConvPyListToStrVLAList(PyObject *obj,char **vla, int *n_str);
 
 int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr);
 int PConvPyListToIntVLA(PyObject *obj,int **f);

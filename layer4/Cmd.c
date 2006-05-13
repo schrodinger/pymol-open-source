@@ -203,6 +203,19 @@ static PyObject *APIAutoNone(PyObject *result) /* automatically owned Py_None */
   } 
   return(result);
 }
+
+static PyObject *CmdSetSceneNames(PyObject *self, PyObject *args)
+{
+  PyObject *list;
+  int ok = PyArg_ParseTuple(args,"O",&list);
+  if(ok) {
+    APIEnterBlocked();
+    ok = SceneSetNames(TempPyMOLGlobals,list);
+    APIExitBlocked();
+  }
+  return APIResultOk(ok);
+}
+
 static PyObject *CmdFixChemistry(PyObject *self, PyObject *args)
 {
   char *str2,*str3;
@@ -3774,12 +3787,13 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
 static PyObject *CmdRock(PyObject *self, PyObject *args)
 {
   int int1;
-  int ok=true;
-  ok = PyArg_ParseTuple(args,"i",&int1);
-  APIEntry();
-  ControlRock(TempPyMOLGlobals,int1);
-  APIExit();
-  return APIResultOk(ok);
+  int result = -1;
+  if(PyArg_ParseTuple(args,"i",&int1)) {
+    APIEntry();
+    result = ControlRock(TempPyMOLGlobals,int1);
+    APIExit();
+  }
+  return APIResultCode(result);
 }
 
 static PyObject *CmdBusyDraw(PyObject *self, PyObject *args)
@@ -5954,6 +5968,7 @@ static PyObject *CmdGetCThreadingAPI(PyObject *self, 	PyObject *args)
 
 static PyMethodDef Cmd_methods[] = {
    {"_get_c_threading_api",  CmdGetCThreadingAPI,         METH_VARARGS },
+   {"_set_scene_names",    CmdSetSceneNames,           METH_VARARGS },
 	{"accept",	              CmdAccept,               METH_VARARGS },
 	{"align",	              CmdAlign,                METH_VARARGS },
 	{"alter",	              CmdAlter,                METH_VARARGS },

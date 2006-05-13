@@ -2824,7 +2824,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_ray_clip_shadows,0);
   set_f(I,cSetting_mouse_wheel_scale,1.0F);
   set_f(I,cSetting_nonbonded_transparency,0.0F);
-
 }
 
 
