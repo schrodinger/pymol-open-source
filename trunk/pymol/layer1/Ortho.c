@@ -1026,6 +1026,10 @@ void OrthoDetach(PyMOLGlobals *G,Block *block)
   ListDetach(I->Blocks,block,next,Block);
 }
 /*========================================================================*/
+#ifdef _PYMOL_EVAL_MESSAGE
+#include "OrthoEvalMessage.h"
+#endif
+
 void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
 {
   register COrtho *I=G->Ortho;
@@ -1255,6 +1259,11 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       }
       
       OrthoDrawWizardPrompt(G);
+ 
+#ifdef _PYMOL_EVAL_MESSAGE
+      OrthoDrawEvalMessage(G);
+#endif
+
       OrthoPopMatrix(G);
 
       if(Feedback(G,FB_OpenGL,FB_Debugging))
@@ -1270,6 +1279,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
 
 }
 /*========================================================================*/
+
 static void OrthoDrawWizardPrompt(PyMOLGlobals *G)
 {
   /* assumes PMGUI */
