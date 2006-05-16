@@ -1864,10 +1864,10 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
           float map_cutoff = neighborhood;
           float *v0,*vv0;
           int ii,jj;
+          float *new_dot = VLAlloc(float,1000),*v1,*n1;
           if(map_cutoff<(2.9*point_sep)) { /* these constants need more tuning...*/
             map_cutoff = 2.9*point_sep;
           }
-          float *new_dot = VLAlloc(float,1000),*v1,*n1;
           map=MapNew(G,map_cutoff,I->V,I->N,extent);
           MapSetupExpress(map);		  
           v=I->V;
@@ -1891,8 +1891,8 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
                       /* if points are too far apart, insert a new one */
                       ii=*(MapLocusEStart(map,v1));
                       if(ii) {
-                        jj=map->EList[ii++];
                         int found=false;
+                        jj=map->EList[ii++];
                         while(jj>=0) {
                           if(jj!=j) {
                             vv0 = I->V+3*jj;
