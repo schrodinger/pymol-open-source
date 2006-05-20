@@ -931,13 +931,18 @@ PYMOL API
         done = 0
         while (done == 0) and (tries<3): # try loading URL up to 3 times
             tries = tries + 1
-            if type=='pdb':
+            if (type=='pdb') or (type=='pdb1'):
                 remoteCode = string.upper(code)
                 try:
-                    filename = urllib.urlretrieve(
-                        'http://www.rcsb.org/pdb/cgi/export.cgi/' +
-                        remoteCode + '.pdb.gz?format=PDB&pdbId=' +
-                        remoteCode + '&compression=gz')[0]
+                    if type=='pdb':
+                        filename = urllib.urlretrieve(
+                            'http://www.rcsb.org/pdb/cgi/export.cgi/' +
+                            remoteCode + '.pdb.gz?format=PDB&pdbId=' +
+                            remoteCode + '&compression=gz')[0]
+                    elif type=='pdb1':
+                        filename = urllib.urlretrieve(
+                            'http://www.rcsb.org/pdb/files/' +
+                            remoteCode + '.pdb1.gz')[0]
                 except:
                     pass
                 else:

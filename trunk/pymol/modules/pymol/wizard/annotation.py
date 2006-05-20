@@ -38,7 +38,7 @@ import re
 
 from chempy.sdf import SDF
 
-def load_annotated_sdf(filename, object=None, state=1):
+def load_annotated_sdf(filename, object=None, state=1, discrete=1):
     
     # get object name from file prefix
 
@@ -75,7 +75,7 @@ def load_annotated_sdf(filename, object=None, state=1):
         # load it into PyMOL
 
         cmd.read_molstr(string.join(mol_list,''),object,
-                             state,finish=0,discrete=1)
+                             state,finish=0,discrete=discrete)
 
         # populate with tuple containing ordered list of keys
         # and associated data dictionary
