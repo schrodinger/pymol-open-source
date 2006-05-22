@@ -1677,16 +1677,17 @@ static void TriangleTxfFolds(TriangleSurfaceRec *II,float *v,float *vn,int n)
         if( (old_dp = dot_product3f(x1020,x1030)) >0.5F) { /* triangles are nearly opposing one another */
 
           /*
-          CGOLinewidth(I->G->DebugCGO,5.0);
-          CGOBegin(I->G->DebugCGO,GL_LINES);
-          CGOVertexv(I->G->DebugCGO,v0);
-          CGOVertexv(I->G->DebugCGO,v1);
-          CGOEnd(I->G->DebugCGO);
-          CGOLinewidth(I->G->DebugCGO,3.0);
-          CGOBegin(I->G->DebugCGO,GL_LINES);            
-          CGOVertexv(I->G->DebugCGO,v2);
-          CGOVertexv(I->G->DebugCGO,v3);
-          CGOEnd(I->G->DebugCGO);*/
+            CGOLinewidth(I->G->DebugCGO,5.0);
+            CGOBegin(I->G->DebugCGO,GL_LINES);
+            CGOVertexv(I->G->DebugCGO,v0);
+            CGOVertexv(I->G->DebugCGO,v1);
+            CGOEnd(I->G->DebugCGO);
+            CGOLinewidth(I->G->DebugCGO,3.0);
+            CGOBegin(I->G->DebugCGO,GL_LINES);            
+            CGOVertexv(I->G->DebugCGO,v2);
+            CGOVertexv(I->G->DebugCGO,v3);
+            CGOEnd(I->G->DebugCGO);
+          */
 
           normalize23f(d10,n10);
           subtract3f(v2,v1,d21);
@@ -1763,14 +1764,13 @@ static void TriangleTxfFolds(TriangleSurfaceRec *II,float *v,float *vn,int n)
                   I->edge[s01].vert4 = b;
                   t1 = I->edge[s01].tri1;
                   t2 = I->edge[s01].tri2;
-
                   {
                     int i;
                     for(i=0;i<3;i++) {
-                      if(I->tri[3*t1+i]==b) {
+                      if(I->tri[3*t1+i]==b) { /* a b c -> a c d */
                         I->tri[3*t1+i]=d;
                       }
-                      if(I->tri[3*t2+i]==a) {
+                      if(I->tri[3*t2+i]==a) { /* a b d -> c b d */
                         I->tri[3*t2+i]=c;
                       }
                     }
@@ -1825,6 +1825,8 @@ static void TriangleTxfFolds(TriangleSurfaceRec *II,float *v,float *vn,int n)
                       I->edge[s01].tri2=t2;
                     }
                   }
+
+                  l=I->edgeStatus[a]; /* start vertex over since we've messed with its edges */
                 }
               }
             }
@@ -1953,7 +1955,7 @@ static void TriangleFixProblems(TriangleSurfaceRec *II,float *v,float *vn,int n)
   FreeP(pFlag);
 }
 
-static void TriangleBruteForceClosure(TriangleSurfaceRec *II,float *v,float *vn,int n) 
+static void TriangleBruteForceClosure(TriangleSurfaceRec *II,float *v,float *vn,int n,float cutoff) 
 {
   register TriangleSurfaceRec *I=II;
   int a,b,c,d;
@@ -2044,16 +2046,21 @@ static void TriangleBruteForceClosure(TriangleSurfaceRec *II,float *v,float *vn,
             }
             if(hits>=3) {
               v0=v+i0*3; v1=v+i1*3; v2=v+i2*3;
-              n0 = vn+3*i0; n1 = vn+3*i1; n2 = vn+3*i2;							 
-              add3f(n0,n1,vt1);
-              add3f(n2,vt1,vt2);
-              subtract3f(v1,v0,vt3);
-              subtract3f(v2,v0,vt4);
-              cross_product3f(vt3,vt4,tNorm); 
-              normalize3f(tNorm); 							 
-              dp = dot_product3f(vt2,tNorm);
-              if(dp<0) scale3f(tNorm,-1.0F,tNorm);
-              TriangleAdd(I,i0,i1,i2,tNorm,v,vn);
+              if(within3f(v0,v1,cutoff) &&
+                 within3f(v1,v2,cutoff) &&
+                 within3f(v0,v2,cutoff)) {
+                
+                n0 = vn+3*i0; n1 = vn+3*i1; n2 = vn+3*i2;							 
+                add3f(n0,n1,vt1);
+                add3f(n2,vt1,vt2);
+                subtract3f(v1,v0,vt3);
+                subtract3f(v2,v0,vt4);
+                cross_product3f(vt3,vt4,tNorm); 
+                normalize3f(tNorm); 							 
+                dp = dot_product3f(vt2,tNorm);
+                if(dp<0) scale3f(tNorm,-1.0F,tNorm);
+                TriangleAdd(I,i0,i1,i2,tNorm,v,vn);
+              }
             }
           }
         }
@@ -2129,7 +2136,8 @@ int *TrianglePointsToSurface(PyMOLGlobals *G,float *v,float *vn,int n,float cuto
         if(I->vertActive[a])
           printf(" TrianglePTS-DEBUG: after fix %i %i\n",a,I->vertActive[a]);
     }
-    TriangleBruteForceClosure(I,v,vn,n); /* abandon algorithm, just CLOSE THOSE GAPS! */
+
+    TriangleBruteForceClosure(I,v,vn,n,cutoff*3); /* abandon algorithm, just CLOSE THOSE GAPS! */
 
     TriangleAdjustNormals(I,v,vn,n,true);
 
