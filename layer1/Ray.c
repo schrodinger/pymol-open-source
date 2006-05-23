@@ -2126,6 +2126,7 @@ int RayTraceThread(CRayThreadInfo *T)
    const float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);
    const float shadow_range = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_range);
    const int clip_shadows = SettingGetGlobal_b(I->G,cSetting_ray_clip_shadows);
+   const int spec_local = SettingGetGlobal_i(I->G,cSetting_ray_spec_local);
    float legacy = SettingGetGlobal_f(I->G,cSetting_ray_legacy_lighting);
    int spec_count = SettingGetGlobal_i(I->G,cSetting_spec_count);
    const float _0		= 0.0F;
@@ -2136,7 +2137,7 @@ int RayTraceThread(CRayThreadInfo *T)
    const float _persistLimit	= 0.0001F;
    float legacy_1m = _1 - legacy;
    int n_basis = I->NBasis;
-   
+
    /*   MemoryDebugDump();
    printf("%d\n",sizeof(CPrimitive));
    */
@@ -2765,7 +2766,19 @@ int RayTraceThread(CRayThreadInfo *T)
                              }
 
                              if(bc<(spec_count+2)) {
-                               dotgle	= -dot_product3f(r1.surfnormal,bp->SpecNormal);
+                               if(spec_local) {
+                                 /* slower, C4D-like local specular */
+                                 float tmp[3];
+                                 
+                                 add3f(r1.surfnormal,r1.surfnormal,tmp);
+                                 add3f(tmp,bp->LightNormal,tmp);
+                                 normalize3f(tmp);
+                                 dotgle	= -dot_product3f(r1.dir,tmp);
+                                 if(dotgle < _0) dotgle=_0;                                                          
+                                 dotgle = (float)( pow(dotgle, 0.25));
+                               } else {
+                                 dotgle	= -dot_product3f(r1.surfnormal,bp->SpecNormal); /* fast OpenGL-like global specular */
+                               }
                                if(dotgle < _0) dotgle=_0;                                                          
                                excess	+= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
                              }
