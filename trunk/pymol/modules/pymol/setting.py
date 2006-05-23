@@ -558,6 +558,7 @@ if __name__=='pymol.setting':
         ray_clip_shadows          = (522,'')
         mouse_wheel_scale         = (523,'')
         nonbonded_transparency    = (524,'')
+        ray_spec_local            = (525,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
