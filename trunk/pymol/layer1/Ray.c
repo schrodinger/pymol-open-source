@@ -2773,9 +2773,10 @@ int RayTraceThread(CRayThreadInfo *T)
                                  add3f(r1.surfnormal,r1.surfnormal,tmp);
                                  add3f(tmp,bp->LightNormal,tmp);
                                  normalize3f(tmp);
-                                 dotgle	= -dot_product3f(r1.dir,tmp);
-                                 if(dotgle < _0) dotgle=_0;                                                          
-                                 dotgle = (float)( pow(dotgle, 0.25));
+                                 dotgle	= -(dot_product3f(r1.dir,tmp))*1.004F;
+                                 if(dotgle > _1) dotgle=_1;
+                                 else if(dotgle < _0) dotgle=_0;
+                                 dotgle = (float)( pow(dotgle, 0.29));
                                } else {
                                  dotgle	= -dot_product3f(r1.surfnormal,bp->SpecNormal); /* fast OpenGL-like global specular */
                                }
