@@ -5819,7 +5819,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
         Py_XDECREF(tmp);
       }
 
-      if(ok) {
+      if(ok&&PyObject_HasAttrString(atom,"label")) {
         tmp = PyObject_GetAttrString(atom,"label");
         if(tmp) {
           OrthoLineType label;
@@ -5844,12 +5844,19 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
         }
         Py_XDECREF(tmp);
       }
+      
+      for(c=0;c<cRepCnt;c++) {
+        atInfo[a].visRep[c] = false;
+      }
+      atInfo[a].visRep[cRepLine] = auto_show_lines; /* show lines by default */
+      atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded;
+      atInfo[a].visRep[cRepSphere] = auto_show_spheres;
 
       if(ok&&PyObject_HasAttrString(atom,"visible")) {
         unsigned int vis;
         tmp = PyObject_GetAttrString(atom,"visible");
         if(tmp) {
-          ok = PConvPyObjectToInt(tmp,&vis);
+          ok = PConvPyObjectToInt(tmp,(signed int*)&vis);
           if(!ok) 
             ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","bad visibility info");
           else {
@@ -5858,16 +5865,10 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
               vis = (vis>>1);
             }
           }
-        } else { /* no representation visibility mask */
-          for(c=0;c<cRepCnt;c++) {
-            atInfo[a].visRep[c] = false;
-          }
-          atInfo[a].visRep[cRepLine] = auto_show_lines; /* show lines by default */
-          atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded;
-          atInfo[a].visRep[cRepSphere] = auto_show_spheres;
         }
         Py_XDECREF(tmp);
       }
+
       if(ok&&atInfo) {
         AtomInfoAssignParameters(G,ai);
         AtomInfoAssignColors(G,ai);
@@ -5877,7 +5878,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
         unsigned int trgb;
         tmp = PyObject_GetAttrString(atom,"trgb");
         if(tmp) {
-          ok = PConvPyObjectToInt(tmp,&trgb);
+          ok = PConvPyObjectToInt(tmp,(signed int*)&trgb);
           if(!ok) 
             ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","bad color info");
           else {
