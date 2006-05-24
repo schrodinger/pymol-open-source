@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+Changes up to 1.00b05
+
+    * tuned VRML2 export
+
 Changes up to 1.00b04
 
     * fixed cartoon_trace_atoms crash bug
