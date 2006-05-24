@@ -997,19 +997,21 @@ void RayRenderVRML2(CRay *I,int width,int height,
   char *vla = *vla_ptr;
   int cc = 0; /* character count */
   OrthoLineType buffer;
-  float mid[3], wid[3];
-  
+  float mid[3]; /*, wid[3];*/
+  float h_fov = cPI*(fov*width)/(180*height);
   RayExpandPrimitives(I);
   RayTransformFirst(I,0);
-
   RayComputeBox(I);
+  /*
   mid[0] = (I->max_box[0] + I->min_box[0]) / 2.0;
   mid[1] = (I->max_box[1] + I->min_box[1]) / 2.0;
   mid[2] = (I->max_box[2] + I->min_box[2]) / 2.0;
   wid[0]  = (I->max_box[0] - I->min_box[0]);
   wid[1]  = (I->max_box[1] - I->min_box[1]);
   wid[2]  = (I->max_box[2] - I->min_box[2]);
+  */
 
+  copy3f(I->Pos,mid);
   UtilConcatVLA(&vla,&cc,
                 "#VRML V2.0 utf8\n" /* WLD: most VRML2 readers req. utf8 */
                 "\n");
@@ -1018,7 +1020,9 @@ void RayRenderVRML2(CRay *I,int width,int height,
           " position 0 0 %6.8f\n"
           " orientation 1 0 0 0\n"
           " description \"Z view\"\n"
+          " fieldOfView %8.6f\n" /* WLD: use correct FOV */
           "}\n"
+          /* WLD: only write the viewpoint which matches PyMOL
           "Viewpoint {\n"
           " position %6.8f 0 0\n"
           " orientation 0 1 0 1.570796\n"
@@ -1028,11 +1032,26 @@ void RayRenderVRML2(CRay *I,int width,int height,
           " position 0 %6.8f 0\n"
           " orientation 0 -0.707106 -0.7071061 3.141592\n"
           " description \"Y view\"\n"
-          "}\n",
-          (wid[2] + wid[1]),
-          (wid[0] + wid[1]),
-          (wid[1] + wid[2]));
+          "}\n"*/,
+          -z_corr, /* *0.96646  for some reason, PyMOL and C4D cameras differ by about 3.5% ... */
+          h_fov
+          /*(wid[2] + wid[1]),
+            (wid[0] + wid[1]),
+            (wid[1] + wid[2])*/
+          );
   UtilConcatVLA(&vla,&cc,buffer);
+  {
+    float light[3];
+    float *lightv=SettingGetfv(I->G,cSetting_light);
+    copy3f(lightv,light);
+    normalize3f(light);
+    sprintf(buffer,
+            "DirectionalLight {\n"
+            " direction %8.6f %8.6f %8.3f\n"
+            "}\n",
+            light[0],light[1],light[2]);
+    UtilConcatVLA(&vla,&cc,buffer);
+  }
   UtilConcatVLA(&vla,&cc,
                 "NavigationInfo {\n"
                 " headlight TRUE\n"
@@ -1147,7 +1166,9 @@ void RayRenderVRML2(CRay *I,int width,int height,
                 " children Shape {\n"
                 "  geometry Sphere { radius %8.6f }\n"
                 "  appearance Appearance {\n"
-                "   material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
+                "   material Material { diffuseColor %6.4f %6.4f %6.4f \n"
+                "                       specularColor 0.8 0.8 0.8 \n"
+                "                       shininess 8 }\n"
                 "  }\n"
                 " }\n"
                 "}\n",        
@@ -1205,7 +1226,9 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "    top    FALSE\n"
                     "   }\n"
                     "   appearance Appearance {\n"
-                    "    material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
+                    "   material Material { diffuseColor %6.4f %6.4f %6.4f \n"
+                    "                       specularColor 0.8 0.8 0.8 \n"
+                    "                       shininess 8 }\n"
                     "   }\n"
                     "  }\n"
                     "  Transform {\n"
@@ -1213,7 +1236,9 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "   children Shape {\n"
                     "    geometry Sphere { radius %8.6f }\n"
                     "    appearance Appearance {\n"
-                    "     material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
+                    "   material Material { diffuseColor %6.4f %6.4f %6.4f \n"
+                    "                       specularColor 0.8 0.8 0.8 \n"
+                    "                       shininess 8 }\n"
                     "    }\n"
                     "   }\n"
                     "  }\n",
@@ -1231,7 +1256,9 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "   children Shape {\n"
                     "    geometry Sphere { radius %8.6f }\n"
                     "    appearance Appearance {\n"
-                    "     material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
+                    "   material Material { diffuseColor %6.4f %6.4f %6.4f \n"
+                    "                       specularColor 0.8 0.8 0.8 \n"
+                    "                       shininess 8 }\n"
                     "    }\n"
                     "   }\n"
                     "  }\n", 
@@ -1247,7 +1274,9 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "    height %8.6f\n"
                     "   }\n"
                     "   appearance Appearance {\n"
-                    "    material Material { diffuseColor %6.4f %6.4f %6.4f }\n"
+                    "   material Material { diffuseColor %6.4f %6.4f %6.4f \n"
+                    "                       specularColor 0.8 0.8 0.8 \n"
+                    "                       shininess 8 }\n"
                     "   }\n"
                     "  }\n",
                     prim->r1, prim->l1,
