@@ -1581,10 +1581,10 @@ int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
             } else if((at1->rank!=at2->rank)&&
                       SettingGetGlobal_b(G,cSetting_rank_assisted_sorts)) { 
               /* use rank to resolve insertion code ambiguities */
-              if(at1->rank>at2->rank)
-                result = 1;
-              else
+              if(at1->rank<at2->rank)
                 result = -1;
+              else
+                result = 1;
             } else {
               result=wc;
             }
@@ -1676,10 +1676,10 @@ int AtomInfoCompareIgnoreRankHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType 
            } else if((at1->rank!=at2->rank)&&
                      SettingGetGlobal_b(G,cSetting_rank_assisted_sorts)) { 
              /* use rank to resolve insertion code ambiguities */
-             if(at1->rank>at2->rank)
-               result = 1;
-             else
+             if(at1->rank<at2->rank)
                result = -1;
+             else
+               result = 1;
            } else {
              result=wc;
            }
@@ -1768,10 +1768,10 @@ int AtomInfoCompareIgnoreRank(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at
              } else if((at1->rank!=at2->rank)&&
                        SettingGetGlobal_b(G,cSetting_rank_assisted_sorts)) { 
                /* use rank to resolve insertion code ambiguities */
-               if(at1->rank>at2->rank)
-                 result = 1;
-               else
+               if(at1->rank<at2->rank)
                  result = -1;
+               else 
+                 result = 1;
              } else {
                result=wc;
              }
@@ -1864,10 +1864,10 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2
             } else if((at1->rank!=at2->rank)&&
                       SettingGetGlobal_b(G,cSetting_rank_assisted_sorts)) { 
               /* use rank to resolve insertion code ambiguities */
-              if(at1->rank>at2->rank)
-                result = 1;
-              else
+              if(at1->rank<at2->rank)
                 result = -1;
+              else
+                result = 1;
             } else {
               result=wc;
             }

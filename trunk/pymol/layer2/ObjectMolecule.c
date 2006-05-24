@@ -5548,294 +5548,350 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
 
 
   if(ok) {
-	 coord=VLAlloc(float,3*nAtom);
-	 if(atInfo)
-		VLACheck(atInfo,AtomInfoType,nAtom);	 
+    coord=VLAlloc(float,3*nAtom);
+    if(atInfo)
+      VLACheck(atInfo,AtomInfoType,nAtom);	 
   }
 
   if(ok) { 
     
-	 f=coord;
-	 for(a=0;a<nAtom;a++)
-		{
-        atom = PyList_GetItem(atomList,a);
-        if(!atom) 
-          ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get atom");
-        crd = PyObject_GetAttrString(atom,"coord");
-        if(!crd) 
-          ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get coordinates");
-        else {
-          for(c=0;c<3;c++) {
-            tmp = PyList_GetItem(crd,c);
-            if (tmp) 
-              ok = PConvPyObjectToFloat(tmp,f++);
-            if(!ok) {
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read coordinates");
-              break;
-            }
-          }
-        }
-        Py_XDECREF(crd);
-        
-        ai = atInfo+a;
-        ai->id = a; /* chempy models are zero-based */
-        if(!ignore_ids) { 
-          if(ok) { /* get chempy atom id if extant */
-            if(PTruthCallStr(atom,"has","id")) { 
-              tmp = PyObject_GetAttrString(atom,"id");
-              if (tmp)
-                ok = PConvPyObjectToInt(tmp,&ai->id);
-              if(!ok) 
-                ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read atom identifier");
-              Py_XDECREF(tmp);
-            } else {
-              ai->id=-1;
-            }
-          }
-        }
-        ai->rank = a; /* ranks are always zero-based */
+    f=coord;
+    for(a=0;a<nAtom;a++) {
 
-        if(ok) {
-          tmp = PyObject_GetAttrString(atom,"name");
-          if (tmp)
-            ok = PConvPyObjectToStrMaxClean(tmp,ai->name,sizeof(AtomName)-1);
+      atom = PyList_GetItem(atomList,a);
+      if(!atom) 
+        ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get atom");
+      crd = PyObject_GetAttrString(atom,"coord");
+      if(!crd) 
+        ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get coordinates");
+      else {
+        for(c=0;c<3;c++) {
+          tmp = PyList_GetItem(crd,c);
+          if (tmp) 
+            ok = PConvPyObjectToFloat(tmp,f++);
+          if(!ok) {
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read coordinates");
+            break;
+          }
+        }
+      }
+      Py_XDECREF(crd);
+        
+      ai = atInfo+a;
+      ai->id = a; /* chempy models are zero-based */
+      if(!ignore_ids) { 
+        if(ok) { /* get chempy atom id if extant */
+          if(PTruthCallStr(atom,"has","id")) { 
+            tmp = PyObject_GetAttrString(atom,"id");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,&ai->id);
+            if(!ok) 
+              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read atom identifier");
+            Py_XDECREF(tmp);
+          } else {
+            ai->id=-1;
+          }
+        }
+      }
+      ai->rank = a; /* ranks are always zero-based */
+
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"name");
+        if (tmp)
+          ok = PConvPyObjectToStrMaxClean(tmp,ai->name,sizeof(AtomName)-1);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read name");
+        Py_XDECREF(tmp);
+      }
+
+      if(ok) {
+        ai->textType = 0;
+        if(PTruthCallStr(atom,"has","text_type")) { 
+          tmp = PyObject_GetAttrString(atom,"text_type");
+          if (tmp) {
+            OrthoLineType temp;
+            OVreturn_word ret;
+            ok = PConvPyObjectToStrMaxClean(tmp,temp,sizeof(OrthoLineType)-1);              
+            ret = OVLexicon_GetFromCString(G->Lexicon,temp);
+            if(OVreturn_IS_OK(ret)) {
+              ai->textType = ret.word;
+            }
+          }
           if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read name");
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read text_type");
           Py_XDECREF(tmp);
         }
+      }
 
-        if(ok) {
-          ai->textType = 0;
-          if(PTruthCallStr(atom,"has","text_type")) { 
-            tmp = PyObject_GetAttrString(atom,"text_type");
-            if (tmp) {
-              OrthoLineType temp;
-              OVreturn_word ret;
-              ok = PConvPyObjectToStrMaxClean(tmp,temp,sizeof(OrthoLineType)-1);              
-              ret = OVLexicon_GetFromCString(G->Lexicon,temp);
+      if(ok) {
+        if(PTruthCallStr(atom,"has","vdw")) { 
+          tmp = PyObject_GetAttrString(atom,"vdw");
+          if (tmp)
+            ok = PConvPyObjectToFloat(tmp,&ai->vdw);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read vdw radius");
+          Py_XDECREF(tmp);
+        } else {
+          ai->vdw=0.0f;
+        }
+      }
+      if(ok) {
+        if(PTruthCallStr(atom,"has","bohr")) { 
+          tmp = PyObject_GetAttrString(atom,"bohr");
+          if (tmp)
+            ok = PConvPyObjectToFloat(tmp,&ai->bohr_radius);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read bohr radius");
+          Py_XDECREF(tmp);
+        } else {
+          ai->bohr_radius=0.0F;
+        }
+      }
+
+      if(ok) {
+        if(PTruthCallStr(atom,"has","stereo")) { 
+          tmp = PyObject_GetAttrString(atom,"stereo");
+          if (tmp)
+            ok = PConvPyObjectToChar(tmp,(char*)&ai->stereo);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read stereo");
+          Py_XDECREF(tmp);
+        } else {
+          ai->stereo = 0;
+        }
+      }
+
+      if(ok) {
+        if(PTruthCallStr(atom,"has","numeric_type")) { 
+          tmp = PyObject_GetAttrString(atom,"numeric_type");
+          if (tmp)
+            ok = PConvPyObjectToInt(tmp,&ai->customType);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read numeric_type");
+          Py_XDECREF(tmp);
+        } else {
+          ai->customType = cAtomInfoNoType;
+        }
+      }
+
+      if(ok) {
+        if(PTruthCallStr(atom,"has","formal_charge")) { 
+          tmp = PyObject_GetAttrString(atom,"formal_charge");
+          if (tmp)
+            ok = PConvPyObjectToInt(tmp,&ai->formalCharge);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read formal_charge");
+          Py_XDECREF(tmp);
+        } else {
+          ai->formalCharge = 0;
+        }
+      }
+
+      if(ok) {
+        if(PTruthCallStr(atom,"has","partial_charge")) { 
+          tmp = PyObject_GetAttrString(atom,"partial_charge");
+          if (tmp)
+            ok = PConvPyObjectToFloat(tmp,&ai->partialCharge);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read partial_charge");
+          Py_XDECREF(tmp);
+        } else {
+          ai->partialCharge = 0.0;
+        }
+      }
+
+      if(ok) {
+        if(PTruthCallStr(atom,"has","flags")) {         
+          tmp = PyObject_GetAttrString(atom,"flags");
+          if (tmp)
+            ok = PConvPyObjectToInt(tmp,(int*)&ai->flags);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read flags");
+          Py_XDECREF(tmp);
+        } else {
+          ai->flags = 0;
+        }
+      }
+
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"resn");
+        if (tmp)
+          ok = PConvPyObjectToStrMaxClean(tmp,ai->resn,sizeof(ResName)-1);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read resn");
+        Py_XDECREF(tmp);
+      }
+        
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"resi");
+        if (tmp)
+          ok = PConvPyObjectToStrMaxClean(tmp,ai->resi,sizeof(ResIdent)-1);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read resi");
+        else
+          ai->resv=AtomResvFromResi(ai->resi);
+        Py_XDECREF(tmp);
+      }
+
+      if(ok) {
+        if(PTruthCallStr(atom,"has","resi_number")) {         
+          tmp = PyObject_GetAttrString(atom,"resi_number");
+          if (tmp)
+            ok = PConvPyObjectToInt(tmp,&ai->resv);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read resi_number");
+          Py_XDECREF(tmp);
+        }
+      }
+        
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"segi");
+        if (tmp)
+          ok = PConvPyObjectToStrMaxClean(tmp,ai->segi,sizeof(SegIdent)-1);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read segi");
+        Py_XDECREF(tmp);
+      }
+
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"b");
+        if (tmp)
+          ok = PConvPyObjectToFloat(tmp,&ai->b);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read b value");
+        Py_XDECREF(tmp);
+      }
+
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"q");
+        if (tmp)
+          ok = PConvPyObjectToFloat(tmp,&ai->q);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read occupancy");
+        Py_XDECREF(tmp);
+      }
+
+        
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"chain");
+        if (tmp)
+          ok = PConvPyObjectToStrMaxClean(tmp,ai->chain,sizeof(Chain)-1);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read chain");
+        Py_XDECREF(tmp);
+      }
+        
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"hetatm");
+        if (tmp)
+          ok = PConvPyObjectToInt(tmp,&hetatm);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read hetatm");
+        else
+          ai->hetatm = hetatm;
+        Py_XDECREF(tmp);
+      }
+        
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"alt");
+        if (tmp)
+          ok = PConvPyObjectToStrMaxClean(tmp,ai->alt,sizeof(Chain)-1);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read alternate conformation");
+        Py_XDECREF(tmp);
+      }
+
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"symbol");
+        if (tmp)
+          ok = PConvPyObjectToStrMaxClean(tmp,ai->elem,sizeof(AtomName)-1);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read symbol");
+        Py_XDECREF(tmp);
+      }
+
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"ss");
+        if (tmp)
+          ok = PConvPyObjectToStrMaxClean(tmp,ai->ssType,sizeof(SSType)-1);
+        if(!ok) 
+          ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read secondary structure");
+        Py_XDECREF(tmp);
+      }
+
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"label");
+        if(tmp) {
+          OrthoLineType label;
+          if(!PConvPyObjectToStrMaxLen(tmp,label,sizeof(OrthoLineType)-1))
+            ok = false;
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read label");
+          else {
+            if(ai->label) {
+              OVLexicon_DecRef(G->Lexicon,ai->label);
+            }
+            ai->label = 0;
+      
+            if(label[0]) {
+              OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon,label);
               if(OVreturn_IS_OK(ret)) {
-                ai->textType = ret.word;
+                /*printf("alloc'd %d [%s]\n",OVLexicon_GetNActive(G->Lexicon),label);*/
+                ai->label = ret.word;
               }
             }
-            if(!ok) 
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read text_type");
-            Py_XDECREF(tmp);
           }
         }
+        Py_XDECREF(tmp);
+      }
 
-        if(ok) {
-          if(PTruthCallStr(atom,"has","vdw")) { 
-            tmp = PyObject_GetAttrString(atom,"vdw");
-            if (tmp)
-              ok = PConvPyObjectToFloat(tmp,&ai->vdw);
-            if(!ok) 
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read vdw radius");
-            Py_XDECREF(tmp);
-          } else {
-            ai->vdw=0.0f;
+      if(ok&&PyObject_HasAttrString(atom,"visible")) {
+        unsigned int vis;
+        tmp = PyObject_GetAttrString(atom,"visible");
+        if(tmp) {
+          ok = PConvPyObjectToInt(tmp,&vis);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","bad visibility info");
+          else {
+            for(c=0;c<cRepCnt;c++) {
+              atInfo[a].visRep[c] = vis&0x1;
+              vis = (vis>>1);
+            }
           }
-        }
-        if(ok) {
-          if(PTruthCallStr(atom,"has","bohr")) { 
-            tmp = PyObject_GetAttrString(atom,"bohr");
-            if (tmp)
-              ok = PConvPyObjectToFloat(tmp,&ai->bohr_radius);
-            if(!ok) 
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read bohr radius");
-            Py_XDECREF(tmp);
-          } else {
-            ai->bohr_radius=0.0F;
-          }
-        }
-
-        if(ok) {
-          if(PTruthCallStr(atom,"has","stereo")) { 
-            tmp = PyObject_GetAttrString(atom,"stereo");
-            if (tmp)
-              ok = PConvPyObjectToChar(tmp,(char*)&ai->stereo);
-            if(!ok) 
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read stereo");
-            Py_XDECREF(tmp);
-          } else {
-            ai->stereo = 0;
-          }
-        }
-
-        if(ok) {
-          if(PTruthCallStr(atom,"has","numeric_type")) { 
-            tmp = PyObject_GetAttrString(atom,"numeric_type");
-            if (tmp)
-              ok = PConvPyObjectToInt(tmp,&ai->customType);
-            if(!ok) 
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read numeric_type");
-            Py_XDECREF(tmp);
-          } else {
-            ai->customType = cAtomInfoNoType;
-          }
-        }
-
-        if(ok) {
-          if(PTruthCallStr(atom,"has","formal_charge")) { 
-            tmp = PyObject_GetAttrString(atom,"formal_charge");
-            if (tmp)
-              ok = PConvPyObjectToInt(tmp,&ai->formalCharge);
-            if(!ok) 
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read formal_charge");
-            Py_XDECREF(tmp);
-          } else {
-            ai->formalCharge = 0;
-          }
-        }
-
-        if(ok) {
-          if(PTruthCallStr(atom,"has","partial_charge")) { 
-            tmp = PyObject_GetAttrString(atom,"partial_charge");
-            if (tmp)
-              ok = PConvPyObjectToFloat(tmp,&ai->partialCharge);
-            if(!ok) 
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read partial_charge");
-            Py_XDECREF(tmp);
-          } else {
-            ai->partialCharge = 0.0;
-          }
-        }
-
-        if(ok) {
-          if(PTruthCallStr(atom,"has","flags")) {         
-            tmp = PyObject_GetAttrString(atom,"flags");
-            if (tmp)
-              ok = PConvPyObjectToInt(tmp,(int*)&ai->flags);
-            if(!ok) 
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read flags");
-            Py_XDECREF(tmp);
-          } else {
-            ai->flags = 0;
-          }
-        }
-
-        if(ok) {
-          tmp = PyObject_GetAttrString(atom,"resn");
-          if (tmp)
-            ok = PConvPyObjectToStrMaxClean(tmp,ai->resn,sizeof(ResName)-1);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read resn");
-          Py_XDECREF(tmp);
-        }
-        
-		  if(ok) {
-          tmp = PyObject_GetAttrString(atom,"resi");
-          if (tmp)
-            ok = PConvPyObjectToStrMaxClean(tmp,ai->resi,sizeof(ResIdent)-1);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read resi");
-          else
-            ai->resv=AtomResvFromResi(ai->resi);
-          Py_XDECREF(tmp);
-        }
-
-        if(ok) {
-          if(PTruthCallStr(atom,"has","resi_number")) {         
-            tmp = PyObject_GetAttrString(atom,"resi_number");
-            if (tmp)
-              ok = PConvPyObjectToInt(tmp,&ai->resv);
-            if(!ok) 
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read resi_number");
-            Py_XDECREF(tmp);
-          }
-        }
-        
-		  if(ok) {
-          tmp = PyObject_GetAttrString(atom,"segi");
-          if (tmp)
-            ok = PConvPyObjectToStrMaxClean(tmp,ai->segi,sizeof(SegIdent)-1);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read segi");
-          Py_XDECREF(tmp);
-        }
-
-		  if(ok) {
-          tmp = PyObject_GetAttrString(atom,"b");
-          if (tmp)
-            ok = PConvPyObjectToFloat(tmp,&ai->b);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read b value");
-          Py_XDECREF(tmp);
-        }
-
-		  if(ok) {
-          tmp = PyObject_GetAttrString(atom,"q");
-          if (tmp)
-            ok = PConvPyObjectToFloat(tmp,&ai->q);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read occupancy");
-          Py_XDECREF(tmp);
-        }
-
-        
-		  if(ok) {
-          tmp = PyObject_GetAttrString(atom,"chain");
-          if (tmp)
-            ok = PConvPyObjectToStrMaxClean(tmp,ai->chain,sizeof(Chain)-1);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read chain");
-          Py_XDECREF(tmp);
-        }
-        
-		  if(ok) {
-          tmp = PyObject_GetAttrString(atom,"hetatm");
-          if (tmp)
-            ok = PConvPyObjectToInt(tmp,&hetatm);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read hetatm");
-          else
-            ai->hetatm = hetatm;
-          Py_XDECREF(tmp);
-        }
-        
-		  if(ok) {
-          tmp = PyObject_GetAttrString(atom,"alt");
-          if (tmp)
-            ok = PConvPyObjectToStrMaxClean(tmp,ai->alt,sizeof(Chain)-1);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read alternate conformation");
-          Py_XDECREF(tmp);
-        }
-
-		  if(ok) {
-          tmp = PyObject_GetAttrString(atom,"symbol");
-          if (tmp)
-            ok = PConvPyObjectToStrMaxClean(tmp,ai->elem,sizeof(AtomName)-1);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read symbol");
-          Py_XDECREF(tmp);
-        }
-
-		  if(ok) {
-          tmp = PyObject_GetAttrString(atom,"ss");
-          if (tmp)
-            ok = PConvPyObjectToStrMaxClean(tmp,ai->ssType,sizeof(SSType)-1);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read secondary structure");
-          Py_XDECREF(tmp);
-        }
-
-        
+        } else { /* no representation visibility mask */
           for(c=0;c<cRepCnt;c++) {
             atInfo[a].visRep[c] = false;
-		  }
+          }
           atInfo[a].visRep[cRepLine] = auto_show_lines; /* show lines by default */
           atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded;
           atInfo[a].visRep[cRepSphere] = auto_show_spheres;
+        }
+        Py_XDECREF(tmp);
+      }
+      if(ok&&atInfo) {
+        AtomInfoAssignParameters(G,ai);
+        AtomInfoAssignColors(G,ai);
+      }
 
-		  if(ok&&atInfo) {
-			 AtomInfoAssignParameters(G,ai);
-			 AtomInfoAssignColors(G,ai);
-		  }
+      if(ok&&PyObject_HasAttrString(atom,"trgb")) { /* were we given a Transparency-Red-Blue-Green value? */
+        unsigned int trgb;
+        tmp = PyObject_GetAttrString(atom,"trgb");
+        if(tmp) {
+          ok = PConvPyObjectToInt(tmp,&trgb);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","bad color info");
+          else {
+            char color_name[24];
+            sprintf(color_name,"0x%08x",trgb);
+            atInfo[a].color = ColorGetIndex(G,color_name);
+          }
+        }
+      }
 
 
-		  if(!ok)
-			 break;
-		}
+      if(!ok)
+        break;
+    }
   }
 
   bondList = PyObject_GetAttrString(model,"bond");
@@ -6257,19 +6313,19 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,
           else
             atInfo[a].stereo=tmp_int;
         }
-		  if(ok&&atInfo) {
+        if(ok&&atInfo) {
           atInfo[a].id = a+1; 
           atInfo[a].rank = a;
-			 strcpy(atInfo[a].resn,resn);
-			 atInfo[a].hetatm=true;
-			 AtomInfoAssignParameters(G,atInfo+a);
+          strcpy(atInfo[a].resn,resn);
+          atInfo[a].hetatm=true;
+          AtomInfoAssignParameters(G,atInfo+a);
           AtomInfoAssignColors(G,atInfo+a);
           atInfo[a].alt[0]=0;
           atInfo[a].segi[0]=0;
           atInfo[a].resi[0]=0;
-		  }
-		  p=nextline(p);
-		  if(!ok)
+        }
+        p=nextline(p);
+        if(!ok)
 			 break;
 		}
   }

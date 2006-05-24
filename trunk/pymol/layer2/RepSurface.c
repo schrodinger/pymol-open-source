@@ -317,7 +317,6 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
           if(c) {
             glColor3f(1.0,0.0,0.0);
             glBegin(GL_POINTS);
-            SceneResetNormal(G,true);
             if(I->oneColorFlag) {
               glColor3fv(ColorGet(G,I->oneColor));
             }

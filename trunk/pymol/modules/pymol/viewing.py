@@ -200,7 +200,7 @@ SEE ALSO
         try:
             lock()   
             r = _cmd.clip(str(mode),float(distance),
-		str(selection),int(state)-1)
+                          str(selection),int(state)-1)
         finally:
             unlock(r)
         if _raising(r): raise QuietException         
