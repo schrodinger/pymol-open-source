@@ -5177,6 +5177,10 @@ CRay *RayNew(PyMOLGlobals *G,int antialias)
   return(I);
 }
 /*========================================================================*/
+#ifdef _PYMOL_EVAL
+#include "RayEvalMessage.h"
+#endif
+
 void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float v3,float v4,float v5,
                 float fov, float *pos, 
@@ -5228,6 +5232,12 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   I->PrimSize = 0.0;
   I->Fov = fov;
   copy3f(pos,I->Pos);
+
+#ifdef _PYMOL_EVAL
+  RayDrawEvalMessage(I);
+#endif
+
+
 }
 /*========================================================================*/
 

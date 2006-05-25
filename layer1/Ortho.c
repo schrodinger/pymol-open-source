@@ -1026,7 +1026,7 @@ void OrthoDetach(PyMOLGlobals *G,Block *block)
   ListDetach(I->Blocks,block,next,Block);
 }
 /*========================================================================*/
-#ifdef _PYMOL_EVAL_MESSAGE
+#ifdef _PYMOL_EVAL
 #include "OrthoEvalMessage.h"
 #endif
 
@@ -1260,7 +1260,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       
       OrthoDrawWizardPrompt(G);
  
-#ifdef _PYMOL_EVAL_MESSAGE
+#ifdef _PYMOL_EVAL
       OrthoDrawEvalMessage(G);
 #endif
 
