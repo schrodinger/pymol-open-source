@@ -1708,7 +1708,7 @@ void OrthoSplash(PyMOLGlobals *G)
 #else
   if(G->Option->incentive_product) {
     PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2006 DeLano Scientific LLC.\n \n" ENDF(G);
-    PRINTF " This Executable Build incorporates and extends Open-Source PyMOL " ENDF(G);
+    PRINTF " This Executable Build integrates and extends Open-Source PyMOL " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
     PRINTF ".\n" ENDF(G);
   } else 
