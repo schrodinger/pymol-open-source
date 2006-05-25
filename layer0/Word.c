@@ -474,12 +474,14 @@ int WordMatcherMatchAlpha(CWordMatcher *I, char *text)
   register MatchNode *cur_node = I->node;
   register int n_node = I->n_node;
   
-  while(n_node--) {
+  while((n_node--)>0) {
     if(recursive_match(I, cur_node, text, NULL))
       return true;
     else {
-      while(cur_node->continued)
+      while(cur_node->continued) {
         cur_node++;
+        n_node--;
+      }
       cur_node++;
     }
   }
@@ -491,12 +493,14 @@ int WordMatcherMatchMixed(CWordMatcher *I, char *text,int value)
   register MatchNode *cur_node = I->node;
   register int n_node = I->n_node;
   
-  while(n_node--) {
+  while((n_node--)>0) {
     if(recursive_match(I, cur_node, text, &value))
       return true;
     else {
-      while(cur_node->continued)
+      while(cur_node->continued) {
         cur_node++;
+        n_node--;
+      }
       cur_node++;
     }
   }
@@ -526,12 +530,14 @@ int WordMatcherMatchInteger(CWordMatcher *I,int value)
   register MatchNode *cur_node = I->node;
   register int n_node = I->n_node;
   
-  while(n_node--) {
+  while((n_node--)>0) {
     if(integer_match(I, cur_node, value))
       return true;
     else {
-      while(cur_node->continued)
+      while(cur_node->continued) {
         cur_node++;
+        n_node--;
+      }
       cur_node++;
     }
   }
