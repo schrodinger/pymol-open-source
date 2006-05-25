@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 1.00b05
 
+    * fixed wildcard array overrun segfault
+
     * tuned VRML2 export
 
 Changes up to 1.00b04
