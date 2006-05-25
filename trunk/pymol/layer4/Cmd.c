@@ -2006,6 +2006,10 @@ static PyObject *CmdSplash(PyObject *dummy, PyObject *args)
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _IPYMOL
     result=0;
+#else
+#ifdef _EPYMOL
+    result=2;
+#endif
 #endif
 /* END PROPRIETARY CODE SEGMENT */
   }

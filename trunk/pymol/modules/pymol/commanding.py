@@ -127,14 +127,15 @@ USAGE
                 show_splash = _cmd.splash(1)
             finally:
                 unlock(0)
-            if show_splash:
+            r = DEFAULT_SUCCESS
+            if show_splash==1: # generic / open-source
                 png_path = cmd.exp_path("$PYMOL_PATH/data/pymol/splash.png")
-                if os.path.exists(png_path):
-                    cmd.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
-                    r = DEFAULT_SUCCESS
-
-            else:
-                r = DEFAULT_SUCCESS
+            elif show_splash==2: # evaluation builds
+                png_path = cmd.exp_path("$PYMOL_PATH/data/pymol/epymol.png")
+            else: # incentive builds
+                png_path = cmd.exp_path("$PYMOL_PATH/data/pymol/ipymol.png")
+            if os.path.exists(png_path):
+                cmd.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
         else:
             if cmd.get_setting_legacy("internal_feedback")>0.1:
                 cmd.set("text","1",quiet=1)
