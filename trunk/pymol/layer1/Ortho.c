@@ -1026,9 +1026,11 @@ void OrthoDetach(PyMOLGlobals *G,Block *block)
   ListDetach(I->Blocks,block,next,Block);
 }
 /*========================================================================*/
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_EVAL
 #include "OrthoEvalMessage.h"
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
 {
@@ -1260,9 +1262,12 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       
       OrthoDrawWizardPrompt(G);
  
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_EVAL
       OrthoDrawEvalMessage(G);
 #endif
+/* END PROPRIETARY CODE SEGMENT */
+
 
       OrthoPopMatrix(G);
 
@@ -1693,58 +1698,21 @@ int OrthoDrag(PyMOLGlobals *G,int x, int y,int mod)
 	 }
   return(handled);
 }
+
 /*========================================================================*/
 void OrthoSplash(PyMOLGlobals *G) 
 {
-
-  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef _IPYMOL
-  /* Splash message for restricted access incentive versions... */
-  PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2006 DeLano Scientific LLC.\n \n" ENDF(G);
-  {
-    char *lic = getenv("PYMOL_MESSAGE"); /* provide customers with the ability to print a custom message */
-    FILE *lic_file;
-    if(lic && (lic_file=fopen(lic,"r"))) {
-      OrthoLineType buffer;
-      while(!feof(lic_file)) {
-        buffer[0] = 0;
-        fgets(buffer,sizeof(OrthoLineType),lic_file);
-        OrthoAddOutput(G,buffer);        
-      }
-      OrthoAddOutput(G,"\n");
-      fclose(lic_file);
-      /* allow environment variables to */
-    } else {
-      PRINTF " This PyMOL Incentive Product Executable Build is exclusively available to\n" ENDF(G);
-      PRINTF " PyMOL Sponsors with current PyMOL Maintenance and/or Support Subscriptions.\n" ENDF(G);
-      PRINTF " Only designated PyMOL Power, Casual, and Developer Users covered within the\n" ENDF(G);
-      PRINTF " scope of such a Subscription may legally use this PyMOL Executable Build.\n" ENDF(G);
-      PRINTF " Any other usage is specifically prohibited and may constitute a violation\n" ENDF(G);
-      PRINTF " of United States and international Copyright laws.\n \n" ENDF(G);
-    }
-  }
-  PRINTF " This Executable Build incorporates and extends Open-Source PyMOL " ENDF(G);
-  PRINTF _PyMOL_VERSION ENDF(G);
-  PRINTF ".\n" ENDF(G);
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+#ifdef _PYMOL_IP_SPLASH
+#include"OrthoIPSplash.h"
 #else
-  
-#ifndef _EPYMOL
-  if(G->Option->incentive_product)
-#else
-  if(1) /* force the issue */
-#endif
-  {
-    /* Splash message for evaluation access incentive versions... */
+  if(G->Option->incentive_product) {
     PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2006 DeLano Scientific LLC.\n \n" ENDF(G);
-    PRINTF " A current PyMOL Maintenance and/or Support Subscription may be required\n" ENDF(G);
-    PRINTF " for legal use of this Build beyond a finite honor-system evaluation period.\n" ENDF(G);
-    PRINTF " Please visit http://www.pymol.org/funding.html for more information.\n \n"ENDF(G);
     PRINTF " This Executable Build incorporates and extends Open-Source PyMOL " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
     PRINTF ".\n" ENDF(G);
-  } else
-    /* END PROPRIETARY CODE SEGMENT */
-    
+  } else 
+/* END PROPRIETARY CODE SEGMENT */
     {
       /* Splash message for unrestricted access open-source versions... */
       PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF(G);

@@ -5177,9 +5177,11 @@ CRay *RayNew(PyMOLGlobals *G,int antialias)
   return(I);
 }
 /*========================================================================*/
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_EVAL
 #include "RayEvalMessage.h"
 #endif
+/* END PROPRIETARY CODE SEGMENT */
 
 void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float v3,float v4,float v5,
@@ -5233,10 +5235,11 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   I->Fov = fov;
   copy3f(pos,I->Pos);
 
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_EVAL
   RayDrawEvalMessage(I);
 #endif
-
+/* END PROPRIETARY CODE SEGMENT */
 
 }
 /*========================================================================*/
