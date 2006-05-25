@@ -111,6 +111,18 @@ Z* -------------------------------------------------------------------
 #endif
 #endif
 
+#ifdef _IPYMOL
+#ifndef _PYMOL_IP_SPLASH
+#define _PYMOL_IP_SPLASH
+#endif
+#endif
+
+#ifdef _EPYMOL
+#ifndef _PYMOL_IP_SPLASH
+#define _PYMOL_IP_SPLASH
+#endif
+#endif
+
 /* END PROPRIETARY CODE SEGMENT */
 
 #endif
