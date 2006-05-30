@@ -236,6 +236,8 @@ PYMOL API
 
         lst = [loadable.cgo]
         lst.extend(list(arg))
+        if not is_list(lst[1]): 
+           lst[1] = list(lst[1]) 
         return apply(load_object,lst,kw)
 
     def load_model(*arg,**kw):

@@ -91,6 +91,11 @@ PyMOL>color green,cgo
 PyMOL>color red,(all)
  Executive: Colored 107 atoms.
 PyMOL>dele all
+PyMOL>cgo_tuple = (SPHERE, 0.0, 0.0, 0.0, 1.0)
+PyMOL>cmd.load_cgo(cgo_tuple,'cgo')
+PyMOL>ray renderer=2
+ RayRenderTest: obtained 1 graphics primitives.
+PyMOL>dele all
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
  CmdLoad: "dat/pept.pdb" loaded as "pept".

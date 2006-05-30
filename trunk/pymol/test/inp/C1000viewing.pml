@@ -87,6 +87,13 @@ color green,cgo
 color red,(all)
 dele all
 
+# cgo tuple input (convenience for users who make mistakes)
+
+cgo_tuple = (SPHERE, 0.0, 0.0, 0.0, 1.0)
+cmd.load_cgo(cgo_tuple,'cgo')
+ray renderer=2
+dele all
+
 # disable & enable
 dele all
 load dat/pept.pdb
