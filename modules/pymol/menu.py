@@ -254,6 +254,7 @@ def by_ss(s):
                 [ 2, 'By Secondary Structure:'     ,''                               ],
     [ 1, '\\900Helix \\990Sheet \\090Loop'  , 'util.cbss("'+s+'","red","yellow","green")'],
     [ 1, '\\099Helix \\909Sheet \\955Loop'  , 'util.cbss("'+s+'","cyan","magenta","salmon")'],
+    [ 1, '\\099Helix \\900Sheet \\909Loop'  , 'util.cbss("'+s+'","cyan","red","magenta")',],
               ]
 
 def spectrum(s):
