@@ -93,8 +93,8 @@ obj.append( END )
 cmd.delete("cgo_plane")
 
 # now load the new object without zooming
-cmd.set('auto_zoom', 0, quiet=1)
 auto_zoom = cmd.get('auto_zoom')
+cmd.set('auto_zoom', 0, quiet=1)
 cmd.load_cgo(obj,'cgo_plane')
 cmd.set('auto_zoom', auto_zoom, quiet=1)
 
