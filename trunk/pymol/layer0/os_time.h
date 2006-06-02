@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_time
 #define _H_os_time
 
+#include "os_predef.h"
+
 #ifndef _WIN32
 #include<sys/time.h>
 #include<unistd.h>

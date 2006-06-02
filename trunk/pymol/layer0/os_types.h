@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_types
 #define _H_os_types
 
+#include "os_predef.h"
+
 #include<sys/types.h>
 
 #endif

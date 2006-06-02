@@ -16,6 +16,13 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_predef
 #define _H_os_predef
 
+/* Macros used by Fortify source in GCC 4.1.x are incompatible with
+   PyMOL's Feedback system... */
+
+#ifdef _FORTIFY_SOURCE
+#undef _FORTIFY_SOURCE
+#endif
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 
 #ifdef WIN32

@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_gl
 #define _H_os_gl
 
+#include"os_predef.h"
 #include"os_proprietary.h"
 
 #ifndef _PYMOL_OSX
