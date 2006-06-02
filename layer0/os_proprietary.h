@@ -15,6 +15,8 @@ Z* -------------------------------------------------------------------
 */
 #ifndef _H_os_proprietary
 
+#include "os_predef.h"
+
 /* PROPRIETARY CODE SEGMENT DISCLAIMER:
  *
  * DeLano Scientific LLC supports and strongly encourages compilation

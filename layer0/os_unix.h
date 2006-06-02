@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_unix
 #define _H_os_unix
 
+#include"os_predef.h"
+
 #ifndef _WIN32
 #include<signal.h>
 #endif

@@ -16,6 +16,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_mech
 #define _H_os_mech
 
+#ifdef _FORTIFY_SOURCE
+#undef _FORTIFY_SOURCE
+#endif
+                                                                                                         
 #include<stdio.h>
 #include<math.h>
 #include<string.h>

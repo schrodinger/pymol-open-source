@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_limits
 #define _H_os_limits
 
+#include"os_predef.h"
+
 #include<limits.h>
 #include<float.h>
 
