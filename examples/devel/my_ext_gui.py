@@ -42,7 +42,7 @@ def run(pymol):
    pymol.cmd.orient("organic & e. N+O",animate=10)
    pymol.cmd.show("sticks","organic")
 
-def __init__(pymol):
+def __init__(pymol,poll=0):
    t = threading.Thread(target=run,args=(pymol,))
    t.setDaemon(1)
    t.start()
