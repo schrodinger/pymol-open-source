@@ -2795,7 +2795,7 @@ int RayTraceThread(CRayThreadInfo *T)
                              }
 
                              if(bc<(spec_count+2)) {
-                               if(spec_local) {
+                               if(spec_local&&perspective) {
                                  /* slower, C4D-like local specular */
                                  float tmp[3];
                                  
