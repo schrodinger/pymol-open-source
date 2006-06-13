@@ -5508,7 +5508,9 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
 }
 /*========================================================================*/
 #ifndef _PYMOL_NOPY
-static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *model,AtomInfoType **atInfoPtr)
+static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
+                                                    PyObject *model,
+                                                    AtomInfoType **atInfoPtr)
 {
   int nAtom,nBond;
   int a,c;
@@ -5822,25 +5824,11 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
       if(ok&&PyObject_HasAttrString(atom,"label")) {
         tmp = PyObject_GetAttrString(atom,"label");
         if(tmp) {
-          OrthoLineType label;
-          if(!PConvPyObjectToStrMaxLen(tmp,label,sizeof(OrthoLineType)-1))
-            ok = false;
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read label");
-          else {
-            if(ai->label) {
-              OVLexicon_DecRef(G->Lexicon,ai->label);
-            }
-            ai->label = 0;
-      
-            if(label[0]) {
-              OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon,label);
-              if(OVreturn_IS_OK(ret)) {
-                /*printf("alloc'd %d [%s]\n",OVLexicon_GetNActive(G->Lexicon),label);*/
-                ai->label = ret.word;
-              }
-            }
+          if(ai->label) {
+            OVLexicon_DecRef(G->Lexicon,ai->label);
           }
+          if(!PConvPyStrToLexRef(tmp,G->Lexicon,&ai->label))
+            ai->label = 0;
         }
         Py_XDECREF(tmp);
       }
@@ -6093,6 +6081,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,
     ObjectMoleculeSort(I);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
+
   }
   return(I);
 #endif
@@ -7314,13 +7303,12 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
   /* first, reassign atom info for matched atoms */
 
   /* allocate additional space */
-  if(c)
-	{
-	  expansionFlag=true;
-	  nAt=I->NAtom+c;
-	} else {
-     nAt=I->NAtom;
-   }
+  if(c) {
+    expansionFlag=true;
+    nAt=I->NAtom+c;
+  } else {
+    nAt=I->NAtom;
+  }
   
   if(expansionFlag) {
 	VLACheck(I->AtomInfo,AtomInfoType,nAt);
@@ -7337,16 +7325,15 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
     ErrChkPtr(G,i2a);
   }
   
-  for(a=0;a<cs->NIndex;a++) /* a is in original file space */
-    {
-		a1=cs->IdxToAtm[a]; /* a1 is in sorted atom info space */
-		a2=index[a1];
-		i2a[a]=a2; /* a2 is in object space */
-      if(a2<oldNAtom)
-        AtomInfoCombine(G,I->AtomInfo+a2,ai+a1,aic_mask);
-      else
-        *(I->AtomInfo+a2)=*(ai+a1);
-    }
+  for(a=0;a<cs->NIndex;a++) {/* a is in original file space */
+    a1=cs->IdxToAtm[a]; /* a1 is in sorted atom info space */
+    a2=index[a1];
+    i2a[a]=a2; /* a2 is in object space */
+    if(a2<oldNAtom)
+      AtomInfoCombine(G,I->AtomInfo+a2,ai+a1,aic_mask);
+    else
+      *(I->AtomInfo+a2)=*(ai+a1);
+  }
   
   if(I->DiscreteFlag) {
     if(I->NDiscrete<nAt) {
@@ -8526,7 +8513,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                   } else {
                     if(op->i2) {
                       /* python label expression evaluation */
-                      if(PLabelAtom(I->Obj.G,&I->AtomInfo[a],op->s1,a)) {
+                      if(PLabelAtom(I->Obj.G,&I->AtomInfo[a],I->Obj.Name,op->s1,a)) {
                         op->i1++;
                         ai->visRep[cRepLabel]=true;
                         hit_flag=true;

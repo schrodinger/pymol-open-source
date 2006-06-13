@@ -37,6 +37,7 @@ typedef struct RepDistLabel {
   DistLabel *L;
   CObject *Obj;
   DistSet *ds;
+  int OutlineColor;
 } RepDistLabel;
 
 #include"ObjectDist.h"
@@ -66,6 +67,7 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
 
   if(ray) {
 
+    TextSetOutlineColor(G,I->OutlineColor);
     color = SettingGet_color(G,I->ds->Setting,I->Obj->Setting,cSetting_label_color);
     
     if(color>=0)
@@ -118,6 +120,7 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
         glDisable(GL_DEPTH_TEST);	 
       glDisable(GL_LIGHTING);
     
+      TextSetOutlineColor(G,I->OutlineColor);
       color = SettingGet_color(G,I->ds->Setting,I->Obj->Setting,cSetting_label_color);
     
       if(color>=0)
@@ -171,6 +174,7 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
   I->R.context.object = (void*)ds->Obj;
   I->R.context.state = state;
 
+  I->OutlineColor = SettingGet_i(G,ds->Setting,I->Obj->Setting,cSetting_label_outline_color);
 
   if(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex) {
     float *lc;

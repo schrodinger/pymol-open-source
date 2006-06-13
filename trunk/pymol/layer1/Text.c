@@ -32,7 +32,7 @@ Z* -------------------------------------------------------------------
 
 #define TEXT_DEFAULT_SIZE 12.0F
 static const float _255 = 255.0F;
-
+static const float _499 = 0.4999F;
 
 typedef struct {
   int Src;
@@ -48,10 +48,19 @@ struct _CText {
   ActiveRec *Active;
   float Pos[4];
   float Color[4];
+  unsigned char UColor[4];
   unsigned char OutlineColor[4];
   int Default_ID;
   int Flat;
 };
+
+static void TextUpdateUColor(CText *I)
+{
+  I->UColor[0] = (unsigned char)(_255*I->Color[0]+_499);
+  I->UColor[1] = (unsigned char)(_255*I->Color[1]+_499);
+  I->UColor[2] = (unsigned char)(_255*I->Color[2]+_499);
+  I->UColor[3] = (unsigned char)(_255*I->Color[3]+_499);
+}
 
 void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color)
 {
@@ -61,6 +70,7 @@ void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color)
   I->Flat = false;
   I->Pos[3]=1.0F;
   I->Color[3]=1.0F;
+  TextUpdateUColor(I);
 }
 void TextAdvance(PyMOLGlobals *G,float advance)
 {
@@ -142,6 +152,18 @@ void TextSetColor(PyMOLGlobals *G,float *color)
   copy3f(color,I->Color);
   I->Color[3]=1.0F;
   I->Flat = false;
+  TextUpdateUColor(I);
+}
+
+void TextSetColor3f(PyMOLGlobals *G,float red, float green, float blue)
+{
+  register CText *I=G->Text;
+  I->Flat = false;
+  I->Color[0]=red;
+  I->Color[1]=green;
+  I->Color[2]=blue;
+  I->Color[3]=1.0F;
+  TextUpdateUColor(I);
 }
 
 void TextSetOutlineColor(PyMOLGlobals *G,int color)
@@ -167,21 +189,17 @@ void TextSetPickColor(PyMOLGlobals *G,int first_pass, int index)
     index = (index>>12); /* high order bits */
 
   I->Flat = true;
-  I->Color[0] = ((uchar)((index&0xF)<<4)) * _inv255;
-  I->Color[1] = ((uchar)((index&0xF0)|0x8)) * _inv255;
-  I->Color[2] = ((uchar)((index&0xF00)>>4)) * _inv255;
+  I->UColor[0] = ((unsigned char)((index&0xF)<<4));
+  I->UColor[1] = ((unsigned char)((index&0xF0)|0x8));
+  I->UColor[2] = ((unsigned char)((index&0xF00)>>4));
+  I->UColor[3] = 0xFF;
+
+  I->Color[0] = I->UColor[0] * _inv255;
+  I->Color[1] = I->UColor[1] * _inv255;
+  I->Color[2] = I->UColor[2] * _inv255;
   I->Color[3] = 1.0F;
 }
 
-void TextSetColor3f(PyMOLGlobals *G,float red, float green, float blue)
-{
-  register CText *I=G->Text;
-  I->Flat = false;
-  I->Color[0]=red;
-  I->Color[1]=green;
-  I->Color[2]=blue;
-  I->Color[3]=1.0F;
-}
 float *TextGetPos(PyMOLGlobals *G)
 {
   register CText *I=G->Text;
@@ -200,10 +218,10 @@ void TextGetColorUChar(PyMOLGlobals *G,unsigned char *red,
                        unsigned char *alpha)
 {
   register CText *I=G->Text;
-  *red = (unsigned char)(_255*I->Color[0]);
-  *green = (unsigned char)(_255*I->Color[1]);
-  *blue = (unsigned char)(_255*I->Color[2]);
-  *alpha = (unsigned char)(_255*I->Color[3]);
+  *red = I->UColor[0];
+  *green = I->UColor[1];
+  *blue = I->UColor[2];
+  *alpha = I->UColor[3];
 }
 
 void TextGetOutlineColor(PyMOLGlobals *G,
@@ -219,8 +237,8 @@ void TextGetOutlineColor(PyMOLGlobals *G,
   *alpha = I->OutlineColor[3];
 }
 
-
-char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,float size, float *rpos)
+char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,
+                       char *st,float size, float *rpos)
 {
   register CText *I=G->Text;
   CFont *font;
@@ -266,7 +284,8 @@ void TextDrawChar(PyMOLGlobals *G,char ch)
 }
 
 
-char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st,float size, float *rpos)
+char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,
+                    char *st,float size, float *rpos)
 {
   register CText *I=G->Text;
   CFont *font;

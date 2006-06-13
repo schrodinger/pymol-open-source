@@ -66,7 +66,7 @@ static void RepDistDashRender(RepDistDash *I,RenderInfo *info)
 
     float radius;
 
-    if(I->radius==0.0F) {
+    if(I->radius<=0.0F) {
       radius = ray->PixelRadius*I->linewidth/2.0F;
     } else {
       radius = I->radius;

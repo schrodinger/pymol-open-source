@@ -164,6 +164,30 @@ int PConvCObjectToPtr(PyObject *obj,void **ptr) {
   return(ok);
 }
 
+int PConvPyStrToLexRef(PyObject *obj,OVLexicon *lex,int *lex_ref)
+{
+  int ok=true;
+  if(!obj) {
+    ok=false;
+  } else if (!PyString_Check(obj)) {
+    ok=false;
+  } else {
+    char *ptr = PyString_AsString(obj);
+    if(!ptr) {
+      ok=false;
+    } else {
+      OVreturn_word result = OVLexicon_GetFromCString(lex,ptr);
+      if(OVreturn_IS_OK(result)) {
+        *lex_ref = result.word;
+      } else {
+        ok=false;
+      }
+    }
+  }
+  return ok;
+}
+
+
 int PConvPyStrToStrPtr(PyObject *obj,char **ptr)
 {
   int ok=true;

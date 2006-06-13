@@ -900,7 +900,7 @@ int ExecutivePop(PyMOLGlobals *G,char *target,char *source,int quiet)
       
       ObjectMoleculeOpRecInit(&op);
       op.code = OMOP_Pop;
-      SelectorCreateEmpty(G,target);
+      SelectorCreateEmpty(G,target,true);
       op.i1 = SelectorIndexByName(G,target);
       op.i2 = 1;
       op.i3 = 0;
@@ -971,10 +971,10 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new)
       
       SettingSetGlobal_i(G,cSetting_sel_counter,sel_num);
       sprintf(name,"sel%02d",sel_num);
-      SelectorCreateEmpty(G,name);
+      SelectorCreateEmpty(G,name,-1);
     } else {
       sprintf(name,"sele");
-      SelectorCreateEmpty(G,name);
+      SelectorCreateEmpty(G,name,-1);
     }
   }
   return result;
@@ -1800,7 +1800,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
         char aligned_name[] = "m4x_aligned";
         char tmp_sele[ObjNameMax*3];
 
-        SelectorCreateEmpty(G,"m4x_aligned");
+        SelectorCreateEmpty(G,"m4x_aligned",-1);
                 
                 
         for(a=0; a<n_processed; a++) {
@@ -6421,7 +6421,7 @@ int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,
        
         }
       } else
-        SelectorCreateEmpty(G,sele_name);
+        SelectorCreateEmpty(G,sele_name,true);
     }
   } else {
     PRINTFB(G,FB_Executive,FB_Errors)

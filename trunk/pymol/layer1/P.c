@@ -842,7 +842,7 @@ int PAlterAtom(PyMOLGlobals *G,
   return(result);
 }
 
-int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *expr,int index)
+int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *model,char *expr,int index)
 {
   PyObject *dict;
   int result;
@@ -858,6 +858,7 @@ int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *expr,int index)
    * what if "at" is destroyed by another thread? */
   dict = PyDict_New();
 
+  PConvStringToPyDictItem(dict,"model",model);
   PConvIntToPyDictItem(dict,"index",index+1);
   PConvStringToPyDictItem(dict,"type",atype);
   PConvStringToPyDictItem(dict,"name",at->name);

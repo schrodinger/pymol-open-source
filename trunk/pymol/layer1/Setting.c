@@ -2343,7 +2343,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_b(I,cSetting_stereo_double_pump_mono,0);
 
-  set_i(I,cSetting_sphere_solvent,0);
+  set_b(I,cSetting_sphere_solvent,0);
 
   set_i(I,cSetting_mesh_quality,2);
 

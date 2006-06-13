@@ -39,7 +39,7 @@ int SelectorCreateFromTagDict(PyMOLGlobals *G,char *sname, OVOneToAny *id2tag, i
 
 /* if n_idx is negative, then looks for negative *idx as the sentinel */
 int SelectorMoveMember(PyMOLGlobals *G,int s,int sele_old,int sele_new);
-int SelectorCreateEmpty(PyMOLGlobals *G,char *name);
+int SelectorCreateEmpty(PyMOLGlobals *G,char *name, int exec_managed);
 void SelectorToggle(PyMOLGlobals *G,int rep,char *name);
 void SelectorCylinder(PyMOLGlobals *G,char *sele,char *onoff);
 int SelectorUpdateTable(PyMOLGlobals *G);

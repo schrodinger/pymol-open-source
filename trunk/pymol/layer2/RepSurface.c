@@ -1968,8 +1968,8 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
                   if(within3f(cs->Coord+3*j,v,ai2->vdw+cutoff)) { 
                     dot_flag[a] = true;
                   }
-                  j=map->EList[i++];
                 }
+                j=map->EList[i++];
               }
             }
             v+=3;
