@@ -92,7 +92,11 @@ static char *_FontTypeRenderOpenGL(RenderInfo *info,
               rgba = fprnt.u.i.color;
               TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
               rgba = fprnt.u.i.outline_color;
-              TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
+              if(!flat) {
+                TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
+              } else {
+                TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);                
+              }
               fprnt.u.i.ch = c;
               fprnt.u.i.flat = flat;
               {

@@ -184,6 +184,7 @@ Rep *RepLabelNew(CoordSet *cs,int state)
   I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*9);
   ErrChkPtr(G,I->V);
 
+
   I->OutlineColor = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_label_outline_color);
 
   lab_pos = SettingGet_3fv(G,cs->Setting,obj->Obj.Setting,cSetting_label_position);

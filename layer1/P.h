@@ -75,7 +75,7 @@ Z* -------------------------------------------------------------------
 #define PGetOptions(a)
 
 #define PAlterAtom(G,a,b,c,d,e,f) 0
-#define PLabelAtom(G,a,b,c) 0
+#define PLabelAtom(G,a,b,c,d) 0
 #define PAlterAtomState(G,a,b,c,d,e,f,g) 0
 
 #else
@@ -95,7 +95,7 @@ void PDo(char *str); /* accepts multple commands seperated by newlines */
 
 int PAlterAtom(PyMOLGlobals *G,AtomInfoType *at,char *expr,
                int read_only,char *model,int index,PyObject *space);
-int PLabelAtom(PyMOLGlobals *G,AtomInfoType *at,char *expr,int index);
+int PLabelAtom(PyMOLGlobals *G,AtomInfoType *at,char *model,char *expr,int index);
 int PAlterAtomState(PyMOLGlobals *G,float *v,char *expr,int read_only,
                     AtomInfoType *at,char *model, int index,PyObject *space);
 

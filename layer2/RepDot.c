@@ -58,7 +58,7 @@ static void RepDotRender(RepDot *I,RenderInfo *info)
   if(ray) {
     float radius;
 
-    if(I->dotSize==0.0F) {
+    if(I->dotSize<=0.0F) {
       radius = ray->PixelRadius*I->Width/1.4142F;
     } else {
       radius = I->dotSize;
@@ -275,7 +275,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode,int state)
 			 if(ai1->visRep[cRepDot]||mode==cRepDotAreaType) 
 				if((inclH||(!ai1->hydrogen))&&
                ((!cullByFlag)||
-                (!(ai1->flags&cAtomFlag_exclude)))) {
+                (!(ai1->flags&cAtomFlag_exfoliate)))) {
               /* If we are culling, flag 24 controls which atoms 
                  will have dot surfaces generated for them.
               */

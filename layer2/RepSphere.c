@@ -622,7 +622,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
         c=I->NC;
           
         if(((sphere_mode>=2)&&(sphere_mode<=3))||
-           ((sphere_mode>=7)&&(sphere_mode<=8))) { 
+           ((sphere_mode>=7)&&(sphere_mode<=8))) { /* scaleable reps... */ 
           if(I->R.displayList) { 
             if(I->LastVertexScale != info->vertex_scale) {
               glDeleteLists(I->R.displayList,1);
@@ -939,7 +939,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               }
             }
             break;
-          default: /* simple, default point width points*/
+          default: /* simple, default point width points -- modes 1 or 6 */
             glHint(GL_POINT_SMOOTH_HINT,GL_FASTEST);
             glDisable(GL_POINT_SMOOTH);
             glDisable(GL_ALPHA_TEST);

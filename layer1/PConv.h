@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 
 #ifndef _PYMOL_NOPY
 #include"Base.h"
+#include"OVLexicon.h"
 
 /* Convenient conversion routines for C<->Python data interchange
    
@@ -60,6 +61,7 @@ int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr);
 int PConvPyListToIntVLA(PyObject *obj,int **f);
 int PConvPyStrToStr(PyObject *obj,char *ptr,int l);
 int PConvPyStrToStrPtr(PyObject *obj,char **ptr);
+int PConvPyStrToLexRef(PyObject *obj,OVLexicon *lex,int *lex_ref);
 int PConvPyFloatToFloat(PyObject *obj,float *ptr);
 int PConvPyIntToChar(PyObject *obj,char *ptr);
 int PConvPyIntToInt(PyObject *obj,int *ptr);

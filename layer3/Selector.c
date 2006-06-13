@@ -6795,9 +6795,9 @@ int SelectorCreateFromTagDict(PyMOLGlobals *G,char *sname, OVOneToAny *id2tag, i
   return _SelectorCreate(G,sname,NULL,NULL,true,NULL,NULL,0,NULL, NULL,0,id2tag, exec_managed);
 }
 
-int SelectorCreateEmpty(PyMOLGlobals *G,char *name)
+int SelectorCreateEmpty(PyMOLGlobals *G,char *name,int exec_managed)
 {
-  return _SelectorCreate(G,name, "none", NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL, -1);
+  return _SelectorCreate(G,name, "none", NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL, exec_managed);
 }
 int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele)
 {

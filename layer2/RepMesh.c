@@ -84,39 +84,47 @@ static void RepMeshRender(RepMesh *I,RenderInfo *info)
 	 if(n) {
       float radius;
 
-      if(I->Radius==0.0F) {
+      if(I->Radius<=0.0F) {
         radius = ray->PixelRadius*I->Width/2.0F;
       } else {
         radius = I->Radius;
       }
+      /* looks like were missing some code here --
+
+        what about mesh_type?
+
+      */
+
       if(I->oneColorFlag) 
         col=ColorGet(G,I->oneColor);
-		ray->fColor3fv(ray,ColorGet(G,I->R.obj->Color));
-		while(*n)
-		  {
-			 c=*(n++);
-			 if(c--)
-				{
-				  vc+=3;
-				  v+=3;
-              if(I->oneColorFlag) {
-                while(c--)
-                  {
-                    ray->fSausage3fv(ray,v-3,v,radius,col,col);
-                    v+=3;
-                    vc+=3;
-                  }
-              } else {
-                while(c--)
-                  {
-                    ray->fSausage3fv(ray,v-3,v,radius,vc-3,vc);
-                    v+=3;
-                    vc+=3;
-                  }
+      ray->fColor3fv(ray,ColorGet(G,I->R.obj->Color));
+      switch(I->mesh_type) {
+      case 0:
+        while(*n) {
+          c=*(n++);
+          if(c--) {
+            vc+=3;
+            v+=3;
+            if(I->oneColorFlag) {
+              while(c--) {
+                ray->fSausage3fv(ray,v-3,v,radius,col,col);
+                v+=3;
+                vc+=3;
               }
-				}
-		  }
-	 }
+            } else {
+              while(c--) {
+                ray->fSausage3fv(ray,v-3,v,radius,vc-3,vc);
+                v+=3;
+                vc+=3;
+              }
+            }
+          }
+        }
+      case 1:
+        /* TO DO */
+        break;
+      }
+     }
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else {
@@ -143,6 +151,13 @@ static void RepMeshRender(RepMesh *I,RenderInfo *info)
         break;
       }
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+
+      if(use_dlst && I->R.displayList && I->R.displayListInvalid) {
+        glDeleteLists(I->R.displayList,1);
+        I->R.displayList = 0;
+        I->R.displayListInvalid = false;
+      }
+      
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
       } else { 
@@ -297,6 +312,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 
   I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_width);
   I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
+  I->R.displayListInvalid=true;
 
   if(I->NTot) {
 	 obj=cs->Obj;
