@@ -431,7 +431,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals *G,ObjectMolecule *I,char
 
   f=fopen(fname,"rb");
   if(!f) {
-	 ok=ErrMessage(G,"ObjectMoleculeLoadTOPFile","Unable to open file!");
+	 ok=ErrMessage(G,"ObjectMoleculeLoadTRJFile","Unable to open file!");
   } else
 	 {
       if(!I->CSTmpl) {
@@ -800,13 +800,13 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals *G,ObjectMolecule *I,
 	 {
       if(!I->CSTmpl) {
         PRINTFB(G,FB_Errors,FB_ObjectMolecule)
-          " ObjMolLoadTRJFile: Missing topology"
+          " ObjMolLoadRSTFile: Missing topology"
           ENDFB(G);
         return(I);
       }
       cs=CoordSetCopy(I->CSTmpl);
       PRINTFB(G,FB_ObjectMolecule,FB_Blather) 
-        " ObjMolLoadTRJFile: Loading from \"%s\".\n",fname
+        " ObjMolLoadRSTFile: Loading from \"%s\".\n",fname
         ENDFB(G);
 
 
@@ -874,7 +874,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals *G,ObjectMolecule *I,
             }
           } else {
             PRINTFB(G,FB_Errors,FB_ObjectMolecule)
-              " ObjMolLoadTRJFile: atom/coordinate mismatch.\n"
+              " ObjMolLoadRSTFile: atom/coordinate mismatch.\n"
               ENDFB(G);
             break;
           }

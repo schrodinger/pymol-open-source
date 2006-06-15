@@ -224,13 +224,114 @@ static int _ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *c
   return(ok);
 }
 
+
+#ifdef _PYMOL_INLINE 
+__inline__
+#endif
+static int _ObjectGadgetRampBlend(ObjectGadgetRamp *I,float *color,
+                                  float *table,float *extreme,int mode)
+{
+  /* this capability needs to be re-thought */
+
+  register float *i_level = I->Level;
+  register int n_level = I->NLevel;
+  const float _1 = 1.0F;
+  float avg[3];
+  int ok=true;
+  zero3f(avg);
+
+  {
+    int cnt = 0;
+    switch(mode) {
+    case 1:
+    case 2:
+      break;
+    default:
+      if(i_level&&table) {
+        int i;
+        for(i=0;i<n_level;i++) {
+          add3f(table+3*i,avg,avg);
+          cnt++;
+        }
+        if(extreme) {
+          add3f(extreme,avg,avg);
+          add3f(extreme+3,avg,avg);
+          cnt+=2;
+        }
+        if(cnt) {
+          float fact = _1/cnt;
+          scale3f(avg,fact,avg);
+        }
+        clamp3f(avg);
+      }
+      copy3f(avg,color);
+    }
+  }
+
+  switch(mode) {
+  case 1: /* min components */
+  case 3:
+    ones3f(color);
+    if(i_level&&table) {
+      int i,j;
+      for(i=0;i<n_level;i++) {
+        for(j=0;j<3;j++) {
+          color[j] = (color[j] < table[3*i+j]) ? color[j] : table[3*i+j];
+        }
+      }
+      if(extreme) {
+        for(j=0;j<3;j++) {
+          color[j] = (color[j] < extreme[j  ]) ? color[j] : extreme[j  ];
+          color[j] = (color[j] < extreme[j+3]) ? color[j] : extreme[j+3];
+        }
+      }
+      clamp3f(color);
+    }
+    if(mode==3) { /* average serves as a minimum */
+      int j;
+      for(j=0;j<3;j++) {
+        color[j] = (color[j] > avg[j]) ? color[j] : avg[j];
+      }
+    }
+    break;
+  case 2: /* max components */
+    zero3f(color);
+    if(i_level&&table) {
+      int i,j;
+      for(i=0;i<n_level;i++) {
+        for(j=0;j<3;j++) {
+          color[j] = (color[j] > table[3*i+j]) ? color[j] : table[3*i+j];
+        }
+      }
+      if(extreme) {
+        for(j=0;j<3;j++) {
+          color[j] = (color[j] > extreme[j  ]) ? color[j] : extreme[j  ];
+          color[j] = (color[j] > extreme[j+3]) ? color[j] : extreme[j+3];
+        }
+      }
+      clamp3f(color);
+    }
+    break;
+  default: /* simple average of all colors */
+    copy3f(avg,color);
+    break;
+  }
+  return(ok);
+}
+
 #define MAX_COLORS 64
 
 #ifdef _PYMOL_INLINE 
 __inline__
 #endif
-static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float level,float *color,
-                                                  float *atomic, float *object,float *vertex, int state)
+static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,
+                                                  float level,
+                                                  float *color,
+                                                  float *atomic, 
+                                                  float *object,
+                                                  float *vertex, 
+                                                  int state, 
+                                                  int blend_all)
 {
   /* now thread-safe...via stack copy of colors */
 
@@ -318,11 +419,19 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,float leve
       }
     }
     /* interpolate using stack tables */
-    return _ObjectGadgetRampInterpolate(I,level,color,stack_color,extreme);
-  } else 
-    /* interplate using static tables */
-    return _ObjectGadgetRampInterpolate(I,level,color,i_color,I->Extreme);
+    if(blend_all) 
+      return _ObjectGadgetRampBlend(I,color,stack_color,extreme,I->SrcState);
+    else
+      return _ObjectGadgetRampInterpolate(I,level,color,stack_color,extreme);
+  } else {
+    /* interpolate using static tables */
+    if(blend_all)
+      return _ObjectGadgetRampBlend(I,color,i_color,I->Extreme,I->SrcState);
+    else
+      return _ObjectGadgetRampInterpolate(I,level,color,i_color,I->Extreme);
+  }
 }
+
 
 int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
 {
@@ -439,8 +548,15 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int 
     if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Map,cObjectMap))
       ok=false;
     else {
+      int src_state;
+      if(I->SrcState>=0)
+        src_state = I->SrcState;
+      else
+        src_state = state;
+      if(src_state<0)
+        src_state = SceneGetState(I->Gadget.Obj.G);
       if(ok) ok = (I->Map!=NULL);
-      if(ok) ok = ObjectMapInterpolate(I->Map,I->SrcState,pos,&level,NULL,1);
+      if(ok) ok = ObjectMapInterpolate(I->Map,src_state,pos,&level,NULL,1);
       if(ok) ok = ObjectGadgetRampInterpolate(I,level,color);
     }
     break;
@@ -474,15 +590,26 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int 
               dist = 0.0F;
           }
           
-          if(!ObjectGadgetRampInterpolateWithSpecial(I,dist,color,atomic,object,pos,state)) {
+          if(!ObjectGadgetRampInterpolateWithSpecial(I,dist,color,atomic,
+                                                     object,pos,state,false)) {
             copy3f(I->Color,color);
           }
         } else {
           float white[3] = {1.0F, 1.0F, 1.0F};
-          if(!ObjectGadgetRampInterpolateWithSpecial(I,cutoff+1.0F,color,white,white,pos,state)) {
+          if(!ObjectGadgetRampInterpolateWithSpecial(I,cutoff+1.0F,color,white,
+                                                     white,pos,state,false)) {
             copy3f(I->Color,color);
           }
         }
+      }
+    }
+    break;
+  case cRampNone:
+    {
+      float white[3] = {1.0F, 1.0F, 1.0F};
+      if(!ObjectGadgetRampInterpolateWithSpecial(I,0.0F,color,white,white,
+                                                 pos,state,true)) { /* simple blend */
+        copy3f(I->Color,color);
       }
     }
     break;
@@ -1028,7 +1155,10 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
   int ok = true;
 
   I = ObjectGadgetRampNew(G);
-  I->RampType = cRampMol;
+  if(mol) 
+    I->RampType = cRampMol;
+  else
+    I->RampType = cRampNone;
   PBlock();
   if(ok) {
     if(PyList_Check(color))
@@ -1044,9 +1174,12 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
   if(ok) ok = ObjectGadgetRampHandleInputColors(I);
 
   ObjectGadgetRampBuild(I);
-  UtilNCopy(I->SrcName,mol->Obj.Name,ObjNameMax);
+  if(mol) {
+    UtilNCopy(I->SrcName,mol->Obj.Name,ObjNameMax);
+  } else {
+    UtilNCopy(I->SrcName,"none",ObjNameMax);
+  }
   I->SrcState=mol_state;
-  
   PUnblock();
   return(I);
 #endif

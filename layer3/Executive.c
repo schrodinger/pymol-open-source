@@ -2309,27 +2309,33 @@ int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,PyObject *range,
         ENDFB(G);
       ok=false;
     }
+  } else if(WordMatch(G,src_name,cKeywordNone,true)) {
+    src_obj=NULL;
   } else {
     PRINTFB(G,FB_Executive,FB_Errors)
       "ExecutiveRampMapNew: Error: object '%s' not found.\n",src_name
       ENDFB(G);
     ok = false;
   }
-  if(ok && src_obj) {
-    switch(src_obj->type) {
-    case cObjectMap:
-      if(sele&&sele[0]) {
-        vert_vla = ExecutiveGetVertexVLA(G,sele,src_state);
+  if(ok) {
+    if(!src_obj) {
+      ok = ok && (obj=ObjectGadgetRampMolNewAsDefined(G,NULL,range,color,src_state));
+    } else {
+      switch(src_obj->type) {
+      case cObjectMap:
+        if(sele&&sele[0]) {
+          vert_vla = ExecutiveGetVertexVLA(G,sele,src_state);
+        }
+        ok = ok && (obj=ObjectGadgetRampMapNewAsDefined(G,(ObjectMap*)src_obj,
+                                                        range,color,src_state,
+                                                        vert_vla,beyond,within,
+                                                        sigma,zero));
+        break;
+      case cObjectMolecule:
+        ok = ok && (obj=ObjectGadgetRampMolNewAsDefined(G,(ObjectMolecule*)src_obj,
+                                                        range,color,src_state));
+        break;
       }
-      ok = ok && (obj=ObjectGadgetRampMapNewAsDefined(G,(ObjectMap*)src_obj,
-                                                      range,color,src_state,
-                                                      vert_vla,beyond,within,
-                                                      sigma,zero));
-      break;
-    case cObjectMolecule:
-      ok = ok && (obj=ObjectGadgetRampMolNewAsDefined(G,(ObjectMolecule*)src_obj,
-                                                      range,color,src_state));
-      break;
     }
   }
   if(ok) ExecutiveDelete(G,name); 
