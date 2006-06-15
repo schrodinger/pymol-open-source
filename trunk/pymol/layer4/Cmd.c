@@ -989,7 +989,7 @@ static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
   char *name;
   int ok = false;
   char *map;
-  int map_state;
+  int state;
   char *sele;
   float beyond,within;
   float sigma;
@@ -997,12 +997,12 @@ static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
   OrthoLineType s1;
   PyObject *range,*color;
   ok = PyArg_ParseTuple(args,"ssOOisfffi",&name,&map,&range,&color,
-                        &map_state,&sele,&beyond,&within,
+                        &state,&sele,&beyond,&within,
                         &sigma,&zero);
   if(ok) {
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,sele,s1)>=0);
-    if(ok) ok = ExecutiveRampNew(TempPyMOLGlobals,name,map,range,color,map_state,s1,beyond,within,sigma,zero);
+    if(ok) ok = ExecutiveRampNew(TempPyMOLGlobals,name,map,range,color,state,s1,beyond,within,sigma,zero);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }

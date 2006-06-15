@@ -93,7 +93,7 @@ if __name__=='pymol.creating':
 
     def ramp_new(name,map_name,range=[-1.0,0.0,1.0],
                      color=['red',[1.0,1.0,1.0],'blue'],
-                     map_state=1,selection='',
+                     state=0,selection='',
                      beyond=2.0,within=6.0,
                      sigma=2.0,zero=1):
         r = DEFAULT_ERROR
@@ -119,7 +119,7 @@ if __name__=='pymol.creating':
         try:
             lock()
             r = _cmd.ramp_new(str(name),str(map_name),list(safe_list_eval(str(range))),new_color,
-                                    int(map_state)-1,str(selection),float(beyond),float(within),
+                                    int(state)-1,str(selection),float(beyond),float(within),
                                     float(sigma),int(zero))
         finally:
             unlock(r)
