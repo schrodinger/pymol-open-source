@@ -20,4 +20,4 @@ PYTHONPATH=${PYMOL_PATH}/modules:${PYTHONPATH}
 fi
 export PYTHONPATH
 #
-/usr/bin/python2 $PYMOL_PATH/modules/pymol/__init__.py "$@"
+exec /usr/bin/python2 $PYMOL_PATH/modules/pymol/__init__.py "$@"

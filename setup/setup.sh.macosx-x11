@@ -30,7 +30,7 @@ echo 'export DISPLAY' >> ./pymol
 echo 'fi' >> ./pymol
 echo 'PYTHONHOME=$PYMOL_PATH/ext' >> ./pymol
 echo 'export PYTHONHOME' >> ./pymol
-echo '$PYMOL_PATH/pymol.exe "$@"' >> ./pymol
+echo 'exec $PYMOL_PATH/pymol.exe "$@"' >> ./pymol
 chmod 755 ./pymol
 
 
