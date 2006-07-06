@@ -78,7 +78,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOL.h"
 #include"Movie.h"
 #include"OVContext.h"
-
+#include"PlugIOManager.h"
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -5427,17 +5427,16 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
   CObject *origObj = NULL;
   OrthoLineType buf;
   int frame,type;
-  int new_type;
   int interval,average,start,stop,max,image;
   OrthoLineType s1;
   char *str1;
   int ok=false;
   float shift[3];
   int quiet=0; /* TODO */
-
-  ok = PyArg_ParseTuple(args,"ssiiiiiiisifff",&oname,&fname,&frame,&type,
+  char *plugin = NULL;
+  ok = PyArg_ParseTuple(args,"ssiiiiiiisifffs",&oname,&fname,&frame,&type,
                         &interval,&average,&start,&stop,&max,&str1,
-                        &image,&shift[0],&shift[1],&shift[2]);
+                        &image,&shift[0],&shift[1],&shift[2],&plugin);
 
   buf[0]=0;
   if (ok) {
@@ -5449,19 +5448,17 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
     origObj=ExecutiveFindObjectByName(TempPyMOLGlobals,oname);
     /* check for existing object of right type, delete if not */
     if(origObj) {
-      new_type = -1;
-      switch(type) {
-      case cLoadTypeTRJ:
-        new_type = cObjectMolecule;
-        break;
-      }
-      if (new_type!=origObj->type) {
+      if (origObj->type != cObjectMolecule) {
         ExecutiveDelete(TempPyMOLGlobals,origObj->Name);
         origObj=NULL;
       }
     }
     
     switch(type) {
+    case cLoadTypeXTC:
+      PlugIOManagerLoadTraj(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,
+                            interval,average,start,stop,max,s1,image,shift,quiet,plugin);
+      break;
     case cLoadTypeTRJ:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoadTraj-DEBUG: loading TRJ\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */

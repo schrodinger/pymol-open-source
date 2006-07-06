@@ -80,6 +80,7 @@ if __name__=='pymol.importing':
         png = 39      # png image
         psw = 40      #
         moe = 41      # Chemical Computing Group ".moe" format (proprietary)
+        xtc = 42      # GROMACS xtc format
         
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -296,7 +297,8 @@ SEE ALSO
         try:
             lock()
             type = format
-            ftype = 0
+            ftype = -1
+            plugin = ""
             state = int(state)
             interval = int(interval)
             average = int(average)
@@ -320,6 +322,9 @@ SEE ALSO
                 # determine file type if possible
                 if re.search("\.trj$",filename,re.I):
                     ftype = loadable.trj
+                elif re.search("\.xtc$",filename,re.I):
+                    ftype = loadable.xtc
+                    plugin = "xtc"
                 else:
                     raise pymol.CmdException
             elif cmd.is_string(type):
@@ -351,7 +356,7 @@ SEE ALSO
                                          int(stop),int(max),str(selection),
                                          int(image),
                                          float(shift[0]),float(shift[1]),
-                                         float(shift[2]))
+                                         float(shift[2]),str(plugin))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException

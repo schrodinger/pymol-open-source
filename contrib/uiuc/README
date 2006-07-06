@@ -1,0 +1,24 @@
+
+To whom it may concern:
+
+Please note that this directory contains source code from the VMD
+plugin tree used under and in compliance with the UIUC Open Source
+license terms.  Please consult the LICENSE files under this directory
+tree for more information.
+
+Note that this special instance of the VMD plugin tree source code has
+been automatically modified to work and compile within the PyMOL
+environment.  Therefore, for all uses of this code other than
+compilation of PyMOL, we urge you to refer back to the Theoretical and
+Computational Biophysics Group at the University of Illinois at
+Urbana-Champaign (http://www.ks.uiuc.edu/) for pristine copies of the
+unmodified VMD plugin tree.  Please do not rely upon our modified copy
+outside of the PyMOL context, since it may change unexpectedly.
+
+Thank you for your cooperation, and let us all give thanks especially
+to the VMD developers for their decision to release VMD plugins under
+an unrestricted open-source license! 
+
+DeLano Scientific LLC
+
+

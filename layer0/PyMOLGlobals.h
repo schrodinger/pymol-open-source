@@ -52,6 +52,7 @@ typedef struct _CTexture CTexture;
 typedef struct _CType CType;
 typedef struct _CMain CMain;
 typedef struct _CGO CGO;
+typedef struct _CPlugIOManager CPlugIOManager;
 
 #ifndef OVLexicon_DEFINED
 typedef struct _OVLexicon OVLexicon;
@@ -113,6 +114,7 @@ struct _PyMOLGlobals {
   CPyMOLOptions *Option; 
   CPyMOL    *PyMOL; /* the instance */
   OVLexicon *Lexicon; /* lexicon for data (e.g. label) strings */
+  CPlugIOManager *PlugIOManager;
 
   /* global variables */
 
