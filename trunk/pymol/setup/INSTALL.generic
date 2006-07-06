@@ -96,6 +96,7 @@ on your system.
    cd $HOME/pymol
    cp pymol.com.template pymol
    vi pymol
+   chmod 755 ./pymol
 	
 Now you should be all set to run pymol.
 

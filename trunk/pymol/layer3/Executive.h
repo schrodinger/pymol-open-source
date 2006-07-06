@@ -62,6 +62,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeCCP4Str 36
 #define cLoadTypeSDF2 37
 #define cLoadTypeSDF2Str 38
+#define cLoadTypeXTC 42
 
 /* NOTE: if you add a type above, then be sure to add corresponding code in:
    CmdLoad

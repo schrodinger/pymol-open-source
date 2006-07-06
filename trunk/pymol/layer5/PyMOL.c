@@ -57,6 +57,7 @@
 #include "Texture.h"
 #include "TestPyMOL.h"
 #include "TypeFace.h"
+#include "PlugIOManager.h"
 
 #include "PyMOL.h"
 #include "PyMOLGlobals.h"
@@ -2432,6 +2433,7 @@ CPyMOL *PyMOL_NewWithOptions(CPyMOLOptions *option)
 }
 
 
+
 void PyMOL_Start(CPyMOL *I)
 {
   PyMOLGlobals *G=I->G;
@@ -2456,6 +2458,7 @@ void PyMOL_Start(CPyMOL *I)
   TypeInit(G);
   TextInit(G);
   CharacterInit(G);
+  PlugIOManagerInit(G);
   SphereInit(G);
   OrthoInit(G,G->Option->show_splash);
   WizardInit(G); /* must come after ortho */
@@ -2574,6 +2577,7 @@ void PyMOL_Stop(CPyMOL *I)
   TypeFree(G);
   TextureFree(G);
   SphereFree(G);
+  PlugIOManagerFree(G);
   PFree();
   CGORendererFree(G);
   ColorFree(G);
