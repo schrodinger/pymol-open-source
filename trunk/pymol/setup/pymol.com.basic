@@ -20,5 +20,5 @@ PYTHONPATH=${PYMOL_PATH}/modules:${PYTHONPATH}
 fi
 export PYTHONPATH
 #
-python $PYMOL_PATH/modules/pymol/__init__.py "$@"
+exec python $PYMOL_PATH/modules/pymol/__init__.py "$@"
 

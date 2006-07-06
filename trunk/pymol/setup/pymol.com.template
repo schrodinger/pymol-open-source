@@ -40,4 +40,4 @@ export PYTHONPATH
 #dbx $PYMOL_PATH/ext/bin/python 
 #gdb $PYMOL_PATH/ext/bin/python 
 #$PYMOL_PATH/ext/bin/python $PYMOL_PATH/modules/launch_pymol.py "$@"
-$PYMOL_PATH/ext/bin/python $PYMOL_PATH/modules/pymol/__init__.py "$@"
+exec $PYMOL_PATH/ext/bin/python $PYMOL_PATH/modules/pymol/__init__.py "$@"
