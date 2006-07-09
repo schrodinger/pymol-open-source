@@ -80,7 +80,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 #define VMDPLUGIN_API __declspec(dllexport)
 #else
-#define VMDPLUGIN_API __declspec(dllimport)
+/* #define VMDPLUGIN_API __declspec(dllimport) */
+#define VMDPLUGIN_API
 #endif
 #else
 /** If we're not compiling on Windows, then this macro is defined empty */
