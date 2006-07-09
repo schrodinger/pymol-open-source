@@ -1,3 +1,5 @@
+DANGER DO NOT RUN UNTIL changes to Gromacs.h and gromacsplugin.ccp are handled
+
 import re
 import string
 import os
