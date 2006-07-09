@@ -83,7 +83,7 @@ int PlugIOManagerRegister(PyMOLGlobals *G,vmdplugin_t *header)
       VLACheck(I->PluginVLA,molfile_plugin_t*,I->NPlugin);
       I->PluginVLA[I->NPlugin] = (molfile_plugin_t*)header;
       I->NPlugin++;
-      printf("register %p %s\n",header,header->name);
+      /*           printf("register %p %s\n",header,header->name);*/
     }
     return VMDPLUGIN_SUCCESS;
   } else
@@ -111,7 +111,11 @@ int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
         }
       }
     }
-    if(plugin) {
+    if(!plugin) {
+      PRINTFB(G,FB_Errors,FB_ObjectMolecule)
+        " ObjectMolecule: unable to locate plugin '%s'\n",plugin_type
+        ENDFB(G);
+    } else {
       
       int natoms;
       molfile_timestep_t timestep;
@@ -121,9 +125,13 @@ int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
 
       timestep.coords = NULL;
       file_handle = plugin->open_file_read(fname, plugin_type, &natoms);
-      if(file_handle && cs_tmpl) {
+      if(!file_handle) {
+      PRINTFB(G,FB_Errors,FB_ObjectMolecule)
+        " ObjectMolecule: plugin '%s' cannot open '%s'.\n",plugin_type, fname
+        ENDFB(G);
+      } else if(cs_tmpl) {
         CoordSet *cs=CoordSetCopy(cs_tmpl);
-        printf("%p\n",file_handle);
+        /*        printf("%p\n",file_handle);*/
         timestep.coords = (float *)cs->Coord;
         {
           int cnt = 0;
@@ -215,8 +223,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
             ExecutiveWindowZoom(G,obj->Obj.Name,0.0,-1,0,0,quiet); /* auto zoom (all states) */
           }
       }
-    }
-
+    } 
   }
   return 0;
 }

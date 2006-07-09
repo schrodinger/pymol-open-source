@@ -2,12 +2,12 @@
 
   Author: Greg Landrum (Landrum@RationalDiscovery.com)
   Created:       February 2004
-  $LastChangedDate: 2004-02-25 15:33:54 -0800 (Wed, 25 Feb 2004) $
+  $LastChangedDate$
   License:  PyMol
   Requires:
             - a python xmlrpclib distribution containing the SimpleXMLRPCServer
               module (1.0 or greater should be fine)
-  RD Version: $Rev: 3200 $            
+  RD Version: $Rev$            
 """
 import xmlrpclib
 

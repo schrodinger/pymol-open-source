@@ -1,5 +1,8 @@
 /* MACHINE GENERATED FILE, DO NOT EDIT! */
 
+/* NOTE: this machine-generated file also contains some
+   hand-edits... */
+
 #define VMDPLUGIN molfile_gromacsplugin
 #define STATIC_PLUGIN 1
 
@@ -319,6 +322,8 @@ static void *open_trr_read(const char *filename, const char *filetype,
   
     if (!strcmp(filetype, "trr")) 
       format = MDFMT_TRR;
+    else if (!strcmp(filetype, "trj")) 
+      format = MDFMT_TRJ;
     else if (!strcmp(filetype, "xtc")) 
       format = MDFMT_XTC;
     else
@@ -595,6 +600,30 @@ static molfile_plugin_t xtc_plugin = {
   0                                   // read_rawgraphics
 };
 
+static molfile_plugin_t trj_plugin = {
+  vmdplugin_ABIVERSION,                // ABI version
+  MOLFILE_PLUGIN_TYPE,                 // type of plugin
+  "trj",                               // short name of plugin
+  "Gromacs TRJ Trajectory", // pretty name of plugin
+  "David Norris, Justin Gullingsrud",  // authors
+  GROMACS_PLUGIN_MAJOR_VERSION,        // major version
+  GROMACS_PLUGIN_MINOR_VERSION,        // minor version
+  VMDPLUGIN_THREADUNSAFE,              // is not reentrant
+  "trj",                               // filename extension
+  open_trr_read,
+  0,
+  0,
+  read_trr_timestep,
+  close_trr_read,
+  0,                                  // open_write
+  0,                                  // write_structure
+  0,                                  // write_timestep
+  0,                                  // close_write
+  0,                                  // read_volumetric_metadata
+  0,                                  // read_volumetric_data
+  0                                   // read_rawgraphics
+};
+
 VMDPLUGIN_EXTERN int VMDPLUGIN_init() { 
   return 0; 
 }
@@ -604,6 +633,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&g96_plugin);
   (*cb)(v, (vmdplugin_t *)&trr_plugin);
   (*cb)(v, (vmdplugin_t *)&xtc_plugin);
+  (*cb)(v, (vmdplugin_t *)&trj_plugin);
   return 0;
 }
 

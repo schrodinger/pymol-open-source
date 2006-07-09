@@ -63,6 +63,11 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeSDF2 37
 #define cLoadTypeSDF2Str 38
 #define cLoadTypeXTC 42
+#define cLoadTypeTRR 43
+#define cLoadTypeGRO 44
+#define cLoadTypeTRJ2 45
+#define cLoadTypeG96 46
+#define cLoadTypeDCD 47
 
 /* NOTE: if you add a type above, then be sure to add corresponding code in:
    CmdLoad
