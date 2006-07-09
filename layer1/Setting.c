@@ -2047,7 +2047,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_i(I,cSetting_overlay, 0);
 
-  set_i(I,cSetting_text, 0);
+  set_b(I,cSetting_text, 0);
 
   set_i(I,cSetting_button_mode, 0);
 
@@ -2327,7 +2327,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_i(I,cSetting_state,1);
 
-  set_i(I,cSetting_ray_shadows,1);
+  set_b(I,cSetting_ray_shadows,1);
 
   set_i(I,cSetting_ribbon_trace_atoms,0);
 
@@ -2335,7 +2335,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_f(I,cSetting_stick_transparency,0.0F);
 
-  set_i(I,cSetting_ray_transparency_shadows,1);
+  set_b(I,cSetting_ray_transparency_shadows,1);
 
   set_i(I,cSetting_session_version_check,0);
 
@@ -2519,7 +2519,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_i(I,cSetting_cache_memory, 0);  /* doesn't seem to do any good :( */
   
-  set_i(I,cSetting_simplify_display_lists, 0);
+  set_b(I,cSetting_simplify_display_lists, 0);
 
   set_i(I,cSetting_retain_order,0);
 

@@ -5455,7 +5455,7 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
     }
     if((type==cLoadTypeTRJ)&&(plugin[0])) 
       type = cLoadTypeTRJ2;
-    printf("plugin %s %d\n",plugin,type);
+    /*printf("plugin %s %d\n",plugin,type);*/
     if(origObj) {
       switch(type) {
       case cLoadTypeXTC:
