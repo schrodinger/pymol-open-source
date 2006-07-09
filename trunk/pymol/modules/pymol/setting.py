@@ -168,7 +168,7 @@ if __name__=='pymol.setting':
         log_box_selections    =(133,'','')
         log_conformations     =(134,'','')
         valence_size          =(135,'','')
-        valence_default       =(135,'','')
+        valence_default       =(135,'','') # deprecated
         surface_miserable     =(136,'','')
         ray_opaque_background =(137,'','')
         transparency          =(138,'','')
