@@ -534,8 +534,8 @@ static int mdio_header(md_file *mf, md_header *mdh) {
 			return -1;
 		return 0;
 
-	case MDFMT_TRR:
-   case MDFMT_TRJ:
+	case MDFMT_TRR: 
+	case MDFMT_TRJ: /* fallthrough */
 		if (trx_header(mf, 1) < 0) return -1;
 		mdh->natoms = mf->trx->natoms;
 		mdh->timeval = (float) mf->trx->t;
@@ -576,7 +576,7 @@ static int mdio_timestep(md_file *mf, md_ts *ts) {
 		return gro_timestep(mf, ts);
 
 	case MDFMT_TRR:
-	case MDFMT_TRJ:
+	case MDFMT_TRJ: /* fallthrough */
 		return trx_timestep(mf, ts);
 
 	case MDFMT_G96:
@@ -1163,6 +1163,7 @@ static int trx_header(md_file *mf, int rewind) {
 	int magic;
 	trx_hdr *hdr;
 	long fpos;
+
 	if (!mf) return mdio_seterror(MDIO_BADPARAMS);
 
 	// In case we need to rewind
@@ -1184,15 +1185,21 @@ static int trx_header(md_file *mf, int rewind) {
 		mf->rev = 1;
 	}
 
-   if(mf->fmt!=MDFMT_TRJ) {
-     // Read the version number. 
-     // XXX. this is not the version number, but the storage size
-     // of the following XDR encoded string.
-     // the 'title' string is in fact the version identifier.
-     // since VMD does not use any of that, it does no harm,
-     // but is should still be fixed occasionally. AK 2005/01/08.
-     if (trx_int(mf, &hdr->version) < 0) return -1;
-   }
+	// Read the version number. 
+        // XXX. this is not the version number, but the storage size
+	// of the following XDR encoded string.
+	// the 'title' string is in fact the version identifier.
+	// since VMD does not use any of that, it does no harm,
+	// but is should still be fixed occasionally. AK 2005/01/08.
+
+	if(mf->fmt!=MDFMT_TRJ) {
+		// It appears that TRJ files either don't contain a version
+		// number or don't have a length-delimiter on the string,
+		// whereas TRR files do contain both.  Thus, with TRJ, we just
+		// assume that the version number is the string length and 
+		// just hope for the best. -- WLD 2006/07/09
+		if (trx_int(mf, &hdr->version) < 0) return -1;
+	}
 
 	// Read in the title string
 	if (trx_string(mf, hdr->title, MAX_TRX_TITLE) < 0)
@@ -1329,8 +1336,10 @@ static int trx_string(md_file *mf, char *str, int max) {
   size_t ssize;
 
 	if (!mf) return mdio_seterror(MDIO_BADPARAMS);
+
 	if (trx_int(mf, &size) < 0) return -1;
   ssize = (size_t)size;
+
 	if (str && size <= max) {
 		if (fread(str, 1, size, mf->f) != ssize)
 			return mdio_seterror(MDIO_IOERROR);
