@@ -492,6 +492,16 @@ SEE ALSO
                     ftype = loadable.top
                 elif re.search("\.trj$",filename,re.I):
                     ftype = loadable.trj
+                elif re.search("\.trr$",filename,re.I):
+                    ftype = loadable.trr
+                elif re.search("\.xtc$",filename,re.I):
+                    ftype = loadable.xtc
+                elif re.search("\.gro$",filename,re.I):
+                    ftype = loadable.gro
+                elif re.search("\.g96$",filename,re.I):
+                    ftype = loadable.g96
+                elif re.search("\.dcd$",filename,re.I):
+                    ftype = loadable.dcd
                 elif re.search("\.crd$",filename,re.I):
                     ftype = loadable.crd
                 elif re.search("\.rst$",filename,re.I):
@@ -580,9 +590,14 @@ SEE ALSO
                 ftype = -1
                 r = DEFAULT_SUCCESS
                 
-    # special handling for AMBER trj failes
-    #      if ftype == loadable.trj:
-    #         ftype = -1
+    # special handling for trj failes (autodetect AMBER versus GROMACS)
+            if ftype == loadable.trj:
+                try: # autodetect gromacs TRJ
+                    magic = map(ord,open(fname,'r').read(4))
+                    if (201 in magic) and (7 in magic):
+                        ftype = loadable.trj2
+                except:
+                    traceback.print_exc()
 
     # special handling of cex files
             if ftype == loadable.cex:
