@@ -5453,27 +5453,34 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
         origObj=NULL;
       }
     }
-    
-    switch(type) {
-    case cLoadTypeXTC:
-      PlugIOManagerLoadTraj(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,
-                            interval,average,start,stop,max,s1,image,shift,quiet,plugin);
-      break;
-    case cLoadTypeTRJ:
-      PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoadTraj-DEBUG: loading TRJ\n" ENDFD;
-      if(origObj) { /* always reinitialize topology objects from scratch */
+    if((type==cLoadTypeTRJ)&&(plugin[0])) 
+      type = cLoadTypeTRJ2;
+    printf("plugin %s %d\n",plugin,type);
+    if(origObj) {
+      switch(type) {
+      case cLoadTypeXTC:
+      case cLoadTypeTRR:
+      case cLoadTypeGRO:
+      case cLoadTypeG96:
+      case cLoadTypeTRJ2:
+      case cLoadTypeDCD:
+        PlugIOManagerLoadTraj(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,
+                              interval,average,start,stop,max,s1,image,shift,quiet,plugin);
+        break;
+      case cLoadTypeTRJ: /* this is the ascii AMBER trajectory format... */
+        PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoadTraj-DEBUG: loading TRJ\n" ENDFD;
         ObjectMoleculeLoadTRJFile(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,
                                   interval,average,start,stop,max,s1,image,shift,quiet);
         /* if(finish)
            ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj); unnecc */
         sprintf(buf," CmdLoadTraj: \"%s\" appended into object \"%s\".\n CmdLoadTraj: %d total states in the object.\n",
                 fname,oname,((ObjectMolecule*)origObj)->NCSet);
-      } else {
-        PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Errors)
-          "CmdLoadTraj-Error: must load object topology before loading trajectory!\n"
-          ENDFB(TempPyMOLGlobals);
+        break;
       }
-      break;
+    } else {
+      PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Errors)
+        "CmdLoadTraj-Error: must load object topology before loading trajectory.\n"
+        ENDFB(TempPyMOLGlobals);
     }
     if(origObj) {
       PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Actions) 

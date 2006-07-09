@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 1.00b05
 
+    * support for trajectory input via VMD plugins
+      [tested: XTC, TRR, TRJ; to test: GRO, G96, DCD]
+
     * fixed wildcard array overrun segfault
 
     * tuned VRML2 export

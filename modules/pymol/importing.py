@@ -80,7 +80,12 @@ if __name__=='pymol.importing':
         png = 39      # png image
         psw = 40      #
         moe = 41      # Chemical Computing Group ".moe" format (proprietary)
-        xtc = 42      # GROMACS xtc format
+        xtc = 42      # xtc trajectory format (via plugin)
+        trr = 43      # trr trajectory format (via plugin)
+        gro = 44      # gro trajectory format (via plugin)
+        trj2 = 45     # trj trajectroy format (via plugin)
+        g96 = 46      # g96 trajectory format (via plugin)
+        dcd = 47      # dcd trajectory format (via plugin)
         
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -257,7 +262,7 @@ PYMOL API
 
     def load_traj(filename,object='',state=0,format='',interval=1,
                       average=1,start=1,stop=-1,max=-1,selection='all',image=1,
-                      shift="[0.0,0.0,0.0]"):
+                      shift="[0.0,0.0,0.0]",plugin=""):
         '''
 DESCRIPTION
 
@@ -298,7 +303,6 @@ SEE ALSO
             lock()
             type = format
             ftype = -1
-            plugin = ""
             state = int(state)
             interval = int(interval)
             average = int(average)
@@ -322,9 +326,28 @@ SEE ALSO
                 # determine file type if possible
                 if re.search("\.trj$",filename,re.I):
                     ftype = loadable.trj
+                    try: # autodetect gromacs TRJ
+                        magic = map(ord,open(fname,'r').read(4))
+                        if (201 in magic) and (7 in magic):
+                            ftype = loadable.trj2
+                            if plugin=="": plugin = "trj"
+                    except:
+                        traceback.print_exc()
                 elif re.search("\.xtc$",filename,re.I):
                     ftype = loadable.xtc
-                    plugin = "xtc"
+                    if plugin=="": plugin = "xtc" 
+                elif re.search("\.trr$",filename,re.I):
+                    ftype = loadable.trr
+                    if plugin=="": plugin = "trr"
+                elif re.search("\.gro$",filename,re.I):
+                    ftype = loadable.gro
+                    if plugin=="": plugin = "gro"
+                elif re.search("\.g96$",filename,re.I):
+                    ftype = loadable.g96
+                    if plugin=="": plugin = "g96"
+                elif re.search("\.dcd$",filename,re.I):
+                    ftype = loadable.dcd
+                    if plugin=="": plugin = "dcd"
                 else:
                     raise pymol.CmdException
             elif cmd.is_string(type):

@@ -2,14 +2,14 @@
 
   Author: Greg Landrum (Landrum@RationalDiscovery.com)
   Created:       January 2002
-  $LastChangedDate: 2005-01-24 13:14:31 -0800 (Mon, 24 Jan 2005) $
+  $LastChangedDate$
   License:  PyMol
   Requires:
             - a python xmlrpclib distribution containing the SimpleXMLRPCServer
               module (1.0 or greater should be fine)
             - python with threading enabled  
              
-  RD Version: $Rev: 4272 $            
+  RD Version: $Rev$            
 """
 import SimpleXMLRPCServer
 import threading,sys,time,types
