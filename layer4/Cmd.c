@@ -5049,6 +5049,43 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         }
       }
       break;
+    case cLoadTypeXTC:
+    case cLoadTypeTRR:
+    case cLoadTypeGRO:
+    case cLoadTypeG96:
+    case cLoadTypeTRJ2:
+    case cLoadTypeDCD:
+      {
+        char *plugin = NULL;
+        char xtc[] = "xtc", trr[] = "trr", gro[] = "gro", g96[] = "g96", trj[] = "trj", dcd[] = "dcd";
+        switch(type) {
+        case cLoadTypeXTC: plugin=xtc; break;
+        case cLoadTypeTRR: plugin=trr; break;
+        case cLoadTypeGRO: plugin=gro; break;
+        case cLoadTypeG96: plugin=g96; break;
+        case cLoadTypeTRJ2: plugin=trj; break;
+        case cLoadTypeDCD: plugin=dcd; break;
+        }
+        if(plugin) {
+          if(origObj) { /* always reinitialize topology objects from scratch */
+            PlugIOManagerLoadTraj(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,
+                                  1,1,1,-1,-1,NULL,1,NULL,quiet,plugin);
+            /* if(finish)
+               ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj); unnecc */
+            sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
+                    fname,oname,((ObjectMolecule*)origObj)->NCSet);
+          } else {
+            PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Errors)
+              "CmdLoad-Error: must load object topology before loading trajectory."
+              ENDFB(TempPyMOLGlobals);
+          }
+        } else {
+          PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Errors)
+            "CmdLoad-Error: plugin not found"
+            ENDFB(TempPyMOLGlobals);
+        }
+      }
+      break;
     case cLoadTypeTRJ:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading TRJ\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */

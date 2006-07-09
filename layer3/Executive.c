@@ -1498,6 +1498,12 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type)
     case cLoadTypeSDF2:
     case cLoadTypeSDF2Str:
     case cLoadTypePQR:
+    case cLoadTypeXTC:
+    case cLoadTypeTRR:
+    case cLoadTypeGRO:
+    case cLoadTypeTRJ2:
+    case cLoadTypeG96:
+    case cLoadTypeDCD:
       new_type = cObjectMolecule;
       break;
     case cLoadTypeChemPyBrick:

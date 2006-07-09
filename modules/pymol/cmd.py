@@ -93,31 +93,26 @@ if __name__=='pymol.cmd':
 
         file_ext_re= re.compile(string.join([
             "\.pdb$|\.pdb1$|\.ent$|\.mol$|\.p5m$|",
-            r"\.PDB$|\.pdb1$|\.ENT$|\.MOL$|\.P5M$|",
             r"\.mmod$|\.mmd$|\.dat$|\.out$|\.mol2$|",
-            r"\.MMOD$|\.MMD$|\.DAT$|\.OUT$|\.MOL2$|",
             r"\.xplor$|\.pkl$|\.sdf$|\.pqr|", 
-            r"\.XPLOR$|\.PKL$|\.SDF$|\.PQR|",                        
             r"\.r3d$|\.xyz$|\.xyz_[0-9]*$|", 
-            r"\.R3D$|\.XYZ$|\.XYZ_[0-9]*$|",
             r"\.cc1$|\.cc2$|", # ChemDraw 3D
-            r"\.CC1$|\.CC2$|",
-            r"\.DX$|\.dx$|", # DX files (APBS)
-            r"\.pse$|\.PSE$|", # PyMOL session (pickled dictionary)
+            r"\.dx$|", # DX files (APBS)
+            r"\.pse$|", # PyMOL session (pickled dictionary)
             r"\.pmo$|", # Experimental molecular object format
-            r"\.PMO$|",
-            r"\.moe$|\.MOE$|", # MOE (proprietary)
-            r"\.ccp4$|\.CCP4$|", # CCP4
-            r"\.top$|\.TOP$|", # AMBER Topology
-            r"\.trj$|\.TRJ$|", # AMBER Trajectory
-            r"\.crd$|\.CRD$|", # AMBER coordinate file
-            r"\.rst$|\.RST$|", # AMBER restart
-            r"\.cex$|\.CEX$|", # CEX format (used by metaphorics)
-            r"\.phi$|\.PHI$|", # PHI format (delphi)
-            r"\.fld$|\.FLD$|", # FLD format (AVS)
-            r"\.o$|\.O$|\.omap$|\.OMAP$|\.dsn6$|\.DSN6$|\.brix$|\.BRIX$", # BRIX/O format
-            r"|\.grd$|\.GRD$", # InsightII Grid format
-            ],''))
+            r"\.moe$|", # MOE (proprietary)
+            r"\.ccp4$|", # CCP4
+            r"\.top$|", # AMBER Topology
+            r"\.trj$|", # AMBER Trajectory
+            r"\.crd$|", # AMBER coordinate file
+            r"\.rst$|", # AMBER restart
+            r"\.cex$|", # CEX format (used by metaphorics)
+            r"\.phi$|", # PHI format (delphi)
+            r"\.fld$|", # FLD format (AVS)
+            r"\.trj$|\.trr$|\.xtc$|\.gro$|\.g96$|\.dcd$|", # Trajectories
+            r"\.o$|\.omap$|\.dsn6$|\.brix$|", # BRIX/O format
+            r"\.grd$", # InsightII Grid format
+            ],''), re.I)
 
         reaper = None
         safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
