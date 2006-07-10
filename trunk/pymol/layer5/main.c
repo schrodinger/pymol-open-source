@@ -163,7 +163,7 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
 
   int result = false;
   if(PLockAPIAsGlut(true)) {
-    result = SceneCopyExternal(G,width, height,rowbytes,(unsigned char *)ptr,0);
+    result = SceneCopyExternal(G,width, height,rowbytes,(unsigned char *)ptr,0x1);
     PUnlockAPIAsGlut();
   }
   return result;
