@@ -209,6 +209,7 @@ setup ( # Distribution meta-data
    "layer2/Sculpt.c",
    "layer2/SculptCache.c",
    "layer2/VFont.c",   
+   "layer3/PlugIOManager.c",
    "layer3/Editor.c",
    "layer3/Executive.c",
    "layer3/Seeker.c",
