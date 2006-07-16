@@ -72,12 +72,12 @@ lib:  .includes .depends .update
 
 unix: .includes .depends .update 
 	/bin/rm -f .update .includes
-	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
+	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o contrib/uiuc/plugins/molfile_plugin/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
 semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) static
-	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)	
+	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o contrib/uiuc/plugins/molfile_plugin/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)	
 	$(PYTHON_EXE) modules/compile_pymol.py
 
 # need to be root to do this...
