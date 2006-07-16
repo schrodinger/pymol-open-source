@@ -776,7 +776,7 @@ class Normal(PMGSkin):
                                 label='PNG...',
                                 command=self.file_save_png)
 
-        self.menuBar.addmenuitem('File', 'separator', '')
+        self.menuBar.addmenuitem('SaveImageAs', 'separator', '')
         
         self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as VRML.',
                                 label='VRML 2...',
