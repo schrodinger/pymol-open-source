@@ -599,14 +599,29 @@ class Normal(PMGSkin):
             else:
                 self.cmd.do("@"+ofile);
 
-    def file_savepng(self):
+    def file_save_png(self):
         sfile = asksaveasfilename(initialdir = self.initialdir,
                  filetypes=[("PNG File","*.png")])
         if len(sfile):
             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
             self.cmd.log("png %s\n"%sfile,"cmd.png('%s')\n"%sfile)
             self.cmd.png(sfile,quiet=0)
+
+    def file_save_wrl(self):
+        sfile = asksaveasfilename(initialdir = self.initialdir,
+                 filetypes=[("VRML 2 WRL File","*.wrl")])
+        if len(sfile):
+            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+            self.cmd.log("save %s\n"%sfile,"cmd.save('%s')\n"%sfile)
+            self.cmd.save(sfile,quiet=0)
             
+    def file_save_pov(self):
+        sfile = asksaveasfilename(initialdir = self.initialdir,
+                 filetypes=[("POV File","*.pov")])
+        if len(sfile):
+            self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+            self.cmd.log("save %s\n"%sfile,"cmd.save('%s')\n"%sfile)
+            self.cmd.save(sfile,quiet=0)
         
     def file_savemovie(self):
         sfile = asksaveasfilename(filetypes=[("Numbered PNG Files","*.png")])
@@ -754,9 +769,22 @@ class Normal(PMGSkin):
 #                        label=self.pad+'Open Sequence...',
 #                        command=self.file_open)
 
-        self.menuBar.addmenuitem('File', 'command', 'Save current image.',
-                                label=self.pad+'Save Image...',
-                                command=self.file_savepng)
+        self.menuBar.addcascademenu('File', 'SaveImageAs', 'Save Image As',
+                                             label=self.pad+'Save Image As',tearoff=TRUE)
+
+        self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as PNG Image.',
+                                label='PNG...',
+                                command=self.file_save_png)
+
+        self.menuBar.addmenuitem('File', 'separator', '')
+        
+        self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as VRML.',
+                                label='VRML 2...',
+                                command=self.file_save_wrl)
+        
+        self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as PovRay input.',
+                                label='POV-Ray...',
+                                command=self.file_save_pov)
 
         self.menuBar.addmenuitem('File', 'command', 'Save all frames.',
                                 label=self.pad+'Save Movie...',

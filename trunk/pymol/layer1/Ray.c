@@ -1513,10 +1513,10 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   charVLA=*charVLA_ptr;
   headerVLA=*headerVLA_ptr;
   smooth_color_triangle=(int)SettingGet(I->G,cSetting_smooth_color_triangle);
-  PRINTFB(I->G,FB_Ray,FB_Details)
+  PRINTFB(I->G,FB_Ray,FB_Blather)
     " RayRenderPOV: w %d h %d f %8.3f b %8.3f\n",width,height,front,back
     ENDFB(I->G);
-  if(Feedback(I->G,FB_Ray,FB_Details)) {
+  if(Feedback(I->G,FB_Ray,FB_Blather)) {
     dump3f(I->Volume," RayRenderPOV: vol");
     dump3f(I->Volume+3," RayRenderPOV: vol");
   }
