@@ -282,6 +282,8 @@ SEE ALSO
             f.write(tup[1])
             f.flush()
             f.close()
+            if not quiet:
+                print " Save: wrote \""+filename+"\"."
             r = DEFAULT_SUCCESS
         elif format=='obj':
             tup = cmd.get_mtl_obj()
