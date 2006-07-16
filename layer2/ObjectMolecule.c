@@ -9270,8 +9270,9 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
                 " ObjectMolecule-DEBUG: updating representations for state %d of \"%s\".\n" 
                 , a+1, I->Obj.Name
                 ENDFB(I->Obj.G);
-              if(I->CSet[a]->fUpdate)
+              if(I->CSet[a]->fUpdate) {
                 I->CSet[a]->fUpdate(I->CSet[a],a);
+              }
             }
         }
     }

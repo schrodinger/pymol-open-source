@@ -138,6 +138,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
           int icnt = interval;
           int n_avg=0;       
           int ncnt = 0;
+
           while(!plugin->read_next_timestep(file_handle, natoms, &timestep)) {
             cnt++;
 
@@ -197,11 +198,11 @@ int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
                       ENDFB(G);
                   }
                   frame++;
+                  cs = CoordSetCopy(cs); /* otherwise, we need a place to put the next set */
                   if((stop>0)&&(cnt>=stop))
                     break;
                   if((max>0)&&(ncnt>=max))
                     break;
-                  cs = CoordSetCopy(cs); /* otherwise, we need a place to put the next set */
                   timestep.coords = (float *)cs->Coord;
                   n_avg=0;
                 }
