@@ -77,6 +77,7 @@ unix: .includes .depends .update
 semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) static
+	cd contrib/uiuc/plugins/molfile_plugin/src;$(MAKE)
 	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o contrib/uiuc/plugins/molfile_plugin/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)	
 	$(PYTHON_EXE) modules/compile_pymol.py
 
