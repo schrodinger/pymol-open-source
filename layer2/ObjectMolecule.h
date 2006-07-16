@@ -58,6 +58,8 @@ typedef struct ObjectMolecule {
   int DiscreteFlag,NDiscrete;
   int *DiscreteAtmToIdx;
   struct CoordSet **DiscreteCSet;
+  /* proposed, for storing uniform trajectory data more efficiently:
+     int *UniformAtmToIdx, *UniformIdxToAtm;  */
   int CurCSet;
   int SeleBase; /* for internal usage by  selector & only valid during selection process */
   CSymmetry *Symmetry;
