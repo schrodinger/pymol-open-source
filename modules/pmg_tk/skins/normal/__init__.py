@@ -770,7 +770,7 @@ class Normal(PMGSkin):
 #                        command=self.file_open)
 
         self.menuBar.addcascademenu('File', 'SaveImageAs', 'Save Image As',
-                                             label=self.pad+'Save Image As',tearoff=TRUE)
+                                             label=self.pad+'Save Image As',tearoff=FALSE)
 
         self.menuBar.addmenuitem('SaveImageAs', 'command', 'Save current image as PNG Image.',
                                 label='PNG...',
