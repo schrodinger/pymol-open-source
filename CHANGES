@@ -2,6 +2,15 @@
 CHANGE LOG
 =========================================================================
 
+
+Changes up to 1.00b07
+
+    * bug fixes for surface representation
+
+Changes up to 1.00b06
+
+    * bug fixes for plugin-based load_traj
+
 Changes up to 1.00b05
 
     * support for trajectory input via VMD plugins

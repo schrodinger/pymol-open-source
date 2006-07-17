@@ -124,58 +124,57 @@ static int *TriangleMakeStripVLA(TriangleSurfaceRec *II,float *v,float *vn,int n
   s=strip;
   done = false;
   while(!done) {
-	 done = true;
-	 t=I->tri;
-	 dir=0;
-	 for(a=0;a<I->nTri;a++) {
-		if(!tFlag[a]) {
-		  tc=a;
-		  flag=false;
-		  dcnt=0;
-		  while(dcnt<3) {
-			 i0 = *(t+3*tc+(dir%3));
-			 i1 = *(t+3*tc+((dir+1)%3));
-			 state = TriangleEdgeStatus(I,i0,i1);
-			 if(state) {
-				s01 = abs(state);
-				t0 = I->edge[s01].tri1;
-				if(!tFlag[t0])
-				  flag=true;
-				else if(state<0) {
-				  t0 = I->edge[s01].tri2;
-				  if(!tFlag[t0])
-					 flag=true;
-				}
-			 }
-			 if(!flag) {
-				dir++;
-				dcnt++;
-			 } else {
-				c=0;
-				sc = s++;
+    done = true;
+    t=I->tri;
+    dir=0;
+    for(a=0;a<I->nTri;a++) {
+      if(!tFlag[a]) {
+        tc=a;
+        flag=false;
+        dcnt=0;
+        while(dcnt<3) {
+          i0 = *(t+3*tc+(dir%3));
+          i1 = *(t+3*tc+((dir+1)%3));
+          state = TriangleEdgeStatus(I,i0,i1);
+          if(state) {
+            s01 = abs(state);
+            t0 = I->edge[s01].tri1;
+            if(!tFlag[t0])
+              flag=true;
+            else if(state<0) {
+              t0 = I->edge[s01].tri2;
+              if(!tFlag[t0])
+                flag=true;
+            }
+          }
+          if(!flag) {
+            dir++;
+            dcnt++;
+          } else {
+            c=0;
+            sc = s++;
             *(s++)=i0;
             *(s++)=i1;
-				while(1) {
-				  state = TriangleEdgeStatus(I,s[-2],s[-1]);
-				  if(!state) break;
-				  s01 = abs(state);
-				  /*			 printf("a: %i %i %i\n",a,I->edge[s01].tri1,I->edge[s01].tri2);*/
+            while(1) {
+              state = TriangleEdgeStatus(I,s[-2],s[-1]);
+              if(!state) break;
+              s01 = abs(state);
+              /*			 printf("a: %i %i %i\n",a,I->edge[s01].tri1,I->edge[s01].tri2);*/
 				  
-				  t0 = I->edge[s01].tri1;
-				  if(!tFlag[t0])
-					 i2 = I->edge[s01].vert3;
-				  else
-					 {
-						if(state>=0) break;
-						t0 = I->edge[s01].tri2;
-						i2 = I->edge[s01].vert4;
-						/*				printf("second to %i i2 %i  [t0] %i \n",t0,i2,tFlag[t0]);*/
-					 } 
-				  if(tFlag[t0]) break;
-				  *(s++) = i2;
-				  tFlag[t0]=true;
-				  c++;
-				  done=false;
+              t0 = I->edge[s01].tri1;
+              if(!tFlag[t0])
+                i2 = I->edge[s01].vert3;
+              else {
+                if(state>=0) break;
+                t0 = I->edge[s01].tri2;
+                i2 = I->edge[s01].vert4;
+                /*				printf("second to %i i2 %i  [t0] %i \n",t0,i2,tFlag[t0]);*/
+              } 
+              if(tFlag[t0]) break;
+              *(s++) = i2;
+              tFlag[t0]=true;
+              c++;
+              done=false;
               if((c==1)||(c==2)) { /* make sure vertices follow standard convention */
                 
                 /* sum normal */
@@ -212,32 +211,58 @@ static int *TriangleMakeStripVLA(TriangleSurfaceRec *II,float *v,float *vn,int n
                     break;
                   }
                 }
-              }
-				}
-				if(!c)
-				  s=sc;
-				else {
-				  *sc = c; 
-				  cc+=c;
-				}
-				/*				if(c>1) printf("strip %i %i\n",c,cc);*/
-				dcnt=0;
-				tc=t0;			 
-				flag=false;
-			 }
-		  }
-		}
-	 }
+              } else { /* continue proofreading handedness... */
+                float dp;
+                /* sum normal */
+                tn0 = vn+(*(s-3))*3;
+                tn1 = vn+(*(s-2))*3;
+                tn2 = vn+(*(s-1))*3;
+                add3f(tn0,tn1,tn);
+                add3f(tn2,tn,tn);
 
-	 /* fail-safe check in case of bad connectivity...*/
+                /* compute right-hand vector */
+
+                v0 = v+(*(s-3))*3;
+                v1 = v+(*(s-2))*3;
+                v2 = v+(*(s-1))*3;
+                subtract3f(v0,v1,vt1);
+                subtract3f(v0,v2,vt2);
+                cross_product3f(vt1,vt2,xtn);
+                
+                dp = dot_product3f(xtn,tn);
+                if(((c&0x1)&&(dp<0.0)) || ((!(c&0x1))&&(dp>0.0))) {
+                  /* truncate if right hand rule has been lost */
+                  tFlag[t0]=false;
+                  c--;
+                  s--;
+                  break;
+                }
+              }
+            }
+            if(!c)
+              s=sc;
+            else {
+              *sc = c; 
+              cc+=c;
+            }
+            /*				if(c>1) printf("strip %i %i\n",c,cc);*/
+            dcnt=0;
+            tc=t0;			 
+            flag=false;
+          }
+        }
+      }
+    }
+
+    /* fail-safe check in case of bad connectivity...*/
 	 
-	 for(a=0;a<I->nTri;a++) {
-		if(!tFlag[a]) {
-		  /*		  printf("missed %i %i %i\n",*(I->tri+3*a),*(I->tri+3*a+1), *(I->tri+3*a+2));*/
-		  *(s++) = 1;
-		  *(s++) = *(I->tri+3*a);
-		  *(s++) = *(I->tri+3*a+1);
-		  *(s++) = *(I->tri+3*a+2);
+    for(a=0;a<I->nTri;a++) {
+      if(!tFlag[a]) {
+        /*		  printf("missed %i %i %i\n",*(I->tri+3*a),*(I->tri+3*a+1), *(I->tri+3*a+2));*/
+        *(s++) = 1;
+        *(s++) = *(I->tri+3*a);
+        *(s++) = *(I->tri+3*a+1);
+        *(s++) = *(I->tri+3*a+2);
 
         /* make sure vertices follow standard convention */
         
@@ -267,7 +292,7 @@ static int *TriangleMakeStripVLA(TriangleSurfaceRec *II,float *v,float *vn,int n
       }
     }
     
-	 *s=0; /* terminate strip list */
+    *s=0; /* terminate strip list */
   }
   FreeP(tFlag);
   /* shrink strip */
