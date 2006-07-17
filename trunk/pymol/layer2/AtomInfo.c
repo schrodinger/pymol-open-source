@@ -818,6 +818,7 @@ void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst)
   *dst=*src;
   dst->unique_id=0;
   dst->selEntry=0;
+  dst->has_atomic_setting=0;
   if(dst->label) {
     OVLexicon_IncRef(G->Lexicon,dst->label);
   }
@@ -831,6 +832,9 @@ void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai)
   CAtomInfo *I=G->AtomInfo;  
   if(ai->textType) {
     OVLexicon_DecRef(G->Lexicon,ai->textType);
+  }
+  if(ai->has_atomic_setting && ai->unique_id) {
+    SettingAtomicDetach(G,ai->unique_id);
   }
   if(ai->unique_id && I->ActiveIDs) {
     OVOneToAny_DelKey(I->ActiveIDs, ai->unique_id);

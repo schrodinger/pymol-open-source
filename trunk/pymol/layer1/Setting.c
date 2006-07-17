@@ -35,8 +35,161 @@ Z* -------------------------------------------------------------------
 #include"Wizard.h"
 #include"Seq.h"
 #include"PyMOLOptions.h"
+#include"OVContext.h"
 
 static void *SettingPtr(CSetting *I,int index,unsigned int size);
+
+void SettingAtomicDetach(PyMOLGlobals *G,int atom_id)
+{
+  register CSettingAtomic *I = G->SettingAtomic;
+  OVreturn_word result;
+  if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,atom_id)) ) {
+    int offset = result.word;
+    int next;
+    SettingAtomicEntry *entry = I->entry + offset;
+    while(offset) {
+      next = entry->next;
+      entry = I->entry + offset;
+      entry->next = I->next_free;
+      I->next_free = offset;
+      offset = next;
+    }
+  }
+}
+
+static void SettingAtomicExpand(PyMOLGlobals *G)
+{
+  register CSettingAtomic *I = G->SettingAtomic;
+  
+  if(!I->next_free) {
+    int new_n_alloc = (I->n_alloc * 3) / 2;
+    int a;
+    VLACheck(I->entry, SettingAtomicEntry, new_n_alloc);
+    for(a=I->n_alloc;a<new_n_alloc;a++) {
+      I->entry[a].next = I->next_free;
+      I->next_free = a;
+    }
+    I->n_alloc = new_n_alloc;
+  }
+}
+
+static void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int setting_type, void *value)
+     /* set value to NULL in order to delete setting */
+{
+  register CSettingAtomic *I = G->SettingAtomic;
+  OVreturn_word result;
+
+  if( OVreturn_IS_OK( (result=OVOneToOne_GetForward(I->id2offset,atom_id)) )) { /* setting list exists for atom */
+    int offset = result.word;
+    int prev = 0;
+    int found = false;
+    while(offset) {
+      SettingAtomicEntry *entry = I->entry + offset;
+      if(entry->setting_id == setting_id) {
+        found = true; /* this setting already defined */
+        if(value) {
+          entry->value = *(int*)value;
+          entry->type = setting_type;
+        } else { /* deleting this setting */
+          if(!prev) { /* if first entry in list */
+            OVOneToOne_DelForward(I->id2offset,atom_id);
+            if(entry->next) { /* set new list start */
+              OVOneToOne_Set(I->id2offset,atom_id,entry->next);
+              entry->next = I->next_free;
+              I->next_free = offset;
+            }
+          } else { /* otherwise excise from middle or end */
+            I->entry[prev].next = entry->next;
+            entry->next = I->next_free;
+            I->next_free = offset;
+          }
+        }
+        break;
+      }
+      prev = offset;
+      offset = entry->next;
+    }
+    if(!found) { /* not found in list, so append */
+      if(!I->next_free) 
+        SettingAtomicExpand(G);
+      if(I->next_free) {
+        offset = I->next_free;
+        SettingAtomicEntry *entry = I->entry + offset;
+        if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, atom_id, offset))) {
+          I->next_free = entry->next;
+          entry->type = setting_type;
+          entry->value = *(int*)value;
+          entry->setting_id = setting_id;
+          entry->next = 0;
+          I->entry[prev].next = offset;
+        }
+      }
+    }
+  } else if( (result.status = OVstatus_NOT_FOUND) && value ) { /* new setting list for atom */
+    if(!I->next_free) 
+      SettingAtomicExpand(G);
+    if(I->next_free) {
+      int offset = I->next_free;
+      SettingAtomicEntry *entry = I->entry + offset;
+
+      if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, atom_id, offset))) {
+        I->next_free = entry->next;
+        entry->type = setting_type;
+        entry->value = *(int*)value;
+        entry->setting_id = setting_id;
+        entry->next = 0;
+      }
+    }
+  } else {
+    /* unhandled error */
+  }
+}
+
+void SettingAtomicSet_i(PyMOLGlobals *G,int atom_id,int setting_id,int value)
+{
+  SettingAtomicSetTypedValue(G,atom_id,setting_id,cSetting_int,&value);
+}
+
+void SettingAtomicSet_f(PyMOLGlobals *G,int atom_id,int setting_id,float value)
+{
+  SettingAtomicSetTypedValue(G,atom_id,setting_id,cSetting_float,&value);
+}
+
+void SettingAtomicSet_b(PyMOLGlobals *G,int atom_id,int setting_id,int value)
+{
+  SettingAtomicSetTypedValue(G,atom_id,setting_id,cSetting_boolean,&value);
+}
+
+void SettingAtomicSet_color(PyMOLGlobals *G,int atom_id,int setting_id,int value)
+{
+  SettingAtomicSetTypedValue(G,atom_id,setting_id,cSetting_color,&value);
+}
+
+static void SettingAtomicInit(PyMOLGlobals *G)
+{
+  register CSettingAtomic *I;
+
+  if( (I=(G->SettingAtomic=Calloc(CSettingAtomic,1)))) {
+    I->id2offset = OVOneToOne_New(G->Context->heap);
+    {
+      int a;
+      I->n_alloc = 10;
+      I->entry = VLACalloc(SettingAtomicEntry,I->n_alloc);
+      /* note: intentially skip index 0  */
+      for(a=2;a<10;a++) {
+        I->entry[a].next = a-1;
+      }
+      I->next_free = I->n_alloc-1;
+    }
+  }
+}
+
+static void SettingAtomicFree(PyMOLGlobals *G)
+{
+  register CSettingAtomic *I = G->SettingAtomic;
+  VLAFreeP(I->entry);
+  OVOneToOne_Del(I->id2offset);
+}
 
 int SettingSetSmart_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index, int value)
 {
@@ -1891,6 +2044,7 @@ float *SettingGetfv(PyMOLGlobals *G,int index)
 void SettingFreeGlobal(PyMOLGlobals *G)
 {
   register CSetting *I=G->Setting;
+  /*  SettingAtomicFree(G);*/
   SettingPurge(I);
   FreeP(G->Setting);
 }
@@ -1898,6 +2052,8 @@ void SettingFreeGlobal(PyMOLGlobals *G)
 void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 {
   register CSetting *I=G->Setting;
+
+  /*  SettingAtomicInit(G);*/
 
   /* use function pointers to prevent the compiler from inlining every
      call in this block (a waste of RAM and time) */
@@ -1913,6 +2069,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
     I=(G->Setting=Calloc(CSetting,1));
     SettingInit(G,I);
   }
+
 
   set_f(I,cSetting_bonding_vdw_cutoff, 0.2F);
 
