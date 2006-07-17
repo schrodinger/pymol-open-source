@@ -159,6 +159,7 @@ typedef struct AtomInfoType {
   signed char protons;
   signed char hb_donor; 
   signed char hb_acceptor;
+  signed char has_atomic_setting; /* setting based on unique_id */
   Chain chain;
   Chain alt;
   ResIdent resi;

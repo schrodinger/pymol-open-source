@@ -18,8 +18,24 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 #include"PyMOLGlobals.h"
+#include"OVOneToOne.h"
 
 typedef char SettingName[255];
+
+/* for atomic settings */
+
+typedef struct {
+  int setting_id;
+  int type; /* must be cSetting_boolean, cSetting_int, cSetting_float, or cSetting_color */
+  int value;
+  int next; /* for per-atom setting lists & memory management */
+} SettingAtomicEntry;
+
+struct _CSettingAtomic {
+  OVOneToOne *id2offset;
+  SettingAtomicEntry *entry;
+  int n_alloc, next_free;
+};
 
 typedef struct {
   int defined;
@@ -44,10 +60,18 @@ struct _CSetting {
 #define cSetting_color       5
 #define cSetting_string      6
 
+/* Atomic Settings */
+
+void SettingAtomicDetach(PyMOLGlobals *G,int index);
 /* New API 
  * NOTE: get commands are not range-checked, so be careful
  * in contrast, set commands expand the current list 
  */
+
+void SettingAtomicSet_b(PyMOLGlobals *G,int atom_id,int setting_id,int value);
+void SettingAtomicSet_i(PyMOLGlobals *G,int atom_id,int setting_id,int value);
+void SettingAtomicSet_f(PyMOLGlobals *G,int atom_id,int setting_id,float value);
+void SettingAtomicSet_color(PyMOLGlobals *G,int atom_id,int setting_id,int value);
 
 void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui);
 void SettingFreeGlobal(PyMOLGlobals *G);
