@@ -114,14 +114,16 @@ static void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_i
         SettingAtomicExpand(G);
       if(I->next_free) {
         offset = I->next_free;
-        SettingAtomicEntry *entry = I->entry + offset;
-        if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, atom_id, offset))) {
-          I->next_free = entry->next;
-          entry->type = setting_type;
-          entry->value = *(int*)value;
-          entry->setting_id = setting_id;
-          entry->next = 0;
-          I->entry[prev].next = offset;
+        {
+          SettingAtomicEntry *entry = I->entry + offset;
+          if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, atom_id, offset))) {
+            I->next_free = entry->next;
+            entry->type = setting_type;
+            entry->value = *(int*)value;
+            entry->setting_id = setting_id;
+            entry->next = 0;
+            I->entry[prev].next = offset;
+          }
         }
       }
     }
