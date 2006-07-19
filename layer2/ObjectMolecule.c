@@ -7651,6 +7651,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         }
       }
       break;
+    case OMOP_SetAtomicSetting:
+      ai = I->AtomInfo;
+      for(a=0;a<I->NAtom;a++) {
+        if(SelectorIsMember(G,ai->selEntry,sele)) {
+          int uid = AtomInfoCheckUniqueID(G,ai);
+          ai->has_atomic_setting = true;
+          SettingAtomicSetTypedValue(G,uid,op->i1,op->i2,op->ii1);
+          op->i4++;
+        }
+        ai++;
+      }
+      break;
    case OMOP_Pop:
      for(a=0;a<I->NAtom;a++)
        {

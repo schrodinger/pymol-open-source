@@ -68,149 +68,149 @@ static PFNGLGETPROGRAMIVARBPROC glGetProgramivARB;
 
 typedef char ShaderCode[255];
 ShaderCode vert_prog[] = {
-"!!ARBvp1.0\n",
-"\n",
-"# input contains the sphere radius in model coordinates\n",
-"PARAM sphereRadius = program.env[0];\n",
-"PARAM half = {0.5, 0.5, 0.0, 2.0 };\n",
-"PARAM zero = {0.0, 0.0, 0.0, 1.0 };\n",
-"\n",
-"ATTRIB vertexPosition  = vertex.position;\n",
-"ATTRIB vertexNormal    = vertex.normal;\n",
-"ATTRIB textureCoord    = vertex.texcoord;\n",
-"OUTPUT outputPosition  = result.position;\n",
-"\n",
-"TEMP   pos, rad, shf, txt, tip;\n",
-"\n",
-"# Transform the vertex by the modelview matrix to get into the frame of the camera\n",
-"\n",
-"DP4    pos.x, state.matrix.modelview.row[0], vertexPosition;\n",
-"DP4    pos.y, state.matrix.modelview.row[1], vertexPosition;\n",
-"DP4    pos.z, state.matrix.modelview.row[2], vertexPosition;\n",
-"DP4    pos.w, state.matrix.modelview.row[3], vertexPosition;\n",
-"\n",
-"# copy current texture coords\n",
-"MOV    txt.xyzw, textureCoord.xyzw;\n",
-"\n",
-"# scale the radius by a factor of two\n",
-"MUL    rad.xy, 2.0, sphereRadius.z;\n",
-"\n",
-"# shift the texture coordinates to the origin\n",
-"SUB    shf.xy, textureCoord, {0.5, 0.5, 0.0, 0.0};\n",
-"\n",
-"# multiply them to get the vertex offset\n",
-"\n",
-"MUL    shf.xy, rad, shf;\n",
-"\n",
-"# define the new vertex for corner of sphere\n",
-"\n",
-"ADD    pos.xy, pos, shf;\n",
-"\n",
-"# apply the projection matrix to get clip coordinates \n",
-"DP4    outputPosition.x, state.matrix.projection.row[0], pos;\n",
-"DP4    outputPosition.y, state.matrix.projection.row[1], pos;\n",
-"DP4    shf.z, state.matrix.projection.row[2], pos;\n",
-"DP4    shf.w, state.matrix.projection.row[3], pos;\n",
-"MOV    outputPosition.zw, shf;\n",
-"\n",
-"# compute camera position for front tip of the sphere\n",
-"ADD    pos.z, pos.z, sphereRadius;\n",
-"\n",
-"# compute Zc and Wc for front tip of the sphere\n",
-"DP4    tip.z, state.matrix.projection.row[2], pos;\n",
-"DP4    tip.w, state.matrix.projection.row[3], pos;\n",
-"\n",
-"# compute 1/Wc for sphere tip \n",
-"RCP    rad.z, tip.w;\n",
-"\n",
-"# put sphere center Zc into tip.w \n",
-"MOV    tip.w, shf.z;\n",
-"\n",
-"# compute 1/Wc for sphere center \n",
-"RCP    rad.w, shf.w;\n",
-"\n",
-"# compute Z/Wc for both sphere tip (->txt.z) and center (->txt.w) \n",
-"MUL    txt.zw, tip, rad;\n",
-"\n",
-"# move into range 0.0-1.0 to get the normalized depth coordinate (0.5*(Zc/Wc)+0.5) \n",
-"ADD    txt.zw, {0.0,0.0,1.0,1.0}, txt;\n",
-"MUL    txt.zw, {0.0,0.0,0.5,0.5}, txt;\n",
-"\n",
-"# Pass the color through\n",
-"MOV    result.color, vertex.color;\n",
-"\n",
-"# Pass texture through\n",
-"MOV    result.texcoord, txt;\n",
-"\n",
-"END\n",
-"\n",
-""
+  "!!ARBvp1.0\n",
+  "\n",
+  "# input contains the sphere radius in model coordinates\n",
+  "PARAM sphereRadius = program.env[0];\n",
+  "PARAM half = {0.5, 0.5, 0.0, 2.0 };\n",
+  "PARAM zero = {0.0, 0.0, 0.0, 1.0 };\n",
+  "\n",
+  "ATTRIB vertexPosition  = vertex.position;\n",
+  "ATTRIB vertexNormal    = vertex.normal;\n",
+  "ATTRIB textureCoord    = vertex.texcoord;\n",
+  "OUTPUT outputPosition  = result.position;\n",
+  "\n",
+  "TEMP   pos, rad, shf, txt, tip;\n",
+  "\n",
+  "# Transform the vertex by the modelview matrix to get into the frame of the camera\n",
+  "\n",
+  "DP4    pos.x, state.matrix.modelview.row[0], vertexPosition;\n",
+  "DP4    pos.y, state.matrix.modelview.row[1], vertexPosition;\n",
+  "DP4    pos.z, state.matrix.modelview.row[2], vertexPosition;\n",
+  "DP4    pos.w, state.matrix.modelview.row[3], vertexPosition;\n",
+  "\n",
+  "# copy current texture coords\n",
+  "MOV    txt.xyzw, textureCoord.xyzw;\n",
+  "\n",
+  "# scale the radius by a factor of two\n",
+  "MUL    rad.xy, 2.0, sphereRadius.z;\n",
+  "\n",
+  "# shift the texture coordinates to the origin\n",
+  "SUB    shf.xy, textureCoord, {0.5, 0.5, 0.0, 0.0};\n",
+  "\n",
+  "# multiply them to get the vertex offset\n",
+  "\n",
+  "MUL    shf.xy, rad, shf;\n",
+  "\n",
+  "# define the new vertex for corner of sphere\n",
+  "\n",
+  "ADD    pos.xy, pos, shf;\n",
+  "\n",
+  "# apply the projection matrix to get clip coordinates \n",
+  "DP4    outputPosition.x, state.matrix.projection.row[0], pos;\n",
+  "DP4    outputPosition.y, state.matrix.projection.row[1], pos;\n",
+  "DP4    shf.z, state.matrix.projection.row[2], pos;\n",
+  "DP4    shf.w, state.matrix.projection.row[3], pos;\n",
+  "MOV    outputPosition.zw, shf;\n",
+  "\n",
+  "# compute camera position for front tip of the sphere\n",
+  "ADD    pos.z, pos.z, sphereRadius;\n",
+  "\n",
+  "# compute Zc and Wc for front tip of the sphere\n",
+  "DP4    tip.z, state.matrix.projection.row[2], pos;\n",
+  "DP4    tip.w, state.matrix.projection.row[3], pos;\n",
+  "\n",
+  "# compute 1/Wc for sphere tip \n",
+  "RCP    rad.z, tip.w;\n",
+  "\n",
+  "# put sphere center Zc into tip.w \n",
+  "MOV    tip.w, shf.z;\n",
+  "\n",
+  "# compute 1/Wc for sphere center \n",
+  "RCP    rad.w, shf.w;\n",
+  "\n",
+  "# compute Z/Wc for both sphere tip (->txt.z) and center (->txt.w) \n",
+  "MUL    txt.zw, tip, rad;\n",
+  "\n",
+  "# move into range 0.0-1.0 to get the normalized depth coordinate (0.5*(Zc/Wc)+0.5) \n",
+  "ADD    txt.zw, {0.0,0.0,1.0,1.0}, txt;\n",
+  "MUL    txt.zw, {0.0,0.0,0.5,0.5}, txt;\n",
+  "\n",
+  "# Pass the color through\n",
+  "MOV    result.color, vertex.color;\n",
+  "\n",
+  "# Pass texture through\n",
+  "MOV    result.texcoord, txt;\n",
+  "\n",
+  "END\n",
+  "\n",
+  ""
 };
 
 ShaderCode frag_prog[] = {
-"!!ARBfp1.0\n",
-"\n",
-"PARAM fogInfo = program.env[0];\n",
-"PARAM fogColor = state.fog.color;\n",
-"ATTRIB fogCoord = fragment.fogcoord;\n",
-"\n",
-"TEMP pln, norm, depth, color, light, spec, fogFactor;\n",
-"\n",
-"# fully clip spheres that hit the camera\n",
-"KIL fragment.texcoord.z;\n",
-"\n",
-"# move texture coordinates to origin\n",
-"\n",
-"MOV norm.z, 0;\n",
-"SUB norm.xy, fragment.texcoord, {0.5,0.5,0.0,0.0};\n",
-"\n",
-"# compute x^2 + y^2, if > 0.25 then kill the pixel -- not in sphere\n",
-"\n",
-"# kill pixels that aren't in the center circle\n",
-"DP3 pln.z, norm, norm;\n",
-"SUB pln.z, 0.25, pln.z;\n",
-"KIL pln.z;\n",
-"\n",
-"# build a complete unit normal\n",
-"MUL pln.z, 4.0, pln.z;\n",
-"RSQ pln.z, pln.z;\n",
-"MUL norm.xy, 2.0, norm;\n",
-"RCP norm.z, pln.z;\n",
-"\n",
-"# interpolate the Zndc coordinate on the sphere \n",
-"LRP depth.z, norm.z, fragment.texcoord.z, fragment.texcoord.w;\n",
-"MOV result.depth.z, depth.z;\n",
-"\n",
-"# light0\n",
-"\n",
-"DP3 light, state.light[1].half, norm;\n",
-"MOV light.w, 60.0;\n",
-"LIT light, light;\n",
-"\n",
-"# ambient\n",
-"MOV color.xyzw, {0.06,0.06,0.06,1.0};\n",
-"ADD color.xyz, light.y, 0.1;\n",
-"MUL color.xyz, fragment.color, color;\n",
-"MUL spec.xyz, light.z, 0.5;\n",
-"ADD color.xyz, color,spec;\n",
- "\n",
-"# apply fog using linear interp over Zndc\n",
-"MAX fogFactor.x, depth.z, fogInfo.x;\n",
-"SUB fogFactor.x, fogFactor.x, fogInfo.x;\n",
-"MUL fogFactor.x, fogFactor.x, fogInfo.y;\n",
-"LRP color.xyz, fogFactor.x, fogColor, color;\n",
-"MOV result.color, color;\n",
-"\n",
-"END\n",
- "\n",
- ""
+  "!!ARBfp1.0\n",
+  "\n",
+  "PARAM fogInfo = program.env[0];\n",
+  "PARAM fogColor = state.fog.color;\n",
+  "ATTRIB fogCoord = fragment.fogcoord;\n",
+  "\n",
+  "TEMP pln, norm, depth, color, light, spec, fogFactor;\n",
+  "\n",
+  "# fully clip spheres that hit the camera\n",
+  "KIL fragment.texcoord.z;\n",
+  "\n",
+  "# move texture coordinates to origin\n",
+  "\n",
+  "MOV norm.z, 0;\n",
+  "SUB norm.xy, fragment.texcoord, {0.5,0.5,0.0,0.0};\n",
+  "\n",
+  "# compute x^2 + y^2, if > 0.25 then kill the pixel -- not in sphere\n",
+  "\n",
+  "# kill pixels that aren't in the center circle\n",
+  "DP3 pln.z, norm, norm;\n",
+  "SUB pln.z, 0.25, pln.z;\n",
+  "KIL pln.z;\n",
+  "\n",
+  "# build a complete unit normal\n",
+  "MUL pln.z, 4.0, pln.z;\n",
+  "RSQ pln.z, pln.z;\n",
+  "MUL norm.xy, 2.0, norm;\n",
+  "RCP norm.z, pln.z;\n",
+  "\n",
+  "# interpolate the Zndc coordinate on the sphere \n",
+  "LRP depth.z, norm.z, fragment.texcoord.z, fragment.texcoord.w;\n",
+  "MOV result.depth.z, depth.z;\n",
+  "\n",
+  "# light0\n",
+  "\n",
+  "DP3 light, state.light[1].half, norm;\n",
+  "MOV light.w, 60.0;\n",
+  "LIT light, light;\n",
+  "\n",
+  "# ambient\n",
+  "MOV color.xyzw, {0.06,0.06,0.06,1.0};\n",
+  "ADD color.xyz, light.y, 0.1;\n",
+  "MUL color.xyz, fragment.color, color;\n",
+  "MUL spec.xyz, light.z, 0.5;\n",
+  "ADD color.xyz, color,spec;\n",
+  "\n",
+  "# apply fog using linear interp over Zndc\n",
+  "MAX fogFactor.x, depth.z, fogInfo.x;\n",
+  "SUB fogFactor.x, fogFactor.x, fogInfo.x;\n",
+  "MUL fogFactor.x, fogFactor.x, fogInfo.y;\n",
+  "LRP color.xyz, fogFactor.x, fogColor, color;\n",
+  "MOV result.color, color;\n",
+  "\n",
+  "END\n",
+  "\n",
+  ""
 };
 
 /*
-normal depth routine...does not work!  why?
-"#MAD_SAT fogFactor.x, fogInfo.x, fragment.texcoord.w, fogInfo.y;\n",
-"#LRP color.xyz, fogFactor.x, color, fogColor;\n",
- */
+  normal depth routine...does not work!  why?
+  "#MAD_SAT fogFactor.x, fogInfo.x, fragment.texcoord.w, fogInfo.y;\n",
+  "#LRP color.xyz, fogFactor.x, color, fogColor;\n",
+*/
 
 #endif
 
@@ -242,7 +242,7 @@ void RepSphereFree(RepSphere *I)
  
 static GLboolean ProgramStringIsNative(PyMOLGlobals *G,
                                        GLenum target, GLenum format,   
-                                     GLsizei len, const GLvoid *string)  
+                                       GLsizei len, const GLvoid *string)  
 {  
   GLint errorPos, isNative;  
   glProgramStringARB(target, format, len, string);  
@@ -324,10 +324,10 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
       char *vp = read_code_str(vert_prog);
       char *fp = read_code_str(frag_prog);
 
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+      /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
       if(!(glGenProgramsARB && glBindProgramARB && 
-         glDeleteProgramsARB && glProgramStringARB && 
+           glDeleteProgramsARB && glProgramStringARB && 
            glProgramEnvParameter4fARB)) {
         glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
         glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
@@ -341,7 +341,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
          glDeleteProgramsARB && glProgramStringARB && 
          glProgramEnvParameter4fARB)
 #endif
-/* END PROPRIETARY CODE SEGMENT */
+        /* END PROPRIETARY CODE SEGMENT */
 
         {
           /*                  
@@ -377,7 +377,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               I->shader_flag=false;
               glDeleteProgramsARB(2,(GLuint*)I->programs);
             }
-        }
+          }
           FreeP(vp);
           FreeP(fp);
         }
@@ -480,8 +480,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           register int clamp_size_flag = (max_size>=0.0F);
           register float size;
           int sphere_mode = SettingGet_i(G,I->R.cs->Setting,
-                                               I->R.obj->Setting,
-                                              cSetting_sphere_mode);
+                                         I->R.obj->Setting,
+                                         cSetting_sphere_mode);
           
           if(!sp) {
             switch(sphere_mode) {
@@ -616,8 +616,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
         /* no sp -- we're rendering as points */
         int use_dlst;
         int sphere_mode = SettingGet_i(G,I->R.cs->Setting,
-                                             I->R.obj->Setting,
-                                             cSetting_sphere_mode);
+                                       I->R.obj->Setting,
+                                       cSetting_sphere_mode);
         v=I->VC;
         c=I->NC;
           
@@ -675,7 +675,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               register float size;
                
               if((sphere_mode==5) && (!I->shader_flag))
-                 sphere_mode=4;
+                sphere_mode=4;
 
               switch(sphere_mode) {
                 
@@ -771,25 +771,25 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                           }
                         size *= r_factor;
                         if( size != last_size ) {
-                            glEnd();
-                            if(size>largest)
-                                largest = size;
-                            if(size<_2) {
-                                if(!pass) {
-                                    zz_factor=1.0F;
-                                    s_factor = 0.0F;
-                                }
+                          glEnd();
+                          if(size>largest)
+                            largest = size;
+                          if(size<_2) {
+                            if(!pass) {
+                              zz_factor=1.0F;
+                              s_factor = 0.0F;
                             }
-                            if(size<_1) {
-                                size=_1;
-                                glDisable(GL_POINT_SMOOTH);
-                                glDisable(GL_ALPHA_TEST);
-                            } else {
-                                glEnable(GL_POINT_SMOOTH);
-                                glEnable(GL_ALPHA_TEST);
-                            }
-                            glPointSize(size);
-                            glBegin(GL_POINTS);
+                          }
+                          if(size<_1) {
+                            size=_1;
+                            glDisable(GL_POINT_SMOOTH);
+                            glDisable(GL_ALPHA_TEST);
+                          } else {
+                            glEnable(GL_POINT_SMOOTH);
+                            glEnable(GL_ALPHA_TEST);
+                          }
+                          glPointSize(size);
+                          glBegin(GL_POINTS);
                         }
                         x_add = z_factor*clamp_radius*info->view_normal[0];
                         y_add = z_factor*clamp_radius*info->view_normal[1];
@@ -846,93 +846,93 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
 				  /* printf("%8.3f %8.3f %8.3f %8.3f\n", nv3, nv2, nv0, fog_info[0]); */
 				  fog_info[1] = 1.0F/(1.0-fog_info[0]); /* effective range of fog */
 				  
-				   z_front = info->stereo_front;
-				   z_back = info->back+((info->back+info->front)*0.25);
+                  z_front = info->stereo_front;
+                  z_back = info->back+((info->back+info->front)*0.25);
 			      
-				   if(Feedback(G,FB_OpenGL,FB_Debugging))
-                      PyMOLCheckOpenGLErr("before shader");
+                  if(Feedback(G,FB_OpenGL,FB_Debugging))
+                    PyMOLCheckOpenGLErr("before shader");
 
-                   /* load the vertex program */
-                   glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
+                  /* load the vertex program */
+                  glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
                    
-                   /* load the fragment program */
-                   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
+                  /* load the fragment program */
+                  glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
                    
-                   /* load some safe initial values  */
+                  /* load some safe initial values  */
 
-                   glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
-                                              0, 0.0F, 0.0F, 1.0, 0.0F);
-                   glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
-                                              0, 0.5F, 2.0F, 0.0F, 0.0F);
+                  glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+                                             0, 0.0F, 0.0F, 1.0, 0.0F);
+                  glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
+                                             0, 0.5F, 2.0F, 0.0F, 0.0F);
                         
-                   glEnable(GL_VERTEX_PROGRAM_ARB);
-                   glEnable(GL_FRAGMENT_PROGRAM_ARB);
+                  glEnable(GL_VERTEX_PROGRAM_ARB);
+                  glEnable(GL_FRAGMENT_PROGRAM_ARB);
                    
-                   {
-                     last_radius = -1.0F;
+                  {
+                    last_radius = -1.0F;
                      
-                     glNormal3fv(info->view_normal);
-                     glBegin(GL_QUADS);
-                     v+=3;
+                    glNormal3fv(info->view_normal);
+                    glBegin(GL_QUADS);
+                    v+=3;
 
-                     while(c--) {
+                    while(c--) {
                        
-                       v3 = v[3];
+                      v3 = v[3];
 
-                       v0 = v[0];
-                       v1 = v[1];
-                       v2 = v[2];
+                      v0 = v[0];
+                      v1 = v[1];
+                      v2 = v[2];
 
-                       if(last_radius!=(cur_radius=v3)) {
-                         glEnd();
-                         glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
-                                                    0, 0.0F, 0.0F, v3, 0.0F);
-                         glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
-                                                    0, fog_info[0], fog_info[1], 0.0F, 0.0F);
-                         glBegin(GL_QUADS);
-                         last_radius = cur_radius;
-                       }
+                      if(last_radius!=(cur_radius=v3)) {
+                        glEnd();
+                        glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+                                                   0, 0.0F, 0.0F, v3, 0.0F);
+                        glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
+                                                   0, fog_info[0], fog_info[1], 0.0F, 0.0F);
+                        glBegin(GL_QUADS);
+                        last_radius = cur_radius;
+                      }
                        
-                       /*  MatrixTransformC44f4f(info->pmv_matrix, v, nv);*/
+                      /*  MatrixTransformC44f4f(info->pmv_matrix, v, nv);*/
 					   
-                       nv3 = m[ 3]*v0+m[ 7]*v1+m[11]*v2+m[15]; /* compute Wc */ 
+                      nv3 = m[ 3]*v0+m[ 7]*v1+m[11]*v2+m[15]; /* compute Wc */ 
 					   
-					   if(((nv3-cur_radius)>z_front) && (nv3<z_back)) { /* is it within the viewing volume? */
-						   nv0 = m[ 0]*v0+m[ 4]*v1+m[ 8]*v2+m[12];
+                      if(((nv3-cur_radius)>z_front) && (nv3<z_back)) { /* is it within the viewing volume? */
+                        nv0 = m[ 0]*v0+m[ 4]*v1+m[ 8]*v2+m[12];
 						   
-						   nv3 = _1/nv3;
-						   nv1 = m[ 1]*v0+m[ 5]*v1+m[ 9]*v2+m[13];
-						   nv0 *= nv3;
-						   nv1 *= nv3;
+                        nv3 = _1/nv3;
+                        nv1 = m[ 1]*v0+m[ 5]*v1+m[ 9]*v2+m[13];
+                        nv0 *= nv3;
+                        nv1 *= nv3;
 						   
 						   
-						   if((nv0<cutoff)&&(nv0>m_cutoff)&&
-							  (nv1<cutoff)&&(nv1>m_cutoff)) {
+                        if((nv0<cutoff)&&(nv0>m_cutoff)&&
+                           (nv1<cutoff)&&(nv1>m_cutoff)) {
 							   
-							   glColor3fv(v-3);                          
+                          glColor3fv(v-3);                          
 							   
-							   glTexCoord2fv(_00);
-							   glVertex3fv(v);
+                          glTexCoord2fv(_00);
+                          glVertex3fv(v);
 							   
-							   glTexCoord2fv(_10);
-							   glVertex3fv(v);
+                          glTexCoord2fv(_10);
+                          glVertex3fv(v);
 							   
-							   glTexCoord2fv(_11);
-							   glVertex3fv(v);
+                          glTexCoord2fv(_11);
+                          glVertex3fv(v);
 							   
-							   glTexCoord2fv(_01);
-							   glVertex3fv(v);
-						   }
-					   }
-                       v+=7;
-                     }
-                     glEnd();
-                   }
+                          glTexCoord2fv(_01);
+                          glVertex3fv(v);
+                        }
+                      }
+                      v+=7;
+                    }
+                    glEnd();
+                  }
                    
-                   glDisable(GL_FRAGMENT_PROGRAM_ARB);
-                   glDisable(GL_VERTEX_PROGRAM_ARB);
-                   if(Feedback(G,FB_OpenGL,FB_Debugging))
-                     PyMOLCheckOpenGLErr("after shader");
+                  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+                  glDisable(GL_VERTEX_PROGRAM_ARB);
+                  if(Feedback(G,FB_OpenGL,FB_Debugging))
+                    PyMOLCheckOpenGLErr("after shader");
                 }
                 break;
 #endif
@@ -1233,7 +1233,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
 
   ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
   sphere_mode = SettingGet_i(G,cs->Setting,    obj->Obj.Setting,
-                                   cSetting_sphere_mode);
+                             cSetting_sphere_mode);
   if(sphere_mode>0)
     ds = -1;
   if(ds<0) {
@@ -1327,40 +1327,43 @@ Rep *RepSphereNew(CoordSet *cs,int state)
       }
       marked[a1] = vis_flag; /* store temporary visibility information */
 
-      if(vis_flag)
-        {
-          
-          if(I->R.P) {
-            I->NP++;
-            if(!ati1->masked) {
-              I->R.P[I->NP].index = a1;
-            } else {
-              I->R.P[I->NP].index = -1;
-            }
-            I->R.P[I->NP].bond = -1;
-          }
-          
-          *mf=true;
-          I->NC++;
-          if(one_color==-1)
-            c1=*(cs->Color+a);
-          else
-            c1=one_color;
-          v0 = cs->Coord+3*a;			 
-          if(ColorCheckRamped(G,c1)) {
-            ColorGetRamped(G,c1,v0,v,state);
-            v+=3;
+      if(vis_flag) {
+        /*        float at_sphere_scale, sphere_add;
+        
+        AtomInfoGetSetting_f(G, ati1, cSetting_sphere_scale, sphere_scale, &at_sphere_scale);
+
+        printf("%8.3f %8.3f\n",sphere_scale,at_sphere_scale);*/
+        if(I->R.P) {
+          I->NP++;
+          if(!ati1->masked) {
+            I->R.P[I->NP].index = a1;
           } else {
-            vc = ColorGet(G,c1); /* save new color */
-            *(v++)=*(vc++);
-            *(v++)=*(vc++);
-            *(v++)=*(vc++);
+            I->R.P[I->NP].index = -1;
           }
-          *(v++)=*(v0++);
-          *(v++)=*(v0++);
-          *(v++)=*(v0++);
-          *(v++)=obj->AtomInfo[a1].vdw*sphere_scale+sphere_add;
+          I->R.P[I->NP].bond = -1;
         }
+          
+        *mf=true;
+        I->NC++;
+        if(one_color==-1)
+          c1=*(cs->Color+a);
+        else
+          c1=one_color;
+        v0 = cs->Coord+3*a;			 
+        if(ColorCheckRamped(G,c1)) {
+          ColorGetRamped(G,c1,v0,v,state);
+          v+=3;
+        } else {
+          vc = ColorGet(G,c1); /* save new color */
+          *(v++)=*(vc++);
+          *(v++)=*(vc++);
+          *(v++)=*(vc++);
+        }
+        *(v++)=*(v0++);
+        *(v++)=*(v0++);
+        *(v++)=*(v0++);
+        *(v++)= obj->AtomInfo[a1].vdw*sphere_scale+sphere_add;
+      }
       mf++;
     }
   

@@ -62,7 +62,7 @@ struct _CSetting {
 
 /* Atomic Settings */
 
-void SettingAtomicDetach(PyMOLGlobals *G,int index);
+void SettingAtomicDetachChain(PyMOLGlobals *G,int index);
 /* New API 
  * NOTE: get commands are not range-checked, so be careful
  * in contrast, set commands expand the current list 
@@ -72,6 +72,12 @@ void SettingAtomicSet_b(PyMOLGlobals *G,int atom_id,int setting_id,int value);
 void SettingAtomicSet_i(PyMOLGlobals *G,int atom_id,int setting_id,int value);
 void SettingAtomicSet_f(PyMOLGlobals *G,int atom_id,int setting_id,float value);
 void SettingAtomicSet_color(PyMOLGlobals *G,int atom_id,int setting_id,int value);
+void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int setting_type, void *value);
+
+int SettingAtomicGet_b(PyMOLGlobals *G,int atom_id,int setting_id,int *value);
+int SettingAtomicGet_i(PyMOLGlobals *G,int atom_id,int setting_id,int *value);
+int SettingAtomicGet_f(PyMOLGlobals *G,int atom_id,int setting_id,float *value);
+int SettingAtomicGet_color(PyMOLGlobals *G,int atom_id,int setting_id,int *value);
 
 void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui);
 void SettingFreeGlobal(PyMOLGlobals *G);

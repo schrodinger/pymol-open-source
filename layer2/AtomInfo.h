@@ -175,6 +175,11 @@ int AtomInfoInit(PyMOLGlobals *G);
 void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai);
 void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst);
 
+int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
+int AtomInfoGetSetting_i(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
+int AtomInfoGetSetting_f(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, float current, float *effective);
+int AtomInfoGetSetting_color(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
+
 int AtomInfoCheckUniqueID(PyMOLGlobals *G, AtomInfoType *ai);
 int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex);
 void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I);

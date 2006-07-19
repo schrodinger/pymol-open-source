@@ -40,6 +40,65 @@ struct _CAtomInfo {
   OVOneToAny *ActiveIDs;
 };
 
+int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective)
+{
+  if(!ai->has_atomic_setting) {
+    *effective = current;
+    return 0;
+  } else {
+    if(!SettingAtomicGet_b(G,ai->unique_id,setting_id,effective)) {
+      *effective = current;
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+}
+int AtomInfoGetSetting_i(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective)
+{
+  if(!ai->has_atomic_setting) {
+    *effective = current;
+    return 0;
+  } else {
+    if(!SettingAtomicGet_i(G,ai->unique_id,setting_id,effective)) {
+      *effective = current;
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+}
+int AtomInfoGetSetting_f(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, float current, float *effective)
+{
+  if(!ai->has_atomic_setting) {
+    *effective = current;
+    return 0;
+  } else {
+    if(!SettingAtomicGet_f(G,ai->unique_id,setting_id,effective)) {
+      *effective = current;
+      return 0;
+    } else {
+      printf("%8.3f\n",*effective);
+      return 1;
+    }
+  }
+}
+int AtomInfoGetSetting_color(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective)
+{
+  if(!ai->has_atomic_setting) {
+    *effective = current;
+    return 0;
+  } else {
+    if(!SettingAtomicGet_color(G,ai->unique_id,setting_id,effective)) {
+      *effective = current;
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+}
+
+
 static int AtomInfoPrimeUniqueIDs(PyMOLGlobals *G)
 {
   CAtomInfo *I=G->AtomInfo;
@@ -834,7 +893,7 @@ void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai)
     OVLexicon_DecRef(G->Lexicon,ai->textType);
   }
   if(ai->has_atomic_setting && ai->unique_id) {
-    SettingAtomicDetach(G,ai->unique_id);
+    SettingAtomicDetachChain(G,ai->unique_id);
   }
   if(ai->unique_id && I->ActiveIDs) {
     OVOneToAny_DelKey(I->ActiveIDs, ai->unique_id);

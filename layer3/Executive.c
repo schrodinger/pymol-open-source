@@ -7684,6 +7684,76 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
           }
           break;
         case cExecSelection:    
+#if 0
+          sele1 = SelectorIndexByName(G,rec->name);
+          if(sele1>=0) {
+            int have_atomic_value=false;
+            int type  = PyInt_AsLong(PyTuple_GetItem(tuple,0));
+            PyObject *value = PyTuple_GetItem(tuple,1);
+            if(value) {
+              ObjectMoleculeOpRecInit(&op);
+              op.code = OMOP_SetAtomicSetting;
+              op.i1 = index;
+              op.ii1 = &op.i3;
+              switch(type) {
+              case cSetting_boolean:
+                *(op.ii1) = PyInt_AsLong(PyTuple_GetItem(value,0));
+                op.i2 = cSetting_boolean;
+                have_atomic_value = true;
+                break;
+              case cSetting_int:
+                *(op.ii1) = PyInt_AsLong(PyTuple_GetItem(value,0));
+                op.i2 = cSetting_int;
+                have_atomic_value = true;
+                break;
+              case cSetting_float:
+                *(float*)op.ii1 = (float)PyFloat_AsDouble(PyTuple_GetItem(value,0));
+                op.i2 = cSetting_float;
+                have_atomic_value = true;
+                break;
+              case cSetting_color:
+                /* to do */
+                break;
+              }
+              if(have_atomic_value) {
+                rec = NULL;
+                while((ListIterate(I->Spec,rec,next))) {
+                  if((rec->type==cExecObject) && (rec->obj->type==cObjectMolecule)) {
+                    obj=(ObjectMolecule*)rec->obj;
+                    ObjectMoleculeSeleOp(obj,sele1,&op);
+                    if(op.i4) {
+                      printf("updated %d\n",op.i4);
+                      if(updates) side_effects = true;
+#if 0
+                      if(!quiet) {
+                      if(state<0) { /* object-specific */
+                        if(Feedback(G,FB_Setting,FB_Actions)) {
+                          SettingGetTextValue(G,*handle,NULL,index,value);
+                          SettingGetName(G,index,name);
+                          PRINTF
+                            " Setting: %s set to %s in object \"%s\".\n",
+                            name,value,rec->obj->Name
+                            ENDF(G);
+                        }
+                      } else { /* state-specific */
+                        if(Feedback(G,FB_Setting,FB_Actions)) {
+                          SettingGetTextValue(G,*handle,NULL,index,value);
+                          SettingGetName(G,index,name);
+                          PRINTF
+                            " Setting: %s set to %s in object \"%s\", state %d.\n",
+                            name,value,rec->obj->Name,state+1
+                            ENDF(G);
+                        }
+                      }
+                    }
+#endif
+                    }
+                  }
+                }
+              }
+            }
+          }
+#else
           sele1 = SelectorIndexByName(G,rec->name);
           if(sele1>=0) {
             rec = NULL;
@@ -7729,6 +7799,7 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
               }
             }
           }
+#endif
           break;
         case cExecObject:
           if(rec->obj->fGetSettingHandle) {
@@ -7776,6 +7847,8 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
   }
         
 #else
+  /* legacy code */
+
   else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
     while(ListIterate(I->Spec,rec,next))
       {
