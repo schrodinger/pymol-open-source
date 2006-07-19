@@ -924,11 +924,12 @@ int ExecutiveGetActiveAlignmentSele(PyMOLGlobals *G)
   } else { /* otherwise, use the first active alignment */
     SpecRec *rec = NULL;
     register CExecutive *I = G->Executive;
-
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->visible) {
         if(rec->type==cExecObject)
           if(rec->obj->type==cObjectAlignment) {
+            if(rec->obj->fUpdate) /* allow object to update selection, if necessary */
+              rec->obj->fUpdate(rec->obj);
             align_sele = SelectorIndexByName(G,rec->obj->Name);
             if(align_sele>=0)
               break;

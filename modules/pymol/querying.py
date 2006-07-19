@@ -1190,6 +1190,25 @@ PYMOL API
         return lst
 
 
+    def get_raw_alignment(name='',active_only=0):
+        '''
+DESCRIPTION
+
+    "get_raw_alignment" returns a list of lists of (object,index)
+    tuples containing the raw per-atom alignment relationships
+
+PYMOL API
+
+    cmd.get_raw_alignment(name)
+
+        '''
+        try:
+            lock()
+            r = _cmd.get_raw_alignment(str(name),int(active_only))
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException
+        return r
 
 
 

@@ -31,6 +31,7 @@ typedef struct {
   int state;
   int color;
   int tag;
+  int is_abbr, hint_no_space;
 } CSeqCol;
   
 typedef struct {

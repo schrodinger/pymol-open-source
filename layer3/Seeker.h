@@ -24,4 +24,7 @@ void SeekerFree(PyMOLGlobals *G);
 void SeekerUpdate(PyMOLGlobals *G);
 char SeekerGetAbbr(PyMOLGlobals *G,char *abbr);
 
+PyObject *SeekerGetRawAlignment(PyMOLGlobals *G, int align_sele, int active_only);
+
+
 #endif
