@@ -179,6 +179,7 @@ typedef struct {
 #define OMOP_TransformR44f 55
 #define OMOP_FixHydrogens 56
 #define OMOP_Sort 57
+#define OMOP_SetAtomicSetting 58
 
 #include"CoordSet.h"
 

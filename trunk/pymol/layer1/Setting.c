@@ -39,21 +39,23 @@ Z* -------------------------------------------------------------------
 
 static void *SettingPtr(CSetting *I,int index,unsigned int size);
 
-void SettingAtomicDetach(PyMOLGlobals *G,int atom_id)
+void SettingAtomicDetachChain(PyMOLGlobals *G,int atom_id)
 {
   register CSettingAtomic *I = G->SettingAtomic;
   OVreturn_word result;
   if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,atom_id)) ) {
     int offset = result.word;
     int next;
-    SettingAtomicEntry *entry = I->entry + offset;
+    SettingAtomicEntry *entry;
     while(offset) {
-      next = entry->next;
       entry = I->entry + offset;
+      next = entry->next;
       entry->next = I->next_free;
       I->next_free = offset;
       offset = next;
     }
+  } else {
+    /* uncaught error */
   }
 }
 
@@ -73,7 +75,66 @@ static void SettingAtomicExpand(PyMOLGlobals *G)
   }
 }
 
-static void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int setting_type, void *value)
+static int SettingAtomicGetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id, int setting_type, void *value)
+{
+  register CSettingAtomic *I = G->SettingAtomic;
+  OVreturn_word result;
+  if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,atom_id)) ) {
+    int offset = result.word;
+    SettingAtomicEntry *entry;
+
+    while(offset) {
+      entry = I->entry + offset;
+      printf("searching %d %d %d\n",offset, entry->setting_id, setting_id);
+
+      if(entry->setting_id == setting_id) {
+        if(entry->type == setting_type) {
+          printf("found\n");
+          *(int*)value = entry->value;
+        } else switch(setting_type) {
+        case cSetting_int:
+        case cSetting_color:
+        case cSetting_boolean:
+          switch(entry->type) {
+          case cSetting_float:
+            *(int*)value = *(float*)&entry->value;            
+            break;
+          default:
+            *(int*)value = entry->value;
+            break;
+          }
+          break;
+        case cSetting_float:
+           *(float*)value = *(int*)entry->value;
+           break;
+        }
+        return 1;
+      }
+      offset = entry->next;
+    }
+  }
+  return 0;
+}
+
+int SettingAtomicGet_b(PyMOLGlobals *G,int atom_id,int setting_id,int *value)
+{
+  return SettingAtomicGetTypedValue(G,atom_id,setting_id,cSetting_boolean,value);
+}
+int SettingAtomicGet_i(PyMOLGlobals *G,int atom_id,int setting_id,int *value)
+{
+  return SettingAtomicGetTypedValue(G,atom_id,setting_id,cSetting_int,value);
+}
+int SettingAtomicGet_f(PyMOLGlobals *G,int atom_id,int setting_id,float *value)
+{
+  return SettingAtomicGetTypedValue(G,atom_id,setting_id,cSetting_float,value);
+}
+int SettingAtomicGet_color(PyMOLGlobals *G,int atom_id,int setting_id,int *value)
+{
+  return SettingAtomicGetTypedValue(G,atom_id,setting_id,cSetting_color,value);
+}
+
+
+void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int setting_type, void *value)
      /* set value to NULL in order to delete setting */
 {
   register CSettingAtomic *I = G->SettingAtomic;
@@ -90,7 +151,7 @@ static void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_i
         if(value) {
           entry->value = *(int*)value;
           entry->type = setting_type;
-        } else { /* deleting this setting */
+        } else { /* NULL value means delete this setting */
           if(!prev) { /* if first entry in list */
             OVOneToOne_DelForward(I->id2offset,atom_id);
             if(entry->next) { /* set new list start */
@@ -191,6 +252,7 @@ static void SettingAtomicFree(PyMOLGlobals *G)
   register CSettingAtomic *I = G->SettingAtomic;
   VLAFreeP(I->entry);
   OVOneToOne_Del(I->id2offset);
+  FreeP(I);
 }
 
 int SettingSetSmart_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index, int value)
@@ -2046,7 +2108,7 @@ float *SettingGetfv(PyMOLGlobals *G,int index)
 void SettingFreeGlobal(PyMOLGlobals *G)
 {
   register CSetting *I=G->Setting;
-  /*  SettingAtomicFree(G);*/
+  SettingAtomicFree(G);
   SettingPurge(I);
   FreeP(G->Setting);
 }
@@ -2054,8 +2116,6 @@ void SettingFreeGlobal(PyMOLGlobals *G)
 void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 {
   register CSetting *I=G->Setting;
-
-  /*  SettingAtomicInit(G);*/
 
   /* use function pointers to prevent the compiler from inlining every
      call in this block (a waste of RAM and time) */
@@ -2066,6 +2126,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   int (*set_b)(CSetting *I,int index, int value)= SettingSet_b;
   int (*set_color)(CSetting *I,int index, char *value) = SettingSet_color;
   int (*set_s)(CSetting *I,int index, char *value) = SettingSet_s;
+
+  SettingAtomicInit(G);
+
 
   if(alloc || !I) {
     I=(G->Setting=Calloc(CSetting,1));
