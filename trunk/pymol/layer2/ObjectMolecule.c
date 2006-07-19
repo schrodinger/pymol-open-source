@@ -311,7 +311,7 @@ static char *skip_fortran(int num,int per_line,char *p)
       p=nextline(p);
     }
   }  
-  if(b) p=nextline(p);
+  if(b||(!num)) p=nextline(p);
   return(p);
 }
 
@@ -941,8 +941,6 @@ static char *findflag(PyMOLGlobals *G,char *p,char *flag,char *format)
   return(p);
 }
 
-#define nextline_top nextline
-
 /*========================================================================*/
 CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
                                         AtomInfoType **atInfoPtr)
@@ -1010,7 +1008,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
   p=ncopy(cc,p,20);
   title[0]=0;
   sscanf(cc,"%s",title);
-  p=nextline_top(p);
+  p=nextline(p);
 
   if(amber7) {
 
@@ -1028,7 +1026,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NHPARM)==1);
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NPARM)==1);
 
-    p=nextline_top(p);
+    p=nextline(p);
 
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NNB)==1);
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NRES)==1);
@@ -1042,7 +1040,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NATYP)==1);
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NPHB)==1);
 
-    p=nextline_top(p);
+    p=nextline(p);
 
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&IFPERT)==1);
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NBPER)==1);
@@ -1056,7 +1054,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NMXRS)==1);
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&IFCAP)==1);
     
-    p=nextline_top(p);
+    p=nextline(p);
     p=ncopy(cc,p,8); ok = ok && (sscanf(cc,"%d",&NEXTRA)==1);
 
   } else {
@@ -1075,7 +1073,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
     p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NNB)==1);
     p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NRES)==1);
     
-    p=nextline_top(p);
+    p=nextline(p);
     
     p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NBONA)==1);
     p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NTHETA)==1);
@@ -1091,7 +1089,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
     p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NGPER)==1);
     p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&NDPER)==1);
     
-    p=nextline_top(p);
+    p=nextline(p);
     
     p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&MBPER)==1);
     p=ncopy(cc,p,6); ok = ok && (sscanf(cc,"%d",&MGPER)==1);
@@ -1120,7 +1118,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
     break;
   }
 
-  p=nextline_top(p);
+  p=nextline(p);
 
   if(!ok) {
     ErrMessage(G,"TOPStrToCoordSet","Error reading counts lines");
@@ -1147,11 +1145,11 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
         ai->name[0]=0;
       if((++b)==20) {
         b=0;
-        p=nextline_top(p);
+        p=nextline(p);
       }
     }
   
-    if(b) p=nextline_top(p);
+    if(b) p=nextline(p);
 
     if(!ok) {
       ErrMessage(G,"TOPStrToCoordSet","Error reading atom names");
@@ -1178,7 +1176,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
       }
       if((++b)==5) {
         b=0;
-        p=nextline_top(p);
+        p=nextline(p);
       }
     }
 
@@ -1189,7 +1187,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
         " TOPStr2CoordSet: read charges.\n"
         ENDFB(G);
     }
-    if(b) p=nextline_top(p);
+    if(b) p=nextline(p);
   
     if(!amber7) {
       /* skip masses */
@@ -1216,10 +1214,10 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
         ok=false;
       if((++b)==col) {
         b=0;
-        p=nextline_top(p);
+        p=nextline(p);
       }
     }
-    if(b) p=nextline_top(p);
+    if(b) p=nextline(p);
 
     if(!ok) {
       ErrMessage(G,"TOPStrToCoordSet","Error LJ atom types");
@@ -1254,10 +1252,10 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
         resn[a][0]=0;
       if((++b)==20) {
         b=0;
-        p=nextline_top(p);
+        p=nextline(p);
       }
     }
-    if(b) p=nextline_top(p);
+    if(b) p=nextline(p);
 
     if(!ok) {
       ErrMessage(G,"TOPStrToCoordSet","Error reading residue labels");
@@ -1297,10 +1295,10 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
         }
       if((++b)==col) {
         b=0;
-        p=nextline_top(p);
+        p=nextline(p);
       }
     }
-    if(b) p=nextline_top(p);
+    if(b) p=nextline(p);
     if(last_i)
       for(aa=(last_i-1);aa<nAtom;aa++) {
         ai = atInfo+aa;
@@ -1403,10 +1401,10 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
       }
       if((++b)==col) {
         b=0;
-        p=nextline_top(p);
+        p=nextline(p);
       }
     }
-    if(b) p=nextline_top(p);
+    if(b) p=nextline(p);
 
     if(!ok) {
       ErrMessage(G,"TOPStrToCoordSet","Error hydrogen containing bonds");
@@ -1445,10 +1443,10 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
       }
       if((++b)==col) {
         b=0;
-        p=nextline_top(p);
+        p=nextline(p);
       }
     }
-    if(b) p=nextline_top(p);
+    if(b) p=nextline(p);
 
     if(!ok) {
       ErrMessage(G,"TOPStrToCoordSet","Error hydrogen free bonds");
@@ -1459,6 +1457,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
     }
 
     if(!amber7) {
+
       /* skip hydrogen angles */
       
       p=skip_fortran(4*NTHETH,12,p);
@@ -1513,10 +1512,10 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
       }
       if((++b)==20) {
         b=0;
-        p=nextline_top(p);
+        p=nextline(p);
       }
     }
-    if(b) p=nextline_top(p);
+    if(b) p=nextline(p);
 
     if(!ok) {
       ErrMessage(G,"TOPStrToCoordSet","Error reading atom types");
@@ -1555,7 +1554,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
       p=ncopy(cc,p,wid); ok = ok && (sscanf(cc,"%d",&NSPM)==1);
       p=ncopy(cc,p,wid); ok = ok && (sscanf(cc,"%d",&NSPSOL)==1);
       
-      p=nextline_top(p);
+      p=nextline(p);
       
       if(amber7) {
         p = findflag(G,buffer,"ATOMS_PER_MOLECULE","10I8");
@@ -1604,16 +1603,16 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
       }
       /* skip periodic box */
       
-      p=nextline_top(p);
+      p=nextline(p);
       
     }
     
     if(!amber7) {
 
       if(IFCAP>0) {
-        p=nextline_top(p);
-        p=nextline_top(p);
-        p=nextline_top(p);
+        p=nextline(p);
+        p=nextline(p);
+        p=nextline(p);
       }
 
       if(IFPERT>0) {
@@ -2788,7 +2787,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,
     have_n_atom = true;
     p=nskip(p,2);
     p=ncopy(tmp_name,p,sizeof(WordType)-1);
-    p=nextline_top(p);
+    p=nextline(p);
   }
 
   if(tinker_xyz&&nAtom) { /* test Tinker XYZ formatting assumption*/
@@ -2828,7 +2827,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,
     if(sscanf(cc,"%f",&dummy_float)!=1) have_atom_line = false; /* z */
     if(!have_atom_line) { /* copy the comment line into the title field */
       p=ncopy(tmp_name,p,sizeof(WordType)-1);
-      p=nextline_top(p);
+      p=nextline(p);
     }
   }
 
@@ -2991,7 +2990,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,
     }
     if(have_n_atom && (atomCount>=nAtom))
       break;
-    p=nextline_top(p);
+    p=nextline(p);
   }
   
   PRINTFB(G,FB_ObjectMolecule,FB_Blather) 

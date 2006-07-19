@@ -979,6 +979,169 @@ static int SeekerFindTag(PyMOLGlobals *G,AtomInfoType *ai,int sele, int codes,in
   return result;
 }
 
+PyObject *SeekerGetRawAlignment(PyMOLGlobals *G, int align_sele, int active_only) 
+{
+  PyObject *result = NULL;
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  int nRow = 0;
+  int nCol = 0;
+  CSeqRow *row_vla = NULL,*row;
+  void *hidden = NULL;
+  ObjectMolecule *obj;
+
+  if(align_sele<0) {
+    align_sele = ExecutiveGetActiveAlignmentSele(G);  
+  }
+  if(align_sele>=0) {
+
+    row_vla = VLACalloc(CSeqRow,10);
+
+    /* first, find out which objects are included in the alignment */
+
+    while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
+      if((obj->Obj.Enabled || !active_only) && (obj->Obj.Name[0]!='_')) {
+        int a;
+        AtomInfoType *ai = obj->AtomInfo;
+        for(a=0;a<obj->NAtom;a++) {
+          if(SelectorIsMember(G,ai->selEntry,align_sele)) {      
+            VLACheck(row_vla,CSeqRow,nRow);
+            row = row_vla + nRow;
+            row->obj = obj;
+            row->nCol = obj->NAtom;
+            nRow++;
+            break;
+          }
+          ai++;
+        }
+      }
+    }
+
+    /* next, figure out how many aligned columns exist */
+
+    {
+      int done = false;
+      while(!done) {
+        int a;
+        int min_tag = -1;
+        done = true;
+        for(a=0;a<nRow;a++) {
+          row = row_vla + a;
+          while(row->cCol<row->nCol) { /* advance to next tag in each row & find lowest */
+            AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+            int tag = SelectorIsMember(G,ai->selEntry, align_sele);     
+            if(!tag) {
+              row->cCol++;
+            } else { /* we're at a tagged atom... */
+              if(min_tag>tag)
+                min_tag = tag; 
+              else if(min_tag<0)
+                min_tag = tag;
+              done = false;
+              break;
+            }
+            ai++;
+          }
+        }
+        if(min_tag>=0) {
+          nCol++;
+          for(a=0;a<nRow;a++) {
+            row = row_vla + a;
+            if(row->cCol<row->nCol) {
+              AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+              int tag = SelectorIsMember(G,ai->selEntry, align_sele);     
+              if(tag == min_tag) { /* advance past this tag */
+                row->cCol++;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /* now populate the table */
+
+    result = PyList_New(nCol);
+  
+    if(nCol) {
+      int done = false;
+      nCol = 0;
+      { /* reset start points for our second pass */
+        int a;
+        for(a=0;a<nRow;a++) {
+          row = row_vla + a;
+          row->cCol = 0;
+        }
+      }
+      while(!done) {
+        int a;
+        int min_tag = -1;
+        done = true;
+        for(a=0;a<nRow;a++) {
+          row = row_vla + a;
+          while(row->cCol<row->nCol) { /* advance to next tag in each row & find lowest */
+            AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+            int tag = SelectorIsMember(G,ai->selEntry, align_sele);     
+            if(!tag) {
+              row->cCol++;
+            } else { /* we're at a tagged atom... */
+              if(min_tag>tag)
+                min_tag = tag; 
+              else if(min_tag<0)
+                min_tag = tag;
+              done = false;
+              break;
+            }
+            ai++;
+          }
+        }
+        if(min_tag>=0) {
+          int n_member = 0;
+
+          for(a=0;a<nRow;a++) {
+            row = row_vla + a;
+            if(row->cCol<row->nCol) {
+              AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+              int tag = SelectorIsMember(G,ai->selEntry, align_sele);     
+              if(tag == min_tag) { /* participates */
+                n_member++;
+              }
+            }
+          }
+          {
+            PyObject *column_list = PyList_New(n_member);
+            n_member = 0;
+
+            for(a=0;a<nRow;a++) {
+              row = row_vla + a;
+              if(row->cCol<row->nCol) {
+                AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+                int tag = SelectorIsMember(G,ai->selEntry, align_sele);     
+                if(tag == min_tag) { /* participates */
+
+                  PyObject *tup = PyTuple_New(2);
+                  PyTuple_SetItem(tup,0,PyString_FromString(row->obj->Obj.Name));
+                  PyTuple_SetItem(tup,1,PyInt_FromLong(row->cCol));
+                  PyList_SetItem(column_list,n_member,tup);
+
+                  row->cCol++; /* advance past this tag */
+                  n_member++;
+                }
+              }
+            }
+            PyList_SetItem(result,nCol,column_list);
+          }
+          nCol++;
+        }
+      }
+    }
+  }
+  VLAFreeP(row_vla);
+  return result;
+#endif
+}
+
 void SeekerUpdate(PyMOLGlobals *G)
 {
   /*  CObject *o = NULL;
@@ -1009,7 +1172,8 @@ void SeekerUpdate(PyMOLGlobals *G)
       AtomInfoType *last = NULL,*last_segi=NULL,*last_chain = NULL;
       CoordSet *last_disc = NULL;
       int last_state;
-      int last_abbr = false;
+      int last_abbr = true;
+      int last_spacer = false;
       int nCol = 0;
       int nListEntries = 1; /* first list starts at 1 always... */
       int est_col = obj->NAtom/5+1;
@@ -1169,7 +1333,7 @@ void SeekerUpdate(PyMOLGlobals *G)
           nCol++;
           
           last_abbr = false;
-          
+          last_spacer = true;
           last_segi = ai;
           last_chain = ai;
 
@@ -1203,6 +1367,7 @@ void SeekerUpdate(PyMOLGlobals *G)
           nCol++;
           
           last_abbr = false;
+          last_spacer = true;
           last_chain = ai;
         }
 
@@ -1224,7 +1389,9 @@ void SeekerUpdate(PyMOLGlobals *G)
             first_atom_in_label = true;
 
             abbr[0] = SeekerGetAbbr(G,ai->resn);
-            
+
+            r1->hint_no_space = last_abbr || last_spacer;
+
             if(!abbr[0]) {
               if(last_abbr) {
                 UtilConcatVLA(&row->txt,&row->len," ");                
@@ -1241,6 +1408,7 @@ void SeekerUpdate(PyMOLGlobals *G)
               UtilConcatVLA(&row->txt,&row->len," ");
             } else {
               UtilConcatVLA(&row->txt,&row->len,abbr);
+              r1->is_abbr = true;
               r1->stop = row->len;
             }
             if(default_color<0)
@@ -1520,58 +1688,75 @@ void SeekerUpdate(PyMOLGlobals *G)
             current = row->accum;
         }
       }
-      
       done_flag = false;
       while(!done_flag) {
-        done_flag = true;
-        { 
-          int all_spacers = true;
-          while(all_spacers) {
-            int allow_repeat = false;
-            for(a=0;a<nRow;a++) {       
-              row = row_vla + a;
-              if((!row->label_flag) && (row->cCol < row->nCol)) {
-                CSeqCol *r1 = row->col + row->cCol;
-                if(r1->tag||(!r1->spacer)) {
-                  all_spacers=false;
-                  break;
-                }
-              }
-            }
-            if(all_spacers) {
-              /* this column is only spacers, so line them up like normal */
-              int width, max_width = 0;
-              int found = false;
+        int hint_tagged_no_space = true;
+        done_flag=true;
+        {
+#if 0
+          if(all_spacers) {
+            /* this column is only spacers, so line them up like normal */
+            int max_width = 0;
+            int width;
+            int space_added = false;
+            int rep;
+            for(rep=0;rep<2;rep++)
               for(a=0;a<nRow;a++) {       
                 row = row_vla + a;
                 if((!row->label_flag) && (row->cCol < row->nCol)) {
                   CSeqCol *r1 = row->col + row->cCol;
-                  if(codes&&(!first)&&(!found))
+                  if( (!first) && (!space_added) &&
+                      (codes || (((!r1->is_abbr) && (!r1->spacer))) ||
+                       (r1->is_abbr&&(!r1->hint_no_space)))) {
                     current++;
+                    space_added = true;
+                  }
                   done_flag = false;
                   first = false;
-                  found = true;
                   r1->offset = current;
                   width =  (r1->stop-r1->start);
                   if(max_width<width)
                     max_width = width;
                   row->cCol++;
-                  allow_repeat = true;
                 }
               }
-              current+=max_width;
-            }
-            if(!allow_repeat)
-              break;
+            current+=max_width;
           }
-          
+#endif
           {
             /* insert untagged entries into their own columns */
             int untagged_flag = true;
+            int saw_untagged_no_abbr = false;
+            int hint_untagged_space = false;
             while(untagged_flag) {
-              int found = false;
+              int space_added = false;
               int max_width = 0;
               untagged_flag = false;
+              
+              /* first get the spaces in...*/
+
+              for(a=0;a<nRow;a++) {       
+                row = row_vla + a;
+                if((!row->label_flag) && (row->cCol < row->nCol)) {
+                  CSeqCol *r1 = row->col + row->cCol;
+                  if(!r1->tag) { /* not aligned */
+                    int text_len = (r1->stop-r1->start);
+                    if((!first) && (!space_added) && (row->cCol>2) &&
+                       (codes || (((!r1->is_abbr) && (!r1->spacer) )) ||
+                        hint_untagged_space ||
+                        (r1->is_abbr&&(!r1->hint_no_space)))) {
+                      /* insert space */
+                      current++;
+                      space_added = true;
+                    }
+                    if(max_width<text_len)
+                      max_width = text_len;
+                  }
+                }
+              }
+              
+              /* then do the rest */
+
               for(a=0;a<nRow;a++) {       
                 row = row_vla + a;
                 if((!row->label_flag) && (row->cCol < row->nCol)) {
@@ -1580,22 +1765,22 @@ void SeekerUpdate(PyMOLGlobals *G)
                     int text_len = (r1->stop-r1->start);
                     untagged_flag = true;
                     done_flag = false;
-                    if(codes&&(!first)&&(!found)) /* insert space */
-                      current++;
+                    saw_untagged_no_abbr |= (!r1->is_abbr)&&(!r1->spacer);
+
                     first = false;
-                    found = true;
                     r1->offset = current;
                     r1->unaligned = true;
                   
                     if(!r1->spacer) {
                       int aa;
+
                       for(aa=0;aa<nRow;aa++) { /* infill populate other rows with dashes */
                         if(aa!=a) {       
                           CSeqRow *row2 = row_vla + aa;
                           if(!row2->label_flag) { 
                             if(row2->cCol < row2->nCol) {
                               CSeqCol *r2 = row2->col + row2->cCol;
-                              if(stagger||r2->tag) {
+                              if(stagger||r2->tag||r2->spacer) {
                                 VLACheck(row2->fill,CSeqCol,row2->nFill);
                                 r2 = row2->fill + row2->nFill;
                                 r2->stop = text_len;
@@ -1623,6 +1808,14 @@ void SeekerUpdate(PyMOLGlobals *G)
               }
               if(!stagger) 
                 current += max_width;
+              if(saw_untagged_no_abbr) {
+                hint_untagged_space = true;
+                hint_tagged_no_space = false;
+              } else {
+                hint_untagged_space = false;
+                hint_tagged_no_space = true;
+              }
+              saw_untagged_no_abbr = false;
               for(a=0;a<nRow;a++) {       
                 row = row_vla + a;
                 if((!row->label_flag) && (row->cCol < row->nCol)) {
@@ -1635,7 +1828,6 @@ void SeekerUpdate(PyMOLGlobals *G)
             }
           }
         }
-
         
         {
           /* next insert match-tagged entries into the same column */
@@ -1651,25 +1843,31 @@ void SeekerUpdate(PyMOLGlobals *G)
           }
           if(min_tag) {
             int width, max_width = 0;
-            int found = false;
-            for(a=0;a<nRow;a++) {       
-              row = row_vla + a;
-              if((!row->label_flag) && (row->cCol < row->nCol)) {
-                CSeqCol *r1 = row->col + row->cCol;
-                if(r1->tag == min_tag) {
-                  if(codes&&(!first)&&(!found)) /* space */
-                    current++;
-                  done_flag = false;
-                  first = false;
-                  found = true;
-                  r1->offset = current;
-                  width = (r1->stop-r1->start);
-                  if(max_width<width)
-                    max_width = width;
-                  /*   row->cCol++;  */
+            int space_added = false;
+            int rep;
+            for(rep=0;rep<2;rep++) 
+              for(a=0;a<nRow;a++) {       
+                row = row_vla + a;
+                if((!row->label_flag) && (row->cCol < row->nCol)) {
+                  CSeqCol *r1 = row->col + row->cCol;
+                  if(r1->tag == min_tag) {
+                    if((!first) && (!space_added) &&
+                       (codes || (((!r1->is_abbr) && (!r1->spacer))) ||
+                        (r1->is_abbr&&(!(r1->hint_no_space||hint_tagged_no_space))))) {
+                      /* insert space */
+                      current++;
+                      space_added = true;
+                    }
+                    done_flag = false;
+                    first = false;
+                    r1->offset = current;
+                    width = (r1->stop-r1->start);
+                    if(max_width<width)
+                      max_width = width;
+                    /*   row->cCol++;  */
+                  }
                 }
               }
-            }
             {
               int aa;
               for(aa=0;aa<nRow;aa++) { /* infill populate other rows with dashes */

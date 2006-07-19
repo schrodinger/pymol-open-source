@@ -33,9 +33,9 @@ __inline__ static char *ParseNextLine(char *p)
   register char ch;
   const char mask = -16; /* 0xF0 */
   while((mask & p[0]) &&
-	(mask & p[1]) &&
-	(mask & p[2]) &&
-	(mask & p[3])) /* trusting short-circuit to avoid overrun */
+        (mask & p[1]) &&
+        (mask & p[2]) &&
+        (mask & p[3])) /* trusting short-circuit to avoid overrun */
     p+=4;
   while( (ch=*p) ) {
     p++;

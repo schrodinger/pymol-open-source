@@ -1405,6 +1405,7 @@ SEE ALSO
               get_phipsi,         \
               get_position,       \
               get_povray,         \
+              get_raw_alignment,  \
               get_renderer,       \
               get_symmetry,       \
               get_title,          \

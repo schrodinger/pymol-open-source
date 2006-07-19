@@ -79,6 +79,7 @@ Z* -------------------------------------------------------------------
 #include"Movie.h"
 #include"OVContext.h"
 #include"PlugIOManager.h"
+#include"Seeker.h"
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -404,6 +405,35 @@ static PyObject *CmdGetColorection(PyObject *dummy, PyObject *args)
     APIExitBlocked();
   }
   return(APIAutoNone(result));
+}
+
+static PyObject *CmdGetRawAlignment(PyObject *dummy, PyObject *args)
+{
+  int ok=true;
+  char *name;
+  int active_only;
+  PyObject *result = NULL;
+  ok = PyArg_ParseTuple(args,"si",&name,&active_only);
+  if(ok) {
+    int align_sele = -1;
+    APIEnterBlocked();
+    if(name[0]) {
+      CObject *obj = ExecutiveFindObjectByName(TempPyMOLGlobals,name);
+      if(obj->type==cObjectAlignment) {
+        align_sele = SelectorIndexByName(TempPyMOLGlobals,obj->Name);
+      }
+    } else {
+      align_sele = ExecutiveGetActiveAlignmentSele(TempPyMOLGlobals);
+    }
+    if(align_sele>=0) {
+      result = SeekerGetRawAlignment(TempPyMOLGlobals,align_sele,active_only);   
+    }
+    APIExitBlocked();
+  }
+  if(!result) {
+    return APIFailure();
+  } else 
+    return result;
 }
 
 static PyObject *CmdGetOrigin(PyObject *dummy, PyObject *args)
@@ -6102,6 +6132,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
    {"get_phipsi",            CmdGetPhiPsi,            METH_VARARGS },
    {"get_renderer",          CmdGetRenderer,          METH_VARARGS },
+   {"get_raw_alignment",      CmdGetRawAlignment,         METH_VARARGS },
    {"get_seq_align_str",     CmdGetSeqAlignStr,          METH_VARARGS },
    {"get_session",           CmdGetSession,           METH_VARARGS },
 	{"get_setting",           CmdGetSetting,           METH_VARARGS },
