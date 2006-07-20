@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 1.00b07
 
+    * fixed normal refinement glitch
+ 
+    * fixed cartoon assignment for objects without a state 0
+ 
     * bug fixes for surface representation
 
 Changes up to 1.00b06
