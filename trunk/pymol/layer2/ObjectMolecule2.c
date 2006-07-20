@@ -2657,6 +2657,7 @@ int ObjectMoleculeGetCheckHBond(ObjectMolecule *don_obj,
     
     if((idxA>=0)&&(idxD>=0)) {
       
+
       /* now get local geometries, including 
          real or virtual hydrogen atom positions */
       
@@ -2672,6 +2673,7 @@ int ObjectMoleculeGetCheckHBond(ObjectMolecule *don_obj,
                                       donToAcc,
                                       bestH))
         {
+
           subtract3f(bestH,vDon,donToH);
           subtract3f(vAcc,bestH,hToAcc);
           

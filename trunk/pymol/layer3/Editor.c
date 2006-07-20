@@ -763,13 +763,13 @@ int EditorSelect(PyMOLGlobals *G,char *s0,char *s1,char *s2,
 
   if(ok) {
     if(obj0)
-      ObjectMoleculeVerifyChemistry(obj0);  
+      ObjectMoleculeVerifyChemistry(obj0,-1);  
     if(obj1&&(obj1!=obj0))
-      ObjectMoleculeVerifyChemistry(obj1);  
+      ObjectMoleculeVerifyChemistry(obj1,-1);  
     if(obj2&&(obj2!=obj0)&&(obj2!=obj1))
-      ObjectMoleculeVerifyChemistry(obj2);  
+      ObjectMoleculeVerifyChemistry(obj2,-1);  
     if(obj3&&(obj3!=obj0)&&(obj3!=obj1)&&(obj3!=obj2))
-      ObjectMoleculeVerifyChemistry(obj3);  
+      ObjectMoleculeVerifyChemistry(obj3,-1);  
 
     if(i0>=0) SelectorCreate(G,cEditorSele1,s0,NULL,quiet,NULL);
     if(i1>=0) SelectorCreate(G,cEditorSele2,s1,NULL,quiet,NULL);
@@ -839,7 +839,7 @@ void EditorCycleValence(PyMOLGlobals *G,int quiet)
         obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);
         obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);
         if((obj0==obj1)&&I->BondMode) {
-          ObjectMoleculeVerifyChemistry(obj0);
+          ObjectMoleculeVerifyChemistry(obj0,-1);
           ObjectMoleculeAdjustBonds(obj0,sele0,sele1,0,0);
         }
       }
@@ -870,7 +870,7 @@ void EditorAttach(PyMOLGlobals *G,char *elem,int geom,int valence,
         if(obj0->DiscreteFlag) {
           ErrMessage(G,"Remove","Can't attach atoms onto discrete objects.");
         } else {
-          ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
+          ObjectMoleculeVerifyChemistry(obj0,-1); /* remember chemistry for later */
           state = SceneGetState(G);
           if(obj1) {
             if(obj0==obj1) {
@@ -910,7 +910,7 @@ void EditorRemove(PyMOLGlobals *G,int hydrogen,int quiet)
   if(EditorActive(G)) {
     sele0 = SelectorIndexByName(G,cEditorSele1);
     obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);
-    ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
+    ObjectMoleculeVerifyChemistry(obj0,-1); /* remember chemistry for later */
     if((sele0>=0)&&obj0) {
       sele1 = SelectorIndexByName(G,cEditorSele2);
       obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);
@@ -954,7 +954,7 @@ void EditorHFill(PyMOLGlobals *G,int quiet)
   if(EditorActive(G)) {
     sele0 = SelectorIndexByName(G,cEditorSele1);
     obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);    
-    ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
+    ObjectMoleculeVerifyChemistry(obj0,-1); /* remember chemistry for later */
     if(sele0>=0) {
       sele1 = SelectorIndexByName(G,cEditorSele2);
       if(sele0>=0) {
@@ -1002,13 +1002,13 @@ void EditorHFix(PyMOLGlobals *G,char *sele,int quiet)
       sele0 = SelectorIndexByName(G,cEditorSele1);
       if(sele0>=0) {
         obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);    
-        ObjectMoleculeVerifyChemistry(obj0); 
+        ObjectMoleculeVerifyChemistry(obj0,-1); 
         ExecutiveFixHydrogens(G,cEditorSele1,quiet);
       }
       sele1 = SelectorIndexByName(G,cEditorSele2);
       if(sele1>=0) {
         obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);    
-        ObjectMoleculeVerifyChemistry(obj1); 
+        ObjectMoleculeVerifyChemistry(obj1,-1); 
         ExecutiveFixHydrogens(G,cEditorSele2,quiet);
       }
     }
@@ -1033,7 +1033,7 @@ void EditorReplace(PyMOLGlobals *G,char *elem,int geom,int valence,char *name,in
     if(obj0->DiscreteFlag) {
       ErrMessage(G,"Remove","Can't attach atoms onto discrete objects.");
     } else {
-      ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
+      ObjectMoleculeVerifyChemistry(obj0,-1); /* remember chemistry for later */
       
       state = SceneGetState(G);
       
@@ -1048,7 +1048,7 @@ void EditorReplace(PyMOLGlobals *G,char *elem,int geom,int valence,char *name,in
           ObjectMoleculePrepareAtom(obj0,i0,&ai);
           ObjectMoleculePreposReplAtom(obj0,i0,&ai);
           ObjectMoleculeReplaceAtom(obj0,i0,&ai); /* invalidates */
-          ObjectMoleculeVerifyChemistry(obj0);
+          ObjectMoleculeVerifyChemistry(obj0,-1);
           ObjectMoleculeFillOpenValences(obj0,i0);
           ObjectMoleculeSort(obj0);
           ObjectMoleculeUpdateIDNumbers(obj0);
