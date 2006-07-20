@@ -1028,7 +1028,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   
   MapType *clear_map = NULL;
 
-  AtomInfoType *ai2,*ai1;
+  AtomInfoType *ai2=NULL,*ai1;
 
   obj=cs->Obj;
   surface_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
@@ -1148,6 +1148,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
     if(map) {
       MapSetupExpress(map);
       for(a=0;a<I->N;a++) {
+        AtomInfoType *ai0 = NULL;
         c1=1;
         minDist=MAXFLOAT;
         i0=-1;
@@ -1166,6 +1167,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
               dist = (float)diff3f(v0,cs->Coord+j*3)-ai2->vdw;
               if(dist<minDist) {
                 i0=j;
+                ai0=ai2;
                 minDist=dist;
               }
             }
@@ -1173,7 +1175,16 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
           }
         }
         if(i0>=0) {
-          c1=*(cs->Color+i0);
+          int at_surface_color;
+
+          AtomInfoGetSetting_color(G, ai0, cSetting_surface_color, 
+                                   surface_color, &at_surface_color);
+          
+          if(at_surface_color!=-1) {
+            c1 = at_surface_color;
+          } else {
+            c1=*(cs->Color+i0);
+          }
           if(I->oneColorFlag) {
             if(first_color>=0) {
               if(first_color!=c1)
@@ -1241,9 +1252,12 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
             }
           }
         }
-        if(ColorCheckRamped(G,surface_color)) {
+        /*
+          if(ColorCheckRamped(G,surface_color)) {
           c1 = surface_color;
-        }
+          }
+        */
+
         if(ColorCheckRamped(G,c1)) {
           I->oneColorFlag=false;
           switch(ramp_above) {
@@ -1280,10 +1294,13 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
       I->oneColor=first_color;
     }
   }
+  /*
   if(surface_color>=0) {
     I->oneColorFlag=true;
     I->oneColor=surface_color;
   }
+  */
+
   if(G->HaveGUI) {
     if(I->R.displayList) {
       if(PIsGlutThread()) {

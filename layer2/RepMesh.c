@@ -329,46 +329,59 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 	 if(map)
 		{
 		  MapSetupExpress(map);
-		  for(a=0;a<I->NTot;a++)
-			 {
-				c1=1;
-				minDist=MAXFLOAT;
-				i0=-1;
-				v0 = I->V+3*a;
-				MapLocus(map,v0,&h,&k,&l);
-				
-				i=*(MapEStart(map,h,k,l));
-				if(i) {
-				  j=map->EList[i++];
-				  while(j>=0) {
-					 ai2=obj->AtomInfo+cs->IdxToAtm[j];
-					 if((inclH||(!ai2->hydrogen))&&
-						 ((!cullByFlag)||
+		  for(a=0;a<I->NTot;a++) {
+            AtomInfoType *ai0 = NULL;
+            c1=1;
+            minDist=MAXFLOAT;
+            i0=-1;
+            v0 = I->V+3*a;
+            MapLocus(map,v0,&h,&k,&l);
+            
+            i=*(MapEStart(map,h,k,l));
+            if(i) {
+              j=map->EList[i++];
+              while(j>=0) {
+                ai2=obj->AtomInfo+cs->IdxToAtm[j];
+                if((inclH||(!ai2->hydrogen))&&
+                   ((!cullByFlag)||
                     (!(ai2->flags&cAtomFlag_ignore))))  
-						{
-						  dist = (float)diff3f(v0,cs->Coord+j*3) - ai2->vdw;
-						  if(dist<minDist)
-							 {
-								i0=j;
-								minDist=dist;
-							 }
-						}
-					 j=map->EList[i++];
-				  }
-				}
-				if(i0>=0) {
-				  c1=*(cs->Color+i0);
-				  if(I->oneColorFlag) {
-					 if(first_color>=0) {
-						if(first_color!=c1)
-						  I->oneColorFlag=false;
-					 } else first_color=c1;
-				  }
-				}
+                  {
+                    dist = (float)diff3f(v0,cs->Coord+j*3) - ai2->vdw;
+                    if(dist<minDist)
+                      {
+                        i0=j;
+                        ai0=ai2;
+                        minDist=dist;
+                      }
+                  }
+                j=map->EList[i++];
+              }
+            }
+            
+            if(i0>=0) {
+              int at_mesh_color;
 
+              AtomInfoGetSetting_color(G, ai0, cSetting_mesh_color, 
+                                   mesh_color, &at_mesh_color);
+              
+              if(at_mesh_color!=-1) {
+                c1 = at_mesh_color;
+              } else {
+                c1 = *(cs->Color+i0);
+              }
+              if(I->oneColorFlag) {
+                if(first_color>=0) {
+                  if(first_color!=c1)
+                    I->oneColorFlag=false;
+                } else first_color=c1;
+              }
+            }
+            /*
             if(ColorCheckRamped(G,mesh_color)) {
               c1 = mesh_color;
-            }
+              }
+            */
+
             if(ColorCheckRamped(G,c1)) {
               I->oneColorFlag=false;
               ColorGetRamped(G,c1,v0,vc,state);
@@ -386,10 +399,12 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
       I->oneColor=first_color;
     }
   } 
-  if(mesh_color>=0) {
+  /*
+    if(mesh_color>=0) {
     I->oneColorFlag=1;
     I->oneColor=mesh_color;
   }
+  */
   
 }
 

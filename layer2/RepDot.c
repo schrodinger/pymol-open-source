@@ -250,11 +250,11 @@ Rep *RepDotDoNew(CoordSet *cs,int mode,int state)
 	 I->T=Alloc(int,cs->NIndex*sp->nDot);
 	 I->F=Alloc(int,cs->NIndex*sp->nDot);
 	 I->VN=Alloc(float,cs->NIndex*sp->nDot*3);
-    I->Atom=Alloc(int,cs->NIndex*sp->nDot);
+     I->Atom=Alloc(int,cs->NIndex*sp->nDot);
 	 aa=I->A;
 	 tp=I->T;
 	 tf=I->F;
-    ati=I->Atom;
+     ati=I->Atom;
 	 inclH=true;
 	 cullByFlag=true;
   }
@@ -265,121 +265,121 @@ Rep *RepDotDoNew(CoordSet *cs,int mode,int state)
   colorCnt=0;
   map=MapNew(G,max_vdw,cs->Coord,cs->NIndex,NULL);
   v=I->V;
-  if(map)
-	 {
-		MapSetupExpress(map);
-		for(a=0;a<cs->NIndex;a++)
-		  {
-          atm = cs->IdxToAtm[a];
-          ai1 = obj->AtomInfo+atm;
-			 if(ai1->visRep[cRepDot]||mode==cRepDotAreaType) 
-				if((inclH||(!ai1->hydrogen))&&
-               ((!cullByFlag)||
-                (!(ai1->flags&cAtomFlag_exfoliate)))) {
-              /* If we are culling, flag 24 controls which atoms 
-                 will have dot surfaces generated for them.
-              */
-              if(dot_color==-1) {
-                if(cs->Color)
-                  c1=*(cs->Color+a);
-                else
-                  c1 = 0;
-              } else {
-                c1 = dot_color;
+  if(map) {
+    MapSetupExpress(map);
+    for(a=0;a<cs->NIndex;a++) {
+      atm = cs->IdxToAtm[a];
+      ai1 = obj->AtomInfo+atm;
+      if(ai1->visRep[cRepDot]||mode==cRepDotAreaType) 
+        if((inclH||(!ai1->hydrogen))&&
+           ((!cullByFlag)||
+            (!(ai1->flags&cAtomFlag_exfoliate)))) {
+          int at_dot_color;
+          
+          AtomInfoGetSetting_color(G, ai1, cSetting_dot_color, 
+                                   dot_color, &at_dot_color);
+          
+
+          /* If we are culling, flag 24 controls which atoms 
+             will have dot surfaces generated for them.
+          */
+          if(at_dot_color==-1) {
+            if(cs->Color)
+              c1=*(cs->Color+a);
+            else
+              c1 = 0;
+          } else {
+            c1 = at_dot_color;
+          }
+          v0 = cs->Coord+3*a;
+          vdw = ai1->vdw+solv_rad;
+          for(b=0;b<sp->nDot;b++) {
+            v1[0]=v0[0]+vdw*sp->dot[b][0];
+            v1[1]=v0[1]+vdw*sp->dot[b][1];
+            v1[2]=v0[2]+vdw*sp->dot[b][2];
+            
+            MapLocus(map,v1,&h,&k,&l);
+            
+            flag=true;
+            
+            i=*(MapEStart(map,h,k,l));
+            if(i) {
+              j=map->EList[i++];
+              while(j>=0) {
+                ai2 = obj->AtomInfo+cs->IdxToAtm[j];
+                if((inclH||(!(ai2->hydrogen)))&&
+                   ((!cullByFlag)||
+                    (!(ai2->flags&cAtomFlag_ignore))))  
+                  /* If we are cullilng, flag 25 controls which atoms 
+                     are considered "present" in the surface area 
+                     calculation (i.e. able to occlude surface) */
+                  if(j!=a)
+                    if(within3f(cs->Coord+3*j,v1,ai2->vdw+solv_rad)) {
+                      flag=false;
+                      break;
+                    }
+                j=map->EList[i++];
               }
-				  v0 = cs->Coord+3*a;
-				  vdw = ai1->vdw+solv_rad;
-				  for(b=0;b<sp->nDot;b++)
-					 {
-						v1[0]=v0[0]+vdw*sp->dot[b][0];
-						v1[1]=v0[1]+vdw*sp->dot[b][1];
-						v1[2]=v0[2]+vdw*sp->dot[b][2];
-						
-						MapLocus(map,v1,&h,&k,&l);
-
-						flag=true;
-
-						i=*(MapEStart(map,h,k,l));
-						if(i) {
-						  j=map->EList[i++];
-						  while(j>=0) {
-                      ai2 = obj->AtomInfo+cs->IdxToAtm[j];
-							 if((inclH||(!(ai2->hydrogen)))&&
-								 ((!cullByFlag)||
-                          (!(ai2->flags&cAtomFlag_ignore))))  
-                        /* If we are cullilng, flag 25 controls which atoms 
-                           are considered "present" in the surface area 
-                           calculation (i.e. able to occlude surface) */
-								if(j!=a)
-								  if(within3f(cs->Coord+3*j,v1,ai2->vdw+solv_rad))
-									 {
-										flag=false;
-										break;
-									 }
-							 j=map->EList[i++];
-						  }
-						}
-						if(flag)
-						  {
-							 switch(mode) {
-							 case cRepDotNormal:
-                        
-								if((lastColor!=c1)||ColorCheckRamped(G,c1)) /* new color */
-								  {
-									 if(countPtr) /* after first pass */
-										*countPtr=(float)colorCnt; /* save count */
-									 colorCnt=1;
-									 countPtr=v++;
-									 vc = ColorGet(G,c1); /* save new color */
-									 lastColor=c1;
-                            if(ColorCheckRamped(G,c1)) {
-                              ColorGetRamped(G,c1,v1,v,state);
-                              v+=3;
-                            } else {
-                              *(v++)=*(vc++);
-                              *(v++)=*(vc++);
-                              *(v++)=*(vc++);
-                            }
-								  }
-								else 
-								  colorCnt++;
-								*(v++)=sp->dot[b][0];
-								*(v++)=sp->dot[b][1];
-								*(v++)=sp->dot[b][2];
-								*(v++)=v1[0];
-								*(v++)=v1[1];
-								*(v++)=v1[2];
-								I->N++;
-								break;
-							 case cRepDotAreaType:
-								*(v++)=v1[0];
-								*(v++)=v1[1];
-								*(v++)=v1[2];
-								*(aa++)=vdw*vdw*sp->area[b]; /* area */
-								*(tp++)=ai1->customType; /* numeric type */
-								*(tf++)=ai1->flags; /* flags */
-								*(vn++)=sp->dot[b][0];
-								*(vn++)=sp->dot[b][1];
-								*(vn++)=sp->dot[b][2];
-                        *(ati++)=atm;
-								I->N++;
-								break;
-							 }
-						  }
-					 }
-				}
-		  }
-		if(countPtr) *countPtr=(float)colorCnt; /* save count */
-		MapFree(map);
-	 }
+            }
+            if(flag) {
+              switch(mode) {
+              case cRepDotNormal:
+                
+                if((lastColor!=c1)||ColorCheckRamped(G,c1)) { /* new color */
+                  if(countPtr) /* after first pass */
+                    *countPtr=(float)colorCnt; /* save count */
+                  colorCnt=1;
+                  countPtr=v++;
+                  vc = ColorGet(G,c1); /* save new color */
+                  lastColor=c1;
+                  if(ColorCheckRamped(G,c1)) {
+                    ColorGetRamped(G,c1,v1,v,state);
+                    v+=3;
+                  } else {
+                    *(v++)=*(vc++);
+                    *(v++)=*(vc++);
+                    *(v++)=*(vc++);
+                  }
+                }
+                else 
+                  colorCnt++;
+                *(v++)=sp->dot[b][0];
+                *(v++)=sp->dot[b][1];
+                *(v++)=sp->dot[b][2];
+                *(v++)=v1[0];
+                *(v++)=v1[1];
+                *(v++)=v1[2];
+                I->N++;
+                break;
+              case cRepDotAreaType:
+                *(v++)=v1[0];
+                *(v++)=v1[1];
+                *(v++)=v1[2];
+                *(aa++)=vdw*vdw*sp->area[b]; /* area */
+                *(tp++)=ai1->customType; /* numeric type */
+                *(tf++)=ai1->flags; /* flags */
+                *(vn++)=sp->dot[b][0];
+                *(vn++)=sp->dot[b][1];
+                *(vn++)=sp->dot[b][2];
+                *(ati++)=atm;
+                I->N++;
+                break;
+              }
+            }
+          }
+        }
+    }
+    if(countPtr) *countPtr=(float)colorCnt; /* save count */
+    MapFree(map);
+  }
   
   I->V = ReallocForSure(I->V,float,(v-I->V));
   
   if(mode==cRepDotAreaType) {
-	 I->A = ReallocForSure(I->A,float,(aa-I->A));
-	 I->T= ReallocForSure(I->T,int,(tp-I->T));
-	 I->F= ReallocForSure(I->F,int,(tf-I->F));
-	 I->VN= ReallocForSure(I->VN,float,(vn-I->VN));
+    I->A = ReallocForSure(I->A,float,(aa-I->A));
+    I->T= ReallocForSure(I->T,int,(tp-I->T));
+    I->F= ReallocForSure(I->F,int,(tf-I->F));
+    I->VN= ReallocForSure(I->VN,float,(vn-I->VN));
     I->Atom= ReallocForSure(I->Atom,int,(ati-I->Atom));
   }
   return((void*)(struct Rep*)I);

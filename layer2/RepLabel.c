@@ -61,8 +61,10 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
   float *v=I->V;
   int c=I->N;
   int *l=I->L;
-  int font_id = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_font_id);
-  float font_size = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_size);
+  int font_id = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,
+                             cSetting_label_font_id);
+  float font_size = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,
+                                 cSetting_label_size);
 
   if(ray) {
     if(c) {
@@ -206,9 +208,14 @@ Rep *RepLabelNew(CoordSet *cs,int state)
       lp = cs->LabPos + a;
     }
     if(ai->visRep[cRepLabel]&&(ai->label)) {
+      int at_label_color;
+
+      AtomInfoGetSetting_color(G, ai, cSetting_label_color, 
+                               label_color, &at_label_color);
+      
       I->N++;
-      if(label_color>=0) 
-        c1 = label_color;
+      if(at_label_color>=0) 
+        c1 = at_label_color;
       else
         c1=*(cs->Color+a);
       vc = ColorGet(G,c1); /* save new color */
