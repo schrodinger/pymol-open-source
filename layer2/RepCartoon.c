@@ -1956,29 +1956,23 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
     *(v1++)=*(v++);
     s++;
 		
-    for(a=1;a<(nAt-1);a++)
-      {
-        if((*s==*(s-1))&&(*s==*(s+1)))
-          {
-            add3f(v,(v-3),v1);
-            normalize3f(v1);			 
-          }
-        else if(*s==*(s-1))
-          {
-            *(v1)=*(v-3);  /* end a segment */
-            *(v1+1)=*(v-2); 
-            *(v1+2)=*(v-1); 
-          }
-        else if(*s==*(s+1))
-          {
-            *(v1)=*(v);   /* new segment */
-            *(v1+1)=*(v+1); 
-            *(v1+2)=*(v+2); 
-          }
-        v+=3;
-        v1+=3;
-        s++;
+    for(a=1;a<(nAt-1);a++) {
+      if((*s==*(s-1))&&(*s==*(s+1))) {
+        add3f(v,(v-3),v1); /* tangent vectors are head-to-tail sums within a segment */
+        normalize3f(v1);			 
+      } else if(*s==*(s-1)) {
+        *(v1)=*(v-3);  /* end a segment */
+        *(v1+1)=*(v-2); 
+        *(v1+2)=*(v-1); 
+      } else if(*s==*(s+1)) {
+        *(v1)=*(v);   /* new segment */
+        *(v1+1)=*(v+1); 
+        *(v1+2)=*(v+2); 
       }
+      v+=3;
+      v1+=3;
+      s++;
+    }
     *(v1++)=*(v-3); /* last segment */
     *(v1++)=*(v-2);
     *(v1++)=*(v-1);
@@ -2102,8 +2096,17 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
     
     {
       int refine_normals = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_normals);
-      if(refine_normals<0) /* default setting is not to refine normals for multistate objects */
-        refine_normals = !(obj->NCSet>1);
+      if(refine_normals<0) { 
+        if(obj->NCSet>1) {
+          int i,n_set =0;
+          for(i=0;i<obj->NCSet;i++)
+            if(obj->CSet[i]) {
+              n_set++;
+              if(n_set>1)
+                refine_normals = 0; /* default behavior is to not refine normals for multi-state objects */
+            }
+        }
+      }
       
       if(refine_normals) {
         
@@ -2126,9 +2129,8 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
           s++;
         }
         
-        /* now generate alternative orientation vectors */
+        /* now generate alternative inverted orientation vectors */
         
-        v1 = tv;
         va = pva;
         vo = pvo;
         ss = sstype;
@@ -2140,35 +2142,37 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
           
           /* inverse */
           copy3f(vo,va);
-          if(*ss!=1)
-            invert3f(va);
+          if(*ss!=1) invert3f(va); /* for helix, don't allow inversion of normals, 
+                                      since that would confuse the inside & outside of the helix  */
           va+=3;
           
           /* go on to next vertex */
           
-          v1+=3;
           vo+=3;
           ss++;
         }
+
+        /* now iterate forward through pairs*/
         
-        /* now iterate through pairs*/
-        
-        vo = pvo;
-        va = pva;
-        v  = nv; /* normals in direction of chain */
-        s = seg;
-        
-        for(a=0;a<(nAt-1);a++) {
+        vo = pvo+3;
+        va = pva+6;
+        v  = nv+3; /* normals in direction of chain */
+        s = seg+1;
+
+        for(a=1;a<(nAt-1);a++) {
           
-          if(*s==*(s+1)) { /* only operate within a segment */         
-            v1 = va+6; /* orientation vectors for next CA */
-            remove_component3f(vo  ,v,o0); 
-            normalize3f(o0); 
-            remove_component3f(v1  ,v,o1  ); 
-            remove_component3f(v1+3,v,o1+3);
+          if((*s==*(s+1))&&(*s==*(s-1))) { /* only operate within a segment */         
+            remove_component3f(vo-3,v-3,o0); /* previous orientation vector */
+            normalize3f(o0); /* is now perp to chain direction */
+
+            v1 = va; /* candidate orientation vectors for current CA */
+
+            remove_component3f(v1  ,v-3,o1  ); /* removes chain direction from the two candidates */
+            remove_component3f(v1+3,v-3,o1+3);
             normalize3f(o1);
             normalize3f(o1+3);
-            max_dot = dot_product3f(o0,o1);
+
+            max_dot = dot_product3f(o0,o1); 
             v0 = v1;
             
             dp = dot_product3f(o0,o1+3);
@@ -2176,8 +2180,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
               v0 = v1+3;
               max_dot = dp;
             }
-
-            copy3f(v0,vo+3); /* update with optimal orientation vector */
+            copy3f(v0,vo); /* updates atom with optimal orientation vector */
           }
           vo+=3;
           va+=6; /* candidate orientation vectors */
@@ -2194,7 +2197,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
           if((*s==*(s-1))&&(*s==*(s+1))) {
             dp = (dot_product3f(vo,vo+3)*
                   dot_product3f(vo,vo-3));
-            if(dp<-0.10F) { 
+            if(dp<-0.10F) { /* threshold value -- could be a setting */
               add3f(vo+3,vo-3,t0);
               scale3f(vo,0.001,t1);
               add3f(t1,t0,t0);
@@ -2221,6 +2224,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
           va+=6;
           s++;
         }
+
         /* now update */
         va = pva+6;
         vo = pvo+3;
@@ -2233,7 +2237,6 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
           va+=6;
           s++;
         }
-
       }
     }
 

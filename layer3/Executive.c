@@ -5110,8 +5110,8 @@ void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor,int mo
       if(obj1)
         i1 = ObjectMoleculeGetAtomIndex(obj1,sele1);
       if(obj0&&obj1&&(i0>=0)&&(i1>=0)&&(obj0!=obj1)) {
-        ObjectMoleculeVerifyChemistry(obj0);
-        ObjectMoleculeVerifyChemistry(obj1);
+        ObjectMoleculeVerifyChemistry(obj0,-1);
+        ObjectMoleculeVerifyChemistry(obj1,-1);
         
         SelectorCreate(G,tmp_fuse_sele,NULL,obj0,1,NULL);
         sele2=SelectorIndexByName(G,tmp_fuse_sele);
@@ -5387,9 +5387,9 @@ void ExecutiveRemoveAtoms(PyMOLGlobals *G,char *s1,int quiet)
                   ObjectMoleculeOpRecInit(&op);
                   op.code = OMOP_Remove;
                   op.i1 = 0;
-						obj=(ObjectMolecule*)rec->obj;
-                  ObjectMoleculeVerifyChemistry(obj); /* remember chemistry for later */
-						ObjectMoleculeSeleOp(obj,sele,&op);
+                  obj=(ObjectMolecule*)rec->obj;
+                  ObjectMoleculeVerifyChemistry(obj,-1); /* remember chemistry for later */
+                  ObjectMoleculeSeleOp(obj,sele,&op);
                   if(op.i1) {
                     if(!quiet) {
                     PRINTFD(G,FB_Editor)

@@ -342,7 +342,7 @@ void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average);
 int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
-int ObjectMoleculeVerifyChemistry(ObjectMolecule *I);
+int ObjectMoleculeVerifyChemistry(ObjectMolecule *I,int state);
 int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
                                         int index,float *v,float *seek,
                                         int ignore_index);

@@ -1314,7 +1314,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
     CoordSet *cs;
     ObjectMolecule *last_obj = NULL;
     /* first, we need to count the number of residues under consideration */
-    
+  
     if(first_pass) {
       for(a=cNDummyAtoms;a<I->NAtom;a++) {
         
@@ -1322,7 +1322,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
         at = + I->Table[a].atom;
         ai = obj->AtomInfo + at;
         
-        /* see if CA coordinates exists in this state...*/
+        /* see if CA coordinates exist...*/
         
         if(SelectorIsMember(G,ai->selEntry,present)) {
           
@@ -1331,7 +1331,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
             
             if(last_obj!=obj) {
               ObjectMoleculeUpdateNeighbors(obj);
-              ObjectMoleculeVerifyChemistry(obj);
+              ObjectMoleculeVerifyChemistry(obj,state_value);
               last_obj=obj;
             }
             /* delimit residue */
@@ -1647,7 +1647,6 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
         }
       }
 
-    
       if(n1) {
         map=MapNewFlagged(G,-cutoff,I->Vertex,I->NAtom,NULL,I->Flag1);
         if(map) {
@@ -1758,7 +1757,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
 
           if(ObjectMoleculeGetPhiPsi(r->obj,I->Table[r->ca].atom,&r->phi,&r->psi,state)) {
             r->flags |= cSSGotPhiPsi;
-          
+
             helix_psi_delta = (float)fabs(r->psi - helix_psi_target); 
             strand_psi_delta  = (float)fabs(r->psi - strand_psi_target); 
             helix_phi_delta = (float)fabs(r->phi - helix_phi_target); 
@@ -1786,6 +1785,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
                       (strand_phi_delta<strand_phi_include)) {
               r->flags |= cSSPhiPsiStrand;
             }
+
           }
         }
       }
@@ -7335,7 +7335,7 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
           s=obj->AtomInfo[at].selEntry;
           if(obj!=lastObj) {
             ObjectMoleculeUpdateNeighbors(obj);
-            ObjectMoleculeVerifyChemistry(obj);
+            ObjectMoleculeVerifyChemistry(obj,-1);
             lastObj = obj;
           }
         }
@@ -7478,7 +7478,7 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
               
               if(last_obj!=obj) {
                 ObjectMoleculeUpdateNeighbors(obj);
-                ObjectMoleculeVerifyChemistry(obj);
+                ObjectMoleculeVerifyChemistry(obj,-1);
                 last_obj=obj;
               }
               
@@ -9963,7 +9963,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
            SelectorIsMember(G,s,sele2)) {
           ObjectMoleculeUpdateNeighbors(obj);
           if(mode==2)
-            ObjectMoleculeVerifyChemistry(obj);
+            ObjectMoleculeVerifyChemistry(obj,-1);
           lastObj = obj;
         }
       }

@@ -78,7 +78,7 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
 int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at);
 void ObjectMoleculeBracketResidue(ObjectMolecule *I,AtomInfoType *ai,int *st,int *nd);
 
-void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
+void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele,int state);
 
 
 CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state);
@@ -239,7 +239,7 @@ void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
   }
 }
 /*========================================================================*/
-static void ObjectMoleculeFixSeleHydrogens(ObjectMolecule *I,int sele)
+static void ObjectMoleculeFixSeleHydrogens(ObjectMolecule *I,int sele,int state)
 {
   int a,b;
   int n;
@@ -259,7 +259,7 @@ static void ObjectMoleculeFixSeleHydrogens(ObjectMolecule *I,int sele)
   }
   if(seleFlag) {
     seleFlag=false;
-    if(!ObjectMoleculeVerifyChemistry(I)) {
+    if(!ObjectMoleculeVerifyChemistry(I,state)) {
       ErrMessage(I->Obj.G," AddHydrogens","missing chemical geometry information.");
     } else {
       ObjectMoleculeUpdateNeighbors(I);
@@ -3163,7 +3163,7 @@ void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force)
   AtomInfoUniquefyNames(I->Obj.G,NULL,0,I->AtomInfo,I->NAtom);  
 }
 /*========================================================================*/
-void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
+void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele,int state)
 {
   int a,b;
   int n,nn;
@@ -3188,7 +3188,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
     ai++;
   }
   if(seleFlag) {
-    if(!ObjectMoleculeVerifyChemistry(I)) {
+    if(!ObjectMoleculeVerifyChemistry(I,state)) {
       ErrMessage(I->Obj.G," AddHydrogens","missing chemical geometry information.");
     } else if(I->DiscreteFlag) {
       ErrMessage(I->Obj.G," AddHydrogens","can't modify a discrete object.");
@@ -3513,12 +3513,22 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,
   FreeP(backup);
 }
 /*========================================================================*/
-int ObjectMoleculeVerifyChemistry(ObjectMolecule *I)
+int ObjectMoleculeVerifyChemistry(ObjectMolecule *I,int state)
 {
   int result=false;
   AtomInfoType *ai;
   int a;
   int flag;
+  
+  if(state<0) {
+    /* use the first defined state */
+    for(a=0;a<I->NCSet;a++) {
+      if(I->CSet[a]) {
+        state = a;
+        break;
+      }
+    }
+  }
   ai=I->AtomInfo;
   flag=true;
   for(a=0;a<I->NAtom;a++) {
@@ -3527,10 +3537,10 @@ int ObjectMoleculeVerifyChemistry(ObjectMolecule *I)
     }
     ai++;
   }
-  if(!flag) {
-    if(I->CSet[0]) { /* right now this stuff is locked to state 0 */
-      ObjectMoleculeInferChemFromBonds(I,0);
-      ObjectMoleculeInferChemFromNeighGeom(I,0);
+  if((!flag)&&(state>=0)&&(state<I->NCSet)) {
+    if(I->CSet[state]) { 
+      ObjectMoleculeInferChemFromBonds(I,state);
+      ObjectMoleculeInferChemFromNeighGeom(I,state);
       ObjectMoleculeInferHBondFromChem(I);
       /*      ObjectMoleculeInferChemForProtein(I,0);*/
     }
@@ -7605,10 +7615,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
    /* */
 	switch(op->code) {
 	case OMOP_AddHydrogens:
-      ObjectMoleculeAddSeleHydrogens(I,sele);
+      ObjectMoleculeAddSeleHydrogens(I,sele,-1); /* state? */
       break;
 	case OMOP_FixHydrogens:
-      ObjectMoleculeFixSeleHydrogens(I,sele);
+      ObjectMoleculeFixSeleHydrogens(I,sele,-1); /* state? */
       break;
 	case OMOP_PrepareFromTemplate:
       ai0=op->ai; /* template atom */

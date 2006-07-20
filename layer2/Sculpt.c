@@ -459,7 +459,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
           ai++;
         }
         
-        ObjectMoleculeVerifyChemistry(obj);
+        ObjectMoleculeVerifyChemistry(obj,state);
         ObjectMoleculeUpdateNeighbors(obj);
 
         cs = obj->CSet[state];
