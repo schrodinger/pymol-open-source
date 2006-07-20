@@ -78,7 +78,6 @@ int AtomInfoGetSetting_f(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, floa
       *effective = current;
       return 0;
     } else {
-      printf("%8.3f\n",*effective);
       return 1;
     }
   }

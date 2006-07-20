@@ -85,11 +85,8 @@ static int SettingAtomicGetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id
 
     while(offset) {
       entry = I->entry + offset;
-      printf("searching %d %d %d\n",offset, entry->setting_id, setting_id);
-
       if(entry->setting_id == setting_id) {
         if(entry->type == setting_type) {
-          printf("found\n");
           *(int*)value = entry->value;
         } else switch(setting_type) {
         case cSetting_int:
@@ -105,8 +102,8 @@ static int SettingAtomicGetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id
           }
           break;
         case cSetting_float:
-           *(float*)value = *(int*)entry->value;
-           break;
+          *(float*)value = (float)(*(int*)&entry->value);
+          break;
         }
         return 1;
       }
@@ -132,7 +129,6 @@ int SettingAtomicGet_color(PyMOLGlobals *G,int atom_id,int setting_id,int *value
 {
   return SettingAtomicGetTypedValue(G,atom_id,setting_id,cSetting_color,value);
 }
-
 
 void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int setting_type, void *value)
      /* set value to NULL in order to delete setting */
@@ -649,6 +645,43 @@ int SettingSetFromTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple)
 }
 #endif
 /*========================================================================*/
+int SettingStringToTypedValue(PyMOLGlobals *G,int index,char *st, int *type, int *value)
+{
+  int ok=true;
+
+  /* this data structure has been pre-checked at the python level... */
+
+  *type  = SettingGetType(G,index); 
+
+  switch(*type) {
+  case cSetting_boolean:
+    if((!*st) || (*st=='0') || (*st=='F') || WordMatchExact(G,st,"on",true) || WordMatchExact(G,st,"false",true))
+      *value = 0;
+    else
+      *value = 1;
+    break;
+  case cSetting_int: 
+    if(sscanf(st,"%d",value)!=1)
+      ok=false;
+    break;
+  case cSetting_float:
+    if(sscanf(st,"%f",(float*)value)!=1)
+      ok=false;
+    break;
+  case cSetting_color:
+    {
+      int color_index=ColorGetIndex(G,st);
+      if((color_index<0)&&(color_index>cColorExtCutoff))
+        color_index = 0;
+      *(value) = color_index;
+    }
+    break;
+  default:
+    ok=false;
+    break;
+  }
+  return(ok);
+}
 
 int SettingSetFromString(PyMOLGlobals *G,CSetting *I,int index,char *st)
 {
@@ -662,7 +695,7 @@ int SettingSetFromString(PyMOLGlobals *G,CSetting *I,int index,char *st)
 
   switch(type) {
   case cSetting_boolean:
-    if((!*st) || (*st=='0'))
+    if((!*st) || (*st=='0') || (*st=='F') || WordMatchExact(G,st,"on",true) || WordMatchExact(G,st,"false",true))
       SettingSet_b(I,index,0);
     else
       SettingSet_b(I,index,1);      

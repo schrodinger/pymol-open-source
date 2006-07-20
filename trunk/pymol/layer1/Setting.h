@@ -140,6 +140,7 @@ float *SettingGet_3fv(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
 int   SettingGet_color(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
 
 int SettingSetFromString(PyMOLGlobals *G,CSetting *I,int index,char *st);
+int SettingStringToTypedValue(PyMOLGlobals *G,int index,char *st, int *type, int *value);
 
 #ifndef _PYMOL_NOPY
 int SettingSetFromTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple);
