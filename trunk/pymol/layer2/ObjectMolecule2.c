@@ -1286,7 +1286,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
 
   if(bondFlag) {
     nBond=0;
-    bond=VLAlloc(BondType,6*nAtom);  
+    bond=VLACalloc(BondType,6*nAtom);  
   }
   p=buffer;
   PRINTFB(G,FB_ObjectMolecule,FB_Blather)
@@ -1584,7 +1584,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                 bond[nBond].index[1]=b2;
                 bond[nBond].order=1;
                 bond[nBond].stereo=0;
-                
               } else {
                 bond[nBond].index[0]=b2;
                 bond[nBond].index[1]=b1;
@@ -3083,7 +3082,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   /*  FeedbackMask[FB_ObjectMolecule]=0xFF;*/
   nBond = 0;
   maxBond = cs->NIndex * 8;
-  (*bond) = VLAlloc(BondType,maxBond);
+  (*bond) = VLACalloc(BondType,maxBond);
   while(repeat) {
     repeat = false;
 

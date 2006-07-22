@@ -1623,8 +1623,10 @@ SEE ALSO
         import setting
         from setting import \
               set,                 \
+              set_bond,            \
               get,                 \
               unset,               \
+              unset_bond,          \
               get_setting_boolean, \
               get_setting_int,     \
               get_setting_float,   \

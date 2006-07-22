@@ -1374,7 +1374,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
     
     nBond = NBONH + NBONA;
 
-    bond=VLAlloc(BondType,nBond);
+    bond=VLACalloc(BondType,nBond);
   
     bi = 0;
   
@@ -2091,7 +2091,7 @@ static CoordSet *ObjectMoleculePMO2CoordSet(PyMOLGlobals *G,CRaw *pmo,AtomInfoTy
           nBond = size/sizeof(BondType068);
           bond068 = Alloc(BondType068,nBond);
           ok = RawReadInto(pmo,cRaw_Bonds1,nBond*sizeof(BondType068),(char*)bond068);
-          bond=VLAlloc(BondType,nBond);
+          bond=VLACalloc(BondType,nBond);
           UtilExpandArrayElements(bond068,bond,nBond,
                                   sizeof(BondType068),sizeof(BondType));
           FreeP(bond068);
@@ -2101,13 +2101,15 @@ static CoordSet *ObjectMoleculePMO2CoordSet(PyMOLGlobals *G,CRaw *pmo,AtomInfoTy
           bond083 = Alloc(BondType083,nBond);
           ok = RawReadInto(pmo,cRaw_Bonds1,nBond*sizeof(BondType083),(char*)bond083);
 
-          bond=VLAlloc(BondType,nBond);
+          bond=VLACalloc(BondType,nBond);
           UtilExpandArrayElements(bond083,bond,nBond,
                                   sizeof(BondType083),sizeof(BondType));
           FreeP(bond083);
 #endif
         } else {
-          bond=(BondType*)RawReadVLA(pmo,cRaw_Bonds1,sizeof(BondType),5,false);
+          /* unique_id handling? */
+
+          bond=(BondType*)RawReadVLA(pmo,cRaw_Bonds1,sizeof(BondType),5,true);
           nBond = VLAGetSize(bond);
         }
         
@@ -2310,7 +2312,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append)
   }
   if(raw) {
     aiVLA = VLAMalloc(1000,sizeof(AtomInfoType),5,true);
-    bondVLA = VLAlloc(BondType,4000);
+    bondVLA = VLACalloc(BondType,4000);
     if(state<0) {
       start=0;
       stop=I->NCSet;
@@ -2383,6 +2385,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append)
           b++;
 
         }
+        /* unique_id handling? */
         if(ok) ok = RawWrite(raw,cRaw_Bonds1,sizeof(BondType)*nBond,0,(char*)bondVLA);
       }
     }
@@ -2841,7 +2844,7 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,
   
   if(tinker_xyz) {
     nBond=0;
-    bond=VLAlloc(BondType,6*nAtom);  /* is this a safe assumption? */
+    bond=VLACalloc(BondType,6*nAtom);  /* is this a safe assumption? */
     ii=bond;
   }
 
@@ -3232,7 +3235,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele,int state)
           
           if(cs->fEnumIndices) cs->fEnumIndices(cs);
 
-          cs->TmpLinkBond = VLAlloc(BondType,nH);
+          cs->TmpLinkBond = VLACalloc(BondType,nH);
           for(a=0;a<nH;a++) {
             cs->TmpLinkBond[a].index[0] = (nai+a)->temp1;
             cs->TmpLinkBond[a].index[1] = a;
@@ -3362,7 +3365,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,
     
     /* copy internal bond information*/
 
-    cs->TmpBond = VLAlloc(BondType,src->NBond);
+    cs->TmpBond = VLACalloc(BondType,src->NBond);
     b1 = src->Bond;
     b0 = cs->TmpBond;
     cs->NTmpBond=0;
@@ -3403,7 +3406,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,
 
     /* set up the linking bond */
 
-    cs->TmpLinkBond = VLAlloc(BondType,1);
+    cs->TmpLinkBond = VLACalloc(BondType,1);
     cs->NTmpLinkBond = 1;
     cs->TmpLinkBond->index[0] = at0;
     cs->TmpLinkBond->index[1] = anch1;
@@ -3575,7 +3578,7 @@ void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai)
   cs = CoordSetNew(I->Obj.G);
   cs->Coord = VLAlloc(float,3);
   cs->NIndex=1;
-  cs->TmpLinkBond = VLAlloc(BondType,1);
+  cs->TmpLinkBond = VLACalloc(BondType,1);
   cs->NTmpLinkBond = 1;
   cs->TmpLinkBond->index[0]=index;
   cs->TmpLinkBond->index[1]=0;
@@ -3629,7 +3632,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
       cs = CoordSetNew(I->Obj.G);
       cs->Coord = VLAlloc(float,3);
       cs->NIndex=1;
-      cs->TmpLinkBond = VLAlloc(BondType,1);
+      cs->TmpLinkBond = VLACalloc(BondType,1);
       cs->NTmpLinkBond = 1;
       cs->TmpLinkBond->index[0]=index;
       cs->TmpLinkBond->index[1]=0;
@@ -4463,6 +4466,7 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele0,int sele1)
     }
     
     if(both==2) {
+      AtomInfoPurgeBond(I->Obj.G,b0);
       offset--;
       b0++;
       I->AtomInfo[a0].chemFlag=false;
@@ -4554,7 +4558,9 @@ void ObjectMoleculePurge(ObjectMolecule *I)
   for(a=0;a<I->NBond;a++) {
     a0=b0->index[0];
     a1=b0->index[1];
-    if((oldToNew[a0]<0)||(oldToNew[a1]<0)) {
+    if((oldToNew[a0]<0)||(oldToNew[a1]<0)) { 
+      /* deleting bond */
+      AtomInfoPurgeBond(I->Obj.G,b0);
       offset--;
       b0++;
     } else if(offset) {
@@ -5899,7 +5905,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
     ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get bond list");
 
   if(ok) {
-	 bond=VLAlloc(BondType,nBond);
+    bond=VLACalloc(BondType,nBond);
     ii=bond;
 	 for(a=0;a<nBond;a++)
 		{
@@ -6329,7 +6335,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,
 		}
   }
   if(ok) {
-	 bond=VLAlloc(BondType,nBond);
+	 bond=VLACalloc(BondType,nBond);
 	 ii=bond;
 	 for(a=0;a<nBond;a++)
 		{
@@ -6675,7 +6681,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
         p=ParseNextLine(p);
 
         if(ok) {
-          bond=VLAlloc(BondType,nBond);
+          bond=VLACalloc(BondType,nBond);
           ii=bond;
           for(a=0;a<nBond;a++)
             {
@@ -7403,20 +7409,20 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
             } else if(ac<0) { /* gone past position of this bond */
               break;
             } else if(!b) {
-	      int idx;
-	      ac=BondCompare(bond+a,I->Bond+I->NBond-1);
-
-	      if(ac>0) /* bond is after all bonds in list, so don't even bother searching */
-		break;
-	      /* next, try to jump to an appropriate position in the list */
-	      idx = ((a*I->NBond)/nBond)-1;
-	      if((idx>0)&&(b!=idx)&&(idx<I->NBond)) {
-		ac=BondCompare(bond+a,I->Bond+idx);
-		if(ac>0) 
-		  b = idx;
-	      }
-	    }
-
+              int idx;
+              ac=BondCompare(bond+a,I->Bond+I->NBond-1);
+              
+              if(ac>0) /* bond is after all bonds in list, so don't even bother searching */
+                break;
+              /* next, try to jump to an appropriate position in the list */
+              idx = ((a*I->NBond)/nBond)-1;
+              if((idx>0)&&(b!=idx)&&(idx<I->NBond)) {
+                ac=BondCompare(bond+a,I->Bond+idx);
+                if(ac>0) 
+                  b = idx;
+              }
+            }
+            
             b++; /* no match yet, keep looking */
           }
         }
@@ -7435,13 +7441,12 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
         
         VLACheck(I->Bond,BondType,nBd);
         
-        for(a=0;a<nBond;a++) /* copy the new bonds */
-          {
-            a2=index[a];
-            if(a2 >= I->NBond) { 
-              I->Bond[a2] = bond[a];
-            }
+        for(a=0;a<nBond;a++) { /* copy the new bonds */
+          a2=index[a];
+          if(a2 >= I->NBond) { 
+            I->Bond[a2] = bond[a];
           }
+        }
         I->NBond=nBd;
       }
       FreeP(index);
@@ -7532,20 +7537,19 @@ void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *
   }
   nBond=I->NBond+cs->NTmpBond;
   if(!I->Bond)
-	 I->Bond=VLAlloc(BondType,nBond);
+	 I->Bond=VLACalloc(BondType,nBond);
   VLACheck(I->Bond,BondType,nBond);
   ii=I->Bond+I->NBond;
   si=cs->TmpBond;
-  for(a=0;a<cs->NTmpBond;a++)
-	 {
-		ii->index[0]=cs->IdxToAtm[si->index[0]];
-		ii->index[1]=cs->IdxToAtm[si->index[1]];
-      ii->order=si->order;
-      ii->stereo=si->stereo;
-      ii->id=-1;
-      ii++;
-      si++;
-	 }
+  for(a=0;a<cs->NTmpBond;a++) {
+    ii->index[0]=cs->IdxToAtm[si->index[0]];
+    ii->index[1]=cs->IdxToAtm[si->index[1]];
+    ii->order=si->order;
+    ii->stereo=si->stereo;
+    ii->id=-1;
+    ii++;
+    si++;
+  }
   I->NBond=nBond;
 }
 /*========================================================================*/
@@ -9765,7 +9769,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals *G,int type)
   I->CSet[frame] = cset;
 
   I->NBond = 0;
-  I->Bond = VLAlloc(BondType,0);
+  I->Bond = VLACalloc(BondType,0);
   
   ObjectMoleculeExtendIndices(I);
   ObjectMoleculeSort(I);
@@ -9851,11 +9855,15 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
     I->CSTmpl = CoordSetCopy(obj->CSTmpl);
   else
     I->CSTmpl=NULL;
-  I->Bond=VLAlloc(BondType,I->NBond);
+  I->Bond=VLACalloc(BondType,I->NBond);
   i0=I->Bond;
   i1=obj->Bond;
   for(a=0;a<I->NBond;a++) {
     *(i0++)=*(i1++); /* copy structure */
+  }
+  i0=I->Bond;
+  for(a=0;a<I->NBond;a++) {
+    (i0++)->unique_id = 0; /* clear unique_id */
   }
   
   I->AtomInfo=VLAlloc(AtomInfoType,I->NAtom);
@@ -9864,8 +9872,11 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
   for(a=0;a<I->NAtom;a++)
     *(a0++)=*(a1++);
 
+  a0 = I->AtomInfo;
   for(a=0;a<I->NAtom;a++) {
-    I->AtomInfo[a].selEntry=0;
+    a0->selEntry = 0;
+    a0->unique_id = 0;
+    a0++;
   }
   
   return(I);
@@ -9900,7 +9911,16 @@ void ObjectMoleculeFree(ObjectMolecule *I)
     }
     VLAFreeP(I->AtomInfo);
   }
-  VLAFreeP(I->Bond);
+  {
+    int nBond = I->NBond;
+    BondType *bi = I->Bond;
+    
+    for(a=0;a<nBond;a++) {
+      AtomInfoPurgeBond(I->Obj.G,bi);
+      bi++;
+    }
+    VLAFreeP(I->Bond);
+  }
   if(I->UnitCellCGO) 
     CGOFree(I->UnitCellCGO);
   for(a=0;a<=cUndoMask;a++)
@@ -10284,7 +10304,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
 
   nBond=0;
   if(ok) {
-	 bond=VLAlloc(BondType,6*nAtom);  
+	 bond=VLACalloc(BondType,6*nAtom);  
   }
   p=nextline(p);
 

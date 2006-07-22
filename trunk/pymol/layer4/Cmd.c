@@ -4582,6 +4582,35 @@ static PyObject *CmdUnset(PyObject *self, 	PyObject *args)
   }
   return APIResultOk(ok);
 }
+#if 0
+static PyObject *CmdUnsetBond(PyObject *self, 	PyObject *args)
+{
+  int index;
+  int tmpFlag=false;
+  char *str3,*str4;
+  int state;
+  int quiet;
+  int updates;
+  OrthoLineType s1,s2;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"issiii",&index,&str3,&str4,&state,&quiet,&updates);
+  s1[0]=0;
+  if (ok) {
+    APIEntry();
+    if(!strcmp(str3,"all")) {
+      strcpy(s1,str3);
+    } else if(str3[0]!=0) {
+      tmpFlag=true;
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
+    }
+    if(ok) ok = ExecutiveUnsetSetting(TempPyMOLGlobals,index,s1,state,quiet,updates);
+    if(tmpFlag) 
+      SelectorFreeTmp(TempPyMOLGlobals,s1);
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+#endif
 
 static PyObject *CmdSet(PyObject *self, 	PyObject *args)
 {
@@ -4611,7 +4640,43 @@ static PyObject *CmdSet(PyObject *self, 	PyObject *args)
   }
   return APIResultOk(ok);
 }
-
+#if 0
+static PyObject *CmdSetBond(PyObject *self, 	PyObject *args)
+{
+  int index;
+  int tmpFlag=false;
+  PyObject *value;
+  char *str3,*str4;
+  int state;
+  int quiet;
+  int updates;
+  OrthoLineType s1,s2;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"iOssiii",&index,&value,&str3,&str4,&state,&quiet,&updates);
+  s1[0]=0;
+  s2[0]=0;
+  if (ok) {
+    APIEntry();
+    if(!strcmp(str3,"all")) {
+      strcpy(s1,str3);
+    } else if(str3[0]!=0) {
+      tmpFlag=true;
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
+    }
+    if(!strcmp(str4,"all")) {
+      strcpy(s1,str4);
+    } else if(str4[0]!=0) {
+      tmpFlag=true;
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str4,s2)>=0);
+    }
+    if(ok) ok = ExecutiveSetBondSetting(TempPyMOLGlobals,index,value,s1,s2,state,quiet,updates);
+    if(tmpFlag) 
+      SelectorFreeTmp(TempPyMOLGlobals,s1);
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+#endif
 static PyObject *CmdGet(PyObject *self, 	PyObject *args)
 {
   float f;
