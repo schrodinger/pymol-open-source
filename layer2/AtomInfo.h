@@ -119,6 +119,14 @@ typedef char LabelType[cLabelTypeLen+1];
 
 #define cAtomInfoNoType -9999
 
+typedef struct {
+  int index[2];
+  int order;
+  int id;
+  int stereo; /* to preserve 2D rep */
+  int unique_id; 
+} BondType;
+
 typedef struct AtomInfoType {
   int resv;
   int customType;
@@ -202,6 +210,8 @@ int AtomInfoSameResidueP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoSameChainP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoSameSegmentP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoSequential(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2,int mode);
+
+void AtomInfoPurgeBond(PyMOLGlobals *G,BondType *bi);
 
 void AtomInfoBracketResidue(PyMOLGlobals *G,AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd);
 void AtomInfoBracketResidueFast(PyMOLGlobals *G,AtomInfoType *ai0,int n0,int cur,int *st,int *nd);

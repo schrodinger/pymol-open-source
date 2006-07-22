@@ -885,6 +885,15 @@ void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst)
   }
 }
 
+void AtomInfoPurgeBond(PyMOLGlobals *G,BondType *bi)
+{
+  CAtomInfo *I=G->AtomInfo;  
+  if(bi->unique_id && I->ActiveIDs) {
+    OVOneToAny_DelKey(I->ActiveIDs, bi->unique_id);
+    bi->unique_id = 0;
+  }
+}
+
 void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai)
 {
   CAtomInfo *I=G->AtomInfo;  

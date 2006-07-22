@@ -612,6 +612,117 @@ if __name__=='pymol.setting':
 
     ###### API functions
 
+    def set_bond(name,value,selection1,selection2=None,
+                 state=0,updates=1,log=0,quiet=1):
+        '''
+DESCRIPTION
+
+    "set_bond" changes one of the state variables for bonds
+
+USAGE
+
+    set_bond name, value, selection, selection [,state , updates, quiet]
+
+PYMOL API
+
+    cmd.set_bond ( string name, string value,
+                   string selection1,
+                   string selection2,
+                   int state=0,
+                   int updates=1, log=0, quiet=1)
+
+       '''
+        r = DEFAULT_ERROR
+        selection1 = str(selection1)
+        if selection2 == None:
+            selection2 = selection1
+        if log:
+            if ',' in str(value):
+                value = str(cmd.safe_list_eval(str(value)))
+            if len(selection2):
+                cmd.log("set_bond %s,%s,%s\n"%(str(name),str(value),str(selection1),str(selection2)))
+            else:
+                cmd.log("set_bond %s,%s\n"%(str(name),str(value),str(selection1)))           
+        index = _get_index(str(name))
+        if(index<0):
+            print "Error: unknown setting '%s'."%name
+            raise QuietException
+        else:
+            try:
+                lock()
+                type = _cmd.get_setting_tuple(int(index),str(""),int(-1))[0]
+                if type==None:
+                    print "Error: unable to get setting type."
+                    raise QuietException
+                try:
+                    if type==1: # boolean (also support non-zero float for truth)
+                        handled = 0
+                        if boolean_sc.interpret(str(value))==None:
+                            try: # number, non-zero, then interpret as TRUE
+                                if not (float(value)==0.0):
+                                    handled = 1
+                                    v = (1,)
+                                else:
+                                    handled = 1
+                                    v = (0,)
+                            except:
+                                pass
+                        if not handled:
+                            v = (boolean_dict[
+                                boolean_sc.auto_err(
+                                str(value),"boolean")],)
+                    elif type==2: # int (also supports boolean language for 0,1)
+                        if boolean_sc.has_key(str(value)):
+                            v = (boolean_dict[
+                                boolean_sc.auto_err(
+                                str(value),"boolean")],)
+                        else:
+                            v = (int(value),)
+                    elif type==3: # float
+                        if boolean_sc.has_key(str(value)):
+                            v = (float(boolean_dict[
+                                boolean_sc.auto_err(
+                                str(value),"boolean")]),)
+                        else:
+                            v = (float(value),)
+                    elif type==4: # float3 - some legacy handling req.
+                        if is_string(value):
+                            if not ',' in value:
+                                v = string.split(value)
+                            else:
+                                v = eval(value)
+                        else:
+                            v = value
+                        v = (float(v[0]),float(v[1]),float(v[2]))
+                    elif type==5: # color
+                        v = (str(value),)
+                    elif type==6: # string
+                        vl = str(value)
+                        # strip outermost quotes (cheesy approach)
+                        if quote_strip_re.search(vl)!=None:
+                            vl=vl[1:-1]
+                        v = (vl,)
+                    v = (type,v)
+                    if len(selection1):
+                        selection1=selector.process(selection1)
+                    if len(selection2):
+                        selection2=selector.process(selection2)                        
+                    r = _cmd.set(int(index),v,
+                                 selection1,selection2,
+                                 int(state)-1,int(quiet),
+                                 int(updates))
+                except:
+                    traceback.print_exc()
+                    if(_feedback(fb_module.cmd,fb_mask.debugging)):
+                        traceback.print_exc()
+                        print "Error: unable to read setting value."
+                    raise QuietException
+            finally:
+                unlock()
+        if _raising(r): raise QuietException            
+        return r
+
+        
     def set(name,value=1,selection='',state=0,updates=1,log=0,quiet=1):
         '''
 DESCRIPTION
@@ -781,6 +892,53 @@ PYMOL API
                         print "Error: unable to unset setting value."
                 finally:
                     unlock()
+        if _raising(r): raise QuietException            
+        return r
+    
+    def unset_bond(name,selection1,selection2=None,state=0,updates=1,log=0,quiet=1):
+        '''
+DESCRIPTION
+
+    "unset_bond" removes a per-bond setting
+    
+USAGE
+
+    unset name [,selection, selection [,state ]]
+
+PYMOL API
+
+    cmd.unset ( string name, string selection = '',
+                int state=0, int updates=1, int log=0 )
+
+        '''
+        r = DEFAULT_ERROR
+        selection1 = str(selection1)
+        selection2 = str(selection2)
+        if log:
+            if(len(selection2)):
+                cmd.log("unset %s,%s\n"%(str(name),str(selection1),str(selection2)))
+            else:
+                cmd.log("set %s,%s\n"%(str(name),str(selection1)))
+        index = _get_index(str(name))
+        if(index<0):
+            print "Error: unknown setting '%s'."%name
+            raise QuietException
+        else:
+            try:
+                lock()
+                try:
+                    selection1 = selector.process(selection1)
+                    selection2 = selector.process(selection2)   
+                    r = _cmd.unset_bond(int(index),selection1,selection2,
+                                   int(state)-1,int(quiet),
+                                   int(updates))
+                except:
+                    if(_feedback(fb_module.cmd,fb_mask.debugging)):
+                        traceback.print_exc()
+                        raise QuietException
+                    print "Error: unable to unset setting value."
+            finally:
+                unlock()
         if _raising(r): raise QuietException            
         return r
 

@@ -33,13 +33,6 @@ Z* -------------------------------------------------------------------
 
 #define cUndoMask 0xF
 
-typedef struct {
-  int index[2];
-  int order;
-  int id;
-  int stereo; /* to preserve 2D rep */
-} BondType;
-
 typedef struct ObjectMoleculeBPRec {
   int *dist;
   int *list;
