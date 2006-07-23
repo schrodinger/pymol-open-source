@@ -92,7 +92,7 @@ static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
 
     if(c>0) {
       while(c--) {
-		  ray->fSausage3fv(ray,v+4,v+11,radius,v+1,v+8);
+        ray->fSausage3fv(ray,v+4,v+11,radius,v+1,v+8);
         v+=18;
       }
     }
@@ -423,8 +423,8 @@ Rep *RepRibbonNew(CoordSet *cs,int state)
                      WordMatchExact(G,"O3*",ai->name,1))&&
                     AtomInfoSameResidueP(G,last_ai,ai)&&
                     ObjectMoleculeCheckBondSep(obj,a1,a2,5)) {
-              trailing_O3p_ai = ai;
-              trailing_O3p_a = a;
+            trailing_O3p_ai = ai;
+            trailing_O3p_a = a;
           } else if((ai->protons==cAN_O)&&
                     ((na_mode==3)||(na_mode==4))&&
                     (WordMatchExact(G,"O5'",ai->name,1)||
@@ -452,85 +452,85 @@ Rep *RepRibbonNew(CoordSet *cs,int state)
     ENDFD;
   
   if(nAt)
-	 {
-		/* compute differences and normals */
+    {
+      /* compute differences and normals */
 
-		s=seg;
-		v=pv;
+      s=seg;
+      v=pv;
 		
-		dv = Alloc(float,nAt*6);
-		nv = Alloc(float,nAt*6);
-		dl = Alloc(float,nAt*2);
-		v1=dv;
-		v2=nv;
-		d=dl;
+      dv = Alloc(float,nAt*6);
+      nv = Alloc(float,nAt*6);
+      dl = Alloc(float,nAt*2);
+      v1=dv;
+      v2=nv;
+      d=dl;
 		
-		for(a=0;a<(nAt-1);a++)
-		  {
-			 if(*s==*(s+1))
-				{
-				  float d_1;
-				  subtract3f(v+3,v,v1);
-				  *d = (float)length3f(v1);
-				  if(*d>R_SMALL4) {
-				    d_1 = 1.0F/(*d);
-				    scale3f(v1,d_1,v2);
-				  } else if(a)  {
-				    copy3f(v2-3,v2); 
-				  } else {
-				    zero3f(v2);
-				  }
-				}
-			 d++;
-			 v+=3;
-			 v1+=3;
-			 v2+=3;
-			 s++;
-		  }
+      for(a=0;a<(nAt-1);a++)
+        {
+          if(*s==*(s+1))
+            {
+              float d_1;
+              subtract3f(v+3,v,v1);
+              *d = (float)length3f(v1);
+              if(*d>R_SMALL4) {
+                d_1 = 1.0F/(*d);
+                scale3f(v1,d_1,v2);
+              } else if(a)  {
+                copy3f(v2-3,v2); 
+              } else {
+                zero3f(v2);
+              }
+            }
+          d++;
+          v+=3;
+          v1+=3;
+          v2+=3;
+          s++;
+        }
 		
-		/* compute tangents */
+      /* compute tangents */
 		
-		s=seg;
-		v=nv;
+      s=seg;
+      v=nv;
 		
-		tv = Alloc(float,nAt*6+6);
-		v1=tv;
+      tv = Alloc(float,nAt*6+6);
+      v1=tv;
 		
-		*(v1++)=*(v++); /* first segment */
-		*(v1++)=*(v++);
-		*(v1++)=*(v++);
-		s++;
+      *(v1++)=*(v++); /* first segment */
+      *(v1++)=*(v++);
+      *(v1++)=*(v++);
+      s++;
 		
-		for(a=1;a<(nAt-1);a++)
-		  {
-			 if((*s==*(s-1))&&(*s==*(s+1)))
-				{
-				  add3f(v,(v-3),v1);
-				  normalize3f(v1);			 
-				}
-			 else if(*s==*(s-1))
-				{
-				  *(v1)=*(v-3);  /* end a segment */
-				  *(v1+1)=*(v-2); 
-				  *(v1+2)=*(v-1); 
-				}
-			 else if(*s==*(s+1))
-				{
-				  *(v1)=*(v);   /* new segment */
-				  *(v1+1)=*(v+1); 
-				  *(v1+2)=*(v+2); 
-				}
-			 v+=3;
-			 v1+=3;
-			 s++;
-		  }
+      for(a=1;a<(nAt-1);a++)
+        {
+          if((*s==*(s-1))&&(*s==*(s+1)))
+            {
+              add3f(v,(v-3),v1);
+              normalize3f(v1);			 
+            }
+          else if(*s==*(s-1))
+            {
+              *(v1)=*(v-3);  /* end a segment */
+              *(v1+1)=*(v-2); 
+              *(v1+2)=*(v-1); 
+            }
+          else if(*s==*(s+1))
+            {
+              *(v1)=*(v);   /* new segment */
+              *(v1+1)=*(v+1); 
+              *(v1+2)=*(v+2); 
+            }
+          v+=3;
+          v1+=3;
+          s++;
+        }
 		
-		*(v1++)=*(v-3); /* last segment */
-		*(v1++)=*(v-2);
-		*(v1++)=*(v-1);
+      *(v1++)=*(v-3); /* last segment */
+      *(v1++)=*(v-2);
+      *(v1++)=*(v-1);
 
       
-	 }
+    }
 
   /* okay, we now have enough info to generate smooth interpolations */
 
@@ -548,142 +548,146 @@ Rep *RepRibbonNew(CoordSet *cs,int state)
   I->NP=0;
   v=I->V;
   if(nAt) {
-	 v1=pv; /* points */
-	 v2=tv; /* tangents */
-	 v3=dv; /* direction vector */
+    v1=pv; /* points */
+    v2=tv; /* tangents */
+    v3=dv; /* direction vector */
     d = dl;
-	 s=seg;
-	 atp=at;
-     rp->index = cs->IdxToAtm[*atp];
-     if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
-       rp->index = -1; 
-     rp->bond = -1;
-     I->NP++;
-     rp++;
-     for(a=0;a<(nAt-1);a++)
-       {
-         rp->index = cs->IdxToAtm[*(atp+1)]; /* store pickable for n+2 */
-         if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
-           rp->index = -1;
-         rp->bond = -1;
-         rp++;
-         I->NP++;
+    s=seg;
+    atp=at;
+    rp->index = cs->IdxToAtm[*atp];
+    if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
+      rp->index = -1; 
+    rp->bond = -1;
+    I->NP++;
+    rp++;
+    for(a=0;a<(nAt-1);a++) {
+
+      rp->index = cs->IdxToAtm[*(atp+1)]; /* store pickable for n+2 */
+      if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
+        rp->index = -1;
+      rp->bond = -1;
+      rp++;
+      I->NP++;
          
-        PRINTFD(G,FB_RepRibbon)
-          " RepRibbon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
-          ENDFD;
+      PRINTFD(G,FB_RepRibbon)
+        " RepRibbon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
+        ENDFD;
 
-		  if(*s==*(s+1))
-			 {
-				c1=*(cs->Color+*atp);
-				c2=*(cs->Color+*(atp+1));
+      if(*s==*(s+1)) {
+        int atom_index1 = cs->IdxToAtm[*atp];
+        int atom_index2 = cs->IdxToAtm[*(atp+1)];
+        
+        c1=*(cs->Color+*atp);
+        c2=*(cs->Color+*(atp+1));
+          
+        if(ribbon_color>=0) {
+          c1 = (c2 = ribbon_color);
+        }
+          
+        AtomInfoGetSetting_color(G,obj->AtomInfo + atom_index1, cSetting_ribbon_color, c1, &c1);
+        AtomInfoGetSetting_color(G,obj->AtomInfo + atom_index2, cSetting_ribbon_color, c2, &c2);
 
-            if(ribbon_color>=0) {
-              c1 = (c2 = ribbon_color);
-            }
-
-            dev = throw*(*d);
-
-				for(b=0;b<sampling;b++) /* needs optimization */
-				  {
-
-					 f0=((float)b)/sampling; /* fraction of completion */
-                f0 = smooth(f0,power_a);  /* bias sampling towards the center of the curve */
-
-					 if(f0<0.5) {
-						v0 = ColorGet(G,c1);
-					 } else {
-						v0 = ColorGet(G,c2);
-					 }
-
-                /* store index */
-                if(f0<0.5F)
-                  *(v++)=(float)I->NP-1;
-                else
-                  *(v++)=(float)I->NP;
-                
-                /* store colors */
-
-					 *(v++)=*(v0++);
-					 *(v++)=*(v0++);
-					 *(v++)=*(v0);
-
-                /* start of line/cylinder */
-
-					 f1=1.0F-f0;
-                f2=smooth(f0,power_b);
-                f3=smooth(f1,power_b);
-                f4 = dev*f2*f3; /* displacement magnitude */
-                
-                *(v++)=f1*v1[0]+f0*v1[3]+
-                  f4*( f3*v2[0]-f2*v2[3] );
-                
-                *(v++)=f1*v1[1]+f0*v1[4]+
-                  f4*( f3*v2[1]-f2*v2[4] );
-                
-                *(v++)=f1*v1[2]+f0*v1[5]+
-                  f4*( f3*v2[2]-f2*v2[5] );
-                
-					 f0=((float)b+1)/sampling;
-                f0 = smooth(f0,power_a);
-
-					 if(f0<0.5) {
-						v0 = ColorGet(G,c1);
-					 } else {
-						v0 = ColorGet(G,c2);
-					 }
-
-                /* store index */
-                if(f0<0.5)
-                  *(v++)=(float)I->NP-1;
-                else
-                  *(v++)=(float)I->NP;
-                
-                /* store colors */
-
-					 *(v++)=*(v0++);
-					 *(v++)=*(v0++);
-					 *(v++)=*(v0);
-
-                /* end of line/cylinder */
-
-					 f1=1.0F-f0;
-                f2=smooth(f0,power_b);
-                f3=smooth(f1,power_b);
-                f4 = dev*f2*f3; /* displacement magnitude */
-                
-                *(v++)=f1*v1[0]+f0*v1[3]+
-                  f4*( f3*v2[0]-f2*v2[3] );
-                
-                *(v++)=f1*v1[1]+f0*v1[4]+
-                  f4*( f3*v2[1]-f2*v2[4] );
-                
-                *(v++)=f1*v1[2]+f0*v1[5]+
-                  f4*( f3*v2[2]-f2*v2[5] );
-
-					 v++; /* radius no longer stored here... */
-
-                average3f(v-4,v-11,v);
-
-                v+=3;
-
-					 I->N++;
-				  }
-            
+        dev = throw*(*d);
+          
+        for(b=0;b<sampling;b++) { /* needs optimization */
+                  
+          f0=((float)b)/sampling; /* fraction of completion */
+          f0 = smooth(f0,power_a);  /* bias sampling towards the center of the curve */
+                  
+          if(f0<0.5) {
+            v0 = ColorGet(G,c1);
+          } else {
+            v0 = ColorGet(G,c2);
           }
-        v1+=3;
-		  v2+=3;
-		  v3+=3;
-        d++;
-		  atp+=1;
-		  s++;
-		}
+
+          /* store index */
+          if(f0<0.5F)
+            *(v++)=(float)I->NP-1;
+          else
+            *(v++)=(float)I->NP;
+                
+          /* store colors */
+
+          *(v++)=*(v0++);
+          *(v++)=*(v0++);
+          *(v++)=*(v0);
+
+          /* start of line/cylinder */
+
+          f1=1.0F-f0;
+          f2=smooth(f0,power_b);
+          f3=smooth(f1,power_b);
+          f4 = dev*f2*f3; /* displacement magnitude */
+                
+          *(v++)=f1*v1[0]+f0*v1[3]+
+            f4*( f3*v2[0]-f2*v2[3] );
+                
+          *(v++)=f1*v1[1]+f0*v1[4]+
+            f4*( f3*v2[1]-f2*v2[4] );
+                
+          *(v++)=f1*v1[2]+f0*v1[5]+
+            f4*( f3*v2[2]-f2*v2[5] );
+                
+          f0=((float)b+1)/sampling;
+          f0 = smooth(f0,power_a);
+
+          if(f0<0.5) {
+            v0 = ColorGet(G,c1);
+          } else {
+            v0 = ColorGet(G,c2);
+          }
+
+          /* store index */
+          if(f0<0.5)
+            *(v++)=(float)I->NP-1;
+          else
+            *(v++)=(float)I->NP;
+                
+          /* store colors */
+
+          *(v++)=*(v0++);
+          *(v++)=*(v0++);
+          *(v++)=*(v0);
+
+          /* end of line/cylinder */
+
+          f1=1.0F-f0;
+          f2=smooth(f0,power_b);
+          f3=smooth(f1,power_b);
+          f4 = dev*f2*f3; /* displacement magnitude */
+                
+          *(v++)=f1*v1[0]+f0*v1[3]+
+            f4*( f3*v2[0]-f2*v2[3] );
+                
+          *(v++)=f1*v1[1]+f0*v1[4]+
+            f4*( f3*v2[1]-f2*v2[4] );
+                
+          *(v++)=f1*v1[2]+f0*v1[5]+
+            f4*( f3*v2[2]-f2*v2[5] );
+
+          v++; /* radius no longer stored here... */
+
+          average3f(v-4,v-11,v);
+
+          v+=3;
+
+          I->N++;
+        }
+            
+      }
+      v1+=3;
+      v2+=3;
+      v3+=3;
+      d++;
+      atp+=1;
+      s++;
+    }
 
 
-	 FreeP(dv);
-	 FreeP(dl);
-	 FreeP(tv);
-	 FreeP(nv);
+    FreeP(dv);
+    FreeP(dl);
+    FreeP(tv);
+    FreeP(nv);
   }
 
   FreeP(at);

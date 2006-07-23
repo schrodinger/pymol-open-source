@@ -36,7 +36,7 @@
 typedef struct RepSphere {
   Rep R;
   float *V; /* triangle vertices (if any) */
-  float *VC; /* sphere centers, colors, and radii */
+  float *VC; /* sphere centers, colors, alpha, and radii */
   float *VN; /* normals (if any) */
   SphereRec *SP;
   int *NT;
@@ -45,7 +45,9 @@ typedef struct RepSphere {
   int *LastVisib;
   int *LastColor;
   float LastVertexScale;
+  int VariableAlphaFlag;
   int shader_flag;
+  
   GLint programs[2];
 } RepSphere;
 
@@ -297,6 +299,7 @@ static char *read_file(char *name)
 }
 #endif
 #endif
+
 static void RepSphereRender(RepSphere *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
@@ -390,7 +393,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0F;
   if(ray) {
-    ray->fTransparentf(ray,1.0F-alpha);
+    ray->fTransparentf(ray,1.0-alpha);
     if(I->spheroidFlag) {
       if(sp) {
         while(c--)
@@ -408,11 +411,15 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           }
       }
     } else {
+      int variable_alpha = I->VariableAlphaFlag;
       v=I->VC;
       c=I->NC;
       while(c--) {
+        if(variable_alpha) {
+          ray->fTransparentf(ray,1.0F-v[3]);
+        }
         ray->fColor3fv(ray,v);
-        v+=3;
+        v+=4;
         ray->fSphere3fv(ray,v,*(v+3));
         v+=4;
       }
@@ -432,45 +439,44 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
         p=I->R.P;
           
         if(I->spheroidFlag && sp) {
-          while(c--)
-            {
-              int skip = (p[1].index<0);
-              if(!skip) {
-                i++;          
-                if(!(*pick)[0].src.bond) {
-                  /* pass 1 - low order bits *            */
-                  glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-                  VLACheck((*pick),Picking,i);
-                  p++;
-                  (*pick)[i].src = *p; /* copy object and atom info */
-                  (*pick)[i].context = I->R.context;
-                } else { 
-                  /* pass 2 - high order bits */           
-                  j=i>>12;            
-                  glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
-                }			 
-              } else {
+          while(c--) {
+            int skip = (p[1].index<0);
+            if(!skip) {
+              i++;          
+              if(!(*pick)[0].src.bond) {
+                /* pass 1 - low order bits *            */
+                glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
+                VLACheck((*pick),Picking,i);
                 p++;
-              }
-                
-              v+=3;
-              for(a=0;a<sp->NStrip;a++) {
-                cc=sp->StripLen[a];
-                if(!skip) {
-                  glBegin(GL_TRIANGLE_STRIP);
-                  while((cc--)>0) {
-                    glNormal3fv(v);
-                    glVertex3fv(v+3);
-                    v+=6;
-                  }
-                  glEnd();
-                } else {
-                  while((cc--)>0) {
-                    v+=6;
-                  }
+                (*pick)[i].src = *p; /* copy object and atom info */
+                (*pick)[i].context = I->R.context;
+              } else { 
+                /* pass 2 - high order bits */           
+                j=i>>12;            
+                glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
+              }			 
+            } else {
+              p++;
+            }
+            
+            v+=4;
+            for(a=0;a<sp->NStrip;a++) {
+              cc=sp->StripLen[a];
+              if(!skip) {
+                glBegin(GL_TRIANGLE_STRIP);
+                while((cc--)>0) {
+                  glNormal3fv(v);
+                  glVertex3fv(v+3);
+                  v+=6;
+                }
+                glEnd();
+              } else {
+                while((cc--)>0) {
+                  v+=6;
                 }
               }
             }
+          }
         } else {
           register float last_radius = -1.0F;
           register float cur_radius;
@@ -539,28 +545,26 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                 int *s,*q,b;
                 float *v0,vdw;
                 
-                v0 = v+3;
-                vdw = v[6];
+                v0 = v+4;
+                vdw = v[7];
                 q=sp->Sequence;
                 s=sp->StripLen;
-                for(b=0;b<sp->NStrip;b++)
-                  {
-                    glBegin(GL_TRIANGLE_STRIP);
-                    for(cc=0;cc<(*s);cc++)
-                      {
-                        glNormal3f(sp->dot[*q][0],
-                                   sp->dot[*q][1],
-                                   sp->dot[*q][2]);
-                        glVertex3f(v0[0]+vdw*sp->dot[*q][0],
-                                   v0[1]+vdw*sp->dot[*q][1],
-                                   v0[2]+vdw*sp->dot[*q][2]);
-                        q++;
-                      }
-                    glEnd();
-                    s++;
+                for(b=0;b<sp->NStrip;b++) {
+                  glBegin(GL_TRIANGLE_STRIP);
+                  for(cc=0;cc<(*s);cc++)  {
+                    glNormal3f(sp->dot[*q][0],
+                               sp->dot[*q][1],
+                               sp->dot[*q][2]);
+                    glVertex3f(v0[0]+vdw*sp->dot[*q][0],
+                               v0[1]+vdw*sp->dot[*q][1],
+                               v0[2]+vdw*sp->dot[*q][2]);
+                    q++;
                   }
+                  glEnd();
+                  s++;
+                }
               }
-              v+=7;
+              v+=8;
             } else {
               switch(sphere_mode) {
               case 2:
@@ -570,7 +574,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               case 7:
               case 8:
                 if(!skip) {
-                  if(last_radius!=(cur_radius=v[6])) {
+                  if(last_radius!=(cur_radius=v[7])) {
                     size = cur_radius*pixel_scale;
                     glEnd();
                     if(clamp_size_flag) 
@@ -581,12 +585,12 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                     last_radius = cur_radius;
                   }
                 }
-                v+=3;
+                v+=4;
                 if(!skip) glVertex3fv(v);
                 v+=4;
                 break;
               default: /* simple, default point width points*/
-                v+=3;
+                v+=4;
                 if(!skip) glVertex3fv(v);
                 v+=4;
                 break;
@@ -700,7 +704,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   glEnable(GL_LIGHTING);
                 glBegin(GL_POINTS);
                 while(c--) {
-                  if(last_radius!=(cur_radius=v[6])) {
+                  if(last_radius!=(cur_radius=v[7])) {
                     size = cur_radius*pixel_scale;
                     glEnd();
                     if(clamp_size_flag) 
@@ -711,7 +715,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                     last_radius = cur_radius;
                   }
                   glColor3fv(v);
-                  v+=3;
+                  v+=4;
                   if(vn) {
                     glNormal3fv(vn);
                     vn+=3;
@@ -761,7 +765,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                     repeat = false;
                     glBegin(GL_POINTS);
                     while(c--) {
-                      if(last_radius!=(cur_radius=v[6])) {
+                      if(last_radius!=(cur_radius=v[7])) {
                         size = cur_radius*pixel_scale;
                         clamp_radius = cur_radius;                        
                         if(clamp_size_flag) 
@@ -805,7 +809,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                                 g > _1 ? _1 : g,
                                 b > _1 ? _1 : b);
                                 
-                      v+=3;
+                      v+=4;
                       glVertex3f(v[0]+x_add, v[1]+y_add, v[2]+z_add);
                       v+=4;
                     }
@@ -873,7 +877,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                      
                     glNormal3fv(info->view_normal);
                     glBegin(GL_QUADS);
-                    v+=3;
+                    v+=4;
 
                     while(c--) {
                        
@@ -909,7 +913,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                         if((nv0<cutoff)&&(nv0>m_cutoff)&&
                            (nv1<cutoff)&&(nv1>m_cutoff)) {
 							   
-                          glColor3fv(v-3);                          
+                          glColor3fv(v-4);                          
 							   
                           glTexCoord2fv(_00);
                           glVertex3fv(v);
@@ -924,7 +928,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                           glVertex3fv(v);
                         }
                       }
-                      v+=7;
+                      v+=8;
                     }
                     glEnd();
                   }
@@ -953,7 +957,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                 glBegin(GL_POINTS);
                 while(c--) {
                   glColor3fv(v);
-                  v+=3;
+                  v+=4;
                   glNormal3fv(vn);
                   vn+=3;
                   glVertex3fv(v);
@@ -962,7 +966,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               } else {
                 while(c--) {
                   glColor3fv(v);
-                  v+=3;
+                  v+=4;
                   glVertex3fv(v);
                   v+=4;
                 }
@@ -974,7 +978,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                 glBegin(GL_POINTS);
                 while(c--) {
                   glColor4f(v[0],v[1],v[2],alpha);
-                  v+=3;
+                  v+=4;
                   glNormal3fv(vn);
                   vn+=3;
                   glVertex3fv(v);
@@ -983,7 +987,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               } else {
                 while(c--) {
                   glColor4f(v[0],v[1],v[2],alpha);
-                  v+=3;
+                  v+=4;
                   glVertex3fv(v);
                   v+=4;
                 }
@@ -1001,7 +1005,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           }
         }
       } else { /* real spheres, drawn with triangles -- not points or impostors */
-
+        int variable_alpha = I->VariableAlphaFlag;
         int use_dlst;
         
         use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
@@ -1020,88 +1024,87 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           }
           if(I->cullFlag) {
             
-            if(alpha==1.0) {
+            if((alpha==1.0)&&(!variable_alpha)) {
               
               nt=I->NT; /* number of passes for each sphere */
-              while(c--) /* iterate through all atoms */
-                {
-                  glColor3fv(v);
-                  v+=3;
-                  cc=*(nt++);
-                  flag=0;
-                  glBegin(GL_TRIANGLE_STRIP);
-                  while(cc--) { /* execute loop this many times */
-                    restart=*(v++);
-                    if(restart) {
-                      if(flag) {
-                        glEnd();
-                        glBegin(GL_TRIANGLE_STRIP);
-                      }
-                      if(restart==2.0) { /* swap triangle polarity */
-                        glNormal3fv(v);
-                        glVertex3fv(v+3);
-                      }
+              while(c--) { /* iterate through all atoms */
+                glColor3fv(v);
+                v+=4;
+                cc=*(nt++);
+                flag=0;
+                glBegin(GL_TRIANGLE_STRIP);
+                while(cc--) { /* execute loop this many times */
+                  restart=*(v++);
+                  if(restart) {
+                    if(flag) {
+                      glEnd();
+                      glBegin(GL_TRIANGLE_STRIP);
+                    }
+                    if(restart==2.0) { /* swap triangle polarity */
                       glNormal3fv(v);
-                      v+=3;
-                      glVertex3fv(v);
-                      v+=3;
-                      glNormal3fv(v);
-                      v+=3;
-                      glVertex3fv(v);
-                      v+=3;
+                      glVertex3fv(v+3);
                     }
                     glNormal3fv(v);
                     v+=3;
                     glVertex3fv(v);
                     v+=3;
-                    flag=1;
+                    glNormal3fv(v);
+                    v+=3;
+                    glVertex3fv(v);
+                    v+=3;
                   }
-                  glEnd();
+                  glNormal3fv(v);
+                  v+=3;
+                  glVertex3fv(v);
+                  v+=3;
+                  flag=1;
                 }
+                glEnd();
+              }
             } else {
               
               nt=I->NT; /* number of passes for each sphere */
-              while(c--) /* iterate through all atoms */
-                {
-                  glColor4f(v[0],v[1],v[2],alpha);
-                  v+=3;
-                  cc=*(nt++);
-                  flag=0;
-                  glBegin(GL_TRIANGLE_STRIP);
-                  while(cc--) { /* execute loop this many times */
-                    restart=*(v++);
-                    if(restart) {
-                      if(flag) {
-                        glEnd();
-                        glBegin(GL_TRIANGLE_STRIP);
-                      }
-                      if(restart==2.0) { /* swap triangle polarity */
-                        glNormal3fv(v);
-                        glVertex3fv(v+3);
-                      }
+              while(c--) { /* iterate through all atoms */
+                
+                glColor4f(v[0],v[1],v[2],v[3]);
+                v+=4;
+                cc=*(nt++);
+                flag=0;
+                glBegin(GL_TRIANGLE_STRIP);
+                while(cc--) { /* execute loop this many times */
+                  restart=*(v++);
+                  if(restart) {
+                    if(flag) {
+                      glEnd();
+                      glBegin(GL_TRIANGLE_STRIP);
+                    }
+                    if(restart==2.0) { /* swap triangle polarity */
                       glNormal3fv(v);
-                      v+=3;
-                      glVertex3fv(v);
-                      v+=3;
-                      glNormal3fv(v);
-                      v+=3;
-                      glVertex3fv(v);
-                      v+=3;
+                      glVertex3fv(v+3);
                     }
                     glNormal3fv(v);
                     v+=3;
                     glVertex3fv(v);
                     v+=3;
-                    flag=1;
+                    glNormal3fv(v);
+                    v+=3;
+                    glVertex3fv(v);
+                    v+=3;
                   }
-                  glEnd();
+                  glNormal3fv(v);
+                  v+=3;
+                  glVertex3fv(v);
+                  v+=3;
+                  flag=1;
                 }
+                glEnd();
+              }
             }
           } else if(sp) {
-            if(alpha==1.0) {
+            if((alpha==1.0)&&!variable_alpha) {
               while(c--) {
                 glColor3fv(v);
-                v+=3;
+                v+=4;
                 for(a=0;a<sp->NStrip;a++) {
                   glBegin(GL_TRIANGLE_STRIP);
                   cc=sp->StripLen[a];
@@ -1116,8 +1119,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               }
             } else {
               while(c--) {
-                glColor4f(v[0],v[1],v[2],alpha);
-                v+=3;
+                glColor4f(v[0],v[1],v[2],v[3]);
+                v+=4;
                 for(a=0;a<sp->NStrip;a++) {
                   glBegin(GL_TRIANGLE_STRIP);
                   cc=sp->StripLen[a];
@@ -1203,7 +1206,8 @@ Rep *RepSphereNew(CoordSet *cs,int state)
   int vis_flag;
   int sphere_mode;
   int *marked = NULL;
-
+  float transp;
+  int variable_alpha = false;
 #ifdef _this_code_is_not_used
   float vv0[3],vv1[3],vv2[3];
   float tn[3],vt1[3],vt2[3],xtn[3],*tn0,*tn1,*tn2;
@@ -1215,11 +1219,10 @@ Rep *RepSphereNew(CoordSet *cs,int state)
   vFlag=false;
   if(obj->RepVisCache[cRepSphere])
     for(a=0;a<cs->NIndex;a++) {
-      if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepSphere])
-        {
-          vFlag=true;
-          break;
-        }
+      if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepSphere]) {
+        vFlag=true;
+        break;
+      }
     }
   if(!vFlag) {
     OOFreeP(I);
@@ -1248,7 +1251,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
                                            cSetting_cartoon_side_chain_helper);
   ribbon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                           cSetting_ribbon_side_chain_helper);
-
+  transp = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_transparency);
   spheroid_scale=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_spheroid_scale);
   if(sp&&spheroid_scale&&cs->Spheroid) 
     spheroidFlag=1;
@@ -1276,7 +1279,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
 
   /* raytracing primitives */
   
-  I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*7);
+  I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*8);
   ErrChkPtr(G,I->VC);
   I->NC=0;
   map_flag = Calloc(int,cs->NIndex);
@@ -1297,76 +1300,82 @@ Rep *RepSphereNew(CoordSet *cs,int state)
   }
 
   I->spheroidFlag=spheroidFlag;
-  for(a=0;a<cs->NIndex;a++)
-    {
-      a1 = cs->IdxToAtm[a];
-      ati1 = obj->AtomInfo+a1;
-      vis_flag = ati1->visRep[cRepSphere];
-
-      if(vis_flag &&
-         (!ati1->hetatm) &&
-         ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon]) ||
-          (ribbon_side_chain_helper && ati1->visRep[cRepRibbon]))) {
-        
-        register char *name1=ati1->name;
-        register int prot1=ati1->protons;
-        if(prot1 == cAN_N) { 
-          if((!name1[1])&&(name1[0]=='N')) { /* N */
-            register char *resn1 = ati1->resn;
-            if(!((resn1[0]=='P')&&(resn1[1]=='R')&&(resn1[2]=='O')))
-              vis_flag=false;
-          }
-        } else if(prot1 == cAN_O) { 
-          if((!name1[1])&&(name1[0]=='O'))
-            vis_flag=false;
-        } else if(prot1 == cAN_C) {
-          if((!name1[1])&&(name1[0]=='C'))
+  for(a=0;a<cs->NIndex;a++) {
+    a1 = cs->IdxToAtm[a];
+    ati1 = obj->AtomInfo+a1;
+    vis_flag = ati1->visRep[cRepSphere];
+    
+    if(vis_flag &&
+       (!ati1->hetatm) &&
+       ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon]) ||
+        (ribbon_side_chain_helper && ati1->visRep[cRepRibbon]))) {
+      
+      register char *name1=ati1->name;
+      register int prot1=ati1->protons;
+      if(prot1 == cAN_N) { 
+        if((!name1[1])&&(name1[0]=='N')) { /* N */
+          register char *resn1 = ati1->resn;
+          if(!((resn1[0]=='P')&&(resn1[1]=='R')&&(resn1[2]=='O')))
             vis_flag=false;
         }
+      } else if(prot1 == cAN_O) { 
+        if((!name1[1])&&(name1[0]=='O'))
+          vis_flag=false;
+      } else if(prot1 == cAN_C) {
+        if((!name1[1])&&(name1[0]=='C'))
+          vis_flag=false;
       }
-      marked[a1] = vis_flag; /* store temporary visibility information */
-
-      if(vis_flag) {
-        float at_sphere_scale;
-        int at_sphere_color;
-
-        AtomInfoGetSetting_f(G, ati1, cSetting_sphere_scale, sphere_scale, &at_sphere_scale);
-        AtomInfoGetSetting_color(G, ati1, cSetting_sphere_color, sphere_color, &at_sphere_color);
-
-        if(I->R.P) {
-          I->NP++;
-          if(!ati1->masked) {
-            I->R.P[I->NP].index = a1;
-          } else {
-            I->R.P[I->NP].index = -1;
-          }
-          I->R.P[I->NP].bond = -1;
-        }
-          
-        *mf=true;
-        I->NC++;
-        if(at_sphere_color==-1)
-          c1=*(cs->Color+a);
-        else
-          c1=at_sphere_color;
-        v0 = cs->Coord+3*a;			 
-        if(ColorCheckRamped(G,c1)) {
-          ColorGetRamped(G,c1,v0,v,state);
-          v+=3;
-        } else {
-          vc = ColorGet(G,c1); /* save new color */
-          *(v++)=*(vc++);
-          *(v++)=*(vc++);
-          *(v++)=*(vc++);
-        }
-        *(v++)=*(v0++);
-        *(v++)=*(v0++);
-        *(v++)=*(v0++);
-        *(v++)= obj->AtomInfo[a1].vdw*at_sphere_scale+sphere_add;
-      }
-      mf++;
     }
+    marked[a1] = vis_flag; /* store temporary visibility information */
+    
+    if(vis_flag) {
+      float at_sphere_scale;
+      int at_sphere_color;
+      float at_transp;
+
+      AtomInfoGetSetting_f(G, ati1, cSetting_sphere_scale, sphere_scale, &at_sphere_scale);
+      if(AtomInfoGetSetting_f(G, ati1, cSetting_sphere_transparency, transp, &at_transp))
+        variable_alpha = true;
+      AtomInfoGetSetting_color(G, ati1, cSetting_sphere_color, sphere_color, &at_sphere_color);
+
+        
+      if(I->R.P) {
+        I->NP++;
+        if(!ati1->masked) {
+          I->R.P[I->NP].index = a1;
+        } else {
+          I->R.P[I->NP].index = -1;
+        }
+        I->R.P[I->NP].bond = -1;
+      }
+      
+      *mf=true;
+      I->NC++;
+      if(at_sphere_color==-1)
+        c1=*(cs->Color+a);
+      else
+        c1=at_sphere_color;
+      v0 = cs->Coord+3*a;			 
+      if(ColorCheckRamped(G,c1)) {
+        ColorGetRamped(G,c1,v0,v,state);
+        v+=3;
+      } else {
+        vc = ColorGet(G,c1); /* save new color */
+        *(v++)=*(vc++);
+        *(v++)=*(vc++);
+        *(v++)=*(vc++);
+      }
+      *(v++) = 1.0F - at_transp;
+
+      *(v++)=*(v0++); /* coordinate */
+      *(v++)=*(v0++);
+      *(v++)=*(v0++);
+      *(v++)= obj->AtomInfo[a1].vdw*at_sphere_scale+sphere_add; /* radius */
+    }
+    mf++;
+  }
   
+  I->VariableAlphaFlag = variable_alpha;
   if(I->NC) 
     I->VC=ReallocForSure(I->VC,float,(v-I->VC));
   else
@@ -1381,18 +1390,18 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     /* sort the vertices by radius */
     if(I->NC && I->VC && (!spheroidFlag) && (sphere_mode>1)) {
       int *ix = Alloc(int,I->NC);
-      float *vc_tmp = Alloc(float, I->NC*7);
+      float *vc_tmp = Alloc(float, I->NC*8);
       Pickable *pk_tmp = Alloc(Pickable,I->NP+1);
       int a;
       if(vc_tmp&&pk_tmp&&ix) {
-        UtilCopyMem(vc_tmp, I->VC, sizeof(float)*7*I->NC);
+        UtilCopyMem(vc_tmp, I->VC, sizeof(float)*8*I->NC);
         UtilCopyMem(pk_tmp, I->R.P, sizeof(Pickable)*(I->NP+1));
         
         UtilSortIndex(I->NC,I->VC,ix,(UtilOrderFn*)RadiusOrder);
         
         UtilCopyMem(I->R.P, pk_tmp, sizeof(Pickable));
         for(a=0;a<I->NC;a++) {
-          UtilCopyMem(I->VC + (a*7), vc_tmp+(7*ix[a]), sizeof(float)*7);
+          UtilCopyMem(I->VC + (a*8), vc_tmp+(8*ix[a]), sizeof(float)*8);
           UtilCopyMem(I->R.P + (a+1), pk_tmp+ix[a]+1, sizeof(Pickable));
         }
       }
@@ -1409,73 +1418,86 @@ Rep *RepSphereNew(CoordSet *cs,int state)
       int n_dot = G->Sphere->Sphere[1]->nDot;
       int nc = I->NC;
       int *active = Alloc(int,2*n_dot);
-      MapType *map = MapNew(G,range,vc,nc,NULL);
-      I->VN = Alloc(float,I->NC*3);
-      if(map && I->VN) {
-        float dst;
-        register float *vv;
-        register int nbr_flag;
-        register int n_dot_active,*da;
-        register float cut_mult = -1.0F;
-        register float range2 = range * range;
-
-        MapSetupExpress(map);
-        v = vc + 3;
-        v0 = I->VN;
-        
-        for(a=1;a<n_dot;a++) {
-          float t_dot = dot_product3f(dot,dot+a*3);
-          if(cut_mult<t_dot)
-            cut_mult=t_dot;
+      float *v_tmp = Alloc(float,3*nc);
+      {
+        float *src = vc+4;
+        float *dst = v_tmp;
+        for(a=0;a<nc;a++) { /* create packed array of sphere centers */
+          *(dst++) = *(src++);
+          *(dst++) = *(src++);
+          *(dst++) = *(src++);
+          src+=5;
         }
-        for(a=0;a<nc;a++) {
-          nbr_flag = false;
-          MapLocus(map,v,&h,&k,&l);
-          da = active;
-          for(b=0;b<n_dot;b++) {
-            *(da++)=b*3;
-          }
-          n_dot_active = n_dot;
-          i=*(MapEStart(map,h,k,l));
-          if(i) {
-            j=map->EList[i++];
-            while(j>=0) {
-              if(j!=a) {
-                vv = vc + 3*j;
-                if(within3fret(vv,v,range,range2,v1,&dst)) {
-                  register float cutoff = dst * cut_mult;
-                  b = 0;
-                  while(b<n_dot_active) {
-                    vv = dot+active[b];
-                    if(dot_product3f(v1,vv)>cutoff) {
-                      n_dot_active--;
-                      active[b] = active[n_dot_active];
+        {
+          MapType *map = MapNew(G,range,v_tmp,nc,NULL); 
+          I->VN = Alloc(float,I->NC*3);
+          if(map && I->VN) {
+            float dst;
+            register float *vv;
+            register int nbr_flag;
+            register int n_dot_active,*da;
+            register float cut_mult = -1.0F;
+            register float range2 = range * range;
+            
+            MapSetupExpress(map);
+            v = vc + 4;
+            v0 = I->VN;
+            for(a=1;a<n_dot;a++) {
+              float t_dot = dot_product3f(dot,dot+a*3);
+              if(cut_mult<t_dot)
+                cut_mult=t_dot;
+            }
+            for(a=0;a<nc;a++) {
+              nbr_flag = false;
+              MapLocus(map,v,&h,&k,&l);
+              da = active;
+              for(b=0;b<n_dot;b++) {
+                *(da++)=b*3;
+              }
+              n_dot_active = n_dot;
+              i=*(MapEStart(map,h,k,l));
+              if(i) {
+                j=map->EList[i++];
+                while(j>=0) {
+                  if(j!=a) {
+                    vv = v_tmp + 3*j;
+                    if(within3fret(vv,v,range,range2,v1,&dst)) {
+                      register float cutoff = dst * cut_mult;
+                      b = 0;
+                      while(b<n_dot_active) {
+                        vv = dot+active[b];
+                        if(dot_product3f(v1,vv)>cutoff) {
+                          n_dot_active--;
+                          active[b] = active[n_dot_active];
+                        }
+                        b++;
+                      }
                     }
-                    b++;
                   }
+                  j=map->EList[i++];
                 }
               }
-              j=map->EList[i++];
+              if(!n_dot_active) {
+                v0[0]=0.0F;
+                v0[1]=0.0F;
+                v0[2]=1.0F;
+              } else {
+                zero3f(v0);
+                b = 0;
+                while(b<n_dot_active) {
+                  vv = dot+active[b];
+                  add3f(vv,v0,v0);
+                  b++;
+                }
+                normalize3f(v0);
+              }
+              v+=8;
+              v0+=3;
             }
           }
-          if(!n_dot_active) {
-            v0[0]=0.0F;
-            v0[1]=0.0F;
-            v0[2]=1.0F;
-          } else {
-            zero3f(v0);
-            b = 0;
-            while(b<n_dot_active) {
-              vv = dot+active[b];
-              add3f(vv,v0,v0);
-              b++;
-            }
-            normalize3f(v0);
-          }
-          v+=7;
-          v0+=3;
         }
       }
+      FreeP(v_tmp);
       MapFree(map);
       map = NULL;
       FreeP(active);
@@ -1490,9 +1512,14 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     
   } else {
 
-    I->cullFlag = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
-    if(I->cullFlag<0) {
-      I->cullFlag = !(obj->NCSet>1);
+    if(variable_alpha) 
+      I->cullFlag = false;
+    else {
+      I->cullFlag = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
+
+      if(I->cullFlag<0) {
+        I->cullFlag = !(obj->NCSet>1);
+      }
     }
     if(spheroidFlag || (!sp) ) I->cullFlag=false;
     if((I->cullFlag<2)&&
@@ -1503,7 +1530,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
        (SettingGet(G,cSetting_roving_spheres)!=0.0F))
       I->cullFlag=false;
     if(I->cullFlag && sp) {
-      I->V=(float*)mmalloc(sizeof(float)*I->NC*(sp->NVertTot*30)); /* double check 30 */
+      I->V=(float*)mmalloc(sizeof(float)*I->NC*(sp->NVertTot*31)); /* double check 31 */
       ErrChkPtr(G,I->V);
       
       I->NT=Alloc(int,cs->NIndex);
@@ -1518,9 +1545,9 @@ Rep *RepSphereNew(CoordSet *cs,int state)
       if(map) MapSetupExpress(map);
     } else {
       if(sp) 
-        I->V=(float*)mmalloc(sizeof(float)*I->NC*(3+sp->NVertTot*6));
+        I->V=(float*)mmalloc(sizeof(float)*I->NC*(4+sp->NVertTot*6));
       else
-        I->V=(float*)mmalloc(sizeof(float)*I->NC*6); /* one color, one vertex per spheres */
+        I->V=(float*)mmalloc(sizeof(float)*I->NC*7); /* one color, one alpha, one vertex per spheres */
       ErrChkPtr(G,I->V);
     }
     
@@ -1531,233 +1558,227 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     v=I->V;
     nt=I->NT;
     
-    for(a=0;a<cs->NIndex;a++)
-      {
-		a1 = cs->IdxToAtm[a];
-        ati1 = obj->AtomInfo+a1;
-        vis_flag = marked[a1];
+    for(a=0;a<cs->NIndex;a++) {
+      a1 = cs->IdxToAtm[a];
+      ati1 = obj->AtomInfo+a1;
+      vis_flag = marked[a1];
         
-        /* don't show backbone atoms if side_chain_helper is on */
+      /* don't show backbone atoms if side_chain_helper is on */
         
-		if(vis_flag)  {
-          float at_sphere_scale;
-          int at_sphere_color;
+      if(vis_flag)  {
+        float at_sphere_scale;
+        int at_sphere_color;
+        float at_transp;
 
-          AtomInfoGetSetting_f(G, ati1, cSetting_sphere_scale, sphere_scale, &at_sphere_scale);
-          AtomInfoGetSetting_color(G, ati1, cSetting_sphere_color, sphere_color, &at_sphere_color);
+        AtomInfoGetSetting_f(G, ati1, cSetting_sphere_scale, sphere_scale, &at_sphere_scale);
+        AtomInfoGetSetting_color(G, ati1, cSetting_sphere_color, sphere_color, &at_sphere_color);
+        if(AtomInfoGetSetting_f(G, ati1, cSetting_sphere_transparency, transp, &at_transp))
+          variable_alpha = true;
 
-          if(at_sphere_color==-1)
-            c1=*(cs->Color+a);
-          else
-            c1=at_sphere_color;
-          v0 = cs->Coord+3*a;
-          vdw = ati1->vdw*at_sphere_scale+sphere_add;
-          if(ColorCheckRamped(G,c1)) {
-            ColorGetRamped(G,c1,v0,v,state);
-            v+=3;
-          } else {
-            vc = ColorGet(G,c1);
-            *(v++)=*(vc++);
-            *(v++)=*(vc++);
-            *(v++)=*(vc++);
-          }
-            
-          if(I->cullFlag&&(!spheroidFlag)&&(sp)) {
-            for(b=0;b<sp->nDot;b++) /* Sphere culling mode - more strips, but many fewer atoms */
-              {
-                v1[0]=v0[0]+vdw*sp->dot[b][0];
-                v1[1]=v0[1]+vdw*sp->dot[b][1];
-                v1[2]=v0[2]+vdw*sp->dot[b][2];
-                  
-                MapLocus(map,v1,&h,&k,&l);
-                  
-                visFlag[b]=1;
-                i=*(MapEStart(map,h,k,l));
-                if(i) {
-                  j=map->EList[i++];
-                  while(j>=0) {
-                    a2 = cs->IdxToAtm[j];
-                    if(marked[a2]) {
-                      float at2_sphere_scale;
-                      AtomInfoType *ati2 = obj->AtomInfo + a2;
-                      AtomInfoGetSetting_f(G, ati2, 
-                                           cSetting_sphere_scale, sphere_scale, &at2_sphere_scale);
-
-                      if(j!=a)
-                        if(within3f(cs->Coord+3*j,v1,
-                                    ati2->vdw * at2_sphere_scale + sphere_add)) {
-                          visFlag[b]=0;
-                            break;
-                        }
-                    }
-                    j=map->EList[i++];
-                  }
-                }
-              }
-            q=sp->Sequence;
-            s=sp->StripLen;
-            for(b=0;b<sp->NStrip;b++) 
-              /* this is an attempt to fill in *some* of the cracks
-               * by checking to see if the center of the triangle is visible 
-               * IMHO - the increase in framerates is worth missing a triangle
-               * here or there, and the user can always turn off sphere culling */
-              {
-                q+=2;
-                for(c=2;c<(*s);c++) {
-                  q0=*q;
-                  q1=*(q-1);
-                  q2=*(q-2);
-                    
-                  if((!visFlag[q0])&&(!visFlag[q1])&&(!visFlag[q2]))
-
-                    v1[0]=v0[0]+vdw*sp->dot[q0][0];
-                  v1[1]=v0[1]+vdw*sp->dot[q0][1];
-                  v1[2]=v0[2]+vdw*sp->dot[q0][2];
-
-                  v1[0]+=v0[0]+vdw*sp->dot[q1][0];
-                  v1[1]+=v0[1]+vdw*sp->dot[q1][1];
-                  v1[2]+=v0[2]+vdw*sp->dot[q1][2];
-
-                  v1[0]+=v0[0]+vdw*sp->dot[q2][0];
-                  v1[1]+=v0[1]+vdw*sp->dot[q2][1];
-                  v1[2]+=v0[2]+vdw*sp->dot[q2][2];
-
-                  v1[0]/=3;
-                  v1[1]/=3;
-                  v1[2]/=3;
-
-                  flag=true;
-                  i=*(MapEStart(map,h,k,l));
-                  if(i) {
-                    j=map->EList[i++];
-                    while(j>=0) {
-                      a2 = cs->IdxToAtm[j];
-                      if(marked[a2]) {
-                        if(j!=a)
-                          if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale+sphere_add))
-                            {
-                              flag=false;
-                              break;
-                            }
-                      }
-                      j=map->EList[i++];
-                    }
-                  }
-                  if(flag)
-                    {
-                      visFlag[q0]=1;
-                      visFlag[q1]=1;
-                      visFlag[q2]=1;
-                    }
-                  q++;
-                }
-                s++;
-              }
-				
-            *(nt)=0; /* how many passes through the triangle renderer? */
-            q=sp->Sequence;
-            s=sp->StripLen;
-
-            for(b=0;b<sp->NStrip;b++)
-              {
-                restart=1.0; /* startin a new strip */
-                for(c=0;c<(*s);c++)
-                  {
-                    if(c>1) { /* on third vertex or better */
-                      q0=*q; /* get the indices of the triangle in this strip */
-                      q1=*(q-1);
-                      q2=*(q-2);
-                      if(visFlag[q0]||(visFlag[q1])||(visFlag[q2])) /* visible? */
-                        {
-                          *(v++) = restart; /* store continuing string flag */
-                          
-                          if(restart) { /* not continuing...this is a new strip */
-                            if(c&0x1) /* make sure strip starts off "right" */
-                              *(v-1)=2.0;
-                            *(v++)=sp->dot[q2][0]; /* normal */
-                            *(v++)=sp->dot[q2][1];
-                            *(v++)=sp->dot[q2][2];
-                            *(v++)=v0[0]+vdw*sp->dot[q2][0]; /* point */
-                            *(v++)=v0[1]+vdw*sp->dot[q2][1];
-                            *(v++)=v0[2]+vdw*sp->dot[q2][2];
-                            *(v++)=sp->dot[q1][0]; /* normal */
-                            *(v++)=sp->dot[q1][1];
-                            *(v++)=sp->dot[q1][2];
-                            *(v++)=v0[0]+vdw*sp->dot[q1][0]; /* point */
-                            *(v++)=v0[1]+vdw*sp->dot[q1][1];
-                            *(v++)=v0[2]+vdw*sp->dot[q1][2];
-                            *(v++)=sp->dot[q0][0]; /* normal */
-                            *(v++)=sp->dot[q0][1];
-                            *(v++)=sp->dot[q0][2];
-                            *(v++)=v0[0]+vdw*sp->dot[q0][0]; /* point */
-                            *(v++)=v0[1]+vdw*sp->dot[q0][1];
-                            *(v++)=v0[2]+vdw*sp->dot[q0][2];
-                          } else { /* continue strip */
-                            *(v++)=sp->dot[q0][0]; /* normal */
-                            *(v++)=sp->dot[q0][1];
-                            *(v++)=sp->dot[q0][2];
-                            *(v++)=v0[0]+vdw*sp->dot[q0][0]; /* point */
-                            *(v++)=v0[1]+vdw*sp->dot[q0][1];
-                            *(v++)=v0[2]+vdw*sp->dot[q0][2];
-                          }
-                          restart=0.0;
-                          (*nt)++;
-                        } else {
-                          restart = 1.0;/* next triangle is a new strip */
-                        }
-                    }
-                    q++;
-                  }
-                s++;
-              }
-          } else if(sp) {
-            q=sp->Sequence;
-            s=sp->StripLen;
-            if(spheroidFlag) {
-              for(b=0;b<sp->NStrip;b++)
-                {
-                  sphLen = cs->Spheroid+(sp->nDot*a1);
-                  sphNorm = cs->SpheroidNormal+(3*sp->nDot*a1);
-                  for(c=0;c<(*s);c++)
-                    {
-                      sphTmpN = sphNorm + 3*(*q);
-                      *(v++)=*(sphTmpN++);
-                      *(v++)=*(sphTmpN++);
-                      *(v++)=*(sphTmpN++);
-                      sphTmp = (*(sphLen+(*q)))*spheroid_scale;
-                      *(v++)=v0[0]+sphTmp*sp->dot[*q][0]; /* point */
-                      *(v++)=v0[1]+sphTmp*sp->dot[*q][1];
-                      *(v++)=v0[2]+sphTmp*sp->dot[*q][2];
-                      q++;
-                    }
-
-                  s++;
-                }
-            } else {
-              for(b=0;b<sp->NStrip;b++)
-                {
-                  for(c=0;c<(*s);c++)
-                    {
-                      *(v++)=sp->dot[*q][0]; /* normal */
-                      *(v++)=sp->dot[*q][1];
-                      *(v++)=sp->dot[*q][2];
-                      *(v++)=v0[0]+vdw*sp->dot[*q][0]; /* point */
-                      *(v++)=v0[1]+vdw*sp->dot[*q][1];
-                      *(v++)=v0[2]+vdw*sp->dot[*q][2];
-                      q++;
-                    }
-                  s++;
-                }
-            }
-          } else { /* if sp is null, then we're simply drawing points */
-            *(v++)=v0[0];
-            *(v++)=v0[1];
-            *(v++)=v0[2];
-          }
-          I->N++;
-          if(nt) nt++;
+        if(at_sphere_color==-1)
+          c1=*(cs->Color+a);
+        else
+          c1=at_sphere_color;
+        v0 = cs->Coord+3*a;
+        vdw = ati1->vdw*at_sphere_scale+sphere_add;
+        if(ColorCheckRamped(G,c1)) {
+          ColorGetRamped(G,c1,v0,v,state);
+          v+=3;
+        } else {
+          vc = ColorGet(G,c1);
+          *(v++)=*(vc++);
+          *(v++)=*(vc++);
+          *(v++)=*(vc++);
         }
+            
+        *(v++) = 1.0F - at_transp; /* alpha */
+
+        if(I->cullFlag&&(!spheroidFlag)&&(sp)) {
+          for(b=0;b<sp->nDot;b++) { /* Sphere culling mode - more strips, but many fewer atoms */
+            v1[0]=v0[0]+vdw*sp->dot[b][0];
+            v1[1]=v0[1]+vdw*sp->dot[b][1];
+            v1[2]=v0[2]+vdw*sp->dot[b][2];
+                  
+            MapLocus(map,v1,&h,&k,&l);
+                  
+            visFlag[b]=1;
+            i=*(MapEStart(map,h,k,l));
+            if(i) {
+              j=map->EList[i++];
+              while(j>=0) {
+                a2 = cs->IdxToAtm[j];
+                if(marked[a2]) {
+                  float at2_sphere_scale;
+                  AtomInfoType *ati2 = obj->AtomInfo + a2;
+                  AtomInfoGetSetting_f(G, ati2, 
+                                       cSetting_sphere_scale, sphere_scale, &at2_sphere_scale);
+
+                  if(j!=a)
+                    if(within3f(cs->Coord+3*j,v1,
+                                ati2->vdw * at2_sphere_scale + sphere_add)) {
+                      visFlag[b]=0;
+                      break;
+                    }
+                }
+                j=map->EList[i++];
+              }
+            }
+          }
+          q=sp->Sequence;
+          s=sp->StripLen;
+          for(b=0;b<sp->NStrip;b++) {
+            /* this is an attempt to fill in *some* of the cracks
+             * by checking to see if the center of the triangle is visible 
+             * IMHO - the increase in framerates is worth missing a triangle
+             * here or there, and the user can always turn off sphere culling */ 
+            q+=2;
+            for(c=2;c<(*s);c++) {
+              q0=*q;
+              q1=*(q-1);
+              q2=*(q-2);
+                    
+              if((!visFlag[q0])&&(!visFlag[q1])&&(!visFlag[q2]))
+
+                v1[0]=v0[0]+vdw*sp->dot[q0][0];
+              v1[1]=v0[1]+vdw*sp->dot[q0][1];
+              v1[2]=v0[2]+vdw*sp->dot[q0][2];
+
+              v1[0]+=v0[0]+vdw*sp->dot[q1][0];
+              v1[1]+=v0[1]+vdw*sp->dot[q1][1];
+              v1[2]+=v0[2]+vdw*sp->dot[q1][2];
+
+              v1[0]+=v0[0]+vdw*sp->dot[q2][0];
+              v1[1]+=v0[1]+vdw*sp->dot[q2][1];
+              v1[2]+=v0[2]+vdw*sp->dot[q2][2];
+
+              v1[0]/=3;
+              v1[1]/=3;
+              v1[2]/=3;
+
+              flag=true;
+              i=*(MapEStart(map,h,k,l));
+              if(i) {
+                j=map->EList[i++];
+                while(j>=0) {
+                  a2 = cs->IdxToAtm[j];
+                  if(marked[a2]) {
+                    if(j!=a)
+                      if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale+sphere_add)) {
+                        flag=false;
+                        break;
+                      }
+                  }
+                  j=map->EList[i++];
+                }
+              }
+              if(flag)
+                {
+                  visFlag[q0]=1;
+                  visFlag[q1]=1;
+                  visFlag[q2]=1;
+                }
+              q++;
+            }
+            s++;
+          }
+				
+          *(nt)=0; /* how many passes through the triangle renderer? */
+          q=sp->Sequence;
+          s=sp->StripLen;
+
+          for(b=0;b<sp->NStrip;b++) {
+            restart=1.0; /* startin a new strip */
+            for(c=0;c<(*s);c++) {
+              if(c>1) { /* on third vertex or better */
+                q0=*q; /* get the indices of the triangle in this strip */
+                q1=*(q-1);
+                q2=*(q-2);
+                if(visFlag[q0]||(visFlag[q1])||(visFlag[q2])) /* visible? */ {
+                  *(v++) = restart; /* store continuing string flag */
+                          
+                  if(restart) { /* not continuing...this is a new strip */
+                    if(c&0x1) /* make sure strip starts off "right" */
+                      *(v-1)=2.0;
+                    *(v++)=sp->dot[q2][0]; /* normal */
+                    *(v++)=sp->dot[q2][1];
+                    *(v++)=sp->dot[q2][2];
+                    *(v++)=v0[0]+vdw*sp->dot[q2][0]; /* point */
+                    *(v++)=v0[1]+vdw*sp->dot[q2][1];
+                    *(v++)=v0[2]+vdw*sp->dot[q2][2];
+                    *(v++)=sp->dot[q1][0]; /* normal */
+                    *(v++)=sp->dot[q1][1];
+                    *(v++)=sp->dot[q1][2];
+                    *(v++)=v0[0]+vdw*sp->dot[q1][0]; /* point */
+                    *(v++)=v0[1]+vdw*sp->dot[q1][1];
+                    *(v++)=v0[2]+vdw*sp->dot[q1][2];
+                    *(v++)=sp->dot[q0][0]; /* normal */
+                    *(v++)=sp->dot[q0][1];
+                    *(v++)=sp->dot[q0][2];
+                    *(v++)=v0[0]+vdw*sp->dot[q0][0]; /* point */
+                    *(v++)=v0[1]+vdw*sp->dot[q0][1];
+                    *(v++)=v0[2]+vdw*sp->dot[q0][2];
+                  } else { /* continue strip */
+                    *(v++)=sp->dot[q0][0]; /* normal */
+                    *(v++)=sp->dot[q0][1];
+                    *(v++)=sp->dot[q0][2];
+                    *(v++)=v0[0]+vdw*sp->dot[q0][0]; /* point */
+                    *(v++)=v0[1]+vdw*sp->dot[q0][1];
+                    *(v++)=v0[2]+vdw*sp->dot[q0][2];
+                  }
+                  restart=0.0;
+                  (*nt)++;
+                } else {
+                  restart = 1.0;/* next triangle is a new strip */
+                }
+              }
+              q++;
+            }
+            s++;
+          }
+        } else if(sp) { 
+          q=sp->Sequence;
+          s=sp->StripLen;
+          if(spheroidFlag) {
+            for(b=0;b<sp->NStrip;b++)  {
+              sphLen = cs->Spheroid+(sp->nDot*a1);
+              sphNorm = cs->SpheroidNormal+(3*sp->nDot*a1);
+              for(c=0;c<(*s);c++) {
+                sphTmpN = sphNorm + 3*(*q);
+                *(v++)=*(sphTmpN++);
+                *(v++)=*(sphTmpN++);
+                *(v++)=*(sphTmpN++);
+                sphTmp = (*(sphLen+(*q)))*spheroid_scale;
+                *(v++)=v0[0]+sphTmp*sp->dot[*q][0]; /* point */
+                *(v++)=v0[1]+sphTmp*sp->dot[*q][1];
+                *(v++)=v0[2]+sphTmp*sp->dot[*q][2];
+                q++;
+              }
+
+              s++;
+            }
+          } else {
+            for(b=0;b<sp->NStrip;b++) {
+              for(c=0;c<(*s);c++) {
+                *(v++)=sp->dot[*q][0]; /* normal */
+                *(v++)=sp->dot[*q][1];
+                *(v++)=sp->dot[*q][2];
+                *(v++)=v0[0]+vdw*sp->dot[*q][0]; /* point */
+                *(v++)=v0[1]+vdw*sp->dot[*q][1];
+                *(v++)=v0[2]+vdw*sp->dot[*q][2];
+                q++;
+              }
+              s++;
+            }
+          }
+        } else { /* if sp is null, then we're simply drawing points */
+          *(v++)=v0[0];
+          *(v++)=v0[1];
+          *(v++)=v0[2];
+        }
+        I->N++;
+        if(nt) nt++;
       }
+    }
   }  
   
   if(sp) { /* don't do this if we're trying to conserve RAM */
@@ -1770,30 +1791,25 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     obj=cs->Obj;
     ai2=obj->AtomInfo;
     if(sphere_color==-1) 
-      for(a=0;a<cs->NIndex;a++)
-        {
-          *(lv++) = marked[cs->IdxToAtm[a]];
-          *(lc++) = *(cc++);
-        }
+      for(a=0;a<cs->NIndex;a++) {
+        *(lv++) = marked[cs->IdxToAtm[a]];
+        *(lc++) = *(cc++);
+      }
     else 
-      for(a=0;a<cs->NIndex;a++)
-        {
-          *(lv++) = marked[cs->IdxToAtm[a]];
-          *(lc++) = sphere_color;
-        }
+      for(a=0;a<cs->NIndex;a++) {
+        *(lv++) = marked[cs->IdxToAtm[a]];
+        *(lc++) = sphere_color;
+      }
   }
 
   if(I->V) {
-    if(I->N) 
-      {
-		I->V=ReallocForSure(I->V,float,(v-I->V));
-		if(I->NT) I->NT=ReallocForSure(I->NT,int,(nt-I->NT));
-      }
-    else
-      {
-		I->V=ReallocForSure(I->V,float,1);
-		if(I->NT) I->NT=ReallocForSure(I->NT,int,1);
-      }
+    if(I->N) {
+      I->V=ReallocForSure(I->V,float,(v-I->V));
+      if(I->NT) I->NT=ReallocForSure(I->NT,int,(nt-I->NT));
+    } else {
+      I->V=ReallocForSure(I->V,float,1);
+      if(I->NT) I->NT=ReallocForSure(I->NT,int,1);
+    }
   }
   FreeP(marked);
   FreeP(visFlag);

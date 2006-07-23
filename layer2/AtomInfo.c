@@ -40,6 +40,19 @@ struct _CAtomInfo {
   OVOneToAny *ActiveIDs;
 };
 
+int AtomInfoCheckSetting(PyMOLGlobals *G, AtomInfoType *ai, int setting_id)
+{  
+  if(!ai->has_setting) {
+    return 0;
+  } else {
+    if(!SettingAtomicCheck(G,ai->unique_id,setting_id)) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+}
+
 int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective)
 {
   if(!ai->has_setting) {
@@ -97,6 +110,18 @@ int AtomInfoGetSetting_color(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, 
   }
 }
 
+int AtomInfoCheckBondSetting(PyMOLGlobals *G, BondType *bi, int setting_id)
+{  
+  if(!bi->has_setting) {
+    return 0;
+  } else {
+    if(!SettingAtomicCheck(G,bi->unique_id,setting_id)) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+}
 
 int AtomInfoGetBondSetting_b(PyMOLGlobals *G, BondType *bi, int setting_id, int current, int *effective)
 {

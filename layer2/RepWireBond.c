@@ -29,7 +29,7 @@ typedef struct RepWireBond {
   float *V,*VP;
   /*  Pickable *P;*/
   int N,NP;
-  float Width;
+  float Width,*VarWidth;
   float Radius;
 } RepWireBond;
 
@@ -341,6 +341,7 @@ static void RepAromatic(float *v1,float *v2,int *other,
 
 void RepWireBondFree(RepWireBond *I)
 {
+  FreeP(I->VarWidth);
   FreeP(I->VP);
   FreeP(I->V);
   RepPurge(&I->R);
@@ -352,7 +353,8 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
   PyMOLGlobals *G=I->R.G;
   CRay *ray = info->ray;
   Picking **pick = info->pick;
-  float *v=I->V;
+  float *v=I->V,*vw=I->VarWidth;
+  float last_width = -1.0F;
   int c=I->N;
   unsigned int i,j;
   Pickable *p;
@@ -360,21 +362,29 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
   if(ray) {
 
     float radius;
-    
+
     if(I->Radius<=0.0F) {
       radius = ray->PixelRadius*I->Width/2.0F;
     } else {
+      vw = NULL;
       radius = I->Radius;
     }
     
-	 v=I->V;
-	 c=I->N;
-	 
-	 while(c--) {
+    v=I->V;
+    c=I->N;
+    
+    while(c--) {
+      if(vw) {
+        if(last_width!=*vw) {
+          last_width = *vw;
+          radius = ray->PixelRadius * last_width/2.0F; 
+        }
+        vw++;
+      }
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
       ray->fSausage3fv(ray,v+3,v+6,radius,v,v);
-		v+=9;
-	 }
+      v+=9;
+    }
 
   } else if(G->HaveGUI && G->ValidContext) {
     register int nvidia_bugs = (int)SettingGet(G,cSetting_nvidia_bugs);
@@ -448,6 +458,15 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
         glDisable(GL_LIGHTING); 
         SceneResetNormal(G,true);
         while(c--) {
+
+          if(vw) {
+            if(last_width!=*vw) {
+              last_width = *vw;
+              glLineWidth(last_width);
+            }
+            vw++;
+          }
+
           glBegin(GL_LINES);	 
           glColor3fv(v);
           v+=3;
@@ -485,6 +504,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
   int maxSegment = 0;
   int maxBond = 0;
   float tmpColor[3];
+  float line_width;
   int valence_flag = false;
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
@@ -494,6 +514,10 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
   int na_mode;
   int *marked = NULL;
   int valence_found = false;
+  int variable_width = false;
+  int n_line_width = 0;
+  int line_color;
+
   OOAlloc(G,RepWireBond);
   obj = cs->Obj;
 
@@ -531,6 +555,8 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                                           cSetting_ribbon_side_chain_helper);
   line_stick_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                    cSetting_line_stick_helper);
+  line_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_line_color);
+  line_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_width);
 
   if(line_stick_helper && (SettingGet_f(G,cs->Setting, obj->Obj.Setting,
                                         cSetting_stick_transparency)>R_SMALL4))
@@ -558,6 +584,8 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
       a2=cs->AtmToIdx[b2];
     }
     if((a1>=0)&&(a2>=0)) {
+      if((!variable_width) && AtomInfoCheckBondSetting(G,b,cSetting_line_width))
+        variable_width = true;
       AtomInfoGetBondSetting_b(G,b,cSetting_valence,valence_flag,&bd_valence_flag);
       if(bd_valence_flag) {
         valence_found = true;
@@ -579,14 +607,14 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
 
   I->R.fRender=(void (*)(struct Rep *, RenderInfo *info))RepWireBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepWireBondFree;
-  I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_width);
+  I->Width = line_width;
   I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_radius);
-
 
   I->N=0;
   I->NP=0;
   I->V=NULL;
   I->VP=NULL;
+  I->VarWidth=NULL;
   I->R.P=NULL;
   I->R.fRecolor=NULL;
   I->R.context.object = (void*)obj;
@@ -597,7 +625,12 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
     if(valence_found) /* build list of up to 2 connected atoms for each atom */
       other=ObjectMoleculeGetPrioritizedOtherIndexList(obj,cs);
     
+    if(variable_width) {
+      I->VarWidth = Alloc(float,maxSegment);
+    }
+        
     I->V=(float*)mmalloc(sizeof(float)*maxSegment*9);
+    
     ErrChkPtr(G,I->V);
 
     if(cartoon_side_chain_helper || ribbon_side_chain_helper) {
@@ -688,14 +721,31 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
           }
 
         if(s1||s2) {
-
+          float bd_line_width;
           int bd_valence_flag;
+          int bd_line_color;
 
           AtomInfoGetBondSetting_b(G,b,cSetting_valence,valence_flag,&bd_valence_flag);
+          AtomInfoGetBondSetting_color(G,b,cSetting_line_color,line_color,&bd_line_color);
           
-          c1=*(cs->Color+a1);
-          c2=*(cs->Color+a2);
-					 
+          if(variable_width) {
+            AtomInfoGetBondSetting_f(G,b,cSetting_line_width,line_width,&bd_line_width);
+          }
+
+          if(bd_line_color<0) {
+            if(bd_line_color==cColorObject) {
+              c1 = (c2 = obj->Obj.Color);
+            } else if(ColorCheckRamped(G,bd_line_color)) {
+              c1 = (c2 = bd_line_color);            
+            } else {
+              c1=*(cs->Color+a1);
+              c2=*(cs->Color+a2);
+            }
+          } else {
+            c1 = (c2 = bd_line_color);
+          }
+        
+
           v1 = cs->Coord+3*a1;
           v2 = cs->Coord+3*a2;
 					 
@@ -937,12 +987,24 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                       
             }
           }
+         
+          /* record effective line_widths for these segments */
+
+          if(variable_width) {
+            while(n_line_width<I->N) {
+              I->VarWidth[n_line_width] = bd_line_width;
+              n_line_width++;
+            }
+          }
         }
       }
       b++;
     }
     
     I->V = ReallocForSure(I->V,float,(v-I->V));
+    if(I->VarWidth) {
+      I->VarWidth = ReallocForSure(I->VarWidth,float,n_line_width);
+    }
 
     /* now create pickable verson */
 

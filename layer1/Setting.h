@@ -74,6 +74,7 @@ void SettingAtomicSet_f(PyMOLGlobals *G,int atom_id,int setting_id,float value);
 void SettingAtomicSet_color(PyMOLGlobals *G,int atom_id,int setting_id,int value);
 void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int setting_type, void *value);
 
+int SettingAtomicCheck(PyMOLGlobals *G,int atom_id,int setting_id);
 int SettingAtomicGet_b(PyMOLGlobals *G,int atom_id,int setting_id,int *value);
 int SettingAtomicGet_i(PyMOLGlobals *G,int atom_id,int setting_id,int *value);
 int SettingAtomicGet_f(PyMOLGlobals *G,int atom_id,int setting_id,float *value);
@@ -708,6 +709,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_mouse_wheel_scale          523
 #define cSetting_nonbonded_transparency     524
 #define cSetting_ray_spec_local             525
+#define cSetting_line_color                 526
 /* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -716,7 +718,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       526
+#define cSetting_INIT                       527
 
 #endif
 

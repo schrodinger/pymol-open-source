@@ -2620,61 +2620,63 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
         }
       }
       if(!extrudeFlag) {
-        if((a<(nAt-1))&&(*s==*(s+1))) /* working in the same segment... */
-          {
-            atom_index1 = cs->IdxToAtm[*atp];
-            atom_index2 = cs->IdxToAtm[*(atp+1)];
-            c1=*(cs->Color+*atp);
-            c2=*(cs->Color+*(atp+1));
-            if(cartoon_color>=0) {
-              c1 = (c2 = cartoon_color);
-            }
-              
-            if(discrete_colors) {
-              if(n_p==0) {
-                if(contigFlag) {
-                  if(cur_car!=cCartoon_loop)
-                    c2=c1;
-                  else {
-                    if ((*cc+1)==cur_car)
-                      c2=c1;
-                    else
-                      c1=c2;
-                  }
-                } else if((cur_car==cCartoon_loop)&&
-                          (*(cc+1)!=cCartoon_loop)) {
-                  c2=c1;
-                }
-              } else {
-                if((cur_car==cCartoon_loop)&&
-                   (*(cc+1)!=cCartoon_loop)) {
-                  c2=c1;
-                }
-              }/* not contig */
-              
-            }
-            
-            if((*(cc)==*(cc+1))&&(c1!=c2)) 
-              uniform_color=false;
-            if(last_color>=0) {
-              if(c1!=last_color)
-                uniform_color=false;
-            }
-            last_color=c1;
-
-            v0 = ColorGet(G,c1);
-            *(vc++)=*(v0++);
-            *(vc++)=*(v0++);
-            *(vc++)=*(v0++);
-            *(vi++)=atom_index1;
-
-            v0 = ColorGet(G,c2); /* kludge */
-            *(vc  )=*(v0++);
-            *(vc+1)=*(v0++);
-            *(vc+2)=*(v0++);
-            *(vi  )=atom_index2;
+        if((a<(nAt-1))&&(*s==*(s+1))) { /* working in the same segment... */
+          atom_index1 = cs->IdxToAtm[*atp];
+          atom_index2 = cs->IdxToAtm[*(atp+1)];
+          c1=*(cs->Color+*atp);
+          c2=*(cs->Color+*(atp+1));
+          
+          if(cartoon_color>=0) {
+            c1 = (c2 = cartoon_color);
           }
-        else {
+
+          AtomInfoGetSetting_color(G,obj->AtomInfo + atom_index1, cSetting_cartoon_color, c1, &c1);
+          AtomInfoGetSetting_color(G,obj->AtomInfo + atom_index2, cSetting_cartoon_color, c2, &c2);
+          
+          if(discrete_colors) {
+            if(n_p==0) {
+              if(contigFlag) {
+                if(cur_car!=cCartoon_loop)
+                  c2=c1;
+                else {
+                  if ((*cc+1)==cur_car)
+                    c2=c1;
+                  else
+                    c1=c2;
+                }
+              } else if((cur_car==cCartoon_loop)&&
+                        (*(cc+1)!=cCartoon_loop)) {
+                c2=c1;
+              }
+            } else {
+              if((cur_car==cCartoon_loop)&&
+                 (*(cc+1)!=cCartoon_loop)) {
+                c2=c1;
+              }
+            }/* not contig */
+            
+          }
+          
+          if((*(cc)==*(cc+1))&&(c1!=c2)) 
+            uniform_color=false;
+          if(last_color>=0) {
+            if(c1!=last_color)
+              uniform_color=false;
+          }
+          last_color=c1;
+          
+          v0 = ColorGet(G,c1);
+          *(vc++)=*(v0++);
+          *(vc++)=*(v0++);
+          *(vc++)=*(v0++);
+          *(vi++)=atom_index1;
+          
+          v0 = ColorGet(G,c2); /* kludge */
+          *(vc  )=*(v0++);
+          *(vc+1)=*(v0++);
+          *(vc+2)=*(v0++);
+          *(vi  )=atom_index2;
+        } else {
           vc+=3; /* part of kludge */
           vi++;
         }
@@ -2714,11 +2716,14 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
         }
         
         if(n_p>1) {
+          atom_index1 = cs->IdxToAtm[*(atp-1)];
           c1=*(cs->Color+*(atp-1));
 
           if(cartoon_color>=0) {
             c1 = cartoon_color;
           }
+          
+          AtomInfoGetSetting_color(G,obj->AtomInfo + atom_index1, cSetting_cartoon_color, c1, &c1);
 
           if(n_p<5) {
             copy3f(ex->p,t3);
@@ -2897,6 +2902,9 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
               if(cartoon_color>=0) {
                 c1 = (c2 = cartoon_color);
               }
+
+              AtomInfoGetSetting_color(G,obj->AtomInfo + atom_index1, cSetting_cartoon_color, c1, &c1);
+              AtomInfoGetSetting_color(G,obj->AtomInfo + atom_index2, cSetting_cartoon_color, c2, &c2);
 
               if(nuc_flag[*atp]||nuc_flag[*(atp+1)]) { /* this is a nucleic acid ribbon */
                 if(nucleic_color>=0) {
