@@ -559,6 +559,7 @@ if __name__=='pymol.setting':
         mouse_wheel_scale         = (523,'')
         nonbonded_transparency    = (524,'')
         ray_spec_local            = (525,'')
+        line_color                = (526,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
@@ -913,6 +914,8 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         selection1 = str(selection1)
+        if selection2 == None:
+            selection2 = selection1
         selection2 = str(selection2)
         if log:
             if(len(selection2)):

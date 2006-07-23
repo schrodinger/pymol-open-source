@@ -75,6 +75,25 @@ static void SettingAtomicExpand(PyMOLGlobals *G)
   }
 }
 
+int SettingAtomicCheck(PyMOLGlobals *G,int atom_id,int setting_id)
+{
+  register CSettingAtomic *I = G->SettingAtomic;
+  OVreturn_word result;
+  if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,atom_id)) ) {
+    int offset = result.word;
+    SettingAtomicEntry *entry;
+
+    while(offset) {
+      entry = I->entry + offset;
+      if(entry->setting_id == setting_id) {
+        return 1;
+      }
+      offset = entry->next;
+    }
+  }
+  return 0;
+}
+
 static int SettingAtomicGetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id, int setting_type, void *value)
 {
   register CSettingAtomic *I = G->SettingAtomic;
@@ -1694,6 +1713,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
 	 break;
   case cSetting_line_width: /* auto-disable smooth lines if line width > 1 */
     /*    SettingSet(G,cSetting_line_smooth,0);  NO LONGER */
+  case cSetting_line_color:
   case cSetting_line_radius:
     ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
     ExecutiveInvalidateRep(G,inv_sele,cRepNonbonded,cRepInvRep);
@@ -1736,6 +1756,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_surface_color:
+  case cSetting_transparency:
   case cSetting_surface_ramp_above_mode:
     ExecutiveInvalidateRep(G,inv_sele,cRepSurface,cRepInvColor);
     SceneChanged(G);
@@ -1888,7 +1909,6 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneInvalidate(G);
     break;
   case cSetting_line_smooth:
-  case cSetting_transparency:
   case cSetting_ortho:
   case cSetting_reflect:
   case cSetting_direct:
@@ -3080,7 +3100,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_mouse_wheel_scale,1.0F);
   set_f(I,cSetting_nonbonded_transparency,0.0F);
   set_b(I,cSetting_ray_spec_local, 0);
-
+  set_color(I,cSetting_line_color, "-1");
 }
 
 

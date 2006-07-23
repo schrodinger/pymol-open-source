@@ -184,11 +184,14 @@ int AtomInfoInit(PyMOLGlobals *G);
 void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai);
 void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst);
 
+int AtomInfoCheckSetting(PyMOLGlobals *G, AtomInfoType *ai, int setting_id);
 int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
 int AtomInfoGetSetting_i(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
 int AtomInfoGetSetting_f(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, float current, float *effective);
 int AtomInfoGetSetting_color(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
 
+
+int AtomInfoCheckBondSetting(PyMOLGlobals *G, BondType *bi, int setting_id);
 int AtomInfoGetBondSetting_b(PyMOLGlobals *G, BondType *ai, int setting_id, int current, int *effective);
 int AtomInfoGetBondSetting_i(PyMOLGlobals *G, BondType *ai, int setting_id, int current, int *effective);
 int AtomInfoGetBondSetting_f(PyMOLGlobals *G, BondType *ai, int setting_id, float current, float *effective);

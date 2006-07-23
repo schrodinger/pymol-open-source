@@ -125,6 +125,12 @@ void RayTriangle3fv(CRay *I,
 						  float *n1,float *n2,float *n3,
 						  float *c1,float *c2,float *c3);
 
+void RayTriangleTrans3fv(CRay *I,
+                         float *v1,float *v2,float *v3,
+                         float *n1,float *n2,float *n3,
+                         float *c1,float *c2,float *c3,
+                         float  t1,float  t2,float  t3);
+
 void RayApplyMatrix33( unsigned int n, float3 *q, const float m[16],
 							float3 *p );
 void RayApplyMatrixInverse33( unsigned int n, float3 *q, const float m[16],
@@ -2616,7 +2622,8 @@ int RayTraceThread(CRayThreadInfo *T)
                          if(r1.prim->type==cPrimTriangle) {
                           
                            BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
-                          
+                           r1.trans = (float)pow(r1.trans,inv_trans_cont);                         
+ 
                            if(r1.prim->ramped) {
                              RayPrimGetColorRamped(I->G, I->ModelView,&r1,fc);
                            }
@@ -4564,6 +4571,7 @@ void RayWobble(CRay *I,int mode,float *v)
 /*========================================================================*/
 void RayTransparentf(CRay *I,float v)
 {
+  if(v>1.0F) v=1.0F;
   I->Trans=v;
 }
 
@@ -5003,6 +5011,9 @@ void RayTriangle3fv(CRay *I,
 
   p->type = cPrimTriangle;
   p->trans=I->Trans;
+  p->tr[0]=I->Trans;
+  p->tr[1]=I->Trans;
+  p->tr[2]=I->Trans;
   p->wobble=I->Wobble;
   p->ramped = ((c1[0]<0.0F)||(c2[0]<0.0F)||(c3[0]<0.0F));
   /*
@@ -5117,6 +5128,24 @@ void RayTriangle3fv(CRay *I,
   I->NPrimitive++;
 
 }
+void RayTriangleTrans3fv(CRay *I,
+                         float *v1,float *v2,float *v3,
+                         float *n1,float *n2,float *n3,
+                         float *c1,float *c2,float *c3,
+                         float  t1,float  t2,float  t3)
+{
+  CPrimitive *p;
+
+  RayTriangle3fv(I,v1,v2,v3,n1,n2,n3,c1,c2,c3);
+
+  p = I->Primitive + I->NPrimitive - 1;
+  
+  p->tr[0] = t1;
+  p->tr[1] = t2;
+  p->tr[2] = t3;
+
+}
+
 /*========================================================================*/
 CRay *RayNew(PyMOLGlobals *G,int antialias)
 {
@@ -5150,6 +5179,7 @@ CRay *RayNew(PyMOLGlobals *G,int antialias)
   I->fCustomCylinder3fv=RayCustomCylinder3fv;
   I->fSausage3fv=RaySausage3fv;
   I->fTriangle3fv=RayTriangle3fv;
+  I->fTriangleTrans3fv=RayTriangleTrans3fv;
   I->fCharacter=RayCharacter;
   I->fInteriorColor3fv=RayInteriorColor3fv;
   I->fWobble=RayWobble;

@@ -1025,6 +1025,8 @@ void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc,int perspective
    fc1 = (lprim->c2[1]*r->tri1)+(lprim->c3[1]*r->tri2)+(lprim->c1[1]*w2);
    fc2 = (lprim->c2[2]*r->tri1)+(lprim->c3[2]*r->tri2)+(lprim->c1[2]*w2);
 
+   r->trans = (lprim->tr[1]*r->tri1)+(lprim->tr[2]*r->tri2)+(lprim->tr[0]*w2);
+
    scale3f(n0+3, r->tri1, r->surfnormal);
    scale3f(n0+6, r->tri2, vt1);
    add3f(vt1, r->surfnormal, r->surfnormal);

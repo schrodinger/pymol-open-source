@@ -85,6 +85,11 @@ struct _CRay {
 							  float *v1,float *v2,float *v3,
 							  float *n1,float *n2,float *n3,
 							  float *c1,float *c2,float *c3);
+  void (*fTriangleTrans3fv)( CRay *ray,
+                             float *v1,float *v2,float *v3,
+                             float *n1,float *n2,float *n3,
+                             float *c1,float *c2,float *c3,
+                             float  t1,float  t2,float  t3);
   void (*fWobble)( CRay *ray,int mode,float *par);
   void (*fTransparentf)( CRay *ray,float t);
   void (*fCharacter)( CRay *ray,int char_id);
