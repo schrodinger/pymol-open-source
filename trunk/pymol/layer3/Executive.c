@@ -7599,6 +7599,175 @@ int *ExecutiveGetG3d(PyMOLGlobals *G)
   return result;
 }
 /*========================================================================*/
+int  ExecutiveSetBondSetting(PyMOLGlobals *G,int index,PyObject *tuple,
+                             char *s1,char *s2,
+                             int state,int quiet,int updates)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
+  register CExecutive *I=G->Executive;
+  SpecRec *rec = NULL;
+  ObjectMolecule *obj = NULL;
+  int sele1,sele2;
+  SettingName name;
+  int unblock;
+  int ok =true;
+  int side_effects = false;
+  int value_storage, *value_ptr;
+  int value_type = 0;
+  PRINTFD(G,FB_Executive)
+    " ExecutiveSetBondSetting: entered. '%s' '%s'\n",s1,s2
+    ENDFD;
+  unblock = PAutoBlock();
+  sele1 = SelectorIndexByName(G,s1);
+  sele2 = SelectorIndexByName(G,s2);
+  value_ptr = &value_storage;
+  if((sele1>=0)&&(sele2>=0)) {
+    int have_value=false;
+    int type  = PyInt_AsLong(PyTuple_GetItem(tuple,0));
+    PyObject *value = PyTuple_GetItem(tuple,1);
+    if(value) {
+      switch(type) {
+      case cSetting_boolean:
+        *(value_ptr) = PyInt_AsLong(PyTuple_GetItem(value,0));
+        value_type = cSetting_boolean;
+        have_value = true;
+        break;
+      case cSetting_int:
+        *(value_ptr) = PyInt_AsLong(PyTuple_GetItem(value,0));
+        value_type = cSetting_int;
+        have_value = true;
+        break;
+      case cSetting_float:
+        *(float*)value_ptr = (float)PyFloat_AsDouble(PyTuple_GetItem(value,0));
+        value_type = cSetting_float;
+        have_value = true;
+        break;
+      case cSetting_color:
+        {
+          int color_index=ColorGetIndex(G,PyString_AsString(PyTuple_GetItem(value,0)));
+          if((color_index<0)&&(color_index>cColorExtCutoff))
+            color_index = 0;
+          *(value_ptr) = color_index;
+          value_type = cSetting_color;
+          have_value = true;
+        }
+        break;
+      }
+      if(have_value) {
+        rec = NULL;
+        while((ListIterate(I->Spec,rec,next))) {
+          if((rec->type==cExecObject) && (rec->obj->type==cObjectMolecule)) {
+            obj=(ObjectMolecule*)rec->obj;
+            {
+              int a,nBond = obj->NBond;
+              int nSet = 0;
+              BondType *bi = obj->Bond;
+              AtomInfoType *ai1,*ai2, *ai = obj->AtomInfo;
+              for(a=0;a<nBond;a++) {
+                ai1 = ai + bi->index[0];
+                ai2 = ai + bi->index[1];
+                if((SelectorIsMember(G,ai1->selEntry,sele1) &&
+                    SelectorIsMember(G,ai2->selEntry,sele2))||
+                   (SelectorIsMember(G,ai2->selEntry,sele1) &&
+                    SelectorIsMember(G,ai1->selEntry,sele2))) {
+                  
+                  int uid = AtomInfoCheckUniqueBondID(G,bi);
+                  bi->has_setting = true;
+                  SettingAtomicSetTypedValue(G,uid,index,value_type,value_ptr);
+                  if(updates)
+                    side_effects=true;
+                  nSet++;
+                }
+                bi++;
+              }
+              if(!quiet) {
+                SettingGetName(G,index,name);
+                PRINTF
+                  " Setting: %s set for %d bonds in object \"%s\".\n",
+                  name,nSet, obj->Obj.Name
+                  ENDF(G);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  if(side_effects) {
+    SettingGenerateSideEffects(G,index,s1,state);
+    /*    SettingGenerateSideEffects(G,index,s2,state);*/
+  }
+
+  PAutoUnblock(unblock);
+  return(ok);
+#endif
+}
+/*========================================================================*/
+int  ExecutiveUnsetBondSetting(PyMOLGlobals *G,int index,char *s1,char *s2,
+                               int state,int quiet,int updates)
+{
+  register CExecutive *I=G->Executive;
+  SpecRec *rec = NULL;
+  ObjectMolecule *obj = NULL;
+  SettingName name;
+  int unblock;
+  int ok =true;
+  int side_effects = false;
+  int sele1,sele2;
+  PRINTFD(G,FB_Executive)
+    " ExecutiveSetSetting: entered. sele '%s' '%s'\n",s1,s2
+    ENDFD;
+  unblock = PAutoBlock();
+  sele1 = SelectorIndexByName(G,s1);
+  sele2 = SelectorIndexByName(G,s2);
+  if((sele1>=0)&&(sele2>=0)) {
+    rec = NULL;
+    while((ListIterate(I->Spec,rec,next))) {
+      if((rec->type==cExecObject) && (rec->obj->type==cObjectMolecule)) {
+        obj=(ObjectMolecule*)rec->obj;
+        {
+          int a,nBond = obj->NBond;
+          int nSet = 0;
+          BondType *bi = obj->Bond;
+          AtomInfoType *ai1,*ai2, *ai = obj->AtomInfo;
+          for(a=0;a<nBond;a++) {
+            ai1 = ai + bi->index[0];
+            ai2 = ai + bi->index[1];
+            if((SelectorIsMember(G,ai1->selEntry,sele1) &&
+                SelectorIsMember(G,ai2->selEntry,sele2))||
+               (SelectorIsMember(G,ai2->selEntry,sele1) &&
+                SelectorIsMember(G,ai1->selEntry,sele2))) {
+              int uid = AtomInfoCheckUniqueBondID(G,bi);
+              bi->has_setting = true;
+              SettingAtomicSetTypedValue(G,uid,index,cSetting_blank,NULL);
+              if(updates)
+                side_effects=true;
+              nSet++;
+            }
+            bi++;
+          }
+          if(!quiet) {
+            SettingGetName(G,index,name);
+            PRINTF
+              " Setting: %s unset for %d bonds in object \"%s\".\n",
+              name, nSet, rec->obj->Name
+              ENDF(G);
+          }
+        }
+      }
+    }
+  }
+  if(side_effects) {
+    SettingGenerateSideEffects(G,index,s1,state);
+    /*    SettingGenerateSideEffects(G,index,s2,state);*/
+  }
+  PAutoUnblock(unblock);
+  return(ok);
+}
+/*========================================================================*/
 int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
                          int state,int quiet,int updates)
 {
@@ -8362,7 +8531,6 @@ int  ExecutiveSetObjSettingFromString(PyMOLGlobals *G,
   }
   return(ok);
 }
-
 /*========================================================================*/
 int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
                          int state,int quiet,int updates)

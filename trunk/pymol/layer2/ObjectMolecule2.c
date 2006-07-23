@@ -2805,12 +2805,14 @@ static PyObject *ObjectMoleculeBondAsPyList(ObjectMolecule *I)
   result = PyList_New(I->NBond);  
   bond = I->Bond;
   for(a=0;a<I->NBond;a++) {
-    bond_list=PyList_New(5);
+    bond_list=PyList_New(7);
     PyList_SetItem(bond_list,0,PyInt_FromLong(bond->index[0]));
     PyList_SetItem(bond_list,1,PyInt_FromLong(bond->index[1]));
     PyList_SetItem(bond_list,2,PyInt_FromLong(bond->order));
     PyList_SetItem(bond_list,3,PyInt_FromLong(bond->id));
     PyList_SetItem(bond_list,4,PyInt_FromLong(bond->stereo));
+    PyList_SetItem(bond_list,5,PyInt_FromLong(bond->unique_id));
+    PyList_SetItem(bond_list,6,PyInt_FromLong(bond->has_setting));
     PyList_SetItem(result,a,bond_list);
     bond++;
   }
@@ -2824,6 +2826,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule *I,PyObject *list)
 {
   int ok=true;
   int a;
+  int stereo,ll = 0;
   PyObject *bond_list=NULL;
   BondType *bond;
   if(ok) ok=PyList_Check(list);  
@@ -2832,11 +2835,19 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule *I,PyObject *list)
   for(a=0;a<I->NBond;a++) {
     if(ok) bond_list = PyList_GetItem(list,a);
     if(ok) ok = PyList_Check(bond_list);
+    if(ok) ll = PyList_Size(bond_list);
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,0),&bond->index[0]);
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,1),&bond->index[1]);
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,2),&bond->order);
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,3),&bond->id);
-    if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,4),&bond->stereo);
+    if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,4),&stereo);
+    if(ok) bond->stereo=(short int)stereo;
+    if(ok&&(ll>5)) {
+      int has_setting;
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,5),&bond->unique_id);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,6),&has_setting);
+      if(ok) bond->has_setting = (short int)has_setting;
+    }
     bond++;
   }
       PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Debugging)

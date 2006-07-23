@@ -123,8 +123,9 @@ typedef struct {
   int index[2];
   int order;
   int id;
-  int stereo; /* to preserve 2D rep */
   int unique_id; 
+  short int stereo; /* to preserve 2D rep */
+  short int has_setting; /* setting based on unique_id */
 } BondType;
 
 typedef struct AtomInfoType {
@@ -167,7 +168,7 @@ typedef struct AtomInfoType {
   signed char protons;
   signed char hb_donor; 
   signed char hb_acceptor;
-  signed char has_atomic_setting; /* setting based on unique_id */
+  signed char has_setting; /* setting based on unique_id */
   Chain chain;
   Chain alt;
   ResIdent resi;
@@ -187,6 +188,11 @@ int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int 
 int AtomInfoGetSetting_i(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
 int AtomInfoGetSetting_f(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, float current, float *effective);
 int AtomInfoGetSetting_color(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
+
+int AtomInfoGetBondSetting_b(PyMOLGlobals *G, BondType *ai, int setting_id, int current, int *effective);
+int AtomInfoGetBondSetting_i(PyMOLGlobals *G, BondType *ai, int setting_id, int current, int *effective);
+int AtomInfoGetBondSetting_f(PyMOLGlobals *G, BondType *ai, int setting_id, float current, float *effective);
+int AtomInfoGetBondSetting_color(PyMOLGlobals *G, BondType *ai, int setting_id, int current, int *effective);
 
 int AtomInfoCheckUniqueID(PyMOLGlobals *G, AtomInfoType *ai);
 int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex);
@@ -211,6 +217,7 @@ int AtomInfoSameChainP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoSameSegmentP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoSequential(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2,int mode);
 
+int AtomInfoCheckUniqueBondID(PyMOLGlobals *G, BondType *bi);
 void AtomInfoPurgeBond(PyMOLGlobals *G,BondType *bi);
 
 void AtomInfoBracketResidue(PyMOLGlobals *G,AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd);

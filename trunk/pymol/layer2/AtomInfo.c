@@ -42,7 +42,7 @@ struct _CAtomInfo {
 
 int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective)
 {
-  if(!ai->has_atomic_setting) {
+  if(!ai->has_setting) {
     *effective = current;
     return 0;
   } else {
@@ -56,7 +56,7 @@ int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int 
 }
 int AtomInfoGetSetting_i(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective)
 {
-  if(!ai->has_atomic_setting) {
+  if(!ai->has_setting) {
     *effective = current;
     return 0;
   } else {
@@ -70,7 +70,7 @@ int AtomInfoGetSetting_i(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int 
 }
 int AtomInfoGetSetting_f(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, float current, float *effective)
 {
-  if(!ai->has_atomic_setting) {
+  if(!ai->has_setting) {
     *effective = current;
     return 0;
   } else {
@@ -84,11 +84,69 @@ int AtomInfoGetSetting_f(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, floa
 }
 int AtomInfoGetSetting_color(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective)
 {
-  if(!ai->has_atomic_setting) {
+  if(!ai->has_setting) {
     *effective = current;
     return 0;
   } else {
     if(!SettingAtomicGet_color(G,ai->unique_id,setting_id,effective)) {
+      *effective = current;
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+}
+
+
+int AtomInfoGetBondSetting_b(PyMOLGlobals *G, BondType *bi, int setting_id, int current, int *effective)
+{
+  if(!bi->has_setting) {
+    *effective = current;
+    return 0;
+  } else {
+    if(!SettingAtomicGet_b(G,bi->unique_id,setting_id,effective)) {
+      *effective = current;
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+}
+int AtomInfoGetBondSetting_i(PyMOLGlobals *G, BondType *bi, int setting_id, int current, int *effective)
+{
+  if(!bi->has_setting) {
+    *effective = current;
+    return 0;
+  } else {
+    if(!SettingAtomicGet_i(G,bi->unique_id,setting_id,effective)) {
+      *effective = current;
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+}
+int AtomInfoGetBondSetting_f(PyMOLGlobals *G, BondType *bi, int setting_id, float current, float *effective)
+{
+  if(!bi->has_setting) {
+    *effective = current;
+    return 0;
+  } else {
+    if(!SettingAtomicGet_f(G,bi->unique_id,setting_id,effective)) {
+      *effective = current;
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+}
+int AtomInfoGetBondSetting_color(PyMOLGlobals *G, BondType *bi, int setting_id, int current, int *effective)
+{
+  if(!bi->has_setting) {
+    *effective = current;
+    return 0;
+  } else {
+    if(!SettingAtomicGet_color(G,bi->unique_id,setting_id,effective)) {
       *effective = current;
       return 0;
     } else {
@@ -133,6 +191,13 @@ int AtomInfoCheckUniqueID(PyMOLGlobals *G, AtomInfoType *ai)
   if(!ai->unique_id) 
     ai->unique_id = AtomInfoGetNewUniqueID(G);
   return ai->unique_id;
+}
+
+int AtomInfoCheckUniqueBondID(PyMOLGlobals *G, BondType *bi)
+{
+  if(!bi->unique_id) 
+    bi->unique_id = AtomInfoGetNewUniqueID(G);
+  return bi->unique_id;
 }
 
 int AtomInfoInit(PyMOLGlobals *G)
@@ -876,7 +941,7 @@ void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst)
   *dst=*src;
   dst->unique_id=0;
   dst->selEntry=0;
-  dst->has_atomic_setting=0;
+  dst->has_setting=0;
   if(dst->label) {
     OVLexicon_IncRef(G->Lexicon,dst->label);
   }
@@ -888,6 +953,9 @@ void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst)
 void AtomInfoPurgeBond(PyMOLGlobals *G,BondType *bi)
 {
   CAtomInfo *I=G->AtomInfo;  
+  if(bi->has_setting && bi->unique_id) {
+    SettingAtomicDetachChain(G,bi->unique_id);
+  }
   if(bi->unique_id && I->ActiveIDs) {
     OVOneToAny_DelKey(I->ActiveIDs, bi->unique_id);
     bi->unique_id = 0;
@@ -900,7 +968,7 @@ void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai)
   if(ai->textType) {
     OVLexicon_DecRef(G->Lexicon,ai->textType);
   }
-  if(ai->has_atomic_setting && ai->unique_id) {
+  if(ai->has_setting && ai->unique_id) {
     SettingAtomicDetachChain(G,ai->unique_id);
   }
   if(ai->unique_id && I->ActiveIDs) {

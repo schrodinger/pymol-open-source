@@ -157,6 +157,12 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name);
 void ExecutiveDump(PyMOLGlobals *G,char *fname,char *obj);
 void ExecutiveSetControlsOff(PyMOLGlobals *G,char *name);
 void ExecutiveSort(PyMOLGlobals *G,char *name);
+int  ExecutiveSetBondSetting(PyMOLGlobals *G,int index,PyObject *tuple,
+                             char *s1,char *s2,
+                             int state,int quiet,int updates);
+int  ExecutiveUnsetBondSetting(PyMOLGlobals *G,int index,char *s1,char *s2,
+                               int state,int quiet,int updates);
+
 int ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,
                         char *sele,int state,
                          int quiet,int updates);
