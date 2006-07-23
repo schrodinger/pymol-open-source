@@ -1868,6 +1868,7 @@ SEE ALSO
             'spectrum'      : [ spectrum          , 0 , 0 , ''  , parsing.STRICT ],
             'select'        : [ select            , 0 , 0 , ''  , parsing.LEGACY ],
             'set'           : [ set               , 0 , 0 , ''  , parsing.LEGACY ],
+            'set_bond'      : [ set_bond          , 0 , 0 , ''  , parsing.STRICT ],
             'set_color'     : [ set_color         , 0 , 0 , ''  , parsing.LEGACY ],
             'set_dihedral'  : [ set_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
             'set_name'      : [ set_name          , 0 , 0 , ''  , parsing.STRICT ],
@@ -1904,7 +1905,8 @@ SEE ALSO
             'undo'          : [ undo              , 0 , 0 , ''  , parsing.STRICT ],
             'unmask'        : [ unmask            , 0 , 0 , ''  , parsing.STRICT ],
             'unprotect'     : [ deprotect         , 0 , 0 , ''  , parsing.STRICT ],
-            'unset'         : [ unset             , 0 , 0 , ''  , parsing.STRICT ],   
+            'unset'         : [ unset             , 0 , 0 , ''  , parsing.STRICT ],
+            'unset_bond'    : [ unset_bond        , 0 , 0 , ''  , parsing.STRICT ],               
             'update'        : [ update            , 0 , 0 , ''  , parsing.STRICT ],
             'vdw_fit'       : [ vdw_fit           , 0 , 0 , ''  , parsing.STRICT ],   
             'view'          : [ view              , 0 , 0 , ''  , parsing.STRICT ],   
@@ -2269,6 +2271,7 @@ SEE ALSO
             'view'           : [ viewing.view_sc        , 'view action'     , ''   ],
             'scene'          : [ viewing.scene_action_sc, 'scene action'    , ','   ],                  
             'unset'          : [ selection_sc           , 'selection'        , ','  ],
+            'unset_bond'     : [ selection_sc           , 'selection'        , ','  ],            
             'update'         : [ selection_sc           , 'selection'       , ''   ],
             'ramp_new'       : [ map_sc                 , 'map object'       , ''   ],      
             },
@@ -2279,14 +2282,17 @@ SEE ALSO
             'order'          : [ controlling.location_sc, 'location'        , ','  ],
             'button'         : [ controlling.but_act_sc , 'button action'   , ''   ],
             'flag'           : [ editing.flag_action_sc , 'flag action'     , ''   ],
-            'set'            : [ selection_sc            , 'selection'         , ','  ],
+            'set'            : [ selection_sc           , 'selection'         , ','  ],
+            'set_bond'       : [ selection_sc           , 'selection'         , ','  ],
+            'unset_bond'     : [ selection_sc           , 'selection'         , ','  ],
             },
     #4th
             {
             'ramp_new'       : [ creating.ramp_spectrum_sc , 'ramp color spectrum'        , ', ' ],      
             'map_new'        : [ selection_sc           , 'selection'       , ', ' ],
             'isosurface'     : [ selection_sc           , 'selection'       , ', ' ],
-            'isomesh'        : [ selection_sc           , 'selection'       , ', ' ],      
+            'isomesh'        : [ selection_sc           , 'selection'       , ', ' ],
+            'set_bond'       : [ selection_sc            , 'selection'         , ','  ],            
             }
             ]
 

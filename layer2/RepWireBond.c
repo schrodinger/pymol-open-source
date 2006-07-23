@@ -493,7 +493,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
   int line_stick_helper = 0;
   int na_mode;
   int *marked = NULL;
-
+  int valence_found = false;
   OOAlloc(G,RepWireBond);
   obj = cs->Obj;
 
@@ -521,14 +521,14 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
   }
   marked = Calloc(int,obj->NAtom);
   valence = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_valence);
-  if(valence==1.0F) /* backwards compatibility... */
+  valence_flag = (valence!=0.0F);
+  if((valence==1.0F)||(valence==0.0F)) /* backwards compatibility... */
     valence = SettingGet_f(G,cs->Setting,
                            obj->Obj.Setting,cSetting_valence_size);  
-  valence_flag = (valence!=0.0F);
   cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
-                                         cSetting_cartoon_side_chain_helper);
+                                           cSetting_cartoon_side_chain_helper);
   ribbon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
-                                         cSetting_ribbon_side_chain_helper);
+                                          cSetting_ribbon_side_chain_helper);
   line_stick_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                    cSetting_line_stick_helper);
 
@@ -539,40 +539,41 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
   na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
 
   b=obj->Bond;
-  for(a=0;a<obj->NBond;a++)
-    {
-      b1 = b->index[0];
-      b2 = b->index[1];
+  for(a=0;a<obj->NBond;a++) {
+    int bd_valence_flag;
 
-      
-      if(obj->DiscreteFlag) {
-        if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-          a1=obj->DiscreteAtmToIdx[b1];
-          a2=obj->DiscreteAtmToIdx[b2];
-        } else {
-          a1=-1;
-          a2=-1;
-        }
+    b1 = b->index[0];
+    b2 = b->index[1];
+    
+    if(obj->DiscreteFlag) {
+      if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+        a1=obj->DiscreteAtmToIdx[b1];
+        a2=obj->DiscreteAtmToIdx[b2];
       } else {
-        a1=cs->AtmToIdx[b1];
-        a2=cs->AtmToIdx[b2];
+        a1=-1;
+        a2=-1;
       }
-      if((a1>=0)&&(a2>=0))
-        {
-          if(valence_flag) {
-            if((b->order>0)&&(b->order<4)) {
-              maxSegment+=2*b->order;
-            } else if(b->order==4) { /* aromatic */
-              maxSegment+=10;
-            } else {
-              maxSegment+=2;
-            }
-          } else
-            maxSegment+=2;
-          maxBond++;
-        }
-      b++;
+    } else {
+      a1=cs->AtmToIdx[b1];
+      a2=cs->AtmToIdx[b2];
     }
+    if((a1>=0)&&(a2>=0)) {
+      AtomInfoGetBondSetting_b(G,b,cSetting_valence,valence_flag,&bd_valence_flag);
+      if(bd_valence_flag) {
+        valence_found = true;
+        if((b->order>0)&&(b->order<4)) {
+          maxSegment+=2*b->order;
+        } else if(b->order==4) { /* aromatic */
+          maxSegment+=10;
+        } else {
+          maxSegment+=2;
+        }
+      } else
+        maxSegment+=2;
+      maxBond++;
+    }
+    b++;
+  }
   
   RepInit(G,&I->R);
 
@@ -593,67 +594,24 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
 
   if(obj->NBond) {
 
-    if(valence_flag) /* build list of up to 2 connected atoms for each atom */
+    if(valence_found) /* build list of up to 2 connected atoms for each atom */
       other=ObjectMoleculeGetPrioritizedOtherIndexList(obj,cs);
     
-	 I->V=(float*)mmalloc(sizeof(float)*maxSegment*9);
-	 ErrChkPtr(G,I->V);
+    I->V=(float*)mmalloc(sizeof(float)*maxSegment*9);
+    ErrChkPtr(G,I->V);
 
     if(cartoon_side_chain_helper || ribbon_side_chain_helper) {
       /* mark atoms that are bonded to atoms without a
          visible cartoon or ribbon */
 
       b=obj->Bond;
-      for(a=0;a<obj->NBond;a++)
-        {
-          b1 = b->index[0];
-          b2 = b->index[1];
-          ord = b->order;
-          b++;
-          
-          if(obj->DiscreteFlag) {
-            if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-              a1=obj->DiscreteAtmToIdx[b1];
-              a2=obj->DiscreteAtmToIdx[b2];
-            } else {
-              a1=-1;
-              a2=-1;
-            }
-          } else {
-            a1=cs->AtmToIdx[b1];
-            a2=cs->AtmToIdx[b2];
-          }
-          if((a1>=0)&&(a2>=0)) {
-            register AtomInfoType *ati1=obj->AtomInfo+b1;
-            register AtomInfoType *ati2=obj->AtomInfo+b2;
+      for(a=0;a<obj->NBond;a++) {
 
-            if((!ati1->hetatm) && (!ati2->hetatm)) {
-              if(((cartoon_side_chain_helper && ati1->visRep[cRepCartoon] && !ati2->visRep[cRepCartoon]) ||
-                  (ribbon_side_chain_helper && ati1->visRep[cRepRibbon] && !ati2->visRep[cRepRibbon]))) {
-                marked[b1] = 1;
-              }
-              if(((cartoon_side_chain_helper && ati2->visRep[cRepCartoon] && !ati1->visRep[cRepCartoon]) ||
-                  (ribbon_side_chain_helper && ati2->visRep[cRepRibbon] && !ati1->visRep[cRepRibbon]))) {
-                marked[b2] = 1;
-              }
-            }
-          }
-        }
-    }
-	 	 
-	 v=I->V;
-	 b=obj->Bond;
-	 for(a=0;a<obj->NBond;a++)
-		{
         b1 = b->index[0];
         b2 = b->index[1];
         ord = b->order;
         b++;
-        /*
-          b1 = *(b++);
-          b2 = *(b++);
-          ord = (*(b++));
-        */
+        
         if(obj->DiscreteFlag) {
           if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
             a1=obj->DiscreteAtmToIdx[b1];
@@ -666,372 +624,415 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
           a1=cs->AtmToIdx[b1];
           a2=cs->AtmToIdx[b2];
         }
-		  if((a1>=0)&&(a2>=0))
-			 {
-            register AtomInfoType *ati1=obj->AtomInfo+b1;
-            register AtomInfoType *ati2=obj->AtomInfo+b2;
-
-				s1=ati1->visRep[cRepLine];
-				s2=ati2->visRep[cRepLine];
-
-				if((s1||s2)&&!(s1&&s2))
-              if(!half_bonds) {
-                if(line_stick_helper && 
-                    ( ( (!s1) && ati1->visRep[cRepCyl] && (!ati2->visRep[cRepCyl])) ||
-                      ( (!s2) && ati2->visRep[cRepCyl] && (!ati1->visRep[cRepCyl]))))
-                  s1 = s2 = 1; /* turn on line when both stick and line are alternately shown */
-                else {
-                  s1 = 0;
-                  s2 = 0;
-                }
-              }
-
-				if(s1||s2)
-				  {	
-
-
-					 c1=*(cs->Color+a1);
-					 c2=*(cs->Color+a2);
-					 
-					 v1 = cs->Coord+3*a1;
-					 v2 = cs->Coord+3*a2;
-					 
-
-                if( (!ati1->hetatm) && (!ati2->hetatm) &&
-                    ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon] && ati2->visRep[cRepCartoon]) ||
-                     (ribbon_side_chain_helper && ati1->visRep[cRepRibbon] && ati2->visRep[cRepRibbon]))) {
-
-                    register char *name1=ati1->name;
-                    register int prot1=ati1->protons;
-                    register char *name2=ati2->name;
-                    register int prot2=ati2->protons;
-
-                    if(prot1 == cAN_C) { 
-                      if((name1[1]=='A')&&(name1[0]=='C')&&(!name1[2])) { /* CA */
-                        if(prot2 == cAN_C) { 
-                          if((name2[1]=='B')&&(name2[0]=='C')&&(!name2[2]))
-                            c1 = c2;  /* CA-CB */
-                          else if((!name2[1])&&(name2[0]=='C')&&(!marked[b2]))
-                            s1 = s2 = 0; /* suppress CA-C */
-                        } else if(prot2 == cAN_H) 
-                          s1 = s2 = 0; /* suppress all CA-hydrogens */
-                      } else if((na_mode==1)&&(prot2 == cAN_C)) {
-                        if((((name2[3]==0)&&
-                             ((name2[2]=='*')||(name2[2]=='\''))&&
-                             (name2[1]=='5')&&
-                             (name2[0]=='C')))&&
-                           (((name1[3]==0)&&
-                             ((name1[2]=='*')||(name1[2]=='\''))&&
-                             (name1[1]=='4')&&
-                             (name1[0]=='C'))))
-                          s1 = s2 = 0;
-                      }
-                    } else if(prot1 == cAN_N) { 
-                      if((!name1[1])&&(name1[0]=='N')) { /* N */
-                        if(prot2 == cAN_C) {
-                          if((name2[1]=='D')&&(name2[0]=='C')&&(!name2[2])) 
-                            c1 = c2; /* N->CD in PRO */
-                          else if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])&&(!marked[b1]))
-                            s1 = s2 = 0; /* suppress N-CA */
-                          else if((!name2[1])&&(name2[0]=='C')&&(!marked[b1]))
-                            s1 = s2 = 0; /* suppress N-C */
-                        } else if(prot2 == cAN_H)
-                          s1 = s2 = 0; /* suppress all N-hydrogens */
-                      }
-                    } else if((prot1 == cAN_O)&&(prot2 == cAN_C)) { 
-                      if((!name2[1])&&(name2[0]=='C')&&
-                         (((!name1[1])&&(name1[0]=='O'))||
-                          ((name1[3]==0)&&(name1[2]=='T')&&(name1[1]=='X')&&(name1[0]=='O')))
-                         &&(!marked[b2]))
-                        s1 = s2 = 0; /* suppress C-O,OXT */
-                      else if(na_mode==1) {
-                        if((((name2[3]==0)&&
-                             ((name2[2]=='*')||(name2[2]=='\''))&&
-                             ((name2[1]=='3')||(name2[1]=='5'))&&
-                             (name2[0]=='C')))&&
-                           (((name1[3]==0)&&
-                             ((name1[2]=='*')||(name1[2]=='\''))&&
-                             ((name1[1]=='3')||(name1[1]=='5'))&&
-                             (name1[0]=='O'))))
-                          s1 = s2 = 0;
-                      }
-                    } else if((prot1 == cAN_P)&&(prot2 == cAN_O)) {
-                      if((!name1[1])&&(name1[0]=='P')&&
-                         (((name2[3]==0)&&(name2[2]=='P')&&
-                           ((name2[1]=='1')||(name2[1]=='2')||(name2[1]=='3'))
-                            &&(name2[0]=='O'))))
-                        s1 = s2 = 0; /* suppress P-O1P,O2P,O3P */
-                      else if(na_mode==1) {
-                        if((!name1[1])&&(name1[0]=='P')&&
-                           (((name2[3]==0)&&
-                             ((name2[2]=='*')||(name2[2]=='\''))&&
-                             ((name2[1]=='3')||(name2[1]=='5'))&&
-                             (name2[0]=='O'))))
-                          s1 = s2 = 0;
-                      }
-                    }
-                    
-                    if(prot2 == cAN_C) {
-                      if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])) { /* CA */
-                        if(prot1 == cAN_C) { 
-                          if((name1[1]=='B')&&(name1[0]=='C')&&(!name1[2]))
-                            c2 = c1; /* CA-CB */
-                          else if((!name1[1])&&(name1[0]=='C')&&(!marked[b1]))
-                            s1 = s2 = 0; /* suppress CA-C */
-                        } else if(prot1 == cAN_H) 
-                          s1 = s2 = 0; /* suppress all CA-hydrogens */
-                      } else if((na_mode==1)&&(prot2 == cAN_C)) {
-                        if((((name1[3]==0)&&
-                             ((name1[2]=='*')||(name1[2]=='\''))&&
-                             (name1[1]=='5')&&
-                             (name1[0]=='C')))&&
-                           (((name2[3]==0)&&
-                             ((name2[2]=='*')||(name2[2]=='\''))&&
-                             (name2[1]=='4')&&
-                             (name2[0]=='C'))))
-                          s1 = s2 = 0;
-                      }
-                    } else if(prot2 == cAN_N) {
-                      if((!name2[1])&&(name2[0]=='N')) { /* N */
-                        if(prot1 == cAN_C) { 
-                          if((name1[1]=='D')&&(name1[0]=='C')&&(!name1[2]))
-                            c2 = c1; /* N->CD in PRO */
-                          else if((name1[1]=='A')&&(name1[0]=='C')&&(marked[b2]))
-                            s1 = s2 = 0; /* suppress N-CA */
-                          else if((!name1[1])&&(name1[0]=='C')&&(!marked[b2]))
-                            s1 = s2 = 0; /* suppress N-C */
-                        } else if(prot1 == cAN_H)
-                          s1 = s2 = 0; /* suppress all N-hydrogens */
-                      }
-                    } else if((prot2 == cAN_O)&&(prot1 == cAN_C)) {
-                      if((!name1[1])&&(name1[0]=='C')&&
-                         (((!name2[1])&&(name2[0]=='O'))||
-                          ((name2[3]==0)&&(name2[2]=='T')&&(name2[1]=='X')&&(name2[0]=='O')))
-                         &&(!marked[b1]))
-                        s1 = s2 = 0; /* suppress C-O,OXT */
-                      else if (na_mode==1) {
-                        if((((name1[3]==0)&&
-                             ((name1[2]=='*')||(name1[2]=='\''))&&
-                             ((name1[1]=='3')||(name1[1]=='5'))&&
-                             (name1[0]=='C')))&&
-                           (((name2[3]==0)&&
-                             ((name2[2]=='*')||(name2[2]=='\''))&&
-                             ((name2[1]=='3')||(name2[1]=='5'))&&
-                             (name2[0]=='O'))))
-                          s1 = s2 = 0;
-                      }
-                    } else if((prot2 == cAN_P)&&(prot1 == cAN_O)) {
-                      if((!name2[1])&&(name2[0]=='P')&&
-                         (((name1[3]==0)&&(name1[2]=='P')&&
-                           ((name1[1]=='1')||(name1[1]=='2')||(name1[1]=='3'))&&
-                           (name1[0]=='O'))))
-                        s1 = s2 = 0; /* suppress P-O1P,O2P,O3P */
-                      else if(na_mode==1) {
-                        if((!name2[1])&&(name2[0]=='P')&&
-                           (((name1[3]==0)&&
-                             ((name1[2]=='*')||(name1[2]=='\''))&&
-                             ((name1[1]=='3')||(name1[1]=='5'))&&
-                             (name1[0]=='O'))))
-                          s1 = s2 = 0;
-                      }
-                    }
-                }
-                
-                if(line_stick_helper) {
-                  if(ati1->visRep[cRepCyl] && 
-                     ati2->visRep[cRepCyl])
-                    s1 = s2 = 0;
-                }
-
-					 if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1))) {
-						
-
-						v0 = ColorGet(G,c1);
-
-                  if((valence_flag)&&(ord>1)&&(ord<4)) {
-                    RepValence(v,v1,v2,other,a1,a2,cs->Coord,v0,ord,valence);
-                    v+=ord*9;
-                    I->N+=ord;
-                  } else if(valence_flag&&(ord==4)) { /* aromatic */
-                    RepAromatic(v1,v2,other,a1,a2,cs->Coord,v0,valence,0,&v,&I->N);
-                  } else {
-                    I->N++;
-                    *(v++)=*(v0++);
-                    *(v++)=*(v0++);
-                    *(v++)=*(v0++);
-                    
-                    *(v++)=*(v1++);
-                    *(v++)=*(v1++);
-                    *(v++)=*(v1++);
-                    
-                    *(v++)=*(v2++);
-                    *(v++)=*(v2++);
-                    *(v++)=*(v2++);
-                  }
-                } else {
-						
-						h[0]=(v1[0]+v2[0])/2;
-						h[1]=(v1[1]+v2[1])/2;
-						h[2]=(v1[2]+v2[2])/2;
-						
-						if(s1)
-						  {
-                      
-                      if(ColorCheckRamped(G,c1)) {
-                        ColorGetRamped(G,c1,v1,tmpColor,state);
-                        v0=tmpColor;
-                      } else {
-                        v0 = ColorGet(G,c1);
-                      }
-
-                      if((valence_flag)&&(ord>1)&&(ord<4)) {
-                        RepValence(v,v1,h,other,a1,a2,cs->Coord,v0,ord,valence);
-                        v+=ord*9;
-                        I->N+=ord;
-							 } else if(valence_flag&&(ord==4)) {
-                        RepAromatic(v1,v2,other,a1,a2,cs->Coord,v0,valence,1,&v,&I->N);
-                      } else {
-
-                        I->N++;
-                        *(v++)=*(v0++);
-                        *(v++)=*(v0++);
-                        *(v++)=*(v0++);
-                        
-                        *(v++)=*(v1++);
-                        *(v++)=*(v1++);
-                        *(v++)=*(v1++);
-                        
-                        *(v++)=h[0];
-                        *(v++)=h[1];
-                        *(v++)=h[2];
-                      }
-                    }
-						if(s2)
-						  {
-                      if(ColorCheckRamped(G,c2)) {
-                        ColorGetRamped(G,c2,v2,tmpColor,state);
-                        v0 = tmpColor;
-                      } else {
-                        v0 = ColorGet(G,c2);
-                      }
-                      if((valence_flag)&&(ord>1)&&(ord<4)) {
-                        RepValence(v,h,v2,other,a1,a2,cs->Coord,v0,ord,valence);
-                        v+=ord*9;
-                        I->N+=ord;
-							 } else if(valence_flag&&(ord==4)) {
-                        RepAromatic(v1,v2,other,a1,a2,cs->Coord,v0,valence,2,&v,&I->N);
-                      } else {
-                        I->N++;
-                        *(v++)=*(v0++);
-                        *(v++)=*(v0++);
-                        *(v++)=*(v0++);
-                        
-                        *(v++)=h[0];
-                        *(v++)=h[1];
-                        *(v++)=h[2];
-                        
-                        *(v++)=*(v2++);
-                        *(v++)=*(v2++);
-                        *(v++)=*(v2++);
-                      }
-                      
-						  }
-					 }
-              }
+        if((a1>=0)&&(a2>=0)) {
+          register AtomInfoType *ati1=obj->AtomInfo+b1;
+          register AtomInfoType *ati2=obj->AtomInfo+b2;
+          
+          if((!ati1->hetatm) && (!ati2->hetatm)) {
+            if(((cartoon_side_chain_helper && ati1->visRep[cRepCartoon] && !ati2->visRep[cRepCartoon]) ||
+                (ribbon_side_chain_helper && ati1->visRep[cRepRibbon] && !ati2->visRep[cRepRibbon]))) {
+              marked[b1] = 1;
+            }
+            if(((cartoon_side_chain_helper && ati2->visRep[cRepCartoon] && !ati1->visRep[cRepCartoon]) ||
+                (ribbon_side_chain_helper && ati2->visRep[cRepRibbon] && !ati1->visRep[cRepRibbon]))) {
+              marked[b2] = 1;
+            }
           }
+        }
       }
+    }
+	 	 
+    v=I->V;
+    b=obj->Bond;
+    for(a=0;a<obj->NBond;a++) {
+
+      b1 = b->index[0];
+      b2 = b->index[1];
+      ord = b->order;
+
+      /*
+        b1 = *(b++);
+        b2 = *(b++);
+        ord = (*(b++));
+      */
+      if(obj->DiscreteFlag) {
+        if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+          a1=obj->DiscreteAtmToIdx[b1];
+          a2=obj->DiscreteAtmToIdx[b2];
+        } else {
+          a1=-1;
+          a2=-1;
+        }
+      } else {
+        a1=cs->AtmToIdx[b1];
+        a2=cs->AtmToIdx[b2];
+      }
+      if((a1>=0)&&(a2>=0)) {
+
+        register AtomInfoType *ati1=obj->AtomInfo+b1;
+        register AtomInfoType *ati2=obj->AtomInfo+b2;
+               
+        s1=ati1->visRep[cRepLine];
+        s2=ati2->visRep[cRepLine];
+               
+        if((s1||s2)&&!(s1&&s2))
+          if(!half_bonds) {
+            if(line_stick_helper && 
+               ( ( (!s1) && ati1->visRep[cRepCyl] && (!ati2->visRep[cRepCyl])) ||
+                 ( (!s2) && ati2->visRep[cRepCyl] && (!ati1->visRep[cRepCyl]))))
+              s1 = s2 = 1; /* turn on line when both stick and line are alternately shown */
+            else {
+              s1 = 0;
+              s2 = 0;
+            }
+          }
+
+        if(s1||s2) {
+
+          int bd_valence_flag;
+
+          AtomInfoGetBondSetting_b(G,b,cSetting_valence,valence_flag,&bd_valence_flag);
+          
+          c1=*(cs->Color+a1);
+          c2=*(cs->Color+a2);
+					 
+          v1 = cs->Coord+3*a1;
+          v2 = cs->Coord+3*a2;
+					 
+          if( (!ati1->hetatm) && (!ati2->hetatm) &&
+              ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon] && ati2->visRep[cRepCartoon]) ||
+               (ribbon_side_chain_helper && ati1->visRep[cRepRibbon] && ati2->visRep[cRepRibbon]))) {
+
+            register char *name1=ati1->name;
+            register int prot1=ati1->protons;
+            register char *name2=ati2->name;
+            register int prot2=ati2->protons;
+
+            if(prot1 == cAN_C) { 
+              if((name1[1]=='A')&&(name1[0]=='C')&&(!name1[2])) { /* CA */
+                if(prot2 == cAN_C) { 
+                  if((name2[1]=='B')&&(name2[0]=='C')&&(!name2[2]))
+                    c1 = c2;  /* CA-CB */
+                  else if((!name2[1])&&(name2[0]=='C')&&(!marked[b2]))
+                    s1 = s2 = 0; /* suppress CA-C */
+                } else if(prot2 == cAN_H) 
+                  s1 = s2 = 0; /* suppress all CA-hydrogens */
+              } else if((na_mode==1)&&(prot2 == cAN_C)) {
+                if((((name2[3]==0)&&
+                     ((name2[2]=='*')||(name2[2]=='\''))&&
+                     (name2[1]=='5')&&
+                     (name2[0]=='C')))&&
+                   (((name1[3]==0)&&
+                     ((name1[2]=='*')||(name1[2]=='\''))&&
+                     (name1[1]=='4')&&
+                     (name1[0]=='C'))))
+                  s1 = s2 = 0;
+              }
+            } else if(prot1 == cAN_N) { 
+              if((!name1[1])&&(name1[0]=='N')) { /* N */
+                if(prot2 == cAN_C) {
+                  if((name2[1]=='D')&&(name2[0]=='C')&&(!name2[2])) 
+                    c1 = c2; /* N->CD in PRO */
+                  else if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])&&(!marked[b1]))
+                    s1 = s2 = 0; /* suppress N-CA */
+                  else if((!name2[1])&&(name2[0]=='C')&&(!marked[b1]))
+                    s1 = s2 = 0; /* suppress N-C */
+                } else if(prot2 == cAN_H)
+                  s1 = s2 = 0; /* suppress all N-hydrogens */
+              }
+            } else if((prot1 == cAN_O)&&(prot2 == cAN_C)) { 
+              if((!name2[1])&&(name2[0]=='C')&&
+                 (((!name1[1])&&(name1[0]=='O'))||
+                  ((name1[3]==0)&&(name1[2]=='T')&&(name1[1]=='X')&&(name1[0]=='O')))
+                 &&(!marked[b2]))
+                s1 = s2 = 0; /* suppress C-O,OXT */
+              else if(na_mode==1) {
+                if((((name2[3]==0)&&
+                     ((name2[2]=='*')||(name2[2]=='\''))&&
+                     ((name2[1]=='3')||(name2[1]=='5'))&&
+                     (name2[0]=='C')))&&
+                   (((name1[3]==0)&&
+                     ((name1[2]=='*')||(name1[2]=='\''))&&
+                     ((name1[1]=='3')||(name1[1]=='5'))&&
+                     (name1[0]=='O'))))
+                  s1 = s2 = 0;
+              }
+            } else if((prot1 == cAN_P)&&(prot2 == cAN_O)) {
+              if((!name1[1])&&(name1[0]=='P')&&
+                 (((name2[3]==0)&&(name2[2]=='P')&&
+                   ((name2[1]=='1')||(name2[1]=='2')||(name2[1]=='3'))
+                   &&(name2[0]=='O'))))
+                s1 = s2 = 0; /* suppress P-O1P,O2P,O3P */
+              else if(na_mode==1) {
+                if((!name1[1])&&(name1[0]=='P')&&
+                   (((name2[3]==0)&&
+                     ((name2[2]=='*')||(name2[2]=='\''))&&
+                     ((name2[1]=='3')||(name2[1]=='5'))&&
+                     (name2[0]=='O'))))
+                  s1 = s2 = 0;
+              }
+            }
+                    
+            if(prot2 == cAN_C) {
+              if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])) { /* CA */
+                if(prot1 == cAN_C) { 
+                  if((name1[1]=='B')&&(name1[0]=='C')&&(!name1[2]))
+                    c2 = c1; /* CA-CB */
+                  else if((!name1[1])&&(name1[0]=='C')&&(!marked[b1]))
+                    s1 = s2 = 0; /* suppress CA-C */
+                } else if(prot1 == cAN_H) 
+                  s1 = s2 = 0; /* suppress all CA-hydrogens */
+              } else if((na_mode==1)&&(prot2 == cAN_C)) {
+                if((((name1[3]==0)&&
+                     ((name1[2]=='*')||(name1[2]=='\''))&&
+                     (name1[1]=='5')&&
+                     (name1[0]=='C')))&&
+                   (((name2[3]==0)&&
+                     ((name2[2]=='*')||(name2[2]=='\''))&&
+                     (name2[1]=='4')&&
+                     (name2[0]=='C'))))
+                  s1 = s2 = 0;
+              }
+            } else if(prot2 == cAN_N) {
+              if((!name2[1])&&(name2[0]=='N')) { /* N */
+                if(prot1 == cAN_C) { 
+                  if((name1[1]=='D')&&(name1[0]=='C')&&(!name1[2]))
+                    c2 = c1; /* N->CD in PRO */
+                  else if((name1[1]=='A')&&(name1[0]=='C')&&(marked[b2]))
+                    s1 = s2 = 0; /* suppress N-CA */
+                  else if((!name1[1])&&(name1[0]=='C')&&(!marked[b2]))
+                    s1 = s2 = 0; /* suppress N-C */
+                } else if(prot1 == cAN_H)
+                  s1 = s2 = 0; /* suppress all N-hydrogens */
+              }
+            } else if((prot2 == cAN_O)&&(prot1 == cAN_C)) {
+              if((!name1[1])&&(name1[0]=='C')&&
+                 (((!name2[1])&&(name2[0]=='O'))||
+                  ((name2[3]==0)&&(name2[2]=='T')&&(name2[1]=='X')&&(name2[0]=='O')))
+                 &&(!marked[b1]))
+                s1 = s2 = 0; /* suppress C-O,OXT */
+              else if (na_mode==1) {
+                if((((name1[3]==0)&&
+                     ((name1[2]=='*')||(name1[2]=='\''))&&
+                     ((name1[1]=='3')||(name1[1]=='5'))&&
+                     (name1[0]=='C')))&&
+                   (((name2[3]==0)&&
+                     ((name2[2]=='*')||(name2[2]=='\''))&&
+                     ((name2[1]=='3')||(name2[1]=='5'))&&
+                     (name2[0]=='O'))))
+                  s1 = s2 = 0;
+              }
+            } else if((prot2 == cAN_P)&&(prot1 == cAN_O)) {
+              if((!name2[1])&&(name2[0]=='P')&&
+                 (((name1[3]==0)&&(name1[2]=='P')&&
+                   ((name1[1]=='1')||(name1[1]=='2')||(name1[1]=='3'))&&
+                   (name1[0]=='O'))))
+                s1 = s2 = 0; /* suppress P-O1P,O2P,O3P */
+              else if(na_mode==1) {
+                if((!name2[1])&&(name2[0]=='P')&&
+                   (((name1[3]==0)&&
+                     ((name1[2]=='*')||(name1[2]=='\''))&&
+                     ((name1[1]=='3')||(name1[1]=='5'))&&
+                     (name1[0]=='O'))))
+                  s1 = s2 = 0;
+              }
+            }
+          }
+                
+          if(line_stick_helper) {
+            if(ati1->visRep[cRepCyl] && 
+               ati2->visRep[cRepCyl])
+              s1 = s2 = 0;
+          }
+                
+          if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1))) {
+                  
+            v0 = ColorGet(G,c1);
+                  
+            if((bd_valence_flag)&&(ord>1)&&(ord<4)) {
+              RepValence(v,v1,v2,other,a1,a2,cs->Coord,v0,ord,valence);
+              v+=ord*9;
+              I->N+=ord;
+            } else if(bd_valence_flag&&(ord==4)) { /* aromatic */
+              RepAromatic(v1,v2,other,a1,a2,cs->Coord,v0,valence,0,&v,&I->N);
+            } else {
+              I->N++;
+              *(v++)=*(v0++);
+              *(v++)=*(v0++);
+              *(v++)=*(v0++);
+                    
+              *(v++)=*(v1++);
+              *(v++)=*(v1++);
+              *(v++)=*(v1++);
+                    
+              *(v++)=*(v2++);
+              *(v++)=*(v2++);
+              *(v++)=*(v2++);
+            }
+          } else {
+						
+            h[0]=(v1[0]+v2[0])/2;
+            h[1]=(v1[1]+v2[1])/2;
+            h[2]=(v1[2]+v2[2])/2;
+						
+            if(s1) {
+
+                      
+              if(ColorCheckRamped(G,c1)) {
+                ColorGetRamped(G,c1,v1,tmpColor,state);
+                v0=tmpColor;
+              } else {
+                v0 = ColorGet(G,c1);
+              }
+
+              if((bd_valence_flag)&&(ord>1)&&(ord<4)) {
+                RepValence(v,v1,h,other,a1,a2,cs->Coord,v0,ord,valence);
+                v+=ord*9;
+                I->N+=ord;
+              } else if(bd_valence_flag&&(ord==4)) {
+                RepAromatic(v1,v2,other,a1,a2,cs->Coord,v0,valence,1,&v,&I->N);
+              } else {
+
+                I->N++;
+                *(v++)=*(v0++);
+                *(v++)=*(v0++);
+                *(v++)=*(v0++);
+                        
+                *(v++)=*(v1++);
+                *(v++)=*(v1++);
+                *(v++)=*(v1++);
+                        
+                *(v++)=h[0];
+                *(v++)=h[1];
+                *(v++)=h[2];
+              }
+            }
+            if(s2) {
+              if(ColorCheckRamped(G,c2)) {
+                ColorGetRamped(G,c2,v2,tmpColor,state);
+                v0 = tmpColor;
+              } else {
+                v0 = ColorGet(G,c2);
+              }
+              if((bd_valence_flag)&&(ord>1)&&(ord<4)) {
+                RepValence(v,h,v2,other,a1,a2,cs->Coord,v0,ord,valence);
+                v+=ord*9;
+                I->N+=ord;
+              } else if(bd_valence_flag&&(ord==4)) {
+                RepAromatic(v1,v2,other,a1,a2,cs->Coord,v0,valence,2,&v,&I->N);
+              } else {
+                I->N++;
+                *(v++)=*(v0++);
+                *(v++)=*(v0++);
+                *(v++)=*(v0++);
+                        
+                *(v++)=h[0];
+                *(v++)=h[1];
+                *(v++)=h[2];
+                        
+                *(v++)=*(v2++);
+                *(v++)=*(v2++);
+                *(v++)=*(v2++);
+              }
+                      
+            }
+          }
+        }
+      }
+      b++;
+    }
     
     I->V = ReallocForSure(I->V,float,(v-I->V));
 
-	 /* now create pickable verson */
+    /* now create pickable verson */
 
-	 if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
-		I->VP=(float*)mmalloc(sizeof(float)*maxBond*6*2);
-		ErrChkPtr(G,I->VP);
+    if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
+      I->VP=(float*)mmalloc(sizeof(float)*maxBond*6*2);
+      ErrChkPtr(G,I->VP);
 		
-		I->R.P=Alloc(Pickable,2*maxBond+1);
-		ErrChkPtr(G,I->R.P);
-		rp = I->R.P + 1; /* skip first record! */
+      I->R.P=Alloc(Pickable,2*maxBond+1);
+      ErrChkPtr(G,I->R.P);
+      rp = I->R.P + 1; /* skip first record! */
 
-		v=I->VP;
-		b=obj->Bond;
-		for(a=0;a<obj->NBond;a++)
-		  {
-          b1 = b->index[0];
-          b2 = b->index[1];
-			 b++;
-          if(obj->DiscreteFlag) {
-            if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-              a1=obj->DiscreteAtmToIdx[b1];
-              a2=obj->DiscreteAtmToIdx[b2];
-            } else {
-              a1=-1;
-              a2=-1;
-            }
+      v=I->VP;
+      b=obj->Bond;
+      for(a=0;a<obj->NBond;a++) {
+
+        b1 = b->index[0];
+        b2 = b->index[1];
+        b++;
+        if(obj->DiscreteFlag) {
+          if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+            a1=obj->DiscreteAtmToIdx[b1];
+            a2=obj->DiscreteAtmToIdx[b2];
           } else {
-            a1=cs->AtmToIdx[b1];
-            a2=cs->AtmToIdx[b2];
+            a1=-1;
+            a2=-1;
           }
-			 if((a1>=0)&&(a2>=0))
-				{
-              ai1=obj->AtomInfo+b1;
-              ai2=obj->AtomInfo+b2;
-				  s1=ai1->visRep[cRepLine];
-				  s2=ai2->visRep[cRepLine];
+        } else {
+          a1=cs->AtmToIdx[b1];
+          a2=cs->AtmToIdx[b2];
+        }
+        if((a1>=0)&&(a2>=0)) {
+
+          ai1=obj->AtomInfo+b1;
+          ai2=obj->AtomInfo+b2;
+          s1=ai1->visRep[cRepLine];
+          s2=ai2->visRep[cRepLine];
 				  
-              if(!(s1&&s2)) {
-                if(!half_bonds) {
-                  s1 = 0;
-                  s2 = 0;
-                }
-              } 
+          if(!(s1&&s2)) {
+            if(!half_bonds) {
+              s1 = 0;
+              s2 = 0;
+            }
+          } 
 
-				  if(s1||s2)
-					 {	
-						v1 = cs->Coord+3*a1;
-						v2 = cs->Coord+3*a2;
-						
-						h[0]=(v1[0]+v2[0])/2;
-						h[1]=(v1[1]+v2[1])/2;
-						h[2]=(v1[2]+v2[2])/2;
-						
-						if(s1&(!ai1->masked))
-						  {
-                            I->NP++;
-                            rp->index = b1;
-                            rp->bond = a;
-                            rp++;
+          if(s1||s2) {
 
-							 *(v++)=*(v1++);
-							 *(v++)=*(v1++);
-							 *(v++)=*(v1++);
+            v1 = cs->Coord+3*a1;
+            v2 = cs->Coord+3*a2;
+						
+            h[0]=(v1[0]+v2[0])/2;
+            h[1]=(v1[1]+v2[1])/2;
+            h[2]=(v1[2]+v2[2])/2;
+						
+            if(s1&(!ai1->masked)) {
+
+              I->NP++;
+              rp->index = b1;
+              rp->bond = a;
+              rp++;
+
+              *(v++)=*(v1++);
+              *(v++)=*(v1++);
+              *(v++)=*(v1++);
 							 
-							 *(v++)=h[0];
-							 *(v++)=h[1];
-							 *(v++)=h[2];
-						  }
-						if(s2&(!ai2->masked))
-						  {
-                            I->NP++;
-                            rp->index = b2;
-                            rp->bond = a;
-                            rp++;
+              *(v++)=h[0];
+              *(v++)=h[1];
+              *(v++)=h[2];
+            }
+            if(s2&(!ai2->masked)) {
+
+              I->NP++;
+              rp->index = b2;
+              rp->bond = a;
+              rp++;
 							 							 
-							 *(v++)=h[0];
-							 *(v++)=h[1];
-							 *(v++)=h[2];
+              *(v++)=h[0];
+              *(v++)=h[1];
+              *(v++)=h[2];
 							 
-							 *(v++)=*(v2++);
-							 *(v++)=*(v2++);
-							 *(v++)=*(v2++);
-						  }
-					 }
-				}
-		  }
-		I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
-		I->R.P[0].index = I->NP;
-		I->VP = ReallocForSure(I->VP,float,(v-I->VP));
-	 }
+              *(v++)=*(v2++);
+              *(v++)=*(v2++);
+              *(v++)=*(v2++);
+            }
+          }
+        }
+      }
+      I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
+      I->R.P[0].index = I->NP;
+      I->VP = ReallocForSure(I->VP,float,(v-I->VP));
+    }
   }
   FreeP(marked);
   FreeP(other);

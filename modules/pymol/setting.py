@@ -590,7 +590,7 @@ if __name__=='pymol.setting':
     def _get_index(name):
         # this may be called from C, so don't raise any exceptions...
         result = setting_sc.interpret(name)
-        if type(result)==types.StringType:
+        if is_string(result):
             if hasattr(SettingIndex,result):
                 return getattr(SettingIndex,result)[0]
             else:
@@ -707,7 +707,7 @@ PYMOL API
                         selection1=selector.process(selection1)
                     if len(selection2):
                         selection2=selector.process(selection2)                        
-                    r = _cmd.set(int(index),v,
+                    r = _cmd.set_bond(int(index),v,
                                  selection1,selection2,
                                  int(state)-1,int(quiet),
                                  int(updates))

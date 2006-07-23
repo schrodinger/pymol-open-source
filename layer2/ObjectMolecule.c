@@ -5936,13 +5936,16 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
         }
 
         if(ok) {
+          int stereo;
           tmp = PyObject_GetAttrString(bnd,"stereo");
           if (tmp)
-            ok = PConvPyObjectToInt(tmp,&ii->stereo);
+            ok = PConvPyObjectToInt(tmp,&stereo);
           else 
             ii->stereo = 0;
           if(!ok) 
             ii->stereo = 0;
+          else
+            ii->stereo = stereo;
           Py_XDECREF(tmp);
         }
 
@@ -6357,10 +6360,12 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,
 				ok=ErrMessage(G,"ReadMOLFile","bad bond order");
 		  }
         if(ok) {
-			 p=ncopy(cc,p,3);
-			 if(sscanf(cc,"%d",&ii->stereo)!=1)
+          int stereo;
+          p=ncopy(cc,p,3);
+          if(sscanf(cc,"%d",&stereo)!=1)
             ii->stereo=0;
-
+          else
+            ii->stereo=stereo;
         }
         ii++;
 		  if(!ok)
@@ -7670,7 +7675,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
       for(a=0;a<I->NAtom;a++) {
         if(SelectorIsMember(G,ai->selEntry,sele)) {
           int uid = AtomInfoCheckUniqueID(G,ai);
-          ai->has_atomic_setting = true;
+          ai->has_setting = true;
           SettingAtomicSetTypedValue(G,uid,op->i1,op->i2,op->ii1);
           op->i4++;
         }

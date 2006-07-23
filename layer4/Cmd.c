@@ -4582,11 +4582,10 @@ static PyObject *CmdUnset(PyObject *self, 	PyObject *args)
   }
   return APIResultOk(ok);
 }
-#if 0
+
 static PyObject *CmdUnsetBond(PyObject *self, 	PyObject *args)
 {
   int index;
-  int tmpFlag=false;
   char *str3,*str4;
   int state;
   int quiet;
@@ -4595,22 +4594,18 @@ static PyObject *CmdUnsetBond(PyObject *self, 	PyObject *args)
   int ok=false;
   ok = PyArg_ParseTuple(args,"issiii",&index,&str3,&str4,&state,&quiet,&updates);
   s1[0]=0;
+  s2[0]=0;
   if (ok) {
     APIEntry();
-    if(!strcmp(str3,"all")) {
-      strcpy(s1,str3);
-    } else if(str3[0]!=0) {
-      tmpFlag=true;
-      ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
-    }
-    if(ok) ok = ExecutiveUnsetSetting(TempPyMOLGlobals,index,s1,state,quiet,updates);
-    if(tmpFlag) 
-      SelectorFreeTmp(TempPyMOLGlobals,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
+    ok = ok && (SelectorGetTmp(TempPyMOLGlobals,str4,s2)>=0);
+    if(ok) ok = ExecutiveUnsetBondSetting(TempPyMOLGlobals,index,s1,s2,state,quiet,updates);
+    SelectorFreeTmp(TempPyMOLGlobals,s1);
+    SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
   }
   return APIResultOk(ok);
 }
-#endif
 
 static PyObject *CmdSet(PyObject *self, 	PyObject *args)
 {
@@ -4640,11 +4635,10 @@ static PyObject *CmdSet(PyObject *self, 	PyObject *args)
   }
   return APIResultOk(ok);
 }
-#if 0
+
 static PyObject *CmdSetBond(PyObject *self, 	PyObject *args)
 {
   int index;
-  int tmpFlag=false;
   PyObject *value;
   char *str3,*str4;
   int state;
@@ -4657,26 +4651,17 @@ static PyObject *CmdSetBond(PyObject *self, 	PyObject *args)
   s2[0]=0;
   if (ok) {
     APIEntry();
-    if(!strcmp(str3,"all")) {
-      strcpy(s1,str3);
-    } else if(str3[0]!=0) {
-      tmpFlag=true;
-      ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
-    }
-    if(!strcmp(str4,"all")) {
-      strcpy(s1,str4);
-    } else if(str4[0]!=0) {
-      tmpFlag=true;
-      ok = (SelectorGetTmp(TempPyMOLGlobals,str4,s2)>=0);
-    }
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str4,s2)>=0);
     if(ok) ok = ExecutiveSetBondSetting(TempPyMOLGlobals,index,value,s1,s2,state,quiet,updates);
-    if(tmpFlag) 
-      SelectorFreeTmp(TempPyMOLGlobals,s1);
+    SelectorFreeTmp(TempPyMOLGlobals,s1);
+    SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
   }
   return APIResultOk(ok);
 }
-#endif
+
+
 static PyObject *CmdGet(PyObject *self, 	PyObject *args)
 {
   float f;
@@ -6295,6 +6280,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"select",                CmdSelect,               METH_VARARGS },
 	{"select_list",           CmdSelectList,           METH_VARARGS },
 	{"set",	                 CmdSet,                  METH_VARARGS },
+	{"set_bond",	         CmdSetBond,              METH_VARARGS },
 	{"legacy_set",            CmdLegacySet,            METH_VARARGS },
 
 	{"sculpt_deactivate",     CmdSculptDeactivate,     METH_VARARGS },
@@ -6344,6 +6330,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"undo",                  CmdUndo,                 METH_VARARGS },
 	{"unpick",                CmdUnpick,               METH_VARARGS },
 	{"unset",                 CmdUnset,                METH_VARARGS },
+	{"unset_bond",            CmdUnsetBond,             METH_VARARGS },
 	{"update",                CmdUpdate,               METH_VARARGS },
 	{"window",                CmdWindow,               METH_VARARGS },
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
