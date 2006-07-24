@@ -45,7 +45,7 @@ int AtomInfoCheckSetting(PyMOLGlobals *G, AtomInfoType *ai, int setting_id)
   if(!ai->has_setting) {
     return 0;
   } else {
-    if(!SettingAtomicCheck(G,ai->unique_id,setting_id)) {
+    if(!SettingUniqueCheck(G,ai->unique_id,setting_id)) {
       return 0;
     } else {
       return 1;
@@ -59,7 +59,7 @@ int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int 
     *effective = current;
     return 0;
   } else {
-    if(!SettingAtomicGet_b(G,ai->unique_id,setting_id,effective)) {
+    if(!SettingUniqueGet_b(G,ai->unique_id,setting_id,effective)) {
       *effective = current;
       return 0;
     } else {
@@ -73,7 +73,7 @@ int AtomInfoGetSetting_i(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int 
     *effective = current;
     return 0;
   } else {
-    if(!SettingAtomicGet_i(G,ai->unique_id,setting_id,effective)) {
+    if(!SettingUniqueGet_i(G,ai->unique_id,setting_id,effective)) {
       *effective = current;
       return 0;
     } else {
@@ -87,7 +87,7 @@ int AtomInfoGetSetting_f(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, floa
     *effective = current;
     return 0;
   } else {
-    if(!SettingAtomicGet_f(G,ai->unique_id,setting_id,effective)) {
+    if(!SettingUniqueGet_f(G,ai->unique_id,setting_id,effective)) {
       *effective = current;
       return 0;
     } else {
@@ -101,7 +101,7 @@ int AtomInfoGetSetting_color(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, 
     *effective = current;
     return 0;
   } else {
-    if(!SettingAtomicGet_color(G,ai->unique_id,setting_id,effective)) {
+    if(!SettingUniqueGet_color(G,ai->unique_id,setting_id,effective)) {
       *effective = current;
       return 0;
     } else {
@@ -115,7 +115,7 @@ int AtomInfoCheckBondSetting(PyMOLGlobals *G, BondType *bi, int setting_id)
   if(!bi->has_setting) {
     return 0;
   } else {
-    if(!SettingAtomicCheck(G,bi->unique_id,setting_id)) {
+    if(!SettingUniqueCheck(G,bi->unique_id,setting_id)) {
       return 0;
     } else {
       return 1;
@@ -129,7 +129,7 @@ int AtomInfoGetBondSetting_b(PyMOLGlobals *G, BondType *bi, int setting_id, int 
     *effective = current;
     return 0;
   } else {
-    if(!SettingAtomicGet_b(G,bi->unique_id,setting_id,effective)) {
+    if(!SettingUniqueGet_b(G,bi->unique_id,setting_id,effective)) {
       *effective = current;
       return 0;
     } else {
@@ -143,7 +143,7 @@ int AtomInfoGetBondSetting_i(PyMOLGlobals *G, BondType *bi, int setting_id, int 
     *effective = current;
     return 0;
   } else {
-    if(!SettingAtomicGet_i(G,bi->unique_id,setting_id,effective)) {
+    if(!SettingUniqueGet_i(G,bi->unique_id,setting_id,effective)) {
       *effective = current;
       return 0;
     } else {
@@ -157,7 +157,7 @@ int AtomInfoGetBondSetting_f(PyMOLGlobals *G, BondType *bi, int setting_id, floa
     *effective = current;
     return 0;
   } else {
-    if(!SettingAtomicGet_f(G,bi->unique_id,setting_id,effective)) {
+    if(!SettingUniqueGet_f(G,bi->unique_id,setting_id,effective)) {
       *effective = current;
       return 0;
     } else {
@@ -171,7 +171,7 @@ int AtomInfoGetBondSetting_color(PyMOLGlobals *G, BondType *bi, int setting_id, 
     *effective = current;
     return 0;
   } else {
-    if(!SettingAtomicGet_color(G,bi->unique_id,setting_id,effective)) {
+    if(!SettingUniqueGet_color(G,bi->unique_id,setting_id,effective)) {
       *effective = current;
       return 0;
     } else {
@@ -817,7 +817,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
 #else
   PyObject *result = NULL;
 
-  result = PyList_New(40);
+  result = PyList_New(41);
   PyList_SetItem(result, 0,PyInt_FromLong(I->resv));
   PyList_SetItem(result, 1,PyString_FromString(I->chain));
   PyList_SetItem(result, 2,PyString_FromString(I->alt));
@@ -869,6 +869,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result,37,PyInt_FromLong((int)I->hb_donor));
   PyList_SetItem(result,38,PyInt_FromLong((int)I->hb_acceptor));
   PyList_SetItem(result,39,PyInt_FromLong((int)I->atomic_color));
+  PyList_SetItem(result,40,PyInt_FromLong((int)I->has_setting));
   return(PConvAutoNone(result));
 #endif
 }
@@ -954,8 +955,9 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   } else {
     I->atomic_color = AtomInfoGetColor(G,I);
   }
-		
-return(ok);
+  if(ok&&(ll>40)) ok = PConvPyIntToChar(PyList_GetItem(list,40),(char*)&I->has_setting);
+
+  return(ok);
 #endif
 }
 
@@ -979,7 +981,7 @@ void AtomInfoPurgeBond(PyMOLGlobals *G,BondType *bi)
 {
   CAtomInfo *I=G->AtomInfo;  
   if(bi->has_setting && bi->unique_id) {
-    SettingAtomicDetachChain(G,bi->unique_id);
+    SettingUniqueDetachChain(G,bi->unique_id);
   }
   if(bi->unique_id && I->ActiveIDs) {
     OVOneToAny_DelKey(I->ActiveIDs, bi->unique_id);
@@ -994,7 +996,7 @@ void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai)
     OVLexicon_DecRef(G->Lexicon,ai->textType);
   }
   if(ai->has_setting && ai->unique_id) {
-    SettingAtomicDetachChain(G,ai->unique_id);
+    SettingUniqueDetachChain(G,ai->unique_id);
   }
   if(ai->unique_id && I->ActiveIDs) {
     OVOneToAny_DelKey(I->ActiveIDs, ai->unique_id);

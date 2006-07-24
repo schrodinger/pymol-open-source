@@ -39,14 +39,14 @@ Z* -------------------------------------------------------------------
 
 static void *SettingPtr(CSetting *I,int index,unsigned int size);
 
-void SettingAtomicDetachChain(PyMOLGlobals *G,int atom_id)
+void SettingUniqueDetachChain(PyMOLGlobals *G,int unique_id)
 {
-  register CSettingAtomic *I = G->SettingAtomic;
+  register CSettingUnique *I = G->SettingUnique;
   OVreturn_word result;
-  if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,atom_id)) ) {
+  if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,unique_id)) ) {
     int offset = result.word;
     int next;
-    SettingAtomicEntry *entry;
+    SettingUniqueEntry *entry;
     while(offset) {
       entry = I->entry + offset;
       next = entry->next;
@@ -59,14 +59,14 @@ void SettingAtomicDetachChain(PyMOLGlobals *G,int atom_id)
   }
 }
 
-static void SettingAtomicExpand(PyMOLGlobals *G)
+static void SettingUniqueExpand(PyMOLGlobals *G)
 {
-  register CSettingAtomic *I = G->SettingAtomic;
+  register CSettingUnique *I = G->SettingUnique;
   
   if(!I->next_free) {
     int new_n_alloc = (I->n_alloc * 3) / 2;
     int a;
-    VLACheck(I->entry, SettingAtomicEntry, new_n_alloc);
+    VLACheck(I->entry, SettingUniqueEntry, new_n_alloc);
     for(a=I->n_alloc;a<new_n_alloc;a++) {
       I->entry[a].next = I->next_free;
       I->next_free = a;
@@ -75,13 +75,13 @@ static void SettingAtomicExpand(PyMOLGlobals *G)
   }
 }
 
-int SettingAtomicCheck(PyMOLGlobals *G,int atom_id,int setting_id)
+int SettingUniqueCheck(PyMOLGlobals *G,int unique_id,int setting_id)
 {
-  register CSettingAtomic *I = G->SettingAtomic;
+  register CSettingUnique *I = G->SettingUnique;
   OVreturn_word result;
-  if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,atom_id)) ) {
+  if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,unique_id)) ) {
     int offset = result.word;
-    SettingAtomicEntry *entry;
+    SettingUniqueEntry *entry;
 
     while(offset) {
       entry = I->entry + offset;
@@ -94,13 +94,13 @@ int SettingAtomicCheck(PyMOLGlobals *G,int atom_id,int setting_id)
   return 0;
 }
 
-static int SettingAtomicGetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id, int setting_type, void *value)
+static int SettingUniqueGetTypedValue(PyMOLGlobals *G,int unique_id,int setting_id, int setting_type, void *value)
 {
-  register CSettingAtomic *I = G->SettingAtomic;
+  register CSettingUnique *I = G->SettingUnique;
   OVreturn_word result;
-  if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,atom_id)) ) {
+  if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,unique_id)) ) {
     int offset = result.word;
-    SettingAtomicEntry *entry;
+    SettingUniqueEntry *entry;
 
     while(offset) {
       entry = I->entry + offset;
@@ -132,35 +132,35 @@ static int SettingAtomicGetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id
   return 0;
 }
 
-int SettingAtomicGet_b(PyMOLGlobals *G,int atom_id,int setting_id,int *value)
+int SettingUniqueGet_b(PyMOLGlobals *G,int unique_id,int setting_id,int *value)
 {
-  return SettingAtomicGetTypedValue(G,atom_id,setting_id,cSetting_boolean,value);
+  return SettingUniqueGetTypedValue(G,unique_id,setting_id,cSetting_boolean,value);
 }
-int SettingAtomicGet_i(PyMOLGlobals *G,int atom_id,int setting_id,int *value)
+int SettingUniqueGet_i(PyMOLGlobals *G,int unique_id,int setting_id,int *value)
 {
-  return SettingAtomicGetTypedValue(G,atom_id,setting_id,cSetting_int,value);
+  return SettingUniqueGetTypedValue(G,unique_id,setting_id,cSetting_int,value);
 }
-int SettingAtomicGet_f(PyMOLGlobals *G,int atom_id,int setting_id,float *value)
+int SettingUniqueGet_f(PyMOLGlobals *G,int unique_id,int setting_id,float *value)
 {
-  return SettingAtomicGetTypedValue(G,atom_id,setting_id,cSetting_float,value);
+  return SettingUniqueGetTypedValue(G,unique_id,setting_id,cSetting_float,value);
 }
-int SettingAtomicGet_color(PyMOLGlobals *G,int atom_id,int setting_id,int *value)
+int SettingUniqueGet_color(PyMOLGlobals *G,int unique_id,int setting_id,int *value)
 {
-  return SettingAtomicGetTypedValue(G,atom_id,setting_id,cSetting_color,value);
+  return SettingUniqueGetTypedValue(G,unique_id,setting_id,cSetting_color,value);
 }
 
-void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int setting_type, void *value)
+void SettingUniqueSetTypedValue(PyMOLGlobals *G,int unique_id,int setting_id,int setting_type, void *value)
      /* set value to NULL in order to delete setting */
 {
-  register CSettingAtomic *I = G->SettingAtomic;
+  register CSettingUnique *I = G->SettingUnique;
   OVreturn_word result;
 
-  if( OVreturn_IS_OK( (result=OVOneToOne_GetForward(I->id2offset,atom_id)) )) { /* setting list exists for atom */
+  if( OVreturn_IS_OK( (result=OVOneToOne_GetForward(I->id2offset,unique_id)) )) { /* setting list exists for atom */
     int offset = result.word;
     int prev = 0;
     int found = false;
     while(offset) {
-      SettingAtomicEntry *entry = I->entry + offset;
+      SettingUniqueEntry *entry = I->entry + offset;
       if(entry->setting_id == setting_id) {
         found = true; /* this setting already defined */
         if(value) {
@@ -168,9 +168,9 @@ void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int s
           entry->type = setting_type;
         } else { /* NULL value means delete this setting */
           if(!prev) { /* if first entry in list */
-            OVOneToOne_DelForward(I->id2offset,atom_id);
+            OVOneToOne_DelForward(I->id2offset,unique_id);
             if(entry->next) { /* set new list start */
-              OVOneToOne_Set(I->id2offset,atom_id,entry->next);
+              OVOneToOne_Set(I->id2offset,unique_id,entry->next);
               entry->next = I->next_free;
               I->next_free = offset;
             }
@@ -187,12 +187,12 @@ void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int s
     }
     if(!found) { /* not found in list, so append */
       if(!I->next_free) 
-        SettingAtomicExpand(G);
+        SettingUniqueExpand(G);
       if(I->next_free) {
         offset = I->next_free;
         {
-          SettingAtomicEntry *entry = I->entry + offset;
-          if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, atom_id, offset))) {
+          SettingUniqueEntry *entry = I->entry + offset;
+          if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, unique_id, offset))) {
             I->next_free = entry->next;
             entry->type = setting_type;
             entry->value = *(int*)value;
@@ -205,12 +205,12 @@ void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int s
     }
   } else if( (result.status = OVstatus_NOT_FOUND) && value ) { /* new setting list for atom */
     if(!I->next_free) 
-      SettingAtomicExpand(G);
+      SettingUniqueExpand(G);
     if(I->next_free) {
       int offset = I->next_free;
-      SettingAtomicEntry *entry = I->entry + offset;
+      SettingUniqueEntry *entry = I->entry + offset;
 
-      if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, atom_id, offset))) {
+      if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, unique_id, offset))) {
         I->next_free = entry->next;
         entry->type = setting_type;
         entry->value = *(int*)value;
@@ -223,36 +223,54 @@ void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int s
   }
 }
 
-void SettingAtomicSet_i(PyMOLGlobals *G,int atom_id,int setting_id,int value)
+void SettingUniqueSet_i(PyMOLGlobals *G,int unique_id,int setting_id,int value)
 {
-  SettingAtomicSetTypedValue(G,atom_id,setting_id,cSetting_int,&value);
+  SettingUniqueSetTypedValue(G,unique_id,setting_id,cSetting_int,&value);
 }
 
-void SettingAtomicSet_f(PyMOLGlobals *G,int atom_id,int setting_id,float value)
+void SettingUniqueSet_f(PyMOLGlobals *G,int unique_id,int setting_id,float value)
 {
-  SettingAtomicSetTypedValue(G,atom_id,setting_id,cSetting_float,&value);
+  SettingUniqueSetTypedValue(G,unique_id,setting_id,cSetting_float,&value);
 }
 
-void SettingAtomicSet_b(PyMOLGlobals *G,int atom_id,int setting_id,int value)
+void SettingUniqueSet_b(PyMOLGlobals *G,int unique_id,int setting_id,int value)
 {
-  SettingAtomicSetTypedValue(G,atom_id,setting_id,cSetting_boolean,&value);
+  SettingUniqueSetTypedValue(G,unique_id,setting_id,cSetting_boolean,&value);
 }
 
-void SettingAtomicSet_color(PyMOLGlobals *G,int atom_id,int setting_id,int value)
+void SettingUniqueSet_color(PyMOLGlobals *G,int unique_id,int setting_id,int value)
 {
-  SettingAtomicSetTypedValue(G,atom_id,setting_id,cSetting_color,&value);
+  SettingUniqueSetTypedValue(G,unique_id,setting_id,cSetting_color,&value);
 }
 
-static void SettingAtomicInit(PyMOLGlobals *G)
+void SettingUniqueResetAll(PyMOLGlobals *G)
 {
-  register CSettingAtomic *I;
+  register CSettingUnique *I = G->SettingUnique;
+  
+  OVOneToOne_Reset(I->id2offset);
+  {
+    int a;
+    I->n_alloc = 10;
+    VLAFreeP(I->entry);
+    I->entry = VLACalloc(SettingUniqueEntry,I->n_alloc);
+    /* note: intentially skip index 0  */
+    for(a=2;a<10;a++) {
+      I->entry[a].next = a-1;
+    }
+    I->next_free = I->n_alloc-1;
+  }
+}
 
-  if( (I=(G->SettingAtomic=Calloc(CSettingAtomic,1)))) {
+static void SettingUniqueInit(PyMOLGlobals *G)
+{
+  register CSettingUnique *I = G->SettingUnique;
+
+  if( (I=(G->SettingUnique=Calloc(CSettingUnique,1)))) {
     I->id2offset = OVOneToOne_New(G->Context->heap);
     {
       int a;
       I->n_alloc = 10;
-      I->entry = VLACalloc(SettingAtomicEntry,I->n_alloc);
+      I->entry = VLACalloc(SettingUniqueEntry,I->n_alloc);
       /* note: intentially skip index 0  */
       for(a=2;a<10;a++) {
         I->entry[a].next = a-1;
@@ -262,12 +280,157 @@ static void SettingAtomicInit(PyMOLGlobals *G)
   }
 }
 
-static void SettingAtomicFree(PyMOLGlobals *G)
+static void SettingUniqueFree(PyMOLGlobals *G)
 {
-  register CSettingAtomic *I = G->SettingAtomic;
+  register CSettingUnique *I = G->SettingUnique;
   VLAFreeP(I->entry);
   OVOneToOne_Del(I->id2offset);
   FreeP(I);
+}
+
+int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+  int ok=true;
+  SettingUniqueResetAll(G);
+  if(list)
+    if(PyList_Check(list)) {
+      int n_id = PyList_Size(list);
+      int a;
+      for(a=0;a<n_id;a++) {
+        PyObject *id_list = PyList_GetItem(list,a);
+        int unique_id;
+        if(ok) ok = PyList_Check(id_list);
+        if(ok) ok = (PyList_Size(id_list)>1);
+        if(ok) ok = PConvPyIntToInt(PyList_GetItem(id_list,0),&unique_id);
+        if(ok) {
+          int n_set = 0;
+          PyObject *setting_list = PyList_GetItem(id_list,1);
+          if(ok) ok = PyList_Check(setting_list);
+          if(ok) n_set = PyList_Size(setting_list);
+          if(ok) {
+            int b;
+            for(b=0;b<n_set;b++) {
+              PyObject *entry_list = PyList_GetItem(setting_list,b);
+              if(ok) ok = PyList_Check(entry_list);
+              if(ok) ok = (PyList_Size(entry_list)>2);
+              if(ok) {
+                int setting_id;
+                int setting_type;
+                int value_store;
+                if(ok) ok = PConvPyIntToInt(PyList_GetItem(entry_list,0),&setting_id);
+                if(ok) ok = PConvPyIntToInt(PyList_GetItem(entry_list,1),&setting_type);
+                if(ok) 
+                  switch(setting_type) {
+                  
+                  case cSetting_int:
+                  case cSetting_color:
+                  case cSetting_boolean:
+                    ok = PConvPyIntToInt(PyList_GetItem(entry_list,2),&value_store);
+                    break;
+                  case cSetting_float:
+                    ok = PConvPyFloatToFloat(PyList_GetItem(entry_list,2),(float*)&value_store);
+                    break;
+                  }
+                if(ok) {
+                  SettingUniqueSetTypedValue(G,unique_id, setting_id, setting_type, &value_store);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  return ok;
+#endif
+}
+  
+PyObject *SettingUniqueAsPyList(PyMOLGlobals *G)
+{
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  PyObject *result = NULL;
+  register CSettingUnique *I=G->SettingUnique;
+  {
+    ov_word hidden = 0;
+    OVreturn_word ret;
+    int n_entry = 0;
+    while(1) {
+      ret = OVOneToOne_IterateForward(I->id2offset,&hidden);
+      if(ret.status != OVstatus_YES) 
+        break;
+      n_entry++;
+    }
+    result = PyList_New(n_entry);
+    if(result) {
+      hidden = 0;
+      n_entry = 0;
+      while(1) {        
+        PyObject *setting_list = NULL;
+        int save_offset, unique_id;
+        ret = OVOneToOne_IterateForward(I->id2offset,&hidden);
+
+        if(ret.status != OVstatus_YES) 
+          break;
+        unique_id = ret.word;
+        if( OVreturn_IS_OK(ret = OVOneToOne_GetForward(I->id2offset,unique_id)) ) {
+          int offset = ret.word;
+          int n_set = 0;
+          
+          /* count number of settings for this unique_id */
+
+          SettingUniqueEntry *entry;
+          save_offset = offset;
+          while(offset) {
+            entry = I->entry + offset;
+            n_set ++;
+            offset = entry->next;
+          }
+
+        
+          /* create and insert list for each setting */
+
+          setting_list = PyList_New(n_set);
+          n_set = 0;
+          offset = save_offset;
+          while(offset) {
+            PyObject *setting_entry = PyList_New(3);
+            entry = I->entry + offset;
+            PyList_SetItem(setting_entry,0,PyInt_FromLong(entry->setting_id));
+            PyList_SetItem(setting_entry,1,PyInt_FromLong(entry->type));
+            switch(entry->type) {
+            case cSetting_int:
+            case cSetting_color:
+            case cSetting_boolean:
+              PyList_SetItem(setting_entry,2,PyInt_FromLong(entry->value));
+              break;
+            case cSetting_float:
+              PyList_SetItem(setting_entry,2,PyFloat_FromDouble(*(float*)&entry->value));
+              break;
+            }
+            PyList_SetItem(setting_list,n_set,setting_entry);
+            n_set++;
+            offset = entry->next;
+          }
+        }
+
+        /* add this unique_id set into the overall list */
+
+        {
+          PyObject *unique_list = PyList_New(2);
+          PyList_SetItem(unique_list, 0, PyInt_FromLong(unique_id));
+          PyList_SetItem(unique_list, 1, setting_list);
+          PyList_SetItem(result,n_entry, unique_list);
+        }
+        n_entry++;
+      }
+    }
+  }
+  return(PConvAutoNone(result));
+#endif
 }
 
 int SettingSetSmart_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index, int value)
@@ -344,7 +507,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
 #endif
 }
 
-PyObject *SettingGetGlobalsPyList(PyMOLGlobals *G)
+PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals *G)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -2161,7 +2324,7 @@ float *SettingGetfv(PyMOLGlobals *G,int index)
 void SettingFreeGlobal(PyMOLGlobals *G)
 {
   register CSetting *I=G->Setting;
-  SettingAtomicFree(G);
+  SettingUniqueFree(G);
   SettingPurge(I);
   FreeP(G->Setting);
 }
@@ -2180,7 +2343,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   int (*set_color)(CSetting *I,int index, char *value) = SettingSet_color;
   int (*set_s)(CSetting *I,int index, char *value) = SettingSet_s;
 
-  SettingAtomicInit(G);
+  SettingUniqueInit(G);
 
 
   if(alloc || !I) {

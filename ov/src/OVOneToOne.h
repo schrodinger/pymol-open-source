@@ -19,6 +19,8 @@ void OVOneToOne_Purge(OVOneToOne *o2o);
 void OVOneToOne_Del(OVOneToOne *o2o);
 void OVOneToOne_Reset(OVOneToOne *up);
 
+OVreturn_word OVOneToOne_IterateForward(OVOneToOne *o2o,ov_word *hidden);
+
 OVreturn_word OVOneToOne_GetForward(OVOneToOne *o2o,ov_word forward_value);
 OVreturn_word OVOneToOne_GetReverse(OVOneToOne *o2o,ov_word reverse_value);
 OVstatus OVOneToOne_Set(OVOneToOne *o2o, ov_word forward_value, ov_word reverse_value);

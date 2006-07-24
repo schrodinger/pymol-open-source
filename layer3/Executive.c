@@ -2630,8 +2630,12 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict)
   PyDict_SetItemString(dict,"selector_secrets",tmp);
   Py_XDECREF(tmp);
   
-  tmp = SettingGetGlobalsPyList(G);
+  tmp = SettingGetGlobalsAsPyList(G);
   PyDict_SetItemString(dict,"settings",tmp);
+  Py_XDECREF(tmp);
+
+  tmp = SettingUniqueAsPyList(G);
+  PyDict_SetItemString(dict,"unique_settings",tmp);
   Py_XDECREF(tmp);
 
   tmp = ColorAsPyList(G);
@@ -2844,6 +2848,26 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
     tmp = PyDict_GetItemString(session,"settings");
     if(tmp) {
       ok = SettingSetGlobalsFromPyList(G,tmp);
+    }
+    
+    if(PyErr_Occurred()) {
+      PyErr_Print();  
+      ok=false;
+    }
+    if(!ok) {
+      PRINTFB(G,FB_Executive,FB_Errors)
+        "ExectiveSetSession-Error: after settings.\n"
+        ENDFB(G);
+    }
+    if(!ok) {
+      incomplete = true;
+      ok=true; /* keep trying...don't give up */
+    }
+  }
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"unique_settings");
+    if(tmp) {
+      ok = SettingUniqueFromPyList(G,tmp);
     }
     
     if(PyErr_Occurred()) {
@@ -7676,7 +7700,7 @@ int  ExecutiveSetBondSetting(PyMOLGlobals *G,int index,PyObject *tuple,
                   
                   int uid = AtomInfoCheckUniqueBondID(G,bi);
                   bi->has_setting = true;
-                  SettingAtomicSetTypedValue(G,uid,index,value_type,value_ptr);
+                  SettingUniqueSetTypedValue(G,uid,index,value_type,value_ptr);
                   if(updates)
                     side_effects=true;
                   nSet++;
@@ -7742,7 +7766,7 @@ int  ExecutiveUnsetBondSetting(PyMOLGlobals *G,int index,char *s1,char *s2,
                 SelectorIsMember(G,ai1->selEntry,sele2))) {
               int uid = AtomInfoCheckUniqueBondID(G,bi);
               bi->has_setting = true;
-              SettingAtomicSetTypedValue(G,uid,index,cSetting_blank,NULL);
+              SettingUniqueSetTypedValue(G,uid,index,cSetting_blank,NULL);
               if(updates)
                 side_effects=true;
               nSet++;

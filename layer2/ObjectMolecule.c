@@ -7676,7 +7676,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         if(SelectorIsMember(G,ai->selEntry,sele)) {
           int uid = AtomInfoCheckUniqueID(G,ai);
           ai->has_setting = true;
-          SettingAtomicSetTypedValue(G,uid,op->i1,op->i2,op->ii1);
+          SettingUniqueSetTypedValue(G,uid,op->i1,op->i2,op->ii1);
           op->i4++;
         }
         ai++;

@@ -29,11 +29,11 @@ typedef struct {
   int type; /* must be cSetting_boolean, cSetting_int, cSetting_float, or cSetting_color */
   int value;
   int next; /* for per-atom setting lists & memory management */
-} SettingAtomicEntry;
+} SettingUniqueEntry;
 
-struct _CSettingAtomic {
+struct _CSettingUnique {
   OVOneToOne *id2offset;
-  SettingAtomicEntry *entry;
+  SettingUniqueEntry *entry;
   int n_alloc, next_free;
 };
 
@@ -62,26 +62,32 @@ struct _CSetting {
 
 /* Atomic Settings */
 
-void SettingAtomicDetachChain(PyMOLGlobals *G,int index);
+void SettingUniqueDetachChain(PyMOLGlobals *G,int index);
 /* New API 
  * NOTE: get commands are not range-checked, so be careful
  * in contrast, set commands expand the current list 
  */
 
-void SettingAtomicSet_b(PyMOLGlobals *G,int atom_id,int setting_id,int value);
-void SettingAtomicSet_i(PyMOLGlobals *G,int atom_id,int setting_id,int value);
-void SettingAtomicSet_f(PyMOLGlobals *G,int atom_id,int setting_id,float value);
-void SettingAtomicSet_color(PyMOLGlobals *G,int atom_id,int setting_id,int value);
-void SettingAtomicSetTypedValue(PyMOLGlobals *G,int atom_id,int setting_id,int setting_type, void *value);
+void SettingUniqueSet_b(PyMOLGlobals *G,int unique_id,int setting_id,int value);
+void SettingUniqueSet_i(PyMOLGlobals *G,int unique_id,int setting_id,int value);
+void SettingUniqueSet_f(PyMOLGlobals *G,int unique_id,int setting_id,float value);
+void SettingUniqueSet_color(PyMOLGlobals *G,int unique_id,int setting_id,int value);
+void SettingUniqueSetTypedValue(PyMOLGlobals *G,int unique_id,int setting_id,int setting_type, void *value);
 
-int SettingAtomicCheck(PyMOLGlobals *G,int atom_id,int setting_id);
-int SettingAtomicGet_b(PyMOLGlobals *G,int atom_id,int setting_id,int *value);
-int SettingAtomicGet_i(PyMOLGlobals *G,int atom_id,int setting_id,int *value);
-int SettingAtomicGet_f(PyMOLGlobals *G,int atom_id,int setting_id,float *value);
-int SettingAtomicGet_color(PyMOLGlobals *G,int atom_id,int setting_id,int *value);
+int SettingUniqueCheck(PyMOLGlobals *G,int unique_id,int setting_id);
+int SettingUniqueGet_b(PyMOLGlobals *G,int unique_id,int setting_id,int *value);
+int SettingUniqueGet_i(PyMOLGlobals *G,int unique_id,int setting_id,int *value);
+int SettingUniqueGet_f(PyMOLGlobals *G,int unique_id,int setting_id,float *value);
+int SettingUniqueGet_color(PyMOLGlobals *G,int unique_id,int setting_id,int *value);
+
+void SettingUniqueResetAll(PyMOLGlobals *G);
+PyObject *SettingUniqueAsPyList(PyMOLGlobals *G);
+int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list);
+
 
 void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui);
 void SettingFreeGlobal(PyMOLGlobals *G);
+
 
 CSetting *SettingNew(PyMOLGlobals *G);
 void SettingFreeP(CSetting *I);
@@ -166,7 +172,7 @@ int SettingGetName(PyMOLGlobals *G,int index,SettingName name);
 PyObject *SettingAsPyList(CSetting *I);
 int SettingFromPyList(CSetting *I,PyObject *list);
 int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list);
-PyObject *SettingGetGlobalsPyList(PyMOLGlobals *G);
+PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals *G);
 CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* WARNING: do not delete or change indices
