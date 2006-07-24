@@ -39,7 +39,7 @@ typedef struct _CPop CPop;
 typedef struct _CScene CScene;
 typedef struct _CSeq CSeq;
 typedef struct _CSetting CSetting;
-typedef struct _CSettingAtomic CSettingAtomic;
+typedef struct _CSettingUnique CSettingUnique;
 typedef struct _CText CText;
 typedef struct _CWizard CWizard;
 typedef struct _CAtomInfo CAtomInfo;
@@ -99,7 +99,7 @@ struct _PyMOLGlobals {
   CGO       *DebugCGO; /* for debugging rendering */
   CSeq      *Seq;
   CSetting  *Setting;
-  CSettingAtomic *SettingAtomic;
+  CSettingUnique *SettingUnique;
   CText     *Text;
   CWizard   *Wizard;
   CAtomInfo *AtomInfo;

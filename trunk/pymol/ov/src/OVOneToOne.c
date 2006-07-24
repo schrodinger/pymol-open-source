@@ -183,6 +183,29 @@ OVreturn_word OVOneToOne_GetReverse(OVOneToOne *up,ov_word reverse_value)
   }
 }
 
+OVreturn_word OVOneToOne_IterateForward(OVOneToOne *up,ov_word *hidden)
+{
+  if(!up) {
+    OVreturn_word result = { OVstatus_NULL_PTR };
+    return result;
+  } else {
+    OVreturn_word result = { OVstatus_YES };
+    register int a;
+    register up_element *cur_elem = up->elem + (*hidden);
+    for(a=*hidden;a<up->size;a++) {
+      if(cur_elem->active) {
+        result.word = cur_elem->forward_value;
+        *hidden = a+1;
+        return result;
+      }
+      cur_elem++;
+    }
+    *hidden = 0;
+    result.status = OVstatus_NO;
+    return result;
+  }
+}
+
 OVreturn_word OVOneToOne_GetForward(OVOneToOne *up,ov_word forward_value)
 {
   if(!up) {
