@@ -6448,8 +6448,10 @@ static CoordSet *ObjectMoleculeSDF2Str2CoordSet(PyMOLGlobals *G,char *buffer,
 }
 /*========================================================================*/
 
-static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
-                                                AtomInfoType **atInfoPtr,char **next_mol)
+static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,
+                                                char *buffer,
+                                                AtomInfoType **atInfoPtr,
+                                                char **next_mol)
 {
   char *p;
   int nAtom,nBond,nSubst,nFeat,nSet;
@@ -6790,8 +6792,6 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
             }
           }
 
-
-
           for(a=0;a<nSubst;a++) {
             segment[0]=0;
             subst_name[0]=0;
@@ -6808,9 +6808,16 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
             resv_flag=false;
             
             if(ok) {
+              char *save_p = p;
               p=ParseWordCopy(cc,p,20);
-              if(sscanf(cc,"%d",&id)!=1)
-                ok=ErrMessage(G,"ReadMOL2File","bad substructure id");
+              if(sscanf(cc,"%d",&id)!=1) {
+                if(cc[0]!='@')
+                  ok=ErrMessage(G,"ReadMOL2File","bad substructure id");
+                else {
+                  p = save_p;
+                  break; /* missing substructure... */
+                }
+              }
             }
             if(ok) {
               p=ParseWordCopy(cc,p,sizeof(WordType)-1);
@@ -6824,7 +6831,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
               else
                 root--; /* convert 1-based to 0-based */
             }
-            
+
             /* optional data */
             if(ok&&(!end_line)) {
               p=ParseWordCopy(cc,p,sizeof(WordType)-1);
@@ -7021,7 +7028,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
             if(!ok)
               break;
             p=ParseNextLine(p);
-          }
+            }
           OVLexicon_DEL_AUTO_NULL(lex);
           OVOneToOne_DEL_AUTO_NULL(o2o);
         }
