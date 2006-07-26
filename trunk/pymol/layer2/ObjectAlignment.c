@@ -32,9 +32,12 @@ Z* -------------------------------------------------------------------
 #include"OVContext.h"
 #include"Util.h"
 #include"Selector.h"
+#include"Seq.h"
+#include"Seeker.h"
 
 static ObjectAlignment *ObjectAlignmentNew(PyMOLGlobals *G);
 static void ObjectAlignmentFree(ObjectAlignment *I);
+static void ObjectAlignmentUpdate(ObjectAlignment *I);
 
 static int GroupOrderKnown(ExecutiveObjectOffset *eoo, 
                             OVOneToOne *id2eoo,
@@ -88,11 +91,39 @@ static int GroupOrderKnown(ExecutiveObjectOffset *eoo,
   return order_known;
 }
 
+
+static int AlignmentFindTag(PyMOLGlobals *G,AtomInfoType *ai,int sele,int n_more_plus_one)
+{
+  register int result = 0;/* default -- no tag */
+  register AtomInfoType *ai0 =ai;
+  while(1) {
+    int tag = SelectorIsMember(G,ai0->selEntry, sele);
+    if(tag && (ai0->flags & cAtomFlag_guide)) /* use guide atom if present */
+      return tag;
+    if(result<tag) {
+      if(!result)
+        result = tag;
+      else if(ai0->flags & cAtomFlag_guide) /* residue based and on guide atom */
+        result = tag;
+    }
+    n_more_plus_one--;
+    if(n_more_plus_one>0) {
+      ai0++;
+      if(!AtomInfoSameResidueP(G,ai,ai0))
+        break;
+    } else 
+      break;
+  }
+  return result;
+}
+
 int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int format, char **str_vla)
 {
   int ok=true;
   int len = 0;
   char *vla = VLAlloc(char, 1000);
+  int force_update = false;
+  int active_only = false;
 
   if(state<0) state=ObjectGetCurrentState(&I->Obj,false);
   if(state<0) state=SceneGetState(G);    
@@ -100,14 +131,232 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
     ObjectAlignmentState *oas = I->State + state;
     if(oas->alignVLA) {
       
+      if(state != I->SelectionState) { /* get us a selection for the current state */
+        I->ForceState = state;
+        force_update = true;
+        ObjectAlignmentUpdate(I);
+      }
+      
       switch(format) {
       case 0: /* aln */
         UtilConcatVLA(&vla, &len,"CLUSTAL\n\n");
         
         break;
       }
+      
+      {
+        int align_sele = SelectorIndexByName(G,I->Obj.Name);
+        if(align_sele>=0) {
+          int nRow = 0;
+          int nCol = 0;
+          CSeqRow *row_vla = NULL,*row;
+          void *hidden = NULL;
+          ObjectMolecule *obj;
+          
+          if(align_sele<0) {
+            align_sele = ExecutiveGetActiveAlignmentSele(G);  
+          }
+          if(align_sele>=0) {
+            
+            int max_name_len = 12; /* default indentation */
+            row_vla = VLACalloc(CSeqRow,10);
+            
+            /* first, find out which objects are included in the
+               alignment and count the name length */
+            
+            while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
+              if((obj->Obj.Enabled || !active_only) && (obj->Obj.Name[0]!='_')) {
+                int a;
+                AtomInfoType *ai = obj->AtomInfo;
+                for(a=0;a<obj->NAtom;a++) {
+                  if(SelectorIsMember(G,ai->selEntry,align_sele)) {      
+                    int name_len = strlen(obj->Obj.Name);
+                    if(max_name_len<name_len) max_name_len = name_len;
+                    VLACheck(row_vla,CSeqRow,nRow);
+                    row = row_vla + nRow;
+                    row->obj = obj;
+                    row->nCol = obj->NAtom;
+                    nRow++;
+                    break;
+                  }
+                  ai++;
+                }
+              }
+            }
+            
+            /* next, figure out how many total columns exist */
+            
+            {
+              int done = false;
+              while(!done) {
+                int a;
+                int min_tag = -1;
+                int untagged_col = false;
+                done = true;
+                for(a=0;a<nRow;a++) {
+                  row = row_vla + a;
+                  while(row->cCol<row->nCol) { /* advance to next tag in each row & find lowest */
+                    AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+                    done = false;
+                    if(AtomInfoSameResidueP(G,row->last_ai,ai)) {
+                      row->cCol++;
+                    } else if(!SeekerGetAbbr(G,ai->resn,0)) { /* not a known residue type */
+                      row->cCol++;
+                    } else {
+                      int tag = AlignmentFindTag(G,ai,align_sele,row->nCol-row->cCol);
+                      if(tag) { /* we're at a tagged atom... */
+                        if(min_tag>tag)
+                          min_tag = tag; 
+                        else if(min_tag<0)
+                          min_tag = tag;
+                        break;
+                      } else {
+                        untagged_col = true;
+                        break;
+                      }
+                    }
+                  }
+                  if(untagged_col) break;
+                }
+                if(untagged_col) {
+                  nCol++;
+                  /* increment all untagged atoms */
+                  for(a=0;a<nRow;a++) {
+                    row = row_vla + a;
+                    if(row->cCol<row->nCol) {
+                      AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+                      int tag = AlignmentFindTag(G,ai,align_sele,row->nCol-row->cCol);
+                      if(!tag) { 
+                        row->last_ai = ai;
+                        row->cCol++;
+                      }
+                    }
+                  }
+                } else if(min_tag>=0) {
+                  /* increment all matching tagged atoms */
+                  nCol++;
+                  for(a=0;a<nRow;a++) {
+                    row = row_vla + a;
+                    if(row->cCol<row->nCol) {
+                      AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+                      int tag = AlignmentFindTag(G,ai,align_sele,row->nCol-row->cCol);
+                      if(tag == min_tag) { /* advance past this tag */
+                        row->cCol++;
+                        row->last_ai = ai;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            printf("nCol %d\n",nCol);
+            /* allocate storage for the sequence alignment */
+            
+            {
+              int a;
+              for(a=0;a<nRow;a++) {
+                row = row_vla + a;
+                row->txt = Calloc(char,nCol+1);
+                row->len = 0;
+                row->last_ai = NULL;
+                row->cCol = 0;
+              }
+            }
+              
+            {
+              int done = false;
+              while(!done) {
+                int a;
+                int min_tag = -1;
+                int untagged_col = false;
+                done = true;
+                for(a=0;a<nRow;a++) {
+                  row = row_vla + a;
+                  while(row->cCol<row->nCol) { /* advance to next tag in each row & find lowest */
+                    AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+                    done = false;
+                    if(AtomInfoSameResidueP(G,row->last_ai,ai)) {
+                      row->cCol++;
+                    } else if(!SeekerGetAbbr(G,ai->resn,0)) { /* not a known residue type */
+                      row->cCol++;
+                    } else {
+                      int tag = AlignmentFindTag(G,ai,align_sele,row->nCol-row->cCol);
+                      if(tag) { /* we're at a tagged atom... */
+                        if(min_tag>tag)
+                          min_tag = tag; 
+                        else if(min_tag<0)
+                          min_tag = tag;
+                        break;
+                      } else {
+                        untagged_col = true;
+                        break;
+                      }
+                    }
+                  }
+                  if(untagged_col) break;
+                }
+                if(untagged_col) {
+                  nCol++;
+                  /* increment all untagged atoms */
+                  for(a=0;a<nRow;a++) {
+                    row = row_vla + a;
+                    if(row->cCol<row->nCol) {
+                      AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+                      int tag = AlignmentFindTag(G,ai,align_sele,row->nCol-row->cCol);
+                      if(!tag) { 
+                        row->last_ai = ai;
+                        row->txt[row->len] = SeekerGetAbbr(G,ai->resn,0);
+                        row->len++;
+                        row->cCol++;
+                      } else {
+                        row->txt[row->len] = '-';
+                        row->len++;
+                      }
+                    }
+                  }
+                } else if(min_tag>=0) {
+                  /* increment all matching tagged atoms */
+                  nCol++;
+                  for(a=0;a<nRow;a++) {
+                    row = row_vla + a;
+                    if(row->cCol<row->nCol) {
+                      AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
+                      int tag = AlignmentFindTag(G,ai,align_sele,row->nCol-row->cCol);
+                      if(tag == min_tag) { /* advance past this tag */
+                        row->last_ai = ai;
+                        row->txt[row->len] = SeekerGetAbbr(G,ai->resn,0);
+                        row->len++;
+                        row->cCol++;
+                      } else {
+                        row->txt[row->len] = '-';
+                        row->len++;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+            { 
+              int a;
+              for(a=0;a<nRow;a++) {
+                row = row_vla + a;
+                printf("%s\n",row->txt);
+              }
+            }
+          }
+
+          VLAFreeP(row_vla);
+        }
+      }
     }
   }
+
+
+  if(force_update) { 
+    ObjectAlignmentUpdate(I);
+  }
+
   VLASize(vla,char,len+1);
   vla[len]=0;
   *str_vla = vla;
@@ -612,7 +861,13 @@ static void ObjectAlignmentUpdate(ObjectAlignment *I)
     VLAFreeP(eoo);
   }
   if(I->SelectionState<0) {
-    int state=SettingGet_i(I->Obj.G,NULL,I->Obj.Setting,cSetting_state)-1;    
+    int state = -1;
+    if(I->ForceState>=0) {
+      state = I->ForceState;
+      I->ForceState = 0;
+    }
+    if(state<0)
+      state=SettingGet_i(I->Obj.G,NULL,I->Obj.Setting,cSetting_state)-1;    
     if(state<0)
       state = SceneGetState(G);
     if(state>I->NState)
@@ -624,6 +879,7 @@ static void ObjectAlignmentUpdate(ObjectAlignment *I)
       if(oas->id2tag) {
         SelectorDelete(G,I->Obj.Name);
         SelectorCreateFromTagDict(G, I->Obj.Name, oas->id2tag, false);
+        I->SelectionState = state;
       }
     }
   }

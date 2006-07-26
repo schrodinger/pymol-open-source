@@ -3415,6 +3415,7 @@ static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
   int ok=false;
   ok = PyArg_ParseTuple(args,"siisii",&str1,&state,&mode,&ref_object,&ref_state,&quiet);
   if (ok) {
+    if(!ref_object[0]) ref_object = NULL;
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     pdb=ExecutiveSeleToPDBStr(TempPyMOLGlobals,s1,state,true,mode,ref_object,ref_state,quiet);
@@ -3430,14 +3431,17 @@ static PyObject *CmdGetModel(PyObject *dummy, PyObject *args)
 {
   char *str1;
   int state;
+  char *ref_object;
+  int ref_state;
   OrthoLineType s1;
   PyObject *result = NULL;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&state);
+  ok = PyArg_ParseTuple(args,"sisi",&str1,&state,&ref_object,&ref_state);
   if (ok) {
+    if(!ref_object[0]) ref_object = NULL;
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
-    if(ok) result=ExecutiveSeleToChemPyModel(TempPyMOLGlobals,s1,state);
+    if(ok) result=ExecutiveSeleToChemPyModel(TempPyMOLGlobals,s1,state,ref_object,ref_state);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }

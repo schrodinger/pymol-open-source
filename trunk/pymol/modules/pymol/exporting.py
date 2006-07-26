@@ -248,12 +248,12 @@ SEE ALSO
                 if not quiet:
                     print " Save: wrote \""+filename+"\"."
         elif format=='pkl': # python binary
-            io.pkl.toFile(cmd.get_model(selection,state),filename)
+            io.pkl.toFile(cmd.get_model(selection,state,ref,ref_state),filename)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
         elif format=='pkla': # ascii override
-            io.pkl.toFile(cmd.get_model(selection,state),filename,bin=0)
+            io.pkl.toFile(cmd.get_model(selection,state,ref,ref_state),filename,bin=0)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
@@ -264,12 +264,12 @@ SEE ALSO
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
         elif format=='mmod': # macromodel
-            io.mmd.toFile(cmd.get_model(selection,state),filename)
+            io.mmd.toFile(cmd.get_model(selection,state,ref,ref_state),filename)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
         elif format=='mol': 
-            io.mol.toFile(cmd.get_model(selection,state),filename)
+            io.mol.toFile(cmd.get_model(selection,state,ref,ref_state),filename)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."

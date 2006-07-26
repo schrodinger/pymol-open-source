@@ -46,6 +46,7 @@ typedef struct {
   int *atom_lists;
   char name[ObjNameMax]; /* associated object */
   struct ObjectMolecule *obj; /* this pointer only valid during update */
+  struct AtomInfoType *last_ai;
   int accum,current,title_width; /* temporary stores for aligning */
 } CSeqRow;
 

@@ -6059,18 +6059,38 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
   return(result);
 }
 /*========================================================================*/
-PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state)
+PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state,
+                                     char *ref_object,int ref_state)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
   PyObject *result = NULL;
   int sele1;
+  CObject *base = NULL;
+  double matrix[16], inverse[16], *ref_mat = NULL;
+
+  if(ref_object) {
+    base=ExecutiveFindObjectByName(G,ref_object);
+    if(base) {
+      if(ref_state<-1) {
+        ref_state = state;
+      }
+      if(ref_state<0) {
+        ref_state = ObjectGetCurrentState(base,true);
+      }
+      if(ObjectGetTotalMatrix(base,ref_state,true,matrix)) {
+        invert_special44d44d(matrix,inverse);
+        ref_mat = inverse;
+      }
+    }
+  }
+
   sele1=SelectorIndexByName(G,s1);
   if(state<0) state=0;
   PBlock(); /*   PBlockAndUnlockAPI();*/
   if(sele1>=0) {
-    result=SelectorGetChemPyModel(G,sele1,state);
+    result=SelectorGetChemPyModel(G,sele1,state,ref_mat);
   }
   if(PyErr_Occurred()) PyErr_Print();
   PUnblock(); /* PLockAPIAndUnblock();*/

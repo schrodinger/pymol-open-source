@@ -705,7 +705,7 @@ static CSeqRow* SeekerRelease(PyMOLGlobals *G,CSeqRow* rowVLA,int button,
   return NULL;
 }
 
-char SeekerGetAbbr(PyMOLGlobals *G,char *abbr)
+char SeekerGetAbbr(PyMOLGlobals *G,char *abbr,char water)
 {
   
   switch(abbr[0]) {
@@ -773,14 +773,14 @@ char SeekerGetAbbr(PyMOLGlobals *G,char *abbr)
     case 'O': 
       switch(abbr[2]) {
       case 'H':
-        return 'O';
+        return water;
         break;
       }
       break;
     case '2': 
       switch(abbr[2]) {
       case 'O':
-        return 'O';
+        return water;
         break;
       }
       break;
@@ -853,7 +853,7 @@ char SeekerGetAbbr(PyMOLGlobals *G,char *abbr)
     case 'O':  /* SOL -- gromacs solvent residue */
       switch(abbr[2]) {
       case 'L':
-        return 'O';
+        return water;
         break;
       }
       break;
@@ -871,7 +871,7 @@ char SeekerGetAbbr(PyMOLGlobals *G,char *abbr)
     case 'I': 
       switch(abbr[2]) {
       case 'P':
-        return 'O';
+        return water;
         break;
       }
       break;
@@ -907,7 +907,7 @@ char SeekerGetAbbr(PyMOLGlobals *G,char *abbr)
     case 'A': 
       switch(abbr[2]) {
       case 'T':
-        return 'O';
+        return water;
         break;
       }
       break;
@@ -919,7 +919,7 @@ char SeekerGetAbbr(PyMOLGlobals *G,char *abbr)
   return 0;
 }
 
-static int SeekerFindColor(PyMOLGlobals *G,AtomInfoType *ai,int n_more)
+static int SeekerFindColor(PyMOLGlobals *G,AtomInfoType *ai,int n_more_plus_one)
 {
   register int result = ai->color; /* default -- use first atom color */
   register AtomInfoType *ai0 =ai;
@@ -928,8 +928,8 @@ static int SeekerFindColor(PyMOLGlobals *G,AtomInfoType *ai,int n_more)
       return ai0->color;
     if(ai0->protons == cAN_C) /* or use carbon color */
       result = ai0->color;
-    n_more--;
-    if(n_more>0) {
+    n_more_plus_one--;
+    if(n_more_plus_one>0) {
       ai0++;
       if(!AtomInfoSameResidueP(G,ai,ai0))
         break;
@@ -939,7 +939,7 @@ static int SeekerFindColor(PyMOLGlobals *G,AtomInfoType *ai,int n_more)
   return result;
 }
 
-static int SeekerFindTag(PyMOLGlobals *G,AtomInfoType *ai,int sele, int codes,int n_more)
+static int SeekerFindTag(PyMOLGlobals *G,AtomInfoType *ai,int sele, int codes,int n_more_plus_one)
 {
   register int result = 0;/* default -- no tag */
   register AtomInfoType *ai0 =ai;
@@ -953,8 +953,8 @@ static int SeekerFindTag(PyMOLGlobals *G,AtomInfoType *ai,int sele, int codes,in
       else if((codes<2) && (ai0->flags & cAtomFlag_guide)) /* residue based and on guide atom */
         result = tag;
     }
-    n_more--;
-    if(n_more>0) {
+    n_more_plus_one--;
+    if(n_more_plus_one>0) {
       int do_break = false;
       ai0++;
       switch(codes) {
@@ -1041,7 +1041,6 @@ PyObject *SeekerGetRawAlignment(PyMOLGlobals *G, int align_sele, int active_only
               done = false;
               break;
             }
-            ai++;
           }
         }
         if(min_tag>=0) {
@@ -1093,7 +1092,6 @@ PyObject *SeekerGetRawAlignment(PyMOLGlobals *G, int align_sele, int active_only
               done = false;
               break;
             }
-            ai++;
           }
         }
         if(min_tag>=0) {
@@ -1388,7 +1386,7 @@ void SeekerUpdate(PyMOLGlobals *G)
 
             first_atom_in_label = true;
 
-            abbr[0] = SeekerGetAbbr(G,ai->resn);
+            abbr[0] = SeekerGetAbbr(G,ai->resn,'O');
 
             r1->hint_no_space = last_abbr || last_spacer;
 
