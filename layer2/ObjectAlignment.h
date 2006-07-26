@@ -38,7 +38,7 @@ typedef struct ObjectAlignment {
   CObject Obj;
   ObjectAlignmentState *State;
   int NState;
-  int SelectionState;
+  int SelectionState,ForceState;
 } ObjectAlignment;
 
 

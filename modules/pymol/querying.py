@@ -822,7 +822,7 @@ PYMOL API
             print " cmd.get_dihedral: %5.3f degrees."%r
         return r
 
-    def get_model(selection="(all)",state=1):
+    def get_model(selection="(all)",state=1,ref='',ref_state=0):
         '''
 DESCRIPTION
 
@@ -839,7 +839,7 @@ PYMOL API
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.get_model("("+str(selection)+")",int(state)-1)
+            r = _cmd.get_model("("+str(selection)+")",int(state)-1,str(ref),int(ref_state)-1)
             if r==None:
                 r = DEFAULT_ERROR
         finally:

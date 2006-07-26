@@ -5671,7 +5671,7 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
   return(cLen);
 }
 /*========================================================================*/
-PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state)
+PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -5687,8 +5687,11 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state)
   BondType *bond=NULL;
   int nBond=0;
   int ok =true;
-  CoordSet *cs;
+  CoordSet *cs,*mat_cs = NULL;
+  double matrix[16];
+  int matrix_flag = false;
   int single_flag = true;
+  float *v_ptr,v_tmp[3];
   CoordSet *single_cs = NULL;
   ObjectMolecule *obj;
   AtomInfoType *atInfo,*ai;
@@ -5726,6 +5729,7 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state)
         }
     }
     if(c) {
+
       atom_list = PyList_New(c);
       PyObject_SetAttrString(model,"atom",atom_list);
       c=0;
@@ -5742,6 +5746,23 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state)
           } else 
             idx=cs->AtmToIdx[at];
           if(idx>=0) {
+
+            if(mat_cs!=cs) {
+              /* compute the effective matrix for output coordinates */
+              
+              matrix_flag = false;
+              if(ObjectGetTotalMatrix(&obj->Obj,state,false,matrix)) {
+                if(ref) {
+                  left_multiply44d44d(ref,matrix);
+                }
+                matrix_flag=true;
+              } else if(ref) {
+                copy44d(ref,matrix);
+                matrix_flag=true;
+              }
+              mat_cs = cs;
+            }
+
             if(single_flag) { /* remember whether all atoms come from a single coordinate set...*/
               if(single_cs) {
                 if(single_cs!=cs)
@@ -5751,9 +5772,15 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state)
               }
             }
             ai = obj->AtomInfo+at;
+
+            v_ptr = cs->Coord+(3*idx);
+            if(matrix_flag) {
+              transform44d3f(matrix,v_ptr,v_tmp);
+              v_ptr = v_tmp;
+            }
+
             PyList_SetItem(atom_list,c,
-                           CoordSetAtomToChemPyAtom(G,
-                       ai,obj->CSet[state]->Coord+(3*idx),at));
+                           CoordSetAtomToChemPyAtom(G,ai,v_ptr,at));
             c = c + 1;
           }
         }
@@ -7578,7 +7605,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
               ai1 = i_obj[i_table[b].model]->AtomInfo + i_table[b].atom; 
               if(!AtomInfoSameResidueP(G,ai1,last_ai1)) {
                 if(*ch!='-') { /* if not skipping this residue */
-                  if(!((*ch=='+')||(SeekerGetAbbr(G,ai1->resn)==*ch))) { /* if a mismatch */
+                  if(!((*ch=='+')||(SeekerGetAbbr(G,ai1->resn,'O')==*ch))) { /* if a mismatch */
                     break; 
                   }
                 }
@@ -7597,7 +7624,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
                 ai1 = i_obj[i_table[b].model]->AtomInfo + i_table[b].atom;              
                 if(!AtomInfoSameResidueP(G,ai1,last_ai1)) {
                   if(*ch!='-') { /* if not skipping this residue */
-                    if((*ch=='+')||(SeekerGetAbbr(G,ai1->resn)==*ch)) { /* if matched */
+                    if((*ch=='+')||(SeekerGetAbbr(G,ai1->resn,'O')==*ch)) { /* if matched */
                       int d;
                       for(d=b;d<I->NAtom;d++) {
                         ai2 = i_obj[i_table[d].model]->AtomInfo 
