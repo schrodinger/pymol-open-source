@@ -32,6 +32,10 @@ int PlugIOManagerFree(PyMOLGlobals *G)
 {
   return 1;
 }
+int PlugIOManagerRegister(PyMOLGlobals *G,void *ptr)
+{
+  return 1;
+}
 int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
                           char *fname,int frame,
                           int interval,int average,int start,
