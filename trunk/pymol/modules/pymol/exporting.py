@@ -305,6 +305,8 @@ SEE ALSO
             f.write(txt)
             f.flush()
             f.close()
+            if not quiet:
+                print " Save: wrote \""+filename+"\"."
             r = DEFAULT_SUCCESS
         if _raising(r): raise QuietException
         return r
