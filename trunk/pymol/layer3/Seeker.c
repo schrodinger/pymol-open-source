@@ -1245,7 +1245,7 @@ void SeekerUpdate(PyMOLGlobals *G)
           r1->stop = row->len;
           r1->spacer = true;
           nCol++;
-        }
+        } 
       } 
       if(label_mode<2) { /* no label rows, so put object name into left-hand column */
 
@@ -1261,8 +1261,16 @@ void SeekerUpdate(PyMOLGlobals *G)
         row->column_label_flag = true;
         row->title_width = row->len;
         nCol++;
-
+      } else if(label_mode==3) { /* otherwise just insert a blank zero-length column */
+        VLACheck(row->col,CSeqCol,nCol);
+        r1 = row->col + nCol;
+        r1->start = row->len;
+        UtilConcatVLA(&row->txt,&row->len,"");
+        r1->stop = row->len;
+        r1->spacer = true;
+        nCol++;
       }
+
       if(lab) {
         
         int st_len;
@@ -1294,7 +1302,16 @@ void SeekerUpdate(PyMOLGlobals *G)
         r1->stop = row->len;
         r1->spacer = true;
         nCol++;
+      } else { /* if no labels, just insert a space in row below */
+        VLACheck(row->col,CSeqCol,nCol);
+        r1 = row->col + nCol;
+        r1->start = row->len;
+        UtilConcatVLA(&row->txt,&row->len," ");
+        r1->stop = row->len;
+        r1->spacer = true;
+        nCol++;
       }
+
 
       last_state=-1;
       for(a=0;a<obj->NAtom;a++) {
