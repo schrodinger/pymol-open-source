@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 int SeekerInit(PyMOLGlobals *G);
 void SeekerFree(PyMOLGlobals *G);
 void SeekerUpdate(PyMOLGlobals *G);
-char SeekerGetAbbr(PyMOLGlobals *G,char *abbr,char water);
+char SeekerGetAbbr(PyMOLGlobals *G,char *abbr,char water,char unknown);
 
 PyObject *SeekerGetRawAlignment(PyMOLGlobals *G, int align_sele, int active_only);
 

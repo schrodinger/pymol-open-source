@@ -7605,7 +7605,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
               ai1 = i_obj[i_table[b].model]->AtomInfo + i_table[b].atom; 
               if(!AtomInfoSameResidueP(G,ai1,last_ai1)) {
                 if(*ch!='-') { /* if not skipping this residue */
-                  if(!((*ch=='+')||(SeekerGetAbbr(G,ai1->resn,'O')==*ch))) { /* if a mismatch */
+                  if(!((*ch=='+')||(SeekerGetAbbr(G,ai1->resn,'O',0)==*ch))) { /* if a mismatch */
                     break; 
                   }
                 }
@@ -7624,7 +7624,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
                 ai1 = i_obj[i_table[b].model]->AtomInfo + i_table[b].atom;              
                 if(!AtomInfoSameResidueP(G,ai1,last_ai1)) {
                   if(*ch!='-') { /* if not skipping this residue */
-                    if((*ch=='+')||(SeekerGetAbbr(G,ai1->resn,'O')==*ch)) { /* if matched */
+                    if((*ch=='+')||(SeekerGetAbbr(G,ai1->resn,'O',0)==*ch)) { /* if matched */
                       int d;
                       for(d=b;d<I->NAtom;d++) {
                         ai2 = i_obj[i_table[d].model]->AtomInfo 

@@ -1315,6 +1315,24 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Display', 'Sequence', 'Sequence Mode',
                                          label='Sequence Mode')
 
+        self.menuBar.addmenuitem('Sequence', 'command', 'All Residue Numbers',
+                                         label='All Residue Numbers',
+                                         command = lambda s=self: s.cmd.do("_ set seq_view_label_mode,2"))
+
+        self.menuBar.addmenuitem('Sequence', 'command', 'Top Sequence Only',
+                                 label='Top Sequence Only',
+                                 command = lambda s=self: s.cmd.do("_ set seq_view_label_mode,1"))
+
+        self.menuBar.addmenuitem('Sequence', 'command', 'Object Names Only',
+                                 label='Object Names Only',
+                                 command = lambda s=self: s.cmd.do("_ set seq_view_label_mode,0"))
+
+        self.menuBar.addmenuitem('Sequence', 'command', 'No Labels',
+                                 label='No Labels',
+                                 command = lambda s=self: s.cmd.do("_ set seq_view_label_mode,3"))
+
+        self.menuBar.addmenuitem('Sequence', 'separator', '')
+
         self.menuBar.addmenuitem('Sequence', 'command', 'Residue Codes',
                                          label='Residue Codes',
                                          command = lambda s=self: s.cmd.do("_ set seq_view_format,0"))

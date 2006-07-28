@@ -705,7 +705,7 @@ static CSeqRow* SeekerRelease(PyMOLGlobals *G,CSeqRow* rowVLA,int button,
   return NULL;
 }
 
-char SeekerGetAbbr(PyMOLGlobals *G,char *abbr,char water)
+char SeekerGetAbbr(PyMOLGlobals *G,char *abbr,char water,char unknown)
 {
   
   switch(abbr[0]) {
@@ -916,7 +916,7 @@ char SeekerGetAbbr(PyMOLGlobals *G,char *abbr,char water)
 
   }
 
-  return 0;
+  return unknown;
 }
 
 static int SeekerFindColor(PyMOLGlobals *G,AtomInfoType *ai,int n_more_plus_one)
@@ -1386,7 +1386,7 @@ void SeekerUpdate(PyMOLGlobals *G)
 
             first_atom_in_label = true;
 
-            abbr[0] = SeekerGetAbbr(G,ai->resn,'O');
+            abbr[0] = SeekerGetAbbr(G,ai->resn,'O',0);
 
             r1->hint_no_space = last_abbr || last_spacer;
 

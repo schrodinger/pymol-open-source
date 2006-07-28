@@ -124,6 +124,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
   char *vla = VLAlloc(char, 1000);
   int force_update = false;
   int active_only = false;
+  int max_name_len = 12; /* default indentation */
 
   if(state<0) state=ObjectGetCurrentState(&I->Obj,false);
   if(state<0) state=SceneGetState(G);    
@@ -150,15 +151,15 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
           int nRow = 0;
           int nCol = 0;
           CSeqRow *row_vla = NULL,*row;
+          char *cons_str = NULL;
           void *hidden = NULL;
+
           ObjectMolecule *obj;
           
           if(align_sele<0) {
             align_sele = ExecutiveGetActiveAlignmentSele(G);  
           }
           if(align_sele>=0) {
-            
-            int max_name_len = 12; /* default indentation */
             row_vla = VLACalloc(CSeqRow,10);
             
             /* first, find out which objects are included in the
@@ -200,7 +201,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
                     done = false;
                     if(AtomInfoSameResidueP(G,row->last_ai,ai)) {
                       row->cCol++;
-                    } else if(!SeekerGetAbbr(G,ai->resn,0)) { /* not a known residue type */
+                    } else if(!SeekerGetAbbr(G,ai->resn,0,0)) { /* not a known residue type */
                       row->cCol++;
                     } else {
                       int tag = AlignmentFindTag(G,ai,align_sele,row->nCol-row->cCol);
@@ -249,8 +250,9 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
                 }
               }
             }
-            printf("nCol %d\n",nCol);
             /* allocate storage for the sequence alignment */
+
+            cons_str = Calloc(char,nCol+1); /* conservation string */
             
             {
               int a;
@@ -262,6 +264,8 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
                 row->cCol = 0;
               }
             }
+
+            nCol = 0;
               
             {
               int done = false;
@@ -277,7 +281,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
                     done = false;
                     if(AtomInfoSameResidueP(G,row->last_ai,ai)) {
                       row->cCol++;
-                    } else if(!SeekerGetAbbr(G,ai->resn,0)) { /* not a known residue type */
+                    } else if(!SeekerGetAbbr(G,ai->resn,0,0)) { /* not a known residue type */
                       row->cCol++;
                     } else {
                       int tag = AlignmentFindTag(G,ai,align_sele,row->nCol-row->cCol);
@@ -293,10 +297,8 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
                       }
                     }
                   }
-                  if(untagged_col) break;
                 }
                 if(untagged_col) {
-                  nCol++;
                   /* increment all untagged atoms */
                   for(a=0;a<nRow;a++) {
                     row = row_vla + a;
@@ -304,48 +306,116 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
                       AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
                       int tag = AlignmentFindTag(G,ai,align_sele,row->nCol-row->cCol);
                       if(!tag) { 
-                        row->last_ai = ai;
-                        row->txt[row->len] = SeekerGetAbbr(G,ai->resn,0);
+                        if(!AtomInfoSameResidueP(G,row->last_ai,ai)) { 
+                          row->last_ai = ai;
+                          row->txt[row->len] = SeekerGetAbbr(G,ai->resn,' ','X');
+                        } else {
+                          row->txt[row->len] = '-';
+                        }
                         row->len++;
                         row->cCol++;
                       } else {
                         row->txt[row->len] = '-';
                         row->len++;
                       }
+                    } else {
+                      row->txt[row->len] = '-';
+                      row->len++;
                     }
                   }
-                } else if(min_tag>=0) {
-                  /* increment all matching tagged atoms */
+                  cons_str[nCol] = ' ';
                   nCol++;
+                } else if(min_tag>=0) {
+                  char cons_abbr = ' ';
+                  int abbr_cnt = 0;
+                  /* increment all matching tagged atoms */
                   for(a=0;a<nRow;a++) {
                     row = row_vla + a;
                     if(row->cCol<row->nCol) {
                       AtomInfoType *ai = row->obj->AtomInfo + row->cCol;
                       int tag = AlignmentFindTag(G,ai,align_sele,row->nCol-row->cCol);
                       if(tag == min_tag) { /* advance past this tag */
-                        row->last_ai = ai;
-                        row->txt[row->len] = SeekerGetAbbr(G,ai->resn,0);
+                        char abbr;
+                        if(!AtomInfoSameResidueP(G,row->last_ai,ai)) {                        
+                          row->last_ai = ai;
+                          abbr = SeekerGetAbbr(G,ai->resn,' ','X');
+                          if(cons_abbr==' ')
+                            cons_abbr = abbr;
+                          else if(cons_abbr!=abbr)
+                            cons_abbr = 0;
+                          abbr_cnt++;
+                        } else {
+                          abbr = '-';
+                          cons_abbr = 0;
+                        }
+                        row->txt[row->len] = abbr;
                         row->len++;
                         row->cCol++;
                       } else {
+                        cons_abbr = 0;
                         row->txt[row->len] = '-';
                         row->len++;
                       }
+                    } else {
+                      cons_abbr = 0;
+                      row->txt[row->len] = '-';
+                      row->len++;
                     }
                   }
+                  if(abbr_cnt>1) {
+                    if(cons_abbr)
+                      cons_str[nCol] = '*'; /* aligned and identical */
+                    else
+                      cons_str[nCol] = '.'; /* aligned but not identical */
+                  } else 
+                    cons_str[nCol] = ' ';
+                  nCol++;
                 }
               }
             }
 
             { 
+              int block_width = 76 - (max_name_len +1);
+              int done = false;
+              int seq_len = 0;
               int a;
-              for(a=0;a<nRow;a++) {
-                row = row_vla + a;
-                printf("%s\n",row->txt);
+              while(!done) {
+                done = true;
+                for(a=0;a<nRow;a++) {
+                  row = row_vla + a;
+                  UtilNPadVLA(&vla, &len, row->obj->Obj.Name, max_name_len+1);
+                  if(seq_len<row->len) {
+                    UtilNPadVLA(&vla, &len, row->txt + seq_len, block_width);
+                  }
+                  UtilConcatVLA(&vla, &len, "\n");
+                }
+                if(seq_len<nCol) {
+                  UtilNPadVLA(&vla, &len, "", max_name_len+1);
+                  UtilNPadVLA(&vla, &len, cons_str + seq_len, block_width);
+                  UtilConcatVLA(&vla, &len, "\n");                  
+                }
+                seq_len += block_width;
+                for(a=0;a<nRow;a++) {
+                  row = row_vla + a;
+                  if(seq_len<row->len) {
+                    done = false;
+                    break;
+                  }
+                }
+                UtilConcatVLA(&vla, &len, "\n");
               }
             }
           }
 
+          /* free up resources */
+          if(row_vla) {
+            int a;
+            for(a=0;a<nRow;a++) {
+              row = row_vla + a;
+              FreeP(row->txt);
+            }
+          }
+          FreeP(cons_str);
           VLAFreeP(row_vla);
         }
       }
@@ -386,7 +456,7 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
       result = VLAlloc(int, ( (n_cur<n_new) ? n_new : n_cur));
       
       while( (cur_start<n_cur)||(new_start<n_new) ) {
-        
+
         int action; /* -1 = insert new, 0 = merge, 1 = insert cur */
 
         /* make sure both lists are queued up on the next identifier */
@@ -455,9 +525,18 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
           }
         }
 
+        /* check assumptions */
+
+        if((action<1)&&!(new_start<n_new))
+          action=1;
+        else if((action>(-1))&&!(cur_start<n_cur))
+          action=-1;
+          
+        /* take action */
+
         {
           register int id;
-          
+
           switch(action) {
           case -1: /* insert new */
             if(new_start<n_new) {
