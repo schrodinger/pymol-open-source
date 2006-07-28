@@ -103,6 +103,29 @@ void UtilConcatVLA(char **vla,int *cc,char *str)
   *where=0;
   *(cc)+=len;
 }
+
+void UtilNPadVLA(char **vla,int *cc,char *str,int len)
+{
+  char *what;
+  char *where;
+  int n = 0;
+  VLACheck((*vla),char,len + *cc +1); 
+  where = (*cc)+(*vla);
+  what = str;
+  while(*what) {
+    if(n>=len) 
+      break;
+    *(where++)=*(what++);
+    n++;
+  }
+  while(n<len) {
+    *(where++) = ' ';
+    n++;
+  }
+  *where=0;
+  *(cc)+=len;
+}
+
 void UtilFillVLA(char **vla,int *cc,char what,int len)
 {
   char *where;
