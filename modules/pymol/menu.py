@@ -1235,6 +1235,8 @@ def pick_sele(title,s):
         [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
+        [ 0, ''               ,''                             ],        
+        [ 1, 'remove'             ,'cmd.remove("'+s+'")'            ],
         ]
     return result
     
