@@ -46,6 +46,9 @@ void SettingUniqueDetachChain(PyMOLGlobals *G,int unique_id)
   if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,unique_id)) ) {
     int offset = result.word;
     int next;
+
+    OVOneToOne_DelForward(I->id2offset,unique_id);
+
     SettingUniqueEntry *entry;
     while(offset) {
       entry = I->entry + offset;
@@ -101,7 +104,6 @@ static int SettingUniqueGetTypedValue(PyMOLGlobals *G,int unique_id,int setting_
   if( OVreturn_IS_OK(result = OVOneToOne_GetForward(I->id2offset,unique_id)) ) {
     int offset = result.word;
     SettingUniqueEntry *entry;
-
     while(offset) {
       entry = I->entry + offset;
       if(entry->setting_id == setting_id) {
@@ -162,54 +164,58 @@ void SettingUniqueSetTypedValue(PyMOLGlobals *G,int unique_id,int setting_id,int
     while(offset) {
       SettingUniqueEntry *entry = I->entry + offset;
       if(entry->setting_id == setting_id) {
-        found = true; /* this setting already defined */
-        if(value) {
+        found = true; /* this setting is already defined */
+        if(value) { /* if redefining value */
           entry->value = *(int*)value;
           entry->type = setting_type;
-        } else { /* NULL value means delete this setting */
+        } else { /* or NULL value means delete this setting */
           if(!prev) { /* if first entry in list */
             OVOneToOne_DelForward(I->id2offset,unique_id);
             if(entry->next) { /* set new list start */
               OVOneToOne_Set(I->id2offset,unique_id,entry->next);
-              entry->next = I->next_free;
-              I->next_free = offset;
             }
           } else { /* otherwise excise from middle or end */
             I->entry[prev].next = entry->next;
-            entry->next = I->next_free;
-            I->next_free = offset;
           }
+          entry->next = I->next_free;
+          I->next_free = offset;
         }
         break;
       }
       prev = offset;
       offset = entry->next;
     }
-    if(!found) { /* not found in list, so append */
+    if((!found) && value) { /* setting not found in existing list, so append new value */
       if(!I->next_free) 
         SettingUniqueExpand(G);
       if(I->next_free) {
         offset = I->next_free;
         {
           SettingUniqueEntry *entry = I->entry + offset;
-          if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, unique_id, offset))) {
-            I->next_free = entry->next;
+          I->next_free = entry->next;
+          entry->next = 0;
+          
+          if(prev) { /* append onto existing list */
+            I->entry[prev].next = offset;
             entry->type = setting_type;
             entry->value = *(int*)value;
             entry->setting_id = setting_id;
-            entry->next = 0;
-            I->entry[prev].next = offset;
+          } else if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, unique_id, offset))) {
+            /* create new list */
+            entry->type = setting_type;
+            entry->value = *(int*)value;
+            entry->setting_id = setting_id;
           }
         }
       }
     }
-  } else if( (result.status = OVstatus_NOT_FOUND) && value ) { /* new setting list for atom */
+  } else if(value && ( result.status == OVstatus_NOT_FOUND)) { /* new setting list for atom */
     if(!I->next_free) 
       SettingUniqueExpand(G);
     if(I->next_free) {
       int offset = I->next_free;
       SettingUniqueEntry *entry = I->entry + offset;
-
+      
       if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, unique_id, offset))) {
         I->next_free = entry->next;
         entry->type = setting_type;

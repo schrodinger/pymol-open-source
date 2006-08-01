@@ -1198,6 +1198,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
   int variable_alpha = false;
   int n_var_alpha=0, n_var_alpha_ray=0,n_var_alpha_sph=0;
   float transp;
+  int valence_found  = false;
   OOAlloc(G,RepCylBond);
 
   PRINTFD(G,FB_RepCylBond)
@@ -1258,10 +1259,15 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
         a2=cs->AtmToIdx[b2];
       }
       if((a1>=0)&&(a2>=0)) {
-      if((!variable_alpha) && AtomInfoCheckBondSetting(G,b,cSetting_stick_transparency))
-        variable_alpha = true;
+        int bd_valence_flag;
+
+        if((!variable_alpha) && AtomInfoCheckBondSetting(G,b,cSetting_stick_transparency))
+          variable_alpha = true;
         
-        if(valence_flag) {
+        AtomInfoGetBondSetting_b(G,b,cSetting_valence,valence_flag,&bd_valence_flag);
+        
+        if(bd_valence_flag) {
+          valence_found = true;
           switch(ord) {
           case 1:
             maxCyl+=2; 
@@ -1359,7 +1365,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
     overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
     nub = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
 
-    if(valence_flag) {/* build list of up to 2 connected atoms for each atom */
+    if(valence_found) {/* build list of up to 2 connected atoms for each atom */
       other=ObjectMoleculeGetPrioritizedOtherIndexList(obj,cs);
       fixed_radius = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_stick_fixed_radius);
       scale_r = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_valence_scale);
@@ -1704,8 +1710,11 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
 
         if(s1||s2)
           {
-					 
-            if((valence_flag)&&(ord>1)&&(ord<5)) {
+            int bd_valence_flag;
+
+            AtomInfoGetBondSetting_b(G,b,cSetting_valence,valence_flag,&bd_valence_flag);
+            
+            if((bd_valence_flag)&&(ord>1)&&(ord<5)) {
                   
               if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1))) {
 

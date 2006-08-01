@@ -2241,6 +2241,7 @@ SEE ALSO
             'view'           : [ viewing.view_dict_sc   , 'view'            , ''   ],                              
             'unmask'         : [ selection_sc           , 'selection'       , ''   ],
             'unset'          : [ setting.setting_sc     , 'setting'         , ','  ],
+            'unset_bond'     : [ setting.setting_sc     , 'setting'         , ','  ],                        
             'update'         : [ selection_sc           , 'selection'       , ''   ],
             'window'         : [ window_sc              , 'action'          , ','  ],      
             'zoom'           : [ selection_sc           , 'selection'       , ''   ],

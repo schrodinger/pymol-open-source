@@ -11969,26 +11969,59 @@ static void ExecutiveDraw(Block *block)
                 }
             }
 #endif
-            TextSetColor(G,I->Block->TextColor);
-            TextSetPos2i(G,x+2,y2+text_lift);
-            if((rec->type==cExecObject)||(rec->type==cExecAll)||
-               (rec->type==cExecSelection))
-              {
+
+            {
+              int x3 = x;
+              
+              TextSetColor(G,I->Block->TextColor);
+              TextSetPos2i(G,x3+2,y2+text_lift);
+
+              if((rec->type==cExecObject)||(rec->type==cExecAll)||
+                 (rec->type==cExecSelection)) {
+                
                 y2=y;
                 x2 = xx;
                 if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
                   x2 = x+10;
                 }
-                if(rec->hilight||(row==I->Over)) {
-                  draw_button(x,y2,(x2-x)-1,(ExecLineHeight-1),lightEdge,darkEdge,pressedColor);
-                } else if(rec->visible) {
-                  draw_button(x,y2,(x2-x)-1,(ExecLineHeight-1),lightEdge,darkEdge,enabledColor);
-                } else {
-                  draw_button(x,y2,(x2-x)-1,(ExecLineHeight-1),lightEdge,darkEdge,disabledColor);
+                {
+                  int but_width = (x2-x3)-1;
+
+                  if(0&&row) {
+
+                    draw_button(x2-17,y2,16,(ExecLineHeight-1),lightEdge,darkEdge,enabledColor);
+                    
+#define cControlBoxSize 17
+#define cControlLeftMargin 8
+#define cControlTopMargin 2
+#define cControlSpacing 2
+#define cControlInnerMargin 4
+#define cControlSpread 6
+#define cControlSize 160
+
+                    glColor3f(0.8F,0.8F,0.8F);
+                    glBegin(GL_TRIANGLES);
+                    glVertex2i(x2-17+(cControlBoxSize)-cControlInnerMargin,
+                               (y2+17)-cControlInnerMargin+1);
+                    glVertex2i(x2-17+cControlInnerMargin-2,
+                               (y2+17)-(cControlBoxSize/2)-1);  
+                    glVertex2i(x2-17+(cControlBoxSize)-cControlInnerMargin,
+                               (y2+17)-(cControlBoxSize-1)+cControlInnerMargin-3);
+                    glEnd();
+                    but_width-=17;
+                  }
+                  
+                  if(rec->hilight||(row==I->Over)) {
+                    draw_button(x3,y2,but_width,(ExecLineHeight-1),lightEdge,darkEdge,pressedColor);
+                  } else if(rec->visible) {
+                    draw_button(x3,y2,but_width,(ExecLineHeight-1),lightEdge,darkEdge,enabledColor);
+                  } else {
+                    draw_button(x3,y2,but_width,(ExecLineHeight-1),lightEdge,darkEdge,disabledColor);
+                  }
                 }
-
+                
                 TextSetColor(G,I->Block->TextColor);
-
+                
                 switch(rec->type) {
                 case cExecObject:
                   c = rec->obj->Name;
@@ -12002,30 +12035,28 @@ static void ExecutiveDraw(Block *block)
                     TextDrawChar(G,'(');
                   }
               }
-
-            if(c)
-              while(*c) {
-                if((nChar--)>0)
-                  TextDrawChar(G,*(c++));
-                else
-                  break;
-              }
-
-            if(rec->type==cExecSelection)
-              {
-                if((nChar--)>0) {
-                  TextDrawChar(G,')');
+              
+              if(c)
+                while(*c) {
+                  if((nChar--)>0)
+                    TextDrawChar(G,*(c++));
+                  else
+                    break;
                 }
-
-                c=rec->name;
-              }
-
-            if(rec->type==cExecObject) {
-              if(rec->obj->fGetCaption)
-                c = rec->obj->fGetCaption(rec->obj);
-              if(c && c[0] && nChar>1 && strcmp(c,rec->obj->Name)!=0)
+              
+              if(rec->type==cExecSelection)
                 {
+                  if((nChar--)>0) {
+                    TextDrawChar(G,')');
+                  }
                   
+                  c=rec->name;
+                }
+              
+              if(rec->type==cExecObject) {
+                if(rec->obj->fGetCaption)
+                  c = rec->obj->fGetCaption(rec->obj);
+                if(c && c[0] && nChar>1 && strcmp(c,rec->obj->Name)!=0) {
                   TextSetColor(G,captionColor);
                   TextSetPos2i(G,x+2+8*(max_char-nChar),y2+text_lift);
                   if((nChar--)>0)
@@ -12036,8 +12067,9 @@ static void ExecutiveDraw(Block *block)
                     else
                       break;
                 }
+              }
             }
-
+            
             y-=ExecLineHeight;
             if(y<(I->Block->rect.bottom))
               break;

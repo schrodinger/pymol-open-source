@@ -191,6 +191,16 @@ static int AtomInfoPrimeUniqueIDs(PyMOLGlobals *G)
   return (I->ActiveIDs!=NULL);
 }
 
+int AtomInfoReserveUniqueID(PyMOLGlobals *G,int unique_id)
+{
+  CAtomInfo *I=G->AtomInfo;
+  if(!I->ActiveIDs) 
+    AtomInfoPrimeUniqueIDs(G);
+  if(I->ActiveIDs) 
+    return (OVreturn_IS_OK(OVOneToAny_SetKey(I->ActiveIDs, unique_id, 1)));
+  return 0;
+}
+
 static int AtomInfoGetNewUniqueID(PyMOLGlobals *G)
 {
   CAtomInfo *I=G->AtomInfo;
