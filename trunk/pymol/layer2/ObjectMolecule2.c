@@ -2847,13 +2847,16 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule *I,PyObject *list)
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,5),&bond->unique_id);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,6),&has_setting);
       if(ok) bond->has_setting = (short int)has_setting;
+      if(ok && bond->unique_id) { /* reserve existing IDs */
+        AtomInfoReserveUniqueID(I->Obj.G,bond->unique_id);
+      }
     }
     bond++;
   }
-      PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Debugging)
-	     " ObjectMoleculeBondFromPyList: ok %d after restore\n",ok
-	  ENDFB(I->Obj.G);
-
+  PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Debugging)
+    " ObjectMoleculeBondFromPyList: ok %d after restore\n",ok
+    ENDFB(I->Obj.G);
+  
   return(ok);
 }
 #endif

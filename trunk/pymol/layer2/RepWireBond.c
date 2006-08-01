@@ -588,6 +588,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
         variable_width = true;
       AtomInfoGetBondSetting_b(G,b,cSetting_valence,valence_flag,&bd_valence_flag);
       if(bd_valence_flag) {
+
         valence_found = true;
         if((b->order>0)&&(b->order<4)) {
           maxSegment+=2*b->order;
@@ -721,7 +722,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
           }
 
         if(s1||s2) {
-          float bd_line_width;
+          float bd_line_width = line_width;
           int bd_valence_flag;
           int bd_line_color;
 
