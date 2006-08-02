@@ -158,7 +158,9 @@ class PMGApp(Pmw.MegaWidget):
                     mod_name = module_context+".startup."+name
                     __builtin__.__import__(mod_name)
                     mod = sys.modules[mod_name]
-                    if hasattr(mod,'__init__'):
+                    if hasattr(mod,'__init_plugin__'):
+                        mod.__init_plugin__(self)
+                    elif hasattr(mod,'__init__'):
                         mod.__init__(self)
             except:
                 suppress = 0
