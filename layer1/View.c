@@ -773,6 +773,9 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,
       current->clip_flag = false;
     }
     
+    if(first->ortho_flag && last->ortho_flag) {
+      current->ortho = ((first->ortho * fxn_1 + last->ortho * fxn)>0.5F);
+    }
     current->specification_level = 1;
     
     if(timing_flag) {
