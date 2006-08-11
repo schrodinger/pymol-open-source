@@ -240,6 +240,8 @@ static int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *o
 #define SELE_DONz ( 0x3F00 | STYP_SEL0 | 0x90 )
 #define SELE_LST1 ( 0x4000 | STYP_OPR1 | 0x30 )
 #define SELE_NTO_ ( 0x4100 | STYP_OP22 | 0x30 ) 
+#define SELE_CCLs ( 0x4200 | STYP_SEL1 | 0x80 )
+#define SELE_RCLs ( 0x4300 | STYP_SEL1 | 0x80 )
 
 #define SEL_PREMAX 0x8
 
@@ -349,6 +351,8 @@ static WordKeyValue Keyword[] =
   {  "rep",      SELE_REPs },
 
   {  "color",    SELE_COLs },
+  {  "cartoon_color", SELE_CCLs },
+  {  "ribbon_color",  SELE_RCLs },
 
   {  "alt",      SELE_ALTs },
 
@@ -7855,44 +7859,72 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
       }
       break;
 	 case SELE_REPs:
-      for(a=0;a<cRepCnt;a++)
-        rep_mask[a]=false;
-      WordPrimeCommaMatch(G,base[1].text);
-      a=0;
-      while(1) {
-        if(!rep_names[a].word[0]) break;
-        if(WordMatchComma(G,base[1].text,
-                          rep_names[a].word,
-                          ignore_case)<0)
-          rep_mask[rep_names[a].value]=true;
-        a++;
-      }
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-		  {
-          base[0].sele[a]=false;
-          for(b=0;b<cRepCnt;b++) {
-            if(rep_mask[b]&&i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].visRep[b]) {
-              base[0].sele[a]=true;
-              c++;
-              break;
-            }
-          }
-		  }
-		break;
+       for(a=0;a<cRepCnt;a++)
+         rep_mask[a]=false;
+       WordPrimeCommaMatch(G,base[1].text);
+       a=0;
+       while(1) {
+         if(!rep_names[a].word[0]) break;
+         if(WordMatchComma(G,base[1].text,
+                           rep_names[a].word,
+                           ignore_case)<0)
+           rep_mask[rep_names[a].value]=true;
+         a++;
+       }
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         {
+           base[0].sele[a]=false;
+           for(b=0;b<cRepCnt;b++) {
+             if(rep_mask[b]&&i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].visRep[b]) {
+               base[0].sele[a]=true;
+               c++;
+               break;
+             }
+           }
+         }
+       break;
 	 case SELE_COLs:
-      col_idx = ColorGetIndex(G,base[1].text);
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-		  {
-          base[0].sele[a]=false;
-          for(b=0;b<cRepCnt;b++) {
-            if(i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].color==col_idx) {
-              base[0].sele[a]=true;
-              c++;
-              break;
-            }
-          }
-		  }
-		break;
+       col_idx = ColorGetIndex(G,base[1].text);
+       for(a=cNDummyAtoms;a<I->NAtom;a++) {
+         base[0].sele[a]=false;
+         if(i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].color==col_idx) {
+           base[0].sele[a]=true;
+           c++;
+         }
+       }
+       break;
+	 case SELE_CCLs:
+       col_idx = ColorGetIndex(G,base[1].text);
+       for(a=cNDummyAtoms;a<I->NAtom;a++) {
+         base[0].sele[a]=false;
+         AtomInfoType *ai = i_obj[i_table[a].model]->AtomInfo + i_table[a].atom;
+         if(ai->has_setting) {
+           int value; 
+           if(SettingUniqueGet_color(G,ai->unique_id, cSetting_cartoon_color,&value)) {
+             if(value == col_idx) {
+               base[0].sele[a]=true;
+               c++;
+             }
+           }
+         }
+       }
+       break;
+     case SELE_RCLs:
+       col_idx = ColorGetIndex(G,base[1].text);
+       for(a=cNDummyAtoms;a<I->NAtom;a++) {
+         base[0].sele[a]=false;
+         AtomInfoType *ai = i_obj[i_table[a].model]->AtomInfo + i_table[a].atom;
+         if(ai->has_setting) {
+           int value; 
+           if(SettingUniqueGet_color(G,ai->unique_id, cSetting_ribbon_color,&value)) {
+             if(value == col_idx) {
+               base[0].sele[a]=true;
+               c++;
+             }
+           }
+         }
+       }
+       break;
 	 case SELE_CHNs:
       {
         CWordMatchOptions options;
