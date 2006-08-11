@@ -781,7 +781,7 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,
 
   SceneClipSet(G,p[0],p[1]);
   p+=2;
-  SettingSet(G,cSetting_ortho,*(p++));
+  SettingSetGlobal_b(G,cSetting_ortho,(p[0]>0.5F));
   if(!quiet) { 
     PRINTFB(G,FB_Scene,FB_Actions)
       " Scene: view updated.\n"
