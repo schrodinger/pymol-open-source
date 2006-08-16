@@ -7897,7 +7897,8 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
        col_idx = ColorGetIndex(G,base[1].text);
        for(a=cNDummyAtoms;a<I->NAtom;a++) {
          base[0].sele[a]=false;
-         AtomInfoType *ai = i_obj[i_table[a].model]->AtomInfo + i_table[a].atom;
+         {
+             AtomInfoType *ai = i_obj[i_table[a].model]->AtomInfo + i_table[a].atom;
          if(ai->has_setting) {
            int value; 
            if(SettingUniqueGet_color(G,ai->unique_id, cSetting_cartoon_color,&value)) {
@@ -7907,13 +7908,15 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
              }
            }
          }
+         }
        }
        break;
      case SELE_RCLs:
        col_idx = ColorGetIndex(G,base[1].text);
        for(a=cNDummyAtoms;a<I->NAtom;a++) {
          base[0].sele[a]=false;
-         AtomInfoType *ai = i_obj[i_table[a].model]->AtomInfo + i_table[a].atom;
+         {
+             AtomInfoType *ai = i_obj[i_table[a].model]->AtomInfo + i_table[a].atom;
          if(ai->has_setting) {
            int value; 
            if(SettingUniqueGet_color(G,ai->unique_id, cSetting_ribbon_color,&value)) {
@@ -7922,6 +7925,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
                c++;
              }
            }
+         }
          }
        }
        break;
