@@ -27,7 +27,7 @@ class Normal(PMGSkin):
     pad = ' ' # extra space in menus
     
     appname        = 'PyMOL Tcl/Tk GUI'
-    appversion     = '0.99'
+    appversion     = '1.00'
     copyright      = ('Copyright (C) 1998-2006 by Warren DeLano and \n'+
                             'DeLano Scientific LLC. All rights reserved.')
     contactweb     = 'http://www.pymol.org'
@@ -413,6 +413,7 @@ class Normal(PMGSkin):
                        ("All Readable","*.pqr"),
                        ("All Readable","*.p5m"),
                        ("All Readable","*.p1m"),
+                       ("All Readable","*.moe"), # proprietary format
                        ("PDB File","*.pdb"),
                        ("All Files","*.*"),
                        ("All Files","*"),                                         
@@ -431,6 +432,7 @@ class Normal(PMGSkin):
                        ("DX Map","*.dx"),                                         
                        ("AVS (MEAD) Field","*.fld"),                                         
                        ("MOL File","*.mol"),
+                       ("MOE File","*.moe"), # proprietary format
                        ("ChemPy Model","*.pkl"),
                        ("Raster3D Scene","*.r3d"),
                        ("SDF File","*.sdf"),
@@ -447,11 +449,13 @@ class Normal(PMGSkin):
         if len(ofile):
             if not tutorial:
                 self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
-            self.cmd.log("load %s\n"%ofile,"cmd.load('%s',quiet=0)\n"%ofile)
-            if (string.lower(ofile[-4:])=='.pse') and (ofile!=self.save_file):
-                self.save_file = '' # remove ambiguous default
-            self.cmd.load(ofile,quiet=0)
-
+            try:
+                self.cmd.log("load %s\n"%ofile,"cmd.load('%s',quiet=0)\n"%ofile)
+                if (string.lower(ofile[-4:])=='.pse') and (ofile!=self.save_file):
+                    self.save_file = '' # remove ambiguous default
+                self.cmd.load(ofile,quiet=0)
+            except self.pymol.CmdException:
+                print "Error: unable to open file '%s'"%ofile
 
     def log_open(self):
         sfile = asksaveasfilename(initialfile = self.log_file,

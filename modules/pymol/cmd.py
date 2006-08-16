@@ -872,7 +872,7 @@ DEVELOPMENT TO DO
                         
                         # END PROPRIETARY CODE SEGMENT
                     except ImportError:
-                        print " Error: .MOE format not supported by this PyMOL build."
+                        print "Error: .MOE format not supported by this PyMOL build."
                         if _raising(-1): raise pymol.CmdException
                         
                 else:
