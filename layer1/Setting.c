@@ -49,13 +49,15 @@ void SettingUniqueDetachChain(PyMOLGlobals *G,int unique_id)
 
     OVOneToOne_DelForward(I->id2offset,unique_id);
 
-    SettingUniqueEntry *entry;
+    {
+        SettingUniqueEntry *entry;
     while(offset) {
       entry = I->entry + offset;
       next = entry->next;
       entry->next = I->next_free;
       I->next_free = offset;
       offset = next;
+    }
     }
   } else {
     /* uncaught error */
