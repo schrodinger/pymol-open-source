@@ -81,7 +81,7 @@ Z* -------------------------------------------------------------------
 #define cAtomInfoSingle 1
 #define cAtomInfoNone 5
 
-
+#define cAN_LP  0
 #define cAN_H   1
 #define cAN_He  2
 #define cAN_B   5
