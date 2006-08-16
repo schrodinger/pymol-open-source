@@ -2316,6 +2316,14 @@ static void set_protons(AtomInfoType *I,char *elem)
         break;
       }
       break;
+    case 'L': 
+      switch(e[1]) {
+      case 'P':
+      case 'p':
+        I->protons=cAN_LP; break;
+        break;
+      }
+      break;
     case 'M':
       switch(e[1]) {
       case 'G':
@@ -2649,6 +2657,7 @@ void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
   case cAN_Mn: vdw=1.73F; break;
   case cAN_Mg: vdw=1.73F; break;
   case cAN_Zn: vdw=1.39F; break;
+  case cAN_LP: vdw=0.5F; break; /* lone pairs @ 0.5 same as MOE? */
   default: vdw=1.80F; break;
   }
   
