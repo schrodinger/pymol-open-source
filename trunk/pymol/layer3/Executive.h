@@ -298,7 +298,7 @@ int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state,int match_state
 float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle);
 int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,char *sele,
                     float buffer,float *minCorner,float *maxCorner,
-                    int state,int have_corners, int quiet,int zoom);
+                    int state,int have_corners, int quiet,int zoom,int normalize);
 
 int ***ExecutiveGetBondPrint(PyMOLGlobals *G,char *name,int max_bond,int max_type,int *dim);
 int ExecutiveSetCrystal(PyMOLGlobals *G,char *sele,float a,float b,float c,

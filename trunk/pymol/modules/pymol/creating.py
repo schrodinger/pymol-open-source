@@ -29,9 +29,10 @@ if __name__=='pymol.creating':
     map_type_dict = {
         'vdw' : 0,
         'coulomb' : 1,
-        'gaussian' : 2,
+        'gaussian' : 2, # gaussian summation
         'coulomb_neutral' : 3,
         'coulomb_local' : 4,
+        'gaussian_max' : 4, # gaussian maximum contributor
         }
 
     map_type_sc = Shortcut(map_type_dict.keys())
@@ -51,7 +52,7 @@ if __name__=='pymol.creating':
     ramp_spectrum_sc = Shortcut(ramp_spectrum_dict.keys())
     
     def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,
-                box=None,state=0,quiet=1,zoom=0):
+                box=None,state=0,quiet=1,zoom=0,normalize=-1):
         '''
         state > 0: do indicated state
         state = 0: independent states in independent extents
@@ -85,7 +86,7 @@ if __name__=='pymol.creating':
             lock()
             r = _cmd.map_new(str(name),int(type),grid,str(selection),
                              float(buffer),box,int(state)-1,
-                             int(box_flag),int(quiet),int(zoom))
+                             int(box_flag),int(quiet),int(zoom),int(normalize))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         

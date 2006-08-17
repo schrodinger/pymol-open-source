@@ -1049,20 +1049,21 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
   int state;
   int have_corners;
   int quiet,zoom;
+  int normalize;
   char *selection;
   OrthoLineType s1 = "";
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sifsf(ffffff)iiii",&name,&type,&grid[0],&selection,&buffer,
+  ok = PyArg_ParseTuple(args,"sifsf(ffffff)iiiii",&name,&type,&grid[0],&selection,&buffer,
                         &minCorner[0],&minCorner[1],&minCorner[2],
                         &maxCorner[0],&maxCorner[1],&maxCorner[2],
-                        &state,&have_corners,&quiet,&zoom);
+                        &state,&have_corners,&quiet,&zoom,&normalize);
   if(ok) {
     APIEntry();
     grid[1]=grid[0];
     grid[2]=grid[0];
     ok = (SelectorGetTmp(TempPyMOLGlobals,selection,s1)>=0);
     if(ok) ok = ExecutiveMapNew(TempPyMOLGlobals,name,type,grid,s1,buffer,
-                         minCorner,maxCorner,state,have_corners,quiet,zoom);
+                         minCorner,maxCorner,state,have_corners,quiet,zoom,normalize);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
 
