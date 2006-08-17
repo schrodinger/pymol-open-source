@@ -1901,6 +1901,11 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvColor);
     SceneChanged(G);
     break;
+  case cSetting_ray_color_ramps:
+    ExecutiveInvalidateRep(G,inv_sele,cRepAll,cRepInvColor);
+    SceneChanged(G);
+    break;
+
   case cSetting_cull_spheres:
   case cSetting_sphere_scale:
   case cSetting_sphere_transparency:
@@ -1940,6 +1945,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepSphere,cRepInvColor);
     SceneChanged(G);
     break;
+
   case cSetting_surface_quality:
   case cSetting_surface_mode:
   case cSetting_surface_normal:

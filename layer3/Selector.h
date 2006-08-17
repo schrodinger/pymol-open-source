@@ -110,7 +110,7 @@ int SelectorMapMaskVDW(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buff
 int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float cutoff,int state,
                        int neutral,int shift,float shift_power);
 
-int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buffer,int state);
+int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buffer,int state,int normalize,int use_max);
 PyObject *SelectorAsPyList(PyMOLGlobals *G,int sele1);
 int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list);
 ObjectMolecule **SelectorGetObjectMoleculeVLA(PyMOLGlobals *G,int sele);

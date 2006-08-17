@@ -4716,7 +4716,8 @@ static double max6d(double a,double b,double c,double d,double e,double f)
 typedef double AtomSF[11];
 
 /*========================================================================*/
-int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buffer,int state)
+int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
+                        float buffer,int state,int normalize,int use_max)
 {
   register CSelector *I=G->Selector;
   MapType *map;
@@ -4753,6 +4754,19 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buf
   for(a=0;a<256;a++) {
     sf[a][0]=-1.0;
   }
+
+  sf[cAN_H][0] =  0.493002;
+  sf[cAN_H][1] = 10.510900;
+  sf[cAN_H][2] =  0.322912;
+  sf[cAN_H][3] = 26.125700;
+  sf[cAN_H][4] =  0.140191;
+  sf[cAN_H][5] =  3.142360;
+  sf[cAN_H][6] =  0.040810;
+  sf[cAN_H][7] = 57.799698;
+  sf[cAN_H][8] =  0.003038;
+  sf[cAN_H][9] = 0.0;
+
+  /* LP is treated like H */
 
   sf[cAN_H][0] =  0.493002;
   sf[cAN_H][1] = 10.510900;
@@ -5097,26 +5111,45 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buf
           for(c=oMap->Min[2];c<=oMap->Max[2];c++) {      
             e_val=0.0;
             v2 = F4Ptr(oMap->Field->points,a,b,c,0);
-
             if(MapExclLocus(map,v2,&h,&k,&l)) {
               i=*(MapEStart(map,h,k,l));
               if(i) {
-
                 j=map->EList[i++];
-                while(j>=0) {
-                  d = (float)diff3f(point+3*j,v2)/blur;
-                  sfp=atom_sf[j];
-                  if(d<sfp[10]) {
-                    d=d*d;
-                    if(d<R_SMALL8) d=R_SMALL8;
-                    e_val+=(float)(
-                      (sfp[0]*exp(-sfp[1]*d))
-                      +(sfp[2]*exp(-sfp[3]*d))
-                      +(sfp[4]*exp(-sfp[5]*d))
-                      +(sfp[6]*exp(-sfp[7]*d))
-                      +(sfp[8]*exp(-sfp[9]*d)));
+                if(use_max) {
+                  float e_partial;
+                  while(j>=0) {
+                    d = (float)diff3f(point+3*j,v2)/blur;
+                    sfp=atom_sf[j];
+                    if(d<sfp[10]) {
+                      d=d*d;
+                      if(d<R_SMALL8) d=R_SMALL8;
+                      e_partial=(float)(
+                                         (sfp[0]*exp(-sfp[1]*d))
+                                         +(sfp[2]*exp(-sfp[3]*d))
+                                         +(sfp[4]*exp(-sfp[5]*d))
+                                         +(sfp[6]*exp(-sfp[7]*d))
+                                         +(sfp[8]*exp(-sfp[9]*d)));
+                      if(e_partial > e_val)
+                        e_val = e_partial;
+                    }
+                    j=map->EList[i++];
                   }
-                  j=map->EList[i++];
+                } else {
+                  while(j>=0) {
+                    d = (float)diff3f(point+3*j,v2)/blur;
+                    sfp=atom_sf[j];
+                    if(d<sfp[10]) {
+                      d=d*d;
+                      if(d<R_SMALL8) d=R_SMALL8;
+                      e_val+=(float)(
+                                     (sfp[0]*exp(-sfp[1]*d))
+                                     +(sfp[2]*exp(-sfp[3]*d))
+                                     +(sfp[4]*exp(-sfp[5]*d))
+                                     +(sfp[6]*exp(-sfp[7]*d))
+                                     +(sfp[8]*exp(-sfp[9]*d)));
+                    }
+                    j=map->EList[i++];
+                  }
                 }
               }
             }
@@ -5129,7 +5162,7 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buf
       }
       mean = (float)(sum/n2);
       stdev = (float)sqrt1d((sumsq - (sum*sum/n2))/(n2-1));
-      if((int)SettingGet(G,cSetting_normalize_ccp4_maps)) {
+      if(normalize) {
 
         PRINTFB(G,FB_ObjectMap,FB_Details)
           " ObjectMap: Normalizing: mean = %8.6f & stdev = %8.6f.\n"

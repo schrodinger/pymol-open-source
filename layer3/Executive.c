@@ -3466,7 +3466,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
                     char *sele,float buffer,
                     float *minCorner,
                     float *maxCorner,int state,int have_corners,
-                    int quiet,int zoom)
+                    int quiet,int zoom,int normalize)
 {
   CObject *origObj=NULL;
   ObjectMap *objMap;
@@ -3563,7 +3563,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
                                    false,1.0F);
                 break;
               case 2: /* gaussian */
-                SelectorMapGaussian(G,sele0,ms,0.0F,state);
+                SelectorMapGaussian(G,sele0,ms,0.0F,state,normalize,false);
                 break;
               case 3: /* coulomb_neutral */
                 SelectorMapCoulomb(G,sele0,ms,0.0F,state,true, false,1.0F);
@@ -3572,6 +3572,9 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
                 SelectorMapCoulomb(G,sele0,ms,
                                    SettingGetGlobal_f(G,cSetting_coulomb_cutoff),state,false,
                                    true, 2.0F);
+                break;
+              case 5: /* gaussian_max */
+                SelectorMapGaussian(G,sele0,ms,0.0F,state,normalize,true);
                 break;
               }
               if(!ms->Active)

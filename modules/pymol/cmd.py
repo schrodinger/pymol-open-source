@@ -2216,6 +2216,7 @@ SEE ALSO
             'get'            : [ setting.setting_sc     , 'setting'         , ','  ],      
             'help'           : [ help_sc                , 'selection'       , ''   ],
             'hide'           : [ repres_sc              , 'representation'  , ', ' ],
+            'isolevel'       : [ map_sc                 , 'map'             , ', ' ],
             'iterate'        : [ selection_sc           , 'selection'       , ''   ],
             'iterate_state'  : [ selection_sc           , 'selection'       , ''   ],
             'indicate'       : [ selection_sc           , 'selection'       , ''   ],   
