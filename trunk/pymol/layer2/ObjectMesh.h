@@ -25,14 +25,15 @@ typedef struct {
   int MapState;
   CCrystal Crystal;
   int Active;
-  int *N;
-  float *V;
+  int *N,*RC,VCsize;
+  float *V,*VC;
   int Range[6];
   float ExtentMin[3],ExtentMax[3];
   int ExtentFlag;
   float Level,Radius;
   int RefreshFlag;
   int ResurfaceFlag;
+  int RecolorFlag;
   float *AtomVertex;
   int CarveFlag;
   float CarveBuffer;

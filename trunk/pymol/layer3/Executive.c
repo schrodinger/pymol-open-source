@@ -5052,6 +5052,8 @@ int ExecutiveGetType(PyMOLGlobals *G,char *name,WordType type)
         strcat(type,"surface");
       else if(rec->obj->type==cObjectDist)
         strcat(type,"distance");
+      else if(rec->obj->type==cObjectCGO)
+        strcat(type,"cgo");
     } else if(rec->type==cExecSelection) {
       strcpy(type,"selection");
     }

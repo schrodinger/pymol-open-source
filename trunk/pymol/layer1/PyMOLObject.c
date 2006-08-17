@@ -331,12 +331,12 @@ void ObjectMakeValidName(char *name)
   char *p=name,*q;
   if(p) {
 
-    /* currently legal are A to Z, a to z, 0 to 9, -, _ */
+    /* currently legal are A to Z, a to z, 0 to 9, -, _, + */
     while(*p) {
-      if((*p<45)||(*p>122)||
+      if((*p<43)||(*p>122)||
          ((*p>57)&&(*p<65))||
          ((*p>90)&&(*p<94))||
-         (*p==47)||(*p==60))
+         (*p==44)||(*p==47)||(*p==60))
         /* must be an ASCII-visible character */
         *p=1; /* placeholder for non-printable */
       p++;

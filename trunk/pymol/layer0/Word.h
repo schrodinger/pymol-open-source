@@ -42,6 +42,7 @@ typedef struct {
   int lists;
   int ignore_case;
   int allow_hyphen;
+  int allow_plus;
   int space_lists;
   char wildcard;
 } CWordMatchOptions;
