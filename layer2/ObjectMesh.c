@@ -247,6 +247,8 @@ static void ObjectMeshStateFree(ObjectMeshState *ms)
   }
   VLAFreeP(ms->N);
   VLAFreeP(ms->V);
+  FreeP(ms->VC);
+  FreeP(ms->RC);
   VLAFreeP(ms->AtomVertex);
   if(ms->UnitCellCGO)
     CGOFree(ms->UnitCellCGO);
@@ -347,6 +349,9 @@ static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
     if(level>=cRepInvAll) {
       I->State[state].ResurfaceFlag=true;      
       SceneChanged(I->Obj.G);
+    } else if(level>=cRepInvColor) {
+      I->State[state].RecolorFlag=true;
+      SceneChanged(I->Obj.G);
     } else {
       SceneInvalidate(I->Obj.G);
     }
@@ -382,6 +387,53 @@ int ObjectMeshSetLevel(ObjectMesh *I,float level,int state)
     }
   }
   return(ok);
+}
+
+static void ObjectMeshStateUpdateColors(ObjectMesh *I, ObjectMeshState *ms)
+{
+  if(ms->V) {
+    int index = I->Obj.Color;
+    int ramped_flag = false;
+    float *v = ms->V;
+    float *vc;
+    int *rc;
+    int a;
+    int state = ms - I->State;
+    int n_vert = VLAGetSize(ms->V)/3;
+    
+    if(ms->VC && (ms->VCsize<n_vert)) {
+      FreeP(ms->VC);
+      FreeP(ms->RC);
+    }
+    
+    if(!ms->VC) {
+      ms->VCsize = n_vert;
+      ms->VC = Alloc(float,n_vert*3);
+    }
+    if(!ms->RC) {
+      ms->RC = Alloc(int,n_vert);
+    }
+    rc = ms->RC;
+    vc = ms->VC;
+    if(vc) {
+      for(a=0;a<n_vert;a++) {
+        if(ColorCheckRamped(I->Obj.G,index)) {
+          ColorGetRamped(I->Obj.G,index,v,vc,state);
+          *rc = index;
+          ramped_flag=true;
+        } else {
+          float *col = ColorGet(I->Obj.G,index);
+          copy3f(col,vc);
+        }
+        rc++;
+        vc+=3;
+        v+=3; 
+      }
+    }
+    if( (!ramped_flag) || (!SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_ray_color_ramps))) {
+      FreeP(ms->RC);
+    }
+  }
 }
 
 static void ObjectMeshUpdate(ObjectMesh *I) 
@@ -445,7 +497,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
       
       if(map&&oms&&ms->N&&ms->V&&I->Obj.RepVis[cRepMesh]) {
         if(ms->ResurfaceFlag) {
-          
+          ms->RecolorFlag=true;          
           ms->ResurfaceFlag=false;
           PRINTFB(G,FB_ObjectMesh,FB_Actions)
             " ObjectMesh: updating \"%s\".\n" , I->Obj.Name 
@@ -575,6 +627,15 @@ static void ObjectMeshUpdate(ObjectMesh *I)
             }
           }
         }
+        if(ms->RecolorFlag) {
+          if(ColorCheckRamped(I->Obj.G,I->Obj.Color))
+            ObjectMeshStateUpdateColors(I,ms);
+          else if(ms->VC) {
+            FreeP(ms->VC);
+            FreeP(ms->RC);
+          }
+          ms->RecolorFlag=false;
+        }
       }
     }
     SceneInvalidate(I->Obj.G);
@@ -586,6 +647,7 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
   PyMOLGlobals *G = I->Obj.G;
   float *v = NULL;
   float *vc;
+  int *rc;
   float radius;
   int state = info->state;
   CRay *ray = info->ray;
@@ -637,94 +699,116 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
                   
 
           if(n&&v&&I->Obj.RepVis[cRepMesh]) {
-            vc = ColorGet(I->Obj.G,I->Obj.Color);
+            float cc[3];
+            float colA[3],colB[3];
+            ColorGetEncoded(G,I->Obj.Color,cc);
+            vc = ms->VC;
+            rc = ms->RC;
+            /* vc = ColorGet(I->Obj.G,I->Obj.Color); */
             if(ms->DotFlag) {
-              ray->fColor3fv(ray,vc);
-              while(*n)
-                {
-                  c=*(n++);
-                  if(c--)
-                    {
-                      v+=3;
-                      while(c--)
-                        {
-                          ray->fSphere3fv(ray,v,radius);
-                          v+=3;
-                        }
+              ray->fColor3fv(ray,cc);
+              while(*n) {
+                c=*(n++);
+                while(c--) {
+                  if(vc) {
+                    register float *cA=vc;
+                    if(rc) {
+                      if(rc[0]<-1) ColorGetEncoded(G,rc[0], (cA=colA));
+                      rc++;
                     }
+                    ray->fColor3fv(ray,cA);
+                    ray->fSphere3fv(ray,v,radius);
+                    vc+=3;
+                  } else {
+                    ray->fSphere3fv(ray,v,radius);
+                  }
+                  v+=3;
                 }
+              }
             } else {
-              while(*n)
-                {
-                  c=*(n++);
-                  if(c--)
-                    {
-                      v+=3;
-                      while(c--)
-                        {
-                          ray->fSausage3fv(ray,v-3,v,radius,vc,vc);
-                          v+=3;
-                        }
+              while(*n) {
+                c=*(n++);
+                if(c--) {
+                  v+=3;
+                  if(vc) {
+                    vc+=3;
+                    if(rc) rc++;
+                  }
+                  while(c--) {
+                    if(vc) {
+                      register float *cA=vc-3, *cB=vc;
+                      if(rc) {
+                        if(rc[-1]<-1) ColorGetEncoded(G,rc[-1], (cA=colA));
+                        if(rc[0]<-1) ColorGetEncoded(G,rc[0], (cB=colB));
+                        rc++;
+                      }
+                      ray->fSausage3fv(ray,v-3,v,radius,cA,cB);
+                      vc+=3;
+                    } else {
+                      ray->fSausage3fv(ray,v-3,v,radius,cc,cc);
                     }
+                    v+=3;
+                  }
                 }
+              }
             }
           }
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
           } else {
             if(!pass) {
-
-            int use_dlst;
-            if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-              CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
-                          I->Obj.Setting,NULL,info);
-
-            SceneResetNormal(I->Obj.G,false);
-            ObjectUseColor(&I->Obj);
-            use_dlst = (int)SettingGet(I->Obj.G,cSetting_use_display_lists);
-
-            if(use_dlst && ms->displayList && ms->displayListInvalid) {
-              glDeleteLists(ms->displayList,1);
-              ms->displayList = 0;
-              ms->displayListInvalid = false;
-            }
-
-            if(use_dlst&&ms->displayList) {
-              glCallList(ms->displayList);
-            } else { 
+              int use_dlst;
+              if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
+                CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
+                            I->Obj.Setting,NULL,info);
               
-              if(use_dlst) {
-                if(!ms->displayList) {
-                  ms->displayList = glGenLists(1);
-                  if(ms->displayList) {
-                    glNewList(ms->displayList,GL_COMPILE_AND_EXECUTE);
+              SceneResetNormal(I->Obj.G,false);
+              ObjectUseColor(&I->Obj);
+              use_dlst = (int)SettingGet(I->Obj.G,cSetting_use_display_lists);
+              
+              if(use_dlst && ms->displayList && ms->displayListInvalid) {
+                glDeleteLists(ms->displayList,1);
+                ms->displayList = 0;
+                ms->displayListInvalid = false;
+              }
+              
+              if(use_dlst&&ms->displayList) {
+                glCallList(ms->displayList);
+              } else { 
+                
+                if(use_dlst) {
+                  if(!ms->displayList) {
+                    ms->displayList = glGenLists(1);
+                    if(ms->displayList) {
+                      glNewList(ms->displayList,GL_COMPILE_AND_EXECUTE);
+                    }
                   }
+                }
+                
+                if(n&&v&&I->Obj.RepVis[cRepMesh]) {
+                  vc = ms->VC;              
+                  if(ms->DotFlag) 
+                    glPointSize(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_dot_width));
+                  else
+                    glLineWidth(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width));
+                  while(*n) {
+                    c=*(n++);
+                    if(ms->DotFlag) 
+                      glBegin(GL_POINTS);
+                    else 
+                      glBegin(GL_LINE_STRIP);
+                    while(c--) {
+                      if(vc) { glColor3fv(vc); vc+=3;}
+                      glVertex3fv(v);
+                      v+=3;
+                    }
+                    glEnd();
+                  }
+                }
+                if(use_dlst&&ms->displayList) {
+                  glEndList();
                 }
               }
-
-            if(n&&v&&I->Obj.RepVis[cRepMesh]) {
-              if(ms->DotFlag) 
-                glPointSize(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_dot_width));
-              else
-                glLineWidth(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width));
-              while(*n)
-                {
-                  c=*(n++);
-                  if(ms->DotFlag) 
-                    glBegin(GL_POINTS);
-                  else 
-                    glBegin(GL_LINE_STRIP);
-                  while(c--) {
-                    glVertex3fv(v);
-                    v+=3;
-                  }
-                  glEnd();
-                }
-            }
-            if(use_dlst&&ms->displayList) {
-              glEndList();
-            }
-            }
             }
           }
         }
@@ -782,6 +866,7 @@ void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
   ms->N[0]=0;
   ms->Active=true;
   ms->ResurfaceFlag=true;
+  ms->RecolorFlag=false;
   ms->ExtentFlag=false;
   ms->CarveFlag=false;
   ms->CarveBuffer=0.0;
