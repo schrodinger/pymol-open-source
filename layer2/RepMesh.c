@@ -436,6 +436,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
   int inclH;
   int solv_acc;
   int mesh_type ;
+  int mesh_skip;
 
   AtomInfoType *ai1;
 
@@ -452,8 +453,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
   probe_radius2 = probe_radius*probe_radius;
   solv_acc = (SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_solvent));
   mesh_type = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_type);
-
-
+  mesh_skip = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_skip);
   
   mesh_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
@@ -663,8 +663,8 @@ Rep *RepMeshNew(CoordSet *cs,int state)
 	 MapFree(map);
 	 FreeP(I->Dot);	 
 	 OrthoBusyFast(G,2,3);
-    IsosurfVolume(G,field,1.0,&I->N,&I->V,NULL,mesh_type);
-    IsosurfFieldFree(G,field);
+     IsosurfVolume(G,field,1.0,&I->N,&I->V,NULL,mesh_type,mesh_skip);
+     IsosurfFieldFree(G,field);
     
     /* someday add support for solid mesh representation....
        if(mesh_type==0||mesh_type==1) {

@@ -1772,6 +1772,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_mesh_type:
   case cSetting_mesh_solvent:
   case cSetting_mesh_quality:
+  case cSetting_mesh_skip:
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvRep);
     SceneChanged(G);
     break;
@@ -3278,6 +3279,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_nonbonded_transparency,0.0F);
   set_b(I,cSetting_ray_spec_local, 0);
   set_color(I,cSetting_line_color, "-1");
+  set_f(I,cSetting_ray_label_specular,1.0F);
+  set_i(I,cSetting_mesh_skip, 0);
+
 }
 
 

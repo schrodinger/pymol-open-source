@@ -716,6 +716,9 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_nonbonded_transparency     524
 #define cSetting_ray_spec_local             525
 #define cSetting_line_color                 526
+#define cSetting_ray_label_specular         527
+#define cSetting_mesh_skip                  528
+
 /* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -724,7 +727,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       527
+#define cSetting_INIT                       529
 
 #endif
 

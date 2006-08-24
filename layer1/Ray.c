@@ -2105,7 +2105,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	float new_front;
 	int pass;
 	unsigned int last_pixel=0,*pixel;
-	int exclude;
+	int exclude1,exclude2;
 	float lit;
 	int backface_cull;
 	float project_triangle;
@@ -2115,7 +2115,7 @@ int RayTraceThread(CRayThreadInfo *T)
    int trans_mode;
 	float first_excess;
 	int pixel_flag;
-	float ray_trans_spec;
+	float ray_trans_spec, ray_lab_spec;
 	float shadow_fudge;
     int label_shadow_mode;
 	int interior_color;
@@ -2208,6 +2208,7 @@ int RayTraceThread(CRayThreadInfo *T)
      opaque_back			= SettingGetGlobal_i(I->G,cSetting_opaque_background);      
    two_sided_lighting	= SettingGetGlobal_i(I->G,cSetting_two_sided_lighting);
    ray_trans_spec		= SettingGet(I->G,cSetting_ray_transparency_specular);
+   ray_lab_spec  		= SettingGet(I->G,cSetting_ray_label_specular);
    trans_cont        = SettingGetGlobal_f(I->G,cSetting_ray_transparency_contrast);
    trans_mode        = SettingGetGlobal_i(I->G,cSetting_transparency_mode);
    if(trans_mode==1) two_sided_lighting = true;
@@ -2528,7 +2529,8 @@ int RayTraceThread(CRayThreadInfo *T)
                  r1.base[1] = pixel_base[1];
                }
               
-               exclude		= -1;
+               exclude1		= -1;
+               exclude2     = -1;
                persist			= _1;
                first_excess	= _0;
                excl_trans		= _0;
@@ -2559,7 +2561,8 @@ int RayTraceThread(CRayThreadInfo *T)
                while((persist > _persistLimit) && (pass <= max_pass))
                  {
                    pixel_flag		= false;
-                   BasisCall[0].except = exclude;
+                   BasisCall[0].except1 = exclude1;
+                   BasisCall[0].except2 = exclude2;
                    BasisCall[0].front = new_front;
                    BasisCall[0].excl_trans = excl_trans;
                    BasisCall[0].interior_flag = false;
@@ -2769,7 +2772,8 @@ int RayTraceThread(CRayThreadInfo *T)
                               ((r1.prim->type != cPrimCharacter)||(label_shadow_mode&0x1))) {
                              matrix_transform33f3f(bp->Matrix,r1.impact,r2.base);
                              r2.base[2]-=shadow_fudge;
-                             BasisCall[bc].except = i;
+                             BasisCall[bc].except2 = -1;
+                             BasisCall[bc].except1 = i; /* exclude current prim from shadow comp */
                              if(BasisHitShadow(&BasisCall[bc]) > -1) {
                                if( (!clip_shadows) || (bp->LightNormal[2]>=_0) || 
                                    ((T->front + r1.impact[2] - (r2.dist*bp->LightNormal[2]))<_0)) {
@@ -2817,7 +2821,11 @@ int RayTraceThread(CRayThreadInfo *T)
                                  dotgle	= -dot_product3f(r1.surfnormal,bp->SpecNormal); /* fast OpenGL-like global specular */
                                }
                                if(dotgle < _0) dotgle=_0;                                                          
-                               excess	+= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
+                               if(r1.prim->type !=cPrimCharacter) {
+                                 excess	+= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
+                               } else {
+                                 excess	+= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit * ray_lab_spec);
+                               }
                              }
                            }
                          }
@@ -3095,7 +3103,8 @@ int RayTraceThread(CRayThreadInfo *T)
                        }
                      }
                      last_pixel	= *pixel;
-                     exclude		= i;
+                     exclude2 = exclude1;
+                     exclude1		= i;
                      pass++;
                    }
                   

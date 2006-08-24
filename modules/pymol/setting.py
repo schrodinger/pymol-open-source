@@ -560,6 +560,8 @@ if __name__=='pymol.setting':
         nonbonded_transparency    = (524,'')
         ray_spec_local            = (525,'')
         line_color                = (526,'')
+        ray_label_specular        = (527,'')
+        mesh_skip                 = (528,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

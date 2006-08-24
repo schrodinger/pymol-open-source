@@ -75,7 +75,7 @@ typedef struct {
 typedef struct {
   CBasis *Basis;
   RayInfo *rr;
-  int except;
+  int except1,except2; /* primitives to avoid */
   int *vert2prim;
   int shadow;
   float front;
