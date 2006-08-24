@@ -130,6 +130,17 @@ void WordMatchOptionsConfigAlpha(CWordMatchOptions *I, char wildcard, int ignore
   I->space_lists = false;
 }
 
+void WordMatchOptionsConfigAlphaList(CWordMatchOptions *I, char wildcard, int ignore_case)
+{ /* here we expect '+' to be used in lists */
+  I->range_mode = cWordMatchOptionAlphaRanges;
+  I->lists = true;
+  I->ignore_case = ignore_case;
+  I->wildcard = wildcard;
+  I->allow_hyphen = false;
+  I->allow_plus = true;
+  I->space_lists = false;
+}
+
 void WordMatchOptionsConfigMixed(CWordMatchOptions *I, char wildcard, int ignore_case )
 {
   I->range_mode = cWordMatchOptionNumericRanges;  

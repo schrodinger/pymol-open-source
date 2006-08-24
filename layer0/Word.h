@@ -51,6 +51,7 @@ typedef struct _CWordMatcher CWordMatcher;
 
 void WordMatchOptionsConfigInteger(CWordMatchOptions *I);
 void WordMatchOptionsConfigAlpha(CWordMatchOptions *I, char wildcard, int ignore_case);
+void WordMatchOptionsConfigAlphaList(CWordMatchOptions *I, char wildcard, int ignore_case);
 void WordMatchOptionsConfigMixed(CWordMatchOptions *I, char wildcard, int ignore_case);
 void WordMatchOptionsConfigNameList(CWordMatchOptions *I, char wildcard, int ignore_case);
 

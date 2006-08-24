@@ -417,7 +417,7 @@ static CIsosurf *IsosurfNew(PyMOLGlobals *G)
 	I->ActiveEdges=NULL;
 	I->Point=NULL;
 	I->Line=NULL;
-	
+	I->Skip=0;
 	for(c=0;c<256;c++)
 	  I->Code[c]=-1;
 		
@@ -622,7 +622,7 @@ int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,
     int range_store[6];
 	I->Num = *num;
 	I->Line = *vert;
-    I->Skip = skip+1;
+    I->Skip = skip;
     if(range) {
       for(c=0;c<3;c++) {
         I->AbsDim[c]=field->dimensions[c];
@@ -769,12 +769,11 @@ static int	IsosurfCurrent(CIsosurf *II)
 {
   register CIsosurf *I = II;
 	int	ok=true;
-	if(IsosurfCodeVertices(I))
-		{
-		if(ok) ok=IsosurfFindActiveEdges(I);
-		if(ok) ok=IsosurfFindLines(I);
-		if(ok) ok=IsosurfDrawLines(I);
-		}
+	if(IsosurfCodeVertices(I)) {
+      if(ok) ok=IsosurfFindActiveEdges(I);
+      if(ok) ok=IsosurfFindLines(I);
+      if(ok) ok=IsosurfDrawLines(I);
+    }
 	return(ok);
 }
 /*===========================================================================*/
@@ -782,11 +781,10 @@ static int	IsosurfPoints(CIsosurf *II)
 {
   register CIsosurf *I = II;
 	int	ok=true;
-	if(IsosurfCodeVertices(I))
-		{
-		if(ok) ok=IsosurfFindActiveEdges(I);
+	if(IsosurfCodeVertices(I)) {
+      if(ok) ok=IsosurfFindActiveEdges(I);
       if(ok) ok=IsosurfDrawPoints(I);
-		}
+    }
 	return(ok);
 }
 /*===========================================================================*/
@@ -1047,7 +1045,7 @@ static int	IsosurfFindLines(CIsosurf *II)
           ip1=i+1;
           jp1=j+1;
           kp1=k+1;
-          if((j<Max1m1)&&(k<Max2m1)&&!(i%skip))	{ /* i-plane */
+          if((j<Max1m1)&&(k<Max2m1)&&((!skip)||!(i%skip)))	{ /* i-plane */
             index=I4(I->ActiveEdges,i,j,k,1)<<2;
             index=(index+I4(I->ActiveEdges,i,jp1,k,2))<<2;
             index=(index+I4(I->ActiveEdges,i,j,kp1,1))<<2;
@@ -1113,7 +1111,7 @@ static int	IsosurfFindLines(CIsosurf *II)
                 }
               }
             }
-            if((i<Max0m1)&&(j<Max1m1)&&!(k%skip))	{ /* k-plane */
+            if((i<Max0m1)&&(j<Max1m1)&&((!skip)||!(k%skip)))	{ /* k-plane */
               index=I4(I->ActiveEdges,i,j,k,0)<<2;
               index=(index+I4(I->ActiveEdges,ip1,j,k,1))<<2;
               index=(index+I4(I->ActiveEdges,i,jp1,k,0))<<2;
@@ -1176,7 +1174,7 @@ static int	IsosurfFindLines(CIsosurf *II)
                 }
               }
             }
-            if((i<Max0m1)&&(k<Max2m1)&&!(j%skip))	{ /* j-plane */
+            if((i<Max0m1)&&(k<Max2m1)&&((!skip)||!(j%skip)))	{ /* j-plane */
               index=I4(I->ActiveEdges,i,j,k,0)<<2;
               index=(index+I4(I->ActiveEdges,ip1,j,k,2))<<2;
               index=(index+I4(I->ActiveEdges,i,j,kp1,0))<<2;

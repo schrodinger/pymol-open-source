@@ -43,6 +43,9 @@ ray
 ramp_new ramp, pot, color=sludge
 ray
 
+ramp_new ramp, pot, color=rainbow
+ray
+
 ramp_new ramp, pot, color=rainbow, selection=none
 ray
 

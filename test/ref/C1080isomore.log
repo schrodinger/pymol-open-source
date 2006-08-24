@@ -74,9 +74,9 @@ PyMOL>refresh
  ObjectMesh: updating "m8".
  IsosurfVolume: Surface generated using 6969 lines.
  ObjectMesh: updating "m9".
- IsosurfVolume: Surface generated using 38299 lines.
+ IsosurfVolume: Surface generated using 37701 lines.
  ObjectMesh: updating "m7".
- IsosurfVolume: Surface generated using 38299 lines.
+ IsosurfVolume: Surface generated using 37701 lines.
 PyMOL>isomesh m7,tst6,state=3,source_state=1
  Isomesh: created "m7", setting level to 1.000
 PyMOL>refresh
@@ -91,20 +91,20 @@ PyMOL>isomesh m7,tst2,state=1,source_state=2
  Isomesh: created "m7", setting level to 1.000
 PyMOL>refresh
  ObjectMesh: updating "m7".
- IsosurfVolume: Surface generated using 29199 lines.
+ IsosurfVolume: Surface generated using 29064 lines.
 PyMOL>isomesh m1,tst1
  Executive: object "m1" created.
  Isomesh: created "m1", setting level to 1.000
 PyMOL>refresh
  ObjectMesh: updating "m1".
- IsosurfVolume: Surface generated using 38299 lines.
+ IsosurfVolume: Surface generated using 37701 lines.
 PyMOL>isomesh m2,tst2
  Executive: object "m2" created.
  Isomesh: created "m2", setting level to 1.000
  Isomesh: created "m2", setting level to 1.000
 PyMOL>refresh
  ObjectMesh: updating "m2".
- IsosurfVolume: Surface generated using 29199 lines.
+ IsosurfVolume: Surface generated using 29064 lines.
  ObjectMesh: updating "m2".
  IsosurfVolume: Surface generated using 6969 lines.
 PyMOL>isomesh m3,tst3
@@ -116,9 +116,9 @@ PyMOL>refresh
  ObjectMesh: updating "m3".
  IsosurfVolume: Surface generated using 3487 lines.
  ObjectMesh: updating "m3".
- IsosurfVolume: Surface generated using 30416 lines.
+ IsosurfVolume: Surface generated using 29781 lines.
  ObjectMesh: updating "m3".
- IsosurfVolume: Surface generated using 9105 lines.
+ IsosurfVolume: Surface generated using 9095 lines.
 PyMOL>isomesh m4,tst4
 PyMOL>refresh
 PyMOL>isomesh m5a,tst5,source_state=1
@@ -141,7 +141,7 @@ PyMOL>refresh
  ObjectMesh: updating "m6".
  IsosurfVolume: Surface generated using 2975 lines.
  ObjectMesh: updating "m6".
- IsosurfVolume: Surface generated using 29199 lines.
+ IsosurfVolume: Surface generated using 29064 lines.
  ObjectMesh: updating "m6".
  IsosurfVolume: Surface generated using 6969 lines.
  ObjectSurface: updating "s1".
