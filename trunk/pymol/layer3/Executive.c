@@ -10440,6 +10440,8 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
             op.i1=rep;
             op.i2=level;
             ExecutiveObjMolSeleOp(G,sele,&op);
+          } else if(rec->obj->fInvalidate) {
+            rec->obj->fInvalidate(rec->obj,rep,level,-1);
           }
         }
         break;

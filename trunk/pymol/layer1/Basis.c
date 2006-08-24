@@ -1133,7 +1133,8 @@ int BasisHitPerspective(BasisCallRec *BC)
     int v2p;
     int i,ii;
     int n_vert = BI->NVertex, n_eElem = map->NEElem;
-    int except = BC->except;
+    int except1 = BC->except1;
+    int except2 = BC->except2;
     int check_interior_flag   = BC->check_interior;
     float   sph[3],vt[3],tri1,tri2; 
     register CPrimitive *BC_prim = BC->prim;
@@ -1151,8 +1152,10 @@ int BasisHitPerspective(BasisCallRec *BC)
   
     excl_trans_flag   = (excl_trans != _0);       
   
-    if(except >= 0)
-      except   = vert2prim[except];
+    if(except1 >= 0)
+      except1   = vert2prim[except1];
+    if(except2 >= 0)
+      except2   = vert2prim[except2];
 
     MapCacheReset(cache);
 
@@ -1259,7 +1262,7 @@ int BasisHitPerspective(BasisCallRec *BC)
               ii = *(ip++);
               v2p = vert2prim[i];
               do_loop = ((ii>=0)&&(ii<n_vert));
-              if((v2p != except) && (!MapCached(cache,v2p))) 
+              if((v2p != except1) && (v2p != except2) && (!MapCached(cache,v2p)))
                 {
                   register CPrimitive *prm = BC_prim + v2p;
                   int prm_type;
@@ -1540,7 +1543,8 @@ int BasisHitNoShadow(BasisCallRec *BC)
     int     i,ii;
     int      *xxtmp;
     int do_loop;
-    int except = BC->except;
+    int except1 = BC->except1;
+    int except2 = BC->except2;
     int    n_vert = BI->NVertex, n_eElem = BI->Map->NEElem;
     const int *vert2prim = BC->vert2prim;
     const float front = BC->front;
@@ -1562,8 +1566,10 @@ int BasisHitNoShadow(BasisCallRec *BC)
     vt[1]         = r->base[1];
     vt[2]         = r->base[2] - front;
       
-    if(except >= 0)
-      except   = vert2prim[except];
+    if(except1 >= 0)
+      except1   = vert2prim[except1];
+    if(except2 >= 0)
+      except2   = vert2prim[except2];
          
     excl_trans_flag   = (excl_trans != _0);
       
@@ -1586,7 +1592,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
           v2p = vert2prim[i];
           do_loop = ((ii>=0)&&(ii<n_vert));
               
-          if((v2p != except) && (!MapCached(cache,v2p)))  {
+          if((v2p != except1) && (v2p != except2) && (!MapCached(cache,v2p)))  {
             CPrimitive *prm = BC->prim + v2p;
             MapCache(cache,v2p);
                   
@@ -1808,7 +1814,8 @@ int BasisHitShadow(BasisCallRec *BC)
       int      *xxtmp;
       
       int n_vert = BI->NVertex, n_eElem = BI->Map->NEElem;
-      register int except = BC->except;
+      register int except1 = BC->except1;
+      register int except2 = BC->except2;
       const int *vert2prim = BC->vert2prim;
       const int trans_shadows = BC->trans_shadows;
       const int nearest_shadow = BC->nearest_shadow;
@@ -1832,8 +1839,10 @@ int BasisHitShadow(BasisCallRec *BC)
       vt[0]         = r->base[0];
       vt[1]         = r->base[1];
       
-      if(except >= 0)
-         except   = vert2prim[except];
+      if(except1 >= 0)
+         except1   = vert2prim[except1];
+      if(except2 >= 0)
+         except2   = vert2prim[except2];
          
       excl_trans_flag   = (excl_trans != _0);
       
@@ -1857,7 +1866,7 @@ int BasisHitShadow(BasisCallRec *BC)
              ii = *(ip++);
              v2p = vert2prim[i];
              do_loop = ((ii>=0)&&(ii<n_vert));
-             if( (v2p != except) && !MapCached(cache,v2p) ) {
+             if( (v2p != except1) && (v2p != except2) && !MapCached(cache,v2p) ) {
                register CPrimitive *prm = BC_prim + v2p;
                int prm_type;
                

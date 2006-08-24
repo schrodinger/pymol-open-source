@@ -672,6 +672,8 @@ typedef struct _CPyMOL {
   ov_word lex_nonbonded_transparency;
   ov_word lex_ray_spec_local;
   ov_word lex_line_color;
+  ov_word lex_ray_label_specular;
+  ov_word lex_mesh_skip;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1341,6 +1343,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(nonbonded_transparency,524);
   LEX_SETTING(ray_spec_local,525);
   LEX_SETTING(line_color,526);
+  LEX_SETTING(ray_label_specular, 527);
+  LEX_SETTING(mesh_skip,528);
   return_OVstatus_SUCCESS;
 }
 

@@ -40,7 +40,7 @@ typedef struct {
 Isofield *IsosurfFieldAlloc(PyMOLGlobals *G,int *dims);
 void IsosurfFieldFree(PyMOLGlobals *G,Isofield *field);
 
-int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **vert,int *range,int mode);
+int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **vert,int *range,int mode,int skip);
 void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
 
 int	IsosurfInit(PyMOLGlobals *G);

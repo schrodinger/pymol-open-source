@@ -346,7 +346,7 @@ static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
     if(state<0) once_flag=false;
     if(!once_flag) state=a;
     I->State[state].RefreshFlag=true;
-    if(level>=cRepInvAll) {
+    if((level>=cRepInvAll)||(rep==cRepMesh)) {
       I->State[state].ResurfaceFlag=true;      
       SceneChanged(I->Obj.G);
     } else if(level>=cRepInvColor) {
@@ -459,6 +459,8 @@ static void ObjectMeshUpdate(ObjectMesh *I)
   int h,k,l;
   int i,j;
   int ok=true;
+  int mesh_skip = SettingGet_i(G,I->Obj.Setting,NULL,cSetting_mesh_skip);
+
   MapType *voxelmap; /* this has nothing to do with isosurfaces... */
   
   for(a=0;a<I->NState;a++) {
@@ -532,7 +534,8 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                           ms->Level,
                           &ms->N,&ms->V,
                           ms->Range,
-                          ms->DotFlag); 
+                          ms->DotFlag,
+                          mesh_skip);
 
             if(ms->State.Matrix && VLAGetSize(ms->N)&&VLAGetSize(ms->V)) { 
               int count;
