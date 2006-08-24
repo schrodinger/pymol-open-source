@@ -116,6 +116,7 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *ver
 
   if(list_size) 
     voxelmap=MapNew(G,-cutoff,vert_vla,list_size,NULL);
+
   if(voxelmap||(!list_size)) {
     int a,b,c;
     int h,k,l,i,j;
@@ -125,7 +126,6 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *ver
     int beyond_flag;
     
     Isofield *field = ms->Field;
-
     if(list_size)
       MapSetupExpress(voxelmap);  
 
@@ -1304,7 +1304,8 @@ int ObjectMapNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMap **result)
 ObjectMapState *ObjectMapGetState(ObjectMap *I,int state)
 {
   ObjectMapState *result = NULL;
-
+  if(state<0)
+    state = 0;
   if(state<I->NState)
     result = &I->State[state];
   return(result);

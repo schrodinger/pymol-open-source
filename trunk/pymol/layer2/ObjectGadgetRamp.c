@@ -1088,17 +1088,18 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
     ObjectMapState *ms;
     float tmp_level[3];
     if(vert_vla && 
-       (ms = ObjectMapGetState(map,map_state)) &&
-       ObjectMapStateGetExcludedStats(G,ms,vert_vla,beyond,within,tmp_level)) {
-      tmp_level[0]=tmp_level[1]+(tmp_level[0]-tmp_level[1])*sigma;
-      tmp_level[2]=tmp_level[1]+(tmp_level[2]-tmp_level[1])*sigma;
-      if(zero) {
-        if(tmp_level[1]<0.0F) {
-          tmp_level[1]=0.0F;
-          tmp_level[2]=-tmp_level[0];
-        } else if(tmp_level[1]>0.0F) {
-          tmp_level[1]=0.0F;
-          tmp_level[0]=-tmp_level[2];
+       (ms = ObjectMapGetState(map,map_state))) {
+      if(ObjectMapStateGetExcludedStats(G,ms,vert_vla,beyond,within,tmp_level)) {
+        tmp_level[0]=tmp_level[1]+(tmp_level[0]-tmp_level[1])*sigma;
+        tmp_level[2]=tmp_level[1]+(tmp_level[2]-tmp_level[1])*sigma;
+        if(zero) {
+          if(tmp_level[1]<0.0F) {
+            tmp_level[1]=0.0F;
+            tmp_level[2]=-tmp_level[0];
+          } else if(tmp_level[1]>0.0F) {
+            tmp_level[1]=0.0F;
+            tmp_level[0]=-tmp_level[2];
+          }
         }
       }
       I->Level = VLAlloc(float,3);

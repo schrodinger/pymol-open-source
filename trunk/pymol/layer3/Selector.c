@@ -7763,7 +7763,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
         if(!atom_name_wildcard[0]) 
           atom_name_wildcard = wildcard;
 
-        WordMatchOptionsConfigAlpha(&options, atom_name_wildcard[0], ignore_case);
+        WordMatchOptionsConfigAlphaList(&options, atom_name_wildcard[0], ignore_case);
 
         matcher = WordMatcherNew(G,base[1].text,&options,false);
 
@@ -7813,7 +7813,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
       {
         CWordMatchOptions options;
         
-        WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
+        WordMatchOptionsConfigAlphaList(&options,wildcard[0],ignore_case); 
         
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
@@ -7845,7 +7845,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
       {
         CWordMatchOptions options;
         
-        WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
+        WordMatchOptionsConfigAlphaList(&options,wildcard[0],ignore_case);
         
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
@@ -7870,7 +7870,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
       {
         CWordMatchOptions options;
         
-        WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
+        WordMatchOptionsConfigAlphaList(&options,wildcard[0],ignore_case);
         
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
@@ -7966,7 +7966,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
       {
         CWordMatchOptions options;
         
-        WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
+        WordMatchOptionsConfigAlphaList(&options,wildcard[0],ignore_case);
         
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
@@ -7991,7 +7991,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
       {
         CWordMatchOptions options;
         
-        WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
+        WordMatchOptionsConfigAlphaList(&options,wildcard[0],ignore_case);
         
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
@@ -8057,7 +8057,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
       {
         CWordMatchOptions options;
         
-        WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
+        WordMatchOptionsConfigAlphaList(&options,wildcard[0],ignore_case);
         
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
@@ -8188,7 +8188,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
       {
         CWordMatchOptions options;
         
-        WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
+        WordMatchOptionsConfigAlphaList(&options,wildcard[0],ignore_case);
         
         table_a = i_table + cNDummyAtoms;
         base_0_sele_a = &base[0].sele[cNDummyAtoms];

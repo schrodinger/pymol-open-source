@@ -2,6 +2,17 @@
 CHANGE LOG
 =========================================================================
 
+Changes up to 1.00b09
+
+
+    * ray_label_specular setting
+
+    * mesh_skip setting
+
+    * bug fix for label scaling
+
+    * bug fix for ramp_new
+
 Changes up to 1.00b07
 
     * fixed normal refinement glitch
