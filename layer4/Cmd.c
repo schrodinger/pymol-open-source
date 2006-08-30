@@ -1039,6 +1039,7 @@ static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
   return APIResultOk(ok);
 }
 
+
 static PyObject *CmdMapNew(PyObject *self, PyObject *args)
 {
   char *name;
@@ -1085,6 +1086,23 @@ static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
   }
   return APIResultOk(ok);
 }
+
+static PyObject *CmdMapSet(PyObject *self, PyObject *args)
+{
+  char *name,*operands;
+  int target_state, source_state,operator;
+  int zoom, quiet;
+  int ok = false;
+
+  ok = PyArg_ParseTuple(args,"sisiiii",&name,&operator,&operands, &target_state, &source_state, &zoom, &quiet);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveMapSet(TempPyMOLGlobals,name,operator,operands,target_state,source_state,zoom,quiet);
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+
 
 static PyObject *CmdMapTrim(PyObject *self, PyObject *args)
 {
@@ -6230,6 +6248,7 @@ static PyMethodDef Cmd_methods[] = {
    {"map_new",               CmdMapNew,               METH_VARARGS },
    {"map_double",            CmdMapDouble,            METH_VARARGS },
    {"map_halve",            CmdMapHalve,            METH_VARARGS },
+   {"map_set",               CmdMapSet,               METH_VARARGS },
    {"map_set_border",        CmdMapSetBorder,         METH_VARARGS },
    {"map_trim",                  CmdMapTrim,         METH_VARARGS },
 	{"mask",	                 CmdMask,                 METH_VARARGS },

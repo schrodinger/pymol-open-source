@@ -1629,6 +1629,55 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException            
         return r
 
+    map_op_dict = {
+        'minimum'       : 0,
+        'maximum'       : 1,
+        'sum'           : 2,
+        'average'       : 3,
+        'difference'    : 4,
+        'copy'          : 5,
+        }
+    
+    map_op_sc = Shortcut(map_op_dict.keys())
+
+    def map_set(name, operator, operands='', target_state=0, source_state=0, zoom=0, quiet=1):
+        '''
+DESCRIPTION
+
+    "map_set" provides a number of common operations on and between maps.
+
+USAGE
+
+    map_set name, operator, operands, target_state, source_state
+
+    operator may be "minimum, maximum, average, sum, or difference"
+EXAMPLES
+
+    map my_sum, add, map1 map2 map3
+    map my_avg, average, map1 map2 map3
+    
+NOTES
+
+    source_state = 0 means all states
+    target_state = -1 means current state
+    
+    experimental
+    
+SEE ALSO
+
+    map_new
+        '''
+        r = DEFAULT_ERROR
+        operator_index = map_op_dict[map_op_sc.auto_err(operator,'operator')]
+        try:
+            lock()
+            r = _cmd.map_set(str(name), int(operator_index), str(operands),
+                         int(target_state), int(source_state), int(zoom), int(quiet))
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException            
+        return r
+            
     def map_set_border(name,level=0.0,state=0):
         '''
 DESCRIPTION

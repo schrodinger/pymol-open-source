@@ -1458,6 +1458,7 @@ SEE ALSO
               invert,             \
               iterate,            \
               iterate_state,      \
+              map_set,            \
               map_set_border,     \
               map_double,         \
               map_halve,          \
@@ -1796,6 +1797,7 @@ SEE ALSO
             'ls'            : [ ls                , 0 , 0 , ''  , parsing.STRICT ],
             'madd'          : [ madd              , 0 , 0 , ''  , parsing.STRICT ],
             'mask'          : [ mask              , 0 , 0 , ''  , parsing.STRICT ],
+            'map_set'       : [ map_set           , 0 , 0 , ''  , parsing.STRICT ],
             'map_set_border': [ map_set_border    , 0 , 0 , ''  , parsing.STRICT ],
             'map_double'    : [ map_double        , 0 , 0 , ''  , parsing.STRICT ],
             'map_halve'     : [ map_halve         , 0 , 0 , ''  , parsing.STRICT ],            
@@ -2219,7 +2221,8 @@ SEE ALSO
             'isolevel'       : [ map_sc                 , 'map'             , ', ' ],
             'iterate'        : [ selection_sc           , 'selection'       , ''   ],
             'iterate_state'  : [ selection_sc           , 'selection'       , ''   ],
-            'indicate'       : [ selection_sc           , 'selection'       , ''   ],   
+            'indicate'       : [ selection_sc           , 'selection'       , ''   ],
+            'map_set'        : [ map_sc                 , 'map'             , ''   ],
             'mask'           : [ selection_sc           , 'selection'       , ''   ],
             'mview'          : [ moving.mview_action_sc , 'action'          , ''   ],
             'map_double'     : [ map_sc                 , 'map object'      , ', ' ],
@@ -2262,6 +2265,7 @@ SEE ALSO
             'load'           : [ selection_sc           , 'selection'       , ', ' ],
             'load_traj'      : [ selection_sc           , 'selection'       , ', ' ],
             'create'         : [ selection_sc           , 'selection'       , ', ' ],
+            'map_set'        : [ editing.map_op_sc      , 'operator'        , ', ' ],
             'map_new'        : [ creating.map_type_sc   , 'map type'        , ', ' ],
             'map_trim'       : [ selection_sc           , 'selection'       , ', ' ],
             'spectrum'       : [ palette_sc             , 'palette'         , ''   ],      
@@ -2285,6 +2289,7 @@ SEE ALSO
             'order'          : [ controlling.location_sc, 'location'        , ','  ],
             'button'         : [ controlling.but_act_sc , 'button action'   , ''   ],
             'flag'           : [ editing.flag_action_sc , 'flag action'     , ''   ],
+            'map_set'        : [ map_sc                 , 'map'             , ' '   ],
             'set'            : [ selection_sc           , 'selection'         , ','  ],
             'set_bond'       : [ selection_sc           , 'selection'         , ','  ],
             'unset_bond'     : [ selection_sc           , 'selection'         , ','  ],
