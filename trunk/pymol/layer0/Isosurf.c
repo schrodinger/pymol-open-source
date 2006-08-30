@@ -186,6 +186,28 @@ Isofield *IsosurfNewFromPyList(PyMOLGlobals *G,PyObject *list)
   return(result);
 #endif
 }
+
+Isofield *IsosurfNewCopy(PyMOLGlobals *G,Isofield *src)
+{
+  int ok=true;
+
+  Isofield *result = Calloc(Isofield,1);
+
+  copy3f(src->dimensions, result->dimensions);
+  result->save_points = src->save_points;
+  
+  ok = ((result->data = FieldNewCopy(G,src->data)) != NULL);
+  ok = ((result->points = FieldNewCopy(G,src->points)) != NULL);
+
+  result->gradients = NULL;
+  if(!ok) {
+    if(result->data) FieldFree(result->data);
+    if(result->points) FieldFree(result->points);
+    FreeP(result);
+  }
+  return result;
+}
+
 /*===========================================================================*/
 void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
 {

@@ -58,6 +58,7 @@ Z* -------------------------------------------------------------------
 #include"Tracker.h"
 #include"Word.h"
 #include"main.h"
+#include"Parse.h"
 
 #include"OVContext.h"
 #include"OVLexicon.h"
@@ -3462,6 +3463,84 @@ int ***ExecutiveGetBondPrint(PyMOLGlobals *G,char *name,int max_bond,int max_typ
   return(result);
 }
 /*========================================================================*/
+#define cMapOperatorMinimum 0
+#define cMapOperatorMaximum 1
+#define cMapOperatorSum     2
+#define cMapOperatorAverage 3
+#define cMapOperatorDifference 4
+#define cMapCopy            5
+
+int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
+                 int target_state,int source_state,int zoom, int quiet)
+{
+  CExecutive *I = G->Executive;
+  int ok=true;
+  int zoom;
+  ObjectMap *target = ExecutiveFindObjectMapByName(G,name);
+  ObjectMap *first_operand = NULL;
+  int need_first_operand = false;
+  char *wildcard = SettingGetGlobal_s(G,cSetting_wildcard);    
+  int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
+    
+  if(!target) {
+    need_first_operand = true;
+  }
+  switch(operator) {
+  case cMapOperatorDifference:
+    need_first_operand = true;
+    break;
+  }
+  if(need_first_operand) {
+    OrthoLineType first_op_st;
+    ParseWordCopy(first_op_st,operands,sizeof(OrthoLineType)-1); /* copy the first operand */
+    {
+      CTracker *I_Tracker= I->Tracker;
+      int list_id = ExecutiveGetNamesListFromPattern(G,first_op_st,true);
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+      SpecRec *rec;
+      
+      while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+        if(rec) {
+          switch(rec->type) {
+          case cExecObject:
+            if(rec->obj->type==cObjectMap) {
+              ObjectMap *obj =(ObjectMap*)rec->obj;
+              first_operand = obj;
+            }
+            break;
+          }
+        }
+        if(first_operand) break;
+      }
+      TrackerDelList(I_Tracker, list_id);
+      TrackerDelIter(I_Tracker, iter_id);
+    }
+  }
+  if(!target) {
+    if(!first_operand) {
+      ok=false;
+      PRINTFB(G,FB_Executive,FB_Errors)
+        "Executive-Error: cannot find or construct target map.\n"   
+        ENDFB(G);
+    } else {
+      if( ObjectMapNewCopy(G,first_operand, &target, source_state, target_state )) {
+        if(target) {
+          ObjectSetName((CObject*)target,name);
+          ObjectMapUpdateExtents(target);
+          if(true) {
+            ExecutiveManageObject(G,target, -1, quiet);
+          } else {
+            ExecutiveDoZoom(G,target,false,zoom,true);
+          }
+          SceneChanged(G);
+        }
+      }
+    }
+  }
+  
+  return ok;
+}
+
 int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
                     char *sele,float buffer,
                     float *minCorner,

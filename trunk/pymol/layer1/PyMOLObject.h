@@ -75,6 +75,7 @@ typedef struct CObject {
 } CObject;
 
 void ObjectInit(PyMOLGlobals *G,CObject *I);
+int ObjectCopyHeader(CObject *I, CObject *src);
 void ObjectPurge(CObject *I);
 void ObjectSetName(CObject *I,char *name);
 void ObjectMakeValidName(char *name);

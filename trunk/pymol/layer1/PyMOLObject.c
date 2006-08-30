@@ -467,13 +467,44 @@ int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I)
         ok = ViewElemVLAFromPyList(tmp,&I->ViewElem,nFrame);
     }
   }
-
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */
   
   return(ok);
 #endif
 }
+
+int ObjectCopyHeader(CObject *I,CObject *src)
+{
+  int ok=true;
+
+  I->G = src->G;
+  I->type = src->type;
+  UtilNCopy(I->Name,src->Name,ObjNameMax);
+  I->Color = src->Color;
+  {
+    int a;
+    for(a=0;a<cRepCnt;a++)
+      I->RepVis[a] = src->RepVis[a];
+  }
+  copy3f(src->ExtentMin, I->ExtentMin);
+  copy3f(src->ExtentMax, I->ExtentMax);
+
+  I->ExtentFlag = src->ExtentFlag;
+  I->TTTFlag = src->TTTFlag;
+  I->Setting = NULL; /* to do */
+  I->Enabled = src->Enabled;
+  I->Context = src->Context;
+  {
+    int a;
+    for(a=0;a<16;a++)
+      I->TTT[a] = src->TTT[a];
+  }
+  I->ViewElem = NULL; /* to do */
+  
+  return(ok);
+}
+
 /*========================================================================*/
 void ObjectCombineTTT(CObject *I,float *ttt,int reverse_order)
 {

@@ -70,6 +70,57 @@ PyObject *FieldAsPyList(CField *I)
 
 }
 
+CField *FieldNewCopy(PyMOLGlobals *G,CField *src)
+{  
+  int ok=true;
+  OOAlloc(G,CField);
+  
+  I->type = src->type;
+  I->n_dim = src->n_dim;
+  I->base_size = src->base_size;
+  I->size = src->size;
+
+  {
+    int a;
+    I->dim = Alloc(int,src->n_dim);
+    I->stride = Alloc(int,src->n_dim);
+    ok = I->dim && I->stride;
+    if(ok) 
+      for(a=0;a<src->n_dim;a++) {
+        I->dim[a] = src->dim[a];
+        I->stride[a] = src->stride[a];
+      }
+  }
+
+  if(ok) {
+    unsigned int n_elem = I->size/I->base_size;
+    switch(I->type) {
+    case cFieldInt:
+      ok = ((I->data = (char*)Alloc(int,n_elem)) != NULL);
+      if(ok) memcpy(I->data, src->data, sizeof(int)*n_elem);
+      break;
+    case cFieldFloat:
+      ok = ((I->data = (char*)Alloc(float,n_elem)) != NULL);
+      if(ok) memcpy(I->data, src->data, sizeof(float)*n_elem);
+      break;
+    default:
+      ok = ((I->data = (char*)Alloc(char,I->size)) != NULL);
+      if(ok) memcpy(I->data, src->data, I->size);
+      break;
+    }
+  }
+  if(!ok) {
+    if(I) {
+      FreeP(I->data);
+      FreeP(I->dim);
+      FreeP(I->stride);
+      OOFreeP(I);
+    }
+    I=NULL;
+  }
+  return I;
+}
+
 CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list)
 {
 #ifdef _PYMOL_NOPY

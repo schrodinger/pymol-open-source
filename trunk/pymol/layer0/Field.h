@@ -93,6 +93,7 @@ float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z);
 
 PyObject *FieldAsPyList(CField *I);
 CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list);
+CField *FieldNewCopy(PyMOLGlobals *G,CField *src);
 int FieldSmooth3f(CField *I);
 
 #endif

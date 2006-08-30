@@ -120,6 +120,9 @@ typedef struct {
   float final_rms;
 } ExecutiveRMSInfo;
 
+int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
+                    int target_state,int source_state,int zoom, int quiet);
+
 int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,
                      float gap,float extend,
                      int max_gap, int max_skip,

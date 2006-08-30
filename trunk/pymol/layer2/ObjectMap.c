@@ -1165,6 +1165,78 @@ static PyObject *ObjectMapAllStatesAsPyList(ObjectMap *I)
 
 }
 #endif
+static int ObjectMapStateCopy(PyMOLGlobals *G,ObjectMapState *src,ObjectMapState *I)
+{
+  int ok=true;
+  if(ok) {
+    I->Active = src->Active;
+    if(I->Active) {
+
+      if(src->Crystal)
+        I->Crystal = CrystalCopy(src->Crystal);
+      else
+        I->Crystal = NULL;
+      
+      if(src->Origin) {
+        I->Origin = Alloc(float,3);
+        if(I->Origin) {
+          copy3f(src->Origin,I->Origin);
+        }
+      } else {
+        I->Origin = NULL;
+      }
+
+      if(src->Range) {
+        I->Range = Alloc(float,3);
+        if(I->Range) {
+          copy3f(src->Range,I->Range);
+        }
+      } else {
+        I->Origin = NULL;
+      }
+
+      if(src->Grid) {
+        I->Grid = Alloc(float,3);
+        if(I->Grid) {
+          copy3f(src->Grid,I->Grid);
+        }
+      } else {
+        I->Origin = NULL;
+      }
+
+      if(src->Dim) {
+        I->Dim = Alloc(int,4);
+        if(I->Dim) {
+          copy3f(src->Dim,I->Dim);
+        }
+      } else {
+        I->Origin = NULL;
+      }
+      
+      {
+        int a;
+        for(a=0;a<24;a++)
+          I->Corner[a] = src->Corner[a];
+      }
+
+      copy3f(src->ExtentMin, I->ExtentMin);
+      copy3f(src->ExtentMax, I->ExtentMax);
+      
+      I->MapSource = src->MapSource;
+
+      copy3f(src->Div, I->Div);
+      copy3f(src->Min, I->Min);
+      copy3f(src->Max, I->Max);
+      copy3f(src->FDim, I->FDim);
+      
+      I->Field = IsosurfNewCopy(G,src->Field);
+      ObjectStateCopy(&I->State, &src->State);
+      if(ok) ObjectMapStateRegeneratePoints(I);
+    }
+  }
+  return(ok);
+}
+
 #ifndef _PYMOL_NOPY
 static int ObjectMapStateFromPyList(PyMOLGlobals *G,ObjectMapState *I,PyObject *list)
 {
@@ -1300,6 +1372,37 @@ int ObjectMapNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMap **result)
 #endif
 }
 
+int ObjectMapNewCopy(PyMOLGlobals *G,ObjectMap *src,ObjectMap **result,int source_state, int target_state)
+{
+  int ok = true;
+  ObjectMap *I=NULL;
+  I=ObjectMapNew(G);
+  if(ok) ok = (I!=NULL);
+  if(ok) ok = ObjectCopyHeader(&I->Obj,&src->Obj);
+  if(source_state==-1) { /* all states */
+    int state;
+    I->NState = src->NState;
+    VLACheck(I->State,ObjectMapState,I->NState);
+    for(state=0;state<src->NState;state++) {
+      ok = ObjectMapStateCopy(G,src->State + state, I->State + state);
+    }
+  } else {
+    if(target_state<0)
+      target_state = 0;
+    if(source_state<0)
+      source_state = 0;
+    VLACheck(I->State,ObjectMapState,target_state);    
+    if(source_state<src->NState) {
+      ok = ObjectMapStateCopy(G,src->State + source_state, I->State + target_state);    
+    } else {
+      ok=false;
+      /* to do */
+    }
+  }
+  if(ok) 
+    *result = I;
+  return ok;
+}
 
 ObjectMapState *ObjectMapGetState(ObjectMap *I,int state)
 {
