@@ -49,6 +49,10 @@ PyMOL>ramp_new ramp, pot, color=sludge
  Executive: object "ramp" created.
 PyMOL>ray
  RayRenderTest: obtained 16656 graphics primitives.
+PyMOL>ramp_new ramp, pot, color=rainbow
+ Executive: object "ramp" created.
+PyMOL>ray
+ RayRenderTest: obtained 16656 graphics primitives.
 PyMOL>ramp_new ramp, pot, color=rainbow, selection=none
  Executive: object "ramp" created.
 PyMOL>ray
