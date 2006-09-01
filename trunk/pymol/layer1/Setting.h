@@ -718,6 +718,12 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_line_color                 526
 #define cSetting_ray_label_specular         527
 #define cSetting_mesh_skip                  528
+#define cSetting_label_digits               529
+#define cSetting_label_distance_digits      530
+#define cSetting_label_angle_digits         531
+#define cSetting_label_dihedral_digits      532
+#define cSetting_surface_negative_visible   533
+#define cSetting_surface_negative_color     534
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -727,7 +733,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       529
+#define cSetting_INIT                       535
 
 #endif
 
