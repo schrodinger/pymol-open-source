@@ -190,7 +190,7 @@ OVreturn_word OVOneToOne_IterateForward(OVOneToOne *up,ov_word *hidden)
     return result;
   } else {
     OVreturn_word result = { OVstatus_YES };
-    register int a;
+    register unsigned int a;
     register up_element *cur_elem = up->elem + (*hidden);
     for(a=*hidden;a<up->size;a++) {
       if(cur_elem->active) {
