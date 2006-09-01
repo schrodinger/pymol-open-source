@@ -1042,11 +1042,6 @@ void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc,int perspective
 }
 
 /*========================================================================*/
-static void BasisGetTriangleImpactColor(CBasis *I,RayInfo *r,int i,float *fc)
-{
-}
-
-
 
 #ifdef PROFILE_BASIS
 int n_cells = 0;

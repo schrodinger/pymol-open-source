@@ -1832,6 +1832,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_dash_radius:
   case cSetting_dash_width:
   case cSetting_angle_size:
+  case cSetting_label_digits:
+  case cSetting_label_distance_digits:
+  case cSetting_label_angle_digits:
+  case cSetting_label_dihedral_digits:
   case cSetting_angle_label_position:
   case cSetting_dihedral_size:
   case cSetting_dihedral_label_position:
@@ -1932,6 +1936,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvColor);
     SceneChanged(G);
     break;
+  case cSetting_surface_negative_color:
   case cSetting_surface_color:
   case cSetting_transparency:
   case cSetting_surface_ramp_above_mode:
@@ -1965,6 +1970,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_surface_proximity:
   case cSetting_cavity_cull:
     ExecutiveInvalidateRep(G,inv_sele,cRepSurface,cRepInvRep);
+    SceneChanged(G);
+    break;
+  case cSetting_surface_negative_visible:
+    ExecutiveInvalidateRep(G,inv_sele,cRepSurface,cRepInvAll);
     SceneChanged(G);
     break;
   case cSetting_solvent_radius:
@@ -3281,7 +3290,12 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_color(I,cSetting_line_color, "-1");
   set_f(I,cSetting_ray_label_specular,1.0F);
   set_i(I,cSetting_mesh_skip, 0);
-
+  set_i(I,cSetting_label_digits,1);
+  set_i(I,cSetting_label_distance_digits,-1);
+  set_i(I,cSetting_label_angle_digits,-1);
+  set_i(I,cSetting_label_dihedral_digits,-1);
+  set_b(I,cSetting_surface_negative_visible,0);
+  set_color(I,cSetting_surface_negative_color,"grey50");
 }
 
 
