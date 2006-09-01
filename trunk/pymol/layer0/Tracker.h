@@ -25,8 +25,8 @@ Z* -------------------------------------------------------------------
    (1) is robust with respect to creation and deletion of candidates and lists
    (2) enables efficient iteration over the lists to which a candidate belongs
    (3) enables efficient iteration over the candidates to which a list belongs
-   (4) is double-linked so that insertion and deletion take are constant time
-   (5) keeps running counts so that length determination take are constant time
+   (4) is double-linked so that insertion and deletion take constant time
+   (5) keeps running counts so that length determination takes constant time
 
 */
 

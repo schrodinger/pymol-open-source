@@ -2699,6 +2699,7 @@ static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
     SettingSetGlobal_f(G,cSetting_ray_legacy_lighting, 1.0F);
 
     /* and labels */
+    SettingSetGlobal_i(G,cSetting_label_digits, 2);
     SettingSetGlobal_3f(G,cSetting_label_position, 1.0F,1.0F,0.0F);
   }
   if(session_version<99) {
@@ -3468,38 +3469,61 @@ int ***ExecutiveGetBondPrint(PyMOLGlobals *G,char *name,int max_bond,int max_typ
 #define cMapOperatorSum     2
 #define cMapOperatorAverage 3
 #define cMapOperatorDifference 4
-#define cMapCopy            5
+#define cMapOperatorCopy     5
+#define cMapOperatorUnique   6
 
 int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
                  int target_state,int source_state,int zoom, int quiet)
 {
   CExecutive *I = G->Executive;
+  CTracker *I_Tracker= I->Tracker;
   int ok=true;
-  int zoom;
+  int isNew = false;
   ObjectMap *target = ExecutiveFindObjectMapByName(G,name);
   ObjectMap *first_operand = NULL;
-  int need_first_operand = false;
-  char *wildcard = SettingGetGlobal_s(G,cSetting_wildcard);    
-  int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
+  int src_state_start=0,src_state_stop=0;
+  int list_id = ExecutiveGetNamesListFromPattern(G,operands,true);
+  
+  if(target_state<0) /* if we're targeting all states, 0 is the offset */
+    target_state = 0;
+
+  /* first, figure out what the range of input states is */
+  
+  if(source_state<0) { /* all source states */
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    int max_n_state = 0;
+    SpecRec *rec;    
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        switch(rec->type) {
+        case cExecObject:
+          if(rec->obj->type==cObjectMap) {
+            ObjectMap *obj =(ObjectMap*)rec->obj;
+            if(obj->NState>max_n_state)
+              max_n_state = obj->NState; /* count states */
+          }
+        }
+      }
+    }
+    TrackerDelIter(I_Tracker, iter_id);
+    src_state_start = 0;
+    src_state_stop = max_n_state;
+  } else {
+    src_state_start = source_state;
+    src_state_stop = source_state+1;
+  }
+
+  {
+    /* next, find the first operand */
     
-  if(!target) {
-    need_first_operand = true;
-  }
-  switch(operator) {
-  case cMapOperatorDifference:
-    need_first_operand = true;
-    break;
-  }
-  if(need_first_operand) {
     OrthoLineType first_op_st;
     ParseWordCopy(first_op_st,operands,sizeof(OrthoLineType)-1); /* copy the first operand */
     {
-      CTracker *I_Tracker= I->Tracker;
-      int list_id = ExecutiveGetNamesListFromPattern(G,first_op_st,true);
-      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+      int sub_list_id = ExecutiveGetNamesListFromPattern(G,first_op_st,true);
+      int sub_iter_id = TrackerNewIter(I_Tracker, 0, sub_list_id);
       SpecRec *rec;
       
-      while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      while( TrackerIterNextCandInList(I_Tracker, sub_iter_id, (TrackerRef**)&rec) ) {
         if(rec) {
           switch(rec->type) {
           case cExecObject:
@@ -3512,32 +3536,334 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
         }
         if(first_operand) break;
       }
-      TrackerDelList(I_Tracker, list_id);
-      TrackerDelIter(I_Tracker, iter_id);
+      TrackerDelList(I_Tracker, sub_list_id);
+      TrackerDelIter(I_Tracker, sub_iter_id);
     }
   }
-  if(!target) {
-    if(!first_operand) {
-      ok=false;
-      PRINTFB(G,FB_Executive,FB_Errors)
-        "Executive-Error: cannot find or construct target map.\n"   
-        ENDFB(G);
-    } else {
-      if( ObjectMapNewCopy(G,first_operand, &target, source_state, target_state )) {
-        if(target) {
-          ObjectSetName((CObject*)target,name);
-          ObjectMapUpdateExtents(target);
-          if(true) {
-            ExecutiveManageObject(G,target, -1, quiet);
-          } else {
-            ExecutiveDoZoom(G,target,false,zoom,true);
+
+  {
+
+  /* okay, next thing we need to worry about is where we're putting the data.
+
+     Case 1. If the map already exists, then we'll use the existing map points for storing
+     the result.
+
+     Case 2. If the operation implies a copy of existing map geometry, then we'll create that
+     copy first before performing the calulation.
+
+     Case 3. If the operation implies a new map geometry, then we need to compute that geometry and
+     create the map.
+
+  */
+
+    if(!target) { /* target map doesn't exist...*/
+      int need_union_geometry = false;
+      int need_first_geometry = false;
+      switch(operator) {
+      case cMapOperatorSum:
+      case cMapOperatorAverage:
+      case cMapOperatorMinimum:
+      case cMapOperatorMaximum:
+      case cMapOperatorDifference:
+        need_union_geometry = true;
+        break;
+      case cMapOperatorUnique:
+      case cMapOperatorCopy:
+        need_first_geometry = true;
+        break;
+      }
+      
+      if(need_union_geometry) {
+        int src_state,trg_state;
+        ObjectMapDesc desc;
+        target = ObjectMapNew(G);
+        
+        ObjectSetName((CObject*)target,name);
+        isNew = true;
+
+        for(src_state=src_state_start;src_state<src_state_stop;src_state++) {
+          trg_state = src_state + target_state;
+          desc.mode = cObjectMap_OrthoMinMaxGrid; /* Orthorhombic: min, max, 
+                                                     spacing, 
+                                                     centered over range  */
+          desc.init_mode = 0; /* zeros */
+          desc.Grid[0] = 1.0F;
+          desc.Grid[1] = 1.0F;
+          desc.Grid[2] = 1.0F;
+
+          {
+            int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+            float grid_sum[3] = {0.0F,0.0F,0.0F};
+            int grid_count = 0;
+            int first_extent = true;
+
+            SpecRec *rec;    
+            while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+              if(rec) {
+                /* compute an average grid and get the effective "union" extent */
+                switch(rec->type) {
+                case cExecObject:
+                  if(rec->obj->type==cObjectMap) {
+                    
+                    ObjectMap *obj =(ObjectMap*)rec->obj;
+                    ObjectMapState *ms = obj->State + src_state;
+                    if(src_state<obj->NState) {
+                      if(ms->Active) {
+                        if(first_extent) {
+                          copy3f(ms->ExtentMin,desc.MinCorner);
+                          copy3f(ms->ExtentMax,desc.MaxCorner);
+                          first_extent = false;
+                        } else {
+                          int b;
+                          for(b=0;b<3;b++) {
+                            if(ms->ExtentMin[b]<desc.MinCorner[b])
+                              desc.MinCorner[b]=ms->ExtentMin[b];
+                            if(ms->ExtentMax[b]>desc.MaxCorner[b])
+                              desc.MaxCorner[b]=ms->ExtentMax[b];
+                          }
+                        }
+                        switch(ms->MapSource) {
+                        case cMapSourcePHI:
+                        case cMapSourceFLD:
+                        case cMapSourceDesc:
+                        case cMapSourceChempyBrick:
+                          {
+                            int b;
+                            for(b=0;b<3;b++) {
+                              grid_sum[b] += ms->Grid[b];
+                            }
+                          }
+                          grid_count++;
+                          break;
+                          /* other map state types not currently handled... */
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            TrackerDelIter(I_Tracker, iter_id);
+            if(grid_count) {
+              int b;
+              for(b=0;b<3;b++) {
+                desc.Grid[b] = grid_sum[b]/grid_count;
+              }
+            }
+            if(!first_extent) {
+              float tmp[3];
+              scale3f(desc.Grid,0.5,tmp);
+              add3f(desc.Grid,desc.MaxCorner,desc.MaxCorner);
+              subtract3f(desc.MinCorner,desc.Grid,desc.MinCorner);
+              ObjectMapNewStateFromDesc(G,target,&desc,trg_state);
+              if(trg_state>=target->NState)
+                target->NState = trg_state+1;
+              target->State[trg_state].Active=true;
+            }
           }
-          SceneChanged(G);
+        }
+        /* need union geometry */
+      } else if(need_first_geometry) {
+        if(first_operand) {
+          if( ObjectMapNewCopy(G,first_operand, &target, source_state, target_state )) {
+            if(target) {
+              ObjectSetName((CObject*)target,name);
+              isNew = true;
+            }
+          }
         }
       }
     }
   }
+
+  if(!target) {
+    ok=false;
+    PRINTFB(G,FB_Executive,FB_Errors)
+      "Executive-Error: cannot find or construct target map.\n"   
+      ENDFB(G);
+  } 
+
+  /* now do the actual operation */
   
+  if(ok&&target) {
+    int src_state;
+    for(src_state=src_state_start;src_state<src_state_stop;src_state++) {
+      int trg_state = src_state + target_state;
+      ObjectMapState *ms;
+      VLACheck(target->State,ObjectMapState,trg_state);
+      
+      ms = target->State + target_state;    
+      if(ms->Active) {
+        int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+        int n_pnt = (ms->Field->points->size / ms->Field->points->base_size)/3;
+        float *pnt = (float*)ms->Field->points->data;
+        float *r_value = Alloc(float, n_pnt);
+        float *l_value = Calloc(float, n_pnt);
+        int *present = Calloc(int, n_pnt);
+        int *inside = Alloc(int, n_pnt);
+        SpecRec *rec;
+        
+        while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+          if(rec) {
+            if(rec->type == cExecObject) {
+              if(rec->obj->type==cObjectMap) {
+                ObjectMap *obj =(ObjectMap*)rec->obj;
+                ObjectMapInterpolate(obj, src_state, pnt, r_value, inside, n_pnt);
+                {
+                  register int a;
+                  register float *rv = r_value;
+                  register float *lv = l_value;
+                  register int *flg = inside;
+                  register int *pre = present;
+                
+                  switch(operator) {
+                  case cMapOperatorCopy:
+                    for(a=0;a<n_pnt;a++) {
+                      if(flg) {
+                        *lv = *rv;
+                      }
+                      rv++; lv++; flg++;
+                    }
+                    break;
+                  case cMapOperatorMinimum:
+                    for(a=0;a<n_pnt;a++) {
+                      if(flg) {
+                        if(*pre) {
+                          if(*lv>*rv)
+                            *lv = *rv;
+                        } else {
+                          *pre = 1;
+                          *lv = *rv;
+                        }
+                      
+                      }
+                      rv++; lv++; flg++; pre++;
+                    }
+                    break;
+                  case cMapOperatorMaximum:
+                    for(a=0;a<n_pnt;a++) {
+                      if(flg) {
+                        if(*pre) {
+                          if(*lv<*rv)
+                            *lv = *rv;
+                        } else {
+                          *pre = 1;
+                          *lv = *rv;
+                        }
+                      }
+                      rv++; lv++; flg++; pre++;
+                    }
+                    break;
+                  case cMapOperatorSum:
+                    for(a=0;a<n_pnt;a++) {
+                      if(flg) {
+                        *lv += *rv;
+                      }
+                      rv++; lv++; flg++;
+                    }
+                    break;
+                  case cMapOperatorAverage:
+                    for(a=0;a<n_pnt;a++) {
+                      if(flg) {
+                        (*pre)++;
+                        *lv += *rv;
+                      }
+                      (*pre)++; 
+                      rv++; lv++; flg++; pre++;
+                    }
+                  
+                    lv = l_value;
+                    pre = present;
+                    for(a=0;a<n_pnt;a++) {
+                      if(*pre)
+                        *lv /= *pre;
+                      lv++; pre++;
+                    }
+                    break;
+                  case cMapOperatorDifference:
+                    if(obj!=first_operand) {
+                      for(a=0;a<n_pnt;a++) {
+                        if(flg) {
+                          *lv -= *rv;
+                        }
+                        rv++; lv++; flg++;
+                      }
+                    } else {
+                      for(a=0;a<n_pnt;a++) {
+                        if(flg) {
+                          *lv += *rv;
+                        }
+                        rv++; lv++; flg++;
+                      }
+                    }
+                    break;
+                  case cMapOperatorUnique:
+                    if(obj!=first_operand) {
+                      for(a=0;a<n_pnt;a++) {
+                        if(flg) {
+                          *lv -= *rv;
+                        }
+                        rv++; lv++; flg++;
+                      }
+                    } else {
+                      for(a=0;a<n_pnt;a++) {
+                        if(flg) {
+                          *lv += *rv;
+                        }
+                        rv++; lv++; flg++;
+                      }
+                    }
+                    
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        {
+          register int a;
+          register float *lv = l_value;
+          
+          switch(operator) {
+          case cMapOperatorUnique:
+            lv = l_value;
+            for(a=0;a<n_pnt;a++) {
+              if(*lv<0.0F)
+                *lv = 0.0F;
+              lv++;
+            }
+          }
+        }
+
+        /* copy after calculation so that operand can include target */
+
+        memcpy(ms->Field->data->data,l_value,n_pnt*sizeof(float));
+     
+        FreeP(present);
+        FreeP(l_value);
+        FreeP(r_value);
+        FreeP(inside);
+        TrackerDelIter(I_Tracker, iter_id);
+      }
+    }
+  }
+
+
+  /* and finally, update */
+
+  if(target) {
+    ObjectMapUpdateExtents(target);
+    if(isNew) {
+      ExecutiveManageObject(G,&target->Obj, -1, quiet);
+    } else {
+      ExecutiveDoZoom(G,&target->Obj,false,zoom,true);
+    }
+    SceneChanged(G);
+  }
+  TrackerDelList(I_Tracker, list_id);
+
   return ok;
 }
 

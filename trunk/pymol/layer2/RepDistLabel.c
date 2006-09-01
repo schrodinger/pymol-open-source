@@ -28,6 +28,8 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 #include"Text.h"
 
+#include"Word.h"
+
 typedef char DistLabel[8];
 
 typedef struct RepDistLabel {
@@ -149,6 +151,7 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
   float *v,*v1,*v2,*v3,d[3],di;
   char buffer[255];
   float *lab_pos = SettingGet_3fv(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_label_position);
+  int default_digits = SettingGet_i(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_label_digits);
   Pickable *rp = NULL;
   OOAlloc(G,RepDistLabel);
 
@@ -159,6 +162,9 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
     OOFreeP(I);
     return(NULL); 
   }
+
+  if(default_digits<0) default_digits = 0;
+  if(default_digits>10) default_digits = 10;
 
   RepInit(G,&I->R);
 
@@ -204,13 +210,18 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
     lc = ds->LabCoord;
 
     if(ds->NIndex) {
+      int digits =  SettingGet_i(G,ds->Setting,ds->Obj->Obj.Setting,
+                                 cSetting_label_distance_digits);
+      WordType format;
+      if(digits<0) digits = default_digits;
+      if(digits>10) digits = 10;
+      sprintf(format,"%c0.%df",'%',digits);
       for(a=0;a<ds->NIndex;a=a+2) {
         v1 = ds->Coord+3*a;
         v2 = ds->Coord+3*(a+1);
         average3f(v2,v1,d);
         di = (float)diff3f(v1,v2);
-        sprintf(buffer,"%1.2f",di);
-        buffer[7]=0;
+        sprintf(buffer,format,di);
         
         VLACheck(I->V,float,6*n+5);
         VLACheck(I->L,DistLabel, n);
@@ -246,11 +257,18 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
     }
 
     if(ds->NAngleIndex) {
+
       float d1[3],d2[3],n1[3],n2[3];
       float avg[3];
 
       float l1,l2;
       float radius;
+      int digits =  SettingGet_i(G,ds->Setting,ds->Obj->Obj.Setting,
+                                 cSetting_label_angle_digits);
+      WordType format;
+      if(digits<0) digits = default_digits;
+      if(digits>10) digits = 10;
+      sprintf(format,"%c0.%df",'%',digits);
 
       for(a=0;a<ds->NAngleIndex;a=a+5) {
         v1 = ds->AngleCoord+3*a;
@@ -282,8 +300,7 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
         add3f(v2,avg,avg);
 
         di = (float)(180.0F * get_angle3f(d1,d2)/PI);
-        sprintf(buffer,"%1.2f",di);
-        buffer[7]=0;
+        sprintf(buffer,format,di);
         
         VLACheck(I->V,float,6*n+5);
         VLACheck(I->L,DistLabel, n);
@@ -329,6 +346,12 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
       
       float *v4, *v5, *v6;
       float avg[3];
+      int digits =  SettingGet_i(G,ds->Setting,ds->Obj->Obj.Setting,
+                                 cSetting_label_dihedral_digits);
+      WordType format;
+      if(digits<0) digits = default_digits;
+      if(digits>10) digits = 10;
+      sprintf(format,"%c0.%df",'%',digits);
 
       for(a=0;a<ds->NDihedralIndex;a=a+6) {
         v1 = ds->DihedralCoord+3*a;
@@ -372,8 +395,7 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
         add3f(a32,avg,avg);
 
         di = (float)(180.0F * get_dihedral3f(v1,v2,v3,v4)/PI);
-        sprintf(buffer,"%1.2f",di);
-        buffer[7]=0;
+        sprintf(buffer,format,di);
         
         VLACheck(I->V,float,6*n+5);
         VLACheck(I->L,DistLabel, n);
