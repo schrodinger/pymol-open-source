@@ -342,21 +342,32 @@ int ObjectSurfaceInvalidateMapName(ObjectSurface *I,char *name)
 }
 
 static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState *ms)
-{
+{ 
+  int one_color = true;
+  int cur_color = SettingGet_color(I->Obj.G, I->Obj.Setting, NULL, cSetting_surface_color);
+
+  if(cur_color == -1)
+    cur_color = I->Obj.Color;
+
+  if(ColorCheckRamped(I->Obj.G,cur_color))
+    one_color = false;
+
+  ms->OneColor = cur_color;
   if(ms->V) {
-    int index = I->Obj.Color;
     int ramped_flag = false;
     float *v = ms->V;
     float *vc;
     int *rc;
     int a;
     int state = ms - I->State;
+    int base_n_vert = ms->base_n_V;
     switch(ms->Mode) {
     case 3:
     case 2:
       {
         int n_vert = VLAGetSize(ms->V)/6;
-        
+        base_n_vert /=6;
+
         if(ms->VC && (ms->VCsize<n_vert)) {
           FreeP(ms->VC);
           FreeP(ms->RC);
@@ -374,12 +385,21 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
         v+=3;
         if(vc) {
           for(a=0;a<n_vert;a++) {
-            if(ColorCheckRamped(I->Obj.G,index)) {
-              ColorGetRamped(I->Obj.G,index,v,vc,state);
-              *rc = index;
+            if(a==base_n_vert) {
+              int new_color = SettingGet_color(I->Obj.G, I->Obj.Setting, 
+                                               NULL, cSetting_surface_negative_color);
+              if(new_color==-1) new_color=cur_color;
+              if(new_color!=cur_color) {
+                one_color = false;
+                cur_color = new_color;
+              }
+            }
+            if(ColorCheckRamped(I->Obj.G,cur_color)) {
+              ColorGetRamped(I->Obj.G,cur_color,v,vc,state);
+              *rc = cur_color;
               ramped_flag=true;
             } else {
-              float *col = ColorGet(I->Obj.G,index);
+              float *col = ColorGet(I->Obj.G,cur_color);
               copy3f(col,vc);
             }
             rc++;
@@ -394,7 +414,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
     default:
       {
         int n_vert = VLAGetSize(ms->V)/3;
-
+        base_n_vert /=3;
         if(ms->VC && (ms->VCsize<n_vert)) {
           FreeP(ms->VC);
           FreeP(ms->RC);
@@ -411,12 +431,21 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
         vc = ms->VC;
         if(vc) {
           for(a=0;a<n_vert;a++) {
-            if(ColorCheckRamped(I->Obj.G,index)) {
-              ColorGetRamped(I->Obj.G,index,v,vc,state);
-              *rc = index;
+            if(a==base_n_vert) {
+              int new_color = SettingGet_color(I->Obj.G, I->Obj.Setting, 
+                                               NULL, cSetting_surface_negative_color);
+              if(new_color==-1) new_color=cur_color;
+              if(new_color!=cur_color)
+                one_color = false;
+                cur_color = new_color;
+            }
+
+            if(ColorCheckRamped(I->Obj.G,cur_color)) {
+              ColorGetRamped(I->Obj.G,cur_color,v,vc,state);
+              *rc = cur_color;
               ramped_flag=true;
             } else {
-              float *col = ColorGet(I->Obj.G,index);
+              float *col = ColorGet(I->Obj.G,cur_color);
               copy3f(col,vc);
             }
             rc++;
@@ -427,11 +456,14 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
       }
       break;
     }
-    if( (!ramped_flag) || (!SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_ray_color_ramps))) {
+
+    if(one_color && (!ramped_flag)) {
+      FreeP(ms->VC);
+      FreeP(ms->RC);
+    } else if( (!ramped_flag) || (!SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_ray_color_ramps))) {
       FreeP(ms->RC);
     }
   }
-
 }
 
 static void ObjectSurfaceUpdate(ObjectSurface *I) 
@@ -524,6 +556,55 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
                                  ms->CarveBuffer,
                                  ms->Side);
             
+            if(!SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_surface_negative_visible)) { 
+              ms->base_n_V = VLAGetSize(ms->V);
+            } else {
+              /* do we want the negative surface too? */
+
+              int nT2;
+              int *N2 = VLAlloc(int,10000);
+              float *V2 =  VLAlloc(float,10000);
+
+              nT2 = TetsurfVolume(I->Obj.G,oms->Field,
+                                  -ms->Level,
+                                  &N2,&V2,
+                                  ms->Range,
+                                  ms->Mode,
+                                  voxelmap,
+                                  ms->AtomVertex,
+                                  ms->CarveBuffer,
+                                  ms->Side);
+              if(N2&&V2) {
+                
+                int base_n_N = VLAGetSize(ms->N);
+                int base_n_V = VLAGetSize(ms->V);
+                int addl_n_N = VLAGetSize(N2);
+                int addl_n_V = VLAGetSize(V2);
+
+                ms->base_n_V = base_n_V;
+
+                /* make room */
+
+                VLASize(ms->N, int, base_n_N + addl_n_N);
+                VLASize(ms->V, float, base_n_V + addl_n_V);
+                
+                /* copy vertex data */
+
+                memcpy(((char*)ms->V)+(sizeof(float)*base_n_V),
+                       V2, sizeof(float)*addl_n_V);
+
+                /* copy strip counts */
+
+                memcpy(((char*)ms->N)+(sizeof(int)*(base_n_N-1)),
+                       N2, sizeof(int)*addl_n_N);
+
+                ms->nT += nT2;
+                VLAFreeP(N2);
+                VLAFreeP(V2);
+              }
+
+            }
+            
             if(voxelmap)
               MapFree(voxelmap);
 
@@ -580,12 +661,8 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
           }
         }
         if(ms->RecolorFlag) {
-          if(ColorCheckRamped(I->Obj.G,I->Obj.Color))
-            ObjectSurfaceStateUpdateColors(I,ms);
-          else if(ms->VC) {
-            FreeP(ms->VC);
-            FreeP(ms->RC);
-          }
+          ObjectSurfaceStateUpdateColors(I,ms);
+         
           ms->RecolorFlag=false;
         }
       }
@@ -649,7 +726,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
         n=ms->N;
         if(ray) {
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-            CGORenderRay(ms->UnitCellCGO,ray,ColorGet(G,I->Obj.Color),
+            CGORenderRay(ms->UnitCellCGO,ray,ColorGet(G,ms->OneColor),
                          I->Obj.Setting,NULL);
 
           ray->fTransparentf(ray,1.0F-alpha);       
@@ -662,8 +739,9 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
           if(n&&v&&I->Obj.RepVis[cRepSurface]) {
             float cc[3];
             float colA[3],colB[3],colC[3];
-            ColorGetEncoded(G,I->Obj.Color,cc);
+            ColorGetEncoded(G,ms->OneColor,cc);
             vc = ms->VC;
+
             rc = ms->RC;
             while(*n)
               {
@@ -738,6 +816,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
           } else {
             
             int render_now = false;
+
             if(alpha>0.0001) {
               render_now = (pass==-1);
             } else 
@@ -746,11 +825,11 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
               int use_dlst;
               
               if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-                CGORenderGL(ms->UnitCellCGO,ColorGet(G,I->Obj.Color),
+                CGORenderGL(ms->UnitCellCGO,ColorGet(G,ms->OneColor),
                             I->Obj.Setting,NULL,info);
               
               SceneResetNormal(G,false);
-              col = ColorGet(G,I->Obj.Color);
+              col = ColorGet(G,ms->OneColor);
               glColor4f(col[0],col[1],col[2],alpha);
               
               use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
@@ -873,7 +952,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                       
                       c=n_tri;
                       
-                      col=ColorGet(G,I->Obj.Color);
+                      col=ColorGet(G,ms->OneColor);
                       
                       glColor4f(col[0],col[1],col[2],alpha);
                       glBegin(GL_TRIANGLES);

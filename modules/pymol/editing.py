@@ -1527,6 +1527,21 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
                               source_mode=-1,  target_mode=-1,
                               source_state=1, target_state=1,
                               target_undo=1, log=0, quiet=1):
+        '''
+
+DESCRIPTION
+
+    "matrix_transfer" copies a transformation matrix from one object to
+    another. This command is often used after a protein structure
+    alignment to bring other related objects into the same frame of
+    reference.  Common Usage
+
+COMMON USAGE
+
+    matrix_transfer source_name, target_name
+
+'''
+        
         r = DEFAULT_ERROR
         try:
             lock()
@@ -1636,6 +1651,7 @@ SEE ALSO
         'average'       : 3,
         'difference'    : 4,
         'copy'          : 5,
+        'unique'        : 6,
         }
     
     map_op_sc = Shortcut(map_op_dict.keys())
@@ -1672,7 +1688,7 @@ SEE ALSO
         try:
             lock()
             r = _cmd.map_set(str(name), int(operator_index), str(operands),
-                         int(target_state), int(source_state), int(zoom), int(quiet))
+                         int(target_state)-1, int(source_state)-1, int(zoom), int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            

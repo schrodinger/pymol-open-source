@@ -2194,7 +2194,9 @@ SEE ALSO
         selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+['all'])
         object_sc = lambda sc=Shortcut,gn=get_names:sc(gn('objects'))
         map_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:map'))
-
+        contour_sc =  lambda sc=Shortcut,gnot=get_names_of_type:sc(
+            gnot('object:mesh')+gnot('object:surface'))
+        
         # Table for argument autocompletion
 
         auto_arg =[
@@ -2218,7 +2220,7 @@ SEE ALSO
             'get'            : [ setting.setting_sc     , 'setting'         , ','  ],      
             'help'           : [ help_sc                , 'selection'       , ''   ],
             'hide'           : [ repres_sc              , 'representation'  , ', ' ],
-            'isolevel'       : [ map_sc                 , 'map'             , ', ' ],
+            'isolevel'       : [ contour_sc             , 'contour'         , ', ' ],
             'iterate'        : [ selection_sc           , 'selection'       , ''   ],
             'iterate_state'  : [ selection_sc           , 'selection'       , ''   ],
             'indicate'       : [ selection_sc           , 'selection'       , ''   ],

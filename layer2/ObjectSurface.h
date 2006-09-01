@@ -24,10 +24,11 @@ typedef struct {
   int MapState;
   CCrystal Crystal;
   int Active;
-  int *N,nT;
+  int *N,nT,base_n_V;
   float *V;
   float *VC;
   int *RC;
+  int OneColor;
   int VCsize;
   int Range[6];
   float ExtentMin[3],ExtentMax[3];

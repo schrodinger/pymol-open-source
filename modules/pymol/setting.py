@@ -562,6 +562,12 @@ if __name__=='pymol.setting':
         line_color                = (526,'')
         ray_label_specular        = (527,'')
         mesh_skip                 = (528,'')
+        label_digits              = (529,'')
+        label_distance_digits     = (530,'')
+        label_angle_digits        = (531,'')
+        label_dihedral_digits     = (532,'')
+        surface_negative_visible  = (533,'')
+        surface_negative_color    = (534,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

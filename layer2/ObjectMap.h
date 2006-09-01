@@ -23,6 +23,15 @@ Z* -------------------------------------------------------------------
 #include"Isosurf.h"
 #include"CGO.h"
 
+#define cMapSourceUndefined 0
+#define cMapSourceXPLOR 1
+#define cMapSourceCCP4 2
+#define cMapSourcePHI 3
+#define cMapSourceDesc 4
+#define cMapSourceFLD 5
+#define cMapSourceBRIX 6
+#define cMapSourceGRD 7
+#define cMapSourceChempyBrick 8
 
 typedef struct ObjectMapState {
   CObjectState State;
@@ -106,6 +115,7 @@ void ObjectMapTransformMatrix(ObjectMap *I, int state, double *matrix);
 void ObjectMapResetMatrix(ObjectMap *I, int state);
 int ObjectMapGetMatrix(ObjectMap *I,int state,double **matrix);
 int ObjectMapSetMatrix(ObjectMap *I,int state,double *matrix);
+void ObjectMapStateRegeneratePoints(ObjectMapState *ms);
 
 #endif
 

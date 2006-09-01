@@ -34,15 +34,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"PyMOLGlobals.h"
 
-#define cMapSourceUndefined 0
-#define cMapSourceXPLOR 1
-#define cMapSourceCCP4 2
-#define cMapSourcePHI 3
-#define cMapSourceDesc 4
-#define cMapSourceFLD 5
-#define cMapSourceBRIX 6
-#define cMapSourceGRD 7
-#define cMapSourceChempyBrick 8
+
 
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_NUMPY
@@ -1038,12 +1030,11 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
     break;
   }
     return(ok);
-  }
+}
 
 int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *I,PyObject *ary);
 
-#ifndef _PYMOL_NOPY
-static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
+void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
 {
   int a,b,c,e;
   float v[3],vr[3];
@@ -1086,7 +1077,6 @@ static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
     break;
   }
 }
-#endif
 
 #ifndef _PYMOL_NOPY
 static PyObject *ObjectMapStateAsPyList(ObjectMapState *I)
@@ -1379,24 +1369,28 @@ int ObjectMapNewCopy(PyMOLGlobals *G,ObjectMap *src,ObjectMap **result,int sourc
   I=ObjectMapNew(G);
   if(ok) ok = (I!=NULL);
   if(ok) ok = ObjectCopyHeader(&I->Obj,&src->Obj);
-  if(source_state==-1) { /* all states */
-    int state;
-    I->NState = src->NState;
-    VLACheck(I->State,ObjectMapState,I->NState);
-    for(state=0;state<src->NState;state++) {
-      ok = ObjectMapStateCopy(G,src->State + state, I->State + state);
-    }
-  } else {
-    if(target_state<0)
-      target_state = 0;
-    if(source_state<0)
-      source_state = 0;
-    VLACheck(I->State,ObjectMapState,target_state);    
-    if(source_state<src->NState) {
-      ok = ObjectMapStateCopy(G,src->State + source_state, I->State + target_state);    
+  if(ok) {
+    if(source_state==-1) { /* all states */
+      int state;
+      I->NState = src->NState;
+      VLACheck(I->State,ObjectMapState,I->NState);
+      for(state=0;state<src->NState;state++) {
+        ok = ObjectMapStateCopy(G, src->State + state, I->State + state);
+      }
     } else {
-      ok=false;
-      /* to do */
+      if(target_state<0)
+        target_state = 0;
+      if(source_state<0)
+        source_state = 0;
+      VLACheck(I->State,ObjectMapState,target_state);    
+      if(source_state<src->NState) {
+        ok = ObjectMapStateCopy(G,src->State + source_state, I->State + target_state);    
+        if(I->NState<target_state)
+          I->NState = target_state;
+      } else {
+        ok=false;
+        /* to do */
+      }
     }
   }
   if(ok) 
@@ -1448,35 +1442,35 @@ void ObjectMapUpdateExtents(ObjectMap *I)
   float tr_min[3],tr_max[3];
   I->Obj.ExtentFlag=false;
   
+  
   for(a=0;a<I->NState;a++) {
     ObjectMapState *ms = I->State+a;
-    if(ms->Active)
-      {
-        if(I->State[a].State.Matrix) { 
-          transform44d3f(ms->State.Matrix,ms->ExtentMin,tr_min);
-          transform44d3f(ms->State.Matrix,ms->ExtentMax,tr_max);
-          {
-            float tmp;
-            int a;
-            for(a=0;a<3;a++) 
-              if(tr_min[a]>tr_max[a]) { tmp=tr_min[a]; tr_min[a]=tr_max[a]; tr_max[a]=tmp;}
-          }
-          min_ext = tr_min;
-          max_ext = tr_max;
-        } else {
-          min_ext = ms->ExtentMin;
-          max_ext = ms->ExtentMax;
+    if(ms->Active) {
+      if(I->State[a].State.Matrix) { 
+        transform44d3f(ms->State.Matrix,ms->ExtentMin,tr_min);
+        transform44d3f(ms->State.Matrix,ms->ExtentMax,tr_max);
+        {
+          float tmp;
+          int a;
+          for(a=0;a<3;a++) 
+            if(tr_min[a]>tr_max[a]) { tmp=tr_min[a]; tr_min[a]=tr_max[a]; tr_max[a]=tmp;}
         }
-
-        if(!I->Obj.ExtentFlag) {
-          copy3f(min_ext,I->Obj.ExtentMin);
-          copy3f(max_ext,I->Obj.ExtentMax);
-          I->Obj.ExtentFlag=true;
-        } else {
-          min3f(min_ext,I->Obj.ExtentMin,I->Obj.ExtentMin);
-          max3f(max_ext,I->Obj.ExtentMax,I->Obj.ExtentMax);
-        }
+        min_ext = tr_min;
+        max_ext = tr_max;
+      } else {
+        min_ext = ms->ExtentMin;
+        max_ext = ms->ExtentMax;
       }
+      
+      if(!I->Obj.ExtentFlag) {
+        copy3f(min_ext,I->Obj.ExtentMin);
+        copy3f(max_ext,I->Obj.ExtentMax);
+        I->Obj.ExtentFlag=true;
+      } else {
+        min3f(min_ext,I->Obj.ExtentMin,I->Obj.ExtentMin);
+        max3f(max_ext,I->Obj.ExtentMax,I->Obj.ExtentMax);
+      }
+    }
   }
   PRINTFD(I->Obj.G,FB_ObjectMap)
     " ObjectMapUpdateExtents-DEBUG: ExtentFlag %d\n",I->Obj.ExtentFlag
