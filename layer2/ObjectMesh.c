@@ -391,8 +391,17 @@ int ObjectMeshSetLevel(ObjectMesh *I,float level,int state)
 
 static void ObjectMeshStateUpdateColors(ObjectMesh *I, ObjectMeshState *ms)
 {
+  int one_color_flag = true;
+  int cur_color = SettingGet_color(I->Obj.G, I->Obj.Setting, NULL, cSetting_mesh_color);
+
+  if(cur_color == -1)
+    cur_color = I->Obj.Color;
+
+  if(ColorCheckRamped(I->Obj.G,cur_color))
+    one_color_flag = false;
+
+  ms->OneColor = cur_color;
   if(ms->V) {
-    int index = I->Obj.Color;
     int ramped_flag = false;
     float *v = ms->V;
     float *vc;
@@ -400,6 +409,7 @@ static void ObjectMeshStateUpdateColors(ObjectMesh *I, ObjectMeshState *ms)
     int a;
     int state = ms - I->State;
     int n_vert = VLAGetSize(ms->V)/3;
+    int base_n_vert = ms->base_n_V/3;
     
     if(ms->VC && (ms->VCsize<n_vert)) {
       FreeP(ms->VC);
@@ -417,12 +427,21 @@ static void ObjectMeshStateUpdateColors(ObjectMesh *I, ObjectMeshState *ms)
     vc = ms->VC;
     if(vc) {
       for(a=0;a<n_vert;a++) {
-        if(ColorCheckRamped(I->Obj.G,index)) {
-          ColorGetRamped(I->Obj.G,index,v,vc,state);
-          *rc = index;
+        if(a==base_n_vert) {
+          int new_color = SettingGet_color(I->Obj.G, I->Obj.Setting, 
+                                           NULL, cSetting_mesh_negative_color);
+          if(new_color==-1) new_color=cur_color;
+          if(new_color!=cur_color) {
+            one_color_flag = false;
+            cur_color = new_color;
+          }
+        }
+        if(ColorCheckRamped(I->Obj.G,cur_color)) {
+          ColorGetRamped(I->Obj.G,cur_color,v,vc,state);
+          *rc = cur_color;
           ramped_flag=true;
         } else {
-          float *col = ColorGet(I->Obj.G,index);
+          float *col = ColorGet(I->Obj.G,cur_color);
           copy3f(col,vc);
         }
         rc++;
@@ -430,7 +449,11 @@ static void ObjectMeshStateUpdateColors(ObjectMesh *I, ObjectMeshState *ms)
         v+=3; 
       }
     }
-    if( (!ramped_flag) || (!SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_ray_color_ramps))) {
+
+    if(one_color_flag && (!ramped_flag)) {
+      FreeP(ms->VC);
+      FreeP(ms->RC);
+    } else if( (!ramped_flag) || (!SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_ray_color_ramps))) {
       FreeP(ms->RC);
     }
   }
@@ -537,6 +560,56 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                           ms->DotFlag,
                           mesh_skip);
 
+                       
+
+            if(!SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_negative_visible)) { 
+              ms->base_n_V = VLAGetSize(ms->V);
+            } else {
+              /* do we want the negative surface too? */
+
+              int *N2 = VLAlloc(int,10000);
+              float *V2 =  VLAlloc(float,10000);
+
+              IsosurfVolume(I->Obj.G,oms->Field,
+                                  -ms->Level,
+                                  &N2,&V2,
+                                  ms->Range,
+                                  ms->DotFlag,
+                                  mesh_skip);
+
+
+              if(N2&&V2) {
+                
+                int base_n_N = VLAGetSize(ms->N);
+                int base_n_V = VLAGetSize(ms->V);
+                int addl_n_N = VLAGetSize(N2);
+                int addl_n_V = VLAGetSize(V2);
+
+                ms->base_n_V = base_n_V;
+
+                /* make room */
+
+                VLASize(ms->N, int, base_n_N + addl_n_N);
+                VLASize(ms->V, float, base_n_V + addl_n_V);
+                
+                /* copy vertex data */
+
+                memcpy(((char*)ms->V)+(sizeof(float)*base_n_V),
+                       V2, sizeof(float)*addl_n_V);
+
+                /* copy strip counts */
+
+                memcpy(((char*)ms->N)+(sizeof(int)*(base_n_N-1)),
+                       N2, sizeof(int)*addl_n_N);
+                ms->N[ base_n_N + addl_n_N - 1] = 0;
+                
+                VLAFreeP(N2);
+                VLAFreeP(V2);
+              }
+
+            }
+
+
             if(ms->State.Matrix && VLAGetSize(ms->N)&&VLAGetSize(ms->V)) { 
               int count;
               /* take map coordinates back to view coordinates if necessary */
@@ -631,12 +704,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
           }
         }
         if(ms->RecolorFlag) {
-          if(ColorCheckRamped(I->Obj.G,I->Obj.Color))
-            ObjectMeshStateUpdateColors(I,ms);
-          else if(ms->VC) {
-            FreeP(ms->VC);
-            FreeP(ms->RC);
-          }
+          ObjectMeshStateUpdateColors(I,ms);
           ms->RecolorFlag=false;
         }
       }
@@ -698,13 +766,12 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
             if(radius==0.0F) {
               radius = ray->PixelRadius*SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_dot_width)/1.4142F;
             } 
-          }
-                  
+          }                  
 
           if(n&&v&&I->Obj.RepVis[cRepMesh]) {
             float cc[3];
             float colA[3],colB[3];
-            ColorGetEncoded(G,I->Obj.Color,cc);
+            ColorGetEncoded(G,ms->OneColor,cc);
             vc = ms->VC;
             rc = ms->RC;
             /* vc = ColorGet(I->Obj.G,I->Obj.Color); */

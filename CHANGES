@@ -2,8 +2,16 @@
 CHANGE LOG
 =========================================================================
 
-Changes up to 1.00b09
 
+Changes up to 1.00b10
+
+    * label_digits settings
+
+    * surface_negative_visible and _color settings
+
+    * mesh_negative_visible and _color settings
+
+Changes up to 1.00b09
 
     * ray_label_specular setting
 

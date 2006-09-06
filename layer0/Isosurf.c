@@ -725,7 +725,7 @@ int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,
     
     /* shrinks sizes for more efficient RAM usage */
     
-    VLASize(I->Line,float,I->NLine*3+1);
+    VLASize(I->Line,float,I->NLine*3);
     VLASize(I->Num,int,I->NSeg+1);
     
     I->Num[I->NSeg]=0;  /* important - must terminate the segment list */
