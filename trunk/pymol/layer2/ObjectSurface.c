@@ -343,14 +343,14 @@ int ObjectSurfaceInvalidateMapName(ObjectSurface *I,char *name)
 
 static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState *ms)
 { 
-  int one_color = true;
+  int one_color_flag = true;
   int cur_color = SettingGet_color(I->Obj.G, I->Obj.Setting, NULL, cSetting_surface_color);
 
   if(cur_color == -1)
     cur_color = I->Obj.Color;
 
   if(ColorCheckRamped(I->Obj.G,cur_color))
-    one_color = false;
+    one_color_flag = false;
 
   ms->OneColor = cur_color;
   if(ms->V) {
@@ -390,7 +390,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
                                                NULL, cSetting_surface_negative_color);
               if(new_color==-1) new_color=cur_color;
               if(new_color!=cur_color) {
-                one_color = false;
+                one_color_flag = false;
                 cur_color = new_color;
               }
             }
@@ -436,7 +436,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
                                                NULL, cSetting_surface_negative_color);
               if(new_color==-1) new_color=cur_color;
               if(new_color!=cur_color)
-                one_color = false;
+                one_color_flag = false;
                 cur_color = new_color;
             }
 
@@ -457,7 +457,7 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
       break;
     }
 
-    if(one_color && (!ramped_flag)) {
+    if(one_color_flag && (!ramped_flag)) {
       FreeP(ms->VC);
       FreeP(ms->RC);
     } else if( (!ramped_flag) || (!SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_ray_color_ramps))) {
@@ -597,6 +597,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
 
                 memcpy(((char*)ms->N)+(sizeof(int)*(base_n_N-1)),
                        N2, sizeof(int)*addl_n_N);
+                ms->N[ base_n_N + addl_n_N - 1] = 0;
 
                 ms->nT += nT2;
                 VLAFreeP(N2);
@@ -662,7 +663,6 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
         }
         if(ms->RecolorFlag) {
           ObjectSurfaceStateUpdateColors(I,ms);
-         
           ms->RecolorFlag=false;
         }
       }
@@ -726,7 +726,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
         n=ms->N;
         if(ray) {
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-            CGORenderRay(ms->UnitCellCGO,ray,ColorGet(G,ms->OneColor),
+            CGORenderRay(ms->UnitCellCGO,ray,ColorGet(G,I->Obj.Color),
                          I->Obj.Setting,NULL);
 
           ray->fTransparentf(ray,1.0F-alpha);       
@@ -825,7 +825,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
               int use_dlst;
               
               if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-                CGORenderGL(ms->UnitCellCGO,ColorGet(G,ms->OneColor),
+                CGORenderGL(ms->UnitCellCGO,ColorGet(G,I->Obj.Color),
                             I->Obj.Setting,NULL,info);
               
               SceneResetNormal(G,false);

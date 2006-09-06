@@ -680,6 +680,8 @@ typedef struct _CPyMOL {
   ov_word lex_label_dihedral_digits;
   ov_word lex_surface_negative_visible;
   ov_word lex_surface_negative_color;
+  ov_word lex_mesh_negative_visible;
+  ov_word lex_mesh_negative_color;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1357,6 +1359,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(label_dihedral_digits,532);
   LEX_SETTING(surface_negative_visible,533);
   LEX_SETTING(surface_negative_color, 534);
+  LEX_SETTING(mesh_negative_visible,535);
+  LEX_SETTING(mesh_negative_color, 536);
   return_OVstatus_SUCCESS;
 }
 

@@ -1903,6 +1903,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_mesh_color: 
+  case cSetting_mesh_negative_color:
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvColor);
     SceneChanged(G);
     break;
@@ -1974,6 +1975,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     break;
   case cSetting_surface_negative_visible:
     ExecutiveInvalidateRep(G,inv_sele,cRepSurface,cRepInvAll);
+    SceneChanged(G);
+    break;
+  case cSetting_mesh_negative_visible:
+    ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvAll);
     SceneChanged(G);
     break;
   case cSetting_solvent_radius:
@@ -3296,6 +3301,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_i(I,cSetting_label_dihedral_digits,-1);
   set_b(I,cSetting_surface_negative_visible,0);
   set_color(I,cSetting_surface_negative_color,"grey50");
+  set_b(I,cSetting_mesh_negative_visible,0);
+  set_color(I,cSetting_mesh_negative_color,"grey30");
 }
 
 

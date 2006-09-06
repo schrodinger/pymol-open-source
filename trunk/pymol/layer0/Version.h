@@ -2,6 +2,10 @@
 #define _PyMOL_VERSION "1.0.0b10"
 #endif
 
+#ifndef _PYMOL_1_x
+#define _PYMOL_1_x
+#endif
+
 #ifndef _PyMOL_VERSION_double
 #define _PyMOL_VERSION_double 0.990702
 #endif

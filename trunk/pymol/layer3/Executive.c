@@ -7510,7 +7510,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
             ENDFB(G);
         }
         if(oname && oname[0]) {
-#if 0
+#ifndef _PYMOL_1_x
           CGO *cgo = NULL;
           ObjectCGO *ocgo;
           int auto_save;
@@ -7536,7 +7536,6 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
           SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
           SceneInvalidate(G);
 #else
-#if 1
           {
             int align_state = state2;
             ObjectMolecule *trg_obj = SelectorGetSingleObjectMolecule(G,sele2);            
@@ -7582,44 +7581,6 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
               VLAFreeP(align_vla);
             }
           }
-#else
-          for(i=0;i<n_pair;i++) {
-            
-            
-            idx_list[0][2*i] = op1.ai1VLA[i]->temp1; /* KLUDGE ALERT! */
-            idx_list[0][2*i+1] = i+SELECTOR_BASE_TAG;
-            idx_list[1][2*i] = op2.ai1VLA[i]->temp1; /* KLUDGE ALERT! */
-            idx_list[1][2*i+1] = i+SELECTOR_BASE_TAG;
-          }
-
-          ObjectMolecule *obj_list[2];
-          obj_list[0] = SelectorGetSingleObjectMolecule(G,sele1); 
-          obj_list[1] = SelectorGetSingleObjectMolecule(G,sele2);
-            
-          if(obj_list[0] && obj_list[1] && op1.ai1VLA && op2.ai1VLA) {
-            int *idx_list[2];
-            idx_list[0] = Alloc(int,n_pair*2);
-            idx_list[1] = Alloc(int,n_pair*2);
-            if(idx_list[0] && idx_list[1]) {
-              int n_idx_list[2];
-              n_idx_list[0] = n_pair;
-              n_idx_list[1] = n_pair;
-              int i;
-              for(i=0;i<n_pair;i++) {
-                idx_list[0][2*i] = op1.ai1VLA[i]->temp1; /* KLUDGE ALERT! */
-                idx_list[0][2*i+1] = i+SELECTOR_BASE_TAG;
-                idx_list[1][2*i] = op2.ai1VLA[i]->temp1; /* KLUDGE ALERT! */
-                idx_list[1][2*i+1] = i+SELECTOR_BASE_TAG;
-              }
-              SelectorCreateOrderedFromMultiObjectIdxTag(G,oname,
-                                                         obj_list,
-                                                         idx_list,
-                                                         n_idx_list,2);
-            }
-            FreeP(idx_list[0]);
-            FreeP(idx_list[1]);
-          }
-#endif
 #endif
         }
         if(ok && mode==2) { 
