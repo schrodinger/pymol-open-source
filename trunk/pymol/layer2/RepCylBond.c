@@ -295,6 +295,7 @@ static void RepCylBondRender(RepCylBond *I,RenderInfo *info)
                   glBegin(GL_TRIANGLE_STRIP);
                   cc=sp->StripLen[a];
                   while(cc--) {
+                    printf("draw\n");
                     glNormal3fv(v);
                     v+=3;
                     glVertex3fv(v);
@@ -1668,6 +1669,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
             *(vspc++)=vdw;
             I->NSPC++;
           }
+
           if(s2&&!(marked[b2])) { /* just once for each atom... */
             int *q=sp->Sequence;
             int *s=sp->StripLen;
@@ -1897,6 +1899,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
       /*      printf("%d\n",(v-I->V)/( (9+6+6) * (nEdge+1) + 3 ));*/
       b++;
     }
+
     PRINTFD(G,FB_RepCylBond)
       " RepCylBond-DEBUG: %d triplets\n",(int)(v-I->V)/3
       ENDFD;
@@ -1914,11 +1917,19 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
       I->VSPC = ReallocForSure(I->VSPC,float,(vspc-I->VSPC));
     if(I->VarAlpha)
       I->VarAlpha = ReallocForSure(I->VarAlpha,float,n_var_alpha);
-    if(I->VarAlphaRay)
-      I->VarAlphaRay = ReallocForSure(I->VarAlphaRay,float,n_var_alpha_ray);
-    if(I->VarAlphaSph)
-      I->VarAlphaSph = ReallocForSure(I->VarAlphaSph,float,n_var_alpha_sph);
-
+    if(n_var_alpha_ray) {
+      if(I->VarAlphaRay)
+        I->VarAlphaRay = ReallocForSure(I->VarAlphaRay,float,n_var_alpha_ray);
+    } else {
+      FreeP(I->VarAlphaRay);
+    }
+    if(n_var_alpha_sph) {
+      if(I->VarAlphaSph)
+        I->VarAlphaSph = ReallocForSure(I->VarAlphaSph,float,n_var_alpha_sph);
+    } else {
+      FreeP(I->VarAlphaSph);
+    }
+      
     if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) { 
 
       PRINTFD(G,FB_RepCylBond)

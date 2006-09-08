@@ -3,6 +3,10 @@ CHANGE LOG
 =========================================================================
 
 
+Changes up to 1.00b11
+
+    * fixed stick_ball / transparency bug
+
 Changes up to 1.00b10
 
     * label_digits settings
