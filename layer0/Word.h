@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include "PyMOLGlobals.h"
 
-#define WordLength 64
+#define WordLength 256
 
 typedef char WordType[WordLength];
 

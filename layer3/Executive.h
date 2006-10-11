@@ -81,6 +81,18 @@ typedef struct {
   int offset;
 } ExecutiveObjectOffset;
 
+int ExecutiveGetExpandedGroupList(PyMOLGlobals *G,char *name);
+int ExecutiveGetExpandedGroupListFromPattern(PyMOLGlobals *G,char *name);
+void ExecutiveFreeGroupList(PyMOLGlobals *G,int list_id);
+
+int ExecutiveCheckGroupMembership(PyMOLGlobals *G,int list_id,CObject *obj); /* 0.5*N for group size */
+
+
+int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int quiet);
+
+void ExecutiveInvalidateGroups(PyMOLGlobals *G,int force);
+void ExecutiveUpdateGroups(PyMOLGlobals *G,int force);
+
 int *ExecutiveGetG3d(PyMOLGlobals *G);
 int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort, int location);
 int ExecutiveFixChemistry(PyMOLGlobals *G,char *s1,char *s2,int invalidate, int quiet);

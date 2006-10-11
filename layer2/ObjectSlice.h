@@ -23,7 +23,7 @@ typedef struct {
   /* stored in a session */
 
   int Active;
-  char MapName[ObjNameMax];
+  ObjectNameType MapName;
   int MapState;
   float MapMean;
   float MapStdev;

@@ -1342,7 +1342,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           if(pdb_name[0]==0) { /* if not, is there a plain name (for MERCK!)*/
             p=nskip(p,6);
             p=ntrim(cc,p,44);
-            UtilNCopy(pdb_name,cc,ObjNameMax-1);
+            UtilNCopy(pdb_name,cc,WordLength);
           } else {
             p=pp;
           }
@@ -1639,7 +1639,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                 p=ntrim(target,p,10);
                 if(target[0]) {
                   if(!align->target[0]) 
-                    UtilNCopy(align->target,target,ObjNameMax);
+                    UtilNCopy(align->target,target,WordLength);
                   if(WordMatchExact(G,align->target,target,true)) { /* must match the one target allowed */
                     p=nskip(p,1);
                     p=ncopy(cc,p,6);

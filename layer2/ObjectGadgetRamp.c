@@ -509,7 +509,7 @@ int ObjectGadgetRampNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadgetRam
     }
   }
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,5),&I->var_index);
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,6),I->SrcName,ObjNameMax);
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,6),I->SrcName,WordLength);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,7),&I->SrcState);
   if(ok&&(ll>8)) ok=PConvPyIntToInt(PyList_GetItem(list,8),&I->CalcMode);
   if(ok&&(ll>9)) {
@@ -1112,7 +1112,7 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
   if(ok) ok = ObjectGadgetRampHandleInputColors(I);
 
   ObjectGadgetRampBuild(I);
-  UtilNCopy(I->SrcName,map->Obj.Name,ObjNameMax);
+  UtilNCopy(I->SrcName,map->Obj.Name,WordLength);
   I->SrcState=map_state;
   
   /* test interpolate 
@@ -1176,9 +1176,9 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
 
   ObjectGadgetRampBuild(I);
   if(mol) {
-    UtilNCopy(I->SrcName,mol->Obj.Name,ObjNameMax);
+    UtilNCopy(I->SrcName,mol->Obj.Name,WordLength);
   } else {
-    UtilNCopy(I->SrcName,"none",ObjNameMax);
+    UtilNCopy(I->SrcName,"none",WordLength);
   }
   I->SrcState=mol_state;
   PUnblock();

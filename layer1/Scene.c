@@ -1500,8 +1500,8 @@ void SceneCountFrames(PyMOLGlobals *G)
         n=rec->obj->fGetNFrame(rec->obj);
       else
         n=0;
-		if(n>I->NFrame)
-		  I->NFrame=n;
+      if(n>I->NFrame)
+        I->NFrame=n;
 	 }
   mov_len = MovieGetLength(G);
   if(mov_len>0) {
@@ -1891,7 +1891,7 @@ void SceneOriginSet(PyMOLGlobals *G,float *origin,int preserve)
   SceneInvalidate(G);
 }
 /*========================================================================*/
-void SceneObjectAdd(PyMOLGlobals *G,CObject *obj)
+int SceneObjectAdd(PyMOLGlobals *G,CObject *obj)
 {
   register CScene *I=G->Scene;
   ObjRec *rec = NULL;
@@ -1902,6 +1902,7 @@ void SceneObjectAdd(PyMOLGlobals *G,CObject *obj)
   ListAppend(I->Obj,rec,next,ObjRec);
   SceneCountFrames(G);
   SceneChanged(G);
+  return 1;
 }
 /*========================================================================*/
 int SceneObjectIsActive(PyMOLGlobals *G,CObject *obj)
@@ -1916,13 +1917,13 @@ int SceneObjectIsActive(PyMOLGlobals *G,CObject *obj)
     }
   return result;
 }
-void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
+int SceneObjectDel(PyMOLGlobals *G,CObject *obj)
 {
   register CScene *I=G->Scene;
   ObjRec *rec = NULL;
   int defer_builds_mode = SettingGetGlobal_b(G,cSetting_defer_builds_mode);
 
-  if(!obj) {
+  if(!obj) { /* deletes all members */
     while(ListIterate(I->Obj,rec,next)) {
       if(rec) {
         if(defer_builds_mode == 3) { 
@@ -1951,6 +1952,7 @@ void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
   }
   SceneCountFrames(G);
   SceneInvalidate(G);
+  return 0;
 }
 /*========================================================================*/
 int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet) 
@@ -3154,7 +3156,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               int active_sele = ExecutiveGetActiveSele(G);
               if(active_sele && SelectorIsMember(G,objMol->AtomInfo[I->LastPicked.src.index].selEntry,
                                                  active_sele)) {
-                char name[ObjNameMax];
+                ObjectNameType name;
                 ExecutiveGetActiveSeleName(G,name,false);
                 MenuActivate2Arg(G,I->LastWinX,I->LastWinY+20, /* selection menu */
                                  I->LastWinX,I->LastWinY,
@@ -3594,7 +3596,8 @@ static int SceneClick(Block *block,int button,int x,int y,
         case cButModeSeleSet:
           {
             OrthoLineType buf2;
-            char name[ObjNameMax];
+            ObjectNameType name;
+
             if(ExecutiveGetActiveSeleName(G,name, false)) {
               SelectorCreate(G,name,"none",NULL,true,NULL);
               if(SettingGet(G,cSetting_logging)) {
@@ -3607,8 +3610,8 @@ static int SceneClick(Block *block,int button,int x,int y,
         case cButModeSeleToggle:
           {
             OrthoLineType buf2;
-            char name[ObjNameMax];
-          
+            ObjectNameType name;
+
             if(ExecutiveGetActiveSeleName(G,name, false)) {
               ExecutiveSetObjVisib(G,name,0);
               if(SettingGet(G,cSetting_logging)) {
@@ -5741,6 +5744,8 @@ void SceneUpdate(PyMOLGlobals *G)
             int nFrame = 0;
             if(rec->obj->fGetNFrame)
               nFrame = rec->obj->fGetNFrame(rec->obj);
+            else
+              nFrame = 0;
             if((nFrame>1)||(!static_singletons)) {
               int start = I->LastStateBuilt;
               int stop = start+1;
@@ -6262,83 +6267,83 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
       info.sampling = 1;
   }
 
-  while(ListIterate(I->Obj,rec,next))
-    {
-      glPushMatrix();
-      if(fat)
-        glLineWidth(3.0);
-      if(rec->obj->fRender)
-        switch(rec->obj->Context) {
-        case 1: /* unit context */
-          {
-#ifndef _PYMOL_OSX
-/* workaround for MacOSX 10.4.3 */
-            glPushAttrib(GL_LIGHTING_BIT); 
-#endif
+  while(ListIterate(I->Obj,rec,next)) {
 
-	    glMatrixMode(GL_PROJECTION);
-            glPushMatrix();
-            glLoadIdentity();
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glLoadIdentity();
-            vv[0]=0.0;
-            vv[1]=0.0;
-            vv[2]=-1.0;
-            vv[3]=0.0;
-            glLightfv(GL_LIGHT0,GL_POSITION,vv);
-            glLightfv(GL_LIGHT1,GL_POSITION,vv);
-            
-            glOrtho(context->unit_left,
-                    context->unit_right,
-                    context->unit_top,
-                    context->unit_bottom,
-                    context->unit_front,
-                    context->unit_back);
-            
-            glNormal3f(0.0F,0.0F,1.0F);
-            info.state = ObjectGetCurrentState(rec->obj,false);
-            rec->obj->fRender(rec->obj,&info);
-            
-            glMatrixMode(GL_PROJECTION);
-            glPopMatrix();
-            glMatrixMode(GL_MODELVIEW);
-            glLoadIdentity();
+    glPushMatrix();
+    if(fat)
+      glLineWidth(3.0);
+    if(rec->obj->fRender)
+      switch(rec->obj->Context) {
+      case 1: /* unit context */
+        {
 #ifndef _PYMOL_OSX
-            glPopAttrib();
-#else  
-/* workaround for MacOSX 10.4.3 */
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-	        SceneProgramLighting(G); /* an expensive workaround... */
-            if(pickVLA) {
-              glDisable(GL_FOG);
-              glDisable(GL_COLOR_MATERIAL);
-              glDisable(GL_LIGHTING);
-              glDisable(GL_DITHER);
-              glDisable(GL_BLEND);
-              glDisable(GL_LINE_SMOOTH);
-              glDisable(GL_POLYGON_SMOOTH);
-              if(G->Option->multisample)    
-                glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
-              glShadeModel(GL_FLAT);
-            }
-/* END PROPRIETARY CODE SEGMENT */
+          /* workaround for MacOSX 10.4.3 */
+          glPushAttrib(GL_LIGHTING_BIT); 
 #endif
-            glPopMatrix();
-          }
-          break;
-        case 2:
-          break;
-        case 0: /* context/grid 0 is all slots */
-        default:
-          if(normal) 
-            glNormal3fv(normal);
+          
+          glMatrixMode(GL_PROJECTION);
+          glPushMatrix();
+          glLoadIdentity();
+          glMatrixMode(GL_MODELVIEW);
+          glPushMatrix();
+          glLoadIdentity();
+          vv[0]=0.0;
+          vv[1]=0.0;
+          vv[2]=-1.0;
+          vv[3]=0.0;
+          glLightfv(GL_LIGHT0,GL_POSITION,vv);
+          glLightfv(GL_LIGHT1,GL_POSITION,vv);
+          
+          glOrtho(context->unit_left,
+                  context->unit_right,
+                  context->unit_top,
+                  context->unit_bottom,
+                  context->unit_front,
+                  context->unit_back);
+          
+          glNormal3f(0.0F,0.0F,1.0F);
           info.state = ObjectGetCurrentState(rec->obj,false);
           rec->obj->fRender(rec->obj,&info);
-          break;          
+          
+          glMatrixMode(GL_PROJECTION);
+          glPopMatrix();
+          glMatrixMode(GL_MODELVIEW);
+          glLoadIdentity();
+#ifndef _PYMOL_OSX
+          glPopAttrib();
+#else  
+          /* workaround for MacOSX 10.4.3 */
+          /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+          SceneProgramLighting(G); /* an expensive workaround... */
+          if(pickVLA) {
+            glDisable(GL_FOG);
+            glDisable(GL_COLOR_MATERIAL);
+            glDisable(GL_LIGHTING);
+            glDisable(GL_DITHER);
+            glDisable(GL_BLEND);
+            glDisable(GL_LINE_SMOOTH);
+            glDisable(GL_POLYGON_SMOOTH);
+            if(G->Option->multisample)    
+              glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
+            glShadeModel(GL_FLAT);
+          }
+          /* END PROPRIETARY CODE SEGMENT */
+#endif
+          glPopMatrix();
         }
-      glPopMatrix();
-    }
+        break;
+      case 2:
+        break;
+      case 0: /* context/grid 0 is all slots */
+      default:
+        if(normal) 
+          glNormal3fv(normal);
+        info.state = ObjectGetCurrentState(rec->obj,false);
+        rec->obj->fRender(rec->obj,&info);
+        break;          
+      }
+    glPopMatrix();
+  }
 }
 
 #ifdef _PYMOL_SHARP3D

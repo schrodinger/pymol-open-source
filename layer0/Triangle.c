@@ -428,6 +428,7 @@ static void TriangleAdjustNormals(TriangleSurfaceRec *II,float *v,float *vn,int 
         va0+=3;
       }
     }
+    FreeP(va);
   }
 
   FreeP(vFlag);

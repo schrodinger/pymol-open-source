@@ -44,7 +44,7 @@ typedef struct ObjectGadgetRamp {
 
   /* cRampMap */
 
-  char SrcName[ObjNameMax];
+  ObjectNameType SrcName;
   int SrcState;
 
   int CalcMode;

@@ -44,6 +44,7 @@ int TrackerDelCand(CTracker *I, int cand_id);
 
 int TrackerNewList(CTracker *I, TrackerRef *ref);
 int TrackerDelList(CTracker *I, int list_id);
+int TrackerNewListCopy(CTracker *I, int list_id, TrackerRef *ref);
 
 int TrackerNewIter(CTracker *I, int cand_id, int list_id);
 int TrackerDelIter(CTracker *I, int iter_id);

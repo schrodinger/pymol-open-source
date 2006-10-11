@@ -144,8 +144,10 @@ static int GetUniqueValidID(CTracker *I)
   int result=I->next_id;
   while(OVreturn_IS_OK(OVOneToOne_GetForward(I->id2info,result))) {
     result = (result+1)&0x7FFFFFFF;
+    if(!result) result=1;
   }
-  I->next_id = (result+1)&0x7FFFFFFF;
+  if(!(I->next_id = (result+1)&0x7FFFFFFF)) I->next_id = 1;
+
   return result;
 }
 
@@ -238,6 +240,20 @@ int TrackerNewList(CTracker *I, TrackerRef *ref)
     }
   }
   return result;
+}
+
+int TrackerNewListCopy(CTracker *I, int list_id, TrackerRef *ref) 
+{
+  int new_list_id = TrackerNewList(I,ref);
+  int iter_id = TrackerNewIter(I,0,list_id);
+  if(iter_id) {
+    int cand_id;
+    while( (cand_id = TrackerIterNextCandInList(I, iter_id, NULL))) {
+      TrackerLink(I,cand_id,new_list_id,1);
+    }
+    TrackerDelIter(I,iter_id);
+  }
+  return new_list_id;
 }
 
 int TrackerNewIter(CTracker *I,int cand_id, int list_id)

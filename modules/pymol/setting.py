@@ -570,6 +570,7 @@ if __name__=='pymol.setting':
         surface_negative_color    = (534,'')
         mesh_negative_visible  = (535,'')
         mesh_negative_color    = (536,'')
+        auto_group             = (537,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
@@ -719,7 +720,7 @@ PYMOL API
                     if len(selection2):
                         selection2=selector.process(selection2)                        
                     r = _cmd.set_bond(int(index),v,
-                                 selection1,selection2,
+                                 "("+selection1+")","("+selection2+")",
                                  int(state)-1,int(quiet),
                                  int(updates))
                 except:

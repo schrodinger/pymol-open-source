@@ -2,6 +2,13 @@
 CHANGE LOG
 =========================================================================
 
+Changes up to 1.00b12
+
+    * fixed bond setting selection processing issue
+
+    * fixed memory leak in surface algorithm
+
+    * fixed session file chaining bug on Windows
 
 Changes up to 1.00b11
 
