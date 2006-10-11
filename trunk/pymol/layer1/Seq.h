@@ -44,7 +44,7 @@ typedef struct {
   int nFill;
   int *char2col;
   int *atom_lists;
-  char name[ObjNameMax]; /* associated object */
+  ObjectNameType name; /* associated object */
   struct ObjectMolecule *obj; /* this pointer only valid during update */
   struct AtomInfoType *last_ai;
   int accum,current,title_width; /* temporary stores for aligning */

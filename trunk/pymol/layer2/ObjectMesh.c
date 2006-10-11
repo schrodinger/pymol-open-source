@@ -70,7 +70,7 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
   PyList_SetItem(result,13,PyInt_FromLong(I->DotFlag));
 
 #if 0
-  char MapName[ObjNameMax];
+  ObjectNameType MapName;
   int MapState;
   CCrystal Crystal;
   int Active;
@@ -130,7 +130,7 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals *G,ObjectMeshState *I,PyObject
          Always check ll when adding new PyList_GetItem's */
       
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
-      if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,ObjNameMax);
+      if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,WordLength);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->MapState);
       if(ok) ok = CrystalFromPyList(&I->Crystal,PyList_GetItem(list,3));
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,4),&I->ExtentFlag);

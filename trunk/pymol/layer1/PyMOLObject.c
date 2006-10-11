@@ -442,7 +442,7 @@ int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I)
   if(ok) ok = PyList_Check(list);
   if(ok) ll=PyList_Size(list);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->type);
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->Name,ObjNameMax);
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->Name,WordLength);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->Color);
   if(ok) ok = PConvPyListToIntArrayInPlaceAutoZero(PyList_GetItem(list,3),I->RepVis,cRepCnt);
   if(ok) ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list,4),I->ExtentMin,3);
@@ -480,7 +480,7 @@ int ObjectCopyHeader(CObject *I,CObject *src)
 
   I->G = src->G;
   I->type = src->type;
-  UtilNCopy(I->Name,src->Name,ObjNameMax);
+  UtilNCopy(I->Name,src->Name,WordLength);
   I->Color = src->Color;
   {
     int a;
@@ -730,7 +730,7 @@ void ObjectSetRepVis(CObject *I,int rep,int state)
 /*========================================================================*/
 void ObjectSetName(CObject *I,char *name)
 {
-  UtilNCopy(I->Name,name,ObjNameMax);
+  UtilNCopy(I->Name,name,WordLength);
   if(SettingGetGlobal_b(I->G,cSetting_validate_object_names))
     ObjectMakeValidName(I->Name);
 }

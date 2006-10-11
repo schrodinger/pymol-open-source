@@ -67,7 +67,7 @@ static void SeekerSelectionToggleRange(PyMOLGlobals *G,CSeqRow* rowVLA,int row_n
                                   int col_first,int col_last,int inc_or_excl,
                                   int start_over)
 {
-  char selName[ObjNameMax];
+  char selName[WordLength];
   OrthoLineType buf1,buf2;
 
   if(row_num>=0) {
@@ -163,7 +163,7 @@ static void SeekerSelectionToggle(PyMOLGlobals *G,CSeqRow* rowVLA,int row_num,
                                   int col_num,int inc_or_excl,
                                   int start_over)
 {
-  char selName[ObjNameMax];
+  char selName[WordLength];
   OrthoLineType buf1,buf2;
 
   if(row_num>=0) {
@@ -302,7 +302,7 @@ static void SeekerSelectionCenter(PyMOLGlobals *G,int action)
     break;
   case 2: /* center seeker */
     {
-      char selName[ObjNameMax];
+      char selName[WordLength];
       if(ExecutiveGetActiveSeleName(G,selName,true)) {
         ExecutiveCenter(G,selName,-1,true,-1,NULL,true);
         if(logging) {
@@ -322,7 +322,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
 {
   CSeqRow *row;
   CSeqCol *col;
-  /*  char selName[ObjNameMax]; */
+  /*  char selName[WordLength]; */
   register CSeeker *I = G->Seeker;    
   int continuation = false;
   if((row_num<0)||(col_num<0)) {
@@ -330,7 +330,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
     case P_GLUT_LEFT_BUTTON:
       if((UtilGetSeconds(G)-I->LastClickTime)<cDoubleTime) {
         OrthoLineType buf2;
-        char name[ObjNameMax];
+        char name[WordLength];
         if(ExecutiveGetActiveSeleName(G,name, false)) {
           SelectorCreate(G,name,"none",NULL,true,NULL);
           if(SettingGet(G,cSetting_logging)) {
@@ -363,7 +363,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
     case P_GLUT_RIGHT_BUTTON:
       {
         ObjectMolecule *obj;
-        char name[ObjNameMax];
+        char name[WordLength];
 
         if(ExecutiveGetActiveSeleName(G,name, false) && col->inverse) {
           MenuActivate2Arg(G,x,y+16,x,y,false,"pick_sele",name,name);

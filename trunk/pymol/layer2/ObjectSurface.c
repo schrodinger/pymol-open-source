@@ -73,7 +73,7 @@ static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState *I)
   PyList_SetItem(result,15,PyInt_FromLong(I->Side));
 
 #if 0
-  char MapName[ObjNameMax];
+  ObjectNameType MapName;
   int MapState;
   CCrystal Crystal;
   int Active;
@@ -127,7 +127,7 @@ static int ObjectSurfaceStateFromPyList(PyMOLGlobals *G,ObjectSurfaceState *I,Py
       if(ok) ok=PyList_Check(list);
       if(ok) ll=PyList_Size(list);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
-      if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,ObjNameMax);
+      if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,WordLength);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->MapState);
       if(ok) ok = CrystalFromPyList(&I->Crystal,PyList_GetItem(list,3));
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,4),&I->ExtentFlag);

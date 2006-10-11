@@ -6336,7 +6336,7 @@ int SelectorSetName(PyMOLGlobals *G,char *new_name, char *old_name)
  i = SelectGetNameOffset(G,old_name,1,ignore_case);
  if(i>=0) {
    SelectorDelName(G,i);
-   UtilNCopy(I->Name[i], new_name, ObjNameMax);
+   UtilNCopy(I->Name[i], new_name, WordLength);
    SelectorAddName(G,i);
    return true;
  } else {
@@ -8254,34 +8254,71 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
               }
             }
             idx++;
-            
           }
           WordMatcherFree(matcher);
+
+          /* must also allow for group name pattern matches */
+          
+          {
+            int group_list_id;
+            if( (group_list_id = ExecutiveGetExpandedGroupListFromPattern(G,word))) {
+              int last_was_member = false;
+              last_obj = NULL;
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
+                if(last_obj!=i_obj[i_table[a].model]) {
+                  last_obj = i_obj[i_table[a].model];
+                  last_was_member = ExecutiveCheckGroupMembership(G,
+                                                                  group_list_id,
+                                                                  (CObject*)last_obj);
+                }
+                if(last_was_member && !base[0].sele[a]) {
+                  base[0].sele[a] = true;
+                  c++;
+                }
+              }
+            }
+            ExecutiveFreeGroupList(G,group_list_id);
+          }
+
         } else if((!enabled_only)|| ExecutiveGetActiveSeleName(G,word,false)) {
           sele=SelectGetNameOffset(G,word,1,ignore_case);
-          if(sele>=0)
-            {
-              sele=I->Info[sele].ID;
-              for(a=cNDummyAtoms;a<I->NAtom;a++)
-                {
-                  base[0].sele[a]=false;
-                  s=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].selEntry;
-                  while(s)
-                    {
-                      if(I->Member[s].selection==sele)
-                        {
-                          base[0].sele[a] = I->Member[s].tag;
-                          c++;
-                        }
-                      s=I->Member[s].next;
-                    }
+          if(sele>=0) {
+            sele=I->Info[sele].ID;
+            for(a=cNDummyAtoms;a<I->NAtom;a++) {
+              base[0].sele[a]=false;
+              s=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].selEntry;
+              while(s) {
+                if(I->Member[s].selection==sele) {
+                  base[0].sele[a] = I->Member[s].tag;
+                  c++;
                 }
+                s=I->Member[s].next;
+              }
+            }
+          } else {
+            int group_list_id;
+            if(  (group_list_id = ExecutiveGetExpandedGroupList(G,word)) ) {
+              int last_was_member = false;
+              last_obj = NULL;
+              for(a=0;a<I->NAtom;a++) /* zero out first before iterating through selections */
+                base[0].sele[a]=false;
+              for(a=cNDummyAtoms;a<I->NAtom;a++) {
+                if(last_obj!=i_obj[i_table[a].model]) {
+                  last_obj = i_obj[i_table[a].model];
+                  last_was_member = ExecutiveCheckGroupMembership(G,
+                                                                  group_list_id,
+                                                                  (CObject*)last_obj);
+                 }
+                if( (base[0].sele[a] = last_was_member)) c++;
+              }
+              ExecutiveFreeGroupList(G,group_list_id);
             } else if(base[1].text[0]=='?') { /* undefined ?sele allowed */
               for(a=cNDummyAtoms;a<I->NAtom;a++)
                 base[0].sele[a]=false;
             } else {
               ok=ErrMessage(G,"Selector","Invalid Selection Name.");          
             }
+          }
         }
       }
       break;

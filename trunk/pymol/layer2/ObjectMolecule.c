@@ -7145,7 +7145,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
   char *restart=NULL,*start;
   int repeatFlag=true;
   int successCnt = 0;
-  char tmpName[ObjNameMax];
+  char tmpName[WordLength];
   int deferred_tasks = false;
   int skip_out;
   *next_entry = NULL;
@@ -7228,7 +7228,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
       }
       
       if(multiplex>0) 
-        UtilNCopy(tmpName,cset->Name,ObjNameMax);
+        UtilNCopy(tmpName,cset->Name,WordLength);
       
       cset->Obj = I;
       cset->fEnumIndices(cset);
@@ -7270,7 +7270,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
       }
       
       if(multiplex>0) {
-        UtilNCopy(new_name,tmpName,ObjNameMax);
+        UtilNCopy(new_name,tmpName,WordLength);
         if(restart) {
           *next_entry = restart;
         }
@@ -10112,7 +10112,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals *G,ObjectMolecule *obj,ch
   int oCnt=0;
   long size;
   char *buffer,*p;
-  char cc[MAXLINELEN],oName[ObjNameMax];
+  char cc[MAXLINELEN],oName[WordLength];
   int nLines;
   f=fopen(fname,"rb");
   if(!f)
@@ -10550,7 +10550,7 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
   char *restart=NULL,*start;
   int repeatFlag=true;
   int successCnt = 0;
-  char tmpName[ObjNameMax];
+  char tmpName[WordLength];
   int deferred_tasks = false;
 
   *next_entry = NULL;
@@ -10612,7 +10612,7 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
         }
 
         if(multiplex>0) 
-          UtilNCopy(tmpName,cset->Name,ObjNameMax);
+          UtilNCopy(tmpName,cset->Name,WordLength);
 
         cset->Obj = I;
         cset->fEnumIndices(cset);
@@ -10652,7 +10652,7 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
         }
       }
     if(multiplex>0) {
-      UtilNCopy(new_name,tmpName,ObjNameMax);
+      UtilNCopy(new_name,tmpName,WordLength);
       if(restart) {
         *next_entry = restart;
       }

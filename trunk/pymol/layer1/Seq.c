@@ -274,8 +274,8 @@ static int SeqClick(Block *block,int button,int x,int y,int mod)
       switch(button) {
       case P_GLUT_RIGHT_BUTTON: 
         {
-          char name[ObjNameMax];
-          
+          ObjectNameType name;
+
           if(ExecutiveGetActiveSeleName(G,name, false)) {
             MenuActivate2Arg(G,x,y+20,x,y,false,
                              "pick_sele",name,name);

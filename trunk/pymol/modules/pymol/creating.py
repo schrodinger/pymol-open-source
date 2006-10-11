@@ -50,6 +50,32 @@ if __name__=='pymol.creating':
         }
     
     ramp_spectrum_sc = Shortcut(ramp_spectrum_dict.keys())
+
+#    group_action_dict = {
+#        "add" : 1,
+#       "remove" : 2,
+#        "delete" : 3
+#       }
+    
+    def group(name,members,action=1,quiet=1):
+        r = DEFAULT_ERROR        
+        try:
+            lock()
+            r = _cmd.group(str(name),str(members),int(quiet))
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException         
+        return r
+    
+    def ungroup(name,members,action=0,quiet=1):
+        r = DEFAULT_ERROR
+        try:
+            lock()
+            r = _cmd.group(str(name),str(members),int(quiet))
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException         
+        return r
     
     def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,
                 box=None,state=0,quiet=1,zoom=0,normalize=-1):

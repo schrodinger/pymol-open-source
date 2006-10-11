@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct {
   CObjectState State;
-  char MapName[ObjNameMax];
+  ObjectNameType MapName;
   int MapState;
   CCrystal Crystal;
   int Active;

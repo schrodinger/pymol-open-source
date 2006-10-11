@@ -1015,7 +1015,7 @@ SEE ALSO
                         if not os.path.exists(new_file):
                             new_file = re.sub("\.psw$",".pse",new_file,re.I)
                         if os.path.exists(new_file):
-                            cmd.do("_ cmd.load('''"+new_file+"''',format='psw')")
+                            cmd.do("_ cmd.load(r'''"+new_file+"''',format='psw')")
                             return 1
 
                 

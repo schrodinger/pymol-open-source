@@ -4828,6 +4828,35 @@ static PyObject *CmdFullScreen(PyObject *self,PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdUngroup(PyObject *self, PyObject *args)
+{
+  char *gname,*names;
+  int quiet;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"ssi",&gname,&names,&quiet);
+  if(ok) {
+    APIEntry();
+    /*    ExecutiveGroup(TempPyMOLGlobals,gname,names,NULL,quiet,NULL);*/
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+
+static PyObject *CmdGroup(PyObject *self, PyObject *args)
+{
+  char *gname,*names;
+  int quiet;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"ssi",&gname,&names,&quiet);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveGroup(TempPyMOLGlobals,gname,names,quiet);
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+
+
 static PyObject *CmdSelect(PyObject *self, PyObject *args)
 {
   char *sname,*sele;
@@ -6224,6 +6253,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_vrml",	             CmdGetVRML,            METH_VARARGS },
    {"get_wizard",            CmdGetWizard,            METH_VARARGS },
    {"get_wizard_stack",      CmdGetWizardStack,       METH_VARARGS },
+   {"group",                 CmdGroup,                METH_VARARGS },
 	{"h_add",                 CmdHAdd,                 METH_VARARGS },
 	{"h_fill",                CmdHFill,                METH_VARARGS },
 	{"h_fix",                CmdHFix,                METH_VARARGS },
@@ -6352,6 +6382,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"viewport",              CmdViewport,             METH_VARARGS },
     {"vdw_fit",               CmdVdwFit,               METH_VARARGS },
 	{"undo",                  CmdUndo,                 METH_VARARGS },
+    {"ungroup",               CmdUngroup,              METH_VARARGS },
 	{"unpick",                CmdUnpick,               METH_VARARGS },
 	{"unset",                 CmdUnset,                METH_VARARGS },
 	{"unset_bond",            CmdUnsetBond,             METH_VARARGS },

@@ -204,7 +204,7 @@ typedef struct {
 } M4XContextType;
 
 typedef struct {
-  char target[ObjNameMax];
+  ObjectNameType target;
   int n_point;
   int *id_at_point;
   float *fitness;
@@ -216,12 +216,12 @@ typedef struct {
   int n_context;
   M4XContextType *context;
   int xname_flag;
-  char xname[ObjNameMax];
+  ObjectNameType xname;
   M4XAlignType *align;
 } M4XAnnoType;
 
 typedef struct {
-  char name[ObjNameMax];
+  ObjectNameType name;
 } ObjMolMultiplexType;
 
 void M4XAnnoInit(M4XAnnoType *m4x);

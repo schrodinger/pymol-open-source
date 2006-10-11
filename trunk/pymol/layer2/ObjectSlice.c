@@ -75,7 +75,7 @@ static PyObject *ObjectSliceStateAsPyList(ObjectSliceState *I)
   
 #if 0
   int Active;
-  char MapName[ObjNameMax];
+  ObjectNameType MapName;
   int MapState;
   float ExtentMin[3];
   float ExtentMax[3];
@@ -124,7 +124,7 @@ static int ObjectSliceStateFromPyList(PyMOLGlobals *G,ObjectSliceState *I,PyObje
          Always check ll when adding new PyList_GetItem's */      
 
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
-      if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,ObjNameMax);
+      if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,WordLength);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->MapState);
       if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,3),I->ExtentMin,3);
       if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,4),I->ExtentMax,3);

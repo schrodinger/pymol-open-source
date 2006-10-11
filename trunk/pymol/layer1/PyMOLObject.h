@@ -24,8 +24,10 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"PyMOLGlobals.h"
 #include"View.h"
+#include"Word.h"
 
-#define ObjNameMax        255
+typedef char ObjectNameType[WordLength];
+
 #define cObjectMolecule     1
 #define cObjectMap          2
 #define cObjectMesh         3
@@ -37,12 +39,14 @@ Z* -------------------------------------------------------------------
 #define cObjectCalculator   9
 #define cObjectSlice        10
 #define cObjectAlignment    11
+#define cObjectGroup        12
 
 /* 
    the object base class is in the process of being converted to support
    states explicitly (an unfortunate early omission), which will allow
    for simplified implementation of future multi-state objects.
  */
+
 
 typedef struct CObjectState {
   PyMOLGlobals *G;
@@ -61,7 +65,7 @@ typedef struct CObject {
   char *(*fGetCaption)(struct CObject *I);
   CObjectState *(*fGetObjectState)(struct CObject *I,int state);
   int type;
-  char Name[ObjNameMax];
+  ObjectNameType Name;
   int Color;
   int RepVis[cRepCnt]; 
   float ExtentMin[3],ExtentMax[3];
@@ -71,7 +75,6 @@ typedef struct CObject {
   int Enabled; /* read-only... maintained by Scene */
   int Context; /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
   CViewElem *ViewElem; /* for animating objects via the TTT */
-  
 } CObject;
 
 void ObjectInit(PyMOLGlobals *G,CObject *I);
