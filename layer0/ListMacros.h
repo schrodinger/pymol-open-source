@@ -107,7 +107,7 @@ Z* -------------------------------------------------------------------
 }
 
 #define ListIterate(List,Counter,Link) \
-   ( (Counter) = ((Counter) ? (Counter)->Link : (List)))
+   ( (Counter) = ((List) ? (((Counter) ? (Counter)->Link : (List))) : NULL))
 
 /* Elem handling routines */
 

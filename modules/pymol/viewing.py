@@ -290,7 +290,7 @@ SEE ALSO
         #   
         try:
             lock()
-            r = _cmd.orient(selection,int(state)-1,float(animate))
+            r = _cmd.orient("("+selection+")",int(state)-1,float(animate))
         finally:
             unlock(r)
         if _raising(r): raise QuietException         

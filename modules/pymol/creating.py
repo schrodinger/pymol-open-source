@@ -51,23 +51,34 @@ if __name__=='pymol.creating':
     
     ramp_spectrum_sc = Shortcut(ramp_spectrum_dict.keys())
 
-#    group_action_dict = {
-#        "add" : 1,
-#       "remove" : 2,
-#        "delete" : 3
-#       }
+    group_action_dict = {
+        "add" : 1,
+        "remove" : 2,
+        "open" : 3,
+        "close" : 4,
+        "toggle" : 5,
+        "auto" : 6,
+        }
+
+    group_action_sc =  Shortcut(group_action_dict.keys())
     
-    def group(name,members,action=1,quiet=1):
+    def group(name,members="",action='auto',quiet=1):
         r = DEFAULT_ERROR        
+        action = group_action_dict[group_action_sc.auto_err(str(action),'group action')]
+        if action==6:
+            if len(members):
+                action=1
+            else:
+                action=5
         try:
             lock()
-            r = _cmd.group(str(name),str(members),int(quiet))
+            r = _cmd.group(str(name),str(members),int(action),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         
         return r
     
-    def ungroup(name,members,action=0,quiet=1):
+    def ungroup(name,members="",action=0,quiet=1):
         r = DEFAULT_ERROR
         try:
             lock()
@@ -107,6 +118,7 @@ if __name__=='pymol.creating':
         if buffer==None:
             buffer = cmd.get_setting_legacy('gaussian_resolution')
         grid = float(grid) # for now, uniform xyz; later (x,y,z)
+
         type = map_type_dict[map_type_sc.auto_err(str(type),'map type')]
         try:
             lock()

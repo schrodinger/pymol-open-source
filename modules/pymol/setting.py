@@ -568,9 +568,10 @@ if __name__=='pymol.setting':
         label_dihedral_digits     = (532,'')
         surface_negative_visible  = (533,'')
         surface_negative_color    = (534,'')
-        mesh_negative_visible  = (535,'')
-        mesh_negative_color    = (536,'')
-        auto_group             = (537,'')
+        mesh_negative_visible     = (535,'')
+        mesh_negative_color       = (536,'')
+        group_auto_mode           = (537,'')
+        group_full_member_names   = (538,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

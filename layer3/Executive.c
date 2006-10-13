@@ -86,14 +86,22 @@ typedef struct SpecRec {
 
   /* not pickled */
   int sele_color;
-  int hilight;
+  int hilight; /* 0 = none, 1 = name, 2 = group control (if any) */
   int previous;
   int cand_id;
   struct SpecRec *group;
   int group_member_list_id; 
   int in_scene;
-
+  int in_panel;
 } SpecRec; /* specification record (a line in the executive window) */
+
+typedef struct PanelRec {
+  SpecRec *spec;
+  int nest_level;
+  int is_group;
+  int is_open;
+  struct PanelRec *next;
+} PanelRec;
 
 typedef struct {
   int list_id;
@@ -110,7 +118,7 @@ struct _CExecutive {
   struct CScrollBar *ScrollBar;
   CObject *LastEdited;
   int DragMode;
-  int Pressed,Over,OldVisibility,ToggleMode;
+  int Pressed,Over,OldVisibility,ToggleMode,PressedWhat,OverWhat;
   SpecRec *LastChanged,*LastZoomed;
   int ReorderFlag;
   OrthoLineType ReorderLog;
@@ -120,7 +128,8 @@ struct _CExecutive {
   OVOneToOne *Key;
   int ValidGroups;
   int ValidSceneMembers;
-  
+  PanelRec *Panel;
+  int ValidPanel;
 };
 
 /* routines that still need to be updated for Tracker list iteration
@@ -142,6 +151,69 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
+
+
+static void ExecutiveInvalidatePanelList(PyMOLGlobals *G)
+{
+  register CExecutive *I = G->Executive;
+  if(I->ValidPanel) {
+    if(I->Panel) 
+      ListFree(I->Panel,next,PanelRec);
+    I->ValidPanel = false;
+  }
+}
+
+static PanelRec *PanelGroup(PyMOLGlobals *G, PanelRec *panel, SpecRec *group,
+                            int level,int hide_underscore)
+{
+  register CExecutive *I = G->Executive;
+  PanelRec *result = NULL;
+  SpecRec *rec = NULL;
+  /* set up recursion prevention */
+  while(ListIterate(I->Spec,rec,next)) {
+    rec->in_panel = false;
+  }
+  while(ListIterate(I->Spec,rec,next)) { /* add all members which belong to this group */
+
+    if((rec->name[0]!='_')||(!hide_underscore)) {
+      if((rec->group == group)&&(!rec->in_panel)) {
+        PanelRec *new_panel = NULL;
+        ListElemCalloc(G,new_panel,PanelRec);
+        if(panel) 
+          panel->next = new_panel;
+        else
+          result = new_panel;
+        panel = new_panel;
+        panel->spec = rec;
+        panel->nest_level = level;
+        rec->in_panel = true;
+        if((rec->type == cExecObject) && 
+           (rec->obj->type == cObjectGroup)) {
+          ObjectGroup *obj_group = (ObjectGroup*)rec->obj;
+          panel->is_group = true;
+          if(obj_group->OpenOrClosed) {
+            panel->is_open = true;
+            panel = PanelGroup(G,panel,rec,level+1,hide_underscore);
+          }
+        }
+      }
+    }
+  }
+  if(!result)
+    result = panel;
+  return result;
+}
+
+static void ExecutiveUpdatePanelList(PyMOLGlobals *G)
+{
+  register CExecutive *I = G->Executive;
+  int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
+  if(!I->ValidPanel) {
+    /* brute-force & inefficient -- need to optimize algorithm */
+    I->Panel = PanelGroup(G,NULL,NULL,0,hide_underscore);
+    I->ValidPanel = true;
+  }
+}
 
 static void ExecutiveInvalidateSceneMembers(PyMOLGlobals *G)
 {
@@ -195,8 +267,9 @@ void ExecutiveInvalidateGroups(PyMOLGlobals *G,int force)
         }
     }
     I->ValidGroups = false;
+    ExecutiveInvalidateSceneMembers(G); 
+    ExecutiveInvalidatePanelList(G);
   }
-  ExecutiveInvalidateSceneMembers(G); 
   /* any changes to group structure means that we need to check scene
      members */
 }
@@ -234,8 +307,21 @@ void ExecutiveUpdateGroups(PyMOLGlobals *G,int force)
         if( OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,rec->group_name)))) {
           if( OVreturn_IS_OK( (result = OVOneToOne_GetForward(I->Key, result.word)))) { 
             if(TrackerGetCandRef(I_Tracker, result.word, (TrackerRef**)&group_rec)) {
-              rec->group = group_rec;
-              TrackerLink(I_Tracker,rec->cand_id,group_rec->group_member_list_id,1);
+              int cycle = false;
+              { /* don't close infinite loops */
+                SpecRec *check_rec = group_rec;
+                while(check_rec) {
+                  if(check_rec == rec) {
+                    cycle=true;
+                    break;
+                  } else
+                    check_rec = check_rec->group;
+                }
+              }
+              if(!cycle) {
+                rec->group = group_rec;
+                TrackerLink(I_Tracker,rec->cand_id,group_rec->group_member_list_id,1);
+              }
             }
           }
         }
@@ -245,6 +331,7 @@ void ExecutiveUpdateGroups(PyMOLGlobals *G,int force)
     /* note that it is possible to have infinite loops -- these must be
        allowed for later in the group expansion routine(s) */
     I->ValidGroups = true;
+    ExecutiveInvalidatePanelList(G);
   }
 }
 
@@ -505,11 +592,12 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals *G,char *name,
   return result;
 }
 
-int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int quiet)
+int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quiet)
 {
   int ok=true;
   CExecutive *I = G->Executive;
   CObject *obj = ExecutiveFindObjectByName(G,name);
+
   if(obj && (obj->type!=cObjectGroup)) {
     PRINTFB(G,FB_Executive,FB_Errors)
       " Group-Error: object '%s' is not a group object.", name
@@ -524,20 +612,44 @@ int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int quiet)
       }
     }
   }
-  if(obj) {
-    CTracker *I_Tracker= I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G,members,true,false);
-    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-    SpecRec *rec;
-    
-    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
-      if(rec) {
-        UtilNCopy(rec->group_name,name,sizeof(WordType));
-        printf("adding %s to group %s\n",rec->name,rec->group_name);
-      }
+  
+  if(obj && (obj->type==cObjectGroup)) {
+    ObjectGroup *objGroup = (ObjectGroup*)obj;
+    switch(action) {
+    case cExecutiveGroupOpen:
+      objGroup->OpenOrClosed = 1;
+      break;
+    case cExecutiveGroupClose:
+      objGroup->OpenOrClosed = 0;
+      break;
+    case cExecutiveGroupToggle:
+      objGroup->OpenOrClosed = !objGroup->OpenOrClosed;
+      break;
     }
-    TrackerDelList(I_Tracker, list_id);
-    TrackerDelIter(I_Tracker, iter_id);
+    if(members[0]&&(action!=cExecutiveGroupRemove))
+      action = cExecutiveGroupAdd;
+    
+    switch(action) {
+    case cExecutiveGroupAdd:
+      {
+
+        CTracker *I_Tracker= I->Tracker;
+        int list_id = ExecutiveGetNamesListFromPattern(G,members,true,false);
+        int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+        SpecRec *rec;
+        
+        while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+          if(rec) {
+            UtilNCopy(rec->group_name,name,sizeof(WordType));
+            printf("adding %s to group %s\n",rec->name,rec->group_name);
+          }
+        }
+        TrackerDelList(I_Tracker, list_id);
+        TrackerDelIter(I_Tracker, iter_id);
+      }
+      break;
+    }
+
     ExecutiveInvalidateGroups(G,true);
   }
   return ok;
@@ -593,7 +705,7 @@ int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int q
   return 1;
 }
 
-int ExecutiveMatrixTransfer(PyMOLGlobals *G,
+int ExecutiveMatrixCopy(PyMOLGlobals *G,
                              char *source_name, char *target_name,
                              int   source_mode,  int target_mode, 
                              int   source_state, int target_state,
@@ -1004,6 +1116,7 @@ int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
       FreeP(list);
       FreeP(subset);
     }
+    ExecutiveInvalidatePanelList(G);
   }
   WordListFreeP(word_list);
   return(ok);
@@ -1068,8 +1181,19 @@ int ExecutiveSetDrag(PyMOLGlobals *G,char *name, int quiet)
               EditorSetDrag(G,obj,sele,quiet,SceneGetState(G));            
               set_flag = true;
             } else {
-              /* complain */
+              PRINTFB(G,FB_Executive,FB_Errors)
+                " Drag-Error: selection spans more than one object.\n"
+                ENDFB(G);
             }
+          }
+        } else if(rec->type==cExecObject) {
+          switch(rec->obj->type) {
+          case cObjectGroup:
+            PRINTFB(G,FB_Executive,FB_Errors)
+              " Drag-Error: cannot drag group objects yet.\n"
+              ENDFB(G);
+            break;
+
           }
         }
       }
@@ -1261,6 +1385,7 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
     if(!name[0]) 
       ok=false;
     else if(!WordMatchExact(G,name,old_name,true)) {
+
       while(ListIterate(I->Spec,rec,next)) {
         if(found)
           break;
@@ -1280,8 +1405,8 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
               SelectorSetName(G,name, old_name);
               SceneChanged(G);
               SeqChanged(G);
-              found = true;
             }
+            found = true;
           }
           break;
         case cExecSelection:
@@ -1300,6 +1425,16 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
       }
       if(!found)
         ok=false;
+      else {
+        rec=NULL;
+        while(ListIterate(I->Spec,rec,next)) {
+          if(WordMatchExact(G,rec->group_name,old_name,true)) {
+            UtilNCopy(rec->group_name,name,WordLength);
+            /* may need to rename members too... */
+          }
+        }
+        ExecutiveInvalidateGroups(G,false);
+      }
     }
   }
   return ok; 
@@ -2728,6 +2863,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
         }
         ListAppend(I->Spec,rec,next,SpecRec);
         ExecutiveAddKey(I,rec);
+        ExecutiveInvalidatePanelList(G);
       } else {
         ListElemFree(rec);
       }
@@ -5295,13 +5431,24 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
       if(rec->type==cExecSelection) {
         
         if(rec->visible) {
-          sele = SelectorIndexByName(G,rec->name); /* TODO: speed this up */
-          if(sele>=0) {
+          int enabled = true;
+          SpecRec *group_rec = rec->group;
+          while(enabled && group_rec ) { 
+            if(!group_rec->visible)
+              enabled=false;
+            else
+              group_rec = group_rec->group;
+          }
+          
+          if(enabled) {
             
-            if(no_depth)
-              glDisable(GL_DEPTH_TEST);
-            glDisable(GL_FOG);
-            
+            sele = SelectorIndexByName(G,rec->name); /* TODO: speed this up */
+            if(sele>=0) {
+              
+              if(no_depth)
+                glDisable(GL_DEPTH_TEST);
+              glDisable(GL_FOG);
+              
             if(rec->sele_color<0)
               glColor3f(1.0F,0.2F,0.6F);
             else
@@ -5388,6 +5535,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
             if(no_depth)
               glEnable(GL_DEPTH_TEST);
             glEnable(GL_FOG);
+          }
           }
         }
       }
@@ -6756,7 +6904,7 @@ int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
          object's state matrix (if any) */
 
       if(old_obj&&new_obj) {
-        ExecutiveMatrixTransfer(G,
+        ExecutiveMatrixCopy(G,
                                 old_obj->Obj.Name,
                                 new_obj->Obj.Name, 
                                 1, 1, /* TTT mode */
@@ -6764,7 +6912,7 @@ int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
                                 false, 0, quiet);
         
         
-        ExecutiveMatrixTransfer(G,
+        ExecutiveMatrixCopy(G,
                                 old_obj->Obj.Name,
                                 new_obj->Obj.Name, 
                                 2, 2, /* Object state mode */
@@ -7820,20 +7968,20 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                object's state matrix (if any) */
 
             if(src_obj&&trg_obj) {
-              ExecutiveMatrixTransfer(G,
-                                      trg_obj->Obj.Name, 
-                                      src_obj->Obj.Name,
-                                      1, 1, /* TTT mode */
-                                      state2,state1,
-                                      false, 0, quiet);
+              ExecutiveMatrixCopy(G,
+                                  trg_obj->Obj.Name, 
+                                  src_obj->Obj.Name,
+                                  1, 1, /* TTT mode */
+                                  state2,state1,
+                                  false, 0, quiet);
               
               
-              ExecutiveMatrixTransfer(G,
-                                      trg_obj->Obj.Name, 
-                                      src_obj->Obj.Name,
-                                      2, 2, /* Object state mode */
-                                      state2,state1,
-                                      false, 0, quiet);
+              ExecutiveMatrixCopy(G,
+                                  trg_obj->Obj.Name, 
+                                  src_obj->Obj.Name,
+                                  2, 2, /* Object state mode */
+                                  state2,state1,
+                                  false, 0, quiet);
               
               switch(matrix_mode) {
               case 1: /* TTTs */
@@ -11451,6 +11599,28 @@ void ExecutiveSymExp(PyMOLGlobals *G,char *name,
 static void ExecutivePurgeSpec(PyMOLGlobals *G,SpecRec *rec)
 {
   register CExecutive *I = G->Executive;
+
+  if(rec->group_name[0]) {
+    /* cascade group members up to the surrounding group */
+    SpecRec *rec2 = NULL;
+    while(ListIterate(I->Spec,rec2,next)) {
+      if((rec2->group == rec) ||
+         WordMatch(G,rec->name,rec2->group_name,true)) {
+        strcpy(rec2->group_name,rec->group_name);
+      }
+    }
+  } else if((rec->type==cExecObject)&&(rec->obj->type == cObjectGroup)) {
+    /* and/or delete their group membership */
+    SpecRec *rec2 = NULL;
+    while(ListIterate(I->Spec,rec2,next)) {
+      if((rec2->group == rec) ||
+         WordMatch(G,rec->name,rec2->group_name,true)) {
+        rec2->group_name[0] = 0;
+      }
+    }
+  }
+  ExecutiveInvalidateGroups(G,false);
+  ExecutiveInvalidatePanelList(G);
   switch(rec->type) {
   case cExecObject:
     if(I->LastEdited==rec->obj)
@@ -11533,6 +11703,7 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name)
       if(I->LastEdited==rec->obj)
         I->LastEdited=NULL;
       if(all_flag||(WordMatch(G,name_copy,rec->obj->Name,true)<0)) {
+        
         if(rec->obj->type == cObjectMolecule)
           if(EditorIsAnActiveObject(G,(ObjectMolecule*)rec->obj))
             EditorInactivate(G);
@@ -11642,6 +11813,49 @@ void ExecutiveDoZoom(PyMOLGlobals *G,CObject *obj,int is_new, int zoom,int quiet
     }
   }
 }
+static void ExecutiveDoAutoGroup(PyMOLGlobals *G,SpecRec *rec)
+{
+  register CExecutive *I = G->Executive;
+  int auto_mode = SettingGet(G,cSetting_group_auto_mode);
+  if(auto_mode&&(rec->name[0]!='_')) {
+    char *period = rec->name + strlen(rec->name);
+    SpecRec *found_group = NULL;
+    WordType seek_group_name;
+    UtilNCopy(seek_group_name,rec->name,sizeof(WordType));
+    
+    while((period>rec->name)&&(!found_group)) {
+      period--;
+      if(*period=='.') {
+        seek_group_name[period-rec->name]=0;
+        {
+          SpecRec *group_rec = NULL;
+          while(ListIterate(I->Spec,group_rec,next)) {
+            if((group_rec->type==cExecObject)&&(group_rec->obj->type==cObjectGroup)) {
+              if(WordMatchExact(G,group_rec->name,seek_group_name,true)) {
+                found_group = group_rec;
+                strcpy(rec->group_name,seek_group_name);
+                break;
+              }
+            }
+          }
+        }
+        
+        if((!found_group)&&(auto_mode==2)) {
+          CObject *obj = (CObject*)ObjectGroupNew(G);
+          if(obj) {
+            ObjectSetName(obj,seek_group_name);
+            strcpy(rec->group_name,seek_group_name);
+            ExecutiveManageObject(G,obj,false,true);
+            ExecutiveInvalidateGroups(G,false);
+            break;
+          }
+        }
+      }
+    }
+    if(found_group)
+      ExecutiveInvalidateGroups(G,false);
+  }
+}
 
 /*========================================================================*/
 void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
@@ -11703,13 +11917,13 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
     if(rec->obj->type==cObjectMolecule)
       rec->repOn[cRepLine]=true;
 
-
     rec->cand_id = TrackerNewCand(I->Tracker,(TrackerRef*)rec);
 
     TrackerLink(I->Tracker, rec->cand_id, I->all_names_list_id,1);
     TrackerLink(I->Tracker, rec->cand_id, I->all_obj_list_id,1);
     ListAppend(I->Spec,rec,next,SpecRec);
     ExecutiveAddKey(I,rec);
+    ExecutiveInvalidatePanelList(G);
 
     if(rec->visible) {
       rec->in_scene = SceneObjectAdd(G,obj);
@@ -11730,6 +11944,7 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
     }
   }
 
+  ExecutiveDoAutoGroup(G,rec);
   ExecutiveDoZoom(G,obj,!exists,zoom,true);
 
   SeqChanged(G);
@@ -11771,6 +11986,7 @@ void ExecutiveManageSelection(PyMOLGlobals *G,char *name)
     TrackerLink(I->Tracker, rec->cand_id, I->all_sel_list_id,1);
     ListAppend(I->Spec,rec,next,SpecRec);
     ExecutiveAddKey(I,rec);
+    ExecutiveInvalidatePanelList(G);
   }
   if(rec) {
     for(a=0;a<cRepCnt;a++)
@@ -11783,6 +11999,7 @@ void ExecutiveManageSelection(PyMOLGlobals *G,char *name)
       }
     }
     if(rec->visible) SceneInvalidate(G);
+    ExecutiveDoAutoGroup(G,rec);
   }
   SeqDirty(G);
 }
@@ -11793,6 +12010,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   register CExecutive *I = G->Executive;
   int n,a;
   SpecRec *rec = NULL;
+  PanelRec *panel = NULL;
   int t;
   int pass = false;
   int skip;
@@ -11813,213 +12031,220 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
     }
   } 
   skip = I->NSkip;
-  if(!pass)   
-    while(ListIterate(I->Spec,rec,next))
-      if((rec->name[0]!='_')||(!hide_underscore))
-        {
-          if(skip) {
-            skip--;
-          } else {
-            if(!a) {
-              t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
-              if(t<op_cnt) {
-                int my = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight)-3;
-                int mx = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
-                t = (op_cnt-t)-1;
-                switch(t) {
-                case 0: /* action */
-                  switch(rec->type) {
-                  case cExecAll:
-                    MenuActivate(G,mx,my,x,y,false,"all_action",rec->name);
-                    break;
-                  case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,false,"sele_action",rec->name);
-                    break;
-                  case cExecObject:
-                    switch(rec->obj->type) {
-                    case cObjectGroup:
-                    case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,false,"mol_action",rec->obj->Name);
-                      break;
-                    case cObjectMap:
-                      MenuActivate(G,mx,my,x,y,false,"map_action",rec->obj->Name);
-                      break;
-                    case cObjectSurface:
-                      MenuActivate(G,mx,my,x,y,false,"surface_action",rec->obj->Name);
-                      break;
-                    case cObjectMesh:
-                      MenuActivate(G,mx,my,x,y,false,"mesh_action",rec->obj->Name);
-                      break;
-                    case cObjectDist:
-                    case cObjectCGO:
-                    case cObjectCallback:
-                    case cObjectAlignment:
-                      MenuActivate(G,mx,my,x,y,false,"simple_action",rec->obj->Name);
-                      break;
-                    case cObjectSlice:
-                      MenuActivate(G,mx,my,x,y,false,"slice_action",rec->obj->Name);
-                      break;
-                    case cObjectGadget:
-                      MenuActivate(G,mx,my,x,y,false,"ramp_action",rec->obj->Name);
-                      break;
-                    }
-                    break;
-                  }
-                  break;
-                case 1:
-                  switch(rec->type) {
-                  case cExecAll:
-                    MenuActivate(G,mx,my,x,y,false,"mol_show",cKeywordAll);
-                    break;
-                  case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,false,"mol_show",rec->name);
-                    break;
-                  case cExecObject:
-                    switch(rec->obj->type) {
-                    case cObjectGroup:
-                    case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,false,"mol_show",rec->obj->Name);
-                      break;
-                    case cObjectCGO:
-                    case cObjectAlignment:
-                      MenuActivate(G,mx,my,x,y,false,"cgo_show",rec->obj->Name);
-                      break;
-                    case cObjectDist:
-                      MenuActivate(G,mx,my,x,y,false,"dist_show",rec->obj->Name);
-                      break;
-                    case cObjectMap:
-                      MenuActivate(G,mx,my,x,y,false,"simple_show",rec->obj->Name);
-                      break;
-                    case cObjectMesh:
-                      MenuActivate(G,mx,my,x,y,false,"mesh_show",rec->obj->Name);
-                      break;
-                    case cObjectSurface:
-                      MenuActivate(G,mx,my,x,y,false,"surface_show",rec->obj->Name);
-                      break;
-                    case cObjectSlice:
-                      MenuActivate(G,mx,my,x,y,false,"slice_show",rec->obj->Name);
-                      break;
+  if(!pass) {
+    /* while(ListIterate(I->Spec,rec,next)) {*/
+    while(ListIterate(I->Panel,panel,next)) {
+      rec = panel->spec;
 
-                    }
-                    break;
-                  }
+      if((rec->name[0]!='_')||(!hide_underscore)) {
+        if(skip) {
+          skip--;
+        } else {
+          if(!a) {
+            t = ((I->Block->rect.right-ExecRightMargin)-x-1)/ExecToggleWidth;
+            if(t<op_cnt) {
+              int my = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight)-3;
+              int mx = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
+              t = (op_cnt-t)-1;
+              switch(t) {
+              case 0: /* action */
+                switch(rec->type) {
+                case cExecAll:
+                  MenuActivate(G,mx,my,x,y,false,"all_action",rec->name);
                   break;
-                case 2:
-                  switch(rec->type) {
-                  case cExecAll:
-                    MenuActivate(G,mx,my,x,y,false,"mol_hide",cKeywordAll);
-                    break;
-                  case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,false,"mol_hide",rec->name);
-                    break;
-                  case cExecObject:
-                    switch(rec->obj->type) {
-                    case cObjectGroup:
-                    case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,false,"mol_hide",rec->obj->Name);
-                      break;
-                    case cObjectCGO:
-                    case cObjectAlignment:
-                      MenuActivate(G,mx,my,x,y,false,"cgo_hide",rec->obj->Name);
-                      break;
-                    case cObjectDist:
-                      MenuActivate(G,mx,my,x,y,false,"dist_hide",rec->obj->Name);
-                      break;
-                    case cObjectMap:
-                      MenuActivate(G,mx,my,x,y,false,"simple_hide",rec->obj->Name);
-                      break;
-                    case cObjectMesh:
-                      MenuActivate(G,mx,my,x,y,false,"mesh_hide",rec->obj->Name);
-                      break;
-                    case cObjectSurface:
-                      MenuActivate(G,mx,my,x,y,false,"surface_hide",rec->obj->Name);
-                      break;
-                    case cObjectSlice:
-                      MenuActivate(G,mx,my,x,y,false,"slice_hide",rec->obj->Name);
-                      break;
-
-                    }
-                    break;
-                  }
+                case cExecSelection:
+                  MenuActivate(G,mx,my,x,y,false,"sele_action",rec->name);
                   break;
-                case 3:
-                  switch(rec->type) {
-                  case cExecAll:
-                    MenuActivate(G,mx,my,x,y,false,"mol_labels","(all)");
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectGroup:
+                  case cObjectMolecule:
+                    MenuActivate(G,mx,my,x,y,false,"mol_action",rec->obj->Name);
                     break;
-                  case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,false,"mol_labels",rec->name);
+                  case cObjectMap:
+                    MenuActivate(G,mx,my,x,y,false,"map_action",rec->obj->Name);
                     break;
-                  case cExecObject:
-                    switch(rec->obj->type) {
-                    case cObjectGroup:
-                    case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,false,"mol_labels",rec->obj->Name);
-                      break;
-                    case cObjectDist:
-                      break;
-                    case cObjectMap:
-                    case cObjectSurface:
-                    case cObjectMesh:
-                    case cObjectSlice:
-                      break;
-                    }
+                  case cObjectSurface:
+                    MenuActivate(G,mx,my,x,y,false,"surface_action",rec->obj->Name);
                     break;
-                  }
-                  break;
-                case 4:
-                  switch(rec->type) {
-                  case cExecAll:
-                  case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,false,"mol_color",rec->name);
+                  case cObjectMesh:
+                    MenuActivate(G,mx,my,x,y,false,"mesh_action",rec->obj->Name);
                     break;
-                  case cExecObject:
-                    switch(rec->obj->type) {
-                    case cObjectGroup:
-                    case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,false,"mol_color",rec->obj->Name);
-                      break;
-                    case cObjectDist:
-                    case cObjectMap:
-                    case cObjectSurface:
-                    case cObjectCGO:
-                    case cObjectMesh:
-                      MenuActivate(G,mx,my,x,y,false,"general_color",rec->obj->Name);
-                      break;
-                    case cObjectSlice:
-                      MenuActivate(G,mx,my,x,y,false,"slice_color",rec->obj->Name);
-                      break;
-                    }
+                  case cObjectDist:
+                  case cObjectCGO:
+                  case cObjectCallback:
+                  case cObjectAlignment:
+                    MenuActivate(G,mx,my,x,y,false,"simple_action",rec->obj->Name);
                     break;
-                  }
-                  break;
-                case 5:
-                  switch(rec->type) {
-                  case cExecAll:
-                  case cExecSelection:
-                    MenuActivate(G,mx,my,x,y,false,"all_motion",rec->name);
+                  case cObjectSlice:
+                    MenuActivate(G,mx,my,x,y,false,"slice_action",rec->obj->Name);
                     break;
-                  case cExecObject:
-                    switch(rec->obj->type) {
-                    case cObjectGroup:
-                    case cObjectMolecule:
-                      MenuActivate(G,mx,my,x,y,false,"mol_motion",rec->obj->Name);
-                      break;
-                      /*
-                    case cObjectDist:
-                    case cObjectMap:
-                    case cObjectSurface:
-                    case cObjectCGO:
-                    case cObjectMesh:
-                      MenuActivate(G,mx,my,x,y,false,"obj_motion",rec->obj->Name);
-                      break;*/
-                    }
+                  case cObjectGadget:
+                    MenuActivate(G,mx,my,x,y,false,"ramp_action",rec->obj->Name);
                     break;
                   }
                   break;
                 }
-              } else {
-                rec->hilight=true;
+                break;
+              case 1:
+                switch(rec->type) {
+                case cExecAll:
+                  MenuActivate(G,mx,my,x,y,false,"mol_show",cKeywordAll);
+                  break;
+                case cExecSelection:
+                  MenuActivate(G,mx,my,x,y,false,"mol_show",rec->name);
+                  break;
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectGroup:
+                  case cObjectMolecule:
+                    MenuActivate(G,mx,my,x,y,false,"mol_show",rec->obj->Name);
+                    break;
+                  case cObjectCGO:
+                  case cObjectAlignment:
+                    MenuActivate(G,mx,my,x,y,false,"cgo_show",rec->obj->Name);
+                    break;
+                  case cObjectDist:
+                    MenuActivate(G,mx,my,x,y,false,"dist_show",rec->obj->Name);
+                    break;
+                  case cObjectMap:
+                    MenuActivate(G,mx,my,x,y,false,"simple_show",rec->obj->Name);
+                    break;
+                  case cObjectMesh:
+                    MenuActivate(G,mx,my,x,y,false,"mesh_show",rec->obj->Name);
+                    break;
+                  case cObjectSurface:
+                    MenuActivate(G,mx,my,x,y,false,"surface_show",rec->obj->Name);
+                    break;
+                  case cObjectSlice:
+                    MenuActivate(G,mx,my,x,y,false,"slice_show",rec->obj->Name);
+                    break;
+                    
+                  }
+                  break;
+                }
+                break;
+              case 2:
+                switch(rec->type) {
+                case cExecAll:
+                  MenuActivate(G,mx,my,x,y,false,"mol_hide",cKeywordAll);
+                  break;
+                case cExecSelection:
+                  MenuActivate(G,mx,my,x,y,false,"mol_hide",rec->name);
+                  break;
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectGroup:
+                  case cObjectMolecule:
+                    MenuActivate(G,mx,my,x,y,false,"mol_hide",rec->obj->Name);
+                    break;
+                  case cObjectCGO:
+                  case cObjectAlignment:
+                    MenuActivate(G,mx,my,x,y,false,"cgo_hide",rec->obj->Name);
+                    break;
+                  case cObjectDist:
+                    MenuActivate(G,mx,my,x,y,false,"dist_hide",rec->obj->Name);
+                    break;
+                  case cObjectMap:
+                    MenuActivate(G,mx,my,x,y,false,"simple_hide",rec->obj->Name);
+                    break;
+                  case cObjectMesh:
+                    MenuActivate(G,mx,my,x,y,false,"mesh_hide",rec->obj->Name);
+                    break;
+                  case cObjectSurface:
+                    MenuActivate(G,mx,my,x,y,false,"surface_hide",rec->obj->Name);
+                    break;
+                  case cObjectSlice:
+                    MenuActivate(G,mx,my,x,y,false,"slice_hide",rec->obj->Name);
+                    break;
+
+                  }
+                  break;
+                }
+                break;
+              case 3:
+                switch(rec->type) {
+                case cExecAll:
+                  MenuActivate(G,mx,my,x,y,false,"mol_labels","(all)");
+                  break;
+                case cExecSelection:
+                  MenuActivate(G,mx,my,x,y,false,"mol_labels",rec->name);
+                  break;
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectGroup:
+                  case cObjectMolecule:
+                    MenuActivate(G,mx,my,x,y,false,"mol_labels",rec->obj->Name);
+                    break;
+                  case cObjectDist:
+                    break;
+                  case cObjectMap:
+                  case cObjectSurface:
+                  case cObjectMesh:
+                  case cObjectSlice:
+                    break;
+                  }
+                  break;
+                }
+                break;
+              case 4:
+                switch(rec->type) {
+                case cExecAll:
+                case cExecSelection:
+                  MenuActivate(G,mx,my,x,y,false,"mol_color",rec->name);
+                  break;
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectGroup:
+                  case cObjectMolecule:
+                    MenuActivate(G,mx,my,x,y,false,"mol_color",rec->obj->Name);
+                    break;
+                  case cObjectDist:
+                  case cObjectMap:
+                  case cObjectSurface:
+                  case cObjectCGO:
+                  case cObjectMesh:
+                    MenuActivate(G,mx,my,x,y,false,"general_color",rec->obj->Name);
+                    break;
+                  case cObjectSlice:
+                    MenuActivate(G,mx,my,x,y,false,"slice_color",rec->obj->Name);
+                    break;
+                  }
+                  break;
+                }
+                break;
+              case 5:
+                switch(rec->type) {
+                case cExecAll:
+                case cExecSelection:
+                  MenuActivate(G,mx,my,x,y,false,"all_motion",rec->name);
+                  break;
+                case cExecObject:
+                  switch(rec->obj->type) {
+                  case cObjectGroup:
+                  case cObjectMolecule:
+                    MenuActivate(G,mx,my,x,y,false,"mol_motion",rec->obj->Name);
+                    break;
+                    /*
+                      case cObjectDist:
+                      case cObjectMap:
+                      case cObjectSurface:
+                      case cObjectCGO:
+                      case cObjectMesh:
+                      MenuActivate(G,mx,my,x,y,false,"obj_motion",rec->obj->Name);
+                      break;*/
+                  }
+                  break;
+                }
+                break;
+              }
+            } else { /* clicked in variable area */
+
+              if(((panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > (panel->nest_level+1)) ||
+                 ((!panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > panel->nest_level) ) {
+                /* clicked on name */
+                  
+                rec->hilight=1;
                 switch(button) {
                 case P_GLUT_LEFT_BUTTON:
                   I->Pressed = n;
@@ -12047,7 +12272,9 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                       ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
                     }
                     I->LastChanged=rec;
-                  } 
+                  }
+                  I->PressedWhat = 1;
+                  I->OverWhat = 1;
                   break;
                 case P_GLUT_MIDDLE_BUTTON:
                   I->Pressed = n;
@@ -12076,20 +12303,38 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     ExecutiveSpecSetVisibility(G,rec,!rec->visible,mod);
                     I->LastChanged=rec;
                   }
+                  I->PressedWhat = 1;
+                  I->OverWhat = 1;
                   break;
                 case P_GLUT_RIGHT_BUTTON:
                   I->DragMode = 2; /* reorder */
                   I->Pressed = n;
                   I->Over = n;
+                  I->PressedWhat = 1;
+                  I->OverWhat = 1;
                   break;
                 }
                 OrthoGrab(G,I->Block);
                 OrthoDirty(G);
+              } else if(panel->is_group) {
+                /* clicked on group control */
+                rec->hilight = 2;
+                I->DragMode = 1;
+                I->Pressed = n;
+                I->Over = n;
+                I->PressedWhat = 2;
+                I->OverWhat = 2;
+
+                OrthoGrab(G,I->Block);
+                OrthoDirty(G);
               }
             }
-            a--;
           }
+          a--;
         }
+      }
+    }
+  }
   PyMOL_NeedRedisplay(G->PyMOL);
   return(1);
 }
@@ -12175,6 +12420,7 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
   register CExecutive *I = G->Executive;
   int n;  
   SpecRec *rec = NULL;
+  PanelRec *panel = NULL;
   int pass = false;
   int skip;
 
@@ -12203,16 +12449,37 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
       switch(I->DragMode) {
       case 1:
         
-        while(ListIterate(I->Spec,rec,next)) {
+        /*while(ListIterate(I->Spec,rec,next)) {*/
+        while(ListIterate(I->Panel,panel,next)) {
+          rec = panel->spec;
+
           if((rec->name[0]!='_')||(!hide_underscore))
             {
               if(skip) {
                 skip--;
-              } else if(rec->hilight) {
-                if(rec->type==cExecSelection) {
-                  ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,0);                    
-                } else {
-                  ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+              } else {
+                if((I->PressedWhat==1) &&
+                   (((panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > (panel->nest_level+1)) ||
+                   ((!panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > panel->nest_level)) ) {
+                  /* over name */
+                  if(rec->hilight==1) {
+                    if(rec->type==cExecSelection) {
+                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,0);                    
+                    } else {
+                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                    }
+                  }
+                } else if((I->PressedWhat==2) && (panel->is_group)) {
+                  if(rec->hilight==2) {
+                    ObjectGroup *obj = (ObjectGroup*)rec->obj;
+                    OrthoLineType buf2;
+                    sprintf(buf2,"cmd.group(\"%s\",action='%s')\n",rec->obj->Name,
+                            obj->OpenOrClosed ? "close" : "open" );
+                    PLog(buf2,cPLog_no_flush);
+                    ExecutiveGroup(G,rec->obj->Name,"",5,1);
+
+                  }
+                  /* over group control */
                 }
               }
             }
@@ -12230,13 +12497,14 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
   {
     SpecRec *rec=NULL;
     while(ListIterate(I->Spec,rec,next)) {
-      rec->hilight=false;
+      rec->hilight=0;
     }
   }
 
   I->Over = -1;
   I->Pressed = -1;
   I->DragMode = 0;
+  I->PressedWhat = 0;
   OrthoUngrab(G);
   PyMOL_NeedRedisplay(G->PyMOL);
   return(1);
@@ -12250,6 +12518,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
   int op_cnt = get_op_cnt(G);
+
 
   if(y<I->HowFarDown) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==1) 
@@ -12275,30 +12544,46 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
         {
           SpecRec *rec=NULL;
           while(ListIterate(I->Spec,rec,next))      
-            rec->hilight=false;
+            rec->hilight=0;
         }
       }
-    
+      
+      if(I->PressedWhat == 2) {
+        I->OverWhat = 0;
+      }
+
       if(I->Over>=0) {
         SpecRec *rec = NULL;
+        PanelRec *panel = NULL;
         int skip=I->NSkip;
         int row=0;
         switch(I->DragMode) {
         case 1:
         
-          while(ListIterate(I->Spec,rec,next)) {
-            if((rec->name[0]!='_')||(!hide_underscore))
-              {
-                if(skip) {
-                  skip--;
-                } else {
-                  rec->hilight=false;
-                  if( ((row>=I->Over)&&(row<=I->Pressed))||
-                      ((row>=I->Pressed)&&(row<=I->Over))) {
+          /*          while(ListIterate(I->Spec,rec,next)) {*/
+          while(ListIterate(I->Panel,panel,next)) {
+            rec = panel->spec;
+
+            if((rec->name[0]!='_')||(!hide_underscore)) {
+              if(skip) {
+                skip--;
+              } else {
+                
+                rec->hilight=0;
+                if((I->PressedWhat==1) && /* name button */
+                   (((row>=I->Over)&&(row<=I->Pressed))||
+                   ((row>=I->Pressed)&&(row<=I->Over)))) {
+                  
+                  if(((panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > (panel->nest_level+1)) ||
+                      ((!panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > panel->nest_level)) {
+                    /* dragged over name */
+                    
+                    I->OverWhat = 1;
+                    
                     switch(I->ToggleMode) {
                     case 0:
                       if(row||(row==I->Pressed))
-                        rec->hilight=true;
+                        rec->hilight=1;
                       break;
                     case 1:
                       if(row)
@@ -12322,12 +12607,25 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                       break;
                     }
                   }
-                  row++;
+                } else if((row==I->Pressed)&&(I->PressedWhat==2)) {
+                  if(!((panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > (panel->nest_level+1))) {
+                    
+                    /* on group control */
+                    
+                    I->OverWhat = 2;
+                    if(I->PressedWhat == I->OverWhat) {
+                      rec->hilight = 2;
+                    }
+                  } else {
+                    I->OverWhat = 0;
+                  }
                 }
+                row++;
               }
+            }
           }
           break;
-        case 2:
+        case 2: /* right button -- BROKEN */
           {
             int loop_flag = (I->Over!=I->Pressed);
             while(loop_flag) {
@@ -12388,13 +12686,15 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
           }
           break;
         case 3: /* middle button */
-          while(ListIterate(I->Spec,rec,next)) {
+          /* while(ListIterate(I->Spec,rec,next)) {*/
+          while(ListIterate(I->Panel,panel,next)) {
+            rec = panel->spec;
             if((rec->name[0]!='_')||(!hide_underscore))
               {
                 if(skip) {
                   skip--;
                 } else {
-                  rec->hilight=false;
+                  rec->hilight=0;
                   if( ((row>=I->Over)&&(row<=I->Pressed))||
                       ((row>=I->Pressed)&&(row<=I->Over))) {
                     switch(I->ToggleMode) {
@@ -12407,7 +12707,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                             ExecutiveSpecSetVisibility(G,rec,true,mod);
                           I->LastChanged = rec;
                         }
-                        rec->hilight=true;
+                        rec->hilight=0;
                       }
                       break;
                     case 5: /* zoom and activate, while deactivating previous */
@@ -12419,7 +12719,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                             ExecutiveSpecSetVisibility(G,rec,true,mod);
                           I->LastChanged = rec;
                         }
-                        rec->hilight=true;
+                        rec->hilight=1;
                       }
                       break;
                     case 6: /* zoom and make only object enabled */
@@ -12430,7 +12730,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                           I->LastZoomed=rec;
                           ExecutiveSpecSetVisibility(G,rec,true,0);
                         }
-                        rec->hilight=true;
+                        rec->hilight=1;
                       }
                     }
                   }
@@ -12499,6 +12799,7 @@ static void draw_button_char(PyMOLGlobals *G,int x2,int y2,char ch)
 }
 #endif
 
+
 /*========================================================================*/
 static void ExecutiveDraw(Block *block)
 {
@@ -12506,12 +12807,16 @@ static void ExecutiveDraw(Block *block)
   int x,y,xx,x2,y2;
   char *c=NULL;
   float enabledColor[3] = { 0.5F, 0.5F, 0.5F };
+  float cloakedColor[3] = { 0.35F, 0.35F, 0.35F };
   float pressedColor[3] = { 0.7F, 0.7F, 0.7F };
-  float disabledColor[3] = { 0.3F, 0.3F, 0.3F };
+  float disabledColor[3] = { 0.25F, 0.25F, 0.25F };
   float lightEdge[3] = {0.6F, 0.6F, 0.6F };
   float darkEdge[3] = {0.35F, 0.35F, 0.35F };
   float captionColor[3] = {0.2F, 0.8F, 0.2F };
+  float toggleColor3[3] = { 0.6F, 0.6F, 0.8F };
+
   SpecRec *rec = NULL;
+  PanelRec *panel = NULL;
   register CExecutive *I = G->Executive;
   int n_ent;
   int n_disp;
@@ -12521,8 +12826,12 @@ static void ExecutiveDraw(Block *block)
   int text_lift = (ExecLineHeight/2)-5;
   int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
   int op_cnt = get_op_cnt(G);
+  int full_names = SettingGetGlobal_b(G,cSetting_group_full_member_names);
 
-  if(G->HaveGUI && G->ValidContext && ((block->rect.right-block->rect.left)>6)) {
+  ExecutiveUpdatePanelList(G);
+  if(G->HaveGUI && G->ValidContext && 
+     ((block->rect.right-block->rect.left)>6) 
+     && I->ValidPanel) {
     int max_char;
     int nChar;
     /* do we have enough structures to warrant a scroll bar? */
@@ -12592,7 +12901,9 @@ static void ExecutiveDraw(Block *block)
       x+=ExecScrollBarWidth+ExecScrollBarMargin;
     }
     skip=I->NSkip;
-    while(ListIterate(I->Spec,rec,next))
+    /*    while(ListIterate(I->Spec,rec,next)) {*/
+    while(ListIterate(I->Panel,panel,next)) {
+      rec = panel->spec;
       if((rec->name[0]!='_')||(!hide_underscore))
         {
           if(skip) {
@@ -12611,7 +12922,6 @@ static void ExecutiveDraw(Block *block)
               int a;
               float toggleColor[3] = { 0.5F, 0.5F, 1.0F };
               float toggleColor2[3] = { 0.4F, 0.4F, 0.6F };
-              float toggleColor3[3] = { 0.6F, 0.6F, 0.8F };
               float toggleDarkEdge[3] = { 0.3F, 0.3F, 0.5F};
               float toggleLightEdge[3] = { 0.7F, 0.7F, 0.9F};
               
@@ -12681,24 +12991,36 @@ static void ExecutiveDraw(Block *block)
 
             {
               int x3 = x;
+              int hidden_prefix = false;
               
               TextSetColor(G,I->Block->TextColor);
               TextSetPos2i(G,x3+2,y2+text_lift);
-
-              if((rec->type==cExecObject)||(rec->type==cExecAll)||
+              
+              if((rec->type==cExecObject)||
+                 (rec->type==cExecAll)||
                  (rec->type==cExecSelection)) {
-                
+
                 y2=y;
                 x2 = xx;
                 if((x-ExecToggleMargin)-(xx-ExecToggleMargin)>-10) {
                   x2 = x+10;
                 }
+                x3+=panel->nest_level*8;
+                TextSetPos2i(G,x3+2,y2+text_lift);
+                nChar-=panel->nest_level;
                 {
                   int but_width = (x2-x3)-1;
 
-                  if(0&&row) {
+                  
+                  if(panel->is_group) {
 
-                    draw_button(x2-17,y2,16,(ExecLineHeight-1),lightEdge,darkEdge,enabledColor);
+                    if((rec->hilight==2)&&(I->Over==I->Pressed)) {
+                      draw_button(x3,y2,15,(ExecLineHeight-1),lightEdge,darkEdge,pressedColor);
+                    } else if(panel->is_open) {
+                      draw_button(x3,y2,15,(ExecLineHeight-1),lightEdge,darkEdge,disabledColor);
+                    } else {
+                      draw_button(x3,y2,15,(ExecLineHeight-1),lightEdge,darkEdge,disabledColor);
+                    }
                     
 #define cControlBoxSize 17
 #define cControlLeftMargin 8
@@ -12708,22 +13030,37 @@ static void ExecutiveDraw(Block *block)
 #define cControlSpread 6
 #define cControlSize 160
 
-                    glColor3f(0.8F,0.8F,0.8F);
-                    glBegin(GL_TRIANGLES);
-                    glVertex2i(x2-17+(cControlBoxSize)-cControlInnerMargin,
-                               (y2+17)-cControlInnerMargin+1);
-                    glVertex2i(x2-17+cControlInnerMargin-2,
-                               (y2+17)-(cControlBoxSize/2)-1);  
-                    glVertex2i(x2-17+(cControlBoxSize)-cControlInnerMargin,
-                               (y2+17)-(cControlBoxSize-1)+cControlInnerMargin-3);
-                    glEnd();
-                    but_width-=17;
+                    TextSetPos2i(G,x3+4,y2+text_lift);
+                    if(panel->is_open) {
+                      TextDrawChar(G,'-');
+                    } else {
+                      TextDrawChar(G,'+');
+                    }
+
+                    but_width-=16;
+                    x3+=16;
+                    nChar-=2;
+
+                    TextSetPos2i(G,x3+2,y2+text_lift);
                   }
                   
-                  if(rec->hilight||(row==I->Over)) {
+                  if((rec->hilight==1)||((row==I->Over)&&(I->OverWhat==1))) {
                     draw_button(x3,y2,but_width,(ExecLineHeight-1),lightEdge,darkEdge,pressedColor);
                   } else if(rec->visible) {
-                    draw_button(x3,y2,but_width,(ExecLineHeight-1),lightEdge,darkEdge,enabledColor);
+                    int enabled = true;
+                    SpecRec *group_rec = rec->group;
+                    while(enabled && group_rec ) { 
+                      if(!group_rec->visible)
+                        enabled=false;
+                      else
+                        group_rec = group_rec->group;
+                    }
+
+                    if(enabled) {
+                      draw_button(x3,y2,but_width,(ExecLineHeight-1),lightEdge,darkEdge,enabledColor);
+                    } else {
+                      draw_button(x3,y2,but_width,(ExecLineHeight-1),lightEdge,darkEdge,cloakedColor);
+                    }
                   } else {
                     draw_button(x3,y2,but_width,(ExecLineHeight-1),lightEdge,darkEdge,disabledColor);
                   }
@@ -12731,27 +13068,44 @@ static void ExecutiveDraw(Block *block)
                 
                 TextSetColor(G,I->Block->TextColor);
                 
-                switch(rec->type) {
-                case cExecObject:
-                  c = rec->obj->Name;
-                  break;
-                default:
-                  c=rec->name;
-                  break;
+                c=rec->name;
+
+                if(!full_names) {
+                  if(rec->group) { /* if prefix matches group name, then truncate */
+                    char *p=c,* q=rec->group->name;
+                    while((*p==*q)&&(*q)) {
+                      p++;
+                      q++;
+                    }
+                    if((*p)&&(!*q)) {
+                      hidden_prefix = true;
+                      c=p;
+                    }
+                  }
                 }
+
                 if(rec->type==cExecSelection)
                   if((nChar--)>0) {
                     TextDrawChar(G,'(');
                   }
               }
               
-              if(c)
+              if(c) {
+                if(hidden_prefix) {
+                  if((nChar--)>0) {
+                    TextDrawChar(G,'^');
+                    TextSetPos2i(G,x3+2,y2+text_lift);
+                    TextDrawChar(G,'|');
+                  }
+                }
+                  
                 while(*c) {
                   if((nChar--)>0)
                     TextDrawChar(G,*(c++));
                   else
                     break;
                 }
+              }
               
               if(rec->type==cExecSelection)
                 {
@@ -12784,6 +13138,7 @@ static void ExecutiveDraw(Block *block)
               break;
           }
         }
+  }
     I->HowFarDown = y;
   }
 }
@@ -12907,6 +13262,9 @@ int ExecutiveInit(PyMOLGlobals *G)
     I->ValidGroups = false;
     I->ValidSceneMembers = false;
 
+    ListInit(I->Panel);
+    I->ValidPanel = false;
+
     I->Lex = OVLexicon_New(G->Context->heap);
     I->Key = OVOneToOne_New(G->Context->heap);
 
@@ -12940,6 +13298,7 @@ void ExecutiveFree(PyMOLGlobals *G)
       rec->obj->fFree(rec->obj);
   }
   ListFree(I->Spec,next,SpecRec);
+  ListFree(I->Panel,next,PanelRec);
   if(I->Tracker)
     TrackerFree(I->Tracker);
   if(I->ScrollBar)

@@ -88,7 +88,13 @@ void ExecutiveFreeGroupList(PyMOLGlobals *G,int list_id);
 int ExecutiveCheckGroupMembership(PyMOLGlobals *G,int list_id,CObject *obj); /* 0.5*N for group size */
 
 
-int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int quiet);
+#define cExecutiveGroupAdd 1
+#define cExecutiveGroupRemove 2
+#define cExecutiveGroupOpen 3
+#define cExecutiveGroupClose 4
+#define cExecutiveGroupToggle 5
+
+int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quiet);
 
 void ExecutiveInvalidateGroups(PyMOLGlobals *G,int force);
 void ExecutiveUpdateGroups(PyMOLGlobals *G,int force);
@@ -361,7 +367,7 @@ int ExecutiveDihedral(PyMOLGlobals *G,float *result,
                       char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
                       int labels,int reset,int zoom,int quiet,int state);
 
-int ExecutiveMatrixTransfer(PyMOLGlobals *G,
+int ExecutiveMatrixCopy(PyMOLGlobals *G,
                              char *source_name, char *target_name,
                              int source_mode, int target_mode, 
                              int source_state, int target_state,

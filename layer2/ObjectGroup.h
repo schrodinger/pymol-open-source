@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct ObjectGroup {
   CObject Obj;
+  int OpenOrClosed;
 } ObjectGroup;
 
 

@@ -1465,7 +1465,7 @@ SEE ALSO
               map_double,         \
               map_halve,          \
               map_trim,           \
-              matrix_transfer,    \
+              matrix_copy,        \
               matrix_reset,       \
               protect,            \
               push_undo,          \
@@ -1499,6 +1499,8 @@ SEE ALSO
               update,             \
               vdw_fit 
 
+        matrix_transfer = matrix_copy # legacy
+        
         #--------------------------------------------------------------------
 
         from externing import \
@@ -1808,7 +1810,8 @@ SEE ALSO
             'map_trim'      : [ map_trim          , 0 , 0 , ''  , parsing.STRICT ],                  
             'mappend'       : [ mappend           , 2 , 2 , ':' , parsing.MOVIE  ],
             'matrix_reset'  : [ matrix_reset      , 0 , 0 , ''  , parsing.STRICT ],         
-            'matrix_transfer': [ matrix_transfer  , 0 , 0 , ''  , parsing.STRICT ],
+            'matrix_copy'   : [ matrix_copy       , 0 , 0 , ''  , parsing.STRICT ],
+            'matrix_transfer': [ matrix_copy       , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
             'mem'           : [ mem               , 0 , 0 , ''  , parsing.STRICT ],
             'meter_reset'   : [ meter_reset       , 0 , 0 , ''  , parsing.STRICT ],
             'move'          : [ move              , 0 , 0 , ''  , parsing.STRICT ],
@@ -1953,7 +1956,15 @@ SEE ALSO
         #   'metaphorics'   : [ metaphorics       , 0 , 0 , ''  , parsing.STRICT ],
             }
 
-        kwhash = Shortcut(keyword.keys())
+        kw_list = keyword.keys()
+
+        # remove legacy commands from the shortcut 
+        
+        kw_list.remove('matrix_transfer')
+        kw_list.remove('util.mroll')
+        kw_list.remove('util.mrock')
+        
+        kwhash = Shortcut(kw_list)
 
         # Aliases for Mother England (NOTE: not hashed)
 
@@ -2233,7 +2244,9 @@ SEE ALSO
             'mview'          : [ moving.mview_action_sc , 'action'          , ''   ],
             'map_double'     : [ map_sc                 , 'map object'      , ', ' ],
             'map_halve'      : [ map_sc                 , 'map object'      , ', ' ],            
-            'map_trim'       : [ map_trim               , 'map object'      , ', ' ],            
+            'map_trim'       : [ map_trim               , 'map object'      , ', ' ],
+            'matrix_copy'    : [ object_sc              , 'object'           , ', ' ],            
+            'matrix_reset'   : [ object_sc              , 'object'           , ', ' ],            
             'order'          : [ selection_sc           , 'name'            , ''   ],
             'origin'         : [ selection_sc           , 'selection'       , ''   ],
             'protect'        : [ selection_sc           , 'selection'       , ''   ],
@@ -2274,6 +2287,7 @@ SEE ALSO
             'map_set'        : [ editing.map_op_sc      , 'operator'        , ', ' ],
             'map_new'        : [ creating.map_type_sc   , 'map type'        , ', ' ],
             'map_trim'       : [ selection_sc           , 'selection'       , ', ' ],
+            'matrix_copy'    : [ object_sc              , 'object'           , ', ' ],
             'spectrum'       : [ palette_sc             , 'palette'         , ''   ],      
             'order'          : [ boolean_sc             , 'sort'            , ','  ],
             'symexp'         : [ object_sc              , 'object'          , ', ' ],   
