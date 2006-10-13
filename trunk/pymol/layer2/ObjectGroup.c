@@ -77,6 +77,7 @@ ObjectGroup *ObjectGroupNew(PyMOLGlobals *G)
   I->Obj.type = cObjectGroup;
   I->Obj.fFree = (void (*)(struct CObject *))ObjectGroupFree;
   I->Obj.fRender = NULL;
+  I->OpenOrClosed = false;
   return(I);
 }
 

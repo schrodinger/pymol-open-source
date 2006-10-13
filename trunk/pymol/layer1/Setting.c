@@ -3306,8 +3306,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_color(I,cSetting_surface_negative_color,"grey50");
   set_b(I,cSetting_mesh_negative_visible,0);
   set_color(I,cSetting_mesh_negative_color,"grey30");
-  set_i(I,cSetting_auto_group,0);
-
+  set_i(I,cSetting_group_auto_mode,1);
+  set_i(I,cSetting_group_full_member_names,0);
 }
 
 

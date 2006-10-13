@@ -1523,29 +1523,29 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def matrix_transfer(source_name,    target_name,
-                              source_mode=-1,  target_mode=-1,
-                              source_state=1, target_state=1,
-                              target_undo=1, log=0, quiet=1):
+    def matrix_copy(source_name,    target_name,
+                    source_mode=-1,  target_mode=-1,
+                    source_state=1, target_state=1,
+                    target_undo=1, log=0, quiet=1):
         '''
 
 DESCRIPTION
-
-    "matrix_transfer" copies a transformation matrix from one object to
+        
+    "matrix_copy" copies a transformation matrix from one object to
     another. This command is often used after a protein structure
     alignment to bring other related objects into the same frame of
     reference.  Common Usage
 
 COMMON USAGE
 
-    matrix_transfer source_name, target_name
+    matrix_copy source_name, target_name
 
 '''
         
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.matrix_transfer(str(source_name),
+            r = _cmd.matrix_copy(str(source_name),
                                              str(target_name),
                                              int(source_mode),
                                              int(target_mode),

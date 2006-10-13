@@ -683,6 +683,8 @@ typedef struct _CPyMOL {
   ov_word lex_mesh_negative_visible;
   ov_word lex_mesh_negative_color;
   ov_word lex_auto_group;
+  ov_word lex_group_auto_mode;
+  ov_word lex_group_full_member_names;
 
 } _CPyMOL;
 
@@ -1363,7 +1365,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(surface_negative_color, 534);
   LEX_SETTING(mesh_negative_visible,535);
   LEX_SETTING(mesh_negative_color, 536);
-  LEX_SETTING(auto_group, 537);
+  LEX_SETTING(group_auto_mode, 537);
+  LEX_SETTING(group_full_member_names, 538);
   return_OVstatus_SUCCESS;
 }
 

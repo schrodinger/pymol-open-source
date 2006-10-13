@@ -1188,7 +1188,7 @@ static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
-static PyObject *CmdMatrixTransfer(PyObject *self, 	PyObject *args)
+static PyObject *CmdMatrixCopy(PyObject *self, 	PyObject *args)
 {
   char *source_name, *target_name;
   int source_mode, target_mode;
@@ -1204,7 +1204,7 @@ static PyObject *CmdMatrixTransfer(PyObject *self, 	PyObject *args)
                         &log, &quiet);
   if (ok) {
     APIEntry();
-    ExecutiveMatrixTransfer(TempPyMOLGlobals,
+    ExecutiveMatrixCopy(TempPyMOLGlobals,
                             source_name, target_name, 
                             source_mode, target_mode, 
                             source_state, target_state,
@@ -4845,12 +4845,12 @@ static PyObject *CmdUngroup(PyObject *self, PyObject *args)
 static PyObject *CmdGroup(PyObject *self, PyObject *args)
 {
   char *gname,*names;
-  int quiet;
+  int quiet,action;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssi",&gname,&names,&quiet);
+  ok = PyArg_ParseTuple(args,"ssii",&gname,&names,&action,&quiet);
   if(ok) {
     APIEntry();
-    ok = ExecutiveGroup(TempPyMOLGlobals,gname,names,quiet);
+    ok = ExecutiveGroup(TempPyMOLGlobals,gname,names,action,quiet);
     APIExit();
   }
   return APIResultOk(ok);
@@ -6373,7 +6373,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"symexp",	              CmdSymExp,               METH_VARARGS },
 	{"test",	                 CmdTest,                 METH_VARARGS },
 	{"toggle",                CmdToggle,               METH_VARARGS },
-	{"matrix_transfer",       CmdMatrixTransfer,       METH_VARARGS },
+	{"matrix_copy",           CmdMatrixCopy,       METH_VARARGS },
 	{"transform_object",      CmdTransformObject,      METH_VARARGS },
 	{"transform_selection",   CmdTransformSelection,   METH_VARARGS },
 	{"translate_atom",        CmdTranslateAtom,        METH_VARARGS },
