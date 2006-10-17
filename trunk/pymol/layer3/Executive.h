@@ -93,6 +93,8 @@ int ExecutiveCheckGroupMembership(PyMOLGlobals *G,int list_id,CObject *obj); /* 
 #define cExecutiveGroupOpen 3
 #define cExecutiveGroupClose 4
 #define cExecutiveGroupToggle 5
+#define cExecutiveGroupAuto 6
+#define cExecutiveGroupUngroup 7
 
 int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quiet);
 

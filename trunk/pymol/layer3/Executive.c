@@ -118,8 +118,8 @@ struct _CExecutive {
   struct CScrollBar *ScrollBar;
   CObject *LastEdited;
   int DragMode;
-  int Pressed,Over,OldVisibility,ToggleMode,PressedWhat,OverWhat;
-  SpecRec *LastChanged,*LastZoomed;
+  int Pressed,Over,LastOver,OldVisibility,ToggleMode,PressedWhat,OverWhat;
+  SpecRec *LastChanged,*LastZoomed,*RecoverPressed;
   int ReorderFlag;
   OrthoLineType ReorderLog;
   int oldPX,oldPY,oldWidth,oldHeight,sizeFlag;
@@ -186,6 +186,7 @@ static PanelRec *PanelGroup(PyMOLGlobals *G, PanelRec *panel, SpecRec *group,
         panel = new_panel;
         panel->spec = rec;
         panel->nest_level = level;
+        if(!level) rec->group_name[0] = 0; /* force open any cycles which have been created...*/
         rec->in_panel = true;
         if((rec->type == cExecObject) && 
            (rec->obj->type == cObjectGroup)) {
@@ -599,10 +600,12 @@ int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quie
   CObject *obj = ExecutiveFindObjectByName(G,name);
 
   if(obj && (obj->type!=cObjectGroup)) {
-    PRINTFB(G,FB_Executive,FB_Errors)
-      " Group-Error: object '%s' is not a group object.", name
-      ENDFB(G);
-    ok=false;
+    if((action!=7)||(members[0])) {
+      PRINTFB(G,FB_Executive,FB_Errors)
+        " Group-Error: object '%s' is not a group object.", name
+        ENDFB(G);
+      ok=false;
+    }
   } else {
     if(!obj) {
       obj = (CObject*)ObjectGroupNew(G);
@@ -612,45 +615,61 @@ int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quie
       }
     }
   }
-  
-  if(obj && (obj->type==cObjectGroup)) {
-    ObjectGroup *objGroup = (ObjectGroup*)obj;
-    switch(action) {
-    case cExecutiveGroupOpen:
-      objGroup->OpenOrClosed = 1;
-      break;
-    case cExecutiveGroupClose:
-      objGroup->OpenOrClosed = 0;
-      break;
-    case cExecutiveGroupToggle:
-      objGroup->OpenOrClosed = !objGroup->OpenOrClosed;
-      break;
-    }
-    if(members[0]&&(action!=cExecutiveGroupRemove))
-      action = cExecutiveGroupAdd;
+  if((action==7)&&(!members[0])) {
+    CTracker *I_Tracker= I->Tracker;
+    int list_id = ExecutiveGetNamesListFromPattern(G,name,true,false);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    SpecRec *rec;
     
-    switch(action) {
-    case cExecutiveGroupAdd:
-      {
-
-        CTracker *I_Tracker= I->Tracker;
-        int list_id = ExecutiveGetNamesListFromPattern(G,members,true,false);
-        int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-        SpecRec *rec;
-        
-        while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
-          if(rec) {
-            UtilNCopy(rec->group_name,name,sizeof(WordType));
-            printf("adding %s to group %s\n",rec->name,rec->group_name);
-          }
-        }
-        TrackerDelList(I_Tracker, list_id);
-        TrackerDelIter(I_Tracker, iter_id);
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        rec->group_name[0]=0;
       }
-      break;
     }
-
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
     ExecutiveInvalidateGroups(G,true);
+  } else {
+  
+    if(obj && (obj->type==cObjectGroup)) {
+      ObjectGroup *objGroup = (ObjectGroup*)obj;
+      switch(action) {
+      case cExecutiveGroupOpen:
+        objGroup->OpenOrClosed = 1;
+        break;
+      case cExecutiveGroupClose:
+        objGroup->OpenOrClosed = 0;
+        break;
+      case cExecutiveGroupToggle:
+        objGroup->OpenOrClosed = !objGroup->OpenOrClosed;
+        break;
+      }
+      if(members[0]&&(action!=cExecutiveGroupRemove))
+        action = cExecutiveGroupAdd;
+    
+      switch(action) {
+      case cExecutiveGroupAdd:
+        {
+
+          CTracker *I_Tracker= I->Tracker;
+          int list_id = ExecutiveGetNamesListFromPattern(G,members,true,false);
+          int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+          SpecRec *rec;
+        
+          while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+            if(rec) {
+              UtilNCopy(rec->group_name,name,sizeof(WordType));
+              printf(" Executive: adding %s to group %s\n",rec->name,rec->group_name);
+            }
+          }
+          TrackerDelList(I_Tracker, list_id);
+          TrackerDelIter(I_Tracker, iter_id);
+        }
+        break;
+      }
+
+      ExecutiveInvalidateGroups(G,true);
+    }
   }
   return ok;
 }
@@ -981,9 +1000,12 @@ static int ReorderOrderFn(PyMOLGlobals *G,SpecRec **rec,int l,int r)
 int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
 {
   register CExecutive *I = G->Executive;
+  CTracker *I_Tracker= I->Tracker;
   int ok=true;
   CWordList *word_list = WordListNew(G,s1);
   int n_names = ExecutiveCountNames(G);
+
+
   if(n_names) {
     SpecRec **list,**subset,**sorted;
     int *index = NULL;
@@ -1003,10 +1025,46 @@ int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
           list[a] = rec;
           a++;
         }
+        /* unlink them */
         for(a=0;a<n_names;a++) {
           list[a]->next = NULL;
         }
       } 
+#if 1
+      /* transfer matching names to the subset array */
+      {
+        int a;
+        int entry;
+        int min_entry = word_list->n_word;
+        char *word = NULL;
+        int word_iter = 0;
+        while(WordListIterate(G,word_list,&word,&word_iter)) {
+          int list_id = ExecutiveGetNamesListFromPattern(G,word,true,false);
+          SpecRec *rec=NULL;
+          entry = word_iter-1;
+          for(a=n_names-1;a>0;a--) { /* skipping zeroth */
+            int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+            while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+              if(rec == list[a]) { 
+                if(entry<=min_entry) {
+                  source_row = a; /* where will new list be inserted...*/
+                  min_entry = entry;
+                }
+                /* ensure that each record appears only once */
+                rec->next = subset[entry];
+                subset[entry] = rec;
+                list[a] = NULL;
+              }
+            }
+            TrackerDelIter(I_Tracker, iter_id);
+          }
+          TrackerDelList(I_Tracker, list_id);
+        }
+        if(word_list->n_word && WordMatchExact(G,word_list->start[0],cKeywordAll,true))
+          location=-1; /* set to top if "all" is first in list */
+      }
+                 
+#else
       /* transfer matching names to the subset array */
       {
         int a;
@@ -1027,6 +1085,7 @@ int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
         if(word_list->n_word && WordMatchExact(G,word_list->start[0],cKeywordAll,true))
           location=-1; /* set to top if "all" is first in list */
       }
+#endif
       /* expand the selected entries */
       {
         SpecRec *rec,*last;
@@ -2707,11 +2766,11 @@ int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,PyObject *range,
 
 
 #ifndef _PYMOL_NOPY
-static PyObject *ExecutiveGetExecObject(PyMOLGlobals *G,SpecRec *rec)
+static PyObject *ExecutiveGetExecObjectAsPyList(PyMOLGlobals *G,SpecRec *rec)
 {
 
   PyObject *result = NULL;
-  result = PyList_New(6);
+  result = PyList_New(7);
   PyList_SetItem(result,0,PyString_FromString(rec->obj->Name));
   PyList_SetItem(result,1,PyInt_FromLong(cExecObject));
   PyList_SetItem(result,2,PyInt_FromLong(rec->visible));
@@ -2745,11 +2804,14 @@ static PyObject *ExecutiveGetExecObject(PyMOLGlobals *G,SpecRec *rec)
   case cObjectAlignment:
     PyList_SetItem(result,5,ObjectAlignmentAsPyList((ObjectAlignment*)rec->obj));
     break;
+  case cObjectGroup:
+    PyList_SetItem(result,5,ObjectGroupAsPyList((ObjectGroup*)rec->obj));
+    break;
   default: 
     PyList_SetItem(result,5,PConvAutoNone(NULL));
     break;
   }
-  /* PyList_SetItem(result,6,PyString_FromString(rec->group_name)); */
+  PyList_SetItem(result,6,PyString_FromString(rec->group_name)); 
 
   return(result);  
 }
@@ -2814,6 +2876,10 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
         case cObjectAlignment:
           if(ok) ok = ObjectAlignmentNewFromPyList(G,PyList_GetItem(cur,5),(ObjectAlignment**)&rec->obj,version);
           break;
+        case cObjectGroup:
+          if(ok) ok = ObjectGroupNewFromPyList(G,PyList_GetItem(cur,5),(ObjectGroup**)&rec->obj,version);
+          break;
+          
         default:
           PRINTFB(G,FB_Executive,FB_Errors)
             " Executive: skipping unrecognized object \"%s\" of type %d.\n",
@@ -2863,6 +2929,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
         }
         ListAppend(I->Spec,rec,next,SpecRec);
         ExecutiveAddKey(I,rec);
+        ExecutiveInvalidateGroups(G,false);
         ExecutiveInvalidatePanelList(G);
       } else {
         ListElemFree(rec);
@@ -2921,20 +2988,22 @@ static int ExecutiveSetSelections(PyMOLGlobals *G,PyObject *names)
   return(!incomplete);
 }
 
-static PyObject *ExecutiveGetExecSelePyList(PyMOLGlobals *G,SpecRec *rec)
+static PyObject *ExecutiveGetExecSeleAsPyList(PyMOLGlobals *G,SpecRec *rec)
 {
   PyObject *result = NULL;
   int sele;
 
   sele = SelectorIndexByName(G,rec->name);
   if(sele>=0) {
-    result = PyList_New(6);
+    result = PyList_New(7);
     PyList_SetItem(result,0,PyString_FromString(rec->name));
     PyList_SetItem(result,1,PyInt_FromLong(cExecSelection));
     PyList_SetItem(result,2,PyInt_FromLong(rec->visible));
     PyList_SetItem(result,3,PConvIntArrayToPyList(rec->repOn,cRepCnt));
     PyList_SetItem(result,4,PyInt_FromLong(-1));
     PyList_SetItem(result,5,SelectorAsPyList(G,sele));
+    PyList_SetItem(result,6,PyString_FromString(rec->group_name));
+    
   }
   return(PConvAutoNone(result));
 }
@@ -2957,11 +3026,11 @@ static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals *G)
       switch(rec->type) {
       case cExecObject:
         PyList_SetItem(result,count,
-                       ExecutiveGetExecObject(G,rec));
+                       ExecutiveGetExecObjectAsPyList(G,rec));
         break;
       case cExecSelection:
         PyList_SetItem(result,count,
-                       ExecutiveGetExecSelePyList(G,rec));
+                       ExecutiveGetExecSeleAsPyList(G,rec));
         break;
       default:
         PyList_SetItem(result,count,PConvAutoNone(NULL));
@@ -12011,7 +12080,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   int n,a;
   SpecRec *rec = NULL;
   PanelRec *panel = NULL;
-  int t;
+  int t,xx;
   int pass = false;
   int skip;
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
@@ -12024,14 +12093,17 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   }
   n=((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
   a=n;
+  xx = (x-I->Block->rect.left);
   if(I->ScrollBarActive) {
     if((x-I->Block->rect.left)<(ExecScrollBarWidth+ExecScrollBarMargin+ExecToggleMargin)) {
       pass = 1;
       ScrollBarDoClick(I->ScrollBar,button,x,y,mod);      
     }
+    xx -= (ExecScrollBarWidth+ExecScrollBarMargin);
   } 
   skip = I->NSkip;
   if(!pass) {
+    I->RecoverPressed = NULL;
     /* while(ListIterate(I->Spec,rec,next)) {*/
     while(ListIterate(I->Panel,panel,next)) {
       rec = panel->spec;
@@ -12240,8 +12312,8 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
               }
             } else { /* clicked in variable area */
 
-              if(((panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > (panel->nest_level+1)) ||
-                 ((!panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > panel->nest_level) ) {
+              if(((panel->is_group)&&(((xx)-1)/8) > (panel->nest_level+1)) ||
+                 ((!panel->is_group)&&(((xx)-1)/8) > panel->nest_level) ) {
                 /* clicked on name */
                   
                 rec->hilight=1;
@@ -12280,6 +12352,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   I->Pressed = n;
                   I->OldVisibility = rec->visible;
                   I->Over = n;
+                  I->LastOver = I->Over;
                   I->DragMode = 3;
                   I->ToggleMode = 0;
                   I->LastChanged=rec;
@@ -12310,6 +12383,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   I->DragMode = 2; /* reorder */
                   I->Pressed = n;
                   I->Over = n;
+                  I->LastOver = I->Over;
                   I->PressedWhat = 1;
                   I->OverWhat = 1;
                   break;
@@ -12322,6 +12396,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 I->DragMode = 1;
                 I->Pressed = n;
                 I->Over = n;
+                I->LastOver = I->Over;
                 I->PressedWhat = 2;
                 I->OverWhat = 2;
 
@@ -12423,7 +12498,7 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
   PanelRec *panel = NULL;
   int pass = false;
   int skip;
-
+  int xx;
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
   if(y<I->HowFarDown) {
@@ -12433,13 +12508,15 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
 
   n=((I->Block->rect.top-y)-(ExecTopMargin+ExecClickMargin))/ExecLineHeight;
 
+  xx = (x-I->Block->rect.left);
   if(I->ScrollBarActive) {
     if((x-I->Block->rect.left)<(ExecScrollBarWidth+ExecScrollBarMargin+ExecToggleMargin)) {
       pass = 1;
       ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
       OrthoUngrab(G);
     }
-  } 
+    xx -= (ExecScrollBarWidth+ExecScrollBarMargin);
+  }
 
   skip=I->NSkip;
 
@@ -12459,8 +12536,8 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
                 skip--;
               } else {
                 if((I->PressedWhat==1) &&
-                   (((panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > (panel->nest_level+1)) ||
-                   ((!panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > panel->nest_level)) ) {
+                   (((panel->is_group)&&((xx-1)/8) > (panel->nest_level+1)) ||
+                   ((!panel->is_group)&&((xx-1)/8) > panel->nest_level)) ) {
                   /* over name */
                   if(rec->hilight==1) {
                     if(rec->type==cExecSelection) {
@@ -12548,6 +12625,28 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
         }
       }
       
+      if(I->RecoverPressed) {
+        SpecRec *rec = NULL;
+        PanelRec *panel = NULL;
+        int skip=I->NSkip;
+        int row = 0;
+        while(ListIterate(I->Panel,panel,next)) {
+          rec = panel->spec;
+          
+          if((rec->name[0]!='_')||(!hide_underscore)) {
+            if(skip) {
+              skip--;
+            } else {
+              if(rec==I->RecoverPressed) {
+                I->Pressed = row;
+                I->RecoverPressed = false;
+              }
+              row++;
+            }
+          }
+        }
+      }
+
       if(I->PressedWhat == 2) {
         I->OverWhat = 0;
       }
@@ -12574,8 +12673,8 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                    (((row>=I->Over)&&(row<=I->Pressed))||
                    ((row>=I->Pressed)&&(row<=I->Over)))) {
                   
-                  if(((panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > (panel->nest_level+1)) ||
-                      ((!panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > panel->nest_level)) {
+                  if(((panel->is_group)&&((xx-1)/8) > (panel->nest_level+1)) ||
+                      ((!panel->is_group)&&((xx-1)/8) > panel->nest_level)) {
                     /* dragged over name */
                     
                     I->OverWhat = 1;
@@ -12608,7 +12707,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                     }
                   }
                 } else if((row==I->Pressed)&&(I->PressedWhat==2)) {
-                  if(!((panel->is_group)&&(((x-I->Block->rect.left)-1)/8) > (panel->nest_level+1))) {
+                  if(!((panel->is_group)&&((xx-1)/8) > (panel->nest_level+1))) {
                     
                     /* on group control */
                     
@@ -12625,61 +12724,106 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
             }
           }
           break;
-        case 2: /* right button -- BROKEN */
+        case 2: /* right buttonBROKEN */
           {
-            int loop_flag = (I->Over!=I->Pressed);
-            while(loop_flag) {
-              loop_flag=false;
-              if(I->Over>I->Pressed)
-                I->Over = I->Pressed+1;
-              else if(I->Over<I->Pressed)
-                I->Over = I->Pressed-1;
-              if(I->Over!=I->Pressed) {
-                SpecRec *last=NULL,*new_parent=NULL,*old_parent=NULL;
+            if((I->Over!=I->Pressed) && (I->LastOver!=I->Over)) {
+              SpecRec *new_rec = NULL;
+              SpecRec *mov_rec = NULL;
+              PanelRec *panel = NULL;
               
-                while(ListIterate(I->Spec,rec,next)) {
-                  if((rec->name[0]!='_')||(!hide_underscore))
-                    {
-                      if(skip) {
-                        skip--;
-                      } else {
-                        if(row==I->Pressed)
-                          old_parent = last;
-                        if(row==I->Over)
-                          new_parent = last;
-                        row++;
-                        last=rec;
+              while(ListIterate(I->Panel,panel,next)) {
+                rec = panel->spec;
+                if((rec->name[0]!='_')||(!hide_underscore)) {
+                  {
+                    if(skip) {
+                      skip--;
+                    } else {
+                      if(row==I->Pressed) {
+                       mov_rec = rec;
                       }
-                    }
-                }
-                if(new_parent&&old_parent&&(new_parent!=old_parent)) {
-                  SpecRec *moving = old_parent->next;
-                  old_parent->next = moving->next;
-                  if(moving!=new_parent) {
-                    moving->next = new_parent->next;
-                    new_parent->next = moving;
-                    if(new_parent==I->Spec) {
-                      sprintf(I->ReorderLog,"cmd.order(\"%s\",location='top')\n",
-                              moving->name);
-                      I->ReorderFlag=true;
-                    } else if(new_parent&&moving) {
-                      sprintf(I->ReorderLog,"cmd.order(\"%s %s\")\n",
-                              new_parent->name,moving->name);
-                      I->ReorderFlag=true;
-                    }
-                  } else {
-                    old_parent->next = moving->next;
-                    moving->next = old_parent->next->next;
-                    old_parent->next->next = moving;
-                    if(old_parent->next&&moving) {
-                      sprintf(I->ReorderLog,"cmd.order(\"%s %s\")\n",
-                              old_parent->next->name,moving->name);
-                      I->ReorderFlag=true;
+                      if(row==I->Over) {
+                        new_rec = rec;
+                      } 
+                      row++;
                     }
                   }
-                  if(I->Pressed!=I->Over)
-                    loop_flag=true;
-                  I->Pressed=I->Over;
+                }
+              }
+              {
+                int group_flag = false;
+                int order_flag = false;
+                char *first = NULL, *second = NULL;
+                int is_child = false;
+                
+                if(mov_rec && (!new_rec) && (I->Over>I->Pressed) && mov_rec->group) {
+                  first = mov_rec->group->name;
+                  second = mov_rec->name;
+                  order_flag=true;
+                  strcpy(mov_rec->group_name, mov_rec->group->group_name);
+                  group_flag=true;
+                } else if(mov_rec && new_rec) {
+                  
+                  if(I->Pressed<I->Over) { /* downward */
+                    first = new_rec->name;
+                    second = mov_rec->name;
+                    order_flag=true;
+                  } else { /* upward */
+                    first = mov_rec->name;
+                    second = new_rec->name;
+                    order_flag=true;
+                  }
+                  
+                  if(mov_rec->group == new_rec->group) { /* reordering within a group level */
+                    if((new_rec->type==cExecObject)&&(new_rec->obj->type==cObjectGroup)) {
+                      ObjectGroup *group = (ObjectGroup*)new_rec->obj;
+                      if(group->OpenOrClosed && !is_child) {
+                        /* put inside an open group */
+                        strcpy(mov_rec->group_name, new_rec->name);                        
+                        order_flag = false;
+                        group_flag = true;
+                      }
+                    }
+                  } else if((mov_rec->group != new_rec) &&
+                            (new_rec->group != mov_rec)) {
+                    if((new_rec->type==cExecObject)&&(new_rec->obj->type==cObjectGroup)) {
+                      ObjectGroup *group = (ObjectGroup*)new_rec->obj;
+                      if(group->OpenOrClosed && !is_child) {
+                        /* put inside group */
+                        strcpy(mov_rec->group_name, new_rec->name);                        
+                      } else if(new_rec->group_name) {
+                        strcpy(mov_rec->group_name, new_rec->group_name);
+                      } else {
+                        mov_rec->group_name[0] = 0;
+                      }
+                    } else if(new_rec->group_name) 
+                      strcpy(mov_rec->group_name, new_rec->group_name);
+                    else
+                      mov_rec->group_name[0] = 0;
+                    group_flag = true;
+                  }
+                }
+                
+                if(group_flag) {
+                  OrthoLineType buf;
+                  if(mov_rec->group_name[0]) {
+                    sprintf(buf,"group %s, %s\n",mov_rec->group_name,mov_rec->name);
+                  } else {
+                    sprintf(buf,"ungroup %s\n",mov_rec->name);
+                  }
+                  PLog(buf,cPLog_no_flush);                      
+                  ExecutiveInvalidateGroups(G,false);
+                  I->RecoverPressed = mov_rec;
+                  I->Pressed = 0;
+                }
+                if(order_flag && first && second) {
+                  OrthoLineType order_input;
+                  sprintf(order_input,"%s %s",first,second);
+                  ExecutiveOrder(G,order_input,false,0);
+                  sprintf(I->ReorderLog,"cmd.order(\"%s\")\n",
+                          order_input);
+                  PLog(I->ReorderLog,cPLog_no_flush);
+                I->RecoverPressed = mov_rec;
+                I->Pressed = 0;
                 }
               }
             }
@@ -12739,8 +12883,9 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
               }
           }
           break;
-        
         }
+        I->LastOver = I->Over;
+        
       } else if(I->LastChanged)
         ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);      
       OrthoDirty(G);
@@ -13248,6 +13393,7 @@ int ExecutiveInit(PyMOLGlobals *G)
     I->ScrollBarActive = 0;
     I->ScrollBar=ScrollBarNew(G,false);
     OrthoAttach(G,I->Block,cOrthoTool);
+    I->RecoverPressed = NULL;
     I->Pressed = -1;
     I->Over = -1;
     I->LastEdited=NULL;
@@ -13258,7 +13404,6 @@ int ExecutiveInit(PyMOLGlobals *G)
     I->sizeFlag=false;
     I->LastZoomed = NULL;
     I->LastChanged = NULL;
-
     I->ValidGroups = false;
     I->ValidSceneMembers = false;
 

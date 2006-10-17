@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 1.00b12
 
+    * groups
+
     * fixed bond setting selection processing issue
 
     * fixed memory leak in surface algorithm

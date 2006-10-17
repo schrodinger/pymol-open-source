@@ -652,6 +652,19 @@ void WordListDump(CWordList *I,char *prefix)
   }
 }
 
+int WordListIterate(PyMOLGlobals *G,CWordList *I,char **ptr, int *hidden)
+{
+  int result = true;
+  if(*hidden>=0) {
+    if(*hidden<I->n_word) {
+      (*ptr)=I->start[(*hidden)++];
+    } else {
+      result=false;
+    }
+  }
+  return result;
+}
+
 int WordListMatch(PyMOLGlobals *G,CWordList *I,char *name, int ignore_case)
 {
   int result = -1;

@@ -58,6 +58,7 @@ if __name__=='pymol.creating':
         "close" : 4,
         "toggle" : 5,
         "auto" : 6,
+        "ungroup" : 7,
         }
 
     group_action_sc =  Shortcut(group_action_dict.keys())
@@ -82,7 +83,7 @@ if __name__=='pymol.creating':
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.group(str(name),str(members),int(quiet))
+            r = _cmd.group(str(name),str(members),7,int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         

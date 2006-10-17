@@ -38,8 +38,14 @@ int ObjectGroupNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGroup **result
   I=ObjectGroupNew(G);
   if(ok) ok = (I!=NULL);
   if(ok) ok = ObjectFromPyList(G,PyList_GetItem(list,0),&I->Obj);
- 
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1), &I->OpenOrClosed);
+  if(ok) {
+    *result = I;
+  } else {
+    /* to do: cleanup */
+  }
   return(ok);
+  
 #endif
 }
 
@@ -51,8 +57,9 @@ PyObject *ObjectGroupAsPyList(ObjectGroup *I)
 
   PyObject *result=NULL;
 
-  result = PyList_New(1);
+  result = PyList_New(2);
   PyList_SetItem(result,0,ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result,1,PyInt_FromLong(I->OpenOrClosed));
 
   return(PConvAutoNone(result));  
 #endif
@@ -62,7 +69,7 @@ PyObject *ObjectGroupAsPyList(ObjectGroup *I)
 /*========================================================================*/
 
 static void ObjectGroupFree(ObjectGroup *I) {
-   ObjectPurge(&I->Obj);
+  ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
 

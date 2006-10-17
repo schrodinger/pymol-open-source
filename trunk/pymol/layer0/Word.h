@@ -65,6 +65,7 @@ int WordMatchNoWild(PyMOLGlobals *G,char *p,char *q,int ignCase) ;
 CWordList *WordListNew(PyMOLGlobals *G,char *st);
 void WordListFreeP(CWordList *I);
 void WordListDump(CWordList *I,char *prefix);
+int WordListIterate(PyMOLGlobals *G,CWordList *I,char **ptr, int *hidden);
 int WordListMatch(PyMOLGlobals *G,CWordList *I,char *name, int ignore_case);
 
 int WordInit(PyMOLGlobals *G);
