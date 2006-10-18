@@ -2131,7 +2131,7 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Wizard', 'command', 'Appearance',
                                          label='Appearance',
-                                         command = lambda s=self: s.cmd.do("_ wizard a7ppearance"))
+                                         command = lambda s=self: s.cmd.do("_ wizard appearance"))
 
         self.menuBar.addmenuitem('Wizard', 'command', 'Measurement',
                                          label='Measurement',

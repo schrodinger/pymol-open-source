@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+Changes up to 1.00b13
+
+    * fixed 'fetch' and the Remote PDB Loader plugin
+
 Changes up to 1.00b12
 
     * groups
