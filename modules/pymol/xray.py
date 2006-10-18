@@ -55,13 +55,17 @@ try:
                         for iSMx in xrange(nSMx):
                             Mx = SgOps.getLISMx(iLTr, iInv, iSMx, +1)
                             result.append([[ Mx[0]/rb, Mx[1]/rb, Mx[2]/rb, Mx[9 ]/tb],
-                                                [ Mx[3]/rb, Mx[4]/rb, Mx[5]/rb, Mx[10]/tb],
-                                                [ Mx[6]/rb, Mx[7]/rb, Mx[8]/rb, Mx[11]/tb],
-                                                [        0,        0,        0,         1]] )                  
+                                           [ Mx[3]/rb, Mx[4]/rb, Mx[5]/rb, Mx[10]/tb],
+                                           [ Mx[6]/rb, Mx[7]/rb, Mx[8]/rb, Mx[11]/tb],
+                                           [        0,        0,        0,         1]] )
         except:
             if(_feedback(fb_module.symmetry,fb_mask.errors)):
                 print "Symmetry-Error: Urecognized space group symbol '"+sgsymbol+"'."
             result = None
+#        for a in result:
+#            print 
+#            for b in a:
+#                print "%8.3f %8.3f %8.3f %8.3f"%(b[0],b[1],b[2],b[3])
         return result
 
 except:

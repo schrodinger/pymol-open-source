@@ -10258,6 +10258,8 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
             float threshold = 0.001F;
             float *r2f = I->Symmetry->Crystal->RealToFrac, *sca = pdb_info->scale.matrix;
 
+            dump44f(r2f,"r2f");
+            dump44f(sca,"sca");
             /* are the matrices sufficiently close to be the same? */
             if(     fabs(r2f[0]-sca[0])>threshold) skipit=false;
             else if(fabs(r2f[1]-sca[1])>threshold) skipit=false;
@@ -10297,13 +10299,14 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
                 }
               }
             }
+            printf("here3 %d\n",skipit);
             /* is SCALEn invalid?  If so, then it
                should definitely be ignored... */
             {
               int is_valid = true;
-	      if(length3f(sca)<R_SMALL8) is_valid = false;
-	      if(length3f(sca+4)<R_SMALL8) is_valid = false;
-	      if(length3f(sca+8)<R_SMALL8) is_valid = false;
+              if(length3f(sca)<R_SMALL8) is_valid = false;
+              if(length3f(sca+4)<R_SMALL8) is_valid = false;
+              if(length3f(sca+8)<R_SMALL8) is_valid = false;
               if(!is_valid) {
                 skipit=true;
                 if(!quiet) {
@@ -10313,7 +10316,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
                 }
               }
             }
-
+            printf("here4 %d\n",skipit);
             if(!skipit) {
               if(!quiet) {
                 PRINTFB(G,FB_ObjectMolecule,FB_Actions)
