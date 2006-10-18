@@ -10258,8 +10258,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
             float threshold = 0.001F;
             float *r2f = I->Symmetry->Crystal->RealToFrac, *sca = pdb_info->scale.matrix;
 
-            dump44f(r2f,"r2f");
-            dump44f(sca,"sca");
             /* are the matrices sufficiently close to be the same? */
             if(     fabs(r2f[0]-sca[0])>threshold) skipit=false;
             else if(fabs(r2f[1]-sca[1])>threshold) skipit=false;
