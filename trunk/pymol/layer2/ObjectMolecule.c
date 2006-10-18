@@ -10297,7 +10297,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
                 }
               }
             }
-            printf("here3 %d\n",skipit);
             /* is SCALEn invalid?  If so, then it
                should definitely be ignored... */
             {
@@ -10314,7 +10313,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
                 }
               }
             }
-            printf("here4 %d\n",skipit);
             if(!skipit) {
               if(!quiet) {
                 PRINTFB(G,FB_ObjectMolecule,FB_Actions)
