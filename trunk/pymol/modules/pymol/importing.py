@@ -979,16 +979,24 @@ PYMOL API
             if (type=='pdb') or (type=='pdb1'):
                 remoteCode = string.upper(code)
                 try:
+                    url = None
                     if type=='pdb':
-                        filename = urllib.urlretrieve(
-                            'http://www.rcsb.org/pdb/cgi/export.cgi/' +
-                            remoteCode + '.pdb.gz?format=PDB&pdbId=' +
-                            remoteCode + '&compression=gz')[0]
+#                        filename = urllib.urlretrieve(
+#                            'http://www.rcsb.org/pdb/cgi/export.cgi/' +
+#                            remoteCode + '.pdb.gz?format=PDB&pdbId=' +
+#                            remoteCode + '&compression=gz')[0]
+#                        url = ('http://www.rcsb.org/pdb/download/downloadFile.do?' +
+#                               'fileFormat=PDB&structureId=' +
+#                               remoteCode + '&compression=GZIP')
+                        url = ('http://www.rcsb.org/pdb/files/'+
+                               remoteCode + '.pdb.gz')
                     elif type=='pdb1':
-                        filename = urllib.urlretrieve(
-                            'http://www.rcsb.org/pdb/files/' +
-                            remoteCode + '.pdb1.gz')[0]
+                        url = ('http://www.rcsb.org/pdb/files/' +
+                               remoteCode + '.pdb1.gz')
+                    if url!=None:
+                        filename = urllib.urlretrieve(url)[0]
                 except:
+#                    print traceback.print_exc()
                     pass
                 else:
                     if os.path.exists(filename):
@@ -1007,8 +1015,10 @@ PYMOL API
                                                     multiplex,zoom)
                                 done = 1
                             except IOError:
+#                                print traceback.print_exc()
                                 pass
                         else:
+#                            print traceback.print_exc()
                             pass
                         os.remove(filename)
             if done == 0:

@@ -56,9 +56,11 @@ class FetchPDB:
         if pdbCode: # None is returned for user cancel
             pdbCode = string.upper(pdbCode)
             try:
-                filename = urllib.urlretrieve('http://www.rcsb.org/pdb/cgi/export.cgi/' +
-                                                        pdbCode + '.pdb.gz?format=PDB&pdbId=' +
-                                                        pdbCode + '&compression=gz')[0]
+#                filename = urllib.urlretrieve('http://www.rcsb.org/pdb/cgi/export.cgi/' +
+#                                                        pdbCode + '.pdb.gz?format=PDB&pdbId=' +
+#                                                        pdbCode + '&compression=gz')[0]
+                filename = urllib.urlretrieve('http://www.rcsb.org/pdb/files/'
+                                              + pdbCode + '.pdb.gz')[0]
             except:
                 tkMessageBox.showerror('Connection Error',
                                        'Can not access to the PDB database.\n'+
