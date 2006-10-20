@@ -630,7 +630,6 @@ int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quie
     TrackerDelIter(I_Tracker, iter_id);
     ExecutiveInvalidateGroups(G,true);
   } else {
-  
     if(obj && (obj->type==cObjectGroup)) {
       ObjectGroup *objGroup = (ObjectGroup*)obj;
       switch(action) {
@@ -657,9 +656,15 @@ int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quie
           SpecRec *rec;
         
           while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
-            if(rec) {
+            if(rec && 
+               ( (rec->type!=cExecObject) ||
+                 ((rec->type==cExecObject) && (rec->obj!=obj)) )) {
               UtilNCopy(rec->group_name,name,sizeof(WordType));
-              printf(" Executive: adding %s to group %s\n",rec->name,rec->group_name);
+              if(!quiet) {
+                PRINTFB(G,FB_Executive, FB_Actions)
+                  " Executive: adding '%s' to group '%s'.\n",rec->name,rec->group_name
+                  ENDFB(G);
+              }
             }
           }
           TrackerDelList(I_Tracker, list_id);
@@ -734,6 +739,9 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
   /*  mode 0: raw coordinates, as per the txf history
       mode 1: object TTT matrix
       mode 2: state matrix */
+  register CExecutive *I = G->Executive;
+  CTracker *I_Tracker= I->Tracker;
+  SpecRec *src_rec = ExecutiveFindSpec(G,source_name);
   int ok = true;
   int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
   int copy_ttt_too = false;
@@ -744,65 +752,81 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
     source_mode = matrix_mode;
   if(target_mode<0)
     target_mode = matrix_mode;
+  
   switch(source_mode) {
   case 0: /* txf history is the source matrix */
     { 
       double *history = NULL;
       int found = ExecutiveGetObjectMatrix(G,source_name,source_state,&history);
       if(found) {
-        switch(target_mode) {
-        case 0: /* apply changes to coordinates in the target object */
-          {
-            double temp_inverse[16];
-            if(target_undo) {
-              double *target_history = NULL;
-              int target_found =  ExecutiveGetObjectMatrix(G,target_name,
-                                                           target_state,
-                                                           &target_history);
-              if(target_found && target_history) {
-                invert_special44d44d(target_history, temp_inverse);
-                if(history) {
-                  right_multiply44d44d(temp_inverse,history);
-                  history = temp_inverse;
-                } else {
-                  history = temp_inverse;
+
+        int list_id = ExecutiveGetNamesListFromPattern(G,target_name,true,true);
+        int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+        SpecRec *rec;
+        
+        while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+          if(rec && (rec!=src_rec)) {
+            switch(rec->type) {
+            case cExecObject:
+
+              switch(target_mode) {
+              case 0: /* apply changes to coordinates in the target object */
+                {
+                  double temp_inverse[16];
+                  if(target_undo) {
+                    double *target_history = NULL;
+                    int target_found =  ExecutiveGetObjectMatrix(G,rec->name,
+                                                                 target_state,
+                                                                 &target_history);
+                    if(target_found && target_history) {
+                      invert_special44d44d(target_history, temp_inverse);
+                      if(history) {
+                        right_multiply44d44d(temp_inverse,history);
+                        history = temp_inverse;
+                      } else {
+                        history = temp_inverse;
+                      }
+                    }
+                    {
+                      float historyf[16];
+                      if(history) {
+                        convert44d44f(history,historyf);
+                      } else {
+                        identity44f(historyf);
+                      }
+                      ExecutiveTransformObjectSelection(G,rec->name, target_state, 
+                                                        "",log,historyf,true);
+                    }
+                  }
+                  if(copy_ttt_too) {
+                    float *tttf;
+                    int found = ExecutiveGetObjectTTT(G,source_name,&tttf,-1,quiet);
+                    if(found) {
+                      ExecutiveSetObjectTTT(G,rec->name,tttf,-1,quiet);
+                    }
+                  }
                 }
-              }
-              {
-                float historyf[16];
+                break;
+              case 1: /* applying changes to the object's TTT matrix */
                 if(history) {
-                  convert44d44f(history,historyf);
+                  float tttf[16];
+                  convertR44dTTTf(history,tttf);
+                  ExecutiveSetObjectTTT(G,rec->name,tttf,-1,quiet);
                 } else {
-                  identity44f(historyf);
+                  ExecutiveSetObjectTTT(G,rec->name,NULL,-1,quiet);
                 }
-                ExecutiveTransformObjectSelection(G,
-                                                  target_name, target_state, 
-                                                  "",log,historyf,true);
+                /* to do: logging, return values, etc. */
+                break;
+              case 2: /* applying changes to the state matrix */
+                ok = ExecutiveSetObjectMatrix(G,rec->name,target_state,history);
+                break;
               }
-            }
-            if(copy_ttt_too) {
-              float *tttf;
-              int found = ExecutiveGetObjectTTT(G,source_name,&tttf,-1,quiet);
-              if(found) {
-                ExecutiveSetObjectTTT(G,target_name,tttf,-1,quiet);
-              }
+              break;
             }
           }
-          break;
-        case 1: /* applying changes to the object's TTT matrix */
-          if(history) {
-            float tttf[16];
-            convertR44dTTTf(history,tttf);
-            ExecutiveSetObjectTTT(G,target_name,tttf,-1,quiet);
-          } else {
-            ExecutiveSetObjectTTT(G,target_name,NULL,-1,quiet);
-          }
-          /* to do: logging, return values, etc. */
-          break;
-        case 2: /* applying changes to the state matrix */
-          ok = ExecutiveSetObjectMatrix(G,target_name,target_state,history);
-          break;
         }
+        TrackerDelList(I_Tracker, list_id);
+        TrackerDelIter(I_Tracker, iter_id);
       }
     }
     break;
@@ -815,23 +839,39 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
       float *tttf;
       int found = ExecutiveGetObjectTTT(G,source_name,&tttf,-1,quiet);
       if(found) {
-        switch(target_mode) {
-        case 0: /* coordinates & history */
-          /* TODO */
-          break;
-        case 1: /* TTT */
-          ExecutiveSetObjectTTT(G,target_name,tttf,-1,quiet);
-          break;
-        case 2: /* State */
-          if(tttf) {
-            double homo[16];
-            convertTTTfR44d(tttf,homo);
-            ok = ExecutiveSetObjectMatrix(G,target_name,-1,homo);
-          } else {
-            ok = ExecutiveSetObjectMatrix(G,target_name,-1,NULL);
+
+        int list_id = ExecutiveGetNamesListFromPattern(G,target_name,true,true);
+        int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+        SpecRec *rec;
+        
+        while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+          if(rec && (rec!=src_rec)) {
+            switch(rec->type) {
+            case cExecObject:
+              
+              switch(target_mode) {
+              case 0: /* coordinates & history */
+                /* TODO */
+                break;
+              case 1: /* TTT */
+                ExecutiveSetObjectTTT(G,rec->name,tttf,-1,quiet);
+                break;
+              case 2: /* State */
+                if(tttf) {
+                  double homo[16];
+                  convertTTTfR44d(tttf,homo);
+                  ok = ExecutiveSetObjectMatrix(G,rec->name,-1,homo);
+                } else {
+                  ok = ExecutiveSetObjectMatrix(G,rec->name,-1,NULL);
+                }
+                break;
+              }
+            }
           }
-          break;
         }
+
+        TrackerDelList(I_Tracker, list_id);
+        TrackerDelIter(I_Tracker, iter_id);
       }
     }
     break;
@@ -840,34 +880,48 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
       double *homo;
       int found = ExecutiveGetObjectMatrix(G,source_name,source_state,&homo);
       if(found) {
+
+        int list_id = ExecutiveGetNamesListFromPattern(G,target_name,true,true);
+        int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+        SpecRec *rec;
         
-        switch(target_mode) {
-        case 0: /* coordinates & history */
-          /* TODO */
-          break;
-        case 1: /* TTT */
-          if(homo) {
-            float tttf[16];
-            convertR44dTTTf(homo,tttf);
-            ExecutiveSetObjectTTT(G,target_name,tttf,-1,quiet);
-          } else {
-            ExecutiveSetObjectTTT(G,target_name,NULL,-1,quiet);
-          }
-          break;
-        case 2: /* State */
-          ok = ExecutiveSetObjectMatrix(G,target_name,target_state,homo);
-          if(copy_ttt_too) {
-            float *tttf;
-            int found = ExecutiveGetObjectTTT(G,source_name,&tttf,-1,quiet);
-            if(found) {
-              ExecutiveSetObjectTTT(G,target_name,tttf,-1,quiet);
+        while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+          if(rec && (rec!=src_rec)) {
+            switch(rec->type) {
+            case cExecObject:
+        
+              switch(target_mode) {
+              case 0: /* coordinates & history */
+                /* TODO */
+                break;
+              case 1: /* TTT */
+                if(homo) {
+                  float tttf[16];
+                  convertR44dTTTf(homo,tttf);
+                  ExecutiveSetObjectTTT(G,rec->name,tttf,-1,quiet);
+                } else {
+                  ExecutiveSetObjectTTT(G,rec->name,NULL,-1,quiet);
+                }
+                break;
+              case 2: /* State */
+                ok = ExecutiveSetObjectMatrix(G,rec->name,target_state,homo);
+                if(copy_ttt_too) {
+                  float *tttf;
+                  int found = ExecutiveGetObjectTTT(G,source_name,&tttf,-1,quiet);
+                  if(found) {
+                    ExecutiveSetObjectTTT(G,rec->name,tttf,-1,quiet);
+                  }
+                }
+                break;
+              }
             }
           }
-          break;
         }
+        TrackerDelList(I_Tracker, list_id);
+        TrackerDelIter(I_Tracker, iter_id);
       }
-      break;
     }
+    break;
   }
   SceneInvalidate(G);
   return ok;
