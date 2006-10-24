@@ -154,8 +154,8 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
 int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
                         char *name, char *resn, char *resi, char *chain,
                         char *segi, char *elem, float vdw, int hetatm,
-                        float b, float q, float *pos, int state, int mode, 
-                        int quiet)
+                        float b, float q, float *pos, int color, 
+                        int state, int mode,  int quiet)
 {
   int ok = true;
   
@@ -180,11 +180,13 @@ int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
   }
 
   if(ObjectMoleculeAddPseudoatom(obj,sele_index, name, resn, resi, chain,
-                                 segi, elem, vdw, hetatm, b, q, pos, 
+                                 segi, elem, vdw, hetatm, b, q, pos, color,
                                  state, mode, quiet)) {
     if(is_new) {
       ExecutiveDelete(G,object_name); /* just in case */
       ExecutiveManageObject(G,&obj->Obj,false,true);
+    } else {
+      ExecutiveUpdateObjectSelection(G,obj);
     }
   }
   return ok;
