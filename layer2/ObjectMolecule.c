@@ -8699,6 +8699,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          case OMOP_CSetMinMax:          
          case OMOP_CSetCameraMinMax:          
          case OMOP_CSetMaxDistToPt:
+         case OMOP_CSetSumSqDistToPt:
          case OMOP_CSetSumVertices:
          case OMOP_CSetMoment: 
            cs = NULL;
@@ -8817,6 +8818,33 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                        op->i1++;
                      }
                    break;
+                 case OMOP_CSetSumSqDistToPt:
+                   if(I->DiscreteFlag) {
+                     if(cs==I->DiscreteCSet[a])
+                       a1=I->DiscreteAtmToIdx[a];
+                     else
+                       a1=-1;
+                   } else 
+                     a1=cs->AtmToIdx[a];
+                   if(a1>=0) {
+                     float dist;
+                     coord = cs->Coord+3*a1;
+                     if(op->i2) { /* do we want transformed coordinates? */
+                       if(use_matrices) {
+                         if(cs->State.Matrix) { /* state transformation */
+                           transform44d3f(cs->State.Matrix,coord,v1);
+                           coord = v1;
+                         }
+                       }
+                       if(I->Obj.TTTFlag) {
+                         transformTTT44f3f(I->Obj.TTT,coord,v1);
+                         coord=v1;
+                       }
+                     }
+                     dist = (float)diff3f(op->v1,coord);
+                     op->d1 += dist * dist;
+                     op->i1++;
+                   }
                  case OMOP_CSetMaxDistToPt:
                    if(I->DiscreteFlag) {
                      if(cs==I->DiscreteCSet[a])

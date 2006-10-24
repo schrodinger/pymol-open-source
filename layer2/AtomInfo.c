@@ -1553,6 +1553,7 @@ int AtomInfoGetColor(PyMOLGlobals *G,AtomInfoType *at1)
       case 'a': color=ColorGetIndex(G,"lanthanum"); break;
       case 'i': color=ColorGetIndex(G,"lithium"); break;
       case 'r': color=ColorGetIndex(G,"lawrencium"); break;
+      case 'p': color=ColorGetIndex(G,"lonepair"); break;
       case 'u': color=ColorGetIndex(G,"lutetium"); break;
       } break;
     case 'M': switch(c2) {
@@ -1584,6 +1585,7 @@ int AtomInfoGetColor(PyMOLGlobals *G,AtomInfoType *at1)
       case 'm': color=ColorGetIndex(G,"promethium"); break;
       case 'o': color=ColorGetIndex(G,"polonium"); break;
       case 'r': color=ColorGetIndex(G,"praseodymium"); break;
+      case 's': color=ColorGetIndex(G,"pseudoatom"); break;
       case 't': color=ColorGetIndex(G,"platinum"); break;
       case 'u': color=ColorGetIndex(G,"plutonium"); break;
       } break;

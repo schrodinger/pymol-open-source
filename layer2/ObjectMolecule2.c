@@ -103,6 +103,168 @@ static int append_index(int *result, int offset, int a1, int a2, int score)
   return offset;
 }
 
+int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name, 
+                                char *resn, char *resi, char  *chain,
+                                char *segi, char *elem, float vdw, 
+                                int hetatm, float b, float q, float *pos, 
+                                int state, int mode, int quiet)
+{
+
+  int start_state=0, stop_state = 0;
+  int nAtom = 1;
+  int extant_only = false;
+  int ai_merged = false;
+  float pos_array[3] = { 0.0F, 0.0F, 0.0F };
+  int ok=true;
+  AtomInfoType *atInfo = VLACalloc(AtomInfoType,1);
+
+  if(state>=0) { /* specific state */
+    start_state = state;
+    stop_state = state+1;
+  } else if(state==-1) { /* current state */
+    start_state = ObjectGetCurrentState(&I->Obj,true);
+    stop_state = start_state+1;
+  } else { /* all states */
+    start_state = 0;
+    stop_state = I->NCSet;
+    if(state==-3)
+      extant_only = true;
+  }
+
+  {
+  /* match existing properties of the old atom */
+    AtomInfoType *ai = atInfo;
+    ai->resv = AtomResvFromResi(resi);
+    ai->hetatm=hetatm;
+    ai->geom=cAtomInfoNone;
+    ai->q=q;
+    ai->b=b;
+    strcpy(ai->chain,chain);
+    strcpy(ai->resi,resi);
+    strcpy(ai->segi,segi);
+    strcpy(ai->resn,resn);  
+    strcpy(ai->name,name);  
+    strcpy(ai->elem,elem);  
+    printf("%s/%s/%s/%s`%s/%s\n",
+           I->Obj.Name,segi,chain,resn,resi,name);
+    ai->visRep[cRepNonbonded]=true;
+    ai->id=-1;
+    ai->rank=-1;
+    AtomInfoAssignColors(I->Obj.G,ai); 
+    if((ai->elem[0]=='C')&&(ai->elem[1]==0)) 
+      /* carbons are always colored according to the object color */
+      ai->color=I->Obj.Color;
+    AtomInfoAssignParameters(I->Obj.G,ai);
+    AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,ai,1);
+  }
+
+  for(state=start_state;state<stop_state;state++) {
+
+    CoordSet *cset = NULL;
+
+    if((extant_only&&(state<I->NCSet)&&I->CSet[state]) ||
+       !extant_only) {
+      
+      if(sele_index>=0) {
+        ObjectMoleculeOpRec op;
+        ObjectMoleculeOpRecInit(&op);
+        op.code = OMOP_CSetSumVertices;
+        op.cs1 = state;
+
+        ExecutiveObjMolSeleOp(I->Obj.G,sele_index,&op);
+        
+        if(op.i1) {
+          float factor = 1.0F/op.i1;
+          scale3f(op.v1, factor, pos_array);
+          pos = pos_array;
+
+          if(vdw<0.0F) {
+            switch(mode) {
+            case 1:
+              ObjectMoleculeOpRecInit(&op);
+              op.code = OMOP_CSetMaxDistToPt;
+              copy3f(pos_array, op.v1);
+              op.cs1 = state;
+              ExecutiveObjMolSeleOp(I->Obj.G,sele_index,&op);
+              vdw = op.f1;
+              break;
+            case 2:
+              ObjectMoleculeOpRecInit(&op);
+              op.code = OMOP_CSetSumSqDistToPt;
+              copy3f(pos_array, op.v1);
+              op.cs1 = state;
+              ExecutiveObjMolSeleOp(I->Obj.G,sele_index,&op);
+              vdw = sqrt1f(op.d1/op.i1);
+              break;
+            case 0:
+            default: 
+              vdw = 0.5F;
+              break;
+            }
+            if(vdw<0.0F)
+              vdw = 0.0F;
+            atInfo->vdw = vdw; 
+            printf("vdw %8.3f\n",vdw);
+          }
+        } else {
+          pos = NULL; /* skip this state */
+        }
+      } else if(!pos) {
+        pos = pos_array;
+        SceneGetPos(I->Obj.G,pos);
+      }
+      
+      if(pos) { /* only add coordinate to state if we have position for it */
+
+        float *coord=VLAlloc(float,3*nAtom);
+        
+        copy3f(pos,coord);
+        
+        cset = CoordSetNew(I->Obj.G);
+        cset->NIndex=nAtom;
+        cset->Coord=coord;
+        cset->TmpBond=NULL;
+        cset->NTmpBond=0;
+        
+        cset->Obj = I;
+        if(cset->fEnumIndices) cset->fEnumIndices(cset);
+        cset->fEnumIndices(cset);
+        if(!ai_merged) {
+          ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_AllMask,true); /* NOTE: will release atInfo */
+          ObjectMoleculeExtendIndices(I);
+          ObjectMoleculeUpdateNeighbors(I);
+          ai_merged = true;
+        }
+        if(state>=I->NCSet) {
+          VLACheck(I->CSet,CoordSet*,state);        
+          I->NCSet=state+1;
+        }
+        if(!I->CSet[state]) {
+          /* new coordinate set */
+          I->CSet[state] = cset;
+          cset = NULL;
+        } else {
+          /* merge coordinate set */
+          CoordSetMerge(I->CSet[state],cset); 
+          if(cset->fFree) {
+            cset->fFree(cset);
+            cset = NULL;
+          }
+        }
+      }
+  }
+}
+
+  if(ai_merged) {
+    ObjectMoleculeSort(I);
+    ObjectMoleculeUpdateIDNumbers(I);
+    ObjectMoleculeUpdateNonbonded(I);
+  } else {
+    VLAFreeP(atInfo);
+  }
+  return(ok);
+}
+
 int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,CoordSet *cs)
 {
   int a,b;

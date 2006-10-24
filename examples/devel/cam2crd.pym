@@ -1,0 +1,22 @@
+
+# applies the current camera view to the atomic coordinates
+# and resets the camera
+
+def cam2crd(sele="all"):
+    view=cmd.get_view()
+    ttt = [ view[0], view[3], view[6], 0.0, 
+     view[1], view[4], view[7], 0.0, 
+     view[2], view[5], view[8], 0.0, 
+     -view[12], -view[13], -view[14], 1.0]
+    cmd.transform_selection(sele,ttt)
+    new_view = [ 1.0, 0.0, 0.0,
+    	     0.0, 1.0, 0.0, 
+             0.0, 0.0, 1.0, 
+             0.0, 0.0, view[11],
+             0.0, 0.0, 0.0,
+             view[15], view[16], view[17]]
+    cmd.set_view(new_view)
+
+cam2crd()
+
+

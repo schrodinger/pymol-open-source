@@ -1344,6 +1344,7 @@ SEE ALSO
               isomesh,            \
               isosurface,         \
               map_new,            \
+              pseudoatom,         \
               slice_new,          \
               symexp,             \
               ramp_new,           \
@@ -1838,6 +1839,7 @@ SEE ALSO
             'phi_psi'       : [ phi_psi           , 0 , 0 , ''  , parsing.STRICT ],
             'pop'           : [ pop               , 0 , 0 , ''  , parsing.STRICT ],
             'protect'       : [ protect           , 0 , 0 , ''  , parsing.STRICT ],
+            'pseudoatom'    : [ pseudoatom        , 0 , 0 , ''  , parsing.STRICT ],
             'push_undo'     : [ push_undo         , 0 , 0 , ''  , parsing.STRICT ],   
             'pwd'           : [ pwd               , 0 , 0 , ''  , parsing.STRICT ],
             'python'        : [ dummy             , 0 , 1 , ',' , parsing.PYTHON_BLOCK ],
@@ -2250,6 +2252,7 @@ SEE ALSO
             'order'          : [ selection_sc           , 'name'            , ''   ],
             'origin'         : [ selection_sc           , 'selection'       , ''   ],
             'protect'        : [ selection_sc           , 'selection'       , ''   ],
+            'pseudoatom'     : [ object_sc              , 'object'          , ''   ],            
             'ramp_new'       : [ object_sc              , 'ramp'            , ''   ],
             'remove'         : [ selection_sc           , 'selection'       , ''   ],
             'scene'          : [ viewing.scene_dict_sc  , 'scene'           , ''   ],

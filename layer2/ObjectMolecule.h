@@ -76,7 +76,7 @@ typedef struct ObjectMoleculeOpRec {
   int cs1,cs2;
   int i1,i2,i3,i4,*vc1,*i1VLA,*ii1,*vp1;
   float f1,f2,*f1VLA,*f2VLA,*ff1;
-  double d[3][3];
+  double d[3][3],d1;
   float *vv1,*vv2;
   char *charVLA;
   char *s1;
@@ -173,6 +173,7 @@ typedef struct {
 #define OMOP_FixHydrogens 56
 #define OMOP_Sort 57
 #define OMOP_SetAtomicSetting 58
+#define OMOP_CSetSumSqDistToPt 59
 
 #include"CoordSet.h"
 
@@ -255,6 +256,12 @@ int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
 char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state);
 int ObjectMoleculeCheckFullStateSelection(ObjectMolecule *I,int sele, int state);
 void ObjectMoleculeFree(ObjectMolecule *I); /* only for friends of ObjectMolecule */
+
+int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name, 
+                                char *resn, char *resi, char *chain,
+                                char *segi, char *elem, float vdw, 
+                                int hetatm, float b, float q, float *pos, int state, 
+                                int more, int quiet);
 
 ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals *G,int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);
