@@ -20,6 +20,7 @@ if __name__=='pymol.creating':
     import operator
     import cmd
     import string
+    import re
     from cmd import _cmd,lock,unlock,Shortcut,is_list,is_string, \
           file_ext_re, safe_list_eval, safe_alpha_list_eval, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
@@ -580,9 +581,17 @@ SEE ALSO
 
     pseudoatom_mode_sc =  Shortcut(pseudoatom_mode_dict.keys())
 
+    unquote_re = re.compile(r"'[^']*'|\"[^\"]*\"")
+    
+    def unquote(s):
+        s = str(s)
+        if unquote_re.search(s):
+            return s[1:-1]
+        return s
+    
     def pseudoatom(object, selection='', name='PS1', resn='PSD', resi='1', chain='P',
                    segi='PSDO', elem='PS', vdw=-1.0, hetatm=1, b=0.0, q=0.0, color='',
-                   pos=None, state=0, mode='rms', quiet=1):
+                   label='', pos=None, state=0, mode='rms', quiet=1):
         r = DEFAULT_ERROR      
         # preprocess selection
         if len(color):
@@ -591,6 +600,8 @@ SEE ALSO
             color = -1 # default
         selection = selector.process(selection)
         mode = pseudoatom_mode_dict[pseudoatom_mode_sc.auto_err(str(mode),'pseudoatom mode')]
+        
+        (name,resn,resi,chain,segi,elem,label) = map(unquote,(name,resn,resi,chain,segi,elem,label))
         #      
         try:
             lock()
@@ -604,7 +615,7 @@ SEE ALSO
             r = _cmd.pseudoatom(str(object), str(selection),
                                 str(name), str(resn), str(resi), str(chain),
                                 str(segi), str(elem), float(vdw), int(hetatm),
-                                float(b), float(q), pos, int(color),
+                                float(b), float(q), str(label), pos, int(color),
                                 int(state)-1, int(mode), int(quiet))
         finally:
             unlock(r)

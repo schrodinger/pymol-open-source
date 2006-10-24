@@ -154,7 +154,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
 int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
                         char *name, char *resn, char *resi, char *chain,
                         char *segi, char *elem, float vdw, int hetatm,
-                        float b, float q, float *pos, int color, 
+                        float b, float q, char *label, float *pos, int color, 
                         int state, int mode,  int quiet)
 {
   int ok = true;
@@ -180,13 +180,13 @@ int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
   }
 
   if(ObjectMoleculeAddPseudoatom(obj,sele_index, name, resn, resi, chain,
-                                 segi, elem, vdw, hetatm, b, q, pos, color,
+                                 segi, elem, vdw, hetatm, b, q, label, pos, color,
                                  state, mode, quiet)) {
     if(is_new) {
       ExecutiveDelete(G,object_name); /* just in case */
       ExecutiveManageObject(G,&obj->Obj,false,true);
     } else {
-      ExecutiveUpdateObjectSelection(G,obj);
+      ExecutiveUpdateObjectSelection(G,&obj->Obj);
     }
   }
   return ok;
@@ -1434,14 +1434,14 @@ int ExecutiveGetActiveAlignmentSele(PyMOLGlobals *G)
 int ExecutiveGetActiveSele(PyMOLGlobals *G)
 {
   ObjectNameType name;
-  if(ExecutiveGetActiveSeleName(G,name,false))
+  if(ExecutiveGetActiveSeleName(G,name,false,false))
     return SelectorIndexByName(G,name);
   else
     return -1;
 
 }
 
-int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new)
+int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new,int log)
 {
   /* TODO: cache/optimize to avoid table scan */
 
@@ -1463,9 +1463,21 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new)
       SettingSetGlobal_i(G,cSetting_sel_counter,sel_num);
       sprintf(name,"sel%02d",sel_num);
       SelectorCreateEmpty(G,name,-1);
+      if(log) {
+        if(SettingGet(G,cSetting_logging)) {
+          OrthoLineType buf2;
+          sprintf(buf2,"cmd.select('%s','none')\n",name);
+          PLog(buf2,cPLog_no_flush);
+        }
+      }
     } else {
       sprintf(name,"sele");
       SelectorCreateEmpty(G,name,-1);
+      if(log) {
+        OrthoLineType buf2;
+        sprintf(buf2,"cmd.select('%s','none')\n",name);
+        PLog(buf2,cPLog_no_flush);
+      }
     }
   }
   return result;
@@ -3416,7 +3428,7 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
     if(tmp) {
       if(ok) ok=ExecutiveSetNamedEntries(G,tmp,version);
       if(ok) ok=ExecutiveSetSelections(G,tmp);
-      if(ok) have_active = ExecutiveGetActiveSeleName(G,active,false);
+      if(ok) have_active = ExecutiveGetActiveSeleName(G,active,false,false);
     }
     if(PyErr_Occurred()) {
       PyErr_Print();  
@@ -4897,8 +4909,8 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
       break;
     case cButModeSeleAdd:
     case cButModeSeleSub:
-        ExecutiveGetActiveSeleName(G,selName,true);
-        sel_mode_kw = SceneGetSeleModeKeyword(G);        
+      ExecutiveGetActiveSeleName(G,selName,true,SettingGet(G,cSetting_logging));
+      sel_mode_kw = SceneGetSeleModeKeyword(G);        
         /* intentional omission of break! */
     case cButModeRectAdd:
     case cButModeRectSub:

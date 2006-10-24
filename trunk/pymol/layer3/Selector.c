@@ -6359,6 +6359,7 @@ int SelectorIndexByName(PyMOLGlobals *G,char *sname)
    strcpy(name,tname);		  
    i = SelectGetNameOffset(G,name,1,ignore_case);
    if((i>=0)&&(name[0]!='_')) { /* don't do checking on internal selections */
+     
      char *best;
      best = ExecutiveFindBestNameMatch(G,sname); /* suppress spurious matches
                                                     of selections with non-selections */
@@ -8237,7 +8238,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             if(WordMatcherMatchAlpha(matcher,list[idx])) {
               if((idx>=0)&&
                  ((!enabled_only)||
-                  ExecutiveGetActiveSeleName(G,list[idx],false))) {
+                  ExecutiveGetActiveSeleName(G,list[idx],false,false))) {
                 sele=I->Info[idx].ID;
                 for(a=cNDummyAtoms;a<I->NAtom;a++) {
                   s=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].selEntry;
@@ -8280,7 +8281,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             ExecutiveFreeGroupList(G,group_list_id);
           }
 
-        } else if((!enabled_only)|| ExecutiveGetActiveSeleName(G,word,false)) {
+        } else if((!enabled_only)|| ExecutiveGetActiveSeleName(G,word,false,false)) {
           sele=SelectGetNameOffset(G,word,1,ignore_case);
           if(sele>=0) {
             sele=I->Info[sele].ID;

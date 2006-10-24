@@ -260,7 +260,9 @@ void ObjectMoleculeFree(ObjectMolecule *I); /* only for friends of ObjectMolecul
 int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name, 
                                 char *resn, char *resi, char *chain,
                                 char *segi, char *elem, float vdw, 
-                                int hetatm, float b, float q, float *pos, int color, 
+                                int hetatm, float b, float q, char *label, 
+
+                                float *pos, int color, 
                                 int state, int more, int quiet);
 
 ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals *G,int discreteFlag);
