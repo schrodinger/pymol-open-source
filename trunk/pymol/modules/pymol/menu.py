@@ -857,7 +857,7 @@ def sele_action(s):
               [ 0, ''               ,''                             ],
               [ 1, 'remove atoms'   ,'cmd.remove("'+s+'");cmd.delete("'+s+'")'          ],
               [ 0, ''          ,''                                              ],
-              [ 1, 'duplicate'      ,'cmd.select("'+s+'")'          ],
+              [ 1, 'duplicate'      ,'cmd.select("'+s+'")'          ], # broken...
               [ 1, 'create object'  ,'cmd.create(None,"'+s+'")'     ],
 #              [ 1, 'extract' ,extract(s)],
               [ 0, ''          ,''                                  ],

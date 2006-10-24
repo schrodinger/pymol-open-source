@@ -570,6 +570,41 @@ SEE ALSO
     def extract(*arg,**kw):
         kw['extract'] = 1
         return apply(create,arg,kw)
-    
-    
+
+    pseudoatom_mode_dict = {
+        "unit" : 0, # radius 0.5
+        "extent" : 1,
+        "rms" : 2,
+#        "ellipse" : 2,  for anisotropic b-factors? 
+        }
+
+    pseudoatom_mode_sc =  Shortcut(pseudoatom_mode_dict.keys())
+
+    def pseudoatom(object, selection='', name='PS1', resn='PSD', resi='1', chain='X',
+                   segi='PSDO', elem='Ps', vdw=-1.0, hetatm=1, b=0.0, q=0.0, pos=None,
+                   state=0, mode='extent', quiet=1):
+        r = DEFAULT_ERROR      
+        # preprocess selection
+
+        selection = selector.process(selection)
+        mode = pseudoatom_mode_dict[pseudoatom_mode_sc.auto_err(str(mode),'pseudoatom mode')]
+        #      
+        try:
+            lock()
+            if pos!=None:
+                if not is_list(pos):
+                    pos = safe_list_eval(pos)
+                pos = (float(pos[0]), # tuple-ize
+                       float(pos[1]),
+                       float(pos[2]))
+            if len(selection): selection = "("+str(selection)+")"
+            r = _cmd.pseudoatom(str(object), str(selection),
+                                str(name), str(resn), str(resi), str(chain),
+                                str(segi), str(elem), float(vdw), int(hetatm),
+                                float(b), float(q), pos, int(state), int(mode), int(quiet))
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException                                    
+        return r
+        
 

@@ -2070,6 +2070,19 @@ void ColorReset(PyMOLGlobals *G)
 
   n_color++;
 
+  strcpy(color[n_color].Name,"lonepair");
+  color[n_color].Color[0]=0.5F;
+  color[n_color].Color[1]=0.5F;
+  color[n_color].Color[2]=0.5F;
+
+  n_color++;
+
+  strcpy(color[n_color].Name,"pseudoatom");
+  color[n_color].Color[0]=0.9F;
+  color[n_color].Color[1]=0.9F;
+  color[n_color].Color[2]=0.9F;
+
+  n_color++;
   for(a=0;a<n_color;a++) { 
     /* mark all current colors non-custom so that they don't get saved in session files */
     color[a].Custom=false;

@@ -140,6 +140,12 @@ typedef struct {
   float final_rms;
 } ExecutiveRMSInfo;
 
+int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
+                        char *name, char *resn, char *resi, char *chain,
+                        char *segi, char *elem, float vdw, int hetatm,
+                        float b, float q, float *pos, int state, int mode, 
+                        int quiet);
+
 int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
                     int target_state,int source_state,int zoom, int quiet);
 
@@ -377,6 +383,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
                              int log, int quiet);
 
 void ExecutiveMemoryDump(PyMOLGlobals *G);
+void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
 #endif
 

@@ -150,7 +150,45 @@ static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name);
 static int ExecutiveDrag(Block *block,int x,int y,int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
-void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
+
+int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
+                        char *name, char *resn, char *resi, char *chain,
+                        char *segi, char *elem, float vdw, int hetatm,
+                        float b, float q, float *pos, int state, int mode, 
+                        int quiet)
+{
+  int ok = true;
+  
+  ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G,object_name);
+  int is_new = false;
+  int sele_index = -1;
+
+  if(sele[0]) {
+    sele_index=SelectorIndexByName(G,sele);    
+    if(sele_index<0) {
+      ok = false;
+      /* complain */
+    }
+  }
+  if(ok) {
+    if(!obj) {
+      /* new object */
+      is_new = true;
+      obj = ObjectMoleculeNew(G,false);
+      ObjectSetName(&obj->Obj,object_name);
+    }
+  }
+
+  if(ObjectMoleculeAddPseudoatom(obj,sele_index, name, resn, resi, chain,
+                                 segi, elem, vdw, hetatm, b, q, pos, 
+                                 state, mode, quiet)) {
+    if(is_new) {
+      ExecutiveDelete(G,object_name); /* just in case */
+      ExecutiveManageObject(G,&obj->Obj,false,true);
+    }
+  }
+  return ok;
+}
 
 
 static void ExecutiveInvalidatePanelList(PyMOLGlobals *G)
@@ -162,6 +200,7 @@ static void ExecutiveInvalidatePanelList(PyMOLGlobals *G)
     I->ValidPanel = false;
   }
 }
+
 
 static PanelRec *PanelGroup(PyMOLGlobals *G, PanelRec *panel, SpecRec *group,
                             int level,int hide_underscore)
@@ -2875,7 +2914,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
   register CExecutive *I = G->Executive;  
   int ok=true;
   int skip=false;
-  int a=0,l=0,ll;
+  int a=0,l=0,ll=0;
   PyObject *cur;
   SpecRec *rec = NULL;
   int extra_int;
@@ -9984,20 +10023,16 @@ void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op)
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
 
-  if(sele>=0)
-	 {
-		while(ListIterate(I->Spec,rec,next))
-		  {
-			 if(rec->type==cExecObject)
-				{
-				  if(rec->obj->type==cObjectMolecule)
-					 {
-						obj=(ObjectMolecule*)rec->obj;
-						ObjectMoleculeSeleOp(obj,sele,op);
-					 }
-				}
-		  }
-	 }
+  if(sele>=0) {
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecObject) {
+        if(rec->obj->type==cObjectMolecule) {
+          obj=(ObjectMolecule*)rec->obj;
+          ObjectMoleculeSeleOp(obj,sele,op);
+        }
+      }
+    }
+  }
 }
 
 /*========================================================================*/

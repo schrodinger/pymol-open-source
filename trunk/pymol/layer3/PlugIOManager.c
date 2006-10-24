@@ -103,7 +103,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
   if(G && G->PlugIOManager && obj) {
     CPlugIOManager *I = G->PlugIOManager;
     molfile_plugin_t *plugin = NULL;
-    int sele0 = SelectorIndexByName(G,sele);
+    /*    int sele0 = SelectorIndexByName(G,sele);*/
 
     {
       /* does this reader exist? */
