@@ -1096,7 +1096,7 @@ void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfo
       
       ai0 = atInfo1 + st1;
       for(a=st1;a<=nd1;a++) {
-        if(strcmp(ai1->name,ai0->name))
+        if(!WordMatchExact(G,ai1->name,ai0->name,true))
           ai0++;
         else if(!AtomInfoSameResidue(G,ai1,ai0))
           ai0++;
@@ -1123,7 +1123,7 @@ void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfo
         }
         ai0 = atInfo0 + st0;
         for(a=st0;a<=nd0;a++) {
-          if(strcmp(ai1->name,ai0->name))
+          if(!WordMatchExact(G,ai1->name,ai0->name,true))
             ai0++;
           else if(!AtomInfoSameResidue(G,ai1,ai0))
             ai0++;

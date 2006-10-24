@@ -581,8 +581,8 @@ SEE ALSO
     pseudoatom_mode_sc =  Shortcut(pseudoatom_mode_dict.keys())
 
     def pseudoatom(object, selection='', name='PS1', resn='PSD', resi='1', chain='X',
-                   segi='PSDO', elem='Ps', vdw=-1.0, hetatm=1, b=0.0, q=0.0, pos=None,
-                   state=0, mode='extent', quiet=1):
+                   segi='PSDO', elem='PS', vdw=-1.0, hetatm=1, b=0.0, q=0.0, pos=None,
+                   state=0, mode='rms', quiet=1):
         r = DEFAULT_ERROR      
         # preprocess selection
 

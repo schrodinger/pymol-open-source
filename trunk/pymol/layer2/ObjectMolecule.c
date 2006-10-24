@@ -8845,6 +8845,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                      op->d1 += dist * dist;
                      op->i1++;
                    }
+                   break;
                  case OMOP_CSetMaxDistToPt:
                    if(I->DiscreteFlag) {
                      if(cs==I->DiscreteCSet[a])
