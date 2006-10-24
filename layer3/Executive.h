@@ -143,7 +143,7 @@ typedef struct {
 int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
                         char *name, char *resn, char *resi, char *chain,
                         char *segi, char *elem, float vdw, int hetatm,
-                        float b, float q, float *pos, int color, 
+                        float b, float q, char *label, float *pos, int color, 
                         int state, int mode, int quiet);
 
 int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
@@ -363,7 +363,7 @@ int ExecutiveGetObjectColorIndex(PyMOLGlobals *G,char *name);
 int ExecutiveSetOnOffBySele(PyMOLGlobals *G,char *name,int onoff);
 int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name);
 int ExecutiveSetDrag(PyMOLGlobals *G,char *name, int quiet);
-int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new);
+int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new,int log);
 int ExecutiveGetActiveSele(PyMOLGlobals *G);
 int ExecutiveGetActiveAlignmentSele(PyMOLGlobals *G);
 CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type);

@@ -106,7 +106,8 @@ static int append_index(int *result, int offset, int a1, int a2, int score)
 int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name, 
                                 char *resn, char *resi, char  *chain,
                                 char *segi, char *elem, float vdw, 
-                                int hetatm, float b, float q, float *pos, 
+                                int hetatm, float b, float q, char *label, 
+                                float *pos, 
                                 int color, int state, int mode, int quiet)
 {
   PyMOLGlobals *G = I->Obj.G;
@@ -155,6 +156,17 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
     ai->id=-1;
     ai->rank=-1;
     ai->vdw = 1.0F;
+    if(label[0]) {
+      OVreturn_word ret = OVLexicon_GetFromCString(
+                                                   G->Lexicon,label);
+      if(OVreturn_IS_OK(ret)) {
+        ai->label = ret.word;
+        ai->visRep[cRepLabel] = true;
+        ai->visRep[cRepLine] = false;
+        ai->visRep[cRepNonbonded] = false;
+        ai->visRep[cRepSphere] = false;
+      }
+    }
     if(color<0) {
       AtomInfoAssignColors(I->Obj.G,ai); 
       if((ai->elem[0]=='C')&&(ai->elem[1]==0)) 
@@ -167,7 +179,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
     AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,ai,1);
     if(!quiet) {
       PRINTFB(G,FB_ObjectMolecule,FB_Actions)
-        " ObjMol: creating pseudoatom %s/%s/%s/%s`%s/%s\n",
+        " ObjMol: created %s/%s/%s/%s`%s/%s\n",
         I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,ai->name
         ENDFB(G);
     }

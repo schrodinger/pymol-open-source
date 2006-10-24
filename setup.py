@@ -198,6 +198,7 @@ setup ( # Distribution meta-data
    "layer2/RepMesh.c",
    "layer2/ObjectGadget.c",
    "layer2/ObjectGadgetRamp.c",
+   "layer2/ObjectGroup.c",
    "layer2/RepAngle.c",      
    "layer2/RepDihedral.c",   
    "layer2/RepNonbonded.c",

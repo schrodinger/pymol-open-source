@@ -119,7 +119,7 @@ static void SeekerSelectionToggleRange(PyMOLGlobals *G,CSeqRow* rowVLA,int row_n
         
         if(!WizardDoSelect(G,cTempSeekerSele)) {
           
-          ExecutiveGetActiveSeleName(G,selName,true);
+          ExecutiveGetActiveSeleName(G,selName,true,logging);
           
           /* selection or deselecting? */
           
@@ -191,7 +191,7 @@ static void SeekerSelectionToggle(PyMOLGlobals *G,CSeqRow* rowVLA,int row_num,
         
         if(!WizardDoSelect(G,cTempSeekerSele)) {
           
-          ExecutiveGetActiveSeleName(G,selName,true);
+          ExecutiveGetActiveSeleName(G,selName,true,logging);
           
           /* selection or deselecting? */
 
@@ -303,7 +303,7 @@ static void SeekerSelectionCenter(PyMOLGlobals *G,int action)
   case 2: /* center seeker */
     {
       char selName[WordLength];
-      if(ExecutiveGetActiveSeleName(G,selName,true)) {
+      if(ExecutiveGetActiveSeleName(G,selName,true,logging)) {
         ExecutiveCenter(G,selName,-1,true,-1,NULL,true);
         if(logging) {
           sprintf(buf2,"%scmd.center(\"%s\")\n",prefix,selName);
@@ -324,6 +324,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
   CSeqCol *col;
   /*  char selName[WordLength]; */
   register CSeeker *I = G->Seeker;    
+  int logging = SettingGetGlobal_i(G,cSetting_logging);
   int continuation = false;
   if((row_num<0)||(col_num<0)) {
     switch(button) {
@@ -331,7 +332,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
       if((UtilGetSeconds(G)-I->LastClickTime)<cDoubleTime) {
         OrthoLineType buf2;
         char name[WordLength];
-        if(ExecutiveGetActiveSeleName(G,name, false)) {
+        if(ExecutiveGetActiveSeleName(G,name, false,false)) {
           SelectorCreate(G,name,"none",NULL,true,NULL);
           if(SettingGet(G,cSetting_logging)) {
             sprintf(buf2,"cmd.select('%s','none')\n",name);
@@ -365,7 +366,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
         ObjectMolecule *obj;
         char name[WordLength];
 
-        if(ExecutiveGetActiveSeleName(G,name, false) && col->inverse) {
+        if(ExecutiveGetActiveSeleName(G,name, false,logging) && col->inverse) {
           MenuActivate2Arg(G,x,y+16,x,y,false,"pick_sele",name,name);
         } else if( (obj = ExecutiveFindObjectMoleculeByName(G,row->name) )) {
           OrthoLineType buffer;

@@ -3157,7 +3157,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               if(active_sele && SelectorIsMember(G,objMol->AtomInfo[I->LastPicked.src.index].selEntry,
                                                  active_sele)) {
                 ObjectNameType name;
-                ExecutiveGetActiveSeleName(G,name,false);
+                ExecutiveGetActiveSeleName(G,name,false,SettingGet(G,cSetting_logging));
                 MenuActivate2Arg(G,I->LastWinX,I->LastWinY+20, /* selection menu */
                                  I->LastWinX,I->LastWinY,
                                  is_single_click,
@@ -3374,7 +3374,23 @@ static int SceneClick(Block *block,int button,int x,int y,
         I->LastY=y;	
         switch(obj->type) {
         case cObjectMolecule:
-        
+
+          if(I->LastPicked.src.bond==cPickableLabel) {        
+            /* if user picks a label with move object/move fragment,
+               then move the object/fragment, not the label */
+
+            switch(mode) {
+            case cButModeRotObj:
+            case cButModeMovObj:
+            case cButModeMovObjZ:
+            case cButModeRotFrag:
+            case cButModeMovFrag:
+            case cButModeMovFragZ:
+              I->LastPicked.src.bond=cPickableAtom;
+              break;
+            }
+          }
+
           if(I->LastPicked.src.bond>=cPickableAtom) {
             if(Feedback(G,FB_Scene,FB_Results)) {
               if(obj->fDescribeElement) 
@@ -3460,7 +3476,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             break;
           case cButModeSeleSet:
           case cButModeSeleToggle:
-            ExecutiveGetActiveSeleName(G,selName,true);
+            ExecutiveGetActiveSeleName(G,selName,true,SettingGet(G,cSetting_logging));
             break;
           case cButModeDragMol:
             {
@@ -3551,7 +3567,6 @@ static int SceneClick(Block *block,int button,int x,int y,
           case cButModeAddToMB:
           case cButModeAddToRB:
           case cButModeSeleToggle:
-
             if(SelectorIndexByName(G,selName)>=0) {
               sprintf(buf2,"(((%s) or %s(%s)) and not ((%s(%s)) and %s(%s)))",
                       selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
@@ -3560,7 +3575,7 @@ static int SceneClick(Block *block,int button,int x,int y,
                 if(SettingGet(G,cSetting_logging)) {
                   objMol = (ObjectMolecule*)obj;            
                   ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buffer,false);
-                  sprintf(buf2,"(((%s) or %s(%s)) and ((%s(%s)) and %s(%s)))",
+                  sprintf(buf2,"(((%s) or %s(%s)) and not ((%s(%s)) and %s(%s)))",
                           selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
                   sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf2);
                   PLog(buffer,cPLog_pym);
@@ -3598,7 +3613,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             OrthoLineType buf2;
             ObjectNameType name;
 
-            if(ExecutiveGetActiveSeleName(G,name, false)) {
+            if(ExecutiveGetActiveSeleName(G,name, false,SettingGet(G,cSetting_logging))) {
               SelectorCreate(G,name,"none",NULL,true,NULL);
               if(SettingGet(G,cSetting_logging)) {
                 sprintf(buf2,"cmd.select('%s','none')\n",name);
@@ -3612,7 +3627,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             OrthoLineType buf2;
             ObjectNameType name;
 
-            if(ExecutiveGetActiveSeleName(G,name, false)) {
+            if(ExecutiveGetActiveSeleName(G,name, false,SettingGet(G,cSetting_logging))) {
               ExecutiveSetObjVisib(G,name,0);
               if(SettingGet(G,cSetting_logging)) {
                 sprintf(buf2,"cmd.disable('%s')\n",name);
