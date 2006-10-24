@@ -109,7 +109,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
                                 int hetatm, float b, float q, float *pos, 
                                 int state, int mode, int quiet)
 {
-
+  PyMOLGlobals *G = I->Obj.G;
   int start_state=0, stop_state = 0;
   int nAtom = 1;
   int extant_only = false;
@@ -145,8 +145,6 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
     strcpy(ai->resn,resn);  
     strcpy(ai->name,name);  
     strcpy(ai->elem,elem);  
-    printf("%s/%s/%s/%s`%s/%s\n",
-           I->Obj.Name,segi,chain,resn,resi,name);
     ai->visRep[cRepNonbonded]=true;
     ai->id=-1;
     ai->rank=-1;
@@ -156,6 +154,12 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
       ai->color=I->Obj.Color;
     AtomInfoAssignParameters(I->Obj.G,ai);
     AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,ai,1);
+    if(!quiet) {
+      PRINTFB(G,FB_ObjectMolecule,FB_Actions)
+        " ObjMol: creating pseudoatom %s/%s/%s/%s`%s/%s\n",
+        I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,ai->name
+        ENDFB(G);
+    }
   }
 
   for(state=start_state;state<stop_state;state++) {
@@ -204,7 +208,6 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
             if(vdw<0.0F)
               vdw = 0.0F;
             atInfo->vdw = vdw; 
-            printf("vdw %8.3f\n",vdw);
           }
         } else {
           pos = NULL; /* skip this state */
@@ -228,7 +231,6 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
         
         cset->Obj = I;
         if(cset->fEnumIndices) cset->fEnumIndices(cset);
-        cset->fEnumIndices(cset);
         if(!ai_merged) {
           ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_AllMask,true); /* NOTE: will release atInfo */
           ObjectMoleculeExtendIndices(I);
