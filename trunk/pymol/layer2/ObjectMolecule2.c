@@ -155,7 +155,10 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
     ai->visRep[cRepSphere] = auto_show_spheres; 
     ai->id=-1;
     ai->rank=-1;
-    ai->vdw = 1.0F;
+    if(vdw>=0.0F) 
+      ai->vdw = vdw;
+    else
+      ai->vdw = 1.0F;
     if(label[0]) {
       OVreturn_word ret = OVLexicon_GetFromCString(
                                                    G->Lexicon,label);
@@ -228,9 +231,8 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
               vdw = 0.5F;
               break;
             }
-            if(vdw<0.0F)
-              vdw = 0.0F;
-            atInfo->vdw = vdw; /* NOTE: only uses vdw from first state selection...*/
+            if(vdw>=0.0F) 
+              atInfo->vdw = vdw; /* NOTE: only uses vdw from first state selection...*/
           }
         } else {
           pos = NULL; /* skip this state */
