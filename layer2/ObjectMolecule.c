@@ -7535,7 +7535,10 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
       if(c) {
         /* allocate additional space */
         nBd=I->NBond+c;
-        
+
+        if(!I->Bond) 
+          I->Bond=VLACalloc(BondType,1);          
+
         VLACheck(I->Bond,BondType,nBd);
         
         for(a=0;a<nBond;a++) { /* copy the new bonds */
