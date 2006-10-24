@@ -212,15 +212,15 @@ static PyObject *CmdPseudoatom(PyObject *self, PyObject *args)
   OrthoLineType s1;
   char *name, *resn, *resi, *chain, *segi, *elem;
   float vdw;
-  int hetatm;
+  int hetatm,color;
   float b,q;
   PyObject *pos;
   int state,mode,quiet;
 
-  int ok = PyArg_ParseTuple(args,"ssssssssfiffOiii",
+  int ok = PyArg_ParseTuple(args,"ssssssssfiffOiiii",
                             &object_name, &sele, &name, &resn, &resi, &chain,
-                            &segi, &elem, &vdw, &hetatm, &b, &q, &pos, &state,
-                            &mode, &quiet);
+                            &segi, &elem, &vdw, &hetatm, &b, &q, &pos, &color, 
+                            &state,&mode, &quiet);
   if(ok) {
     float pos_array[3],*pos_ptr = NULL;
     if(ok) {
@@ -236,7 +236,7 @@ static PyObject *CmdPseudoatom(PyObject *self, PyObject *args)
     if(ok) {
       ok = ExecutivePseudoatom(TempPyMOLGlobals, object_name, s1,
                                name, resn, resi, chain, segi, elem, 
-                               vdw, hetatm, b, q, pos_ptr, state, mode, quiet);
+                               vdw, hetatm, b, q, pos_ptr, color, state, mode, quiet);
     }
     if(sele[0])
       SelectorFreeTmp(TempPyMOLGlobals,s1);

@@ -4342,7 +4342,9 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
       for(a2=0;a2<I->NAtom;a2++) {
         s2=ai2->selEntry;
         if(SelectorIsMember(I->Obj.G,s2,sele1)) {
-          {
+          if(!I->Bond)
+            I->Bond=VLACalloc(BondType,1); 
+          if(I->Bond) {
             VLACheck(I->Bond,BondType,I->NBond);
             bnd = I->Bond+(I->NBond);
             bnd->index[0]=a1;
@@ -4383,51 +4385,53 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int
   int a;
 
   offset=0;
-  b0=I->Bond;
-  for(a=0;a<I->NBond;a++) {
-    a0=b0->index[0];
-    a1=b0->index[1];
-    
-    both=0;
-    s=I->AtomInfo[a0].selEntry;
-    if(SelectorIsMember(I->Obj.G,s,sele0))
-      both++;
-    s=I->AtomInfo[a1].selEntry;
-    if(SelectorIsMember(I->Obj.G,s,sele1))
-      both++;
-    if(both<2) { /* reverse combo */
+  if(I->Bond) {
+    b0=I->Bond;
+    for(a=0;a<I->NBond;a++) {
+      a0=b0->index[0];
+      a1=b0->index[1];
+      
       both=0;
-      s=I->AtomInfo[a1].selEntry;
+      s=I->AtomInfo[a0].selEntry;
       if(SelectorIsMember(I->Obj.G,s,sele0))
         both++;
-      s=I->AtomInfo[a0].selEntry;
+      s=I->AtomInfo[a1].selEntry;
       if(SelectorIsMember(I->Obj.G,s,sele1))
         both++;
-    }
-
-    if(both==2) {
-      switch(mode) {
-      case 0: /* cycle */
-        b0->order++;
-        if(b0->order>3)
-          b0->order=1;
-        I->AtomInfo[a0].chemFlag=false;
-        I->AtomInfo[a1].chemFlag=false;
-        break;
-      case 1: /* set */
-        b0->order=order;
-        I->AtomInfo[a0].chemFlag=false;
-        I->AtomInfo[a1].chemFlag=false;
-        break;
+      if(both<2) { /* reverse combo */
+        both=0;
+        s=I->AtomInfo[a1].selEntry;
+        if(SelectorIsMember(I->Obj.G,s,sele0))
+          both++;
+        s=I->AtomInfo[a0].selEntry;
+        if(SelectorIsMember(I->Obj.G,s,sele1))
+          both++;
       }
-      ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds,-1);
-      ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds,-1);
-      ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds,-1);
-      ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds,-1);
-      ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds,-1);
-      ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds,-1);
+      
+      if(both==2) {
+        switch(mode) {
+        case 0: /* cycle */
+          b0->order++;
+          if(b0->order>3)
+            b0->order=1;
+          I->AtomInfo[a0].chemFlag=false;
+          I->AtomInfo[a1].chemFlag=false;
+          break;
+        case 1: /* set */
+          b0->order=order;
+          I->AtomInfo[a0].chemFlag=false;
+          I->AtomInfo[a1].chemFlag=false;
+          break;
+        }
+        ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds,-1);
+        ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds,-1);
+        ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds,-1);
+        ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds,-1);
+        ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds,-1);
+        ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds,-1);
+      }
+      b0++;
     }
-    b0++;
   }
   return(-offset);
 }
@@ -4441,51 +4445,53 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele0,int sele1)
   int s;
   int a;
 
-  offset=0;
-  b0=I->Bond;
-  b1=I->Bond;
-  for(a=0;a<I->NBond;a++) {
-    a0=b0->index[0];
-    a1=b0->index[1];
-    
-    both=0;
-    s=I->AtomInfo[a0].selEntry;
-    if(SelectorIsMember(I->Obj.G,s,sele0))
-      both++;
-    s=I->AtomInfo[a1].selEntry;
-    if(SelectorIsMember(I->Obj.G,s,sele1))
-      both++;
-    if(both<2) { /* reverse combo */
+  if(I->Bond) {
+    offset=0;
+    b0=I->Bond;
+    b1=I->Bond;
+    for(a=0;a<I->NBond;a++) {
+      a0=b0->index[0];
+      a1=b0->index[1];
+      
       both=0;
-      s=I->AtomInfo[a1].selEntry;
+      s=I->AtomInfo[a0].selEntry;
       if(SelectorIsMember(I->Obj.G,s,sele0))
         both++;
-      s=I->AtomInfo[a0].selEntry;
+      s=I->AtomInfo[a1].selEntry;
       if(SelectorIsMember(I->Obj.G,s,sele1))
         both++;
+      if(both<2) { /* reverse combo */
+        both=0;
+        s=I->AtomInfo[a1].selEntry;
+        if(SelectorIsMember(I->Obj.G,s,sele0))
+          both++;
+        s=I->AtomInfo[a0].selEntry;
+        if(SelectorIsMember(I->Obj.G,s,sele1))
+          both++;
+      }
+      
+      if(both==2) {
+        AtomInfoPurgeBond(I->Obj.G,b0);
+        offset--;
+        b0++;
+        I->AtomInfo[a0].chemFlag=false;
+        I->AtomInfo[a1].chemFlag=false;
+      } else if(offset) {
+        *(b1++)=*(b0++); /* copy bond info */
+      } else {
+        *(b1++)=*(b0++); /* copy bond info */
+      }
     }
-    
-    if(both==2) {
-      AtomInfoPurgeBond(I->Obj.G,b0);
-      offset--;
-      b0++;
-      I->AtomInfo[a0].chemFlag=false;
-      I->AtomInfo[a1].chemFlag=false;
-    } else if(offset) {
-      *(b1++)=*(b0++); /* copy bond info */
-    } else {
-      *(b1++)=*(b0++); /* copy bond info */
+    if(offset) {
+      I->NBond += offset;
+      VLASize(I->Bond,BondType,I->NBond);
+      ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds,-1);
     }
-  }
-  if(offset) {
-    I->NBond += offset;
-    VLASize(I->Bond,BondType,I->NBond);
-    ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds,-1);
-    ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds,-1);
-    ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds,-1);
-    ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds,-1);
-    ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds,-1);
-    ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds,-1);
   }
 
   return(-offset);

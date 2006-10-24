@@ -107,7 +107,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
                                 char *resn, char *resi, char  *chain,
                                 char *segi, char *elem, float vdw, 
                                 int hetatm, float b, float q, float *pos, 
-                                int state, int mode, int quiet)
+                                int color, int state, int mode, int quiet)
 {
   PyMOLGlobals *G = I->Obj.G;
   int start_state=0, stop_state = 0;
@@ -116,6 +116,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
   int ai_merged = false;
   float pos_array[3] = { 0.0F, 0.0F, 0.0F };
   int ok=true;
+
   AtomInfoType *atInfo = VLACalloc(AtomInfoType,1);
 
   if(state>=0) { /* specific state */
@@ -126,13 +127,16 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
     stop_state = start_state+1;
   } else { /* all states */
     start_state = 0;
-    stop_state = I->NCSet;
+    stop_state = SelectorCountStates(G,sele_index);
     if(state==-3)
       extant_only = true;
   }
 
   {
   /* match existing properties of the old atom */
+    int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
+    int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
+    int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
     AtomInfoType *ai = atInfo;
     ai->resv = AtomResvFromResi(resi);
     ai->hetatm=hetatm;
@@ -145,13 +149,20 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
     strcpy(ai->resn,resn);  
     strcpy(ai->name,name);  
     strcpy(ai->elem,elem);  
-    ai->visRep[cRepNonbonded]=true;
+    ai->visRep[cRepLine] = auto_show_lines; 
+    ai->visRep[cRepNonbonded] = auto_show_nonbonded; 
+    ai->visRep[cRepSphere] = auto_show_spheres; 
     ai->id=-1;
     ai->rank=-1;
-    AtomInfoAssignColors(I->Obj.G,ai); 
-    if((ai->elem[0]=='C')&&(ai->elem[1]==0)) 
-      /* carbons are always colored according to the object color */
+    ai->vdw = 1.0F;
+    if(color<0) {
+      AtomInfoAssignColors(I->Obj.G,ai); 
+      if((ai->elem[0]=='C')&&(ai->elem[1]==0)) 
+        /* carbons are always colored according to the object color */
       ai->color=I->Obj.Color;
+    } else {
+      ai->color = color;
+    }
     AtomInfoAssignParameters(I->Obj.G,ai);
     AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,ai,1);
     if(!quiet) {
@@ -207,7 +218,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
             }
             if(vdw<0.0F)
               vdw = 0.0F;
-            atInfo->vdw = vdw; 
+            atInfo->vdw = vdw; /* NOTE: only uses vdw from first state selection...*/
           }
         } else {
           pos = NULL; /* skip this state */
@@ -254,13 +265,13 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
           }
         }
       }
+    }
   }
-}
-
   if(ai_merged) {
     ObjectMoleculeSort(I);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
+    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms,-1);
   } else {
     VLAFreeP(atInfo);
   }

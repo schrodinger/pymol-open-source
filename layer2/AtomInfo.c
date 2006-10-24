@@ -1155,6 +1155,8 @@ void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfo
   }
 }
 
+
+/*========================================================================*/
 /*========================================================================*/
 void AtomInfoBracketResidue(PyMOLGlobals *G,AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd)
 {
