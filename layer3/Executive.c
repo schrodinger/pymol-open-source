@@ -12116,6 +12116,7 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
       rec->in_scene = SceneObjectAdd(G,obj);
       ExecutiveInvalidateSceneMembers(G);
     }
+    ExecutiveDoAutoGroup(G,rec);
   }
 
   if(obj->type==cObjectMolecule) {
@@ -12131,7 +12132,6 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
     }
   }
 
-  ExecutiveDoAutoGroup(G,rec);
   ExecutiveDoZoom(G,obj,!exists,zoom,true);
 
   SeqChanged(G);
