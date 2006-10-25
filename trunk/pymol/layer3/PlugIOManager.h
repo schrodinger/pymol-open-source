@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include "PyMOLGlobals.h"
 #include "ObjectMolecule.h"
+#include "ObjectMap.h"
 
 int PlugIOManagerInit(PyMOLGlobals *G);
 int PlugIOManagerFree(PyMOLGlobals *G);
@@ -27,5 +28,7 @@ int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
                           int interval,int average,int start,
                           int stop,int max,char *sele,int image,
                           float *shift,int quiet,char *plugin_type);
+ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals *G,ObjectMap *obj,
+                         char *fname,int state, int quiet,char *plugin_type);
 
 #endif

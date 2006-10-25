@@ -5223,6 +5223,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         }
       }
       break;
+   /* VMD plugin-based trajectory readers */
     case cLoadTypeXTC:
     case cLoadTypeTRR:
     case cLoadTypeGRO:
@@ -5253,6 +5254,28 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
               "CmdLoad-Error: must load object topology before loading trajectory."
               ENDFB(TempPyMOLGlobals);
           }
+        } else {
+          PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Errors)
+            "CmdLoad-Error: plugin not found"
+            ENDFB(TempPyMOLGlobals);
+        }
+      }
+      break;
+   /* VMD plugin-based volume readers */
+    case cLoadTypeCUBEMap:
+      {
+        char *plugin = NULL;
+        char cube[] = "cube";
+        switch(type) {
+        case cLoadTypeCUBEMap: plugin=cube; break;
+        }
+
+        if(plugin) {
+          ok = ExecutiveLoad(TempPyMOLGlobals,origObj, 
+                             fname, 0, type,
+                             oname, frame, zoom, 
+                             discrete, finish, 
+                             multiplex, quiet, plugin);
         } else {
           PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Errors)
             "CmdLoad-Error: plugin not found"
@@ -5417,7 +5440,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                          fname, 0, type,
                          oname, frame, zoom, 
                          discrete, finish, 
-                         multiplex, quiet);
+                         multiplex, quiet, NULL);
       break;
       /*
     case cLoadTypeMOL2Str:
@@ -5470,68 +5493,6 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                 oname,frame+1);
       }
       break;
-#if 0
-    case cLoadTypeXPLORMap:
-      PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading XPLORMap\n" ENDFD;
-      if(!origObj) {
-        obj=(CObject*)ObjectMapLoadXPLOR(TempPyMOLGlobals,NULL,fname,frame,true,quiet);
-        if(obj) {
-          ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
-          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
-        }
-      } else {
-        ObjectMapLoadXPLOR(TempPyMOLGlobals,(ObjectMap*)origObj,fname,frame,true,quiet);
-        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname,oname);
-      }
-      break;
-    case cLoadTypeXPLORStr:
-      PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading XPLOR string\n" ENDFD;
-      if(!origObj) {
-        obj=(CObject*)ObjectMapLoadXPLOR(TempPyMOLGlobals,NULL,fname,frame,false,quiet);
-        if(obj) {
-          ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
-          sprintf(buf," CmdLoad: XPLOR string loaded as \"%s\".\n",oname);
-        }
-      } else {
-        ObjectMapLoadXPLOR(TempPyMOLGlobals,(ObjectMap*)origObj,fname,frame,false,quiet);
-        sprintf(buf," CmdLoad: XPLOR string appended into object \"%s\".\n",
-                oname);
-      }
-      break;
-    case cLoadTypeCCP4Map:
-      PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading CCP4 map\n" ENDFD;
-      if(!origObj) {
-        obj=(CObject*)ObjectMapLoadCCP4(TempPyMOLGlobals,NULL,fname,frame,false,0,quiet);
-        if(obj) {
-          ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
-          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
-        }
-      } else {
-        ObjectMapLoadCCP4(TempPyMOLGlobals,(ObjectMap*)origObj,fname,frame,false,0,quiet);
-        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname,oname);
-      }
-      break;
-    case cLoadTypeCCP4Str:
-      PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading CCP4 map\n" ENDFD;
-      if(!origObj) {
-        obj=(CObject*)ObjectMapLoadCCP4(TempPyMOLGlobals,NULL,fname,frame,true,bytes,quiet);
-        if(obj) {
-          ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
-          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
-        }
-      } else {
-        ObjectMapLoadCCP4(TempPyMOLGlobals,(ObjectMap*)origObj,fname,frame,true,bytes,quiet);
-        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname,oname);
-      }
-      break;
-#else
     case cLoadTypeXPLORMap:     
     case cLoadTypeXPLORStr:
     case cLoadTypeCCP4Map:
@@ -5540,10 +5501,8 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                          fname, bytes, type,
                          oname, frame, zoom, 
                          discrete, finish, 
-                         multiplex, quiet);
+                         multiplex, quiet, NULL);
       break;
-#endif
-
     case cLoadTypePHIMap:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading Delphi Map\n" ENDFD;
       if(!origObj) {

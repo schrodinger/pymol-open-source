@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 1.00b13
 
+    * support for some Gaussian cube files (orthognal cartesian-aligned)
+
+    * pseudoatoms
+
+    * fixed some logging bugs (yet many more remain...)
+
     * fixed 'fetch' and the Remote PDB Loader plugin
 
 Changes up to 1.00b12

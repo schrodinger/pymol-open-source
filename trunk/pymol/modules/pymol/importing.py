@@ -86,6 +86,7 @@ if __name__=='pymol.importing':
         trj2 = 45     # trj trajectroy format (via plugin)
         g96 = 46      # g96 trajectory format (via plugin)
         dcd = 47      # dcd trajectory format (via plugin)
+        cube = 48     # cube volume file (via plugin)
         
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -321,7 +322,7 @@ SEE ALSO
             #   
 
             fname = cmd.exp_path(filename)
-
+            
             if not len(str(type)):
                 # determine file type if possible
                 if re.search("\.trj$",filename,re.I):
@@ -530,6 +531,8 @@ SEE ALSO
                     ftype = loadable.png
                 elif re.search("\.moe$",filename,re.I):
                     ftype = loadable.moe
+                elif re.search("\.cube$",filename,re.I):
+                    ftype = loadable.cube
                 elif re.search("\.map$",filename,re.I):
                     r = DEFAULT_ERROR
                     print 'Error: .map is ambiguous.  Please add format or use another extension:'

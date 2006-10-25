@@ -413,6 +413,7 @@ class Normal(PMGSkin):
                        ("All Readable","*.pqr"),
                        ("All Readable","*.p5m"),
                        ("All Readable","*.p1m"),
+                       ("All Readable","*.cube"),
                        ("All Readable","*.moe"), # proprietary format
                        ("PDB File","*.pdb"),
                        ("All Files","*.*"),
@@ -429,6 +430,7 @@ class Normal(PMGSkin):
                        ("BRIX/O Map","*.o"),
                        ("BRIX/O Map","*.omap"),
                        ("BRIX/O Map","*.brix"),
+                       ("Gaussian Cube Map","*.cube"),
                        ("DX Map","*.dx"),                                         
                        ("AVS (MEAD) Field","*.fld"),                                         
                        ("MOL File","*.mol"),
