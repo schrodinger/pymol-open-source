@@ -62,31 +62,37 @@ elif sys.platform=='darwin':
                   "-framework","IOKit",
                   "-framework","GLUT",
                   "-framework","Python"]
-else:
+else: # linux or standard unix
    inc_dirs=["ov/src",
              "layer0","layer1","layer2",
              "layer3","layer4","layer5",
              "/usr/include/freetype2",
-#             "/home/warren/ext/include"
+#             "/users/warren/ext/include",
+# VMD plugin support
+#             "contrib/uiuc/plugins/include",
+#             "contrib/uiuc/plugins/molfile_plugin/src",
              ]
    libs=["GL","GLU","glut","png","z","freetype"
 	]	
    pyogl_libs = ["GL","GLU","glut"]
    lib_dirs=[
       "/usr/X11R6/lib",
-#      "/home/warren/ext/lib"
+#      "/users/warren/pymol/ext/lib"
       ]
    def_macros=[("_PYMOL_MODULE",None),
                ("_PYMOL_INLINE",None),
                ("_PYMOL_FREETYPE",None),
+# Numeric Python support               
 #                  ("_PYMOL_NUMPY",None),
-                  ("_HAVE_LIBPNG",None)]
+# VMD plugin support               
+#               ("_PYMOL_VMD_PLUGINS",None),
+               ("_HAVE_LIBPNG",None)]
    ext_comp_args=["-ffast-math","-funroll-loops","-O3"]
    ext_link_args=[]
    
 setup ( # Distribution meta-data
    name = "pymol",
-	version = "0.98",
+	version = "0.99",
 	package_dir = {'' : 'modules'},
 	packages = ['chempy',
                'chempy/bmin',
@@ -222,6 +228,55 @@ setup ( # Distribution meta-data
    "layer5/PyMOL.c",
    "layer5/TestPyMOL.c",
    "layer5/main.c",
+# uncomment below for VMD molfile plugin support
+# (incomplete at present -- only TRJ, TRR, XTC, DCD so far...)
+#   "contrib/uiuc/plugins/molfile_plugin/src/PlugIOManagerInit.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/avsplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/bgfplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/binposplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/biomoccaplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/brixplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/carplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/ccp4plugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/corplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/cpmdplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/crdplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/cubeplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/dcdplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/dlpolyplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/dsn6plugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/dxplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/edmplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/fs4plugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/gamessplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/graspplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/grdplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/gridplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/gromacsplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/mapplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/mdfplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/mol2plugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/moldenplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/msmsplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/namdbinplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/parm7plugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/parmplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/pdbplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/phiplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/pltplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/pqrplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/psfplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/raster3dplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/rst7plugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/situsplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/spiderplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/stlplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/tinkerplugin.c",
+#   "contrib/uiuc/plugins/molfile_plugin/src/uhbdplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/xbgfplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/xsfplugin.cpp",
+#   "contrib/uiuc/plugins/molfile_plugin/src/xyzplugin.c",
+   
    ],
    include_dirs = inc_dirs,
    libraries = libs,
