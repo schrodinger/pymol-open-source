@@ -97,6 +97,7 @@ if __name__=='pymol.cmd':
             r"\.xplor$|\.pkl$|\.sdf$|\.pqr|", 
             r"\.r3d$|\.xyz$|\.xyz_[0-9]*$|", 
             r"\.cc1$|\.cc2$|", # ChemDraw 3D
+            r"\.cube$|", # Gaussian Cube
             r"\.dx$|", # DX files (APBS)
             r"\.pse$|", # PyMOL session (pickled dictionary)
             r"\.pmo$|", # Experimental molecular object format

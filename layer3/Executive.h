@@ -68,6 +68,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeTRJ2 45
 #define cLoadTypeG96 46
 #define cLoadTypeDCD 47
+#define cLoadTypeCUBEMap 48
 
 /* NOTE: if you add a type above, then be sure to add corresponding code in:
    CmdLoad
@@ -126,7 +127,7 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
                    char *object_name, 
                    int state, int zoom, 
                    int discrete, int finish, 
-                  int multiplex, int quiet);
+                  int multiplex, int quiet, char *plugin);
 
 int ExecutiveDebug(PyMOLGlobals *G,char *name);
 

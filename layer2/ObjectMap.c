@@ -511,7 +511,7 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
   case cMapSourceFLD:
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
-
+  case cMapSourceVMDPlugin:
     for(a=0;a<3;a++) {
       grid[a]=ms->Grid[a]/2.0F;
       min[a]=ms->Min[a]*2;
@@ -699,6 +699,7 @@ static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms,int smooth)
   case cMapSourceFLD:
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
+  case cMapSourceVMDPlugin:
     for(a=0;a<3;a++) {
       grid[a]=ms->Grid[a]*2.0F;
       min[a]=ms->Min[a]/2;
@@ -849,7 +850,7 @@ int ObjectMapStateContainsPoint(ObjectMapState *ms,float *point)
   case cMapSourceFLD:
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
-
+  case cMapSourceVMDPlugin:
     x = (point[0] - ms->Origin[0])/ms->Grid[0];
     y = (point[1] - ms->Origin[1])/ms->Grid[1];
     z = (point[2] - ms->Origin[2])/ms->Grid[2];
@@ -967,6 +968,7 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
   case cMapSourceFLD:
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
+  case cMapSourceVMDPlugin:
     while(n--) {
 
       x = (inp[0] - ms->Origin[0])/ms->Grid[0];
@@ -1061,6 +1063,7 @@ void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
   case cMapSourceFLD:
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
+  case cMapSourceVMDPlugin:
     for(c=0;c<ms->FDim[2];c++) {
       v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
       for(b=0;b<ms->FDim[1];b++) {

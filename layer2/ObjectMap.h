@@ -32,20 +32,22 @@ Z* -------------------------------------------------------------------
 #define cMapSourceBRIX 6
 #define cMapSourceGRD 7
 #define cMapSourceChempyBrick 8
+#define cMapSourceVMDPlugin 9
 
 typedef struct ObjectMapState {
   CObjectState State;
   int Active;
   CCrystal *Crystal;
-  int Div[3]; /* NOTE: Div is only reliable for maps defined relative to a unit cell */
-  int Min[3],Max[3],FDim[4]; /* Required for all maps */
+  int Div[3]; /* NOTE: Div is only meaningful for maps defined relative to a unit cell */
+  int Min[3],Max[3]; /* valid min and max indices, required. */
+  int FDim[4]; /* Array dimensions with 3 in fourth slot, required */
   int MapSource;
   Isofield *Field;
   float Corner[24];
-  int *Dim;
-  float *Origin;
-  float *Range;
-  float *Grid; /* For maps not defined relative to a unit cell */
+  int *Dim; /* this field is redundant and should be eliminated -- if exists, must match FDim */
+  float *Origin; /* Origin for non-xtal maps */
+  float *Range; /* Range for non-xtal maps */
+  float *Grid; /* Spacing for non-xtal maps */
   float ExtentMin[3],ExtentMax[3];
 } ObjectMapState;
 

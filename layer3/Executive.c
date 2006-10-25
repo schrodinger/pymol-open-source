@@ -60,6 +60,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"main.h"
 #include"Parse.h"
+#include"PlugIOManager.h"
 
 #include"OVContext.h"
 #include"OVLexicon.h"
@@ -1749,7 +1750,7 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
                    char *object_name, 
                    int state, int zoom, 
                    int discrete, int finish, 
-                   int multiplex, int quiet)
+                   int multiplex, int quiet, char *plugin)
 {
   int ok=true;
   int is_string = false;
@@ -1787,6 +1788,9 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
   case cLoadTypeGRDMap:
   case cLoadTypeDXMap:
     is_string = false;
+    break;
+  case cLoadTypeCUBEMap:
+    is_string = true; /* this is a lie: content is actually the filename */
     break;
   case cLoadTypeCGO:
     is_string = true; /* this is a lie: contet is actually an array of floats */
@@ -1910,6 +1914,11 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
         case cLoadTypeCCP4Str:
           obj=(CObject*)ObjectMapLoadCCP4(G, (ObjectMap*)origObj, start_at, eff_state, true, size, quiet);
           break;
+        case cLoadTypeCUBEMap:
+          if(plugin) {
+            obj =(CObject*)PlugIOManagerLoadVol(G, (ObjectMap*)origObj, start_at, eff_state, quiet, plugin);
+          }
+          break;
         case cLoadTypeCGO:
           obj=(CObject*)ObjectCGOFromFloatArray(G,(ObjectCGO*)origObj, 
                                                 (float*)start_at, size, eff_state, quiet);
@@ -1948,8 +1957,13 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
                 ExecutiveUpdateObjectSelection(G,obj);
                 ExecutiveDoZoom(G,origObj,false,zoom,quiet);
               }
+            }
+            switch(obj->type) {
+            case cObjectMolecule:
+            case cObjectMap:
               if(eff_state<0)
                 eff_state = ((ObjectMolecule*)obj)->NCSet-1;
+              break;
             }
             if(n_processed>0) {
               if(!is_string) {
@@ -4164,6 +4178,7 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
                         case cMapSourceFLD:
                         case cMapSourceDesc:
                         case cMapSourceChempyBrick:
+                        case cMapSourceVMDPlugin:
                           {
                             int b;
                             for(b=0;b<3;b++) {

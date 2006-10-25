@@ -2154,7 +2154,7 @@ static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type,
                            object_name, 
                            state-1,  zoom,
                            discrete, finish,
-                           multiplex, quiet);
+                           multiplex, quiet, NULL);
         break;
       default:
         ok=false;
