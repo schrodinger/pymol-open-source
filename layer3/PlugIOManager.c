@@ -327,8 +327,13 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals *G,ObjectMap *obj,
                 (fabs(v->xaxis[2])>R_SMALL8) ||
                 (fabs(v->yaxis[0])>R_SMALL4) ||
                 (fabs(v->yaxis[2])>R_SMALL4) ||
-                (fabs(v->zaxis[1])>R_SMALL4) ||
+                (fabs(v->zaxis[0])>R_SMALL4) ||
                 (fabs(v->zaxis[1])>R_SMALL4) ) {
+
+              dump3f(v->xaxis,"x");
+              dump3f(v->yaxis,"y");
+              dump3f(v->zaxis,"z");
+
               PRINTFB(G,FB_Errors,FB_ObjectMolecule)
                 " ObjectMap-Error: PyMOL only handles XYZ-axes-aligned CUBE files.\n"
                 ENDFB(G);
@@ -377,9 +382,9 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals *G,ObjectMap *obj,
             ms->Origin=Alloc(float,3);
             ms->Range=Alloc(float,3);
 
-            ms->Grid[0] = v->xaxis[0]; /* we only support this special case: orthogonal & cartesian-aligned */
-            ms->Grid[1] = v->yaxis[1];
-            ms->Grid[2] = v->zaxis[2];
+            ms->Grid[0] = v->xaxis[0]/(ms->FDim[0]-1); /* we only support this special case: orthogonal & cartesian-aligned */
+            ms->Grid[1] = v->yaxis[1]/(ms->FDim[1]-1);
+            ms->Grid[2] = v->zaxis[2]/(ms->FDim[2]-1);
 
             {
               int a;
