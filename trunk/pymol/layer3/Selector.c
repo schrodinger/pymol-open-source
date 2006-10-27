@@ -137,7 +137,7 @@ static int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sel
 
 static int SelectorImplicitOr(PyMOLGlobals *G,EvalElem *base); 
 
-static int SelectorGetArrayNCSet(PyMOLGlobals *G,int *array);
+static int SelectorGetArrayNCSet(PyMOLGlobals *G,int *array,int no_dummies);
 
 static int SelectorModulate1(PyMOLGlobals *G,EvalElem *base);
 static int SelectorSelect0(PyMOLGlobals *G,EvalElem *base);
@@ -4430,18 +4430,23 @@ int SelectorGetSeleNCSet(PyMOLGlobals *G,int sele)
   return(result);
 }
 /*========================================================================*/
-int SelectorGetArrayNCSet(PyMOLGlobals *G,int *array)
+int SelectorGetArrayNCSet(PyMOLGlobals *G,int *array,int no_dummies)
 {
   register CSelector *I=G->Selector;
   int a;
   ObjectMolecule *obj;
   int result=0;
-
-  for(a=cNDummyAtoms;a<I->NAtom;a++) 
-	 if(*(array++)) {
-		obj=I->Obj[I->Table[a].model];
-		if(result<obj->NCSet) result=obj->NCSet;
-	 }
+  int start= 0;
+  if(no_dummies)
+    start = cNDummyAtoms;
+  for(a=start;a<I->NAtom;a++) {
+    if(*(array++)) {
+      if(a>=cNDummyAtoms) {
+        obj=I->Obj[I->Table[a].model];
+        if(result<obj->NCSet) result=obj->NCSet;
+      }
+    }
+  }
   return(result);
 }
 /*========================================================================*/
@@ -7132,89 +7137,84 @@ static int SelectorModulate1(PyMOLGlobals *G,EvalElem *base)
   base->sele=Calloc(int,I->NAtom);
   for(a=0;a<I->NAtom;a++) base[0].sele[a]=false;
   ErrChkPtr(G,base->sele);
-  switch(base[1].code)
-	 {
+  switch(base[1].code) {
 	 case SELE_ARD_:
 	 case SELE_EXP_:
 		if(!sscanf(base[2].text,"%f",&dist))
 		  ok=ErrMessage(G,"Selector","Invalid distance.");
-		if(ok)
-		  {
-			 for(d=0;d<I->NCSet;d++)
-				{
-				  n1=0;
-				  for(a=0;a<I->NAtom;a++) {
-					 I->Flag1[a]=false;
-					 at=I->Table[a].atom;
-					 obj=I->Obj[I->Table[a].model];
-                if(d<obj->NCSet) 
-                  cs=obj->CSet[d];
-                else
-                  cs=NULL;
-					 if(cs) {
-                  if(obj->DiscreteFlag) {
-                    if(cs==obj->DiscreteCSet[at])
-                      idx=obj->DiscreteAtmToIdx[at];
-                    else
-                      idx=-1;
-                  } else 
-                    idx=cs->AtmToIdx[at];
-						if(idx>=0) {
-						  copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
-						  I->Flag1[a]=true;
-						  n1++;
-						}
-					 }
-				  }
-				  if(n1) {
-					 map=MapNewFlagged(G,-dist,I->Vertex,I->NAtom,NULL,I->Flag1);
-					 if(map) {
-						MapSetupExpress(map);
-						nCSet=SelectorGetArrayNCSet(G,base[1].sele);
-						for(e=0;e<nCSet;e++) {
-						  for(a=0;a<I->NAtom;a++) {
-							 if(base[1].sele[a])
-								{
-								  at=I->Table[a].atom;
-								  obj=I->Obj[I->Table[a].model];
-                          if(e<obj->NCSet) 
-                            cs=obj->CSet[e];
+		if(ok) {
+          for(d=0;d<I->NCSet;d++) {
+            n1=0;
+            for(a=0;a<I->NAtom;a++) {
+              I->Flag1[a]=false;
+              at=I->Table[a].atom;
+              obj=I->Obj[I->Table[a].model];
+              if(d<obj->NCSet) 
+                cs=obj->CSet[d];
+              else
+                cs=NULL;
+              if(cs) {
+                if(obj->DiscreteFlag) {
+                  if(cs==obj->DiscreteCSet[at])
+                    idx=obj->DiscreteAtmToIdx[at];
+                  else
+                    idx=-1;
+                } else 
+                  idx=cs->AtmToIdx[at];
+                if(idx>=0) {
+                  copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
+                  I->Flag1[a]=true;
+                  n1++;
+                }
+              }
+            }
+            if(n1) {
+              map=MapNewFlagged(G,-dist,I->Vertex,I->NAtom,NULL,I->Flag1);
+              if(map) {
+                MapSetupExpress(map);
+                nCSet=SelectorGetArrayNCSet(G,base[1].sele,false);
+                for(e=0;e<nCSet;e++) {
+                  for(a=0;a<I->NAtom;a++) {
+                    if(base[1].sele[a]) {
+                      at=I->Table[a].atom;
+                      obj=I->Obj[I->Table[a].model];
+                      if(e<obj->NCSet) 
+                        cs=obj->CSet[e];
+                      else
+                        cs=NULL;
+                      if(cs) {
+                        if(obj->DiscreteFlag) {
+                          if(cs==obj->DiscreteCSet[at])
+                            idx=obj->DiscreteAtmToIdx[at];
                           else
-                            cs=NULL;
-								  if(cs) {
-                            if(obj->DiscreteFlag) {
-                              if(cs==obj->DiscreteCSet[at])
-                                idx=obj->DiscreteAtmToIdx[at];
-                              else
-                                idx=-1;
-                            } else 
-                              idx=cs->AtmToIdx[at];
-									 if(idx>=0) {
-										v2 = cs->Coord+(3*idx);
-										MapLocus(map,v2,&h,&k,&l);
-										i=*(MapEStart(map,h,k,l));
-										if(i) {
-										  j=map->EList[i++];
-										  while(j>=0) {
-											 if((!base[0].sele[j])&&
-												 ((base[1].code==SELE_EXP_)
-												  ||(!base[1].sele[j]))) /*exclude current selection */
-												{
-												  if(within3f(I->Vertex+3*j,v2,dist)) base[0].sele[j]=true;
-												}
-											 j=map->EList[i++];
-										  }
-										}
-									 }
-								  }
-								}
-						  }
-						}
-						MapFree(map);
-					 }
-				  }
-				}
-		  }
+                            idx=-1;
+                        } else 
+                          idx=cs->AtmToIdx[at];
+                        if(idx>=0) {
+                          v2 = cs->Coord+(3*idx);
+                          MapLocus(map,v2,&h,&k,&l);
+                          i=*(MapEStart(map,h,k,l));
+                          if(i) {
+                            j=map->EList[i++];
+                            while(j>=0) {
+                              if((!base[0].sele[j])&&
+                                 ((base[1].code==SELE_EXP_)
+                                  ||(!base[1].sele[j]))) { /*exclude current selection */
+                                if(within3f(I->Vertex+3*j,v2,dist)) base[0].sele[j]=true;
+                              }
+                              j=map->EList[i++];
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                MapFree(map);
+              }
+            }
+          }
+        }
 		break;
 
 	 case SELE_EXT_:
@@ -7295,7 +7295,7 @@ static int SelectorModulate1(PyMOLGlobals *G,EvalElem *base)
 					 if(map) {
 
 						MapSetupExpress(map);
-						nCSet=SelectorGetArrayNCSet(G,base[1].sele);
+						nCSet=SelectorGetArrayNCSet(G,base[1].sele,false);
 						for(e=0;e<nCSet;e++) {
 						  for(a=0;a<I->NAtom;a++) {
 							 if(base[1].sele[a])
@@ -9265,7 +9265,7 @@ int SelectorOperator22(PyMOLGlobals *G,EvalElem *base)
              map=MapNewFlagged(G,-dist,I->Vertex,I->NAtom,NULL,I->Flag1);
              if(map) {
                MapSetupExpress(map);
-               nCSet=SelectorGetArrayNCSet(G,base[4].sele);
+               nCSet=SelectorGetArrayNCSet(G,base[4].sele,false);
                for(e=0;e<nCSet;e++) {
                  for(a=0;a<I->NAtom;a++) {
                    if(base[4].sele[a]) {

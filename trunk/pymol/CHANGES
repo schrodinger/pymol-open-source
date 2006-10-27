@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 1.00b13
 
+    * fixed geometry-based atom selection processing bug for last  small objects
+
     * support for some Gaussian cube files (orthognal cartesian-aligned)
 
     * pseudoatoms

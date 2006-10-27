@@ -116,4 +116,6 @@ count_atoms 1TII
 count_atoms 1tii
 
 
+count_atoms HOH`307/ expand 5
+
 /print "END-LOG"
