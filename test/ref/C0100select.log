@@ -160,3 +160,5 @@ PyMOL>count_atoms 1TII
  count_atoms: 5684 atoms
 PyMOL>count_atoms 1tii
  count_atoms: 5684 atoms
+PyMOL>count_atoms HOH`307/ expand 5
+ count_atoms: 12 atoms
