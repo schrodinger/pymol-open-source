@@ -13075,7 +13075,7 @@ static void ExecutiveDraw(Block *block)
   float disabledColor[3] = { 0.25F, 0.25F, 0.25F };
   float lightEdge[3] = {0.6F, 0.6F, 0.6F };
   float darkEdge[3] = {0.35F, 0.35F, 0.35F };
-  float captionColor[3] = {0.2F, 0.8F, 0.2F };
+  float captionColor[3] = {0.3F, 0.9F, 0.3F };
   float toggleColor3[3] = { 0.6F, 0.6F, 0.8F };
 
   SpecRec *rec = NULL;

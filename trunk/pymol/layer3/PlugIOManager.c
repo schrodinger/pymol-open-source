@@ -32,6 +32,7 @@ int PlugIOManagerFree(PyMOLGlobals *G)
 {
   return 1;
 }
+int PlugIOManagerRegister(PyMOLGlobals *G,void *ptr);
 int PlugIOManagerRegister(PyMOLGlobals *G,void *ptr)
 {
   return 1;
@@ -40,17 +41,9 @@ int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
                           char *fname,int frame,
                           int interval,int average,int start,
                           int stop,int max,char *sele,int image,
-                          float *shift,int quiet,char *plugin)
+                          float *shift,int quiet,char *plugin_type)
 {
   
-  return 0;
-}
-int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
-                          char *fname,int frame,
-                          int interval,int average,int start,
-                          int stop,int max,char *sele,int image,
-                          float *shift,int quiet,char *plugin)
-{
   PRINTFB(G,FB_Errors,FB_ObjectMolecule)
     " ObjectMolecule-Error: sorry, VMD Molfile Plugins not compiled into this build.\n"
     ENDFB(G);
@@ -58,12 +51,12 @@ int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
 }
 
 ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals *G,ObjectMap *obj,
-                         char *fname,int state, int quiet,char *plugin_type);
+                         char *fname,int state, int quiet,char *plugin_type)
 {
   PRINTFB(G,FB_Errors,FB_ObjectMolecule)
     " ObjectMap-Error: sorry, VMD Molfile Plugins not compiled into this build.\n"
     ENDFB(G);
-  return NULL:
+  return NULL;
 }
 
 #else
@@ -330,9 +323,10 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals *G,ObjectMap *obj,
                 (fabs(v->zaxis[0])>R_SMALL4) ||
                 (fabs(v->zaxis[1])>R_SMALL4) ) {
 
-              dump3f(v->xaxis,"x");
+              /*              dump3f(v->xaxis,"x");
               dump3f(v->yaxis,"y");
               dump3f(v->zaxis,"z");
+              */
 
               PRINTFB(G,FB_Errors,FB_ObjectMolecule)
                 " ObjectMap-Error: PyMOL only handles XYZ-axes-aligned CUBE files.\n"
