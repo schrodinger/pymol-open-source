@@ -93,7 +93,7 @@ def sum_partial_charges(selection="(all)",quiet=1):
     cmd.iterate(selection,"stored._util_sum_pc=stored._util_sum_pc+partial_charge",quiet=1)
     result = pymol.stored._util_sum_pc
     if not quiet:
-        print " util.sum_partial_charges: sum = %0.3f"%result
+        print " util.sum_partial_charges: sum = %0.4f"%result
     return result
 
 def protein_assign_charges_and_radii(obj_name):

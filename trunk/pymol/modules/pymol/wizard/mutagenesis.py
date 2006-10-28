@@ -2,6 +2,7 @@
 from pymol.wizard import Wizard
 from pymol import cmd
 from chempy import io
+from copy import deepcopy
 
 import pymol
 import os
@@ -50,17 +51,59 @@ class Mutagenesis(Wizard):
         self.rep = default_rep
         residues = self.ind_library.keys()
         residues.extend(['GLY','PRO','ALA'])
+        residues.extend(['HID','HIE','HIP'])
+        residues.extend(['ARGN','LYSN','ASPH','GLUH'])
         residues.sort()
+        res_copy = deepcopy(residues)
+        for a in res_copy:
+            residues.append('NT_'+a)
+            residues.append('CT_'+a)
         self.modes.extend(residues)
-        self.mode_name={}
+        self.mode_label={}
         for a in self.modes:
-            self.mode_name[a] = "-> "+a
-        self.mode_name['current']="No Mutation"
+            self.mode_label[a] = ""+a
+        self.mode_label['current']="No Mutant"
 
         smm = []
-        smm.append([ 2, 'Substitution', '' ])
+        smm.append([ 2, 'Mutant', '' ])
+        smm.append([ 1, 'None', 'cmd.get_wizard().set_mode("current")' ])
+        smm.append([ 1, 'N-Term', [] ])
+        smm.append([ 1, 'C-Term', [] ])
+        smm.append([ 0, '', '' ])
         for a in self.modes:
-            smm.append([ 1, self.mode_name[a], 'cmd.get_wizard().set_mode("'+a+'")'])
+            if a == 'current':
+                pass
+            elif a[0:3]=='NT_':
+                smm[2][2].append([ 1, self.mode_label[a[3:]], 'cmd.get_wizard().set_mode("'+a+'")'])
+            elif a[0:3]=='CT_':
+                smm[3][2].append([ 1, self.mode_label[a[3:]], 'cmd.get_wizard().set_mode("'+a+'")'])
+            else:
+                smm.append([ 1, self.mode_label[a], 'cmd.get_wizard().set_mode("'+a+'")'])
+
+        # group arg, lys, his, glu, asp
+
+        for lst in [ smm, smm[2][2], smm[3][2] ]:
+            for a in 'ARG','LYS','HID','GLU','ASP':
+                ix = 0
+                start = 0
+                stop = 0
+                for b in lst:
+                    if start==0:
+                        if b[1][0:]==a:
+                            start = ix
+                            stop = ix + 1
+                    elif b[1][0:3]==a[0:3] or ( b[1][0:2]==a[0:2] and a[0:2]=='HI' ):
+                        stop = ix + 1
+                    ix = ix + 1
+                if start!=0 and stop!=0:
+                    slice = lst[start:stop]
+                    if a != 'HID':
+                        slice2 = [slice[0] ] + [ [0,'',''] ] + slice[1:]
+                        lst[start:stop] = [ [1, self.mode_label[a] + "... " , slice2 ] ]
+                    else:
+                        slice2 = [ slice[3] ] + [ [0,'',''] ] + slice[1:4]
+                        lst[start:stop] = [ [1, self.mode_label['HIS']+ "... ", slice2 ] ]                        
+                
         self.menu['mode']=smm
 
 
@@ -135,9 +178,13 @@ class Mutagenesis(Wizard):
             cmd.refresh_wizard()
         
     def get_panel(self):
+        if self.mode == 'current':
+            label = 'No Mutant'
+        else:
+            label = 'Mutate to '+self.mode_label[self.mode]
         return [
             [ 1, 'Mutagenesis',''],
-            [ 3, self.mode_name[self.mode],'mode'],
+            [ 3, label,'mode'],
             [ 3, self.rep_name[self.rep],'rep'],
             [ 3, self.dep_name[self.dep],'dep'],                              
             [ 2, 'Apply' , 'cmd.get_wizard().apply()'],         
@@ -230,6 +277,16 @@ class Mutagenesis(Wizard):
             self.prompt = [ 'Select a conformational state, or pick a new residue...' ]
         return self.prompt
 
+    _res_type_xref = {
+        'GLUH' : 'GLU',
+        'ASPH' : 'ASP',
+        'ARGN' : 'ARG',
+        'LYSN' : 'LYS',
+        'HIP' : 'HIS',
+        'HID' : 'HIS',
+        'HIP' : 'HIS'
+        }
+    
     def do_library(self):
         cmd.feedback("push")
         cmd.feedback("disable","selector","everythin")
@@ -249,6 +306,9 @@ class Mutagenesis(Wizard):
             cmd.create(tmp_name,sele_name,1,1)         
         else:
             res_type = self.mode
+            if res_type[0:3] in [ 'NT_', 'CT_' ]:
+                res_type = res_type[3:]
+            res_type = self._res_type_xref.get(res_type, res_type)
             cmd.fragment(string.lower(self.mode),tmp_name)
             cmd.remove("("+tmp_name+" and hydro)")
             # copy identifying information
@@ -264,24 +324,26 @@ class Mutagenesis(Wizard):
             if ((cmd.count_atoms("(%s and n;cb)"%tmp_name)>0) and
                  (cmd.count_atoms("(%s and n;cb)"%sele_name)>0)):
                 cmd.pair_fit("(%s and n;ca)"%tmp_name,
-                                 "(%s and n;ca)"%sele_name,
-                                 "(%s and n;cb)"%tmp_name,
-                                 "(%s and n;cb)"%sele_name,
-                                 "(%s and n;c)"%tmp_name,
-                                 "(%s and n;c)"%sele_name,
-                                 "(%s and n;n)"%tmp_name,
-                                 "(%s and n;n)"%sele_name)
+                             "(%s and n;ca)"%sele_name,
+                             "(%s and n;cb)"%tmp_name,
+                             "(%s and n;cb)"%sele_name,
+                             "(%s and n;c)"%tmp_name,
+                             "(%s and n;c)"%sele_name,
+                             "(%s and n;n)"%tmp_name,
+                             "(%s and n;n)"%sele_name)
             else:
                 cmd.pair_fit("(%s and n;ca)"%tmp_name,
-                                 "(%s and n;ca)"%sele_name,
-                                 "(%s and n;c)"%tmp_name,
-                                 "(%s and n;c)"%sele_name,
-                                 "(%s and n;n)"%tmp_name,
-                                 "(%s and n;n)"%sele_name)
+                             "(%s and n;ca)"%sele_name,
+                             "(%s and n;c)"%tmp_name,
+                             "(%s and n;c)"%sele_name,
+                             "(%s and n;n)"%tmp_name,
+                             "(%s and n;n)"%sele_name)
             # fix the carbonyl position...
             cmd.iterate_state(1,"(%s and n;o)"%sele_name,"stored.list=[x,y,z]")
             cmd.alter_state(1,"(%s and n;o)"%tmp_name,"(x,y,z)=stored.list")
-
+            if cmd.count_atoms("(%s and n;oxt)"%sele_name):
+                cmd.iterate_state(1,"(%s and n;oxt)"%sele_name,"stored.list=[x,y,z]")
+                cmd.alter_state(1,"(%s and n;oxt)"%tmp_name,"(x,y,z)=stored.list")
         cartoon = (cmd.count_atoms("(%s and n;ca and rep cartoon)"%sele_name)>0)
         sticks = (cmd.count_atoms("(%s and n;ca and rep sticks)"%sele_name)>0)
             
