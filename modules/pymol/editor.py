@@ -46,6 +46,8 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
             cmd.remove("(hydro and %s)"%amino_acid)
         if cmd.count_atoms("((%s) and name c)"%amino_acid,quiet=1):
             cmd.edit("((%s) and name c)"%amino_acid)
+        elif cmd.count_atoms("((%s) and name n)"%amino_acid,quiet=1):
+            cmd.edit("((%s) and name n)"%amino_acid)            
     else:
         ss = int(cmd.get_setting_legacy("secondary_structure"))
         if ss:
@@ -71,42 +73,45 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
             cmd.fuse("(%s and name C)"%(tmp_editor),"(pk1)",2)
             if cmd.get_setting_legacy("auto_remove_hydrogens"):
                 cmd.remove("(pkmol and hydro)")
-            if cmd.count_atoms("(name ca,ch3 and neighbor pk1)")==1:                
+            if ((cmd.count_atoms("(name ca,ch3 and neighbor pk1)")==1) and
+                (cmd.count_atoms("(name ca and neighbor pk2)"))):
                 cmd.set_dihedral("(name ca and neighbor pk2)",
                                  "(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
 
-            cmd.select(tmp1,"pk1") # C -1
-            cmd.select(tmp2,"pk2") # N +0
+            if (cmd.select(tmp1,"pk1")==1) and (cmd.select(tmp2,"pk2")==1):
             
-            if 0:
-                if ((cmd.select(tmp3,"(name ca and neighbor "+tmp2+"))")>0) and
-                    (cmd.select(tmp4,"(name ca and neighbor "+tmp1+")")>0)):
-                    cmd.set_dihedral( # PHI
-                        tmp3, # CA +0
-                        tmp2, # N +0 
-                        tmp1, # C -1
-                        tmp4, # CA -1
-                        180.0) # insure that the peptide is planer
+                if 0:
+                    if ((cmd.select(tmp3,"(name ca and neighbor "+tmp2+"))")>0) and
+                        (cmd.select(tmp4,"(name ca and neighbor "+tmp1+")")>0)):
+                        cmd.set_dihedral( # PHI
+                            tmp3, # CA +0
+                            tmp2, # N +0 
+                            tmp1, # C -1
+                            tmp4, # CA -1
+                            180.0) # insure that the peptide is planer
 
-            cmd.set_geometry(tmp2,3,3) # make nitrogen planer
-            cmd.h_fix(tmp2) # fix hydrogen position
+                cmd.set_geometry(tmp2,3,3) # make nitrogen planer
     
-            if ss:
-                if amino_acid[0:3]!='pro':
-                    cmd.set_dihedral( # PHI
-                        "(name c and neighbor (name ca and neighbor "+tmp2+"))", # C
-                        "(name ca and neighbor "+tmp2+")", # CA 
-                        tmp2, # N
-                        tmp1, # C
-                        phi)
-                if ((cmd.select(tmp4,"(name n and neighbor (name ca and neighbor "+tmp1+"))")>0) and
-                    (cmd.select(tmp3,"(name ca and neighbor "+tmp1+")")>0)):
-                    cmd.set_dihedral( # PSI (n-1)
-                        tmp2, # N
-                        tmp1, # C
-                        tmp3, # CA
-                        tmp4, # N
-                        psi)
+                if ss:
+                    if amino_acid[0:3]!='pro':
+                        if ((cmd.select(tmp4,"(name c and neighbor (name ca and neighbor "+tmp2+"))")==1) and
+                            (cmd.select(tmp3,"(name ca and neighbor "+tmp2+")")==1)):
+                            cmd.set_dihedral( # PHI
+                                tmp4, # C
+                                tmp3, # CA 
+                                tmp2, # N
+                                tmp1, # C
+                                phi)
+                    if ((cmd.select(tmp4,"(name n and neighbor (name ca and neighbor "+tmp1+"))")==1) and
+                        (cmd.select(tmp3,"(name ca and neighbor "+tmp1+")")==1)):
+                        cmd.set_dihedral( # PSI (n-1)
+                            tmp2, # N
+                            tmp1, # C
+                            tmp3, # CA
+                            tmp4, # N
+                            psi)
+                cmd.h_fix(tmp2) # fix hydrogen position
+                        
             cmd.delete(tmp1)
             cmd.delete(tmp2)
             cmd.delete(tmp3)
@@ -127,29 +132,35 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
             cmd.fuse("(%s and name N)"%(tmp_editor),"(pk1)",2)
             if cmd.get_setting_legacy("auto_remove_hydrogens"):
                 cmd.remove("(pkmol and hydro)")
-            if cmd.count_atoms("(name ca,ch3 and neighbor pk1)"):
-                cmd.set_dihedral("(name ca and neighbor pk2)",
+            if (cmd.count_atoms("(name ca,ch3 and neighbor pk1)") and
+                cmd.count_atoms("(name ca,ch3 and neighbor pk2)")):
+                cmd.set_dihedral("(name ca,ch3 and neighbor pk2)",
                                  "(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
             cmd.set_geometry("pk1",3,3) # make nitrogen planer
             cmd.h_fix("pk1") # fix hydrogen position            
             if ss:
-                cmd.select(tmp1,"pk1")
-                cmd.select(tmp2,"pk2")
-                if amino_acid[0:3]!='pro':
-                    cmd.set_dihedral( # PHI
-                        tmp2, # C
-                        tmp1, # N
-                        "(name ca and neighbor "+tmp1+")", # CA 
-                        "(name c and neighbor (name ca and neighbor "+tmp1+"))", # C
-                        phi)
-                cmd.set_dihedral( # PSI (n-1)
-                    "(name n and neighbor (name ca and neighbor "+tmp2+"))", # C
-                    "(name ca and neighbor "+tmp2+")", # CA
-                    tmp2, # C
-                    tmp1, # N
-                    psi)
+                if (cmd.select(tmp1,"pk1")==1) and (cmd.select(tmp2,"pk2")==1):
+                    if amino_acid[0:3]!='pro':
+                        if ((cmd.select(tmp3,"(name ca and neighbor "+tmp1+")")==1) and
+                            (cmd.select(tmp4,"(name c and neighbor (name ca and neighbor "+tmp1+"))")==1)):
+                            cmd.set_dihedral( # PHI
+                                tmp2, # C
+                                tmp1, # N
+                                tmp3, # CA 
+                                tmp4, # C
+                                phi)
+                    if ((cmd.select(tmp3,"(name ca and neighbor "+tmp2+")")==1) and
+                        (cmd.select(tmp4,"(name n and neighbor (name ca and neighbor "+tmp2+"))")==1)):
+                        cmd.set_dihedral( # PSI (n-1)
+                            tmp4, # N
+                            tmp3, # CA
+                            tmp2, # C
+                            tmp1, # N
+                            psi)
                 cmd.delete(tmp1)
-                cmd.delete(tmp2)               
+                cmd.delete(tmp2)
+                cmd.delete(tmp3)
+                cmd.delete(tmp4)                               
             sele = ("(name C and (byres neighbor %s) and not (byres %s))"%
                       (tmp_ed_save,tmp_ed_save))
             if cmd.count_atoms(sele,quiet=1):

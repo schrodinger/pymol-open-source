@@ -985,6 +985,11 @@ class Normal(PMGSkin):
                                          command = lambda s=self: s.cmd.do(
             "_ editor.attach_amino_acid('pk1','ala')"))
 
+        self.menuBar.addmenuitem('Residue', 'command', 'Amine',
+                                         label='Amine',
+                                         command = lambda s=self: s.cmd.do(
+            "_ editor.attach_amino_acid('pk1','nhh')"))
+
         self.menuBar.addmenuitem('Residue', 'command', 'Aspartate',
                                          label='Aspartate [Alt-D]',
                                          command = lambda s=self: s.cmd.do(
