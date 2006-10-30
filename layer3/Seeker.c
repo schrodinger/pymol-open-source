@@ -482,6 +482,9 @@ static void SeekerRefresh(PyMOLGlobals *G,CSeqRow *rowVLA)
     int b;
     ObjectMolecule *obj;
 
+    if(sele<0)
+      sele = SelectorIndexByName(G,"_seeker_hilight");
+
     for(b=0;b<nRow;b++) {
       row = rowVLA + b;
       

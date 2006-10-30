@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+Charnge up to 1.00b14
+
+    * improvements to the mutagenesis wizard (caps, charges, & hydrogens).
+
+    * fixed serious reference-thrashing flaw in the molecular editor
+
 Changes up to 1.00b13
 
     * fixed geometry-based atom selection processing bug for last  small objects

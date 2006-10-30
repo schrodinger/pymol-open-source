@@ -365,7 +365,7 @@ class Builder(Frame):
             self.doZoom()
 
     def doZoom(self, *ignore):
-        print "zoom",self.autoZoom.get()
+#        print "zoom",self.autoZoom.get()
         if self.autoZoom.get():
             if "pk1" in cmd.get_names("selections"):
                 cmd.zoom("((neighbor pk1) expand 5)", 5.0)
