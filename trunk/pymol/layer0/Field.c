@@ -82,8 +82,8 @@ CField *FieldNewCopy(PyMOLGlobals *G,CField *src)
 
   {
     int a;
-    I->dim = Alloc(int,src->n_dim);
-    I->stride = Alloc(int,src->n_dim);
+    I->dim = Alloc(unsigned int,src->n_dim);
+    I->stride = Alloc(unsigned int,src->n_dim);
     ok = I->dim && I->stride;
     if(ok) 
       for(a=0;a<src->n_dim;a++) {

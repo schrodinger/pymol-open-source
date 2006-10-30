@@ -37,7 +37,8 @@ def attach_fragment(selection,fragment,hydrogen,anchor):
         cmd.delete(tmp_editor)
         
 def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
-    if not selection in cmd.get_names("selections"):
+    if (selection == 'pk1') and (selection not in cmd.get_names('all')):
+        # create new object 
         if amino_acid in cmd.get_names("objects"):
             print " Error: an object with than name already exists"
             raise QuietException
@@ -63,22 +64,21 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
             else:
                 phi=180.0
                 psi=180.0
-
         cmd.fragment(amino_acid,tmp_editor)
         if cmd.count_atoms("((%s) and elem n)"%selection,quiet=1):
             cmd.select(tmp_ed_save,"(%s)"%selection)
             cmd.iterate("(%s)"%selection,"stored.resv=resv")
             pymol.stored.resi = str(pymol.stored.resv-1)
             cmd.alter(tmp_editor,"resi=stored.resi")
-            cmd.fuse("(%s and name C)"%(tmp_editor),"(pk1)",2)
+            cmd.fuse("(%s and name C)"%(tmp_editor),tmp_ed_save,2)
             if cmd.get_setting_legacy("auto_remove_hydrogens"):
                 cmd.remove("(pkmol and hydro)")
-            if ((cmd.count_atoms("(name ca,ch3 and neighbor pk1)")==1) and
-                (cmd.count_atoms("(name ca and neighbor pk2)"))):
+            if ((cmd.count_atoms("(name ca,ch3 and neighbor ?pk1)")==1) and
+                (cmd.count_atoms("(name ca and neighbor ?pk2)"))):
                 cmd.set_dihedral("(name ca and neighbor pk2)",
                                  "(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
 
-            if (cmd.select(tmp1,"pk1")==1) and (cmd.select(tmp2,"pk2")==1):
+            if (cmd.select(tmp1,"?pk1")==1) and (cmd.select(tmp2,"?pk2")==1):
             
                 if 0:
                     if ((cmd.select(tmp3,"(name ca and neighbor "+tmp2+"))")>0) and
@@ -129,17 +129,29 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
             cmd.iterate("(%s)"%selection,"stored.resv=resv")
             pymol.stored.resi = str(pymol.stored.resv+1)
             cmd.alter(tmp_editor,"resi=stored.resi")
-            cmd.fuse("(%s and name N)"%(tmp_editor),"(pk1)",2)
+            cmd.fuse("(%s and name N)"%(tmp_editor),tmp_ed_save,2)
             if cmd.get_setting_legacy("auto_remove_hydrogens"):
                 cmd.remove("(pkmol and hydro)")
-            if (cmd.count_atoms("(name ca,ch3 and neighbor pk1)") and
-                cmd.count_atoms("(name ca,ch3 and neighbor pk2)")):
+            if (cmd.count_atoms("(name ca,ch3 and neighbor ?pk1)") and
+                cmd.count_atoms("(name ca,ch3 and neighbor ?pk2)")):
                 cmd.set_dihedral("(name ca,ch3 and neighbor pk2)",
                                  "(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
-            cmd.set_geometry("pk1",3,3) # make nitrogen planer
-            cmd.h_fix("pk1") # fix hydrogen position            
+            if "pk1" in cmd.get_names('selections'):
+                cmd.set_geometry("pk1",3,3) # make nitrogen planer
+                cmd.h_fix("pk1") # fix hydrogen position
             if ss:
-                if (cmd.select(tmp1,"pk1")==1) and (cmd.select(tmp2,"pk2")==1):
+                if (cmd.select(tmp1,"?pk1")==1) and (cmd.select(tmp2,"?pk2")==1):
+                    if amino_acid[0:3]=='nhh': # fix amide hydrogens
+                        print "here1"
+                        if ((cmd.select(tmp3,"(name h1 and neighbor "+tmp1+")")==1) and
+                            (cmd.select(tmp4,"(name o and neighbor "+tmp2+")")==1)):
+                            print "here2"
+                            cmd.set_dihedral(
+                                tmp4, # O
+                                tmp2, # C
+                                tmp1, # N
+                                tmp3, # H1
+                                180)
                     if amino_acid[0:3]!='pro':
                         if ((cmd.select(tmp3,"(name ca and neighbor "+tmp1+")")==1) and
                             (cmd.select(tmp4,"(name c and neighbor (name ca and neighbor "+tmp1+"))")==1)):
@@ -171,7 +183,8 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
             print " Error: please pick a nitrogen or carbonyl carbon to grow from."
             cmd.delete(tmp_editor)
             raise QuietException
-      
+        else:
+            print " Error: unable to attach fragment."
     cmd.delete(tmp_editor)
         
 

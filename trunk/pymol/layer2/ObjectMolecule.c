@@ -273,11 +273,11 @@ static void ObjectMoleculeFixSeleHydrogens(ObjectMolecule *I,int sele,int state)
               if(ai1->hydrogen) {
                 for(b=0;b<I->NCSet;b++) { /* iterate through each coordinate set */
                   if(ObjectMoleculeGetAtomVertex(I,b,a,v0) &&
-                     ObjectMoleculeGetAtomVertex(I,b,h_idx,v1)) {
+                     ObjectMoleculeGetAtomVertex(I,b,h_idx,v1)) { /* current direction */
                     float l;
                     subtract3f(v1,v0,sought);
                     l = length3f(sought); /* use the current length */
-                    
+
                     if(ObjectMoleculeFindOpenValenceVector(I,b,a,fixed,
                                                            sought,h_idx)) {
                       scale3f(fixed,l,fixed);
@@ -3281,6 +3281,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele,int state)
 void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,
                         int index1,int mode,int move_flag)
 {
+  PyMOLGlobals *G = I->Obj.G;
   int a,b;
   AtomInfoType *ai0,*ai1,*nai;
   int n,nn;
@@ -3354,8 +3355,10 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,
     for(a=0;a<scs->NIndex;a++) {
       copy3f(scs->Coord+a*3,cs->Coord+a*3);
       a1 = scs->IdxToAtm[a];
-      *(nai+a) = *(ai1+a1);
-      (nai+a)->selEntry=0; /* avoid duplicating selection references -> leads to hangs ! */
+
+      AtomInfoCopy(G,ai1+a1,nai+a);
+      /*      *(nai+a) = *(ai1+a1);  ** unsafe */
+
       if(a1 == at1) {
         (nai+a)->temp1=2; /* clear marks */        
       } else {
@@ -8055,6 +8058,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              ai = I->AtomInfo + a;
              ai->geom=op->i1;
              ai->valence=op->i2;
+             ai->chemFlag = true;
              op->i3++;
              hit_flag=true;
              break;

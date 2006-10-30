@@ -6346,9 +6346,6 @@ static PyMethodDef Cmd_methods[] = {
   {"set_colorection",       CmdSetColorection,       METH_VARARGS },   
   {"set_colorection_name",  CmdSetColorectionName,   METH_VARARGS },   
   {"set_dihe",              CmdSetDihe,              METH_VARARGS },
-  {"set_dihe",              CmdSetDihe,              METH_VARARGS },
-
-  {"set_dihe",              CmdSetDihe,              METH_VARARGS },
   {"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
   {"set_name",              CmdSetName,              METH_VARARGS },
   {"set_geometry",          CmdSetGeometry,          METH_VARARGS },

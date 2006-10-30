@@ -1024,12 +1024,12 @@ void AtomInfoCombine(PyMOLGlobals *G,AtomInfoType *dst,AtomInfoType *src,int mas
   if(mask&cAIC_tt) {
     if(dst->textType) {
       OVLexicon_DecRef(G->Lexicon,dst->textType);
+      dst->textType = 0;
     }
     dst->textType = src->textType;
-  } else {
-    if(src->textType) {
-      OVLexicon_DecRef(G->Lexicon,src->textType);
-    }
+  } else if(src->textType) {
+    OVLexicon_DecRef(G->Lexicon,src->textType);
+    src->textType = 0;
   }
   if(mask&cAIC_ct) dst->customType = src->customType;
   if(mask&cAIC_pc) dst->partialCharge = src->partialCharge;
@@ -1045,8 +1045,12 @@ void AtomInfoCombine(PyMOLGlobals *G,AtomInfoType *dst,AtomInfoType *src,int mas
   /* keep all existing names, identifiers, etc. */
   /* also keep all existing selections,
      colors, masks, and visible representations*/
-  if(src->label) { /* destroy src label if one exists */
+  { 
+    if(src->label) { /* destroy src label if one exists */
       OVLexicon_DecRef(G->Lexicon,src->label);
+      src->label = 0;
+    }
+    /* leaves dst->label untouched */
   }
 }
 /*========================================================================*/
