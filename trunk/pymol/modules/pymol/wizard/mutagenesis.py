@@ -121,7 +121,7 @@ class Mutagenesis(Wizard):
                         slice2 = [slice[0] ] + [ [0,'',''] ] + slice[1:]
                         lst[start:stop] = [ [1, self.mode_label[a] + "... " , slice2 ] ]
                     else:
-                        slice2 = [ slice[3] ] + [ [0,'',''] ] + slice[1:4]
+                        slice2 = [ slice[3] ] + [ [0,'',''] ] + slice[0:3]
                         lst[start:stop] = [ [1, self.mode_label['HIS']+ "... ", slice2 ] ]                        
                 
         self.menu['mode']=smm
