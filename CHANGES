@@ -2,7 +2,11 @@
 CHANGE LOG
 =========================================================================
 
-Charnge up to 1.00b14
+Changes up to 1.00b15
+
+    * fixed bug with dragging back clip plane 
+
+Changes up to 1.00b14
 
     * matrix handling for groups
 
