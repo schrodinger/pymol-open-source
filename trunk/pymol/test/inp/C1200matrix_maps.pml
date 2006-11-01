@@ -37,6 +37,7 @@ isosurf s1, map1, 1.0, 5/, carve=2.1
 ray renderer=2
 
 translate [5,-10,2], object=prot, object_mode=1
+
 rotate x,60,prot,object=prot,object_mode=1
 rotate z,20,prot,object=prot,object_mode=1
 rotate y,30,prot,object=prot,object_mode=1

@@ -449,6 +449,13 @@ void identity44f ( float *m1 )
   for(a=0;a<16;a++) m1[a]=_0;
   for(a=0;a<16;a=a+5) m1[a]=_1;
 }
+void identity44d ( double *m1 )
+{
+  int a;
+  for(a=0;a<16;a++) m1[a]=_d0;
+  for(a=0;a<16;a=a+5) m1[a]=_d1;
+}
+
 
 void copy44f ( float *src, float *dst )
 {
@@ -694,6 +701,15 @@ void transform44f3f (float *m1, float *m2, float *m3)
 }
 
 void transform44d3f (double *m1, float *m2, float *m3)
+{
+  register double m2r0 = m2[0];
+  register double m2r1 = m2[1];
+  register double m2r2 = m2[2];
+  m3[0] = (float) (m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2 + m1[ 3]);
+  m3[1] = (float) (m1[ 4] * m2r0 + m1[ 5] * m2r1 + m1[ 6] * m2r2 + m1[ 7]);
+  m3[2] = (float) (m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2 + m1[11]);
+}
+void transform44d3d (double *m1, double *m2, double *m3)
 {
   register double m2r0 = m2[0];
   register double m2r1 = m2[1];

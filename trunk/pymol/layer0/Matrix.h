@@ -101,6 +101,9 @@ void MatrixTransformR44fN3f( unsigned int n, float *q, float *m, float *p );
 int MatrixInvTransformExtentsR44d3f(double *matrix, 
                                   float *old_min, float *old_max,
                                   float *new_min, float *new_max);
+int MatrixTransformExtentsR44d3f(double *matrix, 
+                                 float *old_min, float *old_max,
+                                 float *new_min, float *new_max);
 
 typedef long int integer;
 typedef double doublereal;

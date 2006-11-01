@@ -60,6 +60,9 @@ if __name__=='pymol.creating':
         "toggle" : 5,
         "auto" : 6,
         "ungroup" : 7,
+        "empty" : 8,
+        "purge" : 9,
+        "excise" : 10,
         }
 
     group_action_sc =  Shortcut(group_action_dict.keys())
@@ -611,7 +614,8 @@ SEE ALSO
                 pos = (float(pos[0]), # tuple-ize
                        float(pos[1]),
                        float(pos[2]))
-            if len(selection): selection = "("+str(selection)+")"
+            if len(selection.split())>1:
+                selection = "("+str(selection)+")"
             r = _cmd.pseudoatom(str(object), str(selection),
                                 str(name), str(resn), str(resi), str(chain),
                                 str(segi), str(elem), float(vdw), int(hetatm),

@@ -96,6 +96,9 @@ int ExecutiveCheckGroupMembership(PyMOLGlobals *G,int list_id,CObject *obj); /* 
 #define cExecutiveGroupToggle 5
 #define cExecutiveGroupAuto 6
 #define cExecutiveGroupUngroup 7
+#define cExecutiveGroupEmpty 8
+#define cExecutiveGroupPurge 9
+#define cExecutiveGroupExcise 10
 
 int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quiet);
 
@@ -300,7 +303,8 @@ int ExecutiveValidName(PyMOLGlobals *G,char *name);
 int ExecutiveValidNamePattern(PyMOLGlobals *G,char *name);
 int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state);
 int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
-                                      char *s1,int log,float *matrix,int homogenous);
+                                      char *s1,int log,float *matrix,
+                                      int homogenous,int global);
 int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float *ttt,int homogenous);
 int ExecutiveTranslateAtom(PyMOLGlobals *G,char *sele,float *v,int state,int mode,int log);
 void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode);
@@ -316,7 +320,7 @@ int ExecutiveIdentifyObjects(PyMOLGlobals *G,char *s1,int mode,int **indexVLA,Ob
 int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt,int reverse_order);
 int ExecutiveSetObjectTTT(PyMOLGlobals *G,char *name,float *ttt,int state,int quiet);
 int ExecutiveGetObjectTTT(PyMOLGlobals *G,char *name,float **ttt,int state,int quiet);
-int ExecutiveGetObjectMatrix(PyMOLGlobals *G,char *name,int state,double **matrix);
+int ExecutiveGetObjectMatrix(PyMOLGlobals *G,char *name,int state,double **matrix,int incl_ttt);
 int ExecutiveSetObjectMatrix(PyMOLGlobals *G,char *name,int state,double *matrix);
 
 int ExecutiveSetGeometry(PyMOLGlobals *G,char *s1,int geom,int valence);
@@ -375,6 +379,13 @@ int ExecutiveAngle(PyMOLGlobals *G,float *result,
 int ExecutiveDihedral(PyMOLGlobals *G,float *result,
                       char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
                       int labels,int reset,int zoom,int quiet,int state);
+
+int ExecutiveMatrixCopy2(PyMOLGlobals *G,
+                         CObject *source_obj, CObject *target_obj,
+                         int   source_mode,  int target_mode, 
+                         int   source_state, int target_state,
+                         int   target_undo,
+                         int   log,          int quiet);
 
 int ExecutiveMatrixCopy(PyMOLGlobals *G,
                              char *source_name, char *target_name,

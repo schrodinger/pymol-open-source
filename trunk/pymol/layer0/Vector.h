@@ -110,6 +110,7 @@ void copy44d ( double *src, double *dst );
 void identity33f ( float *m1 );
 void identity33d( double *m);
 void identity44f ( float *m1 );
+void identity44d ( double *m1 );
 
 void copy44f44f ( float *src, float *dst );
 void copy44d44f ( double *src, float *dst );
@@ -134,6 +135,7 @@ void transform44f3f ( float  *m1, float  *m2,  float  *m3 );
 void transform44f4f ( float  *m1, float  *m2,  float  *m3 );
 
 void transform44d3f ( double  *m1, float  *m2,  float  *m3 );
+void transform44d3d (double *m1, double *m2, double *m3);
 void inverse_transformC44f3f (float *m1, float *m2, float *m3);
 void inverse_transform44f3f (float *m1, float *m2, float *m3);
 void inverse_transform44d3f (double *m1, float *m2, float *m3);

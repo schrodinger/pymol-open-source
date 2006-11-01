@@ -342,6 +342,9 @@ static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
 {
   int a;
   int once_flag=true;
+  if(level>=cRepInvExtents) {
+    I->Obj.ExtentFlag=false;
+  }
   for(a=0;a<I->NState;a++) {
     if(state<0) once_flag=false;
     if(!once_flag) state=a;
@@ -711,6 +714,11 @@ static void ObjectMeshUpdate(ObjectMesh *I)
     }
     SceneInvalidate(I->Obj.G);
   }
+  if(!I->Obj.ExtentFlag) {
+    ObjectMeshRecomputeExtent(I);
+    if(I->Obj.ExtentFlag)
+      SceneInvalidate(I->Obj.G);
+  }
 }
 
 static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
@@ -728,7 +736,7 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
   int a=0;
   ObjectMeshState *ms = NULL;
 
-  ObjectPrepareContext(&I->Obj,ray);
+   ObjectPrepareContext(&I->Obj,ray);
   
   if(state>=0) 
     if(state<I->NState) 
@@ -832,6 +840,8 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
                 CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
                             I->Obj.Setting,NULL,info);
               
+
+              glDisable(GL_LIGHTING); 
               SceneResetNormal(I->Obj.G,false);
               ObjectUseColor(&I->Obj);
               use_dlst = (int)SettingGet(I->Obj.G,cSetting_use_display_lists);
@@ -879,6 +889,7 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
                   glEndList();
                 }
               }
+              glEnable(GL_LIGHTING);
             }
           }
         }
@@ -1044,6 +1055,18 @@ void ObjectMeshRecomputeExtent(ObjectMesh *I)
       }
     }
   }
+
   I->Obj.ExtentFlag=extent_flag;
+
+  if(I->Obj.TTTFlag && I->Obj.ExtentFlag) {
+    float *ttt;
+    double tttd[16];
+    if(ObjectGetTTT(&I->Obj,&ttt,-1)) {
+      convertTTTfR44d(ttt,tttd);
+      MatrixTransformExtentsR44d3f(tttd,
+                                   I->Obj.ExtentMin,I->Obj.ExtentMax,
+                                   I->Obj.ExtentMin,I->Obj.ExtentMax);
+    }
+  }
 }
 

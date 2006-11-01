@@ -65,6 +65,45 @@ int MatrixInvTransformExtentsR44d3f(double *matrix,
   copy3d3f(out_max,new_max);
   return 1;
 }
+int MatrixTransformExtentsR44d3f(double *matrix, 
+                              float *old_min, float *old_max,
+                              float *new_min, float *new_max)
+{
+  /* just brute-forcing this for now... */
+  int a;
+  int c;
+
+    
+  double inp_min[3],inp_max[3];
+  double out_min[3],out_max[3];
+  double inp_tst[3],out_tst[3];
+
+  if(!matrix) 
+    return 0;
+
+  copy3f3d(old_min,inp_min);
+  copy3f3d(old_max,inp_max);
+  
+  for(c=0;c<8;c++) {
+    inp_tst[0] = c&0x1 ? inp_min[0] : inp_max[0];
+    inp_tst[1] = c&0x2 ? inp_min[1] : inp_max[1];
+    inp_tst[2] = c&0x4 ? inp_min[2] : inp_max[2];
+
+    transform44d3d(matrix,inp_tst,out_tst);
+    if(!c) {
+      copy3d(out_tst,out_max);
+      copy3d(out_tst,out_min);
+    } else {
+      for(a=0;a<3;a++) {
+        if(out_min[a]>out_tst[a]) out_min[a] = out_tst[a];
+        if(out_max[a]<out_tst[a]) out_max[a] = out_tst[a];
+      }
+    }
+  }
+  copy3d3f(out_min,new_min);
+  copy3d3f(out_max,new_max);
+  return 1;
+}
 
 #if 0
 /* currently unused */

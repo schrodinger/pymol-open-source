@@ -3669,7 +3669,7 @@ int SelectorGetSingleAtomVertex(PyMOLGlobals *G,int sele,int state,float *v)
   int index;
   int found_it = false;
   if(SelectorGetSingleAtomObjectIndex(G,sele,&obj,&index))
-    found_it = ObjectMoleculeGetAtomVertex(obj,state,index,v);
+    found_it = ObjectMoleculeGetAtomTxfVertex(obj,state,index,v);
   return(found_it);
 }
 /*========================================================================*/
