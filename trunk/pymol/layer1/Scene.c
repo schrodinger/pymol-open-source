@@ -4678,12 +4678,14 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             I->Front-=(((float)y)-I->LastY)/10;
             if(I->Front>I->Back)
               I->Front=I->Back+cSliceMin;
-            I->FrontSafe = GetFrontSafe(I->Front,I->Back);
-            I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
             I->LastY=y;
             SceneInvalidate(G);
             moved_flag=true;
 		  }
+        if(moved_flag) {
+          I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+          I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
+        }
 		break;
       case cButModeClipN:
 		if(I->LastX!=x)
