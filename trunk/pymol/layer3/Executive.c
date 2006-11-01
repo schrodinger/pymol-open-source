@@ -13727,7 +13727,7 @@ static void ExecutiveDraw(Block *block)
                       p++;
                       q++;
                     }
-                    if((*p)&&(!*q)) {
+                    if((*p)&&(!*q)&&(*p=='.')) {
                       hidden_prefix = true;
                       c=p;
                     }
