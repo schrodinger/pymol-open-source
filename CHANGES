@@ -4,7 +4,9 @@ CHANGE LOG
 
 Charnge up to 1.00b14
 
-    * default matrix_mode is now 1 (hope this doesn't break much stuff!)
+    * matrix handling for groups
+
+    * bug fixes for matrix_mode=1, but more remain so 0 stays the default
 
     * improvements to the mutagenesis wizard (caps, charges, & hydrogens).
 
