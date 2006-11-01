@@ -70,11 +70,14 @@ if __name__=='pymol.creating':
     def group(name,members="",action='auto',quiet=1):
         r = DEFAULT_ERROR        
         action = group_action_dict[group_action_sc.auto_err(str(action),'group action')]
+        if name=='all': name='*'
         if action==6:
             if len(members):
                 action=1
-            else:
+            elif (name in cmd.get_names()) or ('*' in name):
                 action=5
+            else:
+                action=1
         try:
             lock()
             r = _cmd.group(str(name),str(members),int(action),int(quiet))
