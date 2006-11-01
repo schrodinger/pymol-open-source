@@ -77,7 +77,6 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
                 (cmd.count_atoms("(name ca and neighbor ?pk2)"))):
                 cmd.set_dihedral("(name ca and neighbor pk2)",
                                  "(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
-
             if (cmd.select(tmp1,"?pk1")==1) and (cmd.select(tmp2,"?pk2")==1):
             
                 if 0:
@@ -94,14 +93,17 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
     
                 if ss:
                     if amino_acid[0:3]!='pro':
-                        if ((cmd.select(tmp4,"(name c and neighbor (name ca and neighbor "+tmp2+"))")==1) and
-                            (cmd.select(tmp3,"(name ca and neighbor "+tmp2+")")==1)):
+                        if ((cmd.select(tmp4,
+                                        "((!r;pro) and name c and neighbor (name ca and neighbor "
+                                        +tmp2+"))")==1) and
+                            (cmd.select(tmp3,"((!r;pro) and name ca and neighbor "+tmp2+")")==1)):
                             cmd.set_dihedral( # PHI
                                 tmp4, # C
                                 tmp3, # CA 
                                 tmp2, # N
                                 tmp1, # C
                                 phi)
+
                     if ((cmd.select(tmp4,"(name n and neighbor (name ca and neighbor "+tmp1+"))")==1) and
                         (cmd.select(tmp3,"(name ca and neighbor "+tmp1+")")==1)):
                         cmd.set_dihedral( # PSI (n-1)
