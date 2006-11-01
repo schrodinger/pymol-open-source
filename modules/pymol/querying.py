@@ -112,26 +112,6 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
-    def transform_object(name,matrix,state=0,log=0,sele=''):
-        r = DEFAULT_ERROR
-        try:
-            lock()
-            r = _cmd.transform_object(str(name),int(state)-1,list(matrix),int(log),str(sele))
-        finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
-        return r
-
-    def translate_atom(sele1,v0,v1,v2,state=0,mode=0,log=0):
-        r = DEFAULT_ERROR
-        sele1 = selector.process(sele1)
-        try:
-            lock()
-            r = _cmd.translate_atom(str(sele1),float(v0),float(v1),float(v2),int(state)-1,int(mode),int(log))
-        finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
-        return r
 
     def angle(name=None,selection1="(pk1)",selection2="(pk2)",selection3="(pk3)", 
                      mode=None,label=1,reset=0,zoom=0,state=0,quiet=1):

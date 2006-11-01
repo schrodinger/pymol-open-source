@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 
 #define cCartoon_skip_helix -2
 #define cRepAll       -1
+#define cRepNone      -2
 
 /* WARNING: don't change these -- you'll break sessions!
    (you can add to them however, I think) */
@@ -63,6 +64,8 @@ Z* -------------------------------------------------------------------
  * These used to be used just for graphics, but are now
  * used by the molecular editor as well */
 
+/* precompted extents (can change if matrix changes) */
+#define cRepInvExtents 5
 /* invalidate external atom colors */
 #define cRepInvExtColor  10
 /* invalidate atom colors */

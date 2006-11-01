@@ -4,6 +4,8 @@ CHANGE LOG
 
 Charnge up to 1.00b14
 
+    * default matrix_mode is now 1 (hope this doesn't break much stuff!)
+
     * improvements to the mutagenesis wizard (caps, charges, & hydrogens).
 
     * fixed serious reference-thrashing flaw in the molecular editor

@@ -2372,11 +2372,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   int (*set_color)(CSetting *I,int index, char *value) = SettingSet_color;
   int (*set_s)(CSetting *I,int index, char *value) = SettingSet_s;
 
-  SettingUniqueInit(G);
-
-
   if(alloc || !I) {
     I=(G->Setting=Calloc(CSetting,1));
+    SettingUniqueInit(G);
     SettingInit(G,I);
   }
 
@@ -3204,10 +3202,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_opaque_background,1);
   set_b(I,cSetting_draw_frames,0);
   set_b(I,cSetting_show_alpha_checker,0);
-  set_i(I,cSetting_matrix_mode,0); /* 0: coordinates, 
-                                      1: per-object matrices (TTTs)
-                                      2: per-state matrices, 
-                                      3: per-group matrices (to come) */
+  set_i(I,cSetting_matrix_mode,0); /* 0: coordinates (pre-1.0 legacy default mode)
+                                      1: per-object matrices (TTTs: version 1.0 default mode?)
+                                      2: per-state matrices (partially implemented)
+                                      3: per-group matrices (may come in the future) */
   set_b(I,cSetting_editor_auto_origin,1); 
   set_s(I,cSetting_session_file, "");
   set_f(I,cSetting_cgo_transparency, 0.0F); 

@@ -1294,9 +1294,16 @@ static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
   if(ok) {
     if(PConvPyListToFloatArrayInPlace(m,matrix,16)>0) {
       APIEntry();
-      ok = ExecutiveTransformObjectSelection(TempPyMOLGlobals,name,
-                                             state,sele,log,matrix,
-                                             homo);
+      {
+        int matrix_mode = SettingGetGlobal_b(TempPyMOLGlobals,cSetting_matrix_mode);
+        if((matrix_mode==0)||(sele[0]!=0)) {
+          ok = ExecutiveTransformObjectSelection(TempPyMOLGlobals,name,
+                                                 state,sele,log,matrix,
+                                                 homo,true);
+        } else {
+          ok = ExecutiveCombineObjectTTT(TempPyMOLGlobals,name,matrix,false);          
+        }
+      }
       APIExit();
     } else {
       PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Errors)
@@ -2235,10 +2242,16 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
           obj=(CObject*)ObjectMeshFromBox(TempPyMOLGlobals,(ObjectMesh*)origObj,mapObj,
                                           map_state,state,mn,mx,lvl,dotFlag,
                                           carve,vert_vla);
+
+          /* copy the map's TTT */
+          ExecutiveMatrixCopy2(TempPyMOLGlobals, 
+                               mObj, obj, 1, 1, 
+                               -1,-1, false, 0, quiet);
+
           if(!origObj) {
             ObjectSetName(obj,str1);
-            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,-1,false);
-          }
+            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,false,false);
+          }          
           
           if(SettingGet(TempPyMOLGlobals,cSetting_isomesh_auto_state))
             if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
@@ -2653,6 +2666,11 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
           obj=(CObject*)ObjectSurfaceFromBox(TempPyMOLGlobals,(ObjectSurface*)origObj,mapObj,map_state,
                                              state,mn,mx,lvl,dotFlag,
                                              carve,vert_vla,side);
+          /* copy the map's TTT */
+          ExecutiveMatrixCopy2(TempPyMOLGlobals, 
+                               mObj, obj, 1, 1, 
+                               -1,-1, false, 0, quiet);
+
           if(!origObj) {
             ObjectSetName(obj,str1);
             ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,-1,false);
@@ -4208,7 +4226,7 @@ static PyObject *CmdGetObjectMatrix(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&name,&state);
   
   APIEntry();
-  found = ExecutiveGetObjectMatrix(TempPyMOLGlobals,name,state,&history);
+  found = ExecutiveGetObjectMatrix(TempPyMOLGlobals,name,state,&history,true);
   APIExit();
   if(found) {
     if(history) 

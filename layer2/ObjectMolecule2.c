@@ -127,12 +127,18 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
     start_state = ObjectGetCurrentState(&I->Obj,true);
     stop_state = start_state+1;
   } else { /* all states */
-    start_state = 0;
-    stop_state = SelectorCountStates(G,sele_index);
-    if(state==-3)
-      extant_only = true;
+    if(sele_index>=0) {
+      start_state = 0;
+      stop_state = SelectorCountStates(G,sele_index);
+      if(state==-3)
+        extant_only = true;
+    } else {
+      start_state = 0;
+      stop_state = ExecutiveCountStates(G,cKeywordAll);
+      if(stop_state<1)
+        stop_state = 1;
+    }
   }
-
   {
   /* match existing properties of the old atom */
     int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);

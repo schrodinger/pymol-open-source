@@ -1261,7 +1261,8 @@ NOTES
                     r=_cmd.translate_object_ttt(str(object),shift)
                 finally:
                     unlock(r)
-            elif object_mode==1: # transform object coordinates & history matrix
+            elif object_mode==1: # either updates TTT or coordinates & history
+                     # depending on the current matrix mode
                 matrix = [1.0, 0.0, 0.0, shift[0],
                           0.0, 1.0, 0.0, shift[1],
                           0.0, 0.0, 1.0, shift[2],
@@ -1559,7 +1560,7 @@ COMMON USAGE
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def matrix_reset(name, state=1, mode=0, log=0, quiet=1):
+    def matrix_reset(name, state=1, mode=-1, log=0, quiet=1):
         r = DEFAULT_ERROR
         try:
             lock()

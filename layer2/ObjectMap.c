@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"Vector.h"
 #include"PyMOLGlobals.h"
+#include"Matrix.h"
 
 
 
@@ -1475,6 +1476,18 @@ void ObjectMapUpdateExtents(ObjectMap *I)
       }
     }
   }
+
+  if(I->Obj.TTTFlag && I->Obj.ExtentFlag) {
+    float *ttt;
+    double tttd[16];
+    if(ObjectGetTTT(&I->Obj,&ttt,-1)) {
+      convertTTTfR44d(ttt,tttd);
+      MatrixTransformExtentsR44d3f(tttd,
+                                   I->Obj.ExtentMin,I->Obj.ExtentMax,
+                                   I->Obj.ExtentMin,I->Obj.ExtentMax);
+    }
+  }
+
   PRINTFD(I->Obj.G,FB_ObjectMap)
     " ObjectMapUpdateExtents-DEBUG: ExtentFlag %d\n",I->Obj.ExtentFlag
     ENDFD;
@@ -1539,6 +1552,18 @@ static void ObjectMapFree(ObjectMap *I) {
 }
 
 static void ObjectMapUpdate(ObjectMap *I) {
+  if(!I->Obj.ExtentFlag) {
+    ObjectMapUpdateExtents(I);
+    if(I->Obj.ExtentFlag)
+      SceneInvalidate(I->Obj.G);
+  }
+}
+
+static void ObjectMapInvalidate(ObjectMap *I,int rep,int level,int state)
+{
+  if(level>=cRepInvExtents) {
+    I->Obj.ExtentFlag=false;
+  }
   SceneInvalidate(I->Obj.G);
 }
 
@@ -1667,7 +1692,7 @@ ObjectMap *ObjectMapNew(PyMOLGlobals *G)
   I->Obj.fFree = (void (*)(struct CObject *))ObjectMapFree;
   I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectMapUpdate;
   I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectMapRender;
-
+  I->Obj.fInvalidate =(void (*)(struct CObject *,int,int,int))ObjectMapInvalidate;  
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMapGetNStates;
 
   return(I);

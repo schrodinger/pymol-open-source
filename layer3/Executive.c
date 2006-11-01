@@ -75,6 +75,7 @@ Z* -------------------------------------------------------------------
 #define cLeftButSele "lb"
 #define cIndicateSele "indicate"
 
+
 typedef struct SpecRec {
   int type;
   WordType  name; /*only used for selections*/
@@ -151,6 +152,11 @@ static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name);
 static int ExecutiveDrag(Block *block,int x,int y,int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
+static int ExecutiveSetObjectMatrix2(PyMOLGlobals *G,CObject *obj,int state,double *matrix);
+static int ExecutiveGetObjectMatrix2(PyMOLGlobals *G,CObject *obj,int state,double **matrix, int incl_ttt);
+int ExecutiveTransformObjectSelection2(PyMOLGlobals *G,CObject *obj,int state,
+                                       char *s1,int log,float *matrix,
+                                       int homogenous,int global);
 
 int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
                         char *name, char *resn, char *resi, char *chain,
@@ -163,12 +169,27 @@ int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
   ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G,object_name);
   int is_new = false;
   int sele_index = -1;
+  float local_pos[3];
 
-  if(sele[0]) {
+  if(sele && sele[0]) {
+    if(WordMatch(G,cKeywordCenter,sele,1)<0) {
+      sele = NULL;
+      SceneGetPos(G,local_pos);
+      pos = local_pos;
+    } else if(WordMatch(G,cKeywordOrigin,sele,1)<0) {
+      sele = NULL;
+      SceneOriginGet(G,local_pos);
+      pos = local_pos;
+    }
+  }
+
+  if(sele && sele[0]) {
     sele_index=SelectorIndexByName(G,sele);    
     if(sele_index<0) {
       ok = false;
-      /* complain */
+      PRINTFB(G,FB_Executive,FB_Errors)
+        " Pseudoatom-Error: invalid selection\n"
+        ENDFB(G);
     }
   }
   if(ok) {
@@ -535,7 +556,11 @@ int ExecutiveValidNamePattern(PyMOLGlobals *G,char *name)
 
 }
 
-static void ExecutiveExpandGroupsInList(PyMOLGlobals *G,int list_id)
+#define cExecNoExpand false
+#define cExecExpandGroups true
+#define cExecExpandKeepGroups 2
+
+static void ExecutiveExpandGroupsInList(PyMOLGlobals *G,int list_id,int expand_groups)
 {
   register CExecutive *I = G->Executive;
   CTracker *I_Tracker= I->Tracker;  
@@ -569,7 +594,7 @@ static void ExecutiveExpandGroupsInList(PyMOLGlobals *G,int list_id)
     }
   }
   /* now purge all groups from the expanded list */
-  {
+  if(expand_groups != cExecExpandKeepGroups) {
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     int cand_id;
     while( (cand_id = TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec)) ) {
@@ -630,7 +655,7 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals *G,char *name,
   if(matcher) WordMatcherFree(matcher);
   if(iter_id) TrackerDelIter(I->Tracker, iter_id);
   if(group_found && expand_groups) {
-    ExecutiveExpandGroupsInList(G,result);
+    ExecutiveExpandGroupsInList(G,result,expand_groups);
   }
   return result;
 }
@@ -649,7 +674,7 @@ int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quie
       ok=false;
     }
   } else {
-    if(!obj) {
+    if((!obj)&&(action==cExecutiveGroupAdd)) {
       obj = (CObject*)ObjectGroupNew(G);
       if(obj) {
         ObjectSetName(obj,name);
@@ -657,20 +682,98 @@ int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quie
       }
     }
   }
-  if((action==7)&&(!members[0])) {
-    CTracker *I_Tracker= I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G,name,true,false);
-    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-    SpecRec *rec;
-    
-    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
-      if(rec) {
-        rec->group_name[0]=0;
+  if((!members[0])&&((action == cExecutiveGroupOpen)||
+                     (action == cExecutiveGroupClose)||
+                     (action == cExecutiveGroupUngroup)||
+                     (action == cExecutiveGroupToggle)||
+                     (action == cExecutiveGroupEmpty)||
+                     (action == cExecutiveGroupPurge)||
+                     (action == cExecutiveGroupExcise))) {
+    ExecutiveUpdateGroups(G,false);
+    {
+      CTracker *I_Tracker= I->Tracker;
+      int list_id = ExecutiveGetNamesListFromPattern(G,name,true,false);
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+      SpecRec *rec;
+      
+      while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+        if(rec) {
+          ObjectGroup *objGroup = NULL;
+          if((rec->type == cExecObject) && 
+             (rec->obj->type == cObjectGroup)) {
+            objGroup = (ObjectGroup*)rec->obj;
+          }
+          
+          switch(action) {
+          case cExecutiveGroupUngroup:
+            rec->group_name[0]=0;
+            break;
+          case cExecutiveGroupOpen:
+            if(objGroup)
+              objGroup->OpenOrClosed = 1;            
+            break;
+          case cExecutiveGroupClose:
+            if(objGroup)
+              objGroup->OpenOrClosed = 0;
+            break;
+          case cExecutiveGroupToggle:
+            if(objGroup) 
+              objGroup->OpenOrClosed = !objGroup->OpenOrClosed;
+            break;
+          case cExecutiveGroupEmpty:
+            if(objGroup) {
+              SpecRec *rec2 = NULL;
+              while(ListIterate(I->Spec,rec2,next)) {
+                if((rec2->group == rec) || WordMatchExact(G,rec2->group_name,rec->name,true)) {
+                  rec2->group = NULL;
+                  rec2->group_name[0] = 0;
+                }
+              }
+            }
+            break;
+          case cExecutiveGroupPurge:
+            if(objGroup) {
+              SpecRec *rec2 = NULL;
+              while(ListIterate(I->Spec,rec2,next)) {
+                if((rec2->group == rec) || WordMatchExact(G,rec2->group_name,rec->name,true)) {
+                  ExecutiveDelete(G,rec2->name);
+                  rec2 = NULL; /* restart search (danger order N^2) */
+                }
+              }
+            }
+            break;
+          case cExecutiveGroupExcise:
+            if(objGroup) {
+
+              if(rec->group_name[0]) {
+                /* cascade group members up to the surrounding group */
+                SpecRec *rec2 = NULL;
+                while(ListIterate(I->Spec,rec2,next)) {
+                  if((rec2->group == rec) ||
+                     WordMatch(G,rec->name,rec2->group_name,true)) {
+                    strcpy(rec2->group_name,rec->group_name);
+                  }
+                }
+              } else if((rec->type==cExecObject)&&(rec->obj->type == cObjectGroup)) {
+                /* and/or delete their group membership */
+                SpecRec *rec2 = NULL;
+                while(ListIterate(I->Spec,rec2,next)) {
+                  if((rec2->group == rec) ||
+                     WordMatch(G,rec->name,rec2->group_name,true)) {
+                    rec2->group_name[0] = 0;
+                  }
+                }
+              }
+              ExecutiveDelete(G,rec->name);
+            }
+            break;
+          }
+        }
       }
+      TrackerDelList(I_Tracker, list_id);
+      TrackerDelIter(I_Tracker, iter_id);
+      ExecutiveInvalidateGroups(G,true);
     }
-    TrackerDelList(I_Tracker, list_id);
-    TrackerDelIter(I_Tracker, iter_id);
-    ExecutiveInvalidateGroups(G,true);
   } else {
     if(obj && (obj->type==cObjectGroup)) {
       ObjectGroup *objGroup = (ObjectGroup*)obj;
@@ -771,6 +874,168 @@ int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int q
   return 1;
 }
 
+int ExecutiveMatrixCopy2(PyMOLGlobals *G,
+                         CObject *source_obj, CObject *target_obj,
+                         int   source_mode,  int target_mode, 
+                         int   source_state, int target_state,
+                         int   target_undo,
+                         int   log,          int quiet)
+{
+  /*  mode 0: raw coordinates, as per the txf history
+      mode 1: object TTT matrix
+      mode 2: state matrix */
+
+  int ok = true;
+  int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
+  int copy_ttt_too = false;
+  if((source_mode<0)&&(target_mode<0)) {
+    copy_ttt_too = true;
+  }
+  if(source_mode<0) 
+    source_mode = matrix_mode;
+  if(target_mode<0)
+    target_mode = matrix_mode;
+  
+  switch(source_mode) {
+  case 0: /* txf history is the source matrix */
+    { 
+      double *history = NULL;
+      int found = ExecutiveGetObjectMatrix2(G,source_obj,source_state,&history,false);
+      if(found) {
+        switch(target_mode) {
+        case 0: /* apply changes to coordinates in the target object */
+          {
+            double temp_inverse[16];
+            if(target_undo) {
+              double *target_history = NULL;
+              int target_found =  ExecutiveGetObjectMatrix2(G,source_obj,
+                                                            target_state,
+                                                            &target_history,
+                                                            false);
+              if(target_found && target_history) {
+                invert_special44d44d(target_history, temp_inverse);
+                if(history) {
+                  right_multiply44d44d(temp_inverse,history);
+                  history = temp_inverse;
+                } else {
+                  history = temp_inverse;
+                }
+              }
+              {
+                float historyf[16];
+                if(history) {
+                  convert44d44f(history,historyf);
+                } else {
+                  identity44f(historyf);
+                }
+                ExecutiveTransformObjectSelection2(G,target_obj, target_state, 
+                                                  "",log,historyf,true,false);
+              }
+            }
+            if(copy_ttt_too) {
+              float *tttf;
+              int found = ObjectGetTTT(source_obj,&tttf,-1);
+              if(found) {
+                ObjectSetTTT(target_obj,tttf,-1);
+                if(target_obj->fInvalidate)
+                  target_obj->fInvalidate(target_obj,cRepNone,cRepInvExtents,-1);
+              }
+            }
+          }
+          break;
+        case 1: /* applying changes to the object's TTT matrix */
+          if(history) {
+            float tttf[16];
+            convertR44dTTTf(history,tttf);
+            ObjectSetTTT(target_obj,tttf,-1);
+          } else {
+            ObjectSetTTT(target_obj,NULL,-1);
+          }
+          if(target_obj->fInvalidate)
+            target_obj->fInvalidate(target_obj,cRepNone,cRepInvExtents,-1);
+          break;
+        case 2: /* applying changes to the state matrix */
+          ok = ExecutiveSetObjectMatrix2(G,target_obj,target_state,history);
+          break;
+        }
+        break;
+      }
+    }
+    break;
+  case 1: /* from the TTT matrix */
+    {
+      /* note that for now we're forcing states to be -1 */
+      /* in the future, we may have per-state TTTs -- though right now the
+         view matrices serve that purpose */
+      
+      float *tttf;
+      int found = ObjectGetTTT(source_obj,&tttf,-1);
+      if(found) {
+        switch(target_mode) {
+        case 0: /* coordinates & history unsupported.. */
+                /* should complain */
+          break;
+        case 1: /* TTT */
+          ObjectSetTTT(target_obj,tttf,-1);
+           if(target_obj->fInvalidate)
+            target_obj->fInvalidate(target_obj,cRepNone,cRepInvExtents,-1);
+         break;
+        case 2: /* State */
+          if(tttf) {
+            double homo[16];
+            convertTTTfR44d(tttf,homo);
+            ok = ExecutiveSetObjectMatrix2(G,target_obj,-1,homo);
+          } else {
+            ok = ExecutiveSetObjectMatrix2(G,target_obj,-1,NULL);
+          }
+          break;
+        }
+      }
+    }
+    break;
+  case 2: /* from the state matrix */
+    {
+      double *homo;
+      int found = ExecutiveGetObjectMatrix2(G,source_obj,source_state,&homo,false);
+      if(found) {
+        switch(target_mode) {
+        case 0: /* coordinates & history */
+                /* TODO */
+          break;
+        case 1: /* TTT */
+          if(homo) {
+            float tttf[16];
+            convertR44dTTTf(homo,tttf);
+            ObjectSetTTT(target_obj,tttf,-1);
+            if(target_obj->fInvalidate)
+              target_obj->fInvalidate(target_obj,cRepNone,cRepInvExtents,-1);
+          } else {
+            ObjectSetTTT(target_obj,NULL,-1);
+            if(target_obj->fInvalidate)
+              target_obj->fInvalidate(target_obj,cRepNone,cRepInvExtents,-1);
+          }
+          break;
+        case 2: /* State */
+          ok = ExecutiveSetObjectMatrix2(G,target_obj,target_state,homo);
+          if(copy_ttt_too) {
+            float *tttf;
+            int found = ObjectGetTTT(source_obj,&tttf,-1);
+            if(found) {
+              ObjectSetTTT(target_obj,tttf,-1);
+              if(target_obj->fInvalidate)
+                target_obj->fInvalidate(target_obj,cRepNone,cRepInvExtents,-1);
+            }
+          }
+          break;
+        }
+      }
+    }
+    break;
+  }
+  SceneInvalidate(G);
+  return ok;
+}
+
 int ExecutiveMatrixCopy(PyMOLGlobals *G,
                              char *source_name, char *target_name,
                              int   source_mode,  int target_mode, 
@@ -799,10 +1064,11 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
   case 0: /* txf history is the source matrix */
     { 
       double *history = NULL;
-      int found = ExecutiveGetObjectMatrix(G,source_name,source_state,&history);
+      int found = ExecutiveGetObjectMatrix(G,source_name,source_state,&history,false);
       if(found) {
 
-        int list_id = ExecutiveGetNamesListFromPattern(G,target_name,true,true);
+        int list_id = ExecutiveGetNamesListFromPattern(G,target_name,
+                                                       true,cExecExpandKeepGroups);
         int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
         SpecRec *rec;
         
@@ -819,7 +1085,8 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
                     double *target_history = NULL;
                     int target_found =  ExecutiveGetObjectMatrix(G,rec->name,
                                                                  target_state,
-                                                                 &target_history);
+                                                                 &target_history,
+                                                                 false);
                     if(target_found && target_history) {
                       invert_special44d44d(target_history, temp_inverse);
                       if(history) {
@@ -829,16 +1096,16 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
                         history = temp_inverse;
                       }
                     }
-                    {
-                      float historyf[16];
-                      if(history) {
-                        convert44d44f(history,historyf);
-                      } else {
-                        identity44f(historyf);
-                      }
-                      ExecutiveTransformObjectSelection(G,rec->name, target_state, 
-                                                        "",log,historyf,true);
+                  }
+                  {
+                    float historyf[16];
+                    if(history) {
+                      convert44d44f(history,historyf);
+                    } else {
+                      identity44f(historyf);
                     }
+                    ExecutiveTransformObjectSelection(G,rec->name, target_state, 
+                                                      "",log,historyf,true,false);
                   }
                   if(copy_ttt_too) {
                     float *tttf;
@@ -882,18 +1149,20 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
       int found = ExecutiveGetObjectTTT(G,source_name,&tttf,-1,quiet);
       if(found) {
 
-        int list_id = ExecutiveGetNamesListFromPattern(G,target_name,true,true);
+        int list_id = ExecutiveGetNamesListFromPattern(G,target_name,true,
+                                                       cExecExpandKeepGroups);
         int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
         SpecRec *rec;
         
         while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
           if(rec && (rec!=src_rec)) {
+
             switch(rec->type) {
             case cExecObject:
               
               switch(target_mode) {
-              case 0: /* coordinates & history */
-                /* TODO */
+              case 0: /* coordinates & history unsupported.. */
+                /* should complain */
                 break;
               case 1: /* TTT */
                 ExecutiveSetObjectTTT(G,rec->name,tttf,-1,quiet);
@@ -903,7 +1172,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
                   double homo[16];
                   convertTTTfR44d(tttf,homo);
                   ok = ExecutiveSetObjectMatrix(G,rec->name,-1,homo);
-                } else {
+                  } else {
                   ok = ExecutiveSetObjectMatrix(G,rec->name,-1,NULL);
                 }
                 break;
@@ -920,10 +1189,10 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
   case 2: /* from the state matrix */
     {
       double *homo;
-      int found = ExecutiveGetObjectMatrix(G,source_name,source_state,&homo);
+      int found = ExecutiveGetObjectMatrix(G,source_name,source_state,&homo,false);
       if(found) {
 
-        int list_id = ExecutiveGetNamesListFromPattern(G,target_name,true,true);
+        int list_id = ExecutiveGetNamesListFromPattern(G,target_name,true,cExecExpandKeepGroups);
         int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
         SpecRec *rec;
         
@@ -995,84 +1264,146 @@ void ExecutiveResetMatrix(PyMOLGlobals *G,
                           int   log,  
                           int quiet)
 {
-  CObject *obj = ExecutiveFindObjectByName(G,name);
-  if(obj) {
-    switch(obj->type) {
-    case cObjectMolecule:
-      switch(mode) {
-      case 0: /* transformations already applied to the coordinates */
-        { 
-          double *history = NULL;
-          int found = ExecutiveGetObjectMatrix(G,name,state,&history);
-          if(found && history) {
-            double temp_inverse[16];
-            float historyf[16];
-            invert_special44d44d(history, temp_inverse);
-            convert44d44f(temp_inverse,historyf);
-            ExecutiveTransformObjectSelection(G, name, state, "",
-                                              log,historyf,true);
+  register CExecutive *I = G->Executive;
+  CTracker *I_Tracker= I->Tracker;
+  int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
+  int list_id = ExecutiveGetNamesListFromPattern(G,name,true,true);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  SpecRec *rec;
+  
+  if(mode<0)
+    mode = matrix_mode;
+  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+    if(rec && (rec->type==cExecObject)) {
+      /*  CObject *obj = ExecutiveFindObjectByName(G,name);*/
+      CObject *obj = rec->obj;
+      if(obj) {
+        switch(obj->type) {
+        case cObjectMolecule:
+          switch(mode) {
+          case 0: /* transformations already applied to the coordinates */
+            { 
+              double *history = NULL;
+              int found = ExecutiveGetObjectMatrix(G,rec->name,state,&history,false);
+              if(found && history) {
+                double temp_inverse[16];
+                float historyf[16];
+                invert_special44d44d(history, temp_inverse);
+                convert44d44f(temp_inverse,historyf);
+                ExecutiveTransformObjectSelection(G, rec->name, state, "",
+                                                  log,historyf,true,false);
+              }
+            }
+            break;
+          case 1: /* operate on the TTT display matrix */
+            ObjectResetTTT(obj);
+            if(obj->fInvalidate)
+              obj->fInvalidate(obj,cRepNone,cRepInvExtents,-1);
+            
+            break;
+          case 2: /* applying changes to the state matrix */
+            {
+              double ident[16];
+              identity44d(ident);
+              ExecutiveSetObjectMatrix(G,rec->name,state,ident);
+            }
+            break;
           }
+          break;
+        case cObjectMap:
+          ObjectMapResetMatrix((ObjectMap*)obj,state);
+          break;
+        case cObjectGroup:
+          ObjectGroupResetMatrix((ObjectGroup*)obj,state);
+          break;
         }
-        break;
-      case 1: /* operation on the display matrix */
-        /* TO DO */
-        break;
       }
-      break;
-    case cObjectMap:
-      ObjectMapResetMatrix((ObjectMap*)obj,state);
-      break;
     }
   }
 }
 
-int ExecutiveGetObjectMatrix(PyMOLGlobals *G,char *name,int state,double **matrix)
-{
+static double ret_mat[16]; /* UGH ..not thread-safe */
 
+static int ExecutiveGetObjectMatrix2(PyMOLGlobals *G,CObject *obj,int state,double **matrix, int incl_ttt)
+{
   /* right now, this only makes sense for molecule objects -- but in
      time all objects should have per-state matrices */
 
   int ok=false;
-  CObject *obj = ExecutiveFindObjectByName(G,name);
-  if(obj) {
-    if(state<0) {
-      /* to do */
-    } else {
-      switch(obj->type) {
-      case cObjectMolecule:
-        ok = ObjectMoleculeGetMatrix((ObjectMolecule*)obj,state,matrix);
-        break;
-      case cObjectMap:
-        ok = ObjectMapGetMatrix((ObjectMap*)obj,state,matrix);
-        break;
+  if(state<0) {
+    /* to do -- TTT only */
+  } else {
+    switch(obj->type) {
+    case cObjectMolecule:
+      ok = ObjectMoleculeGetMatrix((ObjectMolecule*)obj,state,matrix);
+      break;
+    case cObjectMap:
+      ok = ObjectMapGetMatrix((ObjectMap*)obj,state,matrix);
+      break;
+    case cObjectGroup:
+      ok = ObjectGroupGetMatrix((ObjectGroup*)obj,state,matrix);
+      break;
+    }
+    
+    if(ok && incl_ttt) {
+      float *ttt;
+      double tttd[16];
+      if(ObjectGetTTT(obj,&ttt,-1)) {
+        convertTTTfR44d(ttt,tttd);
+        if(*matrix) {
+          copy44d(*matrix,ret_mat);
+        } else {
+          identity44d(ret_mat);
+        }
+        left_multiply44d44d(tttd,ret_mat);
+        *matrix = ret_mat;
       }
     }
   }
   return ok;
 }
 
-int ExecutiveSetObjectMatrix(PyMOLGlobals *G,char *name,int state,double *matrix)
+int ExecutiveGetObjectMatrix(PyMOLGlobals *G,char *name,int state,double **matrix, int incl_ttt)
+{
+  int ok=false;
+  CObject *obj = ExecutiveFindObjectByName(G,name);
+  if(obj) {
+    return ExecutiveGetObjectMatrix2(G,obj,state,matrix,incl_ttt);
+  }
+  return ok;
+}
+
+static int ExecutiveSetObjectMatrix2(PyMOLGlobals *G,CObject *obj,int state,double *matrix)
 {
   /* -1 for the TTT matrix, 0 or greater for the state matrix */
 
   /* right now, this only makes sense for molecule objects -- but in
      time all objects should have per-state matrices */
-
+  int ok=false;
+  if(state<0) {
+      
+  } else {
+    switch(obj->type) {
+    case cObjectMolecule:
+      ok = ObjectMoleculeSetMatrix((ObjectMolecule*)obj,state,matrix);
+      break;
+    case cObjectMap:
+      ok = ObjectMapSetMatrix((ObjectMap*)obj,state,matrix);
+      break;
+    case cObjectGroup:
+      ok = ObjectGroupSetMatrix((ObjectGroup*)obj,state,matrix);
+      break;
+    }
+  }
+  return ok;
+}
+ 
+int ExecutiveSetObjectMatrix(PyMOLGlobals *G,char *name,int state,double *matrix)
+{
   int ok=false;
   CObject *obj = ExecutiveFindObjectByName(G,name);
   if(obj) {
-    if(state<0) {
-      
-    } else {
-      switch(obj->type) {
-      case cObjectMolecule:
-        ok = ObjectMoleculeSetMatrix((ObjectMolecule*)obj,state,matrix);
-        break;
-      case cObjectMap:
-        ok = ObjectMapSetMatrix((ObjectMap*)obj,state,matrix);
-        break;
-      }
-    }
+    return ExecutiveSetObjectMatrix2(G,obj,state,matrix);
   }
   return ok;
 }
@@ -5022,6 +5353,8 @@ int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt, int reverse
     ok=false;
   } else {
     ObjectCombineTTT(obj,ttt,reverse_order);
+    if(obj->fInvalidate)
+      obj->fInvalidate(obj,cRepNone,cRepInvExtents,-1);
     SceneInvalidate(G);
   }
   return(ok);
@@ -5039,6 +5372,8 @@ int ExecutiveSetObjectTTT(PyMOLGlobals *G,char *name,float *ttt,int state,int qu
     ok=false;
   } else {
     ObjectSetTTT(obj,ttt,state);
+    if(obj->fInvalidate)
+      obj->fInvalidate(obj,cRepNone,cRepInvExtents,-1);
   }
   return(ok);
 }
@@ -5079,7 +5414,7 @@ int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float
     nObj = VLAGetSize(vla);
     for(a=0;a<nObj;a++) {
       obj=vla[a];
-      ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1,homogenous,false);
+      ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1,homogenous,true);
     }
   }
   SceneInvalidate(G);
@@ -5087,55 +5422,71 @@ int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float
   return(ok);
 }
 
+int ExecutiveTransformObjectSelection2(PyMOLGlobals *G,CObject *obj,int state,
+                                       char *s1,int log,float *matrix,
+                                       int homogenous,int global)
+{
+  int ok=true;
+  
+  switch(obj->type) {
+  case cObjectMolecule: 
+    {
+      int sele=-1;
+      ObjectMolecule *objMol = (ObjectMolecule*)obj;
+      
+      if(s1&&s1[0]) {
+        sele = SelectorIndexByName(G,s1);
+        if(sele<0)
+          ok=false;
+      }
+      if(!ok) {
+        PRINTFB(G,FB_ObjectMolecule,FB_Errors)
+          "Error: selection object %s not found.\n",s1
+          ENDFB(G);
+      } else {
+        ObjectMoleculeTransformSelection(objMol,state,sele,matrix,log,s1,homogenous,global);
+      }
+      SceneInvalidate(G);
+    }
+    break;
+  case cObjectMap:
+    {
+      double matrixd[116];
+      if(homogenous) {
+        convert44f44d(matrix,matrixd);
+      } else {
+        convertTTTfR44d(matrix,matrixd);
+      }
+      ObjectMapTransformMatrix((ObjectMap*)obj,state,matrixd);
+    }
+    break;   
+  case cObjectGroup:
+    {
+      double matrixd[116];
+      if(homogenous) {
+        convert44f44d(matrix,matrixd);
+      } else {
+        convertTTTfR44d(matrix,matrixd);
+      }
+      ObjectGroupTransformMatrix((ObjectGroup*)obj,state,matrixd);
+    }
+    break;   
+  }
+  return(ok);
+}
+
 int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
-                                      char *s1,int log,float *matrix,int homogenous)
+                                      char *s1,int log,float *matrix,
+                                      int homogenous,int global)
 {
   int ok=true;
 
   CObject *obj = ExecutiveFindObjectByName(G,name);
   if(obj) {
-    switch(obj->type) {
-    case cObjectMolecule: 
-      {
-        int sele=-1;
-        ObjectMolecule *objMol = (ObjectMolecule*)obj;
-        
-        if(s1&&s1[0]) {
-          sele = SelectorIndexByName(G,s1);
-          if(sele<0)
-            ok=false;
-        }
-        if(!obj) {
-          PRINTFB(G,FB_ObjectMolecule,FB_Errors)
-            "Error: object %s not found.\n",name 
-            ENDFB(G);
-        } else if(!ok) {
-          PRINTFB(G,FB_ObjectMolecule,FB_Errors)
-            "Error: selection object %s not found.\n",s1
-            ENDFB(G);
-        } else {
-          ObjectMoleculeTransformSelection(objMol,state,sele,matrix,log,s1,homogenous,false);
-        }
-        SceneInvalidate(G);
-      }
-      break;
-    case cObjectMap:
-      {
-        double matrixd[116];
-        if(homogenous) {
-          convert44f44d(matrix,matrixd);
-        } else {
-          convertTTTfR44d(matrix,matrixd);
-        }
-        ObjectMapTransformMatrix((ObjectMap*)obj,state,matrixd);
-      }
-      break;   
-    }
+    return ExecutiveTransformObjectSelection2(G,obj,state,s1,log,matrix,homogenous,global);
   }
-  return(ok);
+  return ok;
 }
-
-
 
 int ExecutiveValidName(PyMOLGlobals *G,char *name)
 {
@@ -7628,6 +7979,10 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                    int quiet,char *oname,int state1,int state2,
                    int ordered_selections, int matchmaker, ExecutiveRMSInfo *rms_info)
 {
+  /* mode 0: measure rms without superposition
+     mode 1: measure rms with trial superposition
+     mode 2: measure rms with actual superposition */
+
   int sele1,sele2;
   float rms = -1.0;
   int a,b;
@@ -7659,6 +8014,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
     op1.nvv1=0;
     op1.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
+    if(mode==0) op1.i2 = true; /* if measuring current coordinates, then get global txfd values */
     if(matchmaker||(oname&&oname[0])) 
       op1.ai1VLA=(AtomInfoType**)VLAMalloc(1000,sizeof(AtomInfoType*),5,1);
     if(ordered_selections)
@@ -7690,6 +8046,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
     op2.nvv1=0;
     op2.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
+    if(mode==0) op2.i2 = true; /* if measuring current coordinates, then get global txfd values */
     if(matchmaker||(oname&&oname[0])) 
       op2.ai1VLA=(AtomInfoType**)VLAMalloc(1000,sizeof(AtomInfoType*),5,1);
     if(ordered_selections)
@@ -8182,7 +8539,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                 {
                   double homo[16],*src_homo;
                   convertTTTfR44d(op2.ttt,homo);
-                  if(ExecutiveGetObjectMatrix(G,src_obj->Obj.Name,state1,&src_homo)) {
+                  if(ExecutiveGetObjectMatrix(G,src_obj->Obj.Name,state1,&src_homo,false)) {
                     left_multiply44d44d(src_homo,homo);
                     ExecutiveSetObjectMatrix(G,src_obj->Obj.Name,state1,homo);
                   }
@@ -8438,6 +8795,9 @@ int ExecutiveReset(PyMOLGlobals *G,int cmd,char *name)
       ok=false;
     else {
       ObjectResetTTT(obj);
+      if(obj->fInvalidate)
+        obj->fInvalidate(obj,cRepNone,cRepInvExtents,-1);
+
       SceneInvalidate(G);
     }
   }
@@ -10249,10 +10609,22 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
             while(ListIterate(I->Spec,rec,next)) {
               if(rec->type==cExecObject) {
                 obj=rec->obj;
+                if(!obj->ExtentFlag) {
+                  switch(obj->type) {
+                  case cObjectMap:
+                  case cObjectMesh:
+                  case cObjectSurface:
+                    if(!rec->obj->ExtentFlag) {
+                      if(rec->obj->fUpdate) /* allow object to update extents, if necessary */
+                        rec->obj->fUpdate(rec->obj);
+                    }
+                  }
+                }
                 if(obj->ExtentFlag) 
                   switch(obj->type) {
                   case cObjectMolecule:
                     break;
+                    /* intentional fall-through */
                   default:
                     if(!have_extent_flag) {
                       copy3f(obj->ExtentMin,op.v1);
@@ -10269,6 +10641,17 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
             break;
           case cExecObject:
             obj=rec->obj;
+            if(!obj->ExtentFlag) {
+              switch(obj->type) {
+              case cObjectMap:
+              case cObjectMesh:
+              case cObjectSurface:
+                if(!rec->obj->ExtentFlag) {
+                  if(rec->obj->fUpdate) /* allow object to update extents, if necessary */
+                    rec->obj->fUpdate(rec->obj);
+                }
+              }
+            }
             if(obj->ExtentFlag) 
               switch(obj->type) {
               case cObjectMolecule: /* will have been handled above... */
@@ -11494,7 +11877,7 @@ int ExecutiveGetExpandedGroupListFromPattern(PyMOLGlobals *G,char *name)
   if(matcher) WordMatcherFree(matcher);
   if(iter_id) TrackerDelIter(I->Tracker, iter_id);
   if(result) 
-    ExecutiveExpandGroupsInList(G,result);
+    ExecutiveExpandGroupsInList(G,result,cExecExpandGroups);
   return result;
 }
 
@@ -11511,7 +11894,7 @@ int ExecutiveGetExpandedGroupList(PyMOLGlobals *G,char *name)
   }
   if(list_id) {
     result = TrackerNewListCopy(I->Tracker,list_id,NULL);
-    ExecutiveExpandGroupsInList(G,result);
+    ExecutiveExpandGroupsInList(G,result,cExecExpandGroups);
   }
   return result;
 }
@@ -11855,6 +12238,10 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name)
         ListDelete(I->Spec,rec,next,SpecRec); /* NOTE: order N in list length! TO FIX */
         break;
       case cExecObject: 
+        if(rec->obj->type == cObjectGroup) {
+          /* remove members of the group */
+          ExecutiveGroup(G,rec->name,"",cExecutiveGroupPurge,true);
+        }
         ExecutivePurgeSpec(G,rec);
         ListDelete(I->Spec,rec,next,SpecRec); /* NOTE: order N in list length! TO FIX */
         break;

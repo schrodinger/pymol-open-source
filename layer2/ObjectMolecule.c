@@ -7821,99 +7821,135 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 		  }
 	  break;
 	case OMOP_AVRT: /* average vertex coordinate */
-     for(a=0;a<I->NAtom;a++)
-       {
+      {
+       register int op_i2 = op->i2;
+       register int obj_TTTFlag = I->Obj.TTTFlag;
+       if(op_i2) 
+         use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
+       for(a=0;a<I->NAtom;a++) {
          s=I->AtomInfo[a].selEntry;
-         if((priority=SelectorIsMember(G,s,sele)))
-           {
-             cnt=0;
-             for(b=0;b<I->NCSet;b++) {
-               if(I->CSet[b])
-                 {
-                   if(I->DiscreteFlag) {
-                     if(I->CSet[b]==I->DiscreteCSet[a])
-                       a1=I->DiscreteAtmToIdx[a];
-                     else
-                       a1=-1;
-                   } else 
-                     a1=I->CSet[b]->AtmToIdx[a];
-                   if(a1>=0) {
-                     if(!cnt) {
-                       VLACheck(op->vv1,float,(op->nvv1*3)+2);
-                       VLACheck(op->vc1,int,op->nvv1);
+         if((priority=SelectorIsMember(G,s,sele))) {
+           cnt=0;
+           for(b=0;b<I->NCSet;b++) {
+             if( (cs=I->CSet[b]) ) {
+               
+               if(I->DiscreteFlag) {
+                 if(cs==I->DiscreteCSet[a])
+                   a1=I->DiscreteAtmToIdx[a];
+                 else
+                   a1=-1;
+               } else 
+                 a1=cs->AtmToIdx[a];
+               if(a1>=0) {
+                 if(!cnt) {
+                   VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                   VLACheck(op->vc1,int,op->nvv1);
+                 }
+                 cnt++;
+                 vv2=cs->Coord+(3*a1);
+                 
+                 if(op_i2) { /* do we want transformed coordinates? */
+                   if(use_matrices) {
+                     if(cs->State.Matrix) { /* state transformation */
+                       transform44d3f(cs->State.Matrix,vv2,v1);
+                       vv2=v1;
                      }
-                     cnt++;
-                     vv2=I->CSet[b]->Coord+(3*a1);
-                     vv1=op->vv1+(op->nvv1*3);
-                     *(vv1++)+=*(vv2++);
-                     *(vv1++)+=*(vv2++);
-                     *(vv1++)+=*(vv2++);
+                   }
+                   if(obj_TTTFlag) {
+                     transformTTT44f3f(I->Obj.TTT,vv2,v1);
+                     vv2=v1;
                    }
                  }
-             }
-             op->vc1[op->nvv1]=cnt;
-             if(cnt) {
-               if(op->vp1) {
-                 VLACheck(op->vp1,int,op->nvv1);
-                 op->vp1[op->nvv1] = priority;
+                 
+                 vv1=op->vv1+(op->nvv1*3);
+                 *(vv1++)+=*(vv2++);
+                 *(vv1++)+=*(vv2++);
+                 *(vv1++)+=*(vv2++);
                }
-               if(op->ai1VLA) {
-                 VLACheck(op->ai1VLA,AtomInfoType*,op->nvv1);
-                 op->ai1VLA[op->nvv1] = I->AtomInfo+a;
-                 I->AtomInfo[a].temp1 = a; /* KLUDGE ALERT!!! storing atom index in the temp1 field... */
-               }
-               op->nvv1++;
              }
            }
+           op->vc1[op->nvv1]=cnt;
+           if(cnt) {
+             if(op->vp1) {
+               VLACheck(op->vp1,int,op->nvv1);
+               op->vp1[op->nvv1] = priority;
+             }
+             if(op->ai1VLA) {
+               VLACheck(op->ai1VLA,AtomInfoType*,op->nvv1);
+               op->ai1VLA[op->nvv1] = I->AtomInfo+a;
+               I->AtomInfo[a].temp1 = a; /* KLUDGE ALERT!!! storing atom index in the temp1 field... */
+             }
+             op->nvv1++;
+           }
+         }
        }
-     break;
+      }
+      break;
 	case OMOP_StateVRT: /* state vertex coordinate */
-     for(a=0;a<I->NAtom;a++)
-       {
+      {
+       register int op_i2 = op->i2;
+       register int obj_TTTFlag = I->Obj.TTTFlag;
+       if(op_i2) 
+         use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
+
+       for(a=0;a<I->NAtom;a++) {
          s=I->AtomInfo[a].selEntry;
-         if((priority=SelectorIsMember(G,s,sele)))
-           {
-             cnt=0;
-             b=op->i1;
-             if(b<I->NCSet)
-               if(I->CSet[b])
-                 {
-                   if(I->DiscreteFlag) {
-                     if(I->CSet[b]==I->DiscreteCSet[a])
-                       a1=I->DiscreteAtmToIdx[a];
-                     else
-                       a1=-1;
-                   } else 
-                     a1=I->CSet[b]->AtmToIdx[a];
-                   if(a1>=0) {
-                     if(!cnt) {
-                       VLACheck(op->vv1,float,(op->nvv1*3)+2);
-                       VLACheck(op->vc1,int,op->nvv1);
+         if((priority=SelectorIsMember(G,s,sele))) {
+           cnt=0;
+           b=op->i1;
+           if(b<I->NCSet)
+             if( (cs=I->CSet[b]) ) {
+               if(I->DiscreteFlag) {
+                 if(cs==I->DiscreteCSet[a])
+                   a1=I->DiscreteAtmToIdx[a];
+                 else
+                   a1=-1;
+               } else 
+                 a1=cs->AtmToIdx[a];
+               if(a1>=0) {
+                 if(!cnt) {
+                   VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                   VLACheck(op->vc1,int,op->nvv1);
+                 }
+                 cnt++;
+                 vv2=cs->Coord+(3*a1);
+                 
+                 if(op_i2) { /* do we want transformed coordinates? */
+                   if(use_matrices) {
+                     if(cs->State.Matrix) { /* state transformation */
+                       transform44d3f(cs->State.Matrix,vv2,v1);
+                       vv2=v1;
                      }
-                     cnt++;
-                     vv2=I->CSet[b]->Coord+(3*a1);
-                     vv1=op->vv1+(op->nvv1*3);
-                     *(vv1++)+=*(vv2++);
-                     *(vv1++)+=*(vv2++);
-                     *(vv1++)+=*(vv2++);
+                   }
+                   if(obj_TTTFlag) {
+                     transformTTT44f3f(I->Obj.TTT,vv2,v1);
+                     vv2=v1;
                    }
                  }
-             op->vc1[op->nvv1]=cnt;
-             if(cnt) {
-               if(op->vp1) {
-                 VLACheck(op->vp1,int,op->nvv1);
-                 op->vp1[op->nvv1] = priority;
+                 
+                 vv1=op->vv1+(op->nvv1*3);
+                 *(vv1++)+=*(vv2++);
+                 *(vv1++)+=*(vv2++);
+                 *(vv1++)+=*(vv2++);
                }
-               if(op->ai1VLA) {
-                 VLACheck(op->ai1VLA,AtomInfoType*,op->nvv1);
-                 op->ai1VLA[op->nvv1] = I->AtomInfo+a;
-                 I->AtomInfo[a].temp1 = a; /* KLUDGE ALERT!!! storing atom index in the temp1 field... */
-               }
-               op->nvv1++;
              }
+           op->vc1[op->nvv1]=cnt;
+           if(cnt) {
+             if(op->vp1) {
+               VLACheck(op->vp1,int,op->nvv1);
+               op->vp1[op->nvv1] = priority;
+             }
+             if(op->ai1VLA) {
+               VLACheck(op->ai1VLA,AtomInfoType*,op->nvv1);
+               op->ai1VLA[op->nvv1] = I->AtomInfo+a;
+               I->AtomInfo[a].temp1 = a; /* KLUDGE ALERT!!! storing atom index in the temp1 field... */
+             }
+             op->nvv1++;
            }
+         }
        }
-     break;
+      }
+      break;
 	case OMOP_SFIT: /* state fitting within a single object */
      vt = Alloc(float,3*op->nvv2); /* temporary (matching) target vertex pointers */
      cnt = 0;
@@ -9747,6 +9783,7 @@ int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
     state=0;
   if(I->CSet[state]) 
     result = CoordSetGetAtomVertex(I->CSet[state],index,v);
+
   return(result);
 }
 /*========================================================================*/
