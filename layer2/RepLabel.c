@@ -209,10 +209,16 @@ Rep *RepLabelNew(CoordSet *cs,int state)
     }
     if(ai->visRep[cRepLabel]&&(ai->label)) {
       int at_label_color;
-
       AtomInfoGetSetting_color(G, ai, cSetting_label_color, 
                                label_color, &at_label_color);
-      
+
+      /*
+      float at_label_pos = lab_pos;
+
+        AtomInfoGetSetting_3fv(G, ai, cSetting_label_position, 
+        label_pos, &at_label_pos);
+      */
+
       I->N++;
       if(at_label_color>=0) 
         c1 = at_label_color;

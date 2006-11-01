@@ -482,8 +482,8 @@ class Mutagenesis(Wizard):
             cmd.iterate("(%s and n;ca)"%src_sele,"stored.ss=ss")
             cmd.alter("(%s)"%frag_name,"ss=stored.ss")
             # move the fragment
-            if ((cmd.count_atoms("(%s and n;cb)"%frag_name)>0) and
-                 (cmd.count_atoms("(%s and n;cb)"%src_sele)>0)):
+            if ((cmd.count_atoms("(%s and n;cb)"%frag_name)==1) and
+                 (cmd.count_atoms("(%s and n;cb)"%src_sele)==1)):
                 cmd.pair_fit("(%s and n;ca)"%frag_name,
                              "(%s and n;ca)"%src_sele,
                              "(%s and n;cb)"%frag_name,
@@ -499,7 +499,7 @@ class Mutagenesis(Wizard):
                              "(%s and n;c)"%src_sele,
                              "(%s and n;n)"%frag_name,
                              "(%s and n;n)"%src_sele)
-                
+
             # fix the carbonyl position...
             cmd.iterate_state(1,"(%s and n;o)"%src_sele,"stored.list=[x,y,z]")
             cmd.alter_state(1,"(%s and n;o)"%frag_name,"(x,y,z)=stored.list")
@@ -517,6 +517,7 @@ class Mutagenesis(Wizard):
                                  "(%s and n;c)"%frag_name,
                                  "(%s and n;oxt)"%frag_name,180.0+angle)
                 cmd.deprotect(frag_name)
+
                 
             # fix the hydrogen position (if any)
             if cmd.count_atoms("(elem h and bound_to (n;n and (%s)))"%frag_name)==1:
@@ -536,7 +537,7 @@ class Mutagenesis(Wizard):
                                      "(%s and n;n)"%frag_name,
                                      "(%s and n;h)"%frag_name,180.0+angle)
                     cmd.delete(tmp_sele1)
-                    
+
             # add c-cap (if appropriate)
             if self.c_cap in [ 'amin', 'nmet' ]:
                 if not cmd.count_atoms("elem n & !(%s) & (bto. (n;c & (%s))) & !r. nme+nhh"%
@@ -554,7 +555,7 @@ class Mutagenesis(Wizard):
                         elif (self.hyd == 'auto'):
                             if cmd.count_atoms("("+src_sele+") and hydro")==0:
                                 cmd.remove("("+frag_name+" and hydro)")
-                           
+                         
             # add n-cap (if appropriate)
             if self.n_cap in [ 'acet' ]:
                 if not cmd.count_atoms("elem c & !(%s) & (bto. (n;n & (%s))) & !r. ace "%
@@ -571,6 +572,8 @@ class Mutagenesis(Wizard):
                             if cmd.count_atoms("("+src_sele+") and hydro")==0:
                                 cmd.remove("("+frag_name+" and hydro)")
  
+
+                    
 
         cartoon = (cmd.count_atoms("(%s and n;ca and rep cartoon)"%src_sele)>0)
         sticks = (cmd.count_atoms("(%s and n;ca and rep sticks)"%src_sele)>0)
@@ -606,7 +609,7 @@ class Mutagenesis(Wizard):
                 if state == 1:
                     cmd.select(mut_sele,"(byres (%s like %s))"%(obj_name,src_sele)) 
                 if rot_type=='PRO':
-                    cmd.unbond("(%s & name N)"%obj_name,"(%s & name CD)"%obj_name)
+                    cmd.unbond("(%s & name N)"%mut_sele,"(%s & name CD)"%mut_sele)
                 for b in a.keys():
                     if b!='FREQ':
                         cmd.set_dihedral("(%s & n;%s)"%(mut_sele,b[0]),
