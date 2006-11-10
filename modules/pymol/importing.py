@@ -666,6 +666,16 @@ SEE ALSO
                 r = read_mol2str(string.join(data,''),name,state,finish,discrete,quiet)
             elif ftype==loadable.xplor:
                 r = read_xplorstr(string.join(data,''),name,state,finish,discrete,quiet)
+            elif ftype==loadable.moe:
+                try:
+                    # BEGIN PROPRIETARY CODE SEGMENT
+                    from epymol import moe
+                    r = moe.read_moestr(string.join(data,''),name,state,
+                                    finish,discrete,quiet)
+                    # END PROPRIETARY CODE SEGMENT
+                except ImportError:
+                    print "Error: .MOE format not supported by this PyMOL build."
+                    if raising(-1): raise pymol.CmdException
             elif ftype==loadable.sdf1: # Python-based SDF reader
                 sdf = SDF(PseudoFile(data),'pf')
                 r = _processSDF(sdf,name,state,quiet)

@@ -6,6 +6,8 @@ Changes up to 1.00b15
 
     * fixed bug with dragging back clip plane 
 
+    * fixes for proprietary code (.MOE file reading & embedding)
+
 Changes up to 1.00b14
 
     * matrix handling for groups
