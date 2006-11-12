@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+Changes up to 1.00b16
+
+    * fixed bug when rendering spheres alone
+
 Changes up to 1.00b15
 
     * fixed bug with dragging back clip plane 

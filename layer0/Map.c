@@ -239,102 +239,93 @@ int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for
 
 void MapSetupExpressXY(MapType *I,int n_vert, int negative_start) /* setup a list of XY neighbors for each square */
 {
-   PyMOLGlobals *G=I->G;
-	int n, a,b,c,flag;
-	register int d,e,i;
-	unsigned int mapSize;
-	int st, dim2;
-	int n_alloc = n_vert * 15; /* emprical est. */
-
-	PRINTFD(G,FB_Map)
+  PyMOLGlobals *G=I->G;
+  int n, a,b,c,flag;
+  register int d,e,i;
+  unsigned int mapSize;
+  int st, dim2;
+  int n_alloc = n_vert * 15; /* emprical est. */
+  
+  PRINTFD(G,FB_Map)
 	" MapSetupExpressXY-Debug: entered.\n"
 	ENDFD;
-	
-	mapSize		= I->Dim[0]*I->Dim[1]*I->Dim[2];
-	I->EHead	= CacheCalloc(G,int,mapSize,I->group_id,I->block_base + cCache_map_ehead_offset);
-	ErrChkPtr(G,I->EHead);
-	I->EList	= VLACacheMalloc(G,n_alloc,sizeof(int),ELIST_GROW_FACTOR,0,
-                             I->group_id,I->block_base + cCache_map_elist_offset); 
-	I->EMask    = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
-                             I->group_id,I->block_base + cCache_map_emask_offset);
-	
-	n		= 1;
-	dim2	= I->Dim[2];
-	
-	for(a = I->iMin[0]; a <= I->iMax[0]; a++)
-	{
-		for(b = I->iMin[1]; b <= I->iMax[1]; b++)
-		{
-			for(c = I->iMin[2]; c <= I->iMax[2]; c++) /* a better alternative exists... */
-			{
-				int	*iPtr1	= (I->Head + ((a-1) * I->D1D2) + ((b-1)*dim2) + c);
-				
-				st		= n;
-				flag	= false;
-				
-				for(d = a-1; d <= a+1; d++)
-				{
-					/*int	*iPtr2	= (I->Head + (d * I->D1D2) + ((b-1)*dim2) + c);*/
-					int	*iPtr2	= iPtr1;
-					
-					for(e = b-1; e <= b+1; e++)
-					{
-						/*i	= *MapFirst(I,d,e,c);*/
-						i	= *iPtr2;
-						if(i >= 0)
-						{
-							flag	= true;
-							while(i >= 0)
-							{
-								VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
-								I->EList[n]	= i;
-								n++;
-								i	= MapNext(I,i);
-							}
-						}
-						
-						iPtr2	+= dim2;
-					}
-					
-					iPtr1 += I->D1D2;
-				}
-				
-				if(flag) {
-                  *(I->EMask + I->Dim[1]*a + b) = true;
-                  *(MapEStart(I,a,b,c))= negative_start ? -st : st;
-                  VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
-                  I->EList[n]=-1;
-                  n++;
-				}
-			}
-		}
-	}
-		
+  
+  mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
+  I->EHead = CacheCalloc(G,int,mapSize,I->group_id,I->block_base + cCache_map_ehead_offset);
+  ErrChkPtr(G,I->EHead);
+  I->EList = VLACacheMalloc(G,n_alloc,sizeof(int),ELIST_GROW_FACTOR,0,
+                            I->group_id,I->block_base + cCache_map_elist_offset); 
+  I->EMask = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
+                         I->group_id,I->block_base + cCache_map_emask_offset);
+  
+  n		= 1;
+  dim2	= I->Dim[2];
+  
+  for(a = I->iMin[0]; a <= I->iMax[0]; a++) {
+    for(b = I->iMin[1]; b <= I->iMax[1]; b++) {
+      for(c = I->iMin[2]; c <= I->iMax[2]; c++) { /* a better alternative exists... */
+        int	*iPtr1	= (I->Head + ((a-1) * I->D1D2) + ((b-1)*dim2) + c);
+        
+        st		= n;
+        flag	= false;
+        
+        for(d = a-1; d <= a+1; d++) {
+          /*int	*iPtr2	= (I->Head + (d * I->D1D2) + ((b-1)*dim2) + c);*/
+          int	*iPtr2	= iPtr1;
+          
+          for(e = b-1; e <= b+1; e++) {
+            /*i	= *MapFirst(I,d,e,c);*/
+            i	= *iPtr2;
+            if(i >= 0) {
+              flag	= true;
+              while(i >= 0) {
+                
+                VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+                I->EList[n]	= i;
+                n++;
+                i	= MapNext(I,i);
+              }
+            }
+            
+            iPtr2	+= dim2;
+          }
+          
+          iPtr1 += I->D1D2;
+        }
+        
+        if(flag) {
+          *(I->EMask + I->Dim[1]*a + b) = true;
+          *(MapEStart(I,a,b,c))= negative_start ? -st : st;
+          VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+          I->EList[n]=-1;
+          n++;
+        }
+      }
+    }
+  }
+  
   PRINTFB(G,FB_Map,FB_Blather)
     " MapSetupExpressXY: %d rows in express table\n",n
     ENDFB(G);
-
-	I->NEElem=n;
-	VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
-	PRINTFD(G,FB_Map)
-		" MapSetupExpressXY-Debug: leaving...\n"
-	ENDFD;
+  
+  I->NEElem=n;
+  VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
+  PRINTFD(G,FB_Map)
+    " MapSetupExpressXY-Debug: leaving...\n"
+    ENDFD;
 }
-
-
 
 void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert,int negative_start) /* setup a list of XY neighbors for each square */
 {
   PyMOLGlobals *G=I->G;
   int		h, n, a,b,c;
   int		j,k,dim2;
-  int		d,e;
   float	*v;
   int		*eBase, *hBase;
   int      n_alloc = n_vert * 15; /* emprical est. */
 	
   PRINTFD(G,FB_Map)
-    " MapSetupExpressXY-Debug: entered.\n"
+    " MapSetupExpressXYVert-Debug: entered n_vert = %d negative_start = %d\n",n_vert, negative_start
 	ENDFD;
 	
   /*mapSize 	= I->Dim[0]*I->Dim[1]*I->Dim[2];*/
@@ -354,41 +345,42 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert,int negative_start)
     MapLocus(I,v,&j,&k,&c);
       
     eBase	= I->EHead + ((j-1) * I->D1D2) + ((k-1)*dim2) + c;
-    hBase	= I->Head + (((j-1)-1) * I->D1D2) + c;
+    hBase	= I->Head + (((j-1)-1) * I->D1D2);
       
     for(a = j-1; a <= j+1; a++) {
-      int		*ePtr1	= eBase;
+      int *ePtr1	= eBase;
         
       for(b = k-1; b <= k+1; b++) {
         if( *ePtr1 == 0 ) { /* if we haven't yet expanded this voxel... */
-          int *hPtr1	= hBase + ((b-1) * dim2);
           int	st		= n;
           int	flag	= false;
-          
+          int *hPtr1 = hBase + dim2 * (b-1) + (c-1);
+
+          register int d,e,f;
+
           for(d = a-1; d <= a+1; d++) {
-            int *hPtr2	= hPtr1;
-            
+            int *hPtr2 = hPtr1;
             for(e = b-1; e <= b+1; e++) {
-              int	i	= *hPtr2;
-              /*i	= *MapFirst(I,d,e,c);*/
-							
-              if(i > -1) {
+              int *hPtr3 = hPtr2;
+              for(f = c-1; f <= c+1; f++) {
+                /*                register int i	= *MapFirst(I,d,e,f);*/
+                register int i	= *hPtr3;
 
-                flag = true;
-                while(i > -1) {
-
-                  VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
-                  I->EList[n]	= i;
-                  n++;
-                  i = MapNext(I,i);
+                if(i > -1) {
+                  flag = true;
+                  while(i > -1) {
+                    VLACacheCheck(G,I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
+                    I->EList[n]	= i;
+                    n++;
+                    i = MapNext(I,i);
+                  }
                 }
+                hPtr3 ++;
               }
-							
-              hPtr2	+= dim2;
+              hPtr2 += dim2;
             }
-
-            hPtr1	+= I->D1D2;
-          }					
+            hPtr1 += I->D1D2;
+          }
 					
           if(flag) {
             *(I->EMask + I->Dim[1]*a + b) = true;
@@ -807,70 +799,62 @@ static MapType *_MapNew(PyMOLGlobals *G,float range,float *vert,int nVert,float 
   for(a=0;a<nVert;a++)
 	 I->Link[a] = -1;
 
-  if(extent)
-	 {
-		I->Min[0]=extent[0];
-		I->Max[0]=extent[1];
-		I->Min[1]=extent[2];
-		I->Max[1]=extent[3];
-		I->Min[2]=extent[4];
-		I->Max[2]=extent[5];
-	 }
-  else
-	 {
-		I->Min[0]=0.0F;
-		I->Max[0]=0.0F;
-		I->Min[1]=0.0F;
-		I->Max[1]=0.0F;
-		I->Min[2]=0.0F;
-		I->Max[2]=0.0F;
-		if(flag) {
-		  firstFlag=true;
-		  v=vert;
-		  for(a=0;a<nVert;a++)
-			 {
-				if(flag[a]) {
-				  if(firstFlag) {
-					 for(c=0;c<3;c++)
-						{
-						  I->Min[c]=v[c];
-						  I->Max[c]=v[c];
-						}
-					 firstFlag=false;
-				  } else {
-					 for(c=0;c<3;c++)
-						{
-						  if(I->Min[c]>v[c]) I->Min[c]=v[c];
-						  if(I->Max[c]<v[c]) I->Max[c]=v[c];
-						}
-				  }
-				}
-				v+=3;
-			 }
-		} else {
-        if(nVert) {
-          v=vert;
-          for(c=0;c<3;c++)
-            {
-              I->Min[c] = v[c];
-              I->Max[c] = v[c];
+  if(extent) {
+    I->Min[0]=extent[0];
+    I->Max[0]=extent[1];
+    I->Min[1]=extent[2];
+    I->Max[1]=extent[3];
+    I->Min[2]=extent[4];
+    I->Max[2]=extent[5];
+  }  else	 {
+    I->Min[0]=0.0F;
+    I->Max[0]=0.0F;
+    I->Min[1]=0.0F;
+    I->Max[1]=0.0F;
+    I->Min[2]=0.0F;
+    I->Max[2]=0.0F;
+    if(flag) {
+      firstFlag=true;
+      v=vert;
+      for(a=0;a<nVert;a++) {
+        if(flag[a]) {
+          if(firstFlag) {
+            for(c=0;c<3;c++) {
+              I->Min[c]=v[c];
+              I->Max[c]=v[c];
             }
-          v+=3;
-          for(a=1;a<nVert;a++)
-            {
-              for(c=0;c<3;c++)
-                {
-                  if(I->Min[c]>v[c])
-                    I->Min[c]=v[c];
-                  if(I->Max[c]<v[c])
-                    I->Max[c]=v[c];
-                }
-              v+=3;
+            firstFlag=false;
+          } else {
+            for(c=0;c<3;c++) {
+              
+              if(I->Min[c]>v[c]) I->Min[c]=v[c];
+              if(I->Max[c]<v[c]) I->Max[c]=v[c];
             }
+          }
         }
-		}
-	 }
-
+        v+=3;
+      }
+    } else {
+      if(nVert) {
+        v=vert;
+        for(c=0;c<3;c++) {
+            I->Min[c] = v[c];
+            I->Max[c] = v[c];
+          }
+        v+=3;
+        for(a=1;a<nVert;a++)  {
+          for(c=0;c<3;c++)  {
+            if(I->Min[c]>v[c])
+              I->Min[c]=v[c];
+            if(I->Max[c]<v[c])
+              I->Max[c]=v[c];
+          }
+          v+=3;
+        }
+      }
+    }
+  }
+  
   /* sanity check */
   for(a=0;a<3;a++) {
     if(I->Min[a]>I->Max[a]) {
@@ -879,7 +863,7 @@ static MapType *_MapNew(PyMOLGlobals *G,float range,float *vert,int nVert,float 
       I->Min[a]=tmp_f;
     }
   }
-     
+  
   if(Feedback(G,FB_Map,FB_Debugging)) {
     printf(" MapSetup: %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
            I->Min[0],I->Min[1],I->Min[2],
@@ -954,27 +938,26 @@ static MapType *_MapNew(PyMOLGlobals *G,float range,float *vert,int nVert,float 
   /* create 3-D hash of the vertices*/
   if(flag) {
 	 v=vert;
-	 for(a=0;a<nVert;a++)
-		{
-		  if(flag[a]) 
-			 if(MapExclLocus(I,v,&h,&k,&l)) {
-				list = MapFirst(I,h,k,l);
-				I->Link[a] = *list; 
-				*list = a; /*add to top of list*/
-			 }
-		  v+=3;
-		}
+	 for(a=0;a<nVert;a++)	{
+       if(flag[a]) 
+         if(MapExclLocus(I,v,&h,&k,&l)) {
+           list = MapFirst(I,h,k,l);
+           I->Link[a] = *list; 
+           *list = a; /*add to top of list*/
+         }
+       v+=3;
+     }
   } else {
-	 v=vert;
-	 for(a=0;a<nVert;a++)
-		{
-		  if(MapExclLocus(I,v,&h,&k,&l)) {
-			 list = MapFirst(I,h,k,l);
-			 I->Link[a] = *list; 
-			 *list = a; /*add to top of list*/
-		  }
-		  v+=3;
-		}
+    v=vert;
+    for(a=0;a<nVert;a++) {
+      if(MapExclLocus(I,v,&h,&k,&l)) {
+        list = MapFirst(I,h,k,l);
+        /*        printf("LINK %d %d %d %d %5.2f %5.2f %5.2f\n",a,h,k,l,v[0],v[1],v[2]);*/
+        I->Link[a] = *list; 
+        *list = a; /*add to top of list*/
+      }
+      v+=3;
+    }
   }
 
   PRINTFD(G,FB_Map)
