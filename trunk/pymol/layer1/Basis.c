@@ -2633,7 +2633,6 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
         extent[0],extent[1],extent[2],extent[3],extent[4],extent[5]
         ENDFB(I->G);
       I->Map   = MapNewCached(I->G,-sep,tempVertex,n,extent,group_id,block_base);
-      
     } else {
       I->Map   = MapNewCached(I->G,sep,tempVertex,n,NULL,group_id,block_base);
     }
@@ -2897,6 +2896,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       
   }  else    {
     /* simple sphere mode */
+
     I->Map   = MapNewCached(I->G,-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
     if(perspective) {
       MapSetupExpressPerp(I->Map,I->Vertex,front,I->NVertex,false);
