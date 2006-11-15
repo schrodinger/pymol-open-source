@@ -4346,12 +4346,12 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
 static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
 {
   char *str1;
-  int int1,int2;
+  int int1,int2,int3;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
+  ok = PyArg_ParseTuple(args,"siii",&str1,&int1,&int2,&int3);
   if (ok) {
     APIEntry();
-    ok = MoviePNG(TempPyMOLGlobals,str1,(int)SettingGet(TempPyMOLGlobals,cSetting_cache_frames),int1,int2);
+    ok = MoviePNG(TempPyMOLGlobals,str1,(int)SettingGet(TempPyMOLGlobals,cSetting_cache_frames),int1,int2,int3);
     /* TODO STATUS */
     APIExit();
   }

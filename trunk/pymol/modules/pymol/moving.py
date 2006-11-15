@@ -268,7 +268,7 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
 
-    def mpng(prefix,first=0,last=0):
+    def mpng(prefix,first=0,last=0,preserve=0):
         '''
 DESCRIPTION
 
@@ -296,10 +296,10 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         if thread.get_ident() ==pymol.glutThread:
-            r = cmd._mpng(prefix,int(first)-1,int(last)-1)
+            r = cmd._mpng(prefix,int(first)-1,int(last)-1,int(preserve))
         else:
             r = cmd.do('cmd._mpng("'+prefix+'","'+
-                            str(int(first)-1)+'","'+str(int(last)-1)+'")',0)
+                            str(int(first)-1)+'","'+str(int(last)-1)+','+str(int(preserve))+'")',0)
         if _raising(r): raise pymol.CmdException
         return r
 
