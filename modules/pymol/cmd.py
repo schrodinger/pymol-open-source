@@ -826,7 +826,11 @@ DEVELOPMENT TO DO
                 if re.search("\.png$",fname):
                     fname = re.sub("\.png$","",fname)
                 fname = exp_path(fname)
-                r = _cmd.mpng_(str(fname),int(arg[1]),int(arg[2]))
+                if len(arg)>3:
+                    preserve = arg[3]
+                else:
+                    preserve = 0
+                r = _cmd.mpng_(str(fname),int(arg[1]),int(arg[2]),int(preserve))
             finally:
                 unlock(-1)
             return r

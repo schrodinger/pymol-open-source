@@ -3094,7 +3094,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_dot_normals,1);
   set_b(I,cSetting_session_migration,1);
   set_b(I,cSetting_mesh_normals,1);
-  set_i(I,cSetting_mesh_type,0);
+  set_i(I,cSetting_mesh_type,0); /* 0 = lines, 1 = points, 2 = solid, 3 = gradient */
 
   set_b(I,cSetting_dot_lighting,1);
   set_b(I,cSetting_mesh_lighting,0);

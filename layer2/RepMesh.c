@@ -121,7 +121,24 @@ static void RepMeshRender(RepMesh *I,RenderInfo *info)
           }
         }
       case 1:
-        /* TO DO */
+        while(*n) {
+          c=*(n++);
+          if(I->oneColorFlag) {
+            ray->fColor3fv(ray,col);
+            while(c--) {
+              ray->fSphere3fv(ray,v,radius);
+              v+=3;
+              vc+=3;
+            }
+          } else {
+            while(c--) {
+              ray->fColor3fv(ray,vc);
+              ray->fSphere3fv(ray,v,radius);
+              v+=3;
+              vc+=3;
+            }
+          }
+        }
         break;
       }
      }
@@ -207,30 +224,28 @@ static void RepMeshRender(RepMesh *I,RenderInfo *info)
           glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
           if(n) {
             if(I->oneColorFlag) {
-              while(*n)
-                {
-                  glColor3fv(ColorGet(G,I->oneColor));
-                  c=*(n++);
-                  glBegin(GL_POINTS);
-                  while(c--) {
-                    glVertex3fv(v);
-                    v+=3;
-                  }
-                  glEnd();
+              while(*n) {
+                glColor3fv(ColorGet(G,I->oneColor));
+                c=*(n++);
+                glBegin(GL_POINTS);
+                while(c--) {
+                  glVertex3fv(v);
+                  v+=3;
                 }
+                glEnd();
+              }
             } else {
-              while(*n)
-                {
-                  c=*(n++);
-                  glBegin(GL_POINTS);
-                  while(c--) {
-                    glColor3fv(vc);
-                    vc+=3;
-                    glVertex3fv(v);
-                    v+=3;
-                  }
-                  glEnd();
+              while(*n) {
+                c=*(n++);
+                glBegin(GL_POINTS);
+                while(c--) {
+                  glColor3fv(vc);
+                  vc+=3;
+                  glVertex3fv(v);
+                  v+=3;
                 }
+                glEnd();
+              }
             }
           }
           break;
@@ -310,8 +325,13 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
       *(lc++) = *(cc++);
     }
 
-  I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_width);
-  I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
+  if(I->mesh_type!=1) {
+    I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_width);
+    I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
+  } else {
+    I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_dot_width);
+    I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_dot_radius);
+  }
   I->R.displayListInvalid=true;
 
   if(I->NTot) {

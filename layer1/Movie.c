@@ -458,7 +458,7 @@ void MovieSetSize(PyMOLGlobals *G,unsigned int width,unsigned int height)
   return;
 }
 /*========================================================================*/
-int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
+int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missing_only)
 {
   /* assumed locked api, blocked threads, and master thread on entry */
 
@@ -473,7 +473,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
   char buffer[255];
   int nFrame;
   double accumTiming = 0.0;
-
+  int file_missing = true;
   save = (int)SettingGet(G,cSetting_cache_frames); 
   if(!save)
     MovieClearImages(G);
@@ -495,7 +495,6 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
   MoviePlay(G,cMoviePlay);
   VLACheck(I->Image,ImageType*,nFrame);
 
-
   OrthoBusySlow(G,0,nFrame);
   for(a=0;a<nFrame;a++) {
     double timing = UtilGetSeconds(G); /* start timing the process */
@@ -503,12 +502,21 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
       " MoviePNG-DEBUG: Cycle %d...\n",a
       ENDFB(G);
     sprintf(fname,"%s%04d.png",prefix,a+1);
+    if(missing_only) {
+      FILE *tmp = fopen(fname,"rb");
+      if(tmp) {
+        fclose(tmp);
+        file_missing=false;
+      } else {
+        file_missing=true;
+      }
+    }
     SceneSetFrame(G,0,a);
     MovieDoFrameCommand(G,a);
     MovieFlushCommands(G);
     i=MovieFrameToImage(G,a);
     VLACheck(I->Image,ImageType*,i);
-    if((a>=start)&&(a<=stop)) { /* only render frames in the specified interval */
+    if((a>=start)&&(a<=stop)&&(file_missing)) { /* only render frames in the specified interval */
       if(!I->Image[i]) {
         SceneUpdate(G);
         SceneMakeMovieImage(G,false);

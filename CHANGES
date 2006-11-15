@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 1.00b16
 
+    * fixed mesh_type = 1 for molecular objects
+
     * fixed bug when rendering spheres alone
 
 Changes up to 1.00b15
