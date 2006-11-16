@@ -4,7 +4,7 @@ CHANGE LOG
 
 Changes up to 1.00b16
 
-    * "reinitialize settings" for global settings (only, for now)
+    * "reinitialize settings" for global & object settings (only, for now)
 
     * fixed mesh_type = 1 for molecular objects
 
