@@ -539,11 +539,14 @@ static PyObject *CmdSetVis(PyObject *dummy, PyObject *args)
 static PyObject *CmdReinitialize(PyObject *dummy, PyObject *args)
 {
   int ok=true;
-  if (ok) {
+  int what;
+  char *object;
+  ok = PyArg_ParseTuple(args,"is",&what,&object);
+  if(ok) {
     APIEntry();
-    ok = ExecutiveReinitialize(TempPyMOLGlobals);
+    ok = ExecutiveReinitialize(TempPyMOLGlobals,what,object);
     APIExit();
-  }
+    }
   return APIResultOk(ok);
 
 }
