@@ -357,7 +357,7 @@ int ExecutiveValidateObjectPtr(PyMOLGlobals *G,CObject *ptr,int object_type);
 int ExecutiveSpectrum(PyMOLGlobals *G,char *s1,char *expr,float min,float max,int first,int last,
                       char *prefix,int digits,int byres,int quiet,float *min_ret,float *max_ret);
 
-int ExecutiveReinitialize(PyMOLGlobals *G);
+int ExecutiveReinitialize(PyMOLGlobals *G,int what, char *pattern);
 char *ExecutiveFindBestNameMatch(PyMOLGlobals *G,char *name);
 int ExecutiveSetVisFromPyDict(PyMOLGlobals *G,PyObject *dict);
 PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals *G);

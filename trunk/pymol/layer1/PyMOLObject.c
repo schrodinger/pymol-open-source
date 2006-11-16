@@ -36,6 +36,12 @@ int ObjectGetNFrames(CObject *I);
 void ObjectDescribeElement(struct CObject *I,int index,char *buffer);
 CSetting **ObjectGetSettingHandle(struct CObject *I,int state);
 
+void ObjectPurgeSettings(CObject *I)
+{
+  SettingFreeP(I->Setting);
+  I->Setting = NULL;
+}
+
 static void TTTToViewElem(float *TTT,CViewElem *elem)
 {
   register float *fp = TTT;

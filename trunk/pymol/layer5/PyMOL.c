@@ -1788,11 +1788,11 @@ PyMOLreturn_status PyMOL_CmdColor(CPyMOL *I,char *color, char *selection, int fl
   return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I)
+PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I,int what, char *object_name)
 {
   int ok;
   PYMOL_API_LOCK
-  ok = ExecutiveReinitialize(I->G);
+  ok = ExecutiveReinitialize(I->G,what,object_name);
   PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }

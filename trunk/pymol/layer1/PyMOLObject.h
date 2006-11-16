@@ -82,6 +82,7 @@ int ObjectCopyHeader(CObject *I, CObject *src);
 void ObjectPurge(CObject *I);
 void ObjectSetName(CObject *I,char *name);
 void ObjectMakeValidName(char *name);
+void ObjectPurgeSettings(CObject *I);
 void ObjectFree(CObject *I);
 void ObjectUseColor(CObject *I);
 void ObjectSetRepVis(CObject *I,int rep,int state);

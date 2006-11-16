@@ -1367,6 +1367,7 @@ SEE ALSO
               resume,             \
               splash,             \
               reinitialize,       \
+              reinit_sc,          \
               sync
 
         #--------------------------------------------------------------------
@@ -2261,6 +2262,8 @@ SEE ALSO
             'pseudoatom'     : [ object_sc              , 'object'          , ''   ],            
             'ramp_new'       : [ object_sc              , 'ramp'            , ''   ],
             'remove'         : [ selection_sc           , 'selection'       , ''   ],
+            'reinitialize'   : [ reinit_sc              , 'option'          , ''   ],
+            
             'scene'          : [ viewing.scene_dict_sc  , 'scene'           , ''   ],
             'set'            : [ setting.setting_sc     , 'setting'         , ','  ],
             'set_bond'       : [ setting.setting_sc     , 'setting'         , ','  ],            

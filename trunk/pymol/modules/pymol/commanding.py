@@ -148,7 +148,13 @@ USAGE
         if _raising(r): raise pymol.CmdException
         return r
 
-    def reinitialize():
+    reinit_code = {
+        'everything' : 0,
+        'settings' : 1,
+    }
+    reinit_sc = Shortcut(reinit_code.keys())
+
+    def reinitialize(what='everything',object=''):
         '''
 DESCRIPTION
 
@@ -158,10 +164,11 @@ USAGE
 
     reinitialize
         '''
-        r = DEFAULT_ERROR      
+        r = DEFAULT_ERROR
+        what = reinit_code[reinit_sc.auto_err(str(what),'option')]
         try:
             lock()
-            r = _cmd.reinitialize()
+            r = _cmd.reinitialize(int(what),str(object))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException

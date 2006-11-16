@@ -13848,30 +13848,73 @@ static void ExecutiveReshape(Block *block,int width,int height)
 }
 
 /*========================================================================*/
-int ExecutiveReinitialize(PyMOLGlobals *G)
+int ExecutiveReinitialize(PyMOLGlobals *G,int what,char *pattern)
 { 
+  register CExecutive *I = G->Executive;
   int ok=true;
   int blocked = false;
   /* reinitialize PyMOL */
 
-  ExecutiveDelete(G,cKeywordAll);
-  ColorReset(G);
-  SettingInitGlobal(G,false,false);
-  MovieReset(G);
-  EditorInactivate(G);
-  ControlRock(G,0);
-
-  blocked = PAutoBlock();
-  PRunString("cmd.view('*','clear')");
-  PRunString("cmd.scene('*','clear')");
-  WizardSet(G,NULL,false);
-  PAutoUnblock(blocked);
-  
-  SculptCachePurge(G);
-  SceneReinitialize(G);
-  SelectorReinit(G);
-  SeqChanged(G);
-
+  if(pattern&&(!pattern[0])) pattern=NULL;
+  if(!pattern) {
+    
+    switch(what) {
+    case 0:
+      ExecutiveDelete(G,cKeywordAll);
+      ColorReset(G);
+      SettingInitGlobal(G,false,false);
+      MovieReset(G);
+      EditorInactivate(G);
+      ControlRock(G,0);
+      
+      blocked = PAutoBlock();
+      PRunString("cmd.view('*','clear')");
+      PRunString("cmd.scene('*','clear')");
+      WizardSet(G,NULL,false);
+      PAutoUnblock(blocked);
+      
+      SculptCachePurge(G);
+      SceneReinitialize(G);
+      SelectorReinit(G);
+      SeqChanged(G);
+      break;
+    case 1:
+      SettingInitGlobal(G,false,false);
+      ExecutiveRebuildAll(G);
+      break;
+    }
+  } else {
+    {
+      CTracker *I_Tracker= I->Tracker;
+      int list_id = ExecutiveGetNamesListFromPattern(G,pattern,true,true);
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+      SpecRec *rec;
+      
+      while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+        if(rec) {
+          switch(rec->type) {
+          case cExecObject:
+            switch(what) {
+            case 0:
+            case 1:
+              if(rec->obj->Setting) {
+                ObjectPurgeSettings(rec->obj);
+                if(rec->obj->fInvalidate)
+                  rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvAll,-1);
+                SceneInvalidate(G);
+                SeqChanged(G);
+              }
+              break;
+            }
+          }
+        }
+      }
+      TrackerDelList(I_Tracker, list_id);
+      TrackerDelIter(I_Tracker, iter_id);
+    }
+    
+    /* to do */
+  }
   return(ok);
 }
 /*========================================================================*/
