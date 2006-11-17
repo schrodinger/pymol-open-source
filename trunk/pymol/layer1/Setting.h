@@ -728,6 +728,12 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_mesh_negative_color        536
 #define cSetting_group_auto_mode            537
 #define cSetting_group_full_member_names    538
+#define cSetting_gradient_max_length        539
+#define cSetting_gradient_min_length        540
+#define cSetting_gradient_min_slope         541
+#define cSetting_gradient_min_dot           542
+#define cSetting_gradient_step_size         543
+#define cSetting_gradient_spacing           544
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -737,7 +743,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       539
+#define cSetting_INIT                       545
 
 #endif
 

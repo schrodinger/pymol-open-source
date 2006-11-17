@@ -1344,6 +1344,7 @@ SEE ALSO
               extract,            \
               fragment,           \
               group,              \
+              gradient,           \
               isodot,             \
               isolevel,           \
               isomesh,            \
@@ -1775,6 +1776,7 @@ SEE ALSO
             'get_version'   : [ get_version       , 0 , 0 , ''  , parsing.STRICT ],            
             'get_view'      : [ get_view          , 0 , 0 , ''  , parsing.STRICT ],
             'global'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
+            'gradient'      : [ gradient          , 0 , 0 , ''  , parsing.STRICT ],            
             'group'         : [ group             , 0 , 0 , ''  , parsing.STRICT ],
             'h_add'         : [ h_add             , 0 , 0 , ''  , parsing.STRICT ],
             'h_fill'        : [ h_fill            , 0 , 0 , ''  , parsing.STRICT ],

@@ -202,6 +202,44 @@ float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z)
 
 }
 
+void FieldInterpolate3f(CField *I,int *locus,float *fract, float *result)
+{
+  /* basic trilinear interpolation */
+
+  register float x = fract[0];
+  register float y = fract[1];
+  register float z = fract[2];
+  register float x1,y1,z1;
+  register float result1,result2;
+  register float product1,product2;
+  register int a = locus[0];
+  register int b = locus[1];
+  register int c = locus[2];
+  register int d;
+
+  x1=1.0F-x;
+  y1=1.0F-y;
+  z1=1.0F-z;
+  
+
+  for(d=0;d<3;d++) {
+    result1 = 0.0F;
+    result2 = 0.0F;
+
+    if((product1 = x1*y1*z1)!=0.0F) result1 += product1 * Ffloat4(I,a  ,b  ,c  , d);
+    if((product2 = x *y1*z1)!=0.0F) result2 += product2 * Ffloat4(I,a+1,b  ,c  , d);
+    if((product1 = x1*y *z1)!=0.0F) result1 += product1 * Ffloat4(I,a  ,b+1,c  , d);
+    if((product2 = x1*y1*z )!=0.0F) result2 += product2 * Ffloat4(I,a  ,b  ,c+1, d);
+    if((product1 = x *y *z1)!=0.0F) result1 += product1 * Ffloat4(I,a+1,b+1,c  , d);
+    if((product2 = x1*y *z )!=0.0F) result2 += product2 * Ffloat4(I,a  ,b+1,c+1, d);
+    if((product1 = x *y1*z )!=0.0F) result1 += product1 * Ffloat4(I,a+1,b  ,c+1, d);
+    if((product2 = x *y *z )!=0.0F) result2 += product2 * Ffloat4(I,a+1,b+1,c+1, d);
+    
+    result[d] = result1+result2;
+  }
+
+}
+
 int FieldSmooth3f(CField *I)
 {
   register int a,b,c;

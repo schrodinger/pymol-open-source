@@ -1767,6 +1767,15 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_hide_underscore_names:
     OrthoDirty(G);
     break;
+  case cSetting_gradient_spacing:
+  case cSetting_gradient_max_length:
+  case cSetting_gradient_min_length:
+  case cSetting_gradient_min_dot:
+  case cSetting_gradient_step_size:
+  case cSetting_gradient_min_slope:
+    ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvRep);
+    SceneChanged(G);
+    break;
   case cSetting_min_mesh_spacing:
   case cSetting_mesh_mode:
   case cSetting_mesh_type:
@@ -3306,6 +3315,12 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_color(I,cSetting_mesh_negative_color,"grey30");
   set_i(I,cSetting_group_auto_mode,1);
   set_i(I,cSetting_group_full_member_names,0);
+  set_f(I,cSetting_gradient_max_length,100.0F);
+  set_f(I,cSetting_gradient_min_length,2.0F);
+  set_f(I,cSetting_gradient_min_slope,0.00001F);
+  set_f(I,cSetting_gradient_min_dot, 0.0F);
+  set_f(I,cSetting_gradient_step_size,0.25F);
+  set_i(I,cSetting_gradient_spacing,3);
 }
 
 

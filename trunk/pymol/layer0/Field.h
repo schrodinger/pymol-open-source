@@ -90,6 +90,7 @@ CField *FieldNew(PyMOLGlobals *G,int *dim,int n_dim,unsigned int base_size,int t
 void FieldZero(CField *I);
 void FieldFree(CField *I);
 float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z);
+void FieldInterpolate3f(CField *I,int *locus,float *fract, float *result);
 
 PyObject *FieldAsPyList(CField *I);
 CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list);
