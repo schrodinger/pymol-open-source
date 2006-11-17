@@ -674,7 +674,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
 	 MapFree(map);
 	 FreeP(I->Dot);	 
 	 OrthoBusyFast(G,2,3);
-     IsosurfVolume(G,field,1.0,&I->N,&I->V,NULL,mesh_type,mesh_skip);
+     IsosurfVolume(G,NULL,NULL,field,1.0,&I->N,&I->V,NULL,mesh_type,mesh_skip,1.0F);
      IsosurfFieldFree(G,field);
     
      /* someday add support for solid mesh representation....

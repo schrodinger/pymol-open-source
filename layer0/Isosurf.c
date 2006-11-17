@@ -17,6 +17,9 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"os_std.h"
 
+#include"OVRandom.h"
+#include"OVContext.h"
+
 #include"Isosurf.h"
 #include"MemoryDebug.h"
 #include"Err.h"
@@ -25,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"PConv.h"
 #include"P.h"
+#include"Util.h"
 
 #define Trace_OFF
 
@@ -93,6 +97,9 @@ static int	IsosurfDrawLines(CIsosurf *II);
 static void	IsosurfCode(CIsosurf *II,char *bits1,char *bits2);
 static int	IsosurfDrawPoints(CIsosurf *II);
 static int	IsosurfPoints(CIsosurf *II);
+static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1, CSetting *set2,
+                            CIsosurf *II,Isofield *field,
+                            int *range,float min_level, float max_level);
 
 #define IsosurfSubSize		64
 
@@ -218,6 +225,8 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
 
   if(!field->gradients) {
 
+    /* compute gradients relative to grid axis spacing */
+
     for(a=0;a<3;a++)
       dim[a]=field->dimensions[a];
     dim[3]=3;
@@ -236,9 +245,9 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
         }
       }
     }
-
+    
     for(a=0;a<dim[0];a+=(dim[0]-1)) {
-
+      
       /* 'a' faces */
       for(b=1;b<(dim[1]-1);b++) {
         for(c=1;c<(dim[2]-1);c++) {
@@ -251,7 +260,7 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
           F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c-1))/2.0F;
         }
       }
-
+      
       /* 'c' edges and all eight corners */
       for(b=0;b<dim[1];b+=(dim[1]-1)) {
         for(c=0;c<dim[2];c++) {
@@ -277,7 +286,7 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
           }
         }
       }
-
+      
       /* 'b' edges  */
       for(c=0;c<dim[2];c+=(dim[2]-1)) {
         for(b=1;b<(dim[1]-1);b++) {
@@ -286,9 +295,9 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
           } else {
             F4(gradients,a,b,c,0) = (F3(data,a,b,c) - F3(data,a-1,b,c));
           }
-        
+          
           F4(gradients,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b-1,c))/2.0F;          
-        
+          
           if(!c) {
             F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c));
           } else if(c<(dim[2]-1)) {
@@ -299,7 +308,7 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
         }
       }
     }
-      
+    
     for(b=0;b<dim[1];b+=(dim[1]-1)) {
       
       for(a=1;a<(dim[0]-1);a++) {
@@ -333,12 +342,12 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
         }
       }
     }
-      
-      
-      /* 'c' faces */
-      
-      for(c=0;c<dim[2];c+=(dim[2]-1)) {
-        for(a=1;a<(dim[0]-1);a++) {
+    
+    
+    /* 'c' faces */
+    
+    for(c=0;c<dim[2];c+=(dim[2]-1)) {
+      for(a=1;a<(dim[0]-1);a++) {
         for(b=1;b<(dim[1]-1);b++) {
           F4(gradients,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a-1,b,c))/2.0F;
           F4(gradients,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b-1,c))/2.0F;
@@ -627,8 +636,9 @@ void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,
     ENDFD;
 }
 /*===========================================================================*/
-int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,
-                  float **vert,int *range,int mode,int skip)
+int	IsosurfVolume(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
+                  Isofield *field,float level,int **num,
+                  float **vert,int *range,int mode,int skip,float alt_level)
 {
   register CIsosurf *I;
   if(PIsGlutThread()) {
@@ -673,44 +683,52 @@ int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,
 	I->Num[I->NSeg]=I->NLine;
 
 	if(ok) {
-      
-      for(i=0;i<Steps[0];i++)
-		for(j=0;j<Steps[1];j++)
-          for(k=0;k<Steps[2];k++) {
-			I->CurOff[0]=IsosurfSubSize*i;
-			I->CurOff[1]=IsosurfSubSize*j;
-			I->CurOff[2]=IsosurfSubSize*k;
-            for(c=0;c<3;c++)
-              I->CurOff[c]+=range[c];
-			for(c=0;c<3;c++)	{
-              I->Max[c]=range[3+c]-I->CurOff[c];
-              if(I->Max[c]>(IsosurfSubSize+1))
-                I->Max[c]=(IsosurfSubSize+1);
-            }
-			if(!(i||j||k))	{
-              for(x=0;x<I->Max[0];x++)
-                for(y=0;y<I->Max[1];y++)
-                  for(z=0;z<I->Max[2];z++)
-                    for(c=0;c<3;c++)
-                      EdgePt(I->Point,x,y,z,c).NLink=0;
-            }
-         
-#ifdef Trace
-            for(c=0;c<3;c++)
-              printf(" IsosurfVolume: c: %i CurOff[c]: %i Max[c] %i\n",c,I->CurOff[c],I->Max[c]); 
-#endif
-         
-			if(ok) 
-              switch(mode) { 
-              case 0: /* standard mode - want lines */
-                ok=IsosurfCurrent(I);
-                break;
-              case 1: /* point mode - just want points on the isosurface */
-                ok=IsosurfPoints(I);
-                break;
+      switch(mode) {
+      case 3:
+        ok=IsosurfGradients(G,set1,set2,I,field,range,level,alt_level);
+        break;
+      default:
+        for(i=0;i<Steps[0];i++)
+          for(j=0;j<Steps[1];j++)
+            for(k=0;k<Steps[2];k++) {
+              I->CurOff[0]=IsosurfSubSize*i;
+              I->CurOff[1]=IsosurfSubSize*j;
+              I->CurOff[2]=IsosurfSubSize*k;
+              for(c=0;c<3;c++)
+                I->CurOff[c]+=range[c];
+              for(c=0;c<3;c++)	{
+                I->Max[c]=range[3+c]-I->CurOff[c];
+                if(I->Max[c]>(IsosurfSubSize+1))
+                  I->Max[c]=(IsosurfSubSize+1);
               }
-          }
-      IsosurfPurge(I);
+              if(!(i||j||k))	{
+                for(x=0;x<I->Max[0];x++)
+                  for(y=0;y<I->Max[1];y++)
+                    for(z=0;z<I->Max[2];z++)
+                      for(c=0;c<3;c++)
+                        EdgePt(I->Point,x,y,z,c).NLink=0;
+              }
+              
+#ifdef Trace
+              for(c=0;c<3;c++)
+                printf(" IsosurfVolume: c: %i CurOff[c]: %i Max[c] %i\n",c,I->CurOff[c],I->Max[c]); 
+#endif
+              
+              if(ok) 
+                switch(mode) { 
+                case 0: /* standard mode - want lines */
+                  ok=IsosurfCurrent(I);
+                  break;
+                case 1: /* point mode - just want points on the isosurface */
+                  ok=IsosurfPoints(I);
+                  break;
+                case 2:
+                  /* reserved */
+                break;
+                }
+            }
+        IsosurfPurge(I);
+      }
     }
    
     if(mode) {
@@ -770,21 +788,18 @@ static int	IsosurfAlloc(PyMOLGlobals *G,CIsosurf *II)
 static void	IsosurfPurge(CIsosurf *II)
 {
   register CIsosurf *I = II;
-	if(I->VertexCodes) 
-		{
-        FieldFree(I->VertexCodes);
-        I->VertexCodes=NULL;
-		}
-	if(I->ActiveEdges)
-		{
-        FieldFree(I->ActiveEdges);
-        I->ActiveEdges=NULL;
-		}
-	if(I->Point)
-		{
-        FieldFree(I->Point);
-        I->Point=NULL;
-		}
+  if(I->VertexCodes) {
+    FieldFree(I->VertexCodes);
+    I->VertexCodes=NULL;
+  }
+  if(I->ActiveEdges) {
+    FieldFree(I->ActiveEdges);
+    I->ActiveEdges=NULL;
+  }
+  if(I->Point) {
+    FieldFree(I->Point);
+    I->Point=NULL;
+  }
 }
 /*===========================================================================*/
 static int	IsosurfCurrent(CIsosurf *II)
@@ -806,6 +821,320 @@ static int	IsosurfPoints(CIsosurf *II)
   if(IsosurfCodeVertices(I)) {
     if(ok) ok=IsosurfFindActiveEdges(I);
     if(ok) ok=IsosurfDrawPoints(I);
+  }
+  return(ok);
+}
+/*===========================================================================*/
+static int IsosurfVertexInOrder(int *list,int a,int b)
+{
+  return(list[4*a+3]<=list[4*b+3]);
+}
+
+static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
+                            CIsosurf *II,Isofield *field,
+                            int *range, float min_level, float max_level)
+{
+  register CIsosurf *I = II;
+  int	ok=true;
+  int spacing = SettingGet_f(G,set1,set2,cSetting_gradient_spacing);
+  float step_size = SettingGet_f(G,set1,set2,cSetting_gradient_step_size);
+  float max_walk = SettingGet_f(G,set1,set2,cSetting_gradient_max_length);
+  float min_walk = SettingGet_f(G,set1,set2,cSetting_gradient_min_length);
+  float min_slope = SettingGet_f(G,set1,set2,cSetting_gradient_min_slope);
+  float min_dot = SettingGet_f(G,set1,set2,cSetting_gradient_min_dot);
+  if(step_size<R_SMALL8)
+    step_size = 0.1F;
+
+  if(!field->gradients)
+    IsofieldComputeGradients(G,field);
+  if(field->gradients && I->AbsDim[0] && I->AbsDim[1] && I->AbsDim[2]) {
+    int vol_size = I->AbsDim[0]*I->AbsDim[1]*I->AbsDim[2];
+    int range_size = (range[3]-range[0])*(range[4]-range[1])*(range[5]-range[2]);
+    int stride[3];
+    int *order = Calloc(int,4*range_size);
+    int *flag = Calloc(int,vol_size);
+    int *active_cell = VLAlloc(int,1000);
+    float cell_unit;
+    stride[0] = 1;
+    stride[1] = I->AbsDim[0];
+    stride[2] = I->AbsDim[0]*I->AbsDim[1];
+
+    {
+      float *pos[4];
+      pos[0] = Ffloat4p(I->Coord,0,0,0,0);
+      pos[1] = Ffloat4p(I->Coord,1,0,0,0);
+      pos[2] = Ffloat4p(I->Coord,0,1,0,0);
+      pos[3] = Ffloat4p(I->Coord,0,0,1,0);
+      cell_unit = (diff3f(pos[0],pos[1]) + 
+                   diff3f(pos[0],pos[2]) + 
+                   diff3f(pos[0],pos[3])) / 3.0F;
+
+      max_walk /= cell_unit;
+      min_walk /= cell_unit;
+      step_size /= cell_unit;
+      min_slope *= cell_unit;
+    }
+
+    {
+      OVRandom *my_rand = OVRandom_NewBySeed(G->Context->heap,vol_size);
+      int i,j,k,*p = order;
+      for(k=range[2];k<range[5];k++) {
+        for(j=range[1];j<range[4];j++) {
+          for(i=range[0];i<range[3];i++) {
+            p[0] = i;
+            p[1] = j;
+            p[2] = k;
+            p[3] = OVRandom_Get_int31(my_rand);
+            p+=4;
+          }
+        }
+      }
+      OVRandom_Del(my_rand);
+    }
+    UtilSortInPlace(G,order,range_size,4*sizeof(int),(UtilOrderFn*)IsosurfVertexInOrder);
+    {
+      int a;
+      int *p = order;
+      for(a=0;a<range_size;a++) {
+        int abort_n_line = I->NLine;
+        int abort_n_seg = I->NSeg;
+        int pass;
+        int n_active_cell = 0;
+        float walk = max_walk;
+        for(pass=0;pass<2;pass++) {
+          int have_last = false;
+          float last_gradient[3];
+          int locus[3],*last_locus = NULL;
+          float fract[3] = { 0.0F, 0.0F, 0.0F };
+          int done = false;
+          int n_vert = 0;
+        
+          locus[0] = p[0];
+          locus[1] = p[1];
+          locus[2] = p[2];
+          
+          while(!done) {
+            {
+              /* check array bounds violation */
+              int b;
+              for(b=0;b<3;b++) {
+                while(fract[b]<0.0F) {
+                  fract[b]+=1.0F;
+                  locus[b]--;
+                }
+                while(fract[b]>=1.0F) { /* push everything into the lower box so the we can use it as a flag */
+                  fract[b]-=1.0F;
+                  locus[b]++;
+                }
+                while(locus[b]>=(I->AbsDim[b]-1)) {
+                  if(fract[b]<=0.0F) {
+                    locus[b]--;
+                    fract[b]+=1.0F;
+                  } else {
+                    done = true;
+                    break;
+                  }
+                }
+                while(locus[b]<0) {
+                  if(fract[b]>1.0F) {
+                    locus[b]++;
+                    fract[b]-=1.0F;
+                  } else {
+                    done = true;
+                    break;
+                  }
+                }
+              }
+            }
+            
+            if(!done) {
+
+              if((!have_last) || (have_last && ((locus[0]!=last_locus[0]) ||
+                                                (locus[1]!=last_locus[1]) ||
+                                                (locus[2]!=last_locus[2])))) {
+                
+                /* have we moved */
+
+                /* stop if we leave target range */
+                
+                if((locus[0]<range[0])||(locus[1]<range[1])||(locus[2]<range[2])) 
+                  done = true;
+
+                if((locus[0]>(range[3]-2))||(locus[1]>(range[4]-2))||(locus[2]>(range[5]-2)))
+                  done = true;
+
+                /* stop if we hit an occupied square */
+                
+                if(!done) {
+                  int *flag1 = flag + (locus[0] * stride[0]) + (locus[1] * stride[1]) + (locus[2] * stride[2]);
+                  if( *flag1 ) {
+                    done = true; 
+                  }
+                }
+              }
+            }
+
+            if(!done) {
+              /* stop if level exceeds desired ranges */
+              float level = FieldInterpolatef(I->Data,locus[0],locus[1],locus[2],fract[0],fract[1],fract[2]);
+              if((level<min_level) ||
+                 (level>max_level))
+                done = true;
+            }
+
+            if(!done) {
+              float interp[3];
+             
+              /* interpolate gradient relative to grid */
+              FieldInterpolate3f(field->gradients, locus, fract, interp);
+
+              if(length3f(interp)<min_slope) { 
+                /* if region is too flat, then bail */
+                done = true;
+              }
+              
+              if(!done) {
+                
+                /* add a line vertex at this point */
+                
+                float *f;
+                VLACheck(I->Line,float,I->NLine*3+2);
+                f=I->Line+(I->NLine*3);
+                FieldInterpolate3f(field->points, locus, fract, f);
+                I->NLine++;
+                n_vert++;
+                /* record locus for subsequent oblation */
+
+                if((!have_last) || (have_last && ((locus[0]!=last_locus[0]) ||
+                                                  (locus[1]!=last_locus[1]) ||
+                                                  (locus[2]!=last_locus[2])))) {
+                  
+                  
+                  VLACheck(active_cell, int, n_active_cell * 3 + 2);
+                  {
+                    int *xrd = active_cell + (n_active_cell * 3);
+                    xrd[0] = locus[0];
+                    xrd[1] = locus[1];
+                    xrd[2] = locus[2];
+                    n_active_cell++;
+                    last_locus = xrd; /* warning: volatile */
+                  }
+                }
+
+                /* adjust length of gradient vector */
+                
+                normalize3f(interp);                
+
+                /* make sure gradient isn't too divergent to take another step */
+
+                if(have_last) {
+                  if(dot_product3f(interp,last_gradient)<min_dot)
+                    done = true;
+                }
+
+                if(!done) {
+                  /* take another step */
+
+                  copy3f(interp,last_gradient);
+
+                  if(pass) { 
+                    scale3f(interp,-step_size,interp);
+                  } else {
+                    scale3f(interp,step_size,interp);
+                  }
+                  
+                  walk -= step_size;
+                  
+                  if(walk<0.0F) 
+                    done = true;
+                  else {
+                    /* move */
+                    add3f(interp,fract,fract);
+                  }
+                  have_last = true;
+                }
+
+              }
+            }
+          }
+          if(n_vert<2) {
+            if(n_vert) {
+              I->NLine = I->Num[I->NSeg]; /* quash isolated vertex */            
+            }
+          } else if(I->NLine!=I->Num[I->NSeg]) { /* any new lines? */
+            VLACheck(I->Num,int,I->NSeg+1);
+            I->Num[I->NSeg]=I->NLine-I->Num[I->NSeg];
+            I->NSeg++;
+            VLACheck(I->Num,int,I->NSeg);
+            I->Num[I->NSeg]=I->NLine;
+          }
+        }
+        if((max_walk-walk)<min_walk) { /* ignore short lines */
+          I->NSeg = abort_n_seg;
+          I->NLine = abort_n_line;
+          I->Num[I->NSeg]=I->NLine;
+        } else {
+          /* keeping line, so oblate neighborhood */
+
+          int *ac = active_cell;
+          int b;
+          register int cut_sq = spacing * spacing;
+          for(b=0;b<n_active_cell;b++) {
+            register int ii = ac[0], jj=ac[1], kk=ac[2];
+            int i0 = ii - spacing;
+            int j0 = jj - spacing;
+            int k0 = kk - spacing;
+
+            register int i1 = ii + spacing + 1;
+            register int j1 = jj + spacing + 1;
+            register int k1 = kk + spacing + 1;
+
+            if(i0<0) i0 = 0;
+            if(i1>=I->AbsDim[0]) i1 = I->AbsDim[0]-1;
+            if(j0<0) j0 = 0;
+            if(j1>=I->AbsDim[1]) j1 = I->AbsDim[1]-1;
+            if(k0<0) k0 = 0;
+            if(k1>=I->AbsDim[2]) k1 = I->AbsDim[2]-1;
+
+            {
+              register int i,j,k,a_plus_one = a+1;
+              int *flag1 = flag + (i0 * stride[0]) + (j0 * stride[1]) + (k0 * stride[2]);
+              for(k=k0;k<=k1;k++) {
+                int *flag2 = flag1;
+                int kk_sq = (kk-k);
+                kk_sq = kk_sq * kk_sq;
+
+                for(j=j0;j<=j1;j++) {
+                  register int *flag3 = flag2;
+                  register int jj_sq = (jj-j);
+                  jj_sq = (jj_sq * jj_sq) + kk_sq;
+                  
+                  if( !(jj_sq>cut_sq)) {
+                    for(i=i0;i<i1;i++) { 
+                      if(!*flag3) {
+                        register int tot_sq = (ii-i);
+                        tot_sq = (tot_sq * tot_sq) + jj_sq;
+                        if( !(tot_sq>cut_sq) ) { /* spherical avoidance */
+                          *flag3 = a_plus_one;
+                        }
+                      }
+                      flag3++;
+                    } /* i */
+                  }
+                  flag2 += stride[1];
+                } /* j */
+                flag1 += stride[2];
+              } /* k */
+            }
+            ac+=3;
+          }
+        }
+        p+=4;
+      }
+    }
+      VLAFreeP(active_cell);
+    FreeP(order);
+    FreeP(flag);
   }
   return(ok);
 }
@@ -1381,16 +1710,14 @@ static int	IsosurfCodeVertices(CIsosurf *II)
 	int	VCount=0;
 
 	for(i=0;i<I->Max[0];i++)
-	for(j=0;j<I->Max[1];j++)
-	for(k=0;k<I->Max[2];k++)
-		{
-		if((O3(I->Data,i,j,k,I->CurOff)>I->Level))
-			{
-			I3(I->VertexCodes,i,j,k)=1;
-			VCount++;
-			}
-		else
+      for(j=0;j<I->Max[1];j++)
+        for(k=0;k<I->Max[2];k++) {
+          if((O3(I->Data,i,j,k,I->CurOff)>I->Level)) {
+            I3(I->VertexCodes,i,j,k)=1;
+            VCount++;
+          } else {
 			I3(I->VertexCodes,i,j,k)=0;
+          }
 		}
 #ifdef Trace
 printf(" IsosurfCodeVertices: %i of %i vertices above level\n",VCount,

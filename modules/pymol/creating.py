@@ -233,9 +233,10 @@ SEE ALSO
         try:
             lock()
             r = _cmd.isomesh(str(name),0,str(map),int(mopt),
-                                  selection,float(buffer),
-                                  float(level),0,int(state)-1,float(carve),
-                                  int(source_state)-1,int(quiet))
+                             selection,float(buffer),
+                             float(level),0,int(state)-1,float(carve),
+                             int(source_state)-1,int(quiet),
+                             float(level))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         
@@ -379,13 +380,16 @@ SEE ALSO
         try:
             lock()
             r = _cmd.isomesh(str(name),0,str(map),int(mopt),
-                                  selection,float(buffer),
-                                  float(level),1,int(state)-1,
-                                  float(carve),int(source_state)-1,int(quiet))
+                             selection,float(buffer),
+                             float(level),1,int(state)-1,
+                             float(carve),int(source_state)-1,int(quiet),
+                             float(level))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                  
         return r
+
+
 
     def isolevel(name,level=1.0,state=0):
         '''
@@ -402,6 +406,53 @@ USAGE
         try:
             lock()
             r = _cmd.isolevel(str(name),float(level),int(state)-1)
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException                  
+        return r
+
+    def gradient(name,map,minimum=-1.0,maximum=1.0,
+                 selection='',buffer=0.0,state=0,
+                 carve=None,source_state=0,quiet=1):
+        '''
+DESCRIPTION
+
+    "gradient" creates a gradient object from a map object.
+
+USAGE
+
+    gradient name = map, [ minimum, [ maximum, [,(selection) [,buffer [, state ] ] ] ] ]
+
+    map = the name of the map object to use.
+
+    minimum, maximum = minimum and maximum levels (default -1.0, 1.0)
+
+    selection = an atom selection about which to display the mesh with
+        an additional "buffer" (if provided).
+
+SEE ALSO
+
+    load, isomesh
+        '''
+        r = DEFAULT_ERROR
+        if selection!='':
+            mopt = 1 # about a selection
+        else:
+            mopt = 0 # render the whole map
+        # preprocess selections
+        selection = selector.process(selection)
+        if selection not in [ 'center', 'origin' ]:
+            selection = "("+selection+")"
+        #
+        if carve==None:
+            carve=0.0
+        try:
+            lock()
+            r = _cmd.isomesh(str(name),0,str(map),int(mopt),
+                             selection,float(buffer),
+                             float(minimum),3,int(state)-1,
+                             float(carve),int(source_state)-1,int(quiet),
+                             float(maximum))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                  

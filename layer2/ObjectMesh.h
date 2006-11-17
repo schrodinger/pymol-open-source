@@ -38,11 +38,12 @@ typedef struct {
   float *AtomVertex;
   int CarveFlag;
   float CarveBuffer;
-  int DotFlag;
+  int MeshMode;
   CGO *UnitCellCGO;
   int displayList;
   int displayListInvalid;
   WordType caption;
+  float AltLevel;
 } ObjectMeshState;
 
 typedef struct ObjectMesh {
@@ -54,8 +55,8 @@ typedef struct ObjectMesh {
 ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap* map,
                               int map_state,
                               int state,float *mn,float *mx,
-                              float level,int dotFlag,
-                              float carve,float *vert_vla);
+                              float level,int meshMode,
+                              float carve,float *vert_vla,float alt_level);
 void ObjectMeshDump(ObjectMesh *I,char *fname,int state);
 
 PyObject *ObjectMeshAsPyList(ObjectMesh *I);

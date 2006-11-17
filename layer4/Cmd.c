@@ -2140,7 +2140,7 @@ static PyObject *CmdDump(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
   char *str1,*str2,*str3;
-  float lvl,fbuf;
+  float lvl,fbuf,alt_lvl;
   int dotFlag;
   int c,state=-1;
   OrthoLineType s1;
@@ -2158,8 +2158,8 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
   int quiet;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args,"sisisffiifii",&str1,&frame,&str2,&oper,
-			&str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state,&quiet);
+  ok = PyArg_ParseTuple(args,"sisisffiifiif",&str1,&frame,&str2,&oper,
+			&str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state,&quiet,&alt_lvl);
   if (ok) {
     APIEntry();
 
@@ -2244,7 +2244,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
             ENDFB(TempPyMOLGlobals);
           obj=(CObject*)ObjectMeshFromBox(TempPyMOLGlobals,(ObjectMesh*)origObj,mapObj,
                                           map_state,state,mn,mx,lvl,dotFlag,
-                                          carve,vert_vla);
+                                          carve,vert_vla,alt_lvl);
 
           /* copy the map's TTT */
           ExecutiveMatrixCopy2(TempPyMOLGlobals, 

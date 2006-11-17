@@ -572,6 +572,12 @@ if __name__=='pymol.setting':
         mesh_negative_color       = (536,'')
         group_auto_mode           = (537,'')
         group_full_member_names   = (538,'')
+        gradient_max_length       = (539,'');
+        gradient_min_length       = (540,'');
+        gradient_min_slope        = (541,'');
+        gradient_min_dot          = (542,'');
+        gradient_step_size        = (543,'');
+        gradient_spacing          = (544,'');
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

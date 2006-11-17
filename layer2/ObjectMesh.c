@@ -48,7 +48,7 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
 {
   PyObject *result = NULL;
 
-  result = PyList_New(14);
+  result = PyList_New(15);
   
   PyList_SetItem(result,0,PyInt_FromLong(I->Active));
   PyList_SetItem(result,1,PyString_FromString(I->MapName));
@@ -67,7 +67,8 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
   } else {
     PyList_SetItem(result,12,PConvAutoNone(NULL));
   }
-  PyList_SetItem(result,13,PyInt_FromLong(I->DotFlag));
+  PyList_SetItem(result,13,PyInt_FromLong(I->MeshMode));
+  PyList_SetItem(result,14,PyFloat_FromDouble(I->AltLevel));
 
 #if 0
   ObjectNameType MapName;
@@ -85,7 +86,7 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
   float *AtomVertex;
   int CarveFlag;
   float CarveBuffer;
-  int DotFlag;
+  int MeshMode;
   CGO *UnitCellCGO;
 #endif
 
@@ -148,10 +149,15 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals *G,ObjectMeshState *I,PyObject
         else 
           ok = PConvPyListToFloatVLA(tmp,&I->AtomVertex);
       }
-      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->DotFlag);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->MeshMode);
       if(ok) {
         I->RefreshFlag=true;
         I->ResurfaceFlag=true;
+      }
+      if(ok&&(ll>14)) {
+        ok = PConvPyFloatToFloat(PyList_GetItem(list,14),&I->AltLevel);
+      } else {
+        I->AltLevel = I->Level;
       }
     }
   }
@@ -300,7 +306,7 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
         while(*n)
           {
             c=*(n++);
-            if(!I->State[state].DotFlag) {
+            if(!I->State[state].MeshMode) {
               fprintf(f,"\n");
             }
             while(c--) {
@@ -555,31 +561,32 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                    ms->Range[3],
                    ms->Range[4],
                    ms->Range[5]);*/
-                
-            IsosurfVolume(I->Obj.G,oms->Field,
+            IsosurfVolume(I->Obj.G,I->Obj.Setting,NULL,
+                          oms->Field,
                           ms->Level,
                           &ms->N,&ms->V,
                           ms->Range,
-                          ms->DotFlag,
-                          mesh_skip);
+                          ms->MeshMode,
+                          mesh_skip,ms->AltLevel);
 
                        
 
             if(!SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_negative_visible)) { 
               ms->base_n_V = VLAGetSize(ms->V);
-            } else {
+            } else if(ms->MeshMode!=3) {
               /* do we want the negative surface too? */
 
               int *N2 = VLAlloc(int,10000);
               float *V2 =  VLAlloc(float,10000);
 
-              IsosurfVolume(I->Obj.G,oms->Field,
-                                  -ms->Level,
-                                  &N2,&V2,
-                                  ms->Range,
-                                  ms->DotFlag,
-                                  mesh_skip);
-
+              IsosurfVolume(I->Obj.G,I->Obj.Setting,NULL,
+                            oms->Field,
+                            -ms->Level,
+                            &N2,&V2,
+                            ms->Range,
+                            ms->MeshMode,
+                            mesh_skip,ms->AltLevel);
+              
 
               if(N2&&V2) {
                 
@@ -763,7 +770,7 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
             CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.G,I->Obj.Color),
                          I->Obj.Setting,NULL);
-          if(!ms->DotFlag) {
+          if(ms->MeshMode!=1) {
             radius=SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_radius);
             
             if(radius==0.0F) {
@@ -783,7 +790,7 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
             vc = ms->VC;
             rc = ms->RC;
             /* vc = ColorGet(I->Obj.G,I->Obj.Color); */
-            if(ms->DotFlag) {
+            if(ms->MeshMode==1) {
               ray->fColor3fv(ray,cc);
               while(*n) {
                 c=*(n++);
@@ -867,13 +874,13 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
                 
                 if(n&&v&&I->Obj.RepVis[cRepMesh]) {
                   vc = ms->VC;              
-                  if(ms->DotFlag) 
+                  if(ms->MeshMode==1) 
                     glPointSize(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_dot_width));
                   else
                     glLineWidth(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width));
                   while(*n) {
                     c=*(n++);
-                    if(ms->DotFlag) 
+                    if(ms->MeshMode==1) 
                       glBegin(GL_POINTS);
                     else 
                       glBegin(GL_LINE_STRIP);
@@ -962,8 +969,8 @@ void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
 ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
                               int map_state,
                               int state,float *mn,float *mx,
-                              float level,int dotFlag,
-                              float carve,float *vert_vla)
+                              float level,int meshMode,
+                              float carve,float *vert_vla,float alt_level)
 {
   ObjectMesh *I;
   ObjectMeshState *ms;
@@ -989,7 +996,8 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
   oms = ObjectMapGetState(map,map_state);
 
   ms->Level = level;
-  ms->DotFlag = dotFlag;
+  ms->AltLevel = alt_level;
+  ms->MeshMode = meshMode;
   if(oms) {
     copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
     copy3f(mx,ms->ExtentMax);

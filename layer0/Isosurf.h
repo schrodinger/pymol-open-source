@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"Field.h"
 #include"os_python.h"
 #include"PyMOLGlobals.h"
+#include"Setting.h"
 
 typedef struct {
   int dimensions[3];
@@ -40,7 +41,10 @@ typedef struct {
 Isofield *IsosurfFieldAlloc(PyMOLGlobals *G,int *dims);
 void IsosurfFieldFree(PyMOLGlobals *G,Isofield *field);
 
-int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **vert,int *range,int mode,int skip);
+int	IsosurfVolume(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
+                  Isofield *field,float level,int **num,
+                  float **vert,int *range,int mode,int skip,float alt_level);
+
 void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
 
 int	IsosurfInit(PyMOLGlobals *G);
