@@ -865,7 +865,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
 
   /* and that map has a minimum size */
 
-  if(field->gradients && (I->AbsDim[0]>1) && (I->AbsDim[1]>1) && (I->AbsDim[2]>1) ) {
+  if(field->gradients) {
 
     /* locals for performance */
 
@@ -902,7 +902,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
 
     order = Calloc(int,3*range_size); 
 
-    if( order && flag ) {
+    if( order && flag && (range_dim[0]>1) && (range_dim[1]>1) && (range_dim[2]>1)) {
 
       {
         /* compute approximate cell spacing */
