@@ -1042,7 +1042,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                                                 (locus[2]!=prev_locus[2])))) {
                 /* above: prev_locus may be NULL, so relying upon shortcut logic eval */              
               
-                /* stop if we hit a flagged square (flag always in lower corner) */
+                /* stop if we hit a flagged cell (flag always in lower corner) */
               
                 if(*(flag + (((locus[0] - range[0]) * flag_stride[0]) +
                              ((locus[1] - range[1]) * flag_stride[1]) +
@@ -1190,12 +1190,12 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
 
                 /* highly optimized spherical flag-fill routine */
 
-                for(k=k0;k<=k1;k++) {
+                for(k=k0;k<k1;k++) {
                   int *flag2 = flag1;
                   int kk_sq = (kk-k);
                   kk_sq = kk_sq * kk_sq;
 
-                  for(j=j0;j<=j1;j++) {
+                  for(j=j0;j<j1;j++) {
                     register int *flag3 = flag2;
                     register int jj_sq = (jj-j);
                     jj_sq = (jj_sq * jj_sq) + kk_sq;
