@@ -3318,7 +3318,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_gradient_max_length,100.0F);
   set_f(I,cSetting_gradient_min_length,2.0F);
   set_f(I,cSetting_gradient_min_slope,0.00001F);
-  set_f(I,cSetting_gradient_min_dot, 0.0F);
+  set_f(I,cSetting_gradient_min_dot, 0.7F);
   set_f(I,cSetting_gradient_step_size,0.25F);
   set_i(I,cSetting_gradient_spacing,3);
 }
