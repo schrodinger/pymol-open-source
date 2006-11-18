@@ -2244,7 +2244,7 @@ SEE ALSO
             'feedback'       : [ fb_action_sc           , 'action'          , ', ' ],
             'flag'           : [ editing.flag_sc        , 'flag'            , ', ' ],
             'get'            : [ setting.setting_sc     , 'setting'         , ','  ],
-            'gradient'       : [ object_sc              , 'gradient'        , ''   ],            
+            'gradient'       : [ object_sc              , 'gradient'        , ',' ],            
             'help'           : [ help_sc                , 'selection'       , ''   ],
             'hide'           : [ repres_sc              , 'representation'  , ', ' ],
             'isolevel'       : [ contour_sc             , 'contour'         , ', ' ],
@@ -2263,7 +2263,7 @@ SEE ALSO
             'origin'         : [ selection_sc           , 'selection'       , ''   ],
             'protect'        : [ selection_sc           , 'selection'       , ''   ],
             'pseudoatom'     : [ object_sc              , 'object'          , ''   ],            
-            'ramp_new'       : [ object_sc              , 'ramp'            , ''   ],
+            'ramp_new'       : [ object_sc              , 'ramp'            , ','  ],
             'remove'         : [ selection_sc           , 'selection'       , ''   ],
             'reinitialize'   : [ reinit_sc              , 'option'          , ''   ],
             
@@ -2292,7 +2292,7 @@ SEE ALSO
             'button'         : [ controlling.but_mod_sc , 'modifier'        , ', ' ],
             'show'           : [ selection_sc           , 'selection'       , ''   ],
             'extract'        : [ selection_sc           , 'selection'       , ''   ],
-            'gradient'       : [ map_sc                 , 'map object'       , ''   ],      
+            'gradient'       : [ map_sc                 , 'map object'      , ','  ],      
             'hide'           : [ selection_sc           , 'selection'       , ''   ],
             'color'          : [ selection_sc           , 'selection'       , ''   ],
             'select'         : [ selection_sc           , 'selection'       , ''   ],
@@ -2317,7 +2317,7 @@ SEE ALSO
             'unset'          : [ selection_sc           , 'selection'        , ','  ],
             'unset_bond'     : [ selection_sc           , 'selection'        , ','  ],            
             'update'         : [ selection_sc           , 'selection'       , ''   ],
-            'ramp_new'       : [ map_sc                 , 'map object'       , ''   ],      
+            'ramp_new'       : [ map_sc                 , 'map object'       , ','   ],      
             },
     #3rd
             {
