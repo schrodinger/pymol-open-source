@@ -1141,7 +1141,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                   have_prev = true;
                 }
               }
-            } /* while */
+            } /* for */
 
             if(n_vert<2) { /* quash isolated vertices */
               if(n_vert) {
