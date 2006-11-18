@@ -872,9 +872,6 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
     CField *gradients = field->gradients;
     CField *points = field->points;
 
-    /* total map size (for reproducible seeding of RNG) */
-    int vol_size = I->AbsDim[0]*I->AbsDim[1]*I->AbsDim[2]; 
-
     /* flags marking excluded regions to avoid (currently wasteful) */
     int *flag;
 
@@ -929,7 +926,8 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
       {
         /* generate randomized list of cell coordinates */
 
-        OVRandom *my_rand = OVRandom_NewBySeed(G->Context->heap,vol_size);
+        /* always use same seed for same volume */
+        OVRandom *my_rand = OVRandom_NewBySeed(G->Context->heap,range_size);
         { 
           /* fill */
           int i,j,k,*p = order;
@@ -944,7 +942,6 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
             }
           }
         }
-
         { 
           /* shuffle */
           int a;
@@ -1191,7 +1188,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                                      ((j0 - range[1]) * flag_stride[1]) +
                                      ((k0 - range[2]) * flag_stride[2]));
 
-                /* highly optimized spherical flag fill routine */
+                /* highly optimized spherical flag-fill routine */
 
                 for(k=k0;k<=k1;k++) {
                   int *flag2 = flag1;
