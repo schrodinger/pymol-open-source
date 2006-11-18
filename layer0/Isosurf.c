@@ -962,7 +962,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
       {
         /* now draw our lines */
 
-        int a;
+        int a; 
         int *start_locus = order; 
         for(a=0;a<range_size;a++) {
           int n_active_cell = 0; /* how many cells have we traversed */
@@ -1006,32 +1006,33 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                     fract[b]-=1.0F;
                     locus[b]++;
                   }
-                  while(locus[b]>(range[b+3]-2)) { /* below range? done */
+                  while(locus[b]>(range[b+3]-2)) { /* above range? done */
                     if(fract[b]<=0.0F) {
                       locus[b]--;
                       fract[b]+=1.0F;
+                      if(locus[b]<range[b]) { /* below range? done */
+                        done = true;
+                        break;
+                      }
                     } else {
                       done = true;
                       break;
                     }
                   }
-                  while(locus[b]<range[b]) {  /* above range? done */
+                  while(locus[b]<range[b]) {  /* below range? done */
                     if(fract[b]>1.0F) {
                       locus[b]++;
                       fract[b]-=1.0F;
+                      if(locus[b]>(range[b+3]-2)) { /* above range? done */
+                        done = true;
+                        break;
+                      }
                     } else {
                       done = true;
                       break;
                     }
                   }
-                  if(locus[b]>(range[b+3]-2)) {
-                    done = true;
-                    break;
-                  }
-                  if(locus[b]<range[b]) {
-                    done = true;
-                    break;
-                  }
+                
                 }
                 if(done)
                   break;
@@ -1166,7 +1167,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
 
             int *ac = active_cell;
             int b;
-            register int cut_sq = spacing * spacing;
+            register int cutoff_sq = spacing * spacing;
             for(b=0;b<n_active_cell;b++) {
               register int ii = ac[0], jj=ac[1], kk=ac[2];
               int i0 = ii - spacing;
@@ -1185,7 +1186,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
               if(k1 >= range[5]) k1 = range[5]-1;
 
               {
-                register int i,j,k,a_plus_one = a+1;
+                register int i,j,k;
                 int *flag1 = flag + (((i0 - range[0]) * flag_stride[0]) +
                                      ((j0 - range[1]) * flag_stride[1]) +
                                      ((k0 - range[2]) * flag_stride[2]));
@@ -1202,13 +1203,13 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                     register int jj_sq = (jj-j);
                     jj_sq = (jj_sq * jj_sq) + kk_sq;
                   
-                    if( !(jj_sq>cut_sq)) {
+                    if( !(jj_sq>cutoff_sq)) {
                       for(i=i0;i<i1;i++) { 
                         if(!*flag3) {
                           register int tot_sq = (ii-i);
                           tot_sq = (tot_sq * tot_sq) + jj_sq;
-                          if( !(tot_sq>cut_sq) ) { 
-                            *flag3 = a_plus_one;
+                          if( !(tot_sq>cutoff_sq) ) { 
+                            *flag3 = true;
                           }
                         }
                         flag3++;
