@@ -851,7 +851,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
     int vol_size = I->AbsDim[0]*I->AbsDim[1]*I->AbsDim[2];
     int range_size = (range[3]-range[0])*(range[4]-range[1])*(range[5]-range[2]);
     int stride[3];
-    int *order = Calloc(int,4*range_size);
+    int *order = Calloc(int,3*range_size);
     int *flag = Calloc(int,vol_size);
     int *active_cell = VLAlloc(int,1000);
     float cell_unit;
@@ -876,22 +876,36 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
     }
 
     {
+      /* shuffle */
+
       OVRandom *my_rand = OVRandom_NewBySeed(G->Context->heap,vol_size);
-      int i,j,k,*p = order;
-      for(k=range[2];k<range[5];k++) {
-        for(j=range[1];j<range[4];j++) {
-          for(i=range[0];i<range[3];i++) {
-            p[0] = i;
-            p[1] = j;
-            p[2] = k;
-            p[3] = OVRandom_Get_int31(my_rand);
-            p+=4;
+      {
+        int i,j,k,*p = order;
+        for(k=range[2];k<range[5];k++) {
+          for(j=range[1];j<range[4];j++) {
+            for(i=range[0];i<range[3];i++) {
+              p[0] = i;
+              p[1] = j;
+              p[2] = k;
+              p+=3;
+            }
           }
+        }
+      }
+      { /* shuffle */
+        int a;
+        int scale = range_size * 3;
+        for(a=0;a<range_size;a++) {
+          int *p = order + (int)(scale*OVRandom_Get_float64_exc1(my_rand));
+          int *q = order + (int)(scale*OVRandom_Get_float64_exc1(my_rand));
+          register int t0 = p[0], t1 = p[1], t2 = p[2];
+          p[0] = q[0]; p[1] = q[1]; p[2] = q[2];
+          q[0] = t0;   q[1] = t1;   q[2] = t2;
         }
       }
       OVRandom_Del(my_rand);
     }
-    UtilSortInPlace(G,order,range_size,4*sizeof(int),(UtilOrderFn*)IsosurfVertexInOrder);
+
     {
       int a;
       int *p = order;
@@ -908,12 +922,12 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
           float fract[3] = { 0.0F, 0.0F, 0.0F };
           int done = false;
           int n_vert = 0;
-        
+          
           locus[0] = p[0];
           locus[1] = p[1];
           locus[2] = p[2];
           
-          while(!done) {
+          while(1) {
             {
               /* check array bounds violation */
               int b;
@@ -945,56 +959,57 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                   }
                 }
               }
+              if(done)
+                break;
             }
             
-            if(!done) {
-
-              if((!have_last) || (have_last && ((locus[0]!=last_locus[0]) ||
-                                                (locus[1]!=last_locus[1]) ||
-                                                (locus[2]!=last_locus[2])))) {
-                
-                /* have we moved */
-
-                /* stop if we leave target range */
-                
-                if((locus[0]<range[0])||(locus[1]<range[1])||(locus[2]<range[2])) 
-                  done = true;
-
-                if((locus[0]>(range[3]-2))||(locus[1]>(range[4]-2))||(locus[2]>(range[5]-2)))
-                  done = true;
-
-                /* stop if we hit an occupied square */
-                
-                if(!done) {
-                  int *flag1 = flag + (locus[0] * stride[0]) + (locus[1] * stride[1]) + (locus[2] * stride[2]);
-                  if( *flag1 ) {
-                    done = true; 
-                  }
-                }
+            if((!have_last) || (have_last && ((locus[0]!=last_locus[0]) ||
+                                              (locus[1]!=last_locus[1]) ||
+                                              (locus[2]!=last_locus[2])))) {
+              
+              int offset = (locus[0] * stride[0]) + (locus[1] * stride[1]) + (locus[2] * stride[2]);
+              
+              /* have we moved */
+              
+              /* stop if we leave target range */
+              
+              if((locus[0]<range[0])||(locus[1]<range[1])||(locus[2]<range[2])) {
+                break;
+              }
+              
+              if((locus[0]>(range[3]-2))||(locus[1]>(range[4]-2))||(locus[2]>(range[5]-2))) {
+                break;
+              }
+              
+              /* stop if we hit an occupied square */
+              
+              if ( *(flag + offset )) {
+                break;
               }
             }
-
-            if(!done) {
+            
+            {
               /* stop if level exceeds desired ranges */
               float level = FieldInterpolatef(I->Data,locus[0],locus[1],locus[2],fract[0],fract[1],fract[2]);
               if((level<min_level) ||
                  (level>max_level))
-                done = true;
+                break;
             }
-
-            if(!done) {
-              float interp[3];
-             
+            
+            
+            {
               /* interpolate gradient relative to grid */
+              
+              float interp[3];
+              
               FieldInterpolate3f(field->gradients, locus, fract, interp);
-
+              
               if(length3f(interp)<min_slope) { 
                 /* if region is too flat, then bail */
-                done = true;
+                break;
               }
               
-              if(!done) {
-                
+              {
                 /* add a line vertex at this point */
                 
                 float *f;
@@ -1004,7 +1019,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                 I->NLine++;
                 n_vert++;
                 /* record locus for subsequent oblation */
-
+                
                 if((!have_last) || (have_last && ((locus[0]!=last_locus[0]) ||
                                                   (locus[1]!=last_locus[1]) ||
                                                   (locus[2]!=last_locus[2])))) {
@@ -1020,43 +1035,40 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                     last_locus = xrd; /* warning: volatile */
                   }
                 }
-
+                
                 /* adjust length of gradient vector */
                 
                 normalize3f(interp);                
-
+                
                 /* make sure gradient isn't too divergent to take another step */
-
+                
                 if(have_last) {
                   if(dot_product3f(interp,last_gradient)<min_dot)
-                    done = true;
+                    break;
                 }
-
-                if(!done) {
-                  /* take another step */
-
-                  copy3f(interp,last_gradient);
-
-                  if(pass) { 
-                    scale3f(interp,-step_size,interp);
-                  } else {
-                    scale3f(interp,step_size,interp);
-                  }
-                  
-                  walk -= step_size;
-                  
-                  if(walk<0.0F) 
-                    done = true;
-                  else {
-                    /* move */
-                    add3f(interp,fract,fract);
-                  }
-                  have_last = true;
+                
+                /* take another step */
+                
+                copy3f(interp,last_gradient);
+                
+                if(pass) { 
+                  scale3f(interp,-step_size,interp);
+                } else {
+                  scale3f(interp,step_size,interp);
                 }
-
+                
+                walk -= step_size;
+                
+                if(walk<0.0F) {
+                  break;
+                } else {
+                  /* move */
+                  add3f(interp,fract,fract);
+                }
+                have_last = true;
               }
             }
-          }
+          } /* while */
           if(n_vert<2) {
             if(n_vert) {
               I->NLine = I->Num[I->NSeg]; /* quash isolated vertex */            
@@ -1129,10 +1141,10 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
             ac+=3;
           }
         }
-        p+=4;
+        p+=3;
       }
     }
-      VLAFreeP(active_cell);
+    VLAFreeP(active_cell);
     FreeP(order);
     FreeP(flag);
   }
