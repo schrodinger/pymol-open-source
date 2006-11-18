@@ -825,10 +825,6 @@ static int	IsosurfPoints(CIsosurf *II)
   return(ok);
 }
 /*===========================================================================*/
-static int IsosurfVertexInOrder(int *list,int a,int b)
-{
-  return(list[4*a+3]<=list[4*b+3]);
-}
 
 static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                             CIsosurf *II,Isofield *field,
@@ -836,318 +832,414 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
 {
   register CIsosurf *I = II;
   int	ok=true;
+
+  /* use local copies for performance reasons */
+
+  int n_seg = I->NSeg;
+  int n_line = I->NLine;
+  float *i_line = I->Line;
+  CField *i_data = I->Data;
+  int *i_num = I->Num;
+
+  /* get cascaded state, object, or global settings */
+
   int spacing = SettingGet_f(G,set1,set2,cSetting_gradient_spacing);
   float step_size = SettingGet_f(G,set1,set2,cSetting_gradient_step_size);
   float max_walk = SettingGet_f(G,set1,set2,cSetting_gradient_max_length);
   float min_walk = SettingGet_f(G,set1,set2,cSetting_gradient_min_length);
   float min_slope = SettingGet_f(G,set1,set2,cSetting_gradient_min_slope);
   float min_dot = SettingGet_f(G,set1,set2,cSetting_gradient_min_dot);
-  if(step_size<R_SMALL8)
-    step_size = 0.1F;
+
+  /* clamp dangerous parameters */
+
+  if(step_size<0.01F)
+    step_size = 0.01F;
+  
+  if(min_slope<0.00001F)
+    min_slope = 0.00001F;
+
+  /* make sure we have gradients available for map */
 
   if(!field->gradients)
     IsofieldComputeGradients(G,field);
-  if(field->gradients && I->AbsDim[0] && I->AbsDim[1] && I->AbsDim[2]) {
-    int vol_size = I->AbsDim[0]*I->AbsDim[1]*I->AbsDim[2];
-    int range_size = (range[3]-range[0])*(range[4]-range[1])*(range[5]-range[2]);
-    int stride[3];
-    int *order = Calloc(int,3*range_size);
-    int *flag = Calloc(int,vol_size);
-    int *active_cell = VLAlloc(int,1000);
-    float cell_unit;
-    stride[0] = 1;
-    stride[1] = I->AbsDim[0];
-    stride[2] = I->AbsDim[0]*I->AbsDim[1];
 
-    {
-      float *pos[4];
-      pos[0] = Ffloat4p(I->Coord,0,0,0,0);
-      pos[1] = Ffloat4p(I->Coord,1,0,0,0);
-      pos[2] = Ffloat4p(I->Coord,0,1,0,0);
-      pos[3] = Ffloat4p(I->Coord,0,0,1,0);
-      cell_unit = (diff3f(pos[0],pos[1]) + 
-                   diff3f(pos[0],pos[2]) + 
-                   diff3f(pos[0],pos[3])) / 3.0F;
+  /* and that map has a minimum size */
 
-      max_walk /= cell_unit;
-      min_walk /= cell_unit;
-      step_size /= cell_unit;
-      min_slope *= cell_unit;
-    }
+  if(field->gradients && (I->AbsDim[0]>1) && (I->AbsDim[1]>1) && (I->AbsDim[2]>1) ) {
 
-    {
-      /* shuffle */
+    /* locals for performance */
 
-      OVRandom *my_rand = OVRandom_NewBySeed(G->Context->heap,vol_size);
+    CField *gradients = field->gradients;
+    CField *points = field->points;
+
+    /* total map size (for reproducible seeding of RNG) */
+    int vol_size = I->AbsDim[0]*I->AbsDim[1]*I->AbsDim[2]; 
+
+    /* flags marking excluded regions to avoid (currently wasteful) */
+    int *flag;
+
+    /* variable length array for recording segment paths */
+    int *active_cell = VLAlloc(int,1000); 
+
+    /* ordered list of coordinates for processing */
+    int *order;
+
+    int range_size; /* total points in region being drawn */
+    int range_dim[3]; /* dimension of drawn region */
+    int flag_stride[3]; /* stride values for flag array */
+
+    range_dim[0] = (range[3]-range[0]);
+    range_dim[1] = (range[4]-range[1]);
+    range_dim[2] = (range[5]-range[2]);
+
+    range_size = range_dim[0] * range_dim[1] * range_dim[2];
+
+    flag = Calloc(int,range_size); 
+
+    flag_stride[0] = 1;
+    flag_stride[1] = range_dim[0];
+    flag_stride[2] = range_dim[0]*range_dim[1];
+
+    order = Calloc(int,3*range_size); 
+
+    if( order && flag ) {
+
       {
-        int i,j,k,*p = order;
-        for(k=range[2];k<range[5];k++) {
-          for(j=range[1];j<range[4];j++) {
-            for(i=range[0];i<range[3];i++) {
-              p[0] = i;
-              p[1] = j;
-              p[2] = k;
-              p+=3;
+        /* compute approximate cell spacing */
+
+        float average_cell_axis_dist;
+        float *pos[4];
+        pos[0] = Ffloat4p(I->Coord,0,0,0,0);
+        pos[1] = Ffloat4p(I->Coord,1,0,0,0);
+        pos[2] = Ffloat4p(I->Coord,0,1,0,0);
+        pos[3] = Ffloat4p(I->Coord,0,0,1,0);
+
+        average_cell_axis_dist = (diff3f(pos[0],pos[1]) + 
+                                  diff3f(pos[0],pos[2]) + 
+                                  diff3f(pos[0],pos[3])) / 3.0F;
+
+        /* scale parameters into cell units */
+
+        max_walk /= average_cell_axis_dist;
+        min_walk /= average_cell_axis_dist;
+        step_size /= average_cell_axis_dist;
+        min_slope *= average_cell_axis_dist;
+      }
+
+      {
+        /* generate randomized list of cell coordinates */
+
+        OVRandom *my_rand = OVRandom_NewBySeed(G->Context->heap,vol_size);
+        { 
+          /* fill */
+          int i,j,k,*p = order;
+          for(k=range[2];k<range[5];k++) {
+            for(j=range[1];j<range[4];j++) {
+              for(i=range[0];i<range[3];i++) {
+                p[0] = i;
+                p[1] = j;
+                p[2] = k;
+                p+=3;
+              }
             }
           }
         }
+
+        { 
+          /* shuffle */
+          int a;
+          for(a=0;a<range_size;a++) {
+            int *p = order + 3*(int)(range_size*OVRandom_Get_float64_exc1(my_rand));
+            int *q = order + 3*(int)(range_size*OVRandom_Get_float64_exc1(my_rand));
+            register int t0 = p[0], t1 = p[1], t2 = p[2];
+            p[0] = q[0]; p[1] = q[1]; p[2] = q[2];
+            q[0] = t0;   q[1] = t1;   q[2] = t2;
+          }
+        }
+        OVRandom_Del(my_rand);
       }
-      { /* shuffle */
+
+      {
+        /* now draw our lines */
+
         int a;
-        int scale = range_size * 3;
+        int *start_locus = order; 
         for(a=0;a<range_size;a++) {
-          int *p = order + (int)(scale*OVRandom_Get_float64_exc1(my_rand));
-          int *q = order + (int)(scale*OVRandom_Get_float64_exc1(my_rand));
-          register int t0 = p[0], t1 = p[1], t2 = p[2];
-          p[0] = q[0]; p[1] = q[1]; p[2] = q[2];
-          q[0] = t0;   q[1] = t1;   q[2] = t2;
-        }
-      }
-      OVRandom_Del(my_rand);
-    }
+          int n_active_cell = 0; /* how many cells have we traversed */
+          float walk = max_walk; /* distance remaining to travel */
 
-    {
-      int a;
-      int *p = order;
-      for(a=0;a<range_size;a++) {
-        int abort_n_line = I->NLine;
-        int abort_n_seg = I->NSeg;
-        int pass;
-        int n_active_cell = 0;
-        float walk = max_walk;
-        for(pass=0;pass<2;pass++) {
-          int have_last = false;
-          float last_gradient[3];
-          int locus[3],*last_locus = NULL;
-          float fract[3] = { 0.0F, 0.0F, 0.0F };
-          int done = false;
-          int n_vert = 0;
+          int abort_n_line = n_line; /* for backtracking */
+          int abort_n_seg = n_seg;
+
+          int pass; /* the pass are we on */
+
+          for(pass=0;pass<2;pass++) { /* one pass down the gradient, one up */
+
+            int have_prev = false;  /* flag & storage for previous gradient & locus */
+            float prev_gradient[3]; 
+            int *prev_locus = NULL;
+
+            int locus[3]; /* what cell are we in? */
+            float fract[3] = { 0.0F, 0.0F, 0.0F }; /* where in the cell are we? */
+
+            int n_vert = 0;
           
-          locus[0] = p[0];
-          locus[1] = p[1];
-          locus[2] = p[2];
+            locus[0] = start_locus[0];
+            locus[1] = start_locus[1];
+            locus[2] = start_locus[2];
           
-          while(1) {
-            {
-              /* check array bounds violation */
-              int b;
-              for(b=0;b<3;b++) {
-                while(fract[b]<0.0F) {
-                  fract[b]+=1.0F;
-                  locus[b]--;
-                }
-                while(fract[b]>=1.0F) { /* push everything into the lower box so the we can use it as a flag */
-                  fract[b]-=1.0F;
-                  locus[b]++;
-                }
-                while(locus[b]>=(I->AbsDim[b]-1)) {
-                  if(fract[b]<=0.0F) {
-                    locus[b]--;
-                    fract[b]+=1.0F;
-                  } else {
-                    done = true;
-                    break;
-                  }
-                }
-                while(locus[b]<0) {
-                  if(fract[b]>1.0F) {
-                    locus[b]++;
-                    fract[b]-=1.0F;
-                  } else {
-                    done = true;
-                    break;
-                  }
-                }
-              }
-              if(done)
-                break;
-            }
+            for(;;) {
+
+              /* master segment extension loop, using "break" to exit */
             
-            if((!have_last) || (have_last && ((locus[0]!=last_locus[0]) ||
-                                              (locus[1]!=last_locus[1]) ||
-                                              (locus[2]!=last_locus[2])))) {
-              
-              int offset = (locus[0] * stride[0]) + (locus[1] * stride[1]) + (locus[2] * stride[2]);
-              
-              /* have we moved */
-              
-              /* stop if we leave target range */
-              
-              if((locus[0]<range[0])||(locus[1]<range[1])||(locus[2]<range[2])) {
-                break;
-              }
-              
-              if((locus[0]>(range[3]-2))||(locus[1]>(range[4]-2))||(locus[2]>(range[5]-2))) {
-                break;
-              }
-              
-              /* stop if we hit an occupied square */
-              
-              if ( *(flag + offset )) {
-                break;
-              }
-            }
-            
-            {
-              /* stop if level exceeds desired ranges */
-              float level = FieldInterpolatef(I->Data,locus[0],locus[1],locus[2],fract[0],fract[1],fract[2]);
-              if((level<min_level) ||
-                 (level>max_level))
-                break;
-            }
-            
-            
-            {
-              /* interpolate gradient relative to grid */
-              
-              float interp[3];
-              
-              FieldInterpolate3f(field->gradients, locus, fract, interp);
-              
-              if(length3f(interp)<min_slope) { 
-                /* if region is too flat, then bail */
-                break;
-              }
-              
               {
-                /* add a line vertex at this point */
-                
-                float *f;
-                VLACheck(I->Line,float,I->NLine*3+2);
-                f=I->Line+(I->NLine*3);
-                FieldInterpolate3f(field->points, locus, fract, f);
-                I->NLine++;
-                n_vert++;
-                /* record locus for subsequent oblation */
-                
-                if((!have_last) || (have_last && ((locus[0]!=last_locus[0]) ||
-                                                  (locus[1]!=last_locus[1]) ||
-                                                  (locus[2]!=last_locus[2])))) {
-                  
-                  
-                  VLACheck(active_cell, int, n_active_cell * 3 + 2);
-                  {
-                    int *xrd = active_cell + (n_active_cell * 3);
-                    xrd[0] = locus[0];
-                    xrd[1] = locus[1];
-                    xrd[2] = locus[2];
-                    n_active_cell++;
-                    last_locus = xrd; /* warning: volatile */
+                /* normalize locus and fract before each new step */
+                int done = false;
+                int b;
+                for(b=0;b<3;b++) {
+
+                  while(fract[b]<0.0F) { /* force fract >= 0.0 */
+                    fract[b]+=1.0F;
+                    locus[b]--;
                   }
-                }
-                
-                /* adjust length of gradient vector */
-                
-                normalize3f(interp);                
-                
-                /* make sure gradient isn't too divergent to take another step */
-                
-                if(have_last) {
-                  if(dot_product3f(interp,last_gradient)<min_dot)
+                  while(fract[b]>=1.0F) { /* force fract into [0.0-1.0) */
+                    fract[b]-=1.0F;
+                    locus[b]++;
+                  }
+                  while(locus[b]>(range[b+3]-2)) { /* below range? done */
+                    if(fract[b]<=0.0F) {
+                      locus[b]--;
+                      fract[b]+=1.0F;
+                    } else {
+                      done = true;
+                      break;
+                    }
+                  }
+                  while(locus[b]<range[b]) {  /* above range? done */
+                    if(fract[b]>1.0F) {
+                      locus[b]++;
+                      fract[b]-=1.0F;
+                    } else {
+                      done = true;
+                      break;
+                    }
+                  }
+                  if(locus[b]>(range[b+3]-2)) {
+                    done = true;
                     break;
-                }
-                
-                /* take another step */
-                
-                copy3f(interp,last_gradient);
-                
-                if(pass) { 
-                  scale3f(interp,-step_size,interp);
-                } else {
-                  scale3f(interp,step_size,interp);
-                }
-                
-                walk -= step_size;
-                
-                if(walk<0.0F) {
-                  break;
-                } else {
-                  /* move */
-                  add3f(interp,fract,fract);
-                }
-                have_last = true;
-              }
-            }
-          } /* while */
-          if(n_vert<2) {
-            if(n_vert) {
-              I->NLine = I->Num[I->NSeg]; /* quash isolated vertex */            
-            }
-          } else if(I->NLine!=I->Num[I->NSeg]) { /* any new lines? */
-            VLACheck(I->Num,int,I->NSeg+1);
-            I->Num[I->NSeg]=I->NLine-I->Num[I->NSeg];
-            I->NSeg++;
-            VLACheck(I->Num,int,I->NSeg);
-            I->Num[I->NSeg]=I->NLine;
-          }
-        }
-        if((max_walk-walk)<min_walk) { /* ignore short lines */
-          I->NSeg = abort_n_seg;
-          I->NLine = abort_n_line;
-          I->Num[I->NSeg]=I->NLine;
-        } else {
-          /* keeping line, so oblate neighborhood */
-
-          int *ac = active_cell;
-          int b;
-          register int cut_sq = spacing * spacing;
-          for(b=0;b<n_active_cell;b++) {
-            register int ii = ac[0], jj=ac[1], kk=ac[2];
-            int i0 = ii - spacing;
-            int j0 = jj - spacing;
-            int k0 = kk - spacing;
-
-            register int i1 = ii + spacing + 1;
-            register int j1 = jj + spacing + 1;
-            register int k1 = kk + spacing + 1;
-
-            if(i0<0) i0 = 0;
-            if(i1>=I->AbsDim[0]) i1 = I->AbsDim[0]-1;
-            if(j0<0) j0 = 0;
-            if(j1>=I->AbsDim[1]) j1 = I->AbsDim[1]-1;
-            if(k0<0) k0 = 0;
-            if(k1>=I->AbsDim[2]) k1 = I->AbsDim[2]-1;
-
-            {
-              register int i,j,k,a_plus_one = a+1;
-              int *flag1 = flag + (i0 * stride[0]) + (j0 * stride[1]) + (k0 * stride[2]);
-              for(k=k0;k<=k1;k++) {
-                int *flag2 = flag1;
-                int kk_sq = (kk-k);
-                kk_sq = kk_sq * kk_sq;
-
-                for(j=j0;j<=j1;j++) {
-                  register int *flag3 = flag2;
-                  register int jj_sq = (jj-j);
-                  jj_sq = (jj_sq * jj_sq) + kk_sq;
-                  
-                  if( !(jj_sq>cut_sq)) {
-                    for(i=i0;i<i1;i++) { 
-                      if(!*flag3) {
-                        register int tot_sq = (ii-i);
-                        tot_sq = (tot_sq * tot_sq) + jj_sq;
-                        if( !(tot_sq>cut_sq) ) { /* spherical avoidance */
-                          *flag3 = a_plus_one;
-                        }
-                      }
-                      flag3++;
-                    } /* i */
                   }
-                  flag2 += stride[1];
-                } /* j */
-                flag1 += stride[2];
-              } /* k */
+                  if(locus[b]<range[b]) {
+                    done = true;
+                    break;
+                  }
+                }
+                if(done)
+                  break;
+              }
+
+              /* have we moved cells? */
+            
+              if((!have_prev) || (have_prev && ((locus[0]!=prev_locus[0]) || 
+                                                (locus[1]!=prev_locus[1]) ||
+                                                (locus[2]!=prev_locus[2])))) {
+                /* above: prev_locus may be NULL, so relying upon shortcut logic eval */              
+              
+                /* stop if we hit a flagged square (flag always in lower corner) */
+              
+                if(*(flag + (((locus[0] - range[0]) * flag_stride[0]) +
+                             ((locus[1] - range[1]) * flag_stride[1]) +
+                             ((locus[2] - range[2]) * flag_stride[2])))) {
+                  break;
+                }
+
+              }
+            
+              {
+                /* stop if level exceeds desired ranges */
+                float level = FieldInterpolatef(i_data,locus[0],locus[1],locus[2],
+                                                fract[0],fract[1],fract[2]);
+                if((level<min_level) || (level>max_level))
+                  break;
+              }
+            
+            
+              {
+                /* interpolate gradient relative to grid */
+              
+                float interp_gradient[3];
+              
+                FieldInterpolate3f(gradients, locus, fract, interp_gradient);
+              
+                if(length3f(interp_gradient)<min_slope) { 
+                  /* if region is too flat, then bail */
+                  break;
+                }
+              
+                {
+                  /* add a line vertex at this point */
+                
+                  {
+                    float *f;
+                    VLACheck(i_line,float,n_line*3+2);
+                    f = i_line + (n_line*3);
+                    FieldInterpolate3f(points, locus, fract, f);
+                    n_line++;
+                    n_vert++;
+                  }
+
+                  /* record locus for subsequent oblation */
+                
+                  if((!have_prev) || (have_prev && ((locus[0]!=prev_locus[0]) ||
+                                                    (locus[1]!=prev_locus[1]) ||
+                                                    (locus[2]!=prev_locus[2])))) {
+                  
+                  
+                    VLACheck(active_cell, int, n_active_cell * 3 + 2);
+                    {
+                      int *xrd = active_cell + (n_active_cell * 3);
+                      xrd[0] = locus[0];
+                      xrd[1] = locus[1];
+                      xrd[2] = locus[2];
+                      n_active_cell++;
+                      prev_locus = xrd; /* warning: volatile pointer */
+                    }
+                  }
+                
+                  /* adjust length of gradient vector */
+                
+                  normalize3f(interp_gradient);                
+                
+                  /* make sure gradient isn't too divergent to take another step */
+                
+                  if(have_prev) {
+                    if(dot_product3f(interp_gradient,prev_gradient)<min_dot)
+                      break;
+                  }
+                
+                  /* take another step */
+                
+                  copy3f(interp_gradient,prev_gradient);
+                
+                  /* scale and flip sign */
+
+                  if(pass) { 
+                    scale3f(interp_gradient,-step_size,interp_gradient);
+                  } else {
+                    scale3f(interp_gradient,step_size,interp_gradient);
+                  }
+
+                  /* record progress */
+
+                  walk -= step_size;
+
+                  /* leave if max_walk is reached */
+                
+                  if(walk<0.0F) {
+                    break;
+                  } else {
+                    /* otherwise move */
+                    add3f(interp_gradient,fract,fract);
+                  }
+                  have_prev = true;
+                }
+              }
+            } /* while */
+
+            if(n_vert<2) { /* quash isolated vertices */
+              if(n_vert) {
+                n_line = i_num[n_seg];
+              }
+            } else if(n_line != i_num[n_seg]) { /* or retain count of new line segment */
+              VLACheck(i_num,int,n_seg+1);
+              i_num[n_seg] = n_line - i_num[n_seg];
+              n_seg++;
+              i_num[n_seg] = n_line;
             }
-            ac+=3;
+
           }
-        }
-        p+=3;
+          if((max_walk-walk)<min_walk) { /* ignore too-short segments */
+            n_seg = abort_n_seg;
+            n_line = abort_n_line;
+            i_num[n_seg] = n_line;
+          } else {
+            /* otherwise, keep line and oblate neighborhood */
+
+            int *ac = active_cell;
+            int b;
+            register int cut_sq = spacing * spacing;
+            for(b=0;b<n_active_cell;b++) {
+              register int ii = ac[0], jj=ac[1], kk=ac[2];
+              int i0 = ii - spacing;
+              int j0 = jj - spacing;
+              int k0 = kk - spacing;
+
+              register int i1 = ii + spacing + 1;
+              register int j1 = jj + spacing + 1;
+              register int k1 = kk + spacing + 1;
+
+              if(i0 < range[0]) i0 = range[0];
+              if(i1 >= range[3]) i1 = range[3]-1;
+              if(j0 < range[1]) j0 = range[1];
+              if(j1 >= range[4]) j1 = range[4]-1;
+              if(k0 < range[2]) k0 = range[2];
+              if(k1 >= range[5]) k1 = range[5]-1;
+
+              {
+                register int i,j,k,a_plus_one = a+1;
+                int *flag1 = flag + (((i0 - range[0]) * flag_stride[0]) +
+                                     ((j0 - range[1]) * flag_stride[1]) +
+                                     ((k0 - range[2]) * flag_stride[2]));
+
+                /* highly optimized spherical flag fill routine */
+
+                for(k=k0;k<=k1;k++) {
+                  int *flag2 = flag1;
+                  int kk_sq = (kk-k);
+                  kk_sq = kk_sq * kk_sq;
+
+                  for(j=j0;j<=j1;j++) {
+                    register int *flag3 = flag2;
+                    register int jj_sq = (jj-j);
+                    jj_sq = (jj_sq * jj_sq) + kk_sq;
+                  
+                    if( !(jj_sq>cut_sq)) {
+                      for(i=i0;i<i1;i++) { 
+                        if(!*flag3) {
+                          register int tot_sq = (ii-i);
+                          tot_sq = (tot_sq * tot_sq) + jj_sq;
+                          if( !(tot_sq>cut_sq) ) { 
+                            *flag3 = a_plus_one;
+                          }
+                        }
+                        flag3++;
+                      } /* for i */
+                    }
+                    flag2 += flag_stride[1];
+                  } /* for j */
+                  flag1 += flag_stride[2];
+                } /* for k */
+              }
+
+              ac+=3; /* advance to next active cell */
+            } /* for b in active_cell */
+          }
+
+          start_locus+=3;
+        } /* for a in range_size */
       }
+
     }
+    /* purge memory */
     VLAFreeP(active_cell);
     FreeP(order);
     FreeP(flag);
   }
+
+  /* restore modified local copies */
+  I->Line = i_line;
+  I->Num = i_num;
+  I->NLine = n_line;
+  I->NSeg = n_seg;
   return(ok);
 }
 /*===========================================================================*/
