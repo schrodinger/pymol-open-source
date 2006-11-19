@@ -1773,6 +1773,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_gradient_min_dot:
   case cSetting_gradient_step_size:
   case cSetting_gradient_min_slope:
+  case cSetting_gradient_symmetry:
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvRep);
     SceneChanged(G);
     break;
@@ -3321,6 +3322,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_gradient_min_dot, 0.7F);
   set_f(I,cSetting_gradient_step_size,0.25F);
   set_i(I,cSetting_gradient_spacing,3);
+  set_f(I,cSetting_gradient_symmetry,0.0F);
 }
 
 
