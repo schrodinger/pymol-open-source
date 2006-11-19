@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 #include"OVLexicon.h"
 #include"OVOneToOne.h"
 
-typedef char ColorName[24];
+typedef char ColorName[64];
 
 #define cColorGadgetRamp  1
 
