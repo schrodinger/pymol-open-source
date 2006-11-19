@@ -849,6 +849,11 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
   float min_walk = SettingGet_f(G,set1,set2,cSetting_gradient_min_length);
   float min_slope = SettingGet_f(G,set1,set2,cSetting_gradient_min_slope);
   float min_dot = SettingGet_f(G,set1,set2,cSetting_gradient_min_dot);
+  float symmetry = SettingGet_f(G,set1,set2,cSetting_gradient_symmetry);
+
+  int symmetry_flag = false; /* are we searching for symmetric segments? */
+  if(symmetry!=0.0F) symmetry_flag = true;  /* (very slow process) */
+  if(symmetry>1.0F) symmetry = 1.0F/symmetry;
 
   /* clamp dangerous parameters */
 
@@ -964,12 +969,15 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
         for(a=0;a<range_size;a++) {
           int n_active_cell = 0; /* how many cells have we traversed */
           float walk = max_walk; /* distance remaining to travel */
-
+          
           int abort_n_line = n_line; /* for backtracking */
           int abort_n_seg = n_seg;
 
           int pass; /* the pass are we on */
 
+          float symmetry_max = FLT_MIN; /* if we're trying to get symmetric segments */
+          float symmetry_min = FLT_MAX;
+          
           for(pass=0;pass<2;pass++) { /* one pass down the gradient, one up */
 
             int have_prev = false;  /* flag & storage for previous gradient & locus */
@@ -978,7 +986,6 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
 
             int locus[3]; /* what cell are we in? */
             float fract[3] = { 0.0F, 0.0F, 0.0F }; /* where in the cell are we? */
-
             int n_vert = 0;
           
             locus[0] = start_locus[0];
@@ -1058,6 +1065,12 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                                                 fract[0],fract[1],fract[2]);
                 if((level<min_level) || (level>max_level))
                   break;
+                if(symmetry_flag) {
+                  if(symmetry_min>level)
+                    symmetry_min = level;
+                  if(symmetry_max<level)
+                    symmetry_max = level;
+                }
               }
             
             
@@ -1155,73 +1168,90 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
             }
 
           }
-          if((max_walk-walk)<min_walk) { /* ignore too-short segments */
-            n_seg = abort_n_seg;
-            n_line = abort_n_line;
-            i_num[n_seg] = n_line;
-          } else {
-            /* otherwise, keep line and oblate neighborhood */
-
-            int *ac = active_cell;
-            int b;
-            register int cutoff_sq = spacing * spacing;
-            for(b=0;b<n_active_cell;b++) {
-              register int ii = ac[0], jj=ac[1], kk=ac[2];
-              int i0 = ii - spacing;
-              int j0 = jj - spacing;
-              int k0 = kk - spacing;
-
-              register int i1 = ii + spacing + 1;
-              register int j1 = jj + spacing + 1;
-              register int k1 = kk + spacing + 1;
-
-              if(i0 < range[0]) i0 = range[0];
-              if(i1 >= range[3]) i1 = range[3]-1;
-              if(j0 < range[1]) j0 = range[1];
-              if(j1 >= range[4]) j1 = range[4]-1;
-              if(k0 < range[2]) k0 = range[2];
-              if(k1 >= range[5]) k1 = range[5]-1;
-
-              {
-                register int i,j,k;
-                int *flag1 = flag + (((i0 - range[0]) * flag_stride[0]) +
-                                     ((j0 - range[1]) * flag_stride[1]) +
-                                     ((k0 - range[2]) * flag_stride[2]));
-
-                /* highly optimized spherical flag-fill routine */
-
-                for(k=k0;k<k1;k++) {
-                  int *flag2 = flag1;
-                  int kk_sq = (kk-k);
-                  kk_sq = kk_sq * kk_sq;
-
-                  for(j=j0;j<j1;j++) {
-                    register int *flag3 = flag2;
-                    register int jj_sq = (jj-j);
-                    jj_sq = (jj_sq * jj_sq) + kk_sq;
-                  
-                    if( !(jj_sq>cutoff_sq)) {
-                      for(i=i0;i<i1;i++) { 
-                        if(!*flag3) {
-                          register int tot_sq = (ii-i);
-                          tot_sq = (tot_sq * tot_sq) + jj_sq;
-                          if( !(tot_sq>cutoff_sq) ) { 
-                            *flag3 = true;
-                          }
-                        }
-                        flag3++;
-                      } /* for i */
-                    }
-                    flag2 += flag_stride[1];
-                  } /* for j */
-                  flag1 += flag_stride[2];
-                } /* for k */
+          {
+            int abort_segment = false;
+            if(symmetry_flag) {
+              if((symmetry_max * symmetry_min)>=0.0F) /* abort if not both +/- pot. sampled */
+                abort_segment = true;
+              else {
+                float symmetry_ratio = fabs(symmetry_max)/fabs(symmetry_min);
+                if(symmetry_ratio>1.0F)
+                  symmetry_ratio = 1.0F/symmetry_ratio;
+                if(symmetry_ratio<symmetry) /* abort if +/- weren't close enough in magnitude */
+                  abort_segment = true;
               }
+            }
+            if((max_walk-walk)<min_walk) { /* ignore too-short segments */
+              abort_segment = true;
+            }
 
-              ac+=3; /* advance to next active cell */
-            } /* for b in active_cell */
+            if(abort_segment) {
+              n_seg = abort_n_seg;
+              n_line = abort_n_line;
+              i_num[n_seg] = n_line;
+            } else {
+              /* otherwise, keep line and oblate neighborhood */
+              
+              int *ac = active_cell;
+              int b;
+              register int cutoff_sq = spacing * spacing;
+              for(b=0;b<n_active_cell;b++) {
+                register int ii = ac[0], jj=ac[1], kk=ac[2];
+                int i0 = ii - spacing;
+                int j0 = jj - spacing;
+                int k0 = kk - spacing;
+                
+                register int i1 = ii + spacing + 1;
+                register int j1 = jj + spacing + 1;
+                register int k1 = kk + spacing + 1;
+                
+                if(i0 < range[0]) i0 = range[0];
+                if(i1 >= range[3]) i1 = range[3]-1;
+                if(j0 < range[1]) j0 = range[1];
+                if(j1 >= range[4]) j1 = range[4]-1;
+                if(k0 < range[2]) k0 = range[2];
+                if(k1 >= range[5]) k1 = range[5]-1;
+                
+                {
+                  register int i,j,k;
+                  int *flag1 = flag + (((i0 - range[0]) * flag_stride[0]) +
+                                       ((j0 - range[1]) * flag_stride[1]) +
+                                       ((k0 - range[2]) * flag_stride[2]));
+                  
+                  /* highly optimized spherical flag-fill routine */
+
+                  for(k=k0;k<k1;k++) {
+                    int *flag2 = flag1;
+                    int kk_sq = (kk-k);
+                    kk_sq = kk_sq * kk_sq;
+
+                    for(j=j0;j<j1;j++) {
+                      register int *flag3 = flag2;
+                      register int jj_sq = (jj-j);
+                      jj_sq = (jj_sq * jj_sq) + kk_sq;
+                  
+                      if( !(jj_sq>cutoff_sq)) {
+                        for(i=i0;i<i1;i++) { 
+                          if(!*flag3) {
+                            register int tot_sq = (ii-i);
+                            tot_sq = (tot_sq * tot_sq) + jj_sq;
+                            if( !(tot_sq>cutoff_sq) ) { 
+                              *flag3 = true;
+                            }
+                          }
+                          flag3++;
+                        } /* for i */
+                      }
+                      flag2 += flag_stride[1];
+                    } /* for j */
+                    flag1 += flag_stride[2];
+                  } /* for k */
+                }
+
+                ac+=3; /* advance to next active cell */
+              } /* for b in active_cell */
+            }
           }
-
           start_locus+=3;
         } /* for a in range_size */
       }
