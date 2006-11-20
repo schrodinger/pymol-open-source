@@ -999,6 +999,15 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
   ms->AltLevel = alt_level;
   ms->MeshMode = meshMode;
   if(oms) {
+
+    if((meshMode==3) && (ms->AltLevel < ms->Level)) {
+      /* gradient object -- need to auto-set range */
+      if(!ObjectMapStateGetDataRange(G,oms,&ms->Level,&ms->AltLevel)) {
+        ms->Level = -1.0F;
+        ms->AltLevel = 1.0F;
+      }
+    }
+
     copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
     copy3f(mx,ms->ExtentMax);
 

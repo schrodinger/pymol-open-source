@@ -144,6 +144,18 @@ def simple_hide(s):
     return [[ 2, 'Hide:'     ,''                                ],
               [ 1, 'everything'    ,'cmd.hide("everything","'+s+'")'        ]]
 
+def map_show(s):
+    return [[ 2, 'Show:'       , ''                             ],
+              [ 1, 'dots'        , 'cmd.show("dots","'+s+'")'     ],           
+              [ 1, 'extent'        , 'cmd.show("extent","'+s+'")'     ],
+              [ 1, 'everything'  , 'cmd.show("everything","'+s+'")'          ]]
+
+def map_hide(s):
+    return [[ 2, 'Hide:'     ,''                                ],
+              [ 1, 'dots'        , 'cmd.hide("dots","'+s+'")'     ],           
+              [ 1, 'extent'      , 'cmd.hide("extent","'+s+'")'     ],
+              [ 1, 'everything'    ,'cmd.hide("everything","'+s+'")'        ]]
+
 def mesh_show(s):
     return [[ 2, 'Show:'       , ''                             ],
               [ 1, 'mesh'        , 'cmd.show("mesh","'+s+'")'     ],           
@@ -981,17 +993,26 @@ def map_surface(s):
             [ 1, '@ level -3.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",-3.0)'      ],
             ]
 
+def map_gradient(s):
+    return [[ 2, 'Gradient:',  '' ],
+            [ 1, 'default'         , 'cmd.gradient("'+s+'_grad","'+s+'");cmd.ramp_new("'+s+
+              '_grad_ramp","'+s+'");cmd.color("'+s+'_grad_ramp","'+s+'_grad");' ]
+            ]
+    
 def map_slice(s):
     return [[ 2, 'Slice:',  '' ],
             [ 1, 'default'         , 'cmd.slice_new("'+s+'_slice","'+s+'");cmd.ramp_new("'+s+
-              '_slice_ramp","'+s+'");cmd.color("'+s+'_slice_ramp","'+s+'_slice");cmd.set("slice_track_camera",1,"'+s+'_slice")' ],
+              '_slice_ramp","'+s+'");cmd.color("'+s+'_slice_ramp","'+s+'_slice");'+
+              'cmd.set("slice_track_camera",1,"'+s+'_slice");'+
+              'cmd.set("slice_dynamic_grid",1,"'+s+'_slice")'],
             ]
 
 def map_action(s):
     return [[ 2, 'Actions:'     , ''                       ],
               [ 1, 'mesh'         , map_mesh(s)  ],
               [ 1, 'surface'      , map_surface(s)  ],
-              [ 1, 'slice'        , map_slice(s)  ],                        
+              [ 1, 'slice'        , map_slice(s)  ],
+              [ 1, 'gradient'     , map_gradient(s)  ],                                    
               [ 0, ''             , ''                       ],
               [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
               [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           

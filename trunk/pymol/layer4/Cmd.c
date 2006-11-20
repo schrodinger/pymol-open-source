@@ -2259,9 +2259,15 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
           if(SettingGet(TempPyMOLGlobals,cSetting_isomesh_auto_state))
             if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
 	  if(!quiet) {
-	    PRINTFB(TempPyMOLGlobals,FB_ObjectMesh,FB_Actions)
-	      " Isomesh: created \"%s\", setting level to %5.3f\n",str1,lvl
-	      ENDFB(TempPyMOLGlobals);
+        if(dotFlag!=3) {
+          PRINTFB(TempPyMOLGlobals,FB_ObjectMesh,FB_Actions)
+            " Isomesh: created \"%s\", setting level to %5.3f\n",str1,lvl
+            ENDFB(TempPyMOLGlobals);
+        } else {
+          PRINTFB(TempPyMOLGlobals,FB_ObjectMesh,FB_Actions)
+            " Gradient: created \"%s\"\n",str1
+            ENDFB(TempPyMOLGlobals);
+        }
 	  }
         } else if(!multi) {
           PRINTFB(TempPyMOLGlobals,FB_ObjectMesh,FB_Warnings)

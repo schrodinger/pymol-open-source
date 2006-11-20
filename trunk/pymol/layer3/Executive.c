@@ -12685,7 +12685,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     MenuActivate(G,mx,my,x,y,false,"dist_show",rec->obj->Name);
                     break;
                   case cObjectMap:
-                    MenuActivate(G,mx,my,x,y,false,"simple_show",rec->obj->Name);
+                    MenuActivate(G,mx,my,x,y,false,"map_show",rec->obj->Name);
                     break;
                   case cObjectMesh:
                     MenuActivate(G,mx,my,x,y,false,"mesh_show",rec->obj->Name);
@@ -12723,7 +12723,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     MenuActivate(G,mx,my,x,y,false,"dist_hide",rec->obj->Name);
                     break;
                   case cObjectMap:
-                    MenuActivate(G,mx,my,x,y,false,"simple_hide",rec->obj->Name);
+                    MenuActivate(G,mx,my,x,y,false,"map_hide",rec->obj->Name);
                     break;
                   case cObjectMesh:
                     MenuActivate(G,mx,my,x,y,false,"mesh_hide",rec->obj->Name);

@@ -49,6 +49,11 @@ typedef struct ObjectMapState {
   float *Range; /* Range for non-xtal maps */
   float *Grid; /* Spacing for non-xtal maps */
   float ExtentMin[3],ExtentMax[3];
+
+  /* below not stored */
+
+  int have_range;
+  float high_cutoff,low_cutoff;
 } ObjectMapState;
 
 typedef struct ObjectMap {
@@ -74,6 +79,8 @@ int ObjectMapNewCopy(PyMOLGlobals *G,ObjectMap *src,ObjectMap **result,int sourc
 ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMapDesc *md,int state);
 int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *vert_vla,
                                    float beyond, float within, float *level);
+
+int ObjectMapStateGetRange(PyMOLGlobals *G,ObjectMapState *ms,float *range);
 
 ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals *G,ObjectMap *obj,char *fname,
                                   int state,int is_file,int quiet);
@@ -118,6 +125,7 @@ void ObjectMapResetMatrix(ObjectMap *I, int state);
 int ObjectMapGetMatrix(ObjectMap *I,int state,double **matrix);
 int ObjectMapSetMatrix(ObjectMap *I,int state,double *matrix);
 void ObjectMapStateRegeneratePoints(ObjectMapState *ms);
+int ObjectMapStateGetDataRange(PyMOLGlobals *G,ObjectMapState *ms, float *min, float *max);
 
 #endif
 

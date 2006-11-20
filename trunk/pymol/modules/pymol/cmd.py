@@ -2292,7 +2292,9 @@ SEE ALSO
             'button'         : [ controlling.but_mod_sc , 'modifier'        , ', ' ],
             'show'           : [ selection_sc           , 'selection'       , ''   ],
             'extract'        : [ selection_sc           , 'selection'       , ''   ],
-            'gradient'       : [ map_sc                 , 'map object'      , ','  ],      
+            'gradient'       : [ map_sc                 , 'map object'      , ','  ],
+            'get'             : [ object_sc             , 'object'          , ','  ],            
+            
             'hide'           : [ selection_sc           , 'selection'       , ''   ],
             'color'          : [ selection_sc           , 'selection'       , ''   ],
             'select'         : [ selection_sc           , 'selection'       , ''   ],
