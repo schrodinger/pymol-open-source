@@ -66,12 +66,11 @@ static void RepDotRender(RepDot *I,RenderInfo *info)
 
 	 while(c--)
 		{
-		  if(!cc) /* load up the current vertex color */
-			 {
-				cc=(int)(*(v++));
-				ray->fColor3fv(ray,v);
+		  if(!cc) {/* load up the current vertex color */
+            cc=(int)(*(v++));
+            ray->fColor3fv(ray,v);
 				v+=3;
-			 }
+          }
 		  v+=3;
 		  ray->fSphere3fv(ray,v,radius);
 		  v+=3;

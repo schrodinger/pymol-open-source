@@ -411,7 +411,7 @@ USAGE
         if _raising(r): raise pymol.CmdException                  
         return r
 
-    def gradient(name,map,minimum=-1.0,maximum=1.0,
+    def gradient(name,map,minimum=1.0,maximum=-1.0,
                  selection='',buffer=0.0,state=0,
                  carve=None,source_state=0,quiet=1):
         '''
@@ -425,7 +425,7 @@ USAGE
 
     map = the name of the map object to use.
 
-    minimum, maximum = minimum and maximum levels (default -1.0, 1.0)
+    minimum, maximum = minimum and maximum levels (default: full map range)
 
     selection = an atom selection about which to display the mesh with
         an additional "buffer" (if provided).

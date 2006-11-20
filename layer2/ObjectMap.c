@@ -177,6 +177,26 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *ver
   return cnt;
 }
 
+int ObjectMapStateGetDataRange(PyMOLGlobals *G,ObjectMapState *ms, float *min, float *max)
+{
+  float max_val=0.0F, min_val=0.0F;
+  CField *data = ms->Field->data;
+  int cnt = data->dim[0] * data->dim[1] * data->dim[2];
+  float *raw_data = (float*)data->data;
+  if(cnt) {
+    int a;
+    min_val = (max_val = *(raw_data++));
+    for(a=1;a<cnt;a++) {
+      double f_val = *(raw_data++);
+      if(min_val > f_val) min_val = f_val;
+      if(max_val < f_val) max_val = f_val;
+    }
+  }
+  *min = min_val;
+  *max = max_val;
+  return cnt;
+}
+
 int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *flag,int n)
 {
   int ok=false;
@@ -921,39 +941,51 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
         /* wrap into the map */
 
         if(a<ms->Min[0]) {
+          if(x<0.99F) {
+            ok=false;
+            if(flag) *flag = 0;
+          }
           x=0.0F;
           a=ms->Min[0];
-          ok=false;
-          if(flag) *flag = 0;
         } else if(a>=ms->FDim[0]+ms->Min[0]-1) {
+          if(x>0.01F) {
+            ok=false;
+            if(flag) *flag = 0;
+          }
           x=0.0F;
           a=ms->FDim[0]+ms->Min[0]-1;
-          ok=false;
-          if(flag) *flag = 0;
         }
         
         if(b<ms->Min[1]) {
+          if(y<0.99F) {
+            ok=false;
+            if(flag) *flag = 0;
+          }
           y=0.0F;
           b=ms->Min[1];
-          ok=false;
-          if(flag) *flag = 0;
         } else if(b>=ms->FDim[1]+ms->Min[1]-1) {
+          if(y>0.01F) {
+            ok=false;
+            if(flag) *flag = 0;
+          }
           y=0.0F;
           b=ms->FDim[1]+ms->Min[1]-1;
-          ok=false;
-          if(flag) *flag = 0;
         }
         
         if(c<ms->Min[2]) {
+          if(z<0.99F) {
+            ok=false;
+            if(flag) *flag = 0;
+          }
           z=0.0F;
           c=ms->Min[2];
-          ok=false;
-          if(flag) *flag = 0;
         } else if(c>=ms->FDim[2]+ms->Min[2]-1) {
+          if(z>0.01) {
+            ok=false;
+            if(flag) *flag = 0;
+          }
           z=0.0F;
           c=ms->FDim[2]+ms->Min[2]-1;
-          ok=false;
-          if(flag) *flag = 0;
         }
         /*      printf("%d %d %d %8.3f %8.3f %8.3f\n",a,b,c,x,y,z);*/
         *(result++)=FieldInterpolatef(ms->Field->data,
@@ -1564,6 +1596,13 @@ static void ObjectMapInvalidate(ObjectMap *I,int rep,int level,int state)
   if(level>=cRepInvExtents) {
     I->Obj.ExtentFlag=false;
   }
+  if((rep<0)||(rep==cRepDot)) {
+    int a;
+    for(a=0;a<I->NState;a++) {
+      if(I->State[a].Active)
+        I->State[a].have_range = false;
+    }
+  }
   SceneInvalidate(I->Obj.G);
 }
 
@@ -1592,24 +1631,26 @@ static void ObjectMapRender(ObjectMap *I,RenderInfo *info)
         }
         corner = tr_corner;
       }
+
       
       if(I->Obj.RepVis[cRepExtent]) {
         if(ray) {
           float *vc;
-          vc = ColorGet(I->Obj.G,I->Obj.Color);
+          float radius = ray->PixelRadius/1.4142F;
+          vc = ColorGet(G,I->Obj.Color);
           ray->fColor3fv(ray,vc);
-          ray->fSausage3fv(ray,corner+3*0,corner+3*1,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*0,corner+3*2,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*2,corner+3*3,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*1,corner+3*3,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*0,corner+3*4,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*1,corner+3*5,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*2,corner+3*6,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*3,corner+3*7,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*4,corner+3*5,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*4,corner+3*6,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*6,corner+3*7,0.20F,vc,vc);
-          ray->fSausage3fv(ray,corner+3*5,corner+3*7,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*0,corner+3*1,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*0,corner+3*2,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*2,corner+3*3,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*1,corner+3*3,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*0,corner+3*4,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*1,corner+3*5,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*2,corner+3*6,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*3,corner+3*7,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*4,corner+3*5,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*4,corner+3*6,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*6,corner+3*7,radius,vc,vc);
+          ray->fSausage3fv(ray,corner+3*5,corner+3*7,radius,vc,vc);
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
           } else {
@@ -1657,6 +1698,125 @@ static void ObjectMapRender(ObjectMap *I,RenderInfo *info)
           }
         }
       }
+      
+      if(I->Obj.RepVis[cRepDot]) {
+        /* note, the following rep doesn't work with state matrices yet */
+
+        if(!ms->have_range) {
+          double sum=0.0,sumsq=0.0;
+          CField *data = ms->Field->data;
+          int cnt = data->dim[0] * data->dim[1] * data->dim[2];
+          float *raw_data = (float*)data->data;
+          int a;
+          for(a=0;a<cnt;a++) {
+            double f_val = *(raw_data++);
+            sum+=f_val;
+            sumsq+=(f_val*f_val);
+          }
+          if(cnt) {
+            float mean,stdev;
+            mean = (float)(sum/cnt);
+            stdev = (float)sqrt1d((sumsq - (sum*sum/cnt))/(cnt));
+            ms->high_cutoff = mean + stdev;
+            ms->low_cutoff = mean - stdev;
+            ms->have_range = true;
+          }
+        }
+        if(ms->have_range && SettingGet_b(G,NULL,I->Obj.Setting,cSetting_dot_normals)) {
+          IsofieldComputeGradients(G,ms->Field);
+        }
+        if(ms->have_range) {
+          register int a;
+          CField *data = ms->Field->data;
+          register int cnt = data->dim[0] * data->dim[1] * data->dim[2];
+          CField *points = ms->Field->points;
+          CField *gradients = NULL;
+
+          if(SettingGet_b(G,NULL,I->Obj.Setting,cSetting_dot_normals)) {
+            gradients = ms->Field->gradients;
+          }
+          if(data && points) {
+            register float *raw_data = (float*)data->data;
+            register float *raw_point = (float*)points->data;
+            register float *raw_gradient = NULL;
+            register float high_cut = ms->high_cutoff, low_cut = ms->low_cutoff;
+            register float width = SettingGet_f(G,NULL,I->Obj.Setting,cSetting_dot_width);
+            
+            if(ray) {
+              float radius =  ray->PixelRadius * width/1.4142F;
+              float vc[3];
+              int color = I->Obj.Color;
+              int ramped = ColorCheckRamped(G,I->Obj.Color);
+              
+              {
+                float *tmp = ColorGet(G,I->Obj.Color);
+                copy3f(tmp,vc);
+              }
+
+              for(a=0;a<cnt;a++) {
+                register float f_val = *(raw_data++);
+                if((f_val >= high_cut) || (f_val <= low_cut)) {
+                  if(ramped) {
+                    ColorGetRamped(G,color,raw_point,vc,state);                    
+                    ray->fColor3fv(ray,vc);
+                  }
+                  ray->fSphere3fv(ray,raw_point,radius);}
+                raw_point+=3;
+              }
+            } else if(G->HaveGUI && G->ValidContext) {
+              if(pick) {
+              } else {
+                if(gradients) {
+                  raw_gradient = (float*)gradients->data;                  
+                } else {
+                  glDisable(GL_LIGHTING);
+                }
+                {
+                  int ramped = ColorCheckRamped(G,I->Obj.Color);
+                  float vc[3];
+                  int color = I->Obj.Color;
+                  float gt[3];
+
+                  glPointSize(width);
+                  glDisable(GL_POINT_SMOOTH);
+                  glBegin(GL_POINTS);
+                  ObjectUseColor(&I->Obj);
+                  for(a=0;a<cnt;a++) {
+                    register float f_val = *(raw_data++);
+                    if(f_val >= high_cut) {
+                      if(raw_gradient) {
+                        normalize23f(raw_gradient,gt);
+                        invert3f(gt);
+                        glNormal3fv(gt);
+                      }
+                      if(ramped) {
+                        ColorGetRamped(G,color,raw_point,vc,state);                    
+                        glColor3fv(vc);
+                      }
+                      glVertex3fv(raw_point);
+                    } else if(f_val <= low_cut) {
+                      if(raw_gradient) {
+                        normalize23f(raw_gradient,gt);
+                        glNormal3fv(gt);
+                      }
+                      if(ramped) {
+                        ColorGetRamped(G,color,raw_point,vc,state);                    
+                        glColor3fv(vc);
+                      }
+                      glVertex3fv(raw_point);
+                    }
+                    if(raw_gradient) 
+                      raw_gradient+=3;
+                    raw_point+=3;
+                  }
+                  glEnd();
+                }
+                glEnable(GL_POINT_SMOOTH);
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -1671,6 +1831,7 @@ void ObjectMapStateInit(PyMOLGlobals *G,ObjectMapState *I)
   I->Dim = NULL;
   I->Range = NULL;
   I->Grid = NULL;
+  I->have_range = false;
 }
 int ObjectMapGetNStates(ObjectMap *I)     
 {
@@ -1688,7 +1849,12 @@ ObjectMap *ObjectMapNew(PyMOLGlobals *G)
   I->NState = 0;
   I->State=VLAMalloc(1,sizeof(ObjectMapState),5,true); /* autozero important */
 
-  I->Obj.RepVis[cRepExtent]=true; 
+  {
+    int a;
+    for(a=0;a<cRepCnt;a++)
+      I->Obj.RepVis[a] = false;
+    I->Obj.RepVis[cRepExtent]=true; 
+  }
   I->Obj.fFree = (void (*)(struct CObject *))ObjectMapFree;
   I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectMapUpdate;
   I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectMapRender;
@@ -4045,11 +4211,30 @@ ObjectMap *ObjectMapLoadPHIFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int s
 
 }
 /*========================================================================*/
+
+static int is_number(char *p)
+{
+  int result = (*p != 0);
+  register char c;
+  if(result) 
+    while( (c = *(p++)) ) {
+      if(! ((c == '.') ||
+            (c == '-') ||
+            (c == '+') ||
+            (c == 'e') ||
+            (c == 'E') ||
+            ((c>='0')&&(c<='9'))))
+        result = false;
+      break;
+    }
+  return result;
+}
+
 static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
 
   int n_items = 0;
 
-  char *p;
+  char *p,*pp;
   float dens;
   int a,b,c,d,e;
   float v[3],maxd,mind;
@@ -4083,8 +4268,11 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
   ms->FDim[3] = 3;
 
   while(ok&&(*p)&&(stage==0)) {
+    pp = p;
     p = ParseNCopy(cc,p,35);
-    if(strcmp(cc,"object 1 class gridpositions counts")==0) {
+    if((strcmp(cc,"object 1 class gridpositions counts")==0) || is_number(cc)) {
+      if(is_number(cc)) 
+        p = pp;
       p = ParseWordCopy(cc,p,10);      
       if(sscanf(cc,"%d",&ms->FDim[0])==1) {
         p = ParseWordCopy(cc,p,10);      
@@ -4108,8 +4296,11 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
   /* get the origin */
 
   while(ok&&(*p)&&(stage==1)) {  
+    pp = p;
     p = ParseNCopy(cc,p,6);
-    if(strcmp(cc,"origin")==0) {
+    if((strcmp(cc,"origin")==0) || is_number(cc)) {
+      if(is_number(cc)) 
+        p = pp;
       p = ParseWordCopy(cc,p,20);      
       if(sscanf(cc,"%f",&ms->Origin[0])==1) {
         p = ParseWordCopy(cc,p,20);      
@@ -4122,7 +4313,6 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
       }
     }
     p = ParseNextLine(p);
-    
   }
 
   if(ok&&(stage==2)) {
@@ -4131,8 +4321,8 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
       ENDFB(I->Obj.G);
   }
 
-
   while(ok&&(*p)&&(stage==2)) {  
+    pp = p;
     p = ParseNCopy(cc,p,5);
     if(strcmp(cc,"delta")==0) {
       p = ParseWordCopy(cc,p,20);      
@@ -4152,9 +4342,24 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
           }
         }
       }
+    } else if(is_number(cc)) {
+      p = pp;
+      p = ParseWordCopy(cc,p,20);      
+      if(sscanf(cc,"%f",&ms->Grid[0])==1) {
+        p = ParseNextLine(p);
+        p = ParseWordCopy(cc,p,20);      
+        p = ParseWordCopy(cc,p,20);      
+        if(sscanf(cc,"%f",&ms->Grid[1])==1) {
+          p = ParseNextLine(p);
+          p = ParseWordCopy(cc,p,20);      
+          p = ParseWordCopy(cc,p,20);      
+          p = ParseWordCopy(cc,p,20);      
+          if(sscanf(cc,"%f",&ms->Grid[2])==1) {
+            stage = 3;
+          }
+        }
+      }
     }
-    p = ParseNextLine(p);
-    
   }
 
   if(ok&&(stage==3)) {
@@ -4177,6 +4382,10 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
             stage = 4;
         }
       }
+    } else if(is_number(cc)) {
+      n_items = ms->FDim[0]*ms->FDim[1]*ms->FDim[2];
+      stage = 4;
+      break;
     }
     p = ParseNextLine(p);
   }

@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 1.00b16
     
+    * dot representation for quick previewing of map contents
+
     * "gradient" command for visualizing maps as gradient fields
 
     * "reinitialize settings" for global & object settings (only, for now)
