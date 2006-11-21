@@ -70,26 +70,6 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
   PyList_SetItem(result,13,PyInt_FromLong(I->MeshMode));
   PyList_SetItem(result,14,PyFloat_FromDouble(I->AltLevel));
 
-#if 0
-  ObjectNameType MapName;
-  int MapState;
-  CCrystal Crystal;
-  int Active;
-  int *N;
-  float *V;
-  int Range[6];
-  float ExtentMin[3],ExtentMax[3];
-  int ExtentFlag;
-  float Level,Radius;
-  int RefreshFlag;
-  int ResurfaceFlag;
-  float *AtomVertex;
-  int CarveFlag;
-  float CarveBuffer;
-  int MeshMode;
-  CGO *UnitCellCGO;
-#endif
-
   return(PConvAutoNone(result));  
 }
 #endif

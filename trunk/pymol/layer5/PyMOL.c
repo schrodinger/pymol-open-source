@@ -688,7 +688,7 @@ typedef struct _CPyMOL {
   ov_word lex_gradient_max_length;
   ov_word lex_gradient_min_length;
   ov_word lex_gradient_min_slope;
-  ov_word lex_gradient_min_dot;
+  ov_word lex_gradient_normal_min_dot;
   ov_word lex_gradient_step_size;
   ov_word lex_gradient_spacing;
   ov_word lex_gradient_symmetry;
@@ -1377,7 +1377,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(gradient_max_length,539);
   LEX_SETTING(gradient_min_length,540);
   LEX_SETTING(gradient_min_slope,541);
-  LEX_SETTING(gradient_min_dot,542);
+  LEX_SETTING(gradient_normal_min_dot,542);
   LEX_SETTING(gradient_step_size,543);
   LEX_SETTING(gradient_spacing,544);
   LEX_SETTING(gradient_symmetry,545);
