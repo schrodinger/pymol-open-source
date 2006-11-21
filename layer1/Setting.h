@@ -731,7 +731,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_gradient_max_length        539
 #define cSetting_gradient_min_length        540
 #define cSetting_gradient_min_slope         541
-#define cSetting_gradient_min_dot           542
+#define cSetting_gradient_normal_min_dot    542
 #define cSetting_gradient_step_size         543
 #define cSetting_gradient_spacing           544
 #define cSetting_gradient_symmetry          545

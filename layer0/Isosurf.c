@@ -848,7 +848,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
   float max_walk = SettingGet_f(G,set1,set2,cSetting_gradient_max_length);
   float min_walk = SettingGet_f(G,set1,set2,cSetting_gradient_min_length);
   float min_slope = SettingGet_f(G,set1,set2,cSetting_gradient_min_slope);
-  float min_dot = SettingGet_f(G,set1,set2,cSetting_gradient_min_dot);
+  float min_dot = SettingGet_f(G,set1,set2,cSetting_gradient_normal_min_dot);
   float symmetry = SettingGet_f(G,set1,set2,cSetting_gradient_symmetry);
 
   int symmetry_flag = false; /* are we searching for symmetric segments? */
@@ -981,7 +981,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
           for(pass=0;pass<2;pass++) { /* one pass down the gradient, one up */
 
             int have_prev = false;  /* flag & storage for previous gradient & locus */
-            float prev_gradient[3]; 
+            float prev_grad_normal[3]; 
             int *prev_locus = NULL;
 
             int locus[3]; /* what cell are we in? */
@@ -1123,13 +1123,13 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                   /* make sure gradient isn't too divergent to take another step */
                 
                   if(have_prev) {
-                    if(dot_product3f(interp_gradient,prev_gradient)<min_dot)
+                    if(dot_product3f(interp_gradient,prev_grad_normal)<min_dot)
                       break;
                   }
                 
                   /* take another step */
                 
-                  copy3f(interp_gradient,prev_gradient);
+                  copy3f(interp_gradient,prev_grad_normal);
                 
                   /* scale and flip sign */
 

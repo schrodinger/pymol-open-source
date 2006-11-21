@@ -575,7 +575,7 @@ if __name__=='pymol.setting':
         gradient_max_length       = (539,'');
         gradient_min_length       = (540,'');
         gradient_min_slope        = (541,'');
-        gradient_min_dot          = (542,'');
+        gradient_normal_min_dot   = (542,'');
         gradient_step_size        = (543,'');
         gradient_spacing          = (544,'');
         gradient_symmetry         = (545,'');        

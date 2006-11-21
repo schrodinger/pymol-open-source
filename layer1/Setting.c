@@ -1770,7 +1770,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_gradient_spacing:
   case cSetting_gradient_max_length:
   case cSetting_gradient_min_length:
-  case cSetting_gradient_min_dot:
+  case cSetting_gradient_normal_min_dot:
   case cSetting_gradient_step_size:
   case cSetting_gradient_min_slope:
   case cSetting_gradient_symmetry:
@@ -3319,7 +3319,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_gradient_max_length,100.0F);
   set_f(I,cSetting_gradient_min_length,2.0F);
   set_f(I,cSetting_gradient_min_slope,0.00001F);
-  set_f(I,cSetting_gradient_min_dot, 0.7F);
+  set_f(I,cSetting_gradient_normal_min_dot, 0.70F);
   set_f(I,cSetting_gradient_step_size,0.25F);
   set_i(I,cSetting_gradient_spacing,3);
   set_f(I,cSetting_gradient_symmetry,0.0F);
