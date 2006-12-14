@@ -843,7 +843,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
 
   /* get cascaded state, object, or global settings */
 
-  int spacing = SettingGet_f(G,set1,set2,cSetting_gradient_spacing);
+  int spacing = SettingGet_i(G,set1,set2,cSetting_gradient_spacing);
   float step_size = SettingGet_f(G,set1,set2,cSetting_gradient_step_size);
   float max_walk = SettingGet_f(G,set1,set2,cSetting_gradient_max_length);
   float min_walk = SettingGet_f(G,set1,set2,cSetting_gradient_min_length);
@@ -916,9 +916,9 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
         pos[2] = Ffloat4p(I->Coord,0,1,0,0);
         pos[3] = Ffloat4p(I->Coord,0,0,1,0);
 
-        average_cell_axis_dist = (diff3f(pos[0],pos[1]) + 
+        average_cell_axis_dist = (float)((diff3f(pos[0],pos[1]) + 
                                   diff3f(pos[0],pos[2]) + 
-                                  diff3f(pos[0],pos[3])) / 3.0F;
+                                  diff3f(pos[0],pos[3])) / 3.0);
 
         /* scale parameters into cell units */
 
@@ -1174,7 +1174,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
               if((symmetry_max * symmetry_min)>=0.0F) /* abort if not both +/- pot. sampled */
                 abort_segment = true;
               else {
-                float symmetry_ratio = fabs(symmetry_max)/fabs(symmetry_min);
+                float symmetry_ratio = (float)(fabs(symmetry_max)/fabs(symmetry_min));
                 if(symmetry_ratio>1.0F)
                   symmetry_ratio = 1.0F/symmetry_ratio;
                 if(symmetry_ratio<symmetry) /* abort if +/- weren't close enough in magnitude */
