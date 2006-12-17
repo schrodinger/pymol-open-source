@@ -381,7 +381,7 @@ int TextInit(PyMOLGlobals *G)
     /* 5 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G,TTF_Vera_dat, TTF_Vera_len);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSans_dat, TTF_DejaVuSans_len);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcFreeType;
       I->Active[I->NActive].Font->TextID = I->NActive;
@@ -391,7 +391,7 @@ int TextInit(PyMOLGlobals *G)
     /* 6 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraIt_dat, TTF_VeraIt_len);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSans_Oblique_dat, TTF_DejaVuSans_Oblique_len);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcFreeType;
       I->Active[I->NActive].Font->TextID = I->NActive;
@@ -401,7 +401,7 @@ int TextInit(PyMOLGlobals *G)
     /* 7 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraBd_dat, TTF_VeraBd_len);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSans_Bold_dat, TTF_DejaVuSans_Bold_len);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcFreeType;
       I->Active[I->NActive].Font->TextID = I->NActive;
@@ -411,7 +411,7 @@ int TextInit(PyMOLGlobals *G)
     /* 8 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraBI_dat, TTF_VeraBI_len);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSans_BoldOblique_dat, TTF_DejaVuSans_BoldOblique_len);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcFreeType;
       I->Active[I->NActive].Font->TextID = I->NActive;
@@ -421,7 +421,7 @@ int TextInit(PyMOLGlobals *G)
     /* 9 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraSe_dat, TTF_VeraSe_len);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSerif_dat, TTF_DejaVuSerif_len);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcFreeType;
       I->Active[I->NActive].Font->TextID = I->NActive;
@@ -431,7 +431,7 @@ int TextInit(PyMOLGlobals *G)
     /* 10 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraSeBd_dat, TTF_VeraSeBd_len);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSerif_Bold_dat, TTF_DejaVuSerif_Bold_len);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcFreeType;
       I->Active[I->NActive].Font->TextID = I->NActive;
@@ -441,7 +441,7 @@ int TextInit(PyMOLGlobals *G)
     /* 11 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraMono_dat, TTF_VeraMono_len);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSansMono_dat, TTF_DejaVuSansMono_len);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcFreeType;
       I->Active[I->NActive].Font->TextID = I->NActive;
@@ -451,7 +451,7 @@ int TextInit(PyMOLGlobals *G)
     /* 12 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraMoIt_dat, TTF_VeraMoIt_len);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSansMono_Oblique_dat, TTF_DejaVuSansMono_Oblique_len);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcFreeType;
       I->Active[I->NActive].Font->TextID = I->NActive;
@@ -461,7 +461,7 @@ int TextInit(PyMOLGlobals *G)
     /* 13 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraMoBd_dat, TTF_VeraMoBd_len);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSansMono_Bold_dat, TTF_DejaVuSansMono_Bold_len);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcFreeType;
       I->Active[I->NActive].Font->TextID = I->NActive;
@@ -471,12 +471,14 @@ int TextInit(PyMOLGlobals *G)
     /* 14 */
 
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraMoBI_dat, TTF_VeraMoBI_len);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSansMono_BoldOblique_dat, TTF_DejaVuSansMono_BoldOblique_len);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcFreeType;
       I->Active[I->NActive].Font->TextID = I->NActive;
       I->NActive++;
     }
+
+    /* Gentium */
 
     /* 15 */
     VLACheck(I->Active,ActiveRec,I->NActive);
@@ -495,6 +497,66 @@ int TextInit(PyMOLGlobals *G)
       I->Active[I->NActive].Font->TextID = I->NActive;
       I->NActive++;
     }
+
+    /* back to DejaVu for the last two */
+
+    /* 17 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSerif_Oblique_dat, TTF_DejaVuSerif_Oblique_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 18 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_DejaVuSerif_BoldOblique_dat, TTF_DejaVuSerif_BoldOblique_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+#if 0
+
+    /* Linux Libertine not inluded due to already excessive bloat of Text.o */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_LinLibertine_R_2_2_0_dat, TTF_LinLibertine_R_2_2_0_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_LinLibertine_It_2_2_0rc1_dat, TTF_LinLibertine_It_2_2_0rc1_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_LinLibertine_Bd_2_2_0rc10_dat, TTF_LinLibertine_Bd_2_2_0rc10_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_LinLibertine_BdIt_2_1_6v2_dat, TTF_LinLibertine_BdIt_2_1_6v2_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+#endif
 
 #endif
 
