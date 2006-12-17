@@ -36,8 +36,8 @@ USAGE
     help command
         '''
         r = DEFAULT_SUCCESS
-        if cmd.get_setting_legacy("internal_feedback")>0.1:
-            cmd.set("text","1",quiet=1)
+#        if cmd.get_setting_legacy("internal_feedback")>0.1:
+#            cmd.set("text","1",quiet=1)
         cmmd = cmd.help_sc.auto_err(command,'topic')   
         if cmd.keyword.has_key(cmmd):
             doc = cmd.keyword[cmmd][0].__doc__
@@ -642,3 +642,73 @@ RAY TRACING OPTIMIZATION
         '''
 
         help('faster')
+
+    def abort():
+        '''
+DESCRIPTION
+
+    "abort" abruptly terminates execution of the PyMOL command script
+    without executing any additional commands.
+
+SEE ALSO
+
+    embed, skip, python
+    '''
+
+    def skip():
+        '''
+DESCRIPTION
+
+    "skip" delimits a block of commands that are skipped instead of
+    being executed.  
+
+EXAMPLE
+
+
+    skip
+
+    # the following command will not be executed
+    color blue, all
+    
+    skip end
+
+NOTES
+
+    If the "skip" command is commented out, the subsequent "skip end"
+    can be left in place, and will have no effect upon execution of
+    subsequent command.s
+    
+SEE ALSO
+
+    abort, embed, python
+    '''
+        return None
+
+    def python():
+        '''
+DESCRIPTION
+
+    "python" delimits a block of literal Python code embedded in a
+    PyMOL command script.
+
+EXAMPLE
+
+    python
+
+    for a in range(1,10):
+        b = 10 - a
+        print a, b
+
+    python end
+
+NOTES
+
+    Literal Python blocks avoid the annoying requirement of having to
+    use explicit line continuation markers for multi-line Python
+    commands embedded within Python scripts.  
+    
+SEE ALSO
+
+    abort, embed, skip
+    '''
+        return None

@@ -390,6 +390,8 @@ SEE ALSO
         ftype = loadable.molstr
         while 1:
             rec = sdf.read()
+
+
             if not rec: break
             r = _load(oname,string.join(rec.get('MOL'),''),state,loadable.molstr,0,1,quiet)
         del sdf
@@ -402,30 +404,31 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "load" reads several file formats.  The file extension is used to
-    determine the format.  PDB files must end in ".pdb", MOL files must
-    end in ".mol", Macromodel files must end in ".mmod", XPLOR maps
-    must end in ".xplor", CCP4 maps must end in ".ccp4", Raster3D input
-    (Molscript output) must end in ".r3d", PyMOL session files must end
-    in ".pse", and pickled ChemPy models with a ".pkl" can also be directly
-    read.
+    "load" can by used to read molecules, crystallographic maps and
+    other volumetric data, PyMOL sessions, and some other content.
 
-    If an object is specified, then the file is loaded into that object.
-    Otherwise, an object is created with the same name as the file
-    prefix.
 
 USAGE
 
     load filename [,object [,state [,format [,finish [,discrete ]]]]]
 
-PYMOL API
+BEHAVIOR
 
-    cmd.load( filename [,object [,state [,format [,finish [,discrete ]]]]]
+    If an object name specified, then the file is loaded into that
+    object.  Otherwise, an object is created with the same name as the
+    file prefix.  If a state value is not specified, then the content
+    is appended onto the state.  The file extension is used to
+    determine the format, unless it is specified explicitly.
+
+    PDB files should end in ".pdb", MOL files: ".mol", old Macromodel
+    files: ".mmod", XPLOR maps: ".xplor", CCP4 maps: ".ccp4", Raster3D
+    input (Molscript output): ".r3d" ".r3d", PyMOL sessions, ".pse",
+    and pickled ChemPy models: ".pkl".
 
 NOTES
 
-    You can override the file extension by giving a format string:
-
+    recognized format strings:
+    
     'pdb' : PDB,  'mmod' : Macromodel, 'xyz' : Tinker, 'cc1' : ChemDraw3D  
     'mol' : MDL MOL-file, 'sdf' : MDL SD-file
     'xplor' : X-PLOR/CNS map, 'ccp4' : CCP4 map,

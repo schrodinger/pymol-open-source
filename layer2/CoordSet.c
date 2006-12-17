@@ -771,7 +771,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
       
     (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s %11.8f %7.3f\n",
                   aType,cnt+1,name,ai->alt,resn,
-                  chain,resi,x,y,z,ai->partialCharge,ai->bohr_radius);
+                  chain,resi,x,y,z,ai->partialCharge,ai->elec_radius);
   }
   
 }
@@ -803,7 +803,7 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int
     PConvFloatToPyObjAttr(atom,"q",ai->q);
     PConvFloatToPyObjAttr(atom,"b",ai->b);
     PConvFloatToPyObjAttr(atom,"vdw",ai->vdw);
-    PConvFloatToPyObjAttr(atom,"bohr",ai->bohr_radius);
+    PConvFloatToPyObjAttr(atom,"elec_radius",ai->elec_radius);
     PConvFloatToPyObjAttr(atom,"partial_charge",ai->partialCharge);
     PConvIntToPyObjAttr(atom,"formal_charge",ai->formalCharge);
     if(ai->customType!=-9999)

@@ -152,7 +152,7 @@ def amber99(selection="(all)",quiet=0):
 
     cmd.alter(selection,"name=''")
     cmd.alter(selection,"partial_charge=0")
-    cmd.alter(selection,"bohr=0.0")
+    cmd.alter(selection,"elec_radius=0.0")
     cmd.alter(selection,"text_type=''")
 
     # next, flag all atoms so that we'll be able to detect what we miss
@@ -187,7 +187,7 @@ def amber99(selection="(all)",quiet=0):
                             prop_list = rule[1][tag]
                             # the following expression both changes the formal charge and resets flag 23
                             alter_list.append([atom_tag[0],
-            "name='''%s''';text_type='''%s''';partial_charge=%f;bohr=%f;flags=flags&-8388609"%prop_list])
+            "name='''%s''';text_type='''%s''';partial_charge=%f;elec_radius=%f;flags=flags&-8388609"%prop_list])
 
     # now evaluate all of these expressions efficiently en-masse 
     cmd.alter_list(selection,alter_list)

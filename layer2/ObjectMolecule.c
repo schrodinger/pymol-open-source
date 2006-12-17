@@ -5665,12 +5665,12 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
         if(PTruthCallStr(atom,"has","bohr")) { 
           tmp = PyObject_GetAttrString(atom,"bohr");
           if (tmp)
-            ok = PConvPyObjectToFloat(tmp,&ai->bohr_radius);
+            ok = PConvPyObjectToFloat(tmp,&ai->elec_radius);
           if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read bohr radius");
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read elec. radius");
           Py_XDECREF(tmp);
         } else {
-          ai->bohr_radius=0.0F;
+          ai->elec_radius=0.0F;
         }
       }
 

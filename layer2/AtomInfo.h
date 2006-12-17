@@ -142,7 +142,7 @@ typedef struct AtomInfoType {
   int temp1; /* kludge fields - to remove */
   int unique_id; /* introduced in version 0.77 */
   int discrete_state; /* state+1 for atoms in discrete objects */
-  float bohr_radius;
+  float elec_radius; /* radius for PB calculations */
   int rank;
   int atomic_color; /* what color was this atom originally assigned? */
   int textType;
