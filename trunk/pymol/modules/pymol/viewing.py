@@ -63,7 +63,6 @@ DESCRIPTION
     "zoom" scales and translates the window and the origin to cover the
     atom selection.
 
-
 USAGE
 
     zoom selection=all, buffer=0.0, state=0, complete=0, animate=0
@@ -80,19 +79,22 @@ PYMOL API
     cmd.zoom( string selection, float buffer=0.0,
                  int state=0, int complete=0 )
 
-NOTES
+ARGUMENTS
 
-    state = 0 (default) use all coordinate states
-    state = -1 use only coordinates for the current state
-    state > 0  use coordinates for a specific state
+    state = 0 uses all coordinate states (default).
+    state = -1 uses only coordinates for the current state.
+    state > 0 uses coordinates for a specific state.
 
-    complete = 0 or 1:
-        Normally the zoom command tries to guess an optimal zoom level
+    complete > 0 will insure no atoms centers are clipped.
+
+DISCUSSION
+
+    Normally, the zoom command tries to guess an optimal zoom level
     for visualization, balancing closeness against occasional clipping
-    of atoms out of the field of view.  You can change this behavior by
-    setting the complete option to 1, which will guarantee that the
-    atom positions for the entire selection will fit in the field of an
-    orthoscopic view.  To absolutely prevent clipping, you may also
+    of atoms out of the field of view.  You can change this behavior
+    by setting the complete option to 1, which will guarantee that the
+    atom positions for the entire selection will fit in the field of
+    an orthoscopic view.  To absolutely prevent clipping, you may also
     need to add a buffer (typically 2 A) to account for the perpective
     transformation and for graphical representations which extend
     beyond the atom coordinates..
@@ -133,7 +135,7 @@ PYMOL API
 
     cmd.center(string selection, int state = 0, int origin = 1 )
 
-NOTES
+ARGUMENTS
 
     state = 0 (default) use all coordinate states
     state = -1 use only coordinates for the current state
@@ -224,7 +226,7 @@ PYMOL API
 
     cmd.origin( string object-or-selection )
 
-NOTES
+ARGUMENTS
 
     state = 0 (default) use all coordinate states
     state = -1 use only coordinates for the current state
@@ -274,7 +276,7 @@ PYMOL API
 
     cmd.orient( string object-or-selection [, state = 0] )
 
-NOTES
+ARGUMENTS
 
     state = 0 (default) use all coordinate states
     state = -1 use only coordinates for the current state
@@ -419,14 +421,11 @@ DESCRIPTION
 
     "toggle" toggles representations.
 
-
 USAGE
 
 PYMOL API
 
 EXAMPLES
-
-NOTES
 
 SEE ALSO
         '''
@@ -466,37 +465,35 @@ DESCRIPTION
 
     "show" turns on atom and bond representations.
 
-    The available representations are:
-
-        lines     spheres    mesh      ribbon     cartoon
-        sticks    dots       surface   labels     extent
-        nonbonded nb_spheres slice
-
 USAGE
 
-    show
-    show reprentation [,object]
-    show reprentation [,(selection)]
-    show (selection)
+    show [ representation [, selection ]]
 
-PYMOL API
+ARGUMENTS
 
-    cmd.show( string representation="", string selection="" )
+    selection can be an object name list
+
+    representation can one of: lines, spheres, mesh, ribbon, cartoon,
+       sticks, dots, surface, labels, extent, nonbonded, nb_spheres,
+       slice,extent, slice, dashes, angles, dihedrals, cgo, cell, callback, 
+       everything.
+       
+NOTES
+
+    With no arguments, "show" alone turns on lines for all bonds and
+    nonbonded for all atoms.
 
 EXAMPLES
 
-    show lines,(name ca or name c or name n)
+    show
     show ribbon
-
-NOTES
-
-    "selection" can be an object name
-    "show" alone will turn on lines and nonbonded for all bonds.
+    show lines, (name ca or name c or name n)
 
 SEE ALSO
 
     hide, enable, disable
-        '''
+
+'''
         r = DEFAULT_ERROR
         try:
             lock()
@@ -1021,53 +1018,45 @@ SEE ALSO
                 
         return 0
     
-    def scene(key='auto',action='recall',message=None,
-              view=1,color=1,active=1,rep=1,frame=1,animate=-1,
+    def scene(key='auto', action='recall', message=None, view=1,
+              color=1, active=1, rep=1, frame=1, animate=-1,
               new_key=None, hand=1, quiet=1):
+
         '''
 DESCRIPTION
 
-    "scene" makes it possible to save and restore multiple scenes scene
-    within a single session.  A scene consists of the view, all object
-    activity information, all atom-wise visibility, color,
-    representations, and the global frame index.  
+    "scene" makes it possible to save and restore multiple scenes
+    scene within a single session.  A scene consists of the view, all
+    object activity information, all atom-wise visibility, colors,
+    representations, and the global frame index.
 
 USAGE
 
-    scene key [,action [,message [ ,view [,color [,active [,rep [,frame
-                 [, animate, [, new_key ]]]]]]]]]
-    scene *
+    scene key [,action [, message, [ new_key=new-key-value ]]]
 
-    key can be any string, or
-        'new' for an automatically numbered new scene, or
-        'auto' for the current scene (if one exists), or
-        '*' for all scenes ('clear' and 'recall' actions only)
-        
-    action should be 'store', 'recall', 'insert_after', 'insert_before',
-                          'next',  'previous', 'update', 'rename', or 'clear'
-                          (default: 'recall')
+ARGUMENTS
 
-    view: 1 or 0 controls whether the view is stored
-    color: 1 or 0 controls whether colors are stored
-    active: 1 or 0 controls whether activity is stored
-    rep: 1 or 0 controls whether the representations are stored
-    frame: 1 or 0 controls whether the frame is stored
+    key = any-string, new, auto, or *: use new for an automatically
+    numbered new scene, use auto for the current scene (if one
+    exists), and use * for all scenes (clear and recall actions only).
     
-PYMOL API
+    action = store, recall, insert_after, insert_before, next,
+    previous, update, rename, or clear: (default = recall).  If
+    rename, then a new_key argument must be explicitly defined.
 
-    cmd.scene(string key,string action,string-or-list message,int view,
-                 int color, int active, int rep, int frame, int animate,
-                 string new_key)
-
+    message can contain a text message to display with the scene.
+    
 EXAMPLES
 
+    scene *
+
     scene F1, store
-    scene F2, store, This view shows you the critical hydrogen bond.
+    scene F2, store, Please note the critical hydrogen bond shown in yellow.
 
     scene F1
     scene F2
 
-    scene F3, rename, new_key=F5
+    scene F1, rename, new_key=F5
 
 NOTES
 
@@ -1079,16 +1068,6 @@ SEE ALSO
 
     view, set_view, get_view
 
-DEVELOPMENT TO DO
-
-    Add support for save/restore of a certain global and
-        object-and-state specific settings, such as: state,
-        surface_color, ribbon_color, stick_color, transparency,
-        sphere_transparency, etc.  This would probably best be done by
-        defining a class of "scene" settings which are treated in this
-        manner.  The current workaround is to create separate objects
-        which are enabled/disabled differentially.
-        
         '''
         global scene_dict,scene_dict_sc,scene_order
         global scene_quit_on_action
@@ -2039,7 +2018,8 @@ USAGE
 
 PYMOL API
 
-    cmd.color( string color, string color-name )
+    cmd.color( string color-name,
+        string selection-or-object-name )
 
 EXAMPLES 
 

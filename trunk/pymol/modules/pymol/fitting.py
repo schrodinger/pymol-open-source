@@ -23,9 +23,11 @@ if __name__=='pymol.fitting':
     from cmd import _cmd,lock,unlock,Shortcut, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     
-    def align(source,target,cutoff=2.0,cycles=2,gap=-10.0,extend=-0.5,
-                 max_gap=-1,object=None,matrix="BLOSUM62",
-                 source_state=0,target_state=0,quiet=1,max_skip=0): 
+    def align(source, target, cutoff=2.0, cycles=2, gap=-10.0,
+              extend=-0.5, max_gap=-1, object=None,
+              matrix="BLOSUM62", source_state=0, target_state=0,
+              quiet=1, max_skip=0):
+        
         '''
 DESCRIPTION
 
@@ -35,28 +37,21 @@ DESCRIPTION
 
 USAGE 
 
-    align (source), (target) [,cutoff [,cycles [,gap [,extend \\
-            [,skip [,object [,matrix [, quiet ]]]]]]]]
+    align source, target [, object=alignment-object-name ]
 
-PYMOL API
+NOTES
 
-    cmd.align( string source, string target, float cutoff=2.0,
-                  int cycles=2, float gap=-10.0, float extend=-0.5,
-                  float extend=-0.5,int skip=0, string object=None,
-                  string matrix="BLOSUM62",int quiet=1 )
+    If object is specified, then align will create an object which
+    indicates paired atoms and supports visualization of the alignment
+    in the sequence viewer.
 
-NOTE
+EXAMPLE
 
-    If object is not None, then align will create an object which
-    indicates which atoms were paired between the two structures
-
-EXAMPLES
-
-    align  prot1////CA, prot2, object=alignment
+    align protA////CA, protB////CA, object=alnAB
 
 SEE ALSO
 
-    fit, rms, rms_cur, intra_rms, intra_rms_cur, pair_fit
+    pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur
         '''
         r = DEFAULT_ERROR
         source = selector.process(source)

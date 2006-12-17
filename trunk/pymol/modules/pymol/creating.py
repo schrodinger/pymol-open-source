@@ -488,22 +488,21 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException                  
         return r
 
-    def symexp(prefix,object,selection,cutoff,segi=0,quiet=1):
+    def symexp(prefix, object, selection, cutoff, segi=0, quiet=1):
         '''
 DESCRIPTION
 
     "symexp" creates all symmetry related objects for the specified object
-    that occurs within a cutoff about an atom selection.  The new objects
-    are labeled using the prefix provided along with their crystallographic
-    symmetry operation and translation.
+    that occurs within a cutoff about an atom selection.  
 
 USAGE
 
-    symexp prefix = object, (selection), cutoff
+    symexp prefix, object, (selection), cutoff
 
-PYMOL API
+NOTES
 
-    cmd.symexp( string prefix, string object, string selection, float cutoff) 
+    Thee newly objects are labeled using the prefix provided along with
+    their crystallographic symmetry operation and translation.
 
 SEE ALSO
 

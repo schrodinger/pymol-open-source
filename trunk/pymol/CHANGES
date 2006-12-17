@@ -2,8 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+
 Changes up to 1.00b16
-    
+
+    * switched from Vera to DejaVu fonts in order to get symbols.
+
     * dot representation for quick previewing of map contents
 
     * "gradient" command for visualizing maps as gradient fields

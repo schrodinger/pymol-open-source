@@ -1121,7 +1121,7 @@ def label_props(s):
               [ 1, 'partial charge (0.0000)' , 
   'cmd.label("'+s+'","\'%.4f\'%partial_charge")'                      ],
               [ 0, ''               , ''                                  ],
-              [ 1, 'bohr radius'       , 'cmd.label("'+s+'","\'%1.2f\'%bohr")'  ],                                 
+              [ 1, 'elec. radius'       , 'cmd.label("'+s+'","\'%1.2f\'%elec_radius")'  ],                                 
               [ 0, ''               , ''                                  ],
               [ 1, 'text type'      , 'cmd.label("'+s+'","text_type")'    ],
               [ 1, 'numeric type'   , 'cmd.label("'+s+'","numeric_type")' ],

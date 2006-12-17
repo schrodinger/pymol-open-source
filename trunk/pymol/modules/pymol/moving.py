@@ -27,7 +27,12 @@ if __name__=='pymol.moving':
 
     def accept():
         '''
-        SECURITY FEATURE
+
+DESCRIPTION
+
+    "accept" is an internal method for handling of session file
+    security.
+
         '''
         r = DEFAULT_ERROR      
         try:
@@ -41,7 +46,11 @@ if __name__=='pymol.moving':
 
     def decline():
         '''
-        SECURITY FEATURE
+DESCRIPTION
+
+    "decline" is an internal method for handling of session file
+    security.
+
         '''
         r = DEFAULT_ERROR      
         try:
@@ -52,6 +61,13 @@ if __name__=='pymol.moving':
             unlock(r)
 
     def get_movie_playing():
+        '''
+DECRIPTION
+
+    "get_movie_playing" returns a boolean value informing the caller
+    as to whether or not the movie is currently playing.
+    
+        '''
         r = DEFAULT_ERROR      
         try:
             lock()
@@ -65,15 +81,11 @@ if __name__=='pymol.moving':
         '''
 DESCRIPTION
 
-    "mdump" dumps the current set of movie commands
+    "mdump" dumps the current set of movie commands as text output.
 
 USAGE
 
     mdump
-
-PYMOL API
-
-    cmd.mdump()
 
 SEE ALSO
 
@@ -89,6 +101,12 @@ SEE ALSO
         return r
 
     def mtoggle():
+        '''
+DESCRIPTION
+
+    "mtoggle" toggles playing of the movie.
+    
+    '''        
         r = DEFAULT_ERROR      
         try:
             lock()   
@@ -102,15 +120,11 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "mstop" stops the movie.
+    "mstop" stops playing of the movie.
 
 USAGE
 
     mstop
-
-PYMOL API
-
-    cmd.mstop()
 
 SEE ALSO
 

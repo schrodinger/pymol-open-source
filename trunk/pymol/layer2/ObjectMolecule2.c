@@ -2341,8 +2341,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
             ai->partialCharge=0.0F;
 
           p=ParseWordCopy(cc,p,MAXLINELEN-1);            
-          if(sscanf(cc,"%f",&ai->bohr_radius)!=1)
-            ai->bohr_radius = 0.0F;
+          if(sscanf(cc,"%f",&ai->elec_radius)!=1)
+            ai->elec_radius = 0.0F;
         }
 
         ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */

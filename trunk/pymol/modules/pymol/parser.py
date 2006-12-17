@@ -349,12 +349,13 @@ if __name__=='pymol.parser':
                                         elif (kw[nest][4]==parsing.SKIP):
                                             next[nest] = ()
                                             l = len(args[nest])
-                                            if l>0:
+                                            if (l>0) and args[nest][0]!='end':
                                                 embed_sentinel[nest] = args[nest][0]
-                                            else:
+                                            elif l==0: # default sentinel
                                                 embed_sentinel[nest] = "skip end"
-                                            embed_type[nest] = 2 # skip block
-                                            embed_line[nest] = 0                                            
+                                            if embed_sentinel[nest]!=None:
+                                                embed_type[nest] = 2 # skip block
+                                                embed_line[nest] = 0
                                         elif (kw[nest][4]==parsing.PYTHON_BLOCK):
                                             next[nest] = ()
                                             if not secure: 

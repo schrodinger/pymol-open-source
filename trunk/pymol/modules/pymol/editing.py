@@ -25,7 +25,10 @@ if __name__=='pymol.editing':
 
     def sculpt_purge():
         '''
-        undocumented
+DESCRIPTION
+
+    "sculpt_purge" is not officially supported in PyMOL 1.x.
+    
     '''
         r = DEFAULT_ERROR
         try:
@@ -38,7 +41,10 @@ if __name__=='pymol.editing':
 
     def sculpt_deactivate(object):
         '''
-        undocumented
+DESCRIPTION
+
+    "sculpt_deactivate" is not officially supported in PyMOL 1.x.
+
     '''
         r = 0
         try:
@@ -51,7 +57,10 @@ if __name__=='pymol.editing':
 
     def sculpt_activate(object,state=0,match_state=-1,match_by_segment=0):
         '''
-    undocumented.
+DESCRIPTION
+
+    "sculpt_deactivate" is not officially supported in PyMOL 1.x.
+
     '''
         r = DEFAULT_ERROR
         try:
@@ -64,6 +73,21 @@ if __name__=='pymol.editing':
 
     def split_states(object,first=1,last=0,prefix=None):
         '''
+DESCRIPTION
+
+    "split_states" separates a multi-state molecular object into a set
+    of single-state molecular objects.
+
+USAGE
+
+    split_states object [, first [,last [, prefix ]]]
+    
+EXAMPLE
+
+    load docking_hits.sdf
+    split_states docking_hits, prefix=hit
+    delete docking_hits
+    
         '''
         r = DEFAULT_SUCCESS
         object = str(object)
@@ -95,7 +119,9 @@ if __name__=='pymol.editing':
     
     def sculpt_iterate(object,state=0,cycles=10):
         '''
-    undocumented.
+        
+    "sculpt_iterate" is not officially supported in PyMOL 1.x.
+    
     '''
         r = DEFAULT_ERROR
         try:
@@ -116,7 +142,7 @@ DESCRIPTION
 
 USAGE
 
-    smooth [selection [, passes [,window [,first [,last [, ends]]]]]]
+    smooth [ selection [, passes [,window [,first [,last [, ends]]]]]]
 
 SEE ALSO
 
@@ -124,17 +150,17 @@ SEE ALSO
 
 ARGUMENTS
 
-    ends (0 or 1) controls whether or not the end states are also smoothed
+    ends = 0 or 1: controls whether or not the end states are also smoothed
     using a weighted asymmetric window
 
 NOTES
 
-    This function is not memory efficient.  For reasons of flexibility,
-    it uses two additional copies of every atomic coordinate for the
-    calculation.  If you are memory-constrained in visualizing MD
-    trajectories, then you may want to use an external tool such as
-    Amber\'s ptraj to perform smoothing before loading coordinates into
-    PyMOL.
+    This function is not memory efficient.  For reasons of
+    flexibility, it uses two additional copies of every atomic
+    coordinate for the calculation.  If you are memory-constrained in
+    visualizing MD trajectories, then you may want to use an external
+    tool such as ptraj to perform smoothing before loading coordinates
+    into PyMOL.
     '''
         
         r = DEFAULT_ERROR
@@ -163,13 +189,12 @@ USAGE
 PYMOL API
 
     cmd.set_symmetry(string selection, float a, float b, float c,
-          float alpha,float beta, float gamma, string spacegroup)
+          float alpha, float beta, float gamma, string spacegroup)
 
 NOTES
 
     The new symmetry will be defined for every object referenced
-    by the selection
-
+    by the selection.
         '''
         r = DEFAULT_ERROR
         selection = selector.process(selection)
@@ -869,7 +894,8 @@ SEE ALSO
         return r
 
 
-    def replace(element,geometry,valence,h_fill=1,name="",quiet=1):
+    def replace(element, geometry, valence,
+                h_fill=1, name="", quiet=1):
         '''
 DESCRIPTION
 
@@ -949,7 +975,8 @@ SEE ALSO
         return r
 
 
-    def dss(selection="(all)",state=0,context=None,preserve=0,quiet=1):
+    def dss(selection="(all)", state=0, context=None,
+            preserve=0, quiet=1):
         '''
 DESCRIPTION
 
@@ -1009,35 +1036,43 @@ NOTES
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def alter(selection,expression,quiet=1,space=cmd.pymol.__dict__):
+    def alter(selection, expression, quiet=1,
+              space=cmd.pymol.__dict__):
         '''
 DESCRIPTION
 
-    "alter" changes one or more atomic properties over a selection
-    using the python evaluator with a separate name space for each
-    atom.  The symbols defined in the name space are:
-
-        name, resn, resi, chain, alt, elem, q, b, segi,
-        type (ATOM,HETATM), partial_charge, formal_charge,
-        text_type, numeric_type, ID
-
-    All strings must be explicitly quoted.  This operation typically
-    takes several seconds per thousand atoms altered.
-
-    WARNING: You should always issue a "sort" command on an object
-    after modifying any property which might affect canonical atom
-    ordering (names, chains, etc.).  Failure to do so will confound
-    subsequent "create" and "byres" operations.
+    "alter" changes atomic properties using an expression evaluated
+    within a temporary namespace for each atom.
 
 USAGE
 
-    alter (selection),expression
+    alter selection, expression
 
 EXAMPLES
 
-    alter (chain A),chain='B'
-    alter (all),resi=str(int(resi)+100)
+    alter chain A, chain='B'
+    alter all, resi=str(int(resi)+100)
     sort
+
+NOTES
+
+    Symbols defined (* = read only):
+
+    name, resn, resi, resv, chain, segi, elem, alt, q, b, vdw, type,
+    partial_charge, formal_charge, elec_radius, text_type, label, 
+    numeric_type, model*, state*, index*, ID, rank, color, ss,
+    cartoon, flags
+
+    All strings must be explicitly quoted.  This operation typically
+    takes several seconds per thousand atom altered.  
+
+    You may need to issue a "rebuild" in order to update associated
+    representations.
+    
+    WARNING: You should always issue a "sort" command on an object
+    after modifying any property which might affect canonical atom
+    ordering (names, chains, etc.).  Failure to do so will confound
+    subsequent "create" and "byres" operations.  
 
 SEE ALSO
 
@@ -1055,10 +1090,11 @@ SEE ALSO
         if _raising(r): raise Qui
         return r
 
-    def alter_list(object,expr_list,quiet=1,space=cmd.pymol.__dict__):
+    def alter_list(object, expr_list, quiet=1, space=cmd.pymol.__dict__):
         '''
 DESCRIPTION
-    "alter_list" is currently in development
+
+    "alter_list" is not complete or supported in PyMOL 1.x.
     
         '''
         #
@@ -1075,24 +1111,8 @@ DESCRIPTION
         '''
 DESCRIPTION
 
-    "iterate" iterates over an expression with a separate name space
-    for each atom.  However, unlike the "alter" comman3d, atomic
-    properties can not be altered.  Thus, "iterate" is more efficient
-    than "alter".
-
-    It can be used to perform operations and aggregations using atomic
-    selections, and store the results in any global object, such as the
-    predefined "stored" object.
-
-    The local namespace for "iterate" contains the following names
-
-        name, resn, resi, chain, alt, elem,
-        q, b, segi, and type (ATOM,HETATM),
-        partial_charge, formal_charge,
-        text_type, numeric_type, ID
-
-    All strings in the expression must be explicitly quoted.  This
-    operation typically takes a second per thousand atoms.
+    "iterate" iterates over an expression within a temporary namespace
+    for each atom.
 
 USAGE
 
@@ -1101,14 +1121,22 @@ USAGE
 EXAMPLES
 
     stored.net_charge = 0
-    iterate (all),stored.net_charge = stored.net_charge + partial_charge
-
+    iterate all, stored.net_charge = stored.net_charge + partial_charge
+    print stored.net_charge
+    
     stored.names = []
-    iterate (all),stored.names.append(name)
+    iterate all, stored.names.append(name)
+    print stored.names
+    
+NOTES
+
+    Unlike with the "alter" comman3d, atomic properties cannot be
+    altered.  For this reason, "iterate" is more efficient than
+    "alter".
 
 SEE ALSO
 
-    iterate_state, atler, alter_state
+    iterate_state, alter, alter_state
         '''
         r = DEFAULT_ERROR
         # preprocess selection
@@ -1122,28 +1150,35 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def alter_state(state,selection,expression,quiet=1,space=cmd.pymol.__dict__,atomic=1):
+    def alter_state(state, selection, expression, quiet=1,
+                    space=cmd.pymol.__dict__, atomic=1):
         '''
 DESCRIPTION
 
-    "alter_state" changes the atomic coordinates of a particular state
-    using the python evaluator with a separate name space for each
-    atom.  The symbols defined in the name space are:
-
-        x,y,z
+    "alter_state" changes atom coordinates and flags over a particular
+    state and selection using the Python evaluator with a temporary
+    namespace for each atomic coordinate.
 
 USAGE
 
-    alter_state state,(selection),expression
+    alter_state state, selection, expression
 
 EXAMPLES
 
-    alter_state 1,(all),x=x+5
+    alter_state 1, (all), x=x+5
+    rebuild
+    
+NOTES
 
+    By default, most of the symbols from "alter" are available for use
+    on a read-only basis.  It is usually necessary to "rebuild"
+    representations once your alterations are completed.
+    
 SEE ALSO
 
     iterate_state, alter, iterate
         '''
+        
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
@@ -1166,13 +1201,14 @@ DESCRIPTION
 
 USAGE
 
-    iterate_state state,(selection),expression
+    iterate_state state, selection, expression
 
 EXAMPLES
 
     stored.sum_x = 0.0
-    iterate 1,(all),stored.sum_x = stored.sum_x + x
-
+    iterate_state 1, all, stored.sum_x = stored.sum_x + x
+    print stored.sum_x
+    
 SEE ALSO
 
     iterate, alter, alter_state
@@ -1537,10 +1573,13 @@ DESCRIPTION
     alignment to bring other related objects into the same frame of
     reference.  Common Usage
 
-COMMON USAGE
+USAGE
 
     matrix_copy source_name, target_name
 
+SEE ALSO
+
+    matrix_reset, align, fit, pair_fit
 '''
         
         r = DEFAULT_ERROR
@@ -1668,6 +1707,7 @@ USAGE
     map_set name, operator, operands, target_state, source_state
 
     operator may be "minimum, maximum, average, sum, or difference"
+
 EXAMPLES
 
     map my_sum, add, map1 map2 map3

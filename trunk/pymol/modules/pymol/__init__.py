@@ -262,16 +262,20 @@ if pymol_launch != 3: # if this isn't a dry run
                     cmd.set("stereo_double_pump_mono","1",quiet=1)
                     cmd.set("line_width",1.4,quiet=1)
 
-            if vendor[0:4]=='Mesa':
+            elif vendor[0:4]=='Mesa':
                 if renderer[0:18]=='Mesa GLX Indirect':
                     cmd.set('ribbon_smooth',0,quiet=1)
 
-            if vendor[0:3]=='ATI':
+            elif vendor[0:3]=='ATI':
                 cmd.set('ribbon_smooth',0,quiet=1)
                 if renderer[0:17]=='FireGL2 / FireGL3':
                     if invocation.options.show_splash:
                         print " Adapting to FireGL hardware."
                     cmd.set('line_width','2',quiet=1)            
+            elif vendor[0:9]=='Microsoft':
+                if renderer[0:17]=='GDI Generic':
+                    cmd.set('light_count',1)
+                    cmd.set('spec_direct',0.7)
 
             # find out how many processors we have, and adjust hash
             # table size to reflect available RAM

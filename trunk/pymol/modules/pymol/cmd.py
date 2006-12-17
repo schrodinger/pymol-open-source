@@ -1207,29 +1207,30 @@ SEE ALSO
 
         # for aliasing compound commands to a single keyword
 
-        def alias(name,command):
+        def alias(name, command):
             '''
 DESCRIPTION
 
-    "alias" allows you to bind a commonly used command to a single PyMOL keyword.
+    "alias" allows you to bind routinely used command-line input to a
+    new PyMOL command keyword.
 
 USAGE
 
-    alias name, command-sequence
+    alias name, literal-command-input
 
-PYMOL API
+ARGUMENTS
 
-    cmd.alias(string name,string command)
+    literal-command-input may contain multiple commands separated by semicolons.
+    
+EXAMPLE
 
-EXAMPLES
-
-    alias go,load $TUT/1hpv.pdb; zoom 200/; show sticks, 200/ around 8
-    go
+    alias my_scene, hide; show ribbon, polymer; show sticks, organic; show nonbonded, solvent
+    my_scene
 
 NOTES
 
-    For security reasons, new PyMOL commands created using "extend" are
-    not saved or restored in sessions.
+    For security reasons, aliased commands are not saved or restored
+    in sessions.  
 
 SEE ALSO
 
@@ -1247,14 +1248,14 @@ SEE ALSO
             kees.sort()
             for a in kees:
                 if hasattr(lst[a],'__doc__'):
-                    if a[0:1]!='_' and (a not in ['string','thread',
-                                                            'setup_global_locks',
-                                                            'real_system','sys','imp','glob','vl','time',
-                                                            'threading','repres','re','python_help','os',
-                                                            'fb_debug','fb_dict','ctrl','auto_arg','alt','a',
-                                                            'help_only','special','stereo_dict','toggle_dict',
-                                                            'palette_dict','types'
-                                                            ]):
+                    if (a[0:1]!='_' and
+                        (a not in ['string','thread',
+                                   'setup_global_locks',
+                                   'real_system', 'sys','imp','glob','vl','time',
+                                   'threading', 'repres','re','python_help','os',
+                                   'fb_debug', 'fb_dict','ctrl','auto_arg','alt','a',
+                                   'help_only', 'special','stereo_dict','toggle_dict',
+                                   'palette_dict', 'types' ])):
                         doc = lst[a].__doc__
                         if is_string(doc):
                             if len(doc):
@@ -1651,6 +1652,7 @@ SEE ALSO
         #--------------------------------------------------------------------
         import helping
         from helping import \
+              abort,               \
               show_help,           \
               help,                \
               commands
@@ -1689,7 +1691,7 @@ SEE ALSO
             #       original PyMOL parser which will eventually be removed.
             #       all new commands should use NO_CHECK or STRICT modes
             #       which make much better use of built-in python features.
-            'abort'         : [ dummy             , 0 , 0 , ''  , parsing.ABORT ],
+            'abort'         : [ abort             , 0 , 0 , ''  , parsing.ABORT ],
             'accept'        : [ accept            , 0 , 0 , ''  , parsing.STRICT ],
             'alias'         : [ alias             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
             'align'         : [ align             , 0 , 0 , ''  , parsing.STRICT ],
@@ -1987,28 +1989,38 @@ SEE ALSO
         # PyMOL command language namespace
 
         help_only = {  
-            'api'           : [ helping.api          , 0 , 0 , '' , 0 ],
-            'editing'       : [ helping.editing      , 0 , 0 , '' , 0 ],  
-            'edit_keys'     : [ helping.edit_keys    , 0 , 0 , '' , 0 ],
-            'examples'      : [ helping.examples     , 0 , 0 , '' , 0 ],
-            'faster'        : [ helping.faster       , 0 , 0 , '' , 0 ],
-            'get_pdbstr'    : [ get_pdbstr        , 0 , 0 , ''  , 0 ],
-            'get_names'     : [ get_names             , 0 , 0 , '' , 0 ],
-            'get_type'      : [ get_type              , 0 , 0 , '' , 0 ],
-            'keyboard'      : [ helping.keyboard     , 0 , 0 , '' , 0 ],
-            'launching'     : [ helping.launching    , 0 , 0 , '' , 0 ],
-            'load_model'    : [ load_model            , 0 , 0 , '' , 0 ],
-            'mouse'         : [ helping.mouse        , 0 , 0 , '' , 0 ],
-            'movies'        : [ helping.movies       , 0 , 0 , '' , 0 ],
-            'python_help'   : [ python_help          , 0 , 0 , '' , 0 ],        
-            'povray'        : [ helping.povray       , 0 , 0 , '' , 0 ],
-            'read_molstr'   : [ read_molstr           , 0 , 0 , '' , 0 ],
-            'read_pdbstr'   : [ read_pdbstr           , 0 , 0 , '' , 0 ],      
-            'release'       : [ helping.release      , 0 , 0 , '' , 0 ],   
-            'selections'    : [ helping.selections   , 0 , 0 , '' , 0 ],
-            'sync'          : [ sync                 , 0 , 0 , '' , 0],
-            'transparency'  : [ helping.transparency , 0 , 0 , '' , 0 ],
-            '@'             : [ helping.at_sign      , 0 , 0 , '' , 0 ],  
+            'api'                   : [ helping.api ],
+            'editing'               : [ helping.editing ],  
+            'edit_keys'             : [ helping.edit_keys ],
+            'examples'              : [ helping.examples ],
+            'faster'                : [ helping.faster ],
+            'get_area'              : [ get_area ],
+            'get_movie_playing'     : [ get_movie_playing ],
+            'get_model'             : [ get_model ],
+            'get_mtl_obj'           : [ get_mtl_obj ],
+            'get_names'             : [ get_names ],
+            'get_object_list'       : [ get_object_list ],
+            'get_object_matrix'     : [ get_object_matrix ],
+            'get_povray'            : [ get_povray  ],
+            'get_pdbstr'            : [ get_pdbstr ],
+            'get_symmetry'          : [ get_symmetry ],
+            'get_title'             : [ get_title  ],
+            'get_type'              : [ get_type   ],
+            'get_version'           : [ get_version  ],            
+            'keyboard'              : [ helping.keyboard   ],
+            'launching'             : [ helping.launching  ],
+            'load_model'            : [ load_model  ],
+            'mouse'                 : [ helping.mouse  ],
+            'movies'                : [ helping.movies  ],
+            'python_help'           : [ python_help   ],        
+            'povray'                : [ helping.povray  ],
+            'read_molstr'           : [ read_molstr ],
+            'read_pdbstr'           : [ read_pdbstr ],      
+            'release'               : [ helping.release ],   
+            'selections'            : [ helping.selections ],
+            'sync'                  : [ sync ],
+            'transparency'          : [ helping.transparency ],
+            '@'                     : [ helping.at_sign ],  
         }
 
         help_sc = Shortcut(keyword.keys()+help_only.keys())
