@@ -400,7 +400,7 @@ int PAlterAtomState(PyMOLGlobals *G,float *v,char *expr,int read_only,
     PConvFloatToPyDictItem(dict,"q",at->q);
     PConvFloatToPyDictItem(dict,"b",at->b);
     PConvFloatToPyDictItem(dict,"vdw",at->vdw);
-    PConvFloatToPyDictItem(dict,"bohr",at->bohr_radius);
+    PConvFloatToPyDictItem(dict,"elec_radius",at->elec_radius);
     PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
     PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
     PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
@@ -492,12 +492,12 @@ int PAlterAtom(PyMOLGlobals *G,
   PyObject *ss_id1,*ss_id2=NULL;
   char atype[7];
   PyObject *type_id1,*type_id2=NULL;
-  float b,q,partialCharge,vdw,bohr;
+  float b,q,partialCharge,vdw,elec_radius;
   PyObject *b_id1,*b_id2=NULL;
   PyObject *q_id1,*q_id2=NULL;
   PyObject *partial_charge_id1,*partial_charge_id2=NULL;
   PyObject *vdw_id1,*vdw_id2=NULL;
-  PyObject *bohr_id1,*bohr_id2=NULL;
+  PyObject *elec_radius_id1,*elec_radius_id2=NULL;
   int formalCharge,numericType;
   PyObject *formal_charge_id1,*formal_charge_id2=NULL;
   PyObject *numeric_type_id1,*numeric_type_id2=NULL;
@@ -546,7 +546,7 @@ int PAlterAtom(PyMOLGlobals *G,
   q_id1 = PConvFloatToPyDictItem(dict,"q",at->q);
   b_id1 = PConvFloatToPyDictItem(dict,"b",at->b);
   vdw_id1 = PConvFloatToPyDictItem(dict,"vdw",at->vdw);
-  bohr_id1 = PConvFloatToPyDictItem(dict,"bohr",at->bohr_radius);
+  elec_radius_id1 = PConvFloatToPyDictItem(dict,"elec_radius",at->elec_radius);
   partial_charge_id1 = PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
   formal_charge_id1 = PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
   cartoon_id1 = PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
@@ -613,7 +613,7 @@ int PAlterAtom(PyMOLGlobals *G,
         result=false;
       else if(!(vdw_id2=PyDict_GetItemString(dict,"vdw")))
         result=false;
-      else if(!(bohr_id2=PyDict_GetItemString(dict,"bohr")))
+      else if(!(elec_radius_id2=PyDict_GetItemString(dict,"elec_radius")))
         result=false;
       else if(!(partial_charge_id2 = PyDict_GetItemString(dict,"partial_charge")))
         result=false;
@@ -747,11 +747,11 @@ int PAlterAtom(PyMOLGlobals *G,
           at->vdw=vdw;
 
       }
-      if(bohr_id1!=bohr_id2) {
-        if(!PConvPyObjectToFloat(bohr_id2,&bohr))
+      if(elec_radius_id1!=elec_radius_id2) {
+        if(!PConvPyObjectToFloat(elec_radius_id2,&elec_radius))
           result=false;
         else
-          at->bohr_radius=bohr;
+          at->elec_radius=elec_radius;
       }
       if(partial_charge_id1!=partial_charge_id2) {
         if(!PConvPyObjectToFloat(partial_charge_id2,&partialCharge))
@@ -870,7 +870,7 @@ int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *model,char *expr,int inde
   PConvStringToPyDictItem(dict,"segi",at->segi);
   PConvStringToPyDictItem(dict,"ss",at->ssType);
   PConvFloatToPyDictItem(dict,"vdw",at->vdw);
-  PConvFloatToPyDictItem(dict,"bohr",at->bohr_radius);
+  PConvFloatToPyDictItem(dict,"elec_radius",at->elec_radius);
   {
     char null_st[1] = "";
     char *st = null_st;
