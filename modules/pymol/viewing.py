@@ -1568,7 +1568,7 @@ DESCRIPTION
     the python evaluator with a separate name space for each atom.  The
     symbols defined in the name space are:
 
-        name, resn, resi, chain, q, b, segi, type (ATOM,HETATM) 
+        name, resn, resi, chain, segi, alt, q, b, type (ATOM,HETATM) 
         formal_charge, partial_charge, numeric_type, text_type
 
     All strings in the expression must be explicitly quoted.  This
