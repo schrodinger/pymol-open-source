@@ -735,6 +735,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_gradient_step_size         543
 #define cSetting_gradient_spacing           544
 #define cSetting_gradient_symmetry          545
+#define cSetting_ray_trace_color            546
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -744,7 +745,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       546
+#define cSetting_INIT                       547
 
 #endif
 

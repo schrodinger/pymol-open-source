@@ -3323,6 +3323,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_gradient_step_size,0.25F);
   set_i(I,cSetting_gradient_spacing,3);
   set_f(I,cSetting_gradient_symmetry,0.0F);
+  set_color(I,cSetting_ray_trace_color,"black");
 }
 
 
