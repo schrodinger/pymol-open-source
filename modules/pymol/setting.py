@@ -579,6 +579,7 @@ if __name__=='pymol.setting':
         gradient_step_size        = (543,'');
         gradient_spacing          = (544,'');
         gradient_symmetry         = (545,'');        
+        ray_trace_color           = (546,'');        
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

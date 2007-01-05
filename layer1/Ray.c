@@ -2894,40 +2894,39 @@ int RayTraceThread(CRayThreadInfo *T)
                                trans_spec_scale*(_1 - r1.trans);
                            }
                          } else {
-                           fc[0]	+= first_excess;
-                           fc[1]	+= first_excess;
-                           fc[2]	+= first_excess;
+                           fc[0] += first_excess;
+                           fc[1] += first_excess;
+                           fc[2] += first_excess;
                          }
                          if(opaque_back) {
-                           fc[3]	= _1;
+                           fc[3] = _1;
                          } else {
                            fc[3] = _1 - r1.trans;
                          }
                        }
                      }
-                   else if(pass) 
-                     {
-                       /* hit nothing, and we're on on second or greater pass,
-                          or we're on the last pass of a dead-end loop */
-                       i=-1;
-
-                       fc[0] = first_excess+T->bkrd[0];
-                       fc[1] = first_excess+T->bkrd[1];
-                       fc[2] = first_excess+T->bkrd[2];
-                       if(opaque_back) {
-                         fc[3] = _1;
-                       } else {
-                         fc[3] = _0;
-                       }
-                      
-                       ffact = 1.0F;
-                       ffact1m = 0.0F;
-                      
-                       pixel_flag	= true;
-                       if(trans_cont_flag)
-                         persist = (float)pow(persist,trans_cont);
-                      
+                   else if(pass) {
+                     /* hit nothing, and we're on on second or greater pass,
+                        or we're on the last pass of a dead-end loop */
+                     i=-1;
+                     
+                     fc[0] = first_excess+T->bkrd[0];
+                     fc[1] = first_excess+T->bkrd[1];
+                     fc[2] = first_excess+T->bkrd[2];
+                     if(opaque_back) {
+                       fc[3] = _1;
+                     } else {
+                       fc[3] = _0;
                      }
+                     
+                     ffact = 1.0F;
+                     ffact1m = 0.0F;
+                     
+                     pixel_flag	= true;
+                     if(trans_cont_flag)
+                       persist = (float)pow(persist,trans_cont);
+                     
+                   }
 
                    if(pixel_flag)
                      {
@@ -2951,23 +2950,21 @@ int RayTraceThread(CRayThreadInfo *T)
                        if(cc1 > 255) cc1 = 255;
                        if(cc2 > 255) cc2 = 255;
                       
-                       if(opaque_back) 
-                         { 
-                           if(I->BigEndian) 
-                             *pixel = T->fore_mask|(cc0<<24)|(cc1<<16)|(cc2<<8);
-                           else
-                             *pixel = T->fore_mask|(cc2<<16)|(cc1<<8)|cc0;
-                         }
-                       else	/* use alpha channel for fog with transparent backgrounds */
-                         {
-                           cc3	= (uint)(fc[3] * _255);
-                           if(cc3 > 255) cc3 = 255;
-                          
-                           if(I->BigEndian)
-                             *pixel = (cc0<<24)|(cc1<<16)|(cc2<<8)|cc3;
-                           else
-                             *pixel = (cc3<<24)|(cc2<<16)|(cc1<<8)|cc0;
-                         }
+                       if(opaque_back) {
+                         if(I->BigEndian) 
+                           *pixel = T->fore_mask|(cc0<<24)|(cc1<<16)|(cc2<<8);
+                         else
+                           *pixel = T->fore_mask|(cc2<<16)|(cc1<<8)|cc0;
+                       } else {
+                         /* use alpha channel for fog with transparent backgrounds */
+                         cc3	= (uint)(fc[3] * _255);
+                         if(cc3 > 255) cc3 = 255;
+                         
+                         if(I->BigEndian)
+                           *pixel = (cc0<<24)|(cc1<<16)|(cc2<<8)|cc3;
+                         else
+                           *pixel = (cc3<<24)|(cc2<<16)|(cc1<<8)|cc0;
+                       }
                      }
                   
                    if(pass)	/* average all four channels */
@@ -3678,7 +3675,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
 {
   int a;
   unsigned int *image_copy = NULL;
-  unsigned int back_mask,fore_mask=0;
+  unsigned int back_mask,fore_mask=0,trace_word=0;
   unsigned int background,buffer_size;
   int opaque_back=0;
   int n_hit=0;
@@ -3765,38 +3762,71 @@ void RayRender(CRay *I,unsigned int *image,double timing,
   } else if(oversample_cutoff) {
     depth = Calloc(float,width*height);
   }
-  ambient				= SettingGet(I->G,cSetting_ambient);
+  ambient = SettingGet(I->G,cSetting_ambient);
   
   bkrd_ptr=SettingGetfv(I->G,cSetting_bg_rgb);
   copy3f(bkrd_ptr,bkrd);
-  { /* adjust bkrd to offset the effect of gamma correction */
+  { /* adjust bkrd and trace to offset the effect of gamma correction */
     float gamma = SettingGet(I->G,cSetting_gamma);
-    register float inp;
-    register float sig;
-    inp = (bkrd[0]+bkrd[1]+bkrd[2])/3.0F;
-    if(inp < R_SMALL4) 
-      sig = 1.0F;
-    else
-      sig = (float)(pow(inp,gamma))/inp;
-    bkrd[0] *= sig;
-    bkrd[1] *= sig;
-    bkrd[2] *= sig;
-    if(bkrd[0]>1.0F) bkrd[0] = 1.0F;
-    if(bkrd[1]>1.0F) bkrd[1] = 1.0F;
-    if(bkrd[2]>1.0F) bkrd[2] = 1.0F;
-  
+    {
+      register float inp;
+      register float sig;
+      inp = (bkrd[0]+bkrd[1]+bkrd[2])/3.0F;
+      if(inp < R_SMALL4) 
+        sig = 1.0F;
+      else
+        sig = (float)(pow(inp,gamma))/inp;
+      bkrd[0] *= sig;
+      bkrd[1] *= sig;
+      bkrd[2] *= sig;
+      if(bkrd[0]>1.0F) bkrd[0] = 1.0F;
+      if(bkrd[1]>1.0F) bkrd[1] = 1.0F;
+      if(bkrd[2]>1.0F) bkrd[2] = 1.0F;
+      
 #if 0
-    inp = ambient;
-    if(inp < R_SMALL4) 
-      sig = 1.0F;
-    else
-      sig = (float)(pow(inp,gamma))/inp;
-    ambient *= sig;
-    if(ambient>1.0f) ambient = 1.0F;
+      inp = ambient;
+      if(inp < R_SMALL4) 
+        sig = 1.0F;
+      else
+        sig = (float)(pow(inp,gamma))/inp;
+      ambient *= sig;
+      if(ambient>1.0f) ambient = 1.0F;
 #endif
-
+    }
+    if(trace_mode) {
+      register float inp;
+      register float sig;
+      int trace_color = SettingGetGlobal_color(I->G,cSetting_ray_trace_color);
+      float trgb[3], *trgb_v = ColorGet(I->G,trace_color);
+      copy3f(trgb_v,trgb);
+      
+      inp = (trgb[0]+trgb[1]+trgb[2])/3.0F;
+      if(inp < R_SMALL4) 
+        sig = 1.0F;
+      else
+        sig = (float)(pow(inp,gamma))/inp;
+      trgb[0] *= sig;
+      trgb[1] *= sig;
+      trgb[2] *= sig;
+      if(trgb[0]>1.0F) trgb[0] = 1.0F;
+      if(trgb[1]>1.0F) trgb[1] = 1.0F;
+      if(trgb[2]>1.0F) trgb[2] = 1.0F;
+      
+      if(I->BigEndian) {
+        trace_word =
+          ((0xFF& ((unsigned int)(trgb[0]*255+_p499))) <<24)|
+          ((0xFF& ((unsigned int)(trgb[1]*255+_p499))) <<16)|
+          ((0xFF& ((unsigned int)(trgb[2]*255+_p499))) <<8 )|
+          0xFF;
+      } else {
+        trace_word = 
+          0xFF000000 |
+          ((0xFF& ((unsigned int)(trgb[2]*255+_p499))) <<16)|
+          ((0xFF& ((unsigned int)(trgb[1]*255+_p499))) <<8)|
+          ((0xFF& ((unsigned int)(trgb[0]*255+_p499))) );
+      }
+    }
   }
-
   if(opaque_back) {
     if(I->BigEndian)
       back_mask = 0x000000FF;
@@ -4262,7 +4292,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
           float dep;
           float *p,*q;
           int cnt;
-          for(i=0;i<2;i++) {
+          for(i=0;i<3;i++) { /* three passes required */
             p = depth;
             q = tmp;
             for(y=0;y<height;y++) 
@@ -4451,11 +4481,22 @@ void RayRender(CRay *I,unsigned int *image,double timing,
                 
                   ffact1m	= _1-ffact;
 
-                  fc[0]	= (0xFF&(back_mask>>24)) * ffact1m + (0xFF&(background>>24))*ffact;
-                  fc[1]	= (0xFF&(back_mask>>16)) * ffact1m + (0xFF&(background>>16))*ffact;
-                  fc[2]	= (0xFF&(back_mask>>8))  * ffact1m + (0xFF&(background>>8))*ffact;
-                  fc[3]	= (0xFF&(back_mask))    * ffact1m + (0xFF&(background))*ffact;
-                
+                  if(opaque_back) {
+                    fc[0]	= (0xFF&(background>>24)) * ffact + (0xFF&(trace_word>>24))*ffact1m;
+                    fc[1]	= (0xFF&(background>>16)) * ffact + (0xFF&(trace_word>>16))*ffact1m;
+                    fc[2]	= (0xFF&(background>>8))  * ffact + (0xFF&(trace_word>>8))*ffact1m;
+                    fc[3]	= (0xFF&(background))    * ffact + (0xFF&(trace_word))*ffact1m;
+                  } else { /* if non-opaque background, then use alpha to blend */
+                    fc[1]	= (0xFF&(trace_word>>16));
+                    fc[2]	= (0xFF&(trace_word>>8));
+                    if(I->BigEndian) {
+                      fc[0]	= (0xFF&(trace_word>>24));
+                      fc[3]	= (0xFF&(background))    * ffact + (0xFF&(trace_word))*ffact1m;
+                    } else {
+                      fc[0]	= (0xFF&(background>>24)) * ffact + (0xFF&(trace_word>>24))*ffact1m;
+                      fc[3]	= (0xFF&(trace_word));
+                    }
+                  }
                   cc0		= (uint)(fc[0]);
                   cc1		= (uint)(fc[1]);
                   cc2		= (uint)(fc[2]);
@@ -4468,11 +4509,11 @@ void RayRender(CRay *I,unsigned int *image,double timing,
                 
                   *q = (cc0<<24)|(cc1<<16)|(cc2<<8)|cc3;
                 } else {
-                  *q = back_mask;
+                  *q = trace_word;
                 }
-              } else if(trace_mode==2) {
+              } else if(trace_mode==2) { /* only draw edge */
                 *q = background;
-              } else if(trace_mode==3) {
+              } else if(trace_mode==3) { /* quantize */
                 *q = (*q & 0xC0C0C0C0);
                 *q = *q | ((*q)>>2) | ((*q)>>4) | ((*q)>>6);
               }

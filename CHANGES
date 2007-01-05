@@ -5,6 +5,8 @@ CHANGE LOG
 
 Changes up to 1.00b16
 
+    * ray_trace_color setting
+
     * switched from Vera to DejaVu fonts in order to get symbols.
 
     * dot representation for quick previewing of map contents
