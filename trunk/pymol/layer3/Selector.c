@@ -385,6 +385,7 @@ static WordKeyValue Keyword[] =
   {  cKeywordCenter,   SELE_CENz },
   {  "bonded",   SELE_BNDz },
 
+  {  "segment",  SELE_SEGs },
   {  "segid",    SELE_SEGs },
   {  "segi",     SELE_SEGs },
   {  "s;",       SELE_SEGs },/* deprecated */
