@@ -1790,7 +1790,6 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
                       (strand_phi_delta<strand_phi_include)) {
               r->flags |= cSSPhiPsiStrand;
             }
-
           }
         }
       }
@@ -4445,7 +4444,10 @@ int SelectorGetArrayNCSet(PyMOLGlobals *G,int *array,int no_dummies)
       if(a>=cNDummyAtoms) {
         obj=I->Obj[I->Table[a].model];
         if(result<obj->NCSet) result=obj->NCSet;
+      } else {
+        if(result<1) result=1; /* selected dummy has at least one CSet */
       }
+
     }
   }
   return(result);
@@ -6365,7 +6367,6 @@ int SelectorIndexByName(PyMOLGlobals *G,char *sname)
    strcpy(name,tname);		  
    i = SelectGetNameOffset(G,name,1,ignore_case);
    if((i>=0)&&(name[0]!='_')) { /* don't do checking on internal selections */
-     
      char *best;
      best = ExecutiveFindBestNameMatch(G,sname); /* suppress spurious matches
                                                     of selections with non-selections */

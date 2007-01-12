@@ -4622,6 +4622,7 @@ void RayWobble(CRay *I,int mode,float *v)
 void RayTransparentf(CRay *I,float v)
 {
   if(v>1.0F) v=1.0F;
+  if(v<0.0F) v=0.0F;
   I->Trans=v;
 }
 

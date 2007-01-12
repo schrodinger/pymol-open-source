@@ -3811,6 +3811,7 @@ void SceneRovingUpdate(PyMOLGlobals *G)
   char *name;
   float level;
   float isosurface,isomesh;
+
   if(I->RovingDirtyFlag&&(
                           (UtilGetSeconds(G)-I->RovingLastUpdate)>
                           fabs(SettingGet(G,cSetting_roving_delay)))) {
