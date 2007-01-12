@@ -5,6 +5,12 @@ CHANGE LOG
 
 Changes up to 1.00b16
 
+    * fixed scroll bar bug with groups
+    
+    * fixed ray_trace_mode bug (bp099)
+
+    * object:group now returned
+
     * ray_trace_color setting
 
     * switched from Vera to DejaVu fonts in order to get symbols.
@@ -21,7 +27,7 @@ Changes up to 1.00b16
 
 Changes up to 1.00b15
 
-    * fixed bug with dragging back clip plane 
+    * fixed bug with dragging back clip plane (bp099)
 
     * fixes for proprietary code (.MOE file reading & embedding)
 
@@ -37,7 +43,7 @@ Changes up to 1.00b14
 
 Changes up to 1.00b13
 
-    * fixed geometry-based atom selection processing bug for last  small objects
+    * fixed geometry-based atom selection processing bug for last small objects
 
     * support for some Gaussian cube files (orthognal cartesian-aligned)
 
@@ -53,7 +59,7 @@ Changes up to 1.00b12
 
     * fixed bond setting selection processing issue
 
-    * fixed memory leak in surface algorithm
+    * fixed memory leak in surface algorithm (bp099)
 
     * fixed session file chaining bug on Windows
 
@@ -75,7 +81,7 @@ Changes up to 1.00b09
 
     * mesh_skip setting
 
-    * bug fix for label scaling
+    * bug fix for label scaling (bp099)
 
     * bug fix for ramp_new
 

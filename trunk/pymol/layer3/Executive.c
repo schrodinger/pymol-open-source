@@ -6377,6 +6377,8 @@ int ExecutiveGetType(PyMOLGlobals *G,char *name,WordType type)
         strcat(type,"distance");
       else if(rec->obj->type==cObjectCGO)
         strcat(type,"cgo");
+      else if(rec->obj->type==cObjectGroup)
+        strcat(type,"group");
     } else if(rec->type==cExecSelection) {
       strcpy(type,"selection");
     }
@@ -13485,9 +13487,11 @@ static void ExecutiveDraw(Block *block)
     int max_char;
     int nChar;
     /* do we have enough structures to warrant a scroll bar? */
+    
     n_ent = 0;
-    while(ListIterate(I->Spec,rec,next)) {
-      if((rec->name[0]!='_')||(!hide_underscore))
+    while(ListIterate(I->Panel,panel,next)) {
+      rec=panel->spec;
+      if(rec && ((rec->name[0]!='_')||(!hide_underscore)))
         n_ent++;
     }
 

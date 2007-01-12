@@ -1158,8 +1158,8 @@ void PInitEmbedded(int argc,char **argv)
 #define EMBEDDED_PYTHONHOME "\\py24"
         
     OrthoLineType path_buffer;
-    static char line1[4000];
-    static char line2[4000];
+    static char line1[8092];
+    static char line2[8092];
     HKEY phkResult;
     int lpcbData;
     int lpType = REG_SZ;
@@ -1225,8 +1225,8 @@ void PInitEmbedded(int argc,char **argv)
        * console window. Otherwise a console window might appear, and
        * that would suck. */
             
-      char command[4000];
-      static char cmd_line[4000];
+      char command[8092];
+      static char cmd_line[8092];
       char *p,*q;
       int a;
             
@@ -1325,8 +1325,8 @@ void PInitEmbedded(int argc,char **argv)
 
 #ifdef _PYMOL_SETUP_PY_EXT
   {
-    static char line1[4000];
-    static char line2[4000];
+    static char line1[8092];
+    static char line2[8092];
 
     if(!getenv("PYMOL_PATH")) { /* if PYMOL_PATH isn't defined...*/
     
