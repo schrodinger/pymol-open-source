@@ -127,31 +127,35 @@ PYMOL API
         if _raising(r): raise QuietException
         return r
 
-    def save(filename,selection='(all)',state=0,format='',ref='',ref_state=-1,quiet=1):
+    def save(filename, selection='(all)', state=0, format='', ref='',
+             ref_state=-1, quiet=1):
+        
         '''
 DESCRIPTION
 
-    "save" writes selected atoms to a file.  The file format is
-    autodetected if the extesion is ".pdb", ".pse", ".mol", ".mmod", or
-    ".pkl"
-
-    Note that if the file extension ends in ".pse" (PyMOL Session), the
-    complete PyMOL state is always saved to the file (the selection and
-    state parameters are thus ignored).
-
+    "save" writes content to a file.
+    
 USAGE
 
-    save file [,(selection) [,state [,format]] ]
+    save file [,selection [,state [,format ]]]
 
 PYMOL API
 
-    cmd.save(file, selection, state, format)
+    cmd.save(string file, string selection, int state, string format)
 
 NOTES
 
-    When saving a session file, then "state" has no effect.
-    When state = 0 (default), only the current state is written.
-    When state = -1, then a multi-state output file is written (PDB only).
+    The file format is autodetected if the extesion is one of the
+    supported output formats: pdb, pqr, mol, pkl, mmd, mmod, pov, png,
+    pse, aln, obj, mtl, or wrl.
+
+    Currently, if the file format is not recognized, then a PDB file
+    is written by default
+
+    For molecular files and where applicable:
+    
+    when state = 0 (default), only the current state is written.
+    when state = -1, then a multi-state output file is written.
     
 SEE ALSO
 

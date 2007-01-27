@@ -76,8 +76,8 @@ EXAMPLES
 
 PYMOL API
 
-    cmd.zoom( string selection, float buffer=0.0,
-                 int state=0, int complete=0 )
+    cmd.zoom(string selection, float buffer=0.0,
+             int state=0, int complete=0 )
 
 ARGUMENTS
 
@@ -133,7 +133,7 @@ EXAMPLES
 
 PYMOL API
 
-    cmd.center(string selection, int state = 0, int origin = 1 )
+    cmd.center(string selection, int state, int origin)
 
 ARGUMENTS
 
@@ -187,7 +187,7 @@ EXAMPLES
 
 PYMOL API
 
-    cmd.clip( string mode, float distance, string selection = None)
+    cmd.clip(string mode, float distance, string selection)
 
 SEE ALSO
 
@@ -224,7 +224,7 @@ USAGE
 
 PYMOL API
 
-    cmd.origin( string object-or-selection )
+    cmd.origin(string object-or-selection)
 
 ARGUMENTS
 
@@ -274,7 +274,7 @@ USAGE
 
 PYMOL API
 
-    cmd.orient( string object-or-selection [, state = 0] )
+    cmd.orient(string object-or-selection, int state, float animate)
 
 ARGUMENTS
 
@@ -315,7 +315,7 @@ EXAMPLES
 
 PYMOL API
 
-    cmd.move( string axis, float distance )
+    cmd.move(string axis, float distance)
 
 SEE ALSO
 
@@ -334,23 +334,36 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "enable" enable display of an object and all currently visible representations.
+    "enable" turns on display of one or more objects and/or selections.
 
 USAGE
 
     enable name
-    enable all
 
-    name = object or selection name
+ARGUMENTS    
 
+    name = object or selection name pattern.  If name matches a
+    selection, then selection indicator dots are shown for atoms in
+    that selection.
+
+NOTES
+
+    For an object\'s content to be displayed in the 3D viewer, the
+    object must be enabled AND at least one of the available
+    representations must be shown.
+    
 PYMOL API
 
-    cmd.enable( string object-name )
+    cmd.enable(string object-name)
 
-EXAMPLE
+EXAMPLES
 
-    enable my_object
+    enable target_protein  # enables the target_protein object
 
+    enable 1dn2.*   # enables all entities starting with 1dn2.
+    
+    enable *lig     # enables all entities ending with lig
+    
 SEE ALSO
 
     show, hide, disable
@@ -376,23 +389,19 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "disable" disables display of an object and all currently visible
-    representations.
+    "disable" turns off display of one or more objects and/or selections.
 
 USAGE
 
     disable name
-    disable all 
 
-    "name" is the name of an object or a named selection
+ARGUMENTS    
+
+    name = object or selection name pattern.
 
 PYMOL API
 
-    cmd.disable( string name ) 
-
-EXAMPLE
-
-    disable my_object
+    cmd.disable(string name) 
 
 SEE ALSO
 
@@ -415,19 +424,30 @@ SEE ALSO
         if _raising(r): raise QuietException            
         return r
 
-    def toggle(representation="",selection=""):
+    def toggle(representation="", selection=""):
         '''
 DESCRIPTION
 
-    "toggle" toggles representations.
-
+    "toggle" toggles the visibility of a representation within a
+    selection.
+    
 USAGE
 
+    toggle representation, selection
+
+ARGUMENTS
+
+    representation = na    
+
+NOTES
+
+    If no arguments are provided, then lines are toggled for all
+    objects in the aggregate.
+    
 PYMOL API
 
-EXAMPLES
+    cmd.toggle(string representation, string selection)
 
-SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
@@ -548,7 +568,7 @@ USAGE
 
 PYMOL API
 
-    cmd.as( string representation="", string selection="" )
+    cmd.as(string representation, string selection)
 
 EXAMPLES
 
@@ -620,7 +640,7 @@ USAGE
 
 PYMOL API
 
-    cmd.hide( string representation="", string selection="")
+    cmd.hide(string representation, string selection)
 
 EXAMPLES
 
@@ -675,7 +695,7 @@ USAGE
 
 PYMOL API
 
-    cmd.get_view(output=1,quiet=1)
+    cmd.get_view(output=1, quiet=1)
     
     my_view= cmd.get_view()
 
@@ -813,7 +833,7 @@ USAGE
 
 PYMOL API
 
-    cmd.view(string key,string action)
+    cmd.view(string key, string action)
 
 VIEWS
 
@@ -1446,7 +1466,7 @@ NOTES
 
 PYMOL API
 
-    cmd.stereo(string state="on")
+    cmd.stereo(string state)
         '''
         state = stereo_dict[stereo_sc.auto_err(str(state),'state')]
         r = DEFAULT_ERROR      
@@ -1491,7 +1511,7 @@ EXAMPLES
 
 PYMOL API
 
-    cmd.turn( string axis, float angle )
+    cmd.turn(string axis, float angle)
 
 SEE ALSO
 
@@ -1583,9 +1603,9 @@ USAGE
 
 EXAMPLES
 
-    label (chain A),chain
-    label (n;ca),"%s-%s" % (resn,resi)
-    label (resi 200),"%1.3f" % partial_charge
+    label chain A, chain
+    label name ca,"%s-%s" % (resn,resi)
+    label resi 200,"%1.3f" % partial_charge
         '''
         # preprocess selection
         selection = selector.process(selection)
@@ -1712,7 +1732,7 @@ USAGE
 
 PYMOL API
 
-    cmd.cartoon(string type, string selection )
+    cmd.cartoon(string type, string selection)
 
 EXAMPLES
 
@@ -1775,8 +1795,7 @@ NOTES
         if _raising(r): raise QuietException
         return r
 
-    def ray(width=0, height=0, antialias=-1,
-            angle=0.0, shift=0.0,
+    def ray(width=0, height=0, antialias=-1, angle=0.0, shift=0.0,
             renderer=-1, quiet=1, async=0):
         '''
 DESCRIPTION
@@ -1787,23 +1806,27 @@ DESCRIPTION
 
 USAGE
 
-    ray [ width, height, renderer, antialias, angle, shift, quiet, async ]
+    ray [width [,height [,renderer [,antialias [,angle [,shift 
+        [,renderer [,quiet [,async ]]]]]]]]]
 
-    angle and shift can be used to generate matched stereo pairs
-    
+PYMOL API
+
+    cmd.ray(int width, int height, int antialias, float angle,
+            float shift, int renderer, int quiet, int async)
+
 EXAMPLES
 
     ray
     ray 1024,768
     ray renderer=0
 
-PYMOL API
-
-    cmd.ray(width=0, height=0, antialias=-1,
-            angle=0.0, shift=0.0,
-            renderer=-1, quiet=1, async=0)
-
 NOTES
+
+    Default width and height are taken from the current viewpoint. If
+    one is specified, but not the other, then the missing value is
+    scaled so as to preserve the current aspect ratio.
+    
+    angle and shift can be used to generate matched stereo pairs
 
     renderer = -1 is default (use value in ray_default_renderer)
     renderer =  0 uses PyMOL's internal renderer
@@ -2004,7 +2027,7 @@ SEE ALSO
         if _raising(r): raise QuietException
         return r
 
-    def color(color,selection="(all)",quiet=1,flags=0):
+    def color(color, selection="(all)", quiet=1, flags=0):
         '''
 DESCRIPTION
 
@@ -2018,10 +2041,9 @@ USAGE
 
 PYMOL API
 
-    cmd.color( string color-name,
-        string selection-or-object-name )
+    cmd.color(string color-name, string name-or-selection)
 
-EXAMPLES 
+EXAMPLE 
 
     color yellow, (name C*)
         '''

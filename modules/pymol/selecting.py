@@ -83,6 +83,11 @@ NOTES
                     name = "sel%02.0f" % sel_cnt
                 else:
                     name = "sele"
+            if name == None:
+                sel_cnt = _cmd.get("sel_counter") + 1.0
+                _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
+                name = "sel%02.0f" % sel_cnt
+                
             # preprocess selection (note: inside TRY)
             selection = selector.process(selection)
             merge = int(merge)

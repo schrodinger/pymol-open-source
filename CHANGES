@@ -2,8 +2,13 @@
 CHANGE LOG
 =========================================================================
 
-
 Changes up to 1.00b16
+    
+    * group members starting with internal ._ are now hidden too
+
+    * group_arrow_prefix setting 
+
+    * new 'extract object' item in selection menus
 
     * fixed scroll bar bug with groups
     

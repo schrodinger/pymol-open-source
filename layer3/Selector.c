@@ -344,6 +344,7 @@ static WordKeyValue Keyword[] =
 
   {  "residue",  SELE_RSIs },
   {  "resi",     SELE_RSIs },
+  {  "resident", SELE_RSIs },
   {  "resid",    SELE_RSIs },
   {  "i;",       SELE_RSIs },/* deprecated */
   {  "i.",       SELE_RSIs },
@@ -354,6 +355,7 @@ static WordKeyValue Keyword[] =
   {  "cartoon_color", SELE_CCLs },
   {  "ribbon_color",  SELE_RCLs },
 
+  {  "altloc",   SELE_ALTs },
   {  "alt",      SELE_ALTs },
 
   {  "flag",     SELE_FLGs },

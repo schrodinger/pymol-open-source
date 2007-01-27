@@ -226,7 +226,7 @@ static void ExecutiveInvalidatePanelList(PyMOLGlobals *G)
 }
 
 
-static PanelRec *PanelGroup(PyMOLGlobals *G, PanelRec *panel, SpecRec *group,
+static PanelRec *PanelListGroup(PyMOLGlobals *G, PanelRec *panel, SpecRec *group,
                             int level,int hide_underscore)
 {
   register CExecutive *I = G->Executive;
@@ -238,26 +238,33 @@ static PanelRec *PanelGroup(PyMOLGlobals *G, PanelRec *panel, SpecRec *group,
   }
   while(ListIterate(I->Spec,rec,next)) { /* add all members which belong to this group */
 
-    if((rec->name[0]!='_')||(!hide_underscore)) {
+    if((rec->name[0]!='_')||(!hide_underscore)) { /* not hidden */
       if((rec->group == group)&&(!rec->in_panel)) {
-        PanelRec *new_panel = NULL;
-        ListElemCalloc(G,new_panel,PanelRec);
-        if(panel) 
-          panel->next = new_panel;
-        else
-          result = new_panel;
-        panel = new_panel;
-        panel->spec = rec;
-        panel->nest_level = level;
-        if(!level) rec->group_name[0] = 0; /* force open any cycles which have been created...*/
-        rec->in_panel = true;
-        if((rec->type == cExecObject) && 
-           (rec->obj->type == cObjectGroup)) {
-          ObjectGroup *obj_group = (ObjectGroup*)rec->obj;
-          panel->is_group = true;
-          if(obj_group->OpenOrClosed) {
-            panel->is_open = true;
-            panel = PanelGroup(G,panel,rec,level+1,hide_underscore);
+        int group_name_len = strlen(rec->group_name);
+        if((!hide_underscore)||!
+           ((strncmp(rec->name,rec->group_name,group_name_len)==0) && /* named with proper group prefix */
+           (rec->name[group_name_len]=='.') &&
+           (rec->name[group_name_len+1]=='_'))) { /* and not hidden inside group */
+          
+          PanelRec *new_panel = NULL;
+          ListElemCalloc(G,new_panel,PanelRec);
+          if(panel) 
+            panel->next = new_panel;
+          else
+            result = new_panel;
+          panel = new_panel;
+          panel->spec = rec;
+          panel->nest_level = level;
+          if(!level) rec->group_name[0] = 0; /* force open any cycles which have been created...*/
+          rec->in_panel = true;
+          if((rec->type == cExecObject) && 
+             (rec->obj->type == cObjectGroup)) {
+            ObjectGroup *obj_group = (ObjectGroup*)rec->obj;
+            panel->is_group = true;
+            if(obj_group->OpenOrClosed) {
+              panel->is_open = true;
+              panel = PanelListGroup(G,panel,rec,level+1,hide_underscore);
+            }
           }
         }
       }
@@ -274,7 +281,7 @@ static void ExecutiveUpdatePanelList(PyMOLGlobals *G)
   int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
   if(!I->ValidPanel) {
     /* brute-force & inefficient -- need to optimize algorithm */
-    I->Panel = PanelGroup(G,NULL,NULL,0,hide_underscore);
+    I->Panel = PanelListGroup(G,NULL,NULL,0,hide_underscore);
     I->ValidPanel = true;
   }
 }
@@ -13479,6 +13486,7 @@ static void ExecutiveDraw(Block *block)
   int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
   int op_cnt = get_op_cnt(G);
   int full_names = SettingGetGlobal_b(G,cSetting_group_full_member_names);
+  int arrows = SettingGetGlobal_b(G,cSetting_group_arrow_prefix);
 
   ExecutiveUpdatePanelList(G);
   if(G->HaveGUI && G->ValidContext && 
@@ -13746,7 +13754,7 @@ static void ExecutiveDraw(Block *block)
               
               if(c) {
                 if(hidden_prefix) {
-                  if((nChar--)>0) {
+                  if(arrows&&((nChar--)>0)) {
                     TextDrawChar(G,'^');
                     TextSetPos2i(G,x3+2,y2+text_lift);
                     TextDrawChar(G,'|');

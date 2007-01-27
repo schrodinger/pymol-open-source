@@ -399,47 +399,40 @@ SEE ALSO
         if _cmd.get_setting("auto_zoom")==1.0:
             cmd._do("zoom (%s)"%oname)
     
-    def load(filename,object='',state=0,format='',finish=1,
-                discrete=-1,quiet=1,multiplex=None,zoom=-1):
+    def load(filename, object='', state=0, format='', finish=1,
+             discrete=-1, quiet=1, multiplex=None, zoom=-1):
         '''
 DESCRIPTION
 
     "load" can by used to read molecules, crystallographic maps and
-    other volumetric data, PyMOL sessions, and some other content.
-
+    other volumetric data, PyMOL sessions, and some other types of
+    content.
 
 USAGE
 
     load filename [,object [,state [,format [,finish [,discrete ]]]]]
 
-BEHAVIOR
+NOTES
+
+    The file extension is used to determine the format, unless it is
+    specified explicitly.
 
     If an object name specified, then the file is loaded into that
     object.  Otherwise, an object is created with the same name as the
     file prefix.  If a state value is not specified, then the content
-    is appended onto the state.  The file extension is used to
-    determine the format, unless it is specified explicitly.
+    is appended after the last existing state (if any).
 
-    PDB files should end in ".pdb", MOL files: ".mol", old Macromodel
-    files: ".mmod", XPLOR maps: ".xplor", CCP4 maps: ".ccp4", Raster3D
-    input (Molscript output): ".r3d" ".r3d", PyMOL sessions, ".pse",
-    and pickled ChemPy models: ".pkl".
+    Supported molecular file formats include: .pdb, .mol, .mol2, .sdf,
+    .xyz, and others.
 
-NOTES
+    Supported map formats include: .xplor, .ccp4, .phi, and others.
 
-    recognized format strings:
-    
-    'pdb' : PDB,  'mmod' : Macromodel, 'xyz' : Tinker, 'cc1' : ChemDraw3D  
-    'mol' : MDL MOL-file, 'sdf' : MDL SD-file
-    'xplor' : X-PLOR/CNS map, 'ccp4' : CCP4 map,
-    'callback' : PyMOL Callback object (PyOpenGL)
-    'cgo' : compressed graphics object (list of floats)
-    'trj' : AMBER trajectory (use load_traj command for more control)
-    'top' : AMBER topology file 'rst' : AMBER restart file
-    'cex' : Metaphorics CEX format
-    'pse' : PyMOL Session file ('psw' PyMOL Show)
-    'pqr' : PQR (a modified PDB file with charges and radii)
-    'mol2' : MOL2
+    Accepted file formats are listed in the reference documentation.
+
+PYMOL API
+
+    cmd.load(string filename, string object-name, integer state,
+             string format )
     
 SEE ALSO
 

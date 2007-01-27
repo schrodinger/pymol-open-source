@@ -1724,6 +1724,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_seq_view_label_color:
     OrthoDirty(G);
     break;
+  case cSetting_group_full_member_names:
+  case cSetting_group_arrow_prefix:
+    OrthoDirty(G);
+    break;
   case cSetting_static_singletons:
     SeqChanged(G);
     break;
@@ -1765,6 +1769,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     OrthoDirty(G);
     break;
   case cSetting_hide_underscore_names:
+    ExecutiveInvalidateGroups(G,false);
     OrthoDirty(G);
     break;
   case cSetting_gradient_spacing:
@@ -3324,6 +3329,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_i(I,cSetting_gradient_spacing,3);
   set_f(I,cSetting_gradient_symmetry,0.0F);
   set_color(I,cSetting_ray_trace_color,"black");
+  set_b(I,cSetting_group_arrow_prefix, 1);
+
 }
 
 
