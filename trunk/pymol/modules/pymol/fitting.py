@@ -32,7 +32,7 @@ if __name__=='pymol.fitting':
 DESCRIPTION
 
     "align" performs a sequence alignment followed by a structural
-    alignment, and then carrys out zero or more cycles of refinement
+    alignment, and then carries out zero or more cycles of refinement
     in order to reject structural outliers found during the fit.
 
 USAGE 
