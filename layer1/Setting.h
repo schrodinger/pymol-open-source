@@ -33,6 +33,7 @@ typedef struct {
 
 struct _CSettingUnique {
   OVOneToOne *id2offset;
+  OVOneToOne *old2new;
   SettingUniqueEntry *entry;
   int n_alloc, next_free;
 };
@@ -82,8 +83,8 @@ int SettingUniqueGet_color(PyMOLGlobals *G,int unique_id,int setting_id,int *val
 
 void SettingUniqueResetAll(PyMOLGlobals *G);
 PyObject *SettingUniqueAsPyList(PyMOLGlobals *G);
-int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list);
-
+int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore);
+int SettingUniqueConvertOldSessionID(PyMOLGlobals *G,int old_unique_id);
 
 void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui);
 void SettingFreeGlobal(PyMOLGlobals *G);

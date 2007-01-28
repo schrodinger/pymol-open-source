@@ -3170,7 +3170,7 @@ int ExecutiveValidateObjectPtr(PyMOLGlobals *G,CObject *ptr,int object_type)
 
 int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,PyObject *range,
                         PyObject *color,int src_state,char *sele,
-                        float beyond,float within,float sigma,int zero)
+                        float beyond,float within,float sigma,int zero,int quiet)
 {
   ObjectGadgetRamp *obj = NULL;
   int ok =true;
@@ -3217,7 +3217,7 @@ int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,PyObject *range,
   if(ok) ExecutiveDelete(G,name); 
   if(ok) ObjectSetName((CObject*)obj,name);
   if(ok) ColorRegisterExt(G,name,(void*)obj,cColorGadgetRamp);
-  if(ok) ExecutiveManageObject(G,(CObject*)obj,false,false);
+  if(ok) ExecutiveManageObject(G,(CObject*)obj,false,quiet);
   if(ok) ExecutiveInvalidateRep(G,cKeywordAll,cRepAll,cRepInvColor); /* recolor everything */
   VLAFreeP(vert_vla);
   return(ok);
@@ -3275,7 +3275,8 @@ static PyObject *ExecutiveGetExecObjectAsPyList(PyMOLGlobals *G,SpecRec *rec)
   return(result);  
 }
 
-static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
+static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version,
+                                    int part_rest,int part_sess)
 {
   register CExecutive *I = G->Executive;  
   int ok=true;
@@ -3350,6 +3351,9 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
         break;
       case cExecSelection: /* on the first pass, just create an entry in the rec list */
         rec->sele_color=extra_int;
+        if(part_rest||part_sess) { /* don't attempt to restore selections with partial sessions */
+          skip=true;
+        }
         break;
       }
 
@@ -3467,95 +3471,140 @@ static PyObject *ExecutiveGetExecSeleAsPyList(PyMOLGlobals *G,SpecRec *rec)
   return(PConvAutoNone(result));
 }
 
-static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals *G)
+static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals *G,int list_id,int partial)
 {
   register CExecutive *I = G->Executive;  
+  CTracker *I_Tracker= I->Tracker;
   PyObject *result = NULL;
-  int count;
-  SpecRec *rec = NULL;
-
-  count = ExecutiveCountNames(G);
-  result = PyList_New(count);
+  int count=0,total_count=0;
+  int iter_id = 0;
+  SpecRec *rec = NULL, *list_rec = NULL;
 
   SelectorUpdateTable(G);
 
-  count=0;
-  while(ListIterate(I->Spec,rec,next))
-	 {
+  if(list_id) {
+    total_count = TrackerGetNCandForList(I_Tracker,list_id);
+    iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  } else {
+    total_count = ExecutiveCountNames(G);
+  }
+  result = PyList_New(total_count);
+
+  /* critical reliance on short-circuit behavior */
+
+  while( (iter_id && TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&list_rec)) ||
+         ((!iter_id) && ListIterate(I->Spec,rec,next))) {
+    
+    if(list_id)
+      rec = list_rec;
+    if(count>=total_count)
+      break;
+    if(rec) {
       switch(rec->type) {
       case cExecObject:
         PyList_SetItem(result,count,
                        ExecutiveGetExecObjectAsPyList(G,rec));
         break;
       case cExecSelection:
-        PyList_SetItem(result,count,
-                       ExecutiveGetExecSeleAsPyList(G,rec));
+        if(!partial) {
+          PyList_SetItem(result,count,
+                         ExecutiveGetExecSeleAsPyList(G,rec));
+        } else { 
+          /* cannot currently save selections in partial sessions */
+          PyList_SetItem(result,count,PConvAutoNone(NULL));
+        }
         break;
       default:
         PyList_SetItem(result,count,PConvAutoNone(NULL));
         break;
       }
-      count++;
+    } else {
+      PyList_SetItem(result,count,PConvAutoNone(NULL));
     }
+    count++;
+  }
+
+  while(count<total_count) { /* insure that all members of outgoing list are defined */
+    PyList_SetItem(result,count,PConvAutoNone(NULL));
+  }
+  
+  if(iter_id) {
+    TrackerDelIter(I_Tracker, iter_id);
+  }
   return(PConvAutoNone(result));
 }
 
 
 #endif
 
-int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict)
+int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict,char *names,int partial,int quiet)
 {
 #ifdef _PYMOL_NOPY
   return 0;
 #else
   int ok=true;
+  int list_id=0;
   SceneViewType sv;
   PyObject *tmp;
+  
+  if(names && names[0]) {
+    list_id = ExecutiveGetNamesListFromPattern(G,names,true,cExecExpandKeepGroups);
+  } 
 
-  tmp = ExecutiveGetNamedEntries(G);
+  tmp = PyInt_FromLong(_PyMOL_VERSION_int);
+  PyDict_SetItemString(dict,"version",tmp);
+  Py_XDECREF(tmp);
+
+  tmp = ExecutiveGetNamedEntries(G,list_id,partial);
   PyDict_SetItemString(dict,"names",tmp);
   Py_XDECREF(tmp);
 
-  tmp = SelectorSecretsAsPyList(G);
-  PyDict_SetItemString(dict,"selector_secrets",tmp);
+  tmp = ColorAsPyList(G);
+  PyDict_SetItemString(dict,"colors",tmp);
   Py_XDECREF(tmp);
-  
-  tmp = SettingGetGlobalsAsPyList(G);
-  PyDict_SetItemString(dict,"settings",tmp);
+            
+  tmp = ColorExtAsPyList(G); 
+  PyDict_SetItemString(dict,"color_ext",tmp);
   Py_XDECREF(tmp);
 
   tmp = SettingUniqueAsPyList(G);
   PyDict_SetItemString(dict,"unique_settings",tmp);
   Py_XDECREF(tmp);
 
-  tmp = ColorAsPyList(G);
-  PyDict_SetItemString(dict,"colors",tmp);
-  Py_XDECREF(tmp);
+  if(partial) { /* mark this as a partial session */
 
-  tmp = ColorExtAsPyList(G);
-  PyDict_SetItemString(dict,"color_ext",tmp);
-  Py_XDECREF(tmp);
+    Py_INCREF(Py_None);
+    PyDict_SetItemString(dict,"partial",Py_None);
 
-  tmp = PyInt_FromLong(_PyMOL_VERSION_int);
-  PyDict_SetItemString(dict,"version",tmp);
-  Py_XDECREF(tmp);
+  } else { 
 
-  SceneGetView(G,sv);
-  tmp = PConvFloatArrayToPyList(sv,cSceneViewSize);
-  PyDict_SetItemString(dict,"view",tmp);
-  Py_XDECREF(tmp);
+    /* none of the following information is saved in partial sessions */
 
-  tmp = MovieAsPyList(G);
-  PyDict_SetItemString(dict,"movie",tmp);
-  Py_XDECREF(tmp);
-
-  tmp = EditorAsPyList(G);
-  PyDict_SetItemString(dict,"editor",tmp);
-  Py_XDECREF(tmp);
-
-  tmp = MainAsPyList();
-  PyDict_SetItemString(dict,"main",tmp);
-  Py_XDECREF(tmp);
+    tmp = SelectorSecretsAsPyList(G);
+    PyDict_SetItemString(dict,"selector_secrets",tmp);
+    Py_XDECREF(tmp);
+    
+    tmp = SettingGetGlobalsAsPyList(G);
+    PyDict_SetItemString(dict,"settings",tmp);
+    Py_XDECREF(tmp);
+    
+    SceneGetView(G,sv);
+    tmp = PConvFloatArrayToPyList(sv,cSceneViewSize);
+    PyDict_SetItemString(dict,"view",tmp);
+    Py_XDECREF(tmp);
+    
+    tmp = MovieAsPyList(G);
+    PyDict_SetItemString(dict,"movie",tmp);
+    Py_XDECREF(tmp);
+    
+    tmp = EditorAsPyList(G);
+    PyDict_SetItemString(dict,"editor",tmp);
+    Py_XDECREF(tmp);
+    
+    tmp = MainAsPyList();
+    PyDict_SetItemString(dict,"main",tmp);
+    Py_XDECREF(tmp);
+  }
 
   if(Feedback(G,FB_Executive,FB_Errors)) {
     if(PyErr_Occurred()) {
@@ -3643,7 +3692,8 @@ static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
 }
 #endif
 
-int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
+int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,
+                        int partial_restore,int quiet)
 {
 #ifdef _PYMOL_NOPY
   return 0;
@@ -3656,10 +3706,21 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
   int migrate_sessions = SettingGetGlobal_b(G,cSetting_session_migration);
   char active[WordLength] = "";
   int  have_active = false;
+  int partial_session = false;
 
-  ExecutiveDelete(G,"all");
-  ColorReset(G);
+  if(!partial_restore) { /* if user has requested partial restore */
+    ExecutiveDelete(G,"all");
+    ColorReset(G);
+  }
+
   if(ok) ok = PyDict_Check(session);
+
+  if(ok) { /* if session is partial, then don't error about missing stuff */
+    tmp = PyDict_GetItemString(session,"partial"); 
+    if(tmp) {
+      partial_session = true;
+    }
+  }
 
   if(ok) {
     tmp = PyDict_GetItemString(session,"version");
@@ -3695,44 +3756,50 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
     }
   }
 
-  if(ok) {
+  if(ok) { /* colors must be restored before settings and objects */
     tmp = PyDict_GetItemString(session,"colors");
     if(tmp) {
-      ok = ColorFromPyList(G,tmp);
-    }
+      ok = ColorFromPyList(G,tmp,partial_restore);
+    } 
+
+    if(tmp||(!partial_restore)) { /* ignore missing if partial restore */
     
-    if(PyErr_Occurred()) {
-      PyErr_Print();  
-      ok=false;
-    }
-    if(!ok) {
-      PRINTFB(G,FB_Executive,FB_Errors)
-        "ExectiveSetSession-Error: after colors.\n"
-        ENDFB(G);
-    }
-    if(!ok) {
-      incomplete = true;
-      ok=true; /* keep trying...don't give up */
+      if(PyErr_Occurred()) {
+        PyErr_Print();  
+        ok=false;
+      }
+      if(!ok) {
+        PRINTFB(G,FB_Executive,FB_Errors)
+          "ExectiveSetSession-Error: after colors.\n"
+          ENDFB(G);
+      }
+      if(!ok) {
+        incomplete = true;
+        ok=true; /* keep trying...don't give up */
+      }
     }
   }
+
   if(ok) {
     tmp = PyDict_GetItemString(session,"color_ext");
     if(tmp) {
-      ok = ColorExtFromPyList(G,tmp);
+      ok = ColorExtFromPyList(G,tmp,partial_restore);
     }
-    
-    if(PyErr_Occurred()) {
-      PyErr_Print();  
-      ok=false;
-    }
-    if(!ok) {
-      PRINTFB(G,FB_Executive,FB_Errors)
-        "ExectiveSetSession-Error: after color_ext.\n"
-        ENDFB(G);
-    }
-    if(!ok) {
-      incomplete = true;
-      ok=true; /* keep trying...don't give up */
+
+    if(tmp||(!partial_session)) { /* ignore missing if partial restore */    
+      if(PyErr_Occurred()) {
+        PyErr_Print();  
+        ok=false;
+      }
+      if(!ok) {
+        PRINTFB(G,FB_Executive,FB_Errors)
+          "ExectiveSetSession-Error: after color_ext.\n"
+          ENDFB(G);
+      }
+      if(!ok) {
+        incomplete = true;
+        ok=true; /* keep trying...don't give up */
+      }
     }
   }
   if(ok) {
@@ -3740,47 +3807,53 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
     if(tmp) {
       ok = SettingSetGlobalsFromPyList(G,tmp);
     }
-    
-    if(PyErr_Occurred()) {
-      PyErr_Print();  
-      ok=false;
-    }
-    if(!ok) {
-      PRINTFB(G,FB_Executive,FB_Errors)
-        "ExectiveSetSession-Error: after settings.\n"
-        ENDFB(G);
-    }
-    if(!ok) {
-      incomplete = true;
-      ok=true; /* keep trying...don't give up */
+
+    if(tmp||(!(partial_restore|partial_session))) { /* ignore missing if partial restore */        
+      if(PyErr_Occurred()) {
+        PyErr_Print();  
+        ok=false;
+      }
+      if(!ok) {
+        PRINTFB(G,FB_Executive,FB_Errors)
+          "ExectiveSetSession-Error: after settings.\n"
+          ENDFB(G);
+      }
+      if(!ok) {
+        incomplete = true;
+        ok=true; /* keep trying...don't give up */
+      }
     }
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"unique_settings");
     if(tmp) {
-      ok = SettingUniqueFromPyList(G,tmp);
+      ok = SettingUniqueFromPyList(G,tmp,partial_restore);
     }
     
-    if(PyErr_Occurred()) {
-      PyErr_Print();  
-      ok=false;
-    }
-    if(!ok) {
-      PRINTFB(G,FB_Executive,FB_Errors)
-        "ExectiveSetSession-Error: after settings.\n"
-        ENDFB(G);
-    }
-    if(!ok) {
-      incomplete = true;
-      ok=true; /* keep trying...don't give up */
+    if(tmp||(!partial_session)) { /* ignore missing if partial restore */    
+      if(PyErr_Occurred()) {
+        PyErr_Print();  
+        ok=false;
+      }
+      if(!ok) {
+        PRINTFB(G,FB_Executive,FB_Errors)
+          "ExectiveSetSession-Error: after settings.\n"
+          ENDFB(G);
+      }
+      if(!ok) {
+        incomplete = true;
+        ok=true; /* keep trying...don't give up */
+      }
     }
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"names");
     if(tmp) {
-      if(ok) ok=ExecutiveSetNamedEntries(G,tmp,version);
-      if(ok) ok=ExecutiveSetSelections(G,tmp);
-      if(ok) have_active = ExecutiveGetActiveSeleName(G,active,false,false);
+      if(ok) ok=ExecutiveSetNamedEntries(G,tmp,version,partial_restore,partial_session);
+      if(!(partial_restore||partial_session)) {
+        if(ok) ok=ExecutiveSetSelections(G,tmp);
+        if(ok) have_active = ExecutiveGetActiveSeleName(G,active,false,false);
+      }
     }
     if(PyErr_Occurred()) {
       PyErr_Print();  
@@ -3796,90 +3869,94 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
       ok=true; /* keep trying...don't give up */
     }
   }
-  if(ok) {
+  if(ok&&!(partial_restore)) {
     tmp = PyDict_GetItemString(session,"selector_secrets");
     if(tmp) {
       if(ok) ok=SelectorSecretsFromPyList(G,tmp);
     }
-    
-    if(PyErr_Occurred()) {
-      PyErr_Print();  
-      ok=false;
-    }
-    if(!ok) {
-      PRINTFB(G,FB_Executive,FB_Errors)
-        "ExectiveSetSession-Error: after selector secrets.\n"
-        ENDFB(G);
-    }
-    if(!ok) {
-      incomplete = true;
-      ok=true; /* keep trying...don't give up */
+  
+    if(tmp||(!(partial_restore|partial_session))) { /* ignore missing if partial restore */      
+      if(PyErr_Occurred()) {
+        PyErr_Print();  
+        ok=false;
+      }
+      if(!ok) {
+        PRINTFB(G,FB_Executive,FB_Errors)
+          "ExectiveSetSession-Error: after selector secrets.\n"
+          ENDFB(G);
+      }
+      if(!ok) {
+        incomplete = true;
+        ok=true; /* keep trying...don't give up */
+      }
     }
   }  
-  if(ok) {
+  if(ok&&!(partial_restore)) {
     tmp = PyDict_GetItemString(session,"view");
     if(tmp) {
       ok = PConvPyListToFloatArrayInPlace(tmp,sv,cSceneViewSize);
     }
-    if(ok) SceneSetView(G,sv,true,0,0);
-    
-    
-    
-    if(PyErr_Occurred()) {
-      PyErr_Print();  
-      ok=false;
-    }
-    if(!ok) {
-      PRINTFB(G,FB_Executive,FB_Errors)
-        "ExectiveSetSession-Error: after view.\n"
-        ENDFB(G);
-    }
-    if(!ok) {
-      incomplete = true;
-      ok=true; /* keep trying...don't give up */
+    if(tmp||(!(partial_restore|partial_session))) { /* ignore missing if partial restore */    
+      if(ok) SceneSetView(G,sv,true,0,0);
+      if(PyErr_Occurred()) {
+        PyErr_Print();  
+        ok=false;
+      }
+      if(!ok) {
+        PRINTFB(G,FB_Executive,FB_Errors)
+          "ExectiveSetSession-Error: after view.\n"
+          ENDFB(G);
+      }
+      if(!ok) {
+        incomplete = true;
+        ok=true; /* keep trying...don't give up */
+      }
     }
   }
-  if(ok) {
+  if(ok&&!(partial_restore)) {
     int warning;
     tmp = PyDict_GetItemString(session,"movie");
     if(tmp) {
       ok = MovieFromPyList(G,tmp,&warning);
     }
-    
-    
-    if(PyErr_Occurred()) {
-      PyErr_Print();  
-      ok=false;
-    }
-    if(!ok) {
-      PRINTFB(G,FB_Executive,FB_Errors)
-        "ExectiveSetSession-Error: after movie.\n"
-        ENDFB(G);
-    }
-    if(!ok) {
-      incomplete = true;
-      ok=true; /* keep trying...don't give up */
+    if(tmp||(!(partial_restore|partial_session))) { /* ignore missing if partial restore */    
+      
+      if(PyErr_Occurred()) {
+        PyErr_Print();  
+        ok=false;
+      }
+      if(!ok) {
+        PRINTFB(G,FB_Executive,FB_Errors)
+          "ExectiveSetSession-Error: after movie.\n"
+          ENDFB(G);
+      }
+      if(!ok) {
+        incomplete = true;
+        ok=true; /* keep trying...don't give up */
+      }
     }
   }
   
-  if(ok) {
+  if(ok&&!(partial_restore)) {
     tmp = PyDict_GetItemString(session,"editor");
     if(tmp) {
       ok = EditorFromPyList(G,tmp);
     }
-    
-    if(PyErr_Occurred()) {
-      PyErr_Print();  
-      ok=false;
-    }
-    if(!ok) {
-      PRINTFB(G,FB_Executive,FB_Errors)
-        "ExectiveSetSession-Error: after editor.\n"
-        ENDFB(G);
-    }
-    if(!ok) {
-      incomplete = true;
-      ok=true; /* keep trying...don't give up */
+    if(tmp||(!(partial_restore|partial_session))) { /* ignore missing if partial restore */    
+      
+      if(PyErr_Occurred()) {
+        PyErr_Print();  
+        ok=false;
+      }
+      if(!ok) {
+        PRINTFB(G,FB_Executive,FB_Errors)
+          "ExectiveSetSession-Error: after editor.\n"
+          ENDFB(G);
+      }
+      if(!ok) {
+        incomplete = true;
+        ok=true; /* keep trying...don't give up */
+      }
     }
   }
   if(ok) { /* update mouse in GUI */
@@ -3892,18 +3969,20 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
     if(tmp) {
       ok = MainFromPyList(tmp);  /* main just stores the viewport size */
     }
-    if(PyErr_Occurred()) {
-      PyErr_Print();  
-      ok=false;
-    }
-    if(!ok) {
-      PRINTFB(G,FB_Executive,FB_Errors)
-        "ExectiveSetSession-Error: after main.\n"
-        ENDFB(G);
-    }
-    if(!ok) {
-      incomplete = true;
-      ok=true; /* keep trying...don't give up */
+    if(tmp||(!(partial_restore|partial_session))) { /* ignore missing if partial restore */    
+      if(PyErr_Occurred()) {
+        PyErr_Print();  
+        ok=false;
+      }
+      if(!ok) {
+        PRINTFB(G,FB_Executive,FB_Errors)
+          "ExectiveSetSession-Error: after main.\n"
+          ENDFB(G);
+      }
+      if(!ok) {
+        incomplete = true;
+        ok=true; /* keep trying...don't give up */
+      }
     }
   }
   if(ok&&migrate_sessions) { /* migrate sessions */
@@ -4545,7 +4624,7 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
               scale3f(desc.Grid,0.5,tmp);
               add3f(desc.Grid,desc.MaxCorner,desc.MaxCorner);
               subtract3f(desc.MinCorner,desc.Grid,desc.MinCorner);
-              ObjectMapNewStateFromDesc(G,target,&desc,trg_state);
+              ObjectMapNewStateFromDesc(G,target,&desc,trg_state,quiet);
               if(trg_state>=target->NState)
                 target->NState = trg_state+1;
               target->State[trg_state].Active=true;
@@ -4843,7 +4922,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
             if(state==-3) once_flag=false; /* -2 = each state, separate map, shared extent */
             if(state==-4) state=-1; /* all states, one map */
             if(!once_flag) state=a;
-            ms = ObjectMapNewStateFromDesc(G,objMap,md,state);
+            ms = ObjectMapNewStateFromDesc(G,objMap,md,state,quiet);
             if(!ms)
               ok=false;
           
@@ -4858,7 +4937,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
                                    false,1.0F);
                 break;
               case 2: /* gaussian */
-                SelectorMapGaussian(G,sele0,ms,0.0F,state,normalize,false);
+                SelectorMapGaussian(G,sele0,ms,0.0F,state,normalize,false,quiet);
                 break;
               case 3: /* coulomb_neutral */
                 SelectorMapCoulomb(G,sele0,ms,0.0F,state,true, false,1.0F);
@@ -4869,7 +4948,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
                                    true, 2.0F);
                 break;
               case 5: /* gaussian_max */
-                SelectorMapGaussian(G,sele0,ms,0.0F,state,normalize,true);
+                SelectorMapGaussian(G,sele0,ms,0.0F,state,normalize,true,quiet);
                 break;
               }
               if(!ms->Active)

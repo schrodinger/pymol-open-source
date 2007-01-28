@@ -142,7 +142,7 @@ if __name__=='pymol.creating':
                      color=['red',[1.0,1.0,1.0],'blue'],
                      state=0,selection='',
                      beyond=2.0,within=6.0,
-                     sigma=2.0,zero=1):
+                     sigma=2.0,zero=1,quiet=1):
         r = DEFAULT_ERROR
         safe_color = string.strip(str(color))
         if(safe_color[0:1]=="["): # looks like a list
@@ -167,7 +167,7 @@ if __name__=='pymol.creating':
             lock()
             r = _cmd.ramp_new(str(name),str(map_name),list(safe_list_eval(str(range))),new_color,
                                     int(state)-1,str(selection),float(beyond),float(within),
-                                    float(sigma),int(zero))
+                                    float(sigma),int(zero),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         

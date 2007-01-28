@@ -3043,6 +3043,7 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule *I,PyObject *list)
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,6),&has_setting);
       if(ok) bond->has_setting = (short int)has_setting;
       if(ok && bond->unique_id) { /* reserve existing IDs */
+        bond->unique_id = SettingUniqueConvertOldSessionID(I->Obj.G,bond->unique_id);
         AtomInfoReserveUniqueID(I->Obj.G,bond->unique_id);
       }
     }

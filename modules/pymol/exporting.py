@@ -56,14 +56,15 @@ NOTES
         if _raising(r): raise QuietException         
         return r
     
-    def get_session():
+    def get_session(names='', partial=0, quiet=1):
         session = {}
         r = DEFAULT_SUCCESS
         for a in pymol._session_save_tasks:
             if a==None:
                 try:
                     lock()
-                    r = _cmd.get_session(session)
+                    r = _cmd.get_session(session,str(names),
+                                         int(partial),int(quiet))
                 finally:
                     unlock(r)
                 try:
@@ -128,8 +129,7 @@ PYMOL API
         return r
 
     def save(filename, selection='(all)', state=0, format='', ref='',
-             ref_state=-1, quiet=1):
-        
+             ref_state=-1, quiet=1, partial=0):
         '''
 DESCRIPTION
 
@@ -162,7 +162,8 @@ SEE ALSO
     load, get_model
         '''
         # preprocess selection
-        selection = selector.process(selection)
+        input_selection = selection
+        selection = selector.process(input_selection)
         #   
         r = DEFAULT_ERROR
         lc_filename=string.lower(filename)
@@ -263,7 +264,9 @@ SEE ALSO
                 print " Save: wrote \""+filename+"\"."
         elif format=='pse': # PyMOL session
             cmd.set("session_file",filename,quiet=1)
-            io.pkl.toFile(cmd.get_session(),filename)
+            if '(' in input_selection: # ignore selections 
+                input_selection=''
+            io.pkl.toFile(cmd.get_session(str(input_selection),int(partial),int(quiet)),filename)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."

@@ -184,6 +184,9 @@ int AtomInfoInit(PyMOLGlobals *G);
 void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai);
 void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst);
 int AtomInfoReserveUniqueID(PyMOLGlobals *G,int unique_id);
+int AtomInfoIsUniqueIDActive(PyMOLGlobals *G,int unique_id);
+int AtomInfoGetNewUniqueID(PyMOLGlobals *G);
+
 int AtomInfoCheckSetting(PyMOLGlobals *G, AtomInfoType *ai, int setting_id);
 int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
 int AtomInfoGetSetting_i(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);

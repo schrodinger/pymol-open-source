@@ -25,6 +25,7 @@ if __name__=='pymol.viewing':
     import parsing
     import re
     import cmd
+
     
     from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
           _feedback,fb_module,fb_mask, \
@@ -547,7 +548,7 @@ SEE ALSO
         if _raising(r): raise QuietException         
         return r
 
-    def as(representation="",selection=""):
+    def show_as(representation="",selection=""):
         '''
 DESCRIPTION
 
@@ -568,7 +569,11 @@ USAGE
 
 PYMOL API
 
+<<<<<<< .mine
+    cmd.show_as( string representation="", string selection="" )
+=======
     cmd.as(string representation, string selection)
+>>>>>>> .r2806
 
 EXAMPLES
 
@@ -579,7 +584,7 @@ NOTES
 
     "selection" can be an object name
     "as" alone will turn on lines and nonbonded and hide everything else.
-    
+
 SEE ALSO
 
     show, hide, enable, disable

@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 1.00b16
     
+    * partial session saves & restores (objects only)
+
     * group members starting with internal ._ are now hidden too
 
     * group_arrow_prefix setting 

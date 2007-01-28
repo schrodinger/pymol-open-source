@@ -588,7 +588,7 @@ SEE ALSO
             r = _cmd.get_object_color_index(name)
         finally:
             unlock(r)      
-        if _raising(r): raise pymol.CmdException
+#        if _raising(r): raise pymol.CmdException
         return r
     
     def get_color_tuple(name,mode=0):

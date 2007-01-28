@@ -76,7 +76,7 @@ typedef struct ObjectMapDesc { /* information for creating a new map */
 
 ObjectMap *ObjectMapNew(PyMOLGlobals *G);
 int ObjectMapNewCopy(PyMOLGlobals *G,ObjectMap *src,ObjectMap **result,int source_state, int target_state);
-ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMapDesc *md,int state);
+ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMapDesc *md,int state,int quiet);
 int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *vert_vla,
                                    float beyond, float within, float *level);
 

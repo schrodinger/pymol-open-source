@@ -337,8 +337,8 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,char *sele,
 int ***ExecutiveGetBondPrint(PyMOLGlobals *G,char *name,int max_bond,int max_type,int *dim);
 int ExecutiveSetCrystal(PyMOLGlobals *G,char *sele,float a,float b,float c,
                          float alpha,float beta,float gamma,char *sgroup);
-int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict);
-int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet);
+int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict,char *names,int partial,int quiet);
+int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int partial_restore,int quiet);
 
 ObjectMap *ExecutiveFindObjectMapByName(PyMOLGlobals *G,char *name);
 
@@ -350,7 +350,7 @@ int  ExecutiveAssignSS(PyMOLGlobals *G,char *target,int state,char *context,int 
 
 int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,PyObject *range,
                         PyObject *color,int src_state,char *sele,
-                        float beyond,float within,float sigma,int zero);
+                        float beyond,float within,float sigma,int zero,int quiet);
 
 int ExecutiveValidateObjectPtr(PyMOLGlobals *G,CObject *ptr,int object_type);
 

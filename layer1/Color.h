@@ -46,12 +46,16 @@ typedef struct {
   Vector3f Color,Clamped;
   char ClampedFlag;
   char Custom, Fixed;
+  /* not saved */
+  int old_session_index;
 } ColorRec;
 
 typedef struct {
   ColorName Name;
   void *Ptr;
   int Type;
+  /* not saved */
+  int old_session_index;
 } ExtRec;
 
 struct _CColor {
@@ -65,6 +69,9 @@ struct _CColor {
   OVOneToOne *Idx;
   float RGBColor[3]; /* save global float for returning (float*) */
   char RGBName[10];
+  /* not stored */
+  int HaveOldSessionColors;
+  int HaveOldSessionExtColors;
 };
 
 int ColorInit(PyMOLGlobals *G);
@@ -73,6 +80,8 @@ void ColorFree(PyMOLGlobals *G);
 int ColorGetNext(PyMOLGlobals *G);
 int ColorGetCurrent(PyMOLGlobals *G);
 int ColorGetIndex(PyMOLGlobals *G,char *name);
+int ColorConvertOldSessionIndex(PyMOLGlobals *G,int index);
+
 float *ColorGet(PyMOLGlobals *G,int index); /* pointer maybe invalid after creating a new color */
 float *ColorGetSpecial(PyMOLGlobals *G,int index);
 float *ColorGetNamed(PyMOLGlobals *G,char *name);
@@ -92,9 +101,9 @@ void ColorRegisterExt(PyMOLGlobals *G,char *name,void *extPtr,int type);
 void ColorForgetExt(PyMOLGlobals *G,char *name);
 
 PyObject *ColorAsPyList(PyMOLGlobals *G);
-int ColorFromPyList(PyMOLGlobals *G,PyObject *list);
+int ColorFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore);
 
-int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list);
+int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore);
 PyObject *ColorExtAsPyList(PyMOLGlobals *G);
 int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet);
 void ColorUpdateClamp(PyMOLGlobals *G,int index);
