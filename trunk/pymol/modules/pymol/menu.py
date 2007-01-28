@@ -65,7 +65,7 @@ def rep_action(action,s) :
 def mol_as(s):
     return (
         [[ 2, 'As:'   , '']]
-        +rep_action('as',s)
+        +rep_action('show_as',s)
         )
 
 def mol_toggle(s):

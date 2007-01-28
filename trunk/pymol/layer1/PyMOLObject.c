@@ -450,6 +450,7 @@ int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I)
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->type);
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->Name,WordLength);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->Color);
+  if(ok) I->Color = ColorConvertOldSessionIndex(G,I->Color);
   if(ok) ok = PConvPyListToIntArrayInPlaceAutoZero(PyList_GetItem(list,3),I->RepVis,cRepCnt);
   if(ok) ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list,4),I->ExtentMin,3);
   if(ok) ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list,5),I->ExtentMax,3);

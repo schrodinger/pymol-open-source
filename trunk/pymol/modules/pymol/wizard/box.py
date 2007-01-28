@@ -192,7 +192,7 @@ class Box(Wizard):
             cmd.color("green","%s`2"%self.points_name)
             cmd.color("red"  ,"%s`3"%self.points_name)
             cmd.color("blue" ,"%s`4"%self.points_name)
-            cmd.as("nb_spheres",self.points_name)
+            cmd.show_as("nb_spheres",self.points_name)
 	    
 	    self.auto_position(0.75,0.5)
 

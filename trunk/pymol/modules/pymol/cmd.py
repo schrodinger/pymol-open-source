@@ -1580,7 +1580,7 @@ SEE ALSO
         #--------------------------------------------------------------------
         import viewing
         from viewing import \
-              as,                 \
+              show_as,            \
               bg_color,           \
               bg_colour,          \
               cartoon,            \
@@ -1633,6 +1633,13 @@ SEE ALSO
     #        slice_unlock,       \
     #        slice_heightmap,    \
 
+# dang! Python 2.6 will break PyMOL's "as" method. 
+# Proposal:
+#  1. stick with Python <=2.5 for as long as possible
+#  2. convert API method to cmd.show_as() and leave "as" in the scripting langauge
+#  3. allow "show_as" in the scripting language
+        as = show_as
+    
         #--------------------------------------------------------------------
         import setting
         from setting import \
@@ -1698,7 +1705,7 @@ SEE ALSO
             'alter'         : [ alter             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
             'alter_state'   : [ alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
             'angle'         : [ angle             , 0 , 0 , ''  , parsing.STRICT ],          
-            'as'            : [ as                , 0 , 0 , ''  , parsing.STRICT ],          
+            'as'            : [ show_as           , 0 , 0 , ''  , parsing.STRICT ],          
             'assert'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
             'attach'        : [ attach            , 0 , 0 , ''  , parsing.STRICT ],
             'backward'      : [ backward          , 0 , 0 , ''  , parsing.STRICT ],
@@ -1978,13 +1985,17 @@ SEE ALSO
         
         kwhash = Shortcut(kw_list)
 
+        # Prepare for Python 2.6 (not hashed)
+
+        keyword['show_as'] = keyword['as']
+        
         # Aliases for Mother England (NOTE: not hashed)
 
         keyword['colour'] = keyword['color']
         keyword['set_colour'] = keyword['set_color']
         keyword['recolour'] = keyword['recolor']
         keyword['bg_colour'] = keyword['bg_color']
-
+    
         # informational, or API-only functions which don't exist in the
         # PyMOL command language namespace
 

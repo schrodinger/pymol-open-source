@@ -515,7 +515,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
         if(ms->ResurfaceFlag) {
           ms->ResurfaceFlag=false;
           ms->RecolorFlag=true;
-          PRINTFB(I->Obj.G,FB_ObjectSurface,FB_Actions)
+          PRINTFB(I->Obj.G,FB_ObjectSurface,FB_Blather)
            " ObjectSurface: updating \"%s\".\n" , I->Obj.Name 
             ENDFB(I->Obj.G);
           if(oms->Field) {

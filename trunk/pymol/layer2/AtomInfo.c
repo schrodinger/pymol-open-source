@@ -201,7 +201,17 @@ int AtomInfoReserveUniqueID(PyMOLGlobals *G,int unique_id)
   return 0;
 }
 
-static int AtomInfoGetNewUniqueID(PyMOLGlobals *G)
+int AtomInfoIsUniqueIDActive(PyMOLGlobals *G,int unique_id)
+{
+  CAtomInfo *I=G->AtomInfo;
+  if(!I->ActiveIDs) 
+    return 0;
+  else 
+    return (OVreturn_IS_OK(OVOneToAny_GetKey(I->ActiveIDs, unique_id)));
+  return 0;
+}
+
+int AtomInfoGetNewUniqueID(PyMOLGlobals *G)
 {
   CAtomInfo *I=G->AtomInfo;
   int result = 0;
@@ -938,6 +948,7 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyListToSCharArrayInPlaceAutoZero(
                           PyList_GetItem(list,20),I->visRep,cRepCnt); 
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,21),&I->color); 
+  if(ok) I->color = ColorConvertOldSessionIndex(G,I->color);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,22),&I->id); 
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,23),(char*)&I->cartoon); 
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,24),(int*)&I->flags); 
@@ -952,6 +963,7 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok && I->unique_id) { /* reserve existing IDs */
     CAtomInfo *II = G->AtomInfo;
     AtomInfoPrimeUniqueIDs(G);
+    I->unique_id = SettingUniqueConvertOldSessionID(G,I->unique_id);
     OVOneToAny_SetKey(II->ActiveIDs, I->unique_id, 1);
   }
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,33),(char*)&I->stereo); 
@@ -962,6 +974,7 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok&&(ll>38)) ok = PConvPyIntToChar(PyList_GetItem(list,38),(char*)&I->hb_acceptor); 
   if(ok&&(ll>39)) {
     ok = PConvPyIntToInt(PyList_GetItem(list,39),&I->atomic_color);
+    if(ok) I->atomic_color = ColorConvertOldSessionIndex(G,I->atomic_color);
   } else {
     I->atomic_color = AtomInfoGetColor(G,I);
   }

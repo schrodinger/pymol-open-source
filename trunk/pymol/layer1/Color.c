@@ -328,7 +328,36 @@ PyObject *ColorAsPyList(PyMOLGlobals *G)
 #endif
 }
 
-int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list)
+int ColorConvertOldSessionIndex(PyMOLGlobals *G,int index)
+{
+  register CColor *I=G->Color;
+  if(index>cColorExtCutoff) {
+    if(I->HaveOldSessionColors) {
+      ColorRec *col=I->Color + (I->NColor-1);
+      int a;
+      for(a=I->NColor-1;a>=0;a--) {
+        if(index==col->old_session_index) {
+          index = a;
+          break;
+        }
+        col--;
+      }
+    }
+  } else if(I->HaveOldSessionExtColors) {
+    ExtRec *ext=I->Ext + (I->NExt-1);
+    int a;
+    for(a=I->NExt-1;a>=0;a--) {
+      if(index==ext->old_session_index) {
+        index = cColorExtCutoff-a;
+        break;
+      }
+      ext--;
+    }
+  }
+  return index; /* failsafe */
+}
+
+int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
 {
 #ifdef _PYMOL_NOPY
   return 0;
@@ -340,6 +369,18 @@ int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list)
   register CColor *I=G->Color;
   PyObject *rec;
   ExtRec *ext;
+
+  if(partial_restore) {
+    ext=I->Ext;
+    for(a=0;a<I->NExt;a++) {
+      ext->old_session_index = 0;
+      ext++;
+    }
+    I->HaveOldSessionExtColors = true;
+  } else {
+    I->HaveOldSessionExtColors = false;
+  }
+
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
 
@@ -349,14 +390,20 @@ int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list)
 
   if(ok) {
     n_ext=PyList_Size(list);
-    VLACheck(I->Ext,ExtRec,n_ext); 
-    ext=I->Ext;
+    if(partial_restore) {
+      VLACheck(I->Ext,ExtRec,n_ext + I->NExt); 
+      ext=I->Ext;
+    } else {
+      VLACheck(I->Ext,ExtRec,n_ext); 
+      ext=I->Ext;
+    }
     for(a=0;a<n_ext;a++) {
       rec=PyList_GetItem(list,a);
       if(ok) ok=(rec!=NULL);
       if(ok) ok=PyList_Check(rec);
       if(ok) ok=PConvPyStrToStr(PyList_GetItem(rec,0),ext->Name,sizeof(ColorName));
       if(ok) ok=PConvPyIntToInt(PyList_GetItem(rec,1),&ext->Type);
+      ext->old_session_index = cColorExtCutoff-a;
       ext++;
     }
     if(ok) I->NExt=n_ext;
@@ -367,7 +414,7 @@ int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list)
 }
 
 /*========================================================================*/
-int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
+int ColorFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
 {
 #ifdef _PYMOL_NOPY
   return 0;
@@ -375,12 +422,22 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
 
   int n_custom=0;
   int a;
-  int index=0;
+  int index=0,old_session_index=0;
   int ok=true;
   int ll=0;
   register CColor *I=G->Color;
   PyObject *rec;
   ColorRec *color = NULL;
+
+  if(partial_restore) {
+    color = I->Color;
+    for(a=0;a<I->NColor;a++) {
+      color->old_session_index=0;
+      color++;
+    }
+  }
+  I->HaveOldSessionColors=false;
+
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
   if(ok) {
@@ -394,11 +451,19 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
          Always check ll when adding new PyList_GetItem's */
       if(ok) ok=PConvPyIntToInt(PyList_GetItem(rec,1),&index);
       if(ok) {
+        old_session_index = index;
+        if(partial_restore) {
+          if(I->NColor>index) { /* conflicts with an existing color...*/
+            I->HaveOldSessionColors = true;
+            index = I->NColor;
+          }
+        }
         if(index>=I->NColor) {
           VLACheck(I->Color,ColorRec,index); /* auto-zeros */
           I->NColor=index+1;
         }
         color=I->Color+index;
+        color->old_session_index = old_session_index; 
         if(ok) ok=PConvPyStrToStr(PyList_GetItem(rec,0),color->Name,sizeof(ColorName));
         if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(rec,2),color->Color,3);
         if(PyList_Size(rec)>=6) {

@@ -1320,6 +1320,11 @@ void PInitEmbedded(int argc,char **argv)
 #define _PYMOL_SETUP_PY_EXT
 #endif
 #endif
+#ifdef _PYMOL_SETUP_PY25
+#ifndef _PYMOL_SETUP_PY_EXT
+#define _PYMOL_SETUP_PY_EXT
+#endif
+#endif
 
   /* should we set up PYTHONHOME in the ext directory? */
 

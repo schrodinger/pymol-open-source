@@ -1864,7 +1864,8 @@ ObjectMap *ObjectMapNew(PyMOLGlobals *G)
   return(I);
 }
 /*========================================================================*/
-ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMapDesc *inp_md,int state)
+ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,
+                                          ObjectMapDesc *inp_md,int state,int quiet)
 {
   int ok=true;
   float v[3];
@@ -2006,9 +2007,11 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMap
     ObjectMapFree(I);
     I=NULL;
   } else {
-    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Actions) 
-      " ObjectMap: Map created.\n"
-      ENDFB(I->Obj.G);
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Actions) 
+        " ObjectMap: Map created.\n"
+        ENDFB(I->Obj.G);
+    }
   }
   
   return(ms);

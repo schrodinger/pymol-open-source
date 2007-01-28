@@ -293,16 +293,43 @@ static void SettingUniqueFree(PyMOLGlobals *G)
   register CSettingUnique *I = G->SettingUnique;
   VLAFreeP(I->entry);
   OVOneToOne_Del(I->id2offset);
+  if(I->old2new)
+    OVOneToOne_Del(I->old2new);
   FreeP(I);
 }
 
-int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list)
+int SettingUniqueConvertOldSessionID(PyMOLGlobals *G,int old_unique_id)
+{
+  register CSettingUnique *I=G->SettingUnique;
+  int unique_id = old_unique_id;
+  if(I->old2new) {
+    OVreturn_word ret;    
+    if( OVreturn_IS_OK(ret = OVOneToOne_GetForward(I->old2new,old_unique_id)) ) {
+      unique_id = ret.word;
+    }
+  }
+  return unique_id;
+}
+int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
 {
 #ifdef _PYMOL_NOPY
   return 0;
 #else
   int ok=true;
-  SettingUniqueResetAll(G);
+  register CSettingUnique *I=G->SettingUnique;
+  if(!partial_restore) {
+    SettingUniqueResetAll(G);
+    if(I->old2new) {
+      OVOneToOne_Del(I->old2new);
+      I->old2new = NULL;
+    }
+  } else {
+    if(!I->old2new) {
+      I->old2new = OVOneToOne_New(G->Context->heap);      
+    } else {
+      OVOneToOne_Reset(I->old2new);
+    }
+  }
   if(list)
     if(PyList_Check(list)) {
       int n_id = PyList_Size(list);
@@ -313,8 +340,16 @@ int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list)
         if(ok) ok = PyList_Check(id_list);
         if(ok) ok = (PyList_Size(id_list)>1);
         if(ok) ok = PConvPyIntToInt(PyList_GetItem(id_list,0),&unique_id);
+        if(ok && partial_restore) {
+          if(AtomInfoIsUniqueIDActive(G,unique_id)) { /* if this ID is already active, then we need a substitute */
+            int old_unique_id = unique_id;
+            unique_id = AtomInfoGetNewUniqueID(G);
+            OVOneToOne_Set(I->old2new,old_unique_id,unique_id);
+          }
+        }
         if(ok) {
           int n_set = 0;
+
           PyObject *setting_list = PyList_GetItem(id_list,1);
           if(ok) ok = PyList_Check(setting_list);
           if(ok) n_set = PyList_Size(setting_list);
@@ -621,9 +656,16 @@ static int set_list(CSetting *I,PyObject *list)
         if(ok) switch(setting_type) {
         case cSetting_boolean:
         case cSetting_int:
-        case cSetting_color:
           ok = PConvPyIntToInt(PyList_GetItem(list,2),
                                (int*)SettingPtr(I,index,sizeof(int)));
+          break;
+        case cSetting_color:
+          { 
+            int color = 0;
+            ok = PConvPyIntToInt(PyList_GetItem(list,2),&color);
+            if(ok) color = ColorConvertOldSessionIndex(I->G,color);
+            *((int*)SettingPtr(I,index,sizeof(int))) = color;
+          }
           break;
         case cSetting_float:
           ok = PConvPyFloatToFloat(PyList_GetItem(list,2),

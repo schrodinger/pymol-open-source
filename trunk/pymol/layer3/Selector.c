@@ -4727,7 +4727,7 @@ typedef double AtomSF[11];
 
 /*========================================================================*/
 int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
-                        float buffer,int state,int normalize,int use_max)
+                        float buffer,int state,int normalize,int use_max,int quiet)
 {
   register CSelector *I=G->Selector;
   MapType *map;
@@ -5021,9 +5021,11 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
   occup=Alloc(float,n1);
   atom_sf=Alloc(AtomSF,n1);
 
-  PRINTFB(G,FB_ObjectMap,FB_Details)
-    " ObjectMap: Computing Gaussian map for %d atom positions.\n",n1
-    ENDFB(G);
+  if(!quiet) {
+    PRINTFB(G,FB_ObjectMap,FB_Details)
+      " ObjectMap: Computing Gaussian map for %d atom positions.\n",n1
+      ENDFB(G);
+  }
 
   n1 = 0;
   fp=point;
@@ -5174,10 +5176,12 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
       stdev = (float)sqrt1d((sumsq - (sum*sum/n2))/(n2-1));
       if(normalize) {
 
-        PRINTFB(G,FB_ObjectMap,FB_Details)
-          " ObjectMap: Normalizing: mean = %8.6f & stdev = %8.6f.\n"
-          ,mean,stdev
-          ENDFB(G);
+        if(!quiet) {
+          PRINTFB(G,FB_ObjectMap,FB_Details)
+            " ObjectMap: Normalizing: mean = %8.6f & stdev = %8.6f.\n"
+            ,mean,stdev
+            ENDFB(G);
+        }
         
         if(stdev<R_SMALL8)
           stdev=R_SMALL8;
@@ -5192,11 +5196,12 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
           }
         }
       } else {
-        PRINTFB(G,FB_ObjectMap,FB_Details)
-          " ObjectMap: Not normalizing: mean = %8.6f and stdev = %8.6f.\n",
-          mean,stdev
-          ENDFB(G);
-        
+        if(!quiet) {
+          PRINTFB(G,FB_ObjectMap,FB_Details)
+            " ObjectMap: Not normalizing: mean = %8.6f and stdev = %8.6f.\n",
+            mean,stdev
+            ENDFB(G);
+        }
       }
       oMap->Active=true;
       MapFree(map);

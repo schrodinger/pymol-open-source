@@ -295,7 +295,6 @@ static void RepCylBondRender(RepCylBond *I,RenderInfo *info)
                   glBegin(GL_TRIANGLE_STRIP);
                   cc=sp->StripLen[a];
                   while(cc--) {
-                    printf("draw\n");
                     glNormal3fv(v);
                     v+=3;
                     glVertex3fv(v);
@@ -327,8 +326,6 @@ static void RepCylBondRender(RepCylBond *I,RenderInfo *info)
             }
           }
         }
-      
-
         PRINTFD(G,FB_RepCylBond)
           " RepCylBondRender: done.\n"
           ENDFD;

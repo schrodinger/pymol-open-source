@@ -700,14 +700,13 @@ static PyObject *CmdGetSession(PyObject *self, PyObject *args)
 {
   int ok=true;
   PyObject *dict;
-
-  ok = PyArg_ParseTuple(args,"O",&dict);
+  int partial,quiet;
+  char *names;
+  ok = PyArg_ParseTuple(args,"Osii",&dict,&names,&partial,&quiet);
   if(ok) {
-    APIEntry();
-    PBlock();
-    ok = ExecutiveGetSession(TempPyMOLGlobals,dict);
-    PUnblock();
-    APIExit();
+    APIEnterBlocked();
+    ok = ExecutiveGetSession(TempPyMOLGlobals,dict,names,partial,quiet);
+    APIExitBlocked();
   }
   return APIResultOk(ok);
 }
@@ -715,16 +714,14 @@ static PyObject *CmdGetSession(PyObject *self, PyObject *args)
 static PyObject *CmdSetSession(PyObject *self, PyObject *args)
 {
   int ok=true;
-  int quiet;
+  int quiet,partial;
   PyObject *obj;
 
-  ok = PyArg_ParseTuple(args,"Oi",&obj,&quiet);
+  ok = PyArg_ParseTuple(args,"Oii",&obj,&partial,&quiet);
   if(ok) {
-    APIEntry();
-    PBlock();
-    ok = ExecutiveSetSession(TempPyMOLGlobals,obj,quiet);
-    PUnblock();
-    APIExit();
+    APIEnterBlocked();
+    ok = ExecutiveSetSession(TempPyMOLGlobals,obj,partial,quiet);
+    APIExitBlocked();
   }
   return APIResultOk(ok);
 }
@@ -1068,16 +1065,18 @@ static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
   char *sele;
   float beyond,within;
   float sigma;
-  int zero;
+  int zero,quiet;
   OrthoLineType s1;
   PyObject *range,*color;
-  ok = PyArg_ParseTuple(args,"ssOOisfffi",&name,&map,&range,&color,
+  ok = PyArg_ParseTuple(args,"ssOOisfffii",&name,&map,&range,&color,
                         &state,&sele,&beyond,&within,
-                        &sigma,&zero);
+                        &sigma,&zero,&quiet);
   if(ok) {
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,sele,s1)>=0);
-    if(ok) ok = ExecutiveRampNew(TempPyMOLGlobals,name,map,range,color,state,s1,beyond,within,sigma,zero);
+    if(ok) ok = ExecutiveRampNew(TempPyMOLGlobals,name,map,range,
+                                 color,state,s1,beyond,within,sigma,
+                                 zero,quiet);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
@@ -2253,7 +2252,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
 
           if(!origObj) {
             ObjectSetName(obj,str1);
-            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,false,false);
+            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,false,quiet);
           }          
           
           if(SettingGet(TempPyMOLGlobals,cSetting_isomesh_auto_state))

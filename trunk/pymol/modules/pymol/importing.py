@@ -90,13 +90,13 @@ if __name__=='pymol.importing':
         
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
-    def set_session(session,quiet=1):
+    def set_session(session,partial=0,quiet=1):
         r = DEFAULT_SUCCESS
         for a in pymol._session_restore_tasks:
             if a==None:
                 try:
                     lock()
-                    r = _cmd.set_session(session,int(quiet))
+                    r = _cmd.set_session(session,int(partial),int(quiet))
                 finally:
                     unlock(r)
                 try:
@@ -400,7 +400,7 @@ SEE ALSO
             cmd._do("zoom (%s)"%oname)
     
     def load(filename, object='', state=0, format='', finish=1,
-             discrete=-1, quiet=1, multiplex=None, zoom=-1):
+             discrete=-1, quiet=1, multiplex=None, zoom=-1, partial=0):
         '''
 DESCRIPTION
 
@@ -611,7 +611,7 @@ SEE ALSO
 
             if ftype == loadable.pse:
                 ftype = -1
-                r = cmd.set_session(io.pkl.fromFile(fname),quiet)
+                r = cmd.set_session(io.pkl.fromFile(fname),quiet=quiet,partial=partial)
                 cmd.set("session_file",fname,quiet=1)
                 
     # special handling for multi-model files (mol2, sdf)
