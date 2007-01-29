@@ -93,7 +93,7 @@ typedef struct SpecRec {
   int cand_id;
   struct SpecRec *group;
   int group_member_list_id; 
-  int in_scene;
+  int in_scene,is_hidden;
   int in_panel;
 } SpecRec; /* specification record (a line in the executive window) */
 
@@ -392,6 +392,41 @@ void ExecutiveUpdateGroups(PyMOLGlobals *G,int force)
               if(!cycle) {
                 rec->group = group_rec;
                 TrackerLink(I_Tracker,rec->cand_id,group_rec->group_member_list_id,1);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    {
+      int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
+      if(hide_underscore) {
+        SpecRec *rec=NULL;
+        while(ListIterate(I->Spec,rec,next)) {
+          rec->is_hidden=false;
+          if(rec->name[0]=='_')
+            rec->is_hidden=true;
+          else if(rec->group) {
+            int group_name_len = strlen(rec->group_name);
+            if(rec->group->is_hidden)
+              rec->is_hidden=true;
+            else if((strncmp(rec->name,rec->group_name,group_name_len)==0) && 
+                    (rec->name[group_name_len]=='.') &&
+                    (rec->name[group_name_len+1]=='_'))
+              rec->is_hidden=true;
+          }
+        }
+        { /* sub-optimal propagation of hidden status to group members */
+          int repeat_flag=true;
+          while(repeat_flag) {
+            repeat_flag=false;
+            while(ListIterate(I->Spec,rec,next)) {
+              if(rec->group&&(!rec->is_hidden)) {
+                if(rec->group->is_hidden) {
+                  rec->is_hidden = true;
+                  repeat_flag = true;
+                }
               }
             }
           }
@@ -11276,6 +11311,10 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
     SpecRec *rec;
     int list_id = ExecutiveGetNamesListFromPattern(G,name,true,false);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    int suppress_hidden = SettingGetGlobal_b(G,cSetting_suppress_hidden);
+    int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
+    if(suppress_hidden && hide_underscore)
+      ExecutiveUpdateGroups(G,false);
     while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
 
       if(rec) {
@@ -11289,12 +11328,15 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
                   if(tRec->visible) {
                     tRec->in_scene = SceneObjectDel(G,tRec->obj);				
                     ExecutiveInvalidateSceneMembers(G);
+                    tRec->visible=!tRec->visible;
                   } else {
-                    tRec->in_scene = SceneObjectAdd(G,tRec->obj);
-                    ExecutiveInvalidateSceneMembers(G);
+                    if((!suppress_hidden)||(!hide_underscore)||(!tRec->is_hidden)) {
+                      tRec->in_scene = SceneObjectAdd(G,tRec->obj);
+                      ExecutiveInvalidateSceneMembers(G);
+                      tRec->visible=!tRec->visible;
+                    }
                   }
-                }
-                if((tRec->type!=cExecSelection)||(!onoff)) /* hide all selections, but show all */
+                } else if((tRec->type!=cExecSelection)||(!onoff)) /* hide all selections, but show all */
                   tRec->visible=!tRec->visible;
               }
             }

@@ -176,7 +176,7 @@ class Normal(PMGSkin):
                 vw = win.winfo_vrootwidth()
                 vh = win.winfo_vrootheight()
                 x = max(0,(vw-tw)/2)
-                y = max(0,(vh-tw)/2)
+                y = max(0,(vh-th)/2)
                 win.geometry(newGeometry="+%d+%d"%(x,y))
             win.deiconify()
 #         win.show()
@@ -347,7 +347,7 @@ class Normal(PMGSkin):
             if self.lineCount > 10000:
                 self.output.delete('0.0','%i.%i' % (self.lineCount-5000,0))
                 self.lineCount=5000
-            self.entry.focus_set()
+#            self.entry.focus_set()
         self.updating = 1
         progress = self.cmd.get_progress()
         if progress>=0.0:
