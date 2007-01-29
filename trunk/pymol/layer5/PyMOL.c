@@ -694,6 +694,7 @@ typedef struct _CPyMOL {
   ov_word lex_gradient_symmetry;
   ov_word lex_ray_trace_color;
   ov_word lex_group_arrow_prefix;
+  ov_word lex_suppress_hidden;
 
 } _CPyMOL;
 
@@ -1385,7 +1386,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(gradient_symmetry,545);
   LEX_SETTING(ray_trace_color,546);
   LEX_SETTING(group_arrow_prefix,547);
-
+  LEX_SETTING(suppress_hidden,548);
   return_OVstatus_SUCCESS;
 }
 

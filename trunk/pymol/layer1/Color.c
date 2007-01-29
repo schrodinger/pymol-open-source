@@ -392,7 +392,7 @@ int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
     n_ext=PyList_Size(list);
     if(partial_restore) {
       VLACheck(I->Ext,ExtRec,n_ext + I->NExt); 
-      ext=I->Ext;
+      ext=I->Ext+I->NExt;
     } else {
       VLACheck(I->Ext,ExtRec,n_ext); 
       ext=I->Ext;
@@ -406,7 +406,7 @@ int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
       ext->old_session_index = cColorExtCutoff-a;
       ext++;
     }
-    if(ok) I->NExt=n_ext;
+    if(ok) I->NExt=(ext-I->Ext);
 
   }
   return(ok);

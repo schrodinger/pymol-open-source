@@ -3371,8 +3371,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_i(I,cSetting_gradient_spacing,3);
   set_f(I,cSetting_gradient_symmetry,0.0F);
   set_color(I,cSetting_ray_trace_color,"black");
-  set_b(I,cSetting_group_arrow_prefix, 1);
-
+  set_b(I,cSetting_group_arrow_prefix, 0);
+  set_b(I,cSetting_suppress_hidden,true);
 }
 
 
