@@ -3,7 +3,9 @@ CHANGE LOG
 =========================================================================
 
 Changes up to 1.00b16
-    
+
+    * fixed shadow transparency for per-atom triangle transparency
+
     * partial session saves & restores (objects only)
 
     * group members starting with internal ._ are now hidden too
