@@ -513,7 +513,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
         if(ms->ResurfaceFlag) {
           ms->RecolorFlag=true;          
           ms->ResurfaceFlag=false;
-          PRINTFB(G,FB_ObjectMesh,FB_Blather)
+          PRINTFB(G,FB_ObjectMesh,FB_Details)
             " ObjectMesh: updating \"%s\".\n" , I->Obj.Name 
           ENDFB(G);
           if(oms->Field) {

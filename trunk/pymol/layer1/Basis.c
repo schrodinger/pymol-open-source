@@ -1788,7 +1788,7 @@ __inline__
 #endif
 int BasisHitShadow(BasisCallRec *BC)
 {
-  float   oppSq,dist,tri1,tri2; 
+  float   oppSq,dist,tri1,tri2;
   float sph[3],vt[3];
   register int      h,*ip;
   int a,b,c;
@@ -1903,7 +1903,7 @@ int BasisHitShadow(BasisCallRec *BC)
 
                            {
                              float w2;
-                             w2 = 1.0F - (r->tri1 + r->tri2);
+                             w2 = _1 - (r->tri1 + r->tri2);
                              
                              fc[0] = (prm->c2[0]*r->tri1)+(prm->c3[0]*r->tri2)+(prm->c1[0]*w2);
                              fc[1] = (prm->c2[1]*r->tri1)+(prm->c3[1]*r->tri2)+(prm->c1[1]*w2);
@@ -1959,15 +1959,21 @@ int BasisHitShadow(BasisCallRec *BC)
                            
                        tri1      = (tvec0 * pre[4] - tvec1 * pre[3]) * pre[7];
                        tri2      = -(tvec0 * pre[1] - tvec1 * pre[0]) * pre[7];
-                           
                        if( !( (tri1 < BasisFudge0) ||
                               (tri2 < BasisFudge0) || 
                               (tri1 > BasisFudge1) || 
-                              ((tri1 + tri2) > BasisFudge1) ) )
+                              ((tri1+tri2)> BasisFudge1) ) )
                          {
+                           float *tr = prm->tr;
+                           float trans = _0;
+
                            dist   = (r->base[2] - (tri1*pre[2]) - (tri2*pre[5]) - vert0[2]);
 
-                           if(prm->trans == _0) {
+                           if(prm->trans!=_0) {
+                             trans = (tr[1]*tri1)+(tr[2]*tri2)+(tr[0]*(_1 - (tri1+tri2)));
+                           }
+
+                           if(trans == _0) {
                              if(dist > -kR_SMALL4) {
                                if(nearest_shadow) { /* do we need the nearest shadow? */
                                  if(dist < r_dist) {
@@ -1975,7 +1981,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                    r_tri1      = tri1;
                                    r_tri2      = tri2;
                                    r_dist = dist;
-                                   r_trans = (r->trans = prm->trans);
+                                   r_trans = (r->trans = trans);
                                  }
                                } else {
                                  r->prim = prm;
@@ -1986,13 +1992,13 @@ int BasisHitShadow(BasisCallRec *BC)
                              }
                            } else if(trans_shadows) {
                              if((dist > -kR_SMALL4) &&
-                                (( r_trans > prm->trans) ||
-                                 (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
+                                (( r_trans > trans) ||
+                                 (nearest_shadow && (dist<r_dist) && ( r_trans >= trans)))) {
                                minIndex   = prm->vert;
                                r_tri1      = tri1;
                                r_tri2      = tri2;
                                r_dist = dist;
-                               r_trans = (r->trans = prm->trans);
+                               r_trans = (r->trans = trans);
                              }
                            }
                          }
@@ -2183,6 +2189,7 @@ int BasisHitShadow(BasisCallRec *BC)
       r->tri2 = r_tri2;
       r->prim = r_prim;
       r->dist = r_dist;
+      r->trans = r_trans;
       r->sphere[0] = r_sphere0;
       r->sphere[1] = r_sphere1;
       r->sphere[2] = r_sphere2;
