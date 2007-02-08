@@ -108,7 +108,7 @@ class PMGApp(Pmw.MegaWidget):
             
         self.quit_app()
 
-    def execute(self,cmmd): 
+    def execute(self,cmmd):  
         self.fifo.put(cmmd)
 
     def install_plugin(self):
@@ -188,6 +188,10 @@ class PMGApp(Pmw.MegaWidget):
         
         else:
 
+            # create a FIFO so that PyMOL can send code to be executed by the GUI thread
+            
+            self.fifo = Queue.Queue(0)
+
             # create a pymol global so that PyMOL can find the external GUI
 
             self.pymol._ext_gui = self
@@ -234,10 +238,6 @@ class PMGApp(Pmw.MegaWidget):
             self.root.geometry('%dx%d+%d+%d' % (
                 self.frameWidth, self.frameHeight, self.frameXPos, self.frameYPos))
 
-
-            # create a FIFO so that PyMOL can send code to be executed by the GUI thread
-            
-            self.fifo = Queue.Queue(0)
             
             # activate polling on the fifo
 
