@@ -343,9 +343,9 @@ USAGE
 
 ARGUMENTS    
 
-    name = object or selection name pattern.  If name matches a
-    selection, then selection indicator dots are shown for atoms in
-    that selection.
+    name = name-pattern or selection.  If name matches a selection
+    name, then selection indicator dots are shown for atoms in that
+    selection.
 
 NOTES
 
@@ -398,7 +398,7 @@ USAGE
 
 ARGUMENTS    
 
-    name = object or selection name pattern.
+    name = name-pattern or selection.
 
 PYMOL API
 
@@ -492,13 +492,13 @@ USAGE
 
 ARGUMENTS
 
-    selection can be an object name list
-
     representation can one of: lines, spheres, mesh, ribbon, cartoon,
        sticks, dots, surface, labels, extent, nonbonded, nb_spheres,
        slice,extent, slice, dashes, angles, dihedrals, cgo, cell, callback, 
        everything.
-       
+
+    selection can be a selection-pattern or an object-name-list.
+
 NOTES
 
     With no arguments, "show" alone turns on lines for all bonds and
@@ -631,18 +631,20 @@ DESCRIPTION
 
     "hide" turns of atom and bond representations.
 
-    The available representations are:
-
-        lines     spheres   mesh      ribbon     cartoon
-        sticks    dots      surface   labels
-        nonbonded nb_spheres
 
 USAGE
 
-    hide reprentation [,object]
-    hide reprentation [,(selection)]
-    hide (selection)
+    hide reprentation [, selection]
 
+ARGUMENTS
+
+    repesentation is
+
+    representation can one of: lines, spheres, mesh, ribbon, cartoon,
+       sticks, dots, surface, labels, extent, nonbonded, nb_spheres,
+       slice,extent, slice, dashes, angles, dihedrals, cgo, cell, callback, 
+       everything.
+    
 PYMOL API
 
     cmd.hide(string representation, string selection)
@@ -2040,16 +2042,21 @@ DESCRIPTION
 
 USAGE
 
-    color color-name
-    color color-name, object-name
-    color color-name, (selection)
+    color color [, selection]
 
+ARGUMENTS
+
+    color is a color or ramp name.
+
+    selection is name or selection pattern.
+    
 PYMOL API
 
-    cmd.color(string color-name, string name-or-selection)
+    cmd.color(string color, string selection, int quiet)
 
 EXAMPLE 
 
+    color cyan
     color yellow, (name C*)
         '''
         # preprocess selection

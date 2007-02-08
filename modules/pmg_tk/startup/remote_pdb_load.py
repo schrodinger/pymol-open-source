@@ -37,7 +37,7 @@ def __init__(self):
                                      'PDB Loader Service',
                                      label = 'PDB Loader Service',
                                      command = lambda s=self : FetchPDB(s))
-
+#    FetchPDB(self)
     
 # Class that simply takes the pdbcode from a dialog and retrieves the file
 class FetchPDB:
