@@ -1041,7 +1041,11 @@ PYMOL API
     def _multifetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet):
         import string
         r = DEFAULT_SUCCESS
-        code_list = string.split(code)
+        code_list = string.split(str(code))
+        name = string.strip(str(name))
+        if (name!='') and (len(code_list)>1) and (discrete<0):
+            discrete = 1 # by default, select discrete  when loading
+            # multiple PDB entries into a single object
         for obj_code in code_list:
             obj_code = string.strip(obj_code)
             if len(obj_code):
@@ -1053,13 +1057,35 @@ PYMOL API
                            discrete,multiplex,zoom,type,path,file,quiet)
         return r
     
-    def fetch(code, name='', state=0,finish=1, discrete=-1,
-              multiplex=-2,zoom=-1, type='pdb', async=-1, path=-1, file=None, quiet=1):
+    def fetch(code, name='', state=0, finish=1, discrete=-1,
+              multiplex=-2, zoom=-1, type='pdb', async=-1, path=-1,
+              file=None, quiet=1):
+        
         '''
 DESCRIPTION
 
     "fetch" downloads a file from the internet (if possible)
 
+USAGE
+
+    fetch code [,name [,state]]
+
+ARGUMENTS
+
+    code can be a single PDB identifier or a list of identifiers.
+
+    name is the object name into which the file should be loaded.
+
+    state is the state number into which the file should loaded.
+
+NOTES
+
+    By default, when running in interactive mode, the fetch command
+    loads structures asyncronously, meaning that the next command
+    may get executed before the structures have been loaded.
+
+    If you need synchronous behavior, provide the optional argument ", async=0".
+    
         '''
         import threading
         r = DEFAULT_SUCCESS

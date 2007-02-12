@@ -54,10 +54,14 @@ DESCRIPTION
 
 USAGE
 
-    select (selection)
-    select name, (selection)
-    select name = (selection)            # (DEPRECATED)
+    select name, selection
 
+ARGUMENTS
+
+    name is a unique name for the selection.
+
+    selection is the selection expression
+    
 PYMOL API
 
     cmd.select(string name, string selection)

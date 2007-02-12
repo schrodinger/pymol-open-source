@@ -94,7 +94,7 @@ DESCRIPTION
 
 USAGE
 
-    png filename
+    png filename 
 
 PYMOL API
 
