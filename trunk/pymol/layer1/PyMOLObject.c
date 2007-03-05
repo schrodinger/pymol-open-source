@@ -138,7 +138,7 @@ static void TTTFromViewElem(float *TTT,CViewElem *elem)
 int ObjectView(CObject *I,int action,int first,
                int last,float power,float bias,
                int simple, float linear,int wrap,
-               int hand,int window,int cycles)
+               int hand,int window,int cycles,int quiet)
 {
   register PyMOLGlobals *G = I->G;
   int frame;
@@ -167,9 +167,11 @@ int ObjectView(CObject *I,int action,int first,
       for(frame=first;frame<=last;frame++) {
         if((frame>=0)&&(frame<nFrame)) {
           VLACheck(I->ViewElem,CViewElem,frame);
-          PRINTFB(G,FB_Object,FB_Details)
-            " ObjectView: Setting frame %d.\n",frame+1
-            ENDFB(G);
+          if(!quiet) {
+            PRINTFB(G,FB_Object,FB_Details)
+              " ObjectView: Setting frame %d.\n",frame+1
+              ENDFB(G);
+          }
           TTTToViewElem(I->TTT,I->ViewElem+frame);          
           I->ViewElem[frame].specification_level = 2;
         }
@@ -185,6 +187,7 @@ int ObjectView(CObject *I,int action,int first,
       for(frame=first;frame<=last;frame++) {
         if((frame>=0)&&(frame<nFrame)) {
           VLACheck(I->ViewElem,CViewElem,frame);
+          ViewElemArrayPurge(G,I->ViewElem+frame,1);
           UtilZeroMem((void*)(I->ViewElem+frame),sizeof(CViewElem));
         }
       }
@@ -216,29 +219,31 @@ int ObjectView(CObject *I,int action,int first,
       if(wrap && (last == nFrame)) { /* if we're interpolating beyond the
                                  last frame, then wrap by copying
                                  first to last */
-        I->ViewElem[last] = I->ViewElem[0]; 
+        ViewElemCopy(G,I->ViewElem, I->ViewElem+last);
       }
 
       VLACheck(I->ViewElem,CViewElem,last);
-      if(action==2) {
-        if(last == nFrame) {
-          PRINTFB(G,FB_Object,FB_Details)
-            " ObjectView: interpolating unspecified frames %d to %d (wrapping).\n",first+1,last
-            ENDFB(G);
+      if(!quiet) {
+        if(action==2) {
+          if(last == nFrame) {
+            PRINTFB(G,FB_Object,FB_Details)
+              " ObjectView: interpolating unspecified frames %d to %d (wrapping).\n",first+1,last
+              ENDFB(G);
+          } else {
+            PRINTFB(G,FB_Object,FB_Details)
+              " ObjectView: interpolating unspecified frames %d to %d.\n",first+1,last+1
+              ENDFB(G);
+          }
         } else {
-          PRINTFB(G,FB_Object,FB_Details)
-            " ObjectView: interpolating unspecified frames %d to %d.\n",first+1,last+1
-            ENDFB(G);
-        }
-      } else {
-        if(last == nFrame) {
-          PRINTFB(G,FB_Object,FB_Details)
-            " ObjectView: reinterpolating all frames %d to %d (wrapping).\n",first+1,last
-            ENDFB(G);
-        } else {
-          PRINTFB(G,FB_Object,FB_Details)
-            " ObjectView: reinterpolating all frames %d to %d.\n",first+1,last+1
-            ENDFB(G);
+          if(last == nFrame) {
+            PRINTFB(G,FB_Object,FB_Details)
+              " ObjectView: reinterpolating all frames %d to %d (wrapping).\n",first+1,last
+              ENDFB(G);
+          } else {
+            PRINTFB(G,FB_Object,FB_Details)
+              " ObjectView: reinterpolating all frames %d to %d.\n",first+1,last+1
+              ENDFB(G);
+          }
         }
       }
       for(frame=first;frame<=last;frame++) {
@@ -260,9 +265,9 @@ int ObjectView(CObject *I,int action,int first,
               interpolate_flag=true;
             }
             if(interpolate_flag) {
-              ViewElemInterpolate(first_view,last_view,
+              ViewElemInterpolate(G,first_view,last_view,
                                   power,bias,
-                                  simple,linear,hand);
+                                  simple,linear,hand,0.0F);
             }
             first_view = last_view;
             last_view = NULL;
@@ -426,7 +431,7 @@ PyObject *ObjectAsPyList(CObject *I)
   if(I->ViewElem) {
     int nFrame = VLAGetSize(I->ViewElem);
     PyList_SetItem(result,12,PyInt_FromLong(nFrame));
-    PyList_SetItem(result,13,ViewElemVLAAsPyList(I->ViewElem,nFrame));
+    PyList_SetItem(result,13,ViewElemVLAAsPyList(I->G,I->ViewElem,nFrame));
   } else {
     PyList_SetItem(result,12,PyInt_FromLong(0));
     PyList_SetItem(result,13,PConvAutoNone(NULL));
@@ -471,7 +476,7 @@ int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I)
     if(ok && nFrame) {
       tmp = PyList_GetItem(list,13);
       if(tmp && !(tmp == Py_None))
-        ok = ViewElemVLAFromPyList(tmp,&I->ViewElem,nFrame);
+        ok = ViewElemVLAFromPyList(G,tmp,&I->ViewElem,nFrame);
     }
   }
   /* TO SUPPORT BACKWARDS COMPATIBILITY...

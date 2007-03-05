@@ -421,7 +421,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals *G,ObjectMap *obj,
 
               PRINTFB(G,FB_ObjectMap,FB_Details)
                 " ObjectMap: read %d values between %1.6f and %1.6f.\n",
-                a*b*c,min_level,max_level
+                ms->FDim[0]*ms->FDim[1]*ms->FDim[2],min_level,max_level
                 ENDFB(G);
             }
 

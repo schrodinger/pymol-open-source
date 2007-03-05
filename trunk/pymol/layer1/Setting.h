@@ -739,6 +739,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_ray_trace_color            546
 #define cSetting_group_arrow_prefix         547
 #define cSetting_suppress_hidden            548
+#define cSetting_session_compression        549
+#define cSetting_movie_fps                  550
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -748,7 +750,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       549
+#define cSetting_INIT                       551
 
 #endif
 

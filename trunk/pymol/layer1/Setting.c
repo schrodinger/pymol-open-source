@@ -2545,7 +2545,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_f(I,cSetting_fast_idle, 20000.0F); /* 1/50 of a sec. */
 
-  set_f(I,cSetting_no_idle, 10000.0F); /* 1/100 of a sec. */ 
+  set_f(I,cSetting_no_idle, 10000.0F); /* 1/100th of a sec. */
 
 #ifdef _PYMOL_OSX
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
@@ -3373,6 +3373,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_color(I,cSetting_ray_trace_color,"black");
   set_b(I,cSetting_group_arrow_prefix, 0);
   set_b(I,cSetting_suppress_hidden,true);
+  set_b(I,cSetting_session_compression,0);
+  set_f(I,cSetting_movie_fps,30.0);
 }
 
 

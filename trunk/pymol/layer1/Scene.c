@@ -149,7 +149,7 @@ struct _CScene {
   ImageType *Image;
   int MovieOwnsImageFlag;
   int MovieFrameFlag;
-  double LastRender,RenderTime,LastFrameTime;
+  double LastRender,RenderTime,LastFrameTime,LastFrameAdjust;
   double LastRock,LastRockTime;
   float LastRockX,LastRockY;
   Picking LastPicked;
@@ -308,8 +308,8 @@ void SceneLoadAnimation(PyMOLGlobals *G, double duration,int hand)
     I->ani_elem[0].timing = now + 0.01;
     I->ani_elem[target].timing_flag = true;
     I->ani_elem[target].timing = now + duration;
-    ViewElemInterpolate(I->ani_elem, I->ani_elem + target, 
-                        2.0F, 1.0F, true, 0.0F, hand);
+    ViewElemInterpolate(G,I->ani_elem, I->ani_elem + target, 
+                        2.0F, 1.0F, true, 0.0F, hand, 0.0F);
     SceneFromViewElem(G,I->ani_elem);
     I->cur_ani_elem = 0;
     I->n_ani_elem = target;
@@ -517,7 +517,24 @@ void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem)
 
   elem->ortho_flag = true;
   elem->ortho = SettingGetGlobal_b(G,cSetting_ortho);
-  
+ 
+  {
+    if(elem->scene_flag && elem->scene_name) {
+      OVLexicon_DecRef(G->Lexicon,elem->scene_name);
+      elem->scene_name = 0;
+      elem->scene_flag = 0;
+    }
+  }
+  {
+    char *scene_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
+    if(scene_name && scene_name[0]) {
+      OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon,scene_name);
+      if(OVreturn_IS_OK(result)) {
+        elem->scene_name = result.word;
+        elem->scene_flag = true;
+      }
+    }
+  }
 }
 
 void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem)
@@ -1724,24 +1741,40 @@ void SceneIdle(PyMOLGlobals *G)
       OrthoDirty(G); /* force an update */
     }
   }
-  if(MoviePlaying(G))
+  if(ControlRocking(G)&&(!rockFlag)) {
+    renderTime = -I->LastRockTime + UtilGetSeconds(G);
+    minTime=SettingGet(G,cSetting_rock_delay)/1000.0;
+    if(renderTime>=minTime) {
+      rockFlag=true;
+      I->LastRockTime=UtilGetSeconds(G);
+    }
+  }
+  if(MoviePlaying(G)) {
+    renderTime = UtilGetSeconds(G) - I->LastFrameTime;
     {
-		renderTime = -I->LastFrameTime + UtilGetSeconds(G);
-		minTime=SettingGet(G,cSetting_movie_delay)/1000.0;
-		if(renderTime>=minTime) {
+      float fps = SettingGet(G,cSetting_movie_fps);
+      if(fps<=0.0F) {
+        minTime = SettingGet(G,cSetting_movie_delay)/1000.0;
+        if(minTime>=0)
+          fps = 1.0/minTime;
+        else
+          fps = 1000.0F;
+      } else {
+        minTime = 1.0/fps;
+      }
+      if(renderTime >= (minTime-I->LastFrameAdjust)) {
+        float adjust = (renderTime - minTime);
+        if((fabs(adjust)<minTime) && (fabs(I->LastFrameAdjust)<minTime)) {
+          float new_adjust = (renderTime - minTime) + I->LastFrameAdjust;
+          I->LastFrameAdjust = (new_adjust + fps*I->LastFrameAdjust)/(1+fps);
+        } else {
+          I->LastFrameAdjust = 0.0F;
+        }
         frameFlag=true;
         rockFlag=true;
       }
     }
-  if(ControlRocking(G)&&(!rockFlag))
-    {
-		renderTime = -I->LastRockTime + UtilGetSeconds(G);
-		minTime=SettingGet(G,cSetting_rock_delay)/1000.0;
-		if(renderTime>=minTime) {
-        rockFlag=true;
-        I->LastRockTime=UtilGetSeconds(G);
-      }
-    }
+  }
   if(ControlRocking(G)&&rockFlag) {
     float ang_cur,disp,diff;
     float sweep_angle = SettingGetGlobal_f(G,cSetting_sweep_angle);
@@ -1794,17 +1827,16 @@ void SceneIdle(PyMOLGlobals *G)
       break;
     }
   }
-  if(MoviePlaying(G)&&frameFlag)
-	 {
-      I->LastFrameTime = UtilGetSeconds(G);
-      if((SettingGetGlobal_i(G,cSetting_frame)-1)==(I->NFrame-1)) {
-        if((int)SettingGet(G,cSetting_movie_loop)) {
-          SceneSetFrame(G,7,0);
-        } else
-          MoviePlay(G,cMovieStop);
-      } else 
-        SceneSetFrame(G,5,1);
-	 }
+  if(MoviePlaying(G)&&frameFlag) {
+    I->LastFrameTime = UtilGetSeconds(G);
+    if((SettingGetGlobal_i(G,cSetting_frame)-1)==(I->NFrame-1)) {
+      if((int)SettingGet(G,cSetting_movie_loop)) {
+        SceneSetFrame(G,7,0);
+      } else
+        MoviePlay(G,cMovieStop);
+    } else 
+      SceneSetFrame(G,5,1);
+  }
 }
 /*========================================================================*/
 void SceneWindowSphere(PyMOLGlobals *G,float *location,float radius)
@@ -4981,6 +5013,7 @@ int  SceneInit(PyMOLGlobals *G)
     I->RenderTime = 0;
     I->LastRender = UtilGetSeconds(G);
     I->LastFrameTime = UtilGetSeconds(G);
+    I->LastFrameAdjust = 0.0F;
     I->LastRockTime = UtilGetSeconds(G);
     I->SingleClickDelay = 0.0;
     I->LastPicked.context.object = NULL;
