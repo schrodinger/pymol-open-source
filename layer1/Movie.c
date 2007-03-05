@@ -76,8 +76,8 @@ void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length)
 	VLACheck(I->Image,ImageType*,nFrame);
 	SceneGetWidthHeight(G,width,height);
 	{ 
-		int uniform_height = -1;
-		int uniform_width = -1;
+      int uniform_height = -1;
+      int uniform_width = -1;
 		int uniform_flag = false;
 		int scene_match = true;
 		int a;
@@ -321,7 +321,7 @@ int MovieFromPyList(PyMOLGlobals *G,PyObject *list,int *warning)
     I->ViewElem = NULL;
     tmp = PyList_GetItem(list,6);
     if(tmp && !(tmp == Py_None))
-      ok = ViewElemVLAFromPyList(tmp,&I->ViewElem,I->NFrame);
+      ok = ViewElemVLAFromPyList(G,tmp,&I->ViewElem,I->NFrame);
   }
   if(!ok) {
     MovieReset(G);
@@ -373,7 +373,7 @@ PyObject *MovieAsPyList(PyMOLGlobals *G)
     PyList_SetItem(result,5,PConvAutoNone(NULL));
   }
   if(I->ViewElem) {
-    PyList_SetItem(result,6,ViewElemVLAAsPyList(I->ViewElem,I->NFrame));
+    PyList_SetItem(result,6,ViewElemVLAAsPyList(G,I->ViewElem,I->NFrame));
   } else {
     PyList_SetItem(result,6,PConvAutoNone(NULL));
   }
@@ -690,16 +690,24 @@ void MovieDoFrameCommand(PyMOLGlobals *G,int frame)
   if(frame==0)
 	 MovieMatrix(G,cMovieMatrixRecall);
   if(!I->Locked) {
-    if((frame>=0)&&(frame<I->NFrame))
-      {
-        if(I->Cmd[frame][0]) {
-          if(!I->RecursionFlag) {
-            PParse(I->Cmd[frame]);
+    if((frame>=0)&&(frame<I->NFrame)) {
+      if(I->Cmd[frame][0]) {
+        if(!I->RecursionFlag) {
+          PParse(I->Cmd[frame]);
+        }
+      }
+      if(I->ViewElem) { 
+        if(I->ViewElem[frame].scene_flag) {
+          char *st = OVLexicon_FetchCString(G->Lexicon,I->ViewElem[frame].scene_name);
+          if(strcmp(st,SettingGetGlobal_s(G,cSetting_scene_current_name))) {
+            PBlock();
+            PXDecRef(PyObject_CallMethod(P_cmd,"scene","sssi",st,"recall","", 0));
+            PUnblock();
           }
         }
-        if(I->ViewElem) 
-          SceneFromViewElem(G,I->ViewElem+frame);
+        SceneFromViewElem(G,I->ViewElem+frame);
       }
+    }
   }
 }
 /*========================================================================*/
@@ -726,7 +734,9 @@ void MovieSetCommand(PyMOLGlobals *G,int frame,char *command)
 /*========================================================================*/
 int MovieView(PyMOLGlobals *G,int action,int first,
               int last,float power,float bias,
-              int simple, float linear,int wrap,int hand,int window,int cycles)
+              int simple, float linear,int wrap,
+              int hand,int window,int cycles,
+              char *scene_name, float scene_cut, int quiet)
 {
   register CMovie *I=G->Movie;
   int frame;
@@ -740,10 +750,13 @@ int MovieView(PyMOLGlobals *G,int action,int first,
       for(frame=first;frame<=last;frame++) {
         if((frame>=0)&&(frame<I->NFrame)) {
           VLACheck(I->ViewElem,CViewElem,frame);
-          PRINTFB(G,FB_Movie,FB_Details)
-            " MovieView: Setting frame %d.\n",frame+1
-            ENDFB(G);
+          if(!quiet) {
+            PRINTFB(G,FB_Movie,FB_Details)
+              " MovieView: Setting frame %d.\n",frame+1
+              ENDFB(G);
+          }
           SceneToViewElem(G,I->ViewElem+frame);          
+          
           I->ViewElem[frame].specification_level = 2;
         }
       }
@@ -758,6 +771,7 @@ int MovieView(PyMOLGlobals *G,int action,int first,
       for(frame=first;frame<=last;frame++) {
         if((frame>=0)&&(frame<I->NFrame)) {
           VLACheck(I->ViewElem,CViewElem,frame);
+          ViewElemArrayPurge(G,I->ViewElem+frame,1);
           UtilZeroMem((void*)(I->ViewElem+frame),sizeof(CViewElem));
         }
       }
@@ -794,29 +808,32 @@ int MovieView(PyMOLGlobals *G,int action,int first,
         /* if we're interpolating beyond the
            last frame, then wrap by copying
            first to last */
+        ViewElemCopy(G,I->ViewElem, I->ViewElem+last);
         I->ViewElem[last] = I->ViewElem[0]; 
       }
 
-      if(action==2) {
-        if(last == I->NFrame) {
-          PRINTFB(G,FB_Movie,FB_Details)
-            " MovieView: interpolating unspecified frames %d to %d (wrapping)\n",first+1,last
-            ENDFB(G);
+      if(!quiet) {
+        if(action==2) {
+          if(last == I->NFrame) {
+            PRINTFB(G,FB_Movie,FB_Details)
+              " MovieView: interpolating unspecified frames %d to %d (wrapping)\n",first+1,last
+              ENDFB(G);
+          } else {
+            PRINTFB(G,FB_Movie,FB_Details)
+              " MovieView: interpolating unspecified frames %d to %d.\n",first+1,last+1
+              ENDFB(G);
+          }
+          
         } else {
-          PRINTFB(G,FB_Movie,FB_Details)
-            " MovieView: interpolating unspecified frames %d to %d.\n",first+1,last+1
-            ENDFB(G);
-        }
-       
-      } else {
-        if(last == I->NFrame) {
-          PRINTFB(G,FB_Movie,FB_Details)
-            " MovieView: reinterpolating all frames %d to %d (wrapping).\n",first+1,last
-            ENDFB(G);
-        } else {
-          PRINTFB(G,FB_Movie,FB_Details)
-            " MovieView: reinterpolating all frames %d to %d.\n",first+1,last+1
-            ENDFB(G);
+          if(last == I->NFrame) {
+            PRINTFB(G,FB_Movie,FB_Details)
+              " MovieView: reinterpolating all frames %d to %d (wrapping).\n",first+1,last
+              ENDFB(G);
+          } else {
+            PRINTFB(G,FB_Movie,FB_Details)
+              " MovieView: reinterpolating all frames %d to %d.\n",first+1,last+1
+              ENDFB(G);
+          }
         }
       }
       for(frame=first;frame<=last;frame++) {
@@ -838,8 +855,8 @@ int MovieView(PyMOLGlobals *G,int action,int first,
               interpolate_flag=true;
             }
             if(interpolate_flag) {
-              ViewElemInterpolate(first_view,last_view,
-                                  power,bias,simple,linear,hand);
+              ViewElemInterpolate(G,first_view,last_view,
+                                  power,bias,simple,linear,hand,scene_cut);
             }
             first_view = last_view;
             last_view = NULL;
@@ -868,6 +885,13 @@ int MovieView(PyMOLGlobals *G,int action,int first,
       }
    }
    break;
+  case 5: /* reset */
+    if(I->ViewElem) {
+      int size = VLAGetSize(I->ViewElem);
+      VLAFreeP(I->ViewElem);
+      I->ViewElem = VLACalloc(CViewElem, size);
+    }
+    break;
   }
   return 1;
 }

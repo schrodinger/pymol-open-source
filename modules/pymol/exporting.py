@@ -56,7 +56,7 @@ NOTES
         if _raising(r): raise QuietException         
         return r
     
-    def get_session(names='', partial=0, quiet=1):
+    def get_session(names='', partial=0, quiet=1, compress=-1):
         session = {}
         r = DEFAULT_SUCCESS
         for a in pymol._session_save_tasks:
@@ -80,6 +80,11 @@ NOTES
                     print "Error: An error occurred when trying to generate session."
                     print "Error: The resulting session file may be incomplete."
         if is_ok(r):
+            if(compress<0):
+                compress = cmd.get_setting_boolean('session_compression')
+            if(compress):
+                import zlib
+                session = zlib.compress(io.pkl.toString(session))
             return session
         elif _raising(r):
             raise QuietException                  

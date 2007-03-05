@@ -92,6 +92,9 @@ if __name__=='pymol.importing':
 
     def set_session(session,partial=0,quiet=1):
         r = DEFAULT_SUCCESS
+        if is_string(session): # string implies compressed session data 
+            import zlib
+            session = io.pkl.fromString(zlib.decompress(session))
         for a in pymol._session_restore_tasks:
             if a==None:
                 try:

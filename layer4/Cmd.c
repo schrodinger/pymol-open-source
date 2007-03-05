@@ -2681,7 +2681,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
 
           if(!origObj) {
             ObjectSetName(obj,str1);
-            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,-1,false);
+            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,-1,quiet);
           }
           if(SettingGet(TempPyMOLGlobals,cSetting_isomesh_auto_state))
             if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
@@ -4384,12 +4384,12 @@ static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
 static PyObject *CmdMView(PyObject *self, 	PyObject *args)
 {
   int ok=false;
-  int action,first,last, simple,wrap,window,cycles;
-  float power,bias,linear,hand;
-  char *object;
-  ok = PyArg_ParseTuple(args,"iiiffifsiiii",&action,&first,&last,&power,
+  int action,first,last, simple,wrap,window,cycles,quiet;
+  float power,bias,linear,hand,scene_cut;
+  char *object,*scene_name;
+  ok = PyArg_ParseTuple(args,"iiiffifsiiiisfi",&action,&first,&last,&power,
                         &bias,&simple,&linear,&object,&wrap,&hand,
-                        &window,&cycles);
+                        &window,&cycles,&scene_name,&scene_cut,&quiet);
   if (ok) {
     APIEntry();
     if(wrap<0) {
@@ -4401,11 +4401,14 @@ static PyObject *CmdMView(PyObject *self, 	PyObject *args)
         ok = false;
       } else {
         if(simple<0) simple = 0; 
-        ok = ObjectView(obj,action,first,last,power,bias,simple,linear,wrap,hand,window,cycles);
+        ok = ObjectView(obj,action,first,last,power,bias,
+                        simple,linear,wrap,hand,window,cycles,quiet);
       }
     } else {
       simple = true; /* force this because camera matrix does't work like a TTT */
-      ok = MovieView(TempPyMOLGlobals,action,first,last,power,bias,simple,linear,wrap,hand,window,cycles);
+      ok = MovieView(TempPyMOLGlobals,action,first,last,power,
+                     bias,simple,linear,wrap,hand,window,cycles,
+                     scene_name,scene_cut,quiet);
     }
     APIExit();
   }

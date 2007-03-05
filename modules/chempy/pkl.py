@@ -54,5 +54,5 @@ class PKL(Storage):
 
 #---------------------------------------------------------------------------
     def toString(self,model):
-        return cPickle.dumps(st)
+        return cPickle.dumps(model)
 

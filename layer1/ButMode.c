@@ -38,8 +38,9 @@ struct _CButMode {
   int NCode;
   int Mode[cButModeInputCount];
   int NBut;
-  float Rate,RateShown;
-  float Samples;
+  float Rate;
+  int RateShown;
+  float Samples, Delay;
   WordType Caption;
   float TextColor1[3];
   float TextColor2[3];
@@ -93,23 +94,20 @@ void ButModeSetRate(PyMOLGlobals *G,float interval)
 {
   register CButMode *I=G->ButMode;
 
-  if(interval<0.001)
-    interval = 0.001F;
-  
-  if(interval>0.1F) {
-    I->Samples*=0.5F/(5.0F*interval);
-    I->Rate*=0.5F/(5.0F*interval);
+  if(interval<0.00001)
+    interval = 0.00001F;
+
+  I->Delay -= interval;
+  if(interval<1.0F) {
+    I->Samples *= 0.95*(1.0F - interval);
+    I->Rate *= 0.95*(1.0F - interval);
   } else {
-    I->Samples*=0.99F-interval;
-    I->Rate*=0.99F-interval;
+    I->Samples = 0.0F;
+    I->Rate = 0.0F;
   }
   
   I->Samples++;
-
-  if(interval>=0.001)
-	 I->Rate += 1/interval;
-  else
-	 I->Rate += 99;
+  I->Rate += 1.0F/interval;
   
 }
 /*========================================================================*/
@@ -118,7 +116,8 @@ void ButModeResetRate(PyMOLGlobals *G)
   register CButMode *I=G->ButMode;
   I->Samples=0.0;
   I->Rate=0.0;
-  I->RateShown=0.0;
+  I->RateShown=0;
+  I->Delay=0;
 }
 /*========================================================================*/
 void ButModeFree(PyMOLGlobals *G)
@@ -355,17 +354,20 @@ static void ButModeDraw(Block *block)
     TextSetColor(G,I->Block->TextColor);
 	y-=cButModeLineHeight;
 	{ 
- 	int buffer;
-	glGetIntegerv(GL_DRAW_BUFFER,(GLint*)&buffer);
-    if(buffer!=GL_BACK_RIGHT) {
-		
-		if(I->Samples) 
-			I->RateShown = I->Rate/I->Samples;
-		else 
-			I->RateShown = 0;
-	}
-	}
-	  
+      int buffer;
+      glGetIntegerv(GL_DRAW_BUFFER,(GLint*)&buffer);
+      if(buffer!=GL_BACK_RIGHT) {
+        
+        if(I->Delay<=0.0F) {
+          if(I->Samples>0.0F) 
+            I->RateShown = (int)(I->Rate/I->Samples);
+          else 
+            I->RateShown = 0;
+          I->Delay=0.2F;
+        }
+      }
+    }
+    
     nf = SceneGetNFrame(G);
     if(nf==0)
       nf=1;
@@ -373,7 +375,7 @@ static void ButModeDraw(Block *block)
     TextDrawStrAt(G,"Frame ",x,y);
     TextSetColor(G,I->TextColor2);
     sprintf(rateStr,"[%3d/%3d] %d/sec",SceneGetFrame(G)+1,
-            nf,(int)(I->RateShown+0.5F));
+            nf,I->RateShown);
     TextDrawStrAt(G,rateStr,x+48,y);
 
 
@@ -390,8 +392,8 @@ int ButModeInit(PyMOLGlobals *G)
 
     I->Rate=0.0;
     I->Samples = 0.0;
-    I->RateShown=0.0;
-
+    I->RateShown=0;
+    I->Delay = 0.0;
     I->Caption[0] = 0;
 
     I->NCode = cButModeCount;

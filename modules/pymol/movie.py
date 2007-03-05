@@ -227,4 +227,23 @@ def screw(first,last,step=1,angle=30,phase=0,loop=1,axis='y'):
         cmd.mdo("%d" % (first+a), "turn %s,%8.3f; move z,%8.3f" % (axis,diff,s))
         a = a + 1
 
-        
+def timed_roll(period=12.0,cycles=1,axis='y'):
+    frames_per_sec = float(cmd.get('movie_fps'))
+    if frames_per_sec<1.0:
+        frames_per_sec=30.0
+    frames_per_cycle = int(period*frames_per_sec)
+    total = frames_per_cycle * cycles
+    
+    cmd.mset("1 x%d"%total)
+    step = 2*math.pi/(frames_per_cycle)
+    deg = (180*step/math.pi)
+    cmd.mview('reset')
+    cmd.rewind()
+    frame = 1
+    for cycle in range(cycles):
+        for cnt in range(frames_per_cycle):
+            cmd.turn(axis,deg)
+            cmd.mview('store',frame)
+            frame = frame + 1
+    
+    

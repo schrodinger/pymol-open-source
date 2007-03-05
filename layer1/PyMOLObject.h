@@ -102,7 +102,7 @@ void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop);
 int ObjectView(CObject *I,int action,int first,
                int last,float power,float bias,
                int simple, float linear,int wrap,
-               int hand,int window,int cycles);
+               int hand,int window,int cycles,int quiet);
 
 
 void ObjectStateInit(PyMOLGlobals *G,CObjectState *I);

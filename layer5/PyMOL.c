@@ -695,6 +695,8 @@ typedef struct _CPyMOL {
   ov_word lex_ray_trace_color;
   ov_word lex_group_arrow_prefix;
   ov_word lex_suppress_hidden;
+  ov_word lex_session_compression;
+  ov_word lex_movie_fps;
 
 } _CPyMOL;
 
@@ -1387,6 +1389,9 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_trace_color,546);
   LEX_SETTING(group_arrow_prefix,547);
   LEX_SETTING(suppress_hidden,548);
+  LEX_SETTING(session_compression,549);
+  LEX_SETTING(movie_fps,550);
+  
   return_OVstatus_SUCCESS;
 }
 

@@ -24,15 +24,37 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"PConv.h"
 
+void ViewElemCopy(PyMOLGlobals *G,CViewElem *src,CViewElem *dst)
+{
+  *dst = *src;
+  if(dst->scene_flag && dst->scene_name) {
+    OVLexicon_IncRef(G->Lexicon,dst->scene_name);
+    dst->scene_name=0;
+    dst->scene_flag=false;
+  }
+}
 
-PyObject *ViewElemAsPyList(CViewElem *view)
+void ViewElemArrayPurge(PyMOLGlobals *G,CViewElem *view,int nFrame)
+{
+  int a;
+  for(a=0;a<nFrame;a++) {
+    if(view->scene_flag && view->scene_name ) {
+      OVLexicon_DecRef(G->Lexicon,view->scene_name);
+      view->scene_name=0;
+      view->scene_flag=false;
+    }
+    view++;
+  }
+}
+
+PyObject *ViewElemAsPyList(PyMOLGlobals *G, CViewElem *view)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
   PyObject *result = NULL;
 
-  result=PyList_New(13);
+  result=PyList_New(15);
 
   if(result) {
     PyList_SetItem(result,0,PyInt_FromLong(view->matrix_flag));
@@ -75,13 +97,23 @@ PyObject *ViewElemAsPyList(CViewElem *view)
     PyList_SetItem(result,11,PyInt_FromLong(view->view_mode));
     
     PyList_SetItem(result,12,PyInt_FromLong(view->specification_level));
+
+    PyList_SetItem(result,13,PyInt_FromLong(view->ortho_flag));  
+    
+    {
+      char null_st[1] = "";
+      char *st = null_st;
+      
+      st = OVLexicon_FetchCString(G->Lexicon,view->scene_name);
+      PyList_SetItem(result, 14,PyString_FromString(st));
+    }
   }
 
   return PConvAutoNone(result);
 #endif
 }
 
-int ViewElemFromPyList(PyObject *list, CViewElem *view)
+int ViewElemFromPyList(PyMOLGlobals *G, PyObject *list, CViewElem *view)
 {
 #ifdef _PYMOL_NOPY
   return 0;
@@ -115,11 +147,26 @@ int ViewElemFromPyList(PyObject *list, CViewElem *view)
   if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,11),&view->view_mode);
   if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,12),&view->specification_level);
 
+  if(ok&(ll>14)) {
+    if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,13),&view->scene_flag);
+    if(ok && view->scene_flag) {
+      char *ptr = NULL;
+      view->scene_flag = false;
+      if(PConvPyStrToStrPtr(PyList_GetItem(list, 14),&ptr)) {
+        OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon,ptr);
+        if(OVreturn_IS_OK(result)) {
+          view->scene_name = result.word;
+          view->scene_flag = true;
+        }
+      }
+    }
+  }
+    
   return ok;
 #endif
 }
 
-int ViewElemVLAFromPyList(PyObject *list, CViewElem **vla_ptr, int nFrame)
+int ViewElemVLAFromPyList(PyMOLGlobals *G, PyObject *list, CViewElem **vla_ptr, int nFrame)
 {
 #ifdef _PYMOL_NOPY
   return 0;
@@ -138,7 +185,7 @@ int ViewElemVLAFromPyList(PyObject *list, CViewElem **vla_ptr, int nFrame)
     int a;
     for(a=0;a<nFrame;a++) {
       if(ok) 
-        ok=ViewElemFromPyList(PyList_GetItem(list,a),vla+a);
+        ok=ViewElemFromPyList(G,PyList_GetItem(list,a),vla+a);
       else
         break;
     }
@@ -151,7 +198,7 @@ int ViewElemVLAFromPyList(PyObject *list, CViewElem **vla_ptr, int nFrame)
 #endif
 }
 
-PyObject *ViewElemVLAAsPyList(CViewElem *vla,int nFrame)
+PyObject *ViewElemVLAAsPyList(PyMOLGlobals *G, CViewElem *vla,int nFrame)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -161,7 +208,7 @@ PyObject *ViewElemVLAAsPyList(CViewElem *vla,int nFrame)
   int a;
   result = PyList_New(nFrame);
   for(a=0;a<nFrame;a++) {
-    PyList_SetItem(result,a,ViewElemAsPyList(vla+a));
+    PyList_SetItem(result,a,ViewElemAsPyList(G,vla+a));
   }
   return(PConvAutoNone(result));
 #endif
@@ -413,9 +460,9 @@ int ViewElemSmooth(CViewElem *first,CViewElem *last,int window,int loop)
   return 1;
 }
 
-int ViewElemInterpolate(CViewElem *first,CViewElem *last,
+int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
                         float power,float bias,
-                        int simple, float linearity,int hand)
+                        int simple, float linearity, int hand, float cut)
 {
   float first3x3[9];
   float last3x3[9];
@@ -680,7 +727,7 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,
 
     fxn_1 = 1.0F - fxn;
 
-    *current = *first;
+    ViewElemCopy(G,first,current);
 
     if(simple) {
       rotation_matrix3f(fxn*angle,rot_axis[0],rot_axis[1],rot_axis[2],&imat[0][0]);
@@ -783,6 +830,18 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,
       current->timing = timing;
     }
 
+    if(first->scene_flag && last->scene_flag) {
+      if(current->scene_name) {
+        OVLexicon_DecRef(G->Lexicon,current->scene_name);
+      }
+      current->scene_flag = true;
+      if(fxn>=cut) {
+        current->scene_name = last->scene_name;
+      } else {
+        current->scene_name = first->scene_name;
+      }
+      OVLexicon_IncRef(G->Lexicon,current->scene_name);
+    }
     current++;
   }
   if(debug) dump44f(lastR44f,"last");
