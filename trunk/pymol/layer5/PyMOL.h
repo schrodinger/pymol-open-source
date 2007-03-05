@@ -359,7 +359,8 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
                                        int cycles, float gap, float extend, int max_gap, 
                                        char *object, char *matrix, int source_state,
                                        int target_state, 
-                                       int quiet, int max_skip);
+                                       int quiet, int max_skip,
+                                       int transform, int reset);
 
 PyMOLreturn_status PyMOL_CmdSetView(CPyMOL *I, float *view, int view_len, float animate, int quiet);
 PyMOLreturn_float_array PyMOL_CmdGetView(CPyMOL *I,int quiet);

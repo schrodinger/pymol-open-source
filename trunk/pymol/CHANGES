@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 1.00b19
 
+    * alignment objects now created by alignment menus
+
     * support for scenes in interpolated views (wow that is cool).
 
     * new movie_fps setting subordiantes movie_delay

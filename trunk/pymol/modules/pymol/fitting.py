@@ -26,7 +26,7 @@ if __name__=='pymol.fitting':
     def align(source, target, cutoff=2.0, cycles=2, gap=-10.0,
               extend=-0.5, max_gap=-1, object=None,
               matrix="BLOSUM62", source_state=0, target_state=0,
-              quiet=1, max_skip=0):
+              quiet=1, max_skip=0, transform=1,reset=0):
         
         '''
 DESCRIPTION
@@ -58,12 +58,13 @@ SEE ALSO
         target = selector.process(target)
         mfile = cmd.exp_path("$PYMOL_PATH/data/pymol/matrices/"+matrix)
         if object==None: object=''
+        # delete existing alignment object (if asked to reset it)
         try:
             lock()
             r = _cmd.align(source,"("+target+")",float(cutoff),int(cycles),float(gap),
                                 float(extend),int(max_gap),str(object),str(mfile),
                                 int(source_state)-1,int(target_state)-1,
-                                int(quiet),int(max_skip))
+                                int(quiet),int(max_skip),int(transform),int(reset))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         

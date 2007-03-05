@@ -494,7 +494,7 @@ ARGUMENTS
 
     representation can one of: lines, spheres, mesh, ribbon, cartoon,
        sticks, dots, surface, labels, extent, nonbonded, nb_spheres,
-       slice,extent, slice, dashes, angles, dihedrals, cgo, cell, callback, 
+       slice, extent, slice, dashes, angles, dihedrals, cgo, cell, callback, 
        everything.
 
     selection can be a selection-pattern or an object-name-list.
