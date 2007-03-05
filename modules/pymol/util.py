@@ -74,11 +74,17 @@ _color_cycle_len = len(_color_cycle)
 def mass_align(target,enabled_only=0,max_gap=50):
     list = cmd.get_names("public_objects",int(enabled_only))
     filter(lambda x:cmd.get_type(x)!="object:molecule",list)
+    if enabled_only:
+        aln_object = 'aln_enabled_to'+target
+    else:
+        aln_object = 'aln_all_to_'+target
+    cmd.delete(aln_object)
     for name in list:
         if name!=target:
             if cmd.count_atoms("(%s) and (%s)"%(target,name))==0:
                 cmd.align('polymer and name ca and (%s)'%name,
-                'polymer and name ca and (%s)'%target,max_gap=max_gap,quiet=0)
+                'polymer and name ca and (%s)'%target,max_gap=max_gap,quiet=0,
+                          object=aln_object)
     
 def sum_formal_charges(selection="(all)",quiet=1):
     pymol.stored._util_sum_fc = 0.0

@@ -435,7 +435,7 @@ NOTES
 PYMOL API
 
     cmd.load(string filename, string object-name, integer state,
-             string format )
+             string format)
     
 SEE ALSO
 
@@ -1061,7 +1061,7 @@ PYMOL API
         return r
     
     def fetch(code, name='', state=0, finish=1, discrete=-1,
-              multiplex=-2, zoom=-1, type='pdb', async=-1, path=-1,
+              multiplex=-2, zoom=-1, type='pdb', async=-1, path=None,
               file=None, quiet=1):
         
         '''
@@ -1081,18 +1081,25 @@ ARGUMENTS
 
     state is the state number into which the file should loaded.
 
+PYMOL API
+
+    cmd.fetch(string code, string name, int state, init finish,
+              int discrete, int multiplex, int zoom, string type,
+              int async, string path, string file, int quiet)
+              
 NOTES
 
     By default, when running in interactive mode, the fetch command
-    loads structures asyncronously, meaning that the next command
-    may get executed before the structures have been loaded.
-
-    If you need synchronous behavior, provide the optional argument ", async=0".
+    loads structures asyncronously, meaning that the next command may
+    get executed before the structures have been loaded.  If you need
+    synchronous behavior in order to insure that all structures are
+    loaded before the next command is executed, then please provide
+    the optional argument "async=0".
     
         '''
         import threading
         r = DEFAULT_SUCCESS
-        if path==-1:
+        if path==None:
             path = setting.get('fetch_path')
         if async<0: # by default, run asynch when interactive, sync when not
             async = not quiet

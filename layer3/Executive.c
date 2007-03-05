@@ -5661,7 +5661,7 @@ int ExecutivePhiPsi(PyMOLGlobals *G,char *s1,ObjectMolecule ***objVLA,int **iVLA
 
 int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,
                      int max_gap, int max_skip, float cutoff,int cycles,int quiet,char *oname,
-                     int state1,int state2, ExecutiveRMSInfo *rms_info)
+                     int state1,int state2, ExecutiveRMSInfo *rms_info,int transform,int reset)
 {
   int sele1=SelectorIndexByName(G,s1);
   int sele2=SelectorIndexByName(G,s2);
@@ -5693,12 +5693,17 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,fl
                                          sele1,vla1,sele2,vla2,
                                          "_align1","_align2",false);
             if(c) {
+              int mode = 2;
               if(!quiet) {
                 PRINTFB(G,FB_Executive,FB_Actions)
                   " ExecutiveAlign: %d atoms aligned.\n",c
                   ENDFB(G);
               }
-              ok = ExecutiveRMS(G,"_align1","_align2",2,cutoff,cycles,
+              if(oname&&oname[0]&&reset)
+                ExecutiveDelete(G,oname);
+              if(!transform)
+                mode = 1;
+              ok = ExecutiveRMS(G,"_align1","_align2",mode,cutoff,cycles,
                                 quiet,oname,
                                 state1,state2,false,0, rms_info);
               

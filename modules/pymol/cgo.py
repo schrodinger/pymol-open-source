@@ -319,7 +319,24 @@ class RenderReader:
             self.obj.append(SPHERE)
             self.obj.extend([float(s[0]),float(s[1]),float(s[2]),float(s[3])])
 
+    def mat_prop(self,f):
+        self.append_last()
+        l = f.readline()
+        if l:
+            print l
+            s = string.split(l)
+            (mphong, mspec, sr, sg, sb, clrity) = map(float,s[0:6])
+            print clrity
+            self.obj.extend([ALPHA, 1.0-clrity])
+            opts1 = int(s[6])
+            opts4 = int(s[9])
+            for x in range(opts4):
+                f.readline();
 
+    def mat_reset(self,f):
+        self.append_last()
+        self.obj.extend([ALPHA, 1.0])
+        
     def __init__(self,input):
         # Author: Warren DeLano
         # Modifications: Robert Campbell
@@ -344,6 +361,7 @@ class RenderReader:
             self.cyl,
             None,
             self.tri_normal,
+            self.mat_prop,
             ]
         ld = len(dispatch)
         while 1:

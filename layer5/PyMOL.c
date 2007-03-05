@@ -1526,7 +1526,7 @@ PyMOLreturn_float_array PyMOL_CmdGetView(CPyMOL *I,int quiet)
 PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cutoff, 
                                  int cycles, float gap, float extend, int max_gap, 
                                  char *object, char *matrix, int source_state, int target_state, 
-                                 int quiet, int max_skip) 
+                                 int quiet, int max_skip, int transform, int reset) 
 {
   PyMOLreturn_float_array result;
   
@@ -1545,7 +1545,7 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
       ok = ExecutiveAlign(I->G,s2,s3,matrix,gap,extend,max_gap,
                                        max_skip,cutoff,cycles,quiet,object,
                                        source_state-1, target_state-1,
-                                       &rms_info);
+                                       &rms_info,transform,reset);
       if(ok) {
         result.array[0] = rms_info.final_rms;
         result.array[1] = rms_info.final_n_atom;
