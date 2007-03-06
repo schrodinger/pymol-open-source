@@ -2112,7 +2112,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	float excl_trans;
 	int shadows;
 	int trans_shadows;
-   int trans_mode;
+    int trans_mode;
 	float first_excess;
 	int pixel_flag;
 	float ray_trans_spec, ray_lab_spec;
@@ -2142,7 +2142,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float interior_normal[3];
    float edge_width = 0.35356F;
    float edge_height = 0.35356F;
-   float trans_spec_cut,trans_spec_scale;
+   float trans_spec_cut,trans_spec_scale,trans_oblique,oblique_power;
    float direct_shade;
    float red_blend=0.0F;
    float blue_blend=0.0F;
@@ -2150,6 +2150,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float trans_cont;
    float pixel_base[3];
    float inv_trans_cont = 1.0F;
+   float trans_cutoff,persist_cutoff;
    int trans_cont_flag = false;
    int blend_colors;
    int max_pass;
@@ -2158,6 +2159,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float eye[3];
    float start[3],nudge[3],back_pact[3];
    float *depth = T->depth;
+   float ray_scatter = SettingGetGlobal_f(I->G,cSetting_ray_scatter);
    const float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);
    const float shadow_range = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_range);
    const int clip_shadows = SettingGetGlobal_b(I->G,cSetting_ray_clip_shadows);
@@ -2167,6 +2169,7 @@ int RayTraceThread(CRayThreadInfo *T)
    const float _0		= 0.0F;
    const float _1		= 1.0F;
    const float _p5		= 0.5F;
+   const float _2       = 2.0F;
    const float _255	= 255.0F;
    const float _p499 = 0.499F;
    const float _persistLimit	= 0.0001F;
@@ -2211,6 +2214,11 @@ int RayTraceThread(CRayThreadInfo *T)
    ray_lab_spec  		= SettingGet(I->G,cSetting_ray_label_specular);
    trans_cont        = SettingGetGlobal_f(I->G,cSetting_ray_transparency_contrast);
    trans_mode        = SettingGetGlobal_i(I->G,cSetting_transparency_mode);
+   trans_oblique     = SettingGetGlobal_f(I->G,cSetting_ray_transparency_oblique);
+   oblique_power     = SettingGetGlobal_f(I->G,cSetting_ray_transparency_oblique_power);
+   trans_cutoff     = SettingGetGlobal_f(I->G,cSetting_ray_trace_trans_cutoff);
+   persist_cutoff     = SettingGetGlobal_f(I->G,cSetting_ray_trace_persist_cutoff);
+
    if(trans_mode==1) two_sided_lighting = true;
    if(trans_cont>1.0F) {
      trans_cont_flag = true;
@@ -2218,8 +2226,13 @@ int RayTraceThread(CRayThreadInfo *T)
    }
 	ambient				= T->ambient;
     /* divide up the reflected light component over all lights */
-	lreflect			= SceneGetReflectValue(I->G,10);
-	direct				= SettingGet(I->G,cSetting_direct);
+    {
+      float reflect_scale = SceneGetReflectScaleValue(I->G,10);
+      lreflect			= reflect_scale * (SettingGetGlobal_f(I->G,cSetting_reflect) - ray_scatter);
+      if(lreflect<_0) lreflect=_0;
+      ray_scatter = ray_scatter * reflect_scale;
+    }
+    direct				= SettingGet(I->G,cSetting_direct);
 
 	/* apply legacy adjustments */
 
@@ -2620,8 +2633,8 @@ int RayTraceThread(CRayThreadInfo *T)
                          }
                        } else {
                          if(!perspective) 
-                           new_front	= r1.dist;
-                        
+                           new_front	= r1.dist;                        
+
                          if(r1.prim->type==cPrimTriangle) {
                           
                            BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
@@ -2675,6 +2688,23 @@ int RayTraceThread(CRayThreadInfo *T)
                              fc[2]=r1.prim->c1[2];
                            }
                          }
+
+                         if((trans_oblique!=_0)&&(r1.trans!=_0)) {
+                           if(r1.surfnormal[2]>_0) {
+                             float oblique_factor= r1.surfnormal[2];;
+                             if(oblique_factor!=_1) {
+                               if(r1.surfnormal[2]>_p5) {
+                                 oblique_factor = (float)(_p5+_p5*(_1-pow((_1-oblique_factor)*_2,oblique_power)));
+                               } else {
+                                 oblique_factor = (float)(_p5*pow(oblique_factor*_2,oblique_power));
+                               }
+                             }
+                             r1.trans *= (trans_oblique * oblique_factor) + (1.0F-trans_oblique);
+                             if(r1.trans<0.06F) 
+                               r1.trans=0.06F; /* don't allow transparent to become opaque */
+                           }
+                         }
+
                          dotgle=-r1.dotgle;
                         
                          if(r1.flat_dotgle < _0)
@@ -2743,7 +2773,12 @@ int RayTraceThread(CRayThreadInfo *T)
                        if(settingSpecDirect!=_0) {
                          
 #if 1
-                         excess	= (float)( pow(r1.surfnormal[2], settingSpecDirectPower) * settingSpecDirect);
+                         if(r1.surfnormal[2]>_0) {
+                           excess	= (float)( pow(r1.surfnormal[2], settingSpecDirectPower) * settingSpecDirect);
+                         } else {
+                           excess =_0;
+                         }
+                                  
 #else
                          float tmp[3];
                          tmp[0] = r1.dir[0];
@@ -2806,6 +2841,10 @@ int RayTraceThread(CRayThreadInfo *T)
                              }
 
                              if(bc<(spec_count+2)) {
+
+                               if(ray_scatter!=_0) /* scattered specular light */
+                                 excess += ray_scatter * dotgle;
+
                                if(spec_local&&perspective) {
                                  /* slower, C4D-like local specular */
                                  float tmp[3];
@@ -3060,7 +3099,9 @@ int RayTraceThread(CRayThreadInfo *T)
                       
                      }
 
-                   if(depth&&(i>=0)&&(r1.trans<0.05F)&&(persist>0.95F)) {
+                   if(depth&&(i>=0)&&
+                      (r1.trans<trans_cutoff)&&
+                      (persist>persist_cutoff)) {
                      depth[pixel - T->image] =(T->front + r1.impact[2]);
                    }
                   

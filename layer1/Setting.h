@@ -741,7 +741,11 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_suppress_hidden            548
 #define cSetting_session_compression        549
 #define cSetting_movie_fps                  550
-
+#define cSetting_ray_transparency_oblique   551
+#define cSetting_ray_trace_trans_cutoff     552
+#define cSetting_ray_trace_persist_cutoff   553
+#define cSetting_ray_transparency_oblique_power 554
+#define cSetting_ray_scatter                555
 /* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -750,7 +754,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       551
+#define cSetting_INIT                       556
 
 #endif
 

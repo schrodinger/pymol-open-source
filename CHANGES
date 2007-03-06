@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 1.00b19
 
+    * ray_scatter setting (gives a huge increase in image realism)
+
+    * ray_trace_trans_cutoff, ray_trace_persist_cutoff settings
+
+    * improved transparency model with ray_transparency_oblique
+
     * alignment objects now created by alignment menus
 
     * support for scenes in interpolated views (wow that is cool).
