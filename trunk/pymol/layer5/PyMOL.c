@@ -697,6 +697,11 @@ typedef struct _CPyMOL {
   ov_word lex_suppress_hidden;
   ov_word lex_session_compression;
   ov_word lex_movie_fps;
+  ov_word lex_ray_transparency_oblique;
+  ov_word lex_ray_trace_trans_cutoff;
+  ov_word lex_ray_trace_persist_cutoff; 
+  ov_word lex_ray_transparency_oblique_power;
+  ov_word lex_ray_scatter;
 
 } _CPyMOL;
 
@@ -1391,7 +1396,12 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(suppress_hidden,548);
   LEX_SETTING(session_compression,549);
   LEX_SETTING(movie_fps,550);
-  
+  LEX_SETTING(ray_transparency_oblique,551);
+  LEX_SETTING(ray_trace_trans_cutoff,552);
+  LEX_SETTING(ray_trace_persist_cutoff,553);
+  LEX_SETTING(ray_transparency_oblique_power,554);  
+  LEX_SETTING(ray_scatter,555);
+
   return_OVstatus_SUCCESS;
 }
 

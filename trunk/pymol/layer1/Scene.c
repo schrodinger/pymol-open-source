@@ -5898,10 +5898,9 @@ float SceneGetSpecularValue(PyMOLGlobals *G,float spec,int limit)
   return spec;
 }
 
-float SceneGetReflectValue(PyMOLGlobals *G,int limit)
+float SceneGetReflectScaleValue(PyMOLGlobals *G,int limit)
 {
-  float reflect = SettingGetGlobal_f(G,cSetting_reflect);
-
+  float result = 1.0F;
   register float _1 = 1.0F;
   int n_light = SettingGetGlobal_i(G,cSetting_light_count);  
   if(n_light>limit)
@@ -5957,11 +5956,10 @@ float SceneGetReflectValue(PyMOLGlobals *G,int limit)
         }
       }
     }
-    
     sum *= 0.5;
-    reflect = 0.870 * reflect/sum;
+    return result/sum;
   }
-  return reflect;
+  return result;
 }
 
 static void SceneProgramLighting(PyMOLGlobals *G)
@@ -5973,7 +5971,8 @@ static void SceneProgramLighting(PyMOLGlobals *G)
   float direct = SettingGetGlobal_f(G,cSetting_direct);
   float f;
   float vv[4];
-  float reflect = SceneGetReflectValue(G,8);
+  float reflect = SceneGetReflectScaleValue(G,8) * SettingGetGlobal_f(G,cSetting_reflect);
+
   float spec_value = SettingGet(G,cSetting_specular);
   if(spec_value == 1.0F) {
     spec_value=SettingGet(G,cSetting_specular_intensity);

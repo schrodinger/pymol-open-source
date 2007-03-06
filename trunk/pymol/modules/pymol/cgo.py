@@ -323,10 +323,10 @@ class RenderReader:
         self.append_last()
         l = f.readline()
         if l:
-            print l
             s = string.split(l)
             (mphong, mspec, sr, sg, sb, clrity) = map(float,s[0:6])
-            print clrity
+            if clrity>0.999:
+                clrity=0.999
             self.obj.extend([ALPHA, 1.0-clrity])
             opts1 = int(s[6])
             opts4 = int(s[9])

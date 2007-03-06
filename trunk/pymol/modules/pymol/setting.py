@@ -584,6 +584,11 @@ if __name__=='pymol.setting':
         suppress_hidden           = (548,'')
         session_compression       = (549,'')
         movie_fps                 = (550,'')
+        ray_transparency_oblique  = (551,'')
+        ray_trace_trans_cutoff    = (552,'')
+        ray_trace_persist_cutoff  = (553,'')
+        ray_transparency_oblique_power  = (554,'')
+        ray_scatter = (555,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
