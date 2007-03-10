@@ -1,3 +1,4 @@
+
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
 #C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
@@ -102,6 +103,7 @@ if __name__=='pymol.cmd':
             r"\.pse$|", # PyMOL session (pickled dictionary)
             r"\.pmo$|", # Experimental molecular object format
             r"\.moe$|", # MOE (proprietary)
+            r"\.mae$|", # MAE (proprietary)            
             r"\.ccp4$|", # CCP4
             r"\.top$|", # AMBER Topology
             r"\.trj$|", # AMBER Trajectory
@@ -878,6 +880,27 @@ DEVELOPMENT TO DO
                         # END PROPRIETARY CODE SEGMENT
                     except ImportError:
                         print "Error: .MOE format not supported by this PyMOL build."
+                        if _raising(-1): raise pymol.CmdException
+                        
+                elif ftype == loadable.mae:
+                    try:
+                        # BEGIN PROPRIETARY CODE SEGMENT
+                        from epymol import schrodinger
+
+                        if (string.find(finfo,":")>1):
+                            mae_file = urllib.urlopen(finfo)
+                        else:
+                            mae_file = open(finfo)
+                        mae_str = mae_file.read()
+                        mae_file.close()
+                        r = schrodinger.read_maestr(mae_str,str(oname),
+                                                    int(state),
+                                                    int(finish),int(discrete),
+                                                    int(quiet),int(zoom))
+                        
+                        # END PROPRIETARY CODE SEGMENT
+                    except ImportError:
+                        print "Error: .MAE format not supported by this PyMOL build."
                         if _raising(-1): raise pymol.CmdException
                         
                 else:
@@ -2262,6 +2285,7 @@ SEE ALSO
             'count_atoms'    : [ selection_sc           , 'selection'       , ''   ],
             'delete'         : [ selection_sc           , 'selection'       , ''   ],
             'deprotect'      : [ selection_sc           , 'selection'       , ''   ],
+            'distance'       : [ object_sc              , 'object'       , ''   ],
             'extract'        : [ object_sc              , 'object'          , ''   ],      
             'full_screen'    : [ toggle_sc              , 'option'          , ''   ],
             'feedback'       : [ fb_action_sc           , 'action'          , ', ' ],
@@ -2310,14 +2334,14 @@ SEE ALSO
     # 2nd
             {
             'align'          : [ selection_sc           , 'selection'       , ''   ],
-            'as'             : [ selection_sc           , 'selection'       , ''   ],
-            'feedback'       : [ fb_module_sc           , 'module'          , ', ' ],
             'button'         : [ controlling.but_mod_sc , 'modifier'        , ', ' ],
+            'as'             : [ selection_sc           , 'selection'       , ''   ],
+            'distance'       : [ selection_sc           , 'selection'       , ''   ],            
+            'feedback'       : [ fb_module_sc           , 'module'          , ', ' ],
             'show'           : [ selection_sc           , 'selection'       , ''   ],
             'extract'        : [ selection_sc           , 'selection'       , ''   ],
             'gradient'       : [ map_sc                 , 'map object'      , ','  ],
-            'get'             : [ object_sc             , 'object'          , ','  ],            
-            
+            'get'             : [ object_sc             , 'object'          , ','  ],                        
             'hide'           : [ selection_sc           , 'selection'       , ''   ],
             'color'          : [ selection_sc           , 'selection'       , ''   ],
             'select'         : [ selection_sc           , 'selection'       , ''   ],
@@ -2346,14 +2370,15 @@ SEE ALSO
             },
     #3rd
             {
-            'spectrum'       : [ selection_sc           , 'selection'       , ''   ],
-            'feedback'       : [ fb_mask_sc             , 'mask'            , ''   ],
-            'order'          : [ controlling.location_sc, 'location'        , ','  ],
             'button'         : [ controlling.but_act_sc , 'button action'   , ''   ],
+            'distance'       : [ selection_sc           , 'selection'       , ''   ],
+            'feedback'       : [ fb_mask_sc             , 'mask'            , ''   ],            
             'flag'           : [ editing.flag_action_sc , 'flag action'     , ''   ],
             'map_set'        : [ map_sc                 , 'map'             , ' '   ],
+            'order'          : [ controlling.location_sc, 'location'        , ','  ],
             'set'            : [ selection_sc           , 'selection'         , ','  ],
             'set_bond'       : [ selection_sc           , 'selection'         , ','  ],
+            'spectrum'       : [ selection_sc           , 'selection'       , ''   ],
             'unset_bond'     : [ selection_sc           , 'selection'         , ','  ],
             },
     #4th
