@@ -589,6 +589,7 @@ if __name__=='pymol.setting':
         ray_trace_persist_cutoff  = (553,'')
         ray_transparency_oblique_power  = (554,'')
         ray_scatter = (555,'')
+        h_bond_from_proton = (556,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

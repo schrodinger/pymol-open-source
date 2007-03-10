@@ -378,7 +378,9 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,str
 int ObjectMoleculeSetDiscrete(PyMOLGlobals *G,ObjectMolecule *I,int discrete);
 
 float ObjectMoleculeGetMaxVDW(ObjectMolecule *I);
-int ObjectMoleculeGetCheckHBond(ObjectMolecule *don_obj,
+int ObjectMoleculeGetCheckHBond(int *h_is_real,
+                                float *h_crd_ret,
+                                ObjectMolecule *don_obj,
                                 int don_atom,
                                 int don_state,
                                 ObjectMolecule *acc_obj,
