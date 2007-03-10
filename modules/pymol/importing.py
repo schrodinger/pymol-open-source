@@ -87,7 +87,7 @@ if __name__=='pymol.importing':
         g96 = 46      # g96 trajectory format (via plugin)
         dcd = 47      # dcd trajectory format (via plugin)
         cube = 48     # cube volume file (via plugin)
-        
+        mae = 49      # Schrodinger ".mae" format (proprietary)
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
     def set_session(session,partial=0,quiet=1):
@@ -530,6 +530,8 @@ SEE ALSO
                     ftype = loadable.png
                 elif re.search("\.moe$",filename,re.I):
                     ftype = loadable.moe
+                elif re.search("\.mae$",filename,re.I):
+                    ftype = loadable.mae
                 elif re.search("\.cube$",filename,re.I):
                     ftype = loadable.cube
                 elif re.search("\.map$",filename,re.I):
@@ -666,15 +668,16 @@ SEE ALSO
                 r = read_mol2str(string.join(data,''),name,state,finish,discrete,quiet)
             elif ftype==loadable.xplor:
                 r = read_xplorstr(string.join(data,''),name,state,finish,discrete,quiet)
-            elif ftype==loadable.moe:
+            elif ftype==loadable.mae:
                 try:
                     # BEGIN PROPRIETARY CODE SEGMENT
-                    from epymol import moe
-                    r = moe.read_moestr(string.join(data,''),name,state,
-                                    finish,discrete,quiet)
+                    from epymol import schrodinger
+                    r = schrodinger.read_maestr(string.join(data,''),
+                                                name,state,
+                                                finish,discrete,quiet)
                     # END PROPRIETARY CODE SEGMENT
                 except ImportError:
-                    print "Error: .MOE format not supported by this PyMOL build."
+                    print "Error: .MAE format not supported by this PyMOL build."
                     if raising(-1): raise pymol.CmdException
             elif ftype==loadable.sdf1: # Python-based SDF reader
                 sdf = SDF(PseudoFile(data),'pf')
