@@ -3376,7 +3376,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_session_compression,0);
   set_f(I,cSetting_movie_fps,30.0);
   set_f(I,cSetting_movie_fps,30.0);
-  set_f(I,cSetting_ray_transparency_oblique,0.5F);
+  set_f(I,cSetting_ray_transparency_oblique,0.0F);
   set_f(I,cSetting_ray_trace_trans_cutoff,0.05);
   set_f(I,cSetting_ray_trace_persist_cutoff,0.10);
   set_f(I,cSetting_ray_trace_persist_cutoff,0.10);
