@@ -746,6 +746,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_ray_trace_persist_cutoff   553
 #define cSetting_ray_transparency_oblique_power 554
 #define cSetting_ray_scatter                555
+#define cSetting_h_bond_from_proton         556
+
 /* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -754,7 +756,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       556
+#define cSetting_INIT                       557
 
 #endif
 

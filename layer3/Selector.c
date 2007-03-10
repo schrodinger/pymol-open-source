@@ -1688,18 +1688,29 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
                         exclude = false;
                       }
                     
+                      /*                      if(!exclude) {
+                        printf("at1 %s %s vs at0 %s %s\n",
+                               obj1->AtomInfo[at1].resi,
+                               obj1->AtomInfo[at1].name,
+                               obj0->AtomInfo[at0].resi,
+                               obj0->AtomInfo[at0].name
+                               );
+                      }
+                      */
                       if((!exclude)&&
-                         ObjectMoleculeGetCheckHBond(obj1, /* donor first */
+                         ObjectMoleculeGetCheckHBond(NULL,
+                                                     NULL,
+                                                     obj1, /* donor first */
                                                      at1,
                                                      state,
                                                      obj0, /* then acceptor */
                                                      at0,
                                                      state,
                                                      hbc)) {
-                      
-                        /*                      printf(" found hbond between acceptor resi %s and donor resi %s\n",
-                                                res[a0].obj->AtomInfo[at0].resi,
-                                                res[I->Flag2[as1]].obj->AtomInfo[I->Table[as1].atom].resi);*/
+                        
+                        /*                        printf(" found hbond between acceptor resi %s and donor resi %s\n",
+                                                  res[a0].obj->AtomInfo[at0].resi,
+                                                  res[I->Flag2[as1]].obj->AtomInfo[I->Table[as1].atom].resi);*/
                       
                         a1 = I->Flag2[as1]; /* index in SS n_res space */
                       
@@ -1775,8 +1786,8 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
             if(helix_phi_delta>180.0F) helix_phi_delta = 360.0F-helix_phi_delta;
             if(strand_phi_delta>180.0F) strand_phi_delta = 360.0F-strand_phi_delta;
 
-            /*            printf("helix %d strand %d\n",helix_delta,strand_delta);*/
-              
+            /* printf("helix %d strand %d\n",helix_delta,strand_delta);*/
+               
             if((helix_psi_delta>helix_psi_exclude)||
                (helix_phi_delta>helix_phi_exclude)) {
               r->flags |= cSSPhiPsiNotHelix;
@@ -10051,6 +10062,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
   HBondCriteria hbcRec,*hbc;
   int exclusion = 0;
   int bonds_only = 0;
+  int from_proton = SettingGetGlobal_b(G,cSetting_h_bond_from_proton);
 
   switch(mode) {
   case 1:
@@ -10140,6 +10152,9 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
         cs2=obj2->CSet[state2];
         if(cs1&&cs2) { 
     
+          float *don_vv = NULL;
+          float *acc_vv = NULL;
+
           ai1=obj1->AtomInfo+at1;
           ai2=obj2->AtomInfo+at2;
 
@@ -10169,6 +10184,9 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
             
             if(dist<cutoff) {
               
+              float h_crd[3];
+              int h_real = false;
+
               a_keeper=true;
               if(exclusion && (obj1==obj2)) {
                 a_keeper = !SelectorCheckNeighbors(G,exclusion,
@@ -10181,15 +10199,26 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
               }
               if(a_keeper&&(mode==2)) {
                 if(ai1->hb_donor&&ai2->hb_acceptor) {
-                  a_keeper = ObjectMoleculeGetCheckHBond(obj1,
+                  a_keeper = ObjectMoleculeGetCheckHBond(&h_real,
+                                                         h_crd,
+                                                         obj1,
                                                          at1,
                                                          state1,
                                                          obj2,
                                                          at2,
                                                          state2,
                                                          hbc);
+                  if(a_keeper) {
+                    if(h_real && from_proton) 
+                      don_vv = h_crd;
+                    else
+                      don_vv = cs1->Coord + 3*idx1;
+                    acc_vv = cs2->Coord + 3*idx2;
+                  }
                 } else if(ai1->hb_acceptor&&ai2->hb_donor) {
-                  a_keeper = ObjectMoleculeGetCheckHBond(obj2,
+                  a_keeper = ObjectMoleculeGetCheckHBond(&h_real,
+                                                         h_crd,
+                                                         obj2,
                                                          at2,
                                                          state2,
                                                          obj1,
@@ -10197,6 +10226,13 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
                                                          state1,
                                                          hbc);
                   
+                  if(a_keeper) {
+                    if(h_real && from_proton) 
+                      don_vv = h_crd;
+                    else
+                      don_vv = cs2->Coord + 3*idx2;
+                    acc_vv = cs1->Coord + 3*idx1;
+                  }
                 } else {
                   a_keeper = false;
                 }
@@ -10209,15 +10245,25 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
                 dist_cnt++;
                 dist_sum+=dist;
                 VLACheck(vv,float,(nv*3)+5);
-                vv0 = vv+ (nv*3);
-                vv1 = cs1->Coord+3*idx1;
-                *(vv0++) = *(vv1++);
-                *(vv0++) = *(vv1++);
-                *(vv0++) = *(vv1++);
-                vv1 = cs2->Coord+3*idx2;
-                *(vv0++) = *(vv1++);
-                *(vv0++) = *(vv1++);
-                *(vv0++) = *(vv1++);
+                vv0 = vv + (nv*3);
+
+                if((mode==2)&&(don_vv)&&(acc_vv)) {
+                  *(vv0++) = *(don_vv++);
+                  *(vv0++) = *(don_vv++);
+                  *(vv0++) = *(don_vv++);
+                  *(vv0++) = *(acc_vv++);
+                  *(vv0++) = *(acc_vv++);
+                  *(vv0++) = *(acc_vv++);
+                } else {
+                  vv1 = cs1->Coord+3*idx1;
+                  *(vv0++) = *(vv1++);
+                  *(vv0++) = *(vv1++);
+                  *(vv0++) = *(vv1++);
+                  vv1 = cs2->Coord+3*idx2;
+                  *(vv0++) = *(vv1++);
+                  *(vv0++) = *(vv1++);
+                  *(vv0++) = *(vv1++);
+                }
                 
                 nv+=2;
               }

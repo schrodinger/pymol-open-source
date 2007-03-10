@@ -6187,7 +6187,6 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,
     ObjectMoleculeSort(I);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
-
   }
   return(I);
 #endif

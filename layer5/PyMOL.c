@@ -702,7 +702,7 @@ typedef struct _CPyMOL {
   ov_word lex_ray_trace_persist_cutoff; 
   ov_word lex_ray_transparency_oblique_power;
   ov_word lex_ray_scatter;
-
+  ov_word lex_h_bond_from_proton;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1401,6 +1401,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_trace_persist_cutoff,553);
   LEX_SETTING(ray_transparency_oblique_power,554);  
   LEX_SETTING(ray_scatter,555);
+  LEX_SETTING(h_bond_from_proton,556);
 
   return_OVstatus_SUCCESS;
 }
