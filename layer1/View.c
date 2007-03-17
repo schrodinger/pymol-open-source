@@ -107,7 +107,7 @@ PyObject *ViewElemAsPyList(PyMOLGlobals *G, CViewElem *view)
       st = OVLexicon_FetchCString(G->Lexicon,view->scene_name);
       PyList_SetItem(result, 14,PyString_FromString(st));
     } else {
-      PyList_SetItem(result, 14,PyInt_FromLong(0);
+      PyList_SetItem(result, 14,PyInt_FromLong(0));
     }
   }
 
