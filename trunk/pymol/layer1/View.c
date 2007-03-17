@@ -98,14 +98,16 @@ PyObject *ViewElemAsPyList(PyMOLGlobals *G, CViewElem *view)
     
     PyList_SetItem(result,12,PyInt_FromLong(view->specification_level));
 
-    PyList_SetItem(result,13,PyInt_FromLong(view->ortho_flag));  
+    PyList_SetItem(result,13,PyInt_FromLong(view->scene_flag));  
     
-    {
+    if(view->scene_flag && view->scene_name) {
       char null_st[1] = "";
       char *st = null_st;
       
       st = OVLexicon_FetchCString(G->Lexicon,view->scene_name);
       PyList_SetItem(result, 14,PyString_FromString(st));
+    } else {
+      PyList_SetItem(result, 14,PyInt_FromLong(0);
     }
   }
 
