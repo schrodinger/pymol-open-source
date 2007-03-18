@@ -1,4 +1,6 @@
 
+# BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") 
+
 include Rules.make
 
 all: unix contrib
@@ -220,3 +222,4 @@ compileall:
 	$(PYTHON_EXE) modules/compile_pymol.py
 
 
+# END PROPRIETARY CODE SEGMENT 
