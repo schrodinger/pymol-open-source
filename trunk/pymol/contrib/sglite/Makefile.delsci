@@ -1,0 +1,26 @@
+# BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") 
+
+include ../../Rules.delsci
+
+CFLAGS = $(C_FLAGS) -I../modules
+
+OBJ= sgglobal.o sgcb.o sgcharmx.o sgfile.o sggen.o sghall.o sghkl.o \
+    sgltr.o sgmath.o sgmetric.o sgnorm.o sgprop.o sgss.o sgstr.o sgsymbols.o \
+    sgtidy.o sgtype.o sgutil.o runtests.o sglitemodule.o 
+
+all: sglite.so
+static: $(OBJ)
+
+.c.o: 
+	$(CC) $(CFLAGS) -c $*.c -DPythonTypes
+
+sglite.so: $(OBJ) 
+	$(CC) $(CCOPT1) $(BUILD) *.o -o sglite.so
+
+clean:
+	touch .no_fail
+	/bin/rm -f *.so *.o .no_fail*
+
+distclean: clean
+
+# END PROPRIETARY CODE SEGMENT 
