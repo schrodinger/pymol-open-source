@@ -1,0 +1,19 @@
+
+# BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") 
+
+all: library
+
+include ../../../../../Rules.delsci
+include objects.make
+
+CFLAGS=-I../../include $(CCOPT1) $(CCOPT2)
+CPPFLAGS=-I../../include  $(CCOPT1) $(CCOPT2)
+
+library: $(OBJS) PlugIOManagerInit.o
+
+static: $(DEPS) $(OBJS)
+
+clean:
+	/bin/rm -f *.o 
+
+# END PROPRIETARY CODE SEGMENT 
