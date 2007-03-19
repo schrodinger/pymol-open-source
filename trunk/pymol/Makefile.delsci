@@ -1,15 +1,4 @@
 
-# The old PyMOL Makefile's have been renamed in order to make room for
-# the new GNU Build System-based compilation.
-
-# At present, however, DeLano Scientific LLC only supports end-user
-# compilation of open-source PyMOL source code using Python distutils.
-
-# This Makefile.delsci (and others) are for internal company use only
-# and may or may not be present in future open-source code releases.
-
-# BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") 
-
 include Rules.delsci
 
 all: unix contrib
@@ -89,7 +78,7 @@ semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) -f Makefile.delsci static
 	cd contrib/uiuc/plugins/molfile_plugin/src;$(MAKE) -f Makefile.delsci
-	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o contrib/uiuc/plugins/molfile_plugin/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)	
+	g++ $(BUILD) $(DEST) */*.o ov/src/*.o contrib/uiuc/plugins/molfile_plugin/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)	
 	$(PYTHON_EXE) modules/compile_pymol.py
 
 # need to be root to do this...
@@ -231,4 +220,3 @@ compileall:
 	$(PYTHON_EXE) modules/compile_pymol.py
 
 
-# END PROPRIETARY CODE SEGMENT 
