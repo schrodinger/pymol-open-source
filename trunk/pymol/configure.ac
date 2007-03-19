@@ -1,6 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT([pymol], [1.0.0], [bugs@delsci.com])
 AM_INIT_AUTOMAKE
+AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_DISABLE_STATIC
