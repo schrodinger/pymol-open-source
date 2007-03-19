@@ -1,18 +1,20 @@
 SUBDIRS = ov/src layer0 layer1 layer2 layer3 layer4 layer5 \
-  contrib/sglite contrib/modules contrib/champ contrib/pyopengl
+  contrib/uiuc/plugins/molfile_plugin/src \
+  contrib/sglite contrib/modules contrib/champ contrib/pyopengl 
 
 
 pymollibdir = $(PWD)/built
 pymollib_LTLIBRARIES = libpymol.la
 libpymol_la_SOURCES =
 libpymol_la_LIBADD = \
+contrib/uiuc/plugins/molfile_plugin/src/libmolfile_plugin0.la \
 ov/src/libov.la \
 layer0/liblayer0.la \
 layer1/liblayer1.la \
 layer2/liblayer2.la \
 layer3/liblayer3.la \
 layer4/liblayer4.la \
-layer5/liblayer5.la
+layer5/liblayer5.la 
 
 champlibdir = $(PWD)/built
 champlib_LTLIBRARIES = libchamp.la
