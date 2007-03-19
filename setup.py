@@ -92,7 +92,7 @@ else: # linux or standard unix
    
 setup ( # Distribution meta-data
    name = "pymol",
-	version = "0.99",
+	version = "1.0.0",
 	package_dir = {'' : 'modules'},
 	packages = ['chempy',
                'chempy/bmin',
