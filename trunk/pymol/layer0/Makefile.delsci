@@ -1,0 +1,21 @@
+
+# BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") 
+
+include ../Rules.delsci
+
+CFLAGS = $(PYMOL_INC_DIRS) $(C_FLAGS) -I../ov/src
+
+all: layer
+
+include .includes
+
+.c.p:
+	$(CC) -M $(CFLAGS) $< | sed 's/$*\\.o[ :]*/& $@/g;s/[^ ]*\/usr\/[^ ]*//g;s/[^ ]*\/ext\/[^ ]*//g' > $@
+
+layer: $(DEPS) $(OBJS)
+
+depends: $(DEPS)
+	cat *.p > .depends;cat .files .depends > .includes;
+
+# END PROPRIETARY CODE SEGMENT 
+
