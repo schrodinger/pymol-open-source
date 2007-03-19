@@ -2,53 +2,39 @@
 INSTALLATION VIA COMPILATION 
 ----------------------------------------------------------------------
 
-There are now two approaches for building PyMOL from source:
+There is currently only one *supported* approach for building and
+installing PyMOL from the open-source code: via Python Disutils.
 
-   1. Using Python Distutils, so that PyMOL gets installed in the 
-      Python library directory (without source code).
+You must have OpenGL, glut, libpng, tcl/tk, python, freetype2, and Pmw
+already installed on your system for this to work.
 
-   2. Using standard Makefiles, so that PyMOL remains standalone, and
-      is based out of the current directory (with source code). 
-
-Approach 1 is recommended if:
-
-  (A) you only want to use a single copy of PyMOL, or
-
-  (B) you don't plan on doing any PyMOL development, or
-
-  (C) you are packaging PyMOL for a standard distribution, or
-
-  (D) you are building on Windows using either Cygwin or Visual C.
-
-Approach 2 is recommended if:
-
-  (A) you want to keep your Python installation free of PyMOL, or
-
-  (B) you plan on doing PyMOL development and need both fast/partial
-      recompiles, debugging support, and careful build control, or
-
-  (C) you want to maintain multiple functioning versions of PyMOL
-      on a single system.
-
-To use Approach 1:
-
-   You must have OpenGL, glut, libpng, tcl/tk, python, freetype2, and
-   Pmw already installed on your system for this to work.
-
-   python setup.py install
-   python setup2.py install
-   ./pymol
-
-To use Approach 2:
-
-   consult "INSTALL.generic" in the "setup" folder.
+    python setup.py install
+    python setup2.py install
+    ./pymol
 
 Good luck!
 
-Warren
-warren@delanoscientific.com
+Warren L. DeLano, Ph.D.
+warren@delsci.com
 
+PS. There are two other *unsupported* approaches intended mainly
+for development, with pymol runningly directly from this source
+directory instead of being installed globally.
 
+  1. GNU autotools: assumes that all of the external dependencies are
+     already installed in your system.
 
+    ./configure
+    make install
+    ./pymol
+    
+  2. DeLano Scientific LLC's internal Makefiles (proprietary): assumes
+     that external depencies are already compiled and present in the
+     local ./ext subdirectory.
+    
+    cp setup/Rules.xxxxx Rules.delci # (then configure manually)
+    make -f Makefile.delsci
+    ./setup/setup.sh
+    ./pymol
 
 
