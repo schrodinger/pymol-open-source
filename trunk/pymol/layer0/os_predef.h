@@ -16,6 +16,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_predef
 #define _H_os_predef
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /* Macros used by Fortify source in GCC 4.1.x are incompatible with
    PyMOL's Feedback system... */
 
