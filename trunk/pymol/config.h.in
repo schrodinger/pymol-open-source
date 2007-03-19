@@ -57,8 +57,11 @@
 /* Define to 1 if the X Window System is missing or not being used. */
 #undef X_DISPLAY_MISSING
 
-/* Build as a module */
+/* Uses FreeType fonts */
 #undef _PYMOL_FREETYPE
 
 /* Build as a module */
 #undef _PYMOL_MODULE
+
+/* Uses VMD Plugins */
+#undef _PYMOL_VMD_PLUGINS

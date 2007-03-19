@@ -50,7 +50,8 @@ CPPFLAGS="-I$pythoninc $CPPFLAGS"
 AC_CONFIG_HEADERS([config.h])
 
 AC_DEFINE([_PYMOL_MODULE],[],[Build as a module])
-AC_DEFINE([_PYMOL_FREETYPE],[],[Build as a module])
+AC_DEFINE([_PYMOL_FREETYPE],[],[Uses FreeType fonts])
+AC_DEFINE([_PYMOL_VMD_PLUGINS],[],[Uses VMD Plugins])
 
 AC_CONFIG_FILES([
     Makefile
@@ -65,5 +66,6 @@ AC_CONFIG_FILES([
     contrib/modules/Makefile
     contrib/sglite/Makefile
     contrib/pyopengl/Makefile
+    contrib/uiuc/plugins/molfile_plugin/src/Makefile
     ])  
 AC_OUTPUT
