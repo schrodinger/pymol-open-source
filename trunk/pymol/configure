@@ -21746,7 +21746,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 
-ac_config_files="$ac_config_files Makefile ov/src/Makefile layer0/Makefile layer1/Makefile layer2/Makefile layer3/Makefile layer4/Makefile layer5/Makefile contrib/sglite/Makefile contrib/modules/Makefile contrib/champ/Makefile"
+ac_config_files="$ac_config_files Makefile ov/src/Makefile layer0/Makefile layer1/Makefile layer2/Makefile layer3/Makefile layer4/Makefile layer5/Makefile contrib/champ/Makefile contrib/modules/Makefile contrib/sglite/Makefile contrib/pyopengl/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -22342,9 +22342,10 @@ do
     "layer3/Makefile") CONFIG_FILES="$CONFIG_FILES layer3/Makefile" ;;
     "layer4/Makefile") CONFIG_FILES="$CONFIG_FILES layer4/Makefile" ;;
     "layer5/Makefile") CONFIG_FILES="$CONFIG_FILES layer5/Makefile" ;;
-    "contrib/sglite/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/sglite/Makefile" ;;
-    "contrib/modules/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/modules/Makefile" ;;
     "contrib/champ/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/champ/Makefile" ;;
+    "contrib/modules/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/modules/Makefile" ;;
+    "contrib/sglite/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/sglite/Makefile" ;;
+    "contrib/pyopengl/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/pyopengl/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
