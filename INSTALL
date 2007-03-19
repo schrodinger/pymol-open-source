@@ -22,7 +22,9 @@ for development, with pymol runningly directly from this source
 directory instead of being installed globally.
 
   1. GNU autotools: assumes that all of the external dependencies are
-     already installed in your system.
+     already installed in your system.  NOTE that make install only
+     targets the local directory -- this build approach is not
+     currently intended for installation -- use distutils for that.
 
     ./configure
     make install
