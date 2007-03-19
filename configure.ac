@@ -61,8 +61,9 @@ AC_CONFIG_FILES([
     layer3/Makefile
     layer4/Makefile
     layer5/Makefile
-    contrib/sglite/Makefile
-    contrib/modules/Makefile
     contrib/champ/Makefile
+    contrib/modules/Makefile
+    contrib/sglite/Makefile
+    contrib/pyopengl/Makefile
     ])  
 AC_OUTPUT
