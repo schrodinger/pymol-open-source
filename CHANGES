@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 1.00b19
 
+    * renamed all Makefile to Makefile.delsci in order to make room
+      for an autoconf-based build
+
     * fixed bug with scenes in interpolated views
     
     * pymol now draws h_bonds from proton to acceptor if proton present
