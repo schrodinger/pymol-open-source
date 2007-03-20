@@ -67,6 +67,7 @@ if __name__=='pymol.parsing':
     import threading
     import new
     import traceback
+    import copy
     
     class QuietException:
         def __init__(self,args=None):
@@ -123,6 +124,36 @@ if __name__=='pymol.parsing':
             return None
         return st[0:c]
 
+    def apply_arg(inp_arg,par=(),def_dict={}):
+        n_inp = len(inp_arg)
+        n_req = n_inp - len(def_dict)
+        result = []
+        inp_dict = {}
+        for a in inp_arg:
+            if a[0] != None:
+                inp_dict[a[0]] = a[1];
+        c = 0
+        for p in par:
+            if c<n_inp:
+                a = inp_arg[c]
+                if a[0] == None:
+                    result.append(a[1])
+                    c = c + 1
+                    continue
+            if inp_dict.has_key(p):
+                result.append(inp_dict[p])
+                del inp_dict[p]
+            elif def_dict.has_key(p):
+                result.append(def_dict[p])
+            elif c<n_req:
+                print "Error: invalid argument(s)."
+                raise QuietException
+            c = c + 1
+        if len(inp_dict):
+            print "Error: invalid argument(s)."            
+            raise QuietException
+        return result
+    
     def parse_arg(st,mode=STRICT):
         '''
     parse_arg(st)
@@ -214,19 +245,24 @@ if __name__=='pymol.parsing':
                     argval = None
                     mo = arg_value_re.match(st[cc:])
                     if not mo:
-                        print "Error: "+st
-                        print "Error: "+" "*cc+"^ syntax error (type 2)."
-                        raise QuietException
-                    argval = mo.group(0)
-                    cc=cc+mo.end(0)
-                    while 1: # pickup unqouted characters after quotes
-                        mo = arg_value_re.match(st[cc:])
-                        if not mo:
-                            break
-                        argval = argval + mo.group(0)
+                        if(st[cc:cc+1]!=','):
+                            print "Error: "+st
+                            print "Error: "+" "*cc+"^ syntax error (type 2)."
+                            raise QuietException
+                        else:
+                            # allow blank arguments
+                            result.append((nam,None))
+                    else:
+                        argval = mo.group(0)
                         cc=cc+mo.end(0)
-                    if argval!=None:
-                        result.append((nam,string.strip(argval)))
+                        while 1: # pickup unqouted characters after quotes
+                            mo = arg_value_re.match(st[cc:])
+                            if not mo:
+                                break
+                            argval = argval + mo.group(0)
+                            cc=cc+mo.end(0)
+                        if argval!=None:
+                            result.append((nam,string.strip(argval)))
                 # clean whitespace
                 mo = whitesp_re.match(st[cc:])
                 if mo:
