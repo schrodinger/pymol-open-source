@@ -1882,7 +1882,7 @@ SEE ALSO
             'pseudoatom'    : [ pseudoatom        , 0 , 0 , ''  , parsing.STRICT ],
             'push_undo'     : [ push_undo         , 0 , 0 , ''  , parsing.STRICT ],   
             'pwd'           : [ pwd               , 0 , 0 , ''  , parsing.STRICT ],
-            'python'        : [ dummy             , 0 , 1 , ',' , parsing.PYTHON_BLOCK ],
+            'python'        : [ dummy             , 0 , 2 , ',' , parsing.PYTHON_BLOCK ],
             'skip'          : [ dummy             , 0 , 1 , ',' , parsing.SKIP ],
             'raise'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
             'ramp_new'      : [ ramp_new          , 0 , 0 , ''  , parsing.STRICT ],      

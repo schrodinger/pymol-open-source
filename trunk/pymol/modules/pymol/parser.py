@@ -128,7 +128,10 @@ if __name__=='pymol.parser':
                     py_block = string.join(embed_list[nest],'')
                     del embed_list[nest]
                     embed_sentinel[nest]=None
-                    exec(py_block,pymol_names,pymol_names)
+                    try:
+                        exec(py_block,pymol_names,pymol_names)
+                    except:
+                        traceback.print_exc()
                 elif etn == 2: # skip block
                     print " Skip: skipped %d lines."%(embed_line[nest])
                     embed_sentinel[nest]=None
@@ -199,10 +202,10 @@ if __name__=='pymol.parser':
                                     raise QuietException
                                 com = amb
                             if cmd.keyword.has_key(com):
-    # here is the command and argument handling section
+                                # here is the command and argument handling section
                                 kw[nest] = cmd.keyword[com]
                                 if kw[nest][4]>=parsing.NO_CHECK:
-    # stricter, Python-based argument parsing
+                                    # stricter, Python-based argument parsing
                                     # remove line breaks (only important for Python expressions)
                                     com2[nest]=string.replace(com2[nest],'\n','')
 
@@ -219,10 +222,10 @@ if __name__=='pymol.parser':
                                         return None
                                     else:
                                        (args[nest],kw_args[nest]) = \
-                                                                        parsing.prepare_call(
-                                        kw[nest][0],
-                                        parsing.parse_arg(com2[nest],mode=kw[nest][4]),
-                                        kw[nest][4]) # will raise exception on failure
+                                        parsing.prepare_call(
+                                         kw[nest][0],
+                                         parsing.parse_arg(com2[nest],mode=kw[nest][4]),
+                                         kw[nest][4]) # will raise exception on failure
                                     result=apply(kw[nest][0],args[nest],kw_args[nest])
                                 elif kw[nest][4]==parsing.PYTHON:
                                         # handle python keyword
@@ -237,7 +240,7 @@ if __name__=='pymol.parser':
                                 else:
                                     # remove line breaks (only important for Python expressions)
                                     com2[nest]=string.replace(com2[nest],'\n','')
-    # old parsing style, being phased out
+                                    # old parsing style, being phased out
                                     if kw[nest][4]==parsing.ABORT:
                                         return None # SCRIPT ABORT EXIT POINT
                                     if kw[nest][4]==parsing.MOVIE: # copy literal single line, no breaks
@@ -271,11 +274,11 @@ if __name__=='pymol.parser':
                                     if kw[nest][1]<= len(args[nest]) <= kw[nest][2]:
                                         args[nest] = map(string.strip,args[nest])
                                         if kw[nest][4]<parsing.RUN:
-        #                           
-        # this is where old-style commands are invoked
-        #
+                                            #                           
+                                            # this is where old-style commands are invoked
+                                            #
                                             result=apply(kw[nest][0],args[nest])
-        #                           
+                                            #                           
                                         elif kw[nest][4]==parsing.SPAWN:
                                             if not secure:
                                                 # spawn command
@@ -348,25 +351,32 @@ if __name__=='pymol.parser':
                                                 raise None
                                         elif (kw[nest][4]==parsing.SKIP):
                                             next[nest] = ()
-                                            l = len(args[nest])
-                                            if (l>0) and args[nest][0]!='end':
-                                                embed_sentinel[nest] = args[nest][0]
-                                            elif l==0: # default sentinel
-                                                embed_sentinel[nest] = "skip end"
-                                            if embed_sentinel[nest]!=None:
+                                            arg = parsing.apply_arg(
+                                                parsing.parse_arg(com2[nest]),
+                                                ('sentinel',),
+                                                {'sentinel':'skip end'})
+                                            print arg
+                                            if len(args[nest]):
+                                                if args[nest][0]=='end': # probable 'skip end' to ignore
+                                                    arg = []
+                                            if len(arg):
+                                                embed_sentinel[nest] = arg[0]
                                                 embed_type[nest] = 2 # skip block
                                                 embed_line[nest] = 0
                                         elif (kw[nest][4]==parsing.PYTHON_BLOCK):
                                             next[nest] = ()
-                                            if not secure: 
-                                                l = len(args[nest])
-                                                if l>0:
-                                                    embed_sentinel[nest] = args[nest][0]
-                                                else:
-                                                    embed_sentinel[nest] = "python end"
+                                            if not secure:
+                                                arg = parsing.apply_arg(
+                                                    parsing.parse_arg(com2[nest]),
+                                                    ('sentinel','skip'),
+                                                    {'sentinel':'python end','skip':0})
+                                                embed_sentinel[nest] = arg[0]
                                                 list = []
                                                 embed_list[nest] = list
-                                                embed_type[nest] = 1 # python block
+                                                if arg[1]:
+                                                    embed_type[nest] = 2 # skip block
+                                                else:
+                                                    embed_type[nest] = 1 # python block
                                                 embed_line[nest] = 0
                                             else:
                                                 print 'Error: Python blocks disallowed in this file.'
