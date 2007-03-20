@@ -413,29 +413,50 @@ DESCRIPTION
 
 USAGE
 
-    load filename [,object [,state [,format [,finish [,discrete ]]]]]
+    load filename [,object [,state [,format ]]
 
+ARGUMENTS
+
+    filename: file path or a URL
+
+    object (default: filename prefix): name of the object
+
+    state = a number (default: 0): number of the state into which
+    the content should be loaded, or 0 for append
+
+    format = pdb, ccp4, etc. (default: filename extension): input data format
+    
+EXAMPLES
+
+    load 1dn2.pdb
+
+    load file001.pdb, ligand
+
+    load http://delsci.com/sample.pdb
+    
 NOTES
 
-    The file extension is used to determine the format, unless it is
-    specified explicitly.
+    The file extension is used to determine the format unless the
+    format name is provided explicitly.
 
-    If an object name specified, then the file is loaded into that
+    If an object name is specified, then the file is loaded into that
     object.  Otherwise, an object is created with the same name as the
     file prefix.  If a state value is not specified, then the content
     is appended after the last existing state (if any).
 
-    Supported molecular file formats include: .pdb, .mol, .mol2, .sdf,
-    .xyz, and others.
+    Supported molecular file formats include: pdb, mol, mol2, sdf,
+    xyz, and others.
 
-    Supported map formats include: .xplor, .ccp4, .phi, and others.
+    Supported map formats include: xplor, ccp4, phi, and others.
 
-    Accepted file formats are listed in the reference documentation.
+    All supported file formats are covered in the reference
+    documentation under File Formats.
 
 PYMOL API
 
     cmd.load(string filename, string object-name, integer state,
-             string format)
+             string format, int finish, int discrete, int quiet,
+             int multiplex, int zoom, int partial)
     
 SEE ALSO
 
