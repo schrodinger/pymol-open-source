@@ -8,7 +8,8 @@ installing PyMOL from the open-source code: via Python Disutils.
 You must have OpenGL, glut, libpng, tcl/tk, python, freetype2, and Pmw
 already installed on your system for this to work.
 
-    python setup.py install
+    python setup.py build
+    python setup.py install 
     python setup2.py install
     ./pymol
 
@@ -17,22 +18,27 @@ Good luck!
 Warren L. DeLano, Ph.D.
 warren@delsci.com
 
-PS. There are two other *unsupported* approaches intended mainly
-for development, with pymol runningly directly from this source
-directory instead of being installed globally.
+PS. There are two other *unsupported* approaches intended primarily
+for developer use, with pymol runningly directly out of the source
+directory instead of being installed into an external Python or the
+global system Python.
 
   1. GNU autotools: assumes that all of the external dependencies are
-     already installed in your system.  NOTE that make install only
-     targets the local directory -- this build approach is not
-     currently intended for installation -- use distutils for that.
+     already installed in your system.  NOTE: 'make install' only
+     targets the local "built" directory.  This build approach is not
+     currently intended for a Python-integrated installation --
+     see the above distutils approach for that -- but it could be quite
+     useful in situations where you want to build and maintain multiple
+     PyMOL versions on a single machine, either locally, or system-wide.
 
     ./configure
     make install
     ./pymol
-    
-  2. DeLano Scientific LLC's internal Makefiles (proprietary): assumes
-     that external depencies are already compiled and present in the
-     local ./ext subdirectory.
+    make clean (optional, to save space)
+
+  2. DeLano Scientific LLC's internal Makefiles (PROPRIETARY/AS IS):
+     assumes that external depencies are already compiled and present
+     in the local ./ext subdirectory.
     
     cp setup/Rules.xxxxx Rules.delci # (then configure manually)
     make -f Makefile.delsci

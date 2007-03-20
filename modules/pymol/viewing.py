@@ -57,7 +57,7 @@ if __name__=='pymol.viewing':
     scene_counter = 1
     scene_quit_on_action = ''
 
-    def zoom(selection="all",buffer=0.0,state=0,complete=0,animate=0):
+    def zoom(selection="all", buffer=0.0, state=0, complete=0, animate=0):
         '''
 DESCRIPTION
 
@@ -66,39 +66,53 @@ DESCRIPTION
 
 USAGE
 
-    zoom selection=all, buffer=0.0, state=0, complete=0, animate=0
-
+    zoom [ selection [, buffer [, state [, complete [, animate ]]]]]
+    
 EXAMPLES
 
-    zoom
+    zoom 
     zoom complete=1
+    zoom 142/, animate=3
     zoom (chain A)
-    zoom 142/
-
-PYMOL API
-
-    cmd.zoom(string selection, float buffer=0.0,
-             int state=0, int complete=0 )
 
 ARGUMENTS
 
-    state = 0 uses all coordinate states (default).
-    state = -1 uses only coordinates for the current state.
-    state > 0 uses coordinates for a specific state.
+    selection = a selection-expression or name pattern (default: "all").
 
-    complete > 0 will insure no atoms centers are clipped.
+    buffer = a floating point number (default: 0): distance
+    
+    state = 0 (default): uses all coordinate states (default)
+    
+    state = -1: uses only coordinates for the current state
+    
+    state > 0: uses coordinates for a specific state
 
-DISCUSSION
+    complete = 0 or 1: will insure no atoms centers are clipped
 
-    Normally, the zoom command tries to guess an optimal zoom level
-    for visualization, balancing closeness against occasional clipping
-    of atoms out of the field of view.  You can change this behavior
-    by setting the complete option to 1, which will guarantee that the
+    animate < 0: uses the default animation duration
+    
+    animate = 0: no animation
+    
+    animate > 0: animates using the provided duration in seconds
+    
+PYMOL API
+
+    cmd.zoom(string selection, float buffer, int state, int complete,
+             int animate)
+
+NOTES
+
+    The zoom command normally tries to guess an optimal zoom level for
+    visualization, balancing closeness against occasional clipping of
+    atoms out of the field of view.  You can change this behavior by
+    setting the complete option to 1, which will guarantee that the
     atom positions for the entire selection will fit in the field of
-    an orthoscopic view.  To absolutely prevent clipping, you may also
-    need to add a buffer (typically 2 A) to account for the perpective
+    an orthoscopic view.
+
+    To absolutely prevent clipping, you may also need to add an
+    additional buffer (typically 2 A) to account for the perpective
     transformation and for graphical representations which extend
-    beyond the atom coordinates..
+    beyond the atom coordinates.
 
 SEE ALSO
 
@@ -480,11 +494,11 @@ PYMOL API
         if _raising(r): raise QuietException
         return r
 
-    def show(representation="",selection=""):
+    def show(representation="", selection=""):
         '''
 DESCRIPTION
 
-    "show" turns on atom and bond representations.
+    "show" turns on representations for objects and selections.
 
 USAGE
 
@@ -492,17 +506,17 @@ USAGE
 
 ARGUMENTS
 
-    representation can one of: lines, spheres, mesh, ribbon, cartoon,
-       sticks, dots, surface, labels, extent, nonbonded, nb_spheres,
-       slice, extent, slice, dashes, angles, dihedrals, cgo, cell, callback, 
-       everything.
+    representation = lines, spheres, mesh, ribbon, cartoon, sticks,
+       dots, surface, labels, extent, nonbonded, nb_spheres, slice,
+       extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
+       or everything
 
-    selection can be a selection-pattern or an object-name-list.
+    selection = a selection-expression or name-pattern
 
 NOTES
 
     With no arguments, "show" alone turns on lines for all bonds and
-    nonbonded for all atoms.
+    nonbonded for all atoms in all molecular objects.
 
 EXAMPLES
 
@@ -625,7 +639,7 @@ SEE ALSO
         if _raising(r): raise QuietException
         return r
 
-    def hide(representation="",selection=""):
+    def hide(representation="", selection=""):
         '''
 DESCRIPTION
 
@@ -634,29 +648,30 @@ DESCRIPTION
 
 USAGE
 
-    hide reprentation [, selection]
+    hide [ representation [, selection ]]
 
 ARGUMENTS
 
-    repesentation is
-
-    representation can one of: lines, spheres, mesh, ribbon, cartoon,
+    representation =  lines, spheres, mesh, ribbon, cartoon,
        sticks, dots, surface, labels, extent, nonbonded, nb_spheres,
-       slice,extent, slice, dashes, angles, dihedrals, cgo, cell, callback, 
-       everything.
-    
+       slice, extent, slice, dashes, angles, dihedrals, cgo, cell, callback, 
+       or everything
+
+    selection = a selection-expression or name-pattern
+
+EXAMPLES
+
+    hide lines, all
+    hide ribbon
+
 PYMOL API
 
     cmd.hide(string representation, string selection)
 
-EXAMPLES
-
-    hide lines,all
-    hide ribbon
-
 SEE ALSO
 
     show, enable, disable
+
         '''
         r = DEFAULT_ERROR
         try:
@@ -838,10 +853,6 @@ USAGE
     key can be any string
     action should be 'store' or 'recall' (default: 'recall')
 
-PYMOL API
-
-    cmd.view(string key, string action)
-
 VIEWS
 
     Views F1 through F12 are automatically bound to function keys
@@ -853,6 +864,10 @@ EXAMPLES
 
     view 0,store
     view 0
+
+PYMOL API
+
+    cmd.view(string key, string action)
 
 SEE ALSO
 
@@ -1071,7 +1086,9 @@ ARGUMENTS
     previous, update, rename, or clear: (default = recall).  If
     rename, then a new_key argument must be explicitly defined.
 
-    message can contain a text message to display with the scene.
+    message: a text message to display with the scene.
+
+    new_key:  the new name for the scene
     
 EXAMPLES
 
@@ -1587,16 +1604,37 @@ PYMOL API
         if _raising(r): raise QuietException
         return r
 
-    def label(selection="(all)",expression="",quiet=1):
+    def label(selection="(all)", expression="", quiet=1):
         '''
 DESCRIPTION
 
-    "label" labels one or more atoms properties over a selection using
-    the python evaluator with a separate name space for each atom.  The
-    symbols defined in the name space are:
+    "label" labels one or more atoms in a selection by evaluating an
+    Python expression referencing properties for each atom.
 
-        name, resn, resi, chain, segi, alt, q, b, type (ATOM,HETATM) 
-        formal_charge, partial_charge, numeric_type, text_type
+USAGE
+
+    label [ selection [, expression ]]
+
+ARGUMENTS
+
+    selection = a selection-expression
+
+    expression = a Python expression that can be converted to a string
+    
+EXAMPLES
+
+    label chain A, chain
+    label name ca,"%s-%s" % (resn,resi)
+    label resi 200,"%1.3f" % partial_charge
+
+NOTES
+
+    The symbols defined in the name space are:
+
+        name, resi, resn, resv, chain, segi, model, alt, q, b, type,
+        index, rank, ID, ss, vdw, elec_radius, label, elem, geom,
+        flags, color, cartoon, valence, formal_charge, partial_charge,
+        numeric_type, text_type
 
     All strings in the expression must be explicitly quoted.  This
     operation typically takes several seconds per thousand atoms
@@ -1604,15 +1642,6 @@ DESCRIPTION
 
     To clear labels, simply omit the expression or set it to ''.
 
-USAGE
-
-    label (selection),expression
-
-EXAMPLES
-
-    label chain A, chain
-    label name ca,"%s-%s" % (resn,resi)
-    label resi 200,"%1.3f" % partial_charge
         '''
         # preprocess selection
         selection = selector.process(selection)
@@ -2038,7 +2067,7 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "color" changes the color of an object or an atom selection.
+    "color" changes the color of objects or atoms.
 
 USAGE
 
@@ -2046,9 +2075,9 @@ USAGE
 
 ARGUMENTS
 
-    color is a color or ramp name.
+    color = a color or ramp name
 
-    selection is name or selection pattern.
+    selection = a selection-expression or name-pattern
     
 PYMOL API
 
@@ -2057,7 +2086,7 @@ PYMOL API
 EXAMPLE 
 
     color cyan
-    color yellow, (name C*)
+    color yellow, chain A
         '''
         # preprocess selection
         selection = selector.process(selection)

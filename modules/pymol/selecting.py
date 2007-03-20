@@ -46,35 +46,44 @@ PYMOL API
         return r
     
 
-    def select(name,selection="",enable=-1,quiet=1,merge=0):
+    def select(name, selection="", enable=-1, quiet=1, merge=0):
         '''
 DESCRIPTION
 
-    "select" creates a named selection from an atom selection.
+    "select" creates a named atom selection from a
+    selection-expression.
 
 USAGE
 
     select name, selection
 
+    select ( selection )
+
 ARGUMENTS
 
-    name is a unique name for the selection.
+    name = a unique name for the selection (default: sele)
 
-    selection is the selection expression
-    
+    selection = a selection-expression
+
+NOTES
+
+    If a selection-expression with explicit surrounding parethenses is
+    provided as the first argument, then the default selection name
+    is used as the name argument.
+
+EXAMPLES 
+
+    select chA, chain A
+    select ( resn his )
+    select near142, resi 142 around 5
+
 PYMOL API
 
     cmd.select(string name, string selection)
 
-EXAMPLES 
+SEE ALSO
 
-    select near , (ll expand 8)
-    select near , (ll expand 8)
-    select bb, (name ca,n,c,o )
-
-NOTES
-
-    'help selections' for more information about selections.
+    delete
         '''
         r = DEFAULT_ERROR
         try:
