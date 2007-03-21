@@ -130,6 +130,9 @@ typedef struct _CPyMOL {
   OVOneToOne *Clip;  
   ov_word lex_near, lex_far, lex_move, lex_slab, lex_atoms;
 
+  OVOneToOne *Reinit;  
+  ov_word lex_settings;
+
   OVOneToOne *SelectList;
   ov_word lex_index, lex_id, lex_rank;
 
@@ -810,6 +813,20 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_CLIP(move,2);
   LEX_CLIP(slab,3);
   LEX_CLIP(atoms,4);
+
+#define LEX_REINIT(NAME,CODE) {if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#NAME))))  \
+    return_OVstatus_FAILURE \
+    else \
+    I -> lex_ ## NAME = result.word;} \
+    if(!OVreturn_IS_OK( OVOneToOne_Set(I->Reinit,I->lex_ ## NAME, CODE)))  \
+      return_OVstatus_FAILURE;
+  
+  I->Reinit = OVOneToOne_New(C->heap);
+  if(!I->Reinit)
+    return_OVstatus_FAILURE;
+
+  if(!OVreturn_IS_OK( OVOneToOne_Set(I->Reinit,I->lex_everything, 0))) return_OVstatus_FAILURE;
+  LEX_REINIT(settings,1);
 
 #define LEX_SELLIST(NAME,CODE) {if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#NAME))))  \
     return_OVstatus_FAILURE \
@@ -1661,7 +1678,6 @@ static OVreturn_word get_rep_id(CPyMOL *I,char *representation)
 static OVreturn_word get_setting_id(CPyMOL *I,char *setting)
 {
   OVreturn_word result;
-  result = OVLexicon_BorrowFromCString(I->Lex,setting);
   if(!OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,setting))))
     return result;
   return OVOneToOne_GetForward(I->Setting,result.word);
@@ -1670,16 +1686,22 @@ static OVreturn_word get_setting_id(CPyMOL *I,char *setting)
 static OVreturn_word get_clip_id(CPyMOL *I,char *clip)
 {
   OVreturn_word result;
-  result = OVLexicon_BorrowFromCString(I->Lex,clip);
   if(!OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,clip))))
     return result;
   return OVOneToOne_GetForward(I->Clip,result.word);
 }
 
+static OVreturn_word get_reinit_id(CPyMOL *I,char *reinit)
+{
+  OVreturn_word result;
+  if(!OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,reinit))))
+    return result;
+  return OVOneToOne_GetForward(I->Reinit,result.word);
+}
+
 static OVreturn_word get_select_list_mode(CPyMOL *I,char *mode)
 {
   OVreturn_word result;
-  result = OVLexicon_BorrowFromCString(I->Lex,mode);
   if(!OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,mode))))
     return result;
   return OVOneToOne_GetForward(I->SelectList,result.word);
@@ -1824,13 +1846,16 @@ PyMOLreturn_status PyMOL_CmdColor(CPyMOL *I,char *color, char *selection, int fl
   return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I,int what, char *object_name)
+PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I,char *what, char *object_name)
 {
   int ok;
+  OVreturn_word what_id;
   PYMOL_API_LOCK
-  ok = ExecutiveReinitialize(I->G,what,object_name);
+  if(OVreturn_IS_OK( (what_id= get_reinit_id(I,what)))) {
+    ok = ExecutiveReinitialize(I->G,what_id.word,object_name);
+  }
   PYMOL_API_UNLOCK
-  return return_status_ok(ok);
+    return return_status_ok(ok);
 }
 
 PyMOLreturn_float PyMOL_CmdGetDistance(CPyMOL *I,
