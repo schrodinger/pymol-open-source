@@ -3530,10 +3530,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                     else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O1P")))||
                                             ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O1P")))) 
                                       order=2;
-                                    /*else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O2P")))||
-                                              ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O2P")))) 
-                                              order=2;*/
-                                    
                                     break;
                                   }
                                   break;
@@ -3557,10 +3553,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                     else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O1P")))||
                                             ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O1P")))) 
                                       order=2;
-                                    /*
-                                      else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O2P")))||
-                                      ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O2P")))) 
-                                      order=2;*/
                                   }
                                   break;
                                             
@@ -3609,9 +3601,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                     else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O1P")))||
                                             ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O1P")))) 
                                       order=2;
-                                    /* else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O2P")))||
-                                            ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O2P")))) 
-                                            order=2;*/
                                     break;
                                   }
                                   break;
@@ -3797,10 +3786,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                     else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O1P")))||
                                             ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O1P")))) 
                                       order=2;
-                                    /*
-                                      else if(((!strcmp(ai1->name,"P"))&&(!strcmp(ai2->name,"O2P")))||
-                                      ((!strcmp(ai2->name,"P"))&&(!strcmp(ai1->name,"O2P")))) 
-                                      order=2;*/
                                     break;
                                   }
                                   break;
