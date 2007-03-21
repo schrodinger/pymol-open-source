@@ -3378,7 +3378,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version,
         default:
           PRINTFB(G,FB_Executive,FB_Errors)
             " Executive: skipping unrecognized object \"%s\" of type %d.\n",
-            rec->name,rec->type
+            rec->name,extra_int
             ENDFB(G);
           skip=true;
           break;
