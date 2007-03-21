@@ -19,10 +19,13 @@ for a in xrange(1,11):
    cmd.alter_state(a,"trg","y=y+random()/2")
    cmd.alter_state(a,"trg","z=z+random()/2",quiet=0)
 
-import time
 
 cmd.frame(1)
 print "%8.3f"%cmd.fit("ref","trg")
+
+# asdf
+
+
 for a in xrange(1,14):
    print a,
    print "%8.3f"%cmd.fit("ref and resi %d"%a,"trg"),
