@@ -700,9 +700,11 @@ void MovieDoFrameCommand(PyMOLGlobals *G,int frame)
         if(I->ViewElem[frame].scene_flag) {
           char *st = OVLexicon_FetchCString(G->Lexicon,I->ViewElem[frame].scene_name);
           if(strcmp(st,SettingGetGlobal_s(G,cSetting_scene_current_name))) {
+#ifndef _PYMOL_NOPY            
             PBlock();
             PXDecRef(PyObject_CallMethod(P_cmd,"scene","sssi",st,"recall","", 0));
             PUnblock();
+#endif
           }
         }
         SceneFromViewElem(G,I->ViewElem+frame);
