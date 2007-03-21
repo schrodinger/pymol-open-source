@@ -243,7 +243,7 @@ int PyMOL_DelG3DStream(CPyMOL *I,int *array_ptr);
 
 /* Command API */
 
-PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I,int what, char *object_name);
+PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I,char *what, char *object_name);
 
 PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content, 
                                  char *content_type, 
