@@ -915,17 +915,24 @@ void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state) /*
     else if(!sele[0]) {
       sele=cKeywordAll;
     } 
-    if(!ExecutiveGetCameraExtent(G,sele,mn,mx,true,state))
-      sele = NULL;
-    if(sele) {
-      if(sele[0]) {
-        average3f(mn,mx,cent); /* get center of selection */
-        MatrixTransformC44fAs33f3f(I->RotMatrix,I->Origin,origin); /* convert to view-space */
-        subtract3f(mx,origin,mx); /* how far from origin? */
-        subtract3f(mn,origin,mn); /* how far from origin? */
-        SceneClipSet(G,-I->Pos[2]-mx[2]-movement,-I->Pos[2]-mn[2]+movement);
-      } else {
+    if(WordMatchExact(G,sele,cKeywordCenter,true)) {
+      MatrixTransformC44fAs33f3f(I->RotMatrix,I->Origin,origin); /* convert to view-space */
+      SceneClipSet(G,origin[2]-movement,origin[2]+movement);
+    } else if(WordMatchExact(G,sele,cKeywordOrigin,true)) {
+      SceneClipSet(G,-I->Pos[2]-movement,-I->Pos[2]+movement);      
+    } else {
+      if(!ExecutiveGetCameraExtent(G,sele,mn,mx,true,state))
         sele = NULL;
+      if(sele) {
+        if(sele[0]) {
+          average3f(mn,mx,cent); /* get center of selection */
+          MatrixTransformC44fAs33f3f(I->RotMatrix,I->Origin,origin); /* convert to view-space */
+          subtract3f(mx,origin,mx); /* how far from origin? */
+          subtract3f(mn,origin,mn); /* how far from origin? */
+          SceneClipSet(G,-I->Pos[2]-mx[2]-movement,-I->Pos[2]-mn[2]+movement);
+        } else {
+          sele = NULL;
+        }
       }
     }
     break;
@@ -5750,8 +5757,9 @@ void SceneUpdate(PyMOLGlobals *G)
 #ifndef _PYMOL_NOPY
       int n_thread  = SettingGetGlobal_i(G,cSetting_max_threads);
       int multithread = SettingGetGlobal_i(G,cSetting_async_builds);
-      if((n_thread>2)&&(I->NFrame>1)&&(!SettingGetGlobal_b(G,cSetting_defer_builds_mode)))
-        n_thread = 2; /* prevent n_thread * n_thread */
+      if(multithread&&(n_thread>1)&&(I->NFrame>=n_thread))
+        n_thread = 1; /* prevent n_thread * n_thread -- only multithread 
+                       within individual object states */
 
       if(multithread&&(n_thread>1)) {
         /* multi-threaded geometry update */
