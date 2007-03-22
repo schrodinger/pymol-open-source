@@ -29,7 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"Sphere.h"
 #include"Util.h"
-
+#include"Feedback.h"
 #include"RepWireBond.h"
 #include"RepCylBond.h"
 #include"RepDot.h"
@@ -960,6 +960,11 @@ static void CoordSetUpdate(CoordSet *I,int state)
   int i;
   ObjectMolecule *obj;
   obj=I->Obj;
+  
+  if(Feedback(I->Obj->Obj.G,FB_CoordSet,FB_Blather)) {
+    printf(" CoordSetUpdate-Entered: object %s state %d cset %p\n",
+           I->Obj->Obj.Name, state, I);
+  }
 
   if(!I->Color) /* colors invalidated */
 	 {
@@ -1001,6 +1006,11 @@ static void CoordSetUpdate(CoordSet *I,int state)
 
   SceneInvalidate(I->State.G);
   OrthoBusyFast(I->State.G,1,1);
+  if(Feedback(I->Obj->Obj.G,FB_CoordSet,FB_Blather)) {
+    printf(" CoordSetUpdate-Leaving: object %s state %d cset %p\n",
+           I->Obj->Obj.Name, state, I);
+  }
+
 }
 /*========================================================================*/
 void CoordSetUpdateCoord2IdxMap(CoordSet *I, float cutoff)
