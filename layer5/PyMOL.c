@@ -1447,6 +1447,7 @@ static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
   OVOneToOne_DEL_AUTO_NULL(I->Setting);
   OVOneToOne_DEL_AUTO_NULL(I->Clip);
   OVOneToOne_DEL_AUTO_NULL(I->SelectList);
+  OVOneToOne_DEL_AUTO_NULL(I->Reinit);
   OVOneToOne_DEL_AUTO_NULL(I->Rep);
   OVLexicon_DEL_AUTO_NULL(I->Lex);
   return_OVstatus_SUCCESS;
