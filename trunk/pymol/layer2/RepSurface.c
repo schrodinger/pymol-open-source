@@ -1502,7 +1502,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best);
       sp = G->Sphere->Sphere[2];
       ssp = G->Sphere->Sphere[3];
-      if((circumscribe<0)&&(surface_type==5))
+      if((circumscribe<0)&&(surface_type==6))
         circumscribe = 40;
       break;
     case 0: 
@@ -1510,7 +1510,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_normal);
       sp = G->Sphere->Sphere[1];
       ssp = G->Sphere->Sphere[2];
-      if((circumscribe<0)&&(surface_type==5))
+      if((circumscribe<0)&&(surface_type==6))
         circumscribe = 30;
       break;
     case -1:
@@ -1518,7 +1518,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_poor);
       sp = G->Sphere->Sphere[1];
       ssp = G->Sphere->Sphere[2];
-      if((circumscribe<0)&&(surface_type==5))
+      if((circumscribe<0)&&(surface_type==6))
         circumscribe = 10;
       break;
     case -2:
@@ -1563,6 +1563,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   case 3:
   case 4:
   case 5:
+  case 6:
     probe_rad_less = probe_radius;
     break;
   default:
@@ -1751,7 +1752,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
 
     if(!surface_solvent) {
 
-      if(surface_type>=4) { /* effectively double-weights atom points */
+      if(surface_type>=5) { /* effectively double-weights atom points */
         if(I->NDot) { 
           v0 = I->Dot;
           n0 = I->DotNormal;
@@ -1798,7 +1799,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
             v0 = I->Dot;
             n0 = I->DotNormal;
             for(a=0;a<I->NDot;a++) {
-              if(dc[a]||(surface_type<5)) { /* surface type 5 is completely scribed */
+              if(dc[a]||(surface_type<6)) { /* surface type 6 is completely scribed */
               OrthoBusyFast(G,a+I->NDot*2,I->NDot*5); /* 2/5 to 3/5 */
               for(b=0;b<sp->nDot;b++) {
                   register int ii;
@@ -2232,7 +2233,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
             float *v0,dot_sum;
             int n_nbr;
             dot_flag=Alloc(int,I->N);
-            if(surface_type==5) { /* emprical tweaks */
+            if(surface_type==6) { /* emprical tweaks */
               trim_factor*=2.5;
               trim_cutoff*=1.5;
             }

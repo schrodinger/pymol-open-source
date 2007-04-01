@@ -3061,7 +3061,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       break;
     case cButModeScaleSlabShrink:
       SceneNoteMouseInteraction(G);
-      SceneClip(G,5,0.8F-(0.2*SettingGetGlobal_f(G,cSetting_mouse_wheel_scale)),NULL,0);
+      SceneClip(G,5,1.0F-(0.2*SettingGetGlobal_f(G,cSetting_mouse_wheel_scale)),NULL,0);
       break;
     case cButModeMoveSlabForward:
       SceneNoteMouseInteraction(G);
