@@ -5757,11 +5757,45 @@ void SceneUpdate(PyMOLGlobals *G)
 #ifndef _PYMOL_NOPY
       int n_thread  = SettingGetGlobal_i(G,cSetting_max_threads);
       int multithread = SettingGetGlobal_i(G,cSetting_async_builds);
-      if(multithread&&(n_thread>1)&&(I->NFrame>=n_thread))
-        n_thread = 1; /* prevent n_thread * n_thread -- only multithread 
-                       within individual object states */
+      if(multithread && (n_thread>1)) {
+        int min_start = -1;
+        int max_stop = -1;
+        int n_frame = SceneGetNFrame(G);
+        int n_obj = 0;
+        while(ListIterate(I->Obj,rec,next)) {
+          int start = 0;
+          int stop = n_frame;
+          n_obj++;
+          if(rec->obj->fGetNFrame) {
+            stop = rec->obj->fGetNFrame(rec->obj);
+          } 
+          ObjectAdjustStateRebuildRange(rec->obj,&start,&stop);
+          if(min_start<0) {
+            min_start = start;
+            max_stop = stop;
+          } else {
+            if(min_start>start)
+              min_start = start;
+            if(max_stop<stop)
+              max_stop = stop;
+          }
+        }
+        
+        n_frame = max_stop - min_start;
 
-      if(multithread&&(n_thread>1)) {
+        if( n_frame > n_thread ) {
+          n_thread = 1;
+          /* prevent n_thread * n_thread -- only multithread within
+             individual object states (typically more balanced) */
+        } else if( n_frame > 1 ) {
+          n_thread = n_thread / n_frame;
+        }
+        
+        if(n_thread < 1)
+          n_thread = 1;
+      }
+
+      if(multithread && (n_thread>1)) {
         /* multi-threaded geometry update */
         int cnt = 0;
 
