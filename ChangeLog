@@ -3,13 +3,17 @@ CHANGE LOG
 =========================================================================
 
 
-2207-20-07  Warren L. DeLano <warren@delsci.com>
+2007-03-30  Warren L. DeLano <warren@delsci.com>
+
+	* modified multithreaded async_builds to improve parallelism
+	
+2007-03-24  Warren L. DeLano <warren@delsci.com>
 
 	* allow blank argument values in the command parser 
 
 	* added skip argument to python block command
 	
-2207-19-07  Warren L. DeLano <warren@delsci.com>
+2007-03-23  Warren L. DeLano <warren@delsci.com>
 
 	Changes up to 1.00b19
 
