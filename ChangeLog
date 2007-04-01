@@ -3,6 +3,12 @@ CHANGE LOG
 =========================================================================
 
 
+2007-04-01  Warren L. DeLano <warren@delsci.com>
+
+	* unsupported surface_types: 4,5 ->5,6; 4 now related to 3
+	
+	* fixed mouse_wheel_scale bug
+	
 2007-03-30  Warren L. DeLano <warren@delsci.com>
 
 	* modified multithreaded async_builds to improve parallelism
