@@ -2315,6 +2315,7 @@ SEE ALSO
             'reinitialize'   : [ reinit_sc              , 'option'          , ''   ],
             
             'scene'          : [ viewing.scene_dict_sc  , 'scene'           , ''   ],
+            'sculpt_activate': [ object_sc              , 'object'          , ''   ],
             'set'            : [ setting.setting_sc     , 'setting'         , ','  ],
             'set_bond'       : [ setting.setting_sc     , 'setting'         , ','  ],            
             'set_name'       : [ selection_sc     ,       'name'            , ','  ],
