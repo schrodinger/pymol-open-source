@@ -6093,13 +6093,18 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
         for(cc1=0;cc1<obj1->NCSet;cc1++) { /* iterate over all source states */
           if((cc1==sta1)||(sta1<0)) {
             cs1 = obj1->CSet[cc1];
-            if(cs1&&(cc1<obj0->NCSet)&&
-               ((sta0<0)||(cc1==sta0)|| /* multiple or single state */
+            if(cs1&&
+               (((sta0<0)&&(cc1<obj0->NCSet))|| /* multiple states */
+                (cc1==sta0)|| /* single state */
                 ((sta0>=0)&&(sta1>=0)))) { /* explicit state */
-              if((sta0<0)||(sta0>=obj0->NCSet))
+
+              if((sta0<0)||(sta0>=obj0->NCSet)) {
                 cs0 = obj0->CSet[cc1];
-              else
+              } else if(sta0<obj0->NCSet) {
                 cs0 = obj0->CSet[sta0];
+              } else {
+                cs0 = NULL;
+              }
               if(cs0) {
                 ci0 = cs0->AtmToIdx[at0];
                 ci1 = cs1->AtmToIdx[at1];
