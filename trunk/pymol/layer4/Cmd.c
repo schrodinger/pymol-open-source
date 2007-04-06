@@ -4336,13 +4336,17 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
   char *str1;
   int ok=false;
   int quiet;
-  int width,height;
+  int width,height,ray;
   float dpi;
-  ok = PyArg_ParseTuple(args,"siifi",&str1,&width,&height,&dpi,&quiet);
+  ok = PyArg_ParseTuple(args,"siifii",&str1,&width,&height,&dpi,&ray,&quiet);
   if (ok) {
     APIEntry();
     ExecutiveDrawNow(TempPyMOLGlobals);		 /* TODO STATUS */
-    if(width||height) {
+    if(ray) {
+      SceneRay(TempPyMOLGlobals,width,height,(int)SettingGet(TempPyMOLGlobals,cSetting_ray_default_renderer),
+               NULL,NULL,0.0F,0.0F,false,NULL,true,-1); 
+      ScenePNG(TempPyMOLGlobals,str1,dpi,quiet);
+    } else if(width||height) {
       SceneDeferImage(TempPyMOLGlobals,width,height,str1,-1,dpi,quiet);
     } else {
       ScenePNG(TempPyMOLGlobals,str1,dpi,quiet);
