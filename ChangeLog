@@ -2,7 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2007-04-03  Warren L. DeLano <warren@delsci.com>
 
+	* ray option to png
+	
 2007-04-01  Warren L. DeLano <warren@delsci.com>
 
 	* unsupported surface_types: 4,5 ->5,6; 4 now related to 3

@@ -91,25 +91,43 @@ NOTES
         return r
         
 
-    def png(filename,width=0,height=0,dpi=-1.0,quiet=1):
+    def png(filename, width=0, height=0, dpi=-1.0, ray=0, quiet=1):
         '''
 DESCRIPTION
 
-    "png" writes a png format image file of the current image to disk.
+    "png" saves a PNG format image file of the current display.
 
 USAGE
 
-    png filename 
+    png filename [, width [, height [, dpi [, ray]]]]
 
+ARGUMENTS
+
+    filename is the file to create
+    
+    width of image in pixels (default 0 -> viewport width)
+
+    height of image in pixels (default 0 -> viewport height)
+
+    dpi in dots-per-inch (default -1.0 -- unspecified)
+
+    ray = 0 or 1 (default 0): should ray be run first?
+
+EXAMPLES
+
+    png image.png
+    png image.png, dpi=300
+       
 PYMOL API
 
-    cmd.png( string file )
+    cmd.png(string file, int width, int width, float dpi,
+            int ray, int quiet)
         '''
         r = DEFAULT_ERROR
         if thread.get_ident() ==pymol.glutThread:
-            r = cmd._png(str(filename),int(width),int(height),float(dpi),int(quiet))
+            r = cmd._png(str(filename),int(width),int(height),float(dpi),int(ray),int(quiet))
         else:
-            r = cmd._do("cmd._png('%s',%d,%d,%1.6f,%d)"%(filename,width,height,dpi,quiet))
+            r = cmd._do("cmd._png('%s',%d,%d,%1.6f,%d,%d)"%(filename,width,height,dpi,ray,quiet))
         if _raising(r): raise QuietException
         return r
 

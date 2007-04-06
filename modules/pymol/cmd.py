@@ -982,7 +982,8 @@ DEVELOPMENT TO DO
 
         # writing PNG files (thread-unsafe)
 
-        def _png(a,width=0,height=0,dpi=-1.0,quiet=1): # INTERNAL - can only be safely called by GLUT thread 
+        def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1):
+            # INTERNAL - can only be safely called by GLUT thread 
             # WARNING: internal routine, subject to change
             try:
                 lock()   
@@ -990,7 +991,7 @@ DEVELOPMENT TO DO
                 if not re.search("\.png$",fname):
                     fname = fname +".png"
                 fname = exp_path(fname)
-                r = _cmd.png(str(fname),int(width),int(height),float(dpi),int(quiet))
+                r = _cmd.png(str(fname),int(width),int(height),float(dpi),int(ray),int(quiet))
             finally:
                 unlock(-1)
             return r
