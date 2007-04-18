@@ -754,35 +754,47 @@ PYMOL API
         return r
 
         
-    def set(name,value=1,selection='',state=0,updates=1,log=0,quiet=1):
+    def set(name, value=1, selection='', state=0, updates=1, log=0,
+            quiet=1):
+        
         '''
 DESCRIPTION
 
-    "set" changes one of the PyMOL state variables,
+    "set" changes global, object, object-state, or per-atom settings.
 
 USAGE
 
-    set name, [,value [,object-or-selection [,state ]]]
+    set name [,value [,selection [,state ]]]
 
-    set name = value  # (DEPRECATED)
+ARGUMENTS
 
+    name = a setting name
+
+    value = a setting value (default: 1)
+
+    selection = a name-pattern or selection-expression (default: '')
+
+    state = a state number (default: 0)
+    
 PYMOL API
 
-    cmd.set ( string name, string value=1,
-                 string selection='', int state=0,
-                  int updates=1, quiet=1)
+    cmd.set(string name, string value, string selection, int state,
+            int updates, int quiet)
 
 NOTES
 
-    The default behavior (with a blank selection) changes the global
-    settings database.  If the selection is 'all', then the settings
-    database in all individual objects will be changed.  Likewise, for
-    a given object, if state is zero, then the object database will be
-    modified.  Otherwise, the settings database for the indicated state
-    within the object will be modified.
+    The default behavior (with a blank selection) is global.  If the
+    selection is 'all', then the setting entry in each individual
+    objects will be changed.  Likewise, for a given object, if state
+    is zero, then the object setting will be modified.  Otherwise, the
+    setting for the indicated state within the object will be
+    modified.  
 
-    If a selection is provided, then all objects in the selection will
-    be affected. 
+    If a selection is provided as opposed to an object name, then the
+    atomic setting entries are modified.
+
+    There is a deprecated form of this command where an equals is used
+    in place of the first comma ("set name=value")
 
         '''
         r = DEFAULT_ERROR

@@ -419,7 +419,7 @@ ARGUMENTS
 
     filename: file path or a URL
 
-    object (default: filename prefix): name of the object
+    object: name of the object (default: filename prefix)
 
     state = a number (default: 0): number of the state into which
     the content should be loaded, or 0 for append
