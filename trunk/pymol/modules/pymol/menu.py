@@ -793,7 +793,7 @@ def align_to_sele(s):
         if a!=s:
             result.append([1,a,
                            'cmd.align("polymer and name ca and ('+s+')",'+
-                           '"polymer and name ca and ('+a+')",max_gap=50,quiet=0)'+
+                           '"polymer and name ca and ('+a+')",max_gap=50,quiet=0,'+
                            'object="aln_%s_to_%s",reset=1)'%(s,a)])
     return result
 
