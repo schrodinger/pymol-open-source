@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2007-04-21  Warren L. DeLano <warren@delsci.com>
+
+	* fixed wrapping problems for movies & objects
+	
+	* fixed "mview reset" for object matrices
+	
 2007-04-03  Warren L. DeLano <warren@delsci.com>
 
 	* ray option to png
