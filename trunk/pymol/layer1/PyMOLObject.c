@@ -197,6 +197,8 @@ int ObjectView(CObject *I,int action,int first,
   case 3:
     {
       CViewElem *first_view=NULL,*last_view=NULL;
+      int zero_flag = -1;
+
       if(first<0)
         first = 0;
       if(last<0)
@@ -220,6 +222,7 @@ int ObjectView(CObject *I,int action,int first,
                                  last frame, then wrap by copying
                                  first to last */
         ViewElemCopy(G,I->ViewElem, I->ViewElem+last);
+        zero_flag = last;
       }
 
       VLACheck(I->ViewElem,CViewElem,last);
@@ -274,6 +277,9 @@ int ObjectView(CObject *I,int action,int first,
           }
         }
       }
+      if(zero_flag>=0) { /* erase temporary view */
+        UtilZeroMem((void*)(I->ViewElem + last), sizeof(CViewElem));
+      }
     }
     break;
    case 4: /* smooth */
@@ -296,6 +302,14 @@ int ObjectView(CObject *I,int action,int first,
       }
       break;
    }
+  case 5: /* reset */
+    if(I->ViewElem) {
+      int size = VLAGetSize(I->ViewElem);
+      VLAFreeP(I->ViewElem);
+      I->ViewElem = VLACalloc(CViewElem, size);
+    }
+    break;
+
  }
   return 1;
 }
@@ -627,6 +641,8 @@ void ObjectPrepareContext(CObject *I,CRay *ray)
     int frame = SceneGetFrame(I->G);
     if(frame>=0) {
       VLACheck(I->ViewElem,CViewElem,frame);
+
+
       if(I->ViewElem[frame].specification_level) {
         TTTFromViewElem(I->TTT,I->ViewElem + frame);
         I->TTTFlag=true;

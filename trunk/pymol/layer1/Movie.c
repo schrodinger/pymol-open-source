@@ -783,7 +783,7 @@ int MovieView(PyMOLGlobals *G,int action,int first,
   case 3:
     {
       CViewElem *first_view=NULL,*last_view=NULL;
-
+      int zero_flag = -1;
       if(first<0)
         first = 0;
 
@@ -811,7 +811,7 @@ int MovieView(PyMOLGlobals *G,int action,int first,
            last frame, then wrap by copying
            first to last */
         ViewElemCopy(G,I->ViewElem, I->ViewElem+last);
-        I->ViewElem[last] = I->ViewElem[0]; 
+        zero_flag = last;
       }
 
       if(!quiet) {
@@ -864,6 +864,9 @@ int MovieView(PyMOLGlobals *G,int action,int first,
             last_view = NULL;
           }
         }
+      }
+      if(zero_flag>=0) { /* erase temporary view */
+        UtilZeroMem((void*)(I->ViewElem + last), sizeof(CViewElem));
       }
     }
     break;
