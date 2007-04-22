@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2007-04-22  Warren L. DeLano <warren@delsci.com>
+
+	* fixed pdb_unbond_cations for automatic bond detection
+	
+	* fixed static_singletons for distance objects
+	
 2007-04-21  Warren L. DeLano <warren@delsci.com>
 
 	* fixed wrapping problems for movies & objects

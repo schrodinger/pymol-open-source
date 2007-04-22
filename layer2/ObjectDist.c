@@ -432,8 +432,11 @@ static void ObjectDistRender(ObjectDist *I,RenderInfo *info)
           I->DSet[I->CurDSet]->fRender(I->DSet[I->CurDSet],info);
       }
     } else if(I->NDSet==1) { /* if only one coordinate set, assume static */
-      if(I->DSet[0]->fRender)
-        I->DSet[0]->fRender(I->DSet[0],info);
+      if(I->DSet[0]->fRender) {
+        if(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons)) {
+          I->DSet[0]->fRender(I->DSet[0],info);
+        }
+      }
     }
   }
 }

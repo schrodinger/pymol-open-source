@@ -2441,7 +2441,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                 }
                 flag=true;
                 if(unbond_cations) {
-                         
                   if(AtomInfoIsFreeCation(G,atInfo + ii2->index[0]))
                     flag=false;
                   else if(AtomInfoIsFreeCation(G,atInfo + ii2->index[1]))
@@ -3298,6 +3297,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   int discrete_chains = SettingGetGlobal_i(G,cSetting_pdb_discrete_chains);
   int connect_bonded = SettingGetGlobal_b(G,cSetting_connect_bonded);
   int connect_mode = SettingGetGlobal_i(G,cSetting_connect_mode);
+  int unbond_cations = SettingGetGlobal_i(G,cSetting_pdb_unbond_cations);
   cutoff_v=SettingGet(G,cSetting_connect_cutoff);
   cutoff_s=cutoff_v + 0.2F;
   cutoff_h=cutoff_v - 0.2F;
@@ -3412,6 +3412,13 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                 flag=false;
                         }
                         
+                        if(flag && unbond_cations) {
+                          if(AtomInfoIsFreeCation(G,ai1))
+                            flag=false;
+                          else if(AtomInfoIsFreeCation(G,ai2))
+                            flag=false;
+                        }
+
                         if(flag) {
                           VLACheck((*bond),BondType,nBond);
                           (*bond)[nBond].index[0] = a1;
