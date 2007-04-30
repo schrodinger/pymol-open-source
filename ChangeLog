@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2007-04-23  Warren L. DeLano <warren@delsci.com>
+
+	* added state=-1 and state=0 options for alter_state
+	
 2007-04-22  Warren L. DeLano <warren@delsci.com>
 
 	* fixed pdb_unbond_cations for automatic bond detection
@@ -13,6 +17,10 @@ CHANGE LOG
 	* fixed wrapping problems for movies & objects
 	
 	* fixed "mview reset" for object matrices
+	
+2007-04-18
+
+	* fixed bug with aligning selections using the menus
 	
 2007-04-03  Warren L. DeLano <warren@delsci.com>
 

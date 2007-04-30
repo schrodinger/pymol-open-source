@@ -22,6 +22,15 @@ hide
 show lines
 ray
 
+dele all
+load dat/pept.pdb
+load dat/pept.pdb
+alter_state -1,(all),x=x+y
+alter_state 0,(all), x=x+y
+alter_state 1,(all), x=x+y
+alter_state 2,(all), x=x+y
+alter_state 3,(all), x=x+y
+
 #     h_add,              
 
 dele all
