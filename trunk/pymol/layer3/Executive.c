@@ -8026,27 +8026,45 @@ void ExecutiveIterateState(PyMOLGlobals *G,int state,char *s1,char *expr,int rea
                            int atomic_props,int quiet,PyObject *space)
 {
   int sele1;
-  ObjectMoleculeOpRec op1;
-  
+
   sele1=SelectorIndexByName(G,s1);
   if(sele1>=0) {
+    int start_state, stop_state;
+    ObjectMoleculeOpRec op1;
+    
+    if(state>=0) {
+      start_state = state;
+      stop_state = state+1;
+    } else {
+      if(state==-1) { /* current state */
+        state = SceneGetState(G);
+        start_state = state;
+        stop_state = state+1;
+      } else { /* all states (for the selection) */
+        start_state = 0;
+        stop_state = SelectorCountStates(G,sele1);
+      }
+    }
     ObjectMoleculeOpRecInit(&op1);
-    op1.code = OMOP_AlterState;
-    op1.s1 = expr;
     op1.i1 = 0;
-    op1.i2 = state;
-    op1.i3 = read_only;
-    op1.i4 = atomic_props;
-    op1.py_ob1 = space;
-    ExecutiveObjMolSeleOp(G,sele1,&op1);
+
+    for(state=start_state;state<stop_state;state++) {
+      op1.code = OMOP_AlterState;
+      op1.s1 = expr;
+      op1.i2 = state;
+      op1.i3 = read_only;
+      op1.i4 = atomic_props;
+      op1.py_ob1 = space;
+      ExecutiveObjMolSeleOp(G,sele1,&op1);
+    }
     if(!quiet) {
       if(!read_only) {
         PRINTFB(G,FB_Executive,FB_Actions)
-          " AlterState: modified %i atom states.\n",op1.i1
+          " AlterState: modified %i atomic coordinates states.\n",op1.i1
           ENDFB(G);
       } else {
         PRINTFB(G,FB_Executive,FB_Actions)
-        " IterateState: iterated over %i atom states.\n",op1.i1
+          " IterateState: iterated over %i atomic coordinate states.\n",op1.i1
           ENDFB(G);
       }
     }
