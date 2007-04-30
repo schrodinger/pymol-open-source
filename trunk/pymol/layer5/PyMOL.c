@@ -1849,14 +1849,14 @@ PyMOLreturn_status PyMOL_CmdColor(CPyMOL *I,char *color, char *selection, int fl
 
 PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I,char *what, char *object_name)
 {
-  int ok;
+  int ok = true;
   OVreturn_word what_id;
   PYMOL_API_LOCK
   if(OVreturn_IS_OK( (what_id= get_reinit_id(I,what)))) {
     ok = ExecutiveReinitialize(I->G,what_id.word,object_name);
   }
   PYMOL_API_UNLOCK
-    return return_status_ok(ok);
+  return return_status_ok(ok);
 }
 
 PyMOLreturn_float PyMOL_CmdGetDistance(CPyMOL *I,

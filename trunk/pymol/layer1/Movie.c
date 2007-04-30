@@ -66,7 +66,7 @@ void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length)
 	SettingSet(G,cSetting_cache_frames,1.0);
 	nFrame = I->NFrame;
 	if(!nFrame) {
-		nFrame=SceneGetNFrame(G);
+		nFrame=SceneGetNFrame(G,NULL);
 	}
 	start=0;
 	stop=nFrame;
@@ -129,7 +129,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
   int nFrame;
   nFrame = I->NFrame;
   if(!nFrame) {
-    nFrame=SceneGetNFrame(G);
+    nFrame=SceneGetNFrame(G,NULL);
   }
   
   if((frame<nFrame)&&(ptr)) {
@@ -193,7 +193,7 @@ int MoviePurgeFrame(PyMOLGlobals *G,int frame)
   int i;
   nFrame = I->NFrame;
   if(!nFrame) {
-    nFrame=SceneGetNFrame(G);
+    nFrame=SceneGetNFrame(G,NULL);
   }
   if(!I->CacheSave) {
   if(frame<nFrame) {
@@ -415,7 +415,7 @@ void MoviePlay(PyMOLGlobals *G,int cmd)
     if(!(int)SettingGet(G,cSetting_movie_loop)) { 
       /* if not looping, and at end of movie, then automatically rewind
        and force execution of the first movie command */
-      if((SettingGetGlobal_i(G,cSetting_frame))==(SceneGetNFrame(G))) {
+      if((SettingGetGlobal_i(G,cSetting_frame))==(SceneGetNFrame(G,NULL))) {
         SceneSetFrame(G,7,0);
       }
     }
@@ -481,7 +481,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missin
   OrthoBusyPrime(G);
   nFrame = I->NFrame;
   if(!nFrame) {
-	 nFrame=SceneGetNFrame(G);
+	 nFrame=SceneGetNFrame(G,NULL);
   }
   if(start<0) start=0;
   if(start>nFrame) start=nFrame;
@@ -794,7 +794,7 @@ int MovieView(PyMOLGlobals *G,int action,int first,
       /* note that we're leaving a blank frame at the end... */
 
       if(last<0) {
-        last = SceneGetNFrame(G);
+        last = SceneGetNFrame(G,NULL);
         if(last && (!wrap))
           last--;
       }
@@ -876,7 +876,7 @@ int MovieView(PyMOLGlobals *G,int action,int first,
         first = 0;
 
       if(last<0) {
-        last = SceneGetNFrame(G) -1;
+        last = SceneGetNFrame(G,NULL)-1;
       }
       if(last>=I->NFrame) {
         last = I->NFrame-1;

@@ -145,7 +145,7 @@ struct _CScene {
   int DirtyFlag;
   int ChangedFlag;
   int CopyFlag,CopyNextFlag,CopiedFromOpenGL,CopyForced;
-  int NFrame;
+  int NFrame,HasMovie;
   ImageType *Image;
   int MovieOwnsImageFlag;
   int MovieFrameFlag;
@@ -737,9 +737,11 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
   return(1);
 }
 /*========================================================================*/
-int SceneGetNFrame(PyMOLGlobals *G)
+int SceneGetNFrame(PyMOLGlobals *G,int *has_movie)
 {
   register CScene *I=G->Scene;
+  if(has_movie)
+    *has_movie = I->HasMovie;
   return(I->NFrame);
 }
 /*========================================================================*/
@@ -1518,16 +1520,16 @@ void SceneCountFrames(PyMOLGlobals *G)
   int n;
   int mov_len;
   I->NFrame=0;
-  while(ListIterate(I->Obj,rec,next))
-	 {
-      if(rec->obj->fGetNFrame)
-        n=rec->obj->fGetNFrame(rec->obj);
-      else
-        n=0;
-      if(n>I->NFrame)
-        I->NFrame=n;
-	 }
+  while(ListIterate(I->Obj,rec,next)) {
+    if(rec->obj->fGetNFrame)
+      n=rec->obj->fGetNFrame(rec->obj);
+    else
+      n=0;
+    if(n>I->NFrame)
+      I->NFrame=n;
+  }
   mov_len = MovieGetLength(G);
+  I->HasMovie = (mov_len != 0);
   if(mov_len>0) {
     I->NFrame=mov_len;
   } else if(mov_len<0) {
@@ -5001,6 +5003,7 @@ int  SceneInit(PyMOLGlobals *G)
     SceneSetDefaultView(G);
     
     I->NFrame = 0;
+    I->HasMovie = false;
     I->Scale = 1.0;
     I->Block = OrthoNewBlock(G,NULL);
     I->Block->fClick   = SceneDeferClick;
@@ -5760,7 +5763,7 @@ void SceneUpdate(PyMOLGlobals *G)
       if(multithread && (n_thread>1)) {
         int min_start = -1;
         int max_stop = -1;
-        int n_frame = SceneGetNFrame(G);
+        int n_frame = SceneGetNFrame(G,NULL);
         int n_obj = 0;
         while(ListIterate(I->Obj,rec,next)) {
           int start = 0;

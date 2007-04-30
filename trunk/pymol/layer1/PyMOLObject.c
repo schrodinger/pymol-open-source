@@ -143,6 +143,10 @@ int ObjectView(CObject *I,int action,int first,
   register PyMOLGlobals *G = I->G;
   int frame;
   int nFrame = MovieGetLength(I->G);
+
+  if(nFrame<0)
+    nFrame = -nFrame;
+
   if(!I->ViewElem) {
     I->ViewElem = VLACalloc(CViewElem, 0);    
   }

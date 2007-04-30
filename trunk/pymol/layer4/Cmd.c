@@ -3261,7 +3261,7 @@ static PyObject *CmdCountFrames(PyObject *dummy, PyObject *args)
   int result;
   APIEntry();
   SceneCountFrames(TempPyMOLGlobals);
-  result=SceneGetNFrame(TempPyMOLGlobals);
+  result=SceneGetNFrame(TempPyMOLGlobals,NULL);
   APIExit();
   return(APIResultCode(result));
 }
