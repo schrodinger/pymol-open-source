@@ -368,17 +368,22 @@ static void ButModeDraw(Block *block)
       }
     }
     
-    nf = SceneGetNFrame(G);
-    if(nf==0)
-      nf=1;
-    TextSetColor(G,I->Block->TextColor);
-    TextDrawStrAt(G,"Frame ",x,y);
-    TextSetColor(G,I->TextColor2);
-    sprintf(rateStr,"[%3d/%3d] %d/sec",SceneGetFrame(G)+1,
-            nf,I->RateShown);
-    TextDrawStrAt(G,rateStr,x+48,y);
-
-
+    {
+      int has_movie = false;
+      nf = SceneGetNFrame(G, &has_movie);
+      if(nf==0)
+        nf=1;
+      TextSetColor(G,I->Block->TextColor);
+      if(has_movie) {
+        TextDrawStrAt(G,"Frame ",x,y);
+      } else {
+        TextDrawStrAt(G,"State ",x,y);
+      }
+      TextSetColor(G,I->TextColor2);
+      sprintf(rateStr,"[%3d/%3d] %d/sec",SceneGetFrame(G)+1,
+              nf,I->RateShown);
+      TextDrawStrAt(G,rateStr,x+48,y);
+    }
   }
 }
 
