@@ -28,7 +28,7 @@ PyMOL>map_new tst2,gaussian,1.0,state=4
  ObjectMap: Map created.
  ObjectMap: Computing Gaussian map for 679 atom positions.
  ObjectMap: Normalizing: mean = 0.076772 & stdev = 0.351954.
-PyMOL>map_new tst3,gaussian,1.0,state=-2
+PyMOL>map_new tst3,gaussian,1.0,state=-4
  ObjectMap: Map created.
  ObjectMap: Computing Gaussian map for 107 atom positions.
  ObjectMap: Normalizing: mean = 0.003829 & stdev = 0.054910.

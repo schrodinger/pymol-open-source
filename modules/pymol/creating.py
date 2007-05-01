@@ -101,9 +101,10 @@ if __name__=='pymol.creating':
         '''
         state > 0: do indicated state
         state = 0: independent states in independent extents
-        state = -1: current state
-        state = -2: independent states in unified extent
+        state = -1: current global state
+        state = -2: effective object state(s)
         state = -3: all states in one map
+        state = -4: independent states in unified extent
         '''
         # preprocess selection
         r = DEFAULT_ERROR

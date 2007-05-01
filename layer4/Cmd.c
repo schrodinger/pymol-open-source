@@ -4939,10 +4939,11 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
   int quiet;
   int ok=false;
   int count = 0;
-  ok = PyArg_ParseTuple(args,"ssi",&sname,&sele,&quiet);
+  int state = 0;
+  ok = PyArg_ParseTuple(args,"ssii",&sname,&sele,&quiet,&state);
   if(ok) {
     APIEntry();
-    count = SelectorCreate(TempPyMOLGlobals,sname,sele,NULL,quiet,NULL);
+    count = SelectorCreateWithState(TempPyMOLGlobals,sname,sele,NULL,quiet,NULL,state);
     if(count<0)
       ok = false;
     SceneInvalidate(TempPyMOLGlobals);

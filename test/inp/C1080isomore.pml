@@ -17,7 +17,7 @@ map_new tst2,gaussian,1.0,state=2
 map_new tst2,gaussian,1.0,state=4
 
 # independent states in one extent
-map_new tst3,gaussian,1.0,state=-2 
+map_new tst3,gaussian,1.0,state=-4 
 
 # selected empty state
 map_new tst4,gaussian,1.0,state=3

@@ -16,7 +16,7 @@ PyMOL>iterate_state 1,all,print "%8.3f %8.3f %8.3f"%(x,y,z)
    1.470   -1.542   20.495
    1.431   -0.303   20.038
    0.896   -0.322   18.831
- IterateState: iterated over 10 atom states.
+ IterateState: iterated over 10 atom coordinate states.
 PyMOL>rotate x, 53, object=pept
 PyMOL>rotate y, 27, object=pept
 PyMOL>rotate z, 6, object=pept
@@ -100,7 +100,7 @@ PyMOL>iterate_state 1,all,print "%8.3f %8.3f %8.3f"%(x,y,z)
    1.470   -1.542   20.495
    1.431   -0.303   20.038
    0.896   -0.322   18.831
- IterateState: iterated over 10 atom states.
+ IterateState: iterated over 10 atom coordinate states.
 PyMOL>rotate x, 53, object=pept
 PyMOL>rotate y, 27, object=pept
 PyMOL>rotate z, 6, object=pept
@@ -184,7 +184,7 @@ PyMOL>iterate_state 1,all,print "%8.3f %8.3f %8.3f"%(x,y,z)
    1.470   -1.542   20.495
    1.431   -0.303   20.038
    0.896   -0.322   18.831
- IterateState: iterated over 10 atom states.
+ IterateState: iterated over 10 atom coordinate states.
 PyMOL>rotate x, 53, object=pept, object_mode=1
 PyMOL>rotate y, 27, object=pept, object_mode=1
 PyMOL>rotate z, 6, object=pept, object_mode=1
