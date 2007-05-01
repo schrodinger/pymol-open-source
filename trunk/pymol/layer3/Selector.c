@@ -9514,7 +9514,7 @@ int SelectorOperator22(PyMOLGlobals *G,EvalElem *base,int state)
                                  if(!base[0].sele[j])
                                    if(I->Flag2[j])
                                      if(within3f(I->Vertex+3*j,v2,dist)) {
-                                       if((code!=SELE_NTO_)||(a!=j))
+                                       if((code!=SELE_NTO_)||(!base[4].sele[j]))
                                          base[0].sele[j]=true;
                                      }
                                  j=map->EList[i++];
