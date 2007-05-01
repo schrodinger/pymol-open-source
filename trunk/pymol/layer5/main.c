@@ -136,7 +136,7 @@ void MainFlushAsync(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   if(PLockAPIAsGlut(true)) {
-    PFlush(Temp);
+    PFlush(G);
     PUnlockAPIAsGlut(G);
   }
 }
