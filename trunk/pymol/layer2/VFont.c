@@ -272,7 +272,7 @@ int VFontLoad(PyMOLGlobals *G,float size,int face,int style,int can_load_new)
 #ifndef _PYMOL_NOPY
   if(!result) {
     if(can_load_new) {
-      vfont = PGetFontDict(size,face,style);
+      vfont = PGetFontDict(G,size,face,style);
       if(vfont) {
         if(PyDict_Check(vfont)) {
           VLACheck(I->Font,VFontRec*,I->NFont+1);

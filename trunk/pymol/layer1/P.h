@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 #include"AtomInfo.h"
+#include"PyMOLGlobals.h"
 
 #define cLockAPI 1
 #define cLockInbox 2
@@ -65,13 +66,13 @@ Z* -------------------------------------------------------------------
 
 #define PTruthCallStr(a,b,c)
 
-#define PSleep(a)
-#define PSleepWhileBusy(a)
-#define PSleepUnlocked(a)
+#define PSleep(G,a)
+#define PSleepWhileBusy(G,a)
+#define PSleepUnlocked(G,a)
 
 #define PFree()
 #define PInit(G)
-#define PInitEmbedded(a,b)
+#define PInitEmbedded(G,a,b)
 #define PGetOptions(a)
 
 #define PAlterAtom(G,a,b,c,d,e,f) 0
@@ -81,15 +82,15 @@ Z* -------------------------------------------------------------------
 #else
 
 void PInit(PyMOLGlobals *G);
-void PInitEmbedded(int argc,char **argv);
+void PInitEmbedded(PyMOLGlobals *G,int argc,char **argv);
 
   struct PyMOLOptionRec;
 
 void PGetOptions(CPyMOLOptions *rec);
 
 void PFree(void);
-void PExit(int code);
-void PParse(char *str); /* only accepts one command */
+void PExit(PyMOLGlobals *G,int code);
+void PParse(PyMOLGlobals *G,char *str); /* only accepts one command */
 void PDo(char *str); /* accepts multple commands seperated by newlines */
 
 
@@ -103,9 +104,9 @@ int PAlterAtomState(PyMOLGlobals *G,float *v,char *expr,int read_only,
 void PLog(char *str,int lf);
 void PLogFlush(void);
 
-void PSleep(int usec);
-void PSleepWhileBusy(int usec);
-void PSleepUnlocked(int usec);
+void PSleep(PyMOLGlobals *G,int usec);
+void PSleepWhileBusy(PyMOLGlobals *G,int usec);
+void PSleepUnlocked(PyMOLGlobals *G,int usec);
 
 int PLockAPIAsGlut(int block_if_busy);
 void PUnlockAPIAsGlut(void);
@@ -124,8 +125,8 @@ void PAutoUnblock(int flag);
 void PBlockAndUnlockAPI(void);
 void PLockAPIAndUnblock(void);
 
-void PFlush(void);
-void PFlushFast(void);
+void PFlush(PyMOLGlobals *G);
+void PFlushFast(PyMOLGlobals *G);
 void PXDecRef(PyObject *obj);
 
 void PSGIStereo(int flag);
@@ -144,8 +145,8 @@ int PTruthCallStr4i(PyObject *object,char *method,int a1,int a2,int a3,int a4);
 int PPovrayRender(char *header,char *inp,char *file,int width,int height,int antialias);
 int PIsGlutThread(void);
 
-PyObject *PGetFontDict(float size,int face,int style);
-PyObject *GetBondsDict(void);
+PyObject *PGetFontDict(PyMOLGlobals *G,float size,int face,int style);
+/* PyObject *GetBondsDict(void); */
 
 extern PyObject *P_globals; /* used by main */
 

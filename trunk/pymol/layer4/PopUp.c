@@ -394,8 +394,8 @@ int PopUpRelease(Block *block,int button,int x,int y,int mod)
     if(!I->NeverDragged) 
       if((I->Selected>=0)&&(!I->Sub[I->Selected])) {
         PLog(I->Command[I->Selected],cPLog_pym);
-        PParse(I->Command[I->Selected]);
-        PFlush();
+        PParse(G,I->Command[I->Selected]);
+        PFlush(G);
       }
     PopUpRecursiveFree(block);
   }
