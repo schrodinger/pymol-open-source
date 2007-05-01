@@ -291,7 +291,7 @@ if pymol_launch != 3: # if this isn't a dry run
                             for ll in l:
                                 ll = string.split(string.strip(ll))
                                 if ll[0][0:7]=='hw.ncpu':
-                                    ncpu = int(ll[0][8:])
+                                    ncpu = int(ll[-1])
                                 elif ll[0][0:10]=='hw.physmem':
                                     mem = int(ll[-1:][0])
                                     if mem>1000000000: # Gig or more
