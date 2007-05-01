@@ -118,6 +118,8 @@ typedef struct {
 
 #define MAXLINELEN 1024
 
+#define PYMOL_MAX_THREADS 32
+
 #ifndef _PYMOL_NO_XRAY
 #define _PYMOL_XRAY
 #endif

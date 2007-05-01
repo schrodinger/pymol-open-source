@@ -59,8 +59,6 @@ Z* -------------------------------------------------------------------
 
 #define MAX_BASIS 12
 
-#define MAX_RAY_THREADS 12
-
 typedef float float3[3];
 typedef float float4[4];
 
@@ -3758,8 +3756,8 @@ void RayRender(CRay *I,unsigned int *image,double timing,
   n_thread  = SettingGetGlobal_i(I->G,cSetting_max_threads);
   if(n_thread<1)
     n_thread=1;
-  if(n_thread>MAX_RAY_THREADS)
-    n_thread = MAX_RAY_THREADS;
+  if(n_thread>PYMOL_MAX_THREADS)
+    n_thread = PYMOL_MAX_THREADS;
   opaque_back = SettingGetGlobal_i(I->G,cSetting_ray_opaque_background);
   if(opaque_back<0)
     opaque_back			= SettingGetGlobal_i(I->G,cSetting_opaque_background);      
@@ -4001,7 +3999,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
 #ifndef _PYMOL_NOPY
     if(shadows&&(n_thread>1)) { /* parallel execution */
 
-      CRayHashThreadInfo thread_info[MAX_RAY_THREADS];
+      CRayHashThreadInfo *thread_info = Calloc(CRayHashThreadInfo,n_thread);
       
       /* rendering map */
 
@@ -4039,7 +4037,8 @@ void RayRender(CRay *I,unsigned int *image,double timing,
       /* NOTE that we're not limiting the number of threads in this phase
          under the assumption that it will usually just be a few threads */
       RayHashSpawn(thread_info, n_thread, I->NBasis-1); 
-      
+     
+      FreeP(thread_info);
     } else
 #endif
       { /* serial execution */
@@ -4111,7 +4110,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
         
     {
 		/* now spawn threads as needed */
-		CRayThreadInfo rt[MAX_RAY_THREADS];
+      CRayThreadInfo *rt = Calloc(CRayThreadInfo,n_thread);
       
       int x_start=0,y_start=0;
       int x_stop=0,y_stop=0;
@@ -4569,7 +4568,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
   
   if(antialias>1) {
     /* now spawn threads as needed */
-    CRayAntiThreadInfo rt[MAX_RAY_THREADS];
+    CRayAntiThreadInfo *rt = Calloc(CRayAntiThreadInfo, n_thread);
     
     for(a=0;a<n_thread;a++) {
       rt[a].width = width;
@@ -4588,7 +4587,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
     else 
 #endif
       RayAntiThread(rt);
-    
+    FreeP(rt);
     CacheFreeP(I->G,image,0,cCache_ray_antialias_buffer,false);
     image = image_copy;
   }
