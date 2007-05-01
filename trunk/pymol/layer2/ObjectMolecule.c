@@ -4956,6 +4956,8 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
     case cAN_Mg:
     case cAN_Zn:
     case cAN_Hg:
+    case cAN_Sr:
+    case cAN_Ba:
       ai->hb_donor=true;
       break;
     case cAN_N:
