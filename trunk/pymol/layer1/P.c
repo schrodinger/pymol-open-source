@@ -25,6 +25,10 @@ the initialization functions for these libraries on startup.
 #ifndef _PYMOL_NOPY
 
 #include"os_predef.h"
+#include"Base.h"
+
+#define MAX_SAVED_THREAD ((PYMOL_MAX_THREADS)+3)
+
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
@@ -144,8 +148,6 @@ static void PUnlockGLUT(void) /* assumes we have the GIL */
 {
   PXDecRef(PyObject_CallFunction(P_unlock_glut,NULL));
 }
-
-#define MAX_SAVED_THREAD 16
 
 static SavedThreadRec SavedThread[MAX_SAVED_THREAD];
 
