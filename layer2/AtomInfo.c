@@ -2217,6 +2217,7 @@ int AtomInfoIsFreeCation(PyMOLGlobals *G,AtomInfoType *I) {
   case cAN_Ca:
   case cAN_Mg:
   case cAN_Mn: 
+  case cAN_Sr:
     return true;
   }
   return false;
@@ -2318,6 +2319,8 @@ static void set_protons(AtomInfoType *I,char *elem)
       switch(e[1]) {
       case 'R':
       case 'r': I->protons=cAN_Br; break;
+      case 'A':
+      case 'a': I->protons=cAN_Ba; break;
       }
       break;
     case 'F':
@@ -2369,6 +2372,8 @@ static void set_protons(AtomInfoType *I,char *elem)
       case 'i': I->protons=cAN_Si; break;
       case 'E':
       case 'e': I->protons=cAN_Se; break;
+      case 'R':
+      case 'r': I->protons=cAN_Sr; break;
       }
       break;
     default: /* unrecognized element (possible garbage?) */

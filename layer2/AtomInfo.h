@@ -103,7 +103,9 @@ Z* -------------------------------------------------------------------
 #define cAN_Zn 30
 #define cAN_Se 34
 #define cAN_Br 35
+#define cAN_Sr 38
 #define cAN_I  53
+#define cAN_Ba 56
 #define cAN_Hg 80
 
 typedef char Chain[2];
