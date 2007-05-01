@@ -183,7 +183,7 @@ PYMOL API
         #      
         try:
             lock()   
-            r = _cmd.select("indicate","("+str(selection)+")",1,0,'')
+            r = _cmd.select("indicate","("+str(selection)+")",1,-1,'')
             cmd.enable("indicate")
         finally:
             unlock(r)
