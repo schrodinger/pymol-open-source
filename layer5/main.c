@@ -137,7 +137,7 @@ void MainFlushAsync(void)
   PyMOLGlobals *G = TempPyMOLGlobals;
   if(PLockAPIAsGlut(true)) {
     PFlush(G);
-    PUnlockAPIAsGlut(G);
+    PUnlockAPIAsGlut();
   }
 }
 int MainCheckRedundantOpen(char *file)
