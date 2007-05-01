@@ -3995,9 +3995,9 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,
     }
   }
   if(ok) { /* update mouse in GUI */
-    PParse("cmd.mouse(quiet=1)");
+    PParse(G,"cmd.mouse(quiet=1)");
     if(!G->Option->presentation)
-      PParse("viewport"); /* refresh window/internal_gui status */
+      PParse(G,"viewport"); /* refresh window/internal_gui status */
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"main");

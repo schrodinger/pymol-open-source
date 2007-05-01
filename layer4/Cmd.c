@@ -1891,7 +1891,7 @@ static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
     /* only called by the GLUT thread with unlocked API, blocked interpreter */
     if(flush_count<8) { /* prevent super-deep recursion */
       flush_count++;
-      PFlushFast();
+      PFlushFast(TempPyMOLGlobals);
       flush_count--;
     } else {
       PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Warnings)
@@ -3877,6 +3877,7 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdDo(PyObject *self, 	PyObject *args)
 {
+  PyMOLGlobals *G = TempPyMOLGlobals;
   char *str1;
   int log;
   int ok=false;
@@ -3895,15 +3896,15 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
           if(WordMatch(TempPyMOLGlobals,str1,"quit",true)==0) /* don't log quit */
             PLog(str1,cPLog_pml);
       }
-      PParse(str1);
+      PParse(G,str1);
     } else if(str1[1]==' ') { 
       /* "_ command" suppresses echoing of command, but it is still logged */
       if(log)
         if(WordMatch(TempPyMOLGlobals,str1+2,"quit",true)==0) /* don't log quit */
           PLog(str1+2,cPLog_pml);
-      PParse(str1+2);    
+      PParse(G,str1+2);    
     } else {
-      PParse(str1);
+      PParse(G,str1);
     }
     APIExit();
   }
@@ -4887,7 +4888,7 @@ static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
 {
   APIEntry();
   TempPyMOLGlobals->Terminating=true;
-  PExit(EXIT_SUCCESS);
+  PExit(TempPyMOLGlobals,EXIT_SUCCESS);
   APIExit();
   return APISuccess();
 }

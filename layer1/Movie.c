@@ -118,7 +118,7 @@ void MovieFlushCommands(PyMOLGlobals *G)
 {
   register CMovie *I=G->Movie;
   I->RecursionFlag=true;
-  PFlush();
+  PFlush(G);
   I->RecursionFlag=false;
 }
 
@@ -693,7 +693,7 @@ void MovieDoFrameCommand(PyMOLGlobals *G,int frame)
     if((frame>=0)&&(frame<I->NFrame)) {
       if(I->Cmd[frame][0]) {
         if(!I->RecursionFlag) {
-          PParse(I->Cmd[frame]);
+          PParse(G,I->Cmd[frame]);
         }
       }
       if(I->ViewElem) { 

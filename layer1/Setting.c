@@ -1775,7 +1775,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     break;
   case cSetting_seq_view_location:
   case cSetting_seq_view_overlay:
-    PParse("cmd.viewport(-1,-1)");
+    PParse(G,"cmd.viewport(-1,-1)");
     break;
   case cSetting_stereo_mode:
     SceneUpdateStereoMode(G);

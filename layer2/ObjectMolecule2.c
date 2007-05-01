@@ -2629,7 +2629,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
 
     }
     if(script_file) 
-      PParse(script_file);
+      PParse(I->Obj.G,script_file);
   }
 }
 

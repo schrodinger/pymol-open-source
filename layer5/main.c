@@ -71,13 +71,13 @@ void MainRunCommand(char *str1)
         if(WordMatch(G,str1,"quit",true)==0) /* don't log quit */
           PLog(str1,cPLog_pml);
       }
-      PParse(str1);
+      PParse(G,str1);
     } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
       if(WordMatch(G,str1+2,"quit",true)>=0) /* don't log quit */
         PLog(str1+2,cPLog_pml);
-      PParse(str1+2);    
+      PParse(G,str1+2);    
     } else { 
-      PParse(str1);
+      PParse(G,str1);
     }
     PUnlockAPIAsGlut();
   }
@@ -134,9 +134,10 @@ void MainMovieCopyFinish(void)
 }
 void MainFlushAsync(void)
 {
+  PyMOLGlobals *G = TempPyMOLGlobals;
   if(PLockAPIAsGlut(true)) {
-    PFlush();
-    PUnlockAPIAsGlut();
+    PFlush(Temp);
+    PUnlockAPIAsGlut(G);
   }
 }
 int MainCheckRedundantOpen(char *file)
@@ -403,13 +404,13 @@ void MainRunCommand(char *str1)
         if(WordMatch(G,str1,"quit",true)==0) /* don't log quit */
           PLog(str1,cPLog_pml);
       }
-      PParse(str1);
+      PParse(G,str1);
     } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
       if(WordMatch(G,str1+2,"quit",true)>=0) /* don't log quit */
         PLog(str1+2,cPLog_pml);
-      PParse(str1+2);    
+      PParse(G,str1+2);    
     } else { 
-      PParse(str1);
+      PParse(G,str1);
     }
     PUnlockAPIAsGlut();
   }
@@ -418,7 +419,7 @@ void MainFlushAsync(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   if(PLockAPIAsGlut(true)) {
-    PFlush();
+    PFlush(G);
     PUnlockAPIAsGlut();
   }
 }
@@ -428,7 +429,7 @@ void MainFlush(void) /* assumes GIL held */
 
   MainPushValidContext(G);
 
-  PFlush();
+  PFlush(G);
 
   MainPopValidContext(G);
 
@@ -1265,11 +1266,11 @@ static void MainBusyIdle(void)
     
     if(I->IdleMode) {
       if(I->IdleMode==1)
-        PSleepUnlocked(SettingGetGlobal_i(G,cSetting_fast_idle)); /* fast idle - more responsive */
+        PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_fast_idle)); /* fast idle - more responsive */
       else
-        PSleepUnlocked(SettingGetGlobal_i(G,cSetting_slow_idle)); /* slow idle - save CPU cycles */
+        PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_slow_idle)); /* slow idle - save CPU cycles */
     } else {
-      PSleepUnlocked(SettingGetGlobal_i(G,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
+      PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
     }
     
     /* run final initilization code for Python-based PyMOL implementations. */
@@ -1298,8 +1299,8 @@ static void MainBusyIdle(void)
           I->IdleCount++;
           if(I->IdleCount==10) {
             if(PLockAPIAsGlut(true)) {
-              PParse("_quit");
-              PFlush();
+              PParse(G,"_quit");
+              PFlush(G);
               PUnlockAPIAsGlut();
             }
           }
@@ -1311,7 +1312,7 @@ static void MainBusyIdle(void)
       " MainBusyIdle: lock not obtained...\n"
       ENDFD;
 
-    PSleepWhileBusy(100000); /* 10 per second */
+    PSleepWhileBusy(G,100000); /* 10 per second */
     if(G->HaveGUI) {
       PBlock();
       PLockStatus();
@@ -1625,10 +1626,11 @@ SetConsoleCtrlHandler(
 #ifndef _PYMOL_MODULE
 int main(int argc, char *argv[])
 {
+  PyMOLGlobals *G = TempPyMOLGlobals;
   myArgc=argc;
   myArgv=argv;
 
-  PInitEmbedded(argc,argv);
+  PInitEmbedded(G,argc,argv);
 
 #else
 int was_main(void)
@@ -1717,7 +1719,7 @@ int MainFromPyList(PyObject *list)
       if(ok) {
 	    
         sprintf(buffer,"viewport %d, %d",win_x,win_y);
-        PParse(buffer);
+        PParse(G,buffer);
       }
     }
   }

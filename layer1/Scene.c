@@ -842,7 +842,7 @@ void SceneSetStereo(PyMOLGlobals *G,int flag)
     OrthoReshape(G,G->Option->winX,G->Option->winY,true);
 #ifndef _PYMOL_NOPY
     if((cur_stereo==4)&&I->StereoMode) {
-      PParse("viewport");
+      PParse(G,"viewport");
     }
 #endif
   }
@@ -3524,7 +3524,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               objMol = (ObjectMolecule*)obj;            
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
               sprintf(buffer,"cmd.drag(\"bymol (%s)\")",buf1);
-              PParse(buffer);
+              PParse(G,buffer);
               PLog(buffer,cPLog_pym);
             }
             break;
@@ -3811,29 +3811,29 @@ static void SceneRovingCleanup(PyMOLGlobals *G)
   s = SettingGet_s(G,NULL,NULL,cSetting_roving_selection);
 
   sprintf(buffer,"cmd.hide('lines','''%s''')",s);
-  PParse(buffer);
-  PFlush();
+  PParse(G,buffer);
+  PFlush(G);
   sprintf(buffer,"cmd.hide('sticks','''%s''')",s);
-  PParse(buffer);
-  PFlush();
+  PParse(G,buffer);
+  PFlush(G);
   sprintf(buffer,"cmd.hide('spheres','''%s''')",s);
-  PParse(buffer);
-  PFlush();
+  PParse(G,buffer);
+  PFlush(G);
   sprintf(buffer,"cmd.hide('ribbon','''%s''')",s);
-  PParse(buffer);
-  PFlush();
+  PParse(G,buffer);
+  PFlush(G);
   sprintf(buffer,"cmd.hide('cartoon','''%s''')",s);
-  PParse(buffer);
-  PFlush();
+  PParse(G,buffer);
+  PFlush(G);
   sprintf(buffer,"cmd.hide('labels','''%s''')",s);
-  PParse(buffer);
-  PFlush();
+  PParse(G,buffer);
+  PFlush(G);
   sprintf(buffer,"cmd.hide('nonbonded','''%s''')",s);
-  PParse(buffer);
-  PFlush();
+  PParse(G,buffer);
+  PFlush(G);
   sprintf(buffer,"cmd.hide('nb_spheres','''%s''')",s);
-  PParse(buffer);
-  PFlush();
+  PParse(G,buffer);
+  PFlush(G);
 }
 
 void SceneRovingUpdate(PyMOLGlobals *G)
@@ -3890,8 +3890,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
       sprintf(buffer,
               "cmd.hide('sticks','''%s''');cmd.show('sticks','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,sticks);
-      PParse(buffer);
-      PFlush();
+      PParse(G,buffer);
+      PFlush(G);
       refresh_flag=true;
     }
 
@@ -3905,8 +3905,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
       sprintf(buffer,
               "cmd.hide('lines','''%s''');cmd.show('lines','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,lines);
-      PParse(buffer);
-      PFlush();
+      PParse(G,buffer);
+      PFlush(G);
       refresh_flag=true;
     }
 
@@ -3920,8 +3920,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
       sprintf(buffer,
               "cmd.hide('labels','''%s''');cmd.show('labels','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,labels);
-      PParse(buffer);
-      PFlush();
+      PParse(G,buffer);
+      PFlush(G);
       refresh_flag=true;
     }
 
@@ -3935,8 +3935,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
       sprintf(buffer,
               "cmd.hide('spheres','''%s''');cmd.show('spheres','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,spheres);
-      PParse(buffer);
-      PFlush();
+      PParse(G,buffer);
+      PFlush(G);
       refresh_flag=true;
     }
 
@@ -3950,8 +3950,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
       sprintf(buffer,
               "cmd.hide('cartoon','''%s''');cmd.show('cartoon','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,cartoon);
-      PParse(buffer);
-      PFlush();
+      PParse(G,buffer);
+      PFlush(G);
       refresh_flag=true;
     }
 
@@ -3965,8 +3965,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
       sprintf(buffer,
               "cmd.hide('ribbon','''%s''');cmd.show('ribbon','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,ribbon);
-      PParse(buffer);
-      PFlush();
+      PParse(G,buffer);
+      PFlush(G);
 
       refresh_flag=true;
     }
@@ -3987,8 +3987,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
       sprintf(buffer,
               "cmd.dist('rov_pc','%s & enabled & %s %s (center expand %1.3f)','same',%1.4f,mode=2,label=%d,quiet=2)",
               s,p1,p2,polar_contacts,polar_cutoff,label_flag);
-      PParse(buffer);
-      PFlush();
+      PParse(G,buffer);
+      PFlush(G);
 
       refresh_flag=true;
     }
@@ -4003,8 +4003,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
       sprintf(buffer,
               "cmd.hide('nonbonded','''%s''');cmd.show('nonbonded','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,nonbonded);
-      PParse(buffer);
-      PFlush();
+      PParse(G,buffer);
+      PFlush(G);
       refresh_flag=true;
     }
 
@@ -4018,8 +4018,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
       sprintf(buffer,
               "cmd.hide('nb_spheres','''%s''');cmd.show('nb_spheres','%s & enabled & %s %s (center expand %1.3f)')",
               s,s,p1,p2,nb_spheres);
-      PParse(buffer);
-      PFlush();
+      PParse(G,buffer);
+      PFlush(G);
       refresh_flag=true;
     }
 
@@ -4038,8 +4038,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
               sprintf(buffer,
                       "cmd.isomesh('rov_m1','%s',%8.6f,'center',%1.3f)",
                       name,level,isomesh);
-              PParse(buffer);
-              PFlush();
+              PParse(G,buffer);
+              PFlush(G);
               refresh_flag=true;
             }
 
@@ -4052,8 +4052,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
               sprintf(buffer,
                       "cmd.isomesh('rov_m2','%s',%8.6f,'center',%1.3f)",
                       name,level,isomesh);
-              PParse(buffer);
-              PFlush();
+              PParse(G,buffer);
+              PFlush(G);
               refresh_flag=true;
             }
 
@@ -4066,8 +4066,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
               sprintf(buffer,
                       "cmd.isomesh('rov_m3','%s',%8.6f,'center',%1.3f)",
                       name,level,isomesh);
-              PParse(buffer);
-              PFlush();
+              PParse(G,buffer);
+              PFlush(G);
               refresh_flag=true;
             }
       SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
@@ -4088,8 +4088,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
               sprintf(buffer,
                       "cmd.isosurface('rov_s1','%s',%8.6f,'center',%1.3f)",
                       name,level,isosurface);
-              PParse(buffer);
-              PFlush();
+              PParse(G,buffer);
+              PFlush(G);
               refresh_flag=true;
             }
 
@@ -4102,8 +4102,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
               sprintf(buffer,
                       "cmd.isosurface('rov_s2','%s',%8.6f,'center',%1.3f)",
                       name,level,isosurface);
-              PParse(buffer);
-              PFlush();
+              PParse(G,buffer);
+              PFlush(G);
               refresh_flag=true;
             }
 
@@ -4116,8 +4116,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
               sprintf(buffer,
                       "cmd.isosurface('rov_s3','%s',%8.6f,'center',%1.3f)",
                       name,level,isosurface);
-              PParse(buffer);
-              PFlush();
+              PParse(G,buffer);
+              PFlush(G);
               refresh_flag=true;
             }
       SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
@@ -4125,8 +4125,8 @@ void SceneRovingUpdate(PyMOLGlobals *G)
 
 
     if(refresh_flag) {
-      PParse("cmd.refresh()");
-      PFlush();
+      PParse(G,"cmd.refresh()");
+      PFlush(G);
     }
 
     I->RovingLastUpdate=UtilGetSeconds(G);
@@ -6781,7 +6781,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
       if(debug_pick) {
         PyMOL_SwapBuffers(G->PyMOL);
-        PSleep(1000000*debug_pick/4);
+        PSleep(G,1000000*debug_pick/4);
         PyMOL_SwapBuffers(G->PyMOL);
       }
       lowBits = SceneFindTriplet(G,x,y,render_buffer);
@@ -6795,7 +6795,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
       if(debug_pick) {
         PyMOL_SwapBuffers(G->PyMOL);
-        PSleep(1000000*debug_pick/4);
+        PSleep(G,1000000*debug_pick/4);
         PyMOL_SwapBuffers(G->PyMOL);
       }
 

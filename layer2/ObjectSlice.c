@@ -219,7 +219,7 @@ static void ObjectSliceStateFree(ObjectSliceState *oss)
       } else {
         char buffer[255]; /* pass this off to the main thread */
         sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",oss->displayList,1);
-        PParse(buffer);
+        PParse(oss->G,buffer);
       }
     }
   }

@@ -168,7 +168,7 @@ void RepPurge(Rep *I)
       } else {
         char buffer[255]; /* pass this off to the main thread */
         sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",I->displayList,1);
-        PParse(buffer);
+        PParse(G,buffer);
       }
     }
   }

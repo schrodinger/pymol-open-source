@@ -586,8 +586,8 @@ static int WizardRelease(Block *block,int button,int x,int y,int mod)
       if(I->Stack>=0)
         if(I->Wiz[I->Stack]) {
           PLog(I->Line[a].code,cPLog_pym);
-          PParse(I->Line[a].code);
-          PFlush();
+          PParse(G,I->Line[a].code);
+          PFlush(G);
         }
       break;
     }

@@ -2835,8 +2835,8 @@ void PyMOL_Special(CPyMOL *I,int k, int x, int y, int modifiers)
   if(!grabbed) {
     sprintf(buffer,"_special %d,%d,%d,%d",k,x,y,modifiers);
     PLog(buffer,cPLog_pml);
-    PParse(buffer);
-    PFlush();
+    PParse(G,buffer);
+    PFlush(G);
   }
   PYMOL_API_UNLOCK
 }
@@ -2884,7 +2884,7 @@ int PyMOL_Idle(CPyMOL *I)
     did_work = true;
   }
 
-  PFlush();
+  PFlush(G);
   
 #ifndef _PYMOL_NOPY
   if(I->PythonInitStage>0) {
@@ -2905,7 +2905,7 @@ int PyMOL_Idle(CPyMOL *I)
 		PRunString("adapt_to_hardware()");
 		PRunString("exec_deferred()");
 		PUnblock();
-		PFlush();
+		PFlush(G);
 	}
   }
 #endif
@@ -2932,7 +2932,7 @@ void PyMOL_ExpireIfIdle(CPyMOL *I)
 	   (!G->Option->read_stdin)) {
 	  I->ExpireCount++;
 	  if(I->ExpireCount==10) {
-	    PParse("_quit");
+	    PParse(G,"_quit");
 	  }
 	}
       }
