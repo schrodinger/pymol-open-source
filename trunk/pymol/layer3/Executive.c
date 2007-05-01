@@ -3515,7 +3515,7 @@ static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals *G,int list_id,int partia
   int iter_id = 0;
   SpecRec *rec = NULL, *list_rec = NULL;
 
-  SelectorUpdateTable(G,cSelectorUpdateTableAllStates);
+  SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
 
   if(list_id) {
     total_count = TrackerGetNCandForList(I_Tracker,list_id);
@@ -9034,7 +9034,7 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1)
         case cExecSelection:
           sele1=SelectorIndexByName(G,rec->name);
           if(sele1>=0) {
-            SelectorUpdateTable(G,cSelectorUpdateTableAllStates);
+            SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
             n_state = SelectorGetSeleNCSet(G,sele1);
             if(result<n_state)
               result = n_state;

@@ -1151,7 +1151,7 @@ PYMOL API
         #
         try:
             lock()   
-            r = _cmd.select("_count_tmp","("+str(selection)+")",1,int(state)-1)
+            r = _cmd.select("_count_tmp","("+str(selection)+")",1,int(state)-1,'')
             _cmd.delete("_count_tmp")
         finally:
             unlock(r)

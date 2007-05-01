@@ -28,7 +28,8 @@ Z* -------------------------------------------------------------------
 
 int SelectorInit(PyMOLGlobals *G);
 int SelectorCreate(PyMOLGlobals *G,char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp);
-int SelectorCreateWithState(PyMOLGlobals *G,char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp,int state);
+int SelectorCreateWithStateDomain(PyMOLGlobals *G,char *name,char *sele,ObjectMolecule *obj,
+                                    int quiet,Multipick *mp,int state,char *domain);
 int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele);
 int SelectorCreateFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx);
 int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx); 
@@ -43,7 +44,7 @@ int SelectorCreateEmpty(PyMOLGlobals *G,char *name, int exec_managed);
 void SelectorToggle(PyMOLGlobals *G,int rep,char *name);
 void SelectorCylinder(PyMOLGlobals *G,char *sele,char *onoff);
 
-int SelectorUpdateTable(PyMOLGlobals *G,int req_state);
+int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain);
 #define cSelectorUpdateTableAllStates -1
 #define cSelectorUpdateTableCurrentState -2
 #define cSelectorUpdateTableEffectiveStates -3
