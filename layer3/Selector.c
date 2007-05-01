@@ -7225,6 +7225,7 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state)
   ErrChkPtr(G,I->Flag2);
   I->Vertex=Alloc(float,c*3);
   ErrChkPtr(G,I->Vertex);
+  /* printf("selector update table state=%d, natom=%d\n",req_state,c); */
   return(true);
 }
 /*========================================================================*/
