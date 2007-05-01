@@ -74,13 +74,13 @@ PyMOL>print stored.cnt
 107
 PyMOL>stored.x = 0
 PyMOL>iterate_state 1,(all),stored.x=stored.x+x
- IterateState: iterated over 107 atom states.
+ IterateState: iterated over 107 atom coordinate states.
 PyMOL>print "%8.4f"%stored.x
 130.9720
 PyMOL>alter (all),segi='PEPT'
  Alter: modified 107 atoms.
 PyMOL>alter_state 1,(all),x = x + 1.0
- AlterState: modified 107 atom states.
+ AlterState: modified 107 atom coordinate states.
 PyMOL>print "%8.4f"%cmd.get_dihedral("(i;11&n;n)","(i;11&n;ca)","(i;11&n;cb)","(i;11&n;cg)")
 -160.7909
 PyMOL>edit (i;11&n;n), (i;11&n;c), pkbond=0
@@ -108,7 +108,7 @@ PyMOL>copy cpy=pept
 PyMOL>select cpy_sel = (cpy)
  Selector: selection "cpy_sel" defined with 107 atoms.
 PyMOL>alter_state 1,(cpy),x=x+math.cos(y+z)
- AlterState: modified 107 atom states.
+ AlterState: modified 107 atom coordinate states.
 PyMOL>rms cpy,pept
  Executive: RMS =    0.698 (107 to 107 atoms)
 PyMOL>rms (cpy and name ca),pept

@@ -3515,7 +3515,7 @@ static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals *G,int list_id,int partia
   int iter_id = 0;
   SpecRec *rec = NULL, *list_rec = NULL;
 
-  SelectorUpdateTable(G);
+  SelectorUpdateTable(G,cSelectorUpdateTableAllStates);
 
   if(list_id) {
     total_count = TrackerGetNCandForList(I_Tracker,list_id);
@@ -4895,7 +4895,8 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
 
   md=&_md;
 
-  if(state==-2) state=SceneGetState(G);
+  if((state==-2)||(state==-3)) /* TO DO: support per-object states */
+    state=SceneGetState(G);
 
   /* remove object if it already exists */
 
@@ -4915,7 +4916,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
     if(state==-1) st_once_flag=false; /* each state, separate map, separate extent */
     if(!st_once_flag) state=st;
     extent_state = state;
-    if(state<=-2) extent_state = -1;
+    if(state<=-3) extent_state = -1;
     if(strlen(sele)&&(!have_corners)) {
       valid_extent = ExecutiveGetExtent(G,sele,md->MinCorner,
                                         md->MaxCorner,true,extent_state,false);
@@ -4954,8 +4955,8 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
         n_state = SelectorCountStates(G,sele0);
         if(valid_extent)
           for(a=0;a<n_state;a++) {
-            if(state==-3) once_flag=false; /* -2 = each state, separate map, shared extent */
-            if(state==-4) state=-1; /* all states, one map */
+            if(state==-5) once_flag=false; /* api: state=-4 = each state, separate map, shared extent */
+            if(state==-4) state=-1; /* api: state=-3 all states, but one map */
             if(!once_flag) state=a;
             ms = ObjectMapNewStateFromDesc(G,objMap,md,state,quiet);
             if(!ms)
@@ -6216,6 +6217,8 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
 /*========================================================================*/
 int ExecutiveGetDistance(PyMOLGlobals *G,char *s0,char *s1,float *value,int state)
 {
+  /* TO DO: add support for averaging over multiple states */
+
   Vector3f v0,v1;
   int sele0=-1,sele1=-1;
   int ok=true;
@@ -6238,6 +6241,9 @@ int ExecutiveGetDistance(PyMOLGlobals *G,char *s0,char *s1,float *value,int stat
 /*========================================================================*/
 int ExecutiveGetAngle(PyMOLGlobals *G,char *s0,char *s1,char *s2,float *value,int state)
 {
+
+  /* TO DO: add support for averaging over multiple states */
+
   Vector3f v0,v1,v2;
   int sele0=-1,sele1=-1,sele2=-1;
   int ok=true;
@@ -6266,6 +6272,9 @@ int ExecutiveGetAngle(PyMOLGlobals *G,char *s0,char *s1,char *s2,float *value,in
 /*========================================================================*/
 int ExecutiveGetDihe(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,float *value,int state)
 {
+
+  /* TO DO: add support for averaging over multiple states */
+
   Vector3f v0,v1,v2,v3;
   int sele0=-1,sele1=-1,sele2=-1,sele3=-1;
   int ok=true;
@@ -6361,7 +6370,7 @@ float ExecutiveGetArea(PyMOLGlobals *G,char *s0,int sta0,int load_b)
   } else {
     obj0 = SelectorGetSingleObjectMolecule(G,sele0);
     if(!(obj0)) {
-      if(SelectorCountAtoms(G,sele0)>0)
+      if(SelectorCountAtoms(G,sele0,sta0)>0)
         ErrMessage(G,"Area","Selection must be within a single object.");
       else
         result = 0.0F;
@@ -7454,7 +7463,7 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
   op1.i2 = 0;
   op1.charVLA=VLAlloc(char,10000);
 
-  if(state==-2) { /* multimodel PDB */
+  if(state==-1) { /* multimodel PDB */
     n_state = ExecutiveCountStates(G,s1);
   }
 
@@ -7465,13 +7474,13 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
 
   for(a=0;a<n_state;a++) {
     switch(state) {
-    case -2:
+    case -1: /* multimodel */
       sprintf(model_record,"MODEL     %4d\n",model_count++);
       UtilConcatVLA(&op1.charVLA,&op1.i2,model_record);
       actual_state = a;
       break;
-    case -1:
-      if(state==-1) actual_state=SceneGetState(G);
+    case -2: /* single state */
+      actual_state=SceneGetState(G);
       break;
     default:
       actual_state = state;
@@ -7494,7 +7503,7 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
       /* terminate with END */
       UtilConcatVLA(&op1.charVLA,&op1.i2,end_str);
     switch(state) {
-    case -2:
+    case -1:
       UtilConcatVLA(&op1.charVLA,&op1.i2,"ENDMDL\n");
       break;
     }
@@ -7831,6 +7840,8 @@ int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,
     int check_state = true;
     CoordSet *cs = NULL;
     if(state==-2)
+      state = SceneGetState(G);
+    if(state==-3)
       state = ObjectGetCurrentState(&obj->Obj,true);
     if(state>=0) {
       cs = ObjectMoleculeGetCoordSet(obj,state);
@@ -8036,11 +8047,11 @@ void ExecutiveIterateState(PyMOLGlobals *G,int state,char *s1,char *expr,int rea
       start_state = state;
       stop_state = state+1;
     } else {
-      if(state==-1) { /* current state */
+      if((state==-2)||(state==-3)) { /* current state, TO DO: effective object state */
         state = SceneGetState(G);
         start_state = state;
         stop_state = state+1;
-      } else { /* all states (for the selection) */
+      } else if(state==-1) { /* all states (for the selection) */
         start_state = 0;
         stop_state = SelectorCountStates(G,sele1);
       }
@@ -8060,11 +8071,11 @@ void ExecutiveIterateState(PyMOLGlobals *G,int state,char *s1,char *expr,int rea
     if(!quiet) {
       if(!read_only) {
         PRINTFB(G,FB_Executive,FB_Actions)
-          " AlterState: modified %i atomic coordinates states.\n",op1.i1
+          " AlterState: modified %i atom coordinate states.\n",op1.i1
           ENDFB(G);
       } else {
         PRINTFB(G,FB_Executive,FB_Actions)
-          " IterateState: iterated over %i atomic coordinate states.\n",op1.i1
+          " IterateState: iterated over %i atom coordinate states.\n",op1.i1
           ENDFB(G);
       }
     }
@@ -9023,7 +9034,7 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1)
         case cExecSelection:
           sele1=SelectorIndexByName(G,rec->name);
           if(sele1>=0) {
-            SelectorUpdateTable(G);
+            SelectorUpdateTable(G,cSelectorUpdateTableAllStates);
             n_state = SelectorGetSeleNCSet(G,sele1);
             if(result<n_state)
               result = n_state;
@@ -9060,7 +9071,7 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1)
   } else {
     sele1=SelectorIndexByName(G,s1);
     if(sele1>=0) {
-      SelectorUpdateTable(G);
+      SelectorUpdateTable(G,cSelectorUpdateTableAllStates);
       result = SelectorGetSeleNCSet(G,sele1);
     }
   }
@@ -10577,7 +10588,8 @@ int ExecutiveGetCameraExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int 
   ObjectMoleculeOpRec op;
   int flag = false;
 
-  if(state==-2) state=SceneGetState(G);
+  if((state==-2)||(state==-3)) /* TO DO: support per-object states */
+    state=SceneGetState(G);
 
   PRINTFD(G,FB_Executive)
     " ExecutiveGetCameraExtent: name %s state %d\n",name,state
@@ -10652,7 +10664,7 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
   ObjectMoleculeOpRecInit(&op);
   ObjectMoleculeOpRecInit(&op2);  
 
-  if(state==-2) { /* we want the currently displayed state */
+  if((state==-2)||(state==-3)) { /* we want the currently displayed state */
     state=SceneGetState(G);
     op.include_static_singletons = true; /* make sure we get the static singletons too */
     op2.include_static_singletons = true;
@@ -10869,7 +10881,8 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals *G,char *name,float *pos,float *
   SpecRec *rec = NULL;
   float f1,fmx=0.0F;
 
-  if(state==-2) state=SceneGetState(G);
+  if((state==-2)||(state==-3)) /* TO DO: support per-object states */
+    state=SceneGetState(G);
 
   PRINTFD(G,FB_Executive)
     " ExecutiveGetExtent: name %s state %d\n",name,state
@@ -11275,7 +11288,8 @@ int ExecutiveGetMoment(PyMOLGlobals *G,char *name,double *mi,int state)
   int a,b;
   int c=0;
 
-  if(state==-2) state=SceneGetState(G);
+  if((state==-2)||(state==-3)) /* TO DO: support per-object states */
+    state=SceneGetState(G);
 
   sele=SelectorIndexByName(G,name);
   if(sele>=0) {

@@ -46,7 +46,7 @@ PYMOL API
         return r
     
 
-    def select(name, selection="", enable=-1, quiet=1, merge=0):
+    def select(name, selection="", enable=-1, quiet=1, merge=0, state=0): 
         '''
 DESCRIPTION
 
@@ -109,7 +109,7 @@ SEE ALSO
             elif merge==2:
                 selection = "("+selection+") or ??"+name # merge if exists and active
             #
-            r = _cmd.select(str(name),str(selection),int(quiet))
+            r = _cmd.select(str(name),str(selection),int(quiet),int(state)-1)
             enable = int(enable)
             if is_ok(r) and enable>0:
                 r = _cmd.onoff(str(name),1);
@@ -183,7 +183,7 @@ PYMOL API
         #      
         try:
             lock()   
-            r = _cmd.select("indicate","("+str(selection)+")",1)
+            r = _cmd.select("indicate","("+str(selection)+")",1,0)
             cmd.enable("indicate")
         finally:
             unlock(r)

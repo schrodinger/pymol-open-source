@@ -28,7 +28,7 @@ if __name__=='pymol.exporting':
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     import traceback
 
-    def get_pdbstr(selection="all", state=0, ref='', ref_state=-1, quiet=1):
+    def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1):
         '''
 DESCRIPTION
 
@@ -44,7 +44,9 @@ NOTES
 
     "state" is a 1-based state index for the object.
 
-    if state is zero, then current state is used.
+    if state is -1, then current state is used.
+
+    if state is 0, then all states are saved.
     
     '''
         r = DEFAULT_ERROR
@@ -151,7 +153,7 @@ PYMOL API
         if _raising(r): raise QuietException
         return r
 
-    def save(filename, selection='(all)', state=0, format='', ref='',
+    def save(filename, selection='(all)', state=-1, format='', ref='',
              ref_state=-1, quiet=1, partial=0):
         '''
 DESCRIPTION
@@ -177,8 +179,8 @@ NOTES
 
     For molecular files and where applicable:
     
-    when state = 0 (default), only the current state is written.
-    when state = -1, then a multi-state output file is written.
+    when state = -1 (default) only the current state is written.
+    when state = 0, then a multi-state output PDB file is written.
     
 SEE ALSO
 

@@ -7,11 +7,26 @@ PyMOL>show dots
 PyMOL>ray
  RayRenderTest: obtained 2032 graphics primitives.
 PyMOL>alter_state 1,(all),x=x+y
- AlterState: modified 107 atom states.
+ AlterState: modified 107 atom coordinate states.
 PyMOL>hide
 PyMOL>show lines
 PyMOL>ray
  RayRenderTest: obtained 166 graphics primitives.
+PyMOL>dele all
+PyMOL>load dat/pept.pdb
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
+PyMOL>load dat/pept.pdb
+ CmdLoad: "dat/pept.pdb" appended into object "pept", state 2.
+PyMOL>alter_state -1,(all),x=x+y
+ AlterState: modified 107 atom coordinate states.
+PyMOL>alter_state 0,(all), x=x+y
+ AlterState: modified 214 atom coordinate states.
+PyMOL>alter_state 1,(all), x=x+y
+ AlterState: modified 107 atom coordinate states.
+PyMOL>alter_state 2,(all), x=x+y
+ AlterState: modified 107 atom coordinate states.
+PyMOL>alter_state 3,(all), x=x+y
+ AlterState: modified 0 atom coordinate states.
 PyMOL>dele all
 PyMOL>load dat/small01.mol
  ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
@@ -85,7 +100,7 @@ PyMOL>h_add
 PyMOL>set valence=0.05
  Setting: valence set to on.
 PyMOL>ray
- RayRenderTest: obtained 43 graphics primitives.
+ RayRenderTest: obtained 59 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
  CmdLoad: "dat/pept.pdb" loaded as "pept".
@@ -200,22 +215,22 @@ PyMOL>iterate_state 1,(name o),print "%8.3f %8.3f %8.3f"%(x,y,z)
    3.449  -13.097   20.534
    5.278  -17.322   18.998
    5.962  -19.432   22.570
- IterateState: iterated over 13 atom states.
+ IterateState: iterated over 13 atom coordinate states.
 PyMOL>dele all
 PyMOL>load dat/il2.pdb
  CmdLoad: "dat/il2.pdb" loaded as "il2".
 PyMOL>stored.sum = 0
 PyMOL>iterate_state 1,(il2),stored.sum=stored.sum+x
- IterateState: iterated over 2084 atom states.
+ IterateState: iterated over 2084 atom coordinate states.
 PyMOL>print "%8.3f"%stored.sum
 20809.421
 PyMOL>push_undo (il2)
 PyMOL>alter_state 1,(il2),x=0.0
- AlterState: modified 2084 atom states.
+ AlterState: modified 2084 atom coordinate states.
 PyMOL>rebuild
 PyMOL>stored.sum = 0
 PyMOL>iterate_state 1,(il2),stored.sum=stored.sum+x
- IterateState: iterated over 2084 atom states.
+ IterateState: iterated over 2084 atom coordinate states.
 PyMOL>print "%8.3f"%stored.sum
    0.000
 PyMOL>edit il2`1
@@ -223,7 +238,7 @@ PyMOL>edit il2`1
 PyMOL>undo
 PyMOL>stored.sum = 0
 PyMOL>iterate_state 1,(il2),stored.sum=stored.sum+x
- IterateState: iterated over 2084 atom states.
+ IterateState: iterated over 2084 atom coordinate states.
 PyMOL>print "%8.3f"%stored.sum
 20809.421
 PyMOL>rebuild
@@ -491,7 +506,7 @@ PyMOL>get_extent
 PyMOL>load dat/pept.pdb,sav
  CmdLoad: "dat/pept.pdb" loaded as "sav".
 PyMOL>alter_state 1,(pept),x=1;y=2;z=3;
- AlterState: modified 107 atom states.
+ AlterState: modified 107 atom coordinate states.
 PyMOL>rebuild
 PyMOL>get_extent pept
  cmd.extent: min: [   1.000,   2.000,   3.000]

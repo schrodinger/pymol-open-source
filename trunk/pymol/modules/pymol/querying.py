@@ -681,7 +681,7 @@ SEE ALSO
             print " cmd.get_position: [%8.3f,%8.3f,%8.3f]"%(r[0],r[1],r[2])
         return r
 
-    def get_distance(atom1="pk1",atom2="pk2",state=0,quiet=1):
+    def get_distance(atom1="pk1",atom2="pk2",state=-1,quiet=1):
         '''
 DESCRIPTION
 
@@ -700,7 +700,7 @@ EXAMPLES
     
 PYMOL API
 
-    cmd.get_distance(atom1="pk1",atom2="pk2",state=0)
+    cmd.get_distance(atom1="pk1",atom2="pk2",state=-1)
 
         '''
         r = DEFAULT_ERROR
@@ -720,7 +720,7 @@ PYMOL API
             print " cmd.get_distance: %5.3f Angstroms."%r
         return r
 
-    def get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=0,quiet=1):
+    def get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=-1,quiet=1):
         '''
 DESCRIPTION
 
@@ -739,7 +739,7 @@ EXAMPLES
 
 PYMOL API
 
-    cmd.get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=0)
+    cmd.get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=-1)
 
         '''
         # preprocess selections
@@ -759,7 +759,7 @@ PYMOL API
             print " cmd.get_angle: %5.3f degrees."%r
         return r
         
-    def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=0,quiet=1):
+    def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=-1,quiet=1):
         '''
 DESCRIPTION
 
@@ -781,7 +781,7 @@ EXAMPLES
 
 PYMOL API
 
-    cmd.get_dihedral(atom1,atom2,atom3,atom4,state=0)
+    cmd.get_dihedral(atom1,atom2,atom3,atom4,state=-1)
 
         '''
         # preprocess selections
@@ -1130,7 +1130,7 @@ PYMOL API
         return r
 
 
-    def count_atoms(selection="(all)",quiet=1):
+    def count_atoms(selection="(all)",quiet=1,state=0):
         '''
 DESCRIPTION
 
@@ -1151,7 +1151,7 @@ PYMOL API
         #
         try:
             lock()   
-            r = _cmd.select("_count_tmp","("+str(selection)+")",1)
+            r = _cmd.select("_count_tmp","("+str(selection)+")",1,int(state)-1)
             _cmd.delete("_count_tmp")
         finally:
             unlock(r)

@@ -27,8 +27,8 @@ Z* -------------------------------------------------------------------
 #define cSelectionNone 1
 
 int SelectorInit(PyMOLGlobals *G);
-int *SelectorSelect(PyMOLGlobals *G,char *sele);
 int SelectorCreate(PyMOLGlobals *G,char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp);
+int SelectorCreateWithState(PyMOLGlobals *G,char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp,int state);
 int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele);
 int SelectorCreateFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx);
 int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx); 
@@ -42,7 +42,12 @@ int SelectorMoveMember(PyMOLGlobals *G,int s,int sele_old,int sele_new);
 int SelectorCreateEmpty(PyMOLGlobals *G,char *name, int exec_managed);
 void SelectorToggle(PyMOLGlobals *G,int rep,char *name);
 void SelectorCylinder(PyMOLGlobals *G,char *sele,char *onoff);
-int SelectorUpdateTable(PyMOLGlobals *G);
+
+int SelectorUpdateTable(PyMOLGlobals *G,int req_state);
+#define cSelectorUpdateTableAllStates -1
+#define cSelectorUpdateTableCurrentState -2
+#define cSelectorUpdateTableEffectiveStates -3
+
 int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
                                      int no_dummies,int *idx,int n_idx,int numbered_tags);
 
@@ -98,7 +103,7 @@ int SelectorGetPairIndices(PyMOLGlobals *G,int sele1,int state1,int sele2,int st
                            int mode,float cutoff,float h_angle,
                            int **indexVLA, ObjectMolecule ***objVLA);
 
-int SelectorCountAtoms(PyMOLGlobals *G,int sele);
+int SelectorCountAtoms(PyMOLGlobals *G,int sele,int state);
 int SelectorCheckIntersection(PyMOLGlobals *G,int sele1,int sele2);
 int SelectorCountStates(PyMOLGlobals *G,int sele);
 int SelectorClassifyAtoms(PyMOLGlobals *G,int sele, int preserve,ObjectMolecule *only_object);
