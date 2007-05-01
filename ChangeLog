@@ -4,6 +4,8 @@ CHANGE LOG
 
 2007-04-30  Warren L. DeLano <warren@delsci.com>
 
+	* fixed near_to selection operator
+	
 	* enabled per-state geometric criteria (within, expand, etc.)
 	
 	* added state and domain options to the select command
