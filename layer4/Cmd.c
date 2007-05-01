@@ -4940,10 +4940,13 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
   int ok=false;
   int count = 0;
   int state = 0;
-  ok = PyArg_ParseTuple(args,"ssii",&sname,&sele,&quiet,&state);
+  char *domain;
+  ok = PyArg_ParseTuple(args,"ssiis",&sname,&sele,&quiet,&state,&domain);
   if(ok) {
     APIEntry();
-    count = SelectorCreateWithState(TempPyMOLGlobals,sname,sele,NULL,quiet,NULL,state);
+    if(!domain[0])
+      domain = NULL;
+    count = SelectorCreateWithStateDomain(TempPyMOLGlobals,sname,sele,NULL,quiet,NULL,state,domain);
     if(count<0)
       ok = false;
     SceneInvalidate(TempPyMOLGlobals);

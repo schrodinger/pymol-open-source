@@ -508,7 +508,7 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,
   }
   *result = 0.0;
   mn = 0;
-  SelectorUpdateTable(G,state);
+  SelectorUpdateTable(G,state,-1);
   n_state1 = SelectorGetSeleNCSet(G,sele1);
   n_state2 = SelectorGetSeleNCSet(G,sele2);
   mn = n_state1;
@@ -575,7 +575,7 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals *G,ObjectDist *oldObj,
 
   /* count number of states in each selection */
 
-  SelectorUpdateTable(G,state);
+  SelectorUpdateTable(G,state,-1);
   n_state1 = SelectorGetSeleNCSet(G,sele1);
   n_state2 = SelectorGetSeleNCSet(G,sele2);  
   n_state3 = SelectorGetSeleNCSet(G,sele3);
@@ -658,7 +658,7 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals *G,ObjectDist *oldObj,
 
   /* count number of states in each selection */
 
-  SelectorUpdateTable(G,state);
+  SelectorUpdateTable(G,state,-1);
 
   n_state1 = SelectorGetSeleNCSet(G,sele1);
   n_state2 = SelectorGetSeleNCSet(G,sele2);  
