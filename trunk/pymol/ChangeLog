@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2007-04-30  Warren L. DeLano <warren@delsci.com>
+
+	* added state and domain options to the select command
+	
 2007-04-23  Warren L. DeLano <warren@delsci.com>
 
 	* added state=-1 and state=0 options for alter_state
