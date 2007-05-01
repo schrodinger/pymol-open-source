@@ -291,7 +291,7 @@ if pymol_launch != 3: # if this isn't a dry run
                             for ll in l:
                                 ll = string.split(string.strip(ll))
                                 if ll[0][0:7]=='hw.ncpu':
-                                    ncpu = int(ll[-1:][0])
+                                    ncpu = int(ll[0][8:])
                                 elif ll[0][0:10]=='hw.physmem':
                                     mem = int(ll[-1:][0])
                                     if mem>1000000000: # Gig or more
@@ -304,12 +304,12 @@ if pymol_launch != 3: # if this isn't a dry run
                     f=os.popen("egrep -c '^processor[^A-Za-z0-9:]*: [0-9]' /proc/cpuinfo")
                     l=f.readlines()
                     f.close()
-                    ncpu = int(l[0][0])
+                    ncpu = int(l[0])
                 elif sys.platform[0:4]=='irix':
                     f=os.popen("hinv | grep IP | grep Processor | grep HZ")
                     l=f.readlines()
                     f.close()
-                    ncpu=int(l[0][0])
+                    ncpu=int(string.split(string.strip(l[0]))[0])
                 if ncpu>1:
                      cmd.set("max_threads",ncpu)
                      if invocation.options.show_splash:  
