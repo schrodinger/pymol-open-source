@@ -385,7 +385,7 @@ void OrthoBusySlow(PyMOLGlobals *G,int progress,int total)
 	if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.15F)) {
 		if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
 #ifndef _PYMOL_NOPY
-			int blocked = PAutoBlock();
+			int blocked = PAutoBlock(G);
 			if(PLockStatusAttempt()) {
 #endif
 			PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_SLOW,progress,total);
@@ -394,7 +394,7 @@ void OrthoBusySlow(PyMOLGlobals *G,int progress,int total)
 #ifndef _PYMOL_NOPY
 			PUnlockStatus();
             }
-			PAutoUnblock(blocked);
+			PAutoUnblock(G,blocked);
 #endif
 		}
 	}
@@ -413,7 +413,7 @@ void OrthoBusyFast(PyMOLGlobals *G,int progress,int total)
 	if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.15F)) {
 		if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
 #ifndef _PYMOL_NOPY
-			int blocked = PAutoBlock();
+			int blocked = PAutoBlock(G);
 			if(PLockStatusAttempt()) {
 #endif
 			PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_FAST,progress,total);
@@ -421,7 +421,7 @@ void OrthoBusyFast(PyMOLGlobals *G,int progress,int total)
 #ifndef _PYMOL_NOPY
 			PUnlockStatus();
             }
-			PAutoUnblock(blocked);
+			PAutoUnblock(G,blocked);
 #endif
 		}
 	}
@@ -646,11 +646,6 @@ void OrthoKeyAlt(PyMOLGlobals *G,unsigned char k) {
     PFlush(G);
   }
 
-  /*  PBlockAndUnlockAPI();
-      sprintf(buffer,"cmd._ctrl('%c')",k+64);
-      PRunString(buffer);
-      PLockAPIAndUnblock(); */
-
 }
 /*========================================================================*/
 void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
@@ -783,7 +778,7 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
         curLine=I->CurLine&OrthoSaveLines;
         if(I->PromptChar) {
           strcpy(buffer,I->Line[curLine]);
-          if(PComplete(buffer+I->PromptChar,
+          if(PComplete(G,buffer+I->PromptChar,
                     sizeof(OrthoLineType)-I->PromptChar)); /* just print, don't complete */
         }
       }
@@ -796,7 +791,7 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
         if(I->PromptChar) {
           strcpy(buffer,I->Line[curLine]);
           
-          if(PComplete(buffer+I->PromptChar,
+          if(PComplete(G,buffer+I->PromptChar,
                        sizeof(OrthoLineType)-I->PromptChar))
             {
               OrthoRestorePrompt(G);
@@ -833,9 +828,9 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
       }
       break;
     case 22: /* CTRL V -- paste */
-      PBlockAndUnlockAPI();
+      PBlockAndUnlockAPI(G);
       PRunString("cmd.paste()");
-      PLockAPIAndUnblock();
+      PLockAPIAndUnblock(G);
       break;
 	 default:
       OrthoKeyControl(G,(unsigned char)(k+64));

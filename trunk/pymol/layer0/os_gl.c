@@ -279,7 +279,7 @@ void     p_glutBitmapCharacter(void *font, int character)
   plutBitmapCharacter(character);
 #endif
 }
-void     p_glutSwapBuffers(void){PBlock();PyRun_SimpleString("if hasattr(pymol,'_swap_buffers'): pymol._swap_buffers()");PUnblock();}
+void     p_glutSwapBuffers(void){PBlockLegacy();PyRun_SimpleString("if hasattr(pymol,'_swap_buffers'): pymol._swap_buffers()");PUnblockLegacy();}
 
 
 void     p_glutPopWindow(void){}

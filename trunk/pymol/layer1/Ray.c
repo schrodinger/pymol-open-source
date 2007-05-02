@@ -1834,8 +1834,9 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread,int n_total)
   PyObject *info_list;
   int a,c,n=0;
   CRay *I = Thread->ray;
+  PyMOLGlobals *G = I->G;
 
-  blocked = PAutoBlock();
+  blocked = PAutoBlock(G);
 
   PRINTFB(I->G,FB_Ray,FB_Blather)
     " Ray: filling voxels with %d threads...\n",n_thread
@@ -1855,7 +1856,7 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread,int n_total)
     Py_DECREF(info_list);
 
   }
-  PAutoUnblock(blocked);
+  PAutoUnblock(G,blocked);
 }
 #endif
 
@@ -1866,8 +1867,9 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
   PyObject *info_list;
   int a;
   CRay *I = Thread->ray;
+  PyMOLGlobals *G = I->G;
 
-  blocked = PAutoBlock();
+  blocked = PAutoBlock(G);
 
 
   PRINTFB(I->G,FB_Ray,FB_Blather)
@@ -1879,7 +1881,7 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
   }
   PXDecRef(PyObject_CallMethod(P_cmd,"_ray_anti_spawn","O",info_list));
   Py_DECREF(info_list);
-  PAutoUnblock(blocked);
+  PAutoUnblock(G,blocked);
 }
 #endif
 
@@ -1903,7 +1905,9 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   PyObject *info_list;
   int a;
   CRay *I=Thread->ray;
-  blocked = PAutoBlock();
+  PyMOLGlobals *G = I->G;
+
+  blocked = PAutoBlock(G);
 
   PRINTFB(I->G,FB_Ray,FB_Blather)
     " Ray: rendering with %d threads...\n",n_thread
@@ -1914,7 +1918,7 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   }
   PXDecRef(PyObject_CallMethod(P_cmd,"_ray_spawn","O",info_list));
   Py_DECREF(info_list);
-  PAutoUnblock(blocked);
+  PAutoUnblock(G,blocked);
   
 }
 #endif
@@ -4239,6 +4243,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
 
         CacheFreeP(I->G,edging,0,cCache_ray_edging_buffer,false);
       }
+      FreeP(rt);
     }
   }
   

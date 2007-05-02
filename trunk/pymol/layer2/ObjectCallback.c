@@ -35,14 +35,15 @@ static void ObjectCallbackFree(ObjectCallback *I);
 static void ObjectCallbackFree(ObjectCallback *I) {
 #ifndef _PYMOL_NOPY
   int a;
-  PBlock();
+  PyMOLGlobals *G = I->Obj.G;
+  PBlock(G);
   for(a=0;a<I->NState;a++) {
     if(I->State[a].PObj) {
       Py_DECREF(I->State[a].PObj);
       I->State[a].PObj=NULL;
     }
   }
-  PUnblock();
+  PUnblock(G);
 #endif 
   VLAFreeP(I->State);
   ObjectPurge(&I->Obj);
@@ -79,7 +80,7 @@ static void ObjectCallbackRender(ObjectCallback *I,RenderInfo *info)
       }
       if(state<0) {
         if(I->State) {
-          PBlock();
+          PBlock(G);
           for(a=0;a<I->NState;a++) {
             sobj = I->State+a;
             pobj=sobj->PObj;
@@ -95,7 +96,7 @@ static void ObjectCallbackRender(ObjectCallback *I,RenderInfo *info)
               }
             }
           }
-          PUnblock();
+          PUnblock(G);
         }
       } else {
         if(!sobj) {
@@ -108,13 +109,13 @@ static void ObjectCallbackRender(ObjectCallback *I,RenderInfo *info)
           } else {
             if(sobj) {
               pobj=sobj->PObj;
-              PBlock();
+              PBlock(G);
               if(PyObject_HasAttrString(pobj,"__call__")) {
                 Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
               }
               if(PyErr_Occurred())
                 PyErr_Print();
-              PUnblock();
+              PUnblock(G);
             }
           }
         }

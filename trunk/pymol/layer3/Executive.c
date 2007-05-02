@@ -7069,7 +7069,7 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
       switch(stereo_mode) {
       case 1: /* hardware stereo-in-a-window*/
         SceneSetStereo(G,flag);
-		PSGIStereo(flag); /* does this have any effect anymore? */
+		PSGIStereo(G,flag); /* does this have any effect anymore? */
         break;
       case 2: /* cross-eye stereo*/
       case 3: /* wall-eye */
@@ -7550,12 +7550,12 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state,
 
   sele1=SelectorIndexByName(G,s1);
   if(state<0) state=0;
-  PBlock(); /*   PBlockAndUnlockAPI();*/
+  PBlock(G); /*   PBlockAndUnlockAPI();*/
   if(sele1>=0) {
     result=SelectorGetChemPyModel(G,sele1,state,ref_mat);
   }
   if(PyErr_Occurred()) PyErr_Print();
-  PUnblock(); /* PLockAPIAndUnblock();*/
+  PUnblock(G); /* PLockAPIAndUnblock();*/
   return(result);
 #endif
 }
@@ -9119,7 +9119,7 @@ int  ExecutiveSetBondSetting(PyMOLGlobals *G,int index,PyObject *tuple,
   PRINTFD(G,FB_Executive)
     " ExecutiveSetBondSetting: entered. '%s' '%s'\n",s1,s2
     ENDFD;
-  unblock = PAutoBlock();
+  unblock = PAutoBlock(G);
   sele1 = SelectorIndexByName(G,s1);
   sele2 = SelectorIndexByName(G,s2);
   value_ptr = &value_storage;
@@ -9200,7 +9200,7 @@ int  ExecutiveSetBondSetting(PyMOLGlobals *G,int index,PyObject *tuple,
     /*    SettingGenerateSideEffects(G,index,s2,state);*/
   }
 
-  PAutoUnblock(unblock);
+  PAutoUnblock(G,unblock);
   return(ok);
 #endif
 }
@@ -9219,7 +9219,7 @@ int  ExecutiveUnsetBondSetting(PyMOLGlobals *G,int index,char *s1,char *s2,
   PRINTFD(G,FB_Executive)
     " ExecutiveSetSetting: entered. sele '%s' '%s'\n",s1,s2
     ENDFD;
-  unblock = PAutoBlock();
+  unblock = PAutoBlock(G);
   sele1 = SelectorIndexByName(G,s1);
   sele2 = SelectorIndexByName(G,s2);
   if((sele1>=0)&&(sele2>=0)) {
@@ -9263,7 +9263,7 @@ int  ExecutiveUnsetBondSetting(PyMOLGlobals *G,int index,char *s1,char *s2,
     SettingGenerateSideEffects(G,index,s1,state);
     /*    SettingGenerateSideEffects(G,index,s2,state);*/
   }
-  PAutoUnblock(unblock);
+  PAutoUnblock(G,unblock);
   return(ok);
 }
 /*========================================================================*/
@@ -9288,7 +9288,7 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
   PRINTFD(G,FB_Executive)
     " ExecutiveSetSetting: entered. sele \"%s\"\n",sele
     ENDFD;
-  unblock = PAutoBlock();
+  unblock = PAutoBlock(G);
   if((!sele) || (sele[0]==0)) { /* global setting */
     ok = SettingSetFromTuple(G,NULL,index,tuple);
     if(ok) {
@@ -9633,7 +9633,7 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
   }
 #endif
 
-  PAutoUnblock(unblock);
+  PAutoUnblock(G,unblock);
   return(ok);
 #endif
 }
@@ -10050,7 +10050,7 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
   PRINTFD(G,FB_Executive)
     " ExecutiveSetSetting: entered. sele \"%s\"\n",sele
     ENDFD;
-  unblock = PAutoBlock();
+  unblock = PAutoBlock(G);
   if(sele[0]==0) { 
     /* do nothing -- in future, restore the default */
   } 
@@ -10333,7 +10333,7 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
 #endif
   if(side_effects)
     SettingGenerateSideEffects(G,index,sele,state);
-  PAutoUnblock(unblock);
+  PAutoUnblock(G,unblock);
   return(ok);
 }
 /*========================================================================*/
@@ -14037,11 +14037,11 @@ int ExecutiveReinitialize(PyMOLGlobals *G,int what,char *pattern)
       EditorInactivate(G);
       ControlRock(G,0);
       
-      blocked = PAutoBlock();
+      blocked = PAutoBlock(G);
       PRunString("cmd.view('*','clear')");
       PRunString("cmd.scene('*','clear')");
       WizardSet(G,NULL,false);
-      PAutoUnblock(blocked);
+      PAutoUnblock(G,blocked);
       
       SculptCachePurge(G);
       SceneReinitialize(G);

@@ -33,33 +33,36 @@ Z* -------------------------------------------------------------------
 
 #define PRunString(x)
 
-#define PAutoBlock() 1
-#define PAutoUnblock(a)
+#define PAutoBlock(G) 1
+#define PAutoUnblock(G,a)
 
-#define PBlock()
-#define PUnblock()
+#define PBlock(G)
+#define PUnblock(G)
 
-#define PLockAPIAsGlut(block_if_busy)
-#define PUnlockAPIAsGlut()
-#define PUnlockAPIAsGlutNoFlush()
+#define PBlockLegacy()
+#define PUnblockLegacy()
+
+#define PLockAPIAsGlut(G,block_if_busy)
+#define PUnlockAPIAsGlut(G)
+#define PUnlockAPIAsGlutNoFlush(G)
 
 #define PLockStatus()
 #define PLockStatusAttempt() 1
 #define PUnlockStatus()
 
-#define PBlockAndUnlockAPI()
-#define PLockAPIAndUnblock()
+#define PBlockAndUnlockAPI(G)
+#define PLockAPIAndUnblock(G)
 
 #define PFlush()
 #define PFlushFast()
 #define PParse(s)
-#define PDo(s)
+#define PDo(G,s)
 
 #define PLog(a,b)
 #define PLogFlush()
 
 #define PIsGlutThread() 1
-#define PComplete(a,b) 0
+#define PComplete(G,a,b) 0
 
 #define PSGIStereo(a)
 #define PPovrayRender(a,b,c,d,e,f) 0
@@ -91,7 +94,7 @@ void PGetOptions(CPyMOLOptions *rec);
 void PFree(void);
 void PExit(PyMOLGlobals *G,int code);
 void PParse(PyMOLGlobals *G,char *str); /* only accepts one command */
-void PDo(char *str); /* accepts multple commands seperated by newlines */
+void PDo(PyMOLGlobals *G,char *str); /* accepts multple commands seperated by newlines */
 
 
 int PAlterAtom(PyMOLGlobals *G,AtomInfoType *at,char *expr,
@@ -108,41 +111,44 @@ void PSleep(PyMOLGlobals *G,int usec);
 void PSleepWhileBusy(PyMOLGlobals *G,int usec);
 void PSleepUnlocked(PyMOLGlobals *G,int usec);
 
-int PLockAPIAsGlut(int block_if_busy);
-void PUnlockAPIAsGlut(void);
-void PUnlockAPIAsGlutNoFlush(void);
+int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy);
+void PUnlockAPIAsGlut(PyMOLGlobals *G);
+void PUnlockAPIAsGlutNoFlush(PyMOLGlobals *G);
 
 void PLockStatus(void);
 int  PLockStatusAttempt(void);
 void PUnlockStatus(void);
 
-void PBlock(void);
-void PUnblock(void);
+void PBlock(PyMOLGlobals *G);
+void PUnblock(PyMOLGlobals *G);
 
-int PAutoBlock(void);
-void PAutoUnblock(int flag);
+void PBlockLegacy(void);
+void PUnblockLegacy(void);
 
-void PBlockAndUnlockAPI(void);
-void PLockAPIAndUnblock(void);
+int PAutoBlock(PyMOLGlobals *G);
+void PAutoUnblock(PyMOLGlobals *G,int flag);
+
+void PBlockAndUnlockAPI(PyMOLGlobals *G);
+void PLockAPIAndUnblock(PyMOLGlobals *G);
 
 void PFlush(PyMOLGlobals *G);
 void PFlushFast(PyMOLGlobals *G);
 void PXDecRef(PyObject *obj);
 
-void PSGIStereo(int flag);
-void PDefineFloat(char *name,float value);
+void PSGIStereo(PyMOLGlobals *G,int flag);
+void PDefineFloat(PyMOLGlobals *G,char *name,float value);
 
 void PRunString(char *str);
 void PDumpTraceback(PyObject *err);
 void PDumpException(void);
 
-int PComplete(char *str,int buf_size);
+int PComplete(PyMOLGlobals *G,char *str,int buf_size);
 
 int PTruthCallStr(PyObject *object,char *method,char *argument);
 int PTruthCallStr0(PyObject *object,char *method);
 int PTruthCallStr1i(PyObject *object,char *method,int argument);
 int PTruthCallStr4i(PyObject *object,char *method,int a1,int a2,int a3,int a4);
-int PPovrayRender(char *header,char *inp,char *file,int width,int height,int antialias);
+int PPovrayRender(PyMOLGlobals *G,char *header,char *inp,char *file,int width,int height,int antialias);
 int PIsGlutThread(void);
 
 PyObject *PGetFontDict(PyMOLGlobals *G,float size,int face,int style);

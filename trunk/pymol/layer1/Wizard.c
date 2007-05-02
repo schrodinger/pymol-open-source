@@ -114,11 +114,11 @@ void WizardPurgeStack(PyMOLGlobals *G)
   int blocked;
   int a;
   register CWizard *I=G->Wizard;
-  blocked = PAutoBlock();
+  blocked = PAutoBlock(G);
   for(a=I->Stack;a>=0;a--)
     Py_XDECREF(I->Wiz[a]);
   I->Stack = -1;
-  PAutoUnblock(blocked);
+  PAutoUnblock(G,blocked);
 #endif
 }
 int WizardDoSelect(PyMOLGlobals *G,char *name)
@@ -135,12 +135,12 @@ int WizardDoSelect(PyMOLGlobals *G,char *name)
       if(I->Wiz[I->Stack]) {
         sprintf(buf,"cmd.get_wizard().do_select('''%s''')",name);
         PLog(buf,cPLog_pym);
-        PBlock(); 
+        PBlock(G); 
         if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_select")) {
           result = PTruthCallStr(I->Wiz[I->Stack],"do_select",name);
         if(PyErr_Occurred()) PyErr_Print();
         }
-        PUnblock();
+        PUnblock(G);
       }
   return result;
 #endif
@@ -157,7 +157,7 @@ void WizardRefresh(PyMOLGlobals *G)
   PyObject *i;
   int a;
   int blocked;
-  blocked = PAutoBlock();
+  blocked = PAutoBlock(G);
   
   /* get the current prompt */
   if(I->Stack>=0)
@@ -228,7 +228,7 @@ void WizardRefresh(PyMOLGlobals *G)
   } else {
     OrthoReshapeWizard(G,0);
   }
-  PAutoUnblock(blocked);
+  PAutoUnblock(G,blocked);
 #endif
 }
 /*========================================================================*/
@@ -237,7 +237,7 @@ void WizardSet(PyMOLGlobals *G,PyObject *wiz,int replace)
 #ifndef _PYMOL_NOPY
   register CWizard *I = G->Wizard;
   int blocked;
-  blocked = PAutoBlock();
+  blocked = PAutoBlock(G);
   if(I->Wiz) {
     if((!wiz)||(wiz==Py_None)||((I->Stack>=0)&&replace)) { 
       if(I->Stack>=0) {  /* pop */
@@ -263,7 +263,7 @@ void WizardSet(PyMOLGlobals *G,PyObject *wiz,int replace)
     }
   }
   WizardRefresh(G);
-  PAutoUnblock(blocked);
+  PAutoUnblock(G,blocked);
 #endif
 }
 /*========================================================================*/
@@ -298,7 +298,7 @@ int WizardDoPick(PyMOLGlobals *G,int bondFlag)
         else
           PLog("cmd.get_wizard().do_pick(0)",cPLog_pym);
         
-        PBlock(); 
+        PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_pick")) {
@@ -306,7 +306,7 @@ int WizardDoPick(PyMOLGlobals *G,int bondFlag)
               if(PyErr_Occurred()) PyErr_Print();
             }
           }
-        PUnblock();
+        PUnblock(G);
       }
   return result;
 #endif
@@ -325,7 +325,7 @@ int WizardDoKey(PyMOLGlobals *G,unsigned char k, int x, int y, int mod)
         OrthoLineType buffer;
         sprintf(buffer,"cmd.get_wizard().do_key(%d,%d,%d,%d)",k,x,y,mod);
         PLog(buffer,cPLog_pym);
-        PBlock(); 
+        PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_key")) {
@@ -333,7 +333,7 @@ int WizardDoKey(PyMOLGlobals *G,unsigned char k, int x, int y, int mod)
               if(PyErr_Occurred()) PyErr_Print();
             }
           }
-        PUnblock();
+        PUnblock(G);
       }
   return result;
 #endif
@@ -352,7 +352,7 @@ int WizardDoScene(PyMOLGlobals *G)
         OrthoLineType buffer;
         sprintf(buffer,"cmd.get_wizard().do_scene()");
         PLog(buffer,cPLog_pym);
-        PBlock(); 
+        PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_scene")) {
@@ -360,7 +360,7 @@ int WizardDoScene(PyMOLGlobals *G)
               if(PyErr_Occurred()) PyErr_Print();
             }
           }
-        PUnblock();
+        PUnblock(G);
       }
   return result;
 #endif
@@ -379,7 +379,7 @@ int WizardDoDirty(PyMOLGlobals *G)
         OrthoLineType buffer;
         sprintf(buffer,"cmd.get_wizard().do_dirty()");
         PLog(buffer,cPLog_pym);
-        PBlock(); 
+        PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_dirty")) {
@@ -387,7 +387,7 @@ int WizardDoDirty(PyMOLGlobals *G)
               if(PyErr_Occurred()) PyErr_Print();
             }
           }
-        PUnblock();
+        PUnblock(G);
       }
   return result;
 #endif
@@ -408,7 +408,7 @@ int WizardDoState(PyMOLGlobals *G)
         int state = SettingGetGlobal_i(G,cSetting_state) + 1;
         sprintf(buffer,"cmd.get_wizard().do_state(%d)",state);
         PLog(buffer,cPLog_pym);
-        PBlock(); 
+        PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_state")) {
@@ -416,7 +416,7 @@ int WizardDoState(PyMOLGlobals *G)
               if(PyErr_Occurred()) PyErr_Print();
             }
           }
-        PUnblock();
+        PUnblock(G);
       }
   return result;
 #endif
@@ -437,7 +437,7 @@ int WizardDoFrame(PyMOLGlobals *G)
         int frame = SettingGetGlobal_i(G,cSetting_frame) + 1;
         sprintf(buffer,"cmd.get_wizard().do_frame(%d)",frame);
         PLog(buffer,cPLog_pym);
-        PBlock(); 
+        PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_frame")) {
@@ -445,7 +445,7 @@ int WizardDoFrame(PyMOLGlobals *G)
               if(PyErr_Occurred()) PyErr_Print();
             }
           }
-        PUnblock();
+        PUnblock(G);
       }
   return result;
 #endif
@@ -465,7 +465,7 @@ int WizardDoSpecial(PyMOLGlobals *G,int k, int x, int y, int mod)
         OrthoLineType buffer;
         sprintf(buffer,"cmd.get_wizard().do_special(%d,%d,%d,%d)",k,x,y,mod);
         PLog(buffer,cPLog_pym);
-        PBlock(); 
+        PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_special")) {
@@ -473,7 +473,7 @@ int WizardDoSpecial(PyMOLGlobals *G,int k, int x, int y, int mod)
               if(PyErr_Occurred()) PyErr_Print();
             }
           }
-        PUnblock();
+        PUnblock(G);
       }
   return result;
 #endif
@@ -501,7 +501,7 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
       OrthoDirty(G);
       break;
     case cWizTypePopUp:
-      PBlock(); 
+      PBlock(G); 
       if(I->Stack>=0)
         if(I->Wiz[I->Stack]) {
           if(PyObject_HasAttrString(I->Wiz[I->Stack],"get_menu")) {
@@ -517,8 +517,7 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
         PopUpNew(G,x,my,x,y,false,menuList,NULL);
       }
       Py_XDECREF(menuList);
-      PUnblock();
-
+      PUnblock(G);
       break;
     }
   }

@@ -292,17 +292,17 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
       TestPyMOL_00_00(G); 
       break;
     case 1: 
-      PBlock();
+      PBlock(G);
       VFontLoad(G,1,0,0,true); 
-      PUnblock();
+      PUnblock(G);
       break;
     case 2: 
       {
         CObject *obj = NULL;
         float pos[3] = {0.0,0.0,0.0};
-        PBlock();
+        PBlock(G);
         obj = (CObject*)ObjectCGONewVFontTest(G,"hello",pos);
-        PUnblock();
+        PUnblock(G);
         if(obj) {
           ObjectSetName(obj,"hello");
           ExecutiveManageObject(G,obj,-1,false);

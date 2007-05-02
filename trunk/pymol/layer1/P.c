@@ -190,12 +190,12 @@ PyObject *PGetFontDict(PyMOLGlobals *G, float size,int face,int style)
   return(PConvAutoNone(result));
 }
 
-int PComplete(char *str,int buf_size)
+int PComplete(PyMOLGlobals *G,char *str,int buf_size)
 {
   int ret = false;
   PyObject *result;
   char *st2;
-  PBlockAndUnlockAPI();
+  PBlockAndUnlockAPI(G);
   if(P_complete) {
     result = PyObject_CallFunction(P_complete,"s",str);
     if(result) {
@@ -207,7 +207,7 @@ int PComplete(char *str,int buf_size)
       Py_DECREF(result);
     }
   }
-  PLockAPIAndUnblock();
+  PLockAPIAndUnblock(G);
   return(ret);
 }
 
@@ -283,9 +283,9 @@ void PSleepWhileBusy(PyMOLGlobals *G,int usec)
   ENDFD;
 #else
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-  PBlock();
+  PBlock(G);
   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
-  PUnblock();
+  PUnblock(G);
 /* END PROPRIETARY CODE SEGMENT */
 #endif
 }
@@ -305,9 +305,9 @@ void PSleepUnlocked(PyMOLGlobals *G,int usec)
   ENDFD;
 #else
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-  PBlock();
+  PBlock(G);
   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
-  PUnblock();
+  PUnblock(G);
 /* END PROPRIETARY CODE SEGMENT */
 #endif
 }
@@ -316,7 +316,7 @@ void PSleep(PyMOLGlobals *G,int usec)
 { /* can only be called by the glut process */
 #ifndef WIN32
   struct timeval tv;
-  PUnlockAPIAsGlut();
+  PUnlockAPIAsGlut(G);
   PRINTFD(G,FB_Threads)
     " PSleep-DEBUG: napping.\n"
   ENDFD;
@@ -326,12 +326,12 @@ void PSleep(PyMOLGlobals *G,int usec)
   PRINTFD(G,FB_Threads)
     " PSleep-DEBUG: nap over.\n"
   ENDFD;
-  PLockAPIAsGlut(true);
+  PLockAPIAsGlut(G,true);
 #else
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-  PBlockAndUnlockAPI();
+  PBlockAndUnlockAPI(G);
   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
-  PLockAPIAndUnblock();
+  PLockAPIAndUnblock(G);
 /* END PROPRIETARY CODE SEGMENT */
 #endif
 
@@ -857,7 +857,7 @@ int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *model,char *expr,int inde
     strcpy(atype,"HETATM");
   else
     strcpy(atype,"ATOM");
-  PBlock();
+  PBlock(G);
   /* PBlockAndUnlockAPI() is not safe.
    * what if "at" is destroyed by another thread? */
   dict = PyDict_New();
@@ -938,39 +938,39 @@ int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *model,char *expr,int inde
     }
   }
   Py_DECREF(dict);
-  PUnblock();
+  PUnblock(G);
   return(result);
 }
 
-void PUnlockAPIAsGlut(void) /* must call with unblocked interpreter */
+void PUnlockAPIAsGlut(PyMOLGlobals *G) /* must call with unblocked interpreter */
 {
-  PRINTFD(TempPyMOLGlobals,FB_Threads)
+  PRINTFD(G,FB_Threads)
     " PUnlockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
-  PBlock();
+  PBlock(G);
   PXDecRef(PyObject_CallFunction(P_unlock,NULL)); /* NOTE this may flush the command buffer! */
   PLockStatus();
-  PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
+  PyMOL_PopValidContext(G->PyMOL);
   PUnlockStatus();
   PUnlockGLUT();
-  PUnblock();
+  PUnblock(G);
 }
 
-void PUnlockAPIAsGlutNoFlush(void) /* must call with unblocked interpreter */
+void PUnlockAPIAsGlutNoFlush(PyMOLGlobals *G) /* must call with unblocked interpreter */
 {
-  PRINTFD(TempPyMOLGlobals,FB_Threads)
+  PRINTFD(G,FB_Threads)
     " PUnlockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
-  PBlock();
+  PBlock(G);
   PXDecRef(PyObject_CallFunction(P_unlock,"i",-1)); /* prevents flushing of the buffer */
   PLockStatus();
-  PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
+  PyMOL_PopValidContext(G->PyMOL);
   PUnlockStatus();
   PUnlockGLUT();
-  PUnblock();
+  PUnblock(G);
 }
 
-static int get_api_lock(int block_if_busy) 
+static int get_api_lock(PyMOLGlobals *G,int block_if_busy) 
 {
   int result = true;
 
@@ -985,7 +985,7 @@ static int get_api_lock(int block_if_busy)
     if(got_lock) {
       if(!PyInt_AsLong(got_lock)) {
         PLockStatus();
-        if(PyMOL_GetBusy(TempPyMOLGlobals->PyMOL,false))
+        if(PyMOL_GetBusy(G->PyMOL,false))
           result = false;
         PUnlockStatus();
         
@@ -999,30 +999,30 @@ static int get_api_lock(int block_if_busy)
   return result;
 }
 
-int PLockAPIAsGlut(int block_if_busy)
+int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy)
 {
-  PRINTFD(TempPyMOLGlobals,FB_Threads)
+  PRINTFD(G,FB_Threads)
     "*PLockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
 
-  PBlock();
+  PBlock(G);
 
   PLockGLUT();
 
   PLockStatus();
-  PyMOL_PushValidContext(TempPyMOLGlobals->PyMOL);
+  PyMOL_PushValidContext(G->PyMOL);
   PUnlockStatus();
 
-  PRINTFD(TempPyMOLGlobals,FB_Threads)
+  PRINTFD(G,FB_Threads)
     "#PLockAPIAsGlut-DEBUG: acquiring lock as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
   
-  if(!get_api_lock(block_if_busy)) {
+  if(!get_api_lock(G,block_if_busy)) {
     PLockStatus();
-    PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
+    PyMOL_PopValidContext(G->PyMOL);
     PUnlockStatus();
     PUnlockGLUT();
-    PUnblock();
+    PUnblock(G);
     return false;/* busy -- so allow main to update busy status display (if any) */
   }
    
@@ -1031,7 +1031,7 @@ int PLockAPIAsGlut(int block_if_busy)
     /* NOTE: the keep_out variable can only be changed or read by the thread
        holding the API lock, therefore it is safe even through increment
        isn't atomic. */
-    PRINTFD(TempPyMOLGlobals,FB_Threads)
+    PRINTFD(G,FB_Threads)
       "-PLockAPIAsGlut-DEBUG: glut_thread_keep_out 0x%x\n",PyThread_get_thread_ident()
       ENDFD;
     
@@ -1040,11 +1040,11 @@ int PLockAPIAsGlut(int block_if_busy)
     { 
       struct timeval tv;
 
-      PUnblock();
+      PUnblock(G);
       tv.tv_sec=0;
       tv.tv_usec=50000; 
       select(0,NULL,NULL,NULL,&tv);
-      PBlock(); 
+      PBlock(G); 
     } 
 #else
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
@@ -1052,21 +1052,21 @@ int PLockAPIAsGlut(int block_if_busy)
 /* END PROPRIETARY CODE SEGMENT */
 #endif
 
-    if(!get_api_lock(block_if_busy)) {
+    if(!get_api_lock(G,block_if_busy)) {
       /* return false-- allow main to update busy status display (if any) */
       PLockStatus();
-      PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
+      PyMOL_PopValidContext(G->PyMOL);
       PUnlockStatus();
       PUnlockGLUT();
-      PUnblock();
+      PUnblock(G);
       return false;
     }
   }
 
 
-  PUnblock(); /* API is now locked, so we can free up Python...*/
+  PUnblock(G); /* API is now locked, so we can free up Python...*/
 
-  PRINTFD(TempPyMOLGlobals,FB_Threads)
+  PRINTFD(G,FB_Threads)
     "=PLockAPIAsGlut-DEBUG: acquired\n"
     ENDFD;
   return true;
@@ -1767,27 +1767,27 @@ void PInit(PyMOLGlobals *G)
 
 }
 
-int PPovrayRender(char *header,char *inp,char *file,int width,int height,int antialias) 
+int PPovrayRender(PyMOLGlobals *G,char *header,char *inp,char *file,int width,int height,int antialias) 
 {
   PyObject *result;
   int ok;
-  PBlock();
+  PBlock(G);
   result = PyObject_CallMethod(P_povray,"render_from_string","sssiii",header,inp,file,width,height,antialias);
   ok = PyObject_IsTrue(result);
   Py_DECREF(result);
-  PUnblock();
+  PUnblock(G);
   return(ok);
 }
 
-void PSGIStereo(int flag) 
+void PSGIStereo(PyMOLGlobals *G,int flag) 
 {
   int blocked;
-  blocked = PAutoBlock();
+  blocked = PAutoBlock(G);
   if(flag) 
     PRunString("cmd._sgi_stereo(1)");
   else
     PRunString("cmd._sgi_stereo(0)");
-  if(blocked) PUnblock();
+  if(blocked) PUnblock(G);
 }
 
 void PFree(void)
@@ -1797,7 +1797,7 @@ void PFree(void)
 void PExit(PyMOLGlobals *G,int code)
 {
   ExecutiveDelete(G,"all");
-  PBlock();
+  PBlock(G);
 #ifndef _PYMOL_NO_MAIN
   MainFree();
 #endif
@@ -1816,27 +1816,28 @@ void PParse(PyMOLGlobals *G,char *str)
   OrthoCommandIn(G,str);
 }
 
-void PDo(char *str) /* assumes we already hold the re-entrant API lock */
+void PDo(PyMOLGlobals *G,char *str) /* assumes we already hold the re-entrant API lock */
 {
   int blocked;
-  blocked = PAutoBlock();
+  blocked = PAutoBlock(G);
   Py_XDECREF(PyObject_CallFunction(P_do,"s",str));
-  PAutoUnblock(blocked);
+  PAutoUnblock(G,blocked);
 }
 
 void PLog(char *str,int format) 
      /* general log routine can write PML 
         or PYM commands to appropriate log file */
 {  
+  PyMOLGlobals *G = TempPyMOLGlobals;
   int mode;
   int a;
   int blocked;
   PyObject *log;
   OrthoLineType buffer="";
-  mode = (int)SettingGet(TempPyMOLGlobals,cSetting_logging);
+  mode = (int)SettingGet(G,cSetting_logging);
   if(mode)
     {
-      blocked = PAutoBlock();
+      blocked = PAutoBlock(G);
       log = PyDict_GetItemString(P_globals,P_log_file_str);
       if(log&&(log!=Py_None)) {
         if(format==cPLog_no_flush) {
@@ -1881,24 +1882,25 @@ void PLog(char *str,int format)
           PyObject_CallMethod(log,"flush","");
         }
       }
-      PAutoUnblock(blocked);
+      PAutoUnblock(G,blocked);
     }
 }
 
-void PLogFlush(void)
+void PLogFlush()
 {
+  PyMOLGlobals *G = TempPyMOLGlobals;
   int mode;
   PyObject *log;
   int blocked;
-  mode = (int)SettingGet(TempPyMOLGlobals,cSetting_logging);
+  mode = (int)SettingGet(G,cSetting_logging);
   if(mode)
     {
-      blocked = PAutoBlock();
+      blocked = PAutoBlock(G);
       log = PyDict_GetItemString(P_globals,P_log_file_str);
       if(log&&(log!=Py_None)) {
         PyObject_CallMethod(log,"flush","");
       }
-      PAutoUnblock(blocked);
+      PAutoUnblock(G,blocked);
     }
 }
 
@@ -1907,7 +1909,7 @@ void PFlush(PyMOLGlobals *G) {
   PyObject *err;
   char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(G,buffer)) {
-    PBlockAndUnlockAPI();
+    PBlockAndUnlockAPI(G);
     
     PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
     err = PyErr_Occurred();
@@ -1917,7 +1919,7 @@ void PFlush(PyMOLGlobals *G) {
         " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
         ENDFB(G);
     }
-    PLockAPIAndUnblock();
+    PLockAPIAndUnblock(G);
   }
 }
 
@@ -1942,16 +1944,26 @@ void PFlushFast(PyMOLGlobals *G) {
 }
 
 
-void PBlock(void)
+void PBlockLegacy()
+{
+  PBlock(TempPyMOLGlobals);
+}
+
+void PUnblockLegacy()
+{
+  PUnblock(TempPyMOLGlobals);
+}
+
+void PBlock(PyMOLGlobals *G)
 {
 
-  if(!PAutoBlock()) {
-    ErrFatal(TempPyMOLGlobals,"PBlock","Threading error detected.  Terminating...");
+  if(!PAutoBlock(G)) {
+    ErrFatal(G,"PBlock","Threading error detected.  Terminating...");
   }
 }
 
 
-int PAutoBlock(void)
+int PAutoBlock(PyMOLGlobals *G)
 {
 #ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
@@ -1959,7 +1971,7 @@ int PAutoBlock(void)
   /* synchronize python */
 
   id = PyThread_get_thread_ident();
-  PRINTFD(TempPyMOLGlobals,FB_Threads)
+  PRINTFD(G,FB_Threads)
 	 " PAutoBlock-DEBUG: search 0x%x (0x%x, 0x%x, 0x%x)\n",id,
 	 SavedThread[MAX_SAVED_THREAD-1].id,
 	 SavedThread[MAX_SAVED_THREAD-2].id,
@@ -1972,7 +1984,7 @@ int PAutoBlock(void)
        * though the ints are equal. Must be some kind of optimizer bug
        * or mis-assumption */
       
-      PRINTFD(TempPyMOLGlobals,FB_Threads)
+      PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: seeking global lock 0x%x\n",id
       ENDFD;
 
@@ -1980,25 +1992,25 @@ int PAutoBlock(void)
 
       PyEval_AcquireLock();
 
-      PRINTFD(TempPyMOLGlobals,FB_Threads)
+      PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: restoring 0x%x\n",id
       ENDFD;
       
       PyThreadState_Swap((SavedThread+a)->state);
 
 #else
-      PRINTFD(TempPyMOLGlobals,FB_Threads)
+      PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: restoring 0x%x\n",id
       ENDFD;
       
       PyEval_RestoreThread((SavedThread+a)->state);
 #endif
       
-      PRINTFD(TempPyMOLGlobals,FB_Threads)
+      PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: restored 0x%x\n",id
       ENDFD;
 
-      PRINTFD(TempPyMOLGlobals,FB_Threads)
+      PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: clearing 0x%x\n",id
       ENDFD;
 
@@ -2007,7 +2019,7 @@ int PAutoBlock(void)
       /* this is the only safe time we can change things */
       PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
       
-      PRINTFD(TempPyMOLGlobals,FB_Threads)
+      PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: blocked 0x%x (0x%x, 0x%x, 0x%x)\n",PyThread_get_thread_ident(),
         SavedThread[MAX_SAVED_THREAD-1].id,
         SavedThread[MAX_SAVED_THREAD-2].id,
@@ -2018,7 +2030,7 @@ int PAutoBlock(void)
     }
     a--;
   }
-  PRINTFD(TempPyMOLGlobals,FB_Threads)
+  PRINTFD(G,FB_Threads)
     " PAutoBlock-DEBUG: 0x%x not found, thus already blocked.\n",PyThread_get_thread_ident()
     ENDFD;
   return 0;
@@ -2035,14 +2047,14 @@ int PIsGlutThread(void)
   return(PyThread_get_thread_ident()==P_glut_thread_id);
 }
 
-void PUnblock(void)
+void PUnblock(PyMOLGlobals *G)
 {
 #ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
   int a;
   /* NOTE: ASSUMES a locked API */
 
-  PRINTFD(TempPyMOLGlobals,FB_Threads)
+  PRINTFD(G,FB_Threads)
     " PUnblock-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
 
@@ -2059,7 +2071,7 @@ void PUnblock(void)
     }
     a--;
   }
-  PRINTFD(TempPyMOLGlobals,FB_Threads)
+  PRINTFD(G,FB_Threads)
     " PUnblock-DEBUG: 0x%x stored in slot %d\n",(SavedThread+a)->id,a
     ENDFD;
   PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
@@ -2076,29 +2088,29 @@ void PUnblock(void)
 }
 
 
-void PAutoUnblock(int flag)
+void PAutoUnblock(PyMOLGlobals *G,int flag)
 {
-  if(flag) PUnblock();
+  if(flag) PUnblock(G);
 }
 
-void PBlockAndUnlockAPI(void)
+void PBlockAndUnlockAPI(PyMOLGlobals *G)
 {
-  PBlock();
+  PBlock(G);
   PXDecRef(PyObject_CallFunction(P_unlock,NULL));
 }
 
-void PLockAPIAndUnblock(void)
+void PLockAPIAndUnblock(PyMOLGlobals *G)
 {
   PXDecRef(PyObject_CallFunction(P_lock,NULL));
-  PUnblock();
+  PUnblock(G);
 }
 
-void PDefineFloat(char *name,float value) {
+void PDefineFloat(PyMOLGlobals *G,char *name,float value) {
   char buffer[OrthoLineLength];
   sprintf(buffer,"%s = %f\n",name,value);
-  PBlock();
+  PBlock(G);
   PRunString(buffer);
-  PUnblock();
+  PUnblock(G);
 }
 
 
@@ -2115,8 +2127,10 @@ static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
   char *str;
   PyArg_ParseTuple(args,"s",&str);
   if(str[0]) {
-    if(Feedback(TempPyMOLGlobals,FB_Python,FB_Output)) {
-      OrthoAddOutput(TempPyMOLGlobals,str);
+    if(TempPyMOLGlobals) {
+      if(Feedback(TempPyMOLGlobals,FB_Python,FB_Output)) {
+        OrthoAddOutput(TempPyMOLGlobals,str);
+      }
     }
   }
   Py_INCREF(Py_None);

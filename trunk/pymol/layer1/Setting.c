@@ -1688,7 +1688,7 @@ int SettingGetIndex(PyMOLGlobals *G,char *name) /* can be called from any thread
   int unblock;
   int index=-1; 
   
-  unblock = PAutoBlock();
+  unblock = PAutoBlock(G);
   if(P_setting) {
     tmp = PyObject_CallMethod(P_setting,"_get_index","s",name);
     if(tmp) {
@@ -1697,7 +1697,7 @@ int SettingGetIndex(PyMOLGlobals *G,char *name) /* can be called from any thread
       Py_DECREF(tmp);
     }
   }
-  PAutoUnblock(unblock);
+  PAutoUnblock(G,unblock);
 
   return(index);
 #endif
@@ -1713,7 +1713,7 @@ int SettingGetName(PyMOLGlobals *G,int index,SettingName name) /* can be called 
   PyObject *tmp;
   int unblock;
   name[0]=0;
-  unblock = PAutoBlock();
+  unblock = PAutoBlock(G);
   if(P_setting) {
     tmp = PyObject_CallMethod(P_setting,"_get_name","i",index);
     if(tmp) {
@@ -1722,7 +1722,7 @@ int SettingGetName(PyMOLGlobals *G,int index,SettingName name) /* can be called 
       Py_DECREF(tmp);
     }
   }
-  PAutoUnblock(unblock);
+  PAutoUnblock(G,unblock);
   return(name[0]!=0);
 #endif
 }
