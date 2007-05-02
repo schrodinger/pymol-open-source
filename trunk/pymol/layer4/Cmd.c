@@ -3917,6 +3917,11 @@ static int decoy_input_hook(void)
   return 0;
 }
 
+static PyObject *Cmd_Global(PyObject *self, PyObject *args)
+{
+  return PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL);
+}
+
 static PyObject *Cmd_New(PyObject *self, PyObject *args)
 {
   PyObject *result = NULL;
@@ -5610,7 +5615,7 @@ static PyObject *CmdColor(PyObject *self, 	PyObject *args)
   int ok = false;
   int quiet;
 
-  ok = PyArg_ParseTuple(args,"ssii",&color,&str1,&flags,&quiet);
+  ok = PyArg_ParseTuple(args,"Ossii",&self,&color,&str1,&flags,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -7585,6 +7590,7 @@ static PyMethodDef Cmd_methods[] = {
   {"_get_c_threading_api",  CmdGetCThreadingAPI,     METH_VARARGS },
   {"_set_scene_names",      CmdSetSceneNames,        METH_VARARGS },
   {"_del",                  Cmd_Del,                 METH_VARARGS },
+  {"_global",               Cmd_Global,              METH_VARARGS },
   {"_new",                  Cmd_New,                 METH_VARARGS },
   {"_start",                Cmd_Start,               METH_VARARGS },
   {"_stop",                 Cmd_Stop,                METH_VARARGS },
