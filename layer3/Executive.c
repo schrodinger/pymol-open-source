@@ -1841,7 +1841,7 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new,int lo
         if(SettingGet(G,cSetting_logging)) {
           OrthoLineType buf2;
           sprintf(buf2,"cmd.select('%s','none')\n",name);
-          PLog(buf2,cPLog_no_flush);
+          PLog(G,buf2,cPLog_no_flush);
         }
       }
     } else {
@@ -1850,7 +1850,7 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new,int lo
       if(log) {
         OrthoLineType buf2;
         sprintf(buf2,"cmd.select('%s','none')\n",name);
-        PLog(buf2,cPLog_no_flush);
+        PLog(G,buf2,cPLog_no_flush);
       }
     }
   }
@@ -5371,7 +5371,7 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
         SelectorCreate(G,cLeftButSele,cTempRectSele,NULL,1,NULL);
         if(log_box) {
           sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,cTempRectSele);
-          PLog(buf2,cPLog_no_flush);
+          PLog(G,buf2,cPLog_no_flush);
         }
       } 
       break;
@@ -5388,14 +5388,14 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"(%s)\")\n",prefix,selName,buffer);
-            PLog(buf2,cPLog_no_flush);
+            PLog(G,buf2,cPLog_no_flush);
           }
         } else {
           sprintf(buffer,"(%s(?%s) and not %s(%s))",sel_mode_kw,selName,sel_mode_kw,cTempRectSele);
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buffer);
-            PLog(buf2,cPLog_no_flush);
+            PLog(G,buf2,cPLog_no_flush);
           }
         }
       } else {
@@ -5404,13 +5404,13 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buffer);
-            PLog(buf2,cPLog_no_flush);
+            PLog(G,buf2,cPLog_no_flush);
           }
         } else {
           SelectorCreate(G,selName,"(none)",NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"(none)\")\n",prefix,selName);
-            PLog(buf2,cPLog_no_flush);
+            PLog(G,buf2,cPLog_no_flush);
           }
         }
       }
@@ -5421,8 +5421,8 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
     }
     if(log_box) {
       sprintf(buf2,"%scmd.delete(\"%s\")\n",prefix,cTempRectSele);
-      PLog(buf2,cPLog_no_flush);
-      PLogFlush();
+      PLog(G,buf2,cPLog_no_flush);
+      PLogFlush(G);
     }
     ExecutiveDelete(G,cTempRectSele);
     WizardDoSelect(G,selName);
@@ -13105,7 +13105,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
     }
     SceneChanged(G);
     if(SettingGet(G,cSetting_logging)) {
-      PLog(buffer,cPLog_pym);
+      PLog(G,buffer,cPLog_pym);
     }
     rec->visible=new_vis;
   } else if(rec->type==cExecAll) {
@@ -13114,7 +13114,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
         sprintf(buffer,"cmd.disable('all')");
       else
         sprintf(buffer,"cmd.enable('all')");
-      PLog(buffer,cPLog_pym);
+      PLog(G,buffer,cPLog_pym);
     }
     ExecutiveSetObjVisib(G,cKeywordAll,!rec->visible);
     } else if(rec->type==cExecSelection) {
@@ -13124,11 +13124,11 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                   if(SettingGet(G,cSetting_logging)) {
                   sprintf(buffer,"cmd.set('selection_overlay',%d)",
                   (int)SettingGet(G,cSetting_selection_overlay));
-                  PLog(buffer,cPLog_pym);
+                  PLog(G,buffer,cPLog_pym);
                   }
         */
         sprintf(buffer,"cmd.enable('%s')",rec->name);
-        PLog(buffer,cPLog_pym);
+        PLog(G,buffer,cPLog_pym);
         rec->visible=true; 
       } else if(mod&cOrthoSHIFT) {
         if(rec->sele_color<7)
@@ -13153,7 +13153,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
           ExecutiveHideSelections(G);
         }
         if(SettingGet(G,cSetting_logging)) {
-          PLog(buffer,cPLog_pym);
+          PLog(G,buffer,cPLog_pym);
         }
         rec->visible=new_vis;
       }
@@ -13224,7 +13224,7 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
                     OrthoLineType buf2;
                     sprintf(buf2,"cmd.group(\"%s\",action='%s')\n",rec->obj->Name,
                             obj->OpenOrClosed ? "close" : "open" );
-                    PLog(buf2,cPLog_no_flush);
+                    PLog(G,buf2,cPLog_no_flush);
                     ExecutiveGroup(G,rec->obj->Name,"",5,1);
 
                   }
@@ -13237,7 +13237,7 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
       case 2:
         if(I->ReorderFlag) {
           I->ReorderFlag=false;
-          PLog(I->ReorderLog,cPLog_no_flush);
+          PLog(G,I->ReorderLog,cPLog_no_flush);
         }
         break;
       }
@@ -13482,7 +13482,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                   } else {
                     sprintf(buf,"ungroup %s\n",mov_rec->name);
                   }
-                  PLog(buf,cPLog_no_flush);                      
+                  PLog(G,buf,cPLog_no_flush);                      
                   ExecutiveInvalidateGroups(G,false);
                   I->RecoverPressed = mov_rec;
                   I->Pressed = 0;
@@ -13493,7 +13493,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                   ExecutiveOrder(G,order_input,false,0);
                   sprintf(I->ReorderLog,"cmd.order(\"%s\")\n",
                           order_input);
-                  PLog(I->ReorderLog,cPLog_no_flush);
+                  PLog(G,I->ReorderLog,cPLog_no_flush);
                 I->RecoverPressed = mov_rec;
                 I->Pressed = 0;
                 }

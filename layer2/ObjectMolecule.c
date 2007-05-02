@@ -4261,7 +4261,7 @@ void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,
 void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state,int log)
 {
   CoordSet *cs;
-
+  PyMOLGlobals *G = I->Obj.G;
   FreeP(I->UndoCoord[I->UndoIter]);
   I->UndoState[I->UndoIter]=-1;
   if(state<0) state=0;
@@ -4275,12 +4275,12 @@ void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state,int log)
     I->UndoNIndex[I->UndoIter] = cs->NIndex;
   }
   I->UndoIter=cUndoMask&(I->UndoIter+1);
-  ExecutiveSetLastObjectEdited(I->Obj.G,(CObject*)I);
+  ExecutiveSetLastObjectEdited(G,(CObject*)I);
   if(log) {
     OrthoLineType line;
     if(SettingGet(I->Obj.G,cSetting_logging)) {
       sprintf(line,"cmd.push_undo(\"%s\",%d)\n",I->Obj.Name,state+1);
-      PLog(line,cPLog_no_flush);
+      PLog(G,line,cPLog_no_flush);
     }
   }
 
@@ -5230,7 +5230,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
                                      char *sname,int homogenous,int global) 
 {
   /* if sele == -1, then the whole object state is transformed */
-
+  PyMOLGlobals *G = I->Obj.G;
   int a,s;
   int flag=false;
   CoordSet *cs;
@@ -5372,7 +5372,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
               matrix[ 8],matrix[ 9],matrix[10],matrix[11],
               matrix[12],matrix[13],matrix[14],matrix[15],
               inp_state+1,log,sele_str,homogenous);
-      PLog(line,cPLog_no_flush);
+      PLog(G,line,cPLog_no_flush);
       break;
     case cPLog_pym:
       
@@ -5384,7 +5384,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
               matrix[ 8],matrix[ 9],matrix[10],matrix[11],
               matrix[12],matrix[13],matrix[14],matrix[15],
               inp_state+1,log,sele_str,homogenous);
-      PLog(line,cPLog_no_flush);
+      PLog(G,line,cPLog_no_flush);
       break;
     default:
       break;
@@ -9536,6 +9536,7 @@ void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level,int state)
 /*========================================================================*/
 int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode,int log)
 {
+  PyMOLGlobals *G=I->Obj.G;
   int result = 0;
   CoordSet *cs;
   if(!(I->AtomInfo[index].protekted==1)) {
@@ -9557,7 +9558,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
       ObjectMoleculeGetAtomSele(I,index,buffer);
       sprintf(line,"cmd.translate_atom(\"%s\",%15.9f,%15.9f,%15.9f,%d,%d,%d)\n",
               buffer,v[0],v[1],v[2],state+1,mode,0);
-      PLog(line,cPLog_no_flush);
+      PLog(G,line,cPLog_no_flush);
     }
   }
   return(result);
@@ -9586,7 +9587,7 @@ int ObjectMoleculeMoveAtomLabel(ObjectMolecule *I,int state,int index,float *v,i
       ObjectMoleculeGetAtomSele(I,index,buffer);
       sprintf(line,"cmd.translate_atom(\"%s\",%15.9f,%15.9f,%15.9f,%d,%d,%d)\n",
               buffer,v[0],v[1],v[2],state+1,mode,0);
-      PLog(line,cPLog_no_flush);
+      PLog(G,line,cPLog_no_flush);
     }
   }
 #endif

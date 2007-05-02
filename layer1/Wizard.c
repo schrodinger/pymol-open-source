@@ -134,7 +134,7 @@ int WizardDoSelect(PyMOLGlobals *G,char *name)
     if(I->Stack>=0)
       if(I->Wiz[I->Stack]) {
         sprintf(buf,"cmd.get_wizard().do_select('''%s''')",name);
-        PLog(buf,cPLog_pym);
+        PLog(G,buf,cPLog_pym);
         PBlock(G); 
         if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_select")) {
           result = PTruthCallStr(I->Wiz[I->Stack],"do_select",name);
@@ -294,9 +294,9 @@ int WizardDoPick(PyMOLGlobals *G,int bondFlag)
     if(I->Stack>=0) 
       if(I->Wiz[I->Stack]) {
         if(bondFlag)
-          PLog("cmd.get_wizard().do_pick(1)",cPLog_pym);
+          PLog(G,"cmd.get_wizard().do_pick(1)",cPLog_pym);
         else
-          PLog("cmd.get_wizard().do_pick(0)",cPLog_pym);
+          PLog(G,"cmd.get_wizard().do_pick(0)",cPLog_pym);
         
         PBlock(G); 
         if(I->Stack>=0)
@@ -324,7 +324,7 @@ int WizardDoKey(PyMOLGlobals *G,unsigned char k, int x, int y, int mod)
       if(I->Wiz[I->Stack]) {
         OrthoLineType buffer;
         sprintf(buffer,"cmd.get_wizard().do_key(%d,%d,%d,%d)",k,x,y,mod);
-        PLog(buffer,cPLog_pym);
+        PLog(G,buffer,cPLog_pym);
         PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
@@ -351,7 +351,7 @@ int WizardDoScene(PyMOLGlobals *G)
       if(I->Wiz[I->Stack]) {
         OrthoLineType buffer;
         sprintf(buffer,"cmd.get_wizard().do_scene()");
-        PLog(buffer,cPLog_pym);
+        PLog(G,buffer,cPLog_pym);
         PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
@@ -378,7 +378,7 @@ int WizardDoDirty(PyMOLGlobals *G)
       if(I->Wiz[I->Stack]) {
         OrthoLineType buffer;
         sprintf(buffer,"cmd.get_wizard().do_dirty()");
-        PLog(buffer,cPLog_pym);
+        PLog(G,buffer,cPLog_pym);
         PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
@@ -407,7 +407,7 @@ int WizardDoState(PyMOLGlobals *G)
         OrthoLineType buffer;
         int state = SettingGetGlobal_i(G,cSetting_state) + 1;
         sprintf(buffer,"cmd.get_wizard().do_state(%d)",state);
-        PLog(buffer,cPLog_pym);
+        PLog(G,buffer,cPLog_pym);
         PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
@@ -436,7 +436,7 @@ int WizardDoFrame(PyMOLGlobals *G)
         OrthoLineType buffer;
         int frame = SettingGetGlobal_i(G,cSetting_frame) + 1;
         sprintf(buffer,"cmd.get_wizard().do_frame(%d)",frame);
-        PLog(buffer,cPLog_pym);
+        PLog(G,buffer,cPLog_pym);
         PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
@@ -464,7 +464,7 @@ int WizardDoSpecial(PyMOLGlobals *G,int k, int x, int y, int mod)
       if(I->Wiz[I->Stack]) {
         OrthoLineType buffer;
         sprintf(buffer,"cmd.get_wizard().do_special(%d,%d,%d,%d)",k,x,y,mod);
-        PLog(buffer,cPLog_pym);
+        PLog(G,buffer,cPLog_pym);
         PBlock(G); 
         if(I->Stack>=0)
           if(I->Wiz[I->Stack]) {
@@ -584,7 +584,7 @@ static int WizardRelease(Block *block,int button,int x,int y,int mod)
     case cWizTypeButton:
       if(I->Stack>=0)
         if(I->Wiz[I->Stack]) {
-          PLog(I->Line[a].code,cPLog_pym);
+          PLog(G,I->Line[a].code,cPLog_pym);
           PParse(G,I->Line[a].code);
           PFlush(G);
         }

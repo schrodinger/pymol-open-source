@@ -2834,7 +2834,7 @@ void PyMOL_Special(CPyMOL *I,int k, int x, int y, int modifiers)
   
   if(!grabbed) {
     sprintf(buffer,"_special %d,%d,%d,%d",k,x,y,modifiers);
-    PLog(buffer,cPLog_pml);
+    PLog(G,buffer,cPLog_pml);
     PParse(G,buffer);
     PFlush(G);
   }

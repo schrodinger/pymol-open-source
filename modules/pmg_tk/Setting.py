@@ -21,13 +21,17 @@ from Tkinter import *
 import Pmw
 from pymol import cmd
 import pymol.setting
+import time
 
 pm = cmd
 
 class Setting:
 
     def __init__(self):
-    
+
+        while not cmd.ready(): # make sure PyMOL is ready for action...
+            time.sleep(0.1)
+            
         self.ray_trace_frames = IntVar()
         self.ray_trace_frames.set(int(cmd.get_setting_legacy('ray_trace_frames')))
         

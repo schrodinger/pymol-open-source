@@ -624,7 +624,7 @@ void OrthoKeyControl(PyMOLGlobals *G,unsigned char k) {
   /* safer...*/
 
   sprintf(buffer,"cmd._ctrl(chr(%d))",k);
-  PLog(buffer,cPLog_pym);
+  PLog(G,buffer,cPLog_pym);
   PParse(G,buffer);
   PFlush(G);
 
@@ -641,7 +641,7 @@ void OrthoKeyAlt(PyMOLGlobals *G,unsigned char k) {
     OrthoKey(G,k,0,0,0);
   } else {
     sprintf(buffer,"cmd._alt(chr(%d))",k);
-    PLog(buffer,cPLog_pym);
+    PLog(G,buffer,cPLog_pym);
     PParse(G,buffer);
     PFlush(G);
   }
@@ -855,7 +855,7 @@ void OrthoParseCurrentLine(PyMOLGlobals *G)
       I->History[I->HistoryLine][0]=0;
       I->HistoryView=I->HistoryLine;
       if(WordMatch(G,buffer,"quit",true)==0) /* don't log quit */
-        PLog(buffer,cPLog_pml);
+        PLog(G,buffer,cPLog_pml);
       OrthoNewLine(G,NULL,true);
       OrthoDirty(G); /* this will force a redraw, if necessary */
       PParse(G,buffer);

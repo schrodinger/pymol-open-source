@@ -1824,11 +1824,10 @@ void PDo(PyMOLGlobals *G,char *str) /* assumes we already hold the re-entrant AP
   PAutoUnblock(G,blocked);
 }
 
-void PLog(char *str,int format) 
+void PLog(PyMOLGlobals *G,char *str,int format) 
      /* general log routine can write PML 
         or PYM commands to appropriate log file */
 {  
-  PyMOLGlobals *G = TempPyMOLGlobals;
   int mode;
   int a;
   int blocked;
@@ -1886,9 +1885,8 @@ void PLog(char *str,int format)
     }
 }
 
-void PLogFlush()
+void PLogFlush(PyMOLGlobals *G)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
   int mode;
   PyObject *log;
   int blocked;
