@@ -78,9 +78,9 @@ extern CPyMOLOptions *MacPyMOLOption;
 
 #ifdef _MACPYMOL_XCODE
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#define PYMOL_API_LOCK if((I->PythonInitStage)&&PLockAPIAsGlut(true)) {
-#define PYMOL_API_UNLOCK PUnlockAPIAsGlut(); }
-#define PYMOL_API_UNLOCK_NO_FLUSH PUnlockAPIAsGlutNoFlush(); }
+#define PYMOL_API_LOCK if((I->PythonInitStage)&&PLockAPIAsGlut(I->G,true)) {
+#define PYMOL_API_UNLOCK PUnlockAPIAsGlut(I->G); }
+#define PYMOL_API_UNLOCK_NO_FLUSH PUnlockAPIAsGlutNoFlush(I->G); }
 /* END PROPRIETARY CODE SEGMENT */
 #else 
 #define PYMOL_API_LOCK {
