@@ -2693,7 +2693,7 @@ void PyMOL_Free(CPyMOL *I)
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_OWN_INTERP
   if(I->PythonInitStage) { /* shut down this interpreter gracefully, then free the GIL for others to use */
-    PBlock();
+    PBlock(G);
     { /* should this be moved into a PDestroy?() to clear out the thread record too? */
       PyThreadState *tstate = PyEval_SaveThread();
       PyEval_AcquireThread(tstate);
@@ -2892,7 +2892,7 @@ int PyMOL_Idle(CPyMOL *I)
 	   I->PythonInitStage++;
 	} else {
 		I->PythonInitStage=-1;
-		PBlock();
+		PBlock(G);
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
@@ -2904,7 +2904,7 @@ int PyMOL_Idle(CPyMOL *I)
 
 		PRunString("adapt_to_hardware()");
 		PRunString("exec_deferred()");
-		PUnblock();
+		PUnblock(G);
 		PFlush(G);
 	}
   }

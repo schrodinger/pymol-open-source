@@ -7715,7 +7715,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	switch(op->code) {
 	case OMOP_ALTR: 
    case OMOP_AlterState:
-     PBlock();
+     PBlock(G);
      /* PBlockAndUnlockAPI() is not safe.
       * what if "v" is invalidated by another thread? */
      break;
@@ -9255,7 +9255,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	switch(op->code) {
 	case OMOP_ALTR:
    case OMOP_AlterState:
-     PUnblock();
+     PUnblock(G);
      break;
    }
    /* */
@@ -9372,7 +9372,7 @@ static void ObjMolCoordSetUpdateSpawn(PyMOLGlobals *G,CCoordSetUpdateThreadInfo 
     int blocked;
     PyObject *info_list;
     int a,n=0;
-    blocked = PAutoBlock();
+    blocked = PAutoBlock(G);
     
     PRINTFB(G,FB_Scene,FB_Blather)
       " Scene: updating coordinate sets with %d threads...\n",n_thread
@@ -9384,7 +9384,7 @@ static void ObjMolCoordSetUpdateSpawn(PyMOLGlobals *G,CCoordSetUpdateThreadInfo 
     }
     PXDecRef(PyObject_CallMethod(P_cmd,"_coordset_update_spawn","Oi",info_list,n_thread));
     Py_DECREF(info_list);
-    PAutoUnblock(blocked);
+    PAutoUnblock(G,blocked);
   }
 }
 #endif

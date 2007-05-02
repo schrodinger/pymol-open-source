@@ -2155,7 +2155,6 @@ void ColorReset(PyMOLGlobals *G)
 
   I->NColor = n_color;
   I->NExt = 0;
-
 }
 
 int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet)

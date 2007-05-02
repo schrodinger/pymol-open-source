@@ -767,7 +767,7 @@ int CGOPreloadFonts(CGO *I)
   int font_id;
   int blocked = false;
 
-  blocked = PAutoBlock();
+  blocked = PAutoBlock(I->G);
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     switch(op) {
     case CGO_FONT:
@@ -784,7 +784,7 @@ int CGOPreloadFonts(CGO *I)
     }
     pc+=CGO_sz[op];
   }
-  if(blocked) PUnblock();
+  if(blocked) PUnblock(I->G);
 
   return(ok);
 }
@@ -1139,7 +1139,6 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
 static void CGO_gl_begin(CCGORenderer *I,float *pc)
 {
   glBegin(CGO_read_int(pc));
-
 }
 
 static void CGO_gl_end(CCGORenderer *I,float *pc)

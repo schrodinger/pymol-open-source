@@ -105,6 +105,7 @@ static void SymmetryDump44f(PyMOLGlobals *G,float *m,char *prefix)
 
 int SymmetryAttemptGeneration(CSymmetry *I,int quiet)
 {
+  PyMOLGlobals *G = I->G;
   int ok = false;
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_XRAY
@@ -112,28 +113,28 @@ int SymmetryAttemptGeneration(CSymmetry *I,int quiet)
   int a,l;
   CrystalUpdate(I->Crystal);
   if(!quiet) {
-    if(Feedback(I->G,FB_Symmetry,FB_Blather)) {
+    if(Feedback(G,FB_Symmetry,FB_Blather)) {
       CrystalDump(I->Crystal);
     }
   }
   if(!I->SpaceGroup[0]) {
-    ErrMessage(I->G,"Symmetry","Missing space group symbol");
+    ErrMessage(G,"Symmetry","Missing space group symbol");
   } else if(P_xray) {
-	int blocked = PAutoBlock();
+	int blocked = PAutoBlock(G);
 	mats = PyObject_CallMethod(P_xray,"sg_sym_to_mat_list","s",I->SpaceGroup);
     if(mats&&(mats!=Py_None)) {
       l = PyList_Size(mats);
       VLACheck(I->SymMatVLA,float,16*l);
       if(!quiet) {
-        PRINTFB(I->G,FB_Symmetry,FB_Details)
+        PRINTFB(G,FB_Symmetry,FB_Details)
           " Symmetry: Found %d symmetry operators.\n",l
-          ENDFB(I->G);
+          ENDFB(G);
       }
       for(a=0;a<l;a++) {
         PConv44PyListTo44f(PyList_GetItem(mats,a),I->SymMatVLA+(a*16));
         if(!quiet) {
-          if(Feedback(I->G,FB_Symmetry,FB_Blather)) {
-            SymmetryDump44f(I->G,I->SymMatVLA+(a*16)," Symmetry:");
+          if(Feedback(G,FB_Symmetry,FB_Blather)) {
+            SymmetryDump44f(G,I->SymMatVLA+(a*16)," Symmetry:");
           }
         }
       }
@@ -141,9 +142,9 @@ int SymmetryAttemptGeneration(CSymmetry *I,int quiet)
       ok = true;
       Py_DECREF(mats);
     } else {
-      ErrMessage(I->G,"Symmetry","Unable to get matrices from sglite.");
+      ErrMessage(G,"Symmetry","Unable to get matrices from sglite.");
     }
-    PAutoUnblock(blocked);
+    PAutoUnblock(G,blocked);
   }
 #endif
 #endif

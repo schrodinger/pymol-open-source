@@ -611,7 +611,7 @@ void SceneCleanupStereo(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;  
   if(I->StereoMode==1)
-    PSGIStereo(0);
+    PSGIStereo(G,0);
 }
 
 void ScenePrepareUnitContext(PyMOLGlobals *G,SceneUnitContext *context,int width,int height)
@@ -5515,7 +5515,7 @@ void SceneRay(PyMOLGlobals *G,
                    I->FrontSafe,I->BackSafe,fov,angle,antialias);
       if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
         strcpy(prefix,SettingGet_s(G,NULL,NULL,cSetting_batch_prefix));
-        if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,
+        if(PPovrayRender(G,headerVLA,charVLA,prefix,ray_width,
                          ray_height,antialias)) {
           strcat(prefix,".png");
           SceneLoadPNG(G,prefix,false,0,false);
@@ -5722,7 +5722,7 @@ static void SceneObjectUpdateSpawn(PyMOLGlobals *G,CObjectUpdateThreadInfo *Thre
     int blocked;
     PyObject *info_list;
     int a,n=0;
-    blocked = PAutoBlock();
+    blocked = PAutoBlock(G);
     
     PRINTFB(G,FB_Scene,FB_Blather)
       " Scene: updating objects with %d threads...\n",n_thread
@@ -5734,7 +5734,7 @@ static void SceneObjectUpdateSpawn(PyMOLGlobals *G,CObjectUpdateThreadInfo *Thre
     }
     PXDecRef(PyObject_CallMethod(P_cmd,"_object_update_spawn","Oi",info_list,n_thread));
     Py_DECREF(info_list);
-    PAutoUnblock(blocked);
+    PAutoUnblock(G,blocked);
   }
 }
 #endif

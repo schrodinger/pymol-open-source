@@ -61,7 +61,7 @@ void MainRunCommand(char *str1)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
 
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     
     if(str1[0]!='_') { /* suppress internal call-backs */
       if(strncmp(str1,"cmd._",5)) {
@@ -79,7 +79,7 @@ void MainRunCommand(char *str1)
     } else { 
       PParse(G,str1);
     }
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 PyObject *MainGetStringResult(char *str)
@@ -90,26 +90,27 @@ PyObject *MainGetStringResult(char *str)
 }
 void MainRunString(char *str)
 {
-  PBlock();
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  PBlock(G);
   PLockStatus();
   PRunString(str);
-  PUnblock();
+  PUnblock(G);
 }
 void MainMovieCopyPrepare(int *width,int *height,int *length)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     MovieCopyPrepare(G,width,height,length);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   int result = false;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     result = MovieCopyFrame(G,frame,width,height,rowbytes,ptr);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G,);
   }
   return result;
 }
@@ -117,9 +118,9 @@ int MainMoviePurgeFrame(int frame)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   int result = false;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     result = MoviePurgeFrame(G,frame);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
   return result;
 }
@@ -127,35 +128,35 @@ int MainMoviePurgeFrame(int frame)
 void MainMovieCopyFinish(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     MovieCopyFinish(G);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 void MainFlushAsync(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     PFlush(G);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 int MainCheckRedundantOpen(char *file)
 {
   int result = false;
 #ifndef _PYMOL_NOPY
-  PBlock();
+  PBlock(G);
   result = PTruthCallStr(P_cmd,"check_redundant_open",file);
-  PUnblock();
+  PUnblock(G);
 #endif
   return result;
 }
 void MainSceneGetSize(int *width,int *height)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     SceneGetImageSize(G,width,height);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
@@ -163,9 +164,9 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
   PyMOLGlobals *G = TempPyMOLGlobals;
 
   int result = false;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     result = SceneCopyExternal(G,width, height,rowbytes,(unsigned char *)ptr,0x1);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
   return result;
 }
@@ -319,9 +320,9 @@ int MainCheckRedundantOpen(char *file)
 {
   int result = false;
 #ifndef _PYMOL_NOPY
-  PBlock();
+  PBlock(G);
   result = PTruthCallStr(P_cmd,"check_redundant_open",file);
-  PUnblock();
+  PUnblock(G);
 #endif
   return result;
 }
@@ -330,33 +331,33 @@ void MainMovieCopyPrepare(int *width,int *height,int *length)
   PyMOLGlobals *G = TempPyMOLGlobals;
   if(PLockAPIAsGlut(true)) {
     MovieCopyPrepare(G,width,height,length);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   int result = false;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     result = MovieCopyFrame(G,frame,width,height,rowbytes,ptr);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
   return result;
 }
 void MainMovieCopyFinish(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     MovieCopyFinish(G);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 void MainSceneGetSize(int *width,int *height)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     SceneGetWidthHeight(G,width,height);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
@@ -364,9 +365,9 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
   PyMOLGlobals *G = TempPyMOLGlobals;
 
   int result = false;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     result = SceneCopyExternal(G,width, height,rowbytes,(unsigned char *)ptr,0);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
   return result;
 }
@@ -374,7 +375,7 @@ void MainDoCommand(char *str1)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
 
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     if(str1[0]!='_') { /* suppress internal call-backs */
       if(strncmp(str1,"cmd._",5)) {
         OrthoAddOutput(G,"PyMOL>");
@@ -387,14 +388,14 @@ void MainDoCommand(char *str1)
     } else { 
       PDo(str1);
     }
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 void MainRunCommand(char *str1)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
 
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     
     if(str1[0]!='_') { /* suppress internal call-backs */
       if(strncmp(str1,"cmd._",5)) {
@@ -412,15 +413,15 @@ void MainRunCommand(char *str1)
     } else { 
       PParse(G,str1);
     }
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 void MainFlushAsync(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  if(PLockAPIAsGlut(true)) {
+  if(PLockAPIAsGlut(G,true)) {
     PFlush(G);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 void MainFlush(void) /* assumes GIL held */
@@ -437,12 +438,12 @@ void MainFlush(void) /* assumes GIL held */
 void MainRunString(char *str)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  PBlock();
+  PBlock(G);
   PLockStatus();
   MainPushValidContext(G);
   PRunString(str);
   MainPopValidContext(G);
-  PUnblock();
+  PUnblock(G);
 }
 PyObject *MainGetStringResult(char *str)
 {
@@ -499,7 +500,7 @@ static void MainDrag(int x,int y)
 
   CMain *I = G->Main;
   
-  if(PLockAPIAsGlut(false)) {
+  if(PLockAPIAsGlut(G,false)) {
     
     y=G->Option->winY-y;
     
@@ -512,7 +513,7 @@ static void MainDrag(int x,int y)
       I->IdleMode = 0;
     }
     
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 /*========================================================================*/
@@ -526,7 +527,7 @@ static void MainButton(int button,int state,int x,int y)
 
   glMod = p_glutGetModifiers();
 
-  if(PLockAPIAsGlut(false)) {
+  if(PLockAPIAsGlut(G,false)) {
     
     I->IdleMode = 0; /* restore responsiveness */
     
@@ -551,7 +552,7 @@ static void MainButton(int button,int state,int x,int y)
       PyMOL_Button(PyMOLInstance,button,state,x,y,I->Modifiers);
     }
     
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 /*========================================================================*/
@@ -566,7 +567,7 @@ static void MainPassive(int x,int y)
                                            to slow Python down buy locking on passive
                                            mouse motion */
     
-    if(PLockAPIAsGlut(false)) {
+    if(PLockAPIAsGlut(G,false)) {
       
       if((y<-PASSIVE_EDGE)||(x<-PASSIVE_EDGE)||
          (x>(G->Option->winX+PASSIVE_EDGE))||
@@ -594,7 +595,7 @@ static void MainPassive(int x,int y)
         I->IdleMode = 0;
       }
       
-      PUnlockAPIAsGlut();
+      PUnlockAPIAsGlut(G);
     }
   }
   
@@ -615,7 +616,7 @@ static void MainDrawLocked(void)
     /* okay, on the way in, the API is locked but the interpreter is
        running async, so we need to block it */
 
-    PBlock();
+    PBlock(G);
 
     /* next, we need to let PyMOL know we have a valid context,
       because some initializations, involve GL calls (such as going
@@ -655,7 +656,7 @@ static void MainDrawLocked(void)
     if(G->HaveGUI) 
       MainPopValidContext(G);
 
-    PUnblock();
+    PUnblock(G);
     
 #endif
     I->FinalInitDone = true;
@@ -683,11 +684,11 @@ static void MainDrawProgress(PyMOLGlobals *G)
 {
   int progress[PYMOL_PROGRESS_SIZE];
   int update = false;
-  PBlock();
+  PBlock(G);
   PLockStatus();
   update = PyMOL_GetProgress(G->PyMOL,progress,true);
   PUnlockStatus();
-  PUnblock();
+  PUnblock(G);
 
   /*
   printf("show progress %d %d %d %d %d %d\n",
@@ -826,7 +827,7 @@ static void MainDraw(void)
   PRINTFD(G,FB_Main)
     " MainDraw: called.\n"
     ENDFD;
-  if(PLockAPIAsGlut(false)) {
+  if(PLockAPIAsGlut(G,false)) {
     CMain *I = G->Main;    
     int skip = false;
     if(I->MaximizeCheck) {
@@ -869,7 +870,7 @@ static void MainDraw(void)
     } else {
       PyMOL_NeedRedisplay(PyMOLInstance);
     }
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   } else { /* we're busy -- so try to display a progress indicator */
     MainDrawProgress(G);
   }
@@ -889,7 +890,7 @@ static void MainKey(unsigned char k, int x, int y)
   PRINTFB(G,FB_Main,FB_Blather)
     " MainKey: code:%d modifiers:0x%02x x:%d y:%d\n",k,glMod,x,y
     ENDFB(G);
-  if(PLockAPIAsGlut(false)) {
+  if(PLockAPIAsGlut(G,false)) {
     
     I->IdleMode = 0; /* restore responsiveness */
     
@@ -899,14 +900,14 @@ static void MainKey(unsigned char k, int x, int y)
     
     PyMOL_Key(PyMOLInstance,k,x,y,I->Modifiers);
     
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   } else {
     if((k==8)||(k==127)) { /* interrupt busy state (if possibele) */
-      PBlock();
+      PBlock(G);
       PLockStatus();
       PyMOL_SetInterrupt(G->PyMOL,true);
       PUnlockStatus();
-      PUnblock();
+      PUnblock(G);
     }
   }
 }
@@ -922,7 +923,7 @@ static void MainSpecial(int k, int x, int y)
     " MainSpecial: %d %d %d\n",k,x,y
     ENDFB(G);
   glMod = p_glutGetModifiers();
-  if(PLockAPIAsGlut(false)) {
+  if(PLockAPIAsGlut(G,false)) {
     
     I->Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
       ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
@@ -930,7 +931,7 @@ static void MainSpecial(int k, int x, int y)
     
     PyMOL_Special(PyMOLInstance, k, x, y, I->Modifiers);
     
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 
@@ -946,7 +947,7 @@ void MainReshape(int width, int height) /* called by Glut */
     I->ReshapeTime = (double)UtilGetSeconds(G);
     I->DrawnFlag = false;
 
-    if(PLockAPIAsGlut(true)) {
+    if(PLockAPIAsGlut(G,true)) {
       if(G->HaveGUI) {
         glViewport(0, 0, (GLint) width, (GLint) height);
         if((!PyMOLInstance) ||
@@ -981,7 +982,7 @@ void MainReshape(int width, int height) /* called by Glut */
     }
     if(PyMOLInstance) 
       PyMOL_Reshape(PyMOLInstance, width, height, false);
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
   }
 }
 /*========================================================================*/
@@ -1177,7 +1178,7 @@ static void MainBusyIdle(void)
     I->IdleMode
     ENDFD;*/
 
-  if(PLockAPIAsGlut(false)) {
+  if(PLockAPIAsGlut(G,false)) {
     
     PRINTFD(G,FB_Main)
       " MainBusyIdle: got lock.\n"
@@ -1262,7 +1263,7 @@ static void MainBusyIdle(void)
       " MainBusyIdle: unlocking.\n"
       ENDFD;
 
-    PUnlockAPIAsGlut();
+    PUnlockAPIAsGlut(G);
     
     if(I->IdleMode) {
       if(I->IdleMode==1)
@@ -1298,10 +1299,10 @@ static void MainBusyIdle(void)
            (I->FinalInitCounter>=FINAL_INIT_AT)) {
           I->IdleCount++;
           if(I->IdleCount==10) {
-            if(PLockAPIAsGlut(true)) {
+            if(PLockAPIAsGlut(G,true)) {
               PParse(G,"_quit");
               PFlush(G);
-              PUnlockAPIAsGlut();
+              PUnlockAPIAsGlut(G);
             }
           }
         }
@@ -1314,12 +1315,12 @@ static void MainBusyIdle(void)
 
     PSleepWhileBusy(G,100000); /* 10 per second */
     if(G->HaveGUI) {
-      PBlock();
+      PBlock(G);
       PLockStatus();
       if(PyMOL_GetProgressChanged(G->PyMOL,false))
         p_glutPostRedisplay();
       PUnlockStatus();
-      PUnblock();
+      PUnblock(G);
     }
   }
 
@@ -1580,7 +1581,7 @@ SetConsoleCtrlHandler(
 
      }
      
-     PUnblock();
+     PUnblock(G);
      
      if(G->HaveGUI) {
        SceneSetCardInfo(G,(char*)glGetString(GL_VENDOR),
@@ -1604,7 +1605,7 @@ SetConsoleCtrlHandler(
        if(!I->WindowIsVisible)
          MainReshape(G->Option->winX,G->Option->winY);
        p_glutMainLoop(); /* never returns with traditional GLUT implementation */
-       PBlock(); /* if we've gotten here, then we're heading back to Python... */
+       PBlock(G); /* if we've gotten here, then we're heading back to Python... */
      } else {
        SceneSetCardInfo(G,"none","ray trace only","none");
        if(G->Option->show_splash) 

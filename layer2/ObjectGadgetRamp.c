@@ -1072,11 +1072,10 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
 
   ObjectGadgetRamp *I;
   int ok = true;
-
   I = ObjectGadgetRampNew(G);
   I->RampType = cRampMap;
 
-  PBlock();
+  PBlock(G);
   if(ok) {
     if(PyList_Check(color))
       ok = PConvPyList3ToFloatVLA(color,&I->Color);
@@ -1137,7 +1136,7 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
     dump3f(test,"test color");
   }
   */
-  PUnblock();
+  PUnblock(G);
   return(I);
 #endif
 }
@@ -1160,7 +1159,7 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
     I->RampType = cRampMol;
   else
     I->RampType = cRampNone;
-  PBlock();
+  PBlock(G);
   if(ok) {
     if(PyList_Check(color))
       ok = PConvPyList3ToFloatVLA(color,&I->Color);
@@ -1181,7 +1180,7 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
     UtilNCopy(I->SrcName,"none",WordLength);
   }
   I->SrcState=mol_state;
-  PUnblock();
+  PUnblock(G);
   return(I);
 #endif
 }
