@@ -45,7 +45,7 @@ if hasattr(__main__,'pymol_launch'):
     pymol_launch = __main__.pymol_launch
 else:
     pymol_launch = 2 
-
+    
 if pymol_launch != 3: # if this isn't a dry run
 
     import thread 
@@ -135,8 +135,12 @@ if pymol_launch != 3: # if this isn't a dry run
 
     # PyMOL __init__.py
 
-    if __name__=='pymol':
+    if (__name__=='pymol') and not globals().has_key('_once'):
 
+        # don't ever redefine these symbols...
+        
+        _once = None
+        
         # Python exception type for PyMOL commands
         
         class CmdException:
