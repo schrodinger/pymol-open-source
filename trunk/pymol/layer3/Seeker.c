@@ -140,15 +140,15 @@ static void SeekerSelectionToggleRange(PyMOLGlobals *G,CSeqRow* rowVLA,int row_n
           SelectorCreate(G,selName,buf1,NULL,true,NULL);
           {
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buf1);
-            PLog(buf2,cPLog_no_flush);
+            PLog(G,buf2,cPLog_no_flush);
           }
         }
         
         ExecutiveDelete(G,cTempSeekerSele);
         if(logging) {
           sprintf(buf2,"%scmd.delete(\"%s\")\n",prefix,cTempSeekerSele);
-          PLog(buf2,cPLog_no_flush);
-          PLogFlush();
+          PLog(G,buf2,cPLog_no_flush);
+          PLogFlush(G);
         }
         
         if(SettingGet(G,cSetting_auto_show_selections))
@@ -221,15 +221,15 @@ static void SeekerSelectionToggle(PyMOLGlobals *G,CSeqRow* rowVLA,int row_num,
           SelectorCreate(G,selName,buf1,NULL,true,NULL);
           {
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buf1);
-            PLog(buf2,cPLog_no_flush);
+            PLog(G,buf2,cPLog_no_flush);
           }
         }
 
         ExecutiveDelete(G,cTempSeekerSele);
         if(logging) {
           sprintf(buf2,"%scmd.delete(\"%s\")\n",prefix,cTempSeekerSele);
-          PLog(buf2,cPLog_no_flush);
-          PLogFlush();
+          PLog(G,buf2,cPLog_no_flush);
+          PLogFlush(G);
         }
         
         if(SettingGet(G,cSetting_auto_show_selections))
@@ -288,16 +288,16 @@ static void SeekerSelectionCenter(PyMOLGlobals *G,int action)
     ExecutiveCenter(G,cTempCenterSele,-1,true,-1,NULL,true);
     if(logging) {
       sprintf(buf2,"%scmd.center(\"%s\")\n",prefix,cTempCenterSele);
-      PLog(buf2,cPLog_no_flush);
-      PLogFlush();
+      PLog(G,buf2,cPLog_no_flush);
+      PLogFlush(G);
     }
     break;
   case 1: /* zoom */
     ExecutiveWindowZoom(G,cTempCenterSele,0.0,-1,false,-1,true);
     if(logging) {
       sprintf(buf2,"%scmd.zoom(\"%s\")\n",prefix,cTempCenterSele);
-      PLog(buf2,cPLog_no_flush);
-      PLogFlush();
+      PLog(G,buf2,cPLog_no_flush);
+      PLogFlush(G);
     }
     break;
   case 2: /* center seeker */
@@ -307,8 +307,8 @@ static void SeekerSelectionCenter(PyMOLGlobals *G,int action)
         ExecutiveCenter(G,selName,-1,true,-1,NULL,true);
         if(logging) {
           sprintf(buf2,"%scmd.center(\"%s\")\n",prefix,selName);
-          PLog(buf2,cPLog_no_flush);
-          PLogFlush();
+          PLog(G,buf2,cPLog_no_flush);
+          PLogFlush(G);
         }
       }
     }
@@ -336,7 +336,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
           SelectorCreate(G,name,"none",NULL,true,NULL);
           if(SettingGet(G,cSetting_logging)) {
             sprintf(buf2,"cmd.select('%s','none')\n",name);
-            PLog(buf2,cPLog_no_flush);
+            PLog(G,buf2,cPLog_no_flush);
           }
           SeqDirty(G);
         }

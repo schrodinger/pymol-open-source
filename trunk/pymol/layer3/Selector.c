@@ -3442,15 +3442,15 @@ void SelectorLogSele(PyMOLGlobals *G,char *name)
             cnt++;
             if(strlen(line)>(sizeof(OrthoLineType)/2)) {
               strcat(line,")\")\n");
-              PLog(line,cPLog_no_flush);
+              PLog(G,line,cPLog_no_flush);
               cnt=-1;
             }
           }
         }
       if(cnt>0) {
         strcat(line,")\")\n");
-        PLog(line,cPLog_no_flush);
-        PLogFlush();
+        PLog(G,line,cPLog_no_flush);
+        PLogFlush(G);
       }
     }
   }

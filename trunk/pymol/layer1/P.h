@@ -55,11 +55,11 @@ Z* -------------------------------------------------------------------
 
 #define PFlush()
 #define PFlushFast()
-#define PParse(s)
+#define PParse(G,s)
 #define PDo(G,s)
 
-#define PLog(a,b)
-#define PLogFlush()
+#define PLog(G,a,b)
+#define PLogFlush(G)
 
 #define PIsGlutThread() 1
 #define PComplete(G,a,b) 0
@@ -104,8 +104,8 @@ int PAlterAtomState(PyMOLGlobals *G,float *v,char *expr,int read_only,
                     AtomInfoType *at,char *model, int index,PyObject *space);
 
 
-void PLog(char *str,int lf);
-void PLogFlush(void);
+void PLog(PyMOLGlobals *G,char *str,int lf);
+void PLogFlush(PyMOLGlobals *G);
 
 void PSleep(PyMOLGlobals *G,int usec);
 void PSleepWhileBusy(PyMOLGlobals *G,int usec);

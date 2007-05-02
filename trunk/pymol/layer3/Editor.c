@@ -496,7 +496,7 @@ int EditorLogState(PyMOLGlobals *G,int pkresi)
     int pkbond = 1;
     
     if(!EditorActive(G)) {
-      PLog("edit",cPLog_pml);
+      PLog(G,"edit",cPLog_pml);
     } else {
       int sele1,sele2,sele3,sele4;
       ObjectMolecule *obj1=NULL,*obj2=NULL,*obj3=NULL,*obj4=NULL;
@@ -543,7 +543,7 @@ int EditorLogState(PyMOLGlobals *G,int pkresi)
       sprintf(buffer,"cmd.edit(%s,%s,%s,%s,pkresi=%d,pkbond=%d)",
               buf1,buf2,buf3,buf4,pkresi ? 1: 0, pkbond ? 1: 0);
 
-      PLog(buffer,cPLog_pym);
+      PLog(G,buffer,cPLog_pym);
 
     }
   }
@@ -1495,7 +1495,7 @@ void EditorInactivate(PyMOLGlobals *G)
   ExecutiveDelete(G,cEditorDihedral);
   ExecutiveDelete(G,cEditorDihe1);
   ExecutiveDelete(G,cEditorDihe2);
-  /*  if(SettingGet(G,cSetting_log_conformations)) PLogFlush();
+  /*  if(SettingGet(G,cSetting_log_conformations)) PLogFlush(G);
       TODO: resolve this problem:
       we can't assume that Python interpreter isn't blocked
   */
@@ -1833,7 +1833,7 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,
         ObjectMoleculeSculptImprint(I->DragObject,state,-1,0);
     }
   }
-  if(log_trans) PLogFlush();
+  if(log_trans) PLogFlush(G);
 
   PRINTFD(G,FB_Editor)
     " EditorPrepDrag-Debug: leaving Index %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d seleFlag %d\n",

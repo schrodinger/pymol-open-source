@@ -3224,7 +3224,7 @@ static int SceneClick(Block *block,int button,int x,int y,
                 objMol = (ObjectMolecule*)obj;            
                 ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buffer,false);
                 sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
-                PLog(buf2,cPLog_pym);
+                PLog(G,buf2,cPLog_pym);
               }
               OrthoRestorePrompt(G);
               sprintf(buffer,"%s`%d",
@@ -3352,7 +3352,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
               ObjectMoleculeGetAtomSeleLog(objMol,atIndex,buf2,false);
               sprintf(buffer,"cmd.edit(\"%s\",\"%s\")",buf1,buf2);
-              PLog(buffer,cPLog_pym);
+              PLog(G,buffer,cPLog_pym);
             }
             sprintf(buffer,"%s`%d",
                     obj->Name,atIndex+1);    
@@ -3525,7 +3525,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
               sprintf(buffer,"cmd.drag(\"bymol (%s)\")",buf1);
               PParse(G,buffer);
-              PLog(buffer,cPLog_pym);
+              PLog(G,buffer,cPLog_pym);
             }
             break;
           case cButModeOrigAt:
@@ -3545,7 +3545,7 @@ static int SceneClick(Block *block,int button,int x,int y,
                 objMol = (ObjectMolecule*)obj;            
                 ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
                 sprintf(buffer,"cmd.origin(\"%s\")",buf1);
-                PLog(buffer,cPLog_pym);
+                PLog(G,buffer,cPLog_pym);
 
               }
               if(Feedback(G,FB_Scene,FB_Results)) {
@@ -3575,7 +3575,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               objMol = (ObjectMolecule*)obj;            
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
               sprintf(buffer,"cmd.center(\"%s\",state=-1)",buf1);
-              PLog(buffer,cPLog_pym);
+              PLog(G,buffer,cPLog_pym);
             }
             break;
           }
@@ -3599,7 +3599,7 @@ static int SceneClick(Block *block,int button,int x,int y,
                 objMol = (ObjectMolecule*)obj;            
                 ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
                 sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf1);
-                PLog(buffer,cPLog_pym);
+                PLog(G,buffer,cPLog_pym);
               }
             }
             WizardDoSelect(G,selName);
@@ -3619,7 +3619,7 @@ static int SceneClick(Block *block,int button,int x,int y,
                   sprintf(buf2,"(((%s) or %s(%s)) and not ((%s(%s)) and %s(%s)))",
                           selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
                   sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf2);
-                  PLog(buffer,cPLog_pym);
+                  PLog(G,buffer,cPLog_pym);
                 }
               }
             } else {
@@ -3630,7 +3630,7 @@ static int SceneClick(Block *block,int button,int x,int y,
                   objMol = (ObjectMolecule*)obj;            
                   ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
                   sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf1);
-                  PLog(buffer,cPLog_pym);
+                  PLog(G,buffer,cPLog_pym);
                 }
               }
             }
@@ -3658,7 +3658,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               SelectorCreate(G,name,"none",NULL,true,NULL);
               if(SettingGet(G,cSetting_logging)) {
                 sprintf(buf2,"cmd.select('%s','none')\n",name);
-                PLog(buf2,cPLog_no_flush);
+                PLog(G,buf2,cPLog_no_flush);
               }
               SeqDirty(G);
             }
@@ -3672,7 +3672,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               ExecutiveSetObjVisib(G,name,0);
               if(SettingGet(G,cSetting_logging)) {
                 sprintf(buf2,"cmd.disable('%s')\n",name);
-                PLog(buf2,cPLog_no_flush);
+                PLog(G,buf2,cPLog_no_flush);
               }
             }
           }

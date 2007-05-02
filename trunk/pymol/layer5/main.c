@@ -69,12 +69,12 @@ void MainRunCommand(char *str1)
         OrthoAddOutput(G,str1);
         OrthoNewLine(G,NULL,true);
         if(WordMatch(G,str1,"quit",true)==0) /* don't log quit */
-          PLog(str1,cPLog_pml);
+          PLog(G,str1,cPLog_pml);
       }
       PParse(G,str1);
     } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
       if(WordMatch(G,str1+2,"quit",true)>=0) /* don't log quit */
-        PLog(str1+2,cPLog_pml);
+        PLog(G,str1+2,cPLog_pml);
       PParse(G,str1+2);    
     } else { 
       PParse(G,str1);
@@ -404,12 +404,12 @@ void MainRunCommand(char *str1)
         OrthoAddOutput(G,str1);
         OrthoNewLine(G,NULL,true);
         if(WordMatch(G,str1,"quit",true)==0) /* don't log quit */
-          PLog(str1,cPLog_pml);
+          PLog(G,str1,cPLog_pml);
       }
       PParse(G,str1);
     } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
       if(WordMatch(G,str1+2,"quit",true)>=0) /* don't log quit */
-        PLog(str1+2,cPLog_pml);
+        PLog(G,str1+2,cPLog_pml);
       PParse(G,str1+2);    
     } else { 
       PParse(G,str1);

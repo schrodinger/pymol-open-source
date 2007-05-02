@@ -78,7 +78,7 @@ int ObjectDistMoveLabel(ObjectDist *I,int state,int index,float *v,int mode,int 
       ObjectMoleculeGetAtomSele(I,index,buffer);
       sprintf(line,"cmd.translate_atom(\"%s\",%15.9f,%15.9f,%15.9f,%d,%d,%d)\n",
               buffer,v[0],v[1],v[2],state+1,mode,0);
-      PLog(line,cPLog_no_flush);
+      PLog(G,line,cPLog_no_flush);
     }
   }
 #endif

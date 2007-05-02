@@ -130,11 +130,11 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
   switch(sel) {
   case 0:
     SceneSetFrame(G,4,0);
-    PLog("cmd.rewind()",cPLog_pym);
+    PLog(G,"cmd.rewind()",cPLog_pym);
     break;
   case 1:
     SceneSetFrame(G,5,-1);
-    PLog("cmd.back()",cPLog_pym);
+    PLog(G,"cmd.back()",cPLog_pym);
     break;
   case 2:
     MoviePlay(G,cMovieStop);
@@ -142,62 +142,62 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
     if(I->Rocking) I->Rocking=false;
     ExecutiveDrawNow(G);
     OrthoDirty(G);
-    PLog("cmd.mstop()",cPLog_pym);
+    PLog(G,"cmd.mstop()",cPLog_pym);
     break;
   case 3:
     if(!MoviePlaying(G)) {
       if(mod&cOrthoCTRL) {
-        PLog("cmd.rewind()",cPLog_pym);
-        PLog("cmd.mplay()",cPLog_pym);
+        PLog(G,"cmd.rewind()",cPLog_pym);
+        PLog(G,"cmd.mplay()",cPLog_pym);
         SceneSetFrame(G,4,0);		
         MoviePlay(G,cMoviePlay);
       } else {
-        PLog("cmd.mplay()",cPLog_pym);
+        PLog(G,"cmd.mplay()",cPLog_pym);
         MoviePlay(G,cMoviePlay);
       }
     } else {
       MoviePlay(G,cMovieStop);
       ExecutiveDrawNow(G);
       OrthoDirty(G);
-      PLog("cmd.mstop()",cPLog_pym);
+      PLog(G,"cmd.mstop()",cPLog_pym);
     }
     break;
   case 4:
     SceneSetFrame(G,5,1);
-    PLog("cmd.forward()",cPLog_pym);
+    PLog(G,"cmd.forward()",cPLog_pym);
     break;
   case 5:
     if(mod&cOrthoCTRL) {
       SceneSetFrame(G,3,0);
-      PLog("cmd.middle()",cPLog_pym);
+      PLog(G,"cmd.middle()",cPLog_pym);
     } else {
       SceneSetFrame(G,6,0);
-      PLog("cmd.ending()",cPLog_pym);
+      PLog(G,"cmd.ending()",cPLog_pym);
     }
     break;
   case 6:
     if(SettingGetGlobal_b(G,cSetting_seq_view)) {
       SettingSetGlobal_b(G,cSetting_seq_view,0);
       SeqChanged(G);
-      PLog("cmd.set('seq_view',0)",cPLog_pym);
+      PLog(G,"cmd.set('seq_view',0)",cPLog_pym);
     } else {
       SettingSetGlobal_b(G,cSetting_seq_view,1);
       SeqChanged(G);
-      PLog("cmd.set('seq_view',1)",cPLog_pym);        
+      PLog(G,"cmd.set('seq_view',1)",cPLog_pym);        
     }
     OrthoDirty(G);
     break;
   case 7:
     I->Rocking=!I->Rocking;
     if(I->Rocking)
-      PLog("cmd.rock(1)",cPLog_pym);
+      PLog(G,"cmd.rock(1)",cPLog_pym);
     else
-      PLog("cmd.rock(0)",cPLog_pym);
+      PLog(G,"cmd.rock(0)",cPLog_pym);
     SceneRestartTimers(G);
     OrthoDirty(G);
     break;
   case 8:
-    PLog("cmd.fullscreen()",cPLog_pym);
+    PLog(G,"cmd.fullscreen()",cPLog_pym);
     ExecutiveFullScreen(G,-1);
     break;
   }

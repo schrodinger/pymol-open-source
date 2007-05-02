@@ -216,7 +216,7 @@ static PyObject *APIAutoNone(PyObject *result) /* automatically owned Py_None */
 
 static PyObject *CmdPseudoatom(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *object_name, *sele, *label;
   OrthoLineType s1;
   char *name, *resn, *resi, *chain, *segi, *elem;
@@ -263,7 +263,7 @@ static PyObject *CmdPseudoatom(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetSceneNames(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *list;
   int ok = false;
 
@@ -282,7 +282,7 @@ static PyObject *CmdSetSceneNames(PyObject *self, PyObject *args)
 
 static PyObject *CmdFixChemistry(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str2,*str3;
   OrthoLineType s2="",s3="";
   int ok = false;
@@ -307,7 +307,7 @@ static PyObject *CmdFixChemistry(PyObject *self, PyObject *args)
 
 static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int int1,int2;
   int ok = false;
   ok = PyArg_ParseTuple(args,"ii",&int1,&int2);
@@ -326,7 +326,7 @@ static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args)
 }
 static PyObject *CmdRayAntiThread(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   PyObject *py_thread_info;
 
@@ -349,7 +349,7 @@ static PyObject *CmdRayAntiThread(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdRayHashThread(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   PyObject *py_thread_info;
 
@@ -372,7 +372,7 @@ static PyObject *CmdRayHashThread(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdRayTraceThread(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   PyObject *py_thread_info;
 
@@ -394,7 +394,7 @@ static PyObject *CmdRayTraceThread(PyObject *self, 	PyObject *args)
 }
 static PyObject *CmdCoordSetUpdateThread(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   PyObject *py_thread_info;
 
@@ -417,7 +417,7 @@ static PyObject *CmdCoordSetUpdateThread(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdObjectUpdateThread(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   PyObject *py_thread_info;
 
@@ -440,7 +440,7 @@ static PyObject *CmdObjectUpdateThread(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetMovieLocked(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok=false;
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -455,7 +455,7 @@ static PyObject *CmdGetMovieLocked(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdFakeDrag(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok=false;
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -469,7 +469,7 @@ static PyObject *CmdFakeDrag(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdDelColorection(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   PyObject *list;
   char *prefix;
@@ -488,7 +488,7 @@ static PyObject *CmdDelColorection(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetColorectionName(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   PyObject *list;
   char *prefix,*new_prefix;
@@ -507,7 +507,7 @@ static PyObject *CmdSetColorectionName(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetColorection(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   char *prefix;
   PyObject *list;
@@ -526,7 +526,7 @@ static PyObject *CmdSetColorection(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetColorection(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result=NULL;
   int ok = false;
   char *prefix;
@@ -545,7 +545,7 @@ static PyObject *CmdGetColorection(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetRawAlignment(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   char *name;
   int active_only;
@@ -579,7 +579,7 @@ static PyObject *CmdGetRawAlignment(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetOrigin(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   float origin[3];
   char *object;
@@ -617,9 +617,13 @@ static PyObject *CmdGetOrigin(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetVis(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result;
   int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
   if (ok) {
     APIEnterBlocked(G);
     result = ExecutiveGetVisAsPyDict(G);
@@ -630,7 +634,7 @@ static PyObject *CmdGetVis(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetVis(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   PyObject *visDict;
   ok = PyArg_ParseTuple(args,"O",&visDict);
@@ -648,7 +652,7 @@ static PyObject *CmdSetVis(PyObject *self, PyObject *args)
 
 static PyObject *CmdReinitialize(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int what;
   char *object;
@@ -667,7 +671,7 @@ static PyObject *CmdReinitialize(PyObject *self, PyObject *args)
 }
 static PyObject *CmdSpectrum(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*expr,*prefix;
   OrthoLineType s1;
   float min,max;
@@ -705,8 +709,12 @@ static PyObject *CmdSpectrum(PyObject *self, PyObject *args)
 
 static PyObject *CmdMDump(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
   if(ok) {
     APIEntry(G);
     MovieDump(G);
@@ -717,8 +725,12 @@ static PyObject *CmdMDump(PyObject *self, PyObject *args)
 
 static PyObject *CmdAccept(PyObject *self,PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
   if(ok) {
     APIEntry(G);
     MovieSetLock(G,false);
@@ -733,8 +745,12 @@ static PyObject *CmdAccept(PyObject *self,PyObject *args)
 
 static PyObject *CmdDecline(PyObject *self,PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
   if(ok) {
     APIEntry(G);
     MovieReset(G);
@@ -749,7 +765,7 @@ static PyObject *CmdDecline(PyObject *self,PyObject *args)
 
 static PyObject *CmdSetCrystal(PyObject *self,PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1,*str2;
   OrthoLineType s1;
@@ -773,7 +789,7 @@ static PyObject *CmdSetCrystal(PyObject *self,PyObject *args)
 
 static PyObject *CmdGetCrystal(PyObject *self,PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1;    
   OrthoLineType s1;
@@ -814,7 +830,7 @@ static PyObject *CmdGetCrystal(PyObject *self,PyObject *args)
 
 static PyObject *CmdSmooth(PyObject *self,PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1;
   OrthoLineType s1;
@@ -836,7 +852,7 @@ static PyObject *CmdSmooth(PyObject *self,PyObject *args)
 
 static PyObject *CmdGetSession(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   PyObject *dict;
   int partial,quiet;
@@ -856,7 +872,7 @@ static PyObject *CmdGetSession(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetSession(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int quiet,partial;
   PyObject *obj;
@@ -876,7 +892,7 @@ static PyObject *CmdSetSession(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetName(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1,*str2;
   ok = PyArg_ParseTuple(args,"ss",&str1,&str2);
@@ -894,7 +910,7 @@ static PyObject *CmdSetName(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1;
   int ***array = NULL;
@@ -920,7 +936,7 @@ static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args)
 
 static PyObject *CmdDebug(PyObject *self,PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1;
   ok = PyArg_ParseTuple(args,"s",&str1);
@@ -954,6 +970,7 @@ static PyObject *CmdPGlutEvent(PyObject *self, PyObject *args)
   int ok = false;
 #ifdef _PYMOL_PRETEND_GLUT
 #ifndef _PYMOL_NO_GLUT
+  PyMOLGlobals *G = NULL;
   p_glut_event ev;
   ok = PyArg_ParseTuple(args,"iiiiii",&ev.event_code,
                         &ev.x,&ev.y,&ev.input,&ev.state,&ev.mod);
@@ -973,8 +990,12 @@ static PyObject *CmdPGlutEvent(PyObject *self, PyObject *args)
 
 static PyObject *CmdSculptPurge(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
   if(ok) {
     APIEntry(G);
     SculptCachePurge(G);
@@ -985,7 +1006,7 @@ static PyObject *CmdSculptPurge(PyObject *self, PyObject *args)
 
 static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1;
   ok = PyArg_ParseTuple(args,"s",&str1);
@@ -1003,7 +1024,7 @@ static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args)
 
 static PyObject *CmdSculptActivate(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int int1,int2,int3;
   char *str1;
@@ -1022,7 +1043,7 @@ static PyObject *CmdSculptActivate(PyObject *self, PyObject *args)
 
 static PyObject *CmdSculptIterate(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int int1,int2;
   char *str1;
@@ -1042,7 +1063,7 @@ static PyObject *CmdSculptIterate(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetObjectTTT(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   float ttt[16];
   int quiet;
   char *name;
@@ -1068,7 +1089,7 @@ static PyObject *CmdSetObjectTTT(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdTranslateObjectTTT(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   float mov[3];
   char *name;
   int ok=PyArg_ParseTuple(args,"s(fff)",
@@ -1095,7 +1116,7 @@ static PyObject *CmdTranslateObjectTTT(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   PyObject *m;
   float ttt[16];
@@ -1122,7 +1143,7 @@ static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetColor(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   int mode;
   int ok = false;
@@ -1206,7 +1227,7 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetChains(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
 
   char *str1;
   int int1;
@@ -1252,7 +1273,7 @@ static PyObject *CmdGetChains(PyObject *self, PyObject *args)
 
 static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name,*object;
   int append,state;
   int ok = false;
@@ -1271,7 +1292,7 @@ static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
 
 static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   int ok = false;
   char *map;
@@ -1304,7 +1325,7 @@ static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdMapNew(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   float minCorner[3],maxCorner[3];
   float grid[3];
@@ -1341,7 +1362,7 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
 
 static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   float level;
   int state;
@@ -1361,7 +1382,7 @@ static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
 
 static PyObject *CmdMapSet(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name,*operands;
   int target_state, source_state,operator;
   int zoom, quiet;
@@ -1383,7 +1404,7 @@ static PyObject *CmdMapSet(PyObject *self, PyObject *args)
 
 static PyObject *CmdMapTrim(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name,*sele;
   int map_state,sele_state;
   int ok = false;
@@ -1408,7 +1429,7 @@ static PyObject *CmdMapTrim(PyObject *self, PyObject *args)
 
 static PyObject *CmdMapDouble(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   int state;
   int ok = false;
@@ -1427,7 +1448,7 @@ static PyObject *CmdMapDouble(PyObject *self, PyObject *args)
 
 static PyObject *CmdMapHalve(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   int state;
   int ok = false;
@@ -1447,11 +1468,18 @@ static PyObject *CmdMapHalve(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetRenderer(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *vendor,*renderer,*version;
-  APIEntry(G);
-  SceneGetCardInfo(G,&vendor,&renderer,&version);
-  APIExit(G);
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    SceneGetCardInfo(G,&vendor,&renderer,&version);
+    APIExit(G);
+  }
   return Py_BuildValue("(sss)",vendor,renderer,version);
 }
 
@@ -1465,7 +1493,7 @@ static PyObject *CmdGetVersion(PyObject *self, PyObject *args)
 
 static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int state,log,mode;
   float v[3];
@@ -1488,7 +1516,7 @@ static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
 
 static PyObject *CmdMatrixCopy(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *source_name, *target_name;
   int source_mode, target_mode;
   int source_state, target_state, target_undo;
@@ -1520,7 +1548,7 @@ static PyObject *CmdMatrixCopy(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdResetMatrix(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   int mode;
   int state;
@@ -1550,7 +1578,7 @@ static PyObject *CmdResetMatrix(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name,*sele;
   int state,log;
   PyObject *m;
@@ -1588,7 +1616,7 @@ static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
 
 static PyObject *CmdTransformSelection(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sele;
   int state,log;
   int homo;
@@ -1620,7 +1648,7 @@ static PyObject *CmdTransformSelection(PyObject *self, PyObject *args)
 
 static PyObject *CmdLoadColorTable(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int ok = false;
   int quiet;
@@ -1639,7 +1667,7 @@ static PyObject *CmdLoadColorTable(PyObject *self, PyObject *args)
 
 static PyObject *CmdLoadPNG(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int ok = false;
   int quiet;
@@ -1659,7 +1687,7 @@ static PyObject *CmdLoadPNG(PyObject *self, PyObject *args)
 
 static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int ok = false;
   int idx;
@@ -1684,28 +1712,40 @@ static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result;
-  float v[3];
-  APIEntry(G);
-  SceneGetPos(G,v);
-  APIExit(G);
+  float v[3] = {0.0F,0.0F,0.0F};
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    SceneGetPos(G,v);
+    APIExit(G);
+  }
   result=PConvFloatArrayToPyList(v,3);
-  return(result);
+  return(APIAutoNone(result));
 }
 
 static PyObject *CmdGetMoviePlaying(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  PyObject *result;
-  result=PyInt_FromLong(MoviePlaying(G));
-  return(result);
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+    result=PyInt_FromLong(MoviePlaying(G));
+  }
+  return(APIAutoNone(result));
 }
 
 
 static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int state;
@@ -1761,7 +1801,7 @@ static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdAlign(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str2,*str3,*mfile,*oname;
   OrthoLineType s2="",s3="";
   float result = -1.0;
@@ -1819,35 +1859,51 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  APIEnterBlocked(G);
-  result = SettingGetUpdateList(G,NULL);
-  APIExitBlocked(G);
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEnterBlocked(G);
+    result = SettingGetUpdateList(G,NULL);
+    APIExitBlocked(G);
+  }
   return(APIAutoNone(result));
 }
 
 static PyObject *CmdGetView(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   SceneViewType view;
-  APIEntry(G);
-  SceneGetView(G,view);
-  APIExit(G);
-  return(Py_BuildValue("(fffffffffffffffffffffffff)",
-                   view[ 0],view[ 1],view[ 2],view[ 3], /* 4x4 mat */
-                   view[ 4],view[ 5],view[ 6],view[ 7],
-                   view[ 8],view[ 9],view[10],view[11],
-                   view[12],view[13],view[14],view[15],
-                   view[16],view[17],view[18], /* pos */
-                   view[19],view[20],view[21], /* origin */
-                   view[22],view[23], /* clip */
-                   view[24] /* orthoscopic*/
-                       ));
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    SceneGetView(G,view);
+    APIExit(G);
+    return(Py_BuildValue("(fffffffffffffffffffffffff)",
+                         view[ 0],view[ 1],view[ 2],view[ 3], /* 4x4 mat */
+                         view[ 4],view[ 5],view[ 6],view[ 7],
+                         view[ 8],view[ 9],view[10],view[11],
+                         view[12],view[13],view[14],view[15],
+                         view[16],view[17],view[18], /* pos */
+                         view[19],view[20],view[21], /* origin */
+                         view[22],view[23], /* clip */
+                         view[24] /* orthoscopic*/
+                         ));
+  } else {
+    return(APIAutoNone(NULL));
+  }
 }
 static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   SceneViewType view;
   int quiet;
   float animate;
@@ -1875,24 +1931,51 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
 }
 static PyObject *CmdGetState(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  return(APIResultCode(SceneGetState(G)));
+  PyMOLGlobals *G = NULL;
+  int result=0;
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    result = SceneGetState(G); /* shouldn't this be +1? */
+  }
+  return(APIResultCode(result));
 }
 static PyObject *CmdGetEditorScheme(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  return(APIResultCode(EditorGetScheme(G)));
+  PyMOLGlobals *G = NULL;
+  int result=0;
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    result = EditorGetScheme(G);
+  }
+  return(APIResultCode(result));
 }
 
 static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  return(APIResultCode(SceneGetFrame(G)+1));
+  PyMOLGlobals *G = NULL;
+  int result=0;
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    result = SceneGetFrame(G)+1;
+  }
+  return(APIResultCode(result));
 }
 
 static PyObject *CmdSetTitle(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int int1;
   int ok = false;
@@ -1911,7 +1994,7 @@ static PyObject *CmdSetTitle(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetTitle(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int int1;
   int ok = false;
@@ -1933,7 +2016,7 @@ static PyObject *CmdGetTitle(PyObject *self, PyObject *args)
 
 static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   void *result;
   char *str1;
   int int1;
@@ -1956,7 +2039,7 @@ static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdImportCoords(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int int1;
   PyObject *cObj;
@@ -1980,7 +2063,7 @@ static PyObject *CmdImportCoords(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int int1,int2;
   OrthoLineType s1="";
@@ -2009,7 +2092,7 @@ static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str0;
   int state;
   OrthoLineType s0="";
@@ -2031,7 +2114,7 @@ static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetType(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   WordType type = "";
   int ok = false;
@@ -2052,7 +2135,7 @@ static PyObject *CmdGetType(PyObject *self, 	PyObject *args)
 }
 static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int int1,int2;
   char *vla = NULL;
   OrthoLineType s0="";
@@ -2078,7 +2161,7 @@ static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdInterrupt(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int int1;
   int ok = false;
   ok = PyArg_ParseTuple(args,"i",&int1);
@@ -2094,7 +2177,7 @@ static PyObject *CmdInterrupt(PyObject *self, PyObject *args)
 
 static PyObject *CmdInvert(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int int1;
   int ok = false;
   ok = PyArg_ParseTuple(args,"i",&int1);
@@ -2112,7 +2195,7 @@ static PyObject *CmdInvert(PyObject *self, PyObject *args)
 
 static PyObject *CmdTorsion(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   float float1;
   int ok = false;
   ok = PyArg_ParseTuple(args,"f",&float1);
@@ -2130,7 +2213,7 @@ static PyObject *CmdTorsion(PyObject *self, PyObject *args)
 
 static PyObject *CmdUndo(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int int1;
   int ok = false;
   ok = PyArg_ParseTuple(args,"i",&int1);
@@ -2148,7 +2231,7 @@ static PyObject *CmdUndo(PyObject *self, PyObject *args)
 
 static PyObject *CmdMask(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int int1;
   OrthoLineType s1;
@@ -2171,7 +2254,7 @@ static PyObject *CmdMask(PyObject *self, PyObject *args)
 
 static PyObject *CmdProtect(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int int1,int2;
   OrthoLineType s1;
@@ -2196,7 +2279,7 @@ static PyObject *CmdProtect(PyObject *self, PyObject *args)
 
 static PyObject *CmdButton(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int i1,i2;
   int ok = false;
   ok = PyArg_ParseTuple(args,"ii",&i1,&i2);
@@ -2214,7 +2297,7 @@ static PyObject *CmdButton(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdFeedback(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int i1,i2,result = 0;
   int ok = false;
   ok = PyArg_ParseTuple(args,"ii",&i1,&i2);
@@ -2232,7 +2315,7 @@ static PyObject *CmdFeedback(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdSetFeedbackMask(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int i1,i2,i3;
   int ok = false;
   ok = PyArg_ParseTuple(args,"iii",&i1,&i2,&i3);
@@ -2266,7 +2349,7 @@ static PyObject *CmdSetFeedbackMask(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdPop(PyObject *self,  PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int quiet;
   int result = 0;
@@ -2289,8 +2372,13 @@ static PyObject *CmdPop(PyObject *self,  PyObject *args)
 
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  if(G && G->Ready) {
+  PyMOLGlobals *G = NULL;
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok && G->Ready) {
     /* only called by the GLUT thread with unlocked API, blocked interpreter */
     if(flush_count<8) { /* prevent super-deep recursion */
       flush_count++;
@@ -2307,39 +2395,53 @@ static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  /* called by non-GLUT thread with unlocked API, blocked interpreter */
+  PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  if(!G->Terminating) {
-    APIEnterBlocked(G);
-    if(OrthoCommandWaiting(G)
-       ||(flush_count>1))
-      result = PyInt_FromLong(1);
-    else
-      result = PyInt_FromLong(0);
-    APIExitBlocked(G);
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    /* called by non-GLUT thread with unlocked API, blocked interpreter */
+    if(!G->Terminating) {
+      APIEnterBlocked(G);
+      if(OrthoCommandWaiting(G)
+         ||(flush_count>1))
+        result = PyInt_FromLong(1);
+      else
+        result = PyInt_FromLong(0);
+      APIExitBlocked(G);
+    }
   }
   return APIAutoNone(result);
 }
 
 static PyObject *CmdWaitDeferred(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  if(!G->Terminating) {
-    APIEnterBlocked(G);
-    if(OrthoDeferredWaiting(G))
-      result = PyInt_FromLong(1);
-    else
-      result = PyInt_FromLong(0);
-    APIExitBlocked(G);
+  int ok=true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    if(!G->Terminating) {
+      APIEnterBlocked(G);
+      if(OrthoDeferredWaiting(G))
+        result = PyInt_FromLong(1);
+      else
+        result = PyInt_FromLong(0);
+      APIExitBlocked(G);
+    }
   }
   return APIAutoNone(result);
 }
 
 static PyObject *CmdPaste(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *list,*str;
   char *st;
   int l,a;
@@ -2379,61 +2481,89 @@ static PyObject *CmdPaste(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetVRML(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  char *vla = NULL;
-  APIEntry(G);
-  SceneRay(G,0,0,4,NULL,
-           &vla,0.0F,0.0F,false,NULL,false,-1);
-  APIExit(G);
-  if(vla) {
-    result = Py_BuildValue("s",vla);
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
   }
-  VLAFreeP(vla);
+  if(ok) {
+    char *vla = NULL;
+    APIEntry(G);
+    SceneRay(G,0,0,4,NULL,
+             &vla,0.0F,0.0F,false,NULL,false,-1);
+    APIExit(G);
+    if(vla) {
+      result = Py_BuildValue("s",vla);
+    }
+    VLAFreeP(vla);
+  }
   return(APIAutoNone(result));
 }
 
 static PyObject *CmdGetPovRay(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  char *header=NULL,*geom=NULL;
-  APIEntry(G);
-  SceneRay(G,0,0,1,&header,
-           &geom,0.0F,0.0F,false,NULL,false,-1);
-  APIExit(G);
-  if(header&&geom) {
-    result = Py_BuildValue("(ss)",header,geom);
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
   }
-  VLAFreeP(header);
-  VLAFreeP(geom);
+  if(ok) {
+    char *header=NULL,*geom=NULL;
+    APIEntry(G);
+    SceneRay(G,0,0,1,&header,
+             &geom,0.0F,0.0F,false,NULL,false,-1);
+    APIExit(G);
+    if(header&&geom) {
+      result = Py_BuildValue("(ss)",header,geom);
+    }
+    VLAFreeP(header);
+    VLAFreeP(geom);
+  }
   return(APIAutoNone(result));
 }
 
 static PyObject *CmdGetMtlObj(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  char *obj=NULL,*mtl=NULL;
-  APIEntry(G);
-  SceneRay(G,0,0,5,&obj,
-           &mtl,0.0F,0.0F,false,NULL,false,-1);
-  APIExit(G);
-  if(obj&&mtl) {
-    result = Py_BuildValue("(ss)",mtl,obj);
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
   }
-  VLAFreeP(obj);
-  VLAFreeP(mtl);
+  if(ok) {
+    char *obj=NULL,*mtl=NULL;
+    APIEntry(G);
+    SceneRay(G,0,0,5,&obj,
+             &mtl,0.0F,0.0F,false,NULL,false,-1);
+    APIExit(G);
+    if(obj&&mtl) {
+      result = Py_BuildValue("(ss)",mtl,obj);
+    }
+    VLAFreeP(obj);
+    VLAFreeP(mtl);
+  }
   return(APIAutoNone(result));
 }
 
 static PyObject *CmdGetWizard(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  PyObject *result;
-  APIEntry(G);
-  result = WizardGet(G);
-  APIExit(G);
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    result = WizardGet(G);
+    APIExit(G);
+  }
   if(!result)
     result=Py_None;
   return APIIncRef(result);
@@ -2441,11 +2571,18 @@ static PyObject *CmdGetWizard(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetWizardStack(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  PyObject *result;
-  APIEnterBlocked(G);
-  result = WizardGetStack(G);
-  APIExitBlocked(G);
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEnterBlocked(G);
+    result = WizardGetStack(G);
+    APIExitBlocked(G);
+  }
   if(!result)
     result=Py_None;
   return APIIncRef(result);
@@ -2453,7 +2590,7 @@ static PyObject *CmdGetWizardStack(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetWizard(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   
   PyObject *obj;
   int ok = false;
@@ -2478,7 +2615,7 @@ static PyObject *CmdSetWizard(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetWizardStack(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   
   PyObject *obj;
   int ok = false;
@@ -2502,35 +2639,54 @@ static PyObject *CmdSetWizardStack(PyObject *self, PyObject *args)
 
 static PyObject *CmdRefreshWizard(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  APIEntry(G);
-  WizardRefresh(G);
-  OrthoDirty(G);
-  APIExit(G);
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    WizardRefresh(G);
+    OrthoDirty(G);
+    APIExit(G);
+  }
   return APISuccess();  
 }
 
 static PyObject *CmdDirtyWizard(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  
-  APIEntry(G);
-  WizardDirty(G);
-  APIExit(G);
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    WizardDirty(G);
+    APIExit(G);
+  }
   return APISuccess();  
 }
 
 static PyObject *CmdSplash(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int query;
   int result=1;
-  
-  result = PyArg_ParseTuple(args,"i",&query);
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"i",&query);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
   if(!query) {
-    APIEntry(G);
-    OrthoSplash(G);
-    APIExit(G);
+    if(ok) {
+      APIEntry(G);
+      OrthoSplash(G);
+      APIExit(G);
+    }
   } else {
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _IPYMOL
@@ -2547,9 +2703,12 @@ static PyObject *CmdSplash(PyObject *self, PyObject *args)
 
 static PyObject *CmdCls(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = true;
-
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
   if (ok) {
     APIEntry(G);
     OrthoClear(G);
@@ -2560,7 +2719,7 @@ static PyObject *CmdCls(PyObject *self, PyObject *args)
 
 static PyObject *CmdDump(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int ok = false;
   ok = PyArg_ParseTuple(args,"ss",&str1,&str2);
@@ -2578,7 +2737,7 @@ static PyObject *CmdDump(PyObject *self, PyObject *args)
 
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) 
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2,*str3;
   float lvl,fbuf,alt_lvl;
   int dotFlag;
@@ -2742,7 +2901,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args) 
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int multi = false;
   char * slice;
@@ -2846,7 +3005,9 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
 }
 #if 0
 
-static PyObject *CmdRGBFunction(PyObject *self, 	PyObject *args) {
+static PyObject *CmdRGBFunction(PyObject *self, 	PyObject *args) 
+{
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int multi = false;
   char * slice;
@@ -2907,7 +3068,9 @@ static PyObject *CmdRGBFunction(PyObject *self, 	PyObject *args) {
 }
 
 
-static PyObject *CmdSliceHeightmap(PyObject *self, 	PyObject *args) {
+static PyObject *CmdSliceHeightmap(PyObject *self, 	PyObject *args) 
+{
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int multi = false;
   char * slice;
@@ -2966,7 +3129,9 @@ static PyObject *CmdSliceHeightmap(PyObject *self, 	PyObject *args) {
 }
 
 
-static PyObject *CmdSliceSetLock(PyObject *self, 	PyObject *args) {
+static PyObject *CmdSliceSetLock(PyObject *self, 	PyObject *args) 
+{
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int multi = false;
   char * slice;
@@ -3029,7 +3194,7 @@ static PyObject *CmdSliceSetLock(PyObject *self, 	PyObject *args) {
 
 static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) 
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2,*str3;
   float lvl,fbuf;
   int dotFlag;
@@ -3187,7 +3352,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdSymExp(PyObject *self, 	PyObject *args) 
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2,*str3;
   OrthoLineType s1;
   float cutoff;
@@ -3224,7 +3389,7 @@ static PyObject *CmdSymExp(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdOverlap(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int state1,state2;
   float overlap = -1.0;
@@ -3252,7 +3417,7 @@ static PyObject *CmdOverlap(PyObject *self, PyObject *args)
 
 static PyObject *CmdDist(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name,*str1,*str2;
   float cutoff,result=-1.0;
   int labels,quiet;
@@ -3307,7 +3472,7 @@ static PyObject *CmdDist(PyObject *self, PyObject *args)
 
 static PyObject *CmdAngle(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name,*str1,*str2,*str3;
   float result=-999.0;
   int labels,quiet;
@@ -3362,7 +3527,7 @@ static PyObject *CmdAngle(PyObject *self, PyObject *args)
 
 static PyObject *CmdDihedral(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name,*str1,*str2,*str3,*str4;
   float result=-999.0;
   int labels,quiet;
@@ -3426,7 +3591,7 @@ static PyObject *CmdDihedral(PyObject *self, PyObject *args)
 
 static PyObject *CmdBond(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int order,mode;
   OrthoLineType s1,s2;
@@ -3451,7 +3616,7 @@ static PyObject *CmdBond(PyObject *self, PyObject *args)
 
 static PyObject *CmdVdwFit(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int state1,state2,quiet;
   float buffer;
@@ -3477,7 +3642,7 @@ static PyObject *CmdVdwFit(PyObject *self, PyObject *args)
 
 static PyObject *CmdLabel(PyObject *self,   PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   OrthoLineType s1;
   int quiet;
@@ -3500,7 +3665,7 @@ static PyObject *CmdLabel(PyObject *self,   PyObject *args)
 
 static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int i1,quiet;
   OrthoLineType s1;
@@ -3524,7 +3689,7 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 
 static PyObject *CmdAlterList(PyObject *self,   PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int quiet;
@@ -3549,7 +3714,7 @@ static PyObject *CmdAlterList(PyObject *self,   PyObject *args)
 
 static PyObject *CmdSelectList(PyObject *self,   PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*sele_name;
   OrthoLineType s1;
   int quiet;
@@ -3584,7 +3749,7 @@ static PyObject *CmdSelectList(PyObject *self,   PyObject *args)
 
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int i1,i2,i3,quiet;
   OrthoLineType s1;
@@ -3608,7 +3773,7 @@ static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
 
 static PyObject *CmdCopy(PyObject *self,   PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int ok = false;
   int zoom;
@@ -3627,7 +3792,7 @@ static PyObject *CmdCopy(PyObject *self,   PyObject *args)
 
 static PyObject *CmdRecolor(PyObject *self,   PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int ok = false;
@@ -3659,7 +3824,7 @@ static PyObject *CmdRecolor(PyObject *self,   PyObject *args)
 
 static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int ok = false;
@@ -3694,20 +3859,33 @@ static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
 
 static PyObject *CmdResetRate(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  APIEntry(G);
-  ButModeResetRate(G);
-  APIExit(G);
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    ButModeResetRate(G);
+    APIExit(G);
+  }
   return APISuccess();
 }
 
 static PyObject *CmdReady(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  if(G)
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
     return(APIResultCode(G->Ready));
-  else
+  } else {
     return(APIResultCode(0));
+  }
 }
 
 #if 0
@@ -3715,14 +3893,22 @@ extern int _Py_CountReferences(void);
 #endif
 static PyObject *CmdMem(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  MemoryDebugDump();
-  OVHeap_Dump(G->Context->heap,0);
-  SelectorMemoryDump(G);
-  ExecutiveMemoryDump(G);
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    MemoryDebugDump();
+    
+    OVHeap_Dump(G->Context->heap,0);
+    SelectorMemoryDump(G);
+    ExecutiveMemoryDump(G);
 #if 0
   printf(" Py_Debug: %d total references.\n",_Py_CountReferences());
 #endif
+  }
   return APISuccess();
 }
 
@@ -3785,7 +3971,7 @@ static PyObject *CmdRunWXPyMOL(PyObject *self, PyObject *args)
 
 static PyObject *CmdCountStates(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int ok = false;
@@ -3809,18 +3995,25 @@ static PyObject *CmdCountStates(PyObject *self, PyObject *args)
 
 static PyObject *CmdCountFrames(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  int result;
-  APIEntry(G);
-  SceneCountFrames(G);
-  result=SceneGetNFrame(G,NULL);
-  APIExit(G);
+  PyMOLGlobals *G = NULL;
+  int result = 0;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    SceneCountFrames(G);
+    result=SceneGetNFrame(G,NULL);
+    APIExit(G);
+  }
   return(APIResultCode(result));
 }
 
 static PyObject *CmdIdentify(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int mode;
@@ -3879,7 +4072,7 @@ static PyObject *CmdIdentify(PyObject *self, PyObject *args)
 
 static PyObject *CmdIndex(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int mode;
@@ -3932,7 +4125,7 @@ static PyObject *CmdIndex(PyObject *self, PyObject *args)
 
 static PyObject *CmdFindPairs(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int state1,state2;
   float cutoff;
@@ -3991,7 +4184,7 @@ static PyObject *CmdFindPairs(PyObject *self, PyObject *args)
 
 static PyObject *CmdSystem(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int ok = false;
   int async;
@@ -4018,33 +4211,39 @@ static PyObject *CmdSystem(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetFeedback(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  if(G && G->Ready) {
-    PyObject *result = NULL;
-    OrthoLineType buffer;
-    int ok;
-    
-    if(G->Terminating) { /* try to bail */
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef WIN32
-      abort();
-#endif
-/* END PROPRIETARY CODE SEGMENT */
-      exit(0);
-    }
-    APIEnterBlocked(G);
-    ok = OrthoFeedbackOut(G,buffer); 
-    APIExitBlocked(G);
-    if(ok) result = Py_BuildValue("s",buffer);
-    return(APIAutoNone(result));
-  } else {
-    return(APIAutoNone(NULL));
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
   }
+  if(ok) {
+    if(G->Ready) {
+      PyObject *result = NULL;
+      OrthoLineType buffer;
+      int ok;
+      
+      if(G->Terminating) { /* try to bail */
+        /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+#ifdef WIN32
+        abort();
+#endif
+        /* END PROPRIETARY CODE SEGMENT */
+        exit(0);
+      }
+      APIEnterBlocked(G);
+      ok = OrthoFeedbackOut(G,buffer); 
+      APIExitBlocked(G);
+      if(ok) result = Py_BuildValue("s",buffer);
+      return(APIAutoNone(result));
+    }
+  }
+  return(APIAutoNone(NULL));
 }
 
 static PyObject *CmdGetSeqAlignStr(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   char *seq = NULL;
   int state;
@@ -4069,7 +4268,7 @@ static PyObject *CmdGetSeqAlignStr(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetPDB(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   char *pdb = NULL;
   int state;
@@ -4100,7 +4299,7 @@ static PyObject *CmdGetPDB(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetModel(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int state;
   char *ref_object;
@@ -4126,7 +4325,7 @@ static PyObject *CmdGetModel(PyObject *self, PyObject *args)
 
 static PyObject *CmdCreate(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int target,source,discrete,quiet;
   int singletons;
@@ -4154,7 +4353,7 @@ static PyObject *CmdCreate(PyObject *self, PyObject *args)
 
 static PyObject *CmdOrient(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   double m[16];
   char *str1;
   OrthoLineType s1;
@@ -4180,7 +4379,7 @@ static PyObject *CmdOrient(PyObject *self, PyObject *args)
 
 static PyObject *CmdFitPairs(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *list;
   WordType *word = NULL;
   int ln=0;
@@ -4224,7 +4423,7 @@ static PyObject *CmdFitPairs(PyObject *self, PyObject *args)
 
 static PyObject *CmdIntraFit(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int state;
   int mode;
@@ -4256,7 +4455,7 @@ static PyObject *CmdIntraFit(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetAtomCoords(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int state;
   int quiet;
@@ -4284,7 +4483,7 @@ static PyObject *CmdGetAtomCoords(PyObject *self, PyObject *args)
 
 static PyObject *CmdFit(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int mode;
   int quiet;
@@ -4323,7 +4522,7 @@ static PyObject *CmdFit(PyObject *self, PyObject *args)
 
 static PyObject *CmdUpdate(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int int1,int2;
   OrthoLineType s1,s2;
@@ -4348,19 +4547,26 @@ static PyObject *CmdUpdate(PyObject *self, PyObject *args)
 
 static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  PRINTFD(G,FB_CCmd)
-    " CmdDirty: called.\n"
-    ENDFD;
-  APIEntry(G);
-  OrthoDirty(G);
-  APIExit(G);
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    PRINTFD(G,FB_CCmd)
+      " CmdDirty: called.\n"
+      ENDFD;
+    APIEntry(G);
+    OrthoDirty(G);
+    APIExit(G);
+  }
   return APISuccess();
 }
 
 static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int ok = false;
@@ -4396,7 +4602,7 @@ static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetDistance(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   float result;
   int int1;
@@ -4428,7 +4634,7 @@ static PyObject *CmdGetDistance(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetAngle(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2,*str3;
   float result;
   int int1;
@@ -4461,7 +4667,7 @@ static PyObject *CmdGetAngle(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2,*str3,*str4;
   float result;
   int int1;
@@ -4496,7 +4702,7 @@ static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2,*str3,*str4;
   float float1;
   int int1;
@@ -4526,7 +4732,7 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdDo(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int log;
   int ok = false;
@@ -4547,14 +4753,14 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
         }
         if(log) 
           if(WordMatch(G,str1,"quit",true)==0) /* don't log quit */
-            PLog(str1,cPLog_pml);
+            PLog(G,str1,cPLog_pml);
       }
       PParse(G,str1);
     } else if(str1[1]==' ') { 
       /* "_ command" suppresses echoing of command, but it is still logged */
       if(log)
         if(WordMatch(G,str1+2,"quit",true)==0) /* don't log quit */
-          PLog(str1+2,cPLog_pml);
+          PLog(G,str1+2,cPLog_pml);
       PParse(G,str1+2);    
     } else {
       PParse(G,str1);
@@ -4566,7 +4772,7 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdRock(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int int1;
   int result = -1;
   int ok = false;
@@ -4586,7 +4792,7 @@ static PyObject *CmdRock(PyObject *self, PyObject *args)
 
 static PyObject *CmdBusyDraw(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int int1;
   int ok = false;
   ok = PyArg_ParseTuple(args,"i",&int1);
@@ -4604,7 +4810,7 @@ static PyObject *CmdBusyDraw(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetBusy(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int int1;
   int ok = false;
   ok = PyArg_ParseTuple(args,"i",&int1);
@@ -4622,7 +4828,7 @@ static PyObject *CmdSetBusy(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetBusy(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int result;
   int ok = false;
   int int1;
@@ -4641,49 +4847,55 @@ static PyObject *CmdGetBusy(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetProgress(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  if(G && G->Ready && 
-     (!SettingGetGlobal_b(G,cSetting_sculpting))) {
-    
-    /* assumes status is already locked */
-    
-    float result = -1.0F;
-    float value=0.0F, range=1.0F;
-    int ok = false;
-    int int1;
-    int offset;
-    int progress[PYMOL_PROGRESS_SIZE];
-    
-    ok = PyArg_ParseTuple(args,"i",&int1);
-    if(ok) {
-      if(PyMOL_GetBusy(G->PyMOL,false)) {
-        PyMOL_GetProgress(G->PyMOL,progress,false);
-        
-        for(offset=PYMOL_PROGRESS_FAST;offset>=PYMOL_PROGRESS_SLOW;offset-=2) {
-          if(progress[offset+1]) {
-            float old_value = value;
-            float old_range = range;
-            
-            range = (float)(progress[PYMOL_PROGRESS_FAST+1]);
-            value = (float)(progress[PYMOL_PROGRESS_FAST]);
-            
-            value += (1.0F/range)*(old_value/old_range);
-            
-            result = value/range;
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    if(G->Ready && 
+       (!SettingGetGlobal_b(G,cSetting_sculpting))) {
+      
+      /* assumes status is already locked */
+      
+      float result = -1.0F;
+      float value=0.0F, range=1.0F;
+      int ok = false;
+      int int1;
+      int offset;
+      int progress[PYMOL_PROGRESS_SIZE];
+      
+      ok = PyArg_ParseTuple(args,"i",&int1);
+      if(ok) {
+        if(PyMOL_GetBusy(G->PyMOL,false)) {
+          PyMOL_GetProgress(G->PyMOL,progress,false);
+          
+          for(offset=PYMOL_PROGRESS_FAST;offset>=PYMOL_PROGRESS_SLOW;offset-=2) {
+            if(progress[offset+1]) {
+              float old_value = value;
+              float old_range = range;
+              
+              range = (float)(progress[PYMOL_PROGRESS_FAST+1]);
+              value = (float)(progress[PYMOL_PROGRESS_FAST]);
+              
+              value += (1.0F/range)*(old_value/old_range);
+              
+              result = value/range;
+            }
           }
         }
       }
+      return(PyFloat_FromDouble((double)result));
     }
-    return(PyFloat_FromDouble((double)result));
   }
-  else
-    return(PyFloat_FromDouble(-1.0));
+  return(PyFloat_FromDouble(-1.0));
 }
 
 
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args) /* missing? */
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   double moment[16];
   PyObject *result;
   char *str1;
@@ -4710,7 +4922,7 @@ static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args) /* missing? */
 
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result = Py_None;
   char *str1;
   float value;
@@ -4731,7 +4943,7 @@ static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result = Py_None;
   int int1,int2;
   char *str1;
@@ -4751,7 +4963,7 @@ static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetSettingOfType(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result = Py_None;
   int int1,int2,int3;
   char *str1;
@@ -4771,7 +4983,7 @@ static PyObject *CmdGetSettingOfType(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result = Py_None;
   int int1,int2;
   char *str1;
@@ -4791,7 +5003,7 @@ static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdExportDots(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result=NULL;
   PyObject *cObj;
   ExportDotsObj *obj;
@@ -4822,7 +5034,7 @@ static PyObject *CmdExportDots(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdSetFrame(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int mode,frm;
   int ok = false;
   ok = PyArg_ParseTuple(args,"ii",&mode,&frm);
@@ -4840,7 +5052,7 @@ static PyObject *CmdSetFrame(PyObject *self, PyObject *args)
 
 static PyObject *CmdFrame(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int frm;
   int ok = false;
   ok = PyArg_ParseTuple(args,"i",&frm);
@@ -4860,7 +5072,7 @@ static PyObject *CmdFrame(PyObject *self, PyObject *args)
 
 static PyObject *CmdStereo(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int i1;
   int ok = false;
   
@@ -4879,7 +5091,7 @@ static PyObject *CmdStereo(PyObject *self, PyObject *args)
 
 static PyObject *CmdReset(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int cmd;
   int ok = false;
   char *obj;
@@ -4898,7 +5110,7 @@ static PyObject *CmdReset(PyObject *self, PyObject *args)
 
 static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   float m[16];
   int ok = false;
   ok = PyArg_ParseTuple(args,"ffffffffffffffff",
@@ -4920,7 +5132,7 @@ static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   float mn[3],mx[3];
   char *str1;
   int state;
@@ -4955,25 +5167,31 @@ static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   float *f;
-  PyObject *result;
-  
-  APIEntry(G);
-  f=SceneGetMatrix(G);
-  APIExit(G);
-  result = Py_BuildValue("ffffffffffffffff", 
-								 f[0],f[1],f[2],f[3],
-								 f[4],f[5],f[6],f[7],
-								 f[8],f[9],f[10],f[11],
-								 f[12],f[13],f[14],f[15]
-								 );
-  return result;
+  PyObject *result = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    f=SceneGetMatrix(G);
+    APIExit(G);
+    result = Py_BuildValue("ffffffffffffffff", 
+                           f[0],f[1],f[2],f[3],
+                           f[4],f[5],f[6],f[7],
+                           f[8],f[9],f[10],f[11],
+                           f[12],f[13],f[14],f[15]
+                           );
+  }
+  return APIAutoNone(result);
 }
 
 static PyObject *CmdGetObjectMatrix(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
   char *name;
   double *history = NULL;
@@ -5010,7 +5228,7 @@ static PyObject *CmdGetObjectMatrix(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdMDo(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *cmd;
   int frame;
   int append;
@@ -5034,7 +5252,7 @@ static PyObject *CmdMDo(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdMPlay(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int cmd;
   int ok = false;
   ok = PyArg_ParseTuple(args,"i",&cmd);
@@ -5052,7 +5270,7 @@ static PyObject *CmdMPlay(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int cmd;
   int ok = false;
   ok = PyArg_ParseTuple(args,"i",&cmd);
@@ -5070,41 +5288,64 @@ static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdMClear(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  APIEntry(G);
-  MovieClearImages(G);
-  APIExit(G);
+  PyMOLGlobals *G = NULL;
+   int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    MovieClearImages(G);
+    APIExit(G);
+  }
   return APISuccess();
 }
 
 static PyObject *CmdRefresh(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  APIEntry(G);
-  SceneInvalidateCopy(G,false);
-  ExecutiveDrawNow(G); /* TODO STATUS */
-  APIExit(G);
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+
+    APIEntry(G);
+    SceneInvalidateCopy(G,false);
+    ExecutiveDrawNow(G); /* TODO STATUS */
+    APIExit(G);
+  }
   return APISuccess();
 }
 
 static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  APIEntry(G);
-  PyMOL_PushValidContext(G->PyMOL); /* we're trusting the caller on this... */
-  SceneInvalidateCopy(G,false);
-  ExecutiveDrawNow(G); /* TODO STATUS */
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+
+    APIEntry(G);
+    PyMOL_PushValidContext(G->PyMOL); /* we're trusting the caller on this... */
+    SceneInvalidateCopy(G,false);
+    ExecutiveDrawNow(G); /* TODO STATUS */
 #ifndef _PYMOL_NO_MAIN
-  MainRefreshNow();
+    MainRefreshNow();
 #endif
-  PyMOL_PopValidContext(G->PyMOL);
-  APIExit(G);
+    PyMOL_PopValidContext(G->PyMOL);
+    APIExit(G);
+  }
   return APISuccess();
 }
 
 static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int ok = false;
   int quiet;
@@ -5134,7 +5375,7 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int int1,int2,int3;
   int ok = false;
@@ -5154,7 +5395,7 @@ static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int ok = false;
   int start_from;
@@ -5174,7 +5415,7 @@ static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdMView(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int action,first,last, simple,wrap,window,cycles,quiet;
   float power,bias,linear,hand,scene_cut;
@@ -5213,7 +5454,7 @@ static PyObject *CmdMView(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int w,h;
   int ok = false;
   ok = PyArg_ParseTuple(args,"ii",&w,&h);
@@ -5262,7 +5503,7 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdFlag(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int flag;
   int action;
@@ -5286,7 +5527,7 @@ static PyObject *CmdFlag(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdColor(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*color;
   int flags;
   OrthoLineType s1;
@@ -5312,7 +5553,7 @@ static PyObject *CmdColor(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *color;
   float v[3];
   int ok = false;
@@ -5333,7 +5574,7 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdDraw(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int int1,int2;
   int quiet,antialias;
   int ok = false;
@@ -5353,7 +5594,7 @@ static PyObject *CmdDraw(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdRay(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int w,h,mode;
   float angle,shift;
   int ok = false;
@@ -5378,7 +5619,7 @@ static PyObject *CmdRay(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdClip(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sname;
   float dist;
   char *str1;
@@ -5424,7 +5665,7 @@ static PyObject *CmdClip(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdMove(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sname;
   float dist;
   int ok = false;
@@ -5453,7 +5694,7 @@ static PyObject *CmdMove(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdTurn(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sname;
   float angle;
   int ok = false;
@@ -5482,7 +5723,7 @@ static PyObject *CmdTurn(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sname, *value;
   int ok = false;
   ok = PyArg_ParseTuple(args,"ss",&sname,&value);
@@ -5500,7 +5741,7 @@ static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdUnset(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int index;
   int tmpFlag=false;
   char *str3;
@@ -5534,7 +5775,7 @@ static PyObject *CmdUnset(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdUnsetBond(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int index;
   char *str3,*str4;
   int state;
@@ -5563,7 +5804,7 @@ static PyObject *CmdUnsetBond(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdSet(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int index;
   int tmpFlag=false;
   PyObject *value;
@@ -5597,7 +5838,7 @@ static PyObject *CmdSet(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdSetBond(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int index;
   PyObject *value;
   char *str3,*str4;
@@ -5628,7 +5869,7 @@ static PyObject *CmdSetBond(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGet(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   float f;
   char *sname;
   PyObject *result = Py_None;
@@ -5650,7 +5891,7 @@ static PyObject *CmdGet(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdDelete(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sname;
 
   int ok = false;
@@ -5669,7 +5910,7 @@ static PyObject *CmdDelete(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdCartoon(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sname;
   int type;
   OrthoLineType s1;
@@ -5691,7 +5932,7 @@ static PyObject *CmdCartoon(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdShowHide(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sname;
   int rep;
   int state;
@@ -5718,7 +5959,7 @@ static PyObject *CmdShowHide(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdOnOffBySele(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sname;
   int onoff;
   OrthoLineType s1;
@@ -5740,7 +5981,7 @@ static PyObject *CmdOnOffBySele(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   int state;
   int ok = false;
@@ -5759,7 +6000,7 @@ static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdToggle(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sname;
   int rep;
   OrthoLineType s1;
@@ -5785,16 +6026,24 @@ static PyObject *CmdToggle(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  APIEntry(G);
-  G->Terminating=true;
-  PExit(G,EXIT_SUCCESS);
-  APIExit(G);
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+
+    APIEntry(G);
+    G->Terminating=true;
+    PExit(G,EXIT_SUCCESS);
+    APIExit(G);
+  }
   return APISuccess();
 }
 static PyObject *CmdFullScreen(PyObject *self,PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int flag = 0;
   int ok = false;
   ok = PyArg_ParseTuple(args,"i",&flag);
@@ -5812,7 +6061,7 @@ static PyObject *CmdFullScreen(PyObject *self,PyObject *args)
 
 static PyObject *CmdUngroup(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *gname,*names;
   int quiet;
   int ok = false;
@@ -5831,7 +6080,7 @@ static PyObject *CmdUngroup(PyObject *self, PyObject *args)
 
 static PyObject *CmdGroup(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *gname,*names;
   int quiet,action;
   int ok = false;
@@ -5851,7 +6100,7 @@ static PyObject *CmdGroup(PyObject *self, PyObject *args)
 
 static PyObject *CmdSelect(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *sname,*sele;
   int quiet;
   int ok = false;
@@ -5879,7 +6128,7 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
 
 static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *oname;
   CObject *origObj = NULL;
 
@@ -5910,7 +6159,7 @@ static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
 
 static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *oname;
   PyObject *model;
   CObject *origObj = NULL,*obj;
@@ -6061,7 +6310,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 
 static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *oname;
   PyObject *model;
   CObject *origObj = NULL,*obj;
@@ -6112,7 +6361,7 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
 
 static PyObject *CmdLoad(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *fname,*oname;
   CObject *origObj = NULL,*obj;
   OrthoLineType buf;
@@ -6572,7 +6821,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 
 static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *fname,*oname;
   CObject *origObj = NULL;
   OrthoLineType buf;
@@ -6650,7 +6899,7 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
 
 static PyObject *CmdOrigin(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*obj;
   OrthoLineType s1;
   float v[3];
@@ -6677,7 +6926,7 @@ static PyObject *CmdOrigin(PyObject *self, PyObject *args)
 
 static PyObject *CmdSort(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   int ok = false;
   ok = PyArg_ParseTuple(args,"s",&name);
@@ -6696,7 +6945,7 @@ static PyObject *CmdSort(PyObject *self, PyObject *args)
 static PyObject *CmdAssignSS(PyObject *self, PyObject *args)
 /* EXPERIMENTAL */
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int state,quiet;
   char *str1,*str2;
@@ -6720,7 +6969,7 @@ static PyObject *CmdAssignSS(PyObject *self, PyObject *args)
 static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
 /* EXPERIMENTAL */
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *name;
   int ok = false;
   int average;
@@ -6739,7 +6988,7 @@ static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
 
 static PyObject *CmdTest(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   /* regression tests */
 
   int ok = false;
@@ -6767,7 +7016,7 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
 
 static PyObject *CmdCenter(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int state;
@@ -6792,7 +7041,7 @@ static PyObject *CmdCenter(PyObject *self, PyObject *args)
 
 static PyObject *CmdZoom(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   float buffer;
@@ -6819,7 +7068,7 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
 
 static PyObject *CmdIsolevel(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   float level;
   int state;
   char *name;
@@ -6839,7 +7088,7 @@ static PyObject *CmdIsolevel(PyObject *self, PyObject *args)
 
 static PyObject *CmdHAdd(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int quiet;
@@ -6870,7 +7119,7 @@ static PyObject *CmdHAdd(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetObjectColorIndex(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int result = -1;
   int ok = false;
@@ -6889,7 +7138,7 @@ static PyObject *CmdGetObjectColorIndex(PyObject *self, PyObject *args)
 
 static PyObject *CmdRemove(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   OrthoLineType s1;
   int quiet;
@@ -6911,7 +7160,7 @@ static PyObject *CmdRemove(PyObject *self, PyObject *args)
 
 static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int i1;
   int ok = false;
   int quiet;
@@ -6930,7 +7179,7 @@ static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
 
 static PyObject *CmdHFill(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int quiet;
   ok = PyArg_ParseTuple(args,"i",&quiet);
@@ -6948,7 +7197,7 @@ static PyObject *CmdHFill(PyObject *self, PyObject *args)
 
 static PyObject *CmdHFix(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int quiet;
   OrthoLineType s1;
@@ -6970,7 +7219,7 @@ static PyObject *CmdHFix(PyObject *self, PyObject *args)
 
 static PyObject *CmdCycleValence(PyObject *self, PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int ok = false;
   int quiet;
   ok = PyArg_ParseTuple(args,"i",&quiet);
@@ -6988,7 +7237,7 @@ static PyObject *CmdCycleValence(PyObject *self, PyObject *args)
 
 static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int i1,i2;
   char *str1,*str2;
   int ok = false;
@@ -7008,7 +7257,7 @@ static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdSetGeometry(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int i1,i2;
   char *str1;
   OrthoLineType s1;
@@ -7030,7 +7279,7 @@ static PyObject *CmdSetGeometry(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int i1,i2;
   char *str1;
   int ok = false;
@@ -7051,7 +7300,7 @@ static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int mode;
   OrthoLineType s1,s2;
@@ -7077,16 +7326,23 @@ static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdUnpick(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  APIEntry(G);
-  EditorInactivate(G);  /* TODO STATUS */
-  APIExit(G);
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  }
+  if(ok) {
+    APIEntry(G);
+    EditorInactivate(G);  /* TODO STATUS */
+    APIExit(G);
+  }
   return APISuccess();  
 }
 
 static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str0,*str1,*str2,*str3;
   OrthoLineType s0 = "";
   OrthoLineType s1 = "";
@@ -7122,7 +7378,7 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdDrag(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str0;
   OrthoLineType s0 = "";
   int ok = false;
@@ -7146,7 +7402,7 @@ static PyObject *CmdDrag(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdRename(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int int1;
   OrthoLineType s1;
@@ -7169,7 +7425,7 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdOrder(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   char *str1;
   int int1,int2;
 
@@ -7189,7 +7445,7 @@ static PyObject *CmdOrder(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = NULL;
   int int1,x,y,width,height;
   int ok = false;
   ok = PyArg_ParseTuple(args,"iiiii",&int1,&x,&y,&width,&height);
@@ -7502,7 +7758,11 @@ void init_cmd(void)
   Py_InitModule4("_cmd", 
                  Cmd_methods,  
                  "PyMOL _cmd internal API -- PRIVATE: DO NOT USE!",
+#if 0
+                 NULL,
+#else
                  PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL),
+#endif
                  PYTHON_API_VERSION);
 }
 

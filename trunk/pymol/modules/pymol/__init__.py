@@ -218,20 +218,21 @@ if pymol_launch != 3: # if this isn't a dry run
                 _stdin_reader_thread.setDaemon(1)
                 _stdin_reader_thread.start()
             try:
-                cmd.config_mouse(quiet=1)
-                for a in invocation.options.deferred:
-                    if a[0:4]=="_do_":
-                        cmd.do(a[4:])
-                    elif re.search(r"pymol\.py$",a):
-                        pass
-                    elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
-                        cmd.do("_ run %s" % a)
-                    elif cmd.file_ext_re.search(a):
-                        cmd.load(a,quiet=0)
-                    elif re.search(r"\.pml$",a,re.I):
-                        cmd.do("_ @%s" % a)
-                    else:
-                        cmd.load(a,quiet=0)
+                if cmd.ready():
+                    cmd.config_mouse(quiet=1)
+                    for a in invocation.options.deferred:
+                        if a[0:4]=="_do_":
+                            cmd.do(a[4:])
+                        elif re.search(r"pymol\.py$",a):
+                            pass
+                        elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
+                            cmd.do("_ run %s" % a)
+                        elif cmd.file_ext_re.search(a):
+                            cmd.load(a,quiet=0)
+                        elif re.search(r"\.pml$",a,re.I):
+                            cmd.do("_ @%s" % a)
+                        else:
+                            cmd.load(a,quiet=0)
             except CmdException:
                 print "Error: Argument processing aborted due to exception."
             except:
