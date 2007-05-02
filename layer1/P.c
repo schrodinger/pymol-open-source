@@ -1511,6 +1511,10 @@ void PInitEmbedded(PyMOLGlobals *G,int argc,char **argv)
   pymol = PyImport_AddModule("pymol"); /* get it */
   if(!pymol) ErrFatal(G,"PyMOL","can't find module 'pymol'");
 
+  P_globals = PyModule_GetDict(pymol);
+  if(!P_globals) ErrFatal(G,"PyMOL","can't find globals for 'pymol'");
+  PyDict_SetItemString(P_globals,"_global",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
+
 }
 
 void PGetOptions(CPyMOLOptions *rec)
