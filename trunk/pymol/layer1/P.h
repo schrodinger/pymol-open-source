@@ -74,7 +74,7 @@ Z* -------------------------------------------------------------------
 #define PSleepUnlocked(G,a)
 
 #define PFree()
-#define PInit(G)
+#define PInit(G,a)
 #define PInitEmbedded(G,a,b)
 #define PGetOptions(a)
 
@@ -84,7 +84,7 @@ Z* -------------------------------------------------------------------
 
 #else
 
-void PInit(PyMOLGlobals *G);
+void PInit(PyMOLGlobals *G,int catch_output);
 void PInitEmbedded(PyMOLGlobals *G,int argc,char **argv);
 
   struct PyMOLOptionRec;

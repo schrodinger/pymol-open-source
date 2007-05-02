@@ -39,6 +39,7 @@ if __name__!='__main__':
 # 2: new way, consume main thread: (e.g. from "python pymol/__init__.py")
 # 3: dry run -- just get PyMOL environment information
 # 4: monolithic (embedded) PyMOL.  Prime, but don't start.
+# 5: Python embedded launch from within the PyMOL API
 
 if hasattr(__main__,'pymol_launch'):
     pymol_launch = __main__.pymol_launch

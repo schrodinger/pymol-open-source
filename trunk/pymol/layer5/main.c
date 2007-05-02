@@ -1591,7 +1591,7 @@ SetConsoleCtrlHandler(
      
      I->TheWindow = theWindow;
 
-     PInit(G);
+     PInit(G,true);
      
 #ifdef _PYMOL_SHARP3D
   /* SettingSetGlobal_b(G,cSetting_overlay,1);

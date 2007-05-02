@@ -2625,8 +2625,12 @@ void PyMOL_StartWithPython(CPyMOL *I)
 	
 	/* now locate all the C to Python function hooks and objects we need */
 	
-	PInit(I->G);
-	
+#ifdef _MACPYMOL_XCODE	
+	PInit(I->G,true);
+#else
+	PInit(I->G,false);
+#endif
+
 	/* and begin the initialization sequence */
 	
 	I->PythonInitStage = 1;
@@ -2711,6 +2715,11 @@ void PyMOL_Free(CPyMOL *I)
 struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL *I)
 {
   return I->G;
+}
+
+struct _PyMOLGlobals **PyMOL_GetGlobalsHandle(CPyMOL *I)
+{
+  return &(I->G);
 }
 
 void PyMOL_Draw(CPyMOL *I)
@@ -2901,7 +2910,6 @@ int PyMOL_Idle(CPyMOL *I)
         PRunString("launch_gui()");
 #endif
 /* END PROPRIETARY CODE SEGMENT */
-
 		PRunString("adapt_to_hardware()");
 		PRunString("exec_deferred()");
 		PUnblock(G);

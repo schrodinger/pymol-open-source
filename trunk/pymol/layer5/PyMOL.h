@@ -233,6 +233,8 @@ void PyMOL_SetInterrupt(CPyMOL *I, int value);
 /* developer/transient privates */
 
 struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL *I);
+struct _PyMOLGlobals **PyMOL_GetGlobalsHandle(CPyMOL *I);
+
 void PyMOL_RunTest(CPyMOL *I, int group, int test);
 
 /* for Jmol integration */

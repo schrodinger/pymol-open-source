@@ -1576,7 +1576,7 @@ void PRunString(char *str) /* runs a string in the global PyMOL module namespace
   PXDecRef(PyObject_CallFunction(P_exec,"s",str));
 }
 
-void PInit(PyMOLGlobals *G) 
+void PInit(PyMOLGlobals *G,int catch_output) 
 {
   PyObject *pymol,*sys,*pcatch;
   int a;
@@ -1625,7 +1625,9 @@ void PInit(PyMOLGlobals *G)
     SavedThread[a].id=-1;
   }
 
-  PCatchInit();   /* setup standard-output catch routine */
+  if(catch_output) {
+    PCatchInit();   /* setup standard-output catch routine */
+  }
 
 /* assumes that pymol module has been loaded via Python or PyRun_SimpleString */
 
@@ -1638,10 +1640,13 @@ void PInit(PyMOLGlobals *G)
 
   sys = PyDict_GetItemString(P_globals,"sys");
   if(!sys) ErrFatal(G,"PyMOL","can't find 'pymol.sys'");
-  pcatch = PyImport_AddModule("pcatch"); 
-  if(!pcatch) ErrFatal(G,"PyMOL","can't find module 'pcatch'");
-  PyObject_SetAttrString(sys,"stdout",pcatch);
-  PyObject_SetAttrString(sys,"stderr",pcatch);
+
+  if(catch_output) {
+    pcatch = PyImport_AddModule("pcatch"); 
+    if(!pcatch) ErrFatal(G,"PyMOL","can't find module 'pcatch'");
+    PyObject_SetAttrString(sys,"stdout",pcatch);
+    PyObject_SetAttrString(sys,"stderr",pcatch);
+  }
 
   PRunString("import traceback\n");  
   P_traceback = PyDict_GetItemString(P_globals,"traceback");
@@ -1764,6 +1769,7 @@ void PInit(PyMOLGlobals *G)
 
   PyRun_SimpleString(
 "if not os.environ.has_key('PYMOL_SCRIPTS'): os.environ['PYMOL_SCRIPTS']=os.environ['PYMOL_PATH']+'/scripts'");
+
 
 }
 
