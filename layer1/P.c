@@ -1511,10 +1511,6 @@ void PInitEmbedded(PyMOLGlobals *G,int argc,char **argv)
   pymol = PyImport_AddModule("pymol"); /* get it */
   if(!pymol) ErrFatal(G,"PyMOL","can't find module 'pymol'");
 
-  P_globals = PyModule_GetDict(pymol);
-  if(!P_globals) ErrFatal(G,"PyMOL","can't find globals for 'pymol'");
-  PyDict_SetItemString(P_globals,"_global",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
-
 }
 
 void PGetOptions(CPyMOLOptions *rec)
@@ -1645,7 +1641,11 @@ void PInit(PyMOLGlobals *G,int catch_output)
   sys = PyDict_GetItemString(P_globals,"sys");
   if(!sys) ErrFatal(G,"PyMOL","can't find 'pymol.sys'");
 
-  if(catch_output) {
+  if(catch_output) { 
+
+    /* implies global singleton pymol, so set up the global handle */
+    PyDict_SetItemString(P_globals,"_global",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
+
     pcatch = PyImport_AddModule("pcatch"); 
     if(!pcatch) ErrFatal(G,"PyMOL","can't find module 'pcatch'");
     PyObject_SetAttrString(sys,"stdout",pcatch);
