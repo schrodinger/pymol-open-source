@@ -110,7 +110,7 @@ int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
   int result = false;
   if(PLockAPIAsGlut(G,true)) {
     result = MovieCopyFrame(G,frame,width,height,rowbytes,ptr);
-    PUnlockAPIAsGlut(G,);
+    PUnlockAPIAsGlut(G);
   }
   return result;
 }
@@ -145,6 +145,7 @@ int MainCheckRedundantOpen(char *file)
 {
   int result = false;
 #ifndef _PYMOL_NOPY
+  PyMOLGlobals *G = TempPyMOLGlobals;
   PBlock(G);
   result = PTruthCallStr(P_cmd,"check_redundant_open",file);
   PUnblock(G);
