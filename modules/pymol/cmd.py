@@ -916,8 +916,8 @@ DEVELOPMENT TO DO
                         tmp_file.close()
                         
                     r = _cmd.load(str(oname),finfo,int(state)-1,int(ftype),
-                                      int(finish),int(discrete),int(quiet),
-                                      int(multiplex),int(zoom))
+                                  int(finish),int(discrete),int(quiet),
+                                  int(multiplex),int(zoom))
             else:
                 try:
                     x = io.pkl.fromFile(finfo)
