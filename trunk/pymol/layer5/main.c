@@ -57,6 +57,36 @@ int MainSavingUnderWhileIdle(void)
 
 #ifdef _MACPYMOL_XCODE
 
+void MainBlock(void)
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  PBlock(G);
+}
+
+void MainUnblock(void)
+{
+ PyMOLGlobals *G = TempPyMOLGlobals;
+ PUnblock(G);
+}
+
+int MainLockAPIAsGlut(int a)
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  return PLockAPIAsGlut(G,a);
+}
+
+int MainUnlockAPIAsGlut()
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  PUnlockAPIAsGlut(G);
+}
+
+int MainFeedbackOut(char *st)
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  return OrthoFeedbackOut(G,st);
+}
+
 void MainRunCommand(char *str1)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
