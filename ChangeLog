@@ -4,6 +4,8 @@ CHANGE LOG
 
 2007-05-03  Warren L. DeLano <warren@delsci.com>
 
+	* converted parser to instance-based while retaining global use
+	
 	* continued work on PyMOL as a Python object
 	
 2007-05-01  Warren L. DeLano <warren@delsci.com>

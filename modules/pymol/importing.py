@@ -661,7 +661,7 @@ SEE ALSO
 
     def load_embedded(key=None,name=None,state=0,finish=1,discrete=1,quiet=1):
         r = DEFAULT_ERROR
-        list = parser.get_embedded(key)
+        list = cmd._parser.get_embedded(key)
         if list == None:
             print "Error: embedded data '%s' not found."%key
         else:
@@ -669,7 +669,7 @@ SEE ALSO
                 if key != None:
                     name = key
                 else:
-                    name = parser.get_default_key()
+                    name = cmd._parser.get_default_key()
             type = list[0]
             data = list[1]
             try:

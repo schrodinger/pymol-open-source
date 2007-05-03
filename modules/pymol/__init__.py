@@ -221,10 +221,12 @@ if pymol_launch != 3: # if this isn't a dry run
 
         def exec_deferred():
             if invocation.options.read_stdin:
-                import parser
-                _stdin_reader_thread = threading.Thread(target=parser.stdin_reader)
-                _stdin_reader_thread.setDaemon(1)
-                _stdin_reader_thread.start()
+                try:
+                    _stdin_reader_thread = threading.Thread(target=cmd._parser.stdin_reader)
+                    _stdin_reader_thread.setDaemon(1)
+                    _stdin_reader_thread.start()
+                except:
+                    trackback.print_exc()
             try:
                 if cmd.ready():
                     cmd.config_mouse(quiet=1)

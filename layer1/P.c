@@ -84,8 +84,6 @@ PyObject *P_embed = NULL;
 static PyObject *P_povray = NULL;
 static PyObject *P_traceback = NULL;
 static PyObject *P_parser = NULL; /* serious work needed to eliminate global state from parser...*/
-static PyObject *P_complete = NULL; /* must become a property */
-static PyObject *P_parse = NULL; /* must become a property */
 
 static PyObject *P_lock = NULL; /* API locks */
 static PyObject *P_lock_attempt = NULL;
@@ -205,8 +203,8 @@ int PComplete(PyMOLGlobals *G,char *str,int buf_size)
   PyObject *result;
   char *st2;
   PBlockAndUnlockAPI(G);
-  if(P_complete) {
-    result = PyObject_CallFunction(P_complete,"s",str);
+  if(G->P_inst->complete) {
+    result = PyObject_CallFunction(G->P_inst->complete,"s",str);
     if(result) {
       if(PyString_Check(result)) {
         st2 = PyString_AsString(result);
@@ -1147,7 +1145,7 @@ static int IsSecurityRequired()
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 
-void PInitEmbedded(PyMOLGlobals *G,int argc,char **argv)
+void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
 {
   /* This routine is called if we are running with an embedded Python interpreter */
   PyObject *args, *pymol;
@@ -1593,7 +1591,7 @@ void PRunStringInstance(PyMOLGlobals *G,char *str) /* runs a string in the names
 
 void PInit(PyMOLGlobals *G,int global_instance) 
 {
-  PyObject *pymol,*sys,*pcatch;
+  PyObject *sys,*pcatch;
   int a;
 
 #ifdef PYMOL_NEW_THREADS
@@ -1658,8 +1656,6 @@ void PInit(PyMOLGlobals *G,int global_instance)
   }
   
   {
-    PyObject *P_inst_dict = G->P_inst->dict;
-    
     G->P_inst->exec = PyDict_GetItemString(P_pymol_dict,"exec_str");
     if(!G->P_inst->exec) ErrFatal(G,"PyMOL","can't find 'pymol.exec_str()'");
 
@@ -1692,6 +1688,8 @@ void PInit(PyMOLGlobals *G,int global_instance)
       /* cmd module is itself the api for the global PyMOL instance */
       G->P_inst->cmd = P_cmd;
     }
+
+    PyObject_SetAttrString(G->P_inst->cmd,"_pymol",G->P_inst->obj);
 
     P_lock = PyObject_GetAttrString(P_cmd,"lock");
     if(!P_lock) ErrFatal(G,"PyMOL","can't find 'cmd.lock()'");
@@ -1759,11 +1757,19 @@ void PInit(PyMOLGlobals *G,int global_instance)
     P_parser = PyDict_GetItemString(P_pymol_dict,"parser");
     if(!P_parser) ErrFatal(G,"PyMOL","can't find module 'parser'");
 
-    P_parse = PyObject_GetAttrString(P_parser,"parse");
-    if(!P_parse) ErrFatal(G,"PyMOL","can't find 'parser.parse()'");
+    {
+      PyObject *fn_closure = PyObject_GetAttrString(P_parser,"new_parse_closure");
+      G->P_inst->parse = PyObject_CallFunction(fn_closure,"O",G->P_inst->cmd);
+      PXDecRef(fn_closure);
+      if(!G->P_inst->parse) ErrFatal(G,"PyMOL","can't create 'parse' function closure");
+    }
 
-    P_complete = PyObject_GetAttrString(P_parser,"complete");
-    if(!P_complete) ErrFatal(G,"PyMOL","can't find 'parser.complete()'");
+    {
+      PyObject *fn_closure = PyObject_GetAttrString(P_parser,"new_complete_closure");
+      G->P_inst->complete = PyObject_CallFunction(fn_closure,"O",G->P_inst->cmd);
+      PXDecRef(fn_closure);
+      if(!G->P_inst->complete) ErrFatal(G,"PyMOL","can't create 'complete' function closure");
+    }
 
     PRunStringModule(G,"import chempy"); 
     P_chempy = PyDict_GetItemString(P_pymol_dict,"chempy");
@@ -1952,7 +1958,7 @@ void PFlush(PyMOLGlobals *G) {
   while(OrthoCommandOut(G,buffer)) {
     PBlockAndUnlockAPI(G);
     
-    PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
+    PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0));
     err = PyErr_Occurred();
     if(err) {
       PyErr_Print();
@@ -1973,7 +1979,7 @@ void PFlushFast(PyMOLGlobals *G) {
       " PFlushFast-DEBUG: executing '%s' as thread 0x%x\n",buffer,
       PyThread_get_thread_ident()
       ENDFD;
-    PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
+    PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0));
     err = PyErr_Occurred();
     if(err) {
       PyErr_Print();
