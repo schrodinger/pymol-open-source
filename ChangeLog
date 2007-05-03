@@ -2,13 +2,17 @@
 CHANGE LOG
 =========================================================================
 
+2007-05-03  Warren L. DeLano <warren@delsci.com>
+
+	* continued work on PyMOL as a Python object
+	
 2007-05-01  Warren L. DeLano <warren@delsci.com>
 
 	* threads limit increased to 32 
 	
 2007-04-30  Warren L. DeLano <warren@delsci.com>
 
-	* starting to eliminate global Python state
+	* starting to reduce global Python state, enable PyMOL objects
 	
 	* fixed near_to selection operator
 	

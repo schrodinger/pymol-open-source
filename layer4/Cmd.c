@@ -3917,7 +3917,7 @@ static int decoy_input_hook(void)
   return 0;
 }
 
-static PyObject *Cmd_Global(PyObject *self, PyObject *args)
+static PyObject *Cmd_GetCSelf(PyObject *self, PyObject *args)
 {
   return PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL);
 }
@@ -3925,8 +3925,15 @@ static PyObject *Cmd_Global(PyObject *self, PyObject *args)
 static PyObject *Cmd_New(PyObject *self, PyObject *args)
 {
   PyObject *result = NULL;
+  PyObject *pymol = NULL; /* pymol object instance */
   CPyMOL *I = PyMOL_New(); /* default options */
+  int ok = true;
+  ok = PyArg_ParseTuple(args,"O",&pymol);
   if(I) {
+    PyMOLGlobals *G = PyMOL_GetGlobals(I);
+    G->P_inst = Calloc(CP_inst,1);
+    G->P_inst->obj = pymol;
+    G->P_inst->dict = PyObject_GetAttrString(pymol,"__dict__");
     result = PyCObject_FromVoidPtr((void*)PyMOL_GetGlobalsHandle(I),NULL);
   }
   return APIAutoNone(result);
@@ -3942,6 +3949,7 @@ static PyObject *Cmd_Del(PyObject *self, PyObject *args)
     ok = (G!=NULL);
   }
   if(ok) {
+    /* leaking Px */
     PyMOL_Free(G->PyMOL);
   }
   return APIResultOk(ok);
@@ -3950,13 +3958,15 @@ static PyObject *Cmd_Del(PyObject *self, PyObject *args)
 static PyObject *Cmd_Start(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
+  PyMOLGlobals *cmd = NULL;
   int ok = true;
-  ok = PyArg_ParseTuple(args,"O",&self);
+  ok = PyArg_ParseTuple(args,"OO",&self,&cmd);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
   }
   if(ok) {
+    G->P_inst->cmd = cmd;
 #if 1
     PyRun_SimpleString("print 'starting...'");
     PyMOL_StartWithPython(G->PyMOL);
@@ -7590,7 +7600,7 @@ static PyMethodDef Cmd_methods[] = {
   {"_get_c_threading_api",  CmdGetCThreadingAPI,     METH_VARARGS },
   {"_set_scene_names",      CmdSetSceneNames,        METH_VARARGS },
   {"_del",                  Cmd_Del,                 METH_VARARGS },
-  {"_global",               Cmd_Global,              METH_VARARGS },
+  {"_get_c_self",           Cmd_GetCSelf,            METH_VARARGS },
   {"_new",                  Cmd_New,                 METH_VARARGS },
   {"_start",                Cmd_Start,               METH_VARARGS },
   {"_stop",                 Cmd_Stop,                METH_VARARGS },

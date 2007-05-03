@@ -14038,8 +14038,8 @@ int ExecutiveReinitialize(PyMOLGlobals *G,int what,char *pattern)
       ControlRock(G,0);
       
       blocked = PAutoBlock(G);
-      PRunString("cmd.view('*','clear')");
-      PRunString("cmd.scene('*','clear')");
+      PRunStringInstance(G,"cmd.view('*','clear')");
+      PRunStringInstance(G,"cmd.scene('*','clear')");
       WizardSet(G,NULL,false);
       PAutoUnblock(G,blocked);
       

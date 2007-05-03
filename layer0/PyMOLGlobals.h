@@ -55,6 +55,10 @@ typedef struct _CMain CMain;
 typedef struct _CGO CGO;
 typedef struct _CPlugIOManager CPlugIOManager;
 
+#ifndef _PYMOL_NOPY
+typedef struct _CP_inst CP_inst;
+#endif
+
 #ifndef OVLexicon_DEFINED
 typedef struct _OVLexicon OVLexicon;
 #define OVLexicon_DEFINED
@@ -117,6 +121,10 @@ struct _PyMOLGlobals {
   CPyMOL    *PyMOL; /* the instance */
   OVLexicon *Lexicon; /* lexicon for data (e.g. label) strings */
   CPlugIOManager *PlugIOManager;
+
+#ifndef _PYMOL_NOPY
+  CP_inst *P_inst;
+#endif
 
   /* global variables */
 

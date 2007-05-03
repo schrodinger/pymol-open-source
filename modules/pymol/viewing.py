@@ -2096,7 +2096,7 @@ EXAMPLE
         r = DEFAULT_ERROR      
         try:
             lock()
-            r = _cmd.color(self._global,str(color),str(selection),int(flags),int(quiet))
+            r = _cmd.color(self._c_self,str(color),str(selection),int(flags),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise QuietException
