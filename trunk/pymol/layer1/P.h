@@ -76,7 +76,7 @@ Z* -------------------------------------------------------------------
 
 #define PFree()
 #define PInit(G,a)
-#define PInitEmbedded(G,a,b)
+#define PSetupEmbedded(G,a,b)
 #define PGetOptions(a)
 
 #define PAlterAtom(G,a,b,c,d,e,f) 0
@@ -86,7 +86,7 @@ Z* -------------------------------------------------------------------
 #else
 
 void PInit(PyMOLGlobals *G,int global_instance);
-void PInitEmbedded(PyMOLGlobals *G,int argc,char **argv);
+void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv);
 
   struct PyMOLOptionRec;
 
@@ -156,11 +156,14 @@ int PIsGlutThread(void);
 
 PyObject *PGetFontDict(PyMOLGlobals *G,float size,int face,int style);
 
+/* instance-specific Python object, containers, and closures */
 struct _CP_inst {
-  PyObject  *obj;
-  PyObject  *dict; 
-  PyObject  *exec;
-  PyObject  *cmd;
+  PyObject *obj;
+  PyObject *dict; 
+  PyObject *exec;
+  PyObject *cmd; 
+  PyObject *parse; /* parse closure */
+  PyObject *complete; /* complete partial command / TAB action */
 };
 
 

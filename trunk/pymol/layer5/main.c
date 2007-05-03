@@ -1660,7 +1660,7 @@ int main(int argc, char *argv[])
   myArgc=argc;
   myArgv=argv;
 
-  PInitEmbedded(G,argc,argv);
+  PSetupEmbedded(G,argc,argv);
 
 #else
 int was_main(void)

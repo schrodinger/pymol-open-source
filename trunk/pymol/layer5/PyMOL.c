@@ -2684,6 +2684,10 @@ void PyMOL_Stop(CPyMOL *I)
   /*    printf("%d \n", OVLexicon_GetNActive(G->Lexicon));*/
   OVLexicon_Del(G->Lexicon);
   OVContext_Del(G->Context);   
+#ifndef _PYMOL_NOPY
+  FreeP(G->P_inst);
+#endif
+
 }
 
 

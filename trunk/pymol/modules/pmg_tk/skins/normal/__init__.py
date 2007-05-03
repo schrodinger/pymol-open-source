@@ -11,7 +11,6 @@ import tkMessageBox
 
 import Pmw
 
-from pymol import parser
 from pymol.wizard import cleanup
 
 from pmg_tk.Setting import Setting
@@ -36,7 +35,7 @@ class Normal(PMGSkin):
     # responsible for setup and takedown of the normal skin
 
     def complete(self,event):
-        st = parser.complete(self.command.get())
+        st = self.cmd._parser.complete(self.command.get())
         if st:
             self.command.set(st)
             self.entry.icursor(len(st))
