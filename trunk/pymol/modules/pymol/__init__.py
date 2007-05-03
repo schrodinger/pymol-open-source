@@ -371,19 +371,21 @@ if pymol_launch != 3: # if this isn't a dry run
         start_pymol(1)
 
     if pymol_launch==1: # standard launch (absorb main thread)
+        cmd._global = _cmd._global()
         if __name__=='pymol':
-            _global = _cmd._global()
+            _global = cmd._global
         else:
-            pymol._global = _cmd._global()
+            pymol._global = cmd._global
         from pymol import invocation
         invocation.parse_args(pymol_argv)
         start_pymol(0)
 
     elif pymol_launch==2: # threaded launch (create new thread)
+        cmd._global = _cmd._global()
         if __name__=='pymol':
-            _global = _cmd._global()
+            _global = cmd._global
         else:
-            pymol._global = _cmd._global()
+            pymol._global = cmd._global
         global glutThreadObject
         cmd.reaper = threading.currentThread()
         glutThreadObject = threading.Thread(target=thread_launch,
@@ -392,10 +394,11 @@ if pymol_launch != 3: # if this isn't a dry run
         glutThreadObject.start()
 
     elif pymol_launch==4: # monolithic (embedded) launch
+        cmd._global = _cmd._global()
         if __name__=='pymol':
-            _global = _cmd._global()
+            _global = cmd._global
         else:
-            pymol._global = _cmd._global()
+            pymol._global = cmd._global
         invocation.parse_args(pymol_argv)
         prime_pymol()
         # count on host process to actually start PyMOL

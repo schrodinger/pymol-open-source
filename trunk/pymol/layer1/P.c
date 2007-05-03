@@ -1660,6 +1660,11 @@ void PInit(PyMOLGlobals *G,int catch_output)
   P_cmd = PyDict_GetItemString(P_globals,"cmd");
   if(!P_cmd) ErrFatal(G,"PyMOL","can't find 'cmd'");
 
+  if(catch_output) { 
+    /* implies global singleton pymol, so set up the global handle */
+    PyObject_SetAttrString(P_cmd,"_global",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
+  }
+
   P_lock = PyObject_GetAttrString(P_cmd,"lock");
   if(!P_lock) ErrFatal(G,"PyMOL","can't find 'cmd.lock()'");
 
