@@ -829,7 +829,7 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
       break;
     case 22: /* CTRL V -- paste */
       PBlockAndUnlockAPI(G);
-      PRunString("cmd.paste()");
+      PRunStringInstance(G,"cmd.paste()");
       PLockAPIAndUnblock(G);
       break;
 	 default:

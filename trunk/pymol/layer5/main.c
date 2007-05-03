@@ -115,7 +115,7 @@ void MainRunCommand(char *str1)
 PyObject *MainGetStringResult(char *str)
 {
   PyObject *result;
-  result = PyRun_String(str,Py_eval_input,P_globals,P_globals);
+  result = PyRun_String(str,Py_eval_input,P_pymol_dict,P_pymol_dict);
   return(result);
 }
 void MainRunString(char *str)
@@ -123,7 +123,7 @@ void MainRunString(char *str)
   PyMOLGlobals *G = TempPyMOLGlobals;
   PBlock(G);
   PLockStatus();
-  PRunString(str);
+  PRunStringModule(G,str);
   PUnblock(G);
 }
 void MainMovieCopyPrepare(int *width,int *height,int *length)
@@ -472,7 +472,7 @@ void MainRunString(char *str)
   PBlock(G);
   PLockStatus();
   MainPushValidContext(G);
-  PRunString(str);
+  PRunStringModule(G,str);
   MainPopValidContext(G);
   PUnblock(G);
 }
@@ -657,27 +657,27 @@ static void MainDrawLocked(void)
       MainPushValidContext(G);
     
     /* restore working directory if asked to */
-    PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
+    PRunStringModule(G,"if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
     
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_OSX
-    PRunString("if os.getcwd()[-23:]=='.app/Contents/Resources': os.chdir('../../..')");
+    PRunStringModule(G,"if os.getcwd()[-23:]=='.app/Contents/Resources': os.chdir('../../..')");
 #endif
 /* END PROPRIETARY CODE SEGMENT */    
 
-    PRunString("launch_gui()");
+    PRunStringModule(G,"launch_gui()");
     
     /*#ifndef _PYMOL_WX_GLUT
-      PRunString("launch_gui()");
+      PRunString(G,"launch_gui()");
       #endif*/
     
-    PRunString("adapt_to_hardware()");
+    PRunStringInstance(G,"adapt_to_hardware()");
     
     if(G->Option->incentive_product) { /* perform incentive product initialization (if any) */
       PyRun_SimpleString("try:\n   import ipymol\nexcept:\n   pass\n");
     }
     
-    PRunString("exec_deferred()");
+    PRunStringInstance(G,"exec_deferred()");
 #ifdef _PYMOL_SHARP3D
     /*PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");*/
     /*PParse("stereo on");
@@ -1608,8 +1608,6 @@ SetConsoleCtrlHandler(
        p_glutPassiveMotionFunc(   MainPassive );
        p_glutSpecialFunc(         MainSpecial );
        p_glutIdleFunc(            MainBusyIdle );
-       
-
      }
      
      PUnblock(G);

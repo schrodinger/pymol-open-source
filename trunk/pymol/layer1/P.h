@@ -31,7 +31,8 @@ Z* -------------------------------------------------------------------
 
 #ifdef _PYMOL_NOPY
 
-#define PRunString(x)
+#define PRunStringInstance(x)
+#define PRunStringModule(x)
 
 #define PAutoBlock(G) 1
 #define PAutoUnblock(G,a)
@@ -84,7 +85,7 @@ Z* -------------------------------------------------------------------
 
 #else
 
-void PInit(PyMOLGlobals *G,int catch_output);
+void PInit(PyMOLGlobals *G,int global_instance);
 void PInitEmbedded(PyMOLGlobals *G,int argc,char **argv);
 
   struct PyMOLOptionRec;
@@ -138,7 +139,9 @@ void PXDecRef(PyObject *obj);
 void PSGIStereo(PyMOLGlobals *G,int flag);
 void PDefineFloat(PyMOLGlobals *G,char *name,float value);
 
-void PRunString(char *str);
+void PRunStringModule(PyMOLGlobals *G,char *str);
+void PRunStringInstance(PyMOLGlobals *G,char *str);
+
 void PDumpTraceback(PyObject *err);
 void PDumpException(void);
 
@@ -152,10 +155,21 @@ int PPovrayRender(PyMOLGlobals *G,char *header,char *inp,char *file,int width,in
 int PIsGlutThread(void);
 
 PyObject *PGetFontDict(PyMOLGlobals *G,float size,int face,int style);
+
+struct _CP_inst {
+  PyObject  *obj;
+  PyObject  *dict; 
+  PyObject  *exec;
+  PyObject  *cmd;
+};
+
+
 /* PyObject *GetBondsDict(void); */
 
-extern PyObject *P_globals; /* used by main */
+/* all of the following Python objects must be invariant global
+   modules & module dictionaries for the application */
 
+extern PyObject *P_pymol_dict; /* used by main */
 extern PyObject *P_cmd; /* used by Ray and main */
 extern PyObject *P_menu; /* used by Menu */
 extern PyObject *P_xray; /* used by Symmetry */

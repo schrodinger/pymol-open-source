@@ -2906,12 +2906,12 @@ int PyMOL_Idle(CPyMOL *I)
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
     /* restore working directory if asked to */
-        PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
-        PRunString("launch_gui()");
+        PRunStringModule(G,"if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
+        PRunStringModule(G,"launch_gui()");
 #endif
 /* END PROPRIETARY CODE SEGMENT */
-		PRunString("adapt_to_hardware()");
-		PRunString("exec_deferred()");
+		PRunStringInstance(G,"adapt_to_hardware()");
+		PRunStringInstance(G,"exec_deferred()");
 		PUnblock(G);
 		PFlush(G);
 	}
