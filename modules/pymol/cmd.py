@@ -66,9 +66,11 @@
 
 if __name__=='pymol.cmd':
 
+    self = globals()
+
     import traceback
     import sys
-    
+
     try:
         
         import re
@@ -92,7 +94,7 @@ if __name__=='pymol.cmd':
         # symbols for early export
         #######################################################################
 
-        file_ext_re= re.compile(string.join([
+        file_ext_re = re.compile(string.join([
             "\.pdb$|\.pdb1$|\.ent$|\.mol$|\.p5m$|",
             r"\.mmod$|\.mmd$|\.dat$|\.out$|\.mol2$|",
             r"\.xplor$|\.pkl$|\.sdf$|\.pqr|", 

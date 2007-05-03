@@ -26,6 +26,7 @@ if __name__=='pymol.viewing':
     import re
     import cmd
 
+    self = cmd
     
     from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
           _feedback,fb_module,fb_mask, \
@@ -2090,12 +2091,12 @@ EXAMPLE
         '''
         # preprocess selection
         selection = selector.process(selection)
-        color = cmd._interpret_color(str(color))
+        color = self._interpret_color(str(color))
         #
         r = DEFAULT_ERROR      
         try:
             lock()
-            r = _cmd.color(pymol._global,str(color),str(selection),int(flags),int(quiet))
+            r = _cmd.color(self._global,str(color),str(selection),int(flags),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise QuietException
