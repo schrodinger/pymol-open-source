@@ -2,10 +2,10 @@ PyMOL>help def
 
 DESCRIPTION
 
-    You've asked for help on a Python keyword which is available from
-    within the PyMOL command language.  Please consult the official
-    Python documentation at http://www.python.org for detailed
-    information on Python keywords.
+    You have asked for help on a Python keyword which is available
+    from within the PyMOL command language.  Please consult the
+    official Python documentation at http://www.python.org for
+    detailed information on Python keywords.
 
     You may include Python blocks in your PyMOL command scripts, but do
     note that multi-line blocks of Python in PyMOL command files will
