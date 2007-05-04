@@ -1662,7 +1662,7 @@ void PInit(PyMOLGlobals *G,int global_instance)
     if(global_instance) { 
 
       /* implies global singleton pymol, so set up the global handle */
-      PyDict_SetItemString(P_pymol_dict,"_C",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
+      PyDict_SetItemString(P_pymol_dict,"_COb",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
 
       pcatch = PyImport_AddModule("pcatch"); 
       if(!pcatch) ErrFatal(G,"PyMOL","can't find module 'pcatch'");
@@ -1680,7 +1680,7 @@ void PInit(PyMOLGlobals *G,int global_instance)
 
     if(global_instance) { 
       /* implies global singleton pymol, so set up the global handle */
-      PyObject_SetAttrString(P_cmd,"_C",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
+      PyObject_SetAttrString(P_cmd,"_COb",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
 
       /* cmd module is itself the api for the global PyMOL instance */
       G->P_inst->cmd = P_cmd;
