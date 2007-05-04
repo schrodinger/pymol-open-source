@@ -433,7 +433,7 @@ def chainbow(selection='(all)',first_color=7): # NOT THREAD SAFE
             
 color_chains = cbc
 
-def sum_charge(*arg): # NOT THREAD SAFE
+def sum_charge(*arg,**kw): # NOT THREAD SAFE
     result = None
     try:
         obj = "all"
@@ -574,7 +574,7 @@ def ff_copy(src,dst): # NOT THREAD SAFE
     cmd.alter("(%s)"%dst,"text_type=_rcopy.tt[name]")
     del pymol._rcopy
     
-def b2vdw(*arg):
+def b2vdw(*arg,**kw):
     if not len(arg):
         sele = 'all'
     else:

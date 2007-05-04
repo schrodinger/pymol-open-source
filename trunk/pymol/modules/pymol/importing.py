@@ -147,22 +147,22 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
-    def load_brick(*arg):
+    def load_brick(*arg,**kw):
         '''
     Temporary routine for GAMESS-UK project.
     '''
         lst = [loadable.brick]
         lst.extend(list(arg))
-        return apply(load_object,lst)
+        return apply(load_object,lst,kw)
 
-    def load_map(*arg):
+    def load_map(*arg,**kw):
         '''
     Temporary routine for the Phenix project.
     '''
 
         lst = [loadable.map]
         lst.extend(list(arg))
-        return apply(load_object,lst)
+        return apply(load_object,lst,kw)
 
     def space(space="",quiet=0):
         '''

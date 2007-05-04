@@ -5468,7 +5468,7 @@ static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
   char *str1;
   int int1,int2,int3;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"siii",&str1,&int1,&int2,&int3);
+  ok = PyArg_ParseTuple(args,"Osiii",&self,&str1,&int1,&int2,&int3);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);

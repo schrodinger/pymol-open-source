@@ -82,6 +82,9 @@ class Mutagenesis(Wizard):
             self.mode_label[a] = ""+a
         self.mode_label['current']="No Mutant"
 
+        self.selection_mode = cmd.get_setting_legacy("mouse_selection_mode")
+        cmd.set("mouse_selection_mode",1) 
+
         smm = []
         smm.append([ 2, 'Mutant', '' ])
         smm.append([ 1, 'No change', 'cmd.get_wizard().set_mode("current")' ])
@@ -260,6 +263,8 @@ class Mutagenesis(Wizard):
             cmd.refresh_wizard()
         
     def get_panel(self):
+        if int(cmd.get("mouse_selection_mode")!=1):
+            cmd.set("mouse_selection_mode",1)
         if self.mode == 'current':
             label = 'No Mutation'
         else:
@@ -286,6 +291,7 @@ class Mutagenesis(Wizard):
         default_hyd = self.hyd
         default_n_cap = self.n_cap
         default_c_cap = self.c_cap
+        cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode
         self.clear()
         
     def clear(self):

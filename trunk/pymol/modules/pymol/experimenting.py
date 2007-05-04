@@ -186,6 +186,7 @@ DESCRIPTION
         return r
 
     def load_coords(*arg): # UNSUPPORTED
+        _self = cmd
         r = DEFAULT_ERROR
         try:
             lock()

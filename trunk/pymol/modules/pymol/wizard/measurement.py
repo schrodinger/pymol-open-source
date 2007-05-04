@@ -96,6 +96,8 @@ class Measurement(Wizard):
 
         
     def get_panel(self):
+        if int(cmd.get("mouse_selection_mode")!=0):
+            cmd.set("mouse_selection_mode",0)
         return [
             [ 1, 'Measurement',''],
             [ 3, self.mode_name[self.mode],'mode'],
