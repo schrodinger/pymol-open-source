@@ -702,7 +702,7 @@ void MovieDoFrameCommand(PyMOLGlobals *G,int frame)
           if(strcmp(st,SettingGetGlobal_s(G,cSetting_scene_current_name))) {
 #ifndef _PYMOL_NOPY            
             PBlock(G);
-            PXDecRef(PyObject_CallMethod(P_cmd,"scene","sssi",st,"recall","", 0));
+            PXDecRef(PyObject_CallMethod(G->P_inst->cmd,"scene","sssi",st,"recall","", 0));
             PUnblock(G);
 #endif
           }

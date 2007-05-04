@@ -9382,7 +9382,7 @@ static void ObjMolCoordSetUpdateSpawn(PyMOLGlobals *G,CCoordSetUpdateThreadInfo 
       PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
       n++;
     }
-    PXDecRef(PyObject_CallMethod(P_cmd,"_coordset_update_spawn","Oi",info_list,n_thread));
+    PXDecRef(PyObject_CallMethod(G->P_inst->cmd,"_coordset_update_spawn","Oi",info_list,n_thread));
     Py_DECREF(info_list);
     PAutoUnblock(G,blocked);
   }

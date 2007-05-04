@@ -66,8 +66,6 @@
 
 if __name__=='pymol.cmd':
 
-    self = globals()
-
     import traceback
     import sys
 
@@ -1057,37 +1055,35 @@ DEVELOPMENT TO DO
 
         # color alias interpretation
 
-        def _interpret_color(color):
+        def _interpret_color(_self,color):
             # WARNING: internal routine, subject to change
-            _validate_color_sc()
-            new_color = color_sc.interpret(color)
+            _validate_color_sc(_self)
+            new_color = _self.color_sc.interpret(color)
             if new_color:
                 if is_string(new_color):
                     return new_color
                 else:
-                    color_sc.auto_err(color,'color')
+                    _self.color_sc.auto_err(color,'color')
             else:
                 return color
 
-        def _validate_color_sc():
+        def _validate_color_sc(_self):
             # WARNING: internal routine, subject to change
-            global color_sc
-            if color_sc == None: # update color shortcuts if needed
-                lst = get_color_indices()
+            if _self.color_sc == None: # update color shortcuts if needed
+                lst = _self.get_color_indices()
                 lst.extend([('default',-1),('auto',-2),('current',-3),('atomic',-4)])
-                color_sc = Shortcut(map(lambda x:x[0],lst))
+                _self.color_sc = Shortcut(map(lambda x:x[0],lst))
                 color_dict = {}
                 for a in lst: color_dict[a[0]]=a[1]
 
-        def _invalidate_color_sc():
+        def _invalidate_color_sc(_self):
             # WARNING: internal routine, subject to change
-            global color_sc
-            color_sc = None
+            _self.color_sc = None
 
-        def _get_color_sc():
+        def _get_color_sc(_self):
             # WARNING: internal routine, subject to change
-            _validate_color_sc()
-            return color_sc
+            _validate_color_sc(_self)
+            return _self.color_sc
 
         def _get_feedback(): # INTERNAL
             # WARNING: internal routine, subject to change
@@ -1305,10 +1301,10 @@ DESCRIPTION
             r'''
 DESCRIPTION
 
-    You've asked for help on a Python keyword which is available from
-    within the PyMOL command language.  Please consult the official
-    Python documentation at http://www.python.org for detailed
-    information on Python keywords.
+    You have asked for help on a Python keyword which is available
+    from within the PyMOL command language.  Please consult the
+    official Python documentation at http://www.python.org for
+    detailed information on Python keywords.
 
     You may include Python blocks in your PyMOL command scripts, but do
     note that multi-line blocks of Python in PyMOL command files will
@@ -1337,673 +1333,17 @@ SEE ALSO
         # Here is where the PyMOL Command Language and API are built.
         #####################################################################
 
+        # first we need to import a set of symbols into the local namespace
 
-        # first we need to import a set of symbols into this module's local
-        # namespace
+        from api import *
 
-        #--------------------------------------------------------------------
-        from importing import \
-              finish_object,      \
-              load,               \
-              load_brick,         \
-              load_callback,      \
-              load_cgo,           \
-              load_embedded,      \
-              load_map,           \
-              load_model,         \
-              load_object,        \
-              load_traj,          \
-              load_raw,           \
-              loadable,           \
-              read_mmodstr,       \
-              read_molstr,        \
-              read_pdbstr,        \
-              read_xplorstr,      \
-              fetch,              \
-              set_session,        \
-              space              
-
-        #--------------------------------------------------------------------
-        import creating
-        from creating import \
-              copy,               \
-              create,             \
-              extract,            \
-              fragment,           \
-              group,              \
-              gradient,           \
-              isodot,             \
-              isolevel,           \
-              isomesh,            \
-              isosurface,         \
-              map_new,            \
-              pseudoatom,         \
-              slice_new,          \
-              symexp,             \
-              ramp_new,           \
-              ungroup
-
-        #--------------------------------------------------------------------
-        from commanding import \
-              cls,                \
-              delete,             \
-              do,                 \
-              log,                \
-              log_close,          \
-              log_open,           \
-              quit,               \
-              resume,             \
-              splash,             \
-              reinitialize,       \
-              reinit_sc,          \
-              sync
-
-        #--------------------------------------------------------------------
-        import controlling
-        from controlling import \
-              button,             \
-              config_mouse,       \
-              mouse,              \
-              mask,               \
-              order,              \
-              set_key,            \
-              unmask,             \
-              edit_mode
-
-        #--------------------------------------------------------------------
-        from querying import \
-              angle,              \
-              count_atoms,        \
-              count_frames,       \
-              count_states,       \
-              dist,               \
-              dihedral,           \
-              distance,           \
-              export_dots,        \
-              find_pairs,         \
-              get_angle,          \
-              get_area,           \
-              get_chains,         \
-              get_color_index,    \
-              get_color_indices,  \
-              get_object_color_index, \
-              get_object_list,    \
-              get_color_tuple,    \
-              get_atom_coords,    \
-              get_dihedral,       \
-              get_distance,       \
-              get_extent,         \
-              get_model,          \
-              get_movie_locked,   \
-              get_names,          \
-              get_names_of_type,  \
-              get_object_matrix,  \
-              get_mtl_obj,        \
-              get_phipsi,         \
-              get_position,       \
-              get_povray,         \
-              get_raw_alignment,  \
-              get_renderer,       \
-              get_symmetry,       \
-              get_title,          \
-              get_type,           \
-              get_version,        \
-              get_vrml,           \
-              id_atom,            \
-              identify,           \
-              index,              \
-              overlap,            \
-              phi_psi
-
-        #--------------------------------------------------------------------
-        from selecting import \
-              deselect,           \
-              indicate,           \
-              select,             \
-              select_list,        \
-              pop
-
-        #--------------------------------------------------------------------
-        from exporting import \
-              png,                \
-              export_coords,      \
-              get_pdbstr,         \
-              get_session,        \
-              multisave,          \
-              save               
-
-        #--------------------------------------------------------------------
-        import editing
-        from editing import \
-              alter,              \
-              alter_list,         \
-              alter_state,        \
-              attach,             \
-              bond,               \
-              cycle_valence,      \
-              deprotect,          \
-              drag,               \
-              dss,                \
-              edit,               \
-              fix_chemistry,      \
-              flag,               \
-              fuse,               \
-              get_editor_scheme,  \
-              h_add,              \
-              h_fill,             \
-              h_fix,              \
-              invert,             \
-              iterate,            \
-              iterate_state,      \
-              map_set,            \
-              map_set_border,     \
-              map_double,         \
-              map_halve,          \
-              map_trim,           \
-              matrix_copy,        \
-              matrix_reset,       \
-              protect,            \
-              push_undo,          \
-              redo,               \
-              remove,             \
-              remove_picked,      \
-              rename,             \
-              replace,            \
-              rotate,             \
-              sculpt_purge,       \
-              sculpt_deactivate,  \
-              sculpt_activate,    \
-              sculpt_iterate,     \
-              set_dihedral,       \
-              set_name,           \
-              set_geometry,       \
-              set_object_ttt,     \
-              set_symmetry,       \
-              set_title,          \
-              smooth,             \
-              sort,               \
-              split_states,       \
-              torsion,            \
-              transform_object,   \
-              transform_selection,\
-              translate,          \
-              translate_atom,     \
-              unbond,             \
-              undo,               \
-              unpick,             \
-              update,             \
-              vdw_fit 
-
-        matrix_transfer = matrix_copy # legacy
+        # now we create the command langauge
         
-        #--------------------------------------------------------------------
-
-        from externing import \
-              cd,                 \
-              ls,                 \
-              paste,              \
-              pwd,                \
-              system
-
-        #--------------------------------------------------------------------
-        from wizarding import \
-              get_wizard,         \
-              get_wizard_stack,   \
-              refresh_wizard,     \
-              replace_wizard,     \
-              set_wizard,         \
-              set_wizard_stack,   \
-              dirty_wizard,       \
-              wizard
-
-        #--------------------------------------------------------------------
-        from fitting import \
-              align,             \
-              fit,               \
-              rms,               \
-              rms_cur,           \
-              intra_fit,         \
-              intra_rms,         \
-              intra_rms_cur,     \
-              pair_fit          
-
-        #--------------------------------------------------------------------
-        from preset import \
-              simple,            \
-              technical,         \
-              pretty,         \
-              publication
-
-        #--------------------------------------------------------------------
-        import moving
-        from moving import \
-              madd,              \
-              mset,              \
-              mclear,            \
-              mdo,               \
-              mappend,           \
-              mmatrix,           \
-              mdump,             \
-              accept,            \
-              decline,           \
-              mpng,              \
-              mview,             \
-              forward,           \
-              backward,          \
-              rewind,            \
-              middle,            \
-              ending,            \
-              mplay,             \
-              mtoggle,           \
-              mstop,             \
-              mpng,              \
-              mray,              \
-              frame,             \
-              get_movie_playing, \
-              get_state,         \
-              get_frame         
-
-        #--------------------------------------------------------------------
-        import viewing
-        from viewing import \
-              show_as,            \
-              bg_color,           \
-              bg_colour,          \
-              cartoon,            \
-              clip,               \
-              color,              \
-              colour,             \
-              del_colorection,    \
-              dirty,              \
-              disable,            \
-              draw,               \
-              enable,             \
-              full_screen,        \
-              get_colorection,    \
-              get_view,           \
-              get_vis,            \
-              get_scene_dict,     \
-              hide,               \
-              label,              \
-              load_png,           \
-              meter_reset,        \
-              move,               \
-              orient,             \
-              origin,             \
-              center,             \
-              ray,                \
-              rebuild,            \
-              recolor,            \
-              recolour,           \
-              refresh,            \
-              reset,              \
-              rock,               \
-              scene,              \
-              set_color,          \
-              set_colour,         \
-              set_colorection,    \
-              set_colorection_name,\
-              set_vis,            \
-              set_view,           \
-              show,               \
-              spectrum,           \
-              stereo,             \
-              toggle,             \
-              turn,               \
-              view,               \
-              viewport,           \
-              window,             \
-              zoom
-    #        rgbfunction,        \
-    #        slice_lock,         \
-    #        slice_unlock,       \
-    #        slice_heightmap,    \
-
-# dang! Python 2.6 will break PyMOL's "as" method. 
-# Proposal:
-#  1. stick with Python <=2.5 for as long as possible
-#  2. convert API method to cmd.show_as() and leave "as" in the scripting langauge
-#  3. allow "show_as" in the scripting language
-        as = show_as
-    
-        #--------------------------------------------------------------------
-        import setting
-        from setting import \
-              set,                 \
-              set_bond,            \
-              get,                 \
-              unset,               \
-              unset_bond,          \
-              get_setting_boolean, \
-              get_setting_int,     \
-              get_setting_float,   \
-              get_setting_legacy,  \
-              get_setting_tuple,   \
-              get_setting_updates, \
-              get_setting_text
-
-        #--------------------------------------------------------------------
-        import helping
-        from helping import \
-              abort,               \
-              show_help,           \
-              help,                \
-              commands
-
-        #--------------------------------------------------------------------
-        from experimenting import \
-              check,              \
-              dump,               \
-              expfit,             \
-              get_bond_print,     \
-              fast_minimize,      \
-              import_coords,      \
-              load_coords,        \
-              mem,                \
-              minimize,           \
-              spheroid,           \
-              test
-
-        #--------------------------------------------------------------------
-        #from m4x import \
-        #     metaphorics
-
-        #--------------------------------------------------------------------
-        # Modules which contain programs used explicity as "module.xxx"
-
-        import util
-        import movie
-
-        # This is the main dictionary
-
-        keyword = {
-
-            # keyword : [ command, # min_arg, max_arg, separator, mode ]
-
-            # NOTE: min_arg, max_arg, and separator, are hold-overs from the
-            #       original PyMOL parser which will eventually be removed.
-            #       all new commands should use NO_CHECK or STRICT modes
-            #       which make much better use of built-in python features.
-            'abort'         : [ abort             , 0 , 0 , ''  , parsing.ABORT ],
-            'accept'        : [ accept            , 0 , 0 , ''  , parsing.STRICT ],
-            'alias'         : [ alias             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
-            'align'         : [ align             , 0 , 0 , ''  , parsing.STRICT ],
-            'alter'         : [ alter             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
-            'alter_state'   : [ alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
-            'angle'         : [ angle             , 0 , 0 , ''  , parsing.STRICT ],          
-            'as'            : [ show_as           , 0 , 0 , ''  , parsing.STRICT ],          
-            'assert'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
-            'attach'        : [ attach            , 0 , 0 , ''  , parsing.STRICT ],
-            'backward'      : [ backward          , 0 , 0 , ''  , parsing.STRICT ],
-            'bg_color'      : [ bg_color          , 0 , 0 , ''  , parsing.STRICT ],
-            'bond'          : [ bond              , 0 , 0 , ''  , parsing.STRICT ],
-            'break'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
-            'button'        : [ button            , 0 , 0 , ''  , parsing.STRICT ],
-            'cartoon'       : [ cartoon           , 0 , 0 , ''  , parsing.STRICT ],
-            'cd'            : [ cd                , 0 , 0 , ''  , parsing.STRICT ],
-            'center'        : [ center            , 0 , 0 , ''  , parsing.STRICT ],     
-            'check'         : [ check             , 0 , 0 , ''  , parsing.STRICT ],
-            'class'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
-            'clip'          : [ clip              , 0 , 0 , ''  , parsing.STRICT ],
-            'cls'           : [ cls               , 0 , 0 , ''  , parsing.STRICT ],
-            'color'         : [ color             , 0 , 0 , ''  , parsing.STRICT ],
-            'commands'      : [ helping.commands  , 0 , 0 , ''  , parsing.STRICT ],
-            'config_mouse'  : [ config_mouse      , 0 , 0 , ''  , parsing.STRICT ],
-            'continue'      : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'copy'          : [ copy              , 0 , 0 , ''  , parsing.LEGACY ],
-            'count_atoms'   : [ count_atoms       , 0 , 0 , ''  , parsing.STRICT ],
-            'count_frames'  : [ count_frames      , 0 , 0 , ''  , parsing.STRICT ],   
-            'count_states'  : [ count_states      , 0 , 0 , ''  , parsing.STRICT ],
-            'cycle_valence' : [ cycle_valence     , 0 , 0 , ''  , parsing.STRICT ],
-            'create'        : [ create            , 0 , 0 , ''  , parsing.LEGACY ],
-            'decline'       : [ decline           , 0 , 0 , ''  , parsing.STRICT ],      
-            'delete'        : [ delete            , 0 , 0 , ''  , parsing.STRICT ],
-            'def'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
-            'del'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'deprotect'     : [ deprotect         , 0 , 0 , ''  , parsing.STRICT ],
-            'deselect'      : [ deselect          , 0 , 0 , ''  , parsing.STRICT ],
-            'dihedral'      : [ dihedral          , 0 , 0 , ''  , parsing.STRICT ],
-            'dir'           : [ ls                , 0 , 0 , ''  , parsing.STRICT ],
-            'disable'       : [ disable           , 0 , 0 , ''  , parsing.STRICT ],
-            'distance'      : [ distance          , 0 , 0 , ''  , parsing.LEGACY ],
-            'drag'          : [ drag              , 0 , 0 , ''  , parsing.STRICT ],            
-            'draw'          : [ draw              , 0 , 0 , ''  , parsing.STRICT ],
-            'dss'           : [ dss               , 0 , 0 , ''  , parsing.STRICT ],
-            'dump'          : [ dump              , 0 , 0 , ''  , parsing.STRICT ],
-            'dummy'         : [ dummy             , 0 , 0 , ''  , parsing.STRICT ],   
-            'edit'          : [ edit              , 0 , 0 , ''  , parsing.STRICT ],
-            'edit_mode'     : [ edit_mode         , 0 , 0 , ''  , parsing.STRICT ],
-            'elif'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'else'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'embed'         : [ dummy             , 0 , 3 , ',' , parsing.EMBED  ],
-            'enable'        : [ enable            , 0 , 0 , ''  , parsing.STRICT ],
-            'ending'        : [ ending            , 0 , 0 , ''  , parsing.STRICT ],
-            'except'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],      
-            'extract'       : [ extract           , 0 , 0 , ''  , parsing.STRICT ],            
-            'exec'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
-            'export_dots'   : [ export_dots       , 0 , 0 , ''  , parsing.STRICT ],
-            'extend'        : [ extend            , 0 , 0 , ''  , parsing.STRICT ],
-            'fast_minimize' : [ fast_minimize     , 1,  4 , ',' , parsing.SIMPLE ], # TO REMOVE
-            'feedback'      : [ feedback          , 0,  0 , ''  , parsing.STRICT ],
-            'fetch'         : [ fetch             , 0,  0 , ''  , parsing.STRICT ],
-            'fit'           : [ fit               , 0 , 0 , ''  , parsing.STRICT ],
-            'finally'       : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'fix_chemistry' : [ fix_chemistry     , 0 , 0 , ''  , parsing.STRICT ],
-            'flag'          : [ flag              , 0 , 0 , ''  , parsing.LEGACY ],
-            'for'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'fork'          : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ],
-            'forward'       : [ forward           , 0 , 0 , ''  , parsing.STRICT ],
-            'fragment'      : [ fragment          , 0 , 0 , ''  , parsing.STRICT ],
-            'full_screen'   : [ full_screen       , 0 , 0 , ''  , parsing.STRICT ],
-            'fuse'          : [ fuse              , 0 , 0 , ''  , parsing.STRICT ],
-            'frame'         : [ frame             , 0 , 0 , ''  , parsing.STRICT ],
-            'get'           : [ get               , 0 , 0 , ''  , parsing.STRICT ],
-            'get_angle'     : [ get_angle         , 0 , 0 , ''  , parsing.STRICT ],      
-            'get_area'      : [ get_area          , 0 , 0 , ''  , parsing.STRICT ],
-            'get_chains'    : [ get_chains        , 0 , 0 , ''  , parsing.STRICT ],
-            'get_dihedral'  : [ get_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
-            'get_distance'  : [ get_distance      , 0 , 0 , ''  , parsing.STRICT ],
-            'get_extent'    : [ get_extent        , 0 , 0 , ''  , parsing.STRICT ],
-            'get_position'  : [ get_position      , 0 , 0 , ''  , parsing.STRICT ],
-            'get_symmetry'  : [ get_symmetry      , 0 , 0 , ''  , parsing.STRICT ],
-            'get_title'     : [ get_title         , 0 , 0 , ''  , parsing.STRICT ],   
-            'get_type'      : [ get_type          , 0 , 0 , ''  , parsing.STRICT ],
-            'get_version'   : [ get_version       , 0 , 0 , ''  , parsing.STRICT ],            
-            'get_view'      : [ get_view          , 0 , 0 , ''  , parsing.STRICT ],
-            'global'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'gradient'      : [ gradient          , 0 , 0 , ''  , parsing.STRICT ],            
-            'group'         : [ group             , 0 , 0 , ''  , parsing.STRICT ],
-            'h_add'         : [ h_add             , 0 , 0 , ''  , parsing.STRICT ],
-            'h_fill'        : [ h_fill            , 0 , 0 , ''  , parsing.STRICT ],
-            'h_fix'         : [ h_fix             , 0 , 0 , ''  , parsing.STRICT ],            
-            'help'          : [ help              , 0 , 0 , ''  , parsing.STRICT ],
-            'hide'          : [ hide              , 0 , 0 , ''  , parsing.STRICT ],
-            'id_atom'       : [ id_atom           , 0 , 0 , ''  , parsing.STRICT ],
-            'identify'      : [ identify          , 0 , 0 , ''  , parsing.STRICT ],
-            'if'            : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'import'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
-            'index'         : [ index             , 0 , 0 , ''  , parsing.STRICT ],
-            'indicate'      : [ indicate          , 0 , 0 , ''  , parsing.STRICT ],   
-            'intra_fit'     : [ intra_fit         , 0 , 0 , ''  , parsing.STRICT ],
-            'intra_rms'     : [ intra_rms         , 0 , 0 , ''  , parsing.STRICT ],
-            'intra_rms_cur' : [ intra_rms_cur     , 0 , 0 , ''  , parsing.STRICT ],
-            'invert'        : [ invert            , 0 , 0 , ''  , parsing.STRICT ],
-            'isodot'        : [ isodot            , 0 , 0 , ''  , parsing.LEGACY ],
-            'isolevel'      : [ isolevel           , 0 , 0 , '' , parsing.STRICT ],      
-            'isomesh'       : [ isomesh           , 0 , 0 , ''  , parsing.LEGACY ],
-            'isosurface'    : [ isosurface        , 0 , 0 , ''  , parsing.LEGACY ],   
-            'iterate'       : [ iterate           , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
-            'iterate_state' : [ iterate_state     , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
-            'label'         : [ label             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
-            'load'          : [ load              , 0 , 0 , ''  , parsing.STRICT ],
-            'space'         : [ space             , 0 , 0 , ''  , parsing.STRICT ],
-            'load_embedded' : [ load_embedded     , 0 , 0 , ''  , parsing.STRICT ],
-            'load_png'      : [ load_png          , 0 , 0 , ''  , parsing.STRICT ],
-            'load_traj'     : [ load_traj         , 0 , 0 , ''  , parsing.STRICT ],
-            'log'           : [ log               , 0 , 0 , ''  , parsing.STRICT ],
-            'log_close'     : [ log_close         , 0 , 0 , ''  , parsing.STRICT ],
-            'log_open'      : [ log_open          , 0 , 0 , ''  , parsing.STRICT ],
-            'ls'            : [ ls                , 0 , 0 , ''  , parsing.STRICT ],
-            'madd'          : [ madd              , 0 , 0 , ''  , parsing.STRICT ],
-            'mask'          : [ mask              , 0 , 0 , ''  , parsing.STRICT ],
-            'map_set'       : [ map_set           , 0 , 0 , ''  , parsing.STRICT ],
-            'map_set_border': [ map_set_border    , 0 , 0 , ''  , parsing.STRICT ],
-            'map_double'    : [ map_double        , 0 , 0 , ''  , parsing.STRICT ],
-            'map_halve'     : [ map_halve         , 0 , 0 , ''  , parsing.STRICT ],            
-            'map_new'       : [ map_new           , 0 , 0 , ''  , parsing.STRICT ],    
-            'map_trim'      : [ map_trim          , 0 , 0 , ''  , parsing.STRICT ],                  
-            'mappend'       : [ mappend           , 2 , 2 , ':' , parsing.MOVIE  ],
-            'matrix_reset'  : [ matrix_reset      , 0 , 0 , ''  , parsing.STRICT ],         
-            'matrix_copy'   : [ matrix_copy       , 0 , 0 , ''  , parsing.STRICT ],
-            'matrix_transfer': [ matrix_copy       , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
-            'mem'           : [ mem               , 0 , 0 , ''  , parsing.STRICT ],
-            'meter_reset'   : [ meter_reset       , 0 , 0 , ''  , parsing.STRICT ],
-            'move'          : [ move              , 0 , 0 , ''  , parsing.STRICT ],
-            'mset'          : [ mset              , 0 , 0 , ''  , parsing.STRICT ],
-            'mdo'           : [ mdo               , 2 , 2 , ':' , parsing.MOVIE  ],
-            'mdump'         : [ mdump             , 0 , 0 , ''  , parsing.STRICT ],      
-            'mpng'          : [ mpng              , 0 , 0 , ''  , parsing.SECURE ],
-            'mplay'         : [ mplay             , 0 , 0 , ''  , parsing.STRICT ],
-            'mtoggle'       : [ mtoggle           , 0 , 0 , ''  , parsing.STRICT ],         
-            'mray'          : [ mray              , 0 , 0 , ''  , parsing.STRICT ],
-            'mstop'         : [ mstop             , 0 , 0 , ''  , parsing.STRICT ],
-            'mclear'        : [ mclear            , 0 , 0 , ''  , parsing.STRICT ],
-            'middle'        : [ middle            , 0 , 0 , ''  , parsing.STRICT ],
-            'minimize'      : [ minimize          , 0 , 4 , ',' , parsing.SIMPLE ], # TO REMOVE
-            'mmatrix'       : [ mmatrix           , 0 , 0 , ''  , parsing.STRICT ],
-            'mouse'         : [ mouse             , 0 , 0 , ''  , parsing.STRICT ],
-            'multisave'     : [ multisave         , 0 , 0 , ''  , parsing.STRICT ],
-            'mview'         : [ mview             , 0 , 0 , ''  , parsing.STRICT ],
-            'origin'        : [ origin            , 0 , 0 , ''  , parsing.STRICT ],
-            'orient'        : [ orient            , 0 , 0 , ''  , parsing.STRICT ],
-            'overlap'       : [ overlap           , 0 , 0 , ''  , parsing.STRICT ],
-            'pair_fit'      : [ pair_fit          , 2 ,98 , ',' , parsing.SIMPLE ],
-            'pass'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'phi_psi'       : [ phi_psi           , 0 , 0 , ''  , parsing.STRICT ],
-            'pop'           : [ pop               , 0 , 0 , ''  , parsing.STRICT ],
-            'protect'       : [ protect           , 0 , 0 , ''  , parsing.STRICT ],
-            'pseudoatom'    : [ pseudoatom        , 0 , 0 , ''  , parsing.STRICT ],
-            'push_undo'     : [ push_undo         , 0 , 0 , ''  , parsing.STRICT ],   
-            'pwd'           : [ pwd               , 0 , 0 , ''  , parsing.STRICT ],
-            'python'        : [ dummy             , 0 , 2 , ',' , parsing.PYTHON_BLOCK ],
-            'skip'          : [ dummy             , 0 , 1 , ',' , parsing.SKIP ],
-            'raise'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'ramp_new'      : [ ramp_new          , 0 , 0 , ''  , parsing.STRICT ],      
-            'ray'           : [ ray               , 0 , 0 , ''  , parsing.STRICT ],
-            'rebuild'       : [ rebuild           , 0 , 0 , ''  , parsing.STRICT ],
-            'recolor'       : [ recolor           , 0 , 0 , ''  , parsing.STRICT ],   
-            'redo'          : [ redo              , 0 , 0 , ''  , parsing.STRICT ],
-            'reinitialize'  : [ reinitialize      , 0 , 0 , ''  , parsing.STRICT ],      
-            'refresh'       : [ refresh           , 0 , 0 , ''  , parsing.STRICT ],
-            'refresh_wizard': [ refresh_wizard    , 0 , 0 , ''  , parsing.STRICT ],
-            'remove'        : [ remove            , 0 , 0 , ''  , parsing.STRICT ],
-            'remove_picked' : [ remove_picked     , 0 , 0 , ''  , parsing.STRICT ],
-            'rename'        : [ rename            , 0 , 0 , ''  , parsing.STRICT ],
-            'order'         : [ order             , 0 , 0 , ''  , parsing.STRICT ],
-            'replace'       : [ replace           , 0 , 0 , ''  , parsing.STRICT ],
-            'replace_wizard': [ replace_wizard    , 0 , 0 , ''  , parsing.STRICT ],
-            'reset'         : [ reset             , 0 , 0 , ''  , parsing.STRICT ],
-            'resume'        : [ resume            , 0 , 0 , ''  , parsing.STRICT ],
-            'return'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
-            'rewind'        : [ rewind            , 0 , 0 , ''  , parsing.STRICT ],
-    #      'rgbfunction'   : [ rgbfunction       , 0 , 0 , ''  , parsing.LEGACY ],         
-            'rock'          : [ rock              , 0 , 0 , ''  , parsing.STRICT ],
-            'rotate'        : [ rotate            , 0 , 0 , ''  , parsing.STRICT ],
-            'run'           : [ helping.run       , 1 , 2 , ',' , parsing.RUN    ], # insecure
-            'rms'           : [ rms               , 0 , 0 , ''  , parsing.STRICT ],
-            'rms_cur'       : [ rms_cur           , 0 , 0 , ''  , parsing.STRICT ],
-            'save'          : [ save              , 0 , 0 , ''  , parsing.SECURE ],
-            'scene'         : [ scene             , 0 , 0 , ''  , parsing.STRICT ],
-            'sculpt_purge'  : [ sculpt_purge      , 0 , 0 , ''  , parsing.STRICT ],   
-            'sculpt_deactivate': [ sculpt_deactivate,0, 0 , ''  , parsing.STRICT ],
-            'sculpt_activate': [ sculpt_activate  , 0 , 0 , ''  , parsing.STRICT ],
-            'sculpt_iterate': [ sculpt_iterate    , 0 , 0 , ''  , parsing.STRICT ],
-            'spectrum'      : [ spectrum          , 0 , 0 , ''  , parsing.STRICT ],
-            'select'        : [ select            , 0 , 0 , ''  , parsing.LEGACY ],
-            'set'           : [ set               , 0 , 0 , ''  , parsing.LEGACY ],
-            'set_bond'      : [ set_bond          , 0 , 0 , ''  , parsing.STRICT ],
-            'set_color'     : [ set_color         , 0 , 0 , ''  , parsing.LEGACY ],
-            'set_dihedral'  : [ set_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
-            'set_name'      : [ set_name          , 0 , 0 , ''  , parsing.STRICT ],
-            'set_geometry'  : [ set_geometry      , 0 , 0 , ''  , parsing.STRICT ],
-            'set_symmetry'  : [ set_symmetry      , 0 , 0 , ''  , parsing.STRICT ],         
-            'set_title'     : [ set_title         , 0 , 0 , ''  , parsing.STRICT ],   
-            'set_key'       : [ set_key           , 0 , 0 , ''  , parsing.STRICT ], # API only
-            'set_view'      : [ set_view          , 0 , 0 , ''  , parsing.STRICT ],   
-            'show'          : [ show              , 0 , 0 , ''  , parsing.STRICT ],
-            'slice_new'     : [ slice_new         , 0 , 0 , ''  , parsing.STRICT ],
-    #      'slice_lock'    : [ slice_lock        , 0 , 0 , ''  , parsing.LEGACY ],
-    #      'slice_unlock'  : [ slice_unlock      , 0 , 0 , ''  , parsing.LEGACY ],
-            'smooth'        : [ smooth            , 0 , 0 , ''  , parsing.STRICT ],
-            'sort'          : [ sort              , 0 , 0 , ''  , parsing.STRICT ],
-            'spawn'         : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ], # insecure
-            'spheroid'      : [ spheroid          , 0 , 0 , ''  , parsing.STRICT ],
-            'splash'        : [ splash            , 0 , 0 , ''  , parsing.STRICT ],
-            'split_states'  : [ split_states      , 0 , 0 , ''  , parsing.STRICT ],
-            '_special'      : [ _special          , 0 , 0 , ''  , parsing.STRICT ],
-            'stereo'        : [ stereo            , 0 , 0 , ''  , parsing.STRICT ],
-            'symexp'        : [ symexp            , 0 , 0 , ''  , parsing.LEGACY ],
-            'system'        : [ system            , 0 , 0 , ''  , parsing.LITERAL ],
-            'test'          : [ test              , 0 , 0 , ''  , parsing.STRICT ],
-            'toggle'        : [ toggle            , 0 , 0 , ''  , parsing.STRICT ],      
-            'torsion'       : [ torsion           , 0 , 0 , ''  , parsing.STRICT ], # vs toggle_object
-            'translate'     : [ translate         , 0 , 0 , ''  , parsing.STRICT ],
-            'try'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
-            'turn'          : [ turn              , 0 , 0 , ''  , parsing.STRICT ],
-            'quit'          : [ quit              , 0 , 0 , ''  , parsing.STRICT ],
-            '_quit'         : [ _quit             , 0 , 0 , ''  , parsing.STRICT ],
-            'png'           : [ png               , 0 , 0 , ''  , parsing.SECURE ],
-            'unbond'        : [ unbond            , 0 , 0 , ''  , parsing.STRICT ],
-            'unpick'        : [ unpick            , 0 , 0 , ''  , parsing.STRICT ],
-            'undo'          : [ undo              , 0 , 0 , ''  , parsing.STRICT ],
-            'ungroup'       : [ ungroup           , 0 , 0 , ''  , parsing.STRICT ],
-            'unmask'        : [ unmask            , 0 , 0 , ''  , parsing.STRICT ],
-            'unprotect'     : [ deprotect         , 0 , 0 , ''  , parsing.STRICT ],
-            'unset'         : [ unset             , 0 , 0 , ''  , parsing.STRICT ],
-            'unset_bond'    : [ unset_bond        , 0 , 0 , ''  , parsing.STRICT ],               
-            'update'        : [ update            , 0 , 0 , ''  , parsing.STRICT ],
-            'vdw_fit'       : [ vdw_fit           , 0 , 0 , ''  , parsing.STRICT ],   
-            'view'          : [ view              , 0 , 0 , ''  , parsing.STRICT ],   
-            'viewport'      : [ viewport          , 0 , 0 , ''  , parsing.STRICT ],
-            'window'        : [ window            , 0 , 0 , ''  , parsing.STRICT ],         
-            'while'         : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
-            'wizard'        : [ wizard            , 0 , 0 , ''  , parsing.STRICT ],
-            'zoom'          : [ zoom              , 0 , 0 , ''  , parsing.STRICT ],
-        # utility programs
-            'util.cbag'     : [ util.cbag         , 0 , 0 , ''  , parsing.STRICT ],
-            'util.cbac'     : [ util.cbac         , 0 , 0 , ''  , parsing.STRICT ],
-            'util.cbay'     : [ util.cbay         , 0 , 0 , ''  , parsing.STRICT ],
-            'util.cbas'     : [ util.cbas         , 0 , 0 , ''  , parsing.STRICT ],
-            'util.cbap'     : [ util.cbap         , 0 , 0 , ''  , parsing.STRICT ],
-            'util.cbak'     : [ util.cbak         , 0 , 0 , ''  , parsing.STRICT ],
-            'util.cbaw'     : [ util.cbaw         , 0 , 0 , ''  , parsing.STRICT ],
-            'util.cbab'     : [ util.cbab         , 0 , 0 , ''  , parsing.STRICT ],
-            'util.cbao'     : [ util.cbao         , 0 , 0 , ''  , parsing.STRICT ],
-            'util.cbam'     : [ util.cbam         , 0 , 0 , ''  , parsing.STRICT ],
-            'util.cbc'      : [ util.cbc          , 0 , 0 , ''  , parsing.STRICT ],
-            'util.chainbow' : [ util.chainbow     , 0 , 0 , ''  , parsing.STRICT ],
-            'util.colors'   : [ util.colors       , 0 , 0 , ''  , parsing.STRICT ],
-            'util.mrock'    : [ util.mrock        , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
-            'util.mroll'    : [ util.mroll        , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
-            'util.ss'       : [ util.ss           , 0 , 0 , ''  , parsing.STRICT ],# secondary structure
-            'util.rainbow'  : [ util.rainbow      , 0 , 0 , ''  , parsing.STRICT ],
-        # movie programs
-            'movie.rock'    : [ movie.rock        , 0 , 0 , ''  , parsing.STRICT ],
-            'movie.roll'    : [ movie.roll        , 0 , 0 , ''  , parsing.STRICT ],
-            'movie.load'    : [ movie.load        , 0 , 0 , ''  , parsing.STRICT ],
-            'movie.zoom'    : [ movie.zoom        , 0 , 0 , ''  , parsing.STRICT ],
-            'movie.screw'   : [ movie.screw       , 0 , 0 , ''  , parsing.STRICT ],
-            'movie.sweep'   : [ movie.sweep       , 0 , 0 , ''  , parsing.STRICT ],
-            'movie.pause'   : [ movie.pause       , 0 , 0 , ''  , parsing.STRICT ],               
-            'movie.nutate'  : [ movie.nutate      , 0 , 0 , ''  , parsing.STRICT ],
-            'movie.tdroll'  : [ movie.tdroll      , 0 , 0 , ''  , parsing.STRICT ],
-        # activate metaphorics extensions
-        #   'metaphorics'   : [ metaphorics       , 0 , 0 , ''  , parsing.STRICT ],
-            }
-
+        import keywords
+        keyword = keywords.get_command_keywords()
         kw_list = keyword.keys()
 
-        # remove legacy commands from the shortcut 
+        # remove legacy commands from the shortcut list
         
         kw_list.remove('matrix_transfer')
         kw_list.remove('util.mroll')
@@ -2015,173 +1355,18 @@ SEE ALSO
 
         keyword['show_as'] = keyword['as']
         
-        # Aliases for Mother England (NOTE: not hashed)
+        # Aliases for Mother England (not hashed)
 
         keyword['colour'] = keyword['color']
         keyword['set_colour'] = keyword['set_color']
         keyword['recolour'] = keyword['recolor']
         keyword['bg_colour'] = keyword['bg_color']
     
-        # informational, or API-only functions which don't exist in the
+        # informational or API-only functions which don't exist in the
         # PyMOL command language namespace
 
-        help_only = {  
-            'api'                   : [ helping.api ],
-            'editing'               : [ helping.editing ],  
-            'edit_keys'             : [ helping.edit_keys ],
-            'examples'              : [ helping.examples ],
-            'faster'                : [ helping.faster ],
-            'get_area'              : [ get_area ],
-            'get_movie_playing'     : [ get_movie_playing ],
-            'get_model'             : [ get_model ],
-            'get_mtl_obj'           : [ get_mtl_obj ],
-            'get_names'             : [ get_names ],
-            'get_object_list'       : [ get_object_list ],
-            'get_object_matrix'     : [ get_object_matrix ],
-            'get_povray'            : [ get_povray  ],
-            'get_pdbstr'            : [ get_pdbstr ],
-            'get_symmetry'          : [ get_symmetry ],
-            'get_title'             : [ get_title  ],
-            'get_type'              : [ get_type   ],
-            'get_version'           : [ get_version  ],            
-            'keyboard'              : [ helping.keyboard   ],
-            'launching'             : [ helping.launching  ],
-            'load_model'            : [ load_model  ],
-            'mouse'                 : [ helping.mouse  ],
-            'movies'                : [ helping.movies  ],
-            'python_help'           : [ python_help   ],        
-            'povray'                : [ helping.povray  ],
-            'read_molstr'           : [ read_molstr ],
-            'read_pdbstr'           : [ read_pdbstr ],      
-            'release'               : [ helping.release ],   
-            'selections'            : [ helping.selections ],
-            'sync'                  : [ sync ],
-            'transparency'          : [ helping.transparency ],
-            '@'                     : [ helping.at_sign ],  
-        }
-
+        help_only = keywords.get_help_only_keywords()
         help_sc = Shortcut(keyword.keys()+help_only.keys())
-
-
-        special = {
-            1        : [ 'F1'        , None                   , () , {} ],
-            2        : [ 'F2'        , None                   , () , {} ],
-            3        : [ 'F3'        , None                   , () , {} ],
-            4        : [ 'F4'        , None                   , () , {} ],
-            5        : [ 'F5'        , None                   , () , {} ],
-            6        : [ 'F6'        , None                   , () , {} ],
-            7        : [ 'F7'        , None                   , () , {} ],
-            8        : [ 'F8'        , None                   , () , {} ],
-            9        : [ 'F9'        , None                   , () , {} ],
-            10       : [ 'F10'       , None                   , () , {} ],
-            11       : [ 'F11'       , None                   , () , {} ],
-            12       : [ 'F12'       , None                   , () , {} ],
-            100      : [ 'left'      , backward               , () , {} ],
-            101      : [ 'up'        , None                   , () , {} ],
-            102      : [ 'right'     , forward                , () , {} ],
-            103      : [ 'down'      , None                   , () , {} ],
-            104      : [ 'pgup'      , scene                  , ('','previous') , {} ],
-            105      : [ 'pgdn'      , scene                  , ('','next') , {} ],
-            106      : [ 'home'      , zoom                   , () ,  {'animate':-1} ],
-            107      : [ 'end'       , mtoggle                , () , {} ],
-            108      : [ 'insert'    , rock                   , () , {} ]   
-        }
-
-        shft_special = {
-            1        : [ 'F1'        , None                   , () , {} ],
-            2        : [ 'F2'        , None                   , () , {} ],
-            3        : [ 'F3'        , None                   , () , {} ],
-            4        : [ 'F4'        , None                   , () , {} ],
-            5        : [ 'F5'        , None                   , () , {} ],
-            6        : [ 'F6'        , None                   , () , {} ],
-            7        : [ 'F7'        , None                   , () , {} ],
-            8        : [ 'F8'        , None                   , () , {} ],
-            9        : [ 'F9'        , None                   , () , {} ],
-            10       : [ 'F10'       , None                   , () , {} ],
-            11       : [ 'F11'       , None                   , () , {} ],
-            12       : [ 'F12'       , None                   , () , {} ],
-            100      : [ 'left'      , backward               , () , {} ],
-            101      : [ 'up'        , None                   , () , {} ],
-            102      : [ 'right'     , forward                , () , {} ],
-            103      : [ 'down'      , None                   , () , {} ],
-            104      : [ 'pgup'      , scene                  , ('','previous') , {} ],
-            105      : [ 'pgdn'      , scene                  , ('','next') , {} ],
-            106      : [ 'home'      , rewind                 , () ,  {'animate':-1} ],
-            107      : [ 'end'       , ending                 , () , {} ],
-            108      : [ 'insert'    , rock                   , () , {} ]   
-        }
-
-        alt_special = { # NOTE: some OSes/Windowing systems intercept ALT-Fn keys.
-            1        : [ 'F1'        , None                   , () , {} ],
-            2        : [ 'F2'        , None                   , () , {} ],
-            3        : [ 'F3'        , None                   , () , {} ],
-            4        : [ 'F4'        , None                   , () , {} ],
-            5        : [ 'F5'        , None                   , () , {} ],
-            6        : [ 'F6'        , None                   , () , {} ],
-            7        : [ 'F7'        , None                   , () , {} ],
-            8        : [ 'F8'        , None                   , () , {} ],
-            9        : [ 'F9'        , None                   , () , {} ],
-            10       : [ 'F10'       , None                   , () , {} ],
-            11       : [ 'F11'       , None                   , () , {} ],
-            12       : [ 'F12'       , None                   , () , {} ],
-            100      : [ 'left'      , backward               , () , {} ],
-            101      : [ 'up'        , None                   , () , {} ],
-            102      : [ 'right'     , forward                , () , {} ],
-            103      : [ 'down'      , None                   , () , {} ],
-            104      : [ 'pgup'      , rewind                 , () , {} ],
-            105      : [ 'pgdn'      , ending                 , () , {} ],
-            106      : [ 'home'      , zoom                   , () ,  {'animate':-1} ],
-            107      : [ 'end'       , ending                 , () , {} ],
-            108      : [ 'insert'    , rock                   , () , {} ]   
-        }
-
-        ctrl_special = { # NOTE: some OSes/Windowing systems intercept CTRL-Fn keys.
-            1        : [ 'F1'        , scene  , ('F1','store') , {} ],
-            2        : [ 'F2'        , scene,('F2','store')    , {} ],
-            3        : [ 'F3'        , scene,('F3','store')    , {} ],
-            4        : [ 'F4'        , scene,('F4','store')    , {} ],
-            5        : [ 'F5'        , scene,('F5','store')    , {} ],
-            6        : [ 'F6'        , scene,('F6','store')    , {} ],
-            7        : [ 'F7'        , scene,('F7','store')    , {} ],
-            8        : [ 'F8'        , scene,('F8','store')    , {} ],
-            9        : [ 'F9'        , scene,('F9','store')    , {} ],
-            10       : [ 'F10'       , scene,('F10','store')   , {} ],
-            11       : [ 'F11'       , scene,('F11','store')   , {} ],
-            12       : [ 'F12'       , scene,('F12','store')   , {} ],
-            100      : [ 'left'      , backward               , () , {} ],
-            101      : [ 'up'        , None                   , () , {} ],
-            102      : [ 'right'     , forward                , () , {} ],
-            103      : [ 'down'      , None                   , () , {} ],
-            104      : [ 'pgup'      , scene                  , ('','insert_before') , {} ],
-            105      : [ 'pgdn'      , scene                  , ('','insert_after') , {} ],
-            106      : [ 'home'      , zoom                   , () , {'animate':-1} ],
-            107      : [ 'end'       , scene                  , ('new','store') , {} ],
-            108      : [ 'insert'    , scene                  , ('auto','store') , {} ]   
-        }
-
-        ctsh_special = { # NOTE: some OSes/Windowing systems intercept CTRL-Fn keys.
-            1        : [ 'F1'        , scene,('SHFT-F1','store') , {} ],
-            2        : [ 'F2'        , scene,('SHFT-F2','store')    , {} ],
-            3        : [ 'F3'        , scene,('SHFT-F3','store')    , {} ],
-            4        : [ 'F4'        , scene,('SHFT-F4','store')    , {} ],
-            5        : [ 'F5'        , scene,('SHFT-F5','store')    , {} ],
-            6        : [ 'F6'        , scene,('SHFT-F6','store')    , {} ],
-            7        : [ 'F7'        , scene,('SHFT-F7','store')    , {} ],
-            8        : [ 'F8'        , scene,('SHFT-F8','store')    , {} ],
-            9        : [ 'F9'        , scene,('SHFT-F9','store')    , {} ],
-            10       : [ 'F10'       , scene,('SHFT-F10','store')   , {} ],
-            11       : [ 'F11'       , scene,('SHFT-F11','store')   , {} ],
-            12       : [ 'F12'       , scene,('SHFT-F12','store')   , {} ],
-            100      : [ 'left'      , backward               , () , {} ],
-            101      : [ 'up'        , None                   , () , {} ],
-            102      : [ 'right'     , forward                , () , {} ],
-            103      : [ 'down'      , None                   , () , {} ],
-            104      : [ 'pgup'      , scene                  , ('','insert_before') , {} ],
-            105      : [ 'pgdn'      , ending                 , ('','insert_after') , {} ],
-            106      : [ 'home'      , zoom                 , () ,  {'animate':-1} ],
-            107      : [ 'end'       , mtoggle                , () , {} ],
-            108      : [ 'insert'    , rock                   , () , {} ]   
-        }
 
         def auto_measure():
             lst = get_names("selections")
@@ -2195,75 +1380,20 @@ SEE ALSO
                     else:
                         distance()
             unpick()   
-            
 
-        ctrl = {
-            'A' : [ redo                   , () , {}],
-            'B' : [ replace                , ('Br',1,1), {} ],
-            'C' : [ replace                , ('C',4,4), {} ],
-            'D' : [ remove_picked          , () , {'quiet':0} ],
-            'E' : [ invert                 , () , {'quiet':0} ],      
-            'F' : [ replace                , ('F',1,1), {} ],   
-            'G' : [ replace                , ('H',1,1), {} ],
-            'I' : [ replace                , ('I',1,1), {} ],
-            'J' : [ alter                  , ('pk1','formal_charge=-1.0'), {} ],
-            'K' : [ alter                  , ('pk1','formal_charge =1.0'), {} ],
-            'L' : [ replace                , ('Cl',1,1) , {}],
-            'N' : [ replace                , ('N',4,3) , {}],
-            'O' : [ replace                , ('O',4,2) , {}],   
-            'P' : [ replace                , ('P',4,1) , {}],
-            'Q' : [ None                   , () , {}],   
-            'R' : [ h_fill                 , () , {} ],   
-            'S' : [ replace                , ('S',4,2) , {}],
-            'T' : [ lambda a,b,c=bond,u=unpick: (c(a,b),u()) , ('pk1','pk2') , {} ],   
-            'U' : [ alter                  , ('pk1','formal_charge =0.0') , {}],
-            'W' : [ cycle_valence          , () , {}],
-#         'X' : [ lambda a,b,c,d=dist,u=unpick:(d(a,b,c),u()), (None,'pk1','pk2') , {} ],
-            'X' : [ auto_measure           , () , {} ],   
-            'Y' : [ attach                 , ('H',1,1) , {} ],
-            'Z' : [ undo                   , () , {} ],   
-            }
+        # keyboard configuration
+        
+        import keyboard
+        
+        special = keyboard.get_special()
 
-        alt = {
-            '1' : [ editor.attach_fragment  , ("pk1","formamide",5,0), {}],
-            '2' : [ editor.attach_fragment  , ("pk1","formamide",4,0), {}],
-            '3' : [ editor.attach_fragment  , ("pk1","sulfone",3,1), {}],
-            '4' : [ editor.attach_fragment  , ("pk1","cyclobutane",4,0), {}],
-            '5' : [ editor.attach_fragment  , ("pk1","cyclopentane",5,0), {}],
-            '6' : [ editor.attach_fragment  , ("pk1","cyclohexane",7,0), {}],
-            '7' : [ editor.attach_fragment  , ("pk1","cycloheptane",8,0), {}],
-            '8' : [ editor.attach_fragment  , ("pk1","cyclopentadiene",5,0), {}],
-            '9' : [ editor.attach_fragment  , ("pk1","benzene",6,0), {}],
-            '0' : [ editor.attach_fragment  , ("pk1","formaldehyde",2,0), {}],
-            'a' : [ editor.attach_amino_acid, ("pk1","ala"), {}],
-            'b' : [ editor.attach_amino_acid, ("pk1","ace"), {}],                                 
-            'c' : [ editor.attach_amino_acid, ("pk1","cys"), {}],
-            'd' : [ editor.attach_amino_acid, ("pk1","asp"), {}],
-            'e' : [ editor.attach_amino_acid, ("pk1","glu"), {}],
-            'f' : [ editor.attach_amino_acid, ("pk1","phe"), {}],
+        shft_special = keyboard.get_shft_special()        
+        alt_special = keyboard.get_alt_special()        
+        ctrl_special = keyboard.get_ctrl_special()
+        ctsh_special = keyboard.get_ctsh_special()
 
-            'g' : [ editor.attach_amino_acid, ("pk1","gly"), {}],
-            'h' : [ editor.attach_amino_acid, ("pk1","his"), {}],
-            'i' : [ editor.attach_amino_acid, ("pk1","ile"), {}],
-
-            'j' : [ editor.attach_fragment,   ("pk1","acetylene",2,0), {}],
-            'k' : [ editor.attach_amino_acid, ("pk1","lys"), {}],
-            'l' : [ editor.attach_amino_acid, ("pk1","leu"), {}],
-
-            'm' : [ editor.attach_amino_acid, ("pk1","met"), {}],
-            'n' : [ editor.attach_amino_acid, ("pk1","asn"), {}],
-            'p' : [ editor.attach_amino_acid, ("pk1","pro"), {}],
-            'q' : [ editor.attach_amino_acid, ("pk1","gln"), {}],
-            'r' : [ editor.attach_amino_acid, ("pk1","arg"), {}],
-
-            's' : [ editor.attach_amino_acid, ("pk1","ser"), {}],
-            't' : [ editor.attach_amino_acid, ("pk1","thr"), {}],
-            'v' : [ editor.attach_amino_acid, ("pk1","val"), {}],
-            'w' : [ editor.attach_amino_acid, ("pk1","trp"), {}],
-            'y' : [ editor.attach_amino_acid, ("pk1","tyr"), {}],
-            'z' : [ editor.attach_amino_acid, ("pk1","nme"), {}],
-            }
-
+        ctrl = keyboard.get_ctrl()        
+        alt = keyboard.get_alt()
 
         selection_sc = lambda sc=Shortcut,gn=get_names:sc(gn('public')+['all'])
         object_sc = lambda sc=Shortcut,gn=get_names:sc(gn('objects'))
@@ -2273,127 +1403,9 @@ SEE ALSO
         
         # Table for argument autocompletion
 
-        auto_arg =[
-    # 1st
-            {
-            'align'          : [ selection_sc           , 'selection'       , ','  ],
-            'alter'          : [ selection_sc           , 'selection'       , ''   ],
-            'as'             : [ repres_sc              , 'representation'  , ', ' ],
-            'bg'             : [ _get_color_sc          , 'color'           , ''   ],      
-            'button'         : [ controlling.button_sc  , 'button'          , ', ' ],
-            'color'          : [ _get_color_sc          , 'color'           , ', ' ],
-            'cartoon'        : [ viewing.cartoon_sc     , 'cartoon'         , ', ' ],
-            'center'         : [ selection_sc           , 'selection'       , ''   ],   
-            'clip'           : [ viewing.clip_action_sc , 'clipping action' , ', ' ],
-            'count_atoms'    : [ selection_sc           , 'selection'       , ''   ],
-            'delete'         : [ selection_sc           , 'selection'       , ''   ],
-            'deprotect'      : [ selection_sc           , 'selection'       , ''   ],
-            'distance'       : [ object_sc              , 'object'       , ''   ],
-            'extract'        : [ object_sc              , 'object'          , ''   ],      
-            'full_screen'    : [ toggle_sc              , 'option'          , ''   ],
-            'feedback'       : [ fb_action_sc           , 'action'          , ', ' ],
-            'flag'           : [ editing.flag_sc        , 'flag'            , ', ' ],
-            'get'            : [ setting.setting_sc     , 'setting'         , ','  ],
-            'gradient'       : [ object_sc              , 'gradient'        , ',' ],            
-            'help'           : [ help_sc                , 'selection'       , ''   ],
-            'hide'           : [ repres_sc              , 'representation'  , ', ' ],
-            'isolevel'       : [ contour_sc             , 'contour'         , ', ' ],
-            'iterate'        : [ selection_sc           , 'selection'       , ''   ],
-            'iterate_state'  : [ selection_sc           , 'selection'       , ''   ],
-            'indicate'       : [ selection_sc           , 'selection'       , ''   ],
-            'map_set'        : [ map_sc                 , 'map'             , ''   ],
-            'mask'           : [ selection_sc           , 'selection'       , ''   ],
-            'mview'          : [ moving.mview_action_sc , 'action'          , ''   ],
-            'map_double'     : [ map_sc                 , 'map object'      , ', ' ],
-            'map_halve'      : [ map_sc                 , 'map object'      , ', ' ],            
-            'map_trim'       : [ map_trim               , 'map object'      , ', ' ],
-            'matrix_copy'    : [ object_sc              , 'object'           , ', ' ],            
-            'matrix_reset'   : [ object_sc              , 'object'           , ', ' ],            
-            'order'          : [ selection_sc           , 'name'            , ''   ],
-            'origin'         : [ selection_sc           , 'selection'       , ''   ],
-            'protect'        : [ selection_sc           , 'selection'       , ''   ],
-            'pseudoatom'     : [ object_sc              , 'object'          , ''   ],            
-            'ramp_new'       : [ object_sc              , 'ramp'            , ','  ],
-            'remove'         : [ selection_sc           , 'selection'       , ''   ],
-            'reinitialize'   : [ reinit_sc              , 'option'          , ''   ],
-            
-            'scene'          : [ viewing.scene_dict_sc  , 'scene'           , ''   ],
-            'sculpt_activate': [ object_sc              , 'object'          , ''   ],
-            'set'            : [ setting.setting_sc     , 'setting'         , ','  ],
-            'set_bond'       : [ setting.setting_sc     , 'setting'         , ','  ],            
-            'set_name'       : [ selection_sc     ,       'name'            , ','  ],
-            'show'           : [ repres_sc              , 'representation'  , ', ' ],
-            'smooth'         : [ selection_sc           , 'selection'       , ''   ],
-            'space'          : [ space_sc               , 'space'           , ''   ],      
-            'split_states'   : [ object_sc              , 'object'          , ','  ],
-            'stereo'         : [ stereo_sc              , 'option'          , ''   ],      
-            'view'           : [ viewing.view_dict_sc   , 'view'            , ''   ],                              
-            'unmask'         : [ selection_sc           , 'selection'       , ''   ],
-            'unset'          : [ setting.setting_sc     , 'setting'         , ','  ],
-            'unset_bond'     : [ setting.setting_sc     , 'setting'         , ','  ],                        
-            'update'         : [ selection_sc           , 'selection'       , ''   ],
-            'window'         : [ window_sc              , 'action'          , ','  ],      
-            'zoom'           : [ selection_sc           , 'selection'       , ''   ],
-            },
-    # 2nd
-            {
-            'align'          : [ selection_sc           , 'selection'       , ''   ],
-            'button'         : [ controlling.but_mod_sc , 'modifier'        , ', ' ],
-            'as'             : [ selection_sc           , 'selection'       , ''   ],
-            'distance'       : [ selection_sc           , 'selection'       , ''   ],            
-            'feedback'       : [ fb_module_sc           , 'module'          , ', ' ],
-            'show'           : [ selection_sc           , 'selection'       , ''   ],
-            'extract'        : [ selection_sc           , 'selection'       , ''   ],
-            'gradient'       : [ map_sc                 , 'map object'      , ','  ],
-            'get'             : [ object_sc             , 'object'          , ','  ],                        
-            'hide'           : [ selection_sc           , 'selection'       , ''   ],
-            'color'          : [ selection_sc           , 'selection'       , ''   ],
-            'select'         : [ selection_sc           , 'selection'       , ''   ],
-            'save'           : [ selection_sc           , 'selection'       , ', ' ],
-            'flag'           : [ selection_sc           , 'selection'       , ', ' ],   
-            'load'           : [ selection_sc           , 'selection'       , ', ' ],
-            'load_traj'      : [ selection_sc           , 'selection'       , ', ' ],
-            'create'         : [ selection_sc           , 'selection'       , ', ' ],
-            'map_set'        : [ editing.map_op_sc      , 'operator'        , ', ' ],
-            'map_new'        : [ creating.map_type_sc   , 'map type'        , ', ' ],
-            'map_trim'       : [ selection_sc           , 'selection'       , ', ' ],
-            'matrix_copy'    : [ object_sc              , 'object'           , ', ' ],
-            'spectrum'       : [ palette_sc             , 'palette'         , ''   ],      
-            'order'          : [ boolean_sc             , 'sort'            , ','  ],
-            'symexp'         : [ object_sc              , 'object'          , ', ' ],   
-            'set_name'       : [ selection_sc     ,       'name'            , ''  ],
-            'isomesh'        : [ map_sc                 , 'map object'      , ', ' ],
-            'isosurface'     : [ map_sc                 , 'map object'      , ', ' ],
-            'slice_new'      : [ map_sc                 , 'map object'      , ', ' ],
-            'view'           : [ viewing.view_sc        , 'view action'     , ''   ],
-            'scene'          : [ viewing.scene_action_sc, 'scene action'    , ','   ],                  
-            'unset'          : [ selection_sc           , 'selection'        , ','  ],
-            'unset_bond'     : [ selection_sc           , 'selection'        , ','  ],            
-            'update'         : [ selection_sc           , 'selection'       , ''   ],
-            'ramp_new'       : [ map_sc                 , 'map object'       , ','   ],      
-            },
-    #3rd
-            {
-            'button'         : [ controlling.but_act_sc , 'button action'   , ''   ],
-            'distance'       : [ selection_sc           , 'selection'       , ''   ],
-            'feedback'       : [ fb_mask_sc             , 'mask'            , ''   ],            
-            'flag'           : [ editing.flag_action_sc , 'flag action'     , ''   ],
-            'map_set'        : [ map_sc                 , 'map'             , ' '   ],
-            'order'          : [ controlling.location_sc, 'location'        , ','  ],
-            'set'            : [ selection_sc           , 'selection'         , ','  ],
-            'set_bond'       : [ selection_sc           , 'selection'         , ','  ],
-            'spectrum'       : [ selection_sc           , 'selection'       , ''   ],
-            'unset_bond'     : [ selection_sc           , 'selection'         , ','  ],
-            },
-    #4th
-            {
-            'ramp_new'       : [ creating.ramp_spectrum_sc , 'ramp color spectrum'        , ', ' ],      
-            'map_new'        : [ selection_sc           , 'selection'       , ', ' ],
-            'isosurface'     : [ selection_sc           , 'selection'       , ', ' ],
-            'isomesh'        : [ selection_sc           , 'selection'       , ', ' ],
-            'set_bond'       : [ selection_sc            , 'selection'         , ','  ],            
-            }
-            ]
+        import completing
+        
+        auto_arg = completing.get_auto_arg_list()
 
         color_sc = None
 

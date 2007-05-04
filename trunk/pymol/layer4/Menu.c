@@ -34,7 +34,7 @@ void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
 
   PBlock(G); 
  
-  list = PyObject_CallMethod(P_menu,name,"s",sele); 
+  list = PyObject_CallMethod(P_menu,name,"Os",G->P_inst->cmd,sele); 
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {
     PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
@@ -53,7 +53,7 @@ void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int pass
 
   PBlock(G); 
 
-  list = PyObject_CallMethod(P_menu,name,"ss",sele1,sele2); 
+  list = PyObject_CallMethod(P_menu,name,"Oss",G->P_inst->cmd,sele1,sele2); 
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {
     PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
@@ -71,7 +71,7 @@ void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int pass
 
   PBlock(G); 
 
-  list = PyObject_CallMethod(P_menu,name,"");
+  list = PyObject_CallMethod(P_menu,name,"O",G->P_inst->cmd);
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {
     PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);

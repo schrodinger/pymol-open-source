@@ -66,24 +66,23 @@ the initialization functions for these libraries on startup.
 /* local to this C code module */
 
 static PyObject *P_pymol = NULL;
+static PyObject *P_pymol_dict = NULL; /* must be refomed into globals and instance properties */
+static PyObject *P_cmd = NULL; 
 
 /* used elsewhere */
 
-PyObject *P_pymol_dict = NULL; /* must be refomed into globals and instance properties */
-PyObject *P_cmd = NULL; /* must become a property */
-PyObject *P_menu = NULL;
+PyObject *P_menu = NULL; /* menu definitions are currently global */
 PyObject *P_xray = NULL; /* okay as global */
 PyObject *P_chempy = NULL; /* okay as global */
 PyObject *P_models = NULL; /* okay as global */
 PyObject *P_setting = NULL; /* must be reformed somehow */
 PyObject *P_embed = NULL;
 
-
 /* local to this module */
 
 static PyObject *P_povray = NULL;
 static PyObject *P_traceback = NULL;
-static PyObject *P_parser = NULL; /* serious work needed to eliminate global state from parser...*/
+static PyObject *P_parser = NULL; 
 
 static PyObject *P_lock = NULL; /* API locks */
 static PyObject *P_lock_attempt = NULL;
@@ -98,8 +97,6 @@ static PyObject *P_unlock_status = NULL;
 
 static PyObject *P_lock_glut = NULL; /* GLUT locks */
 static PyObject *P_unlock_glut = NULL;
-
-static PyObject *P_do = NULL; /* must become a property */
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
@@ -1665,7 +1662,7 @@ void PInit(PyMOLGlobals *G,int global_instance)
     if(global_instance) { 
 
       /* implies global singleton pymol, so set up the global handle */
-      PyDict_SetItemString(P_pymol_dict,"_c_self",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
+      PyDict_SetItemString(P_pymol_dict,"_C",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
 
       pcatch = PyImport_AddModule("pcatch"); 
       if(!pcatch) ErrFatal(G,"PyMOL","can't find module 'pcatch'");
@@ -1683,13 +1680,16 @@ void PInit(PyMOLGlobals *G,int global_instance)
 
     if(global_instance) { 
       /* implies global singleton pymol, so set up the global handle */
-      PyObject_SetAttrString(P_cmd,"_c_self",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
+      PyObject_SetAttrString(P_cmd,"_C",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
 
       /* cmd module is itself the api for the global PyMOL instance */
       G->P_inst->cmd = P_cmd;
     }
 
     PyObject_SetAttrString(G->P_inst->cmd,"_pymol",G->P_inst->obj);
+
+    /* right now, all locks are global -- eventually some of these may
+       become instance-specific in order to improve concurrency */
 
     P_lock = PyObject_GetAttrString(P_cmd,"lock");
     if(!P_lock) ErrFatal(G,"PyMOL","can't find 'cmd.lock()'");
@@ -1720,9 +1720,13 @@ void PInit(PyMOLGlobals *G,int global_instance)
 
     P_unlock_glut = PyObject_GetAttrString(P_cmd,"unlock_glut");
     if(!P_unlock_glut) ErrFatal(G,"PyMOL","can't find 'cmd.unlock_glut()'");
+    
+    /* 'do' command */
 
-    P_do = PyObject_GetAttrString(P_cmd,"do");
-    if(!P_do) ErrFatal(G,"PyMOL","can't find 'cmd.do()'");
+    G->P_inst->cmd_do = PyObject_GetAttrString(G->P_inst->cmd,"do");
+    if(!G->P_inst->cmd_do) ErrFatal(G,"PyMOL","can't find 'cmd.do()'");
+
+    /* invariant stuff */
 
     PRunStringModule(G,"import menu\n");  
     P_menu = PyDict_GetItemString(P_pymol_dict,"menu");
@@ -1869,7 +1873,7 @@ void PDo(PyMOLGlobals *G,char *str) /* assumes we already hold the re-entrant AP
 {
   int blocked;
   blocked = PAutoBlock(G);
-  Py_XDECREF(PyObject_CallFunction(P_do,"s",str));
+  Py_XDECREF(PyObject_CallFunction(G->P_inst->cmd_do,"s",str));
   PAutoUnblock(G,blocked);
 }
 

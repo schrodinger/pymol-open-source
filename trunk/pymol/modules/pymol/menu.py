@@ -12,1193 +12,1189 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-# pmm.py 
-# This section contains the menu contents and the associated commands
-#
+# This module defines the menus and their built-in commands
 
-import cmd
-
-def extract(s):
+def extract(self_cmd, sele):
     return [[ 2, 'Extract', '' ],
-            [ 1, 'object', 'cmd.create(None,"'+s+'",extract="'+s+'",zoom=0)' ],
-            [ 1, 'extend 1', 'cmd.create(None,"('+s+') extend 1",extract="'+s+'",zoom=0)' ],
-            [ 1, 'byres extend 1', 'cmd.create(None,"byres (('+s+') extend 1)",extract="'+s+'",zoom=0)' ],            
+            [ 1, 'object', 'cmd.create(None,"'+sele+'",extract="'+sele+'",zoom=0)' ],
+            [ 1, 'extend 1', 'cmd.create(None,"('+sele+') extend 1",extract="'+sele+'",zoom=0)' ],
+            [ 1, 'byres extend 1', 'cmd.create(None,"byres (('+sele+') extend 1)",extract="'+sele+'",zoom=0)' ],            
             ]
-            
-def all_motion(s):
+
+def all_motion(self_cmd, sele):
     return [[ 2, 'Camera Motions:'     , ''                       ],     
-              [ 1, 'store'         , 'cmd.mview("store")'      ],
-              [ 1, 'clear'       ,   'cmd.mview("clear")'      ],
-              [ 0, ''               ,''                             ],
-              [ 1, 'interpolate'   , 'cmd.mview("interpolate")'   ],
-              [ 1, 'reinterpolate'   , 'cmd.mview("reinterpolate")'   ],            
-              ]
+            [ 1, 'store'         , 'cmd.mview("store")'      ],
+            [ 1, 'clear'       ,   'cmd.mview("clear")'      ],
+            [ 0, ''               ,''                             ],
+            [ 1, 'interpolate'   , 'cmd.mview("interpolate")'   ],
+            [ 1, 'reinterpolate'   , 'cmd.mview("reinterpolate")'   ],            
+            ]
 
-def mol_motion(s):
+def mol_motion(self_cmd, sele):
     return [[ 2, 'Object Motions:'     , ''                       ],     
-              [ 1, 'store'         , 'cmd.mview("store",object="'+s+'")'      ],
-              [ 1, 'clear'       ,   'cmd.mview("clear",object="'+s+'")'    ],
-              [ 0, ''               ,''                             ],
-              [ 1, 'interpolate'   ,   'cmd.mview("interpolate",object="'+s+'")'    ],
-              [ 1, 'reinterpolate'   ,   'cmd.mview("reinterpolate",object="'+s+'")'    ],
-              ]
+            [ 1, 'store'         , 'cmd.mview("store",object="'+sele+'")'      ],
+            [ 1, 'clear'       ,   'cmd.mview("clear",object="'+sele+'")'    ],
+            [ 0, ''               ,''                             ],
+            [ 1, 'interpolate'   ,   'cmd.mview("interpolate",object="'+sele+'")'    ],
+            [ 1, 'reinterpolate'   ,   'cmd.mview("reinterpolate",object="'+sele+'")'    ],
+            ]
 
-def rep_action(action,s) :
+def rep_action(self_cmd, sele, action) :
     return [
-        [ 1, 'lines'      , 'cmd.'+action+'("lines"     ,"'+s+'")' ],
-        [ 1, 'sticks'     , 'cmd.'+action+'("sticks"    ,"'+s+'")' ],
-        [ 1, 'ribbon'     , 'cmd.'+action+'("ribbon"    ,"'+s+'")' ],
-        [ 1, 'cartoon'    , 'cmd.'+action+'("cartoon"   ,"'+s+'")' ],
+        [ 1, 'lines'      , 'cmd.'+action+'("lines"     ,"'+sele+'")' ],
+        [ 1, 'sticks'     , 'cmd.'+action+'("sticks"    ,"'+sele+'")' ],
+        [ 1, 'ribbon'     , 'cmd.'+action+'("ribbon"    ,"'+sele+'")' ],
+        [ 1, 'cartoon'    , 'cmd.'+action+'("cartoon"   ,"'+sele+'")' ],
         [ 0, ''           , ''                               ],
-        [ 1, 'label'      , 'cmd.'+action+'("labels"    ,"'+s+'")' ],
-        [ 1, 'cell'       , 'cmd.'+action+'("cell"      ,"'+s+'")' ],
+        [ 1, 'label'      , 'cmd.'+action+'("labels"    ,"'+sele+'")' ],
+        [ 1, 'cell'       , 'cmd.'+action+'("cell"      ,"'+sele+'")' ],
         [ 0, ''           , ''                               ],
-        [ 1, 'nonbonded'  , 'cmd.'+action+'("nonbonded" ,"'+s+'")' ],
-        [ 1, 'dots'       , 'cmd.'+action+'("dots"      ,"'+s+'")' ],
-        [ 1, 'spheres'    , 'cmd.'+action+'("spheres"   ,"'+s+'")' ],
-        [ 1, 'nb_spheres' , 'cmd.'+action+'("nb_spheres","'+s+'")' ],
+        [ 1, 'nonbonded'  , 'cmd.'+action+'("nonbonded" ,"'+sele+'")' ],
+        [ 1, 'dots'       , 'cmd.'+action+'("dots"      ,"'+sele+'")' ],
+        [ 1, 'spheres'    , 'cmd.'+action+'("spheres"   ,"'+sele+'")' ],
+        [ 1, 'nb_spheres' , 'cmd.'+action+'("nb_spheres","'+sele+'")' ],
         [ 0, ''           , ''                               ],
-        [ 1, 'mesh'       , 'cmd.'+action+'("mesh"      ,"'+s+'")' ],
-        [ 1, 'surface'    , 'cmd.'+action+'("surface"   ,"'+s+'")' ],
+        [ 1, 'mesh'       , 'cmd.'+action+'("mesh"      ,"'+sele+'")' ],
+        [ 1, 'surface'    , 'cmd.'+action+'("surface"   ,"'+sele+'")' ],
         ]
 
-def mol_as(s):
+def mol_as(self_cmd, sele):
     return (
         [[ 2, 'As:'   , '']]
-        +rep_action('show_as',s)
+        +rep_action(self_cmd, sele,'show_as')
         )
 
-def mol_toggle(s):
+def mol_toggle(self_cmd, sele):
     return (
         [[ 2, 'As:'   , '']]
-        +rep_action('toggle',s)
+        +rep_action(self_cmd, sele,'toggle')
         )
 
-def show_misc(s):
+def show_misc(self_cmd, sele):
     return [[ 2, 'Show:', '' ],
-              [ 1, 'lines', 'cmd.show("lines","'+s+'")'],
-              [ 1, 'sticks', 'cmd.show("sticks","'+s+'")'],
-              [ 1, 'spheres', 'cmd.show("spheres","'+s+'")'],
-              ]
+            [ 1, 'lines', 'cmd.show("lines","'+sele+'")'],
+            [ 1, 'sticks', 'cmd.show("sticks","'+sele+'")'],
+            [ 1, 'spheres', 'cmd.show("spheres","'+sele+'")'],
+            ]
 
-def mol_show(s):
+def mol_show(self_cmd, sele):
     return (
         [[ 2, 'Show:'      , ''                               ],
-         [ 1, 'as'    , mol_as(s) ],
+         [ 1, 'as'    , mol_as(self_cmd, sele) ],
          [ 0, '', '']]
-        + rep_action('show',s) +
+        + rep_action(self_cmd, sele,'show') +
         [[ 0, '', ''],
-         [ 1, 'organic' , show_misc('(organic and ('+s+'))') ],
-         [ 1, 'main chain' , show_misc("((byres ("+s+"))&n;ca,c,n,o,h)") ],
-         [ 1, 'side chain' , show_misc("((byres ("+s+"))&(!(n;c,o,h|(n. n&!r. pro))))") ],
-         [ 1, 'disulfides' , show_misc("(byres ((("+s+
-            ") & r. CYS+CYX & n. SG) & bound_to (("+s+") & r. CYS+CYX & n. SG))) & n. CA+CB+SG") ]
+         [ 1, 'organic' , show_misc(self_cmd, '(organic and ('+sele+'))') ],
+         [ 1, 'main chain' , show_misc(self_cmd, "((byres ("+sele+"))&n;ca,c,n,o,h)") ],
+         [ 1, 'side chain' , show_misc(self_cmd, "((byres ("+sele+"))&(!(n;c,o,h|(n. n&!r. pro))))") ],
+         [ 1, 'disulfides' , show_misc(self_cmd, "(byres ((("+sele+
+            ") & r. CYS+CYX & n. SG) & bound_to (("+sele+") & r. CYS+CYX & n. SG))) & n. CA+CB+SG") ]
          ])
 
-    cmd.show("lines","(byres (("+s+" & r. CYS+CYX & n. SG) & bound_to ("+s+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
+    cmd.show("lines","(byres (("+sele+" & r. CYS+CYX & n. SG) & bound_to ("+sele+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
     
-def mol_hide(s):
+def mol_hide(self_cmd, sele):
     return (
         [[ 2, 'Hide:'     , ''                                ],
-         [ 1, 'everything', 'cmd.hide("everything","'+s+'")'  ],
+         [ 1, 'everything', 'cmd.hide("everything","'+sele+'")'  ],
          [ 0, ''          , ''                                ]]
-        + rep_action('hide',s) +
+        + rep_action(self_cmd, sele,'hide') +
         [[ 0, ''          , ''                                ],
-         [ 1, 'main chain', 'cmd.hide("((byres ('+s+'))&(n. c,o,h|(n. n&!r. pro)))")' ],
-         [ 1, 'side chain', 'cmd.hide("((byres ('+s+'))&!(n. ca,c,o,h|(n. n&!r. pro)))")' ],
-         [ 1, 'waters'    , 'cmd.hide("(solvent and ('+s+'))")'     ],                      
+         [ 1, 'main chain', 'cmd.hide("((byres ('+sele+'))&(n. c,o,h|(n. n&!r. pro)))")' ],
+         [ 1, 'side chain', 'cmd.hide("((byres ('+sele+'))&!(n. ca,c,o,h|(n. n&!r. pro)))")' ],
+         [ 1, 'waters'    , 'cmd.hide("(solvent and ('+sele+'))")'     ],                      
          [ 0, ''          , ''                                ],
-         [ 1, 'hydrogens' , 'cmd.hide("('+s+' and hydro)")'   ],
+         [ 1, 'hydrogens' , 'cmd.hide("('+sele+' and hydro)")'   ],
          [ 0, ''          , ''                                ],           
-         [ 1, 'unselected', 'cmd.hide("(not '+s+')")'         ],
+         [ 1, 'unselected', 'cmd.hide("(not '+sele+')")'         ],
          ]
         )
         
-def dist_show(s):
+def dist_show(self_cmd, sele):
     return [[ 2, 'Show:'     , ''                               ],
-              [ 1, 'dashes'    , 'cmd.show("dashes"    ,"'+s+'")' ],
-              [ 1, 'labels'    , 'cmd.show("labels"    ,"'+s+'")' ]
+              [ 1, 'dashes'    , 'cmd.show("dashes"    ,"'+sele+'")' ],
+              [ 1, 'labels'    , 'cmd.show("labels"    ,"'+sele+'")' ]
              ]   
 
-def dist_hide(s):
+def dist_hide(self_cmd, sele):
     return [[ 2, 'Hide:'     , ''                                ],
-              [ 1, 'dashes'    , 'cmd.hide("dashes"    ,"'+s+'")'  ],
-              [ 1, 'labels'    , 'cmd.hide("labels"    ,"'+s+'")'  ]
+              [ 1, 'dashes'    , 'cmd.hide("dashes"    ,"'+sele+'")'  ],
+              [ 1, 'labels'    , 'cmd.hide("labels"    ,"'+sele+'")'  ]
              ]
 
-def cgo_show(s):
+def cgo_show(self_cmd, sele):
     return [[ 2, 'Show:'     , ''                               ],
-              [ 1, 'cgo'    , 'cmd.show("cgo"    ,"'+s+'")' ],
+              [ 1, 'cgo'    , 'cmd.show("cgo"    ,"'+sele+'")' ],
              ]   
 
-def cgo_hide(s):
+def cgo_hide(self_cmd, sele):
     return [[ 2, 'Hide:'     , ''                                ],
-              [ 1, 'cgo'    , 'cmd.hide("cgo"    ,"'+s+'")'  ],
+              [ 1, 'cgo'    , 'cmd.hide("cgo"    ,"'+sele+'")'  ],
              ]
 
-def simple_show(s):
+def simple_show(self_cmd, sele):
     return [[ 2, 'Show:'       , ''                             ],
-              [ 1, 'everything'  , 'cmd.show("everything","'+s+'")'          ]]
+              [ 1, 'everything'  , 'cmd.show("everything","'+sele+'")'          ]]
 
-def simple_hide(s):
+def simple_hide(self_cmd, sele):
     return [[ 2, 'Hide:'     ,''                                ],
-              [ 1, 'everything'    ,'cmd.hide("everything","'+s+'")'        ]]
+              [ 1, 'everything'    ,'cmd.hide("everything","'+sele+'")'        ]]
 
-def map_show(s):
+def map_show(self_cmd, sele):
     return [[ 2, 'Show:'       , ''                             ],
-              [ 1, 'dots'        , 'cmd.show("dots","'+s+'")'     ],           
-              [ 1, 'extent'        , 'cmd.show("extent","'+s+'")'     ],
-              [ 1, 'everything'  , 'cmd.show("everything","'+s+'")'          ]]
+              [ 1, 'dots'        , 'cmd.show("dots","'+sele+'")'     ],           
+              [ 1, 'extent'        , 'cmd.show("extent","'+sele+'")'     ],
+              [ 1, 'everything'  , 'cmd.show("everything","'+sele+'")'          ]]
 
-def map_hide(s):
+def map_hide(self_cmd, sele):
     return [[ 2, 'Hide:'     ,''                                ],
-              [ 1, 'dots'        , 'cmd.hide("dots","'+s+'")'     ],           
-              [ 1, 'extent'      , 'cmd.hide("extent","'+s+'")'     ],
-              [ 1, 'everything'    ,'cmd.hide("everything","'+s+'")'        ]]
+              [ 1, 'dots'        , 'cmd.hide("dots","'+sele+'")'     ],           
+              [ 1, 'extent'      , 'cmd.hide("extent","'+sele+'")'     ],
+              [ 1, 'everything'    ,'cmd.hide("everything","'+sele+'")'        ]]
 
-def mesh_show(s):
+def mesh_show(self_cmd, sele):
     return [[ 2, 'Show:'       , ''                             ],
-              [ 1, 'mesh'        , 'cmd.show("mesh","'+s+'")'     ],           
-              [ 1, 'cell'        , 'cmd.show("cell","'+s+'")'     ],
-              [ 1, 'everything'  , 'cmd.enable("'+s+'")'          ]]
+              [ 1, 'mesh'        , 'cmd.show("mesh","'+sele+'")'     ],           
+              [ 1, 'cell'        , 'cmd.show("cell","'+sele+'")'     ],
+              [ 1, 'everything'  , 'cmd.enable("'+sele+'")'          ]]
 
-def mesh_hide(s):
+def mesh_hide(self_cmd, sele):
     return [[ 2, 'Hide:'       , ''                             ],
-              [ 1, 'mesh'        , 'cmd.hide("mesh","'+s+'")'     ],                      
-              [ 1, 'cell'        , 'cmd.hide("cell","'+s+'")'      ],           
-              [ 1, 'everything'  , 'cmd.disable("'+s+'")'          ]]
+              [ 1, 'mesh'        , 'cmd.hide("mesh","'+sele+'")'     ],                      
+              [ 1, 'cell'        , 'cmd.hide("cell","'+sele+'")'      ],           
+              [ 1, 'everything'  , 'cmd.disable("'+sele+'")'          ]]
 
-def surface_show(s):
+def surface_show(self_cmd, sele):
     return [[ 2, 'Show:'       , ''                             ],
-              [ 1, 'surface'        , 'cmd.show("surface","'+s+'")'     ],           
-              [ 1, 'cell'        , 'cmd.show("cell","'+s+'")'     ],
-              [ 1, 'everything'  , 'cmd.enable("'+s+'")'          ]]
+              [ 1, 'surface'        , 'cmd.show("surface","'+sele+'")'     ],           
+              [ 1, 'cell'        , 'cmd.show("cell","'+sele+'")'     ],
+              [ 1, 'everything'  , 'cmd.enable("'+sele+'")'          ]]
 
-def surface_hide(s):
+def surface_hide(self_cmd, sele):
     return [[ 2, 'Hide:'       , ''                             ],
-              [ 1, 'surface'        , 'cmd.hide("surface","'+s+'")'     ],                      
-              [ 1, 'cell'        , 'cmd.hide("cell","'+s+'")'      ],           
-              [ 1, 'everything'  , 'cmd.disable("'+s+'")'          ]]
+              [ 1, 'surface'        , 'cmd.hide("surface","'+sele+'")'     ],                      
+              [ 1, 'cell'        , 'cmd.hide("cell","'+sele+'")'      ],           
+              [ 1, 'everything'  , 'cmd.disable("'+sele+'")'          ]]
 
-def slice_show(s):
+def slice_show(self_cmd, sele):
     return [[ 2, 'Show:'       , ''                             ],
-              [ 1, 'slice'       , 'cmd.show("slice","'+s+'")'     ],
+              [ 1, 'slice'       , 'cmd.show("slice","'+sele+'")'     ],
               ]
 
-def slice_hide(s):
+def slice_hide(self_cmd, sele):
     return [[ 2, 'Hide:'       , ''                             ],
-              [ 1, 'slice'        , 'cmd.hide("slice","'+s+'")'     ],
+              [ 1, 'slice'        , 'cmd.hide("slice","'+sele+'")'     ],
               ]
 
-def by_elem2(s):
+def by_elem2(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
-        [1,'\\494C\\777H\\229N\\922O\\950S...','util.cba(10,"'+s+'")'],# lime
-        [1,'\\155C\\777H\\229N\\922O\\950S...','util.cba(5262,"'+s+'")'],# deepteal
-        [1,'\\904C\\777H\\229N\\922O\\950S...','util.cba(12,"'+s+'")'],# hotpink
-        [1,'\\983C\\777H\\229N\\922O\\950S...','util.cba(36,"'+s+'")'],# yelloworange
-        [1,'\\525C\\777H\\229N\\922O\\950S...','util.cba(5271,"'+s+'")'],# violetpurple
-        [1,'\\666C\\777H\\229N\\922O\\950S...','util.cba(124,"'+s+'")'],# grey70
-        [1,'\\049C\\777H\\229N\\922O\\950S...','util.cba(17,"'+s+'")'],# marine
-        [1,'\\760C\\777H\\229N\\922O\\950S...','util.cba(18,"'+s+'")'],# olive
+        [1,'\\494C\\777H\\229N\\922O\\950S...','util.cba(10,"'+sele+'")'],# lime
+        [1,'\\155C\\777H\\229N\\922O\\950S...','util.cba(5262,"'+sele+'")'],# deepteal
+        [1,'\\904C\\777H\\229N\\922O\\950S...','util.cba(12,"'+sele+'")'],# hotpink
+        [1,'\\983C\\777H\\229N\\922O\\950S...','util.cba(36,"'+sele+'")'],# yelloworange
+        [1,'\\525C\\777H\\229N\\922O\\950S...','util.cba(5271,"'+sele+'")'],# violetpurple
+        [1,'\\666C\\777H\\229N\\922O\\950S...','util.cba(124,"'+sele+'")'],# grey70
+        [1,'\\049C\\777H\\229N\\922O\\950S...','util.cba(17,"'+sele+'")'],# marine
+        [1,'\\760C\\777H\\229N\\922O\\950S...','util.cba(18,"'+sele+'")'],# olive
         ]
         
-def by_elem3(s):
+def by_elem3(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
-        [1,'\\564C\\777H\\229N\\922O\\950S...','util.cba(5270,"'+s+'")'],# smudge
-        [1,'\\077C\\777H\\229N\\922O\\950S...','util.cba(20,"'+s+'")'],# teal
-        [1,'\\644C\\777H\\229N\\922O\\950S...','util.cba(5272,"'+s+'")'],# dirtyviolet
-        [1,'\\976C\\777H\\229N\\922O\\950S...','util.cba(52,"'+s+'")'],# wheat
-        [1,'\\944C\\777H\\229N\\922O\\950S...','util.cba(5258,"'+s+'")'],# deepsalmon
-        [1,'\\978C\\777H\\229N\\922O\\950S...','util.cba(5274,"'+s+'")'],# lightpink
-        [1,'\\499C\\777H\\229N\\922O\\950S...','util.cba(5257,"'+s+'")'],# aquamarine
-        [1,'\\994C\\777H\\229N\\922O\\950S...','util.cba(5256,"'+s+'")'],# paleyellow
+        [1,'\\564C\\777H\\229N\\922O\\950S...','util.cba(5270,"'+sele+'")'],# smudge
+        [1,'\\077C\\777H\\229N\\922O\\950S...','util.cba(20,"'+sele+'")'],# teal
+        [1,'\\644C\\777H\\229N\\922O\\950S...','util.cba(5272,"'+sele+'")'],# dirtyviolet
+        [1,'\\976C\\777H\\229N\\922O\\950S...','util.cba(52,"'+sele+'")'],# wheat
+        [1,'\\944C\\777H\\229N\\922O\\950S...','util.cba(5258,"'+sele+'")'],# deepsalmon
+        [1,'\\978C\\777H\\229N\\922O\\950S...','util.cba(5274,"'+sele+'")'],# lightpink
+        [1,'\\499C\\777H\\229N\\922O\\950S...','util.cba(5257,"'+sele+'")'],# aquamarine
+        [1,'\\994C\\777H\\229N\\922O\\950S...','util.cba(5256,"'+sele+'")'],# paleyellow
         ]
     
-def by_elem4(s):
+def by_elem4(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
-        [1,'\\094C\\777H\\229N\\922O\\950S...','util.cba(15,"'+s+'")'],# limegreen
-        [1,'\\247C\\777H\\229N\\922O\\950S...','util.cba(5277,"'+s+'")'],# skyblue
-        [1,'\\824C\\777H\\229N\\922O\\950S...','util.cba(5279,"'+s+'")'],# warmpink
-        [1,'\\792C\\777H\\229N\\922O\\950S...','util.cba(5276,"'+s+'")'],# limon
-        [1,'\\949C\\777H\\229N\\922O\\950S...','util.cba(53,"'+s+'")'],# violet
-        [1,'\\889C\\777H\\229N\\922O\\950S...','util.cba(5278,"'+s+'")'],# bluewhite
-        [1,'\\297C\\777H\\229N\\922O\\950S...','util.cba(5275,"'+s+'")'],# greencyan
-        [1,'\\653C\\777H\\229N\\922O\\950S...','util.cba(5269,"'+s+'")'],# sand
+        [1,'\\094C\\777H\\229N\\922O\\950S...','util.cba(15,"'+sele+'")'],# limegreen
+        [1,'\\247C\\777H\\229N\\922O\\950S...','util.cba(5277,"'+sele+'")'],# skyblue
+        [1,'\\824C\\777H\\229N\\922O\\950S...','util.cba(5279,"'+sele+'")'],# warmpink
+        [1,'\\792C\\777H\\229N\\922O\\950S...','util.cba(5276,"'+sele+'")'],# limon
+        [1,'\\949C\\777H\\229N\\922O\\950S...','util.cba(53,"'+sele+'")'],# violet
+        [1,'\\889C\\777H\\229N\\922O\\950S...','util.cba(5278,"'+sele+'")'],# bluewhite
+        [1,'\\297C\\777H\\229N\\922O\\950S...','util.cba(5275,"'+sele+'")'],# greencyan
+        [1,'\\653C\\777H\\229N\\922O\\950S...','util.cba(5269,"'+sele+'")'],# sand
         ]
 
-def by_elem5(s):
+def by_elem5(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
-[1,'\\252C\\777H\\229N\\922O\\950S...','util.cba(22,"'+s+'")'],# forest
-[1,'\\466C\\777H\\229N\\922O\\950S...','util.cba(5266,"'+s+'")'],# lightteal
-[1,'\\755C\\777H\\229N\\922O\\950S...','util.cba(5280,"'+s+'")'],# darksalmon
-[1,'\\570C\\777H\\229N\\922O\\950S...','util.cba(5267,"'+s+'")'],# splitpea
-[1,'\\634C\\777H\\229N\\922O\\950S...','util.cba(5268,"'+s+'")'],# raspberry
-[1,'\\555C\\777H\\229N\\922O\\950S...','util.cba(104,"'+s+'")'],# grey50
-[1,'\\226C\\777H\\229N\\922O\\950S...','util.cba(23,"'+s+'")'],# deepblue
-[1,'\\632C\\777H\\229N\\922O\\950S...','util.cba(51,"'+s+'")'],# brown
+[1,'\\252C\\777H\\229N\\922O\\950S...','util.cba(22,"'+sele+'")'],# forest
+[1,'\\466C\\777H\\229N\\922O\\950S...','util.cba(5266,"'+sele+'")'],# lightteal
+[1,'\\755C\\777H\\229N\\922O\\950S...','util.cba(5280,"'+sele+'")'],# darksalmon
+[1,'\\570C\\777H\\229N\\922O\\950S...','util.cba(5267,"'+sele+'")'],# splitpea
+[1,'\\634C\\777H\\229N\\922O\\950S...','util.cba(5268,"'+sele+'")'],# raspberry
+[1,'\\555C\\777H\\229N\\922O\\950S...','util.cba(104,"'+sele+'")'],# grey50
+[1,'\\226C\\777H\\229N\\922O\\950S...','util.cba(23,"'+sele+'")'],# deepblue
+[1,'\\632C\\777H\\229N\\922O\\950S...','util.cba(51,"'+sele+'")'],# brown
               ]
     
-def by_elem(s):
+def by_elem(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
-        [1,' \\777H\\229N\\922O\\950S...','util.cnc("'+s+'")'],
+        [1,' \\777H\\229N\\922O\\950S...','util.cnc("'+sele+'")'],
 
-[1,'\\292C\\777H\\229N\\922O\\950S...','util.cba(26,"'+s+'")'],# carbon
-[1,'\\099C\\777H\\229N\\922O\\950S...','util.cba(5,"'+s+'")'],# cyan
-[1,'\\927C\\777H\\229N\\922O\\950S...','util.cba(154,"'+s+'")'],# lightmagenta
-[1,'\\990C\\777H\\229N\\922O\\950S...','util.cba(6,"'+s+'")'],# yellow
-[1,'\\955C\\777H\\229N\\922O\\950S...','util.cba(9,"'+s+'")'],# salmon
-[1,'\\888C\\777H\\229N\\922O\\950S...','util.cba(29,"'+s+'")'],# hydrogen
-[1,'\\449C\\777H\\229N\\922O\\950S...','util.cba(11,"'+s+'")'],# slate
-[1,'\\962C\\777H\\229N\\922O\\950S...','util.cba(13,"'+s+'")'],# orange
-        [ 1, 'set 2'     ,by_elem2(s)                    ],
-        [ 1, 'set 3'     ,by_elem3(s)                    ],
-        [ 1, 'set 4'     ,by_elem4(s)                    ],
-        [ 1, 'set 5'     ,by_elem5(s)                    ],      
+[1,'\\292C\\777H\\229N\\922O\\950S...','util.cba(26,"'+sele+'")'],# carbon
+[1,'\\099C\\777H\\229N\\922O\\950S...','util.cba(5,"'+sele+'")'],# cyan
+[1,'\\927C\\777H\\229N\\922O\\950S...','util.cba(154,"'+sele+'")'],# lightmagenta
+[1,'\\990C\\777H\\229N\\922O\\950S...','util.cba(6,"'+sele+'")'],# yellow
+[1,'\\955C\\777H\\229N\\922O\\950S...','util.cba(9,"'+sele+'")'],# salmon
+[1,'\\888C\\777H\\229N\\922O\\950S...','util.cba(29,"'+sele+'")'],# hydrogen
+[1,'\\449C\\777H\\229N\\922O\\950S...','util.cba(11,"'+sele+'")'],# slate
+[1,'\\962C\\777H\\229N\\922O\\950S...','util.cba(13,"'+sele+'")'],# orange
+        [ 1, 'set 2'     ,by_elem2(self_cmd, sele)                    ],
+        [ 1, 'set 3'     ,by_elem3(self_cmd, sele)                    ],
+        [ 1, 'set 4'     ,by_elem4(self_cmd, sele)                    ],
+        [ 1, 'set 5'     ,by_elem5(self_cmd, sele)                    ],      
               ]
 
-def by_ss(s):
+def by_ss(self_cmd, sele):
     return [
                 [ 2, 'By Secondary Structure:'     ,''                               ],
-    [ 1, '\\900Helix \\990Sheet \\090Loop'  , 'util.cbss("'+s+'","red","yellow","green")'],
-    [ 1, '\\099Helix \\909Sheet \\955Loop'  , 'util.cbss("'+s+'","cyan","magenta","salmon")'],
-    [ 1, '\\099Helix \\900Sheet \\909Loop'  , 'util.cbss("'+s+'","cyan","red","magenta")',],
+    [ 1, '\\900Helix \\990Sheet \\090Loop'  , 'util.cbss("'+sele+'","red","yellow","green")'],
+    [ 1, '\\099Helix \\909Sheet \\955Loop'  , 'util.cbss("'+sele+'","cyan","magenta","salmon")'],
+    [ 1, '\\099Helix \\900Sheet \\909Loop'  , 'util.cbss("'+sele+'","cyan","red","magenta")',],
               ]
 
-def spectrum(s):
+def spectrum(self_cmd, sele):
     return [
                 [ 2, 'Spectrum:'     ,''                               ],
               [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(e. c)',
-                 'cmd.spectrum("count",selection="('+s+')&e. c")'],           
+                 'cmd.spectrum("count",selection="('+sele+')&e. c")'],           
               [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w\\888(*/ca)',
-                 'cmd.spectrum("count",selection="('+s+')&*/ca")'],
+                 'cmd.spectrum("count",selection="('+sele+')&*/ca")'],
               [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w',
-                 'cmd.spectrum("count",selection="'+s+'",byres=1)'],
+                 'cmd.spectrum("count",selection="'+sele+'",byres=1)'],
               [ 0, ''                                , ''                 ],
-              [ 1, 'b-factors'   , 'cmd.spectrum("b",selection=("'+s+'"),quiet=0)'         ],
-              [ 1, 'b-factors(*/ca)'   , 'cmd.spectrum("b",selection="(('+s+')&*/ca)",quiet=0)'         ],                       
+              [ 1, 'b-factors'   , 'cmd.spectrum("b",selection=("'+sele+'"),quiet=0)'         ],
+              [ 1, 'b-factors(*/ca)'   , 'cmd.spectrum("b",selection="(('+sele+')&*/ca)",quiet=0)'         ],                       
               ]
 
-def by_chain(s):
+def by_chain(self_cmd, sele):
     return [
         [ 2, 'By Chain:'     ,''                               ],
               [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(e. c)',
-                 'util.color_chains("('+s+' and elem c)")'],
+                 'util.color_chains("('+sele+' and elem c)")'],
               [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(*/ca)',
-                 'util.color_chains("('+s+' and name ca)")'],
+                 'util.color_chains("('+sele+' and name ca)")'],
               [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n',
-                 'util.color_chains("('+s+')")'],
+                 'util.color_chains("('+sele+')")'],
                       [ 0, ''                                , ''                 ],
               [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
-                 'util.chainbow("('+s+')")'],                                 
+                 'util.chainbow("('+sele+')")'],                                 
         ]
 
 
-def reds(s):
+def reds(self_cmd, sele):
     return [
         [ 2, 'Reds'     ,''                               ],
-        [1,'\\900red','cmd.color(4,"'+s+'")'],
-        [1,'\\922tv_red','cmd.color(32,"'+s+'")'],
-        [1,'\\634raspberry','cmd.color(5268,"'+s+'")'],
-        [1,'\\755darksalmon','cmd.color(5280,"'+s+'")'],
-        [1,'\\955salmon','cmd.color(9,"'+s+'")'],
-        [1,'\\944deepsalmon','cmd.color(5258,"'+s+'")'],
-        [1,'\\824warmpink','cmd.color(5279,"'+s+'")'],
-        [1,'\\611firebrick','cmd.color(49,"'+s+'")'],
-        [1,'\\522ruby','cmd.color(21,"'+s+'")'],
-        [1,'\\521chocolate','cmd.color(50,"'+s+'")'],
-        [1,'\\632brown','cmd.color(51,"'+s+'")'],
+        [1,'\\900red','cmd.color(4,"'+sele+'")'],
+        [1,'\\922tv_red','cmd.color(32,"'+sele+'")'],
+        [1,'\\634raspberry','cmd.color(5268,"'+sele+'")'],
+        [1,'\\755darksalmon','cmd.color(5280,"'+sele+'")'],
+        [1,'\\955salmon','cmd.color(9,"'+sele+'")'],
+        [1,'\\944deepsalmon','cmd.color(5258,"'+sele+'")'],
+        [1,'\\824warmpink','cmd.color(5279,"'+sele+'")'],
+        [1,'\\611firebrick','cmd.color(49,"'+sele+'")'],
+        [1,'\\522ruby','cmd.color(21,"'+sele+'")'],
+        [1,'\\521chocolate','cmd.color(50,"'+sele+'")'],
+        [1,'\\632brown','cmd.color(51,"'+sele+'")'],
         ]
 
-def greens(s):
+def greens(self_cmd, sele):
     return [
         [ 2, 'Greens'     ,''                               ],
-        [1,'\\090green','cmd.color(3,"'+s+'")'],
-        [1,'\\292tv_green','cmd.color(33,"'+s+'")'],
-        [1,'\\490chartreuse','cmd.color(14,"'+s+'")'],
-        [1,'\\570splitpea','cmd.color(5267,"'+s+'")'],
-        [1,'\\564smudge','cmd.color(5270,"'+s+'")'],
-        [1,'\\686palegreen','cmd.color(5259,"'+s+'")'],
-        [1,'\\094limegreen','cmd.color(15,"'+s+'")'],
-        [1,'\\494lime','cmd.color(10,"'+s+'")'],
-        [1,'\\792limon','cmd.color(5276,"'+s+'")'],      
-        [1,'\\252forest','cmd.color(22,"'+s+'")'],
+        [1,'\\090green','cmd.color(3,"'+sele+'")'],
+        [1,'\\292tv_green','cmd.color(33,"'+sele+'")'],
+        [1,'\\490chartreuse','cmd.color(14,"'+sele+'")'],
+        [1,'\\570splitpea','cmd.color(5267,"'+sele+'")'],
+        [1,'\\564smudge','cmd.color(5270,"'+sele+'")'],
+        [1,'\\686palegreen','cmd.color(5259,"'+sele+'")'],
+        [1,'\\094limegreen','cmd.color(15,"'+sele+'")'],
+        [1,'\\494lime','cmd.color(10,"'+sele+'")'],
+        [1,'\\792limon','cmd.color(5276,"'+sele+'")'],      
+        [1,'\\252forest','cmd.color(22,"'+sele+'")'],
         ]
 
-def blues(s):
+def blues(self_cmd, sele):
     return [
         [ 2, 'Blues'     ,''                               ],
-        [1,'\\009blue','cmd.color(2,"'+s+'")'],
-        [1,'\\339tv_blue','cmd.color(34,"'+s+'")'],
-        [1,'\\049marine','cmd.color(17,"'+s+'")'],
-        [1,'\\449slate','cmd.color(11,"'+s+'")'],
-        [1,'\\779lightblue','cmd.color(5263,"'+s+'")'],
-        [1,'\\247skyblue','cmd.color(5277,"'+s+'")'],
-        [1,'\\409purpleblue','cmd.color(16,"'+s+'")'],
-        [1,'\\226deepblue','cmd.color(23,"'+s+'")'],
-        [1,'\\115density','cmd.color(4155,"'+s+'")'],
+        [1,'\\009blue','cmd.color(2,"'+sele+'")'],
+        [1,'\\339tv_blue','cmd.color(34,"'+sele+'")'],
+        [1,'\\049marine','cmd.color(17,"'+sele+'")'],
+        [1,'\\449slate','cmd.color(11,"'+sele+'")'],
+        [1,'\\779lightblue','cmd.color(5263,"'+sele+'")'],
+        [1,'\\247skyblue','cmd.color(5277,"'+sele+'")'],
+        [1,'\\409purpleblue','cmd.color(16,"'+sele+'")'],
+        [1,'\\226deepblue','cmd.color(23,"'+sele+'")'],
+        [1,'\\115density','cmd.color(4155,"'+sele+'")'],
         ]
 
-def yellows(s):
+def yellows(self_cmd, sele):
     return [
         [ 2, 'Yellows'     ,''                               ],
-        [1,'\\990yellow','cmd.color(6,"'+s+'")'],
-        [1,'\\992tv_yellow','cmd.color(35,"'+s+'")'],
-        [1,'\\994paleyellow','cmd.color(5256,"'+s+'")'],
-        [1,'\\983yelloworange','cmd.color(36,"'+s+'")'],            
-        [1,'\\792limon','cmd.color(5276,"'+s+'")'],
-        [1,'\\976wheat','cmd.color(52,"'+s+'")'],
-        [1,'\\653sand','cmd.color(5269,"'+s+'")'],
+        [1,'\\990yellow','cmd.color(6,"'+sele+'")'],
+        [1,'\\992tv_yellow','cmd.color(35,"'+sele+'")'],
+        [1,'\\994paleyellow','cmd.color(5256,"'+sele+'")'],
+        [1,'\\983yelloworange','cmd.color(36,"'+sele+'")'],            
+        [1,'\\792limon','cmd.color(5276,"'+sele+'")'],
+        [1,'\\976wheat','cmd.color(52,"'+sele+'")'],
+        [1,'\\653sand','cmd.color(5269,"'+sele+'")'],
         ]
 
-def magentas(s):
+def magentas(self_cmd, sele):
     return [
         [ 2, 'Magentas'     ,''                               ],
-        [1,'\\909magenta','cmd.color(8,"'+s+'")'],
-        [1,'\\927lightmagenta','cmd.color(154,"'+s+'")'],
-        [1,'\\904hotpink','cmd.color(12,"'+s+'")'],
-        [1,'\\968pink','cmd.color(48,"'+s+'")'],
-        [1,'\\978lightpink','cmd.color(5274,"'+s+'")'],
-        [1,'\\644dirtyviolet','cmd.color(5272,"'+s+'")'],
-        [1,'\\949violet','cmd.color(53,"'+s+'")'],
-        [1,'\\525violetpurple','cmd.color(5271,"'+s+'")'],
-        [1,'\\707purple','cmd.color(19,"'+s+'")'],
-        [1,'\\515deeppurple','cmd.color(5261,"'+s+'")'],
+        [1,'\\909magenta','cmd.color(8,"'+sele+'")'],
+        [1,'\\927lightmagenta','cmd.color(154,"'+sele+'")'],
+        [1,'\\904hotpink','cmd.color(12,"'+sele+'")'],
+        [1,'\\968pink','cmd.color(48,"'+sele+'")'],
+        [1,'\\978lightpink','cmd.color(5274,"'+sele+'")'],
+        [1,'\\644dirtyviolet','cmd.color(5272,"'+sele+'")'],
+        [1,'\\949violet','cmd.color(53,"'+sele+'")'],
+        [1,'\\525violetpurple','cmd.color(5271,"'+sele+'")'],
+        [1,'\\707purple','cmd.color(19,"'+sele+'")'],
+        [1,'\\515deeppurple','cmd.color(5261,"'+sele+'")'],
         ]
 
-def cyans(s):
+def cyans(self_cmd, sele):
     return [
         [ 2, 'Cyans'     ,''                               ],
-        [1,'\\099cyan','cmd.color(5,"'+s+'")'],
-        [1,'\\799palecyan','cmd.color(5265,"'+s+'")'],
-        [1,'\\499aquamarine','cmd.color(5257,"'+s+'")'],
-        [1,'\\297greencyan','cmd.color(5275,"'+s+'")'],
-        [1,'\\077teal','cmd.color(20,"'+s+'")'],
-        [1,'\\155deepteal','cmd.color(5262,"'+s+'")'],
-        [1,'\\466lightteal','cmd.color(5266,"'+s+'")'],
+        [1,'\\099cyan','cmd.color(5,"'+sele+'")'],
+        [1,'\\799palecyan','cmd.color(5265,"'+sele+'")'],
+        [1,'\\499aquamarine','cmd.color(5257,"'+sele+'")'],
+        [1,'\\297greencyan','cmd.color(5275,"'+sele+'")'],
+        [1,'\\077teal','cmd.color(20,"'+sele+'")'],
+        [1,'\\155deepteal','cmd.color(5262,"'+sele+'")'],
+        [1,'\\466lightteal','cmd.color(5266,"'+sele+'")'],
         ]
 
-def oranges(s):
+def oranges(self_cmd, sele):
     return [
         [ 2, 'Oranges'     ,''                               ],
-        [1,'\\950orange','cmd.color(13,"'+s+'")'],
-        [1,'\\951tv_orange','cmd.color(37,"'+s+'")'],
-        [1,'\\962brightorange','cmd.color(30,"'+s+'")'],
-        [1,'\\985lightorange','cmd.color(5264,"'+s+'")'],      
-        [1,'\\983yelloworange','cmd.color(36,"'+s+'")'],      
-        [1,'\\760olive','cmd.color(18,"'+s+'")'],
-        [1,'\\551deepolive','cmd.color(5260,"'+s+'")'],
+        [1,'\\950orange','cmd.color(13,"'+sele+'")'],
+        [1,'\\951tv_orange','cmd.color(37,"'+sele+'")'],
+        [1,'\\962brightorange','cmd.color(30,"'+sele+'")'],
+        [1,'\\985lightorange','cmd.color(5264,"'+sele+'")'],      
+        [1,'\\983yelloworange','cmd.color(36,"'+sele+'")'],      
+        [1,'\\760olive','cmd.color(18,"'+sele+'")'],
+        [1,'\\551deepolive','cmd.color(5260,"'+sele+'")'],
         ]
 
-def tints(s):
+def tints(self_cmd, sele):
     return [
         [ 2, 'Tints'     ,''                               ],
-        [1,'\\976wheat','cmd.color(52,"'+s+'")'],
-        [1,'\\686palegreen','cmd.color(5259,"'+s+'")'],
-        [1,'\\779lightblue','cmd.color(5263,"'+s+'")'],      
-        [1,'\\994paleyellow','cmd.color(5256,"'+s+'")'],
-        [1,'\\978lightpink','cmd.color(5274,"'+s+'")'],
-        [1,'\\799palecyan','cmd.color(5265,"'+s+'")'],
-        [1,'\\985lightorange','cmd.color(5264,"'+s+'")'],            
-        [1,'\\889bluewhite','cmd.color(5278,"'+s+'")'],
+        [1,'\\976wheat','cmd.color(52,"'+sele+'")'],
+        [1,'\\686palegreen','cmd.color(5259,"'+sele+'")'],
+        [1,'\\779lightblue','cmd.color(5263,"'+sele+'")'],      
+        [1,'\\994paleyellow','cmd.color(5256,"'+sele+'")'],
+        [1,'\\978lightpink','cmd.color(5274,"'+sele+'")'],
+        [1,'\\799palecyan','cmd.color(5265,"'+sele+'")'],
+        [1,'\\985lightorange','cmd.color(5264,"'+sele+'")'],            
+        [1,'\\889bluewhite','cmd.color(5278,"'+sele+'")'],
         ]
     
-def grays(s):
+def grays(self_cmd, sele):
     return [
         [ 2, 'Grays'     ,''                               ],
-        [ 1, '\\999white ', 'cmd.color("white","'+s+'")'  ],
-        [ 1, '\\999gray90 ', 'cmd.color("grey90","'+s+'")'  ],
-        [ 1, '\\888gray80 ', 'cmd.color("grey80","'+s+'")'  ],
-        [ 1, '\\777gray70 ', 'cmd.color("grey70","'+s+'")'  ],
-        [ 1, '\\666gray60 ', 'cmd.color("grey60","'+s+'")'  ],
-        [ 1, '\\555gray50 ', 'cmd.color("grey50","'+s+'")'  ],
-        [ 1, '\\444gray40 ', 'cmd.color("grey40","'+s+'")'  ],
-        [ 1, '\\333gray30 ', 'cmd.color("grey30","'+s+'")'  ],
-        [ 1, '\\222gray20 ', 'cmd.color("grey20","'+s+'")'  ],
-        [ 1, '\\222gray10 ', 'cmd.color("grey10","'+s+'")'  ],
-        [ 1, '\\222black ', 'cmd.color("black","'+s+'")'  ],
+        [ 1, '\\999white ', 'cmd.color("white","'+sele+'")'  ],
+        [ 1, '\\999gray90 ', 'cmd.color("grey90","'+sele+'")'  ],
+        [ 1, '\\888gray80 ', 'cmd.color("grey80","'+sele+'")'  ],
+        [ 1, '\\777gray70 ', 'cmd.color("grey70","'+sele+'")'  ],
+        [ 1, '\\666gray60 ', 'cmd.color("grey60","'+sele+'")'  ],
+        [ 1, '\\555gray50 ', 'cmd.color("grey50","'+sele+'")'  ],
+        [ 1, '\\444gray40 ', 'cmd.color("grey40","'+sele+'")'  ],
+        [ 1, '\\333gray30 ', 'cmd.color("grey30","'+sele+'")'  ],
+        [ 1, '\\222gray20 ', 'cmd.color("grey20","'+sele+'")'  ],
+        [ 1, '\\222gray10 ', 'cmd.color("grey10","'+sele+'")'  ],
+        [ 1, '\\222black ', 'cmd.color("black","'+sele+'")'  ],
         ]
 
-def all_colors(s):
+def all_colors(self_cmd, sele):
     return [
-    [ 1, '\\900reds'        ,reds(s) ],
-    [ 1, '\\090greens'      ,greens(s) ],
-    [ 1, '\\009blues'       ,blues(s) ],
-    [ 1, '\\990yellows'      ,yellows(s) ],
-    [ 1, '\\909magentas'    , magentas(s) ],
-    [ 1, '\\099cyans'        , cyans(s) ],
-    [ 1, '\\950oranges'        , oranges(s) ],   
-    [ 1, '\\978tints'        ,tints(s) ],
-    [ 1, '\\666grays'        ,grays(s) ],
+    [ 1, '\\900reds'        ,reds(self_cmd, sele) ],
+    [ 1, '\\090greens'      ,greens(self_cmd, sele) ],
+    [ 1, '\\009blues'       ,blues(self_cmd, sele) ],
+    [ 1, '\\990yellows'      ,yellows(self_cmd, sele) ],
+    [ 1, '\\909magentas'    , magentas(self_cmd, sele) ],
+    [ 1, '\\099cyans'        , cyans(self_cmd, sele) ],
+    [ 1, '\\950oranges'        , oranges(self_cmd, sele) ],   
+    [ 1, '\\978tints'        ,tints(self_cmd, sele) ],
+    [ 1, '\\666grays'        ,grays(self_cmd, sele) ],
 #   [ 0, '', ''],
-#   [ 1, '\\900red'         ,'cmd.color("red","'+s+'")'  ],
-#   [ 1, '\\090green'       ,'cmd.color("green","'+s+'")'  ],
-#   [ 1, '\\009blue'        ,'cmd.color("blue","'+s+'")'  ],
-#   [ 1, '\\990yellow'      ,'cmd.color("yellow","'+s+'")'  ],
-#   [ 1, '\\909magenta' ,'cmd.color("magenta","'+s+'")'  ],
-#   [ 1, '\\099cyan'  ,'cmd.color("cyan","'+s+'")'  ],           
-#   [ 1, '\\955salmon'      ,'cmd.color("salmon","'+s+'")'  ],
-#   [1,  '\\940orange','cmd.color(13,"'+s+'")'],
+#   [ 1, '\\900red'         ,'cmd.color("red","'+sele+'")'  ],
+#   [ 1, '\\090green'       ,'cmd.color("green","'+sele+'")'  ],
+#   [ 1, '\\009blue'        ,'cmd.color("blue","'+sele+'")'  ],
+#   [ 1, '\\990yellow'      ,'cmd.color("yellow","'+sele+'")'  ],
+#   [ 1, '\\909magenta' ,'cmd.color("magenta","'+sele+'")'  ],
+#   [ 1, '\\099cyan'  ,'cmd.color("cyan","'+sele+'")'  ],           
+#   [ 1, '\\955salmon'      ,'cmd.color("salmon","'+sele+'")'  ],
+#   [1,  '\\940orange','cmd.color(13,"'+sele+'")'],
 #   
-#   [ 1, '\\555gray'    ,'cmd.color("gray","'+s+'")'  ],
-#   [ 1, '\\999white'       ,'cmd.color("white","'+s+'")'  ],
+#   [ 1, '\\555gray'    ,'cmd.color("gray","'+sele+'")'  ],
+#   [ 1, '\\999white'       ,'cmd.color("white","'+sele+'")'  ],
     
         ]
 
-def color_auto(s):
+def color_auto(self_cmd, sele):
     return [
         [ 2, 'Auto'     ,''                               ],
-        [ 1, 'elem c', 'cmd.color("auto","('+s+') and elem c")' ],
+        [ 1, 'elem c', 'cmd.color("auto","('+sele+') and elem c")' ],
         [ 0, ''                                , ''                 ],
-        [ 1, 'all','cmd.color("auto","'+s+'")' ],                  
+        [ 1, 'all','cmd.color("auto","'+sele+'")' ],                  
         [ 0, ''                                , ''                 ],
         [ 1, '\\900b\\950y \\090o\\099b\\059j\\999(e. c)',
-          'util.color_objs("('+s+' and elem c)")'],
+          'util.color_objs("('+sele+' and elem c)")'],
         [ 1, '\\900b\\950y \\090o\\099b\\059j',
-          'util.color_objs("('+s+')")'],
+          'util.color_objs("('+sele+')")'],
         ]
    
-def mol_color(s):
+def mol_color(self_cmd, sele):
     return (
         [[ 2, 'Color:'     ,''                               ],
-         [ 1, 'by element'  , by_elem(s) ],
-         [ 1, 'by chain' , by_chain(s) ],
-         [ 1, 'by ss  '  , by_ss(s) ],
-         [ 1, '\\900s\\950p\\990e\\090c\\099t\\059r\\009u\\555m', spectrum(s) ],
+         [ 1, 'by element'  , by_elem(self_cmd, sele) ],
+         [ 1, 'by chain' , by_chain(self_cmd, sele) ],
+         [ 1, 'by ss  '  , by_ss(self_cmd, sele) ],
+         [ 1, '\\900s\\950p\\990e\\090c\\099t\\059r\\009u\\555m', spectrum(self_cmd, sele) ],
          [ 0, ''                                , ''                 ],
-         [ 1, 'auto', color_auto(s) ],
+         [ 1, 'auto', color_auto(self_cmd, sele) ],
          [ 0, ''                                , ''                 ],         
          ] +
-        all_colors(s))
+        all_colors(self_cmd, sele))
 
-def general_color(s):
-    return [[ 2, 'Color:'     ,''                        ]] + all_colors(s)
+def general_color(self_cmd, sele):
+    return [[ 2, 'Color:'     ,''                        ]] + all_colors(self_cmd, sele)
 
-def preset_ligand_sites(s):
+def preset_ligand_sites(self_cmd, sele):
     return [[ 2, 'Ligand Sites:', ''],
-              [ 1, 'cartoon'   , 'preset.ligand_cartoon("'+s+'")'          ],
+              [ 1, 'cartoon'   , 'preset.ligand_cartoon("'+sele+'")'          ],
               [ 0, '', ''],
-              [ 1, 'solid surface'   , 'preset.ligand_sites("'+s+'")'          ],
-              [ 1, 'solid (better)'   , 'preset.ligand_sites_hq("'+s+'")'          ],
+              [ 1, 'solid surface'   , 'preset.ligand_sites("'+sele+'")'          ],
+              [ 1, 'solid (better)'   , 'preset.ligand_sites_hq("'+sele+'")'          ],
               [ 0, '', ''],
-              [ 1, 'transparent surface'   , 'preset.ligand_sites_trans("'+s+'")'          ],
-              [ 1, 'transparent (better)'   , 'preset.ligand_sites_trans_hq("'+s+'")'          ],
+              [ 1, 'transparent surface'   , 'preset.ligand_sites_trans("'+sele+'")'          ],
+              [ 1, 'transparent (better)'   , 'preset.ligand_sites_trans_hq("'+sele+'")'          ],
               [ 0, '', ''],
-              [ 1, 'dot surface'   , 'preset.ligand_sites_dots("'+s+'")'          ],
+              [ 1, 'dot surface'   , 'preset.ligand_sites_dots("'+sele+'")'          ],
               [ 0, '', ''],
-              [ 1, 'mesh surface'   , 'preset.ligand_sites_mesh("'+s+'")'          ]]
+              [ 1, 'mesh surface'   , 'preset.ligand_sites_mesh("'+sele+'")'          ]]
 
-def presets(s):
+def presets(self_cmd, sele):
     return [[ 2, 'Preset:'       ,''                        ],     
-              [ 1, 'simple'   ,'preset.simple("'+s+'")'          ],
-              [ 1, 'simple (no solvent)'   ,'preset.simple_no_solv("'+s+'")'          ],           
-              [ 1, 'ball and stick' , 'preset.ball_and_stick("'+s+'")' ],
-              [ 1, 'b factor putty' , 'preset.b_factor_putty("'+s+'")' ],
-              [ 1, 'technical'   , 'preset.technical("'+s+'")'          ],
-              [ 1, 'ligands'   , 'preset.ligands("'+s+'")'          ],
-              [ 1, 'ligand sites'   , preset_ligand_sites(s)         ],
-              [ 1, 'pretty ', 'preset.pretty("'+s+'")'          ],
-              [ 1, 'pretty (with solvent)'     , 'preset.pretty_solv("'+s+'")'          ],
-              [ 1, 'publication '   , 'preset.publication("'+s+'")'          ],
-              [ 1, 'publication (with solvent)'   , 'preset.pub_solv("'+s+'")'          ],
+              [ 1, 'simple'   ,'preset.simple("'+sele+'")'          ],
+              [ 1, 'simple (no solvent)'   ,'preset.simple_no_solv("'+sele+'")'          ],           
+              [ 1, 'ball and stick' , 'preset.ball_and_stick("'+sele+'")' ],
+              [ 1, 'b factor putty' , 'preset.b_factor_putty("'+sele+'")' ],
+              [ 1, 'technical'   , 'preset.technical("'+sele+'")'          ],
+              [ 1, 'ligands'   , 'preset.ligands("'+sele+'")'          ],
+              [ 1, 'ligand sites'   , preset_ligand_sites(self_cmd, sele)         ],
+              [ 1, 'pretty ', 'preset.pretty("'+sele+'")'          ],
+              [ 1, 'pretty (with solvent)'     , 'preset.pretty_solv("'+sele+'")'          ],
+              [ 1, 'publication '   , 'preset.publication("'+sele+'")'          ],
+              [ 1, 'publication (with solvent)'   , 'preset.pub_solv("'+sele+'")'          ],
               [ 0, ''               ,''                             ],                      
-              [ 1, 'default'   ,'preset.default("'+s+'")'          ],           
+              [ 1, 'default'   ,'preset.default("'+sele+'")'          ],           
               ]
 
-def hydrogens(s):
+def hydrogens(self_cmd, sele):
    return [[ 2, 'Hydrogens:'       ,''                        ],     
-           [ 1, 'add'   ,'cmd.h_add("'+s+'")'          ],           
-           [ 1, 'remove'   ,'cmd.remove("('+s+') and hydro")'          ],
+           [ 1, 'add'   ,'cmd.h_add("'+sele+'")'          ],           
+           [ 1, 'remove'   ,'cmd.remove("('+sele+') and hydro")'          ],
            ]
 
-def state(s):
+def state(self_cmd, sele):
     return [[ 2, 'State:'       ,''                        ],
-              [ 1, 'freeze'  ,'cmd.set("state",cmd.get_state(),"'+s+'")'        ],
-              [ 1, 'thaw'  ,'cmd.set("state",cmd.get("state","'+s+'"));cmd.unset("state","'+s+'")'        ],           
+              [ 1, 'freeze'  ,'cmd.set("state",cmd.get_state(),"'+sele+'")'        ],
+              [ 1, 'thaw'  ,'cmd.set("state",cmd.get("state","'+sele+'"));cmd.unset("state","'+sele+'")'        ],           
               ]
     
-def movement(s):
+def movement(self_cmd, sele):
     return [[ 2, 'Movement:'       ,''                        ],     
-              [ 1, 'protect'   ,'cmd.protect("'+s+'")'          ],
-              [ 1, 'deprotect'   ,'cmd.deprotect("'+s+'")'          ],           
+              [ 1, 'protect'   ,'cmd.protect("'+sele+'")'          ],
+              [ 1, 'deprotect'   ,'cmd.deprotect("'+sele+'")'          ],           
               ]
 
-def sequence(s):
+def sequence(self_cmd, sele):
     return [[ 2, 'Sequence:'       ,''                        ],     
-              [ 1, 'include'   ,'cmd.set("seq_view","on","'+s+'")'          ],
-              [ 1, 'exclude'   ,'cmd.set("seq_view","off","'+s+'")'          ],
+              [ 1, 'include'   ,'cmd.set("seq_view","on","'+sele+'")'          ],
+              [ 1, 'exclude'   ,'cmd.set("seq_view","off","'+sele+'")'          ],
               [ 0, ''               ,''                             ],                      
-              [ 1, 'default'   ,'cmd.unset("seq_view","'+s+'")'          ],                      
+              [ 1, 'default'   ,'cmd.unset("seq_view","'+sele+'")'          ],                      
               ]
 
-def masking(s):
+def masking(self_cmd, sele):
     return [[ 2, 'Masking:'       ,''                        ],     
-              [ 1, 'mask'   ,'cmd.mask("'+s+'")'          ],
-              [ 1, 'unmask'   ,'cmd.unmask("'+s+'")'          ],           
+              [ 1, 'mask'   ,'cmd.mask("'+sele+'")'          ],
+              [ 1, 'unmask'   ,'cmd.unmask("'+sele+'")'          ],           
               ]
 
-def compute(s):
+def compute(self_cmd, sele):
     return [[ 2, 'Compute:'       ,''                        ],     
-              [ 1, 'atom count'   ,'cmd.count_atoms("'+s+'",quiet=0)'          ],
+              [ 1, 'atom count'   ,'cmd.count_atoms("'+sele+'",quiet=0)'          ],
               [ 0, ''               ,''                             ],           
-              [ 1, 'formal charge sum'   ,'util.sum_formal_charges("'+s+'",quiet=0)'          ],
-              [ 1, 'partial charges sum'   ,'util.sum_partial_charges("'+s+'",quiet=0)'          ],                      
+              [ 1, 'formal charge sum'   ,'util.sum_formal_charges("'+sele+'",quiet=0)'          ],
+              [ 1, 'partial charges sum'   ,'util.sum_partial_charges("'+sele+'",quiet=0)'          ],                      
               ]
 
-def vacuum(s):
+def vacuum(self_cmd, sele):
     return [[ 2, 'Vacuum Electrostatics:'       ,''                        ],
 #              [ 2, '\\955WARNING:\\595 Unvalidated and experimental code!', '' ],
-              [ 1, 'protein contact potential (local)', 'util.protein_vacuum_esp("'+s+'",mode=2,quiet=0)'          ],
-#           [ 1, 'protein surface potential (absolute)', 'util.protein_vacuum_esp("'+s+'",mode=0,quiet=0)'          ],
-#           [ 1, 'protein surface potential (relative)', 'util.protein_vacuum_esp("'+s+'",mode=1,quiet=0)'          ],
+              [ 1, 'protein contact potential (local)', 'util.protein_vacuum_esp("'+sele+'",mode=2,quiet=0)'          ],
+#           [ 1, 'protein surface potential (absolute)', 'util.protein_vacuum_esp("'+sele+'",mode=0,quiet=0)'          ],
+#           [ 1, 'protein surface potential (relative)', 'util.protein_vacuum_esp("'+sele+'",mode=1,quiet=0)'          ],
               [ 2, '\\955NOTE:\\559 Due to short cutoffs, truncations, and', ''],
               [ 2, '\\559lack of solvent "screening", these computed ', ''],
               [ 2, '\\559potentials are only qualitatively useful.', ''],
               [ 2, '\\559Please view with skepticism!', '' ],
               ]
 
-def symmetry(s):
+def symmetry(self_cmd, sele):
     return [[ 2, 'Symmetry Mates:'       ,''                        ],
               [ 2, '\\955 +/- one unit cell and...', '' ],
-              [ 1, 'within 4 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=4,segi=1)'          ],
-              [ 1, 'within 5 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=5,segi=1)'          ],
-              [ 1, 'within 6 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=6,segi=1)'          ],
-              [ 1, 'within 8 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=8,segi=1)'          ],
-              [ 1, 'within 12 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=12,segi=1)'          ],
-              [ 1, 'within 20 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=20,segi=1)'          ],
-              [ 1, 'within 50 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=50,segi=1)'          ],
-              [ 1, 'within 100 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=100,segi=1)'          ],
-              [ 1, 'within 250 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=250,segi=1)'          ],
-              [ 1, 'within 1000 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=1000,segi=1)'          ]]
+              [ 1, 'within 4 A', 'cmd.symexp("'+sele+'_","'+sele+'","'+sele+'",cutoff=4,segi=1)'          ],
+              [ 1, 'within 5 A', 'cmd.symexp("'+sele+'_","'+sele+'","'+sele+'",cutoff=5,segi=1)'          ],
+              [ 1, 'within 6 A', 'cmd.symexp("'+sele+'_","'+sele+'","'+sele+'",cutoff=6,segi=1)'          ],
+              [ 1, 'within 8 A', 'cmd.symexp("'+sele+'_","'+sele+'","'+sele+'",cutoff=8,segi=1)'          ],
+              [ 1, 'within 12 A', 'cmd.symexp("'+sele+'_","'+sele+'","'+sele+'",cutoff=12,segi=1)'          ],
+              [ 1, 'within 20 A', 'cmd.symexp("'+sele+'_","'+sele+'","'+sele+'",cutoff=20,segi=1)'          ],
+              [ 1, 'within 50 A', 'cmd.symexp("'+sele+'_","'+sele+'","'+sele+'",cutoff=50,segi=1)'          ],
+              [ 1, 'within 100 A', 'cmd.symexp("'+sele+'_","'+sele+'","'+sele+'",cutoff=100,segi=1)'          ],
+              [ 1, 'within 250 A', 'cmd.symexp("'+sele+'_","'+sele+'","'+sele+'",cutoff=250,segi=1)'          ],
+              [ 1, 'within 1000 A', 'cmd.symexp("'+sele+'_","'+sele+'","'+sele+'",cutoff=1000,segi=1)'          ]]
 
-def mol_assign(s):
+def mol_assign(self_cmd, sele):
     return [[ 2, 'Assign:'       ,''                        ],     
-              [ 1, 'Amber 99 atomic properties',  'util.assign_amber99("'+s+'")' ],
+              [ 1, 'Amber 99 atomic properties',  'util.assign_amber99("'+sele+'")' ],
               ]
 
-def selection(s):
+def selection(self_cmd, sele):
     return [[ 2, 'Selections:', '' ],
-              [ 1, 'all', 'cmd.select("'+s+'_all","'+s+'")'],
-              [ 1, 'polymer', 'cmd.select("'+s+'_polymer","('+s+') and polymer")'],
-              [ 1, 'organic', 'cmd.select("'+s+'_organic","('+s+') and organic")'],
-              [ 1, 'solvent', 'cmd.select("'+s+'_solvent","('+s+') and solvent")'],           
+              [ 1, 'all', 'cmd.select("'+sele+'_all","'+sele+'")'],
+              [ 1, 'polymer', 'cmd.select("'+sele+'_polymer","('+sele+') and polymer")'],
+              [ 1, 'organic', 'cmd.select("'+sele+'_organic","('+sele+') and organic")'],
+              [ 1, 'solvent', 'cmd.select("'+sele+'_solvent","('+sele+') and solvent")'],           
               ]
 
-def mol_generate(s):
+def mol_generate(self_cmd, sele):
     return [[ 2, 'Generate:'       ,''                        ],
-              [ 1, 'selection', selection(s) ],
-              [ 1, 'symmetry mates', symmetry(s) ],
-              [ 1, 'vacuum electrostatics', vacuum(s) ],
-#           [ 1, 'assign', mol_assign(s) ],
+              [ 1, 'selection', selection(self_cmd, sele) ],
+              [ 1, 'symmetry mates', symmetry(self_cmd, sele) ],
+              [ 1, 'vacuum electrostatics', vacuum(self_cmd, sele) ],
+#           [ 1, 'assign', mol_assign(self_cmd, sele) ],
               ]
     
-def invert(s):
+def invert(self_cmd, sele):
     return [[ 2, 'Invert:'       ,''                        ],     
-              [ 1, 'within object(s)'     ,'cmd.select("'+s+'","((byobj '+s+') and not '+s+')",enable=1)'    ],
-              [ 1, 'within segments(s)'     ,'cmd.select("'+s+'","((byseg '+s+') and not '+s+')",enable=1)'    ],           
-              [ 1, 'within chains(s)'     ,'cmd.select("'+s+'","((bychain '+s+') and not '+s+')",enable=1)'    ],
-              [ 1, 'within residues(s)'   ,'cmd.select("'+s+'","((byres '+s+') and not '+s+')",enable=1)'    ],                      
+              [ 1, 'within object(s)'     ,'cmd.select("'+sele+'","((byobj '+sele+') and not '+sele+')",enable=1)'    ],
+              [ 1, 'within segment(s)'     ,'cmd.select("'+sele+'","((byseg '+sele+') and not '+sele+')",enable=1)'    ],           
+              [ 1, 'within chain(s)'     ,'cmd.select("'+sele+'","((bychain '+sele+') and not '+sele+')",enable=1)'    ],
+              [ 1, 'within residue(s)'   ,'cmd.select("'+sele+'","((byres '+sele+') and not '+sele+')",enable=1)'    ],                      
               [ 0, ''               ,''                             ],
-              [ 1, 'within molecule(s)'     ,'cmd.select("'+s+'","((bymol '+s+') and not '+s+')",enable=1)'    ],
+              [ 1, 'within molecule(s)'     ,'cmd.select("'+sele+'","((bymol '+sele+') and not '+sele+')",enable=1)'    ],
               [ 0, ''               ,''                             ],
-              [ 1, 'within any'     ,'cmd.select("'+s+'","(not '+s+')",enable=1)'    ],
+              [ 1, 'within any'     ,'cmd.select("'+sele+'","(not '+sele+')",enable=1)'    ],
               ]
 
-def complete(s):
+def complete(self_cmd, sele):
     return [[ 2, 'Complete:'       ,''                        ],     
 
-              [ 1, 'resides'  ,'cmd.select("'+s+'","(byres '+s+')",enable=1)'      ],
-              [ 1, 'chains'  ,'cmd.select("'+s+'","(bychain '+s+')",enable=1)'      ],
-              [ 1, 'segments'  ,'cmd.select("'+s+'","(byseg '+s+')",enable=1)'      ],
-              [ 1, 'objects'  ,'cmd.select("'+s+'","(byobj '+s+')",enable=1)'      ],
+              [ 1, 'resides'  ,'cmd.select("'+sele+'","(byres '+sele+')",enable=1)'      ],
+              [ 1, 'chains'  ,'cmd.select("'+sele+'","(bychain '+sele+')",enable=1)'      ],
+              [ 1, 'segments'  ,'cmd.select("'+sele+'","(byseg '+sele+')",enable=1)'      ],
+              [ 1, 'objects'  ,'cmd.select("'+sele+'","(byobj '+sele+')",enable=1)'      ],
               [ 0, ''               ,''                             ],           
-              [ 1, 'molecules'  ,'cmd.select("'+s+'","(bymol '+s+')",enable=1)'      ],
+              [ 1, 'molecules'  ,'cmd.select("'+sele+'","(bymol '+sele+')",enable=1)'      ],
               [ 0, ''               ,''                             ],
-              [ 1, 'C-alphas'  ,'cmd.select("'+s+'","(bycalpha '+s+')",enable=1)'      ],           
+              [ 1, 'C-alphas'  ,'cmd.select("'+sele+'","(bycalpha '+sele+')",enable=1)'      ],           
               ]
 
-def modify_by_object(s,op):
+def modify_by_object(self_cmd, sele, op):
     list = cmd.get_names("public_objects",1)[0:25] # keep this practical
     list = filter(lambda x:cmd.get_type(x)=="object:molecule",list)
     result = [[ 2, 'Object:', '']]
     for a in list:
         if a!=s:
             result.append([1,a,
-                                'cmd.select("'+s+'","('+s+') '+op+' ('+a+')",enable=1)'])
+                                'cmd.select("'+sele+'","('+sele+') '+op+' ('+a+')",enable=1)'])
     return result
 
-def modify_by_sele(s,op):
+def modify_by_sele(self_cmd, sele, op):
     list = cmd.get_names("public_selections",0)[0:25] # keep this practical
     result = [[ 2, 'Selection:', '']]
     for a in list:
         if a!=s:
             result.append([1,a,
-                                'cmd.select("'+s+'","('+s+') '+op+' ('+a+')",enable=1)'])
+                                'cmd.select("'+sele+'","('+sele+') '+op+' ('+a+')",enable=1)'])
     return result
 
-def restrict(s):
+def restrict(self_cmd, sele):
     return [[ 2, 'Restrict:'       ,''                        ],     
-            [ 1, 'to object'   , modify_by_object(s,'and') ],
-            [ 1, 'to selection' , modify_by_sele(s,'and') ],
+            [ 1, 'to object'   , modify_by_object(self_cmd, sele,'and') ],
+            [ 1, 'to selection' , modify_by_sele(self_cmd, sele,'and') ],
             [ 0, ''               ,''                             ],           
-            [ 1, 'to visible'   , 'cmd.select("'+s+'","('+s+') and vis",enable=1)'],
+            [ 1, 'to visible'   , 'cmd.select("'+sele+'","('+sele+') and vis",enable=1)'],
             [ 0, ''               ,''                             ],
-            [ 1, 'to polymer'   , 'cmd.select("'+s+'","('+s+') and polymer",enable=1)'],
-            [ 1, 'to solvent'   , 'cmd.select("'+s+'","('+s+') and solvent",enable=1)'],
-            [ 1, 'to organic'   , 'cmd.select("'+s+'","('+s+') and organic",enable=1)'],
-            [ 1, 'to inorganic'   , 'cmd.select("'+s+'","('+s+') and inorganic",enable=1)'],
+            [ 1, 'to polymer'   , 'cmd.select("'+sele+'","('+sele+') and polymer",enable=1)'],
+            [ 1, 'to solvent'   , 'cmd.select("'+sele+'","('+sele+') and solvent",enable=1)'],
+            [ 1, 'to organic'   , 'cmd.select("'+sele+'","('+sele+') and organic",enable=1)'],
+            [ 1, 'to inorganic'   , 'cmd.select("'+sele+'","('+sele+') and inorganic",enable=1)'],
             ]
 
-def include(s):
+def include(self_cmd, sele):
     return [[ 2, 'Include:'       ,''                        ],     
-              [ 1, 'object'   , modify_by_object(s,'or') ],
-              [ 1, 'selection' , modify_by_sele(s,'or') ],
+              [ 1, 'object'   , modify_by_object(self_cmd, sele,'or') ],
+              [ 1, 'selection' , modify_by_sele(self_cmd, sele,'or') ],
               [ 0, ''               ,''                             ],           
-              [ 1, 'visible'   , 'cmd.select("'+s+'","('+s+') or vis",enable=1)'],
+              [ 1, 'visible'   , 'cmd.select("'+sele+'","('+sele+') or vis",enable=1)'],
               ]
 
-def exclude(s):
+def exclude(self_cmd, sele):
     return [[ 2, 'Exclude:'       ,''                        ],     
-            [ 1, 'object'   , modify_by_object(s,'and not') ],
-            [ 1, 'selection' , modify_by_sele(s,'and not') ],
+            [ 1, 'object'   , modify_by_object(self_cmd, sele,'and not') ],
+            [ 1, 'selection' , modify_by_sele(self_cmd, sele,'and not') ],
             [ 0, ''               ,''                             ],           
-            [ 1, 'polymer'   , 'cmd.select("'+s+'","('+s+') and not organic",enable=1)'],
-            [ 1, 'solvent'   , 'cmd.select("'+s+'","('+s+') and not solvent",enable=1)'],
-            [ 1, 'organic'   , 'cmd.select("'+s+'","('+s+') and not organic",enable=1)'],
-            [ 1, 'inorganic' , 'cmd.select("'+s+'","('+s+') and not organic",enable=1)'],
+            [ 1, 'polymer'   , 'cmd.select("'+sele+'","('+sele+') and not organic",enable=1)'],
+            [ 1, 'solvent'   , 'cmd.select("'+sele+'","('+sele+') and not solvent",enable=1)'],
+            [ 1, 'organic'   , 'cmd.select("'+sele+'","('+sele+') and not organic",enable=1)'],
+            [ 1, 'inorganic' , 'cmd.select("'+sele+'","('+sele+') and not organic",enable=1)'],
             ]
 
-def expand(s):
+def expand(self_cmd, sele):
     return [[ 2, 'Expand:'       ,''                        ],     
-              [ 1, 'by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)",enable=1)' ],
-              [ 1, 'by 5 A'  ,'cmd.select("'+s+'","('+s+' expand 5)",enable=1)' ],
-              [ 1, 'by 6 A'  ,'cmd.select("'+s+'","('+s+' expand 6)",enable=1)' ],           
-              [ 1, 'by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)",enable=1)' ],
-              [ 1, 'by 12 A'  ,'cmd.select("'+s+'","('+s+' expand 12)",enable=1)' ],
-              [ 1, 'by 20 A'  ,'cmd.select("'+s+'","('+s+' expand 20)",enable=1)' ],           
+              [ 1, 'by 4 A'  ,'cmd.select("'+sele+'","('+sele+' expand 4)",enable=1)' ],
+              [ 1, 'by 5 A'  ,'cmd.select("'+sele+'","('+sele+' expand 5)",enable=1)' ],
+              [ 1, 'by 6 A'  ,'cmd.select("'+sele+'","('+sele+' expand 6)",enable=1)' ],           
+              [ 1, 'by 8 A'  ,'cmd.select("'+sele+'","('+sele+' expand 8)",enable=1)' ],
+              [ 1, 'by 12 A'  ,'cmd.select("'+sele+'","('+sele+' expand 12)",enable=1)' ],
+              [ 1, 'by 20 A'  ,'cmd.select("'+sele+'","('+sele+' expand 20)",enable=1)' ],           
               [ 0, ''               ,''                             ],
-              [ 1, 'by 4 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 4))",enable=1)' ],
-              [ 1, 'by 5 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 5))",enable=1)' ],
-              [ 1, 'by 6 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 6))",enable=1)' ],
-              [ 1, 'by 8 A, residues'   ,'cmd.select("'+s+'","(byres ('+s+' expand 8))",enable=1)' ],
-              [ 1, 'by 12 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 12))",enable=1)' ],
-              [ 1, 'by 20 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 20))",enable=1)' ],
+              [ 1, 'by 4 A, residues'  ,'cmd.select("'+sele+'","(byres ('+sele+' expand 4))",enable=1)' ],
+              [ 1, 'by 5 A, residues'  ,'cmd.select("'+sele+'","(byres ('+sele+' expand 5))",enable=1)' ],
+              [ 1, 'by 6 A, residues'  ,'cmd.select("'+sele+'","(byres ('+sele+' expand 6))",enable=1)' ],
+              [ 1, 'by 8 A, residues'   ,'cmd.select("'+sele+'","(byres ('+sele+' expand 8))",enable=1)' ],
+              [ 1, 'by 12 A, residues'  ,'cmd.select("'+sele+'","(byres ('+sele+' expand 12))",enable=1)' ],
+              [ 1, 'by 20 A, residues'  ,'cmd.select("'+sele+'","(byres ('+sele+' expand 20))",enable=1)' ],
               ]
 
-def around(s):
+def around(self_cmd, sele):
     return [[ 2, 'Around:'       ,''                        ],     
-              [ 1, 'atoms within 4 A'  ,'cmd.select("'+s+'","('+s+' around 4)",enable=1)' ],
-              [ 1, 'atoms within 5 A'  ,'cmd.select("'+s+'","('+s+' around 5)",enable=1)' ],           
-              [ 1, 'atoms within 6 A'  ,'cmd.select("'+s+'","('+s+' around 6)",enable=1)' ],           
-              [ 1, 'atoms within 8 A'  ,'cmd.select("'+s+'","('+s+' around 8)",enable=1)' ],
-              [ 1, 'atoms within 12 A'  ,'cmd.select("'+s+'","('+s+' around 12)",enable=1)' ],
-              [ 1, 'atoms within 20 A'  ,'cmd.select("'+s+'","('+s+' around 20)",enable=1)' ],
+              [ 1, 'atoms within 4 A'  ,'cmd.select("'+sele+'","('+sele+' around 4)",enable=1)' ],
+              [ 1, 'atoms within 5 A'  ,'cmd.select("'+sele+'","('+sele+' around 5)",enable=1)' ],           
+              [ 1, 'atoms within 6 A'  ,'cmd.select("'+sele+'","('+sele+' around 6)",enable=1)' ],           
+              [ 1, 'atoms within 8 A'  ,'cmd.select("'+sele+'","('+sele+' around 8)",enable=1)' ],
+              [ 1, 'atoms within 12 A'  ,'cmd.select("'+sele+'","('+sele+' around 12)",enable=1)' ],
+              [ 1, 'atoms within 20 A'  ,'cmd.select("'+sele+'","('+sele+' around 20)",enable=1)' ],
               [ 0, ''               ,''                             ],           
-              [ 1, 'residues within 4 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 4))",enable=1)' ],
-              [ 1, 'residues within 5 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 5))",enable=1)' ],           
-              [ 1, 'residues within 6 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 6))",enable=1)' ],
-              [ 1, 'residues within 8 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 8))",enable=1)' ],
-              [ 1, 'residues within 12 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 12))",enable=1)' ],
-              [ 1, 'residues within 20 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 20))",enable=1)' ],                                 
+              [ 1, 'residues within 4 A'  ,'cmd.select("'+sele+'","(byres ('+sele+' around 4))",enable=1)' ],
+              [ 1, 'residues within 5 A'  ,'cmd.select("'+sele+'","(byres ('+sele+' around 5))",enable=1)' ],           
+              [ 1, 'residues within 6 A'  ,'cmd.select("'+sele+'","(byres ('+sele+' around 6))",enable=1)' ],
+              [ 1, 'residues within 8 A'  ,'cmd.select("'+sele+'","(byres ('+sele+' around 8))",enable=1)' ],
+              [ 1, 'residues within 12 A'  ,'cmd.select("'+sele+'","(byres ('+sele+' around 12))",enable=1)' ],
+              [ 1, 'residues within 20 A'  ,'cmd.select("'+sele+'","(byres ('+sele+' around 20))",enable=1)' ],                                 
               ]
     
-def extend(s):
+def extend(self_cmd, sele):
     return [[ 2, 'Extend:'       ,''                        ],     
-              [ 1, 'by 1 bond'  ,'cmd.select("'+s+'","('+s+' extend 1)",enable=1)' ],
-              [ 1, 'by 2 bonds'  ,'cmd.select("'+s+'","('+s+' extend 2)",enable=1)' ],           
-              [ 1, 'by 3 bonds'  ,'cmd.select("'+s+'","('+s+' extend 3)",enable=1)' ],
-              [ 1, 'by 4 bonds'  ,'cmd.select("'+s+'","('+s+' extend 4)",enable=1)' ],
-              [ 1, 'by 5 bonds'  ,'cmd.select("'+s+'","('+s+' extend 5)",enable=1)' ],
-              [ 1, 'by 6 bonds'  ,'cmd.select("'+s+'","('+s+' extend 6)",enable=1)' ],           
+              [ 1, 'by 1 bond'  ,'cmd.select("'+sele+'","('+sele+' extend 1)",enable=1)' ],
+              [ 1, 'by 2 bonds'  ,'cmd.select("'+sele+'","('+sele+' extend 2)",enable=1)' ],           
+              [ 1, 'by 3 bonds'  ,'cmd.select("'+sele+'","('+sele+' extend 3)",enable=1)' ],
+              [ 1, 'by 4 bonds'  ,'cmd.select("'+sele+'","('+sele+' extend 4)",enable=1)' ],
+              [ 1, 'by 5 bonds'  ,'cmd.select("'+sele+'","('+sele+' extend 5)",enable=1)' ],
+              [ 1, 'by 6 bonds'  ,'cmd.select("'+sele+'","('+sele+' extend 6)",enable=1)' ],           
               [ 0, ''               ,''                             ],
-              [ 1, 'by 1 bond, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 1))",enable=1)' ],
-              [ 1, 'by 2 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 2))",enable=1)' ],
-              [ 1, 'by 3 bonds, residues'   ,'cmd.select("'+s+'","(byres ('+s+' extend 3))",enable=1)' ],
-              [ 1, 'by 4 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 4))",enable=1)' ],
-              [ 1, 'by 5 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 5))",enable=1)' ],
-              [ 1, 'by 6 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 6))",enable=1)' ],
+              [ 1, 'by 1 bond, residues'  ,'cmd.select("'+sele+'","(byres ('+sele+' extend 1))",enable=1)' ],
+              [ 1, 'by 2 bonds, residues'  ,'cmd.select("'+sele+'","(byres ('+sele+' extend 2))",enable=1)' ],
+              [ 1, 'by 3 bonds, residues'   ,'cmd.select("'+sele+'","(byres ('+sele+' extend 3))",enable=1)' ],
+              [ 1, 'by 4 bonds, residues'  ,'cmd.select("'+sele+'","(byres ('+sele+' extend 4))",enable=1)' ],
+              [ 1, 'by 5 bonds, residues'  ,'cmd.select("'+sele+'","(byres ('+sele+' extend 5))",enable=1)' ],
+              [ 1, 'by 6 bonds, residues'  ,'cmd.select("'+sele+'","(byres ('+sele+' extend 6))",enable=1)' ],
               ]
 
-def polar(s):
+def polar(self_cmd, sele):
     return [[ 2, 'Polar Contacts:', ''],
               [ 1, 'within selection'  ,
-                 'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","'+sele+'","'+sele+'",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'involving side chains'  ,
-                 'cmd.dist("'+s+'_polar_conts","('+s+')","('+s+
-                 ') and polymer and not (name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+')","('+sele+
+                 ') and polymer and not (name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'involving solvent'  ,
-                 'cmd.dist("'+s+'_polar_conts","('+s+') and solvent","('+s+
-                 ') and not (solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') and solvent","('+sele+
+                 ') and not (solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'excluding solvent'  ,
-                 'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent)","('+s+
-                 ') and not (solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') and not (solvent)","('+sele+
+                 ') and not (solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'excluding main chain'  ,
-                 'cmd.dist("'+s+'_polar_conts","('+s+') and not (polymer and name n,o,h)","('+s+
-                 ') and not (polymer and name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') and not (polymer and name n,o,h)","('+sele+
+                 ') and not (polymer and name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'excluding intra-main chain'  ,
-                 'cmd.dist("'+s+'_polar_conts","('+s+')","('+s+
-                 ') and not (polymer and name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+')","('+sele+
+                 ') and not (polymer and name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'just intra-side chain'  ,
-                 'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and name n,o,h))","('+s+
-                 ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') and not (solvent or (polymer and name n,o,h))","('+sele+
+                 ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+
                  '_polar_conts")'],
               [ 1, 'just intra-main chain'  ,
-                 'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and not name n,o,h))","('+s+
-                 ') and not (solvent or (polymer and not name n,o,h))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') and not (solvent or (polymer and not name n,o,h))","('+sele+
+                 ') and not (solvent or (polymer and not name n,o,h))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+
                  '_polar_conts")'],
               [ 0, '', '' ],
               [ 1, 'to other atoms in object',
-                 'cmd.dist("'+s+'_polar_conts","('+s+')","(byobj ('+s+')) and (not ('+s+
-                 '))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+')","(byobj ('+sele+')) and (not ('+sele+
+                 '))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'to others excluding solvent',
-                 'cmd.dist("'+s+'_polar_conts","('+s+') and not solvent","(byobj ('+s+')) and (not ('+s+
-                 ')) and (not solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') and not solvent","(byobj ('+sele+')) and (not ('+sele+
+                 ')) and (not solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'to any atoms',
-                 'cmd.dist("'+s+'_polar_conts","('+s+')","(not '+s+
-                 ')",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+')","(not '+sele+
+                 ')",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               [ 1, 'to any excluding solvent',
-                 'cmd.dist("'+s+'_polar_conts","('+s+') and not solvent","(not ('+s+
-                 ')) and not solvent",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+sele+'_polar_conts","('+sele+') and not solvent","(not ('+sele+
+                 ')) and not solvent",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+sele+'_polar_conts")'],
               ]
 
-def polar_inter(s):
+def polar_inter(self_cmd, sele):
     return [[ 2, 'Polar Contacts:', ''],
               ]
 
-def find(s):
+def find(self_cmd, sele):
     return [[ 2, 'Find:', ''],
-              [ 1, 'polar contacts', polar(s) ],
+              [ 1, 'polar contacts', polar(self_cmd, sele) ],
               ]
 
-def align_to_object(s):
-    list = cmd.get_names("public_objects",1)[0:25] # keep this practical
-    list = filter(lambda x:cmd.get_type(x)=="object:molecule",list)
+def align_to_object(self_cmd, sele):
+    list = self_cmd.get_names("public_objects",1)[0:25] # keep this practical
+    list = filter(lambda x:self_cmd.get_type(x)=="object:molecule",list)
     result = [[ 2, 'Object:', '']]
     for a in list:
-        if a!=s:
+        if a!=sele:
             result.append([1,a,
-                           'cmd.align("polymer and name ca and ('+s+')",'+
+                           'cmd.align("polymer and name ca and ('+sele+')",'+
                            '"polymer and name ca and ('+a+')",max_gap=50,quiet=0,'+
-                           'object="aln_%s_to_%s",reset=1)'%(s,a)])
+                           'object="aln_%s_to_%s",reset=1)'%(sele,a)])
     return result
 
-def align_to_sele(s):
-    list = cmd.get_names("public_selections",0)[0:25] # keep this practical
+def align_to_sele(self_cmd, sele):
+    list = self_cmd.get_names("public_selections",0)[0:25] # keep this practical
     result = [[ 2, 'Selection:', '']]
     for a in list:
-        if a!=s:
+        if a!= sele:
             result.append([1,a,
-                           'cmd.align("polymer and name ca and ('+s+')",'+
+                           'cmd.align("polymer and name ca and ('+sele+')",'+
                            '"polymer and name ca and ('+a+')",max_gap=50,quiet=0,'+
-                           'object="aln_%s_to_%s",reset=1)'%(s,a)])
+                           'object="aln_%s_to_%s",reset=1)'%(sele,a)])
     return result
 
-def mat_tran(s,direction=0):
-    list = cmd.get_names("public_objects",1)[0:25] # keep this practical
-    list = filter(lambda x:cmd.get_type(x)=="object:molecule",list)
+def mat_tran(self_cmd, sele, direction=0):
+    list = self_cmd.get_names("public_objects",1)[0:25] # keep this practical
+    list = filter(lambda x:self_cmd.get_type(x)=="object:molecule",list)
     result = [[ 2, 'Object:', '']]
     for a in list:
-        if a!=s:
+        if a!=sele:
             if direction:
                 result.append([1,a,
-                                    'cmd.matrix_transfer("'+a+'","'+s+'");'])
+                                    'cmd.matrix_transfer("'+a+'","'+sele+'");'])
             else:
                 result.append([1,a,
-                                    'cmd.matrix_transfer("'+s+'","'+a+'");'])
+                                    'cmd.matrix_transfer("'+sele+'","'+a+'");'])
     return result
 
 
-def sele_align(s):
+def sele_align(self_cmd, sele):
     return [[ 2, 'Align:', ''],
-              [ 1, 'to molecule', align_to_object(s) ],
-              [ 1, 'to selection', align_to_sele(s) ],
+              [ 1, 'to molecule', align_to_object(self_cmd, sele) ],
+              [ 1, 'to selection', align_to_sele(self_cmd, sele) ],
               [ 0, '', None ],
-              [ 1, 'enabled to this', 'util.mass_align("'+s+'",1)' ],                                 
-              [ 1, 'all to this', 'util.mass_align("'+s+'",0)' ],
+              [ 1, 'enabled to this', 'util.mass_align("'+sele+'",1)' ],                                 
+              [ 1, 'all to this', 'util.mass_align("'+sele+'",0)' ],
               [ 0, '', None ],
-              [ 1, 'states (*/ca)', 'cmd.intra_fit("('+s+') and name ca")' ],                        
-              [ 1, 'states', 'cmd.intra_fit("'+s+'")' ],
+              [ 1, 'states (*/ca)', 'cmd.intra_fit("('+sele+') and name ca")' ],                        
+              [ 1, 'states', 'cmd.intra_fit("'+sele+'")' ],
               ]
 
-def mol_align(s):
+def mol_align(self_cmd, sele):
     return [[ 2, 'Align:', ''],
-              [ 1, 'to molecule', align_to_object(s) ],
-              [ 1, 'to selection', align_to_sele(s) ],
+              [ 1, 'to molecule', align_to_object(self_cmd, sele) ],
+              [ 1, 'to selection', align_to_sele(self_cmd, sele) ],
               [ 0, '', None ],
-              [ 1, 'enabled to this', 'util.mass_align("'+s+'",1)' ],                                 
-              [ 1, 'all to this', 'util.mass_align("'+s+'",0)' ],
+              [ 1, 'enabled to this', 'util.mass_align("'+sele+'",1)' ],                                 
+              [ 1, 'all to this', 'util.mass_align("'+sele+'",0)' ],
               [ 0, '', None ],
-              [ 1, 'states (*/ca)', 'cmd.intra_fit("('+s+') and name ca")' ],                        
-              [ 1, 'states', 'cmd.intra_fit("'+s+'")' ],
+              [ 1, 'states (*/ca)', 'cmd.intra_fit("('+sele+') and name ca")' ],                        
+              [ 1, 'states', 'cmd.intra_fit("'+sele+'")' ],
               [ 0, '', None ],
-              [ 1, 'matrix from', mat_tran(s,1) ],
-              [ 1, 'matrix to', mat_tran(s,0) ],
-              [ 1, 'matrix reset', 'cmd.matrix_reset("'+s+'")'],
+              [ 1, 'matrix from', mat_tran(self_cmd, sele,1) ],
+              [ 1, 'matrix to', mat_tran(self_cmd, sele,0) ],
+              [ 1, 'matrix reset', 'cmd.matrix_reset("'+sele+'")'],
               ]
 
-def modify_sele(s):
+def modify_sele(self_cmd, sele):
     return [[ 2, 'Modify:', ''],
-              [ 1, 'around'         , around(s)         ],           
-              [ 1, 'expand'         , expand(s)         ],
-              [ 1, 'extend'         , extend(s)         ],
-              [ 1, 'invert'         , invert(s)         ],
-              [ 1, 'complete'       , complete(s)         ],
-              [ 1, 'restrict'       , restrict(s)       ],
-              [ 1, 'include'        , include(s)       ],
-              [ 1, 'exclude'        , exclude(s)       ]]
+              [ 1, 'around'         , around(self_cmd, sele)         ],           
+              [ 1, 'expand'         , expand(self_cmd, sele)         ],
+              [ 1, 'extend'         , extend(self_cmd, sele)         ],
+              [ 1, 'invert'         , invert(self_cmd, sele)         ],
+              [ 1, 'complete'       , complete(self_cmd, sele)         ],
+              [ 1, 'restrict'       , restrict(self_cmd, sele)       ],
+              [ 1, 'include'        , include(self_cmd, sele)       ],
+              [ 1, 'exclude'        , exclude(self_cmd, sele)       ]]
 
               
-def sele_action(s):
+def sele_action(self_cmd, sele):
     return [[ 2, 'Actions:'       ,''                        ],     
-              [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
-              [ 1, 'rename selection', 'cmd.wizard("renaming","'+s+'")'          ],
+              [ 1, 'delete selection', 'cmd.delete("'+sele+'")'          ],
+              [ 1, 'rename selection', 'cmd.wizard("renaming","'+sele+'")'          ],
               [ 0, ''               ,''                             ],
-              [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
-              [ 1, 'orient'         ,'cmd.orient("'+s+'",animate=-1)'          ],
-              [ 1, 'center'         ,'cmd.center("'+s+'",animate=-1)'            ],           
-              [ 1, 'origin'         ,'cmd.origin("'+s+'")'          ],
+              [ 1, 'zoom'           ,'cmd.zoom("'+sele+'",animate=-1)'            ],
+              [ 1, 'orient'         ,'cmd.orient("'+sele+'",animate=-1)'          ],
+              [ 1, 'center'         ,'cmd.center("'+sele+'",animate=-1)'            ],           
+              [ 1, 'origin'         ,'cmd.origin("'+sele+'")'          ],
               [ 0, ''               ,''                             ],
-              [ 1, 'drag'       , 'cmd.drag("'+s+'")'    ],                        
+              [ 1, 'drag'       , 'cmd.drag("'+sele+'")'    ],                        
               [ 0, ''               ,''                             ],
-              [ 1, 'modify', modify_sele(s) ],
-              [ 1, 'preset'         ,presets(s)         ],
-              [ 1, 'find', find(s) ],
-              [ 1, 'align', sele_align(s) ],
+              [ 1, 'modify', modify_sele(self_cmd, sele) ],
+              [ 1, 'preset'         ,presets(self_cmd, sele)         ],
+              [ 1, 'find', find(self_cmd, sele) ],
+              [ 1, 'align', sele_align(self_cmd, sele) ],
               [ 0, ''               ,''                             ],
-              [ 1, 'remove atoms'   ,'cmd.remove("'+s+'");cmd.delete("'+s+'")'          ],
+              [ 1, 'remove atoms'   ,'cmd.remove("'+sele+'");cmd.delete("'+sele+'")'          ],
               [ 0, ''          ,''                                              ],
-              [ 1, 'duplicate'      ,'cmd.select(None,"'+s+'")'          ], # broken...
-              [ 1, 'copy to object' ,'cmd.create(None,"'+s+'",zoom=0)'     ],
-              [ 1, 'extract object' ,'cmd.extract(None,"'+s+'",zoom=0)' ],
+              [ 1, 'duplicate'      ,'cmd.select(None,"'+sele+'")'          ], # broken...
+              [ 1, 'copy to object' ,'cmd.create(None,"'+sele+'",zoom=0)'     ],
+              [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
               [ 0, ''          ,''                                  ],
-              [ 1, 'masking'        , masking(s)         ],
-              [ 1, 'movement'       , movement(s)         ],
-              [ 1, 'compute'        , compute(s) ],
+              [ 1, 'masking'        , masking(self_cmd, sele)         ],
+              [ 1, 'movement'       , movement(self_cmd, sele)         ],
+              [ 1, 'compute'        , compute(self_cmd, sele) ],
               ]
 
 
-def sele_action2(s):
+def sele_action2(self_cmd, sele):
     return [[ 2, 'Actions:'       ,''                        ],     
-              [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
-              [ 1, 'rename selection', 'cmd.wizard("renaming","'+s+'")'          ],
+              [ 1, 'delete selection', 'cmd.delete("'+sele+'")'          ],
+              [ 1, 'rename selection', 'cmd.wizard("renaming","'+sele+'")'          ],
               [ 0, ''               ,''                             ],
-              [ 1, 'preset'         ,presets(s)         ],
-              [ 1, 'find', find(s) ],
+              [ 1, 'preset'         ,presets(self_cmd, sele)         ],
+              [ 1, 'find', find(self_cmd, sele) ],
               [ 0, ''               ,''                             ],
-              [ 1, 'remove atoms'   ,'cmd.remove("'+s+'");cmd.delete("'+s+'")'          ],
+              [ 1, 'remove atoms'   ,'cmd.remove("'+sele+'");cmd.delete("'+sele+'")'          ],
               [ 0, ''               ,''                             ],
-              [ 1, 'around'         , around(s)         ],           
-              [ 1, 'expand'         , expand(s)         ],
-              [ 1, 'extend'         , extend(s)         ],
-              [ 1, 'invert'         , invert(s)         ],
-              [ 1, 'complete'       , complete(s)         ],
+              [ 1, 'around'         , around(self_cmd, sele)         ],           
+              [ 1, 'expand'         , expand(self_cmd, sele)         ],
+              [ 1, 'extend'         , extend(self_cmd, sele)         ],
+              [ 1, 'invert'         , invert(self_cmd, sele)         ],
+              [ 1, 'complete'       , complete(self_cmd, sele)         ],
               [ 0, ''          ,''                                              ],
-              [ 1, 'duplicate selection'      ,'cmd.select(None,"'+s+'")'          ],
-              [ 1, 'copy to object'  ,'cmd.create(None,"'+s+'",zoom=0)'     ],           
-              [ 1, 'extract object' ,'cmd.extract(None,"'+s+'",zoom=0)' ],
+              [ 1, 'duplicate selection'      ,'cmd.select(None,"'+sele+'")'          ],
+              [ 1, 'copy to object'  ,'cmd.create(None,"'+sele+'",zoom=0)'     ],           
+              [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
             [ 0, ''          ,''                                  ],
-              [ 1, 'masking'      , masking(s)         ],
-              [ 1, 'movement'       , movement(s)         ],
-              [ 1, 'compute'        , compute(s)         ],           
+              [ 1, 'masking'      , masking(self_cmd, sele)         ],
+              [ 1, 'movement'       , movement(self_cmd, sele)         ],
+              [ 1, 'compute'        , compute(self_cmd, sele)         ],           
               ]
 
 
     
-def mol_action(s):
+def mol_action(self_cmd, sele):
     return [[ 2, 'Actions:'     , ''                       ],     
-              [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
-              [ 1, 'orient'       , 'cmd.orient("'+s+'",animate=-1)'    ],
-              [ 1, 'center'         ,'cmd.center("'+s+'",animate=-1)'            ],
-              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+              [ 1, 'orient'       , 'cmd.orient("'+sele+'",animate=-1)'    ],
+              [ 1, 'center'         ,'cmd.center("'+sele+'",animate=-1)'            ],
+              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
               [ 0, ''               ,''                             ],
-              [ 1, 'drag'       , 'cmd.drag("'+s+'")'    ],            
+              [ 1, 'drag'       , 'cmd.drag("'+sele+'")'    ],            
               [ 0, ''          ,''                                              ],
-              [ 1, 'preset'  ,   presets(s)       ],
-              [ 1, 'find',     find(s) ],
-              [ 1, 'align',     mol_align(s) ],                      
-              [ 1, 'generate'  ,   mol_generate(s)       ],           
+              [ 1, 'preset'  ,   presets(self_cmd, sele)       ],
+              [ 1, 'find',     find(self_cmd, sele) ],
+              [ 1, 'align',     mol_align(self_cmd, sele) ],                      
+              [ 1, 'generate'  ,   mol_generate(self_cmd, sele)       ],           
               [ 0, ''               ,''                             ],
-              [ 1, 'assign sec. struc.'  ,'cmd.dss("'+s+'")'        ],
+              [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
               [ 0, ''             , ''                       ],
-              [ 1, 'rename object', 'cmd.wizard("renaming","'+s+'")'          ],
-              [ 1, 'duplicate object'    ,'cmd.create(None,"'+s+'")'     ],           
-              [ 1, 'delete object'       , 'cmd.delete("'+s+'")'    ],
+              [ 1, 'rename object', 'cmd.wizard("renaming","'+sele+'")'          ],
+              [ 1, 'duplicate object'    ,'cmd.create(None,"'+sele+'")'     ],           
+              [ 1, 'delete object'       , 'cmd.delete("'+sele+'")'    ],
               [ 0, ''          ,''                                              ],
-              [ 1, 'hydrogens' , hydrogens(s)    ],           
-              [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+s+'))")'     ],
+              [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],           
+              [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+sele+'))")'     ],
               [ 0, ''          ,''                                              ],
-              [ 1, 'state'          , state(s)         ],                      
-              [ 1, 'masking'        , masking(s)         ],
-              [ 1, 'sequence'       , sequence(s)         ],                      
-              [ 1, 'movement'       , movement(s)         ],           
-              [ 1, 'compute'        , compute(s)         ],
+              [ 1, 'state'          , state(self_cmd, sele)         ],                      
+              [ 1, 'masking'        , masking(self_cmd, sele)         ],
+              [ 1, 'sequence'       , sequence(self_cmd, sele)         ],                      
+              [ 1, 'movement'       , movement(self_cmd, sele)         ],           
+              [ 1, 'compute'        , compute(self_cmd, sele)         ],
               ]
 
-def slice_action(s):
+def slice_action(self_cmd, sele):
     return [[ 2, 'Actions:'     , ''                       ],
-              [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
-              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],         
+              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+              [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],         
               [ 0, ''             , ''                       ],
-              [ 1, 'tracking on' , 'cmd.set("slice_track_camera",1,"'+s+'")'      ],
-              [ 1, 'tracking off' , 'cmd.set("slice_track_camera",0,"'+s+'")'      ],           
+              [ 1, 'tracking on' , 'cmd.set("slice_track_camera",1,"'+sele+'")'      ],
+              [ 1, 'tracking off' , 'cmd.set("slice_track_camera",0,"'+sele+'")'      ],           
               [ 0, ''             , ''                       ],
-              [ 1, 'height map on' , 'cmd.set("slice_height_map",1,"'+s+'")'    ],
-              [ 1, 'height map off', 'cmd.set("slice_height_map",0,"'+s+'")'    ],                    
+              [ 1, 'height map on' , 'cmd.set("slice_height_map",1,"'+sele+'")'    ],
+              [ 1, 'height map off', 'cmd.set("slice_height_map",0,"'+sele+'")'    ],                    
               [ 0, ''             , ''                       ],
-              [ 1, 'dynamic grid on' , 'cmd.set("slice_dynamic_grid",1,"'+s+'")'    ],
-              [ 1, 'dynamic grid off', 'cmd.set("slice_dynamic_grid",0,"'+s+'")'    ],                    
+              [ 1, 'dynamic grid on' , 'cmd.set("slice_dynamic_grid",1,"'+sele+'")'    ],
+              [ 1, 'dynamic grid off', 'cmd.set("slice_dynamic_grid",0,"'+sele+'")'    ],                    
               [ 0, ''             , ''                       ],
-              [ 1, 'rename'       , 'cmd.wizard("renaming","'+s+'")'          ],           
+              [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
               [ 0, ''             , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
+              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
               ]
 
-def simple_action(s):
+def simple_action(self_cmd, sele):
     return [[ 2, 'Actions:'     , ''                       ],
-              [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
-              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+              [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
               [ 0, ''             , ''                       ],
-              [ 1, 'rename'       , 'cmd.wizard("renaming","'+s+'")'          ],           
+              [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
               [ 0, ''             , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
+              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
               ]
 
-def map_mesh(s):
+def map_mesh(self_cmd, sele):
     return [[ 2, 'Mesh:',  '' ],
-            [ 1, '@ level 1.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",1.0)'      ],
+            [ 1, '@ level 1.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",1.0)'      ],
             [ 0, ''             , ''                       ],            
-            [ 1, '@ level 2.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",2.0)'      ],
-            [ 1, '@ level 3.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",3.0)'      ],            
+            [ 1, '@ level 2.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",2.0)'      ],
+            [ 1, '@ level 3.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",3.0)'      ],            
             [ 0, ''             , ''                       ],            
-            [ 1, '@ level 0.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",0.0)'      ],
-            [ 1, '@ level -1.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",1.0)'      ],
-            [ 1, '@ level -2.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",2.0)'      ],
-            [ 1, '@ level -3.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",-3.0)'      ],
+            [ 1, '@ level 0.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",0.0)'      ],
+            [ 1, '@ level -1.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",1.0)'      ],
+            [ 1, '@ level -2.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",2.0)'      ],
+            [ 1, '@ level -3.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",-3.0)'      ],
             ]
 
-def map_surface(s):
+def map_surface(self_cmd, sele):
     return [[ 2, 'Surface:',  '' ],
-            [ 1, '@ level 1.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",1.0)'      ],
+            [ 1, '@ level 1.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",1.0)'      ],
             [ 0, ''             , ''                       ],            
-            [ 1, '@ level 2.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",2.0)'      ],
-            [ 1, '@ level 3.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",3.0)'      ],            
+            [ 1, '@ level 2.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",2.0)'      ],
+            [ 1, '@ level 3.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",3.0)'      ],            
             [ 0, ''             , ''                       ],
-            [ 1, '@ level 0.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",0.0)'      ],            
-            [ 1, '@ level -1.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",-1.0)'      ],
-            [ 1, '@ level -2.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",-2.0)'      ],
-            [ 1, '@ level -3.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",-3.0)'      ],
+            [ 1, '@ level 0.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",0.0)'      ],            
+            [ 1, '@ level -1.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",-1.0)'      ],
+            [ 1, '@ level -2.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",-2.0)'      ],
+            [ 1, '@ level -3.0'         , 'cmd.isosurface("'+sele+'_surf","'+sele+'",-3.0)'      ],
             ]
 
-def map_gradient(s):
+def map_gradient(self_cmd, sele):
     return [[ 2, 'Gradient:',  '' ],
-            [ 1, 'default'         , 'cmd.gradient("'+s+'_grad","'+s+'");cmd.ramp_new("'+s+
-              '_grad_ramp","'+s+'");cmd.color("'+s+'_grad_ramp","'+s+'_grad");' ]
+            [ 1, 'default'         , 'cmd.gradient("'+sele+'_grad","'+sele+'");cmd.ramp_new("'+sele+
+              '_grad_ramp","'+sele+'");cmd.color("'+sele+'_grad_ramp","'+sele+'_grad");' ]
             ]
     
-def map_slice(s):
+def map_slice(self_cmd, sele):
     return [[ 2, 'Slice:',  '' ],
-            [ 1, 'default'         , 'cmd.slice_new("'+s+'_slice","'+s+'");cmd.ramp_new("'+s+
-              '_slice_ramp","'+s+'");cmd.color("'+s+'_slice_ramp","'+s+'_slice");'+
-              'cmd.set("slice_track_camera",1,"'+s+'_slice");'+
-              'cmd.set("slice_dynamic_grid",1,"'+s+'_slice")'],
+            [ 1, 'default'         , 'cmd.slice_new("'+sele+'_slice","'+sele+'");cmd.ramp_new("'+sele+
+              '_slice_ramp","'+sele+'");cmd.color("'+sele+'_slice_ramp","'+sele+'_slice");'+
+              'cmd.set("slice_track_camera",1,"'+sele+'_slice");'+
+              'cmd.set("slice_dynamic_grid",1,"'+sele+'_slice")'],
             ]
 
-def map_action(s):
+def map_action(self_cmd, sele):
     return [[ 2, 'Actions:'     , ''                       ],
-              [ 1, 'mesh'         , map_mesh(s)  ],
-              [ 1, 'surface'      , map_surface(s)  ],
-              [ 1, 'slice'        , map_slice(s)  ],
-              [ 1, 'gradient'     , map_gradient(s)  ],                                    
+              [ 1, 'mesh'         , map_mesh(self_cmd, sele)  ],
+              [ 1, 'surface'      , map_surface(self_cmd, sele)  ],
+              [ 1, 'slice'        , map_slice(self_cmd, sele)  ],
+              [ 1, 'gradient'     , map_gradient(self_cmd, sele)  ],                                    
               [ 0, ''             , ''                       ],
-              [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
-              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+              [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
               [ 0, ''             , ''                       ],
-              [ 1, 'rename'       , 'cmd.wizard("renaming","'+s+'")'          ],           
+              [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
               [ 0, ''             , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
+              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
               ]
 
-def level(s):
+def level(self_cmd, sele):
     return [[ 2, 'Level',  '' ],
-            [ 1, 'level 5.0'         , 'cmd.isolevel("'+s+'",5.0)'      ],            
-            [ 1, 'level 4.0'         , 'cmd.isolevel("'+s+'",4.0)'      ],                        
-            [ 1, 'level 3.0'         , 'cmd.isolevel("'+s+'",3.0)'      ],
-            [ 1, 'level 2.0'         , 'cmd.isolevel("'+s+'",2.0)'      ],
-            [ 1, 'level 1.5'         , 'cmd.isolevel("'+s+'",1.5)'      ],            
-            [ 1, 'level 1.0'         , 'cmd.isolevel("'+s+'",1.0)'      ],
-            [ 1, 'level 0.5'         , 'cmd.isolevel("'+s+'",0.5)'      ],
-            [ 1, 'level 0.0'         , 'cmd.isolevel("'+s+'",0.0)'      ],
-            [ 1, 'level -0.5'         , 'cmd.isolevel("'+s+'",-0.5)'      ],
-            [ 1, 'level -1.0'         , 'cmd.isolevel("'+s+'",-1.0)'      ],
-            [ 1, 'level -1.0'         , 'cmd.isolevel("'+s+'",-1.5)'      ],            
-            [ 1, 'level -2.0'         , 'cmd.isolevel("'+s+'",-2.0)'      ],
-            [ 1, 'level -3.0'         , 'cmd.isolevel("'+s+'",-3.0)'      ],
-            [ 1, 'level -4.0'         , 'cmd.isolevel("'+s+'",-4.0)'      ],
-            [ 1, 'level -5.0'         , 'cmd.isolevel("'+s+'",-5.0)'      ],            
+            [ 1, 'level 5.0'         , 'cmd.isolevel("'+sele+'",5.0)'      ],            
+            [ 1, 'level 4.0'         , 'cmd.isolevel("'+sele+'",4.0)'      ],                        
+            [ 1, 'level 3.0'         , 'cmd.isolevel("'+sele+'",3.0)'      ],
+            [ 1, 'level 2.0'         , 'cmd.isolevel("'+sele+'",2.0)'      ],
+            [ 1, 'level 1.5'         , 'cmd.isolevel("'+sele+'",1.5)'      ],            
+            [ 1, 'level 1.0'         , 'cmd.isolevel("'+sele+'",1.0)'      ],
+            [ 1, 'level 0.5'         , 'cmd.isolevel("'+sele+'",0.5)'      ],
+            [ 1, 'level 0.0'         , 'cmd.isolevel("'+sele+'",0.0)'      ],
+            [ 1, 'level -0.5'         , 'cmd.isolevel("'+sele+'",-0.5)'      ],
+            [ 1, 'level -1.0'         , 'cmd.isolevel("'+sele+'",-1.0)'      ],
+            [ 1, 'level -1.0'         , 'cmd.isolevel("'+sele+'",-1.5)'      ],            
+            [ 1, 'level -2.0'         , 'cmd.isolevel("'+sele+'",-2.0)'      ],
+            [ 1, 'level -3.0'         , 'cmd.isolevel("'+sele+'",-3.0)'      ],
+            [ 1, 'level -4.0'         , 'cmd.isolevel("'+sele+'",-4.0)'      ],
+            [ 1, 'level -5.0'         , 'cmd.isolevel("'+sele+'",-5.0)'      ],            
             ]
 
-def surface_action(s):
+def surface_action(self_cmd, sele):
     return [[ 2, 'Actions:'     , ''                       ],
-              [ 1, 'level'         , level(s)  ],
+              [ 1, 'level'         , level(self_cmd, sele)  ],
               [ 0, ''             , ''                       ],
-              [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
-              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+              [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
               [ 0, ''             , ''                       ],
-              [ 1, 'rename'       , 'cmd.wizard("renaming","'+s+'")'          ],           
+              [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
               [ 0, ''             , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
+              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
               ]
 
-def mesh_action(s):
+def mesh_action(self_cmd, sele):
     return [[ 2, 'Actions:'     , ''                       ],
-              [ 1, 'level'         , level(s)  ],
+              [ 1, 'level'         , level(self_cmd, sele)  ],
               [ 0, ''             , ''                       ],
-              [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
-              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+              [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
               [ 0, ''             , ''                       ],
-              [ 1, 'rename'       , 'cmd.wizard("renaming","'+s+'")'          ],           
+              [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
               [ 0, ''             , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
+              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
               ]
 
-def ramp_action(s):
+def ramp_action(self_cmd, sele):
     return [[ 2, 'Actions:'     , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
+              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
               ]
 
-def test1(s):
+def test1(self_cmd, sele):
         return [[ 2, 'Test1:'     , ''                      ],     
               [ 1, 'zoom'         , 'cmd.zoom("all",animate=-1)'     ],
               [ 1, 'center'   , 'cmd.center("all",animate=-1)'   ],           
               [ 1, 'origin'   , 'cmd.origin("all")'   ],
               ]
 
-def test2(s):
+def test2(self_cmd, sele):
         return [[ 2, 'Test2:'     , ''                      ],     
               [ 1, 'zoom'         , 'cmd.zoom("all",animate=-1)'     ],
               [ 1, 'center'   , 'cmd.center("all",animate=-1)'   ],           
               [ 1, 'origin'   , 'cmd.origin("all")'   ],
               ]
 
-def all_action(s):
+def all_action(self_cmd, sele):
     return [[ 2, 'Actions:'     , ''                      ],     
               [ 1, 'zoom'         , 'cmd.zoom("all",animate=-1)'     ],
               [ 1, 'center'   , 'cmd.center("all",animate=-1)'   ],           
               [ 1, 'origin'   , 'cmd.origin("all")'   ],
               [ 0, ''             , ''                      ],           
-              [ 1, 'preset'  , presets("all")     ],
-              [ 1, 'find', find("all") ],           
+              [ 1, 'preset'  , presets(self_cmd, "all")     ],
+              [ 1, 'find', find(self_cmd, "all") ],           
               [ 0, ''          ,''                                              ],
-              [ 1, 'hydrogens' ,hydrogens(s)     ],
-#              [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
-#              [ 1, 'remove hydrogens'  ,'cmd.remove("(hydro and ('+s+'))")'     ],
-              [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+s+'))")'     ],                      
+              [ 1, 'hydrogens' ,hydrogens(self_cmd, sele)     ],
+#              [ 1, 'add hydrogens' ,'cmd.h_add("'+sele+'")'     ],           
+#              [ 1, 'remove hydrogens'  ,'cmd.remove("(hydro and ('+sele+'))")'     ],
+              [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+sele+'))")'     ],                      
               [ 0, ''             , ''                      ],
               [ 1, 'delete selections'  , 'map(cmd.delete,cmd.get_names("selections"))'     ],           
               [ 0, ''          ,''                                              ],
               [ 1, 'delete everything'  , 'cmd.delete("all")'     ],           
               [ 0, ''          ,''                                              ],
-              [ 1, 'masking'      , masking(s)         ],                      
-              [ 1, 'movement'       , movement(s)         ],
-              [ 1, 'compute'        , compute(s)         ],                      
+              [ 1, 'masking'      , masking(self_cmd, sele)         ],                      
+              [ 1, 'movement'       , movement(self_cmd, sele)         ],
+              [ 1, 'compute'        , compute(self_cmd, sele)         ],                      
               ]
 
-def label_props(s):
+def label_props(self_cmd, sele):
     return [[ 2, 'Other Properties:'       ,''                        ],     
                              
               [ 1, 'formal charge' , 
-  'cmd.label("'+s+'","\'%d\'%formal_charge")'                      ],
+  'cmd.label("'+sele+'","\'%d\'%formal_charge")'                      ],
               [ 0, ''               , ''                                  ],
               [ 1, 'partial charge (0.00)' ,            
-  'cmd.label("'+s+'","\'%.2f\'%partial_charge")'                      ],
+  'cmd.label("'+sele+'","\'%.2f\'%partial_charge")'                      ],
               [ 1, 'partial charge (0.0000)' , 
-  'cmd.label("'+s+'","\'%.4f\'%partial_charge")'                      ],
+  'cmd.label("'+sele+'","\'%.4f\'%partial_charge")'                      ],
               [ 0, ''               , ''                                  ],
-              [ 1, 'elec. radius'       , 'cmd.label("'+s+'","\'%1.2f\'%elec_radius")'  ],                                 
+              [ 1, 'elec. radius'       , 'cmd.label("'+sele+'","\'%1.2f\'%elec_radius")'  ],                                 
               [ 0, ''               , ''                                  ],
-              [ 1, 'text type'      , 'cmd.label("'+s+'","text_type")'    ],
-              [ 1, 'numeric type'   , 'cmd.label("'+s+'","numeric_type")' ],
+              [ 1, 'text type'      , 'cmd.label("'+sele+'","text_type")'    ],
+              [ 1, 'numeric type'   , 'cmd.label("'+sele+'","numeric_type")' ],
               ]
 
-def label_ids(s):
+def label_ids(self_cmd, sele):
     return [[ 2, 'Atom Identifiers:'       ,''                        ],     
-              [ 1, 'rank'           , 'cmd.label("'+s+'","rank")' ],
-              [ 1, 'ID'             , 'cmd.label("'+s+'","ID")' ],
-              [ 1, 'index'          , 'cmd.label("'+s+'","index")' ],           
+              [ 1, 'rank'           , 'cmd.label("'+sele+'","rank")' ],
+              [ 1, 'ID'             , 'cmd.label("'+sele+'","ID")' ],
+              [ 1, 'index'          , 'cmd.label("'+sele+'","index")' ],           
               ]
               
-def mol_labels(s):
+def mol_labels(self_cmd, sele):
     return [[ 2, 'Label:'        , ''                                  ],
-              [ 1, 'clear'          , 'cmd.label("'+s+'","\'\'")'         ],
+              [ 1, 'clear'          , 'cmd.label("'+sele+'","\'\'")'         ],
               [ 0, ''               , ''                                  ],
               [ 1, 'residues'       ,
-  """cmd.label('''(name ca+C1*+C1' and (byres("""+s+""")))''','''"%s-%s"%(resn,resi)''')"""  ],
-              [ 1, 'chains'       ,   'util.label_chains("'+s+'")'  ],
-              [ 1, 'segments'       ,   'util.label_segments("'+s+'")'  ],           
+  """cmd.label('''(name ca+C1*+C1' and (byres("""+sele+""")))''','''"%s-%s"%(resn,resi)''')"""  ],
+              [ 1, 'chains'       ,   'util.label_chains("'+sele+'")'  ],
+              [ 1, 'segments'       ,   'util.label_segments("'+sele+'")'  ],           
               [ 0, ''               , ''                                  ],           
-              [ 1, 'atom name'      , 'cmd.label("'+s+'","name")'         ],
-              [ 1, 'element symbol' , 'cmd.label("'+s+'","elem")'         ],           
-              [ 1, 'residue name'  , 'cmd.label("'+s+'","resn")'         ],
-              [ 1, 'residue identifier'    , 'cmd.label("'+s+'","resi")'         ],
-              [ 1, 'chain identifier' , 'cmd.label("'+s+'","chain")'         ],
-              [ 1, 'segment identifier'       , 'cmd.label("'+s+'","segi")'         ],           
+              [ 1, 'atom name'      , 'cmd.label("'+sele+'","name")'         ],
+              [ 1, 'element symbol' , 'cmd.label("'+sele+'","elem")'         ],           
+              [ 1, 'residue name'  , 'cmd.label("'+sele+'","resn")'         ],
+              [ 1, 'residue identifier'    , 'cmd.label("'+sele+'","resi")'         ],
+              [ 1, 'chain identifier' , 'cmd.label("'+sele+'","chain")'         ],
+              [ 1, 'segment identifier'       , 'cmd.label("'+sele+'","segi")'         ],           
               [ 0, ''               , ''                                  ],
-              [ 1, 'b-factor'       , 'cmd.label("'+s+'","\'%1.2f\'%b")'  ],
-              [ 1, 'occupancy'       , 'cmd.label("'+s+'","\'%1.2f\'%q")'  ],
-              [ 1, 'vdw radius'       , 'cmd.label("'+s+'","\'%1.2f\'%vdw")'  ],
+              [ 1, 'b-factor'       , 'cmd.label("'+sele+'","\'%1.2f\'%b")'  ],
+              [ 1, 'occupancy'       , 'cmd.label("'+sele+'","\'%1.2f\'%q")'  ],
+              [ 1, 'vdw radius'       , 'cmd.label("'+sele+'","\'%1.2f\'%vdw")'  ],
               [ 0, ''               , ''                                  ],
-              [ 1, 'other properties' , label_props(s) ],
+              [ 1, 'other properties' , label_props(self_cmd, sele) ],
               [ 0, ''               , ''                                  ],
-              [ 1, 'atom identifiers' , label_ids(s) ],
+              [ 1, 'atom identifiers' , label_ids(self_cmd, sele) ],
               ]
 
 
-def mol_view(s):
+def mol_view(self_cmd, sele):
     return [
-        [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
-        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
-        [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
-        [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
+        [ 1, 'zoom'           ,'cmd.zoom("'+sele+'",animate=-1)'            ],
+        [ 1, 'orient'           ,'cmd.orient("'+sele+'",animate=-1)'            ],
+        [ 1, 'center'           ,'cmd.center("'+sele+'",animate=-1)'            ],
+        [ 1, 'origin'           ,'cmd.origin("'+sele+'")'            ],
         ]
 
-def all_option(s):
+def all_option(self_cmd, sele):
     return [
         [ 2, '(all)'      , '' ],
-        [ 1, 'show'      , mol_show(s) ],
-        [ 1, 'hide'      , mol_hide(s) ],
-        [ 1, 'color'      , mol_color(s) ],
-#      [ 1, 'view'      , mol_view(s) ],
-        [ 1, 'preset'      , presets(s) ],
+        [ 1, 'show'      , mol_show(self_cmd, sele) ],
+        [ 1, 'hide'      , mol_hide(self_cmd, sele) ],
+        [ 1, 'color'      , mol_color(self_cmd, sele) ],
+#      [ 1, 'view'      , mol_view(self_cmd, sele) ],
+        [ 1, 'preset'      , presets(self_cmd, sele) ],
         [ 0, ''             , ''                      ],
-        [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
-        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
-        [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
-        [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'select'        ,'cmd.select("'+s+'",enable=1,merge=2)'            ],        
+        [ 1, 'zoom'           ,'cmd.zoom("'+sele+'",animate=-1)'            ],
+        [ 1, 'orient'           ,'cmd.orient("'+sele+'",animate=-1)'            ],
+        [ 1, 'center'           ,'cmd.center("'+sele+'",animate=-1)'            ],
+        [ 1, 'origin'           ,'cmd.origin("'+sele+'")'            ],
+        [ 1, 'select'        ,'cmd.select("'+sele+'",enable=1,merge=2)'            ],        
         [ 0, ''             , ''                      ],
-        [ 1, 'label'      , mol_labels(s) ],
+        [ 1, 'label'      , mol_labels(self_cmd, sele) ],
         [ 0, '', '' ],
-        [ 1, 'enable'         ,'cmd.enable("'+s+'")'            ],
-        [ 1, 'disable'        ,'cmd.disable("'+s+'")'            ],
+        [ 1, 'enable'         ,'cmd.enable("'+sele+'")'            ],
+        [ 1, 'disable'        ,'cmd.disable("'+sele+'")'            ],
         ]
     
-def enable_disable(enable):
+def enable_disable(self_cmd, enable):
     if enable:
         result = [[ 2, 'Enable', '' ]]
         cmmd = 'cmd.enable("'
     else:
         result = [[ 2, 'Disable', '']]
         cmmd = 'cmd.disable("'
-    result = result + map(lambda ob,cm=cmmd:[1,ob,cm+ob+'")'],['all']+cmd.get_names('objects'))
+    result = result + map(lambda ob,cm=cmmd:[1,ob,cm+ob+'")'],['all']+self_cmd.get_names('objects'))
     if not enable:
         result.insert(2,[1, 'selections', "util.hide_sele()"])
     else:
@@ -1206,7 +1202,7 @@ def enable_disable(enable):
         
     return result
 
-def main_menu():
+def main_menu(self_cmd):
     return [
         [ 2, 'Main Pop-Up'  , '' ],
         [ 1, 'zoom (vis)'           ,'cmd.zoom("visible",animate=-1)'            ],
@@ -1214,11 +1210,11 @@ def main_menu():
         [ 1, 'center (vis)'           ,'cmd.center("visible",animate=-1)'            ],      
         [ 1, 'reset'           ,'cmd.reset()'            ],
         [ 0, ''             , ''                      ],
-        [ 1, 'enable', enable_disable(1) ],
-        [ 1, 'disable', enable_disable(0) ],   
+        [ 1, 'enable', enable_disable(self_cmd, 1) ],
+        [ 1, 'disable', enable_disable(self_cmd,0) ],   
         [ 0, ''             , ''                      ],           
-        [ 1, '(all)'      , all_option("all") ],
-        [ 1, '(visible)'      , all_option("visible") ],
+        [ 1, '(all)'      , all_option(self_cmd,"all") ],
+        [ 1, '(visible)'      , all_option(self_cmd,"visible") ],
         [ 0, ''             , ''                      ],
         [ 1, 'ray'           ,'cmd.ray()' ],
         [ 0, ''             , ''                      ],
@@ -1227,117 +1223,117 @@ def main_menu():
         [ 1, 'quit'           ,'cmd.quit()' ],
         ]
 
-def pick_sele_sub(s):
+def pick_sele_sub(self_cmd, sele):
     result = [
         [ 2, 'Actions'  , '' ],      
-        [ 1, 'rename', 'cmd.wizard("renaming","'+s+'")'          ],
-        [ 1, 'clear'    , 'cmd.select("'+s+'","none")' ],
-        [ 1, 'delete selection', 'cmd.delete("'+s+'")' ],
-        [ 1, 'copy to object','cmd.create(None,"'+s+'",zoom=0)'            ],
-        [ 1, 'extract object' ,'cmd.extract(None,"'+s+'",zoom=0)' ],
-        [ 1, 'remove atoms'  , 'cmd.remove("'+s+'")' ],     
+        [ 1, 'rename', 'cmd.wizard("renaming","'+sele+'")'          ],
+        [ 1, 'clear'    , 'cmd.select("'+sele+'","none")' ],
+        [ 1, 'delete selection', 'cmd.delete("'+sele+'")' ],
+        [ 1, 'copy to object','cmd.create(None,"'+sele+'",zoom=0)'            ],
+        [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
+        [ 1, 'remove atoms'  , 'cmd.remove("'+sele+'")' ],     
         ]
     return result
 
-def pick_sele(title,s):
+def pick_sele(self_cmd, sele, title):
     result = [
         [ 2, title, '' ],
-        [ 1, 'disable'    , 'cmd.disable("'+s+'")' ],
+        [ 1, 'disable'    , 'cmd.disable("'+sele+'")' ],
         [ 0, ''             , ''                      ],
-        [ 1, 'actions', sele_action2(s) ],  
+        [ 1, 'actions', sele_action2(self_cmd, sele) ],  
         [ 0, ''             , ''                      ],      
-        [ 1, 'color'      , mol_color(s) ],
-        [ 1, 'show'      , mol_show(s) ],
-        [ 1, 'hide'      , mol_hide(s) ],
-        [ 1, 'preset'  , presets(s)       ],      
-        [ 1, 'label'       , mol_labels(s) ],
+        [ 1, 'color'      , mol_color(self_cmd, sele) ],
+        [ 1, 'show'      , mol_show(self_cmd, sele) ],
+        [ 1, 'hide'      , mol_hide(self_cmd, sele) ],
+        [ 1, 'preset'  , presets(self_cmd, sele)       ],      
+        [ 1, 'label'       , mol_labels(self_cmd, sele) ],
         [ 0, ''             , ''                      ],
-        [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
-        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
-        [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
-        [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
+        [ 1, 'zoom'           ,'cmd.zoom("'+sele+'",animate=-1)'            ],
+        [ 1, 'orient'           ,'cmd.orient("'+sele+'",animate=-1)'            ],
+        [ 1, 'center'           ,'cmd.center("'+sele+'",animate=-1)'            ],
+        [ 1, 'origin'           ,'cmd.origin("'+sele+'")'            ],
         [ 0, ''               ,''                             ],        
-        [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
+        [ 1, 'drag'             ,'cmd.drag("'+sele+'")'            ],
         [ 0, ''               ,''                             ],        
-        [ 1, 'remove'             ,'cmd.remove("'+s+'")'            ],
+        [ 1, 'remove'             ,'cmd.remove("'+sele+'")'            ],
         ]
     return result
     
-def pick_option(title,s,object=0):
+def pick_option(self_cmd, sele, title, object=0):
     result = [
         [ 2, title, '' ],
-        [ 1, 'color'      , mol_color(s) ],
-        [ 1, 'show'      , mol_show(s) ],
-        [ 1, 'hide'      , mol_hide(s) ],
-        [ 1, 'preset'  , presets(s)       ],      
-        [ 1, 'label'          , mol_labels(s) ],
+        [ 1, 'color'      , mol_color(self_cmd, sele) ],
+        [ 1, 'show'      , mol_show(self_cmd, sele) ],
+        [ 1, 'hide'      , mol_hide(self_cmd, sele) ],
+        [ 1, 'preset'  , presets(self_cmd, sele)       ],      
+        [ 1, 'label'          , mol_labels(self_cmd, sele) ],
         [ 0, ''             , ''                      ],
-        [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
-        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
-        [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
-        [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'select'        ,'cmd.select("'+s+'",enable=1,merge=2)'            ],
+        [ 1, 'zoom'           ,'cmd.zoom("'+sele+'",animate=-1)'            ],
+        [ 1, 'orient'           ,'cmd.orient("'+sele+'",animate=-1)'            ],
+        [ 1, 'center'           ,'cmd.center("'+sele+'",animate=-1)'            ],
+        [ 1, 'origin'           ,'cmd.origin("'+sele+'")'            ],
+        [ 1, 'select'        ,'cmd.select("'+sele+'",enable=1,merge=2)'            ],
         [ 0, ''               ,''                             ],        
-        [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
-        [ 1, 'masking'        , masking(s)         ],
-        [ 1, 'movement'       , movement(s)         ],
+        [ 1, 'drag'             ,'cmd.drag("'+sele+'")'            ],
+        [ 1, 'masking'        , masking(self_cmd, sele)         ],
+        [ 1, 'movement'       , movement(self_cmd, sele)         ],
         ]
   
     if object:
         result.extend([
-            [ 1, 'delete'        ,'cmd.delete("'+s+'")'            ],
+            [ 1, 'delete'        ,'cmd.delete("'+sele+'")'            ],
             [ 0, ''             , ''                      ],         
-            [ 1, 'disable'        ,'cmd.disable("'+s+'")'            ],
+            [ 1, 'disable'        ,'cmd.disable("'+sele+'")'            ],
             ])
     else:
         result.extend([
-            [ 1, 'remove atoms' , 'cmd.remove("'+s+'")' ],     
+            [ 1, 'remove atoms' , 'cmd.remove("'+sele+'")' ],     
             [ 0, ''             , ''                      ],      
-            [ 1, 'copy to object','cmd.create(None,"'+s+'",zoom=0)'            ],
-            [ 1, 'extract object' ,'cmd.extract(None,"'+s+'",zoom=0)' ],
+            [ 1, 'copy to object','cmd.create(None,"'+sele+'",zoom=0)'            ],
+            [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
             ])
     return result
 
-def pick_option_rev(title,s,object=0):
-    result = pick_option(title,s,object)[1:]
+def pick_option_rev(self_cmd, sele, title, object=0):
+    result = pick_option(self_cmd, sele, title, object)[1:]
     result.reverse()
     return result
 
-def pick_menu(s1,s2):
-    if s1[-1]=='`':
-        title = s1[0:-1]
+def pick_menu(self_cmd, sele1, sele2):
+    if sele1[-1]=='`':
+        title = sele1[0:-1]
     else:
-        title = s1
+        title = sele1
     return [[ 2, title     , '' ],
-              [ 1, 'atom'    , pick_option("Atom",s2) ],
-              [ 1, 'residue' , pick_option("Residue","(byres ("+s2+"))") ],
-              [ 1, 'chain'   , pick_option("Chain","(bychain ("+s2+"))") ],
-              [ 1, 'segment' , pick_option("Segment","(byseg ("+s2+"))") ],
-              [ 1, 'object'  , pick_option("Object","(byobject ("+s2+"))",1) ],
-              [ 0, ''             , ''                      ],
-              [ 1, 'molecule', pick_option("Molecule","(bymol ("+s2+"))") ],
-              [ 0, ''             , ''                      ],
-              [ 1, 'fragment', pick_option("Fragment","(byfrag ("+s2+"))") ],
-              [ 1, 'fragment+joint(s)', pick_option("Fragment","((byfrag ("+s2+")) extend 1)") ],
+            [ 1, 'atom'    , pick_option(self_cmd, sele2, "Atom") ],
+            [ 1, 'residue' , pick_option(self_cmd, "(byres ("+sele2+"))", "Residue") ],
+            [ 1, 'chain'   , pick_option(self_cmd, "(bychain ("+sele2+"))", "Chain") ],
+            [ 1, 'segment' , pick_option(self_cmd, "(byseg ("+sele2+"))", "Segment") ],
+            [ 1, 'object'  , pick_option(self_cmd, "(byobject ("+sele2+"))", "Object",1) ],
+            [ 0, ''             , ''                      ],
+            [ 1, 'molecule', pick_option(self_cmd, "(bymol ("+sele2+"))", "Molecule") ],
+            [ 0, ''             , ''                      ],
+            [ 1, 'fragment', pick_option(self_cmd, "(byfrag ("+sele2+"))", "Fragment") ],
+            [ 1, 'fragment+joint(s)', pick_option(self_cmd, "((byfrag ("+sele2+")) extend 1)", "Fragment") ],
               ]
         
-def seq_menu(s2,s3):
+def seq_menu(sele2,sele3):
     
     return [[ 2, 'Sequence'    , '' ],
-              [ 1, 'selection', pick_option('('+s3+')',s3) ],
+              [ 1, 'selection', pick_option(self_cmd, sele3, '('+sele3+')') ],
               [ 0, ''             , ''                      ],
-              [ 1, 'residue' , pick_option("Residue","(byres ("+s2+"))") ],
-              [ 1, 'chain'   , pick_option("Chain","(bychain ("+s2+"))") ],
-              [ 1, 'segment' , pick_option("Segment","(byseg ("+s2+"))") ],
-              [ 1, 'object'  , pick_option("Object","(byobject ("+s2+"))",1) ],
+              [ 1, 'residue' , pick_option(self_cmd, "(byres ("+sele2+"))", "Residue",) ],
+              [ 1, 'chain'   , pick_option(self_cmd, "(bychain ("+sele2+"))", "Chain",) ],
+              [ 1, 'segment' , pick_option(self_cmd, "(byseg ("+sele2+"))", "Segment",) ],
+              [ 1, 'object'  , pick_option(self_cmd, "(byobject ("+sele2+"))", "Object",1) ],
               [ 0, ''             , ''                      ],
-              [ 1, 'molecule', pick_option("Molecule","(bymol ("+s2+"))") ],
+              [ 1, 'molecule', pick_option(self_cmd, "(bymol ("+sele2+"))", "Molecule") ],
               [ 0, ''             , ''                      ],
-              [ 1, 'C-alpha'    , pick_option("C-alpha",s2) ],
+              [ 1, 'C-alpha'    , pick_option(self_cmd, "(bycalpha ("+sele2+"))", "C-alpha") ],
               ]
         
 
-def seq_option(title,s,object=0):
+def seq_option(self_cmd, sele, title, object=0):
     c=len(title)-1
     while title[c]!='/':
         c = c-1
@@ -1345,35 +1341,35 @@ def seq_option(title,s,object=0):
     
     result = [
         [ 2, title, '' ],
-        [ 1, 'color'      , mol_color(s) ],
-        [ 1, 'show'      , mol_show(s) ],
-        [ 1, 'hide'      , mol_hide(s) ],
-        [ 1, 'preset'  , presets(s)       ],      
-        [ 1, 'label'      , mol_labels(s) ],
-        [ 0, ''             , ''                      ],
-        [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
-        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
-        [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
-        [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'select'        ,'cmd.select("'+s+'",enable=1,merge=2)'            ],
+        [ 1, 'color'     , mol_color(self_cmd, sele) ],
+        [ 1, 'show'      , mol_show(self_cmd, sele) ],
+        [ 1, 'hide'      , mol_hide(self_cmd, sele) ],
+        [ 1, 'preset'    , presets(self_cmd, sele)       ],      
+        [ 1, 'label'     , mol_labels(self_cmd, sele) ],
+        [ 0, ''          , ''                      ],
+        [ 1, 'zoom'      ,'cmd.zoom("'+sele+'",animate=-1)'            ],
+        [ 1, 'orient'    ,'cmd.orient("'+sele+'",animate=-1)'            ],
+        [ 1, 'center'    ,'cmd.center("'+sele+'",animate=-1)'            ],
+        [ 1, 'origin'    ,'cmd.origin("'+sele+'")'            ],
+        [ 1, 'select'    ,'cmd.select("'+sele+'",enable=1,merge=2)'            ],
         [ 0, ''               ,''                             ],        
-        [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
+        [ 1, 'drag'      ,'cmd.drag("'+sele+'")'            ],
         ]
     
     if object:
         result.extend([
             [ 0, ''             , ''                      ],         
-            [ 1, 'disable'        ,'cmd.disable("'+s+'")'            ],
+            [ 1, 'disable'        ,'cmd.disable("'+sele+'")'            ],
             [ 0, ''             , ''                      ],
-            [ 1, 'delete'        ,'cmd.delete("'+s+'")'            ]         
+            [ 1, 'delete'        ,'cmd.delete("'+sele+'")'            ]         
             ])
     else:
         result.extend([
-        [ 0, ''             , ''                      ],      
-        [ 1, 'create object','cmd.create(None,"'+s+'",zoom=0)'            ],
-        [ 1, 'extract object' ,'cmd.extract(None,"'+s+'",zoom=0)' ],
-        [ 0, ''             , ''                      ],
-        [ 1, 'remove atoms' , 'cmd.remove("'+s+'")' ],     
-                          ])
+            [ 0, ''             , ''                      ],      
+            [ 1, 'create object','cmd.create(None,"'+sele+'",zoom=0)'            ],
+            [ 1, 'extract object' ,'cmd.extract(None,"'+sele+'",zoom=0)' ],
+            [ 0, ''             , ''                      ],
+            [ 1, 'remove atoms' , 'cmd.remove("'+sele+'")' ],     
+            ])
     return result
     
