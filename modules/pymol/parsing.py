@@ -327,6 +327,9 @@ if __name__=='pymol.parsing':
         ac = 0
         pc = 0
         st = "Usage: "+name
+        if '_self' in arg_lst:
+            arg_lst = list(arg_lst)
+            arg_lst.remove('_self')
         for a in arg_lst:
             if ac>=nreq:
                 st = st + " ["

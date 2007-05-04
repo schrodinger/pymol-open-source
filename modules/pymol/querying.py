@@ -591,12 +591,12 @@ SEE ALSO
 #        if _raising(r): raise pymol.CmdException
         return r
     
-    def get_color_tuple(name,mode=0):
+    def get_color_tuple(name,mode=0,_self=cmd):
         name=str(name)
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.get_color(name,mode)
+            r = _cmd.get_color(_self._C,name,mode)
             if r==None:
                 if _feedback(fb_module.cmd,fb_mask.errors):         
                     print "cmd-Error: Unknown color '%s'."%name
@@ -605,24 +605,24 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_color_indices(all=0):
+    def get_color_indices(all=0,_self=cmd):
         r = DEFAULT_ERROR
         try:
             lock()
             if all:
-                r = _cmd.get_color('',2)
+                r = _cmd.get_color(_self._C,'',2)
             else:
-                r = _cmd.get_color('',1)            
+                r = _cmd.get_color(_self._C,'',1)            
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_color_index(color):
+    def get_color_index(color,_self=cmd):
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.get_color(str(color),3)
+            r = _cmd.get_color(_self._C,str(color),3)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException

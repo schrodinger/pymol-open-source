@@ -114,8 +114,9 @@ void MainRunCommand(char *str1)
 }
 PyObject *MainGetStringResult(char *str)
 {
+  PyMOLGlobals *G = TempPyMOLGlobals;
   PyObject *result;
-  result = PyRun_String(str,Py_eval_input,P_pymol_dict,P_pymol_dict);
+  result = PyRun_String(str,Py_eval_input,G->P_inst->dict,G->P_inst->dict);
   return(result);
 }
 void MainRunString(char *str)
@@ -177,7 +178,7 @@ int MainCheckRedundantOpen(char *file)
 #ifndef _PYMOL_NOPY
   PyMOLGlobals *G = TempPyMOLGlobals;
   PBlock(G);
-  result = PTruthCallStr(P_cmd,"check_redundant_open",file);
+  result = PTruthCallStr(G->P_inst->cmd_do,"check_redundant_open",file);
   PUnblock(G);
 #endif
   return result;
@@ -352,7 +353,7 @@ int MainCheckRedundantOpen(char *file)
   int result = false;
 #ifndef _PYMOL_NOPY
   PBlock(G);
-  result = PTruthCallStr(P_cmd,"check_redundant_open",file);
+  result = PTruthCallStr(G->P_inst->cmd_do,"check_redundant_open",file);
   PUnblock(G);
 #endif
   return result;

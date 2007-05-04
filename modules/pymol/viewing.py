@@ -25,8 +25,6 @@ if __name__=='pymol.viewing':
     import parsing
     import re
     import cmd
-
-    self = cmd
     
     from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
           _feedback,fb_module,fb_mask, \
@@ -1716,7 +1714,7 @@ PYMOL API
         return r
 
 
-    def bg_color(color="black"):
+    def bg_color(color="black",_self=cmd):
         '''
 DESCRIPTION
 
@@ -1731,7 +1729,7 @@ PYMOL API
     cmd.bg_color(string color="black")
 
         '''
-        color = cmd._interpret_color(color)
+        color = cmd._interpret_color(_self,color)
         r = DEFAULT_ERROR      
         try:
             lock()
@@ -2064,7 +2062,7 @@ SEE ALSO
         if _raising(r): raise QuietException
         return r
 
-    def color(color, selection="(all)", quiet=1, flags=0):
+    def color(color, selection="(all)", quiet=1, flags=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -2091,12 +2089,12 @@ EXAMPLE
         '''
         # preprocess selection
         selection = selector.process(selection)
-        color = self._interpret_color(str(color))
+        color = _self._interpret_color(_self,str(color))
         #
         r = DEFAULT_ERROR      
         try:
             lock()
-            r = _cmd.color(self._c_self,str(color),str(selection),int(flags),int(quiet))
+            r = _cmd.color(_self._C,str(color),str(selection),int(flags),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise QuietException
@@ -2144,7 +2142,7 @@ EXAMPLES
         if _raising(r): raise QuietException
         return r
     
-    def set_color(name,rgb,mode=0,quiet=1):
+    def set_color(name,rgb,mode=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -2181,7 +2179,7 @@ EXAMPLES
 
                 if len(rgb)==3:
                     r = _cmd.colordef(str(name),rgb[0],rgb[1],rgb[2],int(mode),int(quiet))
-                    cmd._invalidate_color_sc()
+                    _self._invalidate_color_sc(_self)
                 else:
                     print "Error: invalid color."
             finally:

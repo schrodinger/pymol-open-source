@@ -43,7 +43,11 @@ if __name__=='pymol.parser':
 
     def complete_sc(st,sc,type_name,postfix):
         result = None
-        sc=sc() # invoke lambda functions (if any)
+
+        try:
+            sc=sc() # invoke lambda functions (if any)
+        except:
+            traceback.print_exc()
         amb = sc.interpret(st)
         if amb==None:
             print " parser: no matching %s."%type_name
@@ -514,7 +518,7 @@ if __name__=='pymol.parser':
             flag = 0
             if (string.find(st,' ')<0) and (string.find(st,'@'))<0:
                 try:
-                    result = complete_sc(st,self.cmd.kwhash,'commands',' ')
+                    result = complete_sc(st, self.cmd.kwhash, 'commands',' ')
                 except:
                     traceback.print_exc()
             else:
@@ -522,10 +526,10 @@ if __name__=='pymol.parser':
                 st_no_lists = remove_lists_re.sub("",st)
                 count = string.count(st_no_lists,',') # which argument are we on
                 if self.cmd.is_string(full):
-                    if count<len(self.cmd.auto_arg):
-                        if self.cmd.auto_arg[count].has_key(full): # autocomplete arguments
-                            flag = 1
-                            try:
+                    try:
+                        if count<len(self.cmd.auto_arg):
+                            if self.cmd.auto_arg[count].has_key(full): # autocomplete arguments
+                                flag = 1
                                 pre = re.sub(r"^[^ ]* ",' ',st,count=1) # trim command
                                 if re.search(r",",pre)!=None:
                                     pre = re.sub(r"[^\, ]*$","",pre,count=1) 
@@ -536,9 +540,12 @@ if __name__=='pymol.parser':
                                 pre = full+' '+pre
                                 pat = re.sub(r".*[\, ]",'',st)
             #               print ":"+pre+":"+pat+":"
-                                result = apply(complete_sc,tuple([pat]+self.cmd.auto_arg[count][full]),{})
-                            except:
-                                traceback.print_exc()
+                                print tuple([pat] + self.cmd.auto_arg[count][full])
+                                result = apply(complete_sc,
+                                               tuple([pat] + self.cmd.auto_arg[count][full]),
+                                           {})
+                    except:
+                        traceback.print_exc()
                 if not flag: # otherwise fallback onto filename completion
                     if(st[:1]=='@'):
                         st=st[1:]

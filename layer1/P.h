@@ -164,6 +164,7 @@ struct _CP_inst {
   PyObject *cmd; 
   PyObject *parse; /* parse closure */
   PyObject *complete; /* complete partial command / TAB action */
+  PyObject *cmd_do;
 };
 
 
@@ -172,8 +173,6 @@ struct _CP_inst {
 /* all of the following Python objects must be invariant global
    modules & module dictionaries for the application */
 
-extern PyObject *P_pymol_dict; /* used by main */
-extern PyObject *P_cmd; /* used by Ray and main */
 extern PyObject *P_menu; /* used by Menu */
 extern PyObject *P_xray; /* used by Symmetry */
 extern PyObject *P_chempy; /* used by CoordSet and Selector for construction of models */

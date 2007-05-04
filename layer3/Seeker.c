@@ -390,7 +390,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
                 SeekerBuildSeleFromAtomList(G,row->name,atom_list,cTempSeekerSele,true);
                 if(logging) SelectorLogSele(G,cTempSeekerSele);
                 
-                MenuActivate2Arg(G,x,y+16,x,y,false,"seq_option",buffer,cTempSeekerSele); 
+                MenuActivate2Arg(G,x,y+16,x,y,false,"seq_option",cTempSeekerSele,buffer); 
                 
               }
             }

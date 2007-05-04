@@ -31,6 +31,8 @@ if __name__=='pymol.setting':
     float_type   = 3
     float3_type  = 4
 
+    self = cmd
+    
     class SettingIndex: # number, description, range, notes
         bonding_vdw_cutoff    =(0,'is not used')
         min_mesh_spacing      =(1,'determines the minimum spacing of the mesh representation, in Angstroms.')
@@ -605,7 +607,7 @@ if __name__=='pymol.setting':
 
     boolean_dict = {
         "true" : 1,
-        "false" : 0,
+        "false": 0,
         "on"   : 1,
         "off"  : 0,
         "1"    : 1,
