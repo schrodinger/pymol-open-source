@@ -480,7 +480,7 @@ if __name__=='pymol.parsing':
         t.setDaemon(1)
         t.start()
 
-    def split(*arg): # custom split-and-trim
+    def split(*arg,**kw): # custom split-and-trim
         '''
     split(string,token[,count]) -> list of strings
 

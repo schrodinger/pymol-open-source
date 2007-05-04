@@ -115,11 +115,8 @@ EXAMPLE
         if _raising(r): raise pymol.CmdException
         return r
 
-    def refresh_wizard(*arg): # INTERNAL
+    def refresh_wizard(): # INTERNAL
         r = DEFAULT_ERROR      
-        wiz = None
-        if len(arg):
-            wiz=arg[0]
         try:
             lock()
             r = _cmd.refresh_wizard()
@@ -128,11 +125,8 @@ EXAMPLE
         if _raising(r): raise pymol.CmdException
         return r
 
-    def dirty_wizard(*arg): # INTERNAL
+    def dirty_wizard(): # INTERNAL
         r = DEFAULT_ERROR
-        wiz = None
-        if len(arg):
-            wiz=arg[0]
         try:
             lock()
             r = _cmd.dirty_wizard()
@@ -141,7 +135,7 @@ EXAMPLE
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_wizard(*arg): # INTERNAL
+    def get_wizard(): # INTERNAL
         r = DEFAULT_ERROR
         try:
             lock()
@@ -151,7 +145,7 @@ EXAMPLE
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_wizard_stack(*arg): # INTERNAL
+    def get_wizard_stack(): # INTERNAL
         r = DEFAULT_ERROR
         try:
             lock()

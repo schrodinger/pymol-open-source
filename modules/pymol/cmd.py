@@ -820,7 +820,9 @@ DEVELOPMENT TO DO
 
         # movie rendering
 
-        def _mpng(*arg): # INTERNAL
+        def _mpng(*arg,**kw): # INTERNAL
+            import sys
+            _self = sys.modules['cmd']
             # WARNING: internal routine, subject to change
             try:
                 lock()   
@@ -832,7 +834,7 @@ DEVELOPMENT TO DO
                     preserve = arg[3]
                 else:
                     preserve = 0
-                r = _cmd.mpng_(str(fname),int(arg[1]),int(arg[2]),int(preserve))
+                r = _cmd.mpng_(_self._COb,str(fname),int(arg[1]),int(arg[2]),int(preserve))
             finally:
                 unlock(-1)
             return r
