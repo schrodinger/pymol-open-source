@@ -477,12 +477,13 @@ void MainRunString(char *str)
   MainPopValidContext(G);
   PUnblock(G);
 }
+
 PyObject *MainGetStringResult(char *str)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   PyObject *result;
   MainPushValidContext(G);
-  result = PyRun_String(str,Py_eval_input,P_globals,P_globals);
+  result = PyRun_String(str,Py_eval_input, G->P_inst->dict, G->P_inst->dict);
   MainPopValidContext(G);
   return(result);
 }

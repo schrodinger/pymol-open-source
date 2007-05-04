@@ -167,7 +167,6 @@ struct _CP_inst {
   PyObject *cmd_do;
 };
 
-
 /* PyObject *GetBondsDict(void); */
 
 /* all of the following Python objects must be invariant global
@@ -178,6 +177,8 @@ extern PyObject *P_xray; /* used by Symmetry */
 extern PyObject *P_chempy; /* used by CoordSet and Selector for construction of models */
 extern PyObject *P_models; /* used by Selector for construction of models */
 extern PyObject *P_setting; /* used by Setting.c */
+
+/* unused? */
 extern PyObject *P_embed; /* not set by PyMOL -- must be set by host context */
 
 extern int P_glut_thread_keep_out;
