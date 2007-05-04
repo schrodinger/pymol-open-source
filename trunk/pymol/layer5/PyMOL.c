@@ -2621,7 +2621,7 @@ void PyMOL_StartWithPython(CPyMOL *I)
 
 	/* launch pymol's Python subsystems */
 	
-	PyRun_SimpleString("reload(pymol)");
+	PyRun_SimpleString("import sys;reload(sys.modules['pymol'])");
 	
 	/* now locate all the C to Python function hooks and objects we need */
 	

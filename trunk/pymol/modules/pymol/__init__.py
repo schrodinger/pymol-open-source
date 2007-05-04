@@ -26,12 +26,13 @@
 
 # NOTE: If you attempt to "import pymol" in the interactive Python
 # prompt, PYTHON may crash with a "GC object already tracked" error
-# message.  This is not a bug in PyMOL, as it case be produced with a
+# message.  This is not a bug in PyMOL, as it can be produced with a
 # trivial tcl/tk program.  (Tentatively WORKED AROUND in 0.99beta18!)
 
 import __main__
 if __name__!='__main__':
     import invocation
+    
 # Global variable "__main__.pymol_launch" tracks how we're launching PyMOL:
 #
 # 0: old way, now obsolete (e.g. "python launch_pymol.py")
