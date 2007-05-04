@@ -596,7 +596,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.get_color(_self._C,name,mode)
+            r = _cmd.get_color(_self._COb,name,mode)
             if r==None:
                 if _feedback(fb_module.cmd,fb_mask.errors):         
                     print "cmd-Error: Unknown color '%s'."%name
@@ -610,9 +610,9 @@ SEE ALSO
         try:
             lock()
             if all:
-                r = _cmd.get_color(_self._C,'',2)
+                r = _cmd.get_color(_self._COb,'',2)
             else:
-                r = _cmd.get_color(_self._C,'',1)            
+                r = _cmd.get_color(_self._COb,'',1)            
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
@@ -622,7 +622,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.get_color(_self._C,str(color),3)
+            r = _cmd.get_color(_self._COb,str(color),3)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
