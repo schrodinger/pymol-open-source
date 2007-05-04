@@ -3926,7 +3926,7 @@ static PyObject *Cmd_New(PyObject *self, PyObject *args)
 {
   PyObject *result = NULL;
   PyObject *pymol = NULL; /* pymol object instance */
-  CPyMOL *I = PyMOL_New(); /* default options */
+  CPyMOL *I = PyMOL_New(); /* not yet handling options... */
   int ok = true;
   ok = PyArg_ParseTuple(args,"O",&pymol);
   if(I) {
@@ -3966,10 +3966,8 @@ static PyObject *Cmd_Start(PyObject *self, PyObject *args)
     ok = (G!=NULL);
   }
   if(ok) {
-    printf("read in from Python as %p\n",cmd);
     G->P_inst->cmd = cmd;
 #if 1
-    PyRun_SimpleString("print 'starting...'");
     PyMOL_StartWithPython(G->PyMOL);
 #if 0
     G->Option->keep_thread_alive = true;
@@ -3977,7 +3975,6 @@ static PyObject *Cmd_Start(PyObject *self, PyObject *args)
     if(0){
       int a;
       for(a=0;a<100;a++) {
-        printf("%d\n",a);
         PyMOL_Idle(G->PyMOL);
       }
     }
