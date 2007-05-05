@@ -2,6 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2007-05-04  Warren L. DeLano <warren@delsci.com>
+
+	* fixed various GUI annoyances
+	
+	* fixed scene insert before/after actions
+
+	* fixed mpng command-line action
+
+	* OVERHAULED the Python/C API to reduce global state
+
+	* REFACTORED cmd.py into a number of new .py files
+
 2007-05-03  Warren L. DeLano <warren@delsci.com>
 
 	* converted parser to instance-based while retaining global use

@@ -646,7 +646,7 @@ if __name__=='pymol.setting':
     ###### API functions
 
     def set_bond(name,value,selection1,selection2=None,
-                 state=0,updates=1,log=0,quiet=1):
+                 state=0,updates=1,log=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -682,8 +682,8 @@ PYMOL API
             raise QuietException
         else:
             try:
-                lock()
-                type = _cmd.get_setting_tuple(int(index),str(""),int(-1))[0]
+                _self.lock(_self)
+                type = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))[0]
                 if type==None:
                     print "Error: unable to get setting type."
                     raise QuietException
@@ -740,7 +740,7 @@ PYMOL API
                         selection1=selector.process(selection1)
                     if len(selection2):
                         selection2=selector.process(selection2)                        
-                    r = _cmd.set_bond(int(index),v,
+                    r = _cmd.set_bond(_self._COb,int(index),v,
                                  "("+selection1+")","("+selection2+")",
                                  int(state)-1,int(quiet),
                                  int(updates))
@@ -751,13 +751,13 @@ PYMOL API
                         print "Error: unable to read setting value."
                     raise QuietException
             finally:
-                unlock()
-        if _raising(r): raise QuietException            
+                _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise QuietException            
         return r
 
         
     def set(name, value=1, selection='', state=0, updates=1, log=0,
-            quiet=1):
+            quiet=1,_self=cmd):
         
         '''
 DESCRIPTION
@@ -814,8 +814,8 @@ NOTES
             raise QuietException
         else:
             try:
-                lock()
-                type = _cmd.get_setting_tuple(int(index),str(""),int(-1))[0]
+                _self.lock(_self)
+                type = _cmd.get_setting_tuple(_self._COb,int(index),str(""),int(-1))[0]
                 if type==None:
                     print "Error: unable to get setting type."
                     raise QuietException
@@ -870,7 +870,7 @@ NOTES
                     v = (type,v)
                     if len(selection):
                         selection=selector.process(selection)
-                    r = _cmd.set(int(index),v,
+                    r = _cmd.set(_self._COb,int(index),v,
                                      selection,
                                      int(state)-1,int(quiet),
                                      int(updates))
@@ -881,11 +881,11 @@ NOTES
                         print "Error: unable to read setting value."
                     raise QuietException
             finally:
-                unlock()
-        if _raising(r): raise QuietException            
+                _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise QuietException            
         return r
 
-    def unset(name,selection='',state=0,updates=1,log=0,quiet=1):
+    def unset(name,selection='',state=0,updates=1,log=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -924,10 +924,10 @@ PYMOL API
                 r = set(name,0,'',state,updates,log=0,quiet=quiet)
             else:
                 try:
-                    lock()
+                    _self.lock(_self)
                     try:
                         selection = selector.process(selection)   
-                        r = _cmd.unset(int(index),selection,
+                        r = _cmd.unset(_self._COb,int(index),selection,
                                             int(state)-1,int(quiet),
                                             int(updates))
                     except:
@@ -936,11 +936,11 @@ PYMOL API
                             raise QuietException
                         print "Error: unable to unset setting value."
                 finally:
-                    unlock()
-        if _raising(r): raise QuietException            
+                    _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise QuietException            
         return r
     
-    def unset_bond(name,selection1,selection2=None,state=0,updates=1,log=0,quiet=1):
+    def unset_bond(name,selection1,selection2=None,state=0,updates=1,log=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -972,11 +972,11 @@ PYMOL API
             raise QuietException
         else:
             try:
-                lock()
+                _self.lock(_self)
                 try:
                     selection1 = selector.process(selection1)
                     selection2 = selector.process(selection2)   
-                    r = _cmd.unset_bond(int(index),selection1,selection2,
+                    r = _cmd.unset_bond(_self._COb,int(index),selection1,selection2,
                                    int(state)-1,int(quiet),
                                    int(updates))
                 except:
@@ -985,11 +985,11 @@ PYMOL API
                         raise QuietException
                     print "Error: unable to unset setting value."
             finally:
-                unlock()
-        if _raising(r): raise QuietException            
+                _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise QuietException            
         return r
 
-    def get_setting(name,object='',state=0): # INTERNAL
+    def get_setting(name,object='',state=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         if is_string(name):
             i = _get_index(name)
@@ -999,8 +999,8 @@ PYMOL API
             print "Error: unknown setting"
             raise QuietException
         try:
-            lock()
-            r = _cmd.get_setting_tuple(i,str(object),int(state)-1)
+            _self.lock(_self)
+            r = _cmd.get_setting_tuple(_self._COb,i,str(object),int(state)-1)
             typ = r[0]
             if typ<3: # boolean, int
                 value = int(r[1][0])
@@ -1011,14 +1011,14 @@ PYMOL API
             else:
                 value = r[1] # color or string
         finally:
-            unlock()
+            _self.unlock(_self=_self)
         if is_ok(r):
             return value
-        elif _raising(r):
+        elif _self._raising(r,_self):
             raise QuietException                     
         return r
 
-    def get(name,object='',state=0,quiet=1):
+    def get(name,object='',state=0,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         state = int(state)
         if is_string(name):
@@ -1029,10 +1029,10 @@ PYMOL API
             print "Error: unknown setting"
             raise QuietException
         try:
-            lock()
-            r = _cmd.get_setting_text(i,str(object),state-1)
+            _self.lock(_self)
+            r = _cmd.get_setting_text(_self._COb,i,str(object),state-1)
         finally:
-            unlock()
+            _self.unlock(_self=_self)
         if is_ok(r) and (r!=None):
             r_str = str(r)
             if len(string.strip(r_str))==0:
@@ -1044,10 +1044,10 @@ PYMOL API
                     print " get: %s = %s in object %s"%(name,r_str,object)
                 else:
                     print " get: %s = %s in object %s state %d"%(name,r_str,object,state)
-        if _raising(r): raise QuietException
+        if _self._raising(r,_self): raise QuietException
         return r
     
-    def get_setting_tuple(name,object='',state=0): # INTERNAL
+    def get_setting_tuple(name,object='',state=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         if is_string(name):
             i = _get_index(name)
@@ -1057,14 +1057,14 @@ PYMOL API
             print "Error: unknown setting"
             raise QuietException
         try:
-            lock()
-            r = _cmd.get_setting_tuple(i,str(object),int(state)-1)
+            _self.lock(_self)
+            r = _cmd.get_setting_tuple(_self._COb,i,str(object),int(state)-1)
         finally:
-            unlock()
-        if _raising(r): raise QuietException
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise QuietException
         return r
     
-    def get_setting_boolean(name,object='',state=0): # INTERNAL
+    def get_setting_boolean(name,object='',state=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         if is_string(name):
             i = _get_index(name)
@@ -1074,14 +1074,14 @@ PYMOL API
             print "Error: unknown setting"
             raise QuietException
         try:
-            lock()
-            r = _cmd.get_setting_of_type(i,str(object),int(state)-1,1)
+            _self.lock(_self)
+            r = _cmd.get_setting_of_type(_self._COb,i,str(object),int(state)-1,1)
         finally:
-            unlock()
-        if _raising(r): raise QuietException
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise QuietException
         return r
     
-    def get_setting_int(name,object='',state=0): # INTERNAL
+    def get_setting_int(name,object='',state=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         if is_string(name):
             i = _get_index(name)
@@ -1091,14 +1091,14 @@ PYMOL API
             print "Error: unknown setting"
             raise QuietException
         try:
-            lock()
-            r = _cmd.get_setting_of_type(i,str(object),int(state)-1,2)
+            _self.lock(_self)
+            r = _cmd.get_setting_of_type(_self._COb,i,str(object),int(state)-1,2)
         finally:
-            unlock()
-        if _raising(r): raise QuietException
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise QuietException
         return r
     
-    def get_setting_float(name,object='',state=0): # INTERNAL
+    def get_setting_float(name,object='',state=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         if is_string(name):
             i = _get_index(name)
@@ -1108,14 +1108,14 @@ PYMOL API
             print "Error: unknown setting"
             raise QuietException
         try:
-            lock()
-            r = _cmd.get_setting_of_type(i,str(object),int(state)-1,3)
+            _self.lock(_self)
+            r = _cmd.get_setting_of_type(_self._COb,i,str(object),int(state)-1,3)
         finally:
-            unlock()
-        if _raising(r): raise QuietException
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise QuietException
         return r
 
-    def get_setting_text(name,object='',state=0):  # INTERNAL
+    def get_setting_text(name,object='',state=0,_self=cmd):  # INTERNAL
         r = DEFAULT_ERROR
         if is_string(name):
             i = _get_index(name)
@@ -1125,29 +1125,29 @@ PYMOL API
             print "Error: unknown setting"
             raise QuietException
         try:
-            lock()
-            r = _cmd.get_setting_text(i,str(object),int(state)-1)
+            _self.lock(_self)
+            r = _cmd.get_setting_text(_self._COb,i,str(object),int(state)-1)
         finally:
-            unlock()
-        if _raising(r): raise QuietException
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise QuietException
         return r
 
-    def get_setting_updates(): # INTERNAL
+    def get_setting_updates(_self=cmd): # INTERNAL
         r = []
         if lock_attempt():
             try:
-                r = _cmd.get_setting_updates()
+                r = _cmd.get_setting_updates(_self._COb)
             finally:
-                unlock()
+                _self.unlock(_self=_self)
         return r
 
-    def get_setting_legacy(name): # INTERNAL, DEPRECATED
+    def get_setting_legacy(name,_self=cmd): # INTERNAL, DEPRECATED
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_setting(name)
+            _self.lock(_self)
+            r = _cmd.get_setting(_self._COb,name)
         finally:
-            unlock()
-        if _raising(r): raise QuietException
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise QuietException
         return r
 

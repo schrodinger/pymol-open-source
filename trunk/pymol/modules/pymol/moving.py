@@ -25,7 +25,7 @@ if __name__=='pymol.moving':
           toggle_dict,toggle_sc, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
 
-    def accept():
+    def accept(_self=cmd):
         '''
 
 DESCRIPTION
@@ -36,15 +36,15 @@ DESCRIPTION
         '''
         r = DEFAULT_ERROR      
         try:
-            lock()
-            r = _cmd.accept()
+            _self.lock(_self)
+            r = _cmd.accept(_self._COb)
             cmd.set_wizard()
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def decline():
+    def decline(_self=cmd):
         '''
 DESCRIPTION
 
@@ -54,13 +54,13 @@ DESCRIPTION
         '''
         r = DEFAULT_ERROR      
         try:
-            lock()
-            r = _cmd.decline()
+            _self.lock(_self)
+            r = _cmd.decline(_self._COb)
             cmd.set_wizard()
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
 
-    def get_movie_playing():
+    def get_movie_playing(_self=cmd):
         '''
 DECRIPTION
 
@@ -70,14 +70,14 @@ DECRIPTION
         '''
         r = DEFAULT_ERROR      
         try:
-            lock()
-            r = _cmd.get_movie_playing()
+            _self.lock(_self)
+            r = _cmd.get_movie_playing(_self._COb)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
     
-    def mdump():
+    def mdump(_self=cmd):
         '''
 DESCRIPTION
 
@@ -93,14 +93,14 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.mdump(0)
+            _self.lock(_self)   
+            r = _cmd.mdump(_self._COb,0)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def mtoggle():
+    def mtoggle(_self=cmd):
         '''
 DESCRIPTION
 
@@ -109,14 +109,14 @@ DESCRIPTION
     '''        
         r = DEFAULT_ERROR      
         try:
-            lock()   
-            r = _cmd.mplay(-1)
+            _self.lock(_self)   
+            r = _cmd.mplay(_self._COb,-1)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
     
-    def mstop():
+    def mstop(_self=cmd):
         '''
 DESCRIPTION
 
@@ -132,11 +132,11 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.mplay(0)
+            _self.lock(_self)   
+            r = _cmd.mplay(_self._COb,0)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
@@ -154,7 +154,7 @@ SEE ALSO
     def mview(action='store',first=0,last=0,power=1.4,
               bias=1.0,simple=0,linear=0.0,object='',
               wrap=-1,hand=1,window=5,cycles=1,scene='',
-              cut=0.5,quiet=1):
+              cut=0.5,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         first = int(first)
         last = int(last)
@@ -170,18 +170,18 @@ SEE ALSO
         else:
             scene = cmd.get("scene_current_name")
         try:
-            lock()
-            r = _cmd.mview(int(action),int(first)-1,int(last)-1,
+            _self.lock(_self)
+            r = _cmd.mview(_self._COb,int(action),int(first)-1,int(last)-1,
                            float(power),float(bias),
                            int(simple), float(linear),str(object),
                            int(wrap),int(hand),int(window),int(cycles),
                            str(scene),float(cut),int(quiet))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
     
-    def mplay():
+    def mplay(_self=cmd):
         '''
 DESCRIPTION
 
@@ -201,24 +201,24 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.mplay(1)
+            _self.lock(_self)   
+            r = _cmd.mplay(_self._COb,1)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def mray(): # deprecated
+    def mray(_self=cmd): # deprecated
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.mplay(2)
+            _self.lock(_self)   
+            r = _cmd.mplay(_self._COb,2)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def mdo(frame,command):
+    def mdo(frame,command,_self=cmd):
         '''
 DESCRIPTION
 
@@ -256,14 +256,14 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.mdo(int(frame)-1,str(command),0)
+            _self.lock(_self)   
+            r = _cmd.mdo(_self._COb,int(frame)-1,str(command),0)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def mappend(frame,command):
+    def mappend(frame,command,_self=cmd):
         '''
 DESCRIPTION
 
@@ -283,11 +283,11 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.mdo(int(frame)-1,str(";"+command),1)
+            _self.lock(_self)   
+            r = _cmd.mdo(_self._COb,int(frame)-1,str(";"+command),1)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def mpng(prefix,first=0,last=0,preserve=0):
@@ -321,11 +321,13 @@ PYMOL API
             r = cmd._mpng(prefix,int(first)-1,int(last)-1,int(preserve))
         else:
             r = cmd.do('cmd._mpng("'+prefix+'","'+
-                            str(int(first)-1)+'","'+str(int(last)-1)+','+str(int(preserve))+'")',0)
-        if _raising(r): raise pymol.CmdException
+                       str(int(first)-1)+'","'+
+                       str(int(last)-1)+'","'+
+                       str(int(preserve))+'")',0)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def mclear():
+    def mclear(_self=cmd):
         '''
 DESCRIPTION
 
@@ -341,15 +343,15 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.mclear()
+            _self.lock(_self)   
+            r = _cmd.mclear(_self._COb)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
-    def frame(frame):
+    def frame(frame,_self=cmd):
         '''
 DESCRIPTION
 
@@ -373,17 +375,17 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.frame(int(frame))
+            _self.lock(_self)   
+            r = _cmd.frame(_self._COb,int(frame))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def madd(specification=""):
         mset(specification,0)
         
-    def mset(specification="",frame=1):
+    def mset(specification="",frame=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -417,7 +419,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         cur_state = cmd.get_state()-1 # use the current state 
         try:
-            lock()
+            _self.lock(_self)
             output=[]
             input = string.split(string.strip(specification))
             last = -1
@@ -445,14 +447,14 @@ SEE ALSO
                     val = int(x) - 1
                     output.append(str(val))
                     last=val
-            r = _cmd.mset(string.join(output," "),int(frame)-1)
+            r = _cmd.mset(_self._COb,string.join(output," "),int(frame)-1)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
-    def mmatrix(action):
+    def mmatrix(action,_self=cmd):
         '''
 DESCRIPTION
 
@@ -472,22 +474,22 @@ EXAMPLES
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
+            _self.lock(_self)   
             if action=="clear":
-                r = _cmd.mmatrix(0)
+                r = _cmd.mmatrix(_self._COb,0)
             elif action=="store":
-                r = _cmd.mmatrix(1)
+                r = _cmd.mmatrix(_self._COb,1)
             elif action=="recall":
-                r = _cmd.mmatrix(2)
+                r = _cmd.mmatrix(_self._COb,2)
             elif action=="check":
-                r = _cmd.mmatrix(3)
+                r = _cmd.mmatrix(_self._COb,3)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
-    def forward():
+    def forward(_self=cmd):
         '''
 DESCRIPTION
 
@@ -507,14 +509,14 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.setframe(5,1)
+            _self.lock(_self)   
+            r = _cmd.setframe(_self._COb,5,1)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def backward():
+    def backward(_self=cmd):
         '''
 DESCRIPTION
 
@@ -534,15 +536,15 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.setframe(5,-1)
+            _self.lock(_self)   
+            r = _cmd.setframe(_self._COb,5,-1)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
-    def rewind():
+    def rewind(_self=cmd):
         '''
 DESCRIPTION
 
@@ -558,14 +560,14 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.setframe(4,0)
+            _self.lock(_self)   
+            r = _cmd.setframe(_self._COb,4,0)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def ending():
+    def ending(_self=cmd):
         '''
 DESCRIPTION
 
@@ -581,14 +583,14 @@ PYMOL API
         '''
         r = DEFAULT_ERROR      
         try:
-            lock()   
-            r=_cmd.setframe(6,0)
+            _self.lock(_self)   
+            r=_cmd.setframe(_self._COb,6,0)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def middle():
+    def middle(_self=cmd):
         '''
 DESCRIPTION
 
@@ -604,15 +606,15 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.setframe(3,0)
+            _self.lock(_self)   
+            r = _cmd.setframe(_self._COb,3,0)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
 
-    def get_state():
+    def get_state(_self=cmd):
         '''
 DESCRIPTION
 
@@ -635,10 +637,10 @@ SEE ALSO
     get_frame
         '''
         # NOTE: NO LOCKS...this is/can be called from cmd.refresh()
-        r = _cmd.get_state()+1
+        r = _cmd.get_state(_self._COb)+1
         return r
 
-    def get_frame():
+    def get_frame(_self=cmd):
         '''
 DESCRIPTION
 
@@ -657,5 +659,5 @@ SEE ALSO
 
         '''
         # NOTE: NO LOCKS...this is/can be be called from cmd.refresh()
-        r = _cmd.get_frame()
+        r = _cmd.get_frame(_self._COb)
         return r

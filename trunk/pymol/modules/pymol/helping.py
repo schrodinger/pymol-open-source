@@ -19,11 +19,46 @@ if __name__=='pymol.helping':
     import cmd
 
     from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+
     def show_help(cmmd): # INTERNAL
         print "PyMOL>help %s" % cmmd
         help(cmmd)
         if cmd.get_setting_legacy("internal_feedback")>0.1:
             print "(Hit ESC to hide)"
+
+
+    def python_help(*arg):
+            r'''
+DESCRIPTION
+
+    You have asked for help on a Python keyword which is available
+    from within the PyMOL command language.  Please consult the
+    official Python documentation at http://www.python.org for
+    detailed information on Python keywords.
+
+    You may include Python blocks in your PyMOL command scripts, but do
+    note that multi-line blocks of Python in PyMOL command files will
+    require explicit continuation syntax in order to execute properly
+    (see below).
+
+    Generally, if you want to write Python block which span multiple
+    lines, you will want to use ".py" file, and then use "extend" in
+    order to expose your new code to the PyMOL command language.  This
+    will give you better error checking and more predictable results.
+
+EXAMPLES
+
+    a=1
+    while a<10: \
+        print a \
+        a=a+1
+
+SEE ALSO
+
+    extend, run, @
+            '''
+            return None
+
 
     def help(command = "commands"):
         '''

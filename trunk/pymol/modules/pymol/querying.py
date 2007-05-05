@@ -21,34 +21,34 @@ if __name__=='pymol.querying':
           _feedback,fb_module,fb_mask,is_list, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
-    def get_object_matrix(object,state=1):
+    def get_object_matrix(object,state=1,_self=cmd):
         r = DEFAULT_ERROR
         object = str(object)
         try:
-            lock()   
-            r = _cmd.get_object_matrix(str(object), int(state)-1)
+            _self.lock(_self)   
+            r = _cmd.get_object_matrix(_self._COb,str(object), int(state)-1)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_object_list(selection="(all)",quiet=1):
+    def get_object_list(selection="(all)",quiet=1,_self=cmd):
         '''
         '''
         r = DEFAULT_ERROR
         selection = selector.process(selection)
         try:
-            lock()
-            r = _cmd.get_object_list(str(selection))
+            _self.lock(_self)
+            r = _cmd.get_object_list(_self._COb,str(selection))
             if not quiet:
                 if(is_list(r)):
                     print " get_object_list: ",str(r)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_symmetry(selection="(all)",quiet=1):
+    def get_symmetry(selection="(all)",quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -69,8 +69,8 @@ PYMOL API
         r = DEFAULT_ERROR
         selection = selector.process(selection)
         try:
-            lock()
-            r = _cmd.get_symmetry(str(selection))
+            _self.lock(_self)
+            r = _cmd.get_symmetry(_self._COb,str(selection))
             if not quiet:
                 if(is_list(r)):
                     if(len(r)):
@@ -80,11 +80,11 @@ PYMOL API
                     else:
                         print " get_symmetry: No symmetry defined."
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_title(object,state,quiet=1):
+    def get_title(object,state,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -102,19 +102,19 @@ PYMOL API
     '''
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_title(str(object),int(state)-1)
+            _self.lock(_self)
+            r = _cmd.get_title(_self._COb,str(object),int(state)-1)
             if not quiet:
                 if r!=None:
                     print " get_title: %s"%r      
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
 
     def angle(name=None,selection1="(pk1)",selection2="(pk2)",selection3="(pk3)", 
-                     mode=None,label=1,reset=0,zoom=0,state=0,quiet=1):
+                     mode=None,label=1,reset=0,zoom=0,state=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -165,12 +165,12 @@ NOTES
                 nam=name
             else:
                 try:
-                    lock()
-                    cnt = _cmd.get("dist_counter") + 1.0
-                    r = _cmd.legacy_set("dist_counter","%1.0f" % cnt)
+                    _self.lock(_self)
+                    cnt = _cmd.get(_self._COb,"dist_counter") + 1.0
+                    r = _cmd.legacy_set(_self._COb,"dist_counter","%1.0f" % cnt)
                     nam = "angle%02.0f" % cnt
                 finally:
-                    unlock(r)
+                    _self.unlock(r,_self)
 
             # defaults
             if mode == None:
@@ -181,24 +181,24 @@ NOTES
             selection3 = selector.process(selection3)
             # now do the deed
             try:
-                lock()
+                _self.lock(_self)
                 if selection2!="same":
                     selection2 = "("+selection2+")"
                 if selection3!="same":
                     selection3 = "("+selection3+")"
-                r = _cmd.angle(str(nam),"("+str(selection1)+")",
+                r = _cmd.angle(_self._COb,str(nam),"("+str(selection1)+")",
                                str(selection2),
                                str(selection3),
                                int(mode),int(label),int(reset),
                                int(zoom),int(quiet),int(state)-1)
             finally:
-                unlock(r)
+                _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
     def dihedral(name=None,selection1="(pk1)",selection2="(pk2)",
                      selection3="(pk3)",selection4="(pk4)",
-                     mode=None,label=1,reset=0,zoom=0,state=0,quiet=1):
+                     mode=None,label=1,reset=0,zoom=0,state=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -253,12 +253,12 @@ NOTES
                 nam=name
             else:
                 try:
-                    lock()
-                    cnt = _cmd.get("dist_counter") + 1.0
-                    r = _cmd.legacy_set("dist_counter","%1.0f" % cnt)
+                    _self.lock(_self)
+                    cnt = _cmd.get(_self._COb,"dist_counter") + 1.0
+                    r = _cmd.legacy_set(_self._COb,"dist_counter","%1.0f" % cnt)
                     nam = "dihedral%02.0f" % cnt
                 finally:
-                    unlock(r)
+                    _self.unlock(r,_self)
 
             # defaults
             if mode == None:
@@ -270,14 +270,14 @@ NOTES
             selection4 = selector.process(selection4)
             # now do the deed
             try:
-                lock()
+                _self.lock(_self)
                 if selection2!="same":
                     selection2 = "("+selection2+")"
                 if selection3!="same":
                     selection3 = "("+selection3+")"
                 if selection4!="same":
                     selection4 = "("+selection4+")"
-                r = _cmd.dihedral(str(nam),"("+str(selection1)+")",
+                r = _cmd.dihedral(_self._COb,str(nam),"("+str(selection1)+")",
                                   str(selection2),
                                   str(selection3),
                                   str(selection4),
@@ -285,7 +285,7 @@ NOTES
                                   int(reset),int(zoom),
                                   int(quiet),int(state)-1)
             finally:
-                unlock(r)
+                _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
         
@@ -294,7 +294,7 @@ NOTES
                  mode=None,zoom=0,
                  width=None,length=None,
                  gap=None,label=1,quiet=1,
-                 reset=0,state=0):
+                 reset=0,state=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -360,12 +360,12 @@ NOTES
                 nam=name
             else:
                 try:
-                    lock()
-                    cnt = _cmd.get("dist_counter") + 1.0
-                    r = _cmd.legacy_set("dist_counter","%1.0f" % cnt)
+                    _self.lock(_self)
+                    cnt = _cmd.get(_self._COb,"dist_counter") + 1.0
+                    r = _cmd.legacy_set(_self._COb,"dist_counter","%1.0f" % cnt)
                     nam = "dist%02.0f" % cnt
                 finally:
-                    unlock(r)
+                    _self.unlock(r,_self)
 
             # defaults
             if mode == None:
@@ -377,10 +377,10 @@ NOTES
             selection2 = selector.process(selection2)
             # now do the deed
             try:
-                lock()
+                _self.lock(_self)
                 if selection2!="same":
                     selection2 = "("+selection2+")"
-                r = _cmd.dist(str(nam),"("+str(selection1)+")",
+                r = _cmd.dist(_self._COb,str(nam),"("+str(selection1)+")",
                               str(selection2),int(mode),float(cutoff),
                               int(label),int(quiet),int(reset),
                               int(state)-1,int(zoom))
@@ -391,7 +391,7 @@ NOTES
                 if gap!=None:
                     cmd.set("dash_gap",gap,nam)
             finally:
-                unlock(r)
+                _self.unlock(r,_self)
         if (r<0.0) and (not quiet):
             # a negative value is an warning signal from PyMOL...
             r = DEFAULT_ERROR
@@ -402,7 +402,7 @@ NOTES
     def dist(*arg,**kw):
         return apply(distance,arg,kw)
 
-    def get_povray():
+    def get_povray(_self=cmd):
         '''
 DESCRIPTION
 
@@ -416,14 +416,14 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.get_povray()
+            _self.lock(_self)   
+            r = _cmd.get_povray(_self._COb)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_mtl_obj():
+    def get_mtl_obj(_self=cmd):
         '''
 DESCRIPTION
 
@@ -439,20 +439,20 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.get_mtl_obj()
+            _self.lock(_self)   
+            r = _cmd.get_mtl_obj(_self._COb)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
     
-    def get_version(quiet=1):
+    def get_version(quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.get_version()
+            _self.lock(_self)   
+            r = _cmd.get_version(_self._COb)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r):
             raise pymol.CmdException
         else:
@@ -461,7 +461,7 @@ PYMOL API
                     print " version: %s (%8.6f)"%r
         return r
     
-    def get_vrml(): 
+    def get_vrml(_self=cmd): 
         '''
 DESCRIPTION
 
@@ -476,14 +476,14 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.get_vrml()
+            _self.lock(_self)   
+            r = _cmd.get_vrml(_self._COb)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def count_states(selection="(all)",quiet=1):
+    def count_states(selection="(all)",quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -503,17 +503,17 @@ SEE ALSO
         #
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.count_states(selection)
+            _self.lock(_self)
+            r = _cmd.count_states(_self._COb,selection)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if is_ok(r):
             if not quiet:
                 print " cmd.count_states: %d states."%r            
         if _raising(r): raise pymol.CmdException
         return r
 
-    def count_frames(quiet=1):
+    def count_frames(quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -530,26 +530,26 @@ SEE ALSO
     '''
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.count_frames()
+            _self.lock(_self)
+            r = _cmd.count_frames(_self._COb)
             if not quiet: print " cmd.count_frames: %d frames"%r      
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def export_dots(object,state):  
+    def export_dots(object,state,_self=cmd):  
     # UNSUPPORTED
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.export_dots(object,int(state)-1)
+            _self.lock(_self)
+            r = _cmd.export_dots(_self._COb,object,int(state)-1)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def overlap(selection1,selection2,state1=1,state2=1,adjust=0.0,quiet=1):
+    def overlap(selection1,selection2,state1=1,state2=1,adjust=0.0,quiet=1,_self=cmd):
     #
     #   UNSUPPORTED FEATURE - LIKELY TO CHANGE
     #   (for maximum efficiency, use smaller molecule as selection 1)
@@ -560,34 +560,34 @@ SEE ALSO
         #
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.overlap(str(selection1),str(selection2),
+            _self.lock(_self)
+            r = _cmd.overlap(_self._COb,str(selection1),str(selection2),
                                   int(state1)-1,int(state2)-1,
                                   float(adjust))
             if not quiet: print " cmd.overlap: %5.3f Angstroms."%r
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_movie_locked():
+    def get_movie_locked(_self=cmd):
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_movie_locked()
+            _self.lock(_self)
+            r = _cmd.get_movie_locked(_self._COb)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_object_color_index(name):
+    def get_object_color_index(name,_self=cmd):
         name = str(name)
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_object_color_index(name)
+            _self.lock(_self)
+            r = _cmd.get_object_color_index(_self._COb,name)
         finally:
-            unlock(r)      
+            _self.unlock(r,_self)      
 #        if _raising(r): raise pymol.CmdException
         return r
     
@@ -595,71 +595,71 @@ SEE ALSO
         name=str(name)
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.get_color(_self._COb,name,mode)
             if r==None:
                 if _feedback(fb_module.cmd,fb_mask.errors):         
                     print "cmd-Error: Unknown color '%s'."%name
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
     def get_color_indices(all=0,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             if all:
                 r = _cmd.get_color(_self._COb,'',2)
             else:
                 r = _cmd.get_color(_self._COb,'',1)            
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
     def get_color_index(color,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.get_color(_self._COb,str(color),3)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
             
-    def get_renderer():  # 
+    def get_renderer(_self=cmd):  # 
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_renderer()
+            _self.lock(_self)
+            r = _cmd.get_renderer(_self._COb)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_phipsi(selection="(name ca)",state=-1):
+    def get_phipsi(selection="(name ca)",state=-1,_self=cmd):
         # preprocess selections
         selection = selector.process(selection)
         #   
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_phipsi("("+str(selection)+")",int(state)-1)
+            _self.lock(_self)
+            r = _cmd.get_phipsi(_self._COb,"("+str(selection)+")",int(state)-1)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_atom_coords(selection, state=0,quiet=1):
+    def get_atom_coords(selection, state=0,quiet=1,_self=cmd):
         # low performance way to get coords for a single atom
         r = []
         selection = selector.process(selection)
         try:
-            lock()
-            r = _cmd.get_atom_coords(str(selection),int(state)-1,int(quiet))
+            _self.lock(_self)
+            r = _cmd.get_atom_coords(_self._COb,str(selection),int(state)-1,int(quiet))
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if r==None:
             if cmd._raising(): raise pymol.CmdException
         elif not quiet:
@@ -668,20 +668,20 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
     
-    def get_position(quiet=1):
+    def get_position(quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_position()
+            _self.lock(_self)
+            r = _cmd.get_position(_self._COb)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r):
             raise pymol.CmdException
         elif not quiet:
             print " cmd.get_position: [%8.3f,%8.3f,%8.3f]"%(r[0],r[1],r[2])
         return r
 
-    def get_distance(atom1="pk1",atom2="pk2",state=-1,quiet=1):
+    def get_distance(atom1="pk1",atom2="pk2",state=-1,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -710,17 +710,17 @@ PYMOL API
         #   
         r = None
         try:
-            lock()
-            r = _cmd.get_distance(str(atom1),str(atom2),int(state)-1)
+            _self.lock(_self)
+            r = _cmd.get_distance(_self._COb,str(atom1),str(atom2),int(state)-1)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r):
             raise pymol.CmdException
         elif not quiet:
             print " cmd.get_distance: %5.3f Angstroms."%r
         return r
 
-    def get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=-1,quiet=1):
+    def get_angle(atom1="pk1",atom2="pk2",atom3="pk3",state=-1,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -749,17 +749,17 @@ PYMOL API
         #   
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_angle(str(atom1),str(atom2),str(atom3),int(state)-1)
+            _self.lock(_self)
+            r = _cmd.get_angle(_self._COb,str(atom1),str(atom2),str(atom3),int(state)-1)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r):
             raise pymol.CmdException
         elif not quiet:
             print " cmd.get_angle: %5.3f degrees."%r
         return r
         
-    def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=-1,quiet=1):
+    def get_dihedral(atom1="pk1",atom2="pk2",atom3="pk3",atom4="pk4",state=-1,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -792,17 +792,17 @@ PYMOL API
         #   
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_dihe(str(atom1),str(atom2),str(atom3),str(atom4),int(state)-1)
+            _self.lock(_self)
+            r = _cmd.get_dihe(_self._COb,str(atom1),str(atom2),str(atom3),str(atom4),int(state)-1)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r):
             raise pymol.CmdException
         elif not quiet:
             print " cmd.get_dihedral: %5.3f degrees."%r
         return r
 
-    def get_model(selection="(all)",state=1,ref='',ref_state=0):
+    def get_model(selection="(all)",state=1,ref='',ref_state=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -818,16 +818,16 @@ PYMOL API
         #   
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_model("("+str(selection)+")",int(state)-1,str(ref),int(ref_state)-1)
+            _self.lock(_self)
+            r = _cmd.get_model(_self._COb,"("+str(selection)+")",int(state)-1,str(ref),int(ref_state)-1)
             if r==None:
                 r = DEFAULT_ERROR
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_area(selection="(all)",state=1,load_b=0,quiet=1):
+    def get_area(selection="(all)",state=1,load_b=0,quiet=1,_self=cmd):
         '''
         PRE-RELEASE functionality - API will change
         '''
@@ -836,17 +836,17 @@ PYMOL API
         #
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_area("("+str(selection)+")",int(state)-1,int(load_b))
+            _self.lock(_self)
+            r = _cmd.get_area(_self._COb,"("+str(selection)+")",int(state)-1,int(load_b))
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if r<0.0: # negative area signals error condition
             if cmd._raising(): raise pymol.CmdException
         elif not quiet:
             print " cmd.get_area: %5.3f Angstroms^2."%r
         return r
 
-    def get_chains(selection="(all)",state=0,quiet=1):
+    def get_chains(selection="(all)",state=0,quiet=1,_self=cmd):
         '''
         PRE-RELEASE functionality - API will change
 
@@ -857,10 +857,10 @@ PYMOL API
         #
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_chains("("+str(selection)+")",int(state)-1)
+            _self.lock(_self)
+            r = _cmd.get_chains(_self._COb,"("+str(selection)+")",int(state)-1)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if r==None:
             return []
         if _raising(r):
@@ -870,7 +870,7 @@ PYMOL API
         return r
 
 
-    def get_names(type='public_objects',enabled_only=0,selection=""):
+    def get_names(type='public_objects',enabled_only=0,selection="",_self=cmd):
         '''
 DESCRIPTION
 
@@ -904,14 +904,14 @@ SEE ALSO
         elif type=='public_selections':
             mode = 5
         try:
-            lock()
-            r = _cmd.get_names(int(mode),int(enabled_only),str(selection))
+            _self.lock(_self)
+            r = _cmd.get_names(_self._COb,int(mode),int(enabled_only),str(selection))
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_type(name,quiet=1):
+    def get_type(name,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -938,10 +938,10 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_type(str(name))
+            _self.lock(_self)
+            r = _cmd.get_type(_self._COb,str(name))
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if is_error(r):
             if _feedback(fb_module.cmd,fb_mask.errors):      
                 print "cmd-Error: unrecognized name."
@@ -984,7 +984,7 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
-    def identify(selection="(all)",mode=0,quiet=1):
+    def identify(selection="(all)",mode=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1006,10 +1006,10 @@ NOTES
         #
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.identify("("+str(selection)+")",int(mode)) # 0 = default mode
+            _self.lock(_self)
+            r = _cmd.identify(_self._COb,"("+str(selection)+")",int(mode)) # 0 = default mode
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if is_list(r):
             if len(r):
                 if not quiet:
@@ -1022,7 +1022,7 @@ NOTES
         if _raising(r): raise pymol.CmdException
         return r
 
-    def index(selection="(all)",quiet=1):
+    def index(selection="(all)",quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1045,10 +1045,10 @@ NOTE
         #      
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.index("("+str(selection)+")",0) # 0 = default mode
+            _self.lock(_self)
+            r = _cmd.index(_self._COb,"("+str(selection)+")",0) # 0 = default mode
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if not quiet:
             if is_list(r):
                 if len(r):
@@ -1057,7 +1057,7 @@ NOTE
         if _raising(r): raise pymol.CmdException
         return r
 
-    def find_pairs(selection1,selection2,state1=1,state2=1,cutoff=3.5,mode=0,angle=45):
+    def find_pairs(selection1,selection2,state1=1,state2=1,cutoff=3.5,mode=0,angle=45,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1070,18 +1070,18 @@ DESCRIPTION
         #      
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.find_pairs("("+str(selection1)+")",
+            _self.lock(_self)
+            r = _cmd.find_pairs(_self._COb,"("+str(selection1)+")",
                                       "("+str(selection2)+")",
                                       int(state1)-1,int(state2)-1,
                                       int(mode),float(cutoff),float(angle))
             # 0 = default mode
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_extent(selection="(all)",state=0,quiet=1):
+    def get_extent(selection="(all)",state=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1099,10 +1099,10 @@ PYMOL API
         #      
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.get_min_max(str(selection),int(state)-1)
+            _self.lock(_self)
+            r = _cmd.get_min_max(_self._COb,str(selection),int(state)-1)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if not r:
             if cmd._raising(): raise pymol.CmdException
         elif not quiet:
@@ -1130,7 +1130,7 @@ PYMOL API
         return r
 
 
-    def count_atoms(selection="(all)",quiet=1,state=0):
+    def count_atoms(selection="(all)",quiet=1,state=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1150,11 +1150,11 @@ PYMOL API
         selection = selector.process(selection)
         #
         try:
-            lock()   
-            r = _cmd.select("_count_tmp","("+str(selection)+")",1,int(state)-1,'')
-            _cmd.delete("_count_tmp")
+            _self.lock(_self)   
+            r = _cmd.select(_self._COb,"_count_tmp","("+str(selection)+")",1,int(state)-1,'')
+            _cmd.delete(_self._COb,"_count_tmp")
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if not quiet: print " count_atoms: %d atoms"%r
         if _raising(r): raise pymol.CmdException
         return r
@@ -1170,7 +1170,7 @@ PYMOL API
         return lst
 
 
-    def get_raw_alignment(name='',active_only=0):
+    def get_raw_alignment(name='',active_only=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1183,10 +1183,10 @@ PYMOL API
 
         '''
         try:
-            lock()
-            r = _cmd.get_raw_alignment(str(name),int(active_only))
+            _self.lock(_self)
+            r = _cmd.get_raw_alignment(_self._COb,str(name),int(active_only))
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if _raising(r): raise pymol.CmdException
         return r
 

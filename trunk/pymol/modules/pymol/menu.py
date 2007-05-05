@@ -91,7 +91,7 @@ def mol_show(self_cmd, sele):
             ") & r. CYS+CYX & n. SG) & bound_to (("+sele+") & r. CYS+CYX & n. SG))) & n. CA+CB+SG") ]
          ])
 
-    cmd.show("lines","(byres (("+sele+" & r. CYS+CYX & n. SG) & bound_to ("+sele+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
+    self_cmd.show("lines","(byres (("+sele+" & r. CYS+CYX & n. SG) & bound_to ("+sele+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
     
 def mol_hide(self_cmd, sele):
     return (
@@ -618,20 +618,20 @@ def complete(self_cmd, sele):
               ]
 
 def modify_by_object(self_cmd, sele, op):
-    list = cmd.get_names("public_objects",1)[0:25] # keep this practical
-    list = filter(lambda x:cmd.get_type(x)=="object:molecule",list)
+    list = self_cmd.get_names("public_objects",1)[0:25] # keep this practical
+    list = filter(lambda x:self_cmd.get_type(x)=="object:molecule",list)
     result = [[ 2, 'Object:', '']]
     for a in list:
-        if a!=s:
+        if a!=sele:
             result.append([1,a,
                                 'cmd.select("'+sele+'","('+sele+') '+op+' ('+a+')",enable=1)'])
     return result
 
 def modify_by_sele(self_cmd, sele, op):
-    list = cmd.get_names("public_selections",0)[0:25] # keep this practical
+    list = self_cmd.get_names("public_selections",0)[0:25] # keep this practical
     result = [[ 2, 'Selection:', '']]
     for a in list:
-        if a!=s:
+        if a!=sele:
             result.append([1,a,
                                 'cmd.select("'+sele+'","('+sele+') '+op+' ('+a+')",enable=1)'])
     return result

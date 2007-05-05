@@ -46,7 +46,7 @@ PYMOL API
         return r
     
 
-    def select(name, selection="", enable=-1, quiet=1, merge=0, state=0, domain=''): 
+    def select(name, selection="", enable=-1, quiet=1, merge=0, state=0, domain='',_self=cmd): 
         '''
 DESCRIPTION
 
@@ -90,15 +90,15 @@ SEE ALSO
             lock()
             if selection=="":
                 selection = name                    
-                if _cmd.get("auto_number_selections")!=0.0:
-                    sel_cnt = _cmd.get("sel_counter") + 1.0
-                    _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
+                if _cmd.get(_self._COb,"auto_number_selections")!=0.0:
+                    sel_cnt = _cmd.get(_self._COb,"sel_counter") + 1.0
+                    _cmd.legacy_set(_self._COb,"sel_counter","%1.0f" % sel_cnt)
                     name = "sel%02.0f" % sel_cnt
                 else:
                     name = "sele"
             if name == None:
-                sel_cnt = _cmd.get("sel_counter") + 1.0
-                _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
+                sel_cnt = _cmd.get(_self._COb,"sel_counter") + 1.0
+                _cmd.legacy_set(_self._COb,"sel_counter","%1.0f" % sel_cnt)
                 name = "sel%02.0f" % sel_cnt
                 
             # preprocess selection (note: inside TRY)
@@ -109,29 +109,29 @@ SEE ALSO
             elif merge==2:
                 selection = "("+selection+") or ??"+name # merge if exists and active
             #
-            r = _cmd.select(str(name),str(selection),int(quiet),int(state)-1,str(domain))
+            r = _cmd.select(_self._COb,str(name),str(selection),int(quiet),int(state)-1,str(domain))
             enable = int(enable)
             if is_ok(r) and enable>0:
-                r = _cmd.onoff(str(name),1);
+                r = _cmd.onoff(_self._COb,str(name),1);
             elif enable == 0:
-                r = _cmd.onoff(str(name),0)
+                r = _cmd.onoff(_self._COb,str(name),0)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                  
         return r
 
 
-    def pop(name,source,enable=-1,quiet=1):
+    def pop(name,source,enable=-1,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.pop(str(name),str(source),int(quiet))
+            r = _cmd.pop(_self._COb,str(name),str(source),int(quiet))
             if is_ok(r):
                 enable = int(enable)
                 if enable>0:
-                    r = _cmd.onoff(str(name),1);
+                    r = _cmd.onoff(_self._COb,str(name),1);
                 elif enable == 0:
-                    r = _cmd.onoff(str(name),0)
+                    r = _cmd.onoff(_self._COb,str(name),0)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                  
@@ -145,7 +145,7 @@ SEE ALSO
     
     id_type_sc = Shortcut(id_type_dict.keys())
     
-    def select_list(name,object,id_list,state=0,mode='id',quiet=1,):
+    def select_list(name,object,id_list,state=0,mode='id',quiet=1,_self=cmd):
         '''
 DESCRIPTION
     "select_list" is currently in development
@@ -156,13 +156,13 @@ DESCRIPTION
         mode = id_type_dict[id_type_sc.auto_err(mode,'identifier type')]
         try:
             lock()
-            r = _cmd.select_list(str(name),str(object),list(id_list),int(state)-1,int(mode),int(quiet))
+            r = _cmd.select_list(_self._COb,str(name),str(object),list(id_list),int(state)-1,int(mode),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def indicate(selection="(all)"):
+    def indicate(selection="(all)",_self=cmd):
         '''
 DESCRIPTION
 
@@ -183,7 +183,7 @@ PYMOL API
         #      
         try:
             lock()   
-            r = _cmd.select("indicate","("+str(selection)+")",1,-1,'')
+            r = _cmd.select(_self._COb,"indicate","("+str(selection)+")",1,-1,'')
             cmd.enable("indicate")
         finally:
             unlock(r)

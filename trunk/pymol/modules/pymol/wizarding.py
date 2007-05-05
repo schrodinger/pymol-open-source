@@ -95,61 +95,61 @@ EXAMPLE
         if _raising(r): raise pymol.CmdException
         return r
 
-    def set_wizard(wizard=None,replace=0): # INTERNAL
+    def set_wizard(wizard=None,replace=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.set_wizard(wizard,replace)
+            r = _cmd.set_wizard(_self._COb,wizard,replace)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def set_wizard_stack(stack=[]): # INTERNAL
+    def set_wizard_stack(stack=[],_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.set_wizard_stack(stack)
+            r = _cmd.set_wizard_stack(_self._COb,stack)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def refresh_wizard(): # INTERNAL
+    def refresh_wizard(_self=cmd): # INTERNAL
         r = DEFAULT_ERROR      
         try:
             lock()
-            r = _cmd.refresh_wizard()
+            r = _cmd.refresh_wizard(_self._COb)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def dirty_wizard(): # INTERNAL
+    def dirty_wizard(_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.dirty_wizard()
+            r = _cmd.dirty_wizard(_self._COb)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_wizard(): # INTERNAL
+    def get_wizard(_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.get_wizard()
+            r = _cmd.get_wizard(_self._COb)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_wizard_stack(): # INTERNAL
+    def get_wizard_stack(_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.get_wizard_stack()
+            r = _cmd.get_wizard_stack(_self._COb)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException

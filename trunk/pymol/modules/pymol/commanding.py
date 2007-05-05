@@ -21,7 +21,8 @@ if __name__=='pymol.commanding':
     import time
     import threading
     import traceback
-
+    import parsing
+    
     import cmd
     import pymol
     from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
@@ -89,7 +90,7 @@ if __name__=='pymol.commanding':
             if _feedback(fb_module.cmd,fb_mask.details): # redundant
                 print " Cmd: log closed."
 
-    def cls(): 
+    def cls(_self=cmd): 
         '''
 DESCRIPTION
 
@@ -102,13 +103,13 @@ USAGE
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.cls()
+            r = _cmd.cls(_self._COb)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def splash(mode=0):
+    def splash(mode=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -124,7 +125,7 @@ USAGE
             show_splash = 1
             try:
                 lock()
-                show_splash = _cmd.splash(1)
+                show_splash = _cmd.splash(_self._COb,1)
             finally:
                 unlock(0)
             r = DEFAULT_SUCCESS
@@ -142,7 +143,7 @@ USAGE
             print
             try:
                 lock()
-                r = _cmd.splash(0)
+                r = _cmd.splash(_self._COb,0)
             finally:
                 unlock(r)
         if _raising(r): raise pymol.CmdException
@@ -154,7 +155,7 @@ USAGE
     }
     reinit_sc = Shortcut(reinit_code.keys())
 
-    def reinitialize(what='everything',object=''):
+    def reinitialize(what='everything',object='',_self=cmd):
         '''
 DESCRIPTION
 
@@ -168,13 +169,13 @@ USAGE
         what = reinit_code[reinit_sc.auto_err(str(what),'option')]
         try:
             lock()
-            r = _cmd.reinitialize(int(what),str(object))
+            r = _cmd.reinitialize(_self._COb,int(what),str(object))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException
         return r
 
-    def sync(timeout=1.0,poll=0.05):
+    def sync(timeout=1.0,poll=0.05,_self=cmd):
         '''
 DESCRIPTION
 
@@ -193,16 +194,16 @@ SEE ALSO
         now = time.time()
         timeout = float(timeout)
         poll = float(poll)
-        if _cmd.wait_queue(): # commands waiting to be executed?
+        if _cmd.wait_queue(_self._COb): # commands waiting to be executed?
             while 1:
                 e = threading.Event() # using this for portable delay
                 e.wait(poll)
                 del e
-                if not _cmd.wait_queue():
+                if not _cmd.wait_queue(_self._COb):
                     break
                 if (time.time()-now)>timeout:
                     break
-        if _cmd.wait_deferred(): # deferred tasks waiting for a display event?
+        if _cmd.wait_deferred(_self._COb): # deferred tasks waiting for a display event?
             if thread.get_ident() == pymol.glutThread:
                 cmd.refresh()
             else:
@@ -210,13 +211,13 @@ SEE ALSO
                     e = threading.Event() # using this for portable delay
                     e.wait(poll)
                     del e
-                    if not _cmd.wait_queue():
+                    if not _cmd.wait_queue(_self._COb):
                         break
                     if (time.time()-now)>timeout:
                         break
             
 
-    def do(commands,log=1,echo=1):
+    def do(commands,log=1,echo=1,_self=cmd):
         # WARNING: don't call this routine if you already have the API lock
         # use cmd._do instead
         '''
@@ -247,7 +248,7 @@ USAGE (PYTHON)
                     if(len(a)):
                         try:
                             lock()
-                            r = _cmd.do(a,log,echo)
+                            r = _cmd.do(_self._COb,a,log,echo)
                         finally:
                             unlock(r)
                     else:
@@ -259,7 +260,7 @@ USAGE (PYTHON)
                     if(len(a)):
                         try:
                             lock()
-                            r = _cmd.do(a,log,echo)
+                            r = _cmd.do(_self._COb,a,log,echo)
                         finally:
                             unlock(r)
                     else:
@@ -268,7 +269,7 @@ USAGE (PYTHON)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def quit():
+    def quit(_self=cmd):
         '''
 DESCRIPTION
 
@@ -287,14 +288,14 @@ PYMOL API
         else:
             try:
                 lock()
-                _cmd.do("_ time.sleep(0.100);cmd._quit()",0,0)
+                _cmd.do(_self._COb,"_ time.sleep(0.100);cmd._quit()",0,0)
                 # allow time for a graceful exit from the calling thread
                 thread.exit()
             finally:
                 unlock()
         return None
 
-    def delete(name):
+    def delete(name,_self=cmd):
         '''
 DESCRIPTION
 
@@ -318,8 +319,91 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.delete(str(name))
+            r = _cmd.delete(_self._COb,str(name))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException      
         return r
+
+    def extend(name,function,_self=cmd):
+        
+        '''
+DESCRIPTION
+
+    "extend" is an API-only function which binds a new external
+    function as a command into the PyMOL scripting language.
+
+PYMOL API
+
+    cmd.extend(string name,function function)
+
+PYTHON EXAMPLE
+
+    def foo(moo=2): print moo
+    cmd.extend('foo',foo)
+
+    The following would now work within PyMOL:
+
+    PyMOL>foo
+    2
+    PyMOL>foo 3
+    3
+    PyMOL>foo moo=5
+    5
+    PyMOL>foo ?
+    Usage: foo [ moo ]
+
+NOTES
+
+    For security reasons, new PyMOL commands created using "extend" are
+    not saved or restored in sessions.
+
+SEE ALSO
+
+    alias, api
+            '''
+        _self.keyword[name] = [function, 0,0,',',parsing.STRICT]
+        _self.kwhash.append(name)
+        _self.help_sc.append(name)
+
+        # for aliasing compound commands to a single keyword
+
+    def alias(name, command,_self=cmd):
+        '''
+DESCRIPTION
+
+    "alias" allows you to bind routinely used command-line input to a
+    new PyMOL command keyword.
+
+USAGE
+
+    alias name, literal-command-input
+
+ARGUMENTS
+
+    literal-command-input may contain multiple commands separated by semicolons.
+    
+EXAMPLE
+
+    alias my_scene, hide; show ribbon, polymer; show sticks, organic; show nonbonded, solvent
+    my_scene
+
+NOTES
+
+    For security reasons, aliased commands are not saved or restored
+    in sessions.  
+
+SEE ALSO
+
+    extend, api
+            '''
+        _self.keyword[name] = [eval("lambda :do('''%s ''')"%command), 0,0,',',parsing.STRICT]
+        _self.kwhash.append(name)
+
+    def dummy(*arg):
+        '''
+DESCRIPTION
+
+    This is a dummy function which returns None.
+            '''
+        return None
