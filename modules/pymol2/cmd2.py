@@ -3,19 +3,62 @@ from pymol import cmd as global_cmd
 
 class Cmd:
 
-    def __init__(self, _COb):
+    def __init__(self, _pymol, _COb):
+
+        # store parent
         
+        self._pymol = _pymol
+
         # store C object for easy access
     
         self._COb = _COb
-
+        
         # private data
     
         self.color_sc = None
 
+        # CONSTANTS (pymol/constants.py)
+
+        self.DEFAULT_ERROR = global_cmd.DEFAULT_ERROR
+        self.DEFAULT_SUCCESS = global_cmd.DEFAULT_SUCCESS
+        self.QuietException = global_cmd.QuietException
+        self.Shortcut = global_cmd.Shortcut
+        self._load2str = global_cmd._load2str
+        self.boolean_dict = global_cmd.boolean_dict
+        self.boolean_sc = global_cmd.boolean_sc
+        self.fb_action = global_cmd.fb_action
+        self.fb_mask = global_cmd.fb_mask
+        self.fb_module = global_cmd.fb_module
+        self.file_ext_re = global_cmd.file_ext_re
+        self.loadable = global_cmd.loadable
+        self.nt_hidden_path_re = global_cmd.nt_hidden_path_re
+        self.palette_dict = global_cmd.palette_dict
+        self.palette_sc = global_cmd.palette_sc
+        self.parsing = global_cmd.parsing
+        self.quote_alpha_list_re = global_cmd.quote_alpha_list_re
+        self.repres = global_cmd.repres
+        self.repres_sc = global_cmd.repres_sc
+        self.safe_alpha_list_eval = global_cmd.safe_alpha_list_eval
+        self.safe_list_eval = global_cmd.safe_list_eval
+        self.safe_oname_re = global_cmd.safe_oname_re
+        self.sanitize_alpha_list_re = global_cmd.sanitize_alpha_list_re
+        self.sanitize_list_re = global_cmd.sanitize_list_re
+        self.space_sc = global_cmd.space_sc
+        self.stereo_dict = global_cmd.stereo_dict
+        self.stereo_sc = global_cmd.stereo_sc
+        self.toggle_dict = global_cmd.toggle_dict
+        self.toggle_sc = global_cmd.toggle_sc
+        self.window_dict = global_cmd.window_dict
+        self.window_sc = global_cmd.window_sc
+
+        
         # GLOBAL FUNCTIONS
 
         self.exp_path = global_cmd.exp_path
+
+        # deferred initiailization
+        
+        global_cmd._deferred_init_pymol_internals(_pymol)
         
         # PRIVATE FUNCTIONS (requiring '_self' as a keyword argument)
         
@@ -47,37 +90,37 @@ class Cmd:
         self.is_sequence = global_cmd.is_sequence
         self.is_error = global_cmd.is_error
         self.is_ok = global_cmd.is_ok
-        
+
         # from pymol/internal.py
         
-        self._invalidate_color_sc = global_cmd._invalidate_color_sc
+        self._adjust_coord = global_cmd._adjust_coord
+        self._alt = global_cmd._alt
+        self._coordset_update_spawn = global_cmd._coordset_update_spawn
+        self._coordset_update_thread = global_cmd._coordset_update_thread
+        self._ctrl = global_cmd._ctrl
+        self._do = global_cmd._do
+        self._dump_floats = global_cmd._dump_floats
+        self._dump_ufloats = global_cmd._dump_ufloats
+        self._fake_drag = global_cmd._fake_drag
+        self._get_color_sc = global_cmd._get_color_sc
+        self._get_feedback = global_cmd._get_feedback
         self._interpret_color = global_cmd._interpret_color
+        self._interpret_color = global_cmd._interpret_color
+        self._invalidate_color_sc = global_cmd._invalidate_color_sc
+        self._invalidate_color_sc = global_cmd._invalidate_color_sc
+        self._load = global_cmd._load
+        self._mpng = global_cmd._mpng
+        self._object_update_spawn = global_cmd._object_update_spawn
+        self._object_update_thread = global_cmd._object_update_thread
+        self._png = global_cmd._png
+        self._quit = global_cmd._quit
         self._ray_anti_spawn = global_cmd._ray_anti_spawn
         self._ray_hash_spawn = global_cmd._ray_hash_spawn
         self._ray_spawn = global_cmd._ray_spawn
-        self._coordset_update_thread = global_cmd._coordset_update_thread
-        self._coordset_update_spawn = global_cmd._coordset_update_spawn
-        self._object_update_thread = global_cmd._object_update_thread
-        self._object_update_spawn = global_cmd._object_update_spawn
-        self._do = global_cmd._do
-        self._mpng = global_cmd._mpng
-        self._load = global_cmd._load
-        self._special = global_cmd._special
-        self._ctrl = global_cmd._ctrl
-        self._alt = global_cmd._alt
-        self._png = global_cmd._png
-        self._quit = global_cmd._quit
         self._refresh = global_cmd._refresh
         self._sgi_stereo = global_cmd._sgi_stereo
-        self._interpret_color = global_cmd._interpret_color
+        self._special = global_cmd._special
         self._validate_color_sc = global_cmd._validate_color_sc
-        self._invalidate_color_sc = global_cmd._invalidate_color_sc
-        self._get_color_sc = global_cmd._get_color_sc
-        self._get_feedback = global_cmd._get_feedback
-        self._fake_drag = global_cmd._fake_drag
-        self._dump_floats = global_cmd._dump_floats
-        self._dump_ufloats = global_cmd._dump_ufloats
-        self._adjust_coord = global_cmd._adjust_coord
 
         # now we create the command langauge
 
@@ -87,12 +130,16 @@ class Cmd:
         self.kw_list = self.keyword.keys()
 
         keywords.fix_list(self.kw_list)
-        self.kwhash = global_cmd.Shortcut(self.kw_list)
+        self.kwhash = self.Shortcut(self.kw_list)
         keywords.fix_dict(self.keyword)
 
-
+        self.help_only = keywords.get_help_only_keywords()
+        help_sc = self.Shortcut(self.keyword.keys()+self.help_only.keys())
+        
 # PUBLIC API METHODS which expect "self" as the first argument
-# AUTOGENERATED
+
+# ========= WARNING WARNING WARNING WARNING ===========
+# ========= AUTOGENERATED BEYOND THIS POINT ===========
 
     def accept(self, *a, **k):
         k['_self']=self
@@ -129,6 +176,10 @@ class Cmd:
     def attach(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.attach, a, k)
+    
+    def auto_measure(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.auto_measure, a, k)
     
     def backward(self, *a, **k):
         k['_self']=self
@@ -390,6 +441,14 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.get_extent, a, k)
     
+    def get_frame(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_frame, a, k)
+    
+    def get_state(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_state, a, k)
+    
     def get_model(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_model, a, k)
@@ -397,6 +456,10 @@ class Cmd:
     def get_movie_playing(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_movie_playing, a, k)
+    
+    def get_movie_locked(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_movie_locked, a, k)
     
     def get_mtl_obj(self, *a, **k):
         k['_self']=self
@@ -470,6 +533,14 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.get_type, a, k)
     
+    def get_wizard(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_wizard, a, k)
+    
+    def get_wizard_stack(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_wizard_stack, a, k)
+    
     def get_version(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_version, a, k)
@@ -477,6 +548,10 @@ class Cmd:
     def get_view(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_view, a, k)
+    
+    def get_vis(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_vis, a, k)
     
     def gradient(self, *a, **k):
         k['_self']=self
@@ -898,6 +973,10 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.set_color, a, k)
     
+    def set_colorection(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.set_colorection, a, k)
+    
     def set_dihedral(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.set_dihedral, a, k)
@@ -914,6 +993,10 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.set_name, a, k)
     
+    def set_session(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.set_session, a, k)
+    
     def set_symmetry(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.set_symmetry, a, k)
@@ -925,6 +1008,10 @@ class Cmd:
     def set_view(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.set_view, a, k)
+    
+    def set_vis(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.set_vis, a, k)
     
     def show(self, *a, **k):
         k['_self']=self

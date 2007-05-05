@@ -43,8 +43,7 @@ class PyMOL:
 
             # initialize the cmd API
 
-            self.cmd = Cmd(self._COb)
-            self.cmd._pymol = self
+            self.cmd = Cmd(self,self._COb)
 
             # begin assembling the instance member by member
 

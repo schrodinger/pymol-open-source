@@ -21,6 +21,19 @@ if __name__=='pymol.querying':
           _feedback,fb_module,fb_mask,is_list, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
+    def auto_measure(_self=cmd):
+        lst = _self.get_names("selections")
+        if "pk1" in lst:
+            if "pk2" in lst:
+                if "pk3" in lst:
+                    if "pk4" in lst:
+                        _self.dihedral()
+                    else:
+                        _self.angle()
+                else:
+                    _self.distance()
+        _self.unpick()   
+
     def get_object_matrix(object,state=1,_self=cmd):
         r = DEFAULT_ERROR
         object = str(object)
