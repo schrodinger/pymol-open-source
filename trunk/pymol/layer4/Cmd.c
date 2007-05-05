@@ -4195,15 +4195,23 @@ static PyObject *Cmd_New(PyObject *self, PyObject *args)
 {
   PyObject *result = NULL;
   PyObject *pymol = NULL; /* pymol object instance */
-  CPyMOL *I = PyMOL_New(); /* not yet handling options... */
-  int ok = true;
-  ok = PyArg_ParseTuple(args,"O",&pymol);
-  if(I) {
-    PyMOLGlobals *G = PyMOL_GetGlobals(I);
-    G->P_inst = Calloc(CP_inst,1);
-    G->P_inst->obj = pymol;
-    G->P_inst->dict = PyObject_GetAttrString(pymol,"__dict__");
-    result = PyCObject_FromVoidPtr((void*)PyMOL_GetGlobalsHandle(I),NULL);
+  CPyMOLOptions *options = PyMOLOptions_New();
+  
+  if(options) {
+    options->show_splash = false;
+    {
+      CPyMOL *I = PyMOL_NewWithOptions(options);
+      
+      int ok = true;
+      ok = PyArg_ParseTuple(args,"O",&pymol);
+      if(I) {
+        PyMOLGlobals *G = PyMOL_GetGlobals(I);
+        G->P_inst = Calloc(CP_inst,1);
+        G->P_inst->obj = pymol;
+        G->P_inst->dict = PyObject_GetAttrString(pymol,"__dict__");
+        result = PyCObject_FromVoidPtr((void*)PyMOL_GetGlobalsHandle(I),NULL);
+      }
+    }
   }
   return APIAutoNone(result);
 }

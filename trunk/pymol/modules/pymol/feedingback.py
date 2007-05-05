@@ -14,7 +14,7 @@ def _feedback(module,mask,_self=cmd): # feedback query routine
     mask = int(mask)
     if module>0:
         try:
-            _self.lock()
+            _self.lock(_self)
             r = _cmd.feedback(_self._COb,module,mask)
         finally:
             _self.unlock(-1)
@@ -151,10 +151,10 @@ DEVELOPMENT TO DO
             mod_int = int(getattr(fb_module,mod_kee))
             if mod_int>=0:
                 try:
-                    _self.lock()
+                    _self.lock(_self)
                     r = _cmd.set_feedback(_self._COb,act_int,mod_int,mask_int)
                 finally:
-                    _self.unlock()
+                    _self.unlock(_self=_self)
             if mod_int<=0:
                 if mod_int:
                     if act_int==0:

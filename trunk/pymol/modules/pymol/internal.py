@@ -129,14 +129,14 @@ def _mpng(prefix, first=-1, last=-1, preserve=0, _self=cmd): # INTERNAL
     _self = sys.modules['cmd']
     # WARNING: internal routine, subject to change
     try:
-        _self.lock()   
+        _self.lock(_self)   
         fname = prefix
         if re.search("\.png$",fname):
             fname = re.sub("\.png$","",fname)
         fname = cmd.exp_path(fname)
         r = _cmd.mpng_(_self._COb,str(fname),int(first),int(last),int(preserve))
     finally:
-        _self.unlock(-1)
+        _self.unlock(-1,_self)
     return r
 
 # loading
@@ -293,14 +293,14 @@ def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,_self=cmd):
     # INTERNAL - can only be safely called by GLUT thread 
     # WARNING: internal routine, subject to change
     try:
-        _self.lock()   
+        _self.lock(_self)   
         fname = a
         if not re.search("\.png$",fname):
             fname = fname +".png"
         fname = cmd.exp_path(fname)
         r = _cmd.png(_self._COb,str(fname),int(width),int(height),float(dpi),int(ray),int(quiet))
     finally:
-        _self.unlock(-1)
+        _self.unlock(-1,_self)
     return r
 
 # quitting (thread-specific)
@@ -308,7 +308,7 @@ def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,_self=cmd):
 def _quit(_self=cmd):
     # WARNING: internal routine, subject to change
     try:
-        _self.lock()
+        _self.lock(_self)
         try: # flush and close log if possible to avoid threading exception
             if pymol._log_file!=None:
                 try:
@@ -326,7 +326,7 @@ def _quit(_self=cmd):
                 pass
         r = _cmd.quit(_self._COb)
     finally:
-        _self.unlock(-1)
+        _self.unlock(-1,_self)
     return r
 
 # screen redraws (thread-specific)
@@ -335,7 +335,7 @@ def _refresh(swap_buffers=1,_self=cmd):  # Only call with GLUT thread!
     # WARNING: internal routine, subject to change
     r = None
     try:
-        _self.lock()
+        _self.lock(_self)
         if thread.get_ident() == _self._pymol.glutThread:
             if swap_buffers:
                 r = _cmd.refresh_now(_self._COb)
@@ -344,7 +344,7 @@ def _refresh(swap_buffers=1,_self=cmd):  # Only call with GLUT thread!
         else:
             print "Error: Ignoring an unsafe call to cmd._refresh"
     finally:
-        _self.unlock(-1)
+        _self.unlock(-1,_self)
     return r
 
 # stereo (platform dependent )
@@ -395,23 +395,23 @@ def _get_color_sc(_self=cmd):
 def _get_feedback(_self=cmd): # INTERNAL
     # WARNING: internal routine, subject to change
     l = []
-    if _self.lock_attempt():
+    if _self.lock_attempt(_self):
         try:
             r = _cmd.get_feedback(_self._COb)
             while r:
                 l.append(r)
                 r = _cmd.get_feedback(_self._COb)
         finally:
-            _self.unlock(-1)
+            _self.unlock(-1,_self)
     return l
 get_feedback = _get_feedback # for legacy compatibility
 
 def _fake_drag(_self=cmd): # internal
-    _self.lock()
+    _self.lock(_self)
     try:
         _cmd.fake_drag(_self._COb)
     finally:
-        _self.unlock(-1)
+        _self.unlock(-1,_self)
     return 1
 
 # testing tools

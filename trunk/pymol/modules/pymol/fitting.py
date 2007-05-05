@@ -60,14 +60,14 @@ SEE ALSO
         if object==None: object=''
         # delete existing alignment object (if asked to reset it)
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.align(_self._COb,source,"("+target+")",float(cutoff),int(cycles),float(gap),
                                 float(extend),int(max_gap),str(object),str(mfile),
                                 int(source_state)-1,int(target_state)-1,
                                 int(quiet),int(max_skip),int(transform),int(reset))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def intra_fit(selection,state=1,quiet=1,mix=0,_self=cmd):
@@ -106,10 +106,10 @@ SEE ALSO
         state = int(state)
         mix = int(mix)
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.intrafit(_self._COb,"("+str(selection)+")",int(state)-1,2,int(quiet),int(mix))
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if r<0.0:
             r = DEFAULT_ERROR
         elif not quiet:
@@ -121,7 +121,7 @@ SEE ALSO
                     else:
                         print " cmd.intra_fit: %5.3f in state %d vs state %d"%(a,st,state)
                 st = st + 1
-        if _raising(r): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def intra_rms(selection,state=0,quiet=1,_self=cmd):
@@ -152,10 +152,10 @@ SEE ALSO
         r = DEFAULT_ERROR
         state = int(state)
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.intrafit(_self._COb,"("+str(selection)+")",int(state)-1,1,int(quiet),int(0))
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if r<0.0:
             r = DEFAULT_ERROR
         elif not quiet:
@@ -164,7 +164,7 @@ SEE ALSO
                 if a>=0.0:
                     print " cmd.intra_rms: %5.3f in state %d vs state %d"%(a,st,state)
                 st = st + 1
-        if _raising(r): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def intra_rms_cur(selection,state=0,quiet=1,_self=cmd):
@@ -195,10 +195,10 @@ SEE ALSO
         r = DEFAULT_ERROR
         state = int(state)
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.intrafit(_self._COb,"("+str(selection)+")",int(state)-1,0,int(quiet),int(0))
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if r<0.0:
             r = DEFAULT_ERROR
         elif not quiet:
@@ -207,7 +207,7 @@ SEE ALSO
                 if a>=0.0:
                     print " cmd.intra_rms_cur: %5.3f in state %d vs state %d"%(a,st,state)
                 st = st + 1
-        if _raising(r): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def fit(selection,target,source_state=0,target_state=0,
@@ -246,14 +246,14 @@ SEE ALSO
             sele1 = str(a)
             sele2 = str(b)
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.fit(_self._COb,sele1,sele2,2,
                              int(source_state)-1,int(target_state)-1,
                              int(quiet),int(matchmaker),float(cutoff),
                              int(cycles),str(object))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def rms(selection,target,source_state=0,target_state=0,quiet=1,
@@ -291,14 +291,14 @@ SEE ALSO
             sele1 = str(a)
             sele2 = str(b)
         try:
-            lock()   
+            _self.lock(_self)   
             r = _cmd.fit(_self._COb,sele1,sele2,1,
                              int(source_state)-1,int(target_state)-1,
                              int(quiet),int(matchmaker),float(cutoff),
                              int(cycles),str(object))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def rms_cur(selection,target,source_state=0,target_state=0,
@@ -332,14 +332,14 @@ SEE ALSO
             sele1 = str(a)
             sele2 = str(b)
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.fit(_self._COb,sele1,sele2,0,
                              int(source_state)-1,int(target_state)-1,
                              int(quiet),int(matchmaker),float(cutoff),
                              int(cycles),str(object))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def pair_fit(*arg,**kw):
@@ -365,11 +365,11 @@ SEE ALSO
         for a in arg:
             new_arg.append(selector.process(a))
         try:
-            lock()   
+            _self.lock(_self)   
             r = _cmd.fit_pairs(_self._COb,new_arg)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
 

@@ -79,21 +79,21 @@ if __name__=='pymol.creating':
             else:
                 action=1
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.group(_self._COb,str(name),str(members),int(action),int(quiet))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
     
     def ungroup(name,members="",action=0,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.group(_self._COb,str(name),str(members),7,int(quiet))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
     
     def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,
@@ -130,13 +130,13 @@ if __name__=='pymol.creating':
 
         type = map_type_dict[map_type_sc.auto_err(str(type),'map type')]
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.map_new(_self._COb,str(name),int(type),grid,str(selection),
                              float(buffer),box,int(state)-1,
                              int(box_flag),int(quiet),int(zoom),int(normalize))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def ramp_new(name,map_name,range=[-1.0,0.0,1.0],
@@ -165,13 +165,13 @@ if __name__=='pymol.creating':
         else:
             new_color=int(color)
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.ramp_new(_self._COb,str(name),str(map_name),list(safe_list_eval(str(range))),new_color,
                                     int(state)-1,str(selection),float(beyond),float(within),
                                     float(sigma),int(zero),int(quiet))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def isomesh(name,map,level=1.0,selection='',buffer=0.0,
@@ -232,15 +232,15 @@ SEE ALSO
         if carve==None:
             carve=0.0
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.isomesh(_self._COb,str(name),0,str(map),int(mopt),
                              selection,float(buffer),
                              float(level),0,int(state)-1,float(carve),
                              int(source_state)-1,int(quiet),
                              float(level))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def slice_new(name,map,state=1,source_state=0,_self=cmd):
@@ -272,11 +272,11 @@ SEE ALSO
 '''
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.slice_new(_self._COb,str(name),str(map),int(state)-1,int(source_state)-1)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
 
@@ -329,14 +329,14 @@ SEE ALSO
         if carve==None:
             carve=0.0
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.isosurface(_self._COb,str(name),0,str(map),int(mopt),
                                       selection,float(buffer),
                                       float(level),int(mode),int(state)-1,float(carve),
                                       int(source_state)-1,int(side),int(quiet))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,
@@ -379,15 +379,15 @@ SEE ALSO
         if carve==None:
             carve=0.0
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.isomesh(_self._COb,str(name),0,str(map),int(mopt),
                              selection,float(buffer),
                              float(level),1,int(state)-1,
                              float(carve),int(source_state)-1,int(quiet),
                              float(level))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
 
@@ -405,11 +405,11 @@ USAGE
         '''
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.isolevel(_self._COb,str(name),float(level),int(state)-1)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
     def gradient(name,map,minimum=1.0,maximum=-1.0,
@@ -448,15 +448,15 @@ SEE ALSO
         if carve==None:
             carve=0.0
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.isomesh(_self._COb,str(name),0,str(map),int(mopt),
                              selection,float(buffer),
                              float(minimum),3,int(state)-1,
                              float(carve),int(source_state)-1,int(quiet),
                              float(maximum))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
     def copy(target,source,zoom=-1,_self=cmd):
@@ -482,11 +482,11 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR      
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.copy(_self._COb,str(source),str(target),int(zoom))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
     def symexp(prefix, object, selection, cutoff, segi=0, quiet=1,_self=cmd):
@@ -514,16 +514,16 @@ SEE ALSO
         selection=selector.process(selection)
         #
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.symexp(_self._COb,str(prefix),str(object),
                             "("+str(selection)+")",float(cutoff),
                             int(segi),int(quiet))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException                           
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException                           
         return r
 
-    def fragment(name,object=None,origin=1,zoom=0,quiet=1):
+    def fragment(name,object=None,origin=1,zoom=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -562,7 +562,7 @@ USAGE
         except:
             traceback.print_exc()
             print "Error: unable to load fragment '%s'." % name         
-        if _raising(r): raise pymol.CmdException                                    
+        if _self._raising(r,_self): raise pymol.CmdException                                    
         return r
 
     def create(name,selection,source_state=0,
@@ -605,7 +605,7 @@ SEE ALSO
         selection = selector.process(selection)
         #      
         try:
-            lock()
+            _self.lock(_self)
             if name==None:
                 sel_cnt = _cmd.get(_self._COb,"sel_counter") + 1.0
                 _cmd.legacy_set(_self._COb,"sel_counter","%1.0f" % sel_cnt)
@@ -614,7 +614,7 @@ SEE ALSO
                             int(source_state)-1,int(target_state)-1,
                             int(discrete),int(zoom),int(quiet),int(singletons))
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if not is_error(r): # temporary inefficient implementation
             if extract not in (None, 0, '0'):
                 if extract not in (1, '1'):
@@ -622,7 +622,7 @@ SEE ALSO
                 else:
                     extract = selection
                 cmd.remove("(("+extract+") in (%s)) and not (%s)"%(name,name))
-        if _raising(r): raise pymol.CmdException                                    
+        if _self._raising(r,_self): raise pymol.CmdException                                    
         return r
 
     def extract(*arg,**kw):
@@ -661,7 +661,7 @@ SEE ALSO
         (name,resn,resi,chain,segi,elem,label) = map(unquote,(name,resn,resi,chain,segi,elem,label))
         #      
         try:
-            lock()
+            _self.lock(_self)
             if pos!=None:
                 if not is_list(pos):
                     pos = safe_list_eval(pos)
@@ -676,8 +676,8 @@ SEE ALSO
                                 float(b), float(q), str(label), pos, int(color),
                                 int(state)-1, int(mode), int(quiet))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException                                    
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException                                    
         return r
         
 

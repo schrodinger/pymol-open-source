@@ -25,21 +25,21 @@ if __name__=='pymol.experimenting':
     def get_bond_print(obj,max_bond,max_type,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.get_bond_print(_self._COb,str(obj),int(max_bond),int(max_type))
         finally:
-            unlock()
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
     def expfit(a,b,_self=cmd): # Huh?
         r = DEFAULT_ERROR
         try:
-            lock()   
+            _self.lock(_self)   
             r = _cmd.fit(_self._COb,a,b,2)
         finally:
-            unlock()
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
     def spheroid(object="",average=0,_self=cmd):  # EXPERIMENTAL
@@ -60,11 +60,11 @@ USAGE
         r = DEFAULT_ERROR
         try:
             print "Warning: 'spheroid' is experimental, incomplete, and unstable."
-            lock()
+            _self.lock(_self)
             r = _cmd.spheroid(_self._COb,str(object),int(average))
         finally:
-            unlock()
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
     def mem(_self=cmd):
@@ -77,11 +77,11 @@ DESCRIPTION
     '''
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.mem(_self._COb)
         finally:
-            unlock()
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
 
@@ -155,11 +155,11 @@ DESCRIPTION
     def dump(fnam,obj,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.dump(_self._COb,str(fnam),obj)
         finally:
-            unlock()
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
 
@@ -169,28 +169,28 @@ DESCRIPTION
     def test(group=0,index=0,_self=cmd): # generic test routine for development
         r = DEFAULT_ERROR
         try:
-            lock()   
+            _self.lock(_self)   
             r=_cmd.test(_self._COb,int(group),int(index))
         finally:
-            unlock()
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
     def import_coords(obj,state,mechio,_self=cmd): # experimental
         r = DEFAULT_ERROR      
         try:
-            lock()   
+            _self.lock(_self)   
             r = _cmd.import_coords(_self._COb,str(obj),int(state)-1,mechio)
         finally:
-            unlock()
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
     def load_coords(*arg): # UNSUPPORTED
         _self = cmd
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             ok = 1
             ftype = loadable.model
             state = 0
@@ -207,6 +207,6 @@ DESCRIPTION
             else:
                 print "Error: invalid arguments."
         finally:
-            unlock()
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(_self=_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
