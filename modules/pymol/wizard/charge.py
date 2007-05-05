@@ -7,9 +7,9 @@ default_mode = 'labchg'
 
 class Charge(Wizard):
 
-    def __init__(self):
+    def __init__(self,_self=cmd):
 
-        Wizard.__init__(self)
+        Wizard.__init__(self,_self)
         
         self.modes = [
             'labchg',

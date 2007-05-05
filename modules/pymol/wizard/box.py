@@ -29,9 +29,9 @@ class Box(Wizard):
     obj_name=None
 
 
-    def __init__(self):
+    def __init__(self,_self=cmd):
 
-        Wizard.__init__(self)
+        Wizard.__init__(self,_self)
         
         self.editing_name = 0
         self.copying = 0

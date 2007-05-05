@@ -62,8 +62,8 @@ if __name__=='pymol.importing':
             else:
                 if not apply(a,(session,)): # don't stop on errors...try to complete anyway
                     r = DEFAULT_ERROR
-        if cmd.get_movie_locked()>0: # if the movie contains commands...activate security
-            cmd.wizard("security")
+        if _self.get_movie_locked()>0: # if the movie contains commands...activate security
+            _self.wizard("security")
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
@@ -98,21 +98,23 @@ PYMOL API
         return r
 
     def load_brick(*arg,**kw):
+        _self = kw.get('_self',cmd)
         '''
     Temporary routine for GAMESS-UK project.
     '''
         lst = [loadable.brick]
         lst.extend(list(arg))
-        return apply(load_object,lst,kw)
+        return apply(_self.load_object,lst,kw)
 
     def load_map(*arg,**kw):
+        _self = kw.get('_self',cmd)
         '''
     Temporary routine for the Phenix project.
     '''
 
         lst = [loadable.map]
         lst.extend(list(arg))
-        return apply(load_object,lst,kw)
+        return apply(_self.load_object,lst,kw)
 
     def space(space="",quiet=0,_self=cmd):
         '''
@@ -154,7 +156,7 @@ EXAMPLES
                 filename = None
         if filename!=None:
             try:
-                filename = cmd.exp_path(filename)
+                filename = _self.exp_path(filename)
                 _self.lock(_self)
                 r = _cmd.load_color_table(_self._COb,str(filename),int(quiet))
             finally:
@@ -162,7 +164,7 @@ EXAMPLES
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def load_callback(*arg):
+    def load_callback(*arg,**kw):
         '''
 DESCRIPTION
 
@@ -175,10 +177,10 @@ PYMOL API
     cmd.load_callback(object,name,state,finish,discrete)
 
     '''
-
+        _self = kw.get('_self',cmd)
         lst = [loadable.callback]
         lst.extend(list(arg))
-        return apply(load_object,lst)
+        return apply(_self.load_object,lst)
 
     def load_cgo(*arg,**kw):
         '''
@@ -193,12 +195,12 @@ PYMOL API
     cmd.load_cgo(object,name,state,finish,discrete)
 
     '''
-
+        _self = kw.get('_self',cmd)
         lst = [loadable.cgo]
         lst.extend(list(arg))
         if not is_list(lst[1]): 
            lst[1] = list(lst[1]) 
-        return apply(load_object,lst,kw)
+        return apply(_self.load_object,lst,kw)
 
     def load_model(*arg,**kw):
         '''
@@ -210,9 +212,10 @@ PYMOL API
 
     cmd.load_model(model, object [,state [,finish [,discrete ]]])
         '''
+        _self = kw.get('_self',cmd)
         lst = [loadable.model]
         lst.extend(list(arg))
-        return apply(load_object,lst,kw)
+        return apply(_self.load_object,lst,kw)
 
     def load_traj(filename,object='',state=0,format='',interval=1,
                       average=1,start=1,stop=-1,max=-1,selection='all',image=1,
@@ -274,7 +277,7 @@ SEE ALSO
             selection = selector.process(selection)
             #   
 
-            fname = cmd.exp_path(filename)
+            fname = _self.exp_path(filename)
             
             if not len(str(type)):
                 # determine file type if possible
@@ -304,7 +307,7 @@ SEE ALSO
                     if plugin=="": plugin = "dcd"
                 else:
                     raise pymol.CmdException
-            elif cmd.is_string(type):
+            elif _self.is_string(type):
                 try:
                     ftype = int(type)
                 except:
@@ -351,7 +354,7 @@ SEE ALSO
         del sdf
         _cmd.finish_object(_self._COb,str(oname))
         if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
-            cmd._do("zoom (%s)"%oname)
+            _self._do("zoom (%s)"%oname)
     
     def load(filename, object='', state=0, format='', finish=1,
              discrete=-1, quiet=1, multiplex=None, zoom=-1, partial=0,
@@ -430,7 +433,7 @@ SEE ALSO
                 discrete = int(discrete)
             if multiplex==None:
                 multiplex=-2
-            fname = cmd.exp_path(filename)
+            fname = _self.exp_path(filename)
             go_to_first_scene = 0
             
             if not len(str(type)):
@@ -518,7 +521,7 @@ SEE ALSO
                         return r
                 else:
                     ftype = loadable.pdb # default is PDB
-            elif cmd.is_string(type):
+            elif _self.is_string(type):
                 if hasattr(loadable,type):
                     ftype = getattr(loadable,type)
                 else:
@@ -552,18 +555,18 @@ SEE ALSO
     # loadable.sdf1 is for the old Python-based SDF file reader
             if ftype == loadable.sdf1:
                 sdf = SDF(fname)
-                _processSDF(sdf,oname,state,quiet)
+                _processSDF(sdf,oname,state,quiet,_self)
                 ftype = -1
  
     # png images 
             if ftype == loadable.png:
-                r = cmd.load_png(str(fname),quiet=quiet)
+                r = _self.load_png(str(fname),quiet=quiet)
                 ftype = -1
 
     # p1m embedded data script files
     
             if ftype == loadable.p1m:
-                cmd._do("_ @"+fname)
+                _self._do("_ @"+fname)
                 ftype = -1
                 r = DEFAULT_SUCCESS
                 
@@ -589,9 +592,9 @@ SEE ALSO
 
             if ftype == loadable.pse:
                 ftype = -1
-                r = cmd.set_session(io.pkl.fromFile(fname),quiet=quiet,partial=partial)
+                r = _self.set_session(io.pkl.fromFile(fname),quiet=quiet,partial=partial)
                 if not partial:
-                    cmd.set("session_file",fname,quiet=1)
+                    _self.set("session_file",fname,quiet=1)
                 
     # special handling for multi-model files (mol2, sdf)
 
@@ -606,14 +609,14 @@ SEE ALSO
         finally:
             _self.unlock(r,_self)
         if go_to_first_scene:
-            if int(cmd.get_setting_legacy("presentation_auto_start"))!=0:
-                cmd.scene("auto","start",animate=0)
+            if int(_self.get_setting_legacy("presentation_auto_start"))!=0:
+                _self.scene("auto","start",animate=0)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def load_embedded(key=None,name=None,state=0,finish=1,discrete=1,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
-        list = cmd._parser.get_embedded(key)
+        list = _self._parser.get_embedded(key)
         if list == None:
             print "Error: embedded data '%s' not found."%key
         else:
@@ -621,7 +624,7 @@ SEE ALSO
                 if key != None:
                     name = key
                 else:
-                    name = cmd._parser.get_default_key()
+                    name = _self.cmd._parser.get_default_key()
             type = list[0]
             data = list[1]
             try:
@@ -654,7 +657,7 @@ SEE ALSO
                     if raising(-1): raise pymol.CmdException
             elif ftype==loadable.sdf1: # Python-based SDF reader
                 sdf = SDF(PseudoFile(data),'pf')
-                r = _processSDF(sdf,name,state,quiet)
+                r = _processSDF(sdf,name,state,quiet,_self)
             elif ftype==loadable.sdf2: # C-based SDF reader (much faster)
                 r = read_sdfstr(string.join(data,''),name,state,finish,discrete,quiet)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -934,7 +937,7 @@ PYMOL API
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def _fetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet):
+    def _fetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet,_self=cmd):
         import urllib
         import gzip
         import os
@@ -958,7 +961,7 @@ PYMOL API
             auto_close_file = 0
         if fname and not fobj:
             if os.path.exists(fname):
-                return cmd.load(fname,name,state,'pdb',finish,discrete,quiet,
+                return _self.load(fname,name,state,'pdb',finish,discrete,quiet,
                                 multiplex,zoom)
         tries = 0
         r = DEFAULT_ERROR
@@ -1000,7 +1003,7 @@ PYMOL API
                                     fobj.flush()
                                     if auto_close_file:
                                         fobj.close()
-                                r = cmd.read_pdbstr(pdb_str,name,state,finish,discrete,quiet,
+                                r = _self.read_pdbstr(pdb_str,name,state,finish,discrete,quiet,
                                                     multiplex,zoom)
                                 done = 1
                             except IOError:
@@ -1017,7 +1020,7 @@ PYMOL API
             print "Error-fetch: unable to load '%s'"%code
         return r
     
-    def _multifetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet):
+    def _multifetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet,_self):
         import string
         r = DEFAULT_SUCCESS
         code_list = string.split(str(code))
@@ -1033,12 +1036,12 @@ PYMOL API
                 else:
                     obj_name = name
                 r = _fetch(obj_code,obj_name,state,finish,
-                           discrete,multiplex,zoom,type,path,file,quiet)
+                           discrete,multiplex,zoom,type,path,file,quiet,_self)
         return r
     
     def fetch(code, name='', state=0, finish=1, discrete=-1,
               multiplex=-2, zoom=-1, type='pdb', async=-1, path=None,
-              file=None, quiet=1):
+              file=None, quiet=1, _self=cmd):
         
         '''
 DESCRIPTION
@@ -1081,11 +1084,11 @@ NOTES
             async = not quiet
         if not int(async):
             r = _multifetch(code,name,state,finish,
-                            discrete,multiplex,zoom,type,path,file,quiet)
+                            discrete,multiplex,zoom,type,path,file,quiet,_self)
         else:
             t = threading.Thread(target=_multifetch,
                                  args=(code,name,state,finish,
-                                       discrete,multiplex,zoom,type,path,file,quiet))
+                                       discrete,multiplex,zoom,type,path,file,quiet,_self))
             t.setDaemon(1)
             t.start()
         return r

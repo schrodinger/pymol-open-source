@@ -8147,8 +8147,6 @@ static PyMethodDef Cmd_methods[] = {
   {"dirty",                 CmdDirty,                METH_VARARGS },
   {"dirty_wizard",          CmdDirtyWizard,          METH_VARARGS },
   {"dihedral",              CmdDihedral,             METH_VARARGS },
-  /*	{"distance",	        CmdDistance,             METH_VARARGS }, * abandoned long ago, right? */
-
   {"dist",    	            CmdDist,                 METH_VARARGS },
   {"do",	                CmdDo,                   METH_VARARGS },
   {"draw",                  CmdDraw,                 METH_VARARGS },
@@ -8296,7 +8294,6 @@ static PyMethodDef Cmd_methods[] = {
   {"reset",                 CmdReset,                METH_VARARGS },
   {"reset_rate",	        CmdResetRate,            METH_VARARGS },
   {"reset_matrix",	        CmdResetMatrix,          METH_VARARGS },
-  /*	{"rgbfunction",       CmdRGBFunction,              METH_VARARGS },*/
   {"rock",	                CmdRock,                 METH_VARARGS },
   {"runpymol",	            CmdRunPyMOL,             METH_VARARGS },
   {"runwxpymol",	        CmdRunWXPyMOL,           METH_VARARGS },

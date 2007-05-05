@@ -6,6 +6,8 @@ import types
 class Message(Wizard):
 
     def __init__(self,*arg,**kw):
+        _self = kw.get('_self',cmd)
+        Wizard.__init__(self,_self)        
         self.message = []
         for a in arg:
             if not isinstance(a,types.ListType):

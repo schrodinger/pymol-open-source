@@ -61,11 +61,11 @@ class Appearance(Wizard):
         5: ['By Molecule', 'bymol' ],
         }
 
-    def __init__(self):
+    def __init__(self,_self=cmd):
 
-        cmd.deselect()
-        cmd.unpick()
-        Wizard.__init__(self)
+        _self.deselect()
+        _self.unpick()
+        Wizard.__init__(self,_self)
         self.selection_mode = cmd.get_setting_legacy("mouse_selection_mode")
         cmd.set("mouse_selection_mode",0) # set selection mode to atomic      
         self.current_mode = saved_mode

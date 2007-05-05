@@ -28,6 +28,8 @@ class Stereodemo(Wizard):
 	saved['last']=self.last
 
     def __init__(self,*arg,**kw):
+        _self=kw.get('_self',cmd)
+        Wizard.__init__(self,_self)        
         self.message = []
         self.last = None
         cmd.set("use_display_lists","on")

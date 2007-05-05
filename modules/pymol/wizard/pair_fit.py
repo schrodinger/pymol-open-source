@@ -13,9 +13,9 @@ indi_sele = "_indicate_pf"
 
 class Pair_fit(Wizard):
 
-    def __init__(self):
+    def __init__(self,_self=cmd):
 
-        Wizard.__init__(self)
+        Wizard.__init__(self,_self)
         
         self.memory = 0
         self.n_pair = 0

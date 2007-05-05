@@ -755,16 +755,16 @@ SEE ALSO
             _self.unlock(r,_self)
         if is_ok(r):
             if len(r):
-                if (cmd.get_setting_legacy("logging")!=0.0) and (output!=3):
+                if (_self.get_setting_legacy("logging")!=0.0) and (output!=3):
                     if not quiet:
                         print " get_view: matrix written to log file."
-                    cmd.log("_ set_view (\\\n","cmd.set_view((\\\n")
-                    cmd.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3])
-                    cmd.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7])
-                    cmd.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11] , "  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11])
-                    cmd.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19], "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19])
-                    cmd.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22], "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22]) 
-                    cmd.log("_  %14.9f, %14.9f, %14.9f )\n"%r[22:25] , "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
+                    _self.log("_ set_view (\\\n","cmd.set_view((\\\n")
+                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3])
+                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7])
+                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11] , "  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11])
+                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19], "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19])
+                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22], "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22]) 
+                    _self.log("_  %14.9f, %14.9f, %14.9f )\n"%r[22:25] , "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
                     if output<2: # suppress if we have a log file open
                         output=0
                 if output and not quiet and (output!=3):
@@ -1124,11 +1124,11 @@ SEE ALSO
         if not view:
             animate=0
         elif animate<0:
-            scene_animation = int(cmd.get_setting_legacy("scene_animation"))
+            scene_animation = int(_self.get_setting_legacy("scene_animation"))
             if scene_animation<0:
-                scene_animation = int(cmd.get_setting_legacy("animation"))
+                scene_animation = int(_self.get_setting_legacy("animation"))
             if scene_animation!=0:
-                animate = cmd.get_setting_legacy("scene_animation_duration")
+                animate = _self.get_setting_legacy("scene_animation_duration")
             else:
                 animate = 0
         try:
@@ -1155,9 +1155,9 @@ SEE ALSO
                         if len(list)>3:
                             colorection = list[3]
                             if colorection!=None:
-                                cmd.del_colorection(colorection,key) 
+                                _self.del_colorection(colorection,key) 
                         name = "_scene_"+key+"_*"
-                        cmd.delete(name)
+                        _self.delete(name)
                     scene_dict = {}
                     scene_dict_sc = Shortcut(scene_dict.keys())
                     scene_order = []
@@ -1194,18 +1194,18 @@ SEE ALSO
                         scene_order=new_scene_order
                         scene_dict[new_key] = scene_dict[key]
                         del scene_dict[key]
-                        valid_names = cmd.get_names("all")
+                        valid_names = _self.get_names("all")
                         for rep_name in rep_list:
                             name = "_scene_"+key+"_"+rep_name
                             if name in valid_names:
                                 new_name = "_scene_"+new_key+"_"+rep_name
-                                cmd.set_name(name,new_name)
+                                _self.set_name(name,new_name)
                         list = scene_dict[new_key]
                         if len(list)>3:
-                            cmd.set_colorection_name(list[3],key,new_key)
+                            _self.set_colorection_name(list[3],key,new_key)
                         print" scene: '%s' renamed to '%s'."%(key,new_key)
                         scene_dict_sc = Shortcut(scene_dict.keys())
-                        cmd.set("session_changed",1,quiet=1)
+                        _self.set("session_changed",1,quiet=1)
                 elif action=='insert_after':
                     key = _scene_get_unique_key()            
                     cur_scene = setting.get("scene_current_name")
@@ -1217,24 +1217,24 @@ SEE ALSO
                     scene_order.insert(ix,key)
                     action='store'
                 if action=='recall':
-                    cmd.set("scenes_changed",1,quiet=1);
+                    _self.set("scenes_changed",1,quiet=1);
                     key = scene_dict_sc.auto_err(key,'scene')
-                    cmd.set('scene_current_name', key, quiet=1)               
+                    _self.set('scene_current_name', key, quiet=1)               
                     list = scene_dict[key]
                     ll = len(list)
                     if (ll>1) and (active):
                         if list[1]!=None:
-                            cmd.disable()
-                            cmd.deselect()
-                            cmd.set_vis(list[1])
+                            _self.disable()
+                            _self.deselect()
+                            _self.set_vis(list[1])
                     if (ll>2) and (frame):
                         if list[2]!=None:
-                            if not cmd.get_movie_playing(_self): # don't set frame when movie is already playing
-				if cmd.get_frame()!=list[2]: # only set the frame when it isn't already correct
-				    cmd.frame(list[2])
+                            if not _self.get_movie_playing(): # don't set frame when movie is already playing
+				if _self.get_frame()!=list[2]: # only set the frame when it isn't already correct
+				    _self.frame(list[2])
                     if (ll>3) and (color):
                         if list[3]!=None:
-                            cmd.set_colorection(list[3],key)
+                            _self.set_colorection(list[3],key)
                     if (ll>4) and (rep):
                         if list[4]==None:
                             rep = 0
@@ -1242,14 +1242,14 @@ SEE ALSO
                         if list[5]!=None:
                             message=list[5]
                     if rep!=0:
-                        cmd.hide("(all)")
-                        valid_names = cmd.get_names("all")
+                        _self.hide("(all)")
+                        valid_names = _self.get_names("all")
                         for rep_name in rep_list:
                             name = "_scene_"+key+"_"+rep_name
                             if name in valid_names:
-                                cmd.show(rep_name,name)
+                                _self.show(rep_name,name)
                     replace_flag = 0
-                    wiz = cmd.get_wizard()
+                    wiz = _self.get_wizard()
                     if wiz!=None:
                         if str(wiz.__class__) == 'pymol.wizard.message.Message':
                             if hasattr(wiz,'from_scene'):
@@ -1259,21 +1259,21 @@ SEE ALSO
                         if is_string(message):
                             if len(message):
                                 if(replace_flag):
-                                    cmd.replace_wizard("message",message)
+                                    _self.replace_wizard("message",message)
                                 else:
-                                    cmd.wizard("message",message)
-                                cmd.get_wizard().from_scene = 1
+                                    _self.wizard("message",message)
+                                _self.get_wizard().from_scene = 1
                                 mess_flag = 1
                         if is_list(message):
                             if len(message):
                                 if(replace_flag):
-                                    apply(cmd.replace_wizard,("message",)+tuple(message))
+                                    apply(_self.replace_wizard,("message",)+tuple(message))
                                 else:
-                                    apply(cmd.wizard,("message",)+tuple(message))
-                                cmd.get_wizard().from_scene = 1
+                                    apply(_self.wizard,("message",)+tuple(message))
+                                _self.get_wizard().from_scene = 1
                                 mess_flag = 1
                     if replace_flag and not mess_flag:
-                        cmd.wizard()
+                        _self.wizard()
                     if (ll>0) and (view):
                         if list[0]!=None:
                             set_view(list[0],animate,quiet,hand)
@@ -1295,33 +1295,33 @@ SEE ALSO
                         if len(list)>3:
                             colorection = list[3]
                             if colorection!=None:
-                                cmd.del_colorection(colorection,key) # important -- free RAM
+                                _self.del_colorection(colorection,key) # important -- free RAM
                         name = "_scene_"+key+"_*"
-                        cmd.delete(name)
+                        _self.delete(name)
                     if key not in scene_order:
                         scene_order.append(key)
                     entry = []
                     if view:
-                        entry.append(cmd.get_view(0))
+                        entry.append(_self.get_view(0))
                     else:
                         entry.append(None);
                     if active:
-                        entry.append(cmd.get_vis())
+                        entry.append(_self.get_vis())
                     else:
                         entry.append(None)
                     if frame:
-                        entry.append(cmd.get_frame())
+                        entry.append(_self.get_frame())
                     else:
                         entry.append(None)
                     if color:
-                        entry.append(cmd.get_colorection(key))
+                        entry.append(_self.get_colorection(key))
                     else:
                         entry.append(None)
                     if rep:
                         entry.append(1)
                         for rep_name in rep_list:
                             name = "_scene_"+key+"_"+rep_name
-                            cmd.select(name,"rep "+rep_name)
+                            _self.select(name,"rep "+rep_name)
                     else:
                         entry.append(None)
                     if is_string(message):
@@ -1336,9 +1336,9 @@ SEE ALSO
                     if _feedback(fb_module.scene,fb_mask.actions):
                         print " scene: scene stored as \"%s\"."%key
                     _scene_validate_list()                        
-                    cmd.set("scenes_changed",1,quiet=1);
-                    cmd.set('scene_current_name',key,quiet=1)
-                    cmd.set("session_changed",1,quiet=1)
+                    _self.set("scenes_changed",1,quiet=1);
+                    _self.set('scene_current_name',key,quiet=1)
+                    _self.set("session_changed",1,quiet=1)
                 elif action=='clear':
                     if key=='auto':
                         key = setting.get("scene_current_name")
@@ -1348,21 +1348,21 @@ SEE ALSO
                         if len(list)>3:
                             colorection = list[3]
                             if colorection!=None:
-                                cmd.del_colorection(colorection,key) # important -- free RAM
+                                _self.del_colorection(colorection,key) # important -- free RAM
                         lst = _scene_validate_list()
                         if key == setting.get("scene_current_name"):
                             ix = lst.index(key) - 1
                             if ix>=0:
                                 setting.set("scene_current_name",lst[ix],quiet=1)
-                        cmd.set("scenes_changed",1,quiet=1);               
+                        _self.set("scenes_changed",1,quiet=1);               
                         del scene_dict[key]
                         name = "_scene_"+key+"_*"
-                        cmd.delete(name)
+                        _self.delete(name)
                         scene_dict_sc = Shortcut(scene_dict.keys())
                         _scene_validate_list()
                         if _feedback(fb_module.scene,fb_mask.actions):
                             print " scene: '%s' deleted."%key
-                    cmd.set("session_changed",1,quiet=1)                                                                    
+                    _self.set("session_changed",1,quiet=1)                                                                    
                 elif action=='next':
                     lst = _scene_validate_list()
                     cur_scene = setting.get('scene_current_name',quiet=1)
@@ -1374,26 +1374,26 @@ SEE ALSO
                         if ((scene_quit_on_action==action) and
                              (setting.get("presentation")=="on") and 
                              (setting.get("presentation_auto_quit")=="on")):
-                            cmd.quit()
+                            _self.quit()
                     if ix<len(lst):
                         scene_name = lst[ix]
-                        cmd.set('scene_current_name', scene_name, quiet=1)
+                        _self.set('scene_current_name', scene_name, quiet=1)
                         scene(scene_name,'recall',animate=animate)
                     elif setting.get("scene_loop")=="on": # loop back to the beginning
                         if len(lst):
                             scene_name = lst[0]
-                            cmd.set('scene_current_name', scene_name, quiet=1)
+                            _self.set('scene_current_name', scene_name, quiet=1)
                             scene(scene_name,'recall',animate=animate)
                     else: # otherwise put up blank screen
-                        cmd.set('scene_current_name','',quiet=1)
+                        _self.set('scene_current_name','',quiet=1)
                         chained = 0
                         if (setting.get("presentation")=="on"):
                             chained = chain_session(_self)
                             if (not chained) and (setting.get("presentation_auto_quit")=="on"):
                                 scene_quit_on_action = action
                         if not chained: # and len(lst):
-                            cmd.disable() # just hide everything
-                            cmd.wizard()
+                            _self.disable() # just hide everything
+                            _self.wizard()
                             
                 elif action=='previous':
                     lst = _scene_validate_list()            
@@ -1406,7 +1406,7 @@ SEE ALSO
                         if ((scene_quit_on_action==action) and
                              (setting.get("presentation")=="on") and 
                              (setting.get("presentation_auto_quit")=="on")):
-                            cmd.quit()
+                            _self.quit()
                     if ix>=0:
                         scene_name = lst[ix]
                         scene(scene_name,'recall',animate=animate,hand=-1)
@@ -1414,16 +1414,16 @@ SEE ALSO
                         print setting.get("scene_loop")
                         if len(lst):
                             scene_name = lst[-1]
-                            cmd.set('scene_current_name', scene_name, quiet=1)
+                            _self.set('scene_current_name', scene_name, quiet=1)
                             scene(scene_name,'recall',animate=animate,hand=-1)
                     else: # otherwise put up blank screen
-                        cmd.set('scene_current_name','',quiet=1)
+                        _self.set('scene_current_name','',quiet=1)
                         if ((setting.get("presentation")=="on") and 
                              (setting.get("presentation_auto_quit")=="on")):
                             scene_quit_on_action = action
                         if len(lst):
-                            cmd.disable() # just hide everything
-                            cmd.wizard()
+                            _self.disable() # just hide everything
+                            _self.wizard()
         finally:
             _self.unlock(r,_self)
         return r
@@ -1497,15 +1497,15 @@ PYMOL API
             _self.lock(_self)
             if state>1:
                 if state==2: # cross-eye
-                    cmd.set("stereo_mode","2",quiet=quiet)
+                    _self.set("stereo_mode","2",quiet=quiet)
                 elif state==3: # quad
-                    cmd.set("stereo_mode","1",quiet=quiet)
+                    _self.set("stereo_mode","1",quiet=quiet)
                 elif state==4: # wall-eye
-                    cmd.set("stereo_mode","3",quiet=quiet)
+                    _self.set("stereo_mode","3",quiet=quiet)
                 elif state==5: # geowall
-                    cmd.set("stereo_mode","4",quiet=quiet)
+                    _self.set("stereo_mode","4",quiet=quiet)
                 elif state==6:
-                    cmd.set("stereo_mode","5",quiet=quiet)
+                    _self.set("stereo_mode","5",quiet=quiet)
                 state=1
             r = _cmd.stereo(_self._COb,state)
             if is_error(r):
@@ -1573,7 +1573,7 @@ USAGE
         else:
             try:
                 _self.lock(_self)
-                r = cmd._do("_cmd.full_screen(_self._COb,%d)"%int(toggle))
+                r = _self._do("_cmd.full_screen(_self._COb,%d)"%int(toggle))
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
@@ -1703,7 +1703,7 @@ PYMOL API
         '''
         r = None
         if not cmd.is_glut_thread():
-            cmd.do("viewport %d,%d"%(int(width),int(height)),0)
+            _self.do("viewport %d,%d"%(int(width),int(height)),0)
         else:
             try:
                 _self.lock(_self)
@@ -1729,7 +1729,7 @@ PYMOL API
     cmd.bg_color(string color="black")
 
         '''
-        color = cmd._interpret_color(_self,color)
+        color = _self._interpret_color(_self,color)
         r = DEFAULT_ERROR      
         try:
             _self.lock(_self)
@@ -1927,7 +1927,7 @@ SEE ALSO
         else:
             try:
                 _self.lock(_self)
-                r = cmd._do("_ cmd._refresh()")
+                r = _self._do("_ cmd._refresh()")
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
@@ -1990,7 +1990,7 @@ USAGE
 
     def load_png(filename,movie=1,stereo=-1,quiet=0,_self=cmd):
         r = DEFAULT_ERROR      
-	filename = cmd.exp_path(str(filename))
+        filename = _self.exp_path(str(filename))
         try:
             _self.lock(_self)
             r = _cmd.load_png(_self._COb,str(filename),int(movie),int(stereo),int(quiet))

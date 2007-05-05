@@ -11,14 +11,14 @@ class Demo(Wizard):
     def launch(self,name):
         return None
 
-    def __init__(self,*arg):
+    def __init__(self,name=None,_self=cmd):
+        Wizard.__init__(self,_self)
         self.message = []
         self.last = None
         if saved.has_key('last'):
             self.last = saved['last']
-        if len(arg):
+        if name!=None:
             demo = DemoInfo()
-            name = arg[0]
             if self.last:
                 if hasattr(demo,self.last):
                     getattr(demo,self.last)(cleanup=1)

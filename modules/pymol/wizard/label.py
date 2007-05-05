@@ -12,11 +12,10 @@ class Label(Wizard):
     labeling=1
     obj_name=None
 
-    def __init__(self):
+    def __init__(self,_self=cmd):
+        Wizard.__init__(self,_self)
+        self.cmd.unpick()
 
-        cmd.unpick()
-        
-        Wizard.__init__(self)
         
     def get_prompt(self):
         self.prompt = []
