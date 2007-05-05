@@ -18,7 +18,7 @@ if __name__=='pymol.shortcut':
     import types
     import re
     import string
-
+    
     abbr_re = re.compile(r"[^\_]*\_")
 
     def is_string(obj):

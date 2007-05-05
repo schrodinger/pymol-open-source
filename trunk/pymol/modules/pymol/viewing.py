@@ -881,7 +881,7 @@ SEE ALSO
             action = view_sc.auto_err(action,'action')
             if action=='recall':
                 key = pymol._view_dict_sc.auto_err(key,'view')
-                set_view(pymol._view_dict[key],animate=animate)
+                _self.set_view(pymol._view_dict[key],animate=animate)
                 if _feedback(fb_module.scene,fb_mask.actions): # redundant
                     print " view: \"%s\" recalled."%key
             elif (action=='store') or (action=='update'):
@@ -1129,7 +1129,7 @@ SEE ALSO
                 if action=='recall':
                     action='next'
                 if action=='start':
-                    lst = _scene_validate_list()
+                    lst = _scene_validate_list(_self)
                     if len(lst):
                         key = lst[0]
                         action='recall'
@@ -1152,18 +1152,18 @@ SEE ALSO
                     pymol._scene_dict = {}
                     pymol._scene_dict_sc = Shortcut(pymol._scene_dict.keys())
                     pymol._scene_order = []
-                    _scene_validate_list()
+                    _scene_validate_list(_self)
                 else:
                     print " scene: stored scenes:"
-                    lst = _scene_validate_list()
+                    lst = _scene_validate_list(_self)
                     parsing.dump_str_list(lst)
             else:
                 action = scene_action_sc.auto_err(action,'action')
                 
                 if action=='insert_before':
                     key = _scene_get_unique_key(_self=_self)
-                    cur_scene = setting.get("scene_current_name")
-                    _scene_validate_list()                                            
+                    cur_scene = setting.get("scene_current_name",_self=_self)
+                    _scene_validate_list(_self)
                     if cur_scene in pymol._scene_order:
                         ix = pymol._scene_order.index(cur_scene)
                     else:
@@ -1199,8 +1199,8 @@ SEE ALSO
                         _self.set("session_changed",1,quiet=1)
                 elif action=='insert_after':
                     key = _scene_get_unique_key(_self=_self)            
-                    cur_scene = setting.get("scene_current_name")
-                    _scene_validate_list()                    
+                    cur_scene = setting.get("scene_current_name",_self=_self)
+                    _scene_validate_list(_self)                    
                     if cur_scene in pymol._scene_order:
                         ix = pymol._scene_order.index(cur_scene) + 1
                     else:
@@ -1267,14 +1267,14 @@ SEE ALSO
                         _self.wizard()
                     if (ll>0) and (view):
                         if list[0]!=None:
-                            set_view(list[0],animate,quiet,hand)
+                            _self.set_view(list[0],animate,quiet,hand)
                     if not quiet and _feedback(fb_module.scene,fb_mask.actions): # redundant
                         print " scene: \"%s\" recalled."%key
                 elif (action=='store') or (action=='update'):
                     if key =='new':
                         key=_scene_get_unique_key(_self=_self)               
                     if key =='auto':
-                        key = setting.get("scene_current_name")
+                        key = setting.get("scene_current_name",_self=_self)
                         if key=='':
                             key=_scene_get_unique_key(_self=_self)
                     if not pymol._scene_dict.has_key(key):
@@ -1326,13 +1326,13 @@ SEE ALSO
                     pymol._scene_dict[key]=entry
                     if _feedback(fb_module.scene,fb_mask.actions):
                         print " scene: scene stored as \"%s\"."%key
-                    _scene_validate_list()                        
+                    _scene_validate_list(_self)                        
                     _self.set("scenes_changed",1,quiet=1);
                     _self.set('scene_current_name',key,quiet=1)
                     _self.set("session_changed",1,quiet=1)
                 elif action=='clear':
                     if key=='auto':
-                        key = setting.get("scene_current_name")
+                        key = setting.get("scene_current_name",_self=_self)
                     key = pymol._scene_dict_sc.auto_err(key,'scene')
                     if pymol._scene_dict.has_key(key):
                         list = pymol._scene_dict[key]
@@ -1340,37 +1340,37 @@ SEE ALSO
                             colorection = list[3]
                             if colorection!=None:
                                 _self.del_colorection(colorection,key) # important -- free RAM
-                        lst = _scene_validate_list()
-                        if key == setting.get("scene_current_name"):
+                        lst = _scene_validate_list(_self)
+                        if key == setting.get("scene_current_name",_self=_self):
                             ix = lst.index(key) - 1
                             if ix>=0:
-                                setting.set("scene_current_name",lst[ix],quiet=1)
+                                setting.set("scene_current_name",lst[ix],quiet=1,_self=_self)
                         _self.set("scenes_changed",1,quiet=1);               
                         del pymol._scene_dict[key]
                         name = "_scene_"+key+"_*"
                         _self.delete(name)
                         pymol._scene_dict_sc = Shortcut(pymol._scene_dict.keys())
-                        _scene_validate_list()
+                        _scene_validate_list(_self)
                         if _feedback(fb_module.scene,fb_mask.actions):
                             print " scene: '%s' deleted."%key
                     _self.set("session_changed",1,quiet=1)                                                                    
                 elif action=='next':
-                    lst = _scene_validate_list()
-                    cur_scene = setting.get('scene_current_name',quiet=1)
+                    lst = _scene_validate_list(_self)
+                    cur_scene = setting.get('scene_current_name',quiet=1,_self=_self)
                     if cur_scene in lst:
                         ix = lst.index(cur_scene) + 1
                     else:
                         ix = 0
                         animate = 0
                         if ((pymol._scene_quit_on_action==action) and
-                             (setting.get("presentation")=="on") and 
-                             (setting.get("presentation_auto_quit")=="on")):
+                             (setting.get("presentation",_self=_self)=="on") and 
+                             (setting.get("presentation_auto_quit",_self=_self)=="on")):
                             _self.quit()
                     if ix<len(lst):
                         scene_name = lst[ix]
                         _self.set('scene_current_name', scene_name, quiet=1)
                         scene(scene_name,'recall',animate=animate)
-                    elif setting.get("scene_loop")=="on": # loop back to the beginning
+                    elif setting.get("scene_loop",_self=_self)=="on": # loop back to the beginning
                         if len(lst):
                             scene_name = lst[0]
                             _self.set('scene_current_name', scene_name, quiet=1)
@@ -1378,39 +1378,39 @@ SEE ALSO
                     else: # otherwise put up blank screen
                         _self.set('scene_current_name','',quiet=1)
                         chained = 0
-                        if (setting.get("presentation")=="on"):
+                        if (setting.get("presentation",_self=_self)=="on"):
                             chained = chain_session(_self)
-                            if (not chained) and (setting.get("presentation_auto_quit")=="on"):
+                            if (not chained) and (setting.get("presentation_auto_quit",_self=_self)=="on"):
                                 pymol._scene_quit_on_action = action
                         if not chained: # and len(lst):
                             _self.disable() # just hide everything
                             _self.wizard()
                             
                 elif action=='previous':
-                    lst = _scene_validate_list()            
-                    cur_scene = setting.get('scene_current_name',quiet=1)
+                    lst = _scene_validate_list(_self)            
+                    cur_scene = setting.get('scene_current_name',quiet=1,_self=_self)
                     if cur_scene in lst:
                         ix = lst.index(cur_scene) - 1
                     else:
                         ix = len(lst)-1
                         animate = 0
                         if ((pymol._scene_quit_on_action==action) and
-                             (setting.get("presentation")=="on") and 
-                             (setting.get("presentation_auto_quit")=="on")):
+                             (setting.get("presentation",_self=_self)=="on") and 
+                             (setting.get("presentation_auto_quit",_self=_self)=="on")):
                             _self.quit()
                     if ix>=0:
                         scene_name = lst[ix]
                         scene(scene_name,'recall',animate=animate,hand=-1)
-                    elif setting.get("scene_loop")=="on": # loop back to the end
-                        print setting.get("scene_loop")
+                    elif setting.get("scene_loop",_self=_self)=="on": # loop back to the end
+                        print setting.get("scene_loop",_self=_self)
                         if len(lst):
                             scene_name = lst[-1]
                             _self.set('scene_current_name', scene_name, quiet=1)
                             scene(scene_name,'recall',animate=animate,hand=-1)
                     else: # otherwise put up blank screen
                         _self.set('scene_current_name','',quiet=1)
-                        if ((setting.get("presentation")=="on") and 
-                             (setting.get("presentation_auto_quit")=="on")):
+                        if ((setting.get("presentation",_self=_self)=="on") and 
+                             (setting.get("presentation_auto_quit",_self=_self)=="on")):
                             pymol._scene_quit_on_action = action
                         if len(lst):
                             _self.disable() # just hide everything

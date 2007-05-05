@@ -123,7 +123,7 @@ void MainRunString(char *str)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   PBlock(G);
-  PLockStatus();
+  PLockStatus(G);
   PRunStringModule(G,str);
   PUnblock(G);
 }
@@ -247,16 +247,16 @@ void MainOnExit(void);
 
 static void MainPushValidContext(PyMOLGlobals *G)
 {
-  PLockStatus();
+  PLockStatus(G);
   PyMOL_PushValidContext(G->PyMOL);
-  PUnlockStatus();
+  PUnlockStatus(G);
 }
 
 static void MainPopValidContext(PyMOLGlobals *G)
 {
-  PLockStatus();
+  PLockStatus(G);
   PyMOL_PopValidContext(G->PyMOL);
-  PUnlockStatus();
+  PUnlockStatus(G);
 }
 
 static void DrawBlueLine(PyMOLGlobals *G)
@@ -471,7 +471,7 @@ void MainRunString(char *str)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   PBlock(G);
-  PLockStatus();
+  PLockStatus(G);
   MainPushValidContext(G);
   PRunStringModule(G,str);
   MainPopValidContext(G);
@@ -714,9 +714,9 @@ static void MainDrawProgress(PyMOLGlobals *G)
   int progress[PYMOL_PROGRESS_SIZE];
   int update = false;
   PBlock(G);
-  PLockStatus();
+  PLockStatus(G);
   update = PyMOL_GetProgress(G->PyMOL,progress,true);
-  PUnlockStatus();
+  PUnlockStatus(G);
   PUnblock(G);
 
   /*
@@ -933,9 +933,9 @@ static void MainKey(unsigned char k, int x, int y)
   } else {
     if((k==8)||(k==127)) { /* interrupt busy state (if possibele) */
       PBlock(G);
-      PLockStatus();
+      PLockStatus(G);
       PyMOL_SetInterrupt(G->PyMOL,true);
-      PUnlockStatus();
+      PUnlockStatus(G);
       PUnblock(G);
     }
   }
@@ -1345,10 +1345,10 @@ static void MainBusyIdle(void)
     PSleepWhileBusy(G,100000); /* 10 per second */
     if(G->HaveGUI) {
       PBlock(G);
-      PLockStatus();
+      PLockStatus(G);
       if(PyMOL_GetProgressChanged(G->PyMOL,false))
         p_glutPostRedisplay();
-      PUnlockStatus();
+      PUnlockStatus(G);
       PUnblock(G);
     }
   }

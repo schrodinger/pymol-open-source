@@ -47,15 +47,15 @@ Z* -------------------------------------------------------------------
 #define PUnlockAPIAsGlut(G)
 #define PUnlockAPIAsGlutNoFlush(G)
 
-#define PLockStatus()
-#define PLockStatusAttempt() 1
-#define PUnlockStatus()
+#define PLockStatus(G)
+#define PLockStatusAttempt()G 1
+#define PUnlockStatusG()
 
 #define PBlockAndUnlockAPI(G)
 #define PLockAPIAndUnblock(G)
 
-#define PFlush()
-#define PFlushFast()
+#define PFlush(G)
+#define PFlushFast(G)
 #define PParse(G,s)
 #define PDo(G,s)
 
@@ -116,9 +116,9 @@ int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy);
 void PUnlockAPIAsGlut(PyMOLGlobals *G);
 void PUnlockAPIAsGlutNoFlush(PyMOLGlobals *G);
 
-void PLockStatus(void);
-int  PLockStatusAttempt(void);
-void PUnlockStatus(void);
+void PLockStatus(PyMOLGlobals *G);
+int  PLockStatusAttempt(PyMOLGlobals *G);
+void PUnlockStatus(PyMOLGlobals *G);
 
 void PBlock(PyMOLGlobals *G);
 void PUnblock(PyMOLGlobals *G);
@@ -156,8 +156,18 @@ int PIsGlutThread(void);
 
 PyObject *PGetFontDict(PyMOLGlobals *G,float size,int face,int style);
 
-/* instance-specific Python object, containers, and closures */
+typedef struct {
+  int id;
+  PyThreadState *state;
+} SavedThreadRec;
+
+/* instance-specific Python object, containers, closures, and threads */
+
+#define MAX_SAVED_THREAD ((PYMOL_MAX_THREADS)+3)
+
 struct _CP_inst {
+  /* instance-specific storage */
+
   PyObject *obj;
   PyObject *dict; 
   PyObject *exec;
@@ -165,6 +175,24 @@ struct _CP_inst {
   PyObject *parse; /* parse closure */
   PyObject *complete; /* complete partial command / TAB action */
   PyObject *cmd_do;
+
+  /* locks and threads */
+
+  PyObject *lock; /* API locks */
+  PyObject *lock_attempt;
+  PyObject *unlock;
+  
+  PyObject *lock_c; /* C locks */
+  PyObject *unlock_c;
+  
+  PyObject *lock_status; /* status locks */
+  PyObject *lock_status_attempt; /* status locks */
+  PyObject *unlock_status;
+  
+  PyObject *lock_glut; /* GLUT locks */
+  PyObject *unlock_glut;
+
+  SavedThreadRec savedThread[MAX_SAVED_THREAD];
 };
 
 /* PyObject *GetBondsDict(void); */

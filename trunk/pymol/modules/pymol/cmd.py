@@ -64,6 +64,27 @@
 # In rare cases, certain nonserious error or warning output should
 # also be suppressed.  Set "quiet" to 2 for this behavior.
 
+
+def _deferred_init_pymol_internals(_pymol):
+    # set up some global session tasks
+
+    if viewing.session_restore_views not in _pymol._session_restore_tasks:
+        _pymol._session_restore_tasks.append(viewing.session_restore_views)
+
+    if viewing.session_save_views not in _pymol._session_save_tasks:
+        _pymol._session_save_tasks.append(viewing.session_save_views)
+
+    if viewing.session_restore_scenes not in _pymol._session_restore_tasks:
+        _pymol._session_restore_tasks.append(viewing.session_restore_scenes)
+
+    if viewing.session_save_scenes not in _pymol._session_save_tasks:
+        _pymol._session_save_tasks.append(viewing.session_save_scenes)
+
+    # take care of some deferred initialization
+
+    _pymol._view_dict_sc = Shortcut({})
+    _pymol._scene_dict_sc = Shortcut({})
+    
 if __name__=='pymol.cmd':
 
     import traceback
@@ -139,32 +160,32 @@ if __name__=='pymol.cmd':
 
         import internal
 
+        _adjust_coord = internal._adjust_coord
+        _alt = internal._alt
+        _coordset_update_spawn = internal._coordset_update_spawn
+        _coordset_update_thread = internal._coordset_update_thread
+        _ctrl = internal._ctrl
+        _do = internal._do
+        _dump_floats = internal._dump_floats
+        _dump_ufloats = internal._dump_ufloats
+        _fake_drag = internal._fake_drag
+        _get_color_sc = internal._get_color_sc
+        _get_feedback = internal._get_feedback
+        _interpret_color = internal._interpret_color
+        _invalidate_color_sc = internal._invalidate_color_sc
+        _load = internal._load
+        _mpng = internal._mpng
+        _object_update_spawn = internal._object_update_spawn
+        _object_update_thread = internal._object_update_thread
+        _png = internal._png
+        _quit = internal._quit
         _ray_anti_spawn = internal._ray_anti_spawn
         _ray_hash_spawn = internal._ray_hash_spawn
         _ray_spawn = internal._ray_spawn
-        _coordset_update_thread = internal._coordset_update_thread
-        _coordset_update_spawn = internal._coordset_update_spawn
-        _object_update_thread = internal._object_update_thread
-        _object_update_spawn = internal._object_update_spawn
-        _do = internal._do
-        _mpng = internal._mpng
-        _load = internal._load
-        _special = internal._special
-        _ctrl = internal._ctrl
-        _alt = internal._alt
-        _png = internal._png
-        _quit = internal._quit
         _refresh = internal._refresh
         _sgi_stereo = internal._sgi_stereo
-        _interpret_color = internal._interpret_color
+        _special = internal._special
         _validate_color_sc = internal._validate_color_sc
-        _invalidate_color_sc = internal._invalidate_color_sc
-        _get_color_sc = internal._get_color_sc
-        _get_feedback = internal._get_feedback
-        _fake_drag = internal._fake_drag
-        _dump_floats = internal._dump_floats
-        _dump_ufloats = internal._dump_ufloats
-        _adjust_coord = internal._adjust_coord
 
         get_feedback = _get_feedback # legacy
         
@@ -222,25 +243,10 @@ if __name__=='pymol.cmd':
 
         from api import *
 
-        # set up some global session tasks
+        # deferred initialization
 
-        if viewing.session_restore_views not in pymol._session_restore_tasks:
-            pymol._session_restore_tasks.append(viewing.session_restore_views)
-
-        if viewing.session_save_views not in pymol._session_save_tasks:
-            pymol._session_save_tasks.append(viewing.session_save_views)
-
-        if viewing.session_restore_scenes not in pymol._session_restore_tasks:
-            pymol._session_restore_tasks.append(viewing.session_restore_scenes)
-
-        if viewing.session_save_scenes not in pymol._session_save_tasks:
-            pymol._session_save_tasks.append(viewing.session_save_scenes)
-
-        # take care of some deferred initialization
+        _deferred_init_pymol_internals(pymol)
         
-        pymol._view_dict_sc = Shortcut({})
-        pymol._scene_dict_sc = Shortcut({})
-
         # now we create the command langauge
         
         import keywords
@@ -256,19 +262,6 @@ if __name__=='pymol.cmd':
 
         help_only = keywords.get_help_only_keywords()
         help_sc = Shortcut(keyword.keys()+help_only.keys())
-
-        def auto_measure():
-            lst = get_names("selections")
-            if "pk1" in lst:
-                if "pk2" in lst:
-                    if "pk3" in lst:
-                        if "pk4" in lst:
-                            dihedral()
-                        else:
-                            angle()
-                    else:
-                        distance()
-            unpick()   
 
         # keyboard configuration
         

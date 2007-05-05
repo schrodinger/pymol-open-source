@@ -356,8 +356,3 @@ class fb_mask:
     debugging =           0x80
     everything =          0xFF
 
-def null_function():
-    pass
-
-def null():
-    pass

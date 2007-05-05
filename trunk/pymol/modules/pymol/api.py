@@ -72,6 +72,7 @@ from controlling import \
 #--------------------------------------------------------------------
 from querying import \
       angle,              \
+      auto_measure,       \
       count_atoms,        \
       count_frames,       \
       count_states,       \
