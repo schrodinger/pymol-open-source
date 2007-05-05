@@ -20,10 +20,10 @@ if __name__=='pymol.helping':
 
     from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
-    def show_help(cmmd): # INTERNAL
+    def show_help(cmmd,_self=cmd): # INTERNAL
         print "PyMOL>help %s" % cmmd
         help(cmmd)
-        if cmd.get_setting_legacy("internal_feedback")>0.1:
+        if _self.get_setting_legacy("internal_feedback")>0.1:
             print "(Hit ESC to hide)"
 
 
@@ -60,7 +60,7 @@ SEE ALSO
             return None
 
 
-    def help(command = "commands"):
+    def help(command = "commands",_self=cmd):
         '''
 DESCRIPTION
 
@@ -73,15 +73,15 @@ USAGE
         r = DEFAULT_SUCCESS
 #        if cmd.get_setting_legacy("internal_feedback")>0.1:
 #            cmd.set("text","1",quiet=1)
-        cmmd = cmd.help_sc.auto_err(command,'topic')   
-        if cmd.keyword.has_key(cmmd):
-            doc = cmd.keyword[cmmd][0].__doc__
+        cmmd = _self.help_sc.auto_err(command,'topic')   
+        if _self.keyword.has_key(cmmd):
+            doc = _self.keyword[cmmd][0].__doc__
             if doc:
                 print "\n",string.strip(doc),"\n"
             else:
                 print "Error: sorry no help available on that command."
-        elif cmd.help_only.has_key(cmmd):
-            doc = cmd.help_only[cmmd][0].__doc__
+        elif _self.help_only.has_key(cmmd):
+            doc = _self.help_only[cmmd][0].__doc__
             if doc:
                 print "\n",string.strip(doc),"\n"
             else:
@@ -129,9 +129,9 @@ Try "help <command-name>".  Also see the following extra topics:
     "movies", "keyboard", "mouse", "selections",
     "examples", "launching", "editing", and "api".
     '''
-        cmd.help('commands')
+        _self.help('commands')
 
-    def editing():
+    def editing(_self=cmd):
         '''
 SUMMARY
 
@@ -162,9 +162,9 @@ mouse, however other representations will not interfere with picking
 so long as one of these representation is present underneath.
 
     '''
-        cmd.help('editing')
+        _self.help('editing')
 
-    def release():
+    def release(_self=cmd):
         '''
 RELEASE NOTES
 
@@ -202,9 +202,9 @@ despite its drawbacks.
 
 Warren L. DeLano (5/1/2001), warren@delanoscientific.com
     '''
-        cmd.help('release')
+        _self.help('release')
 
-    def edit_keys():
+    def edit_keys(_self=cmd):
         '''
 EDITING KEYS 
 
@@ -246,10 +246,10 @@ UNDO and REDO of conformational changes (not atom changes!)
     CTRL-A    redo the previous conformational change.
 
     '''
-        cmd.help('edit_keys')
+        _self.help('edit_keys')
 
 
-    def at_sign():
+    def at_sign(_self=cmd):
         '''
 DESCRIPTION
 
@@ -265,10 +265,10 @@ PYMOL API
     Not directly available. Instead, use cmd.do("@...").
 
     '''
-        cmd.help(at_sign)
+        _self.help(at_sign)
 
 
-    def run():
+    def run(_self=cmd):
         '''
 DESCRIPTION
 
@@ -293,9 +293,9 @@ NOTES
     Workaround: delegate construction to an imported module.
 
     '''
-        cmd.help(run)
+        _self.help(run)
 
-    def spawn():
+    def spawn(_self=cmd):
         '''
 DESCRIPTION
 
@@ -324,9 +324,9 @@ NOTES
     The best way to spawn processes at startup is to use the -l option
     (see "help launching").
     '''
-        cmd.help(spawn)
+        _self.help(spawn)
 
-    def api():
+    def api(_self=cmd):
         '''
 DESCRIPTION
 
@@ -349,9 +349,9 @@ NOTES
 
         '''
 
-        cmd.help('api')
+        _self.help('api')
 
-    def keyboard():
+    def keyboard(_self=cmd):
         '''
 KEYBOARD COMMANDS and MODIFIERS
 
@@ -379,9 +379,9 @@ EDITING
     type "help edit_keys" for keyboard shortcuts used in editing.
 
         '''
-        cmd.help('keyboard')
+        _self.help('keyboard')
 
-    def transparency():
+    def transparency(_self=cmd):
         '''
 TRANSPARENCY
 
@@ -443,9 +443,9 @@ MOUSE CONTROLS
         MovF     = Move fragment
         TorF     = Torsion fragment
     '''
-        cmd.help('mouse')
+        _self.help('mouse')
 
-    def examples():
+    def examples(_self=cmd):
         '''
 EXAMPLE ATOM SELECTIONS
 
@@ -465,9 +465,9 @@ EXAMPLE ATOM SELECTIONS
         * can be abbreviated as *
     sel combi = (hev&!site)
         '''
-        cmd.help('examples')
+        _self.help('examples')
 
-    def launching():
+    def launching(_self=cmd):
         '''
 PyMOL COMMAND LINE OPTIONS 
 
@@ -518,9 +518,9 @@ PyMOL COMMAND LINE OPTIONS
      .pse            PyMOL session file
      .phi            Delphi/Grasp Electrostatic Potential Map
         '''
-        cmd.help('launching')
+        _self.help('launching')
 
-    def movies():
+    def movies(_self=cmd):
         '''
 MOVIES
 
@@ -556,10 +556,10 @@ NOTE
     160 MB free RAM enables 500,000 atoms with line representations.
     Complex representations require significantly more memory.
         '''
-        cmd.help('movies')
+        _self.help('movies')
 
     ### -------------------------------------------------------------------
-    def selections():
+    def selections(_self=cmd):
         '''
 DESCRIPTION
 
@@ -599,9 +599,9 @@ DESCRIPTION
         <selection> within <distance> of <selection>
                               <selection> w. <distance> of <selection>      
         '''
-        cmd.help('selections')
+        _self.help('selections')
 
-    def povray():
+    def povray(_self=cmd):
         '''
 DESCRIPTION
 
@@ -644,10 +644,10 @@ DESCRIPTION
         surfaces in PovRay.  You must patch PovRay first.
 
         '''
-        cmd.help('povray')
+        _self.help('povray')
 
 
-    def faster():
+    def faster(_self=cmd):
         '''
 RAY TRACING OPTIMIZATION
 
@@ -678,7 +678,7 @@ RAY TRACING OPTIMIZATION
 
         help('faster')
 
-    def abort():
+    def abort(_self=cmd):
         '''
 DESCRIPTION
 
@@ -689,8 +689,9 @@ SEE ALSO
 
     embed, skip, python
     '''
-
-    def skip():
+        return None
+    
+    def skip(_self=cmd):
         '''
 DESCRIPTION
 
@@ -719,7 +720,7 @@ SEE ALSO
     '''
         return None
 
-    def python():
+    def python(_self=cmd):
         '''
 DESCRIPTION
 

@@ -653,7 +653,7 @@ static PyObject *CmdGetOrigin(PyObject *self, PyObject *args)
 static PyObject *CmdGetVis(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  PyObject *result;
+  PyObject *result = NULL;
   int ok=true;
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -4188,7 +4188,7 @@ static int decoy_input_hook(void)
 
 static PyObject *Cmd_GetGlobalCObject(PyObject *self, PyObject *args)
 {
-  return PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL);
+  return PyCObject_FromVoidPtr((void*)&SingletonPyMOLGlobals,NULL);
 }
 
 static PyObject *Cmd_New(PyObject *self, PyObject *args)
@@ -5258,7 +5258,7 @@ static PyObject *CmdSetBusy(PyObject *self, PyObject *args)
 static PyObject *CmdGetBusy(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int result;
+  int result = 0;
   int ok = false;
   int int1;
   ok = PyArg_ParseTuple(args,"Oi",&self,&int1);
@@ -8361,11 +8361,7 @@ void init_cmd(void)
   Py_InitModule4("_cmd", 
                  Cmd_methods,  
                  "PyMOL _cmd internal API -- PRIVATE: DO NOT USE!",
-#if 0
-                 NULL,
-#else
-                 PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL),
-#endif
+                 PyCObject_FromVoidPtr((void*)&SingletonPyMOLGlobals,NULL),
                  PYTHON_API_VERSION);
 }
 

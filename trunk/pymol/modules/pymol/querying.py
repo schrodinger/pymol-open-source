@@ -142,17 +142,17 @@ NOTES
         
         r = DEFAULT_SUCCESS
         if selection1=="(pk1)":
-            if "pk1" not in cmd.get_names('selections'):
+            if "pk1" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors):
                     print "cmd-Error: The 'pk1' selection is undefined."
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
-            if "pk2" not in cmd.get_names('selections'):
+            if "pk2" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors):         
                     print "cmd-Error: The 'pk2' selection is undefined."
                 r = DEFAULT_ERROR
         if selection3=="(pk3)":
-            if "pk3" not in cmd.get_names('selections'):
+            if "pk3" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors):         
                     print "cmd-Error: The 'pk3' selection is undefined."
                 r = DEFAULT_ERROR
@@ -226,22 +226,22 @@ NOTES
     '''
         r = DEFAULT_SUCCESS      
         if selection1=="(pk1)":
-            if "pk1" not in cmd.get_names('selections'):
+            if "pk1" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors):
                     print "cmd-Error: The 'pk1' selection is undefined."
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
-            if "pk2" not in cmd.get_names('selections'):
+            if "pk2" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors):         
                     print "cmd-Error: The 'pk2' selection is undefined."
                 r = DEFAULT_ERROR
         if selection3=="(pk3)":
-            if "pk3" not in cmd.get_names('selections'):
+            if "pk3" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors):         
                     print "cmd-Error: The 'pk3' selection is undefined."
                 r = DEFAULT_ERROR
         if selection3=="(pk4)":
-            if "pk4" not in cmd.get_names('selections'):
+            if "pk4" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors):         
                     print "cmd-Error: The 'pk4' selection is undefined."
                 r = DEFAULT_ERROR
@@ -342,12 +342,12 @@ NOTES
                     name = None
 
         if selection1=="(pk1)":
-            if "pk1" not in cmd.get_names('selections'):
+            if "pk1" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors):
                     print "cmd-Error: The 'pk1' selection is undefined."
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
-            if "pk2" not in cmd.get_names('selections'):
+            if "pk2" not in _self.get_names('selections'):
                 if _feedback(fb_module.cmd,fb_mask.errors):         
                     print "cmd-Error: The 'pk2' selection is undefined."
                 r = DEFAULT_ERROR
@@ -385,11 +385,11 @@ NOTES
                               int(label),int(quiet),int(reset),
                               int(state)-1,int(zoom))
                 if width!=None:
-                    cmd.set("dash_width",width,nam)
+                    _self.set("dash_width",width,nam)
                 if length!=None:
-                    cmd.set("dash_length",length,nam)
+                    _self.set("dash_length",length,nam)
                 if gap!=None:
-                    cmd.set("dash_gap",gap,nam)
+                    _self.set("dash_gap",gap,nam)
             finally:
                 _self.unlock(r,_self)
         if (r<0.0) and (not quiet):
@@ -661,7 +661,7 @@ SEE ALSO
         finally:
             _self.unlock(r,_self)
         if r==None:
-            if cmd._raising(): raise pymol.CmdException
+            if _self._raising(): raise pymol.CmdException
         elif not quiet:
             for a in r:
                 print " cmd.get_coords: [%8.3f,%8.3f,%8.3f]"%(a)
@@ -841,7 +841,7 @@ PYMOL API
         finally:
             _self.unlock(r,_self)
         if r<0.0: # negative area signals error condition
-            if cmd._raising(): raise pymol.CmdException
+            if _self._raising(): raise pymol.CmdException
         elif not quiet:
             print " cmd.get_area: %5.3f Angstroms^2."%r
         return r
@@ -950,7 +950,7 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
 
-    def id_atom(selection,mode=0,quiet=1):
+    def id_atom(selection,mode=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -969,11 +969,11 @@ PYMOL API
         if not ll:
             if _feedback(fb_module.cmd,fb_mask.errors):
                 print "cmd-Error: atom %s not found by id_atom." % selection
-            if cmd._raising(): raise pymol.CmdException
+            if _self._raising(): raise pymol.CmdException
         elif ll>1:
             if _feedback(fb_module.cmd,fb_mask.errors):
                 print "cmd-Error: multiple atoms %s found by id_atom." % selection
-            if cmd._raising(): raise pymol.CmdException
+            if _self._raising(): raise pymol.CmdException
         else:
             r = l[0]
             if not quiet:
@@ -1104,26 +1104,26 @@ PYMOL API
         finally:
             _self.unlock(r,_self)
         if not r:
-            if cmd._raising(): raise pymol.CmdException
+            if _self._raising(): raise pymol.CmdException
         elif not quiet:
             print " cmd.extent: min: [%8.3f,%8.3f,%8.3f]"%(r[0][0],r[0][1],r[0][2])
             print " cmd.extent: max: [%8.3f,%8.3f,%8.3f]"%(r[1][0],r[1][1],r[1][2])      
         if _raising(r): raise pymol.CmdException
         return r
 
-    def phi_psi(selection="(byres pk1)",quiet=1):
+    def phi_psi(selection="(byres pk1)",quiet=1,_self=cmd):
         r = cmd.get_phipsi(selection)
         if r!=None:
             kees = r.keys()
             kees.sort()
             if not quiet:
-                cmd.feedback('push')
-                cmd.feedback('disable','executive','actions')
+                _self.feedback('push')
+                _self.feedback('disable','executive','actions')
                 for a in kees:
-                    cmd.iterate("(%s`%d)"%a,"print ' %-9s "+
+                    _self.iterate("(%s`%d)"%a,"print ' %-9s "+
                                 ("( %6.1f, %6.1f )"%r[a])+
                                 "'%(resn+'-'+resi+':')")
-                cmd.feedback('pop')
+                _self.feedback('pop')
         elif _feedback(fb_module.cmd,fb_mask.errors):      
             print "cmd-Error: can't compute phi_psi"
         if _raising(r): raise pymol.CmdException
@@ -1159,8 +1159,8 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_names_of_type(type):
-        obj = cmd.get_names('objects')
+    def get_names_of_type(type,_self=cmd):
+        obj = _self.get_names('objects')
         types = map(get_type,obj)
         mix = map(None,obj,types)
         lst = []

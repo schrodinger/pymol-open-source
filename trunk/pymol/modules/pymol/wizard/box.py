@@ -30,7 +30,6 @@ class Box(Wizard):
 
 
     def __init__(self,_self=cmd):
-
         Wizard.__init__(self,_self)
         
         self.editing_name = 0
@@ -67,42 +66,42 @@ class Box(Wizard):
             self.mode = mode
         self.status = 0
         self.update_box()
-        cmd.refresh_wizard()
+        self.cmd.refresh_wizard()
         
     def get_prompt(self):
         self.prompt = []
         return self.prompt
 
     def toggle_points(self):
-        if self.points_name in cmd.get_names(enabled_only=1):
-            cmd.disable(self.points_name)
+        if self.points_name in self.cmd.get_names(enabled_only=1):
+            self.cmd.disable(self.points_name)
         else:
-            cmd.enable(self.points_name)
+            self.cmd.enable(self.points_name)
 
     def delete_box(self):
-        cmd.delete(self.point_name)
-        cmd.delete(self.cgo_name)
+        self.cmd.delete(self.point_name)
+        self.cmd.delete(self.cgo_name)
 
     def edit_name(self,copying=0):
         self.editing_name = 1
         self.copying = copying
         self.new_name = ''
-        cmd.refresh_wizard()
+        self.cmd.refresh_wizard()
 
     def auto_position(self,fract=0.75,size=1.0):
 
-        if self.points_name in cmd.get_names():
+        if self.points_name in self.cmd.get_names():
 
 	    if fract<0.5: fract = 1.0 - fract
 	    if fract>0.995: fract = 0.995 # minimum 1% distance from clipping planes
 	    
-            fov = float(cmd.get_setting_legacy("field_of_view"))
+            fov = float(self.cmd.get_setting_legacy("field_of_view"))
 	    
 	    tan_half_fov = math.tan(math.pi*fov/360.0)
 	    
-            model = cmd.get_model(self.points_name)
+            model = self.cmd.get_model(self.points_name)
 
-	    view = cmd.get_view()
+	    view = self.cmd.get_view()
 
 	    # locate box 1/4 and 3/4 distance from clipping plane
 	    
@@ -147,63 +146,63 @@ class Box(Wizard):
 	    model.atom[2].coord = plane[2]
 	    model.atom[3].coord = plane[3]
 
-	    cmd.load_model(model, '_tmp', zoom=0)
-	    cmd.update(self.points_name,"_tmp")
-	    cmd.delete("_tmp")
+	    self.cmd.load_model(model, '_tmp', zoom=0)
+	    self.cmd.update(self.points_name,"_tmp")
+	    self.cmd.delete("_tmp")
 
     def set_name(self,name):
 
         hidden_name = None
         
         if self.points_name != '':
-            if self.points_name in cmd.get_names("all"):
+            if self.points_name in self.cmd.get_names("all"):
                 hidden_name = "_"+self.cgo_name
-                cmd.disable(self.points_name)
-                cmd.set_name(self.points_name, hidden_name) # hide 
+                self.cmd.disable(self.points_name)
+                self.cmd.set_name(self.points_name, hidden_name) # hide 
 
         self.name = name
         self.points_name = self.name + "_points"
         self.cgo_name = self.name
         if self.copying and hidden_name != None:
-            cmd.copy(self.points_name, hidden_name, zoom=0)
+            self.cmd.copy(self.points_name, hidden_name, zoom=0)
             print "copy"
         else:
             hidden_name = "_"+self.cgo_name
-            if hidden_name in cmd.get_names("all"):
-                cmd.set_name(hidden_name, self.points_name) 
+            if hidden_name in self.cmd.get_names("all"):
+                self.cmd.set_name(hidden_name, self.points_name) 
         self.copying = 0
         
-        if not self.points_name in cmd.get_names():
+        if not self.points_name in self.cmd.get_names():
             model = Indexed()
-            origin = cmd.get_view()[12:15]
+            origin = self.cmd.get_view()[12:15]
             for a in pseudo_atoms:
                 new_atom = Atom()
                 (new_atom.symbol, new_atom.name, new_atom.resi, new_atom.resn, new_atom.coord) = a
                 new_atom.coord[0] = new_atom.coord[0] + origin[0]
                 new_atom.coord[1] = new_atom.coord[1] + origin[1]
                 new_atom.coord[2] = new_atom.coord[2] + origin[2]
-		new_atom.flags = 0x2200000 # set surface ignore flag
+                new_atom.flags = 0x2200000 # set surface ignore flag
                 model.atom.append(new_atom)
                 
-            cmd.load_model(model,self.points_name,zoom=0)
-	    cmd.set("surface_mode",0,self.points_name) # make sure no surface is shown
+            self.cmd.load_model(model,self.points_name,zoom=0)
+            self.cmd.set("surface_mode",0,self.points_name) # make sure no surface is shown
             self.coord = None
-            cmd.color("green","%s`1"%self.points_name)
-            cmd.color("green","%s`2"%self.points_name)
-            cmd.color("red"  ,"%s`3"%self.points_name)
-            cmd.color("blue" ,"%s`4"%self.points_name)
-            cmd.show_as("nb_spheres",self.points_name)
+            self.cmd.color("green","%s`1"%self.points_name)
+            self.cmd.color("green","%s`2"%self.points_name)
+            self.cmd.color("red"  ,"%s`3"%self.points_name)
+            self.cmd.color("blue" ,"%s`4"%self.points_name)
+            self.cmd.show_as("nb_spheres",self.points_name)
 	    
 	    self.auto_position(0.75,0.5)
 
-        cmd.enable(self.points_name)
+        self.cmd.enable(self.points_name)
         self.points_enabled = 1
         
     def update_box(self):
 
-        if self.points_name in cmd.get_names():
+        if self.points_name in self.cmd.get_names():
 
-            model = cmd.get_model(self.points_name)
+            model = self.cmd.get_model(self.points_name)
 
             self.coord = (
                 model.atom[0].coord,
@@ -371,16 +370,16 @@ class Box(Wizard):
                 model.atom[2].coord = p010
                 model.atom[3].coord = p001
 
-            cmd.load_model(model, '_tmp', zoom=0)
-            cmd.update(self.points_name,"_tmp")
-            cmd.delete("_tmp")
+            self.cmd.load_model(model, '_tmp', zoom=0)
+            self.cmd.update(self.points_name,"_tmp")
+            self.cmd.delete("_tmp")
 
             # then we load it into PyMOL
 
-            cmd.delete(self.cgo_name)
-            cmd.load_cgo(obj,self.cgo_name,zoom=0)
-            cmd.order(self.cgo_name+" "+self.points_name,sort=1,location='bottom')
-            cmd.set("nonbonded_size",math.sqrt(dot_product(d10,d10))/10,self.points_name)
+            self.cmd.delete(self.cgo_name)
+            self.cmd.load_cgo(obj,self.cgo_name,zoom=0)
+            self.cmd.order(self.cgo_name+" "+self.points_name,sort=1,location='bottom')
+            self.cmd.set("nonbonded_size",math.sqrt(dot_product(d10,d10))/10,self.points_name)
         
     def get_panel(self):
         
@@ -404,11 +403,11 @@ class Box(Wizard):
             return Wizard.event_mask_pick + Wizard.event_mask_select + Wizard.event_mask_scene 
 
     def do_scene(self):
-        if self.points_name in cmd.get_names("objects"):
+        if self.points_name in self.cmd.get_names("objects"):
             if self.coord == None:
                 self.update_box()
             else:
-                model = cmd.get_model(self.points_name)
+                model = self.cmd.get_model(self.points_name)
                 coord = (
                     model.atom[0].coord,
                     model.atom[1].coord,
@@ -435,7 +434,7 @@ class Box(Wizard):
                 self.new_name = self.new_name
             self.set_name(self.new_name)
             self.update_box()
-        cmd.refresh_wizard()
+        self.cmd.refresh_wizard()
         return 1
 
     def get_prompt(self):

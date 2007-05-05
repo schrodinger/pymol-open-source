@@ -60,7 +60,7 @@ if __name__=='pymol.importing':
                 except:
                     traceback.print_exc()
             else:
-                if not apply(a,(session,)): # don't stop on errors...try to complete anyway
+                if not apply(a,(session,),{'_self':_self}): # don't stop on errors...try to complete anyway
                     r = DEFAULT_ERROR
         if _self.get_movie_locked()>0: # if the movie contains commands...activate security
             _self.wizard("security")

@@ -8,6 +8,7 @@ import pymol
 class Security(Wizard):
 
     def __init__(self,_self=cmd):
+        Wizard.__init__(self,_self)        
         for a in self.get_prompt():
             print a
             

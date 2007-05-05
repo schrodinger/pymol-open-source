@@ -21,7 +21,7 @@ if __name__=='pymol.moving':
     import pymol
 
     import cmd
-    from cmd import _cmd,lock,unlock,Shortcut, \
+    from cmd import _cmd,Shortcut, \
           toggle_dict,toggle_sc, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
 
@@ -38,7 +38,7 @@ DESCRIPTION
         try:
             _self.lock(_self)
             r = _cmd.accept(_self._COb)
-            cmd.set_wizard()
+            _self.set_wizard()
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -56,7 +56,7 @@ DESCRIPTION
         try:
             _self.lock(_self)
             r = _cmd.decline(_self._COb)
-            cmd.set_wizard()
+            _self.set_wizard()
         finally:
             _self.unlock(r,_self)
 
@@ -159,16 +159,16 @@ SEE ALSO
         first = int(first)
         last = int(last)
         if first<0:
-            first = cmd.count_frames() + first + 1
+            first = _self.count_frames() + first + 1
             if last == 0:
-                last = cmd.count_frames()
+                last = _self.count_frames()
         if last<0:
-            last = cmd.count_frames() + last + 1
+            last = _self.count_frames() + last + 1
         action = mview_action_dict[mview_action_sc.auto_err(action,'action')]
         if scene==None:
             scene = ''
         else:
-            scene = cmd.get("scene_current_name")
+            scene = _self.get("scene_current_name")
         try:
             _self.lock(_self)
             r = _cmd.mview(_self._COb,int(action),int(first)-1,int(last)-1,
@@ -318,9 +318,9 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         if thread.get_ident() ==pymol.glutThread:
-            r = cmd._mpng(prefix,int(first)-1,int(last)-1,int(preserve))
+            r = _self._mpng(prefix,int(first)-1,int(last)-1,int(preserve))
         else:
-            r = cmd.do('cmd._mpng("'+prefix+'","'+
+            r = _self.do('cmd._mpng("'+prefix+'","'+
                        str(int(first)-1)+'","'+
                        str(int(last)-1)+'","'+
                        str(int(preserve))+'")',0)
@@ -417,7 +417,7 @@ SEE ALSO
     mdo, mplay, mclear
         '''
         r = DEFAULT_ERROR
-        cur_state = cmd.get_state()-1 # use the current state 
+        cur_state = _self.get_state()-1 # use the current state 
         try:
             _self.lock(_self)
             output=[]

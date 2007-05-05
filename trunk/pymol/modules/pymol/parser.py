@@ -243,11 +243,11 @@ if __name__=='pymol.parser':
                                             print 'Error: Command disallowed in this file.'
                                             return None
                                         else:
-                                           (layer.args,layer.kw_args) = \
+                                           (layer.args, layer.kw_args) = \
                                             parsing.prepare_call(
                                              layer.kw[0],
                                              parsing.parse_arg(layer.com2,mode=layer.kw[4]),
-                                             layer.kw[4]) # will raise exception on failure
+                                             layer.kw[4], _self=self.cmd) # will raise exception on failure
                                         self.result=apply(layer.kw[0],layer.args,layer.kw_args)
                                     elif layer.kw[4]==parsing.PYTHON:
                                             # handle python keyword

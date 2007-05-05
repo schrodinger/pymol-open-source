@@ -153,13 +153,13 @@ struct _PyMOLGlobals {
 
 };
 
-/* the following transitional global will disappear once we've
-   completely removed global state from PyMOL's code */
+/* if we're running PyMOL as a global singleton (old way / backward
+   compatible) then this global variable will contain a pointer to
+   PyMOL global state variables */
 
 #ifndef _PYMOL_NOPY
-extern PyMOLGlobals *TempPyMOLGlobals;
+extern PyMOLGlobals *SingletonPyMOLGlobals;
 #endif
-
 
 #endif
 

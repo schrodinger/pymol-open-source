@@ -62,7 +62,8 @@ ALPHA              = 25.0
 
 LIGHTING           = float(0x0B50)
 
-def molauto(*arg):
+def molauto(*arg,**kw):
+    _self = kw.get('_self',cmd)
     name = "mols"
     sele = "(all)"
     marg = "-nice"
@@ -73,13 +74,13 @@ def molauto(*arg):
         sele = arg[1]
     if la>2:
         marg = arg[2]
-    cmd.save("molauto.pdb",sele)
+    _self.save("molauto.pdb",sele)
     print "molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg
     os.system("molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg)
     f = open("molauto.r3d")
     rr = RenderReader(f)
     f.close()
-    cmd.load_cgo(rr.obj,name)
+    _self.load_cgo(rr.obj,name)
 
 # the following implementation causes full-blown system crashes on some machines.
 #   (stdout,stdin) = popen2.popen2("molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg)

@@ -476,33 +476,33 @@ def general_color(self_cmd, sele):
 
 def preset_ligand_sites(self_cmd, sele):
     return [[ 2, 'Ligand Sites:', ''],
-              [ 1, 'cartoon'   , 'preset.ligand_cartoon("'+sele+'")'          ],
+              [ 1, 'cartoon'   , 'preset.ligand_cartoon("'+sele+'",_self=cmd)'          ],
               [ 0, '', ''],
-              [ 1, 'solid surface'   , 'preset.ligand_sites("'+sele+'")'          ],
-              [ 1, 'solid (better)'   , 'preset.ligand_sites_hq("'+sele+'")'          ],
+              [ 1, 'solid surface'   , 'preset.ligand_sites("'+sele+'",_self=cmd)'          ],
+              [ 1, 'solid (better)'   , 'preset.ligand_sites_hq("'+sele+'",_self=cmd)'          ],
               [ 0, '', ''],
-              [ 1, 'transparent surface'   , 'preset.ligand_sites_trans("'+sele+'")'          ],
-              [ 1, 'transparent (better)'   , 'preset.ligand_sites_trans_hq("'+sele+'")'          ],
+              [ 1, 'transparent surface'   , 'preset.ligand_sites_trans("'+sele+'",_self=cmd)'          ],
+              [ 1, 'transparent (better)'   , 'preset.ligand_sites_trans_hq("'+sele+'",_self=cmd)'          ],
               [ 0, '', ''],
-              [ 1, 'dot surface'   , 'preset.ligand_sites_dots("'+sele+'")'          ],
+              [ 1, 'dot surface'   , 'preset.ligand_sites_dots("'+sele+'",_self=cmd)'          ],
               [ 0, '', ''],
-              [ 1, 'mesh surface'   , 'preset.ligand_sites_mesh("'+sele+'")'          ]]
+              [ 1, 'mesh surface'   , 'preset.ligand_sites_mesh("'+sele+'",_self=cmd)'          ]]
 
 def presets(self_cmd, sele):
     return [[ 2, 'Preset:'       ,''                        ],     
               [ 1, 'simple'   ,'preset.simple("'+sele+'")'          ],
-              [ 1, 'simple (no solvent)'   ,'preset.simple_no_solv("'+sele+'")'          ],           
-              [ 1, 'ball and stick' , 'preset.ball_and_stick("'+sele+'")' ],
-              [ 1, 'b factor putty' , 'preset.b_factor_putty("'+sele+'")' ],
-              [ 1, 'technical'   , 'preset.technical("'+sele+'")'          ],
-              [ 1, 'ligands'   , 'preset.ligands("'+sele+'")'          ],
+              [ 1, 'simple (no solvent)'   ,'preset.simple_no_solv("'+sele+'",_self=cmd)'          ],           
+              [ 1, 'ball and stick' , 'preset.ball_and_stick("'+sele+'",_self=cmd)' ],
+              [ 1, 'b factor putty' , 'preset.b_factor_putty("'+sele+'",_self=cmd)' ],
+              [ 1, 'technical'   , 'preset.technical("'+sele+'",_self=cmd)'          ],
+              [ 1, 'ligands'   , 'preset.ligands("'+sele+'",_self=cmd)'          ],
               [ 1, 'ligand sites'   , preset_ligand_sites(self_cmd, sele)         ],
-              [ 1, 'pretty ', 'preset.pretty("'+sele+'")'          ],
-              [ 1, 'pretty (with solvent)'     , 'preset.pretty_solv("'+sele+'")'          ],
-              [ 1, 'publication '   , 'preset.publication("'+sele+'")'          ],
-              [ 1, 'publication (with solvent)'   , 'preset.pub_solv("'+sele+'")'          ],
+              [ 1, 'pretty ', 'preset.pretty("'+sele+'",_self=cmd)'          ],
+              [ 1, 'pretty (with solvent)'     , 'preset.pretty_solv("'+sele+'",_self=cmd)'          ],
+              [ 1, 'publication '   , 'preset.publication("'+sele+'",_self=cmd)'          ],
+              [ 1, 'publication (with solvent)'   , 'preset.pub_solv("'+sele+'",_self=cmd)'          ],
               [ 0, ''               ,''                             ],                      
-              [ 1, 'default'   ,'preset.default("'+sele+'")'          ],           
+              [ 1, 'default'   ,'preset.default("'+sele+'",_self=cmd)'          ],           
               ]
 
 def hydrogens(self_cmd, sele):

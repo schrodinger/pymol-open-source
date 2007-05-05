@@ -25,23 +25,25 @@ if __name__=='pymol.commanding':
     
     import cmd
     import pymol
-    from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
-          _feedback,fb_module,fb_mask,is_list, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+    from cmd import _cmd, Shortcut, QuietException, \
+          fb_module, fb_mask, is_list, \
+          DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error
 
     def resume(fname,_self=cmd):
+        pymol=_self._pymol        
         r = DEFAULT_ERROR
         if os.path.exists(fname):
             if(re.search(r"\.py$|\.PY$|\.pym$|.PYM$",fname)):
-                r = cmd.do("run %s"%fname)
+                r = _self.do("run %s"%fname)
             else:
-                r = cmd.do("@%s"%fname)
+                r = _self.do("@%s"%fname)
         if is_ok(r):
-            r = cmd.do("log_open %s,a"%fname)
+            r = _self.do("log_open %s,a"%fname)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def log_open(fname='log.pml',mode='w'): 
+    def log_open(fname='log.pml',mode='w',_self=cmd):
+        pymol=_self._pymol        
         try:
             try:
                 if hasattr(pymol,"_log_file"):
@@ -51,7 +53,7 @@ if __name__=='pymol.commanding':
             except:
                 pass
             pymol._log_file = open(fname,mode)
-            if _feedback(fb_module.cmd,fb_mask.details): # redundant
+            if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
                 if mode!='a':
                     print " Cmd: logging to '%s'."%fname
                 else:
@@ -59,19 +61,21 @@ if __name__=='pymol.commanding':
             if mode=='a':
                 pymol._log_file.write("\n") # always start on a new line
             if(re.search(r"\.py$|\.PY$|\.pym$|\.PYM$",fname)):
-                cmd.set("logging",2,quiet=1)
+                _self.set("logging",2,quiet=1)
             else:
-                cmd.set("logging",1,quiet=1)
+                _self.set("logging",1,quiet=1)
         except:
             print"Error: unable to open log file '%s'"%fname
             pymol._log_file = None
-            cmd.set("logging",0,quiet=1)
+            _self.set("logging",0,quiet=1)
             traceback.print_exc()
             raise QuietException
 
-    def log(text,alt_text=None):
+    def log(text,alt_text=None,_self=cmd):
+        pymol=_self._pymol        
+        cmd=_self
         if pymol._log_file!=None:
-            mode = cmd.get_setting_legacy("logging")
+            mode = _self.get_setting_legacy("logging")
             if mode:
                 if mode==1:
                     pymol._log_file.write(text)
@@ -83,11 +87,13 @@ if __name__=='pymol.commanding':
                 pymol._log_file.flush()
 
     def log_close():
+        pymol=_self._pymol        
+        cmd=_self
         if pymol._log_file!=None:
             pymol._log_file.close()
             del pymol._log_file
-            cmd.set("logging",0,quiet=1)
-            if _feedback(fb_module.cmd,fb_mask.details): # redundant
+            _self.set("logging",0,quiet=1)
+            if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
                 print " Cmd: log closed."
 
     def cls(_self=cmd): 
@@ -110,6 +116,8 @@ USAGE
         return r
 
     def splash(mode=0,_self=cmd):
+        pymol=_self._pymol        
+        cmd=_self
         '''
 DESCRIPTION
 
@@ -127,19 +135,19 @@ USAGE
                 _self.lock(_self)
                 show_splash = _cmd.splash(_self._COb,1)
             finally:
-                unlock(0)
+                _self.unlock(0,_self)
             r = DEFAULT_SUCCESS
             if show_splash==1: # generic / open-source
-                png_path = cmd.exp_path("$PYMOL_PATH/data/pymol/splash.png")
+                png_path = _self.exp_path("$PYMOL_PATH/data/pymol/splash.png")
             elif show_splash==2: # evaluation builds
-                png_path = cmd.exp_path("$PYMOL_PATH/data/pymol/epymol.png")
+                png_path = _self.exp_path("$PYMOL_PATH/data/pymol/epymol.png")
             else: # incentive builds
-                png_path = cmd.exp_path("$PYMOL_PATH/data/pymol/ipymol.png")
+                png_path = _self.exp_path("$PYMOL_PATH/data/pymol/ipymol.png")
             if os.path.exists(png_path):
-                cmd.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
+                _self.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
         else:
-            if cmd.get_setting_legacy("internal_feedback")>0.1:
-                cmd.set("text","1",quiet=1)
+            if _self.get_setting_legacy("internal_feedback")>0.1:
+                _self.set("text","1",quiet=1)
             print
             try:
                 _self.lock(_self)
@@ -205,7 +213,7 @@ SEE ALSO
                     break
         if _cmd.wait_deferred(_self._COb): # deferred tasks waiting for a display event?
             if thread.get_ident() == pymol.glutThread:
-                cmd.refresh()
+                _self.refresh()
             else:
                 while 1:
                     e = threading.Event() # using this for portable delay
@@ -254,8 +262,8 @@ USAGE (PYTHON)
                     else:
                         r = DEFAULT_SUCCESS
             else:
-                defer = cmd.get_setting_legacy("defer_updates")
-                cmd.set('defer_updates',1)
+                defer = _self.get_setting_legacy("defer_updates")
+                _self.set('defer_updates',1)
                 for a in lst:
                     if(len(a)):
                         try:
@@ -265,7 +273,7 @@ USAGE (PYTHON)
                             _self.unlock(r,_self)
                     else:
                         r = DEFAULT_SUCCESS
-                cmd.set('defer_updates',defer)
+                _self.set('defer_updates',defer)
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
@@ -284,7 +292,7 @@ PYMOL API
     cmd.quit()
         '''
         if thread.get_ident() == pymol.glutThread:
-            cmd._quit()
+            _self._quit()
         else:
             try:
                 _self.lock(_self)

@@ -42,6 +42,54 @@ if __name__!='__main__':
 # 4: monolithic (embedded) PyMOL.  Prime, but don't start.
 # 5: Python embedded launch from within the PyMOL API
 
+def _init_internals(_pymol):
+
+    # Create a temporary object "stored" in the PyMOL global namespace
+    # for usage with evaluate based-commands such as alter
+
+    _pymol.stored = Scratch_Storage()
+
+    # Create a permanent object in the PyMOL global namespace
+    # that will be picked and unpickled along with the session
+
+    _pymol.session = Session_Storage()
+
+    # This global will be non-None if logging is active
+    # (global variable used for efficiency)
+
+    _pymol._log_file = None
+
+    # This global will be non-None if an external gui
+    # exists. It mainly exists so that events which occur
+    # in the Python thread can be handed off to the
+    # external GUI thread through one or more FIFO Queues
+    # (global variable used for efficiency)
+
+    _pymol._ext_gui = None
+
+    # lists of functions to call when saving and restoring pymol session objects
+    # The entry 'None' represents the PyMOL C-API function call
+
+    _pymol._session_save_tasks = [ None ]
+    _pymol._session_restore_tasks = [ None ]
+
+    # standard input reading thread
+
+    _pymol._stdin_reader_thread = None
+
+    # stored views
+    
+    _pymol._view_dict = {}
+    _pymol._view_dict_sc = None
+
+    # stored scenes
+    
+    _pymol._scene_dict = {}
+    _pymol._scene_dict_sc = None
+    _pymol._scene_order = []
+    _pymol._scene_counter = 1
+    _pymol._scene_quit_on_action = ''
+
 if hasattr(__main__,'pymol_launch'):
     pymol_launch = __main__.pymol_launch
 else:
@@ -148,44 +196,15 @@ if pymol_launch != 3: # if this isn't a dry run
             def __init__(self,args=None):
                 self.args = args
         
-        # Create a temporary object "stored" in the PyMOL global namespace
-        # for usage with evaluate based-commands such as alter
-
         class Scratch_Storage:
             pass
-
-        stored = Scratch_Storage()
-
-        # Create a permanent object in the PyMOL global namespace
-        # that will be picked and unpickled along with the session
 
         class Session_Storage:
             pass
 
-        session = Session_Storage()
+        # initialize instance-specific module/object internals
 
-        # This global will be non-None if logging is active
-        # (global variable used for efficiency)
-
-        _log_file = None
-
-        # This global will be non-None if an external gui
-        # exists. It mainly exists so that events which occur
-        # in the Python thread can be handed off to the
-        # external GUI thread through one or more FIFO Queues
-        # (global variable used for efficiency)
-
-        _ext_gui = None
-
-        # lists of functions to call when saving and restoring pymol session objects
-        # The entry 'None' represents the PyMOL C-API function call
-
-        _session_save_tasks = [ None ]
-        _session_restore_tasks = [ None ]
-
-        # standard input reading thread
-
-        _stdin_reader_thread = None
+        _init_internals(sys.modules['pymol'])
         
         # special handling for win32
 
@@ -213,15 +232,16 @@ if pymol_launch != 3: # if this isn't a dry run
         lock_api_status = threading.RLock() # mutex for PyMOL status info
         lock_api_glut = threading.RLock() # mutex for avoiding GLUT
         
-        def exec_str(self,s):
+        def exec_str(self,st):
             try:
-                exec s in self.__dict__, self.__dict__
+                exec st in self.__dict__, self.__dict__
             except StandardError:
                 traceback.print_exc()
             return None
 
-        def exec_deferred():
-            if invocation.options.read_stdin:
+        def exec_deferred(self):
+            cmd=self.cmd
+            if self.invocation.options.read_stdin:
                 try:
                     _stdin_reader_thread = threading.Thread(target=cmd._parser.stdin_reader)
                     _stdin_reader_thread.setDaemon(1)
@@ -231,7 +251,7 @@ if pymol_launch != 3: # if this isn't a dry run
             try:
                 if cmd.ready():
                     cmd.config_mouse(quiet=1)
-                    for a in invocation.options.deferred:
+                    for a in self.invocation.options.deferred:
                         if a[0:4]=="_do_":
                             cmd.do(a[4:])
                         elif re.search(r"pymol\.py$",a):
@@ -250,17 +270,18 @@ if pymol_launch != 3: # if this isn't a dry run
             except:
                 traceback.print_exc()
 
-        def adapt_to_hardware():
+        def adapt_to_hardware(self):
+            cmd=self.cmd
             (vendor,renderer,version) = cmd.get_renderer()
             if vendor[0:6]=='NVIDIA':
                 cmd.set('ribbon_smooth',0,quiet=1)
                 if renderer[0:7]=='GeForce':
-                    if invocation.options.show_splash:
+                    if self.invocation.options.show_splash:
                         print " Adapting to GeForce hardware."
                     cmd.set('line_width','2',quiet=1)
                 elif renderer=='NVIDIA GPU OpenGL Engine':
                     if sys.platform=='darwin':
-                        if invocation.options.show_splash:
+                        if self.invocation.options.show_splash:
                             print " Adapting to NVIDIA hardware on Mac."
                             cmd.set('line_smooth',0,quiet=1)
                             cmd.set('fog',0.9,quiet=1)
@@ -333,23 +354,23 @@ if pymol_launch != 3: # if this isn't a dry run
 
         # NEED SOME CONTRIBUTIONS HERE!
 
-        def launch_gui():
+        def launch_gui(self):
             if sys.platform=='darwin':
                 poll=1
        	    else:
                 poll=0
-            if invocation.options.external_gui==1:
-                __import__(invocation.options.gui)
-                sys.modules[invocation.options.gui].__init__(sys.modules['pymol'],poll)
-            elif invocation.options.external_gui==3:
+            if self.invocation.options.external_gui==1:
+                __import__(self.invocation.options.gui)
+                sys.modules[self.invocation.options.gui].__init__(self,poll)
+            elif self.invocation.options.external_gui==3:
                 os.environ['DISPLAY']=':0.0'
                 os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+"/ext/lib/tcl8.4"
                 os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+"/ext/lib/tk8.4"
-                __import__(invocation.options.gui)
-                sys.modules[invocation.options.gui].__init__(sys.modules['pymol'],poll)
+                __import__(self.invocation.options.gui)
+                sys.modules[self.invocation.options.gui].__init__(self,poll)
 
         # -- Greg Landrum's RPC stuff
-            if invocation.options.rpcServer:
+            if self.invocation.options.rpcServer:
                 import rpc
                 rpc.launch_XMLRPC()
         # --

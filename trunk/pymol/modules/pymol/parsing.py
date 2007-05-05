@@ -341,7 +341,7 @@ if __name__=='pymol.parsing':
             ac = ac + 1
         print st,"]"*pc
 
-    def prepare_call(fn,lst,mode=STRICT,name=None): # returns tuple of arg,kw or excepts if error
+    def prepare_call(fn,lst,mode=STRICT,name=None,_self=None): # returns tuple of arg,kw or excepts if error
         if name==None:
             name=fn.__name__
         result = (None,None)
@@ -375,6 +375,9 @@ if __name__=='pymol.parsing':
                     if __name__!='__main__':
                         if cmd._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
                             kw["quiet"] = 0
+            if "_self" in arg_nam:
+                if not kw.has_key("_self"):
+                    kw["_self"]=_self
         else:
             # error checking enabled
 
@@ -435,6 +438,10 @@ if __name__=='pymol.parsing':
                 if not kw.has_key("quiet"):
                     if cmd._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
                         kw["quiet"] = 0
+            # make sure command knows which PyMOL instance to message
+            if "_self" in arg_nam:
+                if not kw.has_key("_self"):
+                    kw["_self"]=_self
         if __name__!='__main__':
             if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
                 cmd.fb_debug.write(" parsing-DEBUG: kw: "+str(kw)+"\n")      

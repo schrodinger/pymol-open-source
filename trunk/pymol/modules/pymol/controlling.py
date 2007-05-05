@@ -19,9 +19,9 @@ if __name__=='pymol.controlling':
     import cmd
     import pymol
     
-    from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_string, \
+    from cmd import _cmd, Shortcut, QuietException, is_string, \
           boolean_dict, boolean_sc, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+          DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error
 
     location_code = {
         'top' : -1,
@@ -413,45 +413,45 @@ SEE ALSO
             if action=='forward':
                 bm = _cmd.get_setting(_self._COb,"button_mode")
                 bm = (int(bm) + 1) % len(mouse_ring)
-                cmd.set("button_mode",str(bm),quiet=1)
+                _self.set("button_mode",str(bm),quiet=1)
                 action=None
             elif action=='backward':
                 bm = _cmd.get_setting(_self._COb,"button_mode")
                 bm = (int(bm) - 1) % len(mouse_ring)
-                cmd.set("button_mode",str(bm),quiet=1)
+                _self.set("button_mode",str(bm),quiet=1)
                 action=None
             elif action=='select_forward':
                 sm = _cmd.get_setting(_self._COb,"mouse_selection_mode")
                 sm = sm + 1
                 if sm>6: sm = 0
-                cmd.set("mouse_selection_mode",sm,quiet=1)
+                _self.set("mouse_selection_mode",sm,quiet=1)
             elif action=='select_backward':
                 sm = _cmd.get_setting(_self._COb,"mouse_selection_mode")
                 sm = sm - 1
                 if sm<0: sm = 6
-                cmd.set("mouse_selection_mode",sm,quiet=1)
+                _self.set("mouse_selection_mode",sm,quiet=1)
             
             mode_list = None
             if action==None:
                 bm = _cmd.get_setting(_self._COb,"button_mode")
                 bm = int(bm) % len(mouse_ring)
                 mode = mouse_ring[bm]
-                cmd.set("button_mode_name",mode_name_dict.get(mode,mode))
+                _self.set("button_mode_name",mode_name_dict.get(mode,mode))
                 mode_list = mode_dict[mode]
             elif action in mode_dict.keys():
                 mode = action
-                cmd.set("button_mode_name",mode_name_dict.get(mode,mode))
+                _self.set("button_mode_name",mode_name_dict.get(mode,mode))
                 if mode in mouse_ring:
                     bm = mouse_ring.index(mode)
-                    cmd.set("button_mode",bm)
+                    _self.set("button_mode",bm)
                 mode_list = mode_dict[mode]
             if mode_list!=None:
                 for a in mode_list:
                     apply(button,a)
                 if not quiet:
                     print " mouse: %s"%mode
-                if mode[-7:]!='editing': cmd.unpick()
-                if mode[-7:]=='editing': cmd.deselect()
+                if mode[-7:]!='editing': _self.unpick()
+                if mode[-7:]=='editing': _self.deselect()
         finally:
             _self.unlock(_self=_self)
         return DEFAULT_SUCCESS
@@ -523,59 +523,59 @@ SEE ALSO
             if len(pat)>1: # ctrl-special key
                 if pat[0]!='F':
                     pat=string.lower(pat)
-                for a in cmd.ctrl_special.keys():
-                    if cmd.ctrl_special[a][0]==pat:
-                        cmd.ctrl_special[a][1]=fn
-                        cmd.ctrl_special[a][2]=arg
-                        cmd.ctrl_special[a][3]=kw
+                for a in _self.ctrl_special.keys():
+                    if _self.ctrl_special[a][0]==pat:
+                        _self.ctrl_special[a][1]=fn
+                        _self.ctrl_special[a][2]=arg
+                        _self.ctrl_special[a][3]=kw
                         r = DEFAULT_SUCCESS
             else: # std. ctrl key
-                for a in cmd.ctrl.keys():
+                for a in _self.ctrl.keys():
                     if a==pat:
-                        cmd.ctrl[a][0]=fn
-                        cmd.ctrl[a][1]=arg
-                        cmd.ctrl[a][2]=kw
+                        _self.ctrl[a][0]=fn
+                        _self.ctrl[a][1]=arg
+                        _self.ctrl[a][2]=kw
                         r = DEFAULT_SUCCESS
         elif key[0:4]=='ALT-':
             pat=key[4:]
             if len(pat)>1: # alt-special key
                 if pat[0]!='F':
                     pat=string.lower(pat)
-                for a in cmd.alt_special.keys():
-                    if cmd.alt_special[a][0]==pat:
-                        cmd.alt_special[a][1]=fn
-                        cmd.alt_special[a][2]=arg
-                        cmd.alt_special[a][3]=kw
+                for a in _self.alt_special.keys():
+                    if _self.alt_special[a][0]==pat:
+                        _self.alt_special[a][1]=fn
+                        _self.alt_special[a][2]=arg
+                        _self.alt_special[a][3]=kw
                         r = DEFAULT_SUCCESS
             else: # std. alt key
                 pat=string.lower(pat)
-                for a in cmd.alt.keys():
+                for a in _self.alt.keys():
                     if a==pat:
-                        cmd.alt[a][0]=fn
-                        cmd.alt[a][1]=arg
-                        cmd.alt[a][2]=kw
+                        _self.alt[a][0]=fn
+                        _self.alt[a][1]=arg
+                        _self.alt[a][2]=kw
                         r = DEFAULT_SUCCESS
         elif key[0:5]=='SHFT-':
             pat=key[5:]
             if len(pat)>1: # shft-special key
                 if pat[0]!='F':
                     pat=string.lower(pat)
-                for a in cmd.shft_special.keys():
-                    if cmd.shft_special[a][0]==pat:
-                        cmd.shft_special[a][1]=fn
-                        cmd.shft_special[a][2]=arg
-                        cmd.shft_special[a][3]=kw
+                for a in _self.shft_special.keys():
+                    if _self.shft_special[a][0]==pat:
+                        _self.shft_special[a][1]=fn
+                        _self.shft_special[a][2]=arg
+                        _self.shft_special[a][3]=kw
                         r = DEFAULT_SUCCESS
         else:
             if key[0]!='F':
                 pat=string.lower(key)
             else:
                 pat=key
-            for a in cmd.special.keys():
-                if cmd.special[a][0]==pat:
-                    cmd.special[a][1]=fn
-                    cmd.special[a][2]=arg
-                    cmd.special[a][3]=kw
+            for a in _self.special.keys():
+                if _self.special[a][0]==pat:
+                    _self.special[a][1]=fn
+                    _self.special[a][2]=arg
+                    _self.special[a][3]=kw
                     r = DEFAULT_SUCCESS
         if is_error(r):
             print "Error: special '%s' key not found."%key

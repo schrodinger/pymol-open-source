@@ -36,6 +36,9 @@ class PyMOL:
 
         pymol2_lock.acquire(1)
         try:
+
+            pymol._init_internals(self)
+            
             self._COb = _cmd._new(self)
 
             # initialize the cmd API

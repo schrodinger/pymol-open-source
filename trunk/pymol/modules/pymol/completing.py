@@ -46,7 +46,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'remove'         : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'reinitialize'   : [ self_cmd.reinit_sc              , 'option'          , ''   ],
         
-        'scene'          : [ self_cmd.viewing.scene_dict_sc  , 'scene'           , ''   ],
+        'scene'          : [ self_cmd._pymol._scene_dict_sc  , 'scene'           , ''   ],
         'sculpt_activate': [ self_cmd.object_sc              , 'object'          , ''   ],
         'set'            : [ self_cmd.setting.setting_sc     , 'setting'         , ','  ],
         'set_bond'       : [ self_cmd.setting.setting_sc     , 'setting'         , ','  ],            
@@ -56,7 +56,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'space'          : [ self_cmd.space_sc               , 'space'           , ''   ],      
         'split_states'   : [ self_cmd.object_sc              , 'object'          , ','  ],
         'stereo'         : [ self_cmd.stereo_sc              , 'option'          , ''   ],      
-        'view'           : [ self_cmd.viewing.view_dict_sc   , 'view'            , ''   ],                              
+        'view'           : [ self_cmd._pymol._view_dict_sc   , 'view'            , ''   ],                              
         'unmask'         : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'unset'          : [ self_cmd.setting.setting_sc     , 'setting'         , ','  ],
         'unset_bond'     : [ self_cmd.setting.setting_sc     , 'setting'         , ','  ],                        
