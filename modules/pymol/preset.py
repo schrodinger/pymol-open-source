@@ -29,16 +29,22 @@ lig_excl = "(resn MSE)"
 lig_sele = "((hetatm or not "+prot_and_dna_sele+") and not ("+solv_sele+"|"+ion_sele+"|"+lig_excl+"))"
 lig_and_solv_sele = "("+lig_sele+"|"+solv_sele+")"
 
-def _get_polar_contacts_name(s):
+def _get_polar_contacts_name(s,_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     list = cmd.get_object_list(s)
     if list!=None and (len(list)==1):
         return list[0]+polar_contacts_suffix
     else:
         return default_polar_contacts
 
-def _prepare(s,polar_contacts=None):
+def _prepare(selection,polar_contacts=None,_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     # this function should undo everything that is done by any preset function in this module
     # (except for coloring)
+    s = tmp_sele
+    cmd.select(s,selection)
 
     cmd.cartoon("auto",s)   
     cmd.hide("everything",s)
@@ -48,15 +54,15 @@ def _prepare(s,polar_contacts=None):
     cmd.unset("dot_normals",s)
     cmd.unset("mesh_normals",s)
     cmd.unset("surface_quality",s)
-    cmd.unset("surface_type",s)
-    cmd.unset("sphere_scale",s)
-    cmd.unset("stick_radius",s)
-    cmd.unset("stick_color",s)
-    cmd.unset("cartoon_highlight_color",s)
-    cmd.unset("cartoon_fancy_helices",s)
-    cmd.unset("cartoon_smooth_loops",s)
-    cmd.unset("cartoon_flat_sheets",s)
-    cmd.unset("cartoon_side_chain_helper",s)   
+    cmd.unset("surface_type",selection)
+    cmd.unset("sphere_scale",selection)
+    cmd.unset_bond("stick_radius",s,s)
+    cmd.unset_bond("stick_color",s,s)
+    cmd.unset("cartoon_highlight_color",selection)
+    cmd.unset("cartoon_fancy_helices",selection)
+    cmd.unset("cartoon_smooth_loops",selection)
+    cmd.unset("cartoon_flat_sheets",selection)
+    cmd.unset("cartoon_side_chain_helper",selection)   
     cmd.unset("mesh_normals",s)
     cmd.unset("dot_normals",s)
     if polar_contacts == None:
@@ -64,16 +70,20 @@ def _prepare(s,polar_contacts=None):
         if polar_contacts in cmd.get_names('objects'):
             cmd.delete(polar_contacts)
         
-def prepare(selection="(all)"):
+def prepare(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     s = tmp_sele
     cmd.select(s,selection)
-    _prepare(s)
+    _prepare(s,_self=cmd)
 
-def simple(selection="(all)"):
+def simple(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     s = tmp_sele
     cmd.select(s,selection)
-    _prepare(s)
-    util.cbc(s)
+    _prepare(s,_self=cmd)
+    util.cbc(s,_self=cmd)
     cmd.show("ribbon",s)
     cmd.show("lines","(byres (("+s+" & r. CYS+CYX & n. SG) & bound_to ("+s+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
     # try to show what covalent ligands are connected to...
@@ -82,25 +92,29 @@ def simple(selection="(all)"):
     cmd.hide("sticks","("+s+") and ((not rep sticks) extend 1)")
     cmd.show("sticks","("+lig_sele+" and ("+s+")) extend 2")
     # color by atom if lines or sticks are shown
-    util.cnc("(( rep lines or rep sticks or ("+lig_and_solv_sele+")) and ("+s+"))")
+    util.cnc("(( rep lines or rep sticks or ("+lig_and_solv_sele+")) and ("+s+"))",_self=cmd)
     cmd.show("nonbonded","("+lig_and_solv_sele+" and ("+s+"))")
     cmd.show("lines","("+lig_and_solv_sele+" and ("+s+"))")
     if cmd.count_atoms(s):
         cmd.zoom(s)
     cmd.delete(s)
 
-def simple_no_solv(selection="(all)"):
+def simple_no_solv(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     simple(selection)
     s = tmp_sele
     cmd.select(s,selection)
     cmd.hide("nonbonded","("+solv_sele+" and "+s+")")
 
-def ligands(selection="(all)"):
+def ligands(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     try:
         s = tmp_sele
         cmd.select(s,selection)
         polar_contacts = _get_polar_contacts_name(s)
-        _prepare(s,polar_contacts)
+        _prepare(s,polar_contacts,_self=cmd)
         host = "_preset_host"
         solvent = "_preset_solvent"
         near_solvent = "_preset_solvent"
@@ -110,9 +124,9 @@ def ligands(selection="(all)"):
         cmd.select(lig,s+" and "+lig_sele)
         cmd.select(near_solvent,s+" and ("+solvent+" within 4 of "+lig+")")
 
-        util.chainbow(host)
-        util.cbc(lig)
-        util.cbac("(("+s+") and not elem c)")
+        util.chainbow(host,_self=cmd)
+        util.cbc(lig,_self=cmd)
+        util.cbac("(("+s+") and not elem c)",_self=cmd)
         cmd.hide("everything",s)
         cmd.show("ribbon",host)
         cmd.show("lines","("+s+" and byres ("+host+" within 5 of "+lig+"))")
@@ -139,42 +153,50 @@ def ligands(selection="(all)"):
     except:
         traceback.print_exc()
 
-def ball_and_stick(selection="(all)"):
+def ball_and_stick(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     s = tmp_sele
     cmd.select(s,selection)
-    _prepare(s)
+    _prepare(s,_self=cmd)
     cmd.hide("everything",s)
-    cmd.set("stick_color","white",s)
-    cmd.set("stick_radius","0.14",s)
+    cmd.set_bond("stick_color","white",s,s)
+    cmd.set_bond("stick_radius","0.14",s,s)
     cmd.set("sphere_scale","0.25",s)
     cmd.show("sticks",s)
     cmd.show("spheres",s)
     
-def b_factor_putty(selection="(name ca or name p)"):
+def b_factor_putty(selection="(name ca or name p)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     s = tmp_sele
     cmd.select(s,selection)
-    _prepare(s)
+    _prepare(s,_self=cmd)
     cmd.select(s,"(name ca or name p) and ("+selection+")")
     cmd.show("cartoon",s)
-    cmd.set("cartoon_flat_sheets",0,s)
+    cmd.set("cartoon_flat_sheets",0,selection)
     cmd.cartoon("putty",s)
     cmd.spectrum("b",selection=s)
 
-def ligand_cartoon(selection="(all)"):
+def ligand_cartoon(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     ligand_sites(selection)
     s = tmp_sele
     cmd.select(s,selection)
-    cmd.set("cartoon_side_chain_helper",1,s)
+    cmd.set("cartoon_side_chain_helper",1,selection)
     cmd.show("cartoon","rep ribbon")
     cmd.hide("ribbon")
     cmd.hide("surface")
     
-def ligand_sites(selection="(all)"):
+def ligand_sites(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     try:
         s = tmp_sele
         cmd.select(s,selection)
         polar_contacts = _get_polar_contacts_name(s)
-        _prepare(s,polar_contacts)
+        _prepare(s,polar_contacts,_self=cmd)
         host = "_preset_host"
         solvent = "_preset_solvent"
         near_solvent = "_preset_solvent"
@@ -186,9 +208,9 @@ def ligand_sites(selection="(all)"):
         cmd.flag("ignore",host,"clear")
         cmd.flag("ignore",lig+"|"+solvent,"set")
 
-        util.chainbow(host)
-        util.cbc(lig)
-        util.cbac("(("+s+") and not elem c)")
+        util.chainbow(host,_self=cmd)
+        util.cbc(lig,_self=cmd)
+        util.cbac("(("+s+") and not elem c)",_self=cmd)
         cmd.hide("everything",s)
         cmd.show("ribbon",host)
         cmd.show("lines","("+s+" and byres ("+host+" within 5 of "+lig+"))")
@@ -220,61 +242,73 @@ def ligand_sites(selection="(all)"):
     except:
         traceback.print_exc()
 
-def ligand_sites_hq(selection="(all)"):
+def ligand_sites_hq(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     ligand_sites(selection)
     s = tmp_sele
     cmd.select(s,selection)
-    cmd.set("surface_quality","1",s)
-    cmd.set("surface_type",0,s)
+    cmd.set("surface_quality","1",selection)
+    cmd.set("surface_type",0,selection)
 
-def ligand_sites_trans(selection="(all)"):
+def ligand_sites_trans(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     ligand_sites(selection)
     s = tmp_sele
     cmd.select(s,selection)
     cmd.show("sticks",s+" and rep lines")
     cmd.hide("lines",s+" and rep lines")
     cmd.set("transparency","0.33",s)
-    cmd.set("surface_type",0,s)
-    cmd.set("surface_quality",0,s)
+    cmd.set("surface_type",0,selection)
+    cmd.set("surface_quality",0,selection)
 
-def ligand_sites_trans_hq(selection="(all)"):
+def ligand_sites_trans_hq(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     ligand_sites(selection)
     s = tmp_sele
     cmd.select(s,selection)
     cmd.show("sticks",s+" and rep lines")
     cmd.hide("lines",s+" and rep lines")
     cmd.set("transparency","0.33",s)
-    cmd.set("surface_type",0,s)
-    cmd.set("surface_quality",1,s)
+    cmd.set("surface_type",0,selection)
+    cmd.set("surface_quality",1,selection)
     
-def ligand_sites_mesh(selection="(all)"):
+def ligand_sites_mesh(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     ligand_sites(selection)
     s = tmp_sele
     cmd.select(s,selection)
     cmd.show("sticks",s+" and rep lines")
     cmd.hide("lines",s+" and rep lines")
-    cmd.set("surface_type","2",s)
-    cmd.set("surface_quality","0",s)
+    cmd.set("surface_type","2",selection)
+    cmd.set("surface_quality","0",selection)
     cmd.set("mesh_normals",0,s)
     
-def ligand_sites_dots(selection="(all)"):
+def ligand_sites_dots(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     ligand_sites(selection)
     s = tmp_sele
     cmd.select(s,selection)
     cmd.show("sticks",s+" and rep lines")
     cmd.hide("lines",s+" and rep lines")
-    cmd.set("surface_type","1",s)
-    cmd.set("surface_quality","1",s)
+    cmd.set("surface_type","1",selection)
+    cmd.set("surface_quality","1",selection)
     cmd.set("dot_normals",0,s)
 
-def technical(selection="(all)"):
+def technical(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     s = tmp_sele
     cmd.select(s,selection)
     polar_contacts = _get_polar_contacts_name(s)
-    _prepare(s,polar_contacts)
-    util.chainbow(s)
-    util.cbc("("+lig_sele+" and ("+s+"))")   
-    util.cbac("(("+s+") and not elem c)")
+    _prepare(s,polar_contacts,_self=cmd)
+    util.chainbow(s,_self=cmd)
+    util.cbc("("+lig_sele+" and ("+s+"))",_self=cmd)   
+    util.cbac("(("+s+") and not elem c)",_self=cmd)
     cmd.show("nonbonded",s)
     cmd.show("lines","((("+s+") and not "+lig_sele+") extend 1)")
     cmd.show("sticks","("+lig_sele+" and ("+s+"))")
@@ -287,30 +321,34 @@ def technical(selection="(all)"):
         cmd.show("dashes",polar_contacts)
     cmd.show("nonbonded","(("+lig_sele+"|resn hoh+wat+h2o) and ("+s+"))")
 
-def pretty_solv(selection="(all)"):
+def pretty_solv(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     s = tmp_sele
     cmd.select(s,selection)
     polar_contacts = _get_polar_contacts_name(s)
-    _prepare(s,polar_contacts)
+    _prepare(s,polar_contacts,_self=cmd)
     cmd.dss(s,preserve=1)
     cmd.cartoon("auto",s)
     cmd.show("cartoon",s)
     cmd.show("sticks","("+lig_sele+" and ("+s+"))")
     cmd.show("nb_spheres","(("+lig_sele+"|resn hoh+wat+h2o) and ("+s+"))")
-    util.cbc("("+lig_sele+" and ("+s+"))")
-    util.cbac("("+lig_sele+" and ("+s+") and not elem c)")
+    util.cbc("("+lig_sele+" and ("+s+"))",_self=cmd)
+    util.cbac("("+lig_sele+" and ("+s+") and not elem c)",_self=cmd)
     cmd.spectrum("count",selection="(elem c and ("+s+") and not "+lig_sele+")")
-    cmd.set("cartoon_highlight_color",-1,s)
-    cmd.set("cartoon_fancy_helices",0,s)
-    cmd.set("cartoon_smooth_loops",0,s)
-    cmd.set("cartoon_flat_sheets",1,s)
-    cmd.set("cartoon_side_chain_helper",0,s)   
+    cmd.set("cartoon_highlight_color",-1,selection)
+    cmd.set("cartoon_fancy_helices",0,selection)
+    cmd.set("cartoon_smooth_loops",0,selection)
+    cmd.set("cartoon_flat_sheets",1,selection)
+    cmd.set("cartoon_side_chain_helper",0,selection)   
     if polar_contacts in cmd.get_names():
         cmd.disable(polar_contacts)
     if cmd.count_atoms(s):
         cmd.zoom(s)
         
-def pretty(selection):
+def pretty(selection,_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     pretty_solv(selection)
     s = tmp_sele
     cmd.select(s,selection)
@@ -318,19 +356,24 @@ def pretty(selection):
 
 pretty_no_solv = pretty
 
-def pub_solv(selection="(all)"):
+def pub_solv(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     pretty_solv(selection)
     s = tmp_sele
     cmd.select(s,selection)
-    cmd.set("cartoon_smooth_loops",1,s)
-    cmd.set("cartoon_highlight_color","grey50",s)
-    cmd.set("cartoon_fancy_helices",1,s)
-    cmd.set("cartoon_flat_sheets",1,s)
-    cmd.set("cartoon_side_chain_helper",0,s)   
+    cmd.set("cartoon_smooth_loops",1,selection)
+    cmd.set("cartoon_highlight_color","grey50",selection)
+    cmd.set("cartoon_fancy_helices",1,selection)
+    cmd.set("cartoon_flat_sheets",1,selection)
+    cmd.set("cartoon_side_chain_helper",0,selection)   
     if cmd.count_atoms(s):
         cmd.zoom(s)
 
-def publication(selection="(all)"):
+def publication(selection="(all)",_self=cmd):
+    print selection
+    pymol=_self._pymol
+    cmd=_self
     pub_solv(selection)
     s = tmp_sele
     cmd.select(s,selection)
@@ -338,16 +381,18 @@ def publication(selection="(all)"):
 
 pub_no_solv = publication
 
-def default(selection="(all)"):
+def default(selection="(all)",_self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     s = tmp_sele
     cmd.select(s,selection)
-    _prepare(s)
+    _prepare(s,_self=cmd)
     cmd.show("lines",s)
     cmd.show("nonbonded",s)
     color=cmd.get_object_color_index(selection)
     if color<0:
-        util.cbag(selection)
+        util.cbag(selection,_self=cmd)
     else:
-        util.cnc(selection)
+        util.cnc(selection,_self=cmd)
         cmd.color(str(color),"("+s+") and elem c")
         

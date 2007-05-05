@@ -83,6 +83,8 @@ if __name__=='pymol.cmd':
         import time
         import urllib
 
+        _pymol = pymol
+        
         from shortcut import Shortcut
 
         from chempy import io
@@ -219,6 +221,25 @@ if __name__=='pymol.cmd':
         # first we need to import a set of symbols into the local namespace
 
         from api import *
+
+        # set up some global session tasks
+
+        if viewing.session_restore_views not in pymol._session_restore_tasks:
+            pymol._session_restore_tasks.append(viewing.session_restore_views)
+
+        if viewing.session_save_views not in pymol._session_save_tasks:
+            pymol._session_save_tasks.append(viewing.session_save_views)
+
+        if viewing.session_restore_scenes not in pymol._session_restore_tasks:
+            pymol._session_restore_tasks.append(viewing.session_restore_scenes)
+
+        if viewing.session_save_scenes not in pymol._session_save_tasks:
+            pymol._session_save_tasks.append(viewing.session_save_scenes)
+
+        # take care of some deferred initialization
+        
+        pymol._view_dict_sc = Shortcut({})
+        pymol._scene_dict_sc = Shortcut({})
 
         # now we create the command langauge
         

@@ -62,12 +62,11 @@ class Appearance(Wizard):
         }
 
     def __init__(self,_self=cmd):
-
-        _self.deselect()
-        _self.unpick()
         Wizard.__init__(self,_self)
-        self.selection_mode = cmd.get_setting_legacy("mouse_selection_mode")
-        cmd.set("mouse_selection_mode",0) # set selection mode to atomic      
+        self.cmd.deselect()
+        self.cmd.unpick()
+        self.selection_mode = self.cmd.get_setting_legacy("mouse_selection_mode")
+        self.cmd.set("mouse_selection_mode",0) # set selection mode to atomic      
         self.current_mode = saved_mode
         self.current_what = saved_what
         self.current_scope = saved_scope
@@ -134,25 +133,25 @@ class Appearance(Wizard):
         scope = int(scope)
         if scope in self.scope_dict:
             self.current_scope = scope
-        cmd.refresh_wizard()
+        self.cmd.refresh_wizard()
 
     def set_what(self,what):
         what = int(what)
         if what in self.what_dict:
             self.current_what = what
-        cmd.refresh_wizard()
+        self.cmd.refresh_wizard()
 
     def set_color(self,color):
         color = int(color)
         if color in self.color_dict:
             self.current_color = color
-        cmd.refresh_wizard()
+        self.cmd.refresh_wizard()
 
     def set_mode(self,mode):
         mode = int(mode)
         if mode in self.mode_dict:
             self.current_mode = mode
-        cmd.refresh_wizard()
+        self.cmd.refresh_wizard()
 
     def undo(self):
         print "no undo!"
@@ -190,17 +189,17 @@ class Appearance(Wizard):
             color = self.color_dict[self.current_color][1]
             mode = self.mode_dict[self.current_mode][1]
             cmmd = mode+'("%s","%s")'%(color,sele)
-            cmd.do(cmmd,log=0)
+            self.cmd.do(cmmd,log=0)
         elif self.current_mode in [2,3,4]: # show/hide/toggle
             sele = "(%s pk1)"%self.scope_dict[self.current_scope][1]
             what = self.what_dict[self.current_what][1]
             mode = self.mode_dict[self.current_mode][1]
             cmmd = mode+'("%s","%s")'%(what,sele)
-            cmd.do(cmmd,log=0)
+            self.cmd.do(cmmd,log=0)
         else: # select
             pass
-        cmd.unpick()
-        cmd.refresh_wizard()
+        self.cmd.unpick()
+        self.cmd.refresh_wizard()
         return 1
 
     def do_select(self,selection):
@@ -209,21 +208,21 @@ class Appearance(Wizard):
             color = self.color_dict[self.current_color][1]
             mode = self.mode_dict[self.current_mode][1]
             cmmd = mode+'("%s","%s")'%(color,sele)
-            cmd.do(cmmd,log=0)
+            self.cmd.do(cmmd,log=0)
         elif self.current_mode in [2,3,4]: # show/hide/toggle
             sele = "(%s %s)"%(self.scope_dict[self.current_scope][1],selection)
             what = self.what_dict[self.current_what][1]
             mode = self.mode_dict[self.current_mode][1]
             cmmd = mode+'("%s","%s")'%(what,sele)
-            cmd.do(cmmd,log=0)
-        cmd.delete(selection)
-        cmd.deselect()
-        cmd.unpick()
-        cmd.refresh_wizard()
+            self.cmd.do(cmmd,log=0)
+        self.cmd.delete(selection)
+        self.cmd.deselect()
+        self.cmd.unpick()
+        self.cmd.refresh_wizard()
         return 1
 
     def cleanup(self):
-        cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode      
+        self.cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode      
         global saved_scope
         saved_scope = self.current_scope
         global saved_mode

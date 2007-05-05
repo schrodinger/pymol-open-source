@@ -64,7 +64,7 @@
 #include "PyMOLOptions.h"
 
 #ifndef _PYMOL_NOPY
-PyMOLGlobals *TempPyMOLGlobals = NULL;
+PyMOLGlobals *SingletonPyMOLGlobals = NULL;
 #endif
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
@@ -2478,8 +2478,15 @@ static CPyMOL *_PyMOL_New(void)
       PyMOL_ResetProgress(result);
 
       #ifndef _PYMOL_NOPY
-      /* temporary global pointer for the transition period */
-      TempPyMOLGlobals=result->G;
+
+      /* for the time being, the first PyMOL object created becomes
+         the singleton object -- this is failsafe behavior designed to
+         carry us through the transition to fully objectified PyMOL
+         (PS note race in assignment covered by pymol2.pymol2_lock) */
+
+      if(!SingletonPyMOLGlobals) {
+        SingletonPyMOLGlobals=result->G;
+      }
       #endif
 
       /* continue initialization */
@@ -2911,11 +2918,11 @@ int PyMOL_Idle(CPyMOL *I)
 #ifdef _MACPYMOL_XCODE
     /* restore working directory if asked to */
         PRunStringModule(G,"if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
-        PRunStringModule(G,"launch_gui()");
+        PXDecRef(PyObject_CallMethod(G->P_inst->obj,"launch_gui","O",G->P_inst->obj));
 #endif
 /* END PROPRIETARY CODE SEGMENT */
-		PRunStringInstance(G,"adapt_to_hardware()");
-		PRunStringInstance(G,"exec_deferred()");
+        PXDecRef(PyObject_CallMethod(G->P_inst->obj,"adapt_to_hardware","O",G->P_inst->obj));
+        PXDecRef(PyObject_CallMethod(G->P_inst->obj,"exec_deferred","O",G->P_inst->obj));
 		PUnblock(G);
 		PFlush(G);
 	}

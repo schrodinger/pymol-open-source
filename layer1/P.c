@@ -1662,7 +1662,7 @@ void PInit(PyMOLGlobals *G,int global_instance)
     if(global_instance) { 
 
       /* implies global singleton pymol, so set up the global handle */
-      PyDict_SetItemString(P_pymol_dict,"_COb",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
+      PyDict_SetItemString(P_pymol_dict,"_COb",PyCObject_FromVoidPtr((void*)&SingletonPyMOLGlobals,NULL));
 
       pcatch = PyImport_AddModule("pcatch"); 
       if(!pcatch) ErrFatal(G,"PyMOL","can't find module 'pcatch'");
@@ -1680,7 +1680,7 @@ void PInit(PyMOLGlobals *G,int global_instance)
 
     if(global_instance) { 
       /* implies global singleton pymol, so set up the global handle */
-      PyObject_SetAttrString(P_cmd,"_COb",PyCObject_FromVoidPtr((void*)&TempPyMOLGlobals,NULL));
+      PyObject_SetAttrString(P_cmd,"_COb",PyCObject_FromVoidPtr((void*)&SingletonPyMOLGlobals,NULL));
 
       /* cmd module is itself the api for the global PyMOL instance */
       G->P_inst->cmd = P_cmd;
@@ -1997,12 +1997,12 @@ void PFlushFast(PyMOLGlobals *G) {
 
 void PBlockLegacy()
 {
-  PBlock(TempPyMOLGlobals);
+  PBlock(SingletonPyMOLGlobals);
 }
 
 void PUnblockLegacy()
 {
-  PUnblock(TempPyMOLGlobals);
+  PUnblock(SingletonPyMOLGlobals);
 }
 
 void PBlock(PyMOLGlobals *G)
@@ -2178,9 +2178,9 @@ static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
   char *str;
   PyArg_ParseTuple(args,"s",&str);
   if(str[0]) {
-    if(TempPyMOLGlobals) {
-      if(Feedback(TempPyMOLGlobals,FB_Python,FB_Output)) {
-        OrthoAddOutput(TempPyMOLGlobals,str);
+    if(SingletonPyMOLGlobals) {
+      if(Feedback(SingletonPyMOLGlobals,FB_Python,FB_Output)) {
+        OrthoAddOutput(SingletonPyMOLGlobals,str);
       }
     }
   }

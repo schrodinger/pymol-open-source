@@ -95,7 +95,7 @@ EXAMPLE
             prefix = object+"_"
         first=int(first)
         last=int(last)
-        n_state = cmd.count_states(object)
+        n_state = _self.count_states(object)
         if n_state<0:
             r = DEFAULT_ERROR
         else:
@@ -103,15 +103,15 @@ EXAMPLE
                 last = n_state
             for a in range(first,last+1):
                 try:
-                    name = cmd.get_title(object,a)
+                    name = _self.get_title(object,a)
                     if len(name)==0:
                         name = prefix+"%04d"%a
                 except:
                     name = prefix+"%04d"%a
-                r = cmd.frame(a)
+                r = _self.frame(a)
                 if is_error(r): 
                     break
-                r = cmd.create(name,"%s and present"%object,a,1)
+                r = _self.create(name,"%s and present"%object,a,1)
                 if is_error(r): 
                     break
         if _self._raising(r,_self): raise pymol.CmdException            
@@ -672,7 +672,7 @@ SEE ALSO
                 wizard=boolean_dict[boolean_sc.auto_err(wizard,'boolean')]
             edit = int(edit)
             wizard = int(wizard)
-            old_button_mode = cmd.get('button_mode')
+            old_button_mode = _self.get('button_mode')
         else:
             wizard = 0
             edit = 0
@@ -686,13 +686,13 @@ SEE ALSO
             _self.unlock(r,_self)
         if not is_error(r):
             if edit:
-                cmd.edit_mode(edit)
+                _self.edit_mode(edit)
             if wizard:
-                wiz = cmd.get_wizard()
+                wiz = _self.get_wizard()
                 if (wiz == None):
-                    cmd.wizard("dragging",old_button_mode)
+                    _self.wizard("dragging",old_button_mode)
                 elif wiz.__class__ != 'pymol.wizard.dragging.Dragging':
-                    cmd.wizard("dragging",old_button_mode)
+                    _self.wizard("dragging",old_button_mode)
                 else:
                     wiz.recount()
         if _self._raising(r,_self): raise pymol.CmdException
@@ -919,7 +919,7 @@ SEE ALSO
     remove, attach, fuse, bond, unbond
     '''
         r = DEFAULT_ERROR      
-        if not "pk1" in cmd.get_names("selections"):
+        if not "pk1" in _self.get_names("selections"):
             print " Error: you must first pick an atom to replace."
             raise pymol.CmdException
         try:
@@ -1037,7 +1037,7 @@ NOTES
         return r
 
     def alter(selection, expression, quiet=1,
-              space=cmd.pymol.__dict__,_self=cmd):
+              space=None,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1078,6 +1078,8 @@ SEE ALSO
 
     alter_state, iterate, iterate_state, sort
         '''
+        if space == None:
+            space = _self.pymol.__dict__
         r = DEFAULT_ERROR
         # preprocess selections
         selection = selector.process(selection)
@@ -1090,7 +1092,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def alter_list(object, expr_list, quiet=1, space=cmd.pymol.__dict__,_self=cmd):
+    def alter_list(object, expr_list, quiet=1, space=None,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1098,6 +1100,8 @@ DESCRIPTION
     
         '''
         #
+        if space == None:
+            space = _self.pymol.__dict__
         try:
             _self.lock(_self)
             r = _cmd.alter_list(_self._COb,str(object),list(expr_list),int(quiet),dict(space))
@@ -1107,7 +1111,7 @@ DESCRIPTION
         return r
 
 
-    def iterate(selection,expression,quiet=1,space=cmd.pymol.__dict__,_self=cmd):
+    def iterate(selection,expression,quiet=1,space=None,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1138,6 +1142,8 @@ SEE ALSO
 
     iterate_state, alter, alter_state
         '''
+        if space == None:
+            space = _self.pymol.__dict__
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
@@ -1151,7 +1157,7 @@ SEE ALSO
         return r
 
     def alter_state(state, selection, expression, quiet=1,
-                    space=cmd.pymol.__dict__, atomic=1,_self=cmd):
+                    space=None, atomic=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1178,7 +1184,8 @@ SEE ALSO
 
     iterate_state, alter, iterate
         '''
-        
+        if space == None:
+            space = _self.pymol.__dict__
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
@@ -1193,7 +1200,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def iterate_state(state,selection,expression,quiet=1,space=cmd.pymol.__dict__,atomic=1,_self=cmd):
+    def iterate_state(state,selection,expression,quiet=1,space=None,atomic=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1213,6 +1220,8 @@ SEE ALSO
 
     iterate, alter, alter_state
         '''
+        if space == None:
+            space = _self.pymol.__dict__
         # preprocess selection
         selection = selector.process(selection)
         state = int(state)
@@ -1270,16 +1279,16 @@ NOTES
         '''
         r = DEFAULT_ERROR
         object_mode = int(object_mode)
-        if cmd.is_string(vector):
+        if _self.is_string(vector):
             vector = safe_list_eval(vector)
-        if not cmd.is_list(vector):
+        if not _self.is_list(vector):
             print "Error: bad vector."
             raise pymol.CmdException
         else:
             vector = [float(vector[0]),float(vector[1]),float(vector[2])]
             selection = selector.process(selection)
             camera=int(camera)
-            view = cmd.get_view(0)
+            view = _self.get_view(0)
             if camera:
                 mat = [ view[0:3],view[3:6],view[6:9] ]
                 shift = cpv.transform(mat,vector)
@@ -1290,7 +1299,7 @@ NOTES
                          0.0,1.0,0.0,shift[1],
                          0.0,0.0,1.0,shift[2],
                          0.0,0.0,0.0,1.0]
-                r=cmd.transform_selection(selection,ttt,state=state)
+                r=_self.transform_selection(selection,ttt,state=state)
             elif object_mode==0: # update the TTT display matrix
                 try:
                     _self.lock(_self)
@@ -1364,16 +1373,16 @@ NOTES
             axis = [0.0,0.0,1.0]
         else:
             axis = safe_list_eval(str(axis))
-        if not cmd.is_list(axis):
+        if not _self.is_list(axis):
             print "Error: bad axis."
             raise pymol.CmdException
         else:
             axis = [float(axis[0]),float(axis[1]),float(axis[2])]
             angle = math.pi*float(angle)/180.0
-            view = cmd.get_view(0)
+            view = _self.get_view(0)
             if origin!=None:
                 have_origin = 1
-                if cmd.is_string(origin):
+                if _self.is_string(origin):
                     if ',' in origin:
                         origin = safe_list_eval(origin) # should be a sequence of floats
                     else:
@@ -1395,7 +1404,7 @@ NOTES
                        mat[1][0],mat[1][1],mat[1][2],origin[1],
                        mat[2][0],mat[2][1],mat[2][2],origin[2],
                        -origin[0],-origin[1],-origin[2], 1.0]
-                r=cmd.transform_selection(selection,ttt,state=state)
+                r=_self.transform_selection(selection,ttt,state=state)
             elif object_mode==0:
                 _self.lock(_self)
                 try:
@@ -1457,7 +1466,7 @@ PYMOL API
 
     def set_object_ttt(object,ttt,state=0,quiet=1,homogenous=0,_self=cmd):
         r = None
-        if cmd.is_string(ttt):
+        if _self.is_string(ttt):
             ttt = safe_list_eval(str(ttt))
         if homogenous: # passed a homogenous matrix, so do the best we can
             ttt = [
@@ -1977,7 +1986,7 @@ RESERVED FLAGS
         # preprocess selection
         new_flag = flag_sc.interpret(str(flag))
         if new_flag:
-            if cmd.is_string(new_flag):
+            if _self.is_string(new_flag):
                 flag = flag_dict[new_flag]
             else:
                 flag_sc.auto_err(flag,'flag')

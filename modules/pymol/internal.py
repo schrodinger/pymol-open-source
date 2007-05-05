@@ -244,6 +244,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
 # function keys and other specials
 
 def _special(k,x,y,m=0,_self=cmd): # INTERNAL (invoked when special key is pressed)
+    pymol=_self._pymol
     # WARNING: internal routine, subject to change
     k=int(k)
     m=int(m)
@@ -261,9 +262,9 @@ def _special(k,x,y,m=0,_self=cmd): # INTERNAL (invoked when special key is press
             key = my_special[k][0]
             if(m>0) and (m<5):
                 key = ('','SHFT-','CTRL-','CTSH-','ALT-')[m] + key
-            if viewing.scene_dict.has_key(key): # TO MAKE LOCAL
+            if pymol._scene_dict.has_key(key): 
                 _self.scene(key)
-            elif viewing.view_dict.has_key(key): # TO MAKE LOCAL
+            elif pymol._view_dict.has_key(key): 
                 _self.view(key)
     return None
 

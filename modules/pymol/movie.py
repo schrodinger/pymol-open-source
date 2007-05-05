@@ -17,31 +17,32 @@ import glob
 import math
 import string
 
-def sweep(pause=0,cycles=1):
+def sweep(pause=0,cycles=1,_self=cmd):
     pause = int(pause)
     cycles = int(cycles)
-    n_state = cmd.count_states("all")
+    n_state = _self.count_states("all")
     if pause>0:
         pass_string = "1 x%d 1 -%d %d x%d %d -1"%(pause, n_state, n_state, pause, n_state)
     else:
         pass_string = "1 -%d %d -1"%(n_state, n_state)
     movie_list = [ pass_string ] * cycles
     movie_string = string.join(movie_list," ")
-    cmd.mset(movie_string)
+    _self.mset(movie_string)
 
-def pause(pause=15,cycles=1):
+def pause(pause=15,cycles=1,_self=cmd):
     pause = int(pause)
     cycles = int(cycles)
-    n_state = cmd.count_states("all")
+    n_state = _self.count_states("all")
     if pause>0:
         pass_string = "1 x%d 1 -%d %d x%d"%(pause, n_state, n_state, pause)
     else:
         pass_string = "1 -%d %d -1"%(n_state, n_state)
     movie_list = [ pass_string ] * cycles
     movie_string = string.join(movie_list," ")
-    cmd.mset(movie_string)
+    _self.mset(movie_string)
                 
 def load(*args,**kw):
+    _self = kw.get('_self',cmd)
     nam = "mov"
     if len(args)>1:
         nam = args[1]
@@ -51,10 +52,10 @@ def load(*args,**kw):
         print "Error: no matching files"
     else:
         for a in fils:
-            apply(cmd.load,(a,nam),kw)
-#         cmd.load(a,nam)
+            apply(_self.load,(a,nam),kw)
+#         _self.load(a,nam)
 
-def rock(first,last,angle=30,phase=0,loop=1,axis='y'):
+def rock(first,last,angle=30,phase=0,loop=1,axis='y',_self=cmd):
     first=int(first)
     last=int(last)
     angle=float(angle)
@@ -77,11 +78,11 @@ def rock(first,last,angle=30,phase=0,loop=1,axis='y'):
         disp = angle*math.sin(ang_cur)/2
         diff = disp-last
         # com = "mdo %d:turn %s,%8.3f" % (first+a,axis,diff)
-        # cmd.do(com)
-        cmd.mdo("%d"%(first+a),"turn %s,%8.3f"% (axis,diff))      
+        # _self.do(com)
+        _self.mdo("%d"%(first+a),"turn %s,%8.3f"% (axis,diff))      
         a = a + 1
 
-def roll(first,last,loop=1,axis='y'):
+def roll(first,last,loop=1,axis='y',_self=cmd):
     first=int(first)
     last=int(last)
     loop=int(loop)
@@ -94,11 +95,11 @@ def roll(first,last,loop=1,axis='y'):
     deg = (180*step/math.pi)
     while a<=n:
         # com = "mdo %d:turn %s,%8.3f" % (first+a,axis,deg)
-        # cmd.do(com)
-        cmd.mdo("%d" % (first+a), "turn %s,%8.3f" % (axis,deg))
+        # _self.do(com)
+        _self.mdo("%d" % (first+a), "turn %s,%8.3f" % (axis,deg))
         a = a + 1
 
-def tdroll(first,rangex,rangey,rangez,skip=1):
+def tdroll(first,rangex,rangey,rangez,skip=1,_self=cmd):
     '''
 AUTHOR
 
@@ -138,7 +139,7 @@ EXAMPLE
               range = range + int(leftover[1])
             a = 0
             while a<range:
-                cmd.mdo("%d" % (first+frpos-1), "turn %s,%8.3f" % (ax,skip))
+                _self.mdo("%d" % (first+frpos-1), "turn %s,%8.3f" % (ax,skip))
                 a = a + skip
                 frpos = frpos + 1
             axpos = axpos + 1
@@ -147,7 +148,7 @@ EXAMPLE
     print (" tdroll: defined rotations for", frpos - 1,
              "frames, starting at frame %d"%first)
 
-def zoom(first,last,step=1,loop=1,axis='z'):
+def zoom(first,last,step=1,loop=1,axis='z',_self=cmd):
     # Author: Peter Haebel
     first=int(first)
     last=int(last)
@@ -161,11 +162,11 @@ def zoom(first,last,step=1,loop=1,axis='z'):
         else:
             s = step
         # com = "mdo %d:move %s,%8.3f" % (first+a,axis,s)
-        # cmd.do(com)
-        cmd.mdo("%d" % (first+a),"move %s,%8.3f" % (axis,s))
+        # _self.do(com)
+        _self.mdo("%d" % (first+a),"move %s,%8.3f" % (axis,s))
         a = a + 1
 
-def nutate(first,last,angle=30,phase=0,loop=1,shift=math.pi/2.0,factor=0.01):
+def nutate(first,last,angle=30,phase=0,loop=1,shift=math.pi/2.0,factor=0.01,_self=cmd):
     first=int(first)
     last=int(last)
     angle=float(angle)
@@ -189,12 +190,12 @@ def nutate(first,last,angle=30,phase=0,loop=1,shift=math.pi/2.0,factor=0.01):
         nextx = angle*math.sin(ang_cur)/2
         nexty = angle*math.sin(ang_cur+shift)/2      
         # com = "mdo %d:turn %s,%8.3f" % (first+a,axis,diff)
-        # cmd.do(com)
-        cmd.mdo("%d"%(first+a),"turn x,%8.3f;turn y,%8.3f;turn y,%8.3f;turn x,%8.3f"%
+        # _self.do(com)
+        _self.mdo("%d"%(first+a),"turn x,%8.3f;turn y,%8.3f;turn y,%8.3f;turn x,%8.3f"%
                   (-lastx,-lasty,nexty,nextx))
         a = a + 1
 
-def screw(first,last,step=1,angle=30,phase=0,loop=1,axis='y'):
+def screw(first,last,step=1,angle=30,phase=0,loop=1,axis='y',_self=cmd):
     # Author: Peter Haebel
     first=int(first)
     last=int(last)
@@ -223,27 +224,27 @@ def screw(first,last,step=1,angle=30,phase=0,loop=1,axis='y'):
         disp = angle*math.sin(ang_cur)/2
         diff = disp-last
         # com = "mdo %d:turn %s,%8.3f; move z,%8.3f" % (first+a,axis,diff,s)
-        # cmd.do(com)
-        cmd.mdo("%d" % (first+a), "turn %s,%8.3f; move z,%8.3f" % (axis,diff,s))
+        # _self.do(com)
+        _self.mdo("%d" % (first+a), "turn %s,%8.3f; move z,%8.3f" % (axis,diff,s))
         a = a + 1
 
-def timed_roll(period=12.0,cycles=1,axis='y'):
-    frames_per_sec = float(cmd.get('movie_fps'))
+def timed_roll(period=12.0,cycles=1,axis='y',_self=cmd):
+    frames_per_sec = float(_self.get('movie_fps'))
     if frames_per_sec<1.0:
         frames_per_sec=30.0
     frames_per_cycle = int(period*frames_per_sec)
     total = frames_per_cycle * cycles
     
-    cmd.mset("1 x%d"%total)
+    _self.mset("1 x%d"%total)
     step = 2*math.pi/(frames_per_cycle)
     deg = (180*step/math.pi)
-    cmd.mview('reset')
-    cmd.rewind()
+    _self.mview('reset')
+    _self.rewind()
     frame = 1
     for cycle in range(cycles):
         for cnt in range(frames_per_cycle):
-            cmd.turn(axis,deg)
-            cmd.mview('store',frame)
+            _self.turn(axis,deg)
+            _self.mview('store',frame)
             frame = frame + 1
     
     

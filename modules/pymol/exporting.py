@@ -61,7 +61,7 @@ NOTES
     def get_session(names='', partial=0, quiet=1, compress=-1,_self=cmd):
         session = {}
         r = DEFAULT_SUCCESS
-        for a in pymol._session_save_tasks:
+        for a in _self._pymol._session_save_tasks:
             if a==None:
                 try:
                     _self.lock(_self)
@@ -75,7 +75,7 @@ NOTES
                     traceback.print_exc()
             else:
                 try:
-                    if is_error(apply(a,(session,))):
+                    if is_error(apply(a,(session,),{'_self':_self})):
                         r = DEFAULT_ERROR
                 except:
                     traceback.print_exc()
@@ -83,7 +83,7 @@ NOTES
                     print "Error: The resulting session file may be incomplete."
         if is_ok(r):
             if(compress<0):
-                compress = cmd.get_setting_boolean('session_compression')
+                compress = _self.get_setting_boolean('session_compression')
             if(compress):
                 import zlib
                 session = zlib.compress(io.pkl.toString(session))
@@ -230,7 +230,7 @@ SEE ALSO
             if not quiet:
                 print " Save-Warning: Unrecognized file type -- defaulting to PDB format."
             format='pdb'
-        filename = cmd.exp_path(filename)
+        filename = _self.exp_path(filename)
         if format=='pdb': # standard PDB file 
             f=open(filename,"w")
             if f:
@@ -278,12 +278,12 @@ SEE ALSO
                 if not quiet:
                     print " Save: wrote \""+filename+"\"."
         elif format=='pkl': # python binary
-            io.pkl.toFile(cmd.get_model(selection,state,ref,ref_state),filename)
+            io.pkl.toFile(_self.get_model(selection,state,ref,ref_state),filename)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
         elif format=='pkla': # ascii override
-            io.pkl.toFile(cmd.get_model(selection,state,ref,ref_state),filename,bin=0)
+            io.pkl.toFile(_self.get_model(selection,state,ref,ref_state),filename,bin=0)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
@@ -291,17 +291,17 @@ SEE ALSO
             _self.set("session_file",filename,quiet=1)
             if '(' in input_selection: # ignore selections 
                 input_selection=''
-            io.pkl.toFile(cmd.get_session(str(input_selection),int(partial),int(quiet)),filename)
+            io.pkl.toFile(_self.get_session(str(input_selection),int(partial),int(quiet)),filename)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
         elif format=='mmod': # macromodel
-            io.mmd.toFile(cmd.get_model(selection,state,ref,ref_state),filename)
+            io.mmd.toFile(_self.get_model(selection,state,ref,ref_state),filename)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
         elif format=='mol': 
-            io.mol.toFile(cmd.get_model(selection,state,ref,ref_state),filename)
+            io.mol.toFile(_self.get_model(selection,state,ref,ref_state),filename)
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."

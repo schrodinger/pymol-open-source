@@ -59,37 +59,37 @@ int MainSavingUnderWhileIdle(void)
 
 void MainBlock(void)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   PBlock(G);
 }
 
 void MainUnblock(void)
 {
- PyMOLGlobals *G = TempPyMOLGlobals;
+ PyMOLGlobals *G = SingletonPyMOLGlobals;
  PUnblock(G);
 }
 
 int MainLockAPIAsGlut(int a)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   return PLockAPIAsGlut(G,a);
 }
 
 int MainUnlockAPIAsGlut()
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   PUnlockAPIAsGlut(G);
 }
 
 int MainFeedbackOut(char *st)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   return OrthoFeedbackOut(G,st);
 }
 
 void MainRunCommand(char *str1)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   if(PLockAPIAsGlut(G,true)) {
     
@@ -114,14 +114,14 @@ void MainRunCommand(char *str1)
 }
 PyObject *MainGetStringResult(char *str)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   PyObject *result;
   result = PyRun_String(str,Py_eval_input,G->P_inst->dict,G->P_inst->dict);
   return(result);
 }
 void MainRunString(char *str)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   PBlock(G);
   PLockStatus();
   PRunStringModule(G,str);
@@ -129,7 +129,7 @@ void MainRunString(char *str)
 }
 void MainMovieCopyPrepare(int *width,int *height,int *length)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   if(PLockAPIAsGlut(G,true)) {
     MovieCopyPrepare(G,width,height,length);
     PUnlockAPIAsGlut(G);
@@ -137,7 +137,7 @@ void MainMovieCopyPrepare(int *width,int *height,int *length)
 }
 int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   int result = false;
   if(PLockAPIAsGlut(G,true)) {
     result = MovieCopyFrame(G,frame,width,height,rowbytes,ptr);
@@ -147,7 +147,7 @@ int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
 }
 int MainMoviePurgeFrame(int frame)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   int result = false;
   if(PLockAPIAsGlut(G,true)) {
     result = MoviePurgeFrame(G,frame);
@@ -158,7 +158,7 @@ int MainMoviePurgeFrame(int frame)
 
 void MainMovieCopyFinish(void)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   if(PLockAPIAsGlut(G,true)) {
     MovieCopyFinish(G);
     PUnlockAPIAsGlut(G);
@@ -166,7 +166,7 @@ void MainMovieCopyFinish(void)
 }
 void MainFlushAsync(void)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   if(PLockAPIAsGlut(G,true)) {
     PFlush(G);
     PUnlockAPIAsGlut(G);
@@ -176,7 +176,7 @@ int MainCheckRedundantOpen(char *file)
 {
   int result = false;
 #ifndef _PYMOL_NOPY
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   PBlock(G);
   result = PTruthCallStr(G->P_inst->cmd_do,"check_redundant_open",file);
   PUnblock(G);
@@ -185,7 +185,7 @@ int MainCheckRedundantOpen(char *file)
 }
 void MainSceneGetSize(int *width,int *height)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   if(PLockAPIAsGlut(G,true)) {
     SceneGetImageSize(G,width,height);
     PUnlockAPIAsGlut(G);
@@ -193,7 +193,7 @@ void MainSceneGetSize(int *width,int *height)
 }
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
 { 
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   int result = false;
   if(PLockAPIAsGlut(G,true)) {
@@ -360,7 +360,7 @@ int MainCheckRedundantOpen(char *file)
 }
 void MainMovieCopyPrepare(int *width,int *height,int *length)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   if(PLockAPIAsGlut(true)) {
     MovieCopyPrepare(G,width,height,length);
     PUnlockAPIAsGlut(G);
@@ -368,7 +368,7 @@ void MainMovieCopyPrepare(int *width,int *height,int *length)
 }
 int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   int result = false;
   if(PLockAPIAsGlut(G,true)) {
     result = MovieCopyFrame(G,frame,width,height,rowbytes,ptr);
@@ -378,7 +378,7 @@ int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
 }
 void MainMovieCopyFinish(void)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   if(PLockAPIAsGlut(G,true)) {
     MovieCopyFinish(G);
     PUnlockAPIAsGlut(G);
@@ -386,7 +386,7 @@ void MainMovieCopyFinish(void)
 }
 void MainSceneGetSize(int *width,int *height)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   if(PLockAPIAsGlut(G,true)) {
     SceneGetWidthHeight(G,width,height);
     PUnlockAPIAsGlut(G);
@@ -394,7 +394,7 @@ void MainSceneGetSize(int *width,int *height)
 }
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
 { 
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   int result = false;
   if(PLockAPIAsGlut(G,true)) {
@@ -405,7 +405,7 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
 }
 void MainDoCommand(char *str1)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   if(PLockAPIAsGlut(G,true)) {
     if(str1[0]!='_') { /* suppress internal call-backs */
@@ -425,7 +425,7 @@ void MainDoCommand(char *str1)
 }
 void MainRunCommand(char *str1)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   if(PLockAPIAsGlut(G,true)) {
     
@@ -450,7 +450,7 @@ void MainRunCommand(char *str1)
 }
 void MainFlushAsync(void)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   if(PLockAPIAsGlut(G,true)) {
     PFlush(G);
     PUnlockAPIAsGlut(G);
@@ -458,7 +458,7 @@ void MainFlushAsync(void)
 }
 void MainFlush(void) /* assumes GIL held */
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   MainPushValidContext(G);
 
@@ -469,7 +469,7 @@ void MainFlush(void) /* assumes GIL held */
 }
 void MainRunString(char *str)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   PBlock(G);
   PLockStatus();
   MainPushValidContext(G);
@@ -480,7 +480,7 @@ void MainRunString(char *str)
 
 PyObject *MainGetStringResult(char *str)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   PyObject *result;
   MainPushValidContext(G);
   result = PyRun_String(str,Py_eval_input, G->P_inst->dict, G->P_inst->dict);
@@ -495,7 +495,7 @@ PyObject *MainGetStringResult(char *str)
 
 void MainOnExit(void)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
  /* 
      here we enter not knowing anything about the current state...
      so, no graceful exit is possible -- in fact under Window's we'll
@@ -515,21 +515,21 @@ void MainOnExit(void)
 /*========================================================================*/
 int MainSavingUnderWhileIdle(void)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   CMain *I = G->Main;
   return(I->IdleMode==2);
 }
 /*========================================================================*/
 void MainSetWindowVisibility(int mode)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   G->Option->window_visible = mode;
   
 }
 /*========================================================================*/
 static void MainDrag(int x,int y)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   CMain *I = G->Main;
   
@@ -552,7 +552,7 @@ static void MainDrag(int x,int y)
 /*========================================================================*/
 static void MainButton(int button,int state,int x,int y)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   int glMod;  
 
@@ -591,7 +591,7 @@ static void MainButton(int button,int state,int x,int y)
 /*========================================================================*/
 static void MainPassive(int x,int y)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   CMain *I = G->Main;
 
   #define PASSIVE_EDGE 20
@@ -637,7 +637,7 @@ static void MainPassive(int x,int y)
 /*========================================================================*/
 static void MainDrawLocked(void)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   CMain *I = G->Main;
   if(I->FinalInitTrigger) {
@@ -667,19 +667,15 @@ static void MainDrawLocked(void)
 #endif
 /* END PROPRIETARY CODE SEGMENT */    
 
-    PRunStringModule(G,"launch_gui()");
+    PXDecRef(PyObject_CallMethod(G->P_inst->obj,"launch_gui","O",G->P_inst->obj));
     
-    /*#ifndef _PYMOL_WX_GLUT
-      PRunString(G,"launch_gui()");
-      #endif*/
-    
-    PRunStringInstance(G,"adapt_to_hardware()");
+    PXDecRef(PyObject_CallMethod(G->P_inst->obj,"adapt_to_hardware","O",G->P_inst->obj));
     
     if(G->Option->incentive_product) { /* perform incentive product initialization (if any) */
       PyRun_SimpleString("try:\n   import ipymol\nexcept:\n   pass\n");
     }
     
-    PRunStringInstance(G,"exec_deferred()");
+    PXDecRef(PyObject_CallMethod(G->P_inst->obj,"exec_deferred","O",G->P_inst->obj));
 #ifdef _PYMOL_SHARP3D
     /*PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");*/
     /*PParse("stereo on");
@@ -855,7 +851,7 @@ static void MainDrawProgress(PyMOLGlobals *G)
 /*========================================================================*/
 static void MainDraw(void)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   PRINTFD(G,FB_Main)
     " MainDraw: called.\n"
@@ -914,7 +910,7 @@ static void MainDraw(void)
 /*========================================================================*/
 static void MainKey(unsigned char k, int x, int y)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   CMain *I = G->Main;
   int glMod;
 
@@ -948,7 +944,7 @@ static void MainKey(unsigned char k, int x, int y)
 /*========================================================================*/
 static void MainSpecial(int k, int x, int y)
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   CMain *I = G->Main;
   int glMod;  
 
@@ -972,7 +968,7 @@ static void MainSpecial(int k, int x, int y)
 /*========================================================================*/
 void MainReshape(int width, int height) /* called by Glut */
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   if(G) {
     CMain *I = G->Main;
@@ -1024,7 +1020,7 @@ void MainDoReshape(int width, int height) /* called internally */
   int h,w;
   int internal_feedback;
   int force =false;
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   if(G) {
     /* if width is negative, force a reshape based on the current width */
@@ -1147,7 +1143,7 @@ void MainFree(void)
 /*========================================================================*/
 void MainRefreshNow(void) 
 { /* should only be called by the master thread, with a locked API */
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   CMain *I = G->Main;
   if(PyMOL_GetSwap(G->PyMOL,true))
@@ -1173,7 +1169,7 @@ static int Sharp3DLastWindowX = -1000;
 
 static void MainBusyIdle(void) 
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   /* This is one of the few places in the program where we can be sure 
 	* that we have the "glut" thread...glut doesn't seem to be completely
@@ -1658,7 +1654,7 @@ SetConsoleCtrlHandler(
 #ifndef _PYMOL_MODULE
 int main(int argc, char *argv[])
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   myArgc=argc;
   myArgv=argv;
 
@@ -1714,7 +1710,7 @@ PyObject *MainAsPyList(void)
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   PyObject *result=NULL;
   int width,height;
@@ -1737,7 +1733,7 @@ int MainFromPyList(PyObject *list)
   int ok=true;
   int win_x,win_y;
   int ll=0;
-  PyMOLGlobals *G = TempPyMOLGlobals;
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
   OrthoLineType buffer;
 
   if(ok) ok = (list!=NULL);

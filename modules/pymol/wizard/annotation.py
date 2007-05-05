@@ -8,21 +8,21 @@ class Annotation(Wizard):
         return Wizard.event_mask_scene+Wizard.event_mask_state+Wizard.event_mask_frame
     
     def do_scene(self):
-        cmd.dirty_wizard()
+        self.cmd.dirty_wizard()
         
     def do_frame(self,frame):
-        cmd.dirty_wizard()
+        self.cmd.dirty_wizard()
 
     def do_state(self,state):
-        cmd.dirty_wizard()
+        self.cmd.dirty_wizard()
             
     def get_prompt(self):
         prompt = []
         if hasattr(pymol.session,'annotation'):
             anno_dict = pymol.session.annotation
-            for obj in cmd.get_names('objects',1): # enabled objects
+            for obj in self.cmd.get_names('objects',1): # enabled objects
                 state_dict = anno_dict.get(obj,{})
-                state = cmd.get_state()
+                state = self.cmd.get_state()
                 anno_list = state_dict.get(state,[])
                 prompt.extend(anno_list)
         return prompt
@@ -39,7 +39,9 @@ import re
 
 from chempy.sdf import SDF
 
-def load_annotated_sdf(filename, object=None, state=1, discrete=1):
+def load_annotated_sdf(filename, object=None, state=1, discrete=1, _self=cmd):
+    pymol=_self._pymol
+    cmd=_self
     
     # get object name from file prefix
 

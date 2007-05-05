@@ -44,10 +44,12 @@ class Mutagenesis(Wizard):
     cutoff = 3.5
     
     def __init__(self,_self=cmd):
-
+        Wizard.__init__(self,_self)
+        cmd=self.cmd
+        pymol=cmd._pymol
+        
         cmd.unpick()
         
-        Wizard.__init__(self,_self)
 
         self.dep = default_dep
 
@@ -219,6 +221,8 @@ class Mutagenesis(Wizard):
                                            "/data/chempy/sidechains/sc_bb_dep.pkl")
             
     def set_mode(self,mode):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if mode in self.modes:
             self.mode = mode
         if self.status==1:
@@ -226,6 +230,8 @@ class Mutagenesis(Wizard):
         cmd.refresh_wizard()
         
     def set_rep(self,rep):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if rep in self.reps:
             self.rep=rep
         cmd.hide("("+obj_name+")")
@@ -234,6 +240,8 @@ class Mutagenesis(Wizard):
         cmd.refresh_wizard()
         
     def set_c_cap(self,c_cap):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if c_cap in self.c_caps:
             self.c_cap=c_cap
         if self.status==1:
@@ -241,6 +249,8 @@ class Mutagenesis(Wizard):
         cmd.refresh_wizard()
 
     def set_n_cap(self,n_cap):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if n_cap in self.n_caps:
             self.n_cap=n_cap
         if self.status==1:
@@ -248,6 +258,8 @@ class Mutagenesis(Wizard):
         cmd.refresh_wizard()
 
     def set_hyd(self,hyd):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if hyd in self.hyds:
             self.hyd=hyd
         if self.status==1:
@@ -255,6 +267,8 @@ class Mutagenesis(Wizard):
         cmd.refresh_wizard()
 
     def set_dep(self,value):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if value!=self.dep:
             self.dep = value
             self.load_library()
@@ -263,6 +277,8 @@ class Mutagenesis(Wizard):
             cmd.refresh_wizard()
         
     def get_panel(self):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if int(cmd.get("mouse_selection_mode")!=1):
             cmd.set("mouse_selection_mode",1)
         if self.mode == 'current':
@@ -283,6 +299,8 @@ class Mutagenesis(Wizard):
             ]
 
     def cleanup(self):
+        cmd=self.cmd
+        pymol=cmd._pymol
         global default_mode,default_rep,default_dep,default_hyd
         global default_n_cap, default_c_cap
         default_mode = self.mode
@@ -295,6 +313,8 @@ class Mutagenesis(Wizard):
         self.clear()
         
     def clear(self):
+        cmd=self.cmd
+        pymol=cmd._pymol
         self.status=0
         cmd.delete(tmp_obj1)
         cmd.delete(tmp_obj2)
@@ -307,6 +327,8 @@ class Mutagenesis(Wizard):
         cmd.refresh_wizard()
         
     def apply(self):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if self.status==1:
             # find the name of the object which contains the selection
             new_name = None
@@ -420,6 +442,8 @@ class Mutagenesis(Wizard):
 
     
     def do_library(self):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if not ((cmd.count_atoms("(%s) and name n"%src_sele)==1) and
                 (cmd.count_atoms("(%s) and name c"%src_sele)==1) and
                 (cmd.count_atoms("(%s) and name o"%src_sele)==1)):
@@ -681,6 +705,8 @@ class Mutagenesis(Wizard):
         cmd.feedback("pop")
         
     def do_select(self,selection):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if (obj_name in cmd.get_names()):
             if cmd.count_atoms("(%s) and (%s)"%(obj_name,selection)):
                 cmd.deselect()
@@ -699,6 +725,8 @@ class Mutagenesis(Wizard):
         return 1
     
     def do_pick(self,bondFlag):
+        cmd=self.cmd
+        pymol=cmd._pymol
         if bondFlag:
             self.error = "Error: please select an atom, not a bond."
             print self.error

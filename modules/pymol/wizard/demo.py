@@ -18,7 +18,7 @@ class Demo(Wizard):
         if saved.has_key('last'):
             self.last = saved['last']
         if name!=None:
-            demo = DemoInfo()
+            demo = DemoInfo(_self=_self)
             if self.last:
                 if hasattr(demo,self.last):
                     getattr(demo,self.last)(cleanup=1)
@@ -64,6 +64,9 @@ import threading
 
 class DemoInfo:
 
+    def __init__(self,_self=cmd):
+        self.cmd=_self
+        
     message_dict = {
         'roving' : [ 
         "Middle-Click to rove...         CTRL-SHIFT-Middle-Click to center...",],
@@ -78,213 +81,213 @@ class DemoInfo:
     def rep_old(self,cleanup=0):
         if not cleanup:
             try:
-                cmd.set("suspend_updates",1,quiet=1)
-                cmd.disable()
-                cmd.delete("pept")
-                cmd.delete("pept_dist")
-                cmd.load("$PYMOL_DATA/demo/pept.pdb")
-                cmd.show("sticks","(pept and not i;5:7)")
-                cmd.show("surface","(pept and i;5,6)")
-                cmd.show("mesh","(pept and i;1,11,12,13)")
-                cmd.show("spheres","(pept and i;2,12,9,4 and not n;c,n,o,ca)")
-                cmd.show("dots","(i;8)")
-                cmd.dist("pept_dist","(pept and i;1&n;OD2)","(pept and i;13&n;OG1)")
-                cmd.set("dot_width","2");
+                self.cmd.set("suspend_updates",1,quiet=1)
+                self.cmd.disable()
+                self.cmd.delete("pept")
+                self.cmd.delete("pept_dist")
+                self.cmd.load("$PYMOL_DATA/demo/pept.pdb")
+                self.cmd.show("sticks","(pept and not i;5:7)")
+                self.cmd.show("surface","(pept and i;5,6)")
+                self.cmd.show("mesh","(pept and i;1,11,12,13)")
+                self.cmd.show("spheres","(pept and i;2,12,9,4 and not n;c,n,o,ca)")
+                self.cmd.show("dots","(i;8)")
+                self.cmd.dist("pept_dist","(pept and i;1&n;OD2)","(pept and i;13&n;OG1)")
+                self.cmd.set("dot_width","2");
             finally:
-                cmd.set("suspend_updates",0,quiet=1)
+                self.cmd.set("suspend_updates",0,quiet=1)
         else:
-            cmd.delete("pept")
-            cmd.delete("pept_dist")
+            self.cmd.delete("pept")
+            self.cmd.delete("pept_dist")
 
     def reps(self,cleanup=0):
         rep_list = [ "lines","sticks","spheres","surface","mesh","dots","ribbon","cartoon" ]
         try:
             if not cleanup:
-                cmd.disable()
-                cmd.set("suspend_updates",1,quiet=1)
-                cmd.load("$PYMOL_DATA/demo/pept.pdb","rep1")
-                cmd.alter("rep1///1-5+8-13/","ss='S'")
-                cmd.cartoon("auto")
-                cmd.hide("everything","rep1")
+                self.cmd.disable()
+                self.cmd.set("suspend_updates",1,quiet=1)
+                self.cmd.load("$PYMOL_DATA/demo/pept.pdb","rep1")
+                self.cmd.alter("rep1///1-5+8-13/","ss='S'")
+                self.cmd.cartoon("auto")
+                self.cmd.hide("everything","rep1")
                 for a in range(2,9):
-                    cmd.create("rep%d"%a,"rep1")
-                map(lambda x,y:cmd.show(x,"rep%d"%y),
+                    self.cmd.create("rep%d"%a,"rep1")
+                map(lambda x,y,s=self:s.cmd.show(x,"rep%d"%y),
                      rep_list,
                      range(1,9))
-                cmd.reset()
-                cmd.zoom("rep1",24)
-                util.cbay("rep2")
-                util.cbac("rep3")
-                util.cbas("rep4")
-                util.cbab("rep5")
-                util.cbaw("rep6")            
-                util.cbay("rep8")
+                self.cmd.reset()
+                self.cmd.zoom("rep1",24)
+                util.cbay("rep2",_self=self.cmd)
+                util.cbac("rep3",_self=self.cmd)
+                util.cbas("rep4",_self=self.cmd)
+                util.cbab("rep5",_self=self.cmd)
+                util.cbaw("rep6",_self=self.cmd)            
+                util.cbay("rep8",_self=self.cmd)
 
 
-                cmd.set("suspend_updates",0,quiet=1)
+                self.cmd.set("suspend_updates",0,quiet=1)
                 scale=0.5
                 for b in range(1,20):
-                    cmd.set("suspend_updates",0,quiet=1)
-                    cmd.refresh()
-                    cmd.set("suspend_updates",1,quiet=1)
+                    self.cmd.set("suspend_updates",0,quiet=1)
+                    self.cmd.refresh()
+                    self.cmd.set("suspend_updates",1,quiet=1)
                     xt=-3.2
                     yt=1.6
                     for a in range(1,5):
-                        cmd.translate([xt*scale,yt*scale,0],object="rep%d"%a,camera=0)
+                        self.cmd.translate([xt*scale,yt*scale,0],object="rep%d"%a,camera=0)
                         xt=xt+2
                     yt=-yt
                     xt=-3.2
                     for a in range(5,9):
-                        cmd.translate([xt*scale,yt*scale,0],object="rep%d"%a,camera=0)
+                        self.cmd.translate([xt*scale,yt*scale,0],object="rep%d"%a,camera=0)
                         xt=xt+2
                 for a in range(1,9):
-                    cmd.origin("rep%d"%a,object="rep%d"%a)
-                cmd.mset("1")
+                    self.cmd.origin("rep%d"%a,object="rep%d"%a)
+                self.cmd.mset("1")
                 st = string.join(map(lambda x,y:"rotate angle=-3,object=rep%d,axis=%s;"%(x,y),range(1,9),
                                             ['x','y','x','y','x','y','x','y']))
-                cmd.mdo(1,st)
-                cmd.set("suspend_updates",0,quiet=1)
-                cmd.mplay()
+                self.cmd.mdo(1,st)
+                self.cmd.set("suspend_updates",0,quiet=1)
+                self.cmd.mplay()
 
                 cgo = []
                 axes = [[4.5,0.0,0.0],[0.0,3.0,0.0],[0.0,0.0,3.0]]
 
                 c = 1
                 for a in rep_list:
-                    ext = cmd.get_extent("rep%d"%c)
+                    ext = self.cmd.get_extent("rep%d"%c)
                     pos = [(ext[0][0]+ext[1][0])/2,
                              (ext[0][1]+ext[1][1])/2+14,
                              (ext[0][2]+ext[1][2])/2]
                     c = c + 1
                     pos[0]=pos[0]-(measure_text(plain,a,axes)/2)
                     wire_text(cgo,plain,pos,a,axes)
-                cmd.set("cgo_line_width",1.5)
-                cmd.set("auto_zoom",0)
-                cmd.load_cgo(cgo,'reps')
-                cmd.set("auto_zoom",1)
+                self.cmd.set("cgo_line_width",1.5)
+                self.cmd.set("auto_zoom",0)
+                self.cmd.load_cgo(cgo,'reps')
+                self.cmd.set("auto_zoom",1)
             else:
-                cmd.delete("rep*")
-                cmd.mset()
-                cmd.mstop()
+                self.cmd.delete("rep*")
+                self.cmd.mset()
+                self.cmd.mstop()
         except:
             traceback.print_exc()
             
     def raster3d(self,cleanup=0):
         if not cleanup:
-            cmd.disable()
+            self.cmd.disable()
 
-            cmd.set_view( (\
+            self.cmd.set_view( (\
       0.269525230,   -0.492282957,    0.827655137,\
      -0.158114254,   -0.870419860,   -0.466229916,\
       0.949923635,   -0.005200397,   -0.312437057,\
      -0.000086844,    0.000019042, -133.217041016,\
      11.377667427,   21.768899918,    9.270449638,\
     105.029335022,  169.626159668,    0.000000000 ))
-            cmd.load("$PYMOL_DATA/demo/1hpv.r3d","cgo1")
-            cmd.zoom("cgo1")
+            self.cmd.load("$PYMOL_DATA/demo/1hpv.r3d","cgo1")
+            self.cmd.zoom("cgo1")
         else:
-            cmd.delete("cgo1")
+            self.cmd.delete("cgo1")
 
     def cgo(self,cleanup=0):
         if not cleanup:
-            cmd.disable()
+            self.cmd.disable()
             try:
-                cmd.set("suspend_updates",1,quiet=1)
-                cmd.do("run $PYMOL_DATA/demo/cgo03.py")
+                self.cmd.set("suspend_updates",1,quiet=1)
+                self.cmd.do("run $PYMOL_DATA/demo/cgo03.py")
             finally:
-                cmd.set("suspend_updates",0,quiet=1)
+                self.cmd.set("suspend_updates",0,quiet=1)
         else:
-            cmd.delete("cgo03")
-            cmd.mset()
-            cmd.mstop()
-            cmd.rewind()
+            self.cmd.delete("cgo03")
+            self.cmd.mset()
+            self.cmd.mstop()
+            self.cmd.rewind()
 
     def anime_old(self,cleanup=0):
         if not cleanup:
-            cmd.disable()
-            cmd.delete("arg")
-            cmd.fragment("arg")
-            cmd.zoom("arg",2)
-            cmd.show("sticks","arg")
-            cmd.feedback('dis','sel','res')
+            self.cmd.disable()
+            self.cmd.delete("arg")
+            self.cmd.fragment("arg")
+            self.cmd.zoom("arg",2)
+            self.cmd.show("sticks","arg")
+            self.cmd.feedback('dis','sel','res')
             for a in xrange(1,181):
                 try:
-                    cmd.set("suspend_updates",1,quiet=1)
-                    cmd.edit("(arg and n;cd)","(arg and n;cg)",quiet=1)
-                    cmd.torsion("6")
-                    cmd.unpick()
-                    cmd.edit("(arg and n;cb)","(arg and n;ca)",quiet=1)
-                    cmd.torsion("2")
-                    cmd.unpick()
+                    self.cmd.set("suspend_updates",1,quiet=1)
+                    self.cmd.edit("(arg and n;cd)","(arg and n;cg)",quiet=1)
+                    self.cmd.torsion("6")
+                    self.cmd.unpick()
+                    self.cmd.edit("(arg and n;cb)","(arg and n;ca)",quiet=1)
+                    self.cmd.torsion("2")
+                    self.cmd.unpick()
                 finally:
-                    cmd.set("suspend_updates",0,quiet=1)         
-                cmd.refresh()
-            cmd.feedback('ena','sel','res')
+                    self.cmd.set("suspend_updates",0,quiet=1)         
+                self.cmd.refresh()
+            self.cmd.feedback('ena','sel','res')
         else:
-            cmd.delete("arg")
+            self.cmd.delete("arg")
 
     def anime(self,cleanup=0):
         if not cleanup:
             try:
-                cmd.set("suspend_updates",1,quiet=1)
-                cmd.disable()
-                cmd.load("$TUT/1hpv.pdb")
-                util.chainbow("1hpv")
-                cmd.hide("everything","1hpv")
-                cmd.show("cartoon","1hpv")
-                cmd.show("sticks","1hpv///200/")
-                cmd.create("1hpv_a","1hpv//A//")
-                cmd.set("cartoon_smooth_loops",0,"1hpv_a")
-                cmd.create("1hpv_b","1hpv//B//")
-                cmd.set("cartoon_smooth_loops",0,"1hpv_b")
-                cmd.create("1hpv_l","1hpv///200/")
-                util.cbay("1hpv_l")
-                cmd.delete("1hpv")
-                cmd.set_view ((\
+                self.cmd.set("suspend_updates",1,quiet=1)
+                self.cmd.disable()
+                self.cmd.load("$TUT/1hpv.pdb")
+                util.chainbow("1hpv",_self=self.cmd)
+                self.cmd.hide("everything","1hpv")
+                self.cmd.show("cartoon","1hpv")
+                self.cmd.show("sticks","1hpv///200/")
+                self.cmd.create("1hpv_a","1hpv//A//")
+                self.cmd.set("cartoon_smooth_loops",0,"1hpv_a")
+                self.cmd.create("1hpv_b","1hpv//B//")
+                self.cmd.set("cartoon_smooth_loops",0,"1hpv_b")
+                self.cmd.create("1hpv_l","1hpv///200/")
+                util.cbay("1hpv_l",_self=self.cmd)
+                self.cmd.delete("1hpv")
+                self.cmd.set_view ((\
           0.374249548,   -0.517475128,    0.769516647,\
           -0.214397043,   -0.855623126,   -0.471108317,\
           0.902203023,    0.011330833,   -0.431161582,\
           -0.000023194,   -0.000007302, -125.089942932,\
           11.953758240,   20.323493958,    8.406080246,\
           75.304412842,  189.396347046,    0.000000000 ))
-                cmd.translate([-20,0,0],object="1hpv_a")
-                cmd.translate([20,0,0],object="1hpv_b")
-                cmd.zoom("center",30)
-                cmd.translate([0,10,00],object="1hpv_l")
+                self.cmd.translate([-20,0,0],object="1hpv_a")
+                self.cmd.translate([20,0,0],object="1hpv_b")
+                self.cmd.zoom("center",30)
+                self.cmd.translate([0,10,00],object="1hpv_l")
             finally:
-                cmd.set("suspend_updates",0,quiet=1)
-            cmd.refresh()
+                self.cmd.set("suspend_updates",0,quiet=1)
+            self.cmd.refresh()
             for a in range(1,21):
                 try:
-                    cmd.set("suspend_updates",1,quiet=1)
-                    cmd.translate([1,0,0],object="1hpv_a")
-                    cmd.translate([-1,0,0],object="1hpv_b")
-                    cmd.translate([0,-0.5,0],object="1hpv_l")
+                    self.cmd.set("suspend_updates",1,quiet=1)
+                    self.cmd.translate([1,0,0],object="1hpv_a")
+                    self.cmd.translate([-1,0,0],object="1hpv_b")
+                    self.cmd.translate([0,-0.5,0],object="1hpv_l")
                 finally:
-                    cmd.set("suspend_updates",0,quiet=1)
-                cmd.refresh()
+                    self.cmd.set("suspend_updates",0,quiet=1)
+                self.cmd.refresh()
             for a in range(1,62):
-                cmd.turn("y",6)
-                cmd.move('z',2)
-                cmd.move('y',-0.12)
-                cmd.refresh()
+                self.cmd.turn("y",6)
+                self.cmd.move('z',2)
+                self.cmd.move('y',-0.12)
+                self.cmd.refresh()
                                 
         else:
-            cmd.delete("1hpv_*")
+            self.cmd.delete("1hpv_*")
 
     def roving(self,cleanup=0):
         if not cleanup:
-            cmd.load("$PYMOL_DATA/demo/il2.pdb")
-            cmd.remove("hydro")
-            cmd.disable()
-            cmd.enable("il2")
-            cmd.set("ribbon_color","blue","il2")
-            cmd.set("roving_detail",1)
-            cmd.set("roving_origin",1)
-            cmd.set("stick_radius",0.12,"il2")
-#         cmd.zoom("/il2///16/O")
-#         cmd.zoom("center",12)
-            cmd.set_view ((\
+            self.cmd.load("$PYMOL_DATA/demo/il2.pdb")
+            self.cmd.remove("hydro")
+            self.cmd.disable()
+            self.cmd.enable("il2")
+            self.cmd.set("ribbon_color","blue","il2")
+            self.cmd.set("roving_detail",1)
+            self.cmd.set("roving_origin",1)
+            self.cmd.set("stick_radius",0.12,"il2")
+#         self.cmd.zoom("/il2///16/O")
+#         self.cmd.zoom("center",12)
+            self.cmd.set_view ((\
       0.132852688,   -0.729740858,    0.670686543,\
       -0.228543565,    0.635894477,    0.737154961,\
       -0.964425683,   -0.251212329,   -0.082298420,\
@@ -292,32 +295,32 @@ class DemoInfo:
       13.349151611,   -1.565427899,   22.383148193,\
       55.259441376,   63.259449005,    0.000000000 ))
         else:
-            cmd.delete("il2")
-            cmd.set("roving_detail",0)
-            cmd.refresh()
-            cmd.delete("rov_*")
+            self.cmd.delete("il2")
+            self.cmd.set("roving_detail",0)
+            self.cmd.refresh()
+            self.cmd.delete("rov_*")
             
     def roving_density(self,cleanup=0):
         if not cleanup:
             try:
-                cmd.load("$PYMOL_DATA/demo/il2.pdb")
-                cmd.set("suspend_updates",1,quiet=1)
-                cmd.remove("hydro")
-                cmd.disable()
-                cmd.enable("il2")
-                cmd.map_new("map","gaussian","0.75","il2")
-                cmd.set("ribbon_color","purple","il2")
-                cmd.set("roving_detail",1)
-                cmd.set("roving_origin",1)
-                cmd.set("stick_radius",0.12,"il2")
-                cmd.set("roving_sticks",0)
-                cmd.set("roving_polar_contacts",0)
-                cmd.set("line_width","3")
-                cmd.set("roving_map1_name","map")
-                cmd.isomesh("rov_m1","map",9999.0,"il2")
-                cmd.color("density","rov_m1")
+                self.cmd.load("$PYMOL_DATA/demo/il2.pdb")
+                self.cmd.set("suspend_updates",1,quiet=1)
+                self.cmd.remove("hydro")
+                self.cmd.disable()
+                self.cmd.enable("il2")
+                self.cmd.map_new("map","gaussian","0.75","il2")
+                self.cmd.set("ribbon_color","purple","il2")
+                self.cmd.set("roving_detail",1)
+                self.cmd.set("roving_origin",1)
+                self.cmd.set("stick_radius",0.12,"il2")
+                self.cmd.set("roving_sticks",0)
+                self.cmd.set("roving_polar_contacts",0)
+                self.cmd.set("line_width","3")
+                self.cmd.set("roving_map1_name","map")
+                self.cmd.isomesh("rov_m1","map",9999.0,"il2")
+                self.cmd.color("density","rov_m1")
                 
-                cmd.set_view ((\
+                self.cmd.set_view ((\
           0.132852688,   -0.729740858,    0.670686543,\
           -0.228543565,    0.635894477,    0.737154961,\
           -0.964425683,   -0.251212329,   -0.082298420,\
@@ -325,122 +328,122 @@ class DemoInfo:
           13.349151611,   -1.565427899,   22.383148193,\
           55.259441376,   63.259449005,    0.000000000 ))
             finally:
-                cmd.set("suspend_updates",0,quiet=1)
-            cmd.refresh()
+                self.cmd.set("suspend_updates",0,quiet=1)
+            self.cmd.refresh()
         else:
-            cmd.set("roving_detail",0)
-            cmd.set("roving_map1_name","")
-            cmd.set("roving_polar_contacts",7)
-            cmd.set("roving_sticks",6)
-            cmd.delete("il2")
-            cmd.delete("map")
-            cmd.set("line_width",1.5)
-            cmd.refresh()
-            cmd.set("roving_detail",0)
-            cmd.delete("rov_*")
-            cmd.sync()
+            self.cmd.set("roving_detail",0)
+            self.cmd.set("roving_map1_name","")
+            self.cmd.set("roving_polar_contacts",7)
+            self.cmd.set("roving_sticks",6)
+            self.cmd.delete("il2")
+            self.cmd.delete("map")
+            self.cmd.set("line_width",1.5)
+            self.cmd.refresh()
+            self.cmd.set("roving_detail",0)
+            self.cmd.delete("rov_*")
+            self.cmd.sync()
             
     def cartoon(self,cleanup=0):
         if not cleanup:
             try:
-                cmd.set("suspend_updates",1,quiet=1)
-                cmd.disable()
-                cmd.delete("1tii")      
-                cmd.load("$PYMOL_DATA/demo/1tii.pdb")
-                cmd.hide("(1tii)")
-                cmd.show("cartoon","1tii")
-                cmd.zoom("1tii")
-                cmd.spectrum("count","rainbow","1tii////ca")
-                cmd.set("cartoon_highlight_color","grey50","1tii")
-                cmd.set("cartoon_fancy_helices",1,"1tii")
+                self.cmd.set("suspend_updates",1,quiet=1)
+                self.cmd.disable()
+                self.cmd.delete("1tii")      
+                self.cmd.load("$PYMOL_DATA/demo/1tii.pdb")
+                self.cmd.hide("(1tii)")
+                self.cmd.show("cartoon","1tii")
+                self.cmd.zoom("1tii")
+                self.cmd.spectrum("count","rainbow","1tii////ca")
+                self.cmd.set("cartoon_highlight_color","grey50","1tii")
+                self.cmd.set("cartoon_fancy_helices",1,"1tii")
             finally:
-                cmd.set("suspend_updates",0,quiet=1)
-            cmd.refresh()
+                self.cmd.set("suspend_updates",0,quiet=1)
+            self.cmd.refresh()
         else:
-            cmd.delete("1tii")
+            self.cmd.delete("1tii")
 
     def elec(self,cleanup=0):
         if not cleanup:
-            cmd.disable()
-            cmd.delete("pept")
-            cmd.delete("e_pot")
-            cmd.delete("e_lvl")
-            cmd.load("$PYMOL_DATA/demo/pept.pkl")
-            cmd.hide("(pept)")
-            cmd.show("surface","pept")
-            cmd.set("coulomb_dielectric",80.0)
-            cmd.map_new("e_pot","coulomb",1.0,"pept",5)
-            cmd.ramp_new("e_lvl","e_pot",[-3.6,-1.6,0.4])
-            cmd.set("surface_color","e_lvl","pept")
-            cmd.refresh()
+            self.cmd.disable()
+            self.cmd.delete("pept")
+            self.cmd.delete("e_pot")
+            self.cmd.delete("e_lvl")
+            self.cmd.load("$PYMOL_DATA/demo/pept.pkl")
+            self.cmd.hide("(pept)")
+            self.cmd.show("surface","pept")
+            self.cmd.set("coulomb_dielectric",80.0)
+            self.cmd.map_new("e_pot","coulomb",1.0,"pept",5)
+            self.cmd.ramp_new("e_lvl","e_pot",[-3.6,-1.6,0.4])
+            self.cmd.set("surface_color","e_lvl","pept")
+            self.cmd.refresh()
         else:
-            cmd.delete("pept")
-            cmd.delete("e_pot")
-            cmd.delete("e_lvl")
+            self.cmd.delete("pept")
+            self.cmd.delete("e_pot")
+            self.cmd.delete("e_lvl")
             
     def trans(self,cleanup=0):
         if not cleanup:
             try:
-                cmd.set("suspend_updates",1,quiet=1)
-                cmd.disable()
-                cmd.delete("trans")
-                cmd.load("$PYMOL_DATA/demo/pept.pdb","trans")
-                cmd.hide("(trans)")
-                cmd.show("surface","trans")
-                cmd.show("sticks","trans")
-                cmd.set("surface_color","white","trans")
-                cmd.set("transparency",0.5,"trans")
-                cmd.zoom("trans")
+                self.cmd.set("suspend_updates",1,quiet=1)
+                self.cmd.disable()
+                self.cmd.delete("trans")
+                self.cmd.load("$PYMOL_DATA/demo/pept.pdb","trans")
+                self.cmd.hide("(trans)")
+                self.cmd.show("surface","trans")
+                self.cmd.show("sticks","trans")
+                self.cmd.set("surface_color","white","trans")
+                self.cmd.set("transparency",0.5,"trans")
+                self.cmd.zoom("trans")
             finally:
-                cmd.set("suspend_updates",0,quiet=1)
-            cmd.refresh()
+                self.cmd.set("suspend_updates",0,quiet=1)
+            self.cmd.refresh()
         else:
-            cmd.delete("trans")
+            self.cmd.delete("trans")
 
     def ray(self,cleanup=0):
         if not cleanup:
-            cmd.set("suspend_updates",1,quiet=1)
-            cmd.disable()
-            cmd.delete("ray")
-            cmd.load("$PYMOL_DATA/demo/il2.pdb","ray")
-            cmd.remove("(ray and hydro)")
-            cmd.hide("lines","ray")
-            cmd.show("spheres","ray")
-            cmd.orient("ray")
-            cmd.turn("x",90)
-            util.ray_shadows('heavy')
-            cmd.set("suspend_updates",0,quiet=1)
-            cmd.refresh()
-            cmd.do("ray")
+            self.cmd.set("suspend_updates",1,quiet=1)
+            self.cmd.disable()
+            self.cmd.delete("ray")
+            self.cmd.load("$PYMOL_DATA/demo/il2.pdb","ray")
+            self.cmd.remove("(ray and hydro)")
+            self.cmd.hide("lines","ray")
+            self.cmd.show("spheres","ray")
+            self.cmd.orient("ray")
+            self.cmd.turn("x",90)
+            util.ray_shadows('heavy',_self=self.cmd)
+            self.cmd.set("suspend_updates",0,quiet=1)
+            self.cmd.refresh()
+            self.cmd.do("ray")
         else:
-            cmd.delete("ray")
+            self.cmd.delete("ray")
             
     def finish(self,cleanup=0):
-        cmd.do("_ wizard")
+        self.cmd.do("_ wizard")
 
     def sculpt(self,cleanup=0):
         if not cleanup:
-            cmd.set("suspend_updates",1,quiet=1)
-            cmd.disable()
-            cmd.delete("sculpt")
-            cmd.load("$PYMOL_DATA/demo/pept.pdb","sculpt")
-            cmd.hide("lines","sculpt")
-            cmd.show("sticks","sculpt")
-            cmd.show("spheres","sculpt")
-            cmd.set("sphere_transparency","0.75","sculpt")
-            cmd.set("sphere_color","grey","sculpt")
-            cmd.frame(1)
-            cmd.set("auto_sculpt",1)
-            cmd.set("sculpting",1)
-            cmd.sculpt_activate("sculpt")
-            cmd.do("edit_mode")
-            cmd.set("valence","0.05")
-            cmd.set("suspend_updates",0,quiet=0)
-            cmd.unpick()
+            self.cmd.set("suspend_updates",1,quiet=1)
+            self.cmd.disable()
+            self.cmd.delete("sculpt")
+            self.cmd.load("$PYMOL_DATA/demo/pept.pdb","sculpt")
+            self.cmd.hide("lines","sculpt")
+            self.cmd.show("sticks","sculpt")
+            self.cmd.show("spheres","sculpt")
+            self.cmd.set("sphere_transparency","0.75","sculpt")
+            self.cmd.set("sphere_color","grey","sculpt")
+            self.cmd.frame(1)
+            self.cmd.set("auto_sculpt",1)
+            self.cmd.set("sculpting",1)
+            self.cmd.sculpt_activate("sculpt")
+            self.cmd.do("edit_mode")
+            self.cmd.set("valence","0.05")
+            self.cmd.set("suspend_updates",0,quiet=0)
+            self.cmd.unpick()
         else:
-            cmd.set("valence","0")
-            cmd.set("sculpting",0)
-            cmd.set("auto_sculpt",0)
-            cmd.delete("sculpt")
-            cmd.mouse()
+            self.cmd.set("valence","0")
+            self.cmd.set("sculpting",0)
+            self.cmd.set("auto_sculpt",0)
+            self.cmd.delete("sculpt")
+            self.cmd.mouse()
 

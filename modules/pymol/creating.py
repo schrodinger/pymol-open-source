@@ -21,9 +21,9 @@ if __name__=='pymol.creating':
     import cmd
     import string
     import re
-    from cmd import _cmd,lock,unlock,Shortcut,is_list,is_string, \
+    from cmd import _cmd, Shortcut, is_list, is_string, \
           file_ext_re, safe_list_eval, safe_alpha_list_eval, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+          DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error
 
     from chempy import fragments
 
@@ -74,7 +74,7 @@ if __name__=='pymol.creating':
         if action==6:
             if len(members):
                 action=1
-            elif (name in cmd.get_names()) or ('*' in name):
+            elif (name in _self.get_names()) or ('*' in name):
                 action=5
             else:
                 action=1
@@ -110,7 +110,7 @@ if __name__=='pymol.creating':
         r = DEFAULT_ERROR
         selection = selector.process(selection)
         if box!=None: # box should be [[x1,y1,z1],[x2,y2,z2]]
-            if cmd.is_string(box):
+            if _self.is_string(box):
                 box = safe_list_eval(box)
             box = (float(box[0][0]),
                      float(box[0][1]),
@@ -123,9 +123,9 @@ if __name__=='pymol.creating':
             box = (0.0,0.0,0.0,1.0,1.0,1.0)
             box_flag = 0
         if grid==None:
-            grid = cmd.get_setting_legacy('gaussian_resolution')/3.0
+            grid = _self.get_setting_legacy('gaussian_resolution')/3.0
         if buffer==None:
-            buffer = cmd.get_setting_legacy('gaussian_resolution')
+            buffer = _self.get_setting_legacy('gaussian_resolution')
         grid = float(grid) # for now, uniform xyz; later (x,y,z)
 
         type = map_type_dict[map_type_sc.auto_err(str(type),'map type')]
@@ -157,7 +157,7 @@ if __name__=='pymol.creating':
         if is_list(color):
             for a in color:
                 if not is_list(a):
-                    new_color.append(list(cmd.get_color_tuple(a,4))) # incl negative RGB special colors
+                    new_color.append(list(_self.get_color_tuple(a,4))) # incl negative RGB special colors
                 else:
                     new_color.append(a)
         elif is_string(color):
@@ -537,7 +537,7 @@ USAGE
     '''
         r = DEFAULT_ERROR
         try:
-            save=cmd.get_setting_legacy('auto_zoom')
+            save=_self.get_setting_legacy('auto_zoom')
             if object==None:
                 object=name
             model = fragments.get(str(name))
@@ -548,15 +548,15 @@ USAGE
 
                     reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
                     reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
-                position = cmd.get_position()
+                position = _self.get_position()
                 for c in range(0,3):
                     mean[c]=position[c]-mean[c]
-                    map(lambda a,x=mean[c],c=c:cmd._adjust_coord(a,c,x),model.atom)
+                    map(lambda a,x=mean[c],c=c:_self._adjust_coord(a,c,x),model.atom)
                 mean = map(lambda x,la=la:x/la,[
                     reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
                     reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
                     reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
-            r = cmd.load_model(model,str(object),quiet=quiet,zoom=zoom)
+            r = _self.load_model(model,str(object),quiet=quiet,zoom=zoom)
         except IOError:
             print "Error: unable to load fragment '%s'." % name
         except:
@@ -621,7 +621,7 @@ SEE ALSO
                     extract = selector.process(extract)
                 else:
                     extract = selection
-                cmd.remove("(("+extract+") in (%s)) and not (%s)"%(name,name))
+                _self.remove("(("+extract+") in (%s)) and not (%s)"%(name,name))
         if _self._raising(r,_self): raise pymol.CmdException                                    
         return r
 
@@ -652,7 +652,7 @@ SEE ALSO
         r = DEFAULT_ERROR      
         # preprocess selection
         if len(color):
-            color = cmd.get_color_index(str(color))
+            color = _self.get_color_index(str(color))
         else:
             color = -1 # default
         selection = selector.process(selection)
