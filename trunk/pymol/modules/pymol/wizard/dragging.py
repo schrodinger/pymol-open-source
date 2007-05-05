@@ -15,8 +15,9 @@ drag_sele = "_drag"
 class Dragging(Wizard):
 
     def __init__(self,*arg,**kw):
+        _self = kw.get('_self',cmd)
         self.valid = 1
-        Wizard.__init__(self)
+        Wizard.__init__(self,_self)
         if len(arg):
             self.old_button_mode = int(arg[0])
         self.check_valid()

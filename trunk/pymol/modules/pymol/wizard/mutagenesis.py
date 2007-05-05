@@ -43,11 +43,11 @@ class Mutagenesis(Wizard):
     count = 0
     cutoff = 3.5
     
-    def __init__(self):
+    def __init__(self,_self=cmd):
 
         cmd.unpick()
         
-        Wizard.__init__(self)
+        Wizard.__init__(self,_self)
 
         self.dep = default_dep
 

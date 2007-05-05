@@ -46,8 +46,8 @@ class Cleanup(Wizard):
         self.menu['ligand'] = ligand
         self.menu['target'] = target
 
-    def __init__(self):
-        Wizard.__init__(self)
+    def __init__(self,_self=cmd):
+        Wizard.__init__(self,_self)
         
         self.ligand = ""
         for a in cmd.get_names("public_objects",1):

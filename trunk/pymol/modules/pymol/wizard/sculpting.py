@@ -21,9 +21,9 @@ class Sculpting(Wizard):
 
     cutoff = 3.5
     
-    def __init__(self):
+    def __init__(self,_self=cmd):
 
-        Wizard.__init__(self)
+        Wizard.__init__(self,_self)
         
         self.status = 0 # 0 no atoms selections, 1 atom selected
         self.error = None

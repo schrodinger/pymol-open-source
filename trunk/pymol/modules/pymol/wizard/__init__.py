@@ -1,5 +1,5 @@
 
-
+from pymol import cmd
 
 class Wizard:
 
@@ -12,10 +12,11 @@ class Wizard:
     event_mask_frame   = 64 # frame changed
     event_mask_dirty   = 128 # anything changed (via OrthoDirty)
     
-    def __init__(self):
+    def __init__(self,_self=cmd):
         self.menu = {}
         self.prompt = None
         self.panel = None
+        self.cmd = _self
         
     def get_prompt(self):
         return self.prompt

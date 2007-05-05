@@ -28,11 +28,11 @@ reject_str = "Reject"
 
 class Filter(Wizard):
 
-    def __init__(self):
+    def __init__(self,_self=cmd):
 
         # initialize parent class
         
-        Wizard.__init__(self)
+        Wizard.__init__(self,_self)
         
         # restore previous state from global storage
 

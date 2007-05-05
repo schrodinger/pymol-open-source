@@ -7,7 +7,7 @@ import pymol
 
 class Security(Wizard):
 
-    def __init__(self):
+    def __init__(self,_self=cmd):
         for a in self.get_prompt():
             print a
             

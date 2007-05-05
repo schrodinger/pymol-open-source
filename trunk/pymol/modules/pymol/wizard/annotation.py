@@ -6,6 +6,7 @@ class Annotation(Wizard):
 
     def get_event_mask(self):
         return Wizard.event_mask_scene+Wizard.event_mask_state+Wizard.event_mask_frame
+    
     def do_scene(self):
         cmd.dirty_wizard()
         

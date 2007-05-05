@@ -11,11 +11,11 @@ default_track = 0
 
 class Density(Wizard):
 
-    def __init__(self):
+    def __init__(self,_self=cmd):
 
         cmd.unpick()
         
-        Wizard.__init__(self)
+        Wizard.__init__(self,_self)
         
         # mode selection subsystem
         

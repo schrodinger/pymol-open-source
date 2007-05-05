@@ -22,14 +22,15 @@ class Benchmark(Wizard):
         cmd.reinitialize()
         cmd.set('use_display_lists',1)
         
-    def __init__(self,*arg):
+    def __init__(self,arg0=None,_self=cmd):
+        Wizard.__init__(self,_self)        
         self.gl = 5.0
         self.short_cpu = 8.0
         self.long_cpu = 16.0
         self.message = []
-        if len(arg):
-            if hasattr(self,arg[0]):
-                getattr(self,arg[0])()
+        if arg0!=None:
+            if hasattr(self,arg0):
+                getattr(self,arg0)()
                 
     def reset(self):
         pass

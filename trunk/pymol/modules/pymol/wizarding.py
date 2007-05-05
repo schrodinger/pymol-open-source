@@ -41,6 +41,7 @@ if __name__=='pymol.wizarding':
                 oname = string.capitalize(name)
                 r = DEFAULT_SUCCESS
                 if hasattr(mod_obj,oname):
+                    kwd['_self']=_self
                     wiz = apply(getattr(mod_obj,oname),arg,kwd)
                     if wiz:
                         set_wizard(wiz,replace,_self=_self)
@@ -159,7 +160,10 @@ EXAMPLE
 
     def session_save_wizard(session,_self=cmd):
         # double-pickle so that session file is class-independent
-        session['wizard']=cPickle.dumps(cmd.get_wizard_stack(_self=_self),1)
+        stack = cmd.get_wizard_stack(_self=_self)
+        for wiz in stack: 
+            wiz.cmd = None
+        session['wizard']=cPickle.dumps(stack,1)
         return 1
 
     def session_restore_wizard(session,_self=cmd):
@@ -171,6 +175,8 @@ EXAMPLE
                 sys.modules['message'] = message
                 try:
                     wizards = cPickle.loads(session['wizard'])
+                    for wiz in wizards:
+                        wiz.cmd = _self
                     cmd.set_wizard_stack(wizards,_self=_self)
                 except:
                     print "Session-Warning: unable to restore wizard."
