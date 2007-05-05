@@ -8,6 +8,8 @@ import string
 class Renaming(Wizard):
 
     def __init__(self,old_name,_self=cmd):
+        Wizard.__init__(self,_self)
+        
         self.prefix = 'Renaming \\999%s\\--- to: \\999'%old_name
         self.old_name = old_name
         self.new_name = ''
