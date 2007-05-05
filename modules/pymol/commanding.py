@@ -29,7 +29,7 @@ if __name__=='pymol.commanding':
           _feedback,fb_module,fb_mask,is_list, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
-    def resume(fname):
+    def resume(fname,_self=cmd):
         r = DEFAULT_ERROR
         if os.path.exists(fname):
             if(re.search(r"\.py$|\.PY$|\.pym$|.PYM$",fname)):
@@ -38,7 +38,7 @@ if __name__=='pymol.commanding':
                 r = cmd.do("@%s"%fname)
         if is_ok(r):
             r = cmd.do("log_open %s,a"%fname)
-        if _raising(r): raise pymol.CmdException
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def log_open(fname='log.pml',mode='w'): 
@@ -102,11 +102,11 @@ USAGE
     '''
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.cls(_self._COb)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def splash(mode=0,_self=cmd):
@@ -124,7 +124,7 @@ USAGE
         if mode == 1: # just show PNG
             show_splash = 1
             try:
-                lock()
+                _self.lock(_self)
                 show_splash = _cmd.splash(_self._COb,1)
             finally:
                 unlock(0)
@@ -142,11 +142,11 @@ USAGE
                 cmd.set("text","1",quiet=1)
             print
             try:
-                lock()
+                _self.lock(_self)
                 r = _cmd.splash(_self._COb,0)
             finally:
-                unlock(r)
-        if _raising(r): raise pymol.CmdException
+                _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     reinit_code = {
@@ -168,11 +168,11 @@ USAGE
         r = DEFAULT_ERROR
         what = reinit_code[reinit_sc.auto_err(str(what),'option')]
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.reinitialize(_self._COb,int(what),str(object))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def sync(timeout=1.0,poll=0.05,_self=cmd):
@@ -247,10 +247,10 @@ USAGE (PYTHON)
                 for a in lst:
                     if(len(a)):
                         try:
-                            lock()
+                            _self.lock(_self)
                             r = _cmd.do(_self._COb,a,log,echo)
                         finally:
-                            unlock(r)
+                            _self.unlock(r,_self)
                     else:
                         r = DEFAULT_SUCCESS
             else:
@@ -259,14 +259,14 @@ USAGE (PYTHON)
                 for a in lst:
                     if(len(a)):
                         try:
-                            lock()
+                            _self.lock(_self)
                             r = _cmd.do(_self._COb,a,log,echo)
                         finally:
-                            unlock(r)
+                            _self.unlock(r,_self)
                     else:
                         r = DEFAULT_SUCCESS
                 cmd.set('defer_updates',defer)
-        if _raising(r): raise pymol.CmdException            
+        if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
     def quit(_self=cmd):
@@ -287,12 +287,12 @@ PYMOL API
             cmd._quit()
         else:
             try:
-                lock()
+                _self.lock(_self)
                 _cmd.do(_self._COb,"_ time.sleep(0.100);cmd._quit()",0,0)
                 # allow time for a graceful exit from the calling thread
                 thread.exit()
             finally:
-                unlock()
+                _self.unlock(_self=_self)
         return None
 
     def delete(name,_self=cmd):
@@ -318,11 +318,11 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
+            _self.lock(_self)   
             r = _cmd.delete(_self._COb,str(name))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException      
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException      
         return r
 
     def extend(name,function,_self=cmd):

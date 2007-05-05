@@ -51,11 +51,11 @@ NOTES
     '''
         r = DEFAULT_ERROR
         try:
-            lock()   
+            _self.lock(_self)   
             r = _cmd.get_pdb(_self._COb,str(selection),int(state)-1,0,str(ref),int(ref_state),int(quiet))
         finally:
-            unlock(r)
-        if _raising(r): raise QuietException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise QuietException         
         return r
     
     def get_session(names='', partial=0, quiet=1, compress=-1,_self=cmd):
@@ -64,11 +64,11 @@ NOTES
         for a in pymol._session_save_tasks:
             if a==None:
                 try:
-                    lock()
+                    _self.lock(_self)
                     r = _cmd.get_session(_self._COb,session,str(names),
                                          int(partial),int(quiet))
                 finally:
-                    unlock(r)
+                    _self.unlock(r,_self)
                 try:
                     session['session'] = copy.deepcopy(pymol.session)
                 except:
@@ -88,7 +88,7 @@ NOTES
                 import zlib
                 session = zlib.compress(io.pkl.toString(session))
             return session
-        elif _raising(r):
+        elif _self._raising(r,_self):
             raise QuietException                  
         return r
         
@@ -130,27 +130,27 @@ PYMOL API
             r = _self._png(str(filename),int(width),int(height),float(dpi),int(ray),int(quiet),_self)
         else:
             r = _self._do("cmd._png('%s',%d,%d,%1.6f,%d,%d)"%(filename,width,height,dpi,ray,quiet),_self=_self)
-        if _raising(r): raise QuietException
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def export_coords(obj,state,_self=cmd): # experimental
         r = DEFAULT_ERROR
         try:
-            lock()   
+            _self.lock(_self)   
             r = _cmd.export_coords(_self._COb,str(obj),int(state)-1)
         finally:
-            unlock(r)
-        if _raising(r): raise QuietException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def multisave(filename,object,state=0,_self=cmd): # experimental -- deprecated
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.multisave(_self._COb,str(filename),str(object),int(state)-1,0)
         finally:
-            unlock(r)
-        if _raising(r): raise QuietException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise QuietException
         return r
 
     def save(filename, selection='(all)', state=-1, format='', ref='',
@@ -236,11 +236,11 @@ SEE ALSO
             if f:
                 st = ''
                 try:
-                    lock()
+                    _self.lock(_self)
                     st = _cmd.get_pdb(_self._COb,"("+str(selection)+")",int(state)-1,0,
                                       str(ref),int(ref_state)-1,int(quiet))
                 finally:
-                    unlock()
+                    _self.unlock(_self=_self)
                 f.write(st)
                 f.close()
                 r = DEFAULT_SUCCESS
@@ -249,10 +249,10 @@ SEE ALSO
         elif format=='aln':
             st = ''
             try:
-                lock()
+                _self.lock(_self)
                 st = _cmd.get_seq_align_str(_self._COb,str(selection),int(state)-1,0,int(quiet))
             finally:
-                unlock()
+                _self.unlock(_self=_self)
             if st!=None:
                 f=open(filename,"w")
                 f.write(st)
@@ -267,11 +267,11 @@ SEE ALSO
             if f:
                 st = ''
                 try:
-                    lock()
+                    _self.lock(_self)
                     st = _cmd.get_pdb(_self._COb,"("+str(selection)+")",int(state)-1,1,
                                       str(ref),int(ref_state)-1,int(quiet))
                 finally:
-                    unlock()
+                    _self.unlock(_self=_self)
                 f.write(st)
                 f.close()
                 r = DEFAULT_SUCCESS
@@ -340,6 +340,6 @@ SEE ALSO
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
             r = DEFAULT_SUCCESS
-        if _raising(r): raise QuietException
+        if _self._raising(r,_self): raise QuietException
         return r
 

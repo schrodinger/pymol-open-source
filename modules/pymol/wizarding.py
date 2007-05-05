@@ -26,7 +26,7 @@ if __name__=='pymol.wizarding':
     import cPickle
     import traceback
     
-    def _wizard(name,arg,kwd,replace):
+    def _wizard(name,arg,kwd,replace,_self=cmd):
         r = DEFAULT_ERROR
         import wizard
         try:
@@ -43,7 +43,7 @@ if __name__=='pymol.wizarding':
                 if hasattr(mod_obj,oname):
                     wiz = apply(getattr(mod_obj,oname),arg,kwd)
                     if wiz:
-                        set_wizard(wiz,replace)
+                        set_wizard(wiz,replace,_self=_self)
                         cmd.do("_ refresh_wizard")
                 else:
                     print "Error: Sorry, couldn't find the '"+oname+"' class."                             
@@ -73,94 +73,96 @@ EXAMPLE
 
     wizard distance  # launches the distance measurement wizard
     '''
+        _self = kwd.get('_self',cmd)
         r = DEFAULT_ERROR
         if name==None:
-            cmd.set_wizard()
+            cmd.set_wizard(_self=_self)
             r = DEFAULT_SUCCESS
         else:
             name = str(name)
             if string.lower(name)=='distance': # legacy compatibility
                 name = 'measurement'
             r = _wizard(name,arg,kwd,0)
-        if _raising(r): raise pymol.CmdException
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
         
     def replace_wizard(name=None,*arg,**kwd):
+        _self = kwd.get('_self',cmd)
         r = DEFAULT_ERROR
         if name==None:
-            cmd.set_wizard()
+            cmd.set_wizard(_self=_self)
             r = DEFAULT_SUCCESS
         else:
             r = _wizard(name,arg,kwd,1)
-        if _raising(r): raise pymol.CmdException
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def set_wizard(wizard=None,replace=0,_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.set_wizard(_self._COb,wizard,replace)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def set_wizard_stack(stack=[],_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.set_wizard_stack(_self._COb,stack)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def refresh_wizard(_self=cmd): # INTERNAL
         r = DEFAULT_ERROR      
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.refresh_wizard(_self._COb)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def dirty_wizard(_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.dirty_wizard(_self._COb)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def get_wizard(_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.get_wizard(_self._COb)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def get_wizard_stack(_self=cmd): # INTERNAL
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.get_wizard_stack(_self._COb)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def session_save_wizard(session):
+    def session_save_wizard(session,_self=cmd):
         # double-pickle so that session file is class-independent
-        session['wizard']=cPickle.dumps(cmd.get_wizard_stack(),1)
+        session['wizard']=cPickle.dumps(cmd.get_wizard_stack(_self=_self),1)
         return 1
 
-    def session_restore_wizard(session):
+    def session_restore_wizard(session,_self=cmd):
         if session!=None:
             if session.has_key('wizard'):
                 from pymol.wizard import message
@@ -169,7 +171,7 @@ EXAMPLE
                 sys.modules['message'] = message
                 try:
                     wizards = cPickle.loads(session['wizard'])
-                    cmd.set_wizard_stack(wizards)
+                    cmd.set_wizard_stack(wizards,_self=_self)
                 except:
                     print "Session-Warning: unable to restore wizard."
         return 1

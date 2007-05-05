@@ -24,7 +24,7 @@ if __name__=='pymol.selecting':
     
     import pymol
 
-    def deselect():
+    def deselect(_self=cmd):
         '''
 DESCRIPTION
 
@@ -42,7 +42,7 @@ PYMOL API
         arg = cmd.get_names("selections",enabled_only=1)
         for a in arg:
             cmd.disable(a)
-        if _raising(r): raise pymol.CmdException                  
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
     
 
@@ -87,7 +87,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             if selection=="":
                 selection = name                    
                 if _cmd.get(_self._COb,"auto_number_selections")!=0.0:
@@ -116,15 +116,15 @@ SEE ALSO
             elif enable == 0:
                 r = _cmd.onoff(_self._COb,str(name),0)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
 
     def pop(name,source,enable=-1,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.pop(_self._COb,str(name),str(source),int(quiet))
             if is_ok(r):
                 enable = int(enable)
@@ -133,8 +133,8 @@ SEE ALSO
                 elif enable == 0:
                     r = _cmd.onoff(_self._COb,str(name),0)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
     id_type_dict = {
@@ -155,11 +155,11 @@ DESCRIPTION
         r = DEFAULT_ERROR
         mode = id_type_dict[id_type_sc.auto_err(mode,'identifier type')]
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.select_list(_self._COb,str(name),str(object),list(id_list),int(state)-1,int(mode),int(quiet))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def indicate(selection="(all)",_self=cmd):
@@ -182,12 +182,12 @@ PYMOL API
         selection = selector.process(selection)
         #      
         try:
-            lock()   
+            _self.lock(_self)   
             r = _cmd.select(_self._COb,"indicate","("+str(selection)+")",1,-1,'')
             cmd.enable("indicate")
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException                  
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
 

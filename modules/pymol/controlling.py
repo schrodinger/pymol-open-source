@@ -398,17 +398,17 @@ SEE ALSO
         if is_string(sort):
             sort=boolean_dict[boolean_sc.auto_err(sort,'sort option')]
         try:
-            lock()
+            _self.lock(_self)
             r = _cmd.order(_self._COb,str(names),int(sort),int(location))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def mouse(action=None,quiet=1,_self=cmd):# INTERNAL
         # NOTE: PyMOL automatically runs this routine upon start-up
         try:
-            lock()
+            _self.lock(_self)
 
             if action=='forward':
                 bm = _cmd.get_setting(_self._COb,"button_mode")
@@ -453,7 +453,7 @@ SEE ALSO
                 if mode[-7:]!='editing': cmd.unpick()
                 if mode[-7:]=='editing': cmd.deselect()
         finally:
-            unlock()
+            _self.unlock(_self=_self)
         return DEFAULT_SUCCESS
             
 
@@ -481,7 +481,7 @@ SEE ALSO
                         mouse(action='three_button_viewing',quiet=quiet)
         return DEFAULT_SUCCESS
     
-    def set_key(key,fn,arg=(),kw={}):  
+    def set_key(key,fn,arg=(),kw={},_self=cmd):  
         '''
 DESCRIPTION
 
@@ -579,7 +579,7 @@ SEE ALSO
                     r = DEFAULT_SUCCESS
         if is_error(r):
             print "Error: special '%s' key not found."%key
-        if _raising(r): raise pymol.CmdException         
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def button(button,modifier,action,_self=cmd):
@@ -607,7 +607,7 @@ NOTES
     '''
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             button = string.lower(button)
             button = button_sc.auto_err(button,'button')
             modifier = string.lower(modifier)
@@ -631,8 +631,8 @@ NOTES
             act_code = but_act_code[action]
             r = _cmd.button(_self._COb,but_code,act_code)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
 
@@ -662,11 +662,11 @@ SEE ALSO
         selection = selector.process(selection)
         #
         try:
-            lock()   
+            _self.lock(_self)   
             r = _cmd.mask(_self._COb,"("+str(selection)+")",1)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
     def unmask(selection="(all)",_self=cmd):
@@ -692,10 +692,10 @@ SEE ALSO
         selection = selector.process(selection)
         #   
         try:
-            lock()   
+            _self.lock(_self)   
             r = _cmd.mask(_self._COb,"("+str(selection)+")",0)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException         
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
