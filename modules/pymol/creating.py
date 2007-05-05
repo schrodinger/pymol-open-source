@@ -67,7 +67,7 @@ if __name__=='pymol.creating':
 
     group_action_sc =  Shortcut(group_action_dict.keys())
     
-    def group(name,members="",action='auto',quiet=1):
+    def group(name,members="",action='auto',quiet=1,_self=cmd):
         r = DEFAULT_ERROR        
         action = group_action_dict[group_action_sc.auto_err(str(action),'group action')]
         if name=='all': name='*'
@@ -80,24 +80,24 @@ if __name__=='pymol.creating':
                 action=1
         try:
             lock()
-            r = _cmd.group(str(name),str(members),int(action),int(quiet))
+            r = _cmd.group(_self._COb,str(name),str(members),int(action),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         
         return r
     
-    def ungroup(name,members="",action=0,quiet=1):
+    def ungroup(name,members="",action=0,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.group(str(name),str(members),7,int(quiet))
+            r = _cmd.group(_self._COb,str(name),str(members),7,int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         
         return r
     
     def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,
-                box=None,state=0,quiet=1,zoom=0,normalize=-1):
+                box=None,state=0,quiet=1,zoom=0,normalize=-1,_self=cmd):
         '''
         state > 0: do indicated state
         state = 0: independent states in independent extents
@@ -131,7 +131,7 @@ if __name__=='pymol.creating':
         type = map_type_dict[map_type_sc.auto_err(str(type),'map type')]
         try:
             lock()
-            r = _cmd.map_new(str(name),int(type),grid,str(selection),
+            r = _cmd.map_new(_self._COb,str(name),int(type),grid,str(selection),
                              float(buffer),box,int(state)-1,
                              int(box_flag),int(quiet),int(zoom),int(normalize))
         finally:
@@ -143,7 +143,7 @@ if __name__=='pymol.creating':
                      color=['red',[1.0,1.0,1.0],'blue'],
                      state=0,selection='',
                      beyond=2.0,within=6.0,
-                     sigma=2.0,zero=1,quiet=1):
+                     sigma=2.0,zero=1,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         safe_color = string.strip(str(color))
         if(safe_color[0:1]=="["): # looks like a list
@@ -166,7 +166,7 @@ if __name__=='pymol.creating':
             new_color=int(color)
         try:
             lock()
-            r = _cmd.ramp_new(str(name),str(map_name),list(safe_list_eval(str(range))),new_color,
+            r = _cmd.ramp_new(_self._COb,str(name),str(map_name),list(safe_list_eval(str(range))),new_color,
                                     int(state)-1,str(selection),float(beyond),float(within),
                                     float(sigma),int(zero),int(quiet))
         finally:
@@ -175,7 +175,7 @@ if __name__=='pymol.creating':
         return r
 
     def isomesh(name,map,level=1.0,selection='',buffer=0.0,
-                state=1,carve=None,source_state=0,quiet=1):
+                state=1,carve=None,source_state=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -233,7 +233,7 @@ SEE ALSO
             carve=0.0
         try:
             lock()
-            r = _cmd.isomesh(str(name),0,str(map),int(mopt),
+            r = _cmd.isomesh(_self._COb,str(name),0,str(map),int(mopt),
                              selection,float(buffer),
                              float(level),0,int(state)-1,float(carve),
                              int(source_state)-1,int(quiet),
@@ -243,7 +243,7 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException         
         return r
 
-    def slice_new(name,map,state=1,source_state=0):
+    def slice_new(name,map,state=1,source_state=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -273,7 +273,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.slice_new(str(name),str(map),int(state)-1,int(source_state)-1)
+            r = _cmd.slice_new(_self._COb,str(name),str(map),int(state)-1,int(source_state)-1)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         
@@ -281,7 +281,7 @@ SEE ALSO
 
 
     def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,
-                        source_state=0,side=1,mode=3,quiet=1):
+                        source_state=0,side=1,mode=3,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -330,7 +330,7 @@ SEE ALSO
             carve=0.0
         try:
             lock()
-            r = _cmd.isosurface(str(name),0,str(map),int(mopt),
+            r = _cmd.isosurface(_self._COb,str(name),0,str(map),int(mopt),
                                       selection,float(buffer),
                                       float(level),int(mode),int(state)-1,float(carve),
                                       int(source_state)-1,int(side),int(quiet))
@@ -340,7 +340,7 @@ SEE ALSO
         return r
 
     def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,
-                  carve=None,source_state=0,quiet=1):
+                  carve=None,source_state=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -380,7 +380,7 @@ SEE ALSO
             carve=0.0
         try:
             lock()
-            r = _cmd.isomesh(str(name),0,str(map),int(mopt),
+            r = _cmd.isomesh(_self._COb,str(name),0,str(map),int(mopt),
                              selection,float(buffer),
                              float(level),1,int(state)-1,
                              float(carve),int(source_state)-1,int(quiet),
@@ -392,7 +392,7 @@ SEE ALSO
 
 
 
-    def isolevel(name,level=1.0,state=0):
+    def isolevel(name,level=1.0,state=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -406,7 +406,7 @@ USAGE
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.isolevel(str(name),float(level),int(state)-1)
+            r = _cmd.isolevel(_self._COb,str(name),float(level),int(state)-1)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                  
@@ -414,7 +414,7 @@ USAGE
 
     def gradient(name,map,minimum=1.0,maximum=-1.0,
                  selection='',buffer=0.0,state=0,
-                 carve=None,source_state=0,quiet=1):
+                 carve=None,source_state=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -449,7 +449,7 @@ SEE ALSO
             carve=0.0
         try:
             lock()
-            r = _cmd.isomesh(str(name),0,str(map),int(mopt),
+            r = _cmd.isomesh(_self._COb,str(name),0,str(map),int(mopt),
                              selection,float(buffer),
                              float(minimum),3,int(state)-1,
                              float(carve),int(source_state)-1,int(quiet),
@@ -459,7 +459,7 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException                  
         return r
 
-    def copy(target,source,zoom=-1):
+    def copy(target,source,zoom=-1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -483,13 +483,13 @@ SEE ALSO
         r = DEFAULT_ERROR      
         try:
             lock()
-            r = _cmd.copy(str(source),str(target),int(zoom))
+            r = _cmd.copy(_self._COb,str(source),str(target),int(zoom))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                  
         return r
 
-    def symexp(prefix, object, selection, cutoff, segi=0, quiet=1):
+    def symexp(prefix, object, selection, cutoff, segi=0, quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -515,7 +515,7 @@ SEE ALSO
         #
         try:
             lock()
-            r = _cmd.symexp(str(prefix),str(object),
+            r = _cmd.symexp(_self._COb,str(prefix),str(object),
                             "("+str(selection)+")",float(cutoff),
                             int(segi),int(quiet))
         finally:
@@ -566,7 +566,7 @@ USAGE
         return r
 
     def create(name,selection,source_state=0,
-               target_state=0,discrete=0,zoom=-1,quiet=1,singletons=0,extract=None):
+               target_state=0,discrete=0,zoom=-1,quiet=1,singletons=0,extract=None,_self=cmd):
         '''
 DESCRIPTION
 
@@ -607,10 +607,10 @@ SEE ALSO
         try:
             lock()
             if name==None:
-                sel_cnt = _cmd.get("sel_counter") + 1.0
-                _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
+                sel_cnt = _cmd.get(_self._COb,"sel_counter") + 1.0
+                _cmd.legacy_set(_self._COb,"sel_counter","%1.0f" % sel_cnt)
                 name = "obj%02.0f" % sel_cnt
-            r = _cmd.create(str(name),"("+str(selection)+")",
+            r = _cmd.create(_self._COb,str(name),"("+str(selection)+")",
                             int(source_state)-1,int(target_state)-1,
                             int(discrete),int(zoom),int(quiet),int(singletons))
         finally:
@@ -648,7 +648,7 @@ SEE ALSO
     
     def pseudoatom(object, selection='', name='PS1', resn='PSD', resi='1', chain='P',
                    segi='PSDO', elem='PS', vdw=-1.0, hetatm=1, b=0.0, q=0.0, color='',
-                   label='', pos=None, state=0, mode='rms', quiet=1):
+                   label='', pos=None, state=0, mode='rms', quiet=1,_self=cmd):
         r = DEFAULT_ERROR      
         # preprocess selection
         if len(color):
@@ -670,7 +670,7 @@ SEE ALSO
                        float(pos[2]))
             if len(selection.split())>1:
                 selection = "("+str(selection)+")"
-            r = _cmd.pseudoatom(str(object), str(selection),
+            r = _cmd.pseudoatom(_self._COb,str(object), str(selection),
                                 str(name), str(resn), str(resi), str(chain),
                                 str(segi), str(elem), float(vdw), int(hetatm),
                                 float(b), float(q), str(label), pos, int(color),

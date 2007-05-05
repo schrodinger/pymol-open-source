@@ -110,6 +110,9 @@ int PyThread_get_thread_ident(void);
     } \
   }
 
+#define API_HANDLE_ERROR \
+   fprintf(stderr,"API-Error: in %s line %d.\n",__FILE__,__LINE__);
+
 /* NOTE: the glut_thread_keep_out variable can only be changed by the thread
    holding the API lock, therefore this is safe even through increment
    isn't (necessarily) atomic. */
@@ -227,13 +230,15 @@ static PyObject *CmdPseudoatom(PyObject *self, PyObject *args)
   int state,mode,quiet;
   int ok = false;
 
-  ok = PyArg_ParseTuple(args,"ssssssssfiffsOiiii",
+  ok = PyArg_ParseTuple(args,"OssssssssfiffsOiiii",&self,
                             &object_name, &sele, &name, &resn, &resi, &chain,
                             &segi, &elem, &vdw, &hetatm, &b, &q, &label, &pos, &color, 
                             &state, &mode, &quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     float pos_array[3],*pos_ptr = NULL;
@@ -267,10 +272,12 @@ static PyObject *CmdSetSceneNames(PyObject *self, PyObject *args)
   PyObject *list;
   int ok = false;
 
-  ok = PyArg_ParseTuple(args,"O",&list);
+  ok = PyArg_ParseTuple(args,"OO",&self,&list);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -288,10 +295,12 @@ static PyObject *CmdFixChemistry(PyObject *self, PyObject *args)
   int ok = false;
   int quiet;
   int invalidate;
-  ok = PyArg_ParseTuple(args,"ssii",&str2,&str3,&invalidate,&quiet);
+  ok = PyArg_ParseTuple(args,"Ossii",&self,&str2,&str3,&invalidate,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -310,10 +319,12 @@ static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int int1,int2;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ii",&int1,&int2);
+  ok = PyArg_ParseTuple(args,"Oii",&self,&int1,&int2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(G->HaveGUI) {
@@ -332,12 +343,14 @@ static PyObject *CmdRayAntiThread(PyObject *self, 	PyObject *args)
 
   CRayAntiThreadInfo *thread_info = NULL;
 
-  ok = PyArg_ParseTuple(args,"O",&py_thread_info);
+  ok = PyArg_ParseTuple(args,"OO",&self,&py_thread_info);
   if(ok) ok = PyCObject_Check(py_thread_info);
   if(ok) ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info))!=NULL);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   } 
   if (ok) {
     PUnblock(G);
@@ -355,7 +368,7 @@ static PyObject *CmdRayHashThread(PyObject *self, 	PyObject *args)
 
   CRayHashThreadInfo *thread_info = NULL;
 
-  ok = PyArg_ParseTuple(args,"O",&py_thread_info);
+  ok = PyArg_ParseTuple(args,"OO",&self,&py_thread_info);
   if(ok) ok = PyCObject_Check(py_thread_info);
   if(ok) ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info))!=NULL);
   if(ok) {
@@ -378,12 +391,14 @@ static PyObject *CmdRayTraceThread(PyObject *self, 	PyObject *args)
 
   CRayThreadInfo *thread_info = NULL;
 
-  ok = PyArg_ParseTuple(args,"O",&py_thread_info);
+  ok = PyArg_ParseTuple(args,"OO",&self,&py_thread_info);
   if(ok) ok = PyCObject_Check(py_thread_info);
   if(ok) ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info))!=NULL);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   } 
   if (ok) {
     PUnblock(G);
@@ -400,7 +415,7 @@ static PyObject *CmdCoordSetUpdateThread(PyObject *self, 	PyObject *args)
 
   CCoordSetUpdateThreadInfo *thread_info = NULL;
 
-  ok = PyArg_ParseTuple(args,"O",&py_thread_info);
+  ok = PyArg_ParseTuple(args,"OO",&self,&py_thread_info);
   if(ok) ok = PyCObject_Check(py_thread_info);
   if(ok) ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info))!=NULL);
   if(ok) {
@@ -423,12 +438,14 @@ static PyObject *CmdObjectUpdateThread(PyObject *self, 	PyObject *args)
 
   CObjectUpdateThreadInfo *thread_info = NULL;
 
-  ok = PyArg_ParseTuple(args,"O",&py_thread_info);
+  ok = PyArg_ParseTuple(args,"OO",&self,&py_thread_info);
   if(ok) ok = PyCObject_Check(py_thread_info);
   if(ok) ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info))!=NULL);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   } 
   if (ok) {
     PUnblock(G);
@@ -442,9 +459,12 @@ static PyObject *CmdGetMovieLocked(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   int ok=false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   } 
   if(ok) {
     return APIResultCode(MovieLocked(G));
@@ -457,9 +477,12 @@ static PyObject *CmdFakeDrag(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   int ok=false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   } 
   if(ok) {
     PyMOL_NeedFakeDrag(G->PyMOL);
@@ -473,10 +496,12 @@ static PyObject *CmdDelColorection(PyObject *self, PyObject *args)
   int ok = false;
   PyObject *list;
   char *prefix;
-  ok = PyArg_ParseTuple(args,"Os",&list,&prefix);
+  ok = PyArg_ParseTuple(args,"OOs",&self,&list,&prefix);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -492,10 +517,12 @@ static PyObject *CmdSetColorectionName(PyObject *self, PyObject *args)
   int ok = false;
   PyObject *list;
   char *prefix,*new_prefix;
-  ok = PyArg_ParseTuple(args,"Oss",&list,&prefix,&new_prefix);
+  ok = PyArg_ParseTuple(args,"OOss",&self,&list,&prefix,&new_prefix);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -511,10 +538,12 @@ static PyObject *CmdSetColorection(PyObject *self, PyObject *args)
   int ok = false;
   char *prefix;
   PyObject *list;
-  ok = PyArg_ParseTuple(args,"Os",&list,&prefix);
+  ok = PyArg_ParseTuple(args,"OOs",&self,&list,&prefix);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -530,10 +559,12 @@ static PyObject *CmdGetColorection(PyObject *self, PyObject *args)
   PyObject *result=NULL;
   int ok = false;
   char *prefix;
-  ok = PyArg_ParseTuple(args,"s",&prefix);
+  ok = PyArg_ParseTuple(args,"Os",&self,&prefix);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -550,10 +581,12 @@ static PyObject *CmdGetRawAlignment(PyObject *self, PyObject *args)
   char *name;
   int active_only;
   PyObject *result = NULL;
-  ok = PyArg_ParseTuple(args,"si",&name,&active_only);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&name,&active_only);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     int align_sele = -1;
@@ -583,10 +616,12 @@ static PyObject *CmdGetOrigin(PyObject *self, PyObject *args)
   int ok = false;
   float origin[3];
   char *object;
-  ok = PyArg_ParseTuple(args,"s",&object);
+  ok = PyArg_ParseTuple(args,"Os",&self,&object);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -623,6 +658,8 @@ static PyObject *CmdGetVis(PyObject *self, PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -637,10 +674,12 @@ static PyObject *CmdSetVis(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int ok = false;
   PyObject *visDict;
-  ok = PyArg_ParseTuple(args,"O",&visDict);
+  ok = PyArg_ParseTuple(args,"OO",&self,&visDict);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -656,10 +695,12 @@ static PyObject *CmdReinitialize(PyObject *self, PyObject *args)
   int ok = false;
   int what;
   char *object;
-  ok = PyArg_ParseTuple(args,"is",&what,&object);
+  ok = PyArg_ParseTuple(args,"Ois",&self,&what,&object);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -680,12 +721,14 @@ static PyObject *CmdSpectrum(PyObject *self, PyObject *args)
   int ok = false;
   float min_ret,max_ret;
   PyObject *result = Py_None;
-  ok = PyArg_ParseTuple(args,"ssffiisiii",&str1,&expr,
+  ok = PyArg_ParseTuple(args,"Ossffiisiii",&self,&str1,&expr,
                         &min,&max,&start,&stop,&prefix,
                         &digits,&byres,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -714,6 +757,8 @@ static PyObject *CmdMDump(PyObject *self, PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -726,10 +771,13 @@ static PyObject *CmdMDump(PyObject *self, PyObject *args)
 static PyObject *CmdAccept(PyObject *self,PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok=true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -750,6 +798,8 @@ static PyObject *CmdDecline(PyObject *self,PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -771,11 +821,13 @@ static PyObject *CmdSetCrystal(PyObject *self,PyObject *args)
   OrthoLineType s1;
   float a,b,c,alpha,beta,gamma;
 
-  ok = PyArg_ParseTuple(args,"sffffffs",&str1,&a,&b,&c,
+  ok = PyArg_ParseTuple(args,"Osffffffs",&self,&str1,&a,&b,&c,
                         &alpha,&beta,&gamma,&str2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -797,10 +849,12 @@ static PyObject *CmdGetCrystal(PyObject *self,PyObject *args)
   WordType sg;
   PyObject *result = NULL;
   int defined;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"Os",&self,&str1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -835,10 +889,12 @@ static PyObject *CmdSmooth(PyObject *self,PyObject *args)
   char *str1;
   OrthoLineType s1;
   int int1,int2,int3,int4,int5,int6;
-  ok = PyArg_ParseTuple(args,"siiiiii",&str1,&int1,&int2,&int3,&int4,&int5,&int6);
+  ok = PyArg_ParseTuple(args,"Osiiiiii",&self,&str1,&int1,&int2,&int3,&int4,&int5,&int6);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -857,10 +913,12 @@ static PyObject *CmdGetSession(PyObject *self, PyObject *args)
   PyObject *dict;
   int partial,quiet;
   char *names;
-  ok = PyArg_ParseTuple(args,"Osii",&dict,&names,&partial,&quiet);
+  ok = PyArg_ParseTuple(args,"OOsii",&self,&dict,&names,&partial,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -877,10 +935,12 @@ static PyObject *CmdSetSession(PyObject *self, PyObject *args)
   int quiet,partial;
   PyObject *obj;
 
-  ok = PyArg_ParseTuple(args,"Oii",&obj,&partial,&quiet);
+  ok = PyArg_ParseTuple(args,"OOii",&self,&obj,&partial,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -895,10 +955,12 @@ static PyObject *CmdSetName(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1,*str2;
-  ok = PyArg_ParseTuple(args,"ss",&str1,&str2);
+  ok = PyArg_ParseTuple(args,"Oss",&self,&str1,&str2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -917,10 +979,12 @@ static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args)
   PyObject *result = NULL;
   int int1,int2;
   int dim[3];
-  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&str1,&int1,&int2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -939,10 +1003,12 @@ static PyObject *CmdDebug(PyObject *self,PyObject *args)
   PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"Os",&self,&str1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -972,11 +1038,13 @@ static PyObject *CmdPGlutEvent(PyObject *self, PyObject *args)
 #ifndef _PYMOL_NO_GLUT
   PyMOLGlobals *G = NULL;
   p_glut_event ev;
-  ok = PyArg_ParseTuple(args,"iiiiii",&ev.event_code,
+  ok = PyArg_ParseTuple(args,"Oiiiiii",&self,&ev.event_code,
                         &ev.x,&ev.y,&ev.input,&ev.state,&ev.mod);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     PUnblock(G);
@@ -995,6 +1063,8 @@ static PyObject *CmdSculptPurge(PyObject *self, PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -1009,10 +1079,12 @@ static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int ok = false;
   char *str1;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"Os",&self,&str1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1028,10 +1100,12 @@ static PyObject *CmdSculptActivate(PyObject *self, PyObject *args)
   int ok = false;
   int int1,int2,int3;
   char *str1;
-  ok = PyArg_ParseTuple(args,"siii",&str1,&int1,&int2,&int3);
+  ok = PyArg_ParseTuple(args,"Osiii",&self,&str1,&int1,&int2,&int3);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1048,10 +1122,12 @@ static PyObject *CmdSculptIterate(PyObject *self, PyObject *args)
   int int1,int2;
   char *str1;
   float total_strain = 0.0F;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&str1,&int1,&int2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1068,8 +1144,8 @@ static PyObject *CmdSetObjectTTT(PyObject *self, 	PyObject *args)
   int quiet;
   char *name;
   int state;
-  int ok=PyArg_ParseTuple(args,"s(ffffffffffffffff)ii",
-                          &name,
+  int ok=PyArg_ParseTuple(args,"Os(ffffffffffffffff)ii",
+                          &self,&name,
                           &ttt[ 0],&ttt[ 1],&ttt[ 2],&ttt[ 3], 
                           &ttt[ 4],&ttt[ 5],&ttt[ 6],&ttt[ 7],
                           &ttt[ 8],&ttt[ 9],&ttt[10],&ttt[11],
@@ -1078,6 +1154,8 @@ static PyObject *CmdSetObjectTTT(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1092,12 +1170,14 @@ static PyObject *CmdTranslateObjectTTT(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   float mov[3];
   char *name;
-  int ok=PyArg_ParseTuple(args,"s(fff)",
-                          &name,
+  int ok=PyArg_ParseTuple(args,"Os(fff)",
+                          &self, &name,
                           &mov[0],&mov[1],&mov[2]);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1121,10 +1201,12 @@ static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
   PyObject *m;
   float ttt[16];
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sO",&name,&m);
+  ok = PyArg_ParseTuple(args,"OsO",&self,&name,&m);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
@@ -1156,6 +1238,8 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -1238,10 +1322,12 @@ static PyObject *CmdGetChains(PyObject *self, PyObject *args)
   int c1=0;
   int a,l;
   int null_chain = false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1277,10 +1363,12 @@ static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
   char *name,*object;
   int append,state;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssii",&name,&object,&state,&append);
+  ok = PyArg_ParseTuple(args,"Ossii",&self,&name,&object,&state,&append);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1303,12 +1391,14 @@ static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
   int zero,quiet;
   OrthoLineType s1;
   PyObject *range,*color;
-  ok = PyArg_ParseTuple(args,"ssOOisfffii",&name,&map,&range,&color,
+  ok = PyArg_ParseTuple(args,"OssOOisfffii",&self,&name,&map,&range,&color,
                         &state,&sele,&beyond,&within,
                         &sigma,&zero,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1338,13 +1428,16 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
   char *selection;
   OrthoLineType s1 = "";
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sifsf(ffffff)iiiii",&name,&type,&grid[0],&selection,&buffer,
+  ok = PyArg_ParseTuple(args,"Osifsf(ffffff)iiiii",
+                        &self,&name,&type,&grid[0],&selection,&buffer,
                         &minCorner[0],&minCorner[1],&minCorner[2],
                         &maxCorner[0],&maxCorner[1],&maxCorner[2],
                         &state,&have_corners,&quiet,&zoom,&normalize);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1367,10 +1460,12 @@ static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
   float level;
   int state;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sfi",&name,&level,&state);
+  ok = PyArg_ParseTuple(args,"Osfi",&self,&name,&level,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1388,10 +1483,12 @@ static PyObject *CmdMapSet(PyObject *self, PyObject *args)
   int zoom, quiet;
   int ok = false;
 
-  ok = PyArg_ParseTuple(args,"sisiiii",&name,&operator,&operands, &target_state, &source_state, &zoom, &quiet);
+  ok = PyArg_ParseTuple(args,"Osisiiii",&self,&name,&operator,&operands, &target_state, &source_state, &zoom, &quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1411,11 +1508,13 @@ static PyObject *CmdMapTrim(PyObject *self, PyObject *args)
   float buffer;
   int quiet;
   OrthoLineType s1;
-  ok = PyArg_ParseTuple(args,"ssfiii",&name,&sele,&buffer,
+  ok = PyArg_ParseTuple(args,"Ossfiii",&self,&name,&sele,&buffer,
                         &map_state,&sele_state,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1433,10 +1532,12 @@ static PyObject *CmdMapDouble(PyObject *self, PyObject *args)
   char *name;
   int state;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&name,&state);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&name,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1453,10 +1554,12 @@ static PyObject *CmdMapHalve(PyObject *self, PyObject *args)
   int state;
   int ok = false;
   int smooth;
-  ok = PyArg_ParseTuple(args,"sii",&name,&state,&smooth);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&name,&state,&smooth);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1474,6 +1577,8 @@ static PyObject *CmdGetRenderer(PyObject *self, PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -1499,10 +1604,12 @@ static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
   float v[3];
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sfffiii",&str1,v,v+1,v+2,&state,&mode,&log);
+  ok = PyArg_ParseTuple(args,"Osfffiii",&self,&str1,v,v+1,v+2,&state,&mode,&log);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1523,7 +1630,7 @@ static PyObject *CmdMatrixCopy(PyObject *self, 	PyObject *args)
   int log;
   int quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssiiiiiii",
+  ok = PyArg_ParseTuple(args,"Ossiiiiiii",&self,
                         &source_name, &target_name,
                         &source_mode, &target_mode,
                         &source_state, &target_state,
@@ -1532,6 +1639,8 @@ static PyObject *CmdMatrixCopy(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1555,7 +1664,7 @@ static PyObject *CmdResetMatrix(PyObject *self, 	PyObject *args)
   int log;
   int quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"siiii",
+  ok = PyArg_ParseTuple(args,"Osiiii",&self,
                         &name,
                         &mode,
                         &state,
@@ -1563,6 +1672,8 @@ static PyObject *CmdResetMatrix(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1585,10 +1696,12 @@ static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
   float matrix[16];
   int homo;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"siOisi",&name,&state,&m,&log,&sele,&homo);
+  ok = PyArg_ParseTuple(args,"OsiOisi",&self,&name,&state,&m,&log,&sele,&homo);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(PConvPyListToFloatArrayInPlace(m,matrix,16)>0) {
@@ -1624,10 +1737,12 @@ static PyObject *CmdTransformSelection(PyObject *self, PyObject *args)
   float ttt[16];
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"siOii",&sele,&state,&m,&log,&homo);
+  ok = PyArg_ParseTuple(args,"OsiOii",&self,&sele,&state,&m,&log,&homo);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1652,10 +1767,12 @@ static PyObject *CmdLoadColorTable(PyObject *self, PyObject *args)
   char *str1;
   int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1672,10 +1789,12 @@ static PyObject *CmdLoadPNG(PyObject *self, PyObject *args)
   int ok = false;
   int quiet;
   int movie,stereo;
-  ok = PyArg_ParseTuple(args,"siii",&str1,&movie,&stereo,&quiet);
+  ok = PyArg_ParseTuple(args,"Osiii",&self,&str1,&movie,&stereo,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1691,10 +1810,12 @@ static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
   char *str1;
   int ok = false;
   int idx;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"Os",&self,&str1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1719,6 +1840,8 @@ static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -1738,6 +1861,8 @@ static PyObject *CmdGetMoviePlaying(PyObject *self, 	PyObject *args)
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
     result=PyInt_FromLong(MoviePlaying(G));
+  } else {
+    API_HANDLE_ERROR;
   }
   return(APIAutoNone(result));
 }
@@ -1759,10 +1884,12 @@ static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
   ObjectMolecule **o,**oVLA=NULL;
   int a;
   float *s,*p;
-  int ok =  PyArg_ParseTuple(args,"si",&str1,&state);
+  int ok =  PyArg_ParseTuple(args,"Osi",&self,&str1,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1812,7 +1939,7 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args)
   int max_gap,transform,reset;
   ExecutiveRMSInfo rms_info;
 
-  ok = PyArg_ParseTuple(args,"ssfiffissiiiiii",&str2,&str3,
+  ok = PyArg_ParseTuple(args,"Ossfiffissiiiiii",&self,&str2,&str3,
                         &cutoff,&cycles,&gap,&extend,&max_gap,&oname,
                         &mfile,&state1,&state2,&quiet,&max_skip,
                         &transform,&reset);
@@ -1820,6 +1947,8 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     PRINTFD(G,FB_CCmd)
@@ -1865,6 +1994,8 @@ static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEnterBlocked(G);
@@ -1882,6 +2013,8 @@ static PyObject *CmdGetView(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -1908,8 +2041,9 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
   int quiet;
   float animate;
   int hand;
-  int ok=PyArg_ParseTuple(args,"(fffffffffffffffffffffffff)ifi",
-                   &view[ 0],&view[ 1],&view[ 2],&view[ 3], /* 4x4 mat */
+  int ok=PyArg_ParseTuple(args,"O(fffffffffffffffffffffffff)ifi",
+                          &self,
+                          &view[ 0],&view[ 1],&view[ 2],&view[ 3], /* 4x4 mat */
                    &view[ 4],&view[ 5],&view[ 6],&view[ 7],
                    &view[ 8],&view[ 9],&view[10],&view[11],
                    &view[12],&view[13],&view[14],&view[15],
@@ -1921,6 +2055,8 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1937,6 +2073,8 @@ static PyObject *CmdGetState(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     result = SceneGetState(G); /* shouldn't this be +1? */
@@ -1951,6 +2089,8 @@ static PyObject *CmdGetEditorScheme(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     result = EditorGetScheme(G);
@@ -1966,6 +2106,8 @@ static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     result = SceneGetFrame(G)+1;
@@ -1979,10 +2121,12 @@ static PyObject *CmdSetTitle(PyObject *self, PyObject *args)
   char *str1,*str2;
   int int1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sis",&str1,&int1,&str2);
+  ok = PyArg_ParseTuple(args,"Osis",&self,&str1,&int1,&str2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -1999,10 +2143,12 @@ static PyObject *CmdGetTitle(PyObject *self, PyObject *args)
   int int1;
   int ok = false;
   PyObject *result = Py_None;
-  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2022,10 +2168,12 @@ static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args)
   int int1;
   PyObject *py_result = Py_None;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2045,10 +2193,12 @@ static PyObject *CmdImportCoords(PyObject *self, 	PyObject *args)
   PyObject *cObj;
   void *mmdat=NULL;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"siO",&str1,&int1,&cObj);
+  ok = PyArg_ParseTuple(args,"OsiO",&self,&str1,&int1,&cObj);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(PyCObject_Check(cObj))
@@ -2070,10 +2220,12 @@ static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
   float result = -1.0;
   int ok = false;
   int c1=0;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&str1,&int1,&int2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2097,10 +2249,12 @@ static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args)
   int state;
   OrthoLineType s0="";
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&str0,&state);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str0,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2118,10 +2272,12 @@ static PyObject *CmdGetType(PyObject *self, 	PyObject *args)
   char *str1;
   WordType type = "";
   int ok = false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"Os",&self,&str1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2142,10 +2298,12 @@ static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
   PyObject *result = Py_None;
   int ok = false;
   char *str0;
-  ok = PyArg_ParseTuple(args,"iis",&int1,&int2,&str0);
+  ok = PyArg_ParseTuple(args,"Oiis",&self,&int1,&int2,&str0);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2164,10 +2322,12 @@ static PyObject *CmdInterrupt(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int int1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     PyMOL_SetInterrupt(G->PyMOL, int1);
@@ -2180,10 +2340,12 @@ static PyObject *CmdInvert(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int int1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2198,10 +2360,12 @@ static PyObject *CmdTorsion(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   float float1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"f",&float1);
+  ok = PyArg_ParseTuple(args,"Of",&self,&float1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2216,10 +2380,12 @@ static PyObject *CmdUndo(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int int1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2237,10 +2403,12 @@ static PyObject *CmdMask(PyObject *self, PyObject *args)
   OrthoLineType s1;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2260,10 +2428,12 @@ static PyObject *CmdProtect(PyObject *self, PyObject *args)
   OrthoLineType s1;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&str1,&int1,&int2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2282,10 +2452,12 @@ static PyObject *CmdButton(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   int i1,i2;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ii",&i1,&i2);
+  ok = PyArg_ParseTuple(args,"Oii",&self,&i1,&i2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2300,10 +2472,12 @@ static PyObject *CmdFeedback(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   int i1,i2,result = 0;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ii",&i1,&i2);
+  ok = PyArg_ParseTuple(args,"Oii",&self,&i1,&i2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     /* NO API Entry for performance,
@@ -2318,10 +2492,12 @@ static PyObject *CmdSetFeedbackMask(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   int i1,i2,i3;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"iii",&i1,&i2,&i3);
+  ok = PyArg_ParseTuple(args,"Oiii",&self,&i1,&i2,&i3);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2354,10 +2530,12 @@ static PyObject *CmdPop(PyObject *self,  PyObject *args)
   int quiet;
   int result = 0;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&quiet);
+  ok = PyArg_ParseTuple(args,"Ossi",&self,&str1,&str2,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2377,6 +2555,8 @@ static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok && G->Ready) {
     /* only called by the GLUT thread with unlocked API, blocked interpreter */
@@ -2401,6 +2581,8 @@ static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     /* called by non-GLUT thread with unlocked API, blocked interpreter */
@@ -2425,6 +2607,8 @@ static PyObject *CmdWaitDeferred(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     if(!G->Terminating) {
@@ -2446,10 +2630,12 @@ static PyObject *CmdPaste(PyObject *self, PyObject *args)
   char *st;
   int l,a;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"O",&list);
+  ok = PyArg_ParseTuple(args,"OO",&self,&list);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(!list) 
@@ -2483,10 +2669,13 @@ static PyObject *CmdGetVRML(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     char *vla = NULL;
@@ -2506,10 +2695,13 @@ static PyObject *CmdGetPovRay(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     char *header=NULL,*geom=NULL;
@@ -2530,10 +2722,13 @@ static PyObject *CmdGetMtlObj(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     char *obj=NULL,*mtl=NULL;
@@ -2554,10 +2749,13 @@ static PyObject *CmdGetWizard(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -2573,10 +2771,13 @@ static PyObject *CmdGetWizardStack(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEnterBlocked(G);
@@ -2595,10 +2796,12 @@ static PyObject *CmdSetWizard(PyObject *self, PyObject *args)
   PyObject *obj;
   int ok = false;
   int replace;
-  ok = PyArg_ParseTuple(args,"Oi",&obj,&replace);
+  ok = PyArg_ParseTuple(args,"OOi",&self,&obj,&replace);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(!obj)
@@ -2619,10 +2822,12 @@ static PyObject *CmdSetWizardStack(PyObject *self, PyObject *args)
   
   PyObject *obj;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"O",&obj);
+  ok = PyArg_ParseTuple(args,"OO",&self,&obj);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(!obj)
@@ -2640,10 +2845,13 @@ static PyObject *CmdSetWizardStack(PyObject *self, PyObject *args)
 static PyObject *CmdRefreshWizard(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -2657,10 +2865,13 @@ static PyObject *CmdRefreshWizard(PyObject *self, PyObject *args)
 static PyObject *CmdDirtyWizard(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -2676,10 +2887,12 @@ static PyObject *CmdSplash(PyObject *self, PyObject *args)
   int query;
   int result=1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"i",&query);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&query);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(!query) {
     if(ok) {
@@ -2704,10 +2917,13 @@ static PyObject *CmdSplash(PyObject *self, PyObject *args)
 static PyObject *CmdCls(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2722,10 +2938,12 @@ static PyObject *CmdDump(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ss",&str1,&str2);
+  ok = PyArg_ParseTuple(args,"Oss",&self,&str1,&str2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2757,11 +2975,13 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args)
   int quiet;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args,"sisisffiifiif",&str1,&frame,&str2,&oper,
+  ok = PyArg_ParseTuple(args,"Osisisffiifiif",&self,&str1,&frame,&str2,&oper,
 			&str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state,&quiet,&alt_lvl);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -2912,10 +3132,12 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
   ObjectMap *mapObj;
   ObjectMapState *ms;
 
-  ok = PyArg_ParseTuple(args,"ssii",&slice,&map,&state,&map_state);  
+  ok = PyArg_ParseTuple(args,"Ossii",&self,&slice,&map,&state,&map_state);  
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3017,10 +3239,12 @@ static PyObject *CmdRGBFunction(PyObject *self, 	PyObject *args)
   ObjectSlice *Sobj=NULL;
   ObjectSliceState *ss;
   
-  ok = PyArg_ParseTuple(args,"sii",&slice,&function,&state);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&slice,&function,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3079,10 +3303,12 @@ static PyObject *CmdSliceHeightmap(PyObject *self, 	PyObject *args)
   ObjectSlice *Sobj=NULL;
   ObjectSliceState *ss;
   
-  ok = PyArg_ParseTuple(args,"si",&slice,&state);  
+  ok = PyArg_ParseTuple(args,"Osi",&self,&slice,&state);  
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3141,10 +3367,12 @@ static PyObject *CmdSliceSetLock(PyObject *self, 	PyObject *args)
   ObjectSlice *Sobj=NULL;
   ObjectSliceState *ss;
   
-  ok = PyArg_ParseTuple(args,"sii",&slice,&state,&lock);  
+  ok = PyArg_ParseTuple(args,"Osii",&self,&slice,&state,&lock);  
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3215,12 +3443,14 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args)
   int quiet;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args,"sisisffiifiii",&str1,&frame,&str2,&oper,
+  ok = PyArg_ParseTuple(args,"Osisisffiifiii",&self,&str1,&frame,&str2,&oper,
                    &str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state,
                         &side,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3362,10 +3592,12 @@ static PyObject *CmdSymExp(PyObject *self, 	PyObject *args)
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sssfii",&str1,&str2,&str3,&cutoff,&segi,&quiet);
+  ok = PyArg_ParseTuple(args,"Osssfii",&self,&str1,&str2,&str3,&cutoff,&segi,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3396,10 +3628,12 @@ static PyObject *CmdOverlap(PyObject *self, PyObject *args)
   float adjust;
   OrthoLineType s1,s2;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssiif",&str1,&str2,&state1,&state2,&adjust);
+  ok = PyArg_ParseTuple(args,"Ossiif",&self,&str1,&str2,&state1,&state2,&adjust);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3425,12 +3659,14 @@ static PyObject *CmdDist(PyObject *self, PyObject *args)
   OrthoLineType s1,s2;
   int ok = false;
   int c1,c2;
-  ok = PyArg_ParseTuple(args,"sssifiiiii",&name,&str1,
+  ok = PyArg_ParseTuple(args,"Osssifiiiii",&self,&name,&str1,
                         &str2,&mode,&cutoff,
                         &labels,&quiet,&reset,&state,&zoom);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3482,12 +3718,14 @@ static PyObject *CmdAngle(PyObject *self, PyObject *args)
   int c1,c2,c3;
   int reset, zoom;
   int state;
-  ok = PyArg_ParseTuple(args,"ssssiiiiii",
+  ok = PyArg_ParseTuple(args,"Ossssiiiiii",&self,
                         &name,&str1,&str2,&str3,
                         &mode,&labels,&reset,&zoom,&quiet,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3537,12 +3775,14 @@ static PyObject *CmdDihedral(PyObject *self, PyObject *args)
   int c1,c2,c3,c4;
   int reset, zoom;
   int state;
-  ok = PyArg_ParseTuple(args,"sssssiiiiii",
+  ok = PyArg_ParseTuple(args,"Osssssiiiiii",&self,
                         &name,&str1,&str2,&str3,&str4,
                         &mode,&labels,&reset,&zoom,&quiet,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3596,10 +3836,12 @@ static PyObject *CmdBond(PyObject *self, PyObject *args)
   int order,mode;
   OrthoLineType s1,s2;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssii",&str1,&str2,&order,&mode);
+  ok = PyArg_ParseTuple(args,"Ossii",&self,&str1,&str2,&order,&mode);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3622,10 +3864,12 @@ static PyObject *CmdVdwFit(PyObject *self, PyObject *args)
   float buffer;
   OrthoLineType s1,s2;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sisifi",&str1,&state1,&str2,&state2,&buffer,&quiet);
+  ok = PyArg_ParseTuple(args,"Osisifi",&self,&str1,&state1,&str2,&state2,&buffer,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3647,10 +3891,12 @@ static PyObject *CmdLabel(PyObject *self,   PyObject *args)
   OrthoLineType s1;
   int quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&quiet);
+  ok = PyArg_ParseTuple(args,"Ossi",&self,&str1,&str2,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3672,10 +3918,12 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
   int result=0;
   int ok = false;
   PyObject *space;
-  ok = PyArg_ParseTuple(args,"ssiiO",&str1,&str2,&i1,&quiet,&space);
+  ok = PyArg_ParseTuple(args,"OssiiO",&self,&str1,&str2,&i1,&quiet,&space);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3697,10 +3945,12 @@ static PyObject *CmdAlterList(PyObject *self,   PyObject *args)
   int ok = false;
   PyObject *space;
   PyObject *list;
-  ok = PyArg_ParseTuple(args,"sOiO",&str1,&list,&quiet,&space);
+  ok = PyArg_ParseTuple(args,"OsOiO",&self,&str1,&list,&quiet,&space);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -3723,10 +3973,12 @@ static PyObject *CmdSelectList(PyObject *self,   PyObject *args)
   int mode;
   int state;
   PyObject *list;
-  ok = PyArg_ParseTuple(args,"ssOiii",&sele_name,&str1,&list,&state,&mode,&quiet);
+  ok = PyArg_ParseTuple(args,"OssOiii",&self,&sele_name,&str1,&list,&state,&mode,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) { 
     int *int_array = NULL;
@@ -3755,10 +4007,12 @@ static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
   OrthoLineType s1;
   PyObject *obj;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"issiiiO",&i1,&str1,&str2,&i2,&i3,&quiet,&obj);
+  ok = PyArg_ParseTuple(args,"OissiiiO",&self,&i1,&str1,&str2,&i2,&i3,&quiet,&obj);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3777,10 +4031,12 @@ static PyObject *CmdCopy(PyObject *self,   PyObject *args)
   char *str1,*str2;
   int ok = false;
   int zoom;
-  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&zoom);
+  ok = PyArg_ParseTuple(args,"Ossi",&self,&str1,&str2,&zoom);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -3797,10 +4053,12 @@ static PyObject *CmdRecolor(PyObject *self,   PyObject *args)
   OrthoLineType s1;
   int ok = false;
   int rep=-1;
-  ok = PyArg_ParseTuple(args,"si",&str1,&rep);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&rep);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     PRINTFD(G,FB_CCmd)
@@ -3829,10 +4087,12 @@ static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
   OrthoLineType s1;
   int ok = false;
   int rep=-1;
-  ok = PyArg_ParseTuple(args,"si",&str1,&rep);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&rep);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     PRINTFD(G,FB_CCmd)
@@ -3860,10 +4120,13 @@ static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
 static PyObject *CmdResetRate(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -3876,10 +4139,13 @@ static PyObject *CmdResetRate(PyObject *self, PyObject *args)
 static PyObject *CmdReady(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     return(APIResultCode(G->Ready));
@@ -3894,10 +4160,13 @@ extern int _Py_CountReferences(void);
 static PyObject *CmdMem(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     MemoryDebugDump();
@@ -3947,6 +4216,8 @@ static PyObject *Cmd_Del(PyObject *self, PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     /* leaking Px */
@@ -3964,6 +4235,8 @@ static PyObject *Cmd_Start(PyObject *self, PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     G->P_inst->cmd = cmd;
@@ -3998,6 +4271,8 @@ static PyObject *Cmd_Stop(PyObject *self, PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     PyMOL_Stop(G->PyMOL);
@@ -4019,7 +4294,7 @@ static PyObject *CmdRunPyMOL(PyObject *self, PyObject *args)
 #ifdef _PYMOL_MODULE
     {
       int block_input_hook = false;
-      if(!PyArg_ParseTuple(args,"i",&block_input_hook))
+      if(!PyArg_ParseTuple(args,"Oi",&self,&block_input_hook))
         block_input_hook = false;
 
       /* prevent Tcl/Tk from installing/using its hook, which will
@@ -4065,10 +4340,12 @@ static PyObject *CmdCountStates(PyObject *self, PyObject *args)
   OrthoLineType s1;
   int ok = false;
   int count = 0;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"Os",&self,&str1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4086,10 +4363,13 @@ static PyObject *CmdCountFrames(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   int result = 0;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -4112,10 +4392,12 @@ static PyObject *CmdIdentify(PyObject *self, PyObject *args)
   int *iVLA=NULL,*i;
   ObjectMolecule **oVLA=NULL,**o;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&mode);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&mode);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4174,10 +4456,12 @@ static PyObject *CmdIndex(PyObject *self, PyObject *args)
   int a;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&mode);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&mode);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4232,10 +4516,12 @@ static PyObject *CmdFindPairs(PyObject *self, PyObject *args)
   int a;
   
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssiiiff",&str1,&str2,&state1,&state2,&mode,&cutoff,&angle);
+  ok = PyArg_ParseTuple(args,"Ossiiiff",&self,&str1,&str2,&state1,&state2,&mode,&cutoff,&angle);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4277,10 +4563,12 @@ static PyObject *CmdSystem(PyObject *self, PyObject *args)
   char *str1;
   int ok = false;
   int async;
-  ok = PyArg_ParseTuple(args,"si",&str1,&async);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&async);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(async) {
@@ -4301,10 +4589,13 @@ static PyObject *CmdSystem(PyObject *self, PyObject *args)
 static PyObject *CmdGetFeedback(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     if(G->Ready) {
@@ -4340,10 +4631,12 @@ static PyObject *CmdGetSeqAlignStr(PyObject *self, PyObject *args)
   int quiet;
   PyObject *result = NULL;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"siii",&str1,&state,&format,&quiet);
+  ok = PyArg_ParseTuple(args,"Osiii",&self,&str1,&state,&format,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4368,10 +4661,12 @@ static PyObject *CmdGetPDB(PyObject *self, PyObject *args)
   OrthoLineType s1 = "";
   PyObject *result = NULL;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"siisii",&str1,&state,&mode,&ref_object,&ref_state,&quiet);
+  ok = PyArg_ParseTuple(args,"Osiisii",&self,&str1,&state,&mode,&ref_object,&ref_state,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(!ref_object[0]) ref_object = NULL;
@@ -4396,10 +4691,12 @@ static PyObject *CmdGetModel(PyObject *self, PyObject *args)
   OrthoLineType s1;
   PyObject *result = NULL;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sisi",&str1,&state,&ref_object,&ref_state);
+  ok = PyArg_ParseTuple(args,"Osisi",&self,&str1,&state,&ref_object,&ref_state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(!ref_object[0]) ref_object = NULL;
@@ -4421,11 +4718,13 @@ static PyObject *CmdCreate(PyObject *self, PyObject *args)
   OrthoLineType s1;
   int ok = false;
   int zoom;
-  ok = PyArg_ParseTuple(args,"ssiiiiii",&str1,&str2,&source,
+  ok = PyArg_ParseTuple(args,"Ossiiiiii",&self,&str1,&str2,&source,
                         &target,&discrete,&zoom,&quiet,&singletons);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4450,10 +4749,12 @@ static PyObject *CmdOrient(PyObject *self, PyObject *args)
   int ok = false;
   float animate;
   int quiet=false; /* TODO */
-  ok = PyArg_ParseTuple(args,"sif",&str1,&state,&animate);
+  ok = PyArg_ParseTuple(args,"Osif",&self,&str1,&state,&animate);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4476,10 +4777,12 @@ static PyObject *CmdFitPairs(PyObject *self, PyObject *args)
   PyObject *result = NULL;
   float valu;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"O",&list);
+  ok = PyArg_ParseTuple(args,"OO",&self,&list);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -4522,10 +4825,12 @@ static PyObject *CmdIntraFit(PyObject *self, PyObject *args)
   float *fVLA;
   PyObject *result=Py_None;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"siiii",&str1,&state,&mode,&quiet,&mix);
+  ok = PyArg_ParseTuple(args,"Osiiii",&self,&str1,&state,&mode,&quiet,&mix);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(state<0) state=0;
@@ -4552,10 +4857,12 @@ static PyObject *CmdGetAtomCoords(PyObject *self, PyObject *args)
   float vertex[3];
   PyObject *result=Py_None;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&state,&quiet);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&str1,&state,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4584,11 +4891,13 @@ static PyObject *CmdFit(PyObject *self, PyObject *args)
   int matchmaker,cycles;
   char *object;
   ExecutiveRMSInfo rms_info;
-  ok = PyArg_ParseTuple(args,"ssiiiiifis",&str1,&str2,&mode,
+  ok = PyArg_ParseTuple(args,"Ossiiiiifis",&self,&str1,&str2,&mode,
                         &state1,&state2,&quiet,&matchmaker,&cutoff,&cycles,&object);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4617,10 +4926,12 @@ static PyObject *CmdUpdate(PyObject *self, PyObject *args)
   OrthoLineType s1,s2;
   int ok = false;
   int matchmaker,quiet;
-  ok = PyArg_ParseTuple(args,"ssiiii",&str1,&str2,&int1,&int2,&matchmaker,&quiet);
+  ok = PyArg_ParseTuple(args,"Ossiiii",&self,&str1,&str2,&int1,&int2,&matchmaker,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4637,10 +4948,13 @@ static PyObject *CmdUpdate(PyObject *self, PyObject *args)
 static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     PRINTFD(G,FB_CCmd)
@@ -4662,11 +4976,13 @@ static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
   ObjectMolecule **list = NULL;
   PyObject *result=NULL;
 
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"Os",&self,&str1);
   
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4697,11 +5013,13 @@ static PyObject *CmdGetDistance(PyObject *self, 	PyObject *args)
   int int1;
   OrthoLineType s1,s2;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&int1);
+  ok = PyArg_ParseTuple(args,"Ossi",&self,&str1,&str2,&int1);
   
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4729,11 +5047,13 @@ static PyObject *CmdGetAngle(PyObject *self, 	PyObject *args)
   int int1;
   OrthoLineType s1,s2,s3;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sssi",&str1,&str2,&str3,&int1);
+  ok = PyArg_ParseTuple(args,"Osssi",&self,&str1,&str2,&str3,&int1);
   
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4762,11 +5082,13 @@ static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args)
   int int1;
   OrthoLineType s1,s2,s3,s4;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssssi",&str1,&str2,&str3,&str4,&int1);
+  ok = PyArg_ParseTuple(args,"Ossssi",&self,&str1,&str2,&str3,&str4,&int1);
   
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4798,10 +5120,12 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
   int quiet;
   OrthoLineType s1,s2,s3,s4;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssssfii",&str1,&str2,&str3,&str4,&float1,&int1,&quiet);
+  ok = PyArg_ParseTuple(args,"Ossssfii",&self,&str1,&str2,&str3,&str4,&float1,&int1,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4826,10 +5150,12 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
   int log;
   int ok = false;
   int echo;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&log,&echo);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&str1,&log,&echo);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4866,10 +5192,12 @@ static PyObject *CmdRock(PyObject *self, PyObject *args)
   int result = -1;
   int ok = false;
 
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4884,10 +5212,12 @@ static PyObject *CmdBusyDraw(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int int1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -4902,10 +5232,12 @@ static PyObject *CmdSetBusy(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int int1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     PLockStatus();
@@ -4921,10 +5253,12 @@ static PyObject *CmdGetBusy(PyObject *self, PyObject *args)
   int result;
   int ok = false;
   int int1;
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     PLockStatus();
@@ -4937,10 +5271,14 @@ static PyObject *CmdGetBusy(PyObject *self, PyObject *args)
 static PyObject *CmdGetProgress(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  int reset; /* TO DO */
+  ok = PyArg_ParseTuple(args,"Oi",&self,&reset);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     if(G->Ready && 
@@ -4955,7 +5293,7 @@ static PyObject *CmdGetProgress(PyObject *self, PyObject *args)
       int offset;
       int progress[PYMOL_PROGRESS_SIZE];
       
-      ok = PyArg_ParseTuple(args,"i",&int1);
+      ok = PyArg_ParseTuple(args,"Oi",&self,&int1);
       if(ok) {
         if(PyMOL_GetBusy(G->PyMOL,false)) {
           PyMOL_GetProgress(G->PyMOL,progress,false);
@@ -4991,10 +5329,12 @@ static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args) /* missing? */
   int ok = false;
   int state;
 
-  ok = PyArg_ParseTuple(args,"si",&str1,&state);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5016,10 +5356,12 @@ static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args)
   char *str1;
   float value;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"Os",&self,&str1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -5037,10 +5379,12 @@ static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args)
   int int1,int2;
   char *str1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"isi",&int1,&str1,&int2); /* setting, object, state */
+  ok = PyArg_ParseTuple(args,"Oisi",&self,&int1,&str1,&int2); /* setting, object, state */
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -5057,10 +5401,12 @@ static PyObject *CmdGetSettingOfType(PyObject *self, 	PyObject *args)
   int int1,int2,int3;
   char *str1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"isii",&int1,&str1,&int2,&int3); /* setting, object, state */
+  ok = PyArg_ParseTuple(args,"Oisii",&self,&int1,&str1,&int2,&int3); /* setting, object, state */
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -5077,10 +5423,12 @@ static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args)
   int int1,int2;
   char *str1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"isi",&int1,&str1,&int2); /* setting, object, state */
+  ok = PyArg_ParseTuple(args,"Oisi",&self,&int1,&str1,&int2); /* setting, object, state */
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -5100,10 +5448,12 @@ static PyObject *CmdExportDots(PyObject *self, 	PyObject *args)
   int int1;
   
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5126,10 +5476,12 @@ static PyObject *CmdSetFrame(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int mode,frm;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ii",&mode,&frm);
+  ok = PyArg_ParseTuple(args,"Oii",&self,&mode,&frm);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5144,10 +5496,12 @@ static PyObject *CmdFrame(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int frm;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"i",&frm);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&frm);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     frm--;
@@ -5165,10 +5519,12 @@ static PyObject *CmdStereo(PyObject *self, PyObject *args)
   int i1;
   int ok = false;
   
-  ok = PyArg_ParseTuple(args,"i",&i1);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&i1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5184,10 +5540,12 @@ static PyObject *CmdReset(PyObject *self, PyObject *args)
   int cmd;
   int ok = false;
   char *obj;
-  ok = PyArg_ParseTuple(args,"is",&cmd,&obj);
+  ok = PyArg_ParseTuple(args,"Ois",&self,&cmd,&obj);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5202,7 +5560,7 @@ static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   float m[16];
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ffffffffffffffff",
+  ok = PyArg_ParseTuple(args,"Offffffffffffffff",&self,
 						 &m[0],&m[1],&m[2],&m[3],
 						 &m[4],&m[5],&m[6],&m[7],
 						 &m[8],&m[9],&m[10],&m[11],
@@ -5210,6 +5568,8 @@ static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5230,10 +5590,12 @@ static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
   int flag;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&state); 
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&state); 
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5259,10 +5621,13 @@ static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   float *f;
   PyObject *result = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -5287,10 +5652,12 @@ static PyObject *CmdGetObjectMatrix(PyObject *self, 	PyObject *args)
   int ok = false;
   int found;
   int state;
-  ok = PyArg_ParseTuple(args,"si",&name,&state);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&name,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5322,10 +5689,12 @@ static PyObject *CmdMDo(PyObject *self, 	PyObject *args)
   int frame;
   int append;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"isi",&frame,&cmd,&append);
+  ok = PyArg_ParseTuple(args,"Oisi",&self,&frame,&cmd,&append);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5344,10 +5713,12 @@ static PyObject *CmdMPlay(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   int cmd;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"i",&cmd);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&cmd);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5362,10 +5733,12 @@ static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   int cmd;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"i",&cmd);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&cmd);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5378,10 +5751,13 @@ static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args)
 static PyObject *CmdMClear(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-   int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -5394,10 +5770,13 @@ static PyObject *CmdMClear(PyObject *self, 	PyObject *args)
 static PyObject *CmdRefresh(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
 
@@ -5412,10 +5791,13 @@ static PyObject *CmdRefresh(PyObject *self, 	PyObject *args)
 static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
 
@@ -5440,10 +5822,12 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
   int quiet;
   int width,height,ray;
   float dpi;
-  ok = PyArg_ParseTuple(args,"siifii",&str1,&width,&height,&dpi,&ray,&quiet);
+  ok = PyArg_ParseTuple(args,"Osiifii",&self,&str1,&width,&height,&dpi,&ray,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5472,6 +5856,8 @@ static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5488,10 +5874,12 @@ static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
   char *str1;
   int ok = false;
   int start_from;
-  ok = PyArg_ParseTuple(args,"si",&str1,&start_from);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&start_from);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5509,12 +5897,14 @@ static PyObject *CmdMView(PyObject *self, 	PyObject *args)
   int action,first,last, simple,wrap,window,cycles,quiet;
   float power,bias,linear,hand,scene_cut;
   char *object,*scene_name;
-  ok = PyArg_ParseTuple(args,"iiiffifsiiiisfi",&action,&first,&last,&power,
+  ok = PyArg_ParseTuple(args,"Oiiiffifsiiiisfi",&self,&action,&first,&last,&power,
                         &bias,&simple,&linear,&object,&wrap,&hand,
                         &window,&cycles,&scene_name,&scene_cut,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5546,10 +5936,12 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   int w,h;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ii",&w,&h);
+  ok = PyArg_ParseTuple(args,"Oii",&self,&w,&h);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     if(((w>0)&&(h<=0))||
@@ -5599,10 +5991,12 @@ static PyObject *CmdFlag(PyObject *self, 	PyObject *args)
   int quiet;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"isii",&flag,&str1,&action,&quiet);
+  ok = PyArg_ParseTuple(args,"Oisii",&self,&flag,&str1,&action,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5627,6 +6021,8 @@ static PyObject *CmdColor(PyObject *self, 	PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5648,10 +6044,12 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
   int ok = false;
   int mode;
   int quiet;
-  ok = PyArg_ParseTuple(args,"sfffii",&color,v,v+1,v+2,&mode,&quiet);
+  ok = PyArg_ParseTuple(args,"Osfffii",&self,&color,v,v+1,v+2,&mode,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);  
@@ -5668,10 +6066,12 @@ static PyObject *CmdDraw(PyObject *self, 	PyObject *args)
   int quiet,antialias;
   int ok = false;
 
-  ok = PyArg_ParseTuple(args,"iiii",&int1,&int2,&antialias,&quiet);
+  ok = PyArg_ParseTuple(args,"Oiiii",&self,&int1,&int2,&antialias,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5689,12 +6089,14 @@ static PyObject *CmdRay(PyObject *self, 	PyObject *args)
   int ok = false;
   int quiet;
   int antialias;
-  ok = PyArg_ParseTuple(args,"iiiffii", &w, &h,
+  ok = PyArg_ParseTuple(args,"Oiiiffii",&self, &w, &h,
                         &antialias, 
                         &angle, &shift, &mode, &quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5715,10 +6117,12 @@ static PyObject *CmdClip(PyObject *self, 	PyObject *args)
   int state;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sfsi",&sname,&dist,&str1,&state);
+  ok = PyArg_ParseTuple(args,"Osfsi",&self,&sname,&dist,&str1,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5758,10 +6162,12 @@ static PyObject *CmdMove(PyObject *self, 	PyObject *args)
   char *sname;
   float dist;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sf",&sname,&dist);
+  ok = PyArg_ParseTuple(args,"Osf",&self,&sname,&dist);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5787,10 +6193,12 @@ static PyObject *CmdTurn(PyObject *self, 	PyObject *args)
   char *sname;
   float angle;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sf",&sname,&angle);
+  ok = PyArg_ParseTuple(args,"Osf",&self,&sname,&angle);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5815,10 +6223,12 @@ static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   char *sname, *value;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ss",&sname,&value);
+  ok = PyArg_ParseTuple(args,"Oss",&self,&sname,&value);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -5839,10 +6249,12 @@ static PyObject *CmdUnset(PyObject *self, 	PyObject *args)
   int updates;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"isiii",&index,&str3,&state,&quiet,&updates);
+  ok = PyArg_ParseTuple(args,"Oisiii",&self,&index,&str3,&state,&quiet,&updates);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     s1[0]=0;
@@ -5872,10 +6284,12 @@ static PyObject *CmdUnsetBond(PyObject *self, 	PyObject *args)
   int updates;
   OrthoLineType s1,s2;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"issiii",&index,&str3,&str4,&state,&quiet,&updates);
+  ok = PyArg_ParseTuple(args,"Oissiii",&self,&index,&str3,&str4,&state,&quiet,&updates);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     s1[0]=0;
@@ -5903,10 +6317,12 @@ static PyObject *CmdSet(PyObject *self, 	PyObject *args)
   int updates;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"iOsiii",&index,&value,&str3,&state,&quiet,&updates);
+  ok = PyArg_ParseTuple(args,"OiOsiii",&self,&index,&value,&str3,&state,&quiet,&updates);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     s1[0]=0;
@@ -5936,10 +6352,12 @@ static PyObject *CmdSetBond(PyObject *self, 	PyObject *args)
   int updates;
   OrthoLineType s1,s2;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"iOssiii",&index,&value,&str3,&str4,&state,&quiet,&updates);
+  ok = PyArg_ParseTuple(args,"OiOssiii",&self,&index,&value,&str3,&str4,&state,&quiet,&updates);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     s1[0]=0;
@@ -5964,10 +6382,12 @@ static PyObject *CmdGet(PyObject *self, 	PyObject *args)
   PyObject *result = Py_None;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"s",&sname);
+  ok = PyArg_ParseTuple(args,"Os",&self,&sname);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEnterBlocked(G);
@@ -5984,10 +6404,12 @@ static PyObject *CmdDelete(PyObject *self, 	PyObject *args)
   char *sname;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"s",&sname);
+  ok = PyArg_ParseTuple(args,"Os",&self,&sname);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -6004,10 +6426,12 @@ static PyObject *CmdCartoon(PyObject *self, 	PyObject *args)
   int type;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&sname,&type);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&sname,&type);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -6027,10 +6451,12 @@ static PyObject *CmdShowHide(PyObject *self, 	PyObject *args)
   int state;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sii",&sname,&rep,&state);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&sname,&rep,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) { /* TODO STATUS */
     APIEntry(G);
@@ -6053,10 +6479,12 @@ static PyObject *CmdOnOffBySele(PyObject *self, 	PyObject *args)
   int onoff;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&sname,&onoff);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&sname,&onoff);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) { /* TODO STATUS */
     APIEntry(G);
@@ -6074,10 +6502,12 @@ static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
   char *name;
   int state;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&name,&state);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&name,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) { /* TODO STATUS */
     APIEntry(G);
@@ -6094,10 +6524,12 @@ static PyObject *CmdToggle(PyObject *self, 	PyObject *args)
   int rep;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&sname,&rep);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&sname,&rep);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -6116,10 +6548,13 @@ static PyObject *CmdToggle(PyObject *self, 	PyObject *args)
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
 
@@ -6135,10 +6570,12 @@ static PyObject *CmdFullScreen(PyObject *self,PyObject *args)
   PyMOLGlobals *G = NULL;
   int flag = 0;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"i",&flag);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&flag);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -6154,10 +6591,12 @@ static PyObject *CmdUngroup(PyObject *self, PyObject *args)
   char *gname,*names;
   int quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssi",&gname,&names,&quiet);
+  ok = PyArg_ParseTuple(args,"Ossi",&self,&gname,&names,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -6173,10 +6612,12 @@ static PyObject *CmdGroup(PyObject *self, PyObject *args)
   char *gname,*names;
   int quiet,action;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"ssii",&gname,&names,&action,&quiet);
+  ok = PyArg_ParseTuple(args,"Ossii",&self,&gname,&names,&action,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -6196,10 +6637,12 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
   int count = 0;
   int state = 0;
   char *domain;
-  ok = PyArg_ParseTuple(args,"ssiis",&sname,&sele,&quiet,&state,&domain);
+  ok = PyArg_ParseTuple(args,"Ossiis",&self,&sname,&sele,&quiet,&state,&domain);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -6222,11 +6665,13 @@ static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
   CObject *origObj = NULL;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"s",&oname);
+  ok = PyArg_ParseTuple(args,"Os",&self,&oname);
 
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -6258,11 +6703,13 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
   int quiet;
   int ok = false;
   int zoom;
-  ok = PyArg_ParseTuple(args,"sOiiiiii",&oname,&model,&frame,&type,
+  ok = PyArg_ParseTuple(args,"OsOiiiiii",&self,&oname,&model,&frame,&type,
                         &finish,&discrete,&quiet,&zoom);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     buf[0]=0;
@@ -6409,11 +6856,13 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
 
   buf[0]=0;
 
-  ok = PyArg_ParseTuple(args,"sOii",&oname,&model,&frame,&type);
+  ok = PyArg_ParseTuple(args,"OsOii",&self,&oname,&model,&frame,&type);
 
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -6461,13 +6910,15 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   int multiplex;
   int zoom;
   int bytes;
-  ok = PyArg_ParseTuple(args,"ss#iiiiiii",
+  ok = PyArg_ParseTuple(args,"Oss#iiiiiii",&self,
                         &oname,&fname,&bytes,&frame,&type,
                         &finish,&discrete,&quiet,
                         &multiplex,&zoom);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     buf[0]=0;
@@ -6922,7 +7373,7 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
   float shift[3];
   int quiet=0; /* TODO */
   char *plugin = NULL;
-  ok = PyArg_ParseTuple(args,"ssiiiiiiisifffs",&oname,&fname,&frame,&type,
+  ok = PyArg_ParseTuple(args,"Ossiiiiiiisifffs",&self,&oname,&fname,&frame,&type,
                         &interval,&average,&start,&stop,&max,&str1,
                         &image,&shift[0],&shift[1],&shift[2],&plugin);
 
@@ -6930,6 +7381,8 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -6994,10 +7447,12 @@ static PyObject *CmdOrigin(PyObject *self, PyObject *args)
   float v[3];
   int ok = false;
   int state;
-  ok = PyArg_ParseTuple(args,"ss(fff)i",&str1,&obj,v,v+1,v+2,&state);
+  ok = PyArg_ParseTuple(args,"Oss(fff)i",&self, &str1,&obj,v,v+1,v+2,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7018,10 +7473,12 @@ static PyObject *CmdSort(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   char *name;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"s",&name);
+  ok = PyArg_ParseTuple(args,"Os",&self,&name);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7040,10 +7497,12 @@ static PyObject *CmdAssignSS(PyObject *self, PyObject *args)
   char *str1,*str2;
   int preserve;
   OrthoLineType s1,s2;
-  ok = PyArg_ParseTuple(args,"sisii",&str1,&state,&str2,&preserve,&quiet);
+  ok = PyArg_ParseTuple(args,"Osisii",&self,&str1,&state,&str2,&preserve,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7062,10 +7521,12 @@ static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
   char *name;
   int ok = false;
   int average;
-  ok = PyArg_ParseTuple(args,"si",&name,&average);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&name,&average);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7084,10 +7545,12 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
   int code;
   int group;
 
-  ok = PyArg_ParseTuple(args,"ii",&group,&code);
+  ok = PyArg_ParseTuple(args,"Oii",&self,&group,&code);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7113,10 +7576,12 @@ static PyObject *CmdCenter(PyObject *self, PyObject *args)
   int ok = false;
   float animate;
   int quiet=false; /* TODO */
-  ok = PyArg_ParseTuple(args,"siif",&str1,&state,&origin,&animate);
+  ok = PyArg_ParseTuple(args,"Osiif",&self,&str1,&state,&origin,&animate);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7139,10 +7604,12 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   int ok = false;
   float animate;
   int quiet=false; /* TODO */
-  ok = PyArg_ParseTuple(args,"sfiif",&str1,&buffer,&state,&inclusive,&animate);
+  ok = PyArg_ParseTuple(args,"Osfiif",&self,&str1,&buffer,&state,&inclusive,&animate);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7162,10 +7629,12 @@ static PyObject *CmdIsolevel(PyObject *self, PyObject *args)
   int state;
   char *name;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sfi",&name,&level,&state);
+  ok = PyArg_ParseTuple(args,"Osfi",&self,&name,&level,&state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7182,10 +7651,12 @@ static PyObject *CmdHAdd(PyObject *self, PyObject *args)
   OrthoLineType s1;
   int quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7212,10 +7683,12 @@ static PyObject *CmdGetObjectColorIndex(PyObject *self, PyObject *args)
   char *str1;
   int result = -1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"Os",&self,&str1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7232,10 +7705,12 @@ static PyObject *CmdRemove(PyObject *self, PyObject *args)
   OrthoLineType s1;
   int quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7253,10 +7728,12 @@ static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
   int i1;
   int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"ii",&i1,&quiet);
+  ok = PyArg_ParseTuple(args,"Oii",&self,&i1,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7271,10 +7748,12 @@ static PyObject *CmdHFill(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"i",&quiet);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7291,10 +7770,12 @@ static PyObject *CmdHFix(PyObject *self, PyObject *args)
   int quiet;
   OrthoLineType s1;
   char *str1;
-  ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7311,10 +7792,12 @@ static PyObject *CmdCycleValence(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"i",&quiet);
+  ok = PyArg_ParseTuple(args,"Oi",&self,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7331,10 +7814,12 @@ static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
   char *str1,*str2;
   int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"siisi",&str1,&i1,&i2,&str2,&quiet);
+  ok = PyArg_ParseTuple(args,"Osiisi",&self,&str1,&i1,&i2,&str2,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7351,10 +7836,12 @@ static PyObject *CmdSetGeometry(PyObject *self, 	PyObject *args)
   char *str1;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&i1,&i2);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&str1,&i1,&i2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7374,10 +7861,12 @@ static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
   int ok = false;
   int quiet;
   char *name;
-  ok = PyArg_ParseTuple(args,"siis",&str1,&i1,&i2,&name,&quiet);
+  ok = PyArg_ParseTuple(args,"Osiis",&self,&str1,&i1,&i2,&name,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7396,10 +7885,12 @@ static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
   int recolor;
   int ok = false;
   int move_flag;
-  ok = PyArg_ParseTuple(args,"ssiii",&str1,&str2,&mode,&recolor,&move_flag);
+  ok = PyArg_ParseTuple(args,"Ossiii",&self,&str1,&str2,&mode,&recolor,&move_flag);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7416,10 +7907,13 @@ static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
 static PyObject *CmdUnpick(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  int ok = true;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if(ok) {
     APIEntry(G);
@@ -7440,10 +7934,12 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
   int pkresi,pkbond;
   int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"ssssiii",&str0,&str1,&str2,&str3,&pkresi,&pkbond,&quiet);
+  ok = PyArg_ParseTuple(args,"Ossssiii",&self,&str0,&str1,&str2,&str3,&pkresi,&pkbond,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7472,10 +7968,12 @@ static PyObject *CmdDrag(PyObject *self, 	PyObject *args)
   OrthoLineType s0 = "";
   int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"si",&str0,&quiet);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str0,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7497,10 +7995,12 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
   OrthoLineType s1;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&int1);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7519,10 +8019,12 @@ static PyObject *CmdOrder(PyObject *self, 	PyObject *args)
   int int1,int2;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&str1,&int1,&int2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);
@@ -7537,10 +8039,12 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   int int1,x,y,width,height;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"iiiii",&int1,&x,&y,&width,&height);
+  ok = PyArg_ParseTuple(args,"Oiiiii",&self,&int1,&x,&y,&width,&height);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
   }
   if (ok) {
     APIEntry(G);

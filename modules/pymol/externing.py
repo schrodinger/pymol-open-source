@@ -19,7 +19,8 @@ if __name__=='pymol.externing':
     import string
     import parsing
     import threading
-
+    import cmd
+    
     from glob import glob
     from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
           _feedback,fb_module,fb_mask, exp_path, \
@@ -99,7 +100,7 @@ SEE ALSO
             print " ls: Nothing found.  Is that a valid path?"
         return DEFAULT_SUCCESS
 
-    def system(command,async=0):
+    def system(command,async=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -131,10 +132,10 @@ SEE ALSO
             r = threading.Thread(target=_cmd.system,args=(str(command),1))
             r.start()
         else:
-            r = _cmd.system(str(command),0)
+            r = _cmd.system(_self._COb,str(command),0)
         return r # special meaning
 
-    def paste(): # INTERNAL
+    def paste(_self=cmd): # INTERNAL
         r=DEFAULT_SUCCESS
         lst = []
         if hasattr(pymol,"machine_get_clipboard"):
@@ -149,7 +150,7 @@ SEE ALSO
                         a=a[:-1]
                 if len(a):
                     new_lst.append(a)
-            r = _cmd.paste(new_lst)
+            r = _cmd.paste(_self._COb,new_lst)
         if _raising(r): raise pymol.CmdException
         return r 
 

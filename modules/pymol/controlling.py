@@ -361,7 +361,7 @@ if __name__=='pymol.controlling':
 				  ],
         }
 
-    def order(names,sort=0,location='current'):
+    def order(names,sort=0,location='current',_self=cmd):
         '''
 DESCRIPTION
 
@@ -399,41 +399,41 @@ SEE ALSO
             sort=boolean_dict[boolean_sc.auto_err(sort,'sort option')]
         try:
             lock()
-            r = _cmd.order(str(names),int(sort),int(location))
+            r = _cmd.order(_self._COb,str(names),int(sort),int(location))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         
         return r
 
-    def mouse(action=None,quiet=1):# INTERNAL
+    def mouse(action=None,quiet=1,_self=cmd):# INTERNAL
         # NOTE: PyMOL automatically runs this routine upon start-up
         try:
             lock()
 
             if action=='forward':
-                bm = _cmd.get_setting("button_mode")
+                bm = _cmd.get_setting(_self._COb,"button_mode")
                 bm = (int(bm) + 1) % len(mouse_ring)
                 cmd.set("button_mode",str(bm),quiet=1)
                 action=None
             elif action=='backward':
-                bm = _cmd.get_setting("button_mode")
+                bm = _cmd.get_setting(_self._COb,"button_mode")
                 bm = (int(bm) - 1) % len(mouse_ring)
                 cmd.set("button_mode",str(bm),quiet=1)
                 action=None
             elif action=='select_forward':
-                sm = _cmd.get_setting("mouse_selection_mode")
+                sm = _cmd.get_setting(_self._COb,"mouse_selection_mode")
                 sm = sm + 1
                 if sm>6: sm = 0
                 cmd.set("mouse_selection_mode",sm,quiet=1)
             elif action=='select_backward':
-                sm = _cmd.get_setting("mouse_selection_mode")
+                sm = _cmd.get_setting(_self._COb,"mouse_selection_mode")
                 sm = sm - 1
                 if sm<0: sm = 6
                 cmd.set("mouse_selection_mode",sm,quiet=1)
             
             mode_list = None
             if action==None:
-                bm = _cmd.get_setting("button_mode")
+                bm = _cmd.get_setting(_self._COb,"button_mode")
                 bm = int(bm) % len(mouse_ring)
                 mode = mouse_ring[bm]
                 cmd.set("button_mode_name",mode_name_dict.get(mode,mode))
@@ -457,13 +457,13 @@ SEE ALSO
         return DEFAULT_SUCCESS
             
 
-    def edit_mode(active=1,quiet=1):
+    def edit_mode(active=1,quiet=1,_self=cmd):
         # legacy function
         if is_string(active):
             active=boolean_dict[boolean_sc.auto_err(active,'active')]
         active = int(active)
         if len(mouse_ring):
-            bm = int(_cmd.get_setting("button_mode"))
+            bm = int(_cmd.get_setting(_self._COb,"button_mode"))
             mouse_mode = mouse_ring[bm]
             if active:
                 if mouse_mode[0:10]=='two_button':
@@ -582,7 +582,7 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException         
         return r
 
-    def button(button,modifier,action):
+    def button(button,modifier,action,_self=cmd):
         '''
 DESCRIPTION
 
@@ -629,14 +629,14 @@ NOTES
             else: # single and double clicks
                 but_code = (16 + button_num - 4) + but_mod_num * 6
             act_code = but_act_code[action]
-            r = _cmd.button(but_code,act_code)
+            r = _cmd.button(_self._COb,but_code,act_code)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         
         return r
 
 
-    def mask(selection="(all)"):
+    def mask(selection="(all)",_self=cmd):
         '''
 DESCRIPTION
 
@@ -663,13 +663,13 @@ SEE ALSO
         #
         try:
             lock()   
-            r = _cmd.mask("("+str(selection)+")",1)
+            r = _cmd.mask(_self._COb,"("+str(selection)+")",1)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         
         return r
 
-    def unmask(selection="(all)"):
+    def unmask(selection="(all)",_self=cmd):
         '''
 DESCRIPTION
 
@@ -693,7 +693,7 @@ SEE ALSO
         #   
         try:
             lock()   
-            r = _cmd.mask("("+str(selection)+")",0)
+            r = _cmd.mask(_self._COb,"("+str(selection)+")",0)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         

@@ -141,7 +141,7 @@ if pymol_launch != 3: # if this isn't a dry run
         # don't ever redefine these symbols...
         
         _once = None
-        
+
         # Python exception type for PyMOL commands
         
         class CmdException:
@@ -245,6 +245,7 @@ if pymol_launch != 3: # if this isn't a dry run
                         else:
                             cmd.load(a,quiet=0)
             except CmdException:
+                traceback.print_exc()
                 print "Error: Argument processing aborted due to exception."
             except:
                 traceback.print_exc()
@@ -363,7 +364,8 @@ if pymol_launch != 3: # if this isn't a dry run
 
     def start_pymol(block_input_hook=0):
         prime_pymol()
-        _cmd.runpymol(block_input_hook) # only returns if we are running pretend GLUT
+        _COb = _cmd._get_global_C_object()        
+        _cmd.runpymol(_COb,block_input_hook) # only returns if we are running pretend GLUT
 #      from pymol.embed import wxpymol # never returns
 
     import _cmd
@@ -413,9 +415,10 @@ if pymol_launch != 3: # if this isn't a dry run
         from xwin import *
 
     def finish_launching():
+        _COb = _cmd._get_global_C_object()
         e=threading.Event()
         import pymol # wait for import to complete
-        while not _cmd.ready(): # wait for the C library to initialize
+        while not _cmd.ready(_CObj): # wait for the C library to initialize
             e.wait(0.01)
         while not hasattr(pymol,'xray'): # make sure symmetry module has time to start...
             e.wait(0.01)

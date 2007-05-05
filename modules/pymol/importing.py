@@ -22,7 +22,7 @@ if __name__=='pymol.importing':
           _feedback,fb_module,fb_mask, \
           file_ext_re,safe_oname_re, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
-          _load, is_list, space_sc, safe_list_eval, is_string
+          _load, is_list, space_sc, safe_list_eval, is_string, loadable
     import setting
     
     import selector
@@ -38,59 +38,9 @@ if __name__=='pymol.importing':
     import copy
     import traceback
     
-    class loadable:
-        pdb = 0
-        mol = 1
-        molstr = 3
-        mmod = 4
-        mmodstr = 6
-        xplor = 7
-        model = 8
-        pdbstr = 9    
-        brick = 10    # chempy.brick object
-        map = 11      # chempy.map object
-        callback = 12 # pymol callback obejct
-        cgo = 13      # compiled graphic object
-        r3d = 14      # r3d, only used within cmd.py
-        xyz = 15      # xyz, tinker format
-        sdf1 = 16     # sdf, only used within cmd.py
-        cc1 = 17      # cc1 and cc2, only used within cmd.py
-        ccp4 = 18     # CCP4 map, under development
-        pmo = 19      # pmo, experimental molecular object format
-        cex = 20      # cex format
-        top = 21      # AMBER topology
-        trj = 22      # AMBER trajectory
-        crd = 23      # AMBER coordinate
-        rst = 24      # AMBER restart
-        pse = 25      # PyMOL session
-        xplorstr = 26 # XPLOR map as string
-        phi = 27      # Delphi/Grasp
-        fld = 28      # AVS field format (not yet general -- just uniform allowed)
-        brix = 29     # BRIX/DSN6/O map format
-        grd = 30      # Insight II Grid format
-        pqr = 31      # PQR file (modified PDB file for APBS)
-        dx = 32       # DX file (APBS)
-        mol2 = 33     # MOL2 file (TRIPOS)
-        mol2str = 34  # MOL2 file string (TRIPOS)
-        p1m = 35      # P1M file (combined data & secure commands)
-        ccp4str = 36  # CCP4 map string
-        sdf = 37      # new default...
-        sdf2 = 37     # SDF using C-based SDF parser (instead of Python)
-        sdf2str = 38  # SDF ditto
-        png = 39      # png image
-        psw = 40      #
-        moe = 41      # Chemical Computing Group ".moe" format (proprietary)
-        xtc = 42      # xtc trajectory format (via plugin)
-        trr = 43      # trr trajectory format (via plugin)
-        gro = 44      # gro trajectory format (via plugin)
-        trj2 = 45     # trj trajectroy format (via plugin)
-        g96 = 46      # g96 trajectory format (via plugin)
-        dcd = 47      # dcd trajectory format (via plugin)
-        cube = 48     # cube volume file (via plugin)
-        mae = 49      # Schrodinger ".mae" format (proprietary)
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
-    def set_session(session,partial=0,quiet=1):
+    def set_session(session,partial=0,quiet=1,_self=cmd):
         r = DEFAULT_SUCCESS
         if is_string(session): # string implies compressed session data 
             import zlib
@@ -98,10 +48,10 @@ if __name__=='pymol.importing':
         for a in pymol._session_restore_tasks:
             if a==None:
                 try:
-                    lock()
-                    r = _cmd.set_session(session,int(partial),int(quiet))
+                    _self.lock(_self)
+                    r = _cmd.set_session(_self._COb,session,int(partial),int(quiet))
                 finally:
-                    unlock(r)
+                    _self.unlock(r,_self)
                 try:
                     if session.has_key('session'):
                         pymol.session = copy.deepcopy(session['session'])
@@ -114,11 +64,11 @@ if __name__=='pymol.importing':
                     r = DEFAULT_ERROR
         if cmd.get_movie_locked()>0: # if the movie contains commands...activate security
             cmd.wizard("security")
-        if _raising(r): raise pymol.CmdException
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def load_object(type,object,name,state=0,finish=1,discrete=0,
-                         quiet=1,zoom=-1):
+                         quiet=1,zoom=-1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -138,13 +88,13 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.load_object(str(name),object,int(state)-1,
+            _self.lock(_self)   
+            r = _cmd.load_object(_self._COb,str(name),object,int(state)-1,
                                         int(type),int(finish),int(discrete),
                                         int(quiet),int(zoom))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def load_brick(*arg,**kw):
@@ -164,7 +114,7 @@ PYMOL API
         lst.extend(list(arg))
         return apply(load_object,lst,kw)
 
-    def space(space="",quiet=0):
+    def space(space="",quiet=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -205,11 +155,11 @@ EXAMPLES
         if filename!=None:
             try:
                 filename = cmd.exp_path(filename)
-                lock()
-                r = _cmd.load_color_table(str(filename),int(quiet))
+                _self.lock(_self)
+                r = _cmd.load_color_table(_self._COb,str(filename),int(quiet))
             finally:
-                unlock(r)
-        if _raising(r): raise pymol.CmdException
+                _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def load_callback(*arg):
@@ -266,7 +216,7 @@ PYMOL API
 
     def load_traj(filename,object='',state=0,format='',interval=1,
                       average=1,start=1,stop=-1,max=-1,selection='all',image=1,
-                      shift="[0.0,0.0,0.0]",plugin=""):
+                      shift="[0.0,0.0,0.0]",plugin="",_self=cmd):
         '''
 DESCRIPTION
 
@@ -304,7 +254,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             type = format
             ftype = -1
             state = int(state)
@@ -378,32 +328,34 @@ SEE ALSO
                 oname = string.strip(object)
 
             if ftype>=0:
-                r = _cmd.load_traj(str(oname),fname,int(state)-1,int(ftype),
+                r = _cmd.load_traj(_self._COb,str(oname),fname,int(state)-1,int(ftype),
                                          int(interval),int(average),int(start),
                                          int(stop),int(max),str(selection),
                                          int(image),
                                          float(shift[0]),float(shift[1]),
                                          float(shift[2]),str(plugin))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def _processSDF(sdf,oname,state,quiet):
+    def _processSDF(sdf,oname,state,quiet,_self=cmd):
         ftype = loadable.molstr
         while 1:
             rec = sdf.read()
 
 
             if not rec: break
-            r = _load(oname,string.join(rec.get('MOL'),''),state,loadable.molstr,0,1,quiet)
+            r = _load(oname,string.join(rec.get('MOL'),''),state,
+                      loadable.molstr,0,1,quiet,_self=_self)
         del sdf
-        _cmd.finish_object(str(oname))
-        if _cmd.get_setting("auto_zoom")==1.0:
+        _cmd.finish_object(_self._COb,str(oname))
+        if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
             cmd._do("zoom (%s)"%oname)
     
     def load(filename, object='', state=0, format='', finish=1,
-             discrete=-1, quiet=1, multiplex=None, zoom=-1, partial=0):
+             discrete=-1, quiet=1, multiplex=None, zoom=-1, partial=0,
+             _self=cmd):
         '''
 DESCRIPTION
 
@@ -464,7 +416,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         try:
-            lock()
+            _self.lock(_self)
             type = format
             ftype = 0
             state = int(state)
@@ -560,7 +512,7 @@ SEE ALSO
                     print 'Error: .map is ambiguous.  Please add format or use another extension:'
                     print 'Error: For example, "load fofc.map, format=ccp4" or "load 2fofc.xplor".'
                     
-                    if _raising(r):
+                    if _self._raising(r,_self):
                         raise pymol.CmdException
                     else:
                         return r
@@ -650,16 +602,16 @@ SEE ALSO
     # standard file handling
             if ftype>=0:
                 r = _load(oname,fname,state,ftype,finish,
-                             discrete,quiet,multiplex,zoom)
+                          discrete,quiet,multiplex,zoom,_self=_self)
         finally:
-            unlock(r)
+            _self.unlock(r,_self)
         if go_to_first_scene:
             if int(cmd.get_setting_legacy("presentation_auto_start"))!=0:
                 cmd.scene("auto","start",animate=0)
-        if _raising(r): raise pymol.CmdException
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def load_embedded(key=None,name=None,state=0,finish=1,discrete=1,quiet=1):
+    def load_embedded(key=None,name=None,state=0,finish=1,discrete=1,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         list = cmd._parser.get_embedded(key)
         if list == None:
@@ -705,7 +657,7 @@ SEE ALSO
                 r = _processSDF(sdf,name,state,quiet)
             elif ftype==loadable.sdf2: # C-based SDF reader (much faster)
                 r = read_sdfstr(string.join(data,''),name,state,finish,discrete,quiet)
-        if _raising(r): raise pymol.CmdException
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     _raw_dict = {
@@ -717,7 +669,7 @@ SEE ALSO
         }
 
     def load_raw(content,  format='', object='', state=0, finish=1,
-                 discrete=-1, quiet=1, multiplex=None, zoom=-1):
+                 discrete=-1, quiet=1, multiplex=None, zoom=-1,_self=cmd):
         r = DEFAULT_ERROR
         if multiplex==None:
             multiplex=-2
@@ -727,7 +679,7 @@ SEE ALSO
             ftype = getattr(loadable,type)
         else:
             print "Error: unknown format '%s'",format
-            if _raising(r): raise pymol.CmdException            
+            if _self._raising(r,_self): raise pymol.CmdException            
         if ftype!=None:
             if ftype in (loadable.pdb,
                          loadable.mol,
@@ -735,17 +687,17 @@ SEE ALSO
                          loadable.ccp4,
                          loadable.xplor):
                 try:
-                    lock()
-                    r = _cmd.load(str(object),str(content),int(state)-1,
+                    _self.lock(_self)
+                    r = _cmd.load(_self._COb,str(object),str(content),int(state)-1,
                                   _raw_dict[ftype],int(finish),int(discrete),
                                   int(quiet),int(multiplex),int(zoom))
                 finally:
-                    unlock(r)
-        if _raising(r): raise pymol.CmdException
+                    _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
         
     def read_sdfstr(sdfstr,name,state=0,finish=1,discrete=1,quiet=1,
-                         zoom=-1):
+                         zoom=-1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -770,17 +722,17 @@ NOTES
         '''
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.load(str(name),str(sdfstr),int(state)-1,
+            _self.lock(_self)
+            r = _cmd.load(_self._COb,str(name),str(sdfstr),int(state)-1,
                               loadable.sdf2str,int(finish),int(discrete),
                               int(quiet),0,int(zoom))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def read_molstr(molstr,name,state=0,finish=1,discrete=1,quiet=1,
-                         zoom=-1):
+                         zoom=-1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -805,13 +757,13 @@ NOTES
         '''
         r = DEFAULT_ERROR
         try:
-            lock()
-            r = _cmd.load(str(name),str(molstr),int(state)-1,
+            _self.lock(_self)
+            r = _cmd.load(_self._COb,str(name),str(molstr),int(state)-1,
                           loadable.molstr,int(finish),int(discrete),
                           int(quiet),0,int(zoom))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def read_mmodstr(*arg,**kw):
@@ -824,7 +776,7 @@ DESCRIPTION
     '''
         r = DEFAULT_ERROR
         try:
-            lock()   
+            _self.lock(_self)   
             ftype = loadable.mmodstr
             if kw.has_key('quiet'):
                 quiet = int(kw['quiet'])
@@ -836,20 +788,20 @@ DESCRIPTION
                 zoom = -1
             if len(arg)==2:
                 oname = string.strip(arg[1])
-                r = _cmd.load(str(oname),arg[0],-1,int(ftype),1,1,quiet,0,zoom)
+                r = _cmd.load(_self._COb,str(oname),arg[0],-1,int(ftype),1,1,quiet,0,zoom)
             elif len(arg)==3:
                 oname = string.strip(arg[1])
-                r = _cmd.load(str(oname),arg[0],int(arg[2])-1,
+                r = _cmd.load(_self._COb,str(oname),arg[0],int(arg[2])-1,
                                   int(ftype),1,1,quiet,0,zoom)
             else:
                 print "argument error."
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def read_pdbstr(pdb,name,state=0,finish=1,discrete=0,quiet=1,
-                         multiplex=-2,zoom=-1):
+                         multiplex=-2,zoom=-1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -876,19 +828,19 @@ NOTES
     '''
         r = DEFAULT_ERROR
         try:
-            lock()   
+            _self.lock(_self)   
             ftype = loadable.pdbstr
             oname = string.strip(str(name))
-            r = _cmd.load(str(oname),pdb,int(state)-1,int(ftype),
+            r = _cmd.load(_self._COb,str(oname),pdb,int(state)-1,int(ftype),
                               int(finish),int(discrete),int(quiet),
                               0,int(zoom))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def read_mol2str(mol2,name,state=0,finish=1,discrete=0,
-                          quiet=1,zoom=-1):
+                          quiet=1,zoom=-1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -915,19 +867,19 @@ NOTES
     '''
         r = DEFAULT_ERROR
         try:
-            lock()   
+            _self.lock(_self)   
             ftype = loadable.mol2str
             oname = string.strip(str(name))
-            r = _cmd.load(str(oname),mol2,int(state)-1,int(ftype),
+            r = _cmd.load(_self._COb,str(oname),mol2,int(state)-1,int(ftype),
                               int(finish),int(discrete),int(quiet),
                               0,int(zoom))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def read_xplorstr(xplor,name,state=0,finish=1,discrete=0,
-                            quiet=1,zoom=-1):
+                            quiet=1,zoom=-1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -947,18 +899,18 @@ NOTES
     '''
         r = DEFAULT_ERROR
         try:
-            lock()   
+            _self.lock(_self)   
             ftype = loadable.xplorstr
             oname = string.strip(str(name))
-            r = _cmd.load(str(oname),xplor,int(state)-1,int(ftype),
+            r = _cmd.load(_self._COb,str(oname),xplor,int(state)-1,int(ftype),
                               int(finish),int(discrete),int(quiet),
                               0,int(zoom))
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def finish_object(name):
+    def finish_object(name,_self=cmd):
         '''
 DESCRIPTION
 
@@ -975,11 +927,11 @@ PYMOL API
         '''
         r = DEFAULT_ERROR
         try:
-            lock()   
-            r = _cmd.finish_object(name)
+            _self.lock(_self)   
+            r = _cmd.finish_object(_self._COb,name)
         finally:
-            unlock(r)
-        if _raising(r): raise pymol.CmdException
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def _fetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet):

@@ -65,7 +65,7 @@ def readcex(file,*args):  # Author: Scott Dixon
     standardResidues = ("ALA", "ARG", "ASP", "ASN", "ASX", "CYS", "GLY", "GLU",
                         "GLN", "HIS", "ILE", "LEU", "LYS", "MET", "PHE", "PRO",
                         "SER", "THR", "TYR", "TRP", "VAL", "HID", "HIE")
-    def childprop(tag, tree):
+    def childprop(tag, tree,_self=cmd):
         try:
             p = CEX.selectChildren(tree,tag)[0].value
             if p[0] == '"': p = p[1:-1]
@@ -138,7 +138,7 @@ def readcex(file,*args):  # Author: Scott Dixon
                 cmd.load_model(parser.model,modelname,discrete=1,finish=0)
         else:
             pass
-    _cmd.finish_object(modelname)
+    _cmd.finish_object(_self._COb,modelname)
     f.close()
  
 def colorbyB(selection="spheres",first=7,last=3): # Author: Scott Dixon

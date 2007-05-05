@@ -28,7 +28,7 @@ if __name__=='pymol.exporting':
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     import traceback
 
-    def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1):
+    def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -52,20 +52,20 @@ NOTES
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.get_pdb(str(selection),int(state)-1,0,str(ref),int(ref_state),int(quiet))
+            r = _cmd.get_pdb(_self._COb,str(selection),int(state)-1,0,str(ref),int(ref_state),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise QuietException         
         return r
     
-    def get_session(names='', partial=0, quiet=1, compress=-1):
+    def get_session(names='', partial=0, quiet=1, compress=-1,_self=cmd):
         session = {}
         r = DEFAULT_SUCCESS
         for a in pymol._session_save_tasks:
             if a==None:
                 try:
                     lock()
-                    r = _cmd.get_session(session,str(names),
+                    r = _cmd.get_session(_self._COb,session,str(names),
                                          int(partial),int(quiet))
                 finally:
                     unlock(r)
@@ -93,7 +93,7 @@ NOTES
         return r
         
 
-    def png(filename, width=0, height=0, dpi=-1.0, ray=0, quiet=1):
+    def png(filename, width=0, height=0, dpi=-1.0, ray=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -126,35 +126,35 @@ PYMOL API
             int ray, int quiet)
         '''
         r = DEFAULT_ERROR
-        if thread.get_ident() ==pymol.glutThread:
-            r = cmd._png(str(filename),int(width),int(height),float(dpi),int(ray),int(quiet))
+        if thread.get_ident() == pymol.glutThread:
+            r = _self._png(str(filename),int(width),int(height),float(dpi),int(ray),int(quiet),_self)
         else:
-            r = cmd._do("cmd._png('%s',%d,%d,%1.6f,%d,%d)"%(filename,width,height,dpi,ray,quiet))
+            r = _self._do("cmd._png('%s',%d,%d,%1.6f,%d,%d)"%(filename,width,height,dpi,ray,quiet),_self=_self)
         if _raising(r): raise QuietException
         return r
 
-    def export_coords(obj,state): # experimental
+    def export_coords(obj,state,_self=cmd): # experimental
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.export_coords(str(obj),int(state)-1)
+            r = _cmd.export_coords(_self._COb,str(obj),int(state)-1)
         finally:
             unlock(r)
         if _raising(r): raise QuietException
         return r
 
-    def multisave(filename,object,state=0): # experimental -- deprecated
+    def multisave(filename,object,state=0,_self=cmd): # experimental -- deprecated
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.multisave(str(filename),str(object),int(state)-1,0)
+            r = _cmd.multisave(_self._COb,str(filename),str(object),int(state)-1,0)
         finally:
             unlock(r)
         if _raising(r): raise QuietException
         return r
 
     def save(filename, selection='(all)', state=-1, format='', ref='',
-             ref_state=-1, quiet=1, partial=0):
+             ref_state=-1, quiet=1, partial=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -237,7 +237,7 @@ SEE ALSO
                 st = ''
                 try:
                     lock()
-                    st = _cmd.get_pdb("("+str(selection)+")",int(state)-1,0,
+                    st = _cmd.get_pdb(_self._COb,"("+str(selection)+")",int(state)-1,0,
                                       str(ref),int(ref_state)-1,int(quiet))
                 finally:
                     unlock()
@@ -250,7 +250,7 @@ SEE ALSO
             st = ''
             try:
                 lock()
-                st = _cmd.get_seq_align_str(str(selection),int(state)-1,0,int(quiet))
+                st = _cmd.get_seq_align_str(_self._COb,str(selection),int(state)-1,0,int(quiet))
             finally:
                 unlock()
             if st!=None:
@@ -268,7 +268,7 @@ SEE ALSO
                 st = ''
                 try:
                     lock()
-                    st = _cmd.get_pdb("("+str(selection)+")",int(state)-1,1,
+                    st = _cmd.get_pdb(_self._COb,"("+str(selection)+")",int(state)-1,1,
                                       str(ref),int(ref_state)-1,int(quiet))
                 finally:
                     unlock()
@@ -288,7 +288,7 @@ SEE ALSO
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
         elif format=='pse': # PyMOL session
-            cmd.set("session_file",filename,quiet=1)
+            _self.set("session_file",filename,quiet=1)
             if '(' in input_selection: # ignore selections 
                 input_selection=''
             io.pkl.toFile(cmd.get_session(str(input_selection),int(partial),int(quiet)),filename)
@@ -306,9 +306,9 @@ SEE ALSO
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
         elif format=='png':
-            r = cmd.png(filename,quiet=quiet)
+            r = _self.png(filename,quiet=quiet)
         elif format=='pov':
-            tup = cmd.get_povray()
+            tup = _self.get_povray()
             f=open(filename,"w")
             f.write(tup[0])
             f.write(tup[1])
@@ -318,21 +318,21 @@ SEE ALSO
                 print " Save: wrote \""+filename+"\"."
             r = DEFAULT_SUCCESS
         elif format=='obj':
-            tup = cmd.get_mtl_obj()
+            tup = _self.get_mtl_obj()
             f=open(filename,"w")
             f.write(tup[1])
             f.flush()
             f.close()
             r = DEFAULT_SUCCESS
         elif format=='mtl':
-            tup = cmd.get_mtl_obj()
+            tup = _self.get_mtl_obj()
             f=open(filename,"w")
             f.write(tup[0])
             f.flush()
             f.close()
             r = DEFAULT_SUCCESS
         elif format=='wrl':
-            txt = cmd.get_vrml()
+            txt = _self.get_vrml()
             f=open(filename,"w")
             f.write(txt)
             f.flush()

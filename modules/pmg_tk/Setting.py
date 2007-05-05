@@ -149,7 +149,7 @@ class Setting:
         self.texture_fonts.set(int(cmd.get_setting_legacy('texture_fonts')))
 
         self.animation = IntVar()
-        self.animation.set(int(cmd.get_setting_legacy('animation')))
+        self.animation.set(int(cmd.get_setting_legacy('animation'))>0)
 
         self.opaque_background = IntVar()
         self.opaque_background.set(int(cmd.get_setting_legacy('opaque_background')))
@@ -370,9 +370,9 @@ class Setting:
             'animation':
             (lambda s,t: (s.animation.set(t[1][0]!=0))),         
             'opaque_background':
-            (lambda s,t: (s.animation.set(t[1][0]!=0))),
+            (lambda s,t: (s.opaque_background.set(t[1][0]!=0))),
             'show_alpha_checker':
-            (lambda s,t: (s.animation.set(t[1][0]!=0))),       
+            (lambda s,t: (s.show_alpha_checker.set(t[1][0]!=0))),       
           }
         self.active_list = [
             pymol.setting._get_index("ray_trace_frames"),

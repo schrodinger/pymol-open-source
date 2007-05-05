@@ -1763,7 +1763,10 @@ void SceneIdle(PyMOLGlobals *G)
     {
       float fps = SettingGet(G,cSetting_movie_fps);
       if(fps<=0.0F) {
-        minTime = SettingGet(G,cSetting_movie_delay)/1000.0;
+        if(fps<0.0)
+          minTime = 0.0; /* negative fps means full speed */
+        else
+          minTime = SettingGet(G,cSetting_movie_delay)/1000.0;
         if(minTime>=0)
           fps = 1.0/minTime;
         else
@@ -3209,7 +3212,7 @@ static int SceneClick(Block *block,int button,int x,int y,
                 MenuActivate2Arg(G,I->LastWinX,I->LastWinY+20,
                                  I->LastWinX,I->LastWinY,
                                  is_single_click,
-                                 "pick_menu",buf1,buffer);
+                                 "pick_menu",buffer,buf1);
               }
             }
             break;

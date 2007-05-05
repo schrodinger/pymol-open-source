@@ -23,7 +23,7 @@ if __name__=='pymol.editing':
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error              
     from chempy import cpv
 
-    def sculpt_purge():
+    def sculpt_purge(_self=cmd):
         '''
 DESCRIPTION
 
@@ -33,13 +33,13 @@ DESCRIPTION
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.sculpt_purge()
+            r = _cmd.sculpt_purge(_self._COb)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def sculpt_deactivate(object):
+    def sculpt_deactivate(object,_self=cmd):
         '''
 DESCRIPTION
 
@@ -49,13 +49,13 @@ DESCRIPTION
         r = 0
         try:
             lock()
-            r = _cmd.sculpt_deactivate(str(object))
+            r = _cmd.sculpt_deactivate(_self._COb,str(object))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def sculpt_activate(object,state=0,match_state=-1,match_by_segment=0):
+    def sculpt_activate(object,state=0,match_state=-1,match_by_segment=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -65,7 +65,7 @@ DESCRIPTION
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.sculpt_activate(str(object),int(state)-1,int(match_state)-1,int(match_by_segment))
+            r = _cmd.sculpt_activate(_self._COb,str(object),int(state)-1,int(match_state)-1,int(match_by_segment))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
@@ -117,7 +117,7 @@ EXAMPLE
         if _raising(r): raise pymol.CmdException            
         return r
     
-    def sculpt_iterate(object,state=0,cycles=10):
+    def sculpt_iterate(object,state=0,cycles=10,_self=cmd):
         '''
         
     "sculpt_iterate" is not officially supported in PyMOL 1.x.
@@ -126,13 +126,13 @@ EXAMPLE
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.sculpt_iterate(str(object),int(state)-1,int(cycles))
+            r = _cmd.sculpt_iterate(_self._COb,str(object),int(state)-1,int(cycles))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def smooth(selection="all",passes=1,window=5,first=1,last=0,ends=0,quiet=1):
+    def smooth(selection="all",passes=1,window=5,first=1,last=0,ends=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -167,7 +167,7 @@ NOTES
         selection = selector.process(selection)   
         try:
             lock()
-            r = _cmd.smooth(str(selection),int(passes),int(window),
+            r = _cmd.smooth(_self._COb,str(selection),int(passes),int(window),
                                  int(first)-1,int(last)-1,int(ends),int(quiet))
 
         finally:
@@ -175,7 +175,7 @@ NOTES
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def set_symmetry(selection,a,b,c,alpha,beta,gamma,spacegroup="P1"):
+    def set_symmetry(selection,a,b,c,alpha,beta,gamma,spacegroup="P1",_self=cmd):
         '''
 DESCRIPTION
 
@@ -200,7 +200,7 @@ NOTES
         selection = selector.process(selection)
         try:
             lock()
-            r = _cmd.set_symmetry(str(selection),
+            r = _cmd.set_symmetry(_self._COb,str(selection),
                                          float(a),float(b),float(c),
                                          float(alpha),float(beta),float(gamma),
                                          str(spacegroup))
@@ -209,7 +209,7 @@ NOTES
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def set_name(old_name, new_name):
+    def set_name(old_name, new_name,_self=cmd):
         '''
 DESCRIPTION
 
@@ -227,7 +227,7 @@ PYMOL API
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.set_name(str(old_name),
+            r = _cmd.set_name(_self._COb,str(old_name),
                                     str(new_name))
         finally:
             unlock(r)
@@ -235,7 +235,7 @@ PYMOL API
         return r
 
 
-    def set_geometry(selection,geometry,valence):
+    def set_geometry(selection,geometry,valence,_self=cmd):
         '''
 DESCRIPTION
 
@@ -263,13 +263,13 @@ SEE ALSO
         selection = selector.process(selection)
         try:
             lock()
-            r = _cmd.set_geometry(str(selection),int(geometry),int(valence))
+            r = _cmd.set_geometry(_self._COb,str(selection),int(geometry),int(valence))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def undo():
+    def undo(_self=cmd):
         '''
 DESCRIPTION
 
@@ -287,13 +287,13 @@ SEE ALSO
         r = DEFAULT_ERROR      
         try:
             lock()
-            r = _cmd.undo(-1)
+            r = _cmd.undo(_self._COb,-1)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def push_undo(selection,state=0):
+    def push_undo(selection,state=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -314,13 +314,13 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.push_undo("("+str(selection)+")",int(state)-1)
+            r = _cmd.push_undo(_self._COb,"("+str(selection)+")",int(state)-1)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def redo():
+    def redo(_self=cmd):
         '''
 DESCRIPTION
 
@@ -338,13 +338,13 @@ SEE ALSO
         r = DEFAULT_ERROR      
         try:
             lock()
-            r = _cmd.undo(1)
+            r = _cmd.undo(_self._COb,1)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                     
         return r
 
-    def bond(atom1="(pk1)",atom2="(pk2)",order=1,edit=1):
+    def bond(atom1="(pk1)",atom2="(pk2)",order=1,edit=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -376,13 +376,13 @@ SEE ALSO
         atom2 = selector.process(atom2)
         try:
             lock()
-            r = _cmd.bond(atom1,atom2,int(order),1)
+            r = _cmd.bond(_self._COb,atom1,atom2,int(order),1)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def invert(quiet=1):
+    def invert(quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -408,13 +408,13 @@ NOTE
         #
         try:
             lock()
-            r = _cmd.invert(int(quiet))
+            r = _cmd.invert(_self._COb,int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def unbond(atom1="(pk1)",atom2="(pk2)"):
+    def unbond(atom1="(pk1)",atom2="(pk2)",_self=cmd):
         '''
 DESCRIPTION
 
@@ -439,13 +439,13 @@ SEE ALSO
         atom2 = selector.process(atom2)   
         try:
             lock()
-            r = _cmd.bond(str(atom1),str(atom2),0,0)
+            r = _cmd.bond(_self._COb,str(atom1),str(atom2),0,0)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def remove(selection,quiet=1):
+    def remove(selection,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -474,14 +474,14 @@ SEE ALSO
         r = 1
         try:
             lock()   
-            r = _cmd.remove("("+selection+")",int(quiet))
+            r = _cmd.remove(_self._COb,"("+selection+")",int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
 
-    def remove_picked(hydrogens=1,quiet=1):
+    def remove_picked(hydrogens=1,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -511,14 +511,14 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.remove_picked(int(hydrogens),int(quiet))
+            r = _cmd.remove_picked(_self._COb,int(hydrogens),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
 
-    def cycle_valence(h_fill=1,quiet=1):
+    def cycle_valence(h_fill=1,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -551,7 +551,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.cycle_valence(quiet)
+            r = _cmd.cycle_valence(_self._COb,quiet)
         finally:
             unlock(r)
         if h_fill:
@@ -560,7 +560,7 @@ SEE ALSO
         return r
 
 
-    def attach(element,geometry,valence,name='',quiet=1):
+    def attach(element,geometry,valence,name='',quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -582,14 +582,14 @@ NOTES
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.attach(str(element),int(geometry),int(valence),str(name))
+            r = _cmd.attach(_self._COb,str(element),int(geometry),int(valence),str(name))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
 
-    def fuse(selection1="(pk1)",selection2="(pk2)",mode=0,recolor=1,move=1):
+    def fuse(selection1="(pk1)",selection2="(pk2)",mode=0,recolor=1,move=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -624,14 +624,14 @@ SEE ALSO
         #   
         try:
             lock()
-            r = _cmd.fuse(str(selection1),str(selection2),
+            r = _cmd.fuse(_self._COb,str(selection1),str(selection2),
                               int(mode),int(recolor),int(move))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def unpick(*arg):
+    def unpick(_self=cmd):
         '''
 DESCRIPTION
 
@@ -654,13 +654,13 @@ SEE ALSO
         r = DEFAULT_ERROR      
         try:
             lock()   
-            r = _cmd.unpick()
+            r = _cmd.unpick(_self._COb)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def drag(selection=None, wizard=1, edit=1, quiet=1):
+    def drag(selection=None, wizard=1, edit=1, quiet=1,_self=cmd):
         '''
         '''
         quiet = int(quiet)
@@ -681,7 +681,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.drag(str(selection),int(quiet))
+            r = _cmd.drag(_self._COb,str(selection),int(quiet))
         finally:
             unlock(r)
         if not is_error(r):
@@ -699,7 +699,7 @@ SEE ALSO
         return r
         
     def edit(selection1='',selection2='none',selection3='none',
-                selection4='none',pkresi=0, pkbond=1, quiet=1):
+                selection4='none',pkresi=0, pkbond=1, quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -732,7 +732,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.edit(str(selection1),str(selection2),
+            r = _cmd.edit(_self._COb,str(selection1),str(selection2),
                               str(selection3),str(selection4),
                               int(pkresi),int(pkbond),int(quiet))
         finally:
@@ -740,17 +740,17 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_editor_scheme():
+    def get_editor_scheme(_self=cmd):
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.get_editor_scheme()
+            r = _cmd.get_editor_scheme(_self._COb)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def torsion(angle):
+    def torsion(angle,_self=cmd):
         '''
 DESCRIPTION
 
@@ -774,13 +774,13 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.torsion(float(angle))
+            r = _cmd.torsion(_self._COb,float(angle))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def h_fill(quiet=1):
+    def h_fill(quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -807,13 +807,13 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.h_fill(int(quiet))
+            r = _cmd.h_fill(_self._COb,int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def h_fix(selection="",quiet=1):
+    def h_fix(selection="",quiet=1,_self=cmd):
         '''
 under development...
     '''
@@ -823,14 +823,14 @@ under development...
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.h_fix(str(selection),int(quiet))
+            r = _cmd.h_fix(_self._COb,str(selection),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
 
-    def h_add(selection="(all)",quiet=1):
+    def h_add(selection="(all)",quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -855,7 +855,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()   
-            r = _cmd.h_add(selection,int(quiet))
+            r = _cmd.h_add(_self._COb,selection,int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
@@ -863,7 +863,7 @@ SEE ALSO
 
 
 
-    def sort(object=""):
+    def sort(object="",_self=cmd):
         '''
 DESCRIPTION
 
@@ -887,7 +887,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.sort(str(object))
+            r = _cmd.sort(_self._COb,str(object))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
@@ -895,7 +895,7 @@ SEE ALSO
 
 
     def replace(element, geometry, valence,
-                h_fill=1, name="", quiet=1):
+                h_fill=1, name="", quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -926,13 +926,13 @@ SEE ALSO
             if h_fill: # strip off existing hydrogens
                 remove("((neighbor pk1) and elem h)",quiet=quiet)
             lock()
-            r = _cmd.replace(str(element),int(geometry),int(valence),str(name),quiet)
+            r = _cmd.replace(_self._COb,str(element),int(geometry),int(valence),str(name),quiet)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def rename(object,force=0):
+    def rename(object,force=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -968,7 +968,7 @@ SEE ALSO
         r = DEFAULT_ERROR   
         try:
             lock()   
-            r = _cmd.rename(str(object),int(force))
+            r = _cmd.rename(_self._COb,str(object),int(force))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
@@ -976,7 +976,7 @@ SEE ALSO
 
 
     def dss(selection="(all)", state=0, context=None,
-            preserve=0, quiet=1):
+            preserve=0, quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1029,7 +1029,7 @@ NOTES
         #
         try:
             lock()
-            r = _cmd.dss(str(selection),int(state)-1,str(context),
+            r = _cmd.dss(_self._COb,str(selection),int(state)-1,str(context),
                             int(preserve),int(quiet))
         finally:
             unlock(r)   
@@ -1037,7 +1037,7 @@ NOTES
         return r
 
     def alter(selection, expression, quiet=1,
-              space=cmd.pymol.__dict__):
+              space=cmd.pymol.__dict__,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1084,13 +1084,13 @@ SEE ALSO
         #
         try:
             lock()
-            r = _cmd.alter("("+str(selection)+")",str(expression),0,int(quiet),dict(space))
+            r = _cmd.alter(_self._COb,"("+str(selection)+")",str(expression),0,int(quiet),dict(space))
         finally:
             unlock(r)   
         if _raising(r): raise Qui
         return r
 
-    def alter_list(object, expr_list, quiet=1, space=cmd.pymol.__dict__):
+    def alter_list(object, expr_list, quiet=1, space=cmd.pymol.__dict__,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1100,14 +1100,14 @@ DESCRIPTION
         #
         try:
             lock()
-            r = _cmd.alter_list(str(object),list(expr_list),int(quiet),dict(space))
+            r = _cmd.alter_list(_self._COb,str(object),list(expr_list),int(quiet),dict(space))
         finally:
             unlock(r)   
         if _raising(r): raise pymol.CmdException            
         return r
 
 
-    def iterate(selection,expression,quiet=1,space=cmd.pymol.__dict__):
+    def iterate(selection,expression,quiet=1,space=cmd.pymol.__dict__,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1144,14 +1144,14 @@ SEE ALSO
         #
         try:
             lock()
-            r = _cmd.alter("("+str(selection)+")",str(expression),1,int(quiet),dict(space))
+            r = _cmd.alter(_self._COb,"("+str(selection)+")",str(expression),1,int(quiet),dict(space))
         finally:
             unlock(r)   
         if _raising(r): raise pymol.CmdException            
         return r
 
     def alter_state(state, selection, expression, quiet=1,
-                    space=cmd.pymol.__dict__, atomic=1):
+                    space=cmd.pymol.__dict__, atomic=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1186,14 +1186,14 @@ SEE ALSO
         state = int(state)
         try:
             lock()
-            r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",str(expression),
+            r = _cmd.alter_state(_self._COb,int(state)-1,"("+str(selection)+")",str(expression),
                                         0,int(atomic),int(quiet),dict(space))
         finally:
             unlock(r)   
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def iterate_state(state,selection,expression,quiet=1,space=cmd.pymol.__dict__,atomic=1):
+    def iterate_state(state,selection,expression,quiet=1,space=cmd.pymol.__dict__,atomic=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1219,7 +1219,7 @@ SEE ALSO
         #
         try:
             lock()
-            r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",
+            r = _cmd.alter_state(_self._COb,int(state)-1,"("+str(selection)+")",
                                         str(expression),1,int(atomic),
                                         int(quiet),dict(space))
         finally:
@@ -1228,7 +1228,7 @@ SEE ALSO
         return r
 
     def translate(vector=[0.0,0.0,0.0],selection="all",
-                      state=0,camera=1,object=None,object_mode=0):
+                      state=0,camera=1,object=None,object_mode=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1294,7 +1294,7 @@ NOTES
             elif object_mode==0: # update the TTT display matrix
                 try:
                     lock()
-                    r=_cmd.translate_object_ttt(str(object),shift)
+                    r=_cmd.translate_object_ttt(_self._COb,str(object),shift)
                 finally:
                     unlock(r)
             elif object_mode==1: # either updates TTT or coordinates & history
@@ -1305,7 +1305,7 @@ NOTES
                           0.0, 0.0, 0.0, 1.0]
                 try:
                     lock()
-                    r = _cmd.transform_object(str(object),int(state)-1,
+                    r = _cmd.transform_object(_self._COb,str(object),int(state)-1,
                                                       list(matrix),0,'',1)
                 finally:
                     unlock(r)
@@ -1315,7 +1315,7 @@ NOTES
         return r
 
     def rotate(axis='x',angle=0.0,selection="all",
-                  state=0,camera=1,object=None,origin=None,object_mode=0):
+                  state=0,camera=1,object=None,origin=None,object_mode=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1379,7 +1379,7 @@ NOTES
                     else:
                         lock()
                         try:
-                            origin = _cmd.get_origin(str(origin))
+                            origin = _cmd.get_origin(_self._COb,str(origin))
                         finally:
                             unlock(-1)
                 origin = [float(origin[0]),float(origin[1]),float(origin[2])]
@@ -1400,13 +1400,13 @@ NOTES
                 lock()
                 try:
                     if not have_origin:
-                        origin = _cmd.get_origin(str(object))
+                        origin = _cmd.get_origin(_self._COb,str(object))
                     if is_sequence(origin):
                         ttt = [mat[0][0],mat[0][1],mat[0][2], origin[0],
                                mat[1][0],mat[1][1],mat[1][2], origin[1],
                                mat[2][0],mat[2][1],mat[2][2], origin[2],
                                -origin[0], -origin[1], -origin[2], 1.0]
-                        r=_cmd.combine_object_ttt(str(object),ttt)
+                        r=_cmd.combine_object_ttt(_self._COb,str(object),ttt)
                 finally:
                     unlock(r)
                 if not is_sequence(origin):
@@ -1420,7 +1420,7 @@ NOTES
                           -origin[0],-origin[1],-origin[2], 1.0]
                 try:
                     lock()
-                    r = _cmd.transform_object(str(object),int(state)-1,
+                    r = _cmd.transform_object(_self._COb,str(object),int(state)-1,
                                                       list(matrix),0,'',0)
                 finally:
                     unlock(r)
@@ -1431,7 +1431,7 @@ NOTES
         return r
 
 
-    def set_title(object,state,text):
+    def set_title(object,state,text,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1451,11 +1451,11 @@ PYMOL API
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.set_title(str(object),int(state)-1,str(text))
+            r = _cmd.set_title(_self._COb,str(object),int(state)-1,str(text))
         finally:
             unlock(r)
 
-    def set_object_ttt(object,ttt,state=0,quiet=1,homogenous=0):
+    def set_object_ttt(object,ttt,state=0,quiet=1,homogenous=0,_self=cmd):
         r = None
         if cmd.is_string(ttt):
             ttt = safe_list_eval(str(ttt))
@@ -1467,7 +1467,7 @@ PYMOL API
                 ttt[ 3], ttt[ 7], ttt[11], 1.0]
         try:
             lock()
-            r = _cmd.set_object_ttt(str(object),
+            r = _cmd.set_object_ttt(_self._COb,str(object),
                                             (
                 float(ttt[ 0]),
                 float(ttt[ 1]),
@@ -1491,7 +1491,7 @@ PYMOL API
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def transform_selection(selection,matrix,state=0,log=0,homogenous=0,transpose=0):
+    def transform_selection(selection,matrix,state=0,log=0,homogenous=0,transpose=0,_self=cmd):
         '''
 
 "transform_selection" is UNSUPPORTED.
@@ -1535,14 +1535,14 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
                           matrix[3], matrix[7], matrix[11], matrix[15]]
         try:
             lock()
-            r = _cmd.transform_selection(str(selection),int(state)-1,
+            r = _cmd.transform_selection(_self._COb,str(selection),int(state)-1,
                                                   list(matrix),int(log),int(homogenous))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def transform_object(name,matrix,state=0,log=0,selection='',homogenous=0,transpose=0):
+    def transform_object(name,matrix,state=0,log=0,selection='',homogenous=0,transpose=0,_self=cmd):
         r = DEFAULT_ERROR
         if int(transpose):
             matrix = [ matrix[0], matrix[4], matrix[8 ], matrix[12],
@@ -1551,7 +1551,7 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
                           matrix[3], matrix[7], matrix[11], matrix[15]]
         try:
             lock()
-            r = _cmd.transform_object(str(name),int(state)-1,
+            r = _cmd.transform_object(_self._COb,str(name),int(state)-1,
                                               list(matrix),int(log),
                                               str(selection),
                                               int(homogenous))
@@ -1563,7 +1563,7 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
     def matrix_copy(source_name,    target_name,
                     source_mode=-1,  target_mode=-1,
                     source_state=1, target_state=1,
-                    target_undo=1, log=0, quiet=1):
+                    target_undo=1, log=0, quiet=1,_self=cmd):
         '''
 
 DESCRIPTION
@@ -1585,7 +1585,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.matrix_copy(str(source_name),
+            r = _cmd.matrix_copy(_self._COb,str(source_name),
                                              str(target_name),
                                              int(source_mode),
                                              int(target_mode),
@@ -1599,11 +1599,11 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def matrix_reset(name, state=1, mode=-1, log=0, quiet=1):
+    def matrix_reset(name, state=1, mode=-1, log=0, quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.reset_matrix(str(name),
+            r = _cmd.reset_matrix(_self._COb,str(name),
                                          int(mode),
                                          int(state)-1,
                                          int(log),
@@ -1614,19 +1614,19 @@ SEE ALSO
         return r
 
         
-    def translate_atom(sele1,v0,v1,v2,state=0,mode=0,log=0):
+    def translate_atom(sele1,v0,v1,v2,state=0,mode=0,log=0,_self=cmd):
         r = DEFAULT_ERROR
         sele1 = selector.process(sele1)
         try:
             lock()
-            r = _cmd.translate_atom(str(sele1),float(v0),float(v1),
+            r = _cmd.translate_atom(_self._COb,str(sele1),float(v0),float(v1),
                                             float(v2),int(state)-1,int(mode),int(log))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def update(target,source,target_state=0,source_state=0,matchmaker=1,quiet=1):
+    def update(target,source,target_state=0,source_state=0,matchmaker=1,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1659,7 +1659,7 @@ SEE ALSO
         if b[0]!='(': b="("+str(b)+")"   
         try:
             lock()   
-            r = _cmd.update(str(a),str(b),int(target_state)-1,
+            r = _cmd.update(_self._COb,str(a),str(b),int(target_state)-1,
                                  int(source_state)-1,int(matchmaker),int(quiet))
         finally:
             unlock(r)
@@ -1667,7 +1667,7 @@ SEE ALSO
         return r
 
 
-    def set_dihedral(atom1,atom2,atom3,atom4,angle,state=1,quiet=1):
+    def set_dihedral(atom1,atom2,atom3,atom4,angle,state=1,quiet=1,_self=cmd):
         # preprocess selections
         atom1 = selector.process(atom1)
         atom2 = selector.process(atom2)
@@ -1677,7 +1677,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.set_dihe(str(atom1),str(atom2),str(atom3),str(atom4),
+            r = _cmd.set_dihe(_self._COb,str(atom1),str(atom2),str(atom3),str(atom4),
                                     float(angle),int(state)-1,int(quiet))
         finally:
             unlock(r)
@@ -1696,7 +1696,7 @@ SEE ALSO
     
     map_op_sc = Shortcut(map_op_dict.keys())
 
-    def map_set(name, operator, operands='', target_state=0, source_state=0, zoom=0, quiet=1):
+    def map_set(name, operator, operands='', target_state=0, source_state=0, zoom=0, quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1728,14 +1728,14 @@ SEE ALSO
         operator_index = map_op_dict[map_op_sc.auto_err(operator,'operator')]
         try:
             lock()
-            r = _cmd.map_set(str(name), int(operator_index), str(operands),
+            r = _cmd.map_set(_self._COb,str(name), int(operator_index), str(operands),
                          int(target_state)-1, int(source_state)-1, int(zoom), int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
             
-    def map_set_border(name,level=0.0,state=0):
+    def map_set_border(name,level=0.0,state=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1757,13 +1757,13 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.map_set_border(str(name),float(level),int(state))
+            r = _cmd.map_set_border(_self._COb,str(name),float(level),int(state))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def map_double(name,state=0):
+    def map_double(name,state=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1778,13 +1778,13 @@ USAGE
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.map_double(str(name),int(state)-1)
+            r = _cmd.map_double(_self._COb,str(name),int(state)-1)
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def map_halve(name,state=0,smooth=1):
+    def map_halve(name,state=0,smooth=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1799,20 +1799,20 @@ USAGE
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.map_halve(str(name),int(state)-1,int(smooth))
+            r = _cmd.map_halve(_self._COb,str(name),int(state)-1,int(smooth))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def map_trim(name,selection,buffer=0.0,map_state=0,sele_state=0,quiet=1):
+    def map_trim(name,selection,buffer=0.0,map_state=0,sele_state=0,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
         #   
         try:
             lock()
-            r = _cmd.map_trim(str(name),str(selection),
+            r = _cmd.map_trim(_self._COb,str(name),str(selection),
                                   float(buffer),int(map_state)-1,
                                   int(sele_state)-1,int(quiet))
         finally:
@@ -1821,7 +1821,7 @@ USAGE
         return r
 
     
-    def protect(selection="(all)",quiet=1):
+    def protect(selection="(all)",quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1848,13 +1848,13 @@ SEE ALSO
         #   
         try:
             lock()   
-            r = _cmd.protect("("+str(selection)+")",1,int(quiet))
+            r = _cmd.protect(_self._COb,"("+str(selection)+")",1,int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def deprotect(selection="(all)",quiet=1):
+    def deprotect(selection="(all)",quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1878,7 +1878,7 @@ SEE ALSO
         #   
         try:
             lock()   
-            r = _cmd.protect("("+str(selection)+")",0,int(quiet))
+            r = _cmd.protect(_self._COb,"("+str(selection)+")",0,int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
@@ -1907,19 +1907,19 @@ SEE ALSO
 
     flag_action_sc = Shortcut(flag_action_dict.keys())
 
-    def fix_chemistry(selection1 = "all",selection2 = "all", invalidate=0, quiet=1):
+    def fix_chemistry(selection1 = "all",selection2 = "all", invalidate=0, quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
         try:
             lock()   
-            r = _cmd.fix_chemistry("("+str(selection1)+")","("+str(selection2)+")",int(invalidate),int(quiet))
+            r = _cmd.fix_chemistry(_self._COb,"("+str(selection1)+")","("+str(selection2)+")",int(invalidate),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
     
-    def flag(flag,selection,action="reset",quiet=1):
+    def flag(flag,selection,action="reset",quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -1987,14 +1987,14 @@ RESERVED FLAGS
         #      
         try:
             lock()
-            r = _cmd.flag(int(flag),"("+str(selection)+")",
+            r = _cmd.flag(_self._COb,int(flag),"("+str(selection)+")",
                               int(action),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def vdw_fit(selection1,selection2,state1=1,state2=1,buffer=0.24,quiet=1):
+    def vdw_fit(selection1,selection2,state1=1,state2=1,buffer=0.24,quiet=1,_self=cmd):
     #
     #   UNSUPPORTED FEATURE - LIKELY TO CHANGE
     #
@@ -2005,7 +2005,7 @@ RESERVED FLAGS
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.vdw_fit(str(selection1),int(state1)-1,
+            r = _cmd.vdw_fit(_self._COb,str(selection1),int(state1)-1,
                              str(selection2),int(state2)-1,
                              float(buffer),int(quiet))
         finally:

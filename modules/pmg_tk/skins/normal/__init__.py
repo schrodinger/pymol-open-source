@@ -1256,27 +1256,27 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Speed', 'command', 'Maximum',
                                          label=self.pad+'Maximum',
-                                         command = lambda s=self: s.cmd.set("movie_delay","0",log=1))
+                                         command = lambda s=self: s.cmd.set("movie_fps","-1",log=1))
 
         self.menuBar.addmenuitem('Speed', 'command', '30 FPS',
                                          label=self.pad+'30 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_delay","33",log=1))
+                                         command = lambda s=self: s.cmd.set("movie_fps","30",log=1))
 
         self.menuBar.addmenuitem('Speed', 'command', '15 FPS',
                                          label=self.pad+'15 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_delay","66",log=1))
+                                         command = lambda s=self: s.cmd.set("movie_fps","15",log=1))
 
         self.menuBar.addmenuitem('Speed', 'command', '5 FPS',
                                          label=self.pad+'5 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_delay","200",log=1))
+                                         command = lambda s=self: s.cmd.set("movie_fps","5",log=1))
 
         self.menuBar.addmenuitem('Speed', 'command', '1 FPS',
                                          label=self.pad+'1 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_delay","1000",log=1))
+                                         command = lambda s=self: s.cmd.set("movie_fps","1",log=1))
 
         self.menuBar.addmenuitem('Speed', 'command', '0.3 FPS',
                                          label=self.pad+'0.3 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_delay","3000",log=1))
+                                         command = lambda s=self: s.cmd.set("movie_fps","0.3",log=1))
 
         self.menuBar.addmenuitem('Movie', 'command', 'Reset Meter',
                                          label=self.pad+'Reset Meter',
@@ -1997,6 +1997,8 @@ class Normal(PMGSkin):
 
 #      self.menuBar.addcascademenu('Store', 'StoreSHFT', 'StoreSHFT',
 #                                  label=self.pad+'Shift')
+
+        self.menuBar.addmenuitem('Scene', 'separator', '')
 
         self.menuBar.addcascademenu('Scene', 'Clear', 'Clear',
                                              label=self.pad+'Clear')

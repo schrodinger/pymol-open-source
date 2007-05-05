@@ -12,6 +12,8 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+import traceback
+
 try:
     import sglite
 
@@ -69,6 +71,7 @@ try:
         return result
 
 except:
+    traceback.print_exc()
     print "Error: unable to import xray module (no symmetry support)."
     def sg_sym_to_mat_list(sgsymbol):
         return None

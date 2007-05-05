@@ -540,7 +540,7 @@ if __name__=='pymol.parser':
                                 pre = full+' '+pre
                                 pat = re.sub(r".*[\, ]",'',st)
             #               print ":"+pre+":"+pat+":"
-                                print tuple([pat] + self.cmd.auto_arg[count][full])
+#                                print tuple([pat] + self.cmd.auto_arg[count][full])
                                 result = apply(complete_sc,
                                                tuple([pat] + self.cmd.auto_arg[count][full]),
                                            {})

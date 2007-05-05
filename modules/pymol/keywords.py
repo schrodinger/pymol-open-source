@@ -287,6 +287,34 @@ def get_command_keywords(self_cmd=cmd):
         #   'metaphorics'   : [ self_cmd.metaphorics       , 0 , 0 , ''  , parsing.STRICT ],
         }
 
+def fix_keyword_list(kw_list):
+    # remove legacy commands from the shortcut list
+    
+    kw_list.remove('matrix_transfer')
+    kw_list.remove('util.mroll')
+    kw_list.remove('util.mrock')
+
+def fix_list(kw_list):
+    # remove legacy commands from the shortcut list
+    
+    kw_list.remove('matrix_transfer')
+    kw_list.remove('util.mroll')
+    kw_list.remove('util.mrock')
+
+def fix_dict(keyword):
+
+    # Prepare for Python 2.6 (not hashed)
+    
+    keyword['show_as'] = keyword['as']
+    
+    # Aliases for Mother England (not hashed)
+    
+    keyword['colour'] = keyword['color']
+    keyword['set_colour'] = keyword['set_color']
+    keyword['recolour'] = keyword['recolor']
+    keyword['bg_colour'] = keyword['bg_color']
+    
+
 def get_help_only_keywords(self_cmd=cmd):
     return {  
         'api'                   : [ self_cmd.helping.api ],
