@@ -75,7 +75,7 @@ int MainLockAPIAsGlut(int a)
   return PLockAPIAsGlut(G,a);
 }
 
-int MainUnlockAPIAsGlut()
+void MainUnlockAPIAsGlut()
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   PUnlockAPIAsGlut(G);
@@ -202,16 +202,28 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
   }
   return result;
 }
+PyObject *MainComplete(char *str)
+{
+  PyMOLGlobals *G = SingletonPyMOLGlobals;
+  PyObject *result = NULL;
+  printf("complete %s\n",str);
+  result = PyObject_CallFunction(G->P_inst->complete,"s",str);
+  return(result);
+}
+
 
 #endif
 
 #else
 
-
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_OSX
+#if 0
+I think this code is dead...
+
 int *MacPyMOLReady = NULL;
 CPyMOLOptions *MacPyMOLOption = NULL;
+#endif
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 
@@ -348,6 +360,8 @@ static void DrawBlueLine(PyMOLGlobals *G)
 #ifdef _PYMOL_OSX
 /* SPECIAL HOOKS FOR MacPyMOL */
 
+#if 0
+I think this code is dead...
 int MainCheckRedundantOpen(char *file)
 {
   int result = false;
@@ -487,6 +501,7 @@ PyObject *MainGetStringResult(char *str)
   MainPopValidContext(G);
   return(result);
 }
+#endif
 
 #endif
 /* END PROPRIETARY CODE SEGMENT */

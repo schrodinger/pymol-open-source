@@ -116,12 +116,6 @@ Z* -------------------------------------------------------------------
 #endif
 #endif
 
-#ifndef _IPYMOL
-#ifdef _PYMOL_INCENTIVE
-#define _IPYMOL
-#endif
-#endif
-
 #ifdef _IPYMOL
 #ifndef _PYMOL_IP_SPLASH
 #define _PYMOL_IP_SPLASH
