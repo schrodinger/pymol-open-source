@@ -90,6 +90,14 @@ def _init_internals(_pymol):
     _pymol._scene_counter = 1
     _pymol._scene_quit_on_action = ''
 
+    # these locks are to be shared by all PyMOL instances within a
+    # single Python interpeter
+        
+    _pymol.lock_api = threading.RLock() # mutex for API 
+    _pymol.lock_api_c = threading.RLock() # mutex for C management of python threads
+    _pymol.lock_api_status = threading.RLock() # mutex for PyMOL status info
+    _pymol.lock_api_glut = threading.RLock() # mutex for avoiding GLUT
+
 if hasattr(__main__,'pymol_launch'):
     pymol_launch = __main__.pymol_launch
 else:
@@ -224,13 +232,6 @@ if pymol_launch != 3: # if this isn't a dry run
     
         sys.setcheckinterval(1) # maximize responsiveness
 
-        # these locks are to be shared by all PyMOL instances within a
-        # single Python interpeter
-        
-        lock_api = threading.RLock() # mutex for API 
-        lock_api_c = threading.RLock() # mutex for C management of python threads
-        lock_api_status = threading.RLock() # mutex for PyMOL status info
-        lock_api_glut = threading.RLock() # mutex for avoiding GLUT
         
         def exec_str(self,st):
             try:

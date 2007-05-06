@@ -1,0 +1,110 @@
+PyMOL>from pymol2 import PyMOL
+PyMOL>lst = []
+PyMOL>for i in range(0,3): lst.append( PyMOL() )
+PyMOL>for pi in lst: pi.start()
+PyMOL>cmd._dump_floats(cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>for pi in lst: cmd._dump_floats(pi.cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>lst[0].cmd.load("dat/pept.pdb",quiet=0)
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
+PyMOL>lst[1].cmd.load("dat/3al1.pdb",quiet=0)
+HEADER    STRUCTURAL PROTEIN                      26-OCT-98   3AL1
+TITLE     DESIGNED PEPTIDE ALPHA-1, RACEMIC P1BAR FORM
+COMPND    MOL_ID: 1;
+COMPND   2 MOLECULE: D, L-ALPHA-1;
+COMPND   3 CHAIN: A, B;
+COMPND   4 ENGINEERED: YES;
+COMPND   5 OTHER_DETAILS: N TERMINI ARE ACETYLATED
+ ObjectMolecule: Read secondary structure assignments.
+ ObjectMolecule: Read crystal symmetry information.
+ Symmetry: Found 2 symmetry operators.
+ CmdLoad: "dat/3al1.pdb" loaded as "3al1".
+PyMOL>print cmd.count_atoms()
+0
+PyMOL>for pi in lst: print pi.cmd.count_atoms()
+107
+679
+0
+PyMOL>cmd._dump_floats(cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>for pi in lst: cmd._dump_floats(pi.cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -100.481  -9.632   2.772  -6.069  79.220 121.742   0.000
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>cmd._dump_floats(lst[0].cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
+PyMOL>lst[0].cmd.view("F1","store")
+ view: view stored as "F1".
+PyMOL>lst[0].cmd.turn("x",45)
+PyMOL>cmd._dump_floats(lst[0].cmd.get_view())
+  1.000   0.000   0.000   0.000   0.707   0.707   0.000  -0.707   0.707
+  0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
+PyMOL>lst[0].cmd.view("F2","store")
+ view: view stored as "F2".
+PyMOL>cmd._dump_floats(cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>lst[0].cmd.view("F1",animate=0)
+ view: "F1" recalled.
+PyMOL>cmd._dump_floats(lst[0].cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
+PyMOL>cmd._dump_floats(cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>lst[0].cmd.view("F2",animate=0)
+ view: "F2" recalled.
+PyMOL>cmd._dump_floats(lst[0].cmd.get_view())
+  1.000   0.000   0.000   0.000   0.707   0.707   0.000  -0.707   0.707
+  0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
+PyMOL>cmd._dump_floats(cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>cmd._dump_floats(lst[1].cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -100.481  -9.632   2.772  -6.069  79.220 121.742   0.000
+PyMOL>lst[1].cmd.view("F1","store")
+ view: view stored as "F1".
+PyMOL>lst[1].cmd.turn("y",45)
+PyMOL>cmd._dump_floats(lst[1].cmd.get_view())
+  0.707   0.000  -0.707   0.000   1.000   0.000   0.707   0.000   0.707
+  0.000   0.000 -100.481  -9.632   2.772  -6.069  79.220 121.742   0.000
+PyMOL>lst[1].cmd.view("F2","store")
+ view: view stored as "F2".
+PyMOL>lst[1].cmd.view("F1",animate=0)
+ view: "F1" recalled.
+PyMOL>cmd._dump_floats(lst[1].cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -100.481  -9.632   2.772  -6.069  79.220 121.742   0.000
+PyMOL>cmd._dump_floats(cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>lst[1].cmd.view("F2",animate=0)
+ view: "F2" recalled.
+PyMOL>cmd._dump_floats(lst[1].cmd.get_view())
+  0.707   0.000  -0.707   0.000   1.000   0.000   0.707   0.000   0.707
+  0.000   0.000 -100.481  -9.632   2.772  -6.069  79.220 121.742   0.000
+PyMOL>cmd._dump_floats(cmd.get_view())
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>for pi in lst: cmd._dump_floats(pi.cmd.get_view())
+  1.000   0.000   0.000   0.000   0.707   0.707   0.000  -0.707   0.707
+  0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
+  0.707   0.000  -0.707   0.000   1.000   0.000   0.707   0.000   0.707
+  0.000   0.000 -100.481  -9.632   2.772  -6.069  79.220 121.742   0.000
+  1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
+  0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
+PyMOL>for pi in lst: pi.stop()
+PyMOL>del lst
