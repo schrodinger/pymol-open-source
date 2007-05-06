@@ -132,7 +132,7 @@ static void APIEntry(PyMOLGlobals *G) /* assumes API is locked */
     exit(0);
   }
 
-  P_glut_thread_keep_out++;  
+  G->P_inst->glut_thread_keep_out++;  
   PUnblock(G);
 }
 
@@ -152,13 +152,13 @@ static void APIEnterBlocked(PyMOLGlobals *G) /* assumes API is locked */
     exit(0);
   }
 
-  P_glut_thread_keep_out++;  
+  G->P_inst->glut_thread_keep_out++;  
 }
 
 static void APIExit(PyMOLGlobals *G) /* assumes API is locked */
 {
   PBlock(G);
-  P_glut_thread_keep_out--;
+  G->P_inst->glut_thread_keep_out--;
   PRINTFD(G,FB_API)
     " APIExit-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
     ENDFD;
@@ -167,7 +167,7 @@ static void APIExit(PyMOLGlobals *G) /* assumes API is locked */
 static void APIExitBlocked(PyMOLGlobals *G) /* assumes API is locked */
 {
 
-  P_glut_thread_keep_out--;
+  G->P_inst->glut_thread_keep_out--;
   PRINTFD(G,FB_API)
     " APIExitBlocked-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
     ENDFD;

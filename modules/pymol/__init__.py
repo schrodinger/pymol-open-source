@@ -378,7 +378,10 @@ if pymol_launch != 3: # if this isn't a dry run
 
     def prime_pymol():
         global glutThread
-        glutThread = thread.get_ident()
+        try:
+            glutThread
+        except NameError:
+            glutThread = thread.get_ident()
         pymol_launch = 0 # never do this again : )
         if (sys.platform=='darwin') and (invocation.options.external_gui==1):
             import os

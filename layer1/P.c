@@ -130,7 +130,6 @@ static void PUnlockGLUT(PyMOLGlobals *G) /* assumes we have the GIL */
   PXDecRef(PyObject_CallFunction(G->P_inst->unlock_glut,NULL));
 }
 
-int P_glut_thread_keep_out = 0; 
 unsigned int P_glut_thread_id;
 
 /* enables us to keep glut out if by chance it grabs the API
@@ -1006,7 +1005,7 @@ int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy)
     return false;/* busy -- so allow main to update busy status display (if any) */
   }
    
-  while(P_glut_thread_keep_out) {
+  while(G->P_inst->glut_thread_keep_out) {
     /* IMPORTANT: keeps the glut thread out of an API operation... */
     /* NOTE: the keep_out variable can only be changed or read by the thread
        holding the API lock, therefore it is safe even through increment
