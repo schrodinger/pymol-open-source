@@ -66,10 +66,15 @@ class Cmd:
 
         self.reaper = None
 
-        self.lock_api = _pymol.lock_api
-        self.lock_api_c = _pymol.lock_api_c
-        self.lock_api_status = _pymol.lock_api_status
-        self.lock_api_glut = _pymol.lock_api_glut
+#        self.lock_api = _pymol.lock_api
+#        self.lock_api_c = _pymol.lock_api_c
+#        self.lock_api_status = _pymol.lock_api_status
+#        self.lock_api_glut = _pymol.lock_api_glut
+
+        self.lock_api = global_cmd._pymol.lock_api
+        self.lock_api_c = global_cmd._pymol.lock_api_c
+        self.lock_api_status = global_cmd._pymol.lock_api_status
+        self.lock_api_glut = global_cmd._pymol.lock_api_glut
 
         self.lock_c = global_cmd.lock_c
         self.unlock_c = global_cmd.unlock_c
