@@ -142,6 +142,15 @@ if __name__=='pymol.cmd':
         # locks and threading
 
         reaper = None
+
+        # the following locks are used by both C and Python to insure that no more than
+        # one active thread enters PyMOL at a given time. 
+        
+        lock_api = pymol.lock_api
+        lock_api_c = pymol.lock_api_c
+        lock_api_status = pymol.lock_api_status
+        lock_api_glut = pymol.lock_api_glut
+
         from locking import *
 
         #--------------------------------------------------------------------

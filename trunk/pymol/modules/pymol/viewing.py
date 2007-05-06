@@ -31,7 +31,7 @@ if __name__=='pymol.viewing':
           repres,repres_sc, is_string, is_list, is_ok, is_error, \
           toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
           palette_dict ,palette_sc, window_dict, window_sc, \
-          safe_list_eval, lock_without_glut, DEFAULT_ERROR, DEFAULT_SUCCESS
+          safe_list_eval,  DEFAULT_ERROR, DEFAULT_SUCCESS
         
     import thread
     
@@ -1779,7 +1779,7 @@ NOTES
     def _ray(width,height,antialias,angle,shift,renderer,quiet,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            lock_without_glut()
+            _self.lock_without_glut(_self)
             try:
                 _cmd.set_busy(_self._COb,1)
                 r = _cmd.render(_self._COb,int(width),int(height),

@@ -1667,34 +1667,34 @@ void PInit(PyMOLGlobals *G,int global_instance)
     /* right now, all locks are global -- eventually some of these may
        become instance-specific in order to improve concurrency */
 
-    G->P_inst->lock = PyObject_GetAttrString(P_cmd,"lock");
+    G->P_inst->lock = PyObject_GetAttrString(G->P_inst->cmd,"lock");
     if(!G->P_inst->lock) ErrFatal(G,"PyMOL","can't find 'cmd.lock()'");
 
-    G->P_inst->lock_attempt = PyObject_GetAttrString(P_cmd,"lock_attempt");
+    G->P_inst->lock_attempt = PyObject_GetAttrString(G->P_inst->cmd,"lock_attempt");
     if(!G->P_inst->lock_attempt) ErrFatal(G,"PyMOL","can't find 'cmd.lock_attempt()'");
 
-    G->P_inst->unlock = PyObject_GetAttrString(P_cmd,"unlock");
+    G->P_inst->unlock = PyObject_GetAttrString(G->P_inst->cmd,"unlock");
     if(!G->P_inst->unlock) ErrFatal(G,"PyMOL","can't find 'cmd.unlock()'");
 
-    G->P_inst->lock_c = PyObject_GetAttrString(P_cmd,"lock_c");
+    G->P_inst->lock_c = PyObject_GetAttrString(G->P_inst->cmd,"lock_c");
     if(!G->P_inst->lock_c) ErrFatal(G,"PyMOL","can't find 'cmd.lock_c()'");
 
-    G->P_inst->unlock_c = PyObject_GetAttrString(P_cmd,"unlock_c");
+    G->P_inst->unlock_c = PyObject_GetAttrString(G->P_inst->cmd,"unlock_c");
     if(!G->P_inst->unlock_c) ErrFatal(G,"PyMOL","can't find 'cmd.unlock_c()'");
 
-    G->P_inst->lock_status = PyObject_GetAttrString(P_cmd,"lock_status");
+    G->P_inst->lock_status = PyObject_GetAttrString(G->P_inst->cmd,"lock_status");
     if(!G->P_inst->lock_status) ErrFatal(G,"PyMOL","can't find 'cmd.lock_status()'");
 
-    G->P_inst->lock_status_attempt = PyObject_GetAttrString(P_cmd,"lock_status_attempt");
+    G->P_inst->lock_status_attempt = PyObject_GetAttrString(G->P_inst->cmd,"lock_status_attempt");
     if(!G->P_inst->lock_status_attempt) ErrFatal(G,"PyMOL","can't find 'cmd.lock_status_attempt()'");
 
-    G->P_inst->unlock_status = PyObject_GetAttrString(P_cmd,"unlock_status");
+    G->P_inst->unlock_status = PyObject_GetAttrString(G->P_inst->cmd,"unlock_status");
     if(!G->P_inst->unlock_status) ErrFatal(G,"PyMOL","can't find 'cmd.unlock_status()'");
 
-    G->P_inst->lock_glut = PyObject_GetAttrString(P_cmd,"lock_glut");
+    G->P_inst->lock_glut = PyObject_GetAttrString(G->P_inst->cmd,"lock_glut");
     if(!G->P_inst->lock_glut) ErrFatal(G,"PyMOL","can't find 'cmd.lock_glut()'");
 
-    G->P_inst->unlock_glut = PyObject_GetAttrString(P_cmd,"unlock_glut");
+    G->P_inst->unlock_glut = PyObject_GetAttrString(G->P_inst->cmd,"unlock_glut");
     if(!G->P_inst->unlock_glut) ErrFatal(G,"PyMOL","can't find 'cmd.unlock_glut()'");
     
     /* 'do' command */
