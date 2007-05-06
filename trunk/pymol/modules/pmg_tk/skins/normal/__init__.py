@@ -656,11 +656,11 @@ class Normal(PMGSkin):
                                             hull_relief=RAISED, hull_borderwidth=1) 
         self.menuBar.pack(fill=X)
 
-        self.menuBar.addmenu('Tutorial', 'Tutorial', side='right')      
+#        self.menuBar.addmenu('Tutorial', 'Tutorial', side='right')      
 
-        self.menuBar.addmenuitem('Tutorial', 'command', 'Open tutorial data file.',
-                                label='Open File...',
-                                command=lambda s=self: s.file_open(tutorial=1))
+#        self.menuBar.addmenuitem('Tutorial', 'command', 'Open tutorial data file.',
+#                                label='Open File...',
+#                                command=lambda s=self: s.file_open(tutorial=1))
 
 # to come
 #        self.menuBar.addmenuitem('Tutorial', 'separator', '')
