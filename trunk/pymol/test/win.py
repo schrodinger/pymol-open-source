@@ -73,7 +73,7 @@ for test in tests:
       
       print " run_tests: "+tst+"..."
       
-      syscmd = cmmd+" -x "+opt+" "+ifil+" > tmp.txt"
+      syscmd = cmmd+" -x "+opt+" "+ifil+" > tmp.txt 2>&1"
       print syscmd
       os.system(syscmd)
 
