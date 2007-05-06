@@ -298,7 +298,10 @@ PYMOL API
                 _self.lock(_self)
                 _cmd.do(_self._COb,"_ time.sleep(0.100);cmd._quit()",0,0)
                 # allow time for a graceful exit from the calling thread
-                thread.exit()
+                try:
+                    thread.exit()
+                except SystemExit:
+                    pass
             finally:
                 _self.unlock(_self=_self)
         return None

@@ -192,6 +192,7 @@ struct _CP_inst {
   PyObject *lock_glut; /* GLUT locks */
   PyObject *unlock_glut;
 
+  int glut_thread_keep_out;
   SavedThreadRec savedThread[MAX_SAVED_THREAD];
 };
 
@@ -209,7 +210,7 @@ extern PyObject *P_setting; /* used by Setting.c */
 /* unused? */
 extern PyObject *P_embed; /* not set by PyMOL -- must be set by host context */
 
-extern int P_glut_thread_keep_out;
+
 extern unsigned int P_glut_thread_id;
 
 #endif
