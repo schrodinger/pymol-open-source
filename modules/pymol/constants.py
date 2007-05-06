@@ -332,7 +332,8 @@ class fb_module:
     executive                 =70
     selector                  =71
     editor                    =72
-
+    nag                       =73
+    
     export                    =75
     ccmd                      =76
     api                       =77   

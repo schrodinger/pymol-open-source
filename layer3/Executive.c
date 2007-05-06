@@ -3572,6 +3572,12 @@ static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals *G,int list_id,int partia
 
 #endif
 
+#ifndef _PYMOL_NOPY
+#ifdef _PYMOL_EVAL
+#include "ExecutiveEvalMessage.h"
+#endif
+#endif
+
 int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict,char *names,int partial,int quiet)
 {
 #ifdef _PYMOL_NOPY
@@ -3639,8 +3645,13 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict,char *names,int partial,i
     tmp = MainAsPyList();
     PyDict_SetItemString(dict,"main",tmp);
     Py_XDECREF(tmp);
-  }
 
+#ifdef _PYMOL_EVAL
+    ExecutiveEvalMessage(G,dict);
+#endif
+
+  }
+  
   if(Feedback(G,FB_Executive,FB_Errors)) {
     if(PyErr_Occurred()) {
       PRINTF
@@ -3790,6 +3801,23 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,
       }
     }
   }
+
+#ifndef _PYMOL_EVAL
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"eval_nag");
+    if(tmp) {
+      ok = PyString_Check(tmp);
+      if(ok) {
+        char *st = PyString_AsString(tmp);
+        if(st) {
+          if(Feedback(G,FB_Nag,FB_Warnings)) {
+            OrthoAddOutput(G,st);
+          }
+        }
+      }
+    }
+  }
+#endif
 
   if(ok) { /* colors must be restored before settings and objects */
     tmp = PyDict_GetItemString(session,"colors");

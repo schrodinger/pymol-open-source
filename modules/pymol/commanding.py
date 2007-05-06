@@ -86,7 +86,7 @@ if __name__=='pymol.commanding':
                         pymol._log_file.write("cmd.do('''%s''')\n"%string.strip(text))
                 pymol._log_file.flush()
 
-    def log_close():
+    def log_close(_self=cmd):
         pymol=_self._pymol        
         cmd=_self
         if pymol._log_file!=None:
