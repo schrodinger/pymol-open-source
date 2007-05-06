@@ -1405,16 +1405,25 @@ int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,
 	    dst[green_index] = src[1];
 	    dst[blue_index]  = src[2];
 	    dst[alpha_index] = 0xFF;
+        if(!(i||j)) {
+          printf("no alpha\n");
+        }
 	  } else if(premultiply_alpha) {
 	    dst[red_index]   = (((unsigned int)src[0])*src[3])/255; /* premultiply alpha */
 	    dst[green_index] = (((unsigned int)src[1])*src[3])/255;
 	    dst[blue_index]  = (((unsigned int)src[2])*src[3])/255;
 	    dst[alpha_index] = src[3];
+        if(!(i||j)) {
+          printf("premult alpha\n");
+        }
 	  } else {
 	    dst[red_index]   = src[0]; /* standard alpha */
 	    dst[green_index] = src[1];
 	    dst[blue_index]  = src[2];
 	    dst[alpha_index] = src[3];
+        if(!(i||j)) {
+          printf("standard alpha\n");
+        }
 	  }
 	  dst+=4;
 	  src+=4;
