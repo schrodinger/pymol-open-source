@@ -8141,6 +8141,12 @@ static PyObject *CmdCopyImage(PyObject *self, 	PyObject *args)
 
 #ifdef _PYMOL_IP_EXTRAS
       ok = IncentiveCopyToClipboard(G,quiet);
+#else
+#ifdef PYMOL_EVAL
+    PRINTFB(G,FB_Scene,FB_Warnings)
+      " Warning: Clipboard image transfers disabled in Evaluation Builds.\n"
+      ENDFB(G);
+#endif
 #endif    
     } else {
       ok = false;

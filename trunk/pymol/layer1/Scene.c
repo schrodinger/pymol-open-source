@@ -4840,6 +4840,12 @@ static int SceneDeferredImage(DeferredImage *di)
 #ifdef _PYMOL_IP_EXTRAS
     if(IncentiveCopyToClipboard(G,di->quiet)) {
     }
+#else
+#ifdef PYMOL_EVAL
+    PRINTFB(G,FB_Scene,FB_Warnings)
+      " Warning: Clipboard image transfers disabled in Evaluation builds.\n"
+      ENDFB(G);
+#endif
 #endif    
   }
   return 1;
@@ -5251,6 +5257,12 @@ static int SceneDeferredRay(DeferredRay *dr)
      SettingGetGlobal_b(G,cSetting_auto_copy_images)) {
 #ifdef _PYMOL_IP_EXTRAS
     IncentiveCopyToClipboard(G,dr->quiet);
+#else
+#ifdef PYMOL_EVAL
+    PRINTFB(G,FB_Scene,FB_Warnings)
+      " Warning: Clipboard image transfers disabled in Evaluation Builds.\n"
+      ENDFB(G);
+#endif
 #endif    
   }
   return 1;
