@@ -1526,6 +1526,7 @@ void PGetOptions(CPyMOLOptions *rec)
   rec->quiet = PyInt_AsLong(PyObject_GetAttrString(options,"quiet"));
 #ifdef _IPYMOL
   rec->incentive_product = true;
+  PyObject_SetAttrString(options,"incentive_product",PyInt_FromLong(1));
 #else
   rec->incentive_product = PyInt_AsLong(PyObject_GetAttrString(options,"incentive_product"));
 #endif

@@ -845,13 +845,13 @@ class Normal(PMGSkin):
         self.menuBar.addmenu('Edit', 'Edit',tearoff=TRUE)
 
         if sys.platform == 'win32':
-            
-            self.menuBar.addmenuitem('Edit', 'command',
+            if self.app.pymol.invocation.options.incentive_product:
+                self.menuBar.addmenuitem('Edit', 'command',
                                      'Copy Image',
                                      label='Copy Image to Clipboard',
                                      command = lambda s=self:s.cmd.copy_image(quiet=0))
 
-        self.menuBar.addmenuitem('Edit', 'separator', '')
+                self.menuBar.addmenuitem('Edit', 'separator', '')
         
 
         self.menuBar.addmenuitem('Edit', 'command', 'Undo Conformation',
@@ -876,9 +876,11 @@ class Normal(PMGSkin):
                                          state='disabled',                               
                                 command =  None)
 
-        self.menuBar.addmenuitem('Edit', 'separator', '')
-
-        self.menuBar.addmenuitem('Edit', 'checkbutton',
+        if sys.platform == 'win32':
+            if self.app.pymol.invocation.options.incentive_product:
+                self.menuBar.addmenuitem('Edit', 'separator', '')
+        
+                self.menuBar.addmenuitem('Edit', 'checkbutton',
                                  'Auto-Copy Images',
                                  label=self.pad+'Auto-Copy Images',
                                  variable = self.setting.auto_copy_images,
@@ -1427,31 +1429,31 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Zoom', 'command', '4 Angstrom Sphere',
                                          label='4 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,4"))
+                                         command = lambda s=self: s.cmd.do("_ zoom center,4,animate=1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', '6 Angstrom Sphere',
                                          label='6 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,6"))
+                                         command = lambda s=self: s.cmd.do("_ zoom center,6,animate=1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', '8 Angstrom Sphere',
                                          label='8 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,8"))
+                                         command = lambda s=self: s.cmd.do("_ zoom center,8,animate=1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', '12 Angstrom Sphere',
                                          label='12 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,12"))
+                                         command = lambda s=self: s.cmd.do("_ zoom center,12,animate=1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', '20 Angstrom Sphere',
                                          label='20 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,20"))
+                                         command = lambda s=self: s.cmd.do("_ zoom center,20,animate=1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', 'All',
                                          label='All',
-                                         command = lambda s=self: s.cmd.do("_ zoom all"))
+                                         command = lambda s=self: s.cmd.do("_ zoom all,animate=1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', 'Complete',
                                          label='Complete',
-                                         command = lambda s=self: s.cmd.do("_ zoom all,complete=1"))
+                                         command = lambda s=self: s.cmd.do("_ zoom all,complete=1,animate=1"))
 
         self.menuBar.addcascademenu('Display', 'Clip', 'Clip',
                                              label='Clip')
@@ -1486,25 +1488,6 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Display', 'Background', 'Background',
                                              label='Background')
 
-        self.menuBar.addmenuitem('Background', 'command', 'White Background',
-                                         label='White',
-                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('white')"))
-
-        self.menuBar.addmenuitem('Background', 'command', 'Light Grey',
-                                         label='Light Grey',
-                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('grey80')"))
-
-        self.menuBar.addmenuitem('Background', 'command', 'Grey',
-                                         label='Grey',
-                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('grey50')"))
-
-
-        self.menuBar.addmenuitem('Background', 'command', 'Black Background',
-                                         label='Black',
-                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('black')"))
-
-        self.menuBar.addmenuitem('Background', 'separator', '')
-        
         self.menuBar.addmenuitem('Background', 'checkbutton',
                                  'Opaque Background Color',
                                  label=self.pad+'Opaque',
@@ -1516,6 +1499,25 @@ class Normal(PMGSkin):
                                  label=self.pad+'Show Alpha Checker',
                                 variable = self.setting.show_alpha_checker,
                                 command = lambda s=self: s.setting.update('show_alpha_checker'))
+
+        self.menuBar.addmenuitem('Background', 'separator', '')
+        
+        self.menuBar.addmenuitem('Background', 'command', 'White Background',
+                                         label='White',
+                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('white')"))
+
+        self.menuBar.addmenuitem('Background', 'command', 'Light Grey',
+                                         label='Light Grey',
+                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('grey80')"))
+
+        self.menuBar.addmenuitem('Background', 'command', 'Grey Background',
+                                         label='Grey',
+                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('grey50')"))
+
+        self.menuBar.addmenuitem('Background', 'command', 'Black Background',
+                                         label='Black',
+                                         command = lambda s=self: s.cmd.do("_ cmd.bg_color('black')"))
+
 
         self.menuBar.addcascademenu('Display', 'Color Space', 'Color Space',
                                              label='Color Space')
