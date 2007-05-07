@@ -127,6 +127,7 @@ from selecting import \
 from exporting import \
       png,                \
       export_coords,      \
+      copy_image,         \
       get_pdbstr,         \
       get_session,        \
       multisave,          \

@@ -8120,6 +8120,35 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
   return APIResultOk(ok);  
 }
 
+#ifdef _PYMOL_INCENTIVES
+#include "IncentiveCopyToClipboard.h"
+#endif
+
+static PyObject *CmdCopyImage(PyObject *self, 	PyObject *args)
+{ /* should come in as GLUT thread just to be safe... */
+  PyMOLGlobals *G = NULL;
+  int ok=false;
+  int quiet=true;
+  ok = PyArg_ParseTuple(args,"Oi",&self,&quiet);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  } 
+printf("got here ok %d %d %d\n",ok,G->HaveGUI,quiet);
+  if(ok) {
+    if(G->HaveGUI) {
+
+#if _PYMOL_INCENTIVES
+      ok = IncentiveCopyToClipboard(G,quiet);
+#endif    
+    } else {
+      ok = false;
+    }
+  }
+  return APIResultOk(ok);
+}
 
 static PyObject *CmdGetCThreadingAPI(PyObject *self, 	PyObject *args)
 {
@@ -8157,6 +8186,7 @@ static PyMethodDef Cmd_methods[] = {
   {"combine_object_ttt",    CmdCombineObjectTTT,     METH_VARARGS },
   {"coordset_update_thread",CmdCoordSetUpdateThread, METH_VARARGS },
   {"copy",                  CmdCopy,                 METH_VARARGS },
+  {"copy_image",            CmdCopyImage,            METH_VARARGS },
   {"create",                CmdCreate,               METH_VARARGS },
   {"count_states",          CmdCountStates,          METH_VARARGS },
   {"count_frames",          CmdCountFrames,          METH_VARARGS },

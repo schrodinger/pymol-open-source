@@ -73,6 +73,10 @@ void SceneRay(PyMOLGlobals *G,int width,int height,int mode,
               char **headerVLA,char **charVLA,
               float angle,float shift,int quiet,
               G3dPrimitive **g3d,int show_timing,int antialias);
+void SceneDoRay(PyMOLGlobals *G,int width,int height,int mode,
+                char **headerVLA,char **charVLA,
+                float angle,float shift,int quiet,
+                G3dPrimitive **g3d,int show_timing,int antialias);
 int SceneDeferRay(PyMOLGlobals *G,
                    int ray_width,
                    int ray_height,
