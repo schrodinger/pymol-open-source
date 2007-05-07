@@ -2903,7 +2903,6 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       
   }  else    {
     /* simple sphere mode */
-
     I->Map   = MapNewCached(I->G,-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
     if(perspective) {
       MapSetupExpressPerp(I->Map,I->Vertex,front,I->NVertex,false);

@@ -673,15 +673,16 @@ static void MainDrawLocked(void)
     if(G->HaveGUI) 
       MainPushValidContext(G);
     
+
     /* restore working directory if asked to */
     PRunStringModule(G,"if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
-    
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_OSX
     PRunStringModule(G,"if os.getcwd()[-23:]=='.app/Contents/Resources': os.chdir('../../..')");
 #endif
 /* END PROPRIETARY CODE SEGMENT */    
-
+    
     PXDecRef(PyObject_CallMethod(G->P_inst->obj,"launch_gui","O",G->P_inst->obj));
     
     PXDecRef(PyObject_CallMethod(G->P_inst->obj,"adapt_to_hardware","O",G->P_inst->obj));

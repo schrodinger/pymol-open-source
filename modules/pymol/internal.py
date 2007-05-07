@@ -38,9 +38,11 @@ def _ray_hash_spawn(thread_info,_self=cmd):
             t = threading.Thread(target=_cmd.ray_hash_thread,
                                  args=(_self._COb,a))
             t.setDaemon(1)
-            t.start()
             thread_list.append(t)
-    _cmd.ray_hash_thread(_self._COb,thread_info[0])
+    for t in thread_list:
+        t.start()
+    if thread_info[0] != None:
+        _cmd.ray_hash_thread(_self._COb,thread_info[0])
     for t in thread_list:
         t.join()
 

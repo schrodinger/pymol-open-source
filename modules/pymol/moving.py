@@ -94,7 +94,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            r = _cmd.mdump(_self._COb,0)
+            r = _cmd.mdump(_self._COb)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
