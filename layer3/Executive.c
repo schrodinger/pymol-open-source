@@ -9111,6 +9111,13 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1)
 int ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,
                   float angle,float shift,int quiet,int defer, int antialias)
 {
+  if((mode==0) && 
+     G->HaveGUI &&
+     SettingGetGlobal_b(G,cSetting_auto_copy_images)) {
+    /* force deferred behavior if copying image to clipboard */
+    defer=1;
+  }
+
   if(defer && (mode==0)) {
     SceneDeferRay(G,width,height,mode,angle,shift,quiet,true,antialias);
   } else {
