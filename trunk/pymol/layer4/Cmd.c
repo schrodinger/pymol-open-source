@@ -8136,7 +8136,6 @@ static PyObject *CmdCopyImage(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   } 
-printf("got here ok %d %d %d\n",ok,G->HaveGUI,quiet);
   if(ok) {
     if(G->HaveGUI) {
 

@@ -4836,7 +4836,7 @@ static int SceneDeferredImage(DeferredImage *di)
     ScenePNG(G,di->filename, di->dpi, di->quiet);
     FreeP(di->filename);
   } else if(G->HaveGUI &&
-            SettingGetGlobal_b(G,cSetting_auto_copy_to_clipboard)) {
+            SettingGetGlobal_b(G,cSetting_auto_copy_images)) {
 #if _PYMOL_INCENTIVES
     if(IncentiveCopyToClipboard(G,di->quiet)) {
     }
@@ -5240,7 +5240,7 @@ void SceneDoRay(PyMOLGlobals *G,int width,int height,int mode,
            g3d, show_timing, antialias);
   if((mode==0) && 
      G->HaveGUI &&
-     SettingGetGlobal_b(G,cSetting_auto_copy_to_clipboard)) {
+     SettingGetGlobal_b(G,cSetting_auto_copy_images)) {
 #if _PYMOL_INCENTIVES
      IncentiveCopyToClipboard(G,quiet);
 #endif    
@@ -5255,7 +5255,7 @@ static int SceneDeferredRay(DeferredRay *dr)
            NULL, dr->show_timing, dr->antialias);
   if((dr->mode==0) && 
      G->HaveGUI &&
-     SettingGetGlobal_b(G,cSetting_auto_copy_to_clipboard)) {
+     SettingGetGlobal_b(G,cSetting_auto_copy_images)) {
 #if _PYMOL_INCENTIVES
     IncentiveCopyToClipboard(G,dr->quiet);
 #endif    

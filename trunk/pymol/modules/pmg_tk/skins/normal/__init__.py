@@ -842,20 +842,17 @@ class Normal(PMGSkin):
 #                        variable = self.setting.log_box_selections,
 #                        command = lambda s=self: s.setting.update('log_box_selections'))
 
-        self.menuBar.addmenu('Edit', 'Text Editing',tearoff=TRUE)
-        self.menuBar.addmenuitem('Edit', 'command',
-                                 'To Copy: Use Ctrl-C in TclTk GUI',
-                                 label='To copy text use Ctrl-C in the TclTk GUI',
-                                         state='disabled',
-                                command =  None)
+        self.menuBar.addmenu('Edit', 'Edit',tearoff=TRUE)
 
-        self.menuBar.addmenuitem('Edit', 'command',
-                                 'To Paste, Use Ctrl-V in TclTk GUI',
-                                 label='To paste text use Ctrl-V in the TckTk GUI',
-                                         state='disabled',                               
-                                command =  None)
+        if sys.platform == 'win32':
+            
+            self.menuBar.addmenuitem('Edit', 'command',
+                                     'Copy Image',
+                                     label='Copy Image to Clipboard',
+                                     command = lambda s=self:s.cmd.copy_image(quiet=0))
 
         self.menuBar.addmenuitem('Edit', 'separator', '')
+        
 
         self.menuBar.addmenuitem('Edit', 'command', 'Undo Conformation',
                                          label='Undo Conformation [Ctrl-Z]',
@@ -864,6 +861,28 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Edit', 'command', 'Redo Conformation',
                                          label='Redo Conformation [Ctrl-A]',
                                          command = lambda s=self: s.cmd.do("_ redo"))
+
+        self.menuBar.addmenuitem('Edit', 'separator', '')
+        
+        self.menuBar.addmenuitem('Edit', 'command',
+                                 'To Copy Text: Use Ctrl-C in TclTk GUI',
+                                 label='To copy text use Ctrl-C in the TclTk GUI',
+                                         state='disabled',
+                                command =  None)
+
+        self.menuBar.addmenuitem('Edit', 'command',
+                                 'To Paste Text, Use Ctrl-V in TclTk GUI',
+                                 label='To paste text use Ctrl-V in the TckTk GUI',
+                                         state='disabled',                               
+                                command =  None)
+
+        self.menuBar.addmenuitem('Edit', 'separator', '')
+
+        self.menuBar.addmenuitem('Edit', 'checkbutton',
+                                 'Auto-Copy Images',
+                                 label=self.pad+'Auto-Copy Images',
+                                 variable = self.setting.auto_copy_images,
+                                 command = lambda s=self: s.setting.update('auto_copy_images'))
 
         self.menuBar.addmenu('Build', 'Build',tearoff=TRUE)
 
