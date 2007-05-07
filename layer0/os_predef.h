@@ -118,7 +118,7 @@ Z* -------------------------------------------------------------------
 
 /* commercial product */
 
-#ifdef _PYMOL_COMM
+#ifdef PYMOL_COMM
 #ifndef _PYMOL_IP_SPLASH
 #define _PYMOL_IP_SPLASH
 #endif
@@ -129,7 +129,7 @@ Z* -------------------------------------------------------------------
 
 /* collaboration product (placarded) */
 
-#ifdef _PYMOL_COLL
+#ifdef PYMOL_COLL
 #ifndef _PYMOL_IP_SPLASH
 #define _PYMOL_IP_SPLASH
 #endif
@@ -140,7 +140,7 @@ Z* -------------------------------------------------------------------
 
 /* educational product (placarded) */
 
-#ifdef _PYMOL_EDU
+#ifdef PYMOL_EDU
 #ifndef _PYMOL_IP_SPLASH
 #define _PYMOL_IP_SPLASH
 #endif
@@ -151,7 +151,7 @@ Z* -------------------------------------------------------------------
 
 /* evaluation product (placarded) */
 
-#ifdef _PYMOL_EVAL
+#ifdef PYMOL_EVAL
 #ifndef _PYMOL_IP_SPLASH
 #define _PYMOL_IP_SPLASH
 #endif

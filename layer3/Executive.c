@@ -3573,7 +3573,7 @@ static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals *G,int list_id,int partia
 #endif
 
 #ifndef _PYMOL_NOPY
-#ifdef _PYMOL_EVAL
+#ifdef PYMOL_EVAL
 #include "ExecutiveEvalMessage.h"
 #endif
 #endif
@@ -3646,7 +3646,7 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict,char *names,int partial,i
     PyDict_SetItemString(dict,"main",tmp);
     Py_XDECREF(tmp);
 
-#ifdef _PYMOL_EVAL
+#ifdef PYMOL_EVAL
     ExecutiveEvalMessage(G,dict);
 #endif
 
@@ -3802,7 +3802,7 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,
     }
   }
 
-#ifndef _PYMOL_EVAL
+#ifndef PYMOL_EVAL
   if(ok) {
     tmp = PyDict_GetItemString(session,"eval_nag");
     if(tmp) {
