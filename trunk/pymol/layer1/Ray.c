@@ -1852,9 +1852,8 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread,int n_total)
       }
       n++;
     }
-    PXDecRef(PyObject_CallMethod(G->P_inst->cmd,"_ray_hash_spawn","O",info_list));
+    PXDecRef(PyObject_CallMethod(G->P_inst->cmd,"_ray_hash_spawn","OO",info_list,G->P_inst->cmd));
     Py_DECREF(info_list);
-
   }
   PAutoUnblock(G,blocked);
 }
@@ -1879,7 +1878,7 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
   for(a=0;a<n_thread;a++) {
     PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
   }
-  PXDecRef(PyObject_CallMethod(G->P_inst->cmd,"_ray_anti_spawn","O",info_list));
+  PXDecRef(PyObject_CallMethod(G->P_inst->cmd,"_ray_anti_spawn","OO",info_list,G->P_inst->cmd));
   Py_DECREF(info_list);
   PAutoUnblock(G,blocked);
 }
@@ -1916,7 +1915,7 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   for(a=0;a<n_thread;a++) {
     PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
   }
-  PXDecRef(PyObject_CallMethod(G->P_inst->cmd,"_ray_spawn","O",info_list));
+  PXDecRef(PyObject_CallMethod(G->P_inst->cmd,"_ray_spawn","OO",info_list,G->P_inst->cmd));
   Py_DECREF(info_list);
   PAutoUnblock(G,blocked);
   
@@ -4003,7 +4002,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
 #ifndef _PYMOL_NOPY
     if(shadows&&(n_thread>1)) { /* parallel execution */
 
-      CRayHashThreadInfo *thread_info = Calloc(CRayHashThreadInfo,n_thread);
+      CRayHashThreadInfo *thread_info = Calloc(CRayHashThreadInfo,I->NBasis);
       
       /* rendering map */
 
@@ -4051,9 +4050,10 @@ void RayRender(CRay *I,unsigned int *image,double timing,
                      perspective,front,I->PrimSize);
         if(shadows) {
           int bc;
+          float factor = SettingGetGlobal_f(I->G,cSetting_ray_hint_shadow);
           for(bc=2;bc<I->NBasis;bc++) {
             BasisMakeMap(I->Basis+bc,I->Vert2Prim,I->Primitive,
-                         NULL,bc-1,cCache_ray_map,false,_0,I->PrimSize);
+                         NULL,bc-1,cCache_ray_map,false,_0,I->PrimSize*factor);
           }
         }
         
