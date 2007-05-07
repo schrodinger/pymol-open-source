@@ -178,7 +178,7 @@ int MainCheckRedundantOpen(char *file)
 #ifndef _PYMOL_NOPY
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   PBlock(G);
-  result = PTruthCallStr(G->P_inst->cmd_do,"check_redundant_open",file);
+  result = PTruthCallStr(G->P_inst->cmd,"check_redundant_open",file);
   PUnblock(G);
 #endif
   return result;

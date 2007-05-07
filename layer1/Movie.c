@@ -44,6 +44,7 @@ struct _CMovie {
   int Playing;
   int Locked;
   int CacheSave;
+  int OverlaySave;
   CViewElem *ViewElem;
   int RecursionFlag;
 };
@@ -60,10 +61,13 @@ void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length)
 	register CMovie *I=G->Movie;
 	int nFrame;
 	
+
 	I->CacheSave = (int)SettingGet(G,cSetting_cache_frames); 
+	I->OverlaySave = (int)SettingGet(G,cSetting_overlay);
 	if(!I->CacheSave)
 		MovieClearImages(G);
 	SettingSet(G,cSetting_cache_frames,1.0);
+	SettingSet(G,cSetting_overlay,5);
 	nFrame = I->NFrame;
 	if(!nFrame) {
 		nFrame=SceneGetNFrame(G,NULL);
@@ -216,10 +220,11 @@ void MovieCopyFinish(PyMOLGlobals *G)
   register CMovie *I=G->Movie;
   SceneInvalidate(G); /* important */
   SettingSet(G,cSetting_cache_frames,(float)I->CacheSave);
+  SettingSet(G,cSetting_overlay,(float)I->OverlaySave);
   MoviePlay(G,cMovieStop);
   if(!I->CacheSave) {
     MovieClearImages(G); 
-     }
+  }
 }
 
 int MovieLocked(PyMOLGlobals *G)

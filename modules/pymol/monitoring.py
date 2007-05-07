@@ -2,6 +2,7 @@
 
 import cmd
 import _cmd
+import sys
 
 def get_progress(reset=0,_self=cmd):
     r = -1.0
@@ -14,7 +15,7 @@ def get_progress(reset=0,_self=cmd):
 
 def check_redundant_open(file,_self=cmd):
     found = 0
-    for a in pymol.invocation.options.deferred:
+    for a in cmd._pymol.invocation.options.deferred:
         if a == file:
             found = 1
             break
