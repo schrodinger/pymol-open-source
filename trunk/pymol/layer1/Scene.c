@@ -55,7 +55,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"ScrollBar.h"
 
-#ifdef _PYMOL_INCENTIVES
+#ifdef _PYMOL_IP_EXTRAS
 #include "IncentiveCopyToClipboard.h"
 #endif
 
@@ -4837,7 +4837,7 @@ static int SceneDeferredImage(DeferredImage *di)
     FreeP(di->filename);
   } else if(G->HaveGUI &&
             SettingGetGlobal_b(G,cSetting_auto_copy_images)) {
-#if _PYMOL_INCENTIVES
+#if _PYMOL_IP_EXTRAS
     if(IncentiveCopyToClipboard(G,di->quiet)) {
     }
 #endif    
@@ -5249,7 +5249,7 @@ static int SceneDeferredRay(DeferredRay *dr)
   if((dr->mode==0) && 
      G->HaveGUI &&
      SettingGetGlobal_b(G,cSetting_auto_copy_images)) {
-#if _PYMOL_INCENTIVES
+#if _PYMOL_IP_EXTRAS
     IncentiveCopyToClipboard(G,dr->quiet);
 #endif    
   }
