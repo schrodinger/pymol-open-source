@@ -24,6 +24,7 @@ api_list = [
     'commands',
     'config_mouse',
     'copy',
+    'copy_image',
     'count_atoms',
     'count_frames',
     'count_states',
