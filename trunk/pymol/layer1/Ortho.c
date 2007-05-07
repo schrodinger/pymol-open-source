@@ -1022,13 +1022,13 @@ void OrthoDetach(PyMOLGlobals *G,Block *block)
 }
 /*========================================================================*/
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef _PYMOL_EVAL
+#ifdef PYMOL_EVAL
 #include "OrthoEvalMessage.h"
 #endif
-#ifdef _PYMOL_EDU
+#ifdef PYMOL_EDU
 #include "OrthoEduMessage.h"
 #endif
-#ifdef _PYMOL_COLL
+#ifdef PYMOL_COLL
 #include "OrthoCollMessage.h"
 #endif
 /* END PROPRIETARY CODE SEGMENT */
@@ -1264,13 +1264,13 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       OrthoDrawWizardPrompt(G);
  
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef _PYMOL_EVAL
+#ifdef PYMOL_EVAL
       OrthoDrawEvalMessage(G);
 #endif
-#ifdef _PYMOL_EDU
+#ifdef PYMOL_EDU
       OrthoDrawEduMessage(G);
 #endif
-#ifdef _PYMOL_COLL
+#ifdef PYMOL_COLL
       OrthoDrawCollMessage(G);
 #endif
 /* END PROPRIETARY CODE SEGMENT */
@@ -1714,7 +1714,7 @@ void OrthoSplash(PyMOLGlobals *G)
 #include"OrthoIPSplash.h"
 #else
   if(G->Option->incentive_product) {
-    PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2006 DeLano Scientific LLC.\n \n" ENDF(G);
+    PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2007 DeLano Scientific LLC.\n \n" ENDF(G);
     PRINTF " This Executable Build integrates and extends Open-Source PyMOL " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
     PRINTF ".\n" ENDF(G);
@@ -1725,7 +1725,7 @@ void OrthoSplash(PyMOLGlobals *G)
       PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF(G);
       PRINTF _PyMOL_VERSION ENDF(G);
       PRINTF ".\n" ENDF(G);
-      PRINTF " Copyright (C) 2006 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF(G);
+      PRINTF " Copyright (C) 2007 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF(G);
       
       PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF(G);
       
