@@ -28,6 +28,15 @@ if __name__=='pymol.exporting':
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     import traceback
 
+    def copy_image(quiet=1,_self=cmd): # incentive feature / proprietary
+        r = DEFAULT_ERROR
+        if thread.get_ident() == pymol.glutThread:
+            r = _self._copy_image(_self,int(quiet))
+        else:
+            r = _self.do('cmd._copy_image(quiet=%d,_self=cmd)'%int(quiet))
+        if _self._raising(r,_self): raise QuietException         
+        return r
+
     def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1,_self=cmd):
         '''
 DESCRIPTION

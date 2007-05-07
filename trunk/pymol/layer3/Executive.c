@@ -9114,7 +9114,7 @@ int ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,
   if(defer && (mode==0)) {
     SceneDeferRay(G,width,height,mode,angle,shift,quiet,true,antialias);
   } else {
-    SceneRay(G,width,height,mode,NULL,NULL,angle,shift,quiet,NULL,true,antialias);
+    SceneDoRay(G,width,height,mode,NULL,NULL,angle,shift,quiet,NULL,true,antialias);
   }
   return 1;
 }

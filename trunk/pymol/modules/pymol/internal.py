@@ -139,6 +139,17 @@ def _mpng(prefix, first=-1, last=-1, preserve=0, _self=cmd): # INTERNAL
         _self.unlock(-1,_self)
     return r
 
+# copy image
+
+def _copy_image(_self=cmd,quiet=1):
+    r = DEFAULT_ERROR
+    try:
+        _self.lock(_self)   
+        r = _cmd.copy_image(_self._COb,int(quiet))
+    finally:
+        _self.unlock(r,_self)
+    return r
+
 # loading
 
 

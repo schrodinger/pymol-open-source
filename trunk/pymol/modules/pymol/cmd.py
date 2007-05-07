@@ -173,6 +173,7 @@ if __name__=='pymol.cmd':
         _alt = internal._alt
         _coordset_update_spawn = internal._coordset_update_spawn
         _coordset_update_thread = internal._coordset_update_thread
+        _copy_image = internal._copy_image
         _ctrl = internal._ctrl
         _do = internal._do
         _dump_floats = internal._dump_floats
@@ -207,7 +208,7 @@ if __name__=='pymol.cmd':
         #######################################################################
         # cmd module functions...
         #######################################################################
-
+            
         # for extending the language
 
         from commanding import extend, alias, dummy

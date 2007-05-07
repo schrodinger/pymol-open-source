@@ -323,7 +323,7 @@ PYMOL API
             r = _self.do('cmd._mpng("'+prefix+'","'+
                        str(int(first)-1)+'","'+
                        str(int(last)-1)+'","'+
-                       str(int(preserve))+'")',0)
+                       str(int(preserve))+'",_self=cmd)',0)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 

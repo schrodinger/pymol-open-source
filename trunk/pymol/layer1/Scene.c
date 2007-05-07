@@ -55,6 +55,10 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"ScrollBar.h"
 
+#ifdef _PYMOL_INCENTIVES
+#include "IncentiveCopyToClipboard.h"
+#endif
+
 #ifdef _PYMOL_SHARP3D
 #define cSliceMin 0.1F
 #else
@@ -1394,42 +1398,55 @@ int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,
   if(mode&0x2) {
     premultiply_alpha = false;
   }
+  /*
+  printf("image %p I->image %p\n");
+  if(I->Image) {
+    printf("%d %d %d %d\n",I->Image->width,width,I->Image->height,height);
+    }*/
+
   if(image&&I->Image&&(I->Image->width==width)&&(I->Image->height==height)) {
     for (i=0; i< height; i++)
       {
-	unsigned char *dst = dest + i * (rowbytes);
-	unsigned char *src = ((unsigned char*)image) + ((height-1)-i) * width*4;
-	for (j = 0; j < width; j++) {
-	  if(no_alpha) {
-	    dst[red_index]   = src[0]; /* no alpha */
-	    dst[green_index] = src[1];
-	    dst[blue_index]  = src[2];
-	    dst[alpha_index] = 0xFF;
-        if(!(i||j)) {
-          printf("no alpha\n");
+        unsigned char *src = ((unsigned char*)image) + ((height-1)-i) * width*4;
+        unsigned char *dst;
+        if(mode&0x4) {
+          dst = dest + (height-(i+1))*(rowbytes);
+        } else {
+          dst = dest + i * (rowbytes);
         }
-	  } else if(premultiply_alpha) {
-	    dst[red_index]   = (((unsigned int)src[0])*src[3])/255; /* premultiply alpha */
-	    dst[green_index] = (((unsigned int)src[1])*src[3])/255;
-	    dst[blue_index]  = (((unsigned int)src[2])*src[3])/255;
-	    dst[alpha_index] = src[3];
-        if(!(i||j)) {
-          printf("premult alpha\n");
+        for (j = 0; j < width; j++) {
+          if(no_alpha) {
+            dst[red_index]   = src[0]; /* no alpha */
+            dst[green_index] = src[1];
+            dst[blue_index]  = src[2];
+            dst[alpha_index] = 0xFF;
+            /*            if(!(i||j)) {
+              printf("no alpha\n");
+              }*/
+          } else if(premultiply_alpha) {
+            dst[red_index]   = (((unsigned int)src[0])*src[3])/255; /* premultiply alpha */
+            dst[green_index] = (((unsigned int)src[1])*src[3])/255;
+            dst[blue_index]  = (((unsigned int)src[2])*src[3])/255;
+            dst[alpha_index] = src[3];
+            /*            if(!(i||j)) {
+              printf("premult alpha\n");
+              }*/
+          } else {
+            dst[red_index]   = src[0]; /* standard alpha */
+            dst[green_index] = src[1];
+            dst[blue_index]  = src[2];
+            dst[alpha_index] = src[3];
+            /*            if(!(i||j)) {
+              printf("standard alpha\n");
+              }*/
+          }
+          dst+=4;
+          src+=4;
         }
-	  } else {
-	    dst[red_index]   = src[0]; /* standard alpha */
-	    dst[green_index] = src[1];
-	    dst[blue_index]  = src[2];
-	    dst[alpha_index] = src[3];
-        if(!(i||j)) {
-          printf("standard alpha\n");
-        }
-	  }
-	  dst+=4;
-	  src+=4;
-	}
       }
     result=true;
+  } else {
+    printf("image or size mismatch\n");
   }
   SceneImageFinish(G,image);  
   return(result);
@@ -4810,6 +4827,7 @@ static int SceneDeferredClick(DeferredMouse *dm)
     }
   return 1;
 }
+
 static int SceneDeferredImage(DeferredImage *di)
 {
   PyMOLGlobals *G=di->G;
@@ -4817,6 +4835,12 @@ static int SceneDeferredImage(DeferredImage *di)
   if(di->filename) {
     ScenePNG(G,di->filename, di->dpi, di->quiet);
     FreeP(di->filename);
+  } else if(G->HaveGUI &&
+            SettingGetGlobal_b(G,cSetting_auto_copy_to_clipboard)) {
+#if _PYMOL_INCENTIVES
+    if(IncentiveCopyToClipboard(G,di->quiet)) {
+    }
+#endif    
   }
   return 1;
 }
@@ -5205,14 +5229,40 @@ static void SceneApplyImageGamma(PyMOLGlobals *G,unsigned int *buffer, int width
 
 static double accumTiming = 0.0; 
 
+void SceneDoRay(PyMOLGlobals *G,int width,int height,int mode,
+                char **headerVLA,char **charVLA,
+                float angle,float shift,int quiet,
+                G3dPrimitive **g3d,int show_timing,int antialias)
+{
+  SceneRay(G, width, height, mode,
+           headerVLA, charVLA,
+           angle,shift, quiet,
+           g3d, show_timing, antialias);
+  if((mode==0) && 
+     G->HaveGUI &&
+     SettingGetGlobal_b(G,cSetting_auto_copy_to_clipboard)) {
+#if _PYMOL_INCENTIVES
+     IncentiveCopyToClipboard(G,quiet);
+#endif    
+  }
+}
+
 static int SceneDeferredRay(DeferredRay *dr)
 {
   PyMOLGlobals *G=dr->G;
   SceneRay(G, dr->ray_width, dr->ray_height, dr->mode,
            NULL, NULL, dr->angle, dr->shift, dr->quiet, 
            NULL, dr->show_timing, dr->antialias);
+  if((dr->mode==0) && 
+     G->HaveGUI &&
+     SettingGetGlobal_b(G,cSetting_auto_copy_to_clipboard)) {
+#if _PYMOL_INCENTIVES
+    IncentiveCopyToClipboard(G,dr->quiet);
+#endif    
+  }
   return 1;
 }
+
 
 int SceneDeferRay(PyMOLGlobals *G,
                    int ray_width,
@@ -5241,6 +5291,7 @@ int SceneDeferRay(PyMOLGlobals *G,
   OrthoDefer(G,&dr->deferred);
   return 1;
 }
+
 
 
 void SceneRay(PyMOLGlobals *G,
@@ -5671,8 +5722,7 @@ void SceneRay(PyMOLGlobals *G,
 
   if(mode!=3)
     OrthoDirty(G);
-
-
+  
 }
 /*========================================================================*/
 void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
