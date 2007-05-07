@@ -706,7 +706,7 @@ typedef struct _CPyMOL {
   ov_word lex_ray_transparency_oblique_power;
   ov_word lex_ray_scatter;
   ov_word lex_h_bond_from_proton;
-  ov_word lex_auto_copy_to_clipboard;
+  ov_word lex_auto_copy_images;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1420,7 +1420,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_transparency_oblique_power,554);  
   LEX_SETTING(ray_scatter,555);
   LEX_SETTING(h_bond_from_proton,556);
-  LEX_SETTING(auto_copy_to_clipboard, 557);
+  LEX_SETTING(auto_copy_images, 557);
   return_OVstatus_SUCCESS;
 }
 

@@ -3381,7 +3381,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_ray_transparency_oblique_power,1.0F);
   set_f(I,cSetting_ray_scatter,0.0F);
   set_b(I,cSetting_h_bond_from_proton,1);
-  set_b(I,cSetting_auto_copy_to_clipboard,1);
+  set_b(I,cSetting_auto_copy_images,0);
 
 }
 

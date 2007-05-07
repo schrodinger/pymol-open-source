@@ -747,7 +747,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_ray_transparency_oblique_power 554
 #define cSetting_ray_scatter                555
 #define cSetting_h_bond_from_proton         556
-#define cSetting_auto_copy_to_clipboard     557
+#define cSetting_auto_copy_images           557
 
 /* when you add a new setting also remember:
    layer1/Setting.c

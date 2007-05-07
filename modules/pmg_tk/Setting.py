@@ -157,6 +157,9 @@ class Setting:
         self.show_alpha_checker = IntVar()
         self.show_alpha_checker.set(int(cmd.get_setting_legacy('show_alpha_checker')))
 
+        self.auto_copy_images = IntVar()
+        self.auto_copy_images.set(int(cmd.get_setting_legacy('auto_copy_images')))
+
         self.F=[ None,
                     IntVar(),
                     IntVar(),
@@ -285,6 +288,8 @@ class Setting:
 
             'show_alpha_checker'         :
             (lambda s,a: (cmd.set(a,("%d" % s.show_alpha_checker.get()),log=1))),
+            'auto_copy_images'         :
+            (lambda s,a: (cmd.set(a,("%d" % s.auto_copy_images.get()),log=1))),
 
             }
 
@@ -372,8 +377,10 @@ class Setting:
             'opaque_background':
             (lambda s,t: (s.opaque_background.set(t[1][0]!=0))),
             'show_alpha_checker':
-            (lambda s,t: (s.show_alpha_checker.set(t[1][0]!=0))),       
-          }
+            (lambda s,t: (s.show_alpha_checker.set(t[1][0]!=0))),
+            'auto_copy_images':
+            (lambda s,t: (s.auto_copy_images.set(int(t[1][0])))),
+            }
         self.active_list = [
             pymol.setting._get_index("ray_trace_frames"),
             pymol.setting._get_index("cache_frames"),
@@ -417,7 +424,8 @@ class Setting:
             pymol.setting._get_index("stereo"),
             pymol.setting._get_index("animation"),
             pymol.setting._get_index("opaque_background"),
-            pymol.setting._get_index("show_alpha_checker"),            
+            pymol.setting._get_index("show_alpha_checker"),
+            pymol.setting._get_index("auto_copy_images"),
             ]
 
         self.active_dict = {}
