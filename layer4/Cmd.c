@@ -2918,11 +2918,11 @@ static PyObject *CmdSplash(PyObject *self, PyObject *args)
     }
   } else {
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef _IPYMOL
-    result=0;
+#ifdef _PYMOL_EVAL
+    result = 2;
 #else
-#ifdef _EPYMOL
-    result=2;
+#ifdef _PYMOL_IP_EXTRAS
+    result = 0;
 #endif
 #endif
 /* END PROPRIETARY CODE SEGMENT */
@@ -8120,7 +8120,7 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
   return APIResultOk(ok);  
 }
 
-#ifdef _PYMOL_INCENTIVES
+#ifdef _PYMOL_IP_EXTRAS
 #include "IncentiveCopyToClipboard.h"
 #endif
 
@@ -8139,7 +8139,7 @@ static PyObject *CmdCopyImage(PyObject *self, 	PyObject *args)
   if(ok) {
     if(G->HaveGUI) {
 
-#if _PYMOL_INCENTIVES
+#if _PYMOL_IP_EXTRAS
       ok = IncentiveCopyToClipboard(G,quiet);
 #endif    
     } else {

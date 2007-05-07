@@ -116,17 +116,47 @@ Z* -------------------------------------------------------------------
 #endif
 #endif
 
-#ifdef _IPYMOL
+/* commercial product */
+
+#ifdef _PYMOL_COMM
+#ifndef _PYMOL_IP_SPLASH
+#define _PYMOL_IP_SPLASH
+#endif
+#ifndef _PYMOL_IP_EXTRAS
+#define _PYMOL_IP_EXTRAS
+#endif
+#endif
+
+/* collaboration product (placarded) */
+
+#ifdef _PYMOL_COLL
+#ifndef _PYMOL_IP_SPLASH
+#define _PYMOL_IP_SPLASH
+#endif
+#ifndef _PYMOL_IP_EXTRAS
+#define _PYMOL_IP_EXTRAS
+#endif
+#endif
+
+/* educational product (placarded) */
+
+#ifdef _PYMOL_EDU
+#ifndef _PYMOL_IP_SPLASH
+#define _PYMOL_IP_SPLASH
+#endif
+#ifndef _PYMOL_IP_EXTRAS
+#define _PYMOL_IP_EXTRAS
+#endif
+#endif
+
+/* evaluation product (placarded) */
+
+#ifdef _PYMOL_EVAL
 #ifndef _PYMOL_IP_SPLASH
 #define _PYMOL_IP_SPLASH
 #endif
 #endif
 
-#ifdef _EPYMOL
-#ifndef _PYMOL_IP_SPLASH
-#define _PYMOL_IP_SPLASH
-#endif
-#endif
 
 /* END PROPRIETARY CODE SEGMENT */
 
