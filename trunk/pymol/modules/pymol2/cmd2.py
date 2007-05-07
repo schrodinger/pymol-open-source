@@ -110,6 +110,7 @@ class Cmd:
         self._alt = global_cmd._alt
         self._coordset_update_spawn = global_cmd._coordset_update_spawn
         self._coordset_update_thread = global_cmd._coordset_update_thread
+        self._copy_image = global_cmd._copy_image
         self._ctrl = global_cmd._ctrl
         self._do = global_cmd._do
         self._dump_floats = global_cmd._dump_floats
@@ -249,6 +250,10 @@ class Cmd:
     def copy(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.copy, a, k)
+    
+    def copy_image(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.copy_image, a, k)
     
     def count_atoms(self, *a, **k):
         k['_self']=self
