@@ -8139,7 +8139,7 @@ static PyObject *CmdCopyImage(PyObject *self, 	PyObject *args)
   if(ok) {
     if(G->HaveGUI) {
 
-#if _PYMOL_IP_EXTRAS
+#ifdef _PYMOL_IP_EXTRAS
       ok = IncentiveCopyToClipboard(G,quiet);
 #endif    
     } else {
