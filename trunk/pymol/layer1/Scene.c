@@ -5238,13 +5238,6 @@ void SceneDoRay(PyMOLGlobals *G,int width,int height,int mode,
            headerVLA, charVLA,
            angle,shift, quiet,
            g3d, show_timing, antialias);
-  if((mode==0) && 
-     G->HaveGUI &&
-     SettingGetGlobal_b(G,cSetting_auto_copy_images)) {
-#if _PYMOL_INCENTIVES
-     IncentiveCopyToClipboard(G,quiet);
-#endif    
-  }
 }
 
 static int SceneDeferredRay(DeferredRay *dr)
