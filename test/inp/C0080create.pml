@@ -51,4 +51,14 @@ print cmd.count_atoms("tst2 and state 3")
 print cmd.count_atoms("ligs3d and state 3")
 print cmd.count_atoms("ligs3d and state 5")
 print cmd.count_atoms("tst2 and state 5")
+
+dele all
+
+load dat/ligs3d.sdf
+create tmp, ligs3d, 0, 4
+count_states
+disable
+enable tmp
+count_states
+
 /print "END-LOG"

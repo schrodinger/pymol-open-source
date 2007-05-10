@@ -2271,6 +2271,20 @@ PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL *I,float *content,
   return status;
 }
 
+PyMOLreturn_status PyMOL_CmdCreate(CPyMOL *I, char *name, 
+                                   char *selection, int source_state,
+                                   int target_state, int discrete, 
+                                   int zoom, int quiet, 
+                                   int singletons, char *extract)
+{
+  int ok = true;
+  PYMOL_API_LOCK
+  ok = ExecutiveSeleToObject(I->G, name, selection, source_state, target_state, 
+                                 discrete, zoom, quiet, singletons);
+  PYMOL_API_UNLOCK
+  return return_status_ok(ok);
+}
+
 static const CPyMOLOptions Defaults = {
  true, /* pmgui */
 #ifndef _PYMOL_NOPY

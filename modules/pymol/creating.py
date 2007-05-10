@@ -565,8 +565,9 @@ USAGE
         if _self._raising(r,_self): raise pymol.CmdException                                    
         return r
 
-    def create(name,selection,source_state=0,
-               target_state=0,discrete=0,zoom=-1,quiet=1,singletons=0,extract=None,_self=cmd):
+    def create(name, selection, source_state=0,
+               target_state=0, discrete=0, zoom=-1, quiet=1,
+               singletons=0, extract=None, _self=cmd):
         '''
 DESCRIPTION
 
