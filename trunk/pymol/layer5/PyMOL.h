@@ -266,6 +266,12 @@ PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL *I,float *content,
                                     char *object_name, int state, 
                                     int quiet, int zoom);
 
+PyMOLreturn_status PyMOL_CmdCreate(CPyMOL *I, char *name, 
+                                   char *selection, int source_state,
+                                   int target_state, int discrete, 
+                                   int zoom, int quiet, 
+                                   int singletons, char *extract);
+
 PyMOLreturn_status PyMOL_CmdZoom(CPyMOL *I,char *selection, float buffer,
                int state, int complete, float animate, int quiet);
 

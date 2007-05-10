@@ -97,3 +97,25 @@ PyMOL>print cmd.count_atoms("ligs3d and state 5")
 32
 PyMOL>print cmd.count_atoms("tst2 and state 5")
 0
+PyMOL>dele all
+PyMOL>load dat/ligs3d.sdf
+ ObjectMoleculeReadStr: read through molecule 1.
+ ObjectMoleculeReadStr: read through molecule 2.
+ ObjectMoleculeReadStr: read through molecule 3.
+ ObjectMoleculeReadStr: read through molecule 4.
+ ObjectMoleculeReadStr: read through molecule 5.
+ ObjectMoleculeReadStr: read through molecule 6.
+ ObjectMoleculeReadStr: read through molecule 7.
+ ObjectMoleculeReadStr: read through molecule 8.
+ ObjectMoleculeReadStr: read through molecule 9.
+ ObjectMoleculeReadStr: read through molecule 10.
+ ExecutiveLoad: "dat/ligs3d.sdf" loaded as "ligs3d", through state 10.
+PyMOL>create tmp, ligs3d, 0, 4
+ Selector: found 337 atoms.
+ Executive: object "tmp" created.
+PyMOL>count_states
+ cmd.count_states: 13 states.
+PyMOL>disable
+PyMOL>enable tmp
+PyMOL>count_states
+ cmd.count_states: 13 states.

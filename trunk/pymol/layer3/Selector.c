@@ -491,6 +491,34 @@ int SelectorNameIsKeyword(PyMOLGlobals *G, char *name)
   }
   return 0;
 }
+/*========================================================================*/
+static int SelectorIsSelectionDiscrete(PyMOLGlobals *G,int sele,int update_table)
+{
+  register CSelector *I=G->Selector;
+  register ObjectMolecule **i_obj=I->Obj,*obj;
+  AtomInfoType *ai;
+  int result=false;
+  register TableRec *i_table = I->Table, *table_a;
+  int a;
+
+  if(update_table) {
+    SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
+  }
+
+  table_a = i_table + cNDummyAtoms;
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
+    obj= i_obj[table_a->model];
+    ai = obj->AtomInfo + table_a->atom;
+    if(SelectorIsMember(G,ai->selEntry,sele)) {
+      if(obj->DiscreteFlag) {
+        result=true;
+        break;
+      }
+    }
+    table_a++;
+  }
+  return(result);
+}
 
 static int *SelectorUpdateTableMultiObjectIdxTag(PyMOLGlobals *G,
                                                  ObjectMolecule **obj_list,
@@ -6195,24 +6223,31 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
   CObject *ob;
   ObjectMolecule *targ = NULL;
   ObjectMolecule *info_src = NULL;
+  int static_singletons = SettingGetGlobal_b(G,cSetting_static_singletons);
+
+  if(singletons<0)
+    singletons = static_singletons;
 
   ob=ExecutiveFindObjectByName(G,name);
   if(ob)
     if(ob->type==cObjectMolecule) 
       targ = (ObjectMolecule*)ob;
-  if(!targ) {
-    isNew=true;
-    targ = ObjectMoleculeNew(G,discrete);
-    targ->Bond = VLACalloc(BondType,1);
-  } else {
-    isNew=false;
-  }
   
   c=0;
   if((target<0)||(source<0)||(target!=source)) {
     SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
   } else {
     SelectorUpdateTable(G,target,-1);
+  }
+
+  if(!targ) {
+    isNew=true;
+    if(discrete<0)
+      discrete = SelectorIsSelectionDiscrete(G,sele,false);
+    targ = ObjectMoleculeNew(G,discrete);
+    targ->Bond = VLACalloc(BondType,1);
+  } else {
+    isNew=false;
   }
 
   for(a=cNDummyAtoms;a<I->NAtom;a++) {
@@ -6361,10 +6396,14 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
       cs2->IdxToAtm=Realloc(cs2->IdxToAtm,int,c);
       VLASize(cs2->Coord,float,c*3);
       cs2->NIndex = c;
-      if(target>=0)
-        ts = target;
-      else
+      if(target>=0) {
+        if(source<0)
+          ts = target + d;
+        else
+          ts = target;
+      } else {
         ts = d;
+      }
       VLACheck(targ->CSet,CoordSet*,ts);
       if(targ->NCSet<=ts) 
         targ->NCSet=ts+1;

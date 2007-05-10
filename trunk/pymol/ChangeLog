@@ -2,9 +2,17 @@
 CHANGE LOG
 =========================================================================
 
+2007-05-10  Warren L. DeLano <warren@delsci.com>
+
+	* added PyMOL_CmdCreate
+	
+2007-05-09  Warren L. DeLano <warren@delsci.com>
+
+        * modified create to allow shifted multi-state object creation
+	
 2007-05-06  Warren L. DeLano <warren@delsci.com>
 
-	* damage control galore... many new bugs created & quashed.
+	* damage control galore... many bugs created, many bugs quashed.
 	
 2007-05-05  Warren L. DeLano <warren@delsci.com>
 
