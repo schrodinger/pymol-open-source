@@ -336,7 +336,7 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException         
         return r
 
-    def enable(name='all',_self=cmd):
+    def enable(name='all',parents=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -385,7 +385,7 @@ SEE ALSO
         else:
             try:
                 _self.lock(_self)   
-                r = _cmd.onoff(_self._COb,str(name),1);
+                r = _cmd.onoff(_self._COb,str(name),1,int(parents));
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException            
@@ -424,7 +424,7 @@ SEE ALSO
         else:
             try:
                 _self.lock(_self)   
-                r = _cmd.onoff(_self._COb,str(name),0);
+                r = _cmd.onoff(_self._COb,str(name),0,0);
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException            

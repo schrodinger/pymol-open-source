@@ -146,12 +146,13 @@ ExecutiveSpheroid
 
 */
 
+static void ExecutiveSpecEnable(PyMOLGlobals *G, SpecRec *rec, int parents, int log);
 static void ExecutiveToggleAllRepVisib(PyMOLGlobals *G,int rep);
 static void ExecutiveSetAllRepVisib(PyMOLGlobals *G,int rep,int state);
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name); 
 static int ExecutiveDrag(Block *block,int x,int y,int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
-                                       int new_vis,int mod);
+                                       int new_vis,int mod,int parents);
 static int ExecutiveSetObjectMatrix2(PyMOLGlobals *G,CObject *obj,int state,double *matrix);
 static int ExecutiveGetObjectMatrix2(PyMOLGlobals *G,CObject *obj,int state,double **matrix, int incl_ttt);
 int ExecutiveTransformObjectSelection2(PyMOLGlobals *G,CObject *obj,int state,
@@ -439,6 +440,38 @@ void ExecutiveUpdateGroups(PyMOLGlobals *G,int force)
     I->ValidGroups = true;
     ExecutiveInvalidatePanelList(G);
   }
+}
+
+static int ExecutiveGetObjectParentList(PyMOLGlobals *G, SpecRec *child)
+{
+  int list_id = 0;
+  ExecutiveUpdateGroups(G,false);
+  {
+    CExecutive *I = G->Executive;
+    CTracker *I_Tracker= I->Tracker;
+    int priority = 1; /* generations removed from child */
+    int repeat_flag = true;
+    SpecRec *group_rec = NULL;
+
+    list_id = TrackerNewList(I_Tracker, NULL);
+    while(child && child->group && repeat_flag) {
+      repeat_flag = false;
+      OVreturn_word result;
+      if( OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,child->group_name)))) {
+        if( OVreturn_IS_OK( (result = OVOneToOne_GetForward(I->Key, result.word)))) { 
+          if(TrackerGetCandRef(I_Tracker, result.word, (TrackerRef**)&group_rec)) {
+            if(TrackerLink(I_Tracker, result.word,  list_id, priority++)) { /* checking this prevents infinite loops */
+              if(group_rec->group) {
+                repeat_flag=true;
+                child = group_rec;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return list_id;
 }
 
 int ExecutiveVdwFit(PyMOLGlobals *G,char *s1,int state1,char *s2,int state2,float buffer, int quiet)
@@ -4059,7 +4092,7 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,
   }
   if(ok) {
     if(have_active)
-      ExecutiveSetObjVisib(G,active,true);      
+      ExecutiveSetObjVisib(G,active,true,false);      
   }
   if(incomplete) {
     PRINTFB(G,FB_Executive,FB_Warnings)
@@ -5443,7 +5476,7 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
         }
       }
       if(SettingGet(G,cSetting_auto_show_selections)) {
-        ExecutiveSetObjVisib(G,selName,true);
+        ExecutiveSetObjVisib(G,selName,true,false);
       }
       break;
     }
@@ -6999,7 +7032,7 @@ void ExecutiveFlag(PyMOLGlobals *G,int flag,char *s1,int action,int quiet)
     if((int)SettingGet(G,cSetting_auto_indicate_flags)) {
       sprintf(buffer,"(flag %d)",flag);
       SelectorCreate(G,cIndicateSele,buffer,NULL,true,NULL);
-      ExecutiveSetObjVisib(G,cIndicateSele,true);
+      ExecutiveSetObjVisib(G,cIndicateSele,true,false);
       SceneInvalidate(G);
     }
   }
@@ -11371,7 +11404,7 @@ int ExecutiveGetMoment(PyMOLGlobals *G,char *name,double *mi,int state)
   return(c);
 }
 /*========================================================================*/
-int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
+int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff,int parents)
 {
   register CExecutive *I = G->Executive;
   PRINTFD(G,FB_Executive)
@@ -11415,6 +11448,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
           }
           break;
         case cExecObject:
+          /*
           if(rec->visible!=onoff) {
             if(rec->visible) {
               rec->in_scene = SceneObjectDel(G,rec->obj);				
@@ -11424,6 +11458,17 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
               ExecutiveInvalidateSceneMembers(G);
             }
             rec->visible=!rec->visible;
+          }
+          */
+          if(onoff) { /* enable */
+            ExecutiveSpecEnable(G,rec,parents,false);
+          } else { /* disable */
+            if(rec->visible) {
+              if(rec->in_scene) 
+                rec->in_scene = SceneObjectDel(G,rec->obj);				
+              rec->visible = false;
+              ExecutiveInvalidateSceneMembers(G);
+            }
           }
           break;
         case cExecSelection:
@@ -11824,7 +11869,7 @@ int ExecutiveSetOnOffBySele(PyMOLGlobals *G,char *name,int onoff)
 
   tRec = ExecutiveFindSpec(G,name);
   if((!tRec)&&(!strcmp(name,cKeywordAll))) {
-    ExecutiveSetObjVisib(G,name,onoff);
+    ExecutiveSetObjVisib(G,name,onoff,false);
   }
   if(tRec) {
     sele=SelectorIndexByName(G,name);
@@ -13036,19 +13081,19 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   if(mod==(cOrthoSHIFT|cOrthoCTRL)) {
                     I->ToggleMode=2;
                     if(!rec->visible) {
-                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod,false);
                     }
                     if(rec!=I->LastZoomed) 
                       ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F,true);
                     I->LastZoomed=rec;
                     I->LastChanged=rec;
                   } else if(mod&cOrthoSHIFT) {
-                    ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                    ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod,false);
                     I->ToggleMode=1;
                   } else if(mod&cOrthoCTRL) {
                     I->ToggleMode=2;
                     if(!rec->visible) {
-                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod,false);
                     }
                     I->LastChanged=rec;
                   }
@@ -13071,16 +13116,16 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     if(mod&cOrthoSHIFT) { /* exclusive */
                       I->ToggleMode = 6;
 
-                      ExecutiveSetObjVisib(G,cKeywordAll, false); /* need to log this */
+                      ExecutiveSetObjVisib(G,cKeywordAll, false,false); /* need to log this */
                       if(!rec->visible)
-                        ExecutiveSpecSetVisibility(G,rec,true,0);
+                        ExecutiveSpecSetVisibility(G,rec,true,0,false);
                     }
                   } else {
                     I->ToggleMode = 4;
                     ExecutiveCenter(G,rec->name,-1,true,-1.0F,NULL,true);
                   }
                   if(!rec->visible) {
-                    ExecutiveSpecSetVisibility(G,rec,!rec->visible,mod);
+                    ExecutiveSpecSetVisibility(G,rec,!rec->visible,mod,false);
                     I->LastChanged=rec;
                   }
                   I->PressedWhat = 1;
@@ -13121,28 +13166,76 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   return(1);
 }
 /*========================================================================*/
+static void ExecutiveSpecEnable(PyMOLGlobals *G, SpecRec *rec, int parents, int log)
+{
+  if(log && SettingGetGlobal_b(G,cSetting_logging)) {
+    OrthoLineType buffer = "";
+    sprintf(buffer,"cmd.enable('%s',%d)",rec->obj->Name,parents);
+    PLog(G,buffer,cPLog_pym);
+  }
+  
+  if(!rec->visible) {
+    rec->visible = true;
+  }    
+  if(!rec->in_scene) {
+    rec->in_scene = SceneObjectAdd(G,rec->obj);
+  }
+
+  if(parents) {
+    CExecutive *I = G->Executive;
+    CTracker *I_Tracker= I->Tracker;
+    int list_id = ExecutiveGetObjectParentList(G,rec);
+    if(list_id) {
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+      SpecRec *parent_rec = NULL;
+      
+      while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&parent_rec) ) {
+        if(rec) {
+          switch(parent_rec->type) {
+          case cExecObject:
+            if(!parent_rec->in_scene) {
+              parent_rec->in_scene = SceneObjectAdd(G,parent_rec->obj);                
+            }
+            if(!parent_rec->visible) {
+              parent_rec->visible = true;
+            }
+          }
+        }
+      }
+      TrackerDelIter(I_Tracker, iter_id);
+    }
+    TrackerDelList(I_Tracker, list_id);
+  }
+  ExecutiveInvalidateSceneMembers(G);
+}
+
 static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
-                                      int new_vis,int mod)
+                                      int new_vis,int mod,int parents)
 {
   OrthoLineType buffer = "";
-
+  int logging = SettingGet(G,cSetting_logging);
   if(rec->type==cExecObject) {
     if(rec->visible&&!new_vis) {
-      if(SettingGet(G,cSetting_logging)) 
+      if(logging)
         sprintf(buffer,"cmd.disable('%s')",rec->obj->Name);
       SceneObjectDel(G,rec->obj);			
       ExecutiveInvalidateSceneMembers(G);
+      rec->visible=new_vis;
     }
     else if((!rec->visible)&&new_vis) {
-      sprintf(buffer,"cmd.enable('%s')",rec->obj->Name);
-      rec->in_scene = SceneObjectAdd(G,rec->obj);
-      ExecutiveInvalidateSceneMembers(G);
+      ExecutiveSpecEnable(G,rec,parents,logging);
+      /*
+        if(logging) 
+        sprintf(buffer,"cmd.enable('%s')",rec->obj->Name);
+        rec->in_scene = SceneObjectAdd(G,rec->obj);
+        rec->visible=new_vis;
+        ExecutiveInvalidateSceneMembers(G);
+      */
     }
     SceneChanged(G);
-    if(SettingGet(G,cSetting_logging)) {
+    if(logging&&buffer[0]) {
       PLog(G,buffer,cPLog_pym);
     }
-    rec->visible=new_vis;
   } else if(rec->type==cExecAll) {
     if(SettingGet(G,cSetting_logging)) {
       if(rec->visible)
@@ -13151,7 +13244,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
         sprintf(buffer,"cmd.enable('all')");
       PLog(G,buffer,cPLog_pym);
     }
-    ExecutiveSetObjVisib(G,cKeywordAll,!rec->visible);
+    ExecutiveSetObjVisib(G,cKeywordAll,!rec->visible,false);
     } else if(rec->type==cExecSelection) {
       if(mod&cOrthoCTRL) {
         /*        SettingSet(G,cSetting_selection_overlay,
@@ -13248,9 +13341,9 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
                   /* over name */
                   if(rec->hilight==1) {
                     if(rec->type==cExecSelection) {
-                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,0);                    
+                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,0,false);                    
                     } else {
-                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                      ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod,true);
                     }
                   }
                 } else if((I->PressedWhat==2) && (panel->is_group)) {
@@ -13393,15 +13486,15 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                       break;
                     case 1:
                       if(row)
-                        ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
+                        ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod,false);
                       break;
                     case 2:
                       if((row==I->Over)&&row) {
                         if(I->LastChanged!=rec) {
-                          ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
+                          ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod,false);
                         }
                         if(!rec->visible) {
-                          ExecutiveSpecSetVisibility(G,rec,true,mod);
+                          ExecutiveSpecSetVisibility(G,rec,true,mod,false);
                           I->LastChanged=rec;
                         }
                         if((mod==(cOrthoSHIFT|cOrthoCTRL))) {
@@ -13552,10 +13645,10 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                     case 4: /* center and activate, while deactivating previous */
                       if((row==I->Over)&&row) {
                         if(I->LastChanged!=rec) {
-                          ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
+                          ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod,false);
                           ExecutiveCenter(G,rec->name,-1,true,-1.0F,NULL,true);
                           if(!rec->visible) 
-                            ExecutiveSpecSetVisibility(G,rec,true,mod);
+                            ExecutiveSpecSetVisibility(G,rec,true,mod,false);
                           I->LastChanged = rec;
                         }
                         rec->hilight=0;
@@ -13564,10 +13657,10 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                     case 5: /* zoom and activate, while deactivating previous */
                       if((row==I->Over)&&row) {
                         if(I->LastChanged!=rec) {
-                          ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
+                          ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod,false);
                           ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F,true);
                           if(!rec->visible) 
-                            ExecutiveSpecSetVisibility(G,rec,true,mod);
+                            ExecutiveSpecSetVisibility(G,rec,true,mod,false);
                           I->LastChanged = rec;
                         }
                         rec->hilight=1;
@@ -13576,10 +13669,10 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                     case 6: /* zoom and make only object enabled */
                       if((row==I->Over)&&row) {
                         if(rec!=I->LastZoomed) { 
-                          ExecutiveSpecSetVisibility(G,I->LastZoomed,false,mod);
+                          ExecutiveSpecSetVisibility(G,I->LastZoomed,false,mod,false);
                           ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F,true);
                           I->LastZoomed=rec;
-                          ExecutiveSpecSetVisibility(G,rec,true,0);
+                          ExecutiveSpecSetVisibility(G,rec,true,0,false);
                         }
                         rec->hilight=1;
                       }
@@ -13594,7 +13687,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
         I->LastOver = I->Over;
         
       } else if(I->LastChanged)
-        ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);      
+        ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod,false);      
       OrthoDirty(G);
     }
   }
