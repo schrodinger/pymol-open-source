@@ -9246,7 +9246,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        ObjectMoleculeSaveUndo(I,op->i1,false);
        break;
      case OMOP_OnOff:
-       ExecutiveSetObjVisib(G,I->Obj.Name,op->i1);
+       ExecutiveSetObjVisib(G,I->Obj.Name,op->i1,false);
        break;
 	  }
 	}

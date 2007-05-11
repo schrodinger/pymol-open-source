@@ -190,7 +190,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 moe_str = moe_file.read()
                 moe_file.close()
                 r = moe.read_moestr(moe_str,str(oname),int(state),
-                                int(finish),int(discrete),int(quiet),int(zoom))
+                                int(finish),int(discrete),int(quiet),int(zoom),_self=_self)
 
                 # END PROPRIETARY CODE SEGMENT
             except ImportError:

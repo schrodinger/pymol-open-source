@@ -3622,7 +3622,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             if(SettingGet(G,cSetting_auto_hide_selections))
               ExecutiveHideSelections(G);
             if(SettingGet(G,cSetting_auto_show_selections))
-              ExecutiveSetObjVisib(G,selName,1);
+              ExecutiveSetObjVisib(G,selName,1,false);
             if(obj->type==cObjectMolecule) {
               if(SettingGet(G,cSetting_logging)) {
                 objMol = (ObjectMolecule*)obj;            
@@ -3666,7 +3666,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             if(SettingGet(G,cSetting_auto_hide_selections))
               ExecutiveHideSelections(G);
             if(SettingGet(G,cSetting_auto_show_selections))
-              ExecutiveSetObjVisib(G,selName,1);
+              ExecutiveSetObjVisib(G,selName,1,false);
             WizardDoSelect(G,selName);
             break;
           }
@@ -3698,7 +3698,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             ObjectNameType name;
 
             if(ExecutiveGetActiveSeleName(G,name, false,SettingGet(G,cSetting_logging))) {
-              ExecutiveSetObjVisib(G,name,0);
+              ExecutiveSetObjVisib(G,name,0,false);
               if(SettingGet(G,cSetting_logging)) {
                 sprintf(buf2,"cmd.disable('%s')\n",name);
                 PLog(G,buf2,cPLog_no_flush);

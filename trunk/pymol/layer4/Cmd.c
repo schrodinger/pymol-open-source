@@ -6510,7 +6510,7 @@ static PyObject *CmdOnOffBySele(PyObject *self, 	PyObject *args)
   int onoff;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"Osi",&self,&sname,&onoff);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&sname,&onoff);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -6532,8 +6532,9 @@ static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
   PyMOLGlobals *G = NULL;
   char *name;
   int state;
+  int parents = 0;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"Osi",&self,&name,&state);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&name,&state,&parents);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -6542,7 +6543,7 @@ static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
   }
   if (ok) { /* TODO STATUS */
     APIEntry(G);
-    ExecutiveSetObjVisib(G,name,state);
+    ExecutiveSetObjVisib(G,name,state,parents);
     APIExit(G);
   }
   return APIResultOk(ok);
