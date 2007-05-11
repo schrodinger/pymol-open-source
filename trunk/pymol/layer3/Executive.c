@@ -455,8 +455,8 @@ static int ExecutiveGetObjectParentList(PyMOLGlobals *G, SpecRec *child)
 
     list_id = TrackerNewList(I_Tracker, NULL);
     while(child && child->group && repeat_flag) {
-      repeat_flag = false;
       OVreturn_word result;
+      repeat_flag = false;
       if( OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,child->group_name)))) {
         if( OVreturn_IS_OK( (result = OVOneToOne_GetForward(I->Key, result.word)))) { 
           if(TrackerGetCandRef(I_Tracker, result.word, (TrackerRef**)&group_rec)) {

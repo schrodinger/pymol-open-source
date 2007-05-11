@@ -342,7 +342,7 @@ int SettingUniqueCopyAll(PyMOLGlobals *G,int src_unique_id, int dst_unique_id)
           SettingUniqueExpand(G);
         {
           src_entry = I->entry + src_offset;
-        
+          {
           int setting_id = src_entry->setting_id;
           int setting_type = src_entry->type;
           int setting_value = src_entry->value;
@@ -366,6 +366,7 @@ int SettingUniqueCopyAll(PyMOLGlobals *G,int src_unique_id, int dst_unique_id)
               dst_entry->next = 0;
             }
             prev = dst_offset;
+          }
           }
         }
         src_offset = I->entry[src_offset].next; /* src_entry invalid, since I->entry may have changed */
