@@ -593,6 +593,7 @@ if __name__=='pymol.setting':
         ray_scatter = (555,'')
         h_bond_from_proton = (556,'')
         auto_copy_images = (557,'')
+        moe_separate_chains = (558,'')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
