@@ -3382,6 +3382,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_ray_scatter,0.0F);
   set_b(I,cSetting_h_bond_from_proton,1);
   set_b(I,cSetting_auto_copy_images,0);
+  set_b(I,cSetting_moe_separate_chains,1);
 
 }
 
