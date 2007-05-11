@@ -269,6 +269,117 @@ void SettingUniqueResetAll(PyMOLGlobals *G)
   }
 }
 
+int SettingUniqueCopyAll(PyMOLGlobals *G,int src_unique_id, int dst_unique_id)
+{
+  int ok=true;
+  register CSettingUnique *I = G->SettingUnique;
+  OVreturn_word dst_result;
+    
+  if( OVreturn_IS_OK( (dst_result=OVOneToOne_GetForward(I->id2offset,dst_unique_id)) )) { /* setting list exists for atom */
+      
+    /* note, this code path not yet tested...doesn't occur*/
+
+    OVreturn_word src_result;
+    if( OVreturn_IS_OK(src_result = OVOneToOne_GetForward(I->id2offset,src_unique_id)) ) {
+      int src_offset = src_result.word;
+      SettingUniqueEntry *src_entry;
+      while(src_offset) {
+        src_entry = I->entry + src_offset;
+
+        {
+          int setting_id = src_entry->setting_id;
+          int setting_type = src_entry->type;
+          int setting_value = src_entry->value;
+          int dst_offset = dst_result.word;
+          int prev = 0;
+          int found = false;
+          while(dst_offset) {
+            SettingUniqueEntry *dst_entry = I->entry + dst_offset;
+            if(dst_entry->setting_id == setting_id) {
+              found = true; /* this setting is already defined */
+              dst_entry->value = setting_value;
+              dst_entry->type = setting_type;
+              break;
+            }
+            prev = dst_offset;
+            dst_offset = dst_entry->next;
+          }
+          if(!found) { /* setting not found in existing list, so append new value */
+            if(!I->next_free) 
+              SettingUniqueExpand(G);
+            if(I->next_free) {
+              dst_offset = I->next_free;
+              {
+                SettingUniqueEntry *dst_entry = I->entry + dst_offset;
+                I->next_free = dst_entry->next;
+                dst_entry->next = 0;
+                if(prev) { /* append onto existing list */
+                  I->entry[prev].next = dst_offset;
+                  dst_entry->type = setting_type;
+                  dst_entry->value = setting_value;
+                  dst_entry->setting_id = setting_id;
+                } else if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, dst_unique_id, dst_offset))) {
+                  /* create new list */
+                  dst_entry->type = setting_type;
+                  dst_entry->value = setting_value;
+                  dst_entry->setting_id = setting_id;
+                }
+              }
+            }
+          }
+        }
+        src_offset = I->entry[src_offset].next; /* src_entry invalid, since I->entry may have changed */
+      }
+    }
+  } else if(dst_result.status == OVstatus_NOT_FOUND) { /* new setting list for atom */
+    OVreturn_word src_result;
+    if( OVreturn_IS_OK(src_result = OVOneToOne_GetForward(I->id2offset,src_unique_id)) ) {
+      int src_offset = src_result.word;
+      int prev = 0;
+      SettingUniqueEntry *src_entry;
+      while(ok&&src_offset) {
+        if(!I->next_free) 
+          SettingUniqueExpand(G);
+        {
+          src_entry = I->entry + src_offset;
+        
+          int setting_id = src_entry->setting_id;
+          int setting_type = src_entry->type;
+          int setting_value = src_entry->value;
+          if(I->next_free) {
+            int dst_offset = I->next_free;
+            SettingUniqueEntry *dst_entry = I->entry + dst_offset;
+            I->next_free = dst_entry->next;
+            
+            if(!prev) {
+              if(!OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, dst_unique_id, dst_offset))) {
+                ok=false;
+              }
+            } else {
+              I->entry[prev].next = dst_offset;
+            }
+
+            if(ok) {
+              dst_entry->type = setting_type;
+              dst_entry->value = setting_value;
+              dst_entry->setting_id = setting_id;
+              dst_entry->next = 0;
+            }
+            prev = dst_offset;
+          }
+        }
+        src_offset = I->entry[src_offset].next; /* src_entry invalid, since I->entry may have changed */
+      }
+    }
+  } else {
+    ok=false;
+    /* unhandled error */
+  }
+
+  return ok;
+}
+
+
 static void SettingUniqueInit(PyMOLGlobals *G)
 {
   register CSettingUnique *I = G->SettingUnique;
@@ -281,7 +392,7 @@ static void SettingUniqueInit(PyMOLGlobals *G)
       I->entry = VLACalloc(SettingUniqueEntry,I->n_alloc);
       /* note: intentially skip index 0  */
       for(a=2;a<10;a++) {
-        I->entry[a].next = a-1;
+        I->entry[a].next = a-1; /* 1-based linked list with 0 as sentinel */
       }
       I->next_free = I->n_alloc-1;
     }
@@ -3382,7 +3493,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_f(I,cSetting_ray_scatter,0.0F);
   set_b(I,cSetting_h_bond_from_proton,1);
   set_b(I,cSetting_auto_copy_images,0);
-  set_b(I,cSetting_moe_separate_chains,1);
+  set_i(I,cSetting_moe_separate_chains,-1);
 
 }
 

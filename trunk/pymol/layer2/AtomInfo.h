@@ -195,6 +195,7 @@ int AtomInfoGetSetting_i(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int 
 int AtomInfoGetSetting_f(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, float current, float *effective);
 int AtomInfoGetSetting_color(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
 
+void AtomInfoBondCopy(PyMOLGlobals *G, BondType *src, BondType *dst);
 
 int AtomInfoCheckBondSetting(PyMOLGlobals *G, BondType *bi, int setting_id);
 int AtomInfoGetBondSetting_b(PyMOLGlobals *G, BondType *ai, int setting_id, int current, int *effective);

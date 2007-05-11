@@ -3888,10 +3888,9 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
         }
         ai[a1].bonded=true;
         ai[a2].bonded=true;
+        (*ii1) = (*ii2); /* note this copies owned ids and thus settings etc. */
         ii1->index[0]=a1;
         ii1->index[1]=a2;
-        ii1->order = ii2->order;
-        ii1->stereo = ii2->stereo;
         ii1++;
         ii2++;
 
@@ -3931,10 +3930,9 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
         a2 = cs->IdxToAtm[ii2->index[1]]; /* second is in the cset */
         ai[a1].bonded=true;
         ai[a2].bonded=true;
+        (*ii1) = (*ii2); /* note this copies owned ids and thus settings etc. */
         ii1->index[0]=a1;
         ii1->index[1]=a2;
-        ii1->order = ii2->order;
-        ii1->stereo = ii2->stereo;
         ii1++;
         ii2++;
       }
