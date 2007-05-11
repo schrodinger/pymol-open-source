@@ -989,14 +989,34 @@ void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst)
   /* copy, handling resource management issues... */
 
   *dst=*src;
-  dst->unique_id=0;
   dst->selEntry=0;
-  dst->has_setting=0;
+  if(src->unique_id && src->has_setting) {
+    dst->unique_id = AtomInfoGetNewUniqueID(G);
+    if(!SettingUniqueCopyAll(G, src->unique_id, dst->unique_id)) 
+      dst->has_setting = 0;
+  } else {
+    dst->unique_id=0;
+    dst->has_setting=0;
+  }
   if(dst->label) {
     OVLexicon_IncRef(G->Lexicon,dst->label);
   }
   if(dst->textType) {
     OVLexicon_IncRef(G->Lexicon,dst->textType);
+  }
+}
+
+void AtomInfoBondCopy(PyMOLGlobals *G, BondType *src, BondType *dst)
+{
+  *(dst) = *(src);
+
+  if(src->unique_id && src->has_setting) {
+    dst->unique_id = AtomInfoGetNewUniqueID(G);
+    if(!SettingUniqueCopyAll(G, src->unique_id, dst->unique_id)) 
+      dst->has_setting = 0;
+  } else {
+    src->unique_id = 0;
+    src->has_setting = 0;
   }
 }
 

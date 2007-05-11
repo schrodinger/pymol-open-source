@@ -86,6 +86,7 @@ PyObject *SettingUniqueAsPyList(PyMOLGlobals *G);
 int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore);
 int SettingUniqueConvertOldSessionID(PyMOLGlobals *G,int old_unique_id);
 
+int SettingUniqueCopyAll(PyMOLGlobals *G, int src_unique_id, int dst_unique_id);
 void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui);
 void SettingFreeGlobal(PyMOLGlobals *G);
 

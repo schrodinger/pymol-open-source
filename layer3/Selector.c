@@ -6277,11 +6277,13 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
       b2=ii1->index[1]+obj->SeleBase;
       if((I->Table[b1].index>=0)&&(I->Table[b2].index>=0)) {
         VLACheck(bond,BondType,nBond);
-        bond[nBond].index[0]=I->Table[b1].index; /* store what will be the new index */
-        bond[nBond].index[1]=I->Table[b2].index;
-        bond[nBond].order=ii1->order;
-        bond[nBond].stereo=ii1->stereo;
-        nBond++;
+        {
+          BondType *dst_bond = bond+nBond;
+          AtomInfoBondCopy(G, ii1, dst_bond);
+          dst_bond->index[0] = I->Table[b1].index; /* store what will be the new index */
+          dst_bond->index[1] = I->Table[b2].index;
+          nBond++;
+        }
       }
       ii1++;
     }
