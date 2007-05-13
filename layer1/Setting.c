@@ -625,6 +625,10 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   int defer_updates = SettingGetGlobal_b(G,cSetting_defer_updates);
   int suspend_updates = SettingGetGlobal_b(G,cSetting_suspend_updates);
 
+  float no_idle = SettingGetGlobal_f(G,cSetting_no_idle);
+  float slow_idle = SettingGetGlobal_f(G,cSetting_fast_idle);
+  float fast_idle = SettingGetGlobal_f(G,cSetting_slow_idle);
+
   register CSetting *I=G->Setting;
   if(list)
     if(PyList_Check(list)) 
@@ -634,7 +638,11 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_b(I,cSetting_session_migration,session_migration); /* preserve current migration info */
   SettingSet_b(I,cSetting_session_version_check,session_version_check);
 
-  /* restore the following settings */
+  /* restore the following settings  */
+
+  SettingSetGlobal_f(G,cSetting_no_idle, no_idle);
+  SettingSetGlobal_f(G,cSetting_fast_idle, fast_idle);
+  SettingSetGlobal_f(G,cSetting_slow_idle, slow_idle);
 
   SettingSet_b(I,cSetting_stereo, stereo); 
   SettingSet_b(I,cSetting_text, text);
