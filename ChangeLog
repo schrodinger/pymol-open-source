@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2007-05-16  Warren L. DeLano <warren@delsci.com>
+
+	* fixed bug with selection modification menus
+	
+2007-05-14  Warren L. DeLano <warren@delsci.com>
+
+	* fixed enable with selection-expression arguments
+	
 2007-05-10  Warren L. DeLano <warren@delsci.com>
 
 	* added PyMOL_CmdCreate

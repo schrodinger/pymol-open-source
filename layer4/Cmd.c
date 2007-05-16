@@ -6510,7 +6510,7 @@ static PyObject *CmdOnOffBySele(PyObject *self, 	PyObject *args)
   int onoff;
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"Osii",&self,&sname,&onoff);
+  ok = PyArg_ParseTuple(args,"Osi",&self,&sname,&onoff);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
