@@ -168,17 +168,23 @@ SEE ALSO
 
     clip_action_sc = Shortcut([ 'near','far','move','slab','atoms' ])
 
-    def clip(mode,distance,selection=None,state=0,_self=cmd):
+    def clip(mode, distance, selection=None, state=0, _self=cmd):
         '''
 DESCRIPTION
 
-    "clip" alters the near and far clipping planes
+    "clip" alters the positions of the clipping planes.
 
 USAGE
 
-    clip mode, distance, selection='', state=0
+    clip mode, distance [, selection [, state ]]
 
-    mode is one of near, far, move, slab, or atoms
+ARGUMENTS 
+
+    mode = near, far, move, slab, or atoms
+
+    distance is a floating point value
+
+    selection = atom selection for mode=atoms
 
 EXAMPLES
 
@@ -193,11 +199,11 @@ EXAMPLES
 
 PYMOL API
 
-    cmd.clip(string mode, float distance, string selection)
+    cmd.clip(string mode, float distance, string selection, int state)
 
 SEE ALSO
 
-    zoom, reset
+    zoom, orient, reset
         '''
         r = DEFAULT_ERROR      
         mode = clip_action_sc.auto_err(str(mode),'mode')
@@ -214,7 +220,7 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException         
         return r
 
-    def origin(selection="(all)",object=None,position=None,state=0,_self=cmd):
+    def origin(selection="(all)", object=None, position=None, state=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -265,13 +271,12 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException         
         return r
 
-    def orient(selection="(all)",state=0,animate=0,_self=cmd):
+    def orient(selection="(all)", state=0, animate=0, _self=cmd):
         '''
 DESCRIPTION
 
     "orient" aligns the principal components of the atoms in the
-    selection with the XYZ axes.  The function is similar to the
-    orient command in X-PLOR.
+    selection with the XYZ axes.  
 
 USAGE
 
@@ -287,6 +292,10 @@ ARGUMENTS
     state = 0 (default) use all coordinate states
     state = -1 use only coordinates for the current state
     state > 0  use coordinates for a specific state
+
+NOTES
+
+    The function is similar to the orient command in X-PLOR.
 
 SEE ALSO
 
@@ -304,7 +313,7 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException         
         return r
 
-    def move(axis,distance,_self=cmd):
+    def move(axis, distance, _self=cmd):
         '''
 DESCRIPTION
 
@@ -312,12 +321,12 @@ DESCRIPTION
 
 USAGE
 
-    move axis,distance
+    move axis, distance
 
 EXAMPLES
 
-    move x,3
-    move y,-1
+    move x, 3
+    move y, -1
 
 PYMOL API
 
@@ -336,7 +345,7 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException         
         return r
 
-    def enable(name='all',parents=0,_self=cmd):
+    def enable(name='all', parents=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -348,11 +357,14 @@ USAGE
 
 ARGUMENTS    
 
-    name = name-pattern or selection.  If name matches a selection
-    name, then selection indicator dots are shown for atoms in that
-    selection.
+    name = name-pattern or selection. 
 
 NOTES
+
+    If name matches a selection name, then selection indicator dots
+    are shown for atoms in that selection.  If name is a
+    selection-expression, then all objects with atoms in that
+    selection are enabled.
 
     For an object\'s content to be displayed in the 3D viewer, the
     object must be enabled AND at least one of the available
@@ -1795,6 +1807,34 @@ NOTES
         return r
 
     def draw(width=0,height=0,antialias=-1,quiet=1,_self=cmd):
+    	'''
+DESCRIPTION
+
+    "draw" creates an OpenGL-based image of the current frame.  
+
+USAGE
+
+    draw [width [,height [,antialias [,quiet ]]]]
+
+PYMOL API
+
+    cmd.drawy(int width, int height, int antialias, int quiet)
+
+EXAMPLES
+
+    draw
+    draw 1600
+
+NOTES
+
+    Default width and height are taken from the current viewpoint. If
+    one is specifieds but not the other, then the missing value is
+    scaled so as to preserve the current aspect ratio.
+
+SEE ALSO
+
+    ray, png, save
+'''
         # stop movies and sculpting if they're on...
         if _self.get_movie_playing():
             _self.mstop()
@@ -1841,7 +1881,7 @@ EXAMPLES
 NOTES
 
     Default width and height are taken from the current viewpoint. If
-    one is specified, but not the other, then the missing value is
+    one is specified but not the other, then the missing value is
     scaled so as to preserve the current aspect ratio.
     
     angle and shift can be used to generate matched stereo pairs
@@ -1852,12 +1892,13 @@ NOTES
         and you must have "x-povray" in your path.  It utilizes two
         two temporary files: "tmp_pymol.pov" and "tmp_pymol.png".
 
+    See "help faster" for optimization tips with the builtin renderer.
+    See "help povray" for how to use PovRay instead of PyMOL\'s
+    built-in ray-tracing engine.
+
 SEE ALSO
 
-    "help faster" for optimization tips with the builtin renderer.
-    "help povray" for how to use PovRay instead of PyMOL\'s built-in
-    ray-tracing engine.
-
+    ray, draw, png
         '''
         arg_tup = (int(width),int(height),
                    int(antialias),float(angle),
