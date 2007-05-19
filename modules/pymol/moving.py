@@ -290,7 +290,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def mpng(prefix,first=0,last=0,preserve=0):
+    def mpng(prefix,first=0,last=0,preserve=0,_self=cmd):
         '''
 DESCRIPTION
 

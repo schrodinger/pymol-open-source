@@ -4,6 +4,14 @@ CHANGE LOG
 
 2007-05-16  Warren L. DeLano <warren@delsci.com>
 
+	* fixed mpng export
+	
+	* cObjectDist now cObjectMeasurement (no C names/files renamed)
+		
+	* additional show/hide menu options for measurement objects
+	
+2007-05-16  Warren L. DeLano <warren@delsci.com>
+
 	* fixed bug with selection modification menus
 	
 2007-05-14  Warren L. DeLano <warren@delsci.com>

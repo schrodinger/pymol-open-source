@@ -110,15 +110,19 @@ def mol_hide(self_cmd, sele):
          ]
         )
         
-def dist_show(self_cmd, sele):
+def measurement_show(self_cmd, sele):
     return [[ 2, 'Show:'     , ''                               ],
               [ 1, 'dashes'    , 'cmd.show("dashes"    ,"'+sele+'")' ],
+              [ 1, 'angles'    , 'cmd.show("angles"    ,"'+sele+'")' ],
+              [ 1, 'dihedrals' , 'cmd.show("dihedrals"    ,"'+sele+'")' ],
               [ 1, 'labels'    , 'cmd.show("labels"    ,"'+sele+'")' ]
              ]   
 
-def dist_hide(self_cmd, sele):
+def measurement_hide(self_cmd, sele):
     return [[ 2, 'Hide:'     , ''                                ],
               [ 1, 'dashes'    , 'cmd.hide("dashes"    ,"'+sele+'")'  ],
+              [ 1, 'angles'    , 'cmd.hide("angles"    ,"'+sele+'")'  ],
+              [ 1, 'dihedrals' ,  'cmd.hide("dihedrals"  ,"'+sele+'")'  ],
               [ 1, 'labels'    , 'cmd.hide("labels"    ,"'+sele+'")'  ]
              ]
 
@@ -607,7 +611,7 @@ def invert(self_cmd, sele):
 def complete(self_cmd, sele):
     return [[ 2, 'Complete:'       ,''                        ],     
 
-              [ 1, 'resides'  ,'cmd.select("'+sele+'","(byres '+sele+')",enable=1)'      ],
+              [ 1, 'residues'  ,'cmd.select("'+sele+'","(byres '+sele+')",enable=1)'      ],
               [ 1, 'chains'  ,'cmd.select("'+sele+'","(bychain '+sele+')",enable=1)'      ],
               [ 1, 'segments'  ,'cmd.select("'+sele+'","(byseg '+sele+')",enable=1)'      ],
               [ 1, 'objects'  ,'cmd.select("'+sele+'","(byobj '+sele+')",enable=1)'      ],

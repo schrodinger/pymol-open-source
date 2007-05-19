@@ -113,7 +113,7 @@ typedef struct {
 typedef struct {
   int len;
   char *name;
-  int x1,y1,x2,y2,shown;
+  int x1,y1,x2,y2,item;
 } SceneElem;
 
 /* allow up to 10 seconds at 30 FPS */
@@ -183,7 +183,7 @@ struct _CScene {
 
   /* Scene Names */
   int ButtonsShown, ButtonDrag;
-  int Over, Pressed, DragMode, HowFarDown, NSkip;
+  int Over, Pressed, PressMode, HowFarDown, NSkip;
   int ScrollBarActive;
   int ReorderFlag;
   OrthoLineType ReorderLog;
@@ -2167,7 +2167,7 @@ int SceneSetNames(PyMOLGlobals *G,PyObject *list)
       for(a=0;a<I->NScene;a++) {
         elem->name = c;
         elem->len = strlen(c);
-        elem->shown = false;
+        elem->item = 0;
         c += elem->len+1;
         elem++;
       }
@@ -2217,7 +2217,7 @@ static void SceneDrawButtons(Block *block)
     {
       int i;
       for(i=0;i<I->NScene;i++)
-        I->SceneVLA[i].shown = false;
+        I->SceneVLA[i].item = 0;
     }
     if(n_ent>n_disp) {
       int bar_maxed = ScrollBarIsMaxed(I->ScrollBar);
@@ -2302,8 +2302,8 @@ static void SceneDrawButtons(Block *block)
             {
               int visible = 1;
               int len;
-              int item = row - skip;
               SceneElem *elem = I->SceneVLA + i;
+	      int item = I->NSkip + row;
               c = elem->name;
               len = elem->len;
 
@@ -2315,7 +2315,8 @@ static void SceneDrawButtons(Block *block)
 
               /* store rectangles for finding clicks */
 
-              elem->shown = true;
+              elem->item = item;
+
               elem->x1 = x;
               elem->y1 = y2;
               elem->x2 = x2;
@@ -2324,9 +2325,9 @@ static void SceneDrawButtons(Block *block)
               if((item==I->Pressed)&&(item==I->Over)) {
                 draw_button(x,y2,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,pressedColor);
               } else if(visible) {
-                draw_button(x,y2,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,enabledColor);
-              } else {
                 draw_button(x,y2,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,disabledColor);
+              } else {
+                draw_button(x,y2,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,enabledColor);
               }
               
               TextSetColor(G,I->Block->TextColor);
@@ -2636,8 +2637,9 @@ void SceneDraw(Block *block)
       I->RenderTime += I->LastRender;
       ButModeSetRate(G,(float)I->RenderTime);
     }
-
-    /*   SceneDrawButtons(block);*/
+#if 0
+    SceneDrawButtons(block);
+#endif
   }
 }
 /*========================================================================*/
@@ -2836,7 +2838,6 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
   PyMOLGlobals *G=block->G;
   register CScene *I=G->Scene;
   ObjectMolecule *obj;
-  
   I->LastReleaseTime = when;
  
   if(I->PossibleSingleClick==1) {
@@ -2870,17 +2871,34 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
       }
     }
   }
-  if(I->LoopFlag)
-    return SceneLoopRelease(block,button,x,y,mod);
-  if(I->SculptingFlag) {
-    /* SettingSet(G,cSetting_sculpting,1); */
-    obj=(ObjectMolecule*)I->LastPicked.context.object;
-    if(obj) {
-      obj->AtomInfo[I->LastPicked.src.index].protekted=I->SculptingSave;
+  if(!I->PressMode) {
+    if(I->LoopFlag)
+      return SceneLoopRelease(block,button,x,y,mod);
+    if(I->SculptingFlag) {
+      /* SettingSet(G,cSetting_sculpting,1); */
+      obj=(ObjectMolecule*)I->LastPicked.context.object;
+      if(obj) {
+	obj->AtomInfo[I->LastPicked.src.index].protekted=I->SculptingSave;
+      }
+      I->SculptingFlag=0;
     }
-    I->SculptingFlag=0;
+    
+  } else {
+    int release_handled = false;
+    if(I->ScrollBarActive) {
+      if((x-I->Block->rect.left)<(SceneScrollBarWidth+SceneScrollBarMargin)) {
+	ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
+	release_handled = true;
+      }
+    }
+    if(!release_handled) {
+      I->LastPickVertexFlag=false;
+      I->Pressed = -1;
+      I->Over = -1;
+      I->PressMode = 0;
+      OrthoUngrab(G);
+    }
   }
-  I->LastPickVertexFlag=false;
   return 1;
 }
 /*========================================================================*/
@@ -3017,6 +3035,7 @@ static int SceneClick(Block *block,int button,int x,int y,
                          ( button == P_GLUT_SINGLE_MIDDLE ) ||
                          ( button == P_GLUT_SINGLE_RIGHT  ));
   int click_handled = false;
+
   if(!is_single_click) {
 
     if( ((ButModeTranslate(G,button,mod) == cButModePotentialClick) || (!mod)) 
@@ -3063,20 +3082,39 @@ static int SceneClick(Block *block,int button,int x,int y,
   if(I->ButtonsShown) {
     int i;
     SceneElem *elem = I->SceneVLA;
-    for(i=0;i<I->NScene;i++) {
-      if(elem->shown &&
-         (x>=elem->x1) &&
-         (y>=elem->y1) &&
-         (x<elem->x2) &&
-         (y<elem->y2)) {
-        I->Pressed = i;
-        I->Over = i;
-        I->DragMode = 1;
-        OrthoDirty(G);
-        click_handled = true;
-        break;
+    
+    if(I->ScrollBarActive) {
+      if((x-I->Block->rect.left)<(SceneScrollBarWidth+SceneScrollBarMargin)) {
+	click_handled = true;
+	ScrollBarDoClick(I->ScrollBar,button,x,y,mod);      
       }
-      elem++;
+    } 
+    if(!click_handled) {
+      for(i=0;i<I->NScene;i++) {
+	if(elem->item &&
+	   (x>=elem->x1) &&
+	   (y>=elem->y1) &&
+	   (x<elem->x2) &&
+	   (y<elem->y2)) {
+	  switch(button) {
+	  case P_GLUT_LEFT_BUTTON: /* normal activate (with interpolation) */
+	    I->Pressed = i;
+	    I->Over = i;
+	    I->PressMode = 1;
+	    SceneDirty(G);
+	    click_handled = true;
+	    break;
+	  case P_GLUT_MIDDLE_BUTTON: /* quick search */
+	    click_handled = true;
+	    break;
+	  case P_GLUT_RIGHT_BUTTON: /* drag */
+	    click_handled = true;
+	    break;
+	  }
+	  break;
+	}
+	elem++;
+      }
     }
   }
   if(!click_handled) {
@@ -3485,7 +3523,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             I->LastPickVertexFlag=true;
           }
           break;
-        case cObjectDist:
+        case cObjectMeasurement:
           break;
         case cObjectGadget:
           break;
@@ -4190,13 +4228,13 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   if(I->LoopFlag)
     return SceneLoopDrag(block,x,y,mod);
 
-  if(I->ButtonsShown && (I->DragMode)) {
+  if(I->ButtonsShown && (I->PressMode)) {
     int i;
     SceneElem *elem = I->SceneVLA;
     drag_handled = true;
     I->Over = -1;
     for(i=0;i<I->NScene;i++) {
-      if(elem->shown &&
+      if(elem->item &&
          (x>=elem->x1) &&
          (y>=elem->y1) &&
          (x<elem->x2) &&
@@ -4519,7 +4557,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               }
             }
             break;
-          case cObjectDist:
+          case cObjectMeasurement:
             if(ObjectDistGetLabelTxfVertex((ObjectDist*)obj,
                                            SettingGetGlobal_i(G,cSetting_state)-1,
                                            I->LastPicked.src.index,v1)) {
@@ -4821,10 +4859,8 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
 static int SceneDeferredClick(DeferredMouse *dm)
 {
-  if(!SceneClick(dm->block, dm->button, dm->x, dm->y, dm->mod, dm->when))
-    {
-      
-    }
+  if(!SceneClick(dm->block, dm->button, dm->x, dm->y, dm->mod, dm->when)) {
+  }
   return 1;
 }
 
@@ -5099,7 +5135,7 @@ int  SceneInit(PyMOLGlobals *G)
     I->ReorderFlag=false;
     I->NSkip=0;
     I->HowFarDown=0;
-    I->DragMode = 0;
+    I->PressMode = 0;
     I->SceneNameVLA = VLAlloc(char,10);
     I->SceneVLA = VLAlloc(SceneElem,10);
     I->NScene = 0;

@@ -3310,7 +3310,7 @@ static PyObject *ExecutiveGetExecObjectAsPyList(PyMOLGlobals *G,SpecRec *rec)
   case cObjectMolecule:
     PyList_SetItem(result,5,ObjectMoleculeAsPyList((ObjectMolecule*)rec->obj));
     break;
-  case cObjectDist:
+  case cObjectMeasurement:
     PyList_SetItem(result,5,ObjectDistAsPyList((ObjectDist*)rec->obj));
     break;
   case cObjectMap:
@@ -3380,7 +3380,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version,
         case cObjectMolecule:
           if(ok) ok = ObjectMoleculeNewFromPyList(G,PyList_GetItem(cur,5),(ObjectMolecule**)&rec->obj);
           break;
-        case cObjectDist:
+        case cObjectMeasurement:
           if(ok) ok = ObjectDistNewFromPyList(G,PyList_GetItem(cur,5),(ObjectDist**)&rec->obj);
           break;
         case cObjectMap:
@@ -6569,8 +6569,8 @@ int ExecutiveGetType(PyMOLGlobals *G,char *name,WordType type)
         strcat(type,"slice");
       else if(rec->obj->type==cObjectSurface)
         strcat(type,"surface");
-      else if(rec->obj->type==cObjectDist)
-        strcat(type,"distance");
+      else if(rec->obj->type==cObjectMeasurement)
+        strcat(type,"measurement");
       else if(rec->obj->type==cObjectCGO)
         strcat(type,"cgo");
       else if(rec->obj->type==cObjectGroup)
@@ -6736,7 +6736,7 @@ void ExecutiveRebuildAll(PyMOLGlobals *G)
         else
           ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvRep,-1);           
         break;
-      case cObjectDist:
+      case cObjectMeasurement:
         ObjectDistInvalidateRep((ObjectDist*)rec->obj,cRepAll);
         break;
       case cObjectSurface:
@@ -6760,7 +6760,7 @@ void ExecutiveRebuildAllObjectDist(PyMOLGlobals *G)
   SpecRec *rec = NULL;
   while(ListIterate(I->Spec,rec,next)) {
     if(rec->type==cExecObject) {
-      if(rec->obj->type==cObjectDist) {
+      if(rec->obj->type==cObjectMeasurement) {
         ObjectDistInvalidateRep((ObjectDist*)rec->obj,cRepAll);
       }
     }
@@ -7225,7 +7225,7 @@ int ExecutiveAngle(PyMOLGlobals *G,float *result, char *nam,
   if((sele1>=0)&&(sele2>=0)&&(sele3>=0)) {
     anyObj = ExecutiveFindObjectByName(G,nam);
     if(anyObj) {
-      if(anyObj->type!=cObjectDist) {
+      if(anyObj->type!=cObjectMeasurement) {
         ExecutiveDelete(G,nam);
         anyObj=NULL;
       }
@@ -7292,7 +7292,7 @@ int ExecutiveDihedral(PyMOLGlobals *G,float *result, char *nam,char *s1,
   if((sele1>=0)&&(sele2>=0)&&(sele3>=0)&&(sele4>=0)) {
     anyObj = ExecutiveFindObjectByName(G,nam);
     if(anyObj) {
-      if(anyObj->type!=cObjectDist) {
+      if(anyObj->type!=cObjectMeasurement) {
         ExecutiveDelete(G,nam);
         anyObj=NULL;
       }
@@ -7354,7 +7354,7 @@ int ExecutiveDist(PyMOLGlobals *G,float *result,char *nam,
   if((sele1>=0)&&(sele2>=0)) {
     anyObj = ExecutiveFindObjectByName(G,nam);
     if(anyObj)
-      if(reset || anyObj->type!=cObjectDist) {
+      if(reset || anyObj->type!=cObjectMeasurement) {
         ExecutiveDelete(G,nam);
         anyObj=NULL;
       }
@@ -12894,7 +12894,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   case cObjectMesh:
                     MenuActivate(G,mx,my,x,y,false,"mesh_action",rec->obj->Name);
                     break;
-                  case cObjectDist:
+                  case cObjectMeasurement:
                   case cObjectCGO:
                   case cObjectCallback:
                   case cObjectAlignment:
@@ -12928,8 +12928,8 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   case cObjectAlignment:
                     MenuActivate(G,mx,my,x,y,false,"cgo_show",rec->obj->Name);
                     break;
-                  case cObjectDist:
-                    MenuActivate(G,mx,my,x,y,false,"dist_show",rec->obj->Name);
+                  case cObjectMeasurement:
+                    MenuActivate(G,mx,my,x,y,false,"measurement_show",rec->obj->Name);
                     break;
                   case cObjectMap:
                     MenuActivate(G,mx,my,x,y,false,"map_show",rec->obj->Name);
@@ -12966,8 +12966,8 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   case cObjectAlignment:
                     MenuActivate(G,mx,my,x,y,false,"cgo_hide",rec->obj->Name);
                     break;
-                  case cObjectDist:
-                    MenuActivate(G,mx,my,x,y,false,"dist_hide",rec->obj->Name);
+                  case cObjectMeasurement:
+                    MenuActivate(G,mx,my,x,y,false,"measurement_hide",rec->obj->Name);
                     break;
                   case cObjectMap:
                     MenuActivate(G,mx,my,x,y,false,"map_hide",rec->obj->Name);
@@ -13000,7 +13000,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   case cObjectMolecule:
                     MenuActivate(G,mx,my,x,y,false,"mol_labels",rec->obj->Name);
                     break;
-                  case cObjectDist:
+                  case cObjectMeasurement:
                     break;
                   case cObjectMap:
                   case cObjectSurface:
@@ -13023,7 +13023,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   case cObjectMolecule:
                     MenuActivate(G,mx,my,x,y,false,"mol_color",rec->obj->Name);
                     break;
-                  case cObjectDist:
+                  case cObjectMeasurement:
                   case cObjectMap:
                   case cObjectSurface:
                   case cObjectCGO:
@@ -13050,7 +13050,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     MenuActivate(G,mx,my,x,y,false,"mol_motion",rec->obj->Name);
                     break;
                     /*
-                      case cObjectDist:
+                      case cObjectMeasurement:
                       case cObjectMap:
                       case cObjectSurface:
                       case cObjectCGO:
