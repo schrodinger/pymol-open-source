@@ -21,6 +21,8 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Color.h"
 
+/* NOTE: "Dist" names & symbols should be updated to "Measurement" */
+
 typedef struct ObjectDist {
   CObject Obj;
   struct DistSet **DSet;

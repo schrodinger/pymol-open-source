@@ -31,7 +31,8 @@ typedef char ObjectNameType[WordLength];
 #define cObjectMolecule     1
 #define cObjectMap          2
 #define cObjectMesh         3
-#define cObjectDist         4
+/* cObjectDist now cObjectMeasurement */
+#define cObjectMeasurement  4
 #define cObjectCallback     5
 #define cObjectCGO          6
 #define cObjectSurface      7

@@ -184,7 +184,7 @@ ARGUMENTS
 
     distance is a floating point value
 
-    selection = atom selection for mode=atoms
+    selection = atom selection (for mode=atoms only)
 
 EXAMPLES
 
@@ -1818,7 +1818,7 @@ USAGE
 
 PYMOL API
 
-    cmd.drawy(int width, int height, int antialias, int quiet)
+    cmd.draw(int width, int height, int antialias, int quiet)
 
 EXAMPLES
 
@@ -1830,6 +1830,10 @@ NOTES
     Default width and height are taken from the current viewpoint. If
     one is specifieds but not the other, then the missing value is
     scaled so as to preserve the current aspect ratio.
+
+    Because this feature uses the OpenGL rendering context to piece
+    together the image, it does not work when running in the
+    command-line only mode.
 
 SEE ALSO
 
@@ -1898,7 +1902,7 @@ NOTES
 
 SEE ALSO
 
-    ray, draw, png
+    draw, png, save
         '''
         arg_tup = (int(width),int(height),
                    int(antialias),float(angle),
@@ -1926,8 +1930,8 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "refresh" causes the scene to be refresh as soon as it is safe to
-    do so.
+    "refresh" causes the scene to be redrawn as soon as the operating
+    system allows it to be done.
 
 USAGE
 

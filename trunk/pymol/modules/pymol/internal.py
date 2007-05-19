@@ -128,7 +128,6 @@ def _do(cmmd,log=0,echo=1,_self=cmd):
 
 def _mpng(prefix, first=-1, last=-1, preserve=0, _self=cmd): # INTERNAL
     import sys
-    _self = sys.modules['cmd']
     # WARNING: internal routine, subject to change
     try:
         _self.lock(_self)   

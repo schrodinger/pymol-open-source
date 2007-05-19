@@ -132,13 +132,13 @@ if __name__=='pymol.controlling':
         'one_button' : [   'one_button_viewing' ],
         }
 
-    def config_mouse(mode='three_button',quiet=1):
+    def config_mouse(mode='three_button',quiet=1,_self=cmd):
         global mouse_ring
         if ring_dict.has_key(mode):
             mouse_ring = ring_dict[mode]
             if not quiet:
                 print " config_mouse: %s"%mode
-            mouse(quiet=1)
+            _self.mouse(quiet=1,_self=_self)
 
         else:
             print " Error: unrecognized mouse ring: '%s'"%mode
