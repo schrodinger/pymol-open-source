@@ -160,25 +160,25 @@ def mesh_show(self_cmd, sele):
     return [[ 2, 'Show:'       , ''                             ],
               [ 1, 'mesh'        , 'cmd.show("mesh","'+sele+'")'     ],           
               [ 1, 'cell'        , 'cmd.show("cell","'+sele+'")'     ],
-              [ 1, 'everything'  , 'cmd.enable("'+sele+'")'          ]]
+              [ 1, 'everything'  , 'cmd.show("everything","'+sele+'")'          ]]
 
 def mesh_hide(self_cmd, sele):
     return [[ 2, 'Hide:'       , ''                             ],
               [ 1, 'mesh'        , 'cmd.hide("mesh","'+sele+'")'     ],                      
               [ 1, 'cell'        , 'cmd.hide("cell","'+sele+'")'      ],           
-              [ 1, 'everything'  , 'cmd.disable("'+sele+'")'          ]]
+              [ 1, 'everything'  , 'cmd.hide("everything",("'+sele+'")'          ]]
 
 def surface_show(self_cmd, sele):
     return [[ 2, 'Show:'       , ''                             ],
               [ 1, 'surface'        , 'cmd.show("surface","'+sele+'")'     ],           
               [ 1, 'cell'        , 'cmd.show("cell","'+sele+'")'     ],
-              [ 1, 'everything'  , 'cmd.enable("'+sele+'")'          ]]
+              [ 1, 'everything'  , 'cmd.show("everything","'+sele+'")'          ]]
 
 def surface_hide(self_cmd, sele):
     return [[ 2, 'Hide:'       , ''                             ],
               [ 1, 'surface'        , 'cmd.hide("surface","'+sele+'")'     ],                      
               [ 1, 'cell'        , 'cmd.hide("cell","'+sele+'")'      ],           
-              [ 1, 'everything'  , 'cmd.disable("'+sele+'")'          ]]
+              [ 1, 'everything'  , 'cmd.hide("everything","'+sele+'")'          ]]
 
 def slice_show(self_cmd, sele):
     return [[ 2, 'Show:'       , ''                             ],
