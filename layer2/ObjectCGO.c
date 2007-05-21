@@ -223,7 +223,7 @@ static void ObjectCGORender(ObjectCGO *I,RenderInfo *info)
 
   color = ColorGet(G,I->Obj.Color);
 
-  if(!pass) {
+  if((pass == 1) || info->ray) {
     if(I->Obj.RepVis[cRepCGO]) {
       
       if(state<I->NState) {

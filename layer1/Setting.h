@@ -750,6 +750,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_h_bond_from_proton         556
 #define cSetting_auto_copy_images           557
 #define cSetting_moe_separate_chains        558
+#define cSetting_transparency_global_sort   559
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -759,7 +760,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       559
+#define cSetting_INIT                       560
 
 #endif
 

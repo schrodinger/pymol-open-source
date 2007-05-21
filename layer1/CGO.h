@@ -49,6 +49,10 @@ struct _CGO {
   PyMOLGlobals *G;
   float *op;
   int c;
+  int z_flag;
+  float z_min, z_max;
+  float z_vector[3];
+  int *i_start,i_size;
 };
 
 /* instructions and data segment sizes */
@@ -87,7 +91,8 @@ struct _CGO {
 #define CGO_CUSTOM_CYLINDER_SZ   15
 #define CGO_DOTWIDTH             0x10
 #define CGO_DOTWIDTH_SZ          1
-
+#define CGO_ALPHA_TRIANGLE       0x11
+#define CGO_ALPHA_TRIANGLE_SZ    35
 #define CGO_FONT                 0x13
 #define CGO_FONT_SZ              3   /*  size, face, style */
 #define CGO_FONT_SCALE           0x14 
@@ -166,12 +171,19 @@ void CGOStop(CGO *I);
 void CGOCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2);
 void CGOCustomCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2,
                         float cap1,float cap2);
-
+void CGOAlphaTriangle(CGO *I,
+                      float *v1, float *v2, float *v3,
+                      float *n1, float *n2, float *n3,
+                      float *c1, float *c2, float *c3,
+                      float a1, float a2, float a3,
+                      int reverse);
+void CGOSetZVector(CGO *I, float z0, float z1, float z2);
 struct GadgetSet;
 CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result);
 void CGORenderGLPicking(CGO *I,Picking **pick,
                          PickContext *context,CSetting *set1,CSetting *set2);
 void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2,RenderInfo *info);
+void CGORenderGLAlpha(CGO *I,RenderInfo *info);
 void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2);
 void CGOReset(CGO *I);
 

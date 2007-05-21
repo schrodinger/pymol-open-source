@@ -708,6 +708,7 @@ typedef struct _CPyMOL {
   ov_word lex_h_bond_from_proton;
   ov_word lex_auto_copy_images;
   ov_word lex_moe_separate_chains;
+  ov_word lex_transparency_global_sort;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1423,6 +1424,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(h_bond_from_proton,556);
   LEX_SETTING(auto_copy_images, 557);
   LEX_SETTING(moe_separate_chains, 558);
+  LEX_SETTING(transparency_global_sort, 559);
 
   return_OVstatus_SUCCESS;
 }

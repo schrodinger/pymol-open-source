@@ -706,8 +706,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
 
   ObjectPrepareContext(&I->Obj,ray);
 
-  alpha = SettingGet_f(G,NULL,I->Obj.Setting,cSetting_transparency);
-  alpha=1.0F-alpha;
+  alpha = 1.0F - SettingGet_f(G,NULL,I->Obj.Setting,cSetting_transparency);
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0F;
   
@@ -820,15 +819,22 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
           } else {
-            
             int render_now = false;
+            int t_mode;
+            int use_dlst = SettingGetGlobal_b(G,cSetting_use_display_lists);
 
-            if(alpha>0.0001) {
-              render_now = (pass==-1);
+            t_mode  = SettingGet_i(G, NULL, I->Obj.Setting, cSetting_transparency_mode);
+
+            if(info && info->alpha_cgo) {
+              render_now = (pass == 1);
+              t_mode = 0; 
+              if(alpha != 1.0F)
+                use_dlst = false;
+            } else if(alpha < 1.0F) {
+              render_now = (pass == -1);
             } else 
-              render_now = (!pass);
+              render_now = (pass == 1);
             if(render_now) {
-              int use_dlst;
               
               if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
                 CGORenderGL(ms->UnitCellCGO,ColorGet(G,I->Obj.Color),
@@ -837,8 +843,6 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
               SceneResetNormal(G,false);
               col = ColorGet(G,ms->OneColor);
               glColor4f(col[0],col[1],col[2],alpha);
-              
-              use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
 
               if(use_dlst && ms->displayList && ms->displayListInvalid) {
                 glDeleteLists(ms->displayList,1);
@@ -846,7 +850,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                 ms->displayListInvalid = false;
               }
 
-              if(use_dlst&&ms->displayList) {
+              if(use_dlst && ms->displayList) {
                 glCallList(ms->displayList);
               } else { 
                 
@@ -859,14 +863,9 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                   }
                 }
                 
-                
                 if(n&&v&&I->Obj.RepVis[cRepSurface]) {
                   
-                  if((ms->Mode>1)&&(alpha!=1.0)) { /* transparent */
-                    
-                    int t_mode;
-
-                    t_mode  = SettingGet_i(G,NULL,I->Obj.Setting,cSetting_transparency_mode);
+                  if( (ms->Mode > 1) && (alpha != 1.0)) { /* transparent */
                     
                     if(t_mode) { /* high quality (sorted) transparency? */
                       
@@ -983,10 +982,47 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                       FreeP(z_value);
                       FreeP(t_buf);
                       FreeP(c_buf);
-                    } else {  /* fast, but unoptimized transparency */
-                      vc = ms->VC;
-                      while(*n)
-                        {
+                    } else { /* t_mode is zero */
+
+                      if(info->alpha_cgo) { /* global transparency */
+                        
+                        vc = ms->VC;
+                        while(*n) {
+                          int parity = 1;
+                          c=*(n++);
+
+                          v+=6;
+                          if(vc) vc+=3;
+                          c-=2;
+
+                          v+=6;
+                          if(vc) vc+=3;
+                          c-=2;
+
+                          while(c>0) {
+                            
+                            if(vc) {
+                              CGOAlphaTriangle(info->alpha_cgo,
+                                               v+(3-6), v+(3-12), v+3,
+                                               v - 6, v - 12, v,
+                                               vc - 3, vc - 6, vc,
+                                               alpha, alpha, alpha, parity);
+                            } else {
+                              CGOAlphaTriangle(info->alpha_cgo,
+                                               v+(3-6), v+(3-12), v+3,
+                                               v - 6, v - 12, v,
+                                               col, col, col,
+                                               alpha, alpha, alpha, parity);
+                            }
+                            v+=6;
+                            if(vc) vc+=3;
+                            c-=2;
+                            parity=!parity;
+                          }
+                        }
+                      } else {  /* fast, but unoptimized transparency */
+                        vc = ms->VC;
+                        while(*n) {
                           c=*(n++);
                           
                           glBegin(GL_TRIANGLE_STRIP);
@@ -1003,8 +1039,9 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                           }
                           glEnd();
                         }
+                      }
                     }
-                  } else {
+                  } else { /* opaque, triangles */
                     glLineWidth(SettingGet_f(G,I->Obj.Setting,NULL,cSetting_mesh_width));
                     vc = ms->VC;
                     while(*n)

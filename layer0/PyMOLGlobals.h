@@ -52,7 +52,6 @@ typedef struct _CSelector CSelector;
 typedef struct _CTexture CTexture;
 typedef struct _CType CType;
 typedef struct _CMain CMain;
-typedef struct _CGO CGO;
 typedef struct _CPlugIOManager CPlugIOManager;
 
 #ifndef _PYMOL_NOPY
@@ -77,6 +76,11 @@ typedef struct _OVContext OVContext;
 #ifndef CPyMOL_DEFINED
 typedef struct _CPyMOL CPyMOL;
 #define CPyMOL_DEFINED
+#endif
+
+#ifndef CGO_DEFINED
+typedef struct _CGO                CGO;
+#define CGO_DEFINED
 #endif
 
 typedef struct _PyMOLGlobals PyMOLGlobals;

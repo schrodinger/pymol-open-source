@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #define CGO_read_int(p) (*((int*)(p++)))
 #define CGO_get_int(p) (*((int*)(p)))
 #define CGO_write_int(p,i) ((*((int*)(p++)))=(i))
+#define CGO_put_int(p,i) ((*((int*)(p)))=(i))
 
 struct _CCGORenderer {
   PyMOLGlobals *G;
@@ -82,7 +83,7 @@ int CGO_sz[] = {
   CGO_CUSTOM_CYLINDER_SZ,
 
   CGO_DOTWIDTH_SZ,
-  CGO_NULL_SZ,
+  CGO_ALPHA_TRIANGLE_SZ,
   CGO_NULL_SZ,
   CGO_FONT_SZ,
 
@@ -100,8 +101,6 @@ int CGO_sz[] = {
   CGO_NULL_SZ,
   CGO_RESET_NORMAL_SZ,
   CGO_PICK_COLOR_SZ,
-
-
 };
 
 typedef void CGO_op(CCGORenderer *I,float *);
@@ -304,9 +303,10 @@ CGO *CGONewFromPyList(PyMOLGlobals *G,PyObject *list,int version)
 #else
   int ok=true;
   int ll;
-  OOAlloc(G,CGO);
+  OOCalloc(G,CGO);
   I->G=G;
   I->op=NULL;
+  
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
   if(ok) ll = PyList_Size(list);
@@ -330,30 +330,32 @@ CGO *CGONewFromPyList(PyMOLGlobals *G,PyObject *list,int version)
 
 CGO *CGONew(PyMOLGlobals *G)
 {
-  OOAlloc(G,CGO);
+  OOCalloc(G,CGO);
   I->G=G;
   I->op=VLAlloc(float,33);
-  I->c=0;
   return(I);
 }
 
 CGO *CGONewSized(PyMOLGlobals *G,int size)
 {
-  OOAlloc(G,CGO);
+  OOCalloc(G,CGO);
   I->G=G;
   I->op=VLAlloc(float,size+32);
-  I->c=0;
   return(I);
 }
 
 void CGOReset(CGO *I) 
 {
   I->c=0;
+  I->z_flag = false;
 }
 
 void CGOFree(CGO *I)
 {
   if(I) {
+    if(I->i_start) {
+      FreeP(I->i_start);
+    }
     VLAFreeP(I->op);
   }
   OOFreeP(I);
@@ -555,6 +557,107 @@ void CGOSausage(CGO *I,float *v1,float *v2,float r,float *c1,float *c2)
   *(pc++) = *(c2++);
   *(pc++) = *(c2++);
   *(pc++) = *(c2++);
+}
+
+void CGOSetZVector(CGO *I, float z0, float z1, float z2)
+{
+  I->z_flag = true;
+  I->z_vector[0] = z0;
+  I->z_vector[1] = z1;
+  I->z_vector[2] = z2;
+  I->z_min = FLT_MAX;
+  I->z_max = -FLT_MAX;
+}
+
+const static float one_third = 1.0F/3.0F;
+const static float _0 = 0.0F;
+
+void CGOAlphaTriangle(CGO *I,
+                      float *v1, float *v2, float *v3,
+                      float *n1, float *n2, float *n3,
+                      float *c1, float *c2, float *c3,
+                      float a1, float a2, float a3, int reverse)
+{
+  if(v1&&v2&&v3) {
+    float *pc = CGO_add(I,CGO_ALPHA_TRIANGLE_SZ+1);
+    register float z = _0;
+
+    CGO_write_int(pc,CGO_ALPHA_TRIANGLE);
+    CGO_write_int(pc,0);
+    *(pc++) = (v1[0]+v2[0]+v3[0])*one_third;
+    *(pc++) = (v1[1]+v2[1]+v3[1])*one_third;
+    *(pc++) = (v1[2]+v2[2]+v3[2])*one_third;
+    if(I->z_flag) {
+      register float *zv = I->z_vector;
+      z = pc[-3] * zv[0] + pc[-2] * zv[1] + pc[-1] * zv[2];
+      if(z > I->z_max) I->z_max = z;
+      if(z < I->z_min) I->z_min = z;
+    }
+    *(pc++) = z;
+    
+    if(reverse) {
+      *(pc++) = *(v2++); /* vertices @ +5 */
+      *(pc++) = *(v2++);
+      *(pc++) = *(v2++);
+      *(pc++) = *(v1++);
+      *(pc++) = *(v1++);
+      *(pc++) = *(v1++);
+    } else {
+      *(pc++) = *(v1++); /* vertices @ +5 */
+      *(pc++) = *(v1++);
+      *(pc++) = *(v1++);
+      *(pc++) = *(v2++);
+      *(pc++) = *(v2++);
+      *(pc++) = *(v2++);
+   }
+
+    *(pc++) = *(v3++);
+    *(pc++) = *(v3++);
+    *(pc++) = *(v3++);
+    
+    if(reverse) {
+      *(pc++) = *(n2++); /* normals @ +14 */
+      *(pc++) = *(n2++);
+      *(pc++) = *(n2++);
+      *(pc++) = *(n1++);
+      *(pc++) = *(n1++);
+      *(pc++) = *(n1++);
+    } else {
+      *(pc++) = *(n1++); /* normals @ +14 */
+      *(pc++) = *(n1++);
+      *(pc++) = *(n1++);
+      *(pc++) = *(n2++);
+      *(pc++) = *(n2++);
+      *(pc++) = *(n2++);
+    }
+    *(pc++) = *(n3++);
+    *(pc++) = *(n3++);
+    *(pc++) = *(n3++);
+    
+    if(reverse) {
+      *(pc++) = *(c2++); /* colors @ +23 */
+      *(pc++) = *(c2++);
+      *(pc++) = *(c2++);
+      *(pc++) = a2; 
+      *(pc++) = *(c1++);
+      *(pc++) = *(c1++);
+      *(pc++) = *(c1++);
+      *(pc++) = a1;
+    } else {
+      *(pc++) = *(c1++); /* colors @ +23 */
+      *(pc++) = *(c1++);
+      *(pc++) = *(c1++);
+      *(pc++) = a1; 
+      *(pc++) = *(c2++);
+      *(pc++) = *(c2++);
+      *(pc++) = *(c2++);
+      *(pc++) = a2;
+    }
+    *(pc++) = *(c3++);
+    *(pc++) = *(c3++);
+    *(pc++) = *(c3++);
+    *(pc++) = a3;
+  }
 }
 
 void CGOVertex(CGO *I,float v1,float v2,float v3)
@@ -881,7 +984,7 @@ CGO *CGODrawText(CGO *I,int est,float *camera)
 CGO *CGOSimplify(CGO *I,int est)
 {
   CGO *cgo;
-
+  
   register float *pc = I->op;
   register float *nc;
   register int op;
@@ -889,7 +992,7 @@ CGO *CGOSimplify(CGO *I,int est)
   int sz;
   
   cgo=CGONewSized(I->G,I->c+est);
-
+  
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     save_pc=pc;
     switch(op) {
@@ -1291,7 +1394,7 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2,RenderInfo *i
     register float *pc = I->op;
     register int op;
     register CCGORenderer *R = G->CGORenderer;
-    
+    register float _1 = 1.0F;
     if(I->c) {
       R->alpha = 1.0F - SettingGet_f(I->G,set1,set2,cSetting_cgo_transparency);
       if(color) 
@@ -1307,10 +1410,205 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2,RenderInfo *i
         glPointSize(SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width));
       }
       
+      if(info->alpha_cgo) { /* we're sorting transparent triangles globally */
+        register int mode = -1;
+        float *n0=NULL,*n1=NULL,*n2=NULL,*v0=NULL,*v1=NULL,*v2=NULL,*c0=NULL,*c1=NULL,*c2=NULL;
+        float zee[] = {0.0,0.0,1.0};
+        int vc = 0;
+        while((op=(CGO_MASK&CGO_read_int(pc)))) {
+          if((R->alpha != _1)) {
+            switch(op) { /* transpareny */
+            case CGO_BEGIN:
+              mode = CGO_get_int(pc);     
+              CGO_gl_begin(R,pc);
+              vc=0;
+              n0=zee;
+              break;
+            case CGO_END:
+              CGO_gl_end(R,pc);
+              mode = -1;
+              break;
+            case CGO_NORMAL:
+              switch(mode) {
+              case GL_TRIANGLES:
+              case GL_TRIANGLE_STRIP:
+              case GL_TRIANGLE_FAN:
+                n0 = pc;
+                break;
+              default:
+                CGO_gl_normal(R,pc);
+              }
+              break;
+            case CGO_COLOR:
+              c0=pc;
+              CGO_gl_color(R,pc);
+              break;
+            case CGO_TRIANGLE:
+              CGOAlphaTriangle(info->alpha_cgo,
+                               pc,pc+3,pc+6, pc+9,pc+12,pc+15, pc+18,pc+21,pc+24,
+                               R->alpha,R->alpha,R->alpha, false);
+              break;
+            case CGO_VERTEX:
+              v0=pc;
+              switch(mode) {
+              case GL_TRIANGLES:
+                if(3*((vc+1)/3)==vc+1) {
+                    CGOAlphaTriangle(info->alpha_cgo,
+                                     v0,v1,v2,n0,n1,n2,c0,c1,c2,
+                                     R->alpha,R->alpha,R->alpha, true);
+                }
+                v2=v1;
+                c2=c1;
+                n2=n1;
+                v1=v0;
+                c1=c0;
+                n1=n0;
+                vc++;
+                break;
+              case GL_TRIANGLE_STRIP:
+                if(vc>1) {
+                  CGOAlphaTriangle(info->alpha_cgo,
+                                   v0,v1,v2,n0,n1,n2,c0,c1,c2,
+                                   R->alpha,R->alpha,R->alpha, !(vc&0x1));
+                }
+                v2=v1;
+                c2=c1;
+                n2=n1;
+                v1=v0;
+                c1=c0;
+                n1=n0;
+                vc++;
+                break;
+              case GL_TRIANGLE_FAN:
+                if(vc>1) {
+                  CGOAlphaTriangle(info->alpha_cgo,
+                                   v0,v1,v2,n0,n1,n2,c0,c1,c2,
+                                   R->alpha,R->alpha,R->alpha, false);
+                } else if(!vc) {
+                  n2=n0;
+                  v2=v0;
+                  c2=c0;
+                }
+                v1=v0;
+                c1=c0;
+                n1=n0;
+                vc++;
+                break;
+              default:
+                CGO_gl_vertex(R,pc);
+                break;
+              }
+              break;
+            default:
+              CGO_gl[op](R,pc);
+              break;
+            }
+          } else { /* opaque */
+            CGO_gl[op](R,pc);
+          }
+          pc+=CGO_sz[op];
+        }
+      } else {
+        while((op=(CGO_MASK&CGO_read_int(pc)))) {
+          CGO_gl[op](R,pc);
+          pc+=CGO_sz[op];
+        }
+      }
+    }
+  }
+}
+
+
+void CGORenderGLAlpha(CGO *I,RenderInfo *info)
+{
+  register PyMOLGlobals *G = I->G;
+  if(G->ValidContext && I->c) {
+
+    /* 1. transform and measure range (if not already known) 
+       2. bin into linked lists based on Z-centers
+       3. render by layer */
+
+    if(I->z_flag) {
+      if(!I->i_start) {
+        I->i_size = 256;
+        I->i_start = Calloc(int, I->i_size);
+      } else {
+        UtilZeroMem(I->i_start, sizeof(int)*I->i_size);
+      }
+      {
+        register float z_min = I->z_min;
+        register int i_size = I->i_size;
+        register float range_factor = (0.9999F * i_size) / (I->z_max - z_min);
+        register float *base = I->op;
+        register float *pc = base;
+        register int op,i,ii;
+        register int *start = I->i_start;
+        register int delta = 1;
+        /* bin the triangles */
+
+        while((op=(CGO_MASK&CGO_read_int(pc)))) {
+          switch(op) {
+          case CGO_ALPHA_TRIANGLE:
+            i = (int)((pc[4] - z_min) * range_factor);
+            if(i<0) i = 0;
+            if(i>=i_size) i = i_size;
+            CGO_put_int(pc, start[i]);
+            start[i] = (pc - base); /* NOTE: will always be > 0 since we have CGO_read_int'd */
+            break;
+          }
+          pc+=CGO_sz[op];
+        }
+
+        if(SettingGetGlobal_i(G,cSetting_transparency_mode)==2) {
+          delta = -1;
+          start += (i_size-1);
+        }
+      
+        /* now render by bin */
+
+        glBegin(GL_TRIANGLES);
+        for(i=0;i<i_size;i++) {
+          ii = *start;
+          start += delta;
+          while(ii) {
+            pc = base + ii;
+            
+            glColor4fv(pc+23);
+            glNormal3fv(pc+14);
+            glVertex3fv(pc+5);
+            glColor4fv(pc+27);
+            glNormal3fv(pc+17);
+            glVertex3fv(pc+8);
+            glColor4fv(pc+31);
+            glNormal3fv(pc+20);
+            glVertex3fv(pc+11);
+            
+            ii = CGO_get_int(pc);
+          }
+        }
+        glEnd();
+      }
+    } else {
+      register float *pc = I->op;
+      register int op;
+      glBegin(GL_TRIANGLES);
       while((op=(CGO_MASK&CGO_read_int(pc)))) {
-        CGO_gl[op](R,pc);
+        switch(op) {
+        case CGO_ALPHA_TRIANGLE:
+          glColor4fv(pc+23);
+          glNormal3fv(pc+14);
+          glVertex3fv(pc+5);
+          glColor4fv(pc+27);
+          glNormal3fv(pc+17);
+          glVertex3fv(pc+8);
+          glColor4fv(pc+31);
+          glNormal3fv(pc+20);
+          glVertex3fv(pc+11);
+          break;
+        }
         pc+=CGO_sz[op];
       }
+      glEnd();
     }
   }
 }

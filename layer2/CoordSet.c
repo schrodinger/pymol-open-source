@@ -1046,6 +1046,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
   int float_labels = SettingGet_i(G,I->Setting,
                                   I->Obj->Obj.Setting,
                                   cSetting_float_labels);
+
   PRINTFD(G,FB_CoordSet)
     " CoordSetRender: entered (%p).\n",(void*)I
     ENDFD;
@@ -1140,14 +1141,18 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
                 break;
 
               case cRepSurface:
-                /*                if(pass==-1) r->fRender(r,ray,pick);              */
-                if(SettingGet_f(G,r->cs->Setting,
-                                r->obj->Setting,
-                                cSetting_transparency)>0.0001) {
-                  if(pass==-1)
-                    r->fRender(r,info);                                
-                } else if(pass==1)
-                  r->fRender(r,info);
+                if(info->alpha_cgo) {
+                   if(pass == 1)
+                    r->fRender(r,info);
+                } else {
+                  if(SettingGet_f(G,r->cs->Setting,
+                                  r->obj->Setting,
+                                  cSetting_transparency)>0.0001) {
+                    if(pass==-1)
+                      r->fRender(r,info);                                
+                  } else if(pass==1)
+                    r->fRender(r,info);
+                }
                 break;
               case cRepSphere: /* render spheres differently depending on transparency */
                 if(SettingGet_f(G,r->cs->Setting,
@@ -1159,13 +1164,18 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
                   r->fRender(r,info);
                 break;
               case cRepCartoon:
-                if(SettingGet_f(G,r->cs->Setting,
-                                r->obj->Setting,
-                                cSetting_cartoon_transparency)>0.0001) {
-                  if(pass==-1)
-                    r->fRender(r,info);                                
-                } else if(pass==1)
-                  r->fRender(r,info);
+                if(info->alpha_cgo) {
+                  if(pass==1)
+                    r->fRender(r,info);
+                } else {
+                  if(SettingGet_f(G,r->cs->Setting,
+                                  r->obj->Setting,
+                                  cSetting_cartoon_transparency)>0.0001) {
+                    if(pass==-1)
+                      r->fRender(r,info);                                
+                  } else if(pass==1)
+                    r->fRender(r,info);
+                }
                 break;
               }
 

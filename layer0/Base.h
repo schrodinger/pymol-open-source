@@ -101,9 +101,17 @@ typedef struct {
 
 typedef struct _CRay               CRay;
 
+/* likewise */
+
+#ifndef CGO_DEFINED
+typedef struct _CGO                CGO;
+#define CGO_DEFINED
+#endif
+
 typedef struct {
   int state;
   CRay *ray;
+  CGO *alpha_cgo;
   Picking **pick;
   int pass,slot;
   int width_scale_flag;

@@ -532,7 +532,7 @@ int MainSavingUnderWhileIdle(void)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   CMain *I = G->Main;
-  return(I->IdleMode==2);
+  return(I->IdleMode>=3);
 }
 /*========================================================================*/
 void MainSetWindowVisibility(int mode)
@@ -558,8 +558,8 @@ static void MainDrag(int x,int y)
       if(G->HaveGUI) {
         p_glutPostRedisplay();
       }
-      I->IdleMode = 0;
     }
+    I->IdleMode = 0;
     
     PUnlockAPIAsGlut(G);
   }
@@ -1186,7 +1186,6 @@ static int Sharp3DLastWindowX = -1000;
 static void MainBusyIdle(void) 
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
-
   /* This is one of the few places in the program where we can be sure 
 	* that we have the "glut" thread...glut doesn't seem to be completely
 	* thread safe or rather thread consistent
@@ -1218,7 +1217,7 @@ static void MainBusyIdle(void)
 
   /* flush command and output queues */
   
-  /*  PRINTFD(G,FB_Main)
+ /*  PRINTFD(G,FB_Main)
     " MainBusyIdle: entered, IdleMode %d\n",
     I->IdleMode
     ENDFD;*/
@@ -1247,12 +1246,17 @@ static void MainBusyIdle(void)
       " MainBusyIdle: calling idle function.\n"
       ENDFD;
 
-    
+
     if(PyMOL_Idle(PyMOLInstance)) {
-      I->IdleMode=0;
+      if(I->IdleMode<2) {
+        I->IdleMode = 2;
+        I->IdleTime = UtilGetSeconds(G);
+      }
     } else if(!I->IdleMode) {
-      I->IdleTime=UtilGetSeconds(G);
-      I->IdleMode=1;
+      I->IdleMode = 1;
+    } else if(I->IdleMode == 1) {
+      I->IdleMode = 2;
+      I->IdleTime = UtilGetSeconds(G);
     }
 
     PRINTFD(G,FB_Main)
@@ -1278,7 +1282,9 @@ static void MainBusyIdle(void)
         p_glutPostRedisplay();
       else
         MainDrawLocked();
-      I->IdleMode = 0;
+      if(I->IdleMode>1) {
+        I->IdleMode = 1;
+      }
     }
 
     PRINTFD(G,FB_Main)
@@ -1292,16 +1298,24 @@ static void MainBusyIdle(void)
     /* however, don't spend any extra time sleeping in PYMOL if we're
        running under wxPython though... */
 
-    if(I->IdleMode) { /* avoid racing the CPU */
-      if(I->IdleMode==1) {
-        if(UtilGetSeconds(G)-I->IdleTime>SettingGet(G,cSetting_idle_delay)) { 
-          I->IdleMode=2;
-          if(G->HaveGUI)
-            if(SettingGet(G,cSetting_cache_display))
-              p_glutPostRedisplay(); /* trigger caching of the current scene */
-        }
+    switch(I->IdleMode) {
+    case 2: /* avoid racing the CPU */
+      if((UtilGetSeconds(G) - I->IdleTime) > SettingGet(G,cSetting_idle_delay)/5.0) { 
+        I->IdleMode = 3;
+        I->IdleTime = UtilGetSeconds(G);
+        if(G->HaveGUI)
+          if(SettingGet(G,cSetting_cache_display)) {
+            p_glutPostRedisplay(); /* trigger caching of the current scene */
+          }
+      }
+      break;
+    case 3:
+      if((UtilGetSeconds(G) - I->IdleTime) >SettingGet(G,cSetting_idle_delay)) {         
+        I->IdleMode = 4;
+        break;
       }
     }
+
     #endif
 
     PRINTFD(G,FB_Main)
@@ -1310,13 +1324,18 @@ static void MainBusyIdle(void)
 
     PUnlockAPIAsGlut(G);
     
-    if(I->IdleMode) {
-      if(I->IdleMode==1)
-        PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_fast_idle)); /* fast idle - more responsive */
-      else
-        PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_slow_idle)); /* slow idle - save CPU cycles */
-    } else {
+    switch(I->IdleMode) {
+    case 4:
+      PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_slow_idle)); /* slow idle - save CPU cycles */
+      break;
+    case 3:
+      PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_fast_idle)); /* fast idle - more responsive */
+      break;
+    case 2:
       PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
+      break;
+    default:
+      break;
     }
     
     /* run final initilization code for Python-based PyMOL implementations. */
@@ -1647,6 +1666,7 @@ SetConsoleCtrlHandler(
        } 
        if(!I->WindowIsVisible)
          MainReshape(G->Option->winX,G->Option->winY);
+       I->IdleMode=3;
        p_glutMainLoop(); /* never returns with traditional GLUT implementation */
        PBlock(G); /* if we've gotten here, then we're heading back to Python... */
      } else {
