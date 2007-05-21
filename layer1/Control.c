@@ -193,7 +193,7 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
       PLog(G,"cmd.rock(1)",cPLog_pym);
     else
       PLog(G,"cmd.rock(0)",cPLog_pym);
-    SceneRestartPerfTimer(G);
+    SceneRestartFrameTimer(G);
     OrthoDirty(G);
     break;
   case 8:
