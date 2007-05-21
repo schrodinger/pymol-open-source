@@ -199,6 +199,7 @@ typedef struct {
 } SceneUnitContext;
 
 static float SceneGetExactScreenVertexScale(PyMOLGlobals *G,float *v1);
+static void SceneRestartPerfTimer(PyMOLGlobals *G);
 
 int SceneHasImage(PyMOLGlobals *G)
 {
