@@ -45,6 +45,8 @@ struct _CButMode {
   float TextColor1[3];
   float TextColor2[3];
   float TextColor3[3];
+  int DeferCnt;
+  float DeferTime;
 };
 
 /*========================================================================*/
@@ -93,22 +95,28 @@ void ButModeCaptionReset(PyMOLGlobals *G)
 void ButModeSetRate(PyMOLGlobals *G,float interval)
 {
   register CButMode *I=G->ButMode;
-
-  if(interval<0.00001)
-    interval = 0.00001F;
-
-  I->Delay -= interval;
-  if(interval<1.0F) {
-    I->Samples *= 0.95*(1.0F - interval);
-    I->Rate *= 0.95*(1.0F - interval);
+  
+  if(interval>=0.001F) { /* sub-millisecond, defer...*/
+    if(I->DeferCnt) {
+      interval = (interval+I->DeferTime)/(I->DeferCnt+1);
+      I->DeferCnt = 0;
+      I->DeferTime = 0.0F;
+    }
+    I->Delay -= interval;
+    if(interval<1.0F) {
+      I->Samples *= 0.95*(1.0F - interval);
+      I->Rate *= 0.95*(1.0F - interval);
+    } else {
+      I->Samples = 0.0F;
+      I->Rate = 0.0F;
+    }
+    
+    I->Samples++;
+    I->Rate += 1.0F/interval;
   } else {
-    I->Samples = 0.0F;
-    I->Rate = 0.0F;
+    I->DeferCnt++;
+    I->DeferTime += interval;
   }
-  
-  I->Samples++;
-  I->Rate += 1.0F/interval;
-  
 }
 /*========================================================================*/
 void ButModeResetRate(PyMOLGlobals *G)
@@ -400,7 +408,8 @@ int ButModeInit(PyMOLGlobals *G)
     I->RateShown=0;
     I->Delay = 0.0;
     I->Caption[0] = 0;
-
+    I->DeferCnt = 0;
+    I->DeferTime = 0.0F;
     I->NCode = cButModeCount;
     I->NBut = cButModeInputCount;
 
