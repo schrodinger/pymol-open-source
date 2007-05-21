@@ -1385,7 +1385,8 @@ int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,
   int i,j;
   int premultiply_alpha = true;
   int red_index=0,blue_index=1,green_index=2,alpha_index=3;
-  int no_alpha = SettingGetGlobal_b(G,cSetting_opaque_background);
+  int no_alpha = (SettingGetGlobal_b(G,cSetting_opaque_background) &&
+                  SettingGetGlobal_b(G,cSetting_ray_opaque_background));
 
   if(mode&0x1) {
     int index=0;
@@ -1430,7 +1431,7 @@ int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,
             dst[green_index] = (((unsigned int)src[1])*src[3])/255;
             dst[blue_index]  = (((unsigned int)src[2])*src[3])/255;
             dst[alpha_index] = src[3];
-            /*            if(!(i||j)) {
+            /*       if(!(i||j)) {
               printf("premult alpha\n");
               }*/
           } else {
