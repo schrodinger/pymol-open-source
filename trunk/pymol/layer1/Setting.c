@@ -3499,7 +3499,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_h_bond_from_proton,1);
   set_b(I,cSetting_auto_copy_images,0);
   set_i(I,cSetting_moe_separate_chains,-1);
-  set_b(I,cSetting_transparency_global_sort, 1);
+  set_b(I,cSetting_transparency_global_sort, 0);
 
 }
 
