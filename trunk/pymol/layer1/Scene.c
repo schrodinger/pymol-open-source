@@ -2636,7 +2636,6 @@ void SceneDraw(Block *block)
       I->RenderTime = -I->LastRender;
       I->LastRender = UtilGetSeconds(G);
       I->RenderTime += I->LastRender;
-      ButModeSetRate(G,(float)I->RenderTime);
     }
 #if 0
     SceneDrawButtons(block);
@@ -7339,7 +7338,6 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
     I->RenderTime = -I->LastRender;
     I->LastRender = UtilGetSeconds(G);
     I->RenderTime += I->LastRender;
-    ButModeSetRate(G,(float)I->RenderTime);
     I->ApproxRenderTime = I->LastRender - start_time;
 
     if(I->CopyNextFlag) {
@@ -7366,7 +7364,7 @@ void SceneRestartFrameTimer(PyMOLGlobals *G)
   register CScene *I=G->Scene;
   I->LastFrameTime = UtilGetSeconds(G);
 }
-void SceneRestartPerfTimer(PyMOLGlobals *G)
+static void SceneRestartPerfTimer(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
   I->LastRender = UtilGetSeconds(G);

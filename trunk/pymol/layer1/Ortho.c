@@ -96,6 +96,8 @@ struct _COrtho {
   GLint ViewPort[4];
   int WrapXFlag;
   GLenum ActiveGLBuffer;
+  double DrawTime, LastDraw;
+
 };
 
 
@@ -1134,6 +1136,11 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       times = 1;
       double_pump=false;
     }
+
+    I->DrawTime = -I->LastDraw;
+    I->LastDraw = UtilGetSeconds(G);
+    I->DrawTime += I->LastDraw;
+    ButModeSetRate(G,(float)I->DrawTime);
     
     if(render&&(render_mode<2))
       SceneRender(G,NULL,0,0,NULL,0,0);
@@ -1798,6 +1805,8 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   I->Saved[0]=0;
   I->DirtyFlag = true;
   I->ActiveGLBuffer = GL_NONE;
+  I->LastDraw = UtilGetSeconds(G);
+  I->DrawTime = 0.0;
   if(showSplash) {
 	 OrthoSplash(G);
     I->SplashFlag=true;
