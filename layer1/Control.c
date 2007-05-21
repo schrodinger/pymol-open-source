@@ -193,7 +193,7 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
       PLog(G,"cmd.rock(1)",cPLog_pym);
     else
       PLog(G,"cmd.rock(0)",cPLog_pym);
-    SceneRestartTimers(G);
+    SceneRestartPerfTimer(G);
     OrthoDirty(G);
     break;
   case 8:
@@ -254,7 +254,7 @@ int ControlRock(PyMOLGlobals *G,int mode)
 	break;
   }
   if(mode!=-2) {
-    SceneRestartTimers(G);
+    SceneRestartFrameTimer(G);
     OrthoDirty(G);
   }
   return I->Rocking;

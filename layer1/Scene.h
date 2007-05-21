@@ -94,7 +94,8 @@ int SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,
 
 void SceneResetMatrix(PyMOLGlobals *G);
 
-void SceneRestartTimers(PyMOLGlobals *G);
+void SceneRestartFrameTimer(PyMOLGlobals *G);
+void SceneRestartPerfTimer(PyMOLGlobals *G);
 
 void ScenePerspective(PyMOLGlobals *G,int flag);
 void SceneGetEyeNormal(PyMOLGlobals *G,float *v1,float *normal);

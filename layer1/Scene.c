@@ -3014,7 +3014,7 @@ static void SceneNoteMouseInteraction(PyMOLGlobals *G)
 {
   SceneAbortAnimation(G);
   if(SettingGet_b(G,NULL,NULL,cSetting_mouse_restart_movie_delay)) {
-    SceneRestartTimers(G);
+    SceneRestartFrameTimer(G);
   }
 }
 
@@ -5114,7 +5114,8 @@ int  SceneInit(PyMOLGlobals *G)
     I->vendor[0]=0;
     I->renderer[0]=0;
     I->version[0]=0;
-    SceneRestartTimers(G);
+    SceneRestartFrameTimer(G);
+    SceneRestartPerfTimer(G);
 
     I->Width = 640; /* standard defaults */
     I->Height = 480;
@@ -7360,11 +7361,15 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
 }
 /*========================================================================*/
-void SceneRestartTimers(PyMOLGlobals *G)
+void SceneRestartFrameTimer(PyMOLGlobals *G)
+{
+  register CScene *I=G->Scene;
+  I->LastFrameTime = UtilGetSeconds(G);
+}
+void SceneRestartPerfTimer(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
   I->LastRender = UtilGetSeconds(G);
-  I->LastFrameTime = UtilGetSeconds(G);
   I->RenderTime = 0;
 }
 /*========================================================================*/
