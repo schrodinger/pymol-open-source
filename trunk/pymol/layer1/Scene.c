@@ -191,6 +191,7 @@ struct _CScene {
   char *SceneNameVLA;
   SceneElem *SceneVLA;
   int NScene;
+  CGO *AlphaCGO;
 };
 
 typedef struct {
@@ -4998,6 +4999,7 @@ void SceneFree(PyMOLGlobals *G)
   register CScene *I=G->Scene;
   if(I->ScrollBar)
     ScrollBarFree(I->ScrollBar);
+  CGOFree(I->AlphaCGO);
   VLAFreeP(I->SceneVLA);
   VLAFreeP(I->SceneNameVLA);
   OrthoFreeBlock(G,I->Block);
@@ -5545,7 +5547,7 @@ void SceneRay(PyMOLGlobals *G,
       RenderInfo info;
       UtilZeroMem(&info,sizeof(RenderInfo));
       info.ray = ray;
-      
+
       while(ListIterate(I->Obj,rec,next))
         {
           if(rec->obj->fRender) {
@@ -6441,6 +6443,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.front = I->FrontSafe;
   info.slot = slot;
   info.sampling = 1;
+  info.alpha_cgo = I->AlphaCGO;
 
   if(I->StereoMode) {
     float buffer;
@@ -6456,6 +6459,11 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   }
   info.back = I->BackSafe;
   SceneGetViewNormal(G,info.view_normal);
+
+  if(info.alpha_cgo && (pass == 1)) {
+    CGOReset(info.alpha_cgo);
+    CGOSetZVector(info.alpha_cgo, I->ModMatrix[2], I->ModMatrix[6], I->ModMatrix[10]);
+  }
 
   if(width_scale!=0.0F) {
     info.width_scale_flag = true;
@@ -6540,7 +6548,16 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
         rec->obj->fRender(rec->obj,&info);
         break;          
       }
+    
     glPopMatrix();
+  }
+
+  if(info.alpha_cgo) { 
+    CGOStop(info.alpha_cgo);
+    /* this only works when all objects are rendered in the same frame of reference */
+    if(pass == -1) {
+      CGORenderGLAlpha(info.alpha_cgo, &info);
+    }
   }
 }
 
@@ -6739,7 +6756,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
     SceneProgramLighting(G); /* must be done with identity MODELVIEW */
 
     ScenePrepareUnitContext(G,&context,I->Width,I->Height);
- 
+
     /* do standard 3D objects */
 
     /* Set up the clipping planes */
@@ -6773,6 +6790,17 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
     glGetFloatv(GL_PROJECTION_MATRIX,I->ProMatrix);
 
     multiply44f44f44f(I->ModMatrix,I->ProMatrix,I->PmvMatrix);
+    
+    /* get the Z axis vector for sorting transparent objects */
+    
+    if(SettingGetGlobal_b(G,cSetting_transparency_global_sort) &&
+       SettingGetGlobal_b(G,cSetting_transparency_mode) ) {
+      if(!I->AlphaCGO)
+        I->AlphaCGO = CGONew(G);
+    } else if(I->AlphaCGO) {
+      CGOFree(I->AlphaCGO);
+      I->AlphaCGO = NULL;
+    }
 
     /* make note of how large pixels are at the origin  */
 

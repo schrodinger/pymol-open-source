@@ -481,7 +481,11 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
         if((alpha!=1.0)||va) {
         
           t_mode  = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency_mode);
-          
+
+          if(info && info->alpha_cgo) {
+            t_mode = 0; 
+          }
+
           if(t_mode) {
             
             float **t_buf=NULL,**tb;
@@ -626,58 +630,151 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
             FreeP(ix);
             FreeP(z_value);
             FreeP(t_buf);
-          } else { /* fast and ugly */
-            /*          glCullFace(GL_BACK);
-                        glEnable(GL_CULL_FACE);
-                        glDepthMask(GL_FALSE);*/
-            if(I->allVisibleFlag) {
-              if(I->oneColorFlag) {
-                float col[3];
-                ColorGetEncoded(G,I->oneColor,col);
+          } else { 
+            if(info->alpha_cgo) { /* global transparency sort */
+              
+              if(I->allVisibleFlag) {
+                if(I->oneColorFlag) {
+                  float col[3];
+                  ColorGetEncoded(G,I->oneColor,col);
+                  
+                  glColor4f(col[0],col[1],col[2],alpha);
+                  c=*(s++);
+                  while(c) {
+                    int parity=0;
+                    s+=2;
+                    while(c--) {
+                      CGOAlphaTriangle(info->alpha_cgo,
+                                       v+s[-2]*3, v+s[-1]*3, v+(*s)*3,
+                                       vn+s[-2]*3, vn+s[-1]*3, vn+(*s)*3,
+                                       col, col, col, 
+                                       alpha, alpha, alpha, parity);
 
-                glColor4f(col[0],col[1],col[2],alpha);
-                c=*(s++);
-                while(c) {
-                  glBegin(GL_TRIANGLE_STRIP);
-                  glNormal3fv(vn+(*s)*3);
-                  glVertex3fv(v+(*s)*3);
-                  s++;
-                  glNormal3fv(vn+(*s)*3);
-                  glVertex3fv(v+(*s)*3);
-                  s++;
-                  while(c--) {
+                      s++;
+                      parity = !parity;
+                    }
+                    c=*(s++);
+                  }
+                } else {
+                  c=*(s++);
+                  while(c) {
+                    float *col0,*col1,*col2;
+                    int parity=0;
+                    float alpha0,alpha1,alpha2;
+                    col0 = vc+(*s)*3;
+                    if(va) {
+                      alpha0=va[(*s)];
+                    } else {
+                      alpha0 = alpha;
+                    }
+                    s++;
+                    col1 = vc+(*s)*3;
+                    if(va) {
+                      alpha1 = va[(*s)];
+                    } else {
+                      alpha1 = alpha;
+                    }
+                    s++;
+                    while(c--) {
+                      col2 = vc+(*s)*3;
+                      if(va) {
+                        alpha2 = va[(*s)];
+                      } else {
+                        alpha2 = alpha;
+                      }
+                      CGOAlphaTriangle(info->alpha_cgo,
+                                       v+s[-2]*3, v+s[-1]*3, v+(*s)*3,
+                                       vn+s[-2]*3, vn+s[-1]*3, vn+(*s)*3,
+                                       col0, col1, col2, 
+                                       alpha0, alpha1, alpha2, parity);
+                      alpha0 = alpha1;
+                      alpha1 = alpha2;
+                      col0 = col1;
+                      col1 = col2;
+                      s++;
+                      parity = !parity;
+                    }
+                    c=*(s++);
+                  }
+                }
+              } else { /* subset s */
+                c=I->NT;
+                if(c) {
+                  if(I->oneColorFlag) {
+                    float color[3];
+                    ColorGetEncoded(G,I->oneColor,color);
+                    while(c--) {
+                      if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                         ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                        
+                        CGOAlphaTriangle(info->alpha_cgo,
+                                         v+t[0]*3, v+t[1]*3, v+t[2]*3,
+                                         vn+t[0]*3, vn+t[1]*3, vn+t[2]*3,
+                                         color,color,color,
+                                         alpha,alpha,alpha,0);
+                      }
+                      t+=3;
+                    }
+                  } else {
+                    while(c--) {
+                      if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                         ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                        
+                        if(va) {
+                          CGOAlphaTriangle(info->alpha_cgo,
+                                           v+t[0]*3, v+t[1]*3, v+t[2]*3,
+                                           vn+t[0]*3, vn+t[1]*3, vn+t[2]*3,
+                                           vc+t[0]*3, vc+t[1]*3, vc+t[2]*3,
+                                           va[t[0]], va[t[1]], va[t[2]], 0);
+                        } else {
+                          CGOAlphaTriangle(info->alpha_cgo,
+                                           v+t[0]*3, v+t[1]*3, v+t[2]*3,
+                                           vn+t[0]*3, vn+t[1]*3, vn+t[2]*3,
+                                           vc+t[0]*3, vc+t[1]*3, vc+t[2]*3,
+                                           alpha, alpha, alpha, 0);
+                        }
+                      }
+                      t+=3;
+                    }
+                  }
+                  glEnd();
+                }
+              }
+            } else {
+
+              /* fast and ugly */
+              /*          glCullFace(GL_BACK);
+                          glEnable(GL_CULL_FACE);
+                          glDepthMask(GL_FALSE);*/
+              if(I->allVisibleFlag) {
+                if(I->oneColorFlag) {
+                  float col[3];
+                  ColorGetEncoded(G,I->oneColor,col);
+                  
+                  glColor4f(col[0],col[1],col[2],alpha);
+                  c=*(s++);
+                  while(c) {
+                    glBegin(GL_TRIANGLE_STRIP);
                     glNormal3fv(vn+(*s)*3);
                     glVertex3fv(v+(*s)*3);
                     s++;
+                    glNormal3fv(vn+(*s)*3);
+                    glVertex3fv(v+(*s)*3);
+                    s++;
+                    while(c--) {
+                      glNormal3fv(vn+(*s)*3);
+                      glVertex3fv(v+(*s)*3);
+                      s++;
+                    }
+                    glEnd();
+                    c=*(s++);
                   }
-                  glEnd();
+                } else {
                   c=*(s++);
-                }
-              } else {
-                c=*(s++);
-                while(c) {
-                  float *col;
+                  while(c) {
+                    float *col;
 
-                  glBegin(GL_TRIANGLE_STRIP);
-                  col = vc+(*s)*3;
-                  if(va) {
-                    glColor4f(col[0],col[1],col[2],va[(*s)]);            
-                  } else {
-                    glColor4f(col[0],col[1],col[2],alpha);            
-                  }
-                  glNormal3fv(vn+(*s)*3);
-                  glVertex3fv(v+(*s)*3);
-                  s++;
-                  col = vc+(*s)*3;
-                  if(va) {
-                    glColor4f(col[0],col[1],col[2],va[(*s)]);            
-                  } else {
-                    glColor4f(col[0],col[1],col[2],alpha);            
-                  }
-                  glNormal3fv(vn+(*s)*3);
-                  glVertex3fv(v+(*s)*3);
-                  s++;
-                  while(c--) {
+                    glBegin(GL_TRIANGLE_STRIP);
                     col = vc+(*s)*3;
                     if(va) {
                       glColor4f(col[0],col[1],col[2],va[(*s)]);            
@@ -687,80 +784,100 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
                     glNormal3fv(vn+(*s)*3);
                     glVertex3fv(v+(*s)*3);
                     s++;
+                    col = vc+(*s)*3;
+                    if(va) {
+                      glColor4f(col[0],col[1],col[2],va[(*s)]);            
+                    } else {
+                      glColor4f(col[0],col[1],col[2],alpha);            
+                    }
+                    glNormal3fv(vn+(*s)*3);
+                    glVertex3fv(v+(*s)*3);
+                    s++;
+                    while(c--) {
+                      col = vc+(*s)*3;
+                      if(va) {
+                        glColor4f(col[0],col[1],col[2],va[(*s)]);            
+                      } else {
+                        glColor4f(col[0],col[1],col[2],alpha);            
+                      }
+                      glNormal3fv(vn+(*s)*3);
+                      glVertex3fv(v+(*s)*3);
+                      s++;
+                    }
+                    glEnd();
+                    c=*(s++);
+                  }
+                }
+              
+              } else { /* subset s*/
+                c=I->NT;
+                if(c) {
+                  glBegin(GL_TRIANGLES);
+            
+                  if(I->oneColorFlag) {
+                    float color[3];
+                    float *col;
+                    ColorGetEncoded(G,I->oneColor,color);
+                  
+                    glColor4f(color[0],color[1],color[2],alpha);
+                    while(c--) {
+                      if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                         ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                      
+                        col = vc+(*t)*3;
+                        glNormal3fv(vn+(*t)*3);
+                        glVertex3fv(v+(*t)*3);
+                        t++;
+                        col = vc+(*t)*3;
+                        glNormal3fv(vn+(*t)*3);
+                        glVertex3fv(v+(*t)*3);
+                        t++;
+                        col = vc+(*t)*3;
+                        glNormal3fv(vn+(*t)*3);
+                        glVertex3fv(v+(*t)*3);
+                        t++;
+                      } else
+                        t+=3;
+                    }
+                  } else {
+                    float *col;
+                    while(c--) {
+                      if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                         ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                  
+                        col = vc+(*t)*3;
+                        if(va) {
+                          glColor4f(col[0],col[1],col[2],va[(*t)]);            
+                        } else {
+                          glColor4f(col[0],col[1],col[2],alpha);            
+                        }
+                        glNormal3fv(vn+(*t)*3);
+                        glVertex3fv(v+(*t)*3);
+                        t++;
+                        col = vc+(*t)*3;
+                        if(va) {
+                          glColor4f(col[0],col[1],col[2],va[(*t)]);            
+                        } else {
+                          glColor4f(col[0],col[1],col[2],alpha);            
+                        }
+                        glNormal3fv(vn+(*t)*3);
+                        glVertex3fv(v+(*t)*3);
+                        t++;
+                        col = vc+(*t)*3;
+                        if(va) {
+                          glColor4f(col[0],col[1],col[2],va[(*t)]);            
+                        } else {
+                          glColor4f(col[0],col[1],col[2],alpha);            
+                        }
+                        glNormal3fv(vn+(*t)*3);
+                        glVertex3fv(v+(*t)*3);
+                        t++;
+                      } else
+                        t+=3;
+                    }
                   }
                   glEnd();
-                  c=*(s++);
                 }
-              }
-          
-            } else { /* subset s*/
-              c=I->NT;
-              if(c) {
-                glBegin(GL_TRIANGLES);
-            
-                if(I->oneColorFlag) {
-                  float color[3];
-                  float *col;
-                  ColorGetEncoded(G,I->oneColor,color);
-                  
-                  glColor4f(color[0],color[1],color[2],alpha);
-                  while(c--) {
-                    if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                       ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-                      
-                      col = vc+(*t)*3;
-                      glNormal3fv(vn+(*t)*3);
-                      glVertex3fv(v+(*t)*3);
-                      t++;
-                      col = vc+(*t)*3;
-                      glNormal3fv(vn+(*t)*3);
-                      glVertex3fv(v+(*t)*3);
-                      t++;
-                      col = vc+(*t)*3;
-                      glNormal3fv(vn+(*t)*3);
-                      glVertex3fv(v+(*t)*3);
-                      t++;
-                    } else
-                      t+=3;
-                  }
-                } else {
-                  float *col;
-                  while(c--) {
-                    if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                       ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-                  
-                      col = vc+(*t)*3;
-                      if(va) {
-                        glColor4f(col[0],col[1],col[2],va[(*t)]);            
-                      } else {
-                        glColor4f(col[0],col[1],col[2],alpha);            
-                      }
-                      glNormal3fv(vn+(*t)*3);
-                      glVertex3fv(v+(*t)*3);
-                      t++;
-                      col = vc+(*t)*3;
-                      if(va) {
-                        glColor4f(col[0],col[1],col[2],va[(*t)]);            
-                      } else {
-                        glColor4f(col[0],col[1],col[2],alpha);            
-                      }
-                      glNormal3fv(vn+(*t)*3);
-                      glVertex3fv(v+(*t)*3);
-                      t++;
-                      col = vc+(*t)*3;
-                      if(va) {
-                        glColor4f(col[0],col[1],col[2],va[(*t)]);            
-                      } else {
-                        glColor4f(col[0],col[1],col[2],alpha);            
-                      }
-                      glNormal3fv(vn+(*t)*3);
-                      glVertex3fv(v+(*t)*3);
-                      t++;
-                    } else
-                      t+=3;
-                  }
-                }
-                glEnd();
               }
             }
             /*          glDisable(GL_CULL_FACE);

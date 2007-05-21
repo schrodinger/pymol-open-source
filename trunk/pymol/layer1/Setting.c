@@ -1911,6 +1911,8 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_fog_start:
   case cSetting_two_sided_lighting:
   case cSetting_transparency_mode:
+  case cSetting_transparency_global_sort:
+  
   case cSetting_dot_normals:
   case cSetting_mesh_normals:
 	 SceneInvalidate(G);
@@ -2663,17 +2665,11 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   
   set_b(I,cSetting_auto_show_lines, G->Option->sphere_mode<0);
 
-  set_f(I,cSetting_fast_idle, 20000.0F); /* 1/50 of a sec. */
+  set_f(I,cSetting_fast_idle, 2000.0F); /* 1/50th of a sec. */
 
-  set_f(I,cSetting_no_idle, 10000.0F); /* 1/100th of a sec. */
+  set_f(I,cSetting_no_idle, 2000.0F); /* 1/500th of a sec. */
 
-#ifdef _PYMOL_OSX
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-  set_f(I,cSetting_slow_idle, 40000.0F); /* 1/25 of a sec. */
-/* END PROPRIETARY CODE SEGMENT */
-#else
-  set_f(I,cSetting_slow_idle, 200000.0F); /* 1/5 of a sec. */
-#endif
+  set_f(I,cSetting_slow_idle, 40000.0F); /* 1/25th of a sec. */
 
   set_f(I,cSetting_idle_delay, 1.5F);
 
@@ -3503,6 +3499,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_h_bond_from_proton,1);
   set_b(I,cSetting_auto_copy_images,0);
   set_i(I,cSetting_moe_separate_chains,-1);
+  set_b(I,cSetting_transparency_global_sort, 1);
 
 }
 
