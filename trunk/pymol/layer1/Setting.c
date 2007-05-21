@@ -2665,7 +2665,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   
   set_b(I,cSetting_auto_show_lines, G->Option->sphere_mode<0);
 
-  set_f(I,cSetting_fast_idle, 2000.0F); /* 1/50th of a sec. */
+  set_f(I,cSetting_fast_idle, 10000.0F); /* 1/100th of a sec. */
 
   set_f(I,cSetting_no_idle, 2000.0F); /* 1/500th of a sec. */
 

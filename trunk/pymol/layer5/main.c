@@ -532,7 +532,7 @@ int MainSavingUnderWhileIdle(void)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   CMain *I = G->Main;
-  return(I->IdleMode>=3);
+  return(I->IdleMode>3);
 }
 /*========================================================================*/
 void MainSetWindowVisibility(int mode)
@@ -1300,18 +1300,18 @@ static void MainBusyIdle(void)
 
     switch(I->IdleMode) {
     case 2: /* avoid racing the CPU */
-      if((UtilGetSeconds(G) - I->IdleTime) > SettingGet(G,cSetting_idle_delay)/5.0) { 
+      if((UtilGetSeconds(G) - I->IdleTime) > (SettingGet(G,cSetting_idle_delay)/5.0)) { 
         I->IdleMode = 3;
         I->IdleTime = UtilGetSeconds(G);
+      }
+      break;
+    case 3:
+      if((UtilGetSeconds(G) - I->IdleTime) > (SettingGet(G,cSetting_idle_delay))) {         
+        I->IdleMode = 4;
         if(G->HaveGUI)
           if(SettingGet(G,cSetting_cache_display)) {
             p_glutPostRedisplay(); /* trigger caching of the current scene */
           }
-      }
-      break;
-    case 3:
-      if((UtilGetSeconds(G) - I->IdleTime) >SettingGet(G,cSetting_idle_delay)) {         
-        I->IdleMode = 4;
         break;
       }
     }
