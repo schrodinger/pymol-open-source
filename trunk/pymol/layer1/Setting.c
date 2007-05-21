@@ -2075,7 +2075,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_scene_current_name:
-    SceneRestartTimers(G);
+    SceneRestartFrameTimer(G);
     break;
   case cSetting_mesh_width: 
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvRep);

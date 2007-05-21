@@ -428,7 +428,7 @@ void MoviePlay(PyMOLGlobals *G,int cmd)
 	 break;
   }
   OrthoDirty(G);
-  SceneRestartTimers(G);
+  SceneRestartFrameTimer(G);
 }
 /*========================================================================*/
 int  MovieMatrix(PyMOLGlobals *G,int action)
