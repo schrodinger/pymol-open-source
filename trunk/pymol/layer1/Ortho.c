@@ -1140,7 +1140,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
     I->DrawTime = -I->LastDraw;
     I->LastDraw = UtilGetSeconds(G);
     I->DrawTime += I->LastDraw;
-    ButModeSetRate(G,(float)I->DrawTime);
+    ButModeSetRate(G,(float)I->DrawTime); 
     
     if(render&&(render_mode<2))
       SceneRender(G,NULL,0,0,NULL,0,0);
