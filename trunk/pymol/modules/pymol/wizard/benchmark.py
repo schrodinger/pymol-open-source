@@ -357,7 +357,6 @@ class Benchmark(Wizard):
             [ 2, 'Smooth Lines', 'cmd.get_wizard().delay_launch("smooth_lines")'],
             [ 2, 'Jagged Lines', 'cmd.get_wizard().delay_launch("jagged_lines")'],
             [ 2, 'Dots', 'cmd.get_wizard().delay_launch("dots")'],         
-            [ 2, 'Jagged Lines', 'cmd.get_wizard().delay_launch("jagged_lines")'],
             [ 2, 'Sticks', 'cmd.get_wizard().delay_launch("sticks")'],
             [ 2, 'Surface', 'cmd.get_wizard().delay_launch("surface")'],
             [ 2, 'Spheres', 'cmd.get_wizard().delay_launch("spheres")'],
