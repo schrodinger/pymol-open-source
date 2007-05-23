@@ -1719,6 +1719,10 @@ USAGE
 
     bg_color [color]
 
+ARGUMENTS
+
+    color = string: color name or number {default: black}
+    
 PYMOL API
 
     cmd.bg_color(string color="black")
@@ -2102,9 +2106,10 @@ USAGE
 
 ARGUMENTS
 
-    color = a color or ramp name
+    color = string: color or ramp name
 
-    selection = a selection-expression or name-pattern
+    selection = string: selection-expression or name-pattern
+    coorponding to the atoms or objects to be colored
     
 PYMOL API
 
@@ -2174,19 +2179,33 @@ EXAMPLES
         '''
 DESCRIPTION
 
-    "set_color" defines a new color with color indices (0.0-1.0)
+    "set_color" defines a new color using the red, green, and blue
+    components
 
 USAGE
 
-    set_color name, [ red-float, green-float, blue-float ]
+    set_color name, rgb
 
-PYMOL API
+ARGUMENTS
 
-    cmd.set_color( string name, float-list rgb, int mode )
+    name = string: name for the new or existing color
 
+    rgb = list of numbers: [red, green, blue] in range (0.0, 1.0) or (0, 255)
+    
 EXAMPLES 
 
-    set_color red = [ 1.0, 0.0, 0.0 ]
+    set_color red, [ 1.0, 0.0, 0.0 ]
+
+    set_color yellow, [ 255, 255, 0 ]
+
+NOTES
+
+    PyMOL automatically infers the range based on the input arguments.
+    
+PYMOL API
+
+    cmd.set_color( string name, list-of-numbers rgb, int mode )
+
         '''
         r = DEFAULT_ERROR
         if _self.is_string(rgb):

@@ -171,8 +171,16 @@ DESCRIPTION
     
 USAGE
 
-    save file [,selection [,state [,format ]]]
+    save filename [,selection [,state [,format ]]]
 
+ARGUMENTS
+
+    filename = string: file path to be written
+
+    selection = string: atoms to save {default:(all)}
+
+    state = integer: state to save {default:-1 (current state)}
+    
 PYMOL API
 
     cmd.save(string file, string selection, int state, string format)
