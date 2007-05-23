@@ -8,7 +8,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'align'          : [ self_cmd.selection_sc           , 'selection'       , ','  ],
         'alter'          : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'as'             : [ self_cmd.repres_sc              , 'representation'  , ', ' ],
-        'bg'             : [ lambda c=self_cmd:c._get_color_sc(c), 'color'           , ''   ],      
+        'bg_color'       : [ lambda c=self_cmd:c._get_color_sc(c), 'color'           , ''   ],      
         'button'         : [ self_cmd.controlling.button_sc  , 'button'          , ', ' ],
         'color'          : [ lambda c=self_cmd:c._get_color_sc(c), 'color'           , ', ' ],
         'cartoon'        : [ self_cmd.viewing.cartoon_sc     , 'cartoon'         , ', ' ],

@@ -372,14 +372,16 @@ USAGE
 
 ARGUMENTS
 
-    filename: file path or a URL
+    filename = string: file path or URL
 
-    object: name of the object (default: filename prefix)
+    object = string: name of the object {default:filename prefix}
 
-    state = a number (default: 0): number of the state into which
-    the content should be loaded, or 0 for append
+    state = integer: number of the state into which
+    the content should be loaded, or 0 for append {default:0}
 
-    format = pdb, ccp4, etc. (default: filename extension): input data format
+    format = pdb, ccp4, etc. {default:use file extension}): format of
+    data file
+    
     
 EXAMPLES
 
