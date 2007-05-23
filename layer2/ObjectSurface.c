@@ -233,7 +233,7 @@ static void ObjectSurfaceStateFree(ObjectSurfaceState *ms)
         }
       } else {
         char buffer[255]; /* pass this off to the main thread */
-        sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",ms->displayList,1);
+        sprintf(buffer,"_cmd.gl_delete_lists(cmd._COb,%d,%d)\n",ms->displayList,1);
         PParse(ms->State.G,buffer);
       }
     }
@@ -831,6 +831,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
               if(alpha != 1.0F)
                 use_dlst = false;
             } else if(alpha < 1.0F) {
+              use_dlst = false;
               render_now = (pass == -1);
             } else 
               render_now = (pass == 1);
