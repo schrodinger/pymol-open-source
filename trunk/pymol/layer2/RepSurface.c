@@ -1485,7 +1485,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
         }
       } else {
         char buffer[255]; /* pass this off to the main thread */
-        sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",I->R.displayList,1);
+        sprintf(buffer,"_cmd.gl_delete_lists(cmd._COb,%d,%d)\n",I->R.displayList,1);
         PParse(G,buffer);
       }
     }
