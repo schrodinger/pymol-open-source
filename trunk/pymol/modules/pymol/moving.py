@@ -294,19 +294,31 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "mpng" writes a series of numbered movie frames to png files with
-    the specified prefix.  If the "ray_trace_frames" variable is
-    non-zero, these frames will be ray-traced.  This operation can take
-    several hours for a long movie.
-
-    Be sure to disable "cache_frames" when issuing this operation on a
-    long movie (>100 frames) to avoid running out of memory.
+    "mpng" writes movie frames as a series of numbered png files.
 
 USAGE
 
-    mpng prefix [, first [, last]]
+    mpng prefix [, first [, last ]]
 
-    Options "first" and "last" can be used to specify an inclusive
+ARGUMENTS
+
+    prefix = string: filename prefix for saved images -- output files
+    will be numbered and end in ".png"
+
+    first = integer: starting frame {default: 0 (first frame)}
+
+    last = integer: last frame {default: 0 (last frame)}
+
+NOTES
+
+    If the "ray_trace_frames" variable is non-zero, then the frames
+    will be ray-traced.  Note that this can take many hours for a long
+    movie with complex scene.
+
+    Also, be sure to avoid setting "cache_frames" when rendering a
+    long movie to avoid running out of memory.
+    
+    Arguments "first" and "last" can be used to specify an inclusive
     interval over which to render frames.  Thus, you can write a smart
     Python program that will automatically distribute rendering over a
     cluster of workstations.  If these options are left at zero, then
@@ -314,7 +326,12 @@ USAGE
 
 PYMOL API
 
-    cmd.mpng( string prefix, int first=0, int last=0 )
+    cmd.mpng(string prefix, int first, int last)
+
+SEE ALSO
+
+    png, save
+    
         '''
         r = DEFAULT_ERROR
         if thread.get_ident() ==pymol.glutThread:

@@ -116,7 +116,7 @@ PYMOL API
         lst.extend(list(arg))
         return apply(_self.load_object,lst,kw)
 
-    def space(space="",quiet=0,_self=cmd):
+    def space(space="", quiet=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -124,16 +124,47 @@ DESCRIPTION
     
 USAGE
 
-    space space-name
-    
-PYMOL API
-    cmd.space(string space_name)
-    
+    space space
+
+ARGUMENTS
+
+    space = rgb, cmyk, or pymol: {default: rgb}
+
 EXAMPLES
 
     space rgb
     space cmyk
     space pymol
+
+NOTES
+
+    Whereas computer displays use the RGB color space, computer
+    printers typically use the CMYK color space.  The two spaces are
+    non-equivalent, meaning that certain RGB colors cannot be
+    expressed in the CMYK space and vice-versa.  And as a result,
+    molecular graphics images prepared using RGB often turn out poorly
+    when converted to CMYK, with purplish blues or yellowish greens.
+    
+    "space cmyk" forces PyMOL to restrict its use of the RGB color
+    space to subset that can be reliably converted to CMYK using
+    common tools such as Adobe Photoshop.  Thus, what you see on the
+    screen is much closer to what you will get in print.
+
+    Analog video systems as well as digital video compression codecs
+    based on the YUV color space also have incompatibilities with RGB.
+    Oversaturated colors usually cause the most problems.
+
+    Although PyMOL lacks "space yuv", "space pymol" will help PyMOL
+    avoid oversaturated colors can cause problems when exporting
+    animations to video.
+
+PYMOL API
+
+    cmd.space(string space)
+    
+SEE ALSO
+
+    color
     
     '''
         r = DEFAULT_ERROR
@@ -374,12 +405,12 @@ ARGUMENTS
 
     filename = string: file path or URL
 
-    object = string: name of the object {default:filename prefix}
+    object = string: name of the object {default: filename prefix}
 
     state = integer: number of the state into which
     the content should be loaded, or 0 for append {default:0}
 
-    format = pdb, ccp4, etc. {default:use file extension}): format of
+    format = pdb, ccp4, etc. {default: use file extension}): format of
     data file
     
     
@@ -394,12 +425,14 @@ EXAMPLES
 NOTES
 
     The file extension is used to determine the format unless the
-    format name is provided explicitly.
+    format is provided explicitly.
 
     If an object name is specified, then the file is loaded into that
     object.  Otherwise, an object is created with the same name as the
-    file prefix.  If a state value is not specified, then the content
-    is appended after the last existing state (if any).
+    file prefix.
+
+    If a state value is not specified, then the content is appended
+    after the last existing state (if any).
 
     Supported molecular file formats include: pdb, mol, mol2, sdf,
     xyz, and others.

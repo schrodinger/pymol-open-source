@@ -139,11 +139,86 @@ if __name__=='pymol.creating':
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
-    def ramp_new(name,map_name,range=[-1.0,0.0,1.0],
-                     color=['red',[1.0,1.0,1.0],'blue'],
-                     state=0,selection='',
-                     beyond=2.0,within=6.0,
-                     sigma=2.0,zero=1,quiet=1,_self=cmd):
+    def ramp_new(name, map_name, range=[-1.0,0.0,1.0],
+                     color=['red',[1.0,1.0,1.0],'blue'], state=0,
+                     selection='', beyond=2.0, within=6.0, sigma=2.0,
+                     zero=1, quiet=1, _self=cmd):
+
+        '''
+DESCRIPTION
+
+    "ramp_new" creates a color ramp based on a map potential value or
+    based on proximity to a molecular object.
+    
+USAGE
+
+    ramp_new name, map_name [, range [, color [, state [, selection [,
+        beyond [, within [, sigma [, zero ]]]]]]]]
+
+ARGUMENTS
+
+    name = string: name of the ramp object
+
+    map_name = string: name of the map (for potential) or molecular
+    object (for proximity)
+    
+    range = list: values corresponding to slots in the ramp
+
+    color = list: colors corresponding to slots in the ramp
+
+    state = integer: state identifier
+
+    selection = selection: for automatic ranging
+    
+    beyond = number: with automatic ranging, are we excluding
+    values beyond a certain distance from the selection?
+
+    within = number: with automatic ranging, are we only including
+    valuess within a certain distance from the selection?
+
+    sigma = number: with automatic ranging, how many standard
+    deviations from the mean do we go?
+
+    zero = integer: with automatic ranging, do we force the central
+    value to be zero?
+
+EXAMPLES
+
+    ramp_new e_pot_color, e_pot_map, [-10,0,10], [red,white,blue]
+
+NOTES
+
+    Color ramps are extremely powerful but very complicated to use.
+
+    In the simplest case, they can be used to color representations
+    based on the potential values found in a map object at the
+    corresponding positions in space.
+
+    In another simple case, representations can be colored based on
+    proximity to a target.  Note that since ramp targets must
+    themselves be real objects (not merely selections), the "create"
+    command may be needed in order to generate an appropriate target.
+    
+    In more complicated cases, they can be used to color
+    representations on one object based atoms found in another.
+
+    Ramps can operate recursively.  In other words, the output color
+    from one ramp can be used as the input color for another.  For
+    example, you could color by map potential within a certain
+    distance of the target object, beyond which, a uniform color is applied.
+    
+    
+PYMOL API
+
+    def ramp_new(string name, string map_name, list range, list color,
+                 int state, string selection, float beyond, float
+                 within, float sigma, int zero, int quiet)
+
+SEE ALSO
+
+    load, color, create, slice, gradient
+    
+    '''
         r = DEFAULT_ERROR
         safe_color = string.strip(str(color))
         if(safe_color[0:1]=="["): # looks like a list

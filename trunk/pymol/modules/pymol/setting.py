@@ -773,35 +773,47 @@ USAGE
 
 ARGUMENTS
 
-    name = a setting name
+    name = string: setting name
 
-    value = a setting value (default: 1)
+    value = string: a setting value {default: 1}
 
-    selection = a name-pattern or selection-expression (default: '')
+    selection = string: name-pattern or selection-expression
+    {default:'' (global)}
 
-    state = a state number (default: 0)
+    state = a state number {default: 0 (per-object setting)}
+
+EXAMPLES
+
+    set orthoscopic
+
+    set line_width, 3
+
+    set surface_color, white, 1hpv
     
+    set sphere_scale, 0.5, elem C
+
+NOTES
+
+    The default behavior (with a blank selection) is global.  If the
+    selection is "all", then the setting entry in each individual
+    object will be changed.  Likewise, for a given object, if state is
+    zero, then the object setting will be modified.  Otherwise, the
+    setting for the indicated state within the object will be
+    modified.
+
+    If a selection is provided as opposed to an object name, then the
+    atomic setting entries are modified.
+
 PYMOL API
 
     cmd.set(string name, string value, string selection, int state,
             int updates, int quiet)
 
-NOTES
+SEE ALSO
 
-    The default behavior (with a blank selection) is global.  If the
-    selection is 'all', then the setting entry in each individual
-    objects will be changed.  Likewise, for a given object, if state
-    is zero, then the object setting will be modified.  Otherwise, the
-    setting for the indicated state within the object will be
-    modified.  
-
-    If a selection is provided as opposed to an object name, then the
-    atomic setting entries are modified.
-
-    There is a deprecated form of this command where an equals is used
-    in place of the first comma ("set name=value")
-
-        '''
+    get, set_bond
+    
+'''
         r = DEFAULT_ERROR
         selection = str(selection)
         if log:
@@ -888,28 +900,41 @@ NOTES
         if _self._raising(r,_self): raise QuietException            
         return r
 
-    def unset(name,selection='',state=0,updates=1,log=0,quiet=1,_self=cmd):
+    def unset(name, selection='', state=0, updates=1, log=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
-    "unset" behaves in two ways.
-
-    If selection is not provided, unset changes the named global
-    setting to a zero or off value.
-
-    If a selection is provided, then "unset" undefines 
-    object-specific or state-specific settings so that the global
-    setting will be in effect.
+    "unset" clear non-global settings and zeros out global settings.
 
 USAGE
 
     unset name [,selection [,state ]]
 
+EXAMPLE
+
+    unset orthoscopic
+
+    unset surface_color, 1hpv
+
+    unset sphere_scale, elem C
+    
+NOTES
+
+    If selection is not provided, unset changes the named global
+    setting to a zero or off value.
+
+    If a selection is provided, then "unset" undefines per-object,
+    per-state, or per-atom settings.
+
 PYMOL API
 
-    cmd.unset ( string name, string selection = '',
-                int state=0, int updates=1, int log=0 )
+    cmd.unset(string name, string selection, int state, int updates,
+                int log)
 
+SEE ALSO
+
+    set, set_bond
+    
         '''
         r = DEFAULT_ERROR
         selection = str(selection)
@@ -952,11 +977,6 @@ DESCRIPTION
 USAGE
 
     unset name [,selection, selection [,state ]]
-
-PYMOL API
-
-    cmd.unset ( string name, string selection = '',
-                int state=0, int updates=1, int log=0 )
 
         '''
         r = DEFAULT_ERROR
@@ -1021,7 +1041,43 @@ PYMOL API
             raise QuietException                     
         return r
 
-    def get(name,object='',state=0,quiet=1,_self=cmd):
+    def get(name, selection='', state=0, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get" prints out the current value of a setting.
+
+USAGE
+
+    get name [, selection [, state ]]
+    
+EXAMPLE
+
+    get line_width
+
+ARGUMENTS
+
+    name = string: setting name
+
+    selection = string: object name (selections not yet supported)
+
+    state = integer: state number
+    
+NOTES
+
+    "get" currently only works with global, per-object, and per-state
+    settings.  There is currently no way to retrieve per-atom settings.
+    
+PYMOL API
+
+    cmd.get(string name, string object, int state, int quiet)
+
+SEE ALSO
+
+    set, set_bond, get_bond
+
+    '''
+        
         r = DEFAULT_ERROR
         state = int(state)
         if is_string(name):
@@ -1033,7 +1089,7 @@ PYMOL API
             raise QuietException
         try:
             _self.lock(_self)
-            r = _cmd.get_setting_text(_self._COb,i,str(object),state-1)
+            r = _cmd.get_setting_text(_self._COb,i,str(selection),state-1)
         finally:
             _self.unlock(_self=_self)
         if is_ok(r) and (r!=None):
@@ -1041,12 +1097,12 @@ PYMOL API
             if len(string.strip(r_str))==0:
                 r_str = "\'"+r_str+"\'"
             if not quiet:
-                if(object==''):
+                if(selection==''):
                     print " get: %s = %s"%(name,r_str)
                 elif state<=0:
-                    print " get: %s = %s in object %s"%(name,r_str,object)
+                    print " get: %s = %s in object %s"%(name,r_str,selection)
                 else:
-                    print " get: %s = %s in object %s state %d"%(name,r_str,object,state)
+                    print " get: %s = %s in object %s state %d"%(name,r_str,selection,state)
         if _self._raising(r,_self): raise QuietException
         return r
     

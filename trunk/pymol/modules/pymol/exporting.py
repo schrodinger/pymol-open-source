@@ -114,24 +114,32 @@ USAGE
 
 ARGUMENTS
 
-    filename is the file to create
+    filename = string: file path to be written
     
-    width of image in pixels (default 0 -> viewport width)
+    width = integer: width in pixels {default: 0 (current)}
 
-    height of image in pixels (default 0 -> viewport height)
+    height = integer: height in pixels {default: 0 (current)}
 
-    dpi in dots-per-inch (default -1.0 -- unspecified)
+    dpi = float: dots-per-inch {default -1.0 (unspecified)}
 
-    ray = 0 or 1 (default 0): should ray be run first?
+    ray = 0 or 1: should ray be run first {default: 0 (no)}
 
 EXAMPLES
 
     png image.png
     png image.png, dpi=300
-       
+
+NOTES
+
+    PNG is the only image format supported by PyMOL.
+
+SEE ALSO
+
+    mpng, save
+    
 PYMOL API
 
-    cmd.png(string file, int width, int width, float dpi,
+    cmd.png(string filename, int width, int width, float dpi,
             int ray, int quiet)
         '''
         r = DEFAULT_ERROR
@@ -177,9 +185,9 @@ ARGUMENTS
 
     filename = string: file path to be written
 
-    selection = string: atoms to save {default:(all)}
+    selection = string: atoms to save {default: (all)}
 
-    state = integer: state to save {default:-1 (current state)}
+    state = integer: state to save {default: -1 (current state)}
     
 PYMOL API
 
@@ -187,17 +195,18 @@ PYMOL API
 
 NOTES
 
-    The file format is autodetected if the extesion is one of the
-    supported output formats: pdb, pqr, mol, pkl, mmd, mmod, pov, png,
-    pse, aln, obj, mtl, or wrl.
+    The file format is automatically chosen if the extesion is one of
+    the supported output formats: pdb, pqr, mol, pkl, mmd, mmod, pov,
+    png, pse, aln, obj, mtl, or wrl.
 
-    Currently, if the file format is not recognized, then a PDB file
-    is written by default
+    If the file format is not recognized, then a PDB file is written
+    by default.
 
-    For molecular files and where applicable:
+    For molecular files and where applicable and supported:
     
-    when state = -1 (default) only the current state is written.
-    when state = 0, then a multi-state output PDB file is written.
+    * if state = -1 (default), then only the current state is written.
+
+    * if state = 0, then a multi-state output file is written.
     
 SEE ALSO
 

@@ -133,6 +133,10 @@ if __name__=='pymol.controlling':
         }
 
     def config_mouse(mode='three_button',quiet=1,_self=cmd):
+        '''
+        '''
+
+        
         global mouse_ring
         if ring_dict.has_key(mode):
             mouse_ring = ring_dict[mode]
@@ -582,7 +586,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
-    def button(button,modifier,action,_self=cmd):
+    def button(button, modifier, action, _self=cmd):
         '''
 DESCRIPTION
 
@@ -590,20 +594,24 @@ DESCRIPTION
 
 USAGE
 
-    button <button>,<modifier>,<action>
+    button button, modifier, action
+
+ARGUMENTS
+
+    button = L, M, R, or S
+
+    modifiers = None, Shft, Ctrl, or CtSh
+
+    actions = Rota, Rota, Move, MovZ, Clip, RotZ, ClpN, ClpF
+              lb,   mb,   rb,   +lb,  +lbX, -lbX, +mb,  +rb, 
 
 PYMOL API
 
-    cmd.button( string button, string modifier, string action )
+    cmd.button(string button, string modifier, string action)
 
-NOTES
+SEE ALSO
 
-    button:      L, M, R, S
-    modifers:    None, Shft, Ctrl, CtSh
-    actions:     Rota, Move, MovZ, Clip, RotZ, ClpN, ClpF
-                     lb,   mb,   rb,   +lb,  +lbX, -lbX, +mb,  +rb, 
-                     PkAt, PkBd, RotF, TorF, MovF, Orig, Cent
-
+    config_mouse
     '''
         r = DEFAULT_ERROR
         try:

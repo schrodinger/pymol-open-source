@@ -364,6 +364,7 @@ def _refresh(swap_buffers=1,_self=cmd):  # Only call with GLUT thread!
 # stereo (platform dependent )
 
 def _sgi_stereo(flag): # SGI-SPECIFIC - bad bad bad
+    import sys
     # WARNING: internal routine, subject to change
     if sys.platform[0:4]=='irix':
         if os.path.exists("/usr/gfx/setmon"):
