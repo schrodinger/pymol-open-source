@@ -163,15 +163,17 @@ USAGE
     }
     reinit_sc = Shortcut(reinit_code.keys())
 
-    def reinitialize(what='everything',object='',_self=cmd):
+    def reinitialize(what='everything', object='', _self=cmd):
         '''
 DESCRIPTION
 
-    "reinitialize" reinitializes PyMOL
+    "reinitialize" reinitializes the program by deleting all objects
+    and restoring the default program settings.
 
 USAGE
 
     reinitialize
+
         '''
         r = DEFAULT_ERROR
         what = reinit_code[reinit_sc.auto_err(str(what),'option')]
@@ -379,30 +381,33 @@ SEE ALSO
 
         # for aliasing compound commands to a single keyword
 
-    def alias(name, command,_self=cmd):
+    def alias(name, command, _self=cmd):
         '''
 DESCRIPTION
 
-    "alias" allows you to bind routinely used command-line input to a
-    new PyMOL command keyword.
+    "alias" allows you to bind routinely-used command-line inputs to a
+    new command keyword.
 
 USAGE
 
-    alias name, literal-command-input
+    alias name, command
 
 ARGUMENTS
 
-    literal-command-input may contain multiple commands separated by semicolons.
+    name = string: new keyword
+    
+    command = string: literal input with commands separated by semicolons.
     
 EXAMPLE
 
     alias my_scene, hide; show ribbon, polymer; show sticks, organic; show nonbonded, solvent
+    
     my_scene
 
 NOTES
 
     For security reasons, aliased commands are not saved or restored
-    in sessions.  
+    in sessions.
 
 SEE ALSO
 

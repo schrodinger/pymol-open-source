@@ -247,12 +247,12 @@ def by_elem(self_cmd, sele):
         [ 2, 'Atoms'     ,''                               ],
         [1,' \\777H\\229N\\922O\\950S...','util.cnc("'+sele+'")'],
 
-[1,'\\292C\\777H\\229N\\922O\\950S...','util.cba(26,"'+sele+'")'],# carbon
+[1,'\\292C\\777H\\229N\\922O\\950S...','util.cba(33,"'+sele+'")'],# tv_green
 [1,'\\099C\\777H\\229N\\922O\\950S...','util.cba(5,"'+sele+'")'],# cyan
 [1,'\\927C\\777H\\229N\\922O\\950S...','util.cba(154,"'+sele+'")'],# lightmagenta
 [1,'\\990C\\777H\\229N\\922O\\950S...','util.cba(6,"'+sele+'")'],# yellow
 [1,'\\955C\\777H\\229N\\922O\\950S...','util.cba(9,"'+sele+'")'],# salmon
-[1,'\\888C\\777H\\229N\\922O\\950S...','util.cba(29,"'+sele+'")'],# hydrogen
+[1,'\\888C\\777H\\229N\\922O\\950S...','util.cba(144,"'+sele+'")'],# grey90
 [1,'\\449C\\777H\\229N\\922O\\950S...','util.cba(11,"'+sele+'")'],# slate
 [1,'\\962C\\777H\\229N\\922O\\950S...','util.cba(13,"'+sele+'")'],# orange
         [ 1, 'set 2'     ,by_elem2(self_cmd, sele)                    ],

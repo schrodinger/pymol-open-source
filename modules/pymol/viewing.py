@@ -1462,7 +1462,7 @@ SEE ALSO
         return 1
 
 
-    def stereo(state='on',quiet=1,_self=cmd):
+    def stereo(toggle='on', quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1470,39 +1470,44 @@ DESCRIPTION
 
 USAGE
 
+    stereo [toggle]
+
+ARGUMENTS
+
+    toggle = on, off, crosseye, walleye, quadbuffer, sidebyside, or geowall
+    
+EXAMPLES
+
     stereo on
     stereo off
-    stereo swap
     stereo crosseye
-    stereo walleye
-    stereo quadbuffer
 
 NOTES
 
-    quadbuffer is the default stereo mode if hardware stereo is available
-    otherwise, crosseye is the default.
+    "quadbuffer" is the default stereo mode if hardware stereo is available.
+    otherwise, "crosseye" is the default.
 
 PYMOL API
 
-    cmd.stereo(string state)
+    cmd.stereo(string toggle)
         '''
-        state = stereo_dict[stereo_sc.auto_err(str(state),'state')]
+        toggle = stereo_dict[stereo_sc.auto_err(str(toggle),'toggle')]
         r = DEFAULT_ERROR      
         try:
             _self.lock(_self)
-            if state>1:
-                if state==2: # cross-eye
+            if toggle>1:
+                if toggle==2: # cross-eye
                     _self.set("stereo_mode","2",quiet=quiet)
-                elif state==3: # quad
+                elif toggle==3: # quad
                     _self.set("stereo_mode","1",quiet=quiet)
-                elif state==4: # wall-eye
+                elif toggle==4: # wall-eye
                     _self.set("stereo_mode","3",quiet=quiet)
-                elif state==5: # geowall
+                elif toggle==5: # geowall
                     _self.set("stereo_mode","4",quiet=quiet)
-                elif state==6:
+                elif toggle==6:
                     _self.set("stereo_mode","5",quiet=quiet)
-                state=1
-            r = _cmd.stereo(_self._COb,state)
+                toggle=1
+            r = _cmd.stereo(_self._COb,toggle)
             if is_error(r):
                 print "Error: Selected stereo mode is not available."
         finally:
@@ -1545,18 +1550,29 @@ SEE ALSO
         return r
 
 
-    def full_screen(toggle=-1,_self=cmd):
+    def full_screen(toggle=-1, _self=cmd):
         '''
 DESCRIPTION
 
-    "full_screen" enables or disables PyMOL\'s full screen mode.  This
-    does not work well on all platforms.  
+    "full_screen" enables or disables full screen mode.  
 
 USAGE
 
+    full_screen [toggle]
+
+EXAMPLES
+
+
+    full_screen
     full_screen on
     full_screen off
 
+NOTES
+
+    This does not work correctly on all platforms.  If you encounter
+    trouble, try using the maximize button on the viewer window
+    instead.
+    
     '''
         toggle = toggle_dict[toggle_sc.auto_err(str(toggle),'toggle')]
         if thread.get_ident() == pymol.glutThread:
@@ -1709,11 +1725,11 @@ PYMOL API
         return r
 
 
-    def bg_color(color="black",_self=cmd):
+    def bg_color(color="black", _self=cmd):
         '''
 DESCRIPTION
 
-    "bg_color" sets the background color
+    "bg_color" sets the background color.
 
 USAGE
 
@@ -1722,10 +1738,25 @@ USAGE
 ARGUMENTS
 
     color = string: color name or number {default: black}
+
+EXAMPLES
+
+    bg_color grey30
+
+    bg_color
+    
+NOTES
+
+    To obtain a transparent background, "unset opaque_background", and
+    then use "ray".
+    
+SEE ALSO
+
+    set_color, ray
     
 PYMOL API
 
-    cmd.bg_color(string color="black")
+    cmd.bg_color(string color)
 
         '''
         color = _self._interpret_color(_self,color)
@@ -1810,7 +1841,7 @@ NOTES
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def draw(width=0,height=0,antialias=-1,quiet=1,_self=cmd):
+    def draw(width=0, height=0, antialias=-1, quiet=1, _self=cmd):
     	'''
 DESCRIPTION
 
@@ -1818,12 +1849,16 @@ DESCRIPTION
 
 USAGE
 
-    draw [width [,height [,antialias [,quiet ]]]]
+    draw [width [,height [,antialias ]]]
 
-PYMOL API
+ARGUMENTS
 
-    cmd.draw(int width, int height, int antialias, int quiet)
+    width = integer {default: 0 (current)}
 
+    height = integer {default: 0 (current)}
+
+    antialias = integer {default: -1 (use antialias setting)}
+    
 EXAMPLES
 
     draw
@@ -1832,12 +1867,20 @@ EXAMPLES
 NOTES
 
     Default width and height are taken from the current viewpoint. If
-    one is specifieds but not the other, then the missing value is
+    one is specified but not the other, then the missing value is
     scaled so as to preserve the current aspect ratio.
 
     Because this feature uses the OpenGL rendering context to piece
     together the image, it does not work when running in the
     command-line only mode.
+
+    On certain graphics hardware, "unset opaque_background" followed
+    by "draw" will produce an image with a transparent background.
+    However, better results can usually be obtained using "ray".
+    
+PYMOL API
+
+    cmd.draw(int width, int height, int antialias, int quiet)
 
 SEE ALSO
 
@@ -1872,19 +1915,33 @@ DESCRIPTION
 
 USAGE
 
-    ray [width [,height [,renderer [,antialias [,angle [,shift 
-        [,renderer [,quiet [,async ]]]]]]]]]
+    ray [width [,height [,antialias [,angle [,shift [,renderer [,quiet
+        [,async ]]]]]]]]]
 
-PYMOL API
+ARGUMENTS
 
-    cmd.ray(int width, int height, int antialias, float angle,
-            float shift, int renderer, int quiet, int async)
+    width = integer {default: 0 (current)}
 
+    height = integer {default: 0 (current)}
+
+    antialias = integer {default: -1 (use antialias setting)}
+
+    angle = float: y-axis rotation for stereo image generation
+    {default: 0.0}
+
+    shift = float: x-axis translation for stereo image generation
+    {default: 0.0}
+
+    renderer = -1, 0, 1, or 2: respectively, default, built-in,
+    pov-ray, or dry-run {default: 0}
+    
+    async = 0 or 1: should rendering be done in a background thread?
+    
 EXAMPLES
 
     ray
     ray 1024,768
-    ray renderer=0
+    ray renderer=2
 
 NOTES
 
@@ -1894,16 +1951,18 @@ NOTES
     
     angle and shift can be used to generate matched stereo pairs
 
-    renderer = -1 is default (use value in ray_default_renderer)
-    renderer =  0 uses PyMOL's internal renderer
-    renderer =  1 uses PovRay's renderer.  This is Unix-only
-        and you must have "x-povray" in your path.  It utilizes two
-        two temporary files: "tmp_pymol.pov" and "tmp_pymol.png".
+    renderer = 1 uses PovRay.  This is Unix-only and you must have
+        "povray" in your path.  It utilizes two two temporary files:
+        "tmp_pymol.pov" and "tmp_pymol.png".
 
     See "help faster" for optimization tips with the builtin renderer.
     See "help povray" for how to use PovRay instead of PyMOL\'s
     built-in ray-tracing engine.
 
+PYMOL API
+
+    cmd.ray(int width, int height, int antialias, float angle,
+            float shift, int renderer, int quiet, int async)
 SEE ALSO
 
     draw, png, save
@@ -2063,24 +2122,34 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException
         return r
     
-    def recolor(selection='all',representation='everything',_self=cmd):
+    def recolor(selection='all', representation='everything', _self=cmd):
         '''
 DESCRIPTION
 
-    "rebuild" forces PyMOL to reapply colors to geometric objects in
-    case any of them have gone out of sync.
-
+    "recolor" forces reapplication of colors to existing objects.
+    
 USAGE
 
     recolor [selection [, representation ]]
 
+ARGUMENTS
+
+    selection = string {default: all}
+
+    representation = string {default: everything}
+    
+NOTES
+
+    This command often needs to be executed after "set_color" has been
+    used to redefine one or more existing colors.
+    
 PYMOL API
 
     cmd.recolor(string selection = 'all', string representation = 'everything')
 
 SEE ALSO
 
-    recolor
+    color, set_color
     '''
         selection = selector.process(selection)
         representation = repres_sc.auto_err(representation,'representation')
@@ -2106,20 +2175,29 @@ USAGE
 
 ARGUMENTS
 
-    color = string: color or ramp name
+    color = string: color name or number
 
     selection = string: selection-expression or name-pattern
-    coorponding to the atoms or objects to be colored
+    corresponding to the atoms or objects to be colored
+    {default: (all)}.
+
+NOTES
+
+    When using color ramps, the ramp can be used as a color.
     
 PYMOL API
 
     cmd.color(string color, string selection, int quiet)
 
+SEE ALSO
+
+    set_color, recolor
+    
 EXAMPLE 
 
     color cyan
     color yellow, chain A
-        '''
+    '''
         # preprocess selection
         selection = selector.process(selection)
         color = _self._interpret_color(_self,str(color))
@@ -2133,22 +2211,65 @@ EXAMPLE
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def spectrum(expression="count",
-                     palette="rainbow",
-                     selection="(all)",
-                     minimum=None,
-                     maximum=None,
-                     byres=0,quiet=1,_self=cmd):
+    def spectrum(expression="count", palette="rainbow",
+                 selection="(all)", minimum=None, maximum=None,
+                 byres=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
-    "spectrum" colors atoms using a spectrum
+    "spectrum" colors atoms using a spectrum.
     
 USAGE
 
+    spectrum [expression [, palette [, selection [, minimum [, maximum [, byres ]]]]]]
+
+ARGUMENTS
+
+    expression = count, b, q, or pc: respectively, atom count, temperature factor,
+    occupancy, or partial charge {default: count}
+    
+    palette = string: palette name {default: rainbow}
+
+    selection = string: atoms to color {default: (all)}
+
+    minimum = float: {default: None (automatic)}
+
+    maximum = float: {default: None (automatic)}
+
+    byres = integer: controls whether coloring is applied per-residue {default: 0}
+
+EXAMPLES
+
+    spectrum b, blue_red, minimum=10, maximum=50
+
+    spectrum count, rainbow_rev, chain A, byres=1
+
+NOTES
+
+    Available palettes include:
+
+      blue_green green_white_magenta red_cyan blue_magenta
+      green_white_red red_green blue_red green_white_yellow
+      red_white_blue blue_white_green green_yellow red_white_cyan
+      blue_white_magenta green_yellow_red red_white_green
+      blue_white_red magenta_blue red_white_yellow blue_white_yellow
+      magenta_cyan red_yellow blue_yellow magenta_green
+      red_yellow_green cbmr magenta_white_blue rmbc cyan_magenta
+      magenta_white_cyan yellow_blue cyan_red magenta_white_green
+      yellow_cyan cyan_white_magenta magenta_white_yellow
+      yellow_cyan_white cyan_white_red magenta_yellow yellow_green
+      cyan_white_yellow rainbow yellow_magenta cyan_yellow rainbow2
+      yellow_red gcbmry rainbow2_rev yellow_white_blue green_blue
+      rainbow_cycle yellow_white_green green_magenta rainbow_cycle_rev
+      yellow_white_magenta green_red rainbow_rev yellow_white_red
+      green_white_blue red_blue yrmbcg
+
 PYMOL API
 
-EXAMPLES 
+    def spectrum(string expression, string palette,
+                 string selection, float minimum, float maximum,
+                 int byres, int quiet)
+
 
         '''
 
@@ -2175,12 +2296,12 @@ EXAMPLES
         if _self._raising(r,_self): raise QuietException
         return r
     
-    def set_color(name,rgb,mode=0,quiet=1,_self=cmd):
+    def set_color(name, rgb, mode=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
     "set_color" defines a new color using the red, green, and blue
-    components
+    (RGB) color components.
 
 USAGE
 
@@ -2190,7 +2311,8 @@ ARGUMENTS
 
     name = string: name for the new or existing color
 
-    rgb = list of numbers: [red, green, blue] in range (0.0, 1.0) or (0, 255)
+    rgb = list of numbers: [red, green, blue] each and all in the range
+    (0.0, 1.0) or (0, 255)
     
 EXAMPLES 
 
@@ -2201,10 +2323,17 @@ EXAMPLES
 NOTES
 
     PyMOL automatically infers the range based on the input arguments.
+
+    It may be necessary to issue "recolor" command in order to force
+    recoloring of existing objects.
+    
+SEE ALSO
+
+    recolor
     
 PYMOL API
 
-    cmd.set_color( string name, list-of-numbers rgb, int mode )
+    cmd.set_color(string name, list-of-numbers rgb, int mode )
 
         '''
         r = DEFAULT_ERROR
