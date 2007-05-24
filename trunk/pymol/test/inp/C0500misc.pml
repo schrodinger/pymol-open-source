@@ -225,6 +225,10 @@ spheroid pept
 
 cmd.config_mouse(quiet=0)
 
+# split_states
+
+dele all
+load dat/ligs3d.sdf
 
 /print "END-LOG"
 

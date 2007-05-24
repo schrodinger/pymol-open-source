@@ -71,7 +71,7 @@ DESCRIPTION
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def split_states(object,first=1,last=0,prefix=None):
+    def split_states(object,first=1,last=0,prefix=None,_self=cmd):
         '''
 DESCRIPTION
 
