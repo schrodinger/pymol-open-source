@@ -234,3 +234,23 @@ Warning: 'spheroid' is experimental, incomplete, and unstable.
  ObjectMolecule: computing spheroid from states 1 to 1.
 PyMOL>cmd.config_mouse(quiet=0)
  config_mouse: three_button
+PyMOL>rewind
+PyMOL>dele all
+PyMOL>load dat/ligs3d.sdf
+ ObjectMoleculeReadStr: read through molecule 1.
+ ObjectMoleculeReadStr: read through molecule 2.
+ ObjectMoleculeReadStr: read through molecule 3.
+ ObjectMoleculeReadStr: read through molecule 4.
+ ObjectMoleculeReadStr: read through molecule 5.
+ ObjectMoleculeReadStr: read through molecule 6.
+ ObjectMoleculeReadStr: read through molecule 7.
+ ObjectMoleculeReadStr: read through molecule 8.
+ ObjectMoleculeReadStr: read through molecule 9.
+ ObjectMoleculeReadStr: read through molecule 10.
+ ExecutiveLoad: "dat/ligs3d.sdf" loaded as "ligs3d", through state 10.
+PyMOL>split_states ligs3d
+PyMOL>print cmd.get_names()
+['ligs3d', 'MFCD02681585', 'MFCD01567969', 'MFCD00023789', 'MFCD02579443', 'MFCD02579410', 'MFCD02579135', 'MFCD02681468', 'MFCD00141070', 'MFCD02983625', 'MFCD00115818']
+PyMOL>rewind
+PyMOL>ray renderer=2
+ RayRenderTest: obtained 564 graphics primitives.

@@ -71,7 +71,7 @@ DESCRIPTION
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def split_states(object,first=1,last=0,prefix=None,_self=cmd):
+    def split_states(object, first=1, last=0, prefix=None, _self=cmd):
         '''
 DESCRIPTION
 
@@ -111,7 +111,7 @@ EXAMPLE
                 r = _self.frame(a)
                 if is_error(r): 
                     break
-                r = _self.create(name,"%s and present"%object,a,1)
+                r = _self.create(name,"(%s) and state %d"%(object,a),a,1)
                 if is_error(r): 
                     break
         if _self._raising(r,_self): raise pymol.CmdException            
