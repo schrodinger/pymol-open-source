@@ -1085,9 +1085,9 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
   }
   if(ok) {     
     ObjectMapState *ms;
+    float tmp_level[3];
     if(map_state<0)
       map_state = 0;
-    float tmp_level[3];
     if(vert_vla && 
        (ms = ObjectMapGetState(map,map_state))) {
       if(ObjectMapStateGetExcludedStats(G,ms,vert_vla,beyond,within,tmp_level)) {
