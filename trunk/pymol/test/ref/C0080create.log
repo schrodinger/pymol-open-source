@@ -81,7 +81,7 @@ PyMOL>print cmd.count_states("ligs3d")
 PyMOL>print cmd.count_states("cpy")
 1
 PyMOL>create tst2,ligs3d, 5, 3
- Selector: found 337 atoms.
+ Selector: found 32 atoms.
  Executive: object "tst2" created.
 PyMOL>print cmd.count_states("tst2")
 3
