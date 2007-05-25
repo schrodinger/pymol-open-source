@@ -227,8 +227,14 @@ cmd.config_mouse(quiet=0)
 
 # split_states
 
+rewind
 dele all
 load dat/ligs3d.sdf
+split_states ligs3d
+print cmd.get_names()
+rewind
+ray renderer=2
+
 
 /print "END-LOG"
 

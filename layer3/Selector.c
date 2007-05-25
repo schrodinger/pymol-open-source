@@ -115,6 +115,7 @@ struct _CSelector {
   int NAtom;
   int NModel;
   int NCSet;
+  int SeleBaseOffsetsValid;
   ObjectMolecule *Origin,*Center;
   OVLexicon *Lex;
   OVOneToAny *Key;
@@ -130,7 +131,6 @@ typedef struct {
   int sum;
   int frag;
 } WalkDepthRec;
-
 
 static int *SelectorSelect(PyMOLGlobals *G,char *sele,int state,int domain);
 static int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
@@ -159,6 +159,94 @@ static int *SelectorGetIndexVLA(PyMOLGlobals *G,int sele);
 static int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp);
 static int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *obj,int at1,int at2,
                            int *zero,int *scratch);
+
+
+static int SelectorGetObjAtmOffset(CSelector *I,ObjectMolecule *obj,int offset)
+{
+  if(I->SeleBaseOffsetsValid) {
+    return obj->SeleBase + offset;
+  } else {
+    register int stop_below = obj->SeleBase;
+    register int stop_above = I->NAtom - 1;
+    register int result = stop_below;
+    register TableRec *i_table = I->Table;
+    register ObjectMolecule **i_obj=I->Obj;
+    register int step = offset;
+    register int cur;
+    register int proposed;
+    register int prior1=-1, prior2=-1;
+
+    /* non-linear hunt to find atom */
+
+    result = stop_below;
+    cur = i_table[result].atom;
+    while(step>1) {
+      if(cur < offset) {
+        stop_below = result + 1;
+        while(step>1) {
+          proposed = result + step;
+          if(proposed <= stop_above) {
+            if(i_obj[i_table[proposed].model] == obj) {
+              if(proposed == prior1) {
+                proposed--;
+                step--; /* guarantee progress (avoid flip flop) */
+              }
+              result = prior1 = proposed;
+              break;
+            } else if(stop_above>proposed) {
+              stop_above = proposed - 1;
+            }
+          }
+          step = (step>>1);
+        }
+      } else if(cur > offset) {
+        stop_above = result - 1;
+        while(step>1) {
+          proposed = result - step;
+          if(proposed >= stop_below) {
+            if(i_obj[i_table[proposed].model] == obj) {
+              if(proposed == prior2) {
+                proposed++;
+                step--; /* guarantee progress (avoid flip flop) */
+              }
+              result = prior2 = proposed;
+              break;
+            }
+          }
+          step = (step>>1);
+        }
+      } else 
+        return result;
+      cur = i_table[result].atom;
+      if(cur == offset) 
+        return result;
+    }
+
+    {
+      /* failsafe / linear search */
+      register int dir = 1;
+      if(cur > offset)
+        dir = -1;
+      while(1) { /* TODO: optimize this search algorithm! */
+        if(cur == offset)
+          return result;
+        if(dir>0) {
+          if(result >= stop_above)
+            break;
+          result++;
+        } else {
+          if(result <= stop_below)
+            break;
+          result--;
+        }
+        if(i_obj[i_table[result].model] != obj)
+          break;
+        cur = i_table[result].atom;      
+      }
+    }
+  }
+  return -1;
+}
 
 
 #define STYP_VALU 0
@@ -541,6 +629,7 @@ static int *SelectorUpdateTableMultiObjectIdxTag(PyMOLGlobals *G,
  
   SelectorClean(G);
 
+  I->SeleBaseOffsetsValid = true; /* all states -> all atoms -> offsets valid */
   I->NCSet = 0;
   if(no_dummies) {
     modelCnt = 0;
@@ -574,12 +663,11 @@ static int *SelectorUpdateTableMultiObjectIdxTag(PyMOLGlobals *G,
     
     I->Obj[modelCnt]=obj;
     obj->SeleBase=c; 
-    for(a=0;a<obj->NAtom;a++)
-      {
-        I->Table[c].model=modelCnt;
-        I->Table[c].atom=a;
-        c++;
-      }
+    for(a=0;a<obj->NAtom;a++) {
+      I->Table[c].model=modelCnt;
+      I->Table[c].atom=a;
+      c++;
+    }
     if(idx&&n_idx) {
       if(n_idx>0) {
         for(a=0; a< n_idx; a++) {
@@ -3165,8 +3253,9 @@ int  SelectorCreateAlignments(PyMOLGlobals *G,
       while(1) { /* match up all atoms in each residue */
         cmp = AtomInfoNameOrder(G,ai1a,ai2a);
         if(cmp==0) { /* atoms match */
-          index1 = obj1->SeleBase + at1a;
-          index2 = obj2->SeleBase + at2a;
+          index1 = SelectorGetObjAtmOffset(I, obj1, at1a);
+          index2 = SelectorGetObjAtmOffset(I, obj2, at2a);
+
         PRINTFD(G,FB_Selector) 
           " S.C.A.-DEBUG: compare %s %s %d\n",ai1a->name,ai2a->name,cmp
           ENDFD
@@ -3175,13 +3264,14 @@ int  SelectorCreateAlignments(PyMOLGlobals *G,
           " S.C.A.-DEBUG: entry %d %d\n",
           ai1a->selEntry,ai2a->selEntry
           ENDFD
-
-          if(SelectorIsMember(G,ai1a->selEntry,sele1)&&
-             SelectorIsMember(G,ai2a->selEntry,sele2)) {
-            if((!identical)||(strcmp(ai1a->resn,ai2a->resn)==0)) {
-              flag1[index1] = true;
-              flag2[index2] = true; 
-              cnt++;
+          if((index1>=0) && (index2>=0)) {
+            if(SelectorIsMember(G,ai1a->selEntry,sele1)&&
+               SelectorIsMember(G,ai2a->selEntry,sele2)) {
+              if((!identical)||(strcmp(ai1a->resn,ai2a->resn)==0)) {
+                flag1[index1] = true;
+                flag2[index2] = true; 
+                cnt++;
+              }
             }
           }
           at1a++;
@@ -4078,18 +4168,20 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
     if(obj3) ObjectMoleculeUpdateNeighbors(obj3);
     if(obj4) ObjectMoleculeUpdateNeighbors(obj4);
 
-    SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1); /* could this be optimized? */
+    SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1); 
   
     comp = Calloc(int,I->NAtom);
     atom = Alloc(int,I->NAtom);
     toDo = Alloc(int,I->NAtom);
     pkset = Calloc(int,I->NAtom);
 
+    /* NOTE: SeleBase only safe with cSelectorUpdateTableAllStates!  */
+
     if(obj1) {
       atom1_base  = atom + obj1->SeleBase;
       toDo1_base  = toDo + obj1->SeleBase;
       comp1_base  = comp + obj1->SeleBase;
-      pkset1_base  = pkset+ obj1->SeleBase;
+      pkset1_base  = pkset + obj1->SeleBase;
     }
 
     if(obj2) {
@@ -5728,19 +5820,21 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
           }
           
           if((a1>=0)&&(a2>=0)&&(conect_all||atInfo[b1].hetatm||atInfo[b2].hetatm)) {
-            b1+=obj->SeleBase;
-            b2+=obj->SeleBase;
-            if(I->Table[b1].index&&I->Table[b2].index) {
-              VLACheck(bond,BondType,nBond+(2*ii1->order)+2);
-              b1=I->Table[b1].index;
-              b2=I->Table[b2].index;
-              for(d=0;d<ii1->order;d++) {
-                bond[nBond].index[0] = b1;
-                bond[nBond].index[1] = b2;
-                nBond++;
-                bond[nBond].index[0] = b2;
-                bond[nBond].index[1] = b1;
-                nBond++;
+            int i_b1 = SelectorGetObjAtmOffset(I,obj,b1);
+            int i_b2 = SelectorGetObjAtmOffset(I,obj,b2);
+            if((i_b1>=0)&&(i_b2>=0)) {
+              if(I->Table[i_b1].index&&I->Table[i_b2].index) {
+                VLACheck(bond,BondType,nBond+(2*ii1->order)+2);
+                b1 = I->Table[i_b1].index;
+                b2 = I->Table[i_b2].index;
+                for(d=0;d<ii1->order;d++) {
+                  bond[nBond].index[0] = b1;
+                  bond[nBond].index[1] = b2;
+                  nBond++;
+                  bond[nBond].index[0] = b2;
+                  bond[nBond].index[1] = b1;
+                  nBond++;
+                }
               }
             }
           }
@@ -5953,16 +6047,18 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref)
             }
 
             if((a1>=0)&&(a2>=0)) {
-              b1+=obj->SeleBase;
-              b2+=obj->SeleBase;
-              if(I->Table[b1].index&&I->Table[b2].index) {
-                VLACheck(bond,BondType,nBond);
-                bond[nBond] = *ii1;
-                b1=I->Table[b1].index - 1; /* counteract 1-based */
-                b2=I->Table[b2].index - 1; /* indexing from above */
-                bond[nBond].index[0] = b1;
-                bond[nBond].index[1] = b2;
-                nBond++;
+              int i_b1 = SelectorGetObjAtmOffset(I,obj,b1);
+              int i_b2 = SelectorGetObjAtmOffset(I,obj,b2);
+              if((i_b1>=0)&&(i_b2>=0)) {
+                if(I->Table[i_b1].index&&I->Table[i_b2].index) {
+                  VLACheck(bond,BondType,nBond);
+                  bond[nBond] = *ii1;
+                  b1=I->Table[i_b1].index - 1; /* counteract 1-based */
+                  b2=I->Table[i_b2].index - 1; /* indexing from above */
+                  bond[nBond].index[0] = b1;
+                  bond[nBond].index[1] = b2;
+                  nBond++;
+                }
               }
             }
             ii1++;
@@ -6234,10 +6330,10 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
       targ = (ObjectMolecule*)ob;
   
   c=0;
-  if((target<0)||(source<0)||(target!=source)) {
+  if(source<0) {
     SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
   } else {
-    SelectorUpdateTable(G,target,-1);
+    SelectorUpdateTable(G,source,-1);
   }
 
   if(!targ) {
@@ -6273,16 +6369,19 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
     obj=I->Obj[a];
     ii1=obj->Bond;
     for(b=0;b<obj->NBond;b++) {
-      b1=ii1->index[0]+obj->SeleBase;
-      b2=ii1->index[1]+obj->SeleBase;
-      if((I->Table[b1].index>=0)&&(I->Table[b2].index>=0)) {
-        VLACheck(bond,BondType,nBond);
-        {
-          BondType *dst_bond = bond+nBond;
-          AtomInfoBondCopy(G, ii1, dst_bond);
-          dst_bond->index[0] = I->Table[b1].index; /* store what will be the new index */
-          dst_bond->index[1] = I->Table[b2].index;
-          nBond++;
+      b1 = SelectorGetObjAtmOffset(I,obj,ii1->index[0]);
+      b2 = SelectorGetObjAtmOffset(I,obj,ii1->index[1]);
+      if((b1>=0)&&(b2>=0)) {
+        if((I->Table[b1].index>=0)&&(I->Table[b2].index>=0)) {
+          VLACheck(bond,BondType,nBond);
+          {
+            BondType *dst_bond = bond+nBond;
+            AtomInfoBondCopy(G, ii1, dst_bond);
+            dst_bond->index[0] = I->Table[b1].index; /* store what will be the new index */
+            dst_bond->index[1] = I->Table[b2].index;
+            /*            printf("DEBUG %d %d\n",dst_bond->index[0],dst_bond->index[1]);*/
+            nBond++;
+          }
         }
       }
       ii1++;
@@ -6311,6 +6410,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
   cs->NTmpBond = nBond;
   bond=NULL;
   
+  /*  printf("DEBUG nAtom %d\n",nAtom);*/
   ObjectMoleculeMerge(targ,atInfo,cs,false,cAIC_AllMask,true); /* will free atInfo */
   /* cs->IdxToAtm will now have the reverse mapping from the new subset
      to the new merged molecule */
@@ -6320,10 +6420,10 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
   
   if(!isNew) { /* recreate selection table */
 
-    if((target<0)||(source<0)||(target!=source)) {
+    if(source<0) {
       SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
     } else {
-      SelectorUpdateTable(G,target,-1);
+      SelectorUpdateTable(G,source,-1);
     }
 
   }
@@ -6342,13 +6442,12 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
       I->Table[a].index=-1;
       obj=I->Obj[I->Table[a].model];
       s=obj->AtomInfo[at].selEntry;
-      if(SelectorIsMember(G,s,sele))
-        {
-          I->Table[a].index=c; /* Mark records  */
-          if(nCSet<obj->NCSet)
-            nCSet=obj->NCSet;
-          c++;
-        }
+      if(SelectorIsMember(G,s,sele)) {
+        I->Table[a].index=c; /* Mark records  */
+        if(nCSet<obj->NCSet)
+          nCSet=obj->NCSet;
+        c++;
+      }
     }
   }
 
@@ -6826,7 +6925,9 @@ static int *SelectorApplySeqRowVLA(PyMOLGlobals *G,CSeqRow *rowVLA,int nRow)
           while((*index)>0) {
             if(index)
               if(col->inverse)
-                result[obj->SeleBase + *index] = true;
+
+                result[obj->SeleBase + *index] = true; 
+            /* NOTE: SeleBase only safe with cSelectorUpdateTableAllStates!  */
             index++;
           }
         }
@@ -6853,6 +6954,7 @@ static int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp)
     result[a]=0;
   while(n--) { /* what if this object isn't a molecule object??*/
     obj=(ObjectMolecule*)p->context.object;
+    /* NOTE: SeleBase only safe with cSelectorUpdateTableAllStates!  */
     result[obj->SeleBase+p->src.index] = true;
     p++;
   }
@@ -7060,6 +7162,7 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
  
   SelectorClean(G);
 
+  I->SeleBaseOffsetsValid = true; /* all states -> all atoms -> offsets valid */
   I->NCSet = 0;
   if(no_dummies) {
     modelCnt = 0;
@@ -7083,6 +7186,7 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
     modelCnt=cNDummyModels;
   }
   I->Obj[modelCnt]=obj;
+
   obj->SeleBase=c; 
   for(a=0;a<obj->NAtom;a++)
     {
@@ -7168,6 +7272,15 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
   ErrChkPtr(G,I->Table);
   I->Obj=Calloc(ObjectMolecule*,modelCnt);
   ErrChkPtr(G,I->Obj);
+
+  switch(req_state) {
+  case cSelectorUpdateTableAllStates:
+    I->SeleBaseOffsetsValid = true; /* all states -> all atoms -> offsets valid */
+    break;
+  default:
+    I->SeleBaseOffsetsValid = false; /* not including all atoms, so atom-based offsets are invalid */
+    break;
+  }
   
   c=0;
   modelCnt=0;
@@ -7196,9 +7309,10 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
     modelCnt++;
   }
 
-  if(req_state<0) {
-    state = SceneGetState(G);
+  if(req_state<cSelectorUpdateTableAllStates) {
+    state = SceneGetState(G); /* just in case... */
   }
+
 
   while(ExecutiveIterateObject(G,&o,&hidden)) {
     if(o->type==cObjectMolecule) {
@@ -7207,7 +7321,7 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
       if(req_state<0) {
         switch(req_state) {
         case cSelectorUpdateTableAllStates:
-          state = req_state;
+          state = -1; /* all states */
           /* proceed... */
           break;
         case cSelectorUpdateTableEffectiveStates:
@@ -7489,9 +7603,10 @@ static int SelectorModulate1(PyMOLGlobals *G,EvalElem *base,int state)
                 while(1) {
                   a1=lastObj->Neighbor[n];
                   if(a1<0) break;
-                  a2 = a1+lastObj->SeleBase;
-                  base[0].sele[a2] =1;
-                  n+=2;
+                  if( (a2 = SelectorGetObjAtmOffset(I,lastObj,a1)) >= 0 ) {
+                    base[0].sele[a2] = 1;
+                    n+=2;
+                  }
                 }
               }
             }
@@ -8957,10 +9072,11 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
         while(1) {
           a1=lastObj->Neighbor[n];
           if(a1<0) break;
-          a2 = a1+lastObj->SeleBase;
-          if(!base[1].sele[a2])
-            base[0].sele[a2] = tag;
-          n+=2;
+          if( (a2 = SelectorGetObjAtmOffset(I,lastObj,a1)) >= 0 ) {
+            if(!base[1].sele[a2])
+              base[0].sele[a2] = tag;
+            n+=2;
+          }
         }
       }
       table_a++;
@@ -8983,10 +9099,11 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
         while(1) {
           a1=lastObj->Neighbor[n];
           if(a1<0) break;
-          a2 = a1+lastObj->SeleBase;
-          if(!base[0].sele[a2]) 
-            base[0].sele[a2]=1;
-          n+=2;
+          if( (a2 = SelectorGetObjAtmOffset(I,lastObj,a1)) >= 0 ) {
+            if(!base[0].sele[a2]) 
+              base[0].sele[a2]=1;
+            n+=2;
+          }
         }
       }
       table_a++;
@@ -9284,11 +9401,12 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
             while(1) {
               a1 = obj->Neighbor[s];
               if(a1>=0) {
-                aa = obj->SeleBase + a1;
-                if(!base[0].sele[aa]) {
-                  VLACheck(stk,int,stkDepth);
-                  stk[stkDepth]=aa; /* add index in selector space */
-                  stkDepth++;
+                if( (aa = SelectorGetObjAtmOffset(I,obj,a1)) >= 0 ) {
+                  if(!base[0].sele[aa]) {
+                    VLACheck(stk,int,stkDepth);
+                    stk[stkDepth]=aa; /* add index in selector space */
+                    stkDepth++;
+                  }
                 }
               } else 
                 break;

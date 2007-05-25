@@ -2,6 +2,13 @@
 CHANGE LOG
 =========================================================================
 
+2007-05-24  Warren L. DeLano <warren@delsci.com>
+
+	* subtle change to the behavior of "create": only atoms present in
+	  the source state are added to the target object
+	
+	* discovered and corrected flaw in state-based selection handling
+	
 2007-05-20  Warren L. DeLano <warren@delsci.com>
 
 	* adjusted performance, idle, and framerate measuring

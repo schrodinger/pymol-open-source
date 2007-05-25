@@ -5704,50 +5704,52 @@ void SceneRay(PyMOLGlobals *G,
   }
 
   if(stereo_image) {
-    switch(I->StereoMode) {
-    case 1:
-    case 4:
-      /* merge the two images into one pointer */
-      I->Image->data = Realloc(I->Image->data,unsigned char,I->Image->size*2);
-      UtilCopyMem(I->Image->data+I->Image->size,
-                  stereo_image->data,
-                  I->Image->size);
-      I->Image->stereo = true;
-      break;
-    case 2:
-    case 3:
-      {
-        /* merge the two images into one */
+    if(I->Image) {
+      switch(I->StereoMode) {
+      case 1:
+      case 4:
+        /* merge the two images into one pointer */
+        I->Image->data = Realloc(I->Image->data,unsigned char,I->Image->size*2);
+        UtilCopyMem(I->Image->data+I->Image->size,
+                    stereo_image->data,
+                    I->Image->size);
+        I->Image->stereo = true;
+        break;
+      case 2:
+      case 3:
+        {
+          /* merge the two images into one */
           
-        unsigned char *merged_image = Alloc(unsigned char,I->Image->size*2);
-        unsigned int *q=(unsigned int*)merged_image;
-        unsigned int *l;
-        unsigned int *r;
-        register int height,width;
-        register int a,b;
-		
-		if(I->StereoMode==2) {
+          unsigned char *merged_image = Alloc(unsigned char,I->Image->size*2);
+          unsigned int *q=(unsigned int*)merged_image;
+          unsigned int *l;
+          unsigned int *r;
+          register int height,width;
+          register int a,b;
+          
+          if(I->StereoMode==2) {
 			l=(unsigned int*)stereo_image->data;
 			r=(unsigned int*)I->Image->data;
-		} else {
+          } else {
 			r=(unsigned int*)stereo_image->data;
 			l=(unsigned int*)I->Image->data;
-		}
-        height = I->Image->height;
-        width = I->Image->width;
+          }
+          height = I->Image->height;
+          width = I->Image->width;
           
-        for(a=0;a<height;a++) {
-          for(b=0;b<width;b++)
-            *(q++) = *(l++);
-          for(b=0;b<width;b++)
-            *(q++) = *(r++);
+          for(a=0;a<height;a++) {
+            for(b=0;b<width;b++)
+              *(q++) = *(l++);
+            for(b=0;b<width;b++)
+              *(q++) = *(r++);
+          }
+          FreeP(I->Image->data);
+          I->Image->data = merged_image;
+          I->Image->width*=2;
+          I->Image->size*=2;
         }
-        FreeP(I->Image->data);
-        I->Image->data = merged_image;
-        I->Image->width*=2;
-        I->Image->size*=2;
+        break;
       }
-      break;
     }
     FreeP(stereo_image->data);
     FreeP(stereo_image);
