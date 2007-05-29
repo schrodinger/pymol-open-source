@@ -472,6 +472,11 @@ PYMOL API
             _self.lock(_self)
             if (representation=="") and (selection==""):
                 r = _cmd.toggle(_self._COb,"(all)",repres['lines']); # show lines by default       
+            elif representation=='object':
+                if selection in cmd.get_names('all',enabled_only=1):
+                    r = cmd.disable(selection)
+                else:
+                    r = cmd.enable(selection)
             elif (representation!="") and (selection!=""):
                 rep = representation
                 rep = repres_sc.auto_err(rep,'representation')

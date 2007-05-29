@@ -1423,7 +1423,7 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
   char *name;
   float minCorner[3],maxCorner[3];
   float grid[3];
-  float buffer;
+  float buffer,floor,ceiling;
   int type;
   int state;
   int have_corners;
@@ -1432,11 +1432,12 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
   char *selection;
   OrthoLineType s1 = "";
   int ok = false;
-  ok = PyArg_ParseTuple(args,"Osifsf(ffffff)iiiii",
+  ok = PyArg_ParseTuple(args,"Osifsf(ffffff)iiiiiff",
                         &self,&name,&type,&grid[0],&selection,&buffer,
                         &minCorner[0],&minCorner[1],&minCorner[2],
                         &maxCorner[0],&maxCorner[1],&maxCorner[2],
-                        &state,&have_corners,&quiet,&zoom,&normalize);
+                        &state,&have_corners,&quiet,&zoom,&normalize,
+                        &floor,&ceiling);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -1449,7 +1450,8 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
     grid[2]=grid[0];
     ok = (SelectorGetTmp(G,selection,s1)>=0);
     if(ok) ok = ExecutiveMapNew(G,name,type,grid,s1,buffer,
-                         minCorner,maxCorner,state,have_corners,quiet,zoom,normalize);
+                         minCorner,maxCorner,state,have_corners,quiet,zoom,normalize,
+                                floor,ceiling);
     SelectorFreeTmp(G,s1);
     APIExit(G);
 
@@ -1598,7 +1600,7 @@ static PyObject *CmdGetVersion(PyObject *self, PyObject *args)
   double ver_num = _PyMOL_VERSION_double;
   WordType ver_str;
   strcpy(ver_str,_PyMOL_VERSION);
-  return Py_BuildValue("(sd)",ver_str, ver_num);
+  return Py_BuildValue("(sdi)",ver_str, ver_num, _PyMOL_VERSION_int);
 }
 
 static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
@@ -7657,11 +7659,12 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
 static PyObject *CmdIsolevel(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
-  float level;
+  float level,result = 0.0F;
   int state;
   char *name;
+  int query;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"Osfi",&self,&name,&level,&state);
+  ok = PyArg_ParseTuple(args,"Osfii",&self,&name,&level,&state,&query);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -7670,10 +7673,13 @@ static PyObject *CmdIsolevel(PyObject *self, PyObject *args)
   }
   if (ok) {
     APIEntry(G);
-    ok = ExecutiveIsolevel(G,name,level,state);
+    ok = ExecutiveIsolevel(G,name,level,state,query,&result);
     APIExit(G);
   }
-  return APIResultOk(ok);
+  if(!query) 
+    return APIResultOk(ok);
+  else
+    return PyFloat_FromDouble((double)result);
 }
 
 static PyObject *CmdHAdd(PyObject *self, PyObject *args)

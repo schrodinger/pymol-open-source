@@ -52,6 +52,7 @@ typedef struct ObjectMesh {
   int NState;
 } ObjectMesh;
 
+
 ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap* map,
                               int map_state,
                               int state,float *mn,float *mx,
@@ -62,6 +63,7 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state);
 PyObject *ObjectMeshAsPyList(ObjectMesh *I);
 int ObjectMeshNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMesh **result);
 int ObjectMeshSetLevel(ObjectMesh *I,float level,int state);
+int ObjectMeshGetLevel(ObjectMesh *I,int state, float *result);
 int ObjectMeshInvalidateMapName(ObjectMesh *I,char *name);
 
 #endif

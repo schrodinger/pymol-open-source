@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2007-05-29  Warren L. DeLano <warren@delsci.com>
+
+	* fixed problem reading NMR structures with HETATM/CONECT combo
+	
+2007-05-27  Warren L. DeLano <warren@delsci.com>
+
+	* fixed map_set "average" action (which was broken..)
+	
 2007-05-24  Warren L. DeLano <warren@delsci.com>
 
 	* subtle change to the behavior of "create": only atoms present in

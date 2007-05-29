@@ -223,4 +223,61 @@ PyMOL>frame 3
 PyMOL>isosurface s9,tst1,state=-1,source_state=1
  Executive: object "s9" created.
  Isosurface: created "s9", setting level to 1.000
+PyMOL>reinit
+PyMOL>load dat/pept.pdb,obj
+ CmdLoad: "dat/pept.pdb" loaded as "obj".
+PyMOL>alter all, b=10
+ Alter: modified 107 atoms.
+PyMOL>map_new m1, gaussian, 1.0, obj
+ ObjectMap: Map created.
+ ObjectMap: Computing Gaussian map for 107 atom positions.
+ ObjectMap: Normalizing: mean = 0.079569 & stdev = 0.336150.
+ Executive: object "m1" created.
+PyMOL>map_new m2, gaussian, 1.0, obj, clamp=[-5, 5]
+ ObjectMap: Map created.
+ ObjectMap: Computing Gaussian map for 107 atom positions.
+ ObjectMap: Normalizing: mean = 0.079569 & stdev = 0.336150.
+ Executive: object "m2" created.
+PyMOL>map_new m3, gaussian, 1.0, obj, clamp=[-3, 3]
+ ObjectMap: Map created.
+ ObjectMap: Computing Gaussian map for 107 atom positions.
+ ObjectMap: Normalizing: mean = 0.079569 & stdev = 0.336150.
+ Executive: object "m3" created.
+PyMOL>map_new m4, gaussian, 1.0, obj, clamp=[-2, 2]
+ ObjectMap: Map created.
+ ObjectMap: Computing Gaussian map for 107 atom positions.
+ ObjectMap: Normalizing: mean = 0.079569 & stdev = 0.336150.
+ Executive: object "m4" created.
+PyMOL>map_new m5, gaussian, 1.0, obj, clamp=[-0.9, 0.9]
+ ObjectMap: Map created.
+ ObjectMap: Computing Gaussian map for 107 atom positions.
+ ObjectMap: Normalizing: mean = 0.079569 & stdev = 0.336150.
+ Executive: object "m5" created.
+PyMOL>isosurface s1, m1
+ Executive: object "s1" created.
+ Isosurface: created "s1", setting level to 1.000
+PyMOL>isosurface s2, m2
+ Executive: object "s2" created.
+ Isosurface: created "s2", setting level to 1.000
+PyMOL>isosurface s3, m3
+ Executive: object "s3" created.
+ Isosurface: created "s3", setting level to 1.000
+PyMOL>isosurface s4, m4
+ Executive: object "s4" created.
+ Isosurface: created "s4", setting level to 1.000
+PyMOL>isosurface s5, m5
+ Executive: object "s5" created.
+ Isosurface: created "s5", setting level to 1.000
+PyMOL>ray renderer=2
+ ObjectSurface: updating "s1".
+ TetsurfVolume: Surface generated using 7120 triangles.
+ ObjectSurface: updating "s2".
+ TetsurfVolume: Surface generated using 7120 triangles.
+ ObjectSurface: updating "s3".
+ TetsurfVolume: Surface generated using 7120 triangles.
+ ObjectSurface: updating "s4".
+ TetsurfVolume: Surface generated using 7120 triangles.
+ ObjectSurface: updating "s5".
+ TetsurfVolume: Surface generated using 0 triangles.
+ RayRenderTest: obtained 28646 graphics primitives.
 PyMOL>print "END-LOG"

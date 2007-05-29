@@ -207,6 +207,8 @@ int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *
   return(ok);
 }
 
+
+
 static int ObjectMapStateTrim(PyMOLGlobals *G, ObjectMapState *ms, 
                                   float *mn, float *mx,int quiet)
 {
@@ -1523,6 +1525,22 @@ void ObjectMapUpdateExtents(ObjectMap *I)
   PRINTFD(I->Obj.G,FB_ObjectMap)
     " ObjectMapUpdateExtents-DEBUG: ExtentFlag %d\n",I->Obj.ExtentFlag
     ENDFD;
+}
+
+void ObjectMapStateClamp(ObjectMapState *I,float clamp_floor, float clamp_ceiling)
+{
+  int a,b,c;
+  float *fp;
+
+  for(a=0;a<I->FDim[0];a++) 
+    for(b=0;b<I->FDim[1];b++)
+      for(c=0;c<I->FDim[2];c++) {
+        fp = F3Ptr(I->Field->data,a,b,c);
+        if(*fp<clamp_floor)
+          *fp = clamp_floor;
+        else if(*fp>clamp_ceiling)
+          *fp = clamp_ceiling;
+      }
 }
 
 int ObjectMapStateSetBorder(ObjectMapState *I,float level)

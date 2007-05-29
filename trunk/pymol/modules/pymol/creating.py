@@ -96,8 +96,10 @@ if __name__=='pymol.creating':
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
     
-    def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,
-                box=None,state=0,quiet=1,zoom=0,normalize=-1,_self=cmd):
+    def map_new(name, type='gaussian', grid=None, selection="(all)",
+                buffer=None, box=None, state=0, quiet=1, zoom=0,
+                normalize=-1, clamp=[1.0,-1.0], _self=cmd):
+        
         '''
         state > 0: do indicated state
         state = 0: independent states in independent extents
@@ -128,12 +130,17 @@ if __name__=='pymol.creating':
             buffer = _self.get_setting_legacy('gaussian_resolution')
         grid = float(grid) # for now, uniform xyz; later (x,y,z)
 
+        if not is_list(clamp):
+            clamp = safe_list_eval(str(clamp))
+        if len(clamp)<2:
+            clamp = [1.0,-1.0]
         type = map_type_dict[map_type_sc.auto_err(str(type),'map type')]
         try:
             _self.lock(_self)
             r = _cmd.map_new(_self._COb,str(name),int(type),grid,str(selection),
                              float(buffer),box,int(state)-1,
-                             int(box_flag),int(quiet),int(zoom),int(normalize))
+                             int(box_flag),int(quiet),int(zoom),int(normalize),
+                             float(clamp[0]),float(clamp[1]))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
@@ -467,7 +474,7 @@ SEE ALSO
 
 
 
-    def isolevel(name,level=1.0,state=0,_self=cmd):
+    def isolevel(name,level=1.0,state=0,query=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -481,10 +488,11 @@ USAGE
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.isolevel(_self._COb,str(name),float(level),int(state)-1)
+            r = _cmd.isolevel(_self._COb,str(name),float(level),int(state)-1,int(query))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException                  
+        if not int(query):
+            if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
     def gradient(name,map,minimum=1.0,maximum=-1.0,

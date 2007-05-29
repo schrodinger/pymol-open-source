@@ -1196,6 +1196,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int ignore_conect = false;
   int have_bond_order = false;
   int seen_model,in_model = false;
+  int seen_conect = false;
+  int have_conect = false;
   int is_end_of_object = false;
   int literal_names = SettingGetGlobal_b(G,cSetting_pdb_literal_names);
   int bogus_name_alignment = true;
@@ -1363,9 +1365,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
             break;
           }
         } else if((p[0]== 'C')&&(p[1]=='O')&&(p[2]=='N')&&
-                  (p[3]=='E')&&(p[4]=='C')&&(p[5]=='T')) /* CONECT */
+                  (p[3]=='E')&&(p[4]=='C')&&(p[5]=='T')) { /* CONECT */
+          have_conect = true;
           bondFlag=true;
-		else if((p[0]== 'U')&&(p[1]=='S')&&(p[2]=='E')&&
+        } else if((p[0]== 'U')&&(p[1]=='S')&&(p[2]=='E')&&
                 (p[3]=='R')&&(!*restart_model)) {
 
           /* Metaphorics key 'USER     '*/
@@ -1622,35 +1625,38 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               (p[2]=='D')&&
               (p[3]=='M')&&
               (p[4]=='D')&&
-              (p[5]=='L')&&
-              (!*restart_model)) {
-      *restart_model=nextline(p);
-      in_model = false;
-      if(only_read_one_model) {
-        char *pp;
-        pp = nextline(p); 
-        if((pp[0]=='E')&& /* END we're going to be starting a new object...*/
-           (pp[1]=='N')&&
-           (pp[2]=='D')) {
-          (*next_pdb) = check_next_pdb_object(nextline(pp),true);
-          is_end_of_object = true;
-        } else if((pp[0]=='M')&& /* not a new object...just a new state (model) */
-                  (pp[1]=='O')&&
-                  (pp[2]=='D')&&
-                  (pp[3]=='E')&&
-                  (pp[4]=='L')) {
-          if(info && info->multiplex) { /* end object if we're multiplexing */
-            (*next_pdb) = check_next_pdb_object(pp, true);
-            (*restart_model) = NULL;
-          } else 
-            is_end_of_object = false;
-        } else {
-          if(pp[0]>32) /* more content follows... */
-            (*next_pdb) = check_next_pdb_object(pp, true);
-          else
-            (*next_pdb) = NULL; /* at end of file */
+              (p[5]=='L')) {
+      if(*restart_model)
+        in_model = false;
+      else {
+        *restart_model=nextline(p);
+        in_model = false;
+        if(only_read_one_model) {
+          char *pp;
+          pp = nextline(p); 
+          if((pp[0]=='E')&& /* END we're going to be starting a new object...*/
+             (pp[1]=='N')&&
+             (pp[2]=='D')) {
+            (*next_pdb) = check_next_pdb_object(nextline(pp),true);
+            is_end_of_object = true;
+          } else if((pp[0]=='M')&& /* not a new object...just a new state (model) */
+                    (pp[1]=='O')&&
+                    (pp[2]=='D')&&
+                    (pp[3]=='E')&&
+                    (pp[4]=='L')) {
+            if(info && info->multiplex) { /* end object if we're multiplexing */
+              (*next_pdb) = check_next_pdb_object(pp, true);
+              (*restart_model) = NULL;
+            } else 
+              is_end_of_object = false;
+          } else {
+            if(pp[0]>32) /* more content follows... */
+              (*next_pdb) = check_next_pdb_object(pp, true);
+            else
+              (*next_pdb) = NULL; /* at end of file */
+          }
+          break;
         }
-        break;
       }
     } else if((p[0]=='E')&& /* END */
               (p[1]=='N')&&
@@ -1665,20 +1671,19 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
              (cc[2] =='D')&&
              (cc[3] =='M')&&
              (cc[4] =='D')&&
-             (cc[5] =='L')))
-          { 
-            if(!*next_pdb) {
-              (*next_pdb) = check_next_pdb_object(pp, false);
-            }
-            if(*next_pdb) { /* we've found another object... */
-              if(*restart_model) 
-                is_end_of_object = false; /* however, if we're parsing multi-models, then we're not yet at the end */
-              else
-                is_end_of_object = true;
-              break;
-            } else if(!seen_model)
-              break;
+             (cc[5] =='L'))) { /* NOTE: this test seems unnecessary given strcmp above...*/
+          if(!*next_pdb) {
+            (*next_pdb) = check_next_pdb_object(pp, false);
           }
+          if(*next_pdb) { /* we've found another object... */
+            if(*restart_model) 
+              is_end_of_object = false; /* however, if we're parsing multi-models, then we're not yet at the end */
+            else
+              is_end_of_object = true;
+            break;
+          } else if(!seen_model)
+            break;
+        }
       }
     } else if((p[0]=='C')&& /* CRYST1 */
               (p[1]=='R')&&
@@ -1759,8 +1764,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               (p[3]=='E')&&
               (p[4]=='C')&&
               (p[5]=='T')&&
-              bondFlag&&(!ignore_conect)&&
+              bondFlag && (!ignore_conect) &&
               ((!*restart_model)||(!in_model))) {
+      seen_conect = true;
       p=nskip(p,6);
       p=ncopy(cc,p,5);
       if(sscanf(cc,"%d",&b1)==1)
@@ -2011,7 +2017,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
         }
       }
     }
-    
+
     /* END KEYWORDS */
     
     /* Secondary structure records */
