@@ -301,7 +301,7 @@ int ExecutivePhiPsi(PyMOLGlobals *G,char *s1,ObjectMolecule ***objVLA,int **iVLA
 float *ExecutiveGetVertexVLA(PyMOLGlobals *G,char *s1,int state);
 int ExecutiveValidName(PyMOLGlobals *G,char *name);
 int ExecutiveValidNamePattern(PyMOLGlobals *G,char *name);
-int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state);
+int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state,int query,float *result);
 int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
                                       char *s1,int log,float *matrix,
                                       int homogenous,int global);
@@ -332,7 +332,8 @@ int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state,int match_state
 float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle);
 int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,char *sele,
                     float buffer,float *minCorner,float *maxCorner,
-                    int state,int have_corners, int quiet,int zoom,int normalize);
+                    int state,int have_corners, int quiet,int zoom,int normalize,
+                    float clamp_floor, float clamp_ceiling);
 
 int ***ExecutiveGetBondPrint(PyMOLGlobals *G,char *name,int max_bond,int max_type,int *dim);
 int ExecutiveSetCrystal(PyMOLGlobals *G,char *sele,float a,float b,float c,

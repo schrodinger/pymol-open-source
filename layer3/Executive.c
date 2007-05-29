@@ -3035,7 +3035,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals *G,PyObject *dict)
 #endif
 }
 
-int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state)
+int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state,int query,float *result)
 {
   int ok =true;
   CObject *obj;
@@ -3043,12 +3043,20 @@ int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state)
   if(obj) {
     switch(obj->type) {
     case cObjectMesh:
-      ObjectMeshSetLevel((ObjectMesh*)obj,level,state);
-      SceneChanged(G);
+      if(!query) {
+        ObjectMeshSetLevel((ObjectMesh*)obj,level,state);
+        SceneChanged(G);
+      } else if(result) {
+        ok = ObjectMeshGetLevel((ObjectMesh*)obj,state,result);
+      }
       break;
     case cObjectSurface:
-      ObjectSurfaceSetLevel((ObjectSurface*)obj,level,state);
-      SceneChanged(G);
+      if(!query) {
+        ObjectSurfaceSetLevel((ObjectSurface*)obj,level,state);
+        SceneChanged(G);
+      } else if(result) {
+        ok = ObjectSurfaceGetLevel((ObjectSurface*)obj,state,result);
+      }
       break;
     default:
       ok=false;
@@ -4793,10 +4801,10 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
                   case cMapOperatorMinimum:
                     for(a=0;a<n_pnt;a++) {
                       if(flg) {
-                        if(*pre) {
+                        if(*pre) { 
                           if(*lv>*rv)
                             *lv = *rv;
-                        } else {
+                        } else { /* first map */
                           *pre = 1;
                           *lv = *rv;
                         }
@@ -4811,7 +4819,7 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
                         if(*pre) {
                           if(*lv<*rv)
                             *lv = *rv;
-                        } else {
+                        } else { /* first map */
                           *pre = 1;
                           *lv = *rv;
                         }
@@ -4830,19 +4838,10 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
                   case cMapOperatorAverage:
                     for(a=0;a<n_pnt;a++) {
                       if(flg) {
-                        (*pre)++;
                         *lv += *rv;
                       }
-                      (*pre)++; 
+                      (*pre)++;
                       rv++; lv++; flg++; pre++;
-                    }
-                  
-                    lv = l_value;
-                    pre = present;
-                    for(a=0;a<n_pnt;a++) {
-                      if(*pre)
-                        *lv /= *pre;
-                      lv++; pre++;
                     }
                     break;
                   case cMapOperatorDifference:
@@ -4886,10 +4885,13 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
             }
           }
         }
+
+                  
         
         {
           register int a;
           register float *lv = l_value;
+          register int *pre = present;
           
           switch(operator) {
           case cMapOperatorUnique:
@@ -4898,6 +4900,15 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
               if(*lv<0.0F)
                 *lv = 0.0F;
               lv++;
+            }
+            break;
+          case cMapOperatorAverage:
+            lv = l_value;
+            pre = present;
+            for(a=0;a<n_pnt;a++) {
+              if(*pre)
+                *lv /= *pre;
+              lv++; pre++;
             }
           }
         }
@@ -4936,7 +4947,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
                     char *sele,float buffer,
                     float *minCorner,
                     float *maxCorner,int state,int have_corners,
-                    int quiet,int zoom,int normalize)
+                    int quiet,int zoom,int normalize,float clamp_floor, float clamp_ceiling)
 {
   CObject *origObj=NULL;
   ObjectMap *objMap;
@@ -4953,7 +4964,8 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
   int st_once_flag=true;
   int n_st;
   int extent_state;
-
+  int clamp_flag = (clamp_floor <= clamp_ceiling);
+  
   md=&_md;
 
   if((state==-2)||(state==-3)) /* TO DO: support per-object states */
@@ -5050,6 +5062,9 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
               }
               if(!ms->Active)
                 ObjectMapStatePurge(G,ms);
+              else if(clamp_flag) {
+                ObjectMapStateClamp(ms, clamp_floor, clamp_ceiling);
+              }
             }
             if(once_flag) break;
           }

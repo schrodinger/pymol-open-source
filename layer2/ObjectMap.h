@@ -82,6 +82,8 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *ver
 
 int ObjectMapStateGetRange(PyMOLGlobals *G,ObjectMapState *ms,float *range);
 
+void ObjectMapStateClamp(ObjectMapState *I,float clamp_floor, float clamp_ceiling);
+
 ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals *G,ObjectMap *obj,char *fname,
                                   int state,int is_file,int quiet);
 

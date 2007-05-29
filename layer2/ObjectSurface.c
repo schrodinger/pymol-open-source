@@ -1260,6 +1260,25 @@ float carve,float *vert_vla,int side)
   return(I);
 }
 
+int ObjectSurfaceGetLevel(ObjectSurface *I,int state, float *result)
+{
+  int ok=true;
+  ObjectSurfaceState *ms;
+  if(state>=I->NState) {
+    ok=false;
+  } else {
+    if(state<0) {
+      state = 0;
+    }
+    ms = I->State + state;
+    if(ms->Active && result) {
+      *result = ms->Level;
+    } else 
+      ok = false;
+  }
+  return(ok);
+}
+
 int ObjectSurfaceSetLevel(ObjectSurface *I,float level,int state)
 {
   int a;

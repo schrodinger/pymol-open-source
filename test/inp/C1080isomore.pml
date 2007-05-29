@@ -89,4 +89,20 @@ isosurface s8,tst2,state=-1
 frame 3
 isosurface s9,tst1,state=-1,source_state=1
 
+
+reinit
+load dat/pept.pdb,obj
+alter all, b=10
+map_new m1, gaussian, 1.0, obj
+map_new m2, gaussian, 1.0, obj, clamp=[-5, 5]
+map_new m3, gaussian, 1.0, obj, clamp=[-3, 3]
+map_new m4, gaussian, 1.0, obj, clamp=[-2, 2]
+map_new m5, gaussian, 1.0, obj, clamp=[-0.9, 0.9]
+isosurface s1, m1
+isosurface s2, m2
+isosurface s3, m3
+isosurface s4, m4
+isosurface s5, m5
+ray renderer=2
+
 print "END-LOG"
