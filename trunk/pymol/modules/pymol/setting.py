@@ -595,6 +595,7 @@ if __name__=='pymol.setting':
         auto_copy_images = (557,'')
         moe_separate_chains = (558,'')
         transparency_global_sort = (559, '')
+        hide_long_bonds = (560, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
