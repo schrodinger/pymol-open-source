@@ -567,24 +567,28 @@ static WordKeyValue AtOper[] =
 };
 
 
+#define cINTER_ENTRIES 11
+
 int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
                                        int *vla1,int n1,int state1,int sele1,
-                                       int *vla2,int n2,int state2,int sele2)
+                                       int *vla2,int n2,int state2,int sele2,
+                                       float radius, float scale, float base,
+                                       float coord_wt, float rms_exp)
 {
   register CSelector *I = G->Selector;  
   int a,b,*vla;
-  float *inter1 = Calloc(float,2*n1);
-  float *inter2 = Calloc(float,2*n2);
+  int n_max = (n1>n2) ? n1 : n2;
+  float *inter1 = Calloc(float,cINTER_ENTRIES*n1);
+  float *inter2 = Calloc(float,cINTER_ENTRIES*n2);
+  float *v_ca = Calloc(float,3*n_max);
   int pass;
 
   ObjectMolecule *last_obj = NULL;
   for(pass=0;pass<2;pass++) {
     register ObjectMolecule *obj;
     register CoordSet *cs;
-    register int idx1,at1;
     register int *neighbor = NULL;
     register AtomInfoType *atomInfo = NULL;
-
     float *inter;
     int state;
     int n;
@@ -605,8 +609,11 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
 
     if(state<0) state = 0;
     for(a=0;a<n;a++) {
+      register int at_ca1;
+      float *vv_ca = v_ca + a*3;
+
       obj = I->Obj[vla[0]];
-      at1 = vla[1];
+      at_ca1 = vla[1];
       if(obj!=last_obj) {
         ObjectMoleculeUpdateNeighbors(obj);
         last_obj = obj;
@@ -619,88 +626,217 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
       else
         cs=NULL;
       if(cs) {
+        register int idx_ca1 = -1;
         if(obj->DiscreteFlag) {
-          if(cs==obj->DiscreteCSet[at1])
-            idx1=obj->DiscreteAtmToIdx[at1];
+          if(cs==obj->DiscreteCSet[at_ca1])
+            idx_ca1=obj->DiscreteAtmToIdx[at_ca1];
           else
-            idx1=-1;
+            idx_ca1=-1;
         } else 
-          idx1=cs->AtmToIdx[at1];
+          idx_ca1=cs->AtmToIdx[at_ca1];
         
-        if(idx1>=0) {
+        if(idx_ca1>=0) {
           register int mem0,mem1,mem2,mem3,mem4;
           register int nbr0,nbr1,nbr2,nbr3;
-          float *v1 = cs->Coord + 3*idx1,*v2;
-          float sum = 0.0F;
-          int at2,idx2,cnt =0;
+          float *v_ca1 = cs->Coord + 3*idx_ca1;
+          int at_cb1,idx_cb1 = -1;
+          int cnt = 0;
 
-          mem0 = at1;
+          copy3f(v_ca1,vv_ca);
+          copy3f(v_ca1,inter+8);
+
+          /* find attached CB */
+
+          mem0 = at_ca1;
           nbr0 = neighbor[mem0]+1;
           while((mem1 = neighbor[nbr0])>=0) {
-            nbr1 = neighbor[mem1]+1;
-            while((mem2 = neighbor[nbr1])>=0) {
-              if(mem2!=mem0) { 
-                nbr2 = neighbor[mem2]+1;
-                while((mem3 = neighbor[nbr2])>=0) {
-                  if((mem3!=mem1)&&(mem3!=mem0)) {
+            if((atomInfo[mem1].protons==cAN_C) && 
+               (strcmp(atomInfo[mem1].name,"CB")==0)) {
+              at_cb1 = mem1;
 
-                    at2 = mem3;
-                    if(SelectorIsMember(G,atomInfo[at2].selEntry,sele)) {
-                      if(obj->DiscreteFlag) {
-                        if(cs==obj->DiscreteCSet[at2])
-                          idx2=obj->DiscreteAtmToIdx[at2];
-                        else
-                          idx2=-1;
-                      } else 
-                        idx2=cs->AtmToIdx[at2];
-                      if(idx2>=0) {
-                        v2 = cs->Coord + 3*idx2;
-                        sum += diff3f(v2,v1);
-                        cnt++;
-                      }
-                    }
-#if 0
-                    nbr3 = neighbor[mem2]+1;
-                    while((mem4 = neighbor[nbr3])>=0) {
-                      if((mem4!=mem2)&&(mem4!=mem1)&&(mem4!=mem0)) {
-                        
-
-                      }
-                      nbr3+=2;                     
-                    }
-#endif
-                  }
-                  nbr2+=2;
-                }
-              }
-              nbr1+=2;
+              if(obj->DiscreteFlag) {
+                if(cs==obj->DiscreteCSet[at_cb1])
+                  idx_cb1=obj->DiscreteAtmToIdx[at_cb1];
+                else
+                  idx_cb1=-1;
+              } else 
+                idx_cb1=cs->AtmToIdx[at_cb1];
+              break;
             }
             nbr0+=2;
           }
-          if(cnt) {
-            *inter = sum;
-            printf("DEBUG %8.3f %d\n",*inter,cnt);
+
+          /* find remote CA, CB */
+          
+          if(idx_cb1>=0) {
+            float *v_cb1 = cs->Coord + 3*idx_cb1;
+
+            mem0 = at_ca1;
+            nbr0 = neighbor[mem0]+1;
+            while((mem1 = neighbor[nbr0])>=0) {
+              
+              nbr1 = neighbor[mem1]+1;
+              while((mem2 = neighbor[nbr1])>=0) {
+                if(mem2!=mem0) { 
+                  int at_ca2,idx_ca2 = -1;
+
+                  nbr2 = neighbor[mem2]+1;
+                  while((mem3 = neighbor[nbr2])>=0) {
+                    if((mem3!=mem1)&&(mem3!=mem0)) {
+                      if((atomInfo[mem3].protons==cAN_C) && 
+                         (strcmp(atomInfo[mem3].name,"CA")==0)) {
+                        at_ca2 = mem3;
+                        if(obj->DiscreteFlag) {
+                          if(cs==obj->DiscreteCSet[at_ca2])
+                            idx_ca2=obj->DiscreteAtmToIdx[at_ca2];
+                          else
+                            idx_ca2=-1;
+                        } else 
+                          idx_ca2=cs->AtmToIdx[at_ca2];
+                        break;
+                      }
+                    }
+                   nbr2+=2;
+                  }
+                  if(idx_ca2>=0) {
+                    float *v_ca2 = cs->Coord + 3*idx_ca2;
+                  
+                    nbr2 = neighbor[mem2]+1;
+                    while((mem3 = neighbor[nbr2])>=0) {
+                      if((mem3!=mem1)&&(mem3!=mem0)) {
+                        int idx_cb2 = -1;
+                        nbr3 = neighbor[mem3]+1;
+                        while((mem4 = neighbor[nbr3])>=0) {
+                          if((mem4!=mem2)&&(mem4!=mem1)&&(mem4!=mem0)) {
+                            if((atomInfo[mem4].protons==cAN_C) && 
+                               (strcmp(atomInfo[mem4].name,"CB")==0)) {
+                              int at_cb2 = mem4;
+                              if(obj->DiscreteFlag) {
+                                if(cs==obj->DiscreteCSet[at_cb2])
+                                  idx_cb2=obj->DiscreteAtmToIdx[at_cb2];
+                                else
+                                  idx_cb2=-1;
+                              } else 
+                                idx_cb2=cs->AtmToIdx[at_cb2];
+                              break;
+                            }
+                          }
+                          nbr3+=2;
+                        }
+                        
+                        if(idx_cb2>=0) {
+                          float *v_cb2 = NULL;
+                          v_cb2 = cs->Coord + 3*idx_cb2;
+                          {
+                            float angle = get_dihedral3f( v_cb1, v_ca1, v_ca2, v_cb2 );
+                            if(idx_cb1<idx_cb2) {
+                              inter[0] = cos(angle);
+                              inter[1] = sin(angle);
+                            } else {
+                              inter[2] = cos(angle);
+                              inter[3] = sin(angle);
+                            }
+                          }
+                          cnt++;
+                        }
+                      }
+                      nbr2+=2;
+                    }
+                  }
+                }
+                nbr1+=2;
+              }
+              nbr0+=2;
+            }
           }
         }
       }
       vla+=3;
-      inter++;
+      inter+=cINTER_ENTRIES;
+    }
+    {
+      MapType *map=MapNew(G,radius,v_ca,n, NULL);
+      if(!pass) {
+        inter = inter1;
+      } else {
+        inter = inter2;
+      }
+      if(map) {
+        int i,h,k,l;
+        MapSetupExpress(map);
+        
+        for(a=0;a<n;a++) {
+          float *v_ca1 = v_ca + 3 * a;
+          float *i_ca1 = inter + cINTER_ENTRIES*a;
+          if(MapExclLocus(map,v_ca1,&h,&k,&l)) {
+            i=*(MapEStart(map,h,k,l));
+            if(i) {
+              b=map->EList[i++];
+              while(b>=0) {
+                float *v_ca2 = v_ca + 3 * b;
+                if(a != b) {
+                  if(within3f(v_ca1,v_ca2,radius)) {
+                    float *i_ca2  = inter + cINTER_ENTRIES*b;
+                    i_ca1[4] += i_ca2[0]; /* add dihedral vectors head-to-tail */
+                    i_ca1[5] += i_ca2[1];
+                    i_ca1[6] += i_ca2[2];
+                    i_ca1[7] += i_ca2[3];
+                  }
+                }
+                b=map->EList[i++];
+              }
+            }
+          }
+        }
+        MapFree(map);
+        for(a=0;a<n;a++) {
+          float nf = sqrt(inter[4]*inter[4] + inter[5]*inter[5]);
+          if(nf>0.0001F) {
+            inter[4] = inter[4] / nf;
+            inter[5] = inter[5] / nf;
+          }
+          nf = sqrt(inter[6]*inter[6] + inter[7]*inter[7]);
+          if(nf>0.0001F) {
+            
+            inter[6] = inter[6] / nf;
+            inter[7] = inter[7] / nf;
+          }
+          inter+=cINTER_ENTRIES;
+        }
+      }
     }
   }
+
   {
     for(a=0;a<n1;a++) {
-      float i1 = inter1[a];
+      float *i1 = inter1+ cINTER_ENTRIES*a;
       for(b=0;b<n2;b++) {
-        float i2 = inter2[b];
-        float mx = (i1>i2) ? i1 : i2;
-        float score = 10 * (i1*i2/mx);
+        float *i2 = inter2 + cINTER_ENTRIES*b;
+        float sm[cINTER_ENTRIES], comp1, comp2, comp3 = 1.0F;
+        float score;
+        int c;
+        for(c=0;c<cINTER_ENTRIES;c++) {
+          sm[c] = i1[c]+i2[c];
+        }
+        comp1 = 
+          ((sqrt(sm[0]*sm[0] + sm[1]*sm[1]) + 
+            sqrt(sm[2]*sm[2] + sm[3]*sm[3])) * 0.25);
+        comp2 = 
+          ((sqrt(sm[4]*sm[4] + sm[5]*sm[5]) +
+            sqrt(sm[6]*sm[6] + sm[7]*sm[7])) * 0.25);
+        score = scale*(comp1*comp2 - base);
+        if(coord_wt!=0.0) {
+          float diff = diff3f(i1+8,i2+8);
+          comp3 = -log(diff/rms_exp);
+          score = (1-coord_wt)*score + coord_wt*comp3*scale;
+        }
         match->mat[a][b] = score;
       }
     }
   }
-  printf("DEBUG matrix calculated\n");
   FreeP(inter1);
   FreeP(inter2);
+  FreeP(v_ca);
   return 1;
 }
 
@@ -3444,9 +3580,8 @@ int  SelectorCreateAlignments(PyMOLGlobals *G,
       }
     }
     if(cnt) {
-      printf("DEBUG %d %d\n",
-             SelectorEmbedSelection(G,flag1,name1,NULL,false, -1),
-             SelectorEmbedSelection(G,flag2,name2,NULL,false, -1));
+      SelectorEmbedSelection(G,flag1,name1,NULL,false, -1);
+      SelectorEmbedSelection(G,flag2,name2,NULL,false, -1);
     }
     FreeP(flag1);
     FreeP(flag2);
@@ -3535,7 +3670,7 @@ int SelectorCountAtoms(PyMOLGlobals *G,int sele,int state)
 
 
 /*========================================================================*/
-int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele,int all_atoms)
+int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele,int ca_only)
 {
   /* returns a VLA containing atom indices followed by residue integers
    (residue names packed as characters into integers)
@@ -3562,23 +3697,25 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele,int all_atoms)
     ENDFD;
 
   if(I->NAtom) {
-    if(all_atoms) {
+    if(ca_only) {
       for(a=cNDummyAtoms;a<I->NAtom;a++) {
         mod1 = I->Table[a].model;
         at1=I->Table[a].atom;
         obj=I->Obj[mod1];
         ai1 = obj->AtomInfo+at1;
         if(SelectorIsMember(G,ai1->selEntry,sele)) {
-          *(r++)=mod1;
-          *(r++)=at1;
-          for(c=0;c<sizeof(ResName);c++)
-            rn[c]=0;
-          strcpy(rn,ai1->resn); /* store residue code as a number */
-          rcode = 0;
-          for(c=0;c<3;c++) {
-            rcode = (rcode<<8) | rn[c];
+          if(strcmp(ai1->name,"CA")==0) {
+            *(r++)=mod1;
+            *(r++)=at1;
+            for(c=0;c<sizeof(ResName);c++)
+              rn[c]=0;
+            strcpy(rn,ai1->resn); /* store residue code as a number */
+            rcode = 0;
+            for(c=0;c<3;c++) {
+              rcode = (rcode<<8) | rn[c];
+            }
+            *(r++) = rcode;
           }
-          *(r++) = rcode;
         }
       }
     } else {

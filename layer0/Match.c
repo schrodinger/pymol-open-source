@@ -500,7 +500,6 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
     }
     I->score = mxv;
     I->n_pair = cnt;
-    printf("DEBUG %d\n",I->n_pair);
     VLASize(I->pair,int,(p-I->pair));
     FreeP(score);
     FreeP(point);

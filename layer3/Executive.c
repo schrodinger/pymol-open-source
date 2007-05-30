@@ -5737,8 +5737,9 @@ int ExecutivePhiPsi(PyMOLGlobals *G,char *s1,ObjectMolecule ***objVLA,int **iVLA
 
 
 int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,
-                     int max_gap, int max_skip, float cutoff,int cycles,int quiet,char *oname,
-                     int state1,int state2, ExecutiveRMSInfo *rms_info,int transform,int reset)
+                   int max_gap, int max_skip, float cutoff,int cycles,int quiet,char *oname,
+                   int state1,int state2, ExecutiveRMSInfo *rms_info,int transform,int reset,
+                   float radius, float scale, float base, float coord_wt, float expect)
 {
   int sele1=SelectorIndexByName(G,s1);
   int sele2=SelectorIndexByName(G,s2);
@@ -5747,30 +5748,32 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,fl
   int na,nb;
   int c;
   int ok=true;
+  int use_sequence = (mat_file && mat_file[0]);
   CMatch *match = NULL;
 
   if((sele1>=0)&&(sele2>=0)&&rms_info) {
-#if 1
-    vla1=SelectorGetResidueVLA(G,sele1,false);
-    vla2=SelectorGetResidueVLA(G,sele2,false);
-#else
-    vla1=SelectorGetResidueVLA(G,sele1,true);
-    vla2=SelectorGetResidueVLA(G,sele2,true);
-#endif
+    if(use_sequence) {
+      vla1=SelectorGetResidueVLA(G,sele1,false);
+      vla2=SelectorGetResidueVLA(G,sele2,false);
+    } else {
+      vla1=SelectorGetResidueVLA(G,sele1,true);
+      vla2=SelectorGetResidueVLA(G,sele2,true);
+    }
     if(vla1&&vla2) {
       na = VLAGetSize(vla1)/3;
       nb = VLAGetSize(vla2)/3;
       if(na&&nb) {
         match = MatchNew(G,na,nb);
-#if 1
-        if (ok) ok = MatchResidueToCode(match,vla1,na);
-        if (ok) ok = MatchResidueToCode(match,vla2,nb);
-        if (ok) ok = MatchMatrixFromFile(match,mat_file,quiet);
-        if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb,quiet);
-#else
-        if (ok) ok = SelectorResidueVLAsTo3DMatchScores(G,match,vla1,na,state1,sele1,
-                                                        vla2,nb,state2,sele2);
-#endif
+        if(use_sequence) {
+          if (ok) ok = MatchResidueToCode(match,vla1,na);
+          if (ok) ok = MatchResidueToCode(match,vla2,nb);
+          if (ok) ok = MatchMatrixFromFile(match,mat_file,quiet);
+          if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb,quiet);
+        } else {
+          if (ok) ok = SelectorResidueVLAsTo3DMatchScores(G,match,vla1,na,state1,sele1,
+                                                          vla2,nb,state2,sele2,radius,scale,base,
+                                                          coord_wt,expect);
+        }
 
         if (ok) ok = MatchAlign(match,gap,extend,max_gap,max_skip,quiet);
         if(ok) {
@@ -5778,16 +5781,15 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,fl
           rms_info->n_residues_aligned = match->n_pair;
           if(match->pair) { 
 
-#if 1
-            c = SelectorCreateAlignments(G,match->pair,
-                                         sele1,vla1,sele2,vla2,
-                                         "_align1","_align2",false,false);
-#else
-            c = SelectorCreateAlignments(G,match->pair,
-                                         sele1,vla1,sele2,vla2,
-                                         "_align1","_align2",false,true);
-#endif
-          
+            if(use_sequence) {
+              c = SelectorCreateAlignments(G,match->pair,
+                                           sele1,vla1,sele2,vla2,
+                                           "_align1","_align2",false,false);
+            } else {
+              c = SelectorCreateAlignments(G,match->pair,
+                                           sele1,vla1,sele2,vla2,
+                                           "_align1","_align2",false,true);
+            }
             if(c) {
               int mode = 2;
               if(!quiet) {
@@ -5802,7 +5804,6 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,fl
               ok = ExecutiveRMS(G,"_align1","_align2",mode,cutoff,cycles,
                                 quiet,oname,
                                 state1,state2,false,0, rms_info);
-              
             }
           }
         }
@@ -5811,6 +5812,7 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,fl
       }
     }
   }
+  
   VLAFreeP(vla1);
   VLAFreeP(vla2);
   return ok;
@@ -8749,6 +8751,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                 obj->Obj.Color = ColorGetIndex(G,"yellow");
                 ObjectSetName((CObject*)obj,oname);
                 ExecutiveManageObject(G,(CObject*)obj,0,false);
+                ObjectAlignmentUpdate(obj);
                 SceneInvalidate(G);
               }
               VLAFreeP(align_vla);
