@@ -517,6 +517,8 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
   int variable_width = false;
   int n_line_width = 0;
   int line_color;
+  int hide_long = false;
+  const float _0p9 = 0.9F;
 
   OOAlloc(G,RepWireBond);
   obj = cs->Obj;
@@ -562,6 +564,7 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                                         cSetting_stick_transparency)>R_SMALL4))
     line_stick_helper = false;
   half_bonds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
+  hide_long = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_hide_long_bonds);
   na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
 
   b=obj->Bond;
@@ -720,6 +723,16 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
               s2 = 0;
             }
           }
+
+        if(hide_long && (s1||s2)) {
+          float cutoff = (ati1->vdw + ati2->vdw) * _0p9;
+          v1 = cs->Coord+3 * a1;
+          v2 = cs->Coord+3 * a2;
+          ai1 = obj->AtomInfo + b1;
+          ai2 = obj->AtomInfo + b2;
+          if(!within3f(v1,v2,cutoff)) /* atoms separated by more than 90% of the sum of their vdw radii */
+            s1 = s2 = 0;
+        }
 
         if(s1||s2) {
           float bd_line_width = line_width;
@@ -1049,6 +1062,16 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
               s2 = 0;
             }
           } 
+
+          if(hide_long && (s1||s2)) {
+            float cutoff = (ai1->vdw + ai2->vdw) * _0p9;
+            v1 = cs->Coord+3 * a1;
+            v2 = cs->Coord+3 * a2;
+            ai1 = obj->AtomInfo + b1;
+            ai2 = obj->AtomInfo + b2;
+          if(!within3f(v1,v2,cutoff)) /* atoms separated by more than 90% of the sum of their vdw radii */
+            s1 = s2 = 0;
+          }
 
           if(s1||s2) {
 

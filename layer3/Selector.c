@@ -566,6 +566,144 @@ static WordKeyValue AtOper[] =
  { "", 0 }
 };
 
+
+int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
+                                       int *vla1,int n1,int state1,int sele1,
+                                       int *vla2,int n2,int state2,int sele2)
+{
+  register CSelector *I = G->Selector;  
+  int a,b,*vla;
+  float *inter1 = Calloc(float,2*n1);
+  float *inter2 = Calloc(float,2*n2);
+  int pass;
+
+  ObjectMolecule *last_obj = NULL;
+  for(pass=0;pass<2;pass++) {
+    register ObjectMolecule *obj;
+    register CoordSet *cs;
+    register int idx1,at1;
+    register int *neighbor = NULL;
+    register AtomInfoType *atomInfo = NULL;
+
+    float *inter;
+    int state;
+    int n;
+    int sele;
+    if(!pass) {
+      vla = vla1;
+      state = state1;
+      inter = inter1;
+      sele = sele1;
+      n = n1;
+    } else {
+      vla = vla2;
+      state = state2;
+      inter = inter2;
+      sele = sele2;
+      n = n2;
+    }
+
+    if(state<0) state = 0;
+    for(a=0;a<n;a++) {
+      obj = I->Obj[vla[0]];
+      at1 = vla[1];
+      if(obj!=last_obj) {
+        ObjectMoleculeUpdateNeighbors(obj);
+        last_obj = obj;
+        neighbor = obj->Neighbor;          
+        atomInfo = obj->AtomInfo;
+      }
+
+      if(state<obj->NCSet) 
+        cs=obj->CSet[state];
+      else
+        cs=NULL;
+      if(cs) {
+        if(obj->DiscreteFlag) {
+          if(cs==obj->DiscreteCSet[at1])
+            idx1=obj->DiscreteAtmToIdx[at1];
+          else
+            idx1=-1;
+        } else 
+          idx1=cs->AtmToIdx[at1];
+        
+        if(idx1>=0) {
+          register int mem0,mem1,mem2,mem3,mem4;
+          register int nbr0,nbr1,nbr2,nbr3;
+          float *v1 = cs->Coord + 3*idx1,*v2;
+          float sum = 0.0F;
+          int at2,idx2,cnt =0;
+
+          mem0 = at1;
+          nbr0 = neighbor[mem0]+1;
+          while((mem1 = neighbor[nbr0])>=0) {
+            nbr1 = neighbor[mem1]+1;
+            while((mem2 = neighbor[nbr1])>=0) {
+              if(mem2!=mem0) { 
+                nbr2 = neighbor[mem2]+1;
+                while((mem3 = neighbor[nbr2])>=0) {
+                  if((mem3!=mem1)&&(mem3!=mem0)) {
+
+                    at2 = mem3;
+                    if(SelectorIsMember(G,atomInfo[at2].selEntry,sele)) {
+                      if(obj->DiscreteFlag) {
+                        if(cs==obj->DiscreteCSet[at2])
+                          idx2=obj->DiscreteAtmToIdx[at2];
+                        else
+                          idx2=-1;
+                      } else 
+                        idx2=cs->AtmToIdx[at2];
+                      if(idx2>=0) {
+                        v2 = cs->Coord + 3*idx2;
+                        sum += diff3f(v2,v1);
+                        cnt++;
+                      }
+                    }
+#if 0
+                    nbr3 = neighbor[mem2]+1;
+                    while((mem4 = neighbor[nbr3])>=0) {
+                      if((mem4!=mem2)&&(mem4!=mem1)&&(mem4!=mem0)) {
+                        
+
+                      }
+                      nbr3+=2;                     
+                    }
+#endif
+                  }
+                  nbr2+=2;
+                }
+              }
+              nbr1+=2;
+            }
+            nbr0+=2;
+          }
+          if(cnt) {
+            *inter = sum;
+            printf("DEBUG %8.3f %d\n",*inter,cnt);
+          }
+        }
+      }
+      vla+=3;
+      inter++;
+    }
+  }
+  {
+    for(a=0;a<n1;a++) {
+      float i1 = inter1[a];
+      for(b=0;b<n2;b++) {
+        float i2 = inter2[b];
+        float mx = (i1>i2) ? i1 : i2;
+        float score = 10 * (i1*i2/mx);
+        match->mat[a][b] = score;
+      }
+    }
+  }
+  printf("DEBUG matrix calculated\n");
+  FreeP(inter1);
+  FreeP(inter2);
+  return 1;
+}
+
 int SelectorNameIsKeyword(PyMOLGlobals *G, char *name)
 {
   register CSelector *I = G->Selector;
@@ -3197,7 +3335,8 @@ int SelectorGetPairIndices(PyMOLGlobals *G,int sele1,int state1,int sele2,int st
 /*========================================================================*/
 int  SelectorCreateAlignments(PyMOLGlobals *G,
                               int *pair,int sele1,int *vla1,int sele2,
-                              int *vla2,char *name1,char *name2,int identical)
+                              int *vla2,char *name1,char *name2,
+                              int identical,int atomic_input)
 {
   register CSelector *I=G->Selector;
   int *flag1=NULL,*flag2=NULL;
@@ -3218,7 +3357,7 @@ int  SelectorCreateAlignments(PyMOLGlobals *G,
   np = VLAGetSize(pair)/2;
   if(np) {
 
-    SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
+    SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1); /* unnecessary? */
     flag1=Calloc(int,I->NAtom);
     flag2=Calloc(int,I->NAtom);
 
@@ -3229,6 +3368,7 @@ int  SelectorCreateAlignments(PyMOLGlobals *G,
       vi1 = *(p++);
       vi2 = *(p++);
 
+        
       /* find positions in the selection arrays */
 
       mod1 = vla1[vi1*3];
@@ -3248,54 +3388,65 @@ int  SelectorCreateAlignments(PyMOLGlobals *G,
       ai2 = obj2->AtomInfo+at2;
       at1a = at1;
       at2a = at2;
-      ai1a = obj1->AtomInfo+at1a;
-      ai2a = obj2->AtomInfo+at2a;
-      while(1) { /* match up all atoms in each residue */
-        cmp = AtomInfoNameOrder(G,ai1a,ai2a);
-        if(cmp==0) { /* atoms match */
-          index1 = SelectorGetObjAtmOffset(I, obj1, at1a);
-          index2 = SelectorGetObjAtmOffset(I, obj2, at2a);
-
-        PRINTFD(G,FB_Selector) 
-          " S.C.A.-DEBUG: compare %s %s %d\n",ai1a->name,ai2a->name,cmp
-          ENDFD
-
-        PRINTFD(G,FB_Selector) 
-          " S.C.A.-DEBUG: entry %d %d\n",
-          ai1a->selEntry,ai2a->selEntry
-          ENDFD
-          if((index1>=0) && (index2>=0)) {
-            if(SelectorIsMember(G,ai1a->selEntry,sele1)&&
-               SelectorIsMember(G,ai2a->selEntry,sele2)) {
-              if((!identical)||(strcmp(ai1a->resn,ai2a->resn)==0)) {
-                flag1[index1] = true;
-                flag2[index2] = true; 
-                cnt++;
+      ai1a = ai1;
+      ai2a = ai2;
+      
+      if(atomic_input) {
+        index1 = SelectorGetObjAtmOffset(I, obj1, at1a);
+        index2 = SelectorGetObjAtmOffset(I, obj2, at2a);
+        flag1[index1] = true;
+        flag2[index2] = true; 
+        cnt++;
+      } else {
+        
+        while(1) { /* match up all atoms in each residue */
+          cmp = AtomInfoNameOrder(G,ai1a,ai2a);
+          if(cmp==0) { /* atoms match */
+            index1 = SelectorGetObjAtmOffset(I, obj1, at1a);
+            index2 = SelectorGetObjAtmOffset(I, obj2, at2a);
+            
+            PRINTFD(G,FB_Selector) 
+              " S.C.A.-DEBUG: compare %s %s %d\n",ai1a->name,ai2a->name,cmp
+              ENDFD
+              
+              PRINTFD(G,FB_Selector) 
+              " S.C.A.-DEBUG: entry %d %d\n",
+              ai1a->selEntry,ai2a->selEntry
+              ENDFD
+              if((index1>=0) && (index2>=0)) {
+                if(SelectorIsMember(G,ai1a->selEntry,sele1)&&
+                   SelectorIsMember(G,ai2a->selEntry,sele2)) {
+                  if((!identical)||(strcmp(ai1a->resn,ai2a->resn)==0)) {
+                    flag1[index1] = true;
+                    flag2[index2] = true; 
+                    cnt++;
+                  }
+                }
               }
-            }
+            at1a++;
+            at2a++;
+          } else if(cmp<0) { /* 1 is before 2 */
+            at1a++;
+          } else if(cmp>0) { /* 1 is after 2 */
+            at2a++;
           }
-          at1a++;
-          at2a++;
-        } else if(cmp<0) { /* 1 is before 2 */
-          at1a++;
-        } else if(cmp>0) { /* 1 is after 2 */
-          at2a++;
+          if(at1a>=obj1->NAtom) /* make sure we're still in the same residue */
+            break;
+          if(at2a>=obj2->NAtom)
+            break;
+          ai1a = obj1->AtomInfo+at1a;
+          ai2a = obj2->AtomInfo+at2a;
+          if(!AtomInfoSameResidue(G,ai1a,ai1))
+            break;
+          if(!AtomInfoSameResidue(G,ai2a,ai2))
+            break;
         }
-        if(at1a>=obj1->NAtom) /* make sure we're still in the same residue */
-          break;
-        if(at2a>=obj2->NAtom)
-          break;
-        ai1a = obj1->AtomInfo+at1a;
-        ai2a = obj2->AtomInfo+at2a;
-        if(!AtomInfoSameResidue(G,ai1a,ai1))
-          break;
-        if(!AtomInfoSameResidue(G,ai2a,ai2))
-          break;
       }
     }
     if(cnt) {
-      SelectorEmbedSelection(G,flag1,name1,NULL,false, -1);
-      SelectorEmbedSelection(G,flag2,name2,NULL,false, -1);
+      printf("DEBUG %d %d\n",
+             SelectorEmbedSelection(G,flag1,name1,NULL,false, -1),
+             SelectorEmbedSelection(G,flag2,name2,NULL,false, -1));
     }
     FreeP(flag1);
     FreeP(flag2);
@@ -3384,7 +3535,7 @@ int SelectorCountAtoms(PyMOLGlobals *G,int sele,int state)
 
 
 /*========================================================================*/
-int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele)
+int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele,int all_atoms)
 {
   /* returns a VLA containing atom indices followed by residue integers
    (residue names packed as characters into integers)
@@ -3411,8 +3562,27 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele)
     ENDFD;
 
   if(I->NAtom) {
-    for(a=cNDummyAtoms;a<I->NAtom;a++)
-      {
+    if(all_atoms) {
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
+        mod1 = I->Table[a].model;
+        at1=I->Table[a].atom;
+        obj=I->Obj[mod1];
+        ai1 = obj->AtomInfo+at1;
+        if(SelectorIsMember(G,ai1->selEntry,sele)) {
+          *(r++)=mod1;
+          *(r++)=at1;
+          for(c=0;c<sizeof(ResName);c++)
+            rn[c]=0;
+          strcpy(rn,ai1->resn); /* store residue code as a number */
+          rcode = 0;
+          for(c=0;c<3;c++) {
+            rcode = (rcode<<8) | rn[c];
+          }
+          *(r++) = rcode;
+        }
+      }
+    } else {
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
         obj=I->Obj[I->Table[a].model];
         at2=I->Table[a].atom;
         if(SelectorIsMember(G,obj->AtomInfo[at2].selEntry,sele)) {
@@ -3434,7 +3604,7 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele)
                 rcode = (rcode<<8) | rn[c];
               }
               *(r++) = rcode;
-
+              
               at1 = at2;
               ai1 = ai2;
               mod1 = I->Table[a].model;
@@ -3442,17 +3612,18 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele)
           }
         }
       }
-    if(ai1) { /* handle last residue */
-      *(r++)=mod1;
-      *(r++)=at1;
-      for(c=0;c<sizeof(ResName);c++)
-        rn[c]=0;
-      strcpy(rn,ai1->resn); /* store residue code as a number */
-      rcode = 0;
-      for(c=0;c<3;c++) {
-        rcode = (rcode<<8) | rn[c];
+      if(ai1) { /* handle last residue */
+        *(r++)=mod1;
+        *(r++)=at1;
+        for(c=0;c<sizeof(ResName);c++)
+          rn[c]=0;
+        strcpy(rn,ai1->resn); /* store residue code as a number */
+        rcode = 0;
+        for(c=0;c<3;c++) {
+          rcode = (rcode<<8) | rn[c];
+        }
+        *(r++) = rcode;
       }
-      *(r++) = rcode;
     }
   }
   if(result) {
@@ -6777,7 +6948,7 @@ void SelectorFreeTmp(PyMOLGlobals *G,char *name) /* remove temporary selections 
 }
 /*========================================================================*/
 static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name,
-                                   ObjectMolecule *obj,int no_dummies, int exec_managed )
+                                   ObjectMolecule *obj,int no_dummies, int exec_managed)
 {
   /* either atom or obj should be NULL, not both and not neither */
 

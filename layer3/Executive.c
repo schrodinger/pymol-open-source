@@ -5750,25 +5750,44 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,fl
   CMatch *match = NULL;
 
   if((sele1>=0)&&(sele2>=0)&&rms_info) {
-    vla1=SelectorGetResidueVLA(G,sele1);
-    vla2=SelectorGetResidueVLA(G,sele2);
+#if 1
+    vla1=SelectorGetResidueVLA(G,sele1,false);
+    vla2=SelectorGetResidueVLA(G,sele2,false);
+#else
+    vla1=SelectorGetResidueVLA(G,sele1,true);
+    vla2=SelectorGetResidueVLA(G,sele2,true);
+#endif
     if(vla1&&vla2) {
       na = VLAGetSize(vla1)/3;
       nb = VLAGetSize(vla2)/3;
       if(na&&nb) {
         match = MatchNew(G,na,nb);
+#if 1
         if (ok) ok = MatchResidueToCode(match,vla1,na);
         if (ok) ok = MatchResidueToCode(match,vla2,nb);
         if (ok) ok = MatchMatrixFromFile(match,mat_file,quiet);
         if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb,quiet);
+#else
+        if (ok) ok = SelectorResidueVLAsTo3DMatchScores(G,match,vla1,na,state1,sele1,
+                                                        vla2,nb,state2,sele2);
+#endif
+
         if (ok) ok = MatchAlign(match,gap,extend,max_gap,max_skip,quiet);
         if(ok) {
           rms_info->raw_alignment_score = match->score;
           rms_info->n_residues_aligned = match->n_pair;
           if(match->pair) { 
+
+#if 1
             c = SelectorCreateAlignments(G,match->pair,
                                          sele1,vla1,sele2,vla2,
-                                         "_align1","_align2",false);
+                                         "_align1","_align2",false,false);
+#else
+            c = SelectorCreateAlignments(G,match->pair,
+                                         sele1,vla1,sele2,vla2,
+                                         "_align1","_align2",false,true);
+#endif
+          
             if(c) {
               int mode = 2;
               if(!quiet) {

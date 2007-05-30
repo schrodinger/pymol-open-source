@@ -4,6 +4,8 @@ CHANGE LOG
 
 2007-05-29  Warren L. DeLano <warren@delsci.com>
 
+	* added hide_long_bonds setting to help with animating rxns
+	
 	* fixed problem reading NMR structures with HETATM/CONECT combo
 	
 2007-05-27  Warren L. DeLano <warren@delsci.com>

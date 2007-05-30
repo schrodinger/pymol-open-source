@@ -1187,6 +1187,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
   int fixed_radius = false;
   int caps_req = true;
   int valence_flag = false;
+  int hide_long = false;
   int stick_color = 0;
   int cartoon_side_chain_helper = 0;
   int ribbon_side_chain_helper = 1;
@@ -1197,6 +1198,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
   int n_var_alpha=0, n_var_alpha_ray=0,n_var_alpha_sph=0;
   float transp;
   int valence_found  = false;
+  const float _0p9 = 0.9F;
   OOAlloc(G,RepCylBond);
 
   PRINTFD(G,FB_RepCylBond)
@@ -1237,7 +1239,9 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
   ribbon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                           cSetting_ribbon_side_chain_helper);
 
-  transp = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_transparency);                                                                   
+  transp = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_transparency);
+  hide_long = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_hide_long_bonds);
+
   b=obj->Bond;
   for(a=0;a<obj->NBond;a++) {
       b1 = b->index[0];
@@ -1473,6 +1477,14 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
             s1 = 0;
             s2 = 0;
           }
+
+        if(hide_long && (s1||s2)) {
+          float cutoff = (ati1->vdw + ati2->vdw) * _0p9;
+          ai1 = obj->AtomInfo + b1;
+          ai2 = obj->AtomInfo + b2;
+          if(!within3f(vv1,vv2,cutoff)) /* atoms separated by more than 90% of the sum of their vdw radii */
+            s1 = s2 = 0;
+        }
         
         if( (!ati1->hetatm) && (!ati2->hetatm) &&
             ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon] && ati2->visRep[cRepCartoon]) ||
@@ -1705,6 +1717,14 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
             *(vspc++)=vdw;
             I->NSPC++;
           }
+        }
+
+        if(hide_long && (s1||s2)) {
+          float cutoff = (ati1->vdw + ati2->vdw) * _0p9;
+          ai1 = obj->AtomInfo + b1;
+          ai2 = obj->AtomInfo + b2;
+          if(!within3f(vv1,vv2,cutoff)) /* atoms separated by more than 90% of the sum of their vdw radii */
+            s1 = s2 = 0;
         }
 
         if(s1||s2)

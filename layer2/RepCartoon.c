@@ -434,7 +434,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                   nbr[1]+=2;                          
                 }
               }
-              nbr[0]+=2;                          
+              nbr[0]+=2;                         
             }
           }
         }
