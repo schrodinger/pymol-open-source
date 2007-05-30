@@ -24,11 +24,12 @@ if __name__=='pymol.fitting':
     from cmd import _cmd,lock,unlock,Shortcut, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
-    def super(source, target, cutoff=1.8, cycles=5, gap=-10.0,
+    def super(source, target, cutoff=1.8, cycles=5, gap=-15.0,
               extend=-0.5, max_gap=-1, object=None,
               source_state=0, target_state=0,
               quiet=1, max_skip=0, transform=1, reset=0,
-              radius=11.0, scale=4, base=0.64,
+#              radius=11.0, scale=2.5, base=0.64,
+              radius=11.0, scale=3.2, base=0.63,              
               coord=0.0, expect=6.0, _self=cmd):
         
         '''

@@ -37,7 +37,7 @@ Z* -------------------------------------------------------------------
 
 static ObjectAlignment *ObjectAlignmentNew(PyMOLGlobals *G);
 static void ObjectAlignmentFree(ObjectAlignment *I);
-static void ObjectAlignmentUpdate(ObjectAlignment *I);
+void ObjectAlignmentUpdate(ObjectAlignment *I);
 
 static int GroupOrderKnown(ExecutiveObjectOffset *eoo, 
                             OVOneToOne *id2eoo,
@@ -773,7 +773,7 @@ void ObjectAlignmentRecomputeExtent(ObjectAlignment *I)
   I->Obj.ExtentFlag=extent_flag;
 }
 /*========================================================================*/
-static void ObjectAlignmentUpdate(ObjectAlignment *I)
+void ObjectAlignmentUpdate(ObjectAlignment *I)
 {
   register PyMOLGlobals *G = I->Obj.G;
   int update_needed = false;
