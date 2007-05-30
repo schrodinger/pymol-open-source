@@ -98,7 +98,7 @@ void SelectorDeletePrefixSet(PyMOLGlobals *G,char *pref);
 void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0,int sta1,int method,int quiet);
 int SelectorGetSingleAtomVertex(PyMOLGlobals *G,int sele,int state,float *v);
 int SelectorGetSingleAtomObjectIndex(PyMOLGlobals *G,int sele,ObjectMolecule **in_obj,int *index);
-int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele0,int all_atoms);
+int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele0,int ca_only);
 int  SelectorCreateAlignments(PyMOLGlobals *G,int *pair,int sele1,int *vla1,int sele2,
                               int *vla2,char *name1,char *name2,int identical,int atomic_input);
 int SelectorGetPairIndices(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
@@ -151,7 +151,9 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals *G,int sele,int state,f
 int SelectorNameIsKeyword(PyMOLGlobals *G, char *name);
 int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
                                        int *vla1,int n1,int state1,int sele1,
-                                       int *vla2,int n2,int state2,int sele2);
+                                       int *vla2,int n2,int state2,int sele2,
+                                       float radius,float scale,float base,float coord_wt,
+                                       float rms_exp);
 
 /* reserve special meaning for tags 1-15 and note that 0 is disallowed */
 

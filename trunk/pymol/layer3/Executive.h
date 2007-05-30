@@ -154,11 +154,14 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
                     int target_state,int source_state,int zoom, int quiet);
 
 int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,
-                     float gap,float extend,
-                     int max_gap, int max_skip,
-                     float cutoff,int cycles,int quiet,
-                     char *oname,int state1,int state2,
-                     ExecutiveRMSInfo *rms_info,int transform,int reset);
+                   float gap,float extend,
+                   int max_gap, int max_skip,
+                   float cutoff,int cycles,int quiet,
+                   char *oname,int state1,int state2,
+                   ExecutiveRMSInfo *rms_info,int transform,int reset,
+                   float radius,float scale,float base, 
+                   float coord_wt, float expect);
+
 void ExecutiveUpdateColorDepends(PyMOLGlobals *G,ObjectMolecule *mol);
 void ExecutiveUpdateCoordDepends(PyMOLGlobals *G,ObjectMolecule *mol);
 float ExecutiveDistance(PyMOLGlobals *G,char *sele1,char *sele2);

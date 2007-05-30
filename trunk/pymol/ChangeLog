@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2007-05-30  Warren L. DeLano <warren@delsci.com>
+
+	* added "super" command for sequence-independent alignment
+	
 2007-05-29  Warren L. DeLano <warren@delsci.com>
 
 	* added hide_long_bonds setting to help with animating rxns

@@ -221,6 +221,7 @@ from wizarding import \
 from fitting import \
       align,             \
       fit,               \
+      super,             \
       rms,               \
       rms_cur,           \
       intra_fit,         \

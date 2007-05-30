@@ -28,7 +28,7 @@ try:
         #  extended Hermann Mauguin symbol translation
         #  from CCP4's syminfo.lib
         
-        'H 3'      : 'R 3: H',
+        'H 3'      : 'R 3 :H',
         'H -3'     : 'R -3 :H',
         'H 3 2'    : 'R 3 2 :H',
         'H 3 m'    : 'R 3 m :H',

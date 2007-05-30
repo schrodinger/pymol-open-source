@@ -1579,9 +1579,10 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
           (SelectorGetTmp(I->G,target,s3)>=0));
     if(ok) {
       ok = ExecutiveAlign(I->G,s2,s3,matrix,gap,extend,max_gap,
-                                       max_skip,cutoff,cycles,quiet,object,
-                                       source_state-1, target_state-1,
-                                       &rms_info,transform,reset);
+                          max_skip,cutoff,cycles,quiet,object,
+                          source_state-1, target_state-1,
+                          &rms_info,transform,reset,
+                          0.0, 0.0, 0.0, 0.0, 0.0);
       if(ok) {
         result.array[0] = rms_info.final_rms;
         result.array[1] = rms_info.final_n_atom;

@@ -228,6 +228,7 @@ def get_command_keywords(self_cmd=cmd):
         'split_states'  : [ self_cmd.split_states      , 0 , 0 , ''  , parsing.STRICT ],
         '_special'      : [ self_cmd._special          , 0 , 0 , ''  , parsing.STRICT ],
         'stereo'        : [ self_cmd.stereo            , 0 , 0 , ''  , parsing.STRICT ],
+        'super'         : [ self_cmd.super              , 0 , 0 , ''  , parsing.STRICT ],
         'symexp'        : [ self_cmd.symexp            , 0 , 0 , ''  , parsing.LEGACY ],
         'system'        : [ self_cmd.system            , 0 , 0 , ''  , parsing.LITERAL ],
         'test'          : [ self_cmd.test              , 0 , 0 , ''  , parsing.STRICT ],

@@ -19,10 +19,65 @@ if __name__=='pymol.fitting':
     import selector
     import os
     import pymol
+    import string
     
     from cmd import _cmd,lock,unlock,Shortcut, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+
+    def super(source, target, cutoff=1.8, cycles=5, gap=-10.0,
+              extend=-0.5, max_gap=-1, object=None,
+              source_state=0, target_state=0,
+              quiet=1, max_skip=0, transform=1, reset=0,
+              radius=11.0, scale=4, base=0.64,
+              coord=0.0, expect=6.0, _self=cmd):
+        
+        '''
+DESCRIPTION
+
+    NOTE: This feature is experimental and unsupported.
     
+    "super" performs a conform-based residue alignment followed by a
+    structural superposition, and then carries out zero or more cycles
+    of refinement in order to reject structural outliers found during
+    the fit.
+
+USAGE 
+
+    super source, target [, object=alignment-object-name ]
+
+NOTES
+
+    If object is specified, then super will create an object which
+    indicates paired atoms and supports visualization of the alignment
+    in the sequence viewer.
+
+EXAMPLE
+
+    super protA////CA, protB////CA, object=supeAB
+
+SEE ALSO
+
+    pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur
+        '''
+        r = DEFAULT_ERROR
+        source = selector.process(source)
+        target = selector.process(target)
+        if object==None: object=''
+        # delete existing alignment object (if asked to reset it)
+        try:
+            _self.lock(_self)
+            r = _cmd.align(_self._COb,source,"("+target+")",float(cutoff),
+                           int(cycles),float(gap),
+                           float(extend),int(max_gap),str(object),'',
+                           int(source_state)-1,int(target_state)-1,
+                           int(quiet),int(max_skip),int(transform),int(reset),
+                           float(radius),float(scale),float(base),
+                           float(coord),float(expect))
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException         
+        return r
+
     def align(source, target, cutoff=2.0, cycles=2, gap=-10.0,
               extend=-0.5, max_gap=-1, object=None,
               matrix="BLOSUM62", source_state=0, target_state=0,
@@ -31,8 +86,8 @@ if __name__=='pymol.fitting':
         '''
 DESCRIPTION
 
-    "align" performs a sequence alignment followed by a structural
-    alignment, and then carries out zero or more cycles of refinement
+    "align" performs a sequence alignment followed by a structural 
+    superposition, and then carries out zero or more cycles of refinement
     in order to reject structural outliers found during the fit.
 
 USAGE 
@@ -56,15 +111,22 @@ SEE ALSO
         r = DEFAULT_ERROR
         source = selector.process(source)
         target = selector.process(target)
-        mfile = cmd.exp_path("$PYMOL_PATH/data/pymol/matrices/"+matrix)
+        matrix = str(matrix)
+        if string.lower(matrix)=='none':
+            matrix=''
+        if len(matrix):
+            mfile = cmd.exp_path("$PYMOL_PATH/data/pymol/matrices/"+matrix)
+        else:
+            mfile = ''
         if object==None: object=''
         # delete existing alignment object (if asked to reset it)
         try:
             _self.lock(_self)
             r = _cmd.align(_self._COb,source,"("+target+")",float(cutoff),int(cycles),float(gap),
-                                float(extend),int(max_gap),str(object),str(mfile),
-                                int(source_state)-1,int(target_state)-1,
-                                int(quiet),int(max_skip),int(transform),int(reset))
+                           float(extend),int(max_gap),str(object),str(mfile),
+                           int(source_state)-1,int(target_state)-1,
+                           int(quiet),int(max_skip),int(transform),int(reset),
+                           0.0, 0.0, 0.0, 0.0, 0.0)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
