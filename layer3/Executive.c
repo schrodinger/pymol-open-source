@@ -8251,10 +8251,10 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
   int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
 
   sele1=SelectorIndexByName(G,s1);
+  ObjectAlignment *align_to_update = NULL;
 
   ObjectMoleculeOpRecInit(&op1);
   ObjectMoleculeOpRecInit(&op2);
-
   /* this function operates on stored coordinates -- thus transformation 
      matrices will need to be applied to the resulting atoms */
 
@@ -8751,7 +8751,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                 obj->Obj.Color = ColorGetIndex(G,"yellow");
                 ObjectSetName((CObject*)obj,oname);
                 ExecutiveManageObject(G,(CObject*)obj,0,false);
-                ObjectAlignmentUpdate(obj);
+                align_to_update = obj;
                 SceneInvalidate(G);
               }
               VLAFreeP(align_vla);
@@ -8815,6 +8815,11 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
       ErrMessage(G,"ExecutiveRMS","No atoms selected.");
     }
   }
+
+  if(align_to_update) {
+    ObjectAlignmentUpdate(align_to_update);
+  }
+
   VLAFreeP(op1.vv1);
   VLAFreeP(op2.vv1);
   VLAFreeP(op1.vc1);

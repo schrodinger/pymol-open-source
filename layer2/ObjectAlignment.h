@@ -41,6 +41,7 @@ typedef struct ObjectAlignment {
   int SelectionState,ForceState;
 } ObjectAlignment;
 
+void ObjectAlignmentUpdate(ObjectAlignment *I);
 
 ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals *G,
                                        ObjectAlignment *obj,
