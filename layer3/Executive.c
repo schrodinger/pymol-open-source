@@ -5740,7 +5740,7 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap, f
                    int max_gap, int max_skip, float cutoff,int cycles,int quiet,char *oname,
                    int state1,int state2, ExecutiveRMSInfo *rms_info,int transform,int reset,
                    float seq_wt,float radius, float scale, float base, float coord_wt,
-                   float expect, int window)
+                   float expect, int window, float ante)
 {
   int sele1=SelectorIndexByName(G,s1);
   int sele2=SelectorIndexByName(G,s2);
@@ -5750,10 +5750,16 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap, f
   int c;
   int ok=true;
   int use_sequence = (mat_file && mat_file[0] && (seq_wt!=0.0F));
-  int use_structure = (seq_wt>=0.0F);
+  int use_structure = (seq_wt>=0.0F); /* negative seq_wt means sequence only! */
   CMatch *match = NULL;
 
   if(!use_structure) window = 0;
+  
+  if((scale==0.0F) && (seq_wt==0.0F) && (ante<0.0F) && window)
+    ante = window;
+
+  if(ante<0.0F)
+    ante=0.0F;
 
   if((sele1>=0)&&(sele2>=0)&&rms_info) {
     vla1=SelectorGetResidueVLA(G,sele1,use_structure);
@@ -5778,8 +5784,7 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap, f
                                                             coord_wt,expect);
           }
           if(ok) ok = MatchAlign(match,gap,extend,max_gap,
-                                 max_skip,quiet,window);
-          printf("ok %d\n",ok);
+                                 max_skip,quiet,window,ante);
           if(ok) {
             rms_info->raw_alignment_score = match->score;
             rms_info->n_residues_aligned = match->n_pair;

@@ -340,7 +340,8 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
 }
 
 int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
-               int max_gap,int max_skip,int quiet,int window)
+               int max_gap,int max_skip,int quiet,int window,
+               float ante)
 {
   PyMOLGlobals *G=I->G;
   register int a,b,f,g;
@@ -412,6 +413,7 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
 
             if(window) {
               register int aa=a,bb=b,ff=f,gg=g, cc;
+              tst += ante;
               for(cc=0;cc<window;cc++) {
                 if((ff>=0)&&(gg>=0)&&(ff<na)&&(gg<nb)) {
                   tst -= fabs(da[a][ff]-db[b][gg]);
@@ -441,6 +443,7 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
 
             if(window) { 
               register int aa=a,bb=b,ff=f,gg=g, cc;
+              tst += ante;
               for(cc=0;cc<window;cc++) {
                 if((ff>=0)&&(gg>=0)&&(ff<na)&&(gg<nb)) {
                   tst -= fabs(da[a][ff]-db[b][gg]);
@@ -479,6 +482,7 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
 
                 if(window) { 
                   register int aa=a,bb=b,ff=f,gg=g, cc;
+                  tst += ante;
                   for(cc=0;cc<window;cc++) {
                     if((ff>=0)&&(gg>=0)&&(ff<na)&&(gg<nb)) {
                       tst -= fabs(da[a][ff]-db[b][gg]);

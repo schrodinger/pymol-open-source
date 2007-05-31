@@ -910,12 +910,6 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
             match->mat[a][b] = seq_wt*match->mat[a][b] + score;
           }
         }
-      } else {
-        for(a=0;a<n1;a++) {
-          for(b=0;b<n2;b++) {
-            match->mat[a][b] = rms_exp; /* window-only mode */
-          }
-        }
       }
     }
   }
