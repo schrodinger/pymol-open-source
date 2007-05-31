@@ -5763,33 +5763,29 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,fl
       na = VLAGetSize(vla1)/3;
       nb = VLAGetSize(vla2)/3;
       if(na&&nb) {
-        match = MatchNew(G,na,nb);
+        match = MatchNew(G,na,nb,!use_sequence);
         if(use_sequence) {
           if (ok) ok = MatchResidueToCode(match,vla1,na);
           if (ok) ok = MatchResidueToCode(match,vla2,nb);
           if (ok) ok = MatchMatrixFromFile(match,mat_file,quiet);
           if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb,quiet);
+          if(ok) ok = MatchAlign(match,gap,extend,max_gap,max_skip,quiet);
         } else {
           if (ok) ok = SelectorResidueVLAsTo3DMatchScores(G,match,vla1,na,state1,sele1,
                                                           vla2,nb,state2,sele2,radius,scale,base,
                                                           coord_wt,expect);
+          if(ok) ok = MatchAlignWithDistMats(match,gap,extend,max_gap,max_skip,quiet);
         }
 
-        if (ok) ok = MatchAlign(match,gap,extend,max_gap,max_skip,quiet);
         if(ok) {
           rms_info->raw_alignment_score = match->score;
           rms_info->n_residues_aligned = match->n_pair;
           if(match->pair) { 
+            
+            c = SelectorCreateAlignments(G,match->pair,
+                                         sele1,vla1,sele2,vla2,
+                                         "_align1","_align2",false,false);
 
-            if(use_sequence) {
-              c = SelectorCreateAlignments(G,match->pair,
-                                           sele1,vla1,sele2,vla2,
-                                           "_align1","_align2",false,false);
-            } else {
-              c = SelectorCreateAlignments(G,match->pair,
-                                           sele1,vla1,sele2,vla2,
-                                           "_align1","_align2",false,true);
-            }
             if(c) {
               int mode = 2;
               if(!quiet) {

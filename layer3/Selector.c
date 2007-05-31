@@ -589,6 +589,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
     register CoordSet *cs;
     register int *neighbor = NULL;
     register AtomInfoType *atomInfo = NULL;
+    float **dist_mat;
     float *inter;
     int state;
     int n;
@@ -599,12 +600,14 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
       inter = inter1;
       sele = sele1;
       n = n1;
+      dist_mat = match->da;
     } else {
       vla = vla2;
       state = state2;
       inter = inter2;
       sele = sele2;
       n = n2;
+      dist_mat = match->db;
     }
 
     if(state<0) state = 0;
@@ -644,7 +647,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
 
           copy3f(v_ca1,vv_ca);
           copy3f(v_ca1,inter+8);
-
+          
           /* find attached CB */
 
           mem0 = at_ca1;
@@ -755,6 +758,18 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
       inter+=cINTER_ENTRIES;
     }
     {
+      for(a=0;a<n;a++) { /* optimize this later */
+        float *vv_ca = v_ca + a*3;
+        for(b=0;b<n;b++) {
+          float *vv_cb = v_ca + b*3;          
+          float diff = diff3f(vv_ca,vv_cb);
+          dist_mat[a][b] = diff;
+          dist_mat[b][a] = diff;
+        }
+      }
+    }
+
+    {
       MapType *map=MapNew(G,radius,v_ca,n, NULL);
       if(!pass) {
         inter = inter1;
@@ -808,6 +823,8 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
   }
 
   {
+    const float _0F = 0.0F;
+
     for(a=0;a<n1;a++) {
       float *i1 = inter1+ cINTER_ENTRIES*a;
       for(b=0;b<n2;b++) {
@@ -815,8 +832,15 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
         float sm[cINTER_ENTRIES], comp1, comp2, comp3 = 1.0F;
         float score;
         int c;
-        for(c=0;c<cINTER_ENTRIES;c++) {
-          sm[c] = i1[c]+i2[c];
+        for(c=0;c<cINTER_ENTRIES;c+=2) {
+          if( ((i1[c] == _0F) && (i1[c+1]== _0F)) ||
+              ((i2[c] == _0F) && (i2[c+1]== _0F))) { /* handle glycine case */
+            sm[c] = 1.0F;
+            sm[c+1] = 1.0F;
+          } else {
+            sm[c] = i1[c]+i2[c];
+            sm[c+1] = i1[c+1]+i2[c+1];
+          }
         }
         comp1 = 
           ((sqrt(sm[0]*sm[0] + sm[1]*sm[1]) + 
