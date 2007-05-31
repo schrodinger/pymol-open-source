@@ -8246,8 +8246,9 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
   float v1[3],*v2;
   int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
 
-  sele1=SelectorIndexByName(G,s1);
   ObjectAlignment *align_to_update = NULL;
+
+  sele1=SelectorIndexByName(G,s1);
 
   ObjectMoleculeOpRecInit(&op1);
   ObjectMoleculeOpRecInit(&op2);
@@ -8592,6 +8593,8 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
           rms_info->n_cycles_run = 0;
           rms_info->final_n_atom = n_pair; /* in case there is no refinement */
         }
+        
+
         if(mode!=0) {
           rms = MatrixFitRMSTTTf(G,n_pair,op1.vv1,op2.vv1,NULL,op2.ttt);
           if(rms_info) {
@@ -8815,7 +8818,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
   if(align_to_update) {
     ObjectAlignmentUpdate(align_to_update);
   }
-
+  
   VLAFreeP(op1.vv1);
   VLAFreeP(op2.vv1);
   VLAFreeP(op1.vc1);
