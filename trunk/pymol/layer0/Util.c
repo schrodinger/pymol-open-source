@@ -252,7 +252,7 @@ void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size)
   for(a=0;a<ndim;a++)
 	 size = size * dim[a];
   size = size + sum;
-  result = (void*)mmalloc(size*2);
+  result = (void*)mcalloc(size*2,1); /* what is this *2 for ??? */
 
   if(result)
 	 {
