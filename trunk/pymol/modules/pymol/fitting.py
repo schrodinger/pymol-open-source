@@ -91,7 +91,7 @@ SEE ALSO
         return r
 
     def align(source, target, cutoff=2.0, cycles=2, gap=-10.0,
-              extend=-0.5, max_gap=-1, object=None,
+              extend=-0.5, max_gap=50, object=None,
               matrix="BLOSUM62", source_state=0, target_state=0,
               quiet=1, max_skip=0, transform=1,reset=0, _self=cmd):
         

@@ -48,7 +48,8 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals *G,
                                        int *align_vla,
                                        int state, 
                                        int merge,
-                                       ObjectMolecule *guide);
+                                       ObjectMolecule *guide,
+                                       ObjectMolecule *flush);
 
 
 void ObjectAlignmentRecomputeExtent(ObjectAlignment *I);

@@ -1670,6 +1670,8 @@ int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
         }
         I->Spec=spec;
         OrthoDirty(G);
+        SeqChanged(G);
+
       }
       
       FreeP(index);
@@ -8327,10 +8329,11 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
 
   if(op1.vv1&&op2.vv1) {
     if(op1.nvv1&&op2.nvv1) {
+      ObjectMolecule *mobile_obj = NULL;
 
       int n_pair = 0;
 
-      if(!SelectorGetSingleObjectMolecule(G,sele1)) {
+      if(! (mobile_obj = SelectorGetSingleObjectMolecule(G,sele1)) ) {
         if(mode!=2) {
           PRINTFB(G,FB_Executive,FB_Warnings)
             "Executive-Warning: Mobile selection spans more than one object.\n"
@@ -8754,7 +8757,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                   else
                     obj = (ObjectAlignment*)execObj;
                 }
-                obj = ObjectAlignmentDefine(G,obj,align_vla,align_state,true,trg_obj);
+                obj = ObjectAlignmentDefine(G,obj,align_vla,align_state,true,trg_obj,mobile_obj);
                 obj->Obj.Color = ColorGetIndex(G,"yellow");
                 ObjectSetName((CObject*)obj,oname);
                 ExecutiveManageObject(G,(CObject*)obj,0,false);

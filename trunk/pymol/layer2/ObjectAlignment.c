@@ -35,6 +35,13 @@ Z* -------------------------------------------------------------------
 #include"Seq.h"
 #include"Seeker.h"
 
+/* 
+   just so you don't forget...
+
+   alignment vlas are zero-separated lists of groups of unique atom identifiers 
+
+*/
+
 static ObjectAlignment *ObjectAlignmentNew(PyMOLGlobals *G);
 static void ObjectAlignmentFree(ObjectAlignment *I);
 void ObjectAlignmentUpdate(ObjectAlignment *I);
@@ -433,7 +440,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
   return ok;
 }
 
-static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMolecule *guide)
+static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMolecule *guide, ObjectMolecule *flush)
 {
   /* curVLA and newVLA must be properly sized and zero terminated...*/
   int *result = NULL;
@@ -444,176 +451,263 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
     OVOneToOne *id2eoo = NULL;
     
     if(ExecutiveGetUniqueIDObjectOffsetVLADict(G, &eoo, &id2eoo)) {
-      
-      /* now we can take unique IDs to specific atoms */
-      OVOneToAny *used = OVOneToAny_New(G->Context->heap);
-      OVOneToAny *active = OVOneToAny_New(G->Context->heap);
+
       int n_cur = VLAGetSize(curVLA);
       int n_new = VLAGetSize(newVLA);
-      int cur_start = 0;
-      int new_start = 0;
 
-      result = VLAlloc(int, ( (n_cur<n_new) ? n_new : n_cur));
-      
-      while( (cur_start<n_cur)||(new_start<n_new) ) {
+      /* now we can take unique IDs to specific atoms */
 
-        int action; /* -1 = insert new, 0 = merge, 1 = insert cur */
-
-        /* make sure both lists are queued up on the next identifier */
-        
-        while( (cur_start<n_cur) && !curVLA[cur_start]) 
-          cur_start++;
-        while( (new_start<n_cur) && !newVLA[new_start]) 
-          new_start++;
-        
-        if(newVLA[new_start]) { /* default is to insert new first...*/
-          action = -1;
-        } else {
-          action = 1;
-        }
-        
-        if( (cur_start<n_cur) && (new_start<n_new) &&
-            curVLA[cur_start] && newVLA[new_start]) {
-           /* both lists active */
+      /* first, go through and eliminate old matching atoms between guide and flush (if any) */
+      {
+        int cur_start = 0;
+        while(cur_start<n_cur) {
           
-          register int c, id;
-          int overlapping = false;
-
-          OVOneToAny_Reset(active);
-          c = cur_start;
-          while( (id=curVLA[c++]) ) { /* record active atoms */
-            OVOneToAny_SetKey(active,id,1);
+          while( (cur_start<n_cur) && !curVLA[cur_start]) {
+            cur_start++;
           }
           
-          c = new_start;
-          while( (id=newVLA[c++]) ) { /* see if there are any matches */
-            if(OVreturn_IS_OK(OVOneToAny_GetKey(active,id))) { 
-              overlapping = true; 
-              break;
-            }
-          }
+          {
+            int other_seen = false;
+            int guide_seen = false;
+            int flush_seen = false;
+            ObjectMolecule *obj;
 
-          if(overlapping) {
-            /* overlapping, so merge */
-            action = 0; 
-
-          } else { 
-            /* non-overlapping, so we need to figure out which goes first... */
-            if(!GroupOrderKnown(eoo,id2eoo,curVLA,newVLA,
-                                cur_start,new_start,guide,&action)) {
-              register int c,id;
-              OVreturn_word offset;
-              ObjectMolecule *obj, *last_obj = NULL;
-              c = cur_start;
-              while( (id=curVLA[c++]) ) {
-                
-                if(OVreturn_IS_OK( offset=OVOneToOne_GetForward(id2eoo, id)) ) {
+            {
+              int cur = cur_start;
+              int id;
+              while( (id = curVLA[cur]) ) {
+                OVreturn_word offset;
+                if(OVreturn_IS_OK( offset=OVOneToOne_GetForward(id2eoo, id))) {
                   obj = eoo[offset.word].obj;
-                  if(obj != last_obj) {
-                    if(GroupOrderKnown(eoo,id2eoo,curVLA,newVLA,
-                                       cur_start,new_start,obj,&action))
-                      break;
-                    else
-                      last_obj = obj;
+                  if(obj == guide) {
+                    guide_seen = true;
+                  } else if(obj == flush) {
+                    flush_seen = true;
+                  } else {
+                    other_seen = true;
                   }
                 }
+                cur++;
               }
-
-              /* if order isn't set by now, then it doesn't matter...
-                 so group new will go in first */
             }
-          }
-        }
-
-        /* check assumptions */
-
-        if((action<1)&&!(new_start<n_new))
-          action=1;
-        else if((action>(-1))&&!(cur_start<n_cur))
-          action=-1;
-          
-        /* take action */
-
-        {
-          register int id;
-
-          switch(action) {
-          case -1: /* insert new */
-            if(new_start<n_new) {
-              while( (id=newVLA[new_start]) ) {
-                if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
-                  if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
-                    VLACheck(result,int,n_result);
-                    result[n_result] = id;
-                    n_result++;
+            
+            if(flush_seen) { /* eliminate flush atoms */
+              int cur = cur_start;
+              int id;
+              while( (id = curVLA[cur]) ) {
+                OVreturn_word offset;
+                if(OVreturn_IS_OK( offset=OVOneToOne_GetForward(id2eoo, id))) {
+                  obj = eoo[offset.word].obj;
+                  if(obj==flush) {
+                    int tmp = cur;
+                    while(curVLA[tmp]) { 
+                      curVLA[tmp] = curVLA[tmp+1];
+                      tmp++;
+                    }
                   }
                 }
-                new_start++;
+                cur++;
               }
-              while( (new_start<n_new) && (!newVLA[new_start])) 
-                new_start++;
             }
-            VLACheck(result,int,n_result);
-            result[n_result] = 0;
-            n_result++;
-            break;
-          case 0: /* merge, with cur going first */
-            if(new_start<n_new) {
-              while( (id=newVLA[new_start]) ) {
-                if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
-                  if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
-                    VLACheck(result,int,n_result);
-                    result[n_result] = id;
-                    n_result++;
+
+            if(guide_seen && ! other_seen) { /* eliminate guide atoms */
+              int cur = cur_start;
+              int id;
+              while( (id = curVLA[cur]) ) {
+                OVreturn_word offset;
+                if(OVreturn_IS_OK( offset=OVOneToOne_GetForward(id2eoo, id))) {
+                  obj = eoo[offset.word].obj;
+                  if(obj==guide) {
+                    int tmp = cur;
+                    while(curVLA[tmp]) {
+                      curVLA[tmp] = curVLA[tmp+1];
+                      tmp++;
+                    }
                   }
                 }
-                new_start++;
+                cur++;
               }
-              while( (new_start<n_new) && (!newVLA[new_start])) 
-                new_start++;
             }
-            if(cur_start<n_cur) {
-              while( (id=curVLA[cur_start]) ) {
-                if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
-                  if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
-                    VLACheck(result,int,n_result);
-                    result[n_result] = id;
-                    n_result++;
-                  }
-                }
-                cur_start++;
-              }
-              while( (cur_start<n_cur) && (!curVLA[cur_start])) 
-                cur_start++;
+            
+            while(curVLA[cur_start]) 
+              cur_start++;
+            while( (cur_start<n_cur) && !curVLA[cur_start]) {
+              cur_start++;
             }
-            VLACheck(result,int,n_result);
-            result[n_result] = 0;
-            n_result++;
-            break;
-          case 1: /* insert cur */
-            if(cur_start<n_cur) {
-              while( (id=curVLA[cur_start]) ) {
-                if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
-                  if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
-                    VLACheck(result,int,n_result);
-                    result[n_result] = id;
-                    n_result++;
-                  }
-                }
-                cur_start++;
-              }
-              while( (cur_start<n_cur) && (!curVLA[cur_start])) 
-                cur_start++;
-              VLACheck(result,int,n_result);
-              result[n_result] = 0;
-              n_result++;
-            }
-            break;
           }
         }
       }
-      OVOneToAny_DEL_AUTO_NULL(active);
-      OVOneToAny_DEL_AUTO_NULL(used);
+
+      /* now combine the alignments */
+
+      {
+        OVOneToAny *used = OVOneToAny_New(G->Context->heap);
+        OVOneToAny *active = OVOneToAny_New(G->Context->heap);
+        int cur_start = 0;
+        int new_start = 0;
+        
+        result = VLAlloc(int, ( (n_cur<n_new) ? n_new : n_cur));
+        
+        while( (cur_start<n_cur)||(new_start<n_new) ) {
+          
+          int action; /* -1 = insert new, 0 = merge, 1 = insert cur */
+          
+          /* make sure both lists are queued up on the next identifier */
+          
+          while( (cur_start<n_cur) && !curVLA[cur_start]) 
+            cur_start++;
+          while( (new_start<n_cur) && !newVLA[new_start]) 
+            new_start++;
+          
+          if(newVLA[new_start]) { /* default is to insert new first...*/
+            action = -1;
+          } else {
+            action = 1;
+          }
+          
+          if( (cur_start<n_cur) && (new_start<n_new) &&
+              curVLA[cur_start] && newVLA[new_start]) {
+            /* both lists active */
+            
+            register int c, id;
+            int overlapping = false;
+            
+            OVOneToAny_Reset(active);
+            c = cur_start;
+            while( (id=curVLA[c++]) ) { /* record active atoms */
+              OVOneToAny_SetKey(active,id,1);
+            }
+            
+            c = new_start;
+            while( (id=newVLA[c++]) ) { /* see if there are any matches */
+              if(OVreturn_IS_OK(OVOneToAny_GetKey(active,id))) { 
+                overlapping = true; 
+                break;
+              }
+            }
+
+            if(overlapping) {
+              /* overlapping, so merge */
+              action = 0; 
+
+            } else { 
+              /* non-overlapping, so we need to figure out which goes first... */
+              if(!GroupOrderKnown(eoo,id2eoo,curVLA,newVLA,
+                                  cur_start,new_start,guide,&action)) {
+                register int c,id;
+                OVreturn_word offset;
+                ObjectMolecule *obj, *last_obj = NULL;
+                c = cur_start;
+                while( (id=curVLA[c++]) ) {
+                
+                  if(OVreturn_IS_OK( offset=OVOneToOne_GetForward(id2eoo, id)) ) {
+                    obj = eoo[offset.word].obj;
+                    if(obj != last_obj) {
+                      if(GroupOrderKnown(eoo,id2eoo,curVLA,newVLA,
+                                         cur_start,new_start,obj,&action))
+                        break;
+                      else
+                        last_obj = obj;
+                    }
+                  }
+                }
+
+                /* if order isn't set by now, then it doesn't matter...
+                   so group new will go in first */
+              }
+            }
+          }
+
+          /* check assumptions */
+
+          if((action<1)&&!(new_start<n_new))
+            action=1;
+          else if((action>(-1))&&!(cur_start<n_cur))
+            action=-1;
+          
+          /* take action */
+
+          {
+            register int id;
+
+            switch(action) {
+            case -1: /* insert new */
+              if(new_start<n_new) {
+                while( (id=newVLA[new_start]) ) {
+                  if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
+                    if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
+                      VLACheck(result,int,n_result);
+                      result[n_result] = id;
+                      n_result++;
+                    }
+                  }
+                  new_start++;
+                }
+                while( (new_start<n_new) && (!newVLA[new_start])) 
+                  new_start++;
+              }
+              VLACheck(result,int,n_result);
+              result[n_result] = 0;
+              n_result++;
+              break;
+            case 0: /* merge, with cur going first */
+              if(new_start<n_new) {
+                while( (id=newVLA[new_start]) ) {
+                  if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
+                    if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
+                      VLACheck(result,int,n_result);
+                      result[n_result] = id;
+                      n_result++;
+                    }
+                  }
+                  new_start++;
+                }
+                while( (new_start<n_new) && (!newVLA[new_start])) 
+                  new_start++;
+              }
+              if(cur_start<n_cur) {
+                while( (id=curVLA[cur_start]) ) {
+                  if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
+                    if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
+                      VLACheck(result,int,n_result);
+                      result[n_result] = id;
+                      n_result++;
+                    }
+                  }
+                  cur_start++;
+                }
+                while( (cur_start<n_cur) && (!curVLA[cur_start])) 
+                  cur_start++;
+              }
+              VLACheck(result,int,n_result);
+              result[n_result] = 0;
+              n_result++;
+              break;
+            case 1: /* insert cur */
+              if(cur_start<n_cur) {
+                while( (id=curVLA[cur_start]) ) {
+                  if(OVOneToAny_GetKey(used,id).status == OVstatus_NOT_FOUND) {
+                    if(OVreturn_IS_OK(OVOneToAny_SetKey(used,id,1))) {
+                      VLACheck(result,int,n_result);
+                      result[n_result] = id;
+                      n_result++;
+                    }
+                  }
+                  cur_start++;
+                }
+                while( (cur_start<n_cur) && (!curVLA[cur_start])) 
+                  cur_start++;
+                VLACheck(result,int,n_result);
+                result[n_result] = 0;
+                n_result++;
+              }
+              break;
+            }
+          }
+        }
+        OVOneToAny_DEL_AUTO_NULL(active);
+        OVOneToAny_DEL_AUTO_NULL(used);
+      }
     }
     OVOneToOne_DEL_AUTO_NULL(id2eoo);
     VLAFreeP(eoo);
@@ -1080,7 +1174,8 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals *G,
                                        int *align_vla,
                                        int state, 
                                        int merge,
-                                       ObjectMolecule *guide)
+                                       ObjectMolecule *guide,
+                                       ObjectMolecule *flush)
 {
   ObjectAlignment *I = NULL;
   
@@ -1108,7 +1203,7 @@ ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals *G,
     }
     if(align_vla) {
       if(merge && oas->alignVLA) {
-        int *new_vla = AlignmentMerge(G, oas->alignVLA, align_vla, guide);
+        int *new_vla = AlignmentMerge(G, oas->alignVLA, align_vla, guide,flush);
         if(new_vla) {
           VLAFreeP(oas->alignVLA);
           oas->alignVLA = new_vla;
