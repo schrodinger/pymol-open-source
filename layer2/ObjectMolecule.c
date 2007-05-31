@@ -9693,8 +9693,7 @@ int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,in
   dim[1]=max_type+1;
   dim[2]=max_bond+1;
   
-  result=(int***)UtilArrayMalloc((unsigned int*)dim,3,sizeof(int));
-  UtilZeroMem(**result,dim[0]*dim[1]*dim[2]*sizeof(int));
+  result=(int***)UtilArrayCalloc((unsigned int*)dim,3,sizeof(int));
   
   ObjectMoleculeInitBondPath(I,&bp);
   for(a=0;a<I->NAtom;a++) {

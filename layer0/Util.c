@@ -232,7 +232,7 @@ void UtilExpandArrayElements(void *src,void *dst,int n_entries,int old_rec_size,
   }
 }
 
-void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size)
+void *UtilArrayCalloc(unsigned int *dim,int ndim,unsigned int atom_size)
 {
   unsigned int size,sum,product;
   unsigned int chunk;
@@ -241,46 +241,39 @@ void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size)
   char *q;
   
   sum = 0;
-  for(a=0;a<(ndim-1);a++)
-	 {
-	 product = dim[0];
-	 for(b=1;b<=a;b++)
-		product = product * dim[b];
-	 sum = sum + product * sizeof(void*);
-	 }
+  for(a=0;a<(ndim-1);a++) {
+    product = dim[0];
+    for(b=1;b<=a;b++)
+      product = product * dim[b];
+    sum = sum + product * sizeof(void*);
+  }
   size = atom_size;
   for(a=0;a<ndim;a++)
 	 size = size * dim[a];
   size = size + sum;
   result = (void*)mcalloc(size*2,1); /* what is this *2 for ??? */
 
-  if(result)
-	 {
-		chunk = 1;
-		p = result;
-		for(c=0;c<(ndim-1);c++)
-		  {
-			 if(c<(ndim-2))
-            {
-				chunk = dim[c+1] * sizeof(void*);
-           }
-			 else
-            {
-				chunk = dim[c+1] * atom_size;
-            }
-
-			 product = dim[0];
-			 for(b=1;b<=c;b++)
-				product = product * dim[b];
-          q = ((char*)p) + product * sizeof(void*); 
-			 for(a=0;a<(signed)product;a++)
-				{
-              *p = q;
-				  p++;
-				  q+=chunk;
-				}
-		  }
-	 }
+  if(result) {
+    chunk = 1;
+    p = result;
+    for(c=0;c<(ndim-1);c++) {
+      if(c<(ndim-2)) {
+        chunk = dim[c+1] * sizeof(void*);
+      } else {
+        chunk = dim[c+1] * atom_size;
+      }
+      
+      product = dim[0];
+      for(b=1;b<=c;b++)
+        product = product * dim[b];
+      q = ((char*)p) + product * sizeof(void*); 
+      for(a=0;a<(signed)product;a++) {
+        *p = q;
+        p++;
+        q+=chunk;
+      }
+    }
+  }
   return(result);
 }
 

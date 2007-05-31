@@ -5736,10 +5736,11 @@ int ExecutivePhiPsi(PyMOLGlobals *G,char *s1,ObjectMolecule ***objVLA,int **iVLA
 }
 
 
-int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,
+int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap, float extend,
                    int max_gap, int max_skip, float cutoff,int cycles,int quiet,char *oname,
                    int state1,int state2, ExecutiveRMSInfo *rms_info,int transform,int reset,
-                   float radius, float scale, float base, float coord_wt, float expect)
+                   float seq_wt,float radius, float scale, float base, float coord_wt,
+                   float expect, int window)
 {
   int sele1=SelectorIndexByName(G,s1);
   int sele2=SelectorIndexByName(G,s2);
@@ -5748,36 +5749,37 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,fl
   int na,nb;
   int c;
   int ok=true;
-  int use_sequence = (mat_file && mat_file[0]);
+  int use_sequence = (mat_file && mat_file[0] && (seq_wt!=0.0F));
+  int use_structure = (seq_wt>=0.0F);
   CMatch *match = NULL;
 
+  if(!use_structure) window = 0;
+
   if((sele1>=0)&&(sele2>=0)&&rms_info) {
-    if(use_sequence) {
-      vla1=SelectorGetResidueVLA(G,sele1,false);
-      vla2=SelectorGetResidueVLA(G,sele2,false);
-    } else {
-      vla1=SelectorGetResidueVLA(G,sele1,true);
-      vla2=SelectorGetResidueVLA(G,sele2,true);
-    }
+    vla1=SelectorGetResidueVLA(G,sele1,use_structure);
+    vla2=SelectorGetResidueVLA(G,sele2,use_structure);
     if(vla1&&vla2) {
       na = VLAGetSize(vla1)/3;
       nb = VLAGetSize(vla2)/3;
       if(na&&nb) {
-        match = MatchNew(G,na,nb,!use_sequence);
+        match = MatchNew(G,na,nb,window);
         if(match) {
           if(use_sequence) {
             if (ok) ok = MatchResidueToCode(match,vla1,na);
             if (ok) ok = MatchResidueToCode(match,vla2,nb);
             if (ok) ok = MatchMatrixFromFile(match,mat_file,quiet);
             if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb,quiet);
-            if(ok) ok = MatchAlign(match,gap,extend,max_gap,max_skip,quiet);
-          } else {
-            if (ok) ok = SelectorResidueVLAsTo3DMatchScores(G,match,vla1,na,state1,sele1,
-                                                            vla2,nb,state2,sele2,radius,scale,base,
-                                                            coord_wt,expect);
-            if(ok) ok = MatchAlignWithDistMats(match,gap,extend,max_gap,max_skip,quiet);
           }
-
+          if(use_structure) {
+            if (ok) ok = SelectorResidueVLAsTo3DMatchScores(G,match,
+                                                            vla1,na,state1,
+                                                            vla2,nb,state2,seq_wt,
+                                                            radius,scale,base,
+                                                            coord_wt,expect);
+          }
+          if(ok) ok = MatchAlign(match,gap,extend,max_gap,
+                                 max_skip,quiet,window);
+          printf("ok %d\n",ok);
           if(ok) {
             rms_info->raw_alignment_score = match->score;
             rms_info->n_residues_aligned = match->n_pair;

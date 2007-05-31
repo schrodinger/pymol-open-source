@@ -24,38 +24,32 @@ if __name__=='pymol.fitting':
     from cmd import _cmd,lock,unlock,Shortcut, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
-    def super(source, target, cutoff=1.9, cycles=6,
-#              gap=-15.0, extend=-0.5, max_gap=-1, object=None,
-#              gap=-1.0, extend=-0.6, max_gap=-1, object=None,
-#              gap=-1.5, extend=-0.7, max_gap=-1, object=None,
-              gap=-1.5, extend=-0.8, max_gap=-1, object=None,                            
-              source_state=0, target_state=0,
+    def super(mobile, target, cutoff=2.0, cycles=6,
+              gap=-1.5, extend=-0.7, max_gap=50, object=None,                            
+              matrix="BLOSUM62", mobile_state=0, target_state=0, 
               quiet=1, max_skip=0, transform=1, reset=0,
-#              radius=11.0, scale=2.5, base=0.64,
-#              radius=12.0, scale=6.5, base=0.64,
-#              radius=12.0, scale=6.5, base=0.64,
-              radius=12.0, scale=8, base=0.64,                            
-              coord=0.0, expect=6.0, _self=cmd):
+              seq=0.0, radius=12.0, scale=17, base=0.65,
+              coord=0.0, expect=6.0, window=3, _self=cmd):
         
         '''
 DESCRIPTION
 
     NOTE: This feature is experimental and unsupported.
     
-    "super" performs a conform-based residue alignment followed by a
+    "super" performs a residue-based alignment followed by a
     structural superposition, and then carries out zero or more cycles
-    of refinement in order to reject structural outliers found during
-    the fit.
+    of refinement in order to reject structural outliers.
 
 USAGE 
 
-    super source, target [, object=alignment-object-name ]
+    super mobile, target [, object=alignment-object-name ]
 
 NOTES
 
-    If object is specified, then super will create an object which
-    indicates paired atoms and supports visualization of the alignment
-    in the sequence viewer.
+    By adjusting various parameters, the nature of the initial
+    alignment can be modified to include or exclude various factors
+    including sequence similarity, main chain path, secondary
+    structure, and tertiary structure.
 
 EXAMPLE
 
@@ -64,21 +58,31 @@ EXAMPLE
 SEE ALSO
 
     pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur
-        '''
+    '''
         r = DEFAULT_ERROR
-        source = selector.process(source)
+        mobile = selector.process(mobile)
         target = selector.process(target)
         if object==None: object=''
+        matrix = str(matrix)
+        if string.lower(matrix)=='none':
+            matrix=''
+        if len(matrix):
+            mfile = cmd.exp_path("$PYMOL_PATH/data/pymol/matrices/"+matrix)
+        else:
+            mfile = ''        
         # delete existing alignment object (if asked to reset it)
         try:
             _self.lock(_self)
-            r = _cmd.align(_self._COb,source,"("+target+")",float(cutoff),
-                           int(cycles),float(gap),
-                           float(extend),int(max_gap),str(object),'',
-                           int(source_state)-1,int(target_state)-1,
-                           int(quiet),int(max_skip),int(transform),int(reset),
+            
+            r = _cmd.align(_self._COb,mobile,"("+target+")",float(cutoff),
+                           int(cycles),float(gap),float(extend),int(max_gap),
+                           str(object),str(mfile),
+                           int(mobile_state)-1,int(target_state)-1,
+                           int(quiet),int(max_skip),int(transform),
+                           int(reset),float(seq),
                            float(radius),float(scale),float(base),
-                           float(coord),float(expect))
+                           float(coord),float(expect),int(window))
+            
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
@@ -87,7 +91,7 @@ SEE ALSO
     def align(source, target, cutoff=2.0, cycles=2, gap=-10.0,
               extend=-0.5, max_gap=-1, object=None,
               matrix="BLOSUM62", source_state=0, target_state=0,
-              quiet=1, max_skip=0, transform=1,reset=0,_self=cmd):
+              quiet=1, max_skip=0, transform=1,reset=0, _self=cmd):
         
         '''
 DESCRIPTION
@@ -128,11 +132,12 @@ SEE ALSO
         # delete existing alignment object (if asked to reset it)
         try:
             _self.lock(_self)
-            r = _cmd.align(_self._COb,source,"("+target+")",float(cutoff),int(cycles),float(gap),
+            r = _cmd.align(_self._COb,source,"("+target+")",
+                           float(cutoff),int(cycles),float(gap),
                            float(extend),int(max_gap),str(object),str(mfile),
                            int(source_state)-1,int(target_state)-1,
                            int(quiet),int(max_skip),int(transform),int(reset),
-                           0.0, 0.0, 0.0, 0.0, 0.0)
+                           -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         

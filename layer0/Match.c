@@ -42,24 +42,24 @@ CMatch *MatchNew(PyMOLGlobals *G,unsigned int na,unsigned int nb,int dist_mats)
   dim[1]=nb;
   I->G=G;
   if(na&&nb) {
-    I->mat = (float**)UtilArrayMalloc(dim,2,sizeof(float));
+    I->mat = (float**)UtilArrayCalloc(dim,2,sizeof(float));
   }
 
   if(dist_mats && na) {
-    dim[0] = na+2;
-    dim[1] = na+2;
-    I->da = (float**)UtilArrayMalloc(dim,2,sizeof(float));
+    dim[0] = na+1;
+    dim[1] = na+1;
+    I->da = (float**)UtilArrayCalloc(dim,2,sizeof(float));
   }
   if(dist_mats && nb) {
-    dim[0] = nb+2;
-    dim[1] = nb+2;
-    I->db = (float**)UtilArrayMalloc(dim,2,sizeof(float));
+    dim[0] = nb+1;
+    dim[1] = nb+1;
+    I->db = (float**)UtilArrayCalloc(dim,2,sizeof(float));
   }
 
   /* scoring matrix is always 128^2 */
   dim[0]=128;
   dim[1]=128;
-  I->smat = (float**)UtilArrayMalloc(dim,2,sizeof(float));
+  I->smat = (float**)UtilArrayCalloc(dim,2,sizeof(float));
 
   if(!(I->mat && I->smat && ((!dist_mats)||(I->da&&I->db)))) {
     MatchFree(I);
@@ -136,10 +136,17 @@ int MatchResidueToCode(CMatch *I,int *vla,int n)
         break;
       }
     if(!found) {
-      PRINTFB(G,FB_Match,FB_Warnings)
-        " Match-Warning: unknown residue type %c%c%c (using X).\n",
-        0xFF&(*trg>>16),0xFF&(*trg>>8),0xFF&*trg
-        ENDFB(G);
+      if(*trg!=0x484f48) { /* HOH */
+        char st[4];
+        st[0] = 0xFF&(*trg>>16);
+        st[1] = 0xFF&(*trg>>8);
+        st[2] = 0xFF&*trg;
+        st[3] = 0;
+        PRINTFB(G,FB_Match,FB_Warnings)
+          " Match-Warning: unknown residue type '%s' (using X).\n",
+          st
+          ENDFB(G);
+      }
       *trg='X';
     }
   }
@@ -332,40 +339,41 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
   return(ok);
 }
 
-int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
-                           int max_gap,int max_skip,int quiet)
+int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
+               int max_gap,int max_skip,int quiet,int window)
 {
   PyMOLGlobals *G=I->G;
+  register int a,b,f,g;
+  register int nf,ng;
+  register int sf,sg;
+  register float **score;
+  register float **da,**db;
+  register int na=I->na,nb=I->nb;
   unsigned int dim[2];
-  int a,b,f,g;
-  int nf,ng;
-  int sf,sg;
-  float **score;
-  float **da,**db;
-  int2 **point;
+  register int2 **point;
   float mxv;
   int mxa,mxb;
   float tst=0.0;
-  int gap=0;
+  register int gap=0;
   int *p;
   int cnt;
   int ok=true;
   const float MIN_SCORE = 0.0F;
-  nf = I->na+2;
-  ng = I->nb+2;
+  nf = na+1;
+  ng = nb+1;
   da = I->da;
   db = I->db;
   if(!quiet) {
     PRINTFB(G,FB_Match,FB_Actions)
-      " MatchAlign: aligning residues (%d vs %d)...\n",I->na,I->nb
+      " MatchAlign: aligning residues (%d vs %d)...\n",na,nb
       ENDFB(G);
   }
 
   dim[0]=nf;
   dim[1]=ng;
   VLAFreeP(I->pair);
-  score = (float**)UtilArrayMalloc(dim,2,sizeof(float));
-  point = (int2**)UtilArrayMalloc(dim,2,sizeof(int2));
+  score = (float**)UtilArrayCalloc(dim,2,sizeof(float));
+  point = (int2**)UtilArrayCalloc(dim,2,sizeof(int2));
   if(score&&point) {
 
     /* initialize the scoring matrix */
@@ -379,15 +387,15 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
     /* now start walking backwards up the alignment */
     {
       int second_pass = false;
-      for(b=I->nb-1;b>=0;b--) {
-        for(a=I->na-1;a>=0;a--) {
+      for(b=nb-1;b>=0;b--) {
+        for(a=na-1;a>=0;a--) {
           /* find the maximum scoring cell accessible from this position, 
            * while taking gap penalties into account */
          
           mxv = MIN_SCORE;
           mxa=-1;
           mxb=-1;
-         
+
           /* search for asymmetric insertions and deletions */
           f = a+1;
           if((max_gap>=0)&&(second_pass)) {
@@ -401,9 +409,24 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
           }
           for(g=b+1;g<sg;g++) {
             tst = score[f][g];
-            if(!((f==I->na)||(g==I->nb))) {
+
+            if(window) {
+              register int aa=a,bb=b,ff=f,gg=g, cc;
+              for(cc=0;cc<window;cc++) {
+                if((ff>=0)&&(gg>=0)&&(ff<na)&&(gg<nb)) {
+                  tst -= fabs(da[a][ff]-db[b][gg]);
+                  aa = ff;
+                  bb = gg;
+                  ff = point[aa][bb][0];
+                  gg = point[aa][bb][1];
+                } else 
+                  break;
+              }
+            }
+            
+            if(!((f==na)||(g==nb))) {
               gap = g-(b+1);
-              if(gap) tst+= gap_penalty + ext_penalty*(gap-1) - fabs(da[a][f]-db[b][g]);
+              if(gap) tst+= gap_penalty + ext_penalty*(gap-1);
             }
             if(tst>mxv) {
               mxv = tst;
@@ -415,9 +438,25 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
 
           for(f=a+1;f<sf;f++) {
             tst = score[f][g];
-            if(!((f==I->na)||(g==I->nb))) {
+
+            if(window) { 
+              register int aa=a,bb=b,ff=f,gg=g, cc;
+              for(cc=0;cc<window;cc++) {
+                if((ff>=0)&&(gg>=0)&&(ff<na)&&(gg<nb)) {
+                  tst -= fabs(da[a][ff]-db[b][gg]);
+                  aa = ff;
+                  bb = gg;
+                  ff = point[aa][bb][0];
+                  gg = point[aa][bb][1];
+                } else 
+                  break;
+              }
+            }
+
+
+            if(!((f==na)||(g==nb))) {
               gap=(f-(a+1));
-              if(gap) tst+= gap_penalty + ext_penalty*(gap-1) - fabs(da[a][f]-db[b][g]);
+              if(gap) tst+= gap_penalty + ext_penalty*(gap-1);
             }
             if(tst>mxv) {
               mxv = tst;
@@ -437,10 +476,25 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
             for(f=a+1;f<sf;f++) {
               for(g=b+1;g<sg;g++) {
                 tst = score[f][g];
+
+                if(window) { 
+                  register int aa=a,bb=b,ff=f,gg=g, cc;
+                  for(cc=0;cc<window;cc++) {
+                    if((ff>=0)&&(gg>=0)&&(ff<na)&&(gg<nb)) {
+                      tst -= fabs(da[a][ff]-db[b][gg]);
+                      aa = ff;
+                      bb = gg;
+                      ff = point[aa][bb][0];
+                      gg = point[aa][bb][1];
+                    } else 
+                      break;
+                  }
+                }
+
                 /* only penalize if we are not at the end */
-                if(!((f==I->na)||(g==I->nb))) {
+                if(!((f==na)||(g==nb))) {
                   gap = ((f-(a+1))+(g-(b+1)));
-                  if(gap>1) tst+= 2*gap_penalty + ext_penalty*(gap-2) - fabs(da[a][f]-db[b][g]);
+                  if(gap>1) tst+= 2*gap_penalty + ext_penalty*(gap-2);
                 }
               }
               if(tst>mxv) {
@@ -465,8 +519,8 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
     }
 
     if(Feedback(G,FB_Match,FB_Debugging)) {
-      for(b=0;b<I->nb;b++) {
-        for(a=0;a<I->na;a++) {
+      for(b=0;b<nb;b++) {
+        for(a=0;a<na;a++) {
           printf("%4.1f(%2d,%2d)",score[a][b],point[a][b][0],point[a][b][1]);
         }
         printf("\n");
@@ -478,8 +532,8 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
     mxv = MIN_SCORE;
     mxa=0;
     mxb=0;
-    for(b=0;b<I->nb;b++) {
-      for(a=0;a<I->na;a++) {
+    for(b=0;b<nb;b++) {
+      for(a=0;a<na;a++) {
         tst = score[a][b];
         if(tst>mxv) {
           mxv = tst;
@@ -488,12 +542,12 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
         }
       }
     }
-    I->pair = VLAlloc(int,2*(I->na>I->nb?I->na:I->nb));
+    I->pair = VLAlloc(int,2*(na>nb?na:nb));
     p=I->pair;
     a = mxa;
     b = mxb;
     cnt=0;
-    while((a>=0)&&(b>=0)&&(a<I->na)&&(b<I->nb)) {
+    while((a>=0)&&(b>=0)&&(a<na)&&(b<nb)) {
       *(p++)=a;
       *(p++)=b;
       f = point[a][b][0];
@@ -519,38 +573,40 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
   return(ok);
 }
 
+#if 0
 int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
                int max_gap,int max_skip,int quiet)
 {
   PyMOLGlobals *G=I->G;
   unsigned int dim[2];
-  int a,b,f,g;
-  int nf,ng;
-  int sf,sg;
-  float **score;
-  int2 **point;
+  register int a,b,f,g;
+  register int nf,ng;
+  register int sf,sg;
+  register float **score;
+  register int na=I->na,nb=I->nb;
+  register int2 **point;
   float mxv;
   int mxa,mxb;
   float tst=0.0;
-  int gap=0;
+  register int gap=0;
   int *p;
   int cnt;
   int ok=true;
   const float MIN_SCORE = 0.0F;
-  nf = I->na+2;
-  ng = I->nb+2;
+  nf = na+1;
+  ng = nb+1;
 
   if(!quiet) {
     PRINTFB(G,FB_Match,FB_Actions)
-      " MatchAlign: aligning residues (%d vs %d)...\n",I->na,I->nb
+      " MatchAlign: aligning residues (%d vs %d)...\n",na,nb
       ENDFB(G);
   }
 
   dim[0]=nf;
   dim[1]=ng;
   VLAFreeP(I->pair);
-  score = (float**)UtilArrayMalloc(dim,2,sizeof(float));
-  point = (int2**)UtilArrayMalloc(dim,2,sizeof(int2));
+  score = (float**)UtilArrayCalloc(dim,2,sizeof(float));
+  point = (int2**)UtilArrayCalloc(dim,2,sizeof(int2));
   if(score&&point) {
 
     /* initialize the scoring matrix */
@@ -565,8 +621,8 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
     
     {
       int second_pass = false;
-      for(b=I->nb-1;b>=0;b--) {
-        for(a=I->na-1;a>=0;a--) {
+      for(b=nb-1;b>=0;b--) {
+        for(a=na-1;a>=0;a--) {
          
           /* find the maximum scoring cell accessible from this position, 
            * while taking gap penalties into account */
@@ -588,7 +644,7 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
           }
           for(g=b+1;g<sg;g++) {
             tst = score[f][g];
-            if(!((f==I->na)||(g==I->nb))) {
+            if(!((f==na)||(g==nb))) {
               gap = g-(b+1);
               if(gap) tst+=gap_penalty+ext_penalty*(gap-1);
             }
@@ -602,7 +658,7 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
 
           for(f=a+1;f<sf;f++) {
             tst = score[f][g];
-            if(!((f==I->na)||(g==I->nb))) {
+            if(!((f==na)||(g==nb))) {
               gap=(f-(a+1));
               if(gap) tst+=gap_penalty+ext_penalty*(gap-1);
             }
@@ -625,9 +681,10 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
               for(g=b+1;g<sg;g++) {
                 tst = score[f][g];
                 /* only penalize if we are not at the end */
-                if(!((f==I->na)||(g==I->nb)))
+                if(!((f==na)||(g==nb))) {
                   gap = ((f-(a+1))+(g-(b+1)));
-                if(gap>1) tst+=2*gap_penalty+ext_penalty*(gap-2);
+                  if(gap>1) tst+=2*gap_penalty+ext_penalty*(gap-2);
+                }
               }
               if(tst>mxv) {
                 mxv = tst;
@@ -651,8 +708,8 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
     }
 
     if(Feedback(G,FB_Match,FB_Debugging)) {
-      for(b=0;b<I->nb;b++) {
-        for(a=0;a<I->na;a++) {
+      for(b=0;b<nb;b++) {
+        for(a=0;a<na;a++) {
           printf("%4.1f(%2d,%2d)",score[a][b],point[a][b][0],point[a][b][1]);
         }
         printf("\n");
@@ -664,8 +721,8 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
     mxv = MIN_SCORE;
     mxa=0;
     mxb=0;
-    for(b=0;b<I->nb;b++) {
-      for(a=0;a<I->na;a++) {
+    for(b=0;b<nb;b++) {
+      for(a=0;a<na;a++) {
         tst = score[a][b];
         if(tst>mxv) {
           mxv = tst;
@@ -674,12 +731,12 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
         }
       }
     }
-    I->pair = VLAlloc(int,2*(I->na>I->nb?I->na:I->nb));
+    I->pair = VLAlloc(int,2*(na>nb?na:nb));
     p=I->pair;
     a = mxa;
     b = mxb;
     cnt=0;
-    while((a>=0)&&(b>=0)&&(a<I->na)&&(b<I->nb)) {
+    while((a>=0)&&(b>=0)&&(a<na)&&(b<nb)) {
       *(p++)=a;
       *(p++)=b;
       f = point[a][b][0];
@@ -704,6 +761,7 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
   }
   return(ok);
 }
+#endif
 
 void MatchFree(CMatch *I)
 {

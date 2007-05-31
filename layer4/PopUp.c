@@ -153,7 +153,7 @@ Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
   
   dim[0]=I->NLine+1;
   dim[1]=mx+1;
-  I->Text = (char**)UtilArrayMalloc((unsigned int*)dim,2,1);
+  I->Text = (char**)UtilArrayCalloc((unsigned int*)dim,2,1);
 
   mx=1;
   for(a=0;a<I->NLine;a++) {
@@ -165,7 +165,7 @@ Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
   }
   dim[0]=I->NLine+1;
   dim[1]=mx+1;
-  I->Command = (char**)UtilArrayMalloc((unsigned int*)dim,2,1);
+  I->Command = (char**)UtilArrayCalloc((unsigned int*)dim,2,1);
 
   I->Code = Alloc(int,I->NLine+1);
   I->Sub = Calloc(PyObject*,I->NLine+1);

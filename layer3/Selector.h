@@ -149,10 +149,14 @@ ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals *G,int sele,in
 ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals *G,int sele);
 MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals *G,int sele,int state,float cutoff,float **coord_vla);
 int SelectorNameIsKeyword(PyMOLGlobals *G, char *name);
+
+
 int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
-                                       int *vla1,int n1,int state1,int sele1,
-                                       int *vla2,int n2,int state2,int sele2,
-                                       float radius,float scale,float base,float coord_wt,
+                                       int *vla1,int n1,int state1,
+                                       int *vla2,int n2,int state2,
+                                       float seq_wt,
+                                       float radius,float scale,
+                                       float base,float coord_wt,
                                        float rms_exp);
 
 /* reserve special meaning for tags 1-15 and note that 0 is disallowed */

@@ -569,9 +569,65 @@ static WordKeyValue AtOper[] =
 
 #define cINTER_ENTRIES 11
 
+#if 0
+int SelectorResidueVLAGetDistMat(PyMOLGlobals *G, int *vla, 
+                                 int n, int state,float *dist_mat, float scale)
+{
+  register int a,b;
+  register ObjectMolecule *obj;
+  register CoordSet *cs;
+  float *coord = Alloc(float,3*n);
+  if(scale!=0.0F)
+    scale = 1.0F/scale;
+  if(coord) {
+    for(a=0;a<n;a++) {
+      register int at_ca1;
+      float *vv_ca = coord + a*3;
+    
+      obj = I->Obj[vla[0]];
+      at_ca1 = vla[1];
+    
+      if(state<obj->NCSet) 
+        cs=obj->CSet[state];
+      else
+        cs=NULL;
+      if(cs) {
+        register int idx_ca1 = -1;
+        if(obj->DiscreteFlag) {
+          if(cs==obj->DiscreteCSet[at_ca1])
+            idx_ca1=obj->DiscreteAtmToIdx[at_ca1];
+          else
+            idx_ca1=-1;
+        } else 
+          idx_ca1=cs->AtmToIdx[at_ca1];
+      
+        if(idx_ca1>=0) {
+          float *v_ca1 = cs->Coord + 3*idx_ca1;
+          copy3f(v_ca1,vv_ca);
+        }
+      }
+    }
+    {
+      for(a=0;a<n;a++) { /* optimize this later */
+        float *vv_ca = coord + a*3;
+        for(b=0;b<n;b++) {
+          float *vv_cb = coord + b*3;          
+          float diff = scale* diff3f(vv_ca,vv_cb);
+          dist_mat[a][b] = diff;
+          dist_mat[b][a] = diff;
+        }
+      }
+    }
+  }
+  FreeP(coord);
+  return 1;
+}
+#endif
+
 int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
-                                       int *vla1,int n1,int state1,int sele1,
-                                       int *vla2,int n2,int state2,int sele2,
+                                       int *vla1,int n1,int state1,
+                                       int *vla2,int n2,int state2,
+                                       float seq_wt,
                                        float radius, float scale, float base,
                                        float coord_wt, float rms_exp)
 {
@@ -594,19 +650,16 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
       float *inter;
       int state;
       int n;
-      int sele;
       if(!pass) {
         vla = vla1;
         state = state1;
         inter = inter1;
-        sele = sele1;
         n = n1;
         dist_mat = match->da;
       } else {
         vla = vla2;
         state = state2;
         inter = inter2;
-        sele = sele2;
         n = n2;
         dist_mat = match->db;
       }
@@ -758,7 +811,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
         vla+=3;
         inter+=cINTER_ENTRIES;
       }
-      {
+      if(dist_mat) {
         for(a=0;a<n;a++) { /* optimize this later */
           float *vv_ca = v_ca + a*3;
           for(b=0;b<n;b++) {
@@ -824,36 +877,44 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
     {
       const float _0F = 0.0F;
 
-      for(a=0;a<n1;a++) {
-        float *i1 = inter1+ cINTER_ENTRIES*a;
-        for(b=0;b<n2;b++) {
-          float *i2 = inter2 + cINTER_ENTRIES*b;
-          float sm[cINTER_ENTRIES], comp1, comp2, comp3 = 1.0F;
-          float score;
-          int c;
-          for(c=0;c<(cINTER_ENTRIES-1);c+=2) {
-            if( ((i1[c] == _0F) && (i1[c+1]== _0F)) ||
-                ((i2[c] == _0F) && (i2[c+1]== _0F))) { /* handle glycine case */
-              sm[c] = 1.0F;
-              sm[c+1] = 1.0F;
-            } else {
-              sm[c] = i1[c]+i2[c];
-              sm[c+1] = i1[c+1]+i2[c+1];
+      if((scale!=0.0F)||(seq_wt!=0.0F)) {
+        for(a=0;a<n1;a++) {
+          float *i1 = inter1+ cINTER_ENTRIES*a;
+          for(b=0;b<n2;b++) {
+            float *i2 = inter2 + cINTER_ENTRIES*b;
+            float sm[cINTER_ENTRIES], comp1, comp2, comp3 = 1.0F;
+            float score;
+            int c;
+            for(c=0;c<(cINTER_ENTRIES-1);c+=2) {
+              if( ((i1[c] == _0F) && (i1[c+1]== _0F)) ||
+                  ((i2[c] == _0F) && (i2[c+1]== _0F))) { /* handle glycine case */
+                sm[c] = 1.0F;
+                sm[c+1] = 1.0F;
+              } else {
+                sm[c] = i1[c]+i2[c];
+                sm[c+1] = i1[c+1]+i2[c+1];
+              }
             }
+            comp1 = 
+              ((sqrt(sm[0]*sm[0] + sm[1]*sm[1]) + 
+                sqrt(sm[2]*sm[2] + sm[3]*sm[3])) * 0.25);
+            comp2 = 
+              ((sqrt(sm[4]*sm[4] + sm[5]*sm[5]) +
+                sqrt(sm[6]*sm[6] + sm[7]*sm[7])) * 0.25);
+            score = scale*(comp1*comp2 - base);
+            if(coord_wt!=0.0) {
+              float diff = diff3f(i1+8,i2+8);
+              comp3 = -log(diff/rms_exp);
+              score = (1-coord_wt)*score + coord_wt*comp3*scale;
+            }
+            match->mat[a][b] = seq_wt*match->mat[a][b] + score;
           }
-          comp1 = 
-            ((sqrt(sm[0]*sm[0] + sm[1]*sm[1]) + 
-              sqrt(sm[2]*sm[2] + sm[3]*sm[3])) * 0.25);
-          comp2 = 
-            ((sqrt(sm[4]*sm[4] + sm[5]*sm[5]) +
-              sqrt(sm[6]*sm[6] + sm[7]*sm[7])) * 0.25);
-          score = scale*(comp1*comp2 - base);
-          if(coord_wt!=0.0) {
-            float diff = diff3f(i1+8,i2+8);
-            comp3 = -log(diff/rms_exp);
-            score = (1-coord_wt)*score + coord_wt*comp3*scale;
+        }
+      } else {
+        for(a=0;a<n1;a++) {
+          for(b=0;b<n2;b++) {
+            match->mat[a][b] = rms_exp; /* window-only mode */
           }
-          match->mat[a][b] = score;
         }
       }
     }
