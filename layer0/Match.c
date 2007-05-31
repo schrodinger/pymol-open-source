@@ -33,7 +33,6 @@ typedef int int2[2];
 CMatch *MatchNew(PyMOLGlobals *G,unsigned int na,unsigned int nb,int dist_mats)
 {
   unsigned int dim[2];
-  int a,b;
   OOCalloc(G,CMatch);
 
   I->na=na;
@@ -47,13 +46,13 @@ CMatch *MatchNew(PyMOLGlobals *G,unsigned int na,unsigned int nb,int dist_mats)
   }
 
   if(dist_mats && na) {
-    dim[0] = na;
-    dim[1] = na;
+    dim[0] = na+2;
+    dim[1] = na+2;
     I->da = (float**)UtilArrayMalloc(dim,2,sizeof(float));
   }
   if(dist_mats && nb) {
-    dim[0] = nb;
-    dim[1] = nb;
+    dim[0] = nb+2;
+    dim[1] = nb+2;
     I->db = (float**)UtilArrayMalloc(dim,2,sizeof(float));
   }
 
@@ -61,9 +60,11 @@ CMatch *MatchNew(PyMOLGlobals *G,unsigned int na,unsigned int nb,int dist_mats)
   dim[0]=128;
   dim[1]=128;
   I->smat = (float**)UtilArrayMalloc(dim,2,sizeof(float));
-  for(a=0;a<128;a++)
-    for(b=0;b<128;b++) 
-      I->smat[a][b]=0.0F;
+
+  if(!(I->mat && I->smat && ((!dist_mats)||(I->da&&I->db)))) {
+    MatchFree(I);
+    I=NULL;
+  }
   return(I);
 }
 
@@ -376,12 +377,10 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
       }
     }
     /* now start walking backwards up the alignment */
-    
     {
       int second_pass = false;
       for(b=I->nb-1;b>=0;b--) {
         for(a=I->na-1;a>=0;a--) {
-         
           /* find the maximum scoring cell accessible from this position, 
            * while taking gap penalties into account */
          
@@ -439,9 +438,10 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
               for(g=b+1;g<sg;g++) {
                 tst = score[f][g];
                 /* only penalize if we are not at the end */
-                if(!((f==I->na)||(g==I->nb)))
+                if(!((f==I->na)||(g==I->nb))) {
                   gap = ((f-(a+1))+(g-(b+1)));
-                if(gap>1) tst+= 2*gap_penalty + ext_penalty*(gap-2) - fabs(da[a][f]-db[b][g]);
+                  if(gap>1) tst+= 2*gap_penalty + ext_penalty*(gap-2) - fabs(da[a][f]-db[b][g]);
+                }
               }
               if(tst>mxv) {
                 mxv = tst;

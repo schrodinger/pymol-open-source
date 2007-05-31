@@ -581,280 +581,280 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
   float *inter1 = Calloc(float,cINTER_ENTRIES*n1);
   float *inter2 = Calloc(float,cINTER_ENTRIES*n2);
   float *v_ca = Calloc(float,3*n_max);
-  int pass;
+  if(inter1&&inter2&&v_ca) {
+    int pass;
 
-  ObjectMolecule *last_obj = NULL;
-  for(pass=0;pass<2;pass++) {
-    register ObjectMolecule *obj;
-    register CoordSet *cs;
-    register int *neighbor = NULL;
-    register AtomInfoType *atomInfo = NULL;
-    float **dist_mat;
-    float *inter;
-    int state;
-    int n;
-    int sele;
-    if(!pass) {
-      vla = vla1;
-      state = state1;
-      inter = inter1;
-      sele = sele1;
-      n = n1;
-      dist_mat = match->da;
-    } else {
-      vla = vla2;
-      state = state2;
-      inter = inter2;
-      sele = sele2;
-      n = n2;
-      dist_mat = match->db;
-    }
-
-    if(state<0) state = 0;
-    for(a=0;a<n;a++) {
-      register int at_ca1;
-      float *vv_ca = v_ca + a*3;
-
-      obj = I->Obj[vla[0]];
-      at_ca1 = vla[1];
-      if(obj!=last_obj) {
-        ObjectMoleculeUpdateNeighbors(obj);
-        last_obj = obj;
-        neighbor = obj->Neighbor;          
-        atomInfo = obj->AtomInfo;
+    ObjectMolecule *last_obj = NULL;
+    for(pass=0;pass<2;pass++) {
+      register ObjectMolecule *obj;
+      register CoordSet *cs;
+      register int *neighbor = NULL;
+      register AtomInfoType *atomInfo = NULL;
+      float **dist_mat;
+      float *inter;
+      int state;
+      int n;
+      int sele;
+      if(!pass) {
+        vla = vla1;
+        state = state1;
+        inter = inter1;
+        sele = sele1;
+        n = n1;
+        dist_mat = match->da;
+      } else {
+        vla = vla2;
+        state = state2;
+        inter = inter2;
+        sele = sele2;
+        n = n2;
+        dist_mat = match->db;
       }
 
-      if(state<obj->NCSet) 
-        cs=obj->CSet[state];
-      else
-        cs=NULL;
-      if(cs) {
-        register int idx_ca1 = -1;
-        if(obj->DiscreteFlag) {
-          if(cs==obj->DiscreteCSet[at_ca1])
-            idx_ca1=obj->DiscreteAtmToIdx[at_ca1];
-          else
-            idx_ca1=-1;
-        } else 
-          idx_ca1=cs->AtmToIdx[at_ca1];
+      if(state<0) state = 0;
+      for(a=0;a<n;a++) {
+        register int at_ca1;
+        float *vv_ca = v_ca + a*3;
+
+        obj = I->Obj[vla[0]];
+        at_ca1 = vla[1];
+        if(obj!=last_obj) {
+          ObjectMoleculeUpdateNeighbors(obj);
+          last_obj = obj;
+          neighbor = obj->Neighbor;          
+          atomInfo = obj->AtomInfo;
+        }
+
+        if(state<obj->NCSet) 
+          cs=obj->CSet[state];
+        else
+          cs=NULL;
+        if(cs) {
+          register int idx_ca1 = -1;
+          if(obj->DiscreteFlag) {
+            if(cs==obj->DiscreteCSet[at_ca1])
+              idx_ca1=obj->DiscreteAtmToIdx[at_ca1];
+            else
+              idx_ca1=-1;
+          } else 
+            idx_ca1=cs->AtmToIdx[at_ca1];
         
-        if(idx_ca1>=0) {
-          register int mem0,mem1,mem2,mem3,mem4;
-          register int nbr0,nbr1,nbr2,nbr3;
-          float *v_ca1 = cs->Coord + 3*idx_ca1;
-          int at_cb1,idx_cb1 = -1;
-          int cnt = 0;
+          if(idx_ca1>=0) {
+            register int mem0,mem1,mem2,mem3,mem4;
+            register int nbr0,nbr1,nbr2,nbr3;
+            float *v_ca1 = cs->Coord + 3*idx_ca1;
+            int at_cb1,idx_cb1 = -1;
+            int cnt = 0;
 
-          copy3f(v_ca1,vv_ca);
-          copy3f(v_ca1,inter+8);
+            copy3f(v_ca1,vv_ca);
+            copy3f(v_ca1,inter+8);
           
-          /* find attached CB */
-
-          mem0 = at_ca1;
-          nbr0 = neighbor[mem0]+1;
-          while((mem1 = neighbor[nbr0])>=0) {
-            if((atomInfo[mem1].protons==cAN_C) && 
-               (strcmp(atomInfo[mem1].name,"CB")==0)) {
-              at_cb1 = mem1;
-
-              if(obj->DiscreteFlag) {
-                if(cs==obj->DiscreteCSet[at_cb1])
-                  idx_cb1=obj->DiscreteAtmToIdx[at_cb1];
-                else
-                  idx_cb1=-1;
-              } else 
-                idx_cb1=cs->AtmToIdx[at_cb1];
-              break;
-            }
-            nbr0+=2;
-          }
-
-          /* find remote CA, CB */
-          
-          if(idx_cb1>=0) {
-            float *v_cb1 = cs->Coord + 3*idx_cb1;
+            /* find attached CB */
 
             mem0 = at_ca1;
             nbr0 = neighbor[mem0]+1;
             while((mem1 = neighbor[nbr0])>=0) {
-              
-              nbr1 = neighbor[mem1]+1;
-              while((mem2 = neighbor[nbr1])>=0) {
-                if(mem2!=mem0) { 
-                  int at_ca2,idx_ca2 = -1;
+              if((atomInfo[mem1].protons==cAN_C) && 
+                 (strcmp(atomInfo[mem1].name,"CB")==0)) {
+                at_cb1 = mem1;
 
-                  nbr2 = neighbor[mem2]+1;
-                  while((mem3 = neighbor[nbr2])>=0) {
-                    if((mem3!=mem1)&&(mem3!=mem0)) {
-                      if((atomInfo[mem3].protons==cAN_C) && 
-                         (strcmp(atomInfo[mem3].name,"CA")==0)) {
-                        at_ca2 = mem3;
-                        if(obj->DiscreteFlag) {
-                          if(cs==obj->DiscreteCSet[at_ca2])
-                            idx_ca2=obj->DiscreteAtmToIdx[at_ca2];
-                          else
-                            idx_ca2=-1;
-                        } else 
-                          idx_ca2=cs->AtmToIdx[at_ca2];
-                        break;
-                      }
-                    }
-                   nbr2+=2;
-                  }
-                  if(idx_ca2>=0) {
-                    float *v_ca2 = cs->Coord + 3*idx_ca2;
-                  
+                if(obj->DiscreteFlag) {
+                  if(cs==obj->DiscreteCSet[at_cb1])
+                    idx_cb1=obj->DiscreteAtmToIdx[at_cb1];
+                  else
+                    idx_cb1=-1;
+                } else 
+                  idx_cb1=cs->AtmToIdx[at_cb1];
+                break;
+              }
+              nbr0+=2;
+            }
+
+            /* find remote CA, CB */
+          
+            if(idx_cb1>=0) {
+              float *v_cb1 = cs->Coord + 3*idx_cb1;
+
+              mem0 = at_ca1;
+              nbr0 = neighbor[mem0]+1;
+              while((mem1 = neighbor[nbr0])>=0) {
+              
+                nbr1 = neighbor[mem1]+1;
+                while((mem2 = neighbor[nbr1])>=0) {
+                  if(mem2!=mem0) { 
+                    int at_ca2,idx_ca2 = -1;
+
                     nbr2 = neighbor[mem2]+1;
                     while((mem3 = neighbor[nbr2])>=0) {
                       if((mem3!=mem1)&&(mem3!=mem0)) {
-                        int idx_cb2 = -1;
-                        nbr3 = neighbor[mem3]+1;
-                        while((mem4 = neighbor[nbr3])>=0) {
-                          if((mem4!=mem2)&&(mem4!=mem1)&&(mem4!=mem0)) {
-                            if((atomInfo[mem4].protons==cAN_C) && 
-                               (strcmp(atomInfo[mem4].name,"CB")==0)) {
-                              int at_cb2 = mem4;
-                              if(obj->DiscreteFlag) {
-                                if(cs==obj->DiscreteCSet[at_cb2])
-                                  idx_cb2=obj->DiscreteAtmToIdx[at_cb2];
-                                else
-                                  idx_cb2=-1;
-                              } else 
-                                idx_cb2=cs->AtmToIdx[at_cb2];
-                              break;
-                            }
-                          }
-                          nbr3+=2;
-                        }
-                        
-                        if(idx_cb2>=0) {
-                          float *v_cb2 = NULL;
-                          v_cb2 = cs->Coord + 3*idx_cb2;
-                          {
-                            float angle = get_dihedral3f( v_cb1, v_ca1, v_ca2, v_cb2 );
-                            if(idx_cb1<idx_cb2) {
-                              inter[0] = cos(angle);
-                              inter[1] = sin(angle);
-                            } else {
-                              inter[2] = cos(angle);
-                              inter[3] = sin(angle);
-                            }
-                          }
-                          cnt++;
+                        if((atomInfo[mem3].protons==cAN_C) && 
+                           (strcmp(atomInfo[mem3].name,"CA")==0)) {
+                          at_ca2 = mem3;
+                          if(obj->DiscreteFlag) {
+                            if(cs==obj->DiscreteCSet[at_ca2])
+                              idx_ca2=obj->DiscreteAtmToIdx[at_ca2];
+                            else
+                              idx_ca2=-1;
+                          } else 
+                            idx_ca2=cs->AtmToIdx[at_ca2];
+                          break;
                         }
                       }
                       nbr2+=2;
                     }
+                    if(idx_ca2>=0) {
+                      float *v_ca2 = cs->Coord + 3*idx_ca2;
+                  
+                      nbr2 = neighbor[mem2]+1;
+                      while((mem3 = neighbor[nbr2])>=0) {
+                        if((mem3!=mem1)&&(mem3!=mem0)) {
+                          int idx_cb2 = -1;
+                          nbr3 = neighbor[mem3]+1;
+                          while((mem4 = neighbor[nbr3])>=0) {
+                            if((mem4!=mem2)&&(mem4!=mem1)&&(mem4!=mem0)) {
+                              if((atomInfo[mem4].protons==cAN_C) && 
+                                 (strcmp(atomInfo[mem4].name,"CB")==0)) {
+                                int at_cb2 = mem4;
+                                if(obj->DiscreteFlag) {
+                                  if(cs==obj->DiscreteCSet[at_cb2])
+                                    idx_cb2=obj->DiscreteAtmToIdx[at_cb2];
+                                  else
+                                    idx_cb2=-1;
+                                } else 
+                                  idx_cb2=cs->AtmToIdx[at_cb2];
+                                break;
+                              }
+                            }
+                            nbr3+=2;
+                          }
+                        
+                          if(idx_cb2>=0) {
+                            float *v_cb2 = NULL;
+                            v_cb2 = cs->Coord + 3*idx_cb2;
+                            {
+                              float angle = get_dihedral3f( v_cb1, v_ca1, v_ca2, v_cb2 );
+                              if(idx_cb1<idx_cb2) {
+                                inter[0] = cos(angle);
+                                inter[1] = sin(angle);
+                              } else {
+                                inter[2] = cos(angle);
+                                inter[3] = sin(angle);
+                              }
+                            }
+                            cnt++;
+                          }
+                        }
+                        nbr2+=2;
+                      }
+                    }
                   }
+                  nbr1+=2;
                 }
-                nbr1+=2;
+                nbr0+=2;
               }
-              nbr0+=2;
             }
           }
         }
+        vla+=3;
+        inter+=cINTER_ENTRIES;
       }
-      vla+=3;
-      inter+=cINTER_ENTRIES;
-    }
-    {
-      for(a=0;a<n;a++) { /* optimize this later */
-        float *vv_ca = v_ca + a*3;
-        for(b=0;b<n;b++) {
-          float *vv_cb = v_ca + b*3;          
-          float diff = diff3f(vv_ca,vv_cb);
-          dist_mat[a][b] = diff;
-          dist_mat[b][a] = diff;
+      {
+        for(a=0;a<n;a++) { /* optimize this later */
+          float *vv_ca = v_ca + a*3;
+          for(b=0;b<n;b++) {
+            float *vv_cb = v_ca + b*3;          
+            float diff = diff3f(vv_ca,vv_cb);
+            dist_mat[a][b] = diff;
+            dist_mat[b][a] = diff;
+          }
         }
       }
-    }
-
-    {
-      MapType *map=MapNew(G,radius,v_ca,n, NULL);
-      if(!pass) {
-        inter = inter1;
-      } else {
-        inter = inter2;
-      }
-      if(map) {
-        int i,h,k,l;
-        MapSetupExpress(map);
+      {
+        MapType *map=MapNew(G,radius,v_ca,n, NULL);
+        if(!pass) {
+          inter = inter1;
+        } else {
+          inter = inter2;
+        }
+        if(map) {
+          int i,h,k,l;
+          MapSetupExpress(map);
         
-        for(a=0;a<n;a++) {
-          float *v_ca1 = v_ca + 3 * a;
-          float *i_ca1 = inter + cINTER_ENTRIES*a;
-          if(MapExclLocus(map,v_ca1,&h,&k,&l)) {
-            i=*(MapEStart(map,h,k,l));
-            if(i) {
-              b=map->EList[i++];
-              while(b>=0) {
-                float *v_ca2 = v_ca + 3 * b;
-                if(a != b) {
-                  if(within3f(v_ca1,v_ca2,radius)) {
-                    float *i_ca2  = inter + cINTER_ENTRIES*b;
-                    i_ca1[4] += i_ca2[0]; /* add dihedral vectors head-to-tail */
-                    i_ca1[5] += i_ca2[1];
-                    i_ca1[6] += i_ca2[2];
-                    i_ca1[7] += i_ca2[3];
-                  }
-                }
+          for(a=0;a<n;a++) {
+            float *v_ca1 = v_ca + 3 * a;
+            float *i_ca1 = inter + cINTER_ENTRIES*a;
+            if(MapExclLocus(map,v_ca1,&h,&k,&l)) {
+              i=*(MapEStart(map,h,k,l));
+              if(i) {
                 b=map->EList[i++];
+                while(b>=0) {
+                  float *v_ca2 = v_ca + 3 * b;
+                  if(a != b) {
+                    if(within3f(v_ca1,v_ca2,radius)) {
+                      float *i_ca2  = inter + cINTER_ENTRIES*b;
+                      i_ca1[4] += i_ca2[0]; /* add dihedral vectors head-to-tail */
+                      i_ca1[5] += i_ca2[1];
+                      i_ca1[6] += i_ca2[2];
+                      i_ca1[7] += i_ca2[3];
+                    }
+                  }
+                  b=map->EList[i++];
+                }
               }
             }
           }
-        }
-        MapFree(map);
-        for(a=0;a<n;a++) {
-          float nf = sqrt(inter[4]*inter[4] + inter[5]*inter[5]);
-          if(nf>0.0001F) {
-            inter[4] = inter[4] / nf;
-            inter[5] = inter[5] / nf;
-          }
-          nf = sqrt(inter[6]*inter[6] + inter[7]*inter[7]);
-          if(nf>0.0001F) {
+          MapFree(map);
+          for(a=0;a<n;a++) {
+            float nf = sqrt(inter[4]*inter[4] + inter[5]*inter[5]);
+            if(nf>0.0001F) {
+              inter[4] = inter[4] / nf;
+              inter[5] = inter[5] / nf;
+            }
+            nf = sqrt(inter[6]*inter[6] + inter[7]*inter[7]);
+            if(nf>0.0001F) {
             
-            inter[6] = inter[6] / nf;
-            inter[7] = inter[7] / nf;
+              inter[6] = inter[6] / nf;
+              inter[7] = inter[7] / nf;
+            }
+            inter+=cINTER_ENTRIES;
           }
-          inter+=cINTER_ENTRIES;
         }
       }
     }
-  }
+    {
+      const float _0F = 0.0F;
 
-  {
-    const float _0F = 0.0F;
-
-    for(a=0;a<n1;a++) {
-      float *i1 = inter1+ cINTER_ENTRIES*a;
-      for(b=0;b<n2;b++) {
-        float *i2 = inter2 + cINTER_ENTRIES*b;
-        float sm[cINTER_ENTRIES], comp1, comp2, comp3 = 1.0F;
-        float score;
-        int c;
-        for(c=0;c<cINTER_ENTRIES;c+=2) {
-          if( ((i1[c] == _0F) && (i1[c+1]== _0F)) ||
-              ((i2[c] == _0F) && (i2[c+1]== _0F))) { /* handle glycine case */
-            sm[c] = 1.0F;
-            sm[c+1] = 1.0F;
-          } else {
-            sm[c] = i1[c]+i2[c];
-            sm[c+1] = i1[c+1]+i2[c+1];
+      for(a=0;a<n1;a++) {
+        float *i1 = inter1+ cINTER_ENTRIES*a;
+        for(b=0;b<n2;b++) {
+          float *i2 = inter2 + cINTER_ENTRIES*b;
+          float sm[cINTER_ENTRIES], comp1, comp2, comp3 = 1.0F;
+          float score;
+          int c;
+          for(c=0;c<(cINTER_ENTRIES-1);c+=2) {
+            if( ((i1[c] == _0F) && (i1[c+1]== _0F)) ||
+                ((i2[c] == _0F) && (i2[c+1]== _0F))) { /* handle glycine case */
+              sm[c] = 1.0F;
+              sm[c+1] = 1.0F;
+            } else {
+              sm[c] = i1[c]+i2[c];
+              sm[c+1] = i1[c+1]+i2[c+1];
+            }
           }
+          comp1 = 
+            ((sqrt(sm[0]*sm[0] + sm[1]*sm[1]) + 
+              sqrt(sm[2]*sm[2] + sm[3]*sm[3])) * 0.25);
+          comp2 = 
+            ((sqrt(sm[4]*sm[4] + sm[5]*sm[5]) +
+              sqrt(sm[6]*sm[6] + sm[7]*sm[7])) * 0.25);
+          score = scale*(comp1*comp2 - base);
+          if(coord_wt!=0.0) {
+            float diff = diff3f(i1+8,i2+8);
+            comp3 = -log(diff/rms_exp);
+            score = (1-coord_wt)*score + coord_wt*comp3*scale;
+          }
+          match->mat[a][b] = score;
         }
-        comp1 = 
-          ((sqrt(sm[0]*sm[0] + sm[1]*sm[1]) + 
-            sqrt(sm[2]*sm[2] + sm[3]*sm[3])) * 0.25);
-        comp2 = 
-          ((sqrt(sm[4]*sm[4] + sm[5]*sm[5]) +
-            sqrt(sm[6]*sm[6] + sm[7]*sm[7])) * 0.25);
-        score = scale*(comp1*comp2 - base);
-        if(coord_wt!=0.0) {
-          float diff = diff3f(i1+8,i2+8);
-          comp3 = -log(diff/rms_exp);
-          score = (1-coord_wt)*score + coord_wt*comp3*scale;
-        }
-        match->mat[a][b] = score;
       }
     }
   }
