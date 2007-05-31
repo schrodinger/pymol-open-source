@@ -349,7 +349,6 @@ int MatchAlignWithDistMats(CMatch *I,float gap_penalty,float ext_penalty,
   int *p;
   int cnt;
   int ok=true;
-  float base_score = 0.5F;
   const float MIN_SCORE = 0.0F;
   nf = I->na+2;
   ng = I->nb+2;

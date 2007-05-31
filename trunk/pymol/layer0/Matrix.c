@@ -636,20 +636,19 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
   vv2=v2;
 
   if(wt) {
-	for(c=0;c<n;c++)
-	  {
-		for(a=0;a<3;a++) {
-		  t1[a] += wt[c]*vv1[a];
-		  t2[a] += wt[c]*vv2[a];
-		}
-		if (wt[c]!=0.0F) {
-		  sumwt = sumwt + wt[c];
-		} else {
-		  sumwt = sumwt + 1.0F; /* WHAT IS THIS? */
-		}
-		vv1+=3;
-		vv2+=3;
-	  }
+	for(c=0;c<n;c++) {
+      for(a=0;a<3;a++) {
+        t1[a] += wt[c]*vv1[a];
+        t2[a] += wt[c]*vv2[a];
+      }
+      if (wt[c]!=0.0F) {
+        sumwt = sumwt + wt[c];
+      } else {
+        sumwt = sumwt + 1.0F; /* WHAT IS THIS? */
+      }
+      vv1+=3;
+      vv2+=3;
+    }
   } else {
 	for(c=0;c<n;c++)
 	  {
@@ -670,25 +669,24 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
   /* Calculate correlation matrix */
   vv1=v1;
   vv2=v2;
-  for(c=0;c<n;c++)
-	{
-	  if(wt) {
-		for(a=0;a<3;a++) {
-		  x[a] = wt[c]*(vv1[a] - t1[a]);
-		  xx[a] = wt[c]*(vv2[a] - t2[a]);
-		}
-	  } else {
-		for(a=0;a<3;a++) {
-		  x[a] = vv1[a] - t1[a];
-		  xx[a] = vv2[a] - t2[a];
-		}
-	  }
-	  for(a=0;a<3;a++)
-		for(b=0;b<3;b++)
-		  aa[a][b] = aa[a][b] + xx[a]*x[b];
-	  vv1+=3;
-	  vv2+=3;
-	}
+  for(c=0;c<n;c++) {
+    if(wt) {
+      for(a=0;a<3;a++) {
+        x[a] = wt[c]*(vv1[a] - t1[a]);
+        xx[a] = wt[c]*(vv2[a] - t2[a]);
+      }
+    } else {
+      for(a=0;a<3;a++) {
+        x[a] = vv1[a] - t1[a];
+        xx[a] = vv2[a] - t2[a];
+      }
+    }
+    for(a=0;a<3;a++)
+      for(b=0;b<3;b++)
+        aa[a][b] = aa[a][b] + xx[a]*x[b];
+    vv1+=3;
+    vv2+=3;
+  }
   if(n>1) {
     /* Primary iteration scheme to determine rotation matrix for molecule 2 */
     iters = 0;
@@ -715,13 +713,12 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
       sig = aa[iz][iy] - aa[iy][iz];
       gam = aa[iy][iy] + aa[iz][iz];
 
-      if(iters>=maxiter) 
-        {
-          PRINTFB(G,FB_Matrix,FB_Details)
-            " Matrix: Warning: no convergence (%1.8f<%1.8f after %d iterations).\n",(float)tol,(float)gam,iters
-            ENDFB(G);
-          break;
-        }
+      if(iters>=maxiter) {
+        PRINTFB(G,FB_Matrix,FB_Details)
+          " Matrix: Warning: no convergence (%1.8f<%1.8f after %d iterations).\n",(float)tol,(float)gam,iters
+          ENDFB(G);
+        break;
+      }
 
       /* Determine size of off-diagonal element.  If off-diagonals exceed the
          diagonal elements * tolerance, perform Jacobi rotation. */
@@ -775,43 +772,26 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
 
   err=err/sumwt;
   err=sqrt1d(err);
-  /*
-  ttt[0]=(float)m[0][0];
-  ttt[1]=(float)m[0][1];
-  ttt[2]=(float)m[0][2];
-  ttt[3]=(float)-t1[0];
-  ttt[4]=(float)m[1][0];
-  ttt[5]=(float)m[1][1];
-  ttt[6]=(float)m[1][2];
-  ttt[7]=(float)-t1[1];
-  ttt[8]=(float)m[2][0];
-  ttt[9]=(float)m[2][1];
-  ttt[10]=(float)m[2][2];
-  ttt[11]=(float)-t1[2];
-  ttt[12]=(float)t2[0];
-  ttt[13]=(float)t2[1];
-  ttt[14]=(float)t2[2];
-  ttt[15]=1.0F; 
-  */
 
   /* NOTE: TTT's are now row-major (to be more like homogenous matrices) */
 
-  ttt[ 0]=(float)m[0][0];
-  ttt[ 1]=(float)m[1][0];
-  ttt[ 2]=(float)m[2][0];
-  ttt[ 3]=(float)t2[0];
-  ttt[ 4]=(float)m[0][1];
-  ttt[ 5]=(float)m[1][1];
-  ttt[ 6]=(float)m[2][1];
-  ttt[ 7]=(float)t2[1];
-  ttt[ 8]=(float)m[0][2];
-  ttt[ 9]=(float)m[1][2];
-  ttt[10]=(float)m[2][2];
-  ttt[11]=(float)t2[2];
-  ttt[12]=(float)-t1[0];
-  ttt[13]=(float)-t1[1];
-  ttt[14]=(float)-t1[2];
-
+  if(ttt) {
+    ttt[ 0]=(float)m[0][0];
+    ttt[ 1]=(float)m[1][0];
+    ttt[ 2]=(float)m[2][0];
+    ttt[ 3]=(float)t2[0];
+    ttt[ 4]=(float)m[0][1];
+    ttt[ 5]=(float)m[1][1];
+    ttt[ 6]=(float)m[2][1];
+    ttt[ 7]=(float)t2[1];
+    ttt[ 8]=(float)m[0][2];
+    ttt[ 9]=(float)m[1][2];
+    ttt[10]=(float)m[2][2];
+    ttt[11]=(float)t2[2];
+    ttt[12]=(float)-t1[0];
+    ttt[13]=(float)-t1[1];
+    ttt[14]=(float)-t1[2];
+  }
 /* for compatibility with normal 4x4 matrices */
 
   if(fabs(err)<R_SMALL4)
