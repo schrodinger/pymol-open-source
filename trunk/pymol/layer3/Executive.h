@@ -160,7 +160,7 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,
                    char *oname,int state1,int state2,
                    ExecutiveRMSInfo *rms_info,int transform,int reset,
                    float seq_wt,float radius,float scale,float base, 
-                   float coord_wt, float expect, int window);
+                   float coord_wt, float expect, int window, float ante);
 
 void ExecutiveUpdateColorDepends(PyMOLGlobals *G,ObjectMolecule *mol);
 void ExecutiveUpdateCoordDepends(PyMOLGlobals *G,ObjectMolecule *mol);

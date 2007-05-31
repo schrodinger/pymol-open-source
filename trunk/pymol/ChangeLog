@@ -4,7 +4,7 @@ CHANGE LOG
 
 2007-05-30  Warren L. DeLano <warren@delsci.com>
 
-	* added "super" command for sequence-independent alignment
+	* added "super" command to enable more robust alignments
 	
 2007-05-29  Warren L. DeLano <warren@delsci.com>
 

@@ -28,17 +28,18 @@ if __name__=='pymol.fitting':
               gap=-1.5, extend=-0.7, max_gap=50, object=None,                            
               matrix="BLOSUM62", mobile_state=0, target_state=0, 
               quiet=1, max_skip=0, transform=1, reset=0,
-              seq=0.0, radius=12.0, scale=17, base=0.65,
-              coord=0.0, expect=6.0, window=3, _self=cmd):
+              seq=0.0, radius=12.0, scale=17.0, base=0.65,
+              coord=0.0, expect=6.0, window=3, ante=-1.0,
+              _self=cmd):
         
         '''
 DESCRIPTION
 
     NOTE: This feature is experimental and unsupported.
     
-    "super" performs a residue-based alignment followed by a
+    "super" performs a residue-based pairwise alignment followed by a
     structural superposition, and then carries out zero or more cycles
-    of refinement in order to reject structural outliers.
+    of refinement in order to reject outliers.
 
 USAGE 
 
@@ -48,8 +49,8 @@ NOTES
 
     By adjusting various parameters, the nature of the initial
     alignment can be modified to include or exclude various factors
-    including sequence similarity, main chain path, secondary
-    structure, and tertiary structure.
+    including sequence similarity, main chain path, secondary &
+    tertiary structure, and current coordinates.
 
 EXAMPLE
 
@@ -81,7 +82,8 @@ SEE ALSO
                            int(quiet),int(max_skip),int(transform),
                            int(reset),float(seq),
                            float(radius),float(scale),float(base),
-                           float(coord),float(expect),int(window))
+                           float(coord),float(expect),int(window),
+                           float(ante))
             
         finally:
             _self.unlock(r,_self)
@@ -96,9 +98,9 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "align" performs a sequence alignment followed by a structural 
-    superposition, and then carries out zero or more cycles of refinement
-    in order to reject structural outliers found during the fit.
+    "align" performs a sequence alignment followed by a structural
+    superposition, and then carries out zero or more cycles of
+    refinement in order to reject outliers.
 
 USAGE 
 
@@ -137,7 +139,7 @@ SEE ALSO
                            float(extend),int(max_gap),str(object),str(mfile),
                            int(source_state)-1,int(target_state)-1,
                            int(quiet),int(max_skip),int(transform),int(reset),
-                           -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0)
+                           -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
