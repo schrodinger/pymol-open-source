@@ -1943,17 +1943,17 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args)
   float result = -1.0;
   int ok = false;
   int quiet,cycles,max_skip;
-  float cutoff,gap,extend;
+  float cutoff,gap,extend,seq;
   int state1,state2;
-  int max_gap,transform,reset;
+  int max_gap,transform,reset,window;
   float radius,scale,base,coord,expect;
   ExecutiveRMSInfo rms_info;
 
-  ok = PyArg_ParseTuple(args,"Ossfiffissiiiiiifffff",&self,&str2,&str3,
+  ok = PyArg_ParseTuple(args,"Ossfiffissiiiiiiffffffi",&self,&str2,&str3,
                         &cutoff,&cycles,&gap,&extend,&max_gap,&oname,
                         &mfile,&state1,&state2,&quiet,&max_skip,
-                        &transform,&reset,&radius,&scale,&base,
-                        &coord,&expect);
+                        &transform,&reset,&seq,&radius,&scale,&base,
+                        &coord,&expect,&window);
 
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -1975,8 +1975,9 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args)
                      mfile,gap,extend,max_gap,
                      max_skip,cutoff,
                      cycles,quiet,oname,state1,state2,
-                     &rms_info,transform,reset,radius,scale,base,
-                     coord,expect);
+                     &rms_info,transform,reset,seq,
+                     radius,scale,base,
+                     coord,expect,window);
     } else 
       result = -1.0F;
     SelectorFreeTmp(G,s2);
