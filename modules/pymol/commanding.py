@@ -115,7 +115,7 @@ USAGE
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def splash(mode=0,_self=cmd):
+    def splash(mode=0, _self=cmd):
         pymol=_self._pymol        
         cmd=_self
         '''
@@ -385,8 +385,8 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "alias" allows you to bind routinely-used command-line inputs to a
-    new command keyword.
+    "alias" binds routinely-used command inputs to a new command
+    keyword.
 
 USAGE
 

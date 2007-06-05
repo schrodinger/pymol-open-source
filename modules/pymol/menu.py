@@ -782,7 +782,7 @@ def align_to_object(self_cmd, sele):
         if a!=sele:
             result.append([1,a,
                            'cmd.align("polymer and name ca and ('+sele+')",'+
-                           '"polymer and name ca and ('+a+')",max_gap=50,quiet=0,'+
+                           '"polymer and name ca and ('+a+')",quiet=0,'+
                            'object="aln_%s_to_%s",reset=1)'%(sele,a)])
     return result
 
@@ -793,7 +793,7 @@ def align_to_sele(self_cmd, sele):
         if a!= sele:
             result.append([1,a,
                            'cmd.align("polymer and name ca and ('+sele+')",'+
-                           '"polymer and name ca and ('+a+')",max_gap=50,quiet=0,'+
+                           '"polymer and name ca and ('+a+')",quiet=0,'+
                            'object="aln_%s_to_%s",reset=1)'%(sele,a)])
     return result
 

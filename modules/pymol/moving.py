@@ -151,10 +151,32 @@ SEE ALSO
 
     mview_action_sc = Shortcut(mview_action_dict.keys())
 
-    def mview(action='store',first=0,last=0,power=1.4,
-              bias=1.0,simple=0,linear=0.0,object='',
-              wrap=-1,hand=1,window=5,cycles=1,scene='',
-              cut=0.5,quiet=1,_self=cmd):
+    def mview(action='store', first=0, last=0, power=1.4,
+              bias=1.0, simple=0, linear=0.0, object='',
+              wrap=-1, hand=1, window=5, cycles=1, scene='',
+              cut=0.5, quiet=1, _self=cmd):
+
+        '''
+DESCRIPTION
+
+    "mview" stores camera and object matrices for use in movie
+    interpolation.
+
+USAGE
+
+    mview [action [, first [, last [, power [, bias [, simple
+       [, linear [, object [, wrap [, hand [, window [, cycles [,scene
+       [, cut [, quiet ]]]]]]]]]]]]]]]
+
+NOTES
+
+    This command is not yet fully supported in PyMOL 1.x.
+    
+SEE ALSO
+
+    mplay, mset, mdo, mclear, mmatrix
+        '''
+        
         r = DEFAULT_ERROR
         first = int(first)
         last = int(last)

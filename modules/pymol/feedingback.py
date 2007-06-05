@@ -40,21 +40,25 @@ for a in fb_module.__dict__.keys():
 
 fb_debug = sys.stderr # can redirect python debugging output elsewhere if desred...
 
-def feedback(action="?",module="?",mask="?",_self=cmd):
+def feedback(action="?", module="?", mask="?", _self=cmd):
     '''
 DESCRIPTION
 
-    "feedback" allows you to change the amount of information output by pymol.
+    "feedback" changes the amount of information output by pymol.
 
 USAGE
 
-    feedback action,module,mask
+    feedback action, module, mask
 
-    action is one of ['set','enable','disable']
-    module is a space-separated list of strings or simply "all"
-    mask is a space-separated list of strings or simply "everything"
+ARGUMENTS
 
-NOTES:
+    action = set, enable, or disable
+
+    module = string: a space-separated list of modules or simply "all"
+
+    mask = string: a space-separated list of output categories or simply "everything"
+
+NOTES
 
     "feedback" alone will print a list of the available module choices
 
@@ -68,13 +72,8 @@ EXAMPLES
     feedback disable, selector, warnings actions
     feedback enable, main, blather
 
-DEVELOPMENT TO DO
-
-    Add a way of querying the current feedback settings.
-    Check C source code to make source correct modules are being used.
-    Check C source code to insure that all output is properly
-    Update Python API and C source code to use "quiet" parameter as well.
-        '''
+    '''
+    
     r = None
 
     # validate action
