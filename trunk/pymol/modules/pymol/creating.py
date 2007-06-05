@@ -147,9 +147,9 @@ if __name__=='pymol.creating':
         return r
 
     def ramp_new(name, map_name, range=[-1.0,0.0,1.0],
-                     color=['red',[1.0,1.0,1.0],'blue'], state=0,
-                     selection='', beyond=2.0, within=6.0, sigma=2.0,
-                     zero=1, quiet=1, _self=cmd):
+                 color=['red',[1.0,1.0,1.0],'blue'], state=0,
+                 selection='', beyond=2.0, within=6.0, sigma=2.0,
+                 zero=1, quiet=1, _self=cmd):
 
         '''
 DESCRIPTION
@@ -195,7 +195,7 @@ EXAMPLES
 
 NOTES
 
-    Color ramps are extremely powerful but very complicated to use.
+    Color ramps are extremely powerful but complicated to use.
 
     In the simplest case, they can be used to color representations
     based on the potential values found in a map object at the

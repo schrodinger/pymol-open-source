@@ -132,20 +132,41 @@ if __name__=='pymol.controlling':
         'one_button' : [   'one_button_viewing' ],
         }
 
-    def config_mouse(mode='three_button',quiet=1,_self=cmd):
-        '''
-        '''
+    def config_mouse(ring='three_button', quiet=1, _self=cmd):
 
+        '''
+DESCRIPTION
+
+    "config_mouse" sets the current mouse configuration ring.
+
+USAGE
+
+    config_mouse ring
+
+EXAMPLES
+
+    config_mouse three_button
+    config_mouse two_button
+    config_mouse one_button
+    
+PYMOL API
+
+    cmd.config_mouse(string ring, int quiet)
+
+SEE ALSO
+
+    mouse, button
+    '''
         
         global mouse_ring
-        if ring_dict.has_key(mode):
-            mouse_ring = ring_dict[mode]
+        if ring_dict.has_key(ring):
+            mouse_ring = ring_dict[ring]
             if not quiet:
-                print " config_mouse: %s"%mode
+                print " config_mouse: %s"%ring
             _self.mouse(quiet=1,_self=_self)
 
         else:
-            print " Error: unrecognized mouse ring: '%s'"%mode
+            print " Error: unrecognized mouse ring: '%s'"%ring
 
     mouse_ring = ring_dict['three_button']
 
@@ -369,7 +390,7 @@ if __name__=='pymol.controlling':
         '''
 DESCRIPTION
 
-    "order" allows you to change ordering of names in the control panel
+    "order" changes the ordering of names in the control panel.
 
 USAGE
 
@@ -409,7 +430,19 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
-    def mouse(action=None,quiet=1,_self=cmd):# INTERNAL
+    def mouse(action=None, quiet=1, _self=cmd):# INTERNAL
+
+        '''
+DESCRIPTION
+
+    "mouse" cycles through the mouse modes defined in the current
+    mouse configuration ring.
+
+USAGE
+
+    mouse 
+
+'''
         # NOTE: PyMOL automatically runs this routine upon start-up
         try:
             _self.lock(_self)
@@ -598,12 +631,26 @@ USAGE
 
 ARGUMENTS
 
-    button = L, M, R, or S
+    button = left, middle, right, wheel, double_left, double_middle,
+        double_right, single_left, single_middle, or single_right
+       
+    modifiers = None, Shft, Ctrl, CtSh, CtAl, CtAl, CtAS, 
 
-    modifiers = None, Shft, Ctrl, or CtSh
+    actions = None, Rota, Move, MovZ, Slab, +Box, -Box, Clip, MovS,
+        +/-, PkAt, Pk1, MvSZ, Sele, Orig, Menu, PkAt, Pk1 RotO, MovO,
+        MvOZ, MovA, PkAt, PkTB, MvSZ MvAZ, DrgM, RotZ, PkBd, ClpN,
+        ClpF
 
-    actions = Rota, Rota, Move, MovZ, Clip, RotZ, ClpN, ClpF
-              lb,   mb,   rb,   +lb,  +lbX, -lbX, +mb,  +rb, 
+NOTES
+
+   Changes made using the button command are easily overridden when
+   the user iterates through the mouse modes.  This behavior needs to
+   be changed.
+
+   Obsolete actions: lb, mb, rb, +lb, +mb, +rb, +lbX, -lbX,
+      
+   Unsupported, Internal, or Future Actions: RotD, MovD, MvDZ, RotF,
+    MovF, MvFZ, TorF, RotV, MovV, MvVZ, DgMZ, DgRT
 
 PYMOL API
 

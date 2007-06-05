@@ -68,9 +68,9 @@ EXAMPLES
 
 ARGUMENTS
 
-    selection = a selection-expression or name pattern (default: "all").
+    selection = string: selection-expression or name pattern (default: "all").
 
-    buffer = a floating point number (default: 0): distance
+    buffer = a floating-point number (default: 0): distance
     
     state = 0 (default): uses all coordinate states (default)
     
@@ -122,7 +122,7 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def center(selection="all",state=0,origin=1,animate=0,_self=cmd):
+    def center(selection="all", state=0, origin=1, animate=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -131,24 +131,30 @@ DESCRIPTION
 
 USAGE
 
-    center selection=all, state=0, origin=1, animate=0
+    center [selection [, state [, origin [, animate]]]]
 
 EXAMPLES
 
+    chain chain B
     center 145/
+
+ARGUMENTS
+
+    selection = string: selection-expression or name pattern (default: "all").
+    
+    state = 0 (default) use all coordinate states
+    
+    state = -1 use only coordinates for the current state
+    
+    state > 0  use coordinates for a specific state
+
+    origin = 1 (default) move the origin
+    
+    origin = 0 leave the origin unchanged
 
 PYMOL API
 
     cmd.center(string selection, int state, int origin)
-
-ARGUMENTS
-
-    state = 0 (default) use all coordinate states
-    state = -1 use only coordinates for the current state
-    state > 0  use coordinates for a specific state
-
-    origin = 1 (default) move the origin
-    origin = 0 leave the origin unchanged
 
 SEE ALSO
 
@@ -224,25 +230,33 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "origin" sets the center of rotation about a selection.
-    If an object name is specified, it can be used to set
-    the center of rotation for the object's TTT matrix.
+    "origin" sets the center of rotation about a selection.  If an
+    object name is specified, it can be used to set the center of
+    rotation for the object (for use in animation and editing).
 
 USAGE
 
-    origin selection [, object [,position, [, state]]]
-    origin (selection)
+    origin [selection [, object [,position, [, state]]]]
+
+ARGUMENTS
+
+    selection = string: selection-expression or name-list {default: (all)}
+    
+    state = 0 (default) use all coordinate states
+    
+    state = -1 use only coordinates for the current state
+    
+    state > 0  use coordinates for a specific state
+
+EXAMPLES
+
+    origin chain A
+    
     origin position=[1.0,2.0,3.0]
 
 PYMOL API
 
     cmd.origin(string object-or-selection)
-
-ARGUMENTS
-
-    state = 0 (default) use all coordinate states
-    state = -1 use only coordinates for the current state
-    state > 0  use coordinates for a specific state
 
 SEE ALSO
 
@@ -280,22 +294,29 @@ DESCRIPTION
 
 USAGE
 
-    orient object-or-selection [, state]
-    orient (selection)
-
-PYMOL API
-
-    cmd.orient(string object-or-selection, int state, float animate)
+    orient [selection [, state [, animate ]]]
 
 ARGUMENTS
 
-    state = 0 (default) use all coordinate states
-    state = -1 use only coordinates for the current state
-    state > 0  use coordinates for a specific state
+    selection = a selection-expression or name-pattern {default: (all)}
+
+    state = 0: use all coordinate states {default}
+    
+    state = -1: uses only coordinates for the current state
+    
+    state > 0: uses coordinates for a specific state
+
+EXAMPLES
+
+    orient organic
 
 NOTES
 
     The function is similar to the orient command in X-PLOR.
+
+PYMOL API
+
+    cmd.orient(string object-or-selection, int state, float animate)
 
 SEE ALSO
 
@@ -519,7 +540,7 @@ ARGUMENTS
        extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
        or everything
 
-    selection = a selection-expression or name-pattern
+    selection = string: a selection-expression or name-pattern
 
 NOTES
 
@@ -660,12 +681,12 @@ USAGE
 
 ARGUMENTS
 
-    representation =  lines, spheres, mesh, ribbon, cartoon,
+    representation = lines, spheres, mesh, ribbon, cartoon,
        sticks, dots, surface, labels, extent, nonbonded, nb_spheres,
        slice, extent, slice, dashes, angles, dihedrals, cgo, cell, callback, 
        or everything
 
-    selection = a selection-expression or name-pattern
+    selection = string: a selection-expression or name-pattern
 
 EXAMPLES
 
@@ -846,31 +867,32 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def view(key,action='recall',animate=-1,_self=cmd):
+    def view(key, action='recall', animate=-1,_self=cmd):
         '''
 DESCRIPTION
 
-    "view" makes it possible to save and restore viewpoints on a given
-    scene within a single session.
+    "view" saves and restore camera views.
 
 USAGE
 
-    view key[,action]
-    view *
+    view key [, action [, animate]]
+    
+ARGUMENTS
 
-    key can be any string
-    action should be 'store' or 'recall' (default: 'recall')
+    key = string or *
 
-VIEWS
+    action = store or recall: {default: recall}
+
+NOTES
 
     Views F1 through F12 are automatically bound to function keys
-    provided that "set_key" has not been used to redefine the behaviour
-    of the respective key, and that a "scene" has not been defined for
-    that key.
+    provided that "set_key" has not been used to redefine the
+    behaviour of the respective key, and that a "scene" has not been
+    defined for that key.
 
 EXAMPLES
 
-    view 0,store
+    view 0, store
     view 0
 
 PYMOL API
@@ -1075,18 +1097,18 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "scene" makes it possible to save and restore multiple scenes
-    scene within a single session.  A scene consists of the view, all
-    object activity information, all atom-wise visibility, colors,
-    representations, and the global frame index.
+    "scene" saves and restores scenes.  A scene consists of the camera
+    view, all object activity information, all atom-wise visibilities,
+    all atom-wise colors, all representations, the global frame index,
+    and may contain a text message to display on playback.
 
 USAGE
 
-    scene key [,action [, message, [ new_key=new-key-value ]]]
+    scene [key [,action [, message, [ new_key=new-key-value ]]]]
 
 ARGUMENTS
 
-    key = any-string, new, auto, or *: use new for an automatically
+    key = string, new, auto, or *: use new for an automatically
     numbered new scene, use auto for the current scene (if one
     exists), and use * for all scenes (clear and recall actions only).
     
@@ -1094,9 +1116,9 @@ ARGUMENTS
     previous, update, rename, or clear: (default = recall).  If
     rename, then a new_key argument must be explicitly defined.
 
-    message: a text message to display with the scene.
+    message = string: a text message to display with the scene.
 
-    new_key:  the new name for the scene
+    new_key = string: the new name for the scene
     
 EXAMPLES
 
@@ -1632,9 +1654,9 @@ USAGE
 
 ARGUMENTS
 
-    selection = a selection-expression
+    selection = string: a selection-expression
 
-    expression = a Python expression that can be converted to a string
+    expression = string: a Python expression that can be converted to a string
     
 EXAMPLES
 
@@ -1644,15 +1666,16 @@ EXAMPLES
 
 NOTES
 
-    The symbols defined in the name space are:
+    The symbols defined in the label name space for each atom are:
 
         name, resi, resn, resv, chain, segi, model, alt, q, b, type,
         index, rank, ID, ss, vdw, elec_radius, label, elem, geom,
         flags, color, cartoon, valence, formal_charge, partial_charge,
         numeric_type, text_type
 
-    All strings in the expression must be explicitly quoted.  This
-    operation typically takes several seconds per thousand atoms
+    All strings in the expression must be explicitly quoted.
+
+    This operation typically takes several seconds per thousand atoms
     altered.
 
     To clear labels, simply omit the expression or set it to ''.
@@ -1788,32 +1811,35 @@ PYMOL API
 
     cartoon_sc = Shortcut(cartoon_dict.keys())
 
-    def cartoon(type,selection="(all)",_self=cmd):
+    def cartoon(type, selection="(all)", _self=cmd):
         '''
 DESCRIPTION
 
-    "cartoon" changes the default cartoon for a set of atoms.
+    "cartoon" changes the default cartoon representation for a set of atoms.
 
 USAGE
 
-    cartoon type, (selection)
+    cartoon type, selection
 
-    type = skip | automatic | loop | rectangle | oval | tube | arrow | dumbbell
+ARGUMENTS
 
+    type = automatic, skip, loop, rectangle, oval, tube, arrow, dumbbell
+    
 PYMOL API
 
     cmd.cartoon(string type, string selection)
 
 EXAMPLES
 
-    cartoon rectangle,(chain A)
-    cartoon skip,(resi 145:156)
+    cartoon rectangle, chain A
+    cartoon skip, resi 145-156
 
 NOTES
 
-    the "automatic" mode utilizes ribbons according to the
-    information in the PDB HELIX and SHEET records.
-
+    This command is rarely required since the default "automatic" mode
+    utilizes ribbons according to the information in the PDB HELIX and
+    SHEET records.
+    
     '''
         # preprocess selection
         selection = selector.process(selection)
@@ -2218,11 +2244,13 @@ EXAMPLE
 
     def spectrum(expression="count", palette="rainbow",
                  selection="(all)", minimum=None, maximum=None,
-                 byres=0,quiet=1,_self=cmd):
+                 byres=0, quiet=1, _self=cmd):
+        
         '''
 DESCRIPTION
 
-    "spectrum" colors atoms using a spectrum.
+    "spectrum" colors atoms with a spectrum of colors based on an atomic
+    property.
     
 USAGE
 
@@ -2253,21 +2281,21 @@ NOTES
 
     Available palettes include:
 
-      blue_green green_white_magenta red_cyan blue_magenta
-      green_white_red red_green blue_red green_white_yellow
-      red_white_blue blue_white_green green_yellow red_white_cyan
-      blue_white_magenta green_yellow_red red_white_green
-      blue_white_red magenta_blue red_white_yellow blue_white_yellow
-      magenta_cyan red_yellow blue_yellow magenta_green
-      red_yellow_green cbmr magenta_white_blue rmbc cyan_magenta
-      magenta_white_cyan yellow_blue cyan_red magenta_white_green
-      yellow_cyan cyan_white_magenta magenta_white_yellow
-      yellow_cyan_white cyan_white_red magenta_yellow yellow_green
-      cyan_white_yellow rainbow yellow_magenta cyan_yellow rainbow2
-      yellow_red gcbmry rainbow2_rev yellow_white_blue green_blue
-      rainbow_cycle yellow_white_green green_magenta rainbow_cycle_rev
-      yellow_white_magenta green_red rainbow_rev yellow_white_red
-      green_white_blue red_blue yrmbcg
+       blue_green blue_magenta blue_red blue_white_green
+       blue_white_magenta blue_white_red blue_white_yellow blue_yellow
+       cbmr cyan_magenta cyan_red cyan_white_magenta cyan_white_red
+       cyan_white_yellow cyan_yellow gcbmry green_blue green_magenta
+       green_red green_white_blue green_white_magenta green_white_red
+       green_white_yellow green_yellow green_yellow_red magenta_blue
+       magenta_cyan magenta_green magenta_white_blue
+       magenta_white_cyan magenta_white_green magenta_white_yellow
+       magenta_yellow rainbow rainbow2 rainbow2_rev rainbow_cycle
+       rainbow_cycle_rev rainbow_rev red_blue red_cyan red_green
+       red_white_blue red_white_cyan red_white_green red_white_yellow
+       red_yellow red_yellow_green rmbc yellow_blue yellow_cyan
+       yellow_cyan_white yellow_green yellow_magenta yellow_red
+       yellow_white_blue yellow_white_green yellow_white_magenta
+       yellow_white_red yrmbcg
 
 PYMOL API
 
