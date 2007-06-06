@@ -57,7 +57,7 @@ DESCRIPTION
 
 USAGE
 
-    zoom [ selection [, buffer [, state [, complete [, animate ]]]]]
+    zoom [selection [, buffer [, state [, complete [, animate ]]]]]
     
 EXAMPLES
 
@@ -101,9 +101,8 @@ NOTES
     an orthoscopic view.
 
     To absolutely prevent clipping, you may also need to add an
-    additional buffer (typically 2 A) to account for the perpective
-    transformation and for graphical representations which extend
-    beyond the atom coordinates.
+    additional buffer (typically 2 A) to account for graphical
+    representations which extend beyond the atom coordinates.  
 
 SEE ALSO
 
@@ -1676,7 +1675,7 @@ NOTES
     All strings in the expression must be explicitly quoted.
 
     This operation typically takes several seconds per thousand atoms
-    altered.
+    labelled.
 
     To clear labels, simply omit the expression or set it to ''.
 

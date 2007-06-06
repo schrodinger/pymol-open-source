@@ -411,8 +411,7 @@ ARGUMENTS
     the content should be loaded, or 0 for append {default:0}
 
     format = pdb, ccp4, etc. {default: use file extension}): format of
-    data file
-    
+    data file    
     
 EXAMPLES
 
@@ -1089,11 +1088,11 @@ USAGE
 
 ARGUMENTS
 
-    code can be a single PDB identifier or a list of identifiers.
+    code = a single PDB identifier or a list of identifiers.
 
-    name is the object name into which the file should be loaded.
+    name = the object name into which the file should be loaded.
 
-    state is the state number into which the file should loaded.
+    state = the state number into which the file should loaded.
 
 PYMOL API
 
@@ -1103,12 +1102,15 @@ PYMOL API
               
 NOTES
 
-    By default, when running in interactive mode, the fetch command
-    loads structures asyncronously, meaning that the next command may
-    get executed before the structures have been loaded.  If you need
-    synchronous behavior in order to insure that all structures are
-    loaded before the next command is executed, then please provide
-    the optional argument "async=0".
+    When running in interactive mode, the fetch command loads
+    structures asyncronously by default, meaning that the next command
+    may get executed before the structures have been loaded.  If you
+    need synchronous behavior in order to insure that all structures
+    are loaded before the next command is executed, please provide the
+    optional argument "async=0".
+
+    Fetch requires a direct connection to the internet and thus may
+    not work behind certain types of network firewalls.
     
         '''
         import threading
