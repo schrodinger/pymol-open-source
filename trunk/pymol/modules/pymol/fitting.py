@@ -58,7 +58,7 @@ EXAMPLE
 
 SEE ALSO
 
-    pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur
+    align, pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur
     '''
         r = DEFAULT_ERROR
         mobile = selector.process(mobile)
@@ -126,7 +126,7 @@ EXAMPLE
 
 SEE ALSO
 
-    pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur, super
+    super, pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur, super
         '''
         r = DEFAULT_ERROR
         mobile = selector.process(mobile)
@@ -164,6 +164,12 @@ DESCRIPTION
 USAGE 
 
     intra_fit selection [, state]
+
+ARGUMENTS
+
+    selection = string: atoms to fit
+
+    state = integer: target state
 
 PYMOL API
 

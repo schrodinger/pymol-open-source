@@ -1569,8 +1569,8 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def matrix_copy(source_name,    target_name,
-                    source_mode=-1,  target_mode=-1,
+    def matrix_copy(source_name, target_name,
+                    source_mode=-1, target_mode=-1,
                     source_state=1, target_state=1,
                     target_undo=1, log=0, quiet=1,_self=cmd):
         '''
@@ -1578,13 +1578,16 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
 DESCRIPTION
         
     "matrix_copy" copies a transformation matrix from one object to
-    another. This command is often used after a protein structure
-    alignment to bring other related objects into the same frame of
-    reference.  Common Usage
+    another.
 
 USAGE
 
     matrix_copy source_name, target_name
+
+NOTES
+
+    This command is often used after a protein structure alignment to
+    bring other related objects into the same frame of reference.
 
 SEE ALSO
 

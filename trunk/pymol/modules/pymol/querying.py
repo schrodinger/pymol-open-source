@@ -126,8 +126,10 @@ PYMOL API
         return r
 
 
-    def angle(name=None,selection1="(pk1)",selection2="(pk2)",selection3="(pk3)", 
-                     mode=None,label=1,reset=0,zoom=0,state=0,quiet=1,_self=cmd):
+    def angle(name=None, selection1="(pk1)", selection2="(pk2)", 
+	      selection3="(pk3)", mode=None, label=1, reset=0, 
+	      zoom=0, state=0, quiet=1, _self=cmd):
+
         '''
 DESCRIPTION
 
@@ -209,9 +211,9 @@ NOTES
         if _raising(r): raise pymol.CmdException
         return r
 
-    def dihedral(name=None,selection1="(pk1)",selection2="(pk2)",
-                     selection3="(pk3)",selection4="(pk4)",
-                     mode=None,label=1,reset=0,zoom=0,state=0,quiet=1,_self=cmd):
+    def dihedral(name=None, selection1="(pk1)", selection2="(pk2)",
+		 selection3="(pk3)", selection4="(pk4)", mode=None,
+		 label=1, reset=0, zoom=0, state=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -302,34 +304,42 @@ NOTES
         if _raising(r): raise pymol.CmdException
         return r
         
-    def distance(name=None,selection1="(pk1)",
-                 selection2="(pk2)",cutoff=None,
-                 mode=None,zoom=0,
-                 width=None,length=None,
-                 gap=None,label=1,quiet=1,
-                 reset=0,state=0,_self=cmd):
+    def distance(name=None, selection1="(pk1)",
+                 selection2="(pk2)", cutoff=None,
+                 mode=None, zoom=0,
+                 width=None, length=None,
+                 gap=None, label=1, quiet=1,
+                 reset=0, state=0, _self=cmd):
         '''
 DESCRIPTION
 
-    "distance" creates a new distance object between two
-    selections.  It will display all distances within the cutoff.
+    "distance" creates a new distance object between two selections.
 
 USAGE
+    
+    distance [name [, selection1 [, selection2 [, cutoff [, mode ]]]]]
 
-    distance 
-    distance (selection1), (selection2)
-    distance name = (selection1), (selection1) [,cutoff [,mode] ]
+ARGUMENTS
 
-    name = name of distance object 
-    selection1, selection2 = atom selections
-    cutoff = maximum distance to display
-    mode = 0 (default)
+    name = string: name of the distance object to create
 
-PYMOL API
+    selection1 = string: first atom selection
 
-    cmd.distance( string name, string selection1, string selection2,
-             string cutoff, string mode )
-    returns the average distance between all atoms/frames
+    selection2 = string: second atom selection
+
+    cutoff = float: longest distance to show 
+    
+    mode = 0: all interatomic distances
+
+    mode = 1: only bond distances
+
+    mode = 2: only show polar contact distances
+
+EXAMPLES
+
+    distance mydist, 14/CA, 29/CA
+
+    distance hbonds, all, all, 3.2, mode=2
 
 NOTES
 
@@ -338,6 +348,11 @@ NOTES
 
     "dist" alone will show distances between selections (pk1) and (pk1),
     which can be set using the PkAt mouse action (usually CTRL-middle-click).
+
+PYMOL API
+
+    cmd.distance(string name, string selection1, string selection2,
+                 string cutoff, string mode )
 
     '''
         # handle unnamed distance
