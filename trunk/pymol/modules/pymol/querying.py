@@ -137,15 +137,7 @@ DESCRIPTION
 
 USAGE
 
-    angle 
-    angle name, selection1, selection2, selection3
-
-PYMOL API
-
-    cmd.angle(string name=None,
-                 string selection1="(pk1)",
-                 string selection2="(pk2)",
-                 string selection3="(pk3)")
+    angle [ name [, selection1 [, selection2 [, selection3 ]]]]
 
 NOTES
 
@@ -153,6 +145,14 @@ NOTES
     (pk2), (pk3) which can be set using the "PkAt" mouse action
     (typically, Ctrl-middle-click)
 
+PYMOL API
+
+    cmd.angle(string name, string selection1, string selection2,
+              string selection3)
+
+SEE ALSO
+
+    distance, dihedral
     '''
         
         r = DEFAULT_SUCCESS
@@ -221,16 +221,8 @@ DESCRIPTION
 
 USAGE
 
-    dihedral 
-    dihedral name, selection1, selection2, selection3, selection4
+    dihedral [ name [, selection1 [, selection2 [, selection3 [, selection4 ]]]]]
 
-PYMOL API
-
-    cmd.dihedral(string name=None,
-                     string selection1="(pk1)",
-                     string selection2="(pk2)",
-                     string selection3="(pk3)",
-                     string selection4="(pk4)")
 
 NOTES
 
@@ -238,6 +230,14 @@ NOTES
     (pk1), (pk2), (pk3), and (pk4), which can be set using the "PkAt"
     mouse action (typically, Ctrl-middle-click)
 
+PYMOL API
+
+    cmd.dihedral(string name, string selection1, string selection2,
+                 string selection3, string selection4)
+
+SEE ALSO
+
+    distance, angle
     '''
         r = DEFAULT_SUCCESS      
         if selection1=="(pk1)":
