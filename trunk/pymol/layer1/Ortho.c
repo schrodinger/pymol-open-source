@@ -1029,6 +1029,9 @@ void OrthoDetach(PyMOLGlobals *G,Block *block)
 #ifdef PYMOL_EVAL
 #include "OrthoEvalMessage.h"
 #endif
+#ifdef JYMOL_EVAL
+#include "OrthoJyMolEvalMessage.h"
+#endif
 #ifdef PYMOL_EDU
 #include "OrthoEduMessage.h"
 #endif
@@ -1274,6 +1277,9 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
  
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef PYMOL_EVAL
+      OrthoDrawEvalMessage(G);
+#endif
+#ifdef JYMOL_EVAL
       OrthoDrawEvalMessage(G);
 #endif
 #ifdef PYMOL_EDU
