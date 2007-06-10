@@ -5250,7 +5250,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
     all_states=true;
     state=-1;
   }
-  PRINTFD(I->Obj.G,FB_ObjectMolecule)
+  PRINTFD(G,FB_ObjectMolecule)
     "ObjMolTransSele-Debug: state %d\n",state
     ENDFD;
   while(1) {
@@ -5262,7 +5262,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
     if(state<I->NCSet) {
       cs = I->CSet[state];
       if(cs) {
-        int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,
+        int use_matrices = SettingGet_b(G,I->Obj.Setting,
                                         NULL,cSetting_matrix_mode);
 
         if(global && !homogenous) { /* convert matrix to homogenous */
@@ -5316,7 +5316,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
           for(a=0;a<I->NAtom;a++) {
             s=ai->selEntry;
             if(!(ai->protekted==1))
-              if(SelectorIsMember(I->Obj.G,s,sele))
+              if(SelectorIsMember(G,s,sele))
                 {
                   if(homogenous) 
                     CoordSetTransformAtomR44f(cs,a,matrix);
@@ -5346,7 +5346,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
         }
         if(flag) {
           cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
-          ExecutiveUpdateCoordDepends(I->Obj.G,I);
+          ExecutiveUpdateCoordDepends(G,I);
         }
       }
     }
@@ -5358,7 +5358,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
   if(log) {
     OrthoLineType line;
     WordType sele_str = ",'";
-    logging = (int)SettingGet(I->Obj.G,cSetting_logging);
+    logging = (int)SettingGet(G,cSetting_logging);
     if(sele>=0) {
       strcat(sele_str,sname);
       strcat(sele_str,"'");
@@ -9560,18 +9560,18 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
     if(state<0) state=0;
     if(I->NCSet==1) state=0;
     state = state % I->NCSet;
-    if((!I->CSet[state])&&(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_all_states)))
+    if((!I->CSet[state])&&(SettingGet_b(G,I->Obj.Setting,NULL,cSetting_all_states)))
       state=0;
     cs = I->CSet[state];
     if(cs) {
       result = CoordSetMoveAtom(I->CSet[state],index,v,mode);
       cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
-      ExecutiveUpdateCoordDepends(I->Obj.G,I);
+      ExecutiveUpdateCoordDepends(G,I);
     }
   }
   if(log) {
     OrthoLineType line,buffer;
-    if(SettingGet(I->Obj.G,cSetting_logging)) {
+    if(SettingGet(G,cSetting_logging)) {
       ObjectMoleculeGetAtomSele(I,index,buffer);
       sprintf(line,"cmd.translate_atom(\"%s\",%15.9f,%15.9f,%15.9f,%d,%d,%d)\n",
               buffer,v[0],v[1],v[2],state+1,mode,0);
