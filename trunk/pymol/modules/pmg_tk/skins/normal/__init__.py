@@ -126,7 +126,7 @@ class Normal(PMGSkin):
             Frame,self.commandFrame,bd=0)
         row1.pack(side=TOP,fill=BOTH,expand=YES)
         btn_reset = self.buttonAdd(row1,'Reset',lambda s=self: s.cmd.do("_ reset"))
-        btn_reset = self.buttonAdd(row1,'Zoom',lambda s=self: s.cmd.do("_ zoom animate=1"))
+        btn_reset = self.buttonAdd(row1,'Zoom',lambda s=self: s.cmd.do("_ zoom animate=-1"))
         btn_rtrace = self.buttonAdd(row1,'Draw',lambda s=self: s.cmd.do("_ draw"))        
         btn_rtrace = self.buttonAdd(row1,'Ray',lambda s=self: s.cmd.do("_ ray async=1"))
         btn_reset = self.buttonAdd(row1,'Rock',lambda s=self: s.cmd.do("_ rock"))
@@ -1430,31 +1430,31 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Zoom', 'command', '4 Angstrom Sphere',
                                          label='4 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,4,animate=1"))
+                                         command = lambda s=self: s.cmd.do("_ zoom center,4,animate=-1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', '6 Angstrom Sphere',
                                          label='6 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,6,animate=1"))
+                                         command = lambda s=self: s.cmd.do("_ zoom center,6,animate=-1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', '8 Angstrom Sphere',
                                          label='8 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,8,animate=1"))
+                                         command = lambda s=self: s.cmd.do("_ zoom center,8,animate=-1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', '12 Angstrom Sphere',
                                          label='12 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,12,animate=1"))
+                                         command = lambda s=self: s.cmd.do("_ zoom center,12,animate=-1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', '20 Angstrom Sphere',
                                          label='20 Angstrom Sphere',
-                                         command = lambda s=self: s.cmd.do("_ zoom center,20,animate=1"))
+                                         command = lambda s=self: s.cmd.do("_ zoom center,20,animate=-1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', 'All',
                                          label='All',
-                                         command = lambda s=self: s.cmd.do("_ zoom all,animate=1"))
+                                         command = lambda s=self: s.cmd.do("_ zoom all,animate=-1"))
 
         self.menuBar.addmenuitem('Zoom', 'command', 'Complete',
                                          label='Complete',
-                                         command = lambda s=self: s.cmd.do("_ zoom all,complete=1,animate=1"))
+                                         command = lambda s=self: s.cmd.do("_ zoom all,complete=1,animate=-1"))
 
         self.menuBar.addcascademenu('Display', 'Clip', 'Clip',
                                              label='Clip')
