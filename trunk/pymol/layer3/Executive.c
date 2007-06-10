@@ -7172,7 +7172,9 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
       switch(stereo_mode) {
       case 1: /* hardware stereo-in-a-window*/
         SceneSetStereo(G,flag);
-		PSGIStereo(G,flag); /* does this have any effect anymore? */
+#ifndef _PYMOL_NOPY
+	PSGIStereo(G,flag); /* does this have any effect anymore? */
+#endif
         break;
       case 2: /* cross-eye stereo*/
       case 3: /* wall-eye */
@@ -14216,13 +14218,15 @@ int ExecutiveReinitialize(PyMOLGlobals *G,int what,char *pattern)
       MovieReset(G);
       EditorInactivate(G);
       ControlRock(G,0);
-      
+
+#ifndef _PYMOL_NOPY      
       blocked = PAutoBlock(G);
       PRunStringInstance(G,"cmd.view('*','clear')");
       PRunStringInstance(G,"cmd.scene('*','clear')");
       WizardSet(G,NULL,false);
       PAutoUnblock(G,blocked);
-      
+#endif
+
       SculptCachePurge(G);
       SceneReinitialize(G);
       SelectorReinit(G);

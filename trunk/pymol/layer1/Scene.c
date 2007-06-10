@@ -615,9 +615,11 @@ void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem)
 
 void SceneCleanupStereo(PyMOLGlobals *G)
 {
+#ifndef _PYMOL_NOPY
   register CScene *I=G->Scene;  
   if(I->StereoMode==1)
     PSGIStereo(G,0);
+#endif
 }
 
 void ScenePrepareUnitContext(PyMOLGlobals *G,SceneUnitContext *context,int width,int height)
@@ -5623,12 +5625,14 @@ void SceneRay(PyMOLGlobals *G,
                    I->FrontSafe,I->BackSafe,fov,angle,antialias);
       if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
         strcpy(prefix,SettingGet_s(G,NULL,NULL,cSetting_batch_prefix));
+#ifndef _PYMOL_NOPY
         if(PPovrayRender(G,headerVLA,charVLA,prefix,ray_width,
                          ray_height,antialias)) {
           strcat(prefix,".png");
           SceneLoadPNG(G,prefix,false,0,false);
           I->DirtyFlag=false;
         }
+#endif
         VLAFreeP(charVLA);
         VLAFreeP(headerVLA);
       } else { /* get_povray mode */

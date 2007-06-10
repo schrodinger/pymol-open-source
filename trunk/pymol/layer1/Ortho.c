@@ -830,9 +830,11 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
       }
       break;
     case 22: /* CTRL V -- paste */
+#ifndef _PYMOL_NOPY
       PBlockAndUnlockAPI(G);
       PRunStringInstance(G,"cmd.paste()");
       PLockAPIAndUnblock(G);
+#endif
       break;
 	 default:
       OrthoKeyControl(G,(unsigned char)(k+64));
