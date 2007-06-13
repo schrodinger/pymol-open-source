@@ -9553,8 +9553,8 @@ void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level,int state)
 /*========================================================================*/
 int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode,int log)
 {
-  PyMOLGlobals *G=I->Obj.G;
   int result = 0;
+  PyMOLGlobals *G=I->Obj.G;
   CoordSet *cs;
   if(!(I->AtomInfo[index].protekted==1)) {
     if(state<0) state=0;

@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Ray.h"
 #include"Setting.h"
 #include"PConv.h"
+#include"OVLexicon.h"
 
 void ViewElemCopy(PyMOLGlobals *G,CViewElem *src,CViewElem *dst)
 {

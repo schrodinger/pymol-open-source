@@ -88,6 +88,8 @@ CSymmetry *SymmetryNewFromPyList(PyMOLGlobals *G,PyObject *list)
   return(I);
 }
 
+#ifndef _PYMOL_NOPY
+#ifdef _PYMOL_XRAY
 static void SymmetryDump44f(PyMOLGlobals *G,float *m,char *prefix)
 {
   if(prefix) {
@@ -102,13 +104,15 @@ static void SymmetryDump44f(PyMOLGlobals *G,float *m,char *prefix)
     PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[12],m[13],m[14],m[15] ENDF(G);
   }
 }
+#endif
+#endif
 
 int SymmetryAttemptGeneration(CSymmetry *I,int quiet)
 {
-  PyMOLGlobals *G = I->G;
   int ok = false;
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_XRAY
+  PyMOLGlobals *G = I->G;
   PyObject *mats;
   int a,l;
   CrystalUpdate(I->Crystal);

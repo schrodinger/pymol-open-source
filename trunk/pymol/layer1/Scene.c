@@ -5349,6 +5349,7 @@ void SceneRay(PyMOLGlobals *G,
               G3dPrimitive **g3d,int show_timing,
               int antialias)
 {
+
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
   CRay *ray =NULL;
@@ -5416,7 +5417,6 @@ void SceneRay(PyMOLGlobals *G,
   aspRat = ((float) ray_width) / ((float) ray_height);
 
   while(1) {
-
     /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
     identity44f(rayView);
 
@@ -5500,6 +5500,7 @@ void SceneRay(PyMOLGlobals *G,
     
     height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));	 
     width = height*aspRat;
+
     
     OrthoBusyFast(G,0,20);
     
@@ -5515,21 +5516,28 @@ void SceneRay(PyMOLGlobals *G,
       pixel_scale_value *= ((float)ray_height)/I->Height;
 
       if(ortho) {
+        const float _1 = 1.0F;
         RayPrepare(ray,-width,width,-height,height,
                    I->FrontSafe,I->BackSafe,
                    fov, I->Pos, 
                    rayView,I->RotMatrix,aspRat,
                    ray_width, ray_height, 
                    pixel_scale_value, true,
-                   1.0F,1.0F,((float)ray_height)/I->Height);
+                   _1, _1, /* gcc 3.2.3 blows chunks if these are 1.0F */
+                   ((float)ray_height)/I->Height);
+
       } else {        
         float back_ratio;
         float back_height;
         float back_width;
         float pos;
-        float fov=SettingGet(G,cSetting_field_of_view);
+        float fov = SettingGet(G,cSetting_field_of_view);
         pos = I->Pos[2];
-        if((-pos)<I->FrontSafe) pos = -I->FrontSafe;
+
+        if((-pos)<I->FrontSafe) {
+          pos = -I->FrontSafe;
+        }
+
         back_ratio = -I->Back/pos;
         back_height = back_ratio*height;
         back_width = aspRat * back_height;
@@ -5546,7 +5554,6 @@ void SceneRay(PyMOLGlobals *G,
                    ((float)ray_height)/I->Height);
       }
     }
-    
     {
       RenderInfo info;
       UtilZeroMem(&info,sizeof(RenderInfo));
@@ -5762,18 +5769,19 @@ void SceneRay(PyMOLGlobals *G,
   if(mode!=2) { /* don't show timings for tests */
     accumTiming += timing; 
     
-      if(show_timing && !quiet) {
-        PRINTFB(G,FB_Ray,FB_Details)
-          " Ray: render time: %4.2f sec. = %3.1f frames/hour (%4.2f sec. accum.).\n", 
-          timing,3600/timing, 
-          accumTiming 
-          ENDFB(G);
-      }
+    if(show_timing && !quiet) {
+      PRINTFB(G,FB_Ray,FB_Details)
+        " Ray: render time: %4.2f sec. = %3.1f frames/hour (%4.2f sec. accum.).\n", 
+        timing,3600/timing, 
+        accumTiming 
+        ENDFB(G);
+    }
+  }
+  
+  if(mode!=3) {
+    OrthoDirty(G);
   }
 
-  if(mode!=3)
-    OrthoDirty(G);
-  
 }
 /*========================================================================*/
 void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
@@ -5811,7 +5819,6 @@ void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
 int SceneRovingCheckDirty(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
-
   return(I->RovingDirtyFlag);
 }
 
