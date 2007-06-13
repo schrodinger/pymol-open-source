@@ -31,8 +31,8 @@ Z* -------------------------------------------------------------------
 
 #ifdef _PYMOL_NOPY
 
-#define PRunStringInstance(x)
-#define PRunStringModule(x)
+#define PRunStringInstance(G,x)
+#define PRunStringModule(G,x)
 
 #define PAutoBlock(G) 1
 #define PAutoUnblock(G,a)
@@ -65,8 +65,8 @@ Z* -------------------------------------------------------------------
 #define PIsGlutThread() 1
 #define PComplete(G,a,b) 0
 
-#define PSGIStereo(a)
-#define PPovrayRender(a,b,c,d,e,f) 0
+#define PSGIStereo(G,a)
+#define PPovrayRender(a,b,c,d,e,f,g) 0
 
 #define PTruthCallStr(a,b,c)
 
