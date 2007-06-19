@@ -436,8 +436,10 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
     " SculptMeasureObject-Debug: entered.\n"
     ENDFD;
 
-  if(match_state==-1)
+  if(match_state<0)
     match_state = state;
+  if(state<0)
+    state = ObjectGetCurrentState(&obj->Obj,true);
 
   ShakerReset(I->Shaker);
 

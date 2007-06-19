@@ -5769,9 +5769,9 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
   return(c);
 }
 
-
 /*========================================================================*/
-int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float cutoff,int state,
+int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
+		       float cutoff,int state,
                        int neutral,int shift,float shift_power)
 {
   register CSelector *I=G->Selector;

@@ -55,13 +55,11 @@ DESCRIPTION
 
 USAGE
 
-    select name, selection
-
-    select ( selection )
+    select name, selection [, enable [, quiet [, merge [, state [, domain ]]]]]
 
 ARGUMENTS
 
-    name = a unique name for the selection (default: sele)
+    name = a unique name for the selection
 
     selection = a selection-expression
 

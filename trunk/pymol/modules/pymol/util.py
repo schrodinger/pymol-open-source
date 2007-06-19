@@ -159,7 +159,7 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
     if round(formal)!=round(partial):
         print " WARNING: formal and partial charge sums don't match -- there is a problem!"
     
-def protein_vacuum_esp(selection, mode=2,border=10.0,quiet = 1,_self=cmd):
+def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
     pymol=_self._pymol
     cmd=_self
 

@@ -99,8 +99,22 @@ if __name__=='pymol.creating':
     def map_new(name, type='gaussian', grid=None, selection="(all)",
                 buffer=None, box=None, state=0, quiet=1, zoom=0,
                 normalize=-1, clamp=[1.0,-1.0], _self=cmd):
-        
+
         '''
+
+DESCRIPTION
+
+    "map_new" creates a map object using one of the built-in map
+    generation routines.
+
+    map_new 
+
+ARGUMENTS
+
+        name = string: name of the map object to create or modify
+	
+	type = vdw, gaussian, gaussian_max, coulomb, coulomb_neutral, coulomb_local
+
         state > 0: do indicated state
         state = 0: independent states in independent extents
         state = -1: current global state
@@ -265,7 +279,9 @@ DESCRIPTION
 
 USAGE
 
-    isomesh name, map, level [,(selection) [,buffer [,state [,carve ]]]]
+    isomesh name, map, level [, selection [, buffer [, state [, carve ]]]]
+
+ARGUMENTS
 
     name = the name for the new mesh isosurface object.
 
@@ -325,7 +341,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
-    def slice_new(name,map,state=1,source_state=0,_self=cmd):
+    def slice_new(name, map, state=1, source_state=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -334,6 +350,8 @@ DESCRIPTION
 USAGE
 
     slice_map name, map, [opacity, [resolution, [state, [source_state]]]]
+
+ARGUMENTS
 
     name = the name for the new slice object.
 
@@ -371,7 +389,9 @@ DESCRIPTION
 
 USAGE
 
-    isosurface name, map, level [,(selection) [,buffer [,state [,carve ]]]]
+    isosurface name, map, level [, selection [, buffer [, state [, carve ]]]]
+
+ARGUMENTS
 
     name = the name for the new mesh isosurface object.
 
@@ -431,6 +451,8 @@ DESCRIPTION
 USAGE
 
     isodot name = map, level [,(selection) [,buffer [, state ] ] ] 
+
+ARGUMENTS
 
     map = the name of the map object to use.
 
@@ -505,7 +527,9 @@ DESCRIPTION
 
 USAGE
 
-    gradient name = map, [ minimum, [ maximum, [,(selection) [,buffer [, state ] ] ] ] ]
+    gradient name = map, [ minimum, [, maximum [, selection [, buffer [, state ]]]]]
+
+ARGUMENTS
 
     map = the name of the map object to use.
 
@@ -547,17 +571,19 @@ SEE ALSO
 DESCRIPTION
 
     "copy" creates a new object that is an identical copy of an
-    existing object
+    existing object.
 
 USAGE
 
     copy target, source
 
-    copy target = source         # (DEPRECATED)
+NOTES
+
+    Currently, this command only works for molecular objects.
 
 PYMOL API
 
-    cmd.copy(string target,string source)
+    cmd.copy(string target, string source)
 
 SEE ALSO
 
@@ -576,12 +602,12 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "symexp" creates all symmetry related objects for the specified object
-    that occurs within a cutoff about an atom selection.  
+    "symexp" creates all symmetry-related objects for the specified
+    object that occur within a cutoff about an atom selection.
 
 USAGE
 
-    symexp prefix, object, (selection), cutoff
+    symexp prefix, object, selection, cutoff
 
 NOTES
 
@@ -606,12 +632,12 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException                           
         return r
 
-    def fragment(name,object=None,origin=1,zoom=0,quiet=1,_self=cmd):
+    def fragment(name, object=None, origin=1, zoom=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
-    "fragment" retrieves a 3D structure from the fragment library, which is currently
-    pretty meager (just amino acids).
+    "fragment" retrieves a 3D structure from the fragment library,
+    which is currently pretty meager (just amino acids).
 
 USAGE
 
@@ -657,19 +683,19 @@ DESCRIPTION
     "create" creates a new molecule object from a selection.  It can
     also be used to create states in an existing object.
 
-    NOTE: this command has not yet been throughly tested.
-
 USAGE
 
     create name, (selection) [,source_state [,target_state ] ]
 
-    create name = (selection) [,source_state [,target_state ] ]
-      # (DEPRECATED)
+ARGUMENTS
 
-    name = object to create (or modify)
-    selection = atoms to include in the new object
-    source_state (default: 0 - copy all states)
-    target_state (default: 0)
+    name = string: name of object to create or modify
+
+    selection = string: atoms to include in the new object
+
+    source_state = integer: {default: 0 -- copy all states}
+
+    target_state = integer: {default: 0}
 
 PYMOL API
 
@@ -677,8 +703,9 @@ PYMOL API
 
 NOTES
 
-    If the source and target states are zero (default), all states will
-    be copied.  Otherwise, only the indicated states will be copied.
+    If the source and target states are zero (default), then all
+    states will be copied.  Otherwise, only the indicated states will
+    be copied.
 
 SEE ALSO
 
