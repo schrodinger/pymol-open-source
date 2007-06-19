@@ -1,0 +1,37 @@
+# This script reads a HOLE ".vmd_tri" file into PyMOL
+
+# all you need to do is set the filename path
+
+input = "example.vmd_tri"
+
+# and then run PyMOL using this script:
+#
+# pymol hole_vmd_tri.pym
+
+import string
+from pymol.cgo import *
+from pymol import cmd
+
+cgo = [ BEGIN, TRIANGLES ]
+
+for line in open(input).readlines():
+    field = string.split(string.strip(line))
+    if len(field)==32:
+        if field[0] == 'draw' and field[1] == 'trinorm':
+            cgo.append( NORMAL )
+            cgo.extend( map(float, field[18:21]) )
+            cgo.append( VERTEX )
+            cgo.extend( map(float, field[3:6]) )
+            cgo.append( NORMAL )
+            cgo.extend( map(float, field[23:26]) )
+            cgo.append( VERTEX )
+            cgo.extend( map(float, field[8:11]) )
+            cgo.append( NORMAL )            
+            cgo.extend( map(float, field[28:31]) )            
+            cgo.append( VERTEX )            
+            cgo.extend( map(float, field[13:16]) )
+
+cgo.append(END)
+
+cmd.load_cgo(cgo, "hole")
+
