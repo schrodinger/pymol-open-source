@@ -27,7 +27,7 @@ if __name__=='pymol.editing':
         '''
 DESCRIPTION
 
-    "sculpt_purge" is not officially supported in PyMOL 1.x.
+    "sculpt_purge" is an unsupported feature.
     
     '''
         r = DEFAULT_ERROR
@@ -39,11 +39,11 @@ DESCRIPTION
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def sculpt_deactivate(object,_self=cmd):
+    def sculpt_deactivate(object, _self=cmd):
         '''
 DESCRIPTION
 
-    "sculpt_deactivate" is not officially supported in PyMOL 1.x.
+    "sculpt_deactivate" is an unsupported feature.
 
     '''
         r = 0
@@ -55,17 +55,21 @@ DESCRIPTION
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def sculpt_activate(object,state=0,match_state=-1,match_by_segment=0,_self=cmd):
+    def sculpt_activate(object, state=0, match_state=-1, 
+                        match_by_segment=0, _self=cmd):
         '''
 DESCRIPTION
 
-    "sculpt_deactivate" is not officially supported in PyMOL 1.x.
+    "sculpt_deactivate" is an unsupported feature.
 
     '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.sculpt_activate(_self._COb,str(object),int(state)-1,int(match_state)-1,int(match_by_segment))
+            r = _cmd.sculpt_activate(_self._COb,str(object),
+                                     int(state)-1,
+                                     int(match_state)-1,
+                                     int(match_by_segment))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
@@ -80,7 +84,7 @@ DESCRIPTION
 
 USAGE
 
-    split_states object [, first [,last [, prefix ]]]
+    split_states object [, first [, last [, prefix ]]]
     
 EXAMPLE
 
@@ -116,11 +120,11 @@ EXAMPLE
                     break
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
-    
-    def sculpt_iterate(object,state=0,cycles=10,_self=cmd):
+     
+    def sculpt_iterate(object, state=0, cycles=10, _self=cmd):
         '''
         
-    "sculpt_iterate" is not officially supported in PyMOL 1.x.
+    "sculpt_iterate" is an unsupported feature.
     
     '''
         r = DEFAULT_ERROR
@@ -132,21 +136,17 @@ EXAMPLE
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def smooth(selection="all",passes=1,window=5,first=1,last=0,ends=0,quiet=1,_self=cmd):
+    def smooth(selection="all", passes=1, window=5, first=1,
+               last=0, ends=0, quiet=1, _self=cmd):
+
         '''
 DESCRIPTION
 
-    "smooth" performs a window average over a series of states.  This
-    type of averaging is often used to suppress high-frequency vibrations
-    in a molecular dynamics trajectory.
+    "smooth" performs a window average of coordinate states.  
 
 USAGE
 
-    smooth [ selection [, passes [,window [,first [,last [, ends]]]]]]
-
-SEE ALSO
-
-    load_traj
+    smooth [ selection [, passes [, window [, first [, last [, ends]]]]]]
 
 ARGUMENTS
 
@@ -155,12 +155,20 @@ ARGUMENTS
 
 NOTES
 
+    This type of averaging is often used to suppress high-frequency
+    vibrations in a molecular dynamics trajectory.
+
     This function is not memory efficient.  For reasons of
     flexibility, it uses two additional copies of every atomic
     coordinate for the calculation.  If you are memory-constrained in
     visualizing MD trajectories, then you may want to use an external
     tool such as ptraj to perform smoothing before loading coordinates
     into PyMOL.
+
+SEE ALSO
+
+    load_traj
+
     '''
         
         r = DEFAULT_ERROR
@@ -175,26 +183,28 @@ NOTES
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def set_symmetry(selection,a,b,c,alpha,beta,gamma,spacegroup="P1",_self=cmd):
+    def set_symmetry(selection, a, b, c, alpha, beta, gamma, spacegroup="P1", _self=cmd):
+
         '''
 DESCRIPTION
 
-    "set_symmetry" can be used to define or redefine the crystal
-    and spacegroup parameters for a molecule or map object.
+    "set_symmetry" defines or redefines the crystal and spacegroup
+    parameters for a molecule or map object.
 
 USAGE
 
     set_symmetry selection, a, b, c, alpha, beta, gamma, spacegroup
+
+NOTES
+
+    The new symmetry will be defined for every object referenced
+    by the selection.
 
 PYMOL API
 
     cmd.set_symmetry(string selection, float a, float b, float c,
           float alpha, float beta, float gamma, string spacegroup)
 
-NOTES
-
-    The new symmetry will be defined for every object referenced
-    by the selection.
         '''
         r = DEFAULT_ERROR
         selection = selector.process(selection)
@@ -213,7 +223,7 @@ NOTES
         '''
 DESCRIPTION
 
-    "set_name" can be used to change the name of an object or selection
+    "set_name" changes the name of an object or selection.
     
 USAGE
 
@@ -235,24 +245,24 @@ PYMOL API
         return r
 
 
-    def set_geometry(selection,geometry,valence,_self=cmd):
+    def set_geometry(selection, geometry, valence, _self=cmd):
         '''
 DESCRIPTION
 
     "set_geometry" changes PyMOL\'s assumptions about the proper valence
-    and geometry of the picked atom.
+    and geometry of atoms in the selection.
 
 USAGE
 
-    set_geometry geometry, valence
-
-PYMOL API
-
-    cmd.set_geometry(int geometry,int valence )
+    set_geometry selection, geometry, valence
 
 NOTES
 
     Immature functionality. See code for details.
+
+PYMOL API
+
+    cmd.set_geometry(string selection, int geometry, int valence)
 
 SEE ALSO
 
@@ -293,12 +303,12 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def push_undo(selection,state=0,_self=cmd):
+    def push_undo(selection, state=0, _self=cmd):
         '''
 DESCRIPTION
 
-    "push_undo" stores the currently conformations of objects in the
-    selection onto their individual kill rings.
+    "push_undo" stores the current conformations of objects in the
+    selection onto their individual undo rings.
 
 USAGE
 
@@ -344,20 +354,16 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException                     
         return r
 
-    def bond(atom1="(pk1)",atom2="(pk2)",order=1,edit=1,_self=cmd):
+    def bond(atom1="(pk1)", atom2="(pk2)", order=1, edit=1, _self=cmd):
         '''
 DESCRIPTION
 
-    "bond" creates a new bond between two selections, each of
-    which should contain one atom.
+    "bond" creates a new bond between two selections, each of which
+    should contain one atom.
 
 USAGE
 
     bond [atom1, atom2 [,order]]
-
-PYMOL API
-
-    cmd.bond(string atom1, string atom2)
 
 NOTES
 
@@ -365,6 +371,10 @@ NOTES
 
     The default behavior is to create a bond between the (lb) and (rb)
     selections.
+
+PYMOL API
+
+    cmd.bond(string atom1, string atom2)
 
 SEE ALSO
 
@@ -382,7 +392,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def invert(quiet=1,_self=cmd):
+    def invert(quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -393,14 +403,13 @@ USAGE
 
     invert 
 
-PYMOL API
-
-    cmd.invert( )
-
-NOTE
+NOTES
 
     The invert function is usually bound to CTRL-E in Editing Mode.
 
+PYMOL API
+
+    cmd.invert( )
 
     '''
         r = DEFAULT_ERROR
@@ -414,7 +423,7 @@ NOTE
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def unbond(atom1="(pk1)",atom2="(pk2)",_self=cmd):
+    def unbond(atom1="(pk1)", atom2="(pk2)", _self=cmd):
         '''
 DESCRIPTION
 
@@ -424,9 +433,15 @@ USAGE
 
     unbond atom1,atom2
 
+ARGUMENTS
+
+    atom1 = string {default: (pk1)}
+
+    atom2 = string {default: (pk2)}
+
 PYMOL API
 
-    cmd.unbond(selection atom1="(pk1)",selection atom2="(pk2)")
+    cmd.unbond(selection atom1, selection atom2)
 
 SEE ALSO
 
@@ -445,23 +460,24 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def remove(selection,quiet=1,_self=cmd):
+    def remove(selection, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
-    "remove" eleminates a selection of atoms from models.
+    "remove" eleminates the atoms in a selection from their respective
+    molecular objects.
 
 USAGE
 
-    remove (selection)
+    remove selection
+
+EXAMPLES
+
+    remove resi 124 
 
 PYMOL API
 
     cmd.remove( string selection )
-
-EXAMPLES
-
-    remove ( resi 124 )
 
 SEE ALSO
 
@@ -485,16 +501,12 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "remove_picked" removes the atom or bond currently
-    picked for editing. 
+    "remove_picked" removes the atom or bond currently picked for
+    editing.
 
 USAGE
 
-    remove_picked [hydrogens]
-
-PYMOL API
-
-    cmd.remove_picked(integer hydrogens=1)
+    remove_picked [ hydrogens ]
 
 NOTES
 
@@ -503,6 +515,10 @@ NOTES
 
     By default, attached hydrogens will also be deleted unless
     hydrogen-flag is zero.
+
+PYMOL API
+
+    cmd.remove_picked(integer hydrogens)
 
 SEE ALSO
 
@@ -528,10 +544,6 @@ USAGE
 
     cycle_valence [ h_fill ]
 
-PYMOL API
-
-    cmd.cycle_valence(int h_fill)
-
 EXAMPLES
 
     cycle_valence
@@ -543,6 +555,10 @@ NOTES
     satisfy valence requirements.
 
     This function is usually connected to the DELETE key and "CTRL-W".
+
+PYMOL API
+
+    cmd.cycle_valence(int h_fill)
 
 SEE ALSO
 
@@ -564,7 +580,7 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "attach" adds a single atom onto the picked atom.
+    "attach" adds a single atom on to the picked atom.
 
 USAGE
 
@@ -573,10 +589,6 @@ USAGE
 PYMOL API
 
     cmd.attach( element, geometry, valence )
-
-NOTES
-
-    Immature functionality.  See code for details.
 
     '''
         r = DEFAULT_ERROR
@@ -589,22 +601,18 @@ NOTES
         return r
 
 
-    def fuse(selection1="(pk1)",selection2="(pk2)",mode=0,recolor=1,move=1,_self=cmd):
+    def fuse(selection1="(pk1)", selection2="(pk2)", mode=0, recolor=1, move=1, _self=cmd):
         '''
 DESCRIPTION
 
     "fuse" joins two objects into one by forming a bond.  A copy of
     the object containing the first atom is moved so as to form an
-    approximately resonable bond with the second, and is then merged
-    with the first object.
+    approximately resonable bond with the second, and that copy is
+    then merged with the first object.
 
 USAGE
 
-    fuse (selection1), (selection2)
-
-PYMOL API
-
-    cmd.fuse( string selection1="(pk1)", string selection2="(pk2)" )
+    fuse [ selection1 [, selection2 ]]
 
 NOTES
 
@@ -612,6 +620,10 @@ NOTES
     The atoms can both be hydrogens, in which case they are
     eliminated, or they can both be non-hydrogens, in which
     case a bond is formed between the two atoms.
+
+PYMOL API
+
+    cmd.fuse(string selection1, string selection2)
 
 SEE ALSO
 
@@ -662,7 +674,27 @@ SEE ALSO
 
     def drag(selection=None, wizard=1, edit=1, quiet=1,_self=cmd):
         '''
-        '''
+DESCRIPTION
+
+    "drag" activates dragging for a selection, enabling the user to
+    manipulate the atom coordinates of the atoms using mouse controls
+    similar to those for controlling the camera.
+
+USAGE
+
+    drag [ selection ]
+
+ARGUMENTS
+  
+    selection = string: atoms to drag.  If not provided, and dragging
+    is active, then dragging is instead deactivated.
+
+NOTES
+
+    Currently, the selection of atom to drag must all reside in a
+    single molecular object.
+
+'''
         quiet = int(quiet)
         if (selection!=None) and (selection!=""):
             selection = selector.process(selection)
@@ -698,26 +730,29 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
         
-    def edit(selection1='',selection2='none',selection3='none',
-                selection4='none',pkresi=0, pkbond=1, quiet=1,_self=cmd):
+    def edit(selection1='', selection2='none', selection3='none',
+             selection4='none', pkresi=0, pkbond=1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
-    "edit" picks an atom or bond for editing.
+    "edit" picks atoms and bond for editing.
 
 USAGE
 
-    edit (selection) [ ,(selection) ]
-
-PYMOL API
-
-    cmd.edit( string selection  [ ,string selection ] )
+    edit selection1 [, selection2 [, selection3 [, selection4 [, pkresi [, pkbond ]]]]] 
 
 NOTES
 
     If only one selection is provided, an atom is picked.
+
     If two selections are provided, the bond between them
-    is picked (if one exists).
+    is picked (by default, if one exists).
+
+PYMOL API
+
+    cmd.edit(string selection1, string selection2,
+             string selection3, string selection4,
+             int pkresi, int pkbond, int quiet)
 
 SEE ALSO
 
@@ -780,25 +815,24 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def h_fill(quiet=1,_self=cmd):
+    def h_fill(quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
-    "h_fill" removes and replaces hydrogens on the atom
-    or bond picked for editing.  
+    "h_fill" removes and replaces hydrogens on the atom or bond picked
+    for editing.
 
 USAGE
 
     h_fill
 
+NOTES
+
+    This is useful for fixing hydrogens after changing bond valences.
+
 PYMOL API
 
     cmd.h_fill()
-
-NOTES
-
-    This is useful for fixing hydrogens after changing
-    bond valences.
 
 SEE ALSO
 
@@ -834,12 +868,22 @@ under development...
         '''
 DESCRIPTION
 
-    "h_add" uses a primitive algorithm to add hydrogens
-    onto a molecule.
+    "h_add" uses a rudimentary algorithm to add hydrogens onto a
+    molecule based on current valences.
 
 USAGE
 
-    h_add (selection)
+    h_add selection
+
+ARGUMENTS
+
+    selection = string {default: (all)}
+
+NOTES
+
+    Because PDB files do not normally contain bond valences for
+    ligands and other nonstandard components, it may be necessary to
+    manually correct ligand conformations before adding hydrogens.
 
 PYMOL API
 
@@ -894,8 +938,8 @@ SEE ALSO
         return r
 
 
-    def replace(element, geometry, valence,
-                h_fill=1, name="", quiet=1,_self=cmd):
+    def replace(element, geometry, valence, h_fill=1, name="", 
+		quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -903,16 +947,16 @@ DESCRIPTION
 
 USAGE
 
-    replace element, geometry, valence [,h_fill [,name ]]
-
-PYMOL API
-
-    cmd.replace(string element, int geometry, int valence,
-                    int h_fill = 1, string name = "" )
+    replace element, geometry, valence [, h_fill [, name ]]
 
 NOTES
 
     Immature functionality. See code for details.
+
+PYMOL API
+
+    cmd.replace(string element, int geometry, int valence, int h_fill,
+                string name)
 
 SEE ALSO
 
@@ -932,7 +976,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def rename(object,force=0,_self=cmd):
+    def rename(selection, force=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -940,26 +984,11 @@ DESCRIPTION
 
 USAGE
 
-    CURRENT
-        rename object-name [ ,force ]
-
-        force = 0 or 1 (default: 0)
-
-    PROPOSED
-        rename object-or-selection,force   
+    rename selection [, force ]
 
 PYMOL API
 
-    CURRENT
-        cmd.rename( string object-name, int force )
-
-    PROPOSED
-        cmd.rename( string object-or-selection, int force )
-
-NOTES
-
-    To regerate only some atom names in a molecule, first clear them
-    with an "alter (sele),name=''" commmand, then use "rename"
+    cmd.rename(string selection, int force )
 
 SEE ALSO
 
@@ -968,20 +997,36 @@ SEE ALSO
         r = DEFAULT_ERROR   
         try:
             _self.lock(_self)   
-            r = _cmd.rename(_self._COb,str(object),int(force))
+            r = _cmd.rename(_self._COb,str(selection),int(force))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
+    def dss(selection="(all)", state=0, context=None, preserve=0,
+            quiet=1, _self=cmd):
 
-    def dss(selection="(all)", state=0, context=None,
-            preserve=0, quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
     "dss" defines secondary structure based on backbone geometry
     and hydrogen bonding patterns.
+    
+USAGE
+
+    dss selection, state
+
+ARGUMENT
+
+    selection = string: {default: (all)}
+
+    state = integer: {default: 0 -- all states}
+    
+EXAMPLE
+
+    dss
+
+NOTES
 
     With PyMOL, heavy emphasis is placed on cartoon aesthetics, and so
     both hydrogen bonding patterns and backbone geometry are used in
@@ -996,18 +1041,6 @@ DESCRIPTION
     distorted helices, which PyMOL tends to tolerate.
     
     WARNING: This algorithm has not yet been rigorously validated.
-    
-USAGE
-
-    dss selection, state
-
-    state = state-index or 0 for all states
-    
-EXAMPLES
-
-    dss
-
-NOTES
 
     If you dislike one or more of the assignments made by dss, you can
     use the alter command to make changes (followed by "rebuild").
@@ -1017,6 +1050,10 @@ NOTES
         alter pk1, ss=\'S\'
         alter 90/, ss=\'H\'
         rebuild
+
+PYMOL API
+
+    cmd.dss(string selection, int state)
         
         '''
         # preprocess selections
@@ -1036,8 +1073,8 @@ NOTES
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def alter(selection, expression, quiet=1,
-              space=None,_self=cmd):
+    def alter(selection, expression, quiet=1, space=None, _self=cmd):
+
         '''
 DESCRIPTION
 
@@ -1092,11 +1129,11 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def alter_list(object, expr_list, quiet=1, space=None,_self=cmd):
+    def alter_list(object, expr_list, quiet=1, space=None, _self=cmd):
         '''
 DESCRIPTION
 
-    "alter_list" is not complete or supported in PyMOL 1.x.
+    "alter_list" is an unsupported feature.
     
         '''
         #
@@ -1111,7 +1148,8 @@ DESCRIPTION
         return r
 
 
-    def iterate(selection,expression,quiet=1,space=None,_self=cmd):
+    def iterate(selection, expression, quiet=1, space=None, _self=cmd):
+
         '''
 DESCRIPTION
 
@@ -1120,7 +1158,7 @@ DESCRIPTION
 
 USAGE
 
-    iterate (selection),expression
+    iterate selection, expression
 
 EXAMPLES
 
@@ -1134,7 +1172,7 @@ EXAMPLES
     
 NOTES
 
-    Unlike with the "alter" comman3d, atomic properties cannot be
+    Unlike with the "alter" command, atomic properties cannot be
     altered.  For this reason, "iterate" is more efficient than
     "alter".
 
@@ -1142,6 +1180,7 @@ SEE ALSO
 
     iterate_state, alter, alter_state
         '''
+
         if space == None:
             space = _self.pymol.__dict__
         r = DEFAULT_ERROR
@@ -1157,7 +1196,8 @@ SEE ALSO
         return r
 
     def alter_state(state, selection, expression, quiet=1,
-                    space=None, atomic=1,_self=cmd):
+                    space=None, atomic=1, _self=cmd):
+
         '''
 DESCRIPTION
 
@@ -1171,14 +1211,16 @@ USAGE
 
 EXAMPLES
 
-    alter_state 1, (all), x=x+5
+    alter_state 1, all, x=x+5
     rebuild
     
 NOTES
 
     By default, most of the symbols from "alter" are available for use
-    on a read-only basis.  It is usually necessary to "rebuild"
-    representations once your alterations are completed.
+    on a read-only basis.  
+
+    It is usually necessary to "rebuild" representations once your
+    alterations are complete.
     
 SEE ALSO
 
@@ -1200,7 +1242,9 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def iterate_state(state,selection,expression,quiet=1,space=None,atomic=1,_self=cmd):
+    def iterate_state(state, selection, expression, quiet=1, 
+                      space=None, atomic=1, _self=cmd):
+
         '''
 DESCRIPTION
 
@@ -1236,36 +1280,29 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def translate(vector=[0.0,0.0,0.0],selection="all",
-                      state=0,camera=1,object=None,object_mode=0,_self=cmd):
+    def translate(vector=[0.0,0.0,0.0], selection="all", state=-1, 
+                  camera=1, object=None, object_mode=0, _self=cmd):
+
         '''
 DESCRIPTION
 
-    "translate" can be used to translate the atomic coordinates of a
-    molecular object.  Behavior differs depending on whether or not the
-    "object" parameter is specified.
-
-    If object is None, then translate translates atomic coordinates
-    according to the vector provided for the selection and in the state
-    provided.  All representation geometries will need to be
-    regenerated to reflect the new atomic coordinates.
-
-    If object is set to an object name, then selection and state are
-    ignored and instead of translating the atomic coordinates, the
-    object\'s overall representation display matrix is modified.  This
-    option is for use in animations only.
-
-    The "camera" option controls whether the camera or the model\'s
-    axes are used to interpret the translation vector.
+    "translate" translates the atomic coordinates of atoms in a
+    selection.  Alternatively, is modifies the matrix associated with
+    a particular object or object-state.
 
 USAGE
 
-    translate vector [,selection [,state [,camera [,object ]]]]
+    translate vector [, selection [, state [, camera [, object ]]]]
+
+ARGUMENTS
+
+    state = 0: then all states are affected.
+    state = -1: then only the current state
 
 PYMOL API
 
-    cmd.translate(list vector, string selection = "all", int state = 0,
-                      int camera = 1, string object = None)
+    cmd.translate(list vector, string selection, int state, int
+                  camera, string object)
 
 EXAMPLES
 
@@ -1273,8 +1310,22 @@ EXAMPLES
 
 NOTES
 
-    if state = 0, then only visible state(s) are affected.
-    if state = -1, then all states are affected.
+    "translate" can be used to translate the atomic coordinates of a
+    molecular object.  Behavior differs depending on whether or not
+    the "object" parameter is specified.
+
+    If object is None, then translate translates atomic coordinates
+    according to the vector provided for the selection and in the state
+    provided.  All representation geometries will need to be
+    regenerated to reflect the new atomic coordinates.
+
+    If object is set to an object name, then selection is ignored and
+    instead of translating the atomic coordinates, the object\'s
+    overall representation display matrix is modified.  This option is
+    for use in animations only.
+
+    The "camera" option controls whether the camera or the model\'s
+    axes are used to interpret the translation vector.
 
         '''
         r = DEFAULT_ERROR
@@ -1323,43 +1374,51 @@ NOTES
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def rotate(axis='x',angle=0.0,selection="all",
-                  state=0,camera=1,object=None,origin=None,object_mode=0,_self=cmd):
+    def rotate(axis='x', angle=0.0, selection="all", state=-1, camera=1, 
+               object=None, origin=None, object_mode=0, _self=cmd):
+        
         '''
 DESCRIPTION
 
-    "rotate" can be used to rotate the atomic coordinates of a
-    molecular object.  Behavior differs depending on whether or not the
-    "object" parameter is specified.
-
-    If object is None, then rotate rotates the atomic coordinates
-    according to the axes and angle for the selection and state
-    provided.  All representation geometries will need to be
-    regenerated to reflect the new atomic coordinates.
-
-    If object is set to an object name, then selection and state are
-    ignored and instead of translating the atomic coordinates, the
-    object\'s representation display matrix is modified.  This option
-    is for use in animations only.
+    "rotate" rotates the atomic coordinates of atoms in a selection.
+    Alternatively, it modifies the matrix associated with a particular
+    object or object state.
 
 USAGE
 
-    rotate axis, angle [,selection [,state [,camera [,object [,origin]]]]]
+    rotate axis, angle [, selection [, state [, camera [, object 
+        [, origin ]]]]]
+
+ARGUMENTS
+
+    state > 0: only the indicated state is modified
+
+    state = 0: all states are modified
+
+    state = -1: only current states are modified
     
-PYMOL API
-
-    cmd.rotate(list-or-string axis, float angle,
-               string selection = "all", int state = 0,
-                  int camera = 1, string object = None)
-
 EXAMPLES
 
     rotate x, 45, pept
 
 NOTES
 
-    if state = 0, then only visible state(s) are affected.
-    if state = -1, then all states are affected.
+    Behavior differs depending on whether or not the "object"
+    parameter is specified.
+
+    If object is None, then the atomic coordinates are modified
+    directly.  All representation geometries will need to be
+    regenerated to reflect the new atomic coordinates.
+
+    If object is set to an object name, then selection is
+    ignored and instead of translating the atomic coordinates, the
+    object\'s representation display matrix is modified.  This option
+    is for use in animations only.
+
+PYMOL API
+
+    cmd.rotate(list-or-string axis, float angle, string selection, 
+               int state, int camera, string object)
 
         '''
         r = DEFAULT_ERROR
@@ -1440,21 +1499,22 @@ NOTES
         return r
 
 
-    def set_title(object,state,text,_self=cmd):
+    def set_title(object, state, text, _self=cmd):
         '''
 DESCRIPTION
 
     "set_title" attaches a text string to the state of a particular
-    object which can be displayed when the state is active.  This is
-    useful for display the energies of a set of conformers.
+    object which can be displayed next to the object name when that
+    state is active.  This is useful for display the energies of a set
+    of conformers.
 
 USAGE
 
-    set_title object,state,text
+    set_title object, state, text
 
 PYMOL API
 
-    cmd.set_title(string object,int state,string text)
+    cmd.set_title(string object, int state, string text)
 
     '''
         r = DEFAULT_ERROR
@@ -1464,12 +1524,19 @@ PYMOL API
         finally:
             _self.unlock(r,_self)
 
-    def set_object_ttt(object,ttt,state=0,quiet=1,homogenous=0,_self=cmd):
+    def set_object_ttt(object, ttt, state=0, quiet=1, homogenous=0, 
+                       _self=cmd):
+        '''
+DESCRIPTION
+
+    "set_object_ttt" is an unsupported feature.
+
+        '''
         r = None
         if _self.is_string(ttt):
             ttt = safe_list_eval(str(ttt))
         if homogenous: # passed a homogenous matrix, so do the best we can
-            ttt = [
+            ttt = [ # NOTE: this appears to be incorrect...
                 ttt[ 0], ttt[ 4], ttt[ 8], 0.0,
                 ttt[ 1], ttt[ 5], ttt[ 9], 0.0,
                 ttt[ 2], ttt[ 6], ttt[10], 0.0,
@@ -1477,71 +1544,78 @@ PYMOL API
         try:
             _self.lock(_self)
             r = _cmd.set_object_ttt(_self._COb,str(object),
-                                            (
-                float(ttt[ 0]),
-                float(ttt[ 1]),
-                float(ttt[ 2]),
-                float(ttt[ 3]),            
-                float(ttt[ 4]),
-                float(ttt[ 5]),
-                float(ttt[ 6]),
-                float(ttt[ 7]),            
-                float(ttt[ 8]),
-                float(ttt[ 9]),
-                float(ttt[10]),
-                float(ttt[11]),            
-                float(ttt[12]),
-                float(ttt[13]),
-                float(ttt[14]),
-                float(ttt[15])),
-                                            int(state)-1,int(quiet))
+				    (float(ttt[ 0]),
+				     float(ttt[ 1]),
+				     float(ttt[ 2]),
+				     float(ttt[ 3]),            
+				     float(ttt[ 4]),
+				     float(ttt[ 5]),
+				     float(ttt[ 6]),
+				     float(ttt[ 7]),            
+				     float(ttt[ 8]),
+				     float(ttt[ 9]),
+				     float(ttt[10]),
+				     float(ttt[11]),            
+				     float(ttt[12]),
+				     float(ttt[13]),
+				     float(ttt[14]),
+				     float(ttt[15])),
+				    int(state)-1,int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def transform_selection(selection,matrix,state=0,log=0,homogenous=0,transpose=0,_self=cmd):
+    def transform_selection(selection, matrix, state=-1, log=0, 
+                            homogenous=0, transpose=0, _self=cmd):
         '''
 
-"transform_selection" is UNSUPPORTED.
+DESCRIPTION
 
-cmd.transform_selection(string selection, list-of-16-floats matrix, int state-number):
+    "transform_selection" transforms the atomic coordinates of a
+    selection.
 
-Note that matrix is NOT a standard homogenous 4x4 transformation
-matrix.  Instead it is something PyMOL-specific which consists of the
-following:
+PYMOL API
+   
+    cmd.transform_selection(string selection, list-of-16-floats matrix, int state-number):
 
-1) a 3x3 matrix containing the rotation in the upper-left quadrant
+NOTES
 
-2) a 1x3 translation to be applied *before* rotation in the bottom row
-    (matrix[12],matrix[13],matrix[14]).
+    Note that matrix is NOT a standard homogenous 4x4 transformation
+    matrix.  Instead it is something PyMOL-specific which consists of the
+    following:
 
-3) a 3x1 translation to be applied *after* rotation in the right-hand
-    column (matrix[3],matrix[7],matrix[11])
+    1) a 3x3 matrix containing the rotation in the upper-left quadrant
 
-In other words, if the matrix is:
+    2) a 1x3 translation to be applied *before* rotation in the bottom row
+        (matrix[12],matrix[13],matrix[14]).
 
-[  m0  m1  m2  m3
-    m4  m5  m6  m7
-    m8  m9 m10 m11
-  m12 m13 m14 m15 ]
+    3) a 3x1 translation to be applied *after* rotation in the right-hand
+        column (matrix[3],matrix[7],matrix[11])
 
-Atoms will be transformed as follows
+    In other words, if the matrix is:
 
-Y = M X
+    [  m0  m1  m2  m3 \\
+       m4  m5  m6  m7 \\
+       m8  m9 m10 m11 \\
+      m12 m13 m14 m15 ] 
 
-y0 = m0*(x0+m12) + m1*(x1+m13) +  m8*(x2+m14) + m3
-y1 = m4*(x0+m12) + m5*(x1+m13) +  m9*(x2+m14) + m7
-y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
+    Atoms will be transformed as follows
+
+    Y = M X
+
+    y0 = m0*(x0+m12) + m1*(x1+m13) +  m8*(x2+m14) + m3 \\
+    y1 = m4*(x0+m12) + m5*(x1+m13) +  m9*(x2+m14) + m7 \\
+    y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11 
 
         '''
         r = DEFAULT_ERROR
         selection = selector.process(selection)                
         if int(transpose):
             matrix = [ matrix[0], matrix[4], matrix[8 ], matrix[12],
-                          matrix[1], matrix[5], matrix[9 ], matrix[13],
-                          matrix[2], matrix[6], matrix[10], matrix[14],
-                          matrix[3], matrix[7], matrix[11], matrix[15]]
+                       matrix[1], matrix[5], matrix[9 ], matrix[13],
+                       matrix[2], matrix[6], matrix[10], matrix[14],
+                       matrix[3], matrix[7], matrix[11], matrix[15]]
         try:
             _self.lock(_self)
             r = _cmd.transform_selection(_self._COb,str(selection),int(state)-1,
@@ -1551,7 +1625,14 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def transform_object(name,matrix,state=0,log=0,selection='',homogenous=0,transpose=0,_self=cmd):
+    def transform_object(name, matrix, state=-1, log=0, selection='',
+                         homogenous=0, transpose=0, _self=cmd):
+        '''
+DESCRIPTION
+
+    "transform_object" is currently an unsupported feature.
+
+        '''
         r = DEFAULT_ERROR
         if int(transpose):
             matrix = [ matrix[0], matrix[4], matrix[8 ], matrix[12],
@@ -1626,7 +1707,9 @@ SEE ALSO
         return r
 
         
-    def translate_atom(sele1,v0,v1,v2,state=0,mode=0,log=0,_self=cmd):
+    def translate_atom(sele1, v0, v1, v2, state=0, mode=0,
+                       log=0, _self=cmd):
+
         r = DEFAULT_ERROR
         sele1 = selector.process(sele1)
         try:
@@ -1638,7 +1721,9 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def update(target,source,target_state=0,source_state=0,matchmaker=1,quiet=1,_self=cmd):
+    def update(target, source, target_state=0, source_state=0, 
+               matchmaker=1, quiet=1, _self=cmd):
+
         '''
 DESCRIPTION
 
@@ -1708,7 +1793,9 @@ SEE ALSO
     
     map_op_sc = Shortcut(map_op_dict.keys())
 
-    def map_set(name, operator, operands='', target_state=0, source_state=0, zoom=0, quiet=1,_self=cmd):
+    def map_set(name, operator, operands='', target_state=0, 
+                source_state=0, zoom=0, quiet=1, _self=cmd):
+
         '''
 DESCRIPTION
 
@@ -1747,7 +1834,8 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
             
-    def map_set_border(name,level=0.0,state=0,_self=cmd):
+    def map_set_border(name, level=0.0, state=0, _self=cmd):
+
         '''
 DESCRIPTION
 
@@ -1775,13 +1863,16 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def map_double(name,state=0,_self=cmd):
+    def map_double(name, state=0, _self=cmd):
         '''
 DESCRIPTION
 
-    "map_double" resamples a map at twice the current resolution.  The
-    amount of memory required to store the map will increase
-    eight-fold.
+    "map_double" resamples a map at twice the current resolution.
+
+NOTES
+
+     The amount of memory required to store the map will increase
+     eight-fold.
 
 USAGE
 
@@ -1796,18 +1887,27 @@ USAGE
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def map_halve(name,state=0,smooth=1,_self=cmd):
+    def map_halve(name, state=0, smooth=1, _self=cmd):
+
         '''
 DESCRIPTION
 
-    "map_halve" resamples a map at half the current resolution.  The
-    amount of memory required to store the map will decrease
-    eight-fold.
+    "map_halve" resamples a map at half the current resolution.  
 
 USAGE
 
     map_halve map_name, state
+    
+NOTES
+
+    The amount of memory required to store the map will decrease
+    eight-fold.
+
+SEE ALSO
+
+    map_double
         '''
+
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -1833,7 +1933,7 @@ USAGE
         return r
 
     
-    def protect(selection="(all)",quiet=1,_self=cmd):
+    def protect(selection="(all)", quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1866,11 +1966,11 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def deprotect(selection="(all)",quiet=1,_self=cmd):
+    def deprotect(selection="(all)", quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
-    "deprotect" reveres the effect of the "protect" command.
+    "deprotect" reverses the effect of the "protect" command.
 
 USAGE
 
@@ -1878,7 +1978,7 @@ USAGE
 
 PYMOL API
 
-    cmd.deprotect(string selection="(all)")
+    cmd.deprotect(string selection)
 
 SEE ALSO
 
@@ -1919,71 +2019,87 @@ SEE ALSO
 
     flag_action_sc = Shortcut(flag_action_dict.keys())
 
-    def fix_chemistry(selection1 = "all",selection2 = "all", invalidate=0, quiet=1,_self=cmd):
+    def fix_chemistry(selection1="all", selection2="all",
+		      invalidate=0, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+   
+    "fix chemistry" is an unsupported feature.
+
+'''
         r = DEFAULT_ERROR
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
         try:
             _self.lock(_self)   
-            r = _cmd.fix_chemistry(_self._COb,"("+str(selection1)+")","("+str(selection2)+")",int(invalidate),int(quiet))
+            r = _cmd.fix_chemistry(_self._COb,"("+str(selection1)+")",
+				   "("+str(selection2)+")",int(invalidate),
+				   int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
     
-    def flag(flag,selection,action="reset",quiet=1,_self=cmd):
+    def flag(flag, selection, action="reset", quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
     "flag" sets the indicated flag for atoms in the selection and
-     clears the indicated flag for atoms not in the selection.  This
-     is primarily useful for passing selection information into
-     Chempy models, which have a 32 bit attribute "flag" which holds
-     this information.
+     clears the indicated flag for atoms not in the selection.  
 
 USAGE
 
-    flag flag, selection [ ,action ]
+    flag flag, selection [, action ]
 
-    flag flag = selection [ ,action ]      # (DEPRECATED)
+ARGUMENTS
 
-    action can be:
-      "reset" (default) sets flag on selection, clear it on other atoms 
-      "set" sets the flag for selected atoms, leaves other atoms unchanged
-      "clear" clear the flag for selected atoms, leaves other atoms unchanged
+    action = reset: {default} set flag for atoms in selection and clear it for all others
 
-PYMOL API
+    action = set: set the flag for atoms in selection, leaving other atoms unchanged
 
-    cmd.flag( int flag, string selection, string action="reset",
-                 int indicate=0)
-    cmd.flag( string flag, string selection, string action="reset",
-                 int indicate=0)
+    action = clear: clear the flag for selected atoms, leaving other atoms unchanged
 
 EXAMPLES  
 
     flag free, (resi 45 x; 6)
 
-NOTE
+NOTES
+
+    This is primarily useful for passing selection information into
+    Chempy models, which have a 32 bit attribute "flag" which holds
+    this information.
 
     If the 'auto_indicate_flags' setting is true, then PyMOL will automatically
     create a selection called "indicate" which contains all atoms with that flag
     after applying the command.
 
-RESERVED FLAGS
+    SPECIAL FLAGS
 
-    Flags 0-7 are reserved for molecular modeling */
-        focus      0 = Atoms of Interest (i.e. a ligand in an active site)
-        free       1 = Free Atoms (free to move subject to a force-field)
-        restrain   2 = Restrained Atoms (typically harmonically contrained)
-        fix        3 = Fixed Atoms (no movement allowed)
+    * Flags 0-7 are reserved for molecular modeling 
+
+        focus      0 = Atoms of Interest (i.e. a ligand in an active site) \\
+        free       1 = Free Atoms (free to move subject to a force-field) \\
+        restrain   2 = Restrained Atoms (typically harmonically contrained) \\
+        fix        3 = Fixed Atoms (no movement allowed) \\
         exclude    4 = Atoms which should not be part of any simulation
-    Flags 8-15 are free for end users to manipulate
-    Flags 16-23 are reserved for external GUIs and linked applications
-    Flags 24-30 are reserved for PyMOL internal usage
-        exfoliate 24 = Remove surface from atoms when surfacing
-        ignore    25 = Ignore atoms altogether when surfacing
-        no_smooth 26 = Don\'t smooth atom position
-    Flag 31 is reserved for coverage tracking when assigning parameters, etc.
+
+    * Flags 8-15 are free for end users to manipulate
+
+    * Flags 16-23 are reserved for external GUIs and linked applications
+
+    * Flags 24-30 are reserved for PyMOL internal usage
+
+        exfoliate 24 = Remove surface from atoms when surfacing \\
+        ignore    25 = Ignore atoms altogether when surfacing \\
+        no_smooth 26 = Do not smooth atom position
+
+    * Flag 31 is reserved for coverage tracking when assigning parameters, etc.
+
+PYMOL API
+
+    cmd.flag(int flag, string selection, string action="reset",
+             int indicate=0)
+
         '''
         r = DEFAULT_ERROR
         # preprocess selection
@@ -2006,10 +2122,13 @@ RESERVED FLAGS
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def vdw_fit(selection1,selection2,state1=1,state2=1,buffer=0.24,quiet=1,_self=cmd):
-    #
-    #   UNSUPPORTED FEATURE - LIKELY TO CHANGE
-    #
+    def vdw_fit(selection1, selection2, state1=1,state2=1,buffer=0.24,quiet=1,_self=cmd):
+        '''
+DESCRIPTION
+
+    "vdw_fit" is an unsupported feature.
+    
+    '''
         # preprocess selections
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)

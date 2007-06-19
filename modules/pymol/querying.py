@@ -97,7 +97,7 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_title(object,state,quiet=1,_self=cmd):
+    def get_title(object, state, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -106,11 +106,11 @@ DESCRIPTION
 
 USAGE
 
-    set_title object,state
+    set_title object, state
 
 PYMOL API
 
-    cmd.set_title(string object,int state,string text)
+    cmd.set_title(string object, int state, string text)
 
     '''
         r = DEFAULT_ERROR
@@ -304,12 +304,10 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
         
-    def distance(name=None, selection1="(pk1)",
-                 selection2="(pk2)", cutoff=None,
-                 mode=None, zoom=0,
-                 width=None, length=None,
-                 gap=None, label=1, quiet=1,
-                 reset=0, state=0, _self=cmd):
+    def distance(name=None, selection1="(pk1)", selection2="(pk2)", 
+		 cutoff=None, mode=None, zoom=0, width=None, length=None,
+                 gap=None, label=1, quiet=1, reset=0, state=0, _self=cmd):
+	
         '''
 DESCRIPTION
 
@@ -455,11 +453,11 @@ PYMOL API
         '''
 DESCRIPTION
 
-    "get_mtl_obj" returns a tuple containing mtl and obj input
-    files for Maya 
+    NOTE: this is an incomplete and unsupported feature.
 
-    INCOMPLETE & EXPERIMENTAL
-    
+    "get_mtl_obj" returns a tuple containing mtl and obj input files
+    for use with Maya.
+
 PYMOL API
 
     cmd.get_obj_mtl()
@@ -475,6 +473,18 @@ PYMOL API
         return r
     
     def get_version(quiet=1,_self=cmd):
+	'''
+DESCRIPTION
+ 
+    "get_version" returns a tuple of length three containing text,
+    floating point, and integer representations of the current PyMOL
+    version number.
+   
+PYMOL API
+
+    cmd.get_version(int quiet)
+
+	'''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
@@ -486,17 +496,16 @@ PYMOL API
         else:
             if not quiet:
                 if _feedback(fb_module.cmd,fb_mask.results):
-                    print " version: %s (%8.6f)"%r
+                    print " version: %s (%8.6f) %d"%r
         return r
     
     def get_vrml(_self=cmd): 
         '''
 DESCRIPTION
 
-    "get_vrml" returns a vrml input file representing the current scene
+    "get_vrml" returns a VRML2 string representing the content
+    currently displayed.
 
-    INCOMPLETE -- only does spheres at present
-    
 PYMOL API
 
     cmd.get_vrml()
@@ -515,12 +524,12 @@ PYMOL API
         '''
 DESCRIPTION
 
-    "count_states" is an API-only function which returns the number of
+    "count_states" is an API-only method which returns the number of
     states in the selection.
 
 PYMOL API
 
-    cmd.count_states(string selection="(all)")
+    cmd.count_states(string selection)
 
 SEE ALSO
 

@@ -45,9 +45,9 @@ DESCRIPTION
     corresponding to the atoms in the selection provided and that are
     present in the indicated state
 
-PYMOL API ONLY
+PYMOL API
 
-    cmd.get_pdbstr( string selection="all", int state=0 )
+    cmd.get_pdbstr(string selection, int state)
 
 NOTES
 
@@ -179,7 +179,7 @@ DESCRIPTION
     
 USAGE
 
-    save filename [,selection [,state [,format ]]]
+    save filename [, selection [, state [, format ]]]
 
 ARGUMENTS
 

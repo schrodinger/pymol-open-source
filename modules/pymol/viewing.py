@@ -57,7 +57,7 @@ DESCRIPTION
 
 USAGE
 
-    zoom [selection [, buffer [, state [, complete [, animate ]]]]]
+    zoom [ selection [, buffer [, state [, complete [, animate ]]]]]
     
 EXAMPLES
 
@@ -68,11 +68,11 @@ EXAMPLES
 
 ARGUMENTS
 
-    selection = string: selection-expression or name pattern (default: "all").
+    selection = string: selection-expression or name pattern {default: all}
 
-    buffer = a floating-point number (default: 0): distance
+    buffer = float: distance  {default: 0}
     
-    state = 0 (default): uses all coordinate states (default)
+    state = 0: uses all coordinate states {default}
     
     state = -1: uses only coordinates for the current state
     
@@ -130,7 +130,7 @@ DESCRIPTION
 
 USAGE
 
-    center [selection [, state [, origin [, animate]]]]
+    center [ selection [, state [, origin [, animate ]]]]
 
 EXAMPLES
 
@@ -235,7 +235,7 @@ DESCRIPTION
 
 USAGE
 
-    origin [selection [, object [,position, [, state]]]]
+    origin [ selection [, object [,position, [, state ]]]]
 
 ARGUMENTS
 
@@ -293,7 +293,7 @@ DESCRIPTION
 
 USAGE
 
-    orient [selection [, state [, animate ]]]
+    orient [ selection [, state [, animate ]]]
 
 ARGUMENTS
 
@@ -462,7 +462,7 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException            
         return r
 
-    def toggle(representation="", selection="",_self=cmd):
+    def toggle(representation="", selection="", _self=cmd):
         '''
 DESCRIPTION
 
@@ -475,7 +475,9 @@ USAGE
 
 ARGUMENTS
 
-    representation = na    
+    representation = string
+
+    selection = string
 
 NOTES
 
@@ -522,7 +524,7 @@ PYMOL API
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def show(representation="", selection="",_self=cmd):
+    def show(representation="", selection="", _self=cmd):
         '''
 DESCRIPTION
 
@@ -590,7 +592,7 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException         
         return r
 
-    def show_as(representation="",selection="",_self=cmd):
+    def show_as(representation="", selection="", _self=cmd):
         '''
 DESCRIPTION
 
@@ -604,23 +606,26 @@ DESCRIPTION
 
 USAGE
 
-    as
-    as reprentation [,object]
-    as reprentation [,(selection)]
-    as (selection)
+    as representation [, selection ]
 
-PYMOL API
+ARGUMENTS
+    
+    representation = lines, spheres, mesh, ribbon, cartoon, sticks,
+        dots, surface, labels, extent, nonbonded, nb_spheres, slice,
+	extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
+	or everything
 
-<<<<<<< .mine
-    cmd.show_as( string representation="", string selection="" )
-=======
-    cmd.as(string representation, string selection)
->>>>>>> .r2806
+    selection = string {default: all}
 
 EXAMPLES
 
-    as lines,(name ca or name c or name n)
+    as lines, name ca or name c or name n
+
     as ribbon
+
+PYMOL API
+
+    cmd.show_as(string representation, string selection)
 
 NOTES
 
@@ -728,7 +733,7 @@ SEE ALSO
         return r
 
 
-    def get_view(output=1,quiet=1,_self=cmd):
+    def get_view(output=1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -741,35 +746,37 @@ DESCRIPTION
 
 USAGE
 
-    get_view
+    get_view [output]
+
+ARGUMENTS
+
+    output = 0: output matrix to screen
+
+    output = 1: do not Output matrix to screen
+
+    output = 2: force output to screen even if log file is open
+
+    output = 3: return formatted string instead of a list
+
+NOTES
+
+    Contents of the view matrix:
+
+    * 0  -  8: column-major 3x3 matrix which rotates model axes to camera axes
+
+    * 9  - 11: origin or rotation relative to the camera in camera space
+
+    * 12 - 14:  origin of rotation in model space
+
+    * 15: front plane distance from the camera
+
+    * 16: rear plane distance from the camera
+
+    * 17: orthoscopic flag 
 
 PYMOL API
 
     cmd.get_view(output=1, quiet=1)
-    
-    my_view= cmd.get_view()
-
-    output control:
-    
-        0 = output matrix to screen
-        1 = do not Output matrix to screen
-        2 = force output to screen even if log file is open
-        3 = return formatted string instead of a list
-        
-API USAGE
-
-    cmd.get_view(0) # zero option suppresses output (LEGACY approach)
-    cmd.get_view(quiet=1) # suppresses output using PyMOL\'s normal "quiet" parameter.
-
-NOTES
-
-    Contents of the view matrix
-        0  -  8 = column-major 3x3 matrix which rotates model axes to camera axes
-        9  - 11 = origin or rotation relative to the camera in camera space
-        12 - 14 = origin of rotation in model space
-        15      = front plane distance from the camera
-        16      = rear plane distance from the camera
-        17      = orthoscopic flag 
 
 SEE ALSO
 
@@ -829,7 +836,17 @@ DESCRIPTION
 
 USAGE
 
-    set_view (...)  where ... is 18 floating point numbers
+    set_view [ view ] 
+
+EXAMPLE
+
+    set_view (\
+        0.999876618,   -0.000452542,   -0.015699286,\
+	0.000446742,    0.999999821,   -0.000372844,\
+	0.015699454,    0.000365782,    0.999876678,\
+	0.000000000,    0.000000000, -150.258514404,\
+	11.842411041,   20.648729324,    8.775371552,\
+	118.464958191,  182.052062988,    0.000000000 )
 
 PYMOL API
 
@@ -1542,7 +1559,7 @@ PYMOL API
         return r
 
 
-    def turn(axis,angle,_self=cmd):
+    def turn(axis, angle, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1555,8 +1572,8 @@ USAGE
 
 EXAMPLES
 
-    turn x,90
-    turn y,45
+    turn x, 90
+    turn y, 45
 
 PYMOL API
 
@@ -1695,7 +1712,7 @@ NOTES
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def window(action='show',x=0,y=0,width=0,height=0,_self=cmd):
+    def window(action='show', x=0, y=0, width=0, height=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1703,14 +1720,16 @@ DESCRIPTION
 
 USAGE
 
-    window action
+    window [ action [, x [, y [, width [, height ]]]]]
+
+NOTES
+    
+    This command is not fully implemented in MacPyMOL.
 
 PYMOL API
 
-    cmd.window(string action)
+    cmd.window(string action, int x, int y, int width, int height)
 
-    action = \'show\' or \'hide\'
-    
         '''
         action = window_sc.auto_err(action,'action')
         action = window_dict[str(action)]
@@ -1728,8 +1747,7 @@ PYMOL API
         '''
 DESCRIPTION
 
-    "viewport" changes the size of the viewing port (and thus the size
-    of all png files subsequently output)
+    "viewport" changes the size of the graphics display area.
 
 USAGE
 
@@ -1760,7 +1778,7 @@ DESCRIPTION
 
 USAGE
 
-    bg_color [color]
+    bg_color [ color ]
 
 ARGUMENTS
 
@@ -1831,12 +1849,13 @@ PYMOL API
 EXAMPLES
 
     cartoon rectangle, chain A
+
     cartoon skip, resi 145-156
 
 NOTES
 
     This command is rarely required since the default "automatic" mode
-    utilizes ribbons according to the information in the PDB HELIX and
+    chooses cartoons according to the information in the PDB HELIX and
     SHEET records.
     
     '''
@@ -2060,15 +2079,16 @@ DESCRIPTION
 
     "reset" restores the rotation matrix to identity, sets the origin
     to the center of mass (approx.) and zooms the window and clipping
-    planes to cover all objects.
+    planes to cover all objects.  Alternatively, it can reset object
+    matrices.
 
 USAGE
 
-    reset 
+    reset [ object ]
 
 PYMOL API
 
-    cmd.reset ( )
+    cmd.reset()
         '''
         r = DEFAULT_ERROR      
         try:
@@ -2094,7 +2114,7 @@ PYMOL API
         '''
 DESCRIPTION
 
-    "meter_reset" resets the frames per secound counter
+    "meter_reset" resets the frames per secound counter.
 
 USAGE
 
@@ -2132,9 +2152,15 @@ USAGE
 
     rebuild [selection [, representation ]]
 
+ARGUMENTS
+
+    selection = string {default: all}
+
+    representation = string: {default: everything}
+
 PYMOL API
 
-    cmd.rebuild(string selection = 'all', string representation = 'everything')
+    cmd.rebuild(string selection, string representation)
 
 SEE ALSO
 
@@ -2201,7 +2227,7 @@ DESCRIPTION
 
 USAGE
 
-    color color [, selection]
+    color color [, selection ]
 
 ARGUMENTS
 

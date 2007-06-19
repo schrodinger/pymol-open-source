@@ -204,7 +204,7 @@ static void dump_jxn(char *lab,char *q)
 #endif
 
 void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
-                                            int log_trans,int homogenous,int transformed)
+				     int log_trans,int homogenous,int transformed)
 {
   int a;
   int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
@@ -214,6 +214,8 @@ void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
     ObjectMoleculeTransformSelection(I,state,-1,matrix,log_trans,I->Obj.Name,homogenous,true);
   } else {
     double dbl_matrix[16];
+    if(state==-2) 
+      state=ObjectGetCurrentState(&I->Obj,false);
     /* ensure homogenous matrix to preserve programmer sanity */
     if(!homogenous) {
       convertTTTfR44d(matrix,dbl_matrix);
@@ -222,6 +224,7 @@ void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
     } else {
       copy44f44d(matrix,dbl_matrix);
     }
+
     if(state<0) { /* all states */
       for(a=0;a<I->NCSet;a++) {
         cs = I->CSet[a];
@@ -5244,7 +5247,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
   float homo_matrix[16],tmp_matrix[16],*input_matrix = matrix;
 
   inp_state=state;
-  if(state==-1) 
+  if(state==-2) 
     state=ObjectGetCurrentState(&I->Obj,false);
   if(state<0) {
     all_states=true;

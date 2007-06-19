@@ -1720,6 +1720,7 @@ static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
                                                  state,sele,log,matrix,
                                                  homo,true);
         } else {
+	  /* state? */
           ok = ExecutiveCombineObjectTTT(G,name,matrix,false);          
         }
       }
