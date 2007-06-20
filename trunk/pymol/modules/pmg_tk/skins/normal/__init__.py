@@ -25,12 +25,13 @@ class Normal(PMGSkin):
 
     pad = ' ' # extra space in menus
     
-    appname        = 'PyMOL Tcl/Tk GUI'
-    appversion     = '1.00'
-    copyright      = ('Copyright (C) 1998-2006 by Warren DeLano and \n'+
-                            'DeLano Scientific LLC. All rights reserved.')
+    appname        = 'The PyMOL Molecular Graphics System'
+    appversion     = '1.0'
+    copyright      = ('Copyright (C) 2003-2007 \n' +
+                      'DeLano Scientific LLC.\n'+
+                      'All rights reserved.')
     contactweb     = 'http://www.pymol.org'
-    contactemail   = 'warren@delanoscientific.com'
+    contactemail   = 'sales@delsci.com'
     
     # responsible for setup and takedown of the normal skin
 
@@ -671,10 +672,37 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenu('Help', 'About %s' % self.appname, side='right')      
         self.menuBar.addmenuitem('Help', 'command',
-                                         'Get information on application', 
-                                         label='About', command = lambda s=self: s.cmd.do("_ splash"))
-
+                                 'Get information on application', 
+                                 label='About', command = lambda s=self:s.show_about())
+        
         self.menuBar.addmenuitem('Help', 'separator', '')
+
+        try:
+            import webbrowser
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'Access the PyMOL Home Page',
+                                     label='PyMOL Home Page',
+                                     command = lambda w=webbrowser:w.open("http://www.pymol.org"))
+
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'Access the Official PyMOL Documentation online',
+                                     label='Online Documentation',
+                                     command = lambda w=webbrowser:w.open("http://delsci.info/dsc"))
+
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'Sponsor PyMOL by becoming a Subscriber',
+                                     label='Sponsorship Information',
+                                     command = lambda w=webbrowser:w.open("http://pymol.org/funding.html"))
+
+            self.menuBar.addmenuitem('Help', 'separator', '')
+                
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'Access the community-maintained PyMOL Wiki',
+                                     label='PyMOL Community Wiki',
+                                     command = lambda w=webbrowser:w.open("http://www.pymolwiki.org"))
+            self.menuBar.addmenuitem('Help', 'separator', '')        
+        except ImportError:
+            pass
         
         self.menuBar.addmenuitem('Help', 'command', 'Demo',
                                          label='Demo',
@@ -2289,7 +2317,16 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Plugin', 'separator', '')
 
 
-
+    def show_about(self):
+        Pmw.aboutversion(self.appversion)
+        Pmw.aboutcopyright(self.copyright)
+        Pmw.aboutcontact(
+             'For more information, browse to: %s\n or send email to: %s' %\
+             (self.contactweb, self.contactemail))
+        self.about = Pmw.AboutDialog(self.root, applicationname=self.appname)
+        self.about.activate()
+        self.about.withdraw()
+        
     def createInterface(self):
 
         self.balloon = Pmw.Balloon(self.root)
@@ -2303,17 +2340,6 @@ class Normal(PMGSkin):
         self.createDataArea()
 
         self.createCommandArea()
-
-#      self.__createAboutBox()
-        Pmw.aboutversion(self.appversion)
-        Pmw.aboutcopyright(self.copyright)
-        Pmw.aboutcontact(
-             'For more information, browse to: %s\n or send email to: %s' %\
-             (self.contactweb, self.contactemail))
-        self.about = Pmw.AboutDialog(self.root, applicationname=self.appname)
-        self.about.withdraw()
-        
-        # Create the parts of the interface
 
 #      self.initPlugins()
 
@@ -2352,6 +2378,7 @@ class Normal(PMGSkin):
     def __init__(self,app):
 
         PMGSkin.__init__(self,app)
+        Normal.appversion = app.pymol.cmd.get_version()[0]
         self.save_file = ''
         self.cmd = app.pymol.cmd
         self.util = app.pymol.util
