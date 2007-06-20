@@ -453,18 +453,21 @@ USAGE
 
 EXAMPLES
 
-    pair_fit protA/10-25/CA, protB/20-35/CA
+    # superimpose protA residues 10-25 and 33-46 to protB residues 22-37 and 41-54:
+    
+    pair_fit protA/10-25+33-46/CA, protB/22-37+41-54/CA
 
-    pair_fit ligA////C1, ligB////C8, \
-             ligA////C2, ligB////C4, \
-             ligA////C3, ligB////C10
+    # superimpose ligA atoms C1, C2, and C4 to ligB atoms C8, C4, and C10, respectively:
+    
+    pair_fit ligA////C1, ligB////C8, ligA////C2, ligB////C4, ligA////C3, ligB////C10
     
 NOTES
 
     So long as the atoms are stored in PyMOL with the same order
     internally, you can provide just two selections.  Otherwise, you
-    may need to specify each pair of atoms separately.
-
+    may need to specify each pair of atoms separately, two by two, as
+    additional arguments to pair_fit.
+    
     Script files are usually recommended when using this command.
 
 SEE ALSO
