@@ -266,6 +266,13 @@ if __name__=='pymol.invocation':
                 if "j" in a: # Geowall: two side-by-side images
                     options.passive_stereo = 1
                     options.deferred.append("_do__ stereo on")
+                if "J" in a: # cd to user's home directory on startup (if possible)
+                    if sys.platform == 'win32':
+                        if os.environ.has_key("HOMEDRIVE") and os.environ.has_key("HOMEPATH"):
+                            options.deferred.append("_do__ cd %s%s"%(
+                                os.environ["HOMEDRIVE"],os.environ["HOMEPATH"]))
+                    elif os.environ.has_key("HOME"):
+                        options.deferred.append("_do__ cd %s"%os.environ["HOME"])
                 if "l" in a:
                     options.deferred.append("_do_spawn %s"%av.pop())
                 if "r" in a:
