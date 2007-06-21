@@ -183,7 +183,13 @@ USAGE
         '''
         r = DEFAULT_ERROR
         mode = int(mode)
-        if mode == 1: # just show PNG
+        if mode == 2: # query
+            try:
+                _self.lock(_self)
+                r = _cmd.splash(_self._COb,1)
+            finally:
+                _self.unlock(0,_self)
+        elif mode == 1: # just show PNG
             show_splash = 1
             try:
                 _self.lock(_self)

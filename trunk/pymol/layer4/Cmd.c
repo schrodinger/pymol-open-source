@@ -2929,7 +2929,7 @@ static PyObject *CmdSplash(PyObject *self, PyObject *args)
     result = 2;
 #else
 #ifdef _PYMOL_IP_EXTRAS
-    result = 0;
+    result = 0; 
 #endif
 #endif
 /* END PROPRIETARY CODE SEGMENT */
