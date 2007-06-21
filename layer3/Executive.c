@@ -3722,8 +3722,13 @@ static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
                        1.166*SettingGetGlobal_f(G,cSetting_ambient));
     SettingSetGlobal_f(G,cSetting_gamma,
                        0.769*SettingGetGlobal_f(G,cSetting_gamma));
+
     /* try best to meet existing expectations with existing sessions */
     SettingSetGlobal_f(G,cSetting_ray_legacy_lighting, 1.0F);
+
+    /* force use of movie_delay in preference to movie_fps */
+
+    SettingSetGlobal_f(G,cSetting_movie_fps, 0.0F);
 
     /* and labels */
     SettingSetGlobal_i(G,cSetting_label_digits, 2);
