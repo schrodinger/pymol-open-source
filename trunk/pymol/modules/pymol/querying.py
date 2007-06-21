@@ -35,6 +35,13 @@ if __name__=='pymol.querying':
         _self.unpick()   
 
     def get_object_matrix(object,state=1,_self=cmd):
+        '''
+DESCRIPTION
+
+    "get_object_matrix" is an unsupported command that may have
+    something to do with querying the transformation matrices
+    associated with an object
+        '''
         r = DEFAULT_ERROR
         object = str(object)
         try:
@@ -45,9 +52,15 @@ if __name__=='pymol.querying':
         if _raising(r): raise pymol.CmdException
         return r
 
-    def get_object_list(selection="(all)",quiet=1,_self=cmd):
+    def get_object_list(selection="(all)", quiet=1, _self=cmd):
         '''
-        '''
+        
+DESCRIPTION
+
+    "get_object_list" is an unsupported command that may have
+    something to do with querying the objects covered by a selection.
+    '''
+        
         r = DEFAULT_ERROR
         selection = selector.process(selection)
         try:
@@ -520,13 +533,16 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
-    def count_states(selection="(all)",quiet=1,_self=cmd):
+    def count_states(selection="(all)", quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
-    "count_states" is an API-only method which returns the number of
-    states in the selection.
+    "count_states" returns the number of states in the selection.
 
+USAGE
+
+    count_states
+    
 PYMOL API
 
     cmd.count_states(string selection)
@@ -550,13 +566,17 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
 
-    def count_frames(quiet=1,_self=cmd):
+    def count_frames(quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
-    "count_frames" is an API-only function which returns the number of
-    frames defined for the PyMOL movie.
+    "count_frames" returns the number of frames defined for the PyMOL
+    movie.
 
+USAGE
+
+    count_frames
+    
 PYMOL API
 
     cmd.count_frames()
@@ -576,7 +596,14 @@ SEE ALSO
         return r
 
     def export_dots(object,state,_self=cmd):  
-    # UNSUPPORTED
+        '''
+DESCRIPTION
+
+    "export_dots" is an old unsupported command that may have
+    something to do with returning the coordinates of the dot
+    representation back to the Python layer.
+
+    '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -586,11 +613,20 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
 
-    def overlap(selection1,selection2,state1=1,state2=1,adjust=0.0,quiet=1,_self=cmd):
-    #
-    #   UNSUPPORTED FEATURE - LIKELY TO CHANGE
-    #   (for maximum efficiency, use smaller molecule as selection 1)
-    #
+    def overlap(selection1, selection2, state1=1, state2=1, adjust=0.0, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "overlap" is an unsupported command that may have something to do
+    with measuring the total amount of van der Waals overlap between
+    two selections.
+
+NOTES
+
+    For best performance, use the smaller molecule as selection 1.
+    
+    '''
+        
         # preprocess selections
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
@@ -689,6 +725,12 @@ SEE ALSO
         return r
 
     def get_atom_coords(selection, state=0,quiet=1,_self=cmd):
+        '''
+DESCRIPTION
+
+    "get_atom_coords" returns the 3D coordinates of a single atom.
+    
+    '''
         # low performance way to get coords for a single atom
         r = []
         selection = selector.process(selection)
@@ -705,8 +747,15 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
     
-    def get_position(quiet=1,_self=cmd):
-        r = DEFAULT_ERROR
+    def get_position(quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_position" returns the 3D coordinates of the center of the
+    viewer window.
+
+    '''
+        
         try:
             _self.lock(_self)
             r = _cmd.get_position(_self._COb)
@@ -1148,7 +1197,16 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
-    def phi_psi(selection="(byres pk1)",quiet=1,_self=cmd):
+    def phi_psi(selection="(byres pk1)", quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "phi_psi" return the phi and psi angles for a protein atom
+    selection.
+    
+USAGE
+        '''
+        
         r = cmd.get_phipsi(selection)
         if r!=None:
             kees = r.keys()

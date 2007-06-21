@@ -119,7 +119,34 @@ SEE ALSO
         return r
 
 
-    def pop(name,source,enable=-1,quiet=1,_self=cmd):
+    def pop(name, source, enable=-1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "pop" provides a mechanism of iterating through an atom selection
+    atom by atom, where each atom is sequentially assigned to the
+    named selection.
+    
+USAGE
+
+    pop name, source
+    
+EXAMPLE
+
+    select src, name ca
+
+    python
+    while cmd.pop("tmp","src"):
+        cmd.zoom("tmp",2, animate=1)
+        for a in range(30):
+           cmd.refresh()
+           time.sleep(0.05)
+    python end
+    
+PYMOL API
+
+    cmd.deselect()
+        '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)

@@ -88,6 +88,12 @@ EXAMPLE
         return r
         
     def replace_wizard(name=None,*arg,**kwd):
+        '''
+DESCRIPTION
+
+    "replace_wizard" is an unsupported internal command.
+    
+    '''
         _self = kwd.get('_self',cmd)
         r = DEFAULT_ERROR
         if name==None:
@@ -119,6 +125,12 @@ EXAMPLE
         return r
 
     def refresh_wizard(_self=cmd): # INTERNAL
+        '''
+DESCRIPTION
+
+    "refresh_wizard" is in unsupported internal command.
+    
+    '''
         r = DEFAULT_ERROR      
         try:
             _self.lock(_self)

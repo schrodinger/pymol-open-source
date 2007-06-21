@@ -29,20 +29,50 @@ if __name__=='pymol.commanding':
           fb_module, fb_mask, is_list, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error
 
-    def resume(fname,_self=cmd):
+    def resume(filename, _self=cmd):
+        '''
+        
+DESCRIPTION
+
+    "resume" executes a log file and opens it for recording of
+    additional commands.
+
+USAGE
+
+    resume filename
+
+SEE ALSO
+
+    log, log_close
+
+    '''
         pymol=_self._pymol        
         r = DEFAULT_ERROR
-        if os.path.exists(fname):
-            if(re.search(r"\.py$|\.PY$|\.pym$|.PYM$",fname)):
-                r = _self.do("run %s"%fname)
+        if os.path.exists(filename):
+            if(re.search(r"\.py$|\.PY$|\.pym$|.PYM$",filename)):
+                r = _self.do("run %s"%filename)
             else:
-                r = _self.do("@%s"%fname)
+                r = _self.do("@%s"%filename)
         if is_ok(r):
-            r = _self.do("log_open %s,a"%fname)
+            r = _self.do("log_open %s,a"%filename)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def log_open(fname='log.pml',mode='w',_self=cmd):
+    def log_open(filename='log.pml', mode='w', _self=cmd):
+        '''
+DESCRIPTION
+
+    "log_open" opens a log file for writing.
+
+USAGE
+
+    log_open filename
+
+SEE ALSO
+
+    log, log_close
+    
+        '''
         pymol=_self._pymol        
         try:
             try:
@@ -52,26 +82,36 @@ if __name__=='pymol.commanding':
                         del pymol._log_file
             except:
                 pass
-            pymol._log_file = open(fname,mode)
+            pymol._log_file = open(filename,mode)
             if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
                 if mode!='a':
-                    print " Cmd: logging to '%s'."%fname
+                    print " Cmd: logging to '%s'."%filename
                 else:
-                    print " Cmd: appending to '%s'."%fname            
+                    print " Cmd: appending to '%s'."%filename            
             if mode=='a':
                 pymol._log_file.write("\n") # always start on a new line
-            if(re.search(r"\.py$|\.PY$|\.pym$|\.PYM$",fname)):
+            if(re.search(r"\.py$|\.PY$|\.pym$|\.PYM$",filename)):
                 _self.set("logging",2,quiet=1)
             else:
                 _self.set("logging",1,quiet=1)
         except:
-            print"Error: unable to open log file '%s'"%fname
+            print"Error: unable to open log file '%s'"%filename
             pymol._log_file = None
             _self.set("logging",0,quiet=1)
             traceback.print_exc()
             raise QuietException
 
-    def log(text,alt_text=None,_self=cmd):
+    def log(text, alt_text=None, _self=cmd):
+        '''
+DESCRIPTION
+
+    "log" writes a command to the log file (if one is open).
+
+SEE ALSO
+
+    log_open, log_close
+    
+        '''
         pymol=_self._pymol        
         cmd=_self
         if pymol._log_file!=None:
@@ -87,6 +127,20 @@ if __name__=='pymol.commanding':
                 pymol._log_file.flush()
 
     def log_close(_self=cmd):
+        '''
+DESCRIPTION
+
+    "log_close" closes the current log file (if one is open).
+
+USAGE
+
+    log_close
+
+SEE ALSO
+
+    log, log_open
+    
+        '''
         pymol=_self._pymol        
         cmd=_self
         if pymol._log_file!=None:

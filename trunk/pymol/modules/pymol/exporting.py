@@ -160,7 +160,16 @@ PYMOL API
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def multisave(filename,object,state=0,_self=cmd): # experimental -- deprecated
+    def multisave(filename, object, state=0, _self=cmd): # experimental -- deprecated
+        '''
+DESCRIPTION
+
+    "multisave" is an unsupported command that may have something to
+    do with writing multistate coordinate data to fragile version &
+    platform-specific binary (pmo) file.
+    
+    '''
+        
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)

@@ -272,12 +272,19 @@ PYMOL API
         '''
 DESCRIPTION
 
-    "run" executes an external Python script in a local name space, the
-    global namespace, or in its own namespace (as a module).
+    "run" executes an external Python script in a local name space,
+    the main Python namespace, the global PyMOL namespace, or in its
+    own namespace (as a module).
 
 USAGE
 
-    run python-script [, (local | global | module | main | private ) ]
+    run file [, namespace ]
+
+ARGUMENTS
+
+    file = string: a Python program, typically ending in .py or .pym.
+    
+    namespace = local, global, module, main, or private 
 
 PYMOL API
 
@@ -696,7 +703,7 @@ SEE ALSO
 DESCRIPTION
 
     "skip" delimits a block of commands that are skipped instead of
-    being executed.  
+    being executed.
 
 EXAMPLE
 
@@ -712,7 +719,7 @@ NOTES
 
     If the "skip" command is commented out, the subsequent "skip end"
     can be left in place, and will have no effect upon execution of
-    subsequent command.s
+    subsequent commands.
     
 SEE ALSO
 
@@ -746,5 +753,45 @@ NOTES
 SEE ALSO
 
     abort, embed, skip
+    '''
+        return None
+    
+    def embed(_self=cmd):
+        '''
+DESCRIPTION
+
+    "embed" delimits a block of data embedded in a PyMOL command
+    script.
+
+USAGE
+
+    embed key [, type [, sentinel ]]
+
+ARGUMENTS
+
+    key = string: unique indentifier for the data
+
+    type = pdb, mol, mol2, sdf, xplor
+
+    sentinel = string: a unique string signalling the end of the data {default: embed end}
+    
+EXAMPLE
+
+    embed wats, pdb
+    HETATM    1  O   WAT     1       2.573  -1.034  -1.721
+    HETATM    2  H1  WAT     1       2.493  -1.949  -1.992
+    HETATM    3  H2  WAT     1       2.160  -0.537  -2.427
+    HETATM    4  O   WAT     2       0.705   0.744   0.160
+    HETATM    5  H1  WAT     2      -0.071   0.264   0.450
+    HETATM    6  H2  WAT     2       1.356   0.064  -0.014
+    embed end
+    
+NOTES
+
+    Only text data formats can be used with embed
+    
+SEE ALSO
+
+    abort, skip, python
     '''
         return None
