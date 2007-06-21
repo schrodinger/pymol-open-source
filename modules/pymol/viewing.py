@@ -2129,7 +2129,23 @@ USAGE
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def load_png(filename,movie=1,stereo=-1,quiet=0,_self=cmd):
+    def load_png(filename, movie=1, stereo=-1, quiet=0, _self=cmd):
+        '''
+DESCRIPTION
+
+    "load_png" loads and displays a PNG file from disk.
+
+USAGE
+
+    load_png filename
+
+NOTES
+
+    If the displayed image is too big for the window, it will be
+    reduced 2-fold repeatedly until it fits.
+    
+    '''
+        
         r = DEFAULT_ERROR      
         filename = _self.exp_path(str(filename))
         try:

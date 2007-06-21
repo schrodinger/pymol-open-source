@@ -85,9 +85,16 @@ DESCRIPTION
         return r
 
 
-    def check(selection=None,preserve=0):
-    # UNSUPPORTED
-    # This function relies on code that is not currently part of PyMOL/ChemPy
+    def check(selection=None, preserve=0):
+        '''
+DESCRIPTION
+
+    "check" is unsupported command that may eventually have something
+    to do with assigning forcefield parameters to a selection of
+    atoms.
+    
+'''        
+        # This function relies on code that is not currently part of PyMOL/ChemPy
         # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
         from chempy.tinker import realtime
         if selection==None:
@@ -102,7 +109,14 @@ DESCRIPTION
             realtime.setup("("+selection+")")
 
     def fast_minimize(*arg):
-    # OBSOLETE, TO BE REMOVED
+        '''
+DESCRIPTION
+
+    "fast_minimize" is an unsupported nonfunctional command that may
+    eventually have something to do with doing a quick clean up of the
+    molecular structure.
+    
+'''        
         from chempy.tinker import realtime  
         grad  = 0.01
         iter = 500
@@ -125,8 +139,13 @@ DESCRIPTION
             t.start()
 
     def minimize(*arg):
-    # OBSOLETE, TO BE REMOVED
-        # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
+        '''
+DESCRIPTION
+
+    "fast_minimize" is an unsupported nonfunctional command that may
+    eventually have something to do with minimization.
+    
+'''        
         from chempy.tinker import realtime  
         grad  = 0.01
         iter = 500
@@ -153,6 +172,13 @@ DESCRIPTION
 
 
     def dump(fnam,obj,_self=cmd):
+        '''
+DESCRIPTION
+
+    "dump" is an unsupported command which may have something to do
+    with outputing isosurface meshes and surface objects to a file.
+
+    '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -167,6 +193,12 @@ DESCRIPTION
         return None
 
     def test(group=0,index=0,_self=cmd): # generic test routine for development
+        '''
+DESCRIPTION
+
+    "dump" is an unsupported internal command.
+
+    '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   

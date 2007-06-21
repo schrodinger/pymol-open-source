@@ -67,7 +67,37 @@ if __name__=='pymol.creating':
 
     group_action_sc =  Shortcut(group_action_dict.keys())
     
-    def group(name,members="",action='auto',quiet=1,_self=cmd):
+    def group(name, members="", action='auto', quiet=1,_self=cmd):
+        '''
+
+DESCRIPTION
+
+    "group" creates or updates a group object.
+
+USAGE
+
+    group name [, members [, action [, quiet ]]]
+
+ARGUMENTS
+
+    name = string: name of the group
+
+    members = string: space-separated list of objects to include in
+              the group
+
+    action = add, remove, open, close, toggle, auto, ungroup, empty,
+             purge, excise
+
+EXAMPLE
+
+    group kinases, 1oky 1pkg 1t46 1uwh 1z5m
+
+SEE ALSO
+
+    ungroup
+    
+'''
+        
         r = DEFAULT_ERROR        
         action = group_action_dict[group_action_sc.auto_err(str(action),'group action')]
         if name=='all': name='*'
@@ -86,7 +116,25 @@ if __name__=='pymol.creating':
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
     
-    def ungroup(name,members="",action=0,quiet=1,_self=cmd):
+    def ungroup(name, members="", quiet=1, _self=cmd):
+        '''
+
+DESCRIPTION
+
+    "ungroup" removes an object from a group object, returning it to
+    the top level.
+
+USAGE
+
+    ungroup name
+
+
+SEE ALSO
+
+    group
+    
+    '''
+        
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -105,23 +153,42 @@ if __name__=='pymol.creating':
 DESCRIPTION
 
     "map_new" creates a map object using one of the built-in map
-    generation routines.
+    generation routines.  This command not yet fully supported.
 
-    map_new 
+USAGE
+
+    map_new name [, type [, grid [, selection [, buffer [, box [, state ]]]]]]
 
 ARGUMENTS
 
-        name = string: name of the map object to create or modify
+    name = string: name of the map object to create or modify
 	
 	type = vdw, gaussian, gaussian_max, coulomb, coulomb_neutral, coulomb_local
 
-        state > 0: do indicated state
-        state = 0: independent states in independent extents
-        state = -1: current global state
-        state = -2: effective object state(s)
-        state = -3: all states in one map
-        state = -4: independent states in unified extent
-        '''
+    grid = float: grid spacing
+
+    selection = string: atoms about which to generate the map
+
+    buffer = float: cutoff 
+    
+    state > 0: use the indicated state
+    
+    state = 0: use all states independently with independent extents
+    
+    state = -1: use current global state
+    
+    state = -2: use effective object state(s)
+    
+    state = -3: use all states in one map
+    
+    state = -4: use all states independent states by with a unified extent
+
+NOTES
+
+    This command can be used to create low-resolution surfaces of
+    protein structures.
+    
+    '''
         # preprocess selection
         r = DEFAULT_ERROR
         selection = selector.process(selection)
@@ -129,11 +196,11 @@ ARGUMENTS
             if _self.is_string(box):
                 box = safe_list_eval(box)
             box = (float(box[0][0]),
-                     float(box[0][1]),
-                     float(box[0][2]),
-                     float(box[1][0]),
-                     float(box[1][1]),
-                     float(box[1][2]))
+                   float(box[0][1]),
+                   float(box[0][2]),
+                   float(box[1][0]),
+                   float(box[1][1]),
+                   float(box[1][2]))
             box_flag = 1
         else:
             box = (0.0,0.0,0.0,1.0,1.0,1.0)
@@ -709,7 +776,7 @@ NOTES
 
 SEE ALSO
 
-    load, copy
+    load, copy, extract
         '''
         r = DEFAULT_ERROR      
         # preprocess selection
@@ -737,6 +804,23 @@ SEE ALSO
         return r
 
     def extract(*arg,**kw):
+        '''
+DESCRIPTION
+
+    "extract" is simply a shorthand way calling the "create" command
+    with the extract argument activated, so that atoms in the new
+    object are removed from the source object.
+
+USAGE
+
+    extract name, selection [, source_state [, target_state ]]
+
+SEE ALSO
+
+    create
+    
+    '''
+        
         kw['extract'] = 1
         return apply(create,arg,kw)
 
@@ -760,6 +844,26 @@ SEE ALSO
     def pseudoatom(object, selection='', name='PS1', resn='PSD', resi='1', chain='P',
                    segi='PSDO', elem='PS', vdw=-1.0, hetatm=1, b=0.0, q=0.0, color='',
                    label='', pos=None, state=0, mode='rms', quiet=1,_self=cmd):
+        '''
+        
+DESCRIPTION
+
+    "pseudoatom" adds a pseudoatom to a molecular object, and will
+    creating the molecular object if it does not yet exist.
+    
+USAGE
+
+    pseudoatom object [, selection [, name [, resn [, resi [, chain
+        [, segi [, elem [, vdw [, hetatm [, b [, q [, color [, label
+        [, pos [, state [, mode [, quiet ]]]]]]]]]]]]]]]]]
+
+NOTES
+
+    "pseudoatom" can be used for a wide variety of random tasks where
+    on must place an atom or a label in 3D space.
+    
+    '''
+        
         r = DEFAULT_ERROR      
         # preprocess selection
         if len(color):

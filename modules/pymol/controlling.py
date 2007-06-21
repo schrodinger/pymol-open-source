@@ -495,6 +495,13 @@ USAGE
             
 
     def edit_mode(active=1,quiet=1,_self=cmd):
+        '''
+DESCRIPTION
+
+    "edit_mode" switches the mouse into editing mode, if such a mode
+    is available in the current mouse ring.
+    
+    '''
         # legacy function
         if is_string(active):
             active=boolean_dict[boolean_sc.auto_err(active,'active')]

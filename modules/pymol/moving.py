@@ -231,6 +231,11 @@ SEE ALSO
         return r
 
     def mray(_self=cmd): # deprecated
+        '''
+DESCRIPTION
+
+    "mray" is an unsupported command of unknown function.
+    '''
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
@@ -244,14 +249,14 @@ SEE ALSO
         '''
 DESCRIPTION
 
-    "mdo" sets up a command to be executed upon entry into the
-    specified frame of the movie.  These commands are usually created
-    by a PyMOL utility program (such as util.mrock).  Command can
-    actually contain several commands separated by semicolons ';'
+    "mdo" defines (or redefines) the command-line operations
+    associated with a particular movie frame.  These "generalized
+    movie commands" will be executed every time the numbered frame is
+    played.
 
 USAGE
 
-    mdo frame : command
+    mdo frame: command
 
 PYMOL API
 
@@ -268,6 +273,10 @@ EXAMPLE
 
 NOTES
 
+ These commands are usually created
+    by a PyMOL utility program (such as util.mrock).  Command can
+    actually contain several commands separated by semicolons ';'
+    
     The "mset" command must first be used to define the movie before
     "mdo" statements will have any effect.  Redefinition of the movie
     clears any existing mdo statements.
@@ -289,19 +298,35 @@ SEE ALSO
         '''
 DESCRIPTION
 
+    "mappend" associates additional command line operations with a
+    particular movie frame.  These "generalized movie commands" will
+    be executed every time the numbered frame is played.
+    
 USAGE
 
-    mappend frame : command
+    mappend frame: command
 
-PYMOL API
+ARGUMENTS
 
+    frame = integer: the frame to modify
+
+    command = literal command-line text
+    
 EXAMPLE
 
+    mappend 1: hide everything; show sticks
+    mappend 60: hide sticks; show spheres
+    mappend 120: hide spheres; show surface
+    
 NOTES
+
+    The "mset" command must first be used to define the movie before
+    "mdo" statements will have any effect.  Redefinition of the movie
+    clears any existing movie commands specified with mdo or mappend.
 
 SEE ALSO
 
-    mset, mplay, mstop
+    mset, madd, mdo, mplay, mstop
         '''
         r = DEFAULT_ERROR
         try:
@@ -335,7 +360,7 @@ NOTES
 
     If the "ray_trace_frames" variable is non-zero, then the frames
     will be ray-traced.  Note that this can take many hours for a long
-    movie with complex scene.
+    movie with complex content displayed.
 
     Also, be sure to avoid setting "cache_frames" when rendering a
     long movie to avoid running out of memory.
@@ -398,15 +423,23 @@ DESCRIPTION
 
 USAGE
 
-    frame frame-number
+    frame frame
 
+ARGUMENTS
+
+    frame = integer: frame number to display
+
+EXAMPLE
+
+    frame 10
+    
 PYMOL API
 
     cmd.frame( int frame_number )
 
 NOTES
 
-    Frame numbers are 1-based
+    Frame numbers are 1-based.
 
 SEE ALSO
 
@@ -422,6 +455,17 @@ SEE ALSO
         return r
 
     def madd(specification=""):
+        '''
+DESCRIPTION
+
+    "madd" extends the existing movie specification using the same
+    syntax as mset.
+
+SEE ALSO
+
+    mset, mdo, mplay, mclear
+
+    '''
         mset(specification,0)
         
     def mset(specification="",frame=1,_self=cmd):
@@ -442,14 +486,20 @@ PYMOL API
 
 EXAMPLES
 
-    mset 1         // simplest case, one state -> one frame
-    mset 1 x10     // ten frames, all corresponding to state 1
+    # simplest case, one state -> one frame
+
+    mset 1
+
+    # ten frames, all corresponding to state 1
+    
+    mset 1 x10     
+
+    # the first thirty frames are state 1
+    # the next 15 frames pass through states 1-15
+    # the next 30 frames are of state 15
+    # the next 15 frames iterate back to state 1
+
     mset 1 x30 1 -15 15 x30 15 -1
-      // more realistic example:
-      // the first thirty frames are state 1
-      // the next 15 frames pass through states 1-15
-      // the next 30 frames are of state 15
-      // the next 15 frames iterate back to state 1
 
 SEE ALSO
 
@@ -501,8 +551,20 @@ DESCRIPTION
 
 USAGE
 
-    mmatrix {clear|store|recall}
+    mmatrix action
 
+ARGUMENTS
+
+    action = clear, store, or recall
+
+NOTES
+
+    This command ensures that the movie always starts from the same
+    camera view.
+
+    "mmatrix" should not be used when controlling the camera using
+    "mview".
+    
 PYMOL API
 
     cmd.mmatrix( string action )

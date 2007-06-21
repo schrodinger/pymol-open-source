@@ -534,7 +534,7 @@ SEE ALSO
         return r
 
 
-    def cycle_valence(h_fill=1,quiet=1,_self=cmd):
+    def cycle_valence(h_fill=1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -544,10 +544,13 @@ USAGE
 
     cycle_valence [ h_fill ]
 
-EXAMPLES
+ARGUMENTS
+
+    h_fill = 0 or 1: updated hydrogens too? {default: 1 (yes)}
+    
+EXAMPLE
 
     cycle_valence
-    cycle_valence 0
 
 NOTES
 
@@ -735,7 +738,7 @@ NOTES
         '''
 DESCRIPTION
 
-    "edit" picks atoms and bond for editing.
+    "edit" picks atoms or a bond for editing.
 
 USAGE
 
@@ -849,7 +852,11 @@ SEE ALSO
 
     def h_fix(selection="",quiet=1,_self=cmd):
         '''
-under development...
+DESCRIPTION
+
+    "h_fix" is an unsupported command that may have something to do
+    with repositioning hydrogen atoms.
+    
     '''
         # preprocess selection
         selection = selector.process(selection)
@@ -1101,7 +1108,7 @@ NOTES
     cartoon, flags
 
     All strings must be explicitly quoted.  This operation typically
-    takes several seconds per thousand atom altered.  
+    takes several seconds per thousand atoms altered.  
 
     You may need to issue a "rebuild" in order to update associated
     representations.
@@ -1693,6 +1700,23 @@ SEE ALSO
         return r
 
     def matrix_reset(name, state=1, mode=-1, log=0, quiet=1,_self=cmd):
+        '''
+
+DESCRIPTION
+        
+    "matrix_reset" resets the transformation for an object.
+
+USAGE
+
+    matrix_reset name
+
+
+SEE ALSO
+
+    matrix_copy, align, super, fit, pair_fit
+    
+'''
+        
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -1764,7 +1788,29 @@ SEE ALSO
         return r
 
 
-    def set_dihedral(atom1,atom2,atom3,atom4,angle,state=1,quiet=1,_self=cmd):
+    def set_dihedral(atom1, atom2, atom3, atom4, angle, state=1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "set_dihedral" changes the dihedral angle formed between the four
+    bonded atoms provided.  The atoms must be acyclic.
+    
+USAGE
+
+    set_dihedral atom1, atom2, atom3, atom4, angle [, state [, quiet ]]
+
+NOTES
+
+    Because set_dihedral uses the molecular editing capability,
+    numbered "pk" atom selections (if any) will be redefined by this
+    operation.
+    
+PYMOL API
+
+    cmd.set_dihedral(string atom1, string atom2, string atom3, string atom4,
+                     float angle, int state, int quiet)
+
+    '''
         # preprocess selections
         atom1 = selector.process(atom1)
         atom2 = selector.process(atom2)
@@ -1917,7 +1963,15 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def map_trim(name,selection,buffer=0.0,map_state=0,sele_state=0,quiet=1,_self=cmd):
+    def map_trim(name, selection, buffer=0.0, map_state=0, sele_state=0, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "map_trim" is an unsupported command that may have something to do with
+    reducing the extent of a map to cover just a single selection of atoms.
+
+    '''
+        
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)

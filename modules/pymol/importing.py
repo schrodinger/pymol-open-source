@@ -648,7 +648,35 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def load_embedded(key=None,name=None,state=0,finish=1,discrete=1,quiet=1,_self=cmd):
+    def load_embedded(key=None, name=None, state=0, finish=1, discrete=1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "load_embedded" loads content previously defined in the current
+    PyMOL command script using the "embed" command.
+
+USAGE
+
+    load_embedded [ key [, name [, state [, finish [, discrete [, quiet ]]]]]]        
+
+EXAMPLE
+
+    embed wats, pdb
+    HETATM    1  O   WAT     1       2.573  -1.034  -1.721
+    HETATM    2  H1  WAT     1       2.493  -1.949  -1.992
+    HETATM    3  H2  WAT     1       2.160  -0.537  -2.427
+    HETATM    4  O   WAT     2       0.705   0.744   0.160
+    HETATM    5  H1  WAT     2      -0.071   0.264   0.450
+    HETATM    6  H2  WAT     2       1.356   0.064  -0.014
+    embed end
+
+    load_embedded wats
+
+NOTES
+
+    This approach only works with text data files.
+    
+    '''
         r = DEFAULT_ERROR
         list = _self._parser.get_embedded(key)
         if list == None:
