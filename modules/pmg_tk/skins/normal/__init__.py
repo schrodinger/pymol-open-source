@@ -652,6 +652,14 @@ class Normal(PMGSkin):
             self.menuBar.addmenuitem(name,  'command', lab, label=lab,
                                              command = lambda v=val,s=self,sn=setting_name: s.cmd.set(sn, v))
 
+    def cat_terms(self):
+        for path in [ "$PYMOL_PATH/LICENSE.txt", "$PYMOL_PATH/LICENSE.TXT", "$PYMOL_PATH/LICENSE" ]:
+            path = self.pymol.cmd.exp_path(path)
+            if os.path.exists(path):
+                print string.strip(open(path).read())
+                return 
+        print " Error: no license terms found."
+        
     def createMenuBar(self):
         self.menuBar = Pmw.MenuBar(self.root, balloon=self.balloon,
                                             hull_relief=RAISED, hull_borderwidth=1) 
@@ -671,44 +679,57 @@ class Normal(PMGSkin):
 #                                         command = lambda s=self: None)
 
         self.menuBar.addmenu('Help', 'About %s' % self.appname, side='right')      
-        self.menuBar.addmenuitem('Help', 'command',
-                                 'Get information on application', 
-                                 label='About', command = lambda s=self:s.show_about())
-        
-        self.menuBar.addmenuitem('Help', 'separator', '')
 
         try:
             import webbrowser
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Access the PyMOL Home Page',
-                                     label='PyMOL Home Page',
-                                     command = lambda w=webbrowser:w.open("http://www.pymol.org"))
-
             self.menuBar.addmenuitem('Help', 'command',
                                      'Access the Official PyMOL Documentation online',
                                      label='Online Documentation',
                                      command = lambda w=webbrowser:w.open("http://delsci.info/dsc"))
 
             self.menuBar.addmenuitem('Help', 'command',
-                                     'Sponsor PyMOL by becoming a Subscriber',
-                                     label='Sponsorship Information',
-                                     command = lambda w=webbrowser:w.open("http://pymol.org/funding.html"))
+                                     'Access the PyMOL Home Page',
+                                     label='PyMOL Home Page',
+                                     command = lambda w=webbrowser:w.open("http://www.pymol.org"))
 
             self.menuBar.addmenuitem('Help', 'separator', '')
-                
+            
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'Join or browse the pymol-users mailing list',
+                                     label='PyMOL Mailing List',
+                                     command = lambda w=webbrowser:w.open("http://www.pymol.org/maillist"))
+
             self.menuBar.addmenuitem('Help', 'command',
                                      'Access the community-maintained PyMOL Wiki',
                                      label='PyMOL Community Wiki',
                                      command = lambda w=webbrowser:w.open("http://www.pymolwiki.org"))
+            
             self.menuBar.addmenuitem('Help', 'separator', '')        
+
+            if self.pymol.cmd.splash(2):
+                self.menuBar.addmenuitem('Help', 'command',
+                                         'Sponsor PyMOL by becoming a Subscriber',
+                                         label='Sponsorship Information',
+                                         command = lambda w=webbrowser:w.open("http://pymol.org/funding.html"))
+
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'See a copy of the License Terms',
+                                     label='License Terms',
+                                     command = lambda s=self:s.cat_terms())
+
+            self.menuBar.addmenuitem('Help', 'separator', '')
+
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'How to Cite PyMOL', 
+                                     label='Citing PyMOL', command = lambda w=webbrowser:w.open("http://pymol.org/citing"))
+            
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'Get information on application', 
+                                     label='About', command = lambda s=self:s.show_about())
+            
         except ImportError:
             pass
         
-        self.menuBar.addmenuitem('Help', 'command', 'Demo',
-                                         label='Demo',
-                                         command = lambda s=self: s.cmd.do(
-            "_ replace_wizard demo,cartoon"))
-
 
 #      self.menuBar.addmenuitem('Help', 'command', 'Release Notes',
 #                               label='Release Notes',
