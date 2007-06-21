@@ -107,7 +107,6 @@ if __name__=='pymol.invocation':
         if not len(lst): # all
             if os.environ.has_key("PYMOL_PATH"):
                 lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern2)
-
         first = []
         second = []
         for a in lst:
@@ -269,10 +268,16 @@ if __name__=='pymol.invocation':
                 if "J" in a: # cd to user's home directory on startup (if possible)
                     if sys.platform == 'win32':
                         if os.environ.has_key("HOMEDRIVE") and os.environ.has_key("HOMEPATH"):
-                            options.deferred.append("_do__ cd %s%s"%(
-                                os.environ["HOMEDRIVE"],os.environ["HOMEPATH"]))
+                            path = os.environ["HOMEDRIVE"] + os.environ["HOMEPATH"]
+                            if os.path.isdir(path):
+                                my_docs = os.path.join(path,"My Documents")
+                                if os.path.isdir(my_docs): # start in My Documents (if exists)
+                                    path = my_docs
+                                options.deferred.append("_do__ cd %s"%path)
                     elif os.environ.has_key("HOME"):
-                        options.deferred.append("_do__ cd %s"%os.environ["HOME"])
+                        path = os.environ["HOME"]
+                        if os.path.isdir(path):
+                            options.deferred.append("_do__ cd %s"%path)
                 if "l" in a:
                     options.deferred.append("_do_spawn %s"%av.pop())
                 if "r" in a:
