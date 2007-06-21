@@ -416,7 +416,7 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
               tst += ante;
               for(cc=0;cc<window;cc++) {
                 if((ff>=0)&&(gg>=0)&&(ff<na)&&(gg<nb)) {
-                  tst -= fabs(da[a][ff]-db[b][gg]);
+                  tst -= (float)fabs(da[a][ff]-db[b][gg]);
                   aa = ff;
                   bb = gg;
                   ff = point[aa][bb][0];
@@ -446,7 +446,7 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
               tst += ante;
               for(cc=0;cc<window;cc++) {
                 if((ff>=0)&&(gg>=0)&&(ff<na)&&(gg<nb)) {
-                  tst -= fabs(da[a][ff]-db[b][gg]);
+                  tst -= (float)fabs(da[a][ff]-db[b][gg]);
                   aa = ff;
                   bb = gg;
                   ff = point[aa][bb][0];
@@ -485,7 +485,7 @@ int MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
                   tst += ante;
                   for(cc=0;cc<window;cc++) {
                     if((ff>=0)&&(gg>=0)&&(ff<na)&&(gg<nb)) {
-                      tst -= fabs(da[a][ff]-db[b][gg]);
+                      tst -= (float)fabs(da[a][ff]-db[b][gg]);
                       aa = ff;
                       bb = gg;
                       ff = point[aa][bb][0];
