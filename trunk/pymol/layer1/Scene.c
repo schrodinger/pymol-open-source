@@ -1796,7 +1796,7 @@ void SceneIdle(PyMOLGlobals *G)
       if(fps<=0.0F) {
         if(fps<0.0)
           minTime = 0.0; /* negative fps means full speed */
-        else
+        else /* 0 fps means use movie_delay instead */
           minTime = SettingGet(G,cSetting_movie_delay)/1000.0;
         if(minTime>=0)
           fps = 1.0/minTime;
