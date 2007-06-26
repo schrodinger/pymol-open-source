@@ -5306,8 +5306,14 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
   double rcut2;
   float rcut;
   float max_rcut = 0.0F;
-  float blur = SettingGet(G,cSetting_gaussian_resolution)/2.0F;
   float b_floor = SettingGet(G,cSetting_gaussian_b_floor);
+  float blur_factor = 1.0F;
+
+  {
+    float resolution = SettingGet(G,cSetting_gaussian_resolution);
+    if(resolution<2.0) resolution = 2.0;
+    blur_factor = 2.0F / resolution; /* a gaussion_resolution of 2.0 is considered perfect */
+  }
 
   if(b_adjust>500.0) b_adjust = 500.0; /* constrain to be somewhat reasonable */
 
@@ -5655,8 +5661,7 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
                   (elim + log(max2d(fabs(atom_sf[a][4]),D_SMALL10)))/atom_sf[a][5],
                   (elim + log(max2d(fabs(atom_sf[a][6]),D_SMALL10)))/atom_sf[a][7],
                   (elim + log(max2d(fabs(atom_sf[a][8]),D_SMALL10)))/atom_sf[a][9]);
-    rcut = (float)sqrt1d(rcut2);
-    rcut *= blur;
+    rcut = ((float)sqrt1d(rcut2)) / blur_factor;
     atom_sf[a][10] = rcut;
     if(max_rcut<rcut)
       max_rcut = rcut;
@@ -5684,17 +5689,16 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
                 if(use_max) {
                   float e_partial;
                   while(j>=0) {
-                    d = (float)diff3f(point+3*j,v2)/blur;
+                    d = (float)diff3f(point+3*j,v2) * blur_factor; /* scale up width */
                     sfp=atom_sf[j];
                     if(d<sfp[10]) {
                       d=d*d;
                       if(d<R_SMALL8) d=R_SMALL8;
-                      e_partial=(float)(
-                                         (sfp[0]*exp(-sfp[1]*d))
-                                         +(sfp[2]*exp(-sfp[3]*d))
-                                         +(sfp[4]*exp(-sfp[5]*d))
-                                         +(sfp[6]*exp(-sfp[7]*d))
-                                         +(sfp[8]*exp(-sfp[9]*d)));
+                      e_partial=(float)((sfp[0]*exp(-sfp[1]*d))
+                                        +(sfp[2]*exp(-sfp[3]*d))
+                                        +(sfp[4]*exp(-sfp[5]*d))
+                                        +(sfp[6]*exp(-sfp[7]*d))
+                                        +(sfp[8]*exp(-sfp[9]*d))) * blur_factor; /* scale down intensity */
                       if(e_partial > e_val)
                         e_val = e_partial;
                     }
@@ -5702,7 +5706,7 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
                   }
                 } else {
                   while(j>=0) {
-                    d = (float)diff3f(point+3*j,v2)/blur;
+                    d = (float)diff3f(point+3*j,v2) * blur_factor; /* scale up width */
                     sfp=atom_sf[j];
                     if(d<sfp[10]) {
                       d=d*d;
@@ -5712,7 +5716,7 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
                                      +(sfp[2]*exp(-sfp[3]*d))
                                      +(sfp[4]*exp(-sfp[5]*d))
                                      +(sfp[6]*exp(-sfp[7]*d))
-                                     +(sfp[8]*exp(-sfp[9]*d)));
+                                     +(sfp[8]*exp(-sfp[9]*d))) * blur_factor; /* scale down intensity */ 
                     }
                     j=map->EList[i++];
                   }

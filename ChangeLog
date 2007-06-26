@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2007-06-21  Warren L. DeLano <warren@delsci.com>
+
+	* issued PyMOL 1.0, with updates to the help menu
+
+	* updated numerous command entries in code for online support
+	
+	* missing ChangeLog entries for the past few weeks...ugh.
+	
 2007-05-30  Warren L. DeLano <warren@delsci.com>
 
 	* align command now has default max_gap of 50 (for performance)
