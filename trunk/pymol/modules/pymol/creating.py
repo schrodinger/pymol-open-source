@@ -33,7 +33,7 @@ if __name__=='pymol.creating':
         'gaussian' : 2, # gaussian summation
         'coulomb_neutral' : 3,
         'coulomb_local' : 4,
-        'gaussian_max' : 4, # gaussian maximum contributor
+        'gaussian_max' : 5, # gaussian maximum contributor
         }
 
     map_type_sc = Shortcut(map_type_dict.keys())

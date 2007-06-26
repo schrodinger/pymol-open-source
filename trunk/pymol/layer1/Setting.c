@@ -3170,7 +3170,11 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_i(I,cSetting_ray_oversample_cutoff,120);
 
-  set_f(I,cSetting_gaussian_resolution,2.0F);
+  /* note that this setting is ad-hoc and calibrated such that a
+     gaussian_resolution of 2.0 returns maps with the straight atomic
+     scattering factors (unblurred).  At resolution of 4.0, they are
+     blurred 2X, 8.0:4X, and so forth.... */
+  set_f(I,cSetting_gaussian_resolution,2.0F); 
 
   set_f(I,cSetting_gaussian_b_floor,0.0F);
 
