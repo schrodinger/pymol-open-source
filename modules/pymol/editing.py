@@ -1303,8 +1303,20 @@ USAGE
 
 ARGUMENTS
 
-    state = 0: then all states are affected.
-    state = -1: then only the current state
+    vector = float vector: translation vector
+
+    selection = string: atoms whose coordinates should be modified {default: all}
+
+    state > 0: only the indicated state is modified
+
+    state = 0: all states are modified
+
+    state = -1: only current state is modified {default}
+
+    camera = 0 or 1: is the vector in camera coordinates? {default: 1 (yes)}
+
+    object = string: object name (only if rotating object matrix) {default: None}
+
 
 PYMOL API
 
@@ -1387,9 +1399,9 @@ NOTES
         '''
 DESCRIPTION
 
-    "rotate" rotates the atomic coordinates of atoms in a selection.
-    Alternatively, it modifies the matrix associated with a particular
-    object or object state.
+    "rotate" rotates the atomic coordinates of atoms in a selection
+    about an axis.  Alternatively, it modifies the matrix associated
+    with a particular object or object state.
 
 USAGE
 
@@ -1398,15 +1410,29 @@ USAGE
 
 ARGUMENTS
 
+    axis = x, y, z, or float vector: axis about which to rotate
+
+    angle = float: degrees of rotation
+
+    selection = string: atoms whose coordinates should be modified {default: all}
+    
     state > 0: only the indicated state is modified
 
     state = 0: all states are modified
 
-    state = -1: only current states are modified
-    
+    state = -1: only the current state is modified {default}
+
+    camera = 0 or 1: is the axis specific in camera coordinates? {default: 1}
+
+    object = string: object name (only if rotating object matrix) {default: None}
+
+    origin = float vector: origin of rotateion {default: None}
+        
 EXAMPLES
 
     rotate x, 45, pept
+
+    rotate [1,1,1], 10, chain A
 
 NOTES
 
@@ -1414,13 +1440,13 @@ NOTES
     parameter is specified.
 
     If object is None, then the atomic coordinates are modified
-    directly.  All representation geometries will need to be
+    directly, and all representation geometries will need to be
     regenerated to reflect the new atomic coordinates.
 
-    If object is set to an object name, then selection is
+    If object is set to an object name, then the selection field is
     ignored and instead of translating the atomic coordinates, the
-    object\'s representation display matrix is modified.  This option
-    is for use in animations only.
+    object matrix is modified.  This option is only intended for use
+    in animations and is not yet fully supported.
 
 PYMOL API
 
