@@ -20,7 +20,7 @@ freetype2, and Pmw already installed on your system for this to work.
     python setup2.py install
     ./pymol
 
-    If running under Fink, "python" must be the Fink python install.
+    If running under Fink, "python" above must be Fink's python.
 
 Good luck!
 
