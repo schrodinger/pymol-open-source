@@ -1,17 +1,26 @@
+
 ----------------------------------------------------------------------
 INSTALLATION VIA COMPILATION 
 ----------------------------------------------------------------------
 
 There is currently only one *supported* approach for building and
-installing PyMOL from the open-source code: via Python Disutils.
+installing PyMOL from the open-source code: 
 
-You must have OpenGL, glut, libpng, tcl/tk, python, freetype2, and Pmw
-already installed on your system for this to work.
+    via Python Disutils under an open-source environment, such as:
+
+        Linux
+        FreeBSD
+        Mac OS X under X11 with Fink 
+
+Note that you must have OpenGL, glut, libpng, tcl/tk, python,
+freetype2, and Pmw already installed on your system for this to work.
 
     python setup.py build
     python setup.py install 
     python setup2.py install
     ./pymol
+
+    If running under Fink, "python" must be the Fink python install.
 
 Good luck!
 
@@ -30,6 +39,8 @@ global system Python.
      see the above distutils approach for that -- but it could be quite
      useful in situations where you want to build and maintain multiple
      PyMOL versions on a single machine, either locally, or system-wide.
+
+    NOTE: This method has only been tested on Linux.
 
     ./configure
     make install
