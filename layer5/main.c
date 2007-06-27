@@ -217,9 +217,9 @@ PyObject *MainComplete(char *str)
 #else
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef _PYMOL_OSX
 #if 0
 I think this code is dead...
+#ifdef _PYMOL_OSX
 
 int *MacPyMOLReady = NULL;
 CPyMOLOptions *MacPyMOLOption = NULL;
@@ -357,11 +357,11 @@ static void DrawBlueLine(PyMOLGlobals *G)
 }
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+#if 0
+I think this code is dead...
 #ifdef _PYMOL_OSX
 /* SPECIAL HOOKS FOR MacPyMOL */
 
-#if 0
-I think this code is dead...
 int MainCheckRedundantOpen(char *file)
 {
   int result = false;
@@ -1480,7 +1480,7 @@ static void launch(CPyMOLOptions *options,int own_the_options)
   G = PyMOL_GetGlobals(PyMOLInstance);
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef _PYMOL_OSX
+#ifdef _MACPYMOL_XCODE
   MacPyMOLOption = G->Option;
   MacPyMOLReady = &G->Ready;
 #endif

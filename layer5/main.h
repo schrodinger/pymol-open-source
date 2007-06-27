@@ -55,7 +55,7 @@ void MainCheckWindowFit(PyMOLGlobals *G);
 
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
-#ifdef _PYMOL_OSX
+#ifdef _MACPYMOL_XCODE
 int MainCheckRedundantOpen(char *file);
 void MainRunString(char *str);
 PyObject *MainGetStringResult(char *str);

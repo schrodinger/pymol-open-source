@@ -5175,6 +5175,7 @@ void SceneReshape(Block *block,int width,int height)
   /* workaround for broken pixel handling under OSX 
      (Who's fault: Me? Apple? NVidia?) */
   width = 8*(width/8);
+  /* it's 2007, four years later, do we still need this? */
 #endif
 #endif
 /* END PROPRIETARY CODE SEGMENT */
