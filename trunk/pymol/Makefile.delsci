@@ -72,6 +72,8 @@ lib:  .includes .depends .update
 
 unix: .includes .depends .update 
 	/bin/rm -f .update .includes
+	cd contrib;$(MAKE) -f Makefile.delsci
+	cd contrib/uiuc/plugins/molfile_plugin/src;$(MAKE) -f Makefile.delsci
 	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o contrib/uiuc/plugins/molfile_plugin/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
 semistatic: .includes .depends .update
