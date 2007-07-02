@@ -649,22 +649,38 @@ if __name__=='pymol.setting':
 
     ###### API functions
 
-    def set_bond(name,value,selection1,selection2=None,
-                 state=0,updates=1,log=0,quiet=1,_self=cmd):
-        '''
+    def set_bond(name, value, selection1, selection2=None,
+                 state=0, updates=1, log=0, quiet=1, _self=cmd):
+        ''' 
 DESCRIPTION
 
-    "set_bond" changes a per-bond setting
+    "set_bond" changes per-bond settings for all bonds which exist
+    between two selections of atoms.
 
 USAGE
 
-    set_bond name, value, selection [, selection [,state [, updates [, quiet]]]]
+    set_bond name, value, selection1 [, selection2 ]
+
+ARGUMENTS
+
+    name = string: name of the setting
+
+    value = string: new value to use
+
+    selection1 = string: first set of atoms
+
+    selection2 = string: seconds set of atoms {default: (selection1)}
+
+EXAMPLE
+
+    set_bond stick_transparency, 0.7, */n+c+ca+o
+
 
 NOTES
 
     The following per-bond settings are currently implemented.  Others
-    may seem to be recognized but will have no effect when set at the
-    per-bond level.
+    may seem to be recognized but will currently have no effect when
+    set at the per-bond level.
     
     * valence
     * line_width
@@ -672,14 +688,17 @@ NOTES
     * stick_radius
     * stick_color
     * stick_transparency
+
+    Note that if you attempt to use the "set" command with a per-bond
+    setting over a selection of atoms, the setting change will appear
+    to take, but no change will be observed.
     
 PYMOL API
 
     cmd.set_bond ( string name, string value,
                    string selection1,
                    string selection2,
-                   int state=0,
-                   int updates=1, log=0, quiet=1)
+                   int state, int updates, log=0, quiet=1)
 
        '''
         r = DEFAULT_ERROR
@@ -831,6 +850,11 @@ NOTES
     * ribbon_color
     * transparency (for surfaces)
     * sphere_transparency
+    
+    Note that if you attempt to use the "set" command with a per-bond
+    setting over a selection of atoms, the setting change will appear
+    to take, but no change will be observed.  Please use the
+    "set_bond" command for per-bond settings.
     
 
 PYMOL API
