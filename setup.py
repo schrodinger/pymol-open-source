@@ -60,8 +60,7 @@ elif sys.platform=='darwin':
                   "-framework","CoreFoundation",
                   "-framework","Cocoa",
                   "-framework","IOKit",
-                  "-framework","GLUT",
-                  "-framework","Python"]
+                  "-framework","GLUT"]
 else: # linux or standard unix
    inc_dirs=["ov/src",
              "layer0","layer1","layer2",
