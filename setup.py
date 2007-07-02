@@ -8,6 +8,7 @@
 from distutils.core import setup, Extension
 import sys
 
+#============================================================================
 if sys.platform=='win32':
    inc_dirs=["ov/src",
              "layer0","layer1","layer2",
@@ -22,6 +23,7 @@ if sys.platform=='win32':
                ]
    ext_comp_args=[]
    ext_link_args=['/NODEFAULTLIB:"LIBC"']
+#============================================================================
 elif sys.platform=='cygwin':
    inc_dirs=["ov/src",
              "layer0","layer1","layer2",
@@ -35,7 +37,19 @@ elif sys.platform=='cygwin':
                ("_HAVE_LIBPNG",None)]
    ext_comp_args=[]
    ext_link_args=[]
+#============================================================================
 elif sys.platform=='darwin':
+
+# under Fink, with the following packages installed:
+#
+#  python24
+#  libpng3
+#  pmw-py24
+#  freetype2
+#  freetype2-dev
+#
+# REMEMBER to compile using Fink's Python!
+#
    inc_dirs=["ov/src",
              "layer0","layer1","layer2",
              "layer3","layer4","layer5", 
@@ -45,13 +59,17 @@ elif sys.platform=='darwin':
         "/System/Library/Frameworks/AppKit.framework/Headers",
         "/System/Library/Frameworks/ApplicationServices.framework/Headers",
         "/System/Library/Frameworks/Cocoa.framework/Headers",
-        "/System/Library/Frameworks/IOKit.framework/Headers",]
+        "/System/Library/Frameworks/IOKit.framework/Headers",
+        "/sw/lib/freetype2/include",
+        "/sw/lib/freetype2/include/freetype2",
+        "/sw/include"]
    libs=[]
    pyogl_libs = []
    lib_dirs=[]
    def_macros=[("_PYMOL_MODULE",None),
                ("_PYMOL_OSX",None),
-#               ("_HAVE_LIBPNG",None),
+               ("_HAVE_LIBPNG",None),
+               ("_PYMOL_FREETYPE",None),
 	]
    ext_comp_args=[]
    ext_link_args=["-framework","OpenGL",
@@ -60,7 +78,11 @@ elif sys.platform=='darwin':
                   "-framework","CoreFoundation",
                   "-framework","Cocoa",
                   "-framework","IOKit",
-                  "-framework","GLUT"]
+                  "-framework","GLUT",
+                  "-lpng", 
+                  "-L/sw/lib/freetype2/lib", "-lfreetype" ]
+
+#============================================================================
 else: # linux or standard unix
    inc_dirs=["ov/src",
              "layer0","layer1","layer2",

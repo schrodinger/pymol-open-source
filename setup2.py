@@ -98,6 +98,10 @@ try:
          f = open(launch_script,'w')
          if sys.platform!='win32':
             f.write("#!/bin/sh\n")
+
+         if sys.platform=='darwin':
+            f.write('if [ "$DISPLAY" == "" ]; then\nDISPLAY=":0.0"\nexport DISPLAY\nfi\n')
+
          pymol_init = re.sub(r"[\/\\][^\/\\]*$","/__pymol_path",sys.modules['pymol'].__file__)
          python_exe = sys.executable
          if python_exe[0:2]=="./":
