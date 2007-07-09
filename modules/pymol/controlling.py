@@ -698,7 +698,7 @@ SEE ALSO
         return r
 
 
-    def mask(selection="(all)",_self=cmd):
+    def mask(selection="(all)",quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -725,13 +725,13 @@ SEE ALSO
         #
         try:
             _self.lock(_self)   
-            r = _cmd.mask(_self._COb,"("+str(selection)+")",1)
+            r = _cmd.mask(_self._COb,"("+str(selection)+")",1,int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
-    def unmask(selection="(all)",_self=cmd):
+    def unmask(selection="(all)",quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -755,7 +755,7 @@ SEE ALSO
         #   
         try:
             _self.lock(_self)   
-            r = _cmd.mask(_self._COb,"("+str(selection)+")",0)
+            r = _cmd.mask(_self._COb,"("+str(selection)+")",0,int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         

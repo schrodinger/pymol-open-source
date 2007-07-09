@@ -82,5 +82,6 @@ int EditorGetNFrag(PyMOLGlobals *G);
 void EditorUpdate(PyMOLGlobals *G);
 void EditorMouseInvalid(PyMOLGlobals *G);
 int EditorGetScheme(PyMOLGlobals *G);
+void EditorDihedralInvalid(PyMOLGlobals *G,ObjectMolecule *obj);
 
 #endif

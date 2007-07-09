@@ -331,6 +331,8 @@ static int SelectorGetObjAtmOffset(CSelector *I,ObjectMolecule *obj,int offset)
 #define SELE_NTO_ ( 0x4100 | STYP_OP22 | 0x30 ) 
 #define SELE_CCLs ( 0x4200 | STYP_SEL1 | 0x80 )
 #define SELE_RCLs ( 0x4300 | STYP_SEL1 | 0x80 )
+#define SELE_PTDz ( 0x4400 | STYP_SEL0 | 0x90 )
+#define SELE_MSKz ( 0x4500 | STYP_SEL0 | 0x90 )
 
 #define SEL_PREMAX 0x8
 
@@ -456,6 +458,12 @@ static WordKeyValue Keyword[] =
   {  "partial_charge",SELE_PCHx },
   {  "pc;",      SELE_PCHx },/* deprecated */
   {  "pc.",      SELE_PCHx },
+
+  {  "masked",   SELE_MSKz },
+  {  "msk.",     SELE_MSKz },
+
+  {  "protected",SELE_PTDz },
+  {  "pr.",      SELE_PTDz },
 
   {  "formal_charge", SELE_FCHx },
   {  "fc;",      SELE_FCHx },/* deprecated */
@@ -8197,6 +8205,14 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
 	 case SELE_SOLz:
        for(a=cNDummyAtoms;a<I->NAtom;a++)
          base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_solvent;
+       break;
+	 case SELE_PTDz:
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].protekted;
+       break;
+	 case SELE_MSKz:
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].masked;
        break;
 	 case SELE_ORGz:
        for(a=cNDummyAtoms;a<I->NAtom;a++)

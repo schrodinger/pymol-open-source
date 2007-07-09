@@ -1246,7 +1246,6 @@ static void MainBusyIdle(void)
       " MainBusyIdle: calling idle function.\n"
       ENDFD;
 
-
     if(PyMOL_Idle(PyMOLInstance)) {
       if(I->IdleMode<2) {
         I->IdleMode = 2;
@@ -1258,7 +1257,6 @@ static void MainBusyIdle(void)
       I->IdleMode = 2;
       I->IdleTime = UtilGetSeconds(G);
     }
-
     PRINTFD(G,FB_Main)
       " MainBusyIdle: swap check.\n"
       ENDFD;
@@ -1322,20 +1320,31 @@ static void MainBusyIdle(void)
       " MainBusyIdle: unlocking.\n"
       ENDFD;
 
-    PUnlockAPIAsGlut(G);
-    
-    switch(I->IdleMode) {
-    case 4:
-      PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_slow_idle)); /* slow idle - save CPU cycles */
-      break;
-    case 3:
-      PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_fast_idle)); /* fast idle - more responsive */
-      break;
-    case 2:
-      PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
-      break;
-    default:
-      break;
+    {
+      int control_idling = false;
+      if(I->IdleMode==1) {
+        control_idling = ControlIdling(G);
+      }
+      PUnlockAPIAsGlut(G);
+      
+      switch(I->IdleMode) {
+      case 4:
+        PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_slow_idle)); /* slow idle - save CPU cycles */
+        break;
+      case 3:
+        PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_fast_idle)); /* fast idle - more responsive */
+        break;
+      case 2:
+        PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
+        break;
+      case 1:
+        if(control_idling) {
+          PSleepUnlocked(G,SettingGetGlobal_i(G,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
+        }
+        break;
+      default:
+        break;
+      }
     }
     
     /* run final initilization code for Python-based PyMOL implementations. */
