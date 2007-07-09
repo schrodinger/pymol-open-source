@@ -178,6 +178,7 @@ from editing import \
       set_dihedral,       \
       set_name,           \
       set_geometry,       \
+      set_object_color,   \
       set_object_ttt,     \
       set_symmetry,       \
       set_title,          \

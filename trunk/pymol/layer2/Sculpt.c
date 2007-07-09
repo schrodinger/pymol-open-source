@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"Vector.h"
 #include"Word.h"
+#include"Editor.h"
 
 #include"CGO.h"
 
@@ -1724,10 +1725,10 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
         cs->SculptCGO = CGONew(G);
       else
         CGOReset(cs->SculptCGO);
-      cgo = cs->SculptCGO;
     } else if(cs->SculptCGO) {
       CGOReset(cs->SculptCGO);      
     }
+    cgo = cs->SculptCGO;
 
     nb_skip = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_interval);
     if(nb_skip>n_cycle)
@@ -2148,7 +2149,9 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                                 a1 = atm2idx[b1];
                                 v1 = cs_coord+3*a1;
                                 if(vdw_vis_mode && cgo && 
-                                   (n_cycle<1) && (!(ai0->protekted&&ai1->protekted))) {
+                                   (n_cycle<1) && ((!(ai0->protekted&&ai1->protekted))||
+                                                   (ai0->flags&cAtomFlag_study)||
+                                                   (ai1->flags&cAtomFlag_study))) {
                                   SculptCGOBump(v0,v1,ai0->vdw,ai1->vdw,
                                                 cutoff,vdw_vis_min,
                                                 vdw_vis_mid, vdw_vis_max, 
@@ -2326,6 +2329,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
         }
       }
     }
+
+    EditorDihedralInvalid(G,obj);
   }
 
   PRINTFD(G,FB_Sculpt)

@@ -2235,6 +2235,7 @@ SEE ALSO
         if _self._raising(r,_self): raise QuietException
         return r
 
+
     def color(color, selection="(all)", quiet=1, flags=0, _self=cmd):
         '''
 DESCRIPTION

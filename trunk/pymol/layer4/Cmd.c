@@ -2418,11 +2418,11 @@ static PyObject *CmdMask(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   char *str1;
-  int int1;
+  int int1,quiet;
   OrthoLineType s1;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&int1);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&str1,&int1,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -2432,7 +2432,7 @@ static PyObject *CmdMask(PyObject *self, PyObject *args)
   if (ok) {
     APIEntry(G);
     ok = (SelectorGetTmp(G,str1,s1)>=0);
-    ExecutiveMask(G,s1,int1); /* TODO STATUS */
+    ExecutiveMask(G,s1,int1,quiet); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
     APIExit(G);
   }
@@ -7720,6 +7720,28 @@ static PyObject *CmdHAdd(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdSetObjectColor(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  char *name,*color;
+  int result = -1;
+  int quiet;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"Ossi",&self,&name,&color,&quiet);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if (ok) {
+    APIEntry(G);
+    result = ExecutiveSetObjectColor(G,name,color,quiet);
+    APIExit(G);
+  }
+  return(APIResultOk(ok));
+}
+
 static PyObject *CmdGetObjectColorIndex(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -8385,6 +8407,7 @@ static PyMethodDef Cmd_methods[] = {
   {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
   {"set_matrix",	        CmdSetMatrix,            METH_VARARGS },
   {"set_object_ttt",        CmdSetObjectTTT,         METH_VARARGS },
+  {"set_object_color",      CmdSetObjectColor,       METH_VARARGS },
   {"set_session",           CmdSetSession,           METH_VARARGS },
   {"set_symmetry",          CmdSetCrystal,           METH_VARARGS },
   {"set_title",             CmdSetTitle,             METH_VARARGS },

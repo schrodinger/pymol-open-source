@@ -31,7 +31,8 @@ Z* -------------------------------------------------------------------
 #define cAtomFlag_fix           0x00000008
 /* FLAG 4 - Exclude these atoms when performing simulation, minimization */
 #define cAtomFlag_exclude       0x00000010
-
+/* FLAG 5 - Study atoms  */
+#define cAtomFlag_study         0x00000020
 
 /* FLAGS 4-7 are reserved for additional molecular modeling tasks */
 

@@ -271,7 +271,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level);
 void ExecutiveFlag(PyMOLGlobals *G,int flag,char *s1,int action,int quiet);
 void ExecutiveRemoveAtoms(PyMOLGlobals *G,char *s1,int quiet);
 void ExecutiveProtect(PyMOLGlobals *G,char *s1,int mode,int quiet);
-void ExecutiveMask(PyMOLGlobals *G,char *s1,int mode);
+void ExecutiveMask(PyMOLGlobals *G,char *s1,int mode,int quiet);
 void ExecutiveUndo(PyMOLGlobals *G,int dir);
 void ExecutiveRebuildAll(PyMOLGlobals *G);
 void ExecutiveSpheroid(PyMOLGlobals *G,char *name,int average);
@@ -368,6 +368,7 @@ PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals *G);
 int ExecutiveGetCrystal(PyMOLGlobals *G,char *sele,float *a,float *b,float *c,
                         float *alpha,float *beta,float *gamma,char *sgroup,int *defined);
 int ExecutiveIterateObjectMolecule(PyMOLGlobals *G,ObjectMolecule **obj,void **hidden);
+int ExecutiveSetObjectColor(PyMOLGlobals *G,char *name,char *color,int quiet);
 int ExecutiveGetObjectColorIndex(PyMOLGlobals *G,char *name);
 int ExecutiveSetOnOffBySele(PyMOLGlobals *G,char *name,int onoff);
 int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name);

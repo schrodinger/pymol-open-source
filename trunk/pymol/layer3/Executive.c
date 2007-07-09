@@ -1912,6 +1912,19 @@ int ExecutiveFixChemistry(PyMOLGlobals *G,char *s1,char *s2,int invalidate,int q
   return ok;
 }
 
+int ExecutiveSetObjectColor(PyMOLGlobals *G,char *name,char *color,int quiet)
+{
+  int result = false;
+  int col_ind = ColorGetIndex(G,color);
+  CObject *obj = NULL;
+  obj = ExecutiveFindObjectByName(G,name);
+  if(obj) {
+    obj->Color = col_ind;
+    result = true;
+  }
+  return(result);
+}
+
 int ExecutiveGetObjectColorIndex(PyMOLGlobals *G,char *name)
 {
   int result = -1;
@@ -7129,7 +7142,7 @@ void ExecutiveProtect(PyMOLGlobals *G,char *s1,int mode,int quiet)
   }
 }
 /*========================================================================*/
-void ExecutiveMask(PyMOLGlobals *G,char *s1,int mode)
+void ExecutiveMask(PyMOLGlobals *G,char *s1,int mode,int quiet)
 {
   int sele1;
   ObjectMoleculeOpRec op;
@@ -7141,12 +7154,14 @@ void ExecutiveMask(PyMOLGlobals *G,char *s1,int mode)
     op.i1 = mode;
     op.i2 = 0;
     ExecutiveObjMolSeleOp(G,sele1,&op);
-    if(Feedback(G,FB_Executive,FB_Actions)) {    
-      if(op.i2) {
-        if(mode) {
-          PRINTF " Mask: %d atoms masked (cannot be picked or selected).\n",op.i2 ENDF(G);
-        } else {
-          PRINTF " Mask: %d atoms unmasked.\n", op.i2 ENDF(G);
+    if(!quiet) {
+      if(Feedback(G,FB_Executive,FB_Actions)) {    
+        if(op.i2) {
+          if(mode) {
+            PRINTF " Mask: %d atoms masked (cannot be picked or selected).\n",op.i2 ENDF(G);
+          } else {
+            PRINTF " Mask: %d atoms unmasked.\n", op.i2 ENDF(G);
+          }
         }
       }
     }
@@ -10518,7 +10533,7 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
           break;
         }
         
-        switch(rec->type) {
+        switch(rec->type) { /* sets object color */
         case cExecObject:
           rec->obj->Color=col_ind;
           if(rec->obj->fInvalidate)

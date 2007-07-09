@@ -2083,6 +2083,8 @@ SEE ALSO
         'restrain'      : 2,
         'fix'           : 3,
         'exclude'       : 4,
+        'study'         : 5,
+        
     # rendering
         'exfoliate'     : 24,
         'ignore'        : 25,
@@ -2118,6 +2120,16 @@ DESCRIPTION
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
+        return r
+
+    def set_object_color(name, color, quiet=1, _self=cmd):
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _cmd.set_object_color(_self._COb,str(name),str(color),int(quiet))
+        finally:
+            _self.unlock(r,_self)      
+        if _raising(r): raise pymol.CmdException
         return r
     
     def flag(flag, selection, action="reset", quiet=1, _self=cmd):

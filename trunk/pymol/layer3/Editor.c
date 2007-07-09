@@ -36,7 +36,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 
 struct _CEditor {
-  ObjectMolecule *Obj;
+  ObjectMolecule *DihedObject;
   WordType DragSeleName;
   int Active;
   int ActiveState;
@@ -96,7 +96,9 @@ static void EditorDrawDihedral(PyMOLGlobals *G)
       obj1 = SelectorGetFastSingleAtomObjectIndex(G,sele1,&at1);
       obj2 = SelectorGetFastSingleAtomObjectIndex(G,sele2,&at2);
       if(obj1 && (obj1 == obj2) ) {
+        register CEditor *I = G->Editor;
         
+        I->DihedObject = obj1;
         at0 = ObjectMoleculeGetTopNeighbor(G,obj1, at1,at2);
         at3 = ObjectMoleculeGetTopNeighbor(G,obj1, at2,at1);
         
@@ -134,10 +136,13 @@ static void EditorDrawDihedral(PyMOLGlobals *G)
   }
 }
 
-static void EditorDihedralInvalid(PyMOLGlobals *G)
+void EditorDihedralInvalid(PyMOLGlobals *G,ObjectMolecule *obj)
 {
   register CEditor *I = G->Editor;
-  I->DihedralInvalid = true;
+  if(!obj) 
+    I->DihedralInvalid = true;
+  else if(obj==I->DihedObject)
+    I->DihedralInvalid = true;    
 }
 
 void EditorMouseInvalid(PyMOLGlobals *G)
@@ -699,7 +704,7 @@ int EditorTorsion(PyMOLGlobals *G,float angle)
             
             if(I->BondMode && 
                SettingGetGlobal_b(G,cSetting_editor_auto_dihedral)) 
-              EditorDihedralInvalid(G);
+              EditorDihedralInvalid(G,NULL);
           }
         }
       }
@@ -1475,6 +1480,7 @@ void EditorInactivate(PyMOLGlobals *G)
     " EditorInactivate-Debug: callend.\n"
     ENDFD;
 
+  I->DihedObject = NULL;
   I->DragObject = NULL;
   I->BondMode = false;
   I->ShowFrags = false;
@@ -1543,7 +1549,7 @@ void EditorActivate(PyMOLGlobals *G,int state,int enable_bond)
       ExecutiveHideSelections(G);
 
     if(I->BondMode && SettingGetGlobal_b(G,cSetting_editor_auto_dihedral)) 
-      EditorDihedralInvalid(G);
+      EditorDihedralInvalid(G,NULL);
   } else {
     EditorInactivate(G);
   }
@@ -2041,7 +2047,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
             
           }
           if(I->BondMode && SettingGetGlobal_b(G,cSetting_editor_auto_dihedral))
-            EditorDihedralInvalid(G);
+            EditorDihedralInvalid(G,NULL);
         }
 
         SceneInvalidate(G);
@@ -2069,7 +2075,7 @@ int EditorInit(PyMOLGlobals *G)
   register CEditor *I=NULL;
   if( (I=(G->Editor=Calloc(CEditor,1)))) {
     
-    I->Obj = NULL;
+    I->DihedObject = NULL;
     I->NFrag= 0;
     I->Active = false;
     I->DragObject=NULL;
