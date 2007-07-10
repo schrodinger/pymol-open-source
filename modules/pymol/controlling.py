@@ -394,28 +394,34 @@ DESCRIPTION
 
 USAGE
 
-    order names-list, sort, location
+    order names, sort, location
+
+ARGUMENTS
+
+    names = string: a space-separated list of names
+
+    sort = yes or no {default: no}
+
+    location = top, current, or bottom {default: current}
 
 EXAMPLES
 
-    order 1dn2 1fgh 1rnd  # sets the order of these three objects
-    order *,yes           # sorts all names
-    order 1dn2_*, yes     # sorts all names beginning with 1dn2_
+    order 1dn2 1fgh 1rnd       # sets the order of these three objects
+    order *,yes                # sorts all names
+    order 1dn2_*, yes          # sorts all names beginning with 1dn2_
     order 1frg, location=top   # puts 1frg at the top of the list
 
 PYMOL API
 
-    cmd.order(string names-list, string sort, string location)
+    cmd.order(string names, string sort, string location)
 
 NOTES
 
-    names-list: a space separated list of names
-    sort: yes or no
-    location: top, current, or bottom
-
+    "order" can also be used to reorder objects within a group.
+    
 SEE ALSO
 
-    set_name
+    set_name, group
         '''
 
         r = DEFAULT_ERROR

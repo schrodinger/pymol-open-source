@@ -72,11 +72,12 @@ if __name__=='pymol.creating':
 
 DESCRIPTION
 
-    "group" creates or updates a group object.
-
+    "group" creates or updates a group object: a container for
+    organizing objects into a hierarchy.
+    
 USAGE
 
-    group name [, members [, action [, quiet ]]]
+    group name [, members [, action ]]
 
 ARGUMENTS
 
@@ -91,10 +92,22 @@ ARGUMENTS
 EXAMPLE
 
     group kinases, 1oky 1pkg 1t46 1uwh 1z5m
+    group kinases, open
+    group kinases, close
+
+NOTES
+
+    Group objects can typically be used as arguments to commands.  In
+    such cases, the command should be applied to all members of the
+    group.  If the group is used as a selection, then all atoms in all
+    objects in the group should be included in the selection.
+
+    When a group objects is open, objects can be added or removed from
+    the group by right-clicking and dragging in the control panel.
 
 SEE ALSO
 
-    ungroup
+    ungroup, order
     
 '''
         
