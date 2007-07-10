@@ -46,7 +46,7 @@
 #include "Scene.h"
 #include "Seq.h"
 #include "Util.h"
-
+#include "Control.h"
 
 #ifdef _PYMOL_NO_MAIN
 
