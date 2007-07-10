@@ -78,8 +78,9 @@ Z* -------------------------------------------------------------------
 #define cButModeMovViewZ 47
 
 #define cButModePotentialClick 48
+#define cButModeDragObj 49
 
-#define cButModeCount    49
+#define cButModeCount    50
 
 /* remainder only used in scene... */
 
