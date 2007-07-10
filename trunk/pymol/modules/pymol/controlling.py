@@ -111,6 +111,9 @@ if __name__=='pymol.controlling':
         'movv' : 46 ,
         'mvvz' : 47 ,
 
+        # 48 for internal use only
+        
+        'drgo' : 49 ,
         }
     
     but_act_sc = Shortcut(but_act_code.keys())

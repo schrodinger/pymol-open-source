@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2007-07-09  Warren L. DeLano <warren@delsci.com>
+
+	* DrgO mouse action added
+
+	* PyMOL 1.0 branch created
+	
 2007-07-08  Warren L. DeLano <warren@delsci.com>
 
 	* adjusted idle behavior when playing movies, sculpting, etc.

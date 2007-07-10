@@ -3557,6 +3557,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     case cButModeOrigAt:
     case cButModeCent:
     case cButModeDragMol:
+    case cButModeDragObj:
       if(side_by_side(I->StereoMode))
         x = get_stereo_x(x,NULL,I->Width);
 
@@ -3595,6 +3596,15 @@ static int SceneClick(Block *block,int button,int x,int y,
               objMol = (ObjectMolecule*)obj;            
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
               sprintf(buffer,"cmd.drag(\"bymol (%s)\")",buf1);
+              PParse(G,buffer);
+              PLog(G,buffer,cPLog_pym);
+            }
+            break;
+          case cButModeDragObj:
+            {
+              objMol = (ObjectMolecule*)obj;            
+              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
+              sprintf(buffer,"cmd.drag(\"byobject (%s)\")",buf1);
               PParse(G,buffer);
               PLog(G,buffer,cPLog_pym);
             }
