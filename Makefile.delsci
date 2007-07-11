@@ -175,7 +175,7 @@ unix-s3d-product: unix-s3d-build
 
 fast: .update
 	/bin/rm -f .update 
-	$(CC) $(BUILD) */*.o ov/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)
+	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o contrib/uiuc/plugins/molfile_plugin/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
 depends: 
 	/bin/rm -f */*.p
