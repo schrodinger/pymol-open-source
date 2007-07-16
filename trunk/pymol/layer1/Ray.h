@@ -94,7 +94,9 @@ struct _CRay {
   void (*fTransparentf)( CRay *ray,float t);
   void (*fCharacter)( CRay *ray,int char_id);
   void (*fInteriorColor3fv) (CRay *ray, float *v, int passive);
-
+  void (*fEllipsoid3fv)( CRay *ray,
+                         float *v,float r,
+                         float *n1,float *n2,float *n3);
   /* everything below should be private */
   PyMOLGlobals *G;
   CPrimitive *Primitive;

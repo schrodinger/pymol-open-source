@@ -128,6 +128,9 @@ void RayTriangleTrans3fv(CRay *I,
                          float *n1,float *n2,float *n3,
                          float *c1,float *c2,float *c3,
                          float  t1,float  t2,float  t3);
+void RayEllipsoid3fv(CRay *I,
+                     float *v,float r,
+                     float *n1,float *n2,float *n3);
 
 void RayApplyMatrix33( unsigned int n, float3 *q, const float m[16],
 							float3 *p );
@@ -222,6 +225,7 @@ int RayGetNPrimitives(CRay *I)
   return(I->NPrimitive);
 }
 /*========================================================================*/
+
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
@@ -424,6 +428,10 @@ void RayExpandPrimitives(CRay *I)
 	 case cPrimSphere:
        nVert++;
        break;
+     case cPrimEllipsoid:
+       nVert++;
+       nNorm+=3;
+       break;
 	 case cPrimCylinder:
      case cPrimSausage:
        nVert++;
@@ -519,6 +527,33 @@ void RayExpandPrimitives(CRay *I)
 		(*v0++)=(*v1++);
 		(*v0++)=(*v1++);
 		nVert++;
+        break;
+	 case cPrimEllipsoid:
+		I->Primitive[a].vert=nVert;
+		I->Vert2Prim[nVert]=a;
+		v1=I->Primitive[a].v1;
+		basis->Radius[nVert]=I->Primitive[a].r1;
+		basis->Radius2[nVert]=I->Primitive[a].r1*I->Primitive[a].r1; /*precompute*/
+		if(basis->Radius[nVert]>basis->MaxRadius)
+		  basis->MaxRadius=basis->Radius[nVert];
+		basis->Vert2Normal[nVert]=nNorm;
+		(*v0++)=(*v1++);
+		(*v0++)=(*v1++);
+		(*v0++)=(*v1++);
+		nVert++;
+		n1=I->Primitive[a].n1;
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		n1=I->Primitive[a].n2;
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		n1=I->Primitive[a].n3;
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		nNorm+=3;
 		break;
 	 case cPrimCylinder:
 	 case cPrimSausage:
@@ -602,6 +637,7 @@ static void RayComputeBox(CRay *I)
         minmax(v,r);
         break;
       case cPrimSphere:
+      case cPrimEllipsoid:
         r = prm->r1;
         v = basis1->Vertex + prm->vert*3;
         minmax(v,r);
@@ -657,12 +693,11 @@ static void RayTransformFirst(CRay *I,int perspective)
   RayApplyMatrix33(basis0->NVertex,(float3*)basis1->Vertex,
 					  I->ModelView,(float3*)basis0->Vertex);
 
-  for(a=0;a<basis0->NVertex;a++)
-	 {
-		basis1->Radius[a]=basis0->Radius[a];
-		basis1->Radius2[a]=basis0->Radius2[a];
-		basis1->Vert2Normal[a]=basis0->Vert2Normal[a];
-	 }
+  for(a=0;a<basis0->NVertex;a++) {
+    basis1->Radius[a]=basis0->Radius[a];
+    basis1->Radius2[a]=basis0->Radius2[a];
+    basis1->Vert2Normal[a]=basis0->Vert2Normal[a];
+  }
   basis1->MaxRadius=basis0->MaxRadius;
   basis1->MinVoxel=basis0->MinVoxel;
   basis1->NVertex=basis0->NVertex;
@@ -2057,6 +2092,9 @@ static void RayPrimGetColorRamped(PyMOLGlobals *G, float *matrix,RayInfo *r,floa
     }
     copy3f(c1,fc);
     break;
+  case cPrimEllipsoid:
+    /* TO DO */
+    break;
   case cPrimCylinder:
   case cPrimSausage:
     w2 = r->tri1;
@@ -2590,7 +2628,7 @@ int RayTraceThread(CRayThreadInfo *T)
                      BasisCall[0].back_dist = -(T->back+r1.base[2])/r1.dir[2];
                      i = BasisHitPerspective( &BasisCall[0] );
                    } else {
-                     i = BasisHitNoShadow( &BasisCall[0] );
+                     i = BasisHitOrthoscopic( &BasisCall[0] );
                    }
                   
                    interior_flag = BasisCall[0].interior_flag;
@@ -2614,16 +2652,14 @@ int RayTraceThread(CRayThreadInfo *T)
                            r1.impact[2]	-= T->front; 
                          }
                         
-                         if(interior_wobble >= 0) 
-                           {
-                             wobble_save		= r1.prim->wobble; /* This is a no-no for multithreading! */
-                             r1.prim->wobble	= interior_wobble;
-                            
-                             RayReflectAndTexture(I,&r1,perspective);
-                            
-                             r1.prim->wobble	= wobble_save;
-                           }
-                         else
+                         if(interior_wobble >= 0) {
+                           wobble_save		= r1.prim->wobble; /* This is a no-no for multithreading! */
+                           r1.prim->wobble	= interior_wobble;
+                           
+                           RayReflectAndTexture(I,&r1,perspective);
+                           
+                           r1.prim->wobble	= wobble_save;
+                         } else
                            RayReflectAndTexture(I,&r1,perspective);
                         
                          dotgle = -r1.dotgle;
@@ -2636,8 +2672,9 @@ int RayTraceThread(CRayThreadInfo *T)
                          if(!perspective) 
                            new_front	= r1.dist;                        
 
-                         if(r1.prim->type==cPrimTriangle) {
-                          
+                         switch(r1.prim->type) {
+                         case cPrimTriangle:
+                           
                            BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
                            r1.trans = (float)pow(r1.trans,inv_trans_cont);                         
  
@@ -2657,24 +2694,37 @@ int RayTraceThread(CRayThreadInfo *T)
                            } else {
                              BasisGetTriangleFlatDotgle(bp1,&r1,i);
                            }
-                          
-                         } else if(r1.prim->type==cPrimCharacter) {
+                           break;
+                         case cPrimCharacter:
                            BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
                           
                            r1.trans = CharacterInterpolate(I->G,r1.prim->char_id,fc);
                           
                            RayReflectAndTexture(I,&r1,perspective);
                            BasisGetTriangleFlatDotgle(bp1,&r1,i);
+                           break;
+
+                         case cPrimEllipsoid:
+
+                           BasisGetEllipsoidNormal(bp1,&r1,i,perspective);
+                           RayReflectAndTexture(I,&r1,perspective);
                           
-                         } else { /* must be a sphere */
-                          
+                           fc[0]=r1.prim->c1[0];
+                           fc[1]=r1.prim->c1[1];
+                           fc[2]=r1.prim->c1[2];
+                           break;
+
+                         default: /* sphere, cylinder, sausage, etc. */
+
+                           /* must be a sphere (effectively speaking) */
+                           
                            if(perspective) {
                              RayGetSphereNormalPerspective(I,&r1);
-                             RayReflectAndTexture(I,&r1,perspective);
                            } else {
                              RayGetSphereNormal(I,&r1);
-                             RayReflectAndTexture(I,&r1,perspective);
                            }
+
+                           RayReflectAndTexture(I,&r1,perspective);
                           
                            if(r1.prim->ramped) {
                              RayPrimGetColorRamped(I->G, I->ModelView,&r1,fc);
@@ -2688,6 +2738,7 @@ int RayTraceThread(CRayThreadInfo *T)
                              fc[1]=r1.prim->c1[1];
                              fc[2]=r1.prim->c1[2];
                            }
+                           break;
                          }
 
                          if((trans_oblique!=_0)&&(r1.trans!=_0)) {
@@ -5078,9 +5129,109 @@ void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
     (*vv++)=(*v++);
   }
 
-
   I->NPrimitive++;
 }
+void RayEllipsoid3fv(CRay *I,
+                     float *v,float r,
+                     float *n1,float *n2,float *n3)
+{
+
+  CPrimitive *p;
+
+  float *vv;
+
+  VLACacheCheck(I->G,I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
+  p = I->Primitive+I->NPrimitive;
+  
+  p->type = cPrimEllipsoid;
+  p->r1=r; /* maximum extent */
+  p->trans=I->Trans;
+  p->wobble=I->Wobble;
+  p->ramped=(I->CurColor[0]<0.0F);
+
+  I->PrimSize += 2*r;
+  I->PrimSizeCnt++;
+
+  vv=p->n0; /* storing lengths of the direction vectors in m0 */
+
+  (*vv++)=length3f(n1);
+  (*vv++)=length3f(n2);
+  (*vv++)=length3f(n3);
+
+  vv=p->n1;
+  if(p->n0[0]>R_SMALL8) {
+    float factor;
+    factor = 1.0F / p->n0[0];
+    (*vv++)=(*n1++) * factor;
+    (*vv++)=(*n1++) * factor;
+    (*vv++)=(*n1++) * factor;
+  } else {
+    (*vv++)=0.0F;
+    (*vv++)=0.0F;
+    (*vv++)=0.0F;
+  }
+
+  vv=p->n2;
+  if(p->n0[1]>R_SMALL8) {
+    float factor;
+    factor = 1.0F / p->n0[1];
+    (*vv++)=(*n2++) * factor;
+    (*vv++)=(*n2++) * factor;
+    (*vv++)=(*n2++) * factor;
+  } else {
+    (*vv++)=0.0F;
+    (*vv++)=0.0F;
+    (*vv++)=0.0F;
+  }
+  
+  vv=p->n3;
+  if(p->n0[2]>R_SMALL8) {
+    float factor;
+    factor = 1.0F / p->n0[2];
+    (*vv++)=(*n3++) * factor;
+    (*vv++)=(*n3++) * factor;
+    (*vv++)=(*n3++) * factor;
+  } else {
+    (*vv++)=0.0F;
+    (*vv++)=0.0F;
+    (*vv++)=0.0F;
+  }
+
+  vv=p->v1;
+  (*vv++)=(*v++);
+  (*vv++)=(*v++);
+  (*vv++)=(*v++);
+
+  vv=p->c1;
+  v=I->CurColor;
+  (*vv++)=(*v++);
+  (*vv++)=(*v++);
+  (*vv++)=(*v++);
+
+  vv=p->ic;
+  v=I->IntColor;
+  (*vv++)=(*v++);
+  (*vv++)=(*v++);
+  (*vv++)=(*v++);
+
+  if(I->TTTFlag) {
+    transformTTT44f3f(I->TTT,p->v1,p->v1);
+    transform_normalTTT44f3f(I->TTT,p->n1,p->n1);
+    transform_normalTTT44f3f(I->TTT,p->n2,p->n2);
+    transform_normalTTT44f3f(I->TTT,p->n3,p->n3);
+  }
+
+  if(I->Context) {
+    RayApplyContextToVertex(I,p->v1);
+    RayApplyContextToNormal(I,p->n1);
+    RayApplyContextToNormal(I,p->n2);
+    RayApplyContextToNormal(I,p->n3);
+  }
+
+  I->NPrimitive++;
+
+}
+
 /*========================================================================*/
 void RayTriangle3fv(CRay *I,
 						  float *v1,float *v2,float *v3,
@@ -5280,6 +5431,7 @@ CRay *RayNew(PyMOLGlobals *G,int antialias)
   I->fInteriorColor3fv=RayInteriorColor3fv;
   I->fWobble=RayWobble;
   I->fTransparentf=RayTransparentf;
+  I->fEllipsoid3fv=RayEllipsoid3fv;
   I->TTTStackVLA = NULL;
   I->TTTStackDepth = 0;
   I->CheckInterior=false;

@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #define cPrimTriangle 3
 #define cPrimSausage 4
 #define cPrimCharacter 5
+#define cPrimEllipsoid 6
 
 #define cCylCapNone 0
 #define cCylCapFlat 1
@@ -34,7 +35,7 @@ typedef struct {
   int vert;
   float v1[3],v2[3],v3[3];
   float n0[3],n1[3],n2[3],n3[3];
-  float c1[3],c2[3],c3[3],ic[3],tr[3];
+  float c1[3],c2[3],c3[3],ic[3],tr[3]; /* ic = interior color, tr = transparency */
   float r1,l1; 
   float trans;
   int char_id;
@@ -103,11 +104,12 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
 
 void BasisSetupMatrix(CBasis *I);
 void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc,int perspective);
+void BasisGetEllipsoidNormal(CBasis *I,RayInfo *r,int i,int perspective);
 void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);
 void BasisTrianglePrecomputePerspective(float *v1,float *v2,float *v3,float *pre);
 
 int BasisHitPerspective(BasisCallRec *BC);
-int BasisHitNoShadow(BasisCallRec *BC);
+int BasisHitOrthoscopic(BasisCallRec *BC);
 int BasisHitShadow(BasisCallRec *BC);
 
 void BasisGetTriangleFlatDotgle(CBasis *I,RayInfo *r,int i);

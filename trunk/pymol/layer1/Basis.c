@@ -885,6 +885,41 @@ static float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float 
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
+static float ZLineClipPointNoZCheck(float *base,float *point,float *alongNormalSq,float cutoff)
+{
+   float hyp0, hyp1, hyp2;
+   float result   = MAXFLOAT;
+   
+   /* this routine determines whether or not a vector starting at "base"
+     heading in the direction "normal" intersects a sphere located at "point".
+
+     It returns how far along the vector the intersection with the plane is or
+     MAXFLOAT if there isn't a relevant intersection
+
+     NOTE: this routine has been optimized for normals along Z
+     Optimizes-out vectors that are more than "cutoff" from "point" in x,y plane 
+   */
+
+   hyp0 = point[0] - base[0];
+   if(fabs(hyp0) > cutoff)
+      return result;
+      
+   hyp1 = point[1] - base[1];
+   if(fabs(hyp1) > cutoff)
+      return result;
+      
+   hyp2 = point[2] - base[2];
+
+   (*alongNormalSq) = (hyp2 * hyp2);
+   result   = (hyp0 * hyp0) + (hyp1 * hyp1);
+
+   return result;
+}
+
+
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
 static int LineClipPoint(float *base,float *ray, 
                            float *point, float *dist,
                            float cutoff, float cutoff2)
@@ -938,12 +973,130 @@ static int LineClipPoint(float *base,float *ray,
    opp_len_sq = (opp0 * opp0) + (opp1 * opp1) + (opp2 * opp2);
    
    if(opp_len_sq<=cutoff2) {
-     (*dist= proj - (float)sqrt1f(cutoff2-opp_len_sq));
+     *dist = proj - (float)sqrt1f(cutoff2-opp_len_sq);
      return 1;
    }
    
    return 0;
 }
+
+static int LineClipEllipsoidPoint(float *base,float *ray, 
+                                  float *point, float *dist,
+                                  float cutoff, float cutoff2, 
+                                  float *scale,
+                                  float *n1, float *n2, float *n3)
+{
+  float point_to_base[3];
+  float scaled_base[3];
+  float scaled_ray[3];
+  float d1,d2,d3,s1,s2,s3;
+  float comp1[3], comp2[3], comp3[3];
+
+  subtract3f(base, point, point_to_base);
+
+  /* project difference vector onto ellipsoid axes */
+
+  d1 = dot_product3f(point_to_base, n1); 
+  d2 = dot_product3f(point_to_base, n2);
+  d3 = dot_product3f(point_to_base, n3);
+
+  s1 = d1 / scale[0];
+  s2 = d2 / scale[1];
+  s3 = d3 / scale[2];
+  
+  scale3f(n1, s1, comp1);
+  scale3f(n2, s2, comp2);
+  scale3f(n3, s3, comp3);
+
+  copy3f(point, scaled_base);
+  add3f(comp1, scaled_base, scaled_base);
+  add3f(comp2, scaled_base, scaled_base);
+  add3f(comp3, scaled_base, scaled_base);
+
+  d1 = dot_product3f(ray, n1);
+  d2 = dot_product3f(ray, n2);
+  d3 = dot_product3f(ray, n3);
+
+  s1 = d1 / scale[0];
+  s2 = d2 / scale[1];
+  s3 = d3 / scale[2];
+  
+  scale3f(n1, s1, comp1);
+  scale3f(n2, s2, comp2);
+  scale3f(n3, s3, comp3);
+
+  copy3f(comp1, scaled_ray);
+  add3f(comp2, scaled_ray, scaled_ray);
+  add3f(comp3, scaled_ray, scaled_ray);
+
+  d1 = length3f(scaled_ray);
+
+  normalize3f(scaled_ray);
+
+  /*  dump3f(ray,"ray");
+  dump3f(scaled_ray,"scaled_ray");
+  */
+
+  {
+    register float hyp0, hyp1, hyp2;
+    register float opp0, opp1, opp2;
+    register float adj0, adj1, adj2;
+    register float ray0, ray1, ray2;
+    register float proj;
+    register double dcutoff = (double)cutoff;
+    register float opp_len_sq;
+    
+
+    /* this routine determines whether or not a vector starting at "base"
+       heading in the direction "ray" intersects a sphere located at "point".
+       
+       It returns how far along the vector the intersection with the plane is or
+       MAXFLOAT if there isn't a relevant intersection
+       
+    */
+    
+    /* compute the hypo */
+    
+    hyp2 = point[2] - scaled_base[2]; 
+    hyp1 = point[1] - scaled_base[1];
+    hyp0 = point[0] - scaled_base[0];
+    
+    ray0 = scaled_ray[0];
+    ray1 = scaled_ray[1];
+    ray2 = scaled_ray[2];
+    
+    /* compute the adjacent edge (dot-projection) */
+    
+    proj = (ray0 * hyp0) + (ray1 * hyp1) + (ray2 * hyp2);
+    
+    adj0 = ray0 * proj;
+    adj1 = ray1 * proj;
+    opp0 = hyp0 - adj0;
+    adj2 = ray2 * proj;
+    if(fabs(opp0) > dcutoff)
+      return 0;
+    opp1 = hyp1 - adj1;
+    opp2 = hyp2 - adj2;
+    if(fabs(opp1) > dcutoff)
+      return 0;
+    if(fabs(opp2) > dcutoff)
+      return 0;
+    
+    opp_len_sq = (opp0 * opp0) + (opp1 * opp1) + (opp2 * opp2);
+    
+    if(opp_len_sq<=cutoff2) { /* line hits the virtual sphere */
+
+      float scaled_dist = proj - (float)sqrt1f(cutoff2-opp_len_sq);
+      
+      *(dist) = scaled_dist / d1;
+
+      return 1;
+    }
+    
+    return 0;
+  }
+}
+
 
 /*========================================================================*/
 void BasisSetupMatrix(CBasis *I)
@@ -1001,6 +1154,53 @@ void BasisGetTriangleFlatDotglePerspective(CBasis *I,RayInfo *r,int i)
 }
 
 /*========================================================================*/
+void BasisGetEllipsoidNormal(CBasis *I,RayInfo *r,int i,int perspective) 
+{
+  if(perspective) {
+    r->impact[0] = r->base[0]+r->dir[0]*r->dist; 
+    r->impact[1] = r->base[1]+r->dir[1]*r->dist; 
+    r->impact[2] = r->base[2]+r->dir[2]*r->dist;
+  } else {
+    r->impact[0] = r->base[0]; 
+    r->impact[1] = r->base[1]; 
+    r->impact[2] = r->base[2]-r->dist;
+  }
+  
+  {
+    float *n1 = I->Normal + (3 * I->Vert2Normal[i]); 
+    float *n2 = n1 + 3, *n3 = n1 + 6;
+    float *scale = r->prim->n0;
+    float d1,d2,d3,s1,s2,s3;
+    float comp1[3], comp2[3], comp3[3];
+    float normal[3],surfnormal[3];
+    
+    normal[0] = r->impact[0]-r->sphere[0];
+    normal[1] = r->impact[1]-r->sphere[1];
+    normal[2] = r->impact[2]-r->sphere[2];
+    
+    normalize3f(r->surfnormal);
+    
+    d1 = dot_product3f(normal, n1); 
+    d2 = dot_product3f(normal, n2);
+    d3 = dot_product3f(normal, n3);
+    
+    s1 = d1 / (scale[0] * scale[0]);
+    s2 = d2 / (scale[1] * scale[1]);
+    s3 = d3 / (scale[2] * scale[2]);
+    
+    scale3f(n1, s1, comp1);
+    scale3f(n2, s2, comp2);
+    scale3f(n3, s3, comp3);
+    
+    copy3f(comp1, surfnormal);
+    add3f(comp2, surfnormal, surfnormal);
+    add3f(comp3, surfnormal, surfnormal);
+    
+    normalize23f(surfnormal, r->surfnormal);
+  }
+}
+
+
 void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc,int perspective) 
 {
    float *n0,w2,fc0,fc1,fc2;
@@ -1338,30 +1538,63 @@ int BasisHitPerspective(BasisCallRec *BC)
                     break;
                   case cPrimSphere:
                     {
-
                       if(LineClipPoint( r->base, r->dir, 
                                         BI_Vertex + i*3, &dist, 
-                                        BI_Radius[i] , BI_Radius2[i]))
-                        {
-                          if((dist < r_dist) && (prm->trans != _1))
-                            {
+                                        BI_Radius[i] , BI_Radius2[i])) {
+                        if((dist < r_dist) && (prm->trans != _1)) {
+                          if((dist >= _0) && (dist <= back_dist)) {
+                            new_min_index = prm->vert;
+                            r_dist      = dist;
+                          } else if(check_interior_flag && (dist<=back_dist))  {
+                            if(diffsq3f(vt,BI_Vertex+i*3) < BI_Radius2[i]) {
+                              
+                              local_iflag   = true;
+                              r_prim      = prm;
+                              r_dist    = _0;
+                              new_min_index   = prm->vert;
+                            }
+                          }
+                        }
+                      }
+                    }
+                    break;
+                  case cPrimEllipsoid:
+                    {
+                      if(LineClipPoint( r->base, r->dir, 
+                                        BI_Vertex + i*3, &dist, 
+                                        BI_Radius[i] , BI_Radius2[i])) {
+                        if((dist < r_dist) && (prm->trans != _1)) {
+                          float   *n1 = BI_Normal + BI_Vert2Normal[i] * 3;
+                          if(LineClipEllipsoidPoint( r->base, r->dir, 
+                                                  BI_Vertex + i*3, &dist, 
+                                                  BI_Radius[i] , BI_Radius2[i],
+                                                  prm->n0, n1, n1+3, n1+6)) {
+                            if(dist < r_dist) {
                               if((dist >= _0) && (dist <= back_dist)) {
                                 new_min_index = prm->vert;
                                 r_dist      = dist;
-                              } else if(check_interior_flag && (dist<=back_dist))  {
+                              } 
+
+#if 0
+                      /* to do */
+                              else if(check_interior_flag && (dist<=back_dist))  {
                                 if(diffsq3f(vt,BI_Vertex+i*3) < BI_Radius2[i]) {
-                              
+                                  
                                   local_iflag   = true;
                                   r_prim      = prm;
                                   r_dist    = _0;
                                   new_min_index   = prm->vert;
                                 }
                               }
+#endif
+
                             }
+                          }
                         }
+                      }
                     }
                     break;
-                
+               
                   case cPrimCylinder:
                     if(LineToSphereCapped(r->base,r->dir,BI_Vertex+i*3, 
                                           BI_Normal+BI_Vert2Normal[i]*3,
@@ -1479,13 +1712,12 @@ int BasisHitPerspective(BasisCallRec *BC)
         
             r_prim = BC_prim + vert2prim[minIndex];
         
-            if(r_prim->type == cPrimSphere) 
-              {
-                const float   *vv   = BI->Vertex + minIndex * 3;
-                r_sphere0   = vv[0];
-                r_sphere1   = vv[1];
-                r_sphere2   = vv[2];
-              }
+            if((r_prim->type == cPrimSphere) || (r_prim->type == cPrimEllipsoid)) {
+              const float   *vv   = BI->Vertex + minIndex * 3;
+              r_sphere0   = vv[0];
+              r_sphere1   = vv[1];
+              r_sphere2   = vv[2];
+            }
         
             BC->interior_flag = local_iflag;   
             r->tri1 = r_tri1;
@@ -1520,7 +1752,7 @@ int BasisHitPerspective(BasisCallRec *BC)
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
-int BasisHitNoShadow(BasisCallRec *BC)
+int BasisHitOrthoscopic(BasisCallRec *BC)
 {
   float   oppSq,dist,sph[3],vt[3],tri1,tri2; 
   int      a,b,c,h,*ip;
@@ -1528,6 +1760,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
   int      check_interior_flag;
   int      *elist, local_iflag = false;
   const float   _0   = 0.0F, _1 = 1.0F;
+ float minusZ[3] = { 0.0F, 0.0F, -1.0F };
    
   CBasis *BI = BC->Basis;
   RayInfo *r = BC->rr;
@@ -1638,6 +1871,39 @@ int BasisHitNoShadow(BasisCallRec *BC)
                       r_prim      = prm;
                       r_dist    = front;
                       minIndex   = prm->vert;
+                    }
+                  }
+                }
+              }
+              break;
+            case cPrimEllipsoid:
+              oppSq = ZLineClipPoint( r->base, BI->Vertex + i*3, &dist, BI->Radius[i] );
+              if(oppSq <= BI->Radius2[i]) { 
+
+                dist   = (float)(sqrt1f(dist) - sqrt1f((BI->Radius2[i]-oppSq)));
+
+                if((dist < r_dist) && (prm->trans != _1))  {
+                  float   *n1 = BI->Normal + BI->Vert2Normal[i] * 3;
+                  if(LineClipEllipsoidPoint( r->base, minusZ,
+                                             BI->Vertex + i*3, &dist, 
+                                             BI->Radius[i] , BI->Radius2[i],
+                                             prm->n0, n1, n1+3, n1+6)) {
+                    if(dist < r_dist) {
+                      if((dist >= _0) && (dist <= back)) {
+                        minIndex = prm->vert;
+                        r_dist      = dist;
+                      } 
+#if 0
+                      /* to do */
+                      else if(check_interior_flag && (dist<=back_dist))  {
+                        if(diffsq3f(vt,BI_Vertex+i*3) < BI_Radius2[i]) {
+                          local_iflag   = true;
+                          r_prim      = prm;
+                          r_dist    = front;
+                          minIndex   = prm->vert;
+                        }
+                      }
+#endif
                     }
                   }
                 }
@@ -1759,7 +2025,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
     if( minIndex > -1 ) {
       r_prim = BC->prim + vert2prim[minIndex];
          
-      if(r_prim->type == cPrimSphere) {
+      if((r_prim->type == cPrimSphere) || (r_prim->type == cPrimEllipsoid)) {
         const float   *vv   = BI->Vertex + minIndex * 3;
         r_sphere0   = vv[0];
         r_sphere1   = vv[1];
@@ -1797,6 +2063,7 @@ int BasisHitShadow(BasisCallRec *BC)
   int      *elist, local_iflag = false;
   const float   _0   = 0.0F;
   const float   _1   = 1.0F;
+  float minusZ[3] = { 0.0F, 0.0F, -1.0F };
   /* local copies (eliminate these extra copies later on) */
   
   CBasis   *BI   = BC->Basis;
@@ -2039,7 +2306,50 @@ int BasisHitShadow(BasisCallRec *BC)
                      }
                    }
                  break;
-                        
+
+               case cPrimEllipsoid:
+                      
+                 oppSq = ZLineClipPointNoZCheck( r->base, BI->Vertex + i*3, &dist, BI->Radius[i] );
+                 if(oppSq <= BI->Radius2[i])
+                   {
+                     dist   = (float)(sqrt1f(dist) - sqrt1f((BI->Radius2[i]-oppSq)));
+                     
+                     if(dist < r_dist ) {
+                       float   *n1 = BI->Normal + BI->Vert2Normal[i] * 3;
+                       if(LineClipEllipsoidPoint( r->base, minusZ,
+                                                  BI->Vertex + i*3, &dist, 
+                                                  BI->Radius[i] , BI->Radius2[i],
+                                                  prm->n0, n1, n1+3, n1+6)) {
+                         
+                         if(prm->trans == _0) {
+                           if(dist > -kR_SMALL4) {
+                             if(nearest_shadow) {
+                               if(dist < r_dist) {
+                                 minIndex   = prm->vert;
+                                 r_dist = dist;
+                                 r_trans = (r->trans = prm->trans);
+                               }
+                             } else {
+                               r->prim = prm;
+                               r->trans = prm->trans;
+                               r->dist = dist;
+                               return(1);
+                             }
+                           }
+                         } else if(trans_shadows) {
+                           if((dist > -kR_SMALL4) && 
+                              (( r_trans > prm->trans) ||
+                               (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
+                             minIndex   = prm->vert;
+                             r_dist = dist;
+                             r_trans = (r->trans = prm->trans);
+                           }
+                         }
+                       }
+                     }
+                   }
+                 break;
+                         
                case cPrimCylinder:
                  if(ZLineToSphereCapped(r->base,BI->Vertex+i*3, 
                                         BI->Normal+BI->Vert2Normal[i]*3,
@@ -2176,7 +2486,7 @@ int BasisHitShadow(BasisCallRec *BC)
       if( minIndex > -1 )  {
         r_prim = BC->prim + vert2prim[minIndex];
          
-        if(r_prim->type == cPrimSphere)  {
+        if((r_prim->type == cPrimSphere) || (r_prim->type == cPrimEllipsoid))  {
           const float   *vv   = BI->Vertex + minIndex * 3;
           r_sphere0   = vv[0];
           r_sphere1   = vv[1];
@@ -2428,7 +2738,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
           extra_vert+= q;
         }
         break;
-        
+      case cPrimEllipsoid:
       case cPrimSphere:
         if(prm->r1>=sep) {
           b = (int)(2*floor(prm->r1/sep)+1);
@@ -2559,7 +2869,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
             }
           }
           break;
-          
+        case cPrimEllipsoid:
         case cPrimSphere:
           if(prm->r1>=sep) {
             q   = (int)floor(prm->r1 / sep);

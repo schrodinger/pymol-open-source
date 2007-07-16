@@ -710,6 +710,7 @@ typedef struct _CPyMOL {
   ov_word lex_moe_separate_chains;
   ov_word lex_transparency_global_sort;
   ov_word lex_hide_long_bonds;
+  ov_word lex_auto_rename_duplicates;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1427,7 +1428,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(moe_separate_chains, 558);
   LEX_SETTING(transparency_global_sort, 559);
   LEX_SETTING(hide_long_bonds, 560);
-  return_OVstatus_SUCCESS;
+  LEX_SETTING(auto_rename_duplicates, 561);
+ return_OVstatus_SUCCESS;
 }
 
 int PyMOL_NewG3DStream(CPyMOL *I,int **array_ptr)
