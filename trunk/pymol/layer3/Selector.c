@@ -648,12 +648,12 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
   if(inter1&&inter2&&v_ca) {
     int pass;
 
-    ObjectMolecule *last_obj = NULL;
     for(pass=0;pass<2;pass++) {
       register ObjectMolecule *obj;
       register CoordSet *cs;
       register int *neighbor = NULL;
       register AtomInfoType *atomInfo = NULL;
+      ObjectMolecule *last_obj = NULL;
       float **dist_mat;
       float *inter;
       int state;
@@ -690,7 +690,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
           cs=obj->CSet[state];
         else
           cs=NULL;
-        if(cs) {
+        if(cs && neighbor && atomInfo) {
           register int idx_ca1 = -1;
           if(obj->DiscreteFlag) {
             if(cs==obj->DiscreteCSet[at_ca1])
@@ -3757,7 +3757,7 @@ int SelectorCountAtoms(PyMOLGlobals *G,int sele,int state)
 
 
 /*========================================================================*/
-int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele,int ca_only)
+int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele,int ca_only,ObjectMolecule *exclude)
 {
   /* returns a VLA containing atom indices followed by residue integers
    (residue names packed as characters into integers)
@@ -3790,34 +3790,9 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele,int ca_only)
         at1=I->Table[a].atom;
         obj=I->Obj[mod1];
         ai1 = obj->AtomInfo+at1;
-        if(SelectorIsMember(G,ai1->selEntry,sele)) {
-          if(strcmp(ai1->name,"CA")==0) {
-            *(r++)=mod1;
-            *(r++)=at1;
-            for(c=0;c<sizeof(ResName);c++)
-              rn[c]=0;
-            strcpy(rn,ai1->resn); /* store residue code as a number */
-            rcode = 0;
-            for(c=0;c<3;c++) {
-              rcode = (rcode<<8) | rn[c];
-            }
-            *(r++) = rcode;
-          }
-        }
-      }
-    } else {
-      for(a=cNDummyAtoms;a<I->NAtom;a++) {
-        obj=I->Obj[I->Table[a].model];
-        at2=I->Table[a].atom;
-        if(SelectorIsMember(G,obj->AtomInfo[at2].selEntry,sele)) {
-          if(!ai1) {
-            mod1 = I->Table[a].model;
-            at1 = at2;
-            ai1 = obj->AtomInfo+at1;
-          }
-          ai2=obj->AtomInfo+at2;
-          if(!AtomInfoSameResidue(G,ai1,ai2)) {
-            if(ai1) {
+        if(obj!=exclude) {
+          if(SelectorIsMember(G,ai1->selEntry,sele)) {
+            if(strcmp(ai1->name,"CA")==0) {
               *(r++)=mod1;
               *(r++)=at1;
               for(c=0;c<sizeof(ResName);c++)
@@ -3828,10 +3803,39 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele,int ca_only)
                 rcode = (rcode<<8) | rn[c];
               }
               *(r++) = rcode;
-              
-              at1 = at2;
-              ai1 = ai2;
+            }
+          }
+        }
+      }
+    } else {
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
+        obj=I->Obj[I->Table[a].model];
+        if(obj!=exclude) {
+          at2=I->Table[a].atom;
+          if(SelectorIsMember(G,obj->AtomInfo[at2].selEntry,sele)) {
+            if(!ai1) {
               mod1 = I->Table[a].model;
+              at1 = at2;
+              ai1 = obj->AtomInfo+at1;
+            }
+            ai2=obj->AtomInfo+at2;
+            if(!AtomInfoSameResidue(G,ai1,ai2)) {
+              if(ai1) {
+                *(r++)=mod1;
+                *(r++)=at1;
+                for(c=0;c<sizeof(ResName);c++)
+                  rn[c]=0;
+                strcpy(rn,ai1->resn); /* store residue code as a number */
+                rcode = 0;
+                for(c=0;c<3;c++) {
+                  rcode = (rcode<<8) | rn[c];
+                }
+                *(r++) = rcode;
+                
+                at1 = at2;
+                ai1 = ai2;
+                mod1 = I->Table[a].model;
+              }
             }
           }
         }
