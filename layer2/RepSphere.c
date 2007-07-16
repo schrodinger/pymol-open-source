@@ -420,7 +420,18 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
         }
         ray->fColor3fv(ray,v);
         v+=4;
+
+#if 0
+        /* temp code for testing ellipsoids */
+        {
+          float n1[3] = {1.0F, 0.0F, 0.0F};
+          float n2[3] = {0.0F, 0.75F, 0.0F};
+          float n3[3] = {0.0F, 0.0F, 0.35F};
+          ray->fEllipsoid3fv(ray,v,*(v+3),n1,n2,n3);
+        }
+#else
         ray->fSphere3fv(ray,v,*(v+3));
+#endif          
         v+=4;
       }
     }
