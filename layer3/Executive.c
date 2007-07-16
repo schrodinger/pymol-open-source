@@ -5771,6 +5771,7 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap, f
   int ok=true;
   int use_sequence = (mat_file && mat_file[0] && (seq_wt!=0.0F));
   int use_structure = (seq_wt>=0.0F); /* negative seq_wt means sequence only! */
+  ObjectMolecule *mobile_obj = NULL;
   CMatch *match = NULL;
 
   if(!use_structure) window = 0;
@@ -5781,9 +5782,18 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap, f
   if(ante<0.0F)
     ante=0.0F;
 
-  if((sele1>=0)&&(sele2>=0)&&rms_info) {
-    vla1=SelectorGetResidueVLA(G,sele1,use_structure);
-    vla2=SelectorGetResidueVLA(G,sele2,use_structure);
+  if((sele1>=0)) {
+    mobile_obj = SelectorGetSingleObjectMolecule(G,sele1);
+    if(!mobile_obj) {
+      ok=false;
+      PRINTFB(G,FB_Executive,FB_Errors)
+        " ExecutiveAlign: mobile selection must derive from one object only.\n"
+        ENDFB(G);
+    }
+  }
+  if(ok&&(sele1>=0)&&(sele2>=0)&&rms_info) {
+    vla1=SelectorGetResidueVLA(G,sele1,use_structure,NULL);
+    vla2=SelectorGetResidueVLA(G,sele2,use_structure,mobile_obj);
     if(vla1&&vla2) {
       na = VLAGetSize(vla1)/3;
       nb = VLAGetSize(vla2)/3;
@@ -5833,6 +5843,11 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap, f
           }
           MatchFree(match);
         }
+      } else {
+        ok=false;
+        PRINTFB(G,FB_Executive,FB_Errors)
+          " ExecutiveAlign: invalid selections for alignment.\n"
+          ENDFB(G);
       }
     }
   }
