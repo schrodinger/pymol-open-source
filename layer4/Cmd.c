@@ -6687,7 +6687,11 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
     APIEntry(G);
     if(!domain[0])
       domain = NULL;
-    count = SelectorCreateWithStateDomain(G,sname,sele,NULL,quiet,NULL,state,domain);
+    if(ExecutiveFindObjectByName(G,sname)) { /* name conflicts with an object */
+      count = -1;
+    } else {
+      count = SelectorCreateWithStateDomain(G,sname,sele,NULL,quiet,NULL,state,domain);
+    }
     if(count<0)
       ok = false;
     SceneInvalidate(G);

@@ -12255,7 +12255,8 @@ CObject *ExecutiveFindObjectByName(PyMOLGlobals *G,char *name)
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   CObject *obj=NULL;
-  while(ListIterate(I->Spec,rec,next)) {
+  while(ListIterate(I->Spec,rec,next)) { /* tisk tisk -- order N...
+                                          * TODO use constant time lookup! */
     if(rec->type==cExecObject) {
       if(strcmp(rec->obj->Name,name)==0) {
         obj=rec->obj;

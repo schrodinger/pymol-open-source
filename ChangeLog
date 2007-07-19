@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2007-07-18  Warren L. DeLano <warren@delsci.com>
+
+	* fixed problems with atomic picking when using non-default
+	stereo parameters
+	
 2007-07-09  Warren L. DeLano <warren@delsci.com>
 
 	* DrgO mouse action added
@@ -10,10 +15,18 @@ CHANGE LOG
 	
 2007-07-08  Warren L. DeLano <warren@delsci.com>
 
+	* fixed atom picking in stereo modes with customized parameters
+	
 	* adjusted idle behavior when playing movies, sculpting, etc.
 
 	* added new selection operators: masked and protected
+
+2007-07-03  Warren L. DeLano <warren@delsci.com>
+
+	* select no longer 
 	
+	* missing more changelogs!
+
 2007-06-21  Warren L. DeLano <warren@delsci.com>
 
 	* issued PyMOL 1.0, with updates to the help menu
