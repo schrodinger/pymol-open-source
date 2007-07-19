@@ -97,7 +97,7 @@ struct _COrtho {
   int WrapXFlag;
   GLenum ActiveGLBuffer;
   double DrawTime, LastDraw;
-
+  int WrapClickSide; /* ugly kludge for finding click side in geowall stereo mode */
 };
 
 
@@ -120,18 +120,27 @@ void OrthoKeyAlt(PyMOLGlobals *G,unsigned char k);
 #define cWizardLeftMargin 15
 #define cWizardBorder 7
 
-static int get_wrap_x(int x, int *last_x, int width)
+static int get_wrap_x(int x, int *last_x, int width, int *click_side)
 {
   int width_2 = width/2;
   int width_3 = width/3;
   if(!last_x) {
-    if(x>width_2)
+    if(x>width_2) {
       x-=width_2;
+      if(click_side) *click_side = 1;
+    } else {
+      if(click_side) *click_side = -1;
+    }
   } else {
-    if((x-(*last_x))>width_3)
+    if((x-(*last_x))>width_3) {
       x-=width_2;
-    else if(((*last_x)-x)>width_3)
+      if(click_side) *click_side = 1;
+    } else if(((*last_x)-x)>width_3) {
       x+=width_2;
+      if(click_side) *click_side = 1;
+    } else {
+      if(click_side) *click_side = -1;
+    }
   }
   return x;
 }
@@ -1148,7 +1157,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
     ButModeSetRate(G,(float)I->DrawTime); 
     
     if(render&&(render_mode<2))
-      SceneRender(G,NULL,0,0,NULL,0,0);
+      SceneRender(G,NULL,0,0,NULL,0,0,0);
 
     glClearColor(0.0,0.0,0.0,1.0);
     
@@ -1609,7 +1618,11 @@ Block *OrthoFindBlock(PyMOLGlobals *G,int x,int y)
 
   return(BlockRecursiveFind(I->Blocks,x,y));
 }
-
+/*========================================================================*/
+int OrthoGetWrapClickSide(PyMOLGlobals *G)
+{
+  return G->Ortho->WrapClickSide;
+}
 /*========================================================================*/
 int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod)
 {
@@ -1625,13 +1638,15 @@ int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod)
     block = SceneGetBlock(G);
     break;
   }
-  
+
   if(I->WrapXFlag) {
     if(state==P_GLUT_DOWN) {
-      x = get_wrap_x(x,NULL,G->Option->winX);
+      x = get_wrap_x(x,NULL,G->Option->winX,&I->WrapClickSide);
     } else {
-      x = get_wrap_x(x,&I->LastX,G->Option->winX);
+      x = get_wrap_x(x,&I->LastX,G->Option->winX,&I->WrapClickSide);
     }
+  } else {
+    I->WrapClickSide = 0;
   }
 
   OrthoRemoveSplash(G);
@@ -1697,7 +1712,7 @@ int OrthoDrag(PyMOLGlobals *G,int x, int y,int mod)
   int handled = 0;
 
  if(I->WrapXFlag) {
-   x = get_wrap_x(x,&I->LastX,G->Option->winX);
+   x = get_wrap_x(x,&I->LastX,G->Option->winX, NULL);
  }
 
   I->LastX = x;
