@@ -9240,6 +9240,8 @@ int ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,
     defer=1;
   }
 
+  ExecutiveUpdateSceneMembers(G);
+
   if(defer && (mode==0)) {
     SceneDeferRay(G,width,height,mode,angle,shift,quiet,true,antialias);
   } else {
