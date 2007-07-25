@@ -446,7 +446,7 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
       rec=PyList_GetItem(list,a);
       if(ok) ok=(rec!=NULL);
       if(ok) ok=PyList_Check(rec);
-      if(ok) ll = PyList_Size(list);
+      if(ok) ll = PyList_Size(rec);
       /* TO SUPPORT BACKWARDS COMPATIBILITY...
          Always check ll when adding new PyList_GetItem's */
       if(ok) ok=PConvPyIntToInt(PyList_GetItem(rec,1),&index);

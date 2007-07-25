@@ -23,13 +23,15 @@ class Message(Wizard):
         return self.prompt
 
     def get_panel(self):
-	if self.dismiss==1:
-	    return [
-		[ 1, 'Message', '' ],
-		[ 2, 'Dismiss', 'cmd.set_wizard()' ]
-		]
-	else:
-	    return []
+        if not hasattr(self,'dismiss'):
+            self.dismiss=1
+        if self.dismiss==1:
+            return [
+                [ 1, 'Message', '' ],
+                [ 2, 'Dismiss', 'cmd.set_wizard()' ]
+                ]
+        else:
+            return []
 
 
 

@@ -2,6 +2,21 @@
 CHANGE LOG
 =========================================================================
 
+2007-07-25  Warren L. DeLano <warren@delsci.com>
+
+	* fixed bug with command-line rendering with groups 
+			
+	* worked-around problem with .MOE triple-bond valence info
+
+	* fixed bug in .MOE reader with duplicate graphics object names
+
+2007-07-23  Warren L. DeLano <warren@delsci.com>
+
+	* fixed bug (mostly) harmless bug unpacking colors from sessions
+	
+	* fixed problems with box selecting when using non-default stereo
+	parameters
+	
 2007-07-18  Warren L. DeLano <warren@delsci.com>
 
 	* fixed problems with atomic picking when using non-default

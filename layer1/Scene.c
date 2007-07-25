@@ -756,7 +756,7 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
       click_side = -1;
     smp->x = smp->x % (I->Width/2);
   }
-  SceneRender(G,NULL,0,0,smp,0,0,0);
+  SceneRender(G,NULL,0,0,smp,0,0,click_side);
   SceneDirty(G);
   return(1);
 }
