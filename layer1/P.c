@@ -1482,7 +1482,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
 
   /* copy arguments to __main__.pymol_argv */
   PyObject_SetAttrString(P_main,"pymol_argv",args);
-  PyRun_SimpleString("if not hasattr(sys,'argv'): sys.argv=__main__.pymol_argv");
+  PyRun_SimpleString("import __main__\nif not hasattr(sys,'argv'): sys.argv=__main__.pymol_argv");
 
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n"); /* needed for semistatic pymol */
 
