@@ -2,9 +2,26 @@
 CHANGE LOG
 =========================================================================
 
+
 2007-08-15
 	
 	* added sys.stdout.writelines emulation	
+	
+2007-08-14  Warren L. DeLano <warren@delsci.com>
+
+	* sys.argv if not definied, now set using __main__.pymol_argv
+	
+	* added util.cnc keyword (formerly just an api function)
+	
+2007-08-02  Warren L. DeLano <warren@delsci.com>
+
+	* incorporated Michael Lerner's suggestion for argument handling
+	    pymol -c script.py --do=something --when=now
+	    sys.argv = [ 'script.py', '--do=something' , '--when=now' ]
+	
+2007-07-30  Warren L. DeLano <warren@delsci.com>
+
+	* fixed memory leak with gradients
 	
 2007-07-25  Warren L. DeLano <warren@delsci.com>
 

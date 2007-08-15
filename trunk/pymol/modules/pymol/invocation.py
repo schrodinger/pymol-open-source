@@ -123,6 +123,8 @@ if __name__=='pymol.invocation':
         return first+second
 
     def parse_args(argv):
+        global _argv
+        _argv = copy.deepcopy(argv) # pymol.invocation._argv
         av = copy.deepcopy(argv)
         av = av[1:] # throw out the executable path
         av.reverse()
@@ -131,6 +133,7 @@ if __name__=='pymol.invocation':
         options.deferred = []
         final_actions = []
         loaded_something = 0
+        python_script = None
         # append user settings file as an option
         options.deferred.extend(get_user_config())
         while 1:
@@ -140,7 +143,14 @@ if __name__=='pymol.invocation':
             a = re.sub(r'''^"|"$|^'|'$''','',a) # strip extra quotes
             if a[0:1]=='-':
                 if a[1:2]=='-':
-                    break # double hypen signals end of PyMOL arguments
+                    # double hypen signals end of PyMOL arguments
+                    if python_script == None:
+                        python_script = argv[0]
+                    if len(a)>2:
+                        sys.argv = [python_script] + [a] + av
+                    else:
+                        sys.argv = [python_script] + av
+                    break
                 if ("A" in a) or ("a" in a): # application configuration
                     new_args = []
                     # ====== mode 1 - simple viewer window ======
@@ -325,13 +335,16 @@ if __name__=='pymol.invocation':
                     if a[2:]=='2':
                         options.deferred.append("_do_ cmd.get_wizard().ray_trace2()")
                         
-            else: 
-                if a[-4:] in (".p5m",".P5M"):
+            else:
+                suffix = string.split(string.lower(a[-4:]),'.')[-1]
+                if suffix == "p5m":
                     # mode 5 helper application 
                     av.append("-A5")
-                if a[-4:] in (".psw",".PSW"):
+                elif suffix == "psw":
                     # presentation mode
-                    av.append("-A6")               
+                    av.append("-A6")
+                elif suffix in [ 'pym' ,'py', 'pyc' ]:
+                    python_script = a
                 options.deferred.append(a)
                 loaded_something = 1
         if loaded_something and (options.after_load_script!=""):

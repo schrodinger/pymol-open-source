@@ -753,6 +753,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_transparency_global_sort   559
 #define cSetting_hide_long_bonds            560
 #define cSetting_auto_rename_duplicates     561
+#define cSetting_pdb_hetatm_guess_valences  562
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -762,7 +763,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       562
+#define cSetting_INIT                       563
 
 #endif
 

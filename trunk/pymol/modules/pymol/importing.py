@@ -33,6 +33,7 @@ if __name__=='pymol.importing':
 
     from pymol import parser
     from chempy.sdf import SDF,SDFRec
+    from chempy.cif import CIF,CIFRec
     from chempy import io,PseudoFile
     import pymol
     import copy
@@ -372,9 +373,19 @@ SEE ALSO
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
+    
+    def _processCIF(cif,oname,state,quiet,_self=cmd):
+        while 1:
+            rec = cif.read()
+            if not rec: break
+#            r = _load(oname,string.join(rec.get('MOL'),''),state,
+#                      loadable.molstr,0,1,quiet,_self=_self)
+        del cif
+#        _cmd.finish_object(_self._COb,str(oname))
+#        if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
+#            _self._do("zoom (%s)"%oname)
 
     def _processSDF(sdf,oname,state,quiet,_self=cmd):
-        ftype = loadable.molstr
         while 1:
             rec = sdf.read()
 
@@ -544,6 +555,8 @@ SEE ALSO
                     ftype = loadable.mae
                 elif re.search("\.cube$",filename,re.I):
                     ftype = loadable.cube
+                elif re.search("\.cif$",filename,re.I):
+                    ftype = loadable.cif1
                 elif re.search("\.map$",filename,re.I):
                     r = DEFAULT_ERROR
                     print 'Error: .map is ambiguous.  Please add format or use another extension:'
@@ -590,8 +603,19 @@ SEE ALSO
             if ftype == loadable.sdf1:
                 sdf = SDF(fname)
                 _processSDF(sdf,oname,state,quiet,_self)
+                r = DEFAULT_SUCCESS
                 ftype = -1
- 
+
+     # loadable.sdf1 is the Python-based CIF file reader
+            if ftype == loadable.cif1:
+                try:
+                    cif = CIF(fname)
+                    _processCIF(cif,oname,state,quiet,_self)
+                except:
+                    traceback.print_exc()
+                r = DEFAULT_SUCCESS
+                ftype = -1
+
     # png images 
             if ftype == loadable.png:
                 r = _self.load_png(str(fname),quiet=quiet)

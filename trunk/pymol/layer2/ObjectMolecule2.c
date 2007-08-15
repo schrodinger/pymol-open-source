@@ -45,21 +45,80 @@ Z* -------------------------------------------------------------------
 #define cMaxOther 6
 
 typedef struct {
-  int n_arom;
-  int arom[cMaxOther];
-  int n_high_val;
-  int high_val[cMaxOther];
-  int n_planer;
-  int planer[cMaxOther];
-  int n_rest;
-  int rest[cMaxOther];
+  int n_cyclic_arom,  cyclic_arom[cMaxOther];
+  int n_arom, arom[cMaxOther];
+  int n_high_val, high_val[cMaxOther];
+  int n_cyclic, cyclic[cMaxOther];
+  int n_planer, planer[cMaxOther];
+  int n_rest, rest[cMaxOther];
   int score;
 } OtherRec;
 
-static int populate_other(OtherRec *other,int at,AtomInfoType *ai,BondType *bd)
+static int populate_other(OtherRec *other,int at,AtomInfoType *ai,BondType *bd, int *neighbor)
 {
-  if(bd->order==4) { /* aromatic -- highest priority */
-    if(other->n_arom<cMaxOther) {
+  int five_cycle = false;
+  int six_cycle = false;
+  
+  {        
+    int mem[9], nbr[7];
+    const int ESCAPE_MAX = 500;
+    register int escape_count; 
+    
+    escape_count = ESCAPE_MAX; /* don't get bogged down with structures 
+                                  that have unreasonable connectivity */
+    mem[0] = bd->index[0];
+    mem[1] = bd->index[1];
+    nbr[1] = neighbor[mem[1]]+1;
+    while(((mem[2] = neighbor[nbr[1]])>=0)) {
+      if(mem[2]!=mem[0]) {
+        nbr[2] = neighbor[mem[2]]+1;
+        while(((mem[3] = neighbor[nbr[2]])>=0)) {
+          if(mem[3]!=mem[1]) {
+            nbr[3] = neighbor[mem[3]]+1;
+            while(((mem[4] = neighbor[nbr[3]])>=0)) {
+              if((mem[4]!=mem[2])&&(mem[4]!=mem[1])&&(mem[4]!=mem[0])) {            
+                nbr[4] = neighbor[mem[4]]+1;              
+                while(((mem[5] = neighbor[nbr[4]])>=0)) {
+                  if(!(escape_count--)) goto escape;
+                  if((mem[5]!=mem[3])&&(mem[5]!=mem[2])&&(mem[5]!=mem[1])) { 
+                    if(mem[5]==mem[0]) { /* five-cycle */
+                      five_cycle = true;
+                    }
+                    nbr[5] = neighbor[mem[5]]+1;              
+                    while(((mem[6] = neighbor[nbr[5]])>=0)) {
+                      if((mem[6]!=mem[4])&&(mem[6]!=mem[3])&&(mem[6]!=mem[2])&&(mem[6]!=mem[1])) {
+                        if(mem[6]==mem[0]) {  /* six-cycle */
+                          six_cycle = true;
+                        }
+                      }
+                      nbr[5]+=2;                          
+                    }
+                  }
+                  nbr[4]+=2;
+                }
+              }
+              nbr[3]+=2;
+            }
+          }
+          nbr[2]+=2;
+        }
+      }
+      nbr[1]+=2;
+    }
+  }
+ escape:
+
+  if(bd->order==4) { /* aromatic */
+    if((five_cycle || six_cycle) && (other->n_cyclic_arom<cMaxOther)) {
+      other->cyclic_arom[other->n_cyclic_arom++]=at;
+      if(five_cycle && six_cycle) 
+        other->score+=1024;
+      else if(five_cycle)
+        other->score+=256;
+      else
+        other->score+=128;
+      return 1;
+    } else if(other->n_arom<cMaxOther) {
       other->arom[other->n_arom++]=at;
       other->score+=64;
       return 1;
@@ -69,6 +128,13 @@ static int populate_other(OtherRec *other,int at,AtomInfoType *ai,BondType *bd)
     if(other->n_high_val<cMaxOther) {
       other->high_val[other->n_high_val++]=at;
       other->score+=16;
+      return 1;
+    }
+  }
+  if(five_cycle || six_cycle) {
+    if(other->n_cyclic<cMaxOther) {
+      other->cyclic[other->n_cyclic++]=at;
+      other->score+=8;
       return 1;
     }
   }
@@ -87,19 +153,23 @@ static int populate_other(OtherRec *other,int at,AtomInfoType *ai,BondType *bd)
   return 0;
 }
 
-static int append_index(int *result, int offset, int a1, int a2, int score)
+static int append_index(int *result, int offset, int a1, int a2, int score, int ar_count)
 {
   int c;
   c=result[a1];
   while(c<offset) {
     if(result[c]==a2) { /* already entered */
-      result[c+1]=score;
+      if(result[c+1]<score) {
+        result[c+1]=score;
+        result[c+2]=ar_count;
+      }
       return offset;
     }
-    c+=2;
+    c+=3;
   }
   result[offset++]=a2;
   result[offset++]=score;
+  result[offset++]=ar_count;
   return offset;
 }
 
@@ -309,6 +379,7 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,CoordSet *cs)
   int n_alloc=0;
   BondType *bd;
 
+  ObjectMoleculeUpdateNeighbors(I);
   bd=I->Bond;
   for(a=0;a<I->NBond;a++) {
     b1 = bd->index[0];
@@ -325,15 +396,14 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,CoordSet *cs)
       a1=cs->AtmToIdx[b1];
       a2=cs->AtmToIdx[b2];
     }
-    if((a1>=0)&&(a2>=0))
-      {
-        n_alloc+=populate_other(other+a1,a2,I->AtomInfo+b2,bd);
-        n_alloc+=populate_other(other+a2,a1,I->AtomInfo+b1,bd);
-      }
+    if((a1>=0)&&(a2>=0)) {
+      n_alloc+=populate_other(other+a1,a2,I->AtomInfo+b2,bd,I->Neighbor);
+      n_alloc+=populate_other(other+a2,a1,I->AtomInfo+b1,bd,I->Neighbor);
+    }
     bd++;
   }
 
-  n_alloc = 2*(n_alloc+cs->NIndex);
+  n_alloc = 3*(n_alloc+cs->NIndex);
   o=other;
   result = Alloc(int,n_alloc);
   for(a=0;a<cs->NIndex;a++) {
@@ -359,47 +429,65 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,CoordSet *cs)
     if((a1>=0)&&(a2>=0))
       {
         if(result[a1]<0) {
+          int score = other[a1].score;
 
           o = other+a1;
           result[a1]=offset;
+          for(b=0;b<o->n_cyclic_arom;b++) {
+            a3 = o->cyclic_arom[b];
+            offset = append_index(result, offset, a1, a3, score + other[a3].score, 1);
+          }
           for(b=0;b<o->n_arom;b++) {
             a3 = o->arom[b];
-            offset = append_index(result, offset, a1, a3, 64 + other[a3].score);
+            offset = append_index(result, offset, a1, a3, score + other[a3].score, 1);
           }
           for(b=0;b<o->n_high_val;b++) {
             a3 = o->high_val[b];
-            offset = append_index(result, offset, a1, a3, 16 + other[a3].score);
+            offset = append_index(result, offset, a1, a3, score + other[a3].score, 0);
+          }
+          for(b=0;b<o->n_cyclic;b++) {
+            a3 = o->cyclic[b];
+            offset = append_index(result, offset, a1, a3, score + other[a3].score, 0);
           }
           for(b=0;b<o->n_planer;b++) {
             a3 = o->planer[b];
-            offset = append_index(result, offset, a1, a3, 4 + other[a3].score);
+            offset = append_index(result, offset, a1, a3, score + other[a3].score, 0);
           }
           for(b=0;b<o->n_rest;b++) {
             a3 = o->rest[b];
-            offset = append_index(result, offset, a1, a3, 1 + other[a3].score);
+            offset = append_index(result, offset, a1, a3, score + other[a3].score, 0);
           }
           result[offset++]=-1;
         }
 
         if(result[a2]<0) {
+          int score = other[a2].score;
 
           o = other+a2;
           result[a2]=offset;
+          for(b=0;b<o->n_cyclic_arom;b++) {
+            a3 = o->cyclic_arom[b];
+            offset = append_index(result, offset, a2, a3, score + other[a3].score, 1);
+          }
           for(b=0;b<o->n_arom;b++) {
             a3 = o->arom[b];
-            offset = append_index(result, offset, a2, a3, 64 + other[a3].score);
+            offset = append_index(result, offset, a2, a3, score + other[a3].score, 1);
           }
           for(b=0;b<o->n_high_val;b++) {
             a3 = o->high_val[b];
-            offset = append_index(result, offset, a2, a3, 16 + other[a3].score);
+            offset = append_index(result, offset, a2, a3, score + other[a3].score, 0);
+          }
+          for(b=0;b<o->n_cyclic;b++) {
+            a3 = o->cyclic[b];
+            offset = append_index(result, offset, a2, a3, score + other[a3].score, 0);
           }
           for(b=0;b<o->n_planer;b++) {
             a3 = o->planer[b];
-            offset = append_index(result, offset, a2, a3, 4 + other[a3].score);
+            offset = append_index(result, offset, a2, a3, score + other[a3].score, 0);
           }
           for(b=0;b<o->n_rest;b++) {
             a3 = o->rest[b];
-            offset = append_index(result, offset, a2, a3, 1 + other[a3].score);
+            offset = append_index(result, offset, a2, a3, score + other[a3].score, 0);
           }
           result[offset++]=-1;
         }
@@ -484,20 +572,19 @@ int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_si
     offset = other[a1];
     if(offset>=0) {
       while(1) {
-        ck = other[offset++];
+        ck = other[offset];
         if(ck!=a2) {
           if(ck>=0) {
-            ck_lvl = other[offset];
+            ck_lvl = other[offset+1];
             if(ck_lvl>lvl) {
               a3 = ck;
               lvl = ck_lvl;
             }
-            if(ck_lvl>=64)
-              ar_count++;
+            ar_count+=other[offset+2];
           } else
             break;
         }
-        offset++;
+        offset+=3;
       }
     }
   }
@@ -505,20 +592,19 @@ int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_si
     offset = other[a2];
     if(offset>=0) {
       while(1) {
-        ck = other[offset++];
+        ck = other[offset];
         if(ck!=a1) {
           if(ck>=0) {
-            ck_lvl = other[offset];
+            ck_lvl = other[offset+1];
             if(ck_lvl>lvl) {
               a3 = ck;
               lvl = ck_lvl;
             }
-            if(ck_lvl>=64)
-              ar_count++;
+            ar_count+=other[offset+2];
           } else
             break;
         }
-        offset++;
+        offset+=3;
       }
     }
   }

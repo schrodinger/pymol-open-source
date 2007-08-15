@@ -686,6 +686,7 @@ int	IsosurfVolume(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
       switch(mode) {
       case 3:
         ok=IsosurfGradients(G,set1,set2,I,field,range,level,alt_level);
+        IsosurfPurge(I);
         break;
       default:
         for(i=0;i<Steps[0];i++)
@@ -728,6 +729,7 @@ int	IsosurfVolume(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                 }
             }
         IsosurfPurge(I);
+        break;
       }
     }
    
