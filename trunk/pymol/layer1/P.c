@@ -2166,6 +2166,32 @@ static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
+static PyObject *PCatchWritelines(PyObject *self, 	PyObject *args)
+{
+  PyObject *seq;
+  int len;
+  PyArg_ParseTuple(args,"O",&seq);
+  if(seq && PySequence_Check(seq)) {
+    if( (len=PySequence_Size(seq)) > 0) {
+      int i;
+      for(i=0;i<len;i++) {
+        PyObject *obj = PySequence_GetItem(seq,i);
+        if(obj && PyString_Check(obj)) {
+          char *str = PyString_AsString(obj);
+          if(SingletonPyMOLGlobals) {
+            if(Feedback(SingletonPyMOLGlobals,FB_Python,FB_Output)) {
+              OrthoAddOutput(SingletonPyMOLGlobals,str);
+            }
+          }
+        }
+        Py_XDECREF(obj);
+      }
+    }
+  }
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 static PyObject *PCatchFlush(PyObject *self, 	PyObject *args)
 {
   fflush(stdout);
@@ -2175,6 +2201,7 @@ static PyObject *PCatchFlush(PyObject *self, 	PyObject *args)
 }
 
 static PyMethodDef PCatch_methods[] = {
+	{"writelines",	  PCatchWritelines,   METH_VARARGS},
 	{"write",	  PCatchWrite,   METH_VARARGS},
 	{"flush",	  PCatchFlush,   METH_VARARGS},
 	{NULL,		NULL}		/* sentinel */
