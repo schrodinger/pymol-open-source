@@ -596,6 +596,8 @@ if __name__=='pymol.setting':
         moe_separate_chains = (558,'')
         transparency_global_sort = (559, '')
         hide_long_bonds = (560, '')
+        auto_rename_duplicates = (561, '')
+        pdb_hetatm_guess_valences = (561, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

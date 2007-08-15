@@ -4663,6 +4663,577 @@ int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at)
   return(result);
 }
 /*========================================================================*/
+static float compute_avg_center_dot_cross(ObjectMolecule *I, CoordSet *cs, 
+                                          int n_atom, int *atix)
+{
+  float result = 0.0F;
+  float *v[9];
+  int missing_flag = false;
+  {
+    int a,i;
+    for(i=0;i<n_atom;i++) {
+      int a1 = atix[i];
+      if(I->DiscreteFlag) {
+        if(cs==I->DiscreteCSet[a1]) 
+          a=I->DiscreteAtmToIdx[a1];
+        else 
+          a=-1;
+      } else 
+        a=cs->AtmToIdx[a1];
+      if(a<0) {
+        missing_flag = true;
+        break;
+      } else {
+        v[i] = cs->Coord + a*3;
+      }
+    }
+  }
+  if(!missing_flag) {
+    int i;
+    float d10[3],d20[3],cp[8][3];
+    float avg = 0.0;
+
+    v[n_atom] = v[1];
+    for(i=1;i<n_atom;i++) {
+      subtract3f(v[i],v[0],d10);
+      subtract3f(v[i+1],v[0],d20);
+      normalize3f(d10);
+      normalize3f(d20);
+      cross_product3f(d10,d20,cp[i]);
+      normalize3f(cp[i]);
+      if(i>1) {
+        if(dot_product3f(cp[i-1],cp[i])<0.0)
+          invert3f(cp[i]);
+      }
+    }
+    copy3f(cp[1],cp[n_atom]);
+    for(i=1;i<n_atom;i++) {
+      avg += dot_product3f(cp[i],cp[i+1]);
+    }
+    result = avg / (n_atom-1);
+  }
+  return result;
+}
+
+static int verify_planer_bonds(ObjectMolecule *I, CoordSet *cs, 
+                               int n_atom, int *atix, int *neighbor,
+                               float *dir, float cutoff)
+{
+  int a,i;
+  for(i=0;i<n_atom;i++) {
+    int a1 = atix[i];
+    if(I->DiscreteFlag) {
+      if(cs==I->DiscreteCSet[a1]) 
+        a=I->DiscreteAtmToIdx[a1];
+      else 
+        a=-1;
+    } else 
+      a=cs->AtmToIdx[a1];
+    if(a>=0) {
+      float *v0 = cs->Coord + a*3;
+      int n = neighbor[a1]+1;
+      int a2;
+      while( (a2=neighbor[n])>=0 ) {
+        n+=2;
+        if(I->DiscreteFlag) {
+          if(cs==I->DiscreteCSet[a2]) 
+            a=I->DiscreteAtmToIdx[a2];
+          else 
+            a=-1;
+        } else 
+          a=cs->AtmToIdx[a2];
+        if(a>=0) {
+          float *v1 = cs->Coord + a*3;
+          float d10[3];
+          subtract3f(v1,v0,d10);
+          normalize3f(d10);
+          {
+            float dot = fabs(dot_product3f(d10,dir));
+            if(dot>cutoff) {
+              switch(I->AtomInfo[a1].protons) {
+              case cAN_C:
+              case cAN_N:
+              case cAN_O:
+              case cAN_S:
+                switch(I->AtomInfo[a2].protons) {
+                case cAN_C:
+                case cAN_N:
+                case cAN_O:
+                case cAN_S:
+                  return 0;
+                  break;
+                }
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return 1;
+}
+
+static float compute_avg_ring_dot_cross(ObjectMolecule *I, CoordSet *cs, 
+                                   int n_atom, int *atix, float *dir)
+{
+  float result = 0.0F;
+  float *v[9];
+  int missing_flag = false;
+  {
+    int a,i;
+    for(i=0;i<n_atom;i++) {
+      int a1 = atix[i];
+      if(I->DiscreteFlag) {
+        if(cs==I->DiscreteCSet[a1]) 
+          a=I->DiscreteAtmToIdx[a1];
+        else 
+          a=-1;
+      } else 
+        a=cs->AtmToIdx[a1];
+      if(a<0) {
+        missing_flag = true;
+        break;
+      } else {
+        v[i] = cs->Coord + a*3;
+      }
+    }
+  }
+  if(!missing_flag) {
+    int i;
+    float d10[3],d21[3],cp[8][3];
+    float avg = 0.0;
+
+    v[n_atom] = v[0];
+    v[n_atom+1] = v[1];
+    for(i=0;i<n_atom;i++) {
+      subtract3f(v[i+0],v[i+1],d10);
+      subtract3f(v[i+2],v[i+1],d21);
+      normalize3f(d10);
+      normalize3f(d21);
+      cross_product3f(d10,d21,cp[i]);
+      normalize3f(cp[i]);
+      if(i) {
+        if(dot_product3f(cp[i-1],cp[i])<0.0)
+          invert3f(cp[i]);
+      }
+      add3f(cp[i],dir,dir);
+    }
+    copy3f(cp[0],cp[n_atom]);
+    for(i=0;i<n_atom;i++) {
+      avg += dot_product3f(cp[i],cp[i+1]);
+    }
+    result = avg / n_atom;
+  }
+  normalize3f(dir);
+  return result;
+}
+
+typedef struct {
+  int cyclic, planer;
+} ObservedInfo;
+
+static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
+{
+  /* this a hacked 80% solution ...it will get things wrong, but it is
+     better than nothing! */
+
+  const float planer_cutoff = 0.96F;
+
+  CoordSet *cs = NULL;
+  ObservedInfo *obs_atom = NULL;
+  ObservedInfo *obs_bond = NULL;
+
+  ObjectMoleculeUpdateNeighbors(I);
+  
+  if((state>=0)&&(state<I->NCSet)) {
+    cs = I->CSet[state];
+  }
+  if(cs) {
+    obs_atom = Calloc(ObservedInfo, I->NAtom);
+    obs_bond = Calloc(ObservedInfo, I->NBond);
+  }
+
+  if(cs && obs_bond && obs_atom) {
+    int a;
+    int *neighbor = I->Neighbor;
+    AtomInfoType *atomInfo = I->AtomInfo;
+    BondType *bondInfo = I->Bond;
+    
+    for(a=0;a<I->NAtom;a++) {
+      AtomInfoType *ai = atomInfo + a;
+      if(ai->hetatm && !ai->chemFlag) {
+        ObservedInfo *ob_at = obs_atom + a;
+        /*  determine whether or not atom participates in a planer system with 5 or 6 atoms */
+          
+        {        
+          int mem[9];
+          int nbr[7];
+          int *atmToIdx = NULL;
+          const int ESCAPE_MAX = 500;
+            
+          register int escape_count; 
+            
+          if(!I->DiscreteFlag) atmToIdx = cs->AtmToIdx;
+                      
+          escape_count = ESCAPE_MAX; /* don't get bogged down with structures 
+                                        that have unreasonable connectivity */
+          mem[0] = a;
+          nbr[0]= neighbor[mem[0]]+1;
+          while(((mem[1] = neighbor[nbr[0]])>=0)&&
+                ((!atmToIdx)||(atmToIdx[mem[0]]>=0))) {
+            nbr[1] = neighbor[mem[1]]+1;
+            while(((mem[2] = neighbor[nbr[1]])>=0)&&
+                  ((!atmToIdx)||(atmToIdx[mem[1]]>=0))) {
+              if(mem[2]!=mem[0]) {
+                nbr[2] = neighbor[mem[2]]+1;
+                while(((mem[3] = neighbor[nbr[2]])>=0)&&
+                      ((!atmToIdx)||(atmToIdx[mem[2]]>=0))) {
+                  if(mem[3]!=mem[1]) {
+                    nbr[3] = neighbor[mem[3]]+1;
+                    while(((mem[4] = neighbor[nbr[3]])>=0)&&
+                          ((!atmToIdx)||(atmToIdx[mem[3]]>=0))) {
+                      if((mem[4]!=mem[2])&&(mem[4]!=mem[1])&&(mem[4]!=mem[0])) {            
+                        nbr[4] = neighbor[mem[4]]+1;              
+                        while(((mem[5] = neighbor[nbr[4]])>=0)&&
+                              ((!atmToIdx)||(atmToIdx[mem[4]]>=0))) {
+                          if(!(escape_count--)) goto escape;
+                          if((mem[5]!=mem[3])&&(mem[5]!=mem[2])&&(mem[5]!=mem[1])) { 
+                            if(mem[5]==mem[0]) { /* five-cycle */
+                              int i;
+                              float dir[3];
+                              float avg_dot_cross = compute_avg_ring_dot_cross(I, cs, 5, mem, dir);
+                              for(i=0;i<5;i++) {
+                                obs_atom[mem[i]].cyclic = true;
+                                obs_bond[neighbor[nbr[0]+1]].cyclic = true;
+                              }
+                              if(avg_dot_cross>planer_cutoff) {
+                                if(verify_planer_bonds(I, cs, 5, mem, neighbor, dir, 0.35F)) {
+                                  for(i=0;i<5;i++) {
+                                    obs_atom[mem[i]].planer = true;                                    
+                                    obs_bond[neighbor[nbr[i]+1]].planer = true;
+                                  }
+                                }
+                              }
+                            }
+                              
+                            nbr[5] = neighbor[mem[5]]+1;              
+                            while(((mem[6] = neighbor[nbr[5]])>=0)&&
+                                  ((!atmToIdx)||(atmToIdx[mem[5]]>=0))) {
+                              if((mem[6]!=mem[4])&&(mem[6]!=mem[3])&&(mem[6]!=mem[2])&&(mem[6]!=mem[1])) {
+                                if(mem[6]==mem[0]) {  /* six-cycle */
+                                  int i;
+                                  float dir[3];
+                                  float avg_dot_cross = compute_avg_ring_dot_cross(I, cs, 6, mem, dir);
+                                  for(i=0;i<6;i++) {
+                                    obs_atom[mem[i]].cyclic = true;
+                                    obs_bond[neighbor[nbr[i]+1]].cyclic = true;
+                                  }
+                                  if(avg_dot_cross>planer_cutoff) {
+                                    if(verify_planer_bonds(I, cs, 6, mem, neighbor, dir, 0.35F)) {
+                                      for(i=0;i<6;i++) {
+                                        obs_atom[mem[i]].planer = true;    
+                                        obs_bond[neighbor[nbr[i]+1]].planer = true;                                
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                              nbr[5]+=2;                          
+                            }
+                          }
+                          nbr[4]+=2;
+                        }
+                      }
+                      nbr[3]+=2;
+                    }
+                  }
+                  nbr[2]+=2;
+                }
+              }
+              nbr[1]+=2;
+            }
+            nbr[0]+=2;
+          }
+            
+        escape:
+          escape_count = ESCAPE_MAX; /* don't get bogged down with structures 
+                                        that have unreasonable connectivity */
+        }
+
+        {
+          switch(ai->protons) {
+          case cAN_P:
+          case cAN_S:
+          case cAN_C: 
+            {
+              int atm[5];
+              int bnd[5];
+              int n = neighbor[a];
+              int nn = neighbor[n++];
+              if(nn>4) nn=4;
+              atm[0] = a;
+              { 
+                int i;
+                for(i=1;i<=nn;i++) {
+                  atm[i] = neighbor[n];
+                  bnd[i] = neighbor[n+1];
+                  n+=2;
+                }
+              }
+              {
+                int o1_at=-1, o2_at=-1, o3_at=-1, o4_at=-1;
+                int o1_bd=0, o2_bd=0, o3_bd=0, o4_bd=0;
+                float o1_len=0.0F, o2_len=0.0F, o3_len=0.0F, o4_len=0.0F;
+                int n1_at=-1, n2_at=-1, n3_at=-1;
+                int n1_bd=0, n2_bd=0, n3_bd=0;
+                float n1_len=0.0F, n2_len=0.0F, n3_len=0.0F;
+                float *v0 = NULL;
+                
+                {
+                  int idx0=-1;
+                  if(I->DiscreteFlag) {
+                    if(cs==I->DiscreteCSet[a]) 
+                      idx0=I->DiscreteAtmToIdx[a];
+                    else 
+                      idx0=-1;
+                  } else 
+                    idx0=cs->AtmToIdx[a];
+                  if(idx0>=0)
+                    v0 = cs->Coord + idx0*3;
+                }
+                {
+                  int i;
+                  for(i=1;i<=nn;i++) {
+                    float *v1 = NULL;
+                    
+                    {
+                      int idx1 = -1;
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[atm[i]]) 
+                          idx1=I->DiscreteAtmToIdx[atm[i]];
+                        else 
+                          idx1=-1;
+                      } else 
+                        idx1=cs->AtmToIdx[atm[i]];
+                      if(idx1>=0)
+                        v1 = cs->Coord + idx1*3;
+                    }
+                    if(v0&&v1) {
+                      float bond_len = diff3f(v0,v1);
+                      
+                      switch(atomInfo[atm[i]].protons) {
+                      case cAN_O:
+                        if(o1_at<0) {
+                          o1_at = atm[i];
+                          o1_len = bond_len;
+                          o1_bd = bnd[i];
+                        } else if(o2_at<0) {
+                          o2_at = atm[i];
+                          o2_len = bond_len;
+                          o2_bd = bnd[i];
+                        } else if(o3_at<0) {
+                          o3_at = atm[i];
+                          o3_len = bond_len;
+                          o3_bd = bnd[i];
+                        } else if(o4_at<0) {
+                          o4_at = atm[i];
+                          o4_len = bond_len;
+                          o4_bd = bnd[i];
+                        }
+                        break;
+                      case cAN_N:
+                        if(n1_at<0) {
+                          n1_at = atm[i];
+                          n1_len = bond_len;
+                          n1_bd = bnd[i];
+                        } else if(n2_at<0) {
+                          n2_at = atm[i];
+                          n2_len = bond_len;
+                          n2_bd = bnd[i];
+                        } else if(n3_at<0) {
+                          n3_at = atm[i];
+                          n3_len = bond_len;
+                          n3_bd = bnd[i];
+                        }
+                        break;
+                      }
+                    }
+                  }
+                }
+                switch(ai->protons) {
+                case cAN_C: /* planer carbons */
+                  if(nn==3) {
+                    float avg_dot_cross = compute_avg_center_dot_cross(I, cs, 4, atm);
+                    
+                    if((avg_dot_cross>planer_cutoff)) {
+                      
+                      if((n1_at>=0)&&(o1_at>=0)&&(o2_at<0)) {
+                        /* simple amide? */
+                        if(o1_len<1.36F) {
+                          if(neighbor[neighbor[o1_at]]==1)
+                            bondInfo[o1_bd].order = 2;
+                        }
+                      } else if ((n1_at>=0)&&(o1_at>=0)&&(o2_at>=0)) {
+                        if((o1_len<1.36F) && (neighbor[neighbor[o1_at]]==1))
+                          bondInfo[o1_bd].order = 2;
+                        else if((o2_len<1.36F) && (neighbor[neighbor[o2_at]]==1))
+                          bondInfo[o2_bd].order = 2;                        
+                      } else if((o1_at>=0)&&(o2_at>=0)&&(n1_at<0)) {
+                        /* simple carboxylate? */
+                        if((o1_len<1.36F)&&(o2_len<1.36F)) {
+                          if((neighbor[neighbor[o1_at]]==1) &&
+                             (neighbor[neighbor[o2_at]]==1)) {
+                            bondInfo[o1_bd].order = 4;
+                            bondInfo[o2_bd].order = 4;
+                          }
+                        }
+                      } else if((n1_at>=0)&&(n2_at>=0)&&(n3_at>=0)) {
+                        /* primary guanido with no hydrogens */
+                        if( (n1_len<1.40F) && (n2_len<1.40F) &&  (n3_len<1.40F)) {
+                          if((neighbor[neighbor[n1_at]]==1) &&
+                             (neighbor[neighbor[n2_at]]==1) &&
+                             (neighbor[neighbor[n3_at]]==2)) {
+                            bondInfo[n1_bd].order = 4;
+                            atomInfo[n1_at].valence = 3;
+                            atomInfo[n1_at].geom = cAtomInfoPlaner;
+                            atomInfo[n1_at].chemFlag = 2;
+                            bondInfo[n2_bd].order = 4;
+                            atomInfo[n2_at].valence = 3;
+                            atomInfo[n2_at].geom = cAtomInfoPlaner;
+                            atomInfo[n2_at].chemFlag = 2;
+                          } else if((neighbor[neighbor[n1_at]]==1) &&
+                                    (neighbor[neighbor[n2_at]]==2) &&
+                                    (neighbor[neighbor[n3_at]]==1)) {
+                            bondInfo[n1_bd].order = 4;
+                            atomInfo[n1_at].valence = 3;
+                            atomInfo[n1_at].geom = cAtomInfoPlaner;
+                            atomInfo[n1_at].chemFlag = 2;
+                            bondInfo[n3_bd].order = 4;
+                            atomInfo[n3_at].valence = 3;
+                            atomInfo[n3_at].geom = cAtomInfoPlaner;
+                            atomInfo[n3_at].chemFlag = 2;
+                          } else if((neighbor[neighbor[n1_at]]==2) &&
+                                    (neighbor[neighbor[n2_at]]==1) &&
+                                    (neighbor[neighbor[n3_at]]==1)) {
+                            bondInfo[n2_bd].order = 4;
+                            atomInfo[n2_at].valence = 3;
+                            atomInfo[n2_at].geom = cAtomInfoPlaner;
+                            atomInfo[n2_at].chemFlag = 2;
+                            bondInfo[n3_bd].order = 4;
+                            atomInfo[n3_at].valence = 3;
+                            atomInfo[n3_at].geom = cAtomInfoPlaner;
+                            atomInfo[n3_at].chemFlag = 2;
+                          }
+                        }
+                      }
+                    }
+                  }
+                  break;
+                case cAN_S:
+                case cAN_P:
+                  if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at>=0)) {
+                    /* sulfate, phosphate */
+                    int o1 = -1, o2 = -1;
+                    if(neighbor[neighbor[o1_at]]==1)
+                      o1 = o1_bd;
+                    if(neighbor[neighbor[o2_at]]==1) {
+                      if(o1<0) 
+                        o1 = o2_bd;
+                      else if(o2<0)
+                        o2 = o2_bd;
+                    }
+                    if(neighbor[neighbor[o3_at]]==1) {
+                      if(o1<0) 
+                        o1 = o3_bd;
+                      else if(o2<0)
+                        o2 = o3_bd;
+                    }
+                    if(neighbor[neighbor[o4_at]]==1) {
+                      if(o1<0) 
+                        o1 = o4_bd;
+                      else if(o2<0)
+                        o2 = o4_bd;
+                    }
+                    if(o1>=0)
+                      bondInfo[o1].order = 2;                        
+                    if(o2>=0) 
+                      bondInfo[o2].order = 2; 
+                  } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at<=0)) {
+                    /* sulfonamide */
+                    int o1 = -1, o2 = -1;
+                    if(neighbor[neighbor[o1_at]]==1)
+                      o1 = o1_bd;
+                    if(neighbor[neighbor[o2_at]]==1) {
+                      if(o1<0) 
+                        o1 = o2_bd;
+                      else if(o2<0)
+                        o2 = o2_bd;
+                    }
+                    if(neighbor[neighbor[o3_at]]==1) {
+                      if(o1<0) 
+                        o1 = o3_bd;
+                      else if(o2<0)
+                        o2 = o3_bd;
+                    }
+                    if(o1>=0)
+                      bondInfo[o1].order = 2;                        
+                    if(o2>=0) 
+                      bondInfo[o2].order = 2;                        
+                  } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at<0)) {
+                    /* sulphone */
+                    if(neighbor[neighbor[o1_at]]==1)
+                      bondInfo[o1_bd].order = 2;                        
+                    if(neighbor[neighbor[o2_at]]==1)
+                      bondInfo[o2_bd].order = 2;                        
+                  }
+                  break;
+                }
+              }
+            }
+          }
+          /* this sets aromatic bonds for cyclic planer systems */
+          
+          if(ob_at->cyclic && ob_at->planer) {
+            
+            switch(ai->protons) {
+            case cAN_C:              
+            case cAN_N:              
+            case cAN_O:
+            case cAN_S:
+              {
+                int n,a0,b0;
+                n = neighbor[a]+1;
+                while(1) {
+                  a0 = neighbor[n];
+                  if(a0<0) break;
+                  b0 = neighbor[n+1];
+                  n+=2;
+                  if(obs_atom[a0].cyclic && obs_atom[a0].planer &&
+                     obs_bond[b0].cyclic ) {
+                    switch(I->AtomInfo[a0].protons) {
+                    case cAN_C:              
+                    case cAN_N:              
+                    case cAN_O:
+                    case cAN_S:
+                      I->Bond[b0].order = 4;
+                      break;
+                    }
+                  }
+                }
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  FreeP(obs_bond);
+  FreeP(obs_atom);
+}
+/*========================================================================*/
+
 void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
 {
   /* Infers chemical relations for a molecules under protein assumptions.
@@ -4670,7 +5241,7 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
    * NOTE: this routine needs an all-atom model (with hydrogens!)
    * and it will make mistakes on non-protein atoms (if they haven't
    * already been assigned)
-  */
+   */
 
   int a,n,a0,a1,nn;
   int changedFlag = true;
@@ -4797,7 +5368,7 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
 void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
 {
   /* infers chemical relations from neighbors and geometry 
-  * NOTE: very limited in scope */
+   * NOTE: very limited in scope */
 
   int a,n,a0,nn;
   int changedFlag=true;
@@ -4953,7 +5524,7 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
     }
     
     switch(ai->protons) {
-/* cat-ions, lewis acids etc. */
+      /* cat-ions, lewis acids etc. */
     case cAN_Fe:
     case cAN_Ca: 
     case cAN_Cu:
@@ -4973,7 +5544,8 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
         may_have_lone_pair = false;
         
         if((!has_hydro)&&(ai->protons==cAN_N)) {
-          n = I->Neighbor[a] + 1;
+          n = I->Neighbor[a];
+          nn = I->Neighbor[n++];
           while(I->Neighbor[n]>=0) {
             if(I->Neighbor[n+1]>1) { /* any double/triple/delocalized bonds? */
               may_have_lone_pair = true;
@@ -4981,7 +5553,7 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
             n+=2; 
           }
         }
-        if((ai->formalCharge<=0)&&may_have_lone_pair) {
+        if((ai->formalCharge<=0)&&may_have_lone_pair&&(nn<3)) {
           ai->hb_acceptor = true;
         }
       }
@@ -5047,53 +5619,62 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
          information come first? */
       ai0->geom = cAtomInfoLinear;
       ai1->geom = cAtomInfoLinear;
-      switch(ai0->protons) {
-      case cAN_C:
-        ai0->valence=2;
-        break;
-      default:
-        ai0->valence=1;
+      if(ai0->chemFlag!=2) {
+        switch(ai0->protons) {
+        case cAN_C:
+          ai0->valence=2;
+          break;
+        default:
+          ai0->valence=1;
+        }
+        ai0->chemFlag=true;
       }
-      switch(ai1->protons) {
-      case cAN_C:
-        ai1->valence=2;
-        break;
-      default:
-        ai1->valence=1;
+      if(ai1->chemFlag!=2) {
+        switch(ai1->protons) {
+        case cAN_C:
+          ai1->valence=2;
+          break;
+        default:
+          ai1->valence=1;
+        }
+        ai1->chemFlag=true;
       }
-      ai0->chemFlag=true;
-      ai1->chemFlag=true;
     } else if(order==4) {
       ai0->geom = cAtomInfoPlaner;
       ai1->geom = cAtomInfoPlaner;
-      switch(ai0->protons) {
-      case cAN_O:
-        ai0->valence=1;
-        break;
-      case cAN_N:
-        ai0->valence=2;
-        break;
-      case cAN_C:
-        ai0->valence=3;
-        break;
-      default:
-        ai0->valence=4;
+      if(ai0->chemFlag!=2) {
+        switch(ai0->protons) {
+        case cAN_O:
+          ai0->valence=1;
+          break;
+        case cAN_N:
+          ai0->valence=2;
+          
+          break;
+        case cAN_C:
+          ai0->valence=3;
+          break;
+        default:
+          ai0->valence=4;
+        }
+        ai0->chemFlag=true;
       }
-      switch(ai1->protons) {
-      case cAN_O:
-        ai1->valence=1;
-        break;
-      case cAN_N:
-        ai1->valence=2;
-        break;
-      case cAN_C:
-        ai1->valence=3;
-        break;
-      default:
-        ai1->valence=1;
+      if(ai1->chemFlag!=2) {
+        switch(ai1->protons) {
+        case cAN_O:
+          ai1->valence=1;
+          break;
+        case cAN_N:
+          ai1->valence=2;
+          break;
+        case cAN_C:
+          ai1->valence=3;
+          break;
+        default:
+          ai1->valence=1;
+        }
+        ai1->chemFlag=true;
       }
-      ai0->chemFlag=true;
-      ai1->chemFlag=true;
     }
   }
 
@@ -10260,7 +10841,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals *G,ObjectMolecule *obj,ch
 }
 
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char *PDBStr,int frame,
+ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char *PDBStr,int state,
                                          int discrete,M4XAnnoType *m4x,char *pdb_name,
                                          char **next_pdb,PDBInfoRec *pdb_info,int quiet,int *model_number)
 {
@@ -10317,7 +10898,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       
       if(I->DiscreteFlag&&atInfo) {
         unsigned int a;
-        int fp1 = frame+1;
+        int fp1 = state+1;
         AtomInfoType *ai = atInfo;
         for(a=0;a<nAtom;a++) {
           (ai++)->discrete_state = fp1;
@@ -10334,15 +10915,15 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
         ObjectMoleculeMerge(I,atInfo,cset,true,aic_mask,true); /* NOTE: will release atInfo */
       }
       if(isNew) I->NAtom=nAtom;
-      if(frame<0) frame=I->NCSet;
+      if(state<0) state=I->NCSet;
       if(*model_number > 0) {
         if(SettingGetGlobal_b(G,cSetting_pdb_honor_model_number))
-          frame = *model_number - 1;
+          state = *model_number - 1;
       }
-      VLACheck(I->CSet,CoordSet*,frame);
-      if(I->NCSet<=frame) I->NCSet=frame+1;
-      if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
-      I->CSet[frame] = cset;
+      VLACheck(I->CSet,CoordSet*,state);
+      if(I->NCSet<=state) I->NCSet=state+1;
+      if(I->CSet[state]) I->CSet[state]->fFree(I->CSet[state]);
+      I->CSet[state] = cset;
       if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,true);
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
@@ -10432,6 +11013,10 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       ObjectMoleculeUpdateNonbonded(I);
       ObjectMoleculeAutoDisableAtomNameWildcard(I);
 
+      if(SettingGetGlobal_b(G,cSetting_pdb_hetatm_guess_valences)) {
+        ObjectMoleculeGuessHetatmValences(I,state);
+      }
+
       successCnt++;
       if(!quiet) {
         if(successCnt>1) {
@@ -10449,7 +11034,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
     if(restart) {
       repeatFlag=true;
       start=restart;
-      frame=frame+1;
+      state=state+1;
     }
   }
   return(I);

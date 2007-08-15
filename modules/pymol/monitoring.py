@@ -19,7 +19,7 @@ def check_redundant_open(file,_self=cmd):
         if a == file:
             found = 1
             break
-    for a in sys.argv:
+    for a in cmd._pymol.invocation._argv: 
         if a == file:
             found = 1
             break;

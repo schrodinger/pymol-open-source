@@ -3507,7 +3507,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_transparency_global_sort, 0);
   set_b(I,cSetting_hide_long_bonds,0);
   set_b(I,cSetting_auto_rename_duplicates,0); /* to do */
-
+  set_b(I,cSetting_pdb_hetatm_guess_valences,1);
 }
 
 

@@ -268,6 +268,7 @@ def get_command_keywords(self_cmd=cmd):
         'util.cbam'     : [ self_cmd.util.cbam         , 0 , 0 , ''  , parsing.STRICT ],
         'util.cbc'      : [ self_cmd.util.cbc          , 0 , 0 , ''  , parsing.STRICT ],
         'util.chainbow' : [ self_cmd.util.chainbow     , 0 , 0 , ''  , parsing.STRICT ],
+        'util.cnc'      : [ self_cmd.util.cnc          , 0 , 0 , ''  , parsing.STRICT ],        
         'util.colors'   : [ self_cmd.util.colors       , 0 , 0 , ''  , parsing.STRICT ],
         'util.mrock'    : [ self_cmd.util.mrock        , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
         'util.mroll'    : [ self_cmd.util.mroll        , 0 , 0 , ''  , parsing.STRICT ], # LEGACY

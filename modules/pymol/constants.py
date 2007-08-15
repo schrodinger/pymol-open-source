@@ -82,7 +82,8 @@ class loadable:
     dcd = 47      # dcd trajectory format (via plugin)
     cube = 48     # cube volume file (via plugin)
     mae = 49      # Schrodinger ".mae" format (proprietary)
-
+    cif1 = 50     # Python-based CIF parser
+    
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.mol : loadable.molstr,
               loadable.xplor : loadable.xplorstr,

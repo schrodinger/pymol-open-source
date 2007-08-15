@@ -710,7 +710,9 @@ typedef struct _CPyMOL {
   ov_word lex_moe_separate_chains;
   ov_word lex_transparency_global_sort;
   ov_word lex_hide_long_bonds;
-  ov_word lex_auto_rename_duplicates;
+  ov_word lex_auto_rename_duplicates; 
+  ov_word lex_pdb_hetatm_guess_valences;
+
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1429,6 +1431,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(transparency_global_sort, 559);
   LEX_SETTING(hide_long_bonds, 560);
   LEX_SETTING(auto_rename_duplicates, 561);
+  LEX_SETTING(pdb_hetatm_guess_valences, 562);
+
  return_OVstatus_SUCCESS;
 }
 
