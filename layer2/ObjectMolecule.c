@@ -4870,7 +4870,6 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
     for(a=0;a<I->NAtom;a++) {
       AtomInfoType *ai = atomInfo + a;
       if(ai->hetatm && !ai->chemFlag) {
-        ObservedInfo *ob_at = obs_atom + a;
         /*  determine whether or not atom participates in a planer system with 5 or 6 atoms */
           
         {        
@@ -4967,6 +4966,13 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
           escape_count = ESCAPE_MAX; /* don't get bogged down with structures 
                                         that have unreasonable connectivity */
         }
+      }
+    }
+
+    for(a=0;a<I->NAtom;a++) {
+      AtomInfoType *ai = atomInfo + a;
+      if(ai->hetatm && !ai->chemFlag) {
+        ObservedInfo *ob_at = obs_atom + a;
 
         {
           switch(ai->protons) {
@@ -4993,12 +4999,13 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                 int o1_at=-1, o2_at=-1, o3_at=-1, o4_at=-1;
                 int o1_bd=0, o2_bd=0, o3_bd=0, o4_bd=0;
                 float o1_len=0.0F, o2_len=0.0F, o3_len=0.0F, o4_len=0.0F;
+                float n1_v[3];
                 int n1_at=-1, n2_at=-1, n3_at=-1;
                 int n1_bd=0, n2_bd=0, n3_bd=0;
                 float n1_len=0.0F, n2_len=0.0F, n3_len=0.0F;
                 int c1_at=-1, c2_at=-1, c1_bd=0, c2_bd=0;
                 float c1_len=0.0F, c2_len=0.0F;
-
+                float c1_v[3];
                 float *v0 = NULL;
                 
                 {
@@ -5031,7 +5038,10 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                         v1 = cs->Coord + idx1*3;
                     }
                     if(v0&&v1) {
-                      float bond_len = diff3f(v0,v1);
+                      float diff[3];
+
+                      subtract3f(v1,v0,diff);
+                      float bond_len = length3f(diff);
                       
                       switch(atomInfo[atm[i]].protons) {
                       case cAN_C:
@@ -5039,6 +5049,7 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                           c1_at = atm[i];
                           c1_len = bond_len;
                           c1_bd = bnd[i];
+                          copy3f(diff,c1_v);
                         } else if(c2_at<0) {
                           c2_at = atm[i];
                           c2_len = bond_len;
@@ -5066,6 +5077,7 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                         break;
                       case cAN_N:
                         if(n1_at<0) {
+                          copy3f(diff,n1_v);
                           n1_at = atm[i];
                           n1_len = bond_len;
                           n1_bd = bnd[i];
@@ -5083,172 +5095,216 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                     }
                   }
                 }
-                switch(ai->protons) {
-                case cAN_C: /* planer carbons */
-                  if(nn==3) {
-                    float avg_dot_cross = compute_avg_center_dot_cross(I, cs, 4, atm);
-                    
-                    if((avg_dot_cross>planer_cutoff)) {
+                {
+                  float avg_dot_cross = 0.0F;
+
+                  switch(ai->protons) {
+                  case cAN_C: /* planer carbons */
+                    if(nn==3) {
+                      avg_dot_cross = compute_avg_center_dot_cross(I, cs, 4, atm);
                       
-                      if((n1_at>=0)&&(o1_at>=0)&&(o2_at<0)) {
-                        /* simple amide? */
-                        if(o1_len<1.38F) {
-                          if(neighbor[neighbor[o1_at]]==1)
+                      if(avg_dot_cross>planer_cutoff) {
+                        
+                        if((n1_at>=0)&&(o1_at>=0)&&(o2_at<0)) {
+                          /* simple amide? */
+                          if(o1_len<1.38F) {
+                            if(neighbor[neighbor[o1_at]]==1)
+                              bondInfo[o1_bd].order = 2;
+                          }
+                        } else if ((n1_at>=0)&&(o1_at>=0)&&(o2_at>=0)) {
+                          /* carbamyl */
+                          if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1) &&
+                             (o2_len<1.38F) && (neighbor[neighbor[o2_at]]==1)) {
+                            bondInfo[o1_bd].order = 4;
+                            bondInfo[o2_bd].order = 4;
+                          } else if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1))
                             bondInfo[o1_bd].order = 2;
-                        }
-                      } else if ((n1_at>=0)&&(o1_at>=0)&&(o2_at>=0)) {
-                        /* carbamyl */
-                        if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1) &&
-                           (o2_len<1.38F) && (neighbor[neighbor[o2_at]]==1)) {
+                          else if((o2_len<1.38F) && (neighbor[neighbor[o2_at]]==1))
+                            bondInfo[o2_bd].order = 2;                        
+                        } else if ((n1_at<0)&&(o1_at>=0)&&(o2_at<0)) {
+                          /* ketone */
+                          if((o1_len<1.31F) && (neighbor[neighbor[o1_at]]==1))
+                            bondInfo[o1_bd].order = 2;
+                        } else if((o1_at>=0)&&(o2_at>=0)&&(n1_at<0)) {
+                          /* simple carboxylate? */
+                          if((o1_len<1.38F) && (o2_len<1.38F) && 
+                             (neighbor[neighbor[o1_at]]==1) &&
+                             (neighbor[neighbor[o2_at]]==1)) {
                             bondInfo[o1_bd].order = 4;
                             bondInfo[o2_bd].order = 4;
-                        } else if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1))
-                          bondInfo[o1_bd].order = 2;
-                        else if((o2_len<1.38F) && (neighbor[neighbor[o2_at]]==1))
-                          bondInfo[o2_bd].order = 2;                        
-                      } else if ((n1_at<0)&&(o1_at>=0)&&(o2_at<0)) {
-                        /* ketone */
-                        if((o1_len<1.31F) && (neighbor[neighbor[o1_at]]==1))
-                          bondInfo[o1_bd].order = 2;
-                      } else if((o1_at>=0)&&(o2_at>=0)&&(n1_at<0)) {
-                        /* simple carboxylate? */
-                        if((o1_len<1.38F) && (o2_len<1.38F) && 
-                           (neighbor[neighbor[o1_at]]==1) &&
-                           (neighbor[neighbor[o2_at]]==1)) {
-                            bondInfo[o1_bd].order = 4;
-                            bondInfo[o2_bd].order = 4;
-                        } else if((o1_len<1.38F)&&(neighbor[neighbor[o1_at]]==1)) { /* esters */
-                          bondInfo[o1_bd].order = 2;
-                        } else if((o2_len<1.38F)&&(neighbor[neighbor[o2_at]]==1)) {
-                          bondInfo[o2_bd].order = 2;
-                        }
-                       } else if((n1_at>=0)&&(n2_at>=0)&&(n3_at>=0)) {
-                        /* guanido with no hydrogens */
-                        if( (n1_len<1.40F) && (n2_len<1.40F) &&  (n3_len<1.40F)) {
-                          if((neighbor[neighbor[n1_at]]==1) &&
-                             (neighbor[neighbor[n2_at]]==1) &&
-                             (neighbor[neighbor[n3_at]]>=2)) {
-                            bondInfo[n1_bd].order = 4;
-                            atomInfo[n1_at].valence = 3;
-                            atomInfo[n1_at].geom = cAtomInfoPlaner;
-                            atomInfo[n1_at].chemFlag = 2;
-                            bondInfo[n2_bd].order = 4;
-                            atomInfo[n2_at].valence = 3;
-                            atomInfo[n2_at].geom = cAtomInfoPlaner;
-                            atomInfo[n2_at].chemFlag = 2;
-                          } else if((neighbor[neighbor[n1_at]]==1) &&
-                                    (neighbor[neighbor[n2_at]]>=2) &&
-                                    (neighbor[neighbor[n3_at]]==1)) {
-                            bondInfo[n1_bd].order = 4;
-                            atomInfo[n1_at].valence = 3;
-                            atomInfo[n1_at].geom = cAtomInfoPlaner;
-                            atomInfo[n1_at].chemFlag = 2;
-                            bondInfo[n3_bd].order = 4;
-                            atomInfo[n3_at].valence = 3;
-                            atomInfo[n3_at].geom = cAtomInfoPlaner;
-                            atomInfo[n3_at].chemFlag = 2;
-                          } else if((neighbor[neighbor[n1_at]]>=2) &&
-                                    (neighbor[neighbor[n2_at]]==1) &&
-                                    (neighbor[neighbor[n3_at]]==1)) {
-                            bondInfo[n2_bd].order = 4;
-                            atomInfo[n2_at].valence = 3;
-                            atomInfo[n2_at].geom = cAtomInfoPlaner;
-                            atomInfo[n2_at].chemFlag = 2;
-                            bondInfo[n3_bd].order = 4;
-                            atomInfo[n3_at].valence = 3;
-                            atomInfo[n3_at].geom = cAtomInfoPlaner;
-                            atomInfo[n3_at].chemFlag = 2;
+                          } else if((o1_len<1.38F)&&(neighbor[neighbor[o1_at]]==1)) { /* esters */
+                            bondInfo[o1_bd].order = 2;
+                          } else if((o2_len<1.38F)&&(neighbor[neighbor[o2_at]]==1)) {
+                            bondInfo[o2_bd].order = 2;
+                          }
+                        } else if( (n1_at>=0) && (n2_at>=0) && (n3_at<0) && (c1_at>=0) &&
+                                   (n1_len<1.43F) && (n2_len<1.43F) &&
+                                   obs_atom[c1_at].planer && obs_atom[c1_at].cyclic && 
+                                   (!ob_at->cyclic) &&
+                                   (!obs_atom[n1_at].cyclic) && (!obs_atom[n2_at].cyclic)) {
+                          bondInfo[n1_bd].order = 4;
+                          atomInfo[n1_at].valence = 3;
+                          atomInfo[n1_at].geom = cAtomInfoPlaner;
+                          atomInfo[n1_at].chemFlag = 2;
+                          bondInfo[n2_bd].order = 4;
+                          atomInfo[n2_at].valence = 3;
+                          atomInfo[n2_at].geom = cAtomInfoPlaner;
+                          atomInfo[n2_at].chemFlag = 2;
+                        } else if((n1_at>=0)&&(n2_at>=0)&&(n3_at>=0)) {
+                          /* guanido with no hydrogens */
+                          if( (n1_len<1.44F) && (n2_len<1.44F) &&  (n3_len<1.44F)) {
+                            if((neighbor[neighbor[n1_at]]==1) &&
+                               (neighbor[neighbor[n2_at]]==1) &&
+                               (neighbor[neighbor[n3_at]]>=2)) {
+                              bondInfo[n1_bd].order = 4;
+                              atomInfo[n1_at].valence = 3;
+                              atomInfo[n1_at].geom = cAtomInfoPlaner;
+                              atomInfo[n1_at].chemFlag = 2;
+                              bondInfo[n2_bd].order = 4;
+                              atomInfo[n2_at].valence = 3;
+                              atomInfo[n2_at].geom = cAtomInfoPlaner;
+                              atomInfo[n2_at].chemFlag = 2;
+                            } else if((neighbor[neighbor[n1_at]]==1) &&
+                                      (neighbor[neighbor[n2_at]]>=2) &&
+                                      (neighbor[neighbor[n3_at]]==1)) {
+                              bondInfo[n1_bd].order = 4;
+                              atomInfo[n1_at].valence = 3;
+                              atomInfo[n1_at].geom = cAtomInfoPlaner;
+                              atomInfo[n1_at].chemFlag = 2;
+                              bondInfo[n3_bd].order = 4;
+                              atomInfo[n3_at].valence = 3;
+                              atomInfo[n3_at].geom = cAtomInfoPlaner;
+                              atomInfo[n3_at].chemFlag = 2;
+                            } else if((neighbor[neighbor[n1_at]]>=2) &&
+                                      (neighbor[neighbor[n2_at]]==1) &&
+                                      (neighbor[neighbor[n3_at]]==1)) {
+                              bondInfo[n2_bd].order = 4;
+                              atomInfo[n2_at].valence = 3;
+                              atomInfo[n2_at].geom = cAtomInfoPlaner;
+                              atomInfo[n2_at].chemFlag = 2;
+                              bondInfo[n3_bd].order = 4;
+                              atomInfo[n3_at].valence = 3;
+                              atomInfo[n3_at].geom = cAtomInfoPlaner;
+                              atomInfo[n3_at].chemFlag = 2;
+                            }
                           }
                         }
                       }
                     }
-                  }
-                  break;
-                case cAN_N: 
-                  if(nn==3) {
-                    float avg_dot_cross = compute_avg_center_dot_cross(I, cs, 4, atm);
+                    /* any carbon */
+
+                    /* handle imines and nitriles */
+
+                    if( (nn>=2) && (nn<=3) && (n1_at>=0) && (o1_at<0) &&
+                        (n2_at<0) && (n1_len<1.36F) && 
+                        (!ob_at->cyclic) && (!obs_bond[n1_bd].cyclic) && (!obs_atom[n1_at].planer) &&
+                        ((nn==2)||((nn==3)&&(avg_dot_cross>planer_cutoff))) ) {
                     
-                    if((avg_dot_cross>planer_cutoff)) {
-                      if((o1_at>=0)&&(o2_at>=0)&&(o3_at<0)) {
-                        /* nitro */
-                        if(neighbor[neighbor[o1_at]]==1)
-                          bondInfo[o1_bd].order = 4;                        
-                        if(neighbor[neighbor[o2_at]]==1)
-                          bondInfo[o2_bd].order = 4;                        
+                      float n1_dot_cross = 1.0F;
+                      int n2 = neighbor[n1_at];
+                      int nn2 = neighbor[n2++];
+
+                      { /* check nitrogen planarity */
+                        int atm2[5];
+                        int bnd2[5];
+                        if(nn2>2) {
+                          nn2=3;
+                          atm2[0] = n1_at;
+                          { 
+                            int i2;
+                            for(i2=1;i2<=nn2;i2++) {
+                              atm2[i2] = neighbor[n2];
+                              bnd2[i2] = neighbor[n2+1];
+                              n2+=2;
+                            }
+                          }
+                          n1_dot_cross = compute_avg_center_dot_cross(I, cs, 4, atm2);
+                        }
+                      }
+                      if(n1_dot_cross>planer_cutoff) {
+                        bondInfo[n1_bd].order = 2;                      
+                        if((n1_len<1.24F)&&(c1_at>=0)&&(nn2==1)) {
+                          normalize3f(n1_v);
+                          normalize3f(c1_v);
+                          if(dot_product3f(n1_v,c1_v)< -0.9) {
+                            bondInfo[n1_bd].order=3;
+                          }
+                        }
                       }
                     }
-                  } 
-#if 0
-NOTE: need to figure out how to handle imines, hydroxamic acids, oximes, etc. without screwing up amides
-                  
-                     else if(nn==2) { /* acyclic imine */
-                  if(o1_at<0) {
+                    break;
+                  case cAN_N: 
+                    if(nn==3) {
+                      avg_dot_cross = compute_avg_center_dot_cross(I, cs, 4, atm);
                     
-                    if((c1_at>=0) && (c1_len<1.38F) && (!obs_bond[c1_bd].cyclic)) {
-                      bondInfo[c1_bd].order = 2;
-                    } else if((c2_at>=0) && (c2_len<1.38F) && (!obs_bond[c2_bd].cyclic)) {
-                      bondInfo[c2_bd].order = 2;
+                      if((avg_dot_cross>planer_cutoff)) {
+                        if((o1_at>=0)&&(o2_at>=0)&&(o3_at<0)) {
+                          /* nitro */
+                          if(neighbor[neighbor[o1_at]]==1)
+                            bondInfo[o1_bd].order = 4;                        
+                          if(neighbor[neighbor[o2_at]]==1)
+                            bondInfo[o2_bd].order = 4;                        
+                        }
+                      }
                     }
+                    break;
+                  case cAN_S:
+                  case cAN_P:
+                    if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at>=0)) {
+                      /* sulfate, phosphate */
+                      int o1 = -1, o2 = -1;
+                      if(neighbor[neighbor[o1_at]]==1)
+                        o1 = o1_bd;
+                      if(neighbor[neighbor[o2_at]]==1) {
+                        if(o1<0) 
+                          o1 = o2_bd;
+                        else if(o2<0)
+                          o2 = o2_bd;
+                      }
+                      if(neighbor[neighbor[o3_at]]==1) {
+                        if(o1<0) 
+                          o1 = o3_bd;
+                        else if(o2<0)
+                          o2 = o3_bd;
+                      }
+                      if(neighbor[neighbor[o4_at]]==1) {
+                        if(o1<0) 
+                          o1 = o4_bd;
+                        else if(o2<0)
+                          o2 = o4_bd;
+                      }
+                      if(o2>=0) 
+                        bondInfo[o1].order = 2; 
+                    } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at<0)) {
+                      /* sulfonamide */
+                      int o1 = -1, o2 = -1;
+                      if(neighbor[neighbor[o1_at]]==1)
+                        o1 = o1_bd;
+                      if(neighbor[neighbor[o2_at]]==1) {
+                        if(o1<0) 
+                          o1 = o2_bd;
+                        else if(o2<0)
+                          o2 = o2_bd;
+                      }
+                      if(neighbor[neighbor[o3_at]]==1) {
+                        if(o1<0) 
+                          o1 = o3_bd;
+                        else if(o2<0)
+                          o2 = o3_bd;
+                      }
+                      if(o1>=0)
+                        bondInfo[o1].order = 2;                        
+                      if(o2>=0) 
+                        bondInfo[o2].order = 2;                        
+                    } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at<0)) {
+                      /* sulphone */
+                      if(neighbor[neighbor[o1_at]]==1)
+                        bondInfo[o1_bd].order = 2;                        
+                      if(neighbor[neighbor[o2_at]]==1)
+                        bondInfo[o2_bd].order = 2;                        
+                    }
+                    break;
                   }
-#endif                 
-                  
-                  break;
-                case cAN_S:
-                case cAN_P:
-                  if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at>=0)) {
-                    /* sulfate, phosphate */
-                    int o1 = -1, o2 = -1;
-                    if(neighbor[neighbor[o1_at]]==1)
-                      o1 = o1_bd;
-                    if(neighbor[neighbor[o2_at]]==1) {
-                      if(o1<0) 
-                        o1 = o2_bd;
-                      else if(o2<0)
-                        o2 = o2_bd;
-                    }
-                    if(neighbor[neighbor[o3_at]]==1) {
-                      if(o1<0) 
-                        o1 = o3_bd;
-                      else if(o2<0)
-                        o2 = o3_bd;
-                    }
-                    if(neighbor[neighbor[o4_at]]==1) {
-                      if(o1<0) 
-                        o1 = o4_bd;
-                      else if(o2<0)
-                        o2 = o4_bd;
-                    }
-                    if(o2>=0) 
-                      bondInfo[o1].order = 2; 
-                  } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at<0)) {
-                    /* sulfonamide */
-                    int o1 = -1, o2 = -1;
-                    if(neighbor[neighbor[o1_at]]==1)
-                      o1 = o1_bd;
-                    if(neighbor[neighbor[o2_at]]==1) {
-                      if(o1<0) 
-                        o1 = o2_bd;
-                      else if(o2<0)
-                        o2 = o2_bd;
-                    }
-                    if(neighbor[neighbor[o3_at]]==1) {
-                      if(o1<0) 
-                        o1 = o3_bd;
-                      else if(o2<0)
-                        o2 = o3_bd;
-                    }
-                    if(o1>=0)
-                      bondInfo[o1].order = 2;                        
-                    if(o2>=0) 
-                      bondInfo[o2].order = 2;                        
-                  } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at<0)) {
-                    /* sulphone */
-                    if(neighbor[neighbor[o1_at]]==1)
-                      bondInfo[o1_bd].order = 2;                        
-                    if(neighbor[neighbor[o2_at]]==1)
-                      bondInfo[o2_bd].order = 2;                        
-                  }
-                  break;
                 }
               }
             }
@@ -5602,29 +5658,88 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
       if(has_hydro)
         ai->hb_donor=true;
       else {
-        int may_have_lone_pair=false;
-        if((!has_hydro)&&(ai->protons==cAN_N)) {
-          n = I->Neighbor[a];
-          nn = I->Neighbor[n++];
-          while(I->Neighbor[n]>=0) {
-            if(I->Bond[I->Neighbor[n+1]].order>1) { /* any double/triple/delocalized bonds? */
-              may_have_lone_pair = true;
-            }
-            n+=2; 
+        int delocalized = false;
+        int has_double_bond = false;
+        int neighbor_has_double_bond = false;
+        int mem[3];
+        int nbr[3];
+        int *neighbor = I->Neighbor;
+        
+        mem[0] = a;
+        nbr[0] = neighbor[mem[0]]+1;
+        while(((mem[1] = neighbor[nbr[0]])>=0)) {
+          int b_order = I->Bond[neighbor[nbr[0]+1]].order;
+          if(b_order>1) { /* any double/triple/aromatic bonds? */
+            delocalized = true;
           }
+          if(b_order==2) {
+            has_double_bond = true;
+          }
+          nbr[1] = neighbor[mem[1]]+1;
+          while(((mem[2] = neighbor[nbr[1]])>=0)) {
+            if(mem[2]!=mem[0]) {
+              int b_order2 = I->Bond[neighbor[nbr[1]+1]].order; 
+              if(b_order2 == 2) {
+                neighbor_has_double_bond = true;
+              }
+            }
+            nbr[1]+=2;
+          }
+          nbr[0]+=2;
         }
-        if((ai->formalCharge<=0)&&may_have_lone_pair&&(nn<3)) {
+        if((ai->formalCharge<=0) && delocalized && (nn<3)) {
+          /* delocalized nitrogen can likely serve as an acceptor */
           ai->hb_acceptor = true;
-        } else if((ai->geom!=cAtomInfoPlaner)&&(nn==3)&&(ai->formalCharge>=0)&&(!may_have_lone_pair)) {
+        } 
+        if( delocalized && (neighbor_has_double_bond) && (!has_double_bond) &&
+            (ai->geom==cAtomInfoPlaner) && (nn==2) && (ai->formalCharge>=0)) {
+          /* there's a fair chance of a resonance structure with this nitrogen as a donor */
+          ai->hb_donor = true; 
+        } 
+        if((ai->geom!=cAtomInfoPlaner) && (nn==3) && (ai->formalCharge>=0) && (!delocalized) ) {
+          /* tertiary amine case -- assume potential donor */
           ai->hb_donor = true;
         }
       }
       break;
     case cAN_O:
-      if(has_hydro)
-        ai->hb_donor = true;
       if(ai->formalCharge<=0)
         ai->hb_acceptor = true;
+      if(has_hydro)
+        ai->hb_donor = true;
+      else {
+        int has_double_bond = false;
+        int neighbor_has_aromatic_bond = false;
+        int mem[3];
+        int nbr[3];
+        int *neighbor = I->Neighbor;
+        
+        mem[0] = a;
+        nbr[0] = neighbor[mem[0]]+1;
+        while(((mem[1] = neighbor[nbr[0]])>=0)) {
+          int b_order = I->Bond[neighbor[nbr[0]+1]].order;
+          if(b_order==2) {
+            has_double_bond = true;
+          }
+          nbr[1] = neighbor[mem[1]]+1;
+          while(((mem[2] = neighbor[nbr[1]])>=0)) {
+            if(mem[2]!=mem[0]) {
+              int b_order2 = I->Bond[neighbor[nbr[1]+1]].order; 
+              if(b_order2 == 4) {
+                neighbor_has_aromatic_bond = true;
+              }
+            }
+            nbr[1]+=2;
+          }
+          nbr[0]+=2;
+        }
+
+        if( has_double_bond && neighbor_has_aromatic_bond &&
+            (ai->formalCharge>=0)) {
+          /* allow for phenolic resonance structures (and the like)*/
+          ai->hb_donor = true; 
+        }
+      }
       break;
     }
     ai++;

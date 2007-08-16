@@ -8152,6 +8152,9 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
 	 {
     case SELE_HBAs:
     case SELE_HBDs:
+	 case SELE_DONz:
+	 case SELE_ACCz:
+       
       { 
         /* first, verify chemistry for all atoms... */
         ObjectMolecule *lastObj=NULL,*obj;
@@ -8169,13 +8172,16 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
       }
       switch(base->code) {
       case SELE_HBAs:
+	 case SELE_ACCz:
         for(a=cNDummyAtoms;a<I->NAtom;a++)
           base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hb_acceptor;
         break;
       case SELE_HBDs:
+	 case SELE_DONz:
         for(a=cNDummyAtoms;a<I->NAtom;a++)
           base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hb_donor;
         break;
+
       }
       break;
 	 case SELE_NONz:
@@ -8189,14 +8195,6 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
 	 case SELE_HETz:
        for(a=cNDummyAtoms;a<I->NAtom;a++)
          base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hetatm;
-       break;
-	 case SELE_DONz:
-       for(a=cNDummyAtoms;a<I->NAtom;a++)
-         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hb_donor;
-       break;
-	 case SELE_ACCz:
-       for(a=cNDummyAtoms;a<I->NAtom;a++)
-         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hb_acceptor;
        break;
 	 case SELE_HYDz:
        for(a=cNDummyAtoms;a<I->NAtom;a++)
