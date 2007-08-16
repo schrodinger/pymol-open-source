@@ -112,9 +112,9 @@ static int populate_other(OtherRec *other,int at,AtomInfoType *ai,BondType *bd, 
     if((five_cycle || six_cycle) && (other->n_cyclic_arom<cMaxOther)) {
       other->cyclic_arom[other->n_cyclic_arom++]=at;
       if(five_cycle && six_cycle) 
-        other->score+=1024;
-      else if(five_cycle)
         other->score+=256;
+      else if(five_cycle)
+        other->score+=129;
       else
         other->score+=128;
       return 1;
@@ -429,65 +429,61 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,CoordSet *cs)
     if((a1>=0)&&(a2>=0))
       {
         if(result[a1]<0) {
-          int score = other[a1].score;
-
           o = other+a1;
           result[a1]=offset;
           for(b=0;b<o->n_cyclic_arom;b++) {
             a3 = o->cyclic_arom[b];
-            offset = append_index(result, offset, a1, a3, score + other[a3].score, 1);
+            offset = append_index(result, offset, a1, a3, 128 + other[a3].score, 1);
           }
           for(b=0;b<o->n_arom;b++) {
             a3 = o->arom[b];
-            offset = append_index(result, offset, a1, a3, score + other[a3].score, 1);
+            offset = append_index(result, offset, a1, a3, 64 + other[a3].score, 1);
           }
           for(b=0;b<o->n_high_val;b++) {
             a3 = o->high_val[b];
-            offset = append_index(result, offset, a1, a3, score + other[a3].score, 0);
+            offset = append_index(result, offset, a1, a3, 16 + other[a3].score, 0);
           }
           for(b=0;b<o->n_cyclic;b++) {
             a3 = o->cyclic[b];
-            offset = append_index(result, offset, a1, a3, score + other[a3].score, 0);
+            offset = append_index(result, offset, a1, a3, 8 + other[a3].score, 0);
           }
           for(b=0;b<o->n_planer;b++) {
             a3 = o->planer[b];
-            offset = append_index(result, offset, a1, a3, score + other[a3].score, 0);
+            offset = append_index(result, offset, a1, a3, 2 + other[a3].score, 0);
           }
           for(b=0;b<o->n_rest;b++) {
             a3 = o->rest[b];
-            offset = append_index(result, offset, a1, a3, score + other[a3].score, 0);
+            offset = append_index(result, offset, a1, a3, 1 + other[a3].score, 0);
           }
           result[offset++]=-1;
         }
 
         if(result[a2]<0) {
-          int score = other[a2].score;
-
           o = other+a2;
           result[a2]=offset;
           for(b=0;b<o->n_cyclic_arom;b++) {
             a3 = o->cyclic_arom[b];
-            offset = append_index(result, offset, a2, a3, score + other[a3].score, 1);
+            offset = append_index(result, offset, a2, a3, 128 + other[a3].score, 1);
           }
           for(b=0;b<o->n_arom;b++) {
             a3 = o->arom[b];
-            offset = append_index(result, offset, a2, a3, score + other[a3].score, 1);
+            offset = append_index(result, offset, a2, a3, 64 + other[a3].score, 1);
           }
           for(b=0;b<o->n_high_val;b++) {
             a3 = o->high_val[b];
-            offset = append_index(result, offset, a2, a3, score + other[a3].score, 0);
+            offset = append_index(result, offset, a2, a3, 16 + other[a3].score, 0);
           }
           for(b=0;b<o->n_cyclic;b++) {
             a3 = o->cyclic[b];
-            offset = append_index(result, offset, a2, a3, score + other[a3].score, 0);
+            offset = append_index(result, offset, a2, a3, 8 + other[a3].score, 0);
           }
           for(b=0;b<o->n_planer;b++) {
             a3 = o->planer[b];
-            offset = append_index(result, offset, a2, a3, score + other[a3].score, 0);
+            offset = append_index(result, offset, a2, a3, 2 + other[a3].score, 0);
           }
           for(b=0;b<o->n_rest;b++) {
             a3 = o->rest[b];
-            offset = append_index(result, offset, a2, a3, score + other[a3].score, 0);
+            offset = append_index(result, offset, a2, a3, 1 + other[a3].score, 0);
           }
           result[offset++]=-1;
         }
