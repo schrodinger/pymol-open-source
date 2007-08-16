@@ -4,8 +4,8 @@ CHANGE LOG
 
 2007-08-15
 
-	* now attempting to guess valences for PDB hetatm ligands in order
-	  to improve hydrogen-bond display
+	* now guessing valences for PDB hetatm ligands in order to improve
+	  hydrogen-bond display (setting: pdb_hetatm_guess_valences)
 	
 	* added sys.stdout.writelines emulation	
 	
