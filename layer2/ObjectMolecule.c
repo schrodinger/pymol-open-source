@@ -5070,18 +5070,18 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                       
                       if((n1_at>=0)&&(o1_at>=0)&&(o2_at<0)) {
                         /* simple amide? */
-                        if(o1_len<1.36F) {
+                        if(o1_len<1.38F) {
                           if(neighbor[neighbor[o1_at]]==1)
                             bondInfo[o1_bd].order = 2;
                         }
                       } else if ((n1_at>=0)&&(o1_at>=0)&&(o2_at>=0)) {
-                        if((o1_len<1.36F) && (neighbor[neighbor[o1_at]]==1))
+                        if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1))
                           bondInfo[o1_bd].order = 2;
-                        else if((o2_len<1.36F) && (neighbor[neighbor[o2_at]]==1))
+                        else if((o2_len<1.38F) && (neighbor[neighbor[o2_at]]==1))
                           bondInfo[o2_bd].order = 2;                        
                       } else if((o1_at>=0)&&(o2_at>=0)&&(n1_at<0)) {
                         /* simple carboxylate? */
-                        if((o1_len<1.36F)&&(o2_len<1.36F)) {
+                        if((o1_len<1.38F)&&(o2_len<1.38F)) {
                           if((neighbor[neighbor[o1_at]]==1) &&
                              (neighbor[neighbor[o2_at]]==1)) {
                             bondInfo[o1_bd].order = 4;
