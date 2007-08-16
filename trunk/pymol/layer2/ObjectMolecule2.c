@@ -112,11 +112,11 @@ static int populate_other(OtherRec *other,int at,AtomInfoType *ai,BondType *bd, 
     if((five_cycle || six_cycle) && (other->n_cyclic_arom<cMaxOther)) {
       other->cyclic_arom[other->n_cyclic_arom++]=at;
       if(five_cycle && six_cycle) 
-        other->score+=256;
+        other->score+=34;
       else if(five_cycle)
-        other->score+=129;
+        other->score+=33;
       else
-        other->score+=128;
+        other->score+=32;
       return 1;
     } else if(other->n_arom<cMaxOther) {
       other->arom[other->n_arom++]=at;
@@ -2853,7 +2853,7 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule *I,
       }
       */
 
-      if(nn<I->AtomInfo[atom].valence) {       /* is there an implicit hydrogen? */
+      if((nn<I->AtomInfo[atom].valence)||I->AtomInfo[atom].hb_donor) {       /* is there an implicit hydrogen? */
         if(ObjectMoleculeFindOpenValenceVector(I,state,atom,best,dir,-1)) {
           result = true;
           best_dot = dot_product3f(best,dir);
@@ -2875,7 +2875,7 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule *I,
             normalize3f(cand_dir);
             cand_dot = dot_product3f(cand_dir,dir);
             if(result) { /* improved */
-              if(best_dot<cand_dot) {
+              if((best_dot<cand_dot)||((is_real)&&(!*is_real))) {
                 best_dot = cand_dot;
                 copy3f(cand,best);
                 if(is_real)  *is_real = true;

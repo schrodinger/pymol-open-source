@@ -3860,9 +3860,12 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
               result = true;
               break;
             default:
-              if(!seek) 
-                get_random3f(v);
-              else
+              if(!seek) {
+                add3f(occ,occ+3,t);
+                scale3f(t,-1.0F,v);                
+                if(length3f(t)<0.1)
+                  get_random3f(v);
+              } else
                 copy3f(seek,v);
               /* hypervalent */
               result = true;
@@ -3878,9 +3881,13 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
               result = true;
               break;
             default:
-              if(!seek) 
-                get_random3f(v);
-              else
+              if(!seek) {
+                add3f(occ,occ+3,t);
+                add3f(occ+6,t,t);
+                scale3f(t,-1.0F,v);                
+                if(length3f(t)<0.1)
+                  get_random3f(v);
+              } else
                 copy3f(seek,v);
               /* hypervalent */
               result = true;
@@ -4965,6 +4972,7 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
           switch(ai->protons) {
           case cAN_P:
           case cAN_S:
+          case cAN_N:
           case cAN_C: 
             {
               int atm[5];
@@ -4988,6 +4996,9 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                 int n1_at=-1, n2_at=-1, n3_at=-1;
                 int n1_bd=0, n2_bd=0, n3_bd=0;
                 float n1_len=0.0F, n2_len=0.0F, n3_len=0.0F;
+                int c1_at=-1, c2_at=-1, c1_bd=0, c2_bd=0;
+                float c1_len=0.0F, c2_len=0.0F;
+
                 float *v0 = NULL;
                 
                 {
@@ -5023,6 +5034,17 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                       float bond_len = diff3f(v0,v1);
                       
                       switch(atomInfo[atm[i]].protons) {
+                      case cAN_C:
+                        if(c1_at<0) {
+                          c1_at = atm[i];
+                          c1_len = bond_len;
+                          c1_bd = bnd[i];
+                        } else if(c2_at<0) {
+                          c2_at = atm[i];
+                          c2_len = bond_len;
+                          c2_bd = bnd[i];
+                        }
+                        break;
                       case cAN_O:
                         if(o1_at<0) {
                           o1_at = atm[i];
@@ -5075,18 +5097,26 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                             bondInfo[o1_bd].order = 2;
                         }
                       } else if ((n1_at>=0)&&(o1_at>=0)&&(o2_at>=0)) {
-                        if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1))
+                        /* carbamyl */
+                        if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1) &&
+                           (o2_len<1.38F) && (neighbor[neighbor[o2_at]]==1)) {
+                            bondInfo[o1_bd].order = 4;
+                            bondInfo[o2_bd].order = 4;
+                        } else if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1))
                           bondInfo[o1_bd].order = 2;
                         else if((o2_len<1.38F) && (neighbor[neighbor[o2_at]]==1))
                           bondInfo[o2_bd].order = 2;                        
+                      } else if ((n1_at<0)&&(o1_at>=0)&&(o2_at<0)) {
+                        /* ketone */
+                        if((o1_len<1.31F) && (neighbor[neighbor[o1_at]]==1))
+                          bondInfo[o1_bd].order = 2;
                       } else if((o1_at>=0)&&(o2_at>=0)&&(n1_at<0)) {
                         /* simple carboxylate? */
-                        if((o1_len<1.38F)&&(o2_len<1.38F)) {
-                          if((neighbor[neighbor[o1_at]]==1) &&
-                             (neighbor[neighbor[o2_at]]==1)) {
+                        if((o1_len<1.38F) && (o2_len<1.38F) && 
+                           (neighbor[neighbor[o1_at]]==1) &&
+                           (neighbor[neighbor[o2_at]]==1)) {
                             bondInfo[o1_bd].order = 4;
                             bondInfo[o2_bd].order = 4;
-                          }
                         } else if((o1_len<1.38F)&&(neighbor[neighbor[o1_at]]==1)) { /* esters */
                           bondInfo[o1_bd].order = 2;
                         } else if((o2_len<1.38F)&&(neighbor[neighbor[o2_at]]==1)) {
@@ -5134,6 +5164,35 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                     }
                   }
                   break;
+                case cAN_N: 
+                  if(nn==3) {
+                    float avg_dot_cross = compute_avg_center_dot_cross(I, cs, 4, atm);
+                    
+                    if((avg_dot_cross>planer_cutoff)) {
+                      if((o1_at>=0)&&(o2_at>=0)&&(o3_at<0)) {
+                        /* nitro */
+                        if(neighbor[neighbor[o1_at]]==1)
+                          bondInfo[o1_bd].order = 4;                        
+                        if(neighbor[neighbor[o2_at]]==1)
+                          bondInfo[o2_bd].order = 4;                        
+                      }
+                    }
+                  } 
+#if 0
+NOTE: need to figure out how to handle imines, hydroxamic acids, oximes, etc. without screwing up amides
+                  
+                     else if(nn==2) { /* acyclic imine */
+                  if(o1_at<0) {
+                    
+                    if((c1_at>=0) && (c1_len<1.38F) && (!obs_bond[c1_bd].cyclic)) {
+                      bondInfo[c1_bd].order = 2;
+                    } else if((c2_at>=0) && (c2_len<1.38F) && (!obs_bond[c2_bd].cyclic)) {
+                      bondInfo[c2_bd].order = 2;
+                    }
+                  }
+#endif                 
+                  
+                  break;
                 case cAN_S:
                 case cAN_P:
                   if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at>=0)) {
@@ -5159,11 +5218,9 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                       else if(o2<0)
                         o2 = o4_bd;
                     }
-                    if(o1>=0)
-                      bondInfo[o1].order = 2;                        
                     if(o2>=0) 
-                      bondInfo[o2].order = 2; 
-                  } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at<=0)) {
+                      bondInfo[o1].order = 2; 
+                  } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at<0)) {
                     /* sulfonamide */
                     int o1 = -1, o2 = -1;
                     if(neighbor[neighbor[o1_at]]==1)
@@ -5497,7 +5554,7 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
   AtomInfoType *ai;
   int a1;
   int n,nn;
-  int has_hydro,may_have_lone_pair;
+  int has_hydro;
   /* initialize accumulators on uncategorized atoms */
 
   ObjectMoleculeUpdateNeighbors(I);
@@ -5545,13 +5602,12 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
       if(has_hydro)
         ai->hb_donor=true;
       else {
-        may_have_lone_pair = false;
-        
+        int may_have_lone_pair=false;
         if((!has_hydro)&&(ai->protons==cAN_N)) {
           n = I->Neighbor[a];
           nn = I->Neighbor[n++];
           while(I->Neighbor[n]>=0) {
-            if(I->Neighbor[n+1]>1) { /* any double/triple/delocalized bonds? */
+            if(I->Bond[I->Neighbor[n+1]].order>1) { /* any double/triple/delocalized bonds? */
               may_have_lone_pair = true;
             }
             n+=2; 
@@ -5559,6 +5615,8 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
         }
         if((ai->formalCharge<=0)&&may_have_lone_pair&&(nn<3)) {
           ai->hb_acceptor = true;
+        } else if((ai->geom!=cAtomInfoPlaner)&&(nn==3)&&(ai->formalCharge>=0)&&(!may_have_lone_pair)) {
+          ai->hb_donor = true;
         }
       }
       break;

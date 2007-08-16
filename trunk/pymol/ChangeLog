@@ -2,8 +2,10 @@
 CHANGE LOG
 =========================================================================
 
-
 2007-08-15
+
+	* now attempting to guess valences for PDB hetatm ligands in order
+	  to improve hydrogen-bond display
 	
 	* added sys.stdout.writelines emulation	
 	
