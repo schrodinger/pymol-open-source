@@ -5123,11 +5123,11 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                           bondInfo[o2_bd].order = 2;
                         }
                        } else if((n1_at>=0)&&(n2_at>=0)&&(n3_at>=0)) {
-                        /* primary guanido with no hydrogens */
+                        /* guanido with no hydrogens */
                         if( (n1_len<1.40F) && (n2_len<1.40F) &&  (n3_len<1.40F)) {
                           if((neighbor[neighbor[n1_at]]==1) &&
                              (neighbor[neighbor[n2_at]]==1) &&
-                             (neighbor[neighbor[n3_at]]==2)) {
+                             (neighbor[neighbor[n3_at]]>=2)) {
                             bondInfo[n1_bd].order = 4;
                             atomInfo[n1_at].valence = 3;
                             atomInfo[n1_at].geom = cAtomInfoPlaner;
@@ -5137,7 +5137,7 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                             atomInfo[n2_at].geom = cAtomInfoPlaner;
                             atomInfo[n2_at].chemFlag = 2;
                           } else if((neighbor[neighbor[n1_at]]==1) &&
-                                    (neighbor[neighbor[n2_at]]==2) &&
+                                    (neighbor[neighbor[n2_at]]>=2) &&
                                     (neighbor[neighbor[n3_at]]==1)) {
                             bondInfo[n1_bd].order = 4;
                             atomInfo[n1_at].valence = 3;
@@ -5147,7 +5147,7 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                             atomInfo[n3_at].valence = 3;
                             atomInfo[n3_at].geom = cAtomInfoPlaner;
                             atomInfo[n3_at].chemFlag = 2;
-                          } else if((neighbor[neighbor[n1_at]]==2) &&
+                          } else if((neighbor[neighbor[n1_at]]>=2) &&
                                     (neighbor[neighbor[n2_at]]==1) &&
                                     (neighbor[neighbor[n3_at]]==1)) {
                             bondInfo[n2_bd].order = 4;
