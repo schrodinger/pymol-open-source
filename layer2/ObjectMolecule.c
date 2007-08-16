@@ -5087,8 +5087,12 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                             bondInfo[o1_bd].order = 4;
                             bondInfo[o2_bd].order = 4;
                           }
+                        } else if((o1_len<1.38F)&&(neighbor[neighbor[o1_at]]==1)) { /* esters */
+                          bondInfo[o1_bd].order = 2;
+                        } else if((o2_len<1.38F)&&(neighbor[neighbor[o2_at]]==1)) {
+                          bondInfo[o2_bd].order = 2;
                         }
-                      } else if((n1_at>=0)&&(n2_at>=0)&&(n3_at>=0)) {
+                       } else if((n1_at>=0)&&(n2_at>=0)&&(n3_at>=0)) {
                         /* primary guanido with no hydrogens */
                         if( (n1_len<1.40F) && (n2_len<1.40F) &&  (n3_len<1.40F)) {
                           if((neighbor[neighbor[n1_at]]==1) &&
