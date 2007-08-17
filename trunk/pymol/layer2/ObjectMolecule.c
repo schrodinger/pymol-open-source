@@ -5039,8 +5039,9 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                     }
                     if(v0&&v1) {
                       float diff[3];
+						  subtract3f(v1,v0,diff);
+                      {
 
-                      subtract3f(v1,v0,diff);
                       float bond_len = length3f(diff);
                       
                       switch(atomInfo[atm[i]].protons) {
@@ -5093,6 +5094,7 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                         break;
                       }
                     }
+				  }
                   }
                 }
                 {
