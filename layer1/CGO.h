@@ -93,6 +93,8 @@ struct _CGO {
 #define CGO_DOTWIDTH_SZ          1
 #define CGO_ALPHA_TRIANGLE       0x11
 #define CGO_ALPHA_TRIANGLE_SZ    35
+#define CGO_ELLIPSOID            0x12
+#define CGO_ELLIPSOID_SZ         13
 #define CGO_FONT                 0x13
 #define CGO_FONT_SZ              3   /*  size, face, style */
 #define CGO_FONT_SCALE           0x14 
@@ -139,6 +141,7 @@ void CGOBegin(CGO *I,int mode);
 void CGOEnd(CGO *I);
 
 void CGOSphere(CGO *I,float *v1, float r);
+void CGOEllipsoid(CGO *I,float *v1, float r, float *n1, float *n2, float *n3);
 void CGOSausage(CGO *I,float *v1,float *v2,float r,float *c1,float *c2);
 void CGOVertex(CGO *I,float v1,float v2,float v3);
 void CGOVertexv(CGO *I,float *v);

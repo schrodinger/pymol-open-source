@@ -57,6 +57,12 @@ Z* -------------------------------------------------------------------
 #define cRepAngle      17
 #define cRepDihedral   18
 
+/* next...
+
+#define cRepEllipsoid  19
+
+*/
+
 #define cRepCnt        19
 
 /* Hierarchical invalidation scheme - 

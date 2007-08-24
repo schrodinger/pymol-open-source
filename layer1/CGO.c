@@ -84,7 +84,7 @@ int CGO_sz[] = {
 
   CGO_DOTWIDTH_SZ,
   CGO_ALPHA_TRIANGLE_SZ,
-  CGO_NULL_SZ,
+  CGO_ELLIPSOID_SZ,
   CGO_FONT_SZ,
 
   CGO_FONT_SCALE_SZ,
@@ -110,6 +110,7 @@ static float *CGO_add(CGO *I,int c);
 static float *CGO_size(CGO *I,int sz);
 static void subdivide( int n, float *x, float *y);
 void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2,int cap1,int cap2);
+void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n1, float *n2, float *n3);
 void CGOSimpleSphere(CGO *I,float *v,float vdw);
 
 CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result)
@@ -538,6 +539,25 @@ void CGOSphere(CGO *I,float *v1, float r)
   *(pc++) = *(v1++);
   *(pc++) = *(v1++);
   *(pc++) = r;
+}
+
+void CGOEllipsoid(CGO *I,float *v1, float r, float *n1, float *n2, float *n3)
+{
+  float *pc = CGO_add(I,14);
+  CGO_write_int(pc,CGO_ELLIPSOID);
+  *(pc++) = *(v1++);
+  *(pc++) = *(v1++);
+  *(pc++) = *(v1++);
+  *(pc++) = r;
+  *(pc++) = *(n1++);
+  *(pc++) = *(n1++);
+  *(pc++) = *(n1++);
+  *(pc++) = *(n2++);
+  *(pc++) = *(n2++);
+  *(pc++) = *(n2++);
+  *(pc++) = *(n3++);
+  *(pc++) = *(n3++);
+  *(pc++) = *(n3++);
 }
 
 void CGOSausage(CGO *I,float *v1,float *v2,float r,float *c1,float *c2)
@@ -1008,6 +1028,9 @@ CGO *CGOSimplify(CGO *I,int est)
     case CGO_SPHERE:
       CGOSimpleSphere(cgo,pc,*(pc+3));
       break;
+    case CGO_ELLIPSOID:
+      CGOSimpleEllipsoid(cgo,pc,*(pc+3),pc+4,pc+7,pc+10);
+      break;
     default:
       sz=CGO_sz[op];
       nc=CGO_add(cgo,sz+1);
@@ -1215,6 +1238,10 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
     case CGO_SPHERE:
       ray->fColor3fv(ray,c0);
       ray->fSphere3fv(ray,pc,*(pc+3));
+      break;
+    case CGO_ELLIPSOID:
+      ray->fColor3fv(ray,c0);
+      ray->fEllipsoid3fv(ray,pc,*(pc+3),pc+4,pc+7,pc+10);
       break;
     case CGO_CUSTOM_CYLINDER:
       ray->fCustomCylinder3fv(ray,pc,pc+3,*(pc+6),pc+7,pc+10,(int)*(pc+13),(int)*(pc+14));
@@ -1628,23 +1655,83 @@ void CGOSimpleSphere(CGO *I,float *v,float vdw)
   sp = I->G->Sphere->Sphere[ds];
   
   q=sp->Sequence;
-
   s=sp->StripLen;
 
-  for(b=0;b<sp->NStrip;b++)
-    {
-      CGOBegin(I,GL_TRIANGLE_STRIP);
-      for(c=0;c<(*s);c++)
-        {
-          CGONormalv(I,sp->dot[*q]);
-          CGOVertex(I,v[0]+vdw*sp->dot[*q][0],
-                    v[1]+vdw*sp->dot[*q][1],
-                    v[2]+vdw*sp->dot[*q][2]);
-          q++;
-        }
-      CGOEnd(I);
-      s++;
+  for(b=0;b<sp->NStrip;b++) {
+    CGOBegin(I,GL_TRIANGLE_STRIP);
+    for(c=0;c<(*s);c++) {
+      CGONormalv(I,sp->dot[*q]);
+      CGOVertex(I,v[0]+vdw*sp->dot[*q][0],
+                v[1]+vdw*sp->dot[*q][1],
+                v[2]+vdw*sp->dot[*q][2]);
+      q++;
     }
+    CGOEnd(I);
+    s++;
+  }
+}
+
+void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n1, float *n2, float *n3)
+{
+  SphereRec *sp;
+  int *q,*s;
+  int b,c;
+  int ds;
+
+  ds = SettingGet_i(I->G,NULL,NULL,cSetting_cgo_sphere_quality);
+  if(ds<0) ds=0;
+  if(ds>3) ds=3;
+  sp = I->G->Sphere->Sphere[ds];
+  
+  q=sp->Sequence;
+  s=sp->StripLen;
+
+  for(b=0;b<sp->NStrip;b++) {
+    CGOBegin(I,GL_TRIANGLE_STRIP);
+    for(c=0;c<(*s);c++) {
+#if 0
+      {
+        float *n1 = I->Normal + (3 * I->Vert2Normal[i]); 
+        float *n2 = n1 + 3, *n3 = n1 + 6;
+        float *scale = r->prim->n0;
+        float d1,d2,d3,s1,s2,s3;
+        float comp1[3], comp2[3], comp3[3];
+        float normal[3],surfnormal[3];
+        
+        normal[0] = r->impact[0]-r->sphere[0];
+        normal[1] = r->impact[1]-r->sphere[1];
+        normal[2] = r->impact[2]-r->sphere[2];
+        
+        normalize3f(r->surfnormal);
+        
+        d1 = dot_product3f(normal, n1); 
+        d2 = dot_product3f(normal, n2);
+        d3 = dot_product3f(normal, n3);
+        
+        s1 = d1 / (scale[0] * scale[0]);
+        s2 = d2 / (scale[1] * scale[1]);
+        s3 = d3 / (scale[2] * scale[2]);
+        
+        scale3f(n1, s1, comp1);
+        scale3f(n2, s2, comp2);
+        scale3f(n3, s3, comp3);
+        
+        copy3f(comp1, surfnormal);
+        add3f(comp2, surfnormal, surfnormal);
+        add3f(comp3, surfnormal, surfnormal);
+        
+        normalize23f(surfnormal, r->surfnormal);
+      }
+#endif
+      CGONormalv(I,sp->dot[*q]);
+      CGOVertex(I,v[0]+vdw*sp->dot[*q][0],
+                v[1]+vdw*sp->dot[*q][1],
+                v[2]+vdw*sp->dot[*q][2]);
+      q++;
+    }
+    CGOEnd(I);
+    s++;
+  }
 }
 
 static void subdivide( int n, float *x, float *y)
