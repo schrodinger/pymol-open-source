@@ -46,10 +46,13 @@ ENABLE             = 12.0
 DISABLE            = 13.0
 SAUSAGE            = 14.0
 CUSTOM_CYLINDER    = 15.0
+DOTWIDTH           = 16.0
+ALPHA_TRIANGLE     = 17.0
+ELLIPSOID          = 18.0
 
-SHAPE_VERTEX       = 16.0
-SHAPE_COLOR        = 17.0
-SHAPE_NORMAL       = 18.0
+#SHAPE_VERTEX       = 16.0
+#SHAPE_COLOR        = 17.0
+#SHAPE_NORMAL       = 18.0
 
 FONT               = 19.0
 FONT_SCALE         = 20.0
