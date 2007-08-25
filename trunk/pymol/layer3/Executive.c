@@ -6818,6 +6818,7 @@ void ExecutiveRebuildAll(PyMOLGlobals *G)
       case cObjectMesh:
       case cObjectSlice:
       case cObjectAlignment:
+      case cObjectCGO:
         if(rec->obj->fInvalidate) {
           rec->obj->fInvalidate((CObject*)rec->obj,cRepAll,cRepInvAll,-1);
         }
@@ -6826,7 +6827,7 @@ void ExecutiveRebuildAll(PyMOLGlobals *G)
     }
   }
   SeqChanged(G);
-  SceneInvalidate(G);
+  SceneChanged(G);
 }
 /*========================================================================*/
 void ExecutiveRebuildAllObjectDist(PyMOLGlobals *G)

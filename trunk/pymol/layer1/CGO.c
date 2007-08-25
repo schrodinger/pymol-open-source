@@ -110,7 +110,7 @@ static float *CGO_add(CGO *I,int c);
 static float *CGO_size(CGO *I,int sz);
 static void subdivide( int n, float *x, float *y);
 void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2,int cap1,int cap2);
-void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n1, float *n2, float *n3);
+void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n0, float *n1, float *n2);
 void CGOSimpleSphere(CGO *I,float *v,float vdw);
 
 CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result)
@@ -545,6 +545,7 @@ void CGOEllipsoid(CGO *I,float *v1, float r, float *n1, float *n2, float *n3)
 {
   float *pc = CGO_add(I,14);
   CGO_write_int(pc,CGO_ELLIPSOID);
+  
   *(pc++) = *(v1++);
   *(pc++) = *(v1++);
   *(pc++) = *(v1++);
@@ -872,6 +873,7 @@ int CGOCheckComplex(CGO *I)
     case CGO_CUSTOM_CYLINDER:
       fc+=3*(3+(nEdge+1)*9)+9;
       break;
+    case CGO_ELLIPSOID:
     case CGO_SPHERE:
       fc+=(sp->NVertTot*6)+(sp->NStrip*3)+3;
       break;
@@ -1671,14 +1673,30 @@ void CGOSimpleSphere(CGO *I,float *v,float vdw)
   }
 }
 
-void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n1, float *n2, float *n3)
+void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n0, float *n1, float *n2)
 {
   SphereRec *sp;
   int *q,*s;
   int b,c;
   int ds;
+  float nn0[3], nn1[3], nn2[3];
+  float scale[3], scale_sq[3];
 
-  ds = SettingGet_i(I->G,NULL,NULL,cSetting_cgo_sphere_quality);
+  normalize23f(n0,nn0);
+  normalize23f(n1,nn1);
+  normalize23f(n2,nn2);
+
+  scale[0]=(float)length3f(n0);
+  scale[1]=(float)length3f(n1);
+  scale[2]=(float)length3f(n2);
+
+  scale_sq[0] = scale[0]*scale[0];
+  scale_sq[1] = scale[1]*scale[1];
+  scale_sq[2] = scale[2]*scale[2];
+
+  ds = SettingGet_i(I->G,NULL,NULL,cSetting_cgo_ellipsoid_quality);
+  if(ds<0)
+    ds = SettingGet_i(I->G,NULL,NULL,cSetting_ellipsoid_quality);    
   if(ds<0) ds=0;
   if(ds>3) ds=3;
   sp = I->G->Sphere->Sphere[ds];
@@ -1689,44 +1707,58 @@ void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n1, float *n2, float *
   for(b=0;b<sp->NStrip;b++) {
     CGOBegin(I,GL_TRIANGLE_STRIP);
     for(c=0;c<(*s);c++) {
-#if 0
-      {
-        float *n1 = I->Normal + (3 * I->Vert2Normal[i]); 
-        float *n2 = n1 + 3, *n3 = n1 + 6;
-        float *scale = r->prim->n0;
-        float d1,d2,d3,s1,s2,s3;
-        float comp1[3], comp2[3], comp3[3];
-        float normal[3],surfnormal[3];
-        
-        normal[0] = r->impact[0]-r->sphere[0];
-        normal[1] = r->impact[1]-r->sphere[1];
-        normal[2] = r->impact[2]-r->sphere[2];
-        
-        normalize3f(r->surfnormal);
-        
-        d1 = dot_product3f(normal, n1); 
-        d2 = dot_product3f(normal, n2);
-        d3 = dot_product3f(normal, n3);
-        
-        s1 = d1 / (scale[0] * scale[0]);
-        s2 = d2 / (scale[1] * scale[1]);
-        s3 = d3 / (scale[2] * scale[2]);
-        
-        scale3f(n1, s1, comp1);
-        scale3f(n2, s2, comp2);
-        scale3f(n3, s3, comp3);
-        
-        copy3f(comp1, surfnormal);
-        add3f(comp2, surfnormal, surfnormal);
-        add3f(comp3, surfnormal, surfnormal);
-        
-        normalize23f(surfnormal, r->surfnormal);
+      float *sp_dot_q = sp->dot[*q];
+      float s0 = vdw*sp_dot_q[0];
+      float s1 = vdw*sp_dot_q[1];
+      float s2 = vdw*sp_dot_q[2];
+      float d0[3], d1[3], d2[3], vv[3], direction[3];
+      float dd0,dd1,dd2,ss0,ss1,ss2;
+      float comp0[3], comp1[3], comp2[3];
+      float surfnormal[3];
+      int i;
+
+      scale3f(n0, s0, d0);
+      scale3f(n1, s1, d1);
+      scale3f(n2, s2, d2);
+
+      for(i=0; i<3; i++) {
+        vv[i] = d0[i] + d1[i] + d2[i];
       }
-#endif
-      CGONormalv(I,sp->dot[*q]);
-      CGOVertex(I,v[0]+vdw*sp->dot[*q][0],
-                v[1]+vdw*sp->dot[*q][1],
-                v[2]+vdw*sp->dot[*q][2]);
+      normalize23f(vv,direction);
+      add3f(v,vv,vv);
+
+      dd0 = dot_product3f(direction, nn0);
+      dd1 = dot_product3f(direction, nn1);
+      dd2 = dot_product3f(direction, nn2);
+
+      if(scale[0]>R_SMALL8) {
+        ss0 = dd0 / scale_sq[0];
+      } else {
+        ss0 = 0.0F;
+      }
+      if(scale[1]>R_SMALL8) {
+        ss1 = dd1 / scale_sq[1];
+      } else {
+        ss1 = 0.0F;
+      }
+              
+      if(scale[2]>R_SMALL8) {
+        ss2 = dd2 / scale_sq[2];
+      } else {
+        ss2 = 0.0F;
+      }
+      
+      scale3f(nn0, ss0, comp0);
+      scale3f(nn1, ss1, comp1);
+      scale3f(nn2, ss2, comp2);
+      
+      for(i=0; i<3; i++) {
+        surfnormal[i] = comp0[i] + comp1[i] + comp2[i];
+      }
+      normalize3f(surfnormal);
+      
+      CGONormalv(I,surfnormal);
+      CGOVertexv(I,vv);
       q++;
     }
     CGOEnd(I);

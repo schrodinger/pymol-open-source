@@ -2082,6 +2082,11 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvRep);
     SceneChanged(G);
     break;
+  case cSetting_ellipsoid_quality:
+  case cSetting_cgo_ellipsoid_quality:
+    ExecutiveInvalidateRep(G,inv_sele,cRepAll,cRepInvColor);
+    SceneChanged(G);
+    break;
   case cSetting_mesh_color: 
   case cSetting_mesh_negative_color:
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvColor);
@@ -3508,6 +3513,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_hide_long_bonds,0);
   set_b(I,cSetting_auto_rename_duplicates,0); /* to do */
   set_b(I,cSetting_pdb_hetatm_guess_valences,1);
+  set_i(I,cSetting_ellipsoid_quality, 1);
+  set_i(I,cSetting_cgo_ellipsoid_quality, -1);
+
 }
 
 

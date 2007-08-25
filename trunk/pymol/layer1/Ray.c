@@ -5152,11 +5152,13 @@ void RayEllipsoid3fv(CRay *I,
   I->PrimSize += 2*r;
   I->PrimSizeCnt++;
 
-  vv=p->n0; /* storing lengths of the direction vectors in m0 */
+  vv=p->n0; /* storing lengths of the direction vectors in n0 */
 
   (*vv++)=length3f(n1);
   (*vv++)=length3f(n2);
   (*vv++)=length3f(n3);
+
+  /* normalize the ellipsoid axes */
 
   vv=p->n1;
   if(p->n0[0]>R_SMALL8) {

@@ -195,8 +195,40 @@ void ObjectCGORecomputeExtent(ObjectCGO *I)
   I->Obj.ExtentFlag=extent_flag;
 }
 /*========================================================================*/
+static void ObjectCGOInvalidate(ObjectCGO *I,int rep,int level,int state)
+{
+  printf("invalid\n");
+  if(state<0) {
+    int a;
+    for(a=0;a<I->NState;a++) {
+      I->State[a].valid=false;
+    }
+  } else {
+    if((state>=0)&&(state<I->NState)) {
+      I->State[state].valid = false;
+    }
+  }
+}
+/*========================================================================*/
+
 static void ObjectCGOUpdate(ObjectCGO *I)
 {
+  int a;
+  printf("update\n");
+  for(a=0;a<I->NState;a++) {
+    ObjectCGOState *ocs = I->State + a;
+    if(!ocs->valid) {
+      if(ocs->std && ocs->ray) {
+        int est = CGOCheckComplex(ocs->ray);
+        if(est) {
+          if(ocs->std) 
+            CGOFree(ocs->std);
+          ocs->std=CGOSimplify(ocs->ray,est);
+        }
+      }
+      ocs->valid = true;
+    }
+  }
   SceneInvalidate(I->Obj.G);/* needed ?*/
 }
 
@@ -286,6 +318,8 @@ ObjectCGO *ObjectCGONew(PyMOLGlobals *G)
   I->Obj.type = cObjectCGO;
   I->Obj.fFree = (void (*)(struct CObject *))ObjectCGOFree;
   I->Obj.fUpdate =(void (*)(struct CObject *)) ObjectCGOUpdate;
+  I->Obj.fInvalidate = (void (*)(struct CObject *,int rep, int level, int state))
+    ObjectCGOInvalidate;
   I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectCGORender;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectCGOGetNState;
 
@@ -375,8 +409,11 @@ ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals *G,ObjectCGO *obj,CGO *cgo,int state)
   if(est) {
     I->State[state].ray=cgo;
     I->State[state].std=CGOSimplify(cgo,est);
-  } else 
+  } else {
     I->State[state].std=cgo;
+  }
+  I->State[state].valid = true;
+
   if(I) {
     ObjectCGORecomputeExtent(I);
   }
@@ -453,9 +490,10 @@ ObjectCGO *ObjectCGODefine(PyMOLGlobals *G,ObjectCGO *obj,PyObject *pycgo,int st
           if(est) {
             I->State[state].ray=cgo;
             I->State[state].std=CGOSimplify(cgo,est);
-          } else 
+          } else {
             I->State[state].std=cgo;
-          
+          }
+          I->State[state].valid = true;
         } else {
           ErrMessage(G,"ObjectCGO","could not parse CGO List.");
         }
@@ -514,6 +552,7 @@ ObjectCGO *ObjectCGOFromFloatArray(PyMOLGlobals *G,ObjectCGO *obj,
       I->State[state].std=CGOSimplify(cgo,est);
     } else 
       I->State[state].std=cgo;
+    I->State[state].valid = true;
   } else if(!quiet) {
     ErrMessage(G,"ObjectCGO","could not parse CGO.");
   }
