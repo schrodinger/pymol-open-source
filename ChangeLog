@@ -4,6 +4,8 @@ CHANGE LOG
 
 2007-08-24
 	 
+	* added ellipsoid_quality and cgo_ellipsoid_quality settings
+	
 	* added CGO ellipsoids
 	
 2007-08-15
