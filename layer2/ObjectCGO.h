@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 typedef struct ObjectCGOState {
   CGO *std;
   CGO *ray;
+  int valid;
 } ObjectCGOState;
 
 typedef struct ObjectCGO {

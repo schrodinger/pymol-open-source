@@ -57,9 +57,24 @@ def distance(v1, v2):
     return math.sqrt((d0*d0) + (d1*d1) + (d2*d2))
 
 #------------------------------------------------------------------------------
-def random_sphere(v,dist):
-    return add(v,scale(normalize([
-        random.random()-0.5,random.random()-0.5,random.random()-0.5]),dist))
+def length(v):
+    return math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
+
+#------------------------------------------------------------------------------
+def random_sphere(v,diameter):
+    while 1:
+        vect = [random.random(), random.random(), random.random() ]
+        if length(vect)<=1.0:
+            break;
+    return add(v,scale([vect[0]-0.5, vect[1]-0.5, vect[2]-0.5],diameter))
+
+#------------------------------------------------------------------------------
+def random_vector():
+    while 1:
+        vect = [random.random(), random.random(), random.random() ]
+        if length(vect)<=1.0:
+            break;
+    return scale([vect[0]-0.5, vect[1]-0.5, vect[2]-0.5],2.0)
 
 #------------------------------------------------------------------------------
 def add(v1,v2):

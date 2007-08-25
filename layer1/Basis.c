@@ -1172,21 +1172,33 @@ void BasisGetEllipsoidNormal(CBasis *I,RayInfo *r,int i,int perspective)
     float *scale = r->prim->n0;
     float d1,d2,d3,s1,s2,s3;
     float comp1[3], comp2[3], comp3[3];
-    float normal[3],surfnormal[3];
+    float direct[3],surfnormal[3];
     
-    normal[0] = r->impact[0]-r->sphere[0];
-    normal[1] = r->impact[1]-r->sphere[1];
-    normal[2] = r->impact[2]-r->sphere[2];
+    direct[0] = r->impact[0]-r->sphere[0];
+    direct[1] = r->impact[1]-r->sphere[1];
+    direct[2] = r->impact[2]-r->sphere[2];
     
-    normalize3f(r->surfnormal);
-    
-    d1 = dot_product3f(normal, n1); 
-    d2 = dot_product3f(normal, n2);
-    d3 = dot_product3f(normal, n3);
-    
-    s1 = d1 / (scale[0] * scale[0]);
-    s2 = d2 / (scale[1] * scale[1]);
-    s3 = d3 / (scale[2] * scale[2]);
+    normalize3f(direct);
+
+    d1 = dot_product3f(direct, n1); 
+    d2 = dot_product3f(direct, n2);
+    d3 = dot_product3f(direct, n3);
+
+    if(scale[0]>R_SMALL8) {
+      s1 = d1 / (scale[0] * scale[0]);
+    } else {
+      s1 = 0.0F;
+    }
+    if(scale[1]>R_SMALL8) {
+      s2 = d2 / (scale[1] * scale[1]);
+    } else {
+      s2 = 0.0F;
+    }
+    if(scale[2]>R_SMALL8) {
+      s3 = d3 / (scale[2] * scale[2]);
+    } else {
+      s3 = 0.0F;
+    }
     
     scale3f(n1, s1, comp1);
     scale3f(n2, s2, comp2);
@@ -2068,7 +2080,7 @@ int BasisHitShadow(BasisCallRec *BC)
   
   CBasis   *BI   = BC->Basis;
   RayInfo   *r   = BC->rr;
-  
+
   if( MapInsideXY(BI->Map,r->base, &a, &b, &c) ) {
       register int      minIndex=-1;
       register int     v2p;
@@ -2096,6 +2108,7 @@ int BasisHitShadow(BasisCallRec *BC)
       CPrimitive *r_prim = NULL;
 	  
       check_interior_flag   = BC->check_interior;
+
       
       /* assumption: always heading in the negative Z direction with our vector... */
       vt[0]         = r->base[0];
@@ -2314,7 +2327,7 @@ int BasisHitShadow(BasisCallRec *BC)
                    {
                      dist   = (float)(sqrt1f(dist) - sqrt1f((BI->Radius2[i]-oppSq)));
                      
-                     if(dist < r_dist ) {
+                     if((dist < r_dist ) || (trans_shadows && (r_trans!=_0))) {
                        float   *n1 = BI->Normal + BI->Vert2Normal[i] * 3;
                        if(LineClipEllipsoidPoint( r->base, minusZ,
                                                   BI->Vertex + i*3, &dist, 

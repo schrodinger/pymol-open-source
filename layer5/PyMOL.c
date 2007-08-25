@@ -712,6 +712,8 @@ typedef struct _CPyMOL {
   ov_word lex_hide_long_bonds;
   ov_word lex_auto_rename_duplicates; 
   ov_word lex_pdb_hetatm_guess_valences;
+  ov_word lex_ellipsoid_quality;
+  ov_word lex_cgo_ellipsoid_quality;
 
 } _CPyMOL;
 
@@ -1432,6 +1434,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(hide_long_bonds, 560);
   LEX_SETTING(auto_rename_duplicates, 561);
   LEX_SETTING(pdb_hetatm_guess_valences, 562);
+  LEX_SETTING(ellipsoid_quality, 563);
+  LEX_SETTING(cgo_ellipsoid_quality, 564);
 
  return_OVstatus_SUCCESS;
 }

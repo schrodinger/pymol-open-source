@@ -597,8 +597,10 @@ if __name__=='pymol.setting':
         transparency_global_sort = (559, '')
         hide_long_bonds = (560, '')
         auto_rename_duplicates = (561, '')
-        pdb_hetatm_guess_valences = (561, '')
-        
+        pdb_hetatm_guess_valences = (562, '')
+        ellipsoid_quality = (563, '')
+        cgo_ellipsoid_quality = (564, '')
+                
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
     index_list = []
