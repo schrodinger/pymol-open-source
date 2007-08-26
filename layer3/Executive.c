@@ -1947,14 +1947,46 @@ int ExecutiveGetAtomVertex(PyMOLGlobals *G,char *s1,int state,int index,float *v
   return ok;
 }
 
+int ExecutiveProcessObjectName(PyMOLGlobals *G,char *proposed,char *actual)
+{
+  int result = false;
+  UtilNCopy(actual,proposed,sizeof(ObjectNameType));
+  if(SettingGetGlobal_b(G,cSetting_validate_object_names))
+    ObjectMakeValidName(actual);
+  if(SettingGetGlobal_b(G,cSetting_auto_rename_duplicate_objects)) {
+    if(ExecutiveValidName(G,actual)) {
+      ObjectNameType candidate;
+      ObjectNameType counter;
+      int cnt = 2;
+      while(1) {
+        sprintf(counter,"_%d",cnt);
+        if((strlen(actual)+strlen(counter))>=sizeof(ObjectNameType)) {
+          strcpy(candidate,actual);
+          candidate[sizeof(ObjectNameType)-(strlen(counter)+1)] = 0;
+          strcat(candidate,counter);
+        } else {
+          sprintf(candidate,"%s%s",actual,counter);
+        }
+        if(!ExecutiveValidName(G,candidate)) {
+          strcpy(actual,candidate);
+          result = true;
+          break;
+        }
+        cnt++;
+      }
+    }
+  }
+  return 1;
+}
+
 int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
 {
   int ok=true;
   SpecRec *rec = NULL;
   register CExecutive *I = G->Executive;
   int found = false;
-  WordType name;
-  UtilNCopy(name,new_name,sizeof(WordType));
+  ObjectNameType name;
+  UtilNCopy(name,new_name,sizeof(ObjectNameType));
   ObjectMakeValidName(name);
 
   if(!name[0]) {
@@ -3684,7 +3716,7 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict,char *names,int partial,i
     tmp = SettingGetGlobalsAsPyList(G);
     PyDict_SetItemString(dict,"settings",tmp);
     Py_XDECREF(tmp);
-    
+
     SceneGetView(G,sv);
     tmp = PConvFloatArrayToPyList(sv,cSceneViewSize);
     PyDict_SetItemString(dict,"view",tmp);
@@ -14245,15 +14277,17 @@ int ExecutiveReinitialize(PyMOLGlobals *G,int what,char *pattern)
   int ok=true;
   int blocked = false;
   /* reinitialize PyMOL */
+  if(what==2)
+    pattern = NULL;
 
   if(pattern&&(!pattern[0])) pattern=NULL;
   if(!pattern) {
     
     switch(what) {
-    case 0:
+    case 0: /* everything */
       ExecutiveDelete(G,cKeywordAll);
       ColorReset(G);
-      SettingInitGlobal(G,false,false);
+      SettingInitGlobal(G,false,false,true);
       MovieReset(G);
       EditorInactivate(G);
       ControlRock(G,0);
@@ -14271,9 +14305,19 @@ int ExecutiveReinitialize(PyMOLGlobals *G,int what,char *pattern)
       SelectorReinit(G);
       SeqChanged(G);
       break;
-    case 1:
-      SettingInitGlobal(G,false,false);
+    case 1: /* settings */
+      SettingInitGlobal(G,false,false,true);
       ExecutiveRebuildAll(G);
+      break;
+    case 2: /* store_defaults */
+      SettingStoreDefault(G);
+      break;
+    case 3: /* original_settings */
+      SettingInitGlobal(G,false,false,false);
+      ExecutiveRebuildAll(G);
+      break;
+    case 4: /* purge_defaults */
+      SettingPurgeDefault(G);
       break;
     }
   } else {

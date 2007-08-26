@@ -596,7 +596,7 @@ if __name__=='pymol.setting':
         moe_separate_chains = (558,'')
         transparency_global_sort = (559, '')
         hide_long_bonds = (560, '')
-        auto_rename_duplicates = (561, '')
+        auto_rename_duplicate_objects = (561, '')
         pdb_hetatm_guess_valences = (562, '')
         ellipsoid_quality = (563, '')
         cgo_ellipsoid_quality = (564, '')

@@ -106,7 +106,7 @@ struct _PyMOLGlobals {
   CScene    *Scene;
   CGO       *DebugCGO; /* for debugging rendering */
   CSeq      *Seq;
-  CSetting  *Setting;
+  CSetting  *Setting, *Default;
   CSettingUnique *SettingUnique;
   CText     *Text;
   CWizard   *Wizard;
