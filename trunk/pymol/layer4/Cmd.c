@@ -6755,9 +6755,13 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
     API_HANDLE_ERROR;
   }
   if (ok) {
+    ObjectNameType valid_name = "";
     buf[0]=0;
     APIEntry(G);
-    origObj=ExecutiveFindObjectByName(G,oname);
+    ExecutiveProcessObjectName(G,oname,valid_name);
+
+    origObj=ExecutiveFindObjectByName(G,valid_name);
+
     
     /* TODO check for existing object of wrong type */
     
@@ -6765,7 +6769,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
     case cLoadTypeChemPyModel:
       if(origObj)
         if(origObj->type!=cObjectMolecule) {
-          ExecutiveDelete(G,oname);
+          ExecutiveDelete(G,valid_name);
           origObj=NULL;
         }
       PBlock(G); /*PBlockAndUnlockAPI();*/
@@ -6774,12 +6778,12 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       PUnblock(G); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,quiet);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: ChemPy-model loaded into object \"%s\", state %d.\n",
-                  oname,frame+1);		  
+                  valid_name,frame+1);		  
         }
       } else if(origObj) {
         if(finish)
@@ -6787,13 +6791,13 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
         if(frame<0)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: ChemPy-model appended into object \"%s\", state %d.\n",
-                oname,frame+1);
+                valid_name,frame+1);
       }
       break;
     case cLoadTypeChemPyBrick:
       if(origObj)
         if(origObj->type!=cObjectMap) {
-          ExecutiveDelete(G,oname);
+          ExecutiveDelete(G,valid_name);
           origObj=NULL;
         }
       PBlock(G); /*PBlockAndUnlockAPI();*/
@@ -6801,20 +6805,20 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       PUnblock(G); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,quiet);
           sprintf(buf," CmdLoad: chempy.brick loaded into object \"%s\"\n",
-                  oname);		  
+                  valid_name);		  
         }
       } else if(origObj) {
         sprintf(buf," CmdLoad: chempy.brick appended into object \"%s\"\n",
-                oname);
+                valid_name);
       }
       break;
     case cLoadTypeChemPyMap:
       if(origObj)
         if(origObj->type!=cObjectMap) {
-          ExecutiveDelete(G,oname);
+          ExecutiveDelete(G,valid_name);
           origObj=NULL;
         }
       PBlock(G); /*PBlockAndUnlockAPI();*/
@@ -6822,20 +6826,20 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       PUnblock(G); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,quiet);
           sprintf(buf," CmdLoad: chempy.map loaded into object \"%s\"\n",
-                  oname);		  
+                  valid_name);		  
         }
       } else if(origObj) {
         sprintf(buf," CmdLoad: chempy.map appended into object \"%s\"\n",
-                oname);
+                valid_name);
       }
       break;
     case cLoadTypeCallback:
       if(origObj)
         if(origObj->type!=cObjectCallback) {
-          ExecutiveDelete(G,oname);
+          ExecutiveDelete(G,valid_name);
           origObj=NULL;
         }
       PBlock(G); /*PBlockAndUnlockAPI();*/
@@ -6843,20 +6847,20 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       PUnblock(G); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,quiet);
           sprintf(buf," CmdLoad: pymol.callback loaded into object \"%s\"\n",
-                  oname);		  
+                  valid_name);		  
         }
       } else if(origObj) {
         sprintf(buf," CmdLoad: pymol.callback appended into object \"%s\"\n",
-                oname);
+                valid_name);
       }
       break;
     case cLoadTypeCGO:
       if(origObj)
         if(origObj->type!=cObjectCGO) {
-          ExecutiveDelete(G,oname);
+          ExecutiveDelete(G,valid_name);
           origObj=NULL;
         }
       PBlock(G); /*PBlockAndUnlockAPI();*/
@@ -6864,14 +6868,14 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       PUnblock(G); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,quiet);
           sprintf(buf," CmdLoad: CGO loaded into object \"%s\"\n",
-                  oname);		  
+                  valid_name);		  
         }
       } else if(origObj) {
         sprintf(buf," CmdLoad: CGO appended into object \"%s\"\n",
-                oname);
+                valid_name);
       }
       break;
       
@@ -6953,6 +6957,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   int multiplex;
   int zoom;
   int bytes;
+
   ok = PyArg_ParseTuple(args,"Oss#iiiiiii",&self,
                         &oname,&fname,&bytes,&frame,&type,
                         &finish,&discrete,&quiet,
@@ -6964,6 +6969,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     API_HANDLE_ERROR;
   }
   if (ok) {
+    ObjectNameType valid_name = "";
     buf[0]=0;
     PRINTFD(G,FB_CCmd)
       "CmdLoad-DEBUG %s %s %d %d %d %d\n",
@@ -6996,12 +7002,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       }
     }
 
+    ExecutiveProcessObjectName(G,oname,valid_name);
+
     if(multiplex!=1)
-      origObj = ExecutiveGetExistingCompatible(G,oname,type);
+      origObj = ExecutiveGetExistingCompatible(G,valid_name,type);
     
     switch(type) {
     case cLoadTypePDB:
-      ok = ExecutiveProcessPDBFile(G,origObj,fname,oname,
+      ok = ExecutiveProcessPDBFile(G,origObj,fname,valid_name,
                               frame,discrete,finish,buf,NULL,quiet,
                               false,multiplex,zoom);
       break;
@@ -7011,7 +7019,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         UtilZeroMem(&pdb_info,sizeof(PDBInfoRec));
 
         pdb_info.is_pqr_file = true;        
-        ok = ExecutiveProcessPDBFile(G,origObj,fname,oname,
+        ok = ExecutiveProcessPDBFile(G,origObj,fname,valid_name,
                                 frame,discrete,finish,buf,&pdb_info,
                                 quiet,false,multiplex,zoom);
       }
@@ -7025,12 +7033,12 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         obj=(CObject*)ObjectMoleculeLoadTOPFile(G,NULL,fname,frame,discrete);
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,false,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
-                  fname,oname);
+                  fname,valid_name);
         }
       }
       break;
@@ -7059,7 +7067,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
             /* if(finish)
                ExecutiveUpdateObjectSelection(G,origObj); unnecc */
             sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
-                    fname,oname,((ObjectMolecule*)origObj)->NCSet);
+                    fname,valid_name,((ObjectMolecule*)origObj)->NCSet);
           } else {
             PRINTFB(G,FB_CCmd,FB_Errors)
               "CmdLoad-Error: must load object topology before loading trajectory."
@@ -7084,7 +7092,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         if(plugin) {
           ok = ExecutiveLoad(G,origObj, 
                              fname, 0, type,
-                             oname, frame, zoom, 
+                             valid_name, frame, zoom, 
                              discrete, finish, 
                              multiplex, quiet, plugin);
         } else {
@@ -7102,7 +7110,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         /* if(finish)
            ExecutiveUpdateObjectSelection(G,origObj); unnecc */
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
-                fname,oname,((ObjectMolecule*)origObj)->NCSet);
+                fname,valid_name,((ObjectMolecule*)origObj)->NCSet);
       } else {
         PRINTFB(G,FB_CCmd,FB_Errors)
           "CmdLoad-Error: must load object topology before loading trajectory!"
@@ -7116,7 +7124,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         /* if(finish)
            ExecutiveUpdateObjectSelection(G,origObj); unnecc */
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
-                fname,oname,((ObjectMolecule*)origObj)->NCSet);
+                fname,valid_name,((ObjectMolecule*)origObj)->NCSet);
       } else {
         PRINTFB(G,FB_CCmd,FB_Errors)
           "CmdLoad-Error: must load object topology before loading coordinate file!"
@@ -7130,7 +7138,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         /* if(finish)
            ExecutiveUpdateObjectSelection(G,origObj); unnecc */
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
-                fname,oname,((ObjectMolecule*)origObj)->NCSet);
+                fname,valid_name,((ObjectMolecule*)origObj)->NCSet);
       } else {
         PRINTFB(G,FB_CCmd,FB_Errors)
           "CmdLoad-Error: must load object topology before loading restart file!"
@@ -7142,12 +7150,12 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         obj=(CObject*)ObjectMoleculeLoadPMOFile(G,NULL,fname,frame,discrete);
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
-                  fname,oname);
+                  fname,valid_name);
         }
       } else {
         ObjectMoleculeLoadPMOFile(G,(ObjectMolecule*)origObj,fname,frame,discrete);
@@ -7156,7 +7164,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         if(frame<0)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname,oname,frame+1);
+                fname,valid_name,frame+1);
       }
       break;
     case cLoadTypeXYZ:
@@ -7164,12 +7172,12 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         obj=(CObject*)ObjectMoleculeLoadXYZFile(G,NULL,fname,frame,discrete);
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
-                  fname,oname);
+                  fname,valid_name);
         }
       } else {
         ObjectMoleculeLoadXYZFile(G,(ObjectMolecule*)origObj,fname,frame,discrete);
@@ -7178,11 +7186,11 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         if(frame<0)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname,oname,frame+1);
+                fname,valid_name,frame+1);
       }
       break;
     case cLoadTypePDBStr:
-      ok = ExecutiveProcessPDBFile(G,origObj,fname,oname,
+      ok = ExecutiveProcessPDBFile(G,origObj,fname,valid_name,
                                    frame,discrete,finish,buf,NULL,
                                    quiet,true,multiplex,zoom);
       break;
@@ -7193,12 +7201,12 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       obj=(CObject*)ObjectMoleculeLoadMOLFile(G,(ObjectMolecule*)origObj,fname,frame,discrete);
       if(!origObj) {
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
-                  fname,oname);		  
+                  fname,valid_name);		  
         }
       } else if(origObj) {
         if(finish)
@@ -7206,7 +7214,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         if(frame<0)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname,oname,frame+1);
+                fname,valid_name,frame+1);
       }
       break;
     case cLoadTypeMOLStr:
@@ -7215,12 +7223,12 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                                              (ObjectMolecule*)origObj,fname,frame,discrete,finish);
       if(!origObj) {
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: MOL-string loaded as \"%s\".\n",
-                  oname);		  
+                  valid_name);		  
         }
       } else if(origObj) {
         if(finish) {
@@ -7232,7 +7240,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         if(frame<0)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: MOL-string appended into object \"%s\", state %d.\n",
-                oname,frame+1);
+                valid_name,frame+1);
       }
       break;
 #else
@@ -7249,7 +7257,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 
       ok = ExecutiveLoad(G,origObj, 
                          fname, 0, type,
-                         oname, frame, zoom, 
+                         valid_name, frame, zoom, 
                          discrete, finish, 
                          multiplex, quiet, NULL);
       break;
@@ -7264,12 +7272,12 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       obj=(CObject*)ObjectMoleculeLoadMMDFile(G,(ObjectMolecule*)origObj,fname,frame,NULL,discrete);
       if(!origObj) {
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
-                  fname,oname);		  
+                  fname,valid_name);		  
         }
       } else if(origObj) {
         if(finish)
@@ -7277,23 +7285,23 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         if(frame<0)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname,oname,frame+1);
+                fname,valid_name,frame+1);
       }
       break;
     case cLoadTypeMMDSeparate:
-      ObjectMoleculeLoadMMDFile(G,(ObjectMolecule*)origObj,fname,frame,oname,discrete);
+      ObjectMoleculeLoadMMDFile(G,(ObjectMolecule*)origObj,fname,frame,valid_name,discrete);
       break;
     case cLoadTypeMMDStr:
       PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading MMDStr\n" ENDFD;
       obj=(CObject*)ObjectMoleculeReadMMDStr(G,(ObjectMolecule*)origObj,fname,frame,discrete);
       if(!origObj) {
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: MMD-string loaded as \"%s\".\n",
-                  oname);		  
+                  valid_name);		  
         }
       } else if(origObj) {
         if(finish)
@@ -7301,7 +7309,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         if(frame<0)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: MMD-string appended into object \"%s\", state %d\n",
-                oname,frame+1);
+                valid_name,frame+1);
       }
       break;
     case cLoadTypeXPLORMap:     
@@ -7310,7 +7318,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeCCP4Str:
       ok = ExecutiveLoad(G,origObj, 
                          fname, bytes, type,
-                         oname, frame, zoom, 
+                         valid_name, frame, zoom, 
                          discrete, finish, 
                          multiplex, quiet, NULL);
       break;
@@ -7319,14 +7327,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         obj=(CObject*)ObjectMapLoadPHIFile(G,NULL,fname,frame);
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,(CObject*)obj,zoom,true);
-          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
+          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
         }
       } else {
         ObjectMapLoadPHIFile(G,(ObjectMap*)origObj,fname,frame);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname,oname);
+                fname,valid_name);
       }
       break;
     case cLoadTypeDXMap:
@@ -7334,14 +7342,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         obj=(CObject*)ObjectMapLoadDXFile(G,NULL,fname,frame);
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,(CObject*)obj,zoom,true);
-          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
+          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
         }
       } else {
         ObjectMapLoadDXFile(G,(ObjectMap*)origObj,fname,frame);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname,oname);
+                fname,valid_name);
       }
       break;
     case cLoadTypeFLDMap:
@@ -7349,14 +7357,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         obj=(CObject*)ObjectMapLoadFLDFile(G,NULL,fname,frame);
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,(CObject*)obj,zoom,true);
-          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
+          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
         }
       } else {
         ObjectMapLoadFLDFile(G,(ObjectMap*)origObj,fname,frame);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname,oname);
+                fname,valid_name);
       }
       break;
     case cLoadTypeBRIXMap:
@@ -7364,14 +7372,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         obj=(CObject*)ObjectMapLoadBRIXFile(G,NULL,fname,frame);
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,(CObject*)obj,zoom,true);
-          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
+          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
         }
       } else {
         ObjectMapLoadFLDFile(G,(ObjectMap*)origObj,fname,frame);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname,oname);
+                fname,valid_name);
       }
       break;
     case cLoadTypeGRDMap:
@@ -7379,14 +7387,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         obj=(CObject*)ObjectMapLoadGRDFile(G,NULL,fname,frame);
         if(obj) {
-          ObjectSetName(obj,oname);
+          ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,(CObject*)obj,zoom,true);
-          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
+          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
         }
       } else {
         ObjectMapLoadGRDFile(G,(ObjectMap*)origObj,fname,frame);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
-                fname,oname);
+                fname,valid_name);
       }
       break;
     }

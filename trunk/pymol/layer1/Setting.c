@@ -39,6 +39,43 @@ Z* -------------------------------------------------------------------
 
 static void *SettingPtr(CSetting *I,int index,unsigned int size);
 
+static CSetting *SettingCopyAll(PyMOLGlobals *G,CSetting *src,CSetting *dst)
+{
+  if(!dst) {
+    dst = Calloc(CSetting,1);
+    if(dst) {
+      SettingInit(G,dst);
+    }
+  }
+  if(dst && src) {
+
+    /* simply overwriting existing data (if any) ... in the future we
+     may need to release references etc. before doing this */
+
+    unsigned int size = VLAGetSize(src->info);
+    VLACheck(dst->info,SettingRec,size);
+    UtilCopyMem(dst->info,src->info,sizeof(SettingRec)*size);
+    VLACheck(dst->data,char,src->size);
+    dst->size = src->size;
+    UtilCopyMem(dst->data,src->data,src->size);
+  }
+  return dst;
+}
+
+void SettingStoreDefault(PyMOLGlobals *G)
+{
+  G->Default=SettingCopyAll(G,G->Setting,G->Default);
+}
+
+void SettingPurgeDefault(PyMOLGlobals *G)
+{
+  if(G->Default) {
+    SettingPurge(G->Default);
+    FreeP(G->Default);
+    G->Default = NULL;
+  }
+}
+
 void SettingUniqueDetachChain(PyMOLGlobals *G,int unique_id)
 {
   register CSettingUnique *I = G->SettingUnique;
@@ -50,14 +87,14 @@ void SettingUniqueDetachChain(PyMOLGlobals *G,int unique_id)
     OVOneToOne_DelForward(I->id2offset,unique_id);
 
     {
-        SettingUniqueEntry *entry;
-    while(offset) {
-      entry = I->entry + offset;
-      next = entry->next;
-      entry->next = I->next_free;
-      I->next_free = offset;
-      offset = next;
-    }
+      SettingUniqueEntry *entry;
+      while(offset) {
+        entry = I->entry + offset;
+        next = entry->next;
+        entry->next = I->next_free;
+        I->next_free = offset;
+        offset = next;
+      }
     }
   } else {
     /* uncaught error */
@@ -2540,10 +2577,15 @@ void SettingFreeGlobal(PyMOLGlobals *G)
   register CSetting *I=G->Setting;
   SettingUniqueFree(G);
   SettingPurge(I);
+  if(G->Default) {
+    SettingPurge(G->Default);
+    FreeP(G->Default);
+  }
   FreeP(G->Setting);
 }
+
 /*========================================================================*/
-void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
+void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
 {
   register CSetting *I=G->Setting;
 
@@ -2563,958 +2605,964 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
     SettingInit(G,I);
   }
 
+  if(G->Default && use_default) {
 
-  set_f(I,cSetting_bonding_vdw_cutoff, 0.2F);
+    SettingCopyAll(G,G->Default,G->Setting);
 
-  set_f(I,cSetting_min_mesh_spacing, 0.6F);
+  } else {
 
-  set_i(I,cSetting_dot_density, 2);
+    set_f(I,cSetting_bonding_vdw_cutoff, 0.2F);
 
-  set_i(I,cSetting_dot_mode, 0);
+    set_f(I,cSetting_min_mesh_spacing, 0.6F);
 
-  set_f(I,cSetting_solvent_radius, 1.4F);
+    set_i(I,cSetting_dot_density, 2);
 
-  set_i(I,cSetting_sel_counter, 0);
+    set_i(I,cSetting_dot_mode, 0);
 
-  set_3f(I,cSetting_bg_rgb, 0.0F, 0.0F, 0.0F);
+    set_f(I,cSetting_solvent_radius, 1.4F);
 
-  set_f(I,cSetting_ambient, 0.14F);
+    set_i(I,cSetting_sel_counter, 0);
 
-  set_f(I,cSetting_direct, 0.45F);
+    set_3f(I,cSetting_bg_rgb, 0.0F, 0.0F, 0.0F);
 
-  set_f(I,cSetting_reflect, 0.45F);
+    set_f(I,cSetting_ambient, 0.14F);
 
-  set_3f(I,cSetting_light, -0.4F, -0.4F, -1.0F);
+    set_f(I,cSetting_direct, 0.45F);
 
-  set_i(I,cSetting_antialias, 1);
+    set_f(I,cSetting_reflect, 0.45F);
 
-  set_i(I,cSetting_cavity_cull, 10);
+    set_3f(I,cSetting_light, -0.4F, -0.4F, -1.0F);
 
-  set_f(I,cSetting_gl_ambient, 0.12F); /* no longer effective */
+    set_i(I,cSetting_antialias, 1);
 
-  set_b(I,cSetting_single_image, 0);
+    set_i(I,cSetting_cavity_cull, 10);
 
-  set_f(I,cSetting_movie_delay, 30.0F);
+    set_f(I,cSetting_gl_ambient, 0.12F); /* no longer effective */
 
-  set_f(I,cSetting_ribbon_power, 2.0F);
+    set_b(I,cSetting_single_image, 0);
 
-  set_f(I,cSetting_ribbon_power_b, 0.5F);
+    set_f(I,cSetting_movie_delay, 30.0F);
 
-  set_i(I,cSetting_ribbon_sampling, 1);
+    set_f(I,cSetting_ribbon_power, 2.0F);
 
-  set_f(I,cSetting_ribbon_radius, 0.0F);
+    set_f(I,cSetting_ribbon_power_b, 0.5F);
 
-  set_f(I,cSetting_stick_radius, 0.25F);
+    set_i(I,cSetting_ribbon_sampling, 1);
 
-  set_i(I,cSetting_hash_max, 100);
+    set_f(I,cSetting_ribbon_radius, 0.0F);
 
-  set_b(I,cSetting_ortho, 0);
+    set_f(I,cSetting_stick_radius, 0.25F);
 
-  set_f(I,cSetting_power, 1.0F);
+    set_i(I,cSetting_hash_max, 100);
 
-  set_f(I,cSetting_spec_reflect, -1.0F);
+    set_b(I,cSetting_ortho, 0);
 
-  set_f(I,cSetting_spec_power, -1.0F);
+    set_f(I,cSetting_power, 1.0F);
 
-  set_f(I,cSetting_sweep_angle, 20.0F);
+    set_f(I,cSetting_spec_reflect, -1.0F);
 
-  set_f(I,cSetting_sweep_speed, 0.75F);
+    set_f(I,cSetting_spec_power, -1.0F);
 
-  set_b(I,cSetting_dot_hydrogens, 1);
+    set_f(I,cSetting_sweep_angle, 20.0F);
 
-  set_f(I,cSetting_dot_radius, 0.0F);
+    set_f(I,cSetting_sweep_speed, 0.75F);
 
-  set_b(I,cSetting_ray_trace_frames, 0);
+    set_b(I,cSetting_dot_hydrogens, 1);
 
-  set_b(I,cSetting_cache_frames, 0);
+    set_f(I,cSetting_dot_radius, 0.0F);
 
-  set_b(I,cSetting_trim_dots, 1);
+    set_b(I,cSetting_ray_trace_frames, 0);
 
-  if(G->Option->sphere_mode<0) 
-    set_i(I,cSetting_cull_spheres,-1);
-  else
-    set_i(I,cSetting_cull_spheres,0);
+    set_b(I,cSetting_cache_frames, 0);
 
-  set_f(I,cSetting_test1, 3.0F);
+    set_b(I,cSetting_trim_dots, 1);
 
-  set_f(I,cSetting_test2, -0.5F);
+    if(G->Option->sphere_mode<0) 
+      set_i(I,cSetting_cull_spheres,-1);
+    else
+      set_i(I,cSetting_cull_spheres,0);
 
-  set_f(I,cSetting_surface_best, 0.25F);
+    set_f(I,cSetting_test1, 3.0F);
 
-  set_f(I,cSetting_surface_normal, 0.5F);
+    set_f(I,cSetting_test2, -0.5F);
 
-  set_i(I,cSetting_surface_quality, 0);
+    set_f(I,cSetting_surface_best, 0.25F);
 
-  set_b(I,cSetting_surface_proximity, 1);
+    set_f(I,cSetting_surface_normal, 0.5F);
 
-  set_f(I,cSetting_stereo_angle, 2.1F);
+    set_i(I,cSetting_surface_quality, 0);
 
-  set_f(I,cSetting_stereo_shift, 2.0F);
+    set_b(I,cSetting_surface_proximity, 1);
 
-  set_b(I,cSetting_line_smooth, 1);
+    set_f(I,cSetting_stereo_angle, 2.1F);
 
-  set_f(I,cSetting_line_width, 1.49F); /* under 1.5F to retain SGI antialiasing */
+    set_f(I,cSetting_stereo_shift, 2.0F);
 
-  set_b(I,cSetting_half_bonds, 0);
+    set_b(I,cSetting_line_smooth, 1);
 
-  set_i(I,cSetting_stick_quality, 8);
+    set_f(I,cSetting_line_width, 1.49F); /* under 1.5F to retain SGI antialiasing */
 
-  set_f(I,cSetting_stick_overlap, 0.2F);
+    set_b(I,cSetting_half_bonds, 0);
 
-  set_f(I,cSetting_stick_nub, 0.7F);
+    set_i(I,cSetting_stick_quality, 8);
 
-  set_b(I,cSetting_all_states, 0);
+    set_f(I,cSetting_stick_overlap, 0.2F);
 
-  set_b(I,cSetting_pickable, 1);
+    set_f(I,cSetting_stick_nub, 0.7F);
 
-  set_i(I,cSetting_sphere_quality, 1);
+    set_b(I,cSetting_all_states, 0);
+
+    set_b(I,cSetting_pickable, 1);
+
+    set_i(I,cSetting_sphere_quality, 1);
   
-  set_b(I,cSetting_auto_show_lines, G->Option->sphere_mode<0);
+    set_b(I,cSetting_auto_show_lines, G->Option->sphere_mode<0);
 
-  set_f(I,cSetting_fast_idle, 10000.0F); /* 1/100th of a sec. */
+    set_f(I,cSetting_fast_idle, 10000.0F); /* 1/100th of a sec. */
 
-  set_f(I,cSetting_no_idle, 2000.0F); /* 1/500th of a sec. */
+    set_f(I,cSetting_no_idle, 2000.0F); /* 1/500th of a sec. */
 
-  set_f(I,cSetting_slow_idle, 40000.0F); /* 1/25th of a sec. */
+    set_f(I,cSetting_slow_idle, 40000.0F); /* 1/25th of a sec. */
 
-  set_f(I,cSetting_idle_delay, 1.5F);
+    set_f(I,cSetting_idle_delay, 1.5F);
 
-  set_f(I,cSetting_rock_delay, 30.0F);
+    set_f(I,cSetting_rock_delay, 30.0F);
 
-  set_i(I,cSetting_dist_counter, 0);
+    set_i(I,cSetting_dist_counter, 0);
 
-  set_f(I,cSetting_dash_length, 0.15F);
+    set_f(I,cSetting_dash_length, 0.15F);
 
-  set_f(I,cSetting_dash_gap, 0.35F);
+    set_f(I,cSetting_dash_gap, 0.35F);
 
-  set_i(I,cSetting_auto_zoom, G->Option->zoom_mode);
+    set_i(I,cSetting_auto_zoom, G->Option->zoom_mode);
 
-  set_i(I,cSetting_overlay, 0);
+    set_i(I,cSetting_overlay, 0);
 
-  set_b(I,cSetting_text, 0);
+    set_b(I,cSetting_text, 0);
 
-  set_i(I,cSetting_button_mode, 0);
+    set_i(I,cSetting_button_mode, 0);
 
-  set_b(I,cSetting_valence, 0);
+    set_b(I,cSetting_valence, 0);
 
-  set_f(I,cSetting_nonbonded_size, 0.25F);
+    set_f(I,cSetting_nonbonded_size, 0.25F);
 
-  set_color(I,cSetting_label_color, "-1");
+    set_color(I,cSetting_label_color, "-1");
 
-  set_f(I,cSetting_ray_trace_fog, -1.0F);
+    set_f(I,cSetting_ray_trace_fog, -1.0F);
 
-  set_f(I,cSetting_spheroid_scale, 1.0F);
+    set_f(I,cSetting_spheroid_scale, 1.0F);
 
-  set_f(I,cSetting_ray_trace_fog_start, -1.0F);
+    set_f(I,cSetting_ray_trace_fog_start, -1.0F);
 
-  set_f(I,cSetting_spheroid_smooth, 1.1F);
+    set_f(I,cSetting_spheroid_smooth, 1.1F);
 
-  set_f(I,cSetting_spheroid_fill, 1.30F);
+    set_f(I,cSetting_spheroid_fill, 1.30F);
 
-  set_b(I,cSetting_auto_show_nonbonded, G->Option->sphere_mode<0);
+    set_b(I,cSetting_auto_show_nonbonded, G->Option->sphere_mode<0);
 
-  set_f(I,cSetting_mesh_radius, 0.000F);
+    set_f(I,cSetting_mesh_radius, 0.000F);
 
 #ifdef WIN32
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-  set_b(I,cSetting_cache_display, 0);
-/* END PROPRIETARY CODE SEGMENT */
+    /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+    set_b(I,cSetting_cache_display, 0);
+    /* END PROPRIETARY CODE SEGMENT */
 #else
-  set_b(I,cSetting_cache_display, 1);
+    set_b(I,cSetting_cache_display, 1);
 #endif
 
-  set_b(I,cSetting_normal_workaround, 0);
+    set_b(I,cSetting_normal_workaround, 0);
 
-  set_b(I,cSetting_backface_cull, 1);
+    set_b(I,cSetting_backface_cull, 1);
 
-  set_f(I,cSetting_gamma, 1.0F);
+    set_f(I,cSetting_gamma, 1.0F);
 
-  set_f(I,cSetting_dot_width, 2.0F);
+    set_f(I,cSetting_dot_width, 2.0F);
 
-  set_b(I,cSetting_auto_show_selections, 1);
+    set_b(I,cSetting_auto_show_selections, 1);
 
-  set_b(I,cSetting_auto_hide_selections, 1);
+    set_b(I,cSetting_auto_hide_selections, 1);
 
-  set_f(I,cSetting_selection_width, 3.0F);
+    set_f(I,cSetting_selection_width, 3.0F);
 
-  set_f(I,cSetting_selection_overlay, 1.0F);
+    set_f(I,cSetting_selection_overlay, 1.0F);
 
-  set_b(I,cSetting_static_singletons, 1);
+    set_b(I,cSetting_static_singletons, 1);
 
-  set_i(I,cSetting_max_triangles, 1000000); /* no longer used */
+    set_i(I,cSetting_max_triangles, 1000000); /* no longer used */
 
-  set_b(I,cSetting_depth_cue, 1);
+    set_b(I,cSetting_depth_cue, 1);
 
-  set_f(I,cSetting_specular, 1.0F);
+    set_f(I,cSetting_specular, 1.0F);
 
-  set_f(I,cSetting_shininess, 55.0F);
+    set_f(I,cSetting_shininess, 55.0F);
 
-  set_f(I,cSetting_fog, 1.0F);
+    set_f(I,cSetting_fog, 1.0F);
 
-  set_b(I,cSetting_isomesh_auto_state, 0); /* no longer necessary? */
+    set_b(I,cSetting_isomesh_auto_state, 0); /* no longer necessary? */
 
-  set_f(I,cSetting_mesh_width, 1.0F);
+    set_f(I,cSetting_mesh_width, 1.0F);
 
-  set_i(I,cSetting_cartoon_sampling, 7);
+    set_i(I,cSetting_cartoon_sampling, 7);
 
-  set_f(I,cSetting_cartoon_loop_radius, 0.2F);
+    set_f(I,cSetting_cartoon_loop_radius, 0.2F);
 
-  set_f(I,cSetting_cartoon_loop_quality, 6.0F);
+    set_f(I,cSetting_cartoon_loop_quality, 6.0F);
 
-  set_f(I,cSetting_cartoon_power, 2.0F);
+    set_f(I,cSetting_cartoon_power, 2.0F);
 
-  set_f(I,cSetting_cartoon_power_b, 0.52F);
+    set_f(I,cSetting_cartoon_power_b, 0.52F);
 
-  set_f(I,cSetting_cartoon_rect_length, 1.40F);
+    set_f(I,cSetting_cartoon_rect_length, 1.40F);
 
-  set_f(I,cSetting_cartoon_rect_width, 0.4F);
+    set_f(I,cSetting_cartoon_rect_width, 0.4F);
 
-  if(reset_gui) {
-    set_i(I,cSetting_internal_gui_width, cOrthoRightSceneMargin);
+    if(reset_gui) {
+      set_i(I,cSetting_internal_gui_width, cOrthoRightSceneMargin);
 
-    set_b(I,cSetting_internal_gui, 1);
-  }
+      set_b(I,cSetting_internal_gui, 1);
+    }
 
-  set_f(I,cSetting_cartoon_oval_length, 1.35F);
+    set_f(I,cSetting_cartoon_oval_length, 1.35F);
 
-  set_f(I,cSetting_cartoon_oval_width, 0.25F);
+    set_f(I,cSetting_cartoon_oval_width, 0.25F);
 
-  set_f(I,cSetting_cartoon_oval_quality, 10.0F);
+    set_f(I,cSetting_cartoon_oval_quality, 10.0F);
 
-  set_f(I,cSetting_cartoon_tube_radius, 0.5F);
+    set_f(I,cSetting_cartoon_tube_radius, 0.5F);
 
-  set_f(I,cSetting_cartoon_tube_quality, 9.0F);
+    set_f(I,cSetting_cartoon_tube_quality, 9.0F);
 
-  set_i(I,cSetting_cartoon_debug, 0);
+    set_i(I,cSetting_cartoon_debug, 0);
 
-  set_f(I,cSetting_ribbon_width, 3.0F);
+    set_f(I,cSetting_ribbon_width, 3.0F);
 
-  set_f(I,cSetting_dash_width, 3.0F);
+    set_f(I,cSetting_dash_width, 3.0F);
 
-  set_f(I,cSetting_dash_radius, 0.00F);
+    set_f(I,cSetting_dash_radius, 0.00F);
 
-  set_f(I,cSetting_cgo_ray_width_scale, -0.15F);
+    set_f(I,cSetting_cgo_ray_width_scale, -0.15F);
 
-  set_f(I,cSetting_line_radius, 0.0F);
+    set_f(I,cSetting_line_radius, 0.0F);
 
-  set_b(I,cSetting_cartoon_round_helices, 1);
+    set_b(I,cSetting_cartoon_round_helices, 1);
 
-  set_i(I,cSetting_cartoon_refine_normals, -1);
+    set_i(I,cSetting_cartoon_refine_normals, -1);
   
-  set_b(I,cSetting_cartoon_flat_sheets, 1);
+    set_b(I,cSetting_cartoon_flat_sheets, 1);
 
-  set_b(I,cSetting_cartoon_smooth_loops, 0);
+    set_b(I,cSetting_cartoon_smooth_loops, 0);
 
-  set_f(I,cSetting_cartoon_dumbbell_length, 1.60F);
+    set_f(I,cSetting_cartoon_dumbbell_length, 1.60F);
 
-  set_f(I,cSetting_cartoon_dumbbell_width, 0.17F);
+    set_f(I,cSetting_cartoon_dumbbell_width, 0.17F);
 
-  set_f(I,cSetting_cartoon_dumbbell_radius, 0.16F);
+    set_f(I,cSetting_cartoon_dumbbell_radius, 0.16F);
 
-  set_b(I,cSetting_cartoon_fancy_helices, 0);  
+    set_b(I,cSetting_cartoon_fancy_helices, 0);  
 
-  set_b(I,cSetting_cartoon_fancy_sheets, 1);  
+    set_b(I,cSetting_cartoon_fancy_sheets, 1);  
 
-  set_b(I,cSetting_ignore_pdb_segi, 0);  
+    set_b(I,cSetting_ignore_pdb_segi, 0);  
 
-  set_f(I,cSetting_ribbon_throw, 1.35F);  
+    set_f(I,cSetting_ribbon_throw, 1.35F);  
 
-  set_f(I,cSetting_cartoon_throw, 1.35F);  
+    set_f(I,cSetting_cartoon_throw, 1.35F);  
 
-  set_i(I,cSetting_cartoon_refine, 5);  
+    set_i(I,cSetting_cartoon_refine, 5);  
 
-  set_i(I,cSetting_cartoon_refine_tips, 10);  
+    set_i(I,cSetting_cartoon_refine_tips, 10);  
 
-  set_b(I,cSetting_cartoon_discrete_colors, 0);  
+    set_b(I,cSetting_cartoon_discrete_colors, 0);  
 
-  set_b(I,cSetting_normalize_ccp4_maps, 1);  
+    set_b(I,cSetting_normalize_ccp4_maps, 1);  
 
-  set_f(I,cSetting_surface_poor, 0.85F);  
+    set_f(I,cSetting_surface_poor, 0.85F);  
 
-  set_i(I,cSetting_internal_feedback, G->Option->internal_feedback);
+    set_i(I,cSetting_internal_feedback, G->Option->internal_feedback);
 
-  set_f(I,cSetting_cgo_line_width, 1.00F);
+    set_f(I,cSetting_cgo_line_width, 1.00F);
 
-  set_f(I,cSetting_cgo_line_radius, -0.05F);
+    set_f(I,cSetting_cgo_line_radius, -0.05F);
 
-  set_i(I,cSetting_logging, 0); /* 0 = off, 1 = regular (PML), 2 = python (PYM) */
+    set_i(I,cSetting_logging, 0); /* 0 = off, 1 = regular (PML), 2 = python (PYM) */
 
-  set_b(I,cSetting_robust_logs, 0);
+    set_b(I,cSetting_robust_logs, 0);
 
-  set_b(I,cSetting_log_box_selections, 1);
+    set_b(I,cSetting_log_box_selections, 1);
 
-  set_b(I,cSetting_log_conformations, 1);
+    set_b(I,cSetting_log_conformations, 1);
 
-  set_f(I,cSetting_valence_size, 0.060F);
+    set_f(I,cSetting_valence_size, 0.060F);
 
-  set_f(I,cSetting_surface_miserable, 2.0F);
+    set_f(I,cSetting_surface_miserable, 2.0F);
 
-  set_i(I,cSetting_ray_opaque_background, -1);
+    set_i(I,cSetting_ray_opaque_background, -1);
 
-  set_f(I,cSetting_transparency, 0.0F);
+    set_f(I,cSetting_transparency, 0.0F);
 
-  set_i(I,cSetting_ray_texture, 0);
+    set_i(I,cSetting_ray_texture, 0);
 
-  set_3f(I,cSetting_ray_texture_settings, 0.1F, 5.0F, 1.0F);
+    set_3f(I,cSetting_ray_texture_settings, 0.1F, 5.0F, 1.0F);
 
-  set_b(I,cSetting_suspend_updates, 0);
+    set_b(I,cSetting_suspend_updates, 0);
 
-  set_b(I,cSetting_full_screen, 0);
+    set_b(I,cSetting_full_screen, 0);
 
-  set_i(I,cSetting_surface_mode, 0); /* by flag is the default */
+    set_i(I,cSetting_surface_mode, 0); /* by flag is the default */
 
-  set_color(I,cSetting_surface_color,"-1"); /* use atom colors by default */
+    set_color(I,cSetting_surface_color,"-1"); /* use atom colors by default */
 
-  set_i(I,cSetting_mesh_mode,0); /* by flag is the default */
+    set_i(I,cSetting_mesh_mode,0); /* by flag is the default */
 
-  set_color(I,cSetting_mesh_color,"-1"); /* use atom colors by default */
+    set_color(I,cSetting_mesh_color,"-1"); /* use atom colors by default */
 
-  set_b(I,cSetting_auto_indicate_flags,0); 
+    set_b(I,cSetting_auto_indicate_flags,0); 
 
-  set_i(I,cSetting_surface_debug,0);
+    set_i(I,cSetting_surface_debug,0);
 
-  set_f(I,cSetting_ray_improve_shadows,0.1F);
+    set_f(I,cSetting_ray_improve_shadows,0.1F);
 
-  set_b(I,cSetting_smooth_color_triangle,0);
+    set_b(I,cSetting_smooth_color_triangle,0);
 
-  set_i(I,cSetting_ray_default_renderer,0);
+    set_i(I,cSetting_ray_default_renderer,0);
 
-  set_f(I,cSetting_field_of_view,20.0F);
+    set_f(I,cSetting_field_of_view,20.0F);
 
-  set_f(I,cSetting_reflect_power, 1.0F);
+    set_f(I,cSetting_reflect_power, 1.0F);
 
-  set_b(I,cSetting_preserve_chempy_ids, 0);
+    set_b(I,cSetting_preserve_chempy_ids, 0);
 
-  set_f(I,cSetting_sphere_scale, 1.0F);
+    set_f(I,cSetting_sphere_scale, 1.0F);
 
-  set_b(I,cSetting_two_sided_lighting, 0);
+    set_b(I,cSetting_two_sided_lighting, 0);
 
-  set_f(I,cSetting_secondary_structure, 2.0F); /* unused? */
+    set_f(I,cSetting_secondary_structure, 2.0F); /* unused? */
 
-  set_b(I,cSetting_auto_remove_hydrogens, 0);
+    set_b(I,cSetting_auto_remove_hydrogens, 0);
 
-  set_b(I,cSetting_raise_exceptions, 1);
+    set_b(I,cSetting_raise_exceptions, 1);
 
-  set_b(I,cSetting_stop_on_exceptions, 0);  
+    set_b(I,cSetting_stop_on_exceptions, 0);  
 
-  set_b(I,cSetting_sculpting, 0);  
+    set_b(I,cSetting_sculpting, 0);  
 
-  set_b(I,cSetting_auto_sculpt, 0);  
+    set_b(I,cSetting_auto_sculpt, 0);  
 
-  set_f(I,cSetting_sculpt_vdw_scale, 0.97F);  
+    set_f(I,cSetting_sculpt_vdw_scale, 0.97F);  
 
-  set_f(I,cSetting_sculpt_vdw_scale14, 0.90F);  /* 0.915 */
+    set_f(I,cSetting_sculpt_vdw_scale14, 0.90F);  /* 0.915 */
 
-  set_f(I,cSetting_sculpt_vdw_weight, 1.0F);  
+    set_f(I,cSetting_sculpt_vdw_weight, 1.0F);  
 
-  set_f(I,cSetting_sculpt_vdw_weight14, 0.2F);  /* 0.33 */
+    set_f(I,cSetting_sculpt_vdw_weight14, 0.2F);  /* 0.33 */
 
-  set_f(I,cSetting_sculpt_bond_weight, 2.25F);  
+    set_f(I,cSetting_sculpt_bond_weight, 2.25F);  
 
-  set_f(I,cSetting_sculpt_angl_weight, 1.0F);  
+    set_f(I,cSetting_sculpt_angl_weight, 1.0F);  
 
-  set_f(I,cSetting_sculpt_pyra_weight, 1.0F);  
+    set_f(I,cSetting_sculpt_pyra_weight, 1.0F);  
 
-  set_f(I,cSetting_sculpt_plan_weight, 1.0F);  
+    set_f(I,cSetting_sculpt_plan_weight, 1.0F);  
 
-  set_i(I,cSetting_sculpting_cycles, 10);  
+    set_i(I,cSetting_sculpting_cycles, 10);  
 
-  set_f(I,cSetting_sphere_transparency, 0.0F);
+    set_f(I,cSetting_sphere_transparency, 0.0F);
 
-  set_color(I,cSetting_sphere_color,"-1"); /* use atom colors by default */
+    set_color(I,cSetting_sphere_color,"-1"); /* use atom colors by default */
 
-  set_i(I,cSetting_sculpt_field_mask, 0x1FF );  /* all terms */
+    set_i(I,cSetting_sculpt_field_mask, 0x1FF );  /* all terms */
 
-  set_f(I,cSetting_sculpt_hb_overlap, 1.0F);
+    set_f(I,cSetting_sculpt_hb_overlap, 1.0F);
 
-  set_f(I,cSetting_sculpt_hb_overlap_base, 0.35F);
+    set_f(I,cSetting_sculpt_hb_overlap_base, 0.35F);
 
-  set_b(I,cSetting_legacy_vdw_radii, 0);  
+    set_b(I,cSetting_legacy_vdw_radii, 0);  
 
-  set_b(I,cSetting_sculpt_memory, 1);
+    set_b(I,cSetting_sculpt_memory, 1);
   
-  set_i(I,cSetting_connect_mode, 0);
+    set_i(I,cSetting_connect_mode, 0);
 
-  set_b(I,cSetting_cartoon_cylindrical_helices, 0);
+    set_b(I,cSetting_cartoon_cylindrical_helices, 0);
 
-  set_f(I,cSetting_cartoon_helix_radius, 2.25F);
+    set_f(I,cSetting_cartoon_helix_radius, 2.25F);
 
-  set_f(I,cSetting_connect_cutoff, 0.35F);
+    set_f(I,cSetting_connect_cutoff, 0.35F);
 
-  set_b(I,cSetting_save_pdb_ss, 0);
+    set_b(I,cSetting_save_pdb_ss, 0);
 
-  set_f(I,cSetting_sculpt_line_weight, 1.0F);
+    set_f(I,cSetting_sculpt_line_weight, 1.0F);
 
-  set_i(I,cSetting_fit_iterations, 1000);
+    set_i(I,cSetting_fit_iterations, 1000);
 
-  set_f(I,cSetting_fit_tolerance, 0.00001F);
+    set_f(I,cSetting_fit_tolerance, 0.00001F);
 
-  set_s(I,cSetting_batch_prefix,"tmp_pymol");
+    set_s(I,cSetting_batch_prefix,"tmp_pymol");
 
-  if(G->StereoCapable || G->Option->blue_line) {
-    set_i(I,cSetting_stereo_mode, 1); 
-  } else if(G->Option->passive_stereo) {
-    set_i(I,cSetting_stereo_mode, 4); 
-  } else {
-    set_i(I,cSetting_stereo_mode, 2);
-  }
+    if(G->StereoCapable || G->Option->blue_line) {
+      set_i(I,cSetting_stereo_mode, 1); 
+    } else if(G->Option->passive_stereo) {
+      set_i(I,cSetting_stereo_mode, 4); 
+    } else {
+      set_i(I,cSetting_stereo_mode, 2);
+    }
 
-  set_i(I,cSetting_cgo_sphere_quality, 1);
+    set_i(I,cSetting_cgo_sphere_quality, 1);
 
-  set_b(I,cSetting_pdb_literal_names, 0);
+    set_b(I,cSetting_pdb_literal_names, 0);
 
-  set_b(I,cSetting_wrap_output, 0);
+    set_b(I,cSetting_wrap_output, 0);
 
-  set_f(I,cSetting_fog_start, 0.45F);
+    set_f(I,cSetting_fog_start, 0.45F);
 
-  set_i(I,cSetting_frame,1);
+    set_i(I,cSetting_frame,1);
 
-  set_i(I,cSetting_state,1);
+    set_i(I,cSetting_state,1);
 
-  set_b(I,cSetting_ray_shadows,1);
+    set_b(I,cSetting_ray_shadows,1);
 
-  set_i(I,cSetting_ribbon_trace_atoms,0);
+    set_i(I,cSetting_ribbon_trace_atoms,0);
 
-  set_i(I,cSetting_security,1);
+    set_i(I,cSetting_security,1);
 
-  set_f(I,cSetting_stick_transparency,0.0F);
+    set_f(I,cSetting_stick_transparency,0.0F);
 
-  set_b(I,cSetting_ray_transparency_shadows,1);
+    set_b(I,cSetting_ray_transparency_shadows,1);
 
-  set_i(I,cSetting_session_version_check,0);
+    set_i(I,cSetting_session_version_check,0);
 
-  set_f(I,cSetting_ray_transparency_specular,0.6F);
+    set_f(I,cSetting_ray_transparency_specular,0.6F);
 
-  set_b(I,cSetting_stereo_double_pump_mono,0);
+    set_b(I,cSetting_stereo_double_pump_mono,0);
 
-  set_b(I,cSetting_sphere_solvent,0);
+    set_b(I,cSetting_sphere_solvent,0);
 
-  set_i(I,cSetting_mesh_quality,2);
+    set_i(I,cSetting_mesh_quality,2);
 
-  set_i(I,cSetting_mesh_solvent,0);
+    set_i(I,cSetting_mesh_solvent,0);
   
-  set_b(I,cSetting_dot_solvent,0);
+    set_b(I,cSetting_dot_solvent,0);
 
-  set_f(I,cSetting_ray_shadow_fudge,0.001F);
+    set_f(I,cSetting_ray_shadow_fudge,0.001F);
 
-  set_f(I,cSetting_ray_triangle_fudge,0.0000001F);
+    set_f(I,cSetting_ray_triangle_fudge,0.0000001F);
 
-  set_i(I,cSetting_debug_pick,0);
+    set_i(I,cSetting_debug_pick,0);
 
-  set_color(I,cSetting_dot_color,"-1"); /* use atom colors by default */
+    set_color(I,cSetting_dot_color,"-1"); /* use atom colors by default */
 
-  set_f(I,cSetting_mouse_limit,100.0F);
+    set_f(I,cSetting_mouse_limit,100.0F);
 
-  set_f(I,cSetting_mouse_scale,1.3F);
+    set_f(I,cSetting_mouse_scale,1.3F);
 
-  set_i(I,cSetting_transparency_mode,2);
+    set_i(I,cSetting_transparency_mode,2);
 
-  set_b(I,cSetting_clamp_colors,1);
+    set_b(I,cSetting_clamp_colors,1);
 
-  set_f(I,cSetting_pymol_space_max_red,0.90F);
+    set_f(I,cSetting_pymol_space_max_red,0.90F);
 
-  set_f(I,cSetting_pymol_space_max_green,0.75F);
+    set_f(I,cSetting_pymol_space_max_green,0.75F);
 
-  set_f(I,cSetting_pymol_space_max_blue,0.90F);
+    set_f(I,cSetting_pymol_space_max_blue,0.90F);
 
-  set_f(I,cSetting_pymol_space_min_factor,0.15F);
+    set_f(I,cSetting_pymol_space_min_factor,0.15F);
 
-  set_b(I,cSetting_roving_origin,1);
+    set_b(I,cSetting_roving_origin,1);
 
-  set_f(I,cSetting_roving_sticks,6.0F);
+    set_f(I,cSetting_roving_sticks,6.0F);
 
-  set_f(I,cSetting_roving_lines,10.0F);
+    set_f(I,cSetting_roving_lines,10.0F);
 
-  set_f(I,cSetting_roving_spheres,0.0F);
+    set_f(I,cSetting_roving_spheres,0.0F);
 
-  set_f(I,cSetting_roving_labels,0.0F);
+    set_f(I,cSetting_roving_labels,0.0F);
 
-  set_f(I,cSetting_roving_delay,0.2F);
+    set_f(I,cSetting_roving_delay,0.2F);
 
-  set_s(I,cSetting_roving_selection,"all");
+    set_s(I,cSetting_roving_selection,"all");
 
-  set_b(I,cSetting_roving_byres,1);
+    set_b(I,cSetting_roving_byres,1);
 
-  set_f(I,cSetting_roving_ribbon,-7.0F);
+    set_f(I,cSetting_roving_ribbon,-7.0F);
   
-  set_f(I,cSetting_roving_cartoon,0.0F);
+    set_f(I,cSetting_roving_cartoon,0.0F);
 
-  set_f(I,cSetting_roving_polar_contacts,7.0F);
+    set_f(I,cSetting_roving_polar_contacts,7.0F);
 
-  set_f(I,cSetting_roving_polar_cutoff,3.31F);
+    set_f(I,cSetting_roving_polar_cutoff,3.31F);
 
-  set_f(I,cSetting_roving_nonbonded,0.0F);
+    set_f(I,cSetting_roving_nonbonded,0.0F);
 
-  set_i(I,cSetting_float_labels,0);
+    set_i(I,cSetting_float_labels,0);
 
-  set_b(I,cSetting_roving_detail,0);
+    set_b(I,cSetting_roving_detail,0);
 
-  set_f(I,cSetting_roving_nb_spheres,8.0F);
+    set_f(I,cSetting_roving_nb_spheres,8.0F);
 
-  set_color(I,cSetting_ribbon_color,"-1"); /* use atom colors by default */
+    set_color(I,cSetting_ribbon_color,"-1"); /* use atom colors by default */
 
-  set_color(I,cSetting_cartoon_color,"-1"); /* use atom colors by default */
+    set_color(I,cSetting_cartoon_color,"-1"); /* use atom colors by default */
 
-  set_i(I,cSetting_ribbon_smooth,-1);
+    set_i(I,cSetting_ribbon_smooth,-1);
 
-  set_b(I,cSetting_auto_color,1);
+    set_b(I,cSetting_auto_color,1);
 
-  set_i(I,cSetting_auto_color_next,0);
+    set_i(I,cSetting_auto_color_next,0);
 
-  set_color(I,cSetting_ray_interior_color,"-1"); /* object color */
+    set_color(I,cSetting_ray_interior_color,"-1"); /* object color */
 
-  set_color(I,cSetting_cartoon_highlight_color,"-1"); /* no color */
+    set_color(I,cSetting_cartoon_highlight_color,"-1"); /* no color */
 
-  /* In order to get electrostatic potentials in kT from the Coulomb equation... 
+    /* In order to get electrostatic potentials in kT from the Coulomb equation... 
 
-  PyMOL charges: Q, in e
-  PyMOL distances: r, in Angstrom
-  Coulomb Constant: K = 8.987552e9 ((J*m)/(C^2))
-  Angstrom Convertor: 1 A = 1e-10 m
-  Coulomb Convertor: 1 e = 1.60217733e-19 C
-  Angstrom Convertor: 1 A = 10e-10 m
-  Dielectric Constant: D (unitless)
+    PyMOL charges: Q, in e
+    PyMOL distances: r, in Angstrom
+    Coulomb Constant: K = 8.987552e9 ((J*m)/(C^2))
+    Angstrom Convertor: 1 A = 1e-10 m
+    Coulomb Convertor: 1 e = 1.60217733e-19 C
+    Angstrom Convertor: 1 A = 10e-10 m
+    Dielectric Constant: D (unitless)
 
-  ePot = (KQ)/(Dr) = 
+    ePot = (KQ)/(Dr) = 
 
-  8.987552e9 J*m     1.6021773e-19 C   1.6021773e-19 C      1 A        Q  
-  ---------------- * --------------- * --------------- * ---------- * --- =
-         C^2              1 e               1 e            1e-10 m     Dr
+    8.987552e9 J*m     1.6021773e-19 C   1.6021773e-19 C      1 A        Q  
+    ---------------- * --------------- * --------------- * ---------- * --- =
+    C^2              1 e               1 e            1e-10 m     Dr
 
 
     2.3070795237e-18 J*A      Q
-  = ---------------------- * ---
-            e^2               Dr
+    = ---------------------- * ---
+    e^2               Dr
 
-  Boltzmann Constant: k = 1.380658e-23 (J/K)
-  Temperature: 300 Kelvin
+    Boltzmann Constant: k = 1.380658e-23 (J/K)
+    Temperature: 300 Kelvin
 
-  kT = 1.380658e-23 * 300 = 4.141974e-21 J
+    kT = 1.380658e-23 * 300 = 4.141974e-21 J
 
-         2.3070795237e-18 J*A         1 kT             Q
-  ePot = --------------------- * ------------------ * ---
-                 e^2              4.141974e-21 J       Dr
+    2.3070795237e-18 J*A         1 kT             Q
+    ePot = --------------------- * ------------------ * ---
+    e^2              4.141974e-21 J       Dr
   
-         557.00000 kT*A    Q
-  ePot = -------------- * --- which will give kT/e units when applied
-             e^2           Dr
-  */
+    557.00000 kT*A    Q
+    ePot = -------------- * --- which will give kT/e units when applied
+    e^2           Dr
+    */
 
-  set_f(I,cSetting_coulomb_units_factor,557.00000F);
+    set_f(I,cSetting_coulomb_units_factor,557.00000F);
 
-  set_f(I,cSetting_coulomb_dielectric,2.0F);
+    set_f(I,cSetting_coulomb_dielectric,2.0F);
 
-  set_b(I,cSetting_ray_interior_shadows,0);
+    set_b(I,cSetting_ray_interior_shadows,0);
 
-  set_i(I,cSetting_ray_interior_texture,-1);
+    set_i(I,cSetting_ray_interior_texture,-1);
 
-  set_s(I,cSetting_roving_map1_name,"");
+    set_s(I,cSetting_roving_map1_name,"");
 
-  set_s(I,cSetting_roving_map2_name,"");
+    set_s(I,cSetting_roving_map2_name,"");
 
-  set_s(I,cSetting_roving_map3_name,"");
+    set_s(I,cSetting_roving_map3_name,"");
 
-  set_f(I,cSetting_roving_map1_level,1.0F);
+    set_f(I,cSetting_roving_map1_level,1.0F);
 
-  set_f(I,cSetting_roving_map2_level,2.0F);
+    set_f(I,cSetting_roving_map2_level,2.0F);
 
-  set_f(I,cSetting_roving_map3_level,3.0F);
+    set_f(I,cSetting_roving_map3_level,3.0F);
 
-  set_f(I,cSetting_roving_isomesh, 8.0F);
+    set_f(I,cSetting_roving_isomesh, 8.0F);
 
-  set_f(I,cSetting_roving_isosurface, 0.0F);
+    set_f(I,cSetting_roving_isosurface, 0.0F);
 
-  set_f(I,cSetting_scenes_changed, 1.0F);
+    set_f(I,cSetting_scenes_changed, 1.0F);
 
-  set_f(I,cSetting_gaussian_b_adjust, 0.0F );
+    set_f(I,cSetting_gaussian_b_adjust, 0.0F );
 
-  set_b(I,cSetting_pdb_standard_order, 1);
+    set_b(I,cSetting_pdb_standard_order, 1);
 
-  set_i(I,cSetting_cartoon_smooth_first, 1);
-  set_i(I,cSetting_cartoon_smooth_last, 1);
-  set_i(I,cSetting_cartoon_smooth_cycles,2);
-  set_i(I,cSetting_cartoon_flat_cycles,4);
+    set_i(I,cSetting_cartoon_smooth_first, 1);
+    set_i(I,cSetting_cartoon_smooth_last, 1);
+    set_i(I,cSetting_cartoon_smooth_cycles,2);
+    set_i(I,cSetting_cartoon_flat_cycles,4);
 
 #ifdef WIN32
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
- {
-   SYSTEM_INFO SysInfo;
-   GetSystemInfo ( &SysInfo );
-   {
-      DWORD count = SysInfo.dwNumberOfProcessors;
-      if(count>1) {
-        set_i(I,cSetting_max_threads, count);
-      } else {
-        set_i(I,cSetting_max_threads, 1);
+    /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+    {
+      SYSTEM_INFO SysInfo;
+      GetSystemInfo ( &SysInfo );
+      {
+        DWORD count = SysInfo.dwNumberOfProcessors;
+        if(count>1) {
+          set_i(I,cSetting_max_threads, count);
+        } else {
+          set_i(I,cSetting_max_threads, 1);
+        }
       }
-   }
- }
-/* END PROPRIETARY CODE SEGMENT */
+    }
+    /* END PROPRIETARY CODE SEGMENT */
 #else
-  set_i(I,cSetting_max_threads, 1);
+    set_i(I,cSetting_max_threads, 1);
 #endif
 
-  set_i(I,cSetting_show_progress, 1);
+    set_i(I,cSetting_show_progress, 1);
 
-  set_i(I,cSetting_use_display_lists, 0); /* don't make this default
-                                                    until we have a way of
-                                                    reusing display list 
-                                                    identifiers */
+    set_i(I,cSetting_use_display_lists, 0); /* don't make this default
+                                               until we have a way of
+                                               reusing display list 
+                                               identifiers */
 
-  set_i(I,cSetting_cache_memory, 0);  /* doesn't seem to do any good :( */
+    set_i(I,cSetting_cache_memory, 0);  /* doesn't seem to do any good :( */
   
-  set_b(I,cSetting_simplify_display_lists, 0);
+    set_b(I,cSetting_simplify_display_lists, 0);
 
-  set_i(I,cSetting_retain_order,0);
+    set_i(I,cSetting_retain_order,0);
 
-  set_i(I,cSetting_pdb_hetatm_sort,0);
+    set_i(I,cSetting_pdb_hetatm_sort,0);
 
-  set_i(I,cSetting_pdb_use_ter_records,1);
+    set_i(I,cSetting_pdb_use_ter_records,1);
 
-  set_i(I,cSetting_cartoon_trace_atoms,0);
+    set_i(I,cSetting_cartoon_trace_atoms,0);
 
-  set_i(I,cSetting_ray_oversample_cutoff,120);
+    set_i(I,cSetting_ray_oversample_cutoff,120);
 
-  /* note that this setting is ad-hoc and calibrated such that a
-     gaussian_resolution of 2.0 returns maps with the straight atomic
-     scattering factors (unblurred).  At resolution of 4.0, they are
-     blurred 2X, 8.0:4X, and so forth.... */
-  set_f(I,cSetting_gaussian_resolution,2.0F); 
+    /* note that this setting is ad-hoc and calibrated such that a
+       gaussian_resolution of 2.0 returns maps with the straight atomic
+       scattering factors (unblurred).  At resolution of 4.0, they are
+       blurred 2X, 8.0:4X, and so forth.... */
+    set_f(I,cSetting_gaussian_resolution,2.0F); 
 
-  set_f(I,cSetting_gaussian_b_floor,0.0F);
+    set_f(I,cSetting_gaussian_b_floor,0.0F);
 
-  set_i(I,cSetting_sculpt_nb_interval,17);
+    set_i(I,cSetting_sculpt_nb_interval,17);
 
-  set_f(I,cSetting_sculpt_tors_weight,0.05F);
+    set_f(I,cSetting_sculpt_tors_weight,0.05F);
 
-  set_f(I,cSetting_sculpt_tors_tolerance,0.05F);
+    set_f(I,cSetting_sculpt_tors_tolerance,0.05F);
 
-  set_b(I,cSetting_stick_ball, false);
+    set_b(I,cSetting_stick_ball, false);
 
-  set_f(I,cSetting_stick_ball_ratio, 1.0F);
+    set_f(I,cSetting_stick_ball_ratio, 1.0F);
 
-  set_b(I,cSetting_stick_fixed_radius, false);
+    set_b(I,cSetting_stick_fixed_radius, false);
 
-  set_f(I,cSetting_cartoon_transparency, 0.0F);
+    set_f(I,cSetting_cartoon_transparency, 0.0F);
 
-  set_b(I,cSetting_dash_round_ends,1);
+    set_b(I,cSetting_dash_round_ends,1);
 
-  set_f(I,cSetting_h_bond_max_angle,63.0F);
+    set_f(I,cSetting_h_bond_max_angle,63.0F);
 
-  set_f(I,cSetting_h_bond_cutoff_center,3.6F);
+    set_f(I,cSetting_h_bond_cutoff_center,3.6F);
 
-  set_f(I,cSetting_h_bond_cutoff_edge,3.2F);
+    set_f(I,cSetting_h_bond_cutoff_edge,3.2F);
 
-  set_f(I,cSetting_h_bond_power_a,1.6F);
+    set_f(I,cSetting_h_bond_power_a,1.6F);
 
-  set_f(I,cSetting_h_bond_power_b,5.0F);
+    set_f(I,cSetting_h_bond_power_b,5.0F);
 
-  set_f(I,cSetting_h_bond_cone, 180.0F);
+    set_f(I,cSetting_h_bond_cone, 180.0F);
 
-  set_f(I,cSetting_ss_helix_psi_target, -48.0F);
-  set_f(I,cSetting_ss_helix_psi_include, 55.0F); /* 30 */
-  set_f(I,cSetting_ss_helix_psi_exclude, 85.0F);
+    set_f(I,cSetting_ss_helix_psi_target, -48.0F);
+    set_f(I,cSetting_ss_helix_psi_include, 55.0F); /* 30 */
+    set_f(I,cSetting_ss_helix_psi_exclude, 85.0F);
   
-  set_f(I,cSetting_ss_helix_phi_target, -57.0F);
-  set_f(I,cSetting_ss_helix_phi_include, 55.0F);
-  set_f(I,cSetting_ss_helix_phi_exclude, 85.0F);
+    set_f(I,cSetting_ss_helix_phi_target, -57.0F);
+    set_f(I,cSetting_ss_helix_phi_include, 55.0F);
+    set_f(I,cSetting_ss_helix_phi_exclude, 85.0F);
   
-  set_f(I,cSetting_ss_strand_psi_target, 124.0F); 
-  set_f(I,cSetting_ss_strand_psi_include, 40.0F); 
-  set_f(I,cSetting_ss_strand_psi_exclude, 90.0F); /* 80 */
+    set_f(I,cSetting_ss_strand_psi_target, 124.0F); 
+    set_f(I,cSetting_ss_strand_psi_include, 40.0F); 
+    set_f(I,cSetting_ss_strand_psi_exclude, 90.0F); /* 80 */
   
-  set_f(I,cSetting_ss_strand_phi_target, -129.0F); 
-  set_f(I,cSetting_ss_strand_phi_include, 40.0F); 
-  set_f(I,cSetting_ss_strand_phi_exclude, 100.0F);
+    set_f(I,cSetting_ss_strand_phi_target, -129.0F); 
+    set_f(I,cSetting_ss_strand_phi_include, 40.0F); 
+    set_f(I,cSetting_ss_strand_phi_exclude, 100.0F);
 
-  set_b(I,cSetting_movie_loop, 1);
+    set_b(I,cSetting_movie_loop, 1);
      
-  set_b(I,cSetting_pdb_retain_ids, 0);
+    set_b(I,cSetting_pdb_retain_ids, 0);
 
-  set_b(I,cSetting_pdb_no_end_record, 0);
+    set_b(I,cSetting_pdb_no_end_record, 0);
 
-  set_f(I,cSetting_cgo_dot_width, 2.0F);
-  set_f(I,cSetting_cgo_dot_radius, -1.0F);
-  set_b(I,cSetting_defer_updates,0);
-  set_b(I,cSetting_normalize_o_maps,1);
-  set_b(I,cSetting_swap_dsn6_bytes,1);
-  set_b(I,cSetting_pdb_insertions_go_first,0);
-  set_b(I,cSetting_roving_origin_z,1);
-  set_f(I,cSetting_roving_origin_z_cushion,3.0F);
-  set_f(I,cSetting_specular_intensity,0.5F);
-  set_i(I,cSetting_overlay_lines,5);
-  set_f(I,cSetting_ray_transparency_spec_cut,0.9F);
-  set_b(I,cSetting_internal_prompt,1);
-  set_b(I,cSetting_normalize_grd_maps,0);
+    set_f(I,cSetting_cgo_dot_width, 2.0F);
+    set_f(I,cSetting_cgo_dot_radius, -1.0F);
+    set_b(I,cSetting_defer_updates,0);
+    set_b(I,cSetting_normalize_o_maps,1);
+    set_b(I,cSetting_swap_dsn6_bytes,1);
+    set_b(I,cSetting_pdb_insertions_go_first,0);
+    set_b(I,cSetting_roving_origin_z,1);
+    set_f(I,cSetting_roving_origin_z_cushion,3.0F);
+    set_f(I,cSetting_specular_intensity,0.5F);
+    set_i(I,cSetting_overlay_lines,5);
+    set_f(I,cSetting_ray_transparency_spec_cut,0.9F);
+    set_b(I,cSetting_internal_prompt,1);
+    set_b(I,cSetting_normalize_grd_maps,0);
 
-  set_b(I,cSetting_ray_blend_colors,0);
-  set_f(I,cSetting_ray_blend_red,0.17F);
-  set_f(I,cSetting_ray_blend_green,0.25F);
-  set_f(I,cSetting_ray_blend_blue,0.14F);
-  set_f(I,cSetting_png_screen_gamma,2.4F);
-  set_f(I,cSetting_png_file_gamma,1.0F);
-  set_b(I,cSetting_editor_label_fragments,0);
-  set_i(I,cSetting_internal_gui_control_size, 18);
-  set_b(I,cSetting_auto_dss,1);
-  set_i(I,cSetting_transparency_picking_mode,2); /* auto */
-  set_b(I,cSetting_virtual_trackball,1);
-  set_i(I,cSetting_transparency_picking_mode,2); /* auto */
-  set_i(I,cSetting_pdb_reformat_names_mode,0); /*
-                                                        0 = no reformatting, 
-                                                        1 = pdb compliant,
-                                                        2 = amber compliant,
-                                                        3 = pdb I/O, but iupac inside
-                                                      */
-  set_f(I,cSetting_ray_pixel_scale,1.30F);
-  #ifdef _PYMOL_FREETYPE
-  set_i(I,cSetting_label_font_id,5);
-  #else
-  set_i(I,cSetting_label_font_id,0);
-  #endif
-  set_b(I,cSetting_pdb_conect_all,0);
-  set_s(I,cSetting_button_mode_name,"");
-  set_i(I,cSetting_surface_type,0);
-  set_b(I,cSetting_dot_normals,1);
-  set_b(I,cSetting_session_migration,1);
-  set_b(I,cSetting_mesh_normals,1);
-  set_i(I,cSetting_mesh_type,0); /* 0 = lines, 1 = points, 2 = solid, 3 = gradient */
+    set_b(I,cSetting_ray_blend_colors,0);
+    set_f(I,cSetting_ray_blend_red,0.17F);
+    set_f(I,cSetting_ray_blend_green,0.25F);
+    set_f(I,cSetting_ray_blend_blue,0.14F);
+    set_f(I,cSetting_png_screen_gamma,2.4F);
+    set_f(I,cSetting_png_file_gamma,1.0F);
+    set_b(I,cSetting_editor_label_fragments,0);
+    set_i(I,cSetting_internal_gui_control_size, 18);
+    set_b(I,cSetting_auto_dss,1);
+    set_i(I,cSetting_transparency_picking_mode,2); /* auto */
+    set_b(I,cSetting_virtual_trackball,1);
+    set_i(I,cSetting_transparency_picking_mode,2); /* auto */
+    set_i(I,cSetting_pdb_reformat_names_mode,0); /*
+                                                   0 = no reformatting, 
+                                                   1 = pdb compliant,
+                                                   2 = amber compliant,
+                                                   3 = pdb I/O, but iupac inside
+                                                 */
+    set_f(I,cSetting_ray_pixel_scale,1.30F);
+#ifdef _PYMOL_FREETYPE
+    set_i(I,cSetting_label_font_id,5);
+#else
+    set_i(I,cSetting_label_font_id,0);
+#endif
+    set_b(I,cSetting_pdb_conect_all,0);
+    set_s(I,cSetting_button_mode_name,"");
+    set_i(I,cSetting_surface_type,0);
+    set_b(I,cSetting_dot_normals,1);
+    set_b(I,cSetting_session_migration,1);
+    set_b(I,cSetting_mesh_normals,1);
+    set_i(I,cSetting_mesh_type,0); /* 0 = lines, 1 = points, 2 = solid, 3 = gradient */
 
-  set_b(I,cSetting_dot_lighting,1);
-  set_b(I,cSetting_mesh_lighting,0);
-  set_b(I,cSetting_surface_solvent,0);
-  set_i(I,cSetting_triangle_max_passes,5);
-  set_f(I,cSetting_ray_interior_reflect,0.4F);
-  set_i(I,cSetting_internal_gui_mode,0);
-  set_s(I,cSetting_surface_carve_selection,"");
-  set_i(I,cSetting_surface_carve_state,0);
-  set_f(I,cSetting_surface_carve_cutoff,0.0F);
-  set_s(I,cSetting_surface_clear_selection,"");
-  set_i(I,cSetting_surface_clear_state,0);
-  set_f(I,cSetting_surface_clear_cutoff,0.0F);
-  set_f(I,cSetting_surface_trim_cutoff,0.2F);
-  set_f(I,cSetting_surface_trim_factor,2.0F);
-  set_i(I,cSetting_ray_max_passes,25);
-  set_b(I,cSetting_active_selections,true);
-  set_f(I,cSetting_ray_transparency_contrast,1.0F);
-  set_b(I,cSetting_seq_view,0);
-  set_i(I,cSetting_mouse_selection_mode,1);
-  set_i(I,cSetting_seq_view_label_spacing,5);
-  set_i(I,cSetting_seq_view_label_start,1);
-  set_i(I,cSetting_seq_view_format,0);
-  set_i(I,cSetting_seq_view_location,0);
-  set_b(I,cSetting_seq_view_overlay,0);
-  set_b(I,cSetting_auto_classify_atoms,1);
-  set_i(I,cSetting_cartoon_nucleic_acid_mode,4);
-  set_color(I,cSetting_seq_view_color, "-1");
-  set_i(I,cSetting_seq_view_label_mode,2);
-  set_i(I,cSetting_surface_ramp_above_mode,0);
-  set_b(I,cSetting_stereo,0);
-  set_i(I,cSetting_wizard_prompt_mode,1);
-  set_f(I,cSetting_coulomb_cutoff,10.0F);
-  set_b(I,cSetting_slice_track_camera, 0);
-  set_f(I,cSetting_slice_height_scale, 1.0F);
-  set_b(I,cSetting_slice_height_map, 0);
-  set_f(I,cSetting_slice_grid, 0.3F);
-  set_b(I,cSetting_slice_dynamic_grid, 0);
-  set_f(I,cSetting_slice_dynamic_grid_resolution, 3.0F);
-  set_b(I,cSetting_pdb_insure_orthogonal, 1);
-  set_f(I,cSetting_ray_direct_shade,0.0F);  /* only meaningful with one light source */
-  set_color(I,cSetting_stick_color,"-1");
-  set_f(I,cSetting_cartoon_putty_radius, 0.40F);
-  set_f(I,cSetting_cartoon_putty_quality, 11.0F);
-  set_f(I,cSetting_cartoon_putty_scale_min, 0.6F);
-  set_f(I,cSetting_cartoon_putty_scale_max, 4.0F);
-  set_f(I,cSetting_cartoon_putty_scale_power, 1.5F);
-  set_f(I,cSetting_cartoon_putty_range, 2.0F);
-  set_b(I,cSetting_cartoon_side_chain_helper, 0);
-  set_b(I,cSetting_surface_optimize_subsets, 1);
-  set_i(I,cSetting_multiplex, -1);
-  if(G->Option->multisample>1) 
-    set_b(I,cSetting_texture_fonts, 1);
-  else
-    set_b(I,cSetting_texture_fonts, 0);
-  set_b(I,cSetting_pqr_workarounds, 1);
-  set_b(I,cSetting_animation, 1);
-  set_f(I,cSetting_animation_duration, 0.75F);
-  set_i(I,cSetting_scene_animation,-1);
-  set_b(I,cSetting_line_stick_helper, 1);
-  set_i(I,cSetting_ray_orthoscopic, -1);
-  set_i(I,cSetting_ribbon_side_chain_helper, 0);
-  set_f(I,cSetting_selection_width_max,10.0F);
-  set_f(I,cSetting_selection_width_scale,2.0F);
-  set_s(I,cSetting_scene_current_name,"");
-  set_b(I,cSetting_presentation,0);
-  set_i(I,cSetting_presentation_mode,1);
-  set_b(I,cSetting_pdb_truncate_residue_name,false);
-  set_b(I,cSetting_scene_loop,0);
-  set_i(I,cSetting_sweep_mode,0);
-  set_f(I,cSetting_sweep_phase,0.0F);
-  set_b(I,cSetting_scene_restart_movie_delay,1);
-  set_b(I,cSetting_mouse_restart_movie_delay,0);
-  set_f(I,cSetting_angle_size, 0.6666F);
-  set_f(I,cSetting_angle_label_position, 0.5);
-  set_f(I,cSetting_dihedral_size, 0.6666F);
-  set_f(I,cSetting_dihedral_label_position, 1.2F);
-  set_i(I,cSetting_defer_builds_mode, G->Option->defer_builds_mode); 
-  set_b(I,cSetting_seq_view_discrete_by_state, 1);
-  set_f(I,cSetting_scene_animation_duration, 2.25F);
-  set_s(I,cSetting_wildcard, "*");
-  set_s(I,cSetting_atom_name_wildcard, "");
-  set_b(I,cSetting_ignore_case, 1);
-  set_b(I,cSetting_presentation_auto_quit,1);
-  set_b(I,cSetting_editor_auto_dihedral, 1);
-  set_b(I,cSetting_presentation_auto_start,1);
-  set_b(I,cSetting_validate_object_names, 1);
-  set_b(I,cSetting_unused_boolean_def_true, 1);
-  set_b(I,cSetting_auto_show_spheres, G->Option->sphere_mode>=0);
-  set_i(I,cSetting_sphere_mode, G->Option->sphere_mode);
-  set_f(I,cSetting_sphere_point_max_size, 18.0);
-  set_f(I,cSetting_sphere_point_size, 1.0);
-  set_b(I,cSetting_pdb_honor_model_number, false);
-  set_b(I,cSetting_rank_assisted_sorts, true);
-  set_i(I,cSetting_ribbon_nucleic_acid_mode, 0);
-  set_i(I,cSetting_cartoon_ring_mode, 0);
-  set_f(I,cSetting_cartoon_ring_width, 0.125F);
-  set_color(I,cSetting_cartoon_ring_color, "-1");
-  set_i(I,cSetting_cartoon_ring_finder, 1);
-  set_i(I,cSetting_cartoon_tube_cap,2);
-  set_i(I,cSetting_cartoon_loop_cap,1);
-  set_i(I,cSetting_nvidia_bugs, 0);
-  set_f(I,cSetting_image_dots_per_inch, 0.0F); 
-  /* default is to leave it unspecified in PNG file */
-  set_b(I,cSetting_opaque_background,1);
-  set_b(I,cSetting_draw_frames,0);
-  set_b(I,cSetting_show_alpha_checker,1);
-  set_i(I,cSetting_matrix_mode,0); /* 0: coordinates (pre-1.0 legacy default mode)
-                                      1: per-object matrices (TTTs: version 1.0 default mode?)
-                                      2: per-state matrices (partially implemented)
-                                      3: per-group matrices (may come in the future) */
-  set_b(I,cSetting_editor_auto_origin,1); 
-  set_s(I,cSetting_session_file, "");
-  set_f(I,cSetting_cgo_transparency, 0.0F); 
-  set_b(I,cSetting_legacy_mouse_zoom, 0);
-  set_b(I,cSetting_auto_number_selections, 0);
-  set_i(I,cSetting_sculpt_vdw_vis_mode,0);
-  set_f(I,cSetting_sculpt_vdw_vis_min, -0.1F);
-  set_f(I,cSetting_sculpt_vdw_vis_mid, 0.1F);
-  set_f(I,cSetting_sculpt_vdw_vis_max, 0.3F);
-  set_i(I,cSetting_cartoon_ladder_mode, 1);
-  set_f(I,cSetting_cartoon_ladder_radius, 0.25F);
-  set_color(I,cSetting_cartoon_ladder_color, "-1");
-  set_color(I,cSetting_cartoon_nucleic_acid_color, "-1");
-  set_f(I,cSetting_cartoon_ring_transparency, -1.0F);
-  set_f(I,cSetting_label_size, 14.0F);
-  set_f(I,cSetting_spec_direct, 0.0F);
-  set_i(I,cSetting_light_count, 2);
-  set_3f(I,cSetting_light2, -0.55F, -0.7F, 0.15F);
-  set_3f(I,cSetting_light3, 0.3F, -0.6F, -0.2F);
-  set_b(I,cSetting_hide_underscore_names, 1);
-  set_b(I,cSetting_selection_round_points, 0);
-  set_i(I,cSetting_distance_exclusion, 5);
-  set_i(I,cSetting_h_bond_exclusion, 3);
-  set_i(I,cSetting_label_shadow_mode, 0);
-  set_3f(I,cSetting_light4, -1.2F, 0.3F, -0.2F);
-  set_3f(I,cSetting_light5,  0.3F, 0.6F, -0.75F);
-  set_3f(I,cSetting_light6, -0.3F, 0.5F,  0.0F);
-  set_3f(I,cSetting_light7,  0.9F,-0.1F, -0.15F);
-  set_color(I,cSetting_label_outline_color, "-1");
-  set_i(I,cSetting_ray_trace_mode,0);
-  set_f(I,cSetting_ray_trace_gain,0.12F);
-  set_b(I,cSetting_selection_visible_only, 0);
-  set_3f(I,cSetting_label_position, 0.0F, 0.0F, 1.75F);
-  set_f(I,cSetting_ray_trace_depth_factor,0.1F);
-  set_f(I,cSetting_ray_trace_slope_factor,0.6F);
-  set_f(I,cSetting_ray_trace_disco_factor,0.05F);
-  set_f(I,cSetting_ray_shadow_decay_factor,0.0F);
-  set_i(I,cSetting_ray_interior_mode, 0);
-  set_f(I,cSetting_ray_legacy_lighting, 0.0F);
-  set_b(I,cSetting_sculpt_auto_center, 0);
-  set_i(I,cSetting_pdb_discrete_chains, -1);
-  set_i(I,cSetting_pdb_unbond_cations, 1);
-  set_f(I,cSetting_sculpt_tri_scale,1.025F); /* allow for some play here...*/
-  set_f(I,cSetting_sculpt_tri_weight, 1.0F);
-  set_i(I,cSetting_sculpt_tri_min, 2);
-  set_i(I,cSetting_sculpt_tri_max, 18);
-  set_i(I,cSetting_sculpt_tri_mode, 0);
-  set_s(I,cSetting_pdb_echo_tags, "HEADER, TITLE, COMPND");
-  set_b(I,cSetting_connect_bonded, 0);
-  set_f(I,cSetting_spec_direct_power, 55.0F);
-  set_3f(I,cSetting_light8, 1.3F, 2.0F, 0.8F);
-  set_3f(I,cSetting_light9, -1.7F, -0.5F, 1.2F);
-  set_f(I,cSetting_ray_shadow_decay_range, 1.8F);
-  set_i(I,cSetting_spec_count,-1);
-  set_f(I,cSetting_sculpt_min_scale,0.975F);
-  set_f(I,cSetting_sculpt_min_weight, 0.75F);
-  set_f(I,cSetting_sculpt_min_min, 4.0F);
-  set_f(I,cSetting_sculpt_min_max, 12.0F);
-  set_f(I,cSetting_sculpt_max_scale,1.025F);
-  set_f(I,cSetting_sculpt_max_weight, 0.75F);
-  set_f(I,cSetting_sculpt_max_min, 4.0F);
-  set_f(I,cSetting_sculpt_max_max, 12.0F);
-  set_i(I,cSetting_surface_circumscribe, -1);
-  set_f(I,cSetting_sculpt_avd_weight, 4.0F);
-  set_f(I,cSetting_sculpt_avd_gap,-1.0F);
-  set_f(I,cSetting_sculpt_avd_range, -1.0F);
-  set_i(I,cSetting_sculpt_avd_excl, 7);
-  set_b(I,cSetting_async_builds, 0);
-  set_s(I,cSetting_fetch_path, ".");
-  set_f(I,cSetting_cartoon_ring_radius,-1.0F);
-  set_b(I,cSetting_ray_color_ramps,0);
-  set_f(I,cSetting_ray_hint_camera,2.15F);
-  set_f(I,cSetting_ray_hint_shadow,0.65F);
-  set_f(I,cSetting_stick_valence_scale, 1.0F);
-  set_s(I,cSetting_seq_view_alignment,"");
-  set_i(I,cSetting_seq_view_unaligned_mode,0);
-  set_color(I,cSetting_seq_view_unaligned_color, "-1");
-  set_s(I,cSetting_seq_view_fill_char,"-");  
-  set_color(I,cSetting_seq_view_fill_color, "104"); /* grey50 */
-  set_color(I,cSetting_seq_view_label_color, "white"); /* grey50 */
-  set_f(I,cSetting_surface_carve_normal_cutoff, -1.0F);
-  set_i(I,cSetting_trace_atoms_mode,5);
-  set_b(I,cSetting_session_changed,0);
-  set_b(I,cSetting_ray_clip_shadows,0);
-  set_f(I,cSetting_mouse_wheel_scale,1.0F);
-  set_f(I,cSetting_nonbonded_transparency,0.0F);
-  set_b(I,cSetting_ray_spec_local, 0);
-  set_color(I,cSetting_line_color, "-1");
-  set_f(I,cSetting_ray_label_specular,1.0F);
-  set_i(I,cSetting_mesh_skip, 0);
-  set_i(I,cSetting_label_digits,1);
-  set_i(I,cSetting_label_distance_digits,-1);
-  set_i(I,cSetting_label_angle_digits,-1);
-  set_i(I,cSetting_label_dihedral_digits,-1);
-  set_b(I,cSetting_surface_negative_visible,0);
-  set_color(I,cSetting_surface_negative_color,"grey50");
-  set_b(I,cSetting_mesh_negative_visible,0);
-  set_color(I,cSetting_mesh_negative_color,"grey30");
-  set_i(I,cSetting_group_auto_mode,1);
-  set_i(I,cSetting_group_full_member_names,0);
-  set_f(I,cSetting_gradient_max_length,100.0F);
-  set_f(I,cSetting_gradient_min_length,2.0F);
-  set_f(I,cSetting_gradient_min_slope,0.00001F);
-  set_f(I,cSetting_gradient_normal_min_dot, 0.70F);
-  set_f(I,cSetting_gradient_step_size,0.25F);
-  set_i(I,cSetting_gradient_spacing,3);
-  set_f(I,cSetting_gradient_symmetry,0.0F);
-  set_color(I,cSetting_ray_trace_color,"black");
-  set_b(I,cSetting_group_arrow_prefix, 0);
-  set_b(I,cSetting_suppress_hidden,true);
-  set_b(I,cSetting_session_compression,0);
-  set_f(I,cSetting_movie_fps,30.0);
-  set_f(I,cSetting_ray_transparency_oblique,0.0F);
-  set_f(I,cSetting_ray_trace_trans_cutoff,0.05);
-  set_f(I,cSetting_ray_trace_persist_cutoff,0.10);
-  set_f(I,cSetting_ray_transparency_oblique_power,1.0F);
-  set_f(I,cSetting_ray_scatter,0.0F);
-  set_b(I,cSetting_h_bond_from_proton,1);
-  set_b(I,cSetting_auto_copy_images,0);
-  set_i(I,cSetting_moe_separate_chains,-1);
-  set_b(I,cSetting_transparency_global_sort, 0);
-  set_b(I,cSetting_hide_long_bonds,0);
-  set_b(I,cSetting_auto_rename_duplicates,0); /* to do */
-  set_b(I,cSetting_pdb_hetatm_guess_valences,1);
-  set_i(I,cSetting_ellipsoid_quality, 1);
-  set_i(I,cSetting_cgo_ellipsoid_quality, -1);
+    set_b(I,cSetting_dot_lighting,1);
+    set_b(I,cSetting_mesh_lighting,0);
+    set_b(I,cSetting_surface_solvent,0);
+    set_i(I,cSetting_triangle_max_passes,5);
+    set_f(I,cSetting_ray_interior_reflect,0.4F);
+    set_i(I,cSetting_internal_gui_mode,0);
+    set_s(I,cSetting_surface_carve_selection,"");
+    set_i(I,cSetting_surface_carve_state,0);
+    set_f(I,cSetting_surface_carve_cutoff,0.0F);
+    set_s(I,cSetting_surface_clear_selection,"");
+    set_i(I,cSetting_surface_clear_state,0);
+    set_f(I,cSetting_surface_clear_cutoff,0.0F);
+    set_f(I,cSetting_surface_trim_cutoff,0.2F);
+    set_f(I,cSetting_surface_trim_factor,2.0F);
+    set_i(I,cSetting_ray_max_passes,25);
+    set_b(I,cSetting_active_selections,true);
+    set_f(I,cSetting_ray_transparency_contrast,1.0F);
+    set_b(I,cSetting_seq_view,0);
+    set_i(I,cSetting_mouse_selection_mode,1);
+    set_i(I,cSetting_seq_view_label_spacing,5);
+    set_i(I,cSetting_seq_view_label_start,1);
+    set_i(I,cSetting_seq_view_format,0);
+    set_i(I,cSetting_seq_view_location,0);
+    set_b(I,cSetting_seq_view_overlay,0);
+    set_b(I,cSetting_auto_classify_atoms,1);
+    set_i(I,cSetting_cartoon_nucleic_acid_mode,4);
+    set_color(I,cSetting_seq_view_color, "-1");
+    set_i(I,cSetting_seq_view_label_mode,2);
+    set_i(I,cSetting_surface_ramp_above_mode,0);
+    set_b(I,cSetting_stereo,0);
+    set_i(I,cSetting_wizard_prompt_mode,1);
+    set_f(I,cSetting_coulomb_cutoff,10.0F);
+    set_b(I,cSetting_slice_track_camera, 0);
+    set_f(I,cSetting_slice_height_scale, 1.0F);
+    set_b(I,cSetting_slice_height_map, 0);
+    set_f(I,cSetting_slice_grid, 0.3F);
+    set_b(I,cSetting_slice_dynamic_grid, 0);
+    set_f(I,cSetting_slice_dynamic_grid_resolution, 3.0F);
+    set_b(I,cSetting_pdb_insure_orthogonal, 1);
+    set_f(I,cSetting_ray_direct_shade,0.0F);  /* only meaningful with one light source */
+    set_color(I,cSetting_stick_color,"-1");
+    set_f(I,cSetting_cartoon_putty_radius, 0.40F);
+    set_f(I,cSetting_cartoon_putty_quality, 11.0F);
+    set_f(I,cSetting_cartoon_putty_scale_min, 0.6F);
+    set_f(I,cSetting_cartoon_putty_scale_max, 4.0F);
+    set_f(I,cSetting_cartoon_putty_scale_power, 1.5F);
+    set_f(I,cSetting_cartoon_putty_range, 2.0F);
+    set_b(I,cSetting_cartoon_side_chain_helper, 0);
+    set_b(I,cSetting_surface_optimize_subsets, 1);
+    set_i(I,cSetting_multiplex, -1);
+    if(G->Option->multisample>1) 
+      set_b(I,cSetting_texture_fonts, 1);
+    else
+      set_b(I,cSetting_texture_fonts, 0);
+    set_b(I,cSetting_pqr_workarounds, 1);
+    set_b(I,cSetting_animation, 1);
+    set_f(I,cSetting_animation_duration, 0.75F);
+    set_i(I,cSetting_scene_animation,-1);
+    set_b(I,cSetting_line_stick_helper, 1);
+    set_i(I,cSetting_ray_orthoscopic, -1);
+    set_i(I,cSetting_ribbon_side_chain_helper, 0);
+    set_f(I,cSetting_selection_width_max,10.0F);
+    set_f(I,cSetting_selection_width_scale,2.0F);
+    set_s(I,cSetting_scene_current_name,"");
+    set_b(I,cSetting_presentation,0);
+    set_i(I,cSetting_presentation_mode,1);
+    set_b(I,cSetting_pdb_truncate_residue_name,false);
+    set_b(I,cSetting_scene_loop,0);
+    set_i(I,cSetting_sweep_mode,0);
+    set_f(I,cSetting_sweep_phase,0.0F);
+    set_b(I,cSetting_scene_restart_movie_delay,1);
+    set_b(I,cSetting_mouse_restart_movie_delay,0);
+    set_f(I,cSetting_angle_size, 0.6666F);
+    set_f(I,cSetting_angle_label_position, 0.5);
+    set_f(I,cSetting_dihedral_size, 0.6666F);
+    set_f(I,cSetting_dihedral_label_position, 1.2F);
+    set_i(I,cSetting_defer_builds_mode, G->Option->defer_builds_mode); 
+    set_b(I,cSetting_seq_view_discrete_by_state, 1);
+    set_f(I,cSetting_scene_animation_duration, 2.25F);
+    set_s(I,cSetting_wildcard, "*");
+    set_s(I,cSetting_atom_name_wildcard, "");
+    set_b(I,cSetting_ignore_case, 1);
+    set_b(I,cSetting_presentation_auto_quit,1);
+    set_b(I,cSetting_editor_auto_dihedral, 1);
+    set_b(I,cSetting_presentation_auto_start,1);
+    set_b(I,cSetting_validate_object_names, 1);
+    set_b(I,cSetting_unused_boolean_def_true, 1);
+    set_b(I,cSetting_auto_show_spheres, G->Option->sphere_mode>=0);
+    set_i(I,cSetting_sphere_mode, G->Option->sphere_mode);
+    set_f(I,cSetting_sphere_point_max_size, 18.0);
+    set_f(I,cSetting_sphere_point_size, 1.0);
+    set_b(I,cSetting_pdb_honor_model_number, false);
+    set_b(I,cSetting_rank_assisted_sorts, true);
+    set_i(I,cSetting_ribbon_nucleic_acid_mode, 0);
+    set_i(I,cSetting_cartoon_ring_mode, 0);
+    set_f(I,cSetting_cartoon_ring_width, 0.125F);
+    set_color(I,cSetting_cartoon_ring_color, "-1");
+    set_i(I,cSetting_cartoon_ring_finder, 1);
+    set_i(I,cSetting_cartoon_tube_cap,2);
+    set_i(I,cSetting_cartoon_loop_cap,1);
+    set_i(I,cSetting_nvidia_bugs, 0);
+    set_f(I,cSetting_image_dots_per_inch, 0.0F); 
+    /* default is to leave it unspecified in PNG file */
+    set_b(I,cSetting_opaque_background,1);
+    set_b(I,cSetting_draw_frames,0);
+    set_b(I,cSetting_show_alpha_checker,1);
+    set_i(I,cSetting_matrix_mode,0); /* 0: coordinates (pre-1.0 legacy default mode)
+                                        1: per-object matrices (TTTs: version 1.0 default mode?)
+                                        2: per-state matrices (partially implemented)
+                                        3: per-group matrices (may come in the future) */
+    set_b(I,cSetting_editor_auto_origin,1); 
+    set_s(I,cSetting_session_file, "");
+    set_f(I,cSetting_cgo_transparency, 0.0F); 
+    set_b(I,cSetting_legacy_mouse_zoom, 0);
+    set_b(I,cSetting_auto_number_selections, 0);
+    set_i(I,cSetting_sculpt_vdw_vis_mode,0);
+    set_f(I,cSetting_sculpt_vdw_vis_min, -0.1F);
+    set_f(I,cSetting_sculpt_vdw_vis_mid, 0.1F);
+    set_f(I,cSetting_sculpt_vdw_vis_max, 0.3F);
+    set_i(I,cSetting_cartoon_ladder_mode, 1);
+    set_f(I,cSetting_cartoon_ladder_radius, 0.25F);
+    set_color(I,cSetting_cartoon_ladder_color, "-1");
+    set_color(I,cSetting_cartoon_nucleic_acid_color, "-1");
+    set_f(I,cSetting_cartoon_ring_transparency, -1.0F);
+    set_f(I,cSetting_label_size, 14.0F);
+    set_f(I,cSetting_spec_direct, 0.0F);
+    set_i(I,cSetting_light_count, 2);
+    set_3f(I,cSetting_light2, -0.55F, -0.7F, 0.15F);
+    set_3f(I,cSetting_light3, 0.3F, -0.6F, -0.2F);
+    set_b(I,cSetting_hide_underscore_names, 1);
+    set_b(I,cSetting_selection_round_points, 0);
+    set_i(I,cSetting_distance_exclusion, 5);
+    set_i(I,cSetting_h_bond_exclusion, 3);
+    set_i(I,cSetting_label_shadow_mode, 0);
+    set_3f(I,cSetting_light4, -1.2F, 0.3F, -0.2F);
+    set_3f(I,cSetting_light5,  0.3F, 0.6F, -0.75F);
+    set_3f(I,cSetting_light6, -0.3F, 0.5F,  0.0F);
+    set_3f(I,cSetting_light7,  0.9F,-0.1F, -0.15F);
+    set_color(I,cSetting_label_outline_color, "-1");
+    set_i(I,cSetting_ray_trace_mode,0);
+    set_f(I,cSetting_ray_trace_gain,0.12F);
+    set_b(I,cSetting_selection_visible_only, 0);
+    set_3f(I,cSetting_label_position, 0.0F, 0.0F, 1.75F);
+    set_f(I,cSetting_ray_trace_depth_factor,0.1F);
+    set_f(I,cSetting_ray_trace_slope_factor,0.6F);
+    set_f(I,cSetting_ray_trace_disco_factor,0.05F);
+    set_f(I,cSetting_ray_shadow_decay_factor,0.0F);
+    set_i(I,cSetting_ray_interior_mode, 0);
+    set_f(I,cSetting_ray_legacy_lighting, 0.0F);
+    set_b(I,cSetting_sculpt_auto_center, 0);
+    set_i(I,cSetting_pdb_discrete_chains, -1);
+    set_i(I,cSetting_pdb_unbond_cations, 1);
+    set_f(I,cSetting_sculpt_tri_scale,1.025F); /* allow for some play here...*/
+    set_f(I,cSetting_sculpt_tri_weight, 1.0F);
+    set_i(I,cSetting_sculpt_tri_min, 2);
+    set_i(I,cSetting_sculpt_tri_max, 18);
+    set_i(I,cSetting_sculpt_tri_mode, 0);
+    set_s(I,cSetting_pdb_echo_tags, "HEADER, TITLE, COMPND");
+    set_b(I,cSetting_connect_bonded, 0);
+    set_f(I,cSetting_spec_direct_power, 55.0F);
+    set_3f(I,cSetting_light8, 1.3F, 2.0F, 0.8F);
+    set_3f(I,cSetting_light9, -1.7F, -0.5F, 1.2F);
+    set_f(I,cSetting_ray_shadow_decay_range, 1.8F);
+    set_i(I,cSetting_spec_count,-1);
+    set_f(I,cSetting_sculpt_min_scale,0.975F);
+    set_f(I,cSetting_sculpt_min_weight, 0.75F);
+    set_f(I,cSetting_sculpt_min_min, 4.0F);
+    set_f(I,cSetting_sculpt_min_max, 12.0F);
+    set_f(I,cSetting_sculpt_max_scale,1.025F);
+    set_f(I,cSetting_sculpt_max_weight, 0.75F);
+    set_f(I,cSetting_sculpt_max_min, 4.0F);
+    set_f(I,cSetting_sculpt_max_max, 12.0F);
+    set_i(I,cSetting_surface_circumscribe, -1);
+    set_f(I,cSetting_sculpt_avd_weight, 4.0F);
+    set_f(I,cSetting_sculpt_avd_gap,-1.0F);
+    set_f(I,cSetting_sculpt_avd_range, -1.0F);
+    set_i(I,cSetting_sculpt_avd_excl, 7);
+    set_b(I,cSetting_async_builds, 0);
+    set_s(I,cSetting_fetch_path, ".");
+    set_f(I,cSetting_cartoon_ring_radius,-1.0F);
+    set_b(I,cSetting_ray_color_ramps,0);
+    set_f(I,cSetting_ray_hint_camera,2.15F);
+    set_f(I,cSetting_ray_hint_shadow,0.65F);
+    set_f(I,cSetting_stick_valence_scale, 1.0F);
+    set_s(I,cSetting_seq_view_alignment,"");
+    set_i(I,cSetting_seq_view_unaligned_mode,0);
+    set_color(I,cSetting_seq_view_unaligned_color, "-1");
+    set_s(I,cSetting_seq_view_fill_char,"-");  
+    set_color(I,cSetting_seq_view_fill_color, "104"); /* grey50 */
+    set_color(I,cSetting_seq_view_label_color, "white"); /* grey50 */
+    set_f(I,cSetting_surface_carve_normal_cutoff, -1.0F);
+    set_i(I,cSetting_trace_atoms_mode,5);
+    set_b(I,cSetting_session_changed,0);
+    set_b(I,cSetting_ray_clip_shadows,0);
+    set_f(I,cSetting_mouse_wheel_scale,1.0F);
+    set_f(I,cSetting_nonbonded_transparency,0.0F);
+    set_b(I,cSetting_ray_spec_local, 0);
+    set_color(I,cSetting_line_color, "-1");
+    set_f(I,cSetting_ray_label_specular,1.0F);
+    set_i(I,cSetting_mesh_skip, 0);
+    set_i(I,cSetting_label_digits,1);
+    set_i(I,cSetting_label_distance_digits,-1);
+    set_i(I,cSetting_label_angle_digits,-1);
+    set_i(I,cSetting_label_dihedral_digits,-1);
+    set_b(I,cSetting_surface_negative_visible,0);
+    set_color(I,cSetting_surface_negative_color,"grey50");
+    set_b(I,cSetting_mesh_negative_visible,0);
+    set_color(I,cSetting_mesh_negative_color,"grey30");
+    set_i(I,cSetting_group_auto_mode,1);
+    set_i(I,cSetting_group_full_member_names,0);
+    set_f(I,cSetting_gradient_max_length,100.0F);
+    set_f(I,cSetting_gradient_min_length,2.0F);
+    set_f(I,cSetting_gradient_min_slope,0.00001F);
+    set_f(I,cSetting_gradient_normal_min_dot, 0.70F);
+    set_f(I,cSetting_gradient_step_size,0.25F);
+    set_i(I,cSetting_gradient_spacing,3);
+    set_f(I,cSetting_gradient_symmetry,0.0F);
+    set_color(I,cSetting_ray_trace_color,"black");
+    set_b(I,cSetting_group_arrow_prefix, 0);
+    set_b(I,cSetting_suppress_hidden,true);
+    set_b(I,cSetting_session_compression,0);
+    set_f(I,cSetting_movie_fps,30.0);
+    set_f(I,cSetting_ray_transparency_oblique,0.0F);
+    set_f(I,cSetting_ray_trace_trans_cutoff,0.05);
+    set_f(I,cSetting_ray_trace_persist_cutoff,0.10);
+    set_f(I,cSetting_ray_transparency_oblique_power,1.0F);
+    set_f(I,cSetting_ray_scatter,0.0F);
+    set_b(I,cSetting_h_bond_from_proton,1);
+    set_b(I,cSetting_auto_copy_images,0);
+    set_i(I,cSetting_moe_separate_chains,-1);
+    set_b(I,cSetting_transparency_global_sort, 0);
+    set_b(I,cSetting_hide_long_bonds,0);
+    set_b(I,cSetting_auto_rename_duplicate_objects,0); /* to do */
+    set_b(I,cSetting_pdb_hetatm_guess_valences,1);
+    set_i(I,cSetting_ellipsoid_quality, 1);
+    set_i(I,cSetting_cgo_ellipsoid_quality, -1);
+  }
 
 }
 

@@ -8,6 +8,9 @@
 
 # it also test PyMOL's ability to retain identifiers and ordering
 
+unset pdb_hetatm_guess_valences
+reinitialize store_defaults
+
 # test default preservation 
 
 load dat/odd01.pdb

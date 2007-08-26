@@ -220,7 +220,11 @@ USAGE
     reinit_code = {
         'everything' : 0,
         'settings' : 1,
+        'store_defaults' : 2,
+        'original_settings' : 3,
+        'purge_defaults' : 4,
     }
+    
     reinit_sc = Shortcut(reinit_code.keys())
 
     def reinitialize(what='everything', object='', _self=cmd):

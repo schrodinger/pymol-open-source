@@ -87,7 +87,10 @@ int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore);
 int SettingUniqueConvertOldSessionID(PyMOLGlobals *G,int old_unique_id);
 
 int SettingUniqueCopyAll(PyMOLGlobals *G, int src_unique_id, int dst_unique_id);
-void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui);
+void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default);
+void SettingStoreDefault(PyMOLGlobals *G);
+void SettingPurgeDefault(PyMOLGlobals *G);
+
 void SettingFreeGlobal(PyMOLGlobals *G);
 
 
@@ -173,8 +176,15 @@ int SettingGetName(PyMOLGlobals *G,int index,SettingName name);
 
 PyObject *SettingAsPyList(CSetting *I);
 int SettingFromPyList(CSetting *I,PyObject *list);
+
 int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list);
 PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals *G);
+
+/* proposed...
+PyObject *SettingGetDefaultsAsPyList(PyMOLGlobals *G);
+int SettingSetDefaultsFromPyList(PyMOLGlobals *G,PyObject *list);
+*/
+
 CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* WARNING: do not delete or change indices
@@ -752,7 +762,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_moe_separate_chains        558
 #define cSetting_transparency_global_sort   559
 #define cSetting_hide_long_bonds            560
-#define cSetting_auto_rename_duplicates     561
+#define cSetting_auto_rename_duplicate_objects 561
 #define cSetting_pdb_hetatm_guess_valences  562
 #define cSetting_ellipsoid_quality          563
 #define cSetting_cgo_ellipsoid_quality      564

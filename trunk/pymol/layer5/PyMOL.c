@@ -710,7 +710,7 @@ typedef struct _CPyMOL {
   ov_word lex_moe_separate_chains;
   ov_word lex_transparency_global_sort;
   ov_word lex_hide_long_bonds;
-  ov_word lex_auto_rename_duplicates; 
+  ov_word lex_auto_rename_duplicate_objects; 
   ov_word lex_pdb_hetatm_guess_valences;
   ov_word lex_ellipsoid_quality;
   ov_word lex_cgo_ellipsoid_quality;
@@ -1432,7 +1432,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(moe_separate_chains, 558);
   LEX_SETTING(transparency_global_sort, 559);
   LEX_SETTING(hide_long_bonds, 560);
-  LEX_SETTING(auto_rename_duplicates, 561);
+  LEX_SETTING(auto_rename_duplicate_objects, 561);
   LEX_SETTING(pdb_hetatm_guess_valences, 562);
   LEX_SETTING(ellipsoid_quality, 563);
   LEX_SETTING(cgo_ellipsoid_quality, 564);
@@ -2581,7 +2581,7 @@ void PyMOL_Start(CPyMOL *I)
   UtilInit(G);
   ColorInit(G);
   CGORendererInit(G);
-  SettingInitGlobal(G,true,true);  
+  SettingInitGlobal(G,true,true,false);  
   SettingSetGlobal_i(G,cSetting_internal_gui,G->Option->internal_gui);
   SettingSetGlobal_i(G,cSetting_internal_feedback,G->Option->internal_feedback);
   TextureInit(G);

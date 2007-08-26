@@ -2,13 +2,21 @@
 CHANGE LOG
 =========================================================================
 
-2007-08-24
-	 
+2007-08-26  Warren L. DeLano <warren@delsci.com
+
+	* added store_defaults & related options to reinitialize command
+	
+2007-08-25  Warren L. DeLano <warren@delsci.com
+
+	* implemented auto_rename_duplicate_objects setting
+		
+2007-08-24  Warren L. DeLano <warren@delsci.com
+
 	* added ellipsoid_quality and cgo_ellipsoid_quality settings
 	
 	* added CGO ellipsoids
 	
-2007-08-15
+2007-08-15  Warren L. DeLano <warren@delsci.com
 
 	* implemented some fixes to deal with new PDB nomenclature
 	
