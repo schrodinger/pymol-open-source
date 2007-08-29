@@ -132,6 +132,7 @@ void MainMovieCopyPrepare(int *width,int *height,int *length)
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   if(PLockAPIAsGlut(G,true)) {
     MovieCopyPrepare(G,width,height,length);
+    MovieSetRealtime(G,false);
     PUnlockAPIAsGlut(G);
   }
 }
@@ -161,6 +162,7 @@ void MainMovieCopyFinish(void)
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   if(PLockAPIAsGlut(G,true)) {
     MovieCopyFinish(G);
+    MovieSetRealtime(G,true);
     PUnlockAPIAsGlut(G);
   }
 }

@@ -1636,12 +1636,12 @@ void SceneSetFrame(PyMOLGlobals *G,int mode,int frame)
     movieCommand = true;
      break;
   case 4: /* absolute with automatic movie command */
-     newFrame=frame;
+    newFrame=frame;
     movieCommand = true;
-     break;
+    break;
   case 5: /* relative with automatic movie command */
      newFrame+=frame;
-    movieCommand = true;
+     movieCommand = true;
      break;
   case 6: /* end with automatic movie command */
     newFrame=I->NFrame-1; 
@@ -1666,17 +1666,24 @@ void SceneSetFrame(PyMOLGlobals *G,int mode,int frame)
     if(newFrame<0) newFrame=0;
     newState = MovieFrameToIndex(G,newFrame);
     if(newFrame==0) {
-      MovieMatrix(G,cMovieMatrixRecall);
+      if(MovieMatrix(G,cMovieMatrixRecall)) {
+        SceneAbortAnimation(G); /* if we have a programmed initial
+                                   orientation, don't allow animation
+                                   to override it */
+      }
     }
+    SettingSetGlobal_i(G,cSetting_frame,newFrame+1);
+    SettingSetGlobal_i(G,cSetting_state,newState+1);
     if(movieCommand) {
       MovieDoFrameCommand(G,newFrame);
       MovieFlushCommands(G);
     }
     if(SettingGet(G,cSetting_cache_frames))
       I->MovieFrameFlag=true;
+  } else {
+    SettingSetGlobal_i(G,cSetting_frame,newFrame+1);
+    SettingSetGlobal_i(G,cSetting_state,newState+1);
   }
-  SettingSetGlobal_i(G,cSetting_frame,newFrame+1);
-  SettingSetGlobal_i(G,cSetting_state,newState+1);
 
   SceneInvalidate(G);
   PRINTFD(G,FB_Scene)
