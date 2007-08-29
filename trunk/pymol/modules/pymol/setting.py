@@ -601,6 +601,7 @@ if __name__=='pymol.setting':
         ellipsoid_quality = (563, '')
         cgo_ellipsoid_quality = (564, '')
         movie_animate_by_frame = (565, '')
+        ramp_blend_nearby_colors = (566, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

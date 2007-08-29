@@ -2106,84 +2106,85 @@ int *TrianglePointsToSurface(PyMOLGlobals *G,float *v,float *vn,int n,float cuto
   MapType *map;
   int a;
   
-  I = Alloc(TriangleSurfaceRec,1);
-  if(I) {
+  if(n>=3) {
+    I = Alloc(TriangleSurfaceRec,1);
+    if(I) {
+      
+      I->G=G;
+      I->N=n;
+      I->nActive = 0;
+      I->activeEdge=VLAlloc(int,1000);
 
-    I->G=G;
-    I->N=n;
-    I->nActive = 0;
-    I->activeEdge=VLAlloc(int,1000);
+      I->link=VLAlloc(LinkType,n*2);
+      I->nLink = 1;
 
-    I->link=VLAlloc(LinkType,n*2);
-    I->nLink = 1;
+      I->nEdge = 1;
 
-    I->nEdge = 1;
+      I->vNormal=VLAlloc(float,n*2);
+      I->edge=VLAlloc(EdgeRec,n*2);
 
-    I->vNormal=VLAlloc(float,n*2);
-    I->edge=VLAlloc(EdgeRec,n*2);
+      I->tri=VLAlloc(int,n);
+      I->nTri = 0;
 
-    I->tri=VLAlloc(int,n);
-    I->nTri = 0;
+      I->map=MapNew(I->G,cutoff,v,n,extent);
+      MapSetupExpress(I->map);
+      map=I->map;
+      MapCacheInit(&I->map_cache,map,0,0);
 
-    I->map=MapNew(I->G,cutoff,v,n,extent);
-    MapSetupExpress(I->map);
-    map=I->map;
-    MapCacheInit(&I->map_cache,map,0,0);
+      I->edgeStatus = Alloc(int,n);
+      for(a=0;a<n;a++) {
+        I->edgeStatus[a]=0;
+      }
 
-    I->edgeStatus = Alloc(int,n);
-    for(a=0;a<n;a++) {
-      I->edgeStatus[a]=0;
+      I->vertActive = Alloc(int,n);
+      for(a=0;a<n;a++) {
+        I->vertActive[a]=-1;
+      }
+
+      I->vertWeight = Alloc(int,n);
+      for(a=0;a<n;a++) {
+        I->vertWeight[a]=2;
+      }
+
+      TriangleFill(I,v,vn,n,true);
+
+      if(Feedback(G,FB_Triangle,FB_Debugging)) {
+        for(a=0;a<n;a++) 
+          if(I->vertActive[a])
+            printf(" TrianglePTS-DEBUG: before fix %i %i\n",a,I->vertActive[a]);
+      }
+
+      TriangleTxfFolds(I,v,vn,n);
+
+      TriangleFixProblems(I,v,vn,n);  
+
+      if(Feedback(G,FB_Triangle,FB_Debugging)) {
+        for(a=0;a<n;a++) 
+          if(I->vertActive[a])
+            printf(" TrianglePTS-DEBUG: after fix %i %i\n",a,I->vertActive[a]);
+      }
+
+      TriangleBruteForceClosure(I,v,vn,n,cutoff*3); /* abandon algorithm, just CLOSE THOSE GAPS! */
+
+      TriangleAdjustNormals(I,v,vn,n,true);
+
+      *(stripPtr) = TriangleMakeStripVLA(I,v,vn,n);
+
+      (*nTriPtr)=I->nTri;
+      VLAFreeP(I->activeEdge);
+      VLAFreeP(I->link);
+      VLAFreeP(I->vNormal);
+      VLAFreeP(I->edge);
+      FreeP(I->edgeStatus);
+      FreeP(I->vertActive);
+      FreeP(I->vertWeight);
+      MapCacheFree(&I->map_cache,0,0);
+      MapFree(map);
+
+      result = I->tri;
     }
-
-    I->vertActive = Alloc(int,n);
-    for(a=0;a<n;a++) {
-      I->vertActive[a]=-1;
-    }
-
-    I->vertWeight = Alloc(int,n);
-    for(a=0;a<n;a++) {
-      I->vertWeight[a]=2;
-    }
-
-    TriangleFill(I,v,vn,n,true);
-
-    if(Feedback(G,FB_Triangle,FB_Debugging)) {
-      for(a=0;a<n;a++) 
-        if(I->vertActive[a])
-          printf(" TrianglePTS-DEBUG: before fix %i %i\n",a,I->vertActive[a]);
-    }
-
-    TriangleTxfFolds(I,v,vn,n);
-
-    TriangleFixProblems(I,v,vn,n);  
-
-    if(Feedback(G,FB_Triangle,FB_Debugging)) {
-      for(a=0;a<n;a++) 
-        if(I->vertActive[a])
-          printf(" TrianglePTS-DEBUG: after fix %i %i\n",a,I->vertActive[a]);
-    }
-
-    TriangleBruteForceClosure(I,v,vn,n,cutoff*3); /* abandon algorithm, just CLOSE THOSE GAPS! */
-
-    TriangleAdjustNormals(I,v,vn,n,true);
-
-    *(stripPtr) = TriangleMakeStripVLA(I,v,vn,n);
-
-    (*nTriPtr)=I->nTri;
-    VLAFreeP(I->activeEdge);
-    VLAFreeP(I->link);
-    VLAFreeP(I->vNormal);
-    VLAFreeP(I->edge);
-    FreeP(I->edgeStatus);
-    FreeP(I->vertActive);
-    FreeP(I->vertWeight);
-    MapCacheFree(&I->map_cache,0,0);
-    MapFree(map);
-
-    result = I->tri;
-  }
-  FreeP(I);
-  
+    FreeP(I);
+  }  
   return(result);
 }
 

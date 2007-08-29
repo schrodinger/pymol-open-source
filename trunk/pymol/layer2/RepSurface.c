@@ -153,6 +153,11 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
   int *vi=I->Vis;
   float alpha;
   int t_mode;
+
+  if(!s) {
+    return;
+  }
+
   alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
