@@ -2,7 +2,11 @@
 CHANGE LOG
 =========================================================================
 
-2007-08-28  Warren L. DeLano <warren@delsci.com
+2007-08-29  Warren L. DeLano <warren@delsci.com>
+	
+	* fixed problem with windows HOMEPATH ending in backslash
+	
+2007-08-28  Warren L. DeLano <warren@delsci.com>
 
 	* added ramp_blend_nearby_colors setting (for LigandScout-like
     	  coloring via ramps)
@@ -13,7 +17,7 @@ CHANGE LOG
 	* added support for smooth camera interpolation within movies
 	  (using scenes, views, animate options, etc.) for mpng, etc.
 
-2007-08-26  Warren L. DeLano <warren@delsci.com
+2007-08-26  Warren L. DeLano <warren@delsci.com>
 
 	* added store_defaults & related options to reinitialize command
 	
@@ -21,13 +25,13 @@ CHANGE LOG
 
 	* implemented auto_rename_duplicate_objects setting
 		
-2007-08-24  Warren L. DeLano <warren@delsci.com
+2007-08-24  Warren L. DeLano <warren@delsci.com>
 
 	* added ellipsoid_quality and cgo_ellipsoid_quality settings
 	
 	* added CGO ellipsoids
 	
-2007-08-15  Warren L. DeLano <warren@delsci.com
+2007-08-15  Warren L. DeLano <warren@delsci.com>
 
 	* implemented some fixes to deal with new PDB nomenclature
 	
