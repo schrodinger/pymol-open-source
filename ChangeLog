@@ -4,9 +4,12 @@ CHANGE LOG
 
 2007-08-28  Warren L. DeLano <warren@delsci.com
 
+	* movie_animate_by_frame setting controls whether animations
+	  are interpolated based on wall-clock or movie time
+
 	* added support for smooth camera interpolation within movies
-	  (using scenes, views, animate options, etc.) 
-	
+	  (using scenes, views, animate options, etc.) for mpng, etc.
+
 2007-08-26  Warren L. DeLano <warren@delsci.com
 
 	* added store_defaults & related options to reinitialize command

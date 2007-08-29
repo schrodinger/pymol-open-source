@@ -600,7 +600,8 @@ if __name__=='pymol.setting':
         pdb_hetatm_guess_valences = (562, '')
         ellipsoid_quality = (563, '')
         cgo_ellipsoid_quality = (564, '')
-                
+        movie_animate_by_frame = (565, '')
+        
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
     index_list = []
