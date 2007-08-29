@@ -4,6 +4,9 @@ CHANGE LOG
 
 2007-08-28  Warren L. DeLano <warren@delsci.com
 
+	* added ramp_blend_nearby_colors setting (for LigandScout-like
+    	  coloring via ramps)
+	
 	* movie_animate_by_frame setting controls whether animations
 	  are interpolated based on wall-clock or movie time
 

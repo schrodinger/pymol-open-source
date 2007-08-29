@@ -238,6 +238,7 @@ int ObjectMoleculeGetTopNeighbor(PyMOLGlobals *G,
                                  int start, int excluded);
 
 int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule *I, float *point, float cutoff, int state, float *dist);
+int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule *I, float *point, float cutoff, int state, float *dist, float *color);
 
 int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,struct CoordSet *cs);
 int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_sided);

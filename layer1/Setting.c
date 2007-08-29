@@ -2080,6 +2080,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_clamp_colors:
+  case cSetting_ramp_blend_nearby_colors:
     ExecutiveInvalidateRep(G,inv_sele,cRepAll,cRepInvColor);
     SceneChanged(G);
     break;
@@ -3563,6 +3564,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_ellipsoid_quality, 1);
     set_i(I,cSetting_cgo_ellipsoid_quality, -1);
     set_b(I,cSetting_movie_animate_by_frame,0);
+    set_b(I,cSetting_ramp_blend_nearby_colors,0);
   }
 
 }
