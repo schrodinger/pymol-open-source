@@ -285,11 +285,11 @@ if __name__=='pymol.invocation':
                                 my_docs = os.path.join(path,"My Documents")
                                 if os.path.isdir(my_docs): # start in My Documents (if exists)
                                     path = my_docs
-                                options.deferred.append("_do__ cmd.cd('''%s''')"%path)
+                                options.deferred.append("_do__ cmd.cd('''%s''')"%string.replace(path,"\\","\\\\"))
                     elif os.environ.has_key("HOME"):
                         path = os.environ["HOME"]
                         if os.path.isdir(path):
-                            options.deferred.append("_do__ cmd.cd('''%s''')"%path)
+                            options.deferred.append("_do__ cmd.cd('''%s''')"%string.replace(path,"\\","\\\\"))
                 if "l" in a:
                     options.deferred.append("_do_spawn %s"%av.pop())
                 if "r" in a:
