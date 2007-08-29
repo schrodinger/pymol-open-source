@@ -47,7 +47,21 @@ struct _CMovie {
   int OverlaySave;
   CViewElem *ViewElem;
   int RecursionFlag;
+  int RealtimeFlag;
+
 };
+
+void MovieSetRealtime(PyMOLGlobals *G, int realtime)
+{
+  register CMovie *I=G->Movie;
+  I->RealtimeFlag=realtime;
+}
+
+int MovieGetRealtime(PyMOLGlobals *G)
+{
+  register CMovie *I=G->Movie;
+  return I->RealtimeFlag;
+}
 
 void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length)
 {
@@ -479,6 +493,8 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missin
   int nFrame;
   double accumTiming = 0.0;
   int file_missing = true;
+
+  MovieSetRealtime(G,false);
   save = (int)SettingGet(G,cSetting_cache_frames); 
   if(!save)
     MovieClearImages(G);
@@ -573,7 +589,8 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missin
   SettingSet(G,cSetting_cache_frames,(float)save);
   MoviePlay(G,cMovieStop);
   MovieClearImages(G);
-   return(true);
+  MovieSetRealtime(G,true);
+  return(true);
 }
 /*========================================================================*/
 void MovieAppendSequence(PyMOLGlobals *G,char *str,int start_from)
@@ -1016,6 +1033,7 @@ int MovieInit(PyMOLGlobals *G)
     I->NImage=0;
     I->NFrame=0;
     I->RecursionFlag = false;
+    I->RealtimeFlag = true;
     for(a=0;a<16;a++)
       I->Matrix[a]=0.0F;
     I->MatrixFlag=false;

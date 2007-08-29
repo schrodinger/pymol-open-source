@@ -67,6 +67,9 @@ int MovieView(PyMOLGlobals *G,int action,int first,
               int hand,int window,int cycles,
               char *scene_name, float scene_cut, int quiet);
 void MovieFlushCommands(PyMOLGlobals *G);
+void MovieSetRealtime(PyMOLGlobals *G, int realtime);
+int MovieGetRealtime(PyMOLGlobals *G);
+
 
 #define cMovieMatrixClear  0
 #define cMovieMatrixStore  1
