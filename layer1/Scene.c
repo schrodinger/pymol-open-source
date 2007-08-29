@@ -176,6 +176,7 @@ struct _CScene {
   int AnimationStartFlag;
   double AnimationStartTime;
   double AnimationLagTime;
+  int AnimationStartFrame;
   double ApproxRenderTime;
   float VertexScale;
   float FogStart;
@@ -272,6 +273,23 @@ void ScenePrimeAnimation(PyMOLGlobals *G)
   }
 }
 
+static float SceneGetFPS(PyMOLGlobals *G)
+{
+  float fps = SettingGet(G,cSetting_movie_fps);
+  float minTime;
+  if(fps<=0.0F) {
+    if(fps<0.0)
+      minTime = 0.0; /* negative fps means full speed */
+    else /* 0 fps means use movie_delay instead */
+      minTime = SettingGet(G,cSetting_movie_delay)/1000.0;
+    if(minTime>=0.0F)
+      fps = 1.0F/minTime;
+    else
+      fps = 1000.0F;
+  }
+  return fps;
+}
+
 static void ScenePurgeImage(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
@@ -332,6 +350,7 @@ void SceneLoadAnimation(PyMOLGlobals *G, double duration,int hand)
     I->n_ani_elem = target;
     I->AnimationStartTime = UtilGetSeconds(G);
     I->AnimationStartFlag = true;
+    I->AnimationStartFrame = SceneGetFrame(G);
     I->AnimationLagTime = 0.0;
   }
 }
@@ -6669,7 +6688,19 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       I->AnimationStartFlag = false;
     }
 
-    now = UtilGetSeconds(G) - I->AnimationLagTime;
+    if(MovieGetRealtime(G)) {
+      now = UtilGetSeconds(G) - I->AnimationLagTime;
+    } else {
+      float fps = SceneGetFPS(G); /* guaranteed to be >= 0.0F */
+      int frame = SceneGetFrame(G);
+      int n_frame = 0;
+      if(frame >= I->AnimationStartFrame) {
+        n_frame = I->AnimationStartFrame - frame;
+      } else {
+        n_frame = frame + (I->NFrame - I->AnimationStartFrame);
+      }
+      now = I->AnimationStartTime + n_frame / fps;
+    }
 
     while(I->ani_elem[cur].timing<now) {
       cur++;

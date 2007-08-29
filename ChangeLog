@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2007-08-28  Warren L. DeLano <warren@delsci.com
+
+	* added support for smooth camera interpolation within movies
+	  (using scenes, views, animate options, etc.) 
+	
 2007-08-26  Warren L. DeLano <warren@delsci.com
 
 	* added store_defaults & related options to reinitialize command
