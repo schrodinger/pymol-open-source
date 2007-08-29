@@ -5394,6 +5394,51 @@ int SceneDeferRay(PyMOLGlobals *G,
 }
 
 
+static void SceneUpdateAnimation(PyMOLGlobals *G)
+{
+  register CScene *I=G->Scene;
+  if(I->cur_ani_elem < I->n_ani_elem ) { /* play motion animation */
+    double now;
+
+    int cur = I->cur_ani_elem;
+
+    if(I->AnimationStartFlag) { 
+      /* allow animation timing to lag since it may take a few seconds
+         to get here given geometry updates, etc. */
+                                   
+      I->AnimationLagTime = UtilGetSeconds(G) - I->AnimationStartTime;
+      I->AnimationStartFlag = false;
+    }
+
+    if(MovieGetRealtime(G) &&
+       ! SettingGetGlobal_b(G,cSetting_movie_animate_by_frame)) {
+      now = UtilGetSeconds(G) - I->AnimationLagTime;
+    } else {
+      float fps = SceneGetFPS(G); /* guaranteed to be >= 0.0F */
+      int frame = SceneGetFrame(G);
+      int n_frame = 0;
+
+      cur = 0; /* allow backwards interpolation */
+      if(frame >= I->AnimationStartFrame) {
+        n_frame = frame - I->AnimationStartFrame;
+      } else {
+        n_frame = frame + (I->NFrame - I->AnimationStartFrame);
+      }
+      now = I->AnimationStartTime + n_frame / fps;
+    }
+
+    while(I->ani_elem[cur].timing<now) {
+      cur++;
+      if(cur >= I->n_ani_elem) {
+        cur = I->n_ani_elem;
+        break;
+      }
+    }
+    I->cur_ani_elem = cur;
+    SceneFromViewElem(G,I->ani_elem+cur);
+  }
+
+}
 
 void SceneRay(PyMOLGlobals *G,
               int ray_width,int ray_height,int mode,
@@ -5422,6 +5467,8 @@ void SceneRay(PyMOLGlobals *G,
   ImageType *stereo_image = NULL;
   OrthoLineType prefix = "";
   SceneUnitContext context;
+
+  SceneUpdateAnimation(G);
 
   if(antialias<0) {
     antialias = (int)SettingGet(G,cSetting_antialias);
@@ -6666,7 +6713,6 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
   int mono_as_quad_stereo = false;
   int stereo_as_mono_matrix = false;
   int debug_pick = 0;
-  double now;
   GLenum render_buffer;
   SceneUnitContext context;
   float width_scale = 0.0F;
@@ -6677,52 +6723,15 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     (void*)pick,x,y,(void*)smp
     ENDFD;
-    
+
+  SceneUpdateAnimation(G);
+      
   if(SceneMustDrawBoth(G)) {
     render_buffer = GL_BACK_LEFT;
   } else {
     render_buffer = GL_BACK;
   }
 
-  if(I->cur_ani_elem < I->n_ani_elem ) { /* play motion animation */
-    int cur = I->cur_ani_elem;
-
-    if(I->AnimationStartFlag) { 
-      /* allow animation timing to lag since it may take a few seconds
-         to get here given geometry updates, etc. */
-                                   
-      I->AnimationLagTime = UtilGetSeconds(G) - I->AnimationStartTime;
-      I->AnimationStartFlag = false;
-    }
-
-    if(MovieGetRealtime(G) &&
-       ! SettingGetGlobal_b(G,cSetting_movie_animate_by_frame)) {
-      now = UtilGetSeconds(G) - I->AnimationLagTime;
-    } else {
-      float fps = SceneGetFPS(G); /* guaranteed to be >= 0.0F */
-      int frame = SceneGetFrame(G);
-      int n_frame = 0;
-
-      cur = 0; /* allow backwards interpolation */
-      if(frame >= I->AnimationStartFrame) {
-        n_frame = frame - I->AnimationStartFrame;
-      } else {
-        n_frame = frame + (I->NFrame - I->AnimationStartFrame);
-      }
-      now = I->AnimationStartTime + n_frame / fps;
-    }
-
-    while(I->ani_elem[cur].timing<now) {
-      cur++;
-      if(cur >= I->n_ani_elem) {
-        cur = I->n_ani_elem;
-        break;
-      }
-    }
-    I->cur_ani_elem = cur;
-    SceneFromViewElem(G,I->ani_elem+cur);
-  }
-  
   if((stereo_mode>1)&&(stereo_mode<4))
     aspRat=aspRat/2;
 
