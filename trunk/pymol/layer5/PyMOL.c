@@ -714,6 +714,7 @@ typedef struct _CPyMOL {
   ov_word lex_pdb_hetatm_guess_valences;
   ov_word lex_ellipsoid_quality;
   ov_word lex_cgo_ellipsoid_quality;
+  ov_word lex_movie_animate_by_frame;
 
 } _CPyMOL;
 
@@ -1436,6 +1437,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(pdb_hetatm_guess_valences, 562);
   LEX_SETTING(ellipsoid_quality, 563);
   LEX_SETTING(cgo_ellipsoid_quality, 564);
+  LEX_SETTING(movie_animate_by_frame, 565);
 
  return_OVstatus_SUCCESS;
 }

@@ -6688,14 +6688,17 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       I->AnimationStartFlag = false;
     }
 
-    if(MovieGetRealtime(G)) {
+    if(MovieGetRealtime(G) &&
+       ! SettingGetGlobal_b(G,cSetting_movie_animate_by_frame)) {
       now = UtilGetSeconds(G) - I->AnimationLagTime;
     } else {
       float fps = SceneGetFPS(G); /* guaranteed to be >= 0.0F */
       int frame = SceneGetFrame(G);
       int n_frame = 0;
+
+      cur = 0; /* allow backwards interpolation */
       if(frame >= I->AnimationStartFrame) {
-        n_frame = I->AnimationStartFrame - frame;
+        n_frame = frame - I->AnimationStartFrame;
       } else {
         n_frame = frame + (I->NFrame - I->AnimationStartFrame);
       }

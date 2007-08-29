@@ -766,6 +766,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_pdb_hetatm_guess_valences  562
 #define cSetting_ellipsoid_quality          563
 #define cSetting_cgo_ellipsoid_quality      564
+#define cSetting_movie_animate_by_frame     565
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -775,7 +776,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       565
+#define cSetting_INIT                       566
 
 #endif
 
