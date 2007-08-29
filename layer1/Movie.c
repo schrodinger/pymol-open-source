@@ -451,20 +451,21 @@ int  MovieMatrix(PyMOLGlobals *G,int action)
   int result = false;
   switch(action) {
   case cMovieMatrixClear:
-	 I->MatrixFlag=false;
+    I->MatrixFlag=false;
     result = 1;
-	 break;
+    break;
   case cMovieMatrixStore:
     SceneGetView(G,I->Matrix);
-	 I->MatrixFlag=true;
+    I->MatrixFlag=true;
     result = 1;
-	 break;
+    break;
   case cMovieMatrixRecall:
-	 if(I->MatrixFlag) 
-		SceneSetView(G,I->Matrix,true,0,0);
-    else
+    if(I->MatrixFlag) {
+      SceneSetView(G,I->Matrix,true,0,0);
+      result = 1;
+    } else
       result = 0;
-	 break;
+    break;
   case cMovieMatrixCheck:
     result = I->MatrixFlag;
     break;
