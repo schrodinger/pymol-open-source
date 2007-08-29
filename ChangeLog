@@ -3,6 +3,8 @@ CHANGE LOG
 =========================================================================
 
 2007-08-29  Warren L. DeLano <warren@delsci.com>
+
+	* fixed mistake with new double-hypen argument parsing
 	
 	* fixed problem with windows HOMEPATH ending in backslash
 	

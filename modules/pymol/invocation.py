@@ -146,10 +146,12 @@ if __name__=='pymol.invocation':
                     # double hypen signals end of PyMOL arguments
                     if python_script == None:
                         python_script = argv[0]
+                    rev_av = copy.deepcopy(av)
+                    rev_av.reverse()
                     if len(a)>2:
-                        sys.argv = [python_script] + [a] + av
+                        sys.argv = [python_script] + [a] + rev_av
                     else:
-                        sys.argv = [python_script] + av
+                        sys.argv = [python_script] + rev_av
                     break
                 if ("A" in a) or ("a" in a): # application configuration
                     new_args = []
