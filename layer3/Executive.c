@@ -3082,7 +3082,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals *G,PyObject *dict)
 #endif
 }
 
-int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state,int query,float *result)
+int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state,int query,float *result,int quiet)
 {
   int ok =true;
   CObject *obj;
