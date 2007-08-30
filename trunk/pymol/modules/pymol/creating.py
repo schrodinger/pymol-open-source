@@ -350,8 +350,8 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException         
         return r
 
-    def isomesh(name,map,level=1.0,selection='',buffer=0.0,
-                state=1,carve=None,source_state=0,quiet=1,_self=cmd):
+    def isomesh(name, map, level=1.0, selection='', buffer=0.0,
+                state=1, carve=None, source_state=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -399,9 +399,9 @@ SEE ALSO
 '''
         r = DEFAULT_ERROR
         if selection!='':
-            mopt = 1 # about a selection
+            region = 1 # about a selection
         else:
-            mopt = 0 # render the whole map
+            region = 0 # render the whole map
         # preprocess selection
         selection = selector.process(selection)
         if selection not in [ 'center', 'origin' ]:
@@ -411,7 +411,7 @@ SEE ALSO
             carve=0.0
         try:
             _self.lock(_self)
-            r = _cmd.isomesh(_self._COb,str(name),0,str(map),int(mopt),
+            r = _cmd.isomesh(_self._COb,str(name),str(map),int(region),
                              selection,float(buffer),
                              float(level),0,int(state)-1,float(carve),
                              int(source_state)-1,int(quiet),
@@ -460,8 +460,9 @@ SEE ALSO
         return r
 
 
-    def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,
-                        source_state=0,side=1,mode=3,quiet=1,_self=cmd):
+    def isosurface(name, map, level=1.0, selection='', buffer=0.0, state=1,
+                   carve=None, source_state=0, side=1, mode=3, quiet=1,
+                   _self=cmd):
         '''
 DESCRIPTION
 
@@ -500,9 +501,9 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         if selection!='':
-            mopt = 1 # about a selection
+            region = 1 # about a selection
         else:
-            mopt = 0 # render the whole map
+            region = 0 # render the whole map
         # preprocess selection
         selection = selector.process(selection)
         if selection not in [ 'center', 'origin' ]:
@@ -512,7 +513,7 @@ SEE ALSO
             carve=0.0
         try:
             _self.lock(_self)
-            r = _cmd.isosurface(_self._COb,str(name),0,str(map),int(mopt),
+            r = _cmd.isosurface(_self._COb,str(name),0,str(map),int(region),
                                       selection,float(buffer),
                                       float(level),int(mode),int(state)-1,float(carve),
                                       int(source_state)-1,int(side),int(quiet))
@@ -552,9 +553,9 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         if selection!='':
-            mopt = 1 # about a selection
+            region = 1 # about a selection
         else:
-            mopt = 0 # render the whole map
+            region = 0 # render the whole map
         # preprocess selections
         selection = selector.process(selection)
         if selection not in [ 'center', 'origin' ]:
@@ -564,7 +565,7 @@ SEE ALSO
             carve=0.0
         try:
             _self.lock(_self)
-            r = _cmd.isomesh(_self._COb,str(name),0,str(map),int(mopt),
+            r = _cmd.isomesh(_self._COb,str(name),str(map),int(region),
                              selection,float(buffer),
                              float(level),1,int(state)-1,
                              float(carve),int(source_state)-1,int(quiet),
@@ -576,7 +577,7 @@ SEE ALSO
 
 
 
-    def isolevel(name,level=1.0,state=0,query=0,_self=cmd):
+    def isolevel(name,level=1.0,state=0,query=0,quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -590,7 +591,7 @@ USAGE
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.isolevel(_self._COb,str(name),float(level),int(state)-1,int(query))
+            r = _cmd.isolevel(_self._COb,str(name),float(level),int(state)-1,int(query),int(quiet))
         finally:
             _self.unlock(r,_self)
         if not int(query):
@@ -624,9 +625,9 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         if selection!='':
-            mopt = 1 # about a selection
+            region = 1 # about a selection
         else:
-            mopt = 0 # render the whole map
+            region = 0 # render the whole map
         # preprocess selections
         selection = selector.process(selection)
         if selection not in [ 'center', 'origin' ]:
@@ -636,7 +637,7 @@ SEE ALSO
             carve=0.0
         try:
             _self.lock(_self)
-            r = _cmd.isomesh(_self._COb,str(name),0,str(map),int(mopt),
+            r = _cmd.isomesh(_self._COb,str(name),str(map),int(region),
                              selection,float(buffer),
                              float(minimum),3,int(state)-1,
                              float(carve),int(source_state)-1,int(quiet),

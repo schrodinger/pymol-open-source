@@ -2082,6 +2082,25 @@ PyMOLreturn_float PyMOL_CmdDihedral(CPyMOL *I,
   return result;
 }
 
+#if 0
+PyMOLreturn_status PyMOL_CmdIsomesh(CPyMOL *I,char *name, char *map_name, float level, char *selection,
+                                    float buffer, int state, float carve, int source_state, int quiet)
+{
+  
+}
+
+
+PyMOLreturn_status PyMOL_CmdIsosurface(CPyMOL *I,char *name, char *map_name, float level, char *selection,
+                                       float buffer, int state, float carve, int source_state, int side, 
+                                       int mode, int quiet)
+{
+}
+
+PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int query, int quiet)
+{
+}
+#endif
+
 static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type, 
                                  int content_length, char *content_format, 
                                  char *object_name, int state, 

@@ -1166,14 +1166,17 @@ void RayRenderVRML2(CRay *I,int width,int height,
                       "   vector [\n");
         for(b=mesh_start;b<a;b++) {
           cprim = I->Primitive+b;
-          sprintf(buffer,
-                  "%6.4f %6.4f %6.4f,\n"
-                  "%6.4f %6.4f %6.4f,\n"
+          {
+            float *norm = base->Normal+3*base->Vert2Normal[cprim->vert];
+            sprintf(buffer,
+                    "%6.4f %6.4f %6.4f,\n"
+                    "%6.4f %6.4f %6.4f,\n"
                   "%6.4f %6.4f %6.4f,\n", 
-                  cprim->n1[0],cprim->n1[1],cprim->n1[2],
-                  cprim->n2[0],cprim->n2[1],cprim->n2[2],
-                  cprim->n3[0],cprim->n3[1],cprim->n3[2]);
-          UtilConcatVLA(&vla,&cc,buffer);
+                    norm[3], norm[4], norm[5], /* transformed cprim->n1 */
+                    norm[6], norm[7], norm[8], /* transformed cprim->n2 */
+                    norm[9], norm[10], norm[11]); /* transformed cprim->n3 */
+            UtilConcatVLA(&vla,&cc,buffer);
+          }
         }
         UtilConcatVLA(&vla,&cc, 
                       "  ] }\n"
@@ -1354,6 +1357,7 @@ void RayRenderVRML2(CRay *I,int width,int height,
     }
 
     if(mesh_obj) {
+      CBasis *base = I->Basis+1;
       CPrimitive *cprim;
       int tri = 0;
       /* output connectivity */
@@ -1397,14 +1401,17 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "   vector [\n");
       for(b=mesh_start;b<a;b++) {
         cprim = I->Primitive+b;
-        sprintf(buffer,
-                "%6.4f %6.4f %6.4f,\n"
-                "%6.4f %6.4f %6.4f,\n"
-                "%6.4f %6.4f %6.4f,\n", 
-                cprim->n1[0],cprim->n1[1],cprim->n1[2],
-                cprim->n2[0],cprim->n2[1],cprim->n2[2],
-                cprim->n3[0],cprim->n3[1],cprim->n3[2]);
-        UtilConcatVLA(&vla,&cc,buffer);
+        {
+          float *norm = base->Normal+3*base->Vert2Normal[cprim->vert];
+          sprintf(buffer,
+                  "%6.4f %6.4f %6.4f,\n"
+                  "%6.4f %6.4f %6.4f,\n"
+                  "%6.4f %6.4f %6.4f,\n", 
+                  norm[3], norm[4], norm[5], /* transformed cprim->n1 */
+                  norm[6], norm[7], norm[8], /* transformed cprim->n2 */
+                  norm[9], norm[10], norm[11]); /* transformed cprim->n3 */
+          UtilConcatVLA(&vla,&cc,buffer);
+        }
       }
       UtilConcatVLA(&vla,&cc, 
                     "  ] }\n"

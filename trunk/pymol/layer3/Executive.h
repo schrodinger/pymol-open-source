@@ -306,7 +306,7 @@ int ExecutiveValidName(PyMOLGlobals *G,char *name);
 int ExecutiveValidNamePattern(PyMOLGlobals *G,char *name);
 int ExecutiveProcessObjectName(PyMOLGlobals *G,char *proposed,char *actual);
 
-int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state,int query,float *result);
+int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state,int query,float *result,int quiet);
 int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
                                       char *s1,int log,float *matrix,
                                       int homogenous,int global);
