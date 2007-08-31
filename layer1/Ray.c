@@ -1467,13 +1467,13 @@ void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
       norm = base->Normal+3*base->Vert2Normal[prim->vert]+3;
       switch(prim->type) {
       case cPrimTriangle:
-	sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
+        sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
                 vert[0],vert[1],vert[2]-z_corr);
         UtilConcatVLA(&objVLA,&oc,buffer);
-	sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
+        sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
                 vert[3],vert[4],vert[5]-z_corr);
         UtilConcatVLA(&objVLA,&oc,buffer);
-	sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
+        sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
                 vert[6],vert[7],vert[8]-z_corr);
         UtilConcatVLA(&objVLA,&oc,buffer);
         sprintf(buffer,"vn %8.6f %8.6f %8.6f\n",
@@ -1485,8 +1485,14 @@ void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
         sprintf(buffer,"vn %8.6f %8.6f %8.6f\n",
 		norm[6],norm[7],norm[8]);
         UtilConcatVLA(&objVLA,&oc,buffer);
-        sprintf(buffer,"f %d//%d %d//%d %d//%d\n",
-                vc+1,nc+1,vc+2,nc+2,vc+3,nc+3);
+
+        if(TriangleReverse(prim)) {
+          sprintf(buffer,"f %d//%d %d//%d %d//%d\n",
+                  vc+1,nc+1,vc+3,nc+3,vc+2,nc+2);
+        } else {
+          sprintf(buffer,"f %d//%d %d//%d %d//%d\n",
+                  vc+1,nc+1,vc+2,nc+2,vc+3,nc+3);
+        }
         UtilConcatVLA(&objVLA,&oc,buffer);
         nc+=3;
         vc+=3;
