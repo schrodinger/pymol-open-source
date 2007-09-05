@@ -500,12 +500,12 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule *I, float *point, float 
   int result = -1;
   float tot_weight = 0.0F;
   float cutoff2 = cutoff * cutoff;
+  register float nearest = -1.0F;
 
   color[0] = 0.0F;
   color[1] = 0.0F;
   color[2] = 0.0F;
 
-  register float nearest = -1.0F;
   if(state<0)
     state = ObjectGetCurrentState(&I->Obj,true);
   
