@@ -131,6 +131,7 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
           v+=9;
         }
         glEnable(GL_LIGHTING);
+        glEnable(GL_BLEND);
         if(float_text)
           glEnable(GL_DEPTH_TEST);	 
       }

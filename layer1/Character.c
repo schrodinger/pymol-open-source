@@ -190,6 +190,25 @@ float CharacterGetAdvance(PyMOLGlobals *G,int sampling, int id)
   return rec->Advance/sampling;
 }
 
+void CharacterRenderOpenGLPrime(PyMOLGlobals *G,RenderInfo *info)
+{
+  if(G->HaveGUI &&  G->ValidContext) {
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+  }
+}
+
+void CharacterRenderOpenGLDone(PyMOLGlobals *G, RenderInfo *info)
+{
+  if(G->HaveGUI &&  G->ValidContext) {
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
+  } 
+}
+
+
 void CharacterRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int id)
 /* need orientation matrix */
 {
@@ -201,9 +220,8 @@ void CharacterRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int id)
   if(G->HaveGUI &&  G->ValidContext && texture_id) {
     if(info)
       sampling = (float)info->sampling;
-    glEnable(GL_TEXTURE_2D);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-    if(glIsTexture(texture_id)) {
+    /*    if(glIsTexture(texture_id)) -- BAD -- impacts performance */
+    {
       float *v,v0[3];
       float v1[3];
       glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -215,8 +233,6 @@ void CharacterRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int id)
       v1[0] += rec->Width/sampling;
       v1[1] += rec->Height/sampling;
       /*      glColor4f(0.5F,0.5F,0.5F,1.0F);*/
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glBegin(GL_QUADS);
       glTexCoord2f(0.0F, 0.0F); glVertex3f(v0[0],v0[1],v0[2]);
       glTexCoord2f(0.0F, rec->extent[1]); glVertex3f(v0[0],v1[1],v0[2]);
@@ -225,7 +241,6 @@ void CharacterRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int id)
       glEnd();
       TextAdvance(G,rec->Advance/sampling);
     }
-    glDisable(GL_TEXTURE_2D);
   }
 }
 

@@ -160,6 +160,7 @@ static char *_FontTypeRenderOpenGL(RenderInfo *info,
       if(rpos) {
         TextIndent(G,x_indent,y_indent);
       }
+      CharacterRenderOpenGLPrime(G,info);
       while((c=*(st++))) {
         if(unicnt) {
           if(!(c&0x80)) /* corrupt UTF8 */
@@ -207,6 +208,7 @@ static char *_FontTypeRenderOpenGL(RenderInfo *info,
           last_c = c;
         }
       }
+      CharacterRenderOpenGLDone(G,info);
       if(!pushed) {
         ScenePopRasterMatrix(G);
       }

@@ -1306,6 +1306,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
         PyMOLCheckOpenGLErr("OrthoDoDraw final checkpoint");
 
     } /* while */
+
   }
 
   I->DirtyFlag =false;
