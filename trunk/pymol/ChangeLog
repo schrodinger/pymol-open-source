@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2007-09-04  Warren L. DeLano <warren@delsci.com>
+
+	* eliminated some performance bottlenecks affecting virtualized
+	  OpenGL contexts with texture_fonts enabled
+	
 2007-08-30  Warren L. DeLano <warren@delsci.com>
 
 	* fixed VRML2 normals for rotated views (thanks Aaron Bryden!)

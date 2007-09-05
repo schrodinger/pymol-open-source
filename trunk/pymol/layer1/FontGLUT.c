@@ -168,6 +168,8 @@ static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float s
         FontGLUTSave(I);
       }
 
+      if(textured) 
+        CharacterRenderOpenGLPrime(G,info);
       while((c=*(st++))) {
         if ((c >= first) && (c < last))
           {
@@ -207,6 +209,8 @@ static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float s
             }
           }
       }
+      if(textured) 
+        CharacterRenderOpenGLDone(G,info);
                 
       if(textured && !pushed) {
         ScenePopRasterMatrix(G);

@@ -84,7 +84,7 @@ void PyMOLDrawPixels(GLsizei width,
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   
   glDrawPixels(width,height,format,type,pixels);
-  
+
   /* Restore current pixel store state. */
   glPixelStorei(GL_UNPACK_SWAP_BYTES, swapbytes);
   glPixelStorei(GL_UNPACK_LSB_FIRST, lsbfirst);

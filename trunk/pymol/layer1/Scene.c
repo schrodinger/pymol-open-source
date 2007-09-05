@@ -2404,6 +2404,7 @@ void SceneDraw(Block *block)
   PyMOLGlobals *G=block->G;
   register CScene *I=G->Scene;
   int overlay,text;
+  
   if(G->HaveGUI && G->ValidContext) {
 
     I->ButtonsShown = false;
@@ -2538,7 +2539,6 @@ void SceneDraw(Block *block)
               glRasterPos3i((int)((I->Width-tmp_width)/2+I->Block->rect.left),
                             (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-10);
               PyMOLDrawPixels(tmp_width,tmp_height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
-                  
             }
             FreeP(buffer);
           }
@@ -2682,6 +2682,7 @@ void SceneDraw(Block *block)
       I->RenderTime = -I->LastRender;
       I->LastRender = UtilGetSeconds(G);
       I->RenderTime += I->LastRender;
+
     }
 #if 0
     SceneDrawButtons(block);
@@ -7423,7 +7424,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       glDisable(GL_LIGHT1);
       glDisable(GL_COLOR_MATERIAL);
       glDisable(GL_DITHER);
-    }
+    } 
     glLineWidth(1.0);
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_BLEND);

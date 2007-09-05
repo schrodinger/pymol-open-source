@@ -96,7 +96,10 @@ int CharacterFind(PyMOLGlobals *G,CharFngrprnt *fprnt);
 float CharacterInterpolate(PyMOLGlobals *G,int id,float *v);
 void CharacterSetRetention(PyMOLGlobals *G,int retail_all);
 unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals *G,int id);
+
+void CharacterRenderOpenGLPrime(PyMOLGlobals *G,RenderInfo *info);
 void CharacterRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int id);
+void CharacterRenderOpenGLDone(PyMOLGlobals *G, RenderInfo *info);
 
 #endif
 
