@@ -1485,7 +1485,6 @@ void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
         sprintf(buffer,"vn %8.6f %8.6f %8.6f\n",
 		norm[6],norm[7],norm[8]);
         UtilConcatVLA(&objVLA,&oc,buffer);
-
         if(TriangleReverse(prim)) {
           sprintf(buffer,"f %d//%d %d//%d %d//%d\n",
                   vc+1,nc+1,vc+3,nc+3,vc+2,nc+2);

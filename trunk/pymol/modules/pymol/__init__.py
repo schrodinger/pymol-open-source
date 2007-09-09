@@ -301,6 +301,10 @@ if pymol_launch != 3: # if this isn't a dry run
                 if renderer[0:18]=='Mesa GLX Indirect':
                     cmd.set('ribbon_smooth',0,quiet=1)
 
+            elif vendor[0:9]=='Parallels':
+                if renderer[0:8]=='Parallel':
+                    cmd.set('texture_fonts',1)
+                    
             elif vendor[0:3]=='ATI':
                 cmd.set('ribbon_smooth',0,quiet=1)
                 if renderer[0:17]=='FireGL2 / FireGL3':

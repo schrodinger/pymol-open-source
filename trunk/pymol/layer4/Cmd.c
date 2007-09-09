@@ -2982,7 +2982,7 @@ static int ExecutiveIsomeshEtc(PyMOLGlobals *G,
                                float carve, int map_state, int quiet,
                                int mesh_mode, int box_mode, float alt_lvl) 
 {
-  int ok=false;
+  int ok=true;
   CObject *obj=NULL,*mObj,*origObj;
   ObjectMap *mapObj;
   float mn[3] = { 0,0,0};

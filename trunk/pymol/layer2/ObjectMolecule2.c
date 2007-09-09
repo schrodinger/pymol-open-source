@@ -3588,10 +3588,18 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   int connect_bonded = SettingGetGlobal_b(G,cSetting_connect_bonded);
   int connect_mode = SettingGetGlobal_i(G,cSetting_connect_mode);
   int unbond_cations = SettingGetGlobal_i(G,cSetting_pdb_unbond_cations);
+  int ignore_conect = false;
   cutoff_v=SettingGet(G,cSetting_connect_cutoff);
   cutoff_s=cutoff_v + 0.2F;
   cutoff_h=cutoff_v - 0.2F;
   max_cutoff = cutoff_s;
+
+  if(connect_mode==2) { /* force use of distance-based connectivity,
+                         ignoring that provided with file */
+    bondSearchFlag = true;
+    cs->NTmpBond = 0;
+    FreeP(cs->TmpBond);
+  }
 
   /*  FeedbackMask[FB_ObjectMolecule]=0xFF;*/
   nBond = 0;
@@ -3612,7 +3620,8 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
       }
       
       switch(connect_mode) {
-      case 0: {
+      case 0: /* distance-based and explicit */
+      case 2: /* distance-based only */ {
         /* distance-based bond location  */
         int violations = 0;
         int *cnt = Alloc(int,cs->NIndex);
@@ -4244,7 +4253,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
       }
       case 1: /* only use explicit connectivity from file (don't do anything) */ 
         break;
-      case 2:  /* dictionary-based connectivity */
+      case 3:  /* dictionary-based connectivity */
         /* TODO */
         break;
       }
