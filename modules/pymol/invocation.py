@@ -26,9 +26,11 @@ if __name__=='pymol.invocation':
     import string
     import sys
     
-    pattern1 = '.pymolrc*'
-    pattern2 = 'pymolrc*'
-
+    pymolrc_pat1 = '.pymolrc*'
+    pymolrc_pat2 = 'pymolrc*'
+    
+    ros_pat = 'run_on_startup*'
+    
     class generic:
         pass
 
@@ -88,26 +90,33 @@ if __name__=='pymol.invocation':
     pyc_re = re.compile(r"\.pyc$|\.PYC$") # not yet used
 
     def get_user_config():
-        lst = glob.glob(pattern1)
+        # current working directory
+        lst = glob.glob(pymolrc_pat1)
+        # users home directory
         if not len(lst): # unix
             if os.environ.has_key("HOME"):
-                lst = glob.glob(os.environ['HOME']+"/"+pattern1)
+                lst = glob.glob(os.environ['HOME']+"/"+pymolrc_pat1)
         if not len(lst): # unix
             if os.environ.has_key("HOME"):
-                lst = glob.glob(os.environ['HOME']+"/"+pattern2)
+                lst = glob.glob(os.environ['HOME']+"/"+pymolrc_pat2)
         if not len(lst): # win32
             if os.environ.has_key("HOMEPATH") and os.environ.has_key("HOMEDRIVE"):
-                lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pattern1)
+                lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pymolrc_pat1)
         if not len(lst): # win32
             if os.environ.has_key("HOMEPATH") and os.environ.has_key("HOMEDRIVE"):
-                lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pattern2)
+                lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pymolrc_pat2)
+        # installation folder (if known)
         if not len(lst): # all
             if os.environ.has_key("PYMOL_PATH"):
-                lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern1)
+                lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pymolrc_pat1)
         if not len(lst): # all
             if os.environ.has_key("PYMOL_PATH"):
-                lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern2)
-        first = []
+                lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pymolrc_pat2)
+        # global run_on_startup script (not overridden by pymolrc files, but is disabled by "-k")
+        if os.environ.has_key("PYMOL_PATH"):
+            first = glob.glob(os.environ['PYMOL_PATH']+"/"+ros_pat)
+        else:
+            first = []
         second = []
         for a in lst:
             if py_re.search(a):
@@ -116,7 +125,6 @@ if __name__=='pymol.invocation':
                 second.append("_do__ @"+a) # preceeding "_ " cloaks 
     #      elif pyc_re.search(a): # ignore compiled versions for now
     #         first.append("_do__ run "+a) # preceeding "_ " cloaks
-
 
         first.sort()
         second.sort()
@@ -135,7 +143,7 @@ if __name__=='pymol.invocation':
         loaded_something = 0
         python_script = None
         # append user settings file as an option
-        options.deferred.extend(get_user_config())
+        pymolrc = get_user_config()
         while 1:
             if not len(av):
                 break
@@ -306,6 +314,8 @@ if __name__=='pymol.invocation':
                     options.rpcServer = 1
                 if "K" in a:
                     options.keep_thread_alive = 1
+                if "k" in a: # suppress reading of .pymolrc and related files
+                    pymolrc = None
                 if "g" in a:
                     options.deferred.append("_do_png %s"%av.pop())
                 if "C" in a:
@@ -349,6 +359,8 @@ if __name__=='pymol.invocation':
                     python_script = a
                 options.deferred.append(a)
                 loaded_something = 1
+        if pymolrc != None:
+            options.deferred = pymolrc + options.deferred
         if loaded_something and (options.after_load_script!=""):
             options.deferred.append(options.after_load_script)
         options.deferred.extend(final_actions)

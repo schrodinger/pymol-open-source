@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2007-09-06  Warren L. DeLano <warren@delsci.com>
+
+	* added -k option to suppress use of .pymolrc, etc.
+	
 2007-09-04  Warren L. DeLano <warren@delsci.com>
 
 	* eliminated some performance bottlenecks affecting virtualized
@@ -32,7 +36,7 @@ CHANGE LOG
 
 	* added store_defaults & related options to reinitialize command
 	
-2007-08-25  Warren L. DeLano <warren@delsci.com
+2007-08-25  Warren L. DeLano <warren@delsci.com>
 
 	* implemented auto_rename_duplicate_objects setting
 		
