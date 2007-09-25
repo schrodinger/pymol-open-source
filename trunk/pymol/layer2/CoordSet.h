@@ -62,6 +62,17 @@ typedef struct CoordSet {
   LabPosType *LabPos;
 
   /* not saved in state */
+
+  /* idea:  
+
+  int start_atix, stop_atix <-- for discrete objects, we need
+  something like this that would enable pymol to skip atoms not in the
+  discrete state...question is: are these atoms sorted together right
+  now or not? probably not, and if not then we need to change sorting
+  for discrete objects to be state-dependent, but this could screw up
+  byres/bychain actions which assume such atoms to be adjancent...
+  */
+
   CGO *SculptCGO;
   MapType *Coord2Idx;
   float Coord2IdxReq,Coord2IdxDiv;
