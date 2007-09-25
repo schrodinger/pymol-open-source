@@ -866,6 +866,9 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 
   /*  printf("inv %d %d \n",type,level);fflush(stdout);*/
 
+  if(level>=cRepInvVisib) {
+    I->Obj->RepVisCacheValid = false;
+  }
   if(level==cRepInvVisib) {
     if(SettingGet_b(I->State.G,I->Setting,I->Obj->Obj.Setting,
                     cSetting_cartoon_side_chain_helper)) {
@@ -1322,23 +1325,22 @@ void CoordSetExtendIndices(CoordSet *I,int nAtom)
       }
     }
   }
-  if(I->NAtIndex<nAtom)
-	 {
-		if(I->AtmToIdx) {
-        I->AtmToIdx = Realloc(I->AtmToIdx,int,nAtom);
-        if(nAtom){
-          ErrChkPtr(I->State.G,I->AtmToIdx);
-          for(a=I->NAtIndex;a<nAtom;a++)
-            I->AtmToIdx[a]=-1;
-        }
-        I->NAtIndex = nAtom;
-      } else if(!obj->DiscreteFlag) {
-        I->AtmToIdx = Alloc(int,nAtom);
-        for(a=0;a<nAtom;a++)
+  if(I->NAtIndex<nAtom) {
+    if(I->AtmToIdx) {
+      I->AtmToIdx = Realloc(I->AtmToIdx,int,nAtom);
+      if(nAtom) {
+        ErrChkPtr(I->State.G,I->AtmToIdx);
+        for(a=I->NAtIndex;a<nAtom;a++)
           I->AtmToIdx[a]=-1;
-        I->NAtIndex = nAtom;
-		}
-	 }
+      }
+      I->NAtIndex = nAtom;
+    } else if(!obj->DiscreteFlag) {
+      I->AtmToIdx = Alloc(int,nAtom);
+      for(a=0;a<nAtom;a++)
+        I->AtmToIdx[a]=-1;
+      I->NAtIndex = nAtom;
+    }
+  }
 }
 /*========================================================================*/
 void CoordSetAppendIndices(CoordSet *I,int offset) 

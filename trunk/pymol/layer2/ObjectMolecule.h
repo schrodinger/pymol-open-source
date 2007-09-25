@@ -64,10 +64,11 @@ typedef struct ObjectMolecule {
   CGO *UnitCellCGO;
   int BondCounter;
   int AtomCounter;
+  /* not stored */
   struct CSculpt *Sculpt;
+  int RepVisCacheValid;
   signed char RepVisCache[cRepCnt]; /* for transient storage during updates */
 
-  /* not stored */
 } ObjectMolecule;
 
 typedef struct ObjectMoleculeOpRec {
@@ -303,7 +304,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *obj,cha
 ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals *G,ObjectMolecule *I,char *MMDStr,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char *PDBStr,int frame,int discrete);
 
-void ObjectMoleculeExtendIndices(ObjectMolecule *I);
+void ObjectMoleculeExtendIndices(ObjectMolecule *I,int state);
 
 void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level,int state);
 
