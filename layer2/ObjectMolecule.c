@@ -1832,7 +1832,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals *G,ObjectMolecule *I,char 
     I->CSTmpl = cset; /* save template coordinate set */
 
     SceneCountFrames(G);
-    ObjectMoleculeExtendIndices(I);
+    ObjectMoleculeExtendIndices(I,-1);
     ObjectMoleculeSort(I);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
@@ -2241,7 +2241,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals *G,ObjectMolecule *I,CRaw *pm
         SymmetryAttemptGeneration(I->Symmetry,false);
       }
       SceneCountFrames(G);
-      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeExtendIndices(I,frame);
       ObjectMoleculeSort(I);
       ObjectMoleculeUpdateIDNumbers(I);
       ObjectMoleculeUpdateNonbonded(I);
@@ -3086,7 +3086,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,
     }
 
     SceneCountFrames(G);
-    ObjectMoleculeExtendIndices(I);
+    ObjectMoleculeExtendIndices(I,frame);
     ObjectMoleculeSort(I);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
@@ -3251,7 +3251,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele,int state)
           AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,nai,nH);
 
           ObjectMoleculeMerge(I,nai,cs,false,cAIC_AllMask,true); /* will free nai and cs->TmpLinkBond  */
-          ObjectMoleculeExtendIndices(I);
+          ObjectMoleculeExtendIndices(I,state);
           ObjectMoleculeUpdateNeighbors(I);
 
           for(b=0;b<I->NCSet;b++) { /* add coordinate into the coordinate set */
@@ -3437,7 +3437,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,
 
     ObjectMoleculeMerge(I,nai,cs,false,cAIC_AllMask,true); /* will free nai, cs->TmpBond and cs->TmpLinkBond  */
 
-    ObjectMoleculeExtendIndices(I);
+    ObjectMoleculeExtendIndices(I,-1);
     ObjectMoleculeUpdateNeighbors(I);
     for(a=0;a<I->NCSet;a++) { /* add coordinate into the coordinate set */
       tcs = I->CSet[a];
@@ -3596,7 +3596,7 @@ void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai)
   ObjectMoleculePrepareAtom(I,index,nai);
   d = AtomInfoGetBondLength(I->Obj.G,ai,nai);
   ObjectMoleculeMerge(I,nai,cs,false,cAIC_AllMask,true); /* will free nai and cs->TmpLinkBond  */
-  ObjectMoleculeExtendIndices(I);
+  ObjectMoleculeExtendIndices(I,-1);
   ObjectMoleculeUpdateNeighbors(I);
   for(a=0;a<I->NCSet;a++) { /* add atom to each coordinate set */
     if(I->CSet[a]) {
@@ -3654,7 +3654,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
       ObjectMoleculePrepareAtom(I,index,nai);
       d = AtomInfoGetBondLength(I->Obj.G,ai,nai);
       ObjectMoleculeMerge(I,nai,cs,false,cAIC_AllMask,true); /* will free nai and cs->TmpLinkBond  */
-      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeExtendIndices(I,-1);
       ObjectMoleculeUpdateNeighbors(I);
       for(a=0;a<I->NCSet;a++) { /* add atom to each coordinate set */
         if(I->CSet[a]) {
@@ -6951,7 +6951,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,
       SymmetryAttemptGeneration(I->Symmetry,false);
     }
     SceneCountFrames(G);
-    ObjectMoleculeExtendIndices(I);
+    ObjectMoleculeExtendIndices(I,frame);
     ObjectMoleculeSort(I);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
@@ -7054,19 +7054,34 @@ void ObjectMoleculeBlindSymMovie(ObjectMolecule *I)
 }
 
 /*========================================================================*/
-void ObjectMoleculeExtendIndices(ObjectMolecule *I)
+void ObjectMoleculeExtendIndices(ObjectMolecule *I,int state)
 {
   int a;
   CoordSet *cs;
 
-  for(a=-1;a<I->NCSet;a++) {
-    if(a<0) 
-      cs=I->CSTmpl;
-    else
-      cs=I->CSet[a];
-	 if(cs)
+  if(I->DiscreteFlag && (state>=0)) {
+    /* if object is discrete, then we don't need to extend each state,
+       just the current one (which updates object DiscreteAtmToIdx) */
+    cs=I->CSTmpl;
+    if(cs)
       if(cs->fExtendIndices)
         cs->fExtendIndices(cs,I->NAtom);
+    if(state<I->NCSet) {
+      cs = I->CSet[state];
+     if(cs)
+        if(cs->fExtendIndices)
+          cs->fExtendIndices(cs,I->NAtom);
+    }
+  } else { /* do all states */
+    for(a=-1;a<I->NCSet;a++) {
+      if(a<0) 
+        cs=I->CSTmpl;
+      else
+        cs=I->CSet[a];
+      if(cs)
+        if(cs->fExtendIndices)
+          cs->fExtendIndices(cs,I->NAtom);
+    }
   }
 }
 /*========================================================================*/
@@ -8025,7 +8040,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
       
       if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
       
-      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeExtendIndices(I,frame);
       ObjectMoleculeSort(I);
       
       deferred_tasks = true;
@@ -9931,7 +9946,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                   }
                 }
               switch(op->code) { /* full coord-set based */
-              case OMOP_INVA:
+              case OMOP_INVA: /* shouldn't this be calling the object invalidation routine instead? */
                 if(inv_flag) {
                   if(op->i1<0) {
                     /* invalidate all representations */
@@ -10129,16 +10144,18 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
 {
   int a;
   OrthoBusyPrime(I->Obj.G);
-  { /* note which representations are active */
-    int b;
-    AtomInfoType *ai = I->AtomInfo;    
-    signed char *rv = I->RepVisCache;
+  if(!I->RepVisCacheValid) {
+    /* note which representations are active */
+    register int b;
+    register signed char *repVisCache = I->RepVisCache;
     if(I->NCSet>1) {
+      register AtomInfoType *ai = I->AtomInfo;
       for(b=0;b<cRepCnt;b++)
         I->RepVisCache[b]=0;
       for(a=0;a<I->NAtom;a++) {
+        register signed char *rv = repVisCache;
         for(b=0;b<cRepCnt;b++) {
-          rv[b] = rv[b] || ai->visRep[b];
+          *(rv++) = (*rv) || ai->visRep[b];
         }
         ai++;
       }
@@ -10146,8 +10163,9 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
       for(b=0;b<cRepCnt;b++) /* if only one coordinate set, then
                               * there's no benefit to pre-filtering
                               * the representations... */
-        I->RepVisCache[b]=1;
+        repVisCache[b]=1;
     }
+    I->RepVisCacheValid = true;
   }
   
   {
@@ -10229,6 +10247,10 @@ void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level,int state)
     " ObjectMoleculeInvalidate: entered. rep: %d level: %d\n",rep,level
     ENDFD;
 
+  if(level>=cRepInvVisib) {
+    I->RepVisCacheValid=false;
+  }
+    
   if(level>=cRepInvBonds) {
     VLAFreeP(I->Neighbor); /* set I->Neighbor to NULL */
     if(I->Sculpt) {
@@ -10677,7 +10699,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals *G,int type)
   I->NBond = 0;
   I->Bond = VLACalloc(BondType,0);
   
-  ObjectMoleculeExtendIndices(I);
+  ObjectMoleculeExtendIndices(I,frame);
   ObjectMoleculeSort(I);
   ObjectMoleculeUpdateIDNumbers(I);
   ObjectMoleculeUpdateNonbonded(I);
@@ -10730,6 +10752,7 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals *G,int discreteFlag)
   I->CurCSet=0;
   I->Symmetry=NULL;
   I->Neighbor=NULL;
+  I->RepVisCacheValid = false;
   for(a=0;a<=cUndoMask;a++) {
     I->UndoCoord[a]=NULL;
     I->UndoState[a]=-1;
@@ -10910,7 +10933,7 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       I->CSet[frame] = cset;
       if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
       SceneCountFrames(G);
-      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeExtendIndices(I,frame);
       ObjectMoleculeSort(I);
       ObjectMoleculeUpdateIDNumbers(I);
       ObjectMoleculeUpdateNonbonded(I);
@@ -11141,7 +11164,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
         }
       }
       SceneCountFrames(G);
-      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeExtendIndices(I,state);
       ObjectMoleculeSort(I);
       ObjectMoleculeUpdateIDNumbers(I);
       ObjectMoleculeUpdateNonbonded(I);
@@ -11451,7 +11474,7 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
       
         if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
         
-        ObjectMoleculeExtendIndices(I);
+        ObjectMoleculeExtendIndices(I,frame);
         ObjectMoleculeSort(I);
             
         deferred_tasks = true;
@@ -11573,7 +11596,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,
       if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
       
       SceneCountFrames(G);
-      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeExtendIndices(I,frame);
       ObjectMoleculeSort(I);
       if(finish) {
         ObjectMoleculeUpdateIDNumbers(I);

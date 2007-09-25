@@ -334,7 +334,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
         if(cset->fEnumIndices) cset->fEnumIndices(cset);
         if(!ai_merged) {
           ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_AllMask,true); /* NOTE: will release atInfo */
-          ObjectMoleculeExtendIndices(I);
+          ObjectMoleculeExtendIndices(I,-1);
           ObjectMoleculeUpdateNeighbors(I);
           ai_merged = true;
         }

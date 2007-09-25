@@ -6818,7 +6818,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
   /* cs->IdxToAtm will now have the reverse mapping from the new subset
      to the new merged molecule */
 
-  ObjectMoleculeExtendIndices(targ);
+  ObjectMoleculeExtendIndices(targ,-1);
   ObjectMoleculeUpdateNonbonded(targ);
   
   if(!isNew) { /* recreate selection table */
