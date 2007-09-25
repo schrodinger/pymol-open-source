@@ -716,7 +716,7 @@ typedef struct _CPyMOL {
   ov_word lex_cgo_ellipsoid_quality;
   ov_word lex_movie_animate_by_frame;
   ov_word lex_ramp_blend_nearby_colors;
-
+  ov_word lex_auto_defer_builds;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1440,6 +1440,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(cgo_ellipsoid_quality, 564);
   LEX_SETTING(movie_animate_by_frame, 565);
   LEX_SETTING(ramp_blend_nearby_colors, 566);
+  LEX_SETTING(auto_defer_builds, 567);
 
  return_OVstatus_SUCCESS;
 }

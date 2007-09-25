@@ -5973,6 +5973,7 @@ void SceneUpdate(PyMOLGlobals *G)
     " SceneUpdate: entered.\n"
     ENDFD;
 
+  OrthoBusyPrime(G);
   EditorUpdate(G);
   if(I->ChangedFlag || ((cur_state != I->LastStateBuilt) && 
                         (defer_builds_mode>0))) {

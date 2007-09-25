@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2007-09-24  Warren L. DeLano <warren@delsci.com>
+
+	* added auto_defer_builds setting
+	
+	* fixed performance bug w/ large discrete objects (10^3 states)
+	
+2007-09-20  Warren L. DeLano <warren@delsci.com>
+
+	* fixed starup problem with "Documents" folder on Windows Vista
+	
 2007-09-06  Warren L. DeLano <warren@delsci.com>
 
 	* added -k option to suppress use of .pymolrc, etc.

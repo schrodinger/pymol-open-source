@@ -3565,6 +3565,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_cgo_ellipsoid_quality, -1);
     set_b(I,cSetting_movie_animate_by_frame,0);
     set_b(I,cSetting_ramp_blend_nearby_colors,0);
+    set_i(I,cSetting_auto_defer_builds,500); /* 500 or more states, then automatically defer builds */
   }
 
 }

@@ -12844,9 +12844,14 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
 
     if(WordMatch(G,cKeywordAll,obj->Name,true)<0) {
       PRINTFB(G,FB_Executive,FB_Warnings) 
-        " Executive: object name \"%s\" is illegal -- renamed to 'all_'.",obj->Name
+        " Executive: object name \"%s\" is illegal -- renamed to 'all_'.\n",obj->Name
         ENDFB(G);
       strcat(obj->Name,"_"); /* don't allow object named "all" */
+    }
+    if(SelectorNameIsKeyword(G, obj->Name)) {
+      PRINTFB(G,FB_Executive,FB_Warnings) 
+        " Executive-Warning: name \"%s\" collides with a selection language keyword.\n",obj->Name
+        ENDFB(G);
     }
     strcpy(rec->name,obj->Name);
     rec->type=cExecObject;
@@ -12888,6 +12893,16 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
       if(objMol->NCSet==1) {
         ExecutiveAssignSS(G,obj->Name,0,NULL,1,1);
       }
+    }
+  }
+  
+  if(obj->fGetNFrame) {
+    int n_state = rec->obj->fGetNFrame(rec->obj);
+    int defer_limit = SettingGetGlobal_i(G,cSetting_auto_defer_builds);
+    if( (defer_limit>=0) && (n_state >= defer_limit)) {
+      int defer_builds = SettingGetGlobal_b(G,cSetting_defer_builds_mode);
+      if(!defer_builds)
+        SettingSetGlobal_b(G,cSetting_defer_builds_mode, 1);
     }
   }
 

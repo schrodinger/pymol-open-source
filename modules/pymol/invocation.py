@@ -290,9 +290,13 @@ if __name__=='pymol.invocation':
                         if os.environ.has_key("HOMEDRIVE") and os.environ.has_key("HOMEPATH"):
                             path = os.environ["HOMEDRIVE"] + os.environ["HOMEPATH"]
                             if os.path.isdir(path):
-                                my_docs = os.path.join(path,"My Documents")
-                                if os.path.isdir(my_docs): # start in My Documents (if exists)
+                                my_docs = os.path.join(path,"Documents") # for VISTA compatibility
+                                if os.path.isdir(my_docs): # start in Documents (if exists)
                                     path = my_docs
+                                else:
+                                    my_docs = os.path.join(path,"My Documents")                                    
+                                    if os.path.isdir(my_docs): # start in My Documents (if exists)
+                                        path = my_docs
                                 options.deferred.append("_do__ cmd.cd('''%s''')"%string.replace(path,"\\","\\\\"))
                     elif os.environ.has_key("HOME"):
                         path = os.environ["HOME"]
