@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2007-09-26  Warren L. DeLano <warren@delsci.com>
+
+	* bug fix with auto_defer_builds
+
+	* can now open multiple files at once
+	
 2007-09-24  Warren L. DeLano <warren@delsci.com>
 
 	* added auto_defer_builds setting
