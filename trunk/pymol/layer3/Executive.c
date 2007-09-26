@@ -12897,7 +12897,7 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
   }
   
   if(obj->fGetNFrame) {
-    int n_state = rec->obj->fGetNFrame(rec->obj);
+    int n_state = obj->fGetNFrame(obj);
     int defer_limit = SettingGetGlobal_i(G,cSetting_auto_defer_builds);
     if( (defer_limit>=0) && (n_state >= defer_limit)) {
       int defer_builds = SettingGetGlobal_b(G,cSetting_defer_builds_mode);
