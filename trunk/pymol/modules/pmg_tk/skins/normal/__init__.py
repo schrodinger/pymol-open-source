@@ -446,18 +446,21 @@ class Normal(PMGSkin):
             initdir = os.environ['TUT']
             # only list file extensions that are used for tutorial data
             ftypes = [("Tutorial Data","*.pdb"),]
-        ofile = askopenfilename(initialdir = initdir,
-                                        filetypes=ftypes)
-        if len(ofile):
-            if not tutorial:
-                self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
-            try:
-                self.cmd.log("load %s\n"%ofile,"cmd.load('%s',quiet=0)\n"%ofile)
-                if (string.lower(ofile[-4:])=='.pse') and (ofile!=self.save_file):
-                    self.save_file = '' # remove ambiguous default
-                self.cmd.load(ofile,quiet=0)
-            except self.pymol.CmdException:
-                print "Error: unable to open file '%s'"%ofile
+        ofile_list = askopenfilename(initialdir = initdir,
+                                     filetypes=ftypes,
+                                     multiple=1)
+        for ofile in ofile_list:
+            if len(ofile):
+                print ofile
+                if not tutorial:
+                    self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
+                try:
+                    self.cmd.log("load %s\n"%ofile,"cmd.load('%s',quiet=0)\n"%ofile)
+                    if (string.lower(ofile[-4:])=='.pse') and (ofile!=self.save_file):
+                        self.save_file = '' # remove ambiguous default
+                    self.cmd.load(ofile,quiet=0)
+                except self.pymol.CmdException:
+                    print "Error: unable to open file '%s'"%ofile
 
     def log_open(self):
         sfile = asksaveasfilename(initialfile = self.log_file,
