@@ -1440,7 +1440,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
           src+=5;
         }
         {
-          MapType *map = MapNew(G,range,v_tmp,nc,NULL); 
+          map = MapNew(G,range,v_tmp,nc,NULL); 
           I->VN = Alloc(float,I->NC*3);
           if(map && I->VN) {
             float dst;
@@ -1508,8 +1508,9 @@ Rep *RepSphereNew(CoordSet *cs,int state)
           }
         }
       }
-      FreeP(v_tmp);
       MapFree(map);
+      map=NULL;
+      FreeP(v_tmp);
       map = NULL;
       FreeP(active);
     }

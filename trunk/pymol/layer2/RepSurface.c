@@ -1608,8 +1608,8 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
       sp = G->Sphere->Sphere[4];
       ssp = G->Sphere->Sphere[3];
-       if(circumscribe<0)
-         circumscribe = 71;
+      if(circumscribe<0)
+        circumscribe = 71;
       break;
     case 2:
       /* nearly perfect */
@@ -1697,19 +1697,19 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
 
   /* OOCalloc takes care of all this 
 
-     I->N=0;
-     I->NT=0;
-     I->S=NULL;
-     I->V=NULL;
-     I->VC=NULL;
-     I->Vis=NULL;
-     I->VN=NULL;
-     I->T=NULL;
-     I->Dot=NULL;
-     I->NDot=0;
-     I->LastVisib=NULL;
-     I->LastColor=NULL;
-     I->debug = NULL;
+  I->N=0;
+  I->NT=0;
+  I->S=NULL;
+  I->V=NULL;
+  I->VC=NULL;
+  I->Vis=NULL;
+  I->VN=NULL;
+  I->T=NULL;
+  I->Dot=NULL;
+  I->NDot=0;
+  I->LastVisib=NULL;
+  I->LastColor=NULL;
+  I->debug = NULL;
   */
 
   I->R.fRender=(void (*)(struct Rep *, RenderInfo *info))RepSurfaceRender;
@@ -1724,7 +1724,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   /* don't waist time computing a Surface unless we need it!! */
   for(a=0;a<cs->NIndex;a++) {
     ai1=obj->AtomInfo+cs->IdxToAtm[a];
-	 if(ai1->visRep[cRepSurface]&&
+    if(ai1->visRep[cRepSurface]&&
        ((!cullByFlag)|
         (!(ai1->flags&(cAtomFlag_exfoliate)))))
       SurfaceFlag=true;
@@ -1733,14 +1733,14 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   }
   if(SurfaceFlag) {
       
-	 OrthoBusyFast(G,0,1);
+    OrthoBusyFast(G,0,1);
 
     n_present = cs->NIndex;
 
     carve_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
     carve_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
     if((!carve_selection)||(!carve_selection[0]))
-       carve_cutoff=0.0F;
+      carve_cutoff=0.0F;
     if(carve_cutoff>0.0F) {
       carve_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
       carve_cutoff += 2*I->max_vdw+probe_radius;
@@ -1850,10 +1850,24 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       MaxN = n_present*ssp->nDot;
     else
       MaxN = n_present*sp->nDot;
-	 I->V=Alloc(float,(MaxN+1)*3);
-	 I->VN=Alloc(float,(MaxN+1)*3);
 
-     if(!(I->V&&I->VN)) { /* bail out point -- try to reduce crashes */
+    /* WLD note to self -- here is where a surface caching routine would take over based on:
+
+    the basic concept is that all state used to compute the surface
+    past this point needs to be copied into a hashable structure...
+
+    - which atoms are present, which atoms are to be surfaced
+    - probe radius
+    - coordinates and radii of atoms
+    - extent for the calculation
+    - tons of settings
+       
+    */
+
+    I->V=Alloc(float,(MaxN+1)*3);
+    I->VN=Alloc(float,(MaxN+1)*3);
+
+    if(!(I->V&&I->VN)) { /* bail out point -- try to reduce crashes */
       PRINTFB(G,FB_RepSurface,FB_Errors)
         "Error-RepSurface: insufficient memory to calculate surface at this quality.\n"
         ENDFB(G);
@@ -1866,10 +1880,10 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       OOFreeP(I);
       return NULL;
     }
-	 I->N=0;
-     v=I->V;
-     vn=I->VN; 
-
+    I->N=0;
+    v=I->V;
+    vn=I->VN; 
+     
     RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent,present,circumscribe);
 
     if(!surface_solvent) {
@@ -1922,8 +1936,8 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
             n0 = I->DotNormal;
             for(a=0;a<I->NDot;a++) {
               if(dc[a]||(surface_type<6)) { /* surface type 6 is completely scribed */
-              OrthoBusyFast(G,a+I->NDot*2,I->NDot*5); /* 2/5 to 3/5 */
-              for(b=0;b<sp->nDot;b++) {
+                OrthoBusyFast(G,a+I->NDot*2,I->NDot*5); /* 2/5 to 3/5 */
+                for(b=0;b<sp->nDot;b++) {
                   register int ii;
                   v[0]=v0[0]+dot[b][0];
                   v[1]=v0[1]+dot[b][1];
@@ -2442,6 +2456,9 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       " RepSurfaceNew-DEBUG: %i surface points after trimming.\n",I->N
       ENDFD;
     
+    /* WLD -- note to seld: here is where the caching algorithm should
+     * return the completed surface */
+
     RepSurfaceColor(I,cs);
 
     PRINTFD(G,FB_RepSurface)
