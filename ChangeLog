@@ -6,7 +6,7 @@ CHANGE LOG
 
 	* bug fix with auto_defer_builds
 
-	* can now open multiple files at once
+	* can now open multiple files at once (tcl/tk file open)
 	
 2007-09-24  Warren L. DeLano <warren@delsci.com>
 
