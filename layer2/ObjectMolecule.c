@@ -6339,11 +6339,10 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
 	 atInfo = *atInfoPtr;
 
   atomList = PyObject_GetAttrString(model,"atom");
-  if(atomList) 
+  if(atomList && PyList_Check(atomList)) 
     nAtom = PyList_Size(atomList);
   else 
     ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get atom list");
-
 
   if(ok) {
     coord=VLAlloc(float,3*nAtom);
@@ -6758,75 +6757,77 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
     }
   }
 
-  bondList = PyObject_GetAttrString(model,"bond");
-  if(bondList) 
-    nBond = PyList_Size(bondList);
-  else
+  if(nAtom) {
+    bondList = PyObject_GetAttrString(model,"bond");
+    if(bondList && PyList_Check(bondList)) 
+      nBond = PyList_Size(bondList);
+    else
     ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get bond list");
-
-  if(ok) {
-    bond=VLACalloc(BondType,nBond);
-    ii=bond;
-	 for(a=0;a<nBond;a++)
+    
+    if(ok) {
+      bond=VLACalloc(BondType,nBond);
+      ii=bond;
+      for(a=0;a<nBond;a++)
 		{
-        bnd = PyList_GetItem(bondList,a);
-        if(!bnd) 
-          ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get bond");
-        index = PyObject_GetAttrString(bnd,"index");
-        if(!index) 
-          ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get bond indices");
-        else {
-          for(c=0;c<2;c++) {
-            tmp = PyList_GetItem(index,c);
-            if (tmp) 
-              ok = PConvPyObjectToInt(tmp,&ii->index[c]);
-            if(!ok) {
-              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read coordinates");
-              break;
+          bnd = PyList_GetItem(bondList,a);
+          if(!bnd) 
+            ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get bond");
+          index = PyObject_GetAttrString(bnd,"index");
+          if(!index) 
+            ok=ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't get bond indices");
+          else {
+            for(c=0;c<2;c++) {
+              tmp = PyList_GetItem(index,c);
+              if (tmp) 
+                ok = PConvPyObjectToInt(tmp,&ii->index[c]);
+              if(!ok) {
+                ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read coordinates");
+                break;
+              }
             }
           }
-        }
-        if(ok) {
-          tmp = PyObject_GetAttrString(bnd,"order");
-          if (tmp)
-            ok = PConvPyObjectToInt(tmp,&ii->order);
-          if(!ok) 
-            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read bond order");
-          Py_XDECREF(tmp);
-        }
+          if(ok) {
+            tmp = PyObject_GetAttrString(bnd,"order");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,&ii->order);
+            if(!ok) 
+              ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read bond order");
+            Py_XDECREF(tmp);
+          }
 
-        if(ok) {
-          int stereo;
-          tmp = PyObject_GetAttrString(bnd,"stereo");
-          if (tmp)
-            ok = PConvPyObjectToInt(tmp,&stereo);
-          else 
-            ii->stereo = 0;
-          if(!ok) 
-            ii->stereo = 0;
-          else
-            ii->stereo = stereo;
-          Py_XDECREF(tmp);
-        }
+          if(ok) {
+            int stereo;
+            tmp = PyObject_GetAttrString(bnd,"stereo");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,&stereo);
+            else 
+              ii->stereo = 0;
+            if(!ok) 
+              ii->stereo = 0;
+            else
+              ii->stereo = stereo;
+            Py_XDECREF(tmp);
+          }
 
-        ii->id=a;
-        if(!ignore_ids) { 
-          if(ok) { /* get unique chempy bond id if present */
-            if(PTruthCallStr(bnd,"has","id")) { 
-              tmp = PyObject_GetAttrString(bnd,"id");
-              if (tmp)
-                ok = PConvPyObjectToInt(tmp,&ii->id);
-              if(!ok) 
-                ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read bond identifier");
-              Py_XDECREF(tmp);
-            } else {
-              ii->id=-1;
+          ii->id=a;
+          if(!ignore_ids) { 
+            if(ok) { /* get unique chempy bond id if present */
+              if(PTruthCallStr(bnd,"has","id")) { 
+                tmp = PyObject_GetAttrString(bnd,"id");
+                if (tmp)
+                  ok = PConvPyObjectToInt(tmp,&ii->id);
+                if(!ok) 
+                  ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read bond identifier");
+                Py_XDECREF(tmp);
+              } else {
+                ii->id=-1;
+              }
             }
           }
+          Py_XDECREF(index);
+          ii++;
         }
-        Py_XDECREF(index);
-        ii++;
-      }
+    }
   }
 
   Py_XDECREF(atomList);
@@ -6888,39 +6889,43 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,
       I->Obj.Color = AtomInfoUpdateAutoColor(G);
     }
 
-	 cset=ObjectMoleculeChemPyModel2CoordSet(G,model,&atInfo);	 
+    cset=ObjectMoleculeChemPyModel2CoordSet(G,model,&atInfo);	 
 
-    mol = PyObject_GetAttrString(model,"molecule");
-    if(mol) {
-      if(PyObject_HasAttrString(mol,"title")) {
-        tmp = PyObject_GetAttrString(mol,"title");
-        if(tmp) {
-          UtilNCopy(cset->Name,PyString_AsString(tmp),sizeof(WordType));
-          Py_DECREF(tmp);
-          if(!strcmp(cset->Name,"untitled")) /* ignore untitled */
-            cset->Name[0]=0;
+    if(!cset) 
+      ok = false;
+    else {
+      mol = PyObject_GetAttrString(model,"molecule");
+      if(mol) {
+        if(PyObject_HasAttrString(mol,"title")) {
+          tmp = PyObject_GetAttrString(mol,"title");
+          if(tmp) {
+            UtilNCopy(cset->Name,PyString_AsString(tmp),sizeof(WordType));
+            Py_DECREF(tmp);
+            if(!strcmp(cset->Name,"untitled")) /* ignore untitled */
+              cset->Name[0]=0;
+          }
         }
+        Py_DECREF(mol);
       }
-      Py_DECREF(mol);
+      if(PyObject_HasAttrString(model,"spheroid")&&
+         PyObject_HasAttrString(model,"spheroid_normals"))
+        {
+          tmp = PyObject_GetAttrString(model,"spheroid");
+          if(tmp) {
+            cset->NSpheroid = PConvPyListToFloatArray(tmp,&cset->Spheroid);
+            if(cset->NSpheroid<0) cset->NSpheroid=0;
+            Py_DECREF(tmp);
+          }
+          tmp = PyObject_GetAttrString(model,"spheroid_normals");
+          if(tmp) {
+            PConvPyListToFloatArray(tmp,&cset->SpheroidNormal);
+            Py_DECREF(tmp);
+          }
+        }
+      mol = PyObject_GetAttrString(model,"molecule");
+      
+      nAtom=cset->NIndex;
     }
-    if(PyObject_HasAttrString(model,"spheroid")&&
-       PyObject_HasAttrString(model,"spheroid_normals"))
-      {
-        tmp = PyObject_GetAttrString(model,"spheroid");
-        if(tmp) {
-          cset->NSpheroid = PConvPyListToFloatArray(tmp,&cset->Spheroid);
-          if(cset->NSpheroid<0) cset->NSpheroid=0;
-          Py_DECREF(tmp);
-        }
-        tmp = PyObject_GetAttrString(model,"spheroid_normals");
-        if(tmp) {
-          PConvPyListToFloatArray(tmp,&cset->SpheroidNormal);
-          Py_DECREF(tmp);
-        }
-      }
-    mol = PyObject_GetAttrString(model,"molecule");
-    
-	 nAtom=cset->NIndex;
   }
   /* include coordinate set */
   if(ok) {

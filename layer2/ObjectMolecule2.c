@@ -4295,27 +4295,31 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
     VLACheck((*bond),BondType,(nBond+cs->NTmpBond));
     ii1=(*bond)+nBond;
     ii2=cs->TmpBond;
-    for(a=0;a<cs->NTmpBond;a++)
-      {
+    {
+      register n_atom = I->NAtom;
+      for(a=0;a<cs->NTmpBond;a++) {
         a1 = cs->IdxToAtm[ii2->index[0]]; /* convert bonds from index space */
         a2 = cs->IdxToAtm[ii2->index[1]]; /* to atom space */
-        if(check_conect_all) { 
-          if((!ai[a1].hetatm)&&(!ai[a2].hetatm)) { 
-            /* found bond between non-HETATMs -- so tell PyMOL to CONECT all ATOMs
-             * when writing out a PDB file */
-            pdb_conect_all = true;
+        if((a1>=0)&&(a2>=0)&&(a1<n_atom)&&(a2<n_atom)) {
+          if(check_conect_all) { 
+            if((!ai[a1].hetatm)&&(!ai[a2].hetatm)) { 
+              /* found bond between non-HETATMs -- so tell PyMOL to CONECT all ATOMs
+               * when writing out a PDB file */
+              pdb_conect_all = true;
+            }
           }
+          ai[a1].bonded=true;
+          ai[a2].bonded=true;
+          (*ii1) = (*ii2); /* note this copies owned ids and thus settings etc. */
+          ii1->index[0]=a1;
+          ii1->index[1]=a2;
+          ii1++;
+          ii2++;
+          
         }
-        ai[a1].bonded=true;
-        ai[a2].bonded=true;
-        (*ii1) = (*ii2); /* note this copies owned ids and thus settings etc. */
-        ii1->index[0]=a1;
-        ii1->index[1]=a2;
-        ii1++;
-        ii2++;
-
       }
-
+    }
+      
     nBond=nBond+cs->NTmpBond;
     VLAFreeP(cs->TmpBond);
     cs->NTmpBond=0;

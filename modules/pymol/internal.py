@@ -210,7 +210,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 r = schrodinger.read_maestr(mae_str,str(oname),
                                             int(state),
                                             int(finish),int(discrete),
-                                            int(quiet),int(zoom))
+                                            int(quiet),int(multiplex),int(zoom))
 
                 # END PROPRIETARY CODE SEGMENT
             except ImportError:
