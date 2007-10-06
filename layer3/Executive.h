@@ -69,6 +69,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeG96 46
 #define cLoadTypeDCD 47
 #define cLoadTypeCUBEMap 48
+#define cLoadTypeXYZStr 49
 
 /* NOTE: if you add a type above, then be sure to add corresponding code in:
    CmdLoad

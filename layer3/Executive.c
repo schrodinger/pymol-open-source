@@ -2353,6 +2353,8 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
         case cLoadTypeMOL2Str:
         case cLoadTypeSDF2:
         case cLoadTypeSDF2Str:
+        case cLoadTypeXYZ:
+        case cLoadTypeXYZStr:
           obj=(CObject*)ObjectMoleculeReadStr(G,(ObjectMolecule*)origObj,
                                               start_at,content_format,
                                               eff_state,discrete,
@@ -2463,8 +2465,9 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type)
     switch(type) {
     case cLoadTypeChemPyModel:
     case cLoadTypePDB:
-    case cLoadTypeXYZ:
     case cLoadTypePDBStr:
+    case cLoadTypeXYZ:
+    case cLoadTypeXYZStr:
     case cLoadTypeMOL:
     case cLoadTypeMOLStr:
     case cLoadTypeMMD:

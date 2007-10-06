@@ -2756,7 +2756,8 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele,int vis_on
 
 /*========================================================================*/
 static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,
-                                               AtomInfoType **atInfoPtr, int *have_bonds)
+                                               AtomInfoType **atInfoPtr,
+                                               char **restart)
 {
   char *p,*p_store;
   int nAtom;
@@ -2854,11 +2855,6 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,
   PRINTFB(G,FB_ObjectMolecule,FB_Blather)
 	 " ObjectMoleculeReadXYZ: Found %i atoms...\n",nAtom
     ENDFB(G);
-
-  if(tinker_xyz)
-    *have_bonds = true;
-  else
-    *have_bonds = false;
 
   a=0;
   atomCount=0;
@@ -2994,9 +2990,14 @@ static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,
       atomCount++;
 
     }
-    if(have_n_atom && (atomCount>=nAtom))
-      break;
     p=nextline(p);
+    if(have_n_atom && (atomCount>=nAtom)) {
+      int dummy;
+      ncopy(cc,p,6);  
+      if(sscanf(cc,"%d",&dummy)==1) 
+        *restart = p;
+      break;
+    }
   }
   
   PRINTFB(G,FB_ObjectMolecule,FB_Blather) 
@@ -3025,7 +3026,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,
   int ok=true;
   int isNew = true;
   unsigned int nAtom = 0;
-  int have_bonds;
+  char *restart = NULL;
 
   if(!I) 
 	 isNew=true;
@@ -3046,22 +3047,25 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,
       I->Obj.Color = AtomInfoUpdateAutoColor(G);
     }
     
-	 cset=ObjectMoleculeXYZStr2CoordSet(G,PDBStr,&atInfo,&have_bonds);	 
+	 cset=ObjectMoleculeXYZStr2CoordSet(G,PDBStr,&atInfo,&restart);	 
 	 nAtom=cset->NIndex;
   }
 
   /* include coordinate set */
   if(ok) {
-
-      if(I->DiscreteFlag&&atInfo) {
-        unsigned int a;
-        int fp1 = frame+1;
-        AtomInfoType *ai = atInfo;
-        for(a=0;a<nAtom;a++) {
-          (ai++)->discrete_state = fp1;
-        }
+    int have_bonds = false;
+    
+    if(cset->TmpBond) have_bonds = true;
+    
+    if(I->DiscreteFlag&&atInfo) {
+      unsigned int a;
+      int fp1 = frame+1;
+      AtomInfoType *ai = atInfo;
+      for(a=0;a<nAtom;a++) {
+        (ai++)->discrete_state = fp1;
       }
-
+    }
+    
     cset->Obj = I;
     if(cset->fEnumIndices)
       cset->fEnumIndices(cset);
@@ -7939,6 +7943,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
   char tmpName[WordLength];
   int deferred_tasks = false;
   int skip_out;
+  int connect = false;
   *next_entry = NULL;
 
   start=st;
@@ -7978,6 +7983,11 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
     case cLoadTypeSDF2:
     case cLoadTypeSDF2Str:
       cset=ObjectMoleculeSDF2Str2CoordSet(G,start,&atInfo,&restart);
+      break;
+    case cLoadTypeXYZ:
+    case cLoadTypeXYZStr:
+      cset=ObjectMoleculeXYZStr2CoordSet(G,start,&atInfo,&restart);
+      if(!cset->TmpBond) connect=true;
       break;
     }
   
@@ -8038,7 +8048,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
       I->CSet[frame] = cset;
       
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,connect);
       
       ObjectMoleculeExtendIndices(I,frame);
       ObjectMoleculeSort(I);
@@ -10155,7 +10165,8 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
       for(a=0;a<I->NAtom;a++) {
         register signed char *rv = repVisCache;
         for(b=0;b<cRepCnt;b++) {
-          *(rv++) = (*rv) || ai->visRep[b];
+          *(rv) = (*rv) || ai->visRep[b];
+          rv++;
         }
         ai++;
       }
