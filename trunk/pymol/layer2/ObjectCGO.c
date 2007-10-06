@@ -197,7 +197,6 @@ void ObjectCGORecomputeExtent(ObjectCGO *I)
 /*========================================================================*/
 static void ObjectCGOInvalidate(ObjectCGO *I,int rep,int level,int state)
 {
-  printf("invalid\n");
   if(state<0) {
     int a;
     for(a=0;a<I->NState;a++) {
@@ -214,7 +213,6 @@ static void ObjectCGOInvalidate(ObjectCGO *I,int rep,int level,int state)
 static void ObjectCGOUpdate(ObjectCGO *I)
 {
   int a;
-  printf("update\n");
   for(a=0;a<I->NState;a++) {
     ObjectCGOState *ocs = I->State + a;
     if(!ocs->valid) {

@@ -7186,6 +7186,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                 fname,valid_name,frame+1);
       }
       break;
+#if 0
     case cLoadTypeXYZ:
       PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading XYZStr\n" ENDFD;
       if(!origObj) {
@@ -7208,6 +7209,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                 fname,valid_name,frame+1);
       }
       break;
+#endif
     case cLoadTypePDBStr:
       ok = ExecutiveProcessPDBFile(G,origObj,fname,valid_name,
                                    frame,discrete,finish,buf,NULL,
@@ -7266,6 +7268,8 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeMOL:
     case cLoadTypeMOLStr:
 #endif
+    case cLoadTypeXYZ:
+    case cLoadTypeXYZStr:
     case cLoadTypeSDF2:
     case cLoadTypeSDF2Str:
     case cLoadTypeMOL2:
