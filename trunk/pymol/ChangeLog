@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2007-10-05  Warren L. DeLano <warren@delsci.com>
+
+	* fixed some issues regarding .MAE support
+	
+	* added support for multistate XYZ files
+	
 2007-09-26  Warren L. DeLano <warren@delsci.com>
 
 	* bug fix with auto_defer_builds

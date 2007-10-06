@@ -736,7 +736,7 @@ NOTES
                     from epymol import schrodinger
                     r = schrodinger.read_maestr(string.join(data,''),
                                                 name,state,
-                                                finish,discrete,quiet)
+                                                finish,discrete,quiet,multiplex,zoom)
                     # END PROPRIETARY CODE SEGMENT
                 except ImportError:
                     print "Error: .MAE format not supported by this PyMOL build."
