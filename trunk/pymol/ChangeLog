@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2007-10-15  Warren L. DeLano <warren@delsci.com>
+
+	* improved behavior of blended ramps based on atomic distances
+	
+	* added map-related methods to the PyMOL_* internal C-API
+	
 2007-10-05  Warren L. DeLano <warren@delsci.com>
 
 	* fixed some issues regarding .MAE support

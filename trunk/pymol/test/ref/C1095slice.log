@@ -9,7 +9,7 @@ PyMOL>map_new pot,coulomb,0.5,phe,5
  Executive: object "pot" created.
 PyMOL>slice_new slice, pot
  Executive: object "slice" created.
- SliceMap: created "slice", setting opacity to 1.000
+ SliceMap: created "slice".
 PyMOL>ramp_new ramp, pot
  Executive: object "ramp" created.
 PyMOL>color ramp,slice

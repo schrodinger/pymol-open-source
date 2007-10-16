@@ -378,16 +378,23 @@ PyMOLreturn_status PyMOL_CmdDraw(CPyMOL *I,int width, int height,
 
 PyMOLreturn_status PyMOL_CmdRay(CPyMOL *I,int width, int height,int antialias,
                                 float angle, float shift,int renderer, int defer, int quiet);
-#if 0
-PyMOLreturn_status PyMOL_CmdIsomesh(CPyMOL *I,char *name, char *map_name, float level, char *selection,
+
+PyMOLreturn_status PyMOL_CmdIsodot(CPyMOL *I, char *name, char *map_name, float level, char *selection,
+                                   float buffer, int state, float carve, int source_state, int quiet);
+
+PyMOLreturn_status PyMOL_CmdIsomesh(CPyMOL *I, char *name, char *map_name, float level, char *selection,
                                     float buffer, int state, float carve, int source_state, int quiet);
 
 PyMOLreturn_status PyMOL_CmdIsosurface(CPyMOL *I,char *name, char *map_name, float level, char *selection,
                                        float buffer, int state, float carve, int source_state, int side, 
                                        int mode, int quiet);
 
-PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int query, int quiet);
-#endif
+PyMOLreturn_status PyMOL_CmdGradient(CPyMOL *I, char *name, char *map_name, float minimum, float maximum,
+                                     char *selection, float buffer, int state, float carve, int source_state, 
+                                     int quiet);
+
+PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int state, int query, int quiet);
+
 /* releasing returned values */
 
 int PyMOL_FreeResultArray(CPyMOL *I,void *array);

@@ -1617,7 +1617,6 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
     VLAFreeP(result.array);
   }
   PYMOL_API_UNLOCK
-  
   return result;
 }
 
@@ -1904,9 +1903,9 @@ PyMOLreturn_float PyMOL_CmdGetDistance(CPyMOL *I,
     result.status = PyMOLstatus_FAILURE;
     result.value = -1.0F;
   }
-  PYMOL_API_UNLOCK
   SelectorFreeTmp(I->G,s1);
   SelectorFreeTmp(I->G,s2);
+  PYMOL_API_UNLOCK
   return result;
 }
 
@@ -1938,9 +1937,9 @@ PyMOLreturn_float PyMOL_CmdDistance(CPyMOL *I,
     result.status = PyMOLstatus_FAILURE;
     result.value = -1.0F;
   }
-  PYMOL_API_UNLOCK
   SelectorFreeTmp(I->G,s1);
   SelectorFreeTmp(I->G,s2);
+  PYMOL_API_UNLOCK
   return result;
 }
 
@@ -1967,10 +1966,10 @@ PyMOLreturn_float PyMOL_CmdGetAngle(CPyMOL *I,
     result.status = PyMOLstatus_FAILURE;
     result.value = 0.0F;
   }
-  PYMOL_API_UNLOCK
   SelectorFreeTmp(I->G,s1);
   SelectorFreeTmp(I->G,s2);
   SelectorFreeTmp(I->G,s3);
+  PYMOL_API_UNLOCK
   return result;
 }
 
@@ -2003,10 +2002,10 @@ PyMOLreturn_float PyMOL_CmdAngle(CPyMOL *I,
     result.status = PyMOLstatus_FAILURE;
     result.value = -1.0F;
   }
-  PYMOL_API_UNLOCK
   SelectorFreeTmp(I->G,s1);
   SelectorFreeTmp(I->G,s2);
   SelectorFreeTmp(I->G,s3);
+  PYMOL_API_UNLOCK
   return result;
 }
 
@@ -2036,11 +2035,11 @@ PyMOLreturn_float PyMOL_CmdGetDihedral(CPyMOL *I,
     result.status = PyMOLstatus_FAILURE;
     result.value = 0.0F;
   }
-  PYMOL_API_UNLOCK
   SelectorFreeTmp(I->G,s1);
   SelectorFreeTmp(I->G,s2);
   SelectorFreeTmp(I->G,s3);
   SelectorFreeTmp(I->G,s4);
+  PYMOL_API_UNLOCK
   return result;
 }
 
@@ -2075,32 +2074,141 @@ PyMOLreturn_float PyMOL_CmdDihedral(CPyMOL *I,
     result.status = PyMOLstatus_FAILURE;
     result.value = -1.0F;
   }
-  PYMOL_API_UNLOCK
   SelectorFreeTmp(I->G,s1);
   SelectorFreeTmp(I->G,s2);
   SelectorFreeTmp(I->G,s3);
   SelectorFreeTmp(I->G,s4);
+  PYMOL_API_UNLOCK
   return result;
 }
 
-#if 0
-PyMOLreturn_status PyMOL_CmdIsomesh(CPyMOL *I,char *name, char *map_name, float level, char *selection,
-                                    float buffer, int state, float carve, int source_state, int quiet)
+
+PyMOLreturn_status PyMOL_CmdIsodot(CPyMOL *I, char *name, char *map_name, float level, char *selection,
+                                   float buffer, int state, float carve, int source_state, int quiet)
 {
+  int ok=true;
+  OrthoLineType s1="";
+  PyMOLreturn_status result;
+  int box_mode = 0;
+  PYMOL_API_LOCK
+  
+  if(selection && selection[0]) {  
+    if(ok) ok = (SelectorGetTmp(I->G,selection,s1)>=0);
+    if(ok) box_mode = 1;
+  }
+
+  if(ok) {
+      ok = ExecutiveIsomeshEtc(I->G, name, map_name, level, s1, buffer,
+                             state, carve, source_state, quiet, 1, box_mode, level);
+    result.status = get_status_ok(ok);
+  } else {
+    result.status = PyMOLstatus_FAILURE;
+  }
+  SelectorFreeTmp(I->G,s1);
+  PYMOL_API_UNLOCK
+  return result;
   
 }
 
+PyMOLreturn_status PyMOL_CmdIsomesh(CPyMOL *I, char *name, char *map_name, float level, char *selection,
+                                    float buffer, int state, float carve, int source_state, int quiet)
+{
+  int ok=true;
+  OrthoLineType s1="";
+  PyMOLreturn_status result;
+  int box_mode = 0;
+  PYMOL_API_LOCK
+  
+  if(selection && selection[0]) {  
+    if(ok) ok = (SelectorGetTmp(I->G,selection,s1)>=0);
+    if(ok) box_mode = 1;
+  }
 
-PyMOLreturn_status PyMOL_CmdIsosurface(CPyMOL *I,char *name, char *map_name, float level, char *selection,
+  if(ok) {
+      ok = ExecutiveIsomeshEtc(I->G, name, map_name, level, s1, buffer,
+                             state, carve, source_state, quiet, 0, box_mode, level);
+    result.status = get_status_ok(ok);
+  } else {
+    result.status = PyMOLstatus_FAILURE;
+  }
+  SelectorFreeTmp(I->G,s1);
+  PYMOL_API_UNLOCK
+  return result;
+}
+
+PyMOLreturn_status PyMOL_CmdIsosurface(CPyMOL *I, char *name, char *map_name, float level, char *selection,
                                        float buffer, int state, float carve, int source_state, int side, 
                                        int mode, int quiet)
 {
+  int ok=true;
+  OrthoLineType s1="";
+  PyMOLreturn_status result;
+  int box_mode = 0;
+  PYMOL_API_LOCK
+  
+  if(selection && selection[0]) {  
+    if(ok) ok = (SelectorGetTmp(I->G,selection,s1)>=0);
+    if(ok) box_mode = 1;
+  }
+
+  if(ok) {
+    ok = ExecutiveIsosurfaceEtc(I->G, name, map_name, level, s1, buffer,
+                                state, carve, source_state, side, quiet, mode, box_mode);
+    result.status = get_status_ok(ok);
+  } else {
+    result.status = PyMOLstatus_FAILURE;
+  }
+  SelectorFreeTmp(I->G,s1);
+  PYMOL_API_UNLOCK
+  return result;
 }
 
-PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int query, int quiet)
+PyMOLreturn_status PyMOL_CmdGradient(CPyMOL *I, char *name, char *map_name, float minimum, float maximum,
+                                     char *selection, float buffer, int state, float carve, int source_state, 
+                                     int quiet)
 {
+  int ok=true;
+  OrthoLineType s1="";
+  PyMOLreturn_status result;
+  int box_mode = 0;
+  PYMOL_API_LOCK
+  
+  if(selection && selection[0]) {  
+    if(ok) ok = (SelectorGetTmp(I->G,selection,s1)>=0);
+    if(ok) box_mode = 1;
+  }
+
+  if(ok) {
+      ok = ExecutiveIsomeshEtc(I->G, name, map_name, minimum, s1, buffer,
+                             state, carve, source_state, quiet, 3, box_mode, maximum);
+    result.status = get_status_ok(ok);
+  } else {
+    result.status = PyMOLstatus_FAILURE;
+  }
+  SelectorFreeTmp(I->G,s1);
+  PYMOL_API_UNLOCK
+  return result;
 }
-#endif
+
+PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int state, int query, int quiet)
+{
+  int ok=true;
+  OrthoLineType s1="";
+  PyMOLreturn_float result;
+  PYMOL_API_LOCK
+
+  if(ok) {
+    ok = ExecutiveIsolevel(I->G,name,level,state,query,&result.value,quiet);
+
+    result.status = get_status_ok(ok);
+  } else {
+    result.status = PyMOLstatus_FAILURE;
+    result.value = 0.0F;
+  }
+  SelectorFreeTmp(I->G,s1);
+  PYMOL_API_UNLOCK
+  return result;
+}
 
 static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type, 
                                  int content_length, char *content_format, 

@@ -2976,158 +2976,6 @@ static PyObject *CmdDump(PyObject *self, PyObject *args)
   return APIResultOk(ok);  
 }
 
-static int ExecutiveIsomeshEtc(PyMOLGlobals *G, 
-                               char *mesh_name, char *map_name, float lvl, 
-                               char *sele, float fbuf, int state, 
-                               float carve, int map_state, int quiet,
-                               int mesh_mode, int box_mode, float alt_lvl) 
-{
-  int ok=true;
-  CObject *obj=NULL,*mObj,*origObj;
-  ObjectMap *mapObj;
-  float mn[3] = { 0,0,0};
-  float mx[3] = { 15,15,15};
-  float *vert_vla = NULL;
-  int multi=false;
-  ObjectMapState *ms;
-  OrthoLineType s1;
-
-  origObj=ExecutiveFindObjectByName(G,mesh_name);  
-  if(origObj) {
-    if(origObj->type!=cObjectMesh) {
-      ExecutiveDelete(G,mesh_name);
-      origObj=NULL;
-    }
-  }
-  
-  mObj=ExecutiveFindObjectByName(G,map_name);  
-  if(mObj) {
-    if(mObj->type!=cObjectMap)
-      mObj=NULL;
-  }
-  if(mObj) {
-    mapObj = (ObjectMap*)mObj;
-    if(state==-1) {
-      multi=true;
-      state=0;
-      map_state=0;
-    } else if(state==-2) {
-      state=SceneGetState(G);
-      if(map_state<0) 
-        map_state=state;
-    } else if(state==-3) { /* append mode */
-      state=0;
-      if(origObj)
-        if(origObj->fGetNFrame)
-          state=origObj->fGetNFrame(origObj);
-    } else {
-      if(map_state==-1) {
-        map_state=0;
-        multi=true;
-      } else {
-        multi=false;
-      }
-    }
-    while(1) {
-      if(map_state==-2)
-        map_state=SceneGetState(G);
-      if(map_state==-3)
-        map_state=ObjectMapGetNStates(mapObj)-1;
-      ms = ObjectMapStateGetActive(mapObj,map_state);
-      if(ms) {
-        switch(box_mode) {
-        case 0: /* do the whole map */
-          {
-            int c;
-            for(c=0;c<3;c++) {
-              mn[c] = ms->Corner[c];
-              mx[c] = ms->Corner[3*7+c];
-            }
-          }
-          if(ms->State.Matrix) {
-            transform44d3f(ms->State.Matrix,mn,mn);
-            transform44d3f(ms->State.Matrix,mx,mx);
-            {
-              float tmp;
-              int a;
-              for(a=0;a<3;a++)
-                if(mn[a]>mx[a]) { tmp=mn[a];mn[a]=mx[a];mx[a]=tmp; }
-            }
-          }
-          carve = -0.0; /* impossible */
-          break;
-        case 1: /* just do area around selection */
-          ok = (SelectorGetTmp(G,sele,s1)>=0);
-          ExecutiveGetExtent(G,s1,mn,mx,false,-1,false); /* TODO state */
-          if(carve!=0.0) {
-            vert_vla = ExecutiveGetVertexVLA(G,s1,state);
-            if(fbuf<=R_SMALL4)
-              fbuf = fabs(carve);
-          }
-          SelectorFreeTmp(G,s1);
-          {
-            int c;
-            for(c=0;c<3;c++) {
-              mn[c]-=fbuf;
-              mx[c]+=fbuf;
-            }
-          }
-          break;
-        }
-        PRINTFB(G,FB_CCmd,FB_Blather)
-          " Isomesh: buffer %8.3f carve %8.3f \n",fbuf,carve
-          ENDFB(G);
-        obj=(CObject*)ObjectMeshFromBox(G,(ObjectMesh*)origObj,mapObj,
-                                        map_state,state,mn,mx,lvl,mesh_mode,
-                                        carve,vert_vla,alt_lvl);
-        
-        /* copy the map's TTT */
-        ExecutiveMatrixCopy2(G, 
-                             mObj, obj, 1, 1, 
-                             -1,-1, false, 0, quiet);
-        
-        if(!origObj) {
-          ObjectSetName(obj,mesh_name);
-          ExecutiveManageObject(G,(CObject*)obj,false,quiet);
-        }          
-        
-        if(SettingGet(G,cSetting_isomesh_auto_state))
-          if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
-        if(!quiet) {
-          if(mesh_mode!=3) {
-            PRINTFB(G,FB_ObjectMesh,FB_Actions)
-              " Isomesh: created \"%s\", setting level to %5.3f\n",mesh_name,lvl
-              ENDFB(G);
-          } else {
-            PRINTFB(G,FB_ObjectMesh,FB_Actions)
-              " Gradient: created \"%s\"\n",mesh_name
-              ENDFB(G);
-          }
-        }
-      } else if(!multi) {
-        PRINTFB(G,FB_ObjectMesh,FB_Warnings)
-          " Isomesh-Warning: state %d not present in map \"%s\".\n",map_state+1,map_name
-          ENDFB(G);
-        ok = false;
-      }
-      if(multi) {
-        origObj = obj;
-        map_state++;
-        state++;
-        if(map_state>=mapObj->NState)
-          break;
-      } else {
-        break;
-      }
-    }
-  } else {
-    PRINTFB(G,FB_ObjectMesh,FB_Errors)
-      " Isomesh: Map or brick object \"%s\" not found.\n",map_name
-      ENDFB(G);
-    ok = false;
-  }
-  return ok;
-}
 
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) 
 {
@@ -3161,18 +3009,102 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args)
   return APIResultOk(ok);  
 }
 
+static int ExecutiveSliceNew(PyMOLGlobals *G, char *slice_name, 
+                             char *map_name, int state, int map_state)
+{
+  int ok = true;
+  int multi = false;
+  CObject *obj=NULL,*mObj,*origObj;
+  ObjectMap *mapObj;
+  ObjectMapState *ms;
+
+  origObj=ExecutiveFindObjectByName(G,slice_name);  
+  if(origObj) {
+    if(origObj->type!=cObjectSlice) {
+      ExecutiveDelete(G,slice_name);
+      origObj=NULL;
+    }
+  }
+
+  mObj=ExecutiveFindObjectByName(G,map_name);  
+  if(mObj) {
+    if(mObj->type!=cObjectMap)
+      mObj=NULL;
+  }
+  if(mObj) {
+    mapObj = (ObjectMap*)mObj;
+    if(state==-1) {
+      multi=true;
+      state=0;
+      map_state=0;
+    } else if(state==-2) {
+      state=SceneGetState(G);
+        if(map_state<0) 
+          map_state=state;
+    } else if(state==-3) { /* append mode */
+      state=0;
+      if(origObj)
+        if(origObj->fGetNFrame)
+          state=origObj->fGetNFrame(origObj);
+    } else {
+      if(map_state==-1) {
+        map_state=0;
+        multi=true;
+      } else {
+        multi=false;
+      }
+    }
+    while(1) {      
+      if(map_state==-2)
+        map_state=SceneGetState(G);
+      if(map_state==-3)
+        map_state=ObjectMapGetNStates(mapObj)-1;
+      ms = ObjectMapStateGetActive(mapObj,map_state);
+      if(ms) {
+        obj=(CObject*)ObjectSliceFromMap(G,(ObjectSlice*)origObj,mapObj,
+                                         state,map_state);
+     
+        if(!origObj) {
+          ObjectSetName(obj,slice_name);
+          ExecutiveManageObject(G,(CObject*)obj,-1,false);
+        }
+        PRINTFB(G,FB_ObjectMesh,FB_Actions)
+          " SliceMap: created \"%s\".\n",slice_name
+          ENDFB(G);
+
+      } else if(!multi) {
+        PRINTFB(G,FB_ObjectSlice
+                ,FB_Warnings)
+          " SliceMap-Warning: state %d not present in map \"%s\".\n",map_state+1,map_name
+          ENDFB(G);
+        ok = false;
+      }
+      if(multi) {
+        origObj = obj;
+        map_state++;
+        state++;
+        if(map_state>=mapObj->NState)
+          break;
+      } else {
+        break;
+      }
+    }      
+  } else{
+    PRINTFB(G,FB_ObjectSlice,FB_Errors)
+      " SliceMap: Map or brick object \"%s\" not found.\n",map_name
+      ENDFB(G);
+    ok = false;
+  }
+  return ok;
+}
+
 static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args) 
 {
   PyMOLGlobals *G = NULL;
   int ok = false;
-  int multi = false;
-  char * slice;
-  char * map;
-  float opacity = -1;
+  char *slice;
+  char *map;
   int state,map_state;
-  CObject *obj=NULL,*mObj,*origObj;
-  ObjectMap *mapObj;
-  ObjectMapState *ms;
 
   ok = PyArg_ParseTuple(args,"Ossii",&self,&slice,&map,&state,&map_state);  
   if(ok) {
@@ -3181,11 +3113,19 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
+#if 1
   if (ok) {
     APIEntry(G);
-    if(opacity == -1){
-      opacity = 1;
-    }
+    ok = ExecutiveSliceNew(G, slice, map, state, map_state);
+    APIExit(G);
+  }
+#else
+  int multi = false;
+  CObject *obj=NULL,*mObj,*origObj;
+  ObjectMap *mapObj;
+  ObjectMapState *ms;
+  if (ok) {
+    APIEntry(G);
     origObj=ExecutiveFindObjectByName(G,slice);  
     if(origObj) {
       if(origObj->type!=cObjectSlice) {
@@ -3231,13 +3171,13 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
         if(ms) {
           obj=(CObject*)ObjectSliceFromMap(G,(ObjectSlice*)origObj,mapObj,
                                            state,map_state);
-     
+          
           if(!origObj) {
             ObjectSetName(obj,slice);
             ExecutiveManageObject(G,(CObject*)obj,-1,false);
           }
           PRINTFB(G,FB_ObjectMesh,FB_Actions)
-            " SliceMap: created \"%s\", setting opacity to %5.3f\n",slice,opacity
+            " SliceMap: created \"%s\".\n",slice
             ENDFB(G);
 
         } else if(!multi) {
@@ -3256,18 +3196,22 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
         } else {
           break;
         }
-      }      
+      }
+    } else{
+      PRINTFB(G,FB_ObjectSlice,FB_Errors)
+        " SliceMap: Map or brick object \"%s\" not found.\n",map
+        ENDFB(G);
+      ok = false;
     }
-  }else{
-    PRINTFB(G,FB_ObjectSlice,FB_Errors)
-      " SliceMap: Map or brick object \"%s\" not found.\n",map
-      ENDFB(G);
-    ok = false;
+    APIExit(G);
   }
-  APIExit(G);
+#endif
+
   return APIResultOk(ok);  
 }
 #if 0
+
+/* this code can probably be deleted -- already replaced by slices and ramps */
 
 static PyObject *CmdRGBFunction(PyObject *self, 	PyObject *args) 
 {
@@ -3462,31 +3406,24 @@ static PyObject *CmdSliceSetLock(PyObject *self, 	PyObject *args)
 }
 #endif
 
+
 static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) 
 {
   PyMOLGlobals *G = NULL;
-  char *str1,*str2,*str3;
+  char *surf_name,*map_name,*sele;
   float lvl,fbuf;
-  int dotFlag;
-  int c,state=-1;
-  OrthoLineType s1;
-  int oper,frame;
+  int surf_mode;
+  int state=-1;
+  int box_mode;
   float carve;
-  CObject *obj=NULL,*mObj,*origObj;
-  ObjectMap *mapObj;
-  float mn[3] = { 0,0,0};
-  float mx[3] = { 15,15,15};
-  float *vert_vla = NULL;
   int ok = false;
-  ObjectMapState *ms;
   int map_state=0;
-  int multi=false;
   int side;
   int quiet;
-  /* oper 0 = all, 1 = sele + buffer, 2 = vector */
+  /* box_mode 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args,"Osisisffiifiii",&self,&str1,&frame,&str2,&oper,
-                   &str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state,
+  ok = PyArg_ParseTuple(args,"Ossisffiifiii",&self,&surf_name,&map_name,&box_mode,
+                        &sele,&fbuf,&lvl,&surf_mode,&state,&carve,&map_state,
                         &side,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
@@ -3497,126 +3434,9 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args)
   if (ok) {
     APIEntry(G);
 
-    origObj=ExecutiveFindObjectByName(G,str1);  
-    if(origObj) {
-      if(origObj->type!=cObjectSurface) {
-        ExecutiveDelete(G,str1);
-        origObj=NULL;
-      }
-    }
-    
-    mObj=ExecutiveFindObjectByName(G,str2);  
-    if(mObj) {
-      if(mObj->type!=cObjectMap)
-        mObj=NULL;
-    }
-    if(mObj) {
-      mapObj = (ObjectMap*)mObj;
-      if(state==-1) {
-        multi=true;
-        state=0;
-        map_state=0;
-      } else if(state==-2) { /* current state */
-        state=SceneGetState(G);
-        if(map_state<0) 
-          map_state=state;
-      } else if(state==-3) { /* append mode */
-        state=0;
-        if(origObj)
-          if(origObj->fGetNFrame)
-            state=origObj->fGetNFrame(origObj);
-      } else {
-        if(map_state==-1) {
-          map_state=0;
-          multi=true;
-        } else {
-          multi=false;
-        }
-      }
-      while(1) {
-        if(map_state==-2)
-          map_state=SceneGetState(G);
-        if(map_state==-3)
-          map_state=ObjectMapGetNStates(mapObj)-1;
-        ms = ObjectMapStateGetActive(mapObj,map_state);
-        if(ms) {
-          switch(oper) {
-          case 0:
-            for(c=0;c<3;c++) {
-              mn[c] = ms->Corner[c];
-              mx[c] = ms->Corner[3*7+c];
-            }
-            if(ms->State.Matrix) {
-              transform44d3f(ms->State.Matrix,mn,mn);
-              transform44d3f(ms->State.Matrix,mx,mx);
-              {
-                float tmp;
-                int a;
-                for(a=0;a<3;a++)
-                  if(mn[a]>mx[a]) { tmp=mn[a];mn[a]=mx[a];mx[a]=tmp; }
-              }
-            }
-            carve = 0.0F;
-            break;
-          case 1:
-            ok = (SelectorGetTmp(G,str3,s1)>=0);
-            ExecutiveGetExtent(G,s1,mn,mx,false,-1,false); /* TODO state */
-            if(carve!=0.0F) {
-              vert_vla = ExecutiveGetVertexVLA(G,s1,state);
-              if(fbuf<=R_SMALL4)
-                fbuf = fabs(carve);
-            }
-            SelectorFreeTmp(G,s1);
-            for(c=0;c<3;c++) {
-              mn[c]-=fbuf;
-              mx[c]+=fbuf;
-            }
-            break;
-          }
-          PRINTFB(G,FB_CCmd,FB_Blather)
-            " Isosurface: buffer %8.3f carve %8.3f\n",fbuf,carve
-            ENDFB(G);
-          obj=(CObject*)ObjectSurfaceFromBox(G,(ObjectSurface*)origObj,mapObj,map_state,
-                                             state,mn,mx,lvl,dotFlag,
-                                             carve,vert_vla,side);
-          /* copy the map's TTT */
-          ExecutiveMatrixCopy2(G, 
-                               mObj, obj, 1, 1, 
-                               -1,-1, false, 0, quiet);
+    ok = ExecutiveIsosurfaceEtc(G, surf_name, map_name, lvl, sele, fbuf, state, 
+                                  carve, map_state, side, quiet, surf_mode, box_mode);
 
-          if(!origObj) {
-            ObjectSetName(obj,str1);
-            ExecutiveManageObject(G,(CObject*)obj,-1,quiet);
-          }
-          if(SettingGet(G,cSetting_isomesh_auto_state))
-            if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
-	  if(!quiet) {
-	    PRINTFB(G,FB_ObjectSurface,FB_Actions)
-	      " Isosurface: created \"%s\", setting level to %5.3f\n",str1,lvl
-	      ENDFB(G);
-	  }
-        } else if(!multi) {
-          PRINTFB(G,FB_ObjectMesh,FB_Warnings)
-            " Isosurface-Warning: state %d not present in map \"%s\".\n",map_state+1,str2
-            ENDFB(G);
-          ok = false;
-        }
-        if(multi) {
-          origObj = obj;
-          map_state++;
-          state++;
-          if(map_state>=mapObj->NState)
-            break;
-        } else {
-          break;
-        }
-      }
-    } else {
-      PRINTFB(G,FB_ObjectSurface,FB_Errors)
-        " Isosurface: Map or brick object \"%s\" not found.\n",str2
-        ENDFB(G);
-      ok = false;
-    }
     APIExit(G);
   }
   return APIResultOk(ok);  

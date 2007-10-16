@@ -495,12 +495,15 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,CoordSet *cs)
   return result;
 }
 
-int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule *I, float *point, float cutoff, int state, float *dist, float *color)
+int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule *I, float *point, 
+                                         float cutoff, int state, float *dist,
+                                         float *color, int sub_vdw)
 {
   int result = -1;
   float tot_weight = 0.0F;
   float cutoff2 = cutoff * cutoff;
   register float nearest = -1.0F;
+
 
   color[0] = 0.0F;
   color[1] = 0.0F;
@@ -514,6 +517,10 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule *I, float *point, float 
     if(cs) {
       MapType *map;
       CoordSetUpdateCoord2IdxMap(cs, cutoff);
+      if(sub_vdw) {
+        cutoff -= MAX_VDW;
+        cutoff2 = cutoff * cutoff;
+      }
       nearest = cutoff2;
       if( (map = cs->Coord2Idx)) {
         int a,b,c,d,e,f,j;
@@ -527,6 +534,13 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule *I, float *point, float 
               while(j>=0) {
                 v = cs->Coord + (3*j);                    
                 test = diffsq3f(v,point);
+                if(sub_vdw) {
+                  test = sqrt1f(test);
+                  test -= I->AtomInfo[cs->IdxToAtm[j]].vdw;
+                  if (test<0.0F)
+                    test = 0.0F;
+                  test = test*test;
+                }
                 if(test<cutoff2) {
                   float weight = cutoff - sqrt1f(test); 
                   float *at_col = ColorGet(I->Obj.G,I->AtomInfo[cs->IdxToAtm[j]].color);
@@ -547,6 +561,13 @@ int ObjectMoleculeGetNearestBlendedColor(ObjectMolecule *I, float *point, float 
         register float test,*v=cs->Coord;
         for(j=0;j<cs->NIndex;j++) {
           test = diffsq3f(v,point);
+          if(sub_vdw) {
+            test = sqrt1f(test);
+            test -= I->AtomInfo[cs->IdxToAtm[j]].vdw;
+            if (test<0.0F)
+              test = 0.0F;
+            test = test*test;
+          }
           if(test<cutoff2) {
             float weight = cutoff - sqrt1f(test); 
             float *color = ColorGet(I->Obj.G,I->AtomInfo[cs->IdxToAtm[j]].color);
@@ -3588,7 +3609,6 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   int connect_bonded = SettingGetGlobal_b(G,cSetting_connect_bonded);
   int connect_mode = SettingGetGlobal_i(G,cSetting_connect_mode);
   int unbond_cations = SettingGetGlobal_i(G,cSetting_pdb_unbond_cations);
-  int ignore_conect = false;
   cutoff_v=SettingGet(G,cSetting_connect_cutoff);
   cutoff_s=cutoff_v + 0.2F;
   cutoff_h=cutoff_v - 0.2F;
@@ -4296,7 +4316,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
     ii1=(*bond)+nBond;
     ii2=cs->TmpBond;
     {
-      register n_atom = I->NAtom;
+      register int n_atom = I->NAtom;
       for(a=0;a<cs->NTmpBond;a++) {
         a1 = cs->IdxToAtm[ii2->index[0]]; /* convert bonds from index space */
         a2 = cs->IdxToAtm[ii2->index[1]]; /* to atom space */

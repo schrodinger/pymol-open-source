@@ -355,10 +355,9 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
           if(use_dlst&&I->R.displayList) {
             glEndList();
           }
-          if(!lighting)
-            glEnable(GL_LIGHTING);
-
         }
+        if(!lighting)
+          glEnable(GL_LIGHTING);
       } else if(I->Type==2) { /* rendering triangle mesh */
       
         int normals = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
@@ -477,9 +476,9 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
           if(use_dlst&&I->R.displayList) {
             glEndList();
           }
-          if(!lighting)
-            glEnable(GL_LIGHTING);
         }
+        if(!lighting)
+          glEnable(GL_LIGHTING);
       } else {
         /* we're rendering triangles */
       

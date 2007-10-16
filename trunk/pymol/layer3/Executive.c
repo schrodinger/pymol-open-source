@@ -159,6 +159,301 @@ int ExecutiveTransformObjectSelection2(PyMOLGlobals *G,CObject *obj,int state,
                                        char *s1,int log,float *matrix,
                                        int homogenous,int global);
 
+int ExecutiveIsosurfaceEtc(PyMOLGlobals *G, 
+                           char *surf_name, char *map_name, float lvl, 
+                           char *sele, float fbuf, int state, 
+                           float carve, int map_state, int side,
+                           int quiet, int surf_mode, int box_mode) 
+{
+  int c;
+  OrthoLineType s1;
+  CObject *obj=NULL,*mObj,*origObj;
+  ObjectMap *mapObj;
+  float mn[3] = { 0,0,0};
+  float mx[3] = { 15,15,15};
+  float *vert_vla = NULL;
+  int ok = false;
+  ObjectMapState *ms;
+  int multi=false;
+  /* box_mode 0 = all, 1 = sele + buffer, 2 = vector */
+
+  
+  origObj=ExecutiveFindObjectByName(G,surf_name);  
+  if(origObj) {
+    if(origObj->type!=cObjectSurface) {
+      ExecutiveDelete(G,surf_name);
+      origObj=NULL;
+    }
+  }
+  
+  mObj=ExecutiveFindObjectByName(G,map_name);  
+  if(mObj) {
+    if(mObj->type!=cObjectMap)
+      mObj=NULL;
+  }
+  if(mObj) {
+    mapObj = (ObjectMap*)mObj;
+    if(state==-1) {
+      multi=true;
+      state=0;
+      map_state=0;
+    } else if(state==-2) { /* current state */
+      state=SceneGetState(G);
+      if(map_state<0) 
+        map_state=state;
+    } else if(state==-3) { /* append mode */
+      state=0;
+      if(origObj)
+        if(origObj->fGetNFrame)
+          state=origObj->fGetNFrame(origObj);
+    } else {
+      if(map_state==-1) {
+        map_state=0;
+        multi=true;
+      } else {
+        multi=false;
+      }
+    }
+    while(1) {
+      if(map_state==-2)
+        map_state=SceneGetState(G);
+      if(map_state==-3)
+        map_state=ObjectMapGetNStates(mapObj)-1;
+      ms = ObjectMapStateGetActive(mapObj,map_state);
+      if(ms) {
+        switch(box_mode) { 
+        case 0: /* using map to get extents */
+          for(c=0;c<3;c++) {
+            mn[c] = ms->Corner[c];
+            mx[c] = ms->Corner[3*7+c];
+          }
+          if(ms->State.Matrix) {
+            transform44d3f(ms->State.Matrix,mn,mn);
+            transform44d3f(ms->State.Matrix,mx,mx);
+            {
+              float tmp;
+              int a;
+              for(a=0;a<3;a++)
+                if(mn[a]>mx[a]) { tmp=mn[a];mn[a]=mx[a];mx[a]=tmp; }
+            }
+          }
+          carve = 0.0F;
+          break;
+        case 1: /* using selection to get extents */
+          ok = (SelectorGetTmp(G,sele,s1)>=0);
+          ExecutiveGetExtent(G,s1,mn,mx,false,-1,false); /* TODO state */
+          if(carve!=0.0F) {
+            vert_vla = ExecutiveGetVertexVLA(G,s1,state);
+            if(fbuf<=R_SMALL4)
+              fbuf = fabs(carve);
+          }
+          SelectorFreeTmp(G,s1);
+          for(c=0;c<3;c++) {
+            mn[c]-=fbuf;
+            mx[c]+=fbuf;
+          }
+          break;
+        }
+        PRINTFB(G,FB_CCmd,FB_Blather)
+          " Isosurface: buffer %8.3f carve %8.3f\n",fbuf,carve
+          ENDFB(G);
+        obj=(CObject*)ObjectSurfaceFromBox(G,(ObjectSurface*)origObj,mapObj,map_state,
+                                           state,mn,mx,lvl,surf_mode,
+                                           carve,vert_vla,side);
+        /* copy the map's TTT */
+        ExecutiveMatrixCopy2(G, 
+                             mObj, obj, 1, 1, 
+                             -1,-1, false, 0, quiet);
+
+        if(!origObj) {
+          ObjectSetName(obj,surf_name);
+          ExecutiveManageObject(G,(CObject*)obj,-1,quiet);
+        }
+        if(SettingGet(G,cSetting_isomesh_auto_state))
+          if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
+        if(!quiet) {
+          PRINTFB(G,FB_ObjectSurface,FB_Actions)
+            " Isosurface: created \"%s\", setting level to %5.3f\n",surf_name,lvl
+            ENDFB(G);
+        }
+      } else if(!multi) {
+        PRINTFB(G,FB_ObjectMesh,FB_Warnings)
+          " Isosurface-Warning: state %d not present in map \"%s\".\n",map_state+1,map_name
+          ENDFB(G);
+        ok = false;
+      }
+      if(multi) {
+        origObj = obj;
+        map_state++;
+        state++;
+        if(map_state>=mapObj->NState)
+          break;
+      } else {
+        break;
+      }
+    }
+  } else {
+    PRINTFB(G,FB_ObjectSurface,FB_Errors)
+      " Isosurface: Map or brick object \"%s\" not found.\n",map_name
+      ENDFB(G);
+    ok = false;
+  }
+  return ok;
+}
+
+int ExecutiveIsomeshEtc(PyMOLGlobals *G, 
+                        char *mesh_name, char *map_name, float lvl, 
+                        char *sele, float fbuf, int state, 
+                        float carve, int map_state, int quiet,
+                        int mesh_mode, int box_mode, float alt_lvl) 
+{
+  int ok=true;
+  CObject *obj=NULL,*mObj,*origObj;
+  ObjectMap *mapObj;
+  float mn[3] = { 0,0,0};
+  float mx[3] = { 15,15,15};
+  float *vert_vla = NULL;
+  int multi=false;
+  ObjectMapState *ms;
+  OrthoLineType s1;
+
+  origObj=ExecutiveFindObjectByName(G,mesh_name);  
+  if(origObj) {
+    if(origObj->type!=cObjectMesh) {
+      ExecutiveDelete(G,mesh_name);
+      origObj=NULL;
+    }
+  }
+  
+  mObj=ExecutiveFindObjectByName(G,map_name);  
+  if(mObj) {
+    if(mObj->type!=cObjectMap)
+      mObj=NULL;
+  }
+  if(mObj) {
+    mapObj = (ObjectMap*)mObj;
+    if(state==-1) {
+      multi=true;
+      state=0;
+      map_state=0;
+    } else if(state==-2) {
+      state=SceneGetState(G);
+      if(map_state<0) 
+        map_state=state;
+    } else if(state==-3) { /* append mode */
+      state=0;
+      if(origObj)
+        if(origObj->fGetNFrame)
+          state=origObj->fGetNFrame(origObj);
+    } else {
+      if(map_state==-1) {
+        map_state=0;
+        multi=true;
+      } else {
+        multi=false;
+      }
+    }
+    while(1) {
+      if(map_state==-2)
+        map_state=SceneGetState(G);
+      if(map_state==-3)
+        map_state=ObjectMapGetNStates(mapObj)-1;
+      ms = ObjectMapStateGetActive(mapObj,map_state);
+      if(ms) {
+        switch(box_mode) {
+        case 0: /* do the whole map */
+          {
+            int c;
+            for(c=0;c<3;c++) {
+              mn[c] = ms->Corner[c];
+              mx[c] = ms->Corner[3*7+c];
+            }
+          }
+          if(ms->State.Matrix) {
+            transform44d3f(ms->State.Matrix,mn,mn);
+            transform44d3f(ms->State.Matrix,mx,mx);
+            {
+              float tmp;
+              int a;
+              for(a=0;a<3;a++)
+                if(mn[a]>mx[a]) { tmp=mn[a];mn[a]=mx[a];mx[a]=tmp; }
+            }
+          }
+          carve = -0.0; /* impossible */
+          break;
+        case 1: /* just do area around selection */
+          ok = (SelectorGetTmp(G,sele,s1)>=0);
+          ExecutiveGetExtent(G,s1,mn,mx,false,-1,false); /* TODO state */
+          if(carve!=0.0) {
+            vert_vla = ExecutiveGetVertexVLA(G,s1,state);
+            if(fbuf<=R_SMALL4)
+              fbuf = fabs(carve);
+          }
+          SelectorFreeTmp(G,s1);
+          {
+            int c;
+            for(c=0;c<3;c++) {
+              mn[c]-=fbuf;
+              mx[c]+=fbuf;
+            }
+          }
+          break;
+        }
+        PRINTFB(G,FB_CCmd,FB_Blather)
+          " Isomesh: buffer %8.3f carve %8.3f \n",fbuf,carve
+          ENDFB(G);
+        obj=(CObject*)ObjectMeshFromBox(G,(ObjectMesh*)origObj,mapObj,
+                                        map_state,state,mn,mx,lvl,mesh_mode,
+                                        carve,vert_vla,alt_lvl);
+        
+        /* copy the map's TTT */
+        ExecutiveMatrixCopy2(G, 
+                             mObj, obj, 1, 1, 
+                             -1,-1, false, 0, quiet);
+        
+        if(!origObj) {
+          ObjectSetName(obj,mesh_name);
+          ExecutiveManageObject(G,(CObject*)obj,false,quiet);
+        }          
+        
+        if(SettingGet(G,cSetting_isomesh_auto_state))
+          if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
+        if(!quiet) {
+          if(mesh_mode!=3) {
+            PRINTFB(G,FB_ObjectMesh,FB_Actions)
+              " Isomesh: created \"%s\", setting level to %5.3f\n",mesh_name,lvl
+              ENDFB(G);
+          } else {
+            PRINTFB(G,FB_ObjectMesh,FB_Actions)
+              " Gradient: created \"%s\"\n",mesh_name
+              ENDFB(G);
+          }
+        }
+      } else if(!multi) {
+        PRINTFB(G,FB_ObjectMesh,FB_Warnings)
+          " Isomesh-Warning: state %d not present in map \"%s\".\n",map_state+1,map_name
+          ENDFB(G);
+        ok = false;
+      }
+      if(multi) {
+        origObj = obj;
+        map_state++;
+        state++;
+        if(map_state>=mapObj->NState)
+          break;
+      } else {
+        break;
+      }
+    }
+  } else {
+    PRINTFB(G,FB_ObjectMesh,FB_Errors)
+      " Isomesh: Map or brick object \"%s\" not found.\n",map_name
+      ENDFB(G);
+    ok = false;
+  }
+  return ok;
+}
+
 int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
                         char *name, char *resn, char *resi, char *chain,
                         char *segi, char *elem, float vdw, int hetatm,
