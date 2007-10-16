@@ -405,6 +405,18 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
 void ExecutiveMemoryDump(PyMOLGlobals *G);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
+int ExecutiveIsomeshEtc(PyMOLGlobals *G, 
+                        char *mesh_name, char *map_name, float lvl, 
+                        char *sele, float fbuf, int state, 
+                        float carve, int map_state, int quiet,
+                        int mesh_mode, int box_mode, float alt_lvl);
+
+int ExecutiveIsosurfaceEtc(PyMOLGlobals *G, 
+                           char *surf_name, char *map_name, float lvl, 
+                           char *sele, float fbuf, int state, 
+                           float carve, int map_state, int side,
+                           int quiet, int surf_mode, int box_mode);
+
 #endif
 
 

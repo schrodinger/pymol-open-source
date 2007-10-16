@@ -513,10 +513,11 @@ SEE ALSO
             carve=0.0
         try:
             _self.lock(_self)
-            r = _cmd.isosurface(_self._COb,str(name),0,str(map),int(region),
+            r = _cmd.isosurface(_self._COb,str(name),str(map),int(region),
                                       selection,float(buffer),
                                       float(level),int(mode),int(state)-1,float(carve),
                                       int(source_state)-1,int(side),int(quiet))
+
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         
@@ -598,9 +599,9 @@ USAGE
             if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
-    def gradient(name,map,minimum=1.0,maximum=-1.0,
-                 selection='',buffer=0.0,state=0,
-                 carve=None,source_state=0,quiet=1,_self=cmd):
+    def gradient(name, map, minimum=1.0, maximum=-1.0,
+                 selection='', buffer=0.0, state=0,
+                 carve=None, source_state=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 

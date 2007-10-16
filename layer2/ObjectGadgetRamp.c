@@ -581,7 +581,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int 
       if(ok) {
         if(SettingGet_b(I->Gadget.Obj.G,I->Gadget.Obj.Setting,NULL,cSetting_ramp_blend_nearby_colors)) {
           float atomic[3];
-          int index = ObjectMoleculeGetNearestBlendedColor(I->Mol, pos, cutoff, state, &dist, atomic);
+          int index = ObjectMoleculeGetNearestBlendedColor(I->Mol, pos, cutoff, state, &dist, atomic, sub_vdw);
           if(index>=0) {
             float *object =  ColorGet(I->Gadget.Obj.G,I->Mol->Obj.Color);
             
@@ -1193,7 +1193,17 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
   }
   if(ok) I->NLevel=VLAGetSize(I->Level);
   if(ok) ok = ObjectGadgetRampHandleInputColors(I);
-
+  
+  if(ok && I->Level && I->NLevel) {
+    int a;
+    float last = I->Level[0];
+    for(a=1;a<I->NLevel;a++) {
+      if(I->Level[a]<last)
+        I->Level[a] = last;
+      last = I->Level[a];
+    }
+  }
+  
   ObjectGadgetRampBuild(I);
   if(mol) {
     UtilNCopy(I->SrcName,mol->Obj.Name,WordLength);
