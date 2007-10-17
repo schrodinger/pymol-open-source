@@ -2328,6 +2328,8 @@ static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type,
       } else if(format_code == I->lex_xplor) {
         if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeXPLORStr;
+        else if( type_code == I->lex_filename)
+          pymol_content_type = cLoadTypeXPLORMap;
       } else if(format_code == I->lex_cgo) {
         if(type_code == I->lex_cgo) {
           pymol_content_type = cLoadTypeCGO;
