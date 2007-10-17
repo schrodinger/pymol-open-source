@@ -34,6 +34,7 @@ typedef struct {
   float Level,Radius;
   int RefreshFlag;
   int ResurfaceFlag;
+  int quiet;
   int RecolorFlag;
   float *AtomVertex;
   int CarveFlag;
@@ -57,12 +58,12 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap* map,
                               int map_state,
                               int state,float *mn,float *mx,
                               float level,int meshMode,
-                              float carve,float *vert_vla,float alt_level);
+                              float carve,float *vert_vla,float alt_level,int quiet);
 void ObjectMeshDump(ObjectMesh *I,char *fname,int state);
 
 PyObject *ObjectMeshAsPyList(ObjectMesh *I);
 int ObjectMeshNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMesh **result);
-int ObjectMeshSetLevel(ObjectMesh *I,float level,int state);
+int ObjectMeshSetLevel(ObjectMesh *I,float level,int state,int quiet);
 int ObjectMeshGetLevel(ObjectMesh *I,int state, float *result);
 int ObjectMeshInvalidateMapName(ObjectMesh *I,char *name);
 

@@ -37,6 +37,7 @@ typedef struct {
   int RefreshFlag;
   int ResurfaceFlag;
   int RecolorFlag;
+  int quiet;
   float *AtomVertex;
   int CarveFlag;
   float CarveBuffer;
@@ -58,12 +59,12 @@ ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals *G,ObjectSurface *obj,ObjectMap
                                     int map_state,
                                     int state,float *mn,float *mx,
                                     float level,int mode,
-                                    float carve,float *vert_vla,int side);
+                                    float carve,float *vert_vla,int side,int quiet);
 void ObjectSurfaceDump(ObjectSurface *I,char *fname,int state);
 
 int ObjectSurfaceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSurface **result);
 PyObject *ObjectSurfaceAsPyList(ObjectSurface *I);
-int ObjectSurfaceSetLevel(ObjectSurface *I,float level,int state);
+int ObjectSurfaceSetLevel(ObjectSurface *I,float level,int state,int quiet);
 int ObjectSurfaceGetLevel(ObjectSurface *I,int state,float *result);
 int ObjectSurfaceInvalidateMapName(ObjectSurface *I,char *name);
 

@@ -1069,7 +1069,7 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
     return(ok);
 }
 
-int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *I,PyObject *ary);
+static int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *I,PyObject *ary,int quiet);
 
 void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
 {
@@ -2420,7 +2420,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state,
     ObjectMapUpdateExtents(I);
     if(!quiet) {
       PRINTFB(I->Obj.G,FB_ObjectMap, FB_Results) 
-        " ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n",mind,maxd
         ENDFB(I->Obj.G);
     }
   }
@@ -2428,7 +2428,7 @@ static int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state,
   return(ok);
 }
 /*========================================================================*/
-static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
+static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state,int quiet) {
   
   char *p;
   float dens,dens_rev;
@@ -2698,7 +2698,11 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   } else {
     ms->Active=true;
     ObjectMapUpdateExtents(I);
-    printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap, FB_Results) 
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n",mind,maxd
+        ENDFB(I->Obj.G);
+    }
   }
   return(ok);
 }
@@ -2862,13 +2866,17 @@ static int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state,int quie
   } else {
     ms->Active=true;
     ObjectMapUpdateExtents(I);
-    printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap, FB_Results) 
+        " ObjectMap: Map read.  Range = %5.3f to %5.3f\n",mind,maxd
+        ENDFB(I->Obj.G);
+    }
   }
     
   return(ok);
 }
 /*========================================================================*/
-static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) 
+static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state,int quiet) 
 {
   char *p;
   float dens,dens_rev;
@@ -3184,8 +3192,11 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     
     ms->Active=true;
     ObjectMapUpdateExtents(I);
-    printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
-      
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap, FB_Results) 
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n",mind,maxd
+        ENDFB(I->Obj.G);
+    }
   } else {
     PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors) 
       " Error: unable to read FLD file.\n"
@@ -3208,7 +3219,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
 
 }
 /*========================================================================*/
-static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state) 
+static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state,int quiet) 
 {
   char *p,*pp;
   float dens;
@@ -3623,7 +3634,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
   
 }
 /*========================================================================*/
-static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state) 
+static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,int quiet) 
 {
   /* NOTE: binary GRD reader not yet validated */
 
@@ -3971,8 +3982,11 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     
     ms->Active=true;
     ObjectMapUpdateExtents(I);
-    printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
-
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap, FB_Results) 
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n",mind,maxd
+        ENDFB(I->Obj.G);
+    }
   } else {
     PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors) 
       " Error: unable to read GRD file.\n"
@@ -4091,7 +4105,7 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals *G,ObjectMap *obj,char *fname,int stat
   return(I);
 }
 /*========================================================================*/
-static ObjectMap *ObjectMapReadFLDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)
+static ObjectMap *ObjectMapReadFLDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state,int quiet)
 {
   int ok=true;
   int isNew = true;
@@ -4107,7 +4121,7 @@ static ObjectMap *ObjectMapReadFLDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,
 	 } else {
 		isNew = false;
 	 }
-    ObjectMapFLDStrToMap(I,MapStr,bytes,state);
+    ObjectMapFLDStrToMap(I,MapStr,bytes,state,quiet);
     SceneChanged(G);
     SceneCountFrames(G);
   }
@@ -4115,7 +4129,7 @@ static ObjectMap *ObjectMapReadFLDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,
 }
 
 /*========================================================================*/
-static ObjectMap *ObjectMapReadBRIXStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)
+static ObjectMap *ObjectMapReadBRIXStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state,int quiet)
 {
   int ok=true;
   int isNew = true;
@@ -4131,14 +4145,14 @@ static ObjectMap *ObjectMapReadBRIXStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr
 	 } else {
 		isNew = false;
 	 }
-    ObjectMapBRIXStrToMap(I,MapStr,bytes,state);
+    ObjectMapBRIXStrToMap(I,MapStr,bytes,state,quiet);
     SceneChanged(G);
     SceneCountFrames(G);
   }
   return(I);
 }
 /*========================================================================*/
-static ObjectMap *ObjectMapReadGRDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)
+static ObjectMap *ObjectMapReadGRDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state,int quiet)
 {
   int ok=true;
   int isNew = true;
@@ -4154,7 +4168,7 @@ static ObjectMap *ObjectMapReadGRDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,
 	 } else {
 		isNew = false;
 	 }
-    ObjectMapGRDStrToMap(I,MapStr,bytes,state);
+    ObjectMapGRDStrToMap(I,MapStr,bytes,state,quiet);
     SceneChanged(G);
     SceneCountFrames(G);
   }
@@ -4162,7 +4176,7 @@ static ObjectMap *ObjectMapReadGRDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,
 }
 
 /*========================================================================*/
-static ObjectMap *ObjectMapReadPHIStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)
+static ObjectMap *ObjectMapReadPHIStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state,int quiet)
 {
   int ok=true;
   int isNew = true;
@@ -4178,14 +4192,14 @@ static ObjectMap *ObjectMapReadPHIStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,
 	 } else {
 		isNew = false;
 	 }
-    ObjectMapPHIStrToMap(I,MapStr,bytes,state);
+    ObjectMapPHIStrToMap(I,MapStr,bytes,state,quiet);
     SceneChanged(G);
     SceneCountFrames(G);
   }
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadPHIFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadPHIFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -4215,7 +4229,7 @@ ObjectMap *ObjectMapLoadPHIFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int s
 		fread(p,size,1,f);
 		fclose(f);
 
-		I=ObjectMapReadPHIStr(G,obj,buffer,size,state);
+		I=ObjectMapReadPHIStr(G,obj,buffer,size,state,quiet);
 
 		mfree(buffer);
       if(state<0)
@@ -4251,7 +4265,7 @@ static int is_number(char *p)
   return result;
 }
 
-static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
+static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state,int quiet) {
 
   int n_items = 0;
 
@@ -4494,13 +4508,18 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
   } else {
     ms->Active=true;
     ObjectMapUpdateExtents(I);
-    printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap, FB_Results) 
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n",mind,maxd
+        ENDFB(I->Obj.G);
+    }
   }
   return(ok);
 }
 
 /*========================================================================*/
-static ObjectMap *ObjectMapReadDXStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)
+static ObjectMap *ObjectMapReadDXStr(PyMOLGlobals *G,ObjectMap *I,
+                                     char *MapStr,int bytes,int state,int quiet)
 {
   int ok=true;
   int isNew = true;
@@ -4516,7 +4535,7 @@ static ObjectMap *ObjectMapReadDXStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,i
 	 } else {
 		isNew = false;
 	 }
-    ObjectMapDXStrToMap(I,MapStr,bytes,state);
+    ObjectMapDXStrToMap(I,MapStr,bytes,state,quiet);
     SceneChanged(G);
     SceneCountFrames(G);
   }
@@ -4524,7 +4543,7 @@ static ObjectMap *ObjectMapReadDXStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,i
 }
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -4554,7 +4573,7 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int st
 		fread(p,size,1,f);
 		fclose(f);
 
-		I=ObjectMapReadDXStr(G,obj,buffer,size,state);
+		I=ObjectMapReadDXStr(G,obj,buffer,size,state,quiet);
 
 		mfree(buffer);
       if(state<0)
@@ -4572,7 +4591,7 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int st
 }
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -4602,7 +4621,7 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int s
 		fread(p,size,1,f);
 		fclose(f);
 
-		I=ObjectMapReadFLDStr(G,obj,buffer,size,state);
+		I=ObjectMapReadFLDStr(G,obj,buffer,size,state,quiet);
 
 		mfree(buffer);
       if(state<0)
@@ -4620,7 +4639,7 @@ ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int s
 }
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -4651,7 +4670,7 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int 
       p[size]=0;
       fclose(f);
       
-		I=ObjectMapReadBRIXStr(G,obj,buffer,size,state);
+		I=ObjectMapReadBRIXStr(G,obj,buffer,size,state,quiet);
 
       mfree(buffer);
       if(state<0)
@@ -4669,7 +4688,7 @@ ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int 
 
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -4700,7 +4719,7 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int s
       p[size]=0;
       fclose(f);
       
-		I=ObjectMapReadGRDStr(G,obj,buffer,size,state);
+		I=ObjectMapReadGRDStr(G,obj,buffer,size,state,quiet);
 
       mfree(buffer);
       if(state<0)
@@ -4795,7 +4814,7 @@ int ObjectMapSetBorder(ObjectMap *I,float level,int state)
   return(result);
 }
 /*========================================================================*/
-int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *ary) {
+static int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *ary,int quiet) {
 
 #ifdef _PYMOL_NOPY
   return 0;
@@ -4873,8 +4892,10 @@ int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *a
     ErrMessage(G,"ObjectMap","Error reading map");
   } else {
     ms->Active=true;
-    if(Feedback(G,FB_ObjectMap,FB_Actions)) {
-      printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+    if(!quiet) {
+      PRINTFB(G,FB_ObjectMap, FB_Results) 
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n",mind,maxd
+        ENDFB(G);
     }
   }
   return(ok);
@@ -4882,7 +4903,7 @@ int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *a
 }
 /*========================================================================*/
 ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
-                                           int state,int discrete)
+                                           int state,int discrete,int quiet)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -4950,7 +4971,7 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
         if(tmp) {
 
 
-          ObjectMapNumPyArrayToMapState(G,ms,tmp);	 
+          ObjectMapNumPyArrayToMapState(G,ms,tmp,quiet);	 
 
           Py_DECREF(tmp);
         } else
@@ -4965,7 +4986,6 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
         ms->Min[a]=0; 
         ms->Max[a]=ms->Dim[a]-1;
       }
-      
       ms->Active=true;
       ms->MapSource = cMapSourceChempyBrick;
       ObjectMapUpdateExtents(I);
@@ -4978,7 +4998,7 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
 
 /*========================================================================*/
 ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
-                                  int state,int discrete)
+                                  int state,int discrete,int quiet)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -5117,8 +5137,10 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
     } else {
       ms->Active=true;
       ObjectMapUpdateExtents(I);
-		if(Feedback(G,FB_ObjectMap,FB_Actions)) {
-        printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+      if(!quiet) {
+        PRINTFB(I->Obj.G,FB_ObjectMap, FB_Results) 
+          " ObjectMap: Map read.  Range: %5.3f to %5.3f\n",mind,maxd
+          ENDFB(I->Obj.G);
       }
     }
 

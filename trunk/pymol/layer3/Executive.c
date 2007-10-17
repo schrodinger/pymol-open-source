@@ -259,7 +259,7 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals *G,
           ENDFB(G);
         obj=(CObject*)ObjectSurfaceFromBox(G,(ObjectSurface*)origObj,mapObj,map_state,
                                            state,mn,mx,lvl,surf_mode,
-                                           carve,vert_vla,side);
+                                           carve,vert_vla,side,quiet);
         /* copy the map's TTT */
         ExecutiveMatrixCopy2(G, 
                              mObj, obj, 1, 1, 
@@ -404,7 +404,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals *G,
           ENDFB(G);
         obj=(CObject*)ObjectMeshFromBox(G,(ObjectMesh*)origObj,mapObj,
                                         map_state,state,mn,mx,lvl,mesh_mode,
-                                        carve,vert_vla,alt_lvl);
+                                        carve,vert_vla,alt_lvl,quiet);
         
         /* copy the map's TTT */
         ExecutiveMatrixCopy2(G, 
@@ -3389,7 +3389,7 @@ int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state,int query
     switch(obj->type) {
     case cObjectMesh:
       if(!query) {
-        ObjectMeshSetLevel((ObjectMesh*)obj,level,state);
+        ObjectMeshSetLevel((ObjectMesh*)obj,level,state,quiet);
         SceneChanged(G);
       } else if(result) {
         ok = ObjectMeshGetLevel((ObjectMesh*)obj,state,result);
@@ -3397,7 +3397,7 @@ int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state,int query
       break;
     case cObjectSurface:
       if(!query) {
-        ObjectSurfaceSetLevel((ObjectSurface*)obj,level,state);
+        ObjectSurfaceSetLevel((ObjectSurface*)obj,level,state,quiet);
         SceneChanged(G);
       } else if(result) {
         ok = ObjectSurfaceGetLevel((ObjectSurface*)obj,state,result);
