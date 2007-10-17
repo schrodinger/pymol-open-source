@@ -14196,7 +14196,9 @@ static void ExecutiveDraw(Block *block)
   float lightEdge[3] = {0.6F, 0.6F, 0.6F };
   float darkEdge[3] = {0.35F, 0.35F, 0.35F };
   float captionColor[3] = {0.3F, 0.9F, 0.3F };
+#ifndef _PYMOL_NOPY
   float toggleColor3[3] = { 0.6F, 0.6F, 0.8F };
+#endif
 
   SpecRec *rec = NULL;
   PanelRec *panel = NULL;
@@ -14588,7 +14590,9 @@ int ExecutiveReinitialize(PyMOLGlobals *G,int what,char *pattern)
 { 
   register CExecutive *I = G->Executive;
   int ok=true;
+#ifndef _PYMOL_NOPY      
   int blocked = false;
+#endif
   /* reinitialize PyMOL */
   if(what==2)
     pattern = NULL;
