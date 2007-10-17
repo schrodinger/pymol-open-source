@@ -2099,7 +2099,7 @@ PyMOLreturn_status PyMOL_CmdIsodot(CPyMOL *I, char *name, char *map_name, float 
 
   if(ok) {
       ok = ExecutiveIsomeshEtc(I->G, name, map_name, level, s1, buffer,
-                             state, carve, source_state, quiet, 1, box_mode, level);
+                             state-1, carve, source_state-1, quiet, 1, box_mode, level);
     result.status = get_status_ok(ok);
   } else {
     result.status = PyMOLstatus_FAILURE;
@@ -2123,10 +2123,9 @@ PyMOLreturn_status PyMOL_CmdIsomesh(CPyMOL *I, char *name, char *map_name, float
     if(ok) ok = (SelectorGetTmp(I->G,selection,s1)>=0);
     if(ok) box_mode = 1;
   }
-
   if(ok) {
       ok = ExecutiveIsomeshEtc(I->G, name, map_name, level, s1, buffer,
-                             state, carve, source_state, quiet, 0, box_mode, level);
+                             state-1, carve, source_state-1, quiet, 0, box_mode, level);
     result.status = get_status_ok(ok);
   } else {
     result.status = PyMOLstatus_FAILURE;
@@ -2180,7 +2179,7 @@ PyMOLreturn_status PyMOL_CmdGradient(CPyMOL *I, char *name, char *map_name, floa
 
   if(ok) {
       ok = ExecutiveIsomeshEtc(I->G, name, map_name, minimum, s1, buffer,
-                             state, carve, source_state, quiet, 3, box_mode, maximum);
+                             state-1, carve, source_state-1, quiet, 3, box_mode, maximum);
     result.status = get_status_ok(ok);
   } else {
     result.status = PyMOLstatus_FAILURE;
@@ -2198,7 +2197,7 @@ PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int state
   PYMOL_API_LOCK
 
   if(ok) {
-    ok = ExecutiveIsolevel(I->G,name,level,state,query,&result.value,quiet);
+    ok = ExecutiveIsolevel(I->G,name,level,state-1,query,&result.value,quiet);
 
     result.status = get_status_ok(ok);
   } else {
