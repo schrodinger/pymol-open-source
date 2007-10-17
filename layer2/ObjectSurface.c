@@ -49,7 +49,7 @@ static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState *I)
 {
   PyObject *result = NULL;
 
-  result = PyList_New(16);
+  result = PyList_New(17);
   
   PyList_SetItem(result,0,PyInt_FromLong(I->Active));
   PyList_SetItem(result,1,PyString_FromString(I->MapName));
@@ -71,6 +71,7 @@ static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState *I)
   PyList_SetItem(result,13,PyInt_FromLong(I->DotFlag));
   PyList_SetItem(result,14,PyInt_FromLong(I->Mode));
   PyList_SetItem(result,15,PyInt_FromLong(I->Side));
+  PyList_SetItem(result,16,PyInt_FromLong(I->quiet));
 
 #if 0
   ObjectNameType MapName;
@@ -149,6 +150,7 @@ static int ObjectSurfaceStateFromPyList(PyMOLGlobals *G,ObjectSurfaceState *I,Py
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,14),&I->Mode);
 
       if(ok&&(ll>15)) PConvPyIntToInt(PyList_GetItem(list,15),&I->Side);
+      if(ok&&(ll>16)) PConvPyIntToInt(PyList_GetItem(list,16),&I->quiet);
 
       if(ok) {
         I->RefreshFlag=true;
@@ -515,9 +517,11 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
         if(ms->ResurfaceFlag) {
           ms->ResurfaceFlag=false;
           ms->RecolorFlag=true;
-          PRINTFB(I->Obj.G,FB_ObjectSurface,FB_Details)
-           " ObjectSurface: updating \"%s\".\n" , I->Obj.Name 
-            ENDFB(I->Obj.G);
+          if(!ms->quiet) {
+            PRINTFB(I->Obj.G,FB_ObjectSurface,FB_Details)
+              " ObjectSurface: updating \"%s\".\n" , I->Obj.Name 
+              ENDFB(I->Obj.G);
+          }
           if(oms->Field) {
 
             {
@@ -1165,6 +1169,7 @@ void ObjectSurfaceStateInit(PyMOLGlobals *G,ObjectSurfaceState *ms)
   ms->RecolorFlag=false;
   ms->ExtentFlag=false;
   ms->CarveFlag=false;
+  ms->quiet=true;
   ms->AtomVertex=NULL;
   ms->UnitCellCGO=NULL;
   ms->Side = 0;
@@ -1176,7 +1181,7 @@ void ObjectSurfaceStateInit(PyMOLGlobals *G,ObjectSurfaceState *ms)
 ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals *G,ObjectSurface *obj,ObjectMap *map,
                                     int map_state,
 int state,float *mn,float *mx,float level,int mode,
-float carve,float *vert_vla,int side)
+float carve,float *vert_vla,int side,int quiet)
 {
   ObjectSurface *I;
   ObjectSurfaceState *ms;
@@ -1204,6 +1209,7 @@ float carve,float *vert_vla,int side)
   ms->Level = level;
   ms->Mode = mode;
   ms->Side = side;
+  ms->quiet = quiet;
   if(oms) {
 
     if(oms->State.Matrix) {
@@ -1279,7 +1285,7 @@ int ObjectSurfaceGetLevel(ObjectSurface *I,int state, float *result)
   return(ok);
 }
 
-int ObjectSurfaceSetLevel(ObjectSurface *I,float level,int state)
+int ObjectSurfaceSetLevel(ObjectSurface *I,float level,int state,int quiet)
 {
   int a;
   int ok=true;
@@ -1300,6 +1306,7 @@ int ObjectSurfaceSetLevel(ObjectSurface *I,float level,int state)
         ms->ResurfaceFlag=true;
         ms->RefreshFlag=true;
         ms->Level = level;
+        ms->quiet = quiet;
       }
       if(once_flag) {
         break;

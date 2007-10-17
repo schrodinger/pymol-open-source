@@ -6640,7 +6640,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
           origObj=NULL;
         }
       PBlock(G); /*PBlockAndUnlockAPI();*/
-      obj=(CObject*)ObjectMapLoadChemPyBrick(G,(ObjectMap*)origObj,model,frame,discrete);
+      obj=(CObject*)ObjectMapLoadChemPyBrick(G,(ObjectMap*)origObj,model,frame,discrete,quiet);
       PUnblock(G); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
@@ -6661,7 +6661,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
           origObj=NULL;
         }
       PBlock(G); /*PBlockAndUnlockAPI();*/
-      obj=(CObject*)ObjectMapLoadChemPyMap(G,(ObjectMap*)origObj,model,frame,discrete);
+      obj=(CObject*)ObjectMapLoadChemPyMap(G,(ObjectMap*)origObj,model,frame,discrete,quiet);
       PUnblock(G); /*PLockAPIAndUnblock();*/
       if(!origObj) {
         if(obj) {
@@ -7168,14 +7168,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypePHIMap:
       PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading Delphi Map\n" ENDFD;
       if(!origObj) {
-        obj=(CObject*)ObjectMapLoadPHIFile(G,NULL,fname,frame);
+        obj=(CObject*)ObjectMapLoadPHIFile(G,NULL,fname,frame,quiet);
         if(obj) {
           ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
         }
       } else {
-        ObjectMapLoadPHIFile(G,(ObjectMap*)origObj,fname,frame);
+        ObjectMapLoadPHIFile(G,(ObjectMap*)origObj,fname,frame,quiet);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,valid_name);
       }
@@ -7183,14 +7183,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeDXMap:
       PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading DX Map\n" ENDFD;
       if(!origObj) {
-        obj=(CObject*)ObjectMapLoadDXFile(G,NULL,fname,frame);
+        obj=(CObject*)ObjectMapLoadDXFile(G,NULL,fname,frame,quiet);
         if(obj) {
           ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
         }
       } else {
-        ObjectMapLoadDXFile(G,(ObjectMap*)origObj,fname,frame);
+        ObjectMapLoadDXFile(G,(ObjectMap*)origObj,fname,frame,quiet);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,valid_name);
       }
@@ -7198,14 +7198,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeFLDMap:
       PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading AVS Map\n" ENDFD;
       if(!origObj) {
-        obj=(CObject*)ObjectMapLoadFLDFile(G,NULL,fname,frame);
+        obj=(CObject*)ObjectMapLoadFLDFile(G,NULL,fname,frame,quiet);
         if(obj) {
           ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
         }
       } else {
-        ObjectMapLoadFLDFile(G,(ObjectMap*)origObj,fname,frame);
+        ObjectMapLoadFLDFile(G,(ObjectMap*)origObj,fname,frame,quiet);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,valid_name);
       }
@@ -7213,14 +7213,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeBRIXMap:
       PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading BRIX/DSN6 Map\n" ENDFD;
       if(!origObj) {
-        obj=(CObject*)ObjectMapLoadBRIXFile(G,NULL,fname,frame);
+        obj=(CObject*)ObjectMapLoadBRIXFile(G,NULL,fname,frame,quiet);
         if(obj) {
           ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
         }
       } else {
-        ObjectMapLoadFLDFile(G,(ObjectMap*)origObj,fname,frame);
+        ObjectMapLoadFLDFile(G,(ObjectMap*)origObj,fname,frame,quiet);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,valid_name);
       }
@@ -7228,14 +7228,14 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeGRDMap:
       PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading GRD Map\n" ENDFD;
       if(!origObj) {
-        obj=(CObject*)ObjectMapLoadGRDFile(G,NULL,fname,frame);
+        obj=(CObject*)ObjectMapLoadGRDFile(G,NULL,fname,frame,quiet);
         if(obj) {
           ObjectSetName(obj,valid_name);
           ExecutiveManageObject(G,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
         }
       } else {
-        ObjectMapLoadGRDFile(G,(ObjectMap*)origObj,fname,frame);
+        ObjectMapLoadGRDFile(G,(ObjectMap*)origObj,fname,frame,quiet);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,valid_name);
       }

@@ -90,18 +90,18 @@ ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals *G,ObjectMap *obj,char *fname,
 ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals *G,ObjectMap *obj,char *fname,
                              int state,int is_string,int bytes,int quiet);
 
-ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
-ObjectMap *ObjectMapLoadPHIFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
-ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
-ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
-ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet);
+ObjectMap *ObjectMapLoadPHIFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet);
+ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet);
+ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet);
+ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet);
 
 ObjectMap *ObjectMapLoad(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
 ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
-                                    int state,int discrete);
+                                    int state,int discrete,int quiet);
 ObjectMap *ObjectMapLoadCObject(PyMOLGlobals *G,ObjectMap *obj,int state);
 ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
-                                  int state,int discrete);
+                                  int state,int discrete,int quiet);
 int ObjectMapDouble(ObjectMap *I,int state);
 int ObjectMapHalve(ObjectMap *I,int state,int smooth);
 int ObjectMapTrim(ObjectMap *I,int state, float *mn, float *mx,int quiet);

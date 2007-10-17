@@ -48,7 +48,7 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
 {
   PyObject *result = NULL;
 
-  result = PyList_New(15);
+  result = PyList_New(16);
   
   PyList_SetItem(result,0,PyInt_FromLong(I->Active));
   PyList_SetItem(result,1,PyString_FromString(I->MapName));
@@ -69,6 +69,7 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
   }
   PyList_SetItem(result,13,PyInt_FromLong(I->MeshMode));
   PyList_SetItem(result,14,PyFloat_FromDouble(I->AltLevel));
+  PyList_SetItem(result,15,PyInt_FromLong(I->quiet));
 
   return(PConvAutoNone(result));  
 }
@@ -138,6 +139,11 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals *G,ObjectMeshState *I,PyObject
         ok = PConvPyFloatToFloat(PyList_GetItem(list,14),&I->AltLevel);
       } else {
         I->AltLevel = I->Level;
+      }
+      if(ok&&(ll>15)) {
+        ok = PConvPyIntToInt(PyList_GetItem(list,15),&I->quiet);
+      } else {
+        I->quiet=true;
       }
     }
   }
@@ -367,7 +373,7 @@ int ObjectMeshGetLevel(ObjectMesh *I,int state, float *result)
   return(ok);
 }
 
-int ObjectMeshSetLevel(ObjectMesh *I,float level,int state)
+int ObjectMeshSetLevel(ObjectMesh *I,float level,int state,int quiet)
 {
   int a;
   int ok=true;
@@ -388,6 +394,7 @@ int ObjectMeshSetLevel(ObjectMesh *I,float level,int state)
         ms->ResurfaceFlag=true;
         ms->RefreshFlag=true;
         ms->Level = level;
+        ms->quiet = quiet;
       }
       if(once_flag) {
         break;
@@ -532,9 +539,11 @@ static void ObjectMeshUpdate(ObjectMesh *I)
         if(ms->ResurfaceFlag) {
           ms->RecolorFlag=true;          
           ms->ResurfaceFlag=false;
-          PRINTFB(G,FB_ObjectMesh,FB_Details)
-            " ObjectMesh: updating \"%s\".\n" , I->Obj.Name 
-          ENDFB(G);
+          if(!ms->quiet) {
+            PRINTFB(G,FB_ObjectMesh,FB_Details)
+              " ObjectMesh: updating \"%s\".\n" , I->Obj.Name 
+              ENDFB(G);
+          }
           if(oms->Field) {
 
             {
@@ -956,6 +965,7 @@ void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
   ms->RecolorFlag=false;
   ms->ExtentFlag=false;
   ms->CarveFlag=false;
+  ms->quiet = true;
   ms->CarveBuffer=0.0;
   ms->AtomVertex=NULL;
   ms->UnitCellCGO=NULL;
@@ -969,7 +979,7 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
                               int map_state,
                               int state,float *mn,float *mx,
                               float level,int meshMode,
-                              float carve,float *vert_vla,float alt_level)
+                              float carve,float *vert_vla,float alt_level,int quiet)
 {
   ObjectMesh *I;
   ObjectMeshState *ms;
@@ -997,6 +1007,7 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
   ms->Level = level;
   ms->AltLevel = alt_level;
   ms->MeshMode = meshMode;
+  ms->quiet = quiet;
   if(oms) {
 
     if((meshMode==3) && (ms->AltLevel < ms->Level)) {

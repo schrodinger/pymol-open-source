@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2007-10-17  Warren L. DeLano <warren@delsci.com>
+
+	* incorporated various changes for improved JyMOL capabilities
+	
 2007-10-15  Warren L. DeLano <warren@delsci.com>
 
 	* improved behavior of blended ramps based on atomic distances
