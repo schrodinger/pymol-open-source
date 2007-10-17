@@ -2117,7 +2117,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneRestartFrameTimer(G);
     break;
   case cSetting_mesh_width: 
-    ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvColor);
     SceneChanged(G);
     break;
   case cSetting_ellipsoid_quality:
