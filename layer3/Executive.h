@@ -70,6 +70,8 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeDCD 47
 #define cLoadTypeCUBEMap 48
 #define cLoadTypeXYZStr 49
+/* 50 is CIFStr */
+#define cLoadTypePHIStr 51
 
 /* NOTE: if you add a type above, then be sure to add corresponding code in:
    CmdLoad

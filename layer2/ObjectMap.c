@@ -1069,7 +1069,9 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
     return(ok);
 }
 
+#ifndef _PYMOL_NOPY
 static int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *I,PyObject *ary,int quiet);
+#endif
 
 void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
 {
@@ -4074,12 +4076,12 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals *G,ObjectMap *obj,char *fname,int stat
       size=ftell(f);
       fseek(f,0,SEEK_SET);
       
-		buffer=(char*)mmalloc(size);
-		ErrChkPtr(G,buffer);
-		p=buffer;
-		fseek(f,0,SEEK_SET);
-		fread(p,size,1,f);
-		fclose(f);
+      buffer=(char*)mmalloc(size);
+      ErrChkPtr(G,buffer);
+      p=buffer;
+      fseek(f,0,SEEK_SET);
+      fread(p,size,1,f);
+      fclose(f);
     } else {
       buffer = fname;
       size = (long)bytes;
@@ -4199,51 +4201,55 @@ static ObjectMap *ObjectMapReadPHIStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadPHIFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet)
+ObjectMap *ObjectMapLoadPHI(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,
+                            int is_string,int bytes, int quiet)
 {
+  
   ObjectMap *I = NULL;
   int ok=true;
   FILE *f;
   long size;
   char *buffer,*p;
-  float mat[9];
 
-  f=fopen(fname,"rb");
-  if(!f)
-	 ok=ErrMessage(G,"ObjectMapLoadPHIFile","Unable to open file!");
-  else
-	 {
-		if(Feedback(G,FB_ObjectMap,FB_Actions))
-		  {
-			printf(" ObjectMapLoadPHIFile: Loading from '%s'.\n",fname);
-		  }
-		
-		fseek(f,0,SEEK_END);
-      size=ftell(f);
-		fseek(f,0,SEEK_SET);
-
-		buffer=(char*)mmalloc(size);
-		ErrChkPtr(G,buffer);
-		p=buffer;
-		fseek(f,0,SEEK_SET);
-		fread(p,size,1,f);
-		fclose(f);
-
-		I=ObjectMapReadPHIStr(G,obj,buffer,size,state,quiet);
-
-		mfree(buffer);
-      if(state<0)
-        state=I->NState-1;
-      if(state<I->NState) {
-        ObjectMapState *ms;
-        ms = &I->State[state];
-        if(ms->Active) {
-          multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
-        }
+  if(!is_string) {
+    
+    f=fopen(fname,"rb");
+    if(!f)
+      ok=ErrMessage(G,"ObjectMapLoadPHIFile","Unable to open file!");
+  } 
+  
+  if(f || is_string) {
+    
+    if(!quiet) {
+      if((!is_string) && Feedback(G,FB_ObjectMap,FB_Actions)) {
+        printf(" ObjectMapLoadPHIFile: Loading from '%s'.\n",fname);
       }
     }
-  return(I);
 
+    if(!is_string) {
+      fseek(f,0,SEEK_END);
+      size=ftell(f);
+      fseek(f,0,SEEK_SET);
+      
+      buffer=(char*)mmalloc(size);
+      ErrChkPtr(G,buffer);
+      p=buffer;
+      fseek(f,0,SEEK_SET);
+      fread(p,size,1,f);
+      fclose(f);
+    } else {
+      buffer = fname;
+      size = (long)bytes;
+    }
+
+    I=ObjectMapReadPHIStr(G,obj,buffer,size,state,quiet);
+
+    if(!is_string) 
+      mfree(buffer);
+
+  }
+  return(I);
+  
 }
 /*========================================================================*/
 
@@ -4814,12 +4820,9 @@ int ObjectMapSetBorder(ObjectMap *I,float level,int state)
   return(result);
 }
 /*========================================================================*/
+#ifndef _PYMOL_NOPY
 static int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *ary,int quiet) {
 
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-  
   int a,b,c,d,e;
   float v[3],dens,maxd,mind;
   int ok = true;
@@ -4899,8 +4902,8 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyOb
     }
   }
   return(ok);
-#endif
 }
+#endif
 /*========================================================================*/
 ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
                                            int state,int discrete,int quiet)

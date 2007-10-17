@@ -2512,6 +2512,7 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
   case cLoadTypeMOL2Str:
   case cLoadTypeCCP4Str:
   case cLoadTypeSDF2Str:
+  case cLoadTypePHIStr:
     is_string = true;
     break;
   case cLoadTypeP1M:
@@ -2659,6 +2660,10 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
         case cLoadTypeXPLORMap:
         case cLoadTypeXPLORStr:
           obj=(CObject*)ObjectMapLoadXPLOR(G, (ObjectMap*)origObj, start_at, eff_state, false, quiet);
+          break;
+        case cLoadTypePHIMap:
+        case cLoadTypePHIStr:
+          obj=(CObject*)ObjectMapLoadPHI(G, (ObjectMap*)origObj, start_at, eff_state, true, size, quiet);
           break;
         case cLoadTypeCCP4Map:
         case cLoadTypeCCP4Str:

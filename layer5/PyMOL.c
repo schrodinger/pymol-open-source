@@ -118,7 +118,7 @@ typedef struct _CPyMOL {
   /* dynamically mapped string constants */
 
   OVLexicon *Lex;
-  ov_word lex_pdb, lex_mol2, lex_mol, lex_sdf, lex_xplor, lex_ccp4;
+  ov_word lex_pdb, lex_mol2, lex_mol, lex_sdf, lex_xplor, lex_ccp4, lex_phi;
   ov_word lex_string, lex_filename, lex_raw;
 
   OVOneToOne *Rep;
@@ -772,6 +772,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX(mol2);
   LEX(xplor);
   LEX(ccp4);
+  LEX(phi);
 
   LEX(string);
   LEX(filename);
@@ -2152,7 +2153,7 @@ PyMOLreturn_status PyMOL_CmdIsosurface(CPyMOL *I, char *name, char *map_name, fl
 
   if(ok) {
     ok = ExecutiveIsosurfaceEtc(I->G, name, map_name, level, s1, buffer,
-                                state, carve, source_state, side, quiet, mode, box_mode);
+                                state-1, carve, source_state-1, side, quiet, mode, box_mode);
     result.status = get_status_ok(ok);
   } else {
     result.status = PyMOLstatus_FAILURE;
