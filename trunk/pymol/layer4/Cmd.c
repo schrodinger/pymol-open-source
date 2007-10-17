@@ -7159,12 +7159,15 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeXPLORStr:
     case cLoadTypeCCP4Map:
     case cLoadTypeCCP4Str:
+    case cLoadTypePHIMap:
+    case cLoadTypePHIStr:
       ok = ExecutiveLoad(G,origObj, 
                          fname, bytes, type,
                          valid_name, frame, zoom, 
                          discrete, finish, 
                          multiplex, quiet, NULL);
       break;
+      /*
     case cLoadTypePHIMap:
       PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading Delphi Map\n" ENDFD;
       if(!origObj) {
@@ -7180,6 +7183,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                 fname,valid_name);
       }
       break;
+      */
     case cLoadTypeDXMap:
       PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading DX Map\n" ENDFD;
       if(!origObj) {
