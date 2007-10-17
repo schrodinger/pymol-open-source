@@ -985,10 +985,10 @@ static int SeekerFindTag(PyMOLGlobals *G,AtomInfoType *ai,int sele, int codes,in
 
 PyObject *SeekerGetRawAlignment(PyMOLGlobals *G, int align_sele, int active_only) 
 {
-  PyObject *result = NULL;
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
+  PyObject *result = NULL;
   int nRow = 0;
   int nCol = 0;
   CSeqRow *row_vla = NULL,*row;
