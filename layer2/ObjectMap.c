@@ -2471,22 +2471,28 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state,in
   p+=4;
 
   ParseNCopy(cc,p,20);
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
-    " PHIStrToMap: %s\n",cc
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
+      " PHIStrToMap: %s\n",cc
+      ENDFB(I->Obj.G);
+  }
   p+=20;
   p+=4;
 
   p+=4;
   ParseNCopy(cc,p,10);
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
-    " PHIStrToMap: %s\n",cc
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
+      " PHIStrToMap: %s\n",cc
+      ENDFB(I->Obj.G);
+  }
   p+=10;
   ParseNCopy(cc,p,60);
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
-    " PHIStrToMap: %s\n",cc
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
+      " PHIStrToMap: %s\n",cc
+      ENDFB(I->Obj.G);
+  }
   p+=60;
   p+=4;
 
@@ -2511,9 +2517,11 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state,in
   if((4*map_dim*map_dim*map_dim)!=map_bytes) /* consistency check */
     map_dim = 65;
 
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details) 
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details) 
       " PHIStrToMap: Map Size %d x %d x %d\n",map_dim,map_dim,map_dim
       ENDFB(I->Obj.G);
+  }
   p+=4;
 
   ms->FDim[0] = map_dim;
@@ -2564,9 +2572,11 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state,in
 
   p+=4;
   ParseNCopy(cc,p,16);
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
-    " PHIStrToMap: %s\n",cc
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
+      " PHIStrToMap: %s\n",cc
+      ENDFB(I->Obj.G);
+  }
   p+=16;
   p+=4;
 

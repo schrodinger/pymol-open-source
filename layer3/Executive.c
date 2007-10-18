@@ -3594,9 +3594,10 @@ int ExecutiveValidateObjectPtr(PyMOLGlobals *G,CObject *ptr,int object_type)
   return(ok);
 }
 
-int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,PyObject *range,
-                        PyObject *color,int src_state,char *sele,
-                        float beyond,float within,float sigma,int zero,int quiet)
+int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,
+                     PyObject *range,PyObject *color,
+                     int src_state,char *sele, float beyond,
+                     float within,float sigma,int zero,int quiet)
 {
   ObjectGadgetRamp *obj = NULL;
   int ok =true;

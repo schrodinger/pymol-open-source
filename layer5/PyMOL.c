@@ -2210,6 +2210,38 @@ PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int state
   return result;
 }
 
+#if 0
+PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *range, 
+                                    int n_range, char **color, int n_color,
+                                    int state, char *selection,
+                                    float beyond, float within, float sigma,
+                                    int zero, int quiet)
+
+{
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  PyMOLreturn_status result;
+  OrthoLineType s1="";
+
+  PYMOL_API_LOCK
+  if(selection && selection[0]) {  
+    if(ok) ok = (SelectorGetTmp(I->G,selection,s1)>=0);
+  }
+  if(ok) 
+    ok = ExecutiveRampNew(G,name,map,range,
+                          color,state,s1,beyond,within,sigma,
+                          zero,quiet);
+    result.status = get_status_ok(ok);
+  } else {
+    result.status = PyMOLstatus_FAILURE;
+  }
+  SelectorFreeTmp(I->G,s1);
+  PYMOL_API_UNLOCK
+
+  return result;
+}
+#endif
+
 static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type, 
                                  int content_length, char *content_format, 
                                  char *object_name, int state, 
@@ -2307,29 +2339,41 @@ static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type,
           pymol_content_type = cLoadTypePDBStr;
         else if( type_code == I->lex_filename)
           pymol_content_type = cLoadTypePDB;
+
       } else if(format_code == I->lex_mol2) {
         if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeMOL2Str;
         else if( type_code == I->lex_filename)
           pymol_content_type = cLoadTypeMOL2;
+
       } else if(format_code == I->lex_mol) {
         if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeMOLStr;
         else if( type_code == I->lex_filename)
           pymol_content_type = cLoadTypeMOL;
+
       } else if(format_code == I->lex_sdf) {
         if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeSDF2Str;
         else if( type_code == I->lex_filename)
           pymol_content_type = cLoadTypeSDF2;
+
       } else if(format_code == I->lex_ccp4) {
         if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeCCP4Str;
+
       } else if(format_code == I->lex_xplor) {
         if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeXPLORStr;
         else if( type_code == I->lex_filename)
           pymol_content_type = cLoadTypeXPLORMap;
+
+      } else if(format_code == I->lex_phi) {
+        if((type_code == I->lex_raw) || (type_code == I->lex_string))
+          pymol_content_type = cLoadTypePHIStr;
+        else if(type_code == I->lex_filename)
+          pymol_content_type = cLoadTypePHIMap;
+
       } else if(format_code == I->lex_cgo) {
         if(type_code == I->lex_cgo) {
           pymol_content_type = cLoadTypeCGO;
@@ -2360,6 +2404,8 @@ static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type,
       case cLoadTypeSDF2Str:
       case cLoadTypeXPLORMap:
       case cLoadTypeXPLORStr:
+      case cLoadTypePHIMap:
+      case cLoadTypePHIStr:
       case cLoadTypeCCP4Map:
       case cLoadTypeCCP4Str:
       case cLoadTypeCGO:
@@ -2381,11 +2427,11 @@ static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type,
 }
 
 PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,  
-                                        char *content_type,
-                                        char *content_format, 
-                                        char *object_name, int state, 
-                                        int discrete, int finish, 
-                                        int quiet, int multiplex, int zoom)
+                                 char *content_type,
+                                 char *content_format, 
+                                 char *object_name, int state, 
+                                 int discrete, int finish, 
+                                 int quiet, int multiplex, int zoom)
 {
   PyMOLreturn_status status;
   PYMOL_API_LOCK
@@ -2426,8 +2472,8 @@ PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL *I,float *content,
 PyMOLreturn_status PyMOL_CmdCreate(CPyMOL *I, char *name, 
                                    char *selection, int source_state,
                                    int target_state, int discrete, 
-                                   int zoom, int quiet, 
-                                   int singletons, char *extract)
+                                   int zoom, int quiet, int singletons,
+                                   char *extract)
 {
   int ok = true;
   PYMOL_API_LOCK
