@@ -70,6 +70,9 @@ Z* -------------------------------------------------------------------
  * These used to be used just for graphics, but are now
  * used by the molecular editor as well */
 
+/* invalite display (list) */
+
+#define cRepInvDisplay 1
 /* precompted extents (can change if matrix changes) */
 #define cRepInvExtents 5
 /* invalidate external atom colors */

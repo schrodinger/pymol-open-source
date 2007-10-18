@@ -312,20 +312,22 @@ static void ObjectSurfaceInvalidate(ObjectSurface *I,int rep,int level,int state
   if(level>=cRepInvExtents) {
     I->Obj.ExtentFlag=false;
   }
-  for(a=0;a<I->NState;a++) {
-    if(state<0) once_flag=false;
-    if(!once_flag) state=a;
-    I->State[state].RefreshFlag=true;
-    if(level>=cRepInvAll) {
-      I->State[state].ResurfaceFlag=true;     
-      SceneChanged(I->Obj.G);
-    } else if(level>=cRepInvColor) {
-      I->State[state].RecolorFlag=true;
-      SceneChanged(I->Obj.G);
-    } else {
-      SceneInvalidate(I->Obj.G);
+  if((rep==cRepMesh)||(rep==cRepAll)) {
+    for(a=0;a<I->NState;a++) {
+      if(state<0) once_flag=false;
+      if(!once_flag) state=a;
+      I->State[state].RefreshFlag=true;
+      if(level>=cRepInvAll) {
+        I->State[state].ResurfaceFlag=true;     
+        SceneChanged(I->Obj.G);
+      } else if(level>=cRepInvColor) {
+        I->State[state].RecolorFlag=true;
+        SceneChanged(I->Obj.G);
+      } else {
+        SceneInvalidate(I->Obj.G);
+      }
+      if(once_flag) break;
     }
-    if(once_flag) break;
   }
 }
 
