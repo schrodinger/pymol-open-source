@@ -1172,8 +1172,12 @@ NOTES
         if async<0: # by default, run asynch when interactive, sync when not
             async = not quiet
         if not int(async):
-            r = _multifetch(code,name,state,finish,
-                            discrete,multiplex,zoom,type,path,file,quiet,_self)
+            try:
+                _self.block_flush()
+                r = _multifetch(code,name,state,finish,
+                                discrete,multiplex,zoom,type,path,file,quiet,_self)
+            except:
+                _self.unblock_flush()
         else:
             t = threading.Thread(target=_multifetch,
                                  args=(code,name,state,finish,

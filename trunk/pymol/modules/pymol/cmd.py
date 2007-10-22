@@ -150,7 +150,8 @@ if __name__=='pymol.cmd':
         lock_api_c = pymol.lock_api_c
         lock_api_status = pymol.lock_api_status
         lock_api_glut = pymol.lock_api_glut
-
+        lock_api_allow_flush = 1
+        
         from locking import *
 
         #--------------------------------------------------------------------

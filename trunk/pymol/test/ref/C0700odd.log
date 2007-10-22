@@ -1,3 +1,6 @@
+PyMOL>unset pdb_hetatm_guess_valences
+ Setting: pdb_hetatm_guess_valences set to off.
+PyMOL>reinitialize store_defaults
 PyMOL>load dat/odd01.pdb
  CmdLoad: "dat/odd01.pdb" loaded as "odd01".
 PyMOL>iterate all, print name
