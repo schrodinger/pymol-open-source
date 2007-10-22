@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2007-10-22  Warren L. DeLano <warren@delsci.com>
+  	
+	* fixed command synchronization problem with async pdb fetch
+	
 2007-10-17  Warren L. DeLano <warren@delsci.com>
 
 	* incorporated various changes for improved JyMOL capabilities

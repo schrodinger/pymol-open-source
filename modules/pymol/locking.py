@@ -56,6 +56,16 @@ def lock(_self=cmd): # INTERNAL -- API lock
 def lock_attempt(_self=cmd): # INTERNAL
     return _self.lock_api.acquire(blocking=0)
 
+def block_flush(_self=cmd):
+    lock()
+    _self.lock_api_allow_flush = 0
+    unlock()
+
+def unblock_flush(_self=cmd):
+    lock()
+    _self.lock_api_allow_flush = 1
+    unlock()
+    
 def unlock(result=None,_self=cmd): # INTERNAL
     if (thread.get_ident() == pymol.glutThread):
         if _self.reaper:
@@ -69,10 +79,11 @@ def unlock(result=None,_self=cmd): # INTERNAL
                 pass
         _self.lock_api.release()
     #         print "lock: released by 0x%x (glut)"%thread.get_ident()
-        if result==None: # don't flush if we have an incipient error (negative input)
-            _cmd.flush_now(_self._COb)
-        elif cmd.is_ok(result):
-            _cmd.flush_now(_self._COb)
+        if _self.lock_api_allow_flush:
+            if result==None: # don't flush if we have an incipient error (negative input)
+                _cmd.flush_now(_self._COb)
+            elif cmd.is_ok(result):
+                _cmd.flush_now(_self._COb)
     else:
     #         print "lock: released by 0x%x (not glut), waiting queue"%thread.get_ident()
         _self.lock_api.release()
