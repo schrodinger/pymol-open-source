@@ -79,14 +79,14 @@ typedef struct ObjectGadgetRamp {
 
 ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals *G);
 
-ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,ObjectMap *map,PyObject *level,
-                                                  PyObject *color,int map_state,float *vert_vla,
-                                                  float beyond,float within,float sigma,int zero);
+ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,ObjectMap *map,float *level_vla,
+                                                  float *color_vla,int map_state,float *vert_vla,
+                                                  float beyond,float within,float sigma,int zero,int calc_mode);
 
 ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule *mol,
-                                                  PyObject *level,
-                                                  PyObject *color,
-                                                  int mol_state);
+                                                  float *level_vla,
+                                                  float *color_vla,
+                                                  int mol_state,int calc_mode);
 
 int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color);
 int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int state);

@@ -1391,8 +1391,9 @@ static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
   int state;
   char *sele;
   float beyond,within;
-  float sigma;
-  int zero,quiet;
+  float sigma,*range_vla = NULL;
+  float *color_vla = NULL;
+  int zero,quiet,calc_mode = 0;
   OrthoLineType s1;
   PyObject *range,*color;
   ok = PyArg_ParseTuple(args,"OssOOisfffii",&self,&name,&map,&range,&color,
@@ -1407,9 +1408,18 @@ static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
   if (ok) {
     APIEntry(G);
     ok = (SelectorGetTmp(G,sele,s1)>=0);
-    if(ok) ok = ExecutiveRampNew(G,name,map,range,
-                                 color,state,s1,beyond,within,sigma,
-                                 zero,quiet);
+    if(ok) ok = PConvPyListToFloatVLA(range,&range_vla);
+
+    if(ok) {
+      if(PyList_Check(color))
+        ok = PConvPyList3ToFloatVLA(color,&color_vla);
+      else if(PyInt_Check(color)) {
+        ok = PConvPyIntToInt(color,&calc_mode);
+      }
+    }
+    if(ok) ok = ExecutiveRampNew(G,name,map,range_vla,
+                                 color_vla,state,s1,beyond,within,sigma,
+                                 zero,calc_mode,quiet);
     SelectorFreeTmp(G,s1);
     APIExit(G);
   }

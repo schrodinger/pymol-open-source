@@ -1080,10 +1080,10 @@ static int ObjectGadgetRampHandleInputColors(ObjectGadgetRamp *I)
 /*========================================================================*/
 ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
                                                   ObjectMap *map,
-                                                  PyObject *level,
-                                                  PyObject *color,int map_state,
+                                                  float *level_vla,
+                                                  float *color_vla,int map_state,
                                                   float *vert_vla,float beyond,float within,
-                                                  float sigma,int zero)
+                                                  float sigma,int zero,int calc_mode)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -1094,14 +1094,9 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
   I = ObjectGadgetRampNew(G);
   I->RampType = cRampMap;
 
-  PBlock(G);
-  if(ok) {
-    if(PyList_Check(color))
-      ok = PConvPyList3ToFloatVLA(color,&I->Color);
-    else if(PyInt_Check(color)) {
-      ok = PConvPyIntToInt(color,&I->CalcMode);      
-    }
-  }
+  if(ok) I->Color = color_vla;
+  if(ok) I->CalcMode = calc_mode;
+
   if(ok) {     
     ObjectMapState *ms;
     float tmp_level[3];
@@ -1124,13 +1119,13 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
       }
       I->Level = VLAlloc(float,3);
       copy3f(tmp_level,I->Level);
+      VLAFreeP(level_vla);
     } else  {
-      ok = PConvPyListToFloatVLA(level,&I->Level);
+      I->Level = level_vla;
     }
   }
   if(ok) I->NLevel=VLAGetSize(I->Level);
   if(ok) ok = ObjectGadgetRampHandleInputColors(I);
-
   ObjectGadgetRampBuild(I);
   UtilNCopy(I->SrcName,map->Obj.Name,WordLength);
   I->SrcState=map_state;
@@ -1157,16 +1152,15 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
     dump3f(test,"test color");
   }
   */
-  PUnblock(G);
   return(I);
 #endif
 }
 
 /*========================================================================*/
 ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule *mol,
-                                                  PyObject *level,
-                                                  PyObject *color,
-                                                  int mol_state)
+                                                  float *level_vla,
+                                                  float *color_vla,
+                                                  int mol_state, int calc_mode)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -1180,17 +1174,9 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
     I->RampType = cRampMol;
   else
     I->RampType = cRampNone;
-  PBlock(G);
-  if(ok) {
-    if(PyList_Check(color))
-      ok = PConvPyList3ToFloatVLA(color,&I->Color);
-    else if(PyInt_Check(color)) {
-      ok = PConvPyIntToInt(color,&I->CalcMode);      
-    }
-  }
-  if(ok) {     
-    ok = PConvPyListToFloatVLA(level,&I->Level);
-  }
+  if(ok) I->Color = color_vla;
+  if(ok) I->CalcMode = calc_mode;
+  if(ok) I->Level = level_vla;
   if(ok) I->NLevel=VLAGetSize(I->Level);
   if(ok) ok = ObjectGadgetRampHandleInputColors(I);
   
@@ -1211,7 +1197,6 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
     UtilNCopy(I->SrcName,"none",WordLength);
   }
   I->SrcState=mol_state;
-  PUnblock(G);
   return(I);
 #endif
 }
