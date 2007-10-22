@@ -3595,9 +3595,9 @@ int ExecutiveValidateObjectPtr(PyMOLGlobals *G,CObject *ptr,int object_type)
 }
 
 int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,
-                     PyObject *range,PyObject *color,
+                     float *range,float *color,
                      int src_state,char *sele, float beyond,
-                     float within,float sigma,int zero,int quiet)
+                     float within,float sigma,int zero,int calc_mode,int quiet)
 {
   ObjectGadgetRamp *obj = NULL;
   int ok =true;
@@ -3622,7 +3622,7 @@ int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,
   }
   if(ok) {
     if(!src_obj) {
-      ok = ok && (obj=ObjectGadgetRampMolNewAsDefined(G,NULL,range,color,src_state));
+      ok = ok && (obj=ObjectGadgetRampMolNewAsDefined(G,NULL,range,color,src_state,calc_mode));
     } else {
       switch(src_obj->type) {
       case cObjectMap:
@@ -3632,11 +3632,11 @@ int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,
         ok = ok && (obj=ObjectGadgetRampMapNewAsDefined(G,(ObjectMap*)src_obj,
                                                         range,color,src_state,
                                                         vert_vla,beyond,within,
-                                                        sigma,zero));
+                                                        sigma,zero,calc_mode));
         break;
       case cObjectMolecule:
         ok = ok && (obj=ObjectGadgetRampMolNewAsDefined(G,(ObjectMolecule*)src_obj,
-                                                        range,color,src_state));
+                                                        range,color,src_state,calc_mode));
         break;
       }
     }

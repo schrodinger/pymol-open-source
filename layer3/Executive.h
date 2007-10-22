@@ -357,9 +357,9 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
 
 int  ExecutiveAssignSS(PyMOLGlobals *G,char *target,int state,char *context,int preserve,int quiet);
 
-int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,PyObject *range,
-                        PyObject *color,int src_state,char *sele,
-                        float beyond,float within,float sigma,int zero,int quiet);
+int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,float *range,
+                        float *color,int src_state,char *sele,
+                        float beyond,float within,float sigma,int zero,int calc_mode,int quiet);
 
 int ExecutiveValidateObjectPtr(PyMOLGlobals *G,CObject *ptr,int object_type);
 
