@@ -395,6 +395,12 @@ PyMOLreturn_status PyMOL_CmdGradient(CPyMOL *I, char *name, char *map_name, floa
 
 PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int state, int query, int quiet);
 
+PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *range, 
+                                    int n_range, char **color, int n_color,
+                                    int state, char *selection,
+                                    float beyond, float within, float sigma,
+                                    int zero, int calc_mode, int quiet);
+
 /* releasing returned values */
 
 int PyMOL_FreeResultArray(CPyMOL *I,void *array);
