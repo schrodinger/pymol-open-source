@@ -2210,27 +2210,46 @@ PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int state
   return result;
 }
 
-#if 0
 PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *range, 
                                     int n_range, char **color, int n_color,
                                     int state, char *selection,
                                     float beyond, float within, float sigma,
-                                    int zero, int quiet)
+                                    int zero, int calc_mode, int quiet)
 
 {
-  PyMOLGlobals *G = NULL;
   int ok = true;
   PyMOLreturn_status result;
   OrthoLineType s1="";
-
+  float *color_vla = NULL;
+  float *range_vla = NULL;
   PYMOL_API_LOCK
   if(selection && selection[0]) {  
     if(ok) ok = (SelectorGetTmp(I->G,selection,s1)>=0);
   }
-  if(ok) 
-    ok = ExecutiveRampNew(G,name,map,range,
+  if(ok) {
+    if(range&&n_range) {
+      range_vla = VLAlloc(float,n_range);
+      UtilCopyMem(range_vla,range,sizeof(float)*n_range);
+    }
+  }
+
+  if(ok) {
+    if(color&&n_color) {
+      color_vla = VLAlloc(float,n_color*3);
+      if(color_vla) {
+        int a;
+        for(a=0;a<n_color;a++) {
+          float *src = ColorGetNamed(I->G,color[a]);
+          float *dst = color_vla + 3*a;
+          copy3f(src,dst);
+        }
+      }
+    }
+  }
+  if(ok) {
+    ok = ExecutiveRampNew(I->G,name,map,range,
                           color,state,s1,beyond,within,sigma,
-                          zero,quiet);
+                          zero,calc_mode,quiet);
     result.status = get_status_ok(ok);
   } else {
     result.status = PyMOLstatus_FAILURE;
@@ -2240,7 +2259,6 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *rang
 
   return result;
 }
-#endif
 
 static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type, 
                                  int content_length, char *content_format, 
