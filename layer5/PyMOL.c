@@ -2211,8 +2211,7 @@ PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int state
 }
 
 PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *range, 
-                                    int n_range, char **color, int n_color,
-                                    int state, char *selection,
+                                    int n_range, char *color, int state, char *selection,
                                     float beyond, float within, float sigma,
                                     int zero, int calc_mode, int quiet)
 
@@ -2234,12 +2233,14 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *rang
   }
 
   if(ok) {
+    int n_color = 0;
+    /* to do */
     if(color&&n_color) {
       color_vla = VLAlloc(float,n_color*3);
       if(color_vla) {
         int a;
         for(a=0;a<n_color;a++) {
-          float *src = ColorGetNamed(I->G,color[a]);
+          float *src = ColorGetNamed(I->G,color);
           float *dst = color_vla + 3*a;
           copy3f(src,dst);
         }
