@@ -3263,10 +3263,8 @@ PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals *G)
       PyList_SetItem(list,1,repList);
       
       if(rec->type!=cExecObject) {
-        Py_INCREF(Py_None);
-        PyList_SetItem(list,2,Py_None);
-        Py_INCREF(Py_None);
-        PyList_SetItem(list,3,Py_None);
+        PyList_SetItem(list,2,PConvAutoNone(Py_None));
+        PyList_SetItem(list,3,PConvAutoNone(Py_None));
       } else { 
         /* objects have their own visib list too */
         n_vis=0;
@@ -4006,8 +4004,7 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict,char *names,int partial,i
 
   if(partial) { /* mark this as a partial session */
 
-    Py_INCREF(Py_None);
-    PyDict_SetItemString(dict,"partial",Py_None);
+    PyDict_SetItemString(dict,"partial",PConvAutoNone(Py_None));
 
   } else { 
 
@@ -6431,8 +6428,7 @@ PyObject *ExecutiveGetSettingTuple(PyMOLGlobals *G,int index,char *object,int st
     }
   }
   if(!ok) {
-    Py_INCREF(Py_None);
-    result = Py_None;
+    result = PConvAutoNone(Py_None);
   }
   return(result);
 #endif

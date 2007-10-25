@@ -2211,7 +2211,7 @@ PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int state
 }
 
 PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *range, 
-                                    int n_range, char *color, int state, char *selection,
+                                    int n_level, char *color, int state, char *selection,
                                     float beyond, float within, float sigma,
                                     int zero, int calc_mode, int quiet)
 
@@ -2226,9 +2226,9 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *rang
     if(ok) ok = (SelectorGetTmp(I->G,selection,s1)>=0);
   }
   if(ok) {
-    if(range&&n_range) {
-      range_vla = VLAlloc(float,n_range);
-      UtilCopyMem(range_vla,range,sizeof(float)*n_range);
+    if(range&&n_level) {
+      range_vla = VLAlloc(float,n_level);
+      UtilCopyMem(range_vla,range,sizeof(float)*n_level);
     }
   }
 

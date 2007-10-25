@@ -1034,7 +1034,7 @@ PyObject *ObjectStateAsPyList(CObjectState *I)
     if(I->Matrix) {
       PyList_SetItem(result,0,PConvDoubleArrayToPyList(I->Matrix,16));
     } else {
-      PyList_SetItem(result,0,Py_None);
+      PyList_SetItem(result,0,PConvAutoNone(Py_None));
     }
   }
   return(PConvAutoNone(result));
