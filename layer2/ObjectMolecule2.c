@@ -3275,8 +3275,7 @@ static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule *I)
     if(I->CSet[a]) {
       PyList_SetItem(result,a,CoordSetAsPyList(I->CSet[a]));
     } else {
-      PyList_SetItem(result,a,Py_None);
-      Py_INCREF(Py_None);
+      PyList_SetItem(result,a,PConvAutoNone(Py_None));
     }
   }
   return(PConvAutoNone(result));

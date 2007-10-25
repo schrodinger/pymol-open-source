@@ -1164,8 +1164,7 @@ PyObject *SettingGetTuple(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int inde
                            SettingGet_s(G,set1,set2,index));
     break;
   default:
-    Py_INCREF(Py_None);
-    result = Py_None;
+    result = PConvAutoNone(Py_None);
     break;
   }
   return result;
@@ -1219,8 +1218,7 @@ PyObject *SettingGetDefinedTuple(PyMOLGlobals *G,CSetting *set1,int index)
     result = Py_BuildValue("(i)",0);
     }
   if(!result) {
-    Py_INCREF(Py_None);
-    result = Py_None;
+    result = PConvAutoNone(Py_None);
   }
   return result;
 }

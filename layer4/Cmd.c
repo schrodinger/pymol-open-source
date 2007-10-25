@@ -175,8 +175,7 @@ static void APIExitBlocked(PyMOLGlobals *G) /* assumes API is locked */
 
 static PyObject *APISuccess(void)/* success returns None */
 {
-  Py_INCREF(Py_None);
-  return(Py_None);
+  return PConvAutoNone(Py_None);
 }
 
 static PyObject *APIFailure(void) /* returns -1: a general unspecified

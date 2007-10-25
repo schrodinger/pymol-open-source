@@ -836,88 +836,82 @@ int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,int ll)
 PyObject *PConvFloatArrayToPyList(float *f,int l)
 {
   int a;
-  PyObject *result = Py_None;
-  result=PyList_New(l);
+  PyObject *result = PyList_New(l);
   for(a=0;a<l;a++) 
     PyList_SetItem(result,a,PyFloat_FromDouble((double)*(f++)));
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 PyObject *PConvFloatArrayToPyListNullOkay(float *f,int l)
 {
   int a;
-  PyObject *result = Py_None;
-  if(!f) {
-    result = PConvAutoNone(NULL);
-  } else {
+  PyObject *result = NULL;
+  if(f) {
     result=PyList_New(l);
     for(a=0;a<l;a++) 
       PyList_SetItem(result,a,PyFloat_FromDouble((double)*(f++)));
   }
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 PyObject *PConvDoubleArrayToPyList(double *f,int l)
 {
   int a;
-  PyObject *result = Py_None;
-  result=PyList_New(l);
+  PyObject *result = PyList_New(l);
   for(a=0;a<l;a++) 
     PyList_SetItem(result,a,PyFloat_FromDouble(*(f++)));
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 PyObject *PConvFloatVLAToPyList(float *f)
 {
   int a,l;
-  PyObject *result = Py_None;
+  PyObject *result = NULL;
   l=VLAGetSize(f);
   result=PyList_New(l);
   for(a=0;a<l;a++) {
     PyList_SetItem(result,a,PyFloat_FromDouble((double)*(f++))); /* set item steals ref */
   }
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 PyObject *PConvIntVLAToPyList(int *f)
 {
   int a,l;
-  PyObject *result = Py_None;
+  PyObject *result = NULL;
   l=VLAGetSize(f);
   result=PyList_New(l);
   for(a=0;a<l;a++) 
     PyList_SetItem(result,a,PyInt_FromLong(*(f++)));
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 PyObject *PConvIntArrayToPyList(int *f,int l)
 {
   int a;
-  PyObject *result = Py_None;
-  result=PyList_New(l);
+  PyObject *result = PyList_New(l);
   for(a=0;a<l;a++) 
     PyList_SetItem(result,a,PyInt_FromLong(*(f++)));
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 PyObject *PConvSIntArrayToPyList(short int *f,int l)
 {
   int a;
-  PyObject *result = Py_None;
-  result=PyList_New(l);
+  PyObject *result = PyList_New(l);
   for(a=0;a<l;a++) 
     PyList_SetItem(result,a,PyInt_FromLong(*(f++)));
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 PyObject *PConvSCharArrayToPyList(signed char *f,int l)
 {
   int a;
-  PyObject *result = Py_None;
+  PyObject *result = NULL;
   result=PyList_New(l);
   for(a=0;a<l;a++) 
     PyList_SetItem(result,a,PyInt_FromLong(*(f++)));
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 PyObject *PConv3DIntArrayTo3DPyList(int ***array,int *dim)
@@ -936,25 +930,24 @@ PyObject *PConv3DIntArrayTo3DPyList(int ***array,int *dim)
       }
     }
   }
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 PyObject *PConvStringListToPyList(int l,char **str)
 {
   int a;
-  PyObject *result = Py_None;
-  result=PyList_New(l);
+  PyObject *result = PyList_New(l);
   for(a=0;a<l;a++) {
     PyList_SetItem(result,a,PyString_FromString(str[a]));
   }
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 PyObject *PConvStringVLAToPyList(char *vla)
 {
   int a,c,n=0;
   char *p;
-  PyObject *result = Py_None;
+  PyObject *result = NULL;
   p=vla;
   c = VLAGetSize(vla);
   while(c--) { /* count strings */
@@ -1043,7 +1036,7 @@ PyObject *PConvLabPosVLAToPyList(LabPosType *vla,int l)
 { /* TO DO error handling */
   int a;
   LabPosType *p = vla;
-  PyObject *result = Py_None;
+  PyObject *result = NULL;
   if(p) {
     PyObject *item;
     result=PyList_New(l); 

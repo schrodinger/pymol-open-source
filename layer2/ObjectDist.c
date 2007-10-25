@@ -291,8 +291,7 @@ static PyObject *ObjectDistDSetAsPyList(ObjectDist *I)
     if(I->DSet[a]) {
       PyList_SetItem(result,a,DistSetAsPyList(I->DSet[a]));
     } else {
-      PyList_SetItem(result,a,Py_None);
-      Py_INCREF(Py_None);
+      PyList_SetItem(result,a,PConvAutoNone(Py_None));
     }
   }
   return(PConvAutoNone(result));

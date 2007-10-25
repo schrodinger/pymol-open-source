@@ -271,8 +271,7 @@ static PyObject *ObjectGadgetGSetAsPyList(ObjectGadget *I)
     if(I->GSet[a]) {
       PyList_SetItem(result,a,GadgetSetAsPyList(I->GSet[a]));
     } else {
-      PyList_SetItem(result,a,Py_None);
-      Py_INCREF(Py_None);
+      PyList_SetItem(result,a,PConvAutoNone(Py_None));
     }
   }
   return(PConvAutoNone(result));
