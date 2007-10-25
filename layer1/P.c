@@ -1960,7 +1960,6 @@ void PFlushFast(PyMOLGlobals *G) {
       " PFlushFast-DEBUG: executing '%s' as thread 0x%x\n",buffer,
       PyThread_get_thread_ident()
       ENDFD;
-    printf("DEBUG buffer %s\n",buffer);
     PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0));
     err = PyErr_Occurred();
     if(err) {
