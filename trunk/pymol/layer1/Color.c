@@ -77,6 +77,7 @@ static int AutoColor[] = {
 };
 
 static int nAutoColor = 40;
+static void clamp_color(unsigned int *table, float *in, float *out, int big_endian);
 
 void ColorGetBkrdContColor(PyMOLGlobals *G,float *rgb, int invert_flag) 
 {
@@ -204,6 +205,8 @@ int ColorGetRamped(PyMOLGlobals *G,int index,float *vertex,float *color,int stat
     color[0]=1.0;
     color[1]=1.0;
     color[2]=1.0;
+  } else if(I->ColorTable) {
+    clamp_color(I->ColorTable, color, color, I->BigEndian);
   }
   return(ok);
 }
@@ -2489,6 +2492,17 @@ void ColorUpdateClamp(PyMOLGlobals *G,int index)
   }
 }
 /*========================================================================*/
+int ColorClampColor(PyMOLGlobals *G,float *color)
+{
+  register CColor *I=G->Color; 
+  if(I->ColorTable) {
+    clamp_color(I->ColorTable, color, color, I->BigEndian);
+    return true;
+  } else {
+    return false;
+  }
+}
+/*========================================================================*/
 int ColorInit(PyMOLGlobals *G)
 {
   CColor *I=NULL;
@@ -2543,6 +2557,24 @@ float *ColorGet(PyMOLGlobals *G,int index)
     I->RGBColor[2] = ((index&0x000000FF)      ) / 255.0F;
     if(I->ColorTable)
       clamp_color(I->ColorTable, I->RGBColor, I->RGBColor, I->BigEndian);
+    return I->RGBColor;
+  } else {
+            /* invalid color id, then simply return white */
+	 return(I->Color[0].Color);
+  }
+}
+
+float *ColorGetRaw(PyMOLGlobals *G,int index)
+{
+  register CColor *I=G->Color;
+  float *ptr;
+  if((index>=0)&&(index<I->NColor)) {
+    ptr = I->Color[index].Color;
+    return(ptr);
+  } else if((index&cColor_TRGB_Mask)==cColor_TRGB_Bits) { /* a 24-bit RGB color */
+    I->RGBColor[0] = ((index&0x00FF0000) >> 16) / 255.0F;
+    I->RGBColor[1] = ((index&0x0000FF00) >> 8 ) / 255.0F;
+    I->RGBColor[2] = ((index&0x000000FF)      ) / 255.0F;
     return I->RGBColor;
   } else {
             /* invalid color id, then simply return white */

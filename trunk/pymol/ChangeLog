@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2007-10-28  Warren L. DeLano <warren@delsci.com>
+
+	* implemented changed to help support MAEstro format
+
+	* colorspaces now apply to ramps as well
+	
 2007-10-24  Warren L. DeLano <warren@delsci.com>
 
 	* quashed session save bug discovered by GT (PyNone refcnting)

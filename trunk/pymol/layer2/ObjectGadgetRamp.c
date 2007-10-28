@@ -435,7 +435,8 @@ static int ObjectGadgetRampInterpolateWithSpecial(ObjectGadgetRamp *I,
 
 int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color)
 {
-  return _ObjectGadgetRampInterpolate(I,level,color,I->Color,I->Extreme);
+  int result = _ObjectGadgetRampInterpolate(I,level,color,I->Color,I->Extreme);
+  return result;
 }
 
 PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I)
@@ -583,7 +584,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int 
           float atomic[3];
           int index = ObjectMoleculeGetNearestBlendedColor(I->Mol, pos, cutoff, state, &dist, atomic, sub_vdw);
           if(index>=0) {
-            float *object =  ColorGet(I->Gadget.Obj.G,I->Mol->Obj.Color);
+            float *object =  ColorGetRaw(I->Gadget.Obj.G,I->Mol->Obj.Color);
             
             if(!ObjectGadgetRampInterpolateWithSpecial(I,dist,color,atomic,
                                                        object,pos,state,false)) {
@@ -599,8 +600,8 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int 
         } else {
           int index = ObjectMoleculeGetNearestAtomIndex(I->Mol, pos, cutoff, state, &dist);
           if(index>=0) {
-            float *atomic =  ColorGet(I->Gadget.Obj.G,I->Mol->AtomInfo[index].color);
-            float *object =  ColorGet(I->Gadget.Obj.G,I->Mol->Obj.Color);
+            float *atomic =  ColorGetRaw(I->Gadget.Obj.G,I->Mol->AtomInfo[index].color);
+            float *object =  ColorGetRaw(I->Gadget.Obj.G,I->Mol->Obj.Color);
             
             if(sub_vdw) {
               dist-=I->Mol->AtomInfo[index].vdw;
@@ -638,8 +639,6 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int 
   }
   return(ok);
 }
-
-
 
 static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
 {
@@ -702,7 +701,10 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
           if(I->Special&&(I->Special[a]<0)) {
             CGOColorv(cgo,white);
           } else {
-            CGOColorv(cgo,I->Color+3*a);
+            float tmp[3],*src = I->Color+3*a;
+            copy3f(src,tmp);
+            ColorClampColor(I->Gadget.Obj.G,tmp);
+            CGOColorv(cgo,tmp);
           }
           
           *(p++) = I->border + (I->width * a)/(I->NLevel-1);
@@ -727,7 +729,10 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
           if(I->Special&&(I->Special[0]<0)) {
             CGOColorv(cgo,white);
           } else {
-            CGOColorv(cgo,I->Color);
+            float tmp[3],*src = I->Color;
+            copy3f(src,tmp);
+            ColorClampColor(I->Gadget.Obj.G,tmp);
+            CGOColorv(cgo,tmp);
           }
           
           *(p++) = I->border + (I->width * a);
