@@ -6672,6 +6672,23 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
         }
         Py_XDECREF(tmp);
       }
+      if(ok&&PyObject_HasAttrString(atom,"label_trgb")) {
+        tmp = PyObject_GetAttrString(atom,"label_trgb");
+        if(tmp) {
+          unsigned int trgb;
+          ok = PConvPyObjectToInt(tmp,(signed int*)&trgb);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","bad label color info");
+          else {
+            char color_name[24];
+            int uid = AtomInfoCheckUniqueID(G,ai);
+            ai->has_setting = true;
+            sprintf(color_name,"0x%08x",trgb);
+            SettingUniqueSet_color(G,uid,cSetting_label_color,ColorGetIndex(G,color_name));
+          }
+        }
+        Py_XDECREF(tmp);
+      }
       if(ok&&PyObject_HasAttrString(atom,"ribbon_color")) {
         tmp = PyObject_GetAttrString(atom,"ribbon_color");
         if(tmp) {
@@ -6795,6 +6812,31 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
             Py_XDECREF(tmp);
           }
 
+          if(ok&&PyObject_HasAttrString(bnd,"stick_radius")) {
+            tmp = PyObject_GetAttrString(bnd,"stick_radius");
+            if(tmp) {
+              float value;
+              if(PConvPyFloatToFloat(tmp,&value)) {
+                int uid = AtomInfoCheckUniqueBondID(G,ii);
+                ii->has_setting = true;
+                SettingUniqueSet_f(G,uid,cSetting_stick_radius,value);
+              }
+            }
+            Py_XDECREF(tmp);
+          }
+          if(ok&&PyObject_HasAttrString(bnd,"valence")) {
+            tmp = PyObject_GetAttrString(bnd,"valence");
+            if(tmp) {
+              int value;
+              if(PConvPyIntToInt(tmp,&value)) {
+                int uid = AtomInfoCheckUniqueBondID(G,ii);
+                ii->has_setting = true;
+                SettingUniqueSet_b(G,uid,cSetting_valence,value);
+              }
+            }
+            Py_XDECREF(tmp);
+          }
+          
           if(ok) {
             int stereo;
             tmp = PyObject_GetAttrString(bnd,"stereo");

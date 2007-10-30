@@ -199,7 +199,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
         elif ftype == loadable.mae:
             try:
                 # BEGIN PROPRIETARY CODE SEGMENT
-                from epymol import schrodinger
+                from epymol import mae
 
                 if (string.find(finfo,":")>1):
                     mae_file = urllib.urlopen(finfo)
@@ -207,7 +207,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                     mae_file = open(finfo)
                 mae_str = mae_file.read()
                 mae_file.close()
-                r = schrodinger.read_maestr(mae_str,str(oname),
+                r = mae.read_maestr(mae_str,str(oname),
                                             int(state),
                                             int(finish),int(discrete),
                                             int(quiet),int(multiplex),int(zoom))
@@ -215,7 +215,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 # END PROPRIETARY CODE SEGMENT
             except ImportError:
                 print "Error: .MAE format not supported by this PyMOL build."
-                if _self._raising(-1): raise self._pymol.CmdException
+                if _self._raising(-1): raise _self._pymol.CmdException
 
         else:
             if ftype in _load2str.keys() and (string.find(finfo,":")>1):

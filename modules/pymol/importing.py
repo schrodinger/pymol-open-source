@@ -733,10 +733,10 @@ NOTES
             elif ftype==loadable.mae:
                 try:
                     # BEGIN PROPRIETARY CODE SEGMENT
-                    from epymol import schrodinger
-                    r = schrodinger.read_maestr(string.join(data,''),
-                                                name,state,
-                                                finish,discrete,quiet,multiplex,zoom)
+                    from epymol import mae
+                    r = mae.read_maestr(string.join(data,''),
+                                        name,state,
+                                        finish,discrete,quiet,multiplex,zoom)
                     # END PROPRIETARY CODE SEGMENT
                 except ImportError:
                     print "Error: .MAE format not supported by this PyMOL build."
