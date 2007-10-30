@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2007-10-29  Warren L. DeLano <warren@delsci.com>
+
+	* improved memory consumption when rendering lots of triangles
+	
 2007-10-28  Warren L. DeLano <warren@delsci.com>
 
 	* implemented changed to help support MAEstro format
