@@ -2600,7 +2600,8 @@ void BasisOptimizeMap(CBasis *I,float *vertex,int n,int *vert2prim)
 #endif
 
 /*========================================================================*/
-void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
+void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,int n_prim,
+                  float *volume,
                   int group_id,int block_base,
                   int perspective,float front,float size_hint)
 {
@@ -2970,7 +2971,60 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
     n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
     
     if(perspective) {
-      MapSetupExpressPerp(I->Map,tempVertex,front,n,true);
+
+      /* this is a new optimization which prevents primitives
+         contained entirely within a single voxel from spilling over
+         into neighboring voxels for performance of intersection
+         checks (NOTE: this currently only helps with triangles, and
+         is only useful in optimizing between Z layers).  The main
+         impact of this optimization is to reduce the size of the
+         express list (I->Map->Elist) array by about 3-fold */
+
+      int *prm_spanner = Calloc(int,n_prim);
+      int *spanner = Calloc(int,n);
+      float *v=tempVertex;
+      int j,k,l,jj,kk,ll;
+      int nVertex = I->NVertex;
+      int prm_index;
+      MapType *map = I->Map;
+
+      /* figure out which primitives span more than one voxel */
+      for(a=0;a<n;a++) {
+        if(a<nVertex)
+          prm_index = vert2prim[a];
+        else
+          prm_index = vert2prim[tempRef[a]];
+        if( !prm_spanner[prm_index] ) {
+          prm = prim + prm_index;
+          float *vv = prm->vert*3 + I->Vertex;
+          switch(prm->type) {
+          case cPrimTriangle:
+          case cPrimCharacter:
+            MapLocus(map, v,  &j,  &k,  &l );          
+            MapLocus(map, vv, &jj, &kk, &ll);
+            if((j!=jj)||(k!=kk)||(l!=ll)) {
+              prm_spanner[prm_index] = 1;
+            }
+            break;
+          default: /* currently we aren't optimizing other primitives */
+            prm_spanner[prm_index] = 1;
+            break;
+          }
+        }
+        v+=3;
+      }
+      /* now flag associated vertices */
+      for(a=0;a<n;a++) {
+        if(a<nVertex)
+          prm_index = vert2prim[a];
+        else
+          prm_index = vert2prim[tempRef[a]];
+        spanner[a] = prm_spanner[prm_index];
+      }
+      /* and do the optimized expansion */
+      MapSetupExpressPerp(I->Map,tempVertex,front,n,true,spanner);
+      FreeP(spanner);
+      FreeP(prm_spanner);
     } else if(n_voxel < (3*n)) {
       MapSetupExpressXY(I->Map,n,true);      
     } else {
@@ -3228,7 +3282,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
     /* simple sphere mode */
     I->Map   = MapNewCached(I->G,-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
     if(perspective) {
-      MapSetupExpressPerp(I->Map,I->Vertex,front,I->NVertex,false);
+      MapSetupExpressPerp(I->Map,I->Vertex,front,I->NVertex,false,NULL);
     } else {
       MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex,false);
     }

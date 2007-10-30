@@ -86,6 +86,7 @@ struct _CRayThreadInfo {
    CBasis *basis;
    int *vert2prim;
    CPrimitive *prim;
+   int n_prim;
    float *clipBox;
    unsigned int *image;
    unsigned int background;
@@ -1933,7 +1934,7 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
 
 int RayHashThread(CRayHashThreadInfo *T)
 {
-  BasisMakeMap(T->basis,T->vert2prim,T->prim,T->clipBox,T->phase,
+  BasisMakeMap(T->basis,T->vert2prim,T->prim, T->n_prim, T->clipBox,T->phase,
                cCache_ray_map,T->perspective,T->front,T->size_hint);
 
   /* utilize a little extra wasted CPU time in thread 0 which computes the smaller map... */
@@ -4072,6 +4073,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
       thread_info[0].basis = I->Basis+1;
       thread_info[0].vert2prim = I->Vert2Prim;
       thread_info[0].prim = I->Primitive;
+      thread_info[0].n_prim = I->NPrimitive;
       thread_info[0].clipBox = I->Volume;
       thread_info[0].phase = 0;
       thread_info[0].perspective = perspective;
@@ -4091,6 +4093,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
           thread_info[bc-1].basis = I->Basis+bc;
           thread_info[bc-1].vert2prim = I->Vert2Prim;
           thread_info[bc-1].prim = I->Primitive;
+          thread_info[bc-1].n_prim = I->NPrimitive;
           thread_info[bc-1].clipBox = NULL;
           thread_info[bc-1].phase = bc-1;
           thread_info[bc-1].perspective = false; 
@@ -4108,14 +4111,14 @@ void RayRender(CRay *I,unsigned int *image,double timing,
     } else
 #endif
       { /* serial execution */
-        BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,
+        BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->NPrimitive,
                      I->Volume,0,cCache_ray_map,
                      perspective,front,I->PrimSize);
         if(shadows) {
           int bc;
           float factor = SettingGetGlobal_f(I->G,cSetting_ray_hint_shadow);
           for(bc=2;bc<I->NBasis;bc++) {
-            BasisMakeMap(I->Basis+bc,I->Vert2Prim,I->Primitive,
+            BasisMakeMap(I->Basis+bc,I->Vert2Prim,I->Primitive,I->NPrimitive,
                          NULL,bc-1,cCache_ray_map,false,_0,I->PrimSize*factor);
           }
         }

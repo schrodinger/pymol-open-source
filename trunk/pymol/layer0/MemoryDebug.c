@@ -129,10 +129,21 @@ void *VLAExpand(void *ptr,unsigned int rec)
       soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
     vla->nAlloc = ((unsigned int)(rec*vla->growFactor))+1;
     if(vla->nAlloc<=rec) vla->nAlloc = rec+1;
-    vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
-    if(!vla) {
-      printf("VLAExpand-ERR: realloc failed.\n");
-      DieOutOfMemory();
+    {
+      VLARec *old_vla = vla;
+      vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
+      while(!vla) {  /* back off on the request size until it actually fits */
+        vla = old_vla;
+        vla->growFactor = (vla->growFactor-1.0F)/2.0F + 1.0F;   
+        vla->nAlloc = ((unsigned int)(rec*vla->growFactor))+1;
+        vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
+        if(!vla) {
+          if(old_vla->growFactor<1.001F) {
+            printf("VLAExpand-ERR: realloc failed.\n");
+            DieOutOfMemory();
+          }
+        }
+      }
     }
     if(vla->autoZero) {
       start = ((char*)vla) + soffset;
@@ -191,7 +202,7 @@ void *_VLAMalloc(const char *file,int line,unsigned int initSize,
 #endif
 
   if(!vla) {
-    printf("VLAMalloc-ERR: realloc failed\n");
+    printf("VLAMalloc-ERR: malloc failed\n");
     DieOutOfMemory();
   }
   vla->nAlloc=initSize;
