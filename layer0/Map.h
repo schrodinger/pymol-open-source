@@ -52,7 +52,7 @@ MapType *MapNewCached(PyMOLGlobals *G,float range,float *vert,int nVert,float *e
 
 MapType *MapNewFlagged(PyMOLGlobals *G,float range,float *vert,int nVert,float *extent,int *flag);
 void MapSetupExpress(MapType *I);
-void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int negative_start);
+void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int negative_start,int *spanner);
 
 void MapFree(MapType *I);
 

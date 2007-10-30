@@ -61,6 +61,8 @@ void MapCacheInit(MapCache *M,MapType *I,int group_id,int block_base)
   M->block_base = I->block_base;
   M->Cache = CacheCalloc(G,int,I->NVert,group_id,block_base + cCache_map_cache_offset);
   M->CacheLink = CacheAlloc(G,int,I->NVert,group_id,block_base + cCache_map_cache_link_offset);
+  ErrChkPtr(G,M->Cache);
+  ErrChkPtr(G,M->CacheLink);
   M->CacheStart = -1;
   /*  p=M->Cache;
   for(a=0;a<I->NVert;a++)
@@ -413,7 +415,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert,int negative_start)
 	ENDFD;
 }
 
-void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int negative_start)
+void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int negative_start,int *spanner)
 {
   PyMOLGlobals *G=I->G;
   int n=0;
@@ -517,11 +519,14 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int 
                 if(i>=0) {
                   flag=true;
                   while(i>=0) {
-                    VLACacheCheck(G,I->EList,int,n,I->group_id,
-                                  I->block_base + cCache_map_elist_offset);
-                    I->EList[n]=i;
+                    if((!spanner) || (f==c) || spanner[i] ) { 
+                      /* for non-voxel-spanners, only spread in the XY plane (memory use ~ 9X instead of 27X -- a big difference!) */
+                      VLACacheCheck(G,I->EList,int,n,I->group_id,
+                                    I->block_base + cCache_map_elist_offset);
+                      I->EList[n]=i;
+                      n++;
+                    }
                     i=link[i];
-                    n++;
                   }
                 }
               }
@@ -539,7 +544,7 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint,int 
         }
       }
   PRINTFB(G,FB_Map,FB_Blather)
-    " MapSetupExpressPerp: %d rows in express table\n",n
+    " MapSetupExpressPerp: %d rows in express table \n",n
     ENDFB(G);
   I->NEElem=n;
   VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
