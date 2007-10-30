@@ -907,8 +907,7 @@ PyObject *PConvSIntArrayToPyList(short int *f,int l)
 PyObject *PConvSCharArrayToPyList(signed char *f,int l)
 {
   int a;
-  PyObject *result = NULL;
-  result=PyList_New(l);
+  PyObject *result = PyList_New(l);
   for(a=0;a<l;a++) 
     PyList_SetItem(result,a,PyInt_FromLong(*(f++)));
   return(PConvAutoNone(result));
