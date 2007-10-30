@@ -765,9 +765,15 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
       chain[0] = ai->chain[0];
       chain[1] = 0;
     }
-    sprintf(x,"%8.3f",v[0]); x[8]=0;
+    sprintf(x,"%8.3f",v[0]); 
+    if(x[0]!=32) sprintf(x," %7.2f",v[0]); 
+    x[8]=0;
     sprintf(y,"%8.3f",v[1]); y[8]=0;
-    sprintf(z,"%8.3f",v[2]); z[8]=0;
+    if(y[0]!=32) sprintf(y," %7.2f",v[1]); 
+    y[8]=0;
+    sprintf(z,"%8.3f",v[2]); 
+    if(z[0]!=32) sprintf(z," %7.2f",v[2]); 
+    z[8]=0;
       
     (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s %11.8f %7.3f\n",
                   aType,cnt+1,name,ai->alt,resn,
