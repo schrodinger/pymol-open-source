@@ -3004,6 +3004,15 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,int n_prim,
             MapLocus(map, vv, &jj, &kk, &ll);
             if((j!=jj)||(k!=kk)||(l!=ll)) {
               prm_spanner[prm_index] = 1;
+#if 0
+              zero3f(prm->c1);
+              zero3f(prm->c2);
+              zero3f(prm->c3);
+              prm->c1[0]=1.0F;
+              prm->c2[0]=1.0F;
+              prm->c3[0]=1.0F;
+#endif
+
             }
             break;
           default: /* currently we aren't optimizing other primitives */
