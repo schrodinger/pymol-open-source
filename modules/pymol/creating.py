@@ -330,6 +330,9 @@ SEE ALSO
         # preprocess selection
         if selection!='':
             selection = selector.process(selection)
+        # coerce range
+        range = list(safe_list_eval(str(range)))
+        range = map(lambda x:float(x),range)
         if is_list(color):
             for a in color:
                 if not is_list(a):
@@ -342,7 +345,7 @@ SEE ALSO
             new_color=int(color)
         try:
             _self.lock(_self)
-            r = _cmd.ramp_new(_self._COb,str(name),str(map_name),list(safe_list_eval(str(range))),new_color,
+            r = _cmd.ramp_new(_self._COb,str(name),str(map_name),range,new_color,
                                     int(state)-1,str(selection),float(beyond),float(within),
                                     float(sigma),int(zero),int(quiet))
         finally:
