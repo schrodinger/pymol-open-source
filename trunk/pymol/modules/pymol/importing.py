@@ -588,7 +588,10 @@ SEE ALSO
             if ftype == loadable.psw:
                 go_to_first_scene = 1                
                 ftype = loadable.pse
-                
+            elif ftype == loadable.pse:
+                if int(_self.get_setting_legacy("presentation_mode"))!=0:
+                    go_to_first_scene = 1
+                    
     # get object name
             if len(str(object))==0:
                 oname = re.sub(r".*\/|.*\\","",filename) # strip path

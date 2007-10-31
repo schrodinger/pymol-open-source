@@ -454,7 +454,7 @@ if pymol_launch != 3: # if this isn't a dry run
         _COb = _cmd._get_global_C_object()
         e=threading.Event()
         import pymol # wait for import to complete
-        while not _cmd.ready(_CObj): # wait for the C library to initialize
+        while not _cmd.ready(_COb): # wait for the C library to initialize
             e.wait(0.01)
         while not hasattr(pymol,'xray'): # make sure symmetry module has time to start...
             e.wait(0.01)
