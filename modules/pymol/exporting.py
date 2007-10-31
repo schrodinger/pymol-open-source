@@ -24,6 +24,7 @@ if __name__=='pymol.exporting':
     import cmd
     from cmd import _cmd,lock,unlock,Shortcut,QuietException
     from chempy import io
+    from chempy.sdf import SDF,SDFRec
     from cmd import _feedback,fb_module,fb_mask, \
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     import traceback
@@ -235,6 +236,8 @@ SEE ALSO
                 format = 'pqr'
             elif re.search("\.mol$",lc_filename):
                 format = 'mol'
+            elif re.search("\.sdf$",lc_filename):
+                format = 'sdf'
             elif re.search("\.pkl$",lc_filename):
                 format = 'pkl'
             elif re.search("\.pkl$",lc_filename):
@@ -335,6 +338,22 @@ SEE ALSO
             r = DEFAULT_SUCCESS
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
+        elif format=='sdf':
+            state = int(state)
+            if state==0:
+                first_state = 1
+                last_state = cmd.count_states(selection)
+            else:
+                first_state = state
+                last_state = state
+            sdf = SDF(filename,'w')
+            for state in range(first_state, last_state+1):
+                rec = SDFRec(io.mol.toList(_self.get_model(selection,state,ref,ref_state))
+                             + ["$$$$\n"])
+                sdf.write(rec)
+            r = DEFAULT_SUCCESS
+            if not quiet:
+                print " Save: wrote %d states to \"%s\"."%(1+last_state-first_state,filename)
         elif format=='mol': 
             io.mol.toFile(_self.get_model(selection,state,ref,ref_state),filename)
             r = DEFAULT_SUCCESS

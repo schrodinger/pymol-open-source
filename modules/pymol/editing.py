@@ -1242,8 +1242,10 @@ SEE ALSO
         state = int(state)
         try:
             _self.lock(_self)
-            r = _cmd.alter_state(_self._COb,int(state)-1,"("+str(selection)+")",str(expression),
-                                        0,int(atomic),int(quiet),dict(space))
+            r = _cmd.alter_state(_self._COb,
+                                 int(state)-1,"("+str(selection)+")",
+                                 str(expression),
+                                 0,int(atomic),int(quiet),dict(space))
         finally:
             _self.unlock(r,_self)   
         if _self._raising(r,_self): raise pymol.CmdException            
@@ -1271,6 +1273,7 @@ SEE ALSO
 
     iterate, alter, alter_state
         '''
+        r = DEFAULT_ERROR
         if space == None:
             space = _self.pymol.__dict__
         # preprocess selection
