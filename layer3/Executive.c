@@ -4793,7 +4793,7 @@ int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,
                 st = b + offset;
                 if((st>=end_skip)&&(st<(n_state-end_skip))) {
                   /* if(c==0) printf("dumping into slot %d\n",st);*/
-                  flag1[(n_atom*st)+c] = 1;
+                  flag1[(n_atom*st)+c] = flag0[(n_atom*st)+c]; /* don't flag states that weren't originally flagged */
                   i_cnt = 1.0F/cnt;
                   v1 = coord1 + 3*((n_atom*st)+c);
                   scale3f(sum,i_cnt,v1);

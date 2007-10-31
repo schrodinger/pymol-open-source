@@ -1641,6 +1641,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   int active_flag=false;
   float hb_overlap,hb_overlap_base;
   int *active,n_active;
+  register int *exclude;
   AtomInfoType *ai0,*ai1;
   double task_time;
   float vdw_magnify,vdw_magnified = 1.0F;
@@ -1672,6 +1673,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     atm2idx = Alloc(int,obj->NAtom);
     cnt = Alloc(int,obj->NAtom);
     active = Alloc(int,obj->NAtom);
+    exclude = Calloc(int,obj->NAtom);
     shk=I->Shaker;
 
     PRINTFD(G,FB_Sculpt)
@@ -1739,6 +1741,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     ai0=obj->AtomInfo;
     for(a=0;a<obj->NAtom;a++) {
       if(ai0->flags&cAtomFlag_exclude) {
+        exclude[a] = true;
         a1=-1;
       } else {
         if(obj->DiscreteFlag) {
@@ -1839,7 +1842,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
             if(eval_flag) {
               a1 = atm2idx[b1]; /* coordinate set indices */
               a2 = atm2idx[b2];
-              if((a1>=0)&&(a2>=0)) {
+              if((a1>=0)&&(a2>=0)&&!(exclude[b1]||exclude[b2])) {
                 v1 = cs_coord+3*a1;
                 v2 = cs_coord+3*a2;
                 switch(sdc->type) {
@@ -1894,7 +1897,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
             a1 = atm2idx[b1];
             a2 = atm2idx[b2];
                 
-            if((a0>=0)&&(a1>=0)&&(a2>=0))
+            if((a0>=0)&&(a1>=0)&&(a2>=0)&&!(exclude[b0]||exclude[b1]||exclude[b2]))
               {
                 cnt[b0]++;
                 cnt[b1]++;
@@ -1925,7 +1928,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
             a2 = atm2idx[b2];
             a3 = atm2idx[b3];
               
-            if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+            if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)&&!(exclude[b0]||exclude[b1]||exclude[b2]||exclude[b3])) {
               v0 = cs_coord+3*a0;
               v1 = cs_coord+3*a1;
               v2 = cs_coord+3*a2;
@@ -1965,7 +1968,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
             a2 = atm2idx[b2];
             a3 = atm2idx[b3];
               
-            if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+            if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)&&!(exclude[b0]||exclude[b1]||exclude[b2]||exclude[b3])) {
               v0 = cs_coord+3*a0;
               v1 = cs_coord+3*a1;
               v2 = cs_coord+3*a2;
@@ -2007,7 +2010,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
             a2 = atm2idx[b2];
             a3 = atm2idx[b3];
               
-            if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+            if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)&&!(exclude[b0]||exclude[b1]||exclude[b2]||exclude[b3])) {
               v0 = cs_coord+3*a0;
               v1 = cs_coord+3*a1;
               v2 = cs_coord+3*a2;
@@ -2315,6 +2318,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
       if(total_count) 
         total_strain = (1000*total_strain)/total_count;
     }
+    FreeP(exclude);
     FreeP(active);
     FreeP(cnt);
     FreeP(disp);

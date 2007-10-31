@@ -208,7 +208,9 @@ if __name__=='pymol.invocation':
                 if "c" in a:
                     options.no_gui=1
                     options.external_gui=0
-                if "2" in a:
+                if "1" in a[1:2]:
+                    options.deferred.append("_do__ config_mouse one_button")
+                if "2" in a[1:2]:
                     options.deferred.append("_do__ config_mouse two_button")
                 if "q" in a:
                     options.show_splash = 0
