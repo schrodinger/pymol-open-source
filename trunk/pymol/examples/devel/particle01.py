@@ -4,9 +4,9 @@
 from random import random
 from pymol import cmd
 
-particle_count = 25
+particle_count = 1000
 
-box_size = 50.0
+box_size = 500.0
 
 # constants
 
