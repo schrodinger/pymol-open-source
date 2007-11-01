@@ -27,17 +27,15 @@ for z1 in [0.0, depth]:
         if hand:
             if z1 == 0.0:
                 (x,y) = basis[0:2]
-                normal = normalize(cross_product(x,y))
             else:
                 (y,x) = basis[0:2]
-                normal = normalize(cross_product(x,y))
+            normal = normalize(cross_product(x,y))
         else:
             if z1 == 0.0:
                 (y,x) = basis[0:2]
-                normal = normalize(cross_product(y,x))
             else:
                 (x,y) = basis[0:2]
-                normal = normalize(cross_product(y,x))
+            normal = normalize(cross_product(y,x))
                 
         obj.extend( [BEGIN, TRIANGLE_STRIP] +
                     [COLOR, 1.0, 1.0, 1.0] +
@@ -102,7 +100,6 @@ for z1 in [0.0, depth]:
 # then we load it into PyMOL
 
 cmd.load_cgo(obj,'cgo06')
-cmd.set("two_sided_lighting")
                             
 # position haemolysin through pore
 if 1:
