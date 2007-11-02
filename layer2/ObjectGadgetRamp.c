@@ -663,8 +663,9 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   CGOEnd(cgo);
 
   CGOColor(cgo,1.0F,1.0F,1.0F);
-  CGOFontScale(cgo,I->text_scale_h,I->text_scale_v);
 
+#ifndef _PYMOL_NOPY
+  CGOFontScale(cgo,I->text_scale_h,I->text_scale_v);
 
   if(I->Level&&I->NLevel) {
     /*
@@ -681,6 +682,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
     ShapeFVertex(cgo,REL,12);
     CGOWriteLeft(cgo,buffer);
   }
+#endif
 
   CGOBegin(cgo,GL_TRIANGLE_STRIP);
   ShapeNormal(cgo,LKP,2);
@@ -844,8 +846,10 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   CGOFree(gs->ShapeCGO);
   gs->ShapeCGO = cgo;
 
+#ifndef _PYMOL_NOPY
   CGOPreloadFonts(gs->ShapeCGO);
-  
+#endif
+
   cgo = CGONewSized(I->Gadget.Obj.G,100);
   CGODotwidth(cgo,5);
   CGOPickColor(cgo,0,cPickableGadget);
@@ -901,7 +905,6 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   gs->PickShapeCGO = cgo;
 }
 
-#ifndef _PYMOL_NOPY
 static void ObjectGadgetRampBuild(ObjectGadgetRamp *I)
 {
   GadgetSet *gs = NULL;
@@ -969,11 +972,11 @@ VV(    I->width+I->border,I->text_border-(I->border+I->height), I->border+I->tex
   gs->Obj = (ObjectGadget*)I;
   gs->State = 0;
 
+  
   ObjectGadgetRampUpdateCGO(I,gs);
   gs->fUpdate(gs);
-  
+
 }
-#endif
 
 /*========================================================================*/
 void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
@@ -1090,9 +1093,7 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
                                                   float *vert_vla,float beyond,float within,
                                                   float sigma,int zero,int calc_mode)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
+
 
   ObjectGadgetRamp *I;
   int ok = true;
@@ -1158,7 +1159,7 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
   }
   */
   return(I);
-#endif
+
 }
 
 /*========================================================================*/
@@ -1167,9 +1168,6 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
                                                   float *color_vla,
                                                   int mol_state, int calc_mode)
 {
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
 
   ObjectGadgetRamp *I;
   int ok = true;
@@ -1203,7 +1201,6 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
   }
   I->SrcState=mol_state;
   return(I);
-#endif
 }
 
 
