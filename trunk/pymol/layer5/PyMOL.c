@@ -2210,6 +2210,40 @@ PyMOLreturn_float PyMOL_CmdIsolevel(CPyMOL *I,char *name, float level, int state
   return result;
 }
 
+static int word_count(char *src) /* only works for ascii */
+{
+  int cnt = 0;
+  while((*src)&&((*src)<33)) /* skip leading whitespace */
+    src++;
+  while(*src) {
+    if((*src)>32) {
+      cnt++;
+      while((*src)&&((*src)>32))
+        src++;
+    }
+    while((*src)&&((*src)<33))
+      src++;
+  }
+  return cnt;
+}
+
+static char *next_word(char *src,char *dst,int buf_size) /* only works for ascii */
+{
+  while((*src)&&((*src)<33)) /* skip leading whitespace */
+    src++;
+  while(*src) {
+    if((*src)>32) {
+      while((*src)&&((*src)>32)&&(buf_size>1)) {
+        *(dst++) = *(src++);
+        buf_size--;
+      }
+      break;
+    }
+  }
+  dst[0]=0;
+  return src;
+}
+
 PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *range, 
                                     int n_level, char *color, int state, char *selection,
                                     float beyond, float within, float sigma,
@@ -2232,24 +2266,28 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *rang
     }
   }
 
-  if(ok) {
-    int n_color = 0;
+  if(ok&&color) {
+    int n_color = word_count(color);
     /* to do */
     if(color&&n_color) {
       color_vla = VLAlloc(float,n_color*3);
       if(color_vla) {
+        ColorName colorName;
         int a;
         for(a=0;a<n_color;a++) {
-          float *src = ColorGetNamed(I->G,color);
-          float *dst = color_vla + 3*a;
-          copy3f(src,dst);
+          color = next_word(color,colorName,sizeof(colorName));
+          {
+            float *src = ColorGetNamed(I->G,colorName);
+            float *dst = color_vla + 3*a;
+            copy3f(src,dst);
+          }
         }
       }
     }
   }
   if(ok) {
-    ok = ExecutiveRampNew(I->G,name,map,range,
-                          color,state,s1,beyond,within,sigma,
+    ok = ExecutiveRampNew(I->G,name,map,range_vla,
+                          color_vla,state,s1,beyond,within,sigma,
                           zero,calc_mode,quiet);
     result.status = get_status_ok(ok);
   } else {
