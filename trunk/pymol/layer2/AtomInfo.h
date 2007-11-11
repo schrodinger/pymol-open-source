@@ -205,7 +205,7 @@ int AtomInfoGetBondSetting_f(PyMOLGlobals *G, BondType *ai, int setting_id, floa
 int AtomInfoGetBondSetting_color(PyMOLGlobals *G, BondType *ai, int setting_id, int current, int *effective);
 
 int AtomInfoCheckUniqueID(PyMOLGlobals *G, AtomInfoType *ai);
-int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex);
+int *AtomInfoGetSortedIndex(PyMOLGlobals *G,CObject *obj,AtomInfoType *rec,int n,int **outdex);
 void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I);
 void AtomInfoFreeSortedIndexes(PyMOLGlobals *G,int *index,int *outdex);
 void AtomInfoPrimeColors(PyMOLGlobals *G);

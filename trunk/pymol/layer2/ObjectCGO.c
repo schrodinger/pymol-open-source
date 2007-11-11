@@ -314,12 +314,12 @@ ObjectCGO *ObjectCGONew(PyMOLGlobals *G)
   I->NState=0;
 
   I->Obj.type = cObjectCGO;
-  I->Obj.fFree = (void (*)(struct CObject *))ObjectCGOFree;
-  I->Obj.fUpdate =(void (*)(struct CObject *)) ObjectCGOUpdate;
-  I->Obj.fInvalidate = (void (*)(struct CObject *,int rep, int level, int state))
+  I->Obj.fFree = (void (*)(CObject *))ObjectCGOFree;
+  I->Obj.fUpdate =(void (*)(CObject *)) ObjectCGOUpdate;
+  I->Obj.fInvalidate = (void (*)(CObject *,int rep, int level, int state))
     ObjectCGOInvalidate;
-  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectCGORender;
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectCGOGetNState;
+  I->Obj.fRender =(void (*)(CObject *, RenderInfo *))ObjectCGORender;
+  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectCGOGetNState;
 
   return(I);
 }

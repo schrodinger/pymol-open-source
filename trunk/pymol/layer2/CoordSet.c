@@ -43,6 +43,7 @@ Z* -------------------------------------------------------------------
 #include"RepNonbondedSphere.h"
 
 #include"PyMOLGlobals.h"
+#include"PyMOLObject.h"
 
 static void CoordSetUpdate(CoordSet *I,int state);
 
@@ -870,7 +871,6 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 {
   int a;
 
-  /*  printf("inv %d %d \n",type,level);fflush(stdout);*/
 
   if(level>=cRepInvVisib) {
     I->Obj->RepVisCacheValid = false;
@@ -911,34 +911,64 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
       FreeP(I->Spheroid);
       FreeP(I->SpheroidNormal);
     }
+
   if(level>=cRepInvColor) 
 	 VLAFreeP(I->Color);
+
   if(type>=0) { /* representation specific */
 	 if(type<I->NRep)	{
-      a=type;
-      if(I->Rep[a]) {
-        if(I->Rep[a]->fInvalidate && (level<cRepInvPurge))
-          I->Rep[a]->fInvalidate(I->Rep[a],I,level);
-        else {
-          I->Rep[a]->fFree(I->Rep[a]);
-          I->Rep[a] = NULL;
-        }
-      }
-      if(level>=cRepInvVisib) /* make active if visibility has changed */
-        I->Active[type]=true;
+       int eff_level = level;
+       a=type;
+       if(level==cRepInvPick) {
+         switch(a) {
+         case cRepSurface:
+         case cRepMesh:
+         case cRepDot:
+           /* skip the expensive to recompute, non-pickable
+              representations */
+           break;
+         default: /* default behavior is to blow away the representation */
+           eff_level = cRepInvRep;
+           break;
+         }
+       }
+       if(I->Rep[a]) {
+         if(I->Rep[a]->fInvalidate && (eff_level<cRepInvPurge))
+           I->Rep[a]->fInvalidate(I->Rep[a],I,eff_level);
+         else if(eff_level>=cRepInvExtColor) {
+           I->Rep[a]->fFree(I->Rep[a]);
+           I->Rep[a] = NULL;
+         }
+       }
+       if(eff_level>=cRepInvVisib) /* make active if visibility has changed */
+         I->Active[type]=true;
 	 }
   } else { /* all representations are affected */
 	 for(a=0;a<I->NRep;a++)	{
-      if(level>=cRepInvVisib) /* make active if visibility has changed */
-        I->Active[a]=true;
-		if(I->Rep[a]) {
-          if(I->Rep[a]->fInvalidate && (level<cRepInvPurge))
-            I->Rep[a]->fInvalidate(I->Rep[a],I,level);
-          else {
-            I->Rep[a]->fFree(I->Rep[a]);
-            I->Rep[a] = NULL;
-          }
-		}
+       int eff_level = level;
+       if(level==cRepInvPick) {
+         switch(a) {
+         case cRepSurface:
+         case cRepMesh:
+         case cRepDot:
+           /* skip the expensive to recompute, non-pickable
+              representations */
+           break;
+         default: /* default behavior is to blow away the representation */
+           eff_level = cRepInvRep;
+           break;
+         }
+       }
+       if(eff_level>=cRepInvVisib) /* make active if visibility has changed */
+         I->Active[a]=true;
+       if(I->Rep[a]) {
+         if(I->Rep[a]->fInvalidate && (eff_level<cRepInvPurge))
+           I->Rep[a]->fInvalidate(I->Rep[a],I,eff_level);
+         else if(eff_level>=cRepInvExtColor) {
+           I->Rep[a]->fFree(I->Rep[a]);
+           I->Rep[a] = NULL;
+         }
+       }
 	 }
   }
   if(level>=cRepInvCoord) { /* if coordinates change, then this map becomes invalid */

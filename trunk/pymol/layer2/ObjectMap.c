@@ -1875,11 +1875,11 @@ ObjectMap *ObjectMapNew(PyMOLGlobals *G)
       I->Obj.RepVis[a] = false;
     I->Obj.RepVis[cRepExtent]=true; 
   }
-  I->Obj.fFree = (void (*)(struct CObject *))ObjectMapFree;
-  I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectMapUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectMapRender;
-  I->Obj.fInvalidate =(void (*)(struct CObject *,int,int,int))ObjectMapInvalidate;  
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMapGetNStates;
+  I->Obj.fFree = (void (*)(CObject *))ObjectMapFree;
+  I->Obj.fUpdate =  (void (*)(CObject *)) ObjectMapUpdate;
+  I->Obj.fRender =(void (*)(CObject *, RenderInfo *))ObjectMapRender;
+  I->Obj.fInvalidate =(void (*)(CObject *,int,int,int))ObjectMapInvalidate;  
+  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectMapGetNStates;
 
   return(I);
 }

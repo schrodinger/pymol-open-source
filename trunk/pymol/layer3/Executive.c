@@ -79,7 +79,7 @@ Z* -------------------------------------------------------------------
 typedef struct SpecRec {
   int type;
   WordType  name; /*only used for selections*/
-  struct CObject *obj;  
+  CObject *obj;  
   struct SpecRec *next;
   int repOn[cRepCnt];
   int visible;
@@ -9415,7 +9415,7 @@ float ExecutiveRMSPairs(PyMOLGlobals *G,WordType *sele,int pairs,int mode)
   return(rms);
 }
 /*========================================================================*/
-void ExecutiveUpdateObjectSelection(PyMOLGlobals *G,struct CObject *obj)
+void ExecutiveUpdateObjectSelection(PyMOLGlobals *G,CObject *obj)
 {
   if(obj->type==cObjectMolecule) {
     SelectorUpdateObjectSele(G,(ObjectMolecule*)obj);  

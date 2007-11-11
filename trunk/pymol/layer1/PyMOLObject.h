@@ -54,17 +54,23 @@ typedef struct CObjectState {
   double *Matrix;
 } CObjectState;
 
-typedef struct CObject {
+#ifndef CObject_DEFINED
+typedef struct _CObject CObject;
+#define CObject_DEFINED
+#endif
+
+
+struct _CObject {
   PyMOLGlobals *G;
-  void (*fUpdate)(struct CObject *I); /* update representations */
-  void (*fRender)(struct CObject *I,RenderInfo *info);
-  void (*fFree)(struct CObject *I);
-  int  (*fGetNFrame)(struct CObject *I);
-  void (*fDescribeElement)(struct CObject *I,int index,char *buffer);
-  void (*fInvalidate)(struct CObject *I,int rep,int level,int state);
-  CSetting **(*fGetSettingHandle)(struct CObject *I,int state);
-  char *(*fGetCaption)(struct CObject *I);
-  CObjectState *(*fGetObjectState)(struct CObject *I,int state);
+  void (*fUpdate)(CObject *I); /* update representations */
+  void (*fRender)(CObject *I,RenderInfo *info);
+  void (*fFree)(CObject *I);
+  int  (*fGetNFrame)(CObject *I);
+  void (*fDescribeElement)(CObject *I,int index,char *buffer);
+  void (*fInvalidate)(CObject *I,int rep,int level,int state);
+  CSetting **(*fGetSettingHandle)(CObject *I,int state);
+  char *(*fGetCaption)(CObject *I);
+  CObjectState *(*fGetObjectState)(CObject *I,int state);
   int type;
   ObjectNameType Name;
   int Color;
@@ -76,7 +82,7 @@ typedef struct CObject {
   int Enabled; /* read-only... maintained by Scene */
   int Context; /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
   CViewElem *ViewElem; /* for animating objects via the TTT */
-} CObject;
+};
 
 void ObjectInit(PyMOLGlobals *G,CObject *I);
 int ObjectCopyHeader(CObject *I, CObject *src);

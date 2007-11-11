@@ -1158,11 +1158,11 @@ static ObjectAlignment *ObjectAlignmentNew(PyMOLGlobals *G)
   I->SelectionState=-1;
 
   I->Obj.type = cObjectAlignment;
-  I->Obj.fFree = (void (*)(struct CObject *))ObjectAlignmentFree;
-  I->Obj.fUpdate =(void (*)(struct CObject *)) ObjectAlignmentUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectAlignmentRender;
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectAlignmentGetNState;
-  I->Obj.fInvalidate = (void (*)(struct CObject *,int rep, int level, int state))
+  I->Obj.fFree = (void (*)(CObject *))ObjectAlignmentFree;
+  I->Obj.fUpdate =(void (*)(CObject *)) ObjectAlignmentUpdate;
+  I->Obj.fRender =(void (*)(CObject *, RenderInfo *))ObjectAlignmentRender;
+  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectAlignmentGetNState;
+  I->Obj.fInvalidate = (void (*)(CObject *,int rep, int level, int state))
     ObjectAlignmentInvalidate;
 
   return(I);

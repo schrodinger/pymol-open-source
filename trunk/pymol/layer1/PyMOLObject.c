@@ -33,8 +33,8 @@ Z* -------------------------------------------------------------------
 
 int ObjectGetNFrames(CObject *I);
 
-void ObjectDescribeElement(struct CObject *I,int index,char *buffer);
-CSetting **ObjectGetSettingHandle(struct CObject *I,int state);
+void ObjectDescribeElement(CObject *I,int index,char *buffer);
+CSetting **ObjectGetSettingHandle(CObject *I,int state);
 
 void ObjectPurgeSettings(CObject *I)
 {
@@ -738,12 +738,12 @@ void ObjectSetTTTOrigin(CObject *I,float *origin)
 
 }
 /*========================================================================*/
-CSetting **ObjectGetSettingHandle(struct CObject *I,int state)
+CSetting **ObjectGetSettingHandle(CObject *I,int state)
 {
   return(&I->Setting);
 }
 /*========================================================================*/
-void ObjectDescribeElement(struct CObject *I,int index,char *buffer)
+void ObjectDescribeElement(CObject *I,int index,char *buffer)
 {
   buffer[0]=0;
 }
@@ -767,10 +767,10 @@ void ObjectSetName(CObject *I,char *name)
     ObjectMakeValidName(I->Name);
 }
 /*========================================================================*/
-void ObjectUpdate(struct CObject *I);
+void ObjectUpdate(CObject *I);
 
 /*========================================================================*/
-void ObjectUpdate(struct CObject *I)
+void ObjectUpdate(CObject *I)
 {
   
 }

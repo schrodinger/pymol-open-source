@@ -937,12 +937,12 @@ ObjectMesh *ObjectMeshNew(PyMOLGlobals *G)
 
   I->Obj.type = cObjectMesh;
   
-  I->Obj.fFree = (void (*)(struct CObject *))ObjectMeshFree;
-  I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectMeshUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectMeshRender;
-  I->Obj.fInvalidate =(void (*)(struct CObject *,int,int,int))ObjectMeshInvalidate;
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMeshGetNStates;
-  /*  I->Obj.fGetCaption = (char *(*)(struct CObject *))ObjectMeshGetCaption;*/
+  I->Obj.fFree = (void (*)(CObject *))ObjectMeshFree;
+  I->Obj.fUpdate =  (void (*)(CObject *)) ObjectMeshUpdate;
+  I->Obj.fRender =(void (*)(CObject *, RenderInfo *))ObjectMeshRender;
+  I->Obj.fInvalidate =(void (*)(CObject *,int,int,int))ObjectMeshInvalidate;
+  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectMeshGetNStates;
+  /*  I->Obj.fGetCaption = (char *(*)(CObject *))ObjectMeshGetCaption;*/
   return(I);
 }
 

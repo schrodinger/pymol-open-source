@@ -1137,11 +1137,11 @@ ObjectSurface *ObjectSurfaceNew(PyMOLGlobals *G)
 
   I->Obj.type = cObjectSurface;
   
-  I->Obj.fFree = (void (*)(struct CObject *))ObjectSurfaceFree;
-  I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectSurfaceUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *info))ObjectSurfaceRender;
-  I->Obj.fInvalidate =(void (*)(struct CObject *,int,int,int))ObjectSurfaceInvalidate;
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectSurfaceGetNStates;
+  I->Obj.fFree = (void (*)(CObject *))ObjectSurfaceFree;
+  I->Obj.fUpdate =  (void (*)(CObject *)) ObjectSurfaceUpdate;
+  I->Obj.fRender =(void (*)(CObject *, RenderInfo *info))ObjectSurfaceRender;
+  I->Obj.fInvalidate =(void (*)(CObject *,int,int,int))ObjectSurfaceInvalidate;
+  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectSurfaceGetNStates;
   return(I);
 }
 
