@@ -463,11 +463,11 @@ ObjectDist *ObjectDistNew(PyMOLGlobals *G)
   I->Obj.type=cObjectMeasurement;
   I->DSet=VLAMalloc(10,sizeof(DistSet*),5,true); /* auto-zero */
   I->NDSet=0;
-  I->Obj.fRender=(void (*)(struct CObject *, RenderInfo *info))ObjectDistRender;
-  I->Obj.fFree= (void (*)(struct CObject *))ObjectDistFree;
-  I->Obj.fUpdate= (void (*)(struct CObject *)) ObjectDistUpdate;
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectDistGetNFrames;
-  I->Obj.fGetSettingHandle = (CSetting **(*)(struct CObject *,int state))
+  I->Obj.fRender=(void (*)(CObject *, RenderInfo *info))ObjectDistRender;
+  I->Obj.fFree= (void (*)(CObject *))ObjectDistFree;
+  I->Obj.fUpdate= (void (*)(CObject *)) ObjectDistUpdate;
+  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectDistGetNFrames;
+  I->Obj.fGetSettingHandle = (CSetting **(*)(CObject *,int state))
     ObjectDistGetSettingHandle;
   I->Obj.fDescribeElement = NULL;
   I->CurDSet=0;

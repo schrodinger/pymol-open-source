@@ -1224,9 +1224,9 @@ ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals *G)
   I->Extreme = NULL;
   I->SrcName[0] = 0;
 
-  I->Gadget.Obj.fUpdate =(void (*)(struct CObject *)) ObjectGadgetRampUpdate;
-  I->Gadget.Obj.fFree =(void (*)(struct CObject *)) ObjectGadgetRampFree;
-  I->Gadget.Obj.fInvalidate = (void (*)(struct CObject *,int,int,int)) ObjectGadgetRampInvalidate;
+  I->Gadget.Obj.fUpdate =(void (*)(CObject *)) ObjectGadgetRampUpdate;
+  I->Gadget.Obj.fFree =(void (*)(CObject *)) ObjectGadgetRampFree;
+  I->Gadget.Obj.fInvalidate = (void (*)(CObject *,int,int,int)) ObjectGadgetRampInvalidate;
 
   I->Mol = NULL;
   I->Map = NULL;

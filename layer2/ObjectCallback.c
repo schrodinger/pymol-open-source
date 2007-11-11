@@ -141,11 +141,11 @@ ObjectCallback *ObjectCallbackNew(PyMOLGlobals *G)
   I->NState=0;
   
   I->Obj.type = cObjectCallback;
-  I->Obj.fFree = (void (*)(struct CObject *))ObjectCallbackFree;
-  I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectCallbackUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))
+  I->Obj.fFree = (void (*)(CObject *))ObjectCallbackFree;
+  I->Obj.fUpdate =  (void (*)(CObject *)) ObjectCallbackUpdate;
+  I->Obj.fRender =(void (*)(CObject *, RenderInfo *))
     ObjectCallbackRender;
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectCallbackGetNStates;
+  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectCallbackGetNStates;
 
   return(I);
 }

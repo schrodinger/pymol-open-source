@@ -89,10 +89,10 @@ ObjectGroup *ObjectGroupNew(PyMOLGlobals *G)
   ObjectInit(G,(CObject*)I);
 
   I->Obj.type = cObjectGroup;
-  I->Obj.fFree = (void (*)(struct CObject *))ObjectGroupFree;
+  I->Obj.fFree = (void (*)(CObject *))ObjectGroupFree;
   I->Obj.fRender = NULL;
   I->OpenOrClosed = false;
-  I->Obj.fGetObjectState = (CObjectState *(*)(struct CObject *,int state))
+  I->Obj.fGetObjectState = (CObjectState *(*)(CObject *,int state))
     ObjectGroupGetObjectState;
 
   ObjectStateInit(G,&I->State);

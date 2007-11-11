@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"OVOneToAny.h"
 #include"OVContext.h"
+#include"PyMOLObject.h"
 
 struct _CAtomInfo {
   int NColor,CColor,DColor,HColor,OColor,SColor;
@@ -1683,8 +1684,7 @@ int AtomInfoGetColor(PyMOLGlobals *G,AtomInfoType *at1)
   return(color);
 }
 
-
-int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex)
+int *AtomInfoGetSortedIndex(PyMOLGlobals *G,CObject *obj,AtomInfoType *rec,int n,int **outdex)
 {
   int *index;
   int a;
@@ -1692,10 +1692,13 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex
   ErrChkPtr(G,index);
   (*outdex)=Alloc(int,n+1);
   ErrChkPtr(G,*outdex);
+  CSetting *setting = NULL;
+  if(obj)
+    setting=obj->Setting;
 
-  if((int)SettingGet(G,cSetting_retain_order)) {
+  if(SettingGet_b(G,setting,NULL,cSetting_retain_order)) {
     UtilSortIndexGlobals(G,n,rec,index,(UtilOrderFnGlobals*)AtomInfoInOrigOrder);
-  } else if((int)SettingGet(G,cSetting_pdb_hetatm_sort)) {
+  } else if(SettingGet_b(G,setting,NULL,cSetting_pdb_hetatm_sort)) {
     UtilSortIndexGlobals(G,n,rec,index,(UtilOrderFnGlobals*)AtomInfoInOrder);    
   } else {
     UtilSortIndexGlobals(G,n,rec,index,(UtilOrderFnGlobals*)AtomInfoInOrderIgnoreHet);    

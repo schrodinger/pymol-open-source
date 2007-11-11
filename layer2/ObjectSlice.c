@@ -44,7 +44,7 @@ Z* -------------------------------------------------------------------
 #define STOP_STRIP -2
 
 typedef struct ObjRec {
-  struct CObject *obj;  
+  CObject *obj;  
   struct ObjRec *next;
 } ObjRec;
 
@@ -1223,11 +1223,11 @@ ObjectSlice *ObjectSliceNew(PyMOLGlobals *G)
 
   I->Obj.type = cObjectSlice;
   
-  I->Obj.fFree = (void (*)(struct CObject *))ObjectSliceFree;
-  I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectSliceUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectSliceRender;
-  I->Obj.fInvalidate =(void (*)(struct CObject *,int,int,int))ObjectSliceInvalidate;
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectSliceGetNStates;
+  I->Obj.fFree = (void (*)(CObject *))ObjectSliceFree;
+  I->Obj.fUpdate =  (void (*)(CObject *)) ObjectSliceUpdate;
+  I->Obj.fRender =(void (*)(CObject *, RenderInfo *))ObjectSliceRender;
+  I->Obj.fInvalidate =(void (*)(CObject *,int,int,int))ObjectSliceInvalidate;
+  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectSliceGetNStates;
   return(I);
 }
 

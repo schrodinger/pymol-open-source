@@ -497,10 +497,10 @@ void ObjectGadgetInit(PyMOLGlobals *G,ObjectGadget *I)
   I->NGSet=0;
   I->Changed=true;
 
-  I->Obj.fFree = (void (*)(struct CObject *))ObjectGadgetFree;
-  I->Obj.fUpdate =(void (*)(struct CObject *)) ObjectGadgetUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *info))ObjectGadgetRender;
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectGadgetGetNState;
+  I->Obj.fFree = (void (*)(CObject *))ObjectGadgetFree;
+  I->Obj.fUpdate =(void (*)(CObject *)) ObjectGadgetUpdate;
+  I->Obj.fRender =(void (*)(CObject *, RenderInfo *info))ObjectGadgetRender;
+  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectGadgetGetNState;
   I->Obj.fDescribeElement = NULL;
   I->CurGSet=0;
 }

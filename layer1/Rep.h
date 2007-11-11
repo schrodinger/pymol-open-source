@@ -73,8 +73,10 @@ Z* -------------------------------------------------------------------
 /* invalite display (list) */
 
 #define cRepInvDisplay 1
-/* precompted extents (can change if matrix changes) */
+/* precomputed extents (can change if matrix changes) */
 #define cRepInvExtents 5
+/* invalidate pickable atoms */
+#define cRepInvPick  9
 /* invalidate external atom colors */
 #define cRepInvExtColor  10
 /* invalidate atom colors */
@@ -90,8 +92,6 @@ Z* -------------------------------------------------------------------
 #define cRepInvCoord  30
 /* invalidate graphic representation */
 #define cRepInvRep    35
-/* invalidate picked atoms */
-#define cRepInvPick   36
 /* invalidate bond structure */
 #define cRepInvBonds  40
 /* invalidate atomic structure */
@@ -113,7 +113,7 @@ typedef struct Rep {
   void        (*fInvalidate)(struct Rep *I,struct CoordSet *cs,int level);
   void              (*fFree)(struct Rep* I);
   int MaxInvalid,Active;
-  struct CObject *obj;
+  CObject *obj;
   struct CoordSet *cs;
   Pickable *P;
   PickContext context;

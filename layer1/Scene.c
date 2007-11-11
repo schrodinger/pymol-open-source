@@ -71,7 +71,7 @@ Z* -------------------------------------------------------------------
 #define SceneLeftMargin 3
 
 typedef struct ObjRec {
-  struct CObject *obj;  
+  CObject *obj;  
   struct ObjRec *next;
 } ObjRec;
 

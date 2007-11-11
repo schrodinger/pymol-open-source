@@ -73,6 +73,11 @@ typedef struct _OVContext OVContext;
 #define OVCONTEXT_DEFINED
 #endif
 
+#ifndef CObject_DEFINED
+typedef struct _CObject CObject;
+#define CObject_DEFINED
+#endif
+
 #ifndef CPyMOL_DEFINED
 typedef struct _CPyMOL CPyMOL;
 #define CPyMOL_DEFINED

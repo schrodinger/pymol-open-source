@@ -8161,7 +8161,7 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
 
   /* first, sort the coodinate set */
   
-  index=AtomInfoGetSortedIndex(G,ai,cs->NIndex,&outdex);
+  index=AtomInfoGetSortedIndex(G,&I->Obj,ai,cs->NIndex,&outdex);
   for(b=0;b<cs->NIndex;b++)
 	 cs->IdxToAtm[b]=outdex[cs->IdxToAtm[b]];
   for(b=0;b<cs->NIndex;b++)
@@ -10792,20 +10792,20 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals *G,int discreteFlag)
     I->DiscreteAtmToIdx = NULL;
     I->DiscreteCSet = NULL;
   }    
-  I->Obj.fRender=(void (*)(struct CObject *, RenderInfo *info))ObjectMoleculeRender;
-  I->Obj.fFree= (void (*)(struct CObject *))ObjectMoleculeFree;
-  I->Obj.fUpdate=  (void (*)(struct CObject *)) ObjectMoleculeUpdate;
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMoleculeGetNFrames;
-  I->Obj.fInvalidate = (void (*)(struct CObject *,int rep, int level, int state))
+  I->Obj.fRender=(void (*)(CObject *, RenderInfo *info))ObjectMoleculeRender;
+  I->Obj.fFree= (void (*)(CObject *))ObjectMoleculeFree;
+  I->Obj.fUpdate=  (void (*)(CObject *)) ObjectMoleculeUpdate;
+  I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectMoleculeGetNFrames;
+  I->Obj.fInvalidate = (void (*)(CObject *,int rep, int level, int state))
     ObjectMoleculeInvalidate;
-  I->Obj.fDescribeElement = (void (*)(struct CObject *,int index,char *buffer))
+  I->Obj.fDescribeElement = (void (*)(CObject *,int index,char *buffer))
     ObjectMoleculeDescribeElement;
-  I->Obj.fGetSettingHandle = (CSetting **(*)(struct CObject *,int state))
+  I->Obj.fGetSettingHandle = (CSetting **(*)(CObject *,int state))
     ObjectMoleculeGetSettingHandle;
-  I->Obj.fGetObjectState = (CObjectState *(*)(struct CObject *,int state))
+  I->Obj.fGetObjectState = (CObjectState *(*)(CObject *,int state))
     ObjectMoleculeGetObjectState;
 
-  I->Obj.fGetCaption = (char *(*)(struct CObject *))ObjectMoleculeGetCaption;
+  I->Obj.fGetCaption = (char *(*)(CObject *))ObjectMoleculeGetCaption;
   I->AtomInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
   I->CurCSet=0;
   I->Symmetry=NULL;
