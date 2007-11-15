@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2007-11-14  Warren L. DeLano <warren@delsci.com>
+
+	* fixed but in binary .grd reader code
+	
 2007-11-11  Warren L. DeLano <warren@delsci.com>
 
 	* retain_order is now object-specific
