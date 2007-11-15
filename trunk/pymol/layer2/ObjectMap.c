@@ -3849,8 +3849,8 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
     ms->FDim[2] = *((int*)f++) + 1;
 
     ms->Div[0] = pymol_roundf((ms->FDim[0]-1)/(fmax[0]-fmin[0]));
-    ms->Div[1] = pymol_roundf((ms->FDim[1]-1)/(fmax[0]-fmin[1]));
-    ms->Div[2] = pymol_roundf((ms->FDim[2]-1)/(fmax[0]-fmin[2]));
+    ms->Div[1] = pymol_roundf((ms->FDim[1]-1)/(fmax[1]-fmin[1]));
+    ms->Div[2] = pymol_roundf((ms->FDim[2]-1)/(fmax[2]-fmin[2]));
     
     ms->Min[0] = pymol_roundf(ms->Div[0]*fmin[0]);
     ms->Min[1] = pymol_roundf(ms->Div[1]*fmin[1]);
@@ -3863,7 +3863,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
 
     /* assumes fast X */
 
-    f+=1; /* advance to data */
+    f+=1; /* advance to data (what information are we skipping?) */
 
   }
   
