@@ -2,9 +2,15 @@
 CHANGE LOG
 =========================================================================
 
-2007-11-14  Warren L. DeLano <warren@delsci.com>
+2007-11-19  Warren L. DeLano <warren@delsci.com>
 
-	* fixed but in binary .grd reader code
+	* validated binary GRD reader (versus GVIEW with .kont files)
+	
+	* fixed crash bug with errorneous pseudoatom input
+	
+2007-11-16  Warren L. DeLano <warren@delsci.com>
+
+	* fixed bug in binary .grd reader code (or NOT...still unclear)
 	
 2007-11-11  Warren L. DeLano <warren@delsci.com>
 

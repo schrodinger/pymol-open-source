@@ -3660,7 +3660,9 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
   ObjectMapState *ms;
   int got_cell=false;
   int got_brick=false;
-  int fast_axis=1;
+  int fast_axis=1; /* assumes fast X */
+
+
   int got_ranges=false;
   int normalize = false;
   float mean,stdev;
@@ -3669,7 +3671,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
   int n_pts = 0;
   int ascii = true;
   int little_endian = 1,map_endian = 0;
-
+  int block_len  = 0;
   if(state<0) state=I->NState;
   if(I->NState<=state) {
     VLACheck(I->State,ObjectMapState,state);
@@ -3684,7 +3686,8 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
   p = GRDStr;
 
   if(bytes>4) {
-    if((!p[0])||(!p[1])||(!p[2])||(!p[3])) {
+    if((!p[0])||(!p[1])||(!p[2])||(!p[3])) { 
+      /* if zero appears in the first four bytes, then this is a binary map */
       ascii=false;
       
       little_endian = *((char*)&little_endian);
@@ -3697,8 +3700,65 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
   if(ascii) {
     p = ParseNCopy(cc,p,100);
   } else {
-    int header_len;
     char rev[4];
+
+/* 
+
+according to one site on the internet...GRD binary formats look like this:
+
+        write(14) title
+        write(14) scale,oldmid
+        write(14) ivary,nbyte,intdat,extent,extent
+        write(14) extent,xang,yang,zang,xstart
+        write(14) xend,ystart,yend,zstart,zend
+        write(14) intx,inty,intz
+
+        do 100 i = 1,intz+1
+            do 100 j = 1,inty+1
+100            write(14)(phimap(k,j,i),k=1,intx+1)
+
+    where: scale is the inverse grid spacing,
+    oldmid are x,y,z coordinates of the grid center,
+    intx,inty,intz = grid points per side - 1
+    ivary = 0
+    nbyte = 4
+    intdat = 0
+    xang,yang,zang = 90
+    extent is the absolute value of the x,y, or z coordinate of the grid
+    corners with the largest absolute value
+    xstart,xend,ystart, yend,zstart,zend are the fractional limits (-1 to 1)
+    of the molecule in each direction.
+    title is a descriptive header for the molecule 
+
+However, that doesn't make sense...in the files I see, scale and oldmid don't seem to exist!
+
+So here's another claim which I find more credible...
+
+character*132 toplbl !ascii header 
+integer*4 ivary !0 => x index varys most rapidly
+integer*4 nbyte !=4, # of bytes in data
+integer*4 inddat !=0, floating point data
+real*4 xang,yang,zang !=90,90,90 unit cell angles
+integer*4 intx,inty,intz !=igrid-1, # of intervals/grid side
+real*4 extent !maximum extent of grid
+real*4 xstart,xend !beginning, end of grid sides
+real*4 ystart,yend !in fractional
+real*4 zstart,zend !units of extent
+write(14)toplbl write(14)ivary, nbyte, intdat, extent, extent, extent, xang, yang, zang, xstart, xend, ystart, yend, zstart, zend, intx, inty, intz 
+do k = 1,igrid 
+   do j = 1,igrid 
+      write(14)(phimap(i,j,k),i=1,igrid) 
+   end do 
+end d
+
+*/
+
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
+        " ObjectMapGRD-Warning: Binary GRD reader not yet validated.\n"
+        ENDFB(I->Obj.G);
+    }
+    
     if(little_endian!=map_endian) {
       rev[0]=p[3];
       rev[1]=p[2];
@@ -3710,8 +3770,8 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
       rev[2]=p[2];
       rev[3]=p[3];
     }
-    header_len = *((int*)rev);
-    ParseNCopy(cc,p+4,header_len);
+    block_len = *((int*)rev);
+    ParseNCopy(cc,p+4,block_len);
     /* now flip file to correct endianess */
     if(little_endian!=map_endian) {
       char *c = p;
@@ -3730,7 +3790,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
         cnt--;
       }
     }
-    p += 4 + header_len + 4;
+    p += 4 + block_len;
     f = (float*)p;
   }
 
@@ -3744,8 +3804,36 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
   /* skip format -- we're reading float regardless... */
   if(ascii) 
     p = ParseNextLine(p);
-  else
-    f += 4; /* what are these numbers? */
+  else {
+    {
+      int block_len_check;
+      int ivary;
+      int nbyte;
+      int intdat;
+      
+      block_len_check = *((int*)(f++));
+
+      if(block_len != block_len_check) {
+        PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
+          " ObjectMapGRD-Warning: block length not matched -- not a true GRD binary?\n"
+          ENDFB(I->Obj.G);
+      }
+
+      block_len = *((int*)(f++));
+      ivary = *((int*)(f++));
+      nbyte = *((int*)(f++));
+      intdat = *((int*)(f++));
+      
+      if((ivary)||(nbyte!=4)||(intdat)) {
+        if(!quiet) {
+          PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
+            " ObjectMapGRD-Warning: funky ivary, nbyte, intdat -- not a true GRD binary?\n"
+            ENDFB(I->Obj.G);
+        }
+      }
+    }
+
+  }
     
   /* read unit cell */
 
@@ -3772,12 +3860,12 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
       }
       ok = got_cell;
     } else {
-      ms->Crystal->Dim[0] = *(f++);
-      ms->Crystal->Dim[1] = *(f++);
-      ms->Crystal->Dim[2] = *(f++);
-      ms->Crystal->Angle[0] = (*f++);
-      ms->Crystal->Angle[1] = (*f++);
-      ms->Crystal->Angle[2] = (*f++);
+      ms->Crystal->Dim[0] = *(f++); /* x-extent */
+      ms->Crystal->Dim[1] = *(f++); /* y-extent */
+      ms->Crystal->Dim[2] = *(f++); /* z-extent */
+      ms->Crystal->Angle[0] = (*f++); /* xang */
+      ms->Crystal->Angle[1] = (*f++); /* yang */
+      ms->Crystal->Angle[2] = (*f++); /* zang */
       got_cell = 1;
     }
   }
@@ -3844,6 +3932,9 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
     fmax[1] = *(f++);
     fmin[2] = *(f++);
     fmax[2] = *(f++);
+
+    dump3f(fmin,"fmin");
+    dump3f(fmax,"fmax");
     ms->FDim[0] = *((int*)f++) + 1;
     ms->FDim[1] = *((int*)f++) + 1;
     ms->FDim[2] = *((int*)f++) + 1;
@@ -3861,10 +3952,16 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
     ms->Max[2] = ms->Min[2]+ms->FDim[2]-1;
     got_ranges = true;
 
-    /* assumes fast X */
-
-    f+=1; /* advance to data (what information are we skipping?) */
-
+    {
+      int block_len_check;
+      
+      block_len_check = *((int*)(f++));
+      if(block_len != block_len_check) {
+        PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
+          " ObjectMapGRD-Warning: block length not matched -- not a true GRD binary?\n"
+          ENDFB(I->Obj.G);
+      }
+    }
   }
   
   if(ok) {
@@ -3895,8 +3992,12 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
 
     switch(fast_axis) {
     case 3: /* Fast Y - BROKEN! */
-    default:
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
+        " ObjectMapGRD-Warning: fast_axis %d unsupported!\n",fast_axis
+        ENDFB(I->Obj.G);
+      /* intentional fall though...*/
     case 1: /* Fast X */
+    default:
       for(c=0;c<ms->FDim[2];c++) {
         v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
         for(b=0;b<ms->FDim[1];b++) {

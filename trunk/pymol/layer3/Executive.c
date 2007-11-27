@@ -494,17 +494,21 @@ int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
       is_new = true;
       obj = ObjectMoleculeNew(G,false);
       ObjectSetName(&obj->Obj,object_name);
+      if(!obj)
+        ok=false;
     }
   }
 
-  if(ObjectMoleculeAddPseudoatom(obj,sele_index, name, resn, resi, chain,
-                                 segi, elem, vdw, hetatm, b, q, label, pos, color,
-                                 state, mode, quiet)) {
-    if(is_new) {
-      ExecutiveDelete(G,object_name); /* just in case */
-      ExecutiveManageObject(G,&obj->Obj,false,true);
-    } else {
-      ExecutiveUpdateObjectSelection(G,&obj->Obj);
+  if(ok) {
+    if(ObjectMoleculeAddPseudoatom(obj,sele_index, name, resn, resi, chain,
+                                   segi, elem, vdw, hetatm, b, q, label, pos, color,
+                                   state, mode, quiet)) {
+      if(is_new) {
+        ExecutiveDelete(G,object_name); /* just in case */
+        ExecutiveManageObject(G,&obj->Obj,false,true);
+      } else {
+        ExecutiveUpdateObjectSelection(G,&obj->Obj);
+      }
     }
   }
   return ok;
