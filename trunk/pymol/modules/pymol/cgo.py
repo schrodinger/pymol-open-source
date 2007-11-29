@@ -343,6 +343,7 @@ class RenderReader:
     def mat_prop(self,f):
         self.append_last()
         l = f.readline()
+        print "mat_prop"+l
         if l:
             s = string.split(l)
             (mphong, mspec, sr, sg, sb, clrity) = map(float,s[0:6])
@@ -357,7 +358,10 @@ class RenderReader:
     def mat_reset(self,f):
         self.append_last()
         self.obj.extend([ALPHA, 1.0])
-        
+
+    def reset(self,f):
+        pass
+    
     def __init__(self,input):
         # Author: Warren DeLano
         # Modifications: Robert Campbell
@@ -383,7 +387,7 @@ class RenderReader:
             None,
             self.tri_normal,
             self.mat_prop,
-            None,
+            self.reset,
             None,
             None,
             None,
@@ -393,6 +397,7 @@ class RenderReader:
         ld = len(dispatch)
         while 1:
             l = input.readline()
+            print l
             if not l:
                 break
             if l[0] != '#':
