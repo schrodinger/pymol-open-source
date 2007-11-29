@@ -4354,6 +4354,9 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
   int c = 0;
   BondType *bnd;
 
+  /* TO DO: optimize for performance -- we shouldn't be doing full
+     table scans */
+
   ai1=I->AtomInfo;
   for(a1=0;a1<I->NAtom;a1++) {
     s1=ai1->selEntry;

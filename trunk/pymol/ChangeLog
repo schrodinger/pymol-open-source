@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2007-11-28  Warren L. DeLano <warren@delsci.com>	
+
+	* added support for simple raster3d ellipsoids (rastep compat.)
+	
+2007-11-27  Warren L. DeLano <warren@delsci.com>	
+
+	* warning added for attempted bond creation between objects
+	
 2007-11-19  Warren L. DeLano <warren@delsci.com>
 
 	* validated binary GRD reader (versus GVIEW with .kont files)

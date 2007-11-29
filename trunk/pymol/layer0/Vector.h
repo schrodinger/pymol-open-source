@@ -128,6 +128,8 @@ void copy3f3d ( float *v1,double *v2);
 
 void transpose33f33f ( float  *m1, float  *m2);
 void transpose44f44f ( float  *m1, float  *m2);
+void transpose44d44d ( double  *m1, double  *m2);
+
 void transform33f3f ( float  *m1, float  *m2,  float  *m3 );
 void transform33Tf3f ( float  *m1, float  *m2,  float  *m3 ); /* uses transpose */
 

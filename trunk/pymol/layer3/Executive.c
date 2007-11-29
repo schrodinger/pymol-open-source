@@ -1,17 +1,17 @@
 /* 
-A* -------------------------------------------------------------------
-B* This fil econtains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
-D* -------------------------------------------------------------------
-E* It is unlawful to modify or remove this copyright notice.
-F* -------------------------------------------------------------------
-G* Please see the accompanying LICENSE file for further information. 
-H* -------------------------------------------------------------------
-I* Additional authors of this source file include:
--* 
--* 
--*
-Z* -------------------------------------------------------------------
+   A* -------------------------------------------------------------------
+   B* This fil econtains source code for the PyMOL computer program
+   C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+   D* -------------------------------------------------------------------
+   E* It is unlawful to modify or remove this copyright notice.
+   F* -------------------------------------------------------------------
+   G* Please see the accompanying LICENSE file for further information. 
+   H* -------------------------------------------------------------------
+   I* Additional authors of this source file include:
+   -* 
+   -* 
+   -*
+   Z* -------------------------------------------------------------------
 */
 
 #include"os_predef.h"
@@ -527,7 +527,7 @@ static void ExecutiveInvalidatePanelList(PyMOLGlobals *G)
 
 
 static PanelRec *PanelListGroup(PyMOLGlobals *G, PanelRec *panel, SpecRec *group,
-                            int level,int hide_underscore)
+                                int level,int hide_underscore)
 {
   register CExecutive *I = G->Executive;
   PanelRec *result = NULL;
@@ -543,8 +543,8 @@ static PanelRec *PanelListGroup(PyMOLGlobals *G, PanelRec *panel, SpecRec *group
         int group_name_len = strlen(rec->group_name);
         if((!hide_underscore)||!
            ((strncmp(rec->name,rec->group_name,group_name_len)==0) && /* named with proper group prefix */
-           (rec->name[group_name_len]=='.') &&
-           (rec->name[group_name_len+1]=='_'))) { /* and not hidden inside group */
+            (rec->name[group_name_len]=='.') &&
+            (rec->name[group_name_len+1]=='_'))) { /* and not hidden inside group */
           
           PanelRec *new_panel = NULL;
           ListElemCalloc(G,new_panel,PanelRec);
@@ -916,8 +916,8 @@ int ExecutiveValidNamePattern(PyMOLGlobals *G,char *name)
   char *wildcard = SettingGetGlobal_s(G,cSetting_wildcard);
       
   WordMatchOptionsConfigNameList(&options, 
-                              *wildcard,
-                              SettingGetGlobal_b(G,cSetting_ignore_case));
+                                 *wildcard,
+                                 SettingGetGlobal_b(G,cSetting_ignore_case));
   matcher = WordMatcherNew(G, name, &options, false);
   if(matcher) { /* this appears to be a pattern */
     result = true;
@@ -996,8 +996,8 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals *G,char *name,
   SpecRec *rec;
       
   WordMatchOptionsConfigNameList(&options, 
-                              *wildcard,
-                              SettingGetGlobal_b(G,cSetting_ignore_case));
+                                 *wildcard,
+                                 SettingGetGlobal_b(G,cSetting_ignore_case));
   matcher = WordMatcherNew(G, name, &options, false);
   if(matcher) {
     if(iter_id) {
@@ -1199,8 +1199,8 @@ int ExecutiveGroup(PyMOLGlobals *G,char *name,char *members,int action, int quie
 }
 
 int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals *G, 
-                                           ExecutiveObjectOffset **return_vla, 
-                                           OVOneToOne **return_dict)
+                                            ExecutiveObjectOffset **return_vla, 
+                                            OVOneToOne **return_dict)
 {
   register CExecutive *I = G->Executive;
   OVOneToOne *o2o = OVOneToOne_New(G->Context->heap);
@@ -1303,7 +1303,7 @@ int ExecutiveMatrixCopy2(PyMOLGlobals *G,
                   identity44f(historyf);
                 }
                 ExecutiveTransformObjectSelection2(G,target_obj, target_state, 
-                                                  "",log,historyf,true,false);
+                                                   "",log,historyf,true,false);
               }
             }
             if(copy_ttt_too) {
@@ -1351,9 +1351,9 @@ int ExecutiveMatrixCopy2(PyMOLGlobals *G,
           break;
         case 1: /* TTT */
           ObjectSetTTT(target_obj,tttf,-1);
-           if(target_obj->fInvalidate)
+          if(target_obj->fInvalidate)
             target_obj->fInvalidate(target_obj,cRepNone,cRepInvExtents,-1);
-         break;
+          break;
         case 2: /* State */
           if(tttf) {
             double homo[16];
@@ -1411,11 +1411,11 @@ int ExecutiveMatrixCopy2(PyMOLGlobals *G,
 }
 
 int ExecutiveMatrixCopy(PyMOLGlobals *G,
-                             char *source_name, char *target_name,
-                             int   source_mode,  int target_mode, 
-                             int   source_state, int target_state,
-                             int   target_undo,
-                             int   log,          int quiet)
+                        char *source_name, char *target_name,
+                        int   source_mode,  int target_mode, 
+                        int   source_state, int target_state,
+                        int   target_undo,
+                        int   log,          int quiet)
 {
   /*  mode 0: raw coordinates, as per the txf history
       mode 1: object TTT matrix
@@ -1517,7 +1517,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
     {
       /* note that for now we're forcing states to be -1 */
       /* in the future, we may have per-state TTTs -- though right now the
-       view matrices serve that purpose */
+         view matrices serve that purpose */
     
       float *tttf;
       int found = ExecutiveGetObjectTTT(G,source_name,&tttf,-1,quiet);
@@ -1546,7 +1546,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
                   double homo[16];
                   convertTTTfR44d(tttf,homo);
                   ok = ExecutiveSetObjectMatrix(G,rec->name,-1,homo);
-                  } else {
+                } else {
                   ok = ExecutiveSetObjectMatrix(G,rec->name,-1,NULL);
                 }
                 break;
@@ -1788,7 +1788,7 @@ static int ExecutiveCountNames(PyMOLGlobals *G)
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   while(ListIterate(I->Spec,rec,next))
-	 count++;
+    count++;
   
   return(count);
 }
@@ -2294,7 +2294,7 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
       ENDFB(G);
     ok=false;
   } else if(WordMatchExact(G,name,cKeywordSame,true)||
-     SelectorNameIsKeyword(G,name)) {
+            SelectorNameIsKeyword(G,name)) {
     PRINTFB(G,FB_Executive,FB_Errors)
       "SetName-Error: name '%s' is a selection keyword.\n",name
       ENDFB(G);
@@ -2497,12 +2497,12 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
 #endif
 
 int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj, 
-                   char *content, int content_length,
-                   int content_format,
-                   char *object_name, 
-                   int state, int zoom, 
-                   int discrete, int finish, 
-                   int multiplex, int quiet, char *plugin)
+                  char *content, int content_length,
+                  int content_format,
+                  char *object_name, 
+                  int state, int zoom, 
+                  int discrete, int finish, 
+                  int multiplex, int quiet, char *plugin)
 {
   int ok=true;
   int is_string = false;
@@ -2821,9 +2821,9 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type)
 }
 
 int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
-                             char *oname, int frame, int discrete,int finish,
-                             OrthoLineType buf,PDBInfoRec *pdb_info,int quiet,
-                             int is_string,int multiplex,int zoom)
+                            char *oname, int frame, int discrete,int finish,
+                            OrthoLineType buf,PDBInfoRec *pdb_info,int quiet,
+                            int is_string,int multiplex,int zoom)
 {
   int ok=true;
   FILE *f;
@@ -3177,33 +3177,33 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
   }
   
   if(ok&&n_processed) { /* next, perform any and all Metaphorics annotations */
-      int a;
-      int nbr_sele = SelectorIndexByName(G,nbrhood_sele);
+    int a;
+    int nbr_sele = SelectorIndexByName(G,nbrhood_sele);
       
-      for(a=0; a<n_processed; a++) {
-        ProcPDBRec *current = processed + a;
-        if(current->m4x.annotated_flag) {
-          char annotate_script[] = "@$PYMOL_SCRIPTS/metaphorics/annotate.pml";
-          char align_script[] = "@$PYMOL_SCRIPTS/metaphorics/alignment.pml";
-          char *script_file = NULL;
+    for(a=0; a<n_processed; a++) {
+      ProcPDBRec *current = processed + a;
+      if(current->m4x.annotated_flag) {
+        char annotate_script[] = "@$PYMOL_SCRIPTS/metaphorics/annotate.pml";
+        char align_script[] = "@$PYMOL_SCRIPTS/metaphorics/alignment.pml";
+        char *script_file = NULL;
           
-          if(a==(n_processed-1)) { /* for multi-PDB files, don't execute script until after the last file */
-            switch(m4x_mode) {
-            case 0:
-              script_file = annotate_script;
-              break;
-            case 1:
-              script_file = align_script;
-              break;
-            }
+        if(a==(n_processed-1)) { /* for multi-PDB files, don't execute script until after the last file */
+          switch(m4x_mode) {
+          case 0:
+            script_file = annotate_script;
+            break;
+          case 1:
+            script_file = align_script;
+            break;
           }
-
-          if((current!=target_rec)||(!current->m4x.invisible)) /* suppress annotations if target invisible */
-            ObjectMoleculeM4XAnnotate(current->obj,&current->m4x,script_file,(m4x_mode==1),
-                                      nbr_sele);
-          M4XAnnoPurge(&current->m4x);
         }
+
+        if((current!=target_rec)||(!current->m4x.invisible)) /* suppress annotations if target invisible */
+          ObjectMoleculeM4XAnnotate(current->obj,&current->m4x,script_file,(m4x_mode==1),
+                                    nbr_sele);
+        M4XAnnoPurge(&current->m4x);
       }
+    }
   }
   /* END METAPHORICS ANNOTATION AND ALIGNMENT CODE */
   
@@ -3733,7 +3733,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version,
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,1),&rec->type);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,2),&rec->visible);
       if(ok) ok = PConvPyListToIntArrayInPlaceAutoZero(PyList_GetItem(cur,3),
-                                                      rec->repOn,cRepCnt);
+                                                       rec->repOn,cRepCnt);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,4),&extra_int); 
       switch(rec->type) {
       case cExecObject:
@@ -3862,7 +3862,7 @@ static int ExecutiveSetSelections(PyMOLGlobals *G,PyObject *names)
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,1),&rec->type);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,2),&rec->visible);
       if(ok) ok = PConvPyListToIntArrayInPlaceAutoZero(PyList_GetItem(cur,3),
-                                                      rec->repOn,cRepCnt);
+                                                       rec->repOn,cRepCnt);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,4),&extra);
       switch(rec->type) {
       case cExecSelection:
@@ -4521,7 +4521,7 @@ static CObject **ExecutiveSeleToObjectVLA(PyMOLGlobals *G,char *s1)
 }
 
 int ExecutiveGetCrystal(PyMOLGlobals *G,char *sele,float *a,float *b,float *c,
-                         float *alpha,float *beta,float *gamma,
+                        float *alpha,float *beta,float *gamma,
                         char *sgroup,int *defined)
 {
   int ok=true;
@@ -4541,7 +4541,7 @@ int ExecutiveGetCrystal(PyMOLGlobals *G,char *sele,float *a,float *b,float *c,
       PRINTFB(G,FB_Executive,FB_Errors)
         "Error: selection must refer to exactly one object.\n"
         ENDFB(G);
-    ok=false;
+      ok=false;
     } else {
       if(objMol->Symmetry&&objMol->Symmetry->Crystal) {
         *a = objMol->Symmetry->Crystal->Dim[0];
@@ -4559,7 +4559,7 @@ int ExecutiveGetCrystal(PyMOLGlobals *G,char *sele,float *a,float *b,float *c,
 }
 
 int ExecutiveSetCrystal(PyMOLGlobals *G,char *sele,float a,float b,float c,
-                         float alpha,float beta,float gamma,char *sgroup)
+                        float alpha,float beta,float gamma,char *sgroup)
 {
   CObject **objVLA = NULL;
   CObject *obj;
@@ -4597,26 +4597,26 @@ int ExecutiveSetCrystal(PyMOLGlobals *G,char *sele,float a,float b,float c,
         }
         break;
         /* not currently supported 
-      case cObjectMap:
+           case cObjectMap:
         
-        if(!crystal) {
-          crystal = CrystalNew(G);
-          crystal->Dim[0]=a;
-          crystal->Dim[1]=b;
-          crystal->Dim[2]=c;
-          crystal->Angle[0]=alpha;
-          crystal->Angle[1]=beta;
-          crystal->Angle[2]=gamma;
-          CrystalUpdate(crystal);
-        }
-        if(crystal) {
-          objMap = (ObjectMap*)obj;
-          if(objMap->Crystal) {
-            CrystalFree(objMap->Crystal);
-          }
-          objMap->Crystal=CrystalCopy(crystal);
-        }
-        break;
+           if(!crystal) {
+           crystal = CrystalNew(G);
+           crystal->Dim[0]=a;
+           crystal->Dim[1]=b;
+           crystal->Dim[2]=c;
+           crystal->Angle[0]=alpha;
+           crystal->Angle[1]=beta;
+           crystal->Angle[2]=gamma;
+           CrystalUpdate(crystal);
+           }
+           if(crystal) {
+           objMap = (ObjectMap*)obj;
+           if(objMap->Crystal) {
+           CrystalFree(objMap->Crystal);
+           }
+           objMap->Crystal=CrystalCopy(crystal);
+           }
+           break;
         */
 
       }
@@ -4842,9 +4842,9 @@ int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,
         op.nvv1 = 0;
         
         ExecutiveObjMolSeleOp(G,sele,&op);      
-          PRINTFD(G,FB_Executive)  
-            " ExecutiveSmooth: put %d %d\n",op.i2,op.nvv1
-            ENDFD;
+        PRINTFD(G,FB_Executive)  
+          " ExecutiveSmooth: put %d %d\n",op.i2,op.nvv1
+          ENDFD;
         
         FreeP(coord0);
         FreeP(coord1);
@@ -4902,7 +4902,7 @@ int ***ExecutiveGetBondPrint(PyMOLGlobals *G,char *name,int max_bond,int max_typ
 #define cMapOperatorUnique   6
 
 int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
-                 int target_state,int source_state,int zoom, int quiet)
+                    int target_state,int source_state,int zoom, int quiet)
 {
   CExecutive *I = G->Executive;
   CTracker *I_Tracker= I->Tracker;
@@ -4972,18 +4972,18 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
 
   {
 
-  /* okay, next thing we need to worry about is where we're putting the data.
+    /* okay, next thing we need to worry about is where we're putting the data.
 
-     Case 1. If the map already exists, then we'll use the existing map points for storing
-     the result.
+    Case 1. If the map already exists, then we'll use the existing map points for storing
+    the result.
 
-     Case 2. If the operation implies a copy of existing map geometry, then we'll create that
-     copy first before performing the calulation.
+    Case 2. If the operation implies a copy of existing map geometry, then we'll create that
+    copy first before performing the calulation.
 
-     Case 3. If the operation implies a new map geometry, then we need to compute that geometry and
-     create the map.
+    Case 3. If the operation implies a new map geometry, then we need to compute that geometry and
+    create the map.
 
-  */
+    */
 
     if(!target) { /* target map doesn't exist...*/
       int need_union_geometry = false;
@@ -5727,9 +5727,9 @@ int ExecutiveMapHalve(PyMOLGlobals *G,char *name,int state,int smooth)
 }
 
 int ExecutiveMapTrim(PyMOLGlobals *G,char *name,
-                  char *sele,float buffer,
-                  int map_state,int sele_state,
-                  int quiet)
+                     char *sele,float buffer,
+                     int map_state,int sele_state,
+                     int quiet)
 {
   register CExecutive *I = G->Executive;
   int result=true;
@@ -5812,7 +5812,7 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
     case cButModeSeleSub:
       ExecutiveGetActiveSeleName(G,selName,true,SettingGet(G,cSetting_logging));
       sel_mode_kw = SceneGetSeleModeKeyword(G);        
-        /* intentional omission of break! */
+      /* intentional omission of break! */
     case cButModeRectAdd:
     case cButModeRectSub:
       if(SelectorIndexByName(G,selName)>=0) {
@@ -6321,9 +6321,9 @@ PyObject *ExecutiveGetSettingOfType(PyMOLGlobals *G,int index,
       break;
     case cSetting_float3:
       {
-         float value[3];
-         SettingGet_3f(G,set_ptr2,set_ptr1,index,value);
-         result=Py_BuildValue("fff",value[0],value[1],value[2]);
+        float value[3];
+        SettingGet_3f(G,set_ptr2,set_ptr1,index,value);
+        result=Py_BuildValue("fff",value[0],value[1],value[2]);
       }
       break;
     case cSetting_color:
@@ -6390,8 +6390,8 @@ PyObject *ExecutiveGetSettingText(PyMOLGlobals *G,int index,char *object,int sta
   }
   if(ok) {
     buffer[0]=0;
-  SettingGetTextValue(G,set_ptr2,set_ptr1,index,buffer);
-  result=Py_BuildValue("s",buffer);
+    SettingGetTextValue(G,set_ptr2,set_ptr1,index,buffer);
+    result=Py_BuildValue("s",buffer);
   } 
   
   return(result);
@@ -6590,55 +6590,19 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
                 glDisable(GL_DEPTH_TEST);
               glDisable(GL_FOG);
               
-            if(rec->sele_color<0)
-              glColor3f(1.0F,0.2F,0.6F);
-            else
-              glColor3fv(ColorGet(G,rec->sele_color));
+              if(rec->sele_color<0)
+                glColor3f(1.0F,0.2F,0.6F);
+              else
+                glColor3fv(ColorGet(G,rec->sele_color));
             
-            gl_width=(float)width;
-            if(width>6) { /* keep it even above 6 */
-              if(width&0x1) {
-                width--;
-                gl_width = (float)width;
-              }
-            }
-            glPointSize(gl_width);
-            glBegin(GL_POINTS);
-            rec1 = NULL;
-            while(ListIterate(I->Spec,rec1,next)) {
-              if(rec1->type==cExecObject) {
-                if(rec1->obj->type==cObjectMolecule) {
-                  ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele,vis_only);
+              gl_width=(float)width;
+              if(width>6) { /* keep it even above 6 */
+                if(width&0x1) {
+                  width--;
+                  gl_width = (float)width;
                 }
               }
-            }
-            glEnd();
-            
-            if(width>2) {
-              switch(width) {
-              case 1:
-              case 2:
-              case 3:
-                glPointSize(1.0F);
-                break;
-              case 4:
-                glPointSize(2.0F);
-                break;
-              case 5:
-                glPointSize(3.0F); 
-                break;
-              case 6:
-              case 7:
-              case 8:
-              case 9:
-                glPointSize(4.0F);
-                break;
-              default:
-                glPointSize(6.0F);
-                break;
-              }
-              
-              glColor3f(0.0F,0.0F,0.0F);
+              glPointSize(gl_width);
               glBegin(GL_POINTS);
               rec1 = NULL;
               while(ListIterate(I->Spec,rec1,next)) {
@@ -6649,34 +6613,70 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
                 }
               }
               glEnd();
-            }
             
-            if(width>4) {
-              if(width>5) {
-                glPointSize(2.0F);
-              }
-              else 
-                glPointSize(1.0F);
-              glColor3f(1.0F,1.0F,1.0F);
+              if(width>2) {
+                switch(width) {
+                case 1:
+                case 2:
+                case 3:
+                  glPointSize(1.0F);
+                  break;
+                case 4:
+                  glPointSize(2.0F);
+                  break;
+                case 5:
+                  glPointSize(3.0F); 
+                  break;
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                  glPointSize(4.0F);
+                  break;
+                default:
+                  glPointSize(6.0F);
+                  break;
+                }
               
-              glBegin(GL_POINTS);
-              rec1 = NULL;
-              while(ListIterate(I->Spec,rec1,next)) {
-                if(rec1->type==cExecObject) {
-                  if(rec1->obj->type==cObjectMolecule) {
-                    ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele,vis_only);
+                glColor3f(0.0F,0.0F,0.0F);
+                glBegin(GL_POINTS);
+                rec1 = NULL;
+                while(ListIterate(I->Spec,rec1,next)) {
+                  if(rec1->type==cExecObject) {
+                    if(rec1->obj->type==cObjectMolecule) {
+                      ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele,vis_only);
+                    }
                   }
                 }
+                glEnd();
               }
-              glEnd();
+            
+              if(width>4) {
+                if(width>5) {
+                  glPointSize(2.0F);
+                }
+                else 
+                  glPointSize(1.0F);
+                glColor3f(1.0F,1.0F,1.0F);
+              
+                glBegin(GL_POINTS);
+                rec1 = NULL;
+                while(ListIterate(I->Spec,rec1,next)) {
+                  if(rec1->type==cExecObject) {
+                    if(rec1->obj->type==cObjectMolecule) {
+                      ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele,vis_only);
+                    }
+                  }
+                }
+                glEnd();
+              }
+            
+            
+            
+              if(no_depth)
+                glEnable(GL_DEPTH_TEST);
+              glEnable(GL_FOG);
             }
-            
-            
-            
-            if(no_depth)
-              glEnable(GL_DEPTH_TEST);
-            glEnable(GL_FOG);
-          }
           }
         }
       }
@@ -6807,9 +6807,9 @@ int ExecutiveSetDihe(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,float v
     change=value-current;
     save_state = SceneGetState(G);                
     SceneSetFrame(G,-1,state); /* KLUDGE ALERT!
-                             * necessary because the editor 
-                             * can only work on the current state...this
-                             * needs to be changed.*/
+                                * necessary because the editor 
+                                * can only work on the current state...this
+                                * needs to be changed.*/
     EditorSelect(G,s2,s1,NULL,NULL,false,true,true);
     EditorTorsion(G,change);
     SceneSetFrame(G,-1,save_state);
@@ -7284,43 +7284,43 @@ void ExecutiveSort(PyMOLGlobals *G,char *name)
       SceneChanged(G);
   }
 #else
- {
-   CObject *os=NULL;
-   int all_obj = false;
+  {
+    CObject *os=NULL;
+    int all_obj = false;
 
-   if(strlen(name)) {
-     os=ExecutiveFindObjectByName(G,name);
-     if(!os) {
-       if(!WordMatchExact(G,cKeywordAll,name,true))
-         ErrMessage(G," Executive","object not found.");
-       else
-         all_obj=true;
-     } else if(os->type!=cObjectMolecule)
-       ErrMessage(G," Executive","bad object type.");
-   } else {
-     all_obj = true;
-   }
+    if(strlen(name)) {
+      os=ExecutiveFindObjectByName(G,name);
+      if(!os) {
+        if(!WordMatchExact(G,cKeywordAll,name,true))
+          ErrMessage(G," Executive","object not found.");
+        else
+          all_obj=true;
+      } else if(os->type!=cObjectMolecule)
+        ErrMessage(G," Executive","bad object type.");
+    } else {
+      all_obj = true;
+    }
   
-   if(os||all_obj) { /* sort one or all */
-     while(ListIterate(I->Spec,rec,next)) {
-       if(rec->type==cExecObject)
-         if(rec->obj->type==cObjectMolecule)
-           if((rec->obj==os)||all_obj) {
-             obj =(ObjectMolecule*)rec->obj;
-             ObjectMoleculeSort(obj);
-             sele=SelectorIndexByName(G,rec->obj->Name);
-             if(sele>=0) {
-               ObjectMoleculeOpRecInit(&op);
-               op.code=OMOP_INVA;
-               op.i1=cRepAll; 
-               op.i2=cRepInvRep;
-               ExecutiveObjMolSeleOp(G,sele,&op);
-             }
-           }
-     }
-     SceneChanged(G);
-   }
- }
+    if(os||all_obj) { /* sort one or all */
+      while(ListIterate(I->Spec,rec,next)) {
+        if(rec->type==cExecObject)
+          if(rec->obj->type==cObjectMolecule)
+            if((rec->obj==os)||all_obj) {
+              obj =(ObjectMolecule*)rec->obj;
+              ObjectMoleculeSort(obj);
+              sele=SelectorIndexByName(G,rec->obj->Name);
+              if(sele>=0) {
+                ObjectMoleculeOpRecInit(&op);
+                op.code=OMOP_INVA;
+                op.i1=cRepAll; 
+                op.i2=cRepInvRep;
+                ExecutiveObjMolSeleOp(G,sele,&op);
+              }
+            }
+      }
+      SceneChanged(G);
+    }
+  }
 #endif
 
 }
@@ -7336,13 +7336,13 @@ void ExecutiveRemoveAtoms(PyMOLGlobals *G,char *s1,int quiet)
 
   sele=SelectorIndexByName(G,s1);
   if(sele>=0)
-	 {
-		while(ListIterate(I->Spec,rec,next))
-		  {
-			 if(rec->type==cExecObject)
-				{
-				  if(rec->obj->type==cObjectMolecule)
-					 {
+    {
+      while(ListIterate(I->Spec,rec,next))
+        {
+          if(rec->type==cExecObject)
+            {
+              if(rec->obj->type==cObjectMolecule)
+                {
                   ObjectMoleculeOpRecInit(&op);
                   op.code = OMOP_Remove;
                   op.i1 = 0;
@@ -7351,10 +7351,10 @@ void ExecutiveRemoveAtoms(PyMOLGlobals *G,char *s1,int quiet)
                   ObjectMoleculeSeleOp(obj,sele,&op);
                   if(op.i1) {
                     if(!quiet) {
-                    PRINTFD(G,FB_Editor)
-                      " ExecutiveRemove-Debug: purging %i of %i atoms in %s\n",
-                      op.i1,obj->NAtom,obj->Obj.Name
-                      ENDFD;
+                      PRINTFD(G,FB_Editor)
+                        " ExecutiveRemove-Debug: purging %i of %i atoms in %s\n",
+                        op.i1,obj->NAtom,obj->Obj.Name
+                        ENDFD;
                     }
                     ObjectMoleculePurge(obj);
                     if(!quiet) {
@@ -7365,10 +7365,10 @@ void ExecutiveRemoveAtoms(PyMOLGlobals *G,char *s1,int quiet)
                     }
                     flag=true;
                   }
-					 }
-				}
-		  }
-	 }
+                }
+            }
+        }
+    }
   /*  if(!flag) {
       ErrMessage(G,"Remove","no atoms removed.");
       }*/
@@ -7545,7 +7545,7 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
       case 1: /* hardware stereo-in-a-window*/
         SceneSetStereo(G,flag);
 #ifndef _PYMOL_NOPY
-	PSGIStereo(G,flag); /* does this have any effect anymore? */
+        PSGIStereo(G,flag); /* does this have any effect anymore? */
 #endif
         break;
       case 2: /* cross-eye stereo*/
@@ -7573,43 +7573,45 @@ void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add)
   sele2=SelectorIndexByName(G,s2);
   
   if((sele1>=0)&&(sele2>=0)) {
-	 {
-		while(ListIterate(I->Spec,rec,next))
-		  {
-			 if(rec->type==cExecObject)
-				{
-				  if(rec->obj->type==cObjectMolecule)
-					 {
-                  if(add==1) {
-                    cnt = ObjectMoleculeAddBond((ObjectMolecule*)rec->obj,sele1,sele2,order);
-                    if(cnt) {
-                      PRINTFB(G,FB_Editor,FB_Actions)
-                        " AddBond: %d bonds added to model \"%s\".\n",cnt,rec->obj->Name 
-                        ENDFB(G);
-                      flag=true;
-                    }
-                  } else if(add==2) {
-                    cnt = ObjectMoleculeAdjustBonds((ObjectMolecule*)rec->obj,sele1,sele2,1,order);                    
-                  }
-                  else {
-                    cnt = ObjectMoleculeRemoveBonds((ObjectMolecule*)rec->obj,sele1,sele2);
-                    if(cnt) {
-                      PRINTFB(G,FB_Editor,FB_Actions)
-                        " RemoveBond: %d bonds removed from model \"%s\".\n",
-                        cnt,rec->obj->Name 
-                        ENDFB(G);
-                      flag=true;
-                    }
-                  }
-                }
+    ObjectMolecule *obj1 = SelectorGetSingleObjectMolecule(G,sele1);
+    ObjectMolecule *obj2 = SelectorGetSingleObjectMolecule(G,sele2);
+    if((!obj1)||(!obj2)||(obj1!=obj2)) {
+      PRINTFB(G,FB_Editor,FB_Warnings)
+        "Editor-Warning: bonds cannot be created between objects, only within.\n"
+        ENDFB(G);
+    }
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecObject)	{
+        if(rec->obj->type==cObjectMolecule)
+          {
+            if(add==1) {
+              cnt = ObjectMoleculeAddBond((ObjectMolecule*)rec->obj,sele1,sele2,order);
+              if(cnt) {
+                PRINTFB(G,FB_Editor,FB_Actions)
+                  " AddBond: %d bonds added to model \"%s\".\n",cnt,rec->obj->Name 
+                  ENDFB(G);
+                flag=true;
+              }
+            } else if(add==2) {
+              cnt = ObjectMoleculeAdjustBonds((ObjectMolecule*)rec->obj,sele1,sele2,1,order);                    
+            } else {
+              cnt = ObjectMoleculeRemoveBonds((ObjectMolecule*)rec->obj,sele1,sele2);
+              if(cnt) {
+                PRINTFB(G,FB_Editor,FB_Actions)
+                  " RemoveBond: %d bonds removed from model \"%s\".\n",
+                  cnt,rec->obj->Name 
+                  ENDFB(G);
+                flag=true;
+              }
             }
-        }
-      if(!flag) {
-        if(add) 
-          ErrMessage(G,"AddBond","no bonds added.");
-        else
-          ErrMessage(G,"RemoveBond","no bonds removed.");          
+          }
       }
+    }
+    if(!flag) {
+      if(add) 
+        ErrMessage(G,"AddBond","no bonds added.");
+      else
+        ErrMessage(G,"RemoveBond","no bonds removed.");          
     }
   } else if(sele1<0) {
     ErrMessage(G,"ExecutiveBond","The first selection contains no atoms.");

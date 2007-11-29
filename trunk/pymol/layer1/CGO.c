@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"Ray.h"
 #include"Util.h"
 #include"Scene.h"
+#include"Matrix.h"
 
 #define CGO_read_int(p) (*((int*)(p++)))
 #define CGO_get_int(p) (*((int*)(p)))
@@ -94,7 +95,7 @@ int CGO_sz[] = {
 
   CGO_INDENT_SZ,
   CGO_ALPHA_SZ,
-  CGO_NULL_SZ,
+  CGO_QUADRIC_SZ,
   CGO_NULL_SZ,
 
   CGO_NULL_SZ,
@@ -109,9 +110,10 @@ typedef CGO_op *CGO_op_fn;
 static float *CGO_add(CGO *I,int c);
 static float *CGO_size(CGO *I,int sz);
 static void subdivide( int n, float *x, float *y);
-void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2,int cap1,int cap2);
-void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n0, float *n1, float *n2);
-void CGOSimpleSphere(CGO *I,float *v,float vdw);
+static void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2,int cap1,int cap2);
+static void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n0, float *n1, float *n2);
+static void CGOSimpleQuadric(CGO *I,float *v,float vdw, float *q);
+static void CGOSimpleSphere(CGO *I,float *v,float vdw);
 
 CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result)
 {
@@ -561,6 +563,30 @@ void CGOEllipsoid(CGO *I,float *v1, float r, float *n1, float *n2, float *n3)
   *(pc++) = *(n3++);
 }
 
+void CGOQuadric(CGO *I,float *v, float r, float *q) 
+{
+  float *pc = CGO_add(I,15);
+  CGO_write_int(pc,CGO_QUADRIC);
+  
+  *(pc++) = *(v++);
+  *(pc++) = *(v++);
+  *(pc++) = *(v++);
+  *(pc++) = r;
+
+  *(pc++) = *(q++);
+  *(pc++) = *(q++);
+  *(pc++) = *(q++);
+  *(pc++) = *(q++);
+  *(pc++) = *(q++);
+
+  *(pc++) = *(q++);
+  *(pc++) = *(q++);
+  *(pc++) = *(q++);
+  *(pc++) = *(q++);
+  *(pc++) = *(q++);
+
+}
+
 void CGOSausage(CGO *I,float *v1,float *v2,float r,float *c1,float *c2)
 {
   float *pc = CGO_add(I,14);
@@ -874,6 +900,7 @@ int CGOCheckComplex(CGO *I)
       fc+=3*(3+(nEdge+1)*9)+9;
       break;
     case CGO_ELLIPSOID:
+    case CGO_QUADRIC:
     case CGO_SPHERE:
       fc+=(sp->NVertTot*6)+(sp->NStrip*3)+3;
       break;
@@ -1033,6 +1060,9 @@ CGO *CGOSimplify(CGO *I,int est)
     case CGO_ELLIPSOID:
       CGOSimpleEllipsoid(cgo,pc,*(pc+3),pc+4,pc+7,pc+10);
       break;
+    case CGO_QUADRIC:
+      CGOSimpleQuadric(cgo,pc,*(pc+3),pc+4);
+      break;
     default:
       sz=CGO_sz[op];
       nc=CGO_add(cgo,sz+1);
@@ -1096,6 +1126,97 @@ int CGOGetExtent(CGO *I,float *mn,float *mx)
     pc+=CGO_sz[op];
   }
   return(result);
+}
+
+const double problevel[50] = {0.4299, 0.5479, 0.6334, 0.7035, 0.7644, 
+                              0.8192, 0.8694, 0.9162, 0.9605, 1.0026,
+                              1.0430, 1.0821, 1.1200, 1.1570, 1.1932,
+                              1.2288, 1.2638, 1.2985, 1.3330, 1.3672,
+                              1.4013, 1.4354, 1.4695, 1.5037, 1.5382,
+                              1.5729, 1.6080, 1.6436, 1.6797, 1.7164,
+                              1.7540, 1.7924, 1.8318, 1.8724, 1.9144,
+                              1.9580, 2.0034, 2.0510, 2.1012, 2.1544,
+                              2.2114, 2.2730, 2.3404, 2.4153, 2.5003,
+                              2.5997, 2.7216, 2.8829, 3.1365, 6.0000 };
+
+static int CGOQuadricToEllipsoid(float *v, float r, float *q,
+                                 float *r_el, float *n0, float *n1, float *n2)
+{
+  int ok = false;
+  double inp_matrix[16];
+  double e_val[4];
+  double e_vec[16];
+  double inverse[16];
+
+  inp_matrix[ 0] = q[0];
+  inp_matrix[ 1] = q[3];
+  inp_matrix[ 2] = q[5];
+  inp_matrix[ 3] = q[6];
+  inp_matrix[ 4] = q[3];
+  inp_matrix[ 5] = q[1];
+  inp_matrix[ 6] = q[4];
+  inp_matrix[ 7] = q[7];
+  inp_matrix[ 8] = q[5];
+  inp_matrix[ 9] = q[4];
+  inp_matrix[10] = q[2];
+  inp_matrix[11] = q[8];
+  inp_matrix[12] = q[6];
+  inp_matrix[13] = q[7];
+  inp_matrix[14] = q[8];
+  inp_matrix[15] = q[9];
+
+  if(xx_matrix_invert(inverse, inp_matrix, 4)) {
+
+    /* inverse now contains Uij coefficients */
+    float pradius = sqrt1f(-1/inverse[15]);
+    int n_rot;
+    
+    if(xx_matrix_jacobi_solve(e_vec, e_val, &n_rot, inverse, 4)) {
+      float mag[3];
+      float scale[3];
+      float mx;
+      n0[0] = e_vec[0];
+      n0[1] = e_vec[4];
+      n0[2] = e_vec[8];
+      n1[0] = e_vec[1];
+      n1[1] = e_vec[5];
+      n1[2] = e_vec[9];
+      n2[0] = e_vec[2];
+      n2[1] = e_vec[6];
+      n2[2] = e_vec[10];
+      
+      normalize3f(n0);
+      normalize3f(n1);
+      normalize3f(n2);
+      mag[0] = sqrt1f(e_val[0]);
+      mag[1] = sqrt1f(e_val[1]);
+      mag[2] = sqrt1f(e_val[2]);
+      
+      mx = mag[0];
+      if( mx < mag[1]) mx = mag[1];
+      if( mx < mag[2]) mx = mag[2];
+
+      scale[0] = mag[0]/mx;
+      scale[1] = mag[1]/mx;
+      scale[2] = mag[2]/mx;
+
+      scale3f(n0,scale[0],n0);
+      scale3f(n1,scale[1],n1);
+      scale3f(n2,scale[2],n2);
+      
+      *r_el = mx * pradius;
+      ok=true;
+    }
+  }
+  return ok;
+}
+
+static void CGORenderQuadricRay(CRay *ray, float *v, float r, float *q)
+{
+  float r_el,n0[3],n1[3],n2[3];
+  if(CGOQuadricToEllipsoid(v,r,q,&r_el,n0,n1,n2)) 
+    ray->fEllipsoid3fv(ray,v,r_el,n0,n1,n2);
+
 }
 
 /* ======== Raytrace Renderer ======== */
@@ -1244,6 +1365,10 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
     case CGO_ELLIPSOID:
       ray->fColor3fv(ray,c0);
       ray->fEllipsoid3fv(ray,pc,*(pc+3),pc+4,pc+7,pc+10);
+      break;
+    case CGO_QUADRIC:
+      ray->fColor3fv(ray,c0);
+      CGORenderQuadricRay(ray,pc,*(pc+3),pc+4);
       break;
     case CGO_CUSTOM_CYLINDER:
       ray->fCustomCylinder3fv(ray,pc,pc+3,*(pc+6),pc+7,pc+10,(int)*(pc+13),(int)*(pc+14));
@@ -1644,7 +1769,7 @@ void CGORenderGLAlpha(CGO *I,RenderInfo *info)
 
 /* translation function which turns cylinders and spheres into triangles */
 
-void CGOSimpleSphere(CGO *I,float *v,float vdw)
+static void CGOSimpleSphere(CGO *I,float *v,float vdw)
 {
   SphereRec *sp;
   int *q,*s;
@@ -1673,7 +1798,14 @@ void CGOSimpleSphere(CGO *I,float *v,float vdw)
   }
 }
 
-void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n0, float *n1, float *n2)
+static void CGOSimpleQuadric(CGO *I,float *v,float r, float *q)
+{
+  float r_el,n0[3],n1[3],n2[3];
+  if(CGOQuadricToEllipsoid(v,r,q,&r_el,n0,n1,n2)) 
+    CGOSimpleEllipsoid(I,v,r_el,n0,n1,n2);
+}
+
+static void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n0, float *n1, float *n2)
 {
   SphereRec *sp;
   int *q,*s;
@@ -1777,7 +1909,7 @@ static void subdivide( int n, float *x, float *y)
 	 }
 }
 
-void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2,int cap1,int cap2)
+static void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2,int cap1,int cap2)
 {
 
 #define MAX_EDGE 50

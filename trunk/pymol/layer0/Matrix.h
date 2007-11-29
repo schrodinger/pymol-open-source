@@ -85,6 +85,7 @@ void MatrixInvTransformC44fAs33f3f(float *m, float *q,float *p);
 void MatrixTransformC44fAs33f3f(float *p, float *m, float *q);
 void MatrixTransformC44fn( unsigned int n, float *q, float *m, float *p);
 int MatrixEigensolveC33d(PyMOLGlobals *G,double *a, double *wr, double *wi, double *v);
+int MatrixEigensolveC44d(PyMOLGlobals *G, double *a, double *wr, double *wi, double *v);
 
 void MatrixTranslateC44f( float *m, const float x,const float y,const float z);
 void MatrixRotateC44f( float *m, const float angle, const float x,const float y,const float z);
@@ -111,6 +112,10 @@ typedef double doublereal;
 int pymol_rg_(integer *nm, integer *n, doublereal *a, doublereal *wr, 
               doublereal *wi, integer *matz,doublereal *z__,integer *iv1,
               doublereal  *fv1,integer  *ierr);
+
+int xx_matrix_invert(double *result, double *input, int size);
+int xx_matrix_jacobi_solve(double *e_vec, double *e_val, int *n_rot,
+                           double *input, int size);
 
 #endif
 
