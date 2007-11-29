@@ -62,6 +62,7 @@ FONT_AXES          = 22.0
 CHAR               = 23.0
 
 ALPHA              = 25.0
+QUADRIC            = 26.0 # NOTE: Only works with ellipsoids and disks
 
 LIGHTING           = float(0x0B50)
 
@@ -323,6 +324,22 @@ class RenderReader:
             self.obj.append(SPHERE)
             self.obj.extend([float(s[0]),float(s[1]),float(s[2]),float(s[3])])
 
+    def quadric(self,f):
+        self.append_last()
+        l = f.readline()
+        if l:
+            s = string.split(l)
+            self.obj.append(COLOR)
+            self.obj.extend([float(s[4]),float(s[5]),float(s[6])])
+            self.obj.append(QUADRIC)
+            self.obj.extend([float(s[0]),float(s[1]),float(s[2]),float(s[3])])
+        l = f.readline()
+        if l:
+            s = string.split(l)
+            self.obj.extend([float(s[0]),float(s[1]),float(s[2]),
+                             float(s[3]),float(s[4]),float(s[5]),
+                             float(s[6]),float(s[7]),float(s[8]),float(s[9])])
+        
     def mat_prop(self,f):
         self.append_last()
         l = f.readline()
@@ -366,6 +383,12 @@ class RenderReader:
             None,
             self.tri_normal,
             self.mat_prop,
+            None,
+            None,
+            None,
+            None,
+            None,
+            self.quadric,
             ]
         ld = len(dispatch)
         while 1:

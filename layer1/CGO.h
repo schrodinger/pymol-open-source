@@ -109,6 +109,8 @@ struct _CGO {
 #define CGO_INDENT_SZ            2
 #define CGO_ALPHA                0x19 
 #define CGO_ALPHA_SZ             1
+#define CGO_QUADRIC              0x1A
+#define CGO_QUADRIC_SZ           14
 #define CGO_RESET_NORMAL         0x1E
 #define CGO_RESET_NORMAL_SZ      1
 #define CGO_PICK_COLOR           0x1F
@@ -142,6 +144,7 @@ void CGOEnd(CGO *I);
 
 void CGOSphere(CGO *I,float *v1, float r);
 void CGOEllipsoid(CGO *I,float *v1, float r, float *n1, float *n2, float *n3);
+void CGOQuadric(CGO *I,float *v1, float r, float *p); /* NOT WORKING YET */
 void CGOSausage(CGO *I,float *v1,float *v2,float r,float *c1,float *c2);
 void CGOVertex(CGO *I,float v1,float v2,float v3);
 void CGOVertexv(CGO *I,float *v);

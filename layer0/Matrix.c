@@ -25,6 +25,369 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"Setting.h"
 
+/* Jenarix owned types, aliases, and defines */
+
+#define xx_os_malloc mmalloc
+#define xx_os_free mfree
+#define xx_os_memcpy memcpy
+#define xx_os_memset memset
+#define xx_fabs fabs
+#define xx_sqrt sqrt
+#define xx_sizeof sizeof
+#define xx_float64 double
+#define xx_word int
+#define xx_boolean int
+
+#ifndef XX_TRUE
+#define XX_TRUE 1
+#endif
+#ifndef XX_FALSE
+#define XX_FALSE 0
+#endif
+#ifndef XX_NULL
+#define XX_NULL NULL
+#endif
+
+#define XX_MATRIX_STACK_STORAGE_MAX 5
+
+/* 
+   for column-major(Fortran/OpenGL) use: (col*size + row)
+   for row-major(C) use: (row*size + col)
+*/
+
+#define XX_MAT(skip,row,col) (row*skip + col)
+
+xx_boolean xx_matrix_jacobi_solve(xx_float64 *e_vec, xx_float64 *e_val,
+                                  xx_word *n_rot,
+                                  xx_float64 *input, xx_word size)
+
+/* eigenvalues and eigenvectors for a real symmetric matrix 
+   NOTE: transpose the eigenvector matrix to get eigenvectors */
+{
+  xx_float64 stack_A_tmp[XX_MATRIX_STACK_STORAGE_MAX*XX_MATRIX_STACK_STORAGE_MAX];
+  xx_float64 stack_b_tmp[XX_MATRIX_STACK_STORAGE_MAX];
+  xx_float64 stack_z_tmp[XX_MATRIX_STACK_STORAGE_MAX];
+  xx_float64 *A_tmp = XX_NULL;
+  xx_float64 *b_tmp = XX_NULL;
+  xx_float64 *z_tmp = XX_NULL;
+  xx_boolean ok = XX_TRUE;
+
+  if(size > XX_MATRIX_STACK_STORAGE_MAX ) {
+    A_tmp = (xx_float64*)xx_os_malloc(xx_sizeof(xx_float64)*size*size);
+    b_tmp = (xx_float64*)xx_os_malloc(xx_sizeof(xx_float64)*size);
+    z_tmp = (xx_float64*)xx_os_malloc(xx_sizeof(xx_float64)*size);
+    if(!(A_tmp && b_tmp && z_tmp))
+      ok = XX_FALSE;
+  } else {
+    A_tmp = stack_A_tmp;
+    b_tmp = stack_b_tmp;
+    z_tmp = stack_z_tmp;
+  }
+
+  if(ok) {
+    
+    xx_os_memset(e_vec, 0, xx_sizeof(xx_float64)*size*size);
+    xx_os_memcpy(A_tmp, input, xx_sizeof(xx_float64)*size*size);
+
+    {
+      xx_word p;
+      for(p=0; p<size; p++) {
+        e_vec[ XX_MAT(size,p,p) ] = 1.0;
+        e_val[p] = b_tmp[p] = A_tmp[ XX_MAT(size,p,p) ];
+        z_tmp[p] = 0.0;
+      }
+      *n_rot = 0;
+    }
+    {
+      xx_word i;
+      for(i=0; i<50; i++) {
+        xx_float64 thresh;
+
+        {
+          xx_word p,q;
+          xx_float64 sm = 0.0;
+          for(p=0; p<(size-1); p++) {
+            for(q=p+1; q<size; q++) {
+              sm += xx_fabs( A_tmp[ XX_MAT(size,p,q) ] );
+            }
+          }
+          if(sm == 0.0)
+            break;
+          if(i<3) {
+            thresh = 0.2*sm/(size*size); 
+          } else {
+            thresh = 0.0;
+          }
+        }
+
+        {
+          xx_word p,q;
+          xx_float64 g;
+
+          for(p=0; p<(size-1); p++) {
+            for(q=p+1; q<size; q++) {
+              g = 100.0 * xx_fabs( A_tmp[ XX_MAT(size,p,q) ] );
+              if((i>3) &&
+                 ((xx_fabs(e_val[p]) + g) == xx_fabs(e_val[p])) &&
+                 ((xx_fabs(e_val[q]) + g) == xx_fabs(e_val[q]))) {
+                A_tmp[ XX_MAT(size,p,q) ] = 0.0;
+              } else if(xx_fabs(A_tmp[ XX_MAT(size,p,q)]) > thresh) {
+                xx_float64 t;
+                xx_float64 h = e_val[q] - e_val[p];
+                if ((xx_fabs(h) + g) == xx_fabs(h)) {
+                  t = A_tmp[ XX_MAT(size,p,q) ] / h;
+                } else {
+                  xx_float64 theta = 0.5 * h / A_tmp[ XX_MAT(size,p,q) ];
+                  t = 1.0 / (xx_fabs(theta) + xx_sqrt(1.0 + theta*theta));
+                  if (theta<0.0) t = -t;
+                }
+                { 
+                  xx_float64 c = 1.0/xx_sqrt(1.0+t*t);
+                  xx_float64 s = t * c;
+                  xx_float64 tau = s/(1.0+c);
+
+                  h = t * A_tmp[ XX_MAT(size,p,q) ];
+                  z_tmp[p] -= h;
+                  z_tmp[q] += h;
+                  e_val[p] -= h;
+                  e_val[q] += h;
+                  A_tmp[ XX_MAT(size,p,q) ] = 0.0;
+                  {
+                    xx_word j;
+                    for(j=0; j<p; j++) {
+                      g = A_tmp[ XX_MAT(size,j,p) ];
+                      h = A_tmp[ XX_MAT(size,j,q) ];
+                      A_tmp[ XX_MAT(size,j,p) ] = g - s*(h+g*tau);
+                      A_tmp[ XX_MAT(size,j,q) ] = h + s*(g-h*tau);
+                    }
+                    for(j=p+1; j<q; j++) {
+                      g = A_tmp[ XX_MAT(size,p,j) ];
+                      h = A_tmp[ XX_MAT(size,j,q) ];
+                      A_tmp[ XX_MAT(size,p,j) ] = g - s*(h+g*tau);
+                      A_tmp[ XX_MAT(size,j,q) ] = h + s*(g-h*tau);
+                    }
+                    for(j=q+1; j<size; j++) {
+                      g = A_tmp[ XX_MAT(size,p,j) ];
+                      h = A_tmp[ XX_MAT(size,q,j) ];
+                      A_tmp[ XX_MAT(size,p,j) ] = g - s*(h+g*tau);
+                      A_tmp[ XX_MAT(size,q,j) ] = h + s*(g-h*tau);
+                    }
+                    for(j=0; j<size; j++) {
+                      g = e_vec[ XX_MAT(size,j,p) ];
+                      h = e_vec[ XX_MAT(size,j,q) ];
+                      e_vec[ XX_MAT(size,j,p) ] = g - s*(h+g*tau);
+                      e_vec[ XX_MAT(size,j,q) ] = h + s*(g-h*tau);
+                    }
+                  }
+                  (*n_rot)++;
+                }
+              }
+            }
+          }
+          for(p=0; p<size; p++) {
+            b_tmp[p] += z_tmp[p];
+            e_val[p] = b_tmp[p];
+            z_tmp[p] = 0.0;
+          }
+        }
+      }
+    }
+  }
+  if(A_tmp && (A_tmp != stack_A_tmp))
+    xx_os_free(A_tmp);
+  if(b_tmp && (b_tmp != stack_b_tmp))
+    xx_os_free(b_tmp);
+  if(z_tmp && (z_tmp != stack_z_tmp))
+    xx_os_free(z_tmp);
+  return ok;
+}
+
+
+static xx_word xx_matrix_decompose(xx_float64 *matrix, xx_word size, 
+                                   xx_word *permute, xx_word *parity) {
+
+  xx_boolean ok = XX_TRUE;
+  xx_float64 stack_storage[XX_MATRIX_STACK_STORAGE_MAX];
+  xx_float64 *storage = XX_NULL;
+
+  if(size > XX_MATRIX_STACK_STORAGE_MAX ) {
+    storage = (xx_float64*)xx_os_malloc(xx_sizeof(xx_float64)*size);
+    if(!storage)
+      ok=false;
+  } else {
+    storage = stack_storage;
+  }
+
+  *parity = 1;
+
+  if(ok) {
+    xx_word i,j;
+    for(i=0; i<size; i++) {
+      xx_float64 max_abs_value = 0.0;
+      for(j=0; j<size; j++) {
+        xx_float64 test_abs_value = xx_fabs( matrix[ XX_MAT(size,i,j) ] );
+        if(max_abs_value < test_abs_value )
+          max_abs_value = test_abs_value;
+      }
+      if(max_abs_value == 0.0) {
+        ok = XX_FALSE; /* singular matrix -- no inverse */
+        break;
+      }
+      storage[i] = 1.0 / max_abs_value;
+    }
+  }
+  if(ok) {
+    xx_word i, j, k, i_max;
+
+    for(j=0; j<size; j++) {
+
+      for(i=0; i<j; i++) {
+        xx_float64 sum = matrix[ XX_MAT(size,i,j) ];
+        for(k=0; k<i; k++) {
+          sum = sum - matrix[ XX_MAT(size,i,k) ] * matrix[ XX_MAT(size,k,j) ];
+        }
+        matrix[ XX_MAT(size,i,j) ] = sum;
+      }
+
+      {
+        xx_float64 max_product = 0.0;
+        for(i=j; i<size; i++) {
+          xx_float64 sum = matrix[ XX_MAT(size,i,j) ];
+          for(k=0; k<j; k++) {
+            sum = sum - matrix[ XX_MAT(size,i,k) ] * matrix[ XX_MAT(size,k,j) ];
+          }
+          matrix[ XX_MAT(size,i,j) ] = sum; 
+          {
+            xx_float64 test_product = storage[i] * xx_fabs(sum);
+            if( max_product <= test_product) {
+              max_product = test_product;
+              i_max = i;
+            }
+          }
+        }
+      }
+
+      if( j != i_max ) {
+        for(k=0; k<size; k++) {
+          xx_float64 tmp = matrix[ XX_MAT(size,i_max, k) ];
+          matrix[ XX_MAT(size,i_max,k) ] = matrix[ XX_MAT(size,j, k) ];
+          matrix[ XX_MAT(size,j,k) ] = tmp;
+        }
+        *parity = (0 - *parity);
+        storage[i_max] = storage[j];
+      }
+      
+      permute[j] = i_max;
+      if( matrix[ XX_MAT(size,j,j) ] == 0.0 ) {
+        /* here we have a choice: */
+#if 0
+        /* either (A): substitute a small value in place of machine-precision zero */
+        matrix[ XX_MAT(size,j,j) ] = 1e-20;
+#else
+        /* or (B): fail outright */
+        ok = false; 
+        break;
+#endif
+      }
+
+      if( j != (size-1) ) {
+        xx_float64 tmp = 1.0 / matrix[ XX_MAT(size,j,j) ];
+        for(i=j+1; i<size; i++) {
+          matrix[ XX_MAT(size,i,j) ] *= tmp;
+        }
+      }
+    }
+  }
+  if(storage && (storage!=stack_storage))
+    xx_os_free(storage);
+  return ok;
+}
+
+static void xx_matrix_back_substitute(xx_float64 *result, xx_float64 *decomp, 
+                                      xx_word size, xx_word *permute)
+{
+  {
+    xx_word i, ii;
+    ii = -1;
+    for(i=0; i<size; i++) {
+      xx_word p = permute[i];
+      xx_float64 sum = result[p];
+      result[p] = result[i];
+      if( ii >= 0 ) {
+        xx_word j;
+        for(j=ii; j<i; j++) {
+          sum = sum - decomp[ XX_MAT(size,i,j) ] * result[j];
+        } 
+      } else if( sum != 0.0 ) {
+        ii = i;
+      }
+      result[i] = sum;
+    }
+  }
+  
+  {
+    xx_word i,j;
+    for(i=size-1; i>=0; i--) {
+      xx_float64 sum = result[i];
+      for(j=i+1; j<size; j++) {
+        sum = sum - decomp[ XX_MAT(size,i,j) ] * result[j];
+      }
+      result[i] = sum / decomp[ XX_MAT(size,i,i) ];
+    }
+  }
+}
+
+xx_boolean xx_matrix_invert(xx_float64 *result, xx_float64 *input, xx_word size)
+{
+  xx_float64 stack_mat_tmp[XX_MATRIX_STACK_STORAGE_MAX*XX_MATRIX_STACK_STORAGE_MAX];
+  xx_float64 stack_dbl_tmp[XX_MATRIX_STACK_STORAGE_MAX];
+  xx_word    stack_int_tmp[XX_MATRIX_STACK_STORAGE_MAX];
+  xx_float64 *mat_tmp = XX_NULL;
+  xx_float64 *dbl_tmp = XX_NULL;
+  xx_word    *int_tmp = XX_NULL;
+  xx_word parity = 0;
+  xx_word ok = XX_TRUE;
+
+  if(size > XX_MATRIX_STACK_STORAGE_MAX ) {
+    mat_tmp = (xx_float64*)xx_os_malloc(xx_sizeof(xx_float64)*size*size);
+    dbl_tmp = (xx_float64*)xx_os_malloc(xx_sizeof(xx_float64)*size);
+    int_tmp = (xx_word*)xx_os_malloc(xx_sizeof(xx_word)*size);
+    if(!(mat_tmp && dbl_tmp && int_tmp))
+      ok = XX_FALSE;
+  } else {
+    mat_tmp = stack_mat_tmp;
+    dbl_tmp = stack_dbl_tmp;
+    int_tmp = stack_int_tmp;
+  }
+
+  if(ok) {
+    ok = XX_FALSE;
+    memcpy(mat_tmp, input, xx_sizeof(xx_float64)*size*size);
+    
+    if(xx_matrix_decompose(mat_tmp, size, int_tmp, &parity)) {
+      xx_word i,j;
+      for(j=0; j<size; j++) {
+        memset(dbl_tmp, 0, xx_sizeof(xx_float64)*size);
+        dbl_tmp[j] = 1.0;
+        xx_matrix_back_substitute(dbl_tmp, mat_tmp, size, int_tmp);
+        for(i=0; i<size; i++) {
+          result[ XX_MAT(size,i,j) ] = dbl_tmp[i];
+        }
+      }
+      ok = XX_TRUE;
+    }
+  }
+  /* clean up */
+  if(mat_tmp && (mat_tmp != stack_mat_tmp))
+    xx_os_free(mat_tmp);
+  if(dbl_tmp && (dbl_tmp != stack_dbl_tmp))
+    xx_os_free(dbl_tmp);
+  if(int_tmp && (int_tmp != stack_int_tmp))
+    xx_os_free(int_tmp);
+  return ok;
+}
+
+#undef XX_MAT
 
 int MatrixInvTransformExtentsR44d3f(double *matrix, 
                               float *old_min, float *old_max,
@@ -892,6 +1255,40 @@ int MatrixEigensolveC33d(PyMOLGlobals *G,double *a, double *wr, double *wi, doub
     printf(" Eigensolve: eigenvalues  %8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
     printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
   }
+  return(ierr);
+}
+
+int MatrixEigensolveC44d(PyMOLGlobals *G, double *a, double *wr, double *wi, double *v)
+{
+  integer n,nm;
+  integer iv1[4];
+  integer matz;
+  double fv1[16];
+  double at[16];
+  integer ierr;
+  int x;
+  
+  nm = 4;
+  n = 4;
+  matz = 1;
+
+  for(x=0;x<16;x++) /* make a copy */
+	 at[x]=a[x];
+
+  pymol_rg_(&nm,&n,at,wr,wi,&matz,v,iv1,fv1,&ierr);
+
+  /* NOTE: the returned eigenvectors are stored one per row */
+
+  if(Feedback(G,FB_Matrix,FB_Blather)) {
+    printf(" Eigensolve: eigenvectors %8.3f %8.3f %8.3f %8.3f\n",v[0],v[1],v[2],v[3]);
+    printf(" Eigensolve:              %8.3f %8.3f %8.3f %8.3f\n",v[4],v[5],v[6],v[7]);
+    printf(" Eigensolve:              %8.3f %8.3f %8.3f %8.3f\n",v[8],v[9],v[10],v[11]);
+    printf(" Eigensolve:              %8.3f %8.3f %8.3f %8.3f\n",v[12],v[13],v[14],v[15]);
+    
+    printf(" Eigensolve: eigenvalues  %8.3f %8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2],wr[3]);
+    printf(" Eigensolve:              %8.3f %8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2],wi[3]);
+  }
+  
   return(ierr);
 }
 
