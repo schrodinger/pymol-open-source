@@ -451,8 +451,8 @@ class Normal(PMGSkin):
                                          filetypes=ftypes,
                                          multiple=1) # new option in Tk 8.4
         else:
-            ofile_list = askopenfilename(initialdir = initdir,
-                                         filetypes=ftypes)
+            ofile_list = [ askopenfilename(initialdir = initdir,
+                                         filetypes=ftypes) ]
         for ofile in ofile_list:
             if len(ofile):
                 print ofile
