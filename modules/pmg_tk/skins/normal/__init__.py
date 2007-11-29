@@ -446,9 +446,13 @@ class Normal(PMGSkin):
             initdir = os.environ['TUT']
             # only list file extensions that are used for tutorial data
             ftypes = [("Tutorial Data","*.pdb"),]
-        ofile_list = askopenfilename(initialdir = initdir,
-                                     filetypes=ftypes,
-                                     multiple=1)
+        if TkVersion>8.3:
+            ofile_list = askopenfilename(initialdir = initdir,
+                                         filetypes=ftypes,
+                                         multiple=1) # new option in Tk 8.4
+        else:
+            ofile_list = askopenfilename(initialdir = initdir,
+                                         filetypes=ftypes)
         for ofile in ofile_list:
             if len(ofile):
                 print ofile

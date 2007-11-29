@@ -397,7 +397,6 @@ class RenderReader:
         ld = len(dispatch)
         while 1:
             l = input.readline()
-            print l
             if not l:
                 break
             if l[0] != '#':
