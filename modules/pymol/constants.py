@@ -152,7 +152,8 @@ repres = {
     'extent'        :15,
     'slice'         :16,
     'angles'        :17,
-    'dihedrals'     :18,         
+    'dihedrals'     :18,
+    'ellipsoids'    :19,
 }
 repres_sc = Shortcut(repres.keys())
 

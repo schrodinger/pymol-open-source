@@ -23,6 +23,8 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"ObjectMolecule.h"
 
+#define COORD_SET_HAS_ANISOU 0x01
+
 typedef struct CoordSet {
   void (*fUpdate)(struct CoordSet *I,int state);
   void (*fRender)(struct CoordSet *I,RenderInfo *info);

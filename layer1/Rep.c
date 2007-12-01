@@ -140,19 +140,12 @@ static void RepRenderBox(struct Rep *this,RenderInfo *info)
 /*========================================================================*/
 void RepInit(PyMOLGlobals *G,Rep *I)
 {
+  UtilZeroMem(I,sizeof(Rep));
   I->G = G;
   I->fInvalidate = RepInvalidate;
   I->fUpdate = RepUpdate;
   I->fRender = RepRenderBox;
   I->fRebuild = RepRebuild;
-  I->fRecolor = NULL;
-  I->fSameVis = NULL;
-  I->fNew = NULL;
-  I->P=NULL;
-  I->cs = NULL;
-  I->obj = NULL;
-  I->MaxInvalid = 0;
-  I->displayList = 0;
 }
 /*========================================================================*/
 void RepPurge(Rep *I)

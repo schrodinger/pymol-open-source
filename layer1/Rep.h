@@ -53,17 +53,11 @@ Z* -------------------------------------------------------------------
 #define cRepCallback   14
 #define cRepExtent     15
 #define cRepSlice      16
-
 #define cRepAngle      17
 #define cRepDihedral   18
-
-/* next...
-
 #define cRepEllipsoid  19
 
-*/
-
-#define cRepCnt        19
+#define cRepCnt        20
 
 /* Hierarchical invalidation scheme - 
  * each higher level event implies all of the lower levels 

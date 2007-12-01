@@ -769,6 +769,10 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_movie_animate_by_frame     565
 #define cSetting_ramp_blend_nearby_colors   566
 #define cSetting_auto_defer_builds          567
+#define cSetting_ellipsoid_probability      568
+#define cSetting_ellipsoid_scale            569
+#define cSetting_ellipsoid_color            570
+#define cSetting_ellipsoid_transparency     571
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -778,7 +782,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       568
+#define cSetting_INIT                       572
 
 #endif
 

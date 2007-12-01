@@ -2118,9 +2118,17 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvColor);
     SceneChanged(G);
     break;
+  case cSetting_ellipsoid_probability:   
+  case cSetting_ellipsoid_scale:      
+  case cSetting_ellipsoid_color:       
+  case cSetting_ellipsoid_transparency: 
+    ExecutiveInvalidateRep(G,inv_sele,cRepEllipsoid,cRepInvRep);
+    SceneChanged(G);
+    break;
   case cSetting_ellipsoid_quality:
   case cSetting_cgo_ellipsoid_quality:
-    ExecutiveInvalidateRep(G,inv_sele,cRepAll,cRepInvColor);
+    ExecutiveInvalidateRep(G,inv_sele,cRepCGO,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepEllipsoid,cRepInvRep);
     SceneChanged(G);
     break;
   case cSetting_mesh_color: 
@@ -3564,8 +3572,11 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_b(I,cSetting_movie_animate_by_frame,0);
     set_b(I,cSetting_ramp_blend_nearby_colors,0);
     set_i(I,cSetting_auto_defer_builds,500); /* 500 or more states, then automatically defer builds */
+    set_f(I,cSetting_ellipsoid_probability,0.5F);
+    set_f(I,cSetting_ellipsoid_scale,1.0F);
+    set_color(I,cSetting_ellipsoid_color, "-1");
+    set_f(I,cSetting_ellipsoid_transparency,0.0F);
   }
-
 }
 
 

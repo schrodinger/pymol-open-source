@@ -35,10 +35,9 @@ if __name__=='pymol.viewing':
         
     import thread
     
-    rep_list = [ "lines","sticks","spheres",
-                     "dots","surface","mesh",
-                     "nonbonded", "nb_spheres",
-                     "cartoon","ribbon","labels","slice"]
+    rep_list = [ "lines", "sticks", "spheres", "dots", "surface",
+                 "mesh", "nonbonded", "nb_spheres", "cartoon",
+                 "ribbon", "labels", "slice", "ellipsoids"]
 
     scene_action_sc = Shortcut(['store','recall','clear','insert_before',
                                 'insert_after','next','previous',
