@@ -232,6 +232,7 @@ setup ( # Distribution meta-data
    "layer2/RepNonbondedSphere.c",
    "layer2/RepRibbon.c",
    "layer2/RepSphere.c",
+   "layer2/RepEllipsoid.c",   
    "layer2/RepSurface.c",
    "layer2/RepWireBond.c",
    "layer2/Sculpt.c",
