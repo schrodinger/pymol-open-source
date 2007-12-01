@@ -2,11 +2,11 @@
 CHANGE LOG
 =========================================================================
 
-2007-11-28  Warren L. DeLano <warren@delsci.com>	
+2007-11-30  Warren L. DeLano <warren@delsci.com>	
 
 	* ANISOU records now supported in PDB files
 	
-2007-11-28  Warren L. DeLano <warren@delsci.com>	
+2007-11-29  Warren L. DeLano <warren@delsci.com>	
 
 	* restored Tcl8.3 compatibility with file open
 	
