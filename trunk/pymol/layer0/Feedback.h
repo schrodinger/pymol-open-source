@@ -145,7 +145,7 @@ function name.
 #define FB_RepDihedral               44
 #define FB_RepWireBond               45
 #define FB_RepCylBond                46
-
+#define FB_RepEllipsoid              47
 #define FB_RepLabel                  48
 #define FB_RepSphere                 49
 #define FB_RepSurface                50

@@ -1128,17 +1128,6 @@ int CGOGetExtent(CGO *I,float *mn,float *mx)
   return(result);
 }
 
-const double problevel[50] = {0.4299, 0.5479, 0.6334, 0.7035, 0.7644, 
-                              0.8192, 0.8694, 0.9162, 0.9605, 1.0026,
-                              1.0430, 1.0821, 1.1200, 1.1570, 1.1932,
-                              1.2288, 1.2638, 1.2985, 1.3330, 1.3672,
-                              1.4013, 1.4354, 1.4695, 1.5037, 1.5382,
-                              1.5729, 1.6080, 1.6436, 1.6797, 1.7164,
-                              1.7540, 1.7924, 1.8318, 1.8724, 1.9144,
-                              1.9580, 2.0034, 2.0510, 2.1012, 2.1544,
-                              2.2114, 2.2730, 2.3404, 2.4153, 2.5003,
-                              2.5997, 2.7216, 2.8829, 3.1365, 6.0000 };
-
 static int CGOQuadricToEllipsoid(float *v, float r, float *q,
                                  float *r_el, float *n0, float *n1, float *n2)
 {
@@ -1825,6 +1814,7 @@ static void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n0, float *n1, 
   scale_sq[0] = scale[0]*scale[0];
   scale_sq[1] = scale[1]*scale[1];
   scale_sq[2] = scale[2]*scale[2];
+
 
   ds = SettingGet_i(I->G,NULL,NULL,cSetting_cgo_ellipsoid_quality);
   if(ds<0)

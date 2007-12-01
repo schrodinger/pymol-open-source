@@ -41,6 +41,7 @@ Z* -------------------------------------------------------------------
 #include"RepLabel.h"
 #include"RepNonbonded.h"
 #include"RepNonbondedSphere.h"
+#include"RepEllipsoid.h"
 
 #include"PyMOLGlobals.h"
 #include"PyMOLObject.h"
@@ -1036,6 +1037,7 @@ static void CoordSetUpdate(CoordSet *I,int state)
   RepUpdateMacro(I, cRepLabel,           RepLabelNew           , state );
   RepUpdateMacro(I, cRepNonbonded,       RepNonbondedNew       , state );
   RepUpdateMacro(I, cRepNonbondedSphere, RepNonbondedSphereNew , state );
+  RepUpdateMacro(I, cRepEllipsoid,       RepEllipsoidNew       , state );
 
   for(a=0;a<I->NRep;a++) 
     if(!I->Rep[a])
@@ -1192,6 +1194,15 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
                 }
                 break;
               case cRepSphere: /* render spheres differently depending on transparency */
+                if(SettingGet_f(G,r->cs->Setting,
+                                r->obj->Setting,
+                                cSetting_sphere_transparency)>0.0001) {
+                  if(pass==-1)
+                    r->fRender(r,info);                                
+                } else if(pass==1)
+                  r->fRender(r,info);
+                break;
+              case cRepEllipsoid: /* render spheres differently depending on transparency */
                 if(SettingGet_f(G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_sphere_transparency)>0.0001) {

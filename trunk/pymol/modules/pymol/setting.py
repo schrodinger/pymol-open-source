@@ -603,7 +603,11 @@ if __name__=='pymol.setting':
         movie_animate_by_frame = (565, '')
         ramp_blend_nearby_colors = (566, '')
         auto_defer_builds = (567, '')
-        
+        ellipsoid_probability =(568, '');
+        ellipsoid_scale = (569, '');
+        ellipsoid_color = (570, '');
+        ellipsoid_transparency= (571, '');
+      
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
     index_list = []

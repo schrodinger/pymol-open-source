@@ -1585,21 +1585,17 @@ int BasisHitPerspective(BasisCallRec *BC)
                               if((dist >= _0) && (dist <= back_dist)) {
                                 new_min_index = prm->vert;
                                 r_dist      = dist;
-                              } 
-
-#if 0
-                      /* to do */
-                              else if(check_interior_flag && (dist<=back_dist))  {
+                              } else if(check_interior_flag && (dist<=back_dist))  {
+#if 0                                
                                 if(diffsq3f(vt,BI_Vertex+i*3) < BI_Radius2[i]) {
-                                  
+                                  /* TO FIX */                                  
                                   local_iflag   = true;
                                   r_prim      = prm;
                                   r_dist    = _0;
                                   new_min_index   = prm->vert;
                                 }
-                              }
 #endif
-
+                              }
                             }
                           }
                         }
@@ -1904,18 +1900,17 @@ int BasisHitOrthoscopic(BasisCallRec *BC)
                       if((dist >= _0) && (dist <= back)) {
                         minIndex = prm->vert;
                         r_dist      = dist;
-                      } 
-#if 0
-                      /* to do */
-                      else if(check_interior_flag && (dist<=back_dist))  {
-                        if(diffsq3f(vt,BI_Vertex+i*3) < BI_Radius2[i]) {
+                      } else if(check_interior_flag)   {
+#if 0                        
+                        /* TO FIX */
+                        if(diffsq3f(vt,BI->Vertex+i*3) < BI->Radius2[i])    {
                           local_iflag   = true;
                           r_prim      = prm;
                           r_dist    = front;
                           minIndex   = prm->vert;
                         }
-                      }
 #endif
+                      }
                     }
                   }
                 }

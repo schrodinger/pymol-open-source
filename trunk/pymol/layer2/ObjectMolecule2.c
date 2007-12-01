@@ -2321,7 +2321,50 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           }
         }
       }
+    } else if((p[0]=='A')&& /* ANISOU */
+              (p[1]=='N')&&
+              (p[2]=='I')&&
+              (p[3]=='S')&&
+              (p[4]=='O')&&
+              (p[5]=='U')&&
+              (!*restart_model)&&
+              (atomCount)) {
+      ai=atInfo + atomCount - 1;
+      
+      /* TODO: check atom identifier match */
+
+      {
+        int dummy; 
+        p=nskip(p,6);
+        p=ncopy(cc,p,5);
+        if(!sscanf(cc,"%d",&dummy)) dummy = 0;
+        if(dummy == ai->id) { /* ATOM ID must match */
+          p=nskip(p,17);
+          {
+            int dummy;
+            p=ncopy(cc,p,7);
+            if(sscanf(cc,"%d",&dummy))
+              ai->U11 = dummy/10000.0F;
+            p=ncopy(cc,p,7);
+            if(sscanf(cc,"%d",&dummy)) 
+              ai->U22 = dummy/10000.0F;
+            p=ncopy(cc,p,7);
+            if(sscanf(cc,"%d",&dummy)) 
+              ai->U33 = dummy/10000.0F;
+            p=ncopy(cc,p,7);
+            if(sscanf(cc,"%d",&dummy)) 
+              ai->U12 = dummy/10000.0F;
+            p=ncopy(cc,p,7);
+            if(sscanf(cc,"%d",&dummy)) 
+              ai->U13 = dummy/10000.0F;
+            p=ncopy(cc,p,7);
+            if(sscanf(cc,"%d",&dummy)) 
+              ai->U23 = dummy/10000.0F;
+          }
+        }
+      }
     }
+
 
     /* END KEYWORDS */
     
@@ -2329,7 +2372,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
     
     
     if(SSCode) {
-      
         
       /* pretty confusing how this works... the following efficient (i.e. array-based)
          secondary structure lookup even when there are multiple insertion codes

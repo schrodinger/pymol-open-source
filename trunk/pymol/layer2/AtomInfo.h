@@ -180,6 +180,7 @@ typedef struct AtomInfoType {
   AtomName name;
   AtomName elem;
   SSType ssType; /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
+  float U11, U22, U33, U12, U13, U23;
 } AtomInfoType;
 
 void AtomInfoFree(PyMOLGlobals *G);
