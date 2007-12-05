@@ -145,10 +145,8 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
   int have_C4_prime = -1;
   int have_C_number = -1;
   int nf = false;
-
   width *= 0.5F;
-  if(!ring_mode)
-    finder = 0;
+
   /* first, make sure all atoms have known coordinates */
   {
     int a,i;
@@ -168,6 +166,14 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         ai = obj->AtomInfo+a1;
         if(ai->visRep[cRepCartoon]) {
           ai_i[i] = ai;
+
+          {
+            int atom_ring_mode = ring_mode;
+            if(AtomInfoGetSetting_i(G, ai, cSetting_cartoon_ring_mode, ring_mode, &atom_ring_mode)) {
+              ring_mode = atom_ring_mode;
+            }
+          }
+
           col[i] = ColorGet(G,ai->color);
           v_i[i]=cs->Coord+3*a;
           have_atom = true;
@@ -189,6 +195,10 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
       }
     }
   }
+
+  if(!ring_mode)
+    finder = 0;
+
   
   if(n_atom && have_all && (!all_marked)) {
     if(ladder_mode) {
