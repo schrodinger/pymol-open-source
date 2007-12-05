@@ -161,6 +161,36 @@ char *ParseWordCopy(char *q,char *p,int n) { /* word copy */
   return p;
 }
 /*========================================================================*/
+char *ParseWordNumberCopy(char *q,char *p,int n) { /* word copy */
+  int digit_seen_last = 0;
+  while(*p) {
+	 if((*p==0xD)||(*p==0xA)) /* don't skip end of lines */
+      break;
+	 if(*p<=32) 
+		p++;
+	 else
+		break;
+  }
+  while(*p) {
+	 if(*p<=32)
+		break;
+	 if(!n) {
+       while(*p>32) /* finish scanning word, but don't copy into field */
+         p++;
+		break;
+     }
+	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
+		break;
+     if(digit_seen_last && (*p=='-'))  /* parse 123.123-1234.465 as two separate words */
+       break;
+     digit_seen_last = (((*p)>='0') && ((*p)<='9')) || ((*p)=='.');
+     *(q++)=*(p++);
+	 n--;
+  } 
+  *q=0;
+  return p;
+}
+/*========================================================================*/
 char *ParseWord(char *q,char *p,int n) { /* word copy, across lines */
   while(*p) {
 	 if(*p<=32) 
