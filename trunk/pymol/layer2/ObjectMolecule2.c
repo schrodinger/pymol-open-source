@@ -2679,18 +2679,18 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
              and then switch over to whitespace delimited parsing 
              for the coordinates, charge, and radius */
 
-          p=ParseWordCopy(cc,p,MAXLINELEN-1);
+          p=ParseWordNumberCopy(cc,p,MAXLINELEN-1); 
           sscanf(cc,"%f",coord+a);
-          p=ParseWordCopy(cc,p,MAXLINELEN-1);
+          p=ParseWordNumberCopy(cc,p,MAXLINELEN-1);
           sscanf(cc,"%f",coord+(a+1));
-          p=ParseWordCopy(cc,p,MAXLINELEN-1);
+          p=ParseWordNumberCopy(cc,p,MAXLINELEN-1);
           sscanf(cc,"%f",coord+(a+2));
 
-          p=ParseWordCopy(cc,p,MAXLINELEN-1);
+          p=ParseWordNumberCopy(cc,p,MAXLINELEN-1);
           if(!sscanf(cc,"%f",&ai->partialCharge))
             ai->partialCharge=0.0F;
 
-          p=ParseWordCopy(cc,p,MAXLINELEN-1);            
+          p=ParseWordNumberCopy(cc,p,MAXLINELEN-1);            
           if(sscanf(cc,"%f",&ai->elec_radius)!=1)
             ai->elec_radius = 0.0F;
         }

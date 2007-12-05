@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_Parse
 
 char *ParseWordCopy(char *dst,char *src,int n);
+char *ParseWordNumberCopy(char *dst,char *src,int n);
 char *ParseWord(char *dst,char *src,int n);
 char *ParseNTrim(char *q,char *p,int n);
 char *ParseNTrimRight(char *q,char *p,int n);

@@ -2,8 +2,10 @@
 CHANGE LOG
 =========================================================================
 
-2007-12-304  Warren L. DeLano <warren@delsci.com>	
+2007-12-04  Warren L. DeLano <warren@delsci.com>	
 
+	* added additional workaround for reading tricky PQR files
+	
 	* cartoon_ring_mode can now be set per-atom (per-residue, really)
 		
 2007-11-30  Warren L. DeLano <warren@delsci.com>	
