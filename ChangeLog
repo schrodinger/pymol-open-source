@@ -2,12 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2007-12-05  Warren L. DeLano <warren@delsci.com>	
+	
+	* cartoon_ladder_mode, cartoon_ladder_color, cartoon_ring_color,
+	  cartoon_ring_width, cartoon_ring_radius, cartoon_ladder_radius
+	  can all now be set per-atom (per-residue, really)
+
 2007-12-04  Warren L. DeLano <warren@delsci.com>	
 
 	* added additional workaround for reading tricky PQR files
-	
+
 	* cartoon_ring_mode can now be set per-atom (per-residue, really)
-		
+
 2007-11-30  Warren L. DeLano <warren@delsci.com>	
 
 	* ANISOU records now supported in PDB files

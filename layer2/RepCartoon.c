@@ -128,7 +128,7 @@ static float smooth(float x,float power)
 /* atix must contain n_atom + 1 elements, with the first atom repeated at the end */
 
 static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj, 
-                    CoordSet *cs, float width, CGO *cgo, int ring_color, int ring_mode,
+                    CoordSet *cs, float ring_width, CGO *cgo, int ring_color, int ring_mode,
                     float ladder_radius, int ladder_color, int ladder_mode, int finder,
                     int sc_helper, int *nuc_flag, int na_mode, float ring_alpha, 
                     float alpha, int *marked, float *moved, float ring_radius)
@@ -145,7 +145,6 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
   int have_C4_prime = -1;
   int have_C_number = -1;
   int nf = false;
-  width *= 0.5F;
 
   /* first, make sure all atoms have known coordinates */
   {
@@ -169,8 +168,33 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
 
           {
             int atom_ring_mode = ring_mode;
+            int atom_ring_color = ladder_color;
+            float atom_ring_radius = ring_radius;
+            float atom_ring_width = ring_width;
+            int atom_ladder_mode = ladder_mode;
+            int atom_ladder_color = ladder_color;
+            float atom_ladder_radius = ladder_radius;
+            
             if(AtomInfoGetSetting_i(G, ai, cSetting_cartoon_ring_mode, ring_mode, &atom_ring_mode)) {
               ring_mode = atom_ring_mode;
+            }
+            if(AtomInfoGetSetting_color(G, ai, cSetting_cartoon_ring_color, ring_color, &atom_ring_color)) {
+              ring_color = atom_ring_color;
+            }
+            if(AtomInfoGetSetting_f(G, ai, cSetting_cartoon_ring_radius, ring_radius, &atom_ring_radius)) {
+              ring_radius = atom_ring_radius;
+            }
+            if(AtomInfoGetSetting_f(G, ai, cSetting_cartoon_ring_width, ring_width, &atom_ring_width)) {
+              ring_width = atom_ring_width;
+            }
+            if(AtomInfoGetSetting_i(G, ai, cSetting_cartoon_ladder_mode, ladder_mode, &atom_ladder_mode)) {
+              ladder_mode = atom_ladder_mode;
+            }
+            if(AtomInfoGetSetting_color(G, ai, cSetting_cartoon_ladder_color, ladder_color, &atom_ladder_color)) {
+              ladder_color = atom_ladder_color;
+            }
+            if(AtomInfoGetSetting_f(G, ai, cSetting_cartoon_ladder_radius, ladder_radius, &atom_ladder_radius)) {
+              ladder_radius = atom_ladder_radius;
             }
           }
 
@@ -199,6 +223,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
   if(!ring_mode)
     finder = 0;
 
+  ring_width *= 0.5F;
   
   if(n_atom && have_all && (!all_marked)) {
     if(ladder_mode) {
@@ -289,9 +314,9 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                                                  WordMatchExact(G,"N9",ai2->name,1))) {
                               base_at = mem3;
                               if(ring_mode!=3) {
-                                ladder_radius = width * 1.5;
+                                ladder_radius = ring_width * 1.5;
                               } else {
-                                ladder_radius = width * 3;
+                                ladder_radius = ring_width * 3;
                               }
                             }
                           } else {
@@ -658,13 +683,13 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
             switch(ring_mode) {
             case 3:
             case 4:
-              glyco_radius = width * 3;
+              glyco_radius = ring_width * 3;
               break;
             case 5:
               glyco_radius = ladder_radius;
               break;
             default:
-              glyco_radius = width * 1.5;
+              glyco_radius = ring_width * 1.5;
               break;
             }
 
@@ -1141,7 +1166,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
               subtract3f(mid,avg,out); /* compute outward-facing normal */
               normalize3f(out);
 
-              scale3f(up,width,up_add);
+              scale3f(up,ring_width,up_add);
 
               add3f(avg, up_add, ct);
               subtract3f(avg, up_add, cb);
@@ -1208,9 +1233,9 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                 ii=i+1;
                 CGOPickColor(cgo,atix[i],cPickableAtom);
                 if(ring_color<0) {
-                  CGOSausage(cgo,v_i[i], v_i[ii], width, col[i],col[ii]);
+                  CGOSausage(cgo,v_i[i], v_i[ii], ring_width, col[i],col[ii]);
                 } else {
-                  CGOSausage(cgo,v_i[i], v_i[ii], width, color,color);
+                  CGOSausage(cgo,v_i[i], v_i[ii], ring_width, color,color);
                 }
               }
             } else if(ring_mode==3) {
@@ -1218,9 +1243,9 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                 ii=i+1;
                 CGOPickColor(cgo,atix[i],cPickableAtom);
                 if(ring_color<0) {
-                  CGOSausage(cgo,v_i[i], v_i[ii], 3*width, col[i],col[ii]);
+                  CGOSausage(cgo,v_i[i], v_i[ii], 3*ring_width, col[i],col[ii]);
                 } else {
-                  CGOSausage(cgo,v_i[i], v_i[ii], 3*width, color,color);
+                  CGOSausage(cgo,v_i[i], v_i[ii], 3*ring_width, color,color);
                 }
               }
             }
