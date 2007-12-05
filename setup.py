@@ -93,7 +93,8 @@ else: # linux or standard unix
 #             "contrib/uiuc/plugins/include",
 #             "contrib/uiuc/plugins/molfile_plugin/src",
              ]
-   libs=["GL","GLU","glut","png","z","freetype"
+   libs=["GL","GLU","glut","png","z","freetype",
+#        "Xxf86vm"
 	]	
    pyogl_libs = ["GL","GLU","glut"]
    lib_dirs=[

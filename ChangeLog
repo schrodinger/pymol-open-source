@@ -5,7 +5,9 @@ CHANGE LOG
 2007-11-30  Warren L. DeLano <warren@delsci.com>	
 
 	* ANISOU records now supported in PDB files
-	
+
+        * ellipsoid representation (show ellipsoid, if ANISOU provided)
+
 2007-11-29  Warren L. DeLano <warren@delsci.com>	
 
 	* restored Tcl8.3 compatibility with file open
