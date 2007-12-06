@@ -838,7 +838,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
 #else
   PyObject *result = NULL;
 
-  result = PyList_New(41);
+  result = PyList_New(47);
   PyList_SetItem(result, 0,PyInt_FromLong(I->resv));
   PyList_SetItem(result, 1,PyString_FromString(I->chain));
   PyList_SetItem(result, 2,PyString_FromString(I->alt));
@@ -891,6 +891,13 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result,38,PyInt_FromLong((int)I->hb_acceptor));
   PyList_SetItem(result,39,PyInt_FromLong((int)I->atomic_color));
   PyList_SetItem(result,40,PyInt_FromLong((int)I->has_setting));
+  PyList_SetItem(result,41,PyFloat_FromDouble(I->U11));
+  PyList_SetItem(result,42,PyFloat_FromDouble(I->U22));
+  PyList_SetItem(result,43,PyFloat_FromDouble(I->U33));
+  PyList_SetItem(result,44,PyFloat_FromDouble(I->U12));
+  PyList_SetItem(result,45,PyFloat_FromDouble(I->U13));
+  PyList_SetItem(result,46,PyFloat_FromDouble(I->U23));
+  
   return(PConvAutoNone(result));
 #endif
 }
@@ -980,7 +987,14 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
     I->atomic_color = AtomInfoGetColor(G,I);
   }
   if(ok&&(ll>40)) ok = PConvPyIntToChar(PyList_GetItem(list,40),(char*)&I->has_setting);
-
+  if(ok&&(ll>46)) {
+    if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,41),&I->U11);
+    if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,42),&I->U22);
+    if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,43),&I->U33);
+    if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,44),&I->U12);
+    if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,45),&I->U13);
+    if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,46),&I->U23);
+  }
   return(ok);
 #endif
 }

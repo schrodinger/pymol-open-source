@@ -3,6 +3,8 @@ CHANGE LOG
 =========================================================================
 
 2007-12-05  Warren L. DeLano <warren@delsci.com>	
+
+	* anisotropic B factors now preserved in session files
 	
 	* cartoon_ladder_mode, cartoon_ladder_color, cartoon_ring_color,
 	  cartoon_ring_width, cartoon_ring_radius, cartoon_ladder_radius
