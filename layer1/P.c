@@ -453,7 +453,7 @@ int PAlterAtom(PyMOLGlobals *G,
   WordType buf;
   AtomName name;
   PyObject *name_id1,*name_id2=NULL;
-  AtomName elem;
+  ElemName elem;
   PyObject *elem_id1,*elem_id2=NULL;
   ResName resn;
   PyObject *resn_id1,*resn_id2=NULL;
@@ -635,7 +635,7 @@ int PAlterAtom(PyMOLGlobals *G,
           strcpy(at->name,name);
       }
       if(elem_id1!=elem_id2) {
-        if(!PConvPyObjectToStrMaxLen(elem_id2,elem,sizeof(AtomName)-1)) 
+        if(!PConvPyObjectToStrMaxLen(elem_id2,elem,sizeof(ElemName)-1)) 
           result=false;
         else {
           strcpy(at->elem,elem);

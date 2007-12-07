@@ -377,7 +377,8 @@ int ObjectMoleculePurgeBondPath(ObjectMolecule *I,ObjectMoleculeBPRec *bp);
 int ObjectMoleculeGetBondPath(ObjectMolecule *I,int atom,int max,ObjectMoleculeBPRec *bp);
 int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,int *dim);
 
-int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,struct CoordSet *cs,int searchFlag);
+int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
+                          struct CoordSet *cs,int searchFlag, int connectModeOverride);
 int ObjectMoleculeSetDiscrete(PyMOLGlobals *G,ObjectMolecule *I,int discrete);
 
 float ObjectMoleculeGetMaxVDW(ObjectMolecule *I);

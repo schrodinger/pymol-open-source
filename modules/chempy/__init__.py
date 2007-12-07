@@ -144,7 +144,9 @@ class Molecule:
         'dim_code'        : '3D',
         'title'           : 'untitled',
         'comments'        : '',
-        'chiral'          : 1
+        'chiral'          : 1,
+        'spacegroup'      : 'P 1',
+        'cell'            : [1.0, 1.0, 1.0, 90.0, 90.0, 90.0],
         }
 
     def __getattr__(self,attr):

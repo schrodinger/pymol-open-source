@@ -3625,7 +3625,8 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I)
 
 /*========================================================================*/
 int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
-                          struct CoordSet *cs,int bondSearchFlag)
+                          struct CoordSet *cs,int bondSearchMode,
+                          int connectModeOverride)
 {
   #define cMULT 1
   PyMOLGlobals *G=I->Obj.G;
@@ -3655,9 +3656,12 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   cutoff_h=cutoff_v - 0.2F;
   max_cutoff = cutoff_s;
 
+  if(connectModeOverride>=0) 
+    connect_mode = connectModeOverride;
+    
   if(connect_mode==2) { /* force use of distance-based connectivity,
                          ignoring that provided with file */
-    bondSearchFlag = true;
+    bondSearchMode = true;
     cs->NTmpBond = 0;
     FreeP(cs->TmpBond);
   }
@@ -3669,7 +3673,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   while(repeat) {
     repeat = false;
 
-    if(cs->NIndex&&bondSearchFlag) { /* &&(!I->DiscreteFlag) WLD 010527 */
+    if(cs->NIndex&&bondSearchMode) { /* &&(!I->DiscreteFlag) WLD 010527 */
       
       PRINTFB(G,FB_ObjectMolecule,FB_Blather)
         " ObjectMoleculeConnect: Searching for bonds amongst %d coordinates.\n",cs->NIndex
@@ -3681,7 +3685,8 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
       }
       
       switch(connect_mode) {
-      case 0: /* distance-based and explicit */
+      case 0: /* distance-based and explicit (not HETATM to HETATM) */
+      case 3: /* distance-based and explicit (even HETATM to HETATM) */
       case 2: /* distance-based only */ {
         /* distance-based bond location  */
         int violations = 0;
@@ -3743,7 +3748,8 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                       if( (dst <= cutoff)&&
                           (!(ai1->hydrogen&&ai2->hydrogen))&&
                           (water_flag||(!cs->TmpBond)||
-                           (!(ai1->hetatm&&ai2->hetatm))) &&
+                           ((!(ai1->hetatm&&ai2->hetatm) || 
+                             (connect_mode == 3)))) &&
                           ((discrete_chains<1) ||
                            ai1->chain[0]==ai2->chain[0]) &&
                           (connect_bonded || (!(ai1->bonded&&ai2->bonded)))) { 
@@ -4314,7 +4320,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
       }
       case 1: /* only use explicit connectivity from file (don't do anything) */ 
         break;
-      case 3:  /* dictionary-based connectivity */
+      case 4:  /* dictionary-based connectivity */
         /* TODO */
         break;
       }
@@ -4339,7 +4345,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
       nBond,cs->NTmpBond
       ENDFB(G);
     if((nBond==0) && (cs->NTmpBond>0) &&
-       bondSearchFlag && (connect_mode == 0) && cs->NIndex) {
+       bondSearchMode && (connect_mode == 0) && cs->NIndex) {
       /* if we were no bonds were found, and we have explicit connectivity,
        * try to determine if we need to set pdb_conect_mode */
       for(i=0;i<cs->NIndex;i++) {

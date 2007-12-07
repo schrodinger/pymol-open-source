@@ -1820,7 +1820,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals *G,ObjectMolecule *I,char 
        I->CSet[frame] = cset;
     */
 
-    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false,-1);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
       SymmetryAttemptGeneration(I->Symmetry,false);
@@ -2234,7 +2234,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals *G,ObjectMolecule *I,CRaw *pm
       if(I->NCSet<=frame) I->NCSet=frame+1;
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
       I->CSet[frame] = cset;
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false,-1);
 
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
@@ -3083,7 +3083,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,
     if(I->NCSet<=frame) I->NCSet=frame+1;
     if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
-    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,!have_bonds);
+    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,!have_bonds,-1);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
       SymmetryAttemptGeneration(I->Symmetry,false);
@@ -6397,8 +6397,13 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
 
       if(ok) {
         tmp = PyObject_GetAttrString(atom,"name");
-        if (tmp)
-          ok = PConvPyObjectToStrMaxClean(tmp,ai->name,sizeof(AtomName)-1);
+        if (tmp) {
+          WordType tmp_word;
+
+          ok = PConvPyObjectToStrMaxClean(tmp,tmp_word,sizeof(WordType)-1);
+          AtomInfoCleanAtomName(tmp_word);
+          UtilNCopy(ai->name,tmp_word,sizeof(AtomName));
+        }
         if(!ok) 
           ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read name");
         Py_XDECREF(tmp);
@@ -6534,6 +6539,22 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
       }
 
       if(ok) {
+        tmp = PyObject_GetAttrString(atom,"ins_code");
+        if (tmp) {
+          ResIdent tmp_ins_code;
+          ok = PConvPyObjectToStrMaxClean(tmp,tmp_ins_code,sizeof(ResIdent)-1);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read ins_code");
+          else if(tmp_ins_code[0]!='?') {
+            WordType tmp_word;
+            strcpy(tmp_word,ai->resi);
+            strcat(tmp_word,tmp_ins_code);
+            UtilNCopy(ai->resi,tmp_word,sizeof(ResIdent));
+          }
+        }
+        Py_XDECREF(tmp);
+      }
+      if(ok) {
         if(PTruthCallStr(atom,"has","resi_number")) {         
           tmp = PyObject_GetAttrString(atom,"resi_number");
           if (tmp)
@@ -6563,6 +6584,34 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
       }
 
       if(ok) {
+        tmp = PyObject_GetAttrString(atom,"u");
+        if (tmp) {
+          ok = PConvPyObjectToFloat(tmp,&ai->b);
+          if(!ok) 
+            ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read u value");
+          else
+            ai->b *= (8*cPI*cPI); /* B-factor = 8 pi^2 U-factor */
+        }
+        Py_XDECREF(tmp);
+      }
+
+      if(ok) {
+        tmp = PyObject_GetAttrString(atom,"u_aniso");
+        if(tmp) {
+          float u[6];
+          if(PConvPyListToFloatArrayInPlace(tmp,u,6)) {
+            ai->U11 = u[0];
+            ai->U22 = u[1];
+            ai->U33 = u[2];
+            ai->U12 = u[3];
+            ai->U13 = u[4];
+            ai->U23 = u[5];
+          }
+          Py_DECREF(tmp);
+        }
+      }
+
+      if(ok) {
         tmp = PyObject_GetAttrString(atom,"q");
         if (tmp)
           ok = PConvPyObjectToFloat(tmp,&ai->q);
@@ -6587,8 +6636,13 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
           ok = PConvPyObjectToInt(tmp,&hetatm);
         if(!ok) 
           ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read hetatm");
-        else
+        else {
           ai->hetatm = hetatm;
+          if(!PTruthCallStr(atom,"has","flags")) {
+            if(ai->hetatm) 
+              ai->flags=cAtomFlag_ignore;
+          }
+        }
         Py_XDECREF(tmp);
       }
         
@@ -6604,7 +6658,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,
       if(ok) {
         tmp = PyObject_GetAttrString(atom,"symbol");
         if (tmp)
-          ok = PConvPyObjectToStrMaxClean(tmp,ai->elem,sizeof(AtomName)-1);
+          ok = PConvPyObjectToStrMaxClean(tmp,ai->elem,sizeof(ElemName)-1);
         if(!ok) 
           ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read symbol");
         Py_XDECREF(tmp);
@@ -6912,6 +6966,9 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,
   int ok=true;
   int isNew = true;
   unsigned int nAtom = 0;
+  int fractional = false;
+  int connect_mode = -1;
+  int auto_bond = false;
   PyObject *tmp,*mol;
 
   if(!I) 
@@ -6967,8 +7024,50 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,
             Py_DECREF(tmp);
           }
         }
-      mol = PyObject_GetAttrString(model,"molecule");
-      
+      if(PyObject_HasAttrString(model,"spacegroup")&&
+         PyObject_HasAttrString(model,"cell"))
+        {
+          CSymmetry *symmetry = SymmetryNew(G);          
+          if(symmetry) {
+            tmp = PyObject_GetAttrString(model,"spacegroup");
+            if(tmp) {
+              char *tmp_str = NULL;
+              if(PConvPyStrToStrPtr(tmp,&tmp_str)) {
+                UtilNCopy(symmetry->SpaceGroup, tmp_str, sizeof(WordType));
+              }
+              Py_DECREF(tmp);
+            }
+            tmp = PyObject_GetAttrString(model,"cell");
+            if(tmp) {
+              float cell[6];
+              if(PConvPyListToFloatArrayInPlace(tmp,cell,6)) {
+                copy3f(cell, symmetry->Crystal->Dim);
+                copy3f(cell+3, symmetry->Crystal->Angle);
+              }
+              Py_DECREF(tmp);
+            }
+            cset->Symmetry = symmetry;
+          }
+        }
+      if(PyObject_HasAttrString(model,"fractional")) {
+        tmp = PyObject_GetAttrString(model,"fractional");
+        if(tmp) {
+          int tmp_int = 0;
+          if(PConvPyIntToInt(tmp,&tmp_int)) {
+            fractional = tmp_int;
+          }
+        }
+      }
+      if(PyObject_HasAttrString(model,"connect_mode")) {
+        tmp = PyObject_GetAttrString(model,"connect_mode");
+        if(tmp) {
+          int tmp_int = 0;
+          if(PConvPyIntToInt(tmp,&tmp_int)) {
+            auto_bond = true;
+            connect_mode = tmp_int;
+          }
+        }
+      }
       nAtom=cset->NIndex;
     }
   }
@@ -6999,7 +7098,11 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,
     if(I->NCSet<=frame) I->NCSet=frame+1;
     if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
-    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+    if(fractional && cset->Symmetry && cset->Symmetry->Crystal) {
+      CrystalUpdate(cset->Symmetry->Crystal);     
+      CoordSetFracToReal(cset, cset->Symmetry->Crystal);
+    }
+    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,auto_bond,connect_mode);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
       SymmetryAttemptGeneration(I->Symmetry,false);
@@ -7017,7 +7120,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,
 
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals *G,ObjectMolecule *I,PyObject *coords,int frame)
-{
+  {
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
@@ -7495,7 +7598,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,
               while(*tt&&((*tt)!='.')) {
                 *(el++) = *(tt++);
                 elc++;
-                if(elc>cAtomNameLen)
+                if(elc>cElemNameLen)
                   break;
               }
               *el=0;
@@ -8098,7 +8201,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
       I->CSet[frame] = cset;
       
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,connect);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,connect,-1);
       
       ObjectMoleculeExtendIndices(I,frame);
       ObjectMoleculeSort(I);
@@ -8346,7 +8449,7 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
   
   /* now find and integrate and any new bonds */
   if(expansionFlag) { /* expansion flag means we have introduced at least 1 new atom */
-    nBond = ObjectMoleculeConnect(I,&bond,I->AtomInfo,cs,bondSearchFlag);
+    nBond = ObjectMoleculeConnect(I,&bond,I->AtomInfo,cs,bondSearchFlag,-1);
     if(nBond) {
       index=Alloc(int,nBond);
       
@@ -10992,7 +11095,7 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       VLACheck(I->CSet,CoordSet*,frame);
       if(I->NCSet<=frame) I->NCSet=frame+1;
       I->CSet[frame] = cset;
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false,-1);
       SceneCountFrames(G);
       ObjectMoleculeExtendIndices(I,frame);
       ObjectMoleculeSort(I);
@@ -11142,7 +11245,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       if(I->NCSet<=state) I->NCSet=state+1;
       if(I->CSet[state]) I->CSet[state]->fFree(I->CSet[state]);
       I->CSet[state] = cset;
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,true);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,true,-1);
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
         if(SymmetryAttemptGeneration(I->Symmetry,quiet)) {
@@ -11533,7 +11636,7 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
         if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
         I->CSet[frame] = cset;
       
-        if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+        if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false,-1);
         
         ObjectMoleculeExtendIndices(I,frame);
         ObjectMoleculeSort(I);
@@ -11654,7 +11757,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
       I->CSet[frame] = cset;
       
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false,-1);
       
       SceneCountFrames(G);
       ObjectMoleculeExtendIndices(I,frame);

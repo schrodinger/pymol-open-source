@@ -13,6 +13,7 @@ file_ext_re = re.compile(string.join([
     r"\.xplor$|\.pkl$|\.sdf$|\.pqr|", 
     r"\.r3d$|\.xyz$|\.xyz_[0-9]*$|", 
     r"\.cc1$|\.cc2$|", # ChemDraw 3D
+    r"\.cif$|", # CIF/mmCIF
     r"\.cube$|", # Gaussian Cube
     r"\.dx$|", # DX files (APBS)
     r"\.pse$|", # PyMOL session (pickled dictionary)
