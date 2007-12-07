@@ -41,6 +41,30 @@ struct _CAtomInfo {
   OVOneToAny *ActiveIDs;
 };
 
+void AtomInfoCleanAtomName(char *name)
+{
+  char *p = name, *q = name;
+  int c = 0;
+  while(*p) {
+    if(c+1==sizeof(AtomName)) {
+      break;
+    }
+    if( ( ((*p)>='0')&&((*p)<='9')) ||
+        ( ((*p)>='a')&&((*p)<='z')) ||
+        ( ((*p)>='A')&&((*p)<='Z')) ||
+        ((*p)=='.') || 
+        ((*p)=='_' ) || 
+        ((*p)=='+' ) || 
+        ((*p)=='\'') || 
+        ((*p)=='*' )) {
+      *q++ = *p;
+      c++;
+    }
+    p++;
+  }
+  *q = 0;
+}
+
 int AtomInfoCheckSetting(PyMOLGlobals *G, AtomInfoType *ai, int setting_id)
 {  
   if(!ai->has_setting) {
@@ -919,7 +943,7 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 4),I->segi,sizeof(SegIdent));  
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 5),I->resn,sizeof(ResName));  
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 6),I->name,sizeof(AtomName));  
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 7),I->elem,sizeof(AtomName));  
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 7),I->elem,sizeof(ElemName));  
   if(ok) {
     OrthoLineType temp;
     PConvPyStrToStr(PyList_GetItem(list, 8),temp,sizeof(OrthoLineType));

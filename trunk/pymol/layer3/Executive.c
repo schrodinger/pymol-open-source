@@ -12722,6 +12722,7 @@ void ExecutiveSymExp(PyMOLGlobals *G,char *name,
             for(z=-1;z<2;z++)
               for(a=0;a<obj->Symmetry->NSymMat;a++) {
                 new_obj = ObjectMoleculeCopy(obj);
+
                 keepFlag=false;
                 for(b=0;b<new_obj->NCSet;b++) 
                   if(new_obj->CSet[b]) {
@@ -12729,6 +12730,7 @@ void ExecutiveSymExp(PyMOLGlobals *G,char *name,
                     os = obj->CSet[b];
                     CoordSetRealToFrac(cs,obj->Symmetry->Crystal);
                     CoordSetTransform44f(cs,obj->Symmetry->SymMatVLA+(a*16));
+
                     CoordSetGetAverage(cs,ts);
                     identity44f(m);
                     /* compute the effective translation resulting
@@ -12784,6 +12786,9 @@ void ExecutiveSymExp(PyMOLGlobals *G,char *name,
                     }
                   }
                 if(keepFlag) { /* we need to create new object */
+
+                  /* TODO: should also transform the U tensor at this point...*/
+
                   sprintf(new_name,"%s%02d%02d%02d%02d",name,a,x,y,z);
                   ObjectSetName((CObject*)new_obj,new_name);
                   ExecutiveDelete(G,new_name);

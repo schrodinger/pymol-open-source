@@ -886,7 +886,7 @@ void EditorAttach(PyMOLGlobals *G,char *elem,int geom,int valence,
             /* atom mode */
             i0 = ObjectMoleculeGetAtomIndex(obj0,sele0); /* slow */
             if(i0>=0) {
-              UtilNCopy(ai->elem,elem,sizeof(AtomName));
+              UtilNCopy(ai->elem,elem,sizeof(ElemName));
               ai->geom=geom;
               ai->valence=valence;
               if(name[0])
@@ -1045,7 +1045,7 @@ void EditorReplace(PyMOLGlobals *G,char *elem,int geom,int valence,char *name,in
       if(sele0>=0) {
         i0 = ObjectMoleculeGetAtomIndex(obj0,sele0); /* slow */
         if(i0>=0) {
-          UtilNCopy(ai.elem,elem,sizeof(AtomName));
+          UtilNCopy(ai.elem,elem,sizeof(ElemName));
           if(name[0])
             UtilNCopy(ai.name,name,sizeof(AtomName));
           ai.geom=geom;

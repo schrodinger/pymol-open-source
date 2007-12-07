@@ -374,12 +374,13 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
     
-    def _processCIF(cif,oname,state,quiet,_self=cmd):
+    def _processCIF(cif,oname,state,quiet,discrete,_self=cmd):
         while 1:
             rec = cif.read()
             if not rec: break
-#            r = _load(oname,string.join(rec.get('MOL'),''),state,
-#                      loadable.molstr,0,1,quiet,_self=_self)
+            if len(rec.model.atom):
+                r = cmd.load_model(rec.model,oname,state,quiet=quiet,
+                                   _self=_self,discrete=discrete)
         del cif
 #        _cmd.finish_object(_self._COb,str(oname))
 #        if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
@@ -613,7 +614,7 @@ SEE ALSO
             if ftype == loadable.cif1:
                 try:
                     cif = CIF(fname)
-                    _processCIF(cif,oname,state,quiet,_self)
+                    _processCIF(cif,oname,state,quiet,discrete,_self)
                 except:
                     traceback.print_exc()
                 r = DEFAULT_SUCCESS

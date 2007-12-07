@@ -734,6 +734,8 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
   if(cnt>99998)
     cnt=99998;
 
+  name[4] = 0;
+
   if((!pdb_info)||(!pdb_info->is_pqr_file)) { /* relying upon short-circuit */
     sprintf(x,"%8.3f",v[0]); x[8]=0;
     sprintf(y,"%8.3f",v[1]); y[8]=0;

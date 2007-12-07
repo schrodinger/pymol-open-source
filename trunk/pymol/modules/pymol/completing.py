@@ -114,6 +114,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'set'            : [ self_cmd.selection_sc           , 'selection'         , ','  ],
         'set_bond'       : [ self_cmd.selection_sc           , 'selection'         , ','  ],
         'spectrum'       : [ self_cmd.selection_sc           , 'selection'       , ''   ],
+        'symexp'         : [ self_cmd.selection_sc           , 'selection'          , ', ' ],
         'unset_bond'     : [ self_cmd.selection_sc           , 'selection'         , ','  ],
         },
 #4th

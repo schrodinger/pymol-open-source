@@ -72,6 +72,7 @@ Z* -------------------------------------------------------------------
 #define cResnLen 5
 #define cResiLen 5
 #define cAtomNameLen 4
+#define cElemNameLen 4
 #define cSegiLen 4
 #define cTextTypeLen 20
 #define cLabelTypeLen 20
@@ -115,6 +116,8 @@ typedef char SegIdent[cSegiLen+1];
 typedef char ResIdent[cResiLen+1];
 typedef char ResName[cResnLen+1];
 typedef char AtomName[cAtomNameLen+1];
+
+typedef char ElemName[cElemNameLen+1];
 #if 0
 typedef char TextType[cTextTypeLen+1];
 typedef char LabelType[cLabelTypeLen+1];
@@ -178,7 +181,7 @@ typedef struct AtomInfoType {
   SegIdent segi;
   ResName resn;
   AtomName name;
-  AtomName elem;
+  ElemName elem;
   SSType ssType; /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
   float U11, U22, U33, U12, U13, U23;
 } AtomInfoType;
@@ -190,6 +193,7 @@ void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst);
 int AtomInfoReserveUniqueID(PyMOLGlobals *G,int unique_id);
 int AtomInfoIsUniqueIDActive(PyMOLGlobals *G,int unique_id);
 int AtomInfoGetNewUniqueID(PyMOLGlobals *G);
+void AtomInfoCleanAtomName(char *name);
 
 int AtomInfoCheckSetting(PyMOLGlobals *G, AtomInfoType *ai, int setting_id);
 int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
