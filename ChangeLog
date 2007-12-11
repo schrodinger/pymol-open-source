@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2007-12-10  Warren L. DeLano <warren@delsci.com>	
+
+	* fixed object name validation for "create" 
+	
 2007-12-06  Warren L. DeLano <warren@delsci.com>	
 
 	* first CIF reading code (barely functional)

@@ -8045,43 +8045,51 @@ int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
 {
   int sele1;
   int ok=false;
-  int exists=(ExecutiveFindObjectMoleculeByName(G,name)!=NULL);
-  
-  sele1=SelectorIndexByName(G,s1);
-  if(sele1>=0) {
-    ok = SelectorCreateObjectMolecule(G,sele1,name,target,
-                                      source,discrete,false,quiet,singletons);
-    if(ok) {
-      int sele2=SelectorIndexByName(G,name);
-      ObjectMolecule *old_obj,*new_obj;
-      old_obj = SelectorGetFirstObjectMolecule(G,sele1); /* get at least one object */
-      new_obj = SelectorGetSingleObjectMolecule(G,sele2);
-      
-      /* first we need to make sure that the object being moved
-         matches the target with respect to both the TTT and the
-         object's state matrix (if any) */
+  ObjectNameType valid_name;
 
-      if(old_obj&&new_obj) {
-        ExecutiveMatrixCopy(G,
-                                old_obj->Obj.Name,
-                                new_obj->Obj.Name, 
-                                1, 1, /* TTT mode */
-                                source,target,
-                                false, 0, quiet);
+  UtilNCopy(valid_name, name, sizeof(valid_name));
+  if(SettingGetGlobal_b(G,cSetting_validate_object_names)) {
+    ObjectMakeValidName(valid_name);
+    name = valid_name;
+  }
+  {
+    int exists=(ExecutiveFindObjectMoleculeByName(G,name)!=NULL);
+    
+    sele1=SelectorIndexByName(G,s1);
+    if(sele1>=0) {
+      ok = SelectorCreateObjectMolecule(G,sele1,name,target,
+                                        source,discrete,false,quiet,singletons);
+      if(ok) {
+        int sele2=SelectorIndexByName(G,name);
+        ObjectMolecule *old_obj,*new_obj;
+        old_obj = SelectorGetFirstObjectMolecule(G,sele1); /* get at least one object */
+        new_obj = SelectorGetSingleObjectMolecule(G,sele2);
         
+        /* first we need to make sure that the object being moved
+           matches the target with respect to both the TTT and the
+           object's state matrix (if any) */
         
-        ExecutiveMatrixCopy(G,
-                                old_obj->Obj.Name,
-                                new_obj->Obj.Name, 
-                                2, 2, /* Object state mode */
-                                source,target,
-                                false, 0, quiet);
-
-        ExecutiveDoZoom(G,(CObject*)new_obj,!exists,zoom,true);        
+        if(old_obj&&new_obj) {
+          ExecutiveMatrixCopy(G,
+                              old_obj->Obj.Name,
+                              new_obj->Obj.Name, 
+                              1, 1, /* TTT mode */
+                              source,target,
+                              false, 0, quiet);
+          
+          
+          ExecutiveMatrixCopy(G,
+                              old_obj->Obj.Name,
+                              new_obj->Obj.Name, 
+                              2, 2, /* Object state mode */
+                              source,target,
+                              false, 0, quiet);
+          
+          ExecutiveDoZoom(G,(CObject*)new_obj,!exists,zoom,true);        
+        }
       }
     }
   }
-
   return ok;
 }
 /*========================================================================*/
