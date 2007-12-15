@@ -49,8 +49,8 @@ am_liblayer2_la_OBJECTS = AtomInfo.lo CoordSet.lo DistSet.lo \
 	ObjectGroup.lo ObjectMap.lo ObjectMesh.lo ObjectMolecule2.lo \
 	ObjectMolecule.lo ObjectSlice.lo ObjectSurface.lo RepAngle.lo \
 	RepCartoon.lo RepCylBond.lo RepDihedral.lo RepDistDash.lo \
-	RepDistLabel.lo RepDot.lo RepLabel.lo RepMesh.lo \
-	RepNonbonded.lo RepNonbondedSphere.lo RepRibbon.lo \
+	RepDistLabel.lo RepDot.lo RepLabel.lo RepEllipsoid.lo \
+	RepMesh.lo RepNonbonded.lo RepNonbondedSphere.lo RepRibbon.lo \
 	RepSphere.lo RepSurface.lo RepWireBond.lo Sculpt.lo \
 	SculptCache.lo VFont.lo
 liblayer2_la_OBJECTS = $(am_liblayer2_la_OBJECTS)
@@ -248,6 +248,8 @@ RepDot.c \
 RepDot.h \
 RepLabel.c \
 RepLabel.h \
+RepEllipsoid.c \
+RepEllipsoid.h \
 RepMesh.c \
 RepMesh.h \
 RepNonbonded.c \
@@ -344,6 +346,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RepDistDash.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RepDistLabel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RepDot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RepEllipsoid.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RepLabel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RepMesh.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RepNonbonded.Plo@am__quote@
