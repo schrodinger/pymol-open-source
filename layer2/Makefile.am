@@ -53,6 +53,8 @@ RepDot.c \
 RepDot.h \
 RepLabel.c \
 RepLabel.h \
+RepEllipsoid.c \
+RepEllipsoid.h \
 RepMesh.c \
 RepMesh.h \
 RepNonbonded.c \
