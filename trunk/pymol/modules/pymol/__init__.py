@@ -396,8 +396,13 @@ if pymol_launch != 3: # if this isn't a dry run
         pymol_launch = 0 # never do this again : )
         if (sys.platform=='darwin') and (invocation.options.external_gui==1):
             import os
-            os.system("/usr/bin/open -a X11") # launch X11 if we're going to need it
-
+            xdpyinfo = "/usr/X11R6/bin/dxpyinfo"
+            if os.path.exists(xdpyinfo):
+                if os.system(xdpyinfo+" >/dev/null 2>&1"):
+                    os.system("/usr/bin/open -a X11") # launch X11 (if needed)
+            else:
+                os.system("/usr/bin/open -a X11") # launch X11 (if needed)
+                
     def start_pymol(block_input_hook=0):
         prime_pymol()
         _COb = _cmd._get_global_C_object()        
