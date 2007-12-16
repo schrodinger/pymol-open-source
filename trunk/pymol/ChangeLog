@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2007-12-15  Warren L. DeLano <warren@delsci.com>	
+
+	* rock now works within movies
+	
+	* movie_rock setting 	
+	
 2007-12-11  Warren L. DeLano <warren@delsci.com>	
 
 	* anisotropic temperature factors now "u_aniso" in chempy model.
