@@ -156,6 +156,7 @@ struct _CScene {
   double LastRender,RenderTime,LastFrameTime,LastFrameAdjust;
   double LastRock,LastRockTime;
   float LastRockX,LastRockY;
+  int RockFrame;
   Picking LastPicked;
   int StereoMode;
   OrthoLineType vendor,renderer,version;
@@ -201,6 +202,8 @@ typedef struct {
 
 static float SceneGetExactScreenVertexScale(PyMOLGlobals *G,float *v1);
 static void SceneRestartPerfTimer(PyMOLGlobals *G);
+static void SceneRotateWithDirty(PyMOLGlobals *G,float angle,float x,float y,float z,int dirty);
+static void SceneClipSetWithDirty(PyMOLGlobals *G,float front,float back,int dirty);
 
 int SceneHasImage(PyMOLGlobals *G)
 {
@@ -345,7 +348,7 @@ void SceneLoadAnimation(PyMOLGlobals *G, double duration,int hand)
     I->ani_elem[target].timing = now + duration;
     ViewElemInterpolate(G,I->ani_elem, I->ani_elem + target, 
                         2.0F, 1.0F, true, 0.0F, hand, 0.0F);
-    SceneFromViewElem(G,I->ani_elem);
+    SceneFromViewElem(G,I->ani_elem,true);
     I->cur_ani_elem = 0;
     I->n_ani_elem = target;
     I->AnimationStartTime = UtilGetSeconds(G);
@@ -573,7 +576,7 @@ void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem)
   }
 }
 
-void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem)
+void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem,int dirty)
 {
   register CScene *I=G->Scene;
   float *fp;
@@ -627,7 +630,7 @@ void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem)
 
 
   if(elem->clip_flag) {
-    SceneClipSet(G,elem->front,elem->back);
+    SceneClipSetWithDirty(G,elem->front,elem->back,dirty);
   }
   if(elem->ortho_flag) {
     SettingSetGlobal_b(G,cSetting_ortho,elem->ortho);
@@ -638,7 +641,7 @@ void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem)
     I->LastRockX = 0.0F;
     I->LastRockY = 0.0F;
     I->RockTime = 0.0;
-
+    I->RockFrame = 0;
     SceneRovingDirty(G);
   }
 }
@@ -840,6 +843,7 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,
   I->LastRockX = 0.0F;
   I->LastRockY = 0.0F;
   I->RockTime = 0.0;
+  I->RockFrame = 0;
 
   SceneClipSet(G,p[0],p[1]);
   p+=2;
@@ -908,7 +912,8 @@ void SceneTranslate(PyMOLGlobals *G,float x,float y, float z)
   SceneInvalidate(G);
 }
 /*========================================================================*/
-void SceneClipSet(PyMOLGlobals *G,float front,float back)
+
+static void SceneClipSetWithDirty(PyMOLGlobals *G,float front,float back,int dirty)
 {
   register CScene *I=G->Scene;
   I->Front=front;
@@ -917,7 +922,15 @@ void SceneClipSet(PyMOLGlobals *G,float front,float back)
   I->Front=I->Back+cSliceMin;
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
   I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
-  SceneInvalidate(G);
+  if(dirty) 
+    SceneInvalidate(G);
+  else
+    SceneInvalidateCopy(G,false);
+}
+/*========================================================================*/
+void SceneClipSet(PyMOLGlobals *G,float front,float back)
+{
+  SceneClipSetWithDirty(G,front,back,true);
 }
 /*========================================================================*/
 void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state) /* 0=front, 1=back*/
@@ -1797,6 +1810,60 @@ void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing) {
   if(I->Image)
     I->CopyFlag=true;
 }
+/*========================================================================*/
+static void SceneUpdateCameraRock(PyMOLGlobals *G,int dirty) {
+
+  register CScene *I=G->Scene;
+  float ang_cur,disp,diff;
+  float sweep_angle = SettingGetGlobal_f(G,cSetting_sweep_angle);
+  float sweep_speed = SettingGetGlobal_f(G,cSetting_sweep_speed);
+  float sweep_phase = SettingGetGlobal_f(G,cSetting_sweep_phase);
+  int sweep_mode = SettingGetGlobal_i(G,cSetting_sweep_mode);
+  float shift = (float)(PI/2.0F);
+  
+  
+  switch(sweep_mode) {
+  case 0:
+  case 1:
+  case 2:
+    if(sweep_angle<=0.0F) {
+      diff = (float)((PI/180.0F)*I->RenderTime*10);
+    } else {
+      ang_cur = (float)(I->RockTime*sweep_speed) + sweep_phase;
+      disp = (float)(sweep_angle*(PI/180.0F)*sin(ang_cur)/2);
+      diff = (float)(disp-I->LastRock);
+      I->LastRock = disp;
+    }
+    switch(sweep_mode) {
+    case 0:
+      SceneRotateWithDirty(G,(float)(180*diff/PI),0.0F,1.0F,0.0F,dirty);
+      break;
+    case 1:
+      SceneRotateWithDirty(G,(float)(180*diff/PI),1.0F,0.0F,0.0F,dirty);
+      break;
+    case 2: /* z-rotation...useless! */
+      SceneRotateWithDirty(G,(float)(180*diff/PI),0.0F,0.0F,1.0F,dirty);
+      break;
+    }
+    break;
+  case 3: /* nutate */
+    SceneRotateWithDirty(G,(float)(-I->LastRockY),0.0F,1.0F,0.0F,dirty);
+    SceneRotateWithDirty(G,(float)(-I->LastRockX),1.0F,0.0F,0.0F,dirty);
+    ang_cur = (float)(I->RockTime*sweep_speed) + sweep_phase;
+    
+    I->LastRockX = (float)(sweep_angle*sin(ang_cur)/2);
+    I->LastRockY = (float)(sweep_angle*sin(ang_cur+shift)/2);
+    
+    if(I->RockTime*sweep_speed<PI) {
+      float factor = (float)((I->RockTime*sweep_speed)/PI);
+      I->LastRockX *= factor;
+      I->LastRockY *= factor;
+    }
+    SceneRotateWithDirty(G,(float)I->LastRockX,1.0F,0.0F,0.0F,dirty);
+    SceneRotateWithDirty(G,(float)I->LastRockY,0.0F,1.0F,0.0F,dirty);
+    break;
+  }
+}
 
 /*========================================================================*/
 void SceneIdle(PyMOLGlobals *G)
@@ -1805,7 +1872,6 @@ void SceneIdle(PyMOLGlobals *G)
   double renderTime;
   double minTime;
   int frameFlag = false;
-  int rockFlag = false;
 
   if(I->PossibleSingleClick==2) {
     double now = UtilGetSeconds(G);
@@ -1821,14 +1887,6 @@ void SceneIdle(PyMOLGlobals *G)
       
       I->PossibleSingleClick = 0;
       OrthoDirty(G); /* force an update */
-    }
-  }
-  if(ControlRocking(G)&&(!rockFlag)) {
-    renderTime = -I->LastRockTime + UtilGetSeconds(G);
-    minTime=SettingGet(G,cSetting_rock_delay)/1000.0;
-    if(renderTime>=minTime) {
-      rockFlag=true;
-      I->LastRockTime=UtilGetSeconds(G);
     }
   }
   if(MoviePlaying(G)) {
@@ -1856,63 +1914,19 @@ void SceneIdle(PyMOLGlobals *G)
           I->LastFrameAdjust = 0.0F;
         }
         frameFlag=true;
-        rockFlag=true;
       }
     }
-  }
-  if(ControlRocking(G)&&rockFlag) {
-    float ang_cur,disp,diff;
-    float sweep_angle = SettingGetGlobal_f(G,cSetting_sweep_angle);
-    float sweep_speed = SettingGetGlobal_f(G,cSetting_sweep_speed);
-    float sweep_phase = SettingGetGlobal_f(G,cSetting_sweep_phase);
-    int sweep_mode = SettingGetGlobal_i(G,cSetting_sweep_mode);
-    float shift = (float)(PI/2.0F);
-
-    I->RockTime+=I->RenderTime;
-
-    switch(sweep_mode) {
-    case 0:
-    case 1:
-    case 2:
-      if(sweep_angle<=0.0F) {
-        diff = (float)((PI/180.0F)*I->RenderTime*10);
-      } else {
-        ang_cur = (float)(I->RockTime*sweep_speed) + sweep_phase;
-        disp = (float)(sweep_angle*(PI/180.0F)*sin(ang_cur)/2);
-        diff = (float)(disp-I->LastRock);
-        I->LastRock = disp;
-      }
-      switch(sweep_mode) {
-      case 0:
-        SceneRotate(G,(float)(180*diff/PI),0.0F,1.0F,0.0F);
-        break;
-      case 1:
-        SceneRotate(G,(float)(180*diff/PI),1.0F,0.0F,0.0F);
-        break;
-      case 2: /* z-rotation...useless! */
-        SceneRotate(G,(float)(180*diff/PI),0.0F,0.0F,1.0F);
-        break;
-      }
-      break;
-    case 3: /* nutate */
-      SceneRotate(G,(float)(-I->LastRockY),0.0F,1.0F,0.0F);
-      SceneRotate(G,(float)(-I->LastRockX),1.0F,0.0F,0.0F);
-      ang_cur = (float)(I->RockTime*sweep_speed) + sweep_phase;
-      
-      I->LastRockX = (float)(sweep_angle*sin(ang_cur)/2);
-      I->LastRockY = (float)(sweep_angle*sin(ang_cur+shift)/2);
-      
-      if(I->RockTime*sweep_speed<PI) {
-        float factor = (float)((I->RockTime*sweep_speed)/PI);
-        I->LastRockX *= factor;
-        I->LastRockY *= factor;
-      }
-      SceneRotate(G,(float)I->LastRockX,1.0F,0.0F,0.0F);
-      SceneRotate(G,(float)I->LastRockY,0.0F,1.0F,0.0F);
-      break;
+  } else if(ControlRocking(G)) {
+    renderTime = -I->LastRockTime + UtilGetSeconds(G);
+    minTime=SettingGet(G,cSetting_rock_delay)/1000.0;
+    if(renderTime>=minTime) {
+      I->LastRockTime=UtilGetSeconds(G);
+      I->RockTime+=I->RenderTime;
+      SceneUpdateCameraRock(G,true);
     }
   }
-  if(MoviePlaying(G)&&frameFlag) {
+
+  if(MoviePlaying(G) && frameFlag) {
     I->LastFrameTime = UtilGetSeconds(G);
     if((SettingGetGlobal_i(G,cSetting_frame)-1)==(I->NFrame-1)) {
       if((int)SettingGet(G,cSetting_movie_loop)) {
@@ -5394,10 +5408,37 @@ int SceneDeferRay(PyMOLGlobals *G,
   return 1;
 }
 
-
 static void SceneUpdateAnimation(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
+  int rockFlag = false;
+  int dirty = false;
+  if(MoviePlaying(G) && 
+     (SettingGetGlobal_b(G,cSetting_movie_rock) || 
+      ControlRocking(G))) {
+
+    if(MovieGetRealtime(G) && 
+       ! SettingGetGlobal_b(G,cSetting_movie_animate_by_frame)) {
+      I->RockTime+=I->RenderTime;
+      rockFlag = true;
+      dirty = true; /* force a subsequent update */
+    } else {
+      float fps = SceneGetFPS(G); /* guaranteed to be >= 0.0F */
+      if(fps>0.0F) {
+        int rock_frame = SceneGetFrame(G);
+        if(rock_frame!=I->RockFrame) {
+          I->RockFrame = rock_frame;
+          rockFlag = true;
+          I->RockTime += 1.0/fps;
+        }
+      } else {
+        I->RockTime += I->RenderTime;
+        rockFlag = true;
+      }
+    }
+  } else
+    dirty = true;
+
   if(I->cur_ani_elem < I->n_ani_elem ) { /* play motion animation */
     double now;
 
@@ -5411,8 +5452,9 @@ static void SceneUpdateAnimation(PyMOLGlobals *G)
       I->AnimationStartFlag = false;
     }
 
-    if(MovieGetRealtime(G) &&
-       ! SettingGetGlobal_b(G,cSetting_movie_animate_by_frame)) {
+    if( (!MoviePlaying(G)) || 
+        ((MovieGetRealtime(G) &&
+          ! SettingGetGlobal_b(G,cSetting_movie_animate_by_frame)))) {
       now = UtilGetSeconds(G) - I->AnimationLagTime;
     } else {
       float fps = SceneGetFPS(G); /* guaranteed to be >= 0.0F */
@@ -5436,9 +5478,11 @@ static void SceneUpdateAnimation(PyMOLGlobals *G)
       }
     }
     I->cur_ani_elem = cur;
-    SceneFromViewElem(G,I->ani_elem+cur);
+    SceneFromViewElem(G,I->ani_elem+cur,dirty);
   }
-
+  if(rockFlag && (I->RockTime!=0.0)) {
+    SceneUpdateCameraRock(G,dirty);
+  }
 }
 
 void SceneRay(PyMOLGlobals *G,
@@ -6727,7 +6771,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
     ENDFD;
 
   SceneUpdateAnimation(G);
-      
+
   if(SceneMustDrawBoth(G)) {
     render_buffer = GL_BACK_LEFT;
   } else {
@@ -7467,7 +7511,6 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
   PRINTFD(G,FB_Scene)
     " SceneRender: leaving...\n"
     ENDFD;
-
 }
 /*========================================================================*/
 void SceneRestartFrameTimer(PyMOLGlobals *G)
@@ -7538,7 +7581,7 @@ void ScenePrepareMatrix(PyMOLGlobals *G,int mode)
 
 }
 /*========================================================================*/
-void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z)
+static void SceneRotateWithDirty(PyMOLGlobals *G,float angle,float x,float y,float z,int dirty)
 {
   register CScene *I=G->Scene;
   float temp[16];
@@ -7550,7 +7593,11 @@ void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z)
   for(a=0;a<16;a++) 
     I->RotMatrix[a]=temp[a];
   SceneUpdateInvMatrix(G);
-  SceneInvalidate(G);
+  if(dirty) {
+    SceneInvalidate(G);
+  } else {
+    SceneInvalidateCopy(G,false);
+  }
 
     /*  glPushMatrix();
         glLoadIdentity();
@@ -7558,6 +7605,11 @@ void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z)
         glMultMatrixf(I->RotMatrix);
         glGetFloatv(GL_MODELVIEW_MATRIX,I->RotMatrix);
         glPopMatrix();*/
+}
+
+void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z)
+{
+  SceneRotateWithDirty(G,angle,x,y,z,true);
 }
 /*========================================================================*/
 void SceneApplyMatrix(PyMOLGlobals *G,float *m)

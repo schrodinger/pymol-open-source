@@ -730,7 +730,7 @@ void MovieDoFrameCommand(PyMOLGlobals *G,int frame)
 #endif
           }
         }
-        SceneFromViewElem(G,I->ViewElem+frame);
+        SceneFromViewElem(G,I->ViewElem+frame,true);
       }
     }
   }
