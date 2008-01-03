@@ -571,7 +571,6 @@ static void ObjectMeshUpdate(ObjectMesh *I)
           }
           
           if(field) {
-            
             {
               float *min_ext,*max_ext;
               float tmp_min[3],tmp_max[3];
