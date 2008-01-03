@@ -820,11 +820,13 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int
       tmp_array[3] = ai->U12;
       tmp_array[4] = ai->U13;
       tmp_array[5] = ai->U23;
-      PyObject *tmp_obj = PConvFloatArrayToPyList(tmp_array,6);
+      {
+		  PyObject *tmp_obj = PConvFloatArrayToPyList(tmp_array,6);
       if(tmp_obj) {
         PyObject_SetAttrString(atom,"u_aniso",tmp_obj);
         Py_XDECREF(tmp_obj);
       }
+	  }
     }
     PConvFloatToPyObjAttr(atom,"vdw",ai->vdw);
     PConvFloatToPyObjAttr(atom,"elec_radius",ai->elec_radius);
