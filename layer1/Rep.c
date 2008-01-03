@@ -24,6 +24,8 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"CoordSet.h"
 #include"P.h"
+#include"Util.h"
+
 /*========================================================================*/
 
 void RepInvalidate(struct Rep *I,struct CoordSet *cs,int level);
