@@ -4335,7 +4335,7 @@ ObjectMap *ObjectMapLoadPHI(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state
   
   ObjectMap *I = NULL;
   int ok=true;
-  FILE *f;
+  FILE *f = NULL;
   long size;
   char *buffer,*p;
 
