@@ -4677,8 +4677,8 @@ int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at)
   return(result);
 }
 /*========================================================================*/
-static float compute_avg_center_dot_cross(ObjectMolecule *I, CoordSet *cs, 
-                                          int n_atom, int *atix)
+static float compute_avg_center_dot_cross_fn(ObjectMolecule *I, CoordSet *cs, 
+					     int n_atom, int *atix)
 {
   float result = 0.0F;
   float *v[9];
@@ -4788,7 +4788,7 @@ static int verify_planer_bonds(ObjectMolecule *I, CoordSet *cs,
   return 1;
 }
 
-static float compute_avg_ring_dot_cross(ObjectMolecule *I, CoordSet *cs, 
+static float compute_avg_ring_dot_cross_fn(ObjectMolecule *I, CoordSet *cs, 
                                    int n_atom, int *atix, float *dir)
 {
   float result = 0.0F;
@@ -4853,10 +4853,21 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
      better than nothing! */
 
   const float planer_cutoff = 0.96F;
-
+  
   CoordSet *cs = NULL;
   ObservedInfo *obs_atom = NULL;
   ObservedInfo *obs_bond = NULL;
+
+/* WORKAROUND of a possible -funroll-loops inlining optimizer bug in gcc 3.3.3 */
+
+  float (*compute_avg_center_dot_cross)(ObjectMolecule *, CoordSet *, int , int *);
+  float (*compute_avg_ring_dot_cross)(ObjectMolecule *, CoordSet *, 
+				      int , int *, float *);
+
+  compute_avg_center_dot_cross = compute_avg_center_dot_cross_fn;
+  compute_avg_ring_dot_cross = compute_avg_ring_dot_cross_fn;
+
+/* end WORKAROUND */
 
   ObjectMoleculeUpdateNeighbors(I);
   
@@ -8646,7 +8657,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   register float *coord;
   register int a,b,s;
   int c,d,t_i;
-  int a1,ind;
+  int a1=0,ind;
   float r,rms;
   float v1[3],v2,*vv1,*vv2,*vt,*vt1,*vt2;
   int inv_flag;
