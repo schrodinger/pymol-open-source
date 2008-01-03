@@ -72,6 +72,7 @@ static WordKeyValue rep_names[] = {
   { "dots", cRepDot },
   { "mesh", cRepMesh },
   { "nonbonded", cRepNonbonded },
+  { "ellipsoid", cRepEllipsoid },
   { "", },
 };
 
