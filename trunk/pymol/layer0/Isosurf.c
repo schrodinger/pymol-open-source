@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Isosurf.h"
 #include"MemoryDebug.h"
 #include"Err.h"
-#include"Crystal.h"
+#include"Symmetry.h"
 #include"Vector.h"
 #include"Feedback.h"
 #include"PConv.h"
@@ -533,14 +533,135 @@ int IsosurfInit(PyMOLGlobals *G)
   return 1;
 }
 /*===========================================================================*/
-void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,
+void IsosurfExpand(Isofield *field1, Isofield *field2, CCrystal *cryst, 
+                   CSymmetry *sym, int *range)
+{
+  float rmn[3],rmx[3];
+  float imn[3],imx[3];
+  float fstep[3],frange[3];
+  int field1max[3];
+
+  field1max[0] = field1->dimensions[0]-1;
+  field1max[1] = field1->dimensions[1]-1;
+  field1max[2] = field1->dimensions[2]-1;
+  {
+    int a;
+    for(a=0;a<3;a++) {
+      rmn[a] = F4(field1->points,0,0,0,a);
+      rmx[a] = F4(field1->points,field1max[0],field1max[1],field1max[2],a);
+    }
+  }
+
+  /* get min/max extents of map1 in fractional space */
+
+  transform33f3f(cryst->RealToFrac,rmn,imn);
+  transform33f3f(cryst->RealToFrac,rmx,imx);
+
+  /* compute step size */
+
+  subtract3f(imx,imn,frange);
+
+  fstep[0] = frange[0]/field1max[0];
+  fstep[1] = frange[1]/field1max[1];
+  fstep[2] = frange[2]/field1max[2];
+
+  /* compute coordinate points for second field */
+
+  {
+    int i,j,k;
+    int i_stop,j_stop,k_stop;
+    float frac[3];
+
+    i_stop = field2->dimensions[0];
+    j_stop = field2->dimensions[1];
+    k_stop = field2->dimensions[2];
+    for(i=0;i<i_stop;i++) {
+      frac[0] = imn[0] + fstep[0]*(i+range[0]);
+      for(j=0;j<j_stop;j++) {
+        frac[1] = imn[1] + fstep[1]*(j+range[1]);
+        for(k=0;k<k_stop;k++) {
+          float average = 0.0F;
+          int cnt = 0;
+          int n;
+
+          /* first compute the coordinate */
+
+          float *ptr = F4Ptr(field2->points, i,j,k,0);
+          frac[2] = imn[2] + fstep[2]*(k+range[2]);
+          transform33f3f(cryst->FracToReal,frac,ptr);
+
+          /* then compute the value at the coordinate */
+          
+          for(n=-1;n<sym->NSymMat;n++) {
+            float test_frac[3];
+            if(n>=0) {
+              transform44f3f(sym->SymMatVLA+(n*16),frac,test_frac);
+            } else {
+              copy3f(frac,test_frac);
+            }
+            
+            test_frac[0] -= imn[0];
+            test_frac[1] -= imn[1];
+            test_frac[2] -= imn[2];
+
+            test_frac[0] -= (int)floor(test_frac[0]);
+            test_frac[1] -= (int)floor(test_frac[1]);
+            test_frac[2] -= (int)floor(test_frac[2]);
+
+            if((test_frac[0]<=frange[0]) &&
+               (test_frac[1]<=frange[1]) &&
+               (test_frac[2]<=frange[2])) {
+              int a,b,c;
+              float x,y,z;
+              a = (int) (test_frac[0] / fstep[0]);
+              b = (int) (test_frac[1] / fstep[1]);
+              c = (int) (test_frac[2] / fstep[2]);
+              x = (test_frac[0] / fstep[0]) - a;
+              y = (test_frac[1] / fstep[1]) - b;
+              z = (test_frac[2] / fstep[2]) - c;
+
+              if((a>=0) && (b>=0) && (c>=0)&&
+                 (a<=field1max[0]) && (b<=field1max[1]) && (c<=field1max[2])) {
+                if(a == field1max[0]) {
+                  a = field1max[0]-1;
+                  x += 1.0F;
+                }
+                if(b == field1max[1]) {
+                  b = field1max[1]-1;
+                  y += 1.0F;
+                }
+                if(c == field1max[2]) {
+                  c = field1max[2]-1;
+                  z += 1.0F;
+                }
+                
+                average += FieldInterpolatef(field1->data,
+                                             a, b, c, x, y, z);
+                cnt++;
+              }
+            }
+          }
+
+          if(cnt) {
+            F3(field2->data,i,j,k) = average/cnt;
+          } else {
+            F3(field2->data,i,j,k) = 0.0F; /* complain? */
+          }
+        }
+      }
+    }
+  }
+}
+
+int IsosurfGetRange(PyMOLGlobals *G,Isofield *field,
                      CCrystal *cryst,
-                     float *mn,float *mx,int *range)
+                     float *mn,float *mx,int *range,int clamp)
 {
   float rmn[3],rmx[3];
   float imn[3],imx[3];
   float mix[24],imix[24];
   int a,b;
+  int clamped = false; /* clamped? */
   PRINTFD(G,FB_Isosurface)
     " IsosurfGetRange: entered mn: %4.2f %4.2f %4.2f mx: %4.2f %4.2f %4.2f\n",
     mn[0],mn[1],mn[2],mx[0],mx[1],mx[2]
@@ -625,15 +746,32 @@ void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,
       range[a] = 0;
       range[a+3] = 1;
     }
-    if(range[a]<0) range[a]=0;
-    if(range[a]>field->dimensions[a]) range[a]=field->dimensions[a];
-    if(range[a+3]<0) range[a+3]=0;
-    if(range[a+3]>field->dimensions[a]) range[a+3]=field->dimensions[a];
+    if(range[a]<0) {
+      if(clamp) 
+        range[a]=0;
+      clamped = true;
+    }
+    if(range[a]>field->dimensions[a]) {
+      if(clamp) 
+        range[a]=field->dimensions[a];
+      clamped = true;
+    }
+    if(range[a+3]<0) {
+      if(clamp) 
+        range[a+3]=0;
+      clamped = true;
+    }
+    if(range[a+3]>field->dimensions[a]) {
+      if(clamp) 
+        range[a+3]=field->dimensions[a];
+      clamped = true;
+    }
   }
   PRINTFD(G,FB_Isosurface)
     " IsosurfGetRange: returning range: %d %d %d %d %d %d\n",
     range[0],range[1],range[2],range[3],range[4],range[5]
     ENDFD;
+  return clamped;
 }
 /*===========================================================================*/
 int	IsosurfVolume(PyMOLGlobals *G,CSetting *set1,CSetting *set2,

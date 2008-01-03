@@ -175,7 +175,7 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals *G,
   int ok = false;
   ObjectMapState *ms;
   int multi=false;
-  /* box_mode 0 = all, 1 = sele + buffer, 2 = vector */
+  /* box_mode 0 = all, 1 = sele + buffer, 2 = vector, 3 = testing */
 
   
   origObj=ExecutiveFindObjectByName(G,surf_name);  
@@ -316,6 +316,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals *G,
   int multi=false;
   ObjectMapState *ms;
   OrthoLineType s1;
+  ObjectMolecule *sele_obj = NULL;
 
   origObj=ExecutiveFindObjectByName(G,mesh_name);  
   if(origObj) {
@@ -383,6 +384,11 @@ int ExecutiveIsomeshEtc(PyMOLGlobals *G,
           break;
         case 1: /* just do area around selection */
           ok = (SelectorGetTmp(G,sele,s1)>=0);
+          if(ok) {
+            int sele1 = SelectorIndexByName(G,s1);
+            if(sele1>=0) sele_obj = SelectorGetSingleObjectMolecule(G,sele1);
+          }
+            
           ExecutiveGetExtent(G,s1,mn,mx,false,-1,false); /* TODO state */
           if(carve!=0.0) {
             vert_vla = ExecutiveGetVertexVLA(G,s1,state);
@@ -402,10 +408,16 @@ int ExecutiveIsomeshEtc(PyMOLGlobals *G,
         PRINTFB(G,FB_CCmd,FB_Blather)
           " Isomesh: buffer %8.3f carve %8.3f \n",fbuf,carve
           ENDFB(G);
-        obj=(CObject*)ObjectMeshFromBox(G,(ObjectMesh*)origObj,mapObj,
-                                        map_state,state,mn,mx,lvl,mesh_mode,
-                                        carve,vert_vla,alt_lvl,quiet);
-        
+        if(sele_obj && (sele_obj->Symmetry) && ObjectMapValidXtal(mapObj,state)) {
+          obj=(CObject*)ObjectMeshFromXtalSym(G,(ObjectMesh*)origObj,mapObj,
+                                           sele_obj->Symmetry,
+                                           map_state,state,mn,mx,lvl,mesh_mode,
+                                           carve,vert_vla,alt_lvl,quiet);
+        } else {
+          obj=(CObject*)ObjectMeshFromBox(G,(ObjectMesh*)origObj,mapObj,
+                                          map_state,state,mn,mx,lvl,mesh_mode,
+                                          carve,vert_vla,alt_lvl,quiet);
+        }
         /* copy the map's TTT */
         ExecutiveMatrixCopy2(G, 
                              mObj, obj, 1, 1, 

@@ -48,7 +48,7 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
 {
   PyObject *result = NULL;
 
-  result = PyList_New(16);
+  result = PyList_New(17);
   
   PyList_SetItem(result,0,PyInt_FromLong(I->Active));
   PyList_SetItem(result,1,PyString_FromString(I->MapName));
@@ -70,7 +70,11 @@ static PyObject *ObjectMeshStateAsPyList(ObjectMeshState *I)
   PyList_SetItem(result,13,PyInt_FromLong(I->MeshMode));
   PyList_SetItem(result,14,PyFloat_FromDouble(I->AltLevel));
   PyList_SetItem(result,15,PyInt_FromLong(I->quiet));
-
+  if(I->Field) {
+    PyList_SetItem(result,16,IsosurfAsPyList(I->Field));
+  } else {
+    PyList_SetItem(result,16,PConvAutoNone(NULL));
+  }
   return(PConvAutoNone(result));  
 }
 #endif
@@ -144,6 +148,13 @@ static int ObjectMeshStateFromPyList(PyMOLGlobals *G,ObjectMeshState *I,PyObject
         ok = PConvPyIntToInt(PyList_GetItem(list,15),&I->quiet);
       } else {
         I->quiet=true;
+      }
+      if(ok&&(ll>16)) {
+        tmp = PyList_GetItem(list,16);
+        if(tmp == Py_None)
+          I->Field = NULL;
+        else 
+          ok = ((I->Field=IsosurfNewFromPyList(G,tmp))!=NULL);
       }
     }
   }
@@ -237,6 +248,8 @@ static void ObjectMeshStateFree(ObjectMeshState *ms)
       }
     }
   }
+  if(ms->Field)
+    IsosurfFieldFree(ms->State.G,ms->Field);
   VLAFreeP(ms->N);
   VLAFreeP(ms->V);
   FreeP(ms->VC);
@@ -337,7 +350,7 @@ static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
   if(level>=cRepInvExtents) {
     I->Obj.ExtentFlag=false;
   }
-  if((rep==cRepMesh)||(rep==cRepAll)) {
+  if((rep==cRepMesh)||(rep==cRepAll)||(rep==cRepCell)) {
     for(a=0;a<I->NState;a++) {
       if(state<0) once_flag=false;
       if(!once_flag) state=a;
@@ -506,7 +519,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
   for(a=0;a<I->NState;a++) {
     ms = I->State+a;
     if(ms->Active) {
-      
+
       map = ExecutiveFindObjectMapByName(I->Obj.G,ms->MapName);
       if(!map) {
         ok=false;
@@ -521,12 +534,16 @@ static void ObjectMeshUpdate(ObjectMesh *I)
       }
       if(oms) {
         if(ms->RefreshFlag||ms->ResurfaceFlag) {
-          ms->Crystal = *(oms->Crystal);
+          if(!ms->Field) {
+            ms->Crystal = *(oms->Crystal);
+          }
+         
           if(I->Obj.RepVis[cRepCell]) {
             if(ms->UnitCellCGO)
               CGOFree(ms->UnitCellCGO);
             ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
-          } 
+          }
+
           if(oms->State.Matrix) {
             ObjectStateSetMatrix(&ms->State,oms->State.Matrix);
           } else if(ms->State.Matrix) {
@@ -539,6 +556,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
       
       if(map&&oms&&ms->N&&ms->V&&I->Obj.RepVis[cRepMesh]) {
         if(ms->ResurfaceFlag) {
+          Isofield *field = NULL;
           ms->RecolorFlag=true;          
           ms->ResurfaceFlag=false;
           if(!ms->quiet) {
@@ -546,8 +564,14 @@ static void ObjectMeshUpdate(ObjectMesh *I)
               " ObjectMesh: updating \"%s\".\n" , I->Obj.Name 
               ENDFB(G);
           }
-          if(oms->Field) {
-
+          if(ms->Field) {
+            field = ms->Field;
+          } else if(oms->Field) {
+            field = oms->Field;
+          }
+          
+          if(field) {
+            
             {
               float *min_ext,*max_ext;
               float tmp_min[3],tmp_max[3];
@@ -560,26 +584,24 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                 min_ext = ms->ExtentMin;
                 max_ext = ms->ExtentMax;
               }
-
-              IsosurfGetRange(I->Obj.G,oms->Field,oms->Crystal,
-                              min_ext,max_ext,ms->Range);
+              
+              IsosurfGetRange(I->Obj.G, field, oms->Crystal,
+                              min_ext,max_ext,ms->Range,true);
             }
             /*                      printf("DEBUG: %d %d %d %d %d %d\n",
-                   ms->Range[0],
-                   ms->Range[1],
-                   ms->Range[2],
-                   ms->Range[3],
-                   ms->Range[4],
-                   ms->Range[5]);*/
+                                    ms->Range[0],
+                                    ms->Range[1],
+                                    ms->Range[2],
+                                    ms->Range[3],
+                                    ms->Range[4],
+                                    ms->Range[5]);*/
             IsosurfVolume(I->Obj.G,I->Obj.Setting,NULL,
-                          oms->Field,
+                          field,
                           ms->Level,
                           &ms->N,&ms->V,
                           ms->Range,
                           ms->MeshMode,
                           mesh_skip,ms->AltLevel);
-
-                       
 
             if(!SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_negative_visible)) { 
               ms->base_n_V = VLAGetSize(ms->V);
@@ -590,7 +612,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
               float *V2 =  VLAlloc(float,10000);
 
               IsosurfVolume(I->Obj.G,I->Obj.Setting,NULL,
-                            oms->Field,
+                            field,
                             -ms->Level,
                             &N2,&V2,
                             ms->Range,
@@ -951,6 +973,10 @@ void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
 {
   if(ms->Active) 
     ObjectStatePurge(&ms->State);
+  if(ms->Field) {
+    IsosurfFieldFree(ms->State.G,ms->Field);
+    ms->Field = NULL;
+  }
   ObjectStateInit(G,&ms->State);
   if(!ms->V) {
     ms->V = VLAlloc(float,10000);
@@ -974,6 +1000,122 @@ void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
   ms->displayList=0;
   ms->displayListInvalid = true;
   ms->caption[0]=0;
+  ms->Field = NULL;
+}
+/*========================================================================*/
+ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
+                                      CSymmetry *sym,
+                                      int map_state,
+                                      int state,float *mn,float *mx,
+                                      float level,int meshMode,
+                                      float carve,float *vert_vla,
+                                      float alt_level,int quiet)
+{
+  ObjectMesh *I;
+  ObjectMeshState *ms;
+  ObjectMapState *oms;
+
+  if(!obj) {
+    I=ObjectMeshNew(G);
+  } else {
+    I=obj;
+  }
+
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectMeshState,state);
+    I->NState=state+1;
+  }
+
+  ms=I->State+state;
+  ObjectMeshStateInit(G,ms);
+
+  strcpy(ms->MapName,map->Obj.Name);
+  ms->MapState = map_state;
+  oms = ObjectMapGetState(map,map_state);
+
+  ms->Level = level;
+  ms->AltLevel = alt_level;
+  ms->MeshMode = meshMode;
+  ms->quiet = quiet;
+  if(oms) {
+
+    if((meshMode==3) && (ms->AltLevel < ms->Level)) {
+      /* gradient object -- need to auto-set range */
+      if(!ObjectMapStateGetDataRange(G,oms,&ms->Level,&ms->AltLevel)) {
+        ms->Level = -1.0F;
+        ms->AltLevel = 1.0F;
+      }
+    }
+
+    copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
+    copy3f(mx,ms->ExtentMax);
+
+    if(oms->State.Matrix) {
+      ObjectStateSetMatrix(&ms->State,oms->State.Matrix);
+    } else if(ms->State.Matrix) {
+      ObjectStateResetMatrix(&ms->State);
+    }
+    
+    {
+      float *min_ext,*max_ext;
+      float tmp_min[3],tmp_max[3];
+      if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix,
+                                         ms->ExtentMin,ms->ExtentMax,
+                                         tmp_min,tmp_max)) {
+        min_ext = tmp_min;
+        max_ext = tmp_max;
+      } else {
+        min_ext = ms->ExtentMin;
+        max_ext = ms->ExtentMax;
+      }
+      
+      {
+        int eff_range[6];
+
+        if( IsosurfGetRange(G,oms->Field,oms->Crystal,min_ext,max_ext,eff_range,false)) {
+          int fdim[3];
+          
+          /* need to generate symmetry-expanded temporary map */
+
+          ms->Crystal = *(oms->Crystal);     
+          fdim[0] = eff_range[3] - eff_range[0];
+          fdim[1] = eff_range[4] - eff_range[1];
+          fdim[2] = eff_range[5] - eff_range[2];
+          ms->Field=IsosurfFieldAlloc(I->Obj.G,fdim);
+
+          IsosurfExpand(oms->Field, ms->Field, oms->Crystal, sym, eff_range);
+          ms->Range[0] = 0;
+          ms->Range[1] = 0;
+          ms->Range[2] = 0;
+          ms->Range[3] = fdim[0];
+          ms->Range[4] = fdim[1];
+          ms->Range[5] = fdim[2];
+          
+        } else {
+          /* mesh entirely contained within bounds of current map */
+          int a;
+          for(a=0;a<6;a++) {
+            ms->Range[a] = eff_range[a];
+          }
+        }
+      }
+    }
+    ms->ExtentFlag = true;
+  }
+  if(carve!=0.0) {
+    ms->CarveFlag=true;
+    ms->CarveBuffer = carve;
+    ms->AtomVertex = vert_vla;
+  }
+  if(I) {
+    ObjectMeshRecomputeExtent(I);
+  }
+  I->Obj.ExtentFlag=true;
+  /*  printf("Brick %d %d %d %d %d %d\n",I->Range[0],I->Range[1],I->Range[2],I->Range[3],I->Range[4],I->Range[5]);*/
+  SceneChanged(G);
+  SceneCountFrames(G);
+  return(I);
 }
 
 /*========================================================================*/
@@ -1042,7 +1184,7 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
         max_ext = ms->ExtentMax;
       }
 
-      IsosurfGetRange(G,oms->Field,oms->Crystal,min_ext,max_ext,ms->Range);
+      IsosurfGetRange(G,oms->Field,oms->Crystal,min_ext,max_ext,ms->Range,true);
     }
     ms->ExtentFlag = true;
   }

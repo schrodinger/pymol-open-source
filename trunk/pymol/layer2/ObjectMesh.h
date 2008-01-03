@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"ObjectMap.h"
 #include"Word.h"
+#include"Symmetry.h"
 
 typedef struct {
   CObjectState State;
@@ -45,6 +46,8 @@ typedef struct {
   int displayListInvalid;
   WordType caption;
   float AltLevel;
+  /* not stored */
+  Isofield *Field;  
 } ObjectMeshState;
 
 typedef struct ObjectMesh {
@@ -59,6 +62,13 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap* map,
                               int state,float *mn,float *mx,
                               float level,int meshMode,
                               float carve,float *vert_vla,float alt_level,int quiet);
+ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
+                                  CSymmetry *sym,
+                                  int map_state,
+                                  int state,float *mn,float *mx,
+                                  float level,int meshMode,
+                                  float carve,float *vert_vla,
+                                  float alt_level,int quiet);
 void ObjectMeshDump(ObjectMesh *I,char *fname,int state);
 
 PyObject *ObjectMeshAsPyList(ObjectMesh *I);
