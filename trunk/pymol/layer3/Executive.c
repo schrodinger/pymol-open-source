@@ -8539,7 +8539,7 @@ void ExecutiveIterateState(PyMOLGlobals *G,int state,char *s1,char *expr,int rea
 
   sele1=SelectorIndexByName(G,s1);
   if(sele1>=0) {
-    int start_state, stop_state;
+    int start_state=0, stop_state=0;
     ObjectMoleculeOpRec op1;
     
     if(state>=0) {
