@@ -1726,11 +1726,11 @@ int *AtomInfoGetSortedIndex(PyMOLGlobals *G,CObject *obj,AtomInfoType *rec,int n
 {
   int *index;
   int a;
+  CSetting *setting = NULL;
   index = Alloc(int,n+1);
   ErrChkPtr(G,index);
   (*outdex)=Alloc(int,n+1);
   ErrChkPtr(G,*outdex);
-  CSetting *setting = NULL;
   if(obj)
     setting=obj->Setting;
 

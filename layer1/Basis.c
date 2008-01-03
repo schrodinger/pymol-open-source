@@ -2991,7 +2991,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,int n_prim,
           prm_index = vert2prim[tempRef[a]];
         if( !prm_spanner[prm_index] ) {
           prm = prim + prm_index;
-          float *vv = prm->vert*3 + I->Vertex;
+          {
+			  float *vv = prm->vert*3 + I->Vertex;
           switch(prm->type) {
           case cPrimTriangle:
           case cPrimCharacter:
@@ -3014,6 +3015,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,int n_prim,
             prm_spanner[prm_index] = 1;
             break;
           }
+		  }
         }
         v+=3;
       }
