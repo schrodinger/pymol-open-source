@@ -51,6 +51,23 @@ typedef struct {
 #endif
 #endif
 
+int ObjectMapValidXtal(ObjectMap *I, int state)
+{
+  if((state>=0)&&(state<I->NState)) {
+    ObjectMapState *ms = I->State + state;
+    if(ms->Active) {
+      switch(ms->MapSource) {
+      case cMapSourceXPLOR:
+      case cMapSourceCCP4:
+      case cMapSourceBRIX:
+      case cMapSourceGRD:
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
 static int ObjectMapIsStateValidActive(ObjectMap *I, int state)
 {
   if((state>=0)&&(state<I->NState))

@@ -80,6 +80,8 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMap
 int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *vert_vla,
                                    float beyond, float within, float *level);
 
+int ObjectMapValidXtal(ObjectMap *I, int state);
+
 int ObjectMapStateGetRange(PyMOLGlobals *G,ObjectMapState *ms,float *range);
 
 void ObjectMapStateClamp(ObjectMapState *I,float clamp_floor, float clamp_ceiling);

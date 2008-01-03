@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"Map.h"
 #include"MemoryDebug.h"
-#include"Crystal.h"
+#include"Symmetry.h"
 #include"Field.h"
 #include"os_python.h"
 #include"PyMOLGlobals.h"
@@ -45,7 +45,10 @@ int	IsosurfVolume(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
                   Isofield *field,float level,int **num,
                   float **vert,int *range,int mode,int skip,float alt_level);
 
-void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
+int IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,
+                     float *mn,float *mx,int *range,int clamp);
+void IsosurfExpand(Isofield *field1, Isofield *field2,
+                   CCrystal *cryst, CSymmetry *sym, int *range);
 
 int	IsosurfInit(PyMOLGlobals *G);
 void  IsosurfFree(PyMOLGlobals *G);
