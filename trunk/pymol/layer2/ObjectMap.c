@@ -947,7 +947,7 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
         y = (ms->Div[1] * frac[1]);
         z = (ms->Div[2] * frac[2]);
         
-        /* now separate the integration and fractional parts for interpolation */
+        /* now separate the integral and fractional parts for interpolation */
            
         a=(int)floor(x);
         b=(int)floor(y);
@@ -4687,10 +4687,12 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int st
   float mat[9];
 
   f=fopen(fname,"rb");
-  if(!f)
+  if(!f) {
 	 ok=ErrMessage(G,"ObjectMapLoadDXFile","Unable to open file!");
-  else
-	 {
+     PRINTFB(G,FB_ObjectMap,FB_Errors)
+       "ObjectMapLoadDXFile: Does '%s' exist?\n",fname
+       ENDFB(G);
+  } else {
 		if(Feedback(G,FB_ObjectMap,FB_Actions))
 		  {
 			printf(" ObjectMapLoadDXFile: Loading from '%s'.\n",fname);

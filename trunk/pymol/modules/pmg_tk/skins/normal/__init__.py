@@ -414,7 +414,9 @@ class Normal(PMGSkin):
                        ("All Readable","*.p5m"),
                        ("All Readable","*.p1m"),
                        ("All Readable","*.cube"),
+                       ("All Readable","*.cif"),
                        ("All Readable","*.moe"), # proprietary format
+                       ("All Readable","*.mae"), # proprietary format
                        ("PDB File","*.pdb"),
                        ("All Files","*.*"),
                        ("All Files","*"),                                         
@@ -430,11 +432,13 @@ class Normal(PMGSkin):
                        ("BRIX/O Map","*.o"),
                        ("BRIX/O Map","*.omap"),
                        ("BRIX/O Map","*.brix"),
+                       ("CIF","*.cif"),
                        ("Gaussian Cube Map","*.cube"),
                        ("DX Map","*.dx"),                                         
                        ("AVS (MEAD) Field","*.fld"),                                         
                        ("MOL File","*.mol"),
                        ("MOE File","*.moe"), # proprietary format
+                       ("MOE File","*.mae"), # proprietary format                       
                        ("ChemPy Model","*.pkl"),
                        ("Raster3D Scene","*.r3d"),
                        ("SDF File","*.sdf"),
