@@ -1102,12 +1102,15 @@ PYMOL API
                         else:
 #                            print traceback.print_exc()
                             pass
-                        os.remove(filename)
+                        try:
+                            os.remove(filename)
+                        except:
+                            pass
             if done == 0:
                 time.sleep(0.1)
         if done == 0:
             r = DEFAULT_ERROR
-            print "Error-fetch: unable to load '%s'"%code
+            print "Error-fetch: unable to load '%s'."%code
         return r
     
     def _multifetch(code,name,state,finish,discrete,multiplex,zoom,type,path,file,quiet,_self):
