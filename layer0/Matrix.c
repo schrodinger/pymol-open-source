@@ -237,7 +237,7 @@ static xx_word xx_matrix_decompose(xx_float64 *matrix, xx_word size,
     }
   }
   if(ok) {
-    xx_word i, j, k, i_max;
+    xx_word i, j, k, i_max = 0;
 
     for(j=0; j<size; j++) {
 
