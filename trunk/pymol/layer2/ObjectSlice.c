@@ -1024,8 +1024,11 @@ static void ObjectSliceRender(ObjectSlice *I,RenderInfo *info)
           Picking p;
           
           p.context.object = (void*)I;
+          p.context.state = 0;
           p.src.index = state+1;
-          
+          p.src.bond = 0;
+
+
           if(I->Obj.RepVis[cRepSlice]) {
             int *strip = oss->strips;
             float *point = oss->points;

@@ -1178,7 +1178,7 @@ PyObject *SettingGetDefinedTuple(PyMOLGlobals *G,CSetting *set1,int index)
   int defined = true;
   int type = SettingGetType(G,index);
   int int1;
-  float float1,*vect1;
+  float float1,*vect1 = NULL;
   char *str1;
   switch(type) {
   case cSetting_boolean:

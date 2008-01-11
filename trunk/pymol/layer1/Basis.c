@@ -1343,7 +1343,7 @@ int BasisHitPerspective(BasisCallRec *BC)
     int except1 = BC->except1;
     int except2 = BC->except2;
     int check_interior_flag   = BC->check_interior;
-    float   sph[3],vt[3],tri1,tri2; 
+    float   sph[3],vt[3],tri1=_0,tri2; 
     register CPrimitive *BC_prim = BC->prim;
     register int *BI_Vert2Normal = BI->Vert2Normal;
     register float *BI_Vertex = BI->Vertex;
@@ -1762,12 +1762,12 @@ __inline__
 #endif
 int BasisHitOrthoscopic(BasisCallRec *BC)
 {
-  float   oppSq,dist,sph[3],vt[3],tri1,tri2; 
+  const float   _0   = 0.0F, _1 = 1.0F;
+  float   oppSq,dist=_0,sph[3],vt[3],tri1,tri2; 
   int      a,b,c,h,*ip;
   int      excl_trans_flag;
   int      check_interior_flag;
   int      *elist, local_iflag = false;
-  const float   _0   = 0.0F, _1 = 1.0F;
  float minusZ[3] = { 0.0F, 0.0F, -1.0F };
    
   CBasis *BI = BC->Basis;
@@ -2061,15 +2061,15 @@ __inline__
 #endif
 int BasisHitShadow(BasisCallRec *BC)
 {
-  float   oppSq,dist,tri1,tri2;
+  const float   _0   = 0.0F;
+  const float   _1   = 1.0F;
+  float   oppSq,dist=_0,tri1,tri2;
   float sph[3],vt[3];
   register int      h,*ip;
   int a,b,c;
   int      excl_trans_flag;
   int      check_interior_flag;
   int      *elist, local_iflag = false;
-  const float   _0   = 0.0F;
-  const float   _1   = 1.0F;
   float minusZ[3] = { 0.0F, 0.0F, -1.0F };
   /* local copies (eliminate these extra copies later on) */
   

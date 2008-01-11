@@ -287,6 +287,7 @@ OVreturn_word OVLexicon_GetFromCString(OVLexicon *uk,ov_char8 *str)
       if(OVreturn_IS_ERROR(status = OVLexicon_CheckStorage(uk,new_n_entry,new_size))) {
         OVreturn_word result;
         result.status = status.status;
+        result.word = 0;
         return result;
       }
     }
@@ -308,6 +309,7 @@ OVreturn_word OVLexicon_GetFromCString(OVLexicon *uk,ov_char8 *str)
         uk->free_index = index; 
         uk->n_active--;
         result.status = status.status;
+        result.word = 0;
         return result;
       }
       entry_ptr = uk->entry + index;

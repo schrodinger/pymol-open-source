@@ -1314,7 +1314,7 @@ static void normalize3dp( double *v1, double *v2, double *v3 )
 		v3[2]=_0;
 	 }
 } 
-
+/* unused at present
 static void normalize3df( float *v1, float *v2, float *v3 )
 {
   float vlen = (float)sqrt1f((v1[0]*v1[0]) + 
@@ -1333,7 +1333,7 @@ static void normalize3df( float *v1, float *v2, float *v3 )
       v3[2]=_0;
     }
 } 
-
+*/
 void scale3d ( double *v1,double v0,double *v2)
 {
   v2[0]=v1[0]*v0;

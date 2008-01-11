@@ -4223,8 +4223,8 @@ int SelectorGetSingleAtomObjectIndex(PyMOLGlobals *G,int sele,ObjectMolecule **i
 /*========================================================================*/
 int SelectorGetSingleAtomVertex(PyMOLGlobals *G,int sele,int state,float *v)
 {
-  ObjectMolecule *obj;
-  int index;
+  ObjectMolecule *obj = NULL;
+  int index = 0;
   int found_it = false;
   if(SelectorGetSingleAtomObjectIndex(G,sele,&obj,&index))
     found_it = ObjectMoleculeGetAtomTxfVertex(obj,state,index,v);
@@ -4538,7 +4538,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
   int cycFlag=false;
   SelectorWordType name,link_sele="";
   ObjectMolecule *obj1=NULL,*obj2=NULL,*obj3=NULL,*obj4=NULL;
-  int index1,index2,index3,index4;
+  int index1=0,index2=0,index3=0,index4=0;
 
   /* this is seriously getting out of hand -- need to switch over to arrays soon */
 
@@ -4754,6 +4754,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
       
       int *extraStk = VLAlloc(int,50);
       WalkDepthRec curWalk,minWalk;
+      minWalk.sum = 0;
       minWalk.frag = 0;
       
       if(obj1) {
@@ -4949,7 +4950,7 @@ int SelectorGetSeleNCSet(PyMOLGlobals *G,int sele)
 {
   register CSelector *I=G->Selector;
 
-  int a,s,at;
+  int a,s,at = 0;
   ObjectMolecule *obj,*last_obj = NULL;
   int result=0;
 

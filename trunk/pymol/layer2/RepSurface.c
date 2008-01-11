@@ -1842,13 +1842,6 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
         }
       }
     }
-    
-    if(n_present<1) n_present=1; /* safety */
-
-    if(sp->nDot<ssp->nDot)
-      MaxN = n_present*ssp->nDot;
-    else
-      MaxN = n_present*sp->nDot;
 
     /* WLD note to self -- here is where a surface caching routine would take over based on:
 
@@ -1860,8 +1853,14 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
     - coordinates and radii of atoms
     - extent for the calculation
     - tons of settings
-       
     */
+    
+    if(n_present<1) n_present=1; /* safety */
+
+    if(sp->nDot<ssp->nDot)
+      MaxN = n_present*ssp->nDot;
+    else
+      MaxN = n_present*sp->nDot;
 
     I->V=Alloc(float,(MaxN+1)*3);
     I->VN=Alloc(float,(MaxN+1)*3);
