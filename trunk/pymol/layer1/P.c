@@ -1055,9 +1055,9 @@ int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy)
 #ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
 /* 
-  void	initExtensionClass(void);
-  void	initsglite(void);
-*/
+ *  void	initExtensionClass(void);
+ *   void	initsglite(void);
+ */
 void  init_champ(void);
 void    init_opengl(void);
 void    init_opengl_num(void);
@@ -1091,8 +1091,8 @@ void  init_champ();
 #ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
 /*
-  void	initExtensionClass(void);
-  void	initsglite(void);
+ * void	initExtensionClass(void);
+ * void	initsglite(void);
 */
 void  init_champ(void);
 void    init_opengl(void);
@@ -1385,9 +1385,9 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
 #ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
   /*
-    initExtensionClass();
-    initsglite();
-  */
+   * initExtensionClass();
+   * initsglite();
+   */
   /* initialize champ */
   init_champ();
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
@@ -1591,8 +1591,8 @@ void PInit(PyMOLGlobals *G,int global_instance)
 #ifdef _PYMOL_INIT_MODULES
 	/* Win32 module build: includes pyopengl, numpy, and sglite */
 	/* sglite 
-       initExtensionClass();
-       initsglite();
+     * initExtensionClass();
+     * initsglite();
     */
     init_champ();
 	/* initialize numeric python */

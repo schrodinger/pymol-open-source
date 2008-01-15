@@ -2878,8 +2878,8 @@ void PyMOL_Start(CPyMOL *I)
 #ifdef _MACPYMOL_XCODE
 void init_cmd(void);
 /* 
-   void initExtensionClass(void);
-   void initsglite(void);
+ * void initExtensionClass(void);
+ * void initsglite(void);
 */
 void init_champ(void);
 #endif
@@ -2902,8 +2902,10 @@ void PyMOL_StartWithPython(CPyMOL *I)
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE	
     init_cmd();
-	initExtensionClass();
-    initsglite();
+    /* 
+     * initExtensionClass();
+     * initsglite();
+     */
 	init_champ();
 #endif
 /* END PROPRIETARY CODE SEGMENT */
