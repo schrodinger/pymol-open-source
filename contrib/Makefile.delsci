@@ -2,7 +2,10 @@
 
 include ../Rules.delsci
 
-all: make-modules make-sglite make-pyopengl make-champ
+all: make-pyopengl make-champ
+
+# ExtensionClass and sglite are no longer needed
+# make-modules make-sglite 
 
 static:
 	cd modules;$(MAKE) -f Makefile.static
