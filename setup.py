@@ -308,31 +308,35 @@ setup ( # Distribution meta-data
    extra_link_args = ext_link_args,
    extra_compile_args = ext_comp_args,
              ),
-   Extension("pymol.sglite", [
-   "contrib/sglite/runtests.c",
-   "contrib/sglite/sgcb.c",
-   "contrib/sglite/sgcharmx.c",
-   "contrib/sglite/sgfile.c",
-   "contrib/sglite/sggen.c",
-   "contrib/sglite/sgglobal.c",
-   "contrib/sglite/sghall.c",
-   "contrib/sglite/sghkl.c",
-   "contrib/sglite/sglitemodule.c",
-   "contrib/sglite/sgltr.c",
-   "contrib/sglite/sgmath.c",
-   "contrib/sglite/sgmetric.c",
-   "contrib/sglite/sgnorm.c",
-   "contrib/sglite/sgprop.c",
-   "contrib/sglite/sgss.c",
-   "contrib/sglite/sgstr.c",
-   "contrib/sglite/sgsymbols.c",
-   "contrib/sglite/sgtidy.c",
-   "contrib/sglite/sgtype.c",
-   "contrib/sglite/sgutil.c"
-   ],
-   define_macros=[("PythonTypes",None)],   
-   include_dirs=["contrib/sglite","contrib/modules"]
-             ),
+# PyMOL no longers uses sglite directly
+#
+#   Extension("pymol.sglite", [
+#   "contrib/sglite/runtests.c",
+#   "contrib/sglite/sgcb.c",
+#   "contrib/sglite/sgcharmx.c",
+#   "contrib/sglite/sgfile.c",
+#   "contrib/sglite/sggen.c",
+#   "contrib/sglite/sgglobal.c",
+#   "contrib/sglite/sghall.c",
+#   "contrib/sglite/sghkl.c",
+#   "contrib/sglite/sglitemodule.c",
+#   "contrib/sglite/sgltr.c",
+#   "contrib/sglite/sgmath.c",
+#   "contrib/sglite/sgmetric.c",
+#   "contrib/sglite/sgnorm.c",
+#   "contrib/sglite/sgprop.c",
+#   "contrib/sglite/sgss.c",
+#   "contrib/sglite/sgstr.c",
+#   "contrib/sglite/sgsymbols.c",
+#   "contrib/sglite/sgtidy.c",
+#   "contrib/sglite/sgtype.c",
+#   "contrib/sglite/sgutil.c"
+#   ],
+#   define_macros=[("PythonTypes",None)],   
+#   include_dirs=["contrib/sglite","contrib/modules"]
+#             ),
+#   Extension("pymol.ExtensionClass",["contrib/modules/ExtensionClass.c"]),
+   
    Extension("chempy.champ._champ", [
    "contrib/champ/champ.c",
    "contrib/champ/champ_module.c",
@@ -347,7 +351,6 @@ setup ( # Distribution meta-data
    ],
    include_dirs=["contrib/champ"]
              ),
-   Extension("pymol.ExtensionClass",["contrib/modules/ExtensionClass.c"]),
    Extension("pymol.opengl.glu._glu_num", ["contrib/pyopengl/_glu_nummodule.c"],
              include_dirs = inc_dirs,
              libraries = pyogl_libs,

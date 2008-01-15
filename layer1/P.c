@@ -1054,8 +1054,10 @@ int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy)
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
 #ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
-void	initExtensionClass(void);
-void	initsglite(void);
+/* 
+  void	initExtensionClass(void);
+  void	initsglite(void);
+*/
 void  init_champ(void);
 void    init_opengl(void);
 void    init_opengl_num(void);
@@ -1088,8 +1090,10 @@ void  init_champ();
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
-void	initExtensionClass(void);
-void	initsglite(void);
+/*
+  void	initExtensionClass(void);
+  void	initsglite(void);
+*/
 void  init_champ(void);
 void    init_opengl(void);
 void    init_opengl_num(void);
@@ -1380,8 +1384,10 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
-  initExtensionClass();
-  initsglite();
+  /*
+    initExtensionClass();
+    initsglite();
+  */
   /* initialize champ */
   init_champ();
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
@@ -1584,9 +1590,10 @@ void PInit(PyMOLGlobals *G,int global_instance)
 
 #ifdef _PYMOL_INIT_MODULES
 	/* Win32 module build: includes pyopengl, numpy, and sglite */
-	/* sglite */
-	initExtensionClass();
-	initsglite();
+	/* sglite 
+       initExtensionClass();
+       initsglite();
+    */
     init_champ();
 	/* initialize numeric python */
 	init_numpy();
