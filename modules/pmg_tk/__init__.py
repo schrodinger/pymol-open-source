@@ -21,6 +21,7 @@
 
 from PMGApp import *
 import sys, os, threading
+import traceback
 
 if sys.platform=='win32':
     if sys.version[0:4]=='2.1 ':
@@ -28,10 +29,13 @@ if sys.platform=='win32':
             os.environ['TCL_LIBRARY']='c:\\python21\\tcl\\tcl8.3'
                 
 def run(pymol_instance,poll=0):
-    if not hasattr(sys,"argv"):
-        sys.argv=["pymol"]
-    PMGApp(pymol_instance).run(poll)
-
+    try:
+        if not hasattr(sys,"argv"):
+            sys.argv=["pymol"]
+        PMGApp(pymol_instance).run(poll)
+    except:
+        traceback.print_exc()
+        
 def __init__(pymol_instance,poll=0):
 
     t = threading.Thread(target=run,args=(pymol_instance,poll))
