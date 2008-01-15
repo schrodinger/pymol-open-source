@@ -2017,9 +2017,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
         p=ncopy(cc,p,7);
         if(sscanf(cc,"%f",&symmetry->Crystal->Angle[2])!=1) symFlag=false;
         p=nskip(p,1);
-        p=ncopy(symmetry->SpaceGroup,p,10);
+        p=ncopy(symmetry->SpaceGroup,p,11);
         UtilCleanStr(symmetry->SpaceGroup);
-        p=ncopy(cc,p,4);
+        p=ncopy(cc,p,3);
         if(sscanf(cc,"%d",&symmetry->PDBZValue)!=1) symmetry->PDBZValue=1;
         if(!symFlag) {
           ErrMessage(G,"PDBStrToCoordSet","Error reading CRYST1 record\n");
