@@ -2,6 +2,11 @@
 CHANGE LOG
 =========================================================================
 
+2008-01-15  Warren L. DeLano <warren@delsci.com>	
+
+	* ExtensionClass & sglite broke on 64 bit with Python 2.5.1 so
+	  they have been replaced with simple Python symmetry tables.
+	
 2008-01-02  Warren L. DeLano <warren@delsci.com>	
 
 	* added automatic xtal symm expansion for maps about molecules
