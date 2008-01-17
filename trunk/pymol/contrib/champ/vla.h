@@ -48,18 +48,18 @@ void *VLASetSize(void *ptr,unsigned int newSize);
 
 #else
 
-#define VLAMalloc(a,b,c,d) _VLAMalloc(__FILE__,__LINE__,a,b,c,d)
-#define VLAExpand(a,b) _VLAExpand(__FILE__,__LINE__,a,b)
-#define VLAFree(a) _VLAFree(__FILE__,__LINE__,a)
-#define VLASetSize(a,b) _VLASetSize(__FILE__,__LINE__,a,b)
+#define VLAMalloc(a,b,c,d) _champVLAMalloc(__FILE__,__LINE__,a,b,c,d)
+#define VLAExpand(a,b) _champVLAExpand(__FILE__,__LINE__,a,b)
+#define VLAFree(a) _champVLAFree(__FILE__,__LINE__,a)
+#define VLASetSize(a,b) _champVLASetSize(__FILE__,__LINE__,a,b)
 
-void *_VLAExpand(const char *file,int line,
+void *_champVLAExpand(const char *file,int line,
                  void *ptr,unsigned int rec); 
-void _VLAFree(const char *file,int line,
+void _champVLAFree(const char *file,int line,
               void *ptr);
-void *_VLASetSize(const char *file,int line,
+void *_champVLASetSize(const char *file,int line,
                   void *ptr,unsigned int newSize);
-void *_VLAMalloc(const char *file,int line,
+void *_champVLAMalloc(const char *file,int line,
                  unsigned int initSize,unsigned int recSize,
                  unsigned int growFactor,int autoZero); 
 #endif
