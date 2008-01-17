@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2008-01-16  Warren L. DeLano <warren@delsci.com>	
+
+	* fixed surface_type=1, broken in the previous beta
+
+	* refactored molecular surfacing routines 
+	
 2008-01-15  Warren L. DeLano <warren@delsci.com>	
 
 	* ExtensionClass & sglite broke on 64 bit with Python 2.5.1 so

@@ -290,21 +290,25 @@ unsigned int VLAGetSize(void *ptr)
 
 void *VLANewCopy(void *ptr)
 {
-  VLARec *vla,*new_vla;
-  unsigned int size;
-  vla = &((VLARec*)ptr)[-1];
-  size = (vla->recSize*vla->nAlloc)+sizeof(VLARec);
-  new_vla=(void*)mmalloc(size);
-  if(!new_vla)
-	 {
+  if(ptr) { /* NULL protected */
+    VLARec *vla,*new_vla;
+    unsigned int size;
+    vla = &((VLARec*)ptr)[-1];
+    size = (vla->recSize*vla->nAlloc)+sizeof(VLARec);
+    new_vla=(void*)mmalloc(size);
+    if(!new_vla)
+      {
 		printf("VLACopy-ERR: mmalloc failed\n");
 		exit(EXIT_FAILURE);
-	 }
-  else
-    {
-      memcpy(new_vla,vla,size);
-    }
-  return((void*)&(new_vla[1]));
+      }
+    else
+      {
+        memcpy(new_vla,vla,size);
+      }
+    return((void*)&(new_vla[1]));
+  } else {
+    return NULL;
+  }
 }
 #ifdef _MemoryCache_ON
 void *VLACacheSetSize(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_id,int block_id)

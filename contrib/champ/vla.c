@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 #ifndef _os_memory_debug_on
 void *VLAExpand(void *ptr,unsigned int rec)
 #else
-void *_VLAExpand(const char *file,int line,
+void *_champVLAExpand(const char *file,int line,
                 void *ptr,unsigned int rec)
 #endif
 {
@@ -60,7 +60,7 @@ void *_VLAExpand(const char *file,int line,
 #ifndef _os_memory_debug_on
 void *VLAMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero)
 #else
-void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero)
+void *_champVLAMalloc(const char *file,int line,unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero)
 #endif
 {
   VLARec *vla;
@@ -91,7 +91,7 @@ void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int re
 #ifndef _os_memory_debug_on
 void VLAFree(void *ptr)
 #else
-void _VLAFree(const char *file,int line,void *ptr)
+void _champVLAFree(const char *file,int line,void *ptr)
 #endif
 {
   VLARec *vla;
@@ -113,7 +113,7 @@ unsigned int VLAGetSize2(void *ptr)
 #ifndef _os_memory_debug_on
 void *VLASetSize(void *ptr,unsigned int newSize)
 #else
-void *_VLASetSize(const char *file,int line,void *ptr,unsigned int newSize)
+void *_champVLASetSize(const char *file,int line,void *ptr,unsigned int newSize)
 #endif
 {
   VLARec *vla;
