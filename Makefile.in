@@ -53,20 +53,12 @@ am__vpath_adj = case $$p in \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(champlibdir)" \
-	"$(DESTDIR)$(moduleslibdir)" "$(DESTDIR)$(pymollibdir)" \
-	"$(DESTDIR)$(pyopengllibdir)" "$(DESTDIR)$(sglitelibdir)"
+	"$(DESTDIR)$(pymollibdir)" "$(DESTDIR)$(pyopengllibdir)"
 champlibLTLIBRARIES_INSTALL = $(INSTALL)
-moduleslibLTLIBRARIES_INSTALL = $(INSTALL)
 pymollibLTLIBRARIES_INSTALL = $(INSTALL)
 pyopengllibLTLIBRARIES_INSTALL = $(INSTALL)
-sglitelibLTLIBRARIES_INSTALL = $(INSTALL)
-LTLIBRARIES = $(champlib_LTLIBRARIES) $(moduleslib_LTLIBRARIES) \
-	$(pymollib_LTLIBRARIES) $(pyopengllib_LTLIBRARIES) \
-	$(sglitelib_LTLIBRARIES)
-libExtensionClass_la_DEPENDENCIES =  \
-	contrib/modules/libExtensionClass0.la
-am_libExtensionClass_la_OBJECTS =
-libExtensionClass_la_OBJECTS = $(am_libExtensionClass_la_OBJECTS)
+LTLIBRARIES = $(champlib_LTLIBRARIES) $(pymollib_LTLIBRARIES) \
+	$(pyopengllib_LTLIBRARIES)
 lib_glu_nummodule_la_DEPENDENCIES =  \
 	contrib/pyopengl/lib_glu_nummodule0.la
 am_lib_glu_nummodule_la_OBJECTS =
@@ -103,9 +95,6 @@ libpymol_la_DEPENDENCIES =  \
 	layer5/liblayer5.la
 am_libpymol_la_OBJECTS =
 libpymol_la_OBJECTS = $(am_libpymol_la_OBJECTS)
-libsglite_la_DEPENDENCIES = contrib/sglite/libsglite0.la
-am_libsglite_la_OBJECTS =
-libsglite_la_OBJECTS = $(am_libsglite_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -116,20 +105,18 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libExtensionClass_la_SOURCES) \
-	$(lib_glu_nummodule_la_SOURCES) $(lib_glumodule_la_SOURCES) \
+SOURCES = $(lib_glu_nummodule_la_SOURCES) $(lib_glumodule_la_SOURCES) \
 	$(lib_glutmodule_la_SOURCES) \
 	$(lib_opengl_nummodule_la_SOURCES) \
 	$(lib_openglmodule_la_SOURCES) $(libchamp_la_SOURCES) \
 	$(libopenglutil_la_SOURCES) $(libopenglutil_num_la_SOURCES) \
-	$(libpymol_la_SOURCES) $(libsglite_la_SOURCES)
-DIST_SOURCES = $(libExtensionClass_la_SOURCES) \
-	$(lib_glu_nummodule_la_SOURCES) $(lib_glumodule_la_SOURCES) \
-	$(lib_glutmodule_la_SOURCES) \
+	$(libpymol_la_SOURCES)
+DIST_SOURCES = $(lib_glu_nummodule_la_SOURCES) \
+	$(lib_glumodule_la_SOURCES) $(lib_glutmodule_la_SOURCES) \
 	$(lib_opengl_nummodule_la_SOURCES) \
 	$(lib_openglmodule_la_SOURCES) $(libchamp_la_SOURCES) \
 	$(libopenglutil_la_SOURCES) $(libopenglutil_num_la_SOURCES) \
-	$(libpymol_la_SOURCES) $(libsglite_la_SOURCES)
+	$(libpymol_la_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -300,14 +287,16 @@ champlibdir = $(PWD)/built
 champlib_LTLIBRARIES = libchamp.la
 libchamp_la_SOURCES = 
 libchamp_la_LIBADD = contrib/champ/libchamp0.la
-moduleslibdir = $(PWD)/built
-moduleslib_LTLIBRARIES = libExtensionClass.la
-libExtensionClass_la_SOURCES = 
-libExtensionClass_la_LIBADD = contrib/modules/libExtensionClass0.la
-sglitelibdir = $(PWD)/built
-sglitelib_LTLIBRARIES = libsglite.la
-libsglite_la_SOURCES = 
-libsglite_la_LIBADD = contrib/sglite/libsglite0.la
+
+#moduleslibdir = $(PWD)/built
+#moduleslib_LTLIBRARIES =  libExtensionClass.la
+#libExtensionClass_la_SOURCES =
+#libExtensionClass_la_LIBADD =  contrib/modules/libExtensionClass0.la
+
+#sglitelibdir = $(PWD)/built
+#sglitelib_LTLIBRARIES = libsglite.la
+#libsglite_la_SOURCES =
+#libsglite_la_LIBADD = contrib/sglite/libsglite0.la
 pyopengllibdir = $(PWD)/built
 pyopengllib_LTLIBRARIES = \
     libopenglutil.la \
@@ -413,33 +402,6 @@ clean-champlibLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-install-moduleslibLTLIBRARIES: $(moduleslib_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	test -z "$(moduleslibdir)" || $(MKDIR_P) "$(DESTDIR)$(moduleslibdir)"
-	@list='$(moduleslib_LTLIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    f=$(am__strip_dir) \
-	    echo " $(LIBTOOL) --mode=install $(moduleslibLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) '$$p' '$(DESTDIR)$(moduleslibdir)/$$f'"; \
-	    $(LIBTOOL) --mode=install $(moduleslibLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) "$$p" "$(DESTDIR)$(moduleslibdir)/$$f"; \
-	  else :; fi; \
-	done
-
-uninstall-moduleslibLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(moduleslib_LTLIBRARIES)'; for p in $$list; do \
-	  p=$(am__strip_dir) \
-	  echo " $(LIBTOOL) --mode=uninstall rm -f '$(DESTDIR)$(moduleslibdir)/$$p'"; \
-	  $(LIBTOOL) --mode=uninstall rm -f "$(DESTDIR)$(moduleslibdir)/$$p"; \
-	done
-
-clean-moduleslibLTLIBRARIES:
-	-test -z "$(moduleslib_LTLIBRARIES)" || rm -f $(moduleslib_LTLIBRARIES)
-	@list='$(moduleslib_LTLIBRARIES)'; for p in $$list; do \
-	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
-	  test "$$dir" != "$$p" || dir=.; \
-	  echo "rm -f \"$${dir}/so_locations\""; \
-	  rm -f "$${dir}/so_locations"; \
-	done
 install-pymollibLTLIBRARIES: $(pymollib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	test -z "$(pymollibdir)" || $(MKDIR_P) "$(DESTDIR)$(pymollibdir)"
@@ -494,35 +456,6 @@ clean-pyopengllibLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-install-sglitelibLTLIBRARIES: $(sglitelib_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	test -z "$(sglitelibdir)" || $(MKDIR_P) "$(DESTDIR)$(sglitelibdir)"
-	@list='$(sglitelib_LTLIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    f=$(am__strip_dir) \
-	    echo " $(LIBTOOL) --mode=install $(sglitelibLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) '$$p' '$(DESTDIR)$(sglitelibdir)/$$f'"; \
-	    $(LIBTOOL) --mode=install $(sglitelibLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) "$$p" "$(DESTDIR)$(sglitelibdir)/$$f"; \
-	  else :; fi; \
-	done
-
-uninstall-sglitelibLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(sglitelib_LTLIBRARIES)'; for p in $$list; do \
-	  p=$(am__strip_dir) \
-	  echo " $(LIBTOOL) --mode=uninstall rm -f '$(DESTDIR)$(sglitelibdir)/$$p'"; \
-	  $(LIBTOOL) --mode=uninstall rm -f "$(DESTDIR)$(sglitelibdir)/$$p"; \
-	done
-
-clean-sglitelibLTLIBRARIES:
-	-test -z "$(sglitelib_LTLIBRARIES)" || rm -f $(sglitelib_LTLIBRARIES)
-	@list='$(sglitelib_LTLIBRARIES)'; for p in $$list; do \
-	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
-	  test "$$dir" != "$$p" || dir=.; \
-	  echo "rm -f \"$${dir}/so_locations\""; \
-	  rm -f "$${dir}/so_locations"; \
-	done
-libExtensionClass.la: $(libExtensionClass_la_OBJECTS) $(libExtensionClass_la_DEPENDENCIES) 
-	$(LINK) -rpath $(moduleslibdir) $(libExtensionClass_la_OBJECTS) $(libExtensionClass_la_LIBADD) $(LIBS)
 lib_glu_nummodule.la: $(lib_glu_nummodule_la_OBJECTS) $(lib_glu_nummodule_la_DEPENDENCIES) 
 	$(LINK) -rpath $(pyopengllibdir) $(lib_glu_nummodule_la_OBJECTS) $(lib_glu_nummodule_la_LIBADD) $(LIBS)
 lib_glumodule.la: $(lib_glumodule_la_OBJECTS) $(lib_glumodule_la_DEPENDENCIES) 
@@ -541,8 +474,6 @@ libopenglutil_num.la: $(libopenglutil_num_la_OBJECTS) $(libopenglutil_num_la_DEP
 	$(LINK) -rpath $(pyopengllibdir) $(libopenglutil_num_la_OBJECTS) $(libopenglutil_num_la_LIBADD) $(LIBS)
 libpymol.la: $(libpymol_la_OBJECTS) $(libpymol_la_DEPENDENCIES) 
 	$(LINK) -rpath $(pymollibdir) $(libpymol_la_OBJECTS) $(libpymol_la_LIBADD) $(LIBS)
-libsglite.la: $(libsglite_la_OBJECTS) $(libsglite_la_DEPENDENCIES) 
-	$(LINK) -rpath $(sglitelibdir) $(libsglite_la_OBJECTS) $(libsglite_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -837,7 +768,7 @@ check: check-recursive
 all-am: Makefile $(LTLIBRARIES) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(champlibdir)" "$(DESTDIR)$(moduleslibdir)" "$(DESTDIR)$(pymollibdir)" "$(DESTDIR)$(pyopengllibdir)" "$(DESTDIR)$(sglitelibdir)"; do \
+	for dir in "$(DESTDIR)$(champlibdir)" "$(DESTDIR)$(pymollibdir)" "$(DESTDIR)$(pyopengllibdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -867,8 +798,7 @@ maintainer-clean-generic:
 clean: clean-recursive
 
 clean-am: clean-champlibLTLIBRARIES clean-generic clean-libtool \
-	clean-moduleslibLTLIBRARIES clean-pymollibLTLIBRARIES \
-	clean-pyopengllibLTLIBRARIES clean-sglitelibLTLIBRARIES \
+	clean-pymollibLTLIBRARIES clean-pyopengllibLTLIBRARIES \
 	mostlyclean-am
 
 distclean: distclean-recursive
@@ -888,8 +818,7 @@ info: info-recursive
 info-am:
 
 install-data-am: install-champlibLTLIBRARIES \
-	install-moduleslibLTLIBRARIES install-pymollibLTLIBRARIES \
-	install-pyopengllibLTLIBRARIES install-sglitelibLTLIBRARIES
+	install-pymollibLTLIBRARIES install-pyopengllibLTLIBRARIES
 
 install-dvi: install-dvi-recursive
 
@@ -929,9 +858,7 @@ ps: ps-recursive
 ps-am:
 
 uninstall-am: uninstall-champlibLTLIBRARIES \
-	uninstall-moduleslibLTLIBRARIES uninstall-pymollibLTLIBRARIES \
-	uninstall-pyopengllibLTLIBRARIES \
-	uninstall-sglitelibLTLIBRARIES
+	uninstall-pymollibLTLIBRARIES uninstall-pyopengllibLTLIBRARIES
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) install-am \
 	install-exec-am install-strip
@@ -939,8 +866,7 @@ uninstall-am: uninstall-champlibLTLIBRARIES \
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
 	all all-am am--refresh check check-am clean \
 	clean-champlibLTLIBRARIES clean-generic clean-libtool \
-	clean-moduleslibLTLIBRARIES clean-pymollibLTLIBRARIES \
-	clean-pyopengllibLTLIBRARIES clean-sglitelibLTLIBRARIES ctags \
+	clean-pymollibLTLIBRARIES clean-pyopengllibLTLIBRARIES ctags \
 	ctags-recursive dist dist-all dist-bzip2 dist-gzip dist-shar \
 	dist-tarZ dist-zip distcheck distclean distclean-compile \
 	distclean-generic distclean-hdr distclean-libtool \
@@ -949,17 +875,15 @@ uninstall-am: uninstall-champlibLTLIBRARIES \
 	install-champlibLTLIBRARIES install-data install-data-am \
 	install-dvi install-dvi-am install-exec install-exec-am \
 	install-exec-hook install-html install-html-am install-info \
-	install-info-am install-man install-moduleslibLTLIBRARIES \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-pymollibLTLIBRARIES install-pyopengllibLTLIBRARIES \
-	install-sglitelibLTLIBRARIES install-strip installcheck \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-pymollibLTLIBRARIES \
+	install-pyopengllibLTLIBRARIES install-strip installcheck \
 	installcheck-am installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-recursive uninstall uninstall-am \
-	uninstall-champlibLTLIBRARIES uninstall-moduleslibLTLIBRARIES \
-	uninstall-pymollibLTLIBRARIES uninstall-pyopengllibLTLIBRARIES \
-	uninstall-sglitelibLTLIBRARIES
+	uninstall-champlibLTLIBRARIES uninstall-pymollibLTLIBRARIES \
+	uninstall-pyopengllibLTLIBRARIES
 
 
 install-exec-hook:
@@ -968,8 +892,8 @@ install-exec-hook:
 	/bin/rm -f $(srcdir)/modules/pymol/*.so $(srcdir)/modules/chempy/champ/*.so \
       $(srcdir)/modules/pymol/opengl/*/*.so
 	/bin/ln -s $(DESTDIR)$(pymollibdir)/libpymol.so.0.0.0 $(srcdir)/modules/pymol/_cmd.so
-	/bin/ln -s $(DESTDIR)$(pymollibdir)/libsglite.so.0.0.0 $(srcdir)/modules/pymol/sglite.so
-	/bin/ln -s $(DESTDIR)$(pymollibdir)/libExtensionClass.so.0.0.0 $(srcdir)/modules/pymol/ExtensionClass.so
+#	/bin/ln -s $(DESTDIR)$(pymollibdir)/libsglite.so.0.0.0 $(srcdir)/modules/pymol/sglite.so
+#	/bin/ln -s $(DESTDIR)$(pymollibdir)/libExtensionClass.so.0.0.0 $(srcdir)/modules/pymol/ExtensionClass.so
 	/bin/ln -s $(DESTDIR)$(pymollibdir)/libchamp.so.0.0.0 $(srcdir)/modules/chempy/champ/_champ.so
 	/bin/ln -s $(DESTDIR)$(pymollibdir)/libopenglutil.so.0.0.0 $(srcdir)/modules/pymol/opengl/gl/openglutil.so
 	/bin/ln -s $(DESTDIR)$(pymollibdir)/libopenglutil_num.so.0.0.0 $(srcdir)/modules/pymol/opengl/gl/openglutil_num.so
