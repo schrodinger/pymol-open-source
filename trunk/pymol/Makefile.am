@@ -22,15 +22,15 @@ champlib_LTLIBRARIES = libchamp.la
 libchamp_la_SOURCES =
 libchamp_la_LIBADD = contrib/champ/libchamp0.la
 
-moduleslibdir = $(PWD)/built
-moduleslib_LTLIBRARIES = libExtensionClass.la
-libExtensionClass_la_SOURCES =
-libExtensionClass_la_LIBADD = contrib/modules/libExtensionClass0.la
+#moduleslibdir = $(PWD)/built
+#moduleslib_LTLIBRARIES =  libExtensionClass.la
+#libExtensionClass_la_SOURCES =
+#libExtensionClass_la_LIBADD =  contrib/modules/libExtensionClass0.la
 
-sglitelibdir = $(PWD)/built
-sglitelib_LTLIBRARIES = libsglite.la
-libsglite_la_SOURCES =
-libsglite_la_LIBADD = contrib/sglite/libsglite0.la
+#sglitelibdir = $(PWD)/built
+#sglitelib_LTLIBRARIES = libsglite.la
+#libsglite_la_SOURCES =
+#libsglite_la_LIBADD = contrib/sglite/libsglite0.la
 
 pyopengllibdir = $(PWD)/built
 pyopengllib_LTLIBRARIES = \
@@ -62,8 +62,8 @@ install-exec-hook:
 	/bin/rm -f $(srcdir)/modules/pymol/*.so $(srcdir)/modules/chempy/champ/*.so \
       $(srcdir)/modules/pymol/opengl/*/*.so
 	/bin/ln -s $(DESTDIR)$(pymollibdir)/libpymol.so.0.0.0 $(srcdir)/modules/pymol/_cmd.so
-	/bin/ln -s $(DESTDIR)$(pymollibdir)/libsglite.so.0.0.0 $(srcdir)/modules/pymol/sglite.so
-	/bin/ln -s $(DESTDIR)$(pymollibdir)/libExtensionClass.so.0.0.0 $(srcdir)/modules/pymol/ExtensionClass.so
+#	/bin/ln -s $(DESTDIR)$(pymollibdir)/libsglite.so.0.0.0 $(srcdir)/modules/pymol/sglite.so
+#	/bin/ln -s $(DESTDIR)$(pymollibdir)/libExtensionClass.so.0.0.0 $(srcdir)/modules/pymol/ExtensionClass.so
 	/bin/ln -s $(DESTDIR)$(pymollibdir)/libchamp.so.0.0.0 $(srcdir)/modules/chempy/champ/_champ.so
 	/bin/ln -s $(DESTDIR)$(pymollibdir)/libopenglutil.so.0.0.0 $(srcdir)/modules/pymol/opengl/gl/openglutil.so
 	/bin/ln -s $(DESTDIR)$(pymollibdir)/libopenglutil_num.so.0.0.0 $(srcdir)/modules/pymol/opengl/gl/openglutil_num.so
