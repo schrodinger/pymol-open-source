@@ -9,6 +9,8 @@ PyMOL>scene 1,store
  scene: scene stored as "1".
 PyMOL>load dat/pept.pdb
  CmdLoad: "dat/pept.pdb" loaded as "pept".
+PyMOL>ray
+ RayRenderTest: obtained 166 graphics primitives.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
