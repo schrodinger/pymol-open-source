@@ -4149,6 +4149,26 @@ static PyObject *Cmd_Start(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *Cmd_Idle(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  int result = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    PLockAPIAndUnblock(G);
+    PyMOL_Idle(G->PyMOL); 
+    PBlockAndUnlockAPI(G);
+  }
+  return APIResultCode(result);
+}
+
 static PyObject *Cmd_Stop(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -8071,6 +8091,7 @@ static PyMethodDef Cmd_methods[] = {
   {"_del",                  Cmd_Del,                 METH_VARARGS },
   {"_get_global_C_object",  Cmd_GetGlobalCObject,    METH_VARARGS },
   {"_new",                  Cmd_New,                 METH_VARARGS },
+  {"_idle",                 Cmd_Idle,                METH_VARARGS },
   {"_start",                Cmd_Start,               METH_VARARGS },
   {"_stop",                 Cmd_Stop,                METH_VARARGS },
   {"accept",	            CmdAccept,               METH_VARARGS },

@@ -1019,7 +1019,7 @@ SEE ALSO
             _self.lock(_self)
             cpy = copy.deepcopy(pymol._scene_dict)
         finally:
-            _self.unlock(_self)
+            _self.unlock(r,_self)
         return cpy
 
     scene_sort_dict = {

@@ -16,7 +16,8 @@ class Cmd:
         # private data
     
         self.color_sc = None
-
+        self.reaper = None
+        
         # CONSTANTS (pymol/constants.py)
 
         self.DEFAULT_ERROR = global_cmd.DEFAULT_ERROR
@@ -79,8 +80,12 @@ class Cmd:
             self.lock_api_status = global_cmd._pymol.lock_api_status
             self.lock_api_glut = global_cmd._pymol.lock_api_glut
 
+<<<<<<< .mine
+        self.lock_api_allow_flush = 1
+=======
         self.lock_api_allow_flush = 1            
 
+>>>>>>> .r3155
         self.lock_c = global_cmd.lock_c
         self.unlock_c = global_cmd.unlock_c
         self.lock_status_attempt = global_cmd.lock_status_attempt
@@ -106,6 +111,10 @@ class Cmd:
         self.is_error = global_cmd.is_error
         self.is_ok = global_cmd.is_ok
 
+        # from pymol/feedingback.py
+
+        self._feedback = global_cmd._feedback
+        
         # from pymol/internal.py
         
         self._adjust_coord = global_cmd._adjust_coord
@@ -150,7 +159,7 @@ class Cmd:
         keywords.fix_dict(self.keyword)
 
         self.help_only = keywords.get_help_only_keywords()
-        help_sc = self.Shortcut(self.keyword.keys()+self.help_only.keys())
+        self.help_sc = self.Shortcut(self.keyword.keys()+self.help_only.keys())
         
 # PUBLIC API METHODS which expect "self" as the first argument
 
@@ -465,10 +474,6 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.get_frame, a, k)
     
-    def get_state(self, *a, **k):
-        k['_self']=self
-        return apply(global_cmd.get_state, a, k)
-    
     def get_model(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_model, a, k)
@@ -509,6 +514,18 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.get_povray, a, k)
     
+    def get_progress(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_progress, a, k)
+    
+    def get_renderer(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_renderer, a, k)
+    
+    def get_scene_dict(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_scene_dict, a, k)
+    
     def get_session(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_session, a, k)
@@ -540,6 +557,10 @@ class Cmd:
     def get_setting_text(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_setting_text, a, k)
+    
+    def get_state(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_state, a, k)
     
     def get_symmetry(self, *a, **k):
         k['_self']=self
@@ -880,6 +901,10 @@ class Cmd:
     def read_pdbstr(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.read_pdbstr, a, k)
+    
+    def ready(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.ready, a, k)
     
     def rebuild(self, *a, **k):
         k['_self']=self

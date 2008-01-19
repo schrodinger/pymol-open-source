@@ -358,7 +358,7 @@ PYMOL API
     cmd.quit()
         '''
         if thread.get_ident() == pymol.glutThread:
-            _self._quit()
+            _self._quit(_self)
         else:
             try:
                 _self.lock(_self)
@@ -369,7 +369,7 @@ PYMOL API
                 except SystemExit:
                     pass
             finally:
-                _self.unlock(_self=_self)
+                _self.unlock(-1,_self=_self)
         return None
 
     def delete(name,_self=cmd):

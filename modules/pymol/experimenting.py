@@ -28,7 +28,7 @@ if __name__=='pymol.experimenting':
             _self.lock(_self)
             r = _cmd.get_bond_print(_self._COb,str(obj),int(max_bond),int(max_type))
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
@@ -38,7 +38,7 @@ if __name__=='pymol.experimenting':
             _self.lock(_self)   
             r = _cmd.fit(_self._COb,a,b,2)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
@@ -63,7 +63,7 @@ USAGE
             _self.lock(_self)
             r = _cmd.spheroid(_self._COb,str(object),int(average))
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
@@ -80,7 +80,7 @@ DESCRIPTION
             _self.lock(_self)
             r = _cmd.mem(_self._COb)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
@@ -184,7 +184,7 @@ DESCRIPTION
             _self.lock(_self)
             r = _cmd.dump(_self._COb,str(fnam),obj)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
@@ -204,7 +204,7 @@ DESCRIPTION
             _self.lock(_self)   
             r=_cmd.test(_self._COb,int(group),int(index))
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
@@ -214,7 +214,7 @@ DESCRIPTION
             _self.lock(_self)   
             r = _cmd.import_coords(_self._COb,str(obj),int(state)-1,mechio)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
@@ -239,6 +239,6 @@ DESCRIPTION
             else:
                 print "Error: invalid arguments."
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r

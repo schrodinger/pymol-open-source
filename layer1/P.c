@@ -100,13 +100,13 @@ void PRunStringModule(PyMOLGlobals *G,char *str);
 
 void PLockStatus(PyMOLGlobals *G) /* assumes we have the GIL */
 {
-  PXDecRef(PyObject_CallFunction(G->P_inst->lock_status,NULL));
+  PXDecRef(PyObject_CallFunction(G->P_inst->lock_status,"O",G->P_inst->cmd));
 }
 
 int PLockStatusAttempt(PyMOLGlobals *G) /* assumes we have the GIL */
 {
   int result = true;
-  PyObject *got_lock = PyObject_CallFunction(G->P_inst->lock_status_attempt,NULL);
+  PyObject *got_lock = PyObject_CallFunction(G->P_inst->lock_status_attempt,"O",G->P_inst->cmd);
   if(got_lock) {
     if(!PyInt_AsLong(got_lock)) {
       result = false;
@@ -117,17 +117,17 @@ int PLockStatusAttempt(PyMOLGlobals *G) /* assumes we have the GIL */
 }
 void PUnlockStatus(PyMOLGlobals *G) /* assumes we have the GIL */
 {
-  PXDecRef(PyObject_CallFunction(G->P_inst->unlock_status,NULL));
+  PXDecRef(PyObject_CallFunction(G->P_inst->unlock_status,"O",G->P_inst->cmd));
 }
 
 static void PLockGLUT(PyMOLGlobals *G) /* assumes we have the GIL */
 {
-  PXDecRef(PyObject_CallFunction(G->P_inst->lock_glut,NULL));
+  PXDecRef(PyObject_CallFunction(G->P_inst->lock_glut,"O",G->P_inst->cmd));
 }
 
 static void PUnlockGLUT(PyMOLGlobals *G) /* assumes we have the GIL */
 {
-  PXDecRef(PyObject_CallFunction(G->P_inst->unlock_glut,NULL));
+  PXDecRef(PyObject_CallFunction(G->P_inst->unlock_glut,"O",G->P_inst->cmd));
 }
 
 unsigned int P_glut_thread_id;
@@ -927,7 +927,7 @@ void PUnlockAPIAsGlut(PyMOLGlobals *G) /* must call with unblocked interpreter *
     " PUnlockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
   PBlock(G);
-  PXDecRef(PyObject_CallFunction(G->P_inst->unlock,NULL)); /* NOTE this may flush the command buffer! */
+  PXDecRef(PyObject_CallFunction(G->P_inst->unlock,"iO",0,G->P_inst->cmd)); /* NOTE this may flush the command buffer! */
   PLockStatus(G);
   PyMOL_PopValidContext(G->PyMOL);
   PUnlockStatus(G);
@@ -941,7 +941,7 @@ void PUnlockAPIAsGlutNoFlush(PyMOLGlobals *G) /* must call with unblocked interp
     " PUnlockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
   PBlock(G);
-  PXDecRef(PyObject_CallFunction(G->P_inst->unlock,"i",-1)); /* prevents flushing of the buffer */
+  PXDecRef(PyObject_CallFunction(G->P_inst->unlock,"iO",-1,G->P_inst->cmd)); /* prevents flushing of the buffer */
   PLockStatus(G);
   PyMOL_PopValidContext(G->PyMOL);
   PUnlockStatus(G);
@@ -955,11 +955,11 @@ static int get_api_lock(PyMOLGlobals *G,int block_if_busy)
 
   if(block_if_busy) {
     
-    PXDecRef(PyObject_CallFunction(G->P_inst->lock,NULL));
+    PXDecRef(PyObject_CallFunction(G->P_inst->lock,"O",G->P_inst->cmd));
 
   } else { /* not blocking if PyMOL is busy */
 
-    PyObject *got_lock = PyObject_CallFunction(G->P_inst->lock_attempt,NULL);
+    PyObject *got_lock = PyObject_CallFunction(G->P_inst->lock_attempt,"O",G->P_inst->cmd);
     
     if(got_lock) {
       if(!PyInt_AsLong(got_lock)) {
@@ -969,7 +969,7 @@ static int get_api_lock(PyMOLGlobals *G,int block_if_busy)
         PUnlockStatus(G);
         
         if(result) { /* didn't get lock, but not busy, so block and wait for lock */
-          PXDecRef(PyObject_CallFunction(G->P_inst->lock,NULL));
+          PXDecRef(PyObject_CallFunction(G->P_inst->lock,"O",G->P_inst->cmd));
         }
       }
       Py_DECREF(got_lock);
@@ -1014,7 +1014,7 @@ int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy)
       "-PLockAPIAsGlut-DEBUG: glut_thread_keep_out 0x%x\n",PyThread_get_thread_ident()
       ENDFD;
     
-    PXDecRef(PyObject_CallFunction(G->P_inst->unlock,"i",-1)); /* prevent buffer flushing */
+    PXDecRef(PyObject_CallFunction(G->P_inst->unlock,"iO",-1,G->P_inst->cmd)); /* prevent buffer flushing */
 #ifndef WIN32
     { 
       struct timeval tv;
@@ -1558,7 +1558,7 @@ void PGetOptions(CPyMOLOptions *rec)
   }
 }
 
-void PRunStringModule(PyMOLGlobals *G,char *str) /* runs a string in the namespace of the pymol instance */
+void PRunStringModule(PyMOLGlobals *G,char *str) /* runs a string in the namespace of the pymol global module */
 {
   PXDecRef(PyObject_CallFunction(G->P_inst->exec,"Os",P_pymol,str));
 }
@@ -1850,7 +1850,7 @@ void PExit(PyMOLGlobals *G,int code)
 
 void PParse(PyMOLGlobals *G,char *str) 
 {
-  OrthoCommandIn(G,str);
+  OrthoCommandIn(G,str); 
 }
 
 void PDo(PyMOLGlobals *G,char *str) /* assumes we already hold the re-entrant API lock */
@@ -1945,8 +1945,13 @@ void PFlush(PyMOLGlobals *G) {
   char buffer[OrthoLineLength+1];
   while(OrthoCommandOut(G,buffer)) {
     PBlockAndUnlockAPI(G);
-    
-    PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0));
+    if(PyErr_Occurred()) {
+      PyErr_Print();
+      PRINTFB(G,FB_Python,FB_Errors)
+        " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
+        ENDFB(G);
+    }
+    PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0)); 
     err = PyErr_Occurred();
     if(err) {
       PyErr_Print();
@@ -1967,7 +1972,13 @@ void PFlushFast(PyMOLGlobals *G) {
       " PFlushFast-DEBUG: executing '%s' as thread 0x%x\n",buffer,
       PyThread_get_thread_ident()
       ENDFD;
-    PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0));
+    if(PyErr_Occurred()) {
+      PyErr_Print();
+      PRINTFB(G,FB_Python,FB_Errors)
+        " PFlushFast: Uncaught exception.  PyMOL may have a bug.\n"
+        ENDFB(G);
+    }
+    PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0)); 
     err = PyErr_Occurred();
     if(err) {
       PyErr_Print();
@@ -2050,10 +2061,10 @@ int PAutoBlock(PyMOLGlobals *G)
         " PAutoBlock-DEBUG: clearing 0x%x\n",id
       ENDFD;
 
-      PXDecRef(PyObject_CallFunction(G->P_inst->lock_c,NULL));
+      PXDecRef(PyObject_CallFunction(G->P_inst->lock_c,"O",G->P_inst->cmd));
       SavedThread[a].id = -1; 
       /* this is the only safe time we can change things */
-      PXDecRef(PyObject_CallFunction(G->P_inst->unlock_c,NULL));
+      PXDecRef(PyObject_CallFunction(G->P_inst->unlock_c,"O",G->P_inst->cmd));
       
       PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: blocked 0x%x (0x%x, 0x%x, 0x%x)\n",PyThread_get_thread_ident(),
@@ -2096,7 +2107,7 @@ void PUnblock(PyMOLGlobals *G)
     ENDFD;
 
   /* reserve a space while we have a lock */
-  PXDecRef(PyObject_CallFunction(G->P_inst->lock_c,NULL));
+  PXDecRef(PyObject_CallFunction(G->P_inst->lock_c,"O",G->P_inst->cmd));
   a = MAX_SAVED_THREAD-1;
   while(a) {
     if((SavedThread+a)->id == -1 ) {
@@ -2111,7 +2122,7 @@ void PUnblock(PyMOLGlobals *G)
   PRINTFD(G,FB_Threads)
     " PUnblock-DEBUG: 0x%x stored in slot %d\n",(SavedThread+a)->id,a
     ENDFD;
-  PXDecRef(PyObject_CallFunction(G->P_inst->unlock_c,NULL));
+  PXDecRef(PyObject_CallFunction(G->P_inst->unlock_c,"O",G->P_inst->cmd));
 #ifdef PYMOL_NEW_THREADS
   PyThreadState_Swap(NULL);
   PyEval_ReleaseLock();
@@ -2133,12 +2144,12 @@ void PAutoUnblock(PyMOLGlobals *G,int flag)
 void PBlockAndUnlockAPI(PyMOLGlobals *G)
 {
   PBlock(G);
-  PXDecRef(PyObject_CallFunction(G->P_inst->unlock,NULL));
+  PXDecRef(PyObject_CallFunction(G->P_inst->unlock,"iO",0,G->P_inst->cmd));
 }
 
 void PLockAPIAndUnblock(PyMOLGlobals *G)
 {
-  PXDecRef(PyObject_CallFunction(G->P_inst->lock,NULL));
+  PXDecRef(PyObject_CallFunction(G->P_inst->lock,"O",G->P_inst->cmd));
   PUnblock(G);
 }
 
@@ -2168,6 +2179,8 @@ static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
       if(Feedback(SingletonPyMOLGlobals,FB_Python,FB_Output)) {
         OrthoAddOutput(SingletonPyMOLGlobals,str);
       }
+    } else {
+      printf("PCatchWrite: SingletonPyMOLGlobals is NULL\n");
     }
   }
   return PConvAutoNone(Py_None);
@@ -2189,6 +2202,8 @@ static PyObject *PCatchWritelines(PyObject *self, 	PyObject *args)
             if(Feedback(SingletonPyMOLGlobals,FB_Python,FB_Output)) {
               OrthoAddOutput(SingletonPyMOLGlobals,str);
             }
+          } else {
+            printf("PCatchWrite: SingletonPyMOLGlobals is NULL\n");
           }
         }
         Py_XDECREF(obj);

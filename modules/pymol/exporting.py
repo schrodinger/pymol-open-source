@@ -277,11 +277,12 @@ SEE ALSO
                     _self.lock(_self)
                     st = _cmd.get_pdb(_self._COb,"("+str(selection)+")",int(state)-1,0,
                                       str(ref),int(ref_state)-1,int(quiet))
+                    if st != None:
+                        r = DEFAULT_SUCCESS                    
                 finally:
-                    _self.unlock(_self=_self)
+                    _self.unlock(r,_self=_self)
                 f.write(st)
                 f.close()
-                r = DEFAULT_SUCCESS
                 if not quiet:
                     print " Save: wrote \""+filename+"\"."
         elif format=='aln':
@@ -289,13 +290,14 @@ SEE ALSO
             try:
                 _self.lock(_self)
                 st = _cmd.get_seq_align_str(_self._COb,str(selection),int(state)-1,0,int(quiet))
+                if st != None:
+                    r = DEFAULT_SUCCESS
             finally:
-                _self.unlock(_self=_self)
+                _self.unlock(r,_self)
             if st!=None:
                 f=open(filename,"w")
                 f.write(st)
                 f.close()
-                r = DEFAULT_SUCCESS
                 if not quiet:
                     print " Save: wrote \""+filename+"\"."
             else:
@@ -308,11 +310,12 @@ SEE ALSO
                     _self.lock(_self)
                     st = _cmd.get_pdb(_self._COb,"("+str(selection)+")",int(state)-1,1,
                                       str(ref),int(ref_state)-1,int(quiet))
+                    if st != None:
+                        r = DEFAULT_SUCCESS
                 finally:
-                    _self.unlock(_self=_self)
+                    _self.unlock(r,_self)
                 f.write(st)
                 f.close()
-                r = DEFAULT_SUCCESS
                 if not quiet:
                     print " Save: wrote \""+filename+"\"."
         elif format=='pkl': # python binary

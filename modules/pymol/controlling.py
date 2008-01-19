@@ -453,6 +453,7 @@ USAGE
 
 '''
         # NOTE: PyMOL automatically runs this routine upon start-up
+        r = DEFAULT_ERROR
         try:
             _self.lock(_self)
 
@@ -492,15 +493,18 @@ USAGE
                     _self.set("button_mode",bm)
                 mode_list = mode_dict[mode]
             if mode_list!=None:
+                kw_dict = {'_self':_self}
                 for a in mode_list:
-                    apply(button,a)
+                    apply(button,a,kw_dict)
                 if not quiet:
                     print " mouse: %s"%mode
                 if mode[-7:]!='editing': _self.unpick()
                 if mode[-7:]=='editing': _self.deselect()
+            r = DEFAULT_SUCCESS
         finally:
-            _self.unlock(_self=_self)
-        return DEFAULT_SUCCESS
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException                     
+        return r
             
 
     def edit_mode(active=1,quiet=1,_self=cmd):

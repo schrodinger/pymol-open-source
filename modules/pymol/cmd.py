@@ -116,7 +116,9 @@ if __name__=='pymol.cmd':
 
         from constants import *
         from constants import _load2str
-        
+
+        fb_debug = sys.stderr # can redirect python debugging output elsewhere if desred...
+
         #--------------------------------------------------------------------
         # convenient type and result checking
 

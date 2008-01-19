@@ -20,14 +20,13 @@ from Tkinter import *
 import tkColorChooser
 
 import Pmw
-from pymol import cmd
-import pymol.setting
 import string
 import copy
 
 class NewColor:
     def __init__(self,app,parent):
         self.app = app
+        self.cmd = app.pymol.cmd
         self.parent = parent
         items = []
 
@@ -73,11 +72,11 @@ class ColorEdit:
         if color:
             if color[0]!=None:
                 rgb = color[0]
-                cmd.do("set_color %s,[%5.2f,%5.2f,%5.2f]"%(name,
+                self.cmd.do("set_color %s,[%5.2f,%5.2f,%5.2f]"%(name,
                          float(rgb[0]/255.0),
                          float(rgb[1]/255.0),
                          float(rgb[2]/255.0)))
-                cmd.do("recolor")
+                self.cmd.do("recolor")
                 
 class ColorEditor:
 
@@ -86,7 +85,7 @@ class ColorEditor:
         self.app = app
         self.list = []
 
-        lst = cmd.get_color_indices()
+        lst = self.cmd.get_color_indices()
         lst.sort()
         for a in lst:
             self.list.append("%-30s"%(a[0]))
@@ -132,7 +131,7 @@ class ColorEditor:
             sels = self.dialog.getcurselection()
             if len(sels)!=0:
                 color = string.strip(sels[0])
-                ColorEdit(self.app,color,self,cmd.get_color_tuple(color))
+                ColorEdit(self.app,color,self,self.cmd.get_color_tuple(color))
         else:
             NewColor(self.app,self)
             

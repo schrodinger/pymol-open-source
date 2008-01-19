@@ -25,6 +25,7 @@ import pymol.povray
 
 import threading
 import traceback
+import sys
 
 pymol2_lock = threading.RLock() 
 
@@ -79,10 +80,24 @@ class PyMOL:
             self.chempy = pymol.chempy
             self.bonds = pymol.bonds
             self.models = pymol.models
+
+            self.invocation = pymol.invocation # assigns defaults
+            
         except:
             traceback.print_exc()            
             pymol2_lock.release()
+
+    def start_with_tcltk(self, gui=None):
+        self.start()
+        if gui == None:
+            gui = self.invocation.options.gui
+        poll = 0
+        __import__(gui)
+        sys.modules[gui].__init__(self,poll)
         
+    def idle(self):
+       _cmd._idle(self._COb)
+
     def stop(self):
         _cmd._stop(self._COb)
 

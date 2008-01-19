@@ -3,12 +3,15 @@ import sys
 import cmd
 from cmd import Shortcut, is_string
 from cmd import fb_module, fb_mask, fb_action
+from copy import deepcopy
 
 import _cmd
 import string
 
 def _feedback(module,mask,_self=cmd): # feedback query routine
-    # WARNING: internal routine, subject to change      
+    # WARNING: internal routine, subject to change
+    if not hasattr(_self,'_fb_dict'):
+        _self._fb_dict = deepcopy(_fb_dict)
     r = 0
     module = int(module)
     mask = int(mask)
@@ -17,28 +20,23 @@ def _feedback(module,mask,_self=cmd): # feedback query routine
             _self.lock(_self)
             r = _cmd.feedback(_self._COb,module,mask)
         finally:
-            _self.unlock(-1)
+            _self.unlock(-1,_self)
     else:
-        if fb_dict.has_key(module):
-            r = fb_dict[module]&mask
+        r = _self._fb_dict.get(module,0)&mask
     return r
-
 
 fb_action_sc = Shortcut(fb_action.__dict__.keys())
 
 fb_module_sc = Shortcut(fb_module.__dict__.keys())
 
-
 fb_mask_sc = Shortcut(fb_mask.__dict__.keys())
 
-fb_dict ={}
+_fb_dict = {}
 
 for a in fb_module.__dict__.keys():
     vl = getattr(fb_module,a)
     if vl<0:
-        fb_dict[vl] = 0x1F # default mask
-
-fb_debug = sys.stderr # can redirect python debugging output elsewhere if desred...
+        _fb_dict[vl] = 0x1F # default mask
 
 def feedback(action="?", module="?", mask="?", _self=cmd):
     '''
@@ -77,7 +75,8 @@ EXAMPLES
     r = None
 
     # validate action
-
+    if not hasattr(_self,'_fb_dict'):
+        _self._fb_dict = deepcopy(_fb_dict)
     if action=="?":
         print " feedback: possible actions: \nset, enable, disable"
         act_int = 0
@@ -153,23 +152,23 @@ EXAMPLES
                     _self.lock(_self)
                     r = _cmd.set_feedback(_self._COb,act_int,mod_int,mask_int)
                 finally:
-                    _self.unlock(_self=_self)
+                    _self.unlock(r,_self)
             if mod_int<=0:
                 if mod_int:
                     if act_int==0:
-                        fb_dict[mod_int] = mask_int
+                        _self._fb_dict[mod_int] = mask_int
                     elif act_int==1:
-                        fb_dict[mod_int] = fb_dict[mod_int] | mask_int
+                        _self._fb_dict[mod_int] = _self._fb_dict[mod_int] | mask_int
                     elif act_int==2:
-                        fb_dict[mod_int] = fb_dict[mod_int] & ( 0xFF - mask_int )
+                        _self._fb_dict[mod_int] = _self._fb_dict[mod_int] & ( 0xFF - mask_int )
                 else:
-                    for mod_int in fb_dict.keys():
+                    for mod_int in _self._fb_dict.keys():
                         if act_int==0:
-                            fb_dict[mod_int] = mask_int
+                            _self._fb_dict[mod_int] = mask_int
                         elif act_int==1:
-                            fb_dict[mod_int] = fb_dict[mod_int] | mask_int
+                            _self._fb_dict[mod_int] = _self._fb_dict[mod_int] | mask_int
                         elif act_int==2:
-                            fb_dict[mod_int] = fb_dict[mod_int] & ( 0xFF - mask_int )
+                            _self._fb_dict[mod_int] = _self._fb_dict[mod_int] & ( 0xFF - mask_int )
                 if _feedback(fb_module.feedback,fb_mask.debugging):
                      sys.stderr.write(" feedback: mode %d on %d mask %d\n"%(
                          act_int,mod_int,mask_int))
