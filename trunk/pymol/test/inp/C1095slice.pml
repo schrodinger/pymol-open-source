@@ -6,8 +6,9 @@ set auto_zoom,0
 fragment phe
 map_new pot,coulomb,0.5,phe,5
 
-slice_new slice, pot
 ramp_new ramp, pot
+ray renderer=2
+slice_new slice, pot
 color ramp,slice
 
 set ray_default_renderer,2
