@@ -7,11 +7,13 @@ PyMOL>map_new pot,coulomb,0.5,phe,5
  SelectorMapCoulomb: Total charge is 0.000 for 20 points (20 atoms).
  SelectorMapCoulomb: Evaluating Coulomb potential for grid (no cutoff)...
  Executive: object "pot" created.
+PyMOL>ramp_new ramp, pot
+ Executive: object "ramp" created.
+PyMOL>ray renderer=2
+ RayRenderTest: obtained 116 graphics primitives.
 PyMOL>slice_new slice, pot
  Executive: object "slice" created.
  SliceMap: created "slice".
-PyMOL>ramp_new ramp, pot
- Executive: object "ramp" created.
 PyMOL>color ramp,slice
  Executive: Colored 1 object.
 PyMOL>set ray_default_renderer,2
