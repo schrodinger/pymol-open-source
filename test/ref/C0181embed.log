@@ -13,7 +13,7 @@ PyMOL>show sticks
 PyMOL>set ray_default_renderer,2
  Setting: ray_default_renderer set to 2.
 PyMOL>ray
- RepSurface: 1683 surface points.
+ RepSurface: 1319 surface points.
  RepSurface: 2634 triangles.
  RayRenderTest: obtained 2800 graphics primitives.
 PyMOL>print cmd.get_names()

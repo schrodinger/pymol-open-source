@@ -79,6 +79,8 @@ class Cmd:
             self.lock_api_status = global_cmd._pymol.lock_api_status
             self.lock_api_glut = global_cmd._pymol.lock_api_glut
 
+        self.lock_api_allow_flush = 1            
+
         self.lock_c = global_cmd.lock_c
         self.unlock_c = global_cmd.unlock_c
         self.lock_status_attempt = global_cmd.lock_status_attempt

@@ -146,7 +146,7 @@ PyMOL>flag exfoliate,(*/cb)
  Flag: flag 24 is set in 12 of 107 atoms.
 PyMOL>show surf
 PyMOL>ray
- RepSurface: 1154 surface points.
+ RepSurface: 921 surface points.
  RepSurface: 1838 triangles.
  RayRenderTest: obtained 1529 graphics primitives.
 PyMOL>dele all

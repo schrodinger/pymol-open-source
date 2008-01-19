@@ -1969,11 +1969,7 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
               CGOVertexv(I->debug,I->V+3*a);
               CGOEnd(I->debug);
         */
-          
-        PRINTFB(G,FB_RepSurface,FB_Blather)
-          " RepSurface: %i surface points.\n",I->N
-          ENDFB(G);
-          
+                    
         if(I->N) {
           int repeat_flag=true;
           float min_dot = 0.1F;
@@ -2544,7 +2540,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
         }
       }
    }
-#if 1
+#if 0
    {
      SurfaceJob *surf_job = SurfaceJobNew(G);
 
@@ -2993,9 +2989,9 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
                CGOEnd(I->debug);
          */
 
-         PRINTFB(G,FB_RepSurface,FB_Blather)
-           " RepSurface: %i surface points.\n",I->N
-           ENDFB(G);
+         PRINTFD(G,FB_RepSurface)
+           " RepSurface: %i surface points in refinement pass %d.\n",I->N,refine
+           ENDFD(G);
 
          if(I->N) {
            int repeat_flag=true;
@@ -3224,11 +3220,11 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
 #endif
 
     RepSurfaceColor(I,cs);
-
-    PRINTFD(G,FB_RepSurface)
-      " RepSurfaceNew-DEBUG: %i surface points after coloring.\n",I->N
-      ENDFD;
-
+    
+    PRINTFB(G,FB_RepSurface,FB_Blather)
+      " RepSurface: %i surface points.\n",I->N
+      ENDFB(G);
+    
     OrthoBusyFast(G,3,5);
     if(I->N) {
       if(surface_type!=1) { /* not a dot surface... */
