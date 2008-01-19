@@ -2099,7 +2099,9 @@ static void TriangleBruteForceClosure(TriangleSurfaceRec *II,float *v,float *vn,
 
 
 
-int *TrianglePointsToSurface(PyMOLGlobals *G,float *v,float *vn,int n,float cutoff,int *nTriPtr,int **stripPtr,float *extent)
+int *TrianglePointsToSurface(PyMOLGlobals *G, float *v, float *vn, int n,
+                             float cutoff, int *nTriPtr, int **stripPtr, 
+                             float *extent)
 {
   register TriangleSurfaceRec *I= NULL;
   int *result = NULL;
