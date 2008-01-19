@@ -15,8 +15,6 @@
 # (includes filter)
 
 from Tkinter import *
-from pymol import cmd
-import pymol.setting
 
 # nItem defines the number of label/entry widgets displayed on screen
 # for scrolling.  Change to smaller number if performance is poor.
@@ -25,14 +23,16 @@ nItem = 15
 class SetEditor:
 
     def __init__(self, app):
-
+        self.pymol = app.pymol
+        self.cmd = app.pymol.cmd
+        
         #====================
         # get a list of settings and create dictionary with setting:value items
-        self.list = pymol.setting.get_name_list()
+        self.list = self.pymol.setting.get_name_list()
         self.list.sort()
         self.index = {}
         for i in self.list:
-            self.index[i] = cmd.get(i)
+            self.index[i] = self.cmd.get(i)
 
         #====================
         # create main frames and scale widget to use as scrollbar
@@ -114,9 +114,9 @@ class SetEditor:
             return      # if trying to edit a blank entry
 
         val = entry.get()
-        origVal = cmd.get( lab )
+        origVal = self.cmd.get( lab )
         try:
-            cmd.set( lab, val, quiet=0 )
+            self.cmd.set( lab, val, quiet=0 )
             self.index[lab] = val
         except:
             entry.delete( 0,END )
@@ -127,7 +127,7 @@ class SetEditor:
         val = self.filter.get()
         if not val: self.onResetFilter() # WLD
         newL = []
-        for l in pymol.setting.get_name_list():
+        for l in self.pymol.setting.get_name_list():
             if l.find( val ) != -1:
                 newL.append( l )
 
@@ -138,7 +138,7 @@ class SetEditor:
 
     def onResetFilter(self):
         """reset to full list of pymol settings"""
-        self.list = pymol.setting.get_name_list()
+        self.list = self.pymol.setting.get_name_list()
         self.list.sort()
         self.scale.set(0)
         self.scale.config( to=len(self.list)-nItem )

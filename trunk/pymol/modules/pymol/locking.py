@@ -5,7 +5,7 @@ import threading
 import pymol
 import cmd
 
-from cmd import fb_module, fb_mask, fb_action
+from cmd import fb_module, fb_mask, fb_action, fb_debug
 
 import _cmd
 
@@ -33,10 +33,10 @@ def unlock_glut(_self=cmd):
 
 def lock_without_glut(_self=cmd):
     try:
-        _self.lock_glut()
+        _self.lock_glut(_self)
         _self.lock(_self)
     finally:
-        _self.unlock_glut()
+        _self.unlock_glut(_self)
 
 def lock(_self=cmd): # INTERNAL -- API lock
 #      print " lock: acquiring as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
@@ -57,14 +57,14 @@ def lock_attempt(_self=cmd): # INTERNAL
     return _self.lock_api.acquire(blocking=0)
 
 def block_flush(_self=cmd):
-    lock()
+    lock(_self)
     _self.lock_api_allow_flush = 0
-    unlock()
+    unlock(None,_self)
 
 def unblock_flush(_self=cmd):
-    lock()
+    lock(_self)
     _self.lock_api_allow_flush = 1
-    unlock()
+    unlock(None,_self)
     
 def unlock(result=None,_self=cmd): # INTERNAL
     if (thread.get_ident() == pymol.glutThread):
@@ -82,8 +82,10 @@ def unlock(result=None,_self=cmd): # INTERNAL
         if _self.lock_api_allow_flush:
             if result==None: # don't flush if we have an incipient error (negative input)
                 _cmd.flush_now(_self._COb)
-            elif cmd.is_ok(result):
+                pass
+            elif _self.is_ok(result):
                 _cmd.flush_now(_self._COb)
+                pass
     else:
     #         print "lock: released by 0x%x (not glut), waiting queue"%thread.get_ident()
         _self.lock_api.release()
@@ -98,7 +100,7 @@ def unlock(result=None,_self=cmd): # INTERNAL
                 e.wait(w)
                 del e
                 if w > 0.1: # wait up 0.2 sec max for PyMOL to flush queue
-                    if _self._feedback(fb_module.cmd,fb_mask.debugging):
+                    if _self._feedback(fb_module.cmd,fb_mask.debugging,_self):
                         fb_debug.write("Debug: avoiding possible dead-lock?\n")
    #                      print "dead locked as 0x%x"%thread.get_ident()
                     break

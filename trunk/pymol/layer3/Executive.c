@@ -3318,7 +3318,11 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals *G,PyObject *dict)
   WordType name;
   PyObject *key,*list,*col;
   PyObject *vis_list = NULL;
+#if (PY_MAJOR_VERSION>=2)&&(PY_MINOR_VERSION>=5)
+  size_t pos = 0;
+#else
   int pos = 0;
+#endif
   SpecRec *rec;
   int n_vis;
   int rep;
@@ -3335,7 +3339,6 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals *G,PyObject *dict)
       if(!PConvPyStrToStr(key,name,sizeof(WordType))) {
         ok=false;
       } else {
-        
         rec = ExecutiveFindSpec(G,name);
         if(rec) {
           if(ok) ok = (list!=NULL);

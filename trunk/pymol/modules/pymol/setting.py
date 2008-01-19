@@ -799,7 +799,7 @@ PYMOL API
                         print "Error: unable to read setting value."
                     raise QuietException
             finally:
-                _self.unlock(_self=_self)
+                _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException            
         return r
 
@@ -961,7 +961,7 @@ SEE ALSO
                         print "Error: unable to read setting value."
                     raise QuietException
             finally:
-                _self.unlock(_self=_self)
+                _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException            
         return r
 
@@ -1029,7 +1029,7 @@ SEE ALSO
                             raise QuietException
                         print "Error: unable to unset setting value."
                 finally:
-                    _self.unlock(_self=_self)
+                    _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException            
         return r
     
@@ -1073,7 +1073,7 @@ USAGE
                         raise QuietException
                     print "Error: unable to unset setting value."
             finally:
-                _self.unlock(_self=_self)
+                _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException            
         return r
 
@@ -1099,7 +1099,7 @@ USAGE
             else:
                 value = r[1] # color or string
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if is_ok(r):
             return value
         elif _self._raising(r,_self):
@@ -1156,7 +1156,7 @@ SEE ALSO
             _self.lock(_self)
             r = _cmd.get_setting_text(_self._COb,i,str(selection),state-1)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if is_ok(r) and (r!=None):
             r_str = str(r)
             if len(string.strip(r_str))==0:
@@ -1184,7 +1184,7 @@ SEE ALSO
             _self.lock(_self)
             r = _cmd.get_setting_tuple(_self._COb,i,str(object),int(state)-1)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
     
@@ -1201,7 +1201,7 @@ SEE ALSO
             _self.lock(_self)
             r = _cmd.get_setting_of_type(_self._COb,i,str(object),int(state)-1,1)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
     
@@ -1218,7 +1218,7 @@ SEE ALSO
             _self.lock(_self)
             r = _cmd.get_setting_of_type(_self._COb,i,str(object),int(state)-1,2)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
     
@@ -1235,7 +1235,7 @@ SEE ALSO
             _self.lock(_self)
             r = _cmd.get_setting_of_type(_self._COb,i,str(object),int(state)-1,3)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
 
@@ -1252,17 +1252,17 @@ SEE ALSO
             _self.lock(_self)
             r = _cmd.get_setting_text(_self._COb,i,str(object),int(state)-1)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
 
     def get_setting_updates(_self=cmd): # INTERNAL
         r = []
-        if lock_attempt():
+        if lock_attempt(_self):
             try:
                 r = _cmd.get_setting_updates(_self._COb)
             finally:
-                _self.unlock(_self=_self)
+                _self.unlock(r,_self)
         return r
 
     def get_setting_legacy(name,_self=cmd): # INTERNAL, DEPRECATED
@@ -1271,7 +1271,7 @@ SEE ALSO
             _self.lock(_self)
             r = _cmd.get_setting(_self._COb,name)
         finally:
-            _self.unlock(_self=_self)
+            _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
         return r
 

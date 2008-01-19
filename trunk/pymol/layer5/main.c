@@ -1064,21 +1064,21 @@ void MainDoReshape(int width, int height) /* called internally */
     
     /* if we have a GUI, for a reshape event */
     
-    if(G->HaveGUI) {
+    if(G->HaveGUI && G->ValidContext) {
       p_glutReshapeWindow(width,height);
       glViewport(0, 0, (GLint) width, (GLint) height);
     }
     
-    
-    PyMOL_Reshape(PyMOLInstance, width, height, force);
+    PyMOL_Reshape(G->PyMOL, width, height, force);
     
     if(G->Main) {
       G->Main->DeferReshapeDeferral = 1;
     }
     /* do we need to become full-screen? */
     
-    if(SettingGet(G,cSetting_full_screen))
+    if(SettingGet(G,cSetting_full_screen) && G->HaveGUI && G->ValidContext) {
       p_glutFullScreen();
+    }
   }
 
 }

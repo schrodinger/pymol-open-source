@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-01-18  Warren L. DeLano <warren@delsci.com>	
+
+	* extensive refactoring for PyMOL2 & ActiveX
+	
 2008-01-16  Warren L. DeLano <warren@delsci.com>	
 
 	* fixed surface_type=1, broken in the previous beta

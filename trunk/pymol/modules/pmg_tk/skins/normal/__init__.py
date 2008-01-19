@@ -339,7 +339,7 @@ class Normal(PMGSkin):
         if self.focus_entry:
             self.focus_entry=0
             self.entry.focus_set()
-        for a in self.cmd.get_feedback():
+        for a in self.cmd._get_feedback(self.cmd):
             self.output.insert(END,"\n")
             self.output.insert(END,a)
             self.output.see(END)
@@ -802,7 +802,7 @@ class Normal(PMGSkin):
 
         self.toggleBalloonVar = IntVar()
         self.toggleBalloonVar.set(0)
-        self.setting = Setting()
+        self.setting = Setting(self.app)
 
 #      self.menuBar.addmenuitem('Help', 'separator', '')
         
@@ -2411,6 +2411,7 @@ class Normal(PMGSkin):
 
         PMGSkin.__init__(self,app)
         Normal.appversion = app.pymol.cmd.get_version()[0]
+        self.app = app
         self.save_file = ''
         self.cmd = app.pymol.cmd
         self.util = app.pymol.util
