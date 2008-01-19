@@ -4,8 +4,10 @@
 
 set auto_zoom,0
 fragment phe
-map_new pot,coulomb,0.5,phe,5
+ray renderer=2
 
+map_new pot,coulomb,0.5,phe,5
+ray renderer=2
 ramp_new ramp, pot
 ray renderer=2
 slice_new slice, pot
