@@ -12,6 +12,7 @@ cmd._dump_floats(cmd.get_view(0))
 scene 1,store
 
 load dat/pept.pdb
+ray
 cmd._dump_floats(cmd.get_view(0))
 scene 2,store
 
