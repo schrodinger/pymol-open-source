@@ -1544,6 +1544,9 @@ typedef struct {
   float maxVdw;
   int allVisibleFlag;
 
+  int nPresent;
+  int *presentVla;
+
   int solventSphereIndex, sphereIndex;
 
   int surfaceType;
@@ -1551,7 +1554,7 @@ typedef struct {
   float probeRadius, probeRadMore, probeRadLess, probeRadLess2;
   float carveCutoff;
   float *carveVla;
-
+  
   int surfaceMode;
   int surfaceSolvent;
   int cavityCull;
@@ -1581,6 +1584,7 @@ static void SurfaceJobFree(PyMOLGlobals *G, SurfaceJob *I)
 {
   SurfaceJobPurgeResult(G,I);
   VLAFreeP(I->coord);
+  VLAFreeP(I->presentVla);
   VLAFreeP(I->atomInfo);
   VLAFreeP(I->carveVla);
   OOFreeP(I);
@@ -1591,7 +1595,7 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
   int ok = true;
   int MaxN;
   int n_index = VLAGetSize(I->atomInfo);
-
+  int n_present = I->nPresent;
   SphereRec *sp = G->Sphere->Sphere[I->sphereIndex];
   SphereRec *ssp = G->Sphere->Sphere[I->solventSphereIndex];
 
@@ -1599,7 +1603,7 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
 
   {
     /* compute limiting storage requirements */
-    int tmp = n_index;
+    int tmp = n_present;
     if(tmp<1) tmp=1;
     if(sp->nDot<ssp->nDot)
       MaxN = tmp*ssp->nDot;
@@ -1627,12 +1631,13 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
     int surface_type = I->surfaceType;
     float point_sep = I->pointSep;
     float *I_coord = I->coord;
+    int *present_vla = I->presentVla;
     SurfaceJobAtomInfo *I_atom_info = I->atomInfo;
       
     I->N=0;
     
     sol_dot = SolventDotNew(G,I->coord, I->atomInfo, probe_radius,
-                            ssp, NULL,
+                            ssp, present_vla,
                             circumscribe, I->surfaceMode, I->surfaceSolvent,
                             I->cavityCull, I->allVisibleFlag, I->maxVdw);
     
@@ -1741,9 +1746,11 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
                       register int j=map->EList[i++];
                       while(j>=0) {
                         SurfaceJobAtomInfo *atom_info = I_atom_info + j;
-                        if(within3f(I_coord+3*j,v,atom_info->vdw+probe_rad_more)) {
-                          flag=false;
-                          break;
+                        if((!present_vla)||present_vla[j]) {
+                          if(within3f(I_coord+3*j,v,atom_info->vdw+probe_rad_more)) {
+                            flag=false;
+                            break;
+                          }
                         }
                         j=map->EList[i++];
                       }
@@ -1910,7 +1917,7 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
           /* combine scribing with an atom proximity cleanup pass */
             
           int *dot_flag=Calloc(int,I->N);
-          MapType *map = MapNewFlagged(G,I->maxVdw+probe_radius,I_coord,n_index,NULL,NULL);
+          MapType *map = MapNewFlagged(G,I->maxVdw+probe_radius,I_coord,n_index,NULL,present_vla);
           int a;
           MapSetupExpress(map); 
           v=I->V;
@@ -1920,9 +1927,11 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
               register int j=map->EList[i++];
               while(j>=0) {
                 SurfaceJobAtomInfo *atom_info = I_atom_info + j;
-                if(within3f(I_coord+3*j,v,atom_info->vdw+cutoff)) { 
-                  dot_flag[a] = true;
-                  }
+                 if((!present_vla)||present_vla[j]) {
+                   if(within3f(I_coord+3*j,v,atom_info->vdw+cutoff)) { 
+                     dot_flag[a] = true;
+                   }
+                 }
                 j=map->EList[i++];
               }
             }
@@ -2114,9 +2123,9 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
             trim_cutoff*=1.5;
           }
           while(repeat_flag) {
-            repeat_flag=false;
             int a;
             MapType *map = MapNew(G,neighborhood,I->V,I->N,NULL);
+            repeat_flag=false;
           
             for(a=0;a<I->N;a++) dot_flag[a]=1;
             MapSetupExpress(map);		  
@@ -2540,7 +2549,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
         }
       }
    }
-#if 0
+#if 1
    {
      SurfaceJob *surf_job = SurfaceJobNew(G);
 
@@ -2548,11 +2557,13 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
 
        surf_job->maxVdw = I->max_vdw;
        surf_job->allVisibleFlag = I->allVisibleFlag;
-
+       
        surf_job->atomInfo = atom_info; atom_info = NULL;
-
-       if(present_vla) { /* implies that n_present < cs->NIndex, so
-                            eliminate irrelevant atoms & coordinates */
+       
+       surf_job->nPresent = n_present;
+       if(present_vla && optimize) {
+         /* implies that n_present < cs->NIndex, so eliminate
+            irrelevant atoms & coordinates if we are optimizing subsets */
          surf_job->coord = VLAlloc(float, n_present * 3);
          {
            int a;
@@ -2566,20 +2577,22 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
                copy3f(v_src,v_dst);
                v_dst+=3;
                if(ai_dst!=ai_src)
-                 *(ai_dst++) = *ai_src;
+                 *ai_dst = *ai_src;
+               ai_dst++;
              }
              v_src+=3;
              ai_src++;
            }
          }
          VLASetSize(surf_job->atomInfo,n_present);
+         
        } else {
+         surf_job->presentVla = present_vla; present_vla = NULL;
          surf_job->coord = VLAlloc(float, cs->NIndex*3);
          if(surf_job->coord)
            UtilCopyMem(surf_job->coord, cs->Coord, sizeof(float)*3*cs->NIndex);
        }
 
-        
        surf_job->sphereIndex = sphere_idx;
        surf_job->solventSphereIndex = solv_sph_idx;
     
@@ -3319,7 +3332,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals *G,
                 SurfaceJobAtomInfo *j_atom_info = atom_info + j;
                 if(j>a) /* only check if this is atom trails */
                   if((!present)||present[j]) {
-                    if((j_atom_info->vdw == j_atom_info->vdw)) { /* handle singularities */
+                    if((j_atom_info->vdw == a_atom_info->vdw)) { /* handle singularities */
                       float *v1 = coord+3*j;
                       if((v0[0]==v1[0]) &&
                          (v0[1]==v1[1]) &&
@@ -3359,7 +3372,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals *G,
                               break;
                             }
                         }
-                }
+                    }
                     j=map->EList[i++];
                   }
                 }
