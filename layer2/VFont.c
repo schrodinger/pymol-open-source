@@ -176,7 +176,11 @@ static int VFontRecLoad(PyMOLGlobals *G,VFontRec *I,PyObject *dict)
   int ok=true;
   PyObject *key,*char_list;
   PyObject *stroke_list = NULL;
+#if (PY_MAJOR_VERSION>=2)&&(PY_MINOR_VERSION>=5)
+  size_t pos = 0;
+#else
   int pos = 0;
+#endif
   unsigned char code[2];
   float adv;
   int n_float;
