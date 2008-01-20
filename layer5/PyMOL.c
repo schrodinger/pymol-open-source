@@ -3559,7 +3559,6 @@ void PyMOL_SetInterrupt(CPyMOL *I, int value)
   I->InterruptFlag = value;
 }
 
-
 void PyMOL_Drag(CPyMOL *I,int x, int y, int modifiers)
 {
   PYMOL_API_LOCK

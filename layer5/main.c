@@ -534,7 +534,7 @@ int MainSavingUnderWhileIdle(void)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   CMain *I = G->Main;
-  return(I->IdleMode>3);
+  return(I && (I->IdleMode>3));
 }
 /*========================================================================*/
 void MainSetWindowVisibility(int mode)
