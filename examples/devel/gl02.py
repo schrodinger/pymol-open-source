@@ -5,6 +5,8 @@ from pymol import cmd
 # this is an example of creating a callback object which
 # uses GL arrays.  Requires Numeric Python:
 
+# NOTE: NUMERIC NOT SUPPORTED BY PYMOL 1.1 and up
+
 from Numeric import *
 
 # define a callback object
@@ -47,6 +49,7 @@ class myCallback(Callback):
    def get_extent(self):
       return [[0.0,0.0,-1.0],
               [6.3,1.0,1.0]]
+
 
 # load it into PyMOL
 

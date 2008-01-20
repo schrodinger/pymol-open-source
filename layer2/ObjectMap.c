@@ -4960,7 +4960,6 @@ static int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyOb
   MyArrayObject *pao;
 #endif
   
-  
 #ifdef _PYMOL_NUMPY
   pao = (MyArrayObject*)ary;
 #endif

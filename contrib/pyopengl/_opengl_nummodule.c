@@ -1,7 +1,10 @@
 #ifdef _PYMOL_WIN32
 #include"os_predef.h"
 #endif
-#ifdef _PYMOL_NUMPY
+#if 0 
+/* we no longer support numpy with this ancient version of PyOpenGL */
+def _PYMOL_NUMPY
+*/
 
 #define NUMERIC
 #include "_openglmodule.c"
