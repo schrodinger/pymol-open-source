@@ -4,6 +4,12 @@ CHANGE LOG
 
 2008-01-18  Warren L. DeLano <warren@delsci.com>	
 
+	* improved Python 2.5 / 64-bit compatibility
+
+	* migrated to numpy
+	
+2008-01-18  Warren L. DeLano <warren@delsci.com>	
+
 	* extensive refactoring for PyMOL2 & ActiveX
 	
 2008-01-16  Warren L. DeLano <warren@delsci.com>	
