@@ -12,7 +12,10 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-from Numeric import *
+#from Numeric import *
+
+from numpy import *
+import copy
 
 class Brick:
     
@@ -36,7 +39,7 @@ class Brick:
             1 + int(self.range[2]/grid[2])
             ]
         self.grid = copy.deepcopy(grid)
-        self.lvl = zeros(self.dim,Float)
+        self.lvl = zeros(self.dim,float)
         
         
 
