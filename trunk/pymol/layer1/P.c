@@ -1836,7 +1836,9 @@ void PExit(PyMOLGlobals *G,int code)
   ExecutiveDelete(G,"all");
   PBlock(G);
 #ifndef _PYMOL_NO_MAIN
-  MainFree();
+  if(G->Main) {
+    MainFree();
+  }
 #endif
 
   /* we're having trouble with threading errors after calling Py_Exit,

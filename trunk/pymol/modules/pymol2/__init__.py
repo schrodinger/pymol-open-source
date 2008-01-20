@@ -87,21 +87,36 @@ class PyMOL:
             traceback.print_exc()            
             pymol2_lock.release()
 
-    def start_with_tcltk(self, gui=None):
+    def startWithTclTk(self, gui = None, skin=None):
         self.start()
         if gui == None:
             gui = self.invocation.options.gui
+        if skin == None:
+            skin = self.invocation.options.skin
         poll = 0
         __import__(gui)
-        sys.modules[gui].__init__(self,poll)
+        sys.modules[gui].__init__(self,poll,skin)
         
-    def idle(self):
-       _cmd._idle(self._COb)
-
     def stop(self):
         _cmd._stop(self._COb)
 
+    def idle(self):
+        return _cmd._idle(self._COb)
 
+    def reshape(self, width, height, force=0):
+        _cmd._reshape(self._COb,width,height,force)
+
+    def getRedisplay(self,reset):
+        return _cmd._getRedisplay(self._COb,reset)
+
+    def draw(self):
+        _cmd._draw(self._COb)
+    
+    def button(self,button,state,x,y,modifiers):
+        _cmd._button(self._COb,button,state,x,y,modifiers)
+
+    def drag(self,x,y,modifiers):
+        _cmd._drag(self._COb,x,y,modifiers)
 
         
     

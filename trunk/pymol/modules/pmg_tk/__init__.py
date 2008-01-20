@@ -28,17 +28,16 @@ if sys.platform=='win32':
         if not os.environ.has_key('TCL_LIBRARY'):
             os.environ['TCL_LIBRARY']='c:\\python21\\tcl\\tcl8.3'
                 
-def run(pymol_instance,poll=0):
+def run(pymol_instance,poll=0,skin=None):
     try:
         if not hasattr(sys,"argv"):
             sys.argv=["pymol"]
-        PMGApp(pymol_instance).run(poll)
+        PMGApp(pymol_instance,skin).run(poll)
     except:
         traceback.print_exc()
         
-def __init__(pymol_instance,poll=0):
-
-    t = threading.Thread(target=run,args=(pymol_instance,poll))
+def __init__(pymol_instance,poll=0,skin=None):
+    t = threading.Thread(target=run,args=(pymol_instance,poll,skin))
     t.setDaemon(1)
     t.start()
 

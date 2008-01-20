@@ -4120,7 +4120,7 @@ static PyObject *Cmd_Start(PyObject *self, PyObject *args)
   ok = PyArg_ParseTuple(args,"OO",&self,&cmd);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
-    ok = (G!=NULL);
+    ok = (G && G->PyMOL);
   } else {
     API_HANDLE_ERROR;
   }
@@ -4149,6 +4149,23 @@ static PyObject *Cmd_Start(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *Cmd_Stop(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  ok = PyArg_ParseTuple(args,"O",&self);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G && G->PyMOL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    PyMOL_Stop(G->PyMOL);
+  }
+  return APIResultOk(ok);
+}
+
 static PyObject *Cmd_Idle(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -4157,31 +4174,115 @@ static PyObject *Cmd_Idle(PyObject *self, PyObject *args)
   ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
-    ok = (G!=NULL);
+    ok = (G && G->PyMOL);
   } else {
     API_HANDLE_ERROR;
   }
   if(ok) {
     PLockAPIAndUnblock(G);
-    PyMOL_Idle(G->PyMOL); 
+    result = PyMOL_Idle(G->PyMOL);
     PBlockAndUnlockAPI(G);
   }
   return APIResultCode(result);
 }
 
-static PyObject *Cmd_Stop(PyObject *self, PyObject *args)
+static PyObject *Cmd_Reshape(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  int width,height,force;
+  ok = PyArg_ParseTuple(args,"Oiii",&self,&width,&height,&force);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G && G->PyMOL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    PLockAPIAndUnblock(G);
+    PyMOL_Reshape(G->PyMOL,width,height,force);
+    PBlockAndUnlockAPI(G);
+  }
+  return APIResultOk(ok);
+}
+
+static PyObject *Cmd_GetRedisplay(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  int result = false;
+  int reset;
+  ok = PyArg_ParseTuple(args,"Oi",&self,&reset);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G && G->PyMOL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    PLockAPIAndUnblock(G);
+    result = PyMOL_GetRedisplay(G->PyMOL,reset); 
+    PBlockAndUnlockAPI(G);
+  }
+  return APIResultCode(result);
+}
+
+static PyObject *Cmd_Draw(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   int ok = true;
   ok = PyArg_ParseTuple(args,"O",&self);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
-    ok = (G!=NULL);
+    ok = (G && G->PyMOL);
   } else {
     API_HANDLE_ERROR;
   }
   if(ok) {
-    PyMOL_Stop(G->PyMOL);
+    PLockAPIAndUnblock(G);
+    PyMOL_Draw(G->PyMOL); 
+    PBlockAndUnlockAPI(G);
+  }
+  return APIResultOk(ok);
+}
+
+static PyObject *Cmd_Button(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  int button, state;
+  int x, y, modifiers;
+  ok = PyArg_ParseTuple(args,"Oiiiii",&self,&button,&state,&x,&y,&modifiers);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G && G->PyMOL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    PLockAPIAndUnblock(G);
+    PyMOL_Button(G->PyMOL,button,state,x,y,modifiers);
+    PBlockAndUnlockAPI(G);
+  }
+  return APIResultOk(ok);
+}
+
+static PyObject *Cmd_Drag(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  int ok = true;
+  int x, y,  modifiers;
+  ok = PyArg_ParseTuple(args,"Oiii",&self,&x,&y,&modifiers);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G && G->PyMOL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    PLockAPIAndUnblock(G);
+    PyMOL_Drag(G->PyMOL,x,y,modifiers);
+    PBlockAndUnlockAPI(G);
   }
   return APIResultOk(ok);
 }
@@ -5712,7 +5813,9 @@ static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args)
     SceneInvalidateCopy(G,false);
     ExecutiveDrawNow(G); /* TODO STATUS */
 #ifndef _PYMOL_NO_MAIN
-    MainRefreshNow();
+    if(G->Main) {
+      MainRefreshNow();
+    }
 #endif
     PyMOL_PopValidContext(G->PyMOL);
     APIExit(G);
@@ -5879,7 +5982,9 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
     }
     APIEntry(G);
 #ifndef _PYMOL_NO_MAIN
-    MainDoReshape(w,h); /* should be moved into Executive */
+    if(G->Main) {
+      MainDoReshape(w,h); /* should be moved into Executive */
+    }
 #else
     PyMOL_NeedReshape(G->PyMOL,2,0,0,w,h);
 #endif
@@ -8005,29 +8110,36 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
 #ifndef _PYMOL_NO_MAIN
     case 0:
     case 1:
-      MainSetWindowVisibility(int1);
+      if(G->Main) 
+        MainSetWindowVisibility(int1);
       break;
     case 2: /* position */
-      MainSetWindowPosition(G,x,y);
+      if(G->Main) 
+        MainSetWindowPosition(G,x,y);
       break;
     case 3: /* size */
       if((width==0)&&(height==0)&&(x!=0)&&(y!=0)) {
         width=x;
         height=y;
       }
-      MainSetWindowSize(G,width,height);
+      if(G->Main)  
+        MainSetWindowSize(G,width,height);
       break;
     case 4: /* position and size */
-      MainSetWindowPosition(G,x,y);
-      MainSetWindowSize(G,width,height);
+      if(G->Main) {
+        MainSetWindowPosition(G,x,y);
+        MainSetWindowSize(G,width,height);
+      }
       break;
     case 5: /* maximize -- 
                should use the window manager, 
                but GLUT doesn't provide for that */
-      MainMaximizeWindow(G);
+      if(G->Main) 
+        MainMaximizeWindow(G);
       break;
     case 6:
-      MainCheckWindowFit(G);
+      if(G->Main) 
+        MainCheckWindowFit(G);
       break;
 #endif 
 #ifdef _MACPYMOL_XCODE
@@ -8091,9 +8203,14 @@ static PyMethodDef Cmd_methods[] = {
   {"_del",                  Cmd_Del,                 METH_VARARGS },
   {"_get_global_C_object",  Cmd_GetGlobalCObject,    METH_VARARGS },
   {"_new",                  Cmd_New,                 METH_VARARGS },
-  {"_idle",                 Cmd_Idle,                METH_VARARGS },
   {"_start",                Cmd_Start,               METH_VARARGS },
   {"_stop",                 Cmd_Stop,                METH_VARARGS },
+  {"_idle",                 Cmd_Idle,                METH_VARARGS },
+  {"_reshape",              Cmd_Reshape,             METH_VARARGS },
+  {"_getRedisplay",         Cmd_GetRedisplay,        METH_VARARGS },
+  {"_draw",                 Cmd_Draw,                METH_VARARGS },
+  {"_button",               Cmd_Button,              METH_VARARGS },
+  {"_drag",                 Cmd_Drag,                METH_VARARGS },
   {"accept",	            CmdAccept,               METH_VARARGS },
   {"align",	                CmdAlign,                METH_VARARGS },
   {"alter",	                CmdAlter,                METH_VARARGS },

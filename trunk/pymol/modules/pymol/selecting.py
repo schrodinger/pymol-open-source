@@ -39,9 +39,9 @@ PYMOL API
     cmd.deselect()
         '''
         r = DEFAULT_SUCCESS
-        arg = cmd.get_names("selections",enabled_only=1)
+        arg = _self.get_names("selections",enabled_only=1)
         for a in arg:
-            cmd.disable(a)
+            _self.disable(a)
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
     
@@ -209,7 +209,7 @@ PYMOL API
         try:
             _self.lock(_self)   
             r = _cmd.select(_self._COb,"indicate","("+str(selection)+")",1,-1,'')
-            cmd.enable("indicate")
+            _self.enable("indicate")
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  

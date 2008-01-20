@@ -76,7 +76,6 @@ class PMGApp(Pmw.MegaWidget):
         self.root.option_add('*Listbox*selectForeground', 'white')
         
     def quit_app(self):
-        print "here"
         self.pymol.cmd.log_close()
         self.pymol.cmd.quit()  # avoid logging this - it's inconvenient...
 
@@ -176,7 +175,7 @@ class PMGApp(Pmw.MegaWidget):
     def set_skin(self,skin):
         self.skin = skin
     
-    def __init__(self, pymol_instance):
+    def __init__(self, pymol_instance, skin):
 
         self.allow_after = 1 # easy switch for troubleshooting threads
 
@@ -221,16 +220,18 @@ class PMGApp(Pmw.MegaWidget):
             # read the command line arguments regarding:
             # - the size of the root window
             # - the skin to use
-            
+
             inv = sys.modules.get("pymol.invocation",None)
             if inv!=None:
+                if skin == None:
+                    skin = inv.options.skin
                 self.frameWidth = inv.options.win_x + 220
                 self.frameXPos = inv.options.win_px - self.frameXAdjust
                 self.frameHeight = inv.options.ext_y
                 self.frameYPos = inv.options.win_py - (
                          self.frameHeight + self.frameYAdjust)
-                module_path = inv.options.gui +".skins."+ inv.options.skin
-                __import__(inv.options.gui +".skins."+ inv.options.skin)
+                module_path = inv.options.gui +".skins."+ skin
+                __import__(inv.options.gui +".skins."+ skin)
                 sys.modules[module_path].__init__(self)
                 
             # define the size of the root window

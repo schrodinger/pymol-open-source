@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-01-20  Warren L. DeLano <warren@delsci.com>	
+
+	* additional work towards multiple PyMOLs in one Python.
+	
 2008-01-18  Warren L. DeLano <warren@delsci.com>	
 
 	* improved Python 2.5 / 64-bit compatibility (PyDict_Next, etc.)
