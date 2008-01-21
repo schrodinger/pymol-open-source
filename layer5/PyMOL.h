@@ -237,6 +237,11 @@ struct _PyMOLGlobals **PyMOL_GetGlobalsHandle(CPyMOL *I);
 
 void PyMOL_RunTest(CPyMOL *I, int group, int test);
 
+/* for python integration */
+
+int PyMOL_LockAPI(CPyMOL *I,int block_if_busy);
+void PyMOL_UnlockAPI(CPyMOL *I);
+
 /* for Jmol integration */
 
 int PyMOL_NewG3DStream(CPyMOL *I,int **array_ptr);

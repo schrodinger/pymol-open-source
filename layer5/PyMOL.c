@@ -3019,6 +3019,18 @@ struct _PyMOLGlobals **PyMOL_GetGlobalsHandle(CPyMOL *I)
   return &(I->G);
 }
 
+int PyMOL_LockAPI(CPyMOL *I, int block_if_busy)
+{
+  PyMOLGlobals *G = I->G;
+  return PLockAPI(G,block_if_busy);
+}
+
+void PyMOL_UnlockAPI(CPyMOL *I)
+{
+  PyMOLGlobals *G = I->G;
+  PUnlockAPI(G);
+}
+
 void PyMOL_Draw(CPyMOL *I)
 {
   PYMOL_API_LOCK
