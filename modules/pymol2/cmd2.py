@@ -319,6 +319,10 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.delete, a, k)
     
+    def del_colorection(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.del_colorection, a, k)
+    
     def deprotect(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.deprotect, a, k)

@@ -33,6 +33,7 @@ api_list = [
     'cycle_valence',
     'decline',
     'delete',
+    'del_colorection',
     'deprotect',
     'deselect',
     'dihedral',

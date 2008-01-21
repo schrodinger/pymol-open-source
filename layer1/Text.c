@@ -291,11 +291,11 @@ char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,
   CFont *font;
   FontRenderRayFn *fn;
 
-  if((text_id<0)&&(text_id>=I->NActive)) 
+  if((text_id<0)||(text_id>=I->NActive)) 
     text_id=0;
 
   if(st&&(*st)) {
-    if((text_id>=0)||(text_id<I->NActive)) {
+    if((text_id>=0)&&(text_id<I->NActive)) {
       font = I->Active[text_id].Font;
       if(size>=0.0F)
         size*=ray->Magnified;
