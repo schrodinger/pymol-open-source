@@ -1591,7 +1591,6 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
                                  int quiet, int max_skip, int transform, int reset) 
 {
   PyMOLreturn_float_array result;
-  
   PYMOL_API_LOCK
   OrthoLineType s2="",s3="";
   int ok = false;
@@ -1604,12 +1603,13 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
     ok = ((SelectorGetTmp(I->G,source,s2)>=0) &&
           (SelectorGetTmp(I->G,target,s3)>=0));
     if(ok) {
+      const float _0 = 0.0F; /* GCC compiler bug workaround */
+      const float _m1 = -1.0F;
       ok = ExecutiveAlign(I->G,s2,s3,matrix,gap,extend,max_gap,
                           max_skip,cutoff,cycles,quiet,object,
                           source_state-1, target_state-1,
                           &rms_info,transform,reset,
-                          -1.0F, 0.0F, 0.0F, 0.0F, 
-                          0.0F, 0.0F, 0, 0.0F);
+                          _m1, _0, _0, _0, _0, _0, 0, _0);
       if(ok) {
         result.array[0] = rms_info.final_rms;
         result.array[1] = rms_info.final_n_atom;
@@ -1623,12 +1623,14 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
   }
   SelectorFreeTmp(I->G,s2);
   SelectorFreeTmp(I->G,s3);
-  result.status = get_status_ok(ok);
   if(!ok) { 
     VLAFreeP(result.array);
   }
+  result.status = get_status_ok(ok);
+
   PYMOL_API_UNLOCK
   return result;
+ 
 }
 
 PyMOLreturn_status PyMOL_CmdDelete(CPyMOL *I,char *name,int quiet)
