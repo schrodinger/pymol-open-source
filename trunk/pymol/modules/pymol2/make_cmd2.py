@@ -1,5 +1,6 @@
 
 api_list = [
+    '_feedback',
     'accept',
     'alias',
     'align',
@@ -39,6 +40,7 @@ api_list = [
     'dirty',
     'disable',
     'distance',
+    'dist',
     'do',
     'drag',
     'draw',
@@ -82,6 +84,7 @@ api_list = [
     'get_movie_locked',    
     'get_mtl_obj',
     'get_names',
+    'get_names_of_type',
     'get_object_list',
     'get_object_matrix',
     'get_pdbstr',
@@ -132,6 +135,7 @@ api_list = [
     'load',
     'load_embedded',
     'load_model',
+    'load_object',
     'load_png',
     'load_traj',
     'log',

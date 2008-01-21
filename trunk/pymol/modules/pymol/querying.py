@@ -171,17 +171,17 @@ SEE ALSO
         r = DEFAULT_SUCCESS
         if selection1=="(pk1)":
             if "pk1" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors):
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print "cmd-Error: The 'pk1' selection is undefined."
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
             if "pk2" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
                     print "cmd-Error: The 'pk2' selection is undefined."
                 r = DEFAULT_ERROR
         if selection3=="(pk3)":
             if "pk3" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
                     print "cmd-Error: The 'pk3' selection is undefined."
                 r = DEFAULT_ERROR
         if is_ok(r):
@@ -255,22 +255,22 @@ SEE ALSO
         r = DEFAULT_SUCCESS      
         if selection1=="(pk1)":
             if "pk1" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors):
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print "cmd-Error: The 'pk1' selection is undefined."
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
             if "pk2" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
                     print "cmd-Error: The 'pk2' selection is undefined."
                 r = DEFAULT_ERROR
         if selection3=="(pk3)":
             if "pk3" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
                     print "cmd-Error: The 'pk3' selection is undefined."
                 r = DEFAULT_ERROR
         if selection3=="(pk4)":
             if "pk4" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
                     print "cmd-Error: The 'pk4' selection is undefined."
                 r = DEFAULT_ERROR
         if is_ok(r):
@@ -382,12 +382,12 @@ PYMOL API
 
         if selection1=="(pk1)":
             if "pk1" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors):
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):
                     print "cmd-Error: The 'pk1' selection is undefined."
                 r = DEFAULT_ERROR
         if selection2=="(pk2)":
             if "pk2" not in _self.get_names('selections'):
-                if _feedback(fb_module.cmd,fb_mask.errors):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
                     print "cmd-Error: The 'pk2' selection is undefined."
                 r = DEFAULT_ERROR
         if is_ok(r):
@@ -508,7 +508,7 @@ PYMOL API
             raise pymol.CmdException
         else:
             if not quiet:
-                if _feedback(fb_module.cmd,fb_mask.results):
+                if _feedback(fb_module.cmd,fb_mask.results,_self):
                     print " version: %s (%8.6f) %d"%r
         return r
     
@@ -671,7 +671,7 @@ NOTES
             _self.lock(_self)
             r = _cmd.get_color(_self._COb,name,mode)
             if r==None:
-                if _feedback(fb_module.cmd,fb_mask.errors):         
+                if _feedback(fb_module.cmd,fb_mask.errors,_self):         
                     print "cmd-Error: Unknown color '%s'."%name
         finally:
             _self.unlock(r,_self)
@@ -1029,7 +1029,7 @@ SEE ALSO
         finally:
             _self.unlock(r,_self)
         if is_error(r):
-            if _feedback(fb_module.cmd,fb_mask.errors):      
+            if _feedback(fb_module.cmd,fb_mask.errors,_self):      
                 print "cmd-Error: unrecognized name."
         elif not quiet:
             print r
@@ -1053,11 +1053,11 @@ PYMOL API
         l = apply(identify,(selection,mode,1))
         ll = len(l)
         if not ll:
-            if _feedback(fb_module.cmd,fb_mask.errors):
+            if _feedback(fb_module.cmd,fb_mask.errors,_self):
                 print "cmd-Error: atom %s not found by id_atom." % selection
             if _self._raising(): raise pymol.CmdException
         elif ll>1:
-            if _feedback(fb_module.cmd,fb_mask.errors):
+            if _feedback(fb_module.cmd,fb_mask.errors,_self):
                 print "cmd-Error: multiple atoms %s found by id_atom." % selection
             if _self._raising(): raise pymol.CmdException
         else:
@@ -1219,7 +1219,7 @@ USAGE
                                 ("( %6.1f, %6.1f )"%r[a])+
                                 "'%(resn+'-'+resi+':')")
                 _self.feedback('pop')
-        elif _feedback(fb_module.cmd,fb_mask.errors):      
+        elif _feedback(fb_module.cmd,fb_mask.errors,_self):      
             print "cmd-Error: can't compute phi_psi"
         if _raising(r): raise pymol.CmdException
         return r

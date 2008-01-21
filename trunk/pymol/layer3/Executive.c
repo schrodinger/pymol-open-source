@@ -3319,7 +3319,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals *G,PyObject *dict)
   PyObject *key,*list,*col;
   PyObject *vis_list = NULL;
 #if (PY_MAJOR_VERSION>=2)&&(PY_MINOR_VERSION>=5)
-  size_t pos = 0;
+  Py_ssize_t pos = 0;
 #else
   int pos = 0;
 #endif
@@ -4050,9 +4050,11 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict,char *names,int partial,i
     PyDict_SetItemString(dict,"editor",tmp);
     Py_XDECREF(tmp);
     
+#ifndef _PYMOL_NO_MAIN
     tmp = MainAsPyList();
     PyDict_SetItemString(dict,"main",tmp);
     Py_XDECREF(tmp);
+#endif
 
 #ifdef PYMOL_EVAL
     ExecutiveEvalMessage(G,dict);
@@ -4440,6 +4442,8 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,
     if(!G->Option->presentation)
       PParse(G,"viewport"); /* refresh window/internal_gui status */
   }
+ 
+#ifndef _PYMOL_NO_MAIN
   if(ok) {
     tmp = PyDict_GetItemString(session,"main");
     if(tmp) {
@@ -4461,6 +4465,8 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,
       }
     }
   }
+#endif
+
   if(ok&&migrate_sessions) { /* migrate sessions */
     tmp = PyDict_GetItemString(session,"version");
     if(tmp) {

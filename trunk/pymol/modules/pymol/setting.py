@@ -794,7 +794,7 @@ PYMOL API
                                  int(updates))
                 except:
                     traceback.print_exc()
-                    if(_feedback(fb_module.cmd,fb_mask.debugging)):
+                    if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
                         traceback.print_exc()
                         print "Error: unable to read setting value."
                     raise QuietException
@@ -956,7 +956,7 @@ SEE ALSO
                                      int(updates))
                 except:
                     traceback.print_exc()
-                    if(_feedback(fb_module.cmd,fb_mask.debugging)):
+                    if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
                         traceback.print_exc()
                         print "Error: unable to read setting value."
                     raise QuietException
@@ -1024,7 +1024,7 @@ SEE ALSO
                                             int(state)-1,int(quiet),
                                             int(updates))
                     except:
-                        if(_feedback(fb_module.cmd,fb_mask.debugging)):
+                        if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
                             traceback.print_exc()
                             raise QuietException
                         print "Error: unable to unset setting value."
@@ -1068,7 +1068,7 @@ USAGE
                                    int(state)-1,int(quiet),
                                    int(updates))
                 except:
-                    if(_feedback(fb_module.cmd,fb_mask.debugging)):
+                    if(_feedback(fb_module.cmd,fb_mask.debugging,_self)):
                         traceback.print_exc()
                         raise QuietException
                     print "Error: unable to unset setting value."

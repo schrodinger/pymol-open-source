@@ -193,68 +193,68 @@ def slice_hide(self_cmd, sele):
 def by_elem2(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
-        [1,'\\494C\\777H\\229N\\922O\\950S...','util.cba(10,"'+sele+'")'],# lime
-        [1,'\\155C\\777H\\229N\\922O\\950S...','util.cba(5262,"'+sele+'")'],# deepteal
-        [1,'\\904C\\777H\\229N\\922O\\950S...','util.cba(12,"'+sele+'")'],# hotpink
-        [1,'\\983C\\777H\\229N\\922O\\950S...','util.cba(36,"'+sele+'")'],# yelloworange
-        [1,'\\525C\\777H\\229N\\922O\\950S...','util.cba(5271,"'+sele+'")'],# violetpurple
-        [1,'\\666C\\777H\\229N\\922O\\950S...','util.cba(124,"'+sele+'")'],# grey70
-        [1,'\\049C\\777H\\229N\\922O\\950S...','util.cba(17,"'+sele+'")'],# marine
-        [1,'\\760C\\777H\\229N\\922O\\950S...','util.cba(18,"'+sele+'")'],# olive
+        [1,'\\494C\\777H\\229N\\922O\\950S...','util.cba(10,"'+sele+'",_self=cmd)'],# lime
+        [1,'\\155C\\777H\\229N\\922O\\950S...','util.cba(5262,"'+sele+'",_self=cmd)'],# deepteal
+        [1,'\\904C\\777H\\229N\\922O\\950S...','util.cba(12,"'+sele+'",_self=cmd)'],# hotpink
+        [1,'\\983C\\777H\\229N\\922O\\950S...','util.cba(36,"'+sele+'",_self=cmd)'],# yelloworange
+        [1,'\\525C\\777H\\229N\\922O\\950S...','util.cba(5271,"'+sele+'",_self=cmd)'],# violetpurple
+        [1,'\\666C\\777H\\229N\\922O\\950S...','util.cba(124,"'+sele+'",_self=cmd)'],# grey70
+        [1,'\\049C\\777H\\229N\\922O\\950S...','util.cba(17,"'+sele+'",_self=cmd)'],# marine
+        [1,'\\760C\\777H\\229N\\922O\\950S...','util.cba(18,"'+sele+'",_self=cmd)'],# olive
         ]
         
 def by_elem3(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
-        [1,'\\564C\\777H\\229N\\922O\\950S...','util.cba(5270,"'+sele+'")'],# smudge
-        [1,'\\077C\\777H\\229N\\922O\\950S...','util.cba(20,"'+sele+'")'],# teal
-        [1,'\\644C\\777H\\229N\\922O\\950S...','util.cba(5272,"'+sele+'")'],# dirtyviolet
-        [1,'\\976C\\777H\\229N\\922O\\950S...','util.cba(52,"'+sele+'")'],# wheat
-        [1,'\\944C\\777H\\229N\\922O\\950S...','util.cba(5258,"'+sele+'")'],# deepsalmon
-        [1,'\\978C\\777H\\229N\\922O\\950S...','util.cba(5274,"'+sele+'")'],# lightpink
-        [1,'\\499C\\777H\\229N\\922O\\950S...','util.cba(5257,"'+sele+'")'],# aquamarine
-        [1,'\\994C\\777H\\229N\\922O\\950S...','util.cba(5256,"'+sele+'")'],# paleyellow
+        [1,'\\564C\\777H\\229N\\922O\\950S...','util.cba(5270,"'+sele+'",_self=cmd)'],# smudge
+        [1,'\\077C\\777H\\229N\\922O\\950S...','util.cba(20,"'+sele+'",_self=cmd)'],# teal
+        [1,'\\644C\\777H\\229N\\922O\\950S...','util.cba(5272,"'+sele+'",_self=cmd)'],# dirtyviolet
+        [1,'\\976C\\777H\\229N\\922O\\950S...','util.cba(52,"'+sele+'",_self=cmd)'],# wheat
+        [1,'\\944C\\777H\\229N\\922O\\950S...','util.cba(5258,"'+sele+'",_self=cmd)'],# deepsalmon
+        [1,'\\978C\\777H\\229N\\922O\\950S...','util.cba(5274,"'+sele+'",_self=cmd)'],# lightpink
+        [1,'\\499C\\777H\\229N\\922O\\950S...','util.cba(5257,"'+sele+'",_self=cmd)'],# aquamarine
+        [1,'\\994C\\777H\\229N\\922O\\950S...','util.cba(5256,"'+sele+'",_self=cmd)'],# paleyellow
         ]
     
 def by_elem4(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
-        [1,'\\094C\\777H\\229N\\922O\\950S...','util.cba(15,"'+sele+'")'],# limegreen
-        [1,'\\247C\\777H\\229N\\922O\\950S...','util.cba(5277,"'+sele+'")'],# skyblue
-        [1,'\\824C\\777H\\229N\\922O\\950S...','util.cba(5279,"'+sele+'")'],# warmpink
-        [1,'\\792C\\777H\\229N\\922O\\950S...','util.cba(5276,"'+sele+'")'],# limon
-        [1,'\\949C\\777H\\229N\\922O\\950S...','util.cba(53,"'+sele+'")'],# violet
-        [1,'\\889C\\777H\\229N\\922O\\950S...','util.cba(5278,"'+sele+'")'],# bluewhite
-        [1,'\\297C\\777H\\229N\\922O\\950S...','util.cba(5275,"'+sele+'")'],# greencyan
-        [1,'\\653C\\777H\\229N\\922O\\950S...','util.cba(5269,"'+sele+'")'],# sand
+        [1,'\\094C\\777H\\229N\\922O\\950S...','util.cba(15,"'+sele+'",_self=cmd)'],# limegreen
+        [1,'\\247C\\777H\\229N\\922O\\950S...','util.cba(5277,"'+sele+'",_self=cmd)'],# skyblue
+        [1,'\\824C\\777H\\229N\\922O\\950S...','util.cba(5279,"'+sele+'",_self=cmd)'],# warmpink
+        [1,'\\792C\\777H\\229N\\922O\\950S...','util.cba(5276,"'+sele+'",_self=cmd)'],# limon
+        [1,'\\949C\\777H\\229N\\922O\\950S...','util.cba(53,"'+sele+'",_self=cmd)'],# violet
+        [1,'\\889C\\777H\\229N\\922O\\950S...','util.cba(5278,"'+sele+'",_self=cmd)'],# bluewhite
+        [1,'\\297C\\777H\\229N\\922O\\950S...','util.cba(5275,"'+sele+'",_self=cmd)'],# greencyan
+        [1,'\\653C\\777H\\229N\\922O\\950S...','util.cba(5269,"'+sele+'",_self=cmd)'],# sand
         ]
 
 def by_elem5(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
-[1,'\\252C\\777H\\229N\\922O\\950S...','util.cba(22,"'+sele+'")'],# forest
-[1,'\\466C\\777H\\229N\\922O\\950S...','util.cba(5266,"'+sele+'")'],# lightteal
-[1,'\\755C\\777H\\229N\\922O\\950S...','util.cba(5280,"'+sele+'")'],# darksalmon
-[1,'\\570C\\777H\\229N\\922O\\950S...','util.cba(5267,"'+sele+'")'],# splitpea
-[1,'\\634C\\777H\\229N\\922O\\950S...','util.cba(5268,"'+sele+'")'],# raspberry
-[1,'\\555C\\777H\\229N\\922O\\950S...','util.cba(104,"'+sele+'")'],# grey50
-[1,'\\226C\\777H\\229N\\922O\\950S...','util.cba(23,"'+sele+'")'],# deepblue
-[1,'\\632C\\777H\\229N\\922O\\950S...','util.cba(51,"'+sele+'")'],# brown
+[1,'\\252C\\777H\\229N\\922O\\950S...','util.cba(22,"'+sele+'",_self=cmd)'],# forest
+[1,'\\466C\\777H\\229N\\922O\\950S...','util.cba(5266,"'+sele+'",_self=cmd)'],# lightteal
+[1,'\\755C\\777H\\229N\\922O\\950S...','util.cba(5280,"'+sele+'",_self=cmd)'],# darksalmon
+[1,'\\570C\\777H\\229N\\922O\\950S...','util.cba(5267,"'+sele+'",_self=cmd)'],# splitpea
+[1,'\\634C\\777H\\229N\\922O\\950S...','util.cba(5268,"'+sele+'",_self=cmd)'],# raspberry
+[1,'\\555C\\777H\\229N\\922O\\950S...','util.cba(104,"'+sele+'",_self=cmd)'],# grey50
+[1,'\\226C\\777H\\229N\\922O\\950S...','util.cba(23,"'+sele+'",_self=cmd)'],# deepblue
+[1,'\\632C\\777H\\229N\\922O\\950S...','util.cba(51,"'+sele+'",_self=cmd)'],# brown
               ]
     
 def by_elem(self_cmd, sele):
     return [
         [ 2, 'Atoms'     ,''                               ],
-        [1,' \\777H\\229N\\922O\\950S...','util.cnc("'+sele+'")'],
+        [1,' \\777H\\229N\\922O\\950S...','util.cnc("'+sele+'",_self=cmd)'],
 
-[1,'\\292C\\777H\\229N\\922O\\950S...','util.cba(33,"'+sele+'")'],# tv_green
-[1,'\\099C\\777H\\229N\\922O\\950S...','util.cba(5,"'+sele+'")'],# cyan
-[1,'\\927C\\777H\\229N\\922O\\950S...','util.cba(154,"'+sele+'")'],# lightmagenta
-[1,'\\990C\\777H\\229N\\922O\\950S...','util.cba(6,"'+sele+'")'],# yellow
-[1,'\\955C\\777H\\229N\\922O\\950S...','util.cba(9,"'+sele+'")'],# salmon
-[1,'\\888C\\777H\\229N\\922O\\950S...','util.cba(144,"'+sele+'")'],# grey90
-[1,'\\449C\\777H\\229N\\922O\\950S...','util.cba(11,"'+sele+'")'],# slate
-[1,'\\962C\\777H\\229N\\922O\\950S...','util.cba(13,"'+sele+'")'],# orange
+[1,'\\292C\\777H\\229N\\922O\\950S...','util.cba(33,"'+sele+'",_self=cmd)'],# tv_green
+[1,'\\099C\\777H\\229N\\922O\\950S...','util.cba(5,"'+sele+'",_self=cmd)'],# cyan
+[1,'\\927C\\777H\\229N\\922O\\950S...','util.cba(154,"'+sele+'",_self=cmd)'],# lightmagenta
+[1,'\\990C\\777H\\229N\\922O\\950S...','util.cba(6,"'+sele+'",_self=cmd)'],# yellow
+[1,'\\955C\\777H\\229N\\922O\\950S...','util.cba(9,"'+sele+'",_self=cmd)'],# salmon
+[1,'\\888C\\777H\\229N\\922O\\950S...','util.cba(144,"'+sele+'",_self=cmd)'],# grey90
+[1,'\\449C\\777H\\229N\\922O\\950S...','util.cba(11,"'+sele+'",_self=cmd)'],# slate
+[1,'\\962C\\777H\\229N\\922O\\950S...','util.cba(13,"'+sele+'",_self=cmd)'],# orange
         [ 1, 'set 2'     ,by_elem2(self_cmd, sele)                    ],
         [ 1, 'set 3'     ,by_elem3(self_cmd, sele)                    ],
         [ 1, 'set 4'     ,by_elem4(self_cmd, sele)                    ],
@@ -264,9 +264,9 @@ def by_elem(self_cmd, sele):
 def by_ss(self_cmd, sele):
     return [
                 [ 2, 'By Secondary Structure:'     ,''                               ],
-    [ 1, '\\900Helix \\990Sheet \\090Loop'  , 'util.cbss("'+sele+'","red","yellow","green")'],
-    [ 1, '\\099Helix \\909Sheet \\955Loop'  , 'util.cbss("'+sele+'","cyan","magenta","salmon")'],
-    [ 1, '\\099Helix \\900Sheet \\909Loop'  , 'util.cbss("'+sele+'","cyan","red","magenta")',],
+    [ 1, '\\900Helix \\990Sheet \\090Loop'  , 'util.cbss("'+sele+'","red","yellow","green",_self=cmd)'],
+    [ 1, '\\099Helix \\909Sheet \\955Loop'  , 'util.cbss("'+sele+'","cyan","magenta","salmon",_self=cmd)'],
+    [ 1, '\\099Helix \\900Sheet \\909Loop'  , 'util.cbss("'+sele+'","cyan","red","magenta",_self=cmd)'],
               ]
 
 def spectrum(self_cmd, sele):
@@ -287,14 +287,14 @@ def by_chain(self_cmd, sele):
     return [
         [ 2, 'By Chain:'     ,''                               ],
               [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(e. c)',
-                 'util.color_chains("('+sele+' and elem c)")'],
+                 'util.color_chains("('+sele+' and elem c)",_self=cmd)'],
               [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n\\888(*/ca)',
-                 'util.color_chains("('+sele+' and name ca)")'],
+                 'util.color_chains("('+sele+' and name ca)",_self=cmd)'],
               [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n',
-                 'util.color_chains("('+sele+')")'],
+                 'util.color_chains("('+sele+')",_self=cmd)'],
                       [ 0, ''                                , ''                 ],
               [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
-                 'util.chainbow("('+sele+')")'],                                 
+                 'util.chainbow("('+sele+')",_self=cmd)'],                                 
         ]
 
 
@@ -457,9 +457,9 @@ def color_auto(self_cmd, sele):
         [ 1, 'all','cmd.color("auto","'+sele+'")' ],                  
         [ 0, ''                                , ''                 ],
         [ 1, '\\900b\\950y \\090o\\099b\\059j\\999(e. c)',
-          'util.color_objs("('+sele+' and elem c)")'],
+          'util.color_objs("('+sele+' and elem c)",_self=cmd)'],
         [ 1, '\\900b\\950y \\090o\\099b\\059j',
-          'util.color_objs("('+sele+')")'],
+          'util.color_objs("('+sele+')",_self=cmd)'],
         ]
    
 def mol_color(self_cmd, sele):
@@ -494,7 +494,7 @@ def preset_ligand_sites(self_cmd, sele):
 
 def presets(self_cmd, sele):
     return [[ 2, 'Preset:'       ,''                        ],     
-              [ 1, 'simple'   ,'preset.simple("'+sele+'")'          ],
+              [ 1, 'simple'   ,'preset.simple("'+sele+'",_self=cmd)'          ],
               [ 1, 'simple (no solvent)'   ,'preset.simple_no_solv("'+sele+'",_self=cmd)'          ],           
               [ 1, 'ball and stick' , 'preset.ball_and_stick("'+sele+'",_self=cmd)' ],
               [ 1, 'b factor putty' , 'preset.b_factor_putty("'+sele+'",_self=cmd)' ],
@@ -545,16 +545,16 @@ def compute(self_cmd, sele):
     return [[ 2, 'Compute:'       ,''                        ],     
               [ 1, 'atom count'   ,'cmd.count_atoms("'+sele+'",quiet=0)'          ],
               [ 0, ''               ,''                             ],           
-              [ 1, 'formal charge sum'   ,'util.sum_formal_charges("'+sele+'",quiet=0)'          ],
-              [ 1, 'partial charges sum'   ,'util.sum_partial_charges("'+sele+'",quiet=0)'          ],                      
+              [ 1, 'formal charge sum'   ,'util.sum_formal_charges("'+sele+'",quiet=0,_self=cmd)'          ],
+              [ 1, 'partial charges sum'   ,'util.sum_partial_charges("'+sele+'",quiet=0,_self=cmd)'          ],                      
               ]
 
 def vacuum(self_cmd, sele):
     return [[ 2, 'Vacuum Electrostatics:'       ,''                        ],
 #              [ 2, '\\955WARNING:\\595 Unvalidated and experimental code!', '' ],
-              [ 1, 'protein contact potential (local)', 'util.protein_vacuum_esp("'+sele+'",mode=2,quiet=0)'          ],
-#           [ 1, 'protein surface potential (absolute)', 'util.protein_vacuum_esp("'+sele+'",mode=0,quiet=0)'          ],
-#           [ 1, 'protein surface potential (relative)', 'util.protein_vacuum_esp("'+sele+'",mode=1,quiet=0)'          ],
+              [ 1, 'protein contact potential (local)', 'util.protein_vacuum_esp("'+sele+'",mode=2,quiet=0,_self=cmd)'          ],
+#           [ 1, 'protein surface potential (absolute)', 'util.protein_vacuum_esp("'+sele+'",mode=0,quiet=0,_self=cmd)'          ],
+#           [ 1, 'protein surface potential (relative)', 'util.protein_vacuum_esp("'+sele+'",mode=1,quiet=0,_self=cmd)'          ],
               [ 2, '\\955NOTE:\\559 Due to short cutoffs, truncations, and', ''],
               [ 2, '\\559lack of solvent "screening", these computed ', ''],
               [ 2, '\\559potentials are only qualitatively useful.', ''],
@@ -577,7 +577,7 @@ def symmetry(self_cmd, sele):
 
 def mol_assign(self_cmd, sele):
     return [[ 2, 'Assign:'       ,''                        ],     
-              [ 1, 'Amber 99 atomic properties',  'util.assign_amber99("'+sele+'")' ],
+              [ 1, 'Amber 99 atomic properties',  'util.assign_amber99("'+sele+'",_self=cmd)' ],
               ]
 
 def selection(self_cmd, sele):
@@ -817,8 +817,8 @@ def sele_align(self_cmd, sele):
               [ 1, 'to molecule', align_to_object(self_cmd, sele) ],
               [ 1, 'to selection', align_to_sele(self_cmd, sele) ],
               [ 0, '', None ],
-              [ 1, 'enabled to this', 'util.mass_align("'+sele+'",1)' ],                                 
-              [ 1, 'all to this', 'util.mass_align("'+sele+'",0)' ],
+              [ 1, 'enabled to this', 'util.mass_align("'+sele+'",1,_self=cmd)' ],                                 
+              [ 1, 'all to this', 'util.mass_align("'+sele+'",0,_self=cmd)' ],
               [ 0, '', None ],
               [ 1, 'states (*/ca)', 'cmd.intra_fit("('+sele+') and name ca")' ],                        
               [ 1, 'states', 'cmd.intra_fit("'+sele+'")' ],
@@ -829,8 +829,8 @@ def mol_align(self_cmd, sele):
               [ 1, 'to molecule', align_to_object(self_cmd, sele) ],
               [ 1, 'to selection', align_to_sele(self_cmd, sele) ],
               [ 0, '', None ],
-              [ 1, 'enabled to this', 'util.mass_align("'+sele+'",1)' ],                                 
-              [ 1, 'all to this', 'util.mass_align("'+sele+'",0)' ],
+              [ 1, 'enabled to this', 'util.mass_align("'+sele+'",1,_self=cmd)' ],                                 
+              [ 1, 'all to this', 'util.mass_align("'+sele+'",0,_self=cmd)' ],
               [ 0, '', None ],
               [ 1, 'states (*/ca)', 'cmd.intra_fit("('+sele+') and name ca")' ],                        
               [ 1, 'states', 'cmd.intra_fit("'+sele+'")' ],
@@ -1142,8 +1142,8 @@ def mol_labels(self_cmd, sele):
               [ 0, ''               , ''                                  ],
               [ 1, 'residues'       ,
   """cmd.label('''(name ca+C1*+C1' and (byres("""+sele+""")))''','''"%s-%s"%(resn,resi)''')"""  ],
-              [ 1, 'chains'       ,   'util.label_chains("'+sele+'")'  ],
-              [ 1, 'segments'       ,   'util.label_segments("'+sele+'")'  ],           
+              [ 1, 'chains'       ,   'util.label_chains("'+sele+'",_self=cmd)'  ],
+              [ 1, 'segments'       ,   'util.label_segments("'+sele+'",_self=cmd)'  ],           
               [ 0, ''               , ''                                  ],           
               [ 1, 'atom name'      , 'cmd.label("'+sele+'","name")'         ],
               [ 1, 'element symbol' , 'cmd.label("'+sele+'","elem")'         ],           
@@ -1200,7 +1200,7 @@ def enable_disable(self_cmd, enable):
         cmmd = 'cmd.disable("'
     result = result + map(lambda ob,cm=cmmd:[1,ob,cm+ob+'")'],['all']+self_cmd.get_names('objects'))
     if not enable:
-        result.insert(2,[1, 'selections', "util.hide_sele()"])
+        result.insert(2,[1, 'selections', "util.hide_sele(_self=cmd)"])
     else:
         result2 = [[ 2, 'Selections', '']]
         

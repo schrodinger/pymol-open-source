@@ -78,17 +78,21 @@ extern CPyMOLOptions *MacPyMOLOption;
 
 #ifdef _MACPYMOL_XCODE
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+
 #define PYMOL_API_LOCK if((I->PythonInitStage)&&PLockAPIAsGlut(I->G,true)) {
+#define PYMOL_API_TRYLOCK PYMOL_API_LOCK
 #define PYMOL_API_UNLOCK PUnlockAPIAsGlut(I->G); }
 #define PYMOL_API_UNLOCK_NO_FLUSH PUnlockAPIAsGlutNoFlush(I->G); }
 /* END PROPRIETARY CODE SEGMENT */
 #else 
 #ifdef _PYMOL_LIB_HAS_PYTHON
 #define PYMOL_API_LOCK if(I->PythonInitStage) { PLockAPIAndUnblock(I->G); {
+#define PYMOL_API_TRYLOCK if(I->PythonInitStage) { if(PTryLockAPIAndUnblock(I->G)) {
 #define PYMOL_API_UNLOCK PBlockAndUnlockAPI(I->G); }}
 #define PYMOL_API_UNLOCK_NO_FLUSH PBlockAndUnlockAPI(I->G); }}
 #else
 #define PYMOL_API_LOCK {
+#define PYMOL_API_TRYLOCK {
 #define PYMOL_API_UNLOCK }
 #define PYMOL_API_UNLOCK_NO_FLUSH }
 #endif
@@ -3038,12 +3042,6 @@ void PyMOL_BlockAndUnlockAPI(CPyMOL *I)
   PBlockAndUnlockAPI(G);
 }
 
-void PyMOL_Unblock(CPyMOL *I)
-{
-  PyMOLGlobals *G = I->G;
-  PUnlockAPI(G);
-}
-
 void PyMOL_Draw(CPyMOL *I)
 {
   PYMOL_API_LOCK
@@ -3189,7 +3187,7 @@ int PyMOL_Idle(CPyMOL *I)
 {
 
   int did_work = false;
-  PYMOL_API_LOCK
+  PYMOL_API_TRYLOCK
 
   PyMOLGlobals *G = I->G;
   
@@ -3517,10 +3515,12 @@ int PyMOL_FreeResultString(CPyMOL *I,char *st)
 
 int PyMOL_GetRedisplay(CPyMOL *I, int reset)
 {
-  int result = I->RedisplayFlag;
+  int result = false;
   
-  PYMOL_API_LOCK
+  PYMOL_API_TRYLOCK
+
   PyMOLGlobals *G = I->G;
+  result = I->RedisplayFlag;
   
   if(result) {
     if(SettingGet_b(G,NULL,NULL,cSetting_defer_updates)) {

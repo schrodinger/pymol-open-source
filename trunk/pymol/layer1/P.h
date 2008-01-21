@@ -57,7 +57,7 @@ Z* -------------------------------------------------------------------
 #define PBlockAndUnlockAPI(G)
 #define PBlockAndUnlockAPI(G)
 #define PLockAPIAndUnblock(G)
-
+#define PTryLockAPIAndUnblock(G)
 #define PFlush(G)
 #define PFlushFast(G)
 #define PParse(G,s)
@@ -138,6 +138,7 @@ void PAutoUnblock(PyMOLGlobals *G,int flag);
 
 void PBlockAndUnlockAPI(PyMOLGlobals *G);
 void PLockAPIAndUnblock(PyMOLGlobals *G);
+int PTryLockAPIAndUnblock(PyMOLGlobals *G);
 
 void PFlush(PyMOLGlobals *G);
 void PFlushFast(PyMOLGlobals *G);
