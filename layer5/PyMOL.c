@@ -84,7 +84,7 @@ extern CPyMOLOptions *MacPyMOLOption;
 /* END PROPRIETARY CODE SEGMENT */
 #else 
 #ifdef _PYMOL_LIB_HAS_PYTHON
-#define PYMOL_API_LOCK if((I->PythonInitStage)) { PLockAPIAndUnblock(I->G); {
+#define PYMOL_API_LOCK if(I->PythonInitStage) { PLockAPIAndUnblock(I->G); {
 #define PYMOL_API_UNLOCK PBlockAndUnlockAPI(I->G); }}
 #define PYMOL_API_UNLOCK_NO_FLUSH PBlockAndUnlockAPI(I->G); }}
 #else
