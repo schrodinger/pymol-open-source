@@ -47,6 +47,9 @@ Z* -------------------------------------------------------------------
 #define PUnlockAPIAsGlut(G)
 #define PUnlockAPIAsGlutNoFlush(G)
 
+#define PLockAPI(G)
+#define PUnlockAPI(G)
+
 #define PLockStatus(G)
 #define PLockStatusAttempt()G 1
 #define PUnlockStatusG()
@@ -111,6 +114,9 @@ void PLogFlush(PyMOLGlobals *G);
 void PSleep(PyMOLGlobals *G,int usec);
 void PSleepWhileBusy(PyMOLGlobals *G,int usec);
 void PSleepUnlocked(PyMOLGlobals *G,int usec);
+
+int PLockAPI(PyMOLGlobals *G,int block_if_busy);
+void PUnlockAPI(PyMOLGlobals *G);
 
 int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy);
 void PUnlockAPIAsGlut(PyMOLGlobals *G);

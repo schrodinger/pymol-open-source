@@ -2149,6 +2149,32 @@ void PBlockAndUnlockAPI(PyMOLGlobals *G)
   PXDecRef(PyObject_CallFunction(G->P_inst->unlock,"iO",0,G->P_inst->cmd));
 }
 
+int PLockAPI(PyMOLGlobals *G,int block_if_busy)
+{
+  int result = true;
+  PBlock(G);
+  if(block_if_busy) {
+    PXDecRef(PyObject_CallFunction(G->P_inst->lock,"O",G->P_inst->cmd));
+  } else { /* not blocking if PyMOL is busy */
+
+    PyObject *got_lock = PyObject_CallFunction(G->P_inst->lock_attempt,"O",G->P_inst->cmd);
+    
+    if(got_lock) {
+      result = PyInt_AsLong(got_lock);
+      Py_DECREF(got_lock);
+    }
+  }
+  PUnblock(G);
+  return result;
+}
+
+void PUnlockAPI(PyMOLGlobals *G)
+{
+  PBlock(G);
+  PXDecRef(PyObject_CallFunction(G->P_inst->unlock,"iO",0,G->P_inst->cmd));
+  PUnblock(G);
+}
+
 void PLockAPIAndUnblock(PyMOLGlobals *G)
 {
   PXDecRef(PyObject_CallFunction(G->P_inst->lock,"O",G->P_inst->cmd));
