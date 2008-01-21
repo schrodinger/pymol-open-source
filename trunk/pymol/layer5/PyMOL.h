@@ -239,8 +239,8 @@ void PyMOL_RunTest(CPyMOL *I, int group, int test);
 
 /* for python integration */
 
-int PyMOL_LockAPI(CPyMOL *I,int block_if_busy);
-void PyMOL_UnlockAPI(CPyMOL *I);
+void PyMOL_LockAPIAndUnblock(CPyMOL *I);
+void PyMOL_BlockAndUnlockAPI(CPyMOL *I);
 
 /* for Jmol integration */
 

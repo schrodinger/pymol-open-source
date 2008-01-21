@@ -55,6 +55,7 @@ Z* -------------------------------------------------------------------
 #define PUnlockStatusG()
 
 #define PBlockAndUnlockAPI(G)
+#define PBlockAndUnlockAPI(G)
 #define PLockAPIAndUnblock(G)
 
 #define PFlush(G)
