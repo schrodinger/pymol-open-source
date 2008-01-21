@@ -44,8 +44,8 @@ if __name__=='pymol.wizarding':
                     kwd['_self']=_self
                     wiz = apply(getattr(mod_obj,oname),arg,kwd)
                     if wiz:
-                        set_wizard(wiz,replace,_self=_self)
-                        cmd.do("_ refresh_wizard")
+                        _self.set_wizard(wiz,replace)
+                        _self.do("_ refresh_wizard")
                 else:
                     print "Error: Sorry, couldn't find the '"+oname+"' class."                             
             else:
@@ -77,13 +77,13 @@ EXAMPLE
         _self = kwd.get('_self',cmd)
         r = DEFAULT_ERROR
         if name==None:
-            cmd.set_wizard(_self=_self)
+            _self.set_wizard()
             r = DEFAULT_SUCCESS
         else:
             name = str(name)
             if string.lower(name)=='distance': # legacy compatibility
                 name = 'measurement'
-            r = _wizard(name,arg,kwd,0)
+            r = _wizard(name,arg,kwd,0,_self=_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
         
@@ -97,10 +97,10 @@ DESCRIPTION
         _self = kwd.get('_self',cmd)
         r = DEFAULT_ERROR
         if name==None:
-            cmd.set_wizard(_self=_self)
+            _self.set_wizard()
             r = DEFAULT_SUCCESS
         else:
-            r = _wizard(name,arg,kwd,1)
+            r = _wizard(name,arg,kwd,1,_self=_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
@@ -189,7 +189,7 @@ DESCRIPTION
                     wizards = cPickle.loads(session['wizard'])
                     for wiz in wizards:
                         wiz.cmd = _self
-                    cmd.set_wizard_stack(wizards,_self=_self)
+                    _self.set_wizard_stack(wizards,_self=_self)
                 except:
                     print "Session-Warning: unable to restore wizard."
         return 1

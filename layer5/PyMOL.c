@@ -78,7 +78,6 @@ extern CPyMOLOptions *MacPyMOLOption;
 
 #ifdef _MACPYMOL_XCODE
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-
 #define PYMOL_API_LOCK if((I->PythonInitStage)&&PLockAPIAsGlut(I->G,true)) {
 #define PYMOL_API_TRYLOCK PYMOL_API_LOCK
 #define PYMOL_API_UNLOCK PUnlockAPIAsGlut(I->G); }
@@ -2910,17 +2909,13 @@ void PyMOL_StartWithPython(CPyMOL *I)
 	
 	/* initialize our embedded C modules */
 
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef _MACPYMOL_XCODE	
     init_cmd();
     /* 
      * initExtensionClass();
      * initsglite();
      */
 	init_champ();
-#endif
-/* END PROPRIETARY CODE SEGMENT */
-
+    
 	/* launch pymol's Python subsystems */
 	
 	PyRun_SimpleString("import sys;reload(sys.modules['pymol'])");

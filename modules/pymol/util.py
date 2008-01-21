@@ -134,19 +134,19 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
     
     print " Util: Fixing termini and assigning formal charges..."
     
-    assign.missing_c_termini(obj_name,quiet=1)
+    assign.missing_c_termini(obj_name,quiet=1,_self=_self)
 
-    while not assign.formal_charges(obj_name,quiet=1):
+    while not assign.formal_charges(obj_name,quiet=1,_self=_self):
         print " WARNING: unrecognized or incomplete residues are being deleted:"
         cmd.iterate("(byres ("+obj_name+" and flag 23)) and flag 31",
                         'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"',quiet=1)
         cmd.remove("byres ("+obj_name+" and flag 23)") # get rid of residues that weren't assigned
-        assign.missing_c_termini(obj_name,quiet=1)
+        assign.missing_c_termini(obj_name,quiet=1,_self=_self)
         
     print " Util: Assigning Amber 99 charges and radii..."
     
     cmd.h_add(obj_name)
-    if not assign.amber99(obj_name,quiet=1):
+    if not assign.amber99(obj_name,quiet=1,_self=_self):
         print " WARNING: some unassigned atoms are being deleted:"
         cmd.iterate("byres ("+obj_name+" and flag 23)",
                         'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"+name+"? ["+elem+"]"',quiet=1)
@@ -154,8 +154,8 @@ def protein_assign_charges_and_radii(obj_name,_self=cmd):
         
     # show the user what the net charges are...
         
-    formal = sum_formal_charges(obj_name,quiet=0)
-    partial = sum_partial_charges(obj_name,quiet=0)
+    formal = sum_formal_charges(obj_name,quiet=0,_self=_self)
+    partial = sum_partial_charges(obj_name,quiet=0,_self=_self)
     if round(formal)!=round(partial):
         print " WARNING: formal and partial charge sums don't match -- there is a problem!"
     
@@ -179,7 +179,7 @@ def protein_vacuum_esp(selection, mode=2, border=10.0, quiet = 1, _self=cmd):
                selection+"))) and resn NME+NHE+ACE)) and (not hydro)")
          # try to just get protein...
 
-    protein_assign_charges_and_radii(obj_name)
+    protein_assign_charges_and_radii(obj_name,_self=_self)
         
     ext = cmd.get_extent(obj_name)
     max_length = max(abs(ext[0][0] - ext[1][0]),abs(ext[0][1] - ext[1][1]),abs(ext[0][2]-ext[1][2])) + 2*border

@@ -1423,12 +1423,12 @@ SEE ALSO
                     if ix<len(lst):
                         scene_name = lst[ix]
                         _self.set('scene_current_name', scene_name, quiet=1)
-                        scene(scene_name,'recall',animate=animate)
+                        scene(scene_name,'recall',animate=animate,_self=_self)
                     elif setting.get("scene_loop",_self=_self)=="on": # loop back to the beginning
                         if len(lst):
                             scene_name = lst[0]
                             _self.set('scene_current_name', scene_name, quiet=1)
-                            scene(scene_name,'recall',animate=animate)
+                            scene(scene_name,'recall',animate=animate,_self=_self)
                     else: # otherwise put up blank screen
                         _self.set('scene_current_name','',quiet=1)
                         chained = 0
@@ -1454,13 +1454,13 @@ SEE ALSO
                             _self.quit()
                     if ix>=0:
                         scene_name = lst[ix]
-                        scene(scene_name,'recall',animate=animate,hand=-1)
+                        scene(scene_name,'recall',animate=animate,hand=-1,_self=_self)
                     elif setting.get("scene_loop",_self=_self)=="on": # loop back to the end
                         print setting.get("scene_loop",_self=_self)
                         if len(lst):
                             scene_name = lst[-1]
                             _self.set('scene_current_name', scene_name, quiet=1)
-                            scene(scene_name,'recall',animate=animate,hand=-1)
+                            scene(scene_name,'recall',animate=animate,hand=-1,_self=_self)
                     else: # otherwise put up blank screen
                         _self.set('scene_current_name','',quiet=1)
                         if ((setting.get("presentation",_self=_self)=="on") and 
@@ -2066,7 +2066,7 @@ SEE ALSO
         else:
             try:
                 _self.lock(_self)
-                r = _self._do("_ cmd._refresh()")
+                r = _self._do("_ cmd._refresh(_self=cmd)",_self=_self)
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException

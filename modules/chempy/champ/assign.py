@@ -19,8 +19,8 @@ from chempy import champ
 from chempy.champ import Champ
 from pymol import cmd
 
-def missing_c_termini(selection="(all)",quiet=0):
-
+def missing_c_termini(selection="(all)",quiet=0,_self=cmd):
+    cmd=_self
     # assumes that hydogens are not present!
     
     sele_list = []
@@ -43,7 +43,8 @@ def missing_c_termini(selection="(all)",quiet=0):
     cmd.delete(tmp_sele1)
     
     
-def formal_charges(selection="(all)",quiet=0):
+def formal_charges(selection="(all)",quiet=0,_self=cmd):
+    cmd=_self
     result = 1
     # assumes that hydogens are not present!
     
@@ -146,7 +147,8 @@ def formal_charges(selection="(all)",quiet=0):
     
     return result
 
-def amber99(selection="(all)",quiet=0):
+def amber99(selection="(all)",quiet=0,_self=cmd):
+    cmd=_self
     result = 1
     # first, set all parameters to zero
 

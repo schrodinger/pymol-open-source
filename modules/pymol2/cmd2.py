@@ -156,9 +156,6 @@ class Cmd:
         self.kwhash = self.Shortcut(self.kw_list)
         keywords.fix_dict(self.keyword)
 
-
-        self.help_only = keywords.get_help_only_keywords()
-        self.help_sc = self.Shortcut(self.keyword.keys()+self.help_only.keys())
         self.controlling = pymol.controlling
         self.completing = pymol.completing
         self.controlling = pymol.controlling
@@ -168,6 +165,10 @@ class Cmd:
         self.viewing = pymol.viewing
         self.setting = pymol.setting
         self.commanding = pymol.commanding
+
+        self.help_only = keywords.get_help_only_keywords()
+        self.help_sc = self.Shortcut(self.keyword.keys()+self.help_only.keys())
+
         
         self.selection_sc = lambda sc=self.Shortcut,gn=self.get_names:sc(gn('public')+['all'])
         self.object_sc = lambda sc=self.Shortcut,gn=self.get_names:sc(gn('objects'))
@@ -181,7 +182,22 @@ class Cmd:
         
         self.auto_arg = pymol.completing.get_auto_arg_list(self)
         self.color_sc = None
+
+        # keyboard configuration
+                
+        from pymol import keyboard
         
+        self.special = keyboard.get_special(self)
+
+        self.shft_special = keyboard.get_shft_special(self)        
+        self.alt_special = keyboard.get_alt_special(self)        
+        self.ctrl_special = keyboard.get_ctrl_special(self)
+        self.ctsh_special = keyboard.get_ctsh_special(self)
+
+        self.ctrl = keyboard.get_ctrl(self)        
+        self.alt = keyboard.get_alt(self)
+        
+
 # PUBLIC API METHODS which expect "self" as the first argument
 
 # ========= WARNING WARNING WARNING WARNING ===========
@@ -487,6 +503,10 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.get_colorection, a, k)
     
+    def get_color_tuple(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_color_tuple, a, k)
+    
     def get_dihedral(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_dihedral, a, k)
@@ -722,6 +742,10 @@ class Cmd:
     def load(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.load, a, k)
+    
+    def load_cgo(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.load_cgo, a, k)
     
     def load_embedded(self, *a, **k):
         k['_self']=self
@@ -1047,6 +1071,10 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.select, a, k)
     
+    def select_list(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.select_list, a, k)
+    
     def set(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.set, a, k)
@@ -1090,6 +1118,14 @@ class Cmd:
     def set_title(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.set_title, a, k)
+    
+    def set_wizard(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.set_wizard, a, k)
+    
+    def set_wizard_stack(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.set_wizard_stack, a, k)
     
     def set_view(self, *a, **k):
         k['_self']=self

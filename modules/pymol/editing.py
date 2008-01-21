@@ -1123,7 +1123,7 @@ SEE ALSO
     alter_state, iterate, iterate_state, sort
         '''
         if space == None:
-            space = _self.pymol.__dict__
+            space = _self._pymol.__dict__
         r = DEFAULT_ERROR
         # preprocess selections
         selection = selector.process(selection)
@@ -1145,7 +1145,7 @@ DESCRIPTION
         '''
         #
         if space == None:
-            space = _self.pymol.__dict__
+            space = _self._pymol.__dict__
         try:
             _self.lock(_self)
             r = _cmd.alter_list(_self._COb,str(object),list(expr_list),int(quiet),dict(space))
@@ -1189,7 +1189,7 @@ SEE ALSO
         '''
 
         if space == None:
-            space = _self.pymol.__dict__
+            space = _self._pymol.__dict__
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
@@ -1234,7 +1234,7 @@ SEE ALSO
     iterate_state, alter, iterate
         '''
         if space == None:
-            space = _self.pymol.__dict__
+            space = _self._pymol.__dict__
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
@@ -1275,7 +1275,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         if space == None:
-            space = _self.pymol.__dict__
+            space = _self._pymol.__dict__
         # preprocess selection
         selection = selector.process(selection)
         state = int(state)

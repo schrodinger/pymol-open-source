@@ -525,17 +525,17 @@ DESCRIPTION
             if active:
                 if mouse_mode[0:10]=='two_button':
                     if mouse_mode!='two_button_editing':
-                        mouse(action='two_button_editing',quiet=quiet)
+                        mouse(action='two_button_editing',quiet=quiet,_self=_self)
                 elif mouse_mode[0:12] == 'three_button':
                     if mouse_mode!='three_button_editing':
-                        mouse(action='three_button_editing',quiet=quiet)
+                        mouse(action='three_button_editing',quiet=quiet,_self=_self)
             else:
                 if mouse_mode[0:10]=='two_button':
                     if mouse_mode!='two_button_viewing':               
-                        mouse(action='two_button_viewing',quiet=quiet)
+                        mouse(action='two_button_viewing',quiet=quiet,_self=_self)
                 elif mouse_mode[0:12] == 'three_button':
                     if mouse_mode!='three_button_viewing':
-                        mouse(action='three_button_viewing',quiet=quiet)
+                        mouse(action='three_button_viewing',quiet=quiet,_self=_self)
         return DEFAULT_SUCCESS
     
     def set_key(key,fn,arg=(),kw={},_self=cmd):  
