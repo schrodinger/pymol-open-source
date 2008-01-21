@@ -1175,7 +1175,7 @@ NOTES
         import threading
         r = DEFAULT_SUCCESS
         if path==None:
-            path = setting.get('fetch_path')
+            path = setting.get('fetch_path',_self=_self)
         if async<0: # by default, run asynch when interactive, sync when not
             async = not quiet
         if not int(async):
