@@ -246,7 +246,7 @@ if __name__=='pymol.parser':
                                            (layer.args, layer.kw_args) = \
                                             parsing.prepare_call(
                                              layer.kw[0],
-                                             parsing.parse_arg(layer.com2,mode=layer.kw[4]),
+                                             parsing.parse_arg(layer.com2,mode=layer.kw[4],_self=self.cmd),
                                              layer.kw[4], _self=self.cmd) # will raise exception on failure
                                         self.result=apply(layer.kw[0],layer.args,layer.kw_args)
                                     elif layer.kw[4]==parsing.PYTHON:
@@ -372,7 +372,7 @@ if __name__=='pymol.parser':
                                             elif (layer.kw[4]==parsing.SKIP):
                                                 layer.next = ()
                                                 arg = parsing.apply_arg(
-                                                    parsing.parse_arg(layer.com2),
+                                                    parsing.parse_arg(layer.com2,_self=self.cmd),
                                                     ('sentinel',),
                                                     {'sentinel':'skip end'})
                                                 print arg # ???
@@ -387,7 +387,7 @@ if __name__=='pymol.parser':
                                                 layer.next = ()
                                                 if not secure:
                                                     arg = parsing.apply_arg(
-                                                        parsing.parse_arg(layer.com2),
+                                                        parsing.parse_arg(layer.com2,_self=self.cmd),
                                                         ('sentinel','skip'),
                                                         {'sentinel':'python end','skip':0})
                                                     layer.embed_sentinel = arg[0]
