@@ -375,9 +375,8 @@ if __name__=='pymol.parsing':
                     if __name__!='__main__':
                         if _self._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
                             kw["quiet"] = 0
-            if "_self" in arg_nam:
-                if not kw.has_key("_self"):
-                    kw["_self"]=_self
+            if not kw.has_key("_self"): # always send _self in the dictionary
+                kw["_self"]=_self
         else:
             # error checking enabled
 

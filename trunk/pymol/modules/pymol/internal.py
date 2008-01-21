@@ -350,13 +350,16 @@ def _refresh(swap_buffers=1,_self=cmd):  # Only call with GLUT thread!
     r = None
     try:
         _self.lock(_self)
-        if thread.get_ident() == _self._pymol.glutThread:
-            if swap_buffers:
-                r = _cmd.refresh_now(_self._COb)
+        if hasattr(_self._pymol,'glutThread'):
+            if thread.get_ident() == _self._pymol.glutThread:
+                if swap_buffers:
+                    r = _cmd.refresh_now(_self._COb)
+                else:
+                    r = _cmd.refresh(_self._COb)
             else:
-                r = _cmd.refresh(_self._COb)
+                r = _cmd.refresh_later(_self._COb)                
         else:
-            print "Error: Ignoring an unsafe call to cmd._refresh"
+            r = _cmd.refresh_later(_self._COb)
     finally:
         _self.unlock(-1,_self)
     return r

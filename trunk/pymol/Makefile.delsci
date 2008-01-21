@@ -70,6 +70,12 @@ lib:  .includes .depends .update
 	ar crv libPyMOL.a */*.o ov/src/*.o 
 	ranlib libPyMOL.a
 
+pylib: .includes .depends .update 
+	/bin/rm -f .update .includes
+	cd contrib;$(MAKE) -f Makefile.delsci static
+	ar crv libPyMOL.a contrib/champ/*.o */*.o ov/src/*.o 
+	ranlib libPyMOL.a
+
 unix: .includes .depends .update 
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) -f Makefile.delsci

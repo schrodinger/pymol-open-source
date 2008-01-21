@@ -5780,6 +5780,25 @@ static PyObject *CmdMClear(PyObject *self, 	PyObject *args)
   return APISuccess();
 }
 
+static PyObject *CmdRefreshLater(PyObject *self, 	PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    APIEntry(G);
+    SceneInvalidate(G);
+    APIExit(G);
+  }
+  return APISuccess();
+}
+
 static PyObject *CmdRefresh(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -8387,6 +8406,7 @@ static PyMethodDef Cmd_methods[] = {
   {"rebuild",               CmdRebuild,              METH_VARARGS },
   {"recolor",               CmdRecolor,              METH_VARARGS },
   {"refresh",               CmdRefresh,              METH_VARARGS },
+  {"refresh_later",         CmdRefreshLater,         METH_VARARGS },
   {"refresh_now",           CmdRefreshNow,           METH_VARARGS },
   {"refresh_wizard",        CmdRefreshWizard,        METH_VARARGS },
   {"remove",	            CmdRemove,               METH_VARARGS },

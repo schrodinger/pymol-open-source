@@ -25,11 +25,11 @@ class Dragging(Wizard):
             self.recount()
 
     def recount(self):
-        self.atom_count = cmd.count_atoms(drag_sele)
-        self.obj = cmd.get_object_list(drag_sele)[0]
+        self.atom_count = self.cmd.count_atoms(drag_sele)
+        self.obj = self.cmd.get_object_list(drag_sele)[0]
         print ' Dragging %s atoms in object "%s".'%(self.atom_count,self.obj)
-        cmd.refresh_wizard()
-#        cmd.enable(drag_sele)
+        self.cmd.refresh_wizard()
+#        self.cmd.enable(drag_sele)
 #        t = threading.Thread(target=delayed_disable,args=(drag_sele,0.5))
 #        t.setDaemon(1)
 #        t.start()
@@ -39,11 +39,11 @@ class Dragging(Wizard):
             self.check_valid()
         
     def check_valid(self):
-        if cmd.get_editor_scheme()!=3:
+        if self.cmd.get_editor_scheme()!=3:
             if self.valid:
                 self.valid = 0
-                cmd.do("_ cmd.set_wizard()")
-                cmd.refresh_wizard()
+                self.cmd.do("_ cmd.set_wizard()")
+                self.cmd.refresh_wizard()
                 return 0
         else:
             return 1
@@ -56,19 +56,19 @@ class Dragging(Wizard):
         
     def indicate(self):
         self.check_valid()
-        if drag_sele in cmd.get_names("all",enabled_only=1):
-            cmd.disable(drag_sele)
+        if drag_sele in self.cmd.get_names("all",enabled_only=1):
+            self.cmd.disable(drag_sele)
         else:
-            cmd.enable(drag_sele)
-        cmd.refresh_wizard()
+            self.cmd.enable(drag_sele)
+        self.cmd.refresh_wizard()
 
     def cleanup(self):
-        cmd.drag()
-        if drag_sele in cmd.get_names("all",enabled_only=1):
-            cmd.disable(drag_sele)
+        self.cmd.drag()
+        if drag_sele in self.cmd.get_names("all",enabled_only=1):
+            self.cmd.disable(drag_sele)
         if self.old_button_mode != None:
-            cmd.set("button_mode",self.old_button_mode,quiet=1)
-            cmd.mouse()
+            self.cmd.set("button_mode",self.old_button_mode,quiet=1)
+            self.cmd.mouse()
     
     def get_panel(self):
         if self.check_valid():
