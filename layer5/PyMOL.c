@@ -83,11 +83,16 @@ extern CPyMOLOptions *MacPyMOLOption;
 #define PYMOL_API_UNLOCK_NO_FLUSH PUnlockAPIAsGlutNoFlush(I->G); }
 /* END PROPRIETARY CODE SEGMENT */
 #else 
+#ifdef _PYMOL_LIB_HAS_PYTHON
+#define PYMOL_API_LOCK if((I->PythonInitStage)) { PLockAPIAndUnblock(I->G); {
+#define PYMOL_API_UNLOCK PBlockAndUnlockAPI(I->G); }}
+#define PYMOL_API_UNLOCK_NO_FLUSH PBlockAndUnlockAPI(I->G); }}
+#else
 #define PYMOL_API_LOCK {
 #define PYMOL_API_UNLOCK }
 #define PYMOL_API_UNLOCK_NO_FLUSH }
 #endif
-
+#endif
 #define IDLE_AND_READY 10
 
 typedef struct _CPyMOL {
@@ -2935,7 +2940,9 @@ void PyMOL_StartWithPython(CPyMOL *I)
 #endif  
 /* END PROPRIETARY CODE SEGMENT */
 }
+
 #endif
+
 
 void PyMOL_Stop(CPyMOL *I)
 {
@@ -3019,13 +3026,19 @@ struct _PyMOLGlobals **PyMOL_GetGlobalsHandle(CPyMOL *I)
   return &(I->G);
 }
 
-int PyMOL_LockAPI(CPyMOL *I, int block_if_busy)
+void PyMOL_LockAPIAndUnblock(CPyMOL *I)
 {
   PyMOLGlobals *G = I->G;
-  return PLockAPI(G,block_if_busy);
+  PLockAPIAndUnblock(G);
 }
 
-void PyMOL_UnlockAPI(CPyMOL *I)
+void PyMOL_BlockAndUnlockAPI(CPyMOL *I)
+{
+  PyMOLGlobals *G = I->G;
+  PBlockAndUnlockAPI(G);
+}
+
+void PyMOL_Unblock(CPyMOL *I)
 {
   PyMOLGlobals *G = I->G;
   PUnlockAPI(G);

@@ -4081,6 +4081,12 @@ static PyObject *Cmd_New(PyObject *self, PyObject *args)
         G->P_inst->obj = pymol;
         G->P_inst->dict = PyObject_GetAttrString(pymol,"__dict__");
         {
+          /* store the PyMOL struct as a CObject */
+          PyObject *tmp = PyCObject_FromVoidPtr(I,NULL);
+          PyObject_SetAttrString(pymol,"__pymol__",tmp);
+          Py_DECREF(tmp);
+        }
+        {
           int a;
           SavedThreadRec *str = G->P_inst->savedThread;
           for(a=0;a<MAX_SAVED_THREAD;a++) {
