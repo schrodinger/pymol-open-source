@@ -43,6 +43,7 @@ from creating import \
       ungroup
 
 #--------------------------------------------------------------------
+import commanding
 from commanding import \
       cls,                \
       delete,             \

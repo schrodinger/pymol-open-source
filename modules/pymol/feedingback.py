@@ -169,7 +169,7 @@ EXAMPLES
                             _self._fb_dict[mod_int] = _self._fb_dict[mod_int] | mask_int
                         elif act_int==2:
                             _self._fb_dict[mod_int] = _self._fb_dict[mod_int] & ( 0xFF - mask_int )
-                if _feedback(fb_module.feedback,fb_mask.debugging):
+                if _feedback(fb_module.feedback,fb_mask.debugging,_self):
                      sys.stderr.write(" feedback: mode %d on %d mask %d\n"%(
                          act_int,mod_int,mask_int))
     return r

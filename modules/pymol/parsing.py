@@ -154,7 +154,7 @@ if __name__=='pymol.parsing':
             raise QuietException
         return result
     
-    def parse_arg(st,mode=STRICT):
+    def parse_arg(st,mode=STRICT,_self=None):
         '''
     parse_arg(st)
 
@@ -277,7 +277,7 @@ if __name__=='pymol.parsing':
                         print "Error: "+" "*cc+"^ syntax error (type 3)."
                         raise QuietException
         if __name__!='__main__':
-            if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
+            if _self._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
                 cmd.fb_debug.write(" parsing-DEBUG: tup: "+str(result)+"\n")
         return result
 
@@ -373,7 +373,7 @@ if __name__=='pymol.parsing':
             if "quiet" in arg_nam:
                 if not kw.has_key("quiet"):
                     if __name__!='__main__':
-                        if cmd._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
+                        if _self._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
                             kw["quiet"] = 0
             if "_self" in arg_nam:
                 if not kw.has_key("_self"):
@@ -436,14 +436,14 @@ if __name__=='pymol.parsing':
             # set feedback argument (quiet), if extant, results enabled, and not overridden
             if arg_dct.has_key("quiet"):
                 if not kw.has_key("quiet"):
-                    if cmd._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
+                    if _self._feedback(cmd.fb_module.cmd,cmd.fb_mask.results):
                         kw["quiet"] = 0
             # make sure command knows which PyMOL instance to message
             if "_self" in arg_nam:
                 if not kw.has_key("_self"):
                     kw["_self"]=_self
         if __name__!='__main__':
-            if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
+            if _self._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
                 cmd.fb_debug.write(" parsing-DEBUG: kw: "+str(kw)+"\n")      
         return (arg,kw)
 

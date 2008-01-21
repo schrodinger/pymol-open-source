@@ -44,7 +44,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'pseudoatom'     : [ self_cmd.object_sc              , 'object'          , ''   ],            
         'ramp_new'       : [ self_cmd.object_sc              , 'ramp'            , ','  ],
         'remove'         : [ self_cmd.selection_sc           , 'selection'       , ''   ],
-        'reinitialize'   : [ self_cmd.reinit_sc              , 'option'          , ''   ],
+        'reinitialize'   : [ self_cmd.commanding.reinit_sc   , 'option'          , ''   ],
         
         'scene'          : [ self_cmd._pymol._scene_dict_sc  , 'scene'           , ''   ],
         'sculpt_activate': [ self_cmd.object_sc              , 'object'          , ''   ],

@@ -52,7 +52,7 @@ try:
             result = None
         return result
 
-    def sg_sym_to_mat_list(sgsymbol):
+    def sg_sym_to_mat_list(sgsymbol): # TODO _self
         result = None
         key = string.strip(string.upper(sgsymbol))
         sym_op = sym_dict.get(key,None)

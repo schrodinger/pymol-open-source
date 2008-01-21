@@ -375,7 +375,7 @@ if __name__=='pymol.parser':
                                                     parsing.parse_arg(layer.com2),
                                                     ('sentinel',),
                                                     {'sentinel':'skip end'})
-                                                print arg
+                                                print arg # ???
                                                 if len(layer.args):
                                                     if layer.args[0]=='end': # probable 'skip end' to ignore
                                                         arg = []

@@ -2175,6 +2175,16 @@ void PUnlockAPI(PyMOLGlobals *G)
   PUnblock(G);
 }
 
+
+int PTryLockAPIAndUnblock(PyMOLGlobals *G)
+{
+  int result = get_api_lock(G,false);
+  if(result) {
+    PUnblock(G);
+  }
+  return result;
+}
+
 void PLockAPIAndUnblock(PyMOLGlobals *G)
 {
   PXDecRef(PyObject_CallFunction(G->P_inst->lock,"O",G->P_inst->cmd));

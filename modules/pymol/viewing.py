@@ -936,19 +936,19 @@ SEE ALSO
             if action=='recall':
                 key = pymol._view_dict_sc.auto_err(key,'view')
                 _self.set_view(pymol._view_dict[key],animate=animate)
-                if _feedback(fb_module.scene,fb_mask.actions): # redundant
+                if _feedback(fb_module.scene,fb_mask.actions,_self): # redundant
                     print " view: \"%s\" recalled."%key
             elif (action=='store') or (action=='update'):
                 pymol._view_dict_sc.append(key)
                 pymol._view_dict[key]=_self.get_view(0)
-                if _feedback(fb_module.scene,fb_mask.actions):
+                if _feedback(fb_module.scene,fb_mask.actions,_self):
                     print " view: view stored as \"%s\"."%key
             elif action=='clear':
                 key = pymol._view_dict_sc.auto_err(key,'view')
                 if pymol._view_dict.has_key(key):
                     del pymol._view_dict[key]
                     pymol._view_dict_sc = Shortcut(pymol._view_dict.keys())            
-                    if _feedback(fb_module.scene,fb_mask.actions): # redundant
+                    if _feedback(fb_module.scene,fb_mask.actions,_self): # redundant
                         print " view: '%s' deleted."%key
 
 
@@ -1322,7 +1322,7 @@ SEE ALSO
                     if (ll>0) and (view):
                         if list[0]!=None:
                             _self.set_view(list[0],animate,quiet,hand)
-                    if not quiet and _feedback(fb_module.scene,fb_mask.actions): # redundant
+                    if not quiet and _feedback(fb_module.scene,fb_mask.actions,_self): # redundant
                         print " scene: \"%s\" recalled."%key
                 elif (action=='store') or (action=='update'):
                     if key =='new':
@@ -1378,7 +1378,7 @@ SEE ALSO
                                 message = string.split(message,"\n")
                     entry.append(message)
                     pymol._scene_dict[key]=entry
-                    if _feedback(fb_module.scene,fb_mask.actions):
+                    if _feedback(fb_module.scene,fb_mask.actions,_self):
                         print " scene: scene stored as \"%s\"."%key
                     _scene_validate_list(_self)                        
                     _self.set("scenes_changed",1,quiet=1);
@@ -1405,7 +1405,7 @@ SEE ALSO
                         _self.delete(name)
                         pymol._scene_dict_sc = Shortcut(pymol._scene_dict.keys())
                         _scene_validate_list(_self)
-                        if _feedback(fb_module.scene,fb_mask.actions):
+                        if _feedback(fb_module.scene,fb_mask.actions,_self):
                             print " scene: '%s' deleted."%key
                     _self.set("session_changed",1,quiet=1)                                                                    
                 elif action=='next':
