@@ -2993,9 +2993,11 @@ void PyMOL_Stop(CPyMOL *I)
 
 void PyMOL_Free(CPyMOL *I)
 {
+#ifndef _PYMOL_ACTIVEX
   PYMOL_API_LOCK
+#endif
     /* take PyMOL down gracefully */
-    PyMOLOptions_Free(I->G->Option);
+  PyMOLOptions_Free(I->G->Option);
   FreeP(I->G);
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_OWN_INTERP
@@ -3012,7 +3014,9 @@ void PyMOL_Free(CPyMOL *I)
 #endif
   FreeP(I);
   return;
+#ifndef _PYMOL_ACTIVEX
   PYMOL_API_UNLOCK;
+#endif
 }
 
 struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL *I)
@@ -3217,16 +3221,15 @@ int PyMOL_Idle(CPyMOL *I)
 	} else {
 		I->PythonInitStage=-1;
 		PBlock(G);
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+		/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
-    /* restore working directory if asked to */
-        PRunStringModule(G,"if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
-        PXDecRef(PyObject_CallMethod(G->P_inst->obj,"launch_gui","O",G->P_inst->obj));
+		/* restore working directory if asked to */
+		PRunStringModule(G,"if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
+		PXDecRef(PyObject_CallMethod(G->P_inst->obj,"launch_gui","O",G->P_inst->obj));
 #endif
-/* END PROPRIETARY CODE SEGMENT */
-        PXDecRef(PyObject_CallMethod(G->P_inst->obj,"adapt_to_hardware","O",G->P_inst->obj));
-        PXDecRef(PyObject_CallMethod(G->P_inst->obj,"exec_deferred","O",G->P_inst->obj));
+		/* END PROPRIETARY CODE SEGMENT */
+		PXDecRef(PyObject_CallMethod(G->P_inst->obj,"adapt_to_hardware","O",G->P_inst->obj));
+		PXDecRef(PyObject_CallMethod(G->P_inst->obj,"exec_deferred","O",G->P_inst->obj));
 		PUnblock(G);
 		PFlush(G);
 	}
