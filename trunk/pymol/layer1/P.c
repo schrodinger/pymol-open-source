@@ -1052,7 +1052,6 @@ int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy)
 }
 
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
-#ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
 /* 
  *  void	initExtensionClass(void);
@@ -1067,10 +1066,8 @@ void    init_glut(void);
 void    initopenglutil(void);
 void    initopenglutil_num(void);
 #endif
-#endif
 
 #ifdef _PYMOL_MONOLITHIC
-#ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
@@ -1085,10 +1082,8 @@ void  init_champ();
 /* END PROPRIETARY CODE SEGMENT */
 #endif
 #endif
-#endif
 
 #ifdef _PYMOL_MONOLITHIC
-#ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
 /*
  * void	initExtensionClass(void);
@@ -1104,7 +1099,7 @@ void    initopenglutil(void);
 void    initopenglutil_num(void);
 #endif
 #endif
-#endif
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 static int IsSecurityRequired()
@@ -1371,18 +1366,14 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   }
 #endif
 
-#ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
   Py_Initialize();
   PyEval_InitThreads();
   PyUnicode_SetDefaultEncoding("utf-8"); /* is this safe & legal? */
-
-#endif
 #endif
 
   init_cmd();
 #ifdef _PYMOL_MONOLITHIC
-#ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
   /*
    * initExtensionClass();
@@ -1408,7 +1399,6 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   init_glut();
   initopenglutil();
   initopenglutil_num();
-#endif
 #endif
 #endif
   PyRun_SimpleString("import os\n");
@@ -1579,10 +1569,8 @@ void PInit(PyMOLGlobals *G,int global_instance)
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 #ifdef _PYMOL_MONOLITHIC
-#ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
 #define _PYMOL_INIT_MODULES
-#endif
 #endif
 #endif
 #endif
@@ -2006,14 +1994,14 @@ void PBlock(PyMOLGlobals *G)
 {
 
   if(!PAutoBlock(G)) {
-    ErrFatal(G,"PBlock","Threading error detected.  Terminating...");
+    int *p=0; *p=0;
+	ErrFatal(G,"PBlock","Threading error detected.  Terminating...");
   }
 }
 
 
 int PAutoBlock(PyMOLGlobals *G)
 {
-#ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
   int a,id;
   SavedThreadRec *SavedThread = G->P_inst->savedThread;
@@ -2086,9 +2074,6 @@ int PAutoBlock(PyMOLGlobals *G)
 #else
   return 1;
 #endif
-#else
-  return 1;
-#endif
 }
 
 int PIsGlutThread(void)
@@ -2098,12 +2083,10 @@ int PIsGlutThread(void)
 
 void PUnblock(PyMOLGlobals *G)
 {
-#ifndef _PYMOL_ACTIVEX
 #ifndef _PYMOL_EMBEDDED
   int a;
   SavedThreadRec *SavedThread = G->P_inst->savedThread;
   /* NOTE: ASSUMES a locked API */
-
   PRINTFD(G,FB_Threads)
     " PUnblock-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
@@ -2131,10 +2114,7 @@ void PUnblock(PyMOLGlobals *G)
 #else
   (SavedThread+a)->state = PyEval_SaveThread();  
 #endif
-  
 #endif
-#endif
-
 }
 
 
@@ -2213,13 +2193,11 @@ static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
   char *str;
   PyArg_ParseTuple(args,"s",&str);
   if(str[0]) {
-    if(SingletonPyMOLGlobals) {
-      if(Feedback(SingletonPyMOLGlobals,FB_Python,FB_Output)) {
-        OrthoAddOutput(SingletonPyMOLGlobals,str);
-      }
-    } else {
-      printf("PCatchWrite: SingletonPyMOLGlobals is NULL\n");
-    }
+ 	  if(SingletonPyMOLGlobals) {
+		  if(Feedback(SingletonPyMOLGlobals,FB_Python,FB_Output)) {
+			  OrthoAddOutput(SingletonPyMOLGlobals,str);
+		  }
+	  }
   }
   return PConvAutoNone(Py_None);
 }
@@ -2240,9 +2218,7 @@ static PyObject *PCatchWritelines(PyObject *self, 	PyObject *args)
             if(Feedback(SingletonPyMOLGlobals,FB_Python,FB_Output)) {
               OrthoAddOutput(SingletonPyMOLGlobals,str);
             }
-          } else {
-            printf("PCatchWrite: SingletonPyMOLGlobals is NULL\n");
-          }
+		  }
         }
         Py_XDECREF(obj);
       }

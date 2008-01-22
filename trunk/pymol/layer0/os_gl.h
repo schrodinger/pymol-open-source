@@ -88,7 +88,7 @@ int PyMOLCheckOpenGLErr(char *pos);
 #define _PYMOL_PRETEND_GLUT
 #endif
 
-#ifdef _PYMOL_ACTIVEX
+#ifdef _PYMOL_ACTIVEX_OLD
 #define _PYMOL_WX_GLUT
 #endif
 
