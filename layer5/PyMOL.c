@@ -2885,7 +2885,20 @@ void PyMOL_Start(CPyMOL *I)
 #ifndef _PYMOL_NOPY
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+#ifndef _PYMOL_API_HAS_PYTHON
+
 #ifdef _MACPYMOL_XCODE
+#define _PYMOL_API_HAS_PYTHON
+#else
+
+#ifdef _PYMOL_LIB_HAS_PYTHON
+#define _PYMOL_API_HAS_PYTHON
+#endif
+
+#endif
+#endif
+
+#ifdef _PYMOL_API_HAS_PYTHON
 void init_cmd(void);
 /* 
  * void initExtensionClass(void);
@@ -2909,12 +2922,15 @@ void PyMOL_StartWithPython(CPyMOL *I)
 	
 	/* initialize our embedded C modules */
 
+#ifdef _PYMOL_API_HAS_PYTHON
     init_cmd();
     /* 
      * initExtensionClass();
      * initsglite();
      */
+
 	init_champ();
+#endif
     
 	/* launch pymol's Python subsystems */
 	
