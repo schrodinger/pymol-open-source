@@ -9,6 +9,8 @@ print "BEGIN-LOG"
 
 seed(123)
 
+print "the 1st random number should be %8.3f\notherwise the rest of the test is meaningless...\n"%pymol.random()
+
 pymol.random = random
 
 cmd.load("dat/pept.pdb","ref")
