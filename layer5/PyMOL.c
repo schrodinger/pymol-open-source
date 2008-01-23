@@ -108,6 +108,7 @@ typedef struct _CPyMOL {
   int InterruptFlag; 
   int ReshapeFlag;
   int ClickReadyFlag;
+  int DrawnFlag;
   ObjectNameType ClickedObject;
   int ClickedIndex, ClickedButton, ClickedModifiers, ClickedX, ClickedY;
   int ImageRequestedFlag,ImageReadyFlag;
@@ -2878,6 +2879,7 @@ void PyMOL_Start(CPyMOL *I)
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 
+  I->DrawnFlag = false;
   I->RedisplayFlag = true;
   G->Ready = true; 
 }
@@ -3070,7 +3072,7 @@ void PyMOL_Draw(CPyMOL *I)
     I->DraggedFlag = false;
   }
   if(G->HaveGUI) {
-
+    
     PyMOL_PushValidContext(I);
 
     /* get us into a well defined GL state */
@@ -3106,9 +3108,33 @@ void PyMOL_Draw(CPyMOL *I)
     }
 #endif
 /* END PROPRIETARY CODE SEGMENT */
+
+    if(!I->DrawnFlag) {
+      SceneSetCardInfo(G,(char*)glGetString(GL_VENDOR),
+                       (char*)glGetString(GL_RENDERER),
+                       (char*)glGetString(GL_VERSION));
+      if(G->Option->show_splash) {
+        
+        printf(" OpenGL graphics engine:\n");
+        printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
+        printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
+        printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));
+        if(Feedback(G,FB_OpenGL,FB_Blather)) {
+          printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));
+        }
+        if(G->StereoCapable) {
+          printf("  Hardware stereo capability detected.\n");
+        } else if((G->Option->force_stereo==1)&&(!G->StereoCapable)) {
+          printf("  Hardware stereo not present (unable to force).\n");
+        }
+      } 
+      I->DrawnFlag = true;
+    }
     
+  } else {
+    I->DrawnFlag = true;
   }
-  
+
   I->RedisplayFlag = false;
   
   OrthoBusyPrime(G);

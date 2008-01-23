@@ -1657,24 +1657,6 @@ SetConsoleCtrlHandler(
      PUnblock(G);
      
      if(G->HaveGUI) {
-       SceneSetCardInfo(G,(char*)glGetString(GL_VENDOR),
-                        (char*)glGetString(GL_RENDERER),
-                        (char*)glGetString(GL_VERSION));
-       if(G->Option->show_splash) {
-         
-         printf(" OpenGL graphics engine:\n");
-         printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
-         printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
-         printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));
-         if(Feedback(G,FB_OpenGL,FB_Blather)) {
-           printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));
-         }
-         if(G->StereoCapable) {
-           printf("  Hardware stereo capability detected.\n");
-         } else if((G->Option->force_stereo==1)&&(!G->StereoCapable)) {
-           printf("  Hardware stereo not present (unable to force).\n");
-         }
-       } 
        if(!I->WindowIsVisible)
          MainReshape(G->Option->winX,G->Option->winY);
        I->IdleMode=3;
