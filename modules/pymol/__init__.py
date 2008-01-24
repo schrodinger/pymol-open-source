@@ -29,6 +29,7 @@
 # message.  This is not a bug in PyMOL, as it can be produced with a
 # trivial tcl/tk program.  (Tentatively WORKED AROUND in 0.99beta18!)
 
+from copy import deepcopy
 import __main__
 if __name__!='__main__':
     import invocation
@@ -89,6 +90,13 @@ def _init_internals(_pymol):
     _pymol._scene_order = []
     _pymol._scene_counter = 1
     _pymol._scene_quit_on_action = ''
+
+    # get us a private invocation pseudo-module
+    
+    _pymol._invocation = Scratch_Storage()
+    _pymol._invocation.options = deepcopy(invocation.options)
+    _pymol._invocation.get_user_config = invocation.get_user_config
+    _pymol._invocation.parse_args = invocation.parse_args
 
     # these locks are to be shared by all PyMOL instances within a
     # single Python interpeter
@@ -425,8 +433,11 @@ if pymol_launch != 3: # if this isn't a dry run
             _COb = cmd._COb
         else:
             pymol._COb = cmd._COb
-        from pymol import invocation
-        invocation.parse_args(pymol_argv)
+        if hasattr(pymol,'_invocation'):
+            pymol._invocation.parse_args(pymol_argv,_pymol=pymol)
+        else:
+            from pymol import invocation
+            invocation.parse_args(pymol_argv)            
         start_pymol(0)
 
     elif pymol_launch==2: # threaded launch (create new thread)
@@ -448,7 +459,10 @@ if pymol_launch != 3: # if this isn't a dry run
             _COb = cmd._COb
         else:
             pymol._COb = cmd._COb
-        invocation.parse_args(pymol_argv)
+        if hasattr(pymol,'_invocation'):
+            pymol._invocation.parse_args(pymol_argv,_pymol=pymol)
+        else:
+            invocation.parse_args(pymol_argv)            
         prime_pymol()
         # count on host process to actually start PyMOL
 

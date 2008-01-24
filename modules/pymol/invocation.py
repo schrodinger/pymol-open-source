@@ -34,8 +34,10 @@ if __name__=='pymol.invocation':
     class generic:
         pass
 
-    options = generic();
+    global_options = generic();
 
+    options = global_options
+    
     options.deferred = []
     options.no_gui = 0
     options.internal_gui = 1
@@ -130,13 +132,17 @@ if __name__=='pymol.invocation':
         second.sort()
         return first+second
 
-    def parse_args(argv):
+    def parse_args(argv,_pymol=None):
         global _argv
         _argv = copy.deepcopy(argv) # pymol.invocation._argv
         av = copy.deepcopy(argv)
         av = av[1:] # throw out the executable path
         av.reverse()
-        global options
+        global global_options
+        if _pymol==None:
+            options = global_options
+        else:
+            options = _pymol.invocation.options
         once_dict = {}
         options.deferred = []
         final_actions = []
