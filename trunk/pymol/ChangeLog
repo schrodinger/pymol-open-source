@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-01-24  Warren L. DeLano <warren@delsci.com>	
+
+	* spacebar now advances scene when in presentation mode
+	
 2008-01-20  Warren L. DeLano <warren@delsci.com>	
 
 	* additional work towards multiple PyMOLs in one Python.

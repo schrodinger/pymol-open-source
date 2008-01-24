@@ -305,7 +305,7 @@ int OrthoTextVisible(PyMOLGlobals *G) {
 int OrthoArrowsGrabbed(PyMOLGlobals *G)
 {
   register COrtho *I=G->Ortho;
-  return(I->CurChar>I->PromptChar&&OrthoTextVisible(G)); 
+  return((I->CurChar>I->PromptChar)&&OrthoTextVisible(G)); 
   /* arrows can't be grabbed if text isn't visible */
 }
 /*========================================================================*/
@@ -370,7 +370,7 @@ void OrthoDirty(PyMOLGlobals *G) {
     " OrthoDirty: called.\n"
     ENDFD;
   if(!I->DirtyFlag) {
-	 I->DirtyFlag = true;
+    I->DirtyFlag = true;
   }
 
   PyMOL_NeedRedisplay(G->PyMOL);
@@ -380,62 +380,62 @@ void OrthoBusyMessage(PyMOLGlobals *G,char *message)
 {
   register COrtho *I=G->Ortho;
   if(strlen(message)<255)
-	 strcpy(I->BusyMessage,message);
+    strcpy(I->BusyMessage,message);
 }
 /*========================================================================*/
 void OrthoBusySlow(PyMOLGlobals *G,int progress,int total)
 {
-	register COrtho *I=G->Ortho;
-    double   time_yet = (-I->BusyLastUpdate) + UtilGetSeconds(G);
+  register COrtho *I=G->Ortho;
+  double   time_yet = (-I->BusyLastUpdate) + UtilGetSeconds(G);
 
-	PRINTFD(G,FB_Ortho)
-		" OrthoBusySlow-DEBUG: progress %d total %d\n",progress,total
-		ENDFD;
-	I->BusyStatus[0]=progress;
-	I->BusyStatus[1]=total;
-	if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.15F)) {
-		if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
+  PRINTFD(G,FB_Ortho)
+    " OrthoBusySlow-DEBUG: progress %d total %d\n",progress,total
+    ENDFD;
+  I->BusyStatus[0]=progress;
+  I->BusyStatus[1]=total;
+  if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.15F)) {
+    if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
 #ifndef _PYMOL_NOPY
-			int blocked = PAutoBlock(G);
-			if(PLockStatusAttempt(G)) {
+      int blocked = PAutoBlock(G);
+      if(PLockStatusAttempt(G)) {
 #endif
-			PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_SLOW,progress,total);
-            I->BusyLastUpdate = UtilGetSeconds(G);
+        PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_SLOW,progress,total);
+        I->BusyLastUpdate = UtilGetSeconds(G);
 
 #ifndef _PYMOL_NOPY
-			PUnlockStatus(G);
-            }
-			PAutoUnblock(G,blocked);
+        PUnlockStatus(G);
+      }
+      PAutoUnblock(G,blocked);
 #endif
-		}
-	}
-	OrthoBusyDraw(G,false);
+    }
+  }
+  OrthoBusyDraw(G,false);
 }
 /*========================================================================*/
 void OrthoBusyFast(PyMOLGlobals *G,int progress,int total)
 {
-	register COrtho *I=G->Ortho;
-    double   time_yet = (-I->BusyLastUpdate) + UtilGetSeconds(G);
-	PRINTFD(G,FB_Ortho)
-		" OrthoBusyFast-DEBUG: progress %d total %d\n",progress,total
-		ENDFD;
-	I->BusyStatus[2]=progress;
-	I->BusyStatus[3]=total;
-	if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.15F)) {
-		if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
+  register COrtho *I=G->Ortho;
+  double   time_yet = (-I->BusyLastUpdate) + UtilGetSeconds(G);
+  PRINTFD(G,FB_Ortho)
+    " OrthoBusyFast-DEBUG: progress %d total %d\n",progress,total
+    ENDFD;
+  I->BusyStatus[2]=progress;
+  I->BusyStatus[3]=total;
+  if(SettingGetGlobal_b(G,cSetting_show_progress)&&(time_yet>0.15F)) {
+    if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
 #ifndef _PYMOL_NOPY
-			int blocked = PAutoBlock(G);
-			if(PLockStatusAttempt(G)) {
+      int blocked = PAutoBlock(G);
+      if(PLockStatusAttempt(G)) {
 #endif
-			PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_FAST,progress,total);
-            I->BusyLastUpdate = UtilGetSeconds(G);
+        PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_FAST,progress,total);
+        I->BusyLastUpdate = UtilGetSeconds(G);
 #ifndef _PYMOL_NOPY
-			PUnlockStatus(G);
-            }
-			PAutoUnblock(G,blocked);
+        PUnlockStatus(G);
+      }
+      PAutoUnblock(G,blocked);
 #endif
-		}
-	}
+    }
+  }
   OrthoBusyDraw(G,false);
 }
 /*========================================================================*/
@@ -444,7 +444,7 @@ void OrthoBusyPrime(PyMOLGlobals *G)
   register COrtho *I=G->Ortho;
   int a;
   for(a=0;a<4;a++)
-	 I->BusyStatus[a]=0;
+    I->BusyStatus[a]=0;
   I->BusyMessage[0]=0;
   I->BusyLast = UtilGetSeconds(G);
   I->BusyLastUpdate = UtilGetSeconds(G);
@@ -474,7 +474,7 @@ void OrthoBusyDraw(PyMOLGlobals *G,int force)
     if(PIsGlutThread()) {
 
 #ifdef _MACPYMOL_XCODE
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+      /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
       float busyValue;
       if(I->BusyStatus[1]) {
         busyValue=(I->BusyStatus[0]*1.0F/I->BusyStatus[1]);
@@ -483,7 +483,7 @@ void OrthoBusyDraw(PyMOLGlobals *G,int force)
         busyValue=(I->BusyStatus[2]*1.0F/I->BusyStatus[3]);
       }
       MacPyMOLSetProgress(busyValue);
-/* END PROPRIETARY CODE SEGMENT */
+      /* END PROPRIETARY CODE SEGMENT */
 #else
       if(G->HaveGUI && G->ValidContext) {      
         char *c;
@@ -602,11 +602,11 @@ void OrthoRestorePrompt(PyMOLGlobals *G)
   register COrtho *I=G->Ortho;
   int curLine;
   if(!I->InputFlag) 
-	 {
-	 if(I->Saved[0]) 
+    {
+      if(I->Saved[0]) 
 		{
 		  if(I->CurChar) {
-			 OrthoNewLine(G,NULL,true);
+            OrthoNewLine(G,NULL,true);
 		  }
 		  curLine = I->CurLine&OrthoSaveLines;
 		  strcpy(I->Line[curLine],I->Saved);
@@ -614,19 +614,19 @@ void OrthoRestorePrompt(PyMOLGlobals *G)
 		  I->CurChar = I->SavedCC;
 		  I->PromptChar = I->SavedPC;
 		} 
-	 else 
+      else 
 		{
 		  if(I->CurChar) 
-			 OrthoNewLine(G,I->Prompt,true);
+            OrthoNewLine(G,I->Prompt,true);
 		  else
-			 {
-				curLine = I->CurLine&OrthoSaveLines;
-				strcpy(I->Line[curLine],I->Prompt);
-				I->CurChar = (I->PromptChar = strlen(I->Prompt));
-			 }
+            {
+              curLine = I->CurLine&OrthoSaveLines;
+              strcpy(I->Line[curLine],I->Prompt);
+              I->CurChar = (I->PromptChar = strlen(I->Prompt));
+            }
 		}
-	 I->InputFlag=1;
-	 }
+      I->InputFlag=1;
+    }
 }
 /*========================================================================*/
 void OrthoKeyControl(PyMOLGlobals *G,unsigned char k) {
@@ -658,6 +658,23 @@ void OrthoKeyAlt(PyMOLGlobals *G,unsigned char k) {
   }
 
 }
+static int add_normal_char(COrtho *I,unsigned char k)
+{
+  char buffer[OrthoLineLength];
+  int curLine=I->CurLine&OrthoSaveLines;
+  if(I->CursorChar>=0) {
+    strcpy(buffer,I->Line[curLine]+I->CursorChar);
+    I->Line[curLine][I->CursorChar]=k;
+    I->CursorChar++;
+    I->CurChar++;
+    strcpy(I->Line[curLine]+I->CursorChar,buffer);
+  } else {
+    I->Line[curLine][I->CurChar]=k;
+    I->CurChar++;
+    I->Line[curLine][I->CurChar]=0;
+  }
+  return curLine;
+}
 /*========================================================================*/
 void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
 {
@@ -670,11 +687,11 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
     ENDFD;
     
   if(!I->InputFlag) 
-	 {
-	 if(I->Saved[0]) 
+    {
+      if(I->Saved[0]) 
 		{
 		  if(I->CurChar) {
-			 OrthoNewLine(G,NULL,true);
+            OrthoNewLine(G,NULL,true);
 		  }
 		  curLine = I->CurLine&OrthoSaveLines;
 		  strcpy(I->Line[curLine],I->Saved);
@@ -682,76 +699,48 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
 		  I->CurChar = I->SavedCC;
 		  I->PromptChar = I->SavedPC;
 		} 
-	 else 
+      else 
 		{
 		  if(I->CurChar) 
-			 OrthoNewLine(G,I->Prompt,true);
+            OrthoNewLine(G,I->Prompt,true);
 		  else
-			 {
-				curLine = I->CurLine&OrthoSaveLines;
-				strcpy(I->Line[curLine],I->Prompt);
-				I->CurChar = (I->PromptChar = strlen(I->Prompt));
-			 }
+            {
+              curLine = I->CurLine&OrthoSaveLines;
+              strcpy(I->Line[curLine],I->Prompt);
+              I->CurChar = (I->PromptChar = strlen(I->Prompt));
+            }
 		}
-	 I->InputFlag=1;
-  }
+      I->InputFlag=1;
+    }
   if(mod==4) { /* alt */
     OrthoKeyAlt(G,k);
-  } else if((k>=32)&&(k!=127))
-	 {
-      curLine=I->CurLine&OrthoSaveLines;
-      
-      if(I->CursorChar>=0) {
-        strcpy(buffer,I->Line[curLine]+I->CursorChar);
-        I->Line[curLine][I->CursorChar]=k;
-        I->CursorChar++;
-        I->CurChar++;
-        strcpy(I->Line[curLine]+I->CursorChar,buffer);
-      } else {
-        I->Line[curLine][I->CurChar]=k;
-        I->CurChar++;
-        I->Line[curLine][I->CurChar]=0;
-      }
-	 }
-  else switch(k)
-	 {
-    case 127: /* delete */     
+  } else if((k>32)&&(k!=127)) {
+    curLine=add_normal_char(I,k);
+  } else switch(k) {
+  case 32: /* spacebar */
+    if(SettingGetGlobal_b(G,cSetting_presentation)&&!OrthoTextVisible(G)) {
+      PParse(G,"cmd.scene('','next')");
+    } else {
+      curLine=add_normal_char(I,k);
+    }
+    break;
+  case 127: /* delete */     
 #ifndef _PYMOL_OSX
-      if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible(G)) {
-        OrthoKeyControl(G,4+64);
-      } else {
-        if(I->CursorChar>=0) {
-          if(I->CursorChar<I->CurChar)
-            I->CursorChar++;
-          if(I->CursorChar==I->CurChar)
-            I->CursorChar=-1;
-        }
-        if(I->CurChar>I->PromptChar)
-          {
-            curLine=I->CurLine&OrthoSaveLines;
-            if(I->CursorChar>=0) {
-              if(I->CursorChar>I->PromptChar) {
-                strcpy(buffer,I->Line[curLine]+I->CursorChar);
-                I->CursorChar--;
-                I->CurChar--;
-                strcpy(I->Line[curLine]+I->CursorChar,buffer);
-              }
-            } else {
-              I->CurChar--;
-              I->Line[curLine][I->CurChar]=0;
-            }
-          }
-      } 
-      break;
-	 case 8: /* backspace */
-#endif
-		if(I->CurChar>I->PromptChar)
-		  {
+    if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible(G)) {
+      OrthoKeyControl(G,4+64);
+    } else {
+   q   if(I->CursorChar>=0) {
+        if(I->CursorChar<I->CurChar)
+          I->CursorChar++;
+        if(I->CursorChar==I->CurChar)
+          I->CursorChar=-1;
+      }
+      if(I->CurChar>I->PromptChar)
+        {
           curLine=I->CurLine&OrthoSaveLines;
           if(I->CursorChar>=0) {
             if(I->CursorChar>I->PromptChar) {
               strcpy(buffer,I->Line[curLine]+I->CursorChar);
-              I->Line[curLine][I->CursorChar]=k;
               I->CursorChar--;
               I->CurChar--;
               strcpy(I->Line[curLine]+I->CursorChar,buffer);
@@ -760,95 +749,115 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
             I->CurChar--;
             I->Line[curLine][I->CurChar]=0;
           }
-		  }
-		break;
-    case 5: /* CTRL E -- ending */
-      if(OrthoArrowsGrabbed(G)) {
-        I->CursorChar=-1;
-      } else 
-        OrthoKeyControl(G,(unsigned char)(k+64));
-      break;
-    case 1: /* CTRL A -- beginning */
-      if(OrthoArrowsGrabbed(G)) {
-        if(I->CurChar)
-          I->CursorChar=I->PromptChar;        
-      } else 
-        OrthoKeyControl(G,(unsigned char)(k+64));
-      break;
-    case 4: /* CTRL D */
-      if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible(G)) {
-        OrthoKeyControl(G,(unsigned char)(4+64));
-      } else if((I->CurChar>I->PromptChar)&&
-                (I->CursorChar>=0)&&
-                (I->CursorChar<I->CurChar)) { /* deleting */
-        curLine=I->CurLine&OrthoSaveLines;
-        strcpy(buffer,I->Line[curLine]+I->CursorChar+1);
-        I->CurChar--;
-        strcpy(I->Line[curLine]+I->CursorChar,buffer);
-      } else { /* filename completion query */
-        curLine=I->CurLine&OrthoSaveLines;
-        if(I->PromptChar) {
-          strcpy(buffer,I->Line[curLine]);
-          if(PComplete(G,buffer+I->PromptChar,
-                    sizeof(OrthoLineType)-I->PromptChar)); /* just print, don't complete */
         }
-      }
-      break;
-	 case 9: /* CTRL I -- tab */
-      if(mod&cOrthoCTRL) {
-        OrthoKeyControl(G,(unsigned char)(k+64)); 
-      } else {
-        curLine=I->CurLine&OrthoSaveLines;
-        if(I->PromptChar) {
-          strcpy(buffer,I->Line[curLine]);
-          
-          if(PComplete(G,buffer+I->PromptChar,
-                       sizeof(OrthoLineType)-I->PromptChar))
-            {
-              OrthoRestorePrompt(G);
-              curLine=I->CurLine&OrthoSaveLines;
-              strcpy(I->Line[curLine],buffer);
-              I->CurChar = strlen(I->Line[curLine]);
-            }
-        }
-      }
-      break;
-    case 27: /* ESCAPE */
-      if(I->SplashFlag) {
-        OrthoRemoveSplash(G);
-      } else {
-        SettingSet(G,cSetting_text,(float)(!((int)SettingGet(G,cSetting_text))));
-        if(mod&cOrthoSHIFT) 
-          SettingSet(G,cSetting_overlay,(float)(!((int)SettingGet(G,cSetting_overlay))));
-      }
-		break;
-	 case 13: /* CTRL M -- carriage return */
-      OrthoParseCurrentLine(G);
-		break;
-	 case 11: /* CTRL K -- truncate */
-      if(OrthoArrowsGrabbed(G)) {
-        if(I->CursorChar>=0) { 
-          I->Line[I->CurLine&OrthoSaveLines][I->CursorChar]=0;
-          I->CurChar=I->CursorChar;
-          I->CursorChar=-1;
-        }
-      } else {
-        if(mod&cOrthoCTRL) {
-          OrthoKeyControl(G,(unsigned char)(k+64));
-        }
-      }
-      break;
-    case 22: /* CTRL V -- paste */
-#ifndef _PYMOL_NOPY
-      PBlockAndUnlockAPI(G);
-      PRunStringInstance(G,"cmd.paste()");
-      PLockAPIAndUnblock(G);
+    } 
+    break;
+  case 8: /* backspace */
 #endif
-      break;
-	 default:
+    if(I->CurChar>I->PromptChar)
+      {
+        curLine=I->CurLine&OrthoSaveLines;
+        if(I->CursorChar>=0) {
+          if(I->CursorChar>I->PromptChar) {
+            strcpy(buffer,I->Line[curLine]+I->CursorChar);
+            I->Line[curLine][I->CursorChar]=k;
+            I->CursorChar--;
+            I->CurChar--;
+            strcpy(I->Line[curLine]+I->CursorChar,buffer);
+          }
+        } else {
+          I->CurChar--;
+          I->Line[curLine][I->CurChar]=0;
+        }
+      }
+    break;
+  case 5: /* CTRL E -- ending */
+    if(OrthoArrowsGrabbed(G)) {
+      I->CursorChar=-1;
+    } else 
       OrthoKeyControl(G,(unsigned char)(k+64));
-		break;
-	 }
+    break;
+  case 1: /* CTRL A -- beginning */
+    if(OrthoArrowsGrabbed(G)) {
+      if(I->CurChar)
+        I->CursorChar=I->PromptChar;        
+    } else 
+      OrthoKeyControl(G,(unsigned char)(k+64));
+    break;
+  case 4: /* CTRL D */
+    if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible(G)) {
+      OrthoKeyControl(G,(unsigned char)(4+64));
+    } else if((I->CurChar>I->PromptChar)&&
+              (I->CursorChar>=0)&&
+              (I->CursorChar<I->CurChar)) { /* deleting */
+      curLine=I->CurLine&OrthoSaveLines;
+      strcpy(buffer,I->Line[curLine]+I->CursorChar+1);
+      I->CurChar--;
+      strcpy(I->Line[curLine]+I->CursorChar,buffer);
+    } else { /* filename completion query */
+      curLine=I->CurLine&OrthoSaveLines;
+      if(I->PromptChar) {
+        strcpy(buffer,I->Line[curLine]);
+        if(PComplete(G,buffer+I->PromptChar,
+                     sizeof(OrthoLineType)-I->PromptChar)); /* just print, don't complete */
+      }
+    }
+    break;
+  case 9: /* CTRL I -- tab */
+    if(mod&cOrthoCTRL) {
+      OrthoKeyControl(G,(unsigned char)(k+64)); 
+    } else {
+      curLine=I->CurLine&OrthoSaveLines;
+      if(I->PromptChar) {
+        strcpy(buffer,I->Line[curLine]);
+          
+        if(PComplete(G,buffer+I->PromptChar,
+                     sizeof(OrthoLineType)-I->PromptChar))
+          {
+            OrthoRestorePrompt(G);
+            curLine=I->CurLine&OrthoSaveLines;
+            strcpy(I->Line[curLine],buffer);
+            I->CurChar = strlen(I->Line[curLine]);
+          }
+      }
+    }
+    break;
+  case 27: /* ESCAPE */
+    if(I->SplashFlag) {
+      OrthoRemoveSplash(G);
+    } else {
+      SettingSet(G,cSetting_text,(float)(!((int)SettingGet(G,cSetting_text))));
+      if(mod&cOrthoSHIFT) 
+        SettingSet(G,cSetting_overlay,(float)(!((int)SettingGet(G,cSetting_overlay))));
+    }
+    break;
+  case 13: /* CTRL M -- carriage return */
+    OrthoParseCurrentLine(G);
+    break;
+  case 11: /* CTRL K -- truncate */
+    if(OrthoArrowsGrabbed(G)) {
+      if(I->CursorChar>=0) { 
+        I->Line[I->CurLine&OrthoSaveLines][I->CursorChar]=0;
+        I->CurChar=I->CursorChar;
+        I->CursorChar=-1;
+      }
+    } else {
+      if(mod&cOrthoCTRL) {
+        OrthoKeyControl(G,(unsigned char)(k+64));
+      }
+    }
+    break;
+  case 22: /* CTRL V -- paste */
+#ifndef _PYMOL_NOPY
+    PBlockAndUnlockAPI(G);
+    PRunStringInstance(G,"cmd.paste()");
+    PLockAPIAndUnblock(G);
+#endif
+    break;
+  default:
+    OrthoKeyControl(G,(unsigned char)(k+64));
+    break;
+  }
   PyMOL_NeedRedisplay(G->PyMOL);
 }
 /*========================================================================*/

@@ -22,6 +22,7 @@ __main__.pymol = pymol
 from pymol import selector
 import pymol.menu
 import pymol.povray
+from copy import deepcopy
 
 import threading
 import traceback
@@ -45,7 +46,7 @@ class PyMOL:
             # initialize the cmd API
 
             self.cmd = Cmd(self,self._COb)
-
+            
             # begin assembling the instance member by member
 
             # key instance methods
@@ -57,7 +58,7 @@ class PyMOL:
             self.util = pymol.util
 
             # Python components
-
+            
         except:
             traceback.print_exc()
             pymol2_lock.release()
@@ -65,7 +66,7 @@ class PyMOL:
     def __del__(self):
         _cmd._del(self._COb)
 
-    def start(self):
+    def start(self,presentation=None):
         pymol2_lock.acquire()
         try:
             _cmd._start(self._COb, self.cmd)
@@ -81,8 +82,10 @@ class PyMOL:
             self.bonds = pymol.bonds
             self.models = pymol.models
 
-            self.invocation = pymol.invocation # assigns defaults
-            
+            self.invocation = deepcopy(pymol.invocation) # assigns defaults
+            if presentation != None:
+                self.invocation.options.presentation = presentation
+                
         except:
             traceback.print_exc()            
             pymol2_lock.release()
