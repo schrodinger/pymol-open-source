@@ -35,7 +35,6 @@ from cmd2 import Cmd
 class PyMOL:
 
     def __init__(self,activex=None): # initialize a PyMOL instance
-
         pymol2_lock.acquire(1)
         try:
 
@@ -99,7 +98,7 @@ class PyMOL:
         except:
             traceback.print_exc()            
             pymol2_lock.release()
-
+        
     def startWithTclTk(self, gui = None, skin=None):
         self.start()
         if gui == None:
