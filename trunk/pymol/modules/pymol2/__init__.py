@@ -40,6 +40,8 @@ class PyMOL:
         try:
 
             pymol._init_internals(self)
+
+            self.invocation = self._invocation
             
             self._COb = _cmd._new(self)
 
@@ -69,7 +71,9 @@ class PyMOL:
     def start(self,presentation=None):
         pymol2_lock.acquire()
         try:
-            _cmd._start(self._COb, self.cmd)
+                        
+#            if presentation != None:
+#                self._invocation.options.presentation = presentation
 
             # add additional properties from the pymol module
 
@@ -78,13 +82,13 @@ class PyMOL:
             self.povray = pymol.povray
             self.preset = pymol.preset
 
+            # fire off the C code
+            
+            _cmd._start(self._COb, self.cmd)
+
             self.chempy = pymol.chempy
             self.bonds = pymol.bonds
             self.models = pymol.models
-
-            self.invocation = deepcopy(pymol.invocation) # assigns defaults
-            if presentation != None:
-                self.invocation.options.presentation = presentation
                 
         except:
             traceback.print_exc()            
