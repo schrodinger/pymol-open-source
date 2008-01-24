@@ -3271,7 +3271,7 @@ int PyMOL_Idle(CPyMOL *I)
 #endif
 		/* END PROPRIETARY CODE SEGMENT */
 		PXDecRef(PyObject_CallMethod(G->P_inst->obj,"adapt_to_hardware","O",G->P_inst->obj));
-		PXDecRef(PyObject_CallMethod(G->P_inst->obj,"exec_deferred","O",G->P_inst->obj));
+        PXDecRef(PyObject_CallMethod(G->P_inst->obj,"exec_deferred","O",G->P_inst->obj));
 		PUnblock(G);
 		PFlush(G);
 	}
