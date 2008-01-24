@@ -1489,19 +1489,9 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
 
 }
 
-void PGetOptions(CPyMOLOptions *rec)
+void PConvertOptions(CPyMOLOptions *rec,PyObject *options) 
 {
-  PyObject *pymol,*invocation,*options;
   char *load_str;
-
-  pymol = PyImport_AddModule("pymol"); /* get it */
-  if(!pymol) {fprintf(stderr,"PyMOL-ERROR: can't find module 'pymol'"); exit(EXIT_FAILURE);}
-
-  invocation = PyObject_GetAttrString(pymol,"invocation"); /* get a handle to the invocation module */
-  if(!invocation) {fprintf(stderr,"PyMOL-ERROR: can't find module 'invocation'"); exit(EXIT_FAILURE);}
-
-  options = PyObject_GetAttrString(invocation,"options");
-  if(!options) {fprintf(stderr,"PyMOL-ERROR: can't get 'invocation.options'.");exit(EXIT_FAILURE);}
 
   rec->pmgui = ! PyInt_AsLong(PyObject_GetAttrString(options,"no_gui"));
   rec->internal_gui = PyInt_AsLong(PyObject_GetAttrString(options,"internal_gui"));
@@ -1546,6 +1536,25 @@ void PGetOptions(CPyMOLOptions *rec)
   if(PyErr_Occurred()) {
     PyErr_Print();
   }
+}
+
+void PGetOptions(CPyMOLOptions *rec)
+{
+  PyObject *pymol,*invocation,*options;
+
+  pymol = PyImport_AddModule("pymol"); /* get it */
+  if(!pymol) {fprintf(stderr,"PyMOL-ERROR: can't find module 'pymol'"); exit(EXIT_FAILURE);}
+
+  invocation = PyObject_GetAttrString(pymol,"invocation"); /* get a handle to the invocation module */
+  if(!invocation) {fprintf(stderr,"PyMOL-ERROR: can't find module 'invocation'"); exit(EXIT_FAILURE);}
+
+  options = PyObject_GetAttrString(invocation,"options");
+  if(!options) {fprintf(stderr,"PyMOL-ERROR: can't get 'invocation.options'.");exit(EXIT_FAILURE);}
+
+  PConvertOptions(rec,options);
+  Py_XDECREF(pymol);
+  Py_XDECREF(invocation);
+  Py_XDECREF(options);
 }
 
 void PRunStringModule(PyMOLGlobals *G,char *str) /* runs a string in the namespace of the pymol global module */

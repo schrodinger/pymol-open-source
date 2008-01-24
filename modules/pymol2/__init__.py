@@ -34,7 +34,7 @@ from cmd2 import Cmd
 
 class PyMOL:
 
-    def __init__(self): # initialize a PyMOL instance
+    def __init__(self,activex=None): # initialize a PyMOL instance
 
         pymol2_lock.acquire(1)
         try:
@@ -42,8 +42,18 @@ class PyMOL:
             pymol._init_internals(self)
 
             self.invocation = self._invocation
-            
-            self._COb = _cmd._new(self)
+
+            options = self.invocation.options
+
+            if activex!=None: # default ActiveX configuration
+                options.quiet = 0
+                options.show_splash = 0
+                options.external_gui = 0
+                options.internal_gui = 0
+                options.presentation = 1
+                options.internal_feedback = 0
+
+            self._COb = _cmd._new(self,self.invocation.options)
 
             # initialize the cmd API
 
@@ -57,9 +67,13 @@ class PyMOL:
             self.adapt_to_hardware = pymol.adapt_to_hardware
             self.exec_deferred = pymol.exec_deferred
 
-            self.util = pymol.util
-
             # Python components
+
+            self.util = pymol.util
+            self.menu = pymol.menu
+            self.setting = pymol.setting
+            self.povray = pymol.povray
+            self.preset = pymol.preset
             
         except:
             traceback.print_exc()
@@ -67,25 +81,17 @@ class PyMOL:
         
     def __del__(self):
         _cmd._del(self._COb)
-
-    def start(self,presentation=None):
+        
+    def start(self):
         pymol2_lock.acquire()
         try:
-                        
-#            if presentation != None:
-#                self._invocation.options.presentation = presentation
-
-            # add additional properties from the pymol module
-
-            self.menu = pymol.menu
-            self.setting = pymol.setting
-            self.povray = pymol.povray
-            self.preset = pymol.preset
 
             # fire off the C code
             
             _cmd._start(self._COb, self.cmd)
 
+            # add in some additional Python modules
+            
             self.chempy = pymol.chempy
             self.bonds = pymol.bonds
             self.models = pymol.models

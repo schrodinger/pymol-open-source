@@ -81,6 +81,7 @@ Z* -------------------------------------------------------------------
 #define PFree()
 #define PInit(G,a)
 #define PSetupEmbedded(G,a,b)
+#define PConvertOptions(a,b)
 #define PGetOptions(a)
 
 #define PAlterAtom(G,a,b,c,d,e,f) 0
@@ -94,6 +95,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv);
 
   struct PyMOLOptionRec;
 
+void PConvertOptions(CPyMOLOptions *rec,PyObject *options);
 void PGetOptions(CPyMOLOptions *rec);
 
 void PFree(void);

@@ -4069,31 +4069,38 @@ static PyObject *Cmd_New(PyObject *self, PyObject *args)
   CPyMOLOptions *options = PyMOLOptions_New();
   
   if(options) {
-    options->show_splash = false;
     {
-      CPyMOL *I = PyMOL_NewWithOptions(options);
-      
       int ok = true;
-      ok = PyArg_ParseTuple(args,"O",&pymol);
-      if(I) {
+      PyObject *pyoptions;
+      ok = PyArg_ParseTuple(args,"OO",&pymol,&pyoptions);
+      if(!pyoptions) {
+        options->show_splash = false;
+      } else {
+        PConvertOptions(options,pyoptions);
+      }
+      {
+        CPyMOL *I = PyMOL_NewWithOptions(options);
         PyMOLGlobals *G = PyMOL_GetGlobals(I);
-        G->P_inst = Calloc(CP_inst,1);
-        G->P_inst->obj = pymol;
-        G->P_inst->dict = PyObject_GetAttrString(pymol,"__dict__");
-        {
-          /* store the PyMOL struct as a CObject */
-          PyObject *tmp = PyCObject_FromVoidPtr(I,NULL);
-          PyObject_SetAttrString(pymol,"__pymol__",tmp);
-          Py_DECREF(tmp);
-        }
-        {
-          int a;
-          SavedThreadRec *str = G->P_inst->savedThread;
-          for(a=0;a<MAX_SAVED_THREAD;a++) {
-            (str++)->id=-1;
+        if(I) {
+          
+          G->P_inst = Calloc(CP_inst,1);
+          G->P_inst->obj = pymol;
+          G->P_inst->dict = PyObject_GetAttrString(pymol,"__dict__");
+          {
+            /* store the PyMOL struct as a CObject */
+            PyObject *tmp = PyCObject_FromVoidPtr(I,NULL);
+            PyObject_SetAttrString(pymol,"__pymol__",tmp);
+            Py_DECREF(tmp);
           }
+          {
+            int a;
+            SavedThreadRec *str = G->P_inst->savedThread;
+            for(a=0;a<MAX_SAVED_THREAD;a++) {
+              (str++)->id=-1;
+            }
+          }
+          result = PyCObject_FromVoidPtr((void*)PyMOL_GetGlobalsHandle(I),NULL);
         }
-        result = PyCObject_FromVoidPtr((void*)PyMOL_GetGlobalsHandle(I),NULL);
       }
     }
   }
