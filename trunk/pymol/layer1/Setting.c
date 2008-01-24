@@ -3397,7 +3397,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_f(I,cSetting_selection_width_max,10.0F);
     set_f(I,cSetting_selection_width_scale,2.0F);
     set_s(I,cSetting_scene_current_name,"");
-    set_b(I,cSetting_presentation,0);
+    set_b(I,cSetting_presentation,G->Option->presentation);
     set_i(I,cSetting_presentation_mode,1);
     set_b(I,cSetting_pdb_truncate_residue_name,false);
     set_b(I,cSetting_scene_loop,0);
