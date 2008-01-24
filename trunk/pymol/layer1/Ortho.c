@@ -729,7 +729,7 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
     if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible(G)) {
       OrthoKeyControl(G,4+64);
     } else {
-   q   if(I->CursorChar>=0) {
+      if(I->CursorChar>=0) {
         if(I->CursorChar<I->CurChar)
           I->CursorChar++;
         if(I->CursorChar==I->CurChar)
