@@ -34,7 +34,7 @@ from cmd2 import Cmd
 
 class PyMOL:
 
-    def __init__(self,activex=None): # initialize a PyMOL instance
+    def __init__(self,scheme=None): # initialize a PyMOL instance
         pymol2_lock.acquire(1)
         try:
 
@@ -44,14 +44,16 @@ class PyMOL:
 
             options = self.invocation.options
 
-            if activex!=None: # default ActiveX configuration
-                options.quiet = 0
-                options.show_splash = 0
-                options.external_gui = 0
-                options.internal_gui = 0
-                options.presentation = 1
-                options.internal_feedback = 0
-
+            if scheme!=None: #
+                if scheme == 'widget': # An embedded widget of some type
+                    options.quiet = 0
+                    options.show_splash = 0
+                    options.external_gui = 0
+                    options.internal_gui = 0
+                    options.presentation = 1
+                    options.internal_feedback = 0
+                    options.no_quit = 1
+                    
             self._COb = _cmd._new(self,self.invocation.options)
 
             # initialize the cmd API

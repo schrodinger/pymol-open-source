@@ -6601,10 +6601,13 @@ static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
     API_HANDLE_ERROR;
   }
   if(ok) {
-
     APIEntry(G);
-    G->Terminating=true;
-    PExit(G,EXIT_SUCCESS);
+    if(!G->Option->no_quit) {
+      G->Terminating=true;
+      PExit(G,EXIT_SUCCESS);
+    } else {
+      OrthoAddOutput(G,"Cmd-Error: cannot quit from within this context.\n");
+    }
     APIExit(G);
   }
   return APISuccess();
