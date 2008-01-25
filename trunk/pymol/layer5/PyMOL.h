@@ -17,21 +17,31 @@ Z* -------------------------------------------------------------------
 #ifndef _H_CPyMOL
 #define _H_CPyMOL
 
-/* WARNING: Do not write applications against this API.  It is a
- * *private* internal interface to PyMOL for the exclusive use of
- * DeLano Scientific LLC in development of wrapped PyMOL applications
- * and as an interface layer for supporting more stable public APIs.
+/* WARNING: DO NOT DEVELOP APPLICATIONS AGAINST THIS PyMOL_* API.  
+ * 
+ * This is a internal interface to PyMOL for the exclusive use of
+ * DeLano Scientific LLC in development of PyMOL itself, for
+ * development of "wrapped" PyMOL products, and for use as foundation
+ * layer for support of stable public APIs.
  *
- * DeLano Scientific LLC will change this interface regularly and
- * without notice.  It may even vanish altogether.  Code you develop
- * against this interface is guaranteed to be fragile, time-consuming,
- * and expensive to maintain. 
+ * DeLano Scientific LLC changes this interface regularly and without
+ * notice.  It may even vanish altogether.  Code you develop against
+ * this interface is likely to be fragile, time-consuming, and
+ * expensive to maintain.
  *
- * If you feel that you absolutely must rely upon this API, then
- * please be sure to create your own lightweight wrapper layer around
- * it so that the rest of your code will be relatively insensitive to
- * changes made here.  Failure to do so will almost certainly result
- * in code that is impossible to maintain over time.
+ * Our recommended public APIs for PyMOL development are Python-based:
+ * (#1) the old "from pymol import cmd" module-based interface, or
+ * (#2) the new "from pymol2 import PyMOL; cmd=PyMOL().cmd"
+ * instance-based interface.  If you need a C, C++, Java, or
+ * ActiveX/COM interface or widget for molecular visualization, then
+ * please contact sales@delsci.com about obtaining access to our
+ * independent developer and/or OEM product APIs (e.g. JyMOL).
+ * 
+ * If you feel that you absolutely must rely upon this PyMOL_* API,
+ * then please be sure to create your own lightweight wrapper layer
+ * around it so that the rest of your code will be relatively
+ * insensitive to changes made here.  Failure to do so will almost
+ * certainly result in code that is impossible to maintain over time.
  *
  * You have been warned!
  */
