@@ -3415,7 +3415,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_s(I,cSetting_wildcard, "*");
     set_s(I,cSetting_atom_name_wildcard, "");
     set_b(I,cSetting_ignore_case, 1);
-    set_b(I,cSetting_presentation_auto_quit,1);
+    set_b(I,cSetting_presentation_auto_quit,!G->Option->no_quit);
     set_b(I,cSetting_editor_auto_dihedral, 1);
     set_b(I,cSetting_presentation_auto_start,1);
     set_b(I,cSetting_validate_object_names, 1);

@@ -68,6 +68,7 @@ if __name__=='pymol.invocation':
     options.stereo_capable = 0
     options.passive_stereo = 0
     options.zoom_mode = -1
+    options.no_quit = 1
     
     if sys.platform[0:4] == 'irix':
         options.win_py = 240

@@ -51,7 +51,8 @@ struct _CPyMOLOptions {
     sphere_mode,
 	stereo_capable,
     passive_stereo, /* for informing PyMOL as to the capabilities of the context */
-    zoom_mode;
+    zoom_mode,
+    no_quit; /* prevent any action from quitting or killing PyMOL */
   
   /* WARNING: for the sake of forward compability, never delete or
      move any fields in the above ...initialization struct in PyMOL.c */

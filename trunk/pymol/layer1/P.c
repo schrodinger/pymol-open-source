@@ -1528,6 +1528,8 @@ void PConvertOptions(CPyMOLOptions *rec,PyObject *options)
   rec->stereo_capable = PyInt_AsLong(PyObject_GetAttrString(options,"stereo_capable"));
   rec->passive_stereo= PyInt_AsLong(PyObject_GetAttrString(options,"passive_stereo"));
   rec->zoom_mode= PyInt_AsLong(PyObject_GetAttrString(options,"zoom_mode"));
+  rec->no_quit = PyInt_AsLong(PyObject_GetAttrString(options,"no_quit"));
+
   if(load_str) {
     if(load_str[0]) {
       UtilNCopy(rec->after_load_script,load_str,PYMOL_MAX_OPT_STR);
