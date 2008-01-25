@@ -1021,7 +1021,7 @@ static void CoordSetUpdate(CoordSet *I,int state)
   
   if(Feedback(I->Obj->Obj.G,FB_CoordSet,FB_Blather)) {
     printf(" CoordSetUpdate-Entered: object %s state %d cset %p\n",
-           I->Obj->Obj.Name, state, I);
+           I->Obj->Obj.Name, state, (void*)I);
   }
 
   if(!I->Color) /* colors invalidated */ {
@@ -1065,7 +1065,7 @@ static void CoordSetUpdate(CoordSet *I,int state)
   OrthoBusyFast(I->State.G,1,1);
   if(Feedback(I->Obj->Obj.G,FB_CoordSet,FB_Blather)) {
     printf(" CoordSetUpdate-Leaving: object %s state %d cset %p\n",
-           I->Obj->Obj.Name, state, I);
+           I->Obj->Obj.Name, state, (void*)I);
   }
 
 }
