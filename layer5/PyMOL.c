@@ -2692,6 +2692,9 @@ static void init_python(int argc, char *argv[])
 
 }
 
+/* WARNING: the routine below only works with the global singleton
+   model -- not Python-enabled PyMOL instances */
+
 CPyMOLOptions *PyMOLOptions_NewWithPython(int argc, char *argv[])
 {
   CPyMOLOptions *result = PyMOLOptions_New();
