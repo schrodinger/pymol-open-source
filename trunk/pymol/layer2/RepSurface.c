@@ -1564,7 +1564,7 @@ typedef struct {
 
   /* results */
   float *V, *VN;
-  int N;
+  int N, *T, *S, NT;
 
 } SurfaceJob;
 
@@ -1578,6 +1578,8 @@ static void SurfaceJobPurgeResult(PyMOLGlobals *G, SurfaceJob *I)
 {
   FreeP(I->V); I->V = NULL;
   FreeP(I->VN); I->VN = NULL;
+  FreeP(I->T); I->T = NULL;
+  FreeP(I->S); I->S = NULL;
 }
 
 static void SurfaceJobFree(PyMOLGlobals *G, SurfaceJob *I)
@@ -2201,11 +2203,27 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
       I->VN = ReallocForSure(I->VN,float,3*I->N);
     }
     
-    PRINTFD(G,FB_RepSurface)
-      " RepSurfaceNew-DEBUG: %i surface points after trimming.\n",I->N
-      ENDFD;
-    if(carve_map)
-      MapFree(carve_map);
+    PRINTFB(G,FB_RepSurface,FB_Blather)
+      " RepSurface: %i surface points.\n",I->N
+       ENDFB(G);
+     
+     OrthoBusyFast(G,3,5);
+     if(I->N) {
+       if(surface_type!=1) { /* not a dot surface... */
+         float cutoff = point_sep*5.0F;
+         if((cutoff>probe_radius)&&(!I->surfaceSolvent))
+           cutoff = probe_radius;
+         I->T=TrianglePointsToSurface(G,I->V,I->VN,I->N,cutoff,&I->NT,&I->S,NULL);
+         PRINTFB(G,FB_RepSurface,FB_Blather)
+           " RepSurface: %i triangles.\n",I->NT
+           ENDFB(G);
+       }
+     } else {
+       I->V = ReallocForSure(I->V,float,1);
+       I->VN = ReallocForSure(I->VN,float,1);
+     }
+     if(carve_map)
+       MapFree(carve_map);
   }
   return ok;
 }
@@ -2618,9 +2636,11 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       
      SurfaceJobRun(G,surf_job);
      I->N = surf_job->N; surf_job->N = 0;
-     I->V = surf_job->V; surf_job->V = 0;
-     I->VN = surf_job->VN; surf_job->VN = 0;
-
+     I->V = surf_job->V; surf_job->V = NULL;
+     I->VN = surf_job->VN; surf_job->VN = NULL;
+     I->NT = surf_job->NT; surf_job->NT = 0;
+     I->T = surf_job->T; surf_job->T = NULL;
+     I->S = surf_job->S; surf_job->S = NULL;
      SurfaceJobPurgeResult(G,surf_job);
      SurfaceJobFree(G,surf_job);
    }
@@ -3226,34 +3246,31 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
        }
      }
     
-     PRINTFD(G,FB_RepSurface)
-       " RepSurfaceNew-DEBUG: %i surface points after trimming.\n",I->N
-       ENDFD;
+     PRINTFB(G,FB_RepSurface,FB_Blather)
+       " RepSurface: %i surface points.\n",I->N
+       ENDFB(G);
+     
+     OrthoBusyFast(G,3,5);
+     if(I->N) {
+       if(surface_type!=1) { /* not a dot surface... */
+         float cutoff = point_sep*5.0F;
+         if((cutoff>probe_radius)&&(!surface_solvent))
+           cutoff = probe_radius;
+         I->T=TrianglePointsToSurface(G,I->V,I->VN,I->N,cutoff,&I->NT,&I->S,NULL);
+         PRINTFB(G,FB_RepSurface,FB_Blather)
+           " RepSurface: %i triangles.\n",I->NT
+           ENDFB(G);
+       }
+     } else {
+       I->V = ReallocForSure(I->V,float,1);
+       I->VN = ReallocForSure(I->VN,float,1);
+     }
    }
 #endif
+    
+    VLAFreeP(atom_info);
 
     RepSurfaceColor(I,cs);
-    
-    PRINTFB(G,FB_RepSurface,FB_Blather)
-      " RepSurface: %i surface points.\n",I->N
-      ENDFB(G);
-    
-    OrthoBusyFast(G,3,5);
-    if(I->N) {
-      if(surface_type!=1) { /* not a dot surface... */
-        float cutoff = point_sep*5.0F;
-        if((cutoff>probe_radius)&&(!surface_solvent))
-          cutoff = probe_radius;
-        I->T=TrianglePointsToSurface(G,I->V,I->VN,I->N,cutoff,&I->NT,&I->S,NULL);
-        PRINTFB(G,FB_RepSurface,FB_Blather)
-          " RepSurface: %i triangles.\n",I->NT
-          ENDFB(G);
-      }
-    } else {
-      I->V = ReallocForSure(I->V,float,1);
-      I->VN = ReallocForSure(I->VN,float,1);
-    }
-    VLAFreeP(atom_info);
   }
   if(carve_map)
     MapFree(carve_map);

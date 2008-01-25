@@ -463,7 +463,6 @@ SEE ALSO
 
     save
         '''
-        print setting.get("presentation_auto_quit",_self=_self)
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
