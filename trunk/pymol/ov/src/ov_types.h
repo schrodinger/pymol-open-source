@@ -43,7 +43,13 @@ extern "C" {
   typedef unsigned       int ov_uint32;
   typedef              float ov_float32;
   typedef             double ov_float64;
-  
+  typedef             size_t ov_size; 
+#ifdef WIN32
+  typedef          ptrdiff_t ov_diff;
+#else
+  typedef          ptrdiff_t ov_diff;
+#endif
+
 #ifdef WIN32
   typedef            __int64 ov_int64;
   typedef unsigned   __int64 ov_uint64;
@@ -84,7 +90,6 @@ extern "C" {
 
   /* additional derived / convenience types */
   
-  typedef ov_uword   ov_size;  /* our size_t equivalent */
   typedef ov_uword   ov_boolean;
   
   typedef ov_uint32  ov_meta; /* object "meta" bits */

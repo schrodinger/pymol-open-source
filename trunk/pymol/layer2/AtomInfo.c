@@ -933,7 +933,7 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
 #else
   int ok=true;
   int hetatm;
-  int ll = 0;
+  ov_size ll = 0;
   if(ok) ok = PyList_Check(list);  
   if(ok) ll = PyList_Size(list);  
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list, 0),&I->resv);   
@@ -1827,7 +1827,7 @@ int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
           } else {
             /* NOTE: don't forget to synchronize with below */
             if(SettingGetGlobal_b(G,cSetting_pdb_insertions_go_first)) {
-              int sl1,sl2;
+              ov_size sl1,sl2;
               sl1 = strlen(at1->resi);
               sl2 = strlen(at2->resi);
               if(sl1==sl2)
@@ -1922,7 +1922,7 @@ int AtomInfoCompareIgnoreRankHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType 
          } else {
            /* NOTE: don't forget to synchronize with below */
            if(SettingGetGlobal_b(G,cSetting_pdb_insertions_go_first)) {
-             int sl1,sl2;
+             ov_size sl1,sl2;
              sl1 = strlen(at1->resi);
              sl2 = strlen(at2->resi);
              if(sl1==sl2)
@@ -2014,7 +2014,7 @@ int AtomInfoCompareIgnoreRank(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at
            } else {
              /* NOTE: don't forget to synchronize with below */
              if(SettingGetGlobal_b(G,cSetting_pdb_insertions_go_first)) {
-               int sl1,sl2;
+               ov_size sl1,sl2;
                sl1 = strlen(at1->resi);
                sl2 = strlen(at2->resi);
                if(sl1==sl2)
@@ -2110,7 +2110,7 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2
           /* NOTE: don't forget to synchronize with above */
 
             if(SettingGetGlobal_b(G,cSetting_pdb_insertions_go_first)) {
-              int sl1,sl2;
+              ov_size sl1,sl2;
               sl1 = strlen(at1->resi);
               sl2 = strlen(at2->resi);
               if(sl1==sl2)

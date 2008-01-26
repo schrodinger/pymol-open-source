@@ -57,7 +57,7 @@ int SymmetryFromPyList(CSymmetry *I,PyObject *list)
   return 0;
 #else
   int ok=true;
-  int ll;
+  ov_size ll;
 
   if(ok) ok = (I!=NULL);
   if(ok) SymmetryReset(I);
@@ -114,7 +114,7 @@ int SymmetryAttemptGeneration(CSymmetry *I,int quiet)
 #ifdef _PYMOL_XRAY
   PyMOLGlobals *G = I->G;
   PyObject *mats;
-  int a,l;
+  ov_size a,l;
   CrystalUpdate(I->Crystal);
   if(!quiet) {
     if(Feedback(G,FB_Symmetry,FB_Blather)) {

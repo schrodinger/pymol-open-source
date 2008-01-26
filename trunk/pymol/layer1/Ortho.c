@@ -1591,7 +1591,7 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
 }
 
 /*========================================================================*/
-void OrthoReshapeWizard(PyMOLGlobals *G,int wizHeight)
+void OrthoReshapeWizard(PyMOLGlobals *G,ov_size wizHeight)
 {
   Block *block;
   register COrtho *I=G->Ortho;

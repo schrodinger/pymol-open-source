@@ -29,7 +29,7 @@ typedef struct {
   int face;
   float size;
   int style;
-  int offset[VFONT_MASK+1];
+  ov_diff offset[VFONT_MASK+1];
   float advance[VFONT_MASK+1];
   float *pen;
 } VFontRec;
@@ -62,7 +62,7 @@ int VFontWriteToCGO(PyMOLGlobals *G,int font_id,CGO *cgo,char *text,float *pos,f
   float *pc;
   unsigned char c;
   int drawing,stroke;
-  int offset;
+  ov_diff offset;
 
   if((font_id>0)&&(font_id<=I->NFont)) {
     fr = I->Font[font_id];
@@ -138,7 +138,7 @@ int VFontIndent(PyMOLGlobals *G,int font_id,char *text,float *pos,float *scale,f
   float base[3],pen[3];
   float *pc;
   unsigned char c;
-  int offset;
+  ov_diff offset;
 
   if((font_id>0)&&(font_id<=I->NFont)) {
     fr = I->Font[font_id];
@@ -172,7 +172,7 @@ int VFontIndent(PyMOLGlobals *G,int font_id,char *text,float *pos,float *scale,f
 static int VFontRecLoad(PyMOLGlobals *G,VFontRec *I,PyObject *dict)
 { /* assumes blocked Python interpreter */
 
-  int used=0;
+  ov_size used=0;
   int ok=true;
   PyObject *key,*char_list;
   PyObject *stroke_list = NULL;
@@ -183,7 +183,7 @@ static int VFontRecLoad(PyMOLGlobals *G,VFontRec *I,PyObject *dict)
 #endif
   unsigned char code[2];
   float adv;
-  int n_float;
+  ov_size n_float;
   while (PyDict_Next(dict, &pos, &key, &char_list)) {
     if(!PConvPyStrToStr(key,(char*)code,1)) {
       PRINTFB(G,FB_VFont,FB_Errors) 

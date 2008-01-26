@@ -56,8 +56,8 @@ struct _CWizard {
   Block *Block;
   PyObject **Wiz;
   WizardLine *Line;
-  int NLine;
-  int Stack;
+  ov_size NLine;
+  ov_diff Stack;
   int Pressed;
   int EventMask;
   int Dirty;
@@ -112,7 +112,7 @@ void WizardPurgeStack(PyMOLGlobals *G)
 {
 #ifndef _PYMOL_NOPY
   int blocked;
-  int a;
+  ov_diff a;
   register CWizard *I=G->Wizard;
   blocked = PAutoBlock(G);
   for(a=I->Stack;a>=0;a--)
@@ -153,9 +153,9 @@ void WizardRefresh(PyMOLGlobals *G)
   register CWizard *I = G->Wizard;
   char *vla = NULL;
   PyObject *P_list;
-  int ll;
+  ov_size ll;
   PyObject *i;
-  int a;
+  ov_size a;
   int blocked;
   blocked = PAutoBlock(G);
   
@@ -487,17 +487,16 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
 #else
   PyMOLGlobals *G=block->G;
   register CWizard *I=G->Wizard;
-
   int a;
   PyObject *menuList=NULL;
   int LineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
 
   a=((I->Block->rect.top-(y+cWizardClickOffset))-cWizardTopMargin)/LineHeight;
-  if((a>=0)&&(a<I->NLine)) {
+  if((a>=0)&&((ov_size)a<I->NLine)) {
     switch(I->Line[a].type) {
     case cWizTypeButton:
       OrthoGrab(G,I->Block);
-      I->Pressed=a;
+      I->Pressed=(int)a;
       OrthoDirty(G);
       break;
     case cWizTypePopUp:
@@ -547,7 +546,7 @@ static int WizardDrag(Block *block,int x,int y,int mod)
     I->Pressed=-1;
     OrthoDirty(G);
   }
-  if((a>=0)&&(a<I->NLine)) {
+  if((a>=0)&&((ov_size)a<I->NLine)) {
 
     switch(I->Line[a].type) {
     case cWizTypeButton:
@@ -579,7 +578,7 @@ static int WizardRelease(Block *block,int button,int x,int y,int mod)
 
   OrthoUngrab(G);
 
-  if((a>=0)&&(a<I->NLine)) {
+  if((a>=0)&&((ov_size)a<I->NLine)) {
     switch(I->Line[a].type) {
     case cWizTypeButton:
       if(I->Stack>=0)
@@ -695,7 +694,7 @@ static void WizardDraw(Block *block)
     x = I->Block->rect.left+cWizardLeftMargin;
     y = (I->Block->rect.top-LineHeight)-cWizardTopMargin;
 
-    for(a=0;a<I->NLine;a++) {
+    for(a=0;(ov_size)a<I->NLine;a++) {
       if(I->Pressed==a) {
           draw_button(I->Block->rect.left+1,y,
                       (I->Block->rect.right-I->Block->rect.left)-1,
@@ -760,11 +759,11 @@ PyObject *WizardGetStack(PyMOLGlobals *G)
   return NULL;
 #else
   register CWizard *I=G->Wizard;
-  int a;
   PyObject *result;
 
   result = PyList_New(I->Stack-(-1));
   if(I->Wiz) {
+	  ov_size a;
     for(a=I->Stack;a>=0;a--) {
       Py_INCREF(I->Wiz[a]);
       PyList_SetItem(result,a,I->Wiz[a]); /* steals ref */
@@ -781,7 +780,6 @@ int WizardSetStack(PyMOLGlobals *G,PyObject *list)
 #else
 
   register CWizard *I=G->Wizard;
-  int a;
   int ok= true;
   
   if(I->Wiz) {
@@ -791,7 +789,8 @@ int WizardSetStack(PyMOLGlobals *G,PyObject *list)
     if(ok) {
       I->Stack = PyList_Size(list)-1;
       if(I->Stack>=0) {
-        VLACheck(I->Wiz,PyObject*,I->Stack);
+        ov_size a;
+		VLACheck(I->Wiz,PyObject*,I->Stack);
         for(a=I->Stack;a>=0;a--) {
           I->Wiz[a] = PyList_GetItem(list,a);
           Py_INCREF(I->Wiz[a]);

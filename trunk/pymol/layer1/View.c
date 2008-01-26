@@ -123,7 +123,7 @@ int ViewElemFromPyList(PyMOLGlobals *G, PyObject *list, CViewElem *view)
 #else
 
   int ok=true;
-  int ll=0;
+  ov_size ll=0;
 
   if(ok) ok= (list!=NULL);
   if(ok) ok= PyList_Check(list);
@@ -346,18 +346,18 @@ static void matrix_interpolate(Matrix53f imat,Matrix53f mat,
   /* straight linear for now... */
 
   for(a=0;a<3;a++) {
-    imat[4][a] = (((1.0-fxn)*mat[3][a] + fxn*mat[4][a]) * linearity) +
-      (1.0-linearity) * pos[a];
+    imat[4][a] = (float)((((1.0-fxn)*mat[3][a] + fxn*mat[4][a]) * linearity) +
+      (1.0-linearity) * pos[a]);
   }
 }
 
 int ViewElemSmooth(CViewElem *first,CViewElem *last,int window,int loop)
 {
-  int n = (last-first)+1;
+  ov_diff n = (last-first)+1;
   int delta;
   loop = 0; /* FOR NOW */
   if(window>n)
-    window=n;
+    window=(int)n;
   delta = (window-1)/2;
   if(n&&delta) {
     CViewElem *cpy = Alloc(CViewElem,(n+2*delta));
@@ -382,7 +382,7 @@ int ViewElemSmooth(CViewElem *first,CViewElem *last,int window,int loop)
       above = delta;
       below = delta;
       if(above>a) above = a;
-      if(below>((n-1)-a)) below = (n-1)-a;
+      if(below>((n-1)-a)) below = (int)((n-1)-a);
 
       if(dst->specification_level) { /* has to be specified */
 
@@ -474,7 +474,7 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
   float rot_axis[3],trans_axis[3]={0.0F,0.0F,0.0F};
   float angle;
   CViewElem *current;
-  int n = (last-first)-1;
+  ov_diff n = (last-first)-1;
   Matrix53f rot,imat;
   int a;
   float tVector[3],tCenter[3],tDir[3];
@@ -514,9 +514,9 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
       if(((rot_axis[0]*0.7F + rot_axis[1]*0.8F + rot_axis[2]*0.9F) * hand * angle)>0.0F) {
         invert3f(rot_axis);
         if(angle>0) {
-          angle = (2*cPI) - angle;
+          angle = (float)((2*cPI) - angle);
         } else {
-          angle = -(2*cPI) - angle;
+          angle = (float)(-(2*cPI) - angle);
         }
       }
     }
@@ -533,21 +533,21 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
     
     /* form TTTs */
 
-    firstRTTT[12] = -first->pre[0];
-    firstRTTT[13] = -first->pre[1];
-    firstRTTT[14] = -first->pre[2];
+    firstRTTT[12] = (float)-first->pre[0];
+    firstRTTT[13] = (float)-first->pre[1];
+    firstRTTT[14] = (float)-first->pre[2];
 
-    firstRTTT[ 3] = first->post[0];
-    firstRTTT[ 7] = first->post[1];
-    firstRTTT[11] = first->post[2];
+    firstRTTT[ 3] = (float)first->post[0];
+    firstRTTT[ 7] = (float)first->post[1];
+    firstRTTT[11] = (float)first->post[2];
 
-    lastRTTT[12] = -last->pre[0];
-    lastRTTT[13] = -last->pre[1];
-    lastRTTT[14] = -last->pre[2];
+    lastRTTT[12] = (float)-last->pre[0];
+    lastRTTT[13] = (float)-last->pre[1];
+    lastRTTT[14] = (float)-last->pre[2];
 
-    lastRTTT[ 3] = last->post[0];
-    lastRTTT[ 7] = last->post[1];
-    lastRTTT[11] = last->post[2];
+    lastRTTT[ 3] = (float)last->post[0];
+    lastRTTT[ 7] = (float)last->post[1];
+    lastRTTT[11] = (float)last->post[2];
 
     if(debug) dump44f(firstRTTT,"firstRTTT");
     if(debug) dump44f(lastRTTT,"lastRTTT");
@@ -717,12 +717,12 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
     if((power!=1.0F)||(!parabolic)) {
       if(fxn<0.5F) {
         if(!parabolic) 
-          fxn = (_1-cos(cPI*fxn))*_p5; /* circular */
+          fxn = (float)((_1-cos(cPI*fxn))*_p5); /* circular */
         fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic*/
       } else if(fxn>0.5F) {
         fxn = _1 - fxn;
         if(!parabolic) 
-          fxn = (_1-cos(cPI*fxn))*_p5;
+          fxn = (float)((_1-cos(cPI*fxn))*_p5);
         fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic */
         fxn = _1 - fxn;
       }
@@ -768,7 +768,7 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
       
       current->post_flag = true;
       for(b=0;b<3;b++) {
-        imat[4][b] = ((1.0-fxn)*rot[3][b] + fxn*rot[4][b]);
+        imat[4][b] = (float)((1.0-fxn)*rot[3][b] + fxn*rot[4][b]);
       }
       copy3f3d(&imat[4][0],current->post);
        
@@ -802,13 +802,13 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
         
         /* form TTTs */
         
-        curRTTT[12] = -current->pre[0];
-        curRTTT[13] = -current->pre[1];
-        curRTTT[14] = -current->pre[2];
+        curRTTT[12] = (float)-current->pre[0];
+        curRTTT[13] = (float)-current->pre[1];
+        curRTTT[14] = (float)-current->pre[2];
         
-        curRTTT[ 3] = current->post[0];
-        curRTTT[ 7] = current->post[1];
-        curRTTT[11] = current->post[2];
+        curRTTT[ 3] = (float)current->post[0];
+        curRTTT[ 7] = (float)current->post[1];
+        curRTTT[11] = (float)current->post[2];
         
         convertTTTfR44f(curRTTT, curR44f);
         dump44f(curR44f,"cur");

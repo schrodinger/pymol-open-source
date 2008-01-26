@@ -88,11 +88,11 @@ char *UtilConcat(char *where,char *what)
   return(where);
 }
 
-void UtilConcatVLA(char **vla,int *cc,char *str)
+void UtilConcatVLA(char **vla,ov_size *cc,char *str)
 {
   char *what;
   char *where;
-  int len;
+  ov_size len;
 
   len=strlen(str);
   VLACheck((*vla),char,len+*cc+1); 
@@ -104,11 +104,11 @@ void UtilConcatVLA(char **vla,int *cc,char *str)
   *(cc)+=len;
 }
 
-void UtilNPadVLA(char **vla,int *cc,char *str,int len)
+void UtilNPadVLA(char **vla,ov_size *cc,char *str,ov_size len)
 {
   char *what;
   char *where;
-  int n = 0;
+  ov_size n = 0;
   VLACheck((*vla),char,len + *cc +1); 
   where = (*cc)+(*vla);
   what = str;
@@ -126,7 +126,7 @@ void UtilNPadVLA(char **vla,int *cc,char *str,int len)
   *(cc)+=len;
 }
 
-void UtilFillVLA(char **vla,int *cc,char what,int len)
+void UtilFillVLA(char **vla,ov_size *cc,char what,ov_size len)
 {
   char *where;
   VLACheck((*vla),char,len+(*cc)+1); 
@@ -138,31 +138,34 @@ void UtilFillVLA(char **vla,int *cc,char what,int len)
 }
 
 
-void UtilNConcat(char *dst,char *src,int n) { /* copies up to N-1 chars */
-  int l;
+void UtilNConcat(char *dst,char *src,ov_size n) { /* copies up to N-1 chars */
+  ov_size l;
   l=strlen(dst);
   UtilNCopy(dst+l,src,n-l);
 }
 
-void UtilNCopy(char *dst,char *src,int n) { /* copies up to N-1 chars */
-  n--;
-  while((n--)>=0) {
-    if(!*src)
-      break;
-    else
-      *(dst++)=*(src++);
+void UtilNCopy(char *dst,char *src,ov_size n) 
+{ /* copies up to N-1 chars */
+  if(n--) {
+    while(n--) {
+      if(!*src)
+        break;
+      else
+        *(dst++)=*(src++);
+    }
   }
   *dst=0;
 }
 
-void UtilNCopyToLower(char *dst,char *src,int n)
+void UtilNCopyToLower(char *dst,char *src,ov_size n)
 {
-  n--;
-  while((n--)>=0) {
-    if(!*src)
-      break;
-    else
-      *(dst++)=tolower(*(src++));
+  if(n--) {
+    while(n--) {
+      if(!*src)
+        break;
+      else
+        *(dst++)=tolower(*(src++));
+    }
   }
   *dst=0;
 }
@@ -195,7 +198,7 @@ void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 	 }
 }
 
-void UtilZeroMem(void *ptr,unsigned int howMuch)
+void UtilZeroMem(void *ptr,ov_size howMuch)
 {
   char *p,*q;
   p=(char*)ptr;
@@ -203,7 +206,7 @@ void UtilZeroMem(void *ptr,unsigned int howMuch)
   MemoryZero(p,q);
 }
 
-void UtilCopyMem(void *dst,void *src,unsigned int howMuch) /* optimize! */
+void UtilCopyMem(void *dst,void *src,ov_size howMuch) /* optimize! */
 {
   /* need to determine the memory is non-overlapping.  If so, then use memcpy. */
   char *c,*d;
@@ -232,11 +235,12 @@ void UtilExpandArrayElements(void *src,void *dst,int n_entries,int old_rec_size,
   }
 }
 
-void *UtilArrayCalloc(unsigned int *dim,int ndim,unsigned int atom_size)
+void *UtilArrayCalloc(unsigned int *dim,ov_size ndim,ov_size atom_size)
 {
-  unsigned int size,sum,product;
-  unsigned int chunk;
-  int a,b,c;
+  ov_size size;
+  ov_size sum,product;
+  ov_size chunk;
+  ov_size a,b,c;
   void *result,**p;
   char *q;
   
@@ -267,7 +271,7 @@ void *UtilArrayCalloc(unsigned int *dim,int ndim,unsigned int atom_size)
       for(b=1;b<=c;b++)
         product = product * dim[b];
       q = ((char*)p) + product * sizeof(void*); 
-      for(a=0;a<(signed)product;a++) {
+      for(a=0;a<product;a++) {
         *p = q;
         p++;
         q+=chunk;
