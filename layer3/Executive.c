@@ -7976,7 +7976,11 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
     switch(state) {
     case -1: /* multimodel */
       sprintf(model_record,"MODEL     %4d\n",model_count++);
-      UtilConcatVLA(&op1.charVLA,&op1.i2,model_record);
+      {
+        ov_size len = op1.i2;
+        UtilConcatVLA(&op1.charVLA,&len,model_record);
+        op1.i2 = len;
+      }
       actual_state = a;
       break;
     case -2: /* single state */
@@ -8001,10 +8005,18 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
     if((!(SettingGetGlobal_i(G,cSetting_pdb_no_end_record)))
        && !(pdb_info.is_pqr_file))
       /* terminate with END */
-      UtilConcatVLA(&op1.charVLA,&op1.i2,end_str);
+      {
+        ov_size len = op1.i2;
+        UtilConcatVLA(&op1.charVLA,&len,end_str);
+        op1.i2 = len;
+      }
     switch(state) {
     case -1:
-      UtilConcatVLA(&op1.charVLA,&op1.i2,"ENDMDL\n");
+      {
+        ov_size len = op1.i2;
+        UtilConcatVLA(&op1.charVLA,&len,"ENDMDL\n");
+        op1.i2 = len;
+      }
       break;
     }
   }

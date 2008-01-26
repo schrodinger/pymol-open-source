@@ -922,7 +922,7 @@ void RayRenderVRML1(CRay *I,int width,int height,
 		    float fov, float angle,float z_corr)
 {
   char *vla = *vla_ptr;
-  int cc = 0; /* character count */
+  ov_size cc = 0; /* character count */
   OrthoLineType buffer;
   
   RayExpandPrimitives(I);
@@ -1035,7 +1035,7 @@ void RayRenderVRML2(CRay *I,int width,int height,
   */
 
   char *vla = *vla_ptr;
-  int cc = 0; /* character count */
+  ov_size cc = 0; /* character count */
   OrthoLineType buffer;
   float mid[3]; /*, wid[3];*/
   float h_fov = cPI*(fov*width)/(180*height);
@@ -1446,7 +1446,7 @@ void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
 {
   char *objVLA = *objVLA_ptr; 
   char *mtlVLA = *mtlVLA_ptr; 
-  int oc = 0; /* obj character count */
+  ov_size oc = 0; /* obj character count */
   /*  int mc = 0;*/ /* mtl character count */
 
   OrthoLineType buffer;
@@ -1549,7 +1549,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   OrthoLineType buffer;
   float *vert,*norm;
   float vert2[3];
-  int cc,hc;
+  ov_size cc,hc;
   int a;
   int smooth_color_triangle;
   int mesh_obj = false;

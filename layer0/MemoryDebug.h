@@ -17,7 +17,6 @@ Z* -------------------------------------------------------------------
 #define _H_MemoryDebug
 
 #include "os_std.h"
-#include "ov_types.h"
 #include "PyMOLGlobals.h"
 
 /* This file can be included by C and C++ programs for
@@ -90,7 +89,7 @@ void *VLAMalloc(ov_size initSize,ov_size recSize,unsigned int growFactor,int aut
 #else
 #define VLAMalloc(a,b,c,d) _VLAMalloc(__FILE__,__LINE__,a,b,c,d)
 
-void *_VLAMalloc(const char *file,int line,ov_size initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
+void *_VLAMalloc(const char *file,int line,ov_size initSize,ov_size recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
 #endif
 
 
