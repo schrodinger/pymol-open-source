@@ -1193,7 +1193,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   int cullByFlag = false;
   int surface_mode;
   int surface_color;
-  int *present=NULL,*ap;
+  int *present=NULL;
   int *rc;
   int ramped_flag = false;
   int carve_state = 0;
@@ -1288,17 +1288,19 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
     first_color=-1;
 
     present = Alloc(int,cs->NIndex); 
-    ap = present;
-    for(a=0;a<cs->NIndex;a++) {
-      ai1 = obj->AtomInfo + cs->IdxToAtm[a];
-      if(ai1->visRep[cRepSurface]&&
-         (inclH||(!ai1->hydrogen))&&
-         ((!cullByFlag)||
-          (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
-        *ap = 2; 
-      else 
-        *ap = 0;
-      ap++;
+    {
+      int *ap = present;
+      for(a=0;a<cs->NIndex;a++) {
+        ai1 = obj->AtomInfo + cs->IdxToAtm[a];
+        if(ai1->visRep[cRepSurface]&&
+           (inclH||(!ai1->hydrogen))&&
+           ((!cullByFlag)||
+            (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
+          *ap = 2; 
+        else 
+          *ap = 0;
+        ap++;
+      }
     }
     
     map=MapNewFlagged(G,2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL,present);
@@ -1551,7 +1553,7 @@ typedef struct {
 
   int surfaceType;
   int circumscribe;
-  float probeRadius, probeRadMore, probeRadLess, probeRadLess2;
+  float probeRadius;
   float carveCutoff;
   float *carveVla;
   
@@ -1645,9 +1647,30 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
     
     if(!I->surfaceSolvent) {
       
-      float probe_rad_more = I->probeRadMore;
-      float probe_rad_less = I->probeRadLess;
-      float probe_rad_less2 = I->probeRadLess2;
+      float solv_tole = point_sep * 0.04F;
+      float probe_rad_more;
+      float probe_rad_less;
+      float probe_rad_less2;
+        
+      if(probe_radius<(2.5F*point_sep)) { /* minimum probe radius allowed */
+        probe_radius = 2.5F*point_sep;
+      }
+      
+      probe_rad_more = probe_radius*(1.0F+solv_tole);
+      
+      switch(surface_type) {
+      case 0: /* solid */
+      case 3:
+      case 4:
+      case 5:
+      case 6:
+        probe_rad_less = probe_radius;
+        break;
+      default:
+        probe_rad_less = probe_radius*(1.0F-solv_tole);
+        break;
+      }
+      probe_rad_less2 = probe_rad_less * probe_rad_less;
       
       if(surface_type>=5) { /* effectively double-weights atom points */
         if(sol_dot->nDot) { 
@@ -1669,10 +1692,10 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
 
       {
         MapType *map,*solv_map;
-        map=MapNewFlagged(G, I->maxVdw+I->probeRadMore,
+        map=MapNewFlagged(G, I->maxVdw+probe_rad_more,
                           I->coord, VLAGetSize(I->coord)/3, NULL, NULL);
       
-        solv_map=MapNew(G, I->probeRadLess, sol_dot->dot, 
+        solv_map=MapNew(G, probe_rad_less, sol_dot->dot, 
                         sol_dot->nDot, NULL);
         if(map&&solv_map) {
 
@@ -1791,6 +1814,7 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
       float *v0 = sol_dot->dot;
       float *n0 = sol_dot->dotNormal;
       int a;
+      circumscribe = 0;
       if(sol_dot->nDot) {
         for(a=0;a<sol_dot->nDot;a++) {
           *(v++)=*(v0++);
@@ -1929,11 +1953,11 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
               register int j=map->EList[i++];
               while(j>=0) {
                 SurfaceJobAtomInfo *atom_info = I_atom_info + j;
-                 if((!present_vla)||present_vla[j]) {
-                   if(within3f(I_coord+3*j,v,atom_info->vdw+cutoff)) { 
-                     dot_flag[a] = true;
-                   }
-                 }
+                if((!present_vla)||present_vla[j]) {
+                  if(within3f(I_coord+3*j,v,atom_info->vdw+cutoff)) { 
+                    dot_flag[a] = true;
+                  }
+                }
                 j=map->EList[i++];
               }
             }
@@ -2205,1081 +2229,415 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
     
     PRINTFB(G,FB_RepSurface,FB_Blather)
       " RepSurface: %i surface points.\n",I->N
-       ENDFB(G);
+      ENDFB(G);
      
-     OrthoBusyFast(G,3,5);
-     if(I->N) {
-       if(surface_type!=1) { /* not a dot surface... */
-         float cutoff = point_sep*5.0F;
-         if((cutoff>probe_radius)&&(!I->surfaceSolvent))
-           cutoff = probe_radius;
-         I->T=TrianglePointsToSurface(G,I->V,I->VN,I->N,cutoff,&I->NT,&I->S,NULL);
-         PRINTFB(G,FB_RepSurface,FB_Blather)
-           " RepSurface: %i triangles.\n",I->NT
-           ENDFB(G);
-       }
-     } else {
-       I->V = ReallocForSure(I->V,float,1);
-       I->VN = ReallocForSure(I->VN,float,1);
-     }
-     if(carve_map)
-       MapFree(carve_map);
+    OrthoBusyFast(G,3,5);
+    if(I->N) {
+      if(surface_type!=1) { /* not a dot surface... */
+        float cutoff = point_sep*5.0F;
+        if((cutoff>probe_radius)&&(!I->surfaceSolvent))
+          cutoff = probe_radius;
+        I->T=TrianglePointsToSurface(G,I->V,I->VN,I->N,cutoff,&I->NT,&I->S,NULL);
+        PRINTFB(G,FB_RepSurface,FB_Blather)
+          " RepSurface: %i triangles.\n",I->NT
+          ENDFB(G);
+      }
+    } else {
+      I->V = ReallocForSure(I->V,float,1);
+      I->VN = ReallocForSure(I->VN,float,1);
+    }
+    if(carve_map)
+      MapFree(carve_map);
   }
   return ok;
 }
 
 Rep *RepSurfaceNew(CoordSet *cs,int state)
 {
-  PyMOLGlobals *G=cs->State.G;
-  ObjectMolecule *obj;
-  int a,i,j;
-  MapType *map;
-  float *v0=NULL;
-
-  int SurfaceFlag = false;
-  float probe_radius,probe_radius2;
-  float probe_rad_more;
-  float probe_rad_less,probe_rad_less2;
-  float trim_cutoff,trim_factor;
-  int inclH = true;
-  int cullByFlag = false;
-  float point_sep;
-  int visFlag;
-  int surface_quality;
-  int surface_mode;
-  int *present_vla = NULL,*ap;
-  int surface_type;
-  int surface_solvent;
-  int optimize;
-  int sphere_idx=0, solv_sph_idx=0;
-  AtomInfoType *ai1,*ai2;
-  int n_present = 0;
-  float solv_tole;
-  int carve_state = 0;
-  int carve_flag = false;
-  float carve_cutoff;
-  char *carve_selection = NULL;
-  float *carve_vla = NULL;
-  MapType *carve_map = NULL;
-  int circumscribe = 0;
-
-  #if 0
-  int c1;
-  float v1[3];
-  float vdw;
-#endif
+  PyMOLGlobals *G = cs->State.G;
+  ObjectMolecule *obj = cs->Obj;
   OOCalloc(G,RepSurface);
 
-  obj = cs->Obj;
-  I->R.context.object = (void*)obj;
-  I->R.context.state = state;
-
-  surface_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
-  surface_type = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_type);
-  optimize = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_optimize_subsets);
-  surface_solvent = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
-  I->Type = surface_type;
-
-  trim_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_trim_cutoff);
-  trim_factor = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_trim_factor);
-
-  cullByFlag = (surface_mode==cRepSurface_by_flags);
-  inclH = !(surface_mode==cRepSurface_heavy_atoms);
-
-  visFlag=false;
-  if(obj->RepVisCache[cRepSurface])
-    for(a=0;a<cs->NIndex;a++) {
-      ai1=obj->AtomInfo+cs->IdxToAtm[a];
-      if(ai1->visRep[cRepSurface]&&
-         (inclH||(!ai1->hydrogen))&&
-         ((!cullByFlag)||
-          (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore))))) {
-        visFlag=true;
-        break;
-      }
-    }
-  if(!visFlag) {
-    OOFreeP(I);
-    return(NULL); /* skip if no thing visible */
-  }
-
-  I->max_vdw = ObjectMoleculeGetMaxVDW(obj);
-
-  RepInit(G,&I->R);
-  circumscribe = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_circumscribe);
-  surface_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
-  if(surface_quality>=4) { /* totally impractical */
-    point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/4;
-    sphere_idx = 4;
-    solv_sph_idx = 4;
-    if(circumscribe<0)
-      circumscribe = 91;
-  } else {
-    switch(surface_quality) {
-    case 3:  /* nearly impractical */
-      point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
-      sphere_idx = 4;
-      solv_sph_idx = 3;
-      if(circumscribe<0)
-        circumscribe = 71;
-      break;
-    case 2:
-      /* nearly perfect */
-      point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/2;
-      sphere_idx = 3;
-      solv_sph_idx = 3;
-      if(circumscribe<0)
-        circumscribe = 41;
-      break;
-    case 1: 
-      /* good */
-      point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best);
-      sphere_idx = 2;
-      solv_sph_idx = 3;
-      if((circumscribe<0)&&(surface_type==6))
-        circumscribe = 40;
-      break;
-    case 0: 
-      /* 0 - normal */
-      point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_normal);
-      sphere_idx = 1;
-      solv_sph_idx = 2;
-      if((circumscribe<0)&&(surface_type==6))
-        circumscribe = 30;
-      break;
-    case -1:
-      /* -1 */
-      point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_poor);
-      sphere_idx = 1;
-      solv_sph_idx = 2;
-      if((circumscribe<0)&&(surface_type==6))
-        circumscribe = 10;
-      break;
-    case -2:
-      /* -2 god awful*/
-      point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_poor)*1.5F;
-      sphere_idx = 1;
-      solv_sph_idx = 1;
-      break;
-    case -3:
-      /* -3 miserable */
-      point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_miserable);
-      sphere_idx = 1;
-      solv_sph_idx = 1;
-      break;
-    default:
-      point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_miserable)*1.18F;
-      sphere_idx = 0;
-      solv_sph_idx = 1;
-    }
-  }
-
-  solv_tole = point_sep * 0.04F;
-
-  if(circumscribe<0) circumscribe=0;
-
-  probe_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
-
-  if(!surface_solvent) {
-    if(probe_radius<(2.5F*point_sep)) { /* minimum probe radius allowed */
-      probe_radius = 2.5F*point_sep;
-    }
-  } else {
-    circumscribe = 0;
-  }
-
-  probe_radius2 = probe_radius*probe_radius;
-  probe_rad_more = probe_radius*(1.0F+solv_tole);
-
-  switch(surface_type) {
-  case 0: /* solid */
-  case 3:
-  case 4:
-  case 5:
-  case 6:
-    probe_rad_less = probe_radius;
-    break;
-  default:
-    probe_rad_less = probe_radius*(1.0F-solv_tole);
-    break;
-  }
-  
-  probe_rad_less2 = probe_rad_less * probe_rad_less;
-
-  /* OOCalloc takes care of all this 
-
-  I->N=0;
-  I->NT=0;
-  I->S=NULL;
-  I->V=NULL;
-  I->VC=NULL;
-  I->Vis=NULL;
-  I->VN=NULL;
-  I->T=NULL;
-  I->LastVisib=NULL;
-  I->LastColor=NULL;
-  I->debug = NULL;
-  */
-
-  I->R.fRender=(void (*)(struct Rep *, RenderInfo *info))RepSurfaceRender;
-  I->R.fFree=(void (*)(struct Rep *))RepSurfaceFree;
-  I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepSurfaceColor;
-  I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSurfaceSameVis;
-  I->R.obj = (CObject*)(cs->Obj);
-  I->R.cs = cs;
-  I->allVisibleFlag=true;
-  obj = cs->Obj;
-
-  /* don't waist time computing a Surface unless we need it!! */
-  for(a=0;a<cs->NIndex;a++) {
-    ai1=obj->AtomInfo+cs->IdxToAtm[a];
-    if(ai1->visRep[cRepSurface]&&
-       ((!cullByFlag)||
-        (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore)))))
-      SurfaceFlag=true;
-    else
-      I->allVisibleFlag=false;
-  }
-  if(SurfaceFlag) {
-    SurfaceJobAtomInfo *atom_info = VLACalloc(SurfaceJobAtomInfo, cs->NIndex);
-    if(atom_info) {
-      int i;
-      AtomInfoType *i_ai,*obj_atom_info = obj->AtomInfo;
-      int *idx_to_atm = cs->IdxToAtm;
-      int n_index = cs->NIndex;
-      SurfaceJobAtomInfo *i_atom_info = atom_info;
-      for(i=0;i<n_index;i++) {
-        i_ai = obj_atom_info + idx_to_atm[i];
-        /* just surfacing flags */
-        i_atom_info->flags = i_ai->flags & ( cAtomFlag_ignore | cAtomFlag_exfoliate ); 
-        i_atom_info->vdw = i_ai->vdw;
-        i_atom_info++;
-      }
-    }
-
-    OrthoBusyFast(G,0,1);
-
-    n_present = cs->NIndex;
-
-    carve_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
-    carve_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
-    if((!carve_selection)||(!carve_selection[0]))
-      carve_cutoff=0.0F;
-    if(carve_cutoff>0.0F) {
-      carve_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
-      carve_cutoff += 2*I->max_vdw+probe_radius;
-
-      if(carve_selection) 
-        carve_map = SelectorGetSpacialMapFromSeleCoord(G,
-                                                       SelectorIndexByName(G,carve_selection),
-                                                       carve_state,
-                                                       carve_cutoff,
-                                                       &carve_vla);
-      if(carve_map) 
-        MapSetupExpress(carve_map);
-      carve_flag = true;
-      I->allVisibleFlag=false;
-    }
-   if(!I->allVisibleFlag) {
-      /* optimize the space over which we calculate a surface */
-      
-      /* first find out which atoms are actually to be surfaced */
-
-      present_vla = VLAlloc(int,cs->NIndex); 
-      ap = present_vla;
-      for(a=0;a<cs->NIndex;a++) {
-        ai1 = obj->AtomInfo + cs->IdxToAtm[a];
+  {
+    int surface_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
+    int cullByFlag = (surface_mode==cRepSurface_by_flags);
+    int inclH = !(surface_mode==cRepSurface_heavy_atoms);
+    int visFlag = false;
+    
+    if(obj->RepVisCache[cRepSurface]) {
+      register int *idx_to_atm = cs->IdxToAtm;
+      register AtomInfoType *obj_AtomInfo = obj->AtomInfo;
+      register int a,cs_NIndex = cs->NIndex;
+      for(a=0;a<cs_NIndex;a++) {
+        register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
         if(ai1->visRep[cRepSurface]&&
            (inclH||(!ai1->hydrogen))&&
            ((!cullByFlag)||
-            (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
-          *ap = 2; 
-        else 
-          *ap = 0;
-        ap++;
+            (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore))))) {
+          visFlag=true;
+          break;
+        }
+      }
+    }
+    if(!visFlag) {
+      OOFreeP(I);
+      return(NULL); /* skip if no thing visible */
+    }
+
+    {
+    int surface_flag = false;
+
+    int surface_type = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_type);
+    int surface_solvent = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
+    int surface_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
+    float probe_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
+    int optimize = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_optimize_subsets);
+    
+    int circumscribe = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_circumscribe);
+    float trim_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_trim_cutoff);
+
+    float trim_factor = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_trim_factor);
+    int sphere_idx=0, solv_sph_idx=0;
+    MapType *map = NULL;
+    float point_sep;
+    int *present_vla = NULL;
+    int n_present = 0;
+    int carve_state = 0;
+    int carve_flag = false;
+    float carve_cutoff;
+    char *carve_selection = NULL;
+    float *carve_vla = NULL;
+    MapType *carve_map = NULL;
+
+    I->Type = surface_type;
+
+    I->max_vdw = ObjectMoleculeGetMaxVDW(obj);
+    
+    if(surface_quality>=4) { /* totally impractical */
+      point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/4;
+      sphere_idx = 4;
+      solv_sph_idx = 4;
+      if(circumscribe<0)
+        circumscribe = 91;
+    } else {
+      switch(surface_quality) {
+      case 3:  /* nearly impractical */
+        point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
+        sphere_idx = 4;
+        solv_sph_idx = 3;
+        if(circumscribe<0)
+          circumscribe = 71;
+        break;
+      case 2:
+        /* nearly perfect */
+        point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best)/2;
+        sphere_idx = 3;
+        solv_sph_idx = 3;
+        if(circumscribe<0)
+          circumscribe = 41;
+        break;
+      case 1: 
+        /* good */
+        point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_best);
+        sphere_idx = 2;
+        solv_sph_idx = 3;
+        if((circumscribe<0)&&(surface_type==6))
+          circumscribe = 40;
+        break;
+      case 0: 
+        /* 0 - normal */
+        point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_normal);
+        sphere_idx = 1;
+        solv_sph_idx = 2;
+        if((circumscribe<0)&&(surface_type==6))
+          circumscribe = 30;
+        break;
+      case -1:
+        /* -1 */
+        point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_poor);
+        sphere_idx = 1;
+        solv_sph_idx = 2;
+        if((circumscribe<0)&&(surface_type==6))
+          circumscribe = 10;
+        break;
+      case -2:
+        /* -2 god awful*/
+        point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_poor)*1.5F;
+        sphere_idx = 1;
+        solv_sph_idx = 1;
+        break;
+      case -3:
+        /* -3 miserable */
+        point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_miserable);
+        sphere_idx = 1;
+        solv_sph_idx = 1;
+        break;
+      default:
+        point_sep = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_miserable)*1.18F;
+        sphere_idx = 0;
+        solv_sph_idx = 1;
+      }
+    }
+
+    if((circumscribe<0) || (!surface_solvent)) circumscribe = 0;
+
+    RepInit(G,&I->R);
+    I->R.context.object = (void*)obj;
+    I->R.context.state = state;
+    I->R.fRender=(void (*)(struct Rep *, RenderInfo *info))RepSurfaceRender;
+    I->R.fFree=(void (*)(struct Rep *))RepSurfaceFree;
+    I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepSurfaceColor;
+    I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSurfaceSameVis;
+    I->R.obj = (CObject*)(cs->Obj);
+    I->R.cs = cs;
+    I->allVisibleFlag=true;
+    obj = cs->Obj;
+
+    /* don't waist time computing a Surface unless we need it!! */
+    {
+      register int *idx_to_atm = cs->IdxToAtm;
+      register AtomInfoType *obj_AtomInfo = obj->AtomInfo;
+      register int a,cs_NIndex = cs->NIndex;
+      for(a=0;a<cs_NIndex;a++) {
+        register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
+        if(ai1->visRep[cRepSurface]&&
+           ((!cullByFlag)||
+            (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore)))))
+          surface_flag=true;
+        else {
+          I->allVisibleFlag=false;
+          if(surface_flag)
+            break;
+        }
+      }
+    }
+    if(surface_flag) {
+      SurfaceJobAtomInfo *atom_info = VLACalloc(SurfaceJobAtomInfo, cs->NIndex);
+      if(atom_info) {
+        AtomInfoType *i_ai, *obj_atom_info = obj->AtomInfo;
+        int *idx_to_atm = cs->IdxToAtm;
+        int n_index = cs->NIndex;
+        SurfaceJobAtomInfo *i_atom_info = atom_info;
+        int i;
+        for(i=0;i<n_index;i++) {
+          i_ai = obj_atom_info + idx_to_atm[i];
+          /* just surfacing flags */
+          i_atom_info->flags = i_ai->flags & ( cAtomFlag_ignore | cAtomFlag_exfoliate ); 
+          i_atom_info->vdw = i_ai->vdw;
+          i_atom_info++;
+        }
       }
 
-      map=MapNewFlagged(G,2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL,present_vla);
-      MapSetupExpress(map);
+      OrthoBusyFast(G,0,1);
+
+      n_present = cs->NIndex;
+
+      carve_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
+      carve_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
+      if((!carve_selection)||(!carve_selection[0]))
+        carve_cutoff=0.0F;
+      if(carve_cutoff>0.0F) {
+        carve_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
+        carve_cutoff += 2*I->max_vdw+probe_radius;
+
+        if(carve_selection) 
+          carve_map = SelectorGetSpacialMapFromSeleCoord(G,
+                                                         SelectorIndexByName(G,carve_selection),
+                                                         carve_state,
+                                                         carve_cutoff,
+                                                         &carve_vla);
+        if(carve_map) 
+          MapSetupExpress(carve_map);
+        carve_flag = true;
+        I->allVisibleFlag=false;
+      }
+      if(!I->allVisibleFlag) {
+        /* optimize the space over which we calculate a surface */
       
-      {
-        float probe_radiusX2 = probe_radius*2;
-        for(a=0;a<cs->NIndex;a++)
-          /* then add in the nearby atoms which are not surfaced and not ignored */
-
-          if(!present_vla[a]) {
-            ai1 = obj->AtomInfo+cs->IdxToAtm[a];
-            if((!cullByFlag)||!(ai1->flags&cAtomFlag_ignore)) {
-              v0 = cs->Coord+3*a;
-              i=*(MapLocusEStart(map,v0));
-              if(optimize) {
-                if(i) {
-                  j=map->EList[i++];
-                  while(j>=0) {
-                    if(present_vla[j]>1) {
-                      ai2 = obj->AtomInfo+cs->IdxToAtm[j];                  
-                      if(within3f(cs->Coord+3*j,v0,ai1->vdw+ai2->vdw+probe_radiusX2)) {
-                        present_vla[a]=1;
-                        break;
-                      }
-                    }
-                    j=map->EList[i++];
-                  }
-                }
-              } else 
-                present_vla[a]=1;
-            }
-          }
-      }
-
-      if(carve_flag&&(!optimize)) {
-        /* and optimize for carved region */
+        /* first find out which atoms are actually to be surfaced */
         
-        for(a=0;a<cs->NIndex;a++) {
-          int include_flag = false;
-          if(carve_map) {
-            v0 = cs->Coord+3*a;
-            i=*(MapLocusEStart(carve_map,v0));
-            if(i) {
-              j=carve_map->EList[i++];
-              while(j>=0) {
-                if(within3f(carve_vla+3*j,v0,carve_cutoff)) {
-                  include_flag = true;
-                  break;
-                }
-                j=carve_map->EList[i++];
+        present_vla = VLAlloc(int,cs->NIndex); 
+        {
+          register int *ap = present_vla;
+          register int *idx_to_atm = cs->IdxToAtm;
+          register AtomInfoType *obj_AtomInfo = obj->AtomInfo;
+          register int a,cs_NIndex = cs->NIndex;
+          for(a=0;a<cs_NIndex;a++) {
+            register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
+            if(ai1->visRep[cRepSurface]&&
+               (inclH||(!ai1->hydrogen))&&
+               ((!cullByFlag)||
+                (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
+              *ap = 2; 
+            else 
+              *ap = 0;
+            ap++;
+          }
+        }
+
+        map=MapNewFlagged(G,2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL,present_vla);
+        MapSetupExpress(map);
+      
+        {
+          float probe_radiusX2 = probe_radius*2;
+          int a;
+          for(a=0;a<cs->NIndex;a++)
+            /* then add in the nearby atoms which are not surfaced and not ignored */
+
+            if(!present_vla[a]) {
+              AtomInfoType *ai1 = obj->AtomInfo+cs->IdxToAtm[a];
+              if((!cullByFlag)||!(ai1->flags&cAtomFlag_ignore)) {
+                float *v0 = cs->Coord+3*a;
+                int i=*(MapLocusEStart(map,v0));
+                if(optimize) {
+                  if(i) {
+                    int j=map->EList[i++];
+                    while(j>=0) {
+                      if(present_vla[j]>1) {
+                        AtomInfoType *ai2 = obj->AtomInfo+cs->IdxToAtm[j];                  
+                        if(within3f(cs->Coord+3*j,v0,ai1->vdw+ai2->vdw+probe_radiusX2)) {
+                          present_vla[a]=1;
+                          break;
+                        }
+                      }
+                      j=map->EList[i++];
+                    }
+                  }
+                } else 
+                  present_vla[a]=1;
               }
             }
+        }
+
+        if(carve_flag&&(!optimize)) {
+          /* and optimize for carved region */
+          int a;
+          for(a=0;a<cs->NIndex;a++) {
+            int include_flag = false;
+            if(carve_map) {
+              float *v0 = cs->Coord+3*a;
+              int i=*(MapLocusEStart(carve_map,v0));
+              if(i) {
+                int j=carve_map->EList[i++];
+                while(j>=0) {
+                  if(within3f(carve_vla+3*j,v0,carve_cutoff)) {
+                    include_flag = true;
+                    break;
+                  }
+                  j=carve_map->EList[i++];
+                }
+              }
+            }
+            if(!include_flag)
+              present_vla[a]=0;
           }
-          if(!include_flag)
-            present_vla[a]=0;
+        }
+        MapFree(map);
+        map = NULL;
+
+        /* now count how many atoms we actually need to think about */
+
+        n_present = 0;
+        {
+          int a;
+          for(a=0;a<cs->NIndex;a++) {
+            if(present_vla[a]) {
+              n_present++;
+            }
+          }
         }
       }
-      MapFree(map);
-      map = NULL;
+      {
+        SurfaceJob *surf_job = SurfaceJobNew(G);
 
-      /* now count how many atoms we actually need to think about */
+        if(surf_job) {
 
-      n_present = 0;
-      for(a=0;a<cs->NIndex;a++) {
-        if(present_vla[a]) {
-          n_present++;
-        }
-      }
-   }
-#if 1
-   {
-     SurfaceJob *surf_job = SurfaceJobNew(G);
-
-     if(surf_job) {
-
-       surf_job->maxVdw = I->max_vdw;
-       surf_job->allVisibleFlag = I->allVisibleFlag;
+          surf_job->maxVdw = I->max_vdw;
+          surf_job->allVisibleFlag = I->allVisibleFlag;
        
-       surf_job->atomInfo = atom_info; atom_info = NULL;
+          surf_job->atomInfo = atom_info; atom_info = NULL;
        
-       surf_job->nPresent = n_present;
-       if(present_vla && optimize) {
-         /* implies that n_present < cs->NIndex, so eliminate
-            irrelevant atoms & coordinates if we are optimizing subsets */
-         surf_job->coord = VLAlloc(float, n_present * 3);
-         {
-           int a;
-           int *p = present_vla;
-           SurfaceJobAtomInfo *ai_src = surf_job->atomInfo;
-           SurfaceJobAtomInfo *ai_dst = surf_job->atomInfo;
-           float *v_src = cs->Coord;
-           float *v_dst = surf_job->coord;
-           for(a=0;a<cs->NIndex;a++) {
-             if(*(p++)) {
-               copy3f(v_src,v_dst);
-               v_dst+=3;
-               if(ai_dst!=ai_src)
-                 *ai_dst = *ai_src;
-               ai_dst++;
-             }
-             v_src+=3;
-             ai_src++;
-           }
-         }
-         VLASetSize(surf_job->atomInfo,n_present);
+          surf_job->nPresent = n_present;
+          if(present_vla && optimize) {
+            /* implies that n_present < cs->NIndex, so eliminate
+               irrelevant atoms & coordinates if we are optimizing subsets */
+            surf_job->coord = VLAlloc(float, n_present * 3);
+            {
+              int *p = present_vla;
+              SurfaceJobAtomInfo *ai_src = surf_job->atomInfo;
+              SurfaceJobAtomInfo *ai_dst = surf_job->atomInfo;
+              float *v_src = cs->Coord;
+              float *v_dst = surf_job->coord;
+              int a;
+           
+              for(a=0;a<cs->NIndex;a++) {
+                if(*(p++)) {
+                  copy3f(v_src,v_dst);
+                  v_dst+=3;
+                  if(ai_dst!=ai_src)
+                    *ai_dst = *ai_src;
+                  ai_dst++;
+                }
+                v_src+=3;
+                ai_src++;
+              }
+            }
+            VLASetSize(surf_job->atomInfo,n_present);
          
-       } else {
-         surf_job->presentVla = present_vla; present_vla = NULL;
-         surf_job->coord = VLAlloc(float, cs->NIndex*3);
-         if(surf_job->coord)
-           UtilCopyMem(surf_job->coord, cs->Coord, sizeof(float)*3*cs->NIndex);
-       }
+          } else {
+            surf_job->presentVla = present_vla; present_vla = NULL;
+            surf_job->coord = VLAlloc(float, cs->NIndex*3);
+            if(surf_job->coord)
+              UtilCopyMem(surf_job->coord, cs->Coord, sizeof(float)*3*cs->NIndex);
+          }
 
-       surf_job->sphereIndex = sphere_idx;
-       surf_job->solventSphereIndex = solv_sph_idx;
+          surf_job->sphereIndex = sphere_idx;
+          surf_job->solventSphereIndex = solv_sph_idx;
     
-       surf_job->surfaceType = surface_type;
-       surf_job->circumscribe = circumscribe;
-       surf_job->probeRadius = probe_radius;
-       surf_job->probeRadMore = probe_rad_more;
-       surf_job->probeRadLess = probe_rad_less;
-       surf_job->probeRadLess2 = probe_rad_less2;
-       surf_job->pointSep = point_sep;
+          surf_job->surfaceType = surface_type;
+          surf_job->circumscribe = circumscribe;
+          surf_job->probeRadius = probe_radius;
+          surf_job->pointSep = point_sep;
 
-       surf_job->trimCutoff = trim_cutoff;
-       surf_job->trimFactor = trim_factor;
+          surf_job->trimCutoff = trim_cutoff;
+          surf_job->trimFactor = trim_factor;
 
-       if(carve_vla) 
-         surf_job->carveVla = VLACopy(carve_vla,float);
-       surf_job->carveCutoff = carve_cutoff;
+          if(carve_vla) 
+            surf_job->carveVla = VLACopy(carve_vla,float);
+          surf_job->carveCutoff = carve_cutoff;
         
-       surf_job->surfaceMode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
-       surf_job->surfaceSolvent = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
-       surf_job->cavityCull = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
-     }
-      
-     SurfaceJobRun(G,surf_job);
-     I->N = surf_job->N; surf_job->N = 0;
-     I->V = surf_job->V; surf_job->V = NULL;
-     I->VN = surf_job->VN; surf_job->VN = NULL;
-     I->NT = surf_job->NT; surf_job->NT = 0;
-     I->T = surf_job->T; surf_job->T = NULL;
-     I->S = surf_job->S; surf_job->S = NULL;
-     SurfaceJobPurgeResult(G,surf_job);
-     SurfaceJobFree(G,surf_job);
-   }
-#else
-   {
-     SphereRec *sp = G->Sphere->Sphere[sphere_idx];
-     SphereRec *ssp = G->Sphere->Sphere[solv_sph_idx];
-     SolventDot *sol_dot = NULL;
-     MapType *solv_map;
-     int b,c;
-     float *v,*vn=NULL,*vn0=NULL,*n0=NULL;
-     int MaxN;
-     int *p;
-     int flag,*dot_flag;
+          surf_job->surfaceMode = surface_mode;
+          surf_job->surfaceSolvent = surface_solvent;
 
-     if(n_present<1) n_present=1; /* safety */
-  
-     if(sp->nDot<ssp->nDot)
-       MaxN = n_present*ssp->nDot;
-     else
-       MaxN = n_present*sp->nDot;
-
-     I->V=Alloc(float,(MaxN+1)*3);
-     I->VN=Alloc(float,(MaxN+1)*3);
-
-     if(!(I->V&&I->VN)) { /* bail out point -- try to reduce crashes */
-       PRINTFB(G,FB_RepSurface,FB_Errors)
-         "Error-RepSurface: insufficient memory to calculate surface at this quality.\n"
-         ENDFB(G);
-       FreeP(I->V);
-       FreeP(I->VN);
-       VLAFreeP(present_vla);
-       if(carve_map)
-         MapFree(carve_map);
-       VLAFreeP(carve_vla);
-       OOFreeP(I);
-       return NULL;
-     }
-     I->N=0;
-     v=I->V;
-     vn=I->VN; 
-     
-     {
-       int surface_solvent = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
-       int cavity_cull = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
+          surf_job->cavityCull = SettingGet_i(G,cs->Setting,
+                                              obj->Obj.Setting,cSetting_cavity_cull);
+        }
       
-       sol_dot = SolventDotNew(G, cs->Coord, atom_info, probe_radius,
-                               ssp, present_vla, circumscribe,
-                               surface_mode, surface_solvent, cavity_cull,
-                               I->allVisibleFlag, I->max_vdw);
-     }
-  
-     if(!surface_solvent) {
-      
-       if(surface_type>=5) { /* effectively double-weights atom points */
-         if(sol_dot->nDot) { 
-           v0 = sol_dot->dot;
-           n0 = sol_dot->dotNormal;
-           for(a=0;a<sol_dot->nDot;a++) {
-             scale3f(n0,-probe_radius,v);
-             add3f(v0,v,v);
-             copy3f(n0,vn);
-             v+=3;
-             vn+=3;
-             n0+=3;
-             v0+=3;
-             I->N++;
-           }
-         }
-       }
-
-       map=MapNewFlagged(G,I->max_vdw+probe_rad_more,cs->Coord,cs->NIndex,NULL,present_vla);
-      
-       solv_map=MapNew(G,probe_rad_less,sol_dot->dot,sol_dot->nDot,NULL);
-      
-       /*
-
-         I->debug=CGONew(G);
-      
-         CGOBegin(I->debug,GL_POINTS);
-         for(a=0;a<sol_dot->nDot;a++)
-         CGOVertexv(I->debug,sol_dot->dot+3*a);
-         CGOEnd(I->debug);
-       */
-      
-       if(map&&solv_map) {
-         MapSetupExpress(solv_map);
-         MapSetupExpress(map);
-        
-         if(sol_dot->nDot) {
-           int *dc = sol_dot->dotCode;
-           Vector3f *dot = NULL;
-          
-           dot=Alloc(Vector3f,sp->nDot);
-           for(b=0;b<sp->nDot;b++) {
-             scale3f(sp->dot[b],probe_radius,dot[b]);
-           }
-           v0 = sol_dot->dot;
-           n0 = sol_dot->dotNormal;
-           for(a=0;a<sol_dot->nDot;a++) {
-             if(dc[a]||(surface_type<6)) { /* surface type 6 is completely scribed */
-               OrthoBusyFast(G,a+sol_dot->nDot*2,sol_dot->nDot*5); /* 2/5 to 3/5 */
-               for(b=0;b<sp->nDot;b++) {
-                 register int ii;
-                 v[0]=v0[0]+dot[b][0];
-                 v[1]=v0[1]+dot[b][1];
-                 v[2]=v0[2]+dot[b][2];
-                 flag=true;
-                 ii=*(MapLocusEStart(solv_map,v));
-                 if(ii) {
-                   register int jj;
-                   register int *elist = solv_map->EList;
-                   register float *i_dot = sol_dot->dot;
-                   register float v_0=v[0], v_1=v[1], v_2=v[2];
-                   register float dist=probe_rad_less;
-                   register float dist2=probe_rad_less2;
-                   register float *v1,dx,dy,dz;
-                   jj=elist[ii++];
-                   v1 = i_dot + 3*jj;                          
-                   while(jj>=0) {
-                     if(jj!=a)  { /*&&!(dc[jj]))*/
-                       /* huge bottleneck -- optimized for superscaler processors */
-                       dx = v1[0]-v_0;
-                       dy = v1[1]-v_1;
-                       dz = v1[2]-v_2;
-                       dx = (float)fabs(dx);
-                       dy = (float)fabs(dy);
-                       if(!(dx>dist)) {
-                         dx = dx * dx;
-                         if(!(dy>dist)) {
-                           dz = (float)fabs(dz);
-                           dy = dy * dy;
-                           if(!(dz>dist)) {
-                             dx = dx + dy;
-                             dz = dz * dz;
-                             if(!(dx>dist2)) 
-                               if((dx + dz)<=dist2) {
-                                 flag = false; 
-                                 break; 
-                               }
-                           }
-                         }
-                       }
-                     }
-                     jj=elist[ii++];
-                     v1 = i_dot + 3*jj;                          
-                   }
-                 }
-                 /* at this point, we have points on the interior of the solvent surface,
-                    so now we need to further trim that surface to cover atoms that are present */
-                
-                 if(flag) {
-                   i=*(MapLocusEStart(map,v));
-                   if(i) {
-                     j=map->EList[i++];
-                     while(j>=0) {
-                       ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-                       if((!present_vla)||present_vla[j]) {
-                         if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_rad_more)) {
-                           flag=false;
-                           break;
-                         }
-                       }
-                       j=map->EList[i++];
-                     }
-                   }
-                   if(!flag) { /* compute the normals */
-                     vn[0]=-sp->dot[b][0];
-                     vn[1]=-sp->dot[b][1];
-                     vn[2]=-sp->dot[b][2];
-                     if(I->N<MaxN) {
-                       I->N++;
-                       v+=3;
-                       vn+=3;
-                     } else {
-                       int v_offset = v-I->V;
-                       int vn_offset = vn-I->VN;
-                       MaxN = MaxN*2;
-                       I->V=Realloc(I->V,float,(MaxN+1)*3);
-                       I->VN=Realloc(I->VN,float,(MaxN+1)*3);
-                       v = I->V + v_offset;
-                       vn = I->VN + vn_offset;
-                     }
-                   }
-                 }
-               }
-             }
-             v0 +=3;
-             n0 +=3;
-           }
-           FreeP(dot);
-         }
-       }
-       MapFree(solv_map);
-       MapFree(map);
-     } else {
-       v0 = sol_dot->dot;
-       n0 = sol_dot->dotNormal;
-       if(sol_dot->nDot) {
-         for(a=0;a<sol_dot->nDot;a++) {
-           *(v++)=*(v0++);
-           *(vn++)=*(n0++);
-           *(v++)=*(v0++);
-           *(vn++)=*(n0++);
-           *(v++)=*(v0++);
-           *(vn++)=*(n0++);
-           I->N++;
-         }
-       }
-     }
-
-     SolventDotFree(sol_dot); sol_dot = NULL;
-
-     {
-       int refine,ref_count = 1;
-      
-       if((surface_type==0) && (circumscribe)) {
-         ref_count = 2; /* these constants need more tuning...*/
-       }
-      
-       for(refine=0;refine<ref_count;refine++) {
-
-         /* add new vertices in regions where curvature is very high
-            or where there are gaps with no points */
+        SurfaceJobRun(G,surf_job);
+        I->N = surf_job->N; surf_job->N = 0;
+        I->V = surf_job->V; surf_job->V = NULL;
+        I->VN = surf_job->VN; surf_job->VN = NULL;
+        I->NT = surf_job->NT; surf_job->NT = 0;
+        I->T = surf_job->T; surf_job->T = NULL;
+        I->S = surf_job->S; surf_job->S = NULL;
+        SurfaceJobPurgeResult(G,surf_job);
+        SurfaceJobFree(G,surf_job);
+      }
     
-         if(I->N && (surface_type==0) && (circumscribe)) {
-           int n_new = 0;
+      VLAFreeP(atom_info);
 
-           float neighborhood = 2.6*point_sep; /* these constants need more tuning...*/
-           float dot_cutoff = 0.666;
-           float insert_cutoff = 1.1*point_sep;
-
-           float map_cutoff = neighborhood;
-           float *v0,*vv0;
-           int ii,jj;
-           float *new_dot = VLAlloc(float,1000),*v1,*n1;
-           if(map_cutoff<(2.9*point_sep)) { /* these constants need more tuning...*/
-             map_cutoff = 2.9*point_sep;
-           }
-           map=MapNew(G,map_cutoff,I->V,I->N,NULL);
-           MapSetupExpress(map);		  
-           v=I->V;
-           vn=I->VN;
-           for(a=0;a<I->N;a++) {
-             i=*(MapLocusEStart(map,v));
-             if(i) {
-               j=map->EList[i++];
-               while(j>=0) {
-                 if(j>a) {
-                   v0 = I->V+3*j;
-                   if(within3f(v0,v,map_cutoff)) {
-                     int add_new = false;
-                     n0 = I->VN + 3*j;
-                     VLACheck(new_dot,float,n_new*6+5);
-                     v1 = new_dot+n_new*6;
-                     average3f(v,v0,v1);
-                     if((dot_product3f(n0,vn)<dot_cutoff)&&(within3f(v0,v,neighborhood)))
-                       add_new = true;
-                     else {
-                       /* if points are too far apart, insert a new one */
-                       ii=*(MapLocusEStart(map,v1));
-                       if(ii) {
-                         int found=false;
-                         jj=map->EList[ii++];
-                         while(jj>=0) {
-                           if(jj!=j) {
-                             vv0 = I->V+3*jj;
-                             if(within3f(vv0,v1,insert_cutoff)) {
-                               found = true;
-                               break;
-                             }
-                           }
-                           jj=map->EList[ii++];
-                         }
-                         if(!found) add_new =true;
-                       }
-                     }
-                     if(add_new) {
-                       /* highly divergent */
-                       n1 = v1+3;
-                       n_new ++;
-                       average3f(vn,n0,n1);
-                       normalize3f(n1);
-                     }
-                   }
-                 }
-                 j=map->EList[i++];
-               }
-             }
-             v+=3;
-             vn+=3;
-           }
-           MapFree(map);
-           if(n_new) {
-             I->V = Realloc(I->V,float,3*(I->N+n_new));
-             I->VN = Realloc(I->VN,float,3*(I->N+n_new));
-             v = I->V + 3*I->N;
-             vn = I->VN + 3*I->N;
-             n1 = new_dot+3;
-             v1 = new_dot;
-             I->N+=n_new;
-             while(n_new--) {
-               copy3f(v1,v);
-               copy3f(n1,vn);
-               v+=3;
-               vn+=3;
-               v1+=6;
-               n1+=6;
-             }
-           }
-           VLAFreeP(new_dot);
-         }
-
-         if(I->N && (surface_type==0) && (circumscribe)) {
-      
-           float cutoff = 0.5*probe_radius;
-      
-           /* combine scribing with an atom proximity cleanup pass */
-      
-           dot_flag=Calloc(int,I->N);
-           map=MapNewFlagged(G,I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL,present_vla);
-           MapSetupExpress(map); 
-           v=I->V;
-           for(a=0;a<I->N;a++) {
-             i=*(MapLocusEStart(map,v));
-             if(i) {
-               j=map->EList[i++];
-               while(j>=0) {
-                 ai2 = obj->AtomInfo+cs->IdxToAtm[j];                  
-                 if((!present_vla)||present_vla[j]) {
-                   if(within3f(cs->Coord+3*j,v,ai2->vdw+cutoff)) { 
-                     dot_flag[a] = true;
-                   }
-                 }
-                 j=map->EList[i++];
-               }
-             }
-             v+=3;
-           }
-      
-           MapFree(map);
-           map = NULL;
-           {
-             /* purge unused dots */
-
-             float *v0;
-        
-             v0=I->V;
-             v=I->V;
-             vn0=I->VN;
-             vn=I->VN;
-             p=dot_flag;
-             c=I->N;
-             I->N=0;
-             for(a=0;a<c;a++) {
-               if(*(p++)) {
-                 *(v0++)=*(v++);
-                 *(v0++)=*(v++);
-                 *(v0++)=*(v++);
-                 *(vn0++)=*(vn++);
-                 *(vn0++)=*(vn++);
-                 *(vn0++)=*(vn++);
-                 I->N++;
-               } else {
-                 v+=3;
-                 vn+=3;
-               }
-             }
-             FreeP(dot_flag);
-           }
-         }
-
-         /* now, eliminate dots that are too close to each other*/
-
-         /*    CGOColor(I->debug,0.0,1.0,0.0);
-               CGOBegin(I->debug,GL_POINTS);
-               for(a=0;a<I->N;a++)
-               CGOVertexv(I->debug,I->V+3*a);
-               CGOEnd(I->debug);
-         */
-
-         PRINTFD(G,FB_RepSurface)
-           " RepSurface: %i surface points in refinement pass %d.\n",I->N,refine
-           ENDFD(G);
-
-         if(I->N) {
-           int repeat_flag=true;
-           float min_dot = 0.1F;
-           dot_flag=Alloc(int,I->N);
-           while(repeat_flag) {
-             repeat_flag = false;
-
-             if(surface_type>=3) { 
-               register int jj;
-               float dist;
-               register float nearest;
-               register float min_sep2 = point_sep*point_sep;
-               float diff[3];
-               for(a=0;a<I->N;a++) dot_flag[a]=1;
-               map=MapNew(G,point_sep+0.05F,I->V,I->N,NULL);
-               MapSetupExpress(map);		  
-               v=I->V;
-               vn=I->VN;
-               for(a=0;a<I->N;a++) {
-                 if(dot_flag[a]) {
-                   i=*(MapLocusEStart(map,v));
-                   if(i) {
-                     j=map->EList[i++];
-                     jj=I->N;
-                     nearest = point_sep+1.0F;
-                     while(j>=0) {
-                       if(j>a) {
-                         if(dot_flag[j]) {
-                           if(dot_product3f(I->VN+(3*j),vn)>min_dot) {
-                             if(within3fret(I->V+(3*j),v,point_sep,min_sep2,diff,&dist)) {
-                               repeat_flag = true;
-                               if(dist<nearest) { 
-                                 /* try to be as determinstic as possible
-                                    in terms of how we collapse points */
-                                 jj = j;
-                                 nearest = dist;
-                               } else if((j<jj)&&(fabs(dist-nearest)<R_SMALL4)) { 
-                                 jj = j;
-                                 nearest = dist;
-                               }
-                             }
-                           }
-                         }
-                       }
-                       j=map->EList[i++];
-                     }
-                  
-                     if(jj<I->N) {
-                       dot_flag[jj]=0;
-                       add3f(vn,I->VN+(3*jj),vn);
-                       average3f(I->V+(3*jj),v,v);
-                       repeat_flag=true;
-                     }
-                   }
-                 }
-                 v+=3;
-                 vn+=3;
-               }
-               MapFree(map);
-             } else { /* surface types < 3 */
-
-               for(a=0;a<I->N;a++) dot_flag[a]=1;
-               map=MapNew(G,-point_sep,I->V,I->N,NULL);
-               MapSetupExpress(map);		  
-               v=I->V;
-               vn=I->VN;
-               for(a=0;a<I->N;a++) {
-                 if(dot_flag[a]) {
-                   i=*(MapLocusEStart(map,v));
-                   if(i) {
-                     j=map->EList[i++];
-                     while(j>=0) {
-                       if(j!=a) 
-                         {
-                           if(dot_flag[j]) {
-                             if(within3f(I->V+(3*j),v,point_sep)) {
-                               dot_flag[j]=0;
-                               add3f(vn,I->VN+(3*j),vn);
-                               average3f(I->V+(3*j),v,v);
-                               repeat_flag=true;
-                             }
-                           }
-                         }
-                       j=map->EList[i++];
-                     }
-                   }
-                 }
-                 v+=3;
-                 vn+=3;
-               }
-               MapFree(map);
-             }
-             v0=I->V;
-             v=I->V;
-             vn0=I->VN;
-             vn=I->VN;
-             p=dot_flag;
-             c=I->N;
-             I->N=0;
-             for(a=0;a<c;a++)
-               {
-                 if(*(p++)) {
-                   *(v0++)=*(v++);
-                   *(v0++)=*(v++);
-                   *(v0++)=*(v++);
-                   normalize3f(vn);
-                   *(vn0++)=*(vn++);
-                   *(vn0++)=*(vn++);
-                   *(vn0++)=*(vn++);
-                   I->N++;
-                 } else {
-                   v+=3;
-                   vn+=3;
-                 }
-               }
-           }
-
-           FreeP(dot_flag);
-        
-           if(I->N) {	
-             I->V = ReallocForSure(I->V,float,(v0-I->V));
-             I->VN = ReallocForSure(I->VN,float,(vn0-I->VN));
-           }
-         }
-    
-         /* now eliminate troublesome vertices in regions of extremely high curvature */
-
-         if((surface_type!=3)&&
-            I->N && (trim_cutoff>0.0F)&&
-            (trim_factor>0.0F))
-           {
-             int repeat_flag=true;
-             float neighborhood = trim_factor*point_sep;
-             float *v0,dot_sum;
-             int n_nbr;
-             dot_flag=Alloc(int,I->N);
-             if(surface_type==6) { /* emprical tweaks */
-               trim_factor*=2.5;
-               trim_cutoff*=1.5;
-             }
-             while(repeat_flag) {
-               repeat_flag=false;
-          
-               for(a=0;a<I->N;a++) dot_flag[a]=1;
-               map=MapNew(G,neighborhood,I->V,I->N,NULL);
-               MapSetupExpress(map);		  
-               v=I->V;
-               vn=I->VN;
-               for(a=0;a<I->N;a++) {
-                 if(dot_flag[a]) {
-                   i=*(MapLocusEStart(map,v));
-                   if(i) {
-                     n_nbr = 0;
-                     dot_sum = 0.0F;
-                     j=map->EList[i++];
-                     while(j>=0) {
-                       if(j!=a) 
-                         {
-                           if(dot_flag[j]) {
-                             v0 = I->V+3*j;
-                             if(within3f(v0,v,neighborhood)) {
-
-                               n0 = I->VN + 3*j;
-                               dot_sum += dot_product3f(n0,vn);
-                               n_nbr++;
-                          
-                             } 
-                           }
-                         }
-                       j=map->EList[i++];
-                     }
-
-                     if(n_nbr) {
-                       dot_sum/=n_nbr;
-                       if(dot_sum<trim_cutoff) {
-                         dot_flag[a]=false;
-                         repeat_flag = true;
-                       }
-                     }
-                   }
-                 }
-                 v+=3;
-                 vn+=3;
-               }
-               MapFree(map);
-          
-               v0=I->V;
-               v=I->V;
-               vn0=I->VN;
-               vn=I->VN;
-               p=dot_flag;
-               c=I->N;
-               I->N=0;
-               for(a=0;a<c;a++)
-                 {
-                   if(*(p++)) {
-                     *(v0++)=*(v++);
-                     *(v0++)=*(v++);
-                     *(v0++)=*(v++);
-                     normalize3f(vn);
-                     *(vn0++)=*(vn++);
-                     *(vn0++)=*(vn++);
-                     *(vn0++)=*(vn++);
-                     I->N++;
-                   } else {
-                     v+=3;
-                     vn+=3;
-                   }
-                 }
-             }
-             FreeP(dot_flag);
-            
-             if(I->N) {	
-               I->V = ReallocForSure(I->V,float,(v0-I->V));
-               I->VN = ReallocForSure(I->VN,float,(vn0-I->VN));
-             }
-           }
-       }
-     }
-    
-     PRINTFB(G,FB_RepSurface,FB_Blather)
-       " RepSurface: %i surface points.\n",I->N
-       ENDFB(G);
-     
-     OrthoBusyFast(G,3,5);
-     if(I->N) {
-       if(surface_type!=1) { /* not a dot surface... */
-         float cutoff = point_sep*5.0F;
-         if((cutoff>probe_radius)&&(!surface_solvent))
-           cutoff = probe_radius;
-         I->T=TrianglePointsToSurface(G,I->V,I->VN,I->N,cutoff,&I->NT,&I->S,NULL);
-         PRINTFB(G,FB_RepSurface,FB_Blather)
-           " RepSurface: %i triangles.\n",I->NT
-           ENDFB(G);
-       }
-     } else {
-       I->V = ReallocForSure(I->V,float,1);
-       I->VN = ReallocForSure(I->VN,float,1);
-     }
-   }
-#endif
-    
-    VLAFreeP(atom_info);
-
-    RepSurfaceColor(I,cs);
+      RepSurfaceColor(I,cs);
+    }
+    if(carve_map)
+      MapFree(carve_map);
+    VLAFreeP(carve_vla);
+    VLAFreeP(present_vla);
+    if(I->debug)
+      CGOStop(I->debug);
+    OrthoBusyFast(G,4,4);
+    return((void*)(struct Rep*)I);
+    }
   }
-  if(carve_map)
-    MapFree(carve_map);
-  VLAFreeP(carve_vla);
-  if(I->debug)
-    CGOStop(I->debug);
-  OrthoBusyFast(G,4,4);
-  VLAFreeP(present_vla);
-  return((void*)(struct Rep*)I);
 }
 
 static SolventDot *SolventDotNew(PyMOLGlobals *G, 

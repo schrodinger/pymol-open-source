@@ -1,7 +1,7 @@
 #include "ov_port.h"
 #include "ov_utility.h"
 
-void ov_utility_zero_range(ov_pointer start, ov_pointer stop)
+void ov_utility_zero_range(void *start, void *stop)
 {
   char *p = (char*)start;
   char *q = (char*)stop;
@@ -55,7 +55,7 @@ void ov_utility_zero_range(ov_pointer start, ov_pointer stop)
 
 }
 
-void ov_utility_zero_bytes(ov_pointer start, ov_size n_bytes)
+void ov_utility_zero_bytes(void *start, ov_size n_bytes)
 {
   ov_utility_zero_range(start, ((char*)start)+n_bytes);
 }
