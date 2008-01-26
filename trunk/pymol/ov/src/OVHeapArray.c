@@ -28,7 +28,7 @@
 #endif
 
 
-void *_OVHeapArray_Check(void *ptr,ov_port_size_t index
+void *_OVHeapArray_Check(void *ptr,ov_size index
 #ifdef OVHeap_TRACKING
                          ,const char *file,int line
 #endif
@@ -36,7 +36,7 @@ void *_OVHeapArray_Check(void *ptr,ov_port_size_t index
 { /* array-growth routine */
   _OVHeapArray *vla = &(((_OVHeapArray*)ptr)[-1]);
   if(index>=vla->size) {
-    ov_port_size_t new_size = (index+(index>>1)+1); 
+    ov_size new_size = (index+(index>>1)+1); 
     _OVHeapArray *new_vla;
     new_vla = (_OVHeapArray*)ov_array_realloc(vla->heap,vla,
                                               sizeof(_OVHeapArray)+(vla->rec_size*new_size));
@@ -57,8 +57,8 @@ void *_OVHeapArray_Check(void *ptr,ov_port_size_t index
   return((void*)&(vla[1]));
 }
 
-void *_OVHeapArray_Alloc(OVHeap *heap,ov_port_size_t rec_size,
-                         ov_port_size_t size,int zero
+void *_OVHeapArray_Alloc(OVHeap *heap,ov_size rec_size,
+                         ov_size size,int zero
 #ifdef OVHeap_TRACKING
                          ,const char *file,int line
 #endif
@@ -104,7 +104,7 @@ void  _OVHeapArray_Free(void *ptr
   }
 }
 
-ov_port_size_t OVHeapArray_GetSize(void *ptr)
+ov_size OVHeapArray_GetSize(void *ptr)
 {
   _OVHeapArray *vla;
   vla = &((_OVHeapArray*)ptr)[-1];
@@ -132,7 +132,7 @@ void *VLANewCopy(void *ptr)
 }
 */
 
-void *_OVHeapArray_SetSize(void *ptr, ov_port_size_t new_size
+void *_OVHeapArray_SetSize(void *ptr, ov_size new_size
 #ifdef OVHeap_TRACKING
                         ,const char *file,int line
 #endif
