@@ -7,21 +7,21 @@
 
 
 typedef struct {
-  ov_port_size_t size, rec_size;
+  ov_size size, rec_size;
   OVHeap *heap;
   ov_boolean auto_zero;
 } _OVHeapArray;
 
 
-void *_OVHeapArray_Alloc(OVHeap *heap,ov_port_size_t rec_size,
-                         ov_port_size_t size,int zero
+void *_OVHeapArray_Alloc(OVHeap *heap,ov_size rec_size,
+                         ov_size size,int zero
 #ifdef OVHeap_TRACKING
                          ,const char *file,int line
 #endif
                          );
 
 
-void *_OVHeapArray_Check(void *ptr,ov_port_size_t index
+void *_OVHeapArray_Check(void *ptr,ov_size index
 #ifdef OVHeap_TRACKING
                          ,const char *file,int line
 #endif
@@ -35,13 +35,13 @@ void  _OVHeapArray_Free(void *ptr
                         );
 
 
-void *_OVHeapArray_SetSize(void *ptr, ov_port_size_t new_size
+void *_OVHeapArray_SetSize(void *ptr, ov_size new_size
 #ifdef OVHeap_TRACKING
                         ,const char *file,int line
 #endif
                         );
 
-ov_port_size_t OVHeapArray_GetSize(void *ptr);
+ov_size OVHeapArray_GetSize(void *ptr);
 
 
 /* begin interface */

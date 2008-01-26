@@ -28,11 +28,11 @@ struct _OVHeap;  typedef struct _OVHeap OVHeap;
 OVHeap *_OVHeap_New(void);
 void    _OVHeap_Del(OVHeap *I);
 
-void   *_OVHeap_Malloc(OVHeap *I,ov_port_size_t size,const char *file,
+void   *_OVHeap_Malloc(OVHeap *I,ov_size size,const char *file,
                      int line,int type);
-void   *_OVHeap_Calloc(OVHeap *I,ov_port_size_t num,ov_port_size_t size,
+void   *_OVHeap_Calloc(OVHeap *I,ov_size num,ov_size size,
                      const char *file,int line,int type);
-void   *_OVHeap_Realloc(OVHeap *I,void *ptr,ov_port_size_t size,
+void   *_OVHeap_Realloc(OVHeap *I,void *ptr,ov_size size,
                       const char *file,int line,int type);
 void    _OVHeap_Free(OVHeap *I,void *ptr,const char *file,int line,int type);
 

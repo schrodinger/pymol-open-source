@@ -41,7 +41,7 @@ typedef struct DebugRec {
   struct DebugRec *next;
   char file[32], note[64];
   int line;
-  ov_port_size_t size;
+  ov_size size;
   int type;
 } DebugRec;
 
@@ -56,7 +56,7 @@ struct _OVHeap {
 
 OVHeap *_OVHeap_New(void)
 {
-  OVHeap *I = ov_port_calloc(1,sizeof(OVHeap));
+  OVHeap *I = ov_os_calloc(1,sizeof(OVHeap));
   return I;
 }
 
@@ -65,7 +65,7 @@ void _OVHeap_Del(OVHeap *I)
 #ifdef OVHeap_DUMP_ON_DEL
   OVHeap_Dump(I,0);
 #endif
-  ov_port_free((void*)I);
+  ov_os_free((void*)I);
 }
 
 int OVHeap_Usage(OVHeap *I)
@@ -303,7 +303,7 @@ static DebugRec *OVHeap_HashRemove(OVHeap *I,void *ptr)
    }
 */
 
-void *_OVHeap_Malloc(OVHeap *I,ov_port_size_t size,const char *file,int line,int type)
+void *_OVHeap_Malloc(OVHeap *I,ov_size size,const char *file,int line,int type)
 {
   DebugRec *rec;
 
@@ -326,7 +326,7 @@ void *_OVHeap_Malloc(OVHeap *I,ov_port_size_t size,const char *file,int line,int
   return((void *) rec);
 }
 
-void *_OVHeap_Calloc(OVHeap *I,ov_port_size_t num,ov_port_size_t size,
+void *_OVHeap_Calloc(OVHeap *I,ov_size num,ov_size size,
                      const char *file,int line,int type)
 {
   DebugRec *rec;
@@ -351,7 +351,7 @@ void *_OVHeap_Calloc(OVHeap *I,ov_port_size_t num,ov_port_size_t size,
   return((void *) rec);
 }
 
-void *_OVHeap_Realloc(OVHeap *I,void *ptr,ov_port_size_t size,
+void *_OVHeap_Realloc(OVHeap *I,void *ptr,ov_size size,
                       const char *file,int line,int type)
 {
   DebugRec *rec,*new_rec;
