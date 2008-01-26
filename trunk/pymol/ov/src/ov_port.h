@@ -3,8 +3,6 @@
 #ifndef _H_ov_port
 #define _H_ov_port
 
-#define OV_JENARIX
-
 #ifdef OV_JENARIX
 #include "ov_defines.h"
 #include "ov_os.h"
