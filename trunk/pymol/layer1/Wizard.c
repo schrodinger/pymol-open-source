@@ -763,7 +763,7 @@ PyObject *WizardGetStack(PyMOLGlobals *G)
 
   result = PyList_New(I->Stack-(-1));
   if(I->Wiz) {
-	  ov_size a;
+    ov_diff a;
     for(a=I->Stack;a>=0;a--) {
       Py_INCREF(I->Wiz[a]);
       PyList_SetItem(result,a,I->Wiz[a]); /* steals ref */
@@ -789,7 +789,7 @@ int WizardSetStack(PyMOLGlobals *G,PyObject *list)
     if(ok) {
       I->Stack = PyList_Size(list)-1;
       if(I->Stack>=0) {
-        ov_size a;
+        ov_diff a;
 		VLACheck(I->Wiz,PyObject*,I->Stack);
         for(a=I->Stack;a>=0;a--) {
           I->Wiz[a] = PyList_GetItem(list,a);

@@ -35,7 +35,7 @@ typedef struct {
 } CSeqCol;
   
 typedef struct {
-  int len,ext_len;
+  ov_size len,ext_len;
   int label_flag,column_label_flag;
   int color;
   char *txt;

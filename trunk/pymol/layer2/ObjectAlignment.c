@@ -127,7 +127,7 @@ static int AlignmentFindTag(PyMOLGlobals *G,AtomInfoType *ai,int sele,int n_more
 int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int format, char **str_vla)
 {
   int ok=true;
-  int len = 0;
+  ov_size len = 0;
   char *vla = VLAlloc(char, 1000);
   int force_update = false;
   int active_only = false;

@@ -11,6 +11,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#ifndef WIN32
+#include <malloc.h>
+#endif
+
 #ifndef OV_NULL
 #define OV_NULL ((void*)0)
 #endif
