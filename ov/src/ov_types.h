@@ -14,6 +14,14 @@
 extern "C" {
 #endif
 
+  /* automatically detect 64-bit machines */
+
+#if (((size_t)-1) != 0xFFFFFFFF)
+#ifndef OV_64_BIT
+#define OV_64_BIT
+#endif
+#endif
+
   /* Jenarix native structs */
 
   typedef struct ov__object ov_object;
@@ -43,10 +51,6 @@ extern "C" {
   typedef unsigned       int ov_uint32;
   typedef              float ov_float32;
   typedef             double ov_float64;
-  typedef             size_t ov_size; 
-  typedef          ptrdiff_t ov_diff;
-
-
 #ifdef WIN32
   typedef            __int64 ov_int64;
   typedef unsigned   __int64 ov_uint64;
@@ -54,9 +58,8 @@ extern "C" {
   typedef          long long ov_int64;
   typedef unsigned long long ov_uint64;
 #endif
-  
-  /* Jenarix native machine words.  Jenarix ASSUMES that ov_word &
-     ov_uword are large enough to hold a native machine pointer. */
+  typedef             size_t ov_size; 
+  typedef          ptrdiff_t ov_diff;
   
 #ifdef OV_64_BIT
 
@@ -64,8 +67,6 @@ extern "C" {
      double-precision floating point number without owning any
      external resources */
 
-  typedef ov_uint64 ov_uword;
-  typedef ov_int64  ov_word;
   typedef ov_float64 ov_float;
 
 #define OV_FLOAT_ZERO 0.0
@@ -76,8 +77,6 @@ extern "C" {
   /* 32 bit mode: Jenarix objects are 64 bits wide and can only hold a
      single-precision floating point number */
 
-  typedef ov_uint32 ov_uword;
-  typedef ov_int32  ov_word;
   typedef ov_float32 ov_float;
   
 #define OV_FLOAT_ZERO 0.0F
@@ -85,8 +84,13 @@ extern "C" {
   
 #endif
 
+  /* machine word types */
+
+  typedef ov_size    ov_uword;
+  typedef ov_diff    ov_word;
+
   /* additional derived / convenience types */
-  
+
   typedef ov_uword   ov_boolean;
   
   typedef ov_uint32  ov_meta; /* object "meta" bits */
