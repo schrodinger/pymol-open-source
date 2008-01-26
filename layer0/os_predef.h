@@ -160,6 +160,9 @@ Z* -------------------------------------------------------------------
 
 /* END PROPRIETARY CODE SEGMENT */
 
+#include <stddef.h>
+#include "ov_types.h"
+
 #endif
 
 

@@ -1769,7 +1769,7 @@ static void TriangleTxfFolds(TriangleSurfaceRec *II,float *v,float *vn,int n)
                 add3f(vn+b*3,nt,nt);
                 add3f(vn+d*3,nt,nt);
                 old_conv += -dot_product3f(x1030,nt);
-                old_conv = fabs(old_conv);
+                old_conv = (float)fabs(old_conv);
 
                 copy3f(vn+a*3,nt);
                 add3f(vn+c*3,nt,nt);
@@ -1779,7 +1779,7 @@ static void TriangleTxfFolds(TriangleSurfaceRec *II,float *v,float *vn,int n)
                 add3f(vn+c*3,nt,nt);
                 add3f(vn+d*3,nt,nt);
                 new_conv += -dot_product3f(x2132,nt);
-                new_conv = fabs(new_conv);
+                new_conv = (float)fabs(new_conv);
 
                 if((old_conv<new_conv)) {
                   /* switch the edges and triangles around */

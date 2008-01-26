@@ -113,8 +113,8 @@ struct _CSelector {
   TableRec *Table;
   float *Vertex;
   int *Flag1,*Flag2;
-  int NAtom;
-  int NModel;
+  ov_size NAtom;
+  ov_size NModel;
   int NCSet;
   int SeleBaseOffsetsValid;
   ObjectMolecule *Origin,*Center;
@@ -167,8 +167,8 @@ static int SelectorGetObjAtmOffset(CSelector *I,ObjectMolecule *obj,int offset)
   if(I->SeleBaseOffsetsValid) {
     return obj->SeleBase + offset;
   } else {
-    register int stop_below = obj->SeleBase;
-    register int stop_above = I->NAtom - 1;
+    register ov_diff stop_below = obj->SeleBase;
+    register ov_diff stop_above = I->NAtom - 1;
     register int result = stop_below;
     register TableRec *i_table = I->Table;
     register ObjectMolecule **i_obj=I->Obj;
@@ -796,11 +796,11 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
                             {
                               float angle = get_dihedral3f( v_cb1, v_ca1, v_ca2, v_cb2 );
                               if(idx_cb1<idx_cb2) {
-                                inter[0] = cos(angle);
-                                inter[1] = sin(angle);
+                                inter[0] = (float)cos(angle);
+                                inter[1] = (float)sin(angle);
                               } else {
-                                inter[2] = cos(angle);
-                                inter[3] = sin(angle);
+                                inter[2] = (float)cos(angle);
+                                inter[3] = (float)sin(angle);
                               }
                             }
                             cnt++;
@@ -825,7 +825,7 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
           float *vv_ca = v_ca + a*3;
           for(b=0;b<n;b++) {
             float *vv_cb = v_ca + b*3;          
-            float diff = diff3f(vv_ca,vv_cb);
+            float diff = (float)diff3f(vv_ca,vv_cb);
             dist_mat[a][b] = diff;
             dist_mat[b][a] = diff;
           }
@@ -867,12 +867,12 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
           }
           MapFree(map);
           for(a=0;a<n;a++) {
-            float nf = sqrt(inter[4]*inter[4] + inter[5]*inter[5]);
+            float nf = (float)sqrt(inter[4]*inter[4] + inter[5]*inter[5]);
             if(nf>0.0001F) {
               inter[4] = inter[4] / nf;
               inter[5] = inter[5] / nf;
             }
-            nf = sqrt(inter[6]*inter[6] + inter[7]*inter[7]);
+            nf = (float)sqrt(inter[6]*inter[6] + inter[7]*inter[7]);
             if(nf>0.0001F) {
             
               inter[6] = inter[6] / nf;
@@ -904,16 +904,16 @@ int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
                 sm[c+1] = i1[c+1]+i2[c+1];
               }
             }
-            comp1 = 
+            comp1 = (float)
               ((sqrt(sm[0]*sm[0] + sm[1]*sm[1]) + 
                 sqrt(sm[2]*sm[2] + sm[3]*sm[3])) * 0.25);
-            comp2 = 
+            comp2 = (float)
               ((sqrt(sm[4]*sm[4] + sm[5]*sm[5]) +
                 sqrt(sm[6]*sm[6] + sm[7]*sm[7])) * 0.25);
             score = scale*(comp1*comp2 - base);
             if(coord_wt!=0.0) {
-              float diff = diff3f(i1+8,i2+8);
-              comp3 = -log(diff/rms_exp);
+              float diff = (float)diff3f(i1+8,i2+8);
+              comp3 = (float)-log(diff/rms_exp);
               score = (1-coord_wt)*score + coord_wt*comp3*scale;
             }
             match->mat[a][b] = seq_wt*match->mat[a][b] + score;
@@ -949,7 +949,7 @@ static int SelectorIsSelectionDiscrete(PyMOLGlobals *G,int sele,int update_table
   AtomInfoType *ai;
   int result=false;
   register TableRec *i_table = I->Table, *table_a;
-  int a;
+  ov_size a;
 
   if(update_table) {
     SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
@@ -1496,7 +1496,7 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals *G,int sele,int state,f
   return(result);
 }
 
-static int SelectGetNameOffset(PyMOLGlobals *G,char *name,int minMatch,int ignCase)
+static ov_diff SelectGetNameOffset(PyMOLGlobals *G,char *name,ov_size minMatch,int ignCase)
 {
 
   register CSelector *I=G->Selector;
@@ -1538,7 +1538,7 @@ static int SelectGetNameOffset(PyMOLGlobals *G,char *name,int minMatch,int ignCa
       }
       offset++;
     }
-    if((best_match<0)||(best_match>minMatch))
+    if((best_match<0)||(best_match>(ov_diff)minMatch))
       result=best_offset;
   }
   return(result);  
@@ -2868,7 +2868,8 @@ PyObject *SelectorColorectionGet(PyMOLGlobals *G,char *prefix)
   PyObject *result = NULL;
   int n_used=0;
   ColorectionRec *used = NULL,tmp;
-  int a,b,n,sele;
+  ov_size a,b,n;
+  int sele;
   int found;
   int m;
   int color;
@@ -2955,7 +2956,7 @@ int SelectorColorectionApply(PyMOLGlobals *G,PyObject *list,char *prefix)
   register CSelector *I=G->Selector;
   int ok=true;
   ColorectionRec *used=NULL;
-  int n_used=0;
+  ov_size n_used=0;
   int a,b;
   AtomInfoType *ai;
   ObjectMolecule *obj,*last=NULL;
@@ -3004,8 +3005,8 @@ int SelectorColorectionSetName(PyMOLGlobals *G,PyObject *list,char *prefix,char 
 
   int ok=true;
   ColorectionRec *used=NULL;
-  int n_used=0;
-  int b;
+  ov_size n_used=0;
+  ov_size b;
   SelectorWordType name;
   SelectorWordType new_name;
 
@@ -3035,8 +3036,8 @@ int SelectorColorectionFree(PyMOLGlobals *G,PyObject *list,char *prefix)
 
   int ok=true;
   ColorectionRec *used=NULL;
-  int n_used=0;
-  int b;
+  ov_size n_used=0;
+  ov_size b;
   SelectorWordType name;
 
   if(ok) ok=(list!=NULL);
@@ -3101,11 +3102,11 @@ int SelectorSecretsFromPyList(PyMOLGlobals *G,PyObject *list)
   return 0;
 #else
   int ok=true;
-  int n_secret=0;
-  int a;
+  ov_size n_secret=0;
+  ov_size a;
   PyObject *entry=NULL;
   SelectorWordType name;
-  int ll=0;
+  ov_size ll=0;
   if(ok) ok = (list!=NULL);
   if(ok) ok = PyList_Check(list);
   if(ok) n_secret = PyList_Size(list);
@@ -3220,10 +3221,14 @@ int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list)
 
   int ok=true;
   register CSelector *I=G->Selector;
-  int n,a,b,m,sele,ll;
+  ov_size a,b;
+  ov_diff n;
+  int m,sele;
+  ov_size ll;
   PyObject *obj_list=NULL;
   PyObject *idx_list,*tag_list;
-  int n_obj=0,n_idx=0,idx,tag;
+  ov_size n_obj=0,n_idx=0;
+  int idx,tag;
   char *oname;
   ObjectMolecule *obj;
   int singleAtomFlag = true;
@@ -3856,7 +3861,7 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele,int ca_only,ObjectMolecule *
     }
   }
   if(result) {
-    VLASize(result,int,(r-result));
+    VLASize(result,int,(ov_size)(r-result));
   }
   PRINTFD(G,FB_Selector)
     " SelectorGetResidueVLA-DEBUG: exit, result = %p, size = %d\n",
@@ -4233,7 +4238,7 @@ int SelectorGetSingleAtomVertex(PyMOLGlobals *G,int sele,int state,float *v)
 /*========================================================================*/
 void SelectorDeletePrefixSet(PyMOLGlobals *G,char *pref)
 {
-  int a;
+  ov_diff a;
   register CSelector *I=G->Selector;
   SelectorWordType name_copy; 
   int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
@@ -6957,7 +6962,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
 int SelectorSetName(PyMOLGlobals *G,char *new_name, char *old_name)
 {
  register CSelector *I=G->Selector;
- int i;
+ ov_diff i;
  int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
   
  i = SelectGetNameOffset(G,old_name,1,ignore_case);
@@ -6977,7 +6982,7 @@ int SelectorIndexByName(PyMOLGlobals *G,char *sname)
  OrthoLineType name;
  register CSelector *I=G->Selector;
  int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
- int i=-1;
+ ov_diff i=-1;
 
  if(sname) {
    char *tname = sname;
@@ -7063,7 +7068,7 @@ void SelectorDelete(PyMOLGlobals *G,char *sele)
         named selection has never been registered with the executive 
         (i.e., temporary on-the-fly selection) */
 {
-  int n;
+  ov_diff n;
   n=SelectGetNameOffset(G,sele,999,SettingGetGlobal_b(G,cSetting_ignore_case)); /* already exist? */
   if(n>=0) { /* get rid of existing selection -- but never selection 0 (all) */
     SelectorDeleteSeleAtOffset(G,n);
@@ -7645,7 +7650,7 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
 int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
 {
   register int a=0;
-  register int c=0;
+  register ov_size c=0;
   register int modelCnt;
   register int state = req_state;
   CObject *o = NULL;

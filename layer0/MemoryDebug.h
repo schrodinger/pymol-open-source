@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_MemoryDebug
 
 #include "os_std.h"
+#include "ov_types.h"
 #include "PyMOLGlobals.h"
 
 /* This file can be included by C and C++ programs for
@@ -57,14 +58,14 @@ Z* -------------------------------------------------------------------
 void UtilMemCpy(void *dst,void *src,unsigned int *size);
 
 typedef struct VLARec {
-  unsigned int nAlloc;
-  unsigned int recSize;
+  ov_size nAlloc;
+  ov_size recSize;
   float growFactor;
   int autoZero;
 } VLARec;
 
 /* NOTE: in VLACheck, rec is a zero based array index, not a record count */
-#define VLACheck(ptr,type,rec) (ptr=(type*)(((((unsigned)rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLAExpand(ptr,(rec)) : (ptr))))
+#define VLACheck(ptr,type,rec) (ptr=(type*)(((((ov_size)rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLAExpand(ptr,((ov_size)rec)) : (ptr))))
 
 #define VLAlloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,0)
 #define VLACalloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,1)
@@ -79,17 +80,17 @@ typedef struct VLARec {
 
 #define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
 
-void *VLAExpand(void *ptr,unsigned int rec); /* NOTE: rec is index (total-1) */
+void *VLAExpand(void *ptr,ov_size rec); /* NOTE: rec is index (total-1) */
 void *MemoryReallocForSure(void *ptr, unsigned int newSize);
 void *MemoryReallocForSureSafe(void *ptr, unsigned int newSize, unsigned int oldSize);
 
 #ifndef _MemoryDebug_ON
-void *VLAMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
+void *VLAMalloc(ov_size initSize,ov_size recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
 
 #else
 #define VLAMalloc(a,b,c,d) _VLAMalloc(__FILE__,__LINE__,a,b,c,d)
 
-void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
+void *_VLAMalloc(const char *file,int line,ov_size initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
 #endif
 
 

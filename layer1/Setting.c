@@ -37,7 +37,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLOptions.h"
 #include"OVContext.h"
 
-static void *SettingPtr(CSetting *I,int index,unsigned int size);
+static void *SettingPtr(CSetting *I,int index,ov_size size);
 
 static CSetting *SettingCopyAll(PyMOLGlobals *G,CSetting *src,CSetting *dst)
 {
@@ -154,7 +154,7 @@ static int SettingUniqueGetTypedValue(PyMOLGlobals *G,int unique_id,int setting_
         case cSetting_boolean:
           switch(entry->type) {
           case cSetting_float:
-            *(int*)value = *(float*)&entry->value;            
+            *(int*)value = (int)(*(float*)&entry->value);            
             break;
           default:
             *(int*)value = entry->value;
@@ -481,8 +481,8 @@ int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
   }
   if(list)
     if(PyList_Check(list)) {
-      int n_id = PyList_Size(list);
-      int a;
+      ov_size n_id = PyList_Size(list);
+      ov_size a;
       for(a=0;a<n_id;a++) {
         PyObject *id_list = PyList_GetItem(list,a);
         int unique_id;
@@ -497,13 +497,13 @@ int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
           }
         }
         if(ok) {
-          int n_set = 0;
+          ov_size n_set = 0;
 
           PyObject *setting_list = PyList_GetItem(id_list,1);
           if(ok) ok = PyList_Check(setting_list);
           if(ok) n_set = PyList_Size(setting_list);
           if(ok) {
-            int b;
+            ov_size b;
             for(b=0;b<n_set;b++) {
               PyObject *entry_list = PyList_GetItem(setting_list,b);
               if(ok) ok = PyList_Check(entry_list);
@@ -857,8 +857,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list)
 #else
 
   int ok=true;
-  int size;
-  int a;
+  ov_size size;
+  ov_size a;
   CSetting *I=NULL;
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
@@ -880,8 +880,8 @@ int SettingFromPyList(CSetting *I,PyObject *list)
 #else
 
   int ok=true;
-  int size;
-  int a;
+  ov_size size;
+  ov_size a;
   if(ok) ok=(I!=NULL);
   if(ok) ok=PyList_Check(list);
   if(ok) {
@@ -1264,7 +1264,7 @@ void SettingClear(CSetting *I,int index)
     I->info[index].defined = false; 
 }
 /*========================================================================*/
-static void *SettingPtr(CSetting *I,int index,unsigned int size)
+static void *SettingPtr(CSetting *I,int index,ov_size size)
 {
   /* note that this routine essentially leaks RAM in terms of not
      recovering space used for previous settings of smaller size */
@@ -3559,8 +3559,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_b(I,cSetting_session_compression,0);
     set_f(I,cSetting_movie_fps,30.0);
     set_f(I,cSetting_ray_transparency_oblique,0.0F);
-    set_f(I,cSetting_ray_trace_trans_cutoff,0.05);
-    set_f(I,cSetting_ray_trace_persist_cutoff,0.10);
+    set_f(I,cSetting_ray_trace_trans_cutoff,0.05F);
+    set_f(I,cSetting_ray_trace_persist_cutoff,0.10F);
     set_f(I,cSetting_ray_transparency_oblique_power,1.0F);
     set_f(I,cSetting_ray_scatter,0.0F);
     set_b(I,cSetting_h_bond_from_proton,1);

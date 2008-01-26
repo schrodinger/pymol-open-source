@@ -46,12 +46,12 @@ Z* -------------------------------------------------------------------
 /* NOTE: the string routines will write strings up to the specified
  * length, PLUS a NULL...so watch out for array overruns */
 
-int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll);
+int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,ov_size ll);
 
 int PConvPyListToExtent(PyObject *obj,float *mn,float *mx);
 
-int PConvAttrToFloatArrayInPlace(PyObject *obj,char *attr,float *ff,int ll);
-int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *ff,int ll);
+int PConvAttrToFloatArrayInPlace(PyObject *obj,char *attr,float *ff,ov_size ll);
+int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *ff,ov_size ll);
 int PConvAttrToPtr(PyObject *obj,char *name,void **cobj);
 
 int PConvCObjectToPtr(PyObject *obj,void **ptr);
@@ -112,21 +112,21 @@ int PConvPyListToFloatVLANoneOkay(PyObject *obj,float **f);
 int PConvPyList3ToFloatVLA(PyObject *obj,float **f);
 int PConvPyListToFloatArray(PyObject *obj,float **f);
 int PConvPyListToDoubleArray(PyObject *obj,double **f);
-int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,int ll);
-int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,int ll);
+int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,ov_size ll);
+int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,ov_size ll);
 
-int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,int ll);
+int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,ov_size ll);
 
 PyObject *PConvFloatArrayToPyList(float *f,int l);
 PyObject *PConvFloatArrayToPyListNullOkay(float *f,int l);
 PyObject *PConvDoubleArrayToPyList(double *f,int l);
 
 int PConvPyListToIntArray(PyObject *obj,int **f);
-int PConvPyListToIntArrayInPlace(PyObject *obj,int *ff,int ll);
-int PConvPyListToIntArrayInPlaceAutoZero(PyObject *obj,int *ii,int ll);
+int PConvPyListToIntArrayInPlace(PyObject *obj,int *ff,ov_size ll);
+int PConvPyListToIntArrayInPlaceAutoZero(PyObject *obj,int *ii,ov_size ll);
 
-int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,int ll);
-int PConvPyListToSCharArrayInPlaceAutoZero(PyObject *obj,signed char *ii,int ll);
+int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,ov_size ll);
+int PConvPyListToSCharArrayInPlaceAutoZero(PyObject *obj,signed char *ii,ov_size ll);
 
 PyObject *PConv3DIntArrayTo3DPyList(int ***array,int *dim);
 

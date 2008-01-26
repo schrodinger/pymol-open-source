@@ -118,7 +118,7 @@ void MemoryZero(char *p,char *q)
 
 }
 
-void *VLAExpand(void *ptr,unsigned int rec)
+void *VLAExpand(void *ptr,ov_size rec)
 {
   VLARec *vla;
   char *start,*stop;
@@ -187,10 +187,10 @@ void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index
 #endif
 
 #ifndef _MemoryDebug_ON
-void *VLAMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero)
+void *VLAMalloc(ov_size initSize,ov_size recSize,unsigned int growFactor,int autoZero)
 #else
-void *_VLAMalloc(const char *file,int line,unsigned int initSize,
-                 unsigned int recSize,unsigned int growFactor,int autoZero)
+void *_VLAMalloc(const char *file,int line,ov_size initSize,
+                 ov_size recSize,unsigned int growFactor,int autoZero)
 #endif
 {
   VLARec *vla;

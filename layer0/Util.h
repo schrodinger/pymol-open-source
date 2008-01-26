@@ -16,18 +16,19 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Util
 #define _H_Util
 
+#include "os_predef.h"
 #include "PyMOLGlobals.h"
 
-void UtilZeroMem(void *ptr,unsigned int howMuch);
-void UtilCopyMem(void *dst,void *src,unsigned int howMuch);
-void *UtilArrayCalloc(unsigned int *dim,int ndim,unsigned int atom_size);
+void UtilZeroMem(void *ptr,ov_size howMuch);
+void UtilCopyMem(void *dst,void *src,ov_size howMuch);
+void *UtilArrayCalloc(unsigned int *dim,ov_size ndim,ov_size atom_size);
 char *UtilConcat(char *where,char *what);
-void UtilNConcat(char *dst,char *str,int n);
-void UtilConcatVLA(char **vla,int *cc,char *str);
-void UtilNPadVLA(char **vla,int *cc,char *str,int len);
-void UtilFillVLA(char **vla,int *cc,char what,int len);
-void UtilNCopy(char *dst,char *src,int n); /* up to N-1 chars */
-void UtilNCopyToLower(char *dst,char *src,int n); /* up to N-1 chars */
+void UtilNConcat(char *dst,char *str,ov_size n);
+void UtilConcatVLA(char **vla,ov_size *cc,char *str);
+void UtilNPadVLA(char **vla,ov_size *cc,char *str,ov_size len);
+void UtilFillVLA(char **vla,ov_size *cc,char what,ov_size len);
+void UtilNCopy(char *dst,char *src,ov_size n); /* up to N-1 chars */
+void UtilNCopyToLower(char *dst,char *src,ov_size n); /* up to N-1 chars */
 void UtilCleanStr(char *s);
 int UtilCountStringVLA(char *vla);
 

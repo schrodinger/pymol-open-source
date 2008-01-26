@@ -42,13 +42,13 @@ typedef struct {
   int defined;
   int changed;
   int type;
-  unsigned int offset;
-  unsigned int max_size;
+  ov_diff offset;
+  ov_size max_size;
 } SettingRec;
 
 struct _CSetting {
   PyMOLGlobals *G;
-  unsigned int size;
+  ov_size size;
   char *data;
   SettingRec *info;
 };

@@ -89,7 +89,7 @@ int PConvPyListToStrVLAList(PyObject *obj,char **vla, int *n_str)
   return(ok);
 }
 
-int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *f,int ll)
+int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *f,ov_size ll)
 {
   int ok=true;
   PyObject *tmp;
@@ -105,7 +105,7 @@ int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *f,int ll)
   return(ok);
 }
 
-int PConvAttrToFloatArrayInPlace(PyObject *obj,char *attr,float *f,int ll)
+int PConvAttrToFloatArrayInPlace(PyObject *obj,char *attr,float *f,ov_size ll)
 {
   int ok=true;
   PyObject *tmp;
@@ -121,7 +121,7 @@ int PConvAttrToFloatArrayInPlace(PyObject *obj,char *attr,float *f,int ll)
   return(ok);
 }
 
-int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll)
+int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,ov_size ll)
 {
   int ok=true;
   PyObject *tmp;
@@ -662,7 +662,7 @@ int PConvPyListToIntVLA(PyObject *obj,int **f)
   return(ok);
 }
 
-int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,int ll)
+int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,ov_size ll)
 {
   int ok = true;
   int a,l;
@@ -687,7 +687,7 @@ int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,int ll)
   return(ok);
 }
 
-int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,int ll)
+int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,ov_size ll)
 {
   int ok = true;
   int a,l;
@@ -712,7 +712,7 @@ int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,int ll)
   return(ok);
 }
 
-int PConvPyListToIntArrayInPlace(PyObject *obj,int *ii,int ll)
+int PConvPyListToIntArrayInPlace(PyObject *obj,int *ii,ov_size ll)
 {
   int ok = true;
   int a,l;
@@ -736,7 +736,7 @@ int PConvPyListToIntArrayInPlace(PyObject *obj,int *ii,int ll)
   return(ok);
 }
 
-int PConvPyListToIntArrayInPlaceAutoZero(PyObject *obj,int *ii,int ll)
+int PConvPyListToIntArrayInPlaceAutoZero(PyObject *obj,int *ii,ov_size ll)
 {
   int ok = true;
   int a,l;
@@ -760,7 +760,7 @@ int PConvPyListToIntArrayInPlaceAutoZero(PyObject *obj,int *ii,int ll)
   return(ok);
 }
 
-int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,int ll)
+int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,ov_size ll)
 {
   int ok = true;
   int a,l;
@@ -784,7 +784,7 @@ int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,int ll)
   return(ok);
 }
 
-int PConvPyListToSCharArrayInPlaceAutoZero(PyObject *obj,signed char *ii,int ll)
+int PConvPyListToSCharArrayInPlaceAutoZero(PyObject *obj,signed char *ii,ov_size ll)
 {
   int ok = true;
   int a,l;
@@ -808,7 +808,7 @@ int PConvPyListToSCharArrayInPlaceAutoZero(PyObject *obj,signed char *ii,int ll)
   return(ok);
 }
 
-int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,int ll)
+int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,ov_size ll)
 {
   int ok = true;
   int a,l;

@@ -93,7 +93,7 @@ void OrthoSpecial(PyMOLGlobals *G,int k,int x,int y,int mod);
 int  OrthoCommandWaiting(PyMOLGlobals *G);
 
 int OrthoTextVisible(PyMOLGlobals *G);
-void OrthoReshapeWizard(PyMOLGlobals *G,int height);
+void OrthoReshapeWizard(PyMOLGlobals *G,ov_size height);
 void OrthoDefer(PyMOLGlobals *G,CDeferred *D);
 void OrthoExecDeferred(PyMOLGlobals *G);
 int OrthoDeferredWaiting(PyMOLGlobals *G);

@@ -26,9 +26,9 @@ typedef struct {
   WordType PDBSpaceGroup;
   int PDBZValue;
   WordType SpaceGroup;
-  int NSymMat;
+  ov_size NSymMat;
   float *SymMatVLA;
-  int NSymOp;
+  ov_size NSymOp;
   WordType *SymOpVLA;
 
 } CSymmetry;
