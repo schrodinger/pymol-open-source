@@ -53,7 +53,8 @@ static VFontRec *VFontRecNew(PyMOLGlobals *G)
 }
 #endif
 
-int VFontWriteToCGO(PyMOLGlobals *G,int font_id,CGO *cgo,char *text,float *pos,float *scale,float *matrix)
+int VFontWriteToCGO(PyMOLGlobals *G,int font_id,CGO *cgo,
+                    char *text,float *pos,float *scale,float *matrix)
 {
   register CVFont *I=G->VFont;
   VFontRec *fr = NULL;
@@ -63,7 +64,6 @@ int VFontWriteToCGO(PyMOLGlobals *G,int font_id,CGO *cgo,char *text,float *pos,f
   unsigned char c;
   int drawing,stroke;
   ov_diff offset;
-
   if((font_id>0)&&(font_id<=I->NFont)) {
     fr = I->Font[font_id];
     if(fr) 
@@ -172,7 +172,7 @@ int VFontIndent(PyMOLGlobals *G,int font_id,char *text,float *pos,float *scale,f
 static int VFontRecLoad(PyMOLGlobals *G,VFontRec *I,PyObject *dict)
 { /* assumes blocked Python interpreter */
 
-  ov_size used=0;
+  ov_diff used=0;
   int ok=true;
   PyObject *key,*char_list;
   PyObject *stroke_list = NULL;
@@ -183,9 +183,9 @@ static int VFontRecLoad(PyMOLGlobals *G,VFontRec *I,PyObject *dict)
 #endif
   unsigned char code[2];
   float adv;
-  ov_size n_float;
+  ov_diff n_float;
   while (PyDict_Next(dict, &pos, &key, &char_list)) {
-    if(!PConvPyStrToStr(key,(char*)code,1)) {
+    if(!PConvPyStrToStr(key,(char*)code,2)) {
       PRINTFB(G,FB_VFont,FB_Errors) 
         "VFont-Error: Bad character code."
         ENDFB(G);
