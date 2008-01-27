@@ -1,5 +1,6 @@
 #include"OVHeap.h"
 
+#ifndef OV_JENARIX
 #ifdef OVHeap_TRACKING
 
 /* all of the code in this module is only used when OVHeap_TRACKING is
@@ -62,7 +63,7 @@ OVHeap *_OVHeap_New(void)
 
 void _OVHeap_Del(OVHeap *I)
 {
-#ifdef OVHeap_DUMP_ON_DEL
+#ifdef OVHeap_TRACKING
   OVHeap_Dump(I,0);
 #endif
   ov_os_free((void*)I);
@@ -161,7 +162,7 @@ void OVHeap_Dump(OVHeap *I,ov_uint32 flags)
   index = (int*)malloc(cnt*sizeof(int));
   cnt = 0;
 #endif
-  fprintf(OVHeap_ERROR_LOG," ================================= HEAP =================================\n");
+  fprintf(OVHeap_ERROR_LOG,"================================= HEAP =================================\n");
   fflush(OVHeap_ERROR_LOG);
   for(a=0;a<1024;a++)
     {
@@ -178,7 +179,7 @@ void OVHeap_Dump(OVHeap *I,ov_uint32 flags)
 #else
               fprintf(OVHeap_ERROR_LOG,
 #endif
-                      " OVHeap: (%7x) %c %s",(unsigned int)
+                      "OVHeap: (%7x) %c %s",(unsigned int)
                       rec->size,type[rec->type],rec->file);
                       
                       } else {
@@ -189,7 +190,7 @@ void OVHeap_Dump(OVHeap *I,ov_uint32 flags)
 #else
                         fprintf(OVHeap_ERROR_LOG,
 #endif
-                                " OVHeap:%8x -%8x (%7x) %c %s:%-4d",
+                                "OVHeap:%8x -%8x (%7x) %c %s:%-4d",
                                 (unsigned int)rec+1,
                                 (unsigned int)((char*)(rec+1)+rec->size),
                                 (unsigned int)
@@ -232,10 +233,10 @@ void OVHeap_Dump(OVHeap *I,ov_uint32 flags)
             }
 #endif
           
-          fprintf(OVHeap_ERROR_LOG," OVHeap: Summary: Blocks expected %d, found %d, peaked at %d.\n",
+          fprintf(OVHeap_ERROR_LOG,"OVHeap: Summary: Blocks expected %d, found %d, peaked at %d.\n",
                   I->Count,cnt,I->MaxCount);
-          fprintf(OVHeap_ERROR_LOG," OVHeap: Summary: Total bytes allocated 0x%x (%0.3f MB).\n",tot,tot/(1024.0*1024));
-          fprintf(OVHeap_ERROR_LOG," ========================================================================\n");
+          fprintf(OVHeap_ERROR_LOG,"OVHeap: Summary: Total bytes allocated 0x%x (%0.3f MB).\n",tot,tot/(1024.0*1024));
+          fprintf(OVHeap_ERROR_LOG,"========================================================================\n");
           fflush(OVHeap_ERROR_LOG);
 }
 
@@ -439,4 +440,5 @@ void _OVHeap_Free(OVHeap *I,void *ptr,const char *file,int line,int type)
 }
 
 
+#endif
 #endif

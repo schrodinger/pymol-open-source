@@ -227,4 +227,8 @@ pmw:
 compileall:
 	$(PYTHON_EXE) modules/compile_pymol.py
 
-
+xx: ~/xx
+	cd ~/jx;make distclean;make ov
+	cp ~/jx/build/ov*/src/*.[ch] ov/src/
+	$(MAKE) -f Makefile.delsci
+	

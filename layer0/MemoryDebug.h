@@ -161,6 +161,8 @@ void *MemoryDebugRealloc(void *ptr,size_t size,
 			 const char *file,int line,int type);
 void *MemoryDebugReallocForSure(void *ptr,size_t size,const char *file,
                                 int line,int type);
+void *MemoryDebugReallocForSureSafe(void *ptr,size_t size,size_t old_size,
+                                    const char *file,int line,int type);
 
 void MemoryDebugFree(void *ptr,const char *file,int line,int type);
 void MemoryDebugQuietFree(void *ptr,int type);

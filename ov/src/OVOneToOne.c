@@ -523,7 +523,7 @@ void OVOneToOne_Stats(OVOneToOne *up)
     }
     fprintf(stderr," OVOneToOne_Stats: MaxLen=%d ",max_len);
     fprintf(stderr,"active=%d n_inactive=%d ",up->size-up->n_inactive,up->n_inactive);
-    fprintf(stderr,"mask=0x%x n_alloc=%lu\n",up->mask,(unsigned long)OVHeapArray_GetSize(up->elem));
+    fprintf(stderr,"mask=0x%x n_alloc=%lu\n",up->mask,(unsigned long)OVHeapArray_GET_SIZE(up->elem));
   }
 }
 
