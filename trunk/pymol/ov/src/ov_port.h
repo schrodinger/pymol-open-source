@@ -4,8 +4,9 @@
 #define _H_ov_port
 
 #ifdef OV_JENARIX
-#include "ov_defines.h"
-#include "ov_os.h"
+
+#include "ov_public.h"
+
 #else
 /* headers */
 

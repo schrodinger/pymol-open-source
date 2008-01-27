@@ -1,5 +1,5 @@
 #include"OVHeapArray.h"
-
+#ifndef OV_JENARIX
 #include"ov_utility.h"
 
 #define OVHeapArray_COMPLAIN
@@ -39,7 +39,7 @@ void *_OVHeapArray_Check(void *ptr,ov_size index
     ov_size new_size = (index+(index>>1)+1); 
     _OVHeapArray *new_vla;
     new_vla = (_OVHeapArray*)ov_array_realloc(vla->heap,vla,
-                                              sizeof(_OVHeapArray)+(vla->rec_size*new_size));
+                                              sizeof(_OVHeapArray)+(vla->unit_size*new_size));
     if(!new_vla) {
 #ifdef OVHeapArray_COMPLAIN
       fprintf(stderr,"_OVHeapArray_Check-Error: realloc failed\n");
@@ -47,8 +47,8 @@ void *_OVHeapArray_Check(void *ptr,ov_size index
     } else {
       vla = new_vla;
       if(vla->auto_zero) {
-        char *start = ((char*)vla) + sizeof(_OVHeapArray)+(vla->rec_size*vla->size);
-        char *stop = ((char*)vla) + sizeof(_OVHeapArray)+(vla->rec_size*new_size);
+        char *start = ((char*)vla) + sizeof(_OVHeapArray)+(vla->unit_size*vla->size);
+        char *stop = ((char*)vla) + sizeof(_OVHeapArray)+(vla->unit_size*new_size);
         ov_utility_zero_range(start,stop);
       }
       vla->size = new_size;
@@ -57,7 +57,7 @@ void *_OVHeapArray_Check(void *ptr,ov_size index
   return((void*)&(vla[1]));
 }
 
-void *_OVHeapArray_Alloc(OVHeap *heap,ov_size rec_size,
+void *_OVHeapArray_Alloc(OVHeap *heap,ov_size unit_size,
                          ov_size size,int zero
 #ifdef OVHeap_TRACKING
                          ,const char *file,int line
@@ -66,9 +66,9 @@ void *_OVHeapArray_Alloc(OVHeap *heap,ov_size rec_size,
 {
   _OVHeapArray *vla;
   if(zero) {
-    vla = ov_array_calloc(heap,1,sizeof(_OVHeapArray)+(rec_size*size));
+    vla = ov_array_calloc(heap,1,sizeof(_OVHeapArray)+(unit_size*size));
   } else {
-    vla = ov_array_malloc(heap,sizeof(_OVHeapArray)+(rec_size*size));
+    vla = ov_array_malloc(heap,sizeof(_OVHeapArray)+(unit_size*size));
   }
   if(!vla) {
 #ifdef OVHeapArray_COMPLAIN
@@ -78,7 +78,7 @@ void *_OVHeapArray_Alloc(OVHeap *heap,ov_size rec_size,
   } else {
     vla->heap=heap;
     vla->size=size;
-    vla->rec_size=rec_size;
+    vla->unit_size=unit_size;
     vla->auto_zero = zero;
     return((void*)&(vla[1]));
   }
@@ -104,7 +104,11 @@ void  _OVHeapArray_Free(void *ptr
   }
 }
 
-ov_size OVHeapArray_GetSize(void *ptr)
+ov_size OVHeapArray_GetSize(void *ptr
+#ifdef OVHeap_TRACKING
+                            ,const char *file,int line
+#endif
+                            )
 {
   _OVHeapArray *vla;
   vla = &((_OVHeapArray*)ptr)[-1];
@@ -117,7 +121,7 @@ void *VLANewCopy(void *ptr)
   _OVHeapArray *vla,*new_vla;
   unsigned int size;
   vla = &((_OVHeapArray*)ptr)[-1];
-  size = (vla->rec_size*vla->size)+sizeof(_OVHeapArray);
+  size = (vla->unit_size*vla->size)+sizeof(_OVHeapArray);
   new_vla=(void*)mmalloc(size);
   if(!new_vla)
 	 {
@@ -140,7 +144,7 @@ void *_OVHeapArray_SetSize(void *ptr, ov_size new_size
 {
   _OVHeapArray *vla,*new_vla;
   vla = &((_OVHeapArray*)ptr)[-1];
-  new_vla=(void*)ov_array_realloc(vla->heap,vla,(vla->rec_size*new_size)+sizeof(_OVHeapArray));
+  new_vla=(void*)ov_array_realloc(vla->heap,vla,(vla->unit_size*new_size)+sizeof(_OVHeapArray));
   if(!new_vla)	 {
 #ifdef OVHeapArray_COMPLAIN      
 		fprintf(stderr,"VLASetSize-ERR: realloc failed.\n");
@@ -148,8 +152,8 @@ void *_OVHeapArray_SetSize(void *ptr, ov_size new_size
   } else {
     vla = new_vla;
     if(new_size>vla->size && vla->auto_zero) {
-      char *start = ((char*)vla) + sizeof(_OVHeapArray)+(vla->rec_size*vla->size);
-      char *stop = ((char*)vla) + sizeof(_OVHeapArray)+(vla->rec_size*new_size);
+      char *start = ((char*)vla) + sizeof(_OVHeapArray)+(vla->unit_size*vla->size);
+      char *stop = ((char*)vla) + sizeof(_OVHeapArray)+(vla->unit_size*new_size);
       ov_utility_zero_range(start,stop);
     }
     vla->size = new_size;
@@ -157,3 +161,4 @@ void *_OVHeapArray_SetSize(void *ptr, ov_size new_size
   return((void*)&(vla[1]));
 }
 
+#endif

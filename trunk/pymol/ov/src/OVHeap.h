@@ -4,6 +4,45 @@
 #include "ov_port.h"
 #include "ov_types.h"
 
+#ifdef OV_JENARIX
+
+/* NEW Jenarix-based OVHeap wrapper */
+
+#ifdef XX_HEAP_TRACKER
+#ifndef OVHeap_TRACKING
+#define OVHeap_TRACKING
+#endif
+#endif
+
+#define OVHeap_DUMP_FILES_TOO      OV_HEAP_DUMP_FILES_TOO
+#define OVHeap_DUMP_NO_ADDRESSES   OV_HEAP_DUMP_NO_ADDRESSES
+
+typedef int *OVHeap;
+#define OVHeap_New()   ((OVHeap*)1)
+#ifdef OV_HEAP_TRACKER
+#define OVHeap_Del(x) ov_heap_dump(0)
+#else
+#define OVHeap_Del(x) 
+#endif 
+#define OVHeap_Malloc(I,size) OV_HEAP_MALLOC_RAW(void,size)
+#define OVHeap_Calloc(I,num,size) OV_HEAP_CALLOC_RAW_EX(void,(num)*(ov_size)(size))
+#define OVHeap_Realloc(I,ptr,size) OV_HEAP_REALLOC_RAW_EX(ptr,size)
+#define OVHeap_Free(I,ptr) OV_HEAP_FREE_RAW(ptr)
+#define OVHeap_Dump(I,flags) ov_heap_dump(flags)
+#define OVHeap_Usage(I) ov_heap_usage()
+
+/* convenience macros */
+
+#define OVHeap_ALLOC(I,type) OVHeap_Calloc(I,1,sizeof(type))
+
+#define OVHeap_MALLOC(I,type,num) OVHeap_Malloc(I,sizeof(type)*(num))
+#define OVHeap_CALLOC(I,type,num) OVHeap_Calloc(I,num,sizeof(type))
+#define OVHeap_REALLOC(I,ptr,type,num) OVHeap_Realloc(I,ptr,sizeof(type)*(num))
+#define OVHeap_FREE_AUTO_NULL(I,ptr) { if(ptr) {OVHeap_Free(I,ptr); ptr = NULL;}}
+
+#else
+/* OLD proven OVHeap */
+
 #ifdef OVHeap_TRACKING
 
 struct _OVHeap;  typedef struct _OVHeap OVHeap;
@@ -78,6 +117,7 @@ typedef int *OVHeap;
 #define OVHeap_REALLOC(I,ptr,type,num) OVHeap_Realloc(I,ptr,sizeof(type)*(num))
 #define OVHeap_FREE_AUTO_NULL(I,ptr) { if(ptr) {OVHeap_Free(I,ptr); ptr = NULL;}}
 
+#endif
 #endif
 
 

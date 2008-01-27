@@ -592,21 +592,23 @@ void MemoryDebugDump(void)
 	  if(rec->type==_MDMarker)
 	    {
 	      str=rec+1;
-	    printf(" Memory: %s:%i <%s>\n",
+	    printf("Memory: %s:%i <%s>\n",
 		   rec->file,rec->line,(char*)str);
 	    }
 	  else {
        tot+=rec->size;
-	    printf(" Memory: %12p %12p %8x %3.1f %s:%i\n",
-				  rec+1,((char*)(rec+1)+rec->size),rec->size,rec->size/1048576.0F,rec->file,rec->line);
+	    printf("Memory: %12p %12p %8x %3.1f %s:%i\n",
+				  (void*)(rec+1),
+               ((char*)(rec+1)+rec->size),rec->size,
+               rec->size/1048576.0F,rec->file,rec->line);
      }
 	  rec=rec->next;
 	  cnt++;
 	}
     }
-  printf(" Memory: %d blocks expected, %d found, %d maximum allocated.\n",
+  printf("Memory: %d blocks expected, %d found, %d maximum allocated.\n",
 			Count,cnt,MaxCount);
-  printf(" Memory: current memory allocated %x bytes (%0.1f MB).\n",tot,tot/(1024.0*1024));
+  printf("Memory: current memory allocated %x bytes (%0.1f MB).\n",tot,tot/(1024.0*1024));
 
 }
 
