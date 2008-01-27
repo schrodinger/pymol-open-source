@@ -433,11 +433,8 @@ if pymol_launch != 3: # if this isn't a dry run
             _COb = cmd._COb
         else:
             pymol._COb = cmd._COb
-        if hasattr(pymol,'_invocation'):
-            pymol._invocation.parse_args(pymol_argv,_pymol=pymol)
-        else:
-            from pymol import invocation
-            invocation.parse_args(pymol_argv)            
+        from pymol import invocation
+        invocation.parse_args(pymol_argv)            
         start_pymol(0)
 
     elif pymol_launch==2: # threaded launch (create new thread)
@@ -459,10 +456,8 @@ if pymol_launch != 3: # if this isn't a dry run
             _COb = cmd._COb
         else:
             pymol._COb = cmd._COb
-        if hasattr(pymol,'_invocation'):
-            pymol._invocation.parse_args(pymol_argv,_pymol=pymol)
-        else:
-            invocation.parse_args(pymol_argv)            
+        from pymol import invocation
+        invocation.parse_args(pymol_argv)            
         prime_pymol()
         # count on host process to actually start PyMOL
 
