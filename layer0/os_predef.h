@@ -160,10 +160,10 @@ Z* -------------------------------------------------------------------
 
 /* END PROPRIETARY CODE SEGMENT */
 
-#ifdef WIN32
-#include <stddef.h>
-#else
+#ifdef __linux__
 #include <malloc.h>
+#else
+#include <stddef.h>
 #endif
 
 #include "ov_types.h"
