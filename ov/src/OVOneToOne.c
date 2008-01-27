@@ -71,7 +71,7 @@ void OVOneToOne_Dump(OVOneToOne *up)
     for(a=0;a<=up->mask;a++) {
       if(up->forward[a]||up->reverse[a]) {
         fprintf(stderr,
-" OVOneToOne_Dump: Hashes forward[0x%02x]->%d    reverse[0x%02x]->%d\n",
+ " OVOneToOne_Dump: Hashes forward[0x%02x]->%d    reverse[0x%02x]->%d\n",
                 (unsigned int)a,up->forward[a],(unsigned int)a,up->reverse[a]);
         empty = OV_FALSE;
       }
