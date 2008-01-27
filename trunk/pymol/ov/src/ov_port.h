@@ -16,8 +16,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#ifndef WIN32
+#ifdef __linux__
 #include <malloc.h>
+#else
+#include <stddef.h>
 #endif
 
 #ifndef OV_NULL

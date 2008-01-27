@@ -72,7 +72,7 @@ void OVOneToOne_Dump(OVOneToOne *up)
       if(up->forward[a]||up->reverse[a]) {
         fprintf(stderr,
 " OVOneToOne_Dump: Hashes forward[0x%02x]->%d    reverse[0x%02x]->%d\n",
-                a,up->forward[a],a,up->reverse[a]);
+                (unsigned int)a,up->forward[a],(unsigned int)a,up->reverse[a]);
         empty = OV_FALSE;
       }
     }
@@ -81,11 +81,11 @@ void OVOneToOne_Dump(OVOneToOne *up)
       if(up->elem[a].active) {
         fprintf(stderr,
 " OVOneToOne_Dump: Elements %d:    %d (->%d)    %d (->%d)\n",
-                a+1,
+                (int)a+1,
                 up->elem[a].forward_value,
-                up->elem[a].forward_next,
+                (int)up->elem[a].forward_next,
                 up->elem[a].reverse_value,
-                up->elem[a].reverse_next
+                (int)up->elem[a].reverse_next
                 );
         empty=OV_FALSE;
       }
@@ -522,8 +522,9 @@ void OVOneToOne_Stats(OVOneToOne *up)
       
     }
     fprintf(stderr," OVOneToOne_Stats: MaxLen=%d ",max_len);
-    fprintf(stderr,"active=%d n_inactive=%d ",up->size-up->n_inactive,up->n_inactive);
-    fprintf(stderr,"mask=0x%x n_alloc=%lu\n",up->mask,(unsigned long)OVHeapArray_GET_SIZE(up->elem));
+    fprintf(stderr,"active=%d n_inactive=%d ",up->size-up->n_inactive,(int)up->n_inactive);
+    fprintf(stderr,"mask=0x%x n_alloc=%lu\n",(unsigned int)up->mask,
+            (unsigned long)OVHeapArray_GET_SIZE(up->elem));
   }
 }
 
