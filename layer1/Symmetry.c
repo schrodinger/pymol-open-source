@@ -131,7 +131,7 @@ int SymmetryAttemptGeneration(CSymmetry *I,int quiet)
       VLACheck(I->SymMatVLA,float,16*l);
       if(!quiet) {
         PRINTFB(G,FB_Symmetry,FB_Details)
-          " Symmetry: Found %d symmetry operators.\n",l
+          " Symmetry: Found %d symmetry operators.\n",(int)l
           ENDFB(G);
       }
       for(a=0;a<l;a++) {
