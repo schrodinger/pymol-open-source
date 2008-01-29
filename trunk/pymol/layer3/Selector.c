@@ -3865,7 +3865,7 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele,int ca_only,ObjectMolecule *
   }
   PRINTFD(G,FB_Selector)
     " SelectorGetResidueVLA-DEBUG: exit, result = %p, size = %d\n",
-    (void*)result,VLAGetSize(result)
+    (void*)result,(unsigned int)VLAGetSize(result)
     ENDFD;
   
   return(result);

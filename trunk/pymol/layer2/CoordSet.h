@@ -66,7 +66,6 @@ typedef struct CoordSet {
   /* not saved in state */
 
   /* idea:  
-
   int start_atix, stop_atix <-- for discrete objects, we need
   something like this that would enable pymol to skip atoms not in the
   discrete state...question is: are these atoms sorted together right
@@ -78,6 +77,10 @@ typedef struct CoordSet {
   CGO *SculptCGO;
   MapType *Coord2Idx;
   float Coord2IdxReq,Coord2IdxDiv;
+
+  /* temporary / optimization */
+
+  int objMolOpInvalidated;
 } CoordSet;
 
 #define cCSet_NoPeriodicity 0
