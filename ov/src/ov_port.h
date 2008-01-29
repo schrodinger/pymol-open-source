@@ -22,21 +22,7 @@
 #include <stddef.h>
 #endif
 
-#ifndef OV_NULL
-#define OV_NULL ((void*)0)
-#endif
-
-#ifndef OV_FALSE
-#define OV_FALSE 0
-#endif
-
-#ifndef OV_TRUE
-#define OV_TRUE 1
-#endif
-
-/* how do we inline functions in header files? */
-
-#define OV_INLINE __inline__ static
+#include "ov_defines.h"
 
 /* memory management */
 

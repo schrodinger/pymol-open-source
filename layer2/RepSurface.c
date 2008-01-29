@@ -1569,8 +1569,10 @@ typedef struct {
   int N, *T, *S, NT;
 
 } SurfaceJob;
+
 #if 0
-PyObject *SurfaceJobAtomInfoVLAToPyTuple(SurfaceJobAtomInfo *atom_info)
+#ifndef _PYMOL_NOPY
+OV_INLINE_STATIC PyObject *SurfaceJobAtomInfoVLAToPyTuple(SurfaceJobAtomInfo *atom_info)
 {
   PyObject *result = NULL;
   if(f) {
@@ -1580,13 +1582,40 @@ PyObject *SurfaceJobAtomInfoVLAToPyTuple(SurfaceJobAtomInfo *atom_info)
       ov_size i;
       PyTuple_SetItem(result, 0, 2); /* width of array */
       for(i=1;i<size;i+=2) {
-        PyTuple_SetItem(result,i,PyFloatFromDouble(atom_info->vdw));
-        PyTuple_SetItem(result,i+1,PyIntFromLong(atom_info->flags));
+        PyTuple_SetItem(result,i,PyFloat_FromDouble(atom_info->vdw));
+        PyTuple_SetItem(result,i+1,PyInt_FromLong(atom_info->flags));
+        atom_info++;
       }
     }
   }
   return(PConvAutoNone(result));
 }
+
+OV_INLINE_STATIC SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject *tuple)
+{
+  SurfaceJobAtomInfo *result = NULL;
+  if(tuple && PyTuple_Check(tuple)) {
+    ov_size size = PyTuple_Size(tuple);
+    if(size) {
+      ov_size width = PyInt_AsLong(PyTuple_GetItem(tuple,0));
+      if(width==2) {
+        ov_size vla_size = (size-1)/2;
+        result = VLAlloc(SurfaceJobTimeInfo, vla_size);
+        if(result) {
+          SurfaceJobAtomInfo atom_info = result;
+          ov_size i;
+          for(i=1;i<size;i+=2) {
+            atom_info->vdw = (float)PyFloat_AsDouble(PyTuple_GetItem(tuple,i));
+            atom_info->flags = PyInt_AsLong(PyTuple_GetItem(tuple,i+1));
+            atom_info++;
+          }
+        }
+      }
+    }
+  }
+  return(PConvAutoNone(result));
+}
+
 
 PyObject *SurfaceJobInputAsTuple(PyMOLGlobals *G, SurfaceJob *I)
 {
@@ -1606,6 +1635,7 @@ PyObject *SurfaceJobResultAsTuple(PyMOLGlobals *G, SurfaceJob *I)
 SurfaceJobResultFromTuple(PyMOLGlobals *G, Surface Job *I, PyObject *tuple)
 {
 }
+#endif
 #endif
 
 static SurfaceJob *SurfaceJobNew(PyMOLGlobals *G)
