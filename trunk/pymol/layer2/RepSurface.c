@@ -1613,7 +1613,7 @@ OV_INLINE_STATIC SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject *
       }
     }
   }
-  return(PConvAutoNone(result));
+  return(result);
 }
 
 
@@ -1621,9 +1621,34 @@ PyObject *SurfaceJobInputAsTuple(PyMOLGlobals *G, SurfaceJob *I)
 {
   PyObject *result = PyTuple_New(20);
   if(result) {
-    PyTuple_SetItem(result,0,PyFloatFromDouble(version));
-    PyTuple_SetItem(result,1,PConvFloatVLAToPyTuple(coord));
-    
+    PyTuple_SetItem(result,0,PyFloat_FromDouble(I->version));
+    PyTuple_SetItem(result,1,PConvFloatVLAToPyTuple(I->coord));
+    PyTuple_SetItem(result,2,SurfaceJobAtomInfoAsPyTuple(I->atomInfo));
+    PyTuple_SetItem(result,3,PyFloat_FromDouble(I->maxVdw));
+    PyTuple_SetItem(result,4,PyInt_FromLong(I->allVisibleFlag));
+    PyTuple_SetItem(result,5,PyInt_FromLong(nPresent))
+      
+                    
+    float maxVdw;
+  int allVisibleFlag;
+
+  int nPresent;
+  int *presentVla;
+
+  int solventSphereIndex, sphereIndex;
+
+  int surfaceType;
+  int circumscribe;
+  float probeRadius;
+  float carveCutoff;
+  float *carveVla;
+  
+  int surfaceMode;
+  int surfaceSolvent;
+  int cavityCull;
+  float pointSep;
+  float trimCutoff;
+  float trimFactor;
   }
   
 }
