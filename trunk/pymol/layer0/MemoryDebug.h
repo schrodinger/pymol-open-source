@@ -19,6 +19,65 @@ Z* -------------------------------------------------------------------
 #include "os_std.h"
 #include "PyMOLGlobals.h"
 
+#ifdef OV_JENARIX
+
+/* NEW Jenarix-based MemoryDebug wrapper */
+
+#include "ov_port.h"
+
+#define mmalloc(size) OV_HEAP_MALLOC_RAW_VOID(size)
+#define mcalloc(num,size) OV_HEAP_CALLOC_RAW_VOID((num)*(ov_size)(size))
+#define mrealloc(ptr,size) OV_HEAP_REALLOC_RAW_VOID(ptr,size)
+#define mfree(ptr) OV_HEAP_FREE_RAW(ptr)
+
+#define ReallocForSure(ptr,type,size) OV_HEAP_REALLOC_RAW_RECOPY(ptr,type,size,size)
+#define ReallocForSureSafe(ptr,type,size,old_size) OV_HEAP_REALLOC_RAW_RECOPY(ptr,type,size,old_size)
+
+#define MemoryDebugDump() ov_heap_dump(0)
+#define MemoryDebugUsage() ov_heap_usage()
+
+#define VLAlloc(type,init_size) OV_HEAP_VLA_MALLOC_RAW(type, init_size)
+
+#ifndef OV_HEAP_TRACKER
+#define VLAMalloc(init_size, unit_size, grow_factor, auto_zero) \
+    ov_heap_VlaAllocRaw(unit_size, init_size, auto_zero)
+#define VLACheck(vla,type,idx) \
+   (vla=(type*)(((((ov_size)idx)>=((Ov_HeapVLA*)(vla))[-1].size) ? \
+    ov_heap_VlaAddIndexRaw(vla,((ov_size)idx)) : (vla))))
+#else
+#define VLAMalloc(init_size, unit_size, grow_factor, auto_zero) \
+    ov_heap_VlaAllocRaw(unit_size, init_size, auto_zero, OV__FILE__, OV__LINE__)
+#define VLACheck(vla,type,idx) \
+   (vla=(type*)(((((ov_size)idx)>=((Ov_HeapVLA*)(vla))[-1].size) ? \
+    ov_heap_VlaAddIndexRaw(vla,((ov_size)idx), OV__FILE__, OV__LINE__) : (vla))))
+#endif
+
+#define VLACalloc(type,init_size) OV_HEAP_VLA_CALLOC_RAW(type, init_size)
+#define VLAFreeP(ptr) {if(ptr) {OV_HEAP_VLA_FREE_RAW(ptr);ptr=NULL;}}
+#define VLAFree(ptr) OV_HEAP_VLA_FREE_RAW(ptr)
+#define VLASize(ptr,type,size) {ptr=(type*)OV_HEAP_VLA_SET_SIZE_RAW(ptr,size);}
+#define VLASetSize(ptr,size) OV_HEAP_VLA_SET_SIZE_RAW(ptr,size)
+#define VLAGetSize(ptr) OV_HEAP_VLA_GET_SIZE_RAW(ptr)
+#define VLASizeForSure(ptr,type,size) {ptr=(type*)OV_HEAP_VLA_SET_SIZE_RAW_RECOPY(ptr);}
+#define VLASetSizeForSure(ptr,size) OV_HEAP_VLA_SET_SIZE_RAW_RECOPY(ptr);
+#define VLACopy(ptr,type) (type*)OV_HEAP_VLA_CLONE_RAW(ptr)
+#define VLANewCopy(ptr) OV_HEAP_VLA_CLONE_RAW(ptr)
+
+#define Alloc(type,size) ((type*)mmalloc(sizeof(type)*(size)))
+#define Calloc(type,size) ((type*)mcalloc(sizeof(type),size))
+#define Realloc(ptr,type,size) ((type*)mrealloc(ptr,sizeof(type)*(size))
+
+#define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
+
+OV_INLINE_STATIC void MemoryZero(char *p,char *q)
+{
+  if(q>p) 
+    ov_os_memset(p,0,q-p);
+}
+
+#else
+/* OLD proven MemoryDebug implementation */
+
 /* This file can be included by C and C++ programs for
    debugging of malloc, realloc, free in C and in addition,
    of new and delete in C++ 
@@ -27,16 +86,10 @@ Z* -------------------------------------------------------------------
 
   In order to use the debugging system, you must do the following...
 
-  *use mmalloc for malloc
-  *use mrealloc for mrealloc
-  *use mfree for free
-  *use mnew for new
-
-  *use mregister to remember some address or pointer
-  *use mforget to forget some address or pointer
-
-  Notice that because of these requirements, it isn't easy
-  to use this memory debuggin system with existing code...
+  * use mmalloc for malloc
+  * use mcalloc for calloc
+  * use mrealloc for mrealloc
+  * use mfree for free
 
 */
 
@@ -52,22 +105,19 @@ Z* -------------------------------------------------------------------
  * Don't touch below unless you know what you are doing */
 
 
-#define CopyArray(dst,src,type,count) memcpy(dst,src,sizeof(type)*(count))
-
 void UtilMemCpy(void *dst,void *src,unsigned int *size);
 
 typedef struct VLARec {
-  ov_size nAlloc;
-  ov_size recSize;
-  float growFactor;
-  int autoZero;
+  ov_size size, unit_size;
+  float grow_factor;
+  int auto_zero;
 } VLARec;
 
 /* NOTE: in VLACheck, rec is a zero based array index, not a record count */
-#define VLACheck(ptr,type,rec) (ptr=(type*)(((((ov_size)rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLAExpand(ptr,((ov_size)rec)) : (ptr))))
+#define VLACheck(ptr,type,rec) (ptr=(type*)(((((ov_size)rec)>=((VLARec*)(ptr))[-1].size) ? VLAExpand(ptr,((ov_size)rec)) : (ptr))))
 
-#define VLAlloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,0)
-#define VLACalloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,1)
+#define VLAlloc(type,init_size) (type*)VLAMalloc(init_size,sizeof(type),5,0)
+#define VLACalloc(type,init_size) (type*)VLAMalloc(init_size,sizeof(type),5,1)
 #define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
 #define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,size);}
 #define VLASizeForSure(ptr,type,size) {ptr=(type*)VLASetSizeForSure(ptr,size);}
@@ -84,12 +134,12 @@ void *MemoryReallocForSure(void *ptr, unsigned int newSize);
 void *MemoryReallocForSureSafe(void *ptr, unsigned int newSize, unsigned int oldSize);
 
 #ifndef _MemoryDebug_ON
-void *VLAMalloc(ov_size initSize,ov_size recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
+void *VLAMalloc(ov_size init_size,ov_size unit_size,unsigned int grow_factor,int auto_zero); /*growfactor 1-10*/
 
 #else
 #define VLAMalloc(a,b,c,d) _VLAMalloc(__FILE__,__LINE__,a,b,c,d)
 
-void *_VLAMalloc(const char *file,int line,ov_size initSize,ov_size recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
+void *_VLAMalloc(const char *file,int line,ov_size init_size,ov_size unit_size,unsigned int grow_factor,int auto_zero); /*growfactor 1-10*/
 #endif
 
 
@@ -108,8 +158,6 @@ void MemoryZero(char *p,char *q);
 #define mmalloc malloc
 #define mrealloc realloc
 #define mfree free
-#define mregister(x,y) 
-#define mforget(x)
 #define ReallocForSure(ptr,type,size) (type*)MemoryReallocForSure(ptr,sizeof(type)*(size))
 #define ReallocForSureSafe(ptr,type,size,old_size) (type*)MemoryReallocForSure(ptr,sizeof(type)*(size),sizeof(type)*(old_size))
 
@@ -133,8 +181,6 @@ extern "C" {
 #endif
 
 #define _MDPointer 1
-#define _MDObject 2
-#define _MDMarker 3
 
 #define MD_FILE_LINE_Call ,__FILE__,__LINE__
 #define MD_FILE_LINE_Decl ,const char *file,int line
@@ -145,15 +191,10 @@ extern "C" {
 #define mcalloc(x,y) MemoryDebugCalloc(x,y,__FILE__,__LINE__,_MDPointer)
 #define mrealloc(x,y) MemoryDebugRealloc(x,y,__FILE__,__LINE__,_MDPointer)
 #define mfree(x) MemoryDebugFree(x,__FILE__,__LINE__,_MDPointer)
-#define mregister(x,y) MemoryDebugRegister((void*)x,y,__FILE__,__LINE__)
-#define mforget(x) MemoryDebugForget((void*)x,__FILE__,__LINE__)
+
 #define ReallocForSure(ptr,type,size) (type*)MemoryDebugReallocForSure(ptr,sizeof(type)*(size),__FILE__,__LINE__,_MDPointer)
 #define ReallocForSureSafe(ptr,type,size,old_size) (type*)MemoryDebugReallocForSureSafe(ptr,sizeof(type)*(size),\
                     sizeof(type)*(old_size),__FILE__,__LINE__,_MDPointer)
-
-void MemoryDebugRegister(void *addr,const char *note,
-                         const char *file,int line);
-void MemoryDebugForget(void *addr,const char *file,int line);
 
 void *MemoryDebugMalloc(size_t size,const char *file,int line,int type);
 void *MemoryDebugCalloc(size_t nmemb,size_t size,const char *file,int line,int type);
@@ -179,6 +220,7 @@ void *operator new(size_t size, const char *file,int line);
 
 #endif
 
+#endif
 #endif
 
 #endif

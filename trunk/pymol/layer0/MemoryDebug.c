@@ -16,35 +16,32 @@ Z* -------------------------------------------------------------------
 /* This file can be compiled under C as a .c file, or under C++ as a .cc file*/
 
 #include"os_predef.h"
-
-#ifdef __cplusplus
-#include<new.h>
-#endif
+#ifndef OV_JENARIX
 
 #include"MemoryDebug.h"
 #include"MemoryCache.h"
 
 #define GDB_ENTRY
 
-void *MemoryReallocForSureSafe(void *ptr, unsigned int newSize, unsigned int oldSize)
+void *MemoryReallocForSureSafe(void *ptr, unsigned int new_size, unsigned int old_size)
 {
-  if(newSize<oldSize) {
-    float *tmp = mmalloc(newSize);
-    if(tmp && newSize && oldSize) {
-        memcpy(tmp, ptr, newSize);
+  if(new_size<old_size) {
+    float *tmp = mmalloc(new_size);
+    if(tmp && new_size && old_size) {
+        memcpy(tmp, ptr, new_size);
     }
     FreeP(ptr);
     return tmp;
   } else {
-    return mrealloc(ptr,newSize);
+    return mrealloc(ptr,new_size);
   }
 }
 
-void *MemoryReallocForSure(void *ptr, unsigned int newSize) /* unsafe -- replace with above */
+void *MemoryReallocForSure(void *ptr, unsigned int new_size) /* unsafe -- replace with above */
 {
-  float *tmp = mmalloc(newSize);
+  float *tmp = mmalloc(new_size);
   if(tmp)
-    memcpy(tmp,ptr,newSize);
+    memcpy(tmp,ptr,new_size);
   FreeP(ptr);
   return tmp;
 }
@@ -124,30 +121,30 @@ void *VLAExpand(void *ptr,ov_size rec)
   char *start,*stop;
   unsigned int soffset=0;
   vla = &(((VLARec*)ptr)[-1]);
-  if(rec>=vla->nAlloc) {
-    if(vla->autoZero)
-      soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
-    vla->nAlloc = ((unsigned int)(rec*vla->growFactor))+1;
-    if(vla->nAlloc<=rec) vla->nAlloc = rec+1;
+  if(rec>=vla->size) {
+    if(vla->auto_zero)
+      soffset = sizeof(VLARec)+(vla->unit_size*vla->size);
+    vla->size = ((unsigned int)(rec*vla->grow_factor))+1;
+    if(vla->size<=rec) vla->size = rec+1;
     {
       VLARec *old_vla = vla;
-      vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
+      vla=(void*)mrealloc(vla,(vla->unit_size*vla->size)+sizeof(VLARec));
       while(!vla) {  /* back off on the request size until it actually fits */
         vla = old_vla;
-        vla->growFactor = (vla->growFactor-1.0F)/2.0F + 1.0F;   
-        vla->nAlloc = ((unsigned int)(rec*vla->growFactor))+1;
-        vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
+        vla->grow_factor = (vla->grow_factor-1.0F)/2.0F + 1.0F;   
+        vla->size = ((unsigned int)(rec*vla->grow_factor))+1;
+        vla=(void*)mrealloc(vla,(vla->unit_size*vla->size)+sizeof(VLARec));
         if(!vla) {
-          if(old_vla->growFactor<1.001F) {
+          if(old_vla->grow_factor<1.001F) {
             printf("VLAExpand-ERR: realloc failed.\n");
             DieOutOfMemory();
           }
         }
       }
     }
-    if(vla->autoZero) {
+    if(vla->auto_zero) {
       start = ((char*)vla) + soffset;
-      stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+      stop = ((char*)vla)+sizeof(VLARec)+(vla->unit_size*vla->size);
       MemoryZero(start,stop);
     }
   }
@@ -161,24 +158,24 @@ void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index
   char *start,*stop;
   unsigned int soffset=0;
   vla = &(((VLARec*)ptr)[-1]);
-  if(rec>=vla->nAlloc)
+  if(rec>=vla->size)
 	 {
-		if(vla->autoZero)
-		  soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
-		vla->nAlloc = ((unsigned int)(rec*vla->growFactor))+1;
-        if(vla->nAlloc<=rec) vla->nAlloc = rec+1;
+		if(vla->auto_zero)
+		  soffset = sizeof(VLARec)+(vla->unit_size*vla->size);
+		vla->size = ((unsigned int)(rec*vla->grow_factor))+1;
+        if(vla->size<=rec) vla->size = rec+1;
 		vla=(void*)_MemoryCacheRealloc(G,vla,
-                                       (vla->recSize*vla->nAlloc)+sizeof(VLARec),
+                                       (vla->unit_size*vla->size)+sizeof(VLARec),
                                        thread_index,block_id MD_FILE_LINE_Call);
 		if(!vla)
 		  {
 			 printf("VLAExpand-ERR: realloc failed.\n");
           DieOutOfMemory();
 		  }
-		if(vla->autoZero)
+		if(vla->auto_zero)
 		  {
 			 start = ((char*)vla) + soffset;
-			 stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+			 stop = ((char*)vla)+sizeof(VLARec)+(vla->unit_size*vla->size);
 			 MemoryZero(start,stop);
 		  }
 	 }
@@ -187,31 +184,31 @@ void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index
 #endif
 
 #ifndef _MemoryDebug_ON
-void *VLAMalloc(ov_size initSize,ov_size recSize,unsigned int growFactor,int autoZero)
+void *VLAMalloc(ov_size init_size,ov_size unit_size,unsigned int grow_factor,int auto_zero)
 #else
-void *_VLAMalloc(const char *file,int line,ov_size initSize,
-                 ov_size recSize,unsigned int growFactor,int autoZero)
+void *_VLAMalloc(const char *file,int line,ov_size init_size,
+                 ov_size unit_size,unsigned int grow_factor,int auto_zero)
 #endif
 {
   VLARec *vla;
   char *start,*stop;
 #ifndef _MemoryDebug_ON
-  vla=(void*)mmalloc((initSize*recSize)+sizeof(VLARec));
+  vla=(void*)mmalloc((init_size*unit_size)+sizeof(VLARec));
 #else
-  vla=MemoryDebugMalloc((initSize*recSize)+sizeof(VLARec),file,line,_MDPointer);
+  vla=MemoryDebugMalloc((init_size*unit_size)+sizeof(VLARec),file,line,_MDPointer);
 #endif
 
   if(!vla) {
     printf("VLAMalloc-ERR: malloc failed\n");
     DieOutOfMemory();
   }
-  vla->nAlloc=initSize;
-  vla->recSize=recSize;
-  vla->growFactor=(1.0F + growFactor*0.1F);
-  vla->autoZero=autoZero;
-  if(vla->autoZero) {
+  vla->size=init_size;
+  vla->unit_size=unit_size;
+  vla->grow_factor=(1.0F + grow_factor*0.1F);
+  vla->auto_zero=auto_zero;
+  if(vla->auto_zero) {
     start = ((char*)vla)+sizeof(VLARec);
-    stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+    stop = ((char*)vla)+sizeof(VLARec)+(vla->unit_size*vla->size);
     MemoryZero(start,stop);
   }
   return((void*)&(vla[1]));
@@ -220,18 +217,18 @@ void *_VLAMalloc(const char *file,int line,ov_size initSize,
 
 #ifdef _MemoryCache_ON
 #ifndef _MemoryDebug_ON
-void *VLACacheMalloc(PyMOLGlobals *G,unsigned int initSize,unsigned int recSize,
-                     unsigned int growFactor,int autoZero,int thread,int id)
+void *VLACacheMalloc(PyMOLGlobals *G,unsigned int init_size,unsigned int unit_size,
+                     unsigned int grow_factor,int auto_zero,int thread,int id)
 #else
 void *_VLACacheMalloc(PyMOLGlobals *G,const char *file,int line,
-                      unsigned int initSize,unsigned int recSize,unsigned int growFactor,
-                      int autoZero,int thread,int id)
+                      unsigned int init_size,unsigned int unit_size,unsigned int grow_factor,
+                      int auto_zero,int thread,int id)
 #endif
 {
   VLARec *vla;
   char *start,*stop;
 
-  vla=(void*)_MemoryCacheMalloc(G,(initSize*recSize)+sizeof(VLARec),
+  vla=(void*)_MemoryCacheMalloc(G,(init_size*unit_size)+sizeof(VLARec),
                                 thread,id 
                                 MD_FILE_LINE_Nest);
 
@@ -240,14 +237,14 @@ void *_VLACacheMalloc(PyMOLGlobals *G,const char *file,int line,
 		printf("VLAMalloc-ERR: realloc failed\n");
       DieOutOfMemory();
 	 }
-  vla->nAlloc=initSize;
-  vla->recSize=recSize;
-  vla->growFactor=(1.0F + growFactor*0.1F);
-  vla->autoZero=autoZero;
-  if(vla->autoZero)
+  vla->size=init_size;
+  vla->unit_size=unit_size;
+  vla->grow_factor=(1.0F + grow_factor*0.1F);
+  vla->auto_zero=auto_zero;
+  if(vla->auto_zero)
 	 {
 		start = ((char*)vla)+sizeof(VLARec);
-		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+		stop = ((char*)vla)+sizeof(VLARec)+(vla->unit_size*vla->size);
 		MemoryZero(start,stop);
 	 }
   return((void*)&(vla[1]));
@@ -285,7 +282,7 @@ unsigned int VLAGetSize(void *ptr)
 {
   VLARec *vla;
   vla = &((VLARec*)ptr)[-1];
-  return(vla->nAlloc);
+  return(vla->size);
 }
 
 void *VLANewCopy(void *ptr)
@@ -294,7 +291,7 @@ void *VLANewCopy(void *ptr)
     VLARec *vla,*new_vla;
     unsigned int size;
     vla = &((VLARec*)ptr)[-1];
-    size = (vla->recSize*vla->nAlloc)+sizeof(VLARec);
+    size = (vla->unit_size*vla->size)+sizeof(VLARec);
     new_vla=(void*)mmalloc(size);
     if(!new_vla)
       {
@@ -311,50 +308,50 @@ void *VLANewCopy(void *ptr)
   }
 }
 #ifdef _MemoryCache_ON
-void *VLACacheSetSize(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_id,int block_id)
+void *VLACacheSetSize(PyMOLGlobals *G,void *ptr,unsigned int new_size,int group_id,int block_id)
 {
   VLARec *vla;
   char *start=NULL;
   char *stop;
   unsigned int soffset=0;
   vla = &((VLARec*)ptr)[-1];
-  if(vla->autoZero) {
-	 soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+  if(vla->auto_zero) {
+	 soffset = sizeof(VLARec)+(vla->unit_size*vla->size);
   }
-  vla->nAlloc = newSize;
-  vla=(void*)_MemoryCacheRealloc(G,vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec),
+  vla->size = new_size;
+  vla=(void*)_MemoryCacheRealloc(G,vla,(vla->unit_size*vla->size)+sizeof(VLARec),
                                  group_id,block_id MD_FILE_LINE_Call);
   if(!vla)
 	 {
 		printf("VLASetSize-ERR: realloc failed.\n");
       DieOutOfMemory();
 	 }
-  if(vla->autoZero)
+  if(vla->auto_zero)
 	 {
       start = ((char*)vla)+soffset;
-		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+		stop = ((char*)vla)+sizeof(VLARec)+(vla->unit_size*vla->size);
 		if(start<stop)
 		  MemoryZero(start,stop);
 	 }
   return((void*)&(vla[1]));
 }
-void *VLACacheSetSizeForSure(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_id,int block_id)
+void *VLACacheSetSizeForSure(PyMOLGlobals *G,void *ptr,unsigned int new_size,int group_id,int block_id)
 {
   VLARec *vla;
   char *start=NULL;
   char *stop;
   unsigned int soffset=0;
   vla = &((VLARec*)ptr)[-1];
-  if(vla->autoZero) {
-	 soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+  if(vla->auto_zero) {
+	 soffset = sizeof(VLARec)+(vla->unit_size*vla->size);
   }
-  if(newSize<vla->nAlloc) {
-    vla->nAlloc = newSize;
-    vla=(void*)_MemoryCacheShrinkForSure(G,vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec),
+  if(new_size<vla->size) {
+    vla->size = new_size;
+    vla=(void*)_MemoryCacheShrinkForSure(G,vla,(vla->unit_size*vla->size)+sizeof(VLARec),
                                          group_id,block_id MD_FILE_LINE_Call);
   } else {
-    vla->nAlloc = newSize;
-    vla=(void*)_MemoryCacheRealloc(G,vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec),
+    vla->size = new_size;
+    vla=(void*)_MemoryCacheRealloc(G,vla,(vla->unit_size*vla->size)+sizeof(VLARec),
                                    group_id,block_id MD_FILE_LINE_Call);
   }
   if(!vla)
@@ -362,10 +359,10 @@ void *VLACacheSetSizeForSure(PyMOLGlobals *G,void *ptr,unsigned int newSize,int 
 		printf("VLASetSize-ERR: realloc failed.\n");
       DieOutOfMemory();
 	 }
-  if(vla->autoZero)
+  if(vla->auto_zero)
 	 {
       start = ((char*)vla)+soffset;
-		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+		stop = ((char*)vla)+sizeof(VLARec)+(vla->unit_size*vla->size);
 		if(start<stop)
 		  MemoryZero(start,stop);
 	 }
@@ -374,59 +371,59 @@ void *VLACacheSetSizeForSure(PyMOLGlobals *G,void *ptr,unsigned int newSize,int 
 #endif
 
 
-void *VLASetSize(void *ptr,unsigned int newSize)
+void *VLASetSize(void *ptr,unsigned int new_size)
 {
   VLARec *vla;
   char *start=NULL;
   char *stop;
   unsigned int soffset=0;
   vla = &((VLARec*)ptr)[-1];
-  if(vla->autoZero) {
-	 soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+  if(vla->auto_zero) {
+	 soffset = sizeof(VLARec)+(vla->unit_size*vla->size);
   }
-  vla->nAlloc = newSize;
-  vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
+  vla->size = new_size;
+  vla=(void*)mrealloc(vla,(vla->unit_size*vla->size)+sizeof(VLARec));
   if(!vla)
 	 {
 		printf("VLASetSize-ERR: realloc failed.\n");
       DieOutOfMemory();
 	 }
-  if(vla->autoZero)
+  if(vla->auto_zero)
 	 {
       start = ((char*)vla)+soffset;
-		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+		stop = ((char*)vla)+sizeof(VLARec)+(vla->unit_size*vla->size);
 		if(start<stop)
 		  MemoryZero(start,stop);
 	 }
   return((void*)&(vla[1]));
 }
 
-void *VLASetSizeForSure(void *ptr,unsigned int newSize)
+void *VLASetSizeForSure(void *ptr,unsigned int new_size)
 {
   VLARec *vla;
   char *start=NULL;
   char *stop;
   unsigned int soffset=0;
   vla = &((VLARec*)ptr)[-1];
-  if(vla->autoZero) {
-    soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+  if(vla->auto_zero) {
+    soffset = sizeof(VLARec)+(vla->unit_size*vla->size);
   }
-  if(newSize<vla->nAlloc) {
+  if(new_size<vla->size) {
     vla=MemoryReallocForSureSafe(vla,
-                                 (vla->recSize*newSize)+sizeof(VLARec),
-                                 (vla->recSize*vla->nAlloc)+sizeof(VLARec));
-    vla->nAlloc = newSize;
+                                 (vla->unit_size*new_size)+sizeof(VLARec),
+                                 (vla->unit_size*vla->size)+sizeof(VLARec));
+    vla->size = new_size;
   } else {
-    vla->nAlloc = newSize;
-    vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
+    vla->size = new_size;
+    vla=(void*)mrealloc(vla,(vla->unit_size*vla->size)+sizeof(VLARec));
   }
   if(!vla) {
     printf("VLASetSize-ERR: realloc failed.\n");
     DieOutOfMemory();
   }
-  if(vla->autoZero) {
+  if(vla->auto_zero) {
     start = ((char*)vla)+soffset;
-    stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+    stop = ((char*)vla)+sizeof(VLARec)+(vla->unit_size*vla->size);
     if(start<stop)
       MemoryZero(start,stop);
   }
@@ -483,80 +480,6 @@ void MemoryDebugInit(void)
   Count=0;
   MaxCount=0;
 }
-void MemoryDebugRegister(void *addr,const char *note,
-			 const char *file,int line)
-{
-  DebugRec *rec,*str;
-  int hash;
-
-  if(InitFlag) MemoryDebugInit();
-
-  rec=(DebugRec*)malloc(sizeof(DebugRec)+strlen(note));
-  if(!rec)
-    {
-      printf("MemoryDebugRegister-ERR: memory allocation failure\n"); 
-#ifdef GDB_ENTRY
-  MemoryDebugDump();
-  abort();
-#endif
-  DieOutOfMemory();
-    }
-  rec->size=(size_t)addr;
-  rec->type=_MDMarker;
-  rec->line=line;
-  strcpy(rec->file,file);
-  str=rec+1;
-  strcpy((char*)str,note);
-  hash=(int)addr;
-  hash=HASH(hash);
-  rec->next=HashTable[hash];
-  HashTable[hash]=rec;
-  Count++;
-  if(MaxCount<Count) MaxCount=Count;
-}
-
-void MemoryDebugForget(void *addr,const char *file,int line)
-{
-  DebugRec *rec = NULL;
-  DebugRec *cur,*last;
-  int hash;
-
-  if(InitFlag) MemoryDebugInit();
-  hash=(int)addr;
-  hash=HASH(hash);
-  last=NULL;
-  cur=HashTable[hash];
-  while(cur)
-    {
-      if((cur->size==(size_t)addr)&&(cur->type==_MDMarker))
-	{
-	  rec=cur;
-	  if(last)
-	    last->next=cur->next;
-	  else
-	    HashTable[hash]=cur->next;
-	  break;
-	}
-      last=cur;
-      cur=cur->next;
-    }  
-   if(rec)
-    {
-      free(rec);
-    }
-  else
-    {
-      printf(
-   "MemoryDebug-ERR: free(): corrupted tree or bad ptr! (%s:%i @%p)\n",
-	     file,line,addr);
-#ifdef GDB_ENTRY
-  MemoryDebugDump();
-  abort();
-#endif
-      exit(EXIT_FAILURE);
-    }
-  Count--;
-}
 
 int MemoryDebugUsage(void) 
 {
@@ -564,16 +487,12 @@ int MemoryDebugUsage(void)
   unsigned int tot  = 0;
   DebugRec *rec;
   if(InitFlag) MemoryDebugInit();
-  for(a=0;a<1024;a++)
-    {
-      rec=HashTable[a];
-      while(rec)
-        {
-          if(rec->type!=_MDMarker)
-            tot+=rec->size;
-          rec=rec->next;
-        }
+  for(a=0;a<1024;a++) {
+    rec=HashTable[a];
+    while(rec) {
+      rec=rec->next;
     }
+  }
   return(tot);
 }
 
@@ -584,30 +503,20 @@ void MemoryDebugDump(void)
   unsigned int tot  = 0;
   DebugRec *rec,*str;
   if(InitFlag) MemoryDebugInit();
-  for(a=0;a<1024;a++)
-    {
-      rec=HashTable[a];
-      while(rec)
-	{
-	  if(rec->type==_MDMarker)
-	    {
-	      str=rec+1;
-	    printf("Memory: %s:%i <%s>\n",
-		   rec->file,rec->line,(char*)str);
-	    }
-	  else {
-       tot+=rec->size;
-	    printf("Memory: %12p %12p %8x %3.1f %s:%i\n",
-				  (void*)(rec+1),
-               ((char*)(rec+1)+rec->size),rec->size,
-               rec->size/1048576.0F,rec->file,rec->line);
-     }
+  for(a=0;a<1024;a++)  {
+    rec=HashTable[a];
+    while(rec)	{
+	  tot+=rec->size;
+      printf("Memory: %12p %12p %8x %3.1f %s:%i\n",
+             (void*)(rec+1),
+             ((char*)(rec+1)+rec->size),rec->size,
+             rec->size/1048576.0F,rec->file,rec->line);
 	  rec=rec->next;
 	  cnt++;
 	}
-    }
+  }
   printf("Memory: %d blocks expected, %d found, %d maximum allocated.\n",
-			Count,cnt,MaxCount);
+         Count,cnt,MaxCount);
   printf("Memory: current memory allocated %x bytes (%0.1f MB).\n",tot,tot/(1024.0*1024));
 
 }
@@ -997,25 +906,11 @@ void MemoryDebugFree(void *ptr,const char*file,int line,int type)
 
 #ifdef __cplusplus
 }
-
-#undef new
-
-void *operator new(size_t size, const char *file,int line)
-{
-  if(InitFlag) MemoryDebugInit();
-  return(MemoryDebugMalloc(size,file,line,_MDObject));
-}
-
-void operator delete(void *ptr)
-{
-  if(InitFlag) MemoryDebugInit();
-  MemoryDebugQuietFree(ptr,_MDObject);
-}
 #endif
 
 
 #endif
-
+#endif
 
 
 

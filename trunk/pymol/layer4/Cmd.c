@@ -4040,9 +4040,12 @@ static PyObject *CmdMem(PyObject *self, PyObject *args)
     API_HANDLE_ERROR;
   }
   if(ok) {
+#ifdef OV_JENARIX
+    ov_heap_dump(0);
+#else
     MemoryDebugDump();
-    
     OVHeap_Dump(G->Context->heap,0);
+#endif
     SelectorMemoryDump(G);
     ExecutiveMemoryDump(G);
 #if 0

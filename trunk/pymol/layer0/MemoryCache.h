@@ -129,21 +129,10 @@ void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index
 #define VLACacheMalloc(G,a,b,c,d,t,i) VLAMalloc(a,b,c,d)
 #define VLACacheFree(G,p,t,i,f) VLAFree(p)
 
-#ifdef _MemoryDebug_ON
-
-#define CacheAlloc(G,type,size,thread,id) (type*) MemoryDebugMalloc(sizeof(type)*(size),__FILE__,__LINE__,_MDPointer)
-#define CacheCalloc(G,type,size,thread,id) (type*) MemoryDebugCalloc(sizeof(type),size,__FILE__,__LINE__,_MDPointer)
-#define CacheRealloc(G,ptr,type,size,thread,id) (type*)MemoryDebugRealloc(ptr,sizeof(type)*(size),__FILE__,__LINE__,_MDPointer)
-#define CacheFreeP(G,ptr,thread,id,force) {if(ptr) { MemoryDebugFree(ptr,__FILE__,__LINE__,_MDPointer);ptr=NULL;}}
-
-#else
-
-#define CacheAlloc(G,type,size,thread,id) (type*)malloc(sizeof(type)*(size))
+#define CacheAlloc(G,type,size,thread,id) (type*)mmalloc(sizeof(type)*(size))
 #define CacheCalloc(G,type,size,thread,id) (type*)mcalloc(sizeof(type),size)
 #define CacheRealloc(G,ptr,type,size,thread,id) (type*)mrealloc(sizeof(type)*(size))
 #define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {mfree(ptr);ptr=NULL;}}
-
-#endif
 
 #endif
 
