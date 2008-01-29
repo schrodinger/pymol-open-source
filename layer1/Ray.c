@@ -1211,7 +1211,7 @@ void RayRenderVRML2(CRay *I,int width,int height,
                 "  appearance Appearance {\n"
                 "   material Material { diffuseColor %6.4f %6.4f %6.4f \n"
                 "                       specularColor 0.8 0.8 0.8 \n"
-                "                       shininess 8 }\n"
+                "                       shininess 0.8 }\n"
                 "  }\n"
                 " }\n"
                 "}\n",        
@@ -1271,8 +1271,14 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "   appearance Appearance {\n"
                     "   material Material { diffuseColor %6.4f %6.4f %6.4f \n"
                     "                       specularColor 0.8 0.8 0.8 \n"
-                    "                       shininess 8 }\n"
-                    "   }\n"
+                    "                       shininess 0.8 }\n"
+                    "   }\n",
+                    prim->r1, prim->l1,
+                    (prim->c1[0]+prim->c2[0])/2,
+                    (prim->c1[1]+prim->c2[1])/2,
+                    (prim->c1[2]+prim->c2[2])/2);
+            /* WLD: format string split to comply with ISO C89 standards */                
+            sprintf(geom_add,
                     "  }\n"
                     "  Transform {\n"
                     "   translation 0.0 %8.6f 0.0\n"
@@ -1281,18 +1287,16 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "    appearance Appearance {\n"
                     "   material Material { diffuseColor %6.4f %6.4f %6.4f \n"
                     "                       specularColor 0.8 0.8 0.8 \n"
-                    "                       shininess 8 }\n"
+                    "                       shininess 0.8 }\n"
                     "    }\n"
                     "   }\n"
                     "  }\n",
-                    prim->r1, prim->l1,
-                    (prim->c1[0]+prim->c2[0])/2,
-                    (prim->c1[1]+prim->c2[1])/2,
-                    (prim->c1[2]+prim->c2[2])/2,
+    
                     prim->l1/2, prim->r1,  
                     prim->c1[0],prim->c1[1],prim->c1[2]
                     );
-            /* WLD: format string split to comply with ISO C89 standards */
+            strcat(geometry,geom_add);
+           /* WLD: format string split to comply with ISO C89 standards */
             sprintf(geom_add,
                     "  Transform {\n"
                     "   translation 0.0 %8.6f 0.0\n"
@@ -1301,7 +1305,7 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "    appearance Appearance {\n"
                     "   material Material { diffuseColor %6.4f %6.4f %6.4f \n"
                     "                       specularColor 0.8 0.8 0.8 \n"
-                    "                       shininess 8 }\n"
+                    "                       shininess 0.8 }\n"
                     "    }\n"
                     "   }\n"
                     "  }\n", 
@@ -1319,7 +1323,7 @@ void RayRenderVRML2(CRay *I,int width,int height,
                     "   appearance Appearance {\n"
                     "   material Material { diffuseColor %6.4f %6.4f %6.4f \n"
                     "                       specularColor 0.8 0.8 0.8 \n"
-                    "                       shininess 8 }\n"
+                    "                       shininess 0.8 }\n"
                     "   }\n"
                     "  }\n",
                     prim->r1, prim->l1,
