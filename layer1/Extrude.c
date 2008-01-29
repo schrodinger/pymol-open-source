@@ -38,6 +38,8 @@ static float smooth(float x,float power)
   }
 }
 
+#define CopyArray(dst,src,type,count) memcpy(dst,src,sizeof(type)*(count))
+
 CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude *orig)
 {
   OOAlloc(orig->G,CExtrude);
