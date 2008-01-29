@@ -1539,7 +1539,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 
 typedef struct {
   /* input */
-
+  float version;
   float *coord;
   SurfaceJobAtomInfo *atomInfo;
 
@@ -1569,6 +1569,44 @@ typedef struct {
   int N, *T, *S, NT;
 
 } SurfaceJob;
+#if 0
+PyObject *SurfaceJobAtomInfoVLAToPyTuple(SurfaceJobAtomInfo *atom_info)
+{
+  PyObject *result = NULL;
+  if(f) {
+    ov_size size = 2*VLAGetSize(atom_info)+1;
+    result = PyTuple_New(size);
+    if(result) {
+      ov_size i;
+      PyTuple_SetItem(result, 0, 2); /* width of array */
+      for(i=1;i<size;i+=2) {
+        PyTuple_SetItem(result,i,PyFloatFromDouble(atom_info->vdw));
+        PyTuple_SetItem(result,i+1,PyIntFromLong(atom_info->flags));
+      }
+    }
+  }
+  return(PConvAutoNone(result));
+}
+
+PyObject *SurfaceJobInputAsTuple(PyMOLGlobals *G, SurfaceJob *I)
+{
+  PyObject *result = PyTuple_New(20);
+  if(result) {
+    PyTuple_SetItem(result,0,PyFloatFromDouble(version));
+    PyTuple_SetItem(result,1,PConvFloatVLAToPyTuple(coord));
+    
+  }
+  
+}
+PyObject *SurfaceJobResultAsTuple(PyMOLGlobals *G, SurfaceJob *I)
+{
+  PyObject *result = 
+}
+
+SurfaceJobResultFromTuple(PyMOLGlobals *G, Surface Job *I, PyObject *tuple)
+{
+}
+#endif
 
 static SurfaceJob *SurfaceJobNew(PyMOLGlobals *G)
 {
