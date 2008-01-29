@@ -8,12 +8,13 @@ all: make-pyopengl make-champ
 # make-modules make-sglite 
 
 static:
-	cd modules;$(MAKE) -f Makefile.static
-	cd sglite;$(MAKE) -f Makefile.delsci static
 	cd pyopengl;$(MAKE) -f Makefile.delsci static
 	touch champ/.includes
 	cd champ;$(MAKE) -f Makefile.delsci prime
 	cd champ;$(MAKE) -f Makefile.delsci static
+# no longer needed
+#	cd modules;$(MAKE) -f Makefile.static
+#	cd sglite;$(MAKE) -f Makefile.delsci static
 
 make-modules:
 	cd modules;echo installdir=$(PYMOL_PATH)/modules > Makefile.pre.in 

@@ -8660,7 +8660,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   int a1=0,ind;
   float r,rms;
   float v1[3],v2,*vv1,*vv2,*vt,*vt1,*vt2;
-  int inv_flag;
   int hit_flag = false;
   int ok = true;
   int cnt;
@@ -9535,235 +9534,184 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
       }
       break;
     default:
-      use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
-      ai = I->AtomInfo;
-      for(a=0;a<I->NAtom;a++) {
+      {
+        int inv_flag;
         switch(op->code) { 
-        case OMOP_Flag: 
-          ai->flags &= op->i2; /* clear flag using mask */
-          op->i4++;
-          /* no break here is intentional!  */
-        case OMOP_FlagSet:
-        case OMOP_FlagClear:
-        case OMOP_COLR: /* normal atom based loops */
-        case OMOP_VISI:
-        case OMOP_CheckVis:
-        case OMOP_TTTF:
-        case OMOP_ALTR:
-        case OMOP_LABL:
-        case OMOP_AlterState:
-          s=ai->selEntry;
-          if(SelectorIsMember(G,s,sele))  {
-            switch(op->code) {
-            case OMOP_Flag:
-              ai->flags |= op->i1; /* set flag */
-              op->i3++;
-              break;
-            case OMOP_FlagSet:
-              ai->flags |= op->i1; /* set flag */
-              op->i3++;
-              break;
-            case OMOP_FlagClear:
-              ai->flags &= op->i2; /* clear flag */
-              op->i3++;
-              break;
-            case OMOP_VISI:
-              if(op->i1<0)
-                for(d=0;d<cRepCnt;d++) 
-                  ai->visRep[d]=op->i2;                      
-              else {
-                ai->visRep[op->i1]=op->i2;
-                if(op->i1==cRepCell) I->Obj.RepVis[cRepCell]=op->i2;
-              }
-              break;
-              break;
-            case OMOP_CheckVis:
-              if(ai->visRep[op->i1]) {
-                op->i2 = true;
-              }
-              break;
-            case OMOP_COLR:
-              if(op->i1==cColorAtomic)
-                ai->color=ai->atomic_color;
-              else
-                ai->color=op->i1;
-              hit_flag=true;
-              op->i2++;
-              break;
-            case OMOP_TTTF:
-              hit_flag=true;
-              break;
-            case OMOP_LABL:
-              if (ok) {
-                if(!op->s1[0]) {
-                  if(ai->label) {
-                    OVLexicon_DecRef(I->Obj.G->Lexicon,ai->label);
-                    ai->label=0;
-                  }
-                  op->i1++;
-                  ai->visRep[cRepLabel]=false;
-                  hit_flag=true;
-                } else {
-                  if(op->i2) {
-                    /* python label expression evaluation */
-                    if(PLabelAtom(I->Obj.G,&I->AtomInfo[a],I->Obj.Name,op->s1,a)) {
-                      op->i1++;
-                      ai->visRep[cRepLabel]=true;
-                      hit_flag=true;
-                    } else
-                      ok=false;
-                  } else {
-                    /* simple string label text */
-                    AtomInfoType *ai = I->AtomInfo + a;
-                    char *label = op->s1;
+        case OMOP_INVA:
+          /* set up an important optimization... */
+          for(b=0;b<I->NCSet;b++) {
+            cs=I->CSet[b];
+            if(cs)
+              cs->objMolOpInvalidated = false;
+          }
+          break;
+        }
+        use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
+        ai = I->AtomInfo;
+        for(a=0;a<I->NAtom;a++) {
+          switch(op->code) { 
+          case OMOP_Flag: 
+            ai->flags &= op->i2; /* clear flag using mask */
+            op->i4++;
+            /* no break here is intentional!  */
+          case OMOP_FlagSet:
+          case OMOP_FlagClear:
+          case OMOP_COLR: /* normal atom based loops */
+          case OMOP_VISI:
+          case OMOP_CheckVis:
+          case OMOP_TTTF:
+          case OMOP_ALTR:
+          case OMOP_LABL:
+          case OMOP_AlterState:
+            s=ai->selEntry;
+            if(SelectorIsMember(G,s,sele))  {
+              switch(op->code) {
+              case OMOP_Flag:
+                ai->flags |= op->i1; /* set flag */
+                op->i3++;
+                break;
+              case OMOP_FlagSet:
+                ai->flags |= op->i1; /* set flag */
+                op->i3++;
+                break;
+              case OMOP_FlagClear:
+                ai->flags &= op->i2; /* clear flag */
+                op->i3++;
+                break;
+              case OMOP_VISI:
+                if(op->i1<0)
+                  for(d=0;d<cRepCnt;d++) 
+                    ai->visRep[d]=op->i2;                      
+                else {
+                  ai->visRep[op->i1]=op->i2;
+                  if(op->i1==cRepCell) I->Obj.RepVis[cRepCell]=op->i2;
+                }
+                break;
+                break;
+              case OMOP_CheckVis:
+                if(ai->visRep[op->i1]) {
+                  op->i2 = true;
+                }
+                break;
+              case OMOP_COLR:
+                if(op->i1==cColorAtomic)
+                  ai->color=ai->atomic_color;
+                else
+                  ai->color=op->i1;
+                hit_flag=true;
+                op->i2++;
+                break;
+              case OMOP_TTTF:
+                hit_flag=true;
+                break;
+              case OMOP_LABL:
+                if (ok) {
+                  if(!op->s1[0]) {
                     if(ai->label) {
                       OVLexicon_DecRef(I->Obj.G->Lexicon,ai->label);
+                      ai->label=0;
                     }
-                    ai->label = 0;
-                    if(label && label[0]) {
-                      OVreturn_word ret = OVLexicon_GetFromCString(
-                                                                   G->Lexicon,label);
-                      if(OVreturn_IS_OK(ret)) {
-                        ai->label = ret.word;
+                    op->i1++;
+                    ai->visRep[cRepLabel]=false;
+                    hit_flag=true;
+                  } else {
+                    if(op->i2) {
+                      /* python label expression evaluation */
+                      if(PLabelAtom(I->Obj.G,&I->AtomInfo[a],I->Obj.Name,op->s1,a)) {
+                        op->i1++;
+                        ai->visRep[cRepLabel]=true;
+                        hit_flag=true;
+                      } else
+                        ok=false;
+                    } else {
+                      /* simple string label text */
+                      AtomInfoType *ai = I->AtomInfo + a;
+                      char *label = op->s1;
+                      if(ai->label) {
+                        OVLexicon_DecRef(I->Obj.G->Lexicon,ai->label);
+                      }
+                      ai->label = 0;
+                      if(label && label[0]) {
+                        OVreturn_word ret = OVLexicon_GetFromCString(
+                                                                     G->Lexicon,label);
+                        if(OVreturn_IS_OK(ret)) {
+                          ai->label = ret.word;
+                        }
                       }
                     }
                   }
                 }
-              }
-              break;
-            case OMOP_ALTR:
-              if (ok) {
-                if(PAlterAtom(I->Obj.G,&I->AtomInfo[a],op->s1,op->i2,I->Obj.Name,a,op->py_ob1))
-                  op->i1++;
-                else
-                  ok=false;
-              }
-              break;
-            case OMOP_AlterState:
-              if (ok) {
-                if(op->i2<I->NCSet) {
-                  cs = I->CSet[op->i2];
-                  if(cs) {
-                    if(I->DiscreteFlag) {
-                      if(cs==I->DiscreteCSet[a])
-                        a1=I->DiscreteAtmToIdx[a];
-                      else
-                        a1=-1;
-                    } else 
-                      a1=cs->AtmToIdx[a];
-                    if(a1>=0) {
-                      if(op->i4) 
-                        ai_option = I->AtomInfo + a;
-                      else
-                        ai_option = NULL;
-                      if(PAlterAtomState(I->Obj.G,cs->Coord+(a1*3),op->s1,op->i3,
-                                         ai_option,I->Obj.Name,a,op->py_ob1)) {
-                        op->i1++;
-                        hit_flag=true;
-                      } else
-                        ok=false;
+                break;
+              case OMOP_ALTR:
+                if (ok) {
+                  if(PAlterAtom(I->Obj.G,&I->AtomInfo[a],op->s1,op->i2,I->Obj.Name,a,op->py_ob1))
+                    op->i1++;
+                  else
+                    ok=false;
+                }
+                break;
+              case OMOP_AlterState:
+                if (ok) {
+                  if(op->i2<I->NCSet) {
+                    cs = I->CSet[op->i2];
+                    if(cs) {
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[a])
+                          a1=I->DiscreteAtmToIdx[a];
+                        else
+                          a1=-1;
+                      } else 
+                        a1=cs->AtmToIdx[a];
+                      if(a1>=0) {
+                        if(op->i4) 
+                          ai_option = I->AtomInfo + a;
+                        else
+                          ai_option = NULL;
+                        if(PAlterAtomState(I->Obj.G,cs->Coord+(a1*3),op->s1,op->i3,
+                                           ai_option,I->Obj.Name,a,op->py_ob1)) {
+                          op->i1++;
+                          hit_flag=true;
+                        } else
+                          ok=false;
+                      }
                     }
                   }
                 }
+                break;
               }
               break;
             }
             break;
-          }
-          break;
 
-          /* coord-set based properties, iterating only a single coordinate set */
-        case OMOP_CSetMinMax:          
-        case OMOP_CSetCameraMinMax:          
-        case OMOP_CSetMaxDistToPt:
-        case OMOP_CSetSumSqDistToPt:
-        case OMOP_CSetSumVertices:
-        case OMOP_CSetMoment: 
-          cs = NULL;
-          if((op->cs1>=0)&&(op->cs1<I->NCSet)) {
-            cs=I->CSet[op->cs1];
-          } else if(op->include_static_singletons) {
-            if((I->NCSet==1)&&(SettingGet_b(G,NULL,I->Obj.Setting,cSetting_static_singletons))) {
-              cs=I->CSet[0]; /*treat static singletons as present in each state */
+            /* coord-set based properties, iterating only a single coordinate set */
+          case OMOP_CSetMinMax:          
+          case OMOP_CSetCameraMinMax:          
+          case OMOP_CSetMaxDistToPt:
+          case OMOP_CSetSumSqDistToPt:
+          case OMOP_CSetSumVertices:
+          case OMOP_CSetMoment: 
+            cs = NULL;
+            if((op->cs1>=0)&&(op->cs1<I->NCSet)) {
+              cs=I->CSet[op->cs1];
+            } else if(op->include_static_singletons) {
+              if((I->NCSet==1)&&(SettingGet_b(G,NULL,I->Obj.Setting,cSetting_static_singletons))) {
+                cs=I->CSet[0]; /*treat static singletons as present in each state */
+              }
             }
-          }
            
-          if(cs) {
-            s=ai->selEntry;
-            if(SelectorIsMember(G,s,sele)) {
-              switch(op->code) {
-              case OMOP_CSetSumVertices:
-                if(I->DiscreteFlag) {
-                  if(cs==I->DiscreteCSet[a])
-                    a1=I->DiscreteAtmToIdx[a];
-                  else
-                    a1=-1;
-                } else 
-                  a1=cs->AtmToIdx[a];
-                if(a1>=0) {
-                  coord = cs->Coord+3*a1;
-                  if(op->i2) { /* do we want transformed coordinates? */
-                    if(use_matrices) {
-                      if(cs->State.Matrix) { /* state transformation */
-                        transform44d3f(cs->State.Matrix,coord,v1);
-                        coord = v1;
-                      }
-                    }
-                    if(I->Obj.TTTFlag) {
-                      transformTTT44f3f(I->Obj.TTT,coord,v1);
-                      coord=v1;
-                    }
-                  }
-                  add3f(op->v1,coord,op->v1);
-                  op->i1++;
-                }
-                break;
-              case OMOP_CSetMinMax:
-                if(I->DiscreteFlag) {
-                  if(cs==I->DiscreteCSet[a])
-                    a1=I->DiscreteAtmToIdx[a];
-                  else
-                    a1=-1;
-                } else 
-                  a1=cs->AtmToIdx[a];
-                if(a1>=0) {
-                  coord = cs->Coord+3*a1;
-                  if(op->i2) { /* do we want transformed coordinates? */
-                    if(use_matrices) {
-                      if(cs->State.Matrix) { /* state transformation */
-                        transform44d3f(cs->State.Matrix,coord,v1);
-                        coord = v1;
-                      }
-                    }
-                    if(I->Obj.TTTFlag) {
-                      transformTTT44f3f(I->Obj.TTT,coord,v1);
-                      coord=v1;
-                    }
-                  }
-                  if(op->i1) {
-                    for(c=0;c<3;c++) {
-                      if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
-                      if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
-                    }
-                  } else {
-                    for(c=0;c<3;c++) {
-                      *(op->v1+c)=*(coord+c);
-                      *(op->v2+c)=*(coord+c);
-                    }
-                  }
-                  op->i1++;
-                }
-                break;
-              case OMOP_CSetCameraMinMax:
-                if(I->DiscreteFlag) {
-                  if(cs==I->DiscreteCSet[a])
-                    a1=I->DiscreteAtmToIdx[a];
-                  else
-                    a1=-1;
-                } else 
-                  a1=cs->AtmToIdx[a];
-                if(a1>=0)
-                  {
+            if(cs) {
+              s=ai->selEntry;
+              if(SelectorIsMember(G,s,sele)) {
+                switch(op->code) {
+                case OMOP_CSetSumVertices:
+                  if(I->DiscreteFlag) {
+                    if(cs==I->DiscreteCSet[a])
+                      a1=I->DiscreteAtmToIdx[a];
+                    else
+                      a1=-1;
+                  } else 
+                    a1=cs->AtmToIdx[a];
+                  if(a1>=0) {
                     coord = cs->Coord+3*a1;
                     if(op->i2) { /* do we want transformed coordinates? */
                       if(use_matrices) {
@@ -9777,8 +9725,32 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                         coord=v1;
                       }
                     }
-                    MatrixTransformC44fAs33f3f(op->mat1,coord,v1); /* convert to view-space */
-                    coord=v1;
+                    add3f(op->v1,coord,op->v1);
+                    op->i1++;
+                  }
+                  break;
+                case OMOP_CSetMinMax:
+                  if(I->DiscreteFlag) {
+                    if(cs==I->DiscreteCSet[a])
+                      a1=I->DiscreteAtmToIdx[a];
+                    else
+                      a1=-1;
+                  } else 
+                    a1=cs->AtmToIdx[a];
+                  if(a1>=0) {
+                    coord = cs->Coord+3*a1;
+                    if(op->i2) { /* do we want transformed coordinates? */
+                      if(use_matrices) {
+                        if(cs->State.Matrix) { /* state transformation */
+                          transform44d3f(cs->State.Matrix,coord,v1);
+                          coord = v1;
+                        }
+                      }
+                      if(I->Obj.TTTFlag) {
+                        transformTTT44f3f(I->Obj.TTT,coord,v1);
+                        coord=v1;
+                      }
+                    }
                     if(op->i1) {
                       for(c=0;c<3;c++) {
                         if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
@@ -9792,45 +9764,55 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                     }
                     op->i1++;
                   }
-                break;
-              case OMOP_CSetSumSqDistToPt:
-                if(I->DiscreteFlag) {
-                  if(cs==I->DiscreteCSet[a])
-                    a1=I->DiscreteAtmToIdx[a];
-                  else
-                    a1=-1;
-                } else 
-                  a1=cs->AtmToIdx[a];
-                if(a1>=0) {
-                  float dist;
-                  coord = cs->Coord+3*a1;
-                  if(op->i2) { /* do we want transformed coordinates? */
-                    if(use_matrices) {
-                      if(cs->State.Matrix) { /* state transformation */
-                        transform44d3f(cs->State.Matrix,coord,v1);
-                        coord = v1;
+                  break;
+                case OMOP_CSetCameraMinMax:
+                  if(I->DiscreteFlag) {
+                    if(cs==I->DiscreteCSet[a])
+                      a1=I->DiscreteAtmToIdx[a];
+                    else
+                      a1=-1;
+                  } else 
+                    a1=cs->AtmToIdx[a];
+                  if(a1>=0)
+                    {
+                      coord = cs->Coord+3*a1;
+                      if(op->i2) { /* do we want transformed coordinates? */
+                        if(use_matrices) {
+                          if(cs->State.Matrix) { /* state transformation */
+                            transform44d3f(cs->State.Matrix,coord,v1);
+                            coord = v1;
+                          }
+                        }
+                        if(I->Obj.TTTFlag) {
+                          transformTTT44f3f(I->Obj.TTT,coord,v1);
+                          coord=v1;
+                        }
                       }
-                    }
-                    if(I->Obj.TTTFlag) {
-                      transformTTT44f3f(I->Obj.TTT,coord,v1);
+                      MatrixTransformC44fAs33f3f(op->mat1,coord,v1); /* convert to view-space */
                       coord=v1;
+                      if(op->i1) {
+                        for(c=0;c<3;c++) {
+                          if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
+                          if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
+                        }
+                      } else {
+                        for(c=0;c<3;c++) {
+                          *(op->v1+c)=*(coord+c);
+                          *(op->v2+c)=*(coord+c);
+                        }
+                      }
+                      op->i1++;
                     }
-                  }
-                  dist = (float)diff3f(op->v1,coord);
-                  op->d1 += dist * dist;
-                  op->i1++;
-                }
-                break;
-              case OMOP_CSetMaxDistToPt:
-                if(I->DiscreteFlag) {
-                  if(cs==I->DiscreteCSet[a])
-                    a1=I->DiscreteAtmToIdx[a];
-                  else
-                    a1=-1;
-                } else 
-                  a1=cs->AtmToIdx[a];
-                if(a1>=0)
-                  {
+                  break;
+                case OMOP_CSetSumSqDistToPt:
+                  if(I->DiscreteFlag) {
+                    if(cs==I->DiscreteCSet[a])
+                      a1=I->DiscreteAtmToIdx[a];
+                    else
+                      a1=-1;
+                  } else 
+                    a1=cs->AtmToIdx[a];
+                  if(a1>=0) {
                     float dist;
                     coord = cs->Coord+3*a1;
                     if(op->i2) { /* do we want transformed coordinates? */
@@ -9846,119 +9828,79 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                       }
                     }
                     dist = (float)diff3f(op->v1,coord);
-                    if(dist>op->f1)
-                      op->f1=dist;
+                    op->d1 += dist * dist;
                     op->i1++;
                   }
-                break;
-              case OMOP_CSetMoment: 
-                if(I->DiscreteFlag) {
-                  if(cs==I->DiscreteCSet[a])
-                    a1=I->DiscreteAtmToIdx[a];
-                  else
-                    a1=-1;
-                } else 
-                  a1=cs->AtmToIdx[a];
-                if(a1>=0) {
-                  subtract3f(cs->Coord+(3*a1),op->v1,v1);
-                  v2=v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]; 
-                  op->d[0][0] += v2 - v1[0] * v1[0];
-                  op->d[0][1] +=    - v1[0] * v1[1];
-                  op->d[0][2] +=    - v1[0] * v1[2];
-                  op->d[1][0] +=    - v1[1] * v1[0];
-                  op->d[1][1] += v2 - v1[1] * v1[1];
-                  op->d[1][2] +=    - v1[1] * v1[2];
-                  op->d[2][0] +=    - v1[2] * v1[0];
-                  op->d[2][1] +=    - v1[2] * v1[1];
-                  op->d[2][2] += v2 - v1[2] * v1[2];
-                }
-                break;
+                  break;
+                case OMOP_CSetMaxDistToPt:
+                  if(I->DiscreteFlag) {
+                    if(cs==I->DiscreteCSet[a])
+                      a1=I->DiscreteAtmToIdx[a];
+                    else
+                      a1=-1;
+                  } else 
+                    a1=cs->AtmToIdx[a];
+                  if(a1>=0)
+                    {
+                      float dist;
+                      coord = cs->Coord+3*a1;
+                      if(op->i2) { /* do we want transformed coordinates? */
+                        if(use_matrices) {
+                          if(cs->State.Matrix) { /* state transformation */
+                            transform44d3f(cs->State.Matrix,coord,v1);
+                            coord = v1;
+                          }
+                        }
+                        if(I->Obj.TTTFlag) {
+                          transformTTT44f3f(I->Obj.TTT,coord,v1);
+                          coord=v1;
+                        }
+                      }
+                      dist = (float)diff3f(op->v1,coord);
+                      if(dist>op->f1)
+                        op->f1=dist;
+                      op->i1++;
+                    }
+                  break;
+                case OMOP_CSetMoment: 
+                  if(I->DiscreteFlag) {
+                    if(cs==I->DiscreteCSet[a])
+                      a1=I->DiscreteAtmToIdx[a];
+                    else
+                      a1=-1;
+                  } else 
+                    a1=cs->AtmToIdx[a];
+                  if(a1>=0) {
+                    subtract3f(cs->Coord+(3*a1),op->v1,v1);
+                    v2=v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]; 
+                    op->d[0][0] += v2 - v1[0] * v1[0];
+                    op->d[0][1] +=    - v1[0] * v1[1];
+                    op->d[0][2] +=    - v1[0] * v1[2];
+                    op->d[1][0] +=    - v1[1] * v1[0];
+                    op->d[1][1] += v2 - v1[1] * v1[1];
+                    op->d[1][2] +=    - v1[1] * v1[2];
+                    op->d[2][0] +=    - v1[2] * v1[0];
+                    op->d[2][1] +=    - v1[2] * v1[1];
+                    op->d[2][2] += v2 - v1[2] * v1[2];
+                  }
+                  break;
                      
+                }
               }
             }
-          }
-          break;
-        default: /* coord-set based properties, iterating as all coordsets within atoms */
-          for(b=0;b<I->NCSet;b++) {
-            if(I->DiscreteFlag) {
-              cs=I->DiscreteCSet[a];
-            } else {
-              cs=I->CSet[b];
-            }
-            if(cs)  {
-              s=ai->selEntry;
-              inv_flag=false;
-              if(SelectorIsMember(G,s,sele))
-                {
+            break;
+          default: /* coord-set based properties, iterating as all coordsets within atoms */
+            for(b=0;b<I->NCSet;b++) {
+              if(I->DiscreteFlag) {
+                cs=I->DiscreteCSet[a];
+              } else {
+                cs=I->CSet[b];
+              }
+              if(cs)  {
+                s=ai->selEntry;
+                inv_flag=false;
+                if(SelectorIsMember(G,s,sele)) {
                   switch(op->code) {
-#if 0
-                    /* pulled out for performance reasons */
-                  case OMOP_SUMC:
-                    if(I->DiscreteFlag) {
-                      if(cs==I->DiscreteCSet[a])
-                        a1=I->DiscreteAtmToIdx[a];
-                      else
-                        a1=-1;
-                    } else 
-                      a1=cs->AtmToIdx[a];
-                    if(a1>=0)
-                      {
-                        coord = cs->Coord+3*a1;
-                        if(op->i2) { /* do we want transformed coordinates? */
-                          if(use_matrices) {
-                            if(cs->State.Matrix) { /* state transformation */
-                              transform44d3f(cs->State.Matrix,coord,v1);
-                              coord = v1;
-                            }
-                          }
-                          if(I->Obj.TTTFlag) {
-                            transformTTT44f3f(I->Obj.TTT,coord,v1);
-                            coord=v1;
-                          }
-                        }
-                        add3f(op->v1,coord,op->v1);
-                        op->i1++;
-                      }
-                    break;
-                  case OMOP_MNMX:
-                    if(I->DiscreteFlag) {
-                      if(cs==I->DiscreteCSet[a])
-                        a1=I->DiscreteAtmToIdx[a];
-                      else
-                        a1=-1;
-                    } else 
-                      a1=cs->AtmToIdx[a];
-                    if(a1>=0)
-                      {
-                        coord = cs->Coord+3*a1;
-                        if(op->i2) { /* do we want transformed coordinates? */
-                          if(use_matrices) {
-                            if(cs->State.Matrix) { /* state transformation */
-                              transform44d3f(cs->State.Matrix,coord,v1);
-                              coord = v1;
-                            }
-                          }
-                          if(I->Obj.TTTFlag) {
-                            transformTTT44f3f(I->Obj.TTT,coord,v1);
-                            coord=v1;
-                          }
-                        }
-                        if(op->i1) {
-                          for(c=0;c<3;c++) {
-                            if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
-                            if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
-                          }
-                        } else {
-                          for(c=0;c<3;c++) {
-                            *(op->v1+c)=*(coord+c);
-                            *(op->v2+c)=*(coord+c);
-                          }
-                        }
-                        op->i1++;
-                      }
-                    break;
-#endif
-
                   case OMOP_CameraMinMax:
                     if(I->DiscreteFlag) {
                       if(cs==I->DiscreteCSet[a])
@@ -9967,36 +9909,35 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                         a1=-1;
                     } else 
                       a1=cs->AtmToIdx[a];
-                    if(a1>=0)
-                      {
-                        coord = cs->Coord+3*a1;
-                        if(op->i2) { /* do we want transformed coordinates? */
-                          if(use_matrices) {
-                            if(cs->State.Matrix) { /* state transformation */
-                              transform44d3f(cs->State.Matrix,coord,v1);
-                              coord = v1;
-                            }
-                          }
-                          if(I->Obj.TTTFlag) {
-                            transformTTT44f3f(I->Obj.TTT,coord,v1);
-                            coord=v1;
+                    if(a1>=0) {
+                      coord = cs->Coord+3*a1;
+                      if(op->i2) { /* do we want transformed coordinates? */
+                        if(use_matrices) {
+                          if(cs->State.Matrix) { /* state transformation */
+                            transform44d3f(cs->State.Matrix,coord,v1);
+                            coord = v1;
                           }
                         }
-                        MatrixTransformC44fAs33f3f(op->mat1,coord,v1); /* convert to view-space */
-                        coord=v1;
-                        if(op->i1) {
-                          for(c=0;c<3;c++) {
-                            if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
-                            if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
-                          }
-                        } else {
-                          for(c=0;c<3;c++) {
-                            *(op->v1+c)=*(coord+c);
-                            *(op->v2+c)=*(coord+c);
-                          }
+                        if(I->Obj.TTTFlag) {
+                          transformTTT44f3f(I->Obj.TTT,coord,v1);
+                          coord=v1;
                         }
-                        op->i1++;
                       }
+                      MatrixTransformC44fAs33f3f(op->mat1,coord,v1); /* convert to view-space */
+                      coord=v1;
+                      if(op->i1) {
+                        for(c=0;c<3;c++) {
+                          if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
+                          if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
+                        }
+                      } else {
+                        for(c=0;c<3;c++) {
+                          *(op->v1+c)=*(coord+c);
+                          *(op->v2+c)=*(coord+c);
+                        }
+                      }
+                      op->i1++;
+                    }
                     break;
                   case OMOP_MaxDistToPt:
                     if(I->DiscreteFlag) {
@@ -10006,27 +9947,26 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                         a1=-1;
                     } else 
                       a1=cs->AtmToIdx[a];
-                    if(a1>=0)
-                      {
-                        float dist;
-                        coord = cs->Coord+3*a1;
-                        if(op->i2) { /* do we want transformed coordinates? */
-                          if(use_matrices) {
-                            if(cs->State.Matrix) { /* state transformation */
-                              transform44d3f(cs->State.Matrix,coord,v1);
-                              coord = v1;
-                            }
-                          }
-                          if(I->Obj.TTTFlag) {
-                            transformTTT44f3f(I->Obj.TTT,coord,v1);
-                            coord=v1;
+                    if(a1>=0) {
+                      float dist;
+                      coord = cs->Coord+3*a1;
+                      if(op->i2) { /* do we want transformed coordinates? */
+                        if(use_matrices) {
+                          if(cs->State.Matrix) { /* state transformation */
+                            transform44d3f(cs->State.Matrix,coord,v1);
+                            coord = v1;
                           }
                         }
-                        dist = (float)diff3f(coord,op->v1);
-                        if(dist>op->f1)
-                          op->f1=dist;
-                        op->i1++;
+                        if(I->Obj.TTTFlag) {
+                          transformTTT44f3f(I->Obj.TTT,coord,v1);
+                          coord=v1;
+                        }
                       }
+                      dist = (float)diff3f(coord,op->v1);
+                      if(dist>op->f1)
+                        op->f1=dist;
+                      op->i1++;
+                    }
                     break;
                   case OMOP_MDST: 
                     if(I->DiscreteFlag) {
@@ -10036,23 +9976,25 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                         a1=-1;
                     } else 
                       a1=cs->AtmToIdx[a];
-                    if(a1>=0)
-                      {
+                    if(a1>=0) {
                         r=(float)diff3f(op->v1,cs->Coord+(3*a1));
                         if(r>op->f1)
                           op->f1=r;
                       }
                     break;
                   case OMOP_INVA:
-                    if(I->DiscreteFlag) {
-                      if(cs==I->DiscreteCSet[a])
-                        a1=I->DiscreteAtmToIdx[a];
-                      else
-                        a1=-1;
-                    } else 
-                      a1=cs->AtmToIdx[a]; 
-                    if(a1>=0)                     /* selection touches this coordinate set */ 
-                      inv_flag=true;              /* so set the invalidation flag */
+                    if(!cs->objMolOpInvalidated) {
+                    /* performance optimization: avoid repeatedly
+                       calling invalidate on the same coord sets */
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[a])
+                          a1=I->DiscreteAtmToIdx[a];
+                        else
+                          a1=-1;
+                      } else 
+                        a1=cs->AtmToIdx[a]; 
+                      if(a1>=0)                     /* selection touches this coordinate set */                         inv_flag=true;              /* so set the invalidation flag */
+                    }
                     break;
                   case OMOP_VERT: 
                     if(I->DiscreteFlag) {
@@ -10119,31 +10061,33 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                     break;
                   }
                 }
-              switch(op->code) { /* full coord-set based */
-              case OMOP_INVA: /* shouldn't this be calling the object invalidation routine instead? */
-                if(inv_flag) {
-                  if(op->i1<0) {
-                    /* invalidate all representations */
-                    for(d=0;d<cRepCnt;d++) {
-                      if(cs->fInvalidateRep)
-                        cs->fInvalidateRep(cs,d,op->i2);
-                    }
-                  } else if(cs->fInvalidateRep) 
-                    /* invalidate only that particular representation */
-                    cs->fInvalidateRep(cs,op->i1,op->i2);
+                switch(op->code) { /* full coord-set based */
+                case OMOP_INVA: /* shouldn't this be calling the object invalidation routine instead? */
+                  if(inv_flag) {
+                    cs->objMolOpInvalidated = true;
+                    if(op->i1<0) {
+                      /* invalidate all representations */
+                      for(d=0;d<cRepCnt;d++) {
+                        if(cs->fInvalidateRep)
+                          cs->fInvalidateRep(cs,d,op->i2);
+                      }
+                    } else if(cs->fInvalidateRep) 
+                      /* invalidate only that particular representation */
+                      cs->fInvalidateRep(cs,op->i1,op->i2);
+                  }
+                  break;
                 }
-                break;
+                if(I->DiscreteFlag) /* don't iterate every coordinate set for discrete objects! */
+                  break;
               }
-              if(I->DiscreteFlag) /* don't iterate every coordinate set for discrete objects! */
-                break;
-            }
-          } /* end coordset section */
-          break;
+            } /* end coordset section */
+            break;
+          }
+          ai++;
         }
-        ai++;
-      }
+      } /* case: default */
       break;
-	}
+    }
 	if(hit_flag) {
 	  switch(op->code) {
       case OMOP_COLR:
