@@ -63,8 +63,10 @@ OVHeap *_OVHeap_New(void)
 
 void _OVHeap_Del(OVHeap *I)
 {
+#ifndef OV_JENARIX
 #ifdef OVHeap_TRACKING
   OVHeap_Dump(I,0);
+#endif
 #endif
   ov_os_free((void*)I);
 }
