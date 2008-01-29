@@ -71,6 +71,7 @@ int PConvPyListToLabPosVLA(PyObject *obj, LabPosType **vla_ptr);
 /* categories below... */
 
 PyObject *PConvFloatVLAToPyList(float *f);
+PyObject *PConvFloatVLAToPyTuple(float *f);
 PyObject *PConvIntVLAToPyList(int *f);
 PyObject *PConvIntArrayToPyList(int *f,int l);
 PyObject *PConvSIntArrayToPyList(short int *f,int l);

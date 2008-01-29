@@ -875,6 +875,22 @@ PyObject *PConvFloatVLAToPyList(float *f)
   return(PConvAutoNone(result));
 }
 
+PyObject *PConvFloatVLAToPyTuple(float *f)
+{
+  PyObject *result = NULL;
+  if(f) {
+    ov_size size = VLAGetSize(f);
+    result = PyTuple_New(size);
+    if(result) {
+      ov_size i;
+      for(i=0;i<size;i++) {
+        PyTuple_SetItem(result,i,PyFloat_FromDouble((double)*(f++))); /* set item steals ref */
+      }
+    }
+  }
+  return(PConvAutoNone(result));
+}
+
 PyObject *PConvIntVLAToPyList(int *f)
 {
   int a,l;
