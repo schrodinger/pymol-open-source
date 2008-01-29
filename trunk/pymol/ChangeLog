@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-01-28  Warren L. DeLano <warren@delsci.com>	
 
+	* fixed minor compatibility bug with vrml (shininess value)
+	
 	* addressed performance issue when changing representations
 	     for large objects with many states (e.g. 1sva.pdb1)
 	
