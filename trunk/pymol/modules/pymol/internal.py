@@ -8,6 +8,7 @@ import traceback
 import thread
 import re
 import viewing
+import time
 
 from chempy import io
 
@@ -24,6 +25,10 @@ def _cache_get(target, hash_size = None, _self=cmd):
         for entry in _self._pymol._cache:
             if entry[1][0:hash_size] == key:
                 if entry[2] == target[2]:
+                    while len(entry)<6:
+                        entry.append([])
+                    entry[4] = entry[4] + 1 # access count
+                    entry[5] = time.time() # timestampe
                     return entry[3]
     except:
         traceback.print_exc()
@@ -35,10 +40,15 @@ def _cache_set(new_entry, _self=cmd):
         key = new_entry[1][0:hash_size]
         count = 0
         found = 0
-        for entry in _self._pymol._cache:
+        new_entry[4] = new_entry[4] + 1 # incr access count
+        new_entry[5] = time.time() # timestamp
+        
+        for entry in _self._pymol._cache: 
             if entry[1][0:hash_size] == key:
-                if entry[2] == new_entry[2]:
-                    _self._pymol._cache[count] = entry
+                if entry[2] == new_entry[2]: # dupe (shouldn't happen)
+                    entry[3] = new_entry[3] 
+                    found = 1
+                    break
             count = count + 1
         if not found:
             _self._pymol._cache.append(new_entry)
