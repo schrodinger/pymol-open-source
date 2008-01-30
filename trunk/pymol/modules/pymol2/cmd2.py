@@ -144,6 +144,8 @@ class Cmd:
         self._sgi_stereo = global_cmd._sgi_stereo
         self._special = global_cmd._special
         self._validate_color_sc = global_cmd._validate_color_sc
+        self._cache_set = global_cmd._cache_set
+        self._cache_get = global_cmd._cache_get
 
         # now we create the command langauge
 

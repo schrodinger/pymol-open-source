@@ -199,7 +199,9 @@ if __name__=='pymol.cmd':
         _sgi_stereo = internal._sgi_stereo
         _special = internal._special
         _validate_color_sc = internal._validate_color_sc
-
+        _cache_get = internal._cache_get
+        _cache_set = internal._cache_set
+        
         get_feedback = _get_feedback # legacy
         
         #######################################################################

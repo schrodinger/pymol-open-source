@@ -731,6 +731,7 @@ typedef struct _CPyMOL {
   ov_word lex_ellipsoid_color;       
   ov_word lex_ellipsoid_transparency;
   ov_word lex_movie_rock;
+  ov_word lex_cache_mode;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1461,6 +1462,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ellipsoid_color,570);
   LEX_SETTING(ellipsoid_transparency,571);
   LEX_SETTING(movie_rock,572);
+  LEX_SETTING(cache_mode,573);
 
  return_OVstatus_SUCCESS;
 }

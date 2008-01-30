@@ -66,13 +66,20 @@ int PConvPyFloatToFloat(PyObject *obj,float *ptr);
 int PConvPyIntToChar(PyObject *obj,char *ptr);
 int PConvPyIntToInt(PyObject *obj,int *ptr);
 int PConvPyListToLabPosVLA(PyObject *obj, LabPosType **vla_ptr);
+
+/* Jenarix conventions -- returns before args */
+
+ov_status PConvPyTupleToIntVLA(int **result, PyObject *tuple);
+ov_status PConvPyTupleToFloatVLA(float **result, PyObject *tuple);
+
 /* === end === */
 
 /* categories below... */
 
-PyObject *PConvFloatVLAToPyList(float *f);
-PyObject *PConvFloatVLAToPyTuple(float *f);
-PyObject *PConvIntVLAToPyList(int *f);
+PyObject *PConvFloatVLAToPyList(float *vla);
+PyObject *PConvFloatVLAToPyTuple(float *vla);
+PyObject *PConvIntVLAToPyList(int *vla);
+PyObject *PConvIntVLAToPyTuple(int *vla);
 PyObject *PConvIntArrayToPyList(int *f,int l);
 PyObject *PConvSIntArrayToPyList(short int *f,int l);
 PyObject *PConvSCharArrayToPyList(signed char *f,int l);

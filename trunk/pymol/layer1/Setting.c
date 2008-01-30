@@ -3580,6 +3580,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_color(I,cSetting_ellipsoid_color, "-1");
     set_f(I,cSetting_ellipsoid_transparency,0.0F);
     set_b(I,cSetting_movie_rock,0);
+    set_i(I,cSetting_cache_mode,0);
   }
 }
 

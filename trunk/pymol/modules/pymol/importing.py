@@ -41,11 +41,15 @@ if __name__=='pymol.importing':
     
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
-    def set_session(session,partial=0,quiet=1,_self=cmd):
+    def set_session(session,partial=0,quiet=1,cache=1,steal=-1,_self=cmd):
         r = DEFAULT_SUCCESS
         if is_string(session): # string implies compressed session data 
             import zlib
             session = io.pkl.fromString(zlib.decompress(session))
+            if steal<0:
+                steal = 1
+        elif steal<0:
+            steal = 0
         for a in pymol._session_restore_tasks:
             if a==None:
                 try:
@@ -55,9 +59,23 @@ if __name__=='pymol.importing':
                     _self.unlock(r,_self)
                 try:
                     if session.has_key('session'):
-                        pymol.session = copy.deepcopy(session['session'])
+                        if steal:
+                            pymol.session = session['session']
+                            del session['session']
+                        else:
+                            pymol.session = copy.deepcopy(session['session'])
                     else:
                         pymol.session = pymol.Session_Storage()
+                    if cache:
+                        if session.has_key('cache'):
+                            cache = session['cache']
+                            if len(cache):
+                                _self.set('cache_mode',1)
+                                if steal:
+                                    _self._pymol._cache = session['cache']
+                                    del session['cache']
+                                else:
+                                    _self._pymol._cache = copy.deepcopy(session['cache'])
                 except:
                     traceback.print_exc()
             else:
@@ -654,7 +672,8 @@ SEE ALSO
 
             if ftype == loadable.pse:
                 ftype = -1
-                r = _self.set_session(io.pkl.fromFile(fname),quiet=quiet,partial=partial)
+                r = _self.set_session(io.pkl.fromFile(fname),quiet=quiet,
+                                      partial=partial,steal=1)
                 if not partial:
                     _self.set("session_file",fname,quiet=1)
                 

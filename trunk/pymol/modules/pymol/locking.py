@@ -41,7 +41,7 @@ def lock_without_glut(_self=cmd):
 def lock(_self=cmd): # INTERNAL -- API lock
 #      print " lock: acquiring as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
     if not _self.lock_api.acquire(0):
-        w = 0.001
+        w = 0.0001
         while 1:
 #            print " lock: ... as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
             e = threading.Event() 
@@ -49,8 +49,11 @@ def lock(_self=cmd): # INTERNAL -- API lock
             del e
             if _self.lock_api.acquire(0):
                 break
-            if w<0.1:
+            if w<0.05:
                 w = w * 2 # wait twice as long each time until flushed
+            else: # we're not getting lucky, so block for real
+                _self.lock_api.acquire(1)
+                break
 #      print "lock: acquired by 0x%x"%thread.get_ident()
 
 def lock_attempt(_self=cmd): # INTERNAL
@@ -105,8 +108,7 @@ def unlock(result=None,_self=cmd): # INTERNAL
    #                      print "dead locked as 0x%x"%thread.get_ident()
                     break
                 w = w * 2 # wait twice as long each time until flushed
-
-
+            
 def is_glut_thread(): # internal
     if thread.get_ident() == pymol.glutThread:
         return 1

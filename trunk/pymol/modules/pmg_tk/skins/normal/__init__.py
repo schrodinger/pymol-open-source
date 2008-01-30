@@ -2405,7 +2405,7 @@ class Normal(PMGSkin):
         self.app._hull.pack(side=LEFT, fill=BOTH, expand=YES)
 
         # and set focus
-        self.root.focus_set()
+        self.entry.focus_set()
 
     def __init__(self,app):
 

@@ -291,7 +291,7 @@ SEE ALSO
                         break
             
 
-    def do(commands,log=1,echo=1,_self=cmd):
+    def do(commands,log=1,echo=1,flush=1,_self=cmd):
         # WARNING: don't call this routine if you already have the API lock
         # use cmd._do instead
         '''
@@ -325,6 +325,7 @@ USAGE (PYTHON)
                             r = _cmd.do(_self._COb,a,log,echo)
                         finally:
                             _self.unlock(r,_self)
+                        
                     else:
                         r = DEFAULT_SUCCESS
             else:
@@ -340,7 +341,7 @@ USAGE (PYTHON)
                     else:
                         r = DEFAULT_SUCCESS
                 _self.set('defer_updates',defer)
-        if _self._raising(r,_self): raise pymol.CmdException            
+        if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def quit(_self=cmd):

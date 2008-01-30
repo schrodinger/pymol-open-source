@@ -662,6 +662,48 @@ int PConvPyListToIntVLA(PyObject *obj,int **f)
   return(ok);
 }
 
+ov_status PConvPyTupleToIntVLA(int **result, PyObject *tuple)
+{
+  ov_status status = OV_STATUS_FAILURE;
+  if(!(tuple && PyTuple_Check(tuple))) {
+    *result = NULL;
+  } else {
+    int *vla = NULL;
+    ov_size size = PyTuple_Size(tuple);
+    vla = VLAlloc(int,size);
+    if(vla) {
+      ov_size i;
+      int *ptr = vla;
+      status = OV_STATUS_SUCCESS;
+      for(i=0;i<size;i++)
+        *(ptr++) = PyInt_AsLong(PyTuple_GetItem(tuple,i));
+    }
+    *result = vla;
+  }
+  return status;
+}
+
+ov_status PConvPyTupleToFloatVLA(float **result, PyObject *tuple)
+{
+  ov_status status = OV_STATUS_FAILURE;
+  if(!(tuple && PyTuple_Check(tuple))) {
+    *result = NULL;
+  } else {
+    float *vla = NULL;
+    ov_size size = PyTuple_Size(tuple);
+    vla = VLAlloc(float,size);
+    if(vla) {
+      ov_size i;
+      float *ptr = vla;
+      status = OV_STATUS_SUCCESS;
+      for(i=0;i<size;i++)
+        *(ptr++) = PyFloat_AsDouble(PyTuple_GetItem(tuple,i));
+    }
+    *result = vla;
+  }
+  return status;
+}
+
 int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,ov_size ll)
 {
   int ok = true;
@@ -875,16 +917,16 @@ PyObject *PConvFloatVLAToPyList(float *f)
   return(PConvAutoNone(result));
 }
 
-PyObject *PConvFloatVLAToPyTuple(float *f)
+PyObject *PConvFloatVLAToPyTuple(float *vla)
 {
   PyObject *result = NULL;
-  if(f) {
-    ov_size size = VLAGetSize(f);
+  if(vla) {
+    ov_size size = VLAGetSize(vla);
     result = PyTuple_New(size);
     if(result) {
       ov_size i;
       for(i=0;i<size;i++) {
-        PyTuple_SetItem(result,i,PyFloat_FromDouble((double)*(f++))); /* set item steals ref */
+        PyTuple_SetItem(result,i,PyFloat_FromDouble((double)*(vla++))); /* set item steals ref */
       }
     }
   }
@@ -899,6 +941,22 @@ PyObject *PConvIntVLAToPyList(int *f)
   result=PyList_New(l);
   for(a=0;a<l;a++) 
     PyList_SetItem(result,a,PyInt_FromLong(*(f++)));
+  return(PConvAutoNone(result));
+}
+
+PyObject *PConvIntVLAToPyTuple(int *vla)
+{
+  PyObject *result = NULL;
+  if(vla) {
+    ov_size size = VLAGetSize(vla);
+    result = PyTuple_New(size);
+    if(result) {
+      ov_size i;
+      for(i=0;i<size;i++) {
+        PyTuple_SetItem(result,i,PyInt_FromLong(*(vla++))); /* set item steals ref */
+      }
+    }
+  }
   return(PConvAutoNone(result));
 }
 
