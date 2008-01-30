@@ -74,6 +74,13 @@ def _init_internals(_pymol):
     _pymol._session_save_tasks = [ None ]
     _pymol._session_restore_tasks = [ None ]
 
+    # cached results (as a list):
+    # [ [size, (hash1, hash2, ... ), (inp1, inp2, ...), output],
+    #   [size, (hash1, hash2, ... ), (inp1, inp2, ...), output],
+    #   ... ]
+    
+    _pymol._cache = []
+
     # standard input reading thread
 
     _pymol._stdin_reader_thread = None

@@ -501,7 +501,7 @@ void MemoryDebugDump(void)
   int a;
   int cnt=0;
   unsigned int tot  = 0;
-  DebugRec *rec,*str;
+  DebugRec *rec;
   if(InitFlag) MemoryDebugInit();
   for(a=0;a<1024;a++)  {
     rec=HashTable[a];
@@ -509,7 +509,7 @@ void MemoryDebugDump(void)
 	  tot+=rec->size;
       printf("Memory: %12p %12p %8x %3.1f %s:%i\n",
              (void*)(rec+1),
-             ((char*)(rec+1)+rec->size),rec->size,
+             ((char*)(rec+1)+rec->size),(unsigned int)rec->size,
              rec->size/1048576.0F,rec->file,rec->line);
 	  rec=rec->next;
 	  cnt++;
@@ -528,7 +528,7 @@ void MemoryDebugHashAdd(DebugRec *rec)
 {
   int hash;
 
-  hash=(int)rec;
+  hash=(int)rec; 
   hash=HASH(hash);
   rec->next=HashTable[hash];
   HashTable[hash]=rec;

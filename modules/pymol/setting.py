@@ -608,7 +608,8 @@ if __name__=='pymol.setting':
         ellipsoid_color                    = 570
         ellipsoid_transparency             = 571
         movie_rock                         = 572
-      
+        cache_mode                         = 573
+        
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
     index_list = []

@@ -68,7 +68,7 @@ NOTES
         if _self._raising(r,_self): raise QuietException         
         return r
     
-    def get_session(names='', partial=0, quiet=1, compress=-1,_self=cmd):
+    def get_session(names='', partial=0, quiet=1, compress=-1, cache=-1, _self=cmd):
         session = {}
         r = DEFAULT_SUCCESS
         for a in _self._pymol._session_save_tasks:
@@ -81,6 +81,10 @@ NOTES
                     _self.unlock(r,_self)
                 try:
                     session['session'] = copy.deepcopy(pymol.session)
+                    if cache<0:
+                        cache = _self.get_setting_int('cache_mode')
+                    if cache:
+                        session['cache'] = _self._pymol._cache
                 except:
                     traceback.print_exc()
             else:

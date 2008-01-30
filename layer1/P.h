@@ -90,6 +90,11 @@ Z* -------------------------------------------------------------------
 
 #else
 
+ov_status PCacheSet(PyMOLGlobals *G, PyObject *entry, PyObject *output);
+ov_status PCacheGet(PyMOLGlobals *G, 
+                    PyObject **result_output, PyObject **result_entry,
+                    PyObject *input);
+
 void PInit(PyMOLGlobals *G,int global_instance);
 void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv);
 
@@ -145,7 +150,7 @@ int PTryLockAPIAndUnblock(PyMOLGlobals *G);
 void PFlush(PyMOLGlobals *G);
 void PFlushFast(PyMOLGlobals *G);
 void PXDecRef(PyObject *obj);
-
+PyObject *PXIncRef(PyObject *obj);
 void PSGIStereo(PyMOLGlobals *G,int flag);
 void PDefineFloat(PyMOLGlobals *G,char *name,float value);
 
@@ -186,6 +191,8 @@ struct _CP_inst {
   PyObject *complete; /* complete partial command / TAB action */
   PyObject *cmd_do;
 
+  PyObject *cache;
+
   /* locks and threads */
 
   PyObject *lock; /* API locks */
@@ -216,10 +223,6 @@ extern PyObject *P_xray; /* used by Symmetry */
 extern PyObject *P_chempy; /* used by CoordSet and Selector for construction of models */
 extern PyObject *P_models; /* used by Selector for construction of models */
 extern PyObject *P_setting; /* used by Setting.c */
-
-/* unused? */
-extern PyObject *P_embed; /* not set by PyMOL -- must be set by host context */
-
 
 extern unsigned int P_glut_thread_id;
 

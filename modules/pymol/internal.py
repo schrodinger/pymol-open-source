@@ -14,6 +14,39 @@ from chempy import io
 from cmd import DEFAULT_ERROR, loadable, _load2str, Shortcut, \
    is_string, is_ok
 
+# cache management:
+
+def _cache_get(target, hash_size = None, _self=cmd):
+    try:
+        if hash_size == None:
+            hash_size = len(target[1])
+        key = target[1][0:hash_size]
+        for entry in _self._pymol._cache:
+            if entry[1][0:hash_size] == key:
+                if entry[2] == target[2]:
+                    return entry[3]
+    except:
+        traceback.print_exc()
+    return None
+
+def _cache_set(new_entry, _self=cmd):
+    try:
+        hash_size = len(new_entry[1])
+        key = new_entry[1][0:hash_size]
+        count = 0
+        found = 0
+        for entry in _self._pymol._cache:
+            if entry[1][0:hash_size] == key:
+                if entry[2] == new_entry[2]:
+                    _self._pymol._cache[count] = entry
+            count = count + 1
+        if not found:
+            _self._pymol._cache.append(new_entry)
+    except:
+        traceback.print_exc()
+        
+# ray tracing threads
+
 def _ray_anti_spawn(thread_info,_self=cmd):
     # WARNING: internal routine, subject to change      
     # internal routine to support multithreaded raytracing

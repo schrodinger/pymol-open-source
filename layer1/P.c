@@ -80,8 +80,7 @@ PyObject *P_menu = NULL; /* menu definitions are currently global */
 PyObject *P_xray = NULL; /* okay as global */
 PyObject *P_chempy = NULL; /* okay as global */
 PyObject *P_models = NULL; /* okay as global */
-PyObject *P_setting = NULL; /* must be reformed somehow */
-PyObject *P_embed = NULL;
+PyObject *P_setting = NULL; /* okay as global -- just used for names */
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
@@ -240,10 +239,111 @@ int PTruthCallStr4i(PyObject *object,char *method,int a1,int a2,int a3,int a4)
   }
   return(result);
 }
-                                       
+       
+PyObject *PXIncRef(PyObject *obj)
+{
+  if(!obj)
+    obj = Py_None;
+  Py_XINCREF(obj);
+  return obj;
+}
+                    
 void PXDecRef(PyObject *obj)
 {
   Py_XDECREF(obj);
+}
+
+OV_STATIC ov_status CacheCreateEntry(PyObject **result, PyObject *input)
+{
+  ov_status status = OV_STATUS_FAILURE;
+  if(input && PyTuple_Check(input)) {
+    ov_size tuple_size = PyTuple_Size(input);
+    ov_size tot_size = tuple_size;
+    PyObject *hash_code = PyTuple_New(tuple_size);
+    PyObject *entry = PyList_New(4);
+    if(hash_code && entry) {
+      /* compute hash codes & total input size */
+      status = OV_STATUS_SUCCESS;
+      ov_size i;
+      for(i=0;i<tuple_size;i++) {
+        PyObject *item = PyTuple_GetItem(input,i);
+        PyTuple_SetItem(hash_code, i, PyInt_FromLong(PyObject_Hash(item)));
+        if(PyTuple_Check(item)) {
+          tot_size += PyTuple_Size(item);
+        }
+      }
+      PyList_SetItem(entry, 0, PyInt_FromLong(tot_size));
+      PyList_SetItem(entry, 1, hash_code);
+      PyList_SetItem(entry, 2, PXIncRef(input));
+      PyList_SetItem(entry, 3, PXIncRef(NULL));
+    }
+    if(!OV_OK(status)) {
+      PXDecRef(hash_code);
+      PXDecRef(entry);
+    } else {
+      *result = entry;
+    }
+  }
+  if(PyErr_Occurred()) PyErr_Print();
+  return status;
+}
+
+ov_status PCacheSet(PyMOLGlobals *G, PyObject *entry, PyObject *output)
+{
+  ov_status status = OV_STATUS_FAILURE;
+  if(G->P_inst->cache && output) {
+    status = OV_STATUS_SUCCESS;
+    ov_size tuple_size = PyTuple_Size(output);
+    ov_size tot_size = tuple_size + PyInt_AsLong(PyList_GetItem(entry,0));
+    {
+      ov_size i;
+      for(i=0;i<tuple_size;i++) {
+        PyObject *item = PyTuple_GetItem(output,i);
+        if(PyTuple_Check(item)) {
+          tot_size += PyTuple_Size(item);
+        }
+      }
+    }
+    PyList_SetItem(entry,0,PyInt_FromLong(tot_size)); /* update total size */
+    PyList_SetItem(entry,3,PXIncRef(output));
+    PXDecRef(PyObject_CallMethod(G->P_inst->cmd, "_cache_set",
+                                 "OO", entry, G->P_inst->cmd));
+    /* compute the hash codes */
+  }
+  if(PyErr_Occurred()) PyErr_Print();
+  return status;
+}
+
+ov_status PCacheGet(PyMOLGlobals *G, 
+                    PyObject **result_output, PyObject **result_entry,
+                    PyObject *input)
+{
+  ov_status status = OV_STATUS_NO;
+  if(G->P_inst->cache) {
+    PyObject *entry = NULL;
+    PyObject *output = NULL;
+
+    if(OV_OK(CacheCreateEntry(&entry, input))) {
+      output = PyObject_CallMethod(G->P_inst->cmd, "_cache_get",
+                                   "OOO", entry, Py_None, G->P_inst->cmd);
+      if(output == Py_None) {
+        Py_DECREF(output);
+        output = NULL;
+      } else {
+        status = OV_STATUS_YES;
+      }
+    }
+    /* compute the hash codes */
+    if(OV_OK(status)) {
+      *result_entry = entry;
+      *result_output = output;
+    } else {
+      PXDecRef(entry);
+      PXDecRef(output);
+    }
+  }
+  if(PyErr_Occurred()) PyErr_Print();
+  return status;
 }
 
 void PSleepWhileBusy(PyMOLGlobals *G,int usec)
@@ -1708,6 +1808,9 @@ void PInit(PyMOLGlobals *G,int global_instance)
 
     G->P_inst->cmd_do = PyObject_GetAttrString(G->P_inst->cmd,"do");
     if(!G->P_inst->cmd_do) ErrFatal(G,"PyMOL","can't find 'cmd.do()'");
+
+    /* cache */
+    G->P_inst->cache = PyObject_GetAttrString(G->P_inst->obj,"_cache");
 
     /* invariant stuff */
 

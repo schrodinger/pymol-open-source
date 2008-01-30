@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"CGO.h"
 #include"P.h"
+#include"PConv.h"
 #include"Selector.h"
 
 #ifdef NT
@@ -68,8 +69,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs);
 
 void RepSurfaceFree(RepSurface *I)
 {
-  FreeP(I->V);
-  FreeP(I->VN);
+  VLAFreeP(I->V);
+  VLAFreeP(I->VN);
   FreeP(I->VC);
   FreeP(I->VA);
   FreeP(I->RC);
@@ -80,7 +81,6 @@ void RepSurfaceFree(RepSurface *I)
   VLAFreeP(I->T);
   VLAFreeP(I->S);
   RepPurge(&I->R); /* unnecessary, but a good idea */
-  /*  VLAFreeP(I->N);*/
   OOFreeP(I);
 }
 
@@ -1490,7 +1490,6 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
       }
       MapFree(map);
     }
-
     if(variable_alpha)
       I->oneColorFlag = false;
 
@@ -1539,7 +1538,6 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 
 typedef struct {
   /* input */
-  float version;
   float *coord;
   SurfaceJobAtomInfo *atomInfo;
 
@@ -1570,17 +1568,27 @@ typedef struct {
 
 } SurfaceJob;
 
-#if 0
+static void SurfaceJobPurgeResult(PyMOLGlobals *G, SurfaceJob *I)
+{
+  I->N = 0;
+  I->NT = 0;
+  VLAFreeP(I->V); I->V = NULL;
+  VLAFreeP(I->VN); I->VN = NULL;
+  VLAFreeP(I->T); I->T = NULL;
+  VLAFreeP(I->S); I->S = NULL;
+}
+
+
 #ifndef _PYMOL_NOPY
-OV_INLINE_STATIC PyObject *SurfaceJobAtomInfoVLAToPyTuple(SurfaceJobAtomInfo *atom_info)
+OV_INLINE_STATIC PyObject *SurfaceJobAtomInfoAsPyTuple(SurfaceJobAtomInfo *atom_info)
 {
   PyObject *result = NULL;
-  if(f) {
+  if(atom_info) {
     ov_size size = 2*VLAGetSize(atom_info)+1;
     result = PyTuple_New(size);
     if(result) {
       ov_size i;
-      PyTuple_SetItem(result, 0, 2); /* width of array */
+      PyTuple_SetItem(result, 0, PyInt_FromLong(2)); /* width of array */
       for(i=1;i<size;i+=2) {
         PyTuple_SetItem(result,i,PyFloat_FromDouble(atom_info->vdw));
         PyTuple_SetItem(result,i+1,PyInt_FromLong(atom_info->flags));
@@ -1600,9 +1608,9 @@ OV_INLINE_STATIC SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject *
       ov_size width = PyInt_AsLong(PyTuple_GetItem(tuple,0));
       if(width==2) {
         ov_size vla_size = (size-1)/2;
-        result = VLAlloc(SurfaceJobTimeInfo, vla_size);
+        result = VLAlloc(SurfaceJobAtomInfo, vla_size);
         if(result) {
-          SurfaceJobAtomInfo atom_info = result;
+          SurfaceJobAtomInfo *atom_info = result;
           ov_size i;
           for(i=1;i<size;i+=2) {
             atom_info->vdw = (float)PyFloat_AsDouble(PyTuple_GetItem(tuple,i));
@@ -1617,64 +1625,83 @@ OV_INLINE_STATIC SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject *
 }
 
 
-PyObject *SurfaceJobInputAsTuple(PyMOLGlobals *G, SurfaceJob *I)
+OV_INLINE_STATIC PyObject *SurfaceJobInputAsTuple(PyMOLGlobals *G, SurfaceJob *I)
 {
-  PyObject *result = PyTuple_New(20);
+  PyObject *result = PyTuple_New(21);
   if(result) {
-    PyTuple_SetItem(result,0,PyFloat_FromDouble(I->version));
-    PyTuple_SetItem(result,1,PConvFloatVLAToPyTuple(I->coord));
-    PyTuple_SetItem(result,2,SurfaceJobAtomInfoAsPyTuple(I->atomInfo));
-    PyTuple_SetItem(result,3,PyFloat_FromDouble(I->maxVdw));
-    PyTuple_SetItem(result,4,PyInt_FromLong(I->allVisibleFlag));
-    PyTuple_SetItem(result,5,PyInt_FromLong(nPresent))
-      
-                    
-    float maxVdw;
-  int allVisibleFlag;
-
-  int nPresent;
-  int *presentVla;
-
-  int solventSphereIndex, sphereIndex;
-
-  int surfaceType;
-  int circumscribe;
-  float probeRadius;
-  float carveCutoff;
-  float *carveVla;
-  
-  int surfaceMode;
-  int surfaceSolvent;
-  int cavityCull;
-  float pointSep;
-  float trimCutoff;
-  float trimFactor;
+    PyTuple_SetItem(result,  0, PyString_FromString("SurfaceJob"));
+    PyTuple_SetItem(result,  1, PyInt_FromLong(1)); /* version */
+    PyTuple_SetItem(result,  2, PConvFloatVLAToPyTuple(I->coord));
+    PyTuple_SetItem(result,  3, SurfaceJobAtomInfoAsPyTuple(I->atomInfo));
+    PyTuple_SetItem(result,  4, PyFloat_FromDouble(I->maxVdw));
+    PyTuple_SetItem(result,  5, PyInt_FromLong(I->allVisibleFlag));
+    PyTuple_SetItem(result,  6, PyInt_FromLong(I->nPresent));
+    PyTuple_SetItem(result,  7, PConvIntVLAToPyTuple(I->presentVla));
+    PyTuple_SetItem(result,  8, PyInt_FromLong(I->solventSphereIndex));
+    PyTuple_SetItem(result,  9, PyInt_FromLong(I->sphereIndex));
+    PyTuple_SetItem(result, 10, PyInt_FromLong(I->surfaceType));
+    PyTuple_SetItem(result, 11, PyInt_FromLong(I->circumscribe));
+    PyTuple_SetItem(result, 12, PyFloat_FromDouble(I->probeRadius));
+    PyTuple_SetItem(result, 13, PyFloat_FromDouble(I->carveCutoff));
+    PyTuple_SetItem(result, 14, PConvFloatVLAToPyTuple(I->carveVla));
+    PyTuple_SetItem(result, 15, PyInt_FromLong(I->surfaceMode));
+    PyTuple_SetItem(result, 16, PyInt_FromLong(I->surfaceSolvent));
+    PyTuple_SetItem(result, 17, PyInt_FromLong(I->cavityCull));
+    PyTuple_SetItem(result, 18, PyFloat_FromDouble(I->pointSep));
+    PyTuple_SetItem(result, 19, PyFloat_FromDouble(I->trimCutoff));
+    PyTuple_SetItem(result, 20, PyFloat_FromDouble(I->trimFactor));
   }
-  
-}
-PyObject *SurfaceJobResultAsTuple(PyMOLGlobals *G, SurfaceJob *I)
-{
-  PyObject *result = 
+  return result;
 }
 
-SurfaceJobResultFromTuple(PyMOLGlobals *G, Surface Job *I, PyObject *tuple)
+OV_INLINE_STATIC PyObject *SurfaceJobResultAsTuple(PyMOLGlobals *G, 
+                                                   SurfaceJob *I)
 {
+  PyObject *result = PyTuple_New(6);
+  if(result) {
+    PyTuple_SetItem(result,  0, PyInt_FromLong(I->N));
+    PyTuple_SetItem(result,  1, PConvFloatVLAToPyTuple(I->V));
+    PyTuple_SetItem(result,  2, PConvFloatVLAToPyTuple(I->VN));
+    PyTuple_SetItem(result,  3, PyInt_FromLong(I->NT));
+    PyTuple_SetItem(result,  4, PConvIntVLAToPyTuple(I->T));
+    PyTuple_SetItem(result,  5, PConvIntVLAToPyTuple(I->S));
+  }
+  return result;
 }
-#endif
+
+OV_INLINE_STATIC ov_status SurfaceJobResultFromTuple(PyMOLGlobals *G, 
+                                                     SurfaceJob *I, 
+                                                     PyObject *tuple)
+{
+  ov_status status = OV_STATUS_FAILURE;
+  SurfaceJobPurgeResult(G,I);
+  if(tuple && PyTuple_Check(tuple)) {
+    ov_size size = PyTuple_Size(tuple);
+    if(size>=6) {
+      status = OV_STATUS_SUCCESS;
+
+      I->N = PyInt_AsLong(PyTuple_GetItem(tuple,0));
+      if(OV_OK(status)) 
+        status = PConvPyTupleToFloatVLA(&I->V, PyTuple_GetItem(tuple,1));
+      if(OV_OK(status)) 
+        status = PConvPyTupleToFloatVLA(&I->VN, PyTuple_GetItem(tuple,2));
+      I->NT = PyInt_AsLong(PyTuple_GetItem(tuple,3));
+      if(OV_OK(status)) 
+        status = PConvPyTupleToIntVLA(&I->T, PyTuple_GetItem(tuple,4));
+      if(OV_OK(status)) 
+        status = PConvPyTupleToIntVLA(&I->S, PyTuple_GetItem(tuple,5));
+    }
+    if(OV_ERR(status))
+      SurfaceJobPurgeResult(G,I);
+  }
+  return status;
+}
 #endif
 
 static SurfaceJob *SurfaceJobNew(PyMOLGlobals *G)
 {
   OOCalloc(G, SurfaceJob);
   return I;
-}
-
-static void SurfaceJobPurgeResult(PyMOLGlobals *G, SurfaceJob *I)
-{
-  FreeP(I->V); I->V = NULL;
-  FreeP(I->VN); I->VN = NULL;
-  FreeP(I->T); I->T = NULL;
-  FreeP(I->S); I->S = NULL;
 }
 
 static void SurfaceJobFree(PyMOLGlobals *G, SurfaceJob *I)
@@ -1708,15 +1735,15 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
       MaxN = tmp*sp->nDot;
   }
 
-  I->V=Alloc(float,(MaxN+1)*3);
-  I->VN=Alloc(float,(MaxN+1)*3);
+  I->V=VLAlloc(float,(MaxN+1)*3);
+  I->VN=VLAlloc(float,(MaxN+1)*3);
 
   if(!(I->V&&I->VN)) { /* bail out point -- try to reduce crashes */
     PRINTFB(G,FB_RepSurface,FB_Errors)
       "Error-RepSurface: insufficient memory to calculate surface at this quality.\n"
       ENDFB(G);
-    FreeP(I->V); I->V = NULL;
-    FreeP(I->VN); I->VN = NULL;
+    VLAFreeP(I->V); I->V = NULL;
+    VLAFreeP(I->VN); I->VN = NULL;
     ok = false;
   } else {
     SolventDot *sol_dot = NULL;
@@ -1885,8 +1912,8 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
                         int v_offset = v-I->V;
                         int vn_offset = vn-I->VN;
                         MaxN = MaxN*2;
-                        I->V=Realloc(I->V,float,(MaxN+1)*3);
-                        I->VN=Realloc(I->VN,float,(MaxN+1)*3);
+                        VLASize(I->V,float,(MaxN+1)*3);
+                        VLASize(I->VN,float,(MaxN+1)*3);
                         v = I->V + v_offset;
                         vn = I->VN + vn_offset;
                       }
@@ -1984,8 +2011,8 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
                                 if(within3f(vv0,v1,insert_cutoff)) {
                                   found = true;
                                   break;
-                                }
-                              }
+                                } 
+                             }
                               jj=map->EList[ii++];
                             }
                             if(!found) add_new =true;
@@ -2012,8 +2039,8 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
           if(n_new) {
             float *n1 = new_dot+3;
             float *v1 = new_dot;
-            I->V = Realloc(I->V,float,3*(I->N+n_new));
-            I->VN = Realloc(I->VN,float,3*(I->N+n_new));
+            VLASize(I->V,float,3*(I->N+n_new));
+            VLASize(I->VN,float,3*(I->N+n_new));
             v = I->V + 3*I->N;
             vn = I->VN + 3*I->N;
             I->N += n_new;
@@ -2316,8 +2343,8 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
     }
 
     if(I->N && I->V && I->VN) {	
-      I->V = ReallocForSure(I->V,float,3*I->N);
-      I->VN = ReallocForSure(I->VN,float,3*I->N);
+      VLASizeForSure(I->V,float,3*I->N);
+      VLASizeForSure(I->VN,float,3*I->N);
     }
     
     PRINTFB(G,FB_RepSurface,FB_Blather)
@@ -2336,8 +2363,8 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
           ENDFB(G);
       }
     } else {
-      I->V = ReallocForSure(I->V,float,1);
-      I->VN = ReallocForSure(I->VN,float,1);
+      VLASizeForSure(I->V,float,1);
+      VLASizeForSure(I->VN,float,1);
     }
     if(carve_map)
       MapFree(carve_map);
@@ -2640,6 +2667,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
           }
         }
       }
+
       {
         SurfaceJob *surf_job = SurfaceJobNew(G);
 
@@ -2675,8 +2703,7 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
                 ai_src++;
               }
             }
-            VLASetSize(surf_job->atomInfo,n_present);
-         
+            VLASize(surf_job->atomInfo,SurfaceJobAtomInfo,n_present);
           } else {
             surf_job->presentVla = present_vla; present_vla = NULL;
             surf_job->coord = VLAlloc(float, cs->NIndex*3);
@@ -2706,15 +2733,70 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
                                               obj->Obj.Setting,cSetting_cavity_cull);
         }
       
-        SurfaceJobRun(G,surf_job);
+        {
+          PyObject *entry = NULL;
+          PyObject *output = NULL;
+          PyObject *input = NULL;
+          int found = false;
+#ifndef _PYMOL_NOPY
+          int cache_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cache_mode);
+          
+          if(cache_mode>0) { 
+            int blocked = PAutoBlock(G);
+            
+            input = SurfaceJobInputAsTuple(G,surf_job);
+
+            if(PCacheGet(G,&output,&entry,input)==OV_STATUS_YES) {
+              if(OV_OK(SurfaceJobResultFromTuple(G,surf_job,output))) {
+                found = true;
+                PXDecRef(input); input = NULL;
+                PXDecRef(entry); entry = NULL;
+              }
+              PXDecRef(output); output = NULL;
+            }
+            if(PyErr_Occurred()) PyErr_Print();
+
+            PAutoUnblock(G,blocked);
+          }
+#endif
+          if(!found) {
+
+            SurfaceJobRun(G,surf_job);
+
+#ifndef _PYMOL_NOPY
+            if(cache_mode>1) { 
+              int blocked = PAutoBlock(G);
+              output = SurfaceJobResultAsTuple(G,surf_job);
+              PCacheSet(G,entry,output);
+              PXDecRef(entry); entry = NULL;
+              PXDecRef(output); output = NULL; 
+              PXDecRef(input); input = NULL;
+              PAutoUnblock(G,blocked);
+            }
+          }
+#endif
+#ifndef _PYMOL_NOPY
+          if(entry||input||output) {
+            int blocked = PAutoBlock(G);
+            PXDecRef(entry);
+            PXDecRef(input);
+            PXDecRef(output);
+            PAutoUnblock(G,blocked);
+          }
+#endif
+        }
+        /* surf_job must be valid at this point */
+
         I->N = surf_job->N; surf_job->N = 0;
         I->V = surf_job->V; surf_job->V = NULL;
         I->VN = surf_job->VN; surf_job->VN = NULL;
         I->NT = surf_job->NT; surf_job->NT = 0;
         I->T = surf_job->T; surf_job->T = NULL;
         I->S = surf_job->S; surf_job->S = NULL;
+
         SurfaceJobPurgeResult(G,surf_job);
         SurfaceJobFree(G,surf_job);
+        
       }
     
       VLAFreeP(atom_info);

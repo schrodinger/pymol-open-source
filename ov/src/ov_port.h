@@ -23,6 +23,7 @@
 #endif
 
 #include "ov_defines.h"
+#include "ov_status.h"
 
 /* memory management */
 
