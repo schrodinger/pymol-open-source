@@ -26,7 +26,7 @@ def _cache_get(target, hash_size = None, _self=cmd):
             if entry[1][0:hash_size] == key:
                 if entry[2] == target[2]:
                     while len(entry)<6:
-                        entry.append([])
+                        entry.append(0)
                     entry[4] = entry[4] + 1 # access count
                     entry[5] = time.time() # timestampe
                     return entry[3]
