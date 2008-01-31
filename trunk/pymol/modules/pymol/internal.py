@@ -17,6 +17,9 @@ from cmd import DEFAULT_ERROR, loadable, _load2str, Shortcut, \
 
 # cache management:
 
+def _cache_purge(_self=cmd):
+    max_size = _self.get_setting_int("cache_max")
+    
 def _cache_get(target, hash_size = None, _self=cmd):
     try:
         if hash_size == None:
@@ -28,7 +31,7 @@ def _cache_get(target, hash_size = None, _self=cmd):
                     while len(entry)<6:
                         entry.append(0)
                     entry[4] = entry[4] + 1 # access count
-                    entry[5] = time.time() # timestampe
+                    entry[5] = time.time() # timestamp
                     return entry[3]
     except:
         traceback.print_exc()
