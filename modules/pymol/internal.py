@@ -35,6 +35,11 @@ def _cache_get(target, hash_size = None, _self=cmd):
     return None
 
 def _cache_set(new_entry, _self=cmd):
+    _pymol = _self._pymol
+    if not hasattr(_pymol,"_cache"):
+        _pymol._cache = []
+    elif not hasattr(_pymol,"_cache_memory"):
+        _pymol._cache_memory = 0
     try:
         hash_size = len(new_entry[1])
         key = new_entry[1][0:hash_size]
@@ -43,7 +48,7 @@ def _cache_set(new_entry, _self=cmd):
         new_entry[4] = new_entry[4] + 1 # incr access count
         new_entry[5] = time.time() # timestamp
         
-        for entry in _self._pymol._cache: 
+        for entry in _pymol._cache: 
             if entry[1][0:hash_size] == key:
                 if entry[2] == new_entry[2]: # dupe (shouldn't happen)
                     entry[3] = new_entry[3] 
@@ -51,7 +56,8 @@ def _cache_set(new_entry, _self=cmd):
                     break
             count = count + 1
         if not found:
-            _self._pymol._cache.append(new_entry)
+            _pymol._cache.append(new_entry)
+            _pymol._cache_memory = _pymol._cache_memory + new_entry[0]
     except:
         traceback.print_exc()
         

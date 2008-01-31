@@ -5734,7 +5734,7 @@ void SceneRay(PyMOLGlobals *G,
     
     for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
       
-      if(slot) { 
+      if(slot && grid.active) { 
         GridSetRayViewport(&grid,slot,&ray_x,&ray_y,&ray_width,&ray_height);
       }
     
@@ -7341,13 +7341,14 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           int slot;
           for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
             
-            if(slot) { 
+            if(slot && grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
             
             SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
           }
-          GridSetGLViewport(&grid,0);
+          if(grid.active)
+            GridSetGLViewport(&grid,0);
         }
           
         if(debug_pick) {
@@ -7365,12 +7366,13 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         {
           int slot;
           for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
-            if(slot) { 
+            if(slot && grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
             SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
           }
-          GridSetGLViewport(&grid,0);
+          if(grid.active)
+            GridSetGLViewport(&grid,0);
         }
 
           
@@ -7420,12 +7422,13 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         {
           int slot;
           for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
-            if(slot) { 
+            if(slot && grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
             SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
           }
-          GridSetGLViewport(&grid,0);
+          if(grid.active)
+            GridSetGLViewport(&grid,0);
         }
         
         lowBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
@@ -7438,12 +7441,13 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         {
           int slot;
           for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
-            if(slot) { 
+            if(slot && grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
             SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
           }
-          GridSetGLViewport(&grid,0);
+          if(grid.active)
+            GridSetGLViewport(&grid,0);
         }
         
         highBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
@@ -7562,7 +7566,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           int slot;
           for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
             
-            if(slot) { 
+            if(slot && grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
             
@@ -7660,7 +7664,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
           for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
             
-            if(slot) { 
+            if(slot && grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
 
@@ -7737,7 +7741,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           int slot;
           for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
             
-            if(slot) { 
+            if(slot && grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
             
