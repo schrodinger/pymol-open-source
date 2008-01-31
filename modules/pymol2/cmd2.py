@@ -1,4 +1,4 @@
-
+7
 from pymol import cmd as global_cmd
 import pymol
 
@@ -1248,6 +1248,10 @@ class Cmd:
     def update(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.update, a, k)
+    
+    def valence(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.valence, a, k)
     
     def vdw_fit(self, *a, **k):
         k['_self']=self

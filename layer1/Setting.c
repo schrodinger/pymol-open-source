@@ -1905,7 +1905,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_pickable:
     ExecutiveInvalidateRep(G,inv_sele,cRepAll,cRepInvAll);
     SceneChanged(G);
-    
+    break;
+  case cSetting_grid_mode:
+    SceneChanged(G);
     break;
   case cSetting_defer_builds_mode:
     ExecutiveRebuildAll(G);
@@ -1961,6 +1963,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
 	 SceneInvalidate(G);
 	 break;
   case cSetting_dash_round_ends:
+  case cSetting_dash_color:
+  case cSetting_angle_color:
+  case cSetting_dihedral_color:
 	 SceneInvalidate(G);
 	 break;
   case cSetting_mouse_selection_mode:
@@ -3581,6 +3586,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_f(I,cSetting_ellipsoid_transparency,0.0F);
     set_b(I,cSetting_movie_rock,0);
     set_i(I,cSetting_cache_mode,0);
+    set_color(I,cSetting_dash_color, "-1");
+    set_color(I,cSetting_angle_color, "-1");
+    set_color(I,cSetting_dihedral_color, "-1");
+    set_i(I,cSetting_grid_mode,0);
   }
 }
 

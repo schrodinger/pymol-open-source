@@ -30,7 +30,7 @@ PyMOL>as spheres, test
 PyMOL>ray renderer=2
  RayRenderTest: obtained 3 graphics primitives.
 PyMOL>bond name PS2, name PS3
- AddBond: 1 bonds added to model "test".
+ Bond: 1 bonds added to model "test".
 PyMOL>show sticks, test
 PyMOL>ray renderer=2
  RayRenderTest: obtained 4 graphics primitives.
@@ -58,7 +58,7 @@ PyMOL>pseudoatom pept, pept and resi 10
 PyMOL>count_atoms pept
  count_atoms: 110 atoms
 PyMOL>bond name PS2, name PS3
- AddBond: 1 bonds added to model "pept".
+ Bond: 1 bonds added to model "pept".
 PyMOL>hide nonbonded
 PyMOL>ray renderer=2
  RayRenderTest: obtained 167 graphics primitives.

@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2008-01-30  Warren L. DeLano <warren@delsci.com>	
+
+	* grid_mode experimental setting (for viewing multiple objects)
+	
+	* dash_color, angle_color, dihedral_color settings
+	
+	* surface_mode 3 and 4 added (thanks Nidhi!)
+	
 2008-01-29  Warren L. DeLano <warren@delsci.com>	
 
 	* added experimental surface caching implementation

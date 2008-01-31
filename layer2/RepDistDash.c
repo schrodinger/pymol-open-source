@@ -58,6 +58,7 @@ static void RepDistDashRender(RepDistDash *I,RenderInfo *info)
   int c=I->N;
   float *vc;
   int round_ends;
+  int color = SettingGet_color(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_color);
   I->linewidth = SettingGet_f(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_width);
   I->radius = SettingGet_f(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_radius);
   round_ends = SettingGet_b(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_round_ends);
@@ -71,21 +72,23 @@ static void RepDistDashRender(RepDistDash *I,RenderInfo *info)
     } else {
       radius = I->radius;
     }
-
-    vc = ColorGet(G,I->Obj->Color);
-	 v=I->V;
-	 c=I->N;
-	 
-	 while(c>0) {
+    
+    if(color<0)
+      color = I->Obj->Color;
+    vc = ColorGet(G,color);
+    v=I->V;
+    c=I->N;
+    
+    while(c>0) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
       if(round_ends) {
         ray->fSausage3fv(ray,v,v+3,radius,vc,vc);
       } else {
         ray->fCustomCylinder3fv(ray,v,v+3,radius,vc,vc,cCylCapFlat,cCylCapFlat);
       }
-		v+=6;
+      v+=6;
       c-=2;
-	 }
+    }
 
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
@@ -97,6 +100,9 @@ static void RepDistDashRender(RepDistDash *I,RenderInfo *info)
       } else {
         glLineWidth(I->linewidth);
       }
+
+      if(color>=0)
+        glColor3fv(ColorGet(G,color));
 
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {

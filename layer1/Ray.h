@@ -36,7 +36,7 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float pixel_scale,int ortho,float pixel_ratio,
                 float back_ratio, float magnified);
 void RayRender(CRay *I,unsigned int *image,
-               double timing,float angle,int antialias);
+               double timing,float angle,int antialias,unsigned int *return_bg);
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA,
                   char **charVLA,float front,float back,float fov,float angle,
                   int antialias);

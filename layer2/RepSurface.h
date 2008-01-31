@@ -21,8 +21,10 @@ Z* -------------------------------------------------------------------
 
 Rep *RepSurfaceNew(CoordSet *cset,int state);
 
-#define cRepSurface_by_flags     0
-#define cRepSurface_all          1
-#define cRepSurface_heavy_atoms  2
+#define cRepSurface_by_flags       0
+#define cRepSurface_all            1
+#define cRepSurface_heavy_atoms    2
+#define cRepSurface_vis_only       3
+#define cRepSurface_vis_heavy_only 4
 
 #endif

@@ -354,7 +354,44 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException                     
         return r
 
-    def bond(atom1="(pk1)", atom2="(pk2)", order=1, edit=1, _self=cmd):
+    def valence(order, selection1=None, selection2=None, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "valence" modifies the valences of all existing bonds formed
+    between two atom selections.
+    
+USAGE
+
+    valence 2, (name c), (name o)
+
+PYMOL API
+
+    cmd.valence(string selection1, selection2)
+
+SEE ALSO
+
+    unbond, fuse, attach, replace, remove_picked
+    '''
+        r = DEFAULT_ERROR
+        # preprocess selections
+        if selection1 == None:
+            selection1="(pk1)"
+            if selection2 == None:
+                selection2="(pk2)"
+        if selection2 == None:
+            selection2 = selection1
+        selection1 = selector.process(selection1)
+        selection2 = selector.process(selection2)
+        try:
+            _self.lock(_self)
+            r = _cmd.bond(_self._COb, selection1, selection2, int(order), 2, int(quiet))
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException            
+        return r
+        
+    def bond(atom1="(pk1)", atom2="(pk2)", order=1, edit=1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -386,7 +423,7 @@ SEE ALSO
         atom2 = selector.process(atom2)
         try:
             _self.lock(_self)
-            r = _cmd.bond(_self._COb,atom1,atom2,int(order),1)
+            r = _cmd.bond(_self._COb,atom1,atom2,int(order),1,int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
@@ -423,7 +460,7 @@ PYMOL API
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def unbond(atom1="(pk1)", atom2="(pk2)", _self=cmd):
+    def unbond(atom1="(pk1)", atom2="(pk2)", quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -454,7 +491,7 @@ SEE ALSO
         atom2 = selector.process(atom2)   
         try:
             _self.lock(_self)
-            r = _cmd.bond(_self._COb,str(atom1),str(atom2),0,0)
+            r = _cmd.bond(_self._COb,str(atom1),str(atom2),0,0,int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            

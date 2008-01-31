@@ -248,6 +248,7 @@ def get_command_keywords(self_cmd=cmd):
         'unset'         : [ self_cmd.unset             , 0 , 0 , ''  , parsing.STRICT ],
         'unset_bond'    : [ self_cmd.unset_bond        , 0 , 0 , ''  , parsing.STRICT ],               
         'update'        : [ self_cmd.update            , 0 , 0 , ''  , parsing.STRICT ],
+        'valence'       : [ self_cmd.valence           , 0 , 0 , ''  , parsing.STRICT ],           
         'vdw_fit'       : [ self_cmd.vdw_fit           , 0 , 0 , ''  , parsing.STRICT ],   
         'view'          : [ self_cmd.view              , 0 , 0 , ''  , parsing.STRICT ],   
         'viewport'      : [ self_cmd.viewport          , 0 , 0 , ''  , parsing.STRICT ],

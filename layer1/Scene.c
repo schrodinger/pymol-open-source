@@ -205,6 +205,108 @@ static void SceneRestartPerfTimer(PyMOLGlobals *G);
 static void SceneRotateWithDirty(PyMOLGlobals *G,float angle,float x,float y,float z,int dirty);
 static void SceneClipSetWithDirty(PyMOLGlobals *G,float front,float back,int dirty);
 
+typedef struct {
+  int n_col;
+  int n_row;
+  int first_slot;
+  int last_slot;
+  float asp_adjust;
+  int active;
+  int size;
+  int slot;
+  int mode;
+  GLint cur_view[4];
+} GridInfo;
+
+static void GridSetRayViewport(GridInfo *I, int slot, int *x, int *y, int *width, int *height)
+{
+  I->slot = slot;
+  /* if we are in grid mode, then prepare the grid slot viewport */
+  if(!slot) {
+    *x = I->cur_view[0];
+    *y = I->cur_view[1];
+    *width = I->cur_view[2];
+    *height = I->cur_view[3];
+  } else {
+    int abs_grid_slot = slot - I->first_slot;
+    int grid_col = abs_grid_slot % I->n_col;
+    int grid_row = (abs_grid_slot / I->n_col);
+    int vx = (grid_col*I->cur_view[2])/I->n_col;
+    int vw = ((grid_col+1)*I->cur_view[2])/I->n_col - vx;
+    int vy = I->cur_view[3] - ((grid_row+1)*I->cur_view[3])/I->n_row;
+    int vh = (I->cur_view[3] - ((grid_row)*I->cur_view[3])/I->n_row) - vy;
+    vx += I->cur_view[0];
+    vy += I->cur_view[1];
+    *x = vx;
+    *y = vy;
+    *width = vw;
+    *height = vh;
+  }
+}
+static void GridSetGLViewport(GridInfo *I, int slot)
+{
+  I->slot = slot;
+  /* if we are in grid mode, then prepare the grid slot viewport */
+  if(!slot) {
+    glViewport(I->cur_view[0],I->cur_view[1],I->cur_view[2],I->cur_view[3]);
+  } else {
+    int abs_grid_slot = slot - I->first_slot;
+    int grid_col = abs_grid_slot % I->n_col;
+    int grid_row = (abs_grid_slot / I->n_col);
+    int vx = (grid_col*I->cur_view[2])/I->n_col;
+    int vw = ((grid_col+1)*I->cur_view[2])/I->n_col - vx;
+    int vy = I->cur_view[3] - ((grid_row+1)*I->cur_view[3])/I->n_row;
+    int vh = (I->cur_view[3] - ((grid_row)*I->cur_view[3])/I->n_row) - vy;
+    vx += I->cur_view[0];
+    vy += I->cur_view[1];
+    glViewport(vx,vy,vw,vh);
+  }
+}
+
+static void GridGetRayViewport(GridInfo *I, int width, int height)
+{
+  I->cur_view[0] = 0;
+  I->cur_view[1] = 0;
+  I->cur_view[2] = width;
+  I->cur_view[3] = height;
+}
+
+static void GridGetGLViewport(GridInfo *I)
+{
+  glGetIntegerv(GL_VIEWPORT,I->cur_view);
+}
+
+static void GridUpdate(GridInfo *I, float asp_ratio, int mode, int size)
+{
+  
+  I->size = size;
+  I->mode = mode;
+  {
+    register int n_row = 1;
+    register int n_col = 1;
+    register int r_size = size;
+    while((n_row * n_col) < r_size) {
+      register float asp1 = asp_ratio * (n_row+1.0)/n_col;
+      register float asp2 = asp_ratio * (n_row)/(n_col+1.0);
+      if(fabs(asp1 - 1.0) > fabs(asp2 - 1.0))
+        n_col++;
+      else
+        n_row++;
+    }
+    I->n_row = n_row;
+    I->n_col = n_col;
+  }
+  if(I->size>1) {
+    I->active = true;
+    I->asp_adjust = (float)I->n_row / I->n_col;
+    I->first_slot = 1;
+    I->last_slot = I->size;
+  } else {
+    I->active = false;
+    I->mode = 0;
+  }
+}
+
 int SceneHasImage(PyMOLGlobals *G)
 {
   CScene *I=G->Scene;
@@ -5497,10 +5599,8 @@ void SceneRay(PyMOLGlobals *G,
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
   CRay *ray =NULL;
-  unsigned int buffer_size;
   float height,width;
   float aspRat;
-  unsigned int *buffer;
   float rayView[16];
   int curState;
   double timing;
@@ -5508,12 +5608,20 @@ void SceneRay(PyMOLGlobals *G,
   char *headerVLA = NULL;
   float fov;
   int stereo_hand = 0;
-  
+  GridInfo grid;
+  int grid_mode = SettingGetGlobal_i(G,cSetting_grid_mode);
+
+  UtilZeroMem(&grid,sizeof(grid));
+
+  if(mode!=0) grid_mode = 0; /* only allow grid mode with PyMOL renderer */
+
   ImageType *stereo_image = NULL;
   OrthoLineType prefix = "";
   SceneUnitContext context;
 
   SceneUpdateAnimation(G);
+  if(mode==0) 
+    SceneInvalidateCopy(G,true);
 
   if(antialias<0) {
     antialias = (int)SettingGet(G,cSetting_antialias);
@@ -5562,151 +5670,184 @@ void SceneRay(PyMOLGlobals *G,
 
   aspRat = ((float) ray_width) / ((float) ray_height);
 
-  while(1) {
-    /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
-    identity44f(rayView);
-
-    ray = RayNew(G,antialias);
-    if(!ray) break;
-
-    if(stereo_hand) {
-      /* stereo */
-        
-      float stAng,stShift;
-        
-      stAng = SettingGet(G,cSetting_stereo_angle);
-      stShift = SettingGet(G,cSetting_stereo_shift);
-        
-      /* right hand */
-        
-      stShift = (float)(stShift*fabs(I->Pos[2])/100.0);
-      stAng = (float)(stAng*atan(stShift/fabs(I->Pos[2]))*90.0/cPI);
-        
-      if(stereo_hand==2) { /* left hand */
-        stAng=-stAng;
-        stShift=-stShift;
-      }
-        
-      angle = stAng;
-    
-      {
-        float temp[16];
-        identity44f(temp);
-        MatrixRotateC44f(temp,(float)(-PI*stAng/180),0.0F,1.0F,0.0F); /* y-axis rotation */
-        MatrixMultiplyC44f(temp,rayView);
-      }
-        
-      /* move the camera to the location we are looking at */
-      MatrixTranslateC44f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
-      MatrixTranslateC44f(rayView,stShift,0.0,0.0);
-        
-      MatrixMultiplyC44f(I->RotMatrix,rayView);
-        
-        
-    } else { /* not stereo mode */
-        
-      /* move the camera to the location we are looking at */
-      MatrixTranslateC44f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
-        
-      if(shift) {
-        MatrixTranslateC44f(rayView,shift,0.0F,0.0F);
-      }
-      /* move the camera so that we can see the origin 
-       * NOTE, vector is given in the coordinates of the world's motion
-       * relative to the camera */
-        
-        
-      /* 4. rotate about the origin (the the center of rotation) */
-        
-      if(angle) {
-        float temp[16];
-        identity44f(temp);
-        MatrixRotateC44f(temp,(float)(-PI*angle/180),0.0F,1.0F,0.0F);
-        MatrixMultiplyC44f(I->RotMatrix,temp);
-        MatrixMultiplyC44f(temp,rayView);
-      } else {
-        MatrixMultiplyC44f(I->RotMatrix,rayView);
-      }
-    }
-
-    ScenePrepareUnitContext(G,&context,ray_width,ray_height);
-      
-    /* 5. move the origin to the center of rotation */
-    MatrixTranslateC44f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
-      
-    if(Feedback(G,FB_Scene,FB_Debugging)) {
-      fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
-              I->Pos[0],I->Pos[1],I->Pos[2]);
-      fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
-              I->Origin[0],I->Origin[1],I->Origin[2]);
-      fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
-              I->RotMatrix[0],I->RotMatrix[1],I->RotMatrix[2]);
-    }
-    /* define the viewing volume */
-    
-    height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));     
-    width = height*aspRat;
-
-    
-    OrthoBusyFast(G,0,20);
-    
-    {
-      int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
-      float pixel_scale_value = SettingGetGlobal_f(G,cSetting_ray_pixel_scale);
-      float fov=SettingGet(G,cSetting_field_of_view);
-      
-      if(pixel_scale_value<0) pixel_scale_value = 1.0F;
-
-      if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
-      
-      pixel_scale_value *= ((float)ray_height)/I->Height;
-
-      if(ortho) {
-        const float _1 = 1.0F;
-        RayPrepare(ray,-width,width,-height,height,
-                   I->FrontSafe,I->BackSafe,
-                   fov, I->Pos, 
-                   rayView,I->RotMatrix,aspRat,
-                   ray_width, ray_height, 
-                   pixel_scale_value, true,
-                   _1, _1, /* gcc 3.2.3 blows chunks if these are 1.0F */
-                   ((float)ray_height)/I->Height);
-
-      } else {        
-        float back_ratio;
-        float back_height;
-        float back_width;
-        float pos;
-        float fov = SettingGet(G,cSetting_field_of_view);
-        pos = I->Pos[2];
-
-        if((-pos)<I->FrontSafe) {
-          pos = -I->FrontSafe;
-        }
-
-        back_ratio = -I->Back/pos;
-        back_height = back_ratio*height;
-        back_width = aspRat * back_height;
-        RayPrepare(ray,
-                   -back_width, back_width, 
-                   -back_height, back_height,
-                   I->FrontSafe,I->BackSafe,
-                   fov, I->Pos,
-                   rayView,I->RotMatrix,aspRat,
-                   ray_width, ray_height, 
-                   pixel_scale_value, false,
-                   height/back_height,
-                   I->FrontSafe/I->BackSafe,
-                   ((float)ray_height)/I->Height);
-      }
-    }
-    {
-      RenderInfo info;
-      UtilZeroMem(&info,sizeof(RenderInfo));
-      info.ray = ray;
-
-      while(ListIterate(I->Obj,rec,next))
+  if(grid_mode) {
+    int grid_size = 0;
+    if(!grid_size) {
+      switch(grid_mode) {
+      case 1:
         {
+          ObjRec *rec = NULL;
+          while(ListIterate(I->Obj,rec,next)) {
+            grid_size++;
+          }
+        }
+        break;
+      }
+    }
+    GridUpdate(&grid, aspRat, grid_mode, grid_size);
+    if(grid.active) 
+      aspRat *= grid.asp_adjust;
+  }
+
+  while(1) {
+    int slot;
+    int tot_width = ray_width;
+    int tot_height = ray_height;
+    int ray_x = 0,ray_y = 0;
+
+    if(grid.active)
+      GridGetRayViewport(&grid,ray_width,ray_height);
+    
+    for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+      
+      if(slot) { 
+        GridSetRayViewport(&grid,slot,&ray_x,&ray_y,&ray_width,&ray_height);
+      }
+    
+      /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
+      identity44f(rayView);
+      
+      ray = RayNew(G,antialias);
+      if(!ray) break;
+      
+      if(stereo_hand) {
+        /* stereo */
+        
+        float stAng,stShift;
+        
+        stAng = SettingGet(G,cSetting_stereo_angle);
+        stShift = SettingGet(G,cSetting_stereo_shift);
+        
+        /* right hand */
+        
+        stShift = (float)(stShift*fabs(I->Pos[2])/100.0);
+        stAng = (float)(stAng*atan(stShift/fabs(I->Pos[2]))*90.0/cPI);
+        
+        if(stereo_hand==2) { /* left hand */
+          stAng=-stAng;
+          stShift=-stShift;
+        }
+        
+        angle = stAng;
+        
+        {
+          float temp[16];
+          identity44f(temp);
+          MatrixRotateC44f(temp,(float)(-PI*stAng/180),0.0F,1.0F,0.0F); /* y-axis rotation */
+          MatrixMultiplyC44f(temp,rayView);
+        }
+        
+        /* move the camera to the location we are looking at */
+        MatrixTranslateC44f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
+        MatrixTranslateC44f(rayView,stShift,0.0,0.0);
+        
+        MatrixMultiplyC44f(I->RotMatrix,rayView);
+        
+      } else { /* not stereo mode */
+        
+        /* move the camera to the location we are looking at */
+        MatrixTranslateC44f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
+        
+        if(shift) {
+          MatrixTranslateC44f(rayView,shift,0.0F,0.0F);
+        }
+        /* move the camera so that we can see the origin 
+         * NOTE, vector is given in the coordinates of the world's motion
+         * relative to the camera */
+        
+        
+        /* 4. rotate about the origin (the the center of rotation) */
+        
+        if(angle) {
+          float temp[16];
+          identity44f(temp);
+          MatrixRotateC44f(temp,(float)(-PI*angle/180),0.0F,1.0F,0.0F);
+          MatrixMultiplyC44f(I->RotMatrix,temp);
+          MatrixMultiplyC44f(temp,rayView);
+        } else {
+          MatrixMultiplyC44f(I->RotMatrix,rayView);
+        }
+      }
+      
+      ScenePrepareUnitContext(G,&context,ray_width,ray_height);
+      
+      /* 5. move the origin to the center of rotation */
+      MatrixTranslateC44f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
+      
+      if(Feedback(G,FB_Scene,FB_Debugging)) {
+        fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
+                I->Pos[0],I->Pos[1],I->Pos[2]);
+        fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
+                I->Origin[0],I->Origin[1],I->Origin[2]);
+        fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
+                I->RotMatrix[0],I->RotMatrix[1],I->RotMatrix[2]);
+      }
+      /* define the viewing volume */
+      
+      height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));     
+      width = height*aspRat;
+      
+      
+      OrthoBusyFast(G,0,20);
+      
+      {
+        int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
+        float pixel_scale_value = SettingGetGlobal_f(G,cSetting_ray_pixel_scale);
+        float fov=SettingGet(G,cSetting_field_of_view);
+        
+        if(pixel_scale_value<0) pixel_scale_value = 1.0F;
+        
+        if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
+        
+        pixel_scale_value *= ((float)tot_height)/I->Height;
+        
+        if(ortho) {
+          const float _1 = 1.0F;
+          RayPrepare(ray,-width,width,-height,height,
+                     I->FrontSafe,I->BackSafe,
+                     fov, I->Pos, 
+                     rayView,I->RotMatrix,aspRat,
+                     ray_width, ray_height, 
+                     pixel_scale_value, true,
+                     _1, _1, /* gcc 3.2.3 blows chunks if these are 1.0F */
+                     ((float)ray_height)/I->Height);
+          
+        } else {        
+          float back_ratio;
+          float back_height;
+          float back_width;
+          float pos;
+          float fov = SettingGet(G,cSetting_field_of_view);
+          pos = I->Pos[2];
+
+          if((-pos)<I->FrontSafe) {
+            pos = -I->FrontSafe;
+          }
+
+          back_ratio = -I->Back/pos;
+          back_height = back_ratio*height;
+          back_width = aspRat * back_height;
+          RayPrepare(ray,
+                     -back_width, back_width, 
+                     -back_height, back_height,
+                     I->FrontSafe,I->BackSafe,
+                     fov, I->Pos,
+                     rayView,I->RotMatrix,aspRat,
+                     ray_width, ray_height, 
+                     pixel_scale_value, false,
+                     height/back_height,
+                     I->FrontSafe/I->BackSafe,
+                     ((float)ray_height)/I->Height);
+        }
+      }
+      {
+        int grid_count = 0;
+        RenderInfo info;
+        UtilZeroMem(&info,sizeof(RenderInfo));
+        info.ray = ray;
+
+        while(ListIterate(I->Obj,rec,next)) {
+          grid_count++;
           if(rec->obj->fRender) {
             int obj_color = rec->obj->Color;
             float color[3];
@@ -5714,7 +5855,7 @@ void SceneRay(PyMOLGlobals *G,
             ColorGetEncoded(G,obj_color,color);
             RaySetContext(ray,rec->obj->Context);
             ray->fColor3fv(ray,color);
-
+            
             if(SettingGetIfDefined_i(G,rec->obj->Setting,cSetting_ray_interior_color,&icx)) {
               float icolor[3];
               if(icx!=-1) {
@@ -5730,127 +5871,186 @@ void SceneRay(PyMOLGlobals *G,
             } else {
               ray->fInteriorColor3fv(ray,color,true);
             }
-            info.state = ObjectGetCurrentState(rec->obj,false);
-            rec->obj->fRender(rec->obj,&info);
-          }
-        }
-    }
-
-    OrthoBusyFast(G,1,20);
-    
-    if(mode!=2) { /* don't show pixel count for tests */
-      if(!quiet) {
-        PRINTFB(G,FB_Ray,FB_Blather)
-          " Ray: tracing %dx%d = %d rays against %d primitives.\n",ray_width,ray_height,
-          ray_width*ray_height,RayGetNPrimitives(ray)
-          ENDFB(G);
-      }
-    }
-    switch(mode) {
-    case 0: /* mode 0 is built-in */
-      buffer_size = 4*ray_width*ray_height;
-      buffer=(GLvoid*)Alloc(char,buffer_size);
-      ErrChkPtr(G,buffer);
-      
-      RayRender(ray,buffer,timing,angle,antialias);
-      SceneApplyImageGamma(G,buffer,ray_width,ray_height);
-      
-      /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
-      
-      SceneInvalidateCopy(G,true);
-      
-      I->Image=Calloc(ImageType,1);
-      I->Image->data = (unsigned char*)buffer;
-      I->Image->size = buffer_size;
-      I->Image->width = ray_width;
-      I->Image->height = ray_height;
-      I->DirtyFlag=false;
-      I->CopyFlag = true;
-      I->CopyForced = true;
-      I->CopiedFromOpenGL = false;
-      I->MovieOwnsImageFlag = false;
-      break;
-      
-    case 1: /* mode 1 is povray */
-      charVLA=VLACalloc(char,100000); 
-      headerVLA=VLACalloc(char,2000);
-      RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,
-                   I->FrontSafe,I->BackSafe,fov,angle,antialias);
-      if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
-        strcpy(prefix,SettingGet_s(G,NULL,NULL,cSetting_batch_prefix));
-#ifndef _PYMOL_NOPY
-        if(PPovrayRender(G,headerVLA,charVLA,prefix,ray_width,
-                         ray_height,antialias)) {
-          strcat(prefix,".png");
-          SceneLoadPNG(G,prefix,false,0,false);
-          I->DirtyFlag=false;
-        }
-#endif
-        VLAFreeP(charVLA);
-        VLAFreeP(headerVLA);
-      } else { /* get_povray mode */
-        *charVLA_ptr=charVLA;
-        *headerVLA_ptr=headerVLA;
-      }
-      break;
-    case 2: /* mode 2 is for testing of geometries */
-      RayRenderTest(ray,ray_width,ray_height,I->FrontSafe,I->BackSafe,fov);
-      break;
-    case 3: /* mode 3 is for Jmol */
-      {
-        G3dPrimitive *jp = RayRenderG3d(ray,ray_width,ray_height,I->FrontSafe,I->BackSafe,fov,quiet);
-        if(0) {
-          int cnt = VLAGetSize(jp);
-          int a;
-          for(a=0;a<cnt;a++) {
-            switch(jp[a].op) {
-            case 1:
-              printf("g3d.fillSphereCentered(gray,%d,%d,%d,%d);\n",jp[a].r,jp[a].x1,jp[a].y1,jp[a].z1);
-              break;
-            case 2:
-              printf("triangle(%d,%d,%d,%d,%d,%d,%d,%d,%d);\n",
-                     jp[a].x1,jp[a].y1,jp[a].z1,
-                     jp[a].x2,jp[a].y2,jp[a].z2,
-                     jp[a].x3,jp[a].y3,jp[a].z3
-                     );
-              break;
-            case 3:
-              printf("g3d.fillCylinder(gray,gray,(byte)3,%d,%d,%d,%d,%d,%d,%d);\n",
-                     jp[a].r,
-                     jp[a].x1,jp[a].y1,jp[a].z1,
-                     jp[a].x2,jp[a].y2,jp[a].z2
-                     );          
-              break;
+            info.slot = slot;
+            if(grid.active) {
+              switch(grid.mode) {
+              case 1: /* one object in a single slot */
+                if(grid_count == slot) {
+                  info.state = ObjectGetCurrentState(rec->obj,false);
+                  rec->obj->fRender(rec->obj,&info);
+                }
+                break;
+              case 2: /* each state in a separate slot */
+                info.state = grid_count - 1;
+                break;
+              }
+            } else {
+              info.state = ObjectGetCurrentState(rec->obj,false);
+              rec->obj->fRender(rec->obj,&info);
             }
           }
         }
-        if(g3d) {
-          *g3d = jp;
-        } else {
-          VLAFreeP(jp);
+      }
+
+      OrthoBusyFast(G,1,20);
+    
+      if(mode!=2) { /* don't show pixel count for tests */
+        if(!quiet) {
+          PRINTFB(G,FB_Ray,FB_Blather)
+            " Ray: tracing %dx%d = %d rays against %d primitives.\n",ray_width,ray_height,
+            ray_width*ray_height,RayGetNPrimitives(ray)
+            ENDFB(G);
         }
       }
-      break;
-    case 4: /* VRML */
-      {
-        char *vla = VLACalloc(char,100000);
-        RayRenderVRML2(ray,ray_width,ray_height,&vla,
-               I->FrontSafe,I->BackSafe,fov,angle,I->Pos[2]);
-        *charVLA_ptr=vla;
+      switch(mode) {
+      case 0: /* mode 0 is built-in */
+        {
+          unsigned int buffer_size = 4*ray_width*ray_height;
+          unsigned int *buffer=(GLvoid*)Alloc(char,buffer_size);
+          unsigned int background;
+          ErrChkPtr(G,buffer);
+          
+          RayRender(ray,buffer,timing,angle,antialias,&background);
+          
+          /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
+          
+          if(!grid.active) {
+            I->Image=Calloc(ImageType,1);
+            I->Image->data = (unsigned char*)buffer;
+            I->Image->size = buffer_size;
+            I->Image->width = ray_width;
+            I->Image->height = ray_height;
+          } else {
+            if(!I->Image) { /* alloc on first pass */
+              I->Image=Calloc(ImageType,1);
+              if(I->Image) {
+                unsigned int tot_size = 4*tot_width*tot_height;
+                I->Image->data = (GLvoid*)Alloc(char,tot_size);
+                I->Image->size = tot_size;
+                I->Image->width = tot_width;
+                I->Image->height = tot_height;
+                { /* fill with background color */
+                  unsigned int i;
+                  unsigned int *ptr = (unsigned int*)I->Image->data;
+                  for(i=0;i<tot_size;i+=4) {
+                    *(ptr++) = background;
+                  }
+                }
+              }
+            }
+            /* merge in the latest rendering */
+            if(I->Image && I->Image->data) {
+              unsigned int i,j;
+              unsigned int *src = buffer;
+              unsigned int *dst = (unsigned int*)I->Image->data;
+              
+              dst += (ray_x + ray_y*tot_width);
+              
+              for(i=0;i<ray_height;i++) {
+                for(j=0;j<ray_width;j++) {
+                  *(dst++) = *(src++);
+                }
+                dst += (tot_width - ray_width);
+              }
+            }
+            FreeP(buffer);
+          }
+          I->DirtyFlag=false;
+          I->CopyFlag = true;
+          I->CopyForced = true;
+          I->CopiedFromOpenGL = false;
+          I->MovieOwnsImageFlag = false;
+        }
+        break;
+      
+      case 1: /* mode 1 is povray */
+        charVLA=VLACalloc(char,100000); 
+        headerVLA=VLACalloc(char,2000);
+        RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,
+                     I->FrontSafe,I->BackSafe,fov,angle,antialias);
+        if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
+          strcpy(prefix,SettingGet_s(G,NULL,NULL,cSetting_batch_prefix));
+#ifndef _PYMOL_NOPY
+          if(PPovrayRender(G,headerVLA,charVLA,prefix,ray_width,
+                           ray_height,antialias)) {
+            strcat(prefix,".png");
+            SceneLoadPNG(G,prefix,false,0,false);
+            I->DirtyFlag=false;
+          }
+#endif
+          VLAFreeP(charVLA);
+          VLAFreeP(headerVLA);
+        } else { /* get_povray mode */
+          *charVLA_ptr=charVLA;
+          *headerVLA_ptr=headerVLA;
+        }
+        break;
+      case 2: /* mode 2 is for testing of geometries */
+        RayRenderTest(ray,ray_width,ray_height,I->FrontSafe,I->BackSafe,fov);
+        break;
+      case 3: /* mode 3 is for Jmol */
+        {
+          G3dPrimitive *jp = RayRenderG3d(ray,ray_width,ray_height,I->FrontSafe,I->BackSafe,fov,quiet);
+          if(0) {
+            int cnt = VLAGetSize(jp);
+            int a;
+            for(a=0;a<cnt;a++) {
+              switch(jp[a].op) {
+              case 1:
+                printf("g3d.fillSphereCentered(gray,%d,%d,%d,%d);\n",jp[a].r,jp[a].x1,jp[a].y1,jp[a].z1);
+                break;
+              case 2:
+                printf("triangle(%d,%d,%d,%d,%d,%d,%d,%d,%d);\n",
+                       jp[a].x1,jp[a].y1,jp[a].z1,
+                       jp[a].x2,jp[a].y2,jp[a].z2,
+                       jp[a].x3,jp[a].y3,jp[a].z3
+                       );
+                break;
+              case 3:
+                printf("g3d.fillCylinder(gray,gray,(byte)3,%d,%d,%d,%d,%d,%d,%d);\n",
+                       jp[a].r,
+                       jp[a].x1,jp[a].y1,jp[a].z1,
+                       jp[a].x2,jp[a].y2,jp[a].z2
+                       );          
+                break;
+              }
+            }
+          }
+          if(g3d) {
+            *g3d = jp;
+          } else {
+            VLAFreeP(jp);
+          }
+        }
+        break;
+      case 4: /* VRML */
+        {
+          char *vla = VLACalloc(char,100000);
+          RayRenderVRML2(ray,ray_width,ray_height,&vla,
+                         I->FrontSafe,I->BackSafe,fov,angle,I->Pos[2]);
+          *charVLA_ptr=vla;
+        }
+        break;
+      case 5: /* mode 5 is OBJ MTL */
+        {
+          char *objVLA=VLACalloc(char,100000); 
+          char *mtlVLA=VLACalloc(char,1000);
+          RayRenderObjMtl(ray,ray_width,ray_height,&objVLA,&mtlVLA,
+                          I->FrontSafe,I->BackSafe,fov,angle,I->Pos[2]);
+          *headerVLA_ptr=objVLA;
+          *charVLA_ptr=mtlVLA;
+        }
+        break;
       }
-      break;
-    case 5: /* mode 5 is OBJ MTL */
-      {
-        char *objVLA=VLACalloc(char,100000); 
-        char *mtlVLA=VLACalloc(char,1000);
-        RayRenderObjMtl(ray,ray_width,ray_height,&objVLA,&mtlVLA,
-            I->FrontSafe,I->BackSafe,fov,angle,I->Pos[2]);
-        *headerVLA_ptr=objVLA;
-        *charVLA_ptr=mtlVLA;
-      }
-      break;
+      RayFree(ray);
     }
-    RayFree(ray);
+    if(grid.active)
+      GridSetRayViewport(&grid,0,&ray_x,&ray_y,&ray_width,&ray_height);
+    
+    if((mode==0)&&I->Image&&I->Image->data) {
+      SceneApplyImageGamma(G,(unsigned int*)I->Image->data,I->Image->width,I->Image->height);
+    }
+
     stereo_hand--;
     if((I->StereoMode==0)||(!stereo_hand))
       break;
@@ -6589,7 +6789,8 @@ static void SceneProgramLighting(PyMOLGlobals *G)
 /*========================================================================*/
 static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
                            float *normal,Picking **pickVLA,
-                           int pass,int fat, float width_scale,int slot)
+                           int pass,int fat, float width_scale,
+                           GridInfo *grid)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
@@ -6603,9 +6804,10 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.fog_end = I->FogEnd;
   info.pmv_matrix = I->PmvMatrix;
   info.front = I->FrontSafe;
-  info.slot = slot;
+  if(grid) info.slot = grid->slot;
   info.sampling = 1;
   info.alpha_cgo = I->AlphaCGO;
+  
 
   if(I->StereoMode) {
     float buffer;
@@ -6617,7 +6819,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
     buffer = fabs(I->Width*I->VertexScale*tan(cPI*stAng/180.0));
     info.stereo_front = I->FrontSafe + buffer;
   } else {
-     info.stereo_front = I->FrontSafe;
+    info.stereo_front = I->FrontSafe;
   }
   info.back = I->BackSafe;
   SceneGetViewNormal(G,info.view_normal);
@@ -6635,83 +6837,103 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
       info.sampling = 1;
   }
 
-  while(ListIterate(I->Obj,rec,next)) {
-
-    glPushMatrix();
-    if(fat)
-      glLineWidth(3.0);
-    if(rec->obj->fRender)
-      switch(rec->obj->Context) {
-      case 1: /* unit context */
-        {
+  {
+    int grid_count = 0;
+    while(ListIterate(I->Obj,rec,next)) {
+      grid_count++;
+      if(rec->obj->fRender) {
+        glPushMatrix();
+        if(fat)
+          glLineWidth(3.0);
+        switch(rec->obj->Context) {
+        case 1: /* unit context */
+          {
 #ifndef _PYMOL_OSX
-          /* workaround for MacOSX 10.4.3 */
-          glPushAttrib(GL_LIGHTING_BIT); 
+            /* workaround for MacOSX 10.4.3 */
+            glPushAttrib(GL_LIGHTING_BIT); 
 #endif
-          
-          glMatrixMode(GL_PROJECTION);
-          glPushMatrix();
-          glLoadIdentity();
-          glMatrixMode(GL_MODELVIEW);
-          glPushMatrix();
-          glLoadIdentity();
-          vv[0]=0.0;
-          vv[1]=0.0;
-          vv[2]=-1.0;
-          vv[3]=0.0;
-          glLightfv(GL_LIGHT0,GL_POSITION,vv);
-          glLightfv(GL_LIGHT1,GL_POSITION,vv);
-          
-          glOrtho(context->unit_left,
-                  context->unit_right,
-                  context->unit_top,
-                  context->unit_bottom,
-                  context->unit_front,
-                  context->unit_back);
-          
-          glNormal3f(0.0F,0.0F,1.0F);
-          info.state = ObjectGetCurrentState(rec->obj,false);
-          rec->obj->fRender(rec->obj,&info);
-          
-          glMatrixMode(GL_PROJECTION);
-          glPopMatrix();
-          glMatrixMode(GL_MODELVIEW);
-          glLoadIdentity();
+            
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            vv[0]=0.0;
+            vv[1]=0.0;
+            vv[2]=-1.0;
+            vv[3]=0.0;
+            glLightfv(GL_LIGHT0,GL_POSITION,vv);
+            glLightfv(GL_LIGHT1,GL_POSITION,vv);
+            
+            glOrtho(context->unit_left,
+                    context->unit_right,
+                    context->unit_top,
+                    context->unit_bottom,
+                    context->unit_front,
+                    context->unit_back);
+            
+            glNormal3f(0.0F,0.0F,1.0F);
+            info.state = ObjectGetCurrentState(rec->obj,false);
+            rec->obj->fRender(rec->obj,&info);
+            
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
 #ifndef _PYMOL_OSX
-          glPopAttrib();
+            glPopAttrib();
 #else  
-          /* workaround for MacOSX 10.4.3 */
-          /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-          SceneProgramLighting(G); /* an expensive workaround... */
-          if(pickVLA) {
-            glDisable(GL_FOG);
-            glDisable(GL_COLOR_MATERIAL);
-            glDisable(GL_LIGHTING);
-            glDisable(GL_DITHER);
-            glDisable(GL_BLEND);
-            glDisable(GL_LINE_SMOOTH);
-            glDisable(GL_POLYGON_SMOOTH);
-            if(G->Option->multisample)    
-              glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
-            glShadeModel(GL_FLAT);
-          }
-          /* END PROPRIETARY CODE SEGMENT */
+            /* workaround for MacOSX 10.4.3 */
+            /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+            SceneProgramLighting(G); /* an expensive workaround... */
+            if(pickVLA) {
+              glDisable(GL_FOG);
+              glDisable(GL_COLOR_MATERIAL);
+              glDisable(GL_LIGHTING);
+              glDisable(GL_DITHER);
+              glDisable(GL_BLEND);
+              glDisable(GL_LINE_SMOOTH);
+              glDisable(GL_POLYGON_SMOOTH);
+              if(G->Option->multisample)    
+                glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
+              glShadeModel(GL_FLAT);
+            }
+            /* END PROPRIETARY CODE SEGMENT */
 #endif
-          glPopMatrix();
+            glPopMatrix();
+          }
+          break;
+        case 2:
+          break;
+        case 0: /* context/grid 0 is all slots */
+        default:
+          if(grid && grid->active) {
+            switch(grid->mode) {
+            case 1: /* one object in a single slot */
+              if(grid_count == grid->slot) {
+                if(normal) 
+                  glNormal3fv(normal);
+                info.state = ObjectGetCurrentState(rec->obj,false);
+                rec->obj->fRender(rec->obj,&info);
+              }
+              break;
+            case 2: /* each state in a separate slot */
+              info.state = grid_count - 1;
+              break;
+              break;  
+            }
+          } else {
+            if(normal) 
+              glNormal3fv(normal);
+            info.state = ObjectGetCurrentState(rec->obj,false);
+            rec->obj->fRender(rec->obj,&info);
+          }
+          break;
         }
-        break;
-      case 2:
-        break;
-      case 0: /* context/grid 0 is all slots */
-      default:
-        if(normal) 
-          glNormal3fv(normal);
-        info.state = ObjectGetCurrentState(rec->obj,false);
-        rec->obj->fRender(rec->obj,&info);
-        break;          
+        glPopMatrix();
       }
-    
-    glPopMatrix();
+    }
   }
 
   if(info.alpha_cgo) { 
@@ -6762,14 +6984,35 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
   GLenum render_buffer;
   SceneUnitContext context;
   float width_scale = 0.0F;
-  int first_grid_slot=0, last_grid_slot=0;
   int stereo_mode = I->StereoMode;
+  GridInfo grid;
+  int grid_mode = SettingGetGlobal_i(G,cSetting_grid_mode);
 
   PRINTFD(G,FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     (void*)pick,x,y,(void*)smp
     ENDFD;
 
+  UtilZeroMem(&grid,sizeof(grid));
+  if(grid_mode) {
+    int grid_size = 0;
+    if(!grid_size) {
+      switch(grid_mode) {
+      case 1:
+        {
+          ObjRec *rec = NULL;
+          while(ListIterate(I->Obj,rec,next)) {
+            grid_size++;
+          }
+        }
+        break;
+      }
+    }
+    GridUpdate(&grid, aspRat, grid_mode, grid_size);
+    if(grid.active) 
+      aspRat *= grid.asp_adjust;
+  }
+  
   SceneUpdateAnimation(G);
 
   if(SceneMustDrawBoth(G)) {
@@ -7068,8 +7311,22 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         pickVLA=VLACalloc(Picking,5000);
         pickVLA[0].src.index = 0;
         pickVLA[0].src.bond = 0;
-          
-        SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);      
+
+        if(grid.active)
+          GridGetGLViewport(&grid);
+
+        {
+          int slot;
+          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+            
+            if(slot) { 
+              GridSetGLViewport(&grid,slot);
+            }
+            
+            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
+          }
+          GridSetGLViewport(&grid,0);
+        }
           
         if(debug_pick) {
           PyMOL_SwapBuffers(G->PyMOL);
@@ -7083,7 +7340,17 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         pickVLA[0].src.index = 0;
         pickVLA[0].src.bond = 1;
           
-        SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);
+        {
+          int slot;
+          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+            if(slot) { 
+              GridSetGLViewport(&grid,slot);
+            }
+            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
+          }
+          GridSetGLViewport(&grid,0);
+        }
+
           
         if(debug_pick) {
           PyMOL_SwapBuffers(G->PyMOL);
@@ -7125,7 +7392,19 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         pickVLA[0].src.index = 0;
         pickVLA[0].src.bond = 0; /* this is just a flag for first pass */
         
-        SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);
+        if(grid.active)
+          GridGetGLViewport(&grid);
+            
+        {
+          int slot;
+          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+            if(slot) { 
+              GridSetGLViewport(&grid,slot);
+            }
+            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
+          }
+          GridSetGLViewport(&grid,0);
+        }
         
         lowBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
         
@@ -7134,7 +7413,16 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         pickVLA[0].src.index = 0;
         pickVLA[0].src.bond = 1; /* this is just a flag for second pass */
         
-        SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);
+        {
+          int slot;
+          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+            if(slot) { 
+              GridSetGLViewport(&grid,slot);
+            }
+            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
+          }
+          GridSetGLViewport(&grid,0);
+        }
         
         highBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
         
@@ -7180,7 +7468,6 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
     } else {
 
-      
       /* STANDARD RENDERING */
 
       ButModeCaptionReset(G); /* reset the frame caption if any */
@@ -7194,7 +7481,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
       start_time = UtilGetSeconds(G);
       if(must_render_stereo) {
-        /*stereo*/
+        /* STEREO RENDERING (real or double-pumped) */
 
         PRINTFD(G,FB_Scene)
           " SceneRender: left hand stereo...\n"
@@ -7242,46 +7529,63 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         }
 
         /* prepare the stereo transformation matrix */
-
+        
         glPushMatrix(); /* 1 */
         ScenePrepareMatrix(G,stereo_as_mono_matrix ? 0 : 1);
+        
+        if(grid.active)
+          GridGetGLViewport(&grid);
 
-        /* render picked atoms */
-
-        glPushMatrix(); /* 2 */
-        EditorRender(G,curState);
-        glPopMatrix(); /* 1 */
-
-        /* render the debugging CGO */
-
-        glPushMatrix();  /* 2 */
-        glNormal3fv(normal);
-        CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
-        glPopMatrix();  /* 1 */
-
-        /* render all objects */
-
-        glPushMatrix(); /* 2 */
-
-        for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
-          SceneRenderAll(G,&context,normal,NULL,pass,false,width_scale,0);
+        {
+          int slot;
+          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+            
+            if(slot) { 
+              GridSetGLViewport(&grid,slot);
+            }
+            
+            /* render picked atoms */
+            
+            glPushMatrix(); /* 2 */
+            EditorRender(G,curState);
+            glPopMatrix(); /* 1 */
+            
+            /* render the debugging CGO */
+            
+            glPushMatrix();  /* 2 */
+            glNormal3fv(normal);
+            CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
+            glPopMatrix();  /* 1 */
+            
+            /* render all objects */
+            
+            glPushMatrix(); /* 2 */
+            
+            for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
+              SceneRenderAll(G,&context,normal,NULL,pass,false,width_scale,&grid);
+            }
+            glPopMatrix(); /* 1 */
+            
+            /* render selections */
+            glPushMatrix(); /* 2 */
+            glNormal3fv(normal);
+            ExecutiveRenderSelections(G,curState);
+            glPopMatrix(); /* 1 */
+            
+          }
         }
-        glPopMatrix(); /* 1 */
-
-        /* render selections */
-        glPushMatrix(); /* 2 */
-        glNormal3fv(normal);
-        ExecutiveRenderSelections(G,curState);
-        glPopMatrix(); /* 1 */
+        
+        if(grid.active)
+          GridSetGLViewport(&grid,0);
         
         glPopMatrix(); /* 0 */
 
         /* RIGHT HAND STEREO */
-
+        
         PRINTFD(G,FB_Scene)
           " SceneRender: right hand stereo...\n"
           ENDFD;
-
+        
         if(Feedback(G,FB_OpenGL,FB_Debugging))
           PyMOLCheckOpenGLErr("before stereo glViewport 2");
 
@@ -7321,39 +7625,58 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         }
 
         /* prepare the stereo transformation matrix */
-
+        
         glPushMatrix(); /* 1 */
         ScenePrepareMatrix(G,stereo_as_mono_matrix ? 0 : 2);
         glClear(GL_DEPTH_BUFFER_BIT) ;
 
-        /* render picked atoms */
+        if(grid.active)
+          GridGetGLViewport(&grid);
+            
+        {
+          int slot;
 
-        glPushMatrix(); /* 2 */
-        EditorRender(G,curState);
-        glPopMatrix(); /* 1 */
+          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+            
+            if(slot) { 
+              GridSetGLViewport(&grid,slot);
+            }
 
-        /* render the debugging CGO */
+            /* render picked atoms */
+            
+            glPushMatrix(); /* 2 */
+            EditorRender(G,curState);
+            glPopMatrix(); /* 1 */
+            
+            /* render the debugging CGO */
+            
+            glPushMatrix();  /* 2 */
+            glNormal3fv(normal);
+            CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
+            glPopMatrix();  /* 1 */
+            
+            /* render all objects */
+            
+            glPushMatrix(); /* 2 */
+            for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
+              SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale,&grid);
+            }        
+            glPopMatrix(); /* 1 */
+            
+            /* render selections */
+            glPushMatrix(); /* 2 */
+            glNormal3fv(normal);
+            ExecutiveRenderSelections(G,curState);
+            glPopMatrix(); /* 1 */
+            
+          }
+        }
 
-        glPushMatrix();  /* 2 */
-        glNormal3fv(normal);
-        CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
-        glPopMatrix();  /* 1 */
-
-        /* render all objects */
-
-        glPushMatrix(); /* 2 */
-        for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
-          SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale,0);
-        }        
-        glPopMatrix(); /* 1 */
-
-        /* render selections */
-        glPushMatrix(); /* 2 */
-        glNormal3fv(normal);
-        ExecutiveRenderSelections(G,curState);
-        glPopMatrix(); /* 1 */
-
+        if(grid.active)
+          GridSetGLViewport(&grid,0);
+          
         glPopMatrix(); /* 0 */
+            
 
         /* restore draw buffer */
 
@@ -7381,81 +7704,66 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
       } else {
 
-        /* standard monoscopic rendering... */
-        int slot;
-        GLint cur_view[4];
+        /* MONOSCOPING RENDERING (not double-pumped) */
+        if(grid.active)
+          GridGetGLViewport(&grid);
         
-        if(first_grid_slot<0) {
-          glGetIntegerv(GL_VIEWPORT,cur_view);
-        }
-
         if(Feedback(G,FB_OpenGL,FB_Debugging))
           PyMOLCheckOpenGLErr("Before mono rendering");
-        
-        for(slot=first_grid_slot;slot<=last_grid_slot;slot++) {
-          
-          if(slot<0) { /* slot numbers are always negative */
-            /* if we are in grid mode, then prepare the grid slot viewport */
+
+        {
+          int slot;
+          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
             
-            int abs_grid_slot = slot - first_grid_slot;
-            int n_grid_col = 4;
-            int n_grid_row = 4;
-            int grid_col = abs_grid_slot % n_grid_col;
-            int grid_row = abs_grid_slot / n_grid_row;
-            int vx = (grid_col*cur_view[2])/n_grid_col;
-            int vy = (grid_row*cur_view[3])/n_grid_row;
-            int vw = ((grid_col+1)*cur_view[2])/n_grid_col - vx;
-            int vh = ((grid_row+1)*cur_view[3])/n_grid_row - vy;
-            vx += cur_view[0];
-            vy += cur_view[1];
-            glViewport(vx,vy,vw,vh);
-          }
+            if(slot) { 
+              GridSetGLViewport(&grid,slot);
+            }
             
-          /* mono rendering */
-          
-          PRINTFD(G,FB_Scene)
-            " SceneRender: rendering DebugCGO...\n"
-            ENDFD;
-          
-          glPushMatrix();
-          glNormal3fv(normal);
-          CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
-          glPopMatrix();
-          
-          glPushMatrix();
-          PRINTFD(G,FB_Scene)
-            " SceneRender: rendering picked atoms...\n"
-            ENDFD;
-          EditorRender(G,curState);
-          glPopMatrix();
-          
-          PRINTFD(G,FB_Scene)
-            " SceneRender: rendering opaque and antialiased...\n"
-            ENDFD;
-          
-          for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
-            SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale, slot);
+            /* mono rendering */
+            
+            PRINTFD(G,FB_Scene)
+              " SceneRender: rendering DebugCGO...\n"
+              ENDFD;
+            
+            glPushMatrix();
+            glNormal3fv(normal);
+            CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
+            glPopMatrix();
+            
+            glPushMatrix();
+            PRINTFD(G,FB_Scene)
+              " SceneRender: rendering picked atoms...\n"
+              ENDFD;
+            EditorRender(G,curState);
+            glPopMatrix();
+            
+            PRINTFD(G,FB_Scene)
+              " SceneRender: rendering opaque and antialiased...\n"
+              ENDFD;
+            
+            for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
+              SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale, &grid);
+            }
+            
+            glPushMatrix();
+            PRINTFD(G,FB_Scene)
+              " SceneRender: rendering selections...\n"
+              ENDFD;
+            
+            glNormal3fv(normal);
+            ExecutiveRenderSelections(G,curState);
+            
+            PRINTFD(G,FB_Scene)
+              " SceneRender: rendering transparent objects...\n"
+              ENDFD;
+            
+            /* render transparent */
+            SceneRenderAll(G,&context,normal,NULL,-1,false, width_scale, &grid);
+            glPopMatrix();
           }
-          
-          glPushMatrix();
-          PRINTFD(G,FB_Scene)
-            " SceneRender: rendering selections...\n"
-            ENDFD;
-          
-          glNormal3fv(normal);
-          ExecutiveRenderSelections(G,curState);
-          
-          PRINTFD(G,FB_Scene)
-            " SceneRender: rendering transparent objects...\n"
-            ENDFD;
-          
-          /* render transparent */
-          SceneRenderAll(G,&context,normal,NULL,-1,false, width_scale, slot);
-          glPopMatrix();
-          
         }
-        if(first_grid_slot<0) {
-          glViewport(cur_view[0],cur_view[1],cur_view[2],cur_view[3]);
+        if(grid.active) {
+          GridSetGLViewport(&grid,0);
         }
       if(Feedback(G,FB_OpenGL,FB_Debugging))
         PyMOLCheckOpenGLErr("during mono rendering");

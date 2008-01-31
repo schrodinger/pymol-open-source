@@ -4401,13 +4401,12 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
 int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int order)
 {
   int a0,a1;
-  int offset=0;
+  int cnt = 0;
   BondType *b0;
   int both;
   int s;
   int a;
 
-  offset=0;
   if(I->Bond) {
     b0=I->Bond;
     for(a=0;a<I->NBond;a++) {
@@ -4432,6 +4431,7 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int
       }
       
       if(both==2) {
+        cnt++;
         switch(mode) {
         case 0: /* cycle */
           b0->order++;
@@ -4446,17 +4446,20 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int
           I->AtomInfo[a1].chemFlag=false;
           break;
         }
-        ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds,-1);
-        ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds,-1);
-        ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds,-1);
-        ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds,-1);
-        ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds,-1);
-        ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds,-1);
       }
       b0++;
     }
+    if(cnt) {
+      ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds,-1);
+    }
   }
-  return(-offset);
+
+  return(cnt);
 }
 /*========================================================================*/
 int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele0,int sele1)

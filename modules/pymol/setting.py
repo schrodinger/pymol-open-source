@@ -609,6 +609,10 @@ if __name__=='pymol.setting':
         ellipsoid_transparency             = 571
         movie_rock                         = 572
         cache_mode                         = 573
+        dash_color                         = 574
+        angle_color                        = 575
+        dihedral_color                     = 576        
+        grid_mode                          = 577
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
