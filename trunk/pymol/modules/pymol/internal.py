@@ -9,6 +9,7 @@ import thread
 import re
 import viewing
 import time
+from operator import add
 
 from chempy import io
 
@@ -17,12 +18,18 @@ from cmd import DEFAULT_ERROR, loadable, _load2str, Shortcut, \
 
 # cache management:
 
-def _cache_purge(_self=cmd):
+def _cache_purge(max_size, _self=cmd):
     _pymol = _self._pymol
-    max_size = _self.get_setting_int("cache_max")
-    while len(_pymol):
-        pass
-    
+    cur_size = reduce(add,map(lambda x:x[0],_pymol._cache))
+    now = time.time()
+    new_cache = map(lambda x:[(now-x[5])/x[4],x], _pymol._cache)
+    new_cache.sort()
+    new_cache = map(lambda x:x[1],new_cache)
+    while (cur_size>max_size) and (len(new_cache)>1):
+        entry = new_cache.pop()
+        cur_size = cur_size - entry[0]
+    _pymol._cache = new_cache
+    _pymol._cache_memory = cur_size
     
 def _cache_get(target, hash_size = None, _self=cmd):
     try:
@@ -65,6 +72,10 @@ def _cache_set(new_entry, _self=cmd):
         if not found:
             _pymol._cache.append(new_entry)
             _pymol._cache_memory = _pymol._cache_memory + new_entry[0]
+            max_size = _self.get_setting_int("cache_max")
+            if _pymol._cache_memory > max_size:
+                _cache_purge(max_size, _self)
+            
     except:
         traceback.print_exc()
         
