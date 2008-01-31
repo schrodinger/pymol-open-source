@@ -661,11 +661,11 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   int show_progress = SettingGetGlobal_b(G,cSetting_show_progress);
   int defer_updates = SettingGetGlobal_b(G,cSetting_defer_updates);
   int suspend_updates = SettingGetGlobal_b(G,cSetting_suspend_updates);
-
+  int cache_max =  SettingGetGlobal_i(G,cSetting_cache_max);
   float no_idle = SettingGetGlobal_f(G,cSetting_no_idle);
   float slow_idle = SettingGetGlobal_f(G,cSetting_fast_idle);
   float fast_idle = SettingGetGlobal_f(G,cSetting_slow_idle);
-
+  
   register CSetting *I=G->Setting;
   if(list)
     if(PyList_Check(list)) 
@@ -687,6 +687,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_b(I,cSetting_use_display_lists, use_display_lists);
   SettingSet_i(I,cSetting_max_threads, max_threads);
   SettingSet_i(I,cSetting_nvidia_bugs, nvidia_bugs);
+  SettingSet_i(I,cSetting_cache_max, cache_max);
   
   SettingSet_i(I,cSetting_stereo_mode, stereo_mode);
   SettingSet_b(I,cSetting_stereo_double_pump_mono,stereo_double_pump_mono);
