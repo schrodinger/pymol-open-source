@@ -613,6 +613,7 @@ if __name__=='pymol.setting':
         angle_color                        = 575
         dihedral_color                     = 576        
         grid_mode                          = 577
+        cache_max                          = 578
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
