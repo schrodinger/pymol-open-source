@@ -3699,15 +3699,15 @@ static PyObject *CmdDihedral(PyObject *self, PyObject *args)
   return(Py_BuildValue("f",result));
 }
 
-
 static PyObject *CmdBond(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   char *str1,*str2;
   int order,mode;
+  int quiet;
   OrthoLineType s1,s2;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"Ossii",&self,&str1,&str2,&order,&mode);
+  ok = PyArg_ParseTuple(args,"Ossiii",&self,&str1,&str2,&order,&mode,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -3719,7 +3719,7 @@ static PyObject *CmdBond(PyObject *self, PyObject *args)
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0));
     if(ok) 
-      ExecutiveBond(G,s1,s2,order,mode); /* TODO STATUS */
+      ok = ExecutiveBond(G,s1,s2,order,mode,quiet); 
     SelectorFreeTmp(G,s1);
     SelectorFreeTmp(G,s2);
     APIExit(G);

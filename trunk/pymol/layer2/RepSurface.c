@@ -1190,6 +1190,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   float dist,minDist;
   float cutoff;
   int inclH;
+  int inclInvis;
   int cullByFlag = false;
   int surface_mode;
   int surface_color;
@@ -1223,7 +1224,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   ramp_above  = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_ramp_above_mode);
   surface_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_surface_color);
   cullByFlag = (surface_mode==cRepSurface_by_flags);
-  inclH = !(surface_mode==cRepSurface_heavy_atoms);
+  inclH = !((surface_mode==cRepSurface_heavy_atoms)||(surface_mode==cRepSurface_vis_heavy_only));
+  inclInvis = !((surface_mode==cRepSurface_vis_only)||(surface_mode==cRepSurface_vis_heavy_only));
   probe_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   I->proximity = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
   carve_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
@@ -1292,10 +1294,10 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
       int *ap = present;
       for(a=0;a<cs->NIndex;a++) {
         ai1 = obj->AtomInfo + cs->IdxToAtm[a];
-        if(ai1->visRep[cRepSurface]&&
-           (inclH||(!ai1->hydrogen))&&
-           ((!cullByFlag)||
-            (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
+        if(ai1->visRep[cRepSurface] &&
+           (inclH||(!ai1->hydrogen)) &&
+           ((!cullByFlag) || (!(ai1->flags & 
+                                (cAtomFlag_ignore|cAtomFlag_exfoliate)))))
           *ap = 2; 
         else 
           *ap = 0;
@@ -1306,12 +1308,13 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
     map=MapNewFlagged(G,2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL,present);
     MapSetupExpress(map);
 
-    {
+    if(inclInvis) {
+      /* add in nearby invisibles */
       float probe_radiusX2 = probe_radius*2;    
       for(a=0;a<cs->NIndex;a++)
         if(!present[a]) {
           ai1 = obj->AtomInfo+cs->IdxToAtm[a];
-          if((!cullByFlag)||!(ai1->flags&cAtomFlag_ignore)) {
+          if((!cullByFlag) || !(ai1->flags&cAtomFlag_ignore)) {
             v0 = cs->Coord+3*a;
             i=*(MapLocusEStart(map,v0));
             if(i) {
@@ -1353,9 +1356,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
           j=map->EList[i++];
           while(j>=0) {
             ai2 = obj->AtomInfo + cs->IdxToAtm[j];
-            if((inclH||(!ai2->hydrogen))&&
-               ((!cullByFlag)||
-                (!(ai2->flags&cAtomFlag_ignore)))) {
+            if((inclH||(!ai2->hydrogen)) &&
+               ((!cullByFlag) || (!(ai2->flags&cAtomFlag_ignore)))) {
               dist = (float)diff3f(v0,cs->Coord+j*3)-ai2->vdw;
               if(dist<minDist) {
                 i0=j;
@@ -1391,10 +1393,10 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
             *vi = 1;
           else {
             ai2 = obj->AtomInfo+cs->IdxToAtm[i0];                
-            if(ai2->visRep[cRepSurface]&&
-               (inclH||(!ai2->hydrogen))&&
-               ((!cullByFlag)||
-                (!(ai2->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
+            if(ai2->visRep[cRepSurface] &&
+               (inclH||(!ai2->hydrogen)) &&
+               ((!cullByFlag)||(!(ai2->flags & 
+                                  (cAtomFlag_ignore|cAtomFlag_exfoliate)))))
               *vi = 1;
             else
               *vi = 0;
@@ -2381,7 +2383,8 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   {
     int surface_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
     int cullByFlag = (surface_mode==cRepSurface_by_flags);
-    int inclH = !(surface_mode==cRepSurface_heavy_atoms);
+    int inclH = !((surface_mode==cRepSurface_heavy_atoms)||(surface_mode==cRepSurface_vis_heavy_only));
+    int inclInvis = !((surface_mode==cRepSurface_vis_only)||(surface_mode==cRepSurface_vis_heavy_only));
     int visFlag = false;
     
     if(obj->RepVisCache[cRepSurface]) {
@@ -2390,10 +2393,10 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       register int a,cs_NIndex = cs->NIndex;
       for(a=0;a<cs_NIndex;a++) {
         register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
-        if(ai1->visRep[cRepSurface]&&
-           (inclH||(!ai1->hydrogen))&&
-           ((!cullByFlag)||
-            (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore))))) {
+        if(ai1->visRep[cRepSurface] &&
+           (inclH||(!ai1->hydrogen)) &&
+           ((!cullByFlag) || (!(ai1->flags&
+                                (cAtomFlag_exfoliate|cAtomFlag_ignore))))) {
           visFlag=true;
           break;
         }
@@ -2520,9 +2523,9 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
       register int a,cs_NIndex = cs->NIndex;
       for(a=0;a<cs_NIndex;a++) {
         register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
-        if(ai1->visRep[cRepSurface]&&
-           ((!cullByFlag)||
-            (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore)))))
+        if(ai1->visRep[cRepSurface] &&
+           ((!cullByFlag) || (!(ai1->flags & 
+                                (cAtomFlag_exfoliate|cAtomFlag_ignore)))))
           surface_flag=true;
         else {
           I->allVisibleFlag=false;
@@ -2584,10 +2587,10 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
           register int a,cs_NIndex = cs->NIndex;
           for(a=0;a<cs_NIndex;a++) {
             register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
-            if(ai1->visRep[cRepSurface]&&
-               (inclH||(!ai1->hydrogen))&&
-               ((!cullByFlag)||
-                (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
+            if(ai1->visRep[cRepSurface] &&
+               (inclH||(!ai1->hydrogen)) &&
+               ((!cullByFlag) || (!(ai1->flags & 
+                                    (cAtomFlag_ignore|cAtomFlag_exfoliate)))))
               *ap = 2; 
             else 
               *ap = 0;
@@ -2598,15 +2601,14 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
         map=MapNewFlagged(G,2*I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL,present_vla);
         MapSetupExpress(map);
       
-        {
+        if(inclInvis) {
+          /* then add in the nearby atoms which are not surfaced and not ignored */
           float probe_radiusX2 = probe_radius*2;
           int a;
           for(a=0;a<cs->NIndex;a++)
-            /* then add in the nearby atoms which are not surfaced and not ignored */
-
             if(!present_vla[a]) {
               AtomInfoType *ai1 = obj->AtomInfo+cs->IdxToAtm[a];
-              if((!cullByFlag)||!(ai1->flags&cAtomFlag_ignore)) {
+              if((!cullByFlag) || !(ai1->flags&cAtomFlag_ignore)) {
                 float *v0 = cs->Coord+3*a;
                 int i=*(MapLocusEStart(map,v0));
                 if(optimize) {

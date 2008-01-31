@@ -57,6 +57,7 @@ static void RepAngleRender(RepAngle *I,RenderInfo *info)
   int c=I->N;
   float *vc;
   int round_ends;
+  int color = SettingGet_color(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_angle_color);
   I->linewidth = SettingGet_f(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_width);
   I->radius = SettingGet_f(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_radius);
   round_ends = SettingGet_b(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_round_ends);
@@ -71,7 +72,9 @@ static void RepAngleRender(RepAngle *I,RenderInfo *info)
       radius = I->radius;
     }
 
-    vc = ColorGet(G,I->Obj->Color);
+    if(color<0)
+      color = I->Obj->Color;
+    vc = ColorGet(G,color);
 	 v=I->V;
 	 c=I->N;
 	 
@@ -96,6 +99,8 @@ static void RepAngleRender(RepAngle *I,RenderInfo *info)
       } else {
         glLineWidth(I->linewidth);
       }
+      if(color>=0)
+        glColor3fv(ColorGet(G,color));
 
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {

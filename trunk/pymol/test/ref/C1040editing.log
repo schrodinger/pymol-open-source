@@ -66,14 +66,14 @@ PyMOL>dele all
 PyMOL>load dat/small01.mol
  ExecutiveLoad: "dat/small01.mol" loaded as "small01", through state 1.
 PyMOL>unbond id 1,id 2
- RemoveBond: 1 bonds removed from model "small01".
+ Unbond: 1 bonds removed from model "small01".
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 38 atoms
 PyMOL>remove hydro
  Remove: eliminated 22 atoms in model "small01".
 PyMOL>bond id 1,id 2
- AddBond: 1 bonds added to model "small01".
+ Bond: 1 bonds added to model "small01".
 PyMOL>h_add
 PyMOL>count_atoms
  count_atoms: 36 atoms
@@ -95,7 +95,7 @@ PyMOL>count_atoms
  count_atoms: 32 atoms
 PyMOL>remove_picked
 PyMOL>bond id 6,id 10,2
- AddBond: 1 bonds added to model "small01".
+ Bond: 1 bonds added to model "small01".
 PyMOL>h_add
 PyMOL>set valence=0.05
  Setting: valence set to on.

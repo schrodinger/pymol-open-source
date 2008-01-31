@@ -195,6 +195,7 @@ from editing import \
       undo,               \
       unpick,             \
       update,             \
+      valence,            \
       vdw_fit 
 
 matrix_transfer = matrix_copy # legacy

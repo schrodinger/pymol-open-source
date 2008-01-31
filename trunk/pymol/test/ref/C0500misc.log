@@ -95,13 +95,13 @@ PyMOL>dist tst
 PyMOL>dist tst2 = (pk1),(pk2)
  Executive: object "tst2" created.
 PyMOL>bond
- AddBond: 1 bonds added to model "pept".
+ Bond: 1 bonds added to model "pept".
 PyMOL>unbond
- RemoveBond: 1 bonds removed from model "pept".
+ Unbond: 1 bonds removed from model "pept".
 PyMOL>bond (pk1),(pk2),2
- AddBond: 1 bonds added to model "pept".
+ Bond: 1 bonds added to model "pept".
 PyMOL>unbond (pk1),(pk2)
- RemoveBond: 1 bonds removed from model "pept".
+ Unbond: 1 bonds removed from model "pept".
 PyMOL>copy cpy=pept
  Executive: object "cpy" created.
  Executive: object cpy created.

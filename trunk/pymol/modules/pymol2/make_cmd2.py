@@ -261,6 +261,7 @@ api_list = [
     'unset',
     'unset_bond',
     'update',
+    'valence',
     'vdw_fit',
     'view',
     'viewport',

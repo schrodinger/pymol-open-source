@@ -172,7 +172,7 @@ int  ExecutiveDist(PyMOLGlobals *G,float *result,
                    char *nam,char *s1,char *s2,int mode,
                    float cutoff,int labels,int quiet,
                    int reset,int state,int zoom);
-void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add);
+int ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int mode,int quiet);
 int ExecutiveVdwFit(PyMOLGlobals *G,char *s1,int state1,char *s2,int state2,float buffer, int quiet);
 int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet,PyObject *space);
 int ExecutiveIterateList(PyMOLGlobals *G,char *s1,PyObject *list,int read_only,int quiet,PyObject *space);

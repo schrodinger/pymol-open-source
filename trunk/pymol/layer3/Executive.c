@@ -7582,8 +7582,9 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
   return(ok);
 }
 /*========================================================================*/
-void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add)
+int ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int mode,int quiet)
 {
+  int ok=true;
   int sele1,sele2;
   int cnt;
   register CExecutive *I=G->Executive;
@@ -7597,48 +7598,82 @@ void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add)
     ObjectMolecule *obj1 = SelectorGetSingleObjectMolecule(G,sele1);
     ObjectMolecule *obj2 = SelectorGetSingleObjectMolecule(G,sele2);
     if((!obj1)||(!obj2)||(obj1!=obj2)) {
-      PRINTFB(G,FB_Editor,FB_Warnings)
-        "Editor-Warning: bonds cannot be created between objects, only within.\n"
-        ENDFB(G);
+      if((!quiet)&&(mode==1)) {
+        PRINTFB(G,FB_Editor,FB_Warnings)
+          "Editor-Warning: bonds cannot be created between objects, only within.\n"
+          ENDFB(G);
+      }
     }
     while(ListIterate(I->Spec,rec,next)) {
-      if(rec->type==cExecObject)	{
-        if(rec->obj->type==cObjectMolecule)
-          {
-            if(add==1) {
-              cnt = ObjectMoleculeAddBond((ObjectMolecule*)rec->obj,sele1,sele2,order);
-              if(cnt) {
+      if(rec->type==cExecObject) {
+        if(rec->obj->type==cObjectMolecule) {
+          switch(mode) {
+          case 1: /* add */
+            cnt = ObjectMoleculeAddBond((ObjectMolecule*)rec->obj,sele1,sele2,order);
+            if(cnt) {
+              if(!quiet) {
                 PRINTFB(G,FB_Editor,FB_Actions)
-                  " AddBond: %d bonds added to model \"%s\".\n",cnt,rec->obj->Name 
-                  ENDFB(G);
-                flag=true;
-              }
-            } else if(add==2) {
-              cnt = ObjectMoleculeAdjustBonds((ObjectMolecule*)rec->obj,sele1,sele2,1,order);                    
-            } else {
-              cnt = ObjectMoleculeRemoveBonds((ObjectMolecule*)rec->obj,sele1,sele2);
-              if(cnt) {
-                PRINTFB(G,FB_Editor,FB_Actions)
-                  " RemoveBond: %d bonds removed from model \"%s\".\n",
-                  cnt,rec->obj->Name 
+                  " Bond: %d bonds added to model \"%s\".\n",cnt,rec->obj->Name 
                   ENDFB(G);
                 flag=true;
               }
             }
+            break;
+          case 2: /* adjust */
+            cnt = ObjectMoleculeAdjustBonds((ObjectMolecule*)rec->obj,sele1,sele2,1,order);                    
+            if(cnt) {
+              if(!quiet) {
+                PRINTFB(G,FB_Editor,FB_Actions)
+                  " Valence: %d bond valences adjusted in model \"%s\".\n",cnt,rec->obj->Name 
+                  ENDFB(G);
+                flag=true;
+              }
+            }
+            break;
+          case 0: /* remove */
+          default: 
+            cnt = ObjectMoleculeRemoveBonds((ObjectMolecule*)rec->obj,sele1,sele2);
+            if(cnt) {
+              if(!quiet) {
+                PRINTFB(G,FB_Editor,FB_Actions)
+                  " Unbond: %d bonds removed from model \"%s\".\n",
+                  cnt,rec->obj->Name 
+                  ENDFB(G);
+              }
+              flag=true;
+            }
           }
+        }
       }
     }
     if(!flag) {
-      if(add) 
-        ErrMessage(G,"AddBond","no bonds added.");
-      else
-        ErrMessage(G,"RemoveBond","no bonds removed.");          
+      if(!quiet) {
+        switch(mode) {
+        case 1:
+          PRINTFB(G,FB_Editor,FB_Warnings) 
+            "Bond-Warning: no bonds added."
+            ENDFB(G);
+          break;
+        case 2:
+          PRINTFB(G,FB_Editor,FB_Warnings) 
+            "Valence-Warning: no bond valences changed."
+            ENDFB(G);
+          break;
+        case 0:
+        default:
+          PRINTFB(G,FB_Editor,FB_Warnings) 
+            "Unbond-Warning: no bonds removed."
+            ENDFB(G);
+          break;
+        }
+      }
     }
   } else if(sele1<0) {
-    ErrMessage(G,"ExecutiveBond","The first selection contains no atoms.");
+    ok=ErrMessage(G,"ExecutiveBond","The first selection contains no atoms.");
   } else if(sele2<0) {
-    ErrMessage(G,"ExecutiveBond","The second selection contains no atoms.");
+    ok=ErrMessage(G,"ExecutiveBond","The second selection contains no atoms.");
   }
+  return ok;
 }
 /*========================================================================*/
 int ExecutiveAngle(PyMOLGlobals *G,float *result, char *nam,

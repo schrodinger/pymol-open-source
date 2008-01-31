@@ -7,6 +7,7 @@ def get_auto_arg_list(self_cmd=cmd):
         {
         'align'          : [ self_cmd.selection_sc           , 'selection'       , ','  ],
         'alter'          : [ self_cmd.selection_sc           , 'selection'       , ''   ],
+        'bond'           : [ self_cmd.selection_sc           , 'selection'       , ''   ],        
         'as'             : [ self_cmd.repres_sc              , 'representation'  , ', ' ],
         'bg_color'       : [ lambda c=self_cmd:c._get_color_sc(c), 'color'           , ''   ],      
         'button'         : [ self_cmd.controlling.button_sc  , 'button'          , ', ' ],
@@ -68,6 +69,7 @@ def get_auto_arg_list(self_cmd=cmd):
 # 2nd
         {
         'align'          : [ self_cmd.selection_sc           , 'selection'       , ''   ],
+        'bond'           : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'button'         : [ self_cmd.controlling.but_mod_sc , 'modifier'        , ', ' ],
         'as'             : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'distance'       : [ self_cmd.selection_sc           , 'selection'       , ''   ],            
@@ -102,6 +104,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'unset_bond'     : [ self_cmd.selection_sc           , 'selection'        , ','  ],            
         'update'         : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'ramp_new'       : [ self_cmd.map_sc                 , 'map object'       , ','   ],      
+        'valence'        : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         },
 #3rd
         {
@@ -116,6 +119,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'spectrum'       : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'symexp'         : [ self_cmd.selection_sc           , 'selection'          , ', ' ],
         'unset_bond'     : [ self_cmd.selection_sc           , 'selection'         , ','  ],
+        'valence'        : [ self_cmd.selection_sc           , 'selection'       , ''   ],                
         },
 #4th
         {

@@ -3781,7 +3781,7 @@ extern int n_skipped;
 
 /*========================================================================*/
 void RayRender(CRay *I,unsigned int *image,double timing,
-               float angle,int antialias)
+               float angle,int antialias,unsigned int *return_bg)
 {
   int a;
   unsigned int *image_copy = NULL;
@@ -3968,6 +3968,9 @@ void RayRender(CRay *I,unsigned int *image,double timing,
     " RayNew: Background = %x %d %d %d\n",background,(int)(bkrd[0]*255),
     (int)(bkrd[1]*255),(int)(bkrd[2]*255)
     ENDFB(I->G);
+
+  if(return_bg)
+    *return_bg = background;
 
   if(!I->NPrimitive) { /* nothing to render! */
     fill(image,background,width * (unsigned int)height);
