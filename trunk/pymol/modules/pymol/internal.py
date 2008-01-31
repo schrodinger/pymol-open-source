@@ -18,7 +18,11 @@ from cmd import DEFAULT_ERROR, loadable, _load2str, Shortcut, \
 # cache management:
 
 def _cache_purge(_self=cmd):
+    _pymol = _self._pymol
     max_size = _self.get_setting_int("cache_max")
+    while len(_pymol):
+        pass
+    
     
 def _cache_get(target, hash_size = None, _self=cmd):
     try:
