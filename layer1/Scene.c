@@ -73,6 +73,7 @@ Z* -------------------------------------------------------------------
 typedef struct ObjRec {
   CObject *obj;  
   struct ObjRec *next;
+  int slot;
 } ObjRec;
 
 typedef struct {
@@ -288,7 +289,9 @@ static void GridUpdate(GridInfo *I, float asp_ratio, int mode, int size)
     while((n_row * n_col) < r_size) {
       register float asp1 = asp_ratio * (n_row+1.0)/n_col;
       register float asp2 = asp_ratio * (n_row)/(n_col+1.0);
-      if(fabs(asp1 - 1.0) > fabs(asp2 - 1.0))
+      if(asp1<1.0F) asp1 = 1.0/asp1;
+      if(asp2<1.0F) asp2 = 1.0/asp2;
+      if(fabs(asp1) > fabs(asp2))
         n_col++;
       else
         n_row++;
@@ -305,6 +308,49 @@ static void GridUpdate(GridInfo *I, float asp_ratio, int mode, int size)
     I->active = false;
     I->mode = 0;
   }
+}
+
+static int SceneObjectNeedsGridSlot(int grid_mode, CObject *obj)
+{
+  int result = 0;
+  switch(grid_mode) {
+  case 1:
+    switch(obj->type) {
+    case cObjectMolecule:
+    case cObjectMap:
+    case cObjectMesh:
+    case cObjectMeasurement:
+    case cObjectCallback:
+    case cObjectCGO:
+    case cObjectSurface:
+    case cObjectSlice:
+      switch(obj->Context) {          
+      case 0:
+        result = 1;
+        break;
+      }
+      break;
+    }
+    break;
+  }
+  return result;
+}
+
+static int SceneGetGridSize(PyMOLGlobals *G)
+{
+  CScene *I=G->Scene;
+  int grid_mode = SettingGetGlobal_i(G,cSetting_grid_mode);
+  int size = 0;
+  ObjRec *rec = NULL;
+  switch(grid_mode) {
+  case 1:
+    while(ListIterate(I->Obj,rec,next)) {
+      if(SceneObjectNeedsGridSlot(grid_mode,rec->obj)) 
+        size++;
+    }
+    break;
+  }
+  return size;
 }
 
 int SceneHasImage(PyMOLGlobals *G)
@@ -5610,12 +5656,12 @@ void SceneRay(PyMOLGlobals *G,
   int stereo_hand = 0;
   GridInfo grid;
   int grid_mode = SettingGetGlobal_i(G,cSetting_grid_mode);
+  ImageType *stereo_image = NULL;
 
   UtilZeroMem(&grid,sizeof(grid));
 
   if(mode!=0) grid_mode = 0; /* only allow grid mode with PyMOL renderer */
 
-  ImageType *stereo_image = NULL;
   OrthoLineType prefix = "";
   SceneUnitContext context;
 
@@ -5671,19 +5717,7 @@ void SceneRay(PyMOLGlobals *G,
   aspRat = ((float) ray_width) / ((float) ray_height);
 
   if(grid_mode) {
-    int grid_size = 0;
-    if(!grid_size) {
-      switch(grid_mode) {
-      case 1:
-        {
-          ObjRec *rec = NULL;
-          while(ListIterate(I->Obj,rec,next)) {
-            grid_size++;
-          }
-        }
-        break;
-      }
-    }
+    int grid_size = SceneGetGridSize(G);
     GridUpdate(&grid, aspRat, grid_mode, grid_size);
     if(grid.active) 
       aspRat *= grid.asp_adjust;
@@ -6995,19 +7029,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
   UtilZeroMem(&grid,sizeof(grid));
   if(grid_mode) {
-    int grid_size = 0;
-    if(!grid_size) {
-      switch(grid_mode) {
-      case 1:
-        {
-          ObjRec *rec = NULL;
-          while(ListIterate(I->Obj,rec,next)) {
-            grid_size++;
-          }
-        }
-        break;
-      }
-    }
+    int grid_size = SceneGetGridSize(G);
     GridUpdate(&grid, aspRat, grid_mode, grid_size);
     if(grid.active) 
       aspRat *= grid.asp_adjust;
