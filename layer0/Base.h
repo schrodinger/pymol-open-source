@@ -113,7 +113,7 @@ typedef struct {
   CRay *ray;
   CGO *alpha_cgo;
   Picking **pick;
-  int pass,slot;
+  int pass;
   int width_scale_flag;
   float front, back, stereo_front;
   float fog_start, fog_end;

@@ -76,7 +76,8 @@
 #define cIndicateSele "indicate"
 
 
-typedef struct SpecRec {
+typedef struct SpecRec { 
+  /* NOTE: must zero-init with CALLOC */
   int type;
   WordType  name; /*only used for selections*/
   CObject *obj;  
@@ -95,6 +96,7 @@ typedef struct SpecRec {
   int group_member_list_id; 
   int in_scene,is_hidden;
   int in_panel;
+  int grid_slot;
 } SpecRec; /* specification record (a line in the executive window) */
 
 typedef struct PanelRec {
@@ -130,6 +132,7 @@ struct _CExecutive {
   OVOneToOne *Key;
   int ValidGroups;
   int ValidSceneMembers;
+  int ValidGridSlots;
   PanelRec *Panel;
   int ValidPanel;
 };
@@ -527,6 +530,89 @@ int ExecutivePseudoatom(PyMOLGlobals *G, char *object_name, char *sele,
 }
 
 
+static void ExecutiveInvalidateGridSlots(PyMOLGlobals *G)
+{
+  register CExecutive *I = G->Executive;
+  I->ValidGridSlots = false;
+}
+
+static void ExecutiveUpdateGridSlots(PyMOLGlobals *G, int force)
+{
+  register CExecutive *I = G->Executive;
+  int grid_slot_count = 0;
+  int grid_by_group = 1; /* grid slots are inherited this many levels */
+
+  ExecutiveUpdateGroups(G,false);
+  if(force || (!I->ValidGridSlots)) {
+    CTracker *I_Tracker= I->Tracker;
+    I->ValidGridSlots = true;
+    {
+      SpecRec *rec=NULL;
+      while(ListIterate(I->Spec,rec,next)) {
+        rec->grid_slot = 0;
+        if(rec->type==cExecObject) {
+          /* make sure every object (potentially) needing a grid slot gets one */
+          switch(rec->obj->type) {
+          case cObjectMolecule:
+          case cObjectMap:
+          case cObjectMesh:
+          case cObjectMeasurement:
+          case cObjectCallback:
+          case cObjectCGO:
+          case cObjectSurface:
+          case cObjectSlice:
+          case cObjectGadget:
+          case cObjectGroup:
+            if(!rec->grid_slot)
+              rec->grid_slot = ++grid_slot_count; 
+            break;
+          }
+        }
+      }
+    }
+    
+    if(grid_by_group) {
+      SpecRec *rec=NULL,*group_rec = NULL;
+      while(ListIterate(I->Spec,rec,next)) {
+        OVreturn_word result;
+        if( OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,rec->group_name)))) {
+          if( OVreturn_IS_OK( (result = OVOneToOne_GetForward(I->Key, result.word)))) { 
+            if(TrackerGetCandRef(I_Tracker, result.word, (TrackerRef**)&group_rec)) {
+              register int grid_slot_group_depth = grid_by_group;
+              { 
+                SpecRec *check_rec = group_rec;
+                while(check_rec && grid_slot_group_depth) {
+                  if(grid_slot_group_depth==1)
+                    rec->grid_slot = check_rec->grid_slot;
+                  if(check_rec == rec) { /* cycle */
+                    break;
+                  } else {
+                    check_rec = check_rec->group;
+                    grid_slot_group_depth--;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+      
+    {
+      SpecRec *rec=NULL;
+      while(ListIterate(I->Spec,rec,next)) {
+        if(rec->type==cExecObject) {
+          int obj_slot = SettingGet_i(G,rec->obj->Setting,NULL,cSetting_grid_slot);
+          if(obj_slot == -1) {
+            rec->obj->grid_slot = rec->grid_slot;
+          } else
+            rec->obj->grid_slot = obj_slot;
+        }
+      }
+    }
+  }
+}
+
 static void ExecutiveInvalidatePanelList(PyMOLGlobals *G)
 {
   register CExecutive *I = G->Executive;
@@ -534,6 +620,7 @@ static void ExecutiveInvalidatePanelList(PyMOLGlobals *G)
     if(I->Panel) 
       ListFree(I->Panel,next,PanelRec);
     I->ValidPanel = false;
+    ExecutiveInvalidateGridSlots(G);
   }
 }
 
@@ -608,24 +695,23 @@ static void ExecutiveUpdateSceneMembers(PyMOLGlobals *G)
 {
   register CExecutive *I = G->Executive;
   ExecutiveUpdateGroups(G,false);
+  ExecutiveUpdateGridSlots(G,false);
   if(!I->ValidSceneMembers) {
     SpecRec *rec=NULL;
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject) {
-        if(rec->obj->type!=cObjectGroup) {
-          int visible = rec->visible;
-          SpecRec *group_rec = rec->group;
-          while(visible && group_rec) { /* visibility is a group issue... */
-            if(!group_rec->visible)
-              visible=false;
-            else
-              group_rec = group_rec->group;
-          }
-          if(rec->in_scene && !visible) {
-            rec->in_scene = SceneObjectDel(G,rec->obj);
-          } else if(visible && !rec->in_scene) {
-            rec->in_scene = SceneObjectAdd(G,rec->obj);
-          }
+        int visible = rec->visible;
+        SpecRec *group_rec = rec->group;
+        while(visible && group_rec) { /* visibility is a group issue... */
+          if(!group_rec->visible)
+            visible=false;
+          else
+            group_rec = group_rec->group;
+        }
+        if(rec->in_scene && !visible) {
+          rec->in_scene = SceneObjectDel(G,rec->obj);
+        } else if(visible && !rec->in_scene) {
+          rec->in_scene = SceneObjectAdd(G,rec->obj);
         }
       }
     }
@@ -657,6 +743,7 @@ void ExecutiveInvalidateGroups(PyMOLGlobals *G,int force)
      members */
 }
 
+
 void ExecutiveUpdateGroups(PyMOLGlobals *G,int force)
 {
   register CExecutive *I = G->Executive;
@@ -668,16 +755,17 @@ void ExecutiveUpdateGroups(PyMOLGlobals *G,int force)
     
     if(force || I->ValidGroups) ExecutiveInvalidateGroups(G,true);
 
-    /* create empty lists for each group */
-
+    /* create empty lists for each group (also init grid_slot) */
+    
     {
       SpecRec *rec=NULL;
       while(ListIterate(I->Spec,rec,next)) {
         rec->group = NULL;
-        if(rec->type==cExecObject)
+        if(rec->type==cExecObject) {
           if(rec->obj->type==cObjectGroup) {
             rec->group_member_list_id = TrackerNewList(I_Tracker,NULL);
           }
+        }
       }
     }
               
@@ -697,8 +785,9 @@ void ExecutiveUpdateGroups(PyMOLGlobals *G,int force)
                   if(check_rec == rec) {
                     cycle=true;
                     break;
-                  } else
+                  } else {
                     check_rec = check_rec->group;
+                  }
                 }
               }
               if(!cycle) {

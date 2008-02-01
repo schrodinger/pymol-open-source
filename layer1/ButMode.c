@@ -41,7 +41,6 @@ struct _CButMode {
   float Rate;
   int RateShown;
   float Samples, Delay;
-  WordType Caption;
   float TextColor1[3];
   float TextColor2[3];
   float TextColor3[3];
@@ -73,23 +72,6 @@ void ButModeSet(PyMOLGlobals *G,int button,int action)
     I->Mode[button]=action;
     OrthoDirty(G);
   }
-}
-/*========================================================================*/
-void ButModeCaption(PyMOLGlobals *G,char *text)
-{
-  register CButMode *I=G->ButMode;
-  int l;
-  l = strlen(I->Caption);
-  if((l>0)&&(l<(sizeof(WordType)-1)))
-    strcat(I->Caption,",");
-  l = (sizeof(WordType)-2)-l;
-  UtilNConcat(I->Caption,text,l);
-}
-/*========================================================================*/
-void ButModeCaptionReset(PyMOLGlobals *G)
-{
-  register CButMode *I=G->ButMode;
-  I->Caption[0]=0;
 }
 /*========================================================================*/
 void ButModeSetRate(PyMOLGlobals *G,float interval)
@@ -326,10 +308,6 @@ static void ButModeDraw(Block *block)
     TextSetColor(G,I->Block->TextColor);
     y-=cButModeLineHeight;
 
-    /*
-    if(I->Caption[0]) TextDrawStrAt(G,I->Caption,x,y);
-    */
-
     {
       TextSetColor(G,I->Block->TextColor);
       TextDrawStrAt(G,"Selecting ",x,y);
@@ -407,7 +385,6 @@ int ButModeInit(PyMOLGlobals *G)
     I->Samples = 0.0;
     I->RateShown=0;
     I->Delay = 0.0;
-    I->Caption[0] = 0;
     I->DeferCnt = 0;
     I->DeferTime = 0.0F;
     I->NCode = cButModeCount;

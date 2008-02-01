@@ -186,6 +186,7 @@ void RayApplyContextToVertex(CRay *I,float *v)
         th = 1.0F/I->AspRatio;
         tw = 1.0F;
       }
+
       if(!SettingGetGlobal_b(I->G,cSetting_ortho)) {
         float scale = v[2]+0.5F;
         scale = I->FrontBackRatio*scale + 1.0F - scale;
