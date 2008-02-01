@@ -226,7 +226,10 @@ typedef struct {
 
 static void GridSetRayViewport(GridInfo *I, int slot, int *x, int *y, int *width, int *height)
 {
-  I->slot = slot;
+  if(slot)
+    I->slot = slot + I->first_slot - 1;
+  else
+    I->slot = slot;
   /* if we are in grid mode, then prepare the grid slot viewport */
   if(slot<0) {
     *x = I->cur_view[0];
@@ -269,7 +272,10 @@ static void GridSetRayViewport(GridInfo *I, int slot, int *x, int *y, int *width
 }
 static void GridSetGLViewport(GridInfo *I, int slot)
 {
-  I->slot = slot;
+  if(slot)
+    I->slot = slot + I->first_slot - 1;
+  else
+    I->slot = slot;
   /* if we are in grid mode, then prepare the grid slot viewport */
   if(slot<0) {
     glViewport(I->cur_view[0],I->cur_view[1],I->cur_view[2],I->cur_view[3]);
@@ -399,6 +405,12 @@ static int SceneGetGridSize(PyMOLGlobals *G,int grid_mode)
       size = max_slot;
     }
     break;
+  }
+  {
+    int grid_max = SettingGetGlobal_i(G,cSetting_grid_max);
+    if(grid_max>=0) 
+      if(size>grid_max)
+        size = grid_max;
   }
   return size;
 }
@@ -5808,6 +5820,7 @@ void SceneRay(PyMOLGlobals *G,
       
       if(grid.active) { 
         GridSetRayViewport(&grid,slot,&ray_x,&ray_y,&ray_width,&ray_height);
+        OrthoBusySlow(G,slot,grid.last_slot);
       }
     
       /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
@@ -5946,6 +5959,7 @@ void SceneRay(PyMOLGlobals *G,
       }
       {
         int *slot_vla = I->SlotVLA;
+        int state = SceneGetState(G);
         RenderInfo info;
         UtilZeroMem(&info,sizeof(RenderInfo));
         info.ray = ray;
@@ -5978,8 +5992,8 @@ void SceneRay(PyMOLGlobals *G,
                 info.state = ObjectGetCurrentState(rec->obj,false);
                 rec->obj->fRender(rec->obj,&info);
               } else if(grid.slot) {
-                info.state = grid.slot - 1;
-                rec->obj->fRender(rec->obj,&info);
+                if ( (info.state = state + grid.slot - 1) >= 0 )
+                  rec->obj->fRender(rec->obj,&info);
               }
             }
           }
@@ -6892,6 +6906,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
   float vv[4];
+  int state = SceneGetState(G);
   RenderInfo info;
   UtilZeroMem(&info,sizeof(RenderInfo));
   info.pick = pickVLA;
@@ -7021,8 +7036,8 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
               info.state = ObjectGetCurrentState(rec->obj,false);
               rec->obj->fRender(rec->obj,&info);
             } else if(grid->slot) {
-              info.state = grid->slot - 1;
-              rec->obj->fRender(rec->obj,&info);              
+              if ( (info.state = state + grid->slot - 1) >= 0 )
+                rec->obj->fRender(rec->obj,&info);              
             }
             break;
           }

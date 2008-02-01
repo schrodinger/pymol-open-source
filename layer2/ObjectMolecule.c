@@ -8126,10 +8126,8 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
     if(isNew) {
       I=(ObjectMolecule*)ObjectMoleculeNew(G,(discrete>0));
       atInfo = I->AtomInfo;
-      isNew = true;
     } else {
       atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
-      isNew = false;
     }
 
     if(isNew) {
@@ -8159,6 +8157,8 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
     }
   
     if(!cset) {
+      if(!isNew) 
+        VLAFreeP(atInfo);
       if(!successCnt) {
         ObjectMoleculeFree(I);
         I=NULL;

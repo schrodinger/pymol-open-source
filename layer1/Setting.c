@@ -1912,6 +1912,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateGroups(G,false);
     SceneChanged(G);
     break;
+  case cSetting_grid_max:
+    SceneChanged(G);
+    break;
   case cSetting_defer_builds_mode:
     ExecutiveRebuildAll(G);
     break;
@@ -3595,6 +3598,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_grid_mode,0);
     set_i(I,cSetting_cache_max,12500000); /* default: ~50 MB cache */
     set_i(I,cSetting_grid_slot,-1);
+    set_i(I,cSetting_grid_max,-1);
   }
 }
 
