@@ -195,11 +195,15 @@ struct _CScene {
   SceneElem *SceneVLA;
   int NScene;
   CGO *AlphaCGO;
+
+  int *SlotVLA;
 };
 
 typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
 } SceneUnitContext;
+
+static void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height);
 
 static float SceneGetExactScreenVertexScale(PyMOLGlobals *G,float *v1);
 static void SceneRestartPerfTimer(PyMOLGlobals *G);
@@ -217,17 +221,36 @@ typedef struct {
   int slot;
   int mode;
   GLint cur_view[4];
+  SceneUnitContext context; /* for whole-window display */
 } GridInfo;
 
 static void GridSetRayViewport(GridInfo *I, int slot, int *x, int *y, int *width, int *height)
 {
   I->slot = slot;
   /* if we are in grid mode, then prepare the grid slot viewport */
-  if(!slot) {
+  if(slot<0) {
     *x = I->cur_view[0];
     *y = I->cur_view[1];
     *width = I->cur_view[2];
     *height = I->cur_view[3];
+  } else if(!slot) {
+    int vx = 0;
+    int vw = I->cur_view[2]/I->n_col;
+    int vy = 0;
+    int vh = I->cur_view[3]/I->n_row;
+    if(I->n_col < I->n_row) {
+      vw *= I->n_col;
+      vh *= I->n_col;
+    } else {
+      vw *= I->n_row;
+      vh *= I->n_row;
+    }
+    vx += I->cur_view[0] + (I->cur_view[2] - vw)/2;
+    vy += I->cur_view[1];
+    *x = vx;
+    *y = vy;
+    *width = vw;
+    *height = vh;
   } else {
     int abs_grid_slot = slot - I->first_slot;
     int grid_col = abs_grid_slot % I->n_col;
@@ -248,8 +271,24 @@ static void GridSetGLViewport(GridInfo *I, int slot)
 {
   I->slot = slot;
   /* if we are in grid mode, then prepare the grid slot viewport */
-  if(!slot) {
+  if(slot<0) {
     glViewport(I->cur_view[0],I->cur_view[1],I->cur_view[2],I->cur_view[3]);
+  } else if(!slot) {
+    int vx = 0;
+    int vw = I->cur_view[2]/I->n_col;
+    int vy = 0;
+    int vh = I->cur_view[3]/I->n_row;
+    if(I->n_col < I->n_row) {
+      vw *= I->n_col;
+      vh *= I->n_col;
+    } else {
+      vw *= I->n_row;
+      vh *= I->n_row;
+    }
+    vx += I->cur_view[0] + (I->cur_view[2] - vw)/2;
+    vy += I->cur_view[1];
+    glViewport(vx,vy,vw,vh);
+    ScenePrepareUnitContext(&I->context,vw,vh);
   } else {
     int abs_grid_slot = slot - I->first_slot;
     int grid_col = abs_grid_slot % I->n_col;
@@ -261,6 +300,7 @@ static void GridSetGLViewport(GridInfo *I, int slot)
     vx += I->cur_view[0];
     vy += I->cur_view[1];
     glViewport(vx,vy,vw,vh);
+    ScenePrepareUnitContext(&I->context,vw,vh);
   }
 }
 
@@ -279,74 +319,84 @@ static void GridGetGLViewport(GridInfo *I)
 
 static void GridUpdate(GridInfo *I, float asp_ratio, int mode, int size)
 {
-  
-  I->size = size;
-  I->mode = mode;
-  {
-    register int n_row = 1;
-    register int n_col = 1;
-    register int r_size = size;
-    while((n_row * n_col) < r_size) {
-      register float asp1 = asp_ratio * (n_row+1.0)/n_col;
-      register float asp2 = asp_ratio * (n_row)/(n_col+1.0);
-      if(asp1<1.0F) asp1 = 1.0/asp1;
-      if(asp2<1.0F) asp2 = 1.0/asp2;
-      if(fabs(asp1) > fabs(asp2))
-        n_col++;
-      else
-        n_row++;
-    }
-    I->n_row = n_row;
-    I->n_col = n_col;
-  }
-  if(I->size>1) {
-    I->active = true;
-    I->asp_adjust = (float)I->n_row / I->n_col;
-    I->first_slot = 1;
-    I->last_slot = I->size;
-  } else {
-    I->active = false;
-    I->mode = 0;
-  }
-}
-
-static int SceneObjectNeedsGridSlot(int grid_mode, CObject *obj)
-{
-  int result = 0;
-  switch(grid_mode) {
-  case 1:
-    switch(obj->type) {
-    case cObjectMolecule:
-    case cObjectMap:
-    case cObjectMesh:
-    case cObjectMeasurement:
-    case cObjectCallback:
-    case cObjectCGO:
-    case cObjectSurface:
-    case cObjectSlice:
-      switch(obj->Context) {          
-      case 0:
-        result = 1;
-        break;
+  if(mode) {
+    I->size = size;
+    I->mode = mode;
+    {
+      register int n_row = 1;
+      register int n_col = 1;
+      register int r_size = size;
+      while((n_row * n_col) < r_size) {
+        register float asp1 = asp_ratio * (n_row+1.0)/n_col;
+        register float asp2 = asp_ratio * (n_row)/(n_col+1.0);
+        if(asp1<1.0F) asp1 = 1.0/asp1;
+        if(asp2<1.0F) asp2 = 1.0/asp2;
+        if(fabs(asp1) > fabs(asp2))
+          n_col++;
+        else
+          n_row++;
       }
-      break;
+      I->n_row = n_row;
+      I->n_col = n_col;
     }
-    break;
+    if(I->size>1) {
+      I->active = true;
+      I->asp_adjust = (float)I->n_row / I->n_col;
+      I->first_slot = 1;
+      I->last_slot = I->size;
+    }
   }
-  return result;
 }
 
-static int SceneGetGridSize(PyMOLGlobals *G)
+static int SceneGetGridSize(PyMOLGlobals *G,int grid_mode)
 {
   CScene *I=G->Scene;
-  int grid_mode = SettingGetGlobal_i(G,cSetting_grid_mode);
+  int slot;
   int size = 0;
-  ObjRec *rec = NULL;
+    
   switch(grid_mode) {
   case 1:
-    while(ListIterate(I->Obj,rec,next)) {
-      if(SceneObjectNeedsGridSlot(grid_mode,rec->obj)) 
-        size++;
+    if(!I->SlotVLA)
+      I->SlotVLA = VLACalloc(int,1);
+    else {
+      UtilZeroMem(I->SlotVLA,sizeof(int)*VLAGetSize(I->SlotVLA));
+    }
+    {
+      int max_slot = 0;
+      ObjRec *rec = NULL;
+      while(ListIterate(I->Obj,rec,next)) {
+        if( (slot = rec->obj->grid_slot) ) {
+          slot = rec->obj->grid_slot;
+          if(max_slot<slot)
+            max_slot = slot;
+          if(slot>0) {
+            VLACheck(I->SlotVLA,int,slot);
+            I->SlotVLA[slot] = 1;
+          }
+        }
+      }
+      for(slot=0;slot<=max_slot;slot++) {
+        if(I->SlotVLA[slot])
+          I->SlotVLA[slot] = ++size;
+      }
+    }
+    break;
+  case 2:
+    if(I->SlotVLA) {
+      VLAFreeP(I->SlotVLA); 
+      I->SlotVLA = NULL;
+    }
+    {
+      int max_slot = 0;
+      ObjRec *rec = NULL;
+      while(ListIterate(I->Obj,rec,next)) {
+        if(rec->obj->fGetNFrame) {
+          slot = rec->obj->fGetNFrame(rec->obj);
+          if(max_slot<slot)
+            max_slot = slot;
+        }
+      }
+      size = max_slot;
     }
     break;
   }
@@ -631,7 +681,6 @@ unsigned int *SceneReadTriplets(PyMOLGlobals *G,int x,int y,int w,int h,GLenum g
 void SceneDraw(Block *block);
 void ScenePrepareMatrix(PyMOLGlobals *G,int mode);
 
-void ScenePrepareUnitContext(PyMOLGlobals *G,SceneUnitContext *context,int width,int height);
 
 #if 0
 static int SceneGetObjState(PyMOLGlobals *G,CObject *obj,int state)
@@ -803,7 +852,7 @@ void SceneCleanupStereo(PyMOLGlobals *G)
 #endif
 }
 
-void ScenePrepareUnitContext(PyMOLGlobals *G,SceneUnitContext *context,int width,int height)
+static void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height)
 {
   float tw = 1.0F;
   float th = 1.0F;
@@ -827,17 +876,16 @@ void ScenePrepareUnitContext(PyMOLGlobals *G,SceneUnitContext *context,int width
   context->unit_bottom = (th+1.0F)/2;
   context->unit_front = -0.5F;
   context->unit_back = 0.5F;
-
-  PRINTFD(G,FB_Scene)
+  /*
+  printf(
     "ScenePrepareUnitContext:%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
     context->unit_left,
     context->unit_right,
     context->unit_top, 
     context->unit_bottom,
     context->unit_front,
-    context->unit_back
-    ENDFD;
-
+    context->unit_back);
+  */
 }
 void SceneGetWidthHeight(PyMOLGlobals *G,int *width,int *height)
 {
@@ -5221,6 +5269,7 @@ void SceneFree(PyMOLGlobals *G)
   CGOFree(I->AlphaCGO);
   VLAFreeP(I->SceneVLA);
   VLAFreeP(I->SceneNameVLA);
+  VLAFreeP(I->SlotVLA);
   OrthoFreeBlock(G,I->Block);
   ListFree(I->Obj,next,ObjRec);
 
@@ -5633,6 +5682,30 @@ static void SceneUpdateAnimation(PyMOLGlobals *G)
   }
 }
 
+static int SceneGetDrawFlag(GridInfo *grid, int *slot_vla, int slot)
+{
+  int draw_flag = false;
+  if(grid && grid->active) {
+    switch(grid->mode) {
+    case 1: /* assigned grid slots (usually by group) */
+      {
+        if(((slot<0) && grid->slot) || 
+           ((slot==0) && (grid->slot==0)) ||
+           (slot_vla && (slot_vla[slot] == grid->slot))) {
+          draw_flag = true;
+        }
+      }
+      break;
+    case 2: /* each state in a separate slot */
+      draw_flag = true;
+      break;
+    }
+  } else {
+    draw_flag = true;
+  }
+  return draw_flag;
+}
+
 void SceneRay(PyMOLGlobals *G,
               int ray_width,int ray_height,int mode,
               char **headerVLA_ptr,
@@ -5658,12 +5731,11 @@ void SceneRay(PyMOLGlobals *G,
   int grid_mode = SettingGetGlobal_i(G,cSetting_grid_mode);
   ImageType *stereo_image = NULL;
 
-  UtilZeroMem(&grid,sizeof(grid));
+  UtilZeroMem(&grid,sizeof(GridInfo));
 
   if(mode!=0) grid_mode = 0; /* only allow grid mode with PyMOL renderer */
 
   OrthoLineType prefix = "";
-  SceneUnitContext context;
 
   SceneUpdateAnimation(G);
   if(mode==0) 
@@ -5717,7 +5789,7 @@ void SceneRay(PyMOLGlobals *G,
   aspRat = ((float) ray_width) / ((float) ray_height);
 
   if(grid_mode) {
-    int grid_size = SceneGetGridSize(G);
+    int grid_size = SceneGetGridSize(G,grid_mode);
     GridUpdate(&grid, aspRat, grid_mode, grid_size);
     if(grid.active) 
       aspRat *= grid.asp_adjust;
@@ -5732,9 +5804,9 @@ void SceneRay(PyMOLGlobals *G,
     if(grid.active)
       GridGetRayViewport(&grid,ray_width,ray_height);
     
-    for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+    for(slot=0;slot<=grid.last_slot;slot++) {
       
-      if(slot && grid.active) { 
+      if(grid.active) { 
         GridSetRayViewport(&grid,slot,&ray_x,&ray_y,&ray_width,&ray_height);
       }
     
@@ -5802,8 +5874,6 @@ void SceneRay(PyMOLGlobals *G,
           MatrixMultiplyC44f(I->RotMatrix,rayView);
         }
       }
-      
-      ScenePrepareUnitContext(G,&context,ray_width,ray_height);
       
       /* 5. move the origin to the center of rotation */
       MatrixTranslateC44f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
@@ -5875,52 +5945,42 @@ void SceneRay(PyMOLGlobals *G,
         }
       }
       {
-        int grid_count = 0;
+        int *slot_vla = I->SlotVLA;
         RenderInfo info;
         UtilZeroMem(&info,sizeof(RenderInfo));
         info.ray = ray;
-
         while(ListIterate(I->Obj,rec,next)) {
-          grid_count++;
           if(rec->obj->fRender) {
-            int obj_color = rec->obj->Color;
-            float color[3];
-            int icx;
-            ColorGetEncoded(G,obj_color,color);
-            RaySetContext(ray,rec->obj->Context);
-            ray->fColor3fv(ray,color);
-            
-            if(SettingGetIfDefined_i(G,rec->obj->Setting,cSetting_ray_interior_color,&icx)) {
-              float icolor[3];
-              if(icx!=-1) {
-                if(icx==cColorObject) {
-                  ray->fInteriorColor3fv(ray,color,false);              
+            if(SceneGetDrawFlag(&grid, slot_vla, rec->obj->grid_slot)) {
+              int obj_color = rec->obj->Color;
+              float color[3];
+              int icx;
+              ColorGetEncoded(G,obj_color,color);
+              RaySetContext(ray,rec->obj->Context);
+              ray->fColor3fv(ray,color);
+              
+              if(SettingGetIfDefined_i(G,rec->obj->Setting,cSetting_ray_interior_color,&icx)) {
+                float icolor[3];
+                if(icx!=-1) {
+                  if(icx==cColorObject) {
+                    ray->fInteriorColor3fv(ray,color,false);              
+                  } else {
+                    ColorGetEncoded(G,icx,icolor);
+                    ray->fInteriorColor3fv(ray,icolor,false);              
+                  }
                 } else {
-                  ColorGetEncoded(G,icx,icolor);
-                  ray->fInteriorColor3fv(ray,icolor,false);              
+                  ray->fInteriorColor3fv(ray,color,true);
                 }
               } else {
                 ray->fInteriorColor3fv(ray,color,true);
               }
-            } else {
-              ray->fInteriorColor3fv(ray,color,true);
-            }
-            info.slot = slot;
-            if(grid.active) {
-              switch(grid.mode) {
-              case 1: /* one object in a single slot */
-                if(grid_count == slot) {
-                  info.state = ObjectGetCurrentState(rec->obj,false);
-                  rec->obj->fRender(rec->obj,&info);
-                }
-                break;
-              case 2: /* each state in a separate slot */
-                info.state = grid_count - 1;
-                break;
+              if((!grid.active)||(grid.mode!=2)) {
+                info.state = ObjectGetCurrentState(rec->obj,false);
+                rec->obj->fRender(rec->obj,&info);
+              } else if(grid.slot) {
+                info.state = grid.slot - 1;
+                rec->obj->fRender(rec->obj,&info);
               }
-            } else {
-              info.state = ObjectGetCurrentState(rec->obj,false);
-              rec->obj->fRender(rec->obj,&info);
             }
           }
         }
@@ -5982,7 +6042,10 @@ void SceneRay(PyMOLGlobals *G,
               
               for(i=0;i<ray_height;i++) {
                 for(j=0;j<ray_width;j++) {
-                  *(dst++) = *(src++);
+                  if(*src != background) 
+                    *(dst) = *(src);
+                  dst++;
+                  src++;
                 }
                 dst += (tot_width - ray_width);
               }
@@ -6079,7 +6142,7 @@ void SceneRay(PyMOLGlobals *G,
       RayFree(ray);
     }
     if(grid.active)
-      GridSetRayViewport(&grid,0,&ray_x,&ray_y,&ray_width,&ray_height);
+      GridSetRayViewport(&grid,-1,&ray_x,&ray_y,&ray_width,&ray_height);
     
     if((mode==0)&&I->Image&&I->Image->data) {
       SceneApplyImageGamma(G,(unsigned int*)I->Image->data,I->Image->width,I->Image->height);
@@ -6822,7 +6885,7 @@ static void SceneProgramLighting(PyMOLGlobals *G)
 }
 /*========================================================================*/
 static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
-                           float *normal,Picking **pickVLA,
+                            float *normal,Picking **pickVLA,
                            int pass,int fat, float width_scale,
                            GridInfo *grid)
 {
@@ -6838,7 +6901,6 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.fog_end = I->FogEnd;
   info.pmv_matrix = I->PmvMatrix;
   info.front = I->FrontSafe;
-  if(grid) info.slot = grid->slot;
   info.sampling = 1;
   info.alpha_cgo = I->AlphaCGO;
   
@@ -6872,100 +6934,100 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   }
 
   {
-    int grid_count = 0;
+    int *slot_vla = I->SlotVLA;
     while(ListIterate(I->Obj,rec,next)) {
-      grid_count++;
       if(rec->obj->fRender) {
-        glPushMatrix();
-        if(fat)
-          glLineWidth(3.0);
-        switch(rec->obj->Context) {
-        case 1: /* unit context */
-          {
+
+        if(SceneGetDrawFlag(grid, slot_vla, rec->obj->grid_slot)) {
+          glPushMatrix();
+          if(fat)
+            glLineWidth(3.0);
+          
+          switch(rec->obj->Context) {
+          case 1: /* unit context */
+            {
 #ifndef _PYMOL_OSX
-            /* workaround for MacOSX 10.4.3 */
-            glPushAttrib(GL_LIGHTING_BIT); 
+              /* workaround for MacOSX 10.4.3 */
+              glPushAttrib(GL_LIGHTING_BIT); 
 #endif
-            
-            glMatrixMode(GL_PROJECTION);
-            glPushMatrix();
-            glLoadIdentity();
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glLoadIdentity();
-            vv[0]=0.0;
-            vv[1]=0.0;
-            vv[2]=-1.0;
-            vv[3]=0.0;
-            glLightfv(GL_LIGHT0,GL_POSITION,vv);
-            glLightfv(GL_LIGHT1,GL_POSITION,vv);
-            
-            glOrtho(context->unit_left,
-                    context->unit_right,
-                    context->unit_top,
-                    context->unit_bottom,
-                    context->unit_front,
-                    context->unit_back);
-            
-            glNormal3f(0.0F,0.0F,1.0F);
-            info.state = ObjectGetCurrentState(rec->obj,false);
-            rec->obj->fRender(rec->obj,&info);
-            
-            glMatrixMode(GL_PROJECTION);
-            glPopMatrix();
-            glMatrixMode(GL_MODELVIEW);
-            glLoadIdentity();
-#ifndef _PYMOL_OSX
-            glPopAttrib();
-#else  
-            /* workaround for MacOSX 10.4.3 */
-            /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-            SceneProgramLighting(G); /* an expensive workaround... */
-            if(pickVLA) {
-              glDisable(GL_FOG);
-              glDisable(GL_COLOR_MATERIAL);
-              glDisable(GL_LIGHTING);
-              glDisable(GL_DITHER);
-              glDisable(GL_BLEND);
-              glDisable(GL_LINE_SMOOTH);
-              glDisable(GL_POLYGON_SMOOTH);
-              if(G->Option->multisample)    
-                glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
-              glShadeModel(GL_FLAT);
-            }
-            /* END PROPRIETARY CODE SEGMENT */
-#endif
-            glPopMatrix();
-          }
-          break;
-        case 2:
-          break;
-        case 0: /* context/grid 0 is all slots */
-        default:
-          if(grid && grid->active) {
-            switch(grid->mode) {
-            case 1: /* one object in a single slot */
-              if(grid_count == grid->slot) {
-                if(normal) 
-                  glNormal3fv(normal);
-                info.state = ObjectGetCurrentState(rec->obj,false);
-                rec->obj->fRender(rec->obj,&info);
+              
+              glMatrixMode(GL_PROJECTION);
+              glPushMatrix();
+              glLoadIdentity();
+              glMatrixMode(GL_MODELVIEW);
+              glPushMatrix();
+              glLoadIdentity();
+              vv[0]=0.0;
+              vv[1]=0.0;
+              vv[2]=-1.0;
+              vv[3]=0.0;
+              glLightfv(GL_LIGHT0,GL_POSITION,vv);
+              glLightfv(GL_LIGHT1,GL_POSITION,vv);
+
+              if(!grid->active) {
+                glOrtho(context->unit_left,
+                        context->unit_right,
+                        context->unit_top,
+                        context->unit_bottom,
+                        context->unit_front,
+                        context->unit_back);
+              } else { /* special unit context */
+                glOrtho(grid->context.unit_left,
+                        grid->context.unit_right,
+                        grid->context.unit_top,
+                        grid->context.unit_bottom,
+                        grid->context.unit_front,
+                        grid->context.unit_back);
               }
-              break;
-            case 2: /* each state in a separate slot */
-              info.state = grid_count - 1;
-              break;
-              break;  
+              
+              glNormal3f(0.0F,0.0F,1.0F);
+              info.state = ObjectGetCurrentState(rec->obj,false);
+              rec->obj->fRender(rec->obj,&info);
+              
+              glMatrixMode(GL_PROJECTION);
+              glPopMatrix();
+              glMatrixMode(GL_MODELVIEW);
+              glLoadIdentity();
+#ifndef _PYMOL_OSX
+              glPopAttrib();
+#else  
+              /* workaround for MacOSX 10.4.3 */
+              /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+              SceneProgramLighting(G); /* an expensive workaround... */
+              if(pickVLA) {
+                glDisable(GL_FOG);
+                glDisable(GL_COLOR_MATERIAL);
+                glDisable(GL_LIGHTING);
+                glDisable(GL_DITHER);
+                glDisable(GL_BLEND);
+                glDisable(GL_LINE_SMOOTH);
+                glDisable(GL_POLYGON_SMOOTH);
+                if(G->Option->multisample)    
+                  glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
+                glShadeModel(GL_FLAT);
+              }
+              /* END PROPRIETARY CODE SEGMENT */
+#endif
+              glPopMatrix();
             }
-          } else {
+            break;
+          case 2:
+            break;
+          case 0: /* context/grid 0 is all slots */
+          default:
             if(normal) 
               glNormal3fv(normal);
-            info.state = ObjectGetCurrentState(rec->obj,false);
-            rec->obj->fRender(rec->obj,&info);
+            if((!grid->active)||(grid->mode!=2)) {
+              info.state = ObjectGetCurrentState(rec->obj,false);
+              rec->obj->fRender(rec->obj,&info);
+            } else if(grid->slot) {
+              info.state = grid->slot - 1;
+              rec->obj->fRender(rec->obj,&info);              
+            }
+            break;
           }
-          break;
+          glPopMatrix();
         }
-        glPopMatrix();
       }
     }
   }
@@ -7027,9 +7089,9 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
     (void*)pick,x,y,(void*)smp
     ENDFD;
 
-  UtilZeroMem(&grid,sizeof(grid));
+  UtilZeroMem(&grid,sizeof(GridInfo));
   if(grid_mode) {
-    int grid_size = SceneGetGridSize(G);
+    int grid_size = SceneGetGridSize(G,grid_mode);
     GridUpdate(&grid, aspRat, grid_mode, grid_size);
     if(grid.active) 
       aspRat *= grid.asp_adjust;
@@ -7160,7 +7222,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
     
     SceneProgramLighting(G); /* must be done with identity MODELVIEW */
 
-    ScenePrepareUnitContext(G,&context,I->Width,I->Height);
+    ScenePrepareUnitContext(&context,I->Width,I->Height);
 
     /* do standard 3D objects */
 
@@ -7339,16 +7401,14 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
         {
           int slot;
-          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
-            
-            if(slot && grid.active) { 
+          for(slot=0;slot<=grid.last_slot;slot++) {
+            if(grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
-            
             SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
           }
           if(grid.active)
-            GridSetGLViewport(&grid,0);
+            GridSetGLViewport(&grid,-1);
         }
           
         if(debug_pick) {
@@ -7365,14 +7425,14 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           
         {
           int slot;
-          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
-            if(slot && grid.active) { 
+          for(slot=0;slot<=grid.last_slot;slot++) {
+            if(grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
             SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
           }
           if(grid.active)
-            GridSetGLViewport(&grid,0);
+            GridSetGLViewport(&grid,-1);
         }
 
           
@@ -7418,17 +7478,16 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         
         if(grid.active)
           GridGetGLViewport(&grid);
-            
         {
           int slot;
-          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
-            if(slot && grid.active) { 
+          for(slot=0;slot<=grid.last_slot;slot++) {
+            if(grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
             SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
           }
           if(grid.active)
-            GridSetGLViewport(&grid,0);
+            GridSetGLViewport(&grid,-1);
         }
         
         lowBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
@@ -7440,14 +7499,14 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         
         {
           int slot;
-          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
-            if(slot && grid.active) { 
+          for(slot=0;slot<=grid.last_slot;slot++) {
+            if(grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
             SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
           }
           if(grid.active)
-            GridSetGLViewport(&grid,0);
+            GridSetGLViewport(&grid,-1);
         }
         
         highBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
@@ -7496,7 +7555,6 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
       /* STANDARD RENDERING */
 
-      ButModeCaptionReset(G); /* reset the frame caption if any */
       /* rendering for visualization */
 
 
@@ -7561,12 +7619,11 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         
         if(grid.active)
           GridGetGLViewport(&grid);
-
         {
           int slot;
-          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+          for(slot=0;slot<=grid.last_slot;slot++) {
             
-            if(slot && grid.active) { 
+            if(grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
             
@@ -7600,9 +7657,8 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             
           }
         }
-        
         if(grid.active)
-          GridSetGLViewport(&grid,0);
+          GridSetGLViewport(&grid,-1);
         
         glPopMatrix(); /* 0 */
 
@@ -7662,9 +7718,9 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         {
           int slot;
 
-          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+          for(slot=0;slot<=grid.last_slot;slot++) {
             
-            if(slot && grid.active) { 
+            if(grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
 
@@ -7699,7 +7755,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         }
 
         if(grid.active)
-          GridSetGLViewport(&grid,0);
+          GridSetGLViewport(&grid,-1);
           
         glPopMatrix(); /* 0 */
             
@@ -7739,12 +7795,12 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
         {
           int slot;
-          for(slot=grid.first_slot;slot<=grid.last_slot;slot++) {
+          for(slot=0;slot<=grid.last_slot;slot++) {
             
-            if(slot && grid.active) { 
+            if(grid.active) { 
               GridSetGLViewport(&grid,slot);
-            }
-            
+            } 
+
             /* mono rendering */
             
             PRINTFD(G,FB_Scene)
@@ -7789,7 +7845,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           }
         }
         if(grid.active) {
-          GridSetGLViewport(&grid,0);
+          GridSetGLViewport(&grid,-1);
         }
       if(Feedback(G,FB_OpenGL,FB_Debugging))
         PyMOLCheckOpenGLErr("during mono rendering");

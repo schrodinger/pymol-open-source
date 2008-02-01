@@ -82,6 +82,9 @@ struct _CObject {
   int Enabled; /* read-only... maintained by Scene */
   int Context; /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
   CViewElem *ViewElem; /* for animating objects via the TTT */
+
+  /* not pickled */
+  int grid_slot;
 };
 
 void ObjectInit(PyMOLGlobals *G,CObject *I);

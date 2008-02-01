@@ -737,6 +737,7 @@ typedef struct _CPyMOL {
   ov_word lex_dihedral_color;
   ov_word lex_grid_mode;
   ov_word lex_cache_max;
+  ov_word lex_grid_slot;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1473,6 +1474,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(dihedral_color,576);
   LEX_SETTING(grid_mode,577);
   LEX_SETTING(cache_max,578);
+  LEX_SETTING(grid_slot,579);
  return_OVstatus_SUCCESS;
 }
 

@@ -25,7 +25,6 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"PConv.h"
 #include"P.h"
-#include"ButMode.h"
 #include"Matrix.h"
 #include"Sphere.h"
 #include"Util.h"
@@ -1108,8 +1107,6 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
     " CoordSetRender: entered (%p).\n",(void*)I
     ENDFD;
 
-  if((!pass)&&I->Name[0])
-    ButModeCaption(G,I->Name);
   if((!pass)&&I->SculptCGO&&(I->Obj->Obj.RepVis[cRepCGO])) {
     if(ray) {
       CGORenderRay(I->SculptCGO,ray,

@@ -2,9 +2,15 @@
 CHANGE LOG
 =========================================================================
 
+2008-01-31  Warren L. DeLano <warren@delsci.com>	
+
+	* grid_slot experimental setting
+	
+	* grid_mode 2 for viewng multiple states
+	
 2008-01-30  Warren L. DeLano <warren@delsci.com>	
 
-	* grid_mode experimental setting (for viewing multiple objects)
+	* grid_mode 1 for viewing multiple objects 
 	
 	* dash_color, angle_color, dihedral_color settings
 	

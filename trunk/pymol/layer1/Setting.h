@@ -780,6 +780,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_dihedral_color             576
 #define cSetting_grid_mode                  577
 #define cSetting_cache_max                  578
+#define cSetting_grid_slot                  579
+
 /* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -788,7 +790,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       579
+#define cSetting_INIT                       580
 
 #endif
 

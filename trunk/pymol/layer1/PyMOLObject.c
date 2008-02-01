@@ -841,6 +841,8 @@ static void ObjectRenderUnitBox(CObject *this,RenderInfo *info)
 void ObjectInit(PyMOLGlobals *G,CObject *I)
 {
   int a;
+  UtilZeroMem(I,sizeof(CObject));
+
   I->G = G;
   I->fFree = ObjectFree;
   I->fRender = ObjectRenderUnitBox;
@@ -849,23 +851,27 @@ void ObjectInit(PyMOLGlobals *G,CObject *I)
   I->fDescribeElement = ObjectDescribeElement;
   I->fGetSettingHandle = ObjectGetSettingHandle;
   I->fInvalidate = ObjectInvalidate;
-  I->fGetCaption = NULL;
-  I->fGetObjectState = NULL;
-  I->Name[0]=0;
-  I->Color=0; /* white */
-  I->ExtentFlag=false;
-  I->Setting=NULL;
-  I->TTTFlag=false;
-  I->Enabled=false;
-  zero3f(I->ExtentMin);
-  zero3f(I->ExtentMax);
+
+  /*
+    I->fGetCaption = NULL;
+    I->fGetObjectState = NULL;
+    I->Name[0]=0;
+    I->Color=0;
+    I->ExtentFlag=false;
+    I->Setting=NULL;
+    I->TTTFlag=false;
+    I->Enabled=false;
+    zero3f(I->ExtentMin);
+    zero3f(I->ExtentMax);
+    for(a=0;a<16;a++) I->TTT[a]=0.0F;
+    I->Context=0;
+    I->ViewElem = NULL;
+  */
+
   OrthoRemoveSplash(G);
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
-  for(a=0;a<16;a++) I->TTT[a]=0.0F;
   I->RepVis[cRepCell]=false;
   I->RepVis[cRepExtent]=false;
-  I->Context=0;
-  I->ViewElem = NULL;
 }
 
 void ObjectStateInit(PyMOLGlobals *G,CObjectState *I)

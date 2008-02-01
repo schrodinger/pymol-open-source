@@ -141,7 +141,9 @@ void UtilFillVLA(char **vla,ov_size *cc,char what,ov_size len)
 void UtilNConcat(char *dst,char *src,ov_size n) { /* copies up to N-1 chars */
   ov_size l;
   l=strlen(dst);
-  UtilNCopy(dst+l,src,n-l);
+  if(n>l) {
+    UtilNCopy(dst+l,src,n-l);
+  }
 }
 
 void UtilNCopy(char *dst,char *src,ov_size n) 
