@@ -5742,12 +5742,11 @@ void SceneRay(PyMOLGlobals *G,
   GridInfo grid;
   int grid_mode = SettingGetGlobal_i(G,cSetting_grid_mode);
   ImageType *stereo_image = NULL;
+  OrthoLineType prefix = "";
 
   UtilZeroMem(&grid,sizeof(GridInfo));
 
   if(mode!=0) grid_mode = 0; /* only allow grid mode with PyMOL renderer */
-
-  OrthoLineType prefix = "";
 
   SceneUpdateAnimation(G);
   if(mode==0) 

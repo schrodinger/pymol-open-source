@@ -263,8 +263,8 @@ OV_STATIC ov_status CacheCreateEntry(PyObject **result, PyObject *input)
     PyObject *entry = PyList_New(6);
     if(hash_code && entry) {
       /* compute hash codes & total input size */
-      status = OV_STATUS_SUCCESS;
       ov_size i;
+      status = OV_STATUS_SUCCESS;
       for(i=0;i<tuple_size;i++) {
         PyObject *item = PyTuple_GetItem(input,i);
         PyTuple_SetItem(hash_code, i, PyInt_FromLong(PyObject_Hash(item)));
@@ -294,9 +294,9 @@ ov_status PCacheSet(PyMOLGlobals *G, PyObject *entry, PyObject *output)
 {
   ov_status status = OV_STATUS_FAILURE;
   if(G->P_inst->cache && output) {
-    status = OV_STATUS_SUCCESS;
     ov_size tuple_size = PyTuple_Size(output);
     ov_size tot_size = tuple_size + PyInt_AsLong(PyList_GetItem(entry,0));
+    status = OV_STATUS_SUCCESS;
     {
       ov_size i;
       for(i=0;i<tuple_size;i++) {
