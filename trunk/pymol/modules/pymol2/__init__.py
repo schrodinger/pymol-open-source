@@ -49,10 +49,10 @@ class PyMOL:
                     options.quiet = 0
                     options.show_splash = 0
                     options.external_gui = 0
-                    options.internal_gui = 0
-                    options.presentation = 1
                     options.internal_feedback = 0
                     options.no_quit = 1
+#                    options.internal_gui = 0
+#                    options.presentation = 1
                     
             self._COb = _cmd._new(self,self.invocation.options)
 
