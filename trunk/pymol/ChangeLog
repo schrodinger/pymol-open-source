@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-02-05  Warren L. DeLano <warren@delsci.com>	
+
+	* eliminated rare but serious bug with fog plus selections
+	
 2008-01-31  Warren L. DeLano <warren@delsci.com>	
 
 	* grid_slot experimental setting

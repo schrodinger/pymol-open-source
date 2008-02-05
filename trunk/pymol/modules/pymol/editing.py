@@ -1650,13 +1650,14 @@ DESCRIPTION
 
 PYMOL API
    
-    cmd.transform_selection(string selection, list-of-16-floats matrix, int state-number):
+    cmd.transform_selection(string selection, list matrix, int state,
+                            int log, int homogenous, int transpose):
 
 NOTES
 
-    Note that matrix is NOT a standard homogenous 4x4 transformation
-    matrix.  Instead it is something PyMOL-specific which consists of the
-    following:
+    Note that when homogenous is zero, the input matrix is NOT a
+    standard homogenous 4x4 transformation matrix.  Instead it is
+    something PyMOL-specific which consists of the following:
 
     1) a 3x3 matrix containing the rotation in the upper-left quadrant
 
@@ -1677,8 +1678,8 @@ NOTES
 
     Y = M X
 
-    y0 = m0*(x0+m12) + m1*(x1+m13) +  m8*(x2+m14) + m3 \\
-    y1 = m4*(x0+m12) + m5*(x1+m13) +  m9*(x2+m14) + m7 \\
+    y0 = m0*(x0+m12) + m1*(x1+m13) +  m2*(x2+m14) + m3 \\
+    y1 = m4*(x0+m12) + m5*(x1+m13) +  m6*(x2+m14) + m7 \\
     y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11 
 
         '''

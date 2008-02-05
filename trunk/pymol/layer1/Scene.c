@@ -7323,28 +7323,30 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       if(G->Option->multisample)
         glEnable(0x809D); /* GL_MULTISAMPLE_ARB */
 
+      I->FogStart = (I->BackSafe-I->FrontSafe)*SettingGet(G,cSetting_fog_start)+I->FrontSafe;
+
+      glFogf(GL_FOG_MODE, GL_LINEAR);
+      /* glHint(GL_FOG_HINT,GL_NICEST); *** DISABLED TO WORK AROUND ATI DRIVER BUG(s) */
+      glFogf(GL_FOG_START, I->FogStart);
+      
+      I->FogEnd = I->BackSafe;
+      glFogf(GL_FOG_END, I->FogEnd);
+      glFogf(GL_FOG_DENSITY, SettingGet(G,cSetting_fog));
+      
+      v=SettingGetfv(G,cSetting_bg_rgb);
+      fog[0]=v[0];
+      fog[1]=v[1];
+      fog[2]=v[2];
+      
+      /* NOTE: this doesn't seem to work :( -- only raytracing can do this */
+      fog[3]= (SettingGetGlobal_b(G,cSetting_opaque_background) ? 1.0F : 0.0F);
+      
+      glFogfv(GL_FOG_COLOR, fog);
+      
       if(SettingGet(G,cSetting_depth_cue)&&SettingGet(G,cSetting_fog)) {
-        I->FogStart = (I->BackSafe-I->FrontSafe)*SettingGet(G,cSetting_fog_start)+I->FrontSafe;
         glEnable(GL_FOG);
-        glFogf(GL_FOG_MODE, GL_LINEAR);
-        /* glHint(GL_FOG_HINT,GL_NICEST); *** DISABLED TO WORK AROUND ATI DRIVER BUG(s) */
-        glFogf(GL_FOG_START, I->FogStart);
-        
-        I->FogEnd = I->BackSafe;
-        glFogf(GL_FOG_END, I->FogEnd);
-        glFogf(GL_FOG_DENSITY, SettingGet(G,cSetting_fog));
-        
-        v=SettingGetfv(G,cSetting_bg_rgb);
-        fog[0]=v[0];
-        fog[1]=v[1];
-        fog[2]=v[2];
-        
-        /* NOTE: this doesn't seem to work :( -- only raytracing can do this */
-        fog[3]= (SettingGetGlobal_b(G,cSetting_opaque_background) ? 1.0F : 0.0F);
-        
-        glFogfv(GL_FOG_COLOR, fog);
       } else {
-          glDisable(GL_FOG);
+        glDisable(GL_FOG);
       }
       glColor4ub(255,255,255,255);
       glNormal3fv(normal);
