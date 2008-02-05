@@ -618,7 +618,7 @@ if __name__=='pymol.setting':
         grid_max                           = 580
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
-
+    
     index_list = []
     name_dict = {}
     name_list = SettingIndex.__dict__.keys()
@@ -656,10 +656,7 @@ if __name__=='pymol.setting':
             return -1
 
     def _get_name(index): # likewise, this can be called from C so no exceptions
-        if name_dict.has_key(index):
-            return name_dict[index]
-        else:
-            return ""
+        return name_dict.get(index,"")
 
     def get_index_list():
         return index_list
@@ -667,6 +664,10 @@ if __name__=='pymol.setting':
     def get_name_list():
         return name_list
 
+    def dump_tuples():
+        for idx in range(581):
+            print _get_name(idx), cmd.get_setting_tuple(idx)
+            
     ###### API functions
 
     def set_bond(name, value, selection1, selection2=None,

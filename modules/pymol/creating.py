@@ -784,7 +784,8 @@ ARGUMENTS
 
 PYMOL API
 
-    cmd.create(string name, string selection, int state, int target_state,int discrete)
+    cmd.create(string name, string selection, int state,
+               int target_state, int discrete)
 
 NOTES
 

@@ -6651,6 +6651,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
     float width_scale = SettingGetGlobal_f(G,cSetting_selection_width_scale);
     int round_points = SettingGetGlobal_b(G,cSetting_selection_round_points);
     int vis_only = SettingGetGlobal_b(G,cSetting_selection_visible_only);
+    int fog = SettingGet(G,cSetting_depth_cue)&&SettingGet(G,cSetting_fog);
     rec = NULL;
     min_width = SettingGetGlobal_f(G,cSetting_selection_width);
     
@@ -6785,7 +6786,8 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
             
               if(no_depth)
                 glEnable(GL_DEPTH_TEST);
-              glEnable(GL_FOG);
+              if(fog)
+                glEnable(GL_FOG);
             }
           }
         }
