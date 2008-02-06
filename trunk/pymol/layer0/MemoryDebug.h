@@ -58,8 +58,8 @@ Z* -------------------------------------------------------------------
 #define VLASize(ptr,type,size) {ptr=(type*)OV_HEAP_VLA_SET_SIZE_RAW(ptr,size);}
 #define VLASetSize(ptr,size) OV_HEAP_VLA_SET_SIZE_RAW(ptr,size)
 #define VLAGetSize(ptr) OV_HEAP_VLA_GET_SIZE_RAW(ptr)
-#define VLASizeForSure(ptr,type,size) {ptr=(type*)OV_HEAP_VLA_SET_SIZE_RAW_RECOPY(ptr);}
-#define VLASetSizeForSure(ptr,size) OV_HEAP_VLA_SET_SIZE_RAW_RECOPY(ptr);
+#define VLASizeForSure(ptr,type,size) {ptr=(type*)OV_HEAP_VLA_SET_SIZE_RAW_RECOPY(ptr,size);}
+#define VLASetSizeForSure(ptr,size) OV_HEAP_VLA_SET_SIZE_RAW_RECOPY(ptr,size);
 #define VLACopy(ptr,type) (type*)OV_HEAP_VLA_CLONE_RAW(ptr)
 #define VLANewCopy(ptr) OV_HEAP_VLA_CLONE_RAW(ptr)
 
