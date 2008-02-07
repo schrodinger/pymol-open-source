@@ -45,14 +45,20 @@ class PyMOL:
             options = self.invocation.options
 
             if scheme!=None: #
-                if scheme == 'widget': # An embedded widget of some type
+                if scheme == 'presentation':
                     options.quiet = 0
                     options.show_splash = 0
                     options.external_gui = 0
                     options.internal_feedback = 0
                     options.no_quit = 1
-#                    options.internal_gui = 0
-#                    options.presentation = 1
+                    options.internal_gui = 0
+                    options.presentation = 1
+                elif scheme == 'widget': # An embedded widget of some type
+                    options.quiet = 0
+                    options.show_splash = 0
+                    options.external_gui = 0
+                    options.internal_feedback = 1
+                    options.no_quit = 1
                     
             self._COb = _cmd._new(self,self.invocation.options)
 

@@ -180,6 +180,7 @@ void PyMOL_PopValidContext(CPyMOL *I);
 
 /* methods requiring a valid OpenGL context*/
 
+void PyMOL_AdaptToHardware(CPyMOL *I);
 void PyMOL_Draw(CPyMOL *I);
 
 /* methods that do not require a valid OpenGL context */
