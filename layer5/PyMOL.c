@@ -3077,6 +3077,31 @@ void PyMOL_BlockAndUnlockAPI(CPyMOL *I)
   PBlockAndUnlockAPI(G);
 }
 
+void PyMOL_AdaptToHardware(CPyMOL *I)
+{
+  PYMOL_API_LOCK
+  
+  PyMOLGlobals *G = I->G;
+  if(G->HaveGUI) {
+    PyMOL_PushValidContext(I);
+    {
+      char *vendor = (char*)glGetString(GL_VENDOR);
+      char *renderer =(char*)glGetString(GL_RENDERER);
+      char *version = (char*)glGetString(GL_VERSION);    
+      if(vendor && version) {
+        /* work around broken lighting under Windows GDI Generic */
+        if((strcmp(vendor,"Microsoft Corporation")==0) &&
+           (strcmp(renderer,"GDI Generic")==0)) {
+          ExecutiveSetSettingFromString(I->G, cSetting_light_count, "1","",0,1,0);
+          ExecutiveSetSettingFromString(I->G, cSetting_spec_direct, "0.7","",0,1,0);
+        }
+      }
+    }
+    PyMOL_PopValidContext(I);
+  }
+  PYMOL_API_UNLOCK
+}
+
 void PyMOL_Draw(CPyMOL *I)
 {
   PYMOL_API_LOCK
