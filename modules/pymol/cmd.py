@@ -102,7 +102,6 @@ if __name__=='pymol.cmd':
         import parsing
         import __main__
         import time
-        import urllib
 
         _pymol = pymol
         

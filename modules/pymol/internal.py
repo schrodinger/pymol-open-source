@@ -248,8 +248,8 @@ def _load(oname,finfo,state,ftype,finish,discrete,
             try:
                 # BEGIN PROPRIETARY CODE SEGMENT
                 from epymol import moe
-
                 if (string.find(finfo,":")>1):
+                    import urllib
                     moe_file = urllib.urlopen(finfo)
                 else:
                     moe_file = open(finfo)
@@ -267,8 +267,8 @@ def _load(oname,finfo,state,ftype,finish,discrete,
             try:
                 # BEGIN PROPRIETARY CODE SEGMENT
                 from epymol import mae
-
                 if (string.find(finfo,":")>1):
+                    import urllib 
                     mae_file = urllib.urlopen(finfo)
                 else:
                     mae_file = open(finfo)
@@ -287,6 +287,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
         else:
             if ftype in _load2str.keys() and (string.find(finfo,":")>1):
                 try:
+                    import urllib
                     tmp_file = urllib.urlopen(finfo)
                 except:
                     print "Error: unable to open URL '%s'"%finfo
