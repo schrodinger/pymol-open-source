@@ -15,7 +15,6 @@
 import string
 import os
 import copy
-import urllib
 
 #
 # Basic chempy types
@@ -162,6 +161,7 @@ class Storage:
 
     def my_open(self,fname,mode='r'):
         if (mode[0:1]=='r') and (string.find(fname,':')>1):
+            import urllib
             return urllib.urlopen(fname)
         else:
             return open(fname,mode)
