@@ -1101,7 +1101,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
             m[iy][a] = bb*sg;
             m[iz][a] = cc*sg;
           }
-      } else {
+      } else if(iters>2) {
         break;
       }
       iters++;
