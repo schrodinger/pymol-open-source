@@ -110,11 +110,11 @@ PyMOL>select cpy_sel = (cpy)
 PyMOL>alter_state 1,(cpy),x=x+math.cos(y+z)
  AlterState: modified 107 atom coordinate states.
 PyMOL>rms cpy,pept
- Executive: RMS =    0.698 (107 to 107 atoms)
+ Executive: RMS =    0.695 (107 to 107 atoms)
 PyMOL>rms (cpy and name ca),pept
- Executive: RMS =    0.685 (13 to 13 atoms)
+ Executive: RMS =    0.639 (13 to 13 atoms)
 PyMOL>rms (cpy and name ca),(pept &n;ca)
- Executive: RMS =    0.685 (13 to 13 atoms)
+ Executive: RMS =    0.639 (13 to 13 atoms)
 PyMOL>rms_cur cpy,pept
  Executive: RMS =    0.700 (107 to 107 atoms)
 PyMOL>rms_cur (cpy and name ca),pept
@@ -122,16 +122,16 @@ PyMOL>rms_cur (cpy and name ca),pept
 PyMOL>rms_cur (cpy and name ca),(pept &n;ca)
  Executive: RMS =    0.722 (13 to 13 atoms)
 PyMOL>fit cpy,pept
- Executive: RMS =    0.698 (107 to 107 atoms)
+ Executive: RMS =    0.695 (107 to 107 atoms)
 PyMOL>fit (cpy),(pept)
- Executive: RMS =    0.698 (107 to 107 atoms)
+ Executive: RMS =    0.695 (107 to 107 atoms)
 PyMOL>fit (cpy and name ca),(pept &n;ca)
- Executive: RMS =    0.685 (13 to 13 atoms)
+ Executive: RMS =    0.639 (13 to 13 atoms)
 PyMOL>pair_fit (cpy&i;11&n;ca),(pept&i;11&n;ca),\
 PyMOL>(cpy&i;5&n;ca),(pept&i;5&n;ca),\
 PyMOL>(cpy&i;1&n;ca),(pept&i;1&n;ca),\
 PyMOL>(cpy&i;8&n;ca),(pept&i;8&n;ca)
- ExecutiveRMS: RMS =    0.718 (4 to 4 atoms)
+ ExecutiveRMS: RMS =    0.478 (4 to 4 atoms)
 PyMOL>update (cpy),(pept)
  Update: coordinates updated for 107 atoms.
 PyMOL>remove (cpy and name c)

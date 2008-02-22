@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2008-02-23  Warren L. DeLano <warren@delsci.com>	
+
+	* fixed a fitting bug with degenerate cases
+
+	* various activex compatibility fixes integrated over past weeks
+	
 2008-02-05  Warren L. DeLano <warren@delsci.com>	
 
 	* eliminated rare but serious bug with fog plus selections
