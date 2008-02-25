@@ -7528,6 +7528,14 @@ int SelectorCreateWithStateDomain(PyMOLGlobals *G,char *sname,char *sele,ObjectM
                                     int quiet,Multipick *mp,int state,char *domain)
 {
   int domain_sele = -1;
+  ObjectNameType valid_name;
+
+  UtilNCopy(valid_name, sname, sizeof(valid_name));
+  if(SettingGetGlobal_b(G,cSetting_validate_object_names)) {
+    ObjectMakeValidName(valid_name);
+    sname = valid_name;
+  }
+
   if(domain && domain[0]) {
     if(!WordMatchExact(G,cKeywordAll,domain,true)) { /* allow domain=all */
       domain_sele = SelectorIndexByName(G,domain);
