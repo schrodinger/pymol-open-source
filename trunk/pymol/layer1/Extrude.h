@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Extrude
 #define _H_Extrude
 
+
 #include"Ray.h"
 #include"CGO.h"
 #include"ObjectMolecule.h"
@@ -56,10 +57,12 @@ void ExtrudeRectangle(CExtrude *I,float width,float length,int mode);
 void ExtrudeOval(CExtrude *I,int n,float width,float length);
 
 
-void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field,
-                                float mean, float stdev, float power, float range,
-                                float min_scale, float max_scale,
-                                int smooth_window);
+void ExtrudeComputePuttyScaleFactors(CExtrude *I, ObjectMolecule *obj, 
+                                     int transform,
+                                     float mean, float stdev, float min, float max, 
+                                     float power, float range,
+                                     float min_scale, float max_scale,
+                                     int smooth_window);
 
 void ExtrudeBuildNormals1f(CExtrude *I);
 void ExtrudeBuildNormals2f(CExtrude *I);

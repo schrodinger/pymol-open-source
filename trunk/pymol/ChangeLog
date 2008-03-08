@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-03-07 Warren L. DeLano <warren@delsci.com>	
+
+	* added cartoon_putty_transform setting for comparison tasks
+		
 2008-02-24  Warren L. DeLano <warren@delsci.com>	
 
 	* select now applies validate_object_names to selection name

@@ -73,6 +73,12 @@ typedef struct {
 #define cPickableLabel -2
 #define cPickableGadget -3
 
+#define cPuttyTransformNormalizedNonlinear 0
+#define cPuttyTransformRelativeNonlinear   1
+#define cPuttyTransformScaledNonlinear     2
+#define cPuttyTransformScaledLinear        3
+#define cPuttyTransformAbsoluteLinear      4
+
 typedef struct {
   void *object;
   int state;

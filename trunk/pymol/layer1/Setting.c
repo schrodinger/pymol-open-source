@@ -2283,9 +2283,11 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_cartoon_tube_cap:
   case cSetting_cartoon_putty_quality:
   case cSetting_cartoon_putty_radius:
+  case cSetting_cartoon_putty_range:
   case cSetting_cartoon_putty_scale_min:
   case cSetting_cartoon_putty_scale_max:
   case cSetting_cartoon_putty_scale_power:
+  case cSetting_cartoon_putty_transform:
   case cSetting_cartoon_power:
   case cSetting_cartoon_power_b:
   case cSetting_cartoon_ring_radius:
@@ -3599,8 +3601,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_cache_max,12500000); /* default: ~50 MB cache */
     set_i(I,cSetting_grid_slot,-1);
     set_i(I,cSetting_grid_max,-1);
+    set_i(I,cSetting_cartoon_putty_transform, cPuttyTransformNormalizedNonlinear);
+
   }
 }
-
-
-
