@@ -78,19 +78,22 @@ extern CPyMOLOptions *MacPyMOLOption;
 
 #ifdef _MACPYMOL_XCODE
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#define PYMOL_API_LOCK if((I->PythonInitStage)&&PLockAPIAsGlut(I->G,true)) {
+#define PYMOL_API_LOCK if((I->PythonInitStage) && (!I->ModalDraw) && PLockAPIAsGlut(I->G,true)) {
+#define PYMOL_API_LOCK_MODAL if((I->PythonInitStage) && PLockAPIAsGlut(I->G,true)) {
 #define PYMOL_API_TRYLOCK PYMOL_API_LOCK
 #define PYMOL_API_UNLOCK PUnlockAPIAsGlut(I->G); }
 #define PYMOL_API_UNLOCK_NO_FLUSH PUnlockAPIAsGlutNoFlush(I->G); }
 /* END PROPRIETARY CODE SEGMENT */
 #else 
 #ifdef _PYMOL_LIB_HAS_PYTHON
-#define PYMOL_API_LOCK if(I->PythonInitStage) { PLockAPIAndUnblock(I->G); {
-#define PYMOL_API_TRYLOCK if(I->PythonInitStage) { if(PTryLockAPIAndUnblock(I->G)) {
+#define PYMOL_API_LOCK if(I->PythonInitStage && (!I->ModalDraw)) { PLockAPIAndUnblock(I->G); {
+#define PYMOL_API_LOCK_MODAL if(I->PythonInitStage) { PLockAPIAndUnblock(I->G); {
+#define PYMOL_API_TRYLOCK if(I->PythonInitStage && (!I->ModalDraw)) { if(PTryLockAPIAndUnblock(I->G)) {
 #define PYMOL_API_UNLOCK PBlockAndUnlockAPI(I->G); }}
 #define PYMOL_API_UNLOCK_NO_FLUSH PBlockAndUnlockAPI(I->G); }}
 #else
-#define PYMOL_API_LOCK {
+#define PYMOL_API_LOCK if(!I->ModalDraw) {
+#define PYMOL_API_LOCK_MODAL {
 #define PYMOL_API_TRYLOCK {
 #define PYMOL_API_UNLOCK }
 #define PYMOL_API_UNLOCK_NO_FLUSH }
@@ -118,6 +121,10 @@ typedef struct _CPyMOL {
   int ProgressChanged;
   int IdleAndReady;
   int ExpireCount;
+
+  void *ModalStorage;
+  PyMOLModalDrawFn  *ModalDraw;
+
   PyMOLSwapBuffersFn *SwapFn;
 
 /* Python stuff */
@@ -3102,106 +3109,123 @@ void PyMOL_AdaptToHardware(CPyMOL *I)
   PYMOL_API_UNLOCK
 }
 
-void PyMOL_Draw(CPyMOL *I)
+static void setup_gl_state(void) 
 {
-  PYMOL_API_LOCK
+  /* get us into a well defined GL state */
   
-  PyMOLGlobals *G = I->G;
-
-  if(I->DraggedFlag) {
-    if(ControlIdling(I->G)) {
-      ExecutiveSculptIterateAll(I->G);
-    }
-    I->DraggedFlag = false;
-  }
-  if(G->HaveGUI) {
-    
-    PyMOL_PushValidContext(I);
-
-    /* get us into a well defined GL state */
-
-    /*glMatrixMode(GL_PROJECTION);
+  /*glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();*/
+  
+  glDisable(GL_ALPHA_TEST);
+  glDisable(GL_AUTO_NORMAL);
+  glDisable(GL_BLEND);
+  glDisable(GL_COLOR_LOGIC_OP);
+  glDisable(GL_COLOR_MATERIAL);
+  glDisable(GL_CULL_FACE);
+  
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_DITHER);
+  glDisable(GL_FOG);
+  glDisable(GL_LIGHTING);
+  glDisable(GL_LIGHT0);
+  glDisable(GL_LIGHT1);
+  glDisable(GL_LINE_SMOOTH);
+  glDisable(GL_NORMALIZE);
+  glDisable(GL_POLYGON_SMOOTH);
+}
 
-    glDisable(GL_ALPHA_TEST);
-    glDisable(GL_AUTO_NORMAL);
-    glDisable(GL_BLEND);
-    glDisable(GL_COLOR_LOGIC_OP);
-    glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_CULL_FACE);
+void PyMOL_Draw(CPyMOL *I)
+{
+  PYMOL_API_LOCK_MODAL
+  
+  PyMOLGlobals *G = I->G;
 
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_DITHER);
-    glDisable(GL_FOG);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_LIGHT0);
-    glDisable(GL_LIGHT1);
-    glDisable(GL_LINE_SMOOTH);
-    glDisable(GL_NORMALIZE);
-    glDisable(GL_POLYGON_SMOOTH);
-    
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef _MACPYMOL_XCODE
-    { /* on a mac, this can change if we've switched contexts...*/
-      GLboolean state;
-      glGetBooleanv(GL_STEREO, &state);
-      G->StereoCapable = (int) state;
+  if(I->ModalDraw) {
+    if(G->HaveGUI) {
+      PyMOL_PushValidContext(I);
+
+      setup_gl_state();
+      
+      I->ModalDraw(I,I->ModalStorage);
+      
+      PyMOL_PopValidContext(I);
     }
-#endif
-/* END PROPRIETARY CODE SEGMENT */
+  } else {
+    
+    if(I->DraggedFlag) {
+      if(ControlIdling(I->G)) {
+        ExecutiveSculptIterateAll(I->G);
+      }
+      I->DraggedFlag = false;
+    }
 
-    if(!I->DrawnFlag) {
-      SceneSetCardInfo(G,(char*)glGetString(GL_VENDOR),
-                       (char*)glGetString(GL_RENDERER),
-                       (char*)glGetString(GL_VERSION));
-      if(G->Option->show_splash) {
-        
-        printf(" OpenGL graphics engine:\n");
-        printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
-        printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
-        printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));
-        if(Feedback(G,FB_OpenGL,FB_Blather)) {
-          printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));
-        }
-        if(G->StereoCapable) {
-          printf("  Hardware stereo capability detected.\n");
-        } else if((G->Option->force_stereo==1)&&(!G->StereoCapable)) {
-          printf("  Hardware stereo not present (unable to force).\n");
-        }
-      } 
+    
+    if(G->HaveGUI) {
+      
+      PyMOL_PushValidContext(I);
+      
+      setup_gl_state();
+
+      /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+#ifdef _MACPYMOL_XCODE
+      { /* on a mac, this can change if we've switched contexts...*/
+        GLboolean state;
+        glGetBooleanv(GL_STEREO, &state);
+        G->StereoCapable = (int) state;
+      }
+#endif
+      /* END PROPRIETARY CODE SEGMENT */
+      
+      if(!I->DrawnFlag) {
+        SceneSetCardInfo(G,(char*)glGetString(GL_VENDOR),
+                         (char*)glGetString(GL_RENDERER),
+                         (char*)glGetString(GL_VERSION));
+        if(G->Option->show_splash) {
+          
+          printf(" OpenGL graphics engine:\n");
+          printf("  GL_VENDOR: %s\n",(char*)glGetString(GL_VENDOR));
+          printf("  GL_RENDERER: %s\n",(char*)glGetString(GL_RENDERER));
+          printf("  GL_VERSION: %s\n",(char*)glGetString(GL_VERSION));
+          if(Feedback(G,FB_OpenGL,FB_Blather)) {
+            printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));
+          }
+          if(G->StereoCapable) {
+            printf("  Hardware stereo capability detected.\n");
+          } else if((G->Option->force_stereo==1)&&(!G->StereoCapable)) {
+            printf("  Hardware stereo not present (unable to force).\n");
+          }
+        } 
+        I->DrawnFlag = true;
+      }
+    } else {
       I->DrawnFlag = true;
     }
     
-  } else {
-    I->DrawnFlag = true;
-  }
-
-  I->RedisplayFlag = false;
-  
-  OrthoBusyPrime(G);
-  ExecutiveDrawNow(G);
-
-  if(I->ImageRequestedFlag) {
-    if(SceneHasImage(G)) {
-      I->ImageReadyFlag = true;
-      I->ImageRequestedFlag = false;
-      {
-        int w, h;
-        SceneGetImageSize(I->G,&w,&h);
+    I->RedisplayFlag = false;
+    
+    OrthoBusyPrime(G);
+    ExecutiveDrawNow(G);
+    
+    if(I->ImageRequestedFlag) {
+      if(SceneHasImage(G)) {
+        I->ImageReadyFlag = true;
+        I->ImageRequestedFlag = false;
+        {
+          int w, h;
+          SceneGetImageSize(I->G,&w,&h);
+        }
+        
+      } else {
+        I->ImageReadyFlag = false;
       }
-
-    } else {
-      I->ImageReadyFlag = false;
+    } else if(I->ImageReadyFlag) {
+      if(!SceneHasImage(G)) 
+        I->ImageReadyFlag = false;
     }
-  } else if(I->ImageReadyFlag) {
-    if(!SceneHasImage(G)) 
-      I->ImageReadyFlag = false;
+    if(G->HaveGUI) PyMOL_PopValidContext(I);
   }
-
-  if(G->HaveGUI) PyMOL_PopValidContext(I);
-  
   PYMOL_API_UNLOCK
   
 }
@@ -3259,7 +3283,6 @@ void PyMOL_Reshape(CPyMOL *I,int width, int height, int force)
   PYMOL_API_LOCK
   PyMOLGlobals *G = I->G;
 
-
   G->Option->winX = width;
   G->Option->winY = height;
 
@@ -3269,41 +3292,41 @@ void PyMOL_Reshape(CPyMOL *I,int width, int height, int force)
 
 int PyMOL_Idle(CPyMOL *I)
 {
-
   int did_work = false;
   PYMOL_API_TRYLOCK
 
   PyMOLGlobals *G = I->G;
-  
-  I->DraggedFlag = false;
-  if(I->IdleAndReady<IDLE_AND_READY) {
-    I->IdleAndReady++;
-  }
-  if(I->FakeDragFlag==1) {
-    I->FakeDragFlag = false;
-    OrthoFakeDrag(G);
-    did_work = true;
-  }
+  if(!I->ModalDraw) {
 
-  if(ControlIdling(G)) {
-    ExecutiveSculptIterateAll(G);
-    did_work = true;
-  }
-
-  SceneIdle(G); 
-
-  if(SceneRovingCheckDirty(G)) {
-    SceneRovingUpdate(G);
-    did_work = true;
-  }
-
-  PFlush(G);
-  
+    I->DraggedFlag = false;
+    if(I->IdleAndReady<IDLE_AND_READY) {
+      I->IdleAndReady++;
+    }
+    if(I->FakeDragFlag==1) {
+      I->FakeDragFlag = false;
+      OrthoFakeDrag(G);
+      did_work = true;
+    }
+    
+    if(ControlIdling(G)) {
+      ExecutiveSculptIterateAll(G);
+      did_work = true;
+    }
+    
+    SceneIdle(G); 
+    
+    if(SceneRovingCheckDirty(G)) {
+      SceneRovingUpdate(G);
+      did_work = true;
+    }
+    
+    PFlush(G);
+    
 #ifndef _PYMOL_NOPY
-  if(I->PythonInitStage>0) {
-	if(I->PythonInitStage<2) {
-	   I->PythonInitStage++;
-	} else {
+    if(I->PythonInitStage>0) {
+      if(I->PythonInitStage<2) {
+        I->PythonInitStage++;
+      } else {
 		I->PythonInitStage=-1;
 		PBlock(G);
 		/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
@@ -3317,12 +3340,12 @@ int PyMOL_Idle(CPyMOL *I)
         PXDecRef(PyObject_CallMethod(G->P_inst->obj,"exec_deferred","O",G->P_inst->obj));
 		PUnblock(G);
 		PFlush(G);
-	}
-  }
+      }
+    }
 #endif
+  }
 
   PYMOL_API_UNLOCK_NO_FLUSH
-
   return did_work;
 }
 
@@ -3614,7 +3637,8 @@ int PyMOL_GetRedisplay(CPyMOL *I, int reset)
     }
   }
   PYMOL_API_UNLOCK_NO_FLUSH
-  return result;
+
+  return (result || I->ModalDraw); /* always true when ModalDraw is set */
 }
 
 int PyMOL_GetPassive(CPyMOL *I, int reset)
@@ -3623,6 +3647,17 @@ int PyMOL_GetPassive(CPyMOL *I, int reset)
   if(reset)
     I->PassiveFlag = false;
   return result;
+}
+
+int PyMOL_GetModalDraw(CPyMOL *I)
+{
+  return (I->ModalDraw != NULL);
+}
+
+void PyMOL_SetModalDraw(CPyMOL *I, PyMOLModalDrawFn *fn, void *storage)
+{
+  I->ModalDraw = fn;
+  I->ModalStorage = storage;
 }
 
 int PyMOL_GetSwap(CPyMOL *I, int reset)
