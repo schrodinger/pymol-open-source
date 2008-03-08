@@ -76,8 +76,14 @@ typedef struct {
 #define cPuttyTransformNormalizedNonlinear 0
 #define cPuttyTransformRelativeNonlinear   1
 #define cPuttyTransformScaledNonlinear     2
-#define cPuttyTransformScaledLinear        3
-#define cPuttyTransformAbsoluteLinear      4
+#define cPuttyTransformAbsoluteNonlinear   3
+
+#define cPuttyTransformNormalizedLinear    4
+#define cPuttyTransformRelativeLinear      5
+#define cPuttyTransformScaledLinear        6
+#define cPuttyTransformAbsoluteLinear      7
+
+#define cPuttyTransformImpliedRMS          8
 
 typedef struct {
   void *object;

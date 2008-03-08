@@ -1648,6 +1648,23 @@ void ExtrudeComputePuttyScaleFactors(CExtrude *I,ObjectMolecule *obj,int transfo
           scale=(float)pow(scale,power);
           *sf = scale;
           break;
+        case cPuttyTransformAbsoluteNonlinear: 
+          scale = at->b;
+          if(scale<0.0F) scale = 0.0F;
+          scale=(float)pow(scale,power);
+          *sf = scale;
+          break;
+        case cPuttyTransformNormalizedLinear:  
+          /* normalized by Z-score, with the range affecting the distribution width */
+          scale = (range+(at->b - mean)/stdev)/range;
+          if(scale<0.0F)
+            scale = 0.0F;
+          break;
+        case cPuttyTransformRelativeLinear: 
+          scale = (at->b - min) / (data_range * range);
+          if(scale<0.0F) scale = 0.0F;
+          *sf = scale;
+          break;
         case cPuttyTransformScaledLinear: 
           scale = at->b / range;
           if(scale<0.0F) scale = 0.0F;
@@ -1657,6 +1674,10 @@ void ExtrudeComputePuttyScaleFactors(CExtrude *I,ObjectMolecule *obj,int transfo
           scale = at->b;
           if(scale<0.0F) scale = 0.0F;
           *sf = scale;
+          break;
+        case cPuttyTransformImpliedRMS:
+          if(scale<0.0F) scale = 0.0F;
+          scale = (float)(sqrt1d(at->b/8.0)/PI);
           break;
         }
         if(scale<min_scale)

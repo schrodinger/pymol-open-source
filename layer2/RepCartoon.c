@@ -1530,7 +1530,9 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
   if(tube_quality<3) tube_quality=3;
 
   putty_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_putty_radius);
-  if(putty_radius<0.01F) putty_radius=0.01F;
+  /* WLD removed: if(putty_radius<0.01F) putty_radius=0.01F; --
+     should not constrain what is effectively a scale factor */
+
   putty_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_putty_quality);
   if(putty_quality<3) putty_quality=3;
 
