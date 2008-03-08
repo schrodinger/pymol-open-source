@@ -19,10 +19,10 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 
 
-/* WARNING: PYMOL's internal matrix handling is an partially-mitigated
-   disaster.  There are many different kinds of matrices in use in
+/* WARNING: PYMOL's internal matrix handling is a partially-mitigated
+   disaster.  There are several different kinds of matrices in use in
    PyMOL, and until recently, it wasn't clear which conventions were
-   being used where.  We're trying to change that...
+   being used where.  Over time, we WILL fix that.
 
    Note the coding used on routines:
 

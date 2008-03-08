@@ -1604,16 +1604,20 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
 
 }
 
-void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field,
-                                float mean, float stdev, float power, float range,
-                                float min_scale, float max_scale,
-                                int window)
+void ExtrudeComputePuttyScaleFactors(CExtrude *I,ObjectMolecule *obj,int transform,
+                                     float mean, float stdev, float min, float max, 
+                                     float power, float range,
+                                     float min_scale, float max_scale,
+                                     int window)
 {
   float *sf;
   int a;
   int *i;
   AtomInfoType *at;
   float scale;
+  float data_range = max - min;
+
+  if(data_range==0.0F) data_range = 1.0F;
 
   if(I->N&&I->Ns) {
 
@@ -1624,20 +1628,42 @@ void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field
       for(a=0;a<I->N;a++) {
         at = obj->AtomInfo + (*i);
         
-        switch(source_field) {
-        default: /* b*/
+        switch(transform) {
+        case cPuttyTransformNormalizedNonlinear:  
+          /* normalized by Z-score, with the range affecting the distribution width */
           scale = (range+(at->b - mean)/stdev)/range;
           if(scale<0.0F)
             scale = 0.0F;
           scale=(float)pow(scale,power);
-          if(scale<min_scale)
-            scale=min_scale;
-          if(scale>max_scale)
-            scale=max_scale;
+          break;
+        case cPuttyTransformRelativeNonlinear: 
+          scale = (at->b - min) / (data_range * range);
+          if(scale<0.0F) scale = 0.0F;
+          scale=(float)pow(scale,power);
+          *sf = scale;
+          break;
+        case cPuttyTransformScaledNonlinear: 
+          scale = at->b / range;
+          if(scale<0.0F) scale = 0.0F;
+          scale=(float)pow(scale,power);
+          *sf = scale;
+          break;
+        case cPuttyTransformScaledLinear: 
+          scale = at->b / range;
+          if(scale<0.0F) scale = 0.0F;
+          *sf = scale;
+          break;
+        case cPuttyTransformAbsoluteLinear: 
+          scale = at->b;
+          if(scale<0.0F) scale = 0.0F;
           *sf = scale;
           break;
         }
-        sf++;
+        if(scale<min_scale)
+          scale=min_scale;
+        if(scale>max_scale)
+          scale=max_scale;
+        *(sf++) = scale;
         i++;
       }
     } else {

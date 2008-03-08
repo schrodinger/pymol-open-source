@@ -1462,6 +1462,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
   float alpha;
   int putty_flag = false;
   float putty_mean=10.0F,putty_stdev=0.0F;
+  float putty_max=-FLT_MAX, putty_min=FLT_MAX;
   AtomInfoType *trailing_O3p_ai=NULL;
   int trailing_O3p_a = 0, trailing_O3p_a1=0;
   AtomInfoType *leading_O5p_ai=NULL;
@@ -1917,6 +1918,10 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
         value = ai->b;
         sum+=value;
         sumsq+=(value*value);
+        if(value<putty_min)
+          putty_min = value;
+        if(value>putty_max)
+          putty_max = value;
         cnt++;
       }
     }
@@ -1924,9 +1929,12 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
     if(cnt) {
       putty_mean = (float)(sum/cnt);
       putty_stdev = (float)sqrt1d((sumsq - (sum*sum/cnt))/(cnt));
-    } else {
+    } else { 
+      /* aren't these assignments unnecessary? */
       putty_mean = 10.0F;
       putty_stdev = 10.0F;
+      putty_min = 0.0F;
+      putty_max = 10.0F;
     }
   }
 
@@ -3166,17 +3174,19 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
             case cCartoon_putty:
               ExtrudeCircle(ex,putty_quality,putty_radius);
               ExtrudeBuildNormals1f(ex);
-              ExtrudeComputeScaleFactors(ex,obj,0,
-                                         putty_mean,putty_stdev,
-                                         SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-                                                      cSetting_cartoon_putty_scale_power),
-                                         SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-                                                      cSetting_cartoon_putty_range),
-                                         SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-                                                      cSetting_cartoon_putty_scale_min),
-                                         SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-                                                      cSetting_cartoon_putty_scale_max),
-                                         sampling/2);
+              ExtrudeComputePuttyScaleFactors(ex,obj,
+                                              SettingGet_i(G,cs->Setting,obj->Obj.Setting,
+                                                           cSetting_cartoon_putty_transform),
+                                              putty_mean, putty_stdev, putty_min, putty_max,
+                                              SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                                           cSetting_cartoon_putty_scale_power),
+                                              SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                                           cSetting_cartoon_putty_range),
+                                              SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                                           cSetting_cartoon_putty_scale_min),
+                                              SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                                           cSetting_cartoon_putty_scale_max),
+                                              sampling/2);
 
               ExtrudeCGOSurfaceVariableTube(ex,I->ray,1);
               break;
