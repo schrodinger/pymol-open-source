@@ -1661,7 +1661,7 @@ void ExtrudeComputePuttyScaleFactors(CExtrude *I,ObjectMolecule *obj,int transfo
         }
         if(scale<min_scale)
           scale=min_scale;
-        if(scale>max_scale)
+        if((scale>max_scale) && (max_scale>=0.0)) 
           scale=max_scale;
         *(sf++) = scale;
         i++;
