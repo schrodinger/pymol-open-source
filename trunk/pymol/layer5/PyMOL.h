@@ -147,6 +147,9 @@ typedef struct {
   int *array;
 } PyMOLreturn_int_array;
 
+
+typedef void PyMOLModalDrawFn(CPyMOL *I, void *info);
+
 /* creation */
 
 CPyMOL *PyMOL_New(void);
@@ -240,6 +243,12 @@ int PyMOL_GetProgressChanged(CPyMOL *I,int reset);
                        
 int PyMOL_GetInterrupt(CPyMOL *I, int reset);
 void PyMOL_SetInterrupt(CPyMOL *I, int value);
+
+/* modal updates -- PyMOL is busy with some complex task, but we have
+   to return control to the host in order to get a valid draw callback */
+
+int PyMOL_GetModalDraw(CPyMOL *I);
+void PyMOL_SetModalDraw(CPyMOL *I, PyMOLModalDrawFn *fn, void *storage);
 
 /* developer/transient privates */
 
