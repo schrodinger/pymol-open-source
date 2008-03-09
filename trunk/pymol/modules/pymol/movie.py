@@ -82,17 +82,24 @@ def rock(first,last,angle=30,phase=0,loop=1,axis='y',_self=cmd):
         _self.mdo("%d"%(first+a),"turn %s,%8.3f"% (axis,diff))      
         a = a + 1
 
-def roll(first,last,loop=1,axis='y',_self=cmd):
+def roll(first=1,last=-1,loop=1,axis='y',_self=cmd):
     first=int(first)
     last=int(last)
     loop=int(loop)
+    axis=str(axis)
+    if last<0:
+        last = _self.count_frames()
     n = last - first
     if loop:
         step = 2*math.pi/(n+1)
     else:
         step = 2*math.pi/n   
     a = 0
-    deg = (180*step/math.pi)
+    invert = 1
+    if axis[0:1]=='-':
+        axis=axis[1:]
+        invert = -1
+    deg = invert * (180*step/math.pi)
     while a<=n:
         # com = "mdo %d:turn %s,%8.3f" % (first+a,axis,deg)
         # _self.do(com)

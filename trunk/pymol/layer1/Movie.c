@@ -589,19 +589,20 @@ static void MovieModalPNG(PyMOLGlobals *G, CMovie *I, CMovieModal *M)
         "MoviePNG-Error: Missing rendered image.\n"
         ENDFB(G);
     } else {
-      MyPNGWrite(G,M->fname,I->Image[M->image]->data,
-                 I->Image[M->image]->width,
-                 I->Image[M->image]->height,
-                 SettingGetGlobal_f(G,cSetting_image_dots_per_inch));		
+      if(!MyPNGWrite(G,M->fname,I->Image[M->image]->data,
+                     I->Image[M->image]->width,
+                     I->Image[M->image]->height,
+                     SettingGetGlobal_f(G,cSetting_image_dots_per_inch))) {
+        PRINTFB(G,FB_Movie,FB_Errors)
+          " MoviePNG-Error: unable to write '%s'\n",M->fname
+          ENDFB(G);
+      }
       ExecutiveDrawNow(G);
       OrthoBusySlow(G,M->frame,M->nFrame);
       if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
       PRINTFB(G,FB_Movie,FB_Debugging)
         " MoviePNG-DEBUG: i = %d, I->Image[image] = %p\n",M->image,I->Image[M->image]->data
         ENDFB(G);
-      if(Feedback(G,FB_Movie,FB_Actions)) {
-        printf(" Movie: wrote %s\n",M->fname);
-      }
     }
     if(I->Image[M->image]) {
       FreeP(I->Image[M->image]->data);
