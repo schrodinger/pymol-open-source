@@ -641,7 +641,8 @@ class Normal(PMGSkin):
             self.cmd.save(sfile,quiet=0)
         
     def file_savemovie(self):
-        sfile = asksaveasfilename(filetypes=[("Numbered PNG Files","*.png")])
+        sfile = asksaveasfilename(initialdir = self.initialdir,
+                                  filetypes=[("Numbered PNG Files","*.png")])
         if len(sfile):
             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
             self.cmd.log("mpng %s\n"%sfile,"cmd.mpng('%s')\n"%sfile)         
