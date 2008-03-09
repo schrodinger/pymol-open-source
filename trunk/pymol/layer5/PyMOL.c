@@ -94,7 +94,7 @@ extern CPyMOLOptions *MacPyMOLOption;
 #else
 #define PYMOL_API_LOCK if(!I->ModalDraw) {
 #define PYMOL_API_LOCK_MODAL {
-#define PYMOL_API_TRYLOCK {
+#define PYMOL_API_TRYLOCK if(!I->ModalDraw) {
 #define PYMOL_API_UNLOCK }
 #define PYMOL_API_UNLOCK_NO_FLUSH }
 #endif
@@ -122,7 +122,6 @@ typedef struct _CPyMOL {
   int IdleAndReady;
   int ExpireCount;
 
-  void *ModalStorage;
   PyMOLModalDrawFn  *ModalDraw;
 
   PyMOLSwapBuffersFn *SwapFn;
@@ -3145,13 +3144,19 @@ void PyMOL_Draw(CPyMOL *I)
   if(I->ModalDraw) {
     if(G->HaveGUI) {
       PyMOL_PushValidContext(I);
-
       setup_gl_state();
-      
-      I->ModalDraw(I,I->ModalStorage);
-      
+    }
+
+    {
+      PyMOLModalDrawFn *fn = I->ModalDraw;
+      I->ModalDraw = NULL; /* always resets to NULL! */
+      fn(G);
+    }
+    
+    if(G->HaveGUI) {
       PyMOL_PopValidContext(I);
     }
+
   } else {
     
     if(I->DraggedFlag) {
@@ -3296,57 +3301,55 @@ int PyMOL_Idle(CPyMOL *I)
   PYMOL_API_TRYLOCK
 
   PyMOLGlobals *G = I->G;
-  if(!I->ModalDraw) {
 
-    I->DraggedFlag = false;
-    if(I->IdleAndReady<IDLE_AND_READY) {
-      I->IdleAndReady++;
-    }
-    if(I->FakeDragFlag==1) {
-      I->FakeDragFlag = false;
-      OrthoFakeDrag(G);
-      did_work = true;
-    }
-    
-    if(ControlIdling(G)) {
-      ExecutiveSculptIterateAll(G);
-      did_work = true;
-    }
-    
-    SceneIdle(G); 
-    
-    if(SceneRovingCheckDirty(G)) {
-      SceneRovingUpdate(G);
-      did_work = true;
-    }
-    
-    PFlush(G);
-    
-#ifndef _PYMOL_NOPY
-    if(I->PythonInitStage>0) {
-      if(I->PythonInitStage<2) {
-        I->PythonInitStage++;
-      } else {
-		I->PythonInitStage=-1;
-		PBlock(G);
-		/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef _MACPYMOL_XCODE
-		/* restore working directory if asked to */
-		PRunStringModule(G,"if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
-		PXDecRef(PyObject_CallMethod(G->P_inst->obj,"launch_gui","O",G->P_inst->obj));
-#endif
-		/* END PROPRIETARY CODE SEGMENT */
-		PXDecRef(PyObject_CallMethod(G->P_inst->obj,"adapt_to_hardware","O",G->P_inst->obj));
-        PXDecRef(PyObject_CallMethod(G->P_inst->obj,"exec_deferred","O",G->P_inst->obj));
-		PUnblock(G);
-		PFlush(G);
-      }
-    }
-#endif
+  I->DraggedFlag = false;
+  if(I->IdleAndReady<IDLE_AND_READY) {
+    I->IdleAndReady++;
   }
+  if(I->FakeDragFlag==1) {
+    I->FakeDragFlag = false;
+    OrthoFakeDrag(G);
+    did_work = true;
+  }
+  
+  if(ControlIdling(G)) {
+    ExecutiveSculptIterateAll(G);
+    did_work = true;
+  }
+  
+  SceneIdle(G); 
+  
+  if(SceneRovingCheckDirty(G)) {
+    SceneRovingUpdate(G);
+    did_work = true;
+  }
+  
+  PFlush(G);
+  
+#ifndef _PYMOL_NOPY
+  if(I->PythonInitStage>0) {
+    if(I->PythonInitStage<2) {
+      I->PythonInitStage++;
+    } else {
+      I->PythonInitStage=-1;
+      PBlock(G);
+      /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+#ifdef _MACPYMOL_XCODE
+      /* restore working directory if asked to */
+      PRunStringModule(G,"if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
+      PXDecRef(PyObject_CallMethod(G->P_inst->obj,"launch_gui","O",G->P_inst->obj));
+#endif
+      /* END PROPRIETARY CODE SEGMENT */
+      PXDecRef(PyObject_CallMethod(G->P_inst->obj,"adapt_to_hardware","O",G->P_inst->obj));
+      PXDecRef(PyObject_CallMethod(G->P_inst->obj,"exec_deferred","O",G->P_inst->obj));
+      PUnblock(G);
+      PFlush(G);
+    }
+  }
+#endif
 
   PYMOL_API_UNLOCK_NO_FLUSH
-  return did_work;
+  return (did_work || I->ModalDraw);
 }
 
 void PyMOL_ExpireIfIdle(CPyMOL *I)
@@ -3651,13 +3654,14 @@ int PyMOL_GetPassive(CPyMOL *I, int reset)
 
 int PyMOL_GetModalDraw(CPyMOL *I)
 {
-  return (I->ModalDraw != NULL);
+  if(I) 
+    return (I->ModalDraw != NULL);
+  return false;
 }
 
-void PyMOL_SetModalDraw(CPyMOL *I, PyMOLModalDrawFn *fn, void *storage)
+void PyMOL_SetModalDraw(CPyMOL *I, PyMOLModalDrawFn *fn)
 {
   I->ModalDraw = fn;
-  I->ModalStorage = storage;
 }
 
 int PyMOL_GetSwap(CPyMOL *I, int reset)

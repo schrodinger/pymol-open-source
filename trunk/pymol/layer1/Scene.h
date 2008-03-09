@@ -87,7 +87,7 @@ int SceneDeferRay(PyMOLGlobals *G,
                    int quiet,
                    int show_timing,
                    int antialias);
-void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing);
+int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing,int validate);
 
 void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet);
 int SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,

@@ -32,7 +32,7 @@ void MovieFree(PyMOLGlobals *G);
 void MovieReset(PyMOLGlobals *G);
 void MovieDump(PyMOLGlobals *G);
 void MovieAppendSequence(PyMOLGlobals *G,char *seq,int start_from);
-int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missing_only);
+int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missing_only,int modal);
 void MovieSetCommand(PyMOLGlobals *G,int frame,char *command);
 void MovieAppendCommand(PyMOLGlobals *G,int frame,char *command);
 
