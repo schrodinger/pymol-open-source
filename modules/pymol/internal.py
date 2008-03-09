@@ -193,16 +193,17 @@ def _do(cmmd,log=0,echo=1,_self=cmd):
 
 # movie rendering
 
-def _mpng(prefix, first=-1, last=-1, preserve=0, _self=cmd): # INTERNAL
+def _mpng(prefix, first=-1, last=-1, preserve=0, modal=0, _self=cmd): # INTERNAL
     import sys
     # WARNING: internal routine, subject to change
     try:
         _self.lock(_self)   
         fname = prefix
-        if re.search("\.png$",fname):
-            fname = re.sub("\.png$","",fname)
+        if re.search("[0-9]*\.png$",fname): # remove numbering, etc.
+            fname = re.sub("[0-9]*\.png$","",fname)
         fname = cmd.exp_path(fname)
-        r = _cmd.mpng_(_self._COb,str(fname),int(first),int(last),int(preserve))
+        r = _cmd.mpng_(_self._COb,str(fname),int(first),
+                       int(last),int(preserve),int(modal))
     finally:
         _self.unlock(-1,_self)
     return r

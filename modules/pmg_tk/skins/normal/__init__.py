@@ -645,7 +645,7 @@ class Normal(PMGSkin):
         if len(sfile):
             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
             self.cmd.log("mpng %s\n"%sfile,"cmd.mpng('%s')\n"%sfile)         
-            self.cmd.mpng(sfile)
+            self.cmd.mpng(sfile,modal=-1)
 
     def about_plugins(self):
         about = Pmw.MessageDialog((self.app._hull),

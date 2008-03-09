@@ -337,7 +337,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def mpng(prefix,first=0,last=0,preserve=0,_self=cmd):
+    def mpng(prefix,first=0,last=0,preserve=0,modal=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -356,6 +356,8 @@ ARGUMENTS
 
     last = integer: last frame {default: 0 (last frame)}
 
+    modal = integer: will frames be rendered with a modal draw loop
+    
 NOTES
 
     If the "ray_trace_frames" variable is non-zero, then the frames
@@ -382,12 +384,14 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR
         if thread.get_ident() ==pymol.glutThread:
-            r = _self._mpng(prefix,int(first)-1,int(last)-1,int(preserve))
+            r = _self._mpng(prefix,int(first)-1,int(last)-1,
+                            int(preserve),int(modal))
         else:
             r = _self.do('cmd._mpng("'+prefix+'","'+
                        str(int(first)-1)+'","'+
                        str(int(last)-1)+'","'+
-                       str(int(preserve))+'",_self=cmd)',0)
+                       str(int(preserve))+'","'+
+                       str(int(modal))+'",_self=cmd)',0)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 

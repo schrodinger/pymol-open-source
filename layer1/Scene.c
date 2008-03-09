@@ -1971,10 +1971,10 @@ Block *SceneGetBlock(PyMOLGlobals *G)
   return(I->Block);
 }
 /*========================================================================*/
-void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing) {
+int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing, int validate) {
   register CScene *I=G->Scene;
   float *v;
-
+  int valid = true;
   PRINTFB(G,FB_Scene,FB_Blather)
     " Scene: Making movie image.\n"
     ENDFB(G);
@@ -1998,6 +1998,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing) {
       }
       glClearColor(v[0],v[1],v[2],alpha);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      /* insert OpenGL context validation code here? */
       SceneRender(G,NULL,0,0,NULL,0,0,0);
       glClearColor(0.0,0.0,0.0,1.0);
       if(draw_both) {
@@ -2005,6 +2006,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing) {
       } else {
         SceneCopy(G,GL_BACK,true);
       }
+      /* insert OpenGL context validation code here? */
     }
   }
   if(I->Image) {
@@ -2017,6 +2019,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G,int show_timing) {
   }
   if(I->Image)
     I->CopyFlag=true;
+  return valid;
 }
 /*========================================================================*/
 static void SceneUpdateCameraRock(PyMOLGlobals *G,int dirty) {
@@ -6482,7 +6485,7 @@ int SceneRenderCached(PyMOLGlobals *G)
         OrthoDirty(G);
         renderedFlag=true;
       } else {
-        SceneMakeMovieImage(G,true);
+        SceneMakeMovieImage(G,true,false);
         renderedFlag=true;
       }
     } else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_ray_trace_frames)) {

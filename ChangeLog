@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-03-08 Warren L. DeLano <warren@delsci.com>	
+
+	* added "modal" draw loop to deal with Windows GL update bugs
+	
 2008-03-07 Warren L. DeLano <warren@delsci.com>	
 
 	* added cartoon_putty_transform setting for comparison tasks

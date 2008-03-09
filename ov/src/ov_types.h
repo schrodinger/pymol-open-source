@@ -16,9 +16,11 @@ extern "C" {
 
   /* automatically detect 64-bit machines */
 
+#ifndef OV_32_BIT
 #if (((size_t)-1) != 0xFFFFFFFF)
 #ifndef OV_64_BIT
 #define OV_64_BIT
+#endif
 #endif
 #endif
 

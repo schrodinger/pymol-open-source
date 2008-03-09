@@ -34,6 +34,26 @@ Z* -------------------------------------------------------------------
 #include"Parse.h"
 #include"PyMOL.h"
 
+typedef struct {
+  int stage; 
+  
+  /* input parameters */
+  OrthoLineType prefix;
+  int save, start, stop, missing_only;
+  int modal;
+
+  /* job / local parameters */
+  int frame;
+  int image;
+  int nFrame;
+  double accumTiming;
+  double timing;
+  int complete;
+  int file_missing;
+  OrthoLineType fname;
+
+} CMovieModal;
+
 struct _CMovie {
   ImageType **Image;
   int *Sequence;
@@ -48,7 +68,7 @@ struct _CMovie {
   CViewElem *ViewElem;
   int RecursionFlag;
   int RealtimeFlag;
-
+  CMovieModal Modal;
 };
 
 void MovieSetRealtime(PyMOLGlobals *G, int realtime)
@@ -160,7 +180,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
     VLACheck(I->Image,ImageType*,i);
     if(!I->Image[i]) {
       SceneUpdate(G);
-	  SceneMakeMovieImage(G,false);
+	  SceneMakeMovieImage(G,false,false);
     }
     if(!I->Image[i]) {
       PRINTFB(G,FB_Movie,FB_Errors) 
@@ -478,23 +498,227 @@ void MovieSetSize(PyMOLGlobals *G,unsigned int width,unsigned int height)
   return;
 }
 /*========================================================================*/
-int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missing_only)
+static void MovieModalPNG(PyMOLGlobals *G, CMovie *I, CMovieModal *M)
 {
-  /* assumed locked api, blocked threads, and master thread on entry */
+  switch(M->stage) {
+  case 0: /* setup */
+    MovieSetRealtime(G,false);
+    M->save = (int)SettingGet(G,cSetting_cache_frames); 
+    if(!M->save)
+      MovieClearImages(G);
+    SettingSet(G,cSetting_cache_frames,1.0);
+    OrthoBusyPrime(G);
+    M->nFrame = I->NFrame;
+    if(!M->nFrame) {
+      M->nFrame=SceneGetNFrame(G,NULL);
+    }
+    if(M->start < 0) M->start = 0;
+    if(M->start > M->nFrame) M->start = M->nFrame;
+    if(M->stop < 0) M->stop = M->nFrame;
+    if(M->stop > M->nFrame) M->stop = M->nFrame;
+    {
+      OrthoLineType buffer;
+      sprintf(buffer,"Creating movie (%d frames)...",M->nFrame);
+      OrthoBusyMessage(G,buffer);
+    }
+    if((M->start!=0) || (M->stop != (M->nFrame+1) ))
+      SceneSetFrame(G,0,0);
+    MoviePlay(G,cMoviePlay);
+    VLACheck(I->Image,ImageType*,M->nFrame);
+    M->frame = 0;
+    M->stage = 1;
+    break;
+  case 1: /* RENDER LOOP: advance a frame */
+    if(M->frame < M->nFrame) {
 
-  /* writes the current movie sequence to a set of PNG files 
-  * this routine can take a LOT of time -- 
-  * TODO: develop an interrupt mechanism */
+      M->file_missing = true;
+      M->timing = UtilGetSeconds(G); /* start timing the process */
 
+      PRINTFB(G,FB_Movie,FB_Debugging)
+        " MoviePNG-DEBUG: Cycle %d...\n",M->frame
+        ENDFB(G);
+      sprintf(M->fname,"%s%04d.png",M->prefix,M->frame+1);
+      if(M->missing_only) {
+        FILE *tmp = fopen(M->fname,"rb");
+        if(tmp) {
+          fclose(tmp);
+          M->file_missing=false;
+        } else {
+          M->file_missing=true;
+        }
+      }
+      SceneSetFrame(G,0,M->frame);
+      MovieDoFrameCommand(G,M->frame);
+      MovieFlushCommands(G);
+
+      M->image = MovieFrameToImage(G,M->frame);
+      M->stage = 2;
+    }
+    break;
+  }
+  
+  switch(M->stage) {
+  case 2: /* IN RENDER LOOP: create the image */
+    VLACheck(I->Image,ImageType*,M->image);
+    if((M->frame >= M->start) && /* only render frames in the specified interval... */
+       (M->frame <= M->stop) && 
+       (M->file_missing)) { /* ...that don't already exist */
+      if(!I->Image[M->image]) {
+        SceneUpdate(G);
+        if(SceneMakeMovieImage(G,false,M->modal) || (!M->modal)) {
+          M->stage = 3;
+        } else {
+          /* didn't get an image... */
+          PRINTFB(G,FB_Movie,FB_Errors)
+            " MoviePNG-Error: unable to obtain a valid OpenGL image.  Trying again...\n"
+            ENDFB(G);
+        }
+      } else { /* frame already rendered */
+        M->stage = 3; 
+      }
+    } else { /* we don't need to render this frame */
+      M->stage = 4; 
+    }
+    break;
+  }
+  
+  switch(M->stage) {
+  case 3: /* IN RENDER LOOP: have image, so write to file */
+    if(!I->Image[M->image]) {
+      PRINTFB(G,FB_Movie,FB_Errors) 
+        "MoviePNG-Error: Missing rendered image.\n"
+        ENDFB(G);
+    } else {
+      MyPNGWrite(G,M->fname,I->Image[M->image]->data,
+                 I->Image[M->image]->width,
+                 I->Image[M->image]->height,
+                 SettingGetGlobal_f(G,cSetting_image_dots_per_inch));		
+      ExecutiveDrawNow(G);
+      OrthoBusySlow(G,M->frame,M->nFrame);
+      if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
+      PRINTFB(G,FB_Movie,FB_Debugging)
+        " MoviePNG-DEBUG: i = %d, I->Image[image] = %p\n",M->image,I->Image[M->image]->data
+        ENDFB(G);
+      if(Feedback(G,FB_Movie,FB_Actions)) {
+        printf(" Movie: wrote %s\n",M->fname);
+      }
+    }
+    if(I->Image[M->image]) {
+      FreeP(I->Image[M->image]->data);
+      FreeP(I->Image[M->image]);
+    }
+    M->timing = UtilGetSeconds(G) - M->timing;
+    M->accumTiming += M->timing; 
+    { 
+      double est1 =       (M->nFrame - M->frame) * M->timing;
+      double est2 =       ((M->nFrame - M->frame)/(float)(M->frame+1))*M->accumTiming;
+      
+      PRINTFB(G,FB_Movie,FB_Details)
+        " Movie: frame %4d of %4d, %4.2f sec. (%d:%02d:%02d - %d:%02d:%02d to go).\n", 
+        M->frame+1,M->nFrame,
+        M->timing,
+        (int)(est1/3600),
+        ((int)(est1/60)) % 60,
+        ((int)est1) % 60,
+        (int)(est2/3600),
+        ((int)(est2/60)) % 60,
+        ((int)est2) % 60
+        ENDFB(G);
+    }
+    M->stage = 4;
+    break;
+  }
+
+  switch(M->stage) {
+  case 4: /* IN RENDER LOOP: advance to next frame or kick out when done */
+    M->frame++;
+    if(M->frame >= M->nFrame) {
+      M->stage = 5;
+    } else {
+      M->stage = 1; /* RESTART LOOP */
+    }
+    break;
+  }
+
+  switch(M->stage) {
+  case 5: /* finish up */
+    
+    SceneInvalidate(G); /* important */
+    PRINTFB(G,FB_Movie,FB_Debugging)
+      " MoviePNG-DEBUG: done.\n"
+      ENDFB(G);
+    SettingSet(G,cSetting_cache_frames,(float)M->save);
+    MoviePlay(G,cMovieStop);
+    MovieClearImages(G);
+    MovieSetRealtime(G,true);
+    M->complete = true;
+    M->stage = 6;
+    break;
+  }
+}
+
+static void MovieModalDraw(PyMOLGlobals *G);
+
+static void MovieModalDraw(PyMOLGlobals *G)
+{
   register CMovie *I=G->Movie;
-  int a;
-  int i;
-  char fname[255];
-  char buffer[255];
+
+  MovieModalPNG(G,I,&I->Modal);
+  if(!I->Modal.complete) /* force modalic return until job is done */
+    PyMOL_SetModalDraw(G->PyMOL, MovieModalDraw);
+}
+
+int MoviePNG(PyMOLGlobals *G, char *prefix, int save, int start, 
+             int stop, int missing_only, int modal)
+{
+  /* assumes locked api, blocked threads, and master thread on entry */
+  register CMovie *I=G->Movie;
+
+#if 1
+
+  /* new routine allows PyMOL to workaround XP and Vista Windowing
+     issues */
+
+  CMovieModal *M = &I->Modal;
+
+  UtilZeroMem(M,sizeof(CMovieModal));
+
+  UtilNCopy(M->prefix, prefix, sizeof(OrthoLineType));
+  M->save = save;
+  M->start = start;
+  M->stop = stop;
+  M->missing_only = missing_only;
+  M->stage = 0;
+
+  if(modal<0) {
+    if(!SettingGetGlobal_b(G,cSetting_ray_trace_frames)) {
+      modal = 1;
+    }
+  }
+  M->modal = modal;
+
+  if(modal) {
+    PyMOL_SetModalDraw(G->PyMOL, MovieModalDraw);
+  } else {
+    while(!M->complete) {
+      MovieModalPNG(G,I,&I->Modal);
+    }
+  }
+  return true;
+#else
+  
+  /* writes the current movie sequence to a set of PNG files 
+   * this routine can take a LOT of time -- 
+     * TODO: develop an interrupt mechanism */
+  
+  int frame;
+  int image;
+  OrthoLineType fname;
+  OrthoLineType buffer;
   int nFrame;
   double accumTiming = 0.0;
   int file_missing = true;
-
+  
   MovieSetRealtime(G,false);
   save = (int)SettingGet(G,cSetting_cache_frames); 
   if(!save)
@@ -503,7 +727,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missin
   OrthoBusyPrime(G);
   nFrame = I->NFrame;
   if(!nFrame) {
-	 nFrame=SceneGetNFrame(G,NULL);
+    nFrame=SceneGetNFrame(G,NULL);
   }
   if(start<0) start=0;
   if(start>nFrame) start=nFrame;
@@ -512,18 +736,17 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missin
   sprintf(buffer,"Creating movie (%d frames)...",nFrame);
   OrthoBusyMessage(G,buffer);
   if((start!=0)||(stop!=(nFrame+1)))
-    
-  SceneSetFrame(G,0,0);
+    SceneSetFrame(G,0,0);
   MoviePlay(G,cMoviePlay);
   VLACheck(I->Image,ImageType*,nFrame);
-
+  
   OrthoBusySlow(G,0,nFrame);
-  for(a=0;a<nFrame;a++) {
+  for(frame=0;frame<nFrame;frame++) {
     double timing = UtilGetSeconds(G); /* start timing the process */
     PRINTFB(G,FB_Movie,FB_Debugging)
-      " MoviePNG-DEBUG: Cycle %d...\n",a
+      " MoviePNG-DEBUG: Cycle %d...\n",frame
       ENDFB(G);
-    sprintf(fname,"%s%04d.png",prefix,a+1);
+    sprintf(fname,"%s%04d.png",prefix,frame+1);
     if(missing_only) {
       FILE *tmp = fopen(fname,"rb");
       if(tmp) {
@@ -533,47 +756,49 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missin
         file_missing=true;
       }
     }
-    SceneSetFrame(G,0,a);
-    MovieDoFrameCommand(G,a);
+    SceneSetFrame(G,0,frame);
+    MovieDoFrameCommand(G,frame);
     MovieFlushCommands(G);
-    i=MovieFrameToImage(G,a);
-    VLACheck(I->Image,ImageType*,i);
-    if((a>=start)&&(a<=stop)&&(file_missing)) { /* only render frames in the specified interval */
-      if(!I->Image[i]) {
+    image=MovieFrameToImage(G,frame);
+    VLACheck(I->Image,ImageType*,image);
+    if((frame>=start)&&(frame<=stop)&&(file_missing)) { /* only render frames in the specified interval */
+      if(!I->Image[image]) {
         SceneUpdate(G);
         SceneMakeMovieImage(G,false);
       }
-      if(!I->Image[i]) {
+      if(!I->Image[image]) {
         PRINTFB(G,FB_Movie,FB_Errors) 
           "MoviePNG-Error: Missing rendered image.\n"
           ENDFB(G);
       } else {
-        MyPNGWrite(G,fname,I->Image[i]->data,I->Image[i]->width,I->Image[i]->height,SettingGetGlobal_f(G,cSetting_image_dots_per_inch));		
+        MyPNGWrite(G,fname,I->Image[image]->data,I->Image[image]->width,
+                   I->Image[image]->height,
+                   SettingGetGlobal_f(G,cSetting_image_dots_per_inch));		
         ExecutiveDrawNow(G);
-        OrthoBusySlow(G,a,nFrame);
+        OrthoBusySlow(G,frame,nFrame);
         if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
         PRINTFB(G,FB_Movie,FB_Debugging)
-          " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]->data
+          " MoviePNG-DEBUG: i = %d, I->Image[image] = %p\n",image,I->Image[image]->data
           ENDFB(G);
         if(Feedback(G,FB_Movie,FB_Actions)) {
           printf(" Movie: wrote %s\n",fname);
         }
       }
     }
-    if(I->Image[i]) {
-      FreeP(I->Image[i]->data);
-      FreeP(I->Image[i]);
+    if(I->Image[image]) {
+      FreeP(I->Image[image]->data);
+      FreeP(I->Image[image]);
     }
-    timing = UtilGetSeconds(G)-timing;
-    accumTiming += timing; 
+    M->timing = UtilGetSeconds(G) - M->timing;
+    accumTiming += M->timing; 
     { 
-      double est1 =       (nFrame-a)*timing;
-      double est2 =       ((nFrame-a)/(float)(a+1))*accumTiming;
+      double est1 =       (nFrame-frame) * M->timing;
+      double est2 =       ((nFrame-frame)/(float)(frame+1))*accumTiming;
       
       PRINTFB(G,FB_Movie,FB_Details)
         " Movie: frame %4d of %4d, %4.2f sec. (%d:%02d:%02d - %d:%02d:%02d to go).\n", 
-        a+1,nFrame,
-        timing,
+        frame+1,nFrame,
+        M->timing,
         (int)(est1/3600),
         ((int)(est1/60)) % 60,
         ((int)est1) % 60,
@@ -592,6 +817,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,int missin
   MovieClearImages(G);
   MovieSetRealtime(G,true);
   return(true);
+#endif
 }
 /*========================================================================*/
 void MovieAppendSequence(PyMOLGlobals *G,char *str,int start_from)
