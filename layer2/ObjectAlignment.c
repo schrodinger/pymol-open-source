@@ -384,7 +384,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
             { 
               int block_width = 76 - (max_name_len +1);
               int done = false;
-              int seq_len = 0;
+              ov_size seq_len = 0;
               int a;
               while(!done) {
                 done = true;

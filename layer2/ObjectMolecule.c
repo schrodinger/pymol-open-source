@@ -7188,7 +7188,8 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals *G,ObjectMolecule *I,PyObj
 void ObjectMoleculeBlindSymMovie(ObjectMolecule *I)
 {
   CoordSet *frac;
-  int a,c;
+  ov_size a;
+  int c;
   int x,y,z;
   float m[16];
 
