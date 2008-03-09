@@ -156,7 +156,7 @@ int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int fo
         int align_sele = SelectorIndexByName(G,I->Obj.Name);
         if(align_sele>=0) {
           int nRow = 0;
-          int nCol = 0;
+          ov_size nCol = 0;
           CSeqRow *row_vla = NULL,*row;
           char *cons_str = NULL;
           void *hidden = NULL;
