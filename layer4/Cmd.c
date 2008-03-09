@@ -266,7 +266,7 @@ static PyObject *CmdPseudoatom(PyObject *self, PyObject *args)
         if(PyArg_ParseTuple(pos,"fff",pos_array, pos_array+1, pos_array+2))
           pos_ptr = pos_array;
     }
-    if(APIEnterBlockedNotModal(G)) {
+    if( (ok=APIEnterBlockedNotModal(G)) ) {
       if(sele[0]) 
         ok = (SelectorGetTmp(G,sele,s1)>=0);
       else
@@ -299,8 +299,7 @@ static PyObject *CmdSetSceneNames(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     ok = SceneSetNames(G,list);
     APIExitBlocked(G);
   }
@@ -522,8 +521,7 @@ static PyObject *CmdDelColorection(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G)) ) {
     ok = SelectorColorectionFree(G,list,prefix);
     APIExitBlocked(G);
   }
@@ -543,8 +541,7 @@ static PyObject *CmdSetColorectionName(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     ok = SelectorColorectionSetName(G,list,prefix,new_prefix);
     APIExitBlocked(G);
   }
@@ -564,8 +561,7 @@ static PyObject *CmdSetColorection(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     ok = SelectorColorectionApply(G,list,prefix);
     APIExitBlocked(G);
   }
@@ -585,8 +581,7 @@ static PyObject *CmdGetColorection(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     result = SelectorColorectionGet(G,prefix);
     APIExitBlocked(G);
   }
@@ -607,9 +602,8 @@ static PyObject *CmdGetRawAlignment(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     int align_sele = -1;
-    APIEnterBlocked(G);
     if(name[0]) {
       CObject *obj = ExecutiveFindObjectByName(G,name);
       if(obj->type==cObjectAlignment) {
@@ -642,8 +636,7 @@ static PyObject *CmdGetOrigin(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     if((!object)||(!object[0])) {
       SceneOriginGet(G,origin);
     } else {
@@ -681,8 +674,7 @@ static PyObject *CmdGetVis(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     result = ExecutiveGetVisAsPyDict(G);
     APIExitBlocked(G);
   }
@@ -701,8 +693,7 @@ static PyObject *CmdSetVis(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     ok = ExecutiveSetVisFromPyDict(G,visDict);
     APIExitBlocked(G);
   }
@@ -934,8 +925,7 @@ static PyObject *CmdGetSession(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     ok = ExecutiveGetSession(G,dict,names,partial,quiet);
     APIExitBlocked(G);
   }
@@ -956,8 +946,7 @@ static PyObject *CmdSetSession(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     ok = ExecutiveSetSession(G,obj,partial,quiet);
     APIExitBlocked(G);
   }
@@ -1248,8 +1237,7 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     switch(mode) {
     case 0: /* by name or index, return floats */
       index = ColorGetIndex(G,name);
@@ -2005,8 +1993,7 @@ static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     result = SettingGetUpdateList(G,NULL);
     APIExitBlocked(G);
   }
@@ -2586,13 +2573,14 @@ static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
   if(ok) {
     /* called by non-GLUT thread with unlocked API, blocked interpreter */
     if(!G->Terminating) {
-      APIEnterBlocked(G);
-      if(OrthoCommandWaiting(G)
-         ||(flush_count>1))
-        result = PyInt_FromLong(1);
-      else
-        result = PyInt_FromLong(0);
-      APIExitBlocked(G);
+      if(APIEnterBlockedNotModal(G)) {
+        if(OrthoCommandWaiting(G)
+           ||(flush_count>1))
+          result = PyInt_FromLong(1);
+        else
+          result = PyInt_FromLong(0);
+        APIExitBlocked(G);
+      }
     }
   }
   return APIAutoNone(result);
@@ -2612,12 +2600,13 @@ static PyObject *CmdWaitDeferred(PyObject *self, 	PyObject *args)
   }
   if(ok) {
     if(!G->Terminating) {
-      APIEnterBlocked(G);
-      if(OrthoDeferredWaiting(G))
-        result = PyInt_FromLong(1);
-      else
-        result = PyInt_FromLong(0);
-      APIExitBlocked(G);
+      if(APIEnterBlockedNotModal(G)) {
+        if(OrthoDeferredWaiting(G))
+          result = PyInt_FromLong(1);
+        else
+          result = PyInt_FromLong(0);
+        APIExitBlocked(G);
+      }
     }
   }
   return APIAutoNone(result);
@@ -2782,8 +2771,7 @@ static PyObject *CmdGetWizardStack(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     result = WizardGetStack(G);
     APIExitBlocked(G);
   }
@@ -3769,8 +3757,7 @@ static PyObject *CmdAlterList(PyObject *self,   PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     result=ExecutiveIterateList(G,s1,list,false,quiet,space); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -3797,9 +3784,8 @@ static PyObject *CmdSelectList(PyObject *self,   PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) { 
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     int *int_array = NULL;
-    APIEnterBlocked(G); 
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) ok = PyList_Check(list);
     if(ok) ok = PConvPyListToIntArray(list,&int_array);
@@ -4571,7 +4557,9 @@ static PyObject *CmdGetFeedback(PyObject *self, PyObject *args)
         /* END PROPRIETARY CODE SEGMENT */
         exit(0);
       }
-      APIEnterBlocked(G);
+
+      /* ALLOWED DURING MODAL DRAWING */
+      APIEnterBlocked(G); 
       ok = OrthoFeedbackOut(G,buffer); 
       APIExitBlocked(G);
       if(ok) result = Py_BuildValue("s",buffer);
@@ -5311,7 +5299,7 @@ static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok && (ok=APIEnterBlockedNotModal(G))) {
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     float value=SettingGetNamed(G,str1);
     APIExitBlocked(G);
     result = Py_BuildValue("f", value);
@@ -5333,8 +5321,7 @@ static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G)) ) {
     result =  ExecutiveGetSettingTuple(G,int1,str1,int2);
     APIExitBlocked(G);
   }
@@ -5355,8 +5342,7 @@ static PyObject *CmdGetSettingOfType(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G)) ) {
     result =  ExecutiveGetSettingOfType(G,int1,str1,int2,int3);
     APIExitBlocked(G);
   }
@@ -5377,8 +5363,7 @@ static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok) {
-    APIEnterBlocked(G);
+  if(ok && (ok=APIEnterBlockedNotModal(G)) ) {
     result =  ExecutiveGetSettingText(G,int1,str1,int2);
     APIExitBlocked(G);
   }

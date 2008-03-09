@@ -84,8 +84,10 @@ class ColorEditor:
 
         self.app = app
         self.list = []
-
+        self.cmd = app.pymol.cmd
         lst = self.cmd.get_color_indices()
+        if lst == None:
+            lst = []
         lst.sort()
         for a in lst:
             self.list.append("%-30s"%(a[0]))

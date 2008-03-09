@@ -453,25 +453,27 @@ class Setting:
 
     def update_scenes(self):
         dict = self.cmd.get_scene_dict()
-        for x in range(1,13):
-            if dict.has_key('F%d'%x):
-                self.F[x].set(1)
-            else:
-                self.F[x].set(0)
-            if dict.has_key('SHFT-F%d'%x):
-                self.SHFTF[x].set(1)
-            else:
-                self.SHFTF[x].set(0)
+        if dict != None:
+            for x in range(1,13):
+                if dict.has_key('F%d'%x):
+                    self.F[x].set(1)
+                else:
+                    self.F[x].set(0)
+                if dict.has_key('SHFT-F%d'%x):
+                    self.SHFTF[x].set(1)
+                else:
+                    self.SHFTF[x].set(0)
                 
     def refresh(self): # get any settings changes from PyMOL and update menus
         lst = self.cmd.get_setting_updates()
-        for a in lst:
-            if a in self.active_list:
-                name = self.active_dict[a]
-                if self.update_code.has_key(name):
-                    code = self.update_code[name]
-                    if code!=None:
-                        tup = self.cmd.get_setting_tuple(name,'',0)
-                        if tup!=None:
-                            apply(code,(self,tup))
-        
+        if lst!=None:
+            for a in lst:
+                if a in self.active_list:
+                    name = self.active_dict[a]
+                    if self.update_code.has_key(name):
+                        code = self.update_code[name]
+                        if code!=None:
+                            tup = self.cmd.get_setting_tuple(name,'',0)
+                            if tup!=None:
+                                apply(code,(self,tup))
+

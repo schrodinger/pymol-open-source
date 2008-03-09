@@ -869,6 +869,7 @@ static void MainDrawProgress(PyMOLGlobals *G)
 /*========================================================================*/
 static void MainDraw(void)
 {
+  int usec_sleep_after_draw = 0;
   PyMOLGlobals *G = SingletonPyMOLGlobals;
 
   PRINTFD(G,FB_Main)
@@ -914,6 +915,9 @@ static void MainDraw(void)
     if(!skip) {
       MainDrawLocked();
       I->DrawnFlag = true;
+      if(PyMOL_GetModalDraw(PyMOLInstance)) {
+        usec_sleep_after_draw = 10000; /* give other threads a chance to run */
+      }
     } else {
       PyMOL_NeedRedisplay(PyMOLInstance);
     }
@@ -924,6 +928,9 @@ static void MainDraw(void)
   PRINTFD(G,FB_Main)
     " MainDraw: completed.\n"
     ENDFD;
+  if(usec_sleep_after_draw && G) {
+    PSleepUnlocked(G, usec_sleep_after_draw);
+  }
 }
 /*========================================================================*/
 static void MainKey(unsigned char k, int x, int y)

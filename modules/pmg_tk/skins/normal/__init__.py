@@ -295,8 +295,8 @@ class Normal(PMGSkin):
         self.focus_entry=0
         self.refocus_entry=0
         if self.app.allow_after:
-            self.output.after(1000,self.update_feedback)
-            self.output.after(1000,self.update_menus)
+            self.output.after(100,self.update_feedback)
+            self.output.after(100,self.update_menus)
             
         self.output.pack(side=BOTTOM,expand=YES,fill=BOTH)
         self.app.bind(self.entry, 'Command Input Area')
@@ -339,14 +339,16 @@ class Normal(PMGSkin):
         if self.focus_entry:
             self.focus_entry=0
             self.entry.focus_set()
-        for a in self.cmd._get_feedback(self.cmd):
-            self.output.insert(END,"\n")
-            self.output.insert(END,a)
-            self.output.see(END)
-            self.lineCount = self.lineCount + 1
-            if self.lineCount > 10000:
-                self.output.delete('0.0','%i.%i' % (self.lineCount-5000,0))
-                self.lineCount=5000
+        feedback = self.cmd._get_feedback(self.cmd)
+        if feedback!=None:
+            for a in feedback:
+                self.output.insert(END,"\n")
+                self.output.insert(END,a)
+                self.output.see(END)
+                self.lineCount = self.lineCount + 1
+                if self.lineCount > 10000:
+                    self.output.delete('0.0','%i.%i' % (self.lineCount-5000,0))
+                    self.lineCount=5000
 #            self.entry.focus_set()
         self.updating = 1
         progress = self.cmd.get_progress()
@@ -355,7 +357,10 @@ class Normal(PMGSkin):
         else:
             self.messageBar.resetmessages("busy")
         if self.app.allow_after:
-            self.output.after(100,self.update_feedback) # 10X a second
+            if feedback == None: # PyMOL busy, so try more aggressively to get lock
+                self.output.after(10,self.update_feedback) # 100X a second                
+            else:
+                self.output.after(100,self.update_feedback) # 10X a second
 
     def toggleFrame(self, frame, startup=0):
         if frame not in self.dataArea.slaves():
