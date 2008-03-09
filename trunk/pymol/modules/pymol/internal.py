@@ -490,7 +490,10 @@ def _get_feedback(_self=cmd): # INTERNAL
                 r = _cmd.get_feedback(_self._COb)
         finally:
             _self.unlock(-1,_self)
+    else:
+        l = None
     return l
+
 get_feedback = _get_feedback # for legacy compatibility
 
 def _fake_drag(_self=cmd): # internal
