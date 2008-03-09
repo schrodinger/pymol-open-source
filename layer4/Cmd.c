@@ -136,7 +136,7 @@ static void APIEnter(PyMOLGlobals *G) /* assumes API is locked */
   PUnblock(G);
 }
 
-static int APIEnterIfAble(PyMOLGlobals *G) /* assumes API is locked */
+static int APIEnterNotModal(PyMOLGlobals *G) /* assumes API is locked */
 {
   if(PyMOL_GetModalDraw(G->PyMOL)) {
     return false;
@@ -165,7 +165,7 @@ static void APIEnterBlocked(PyMOLGlobals *G) /* assumes API is locked */
   G->P_inst->glut_thread_keep_out++;  
 }
 
-static int APIEnterBlockedIfAble(PyMOLGlobals *G) /* assumes API is locked */
+static int APIEnterBlockedNotModal(PyMOLGlobals *G) /* assumes API is locked */
 {
   if(PyMOL_GetModalDraw(G->PyMOL)) {
     return false;
@@ -266,7 +266,7 @@ static PyObject *CmdPseudoatom(PyObject *self, PyObject *args)
         if(PyArg_ParseTuple(pos,"fff",pos_array, pos_array+1, pos_array+2))
           pos_ptr = pos_array;
     }
-    if(APIEnterBlockedIfAble(G)) {
+    if(APIEnterBlockedNotModal(G)) {
       if(sele[0]) 
         ok = (SelectorGetTmp(G,sele,s1)>=0);
       else
@@ -322,7 +322,7 @@ static PyObject *CmdFixChemistry(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str2,s2)>=0) &&
           (SelectorGetTmp(G,str3,s3)>=0));
     if(ok) ok = ExecutiveFixChemistry(G,s2,s3,invalidate, quiet);
@@ -722,7 +722,7 @@ static PyObject *CmdReinitialize(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveReinitialize(G,what,object);
     APIExit(G);
   }
@@ -749,7 +749,7 @@ static PyObject *CmdSpectrum(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(str1[0])
       ok = (SelectorGetTmp(G,str1,s1)>=0);
     else
@@ -779,7 +779,7 @@ static PyObject *CmdMDump(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     MovieDump(G);
     APIExit(G);
   }
@@ -797,7 +797,7 @@ static PyObject *CmdAccept(PyObject *self,PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     MovieSetLock(G,false);
     PRINTFB(G,FB_Movie,FB_Actions)
       " Movie: Risk accepted by user.  Movie commands have been enabled.\n"
@@ -819,7 +819,7 @@ static PyObject *CmdDecline(PyObject *self,PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     MovieReset(G);
     PRINTFB(G,FB_Movie,FB_Actions)
       " Movie: Risk declined by user.  Movie commands have been deleted.\n"
@@ -846,7 +846,7 @@ static PyObject *CmdSetCrystal(PyObject *self,PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) ok = ExecutiveSetCrystal(G,s1,a,b,c,alpha,beta,gamma,str2);
     SelectorFreeTmp(G,s1);
@@ -872,7 +872,7 @@ static PyObject *CmdGetCrystal(PyObject *self,PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) ok = ExecutiveGetCrystal(G,s1,&a,&b,&c,&alpha,&beta,&gamma,sg,&defined);
     APIExit(G);
@@ -911,7 +911,7 @@ static PyObject *CmdSmooth(PyObject *self,PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) ok = ExecutiveSmooth(G,s1,int1,int2,int3,int4,int5,int6);
     SelectorFreeTmp(G,s1);
@@ -976,7 +976,7 @@ static PyObject *CmdSetName(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveSetName(G,str1,str2);
     APIExit(G);
   }
@@ -999,7 +999,7 @@ static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     array = ExecutiveGetBondPrint(G,str1,int1,int2,dim);
     APIExit(G);
     if(array) {
@@ -1022,7 +1022,7 @@ static PyObject *CmdDebug(PyObject *self,PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveDebug(G,str1);
     APIExit(G);
   }
@@ -1078,7 +1078,7 @@ static PyObject *CmdSculptPurge(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     SculptCachePurge(G);
     APIExit(G);
   }
@@ -1097,7 +1097,7 @@ static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveSculptDeactivate(G,str1);
     APIExit(G);
   }
@@ -1117,7 +1117,7 @@ static PyObject *CmdSculptActivate(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveSculptActivate(G,str1,int1,int2,int3);
     APIExit(G);
   }
@@ -1138,7 +1138,7 @@ static PyObject *CmdSculptIterate(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     total_strain = ExecutiveSculptIterate(G,str1,int1,int2);
     APIExit(G);
   }
@@ -1165,7 +1165,7 @@ static PyObject *CmdSetObjectTTT(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveSetObjectTTT(G,name,ttt,state,quiet);
     APIExit(G);
   }
@@ -1186,7 +1186,7 @@ static PyObject *CmdTranslateObjectTTT(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     {
       CObject *obj = ExecutiveFindObjectByName(G,name);
       if(obj) {
@@ -1216,7 +1216,7 @@ static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
   }
   if (ok) {
     if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
-      if( (ok=APIEnterIfAble(G)) ) {
+      if( (ok=APIEnterNotModal(G)) ) {
         ok = ExecutiveCombineObjectTTT(G,name,ttt,false);
         APIExit(G);
       }
@@ -1336,7 +1336,7 @@ static PyObject *CmdGetChains(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(str1[0]) c1 = SelectorGetTmp(G,str1,s1);
     if(c1>=0)
       chain_str = ExecutiveGetChains(G,s1,int1,&null_chain);
@@ -1376,7 +1376,7 @@ static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveMultiSave(G,name,object,state,append);
     APIExit(G);
   }
@@ -1406,7 +1406,7 @@ static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,sele,s1)>=0);
     if(ok) ok = PConvPyListToFloatVLA(range,&range_vla);
 
@@ -1454,7 +1454,7 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     grid[1]=grid[0];
     grid[2]=grid[0];
     ok = (SelectorGetTmp(G,selection,s1)>=0);
@@ -1482,7 +1482,7 @@ static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveMapSetBorder(G,name,level,state);
     APIExit(G);
   }
@@ -1504,7 +1504,7 @@ static PyObject *CmdMapSet(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveMapSet(G,name,operator,operands,target_state,source_state,zoom,quiet);
     APIExit(G);
   }
@@ -1529,7 +1529,7 @@ static PyObject *CmdMapTrim(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,sele,s1)>=0);
     ok = ExecutiveMapTrim(G,name,s1,buffer,map_state,sele_state,quiet);
     SelectorFreeTmp(G,s1);
@@ -1551,7 +1551,7 @@ static PyObject *CmdMapDouble(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveMapDouble(G,name,state);
     APIExit(G);
   }
@@ -1572,7 +1572,7 @@ static PyObject *CmdMapHalve(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveMapHalve(G,name,state,smooth);
     APIExit(G);
   }
@@ -1591,7 +1591,7 @@ static PyObject *CmdGetRenderer(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     SceneGetCardInfo(G,&vendor,&renderer,&version);
     APIExit(G);
   }
@@ -1621,7 +1621,7 @@ static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) ok = ExecutiveTranslateAtom(G,s1,v,state,mode,log);
     SelectorFreeTmp(G,s1);
@@ -1651,7 +1651,7 @@ static PyObject *CmdMatrixCopy(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveMatrixCopy(G,
                             source_name, target_name, 
                             source_mode, target_mode, 
@@ -1683,7 +1683,7 @@ static PyObject *CmdResetMatrix(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveResetMatrix(G,
                          name,
                          mode,
@@ -1712,7 +1712,7 @@ static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
   }
   if (ok) {
     if(PConvPyListToFloatArrayInPlace(m,matrix,16)>0) {
-      if( (ok=APIEnterIfAble(G)) ) {
+      if( (ok=APIEnterNotModal(G)) ) {
         int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
         if((matrix_mode==0)||(sele[0]!=0)) {
           ok = ExecutiveTransformObjectSelection(G,name,
@@ -1751,7 +1751,7 @@ static PyObject *CmdTransformSelection(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
       ok = (SelectorGetTmp(G,sele,s1)>=0);
       if(ok) ok = ExecutiveTransformSelection(G,state,s1,log,ttt,homo);
@@ -1780,7 +1780,7 @@ static PyObject *CmdLoadColorTable(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ColorTableLoad(G,str1,quiet);
     APIExit(G);
   }
@@ -1801,7 +1801,7 @@ static PyObject *CmdLoadPNG(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = SceneLoadPNG(G,str1,movie,stereo,quiet);
     APIExit(G);
   }
@@ -1821,7 +1821,7 @@ static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     idx = ColorGetIndex(G,str1);
     if(idx>=0)
       ok = SettingSetfv(G,cSetting_bg_rgb,ColorGet(G,idx));
@@ -1847,7 +1847,7 @@ static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     SceneGetPos(G,v);
     APIExit(G);
   }
@@ -1895,7 +1895,7 @@ static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok=(SelectorGetTmp(G,str1,s1)>=0);
     if(ok) 
       l = ExecutivePhiPsi(G,s1,&oVLA,&iVLA,&pVLA,&sVLA,state);
@@ -1960,7 +1960,7 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args)
       "CmdAlign-DEBUG %s %s\n",
       str2,str3
       ENDFD;
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       ok = ((SelectorGetTmp(G,str2,s2)>=0) &&
             (SelectorGetTmp(G,str3,s3)>=0));
       if(ok) {
@@ -2025,7 +2025,7 @@ static PyObject *CmdGetView(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     SceneGetView(G,view);
     APIExit(G);
     return(Py_BuildValue("(fffffffffffffffffffffffff)",
@@ -2066,7 +2066,7 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     SceneSetView(G,view,quiet,animate,hand); /* TODO STATUS */
     APIExit(G);
   }
@@ -2138,7 +2138,7 @@ static PyObject *CmdSetTitle(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveSetTitle(G,str1,int1,str2);
     APIExit(G);
   }
@@ -2159,7 +2159,7 @@ static PyObject *CmdGetTitle(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     str2 = ExecutiveGetTitle(G,str1,int1);
     APIExit(G);
     if(str2) result = PyString_FromString(str2);
@@ -2183,7 +2183,7 @@ static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     result = ExportCoordsExport(G,str1,int1,0);
     APIExit(G);
     if(result) 
@@ -2210,7 +2210,7 @@ static PyObject *CmdImportCoords(PyObject *self, 	PyObject *args)
   if (ok) {
     if(PyCObject_Check(cObj))
       mmdat = PyCObject_AsVoidPtr(cObj);
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       if(mmdat)
         ok = ExportCoordsImport(G,str1,int1,mmdat,0);
       APIExit(G);
@@ -2235,7 +2235,7 @@ static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(str1[0]) c1 = SelectorGetTmp(G,str1,s1);
     if(c1>=0)
       result = ExecutiveGetArea(G,s1,int1,int2);
@@ -2263,7 +2263,7 @@ static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(str0[0]) ok = (SelectorGetTmp(G,str0,s0)>=0);
     if(ok) ok = ExecutiveSaveUndo(G,s0,state);
     if(s0[0]) SelectorFreeTmp(G,s0);
@@ -2285,7 +2285,7 @@ static PyObject *CmdGetType(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveGetType(G,str1,type);
     APIExit(G);
   } 
@@ -2310,7 +2310,7 @@ static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(str0[0]) ok = (SelectorGetTmp(G,str0,s0)>=0);
     vla = ExecutiveGetNames(G,int1,int2,s0);
     if(s0[0]) SelectorFreeTmp(G,s0);
@@ -2351,7 +2351,7 @@ static PyObject *CmdInvert(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveInvert(G,int1);
     APIExit(G);
   }
@@ -2370,7 +2370,7 @@ static PyObject *CmdTorsion(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = EditorTorsion(G,float1);
     APIExit(G);
   }
@@ -2389,7 +2389,7 @@ static PyObject *CmdUndo(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveUndo(G,int1); /* TODO STATUS */
     APIExit(G);
   }
@@ -2411,7 +2411,7 @@ static PyObject *CmdMask(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     ExecutiveMask(G,s1,int1,quiet); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -2435,7 +2435,7 @@ static PyObject *CmdProtect(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     ExecutiveProtect(G,s1,int1,int2); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -2458,7 +2458,7 @@ static PyObject *CmdButton(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ButModeSet(G,i1,i2); /* TODO STATUS */
     APIExit(G);
   }
@@ -2497,7 +2497,7 @@ static PyObject *CmdSetFeedbackMask(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     switch(i1) { /* TODO STATUS */
     case 0: 
       FeedbackSetMask(G,i2,(uchar)i3);
@@ -2534,7 +2534,7 @@ static PyObject *CmdPop(PyObject *self,  PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     result = ExecutivePop(G,str1,str2,quiet); 
     APIExit(G);
   } else
@@ -2650,7 +2650,7 @@ static PyObject *CmdPaste(PyObject *self, PyObject *args)
           if(str) {
             if(PyString_Check(str)) {
               st = PyString_AsString(str);
-              if( (ok=APIEnterIfAble(G)) ) {
+              if( (ok=APIEnterNotModal(G)) ) {
                 OrthoPasteIn(G,st);
                 if(a<(l-1))
                   OrthoPasteIn(G,"\n");
@@ -2680,7 +2680,7 @@ static PyObject *CmdGetVRML(PyObject *self, PyObject *args)
   }
   if(ok) {
     char *vla = NULL;
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       SceneRay(G,0,0,4,NULL,
                &vla,0.0F,0.0F,false,NULL,false,-1);
       APIExit(G);
@@ -2707,7 +2707,7 @@ static PyObject *CmdGetPovRay(PyObject *self, PyObject *args)
   }
   if(ok) {
     char *header=NULL,*geom=NULL;
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       SceneRay(G,0,0,1,&header,
                &geom,0.0F,0.0F,false,NULL,false,-1);
       APIExit(G);
@@ -2735,7 +2735,7 @@ static PyObject *CmdGetMtlObj(PyObject *self, PyObject *args)
   }
   if (ok) {
     char *obj=NULL,*mtl=NULL;
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       SceneRay(G,0,0,5,&obj,
                &mtl,0.0F,0.0F,false,NULL,false,-1);
       APIExit(G);
@@ -2761,7 +2761,7 @@ static PyObject *CmdGetWizard(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     result = WizardGet(G);
     APIExit(G);
   }
@@ -2809,7 +2809,7 @@ static PyObject *CmdSetWizard(PyObject *self, PyObject *args)
   if (ok) {
     if(!obj)
       ok = false;
-    else if( (ok=APIEnterIfAble(G)) ) {
+    else if( (ok=APIEnterNotModal(G)) ) {
       WizardSet(G,obj,replace); /* TODO STATUS */
       APIExit(G);
     }
@@ -2833,7 +2833,7 @@ static PyObject *CmdSetWizardStack(PyObject *self, PyObject *args)
   if (ok) {
     if(!obj)
       ok = false;
-    else if( (ok=APIEnterIfAble(G)) ) {
+    else if( (ok=APIEnterNotModal(G)) ) {
       WizardSetStack(G,obj); /* TODO STATUS */
       APIExit(G);
     }
@@ -2852,7 +2852,7 @@ static PyObject *CmdRefreshWizard(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     WizardRefresh(G);
     OrthoDirty(G);
     APIExit(G);
@@ -2871,7 +2871,7 @@ static PyObject *CmdDirtyWizard(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     WizardDirty(G);
     APIExit(G);
   }
@@ -2892,7 +2892,7 @@ static PyObject *CmdSplash(PyObject *self, PyObject *args)
     API_HANDLE_ERROR;
   }
   if(!query) {
-    if(ok && (ok=APIEnterIfAble(G))) {
+    if(ok && (ok=APIEnterNotModal(G))) {
       OrthoSplash(G);
       APIExit(G);
     }
@@ -2921,7 +2921,7 @@ static PyObject *CmdCls(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     OrthoClear(G);
     APIExit(G);
   }
@@ -2940,7 +2940,7 @@ static PyObject *CmdDump(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveDump(G,str1,str2); /* TODO STATUS */
     APIExit(G);
   }
@@ -2970,7 +2970,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveIsomeshEtc(G, mesh_name, map_name, lvl, sele, fbuf, 
                              state, carve, map_state, quiet, mesh_mode, box_mode, alt_lvl);
     
@@ -3084,7 +3084,7 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
     API_HANDLE_ERROR;
   }
 #if 1
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveSliceNew(G, slice, map, state, map_state);
     APIExit(G);
   }
@@ -3093,7 +3093,7 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
   CObject *obj=NULL,*mObj,*origObj;
   ObjectMap *mapObj;
   ObjectMapState *ms;
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     origObj=ExecutiveFindObjectByName(G,slice);  
     if(origObj) {
       if(origObj->type!=cObjectSlice) {
@@ -3200,7 +3200,7 @@ static PyObject *CmdRGBFunction(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     obj=ExecutiveFindObjectByName(G,slice);  
     if(obj) {
       if(obj->type!=cObjectSlice) {
@@ -3263,7 +3263,7 @@ static PyObject *CmdSliceHeightmap(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     obj=ExecutiveFindObjectByName(G,slice);  
     if(obj) {
       if(obj->type!=cObjectSlice) {
@@ -3326,7 +3326,7 @@ static PyObject *CmdSliceSetLock(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     obj=ExecutiveFindObjectByName(G,slice);  
     if(obj) {
       if(obj->type!=cObjectSlice) {
@@ -3396,7 +3396,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
 
     ok = ExecutiveIsosurfaceEtc(G, surf_name, map_name, lvl, sele, fbuf, state, 
                                   carve, map_state, side, quiet, surf_mode, box_mode);
@@ -3425,7 +3425,7 @@ static PyObject *CmdSymExp(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     mObj=ExecutiveFindObjectByName(G,str2);  
     if(mObj) {
       if(mObj->type!=cObjectMolecule) {
@@ -3460,7 +3460,7 @@ static PyObject *CmdOverlap(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0));
     if(ok) {
@@ -3492,7 +3492,7 @@ static PyObject *CmdDist(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     c1 = SelectorGetTmp(G,str1,s1);
     c2 = SelectorGetTmp(G,str2,s2);
     if((c1<0)||(c2<0))
@@ -3550,7 +3550,7 @@ static PyObject *CmdAngle(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     c1 = SelectorGetTmp(G,str1,s1);
     c2 = SelectorGetTmp(G,str2,s2);
     c3 = SelectorGetTmp(G,str3,s3);
@@ -3606,7 +3606,7 @@ static PyObject *CmdDihedral(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     c1 = SelectorGetTmp(G,str1,s1);
     c2 = SelectorGetTmp(G,str2,s2);
     c3 = SelectorGetTmp(G,str3,s3);
@@ -3664,7 +3664,7 @@ static PyObject *CmdBond(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0));
     if(ok) 
@@ -3691,7 +3691,7 @@ static PyObject *CmdVdwFit(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0));
     if(ok) 
@@ -3717,7 +3717,7 @@ static PyObject *CmdLabel(PyObject *self,   PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) ok=ExecutiveLabel(G,s1,str2,quiet,true); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -3743,7 +3743,7 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     result=ExecutiveIterate(G,s1,str2,i1,quiet,space); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -3831,7 +3831,7 @@ static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     ExecutiveIterateState(G,i1,s1,str2,i2,i3,quiet,obj); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -3854,7 +3854,7 @@ static PyObject *CmdCopy(PyObject *self,   PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveCopy(G,str1,str2,zoom); /* TODO STATUS */
     APIExit(G);
   }
@@ -3880,7 +3880,7 @@ static PyObject *CmdRecolor(PyObject *self,   PyObject *args)
       " CmdRecolor: called with %s.\n",str1
       ENDFD;
 
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       if(WordMatch(G,str1,"all",true)<0)
         ExecutiveInvalidateRep(G,str1,rep,cRepInvColor);
       else {
@@ -3915,7 +3915,7 @@ static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
       " CmdRebuild: called with %s.\n",str1
       ENDFD;
 
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       if(WordMatch(G,str1,"all",true)<0)
         ExecutiveRebuildAll(G);
       else {
@@ -3945,7 +3945,7 @@ static PyObject *CmdResetRate(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ButModeResetRate(G);
     APIExit(G);
   }
@@ -4315,7 +4315,7 @@ static PyObject *CmdCountStates(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     count = ExecutiveCountStates(G,s1);
     if(count<0)
@@ -4338,7 +4338,7 @@ static PyObject *CmdCountFrames(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     SceneCountFrames(G);
     result=SceneGetNFrame(G,NULL);
     APIExit(G);
@@ -4365,7 +4365,7 @@ static PyObject *CmdIdentify(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) {
       if(!mode) {
@@ -4428,7 +4428,7 @@ static PyObject *CmdIndex(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) l = ExecutiveIndex(G,s1,mode,&iVLA,&oVLA);
     SelectorFreeTmp(G,s1);
@@ -4487,7 +4487,7 @@ static PyObject *CmdFindPairs(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0)&&
           (SelectorGetTmp(G,str2,s2)>=0));
     l = ExecutivePairIndices(G,s1,s2,state1,state2,mode,cutoff,angle,&iVLA,&oVLA);
@@ -4538,7 +4538,7 @@ static PyObject *CmdSystem(PyObject *self, PyObject *args)
       PUnblock(G); /* free up PyMOL and the API */
       ok = system(str1);
       PBlock(G);
-    } else if( (ok=APIEnterIfAble(G))) { /* keep PyMOL locked */
+    } else if( (ok=APIEnterNotModal(G))) { /* keep PyMOL locked */
       ok = system(str1);
       APIExit(G);
     }
@@ -4598,7 +4598,7 @@ static PyObject *CmdGetSeqAlignStr(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     seq=ExecutiveNameToSeqAlignStrVLA(G,str1,state,format,quiet);
     APIExit(G);
     if(seq) result = Py_BuildValue("s",seq);
@@ -4629,7 +4629,7 @@ static PyObject *CmdGetPDB(PyObject *self, PyObject *args)
   }
   if (ok) {
     if(!ref_object[0]) ref_object = NULL;
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       ok = (SelectorGetTmp(G,str1,s1)>=0);
       pdb=ExecutiveSeleToPDBStr(G,s1,state,true,mode,ref_object,ref_state,quiet);
       SelectorFreeTmp(G,s1);
@@ -4660,7 +4660,7 @@ static PyObject *CmdGetModel(PyObject *self, PyObject *args)
   }
   if (ok) {
     if(!ref_object[0]) ref_object = NULL;
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       ok = (SelectorGetTmp(G,str1,s1)>=0);
       if(ok) result=ExecutiveSeleToChemPyModel(G,s1,state,ref_object,ref_state);
       SelectorFreeTmp(G,s1);
@@ -4687,7 +4687,7 @@ static PyObject *CmdCreate(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok=(SelectorGetTmp(G,str2,s1)>=0);
     if(ok) ok = ExecutiveSeleToObject(G,str1,s1,
                                       source,target,discrete,zoom,quiet,
@@ -4716,7 +4716,7 @@ static PyObject *CmdOrient(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ExecutiveGetMoment(G,s1,m,state))
       ExecutiveOrient(G,s1,m,state,animate,false,0.0F,quiet); /* TODO STATUS */
@@ -4743,7 +4743,7 @@ static PyObject *CmdFitPairs(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok && (ok=APIEnterBlockedIfAble(G)) ) {
+  if (ok && (ok=APIEnterBlockedNotModal(G)) ) {
     ln = PyObject_Length(list);
     if(ln) {
       if(ln&0x1)
@@ -4758,7 +4758,7 @@ static PyObject *CmdFitPairs(PyObject *self, PyObject *args)
         SelectorGetTmp(G,PyString_AsString(PySequence_GetItem(list,a)),word[a]);
         a++;
       }
-      if( (ok=APIEnterIfAble(G)) ) {
+      if( (ok=APIEnterNotModal(G)) ) {
         valu = ExecutiveRMSPairs(G,word,ln/2,2);
         APIExit(G);
       }
@@ -4793,7 +4793,7 @@ static PyObject *CmdIntraFit(PyObject *self, PyObject *args)
   }
   if (ok) {
     if(state<0) state=0;
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       ok=(SelectorGetTmp(G,str1,s1)>=0);
       fVLA=ExecutiveRMSStates(G,s1,state,mode,quiet,mix);
       SelectorFreeTmp(G,s1);
@@ -4824,7 +4824,7 @@ static PyObject *CmdGetAtomCoords(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) ok=ExecutiveGetAtomVertex(G,s1,state,quiet,vertex);
     SelectorFreeTmp(G,s1);
@@ -4858,7 +4858,7 @@ static PyObject *CmdFit(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0));
     if(ok) ok = ExecutiveRMS(G,s1,s2,mode,
@@ -4891,7 +4891,7 @@ static PyObject *CmdUpdate(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0));
     ExecutiveUpdateCmd(G,s1,s2,int1,int2,matchmaker,quiet); /* TODO STATUS */
@@ -4917,7 +4917,7 @@ static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
     PRINTFD(G,FB_CCmd)
       " CmdDirty: called.\n"
       ENDFD;
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       OrthoDirty(G);
       APIExit(G);
     }
@@ -4942,7 +4942,7 @@ static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     list = ExecutiveGetObjectMoleculeVLA(G, s1);
     if(list) {
@@ -4978,7 +4978,7 @@ static PyObject *CmdGetDistance(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0));
     if(ok) ok = ExecutiveGetDistance(G,s1,s2,&result,int1);
@@ -5011,7 +5011,7 @@ static PyObject *CmdGetAngle(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0) &&
           (SelectorGetTmp(G,str3,s3)>=0));
@@ -5045,7 +5045,7 @@ static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0) &&
           (SelectorGetTmp(G,str3,s3)>=0) &&
@@ -5081,7 +5081,7 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0) &&
           (SelectorGetTmp(G,str3,s3)>=0) &&
@@ -5110,7 +5110,7 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G)) ) {
+  if(ok && (ok=APIEnterNotModal(G)) ) {
     if(str1[0]!='_') { /* suppress internal call-backs */
       if(strncmp(str1,"cmd._",5)&&(strncmp(str1,"_cmd.",5))) {
         if(echo) {
@@ -5151,7 +5151,7 @@ static PyObject *CmdRock(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     result = ControlRock(G,int1);
     APIExit(G);
   }
@@ -5170,7 +5170,7 @@ static PyObject *CmdBusyDraw(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     OrthoBusyDraw(G,int1);
     APIExit(G);
   }
@@ -5286,7 +5286,7 @@ static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args) /* missing? */
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveGetMoment(G,str1,moment,state);
     APIExit(G);
   }
@@ -5311,7 +5311,7 @@ static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok && (ok=APIEnterBlockedIfAble(G))) {
+  if (ok && (ok=APIEnterBlockedNotModal(G))) {
     float value=SettingGetNamed(G,str1);
     APIExitBlocked(G);
     result = Py_BuildValue("f", value);
@@ -5402,7 +5402,7 @@ static PyObject *CmdExportDots(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     obj = ExportDots(G,str1,int1);
     APIExit(G);
     if(obj) 
@@ -5429,7 +5429,7 @@ static PyObject *CmdSetFrame(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     SceneSetFrame(G,mode,frm);
     APIExit(G);
   }
@@ -5451,7 +5451,7 @@ static PyObject *CmdFrame(PyObject *self, PyObject *args)
   if (ok) {
     frm--;
     if(frm<0) frm=0;
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
       SceneSetFrame(G,4,frm);
       APIExit(G);
     }
@@ -5472,7 +5472,7 @@ static PyObject *CmdStereo(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveStereo(G,i1); 
     APIExit(G);
   }
@@ -5492,7 +5492,7 @@ static PyObject *CmdReset(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok && (ok=APIEnterIfAble(G))) {
+  if (ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveReset(G,cmd,obj); 
     APIExit(G);
   }
@@ -5515,7 +5515,7 @@ static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     SceneSetMatrix(G,m); /* TODO STATUS */
     APIExit(G);
   }
@@ -5540,7 +5540,7 @@ static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     flag = ExecutiveGetExtent(G,s1,mn,mx,true,state,false);
     SelectorFreeTmp(G,s1);
@@ -5571,7 +5571,7 @@ static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     f=SceneGetMatrix(G);
     APIExit(G);
     result = Py_BuildValue("ffffffffffffffff", 
@@ -5600,7 +5600,7 @@ static PyObject *CmdGetObjectMatrix(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     found = ExecutiveGetObjectMatrix(G,name,state,&history,true);
     APIExit(G);
     if(found) {
@@ -5636,7 +5636,7 @@ static PyObject *CmdMDo(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(append) {
       MovieAppendCommand(G,frame,cmd);
     } else {
@@ -5659,7 +5659,7 @@ static PyObject *CmdMPlay(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     MoviePlay(G,cmd);
     APIExit(G);
   }
@@ -5678,7 +5678,7 @@ static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = MovieMatrix(G,cmd);
     APIExit(G);
   }
@@ -5696,7 +5696,7 @@ static PyObject *CmdMClear(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     MovieClearImages(G);
     APIExit(G);
   }
@@ -5714,7 +5714,7 @@ static PyObject *CmdRefreshLater(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     SceneInvalidate(G);
     APIExit(G);
   }
@@ -5732,7 +5732,7 @@ static PyObject *CmdRefresh(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     SceneInvalidateCopy(G,false);
     ExecutiveDrawNow(G); /* TODO STATUS */
     APIExit(G);
@@ -5751,7 +5751,7 @@ static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     PyMOL_PushValidContext(G->PyMOL); /* we're trusting the caller on this... */
     SceneInvalidateCopy(G,false);
     ExecutiveDrawNow(G); /* TODO STATUS */
@@ -5781,7 +5781,7 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveDrawNow(G);		 /* TODO STATUS */
     if(ray) {
       SceneRay(G,width,height,(int)SettingGet(G,cSetting_ray_default_renderer),
@@ -5810,7 +5810,7 @@ static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = MoviePNG(G,str1,(int)SettingGet(G,cSetting_cache_frames),
                   int1,int2,int3,int4);
     /* TODO STATUS */
@@ -5832,7 +5832,7 @@ static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     MovieAppendSequence(G,str1,start_from);
     SceneCountFrames(G);
     APIExit(G);
@@ -5856,7 +5856,7 @@ static PyObject *CmdMView(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(wrap<0) {
       wrap = SettingGetGlobal_b(G,cSetting_movie_loop);
     }
@@ -5920,7 +5920,7 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
       w=-1;
       h=-1;
     }
-    if( (ok=APIEnterIfAble(G)) ) {
+    if( (ok=APIEnterNotModal(G)) ) {
 #ifndef _PYMOL_NO_MAIN
       if(G->Main) {
         MainDoReshape(w,h); /* should be moved into Executive */
@@ -5950,7 +5950,7 @@ static PyObject *CmdFlag(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     ExecutiveFlag(G,flag,s1,action,quiet);
     SelectorFreeTmp(G,s1);
@@ -5975,7 +5975,7 @@ static PyObject *CmdColor(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) {
       ok = ExecutiveColor(G,s1,color,flags,quiet);
@@ -6001,7 +6001,7 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ColorDef(G,color,v,mode,quiet);
     APIExit(G);
   }
@@ -6022,7 +6022,7 @@ static PyObject *CmdDraw(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveDrawCmd(G,int1,int2,antialias,quiet);
     APIExit(G);
   }
@@ -6046,7 +6046,7 @@ static PyObject *CmdRay(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(mode<0)
       mode=(int)SettingGet(G,cSetting_ray_default_renderer);
     ExecutiveRay(G,w,h,mode,angle,shift,quiet,false,antialias); /* TODO STATUS */
@@ -6071,7 +6071,7 @@ static PyObject *CmdClip(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     switch(sname[0]) { /* TODO STATUS */
     case 'N':
@@ -6115,7 +6115,7 @@ static PyObject *CmdMove(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     switch(sname[0]) { /* TODO STATUS */
     case 'x':
       SceneTranslate(G,dist,0.0,0.0);
@@ -6145,7 +6145,7 @@ static PyObject *CmdTurn(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     switch(sname[0]) { /* TODO STATUS */
     case 'x':
       SceneRotate(G,angle,1.0,0.0,0.0);
@@ -6174,7 +6174,7 @@ static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = SettingSetNamed(G,sname,value); 
     APIExit(G);
   }
@@ -6199,7 +6199,7 @@ static PyObject *CmdUnset(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok && (ok=APIEnterIfAble(G))) {
+  if (ok && (ok=APIEnterNotModal(G))) {
     s1[0]=0;
     if(!strcmp(str3,"all")) {
       strcpy(s1,str3);
@@ -6232,7 +6232,7 @@ static PyObject *CmdUnsetBond(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if (ok && (ok=APIEnterIfAble(G)) ) {
+  if (ok && (ok=APIEnterNotModal(G)) ) {
     s1[0]=0;
     s2[0]=0;
     ok = (SelectorGetTmp(G,str3,s1)>=0);
@@ -6264,7 +6264,7 @@ static PyObject *CmdSet(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G)) ) {
+  if(ok && (ok=APIEnterNotModal(G)) ) {
     s1[0]=0;
     if(!strcmp(str3,"all")) {
       strcpy(s1,str3);
@@ -6298,7 +6298,7 @@ static PyObject *CmdSetBond(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     s1[0]=0;
     s2[0]=0;
     ok = (SelectorGetTmp(G,str3,s1)>=0);
@@ -6325,7 +6325,7 @@ static PyObject *CmdGet(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterBlockedIfAble(G)) ) {
+  if(ok && (ok=APIEnterBlockedNotModal(G)) ) {
     float f=SettingGetNamed(G,sname);
     APIExitBlocked(G);
     result = Py_BuildValue("f", f);
@@ -6346,7 +6346,7 @@ static PyObject *CmdDelete(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveDelete(G,sname); /* TODO STATUS */
     APIExit(G);
   }
@@ -6367,7 +6367,7 @@ static PyObject *CmdCartoon(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,sname,s1)>=0);
     if(ok) ExecutiveCartoon(G,type,s1); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -6391,7 +6391,7 @@ static PyObject *CmdShowHide(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G)) ) { /* TODO STATUS */
+  if(ok && (ok=APIEnterNotModal(G)) ) { /* TODO STATUS */
     if(sname[0]=='@') {
       ExecutiveSetAllVisib(G,state);
     } else {
@@ -6418,7 +6418,7 @@ static PyObject *CmdOnOffBySele(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) { /* TODO STATUS */
+  if(ok && (ok=APIEnterNotModal(G))) { /* TODO STATUS */
     ok = (SelectorGetTmp(G,sname,s1)>=0);
     if(ok) ok = ExecutiveSetOnOffBySele(G,s1,onoff);
     SelectorFreeTmp(G,s1);
@@ -6441,7 +6441,7 @@ static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) { /* TODO STATUS */
+  if(ok && (ok=APIEnterNotModal(G))) { /* TODO STATUS */
     ExecutiveSetObjVisib(G,name,state,parents);
     APIExit(G);
   }
@@ -6462,7 +6462,7 @@ static PyObject *CmdToggle(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(sname[0]=='@') {
       /* TODO */
     } else {
@@ -6486,7 +6486,11 @@ static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok) {
+    if(!APIEnterNotModal(G)) { /* override modal state to enable quit */
+      PyMOL_SetModalDraw(G->PyMOL,NULL);
+      APIEnter(G);
+    }
     if(!G->Option->no_quit) {
       G->Terminating=true;
       PExit(G,EXIT_SUCCESS);
@@ -6509,7 +6513,7 @@ static PyObject *CmdFullScreen(PyObject *self,PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveFullScreen(G,flag); /* TODO STATUS */
     APIExit(G);
   }
@@ -6529,7 +6533,7 @@ static PyObject *CmdUngroup(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     /*    ExecutiveGroup(G,gname,names,NULL,quiet,NULL);*/
     APIExit(G);
   }
@@ -6549,7 +6553,7 @@ static PyObject *CmdGroup(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveGroup(G,gname,names,action,quiet);
     APIExit(G);
   }
@@ -6573,7 +6577,7 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(!domain[0])
       domain = NULL;
     if(ExecutiveFindObjectByName(G,sname)) { /* name conflicts with an object */
@@ -6605,7 +6609,7 @@ static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     origObj=ExecutiveFindObjectByName(G,oname);
     if(origObj) {
       if(origObj->type==cObjectMolecule) {
@@ -6642,7 +6646,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ObjectNameType valid_name = "";
     buf[0]=0;
     ExecutiveProcessObjectName(G,oname,valid_name);
@@ -6798,7 +6802,7 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     origObj=ExecutiveFindObjectByName(G,oname);
     
     /* TODO check for existing object of wrong type */
@@ -6854,7 +6858,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ObjectNameType valid_name = "";
     buf[0]=0;
     PRINTFD(G,FB_CCmd)
@@ -7328,7 +7332,7 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(str1[0])
       ok = (SelectorGetTmp(G,str1,s1)>=0);
     else
@@ -7397,7 +7401,7 @@ static PyObject *CmdOrigin(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(str1[0])
       ok = (SelectorGetTmp(G,str1,s1)>=0);
     else
@@ -7422,7 +7426,7 @@ static PyObject *CmdSort(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveSort(G,name); /* TODO STATUS */
     APIExit(G);
   }
@@ -7445,7 +7449,7 @@ static PyObject *CmdAssignSS(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0));
     if(ok) ok = ExecutiveAssignSS(G,s1,state,s2,preserve,quiet);
@@ -7468,7 +7472,7 @@ static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ExecutiveSpheroid(G,name,average); /* TODO STATUS */
     APIExit(G);
   }
@@ -7491,7 +7495,7 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     PRINTFB(G,FB_CCmd,FB_Details)
       " Cmd: initiating test %d-%d.\n",group,code
       ENDFB(G);
@@ -7521,7 +7525,7 @@ static PyObject *CmdCenter(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) ok = ExecutiveCenter(G,s1,state,origin,animate,NULL,quiet);
     SelectorFreeTmp(G,s1);
@@ -7548,7 +7552,7 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     if(ok) ok = ExecutiveWindowZoom(G,s1,buffer,state,
                                     inclusive,animate,quiet); 
@@ -7573,7 +7577,7 @@ static PyObject *CmdIsolevel(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveIsolevel(G,name,level,state,query,&result,quiet);
     APIExit(G);
   }
@@ -7597,7 +7601,7 @@ static PyObject *CmdHAdd(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     ExecutiveAddHydrogens(G,s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -7629,7 +7633,7 @@ static PyObject *CmdSetObjectColor(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     result = ExecutiveSetObjectColor(G,name,color,quiet);
     APIExit(G);
   }
@@ -7649,7 +7653,7 @@ static PyObject *CmdGetObjectColorIndex(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     result = ExecutiveGetObjectColorIndex(G,str1);
     APIExit(G);
   }
@@ -7670,7 +7674,7 @@ static PyObject *CmdRemove(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     ExecutiveRemoveAtoms(G,s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -7692,7 +7696,7 @@ static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     EditorRemove(G,i1,quiet); /* TODO STATUS */
     APIExit(G);
   }
@@ -7711,7 +7715,7 @@ static PyObject *CmdHFill(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     EditorHFill(G,quiet); /* TODO STATUS */
     APIExit(G);
   }
@@ -7732,7 +7736,7 @@ static PyObject *CmdHFix(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     EditorHFix(G,s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -7753,7 +7757,7 @@ static PyObject *CmdCycleValence(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     EditorCycleValence(G,quiet);  /* TODO STATUS */
     APIExit(G);
   }
@@ -7774,7 +7778,7 @@ static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     EditorReplace(G,str1,i1,i2,str2,quiet);  /* TODO STATUS */
     APIExit(G);
   }
@@ -7795,7 +7799,7 @@ static PyObject *CmdSetGeometry(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     ok = ExecutiveSetGeometry(G,s1,i1,i2);  /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -7819,7 +7823,7 @@ static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     EditorAttach(G,str1,i1,i2,name,quiet);  /* TODO STATUS */
     APIExit(G);
   }
@@ -7842,7 +7846,7 @@ static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0));
     ExecutiveFuse(G,s1,s2,mode,recolor,move_flag);  /* TODO STATUS */
@@ -7864,7 +7868,7 @@ static PyObject *CmdUnpick(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     EditorInactivate(G);  /* TODO STATUS */
     APIExit(G);
   }
@@ -7889,7 +7893,7 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     if(!str0[0]) {
       EditorInactivate(G);
     } else {
@@ -7922,7 +7926,7 @@ static PyObject *CmdDrag(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str0,s0)>=0);
     if(ok) {
       ok = ExecutiveSetDrag(G,s0,quiet);
@@ -7948,7 +7952,7 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     ExecutiveRenameObjectAtoms(G,s1,int1); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
@@ -7971,7 +7975,7 @@ static PyObject *CmdOrder(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     ok = ExecutiveOrder(G,str1,int1,int2);
     APIExit(G);
   }
@@ -7990,7 +7994,7 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterIfAble(G))) {
+  if(ok && (ok=APIEnterNotModal(G))) {
     switch(int1) {
 #ifndef _PYMOL_NO_MAIN
     case 0:

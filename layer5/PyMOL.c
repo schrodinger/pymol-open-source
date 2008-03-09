@@ -3137,6 +3137,7 @@ static void setup_gl_state(void)
 
 void PyMOL_Draw(CPyMOL *I)
 {
+  int usec_sleep_after_draw = 0;
   PYMOL_API_LOCK_MODAL
   
   PyMOLGlobals *G = I->G;
@@ -3151,12 +3152,13 @@ void PyMOL_Draw(CPyMOL *I)
       PyMOLModalDrawFn *fn = I->ModalDraw;
       I->ModalDraw = NULL; /* always resets to NULL! */
       fn(G);
+
+      usec_sleep_after_draw = 10000; /* give other threads a chance to run */
     }
     
     if(G->HaveGUI) {
       PyMOL_PopValidContext(I);
     }
-
   } else {
     
     if(I->DraggedFlag) {
@@ -3232,7 +3234,10 @@ void PyMOL_Draw(CPyMOL *I)
     if(G->HaveGUI) PyMOL_PopValidContext(I);
   }
   PYMOL_API_UNLOCK
-  
+
+  if(usec_sleep_after_draw && I->G) {
+    PSleepUnlocked(I->G, usec_sleep_after_draw);
+  }
 }
 
 void PyMOL_Key(CPyMOL *I,unsigned char k, int x, int y, int modifiers)

@@ -80,7 +80,7 @@ class Normal(PMGSkin):
 
 
     def confirm_quit(self,e=None):
-        if int(self.cmd.get_setting_legacy("session_changed")):
+        if self.cmd.get_setting_legacy("session_changed"):
             session_file = self.cmd.get_setting_text("session_file")
             if session_file != '':
                 message = "Save the current session '%s'?"%os.path.split(session_file)[1]
