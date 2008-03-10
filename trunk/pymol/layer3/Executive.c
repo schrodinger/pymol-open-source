@@ -963,7 +963,6 @@ static SpecRec *ExecutiveAnyCaseNameMatch(PyMOLGlobals *G,char *name)
 }
 void ExecutiveUpdateColorDepends(PyMOLGlobals *G,ObjectMolecule *mol)
 {
-
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
 

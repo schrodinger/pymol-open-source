@@ -1033,7 +1033,6 @@ int MovieView(PyMOLGlobals *G,int action,int first,
   case 3:
     {
       CViewElem *first_view=NULL,*last_view=NULL;
-      int zero_flag = -1;
       if(first<0)
         first = 0;
 
@@ -1045,10 +1044,21 @@ int MovieView(PyMOLGlobals *G,int action,int first,
 
       if(last<0) {
         last = SceneGetNFrame(G,NULL);
-        if(last && (!wrap))
-          last--;
-      }
-      if(last>=I->NFrame) {
+        if(last) {
+          if(!wrap)
+            last--;
+          else {
+            int frame=0;
+            VLACheck(I->ViewElem,CViewElem,last);
+            for(frame=0;frame<last;frame++) {
+              if(I->ViewElem[frame].specification_level>1) {
+                last+=frame;
+                break;
+              }
+            }
+          }
+        }
+      } else if(last >= I->NFrame) {
         last = I->NFrame;
         if(last && (!wrap))
           last--;
@@ -1056,12 +1066,13 @@ int MovieView(PyMOLGlobals *G,int action,int first,
 
       VLACheck(I->ViewElem,CViewElem,last);
       
-      if(wrap && (last == I->NFrame)) {
-        /* if we're interpolating beyond the
-           last frame, then wrap by copying
-           first to last */
-        ViewElemCopy(G,I->ViewElem, I->ViewElem+last);
-        zero_flag = last;
+      if(wrap && (last >= I->NFrame)) {
+        /* if we're interpolating beyond the last frame, then wrap by
+           copying early frames to last frames */
+        int a;
+        for(a=I->NFrame;a<=last;a++) {
+          ViewElemCopy(G, I->ViewElem+a-I->NFrame, I->ViewElem+a);
+        }
       }
 
       if(!quiet) {
@@ -1088,6 +1099,7 @@ int MovieView(PyMOLGlobals *G,int action,int first,
           }
         }
       }
+
       for(frame=first;frame<=last;frame++) {
         if(!first_view) {
           if(I->ViewElem[frame].specification_level==2) { /* specified */
@@ -1115,8 +1127,17 @@ int MovieView(PyMOLGlobals *G,int action,int first,
           }
         }
       }
-      if(zero_flag>=0) { /* erase temporary view */
-        UtilZeroMem((void*)(I->ViewElem + last), sizeof(CViewElem));
+
+      if(wrap && (last >= I->NFrame)) {
+        /* if we're interpolating beyond the last frame, then wrap by
+           copying early frames to last frames */
+        int a;
+        for(a=I->NFrame;a<=last;a++) {
+          ViewElemCopy(G, I->ViewElem+a, I->ViewElem+a-I->NFrame);
+        }
+      }
+      if(last>=I->NFrame) { /* erase temporary view */
+        UtilZeroMem((void*)(I->ViewElem + I->NFrame), sizeof(CViewElem) * (1+last-I->NFrame));
       }
     }
     break;

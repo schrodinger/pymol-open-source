@@ -106,25 +106,7 @@ def roll(first=1,last=-1,loop=1,axis='y',_self=cmd):
         _self.mdo("%d" % (first+a), "turn %s,%8.3f" % (axis,deg))
         a = a + 1
 
-def append_roll(duration=10.0,_self=cmd):
-    cmd = _self
-    start_frame = 1
-    duration = float(duration)
-    fps = float(cmd.get('movie_fps'))
-    n_frame = round(fps * duration)
-    if n_frame > 0:
-        cmd.madd("1 x%d"%n_frame)
-        cmd.frame(start_frame)
-        cmd.mview("store")
-        cmd.frame(start_frame+n_frame/3)
-        cmd.turn("y",120)
-        cmd.mview("store")
-        cmd.frame(start_frame+(2*n_frame)/3)
-        cmd.turn("y",120)
-        cmd.mview("store")
-        cmd.mview("interpolate",power=1,wrap=1)
-        cmd.frame(start_frame)
-        
+
 def tdroll(first,rangex,rangey,rangez,skip=1,_self=cmd):
     '''
 AUTHOR
@@ -273,4 +255,54 @@ def timed_roll(period=12.0,cycles=1,axis='y',_self=cmd):
             _self.mview('store',frame)
             frame = frame + 1
     
-    
+# new matrix-based camera interpolation
+
+def append_roll(duration=10.0,loop=1,axis='y',_self=cmd):
+    cmd = _self
+    start_frame = 1
+    duration = float(duration)
+    fps = float(cmd.get('movie_fps'))
+    n_frame = round(fps * duration)
+    if n_frame > 0:
+        cmd.madd("1 x%d"%n_frame)
+        cmd.frame(start_frame)
+        cmd.mview("store")
+        cmd.frame(start_frame+n_frame/3)
+        cmd.turn(axis,120)
+        cmd.mview("store")
+        cmd.frame(start_frame+(2*n_frame)/3)
+        cmd.turn(axis,120)
+        cmd.mview("store")
+        if loop:
+            cmd.mview("interpolate",power=1,wrap=1)
+            cmd.turn(axis,120)
+        else:
+            cmd.frame(start_frame+n_frame-1)
+            cmd.turn(axis,120)
+            cmd.mview("store")
+            cmd.mview("interpolate",power=1)
+        cmd.frame(start_frame)
+        
+def append_rock(duration,angle=30.0,loop=1,axis='y',_self=cmd):
+    cmd = _self
+    start_frame = 1
+    duration = float(duration)
+    angle=float(angle)
+    loop=int(loop)
+    fps = float(cmd.get('movie_fps'))
+    n_frame = round(fps * duration)
+    if n_frame > 0:
+        cmd.madd("1 x%d"%n_frame)
+        cmd.frame(start_frame+n_frame/4)
+        cmd.turn(axis,angle/2.0)
+        cmd.mview("store")
+        cmd.frame(start_frame+(3*n_frame)/4)
+        cmd.turn(axis,-angle)
+        cmd.mview("store")
+        cmd.turn(axis,angle/2.0)
+        if loop:
+            cmd.mview("interpolate",power=-1,wrap=1)
+        else:
+            cmd.mview("interpolate",power=-1)
+        cmd.frame(start_frame)
+        
