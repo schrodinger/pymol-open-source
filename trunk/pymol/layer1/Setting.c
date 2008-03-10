@@ -2391,6 +2391,13 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_frame:
     SceneChanged(G);
     break;
+  case cSetting_rock:
+  case cSetting_sweep_mode:
+  case cSetting_sweep_phase:
+  case cSetting_sweep_angle:
+  case cSetting_sweep_speed:
+    SceneRestartSweepTimer(G);
+    break;
   default:
 	 break;
   }
@@ -3592,7 +3599,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_f(I,cSetting_ellipsoid_scale,1.0F);
     set_color(I,cSetting_ellipsoid_color, "-1");
     set_f(I,cSetting_ellipsoid_transparency,0.0F);
-    set_b(I,cSetting_movie_rock,0);
+    set_i(I,cSetting_movie_rock,-1);
     set_i(I,cSetting_cache_mode,0);
     set_color(I,cSetting_dash_color, "-1");
     set_color(I,cSetting_angle_color, "-1");
@@ -3602,6 +3609,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_grid_slot,-1);
     set_i(I,cSetting_grid_max,-1);
     set_i(I,cSetting_cartoon_putty_transform, cPuttyTransformNormalizedNonlinear);
+    set_b(I,cSetting_rock,0);
 
   }
 }

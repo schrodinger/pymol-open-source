@@ -1337,7 +1337,29 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenu('Movie', 'Movie Control',tearoff=TRUE)
 
-        
+        self.menuBar.addcascademenu('Movie', 'Auto Program', 'Auto Program',
+                                             label='Auto Progrom')
+
+        self.menuBar.addcascademenu('Auto Program', 'Simple', 'Simple',
+                                             label='Simple')
+
+        self.menuBar.addcascademenu('Simple', 'Y-Axis Loop', 'Y-Axis Loop',
+                                    label='Y-Axis Loop')
+
+        self.menuBar.addmenuitem('Y-Axis Loop', 'command', '5 seconds',label='5 seconds',
+                                         command = lambda s=self: s.cmd.do("_ mset;movie.append_roll(5.0)"))
+
+        self.menuBar.addmenuitem('Y-Axis Loop', 'command', '10 seconds',label='10 seconds',
+                                         command = lambda s=self: s.cmd.do("_ mset;movie.append_roll(10.0)"))
+
+        self.menuBar.addmenuitem('Y-Axis Loop', 'command', '20 seconds',label='20 seconds',
+                                         command = lambda s=self: s.cmd.do("_ mset;movie.append_roll(20.0)"))
+
+        self.menuBar.addmenuitem('Y-Axis Loop', 'command', '30 seconds',label='30 seconds',
+                                         command = lambda s=self: s.cmd.do("_ mset;movie.append_roll(30.0)"))
+
+        self.menuBar.addmenuitem('Movie', 'separator', '')
+
         self.menuBar.addcascademenu('Movie', 'Speed', 'Playback Speed',
                                              label=self.pad+'Speed')
 

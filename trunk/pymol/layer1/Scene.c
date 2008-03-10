@@ -146,7 +146,7 @@ struct _CScene {
   float H;
   float Front,Back,FrontSafe,BackSafe;
   float TextColor[3];
-  double RockTime;
+  double SweepTime;
   int DirtyFlag;
   int ChangedFlag;
   int CopyFlag,CopyNextFlag,CopiedFromOpenGL,CopyForced;
@@ -155,8 +155,8 @@ struct _CScene {
   int MovieOwnsImageFlag;
   int MovieFrameFlag;
   double LastRender,RenderTime,LastFrameTime,LastFrameAdjust;
-  double LastRock,LastRockTime;
-  float LastRockX,LastRockY;
+  double LastSweep,LastSweepTime;
+  float LastSweepX,LastSweepY;
   int RockFrame;
   Picking LastPicked;
   int StereoMode;
@@ -846,10 +846,7 @@ void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem,int dirty)
   }
   if(changed_flag) {
 
-    I->LastRock = 0.0F; /* continue to defer rocking until this is done */
-    I->LastRockX = 0.0F;
-    I->LastRockY = 0.0F;
-    I->RockTime = 0.0;
+    SceneRestartSweepTimer(G);
     I->RockFrame = 0;
     SceneRovingDirty(G);
   }
@@ -1047,10 +1044,10 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,
   I->Origin[1] = *(p++);
   I->Origin[2] = *(p++);
 
-  I->LastRock = 0.0F;
-  I->LastRockX = 0.0F;
-  I->LastRockY = 0.0F;
-  I->RockTime = 0.0;
+  I->LastSweep = 0.0F;
+  I->LastSweepX = 0.0F;
+  I->LastSweepY = 0.0F;
+  I->SweepTime = 0.0;
   I->RockFrame = 0;
 
   SceneClipSet(G,p[0],p[1]);
@@ -2040,10 +2037,10 @@ static void SceneUpdateCameraRock(PyMOLGlobals *G,int dirty) {
     if(sweep_angle<=0.0F) {
       diff = (float)((PI/180.0F)*I->RenderTime*10);
     } else {
-      ang_cur = (float)(I->RockTime*sweep_speed) + sweep_phase;
+      ang_cur = (float)(I->SweepTime*sweep_speed) + sweep_phase;
       disp = (float)(sweep_angle*(PI/180.0F)*sin(ang_cur)/2);
-      diff = (float)(disp-I->LastRock);
-      I->LastRock = disp;
+      diff = (float)(disp-I->LastSweep);
+      I->LastSweep = disp;
     }
     switch(sweep_mode) {
     case 0:
@@ -2058,20 +2055,20 @@ static void SceneUpdateCameraRock(PyMOLGlobals *G,int dirty) {
     }
     break;
   case 3: /* nutate */
-    SceneRotateWithDirty(G,(float)(-I->LastRockY),0.0F,1.0F,0.0F,dirty);
-    SceneRotateWithDirty(G,(float)(-I->LastRockX),1.0F,0.0F,0.0F,dirty);
-    ang_cur = (float)(I->RockTime*sweep_speed) + sweep_phase;
+    SceneRotateWithDirty(G,(float)(-I->LastSweepY),0.0F,1.0F,0.0F,dirty);
+    SceneRotateWithDirty(G,(float)(-I->LastSweepX),1.0F,0.0F,0.0F,dirty);
+    ang_cur = (float)(I->SweepTime*sweep_speed) + sweep_phase;
     
-    I->LastRockX = (float)(sweep_angle*sin(ang_cur)/2);
-    I->LastRockY = (float)(sweep_angle*sin(ang_cur+shift)/2);
+    I->LastSweepX = (float)(sweep_angle*sin(ang_cur)/2);
+    I->LastSweepY = (float)(sweep_angle*sin(ang_cur+shift)/2);
     
-    if(I->RockTime*sweep_speed<PI) {
-      float factor = (float)((I->RockTime*sweep_speed)/PI);
-      I->LastRockX *= factor;
-      I->LastRockY *= factor;
+    if(I->SweepTime*sweep_speed<PI) {
+      float factor = (float)((I->SweepTime*sweep_speed)/PI);
+      I->LastSweepX *= factor;
+      I->LastSweepY *= factor;
     }
-    SceneRotateWithDirty(G,(float)I->LastRockX,1.0F,0.0F,0.0F,dirty);
-    SceneRotateWithDirty(G,(float)I->LastRockY,0.0F,1.0F,0.0F,dirty);
+    SceneRotateWithDirty(G,(float)I->LastSweepX,1.0F,0.0F,0.0F,dirty);
+    SceneRotateWithDirty(G,(float)I->LastSweepY,0.0F,1.0F,0.0F,dirty);
     break;
   }
 }
@@ -2128,11 +2125,11 @@ void SceneIdle(PyMOLGlobals *G)
       }
     }
   } else if(ControlRocking(G)) {
-    renderTime = -I->LastRockTime + UtilGetSeconds(G);
+    renderTime = -I->LastSweepTime + UtilGetSeconds(G);
     minTime=SettingGet(G,cSetting_rock_delay)/1000.0;
     if(renderTime>=minTime) {
-      I->LastRockTime=UtilGetSeconds(G);
-      I->RockTime+=I->RenderTime;
+      I->LastSweepTime=UtilGetSeconds(G);
+      I->SweepTime+=I->RenderTime;
       SceneUpdateCameraRock(G,true);
     }
   }
@@ -5349,7 +5346,7 @@ int  SceneInit(PyMOLGlobals *G)
     
 
     I->LoopFlag = false;
-    I->RockTime=0;
+    I->SweepTime=0;
     I->TextColor[0]=0.2F;
     I->TextColor[1]=1.0F;
     I->TextColor[2]=0.2F;
@@ -5387,7 +5384,7 @@ int  SceneInit(PyMOLGlobals *G)
     I->LastRender = UtilGetSeconds(G);
     I->LastFrameTime = UtilGetSeconds(G);
     I->LastFrameAdjust = 0.0F;
-    I->LastRockTime = UtilGetSeconds(G);
+    I->LastSweepTime = UtilGetSeconds(G);
     I->SingleClickDelay = 0.0;
     I->LastPicked.context.object = NULL;
     I->LastStateBuilt = -1;
@@ -5625,13 +5622,15 @@ static void SceneUpdateAnimation(PyMOLGlobals *G)
   register CScene *I=G->Scene;
   int rockFlag = false;
   int dirty = false;
-  if(MoviePlaying(G) && 
-     (SettingGetGlobal_b(G,cSetting_movie_rock) || 
-      ControlRocking(G))) {
+  int movie_rock = SettingGetGlobal_b(G,cSetting_movie_rock);
+  
+  if(movie_rock<0) movie_rock = ControlRocking(G);
+
+  if(MoviePlaying(G) && movie_rock) {
 
     if(MovieGetRealtime(G) && 
        ! SettingGetGlobal_b(G,cSetting_movie_animate_by_frame)) {
-      I->RockTime+=I->RenderTime;
+      I->SweepTime+=I->RenderTime;
       rockFlag = true;
       dirty = true; /* force a subsequent update */
     } else {
@@ -5641,10 +5640,10 @@ static void SceneUpdateAnimation(PyMOLGlobals *G)
         if(rock_frame!=I->RockFrame) {
           I->RockFrame = rock_frame;
           rockFlag = true;
-          I->RockTime += 1.0/fps;
+          I->SweepTime += 1.0/fps;
         }
       } else {
-        I->RockTime += I->RenderTime;
+        I->SweepTime += I->RenderTime;
         rockFlag = true;
       }
     }
@@ -5692,7 +5691,7 @@ static void SceneUpdateAnimation(PyMOLGlobals *G)
     I->cur_ani_elem = cur;
     SceneFromViewElem(G,I->ani_elem+cur,dirty);
   }
-  if(rockFlag && (I->RockTime!=0.0)) {
+  if(rockFlag && (I->SweepTime!=0.0)) {
     SceneUpdateCameraRock(G,dirty);
   }
 }
@@ -7931,7 +7930,17 @@ static void SceneRestartPerfTimer(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
   I->LastRender = UtilGetSeconds(G);
-  I->RenderTime = 0;
+  I->RenderTime = 0.0;
+}
+void SceneRestartSweepTimer(PyMOLGlobals *G)
+{
+  register CScene *I=G->Scene;
+  I->LastSweep = 0.0F; /* continue to defer rocking until this is done */
+  I->LastSweepX = 0.0F;
+  I->LastSweepY = 0.0F;
+  I->SweepTime = 0.0;
+  SceneRestartPerfTimer(G);
+
 }
 /*========================================================================*/
 void ScenePrepareMatrix(PyMOLGlobals *G,int mode)

@@ -745,6 +745,8 @@ typedef struct _CPyMOL {
   ov_word lex_cache_max;
   ov_word lex_grid_slot;
   ov_word lex_grid_max;
+  ov_word lex_cartoon_putty_transform;
+  ov_word lex_rock;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1483,6 +1485,9 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(cache_max,578);
   LEX_SETTING(grid_slot,579);
   LEX_SETTING(grid_max,580);
+  LEX_SETTING(cartoon_putty_transform,581);
+  LEX_SETTING(rock,582);
+
  return_OVstatus_SUCCESS;
 }
 

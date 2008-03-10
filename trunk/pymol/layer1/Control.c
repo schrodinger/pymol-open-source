@@ -43,7 +43,6 @@ Z* -------------------------------------------------------------------
 
 struct _CControl {
   Block *Block;
-  int Rocking;
   int DragFlag;
   int LastPos;
   int ExtraSpace;
@@ -58,8 +57,7 @@ struct _CControl {
 
 int ControlRocking(PyMOLGlobals *G)
 {
-  register CControl *I=G->Control;
-  return I->Rocking;
+  return SettingGetGlobal_b(G,cSetting_rock);
 }
 
 static void ControlReshape(Block *block,int width, int height)
@@ -139,7 +137,7 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
   case 2:
     MoviePlay(G,cMovieStop);
     if(SettingGet(G,cSetting_sculpting)) SettingSet(G,cSetting_sculpting,0);
-    if(I->Rocking) I->Rocking=false;
+    if(SettingGetGlobal_b(G,cSetting_rock)) SettingSetGlobal_b(G,cSetting_rock,false);
     ExecutiveDrawNow(G);
     OrthoDirty(G);
     PLog(G,"cmd.mstop()",cPLog_pym);
@@ -188,10 +186,11 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
     OrthoDirty(G);
     break;
   case 7:
-    I->Rocking=!I->Rocking;
-    if(I->Rocking)
+    SettingSetGlobal_b(G,cSetting_rock,!SettingGetGlobal_b(G,cSetting_rock));
+    if(SettingGetGlobal_b(G,cSetting_rock)) {
+      SceneRestartSweepTimer(G);
       PLog(G,"cmd.rock(1)",cPLog_pym);
-    else
+    } else
       PLog(G,"cmd.rock(0)",cPLog_pym);
     SceneRestartFrameTimer(G);
     OrthoDirty(G);
@@ -219,8 +218,9 @@ Block *ControlGetBlock(PyMOLGlobals *G)
 /*========================================================================*/
 int ControlIdling(PyMOLGlobals *G)
 {
-  register CControl *I=G->Control;
-  return(MoviePlaying(G)||I->Rocking||SettingGet(G,cSetting_sculpting));
+  return(MoviePlaying(G)||
+         SettingGetGlobal_b(G,cSetting_rock)||
+         SettingGet(G,cSetting_sculpting));
 }
 /*========================================================================*/
 void ControlInterrupt(PyMOLGlobals *G)
@@ -244,20 +244,24 @@ int ControlRock(PyMOLGlobals *G,int mode)
   case -2: 
     break;
   case -1:
-	I->Rocking=!I->Rocking;
+    SettingSetGlobal_b(G,cSetting_rock,!SettingGetGlobal_b(G,cSetting_rock));
+    if(SettingGetGlobal_b(G,cSetting_rock)) {
+      SceneRestartSweepTimer(G);
+    }
 	break;
   case 0:
-	I->Rocking=false;
+	SettingSetGlobal_b(G,cSetting_rock,false);
 	break;
   case 1:
-	I->Rocking=true;
+	SettingSetGlobal_b(G,cSetting_rock,true);
+    SceneRestartSweepTimer(G);
 	break;
   }
   if(mode!=-2) {
     SceneRestartFrameTimer(G);
     OrthoDirty(G);
   }
-  return I->Rocking;
+  return SettingGetGlobal_b(G,cSetting_rock);
 }
 
 /*========================================================================*/
@@ -400,7 +404,7 @@ static void ControlDraw(Block *block)
                     but_width, but_height, lightEdge,darkEdge,pushed);
       } else if(((but_num==6)&&((int)SettingGet(G,cSetting_seq_view))) ||
                 ((but_num==3)&&(MoviePlaying(G))) ||
-                ((but_num==7)&&(I->Rocking))||
+                ((but_num==7)&&(SettingGetGlobal_b(G,cSetting_rock))) ||
                 ((but_num==8)&&(SettingGetGlobal_b(G,cSetting_full_screen)))) {
         draw_button(but_left,but_bottom,
                     but_width, but_height, lightEdge,darkEdge,I->ActiveColor);
@@ -538,7 +542,6 @@ int ControlInit(PyMOLGlobals *G)
     I->Active = -1;
     OrthoAttach(G,I->Block,cOrthoTool);
     I->SaveWidth = 0;
-    I->Rocking=false;
     I->LastClickTime = UtilGetSeconds(G);
     I->NButton=9;
     return 1;
