@@ -32,9 +32,12 @@ class Setting:
             
         self.ray_trace_frames = IntVar()
         self.ray_trace_frames.set(int(self.cmd.get_setting_legacy('ray_trace_frames')))
-        
+
+        self.draw_frames = IntVar()
+        self.draw_frames.set(int(self.cmd.get_setting_legacy('draw_frames')))
+       
         self.cache_frames = IntVar()
-        self.cache_frames.set(int(self.cmd.get_setting_legacy('ray_trace_frames')))
+        self.cache_frames.set(int(self.cmd.get_setting_legacy('cache_frames')))
 
         self.ortho = IntVar()
         self.ortho.set(int(self.cmd.get_setting_legacy('orthoscopic')))
@@ -191,9 +194,9 @@ class Setting:
         
         self.xref = { 
             'ray_trace_frames':
-            (lambda s,a: (self.cmd.set(a,("%1.0f" % s.ray_trace_frames.get()),log=1),
-                              s.cache_frames.set(s.ray_trace_frames.get()),
-                              s.update('cache_frames'))),
+            (lambda s,a: (self.cmd.set(a,("%1.0f" % s.ray_trace_frames.get()),log=1))),
+            'draw_frames':
+            (lambda s,a: (self.cmd.set(a,("%1.0f" % s.draw_frames.get()),log=1))),
             'cache_frames'  :
             (lambda s,a: (self.cmd.set(a,("%1.0f" % s.cache_frames.get()),log=1))),
             'ortho'         :
@@ -294,6 +297,8 @@ class Setting:
         self.update_code = {
             'ray_trace_frames':
             (lambda s,t: (s.ray_trace_frames.set(int(t[1][0])))),
+            'draw_frames':
+            (lambda s,t: (s.draw_frames.set(int(t[1][0])))),
             'cache_frames':
             (lambda s,t: (s.cache_frames.set(int(t[1][0])))),
             'orthoscopic':
@@ -381,6 +386,7 @@ class Setting:
             }
         self.active_list = [
             self.pymol.setting._get_index("ray_trace_frames"),
+            self.pymol.setting._get_index("draw_frames"),            
             self.pymol.setting._get_index("cache_frames"),
             self.pymol.setting._get_index("orthoscopic"),
             self.pymol.setting._get_index("antialias"),

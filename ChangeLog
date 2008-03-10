@@ -4,6 +4,10 @@ CHANGE LOG
 
 2008-03-09 Warren L. DeLano <warren@delsci.com>	
 
+	* added Movie->Program submenus and make other changes to Movie
+
+	* updated buttons in upper right panel -- added 'orient' button
+	
 	* movie_rock modified so as to defer to rock setting by default
 	
 	* reduced Tcl/Tk pause on startup from 1 sec to 0.1 sec
