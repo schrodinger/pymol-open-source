@@ -126,6 +126,7 @@ void SceneClipSet(PyMOLGlobals *G,float front,float back);
 void SceneGetView(PyMOLGlobals *G,SceneViewType view);
 void SceneSetView(PyMOLGlobals *G,SceneViewType view,
                   int quiet,float animate,int hand);
+void SceneRestartSweepTimer(PyMOLGlobals *G);
 
 void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem);
 void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem,int dirty);

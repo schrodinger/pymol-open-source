@@ -106,6 +106,25 @@ def roll(first=1,last=-1,loop=1,axis='y',_self=cmd):
         _self.mdo("%d" % (first+a), "turn %s,%8.3f" % (axis,deg))
         a = a + 1
 
+def append_roll(duration=10.0,_self=cmd):
+    cmd = _self
+    start_frame = 1
+    duration = float(duration)
+    fps = float(cmd.get('movie_fps'))
+    n_frame = round(fps * duration)
+    if n_frame > 0:
+        cmd.madd("1 x%d"%n_frame)
+        cmd.frame(start_frame)
+        cmd.mview("store")
+        cmd.frame(start_frame+n_frame/3)
+        cmd.turn("y",120)
+        cmd.mview("store")
+        cmd.frame(start_frame+(2*n_frame)/3)
+        cmd.turn("y",120)
+        cmd.mview("store")
+        cmd.mview("interpolate",power=1,wrap=1)
+        cmd.frame(start_frame)
+        
 def tdroll(first,rangex,rangey,rangez,skip=1,_self=cmd):
     '''
 AUTHOR

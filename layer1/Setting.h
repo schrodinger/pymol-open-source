@@ -783,6 +783,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_grid_slot                  579
 #define cSetting_grid_max                   580
 #define cSetting_cartoon_putty_transform    581
+#define cSetting_rock                       582
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -792,7 +793,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       582
+#define cSetting_INIT                       583
 
 #endif
 

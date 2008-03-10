@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2008-03-09 Warren L. DeLano <warren@delsci.com>	
+
+	* movie_rock modified so as to defer to rock setting by default
+	
+	* reduced Tcl/Tk pause on startup from 1 sec to 0.1 sec
+	
+	* rock setting (replaces hardcoded Control->Rocking property)
+	
 2008-03-08 Warren L. DeLano <warren@delsci.com>	
 
 	* added "modal" draw loop to deal with Windows GL update bugs
