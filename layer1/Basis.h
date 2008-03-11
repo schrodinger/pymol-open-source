@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #define cPrimSausage 4
 #define cPrimCharacter 5
 #define cPrimEllipsoid 6
+#define cPrimConic 7
 
 #define cCylCapNone 0
 #define cCylCapFlat 1
@@ -36,7 +37,7 @@ typedef struct {
   float v1[3],v2[3],v3[3];
   float n0[3],n1[3],n2[3],n3[3];
   float c1[3],c2[3],c3[3],ic[3],tr[3]; /* ic = interior color, tr = transparency */
-  float r1,l1; 
+  float r1,r2,l1; 
   float trans;
   int char_id;
   char type,cap1,cap2,cull;

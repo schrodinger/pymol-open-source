@@ -63,6 +63,7 @@ CHAR               = 23.0
 
 ALPHA              = 25.0
 QUADRIC            = 26.0 # NOTE: Only works with ellipsoids and disks
+CONIC              = 27.0 # NOT YET FUNCTIONAL
 
 LIGHTING           = float(0x0B50)
 
