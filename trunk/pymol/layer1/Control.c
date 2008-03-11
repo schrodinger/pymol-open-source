@@ -239,7 +239,6 @@ void ControlFree(PyMOLGlobals *G)
 /*========================================================================*/
 int ControlRock(PyMOLGlobals *G,int mode)
 {
-  register CControl *I=G->Control;
   switch(mode) {
   case -2: 
     break;

@@ -96,7 +96,7 @@ int CGO_sz[] = {
   CGO_INDENT_SZ,
   CGO_ALPHA_SZ,
   CGO_QUADRIC_SZ,
-  CGO_NULL_SZ,
+  CGO_CONIC_SZ,
 
   CGO_NULL_SZ,
   CGO_NULL_SZ,
@@ -114,6 +114,7 @@ static void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *
 static void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n0, float *n1, float *n2);
 static void CGOSimpleQuadric(CGO *I,float *v,float vdw, float *q);
 static void CGOSimpleSphere(CGO *I,float *v,float vdw);
+static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c1,float *c2,int cap1,int cap2);
 
 CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result)
 {
@@ -518,6 +519,28 @@ void CGOCustomCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2,
   *(pc++)=cap2;
 }
 
+void CGOConicv(CGO *I,float *p1,float *p2,float r1,float r2,float *c1,float *c2,float cap1, float cap2)
+{
+  float *pc = CGO_add(I,17);
+  CGO_write_int(pc,CGO_CONIC);
+  *(pc++)=*(p1++);
+  *(pc++)=*(p1++);
+  *(pc++)=*(p1++);
+  *(pc++)=*(p2++);
+  *(pc++)=*(p2++);
+  *(pc++)=*(p2++);
+  *(pc++)=r1;
+  *(pc++)=r2;
+  *(pc++)=*(c1++);
+  *(pc++)=*(c1++);
+  *(pc++)=*(c1++);
+  *(pc++)=*(c2++);
+  *(pc++)=*(c2++);
+  *(pc++)=*(c2++);
+  *(pc++)=cap1;
+  *(pc++)=cap2;
+}
+
 void CGOPickColor(CGO *I,int index,int bond)
 {
   float *pc = CGO_add(I,3);
@@ -895,6 +918,7 @@ int CGOCheckComplex(CGO *I)
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     switch(op) {
     case CGO_CYLINDER:
+    case CGO_CONIC:
     case CGO_SAUSAGE:
     case CGO_CUSTOM_CYLINDER:
       fc+=3*(3+(nEdge+1)*9)+9;
@@ -1048,6 +1072,9 @@ CGO *CGOSimplify(CGO *I,int est)
     case CGO_CYLINDER:
       CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10,1,1);
       break;
+    case CGO_CONIC:
+      CGOSimpleConic(cgo,pc,pc+3,*(pc+6),*(pc+7),pc+8,pc+11,(int)*(pc+14),(int)*(pc+15));
+      break;
     case CGO_SAUSAGE:
       CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10,2,2);
       break;
@@ -1109,9 +1136,11 @@ int CGOGetExtent(CGO *I,float *mn,float *mx)
       check_extent(pc,0);
       break;
     case CGO_SPHERE:
+    case CGO_ELLIPSOID:
       check_extent(pc,*(pc+3));
       break;
     case CGO_CYLINDER:
+    case CGO_CONIC:
     case CGO_SAUSAGE:
     case CGO_CUSTOM_CYLINDER:
       check_extent(pc  ,*(pc+6));
@@ -1358,6 +1387,9 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
     case CGO_QUADRIC:
       ray->fColor3fv(ray,c0);
       CGORenderQuadricRay(ray,pc,*(pc+3),pc+4);
+      break;
+    case CGO_CONIC:
+      ray->fConic3fv(ray,pc,pc+3,*(pc+6),*(pc+7),pc+8,pc+11,(int)*(pc+14),(int)*(pc+15));
       break;
     case CGO_CUSTOM_CYLINDER:
       ray->fCustomCylinder3fv(ray,pc,pc+3,*(pc+6),pc+7,pc+10,(int)*(pc+13),(int)*(pc+14));
@@ -2057,6 +2089,175 @@ static void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *
         v[3] = vv2[0] + v[0]*tube_size;
         v[4] = vv2[1] + v[1]*tube_size;
         v[5] = vv2[2] + v[2]*tube_size;
+        
+        if(cap2==cCylCapRound) CGONormalv(I,v);
+        CGOVertexv(I,v+3);
+      }
+    CGOEnd(I);
+  }
+}
+
+
+static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c1,float *c2,int cap1,int cap2)
+{
+
+#define MAX_EDGE 50
+
+  float d[3],t[3],p0[3],p1[3],p2[3],vv1[3],vv2[3],v_buf[9],*v;
+  float x[50],y[50];
+  float overlap1,overlap2;
+  float nub1,nub2;
+  int colorFlag;
+  int nEdge;
+  int c;
+
+  v=v_buf;
+  nEdge= (int)SettingGet(I->G,cSetting_stick_quality);
+  overlap1 = r1*SettingGet(I->G,cSetting_stick_overlap);
+  overlap2 = r2*SettingGet(I->G,cSetting_stick_overlap);
+  nub1 = r1*SettingGet(I->G,cSetting_stick_nub);
+  nub2 = r2*SettingGet(I->G,cSetting_stick_nub);
+
+  if(nEdge>MAX_EDGE)
+    nEdge=MAX_EDGE;
+  subdivide(nEdge,x,y);
+
+  colorFlag=(c1!=c2)&&c2;
+
+  CGOColorv(I,c1);
+
+  /* direction vector */
+  
+  p0[0] = (v2[0] - v1[0]);
+  p0[1] = (v2[1] - v1[1]);
+  p0[2] = (v2[2] - v1[2]);
+  
+  normalize3f(p0);
+  
+  if(cap1==cCylCapRound) {
+    vv1[0]=v1[0]-p0[0]*overlap1;
+    vv1[1]=v1[1]-p0[1]*overlap1;
+    vv1[2]=v1[2]-p0[2]*overlap1;
+  } else {
+    vv1[0]=v1[0];
+    vv1[1]=v1[1];
+    vv1[2]=v1[2];
+  }
+  if(cap2==cCylCapRound) {
+    vv2[0]=v2[0]+p0[0]*overlap2;
+    vv2[1]=v2[1]+p0[1]*overlap2;
+    vv2[2]=v2[2]+p0[2]*overlap2;
+  } else {
+    vv2[0]=v2[0];
+    vv2[1]=v2[1];
+    vv2[2]=v2[2];
+  }
+  
+  d[0] = (vv2[0] - vv1[0]);
+  d[1] = (vv2[1] - vv1[1]);
+  d[2] = (vv2[2] - vv1[2]);
+  
+  get_divergent3f(d,t);
+
+  cross_product3f(d,t,p1);
+  
+  normalize3f(p1);
+  
+  cross_product3f(d,p1,p2);
+  
+  normalize3f(p2);
+  
+  /* now we have a coordinate system*/
+  
+  CGOBegin(I,GL_TRIANGLE_STRIP);
+  for(c=nEdge;c>=0;c--) {
+    v[0] = p1[0]*x[c] + p2[0]*y[c];
+    v[1] = p1[1]*x[c] + p2[1]*y[c];
+    v[2] = p1[2]*x[c] + p2[2]*y[c];
+    
+    v[3] = vv1[0] + v[0]*r1;
+    v[4] = vv1[1] + v[1]*r1;
+    v[5] = vv1[2] + v[2]*r1;
+    
+    v[6] = vv1[0] + v[0]*r2 + d[0];
+    v[7] = vv1[1] + v[1]*r2 + d[1];
+    v[8] = vv1[2] + v[2]*r2 + d[2];
+    
+    
+    CGONormalv(I,v);
+    if(colorFlag) CGOColorv(I,c1);
+    CGOVertexv(I,v+3);
+    if(colorFlag) CGOColorv(I,c2);
+    CGOVertexv(I,v+6);
+  }
+  CGOEnd(I);
+
+  if(cap1) {
+  v[0] = -p0[0];
+  v[1] = -p0[1];
+  v[2] = -p0[2];
+
+    if(cap1==cCylCapRound) {
+      v[3] = vv1[0] - p0[0]*nub1;
+      v[4] = vv1[1] - p0[1]*nub1;
+      v[5] = vv1[2] - p0[2]*nub1;
+    } else {
+      v[3] = vv1[0];
+      v[4] = vv1[1];
+      v[5] = vv1[2];
+    }
+    
+    if(colorFlag) CGOColorv(I,c1);
+    CGOBegin(I,GL_TRIANGLE_FAN);
+    CGONormalv(I,v);
+    CGOVertexv(I,v+3);
+    
+    for(c=nEdge;c>=0;c--)
+      {
+        v[0] = p1[0]*x[c] + p2[0]*y[c];
+        v[1] = p1[1]*x[c] + p2[1]*y[c];
+        v[2] = p1[2]*x[c] + p2[2]*y[c];
+        
+        v[3] = vv1[0] + v[0]*r1;
+        v[4] = vv1[1] + v[1]*r1;
+        v[5] = vv1[2] + v[2]*r1;
+        
+        if(cap1==cCylCapRound) CGONormalv(I,v);
+        CGOVertexv(I,v+3);
+      }
+    CGOEnd(I);
+  }
+
+  if(cap2) {
+    
+    v[0] = p0[0];
+    v[1] = p0[1];
+    v[2] = p0[2];
+    
+    if(cap2==cCylCapRound) {
+      v[3] = vv2[0] + p0[0]*nub2;
+      v[4] = vv2[1] + p0[1]*nub2;
+      v[5] = vv2[2] + p0[2]*nub2;
+    } else {
+      v[3] = vv2[0];
+      v[4] = vv2[1];
+      v[5] = vv2[2];
+    }
+    
+    if(colorFlag) CGOColorv(I,c2);
+    CGOBegin(I,GL_TRIANGLE_FAN);
+    CGONormalv(I,v);
+    CGOVertexv(I,v+3);
+    
+    for(c=0;c<=nEdge;c++)
+      {
+        v[0] = p1[0]*x[c] + p2[0]*y[c];
+        v[1] = p1[1]*x[c] + p2[1]*y[c];
+        v[2] = p1[2]*x[c] + p2[2]*y[c];
+        
+        v[3] = vv2[0] + v[0]*r2;
+        v[4] = vv2[1] + v[1]*r2;
+        v[5] = vv2[2] + v[2]*r2;
         
         if(cap2==cCylCapRound) CGONormalv(I,v);
         CGOVertexv(I,v+3);

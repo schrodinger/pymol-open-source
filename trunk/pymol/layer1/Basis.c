@@ -324,11 +324,11 @@ static int LineToSphere(float *base, float *ray, float *point,float *dir,float r
 __inline__
 #endif
 static int FrontToInteriorSphere(float *front,
-                                      float *point,
-                                      float *dir,
-                                      float radius,
-                                      float radius2,
-                                      float maxial)
+                                 float *point,
+                                 float *dir,
+                                 float radius,
+                                 float radius2,
+                                 float maxial)
 {
   float intra_p[3];
   float axial;
@@ -356,8 +356,10 @@ static int FrontToInteriorSphere(float *front,
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
-static int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float maxial,
-                  float *sphere,float *asum,int cap1,int cap2,float *pre)
+static int ZLineToSphereCapped(float *base,float *point,
+                               float *dir,float radius,float maxial,
+                               float *sphere,float *asum,int cap1,
+                               int cap2,float *pre)
 {
   /* Strategy - find an imaginary sphere that lies at the correct point on
      the line segment, then treat as a sphere reflection */
@@ -369,7 +371,6 @@ static int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,
   float intra[3],vradial[3];
   float diff[3],fpoint[3];
   float proj[3];
-
 
   perpAxis[0] = pre[0]; /* was cross_product(MinusZ,dir,perpAxis),normalize */
   perpAxis[1] = pre[1];
@@ -577,7 +578,6 @@ static int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,
     /*  printf("==>%8.3f sphere %8.3f %8.3f %8.3f\n",base[1],sphere[1],axial_perp,axial);*/
   }
   return(1);
-  
 }
 
 
@@ -655,6 +655,226 @@ static int LineToSphereCapped(float *base, float *ray,
         return(1);
       }
     }
+  
+  /*tan_acos_dangle = tan(acos(dangle));*/
+  tan_acos_dangle = (float)sqrt1f(1-dangle*dangle)/dangle;
+
+  /*
+  printf("perpDist %8.3f\n",perpDist);
+  printf("dir %8.3f %8.3f %8.3f\n",dir[0],dir[1],dir[2]);
+  printf("base %8.3f %8.3f %8.3f\n",base[0],base[1],base[2]);
+  printf("point %8.3f %8.3f %8.3f\n",point[0],point[1],point[2]);
+  printf("intra %8.3f %8.3f %8.3f\n",intra[0],intra[1],intra[2]);
+  printf("perpAxis %8.3f %8.3f %8.3f\n",perpAxis[0],perpAxis[1],perpAxis[2]);
+  */
+
+  /* now we need to define the triangle in the perp-plane  
+     to figure out where the projected line intersection point is */
+
+  /* first, compute radial distance in the perp-plane between the two starting points */
+
+  remove_component3f(intra,perpAxis,intra_p);
+  remove_component3f(intra_p,dir,vradial);
+
+  radialsq = lengthsq3f(vradial);
+
+  /* now figure out the axial distance along the cyl-line that will give us
+     the point of closest approach */
+
+  if(ab_dangle<kR_SMALL4)
+    axial_perp=0;
+  else
+    axial_perp = (float)sqrt1f(radialsq)/tan_acos_dangle;
+  
+  axial = (float)lengthsq3f(intra_p)-radialsq;
+  axial = (float)sqrt1f(axial);
+
+  /*
+  printf("radial %8.3f\n",radial);
+  printf("vradial %8.3f %8.3f %8.3f\n",vradial[0],vradial[1],vradial[2]);
+  printf("radial %8.3f\n",radial);
+  printf("dangle %8.3f \n",dangle);
+  printf("axial_perp %8.3f \n",axial_perp);
+  printf("axial1 %8.3f \n",axial);
+  printf("%8.3f\n",dot_product3f(intra_p,dir));
+  */
+
+  if(dot_product3f(intra_p,dir)>=0.0)
+    axial = axial_perp - axial;
+  else
+    axial = axial_perp + axial;
+
+  /*
+  printf("axial2 %8.3f\n",axial);
+  */
+  
+  /* now we have to think about where the vector will actually strike the cylinder*/
+
+  /* by definition, it must be perpdist away from the perp-plane becuase the perp-plane
+     is parallel to the line, so we can compute the radial component to this point */
+
+  radial = radius*radius-perpDist*perpDist;
+  radial = (float)sqrt1f(radial);
+
+  /* now the trick is figuring out how to adjust the axial distance to get the actual
+     position along the cyl line which will give us a representative sphere */
+
+  if(ab_dangle > kR_SMALL4)
+    axial_sum = axial - radial/tan_acos_dangle;
+  else
+    axial_sum = axial;
+
+  /*    printf("ab_dangle %8.3f \n",ab_dangle);
+ 
+    printf("axial_sum %8.3f \n",axial_sum);
+  */
+  if(axial_sum<0) {
+    switch(cap1) {
+    case cCylCapFlat:
+      subtract3f(point,base,diff);
+      project3f(diff,dir,proj);
+      len_proj = (float)length3f(proj);
+      dangle = dot_product3f(proj,ray)/len_proj;
+      if(fabs(dangle)<kR_SMALL4) 
+        return 0;
+      len_proj /= dangle;
+      sphere[0]=base[0]+ray[0]*len_proj;
+      sphere[1]=base[1]+ray[1]*len_proj;
+      sphere[2]=base[2]+ray[2]*len_proj;
+      if(diff3f(sphere,point)>radius)
+        return 0; 
+      sphere[0]+=dir[0]*radius;
+      sphere[1]+=dir[1]*radius;
+      sphere[2]+=dir[2]*radius;
+      *asum=0;
+      break;
+    case cCylCapRound:
+      axial_sum=0;
+      sphere[0]=point[0];
+      sphere[1]=point[1];
+      sphere[2]=point[2];
+      *asum = axial_sum;
+      break;
+    case cCylCapNone:
+    default:
+      return 0;
+      break;
+    }
+  } else if(axial_sum>maxial) {
+    switch(cap2) {
+
+    case cCylCapFlat:
+      scale3f(dir,maxial,fpoint);
+      add3f(fpoint,point,fpoint);
+      subtract3f(fpoint,base,diff);
+      project3f(diff,dir,proj);
+      len_proj = (float)length3f(proj);
+      dangle = dot_product3f(proj,ray)/len_proj;
+      if(fabs(dangle)<kR_SMALL4) 
+        return 0;
+      len_proj /= dangle;
+      sphere[0]=base[0]+ray[0]*len_proj;
+      sphere[1]=base[1]+ray[1]*len_proj;
+      sphere[2]=base[2]+ray[2]*len_proj;
+      if(diff3f(sphere,fpoint)>radius)
+        return 0; 
+      sphere[0]-=dir[0]*radius;
+      sphere[1]-=dir[1]*radius;
+      sphere[2]-=dir[2]*radius;
+      *asum=maxial;
+      break;
+    case cCylCapRound:
+      axial_sum=maxial;
+      sphere[0]=dir[0]*axial_sum+point[0];
+      sphere[1]=dir[1]*axial_sum+point[1];
+      sphere[2]=dir[2]*axial_sum+point[2];
+      *asum = axial_sum;
+      break;
+    case cCylCapNone:
+    default:
+      return 0;
+      break;
+    }
+  } else {
+    sphere[0]=dir[0]*axial_sum+point[0];
+    sphere[1]=dir[1]*axial_sum+point[1];
+    sphere[2]=dir[2]*axial_sum+point[2];
+  
+    *asum = axial_sum;
+
+    /*  printf("==>%8.3f sphere %8.3f %8.3f %8.3f\n",base[1],sphere[1],axial_perp,axial);*/
+  }
+  return(1);
+}
+
+static int ConeLineToSphereCapped(float *base, float *ray,
+                              float *point,float *dir,float radius,
+                              float small_radius, float maxial, float *sphere,
+                              float *asum,int cap1,int cap2)
+{
+  /* Strategy - find an imaginary sphere that lies at the correct point on
+     the line segment, then treat as a sphere reflection */
+  
+  float perpAxis[3],intra_p[3];
+  float perpDist,radial,axial,axial_sum,dangle,ab_dangle,axial_perp;
+  float radialsq,tan_acos_dangle;
+  float len_proj;
+  float intra[3],vradial[3];
+  float diff[3],fpoint[3];
+  float proj[3];
+  
+  subtract3f(point,base,intra);
+  
+  cross_product3f(ray,dir,perpAxis);
+  
+  normalize3f(perpAxis);
+  
+  /* the perpAxis defines a perp-plane which includes the cyl-axis */
+  
+  /* get minimum distance between the lines */
+  
+  perpDist = dot_product3f(intra, perpAxis);
+  
+  if(fabs(perpDist)>radius) { 
+    /* the infinite ray and the cylinder direction lines don't pass close enough to intersect */
+    return 0;
+  }
+
+  dangle   = dot_product3f(ray, dir);
+  ab_dangle   = (float)fabs(dangle);
+  
+  if(ab_dangle>(1-kR_SMALL4)) { /* vector inline with light ray... */
+    vradial[0]=point[0]-base[0];
+    vradial[1]=point[1]-base[1];
+    vradial[2]=point[2]-base[2];
+    radial = (float)length3f(vradial);
+    if(radial>radius)
+      return 0;
+    if(dangle>0.0) {
+      switch(cap1) {
+      case cCylCapFlat:
+        sphere[0]=dir[0]*radius+point[0];
+        sphere[1]=dir[1]*radius+point[1];
+        sphere[2]=dir[2]*radius+point[2];
+        break;
+      case cCylCapRound:
+        sphere[0]=point[0];
+        sphere[1]=point[1];
+        sphere[2]=point[2];
+      }
+      return(1);
+    } else {
+      switch(cap1) {
+      case cCylCapFlat:
+        maxial-=radius;
+        break;
+      }
+      sphere[0]=dir[0]*maxial+point[0];
+      sphere[1]=dir[1]*maxial+point[1];
+      sphere[2]=dir[2]*maxial+point[2];
+      return(1);
+    }
+  }
   
   /*tan_acos_dangle = tan(acos(dangle));*/
   tan_acos_dangle = (float)sqrt1f(1-dangle*dangle)/dangle;
@@ -931,7 +1151,6 @@ static int LineClipPoint(float *base,float *ray,
    register float proj;
    register double dcutoff = (double)cutoff;
    register float opp_len_sq;
-
    
    /* this routine determines whether or not a vector starting at "base"
      heading in the direction "ray" intersects a sphere located at "point".
@@ -1646,7 +1865,40 @@ int BasisHitPerspective(BasisCallRec *BC)
                           }
                       }
                     break;
-                
+                  case cPrimConic: /* TO DO */
+                    if(ConeLineToSphereCapped(r->base,r->dir,BI_Vertex+i*3, 
+                                              BI_Normal+BI_Vert2Normal[i]*3,
+                                              BI_Radius[i],prm->r2,prm->l1,sph,&tri1,
+                                              prm->cap1,prm->cap2)) {
+                      if(LineClipPoint(r->base,r->dir,sph,&dist,BI_Radius[i],BI_Radius2[i])) {
+                        if((dist < r_dist) && (prm->trans != _1)) {
+                          if((dist >= _0) && (dist <= back_dist)) {
+                            if(prm->l1 > kR_SMALL4)
+                              r_tri1   = tri1 / prm->l1;
+                            r_sphere0   = sph[0];
+                            r_sphere1   = sph[1];                              
+                            r_sphere2   = sph[2];
+                            new_min_index   = prm->vert;
+                            r_dist      = dist;
+                          }  else if(check_interior_flag && (dist<=back_dist)) {
+                            if(FrontToInteriorSphereCapped(vt,
+                                                           BI_Vertex+i*3,
+                                                           BI_Normal+BI_Vert2Normal[i]*3,
+                                                           BI_Radius[i],
+                                                           BI_Radius2[i],
+                                                           prm->l1,
+                                                           prm->cap1,
+                                                           prm->cap2)) {
+                              local_iflag   = true;
+                              r_prim      = prm;
+                              r_dist      = _0;
+                              new_min_index   = prm->vert;
+                            }
+                          }
+                        }
+                      }
+                    }
+                    break;
                   case cPrimSausage:
                     if(LineToSphere(r->base,r->dir, 
                                     BI_Vertex+i*3,BI_Normal+BI_Vert2Normal[i]*3,
