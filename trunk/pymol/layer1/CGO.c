@@ -2113,10 +2113,10 @@ static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c
 
   v=v_buf;
   nEdge= (int)SettingGet(I->G,cSetting_stick_quality);
-  overlap1 = r1*SettingGet(I->G,cSetting_stick_overlap);
-  overlap2 = r2*SettingGet(I->G,cSetting_stick_overlap);
-  nub1 = r1*SettingGet(I->G,cSetting_stick_nub);
-  nub2 = r2*SettingGet(I->G,cSetting_stick_nub);
+  overlap1 = r1*SettingGet(I->G,cSetting_stick_overlap)*0.0;  /* 0.0 FOR DEBUGGING RAY */
+  overlap2 = r2*SettingGet(I->G,cSetting_stick_overlap)*0.0;
+  nub1 = r1*SettingGet(I->G,cSetting_stick_nub)*0.0;
+  nub2 = r2*SettingGet(I->G,cSetting_stick_nub)*0.0;
 
   if(nEdge>MAX_EDGE)
     nEdge=MAX_EDGE;

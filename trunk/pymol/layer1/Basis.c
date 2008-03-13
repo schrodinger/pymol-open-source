@@ -808,9 +808,10 @@ static int LineToSphereCapped(float *base, float *ray,
 }
 
 static int ConeLineToSphereCapped(float *base, float *ray,
-                              float *point,float *dir,float radius,
-                              float small_radius, float maxial, float *sphere,
-                              float *asum,int cap1,int cap2)
+                                  float *point,float *dir,float radius,
+                                  float small_radius, float maxial, float *sphere,
+                                  float *asum, float *sph_rad, float *sph_rad_sq,
+                                  int cap1,int cap2)
 {
   /* Strategy - find an imaginary sphere that lies at the correct point on
      the line segment, then treat as a sphere reflection */
@@ -833,17 +834,21 @@ static int ConeLineToSphereCapped(float *base, float *ray,
   
   /* get minimum distance between the lines */
   
-  perpDist = dot_product3f(intra, perpAxis);
+  perpDist = fabs(dot_product3f(intra, perpAxis));
   
-  if(fabs(perpDist)>radius) { 
-    /* the infinite ray and the cylinder direction lines don't pass close enough to intersect */
+  if(perpDist>radius) { 
+    /* the infinite ray and the cone direction lines don't pass close
+       enough to intersect within the bounding cylinder */
     return 0;
   }
 
   dangle   = dot_product3f(ray, dir);
   ab_dangle   = (float)fabs(dangle);
   
-  if(ab_dangle>(1-kR_SMALL4)) { /* vector inline with light ray... */
+  if(ab_dangle>(1-kR_SMALL4)) { /* SPECIAL CASE: cone inline with light ray  */
+    return 0;
+    /* need to update this code for cone */
+
     vradial[0]=point[0]-base[0];
     vradial[1]=point[1]-base[1];
     vradial[2]=point[2]-base[2];
@@ -875,18 +880,13 @@ static int ConeLineToSphereCapped(float *base, float *ray,
       return(1);
     }
   }
-  
-  /*tan_acos_dangle = tan(acos(dangle));*/
-  tan_acos_dangle = (float)sqrt1f(1-dangle*dangle)/dangle;
 
-  /*
-  printf("perpDist %8.3f\n",perpDist);
-  printf("dir %8.3f %8.3f %8.3f\n",dir[0],dir[1],dir[2]);
-  printf("base %8.3f %8.3f %8.3f\n",base[0],base[1],base[2]);
-  printf("point %8.3f %8.3f %8.3f\n",point[0],point[1],point[2]);
-  printf("intra %8.3f %8.3f %8.3f\n",intra[0],intra[1],intra[2]);
-  printf("perpAxis %8.3f %8.3f %8.3f\n",perpAxis[0],perpAxis[1],perpAxis[2]);
-  */
+  /* general case: ray and dir aren't parallel (but may well be perpendicular!) */
+
+  if(ab_dangle<kR_SMALL4) /* perpendicular check */
+    tan_acos_dangle = 0.0F; /* unused below -- just zero to avoid compiler warnings */
+  else
+    tan_acos_dangle = (float)sqrt1f(1-dangle*dangle)/dangle; /* = tan(acos(dangle));*/
 
   /* now we need to define the triangle in the perp-plane  
      to figure out where the projected line intersection point is */
@@ -896,58 +896,238 @@ static int ConeLineToSphereCapped(float *base, float *ray,
   remove_component3f(intra,perpAxis,intra_p);
   remove_component3f(intra_p,dir,vradial);
 
-  radialsq = lengthsq3f(vradial);
+  /* compute the square of the distance between base and the closest
+     approach of cone's axis */
+
+  radialsq = lengthsq3f(vradial); 
 
   /* now figure out the axial distance along the cyl-line that will give us
      the point of closest approach */
 
-  if(ab_dangle<kR_SMALL4)
+  if(ab_dangle<kR_SMALL4) /* ray and dir are perpendicular */
     axial_perp=0;
   else
     axial_perp = (float)sqrt1f(radialsq)/tan_acos_dangle;
   
-  axial = (float)lengthsq3f(intra_p)-radialsq;
+  axial = (float)lengthsq3f(intra_p)-radialsq; /* right-triangle relationship */
   axial = (float)sqrt1f(axial);
 
-  /*
-  printf("radial %8.3f\n",radial);
-  printf("vradial %8.3f %8.3f %8.3f\n",vradial[0],vradial[1],vradial[2]);
-  printf("radial %8.3f\n",radial);
-  printf("dangle %8.3f \n",dangle);
-  printf("axial_perp %8.3f \n",axial_perp);
-  printf("axial1 %8.3f \n",axial);
-  printf("%8.3f\n",dot_product3f(intra_p,dir));
-  */
+  /* signage check: axial_perp is negative when dangle is negative */
 
-  if(dot_product3f(intra_p,dir)>=0.0)
+  if(dot_product3f(intra_p,dir)>=0.0) 
     axial = axial_perp - axial;
   else
     axial = axial_perp + axial;
 
+  /* OKAY! axial now contains the distance along dir from point to the
+     closest approach (our reference point).  Up until now, everything
+     we've done has matched the cylinder, now the problem diverges
+     since solving for a cone is significantly more difficult...*/
+
+  {
+    float shift1, shift2; /* this is what we are solving for -- 
+                            the distance along the cone axis to the point of intersection */
+    float cone[3]; /* pass-thru point along 'dir' when shift=0 */
+    float near[3]; /* pass-thru point along 'ray' when shift=0 */
+    float slope = (small_radius - radius) / maxial;
+
+    scale3f(dir,axial,cone);
+    add3f(point,cone,cone);
+
+    scale3f(perpAxis,perpDist,near);
+    add3f(cone,near,near);
+
+    /* now we punt entirely, and throw the solution of this quadratic
+       relationship over to Mathematica -- surely this calculation
+       could be significantly optimized! */
+
+    {
+      double dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
+      double ray0 = ray[0], ray1 = ray[1], ray2 = ray[2];
+      double dir0Sq = dir0*dir0, dir1Sq = dir1*dir1, dir2Sq = dir2*dir2;
+      double ray0Sq = ray0*ray0, ray1Sq = ray1*ray1, ray2Sq = ray2*ray2;
+
+      double cone0 = cone[0], cone1 = cone[1], cone2 = cone[2];
+      double near0 = near[0], near1 = near[1], near2 = near[2];
+      double cone0Sq = cone0*cone0, cone1Sq = cone1*cone1, cone2Sq = cone2*cone2;
+      double near0Sq = near0*near0, near1Sq = near1*near1, near2Sq = near2*near2;
+
+      double dir0Cu = dir0Sq*dir0, dir1Cu = dir1Sq*dir1, dir2Cu = dir2Sq*dir2;
+      double dir0Fo = dir0Sq*dir0Sq, dir1Fo = dir1Sq*dir1Sq, dir2Fo = dir2Sq*dir2Sq;
+
+      double axialSq = axial * axial;
+      double slopeSq = slope * slope;
+      double radiusSq = radius * radius;
+
+      double partB = pow(dir0*ray0 + dir1*ray1 + dir2*ray2,2) * 
+        (-((ray2Sq*(1 + dir2Fo + dir2Sq*(-2 + dir0Sq + dir1Sq - slopeSq)) + 
+            ray1Sq*(1 + dir1Fo + dir1Sq*(-2 + dir0Sq + dir2Sq - slopeSq)) + 
+            ray0Sq*(1 + dir0Fo + dir0Sq*(-2 + dir1Sq + dir2Sq - slopeSq)) + 
+            2*dir1*dir2*ray1*
+            ray2*(-2 + dir0Sq + dir1Sq + dir2Sq - slopeSq) + 
+            2*dir0*ray0*(dir1*ray1 + dir2*ray2)*(-2 + dir0Sq + dir1Sq + dir2Sq - slopeSq))*
+           (cone0Sq + cone1Sq + cone2Sq - 
+            2*cone0*near0 + near0Sq - 2*cone1*near1 + near1Sq - 
+            2*cone2*near2 + near2Sq - radiusSq - 2*axial*radius*slope - 
+            axialSq*slopeSq)) +
+         pow(-(cone2*dir0*dir2*ray0) - near0*ray0 + 
+             dir0Sq*near0*ray0 + dir0*dir1*near1*ray0 + 
+             dir0*dir2*near2*ray0 - cone2*dir1*dir2*ray1 + 
+             dir0*dir1*near0*ray1 - near1*ray1 + dir1Sq*near1*ray1 + 
+             dir1*dir2*near2*ray1 + cone2*ray2 - cone2*dir2Sq*ray2 + 
+             dir0*dir2*near0*ray2 + dir1*dir2*near1*ray2 - near2*ray2 + 
+             dir2Sq*near2*ray2 - 
+             cone1*(dir0*dir1*ray0 + (-1 + dir1Sq)*ray1 + dir1*dir2*ray2) -
+             cone0*((-1 + dir0Sq)*ray0 + dir0*(dir1*ray1 + dir2*ray2)) + 
+             dir0*radius*ray0*slope + dir1*radius*ray1*slope + 
+             dir2*radius*ray2*slope + axial*dir0*ray0*slopeSq + 
+             axial*dir1*ray1*slopeSq + axial*dir2*ray2*slopeSq,2));
+      
+      if(partB<0.0) { /* negative? then there are NO real solutions */
+        return 0;
+      } else {
+        double partBroot = sqrt(partB);
+
+        double partA = cone0*dir0*ray0Sq - cone0*dir0Cu*ray0Sq - 
+          cone1*dir0Sq*dir1*ray0Sq - cone2*dir0Sq*dir2*ray0Sq - 
+          dir0*near0*ray0Sq + dir0Cu*near0*ray0Sq + 
+          dir0Sq*dir1*near1*ray0Sq + dir0Sq*dir2*near2*ray0Sq + 
+          cone1*dir0*ray0*ray1 + cone0*dir1*ray0*ray1 - 
+          2*cone0*dir0Sq*dir1*ray0*ray1 - 2*cone1*dir0*dir1Sq*ray0*ray1 - 
+          2*cone2*dir0*dir1*dir2*ray0*ray1 - dir1*near0*ray0*ray1 + 
+          2*dir0Sq*dir1*near0*ray0*ray1 - dir0*near1*ray0*ray1 + 
+          2*dir0*dir1Sq*near1*ray0*ray1 + 2*dir0*dir1*dir2*near2*ray0*ray1 + 
+          cone1*dir1*ray1Sq - cone1*dir1Cu*ray1Sq - 
+          cone0*dir0*dir1Sq*ray1Sq - cone2*dir1Sq*dir2*ray1Sq + 
+          dir0*dir1Sq*near0*ray1Sq - dir1*near1*ray1Sq + 
+          dir1Cu*near1*ray1Sq + dir1Sq*dir2*near2*ray1Sq + 
+          cone2*dir0*ray0*ray2 + cone0*dir2*ray0*ray2 - 
+          2*cone0*dir0Sq*dir2*ray0*ray2 - 2*cone1*dir0*dir1*dir2*ray0*ray2 - 
+          2*cone2*dir0*dir2Sq*ray0*ray2 - dir2*near0*ray0*ray2 + 
+          2*dir0Sq*dir2*near0*ray0*ray2 + 2*dir0*dir1*dir2*near1*ray0*ray2 - 
+          dir0*near2*ray0*ray2 + 2*dir0*dir2Sq*near2*ray0*ray2 + 
+          cone2*dir1*ray1*ray2 + cone1*dir2*ray1*ray2 - 
+          2*cone0*dir0*dir1*dir2*ray1*ray2 - 2*cone1*dir1Sq*dir2*ray1*ray2 - 
+          2*cone2*dir1*dir2Sq*ray1*ray2 + 2*dir0*dir1*dir2*near0*ray1*ray2 - 
+          dir2*near1*ray1*ray2 + 2*dir1Sq*dir2*near1*ray1*ray2 - 
+          dir1*near2*ray1*ray2 + 2*dir1*dir2Sq*near2*ray1*ray2 + 
+          cone2*dir2*ray2Sq - cone2*dir2Cu*ray2Sq - 
+          cone0*dir0*dir2Sq*ray2Sq - cone1*dir1*dir2Sq*ray2Sq + 
+          dir0*dir2Sq*near0*ray2Sq + dir1*dir2Sq*near1*ray2Sq - 
+          dir2*near2*ray2Sq + dir2Cu*near2*ray2Sq + 
+          dir0Sq*radius*ray0Sq*slope + 2*dir0*dir1*radius*ray0*ray1*slope + 
+          dir1Sq*radius*ray1Sq*slope + 2*dir0*dir2*radius*ray0*ray2*slope + 
+          2*dir1*dir2*radius*ray1*ray2*slope + dir2Sq*radius*ray2Sq*slope + 
+          axial*dir0Sq*ray0Sq*slopeSq + 2*axial*dir0*dir1*ray0*ray1*slopeSq +
+          axial*dir1Sq*ray1Sq*slopeSq + 
+          2*axial*dir0*dir2*ray0*ray2*slopeSq + 
+          2*axial*dir1*dir2*ray1*ray2*slopeSq + axial*dir2Sq*ray2Sq*slopeSq;
+        
+        double partC = (ray2Sq*(1 + dir2Fo +  dir2Sq*(-2 + dir0Sq + dir1Sq - slopeSq)) + 
+                        ray1Sq*(1 + dir1Fo + dir1Sq*(-2 + dir0Sq + dir2Sq - slopeSq)) + 
+                        ray0Sq*(1 + dir0Fo + dir0Sq*(-2 + dir1Sq + dir2Sq - slopeSq)) + 
+                        2*dir1*dir2*ray1*ray2*(-2 + dir0Sq + dir1Sq + dir2Sq - slopeSq) + 
+                        2*dir0*ray0*(dir1*ray1 + dir2*ray2)*(-2 + dir0Sq + dir1Sq + 
+                                                             dir2Sq - slopeSq));
+        
+        shift1 = (float)((partA - partBroot) / partC);
+        shift2 = (float)((partA + partBroot) / partC);
+      }
+    }
+
+#if 0
+    /* prove that the solutions are valid */
+    {
+      float axial_sum1 = axial + shift1;
+      float axial_sum2 = axial + shift2;
+      float near1[3],cone1[3];
+      float near2[3],cone2[3];
+      float radius1 = fabs(radius + slope * axial_sum1);
+      float radius2 = fabs(radius + slope * axial_sum2);
+      
+      scale3f(ray,shift1/dangle,near1);
+      add3f(near,near1,near1);
+      scale3f(dir,shift1,cone1);
+      add3f(cone,cone1,cone1);
+      
+      scale3f(ray,shift2/dangle,near2);
+      add3f(near,near2,near2);
+      scale3f(dir,shift2,cone2);
+      add3f(cone,cone2,cone2);
+      
+      {
+        float diff1 = diff3f(near1,cone1);
+        float diff2 = diff3f(near2,cone2);
+        
+        if(fabs(diff1 - radius1)>0.001) {
+          printf("error #1: %10.8f != %10.8f\n", diff1, radius1);
+        }
+        if(fabs(diff2 - radius2)>0.001) {
+          printf("error #2: %10.8f != %10.8f\n", diff2, radius2);
+        }
+      }
+    }
+#endif
+
+
+    {
+      float axial_sum1 = axial + shift1;
+      float axial_sum2 = axial + shift2;
+      
+      int soln1_on_cone = (axial_sum1>=0.0F) && (axial_sum1<=maxial);
+      int soln2_on_cone = (axial_sum2>=0.0F) && (axial_sum2<=maxial);
+      
+      if(!(soln1_on_cone||soln2_on_cone))
+        return 0;
+      else if(soln1_on_cone&&!soln2_on_cone) 
+        axial_sum = axial_sum1;
+      else if(soln2_on_cone&&!soln1_on_cone)
+        axial_sum = axial_sum2;
+      else if(dangle<0.0F) { /* cone is facing ray */
+        if(shift1>shift2) {
+          axial_sum = axial_sum1;
+        } else {
+          axial_sum = axial_sum2;
+        }
+      } else {
+        if(shift1>shift2) {
+          axial_sum = axial_sum2;
+        } else {
+          axial_sum = axial_sum1;
+        }
+      }
+    }
+
+    { 
+      float radius_at_hit = fabs(radius + slope * axial_sum);
+      float adjustment = -radius_at_hit * slope;
+
+
+      *asum = axial_sum; /* color blend based on actual hit location */
+     
+      axial_sum -= adjustment; /* but move virtual sphere center as required... */
+
+      sphere[0] = dir[0] * axial_sum + point[0];
+      sphere[1] = dir[1] * axial_sum + point[1];
+      sphere[2] = dir[2] * axial_sum + point[2];
+
+      /* and provide virtual sphere radius info */
+
+      *sph_rad_sq = (float)(radius_at_hit * radius_at_hit) + (adjustment * adjustment);
+      *sph_rad = (float)sqrt(*sph_rad_sq);
+
+    }
+
+  }
+
+
+
+  #if 0
   /*
-  printf("axial2 %8.3f\n",axial);
-  */
-  
-  /* now we have to think about where the vector will actually strike the cylinder*/
-
-  /* by definition, it must be perpdist away from the perp-plane becuase the perp-plane
-     is parallel to the line, so we can compute the radial component to this point */
-
-  radial = radius*radius-perpDist*perpDist;
-  radial = (float)sqrt1f(radial);
-
-  /* now the trick is figuring out how to adjust the axial distance to get the actual
-     position along the cyl line which will give us a representative sphere */
-
-  if(ab_dangle > kR_SMALL4)
-    axial_sum = axial - radial/tan_acos_dangle;
-  else
-    axial_sum = axial;
-
-  /*    printf("ab_dangle %8.3f \n",ab_dangle);
- 
+    printf("ab_dangle %8.3f \n",ab_dangle);
     printf("axial_sum %8.3f \n",axial_sum);
-  */
+  */  
+
   if(axial_sum<0) {
     switch(cap1) {
     case cCylCapFlat:
@@ -1016,14 +1196,10 @@ static int ConeLineToSphereCapped(float *base, float *ray,
       break;
     }
   } else {
-    sphere[0]=dir[0]*axial_sum+point[0];
-    sphere[1]=dir[1]*axial_sum+point[1];
-    sphere[2]=dir[2]*axial_sum+point[2];
-  
-    *asum = axial_sum;
-
     /*  printf("==>%8.3f sphere %8.3f %8.3f %8.3f\n",base[1],sphere[1],axial_perp,axial);*/
   }
+#endif
+
   return(1);
   
 }
@@ -1866,33 +2042,37 @@ int BasisHitPerspective(BasisCallRec *BC)
                       }
                     break;
                   case cPrimConic: /* TO DO */
-                    if(ConeLineToSphereCapped(r->base,r->dir,BI_Vertex+i*3, 
-                                              BI_Normal+BI_Vert2Normal[i]*3,
-                                              BI_Radius[i],prm->r2,prm->l1,sph,&tri1,
-                                              prm->cap1,prm->cap2)) {
-                      if(LineClipPoint(r->base,r->dir,sph,&dist,BI_Radius[i],BI_Radius2[i])) {
-                        if((dist < r_dist) && (prm->trans != _1)) {
-                          if((dist >= _0) && (dist <= back_dist)) {
-                            if(prm->l1 > kR_SMALL4)
-                              r_tri1   = tri1 / prm->l1;
-                            r_sphere0   = sph[0];
-                            r_sphere1   = sph[1];                              
-                            r_sphere2   = sph[2];
-                            new_min_index   = prm->vert;
-                            r_dist      = dist;
-                          }  else if(check_interior_flag && (dist<=back_dist)) {
-                            if(FrontToInteriorSphereCapped(vt,
-                                                           BI_Vertex+i*3,
-                                                           BI_Normal+BI_Vert2Normal[i]*3,
-                                                           BI_Radius[i],
-                                                           BI_Radius2[i],
-                                                           prm->l1,
-                                                           prm->cap1,
-                                                           prm->cap2)) {
-                              local_iflag   = true;
-                              r_prim      = prm;
-                              r_dist      = _0;
+                    {
+                      float sph_rad,sph_rad_sq;
+                      if(ConeLineToSphereCapped(r->base,r->dir,BI_Vertex+i*3, 
+                                                BI_Normal+BI_Vert2Normal[i]*3,
+                                                BI_Radius[i],prm->r2,prm->l1,sph, &tri1,
+                                                &sph_rad, &sph_rad_sq,
+                                                prm->cap1,prm->cap2)) {
+                        if(LineClipPoint(r->base, r->dir, sph, &dist, sph_rad, sph_rad_sq)) {
+                          if((dist < r_dist) && (prm->trans != _1)) {
+                            if((dist >= _0) && (dist <= back_dist)) {
+                              if(prm->l1 > kR_SMALL4)
+                                r_tri1   = tri1 / prm->l1; /* color blending */
+                              r_sphere0   = sph[0];
+                              r_sphere1   = sph[1];                              
+                              r_sphere2   = sph[2];
                               new_min_index   = prm->vert;
+                              r_dist      = dist;
+                            }  else if(check_interior_flag && (dist<=back_dist)) {
+                              if(FrontToInteriorSphereCapped(vt,
+                                                             BI_Vertex+i*3,
+                                                             BI_Normal+BI_Vert2Normal[i]*3,
+                                                             BI_Radius[i],
+                                                             BI_Radius2[i],
+                                                             prm->l1,
+                                                             prm->cap1,
+                                                             prm->cap2)) {
+                                local_iflag   = true;
+                                r_prim      = prm;
+                                r_dist      = _0;
+                                new_min_index   = prm->vert;
+                              }
                             }
                           }
                         }
