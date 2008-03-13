@@ -816,27 +816,29 @@ static int ConeLineToSphereCapped(float *base, float *ray,
   /* Strategy - find an imaginary sphere that lies at the correct point on
      the line segment, then treat as a sphere reflection */
   
-  float perpAxis[3],intra_p[3];
-  float perpDist,radial,axial,axial_sum,dangle,ab_dangle,axial_perp;
-  float radialsq,tan_acos_dangle;
+  float intra[3], intra_perp[3];
+  
+  float perp_axis[3];
+  float perp_dist,axial,axial_sum,dangle,ab_dangle,axial_perp;
+  float intra_perp_radial_len_sq,intra_perp_axial_len,tan_acos_dangle;
   float len_proj;
-  float intra[3],vradial[3];
+  float intra_perp_radial[3];
   float diff[3],fpoint[3];
   float proj[3];
-  
+
   subtract3f(point,base,intra);
   
-  cross_product3f(ray,dir,perpAxis);
+  cross_product3f(ray,dir,perp_axis);
   
-  normalize3f(perpAxis);
+  normalize3f(perp_axis);
   
-  /* the perpAxis defines a perp-plane which includes the cyl-axis */
+  /* the perp_axis defines a perp-plane which includes the cyl-axis */
   
   /* get minimum distance between the lines */
   
-  perpDist = fabs(dot_product3f(intra, perpAxis));
+  perp_dist = fabs(dot_product3f(intra, perp_axis));
   
-  if(perpDist>radius) { 
+  if(perp_dist>radius) { 
     /* the infinite ray and the cone direction lines don't pass close
        enough to intersect within the bounding cylinder */
     return 0;
@@ -846,38 +848,71 @@ static int ConeLineToSphereCapped(float *base, float *ray,
   ab_dangle   = (float)fabs(dangle);
   
   if(ab_dangle>(1-kR_SMALL4)) { /* SPECIAL CASE: cone inline with light ray  */
-    return 0;
-    /* need to update this code for cone */
-
-    vradial[0]=point[0]-base[0];
-    vradial[1]=point[1]-base[1];
-    vradial[2]=point[2]-base[2];
-    radial = (float)length3f(vradial);
-    if(radial>radius)
-      return 0;
-    if(dangle>0.0) {
+    if(dangle>=0.0) {
       switch(cap1) {
       case cCylCapFlat:
-        sphere[0]=dir[0]*radius+point[0];
-        sphere[1]=dir[1]*radius+point[1];
-        sphere[2]=dir[2]*radius+point[2];
+        subtract3f(point,base,diff);
+        project3f(diff,dir,proj);
+        len_proj = (float)length3f(proj);
+        dangle = dot_product3f(proj,ray)/len_proj;
+        if(fabs(dangle)<kR_SMALL4) 
+          return 0;
+        len_proj /= dangle;
+        sphere[0]=base[0]+ray[0]*len_proj;
+        sphere[1]=base[1]+ray[1]*len_proj;
+        sphere[2]=base[2]+ray[2]*len_proj;
+        if(diff3f(sphere,point)>radius)
+          return 0; 
+        sphere[0]+=dir[0]*radius;
+        sphere[1]+=dir[1]*radius;
+        sphere[2]+=dir[2]*radius;
+        *sph_rad = radius;
+        *sph_rad_sq = radius * radius;
+        *asum=0;
+        return 1;
         break;
       case cCylCapRound:
         sphere[0]=point[0];
         sphere[1]=point[1];
         sphere[2]=point[2];
-      }
-      return(1);
-    } else {
-      switch(cap1) {
-      case cCylCapFlat:
-        maxial-=radius;
+        return 0;
+        break;
+      default:
+        return 0;
         break;
       }
-      sphere[0]=dir[0]*maxial+point[0];
-      sphere[1]=dir[1]*maxial+point[1];
-      sphere[2]=dir[2]*maxial+point[2];
-      return(1);
+    } else {
+      switch(cap2) {
+      case cCylCapFlat:
+        scale3f(dir,maxial,fpoint);
+        add3f(fpoint,point,fpoint);
+        subtract3f(fpoint,base,diff);
+        project3f(diff,dir,proj);
+        len_proj = (float)length3f(proj);
+        dangle = dot_product3f(proj,ray)/len_proj;
+        if(fabs(dangle)<kR_SMALL4) 
+          return 0;
+        len_proj /= dangle;
+        sphere[0]=base[0]+ray[0]*len_proj;
+        sphere[1]=base[1]+ray[1]*len_proj;
+        sphere[2]=base[2]+ray[2]*len_proj;
+        if(diff3f(sphere,fpoint)>small_radius)
+          return 0; 
+        sphere[0]-=dir[0]*small_radius;
+        sphere[1]-=dir[1]*small_radius;
+        sphere[2]-=dir[2]*small_radius;
+        *sph_rad = small_radius;
+        *sph_rad_sq = small_radius * small_radius;
+        *asum=maxial;
+        return 1;
+        break;
+      case cCylCapRound:
+        return 0;
+        break;
+      default:
+        return 0;
+        break;
+      }
     }
   }
 
@@ -893,13 +928,13 @@ static int ConeLineToSphereCapped(float *base, float *ray,
 
   /* first, compute radial distance in the perp-plane between the two starting points */
 
-  remove_component3f(intra,perpAxis,intra_p);
-  remove_component3f(intra_p,dir,vradial);
+  remove_component3f(intra,perp_axis, intra_perp);
+  remove_component3f(intra_perp, dir, intra_perp_radial);
 
   /* compute the square of the distance between base and the closest
      approach of cone's axis */
 
-  radialsq = lengthsq3f(vradial); 
+  intra_perp_radial_len_sq = lengthsq3f(intra_perp_radial); 
 
   /* now figure out the axial distance along the cyl-line that will give us
      the point of closest approach */
@@ -907,17 +942,17 @@ static int ConeLineToSphereCapped(float *base, float *ray,
   if(ab_dangle<kR_SMALL4) /* ray and dir are perpendicular */
     axial_perp=0;
   else
-    axial_perp = (float)sqrt1f(radialsq)/tan_acos_dangle;
+    axial_perp = (float)sqrt1f(intra_perp_radial_len_sq)/tan_acos_dangle;
   
-  axial = (float)lengthsq3f(intra_p)-radialsq; /* right-triangle relationship */
-  axial = (float)sqrt1f(axial);
+  /* right-triangle relationship */
+  intra_perp_axial_len = (float)sqrt1f( lengthsq3f(intra_perp)-intra_perp_radial_len_sq );
 
   /* signage check: axial_perp is negative when dangle is negative */
 
-  if(dot_product3f(intra_p,dir)>=0.0) 
-    axial = axial_perp - axial;
+  if(dot_product3f(intra_perp,dir)>=0.0) 
+    axial = axial_perp - intra_perp_axial_len;
   else
-    axial = axial_perp + axial;
+    axial = axial_perp + intra_perp_axial_len;
 
   /* OKAY! axial now contains the distance along dir from point to the
      closest approach (our reference point).  Up until now, everything
@@ -930,11 +965,11 @@ static int ConeLineToSphereCapped(float *base, float *ray,
     float cone[3]; /* pass-thru point along 'dir' when shift=0 */
     float near[3]; /* pass-thru point along 'ray' when shift=0 */
     float slope = (small_radius - radius) / maxial;
-
+    
     scale3f(dir,axial,cone);
     add3f(point,cone,cone);
 
-    scale3f(perpAxis,perpDist,near);
+    scale3f(perp_axis,perp_dist,near);
     add3f(cone,near,near);
 
     /* Now we punt entirely and throw the solution of this quadratic
@@ -1069,139 +1104,165 @@ static int ConeLineToSphereCapped(float *base, float *ray,
     }
 #endif
 
-
     {
       float axial_sum1 = axial + shift1;
       float axial_sum2 = axial + shift2;
+      float orig_axial_len = -radius / slope;
+      float orig[3], base2orig[3], base2orig_radial[3];
+      float base2orig_radial_len, base2orig_radial_len_sq;
+      float base2orig_axial_len, base2orig_slope;
+      int base_inside_cone = false;
       
-      int soln1_on_cone = (axial_sum1>=0.0F) && (axial_sum1<=maxial);
-      int soln2_on_cone = (axial_sum2>=0.0F) && (axial_sum2<=maxial);
+      scale3f(dir, orig_axial_len, orig);
+      add3f(point, orig, orig);
+      subtract3f(orig,base,base2orig);
       
-      if(!(soln1_on_cone||soln2_on_cone))
-        return 0;
-      else if(soln1_on_cone&&!soln2_on_cone) 
-        axial_sum = axial_sum1;
-      else if(soln2_on_cone&&!soln1_on_cone)
-        axial_sum = axial_sum2;
-      else if(dangle<0.0F) { /* cone is facing ray */
-        if(shift1>shift2) {
+      remove_component3f(base2orig,dir,base2orig_radial);
+      
+      base2orig_radial_len_sq = lengthsq3f(base2orig_radial);
+      base2orig_axial_len = sqrt1f(lengthsq3f(base2orig) -  base2orig_radial_len_sq);
+      base2orig_radial_len = sqrt1f(base2orig_radial_len_sq);
+      
+      base2orig_slope = base2orig_radial_len / base2orig_axial_len;
+      
+      base_inside_cone = (base2orig_slope < -slope);
+      
+      if(dangle>0.0F) { /* cone is narrowing in parallel with ray */
+        
+        if(shift1<shift2) {
           axial_sum = axial_sum1;
         } else {
           axial_sum = axial_sum2;
         }
-      } else {
-        if(shift1>shift2) {
+        if((axial_sum<=0.0F)||
+           (base_inside_cone && (axial_sum<orig_axial_len))) {
+          switch(cap1) {
+          case cCylCapFlat:
+            subtract3f(point,base,diff);
+            project3f(diff,dir,proj);
+            len_proj = (float)length3f(proj);
+            dangle = dot_product3f(proj,ray)/len_proj;
+            if(fabs(dangle)<kR_SMALL4) 
+              return 0;
+            len_proj /= dangle;
+            sphere[0]=base[0]+ray[0]*len_proj;
+            sphere[1]=base[1]+ray[1]*len_proj;
+            sphere[2]=base[2]+ray[2]*len_proj;
+            if(diff3f(sphere,point)>radius)
+              return 0; 
+            sphere[0]+=dir[0]*radius;
+            sphere[1]+=dir[1]*radius;
+            sphere[2]+=dir[2]*radius;
+            *sph_rad = radius;
+            *sph_rad_sq = radius * radius;
+            *asum=0;
+            return 1;
+            break;
+          case cCylCapRound:
+            axial_sum=0;
+            sphere[0]=point[0];
+            sphere[1]=point[1];
+            sphere[2]=point[2];
+            *sph_rad = radius;
+            *sph_rad_sq = radius * radius;
+            *asum = axial_sum;
+            return 1;
+            break;
+          case cCylCapNone:
+          default:
+            return 0;
+            break;
+          }
+        } else if(axial_sum>maxial) {
+          return 0;
+        }
+      } else { /* cone is narrowing against ray */
+        if(shift1<shift2) {
           axial_sum = axial_sum2;
+          if(axial_sum>orig_axial_len) 
+            axial_sum = axial_sum1;
         } else {
           axial_sum = axial_sum1;
+          if(axial_sum>orig_axial_len)
+            axial_sum = axial_sum2;
+        }
+        if(axial_sum<0.0F) {
+          return 0;
+        } else if(axial_sum>=maxial) {
+          switch(cap2) {
+          case cCylCapFlat:
+            scale3f(dir,maxial,fpoint);
+            add3f(fpoint,point,fpoint);
+            subtract3f(fpoint,base,diff);
+            project3f(diff,dir,proj);
+            len_proj = (float)length3f(proj);
+            dangle = dot_product3f(proj,ray)/len_proj;
+            if(fabs(dangle)<kR_SMALL4) 
+              return 0;
+            len_proj /= dangle;
+            sphere[0]=base[0]+ray[0]*len_proj;
+            sphere[1]=base[1]+ray[1]*len_proj;
+            sphere[2]=base[2]+ray[2]*len_proj;
+            if(diff3f(sphere,fpoint)>small_radius)
+              /* need to handle this case */
+              return 0; 
+            sphere[0]-=dir[0]*small_radius;
+            sphere[1]-=dir[1]*small_radius;
+            sphere[2]-=dir[2]*small_radius;
+            *sph_rad = small_radius;
+            *sph_rad_sq = small_radius * small_radius;
+            *asum=maxial;
+            return 1;
+            break;
+          case cCylCapRound:
+            axial_sum=0;
+            sphere[0]=point[0];
+            sphere[1]=point[1];
+            sphere[2]=point[2];
+            *sph_rad = radius;
+            *sph_rad_sq = radius * radius;
+            *asum = axial_sum;
+            return 1;
+            break;
+          case cCylCapNone:
+          default:
+            return 0;
+            break;
+          }
         }
       }
+
+
+      /* normal hit in mid-section of the cone */
+      
+      { 
+        float radius_at_hit = radius + slope * axial_sum;
+        float adjustment = -radius_at_hit * slope;
+        
+        /*        printf("%8.3f %8.3f %8.3f %8.3f",axial_sum1, axial_sum2, radius, radius_at_hit); */
+
+        *asum = axial_sum; /* color blend based on actual hit location */
+        
+        axial_sum -= adjustment; /* but move virtual sphere center as required... */
+
+        /*        printf(" %8.3f ",axial_sum);*/
+        
+        sphere[0] = dir[0] * axial_sum + point[0];
+        sphere[1] = dir[1] * axial_sum + point[1];
+        sphere[2] = dir[2] * axial_sum + point[2];
+        
+        /* and provide virtual sphere radius info */
+        
+        *sph_rad_sq = (float)(radius_at_hit * radius_at_hit) + (adjustment * adjustment);
+        *sph_rad = (float)sqrt(*sph_rad_sq);
+        /*        printf("%8.3f %8.3f ",*sph_rad, tan_acos_dangle);*/
+
+        /*         dump3f(sphere,"sph");*/
+        return 1;
+      }
     }
-
-    { 
-      float radius_at_hit = fabs(radius + slope * axial_sum);
-      float adjustment = -radius_at_hit * slope;
-
-
-      *asum = axial_sum; /* color blend based on actual hit location */
-     
-      axial_sum -= adjustment; /* but move virtual sphere center as required... */
-
-      sphere[0] = dir[0] * axial_sum + point[0];
-      sphere[1] = dir[1] * axial_sum + point[1];
-      sphere[2] = dir[2] * axial_sum + point[2];
-
-      /* and provide virtual sphere radius info */
-
-      *sph_rad_sq = (float)(radius_at_hit * radius_at_hit) + (adjustment * adjustment);
-      *sph_rad = (float)sqrt(*sph_rad_sq);
-
-    }
-
   }
-
-
-
-  #if 0
-  /*
-    printf("ab_dangle %8.3f \n",ab_dangle);
-    printf("axial_sum %8.3f \n",axial_sum);
-  */  
-
-  if(axial_sum<0) {
-    switch(cap1) {
-    case cCylCapFlat:
-      subtract3f(point,base,diff);
-      project3f(diff,dir,proj);
-      len_proj = (float)length3f(proj);
-      dangle = dot_product3f(proj,ray)/len_proj;
-      if(fabs(dangle)<kR_SMALL4) 
-        return 0;
-      len_proj /= dangle;
-      sphere[0]=base[0]+ray[0]*len_proj;
-      sphere[1]=base[1]+ray[1]*len_proj;
-      sphere[2]=base[2]+ray[2]*len_proj;
-      if(diff3f(sphere,point)>radius)
-        return 0; 
-      sphere[0]+=dir[0]*radius;
-      sphere[1]+=dir[1]*radius;
-      sphere[2]+=dir[2]*radius;
-      *asum=0;
-      break;
-    case cCylCapRound:
-      axial_sum=0;
-      sphere[0]=point[0];
-      sphere[1]=point[1];
-      sphere[2]=point[2];
-      *asum = axial_sum;
-      break;
-    case cCylCapNone:
-    default:
-      return 0;
-      break;
-    }
-  } else if(axial_sum>maxial) {
-    switch(cap2) {
-
-    case cCylCapFlat:
-      scale3f(dir,maxial,fpoint);
-      add3f(fpoint,point,fpoint);
-      subtract3f(fpoint,base,diff);
-      project3f(diff,dir,proj);
-      len_proj = (float)length3f(proj);
-      dangle = dot_product3f(proj,ray)/len_proj;
-      if(fabs(dangle)<kR_SMALL4) 
-        return 0;
-      len_proj /= dangle;
-      sphere[0]=base[0]+ray[0]*len_proj;
-      sphere[1]=base[1]+ray[1]*len_proj;
-      sphere[2]=base[2]+ray[2]*len_proj;
-      if(diff3f(sphere,fpoint)>radius)
-        return 0; 
-      sphere[0]-=dir[0]*radius;
-      sphere[1]-=dir[1]*radius;
-      sphere[2]-=dir[2]*radius;
-      *asum=maxial;
-      break;
-    case cCylCapRound:
-      axial_sum=maxial;
-      sphere[0]=dir[0]*axial_sum+point[0];
-      sphere[1]=dir[1]*axial_sum+point[1];
-      sphere[2]=dir[2]*axial_sum+point[2];
-      *asum = axial_sum;
-      break;
-    case cCylCapNone:
-    default:
-      return 0;
-      break;
-    }
-  } else {
-    /*  printf("==>%8.3f sphere %8.3f %8.3f %8.3f\n",base[1],sphere[1],axial_perp,axial);*/
-  }
-#endif
-
-  return(1);
-  
+  return 0;
 }
 
 
