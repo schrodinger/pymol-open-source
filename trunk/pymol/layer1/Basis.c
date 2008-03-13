@@ -937,9 +937,9 @@ static int ConeLineToSphereCapped(float *base, float *ray,
     scale3f(perpAxis,perpDist,near);
     add3f(cone,near,near);
 
-    /* now we punt entirely, and throw the solution of this quadratic
-       relationship over to Mathematica -- surely this calculation
-       could be significantly optimized! */
+    /* Now we punt entirely and throw the solution of this quadratic
+       relationship over to Mathematica.  Surely this calculation
+       could be significantly optimized... */
 
     {
       double dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
@@ -1023,12 +1023,12 @@ static int ConeLineToSphereCapped(float *base, float *ray,
           2*axial*dir0*dir2*ray0*ray2*slopeSq + 
           2*axial*dir1*dir2*ray1*ray2*slopeSq + axial*dir2Sq*ray2Sq*slopeSq;
         
-        double partC = (ray2Sq*(1 + dir2Fo +  dir2Sq*(-2 + dir0Sq + dir1Sq - slopeSq)) + 
+        double partC = (ray2Sq*(1 + dir2Fo + dir2Sq*(-2 + dir0Sq + dir1Sq - slopeSq)) + 
                         ray1Sq*(1 + dir1Fo + dir1Sq*(-2 + dir0Sq + dir2Sq - slopeSq)) + 
                         ray0Sq*(1 + dir0Fo + dir0Sq*(-2 + dir1Sq + dir2Sq - slopeSq)) + 
                         2*dir1*dir2*ray1*ray2*(-2 + dir0Sq + dir1Sq + dir2Sq - slopeSq) + 
-                        2*dir0*ray0*(dir1*ray1 + dir2*ray2)*(-2 + dir0Sq + dir1Sq + 
-                                                             dir2Sq - slopeSq));
+                        2*dir0*ray0*(dir1*ray1 + dir2*ray2)*
+                        (-2 + dir0Sq + dir1Sq +  dir2Sq - slopeSq));
         
         shift1 = (float)((partA - partBroot) / partC);
         shift2 = (float)((partA + partBroot) / partC);
