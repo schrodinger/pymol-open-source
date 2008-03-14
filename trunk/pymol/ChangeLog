@@ -2,10 +2,11 @@
 CHANGE LOG
 =========================================================================
 
-2008-03-09 Warren L. DeLano <warren@delsci.com>	
-
-	* almost have cones working...
 	
+2008-03-12 Warren L. DeLano <warren@delsci.com>	
+
+	* cones are now working (flat-capped only...)
+		
 2008-03-09 Warren L. DeLano <warren@delsci.com>	
 
 	* added Movie->Program submenus and make other changes to Movie
