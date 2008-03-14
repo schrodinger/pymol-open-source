@@ -79,7 +79,7 @@ struct _CRay {
   void (*fCylinder3fv)( CRay *ray,float *v1,float *v2,float r,float *c1,float *c2);
   void (*fCustomCylinder3fv)( CRay *ray,float *v1,float *v2,float r,float *c1,
                               float *c2,int cap1,int cap2);
-  void (*fConic3fv)( CRay *ray,float *v1,float *v2,float r1,float r2,float *c1,
+  void (*fCone3fv)( CRay *ray,float *v1,float *v2,float r1,float r2,float *c1,
                      float *c2,int cap1,int cap2);
   void (*fSausage3fv)( CRay *ray,float *v1,float *v2,float r,float *c1,float *c2);
   void (*fColor3fv)( CRay *ray,float *c);

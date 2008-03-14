@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 #define cPrimSausage 4
 #define cPrimCharacter 5
 #define cPrimEllipsoid 6
-#define cPrimConic 7
+#define cPrimCone 7
 
 #define cCylCapNone 0
 #define cCylCapFlat 1

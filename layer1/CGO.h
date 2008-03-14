@@ -111,8 +111,8 @@ struct _CGO {
 #define CGO_ALPHA_SZ             1
 #define CGO_QUADRIC              0x1A
 #define CGO_QUADRIC_SZ           14
-#define CGO_CONIC                0x1B
-#define CGO_CONIC_SZ             16
+#define CGO_CONE                0x1B
+#define CGO_CONE_SZ             16
 #define CGO_RESET_NORMAL         0x1E
 #define CGO_RESET_NORMAL_SZ      1
 #define CGO_PICK_COLOR           0x1F
@@ -179,7 +179,7 @@ void CGOStop(CGO *I);
 void CGOCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2);
 void CGOCustomCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2,
                         float cap1,float cap2);
-void CGOConicv(CGO *I,float *p1,float *p2,float r1,float r2,float *c1,float *c2, float cap1,float cap2);
+void CGOConev(CGO *I,float *p1,float *p2,float r1,float r2,float *c1,float *c2, float cap1,float cap2);
 
 void CGOAlphaTriangle(CGO *I,
                       float *v1, float *v2, float *v3,
