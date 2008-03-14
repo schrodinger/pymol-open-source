@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Character.h"
 
 static const float kR_SMALL4 = 0.0001F;
+static const float kR_SMALL5 = 0.0001F;
 #define EPSILON 0.000001
 
 /*========================================================================*/
@@ -816,450 +817,304 @@ static int ConeLineToSphereCapped(float *base, float *ray,
   /* Strategy - find an imaginary sphere that lies at the correct point on
      the line segment, then treat as a sphere reflection */
   
-  float intra[3], intra_perp[3];
   
-  float perp_axis[3];
-  float perp_dist,axial,axial_sum,dangle,ab_dangle,axial_perp;
-  float intra_perp_radial_len_sq,intra_perp_axial_len,tan_acos_dangle;
+  float axial_sum, dangle, ab_dangle;
   float len_proj;
-  float intra_perp_radial[3];
   float diff[3],fpoint[3];
   float proj[3];
 
-  subtract3f(point,base,intra);
+  {
+    float perp_axis[3];
+    float intra[3];
+    float perp_dist;
+
+    subtract3f(point,base,intra);
+    cross_product3f(ray,dir,perp_axis);
+    
+    normalize3f(perp_axis);
   
-  cross_product3f(ray,dir,perp_axis);
-  
-  normalize3f(perp_axis);
-  
-  /* the perp_axis defines a perp-plane which includes the cyl-axis */
-  
-  /* get minimum distance between the lines */
-  
-  perp_dist = fabs(dot_product3f(intra, perp_axis));
-  
-  if(perp_dist>radius) { 
-    /* the infinite ray and the cone direction lines don't pass close
-       enough to intersect within the bounding cylinder */
-    return 0;
+    /* the perp_axis defines a perp-plane which includes the cyl-axis */
+    
+    /* get minimum distance between the lines */
+    
+    perp_dist = fabs(dot_product3f(intra, perp_axis));
+    
+    if(perp_dist>radius) { 
+      /* the infinite ray and the cone direction lines don't pass close
+         enough to intersect within the bounding cylinder */
+      return 0;
+    }
   }
 
   dangle   = dot_product3f(ray, dir);
   ab_dangle   = (float)fabs(dangle);
-  
-  if(ab_dangle>(1-kR_SMALL4)) { /* SPECIAL CASE: cone inline with light ray  */
-    if(dangle>=0.0) {
-      switch(cap1) {
-      case cCylCapFlat:
-        subtract3f(point,base,diff);
-        project3f(diff,dir,proj);
-        len_proj = (float)length3f(proj);
-        dangle = dot_product3f(proj,ray)/len_proj;
-        if(fabs(dangle)<kR_SMALL4) 
-          return 0;
-        len_proj /= dangle;
-        sphere[0]=base[0]+ray[0]*len_proj;
-        sphere[1]=base[1]+ray[1]*len_proj;
-        sphere[2]=base[2]+ray[2]*len_proj;
-        if(diff3f(sphere,point)>radius)
-          return 0; 
-        sphere[0]+=dir[0]*radius;
-        sphere[1]+=dir[1]*radius;
-        sphere[2]+=dir[2]*radius;
-        *sph_rad = radius;
-        *sph_rad_sq = radius * radius;
-        *asum=0;
-        return 1;
-        break;
-      case cCylCapRound:
-        sphere[0]=point[0];
-        sphere[1]=point[1];
-        sphere[2]=point[2];
-        return 0;
-        break;
-      default:
-        return 0;
-        break;
-      }
-    } else {
-      switch(cap2) {
-      case cCylCapFlat:
-        scale3f(dir,maxial,fpoint);
-        add3f(fpoint,point,fpoint);
-        subtract3f(fpoint,base,diff);
-        project3f(diff,dir,proj);
-        len_proj = (float)length3f(proj);
-        dangle = dot_product3f(proj,ray)/len_proj;
-        if(fabs(dangle)<kR_SMALL4) 
-          return 0;
-        len_proj /= dangle;
-        sphere[0]=base[0]+ray[0]*len_proj;
-        sphere[1]=base[1]+ray[1]*len_proj;
-        sphere[2]=base[2]+ray[2]*len_proj;
-        if(diff3f(sphere,fpoint)>small_radius)
-          return 0; 
-        sphere[0]-=dir[0]*small_radius;
-        sphere[1]-=dir[1]*small_radius;
-        sphere[2]-=dir[2]*small_radius;
-        *sph_rad = small_radius;
-        *sph_rad_sq = small_radius * small_radius;
-        *asum=maxial;
-        return 1;
-        break;
-      case cCylCapRound:
-        return 0;
-        break;
-      default:
-        return 0;
-        break;
-      }
-    }
-  }
 
-  /* general case: ray and dir aren't parallel (but may well be perpendicular!) */
-
-  if(ab_dangle<kR_SMALL4) /* perpendicular check */
-    tan_acos_dangle = 0.0F; /* unused below -- just zero to avoid compiler warnings */
-  else
-    tan_acos_dangle = (float)sqrt1f(1-dangle*dangle)/dangle; /* = tan(acos(dangle));*/
-
-  /* now we need to define the triangle in the perp-plane  
-     to figure out where the projected line intersection point is */
-
-  /* first, compute radial distance in the perp-plane between the two starting points */
-
-  remove_component3f(intra,perp_axis, intra_perp);
-  remove_component3f(intra_perp, dir, intra_perp_radial);
-
-  /* compute the square of the distance between base and the closest
-     approach of cone's axis */
-
-  intra_perp_radial_len_sq = lengthsq3f(intra_perp_radial); 
-
-  /* now figure out the axial distance along the cyl-line that will give us
-     the point of closest approach */
-
-  if(ab_dangle<kR_SMALL4) /* ray and dir are perpendicular */
-    axial_perp=0;
-  else
-    axial_perp = (float)sqrt1f(intra_perp_radial_len_sq)/tan_acos_dangle;
-  
-  /* right-triangle relationship */
-  intra_perp_axial_len = (float)sqrt1f( lengthsq3f(intra_perp)-intra_perp_radial_len_sq );
-
-  /* signage check: axial_perp is negative when dangle is negative */
-
-  if(dot_product3f(intra_perp,dir)>=0.0) 
-    axial = axial_perp - intra_perp_axial_len;
-  else
-    axial = axial_perp + intra_perp_axial_len;
-
-  /* OKAY! axial now contains the distance along dir from point to the
-     closest approach (our reference point).  Up until now, everything
-     we've done has matched the cylinder, now the problem diverges
-     since solving for a cone is significantly more difficult...*/
+  /* set up the cone */
 
   {
+    double spread = (radius - small_radius) / maxial;
+    float orig_axial_len = radius / spread;
+    float orig[3], base2orig[3], base2orig_radial[3], base2orig_normal[3];
+    float near[3];
+
+    float base2orig_radial_len, base2orig_radial_len_sq;
+    float base2orig_len, base2orig_len_sq;
+    float base2orig_axial_len, base2orig_spread;
+    int base_inside_cone = false;
     float shift1, shift2; /* this is what we are solving for -- 
-                            the distance along the cone axis to the point of intersection */
-    float cone[3]; /* pass-thru point along 'dir' when shift=0 */
-    float near[3]; /* pass-thru point along 'ray' when shift=0 */
-    float slope = (small_radius - radius) / maxial;
+                             the distance along the cone axis to the point of intersection */
     
-    scale3f(dir,axial,cone);
-    add3f(point,cone,cone);
+    scale3f(dir, orig_axial_len, orig);
+    add3f(point, orig, orig);
+    subtract3f(orig, base ,base2orig);
 
-    scale3f(perp_axis,perp_dist,near);
-    add3f(cone,near,near);
-
-    /* Now we punt entirely and throw the solution of this quadratic
-       relationship over to Mathematica.  Surely this calculation
-       could be significantly optimized... */
-
-    {
-      double dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
-      double ray0 = ray[0], ray1 = ray[1], ray2 = ray[2];
-      double dir0Sq = dir0*dir0, dir1Sq = dir1*dir1, dir2Sq = dir2*dir2;
-      double ray0Sq = ray0*ray0, ray1Sq = ray1*ray1, ray2Sq = ray2*ray2;
-
-      double cone0 = cone[0], cone1 = cone[1], cone2 = cone[2];
-      double near0 = near[0], near1 = near[1], near2 = near[2];
-      double cone0Sq = cone0*cone0, cone1Sq = cone1*cone1, cone2Sq = cone2*cone2;
-      double near0Sq = near0*near0, near1Sq = near1*near1, near2Sq = near2*near2;
-
-      double dir0Cu = dir0Sq*dir0, dir1Cu = dir1Sq*dir1, dir2Cu = dir2Sq*dir2;
-      double dir0Fo = dir0Sq*dir0Sq, dir1Fo = dir1Sq*dir1Sq, dir2Fo = dir2Sq*dir2Sq;
-
-      double axialSq = axial * axial;
-      double slopeSq = slope * slope;
-      double radiusSq = radius * radius;
-
-      double partB = pow(dir0*ray0 + dir1*ray1 + dir2*ray2,2) * 
-        (-((ray2Sq*(1 + dir2Fo + dir2Sq*(-2 + dir0Sq + dir1Sq - slopeSq)) + 
-            ray1Sq*(1 + dir1Fo + dir1Sq*(-2 + dir0Sq + dir2Sq - slopeSq)) + 
-            ray0Sq*(1 + dir0Fo + dir0Sq*(-2 + dir1Sq + dir2Sq - slopeSq)) + 
-            2*dir1*dir2*ray1*
-            ray2*(-2 + dir0Sq + dir1Sq + dir2Sq - slopeSq) + 
-            2*dir0*ray0*(dir1*ray1 + dir2*ray2)*(-2 + dir0Sq + dir1Sq + dir2Sq - slopeSq))*
-           (cone0Sq + cone1Sq + cone2Sq - 
-            2*cone0*near0 + near0Sq - 2*cone1*near1 + near1Sq - 
-            2*cone2*near2 + near2Sq - radiusSq - 2*axial*radius*slope - 
-            axialSq*slopeSq)) +
-         pow(-(cone2*dir0*dir2*ray0) - near0*ray0 + 
-             dir0Sq*near0*ray0 + dir0*dir1*near1*ray0 + 
-             dir0*dir2*near2*ray0 - cone2*dir1*dir2*ray1 + 
-             dir0*dir1*near0*ray1 - near1*ray1 + dir1Sq*near1*ray1 + 
-             dir1*dir2*near2*ray1 + cone2*ray2 - cone2*dir2Sq*ray2 + 
-             dir0*dir2*near0*ray2 + dir1*dir2*near1*ray2 - near2*ray2 + 
-             dir2Sq*near2*ray2 - 
-             cone1*(dir0*dir1*ray0 + (-1 + dir1Sq)*ray1 + dir1*dir2*ray2) -
-             cone0*((-1 + dir0Sq)*ray0 + dir0*(dir1*ray1 + dir2*ray2)) + 
-             dir0*radius*ray0*slope + dir1*radius*ray1*slope + 
-             dir2*radius*ray2*slope + axial*dir0*ray0*slopeSq + 
-             axial*dir1*ray1*slopeSq + axial*dir2*ray2*slopeSq,2));
+    remove_component3f(base2orig, dir, base2orig_radial);
       
-      if(partB<0.0) { /* negative? then there are NO real solutions */
-        return 0;
-      } else {
-        double partBroot = sqrt(partB);
+    base2orig_radial_len_sq = lengthsq3f(base2orig_radial);
 
-        double partA = cone0*dir0*ray0Sq - cone0*dir0Cu*ray0Sq - 
-          cone1*dir0Sq*dir1*ray0Sq - cone2*dir0Sq*dir2*ray0Sq - 
-          dir0*near0*ray0Sq + dir0Cu*near0*ray0Sq + 
-          dir0Sq*dir1*near1*ray0Sq + dir0Sq*dir2*near2*ray0Sq + 
-          cone1*dir0*ray0*ray1 + cone0*dir1*ray0*ray1 - 
-          2*cone0*dir0Sq*dir1*ray0*ray1 - 2*cone1*dir0*dir1Sq*ray0*ray1 - 
-          2*cone2*dir0*dir1*dir2*ray0*ray1 - dir1*near0*ray0*ray1 + 
-          2*dir0Sq*dir1*near0*ray0*ray1 - dir0*near1*ray0*ray1 + 
-          2*dir0*dir1Sq*near1*ray0*ray1 + 2*dir0*dir1*dir2*near2*ray0*ray1 + 
-          cone1*dir1*ray1Sq - cone1*dir1Cu*ray1Sq - 
-          cone0*dir0*dir1Sq*ray1Sq - cone2*dir1Sq*dir2*ray1Sq + 
-          dir0*dir1Sq*near0*ray1Sq - dir1*near1*ray1Sq + 
-          dir1Cu*near1*ray1Sq + dir1Sq*dir2*near2*ray1Sq + 
-          cone2*dir0*ray0*ray2 + cone0*dir2*ray0*ray2 - 
-          2*cone0*dir0Sq*dir2*ray0*ray2 - 2*cone1*dir0*dir1*dir2*ray0*ray2 - 
-          2*cone2*dir0*dir2Sq*ray0*ray2 - dir2*near0*ray0*ray2 + 
-          2*dir0Sq*dir2*near0*ray0*ray2 + 2*dir0*dir1*dir2*near1*ray0*ray2 - 
-          dir0*near2*ray0*ray2 + 2*dir0*dir2Sq*near2*ray0*ray2 + 
-          cone2*dir1*ray1*ray2 + cone1*dir2*ray1*ray2 - 
-          2*cone0*dir0*dir1*dir2*ray1*ray2 - 2*cone1*dir1Sq*dir2*ray1*ray2 - 
-          2*cone2*dir1*dir2Sq*ray1*ray2 + 2*dir0*dir1*dir2*near0*ray1*ray2 - 
-          dir2*near1*ray1*ray2 + 2*dir1Sq*dir2*near1*ray1*ray2 - 
-          dir1*near2*ray1*ray2 + 2*dir1*dir2Sq*near2*ray1*ray2 + 
-          cone2*dir2*ray2Sq - cone2*dir2Cu*ray2Sq - 
-          cone0*dir0*dir2Sq*ray2Sq - cone1*dir1*dir2Sq*ray2Sq + 
-          dir0*dir2Sq*near0*ray2Sq + dir1*dir2Sq*near1*ray2Sq - 
-          dir2*near2*ray2Sq + dir2Cu*near2*ray2Sq + 
-          dir0Sq*radius*ray0Sq*slope + 2*dir0*dir1*radius*ray0*ray1*slope + 
-          dir1Sq*radius*ray1Sq*slope + 2*dir0*dir2*radius*ray0*ray2*slope + 
-          2*dir1*dir2*radius*ray1*ray2*slope + dir2Sq*radius*ray2Sq*slope + 
-          axial*dir0Sq*ray0Sq*slopeSq + 2*axial*dir0*dir1*ray0*ray1*slopeSq +
-          axial*dir1Sq*ray1Sq*slopeSq + 
-          2*axial*dir0*dir2*ray0*ray2*slopeSq + 
-          2*axial*dir1*dir2*ray1*ray2*slopeSq + axial*dir2Sq*ray2Sq*slopeSq;
-        
-        double partC = (ray2Sq*(1 + dir2Fo + dir2Sq*(-2 + dir0Sq + dir1Sq - slopeSq)) + 
-                        ray1Sq*(1 + dir1Fo + dir1Sq*(-2 + dir0Sq + dir2Sq - slopeSq)) + 
-                        ray0Sq*(1 + dir0Fo + dir0Sq*(-2 + dir1Sq + dir2Sq - slopeSq)) + 
-                        2*dir1*dir2*ray1*ray2*(-2 + dir0Sq + dir1Sq + dir2Sq - slopeSq) + 
-                        2*dir0*ray0*(dir1*ray1 + dir2*ray2)*
-                        (-2 + dir0Sq + dir1Sq +  dir2Sq - slopeSq));
-        
-        shift1 = (float)((partA - partBroot) / partC);
-        shift2 = (float)((partA + partBroot) / partC);
-      }
-    }
+    base2orig_len_sq = lengthsq3f(base2orig);
+   
+    base2orig_axial_len = sqrt1f(base2orig_len_sq -  base2orig_radial_len_sq);
 
+    base2orig_radial_len = sqrt1f(base2orig_radial_len_sq);
+    base2orig_len = sqrt1f(base2orig_len_sq);
+
+    base2orig_spread = base2orig_radial_len / base2orig_axial_len;
+    
+    base_inside_cone = (base2orig_spread < spread);
+
+    normalize23f(base2orig, base2orig_normal);
+
+    if(ab_dangle > kR_SMALL4) {
+      float ray_extend = base2orig_axial_len / dangle;
+      if(dot_product3f(base2orig_normal,dir)<0.0)
+        ray_extend  = -ray_extend;
+      
+      scale3f(ray, ray_extend, near);
+      add3f(base, near, near);
+      
 #if 0
-    /* prove that the solutions are valid */
-    {
-      float axial_sum1 = axial + shift1;
-      float axial_sum2 = axial + shift2;
-      float near1[3],cone1[3];
-      float near2[3],cone2[3];
-      float radius1 = fabs(radius + slope * axial_sum1);
-      float radius2 = fabs(radius + slope * axial_sum2);
+      printf("base2orig len %8.3f extend %8.3f dangle %8.3f %8.3f ",
+             base2orig_radial_len,ray_extend,dangle,
+             dot_product3f(base2orig_normal, dir));
+      {
+        float check[3];
+        subtract3f(near,orig,check);
+        printf("check: %8.7f\n",dot_product3f(check,dir));
+      }
+#endif
       
-      scale3f(ray,shift1/dangle,near1);
-      add3f(near,near1,near1);
-      scale3f(dir,shift1,cone1);
-      add3f(cone,cone1,cone1);
-      
-      scale3f(ray,shift2/dangle,near2);
-      add3f(near,near2,near2);
-      scale3f(dir,shift2,cone2);
-      add3f(cone,cone2,cone2);
+      /* Now we punt entirely and throw the solution of this quadratic
+         relationship over to Mathematica.  Surely this calculation
+         could be significantly optimized... */
       
       {
-        float diff1 = diff3f(near1,cone1);
-        float diff2 = diff3f(near2,cone2);
+        double partA, partB, partC;
         
-        if(fabs(diff1 - radius1)>0.001) {
-          printf("error #1: %10.8f != %10.8f\n", diff1, radius1);
+        
+        double dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
+        double ray0 = ray[0], ray1 = ray[1], ray2 = ray[2];
+        double dir0Sq = dir0*dir0, dir1Sq = dir1*dir1, dir2Sq = dir2*dir2;
+        double ray0Sq = ray0*ray0, ray1Sq = ray1*ray1, ray2Sq = ray2*ray2;
+        
+        double cone0 = orig[0], cone1 = orig[1], cone2 = orig[2];
+        double near0 = near[0], near1 = near[1], near2 = near[2];
+        double cone0Sq = cone0*cone0, cone1Sq = cone1*cone1, cone2Sq = cone2*cone2;
+        double near0Sq = near0*near0, near1Sq = near1*near1, near2Sq = near2*near2;
+        
+        double dAngle = ray0 * dir0 + ray1 * dir1 + ray2 * dir2;
+        
+        double spreadSq = spread * spread;
+        double dAngleSq = dAngle * dAngle;
+        
+        partB = dAngleSq*(4*pow(cone0*dAngle*dir0 + cone1*dAngle*dir1 + 
+                                cone2*dAngle*dir2 - dAngle*dir0*near0 - dAngle*dir1*near1 - 
+                                dAngle*dir2*near2 - cone0*ray0 + near0*ray0 - cone1*ray1 + 
+                                near1*ray1 - cone2*ray2 + near2*ray2,2.0) - 
+                          4*(cone0Sq + cone1Sq + cone2Sq - 2*cone0*near0 + near0Sq - 
+                             2*cone1*near1 + near1Sq - 2*cone2*near2 + near2Sq)*
+                          (ray0Sq + 
+                           ray1Sq - 2*dAngle*(dir0*ray0 + dir1*ray1 + dir2*ray2) + 
+                           ray2Sq + dAngleSq*(dir0Sq + dir1Sq + dir2Sq - spreadSq)));
+        
+        
+        if(partB<0.0) { /* negative? then there are NO real solutions */
+          return 0;
+        } else {
+          double partBroot = sqrt(partB);
+          
+          partA = -(cone0*dAngleSq*dir0) - cone1*dAngleSq*dir1 - 
+            cone2*dAngleSq*dir2 + dAngleSq*dir0*near0 + dAngleSq*dir1*near1 + 
+            dAngleSq*dir2*near2 + cone0*dAngle*ray0 - dAngle*near0*ray0 + 
+            cone1*dAngle*ray1 - dAngle*near1*ray1 + cone2*dAngle*ray2 - 
+            dAngle*near2*ray2;
+          
+          partC = (ray0Sq + ray1Sq - 
+                   2*dAngle*(dir0*ray0 + dir1*ray1 + dir2*ray2) + ray2Sq + 
+                   dAngleSq*(dir0Sq + dir1Sq + dir2Sq - spreadSq));
+          
+          shift1 = (float)((partA + partBroot*0.5) / partC);
+          shift2 = (float)((partA - partBroot*0.5) / partC);
         }
-        if(fabs(diff2 - radius2)>0.001) {
-          printf("error #2: %10.8f != %10.8f\n", diff2, radius2);
+        
+        
+#if 0
+        /* prove that the solutions are valid */
+        {
+          float near1[3],cone1[3];
+          float near2[3],cone2[3];
+          float radius1 = fabs(spread * shift1);
+          float radius2 = fabs(spread * shift2);
+          
+          scale3f(ray,shift1/dangle,near1);
+          add3f(near,near1,near1);
+          
+          scale3f(dir,shift1,cone1);
+          add3f(orig,cone1,cone1);
+          
+          scale3f(ray,shift2/dangle,near2);
+          add3f(near,near2,near2);
+          
+          scale3f(dir,shift2,cone2);
+          add3f(orig,cone2,cone2);
+          
+          {
+            float diff1 = diff3f(near1,cone1);
+            float diff2 = diff3f(near2,cone2);
+            
+            if(fabs(diff1 - radius1)>0.01) {
+              printf("error #1: %10.8f != %10.8f for ", diff1, radius1);
+              printf("%8.3f %8.3f\n",shift1,shift2);
+            }
+            if(fabs(diff2 - radius2)>0.01) {
+              printf("error #2: %10.8f != %10.8f for ", diff2, radius2);
+              printf("%8.3f %8.3f\n",shift1,shift2);
+            }
+          }
         }
-      }
-    }
 #endif
-
-    {
-      float axial_sum1 = axial + shift1;
-      float axial_sum2 = axial + shift2;
-      float orig_axial_len = -radius / slope;
-      float orig[3], base2orig[3], base2orig_radial[3];
-      float base2orig_radial_len, base2orig_radial_len_sq;
-      float base2orig_axial_len, base2orig_slope;
-      int base_inside_cone = false;
+      }
       
-      scale3f(dir, orig_axial_len, orig);
-      add3f(point, orig, orig);
-      subtract3f(orig,base,base2orig);
-      
-      remove_component3f(base2orig,dir,base2orig_radial);
-      
-      base2orig_radial_len_sq = lengthsq3f(base2orig_radial);
-      base2orig_axial_len = sqrt1f(lengthsq3f(base2orig) -  base2orig_radial_len_sq);
-      base2orig_radial_len = sqrt1f(base2orig_radial_len_sq);
-      
-      base2orig_slope = base2orig_radial_len / base2orig_axial_len;
-      
-      base_inside_cone = (base2orig_slope < -slope);
-      
-      if(dangle>0.0F) { /* cone is narrowing in parallel with ray */
+      {
+        float axial_sum1 = orig_axial_len + shift1;
+        float axial_sum2 = orig_axial_len + shift2;
         
-        if(shift1<shift2) {
-          axial_sum = axial_sum1;
-        } else {
-          axial_sum = axial_sum2;
-        }
-        if((axial_sum<=0.0F)||
-           (base_inside_cone && (axial_sum<orig_axial_len))) {
-          switch(cap1) {
-          case cCylCapFlat:
-            subtract3f(point,base,diff);
-            project3f(diff,dir,proj);
-            len_proj = (float)length3f(proj);
-            dangle = dot_product3f(proj,ray)/len_proj;
-            if(fabs(dangle)<kR_SMALL4) 
-              return 0;
-            len_proj /= dangle;
-            sphere[0]=base[0]+ray[0]*len_proj;
-            sphere[1]=base[1]+ray[1]*len_proj;
-            sphere[2]=base[2]+ray[2]*len_proj;
-            if(diff3f(sphere,point)>radius)
-              return 0; 
-            sphere[0]+=dir[0]*radius;
-            sphere[1]+=dir[1]*radius;
-            sphere[2]+=dir[2]*radius;
-            *sph_rad = radius;
-            *sph_rad_sq = radius * radius;
-            *asum=0;
-            return 1;
-            break;
-          case cCylCapRound:
-            axial_sum=0;
-            sphere[0]=point[0];
-            sphere[1]=point[1];
-            sphere[2]=point[2];
-            *sph_rad = radius;
-            *sph_rad_sq = radius * radius;
-            *asum = axial_sum;
-            return 1;
-            break;
-          case cCylCapNone:
-          default:
-            return 0;
-            break;
-          }
-        } else if(axial_sum>maxial) {
-          return 0;
-        }
-      } else { /* cone is narrowing against ray */
-        if(shift1<shift2) {
-          axial_sum = axial_sum2;
-          if(axial_sum>orig_axial_len) 
+        if(dangle>0.0F) { /* cone is narrowing in parallel with ray */
+          if(shift1<shift2) {
             axial_sum = axial_sum1;
-        } else {
-          axial_sum = axial_sum1;
-          if(axial_sum>orig_axial_len)
+          } else {
             axial_sum = axial_sum2;
-        }
-        if(axial_sum<0.0F) {
-          return 0;
-        } else if(axial_sum>=maxial) {
-          switch(cap2) {
-          case cCylCapFlat:
-            scale3f(dir,maxial,fpoint);
-            add3f(fpoint,point,fpoint);
-            subtract3f(fpoint,base,diff);
-            project3f(diff,dir,proj);
-            len_proj = (float)length3f(proj);
-            dangle = dot_product3f(proj,ray)/len_proj;
-            if(fabs(dangle)<kR_SMALL4) 
+          }
+          if((axial_sum<0.0F) || (base_inside_cone && (axial_sum<orig_axial_len))) {
+            switch(cap1) {
+            case cCylCapFlat:
+              subtract3f(point,base,diff);
+              project3f(diff,dir,proj);
+              len_proj = (float)length3f(proj);
+              dangle = dot_product3f(proj,ray)/len_proj;
+              if(fabs(dangle)<kR_SMALL5) 
+                return 0;
+              len_proj /= dangle;
+              sphere[0]=base[0]+ray[0]*len_proj;
+              sphere[1]=base[1]+ray[1]*len_proj;
+              sphere[2]=base[2]+ray[2]*len_proj;
+              if(diff3f(sphere,point)>radius)
+                return 0; 
+              sphere[0]+=dir[0]*radius;
+              sphere[1]+=dir[1]*radius;
+              sphere[2]+=dir[2]*radius;
+              *sph_rad = radius;
+              *sph_rad_sq = radius * radius;
+              *asum=0;
+              return 1;
+              break;
+            case cCylCapNone:
+            default:
               return 0;
-            len_proj /= dangle;
-            sphere[0]=base[0]+ray[0]*len_proj;
-            sphere[1]=base[1]+ray[1]*len_proj;
-            sphere[2]=base[2]+ray[2]*len_proj;
-            if(diff3f(sphere,fpoint)>small_radius)
-              /* need to handle this case */
-              return 0; 
-            sphere[0]-=dir[0]*small_radius;
-            sphere[1]-=dir[1]*small_radius;
-            sphere[2]-=dir[2]*small_radius;
-            *sph_rad = small_radius;
-            *sph_rad_sq = small_radius * small_radius;
-            *asum=maxial;
-            return 1;
-            break;
-          case cCylCapRound:
-            axial_sum=0;
-            sphere[0]=point[0];
-            sphere[1]=point[1];
-            sphere[2]=point[2];
-            *sph_rad = radius;
-            *sph_rad_sq = radius * radius;
-            *asum = axial_sum;
-            return 1;
-            break;
-          case cCylCapNone:
-          default:
+              break;
+            }
+          } else if(axial_sum>maxial) {
             return 0;
-            break;
+          }
+        } else { /* cone is narrowing against ray */
+          if(shift1<shift2) {
+            axial_sum = axial_sum2;
+            if(axial_sum>orig_axial_len) {
+              axial_sum = axial_sum1;
+            }
+          } else {
+            axial_sum = axial_sum1;
+            if(axial_sum>orig_axial_len) {
+              axial_sum = axial_sum2;
+            }
+          }
+          if(axial_sum<0.0F) {
+            return 0;
+          } else if(axial_sum>=maxial) {
+            switch(cap2) {
+            case cCylCapFlat:
+              scale3f(dir,maxial,fpoint);
+              add3f(fpoint,point,fpoint);
+              subtract3f(fpoint,base,diff);
+              project3f(diff,dir,proj);
+              len_proj = (float)length3f(proj);
+              dangle = dot_product3f(proj,ray)/len_proj;
+              if(fabs(dangle)<kR_SMALL5) 
+                return 0;
+              len_proj /= dangle;
+              sphere[0]=base[0]+ray[0]*len_proj;
+              sphere[1]=base[1]+ray[1]*len_proj;
+              sphere[2]=base[2]+ray[2]*len_proj;
+              if(diff3f(sphere,fpoint)>small_radius)
+                /* need to handle this case */
+                return 0; 
+              sphere[0]-=dir[0]*small_radius;
+              sphere[1]-=dir[1]*small_radius;
+              sphere[2]-=dir[2]*small_radius;
+              *sph_rad = small_radius;
+              *sph_rad_sq = small_radius * small_radius;
+              *asum=maxial;
+              return 1;
+              break;
+            case cCylCapNone:
+            default:
+              return 0;
+              break;
+            }
           }
         }
       }
-
-
-      /* normal hit in mid-section of the cone */
+    } else {
+      axial_sum = orig_axial_len - base2orig_axial_len;
+      if((axial_sum<0.0F)||(axial_sum>maxial))
+        return 0;
+    }
+    
+    /* normal hit in mid-section of the cone */
+    
+    { 
+      float radius_at_hit = radius - spread * axial_sum;
       
-      { 
-        float radius_at_hit = radius + slope * axial_sum;
-        float adjustment = -radius_at_hit * slope;
-        
-        /*        printf("%8.3f %8.3f %8.3f %8.3f",axial_sum1, axial_sum2, radius, radius_at_hit); */
-
-        *asum = axial_sum; /* color blend based on actual hit location */
-        
-        axial_sum -= adjustment; /* but move virtual sphere center as required... */
-
-        /*        printf(" %8.3f ",axial_sum);*/
-        
-        sphere[0] = dir[0] * axial_sum + point[0];
-        sphere[1] = dir[1] * axial_sum + point[1];
-        sphere[2] = dir[2] * axial_sum + point[2];
-        
-        /* and provide virtual sphere radius info */
-        
-        *sph_rad_sq = (float)(radius_at_hit * radius_at_hit) + (adjustment * adjustment);
-        *sph_rad = (float)sqrt(*sph_rad_sq);
-        /*        printf("%8.3f %8.3f ",*sph_rad, tan_acos_dangle);*/
-
-        /*         dump3f(sphere,"sph");*/
-        return 1;
-      }
+      float adjustment = radius_at_hit * spread;
+      
+      *asum = axial_sum; /* color blend based on actual hit location */
+      
+      axial_sum -= adjustment; 
+      
+      /*        printf(" %8.3f ",axial_sum);*/
+      
+      sphere[0] = dir[0] * axial_sum + point[0];
+      sphere[1] = dir[1] * axial_sum + point[1];
+      sphere[2] = dir[2] * axial_sum + point[2];
+      
+      /* and provide virtual sphere radius info */
+      
+      *sph_rad_sq = (float)((radius_at_hit * radius_at_hit) + (adjustment * adjustment));
+      *sph_rad = (float)sqrt(*sph_rad_sq);
+      /*        printf("%8.3f %8.3f ",*sph_rad, tan_acos_dangle);*/
+      
+      /*         dump3f(sphere,"sph");*/
+      return 1;
     }
   }
   return 0;
@@ -2102,7 +1957,7 @@ int BasisHitPerspective(BasisCallRec *BC)
                           }
                       }
                     break;
-                  case cPrimConic: /* TO DO */
+                  case cPrimConic:
                     {
                       float sph_rad,sph_rad_sq;
                       if(ConeLineToSphereCapped(r->base,r->dir,BI_Vertex+i*3, 
@@ -2110,6 +1965,8 @@ int BasisHitPerspective(BasisCallRec *BC)
                                                 BI_Radius[i],prm->r2,prm->l1,sph, &tri1,
                                                 &sph_rad, &sph_rad_sq,
                                                 prm->cap1,prm->cap2)) {
+
+
                         if(LineClipPoint(r->base, r->dir, sph, &dist, sph_rad, sph_rad_sq)) {
                           if((dist < r_dist) && (prm->trans != _1)) {
                             if((dist >= _0) && (dist <= back_dist)) {
@@ -2395,7 +2252,7 @@ int BasisHitOrthoscopic(BasisCallRec *BC)
                         r_dist      = dist;
                       } else if(check_interior_flag)   {
 #if 0                        
-                        /* TO FIX */
+                        /* TODO TO FIX */
                         if(diffsq3f(vt,BI->Vertex+i*3) < BI->Radius2[i])    {
                           local_iflag   = true;
                           r_prim      = prm;
@@ -2409,7 +2266,7 @@ int BasisHitOrthoscopic(BasisCallRec *BC)
                 }
               }
               break;
-                     
+              
             case cPrimCylinder:
               if(ZLineToSphereCapped(r->base,BI->Vertex+i*3, 
                                      BI->Normal+BI->Vert2Normal[i]*3,
@@ -2448,7 +2305,49 @@ int BasisHitOrthoscopic(BasisCallRec *BC)
                 }
               }
               break;
-                     
+            case cPrimConic:
+              {
+                float sph_rad,sph_rad_sq;
+                if(ConeLineToSphereCapped(r->base,minusZ,BI->Vertex+i*3, 
+                                          BI->Normal+BI->Vert2Normal[i]*3,
+                                          BI->Radius[i],prm->r2,prm->l1,sph, &tri1,
+                                          &sph_rad, &sph_rad_sq,
+                                          prm->cap1,prm->cap2)) {
+                  
+                  oppSq = ZLineClipPoint(r->base,sph,&dist,sph_rad);
+                  if(oppSq<=sph_rad_sq)      {
+                    dist   = (float)(sqrt1f(dist)-sqrt1f((sph_rad_sq-oppSq)));
+                    
+                    if((dist < r_dist) && (prm->trans != _1)) {
+                      if((dist >= front) && (dist <= back))   {
+                        if(prm->l1 > kR_SMALL4)
+                          r_tri1   = tri1 / prm->l1;
+                        
+                        r_sphere0   = sph[0];
+                        r_sphere1   = sph[1];                              
+                        r_sphere2   = sph[2];
+                        minIndex   = prm->vert;
+                        r_dist      = dist;
+                      } else if(check_interior_flag) {
+                        if(FrontToInteriorSphereCapped(vt,
+                                                       BI->Vertex+i*3,
+                                                       BI->Normal+BI->Vert2Normal[i]*3,
+                                                       sph_rad,
+                                                       sph_rad_sq,
+                                                       prm->l1,
+                                                       prm->cap1,
+                                                       prm->cap2)) {
+                          local_iflag   = true;
+                          r_prim      = prm;
+                          r_dist      = front;
+                          minIndex   = prm->vert;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              break;
             case cPrimSausage:
               if(ZLineToSphere(r->base,BI->Vertex+i*3,BI->Normal+BI->Vert2Normal[i]*3,
                                BI->Radius[i],prm->l1,sph,&tri1,
@@ -2811,81 +2710,110 @@ int BasisHitShadow(BasisCallRec *BC)
                case cPrimEllipsoid:
                       
                  oppSq = ZLineClipPointNoZCheck( r->base, BI->Vertex + i*3, &dist, BI->Radius[i] );
-                 if(oppSq <= BI->Radius2[i])
-                   {
-                     dist   = (float)(sqrt1f(dist) - sqrt1f((BI->Radius2[i]-oppSq)));
-                     
-                     if((dist < r_dist ) || (trans_shadows && (r_trans!=_0))) {
-                       float   *n1 = BI->Normal + BI->Vert2Normal[i] * 3;
-                       if(LineClipEllipsoidPoint( r->base, minusZ,
-                                                  BI->Vertex + i*3, &dist, 
-                                                  BI->Radius[i] , BI->Radius2[i],
-                                                  prm->n0, n1, n1+3, n1+6)) {
-                         
-                         if(prm->trans == _0) {
-                           if(dist > -kR_SMALL4) {
-                             if(nearest_shadow) {
-                               if(dist < r_dist) {
-                                 minIndex   = prm->vert;
-                                 r_dist = dist;
-                                 r_trans = (r->trans = prm->trans);
-                               }
-                             } else {
-                               r->prim = prm;
-                               r->trans = prm->trans;
-                               r->dist = dist;
-                               return(1);
+                 if(oppSq <= BI->Radius2[i])  {
+                   dist   = (float)(sqrt1f(dist) - sqrt1f((BI->Radius2[i]-oppSq)));
+                   
+                   if((dist < r_dist ) || (trans_shadows && (r_trans!=_0))) {
+                     float   *n1 = BI->Normal + BI->Vert2Normal[i] * 3;
+                     if(LineClipEllipsoidPoint( r->base, minusZ,
+                                                BI->Vertex + i*3, &dist, 
+                                                BI->Radius[i] , BI->Radius2[i],
+                                                prm->n0, n1, n1+3, n1+6)) {
+                       
+                       if(prm->trans == _0) {
+                         if(dist > -kR_SMALL4) {
+                           if(nearest_shadow) {
+                             if(dist < r_dist) {
+                               minIndex   = prm->vert;
+                               r_dist = dist;
+                               r_trans = (r->trans = prm->trans);
                              }
+                           } else {
+                             r->prim = prm;
+                             r->trans = prm->trans;
+                             r->dist = dist;
+                             return(1);
                            }
-                         } else if(trans_shadows) {
-                           if((dist > -kR_SMALL4) && 
-                              (( r_trans > prm->trans) ||
-                               (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
-                             minIndex   = prm->vert;
-                             r_dist = dist;
-                             r_trans = (r->trans = prm->trans);
-                           }
+                         }
+                       } else if(trans_shadows) {
+                         if((dist > -kR_SMALL4) && 
+                            (( r_trans > prm->trans) ||
+                             (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
+                           minIndex   = prm->vert;
+                           r_dist = dist;
+                           r_trans = (r->trans = prm->trans);
                          }
                        }
                      }
                    }
+                 }
                  break;
-                         
+               case cPrimConic:
+                 {
+                   float sph_rad,sph_rad_sq;
+                   if(ConeLineToSphereCapped(r->base,minusZ,BI->Vertex+i*3, 
+                                             BI->Normal+BI->Vert2Normal[i]*3,
+                                             BI->Radius[i],prm->r2,prm->l1,sph, &tri1,
+                                             &sph_rad, &sph_rad_sq,
+                                             1,1)) {
+                     
+                     oppSq = ZLineClipPoint(r->base,sph,&dist,sph_rad);
+                     if(oppSq <= sph_rad_sq) {
+                       dist=(float)(sqrt1f(dist)-sqrt1f((sph_rad_sq-oppSq)));
+                       
+                       if(prm->trans == _0) {
+                         if(dist > -kR_SMALL4) {
+                           if(nearest_shadow) {
+                             if(dist < r_dist) {
+                               if(prm->l1 > kR_SMALL4)
+                                 r_tri1   = tri1 / prm->l1;
+                               r_sphere0   = sph[0];
+                               r_sphere1   = sph[1];                              
+                               r_sphere2   = sph[2];
+                               minIndex   = prm->vert;
+                               r->trans = prm->trans;
+                               r_dist = dist;
+                               r_trans = (r->trans = prm->trans);}
+                           } else {
+                             r->prim = prm;
+                             r->trans = prm->trans;
+                             r->dist = dist;
+                             return(1);
+                           }
+                         }
+                       } else if(trans_shadows) {
+                         if((dist > -kR_SMALL4) && 
+                            (( r_trans > prm->trans) ||
+                             (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
+                           if(prm->l1 > kR_SMALL4)
+                             r_tri1   = tri1 / prm->l1;
+                           r_sphere0   = sph[0];
+                           r_sphere1   = sph[1];                              
+                           r_sphere2   = sph[2];
+                           minIndex   = prm->vert;
+                           r->trans = prm->trans;
+                           r_dist = dist;
+                           r_trans = (r->trans = prm->trans);
+                         }
+                       }
+                     }
+                   }
+                 }
+                 break;
                case cPrimCylinder:
                  if(ZLineToSphereCapped(r->base,BI->Vertex+i*3, 
                                         BI->Normal+BI->Vert2Normal[i]*3,
                                         BI->Radius[i], prm->l1,sph,&tri1,prm->cap1,prm->cap2,
-                                        BI->Precomp + BI->Vert2Normal[i] * 3))
-                   {
-                     oppSq = ZLineClipPoint(r->base,sph,&dist,BI->Radius[i]);
-                     if(oppSq <= BI->Radius2[i])
-                       {
-                         dist=(float)(sqrt1f(dist)-sqrt1f((BI->Radius2[i]-oppSq)));
-
-                         if(prm->trans == _0) {
-                           if(dist > -kR_SMALL4) {
-                             if(nearest_shadow) {
-                               if(dist < r_dist) {
-                                 if(prm->l1 > kR_SMALL4)
-                                   r_tri1   = tri1 / prm->l1;
-                                 r_sphere0   = sph[0];
-                                 r_sphere1   = sph[1];                              
-                                 r_sphere2   = sph[2];
-                                 minIndex   = prm->vert;
-                                 r->trans = prm->trans;
-                                 r_dist = dist;
-                                 r_trans = (r->trans = prm->trans);}
-                             } else {
-                               r->prim = prm;
-                               r->trans = prm->trans;
-                               r->dist = dist;
-                               return(1);
-                             }
-                           }
-                         } else if(trans_shadows) {
-                           if((dist > -kR_SMALL4) && 
-                              (( r_trans > prm->trans) ||
-                               (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
+                                        BI->Precomp + BI->Vert2Normal[i] * 3)) {
+                   
+                   oppSq = ZLineClipPoint(r->base,sph,&dist,BI->Radius[i]);
+                   if(oppSq <= BI->Radius2[i]) {
+                     dist=(float)(sqrt1f(dist)-sqrt1f((BI->Radius2[i]-oppSq)));
+                     
+                     if(prm->trans == _0) {
+                       if(dist > -kR_SMALL4) {
+                         if(nearest_shadow) {
+                           if(dist < r_dist) {
                              if(prm->l1 > kR_SMALL4)
                                r_tri1   = tri1 / prm->l1;
                              r_sphere0   = sph[0];
@@ -2894,11 +2822,31 @@ int BasisHitShadow(BasisCallRec *BC)
                              minIndex   = prm->vert;
                              r->trans = prm->trans;
                              r_dist = dist;
-                             r_trans = (r->trans = prm->trans);
-                           }
+                             r_trans = (r->trans = prm->trans);}
+                         } else {
+                           r->prim = prm;
+                           r->trans = prm->trans;
+                           r->dist = dist;
+                           return(1);
                          }
                        }
+                     } else if(trans_shadows) {
+                       if((dist > -kR_SMALL4) && 
+                          (( r_trans > prm->trans) ||
+                           (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
+                         if(prm->l1 > kR_SMALL4)
+                           r_tri1   = tri1 / prm->l1;
+                         r_sphere0   = sph[0];
+                         r_sphere1   = sph[1];                              
+                         r_sphere2   = sph[2];
+                         minIndex   = prm->vert;
+                         r->trans = prm->trans;
+                         r_dist = dist;
+                         r_trans = (r->trans = prm->trans);
+                       }
+                     }
                    }
+                 }
                  break;
                      
                case cPrimSausage:
@@ -3232,6 +3180,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,int n_prim,
         }
         break;
         
+      case cPrimConic:
       case cPrimCylinder:
       case cPrimSausage:
         if((prm->l1+2*prm->r1)>=sep) {
@@ -3329,6 +3278,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,int n_prim,
             }
           }   /* if */
           break;
+        case cPrimConic:
         case cPrimCylinder:
         case cPrimSausage:
             

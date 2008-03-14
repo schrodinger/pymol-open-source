@@ -1937,7 +1937,7 @@ static void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *
 #define MAX_EDGE 50
 
   float d[3],t[3],p0[3],p1[3],p2[3],vv1[3],vv2[3],v_buf[9],*v;
-  float x[50],y[50];
+  float x[MAX_EDGE+1],y[MAX_EDGE+1];
   float overlap;
   float nub;
   int colorFlag;
@@ -2098,14 +2098,17 @@ static void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *
 }
 
 
-static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c1,float *c2,int cap1,int cap2)
+static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,
+                           float *c1,float *c2,int cap1,int cap2)
 {
 
 #define MAX_EDGE 50
 
   float d[3],t[3],p0[3],p1[3],p2[3],vv1[3],vv2[3],v_buf[9],*v;
-  float x[50],y[50];
+  float x[MAX_EDGE+1],y[MAX_EDGE+1],edge_normal[3*(MAX_EDGE+1)];
+#if 0
   float overlap1,overlap2;
+#endif
   float nub1,nub2;
   int colorFlag;
   int nEdge;
@@ -2113,10 +2116,13 @@ static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c
 
   v=v_buf;
   nEdge= (int)SettingGet(I->G,cSetting_stick_quality);
-  overlap1 = r1*SettingGet(I->G,cSetting_stick_overlap)*0.0;  /* 0.0 FOR DEBUGGING RAY */
-  overlap2 = r2*SettingGet(I->G,cSetting_stick_overlap)*0.0;
-  nub1 = r1*SettingGet(I->G,cSetting_stick_nub)*0.0;
-  nub2 = r2*SettingGet(I->G,cSetting_stick_nub)*0.0;
+#if 0
+  overlap1 = r1*SettingGet(I->G,cSetting_stick_overlap);  
+  overlap2 = r2*SettingGet(I->G,cSetting_stick_overlap);
+#endif
+
+  nub1 = r1*SettingGet(I->G,cSetting_stick_nub);
+  nub2 = r2*SettingGet(I->G,cSetting_stick_nub);
 
   if(nEdge>MAX_EDGE)
     nEdge=MAX_EDGE;
@@ -2134,20 +2140,29 @@ static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c
   
   normalize3f(p0);
   
-  if(cap1==cCylCapRound) {
+#if 0
+  if(cap1==cCylCapRound)) {
     vv1[0]=v1[0]-p0[0]*overlap1;
     vv1[1]=v1[1]-p0[1]*overlap1;
     vv1[2]=v1[2]-p0[2]*overlap1;
-  } else {
+  } else
+#endif
+
+ {
     vv1[0]=v1[0];
     vv1[1]=v1[1];
     vv1[2]=v1[2];
   }
+
+#if 0
   if(cap2==cCylCapRound) {
     vv2[0]=v2[0]+p0[0]*overlap2;
     vv2[1]=v2[1]+p0[1]*overlap2;
     vv2[2]=v2[2]+p0[2]*overlap2;
-  } else {
+  } else
+#endif
+
+ {
     vv2[0]=v2[0];
     vv2[1]=v2[1];
     vv2[2]=v2[2];
@@ -2168,6 +2183,29 @@ static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c
   normalize3f(p2);
   
   /* now we have a coordinate system*/
+
+  {
+    float len = diff3f(v1,v2);
+    float vt[3],nt[3];
+    float slope = 0.0F;
+  
+    if(len) {
+      slope = (r1-r2)/len;
+    }
+    for(c=nEdge;c>=0;c--) {
+      vt[0] = p1[0]*x[c] + p2[0]*y[c];
+      vt[1] = p1[1]*x[c] + p2[1]*y[c];
+      vt[2] = p1[2]*x[c] + p2[2]*y[c];
+      
+      scale3f(p0,slope,nt);
+      add3f(nt,vt,vt);
+      normalize3f(vt);
+      copy3f(vt,edge_normal+3*c);
+    }
+  }
+
+  /* now we have normals */
+
   
   CGOBegin(I,GL_TRIANGLE_STRIP);
   for(c=nEdge;c>=0;c--) {
@@ -2184,7 +2222,7 @@ static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c
     v[8] = vv1[2] + v[2]*r2 + d[2];
     
     
-    CGONormalv(I,v);
+    CGONormalv(I,edge_normal+3*c);
     if(colorFlag) CGOColorv(I,c1);
     CGOVertexv(I,v+3);
     if(colorFlag) CGOColorv(I,c2);
@@ -2193,19 +2231,22 @@ static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c
   CGOEnd(I);
 
   if(cap1) {
-  v[0] = -p0[0];
-  v[1] = -p0[1];
-  v[2] = -p0[2];
-
+    v[0] = -p0[0];
+    v[1] = -p0[1];
+    v[2] = -p0[2];
+    
+#if 0
     if(cap1==cCylCapRound) {
       v[3] = vv1[0] - p0[0]*nub1;
       v[4] = vv1[1] - p0[1]*nub1;
       v[5] = vv1[2] - p0[2]*nub1;
-    } else {
-      v[3] = vv1[0];
-      v[4] = vv1[1];
-      v[5] = vv1[2];
-    }
+    } else
+#endif
+      {
+        v[3] = vv1[0];
+        v[4] = vv1[1];
+        v[5] = vv1[2];
+      }
     
     if(colorFlag) CGOColorv(I,c1);
     CGOBegin(I,GL_TRIANGLE_FAN);
@@ -2234,11 +2275,14 @@ static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c
     v[1] = p0[1];
     v[2] = p0[2];
     
+#if 0
     if(cap2==cCylCapRound) {
       v[3] = vv2[0] + p0[0]*nub2;
       v[4] = vv2[1] + p0[1]*nub2;
       v[5] = vv2[2] + p0[2]*nub2;
-    } else {
+    } else 
+#endif
+{
       v[3] = vv2[0];
       v[4] = vv2[1];
       v[5] = vv2[2];
@@ -2249,19 +2293,18 @@ static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c
     CGONormalv(I,v);
     CGOVertexv(I,v+3);
     
-    for(c=0;c<=nEdge;c++)
-      {
-        v[0] = p1[0]*x[c] + p2[0]*y[c];
-        v[1] = p1[1]*x[c] + p2[1]*y[c];
-        v[2] = p1[2]*x[c] + p2[2]*y[c];
-        
-        v[3] = vv2[0] + v[0]*r2;
-        v[4] = vv2[1] + v[1]*r2;
-        v[5] = vv2[2] + v[2]*r2;
-        
-        if(cap2==cCylCapRound) CGONormalv(I,v);
-        CGOVertexv(I,v+3);
-      }
+    for(c=0;c<=nEdge;c++) {
+      v[0] = p1[0]*x[c] + p2[0]*y[c];
+      v[1] = p1[1]*x[c] + p2[1]*y[c];
+      v[2] = p1[2]*x[c] + p2[2]*y[c];
+      
+      v[3] = vv2[0] + v[0]*r2;
+      v[4] = vv2[1] + v[1]*r2;
+      v[5] = vv2[2] + v[2]*r2;
+      
+      if(cap2==cCylCapRound) CGONormalv(I,v);
+      CGOVertexv(I,v+3);
+    }
     CGOEnd(I);
   }
 }

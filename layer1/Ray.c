@@ -5136,6 +5136,12 @@ void RayConic3fv(CRay *I,float *v1,float *v2,float r1,float r2,
   p->r2=r2;
   p->trans=I->Trans;
   p->cap1=cap1;
+
+  if(cap2 >= cCylCapFlat)
+    cap2 = cCylCapFlat;
+  if(cap1 >= cCylCapFlat)
+    cap1 = cCylCapFlat;
+    
   p->cap2=cap2;
   p->wobble=I->Wobble;
   p->ramped = ((c1[0]<0.0F)||(c2[0]<0.0F));
