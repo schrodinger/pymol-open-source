@@ -1380,7 +1380,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
        plus 3 more floats for color */
 
     /*    printf("debug maxCyl: %d nEdge: %d v_size: %d\n",maxCyl,nEdge,v_size);*/
-    fflush(stdout);
+
     if(variable_alpha) 
       I->VarAlpha = Alloc(float,maxCyl);
     I->V = Alloc(float,v_size);
@@ -2058,11 +2058,10 @@ static void subdivide( int n, float *x, float *y)
 {
   int a;
   if(n<3) {n=3;}
-  for(a=0;a<=n;a++)
-	 {
-		x[a]=(float)cos(a*2*PI/n);
-		y[a]=(float)sin(a*2*PI/n);
-	 }
+  for(a=0;a<=n;a++) {
+    x[a]=(float)cos(a*2*PI/n);
+    y[a]=(float)sin(a*2*PI/n);
+  }
 }
 
 
@@ -2177,11 +2176,12 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,
 {
 
   float d[3],t[3],p0[3],p1[3],p2[3];
-  float x[50],y[50];
+  float x[51],y[51];
   int c;
 
   if(nEdge>50)
     nEdge=50;
+
   subdivide(nEdge,x,y);
  
   /* direction vector */
