@@ -1957,7 +1957,7 @@ int BasisHitPerspective(BasisCallRec *BC)
                           }
                       }
                     break;
-                  case cPrimConic:
+                  case cPrimCone:
                     {
                       float sph_rad,sph_rad_sq;
                       if(ConeLineToSphereCapped(r->base,r->dir,BI_Vertex+i*3, 
@@ -2305,7 +2305,7 @@ int BasisHitOrthoscopic(BasisCallRec *BC)
                 }
               }
               break;
-            case cPrimConic:
+            case cPrimCone:
               {
                 float sph_rad,sph_rad_sq;
                 if(ConeLineToSphereCapped(r->base,minusZ,BI->Vertex+i*3, 
@@ -2748,7 +2748,7 @@ int BasisHitShadow(BasisCallRec *BC)
                    }
                  }
                  break;
-               case cPrimConic:
+               case cPrimCone:
                  {
                    float sph_rad,sph_rad_sq;
                    if(ConeLineToSphereCapped(r->base,minusZ,BI->Vertex+i*3, 
@@ -3180,7 +3180,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,int n_prim,
         }
         break;
         
-      case cPrimConic:
+      case cPrimCone:
       case cPrimCylinder:
       case cPrimSausage:
         if((prm->l1+2*prm->r1)>=sep) {
@@ -3278,7 +3278,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,int n_prim,
             }
           }   /* if */
           break;
-        case cPrimConic:
+        case cPrimCone:
         case cPrimCylinder:
         case cPrimSausage:
             

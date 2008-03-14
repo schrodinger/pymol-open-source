@@ -618,6 +618,7 @@ if __name__=='pymol.setting':
         grid_max                           = 580
         cartoon_putty_transform            = 581
         rock                               = 582
+        cone_quality                       = 583
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

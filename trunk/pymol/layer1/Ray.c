@@ -118,7 +118,7 @@ void RayCharacter(CRay *I,int char_id);
 void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
 void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
 void RayInteriorColor3fv(CRay *I,float *v,int passive);
-void RayConic3fv(CRay *I,float *v1,float *v2,float r1,float r2,
+void RayCone3fv(CRay *I,float *v1,float *v2,float r1,float r2,
                  float *c1,float *c2,int cap1,int cap2);
 void RayTriangle3fv(CRay *I,
 						  float *v1,float *v2,float *v3,
@@ -435,7 +435,7 @@ void RayExpandPrimitives(CRay *I)
        nVert++;
        nNorm+=3;
        break;
-     case cPrimConic:
+     case cPrimCone:
 	 case cPrimCylinder:
      case cPrimSausage:
        nVert++;
@@ -559,7 +559,7 @@ void RayExpandPrimitives(CRay *I)
 		(*n0++)=(*n1++);
 		nNorm+=3;
 		break;
-     case cPrimConic:
+     case cPrimCone:
 	 case cPrimCylinder:
 	 case cPrimSausage:
 		I->Primitive[a].vert=nVert;
@@ -647,7 +647,7 @@ static void RayComputeBox(CRay *I)
         v = basis1->Vertex + prm->vert*3;
         minmax(v,r);
         break;
-      case cPrimConic:
+      case cPrimCone:
       case cPrimCylinder:
       case cPrimSausage:
         r = prm->r1;
@@ -743,7 +743,7 @@ static void RayTransformFirst(CRay *I,int perspective)
         v0 = basis1->Normal + (basis1->Vert2Normal[prm->vert]*3 + 3);
         prm->cull = backface_cull&&((v0[2]<0.0F)&&(v0[5]<0.0F)&&(v0[8]<0.0F));
         break;
-      case cPrimConic:
+      case cPrimCone:
       case cPrimSausage:
       case cPrimCylinder:
         BasisCylinderSausagePrecompute(basis1->Normal + basis1->Vert2Normal[prm->vert]*3,
@@ -804,7 +804,7 @@ void RayTransformBasis(CRay *I,CBasis *basis1,int group_id)
                                 basis1->Vertex+prm->vert*3+6,
                                 basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
         break;
-    case cPrimConic:
+    case cPrimCone:
     case cPrimSausage:
     case cPrimCylinder:
       BasisCylinderSausagePrecompute(basis1->Normal + basis1->Vert2Normal[prm->vert]*3,
@@ -982,7 +982,7 @@ void RayRenderVRML1(CRay *I,int width,int height,
         break;
       case cPrimCylinder:
       case cPrimSausage:
-      case cPrimConic:
+      case cPrimCone:
         break;
       case cPrimTriangle:
         break;
@@ -1229,7 +1229,7 @@ void RayRenderVRML2(CRay *I,int width,int height,
                 prim->c1[0],prim->c1[1],prim->c1[2]);
         UtilConcatVLA(&vla,&cc,buffer);    
         break;
-      case cPrimConic:
+      case cPrimCone:
         /* TO DO */
         break;
       case cPrimCylinder:
@@ -2122,7 +2122,7 @@ static void RayPrimGetColorRamped(PyMOLGlobals *G, float *matrix,RayInfo *r,floa
   case cPrimEllipsoid:
     /* TO DO */
     break;
-  case cPrimConic:
+  case cPrimCone:
   case cPrimCylinder:
   case cPrimSausage:
     w2 = r->tri1;
@@ -2760,7 +2760,7 @@ int RayTraceThread(CRayThreadInfo *T)
                              switch(r1.prim->type) {
                              case cPrimCylinder:
                              case cPrimSausage:
-                             case cPrimConic:
+                             case cPrimCone:
                                ft = r1.tri1;
                                fc[0]=(r1.prim->c1[0]*(_1-ft))+(r1.prim->c2[0]*ft);
                                fc[1]=(r1.prim->c1[1]*(_1-ft))+(r1.prim->c2[1]*ft);
@@ -5112,7 +5112,7 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
   I->NPrimitive++;
 }
 
-void RayConic3fv(CRay *I,float *v1,float *v2,float r1,float r2,
+void RayCone3fv(CRay *I,float *v1,float *v2,float r1,float r2,
                           float *c1,float *c2,int cap1,int cap2)
 {
   CPrimitive *p;
@@ -5131,7 +5131,7 @@ void RayConic3fv(CRay *I,float *v1,float *v2,float r1,float r2,
   VLACacheCheck(I->G,I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
-  p->type = cPrimConic;
+  p->type = cPrimCone;
   p->r1=r1;
   p->r2=r2;
   p->trans=I->Trans;
@@ -5544,7 +5544,7 @@ CRay *RayNew(PyMOLGlobals *G,int antialias)
   I->fColor3fv=RayColor3fv;
   I->fSphere3fv=RaySphere3fv;
   I->fCylinder3fv=RayCylinder3fv;
-  I->fConic3fv=RayConic3fv;
+  I->fCone3fv=RayCone3fv;
   I->fCustomCylinder3fv=RayCustomCylinder3fv;
   I->fSausage3fv=RaySausage3fv;
   I->fTriangle3fv=RayTriangle3fv;

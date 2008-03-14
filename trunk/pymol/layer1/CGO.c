@@ -96,7 +96,7 @@ int CGO_sz[] = {
   CGO_INDENT_SZ,
   CGO_ALPHA_SZ,
   CGO_QUADRIC_SZ,
-  CGO_CONIC_SZ,
+  CGO_CONE_SZ,
 
   CGO_NULL_SZ,
   CGO_NULL_SZ,
@@ -114,7 +114,7 @@ static void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *
 static void CGOSimpleEllipsoid(CGO *I,float *v,float vdw, float *n0, float *n1, float *n2);
 static void CGOSimpleQuadric(CGO *I,float *v,float vdw, float *q);
 static void CGOSimpleSphere(CGO *I,float *v,float vdw);
-static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,float *c1,float *c2,int cap1,int cap2);
+static void CGOSimpleCone(CGO *I,float *v1,float *v2,float r1,float r2,float *c1,float *c2,int cap1,int cap2);
 
 CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result)
 {
@@ -519,10 +519,10 @@ void CGOCustomCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2,
   *(pc++)=cap2;
 }
 
-void CGOConicv(CGO *I,float *p1,float *p2,float r1,float r2,float *c1,float *c2,float cap1, float cap2)
+void CGOConev(CGO *I,float *p1,float *p2,float r1,float r2,float *c1,float *c2,float cap1, float cap2)
 {
   float *pc = CGO_add(I,17);
-  CGO_write_int(pc,CGO_CONIC);
+  CGO_write_int(pc,CGO_CONE);
   *(pc++)=*(p1++);
   *(pc++)=*(p1++);
   *(pc++)=*(p1++);
@@ -918,7 +918,7 @@ int CGOCheckComplex(CGO *I)
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     switch(op) {
     case CGO_CYLINDER:
-    case CGO_CONIC:
+    case CGO_CONE:
     case CGO_SAUSAGE:
     case CGO_CUSTOM_CYLINDER:
       fc+=3*(3+(nEdge+1)*9)+9;
@@ -1072,8 +1072,8 @@ CGO *CGOSimplify(CGO *I,int est)
     case CGO_CYLINDER:
       CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10,1,1);
       break;
-    case CGO_CONIC:
-      CGOSimpleConic(cgo,pc,pc+3,*(pc+6),*(pc+7),pc+8,pc+11,(int)*(pc+14),(int)*(pc+15));
+    case CGO_CONE:
+      CGOSimpleCone(cgo,pc,pc+3,*(pc+6),*(pc+7),pc+8,pc+11,(int)*(pc+14),(int)*(pc+15));
       break;
     case CGO_SAUSAGE:
       CGOSimpleCylinder(cgo,pc,pc+3,*(pc+6),pc+7,pc+10,2,2);
@@ -1140,7 +1140,7 @@ int CGOGetExtent(CGO *I,float *mn,float *mx)
       check_extent(pc,*(pc+3));
       break;
     case CGO_CYLINDER:
-    case CGO_CONIC:
+    case CGO_CONE:
     case CGO_SAUSAGE:
     case CGO_CUSTOM_CYLINDER:
       check_extent(pc  ,*(pc+6));
@@ -1388,8 +1388,8 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
       ray->fColor3fv(ray,c0);
       CGORenderQuadricRay(ray,pc,*(pc+3),pc+4);
       break;
-    case CGO_CONIC:
-      ray->fConic3fv(ray,pc,pc+3,*(pc+6),*(pc+7),pc+8,pc+11,(int)*(pc+14),(int)*(pc+15));
+    case CGO_CONE:
+      ray->fCone3fv(ray,pc,pc+3,*(pc+6),*(pc+7),pc+8,pc+11,(int)*(pc+14),(int)*(pc+15));
       break;
     case CGO_CUSTOM_CYLINDER:
       ray->fCustomCylinder3fv(ray,pc,pc+3,*(pc+6),pc+7,pc+10,(int)*(pc+13),(int)*(pc+14));
@@ -2098,7 +2098,7 @@ static void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *
 }
 
 
-static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,
+static void CGOSimpleCone(CGO *I,float *v1,float *v2,float r1,float r2,
                            float *c1,float *c2,int cap1,int cap2)
 {
 
@@ -2115,7 +2115,7 @@ static void CGOSimpleConic(CGO *I,float *v1,float *v2,float r1,float r2,
   int c;
 
   v=v_buf;
-  nEdge= (int)SettingGet(I->G,cSetting_stick_quality);
+  nEdge= (int)SettingGet(I->G,cSetting_cone_quality);
 #if 0
   overlap1 = r1*SettingGet(I->G,cSetting_stick_overlap);  
   overlap2 = r2*SettingGet(I->G,cSetting_stick_overlap);
