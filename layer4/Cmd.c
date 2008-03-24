@@ -4722,7 +4722,7 @@ static PyObject *CmdFitPairs(PyObject *self, PyObject *args)
   int ln=0;
   int a;
   PyObject *result = NULL;
-  float valu;
+  float valu = -1.0F;
   int ok = false;
   ok = PyArg_ParseTuple(args,"OO",&self,&list);
   if(ok) {

@@ -134,6 +134,7 @@ typedef struct {
   float vertex_scale; /* how large is a screen pixel in model space at the origin */
   float *pmv_matrix;
   int sampling; /* are we supersampling? */
+  int ortho; /* orthoscopic projection? */
 } RenderInfo;
 
 #define MAXLINELEN 1024
