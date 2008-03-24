@@ -164,11 +164,15 @@ static float RayGetScreenVertexScale(CRay *I,float *v1)
   /* what size should a screen pixel be at the coordinate provided? */
 
   float vt[3];
-  float front_size,ratio;
+  float ratio;
   RayApplyMatrix33(1,(float3*)vt,I->ModelView,(float3*)v1);
 
-  front_size = 2*I->Volume[4]*((float)tan((I->Fov/2.0F)*PI/180.0F))/(I->Height);
-  ratio = front_size*(-vt[2]/I->Volume[4]);
+  if(I->Ortho) {
+    ratio = 2*(float)(fabs(I->Pos[2])*tan((I->Fov/2.0)*cPI/180.0))/(I->Height); 
+  } else {
+    float front_size = 2*I->Volume[4]*((float)tan((I->Fov/2.0F)*PI/180.0F))/(I->Height);
+    ratio = front_size*(-vt[2]/I->Volume[4]);
+  }
   return ratio;
 }
 
@@ -4885,8 +4889,6 @@ void RayCharacter(CRay *I,int char_id)
 
   v_scale =  RayGetScreenVertexScale(I,p->v1)/I->Sampling;
 
-  RayGetScreenVertexScale(I,vt);
-
   if(I->Context) {
     RayApplyContextToVertex(I,p->v1);
   }
@@ -5622,6 +5624,7 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   if(rotMat)  
     for(a=0;a<16;a++)
       I->Rotation[a]=rotMat[a];
+  I->Ortho = ortho;
   if(ortho) {
     I->PixelRadius = (((float)I->Range[0])/width)*pixel_scale;
   } else {

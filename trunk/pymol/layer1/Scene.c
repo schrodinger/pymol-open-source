@@ -4088,7 +4088,7 @@ void SceneGetEyeNormal(PyMOLGlobals *G,float *v1,float *normal)
 float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1) 
      /* does not require OpenGL-provided matrices */
 {
-  float front_size,ratio;
+  float ratio;
   register CScene *I=G->Scene;
   float vt[3];
   float fov=SettingGet(G,cSetting_field_of_view);
@@ -4101,8 +4101,12 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
   MatrixTranslateC44f(modelView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
 
   MatrixTransformC44f3f(modelView, v1,vt);
-  front_size = 2*I->FrontSafe*((float)tan((fov/2.0F)*PI/180.0F))/(I->Height);
-  ratio = front_size*(-vt[2]/I->FrontSafe);
+  if(SettingGetGlobal_i(G,cSetting_ortho)) {
+    ratio = 2*(float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0))/(I->Height); 
+  } else {
+    float front_size = 2*I->FrontSafe*((float)tan((fov/2.0F)*PI/180.0F))/(I->Height);
+    ratio = front_size*(-vt[2]/I->FrontSafe);
+  }
   return ratio;
 }
 
@@ -5746,6 +5750,9 @@ void SceneRay(PyMOLGlobals *G,
   ImageType *stereo_image = NULL;
   OrthoLineType prefix = "";
 
+  int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
+  if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
+
   UtilZeroMem(&grid,sizeof(GridInfo));
 
   if(mode!=0) grid_mode = 0; /* only allow grid mode with PyMOL renderer */
@@ -5909,14 +5916,12 @@ void SceneRay(PyMOLGlobals *G,
       OrthoBusyFast(G,0,20);
       
       {
-        int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
         float pixel_scale_value = SettingGetGlobal_f(G,cSetting_ray_pixel_scale);
         float fov=SettingGet(G,cSetting_field_of_view);
         
         if(pixel_scale_value<0) pixel_scale_value = 1.0F;
         
-        if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
-        
+
         pixel_scale_value *= ((float)tot_height)/I->Height;
         
         if(ortho) {
@@ -5926,7 +5931,7 @@ void SceneRay(PyMOLGlobals *G,
                      fov, I->Pos, 
                      rayView,I->RotMatrix,aspRat,
                      ray_width, ray_height, 
-                     pixel_scale_value, true,
+                     pixel_scale_value, ortho,
                      _1, _1, /* gcc 3.2.3 blows chunks if these are 1.0F */
                      ((float)ray_height)/I->Height);
           
@@ -5952,7 +5957,7 @@ void SceneRay(PyMOLGlobals *G,
                      fov, I->Pos,
                      rayView,I->RotMatrix,aspRat,
                      ray_width, ray_height, 
-                     pixel_scale_value, false,
+                     pixel_scale_value, ortho,
                      height/back_height,
                      I->FrontSafe/I->BackSafe,
                      ((float)ray_height)/I->Height);
@@ -5964,6 +5969,8 @@ void SceneRay(PyMOLGlobals *G,
         RenderInfo info;
         UtilZeroMem(&info,sizeof(RenderInfo));
         info.ray = ray;
+        info.ortho = ortho;
+
         while(ListIterate(I->Obj,rec,next)) {
           if(rec->obj->fRender) {
             if(SceneGetDrawFlag(&grid, slot_vla, rec->obj->grid_slot)) {
@@ -6900,7 +6907,7 @@ static void SceneProgramLighting(PyMOLGlobals *G)
 }
 /*========================================================================*/
 static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
-                            float *normal,Picking **pickVLA,
+                           float *normal,Picking **pickVLA,
                            int pass,int fat, float width_scale,
                            GridInfo *grid)
 {
@@ -6919,7 +6926,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.front = I->FrontSafe;
   info.sampling = 1;
   info.alpha_cgo = I->AlphaCGO;
-  
+  info.ortho = SettingGetGlobal_b(G,cSetting_ortho);
 
   if(I->StereoMode) {
     float buffer;

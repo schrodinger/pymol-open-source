@@ -127,7 +127,13 @@ static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float s
         float loc[3];
         float zero[3]= {0.0F,0.0F,0.0F};
         if(rpos) {
-          SceneGetEyeNormal(G,v,loc);
+          if(info->ortho) {
+            float orig[3];
+            SceneOriginGet(G,orig);
+            SceneGetEyeNormal(G,orig,loc);
+          } else {
+            SceneGetEyeNormal(G,v,loc);
+          }
           scale3f(loc,z_indent,loc);
           add3f(v,loc,loc);
           v = loc;
@@ -138,7 +144,13 @@ static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float s
         if(rpos) {
           float *v = TextGetPos(G);
           float loc[3];
-          SceneGetEyeNormal(G,v,loc);
+          if(info->ortho) {
+            float orig[3];
+            SceneOriginGet(G,orig);
+            SceneGetEyeNormal(G,orig,loc);
+          } else {
+            SceneGetEyeNormal(G,v,loc);
+          }
           scale3f(loc,z_indent,loc);
           add3f(v,loc,loc);
           TextSetPos(G,loc);
@@ -247,7 +259,13 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st,float size, floa
     if(rpos) {
       float loc[3];
       v = TextGetPos(G);
-      SceneGetEyeNormal(G,v,loc);
+      if(ray->Ortho) {
+        float orig[3];
+        SceneOriginGet(G,orig);
+        SceneGetEyeNormal(G,orig,loc);
+      } else { 
+        SceneGetEyeNormal(G,v,loc);
+      }
       scale3f(loc,rpos[2],loc);
       add3f(v,loc,loc);
       TextSetPos(G,loc);

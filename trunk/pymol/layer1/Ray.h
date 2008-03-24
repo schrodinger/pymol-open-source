@@ -125,6 +125,7 @@ struct _CRay {
   float AspRatio;
   int Width,Height;
   float PixelRadius;
+  int Ortho;
   float min_box[3];
   float max_box[3];
   int Sampling;

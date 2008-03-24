@@ -36,8 +36,8 @@ typedef struct {
 __inline__ 
 #endif
 static char *_FontTypeRenderOpenGL(RenderInfo *info, 
-                                              CFontType *I,char *st,
-                                              float size,int flat, float *rpos)
+                                   CFontType *I,char *st,
+                                   float size,int flat, float *rpos)
 {
   register PyMOLGlobals *G = I->Font.G;
   if(G->ValidContext) {
@@ -149,7 +149,13 @@ static char *_FontTypeRenderOpenGL(RenderInfo *info,
         float loc[3];
         float zero[3]= {0.0F,0.0F,0.0F};
         if(rpos) {
-          SceneGetEyeNormal(G,v,loc);
+          if(info->ortho) {
+            float orig[3];
+            SceneOriginGet(G,orig);
+            SceneGetEyeNormal(G,orig,loc);
+          } else {
+            SceneGetEyeNormal(G,v,loc);
+          }
           scale3f(loc,z_indent,loc);
           add3f(v,loc,loc);
           v = loc;
@@ -256,7 +262,14 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
       }
 
       v = TextGetPos(I->G);
-      SceneGetEyeNormal(G,v,loc);
+
+      if(ray->Ortho) {
+        float orig[3];
+        SceneOriginGet(G,orig);
+        SceneGetEyeNormal(G,orig,loc);
+      } else { 
+        SceneGetEyeNormal(G,v,loc);
+      }
       scale3f(loc,z_indent,loc);
       add3f(v,loc,loc);
       TextSetPos(I->G,loc);
