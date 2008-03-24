@@ -71,7 +71,7 @@ CMatch *MatchNew(PyMOLGlobals *G,unsigned int na,unsigned int nb,int dist_mats)
 int MatchResidueToCode(CMatch *I,int *vla,int n)
 {
 
-#define cNRES 30
+#define cNRES 33
   PyMOLGlobals *G=I->G;
   int ok=true;
   int a,b,c;
@@ -84,6 +84,7 @@ int MatchResidueToCode(CMatch *I,int *vla,int n)
     "C"  , "C",
     "CYT", "C",
     "G"  , "G",
+
     "GUA", "G",
     "T"  , "T",
     "THY", "T",
@@ -109,10 +110,14 @@ int MatchResidueToCode(CMatch *I,int *vla,int n)
     "ARG", "R",
     
     "SER", "S",
+    "SEP", "S", /* phosphoserine */
     "THR", "T",
+    "TPO", "T", /* phosphothreonine */
     "VAL", "V",
+
     "TRP", "W",
-    "TYR", "Y" 
+    "TYR", "Y",
+    "PTR", "Y"  /* phosphotyrosine */
 };
   
   /* get integral values for the residue names */

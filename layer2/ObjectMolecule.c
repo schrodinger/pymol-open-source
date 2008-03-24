@@ -5275,29 +5275,43 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                   case cAN_P:
                     if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at>=0)) {
                       /* sulfate, phosphate */
-                      int o1 = -1, o2 = -1;
-                      if(neighbor[neighbor[o1_at]]==1)
+                      int o1 = -1, o2 = -1, o3 = -1;
+                      if(neighbor[neighbor[o1_at]]==1) {
                         o1 = o1_bd;
+                      }
                       if(neighbor[neighbor[o2_at]]==1) {
-                        if(o1<0) 
+                        if(o1<0) {
                           o1 = o2_bd;
-                        else if(o2<0)
+                        } else if(o2<0) {
                           o2 = o2_bd;
+                        }
                       }
                       if(neighbor[neighbor[o3_at]]==1) {
                         if(o1<0) 
                           o1 = o3_bd;
                         else if(o2<0)
                           o2 = o3_bd;
+                        else if(o3<0)
+                          o3 = o3_bd;
                       }
                       if(neighbor[neighbor[o4_at]]==1) {
                         if(o1<0) 
                           o1 = o4_bd;
                         else if(o2<0)
                           o2 = o4_bd;
+                        else if(o3<0)
+                          o3 = o4_bd;
                       }
-                      if(o2>=0) 
+                      if(o2>=0) {
                         bondInfo[o1].order = 2; 
+                        if(o2 == o2_bd) {
+                          atomInfo[o2_at].formalCharge = -1;
+                        } else if(o2 == o3_bd) {
+                          atomInfo[o3_at].formalCharge = -1;                          
+                        } else if(o2 == o4_bd) {
+                          atomInfo[o4_at].formalCharge = -1;
+                        }
+                      }
                     } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at<0)) {
                       /* sulfonamide */
                       int o1 = -1, o2 = -1;
