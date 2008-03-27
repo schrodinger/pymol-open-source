@@ -23,7 +23,8 @@ if __name__=='pymol.creating':
     import re
     from cmd import _cmd, Shortcut, is_list, is_string, \
           file_ext_re, safe_list_eval, safe_alpha_list_eval, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error
+          DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
+          is_tuple
 
     from chempy import fragments
 
@@ -897,7 +898,7 @@ NOTES
         try:
             _self.lock(_self)
             if pos!=None:
-                if not is_list(pos):
+                if not (is_list(pos) or is_tuple(pos)):
                     pos = safe_list_eval(pos)
                 pos = (float(pos[0]), # tuple-ize
                        float(pos[1]),
