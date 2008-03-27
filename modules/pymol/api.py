@@ -288,6 +288,7 @@ from viewing import \
       get_view,           \
       get_vis,            \
       get_scene_dict,     \
+      get_scene_list,     \
       hide,               \
       label,              \
       load_png,           \

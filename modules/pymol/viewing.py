@@ -1022,6 +1022,9 @@ SEE ALSO
             _self.unlock(r,_self)
         return cpy
 
+    def get_scene_list(_self=cmd):
+        return copy.deepcopy(_scene_validate_list(_self))
+
     scene_sort_dict = {
         'F1' : 'F01',
         'F2' : 'F02',

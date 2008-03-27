@@ -4058,6 +4058,7 @@ static PyObject *ExecutiveGetNamedEntries(PyMOLGlobals *G,int list_id,int partia
 
   while(count<total_count) { /* insure that all members of outgoing list are defined */
     PyList_SetItem(result,count,PConvAutoNone(NULL));
+    count++;
   }
   
   if(iter_id) {
@@ -14179,44 +14180,64 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                   strcpy(mov_rec->group_name, mov_rec->group->group_name);
                   group_flag=true;
                 } else if(mov_rec && new_rec) {
-                  
-                  if(I->Pressed<I->Over) { /* downward */
-                    first = new_rec->name;
-                    second = mov_rec->name;
-                    order_flag=true;
-                  } else { /* upward */
-                    first = mov_rec->name;
-                    second = new_rec->name;
-                    order_flag=true;
-                  }
-                  
-                  if(mov_rec->group == new_rec->group) { /* reordering within a group level */
-                    if((new_rec->type==cExecObject)&&(new_rec->obj->type==cObjectGroup)) {
-                      ObjectGroup *group = (ObjectGroup*)new_rec->obj;
-                      if(group->OpenOrClosed && !is_child) {
-                        /* put inside an open group */
-                        strcpy(mov_rec->group_name, new_rec->name);                        
-                        order_flag = false;
-                        group_flag = true;
-                      }
+                  if(mov_rec == new_rec->group) {
+                    /* do nothing when a group is dragged over one of its members */
+                  } else {
+
+                    if(I->Pressed<I->Over) { /* downward */
+                      first = new_rec->name;
+                      second = mov_rec->name;
+                      order_flag=true;
+                    } else { /* upward */
+                      first = mov_rec->name;
+                      second = new_rec->name;
+                      order_flag=true;
                     }
-                  } else if((mov_rec->group != new_rec) &&
-                            (new_rec->group != mov_rec)) {
-                    if((new_rec->type==cExecObject)&&(new_rec->obj->type==cObjectGroup)) {
-                      ObjectGroup *group = (ObjectGroup*)new_rec->obj;
-                      if(group->OpenOrClosed && !is_child) {
-                        /* put inside group */
-                        strcpy(mov_rec->group_name, new_rec->name);                        
-                      } else if(new_rec->group_name) {
-                        strcpy(mov_rec->group_name, new_rec->group_name);
-                      } else {
-                        mov_rec->group_name[0] = 0;
+                  
+                    if(mov_rec->group == new_rec->group) { /* reordering within a group level */
+                      if((new_rec->type==cExecObject)&&(new_rec->obj->type==cObjectGroup)) {
+                        ObjectGroup *group = (ObjectGroup*)new_rec->obj;
+                        if(group->OpenOrClosed && !is_child) {
+                          /* put inside an open group */
+                          strcpy(mov_rec->group_name, new_rec->name);                        
+                          order_flag = false;
+                        group_flag = true;
+                        }
                       }
+                    } else if((mov_rec->group != new_rec) &&
+                              (new_rec->group != mov_rec)) {
+                      
+                      if((new_rec->type==cExecObject)&&(new_rec->obj->type==cObjectGroup)) {
+                        ObjectGroup *group = (ObjectGroup*)new_rec->obj;
+                        if(group->OpenOrClosed && !is_child) {
+                          /* put inside group */
+                          strcpy(mov_rec->group_name, new_rec->name);                        
+                        } else if(new_rec->group_name) {
+                          strcpy(mov_rec->group_name, new_rec->group_name);
+                        } else {
+                          mov_rec->group_name[0] = 0;
+                        }
+                        
+                        /* WLD TEST */
+                        
+                        if(I->Pressed<I->Over) { /* downward */
+                          first = new_rec->name;
+                          second = mov_rec->name;
+                          order_flag=true;
+                        } else { /* upward */
+                          first = mov_rec->name;
+                          second = new_rec->name;
+                          order_flag=true;
+                        }
+
+                      /* WLD END */
+
                     } else if(new_rec->group_name) 
                       strcpy(mov_rec->group_name, new_rec->group_name);
-                    else
-                      mov_rec->group_name[0] = 0;
-                    group_flag = true;
+                      else
+                        mov_rec->group_name[0] = 0;
+                      group_flag = true;
+                    }
                   }
                 }
                 
