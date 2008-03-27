@@ -155,13 +155,13 @@ PyObject *PGetFontDict(PyMOLGlobals *G, float size,int face,int style)
   if(!P_vfont) {
     PRunStringModule(G,"import vfont\n");  
     P_vfont = PyDict_GetItemString(P_pymol_dict,"vfont");
+    Py_XINCREF(P_vfont);
   }
   if(!P_vfont) {
     PRINTFB(G,FB_Python,FB_Errors)
       " PyMOL-Error: can't find module 'vfont'"
       ENDFB(G);
-  }
-  else {
+  } else {
     result = PyObject_CallMethod(P_vfont,"get_font","fii",size,face,style);
   }
   return(PConvAutoNone(result));
@@ -1646,7 +1646,7 @@ void PGetOptions(CPyMOLOptions *rec)
 {
   PyObject *pymol,*invocation,*options;
 
-  pymol = PyImport_AddModule("pymol"); /* get it */
+  pymol = PyImport_AddModule("pymol"); /* borrowed reference!!! */
   if(!pymol) {fprintf(stderr,"PyMOL-ERROR: can't find module 'pymol'"); exit(EXIT_FAILURE);}
 
   invocation = PyObject_GetAttrString(pymol,"invocation"); /* get a handle to the invocation module */
@@ -1655,8 +1655,8 @@ void PGetOptions(CPyMOLOptions *rec)
   options = PyObject_GetAttrString(invocation,"options");
   if(!options) {fprintf(stderr,"PyMOL-ERROR: can't get 'invocation.options'.");exit(EXIT_FAILURE);}
 
-  PConvertOptions(rec,options);
-  Py_XDECREF(pymol);
+   PConvertOptions(rec,options);
+
   Py_XDECREF(invocation);
   Py_XDECREF(options);
 }
@@ -1739,9 +1739,11 @@ void PInit(PyMOLGlobals *G,int global_instance)
 
   {
     G->P_inst->exec = PyDict_GetItemString(P_pymol_dict,"exec_str");
+    Py_XINCREF(G->P_inst->exec);
     if(!G->P_inst->exec) ErrFatal(G,"PyMOL","can't find 'pymol.exec_str()'");
 
     sys = PyDict_GetItemString(P_pymol_dict,"sys");
+    Py_XINCREF(sys);
     if(!sys) ErrFatal(G,"PyMOL","can't find 'pymol.sys'");
 
     if(global_instance) { 
@@ -1757,10 +1759,12 @@ void PInit(PyMOLGlobals *G,int global_instance)
 
     PRunStringModule(G,"import traceback\n");  
     P_traceback = PyDict_GetItemString(P_pymol_dict,"traceback");
+    Py_XINCREF(P_traceback);
     if(!P_traceback) ErrFatal(G,"PyMOL","can't find 'traceback'");
 
     PRunStringModule(G,"import cmd\n");  
     P_cmd = PyDict_GetItemString(P_pymol_dict,"cmd");
+    Py_XINCREF(P_cmd);
     if(!P_cmd) ErrFatal(G,"PyMOL","can't find 'cmd'");
 
     if(global_instance) { 
@@ -1818,19 +1822,23 @@ void PInit(PyMOLGlobals *G,int global_instance)
 
     PRunStringModule(G,"import menu\n");  
     P_menu = PyDict_GetItemString(P_pymol_dict,"menu");
+    Py_XINCREF(P_menu);
     if(!P_menu) ErrFatal(G,"PyMOL","can't find module 'menu'");
 
     PRunStringModule(G,"import setting\n");  
     P_setting = PyDict_GetItemString(P_pymol_dict,"setting");
+    Py_XINCREF(P_setting);
     if(!P_setting) ErrFatal(G,"PyMOL","can't find module 'setting'");
 
     PRunStringModule(G,"import povray\n");  
     P_povray = PyDict_GetItemString(P_pymol_dict,"povray");
+    Py_XINCREF(P_povray);
     if(!P_povray) ErrFatal(G,"PyMOL","can't find module 'povray'");
 
 #ifdef _PYMOL_XRAY
     PRunStringModule(G,"import xray\n");  
     P_xray = PyDict_GetItemString(P_pymol_dict,"xray");
+    Py_XINCREF(P_xray);
     if(!P_xray) ErrFatal(G,"PyMOL","can't find module 'xray'");
 #endif
 
@@ -1838,15 +1846,18 @@ void PInit(PyMOLGlobals *G,int global_instance)
 #ifdef WIN32
     PRunStringModule(G,"import time\n");  
     P_time = PyDict_GetItemString(P_pymol_dict,"time");
+    Py_XINCREF(P_time);
     if(!P_time) ErrFatal(G,"PyMOL","can't find module 'time'");
 
     P_sleep = PyObject_GetAttrString(P_time,"sleep");
+    Py_XINCREF(P_sleep);
     if(!P_sleep) ErrFatal(G,"PyMOL","can't find 'time.sleep()'");
 #endif
     /* END PROPRIETARY CODE SEGMENT */
 
     PRunStringModule(G,"import parser\n");  
     P_parser = PyDict_GetItemString(P_pymol_dict,"parser");
+    Py_XINCREF(P_parser);
     if(!P_parser) ErrFatal(G,"PyMOL","can't find module 'parser'");
 
     {
@@ -1865,12 +1876,14 @@ void PInit(PyMOLGlobals *G,int global_instance)
 
     PRunStringModule(G,"import chempy"); 
     P_chempy = PyDict_GetItemString(P_pymol_dict,"chempy");
+    Py_XINCREF(P_chempy);
     if(!P_chempy) ErrFatal(G,"PyMOL","can't find 'chempy'");
 
     PRunStringModule(G,"from chempy.bonds import bonds"); /* load bond dictionary */
 
     PRunStringModule(G,"from chempy import models"); 
     P_models = PyDict_GetItemString(P_pymol_dict,"models");
+    Py_XINCREF(P_models);
     if(!P_models) ErrFatal(G,"PyMOL","can't find 'chempy.models'");
 
     PRunStringModule(G,"import util\n");  
