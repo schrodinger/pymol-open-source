@@ -2,7 +2,11 @@
 CHANGE LOG
 =========================================================================
 
-2008-03-25 Warren L. DeLano <warren@delsci.com>	
+2008-03-27 Warren L. DeLano <warren@delsci.com>	
+
+	* Fixed quicky group-dragging behavior
+	
+2008-03-26 Warren L. DeLano <warren@delsci.com>	
 
 	* Eliminated a longstanding GC bug (problematic on 64bit/py251)
 	
