@@ -668,6 +668,8 @@ static void MainDrawLocked(void)
 
     PBlock(G);
 
+    if(PyErr_Occurred()) PyErr_Print();
+
     /* next, we need to let PyMOL know we have a valid context,
       because some initializations, involve GL calls (such as going
       into full-screen or stereo mode) */
@@ -679,21 +681,33 @@ static void MainDrawLocked(void)
     /* restore working directory if asked to */
     PRunStringModule(G,"if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
 
+    if(PyErr_Occurred()) PyErr_Print();
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _PYMOL_OSX
     PRunStringModule(G,"if os.getcwd()[-23:]=='.app/Contents/Resources': os.chdir('../../..')");
 #endif
 /* END PROPRIETARY CODE SEGMENT */    
+
+    if(PyErr_Occurred()) PyErr_Print();
     
     PXDecRef(PyObject_CallMethod(G->P_inst->obj,"launch_gui","O",G->P_inst->obj));
-    
+
+    if(PyErr_Occurred()) PyErr_Print();
+
     PXDecRef(PyObject_CallMethod(G->P_inst->obj,"adapt_to_hardware","O",G->P_inst->obj));
+
+    if(PyErr_Occurred()) PyErr_Print();
     
     if(G->Option->incentive_product) { /* perform incentive product initialization (if any) */
       PyRun_SimpleString("try:\n   import ipymol\nexcept:\n   pass\n");
+      if(PyErr_Occurred()) PyErr_Print();
     }
     
     PXDecRef(PyObject_CallMethod(G->P_inst->obj,"exec_deferred","O",G->P_inst->obj));
+
+    if(PyErr_Occurred()) PyErr_Print();
+      
 #ifdef _PYMOL_SHARP3D
     /*PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");*/
     /*PParse("stereo on");
