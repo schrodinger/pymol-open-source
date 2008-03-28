@@ -128,7 +128,7 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,
                   int quiet,float animate,int hand);
 void SceneRestartSweepTimer(PyMOLGlobals *G);
 
-void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem);
+void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem,char *scene_name);
 void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem,int dirty);
 void SceneGetPos(PyMOLGlobals *G,float *pos);
 void SceneGetWidthHeight(PyMOLGlobals *G,int *width,int *height);

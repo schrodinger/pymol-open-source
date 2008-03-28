@@ -27,11 +27,12 @@ Z* -------------------------------------------------------------------
 
 void ViewElemCopy(PyMOLGlobals *G,CViewElem *src,CViewElem *dst)
 {
+  if(dst->scene_flag && dst->scene_name) {
+    OVLexicon_DecRef(G->Lexicon,dst->scene_name);
+  }
   *dst = *src;
   if(dst->scene_flag && dst->scene_name) {
     OVLexicon_IncRef(G->Lexicon,dst->scene_name);
-    dst->scene_name=0;
-    dst->scene_flag=false;
   }
 }
 
@@ -459,6 +460,7 @@ int ViewElemSmooth(CViewElem *first,CViewElem *last,int window,int loop)
         
       }
     }
+    FreeP(cpy);
   }
   return 1;
 }
