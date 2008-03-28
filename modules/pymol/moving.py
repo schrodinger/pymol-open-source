@@ -188,9 +188,10 @@ SEE ALSO
             last = _self.count_frames() + last + 1
         action = mview_action_dict[mview_action_sc.auto_err(action,'action')]
         if scene==None:
-            scene = ''
-        else:
             scene = _self.get("scene_current_name")
+        scene = str(scene)
+        if (scene!=''):
+            cmd.scene(scene,"recall","",animate=0,frame=0)
         try:
             _self.lock(_self)
             r = _cmd.mview(_self._COb,int(action),int(first)-1,int(last)-1,

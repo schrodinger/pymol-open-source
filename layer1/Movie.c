@@ -952,7 +952,7 @@ void MovieDoFrameCommand(PyMOLGlobals *G,int frame)
           if(strcmp(st,SettingGetGlobal_s(G,cSetting_scene_current_name))) {
 #ifndef _PYMOL_NOPY            
             PBlock(G);
-            PXDecRef(PyObject_CallMethod(G->P_inst->cmd,"scene","sssi",st,"recall","", 0));
+            PXDecRef(PyObject_CallMethod(G->P_inst->cmd,"scene","sssiiiii",st,"recall",NULL, 0, 1, 1, 1, 0));
             PUnblock(G);
 #endif
           }
@@ -1007,7 +1007,9 @@ int MovieView(PyMOLGlobals *G,int action,int first,
               " MovieView: Setting frame %d.\n",frame+1
               ENDFB(G);
           }
-          SceneToViewElem(G,I->ViewElem+frame);          
+          if(scene_name&&(!scene_name[0]))
+            scene_name = NULL;
+          SceneToViewElem(G,I->ViewElem+frame,scene_name);          
           
           I->ViewElem[frame].specification_level = 2;
         }
@@ -1130,13 +1132,15 @@ int MovieView(PyMOLGlobals *G,int action,int first,
 
       if(wrap && (last >= I->NFrame)) {
         /* if we're interpolating beyond the last frame, then wrap by
-           copying early frames to last frames */
+           copying the last frames back over the early frames */
         int a;
         for(a=I->NFrame;a<=last;a++) {
           ViewElemCopy(G, I->ViewElem+a, I->ViewElem+a-I->NFrame);
         }
       }
+      
       if(last>=I->NFrame) { /* erase temporary view */
+        ViewElemArrayPurge(G,I->ViewElem+I->NFrame,(1+last-I->NFrame));
         UtilZeroMem((void*)(I->ViewElem + I->NFrame), sizeof(CViewElem) * (1+last-I->NFrame));
       }
     }

@@ -255,11 +255,11 @@ def timed_roll(period=12.0,cycles=1,axis='y',_self=cmd):
             _self.mview('store',frame)
             frame = frame + 1
     
-# new matrix-based camera interpolation
+# new matrix-based camera interpolation routines
 
-def append_roll(duration=10.0,loop=1,axis='y',_self=cmd):
+def append_roll(duration=12.0,loop=1,axis='y',_self=cmd):
     cmd = _self
-    start_frame = 1
+    start_frame = max(cmd.count_frames(),1)
     duration = float(duration)
     fps = float(cmd.get('movie_fps'))
     n_frame = round(fps * duration)
@@ -273,7 +273,7 @@ def append_roll(duration=10.0,loop=1,axis='y',_self=cmd):
         cmd.frame(start_frame+(2*n_frame)/3)
         cmd.turn(axis,120)
         cmd.mview("store")
-        if loop:
+        if loop and (start_frame == 1):
             cmd.mview("interpolate",power=1,wrap=1)
             cmd.turn(axis,120)
         else:
@@ -283,9 +283,9 @@ def append_roll(duration=10.0,loop=1,axis='y',_self=cmd):
             cmd.mview("interpolate",power=1)
         cmd.frame(start_frame)
         
-def append_rock(duration,angle=30.0,loop=1,axis='y',_self=cmd):
+def append_rock(duration=4.0,angle=30.0,loop=1,axis='y',_self=cmd):
     cmd = _self
-    start_frame = 1
+    start_frame = max(cmd.count_frames(),1)
     duration = float(duration)
     angle=float(angle)
     loop=int(loop)
@@ -300,9 +300,40 @@ def append_rock(duration,angle=30.0,loop=1,axis='y',_self=cmd):
         cmd.turn(axis,-angle)
         cmd.mview("store")
         cmd.turn(axis,angle/2.0)
-        if loop:
+        if loop and (start_frame == 1):
             cmd.mview("interpolate",power=-1,wrap=1)
         else:
             cmd.mview("interpolate",power=-1)
         cmd.frame(start_frame)
-        
+
+def append_scenes(names=None,pause=6.0,animate=-1,loop=1,_self=cmd):
+    cmd = _self
+    animate = float(animate)
+    if animate<0:
+        animate = float(cmd.get("scene_animation_duration"))
+    if names == None:
+        names = cmd.get_scene_list()
+    else:
+        names = cmd.safe_list_alpha_eval(names)
+    n_scene = len(names)
+    start_frame = max(cmd.count_frames(),1)
+    duration = n_scene*(float(pause)+float(animate))
+    if not loop:
+        duration = duration - animate
+    fps = float(cmd.get('movie_fps'))
+    n_frame = round(fps * duration)
+    if n_frame > 0:
+        cmd.madd("1 x%d"%n_frame)
+        cnt = 0
+        for scene in names:
+
+            frame = start_frame+int((cnt*n_frame)/n_scene)
+            cmd.frame(frame)
+            cmd.mview("store",scene=scene)
+
+            frame = start_frame+int(pause*fps+(cnt*n_frame)/n_scene)
+            cmd.frame(frame)
+            cmd.mview("store",scene=scene)
+            
+            cnt = cnt + 1
+        cmd.mview("interpolate",cut=0)

@@ -1389,7 +1389,6 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('X-Axis Rock', 'command', '30 deg. over 8 sec.',label='30 deg. over 8 sec.',
                                  command = lambda s=self: s.cmd.do("_ mset;movie.append_rock(8,30,axis='x')"))
-
         
         self.menuBar.addmenuitem('X-Axis Rock', 'separator', '')
         
@@ -1511,7 +1510,6 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Simple Loop', 'Y-Axis Roll', 'Y-Axis Roll',
                                     label='Y-Axis Roll')
 
-
         self.menuBar.addmenuitem('Y-Axis Roll', 'command', '4 seconds',label='4 seconds',
                                  command = lambda s=self: s.cmd.do("_ mset;movie.append_roll(4.0,axis='y')"))
 
@@ -1523,6 +1521,7 @@ class Normal(PMGSkin):
         
         self.menuBar.addmenuitem('Y-Axis Roll', 'command', '32 seconds',label='32 seconds',
                                  command = lambda s=self: s.cmd.do("_ mset;movie.append_roll(32.0,axis='y')"))
+
 
         self.menuBar.addmenuitem('Program', 'separator', '')
         

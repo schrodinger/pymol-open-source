@@ -480,7 +480,7 @@ void ScenePrimeAnimation(PyMOLGlobals *G)
   if(G->HaveGUI) {
     CScene *I=G->Scene;
     UtilZeroMem(I->ani_elem,sizeof(CViewElem));
-    SceneToViewElem(G,I->ani_elem);
+    SceneToViewElem(G,I->ani_elem,NULL);
     I->ani_elem[0].specification_level = 2;
     I->n_ani_elem = 0;
   }
@@ -549,7 +549,7 @@ void SceneLoadAnimation(PyMOLGlobals *G, double duration,int hand)
     if(target>MAX_ANI_ELEM)
       target = MAX_ANI_ELEM;
     UtilZeroMem(I->ani_elem+1,sizeof(CViewElem)*target);
-    SceneToViewElem(G,I->ani_elem + target);
+    SceneToViewElem(G,I->ani_elem + target,NULL);
     I->ani_elem[target].specification_level = 2;
     now = UtilGetSeconds(G);
     I->ani_elem[0].timing_flag = true;
@@ -713,7 +713,7 @@ static int SceneGetObjState(PyMOLGlobals *G,CObject *obj,int state)
 }
 #endif
 
-void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem)
+void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem,char *scene_name)
 {
   float *fp;
   double *dp;
@@ -774,7 +774,8 @@ void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem)
     }
   }
   {
-    char *scene_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
+    if(!scene_name)
+      scene_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
     if(scene_name && scene_name[0]) {
       OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon,scene_name);
       if(OVreturn_IS_OK(result)) {
