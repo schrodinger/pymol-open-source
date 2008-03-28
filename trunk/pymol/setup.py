@@ -109,7 +109,7 @@ else: # linux or standard unix
 # VMD plugin support               
 #               ("_PYMOL_VMD_PLUGINS",None),
                ("_HAVE_LIBPNG",None)]
-   ext_comp_args=["-ffast-math","-funroll-loops","-g"]
+   ext_comp_args=["-ffast-math","-funroll-loops","-O3"]
    ext_link_args=[]
    
 setup ( # Distribution meta-data
