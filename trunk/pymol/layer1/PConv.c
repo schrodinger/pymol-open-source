@@ -697,7 +697,7 @@ ov_status PConvPyTupleToFloatVLA(float **result, PyObject *tuple)
       float *ptr = vla;
       status = OV_STATUS_SUCCESS;
       for(i=0;i<size;i++)
-        *(ptr++) = PyFloat_AsDouble(PyTuple_GetItem(tuple,i));
+        *(ptr++) = (float)PyFloat_AsDouble(PyTuple_GetItem(tuple,i));
     }
     *result = vla;
   }
@@ -707,7 +707,7 @@ ov_status PConvPyTupleToFloatVLA(float **result, PyObject *tuple)
 int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,ov_size ll)
 {
   int ok = true;
-  int a,l;
+  ov_size a,l;
   if(!obj) { 
     ok=false;
   } else if(!PyList_Check(obj)) {
@@ -732,7 +732,7 @@ int PConvPyListToDoubleArrayInPlace(PyObject *obj,double *ff,ov_size ll)
 int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,ov_size ll)
 {
   int ok = true;
-  int a,l;
+  ov_size a,l;
   if(!obj) { 
     ok=false;
   } else if(!PyList_Check(obj)) {
@@ -757,7 +757,7 @@ int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,ov_size ll)
 int PConvPyListToIntArrayInPlace(PyObject *obj,int *ii,ov_size ll)
 {
   int ok = true;
-  int a,l;
+  ov_size a,l;
   if(!obj) 
     ok=false;
   else if(!PyList_Check(obj)) 
@@ -781,7 +781,7 @@ int PConvPyListToIntArrayInPlace(PyObject *obj,int *ii,ov_size ll)
 int PConvPyListToIntArrayInPlaceAutoZero(PyObject *obj,int *ii,ov_size ll)
 {
   int ok = true;
-  int a,l;
+  ov_size a,l;
   if(!obj) 
     ok=false;
   else if(!PyList_Check(obj)) 
@@ -805,7 +805,7 @@ int PConvPyListToIntArrayInPlaceAutoZero(PyObject *obj,int *ii,ov_size ll)
 int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,ov_size ll)
 {
   int ok = true;
-  int a,l;
+  ov_size a,l;
   if(!obj) 
     ok=false;
   else if(!PyList_Check(obj)) 
@@ -829,7 +829,7 @@ int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,ov_size ll
 int PConvPyListToSCharArrayInPlaceAutoZero(PyObject *obj,signed char *ii,ov_size ll)
 {
   int ok = true;
-  int a,l;
+  ov_size a,l;
   if(!obj) 
     ok=false;
   else if(!PyList_Check(obj)) 
@@ -853,7 +853,7 @@ int PConvPyListToSCharArrayInPlaceAutoZero(PyObject *obj,signed char *ii,ov_size
 int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,ov_size ll)
 {
   int ok = true;
-  int a,l;
+  ov_size a,l;
   if(!obj) 
     ok=false;
   else if(!PyList_Check(obj)) 
