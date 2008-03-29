@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2008-03-28 Warren L. DeLano <warren@delsci.com>	
+
+	* Cleaned up a launch issue under Centos 4.5
+
+	* Accomodating default Gnome Panel window positioning under Linux
+	
 2008-03-27 Warren L. DeLano <warren@delsci.com>	
 
 	* Fixed quicky group-dragging behavior
