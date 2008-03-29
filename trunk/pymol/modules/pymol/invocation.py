@@ -70,14 +70,10 @@ if __name__=='pymol.invocation':
     options.zoom_mode = -1
     options.no_quit = 0
     
-    if sys.platform[0:4] == 'irix':
-        options.win_py = 240
-    elif sys.platform == 'darwin':
-        options.win_py = 214
-    elif sys.platform != 'win32':
-        options.win_py = 200
-    else:
-        options.win_py = 230
+    options.win_py = { 'irix':240,
+                       'darwin': 214,
+                       'linux2': 220,
+                       'win32' : 230}.get(sys.platform,200)
 
     options.ext_y = 168 # external gui height (eg. for Tcl/Tk top bar)
 
