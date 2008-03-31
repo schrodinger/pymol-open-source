@@ -854,13 +854,15 @@ static int ConeLineToSphereCapped(float *base, float *ray,
   {
     double spread = (radius - small_radius) / maxial;
 	float orig_axial_len = radius / spread;
-	float orig[3], base2orig[3];
-	float near[3];
 	float base2orig_radial[3];
 	float base2orig_normal[3];
     float base2orig_radial_len, base2orig_radial_len_sq;
     float base2orig_len, base2orig_len_sq;
     float base2orig_axial_len, base2orig_spread;
+	float orig[3];
+	float base2orig[3];
+	float near_p[3];
+
     int base_inside_cone = false;
     float shift1, shift2; /* this is what we are solving for -- 
                              the distance along the cone axis to the point of intersection */
@@ -891,8 +893,8 @@ static int ConeLineToSphereCapped(float *base, float *ray,
       if(dot_product3f(base2orig_normal,dir)<0.0)
         ray_extend  = -ray_extend;
       
-      scale3f(ray, ray_extend, near);
-      add3f(base, near, near);
+      scale3f(ray, ray_extend, near_p);
+      add3f(base, near_p, near_p);
       
 #if 0
       printf("base2orig len %8.3f extend %8.3f dangle %8.3f %8.3f ",
@@ -900,7 +902,7 @@ static int ConeLineToSphereCapped(float *base, float *ray,
              dot_product3f(base2orig_normal, dir));
       {
         float check[3];
-        subtract3f(near,orig,check);
+        subtract3f(near_p,orig,check);
         printf("check: %8.7f\n",dot_product3f(check,dir));
       }
 #endif
@@ -919,7 +921,7 @@ static int ConeLineToSphereCapped(float *base, float *ray,
         double ray0Sq = ray0*ray0, ray1Sq = ray1*ray1, ray2Sq = ray2*ray2;
         
         double cone0 = orig[0], cone1 = orig[1], cone2 = orig[2];
-        double near0 = near[0], near1 = near[1], near2 = near[2];
+        double near0 = near_p[0], near1 = near_p[1], near2 = near_p[2];
         double cone0Sq = cone0*cone0, cone1Sq = cone1*cone1, cone2Sq = cone2*cone2;
         double near0Sq = near0*near0, near1Sq = near1*near1, near2Sq = near2*near2;
         
@@ -968,13 +970,13 @@ static int ConeLineToSphereCapped(float *base, float *ray,
           float radius2 = fabs(spread * shift2);
           
           scale3f(ray,shift1/dangle,near1);
-          add3f(near,near1,near1);
+          add3f(near_p,near1,near1);
           
           scale3f(dir,shift1,cone1);
           add3f(orig,cone1,cone1);
           
           scale3f(ray,shift2/dangle,near2);
-          add3f(near,near2,near2);
+          add3f(near_p,near2,near2);
           
           scale3f(dir,shift2,cone2);
           add3f(orig,cone2,cone2);
