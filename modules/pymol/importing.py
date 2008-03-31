@@ -70,7 +70,6 @@ if __name__=='pymol.importing':
                         if session.has_key('cache'):
                             cache = session['cache']
                             if len(cache):
-                                _self.set('cache_mode',1)
                                 if steal:
                                     _self._pymol._cache = session['cache']
                                     del session['cache']
