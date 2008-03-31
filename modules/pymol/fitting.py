@@ -68,7 +68,7 @@ SEE ALSO
         if string.lower(matrix)=='none':
             matrix=''
         if len(matrix):
-            mfile = cmd.exp_path("$PYMOL_PATH/data/pymol/matrices/"+matrix)
+            mfile = cmd.exp_path("$PYMOL_DATA/pymol/matrices/"+matrix)
         else:
             mfile = ''        
         # delete existing alignment object (if asked to reset it)
@@ -135,7 +135,7 @@ SEE ALSO
         if string.lower(matrix)=='none':
             matrix=''
         if len(matrix):
-            mfile = cmd.exp_path("$PYMOL_PATH/data/pymol/matrices/"+matrix)
+            mfile = cmd.exp_path("$PYMOL_DATA/pymol/matrices/"+matrix)
         else:
             mfile = ''
         if object==None: object=''
