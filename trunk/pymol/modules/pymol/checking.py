@@ -15,6 +15,9 @@ def is_string(obj):
 def is_list(obj):
     return isinstance(obj,types.ListType)
 
+def is_dict(obj):
+    return isinstance(obj,types.DictType)
+
 def is_tuple(obj):
     return isinstance(obj,types.TupleType)
 

@@ -26,7 +26,8 @@ if __name__=='pymol.exporting':
     from chempy import io
     from chempy.sdf import SDF,SDFRec
     from cmd import _feedback,fb_module,fb_mask, \
-                     DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+                     DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
+                     is_list, is_dict, is_tuple
     import traceback
 
     def copy_image(quiet=1,_self=cmd): # incentive feature / proprietary
@@ -67,6 +68,22 @@ NOTES
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException         
         return r
+
+    def _get_dump_str(obj):
+        if is_list(obj):
+            list = map(_get_dump_str,obj)
+            result = "[\n"+string.join(list,",\n")+"\n] "
+        elif is_dict(obj):
+            list = []
+            for key in obj.keys():
+                list.append( _get_dump_str(key)+" : "+_get_dump_str(obj[key]) )
+            result = "{\n"+string.join(list,",\n")+"\n} "
+        elif is_tuple(obj):
+            list = map(_get_dump_str,obj)
+            result = "(\n"+string.join(list,",\n")+"\n) "
+        else:
+            result = str(obj)
+        return result
     
     def get_session(names='', partial=0, quiet=1, compress=-1, cache=-1, _self=cmd):
         session = {}
