@@ -267,7 +267,7 @@ OV_STATIC ov_status CacheCreateEntry(PyObject **result, PyObject *input)
       status = OV_STATUS_SUCCESS;
       for(i=0;i<tuple_size;i++) {
         PyObject *item = PyTuple_GetItem(input,i);
-        PyTuple_SetItem(hash_code, i, PyInt_FromLong(PyObject_Hash(item)));
+        PyTuple_SetItem(hash_code, i, PyInt_FromLong(0x7FFFFFFF & PyObject_Hash(item)));
         if(PyTuple_Check(item)) {
           tot_size += PyTuple_Size(item);
         }
