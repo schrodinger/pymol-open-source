@@ -853,8 +853,8 @@ static int ConeLineToSphereCapped(float *base, float *ray,
 
   {
     double spread = (radius - small_radius) / maxial;
-    float orig_axial_len = radius / spread;
-    float orig[3], base2orig[3];
+	float orig_axial_len = radius / spread;
+	float orig[3], base2orig[3];
 	float near[3], base2orig_radial[3], base2orig_normal[3];
 
     float base2orig_radial_len, base2orig_radial_len_sq;
