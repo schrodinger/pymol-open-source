@@ -1626,7 +1626,6 @@ OV_INLINE_STATIC SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject *
   return(result);
 }
 
-
 OV_INLINE_STATIC PyObject *SurfaceJobInputAsTuple(PyMOLGlobals *G, SurfaceJob *I)
 {
   PyObject *result = PyTuple_New(21);
