@@ -267,7 +267,15 @@ OV_STATIC ov_status CacheCreateEntry(PyObject **result, PyObject *input)
       status = OV_STATUS_SUCCESS;
       for(i=0;i<tuple_size;i++) {
         PyObject *item = PyTuple_GetItem(input,i);
-        PyTuple_SetItem(hash_code, i, PyInt_FromLong(0x7FFFFFFF & PyObject_Hash(item)));
+        long hash_long; 
+        if(item!=Py_None) {
+          /* here we are assuming that different Python versions will
+           * hash tuples of ints & floats in exactly the same way (at least to 31 bits of significance) */
+          hash_long = 0x7FFFFFFF & PyObject_Hash(item); /* pos 32 bit # to preserve 32-bit/64-bit compat */
+        } else {
+          hash_long = 0; /* None doesn't hash consistently from Python version to version */
+        }
+        PyTuple_SetItem(hash_code, i, PyInt_FromLong(hash_long));
         if(PyTuple_Check(item)) {
           tot_size += PyTuple_Size(item);
         }
