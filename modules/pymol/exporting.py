@@ -72,15 +72,15 @@ NOTES
     def _get_dump_str(obj):
         if is_list(obj):
             list = map(_get_dump_str,obj)
-            result = "[\n"+string.join(list,",\n")+"\n] "
+            result = "[ "+string.join(list,",\n")+" ] "
         elif is_dict(obj):
             list = []
             for key in obj.keys():
                 list.append( _get_dump_str(key)+" : "+_get_dump_str(obj[key]) )
-            result = "{\n"+string.join(list,",\n")+"\n} "
+            result = "{ "+string.join(list,",\n")+" } "
         elif is_tuple(obj):
             list = map(_get_dump_str,obj)
-            result = "(\n"+string.join(list,",\n")+"\n) "
+            result = "( "+string.join(list,",\n")+" ) "
         else:
             result = str(obj)
         return result
