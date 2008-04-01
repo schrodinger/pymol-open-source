@@ -262,6 +262,15 @@ palette_dict = {
 palette_sc = Shortcut(palette_dict.keys())
 
 
+location_code = {
+    'first' : -1,
+    'top' : -1,
+    'current' : 0,
+    'bottom' : 1,
+    'last' : 1
+    }
+location_sc = Shortcut(location_code.keys())
+
 class fb_action:
     set = 0
     enable = 1

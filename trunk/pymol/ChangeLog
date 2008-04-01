@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-03-31 Warren L. DeLano <warren@delsci.com>	
 
+	* scene_order command 
+	
 	* improved hash compatibility for cached surfaces
 	
 	* $PYMOL_DATA now used instead of $PYMOL_PATH for align matrix

@@ -305,6 +305,7 @@ from viewing import \
       reset,              \
       rock,               \
       scene,              \
+      scene_order,        \
       set_color,          \
       set_colour,         \
       set_colorection,    \

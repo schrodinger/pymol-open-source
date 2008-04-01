@@ -31,7 +31,9 @@ if __name__=='pymol.viewing':
           repres,repres_sc, is_string, is_list, is_ok, is_error, \
           toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
           palette_dict ,palette_sc, window_dict, window_sc, \
-          safe_list_eval,  DEFAULT_ERROR, DEFAULT_SUCCESS
+          safe_list_eval,  safe_alpha_list_eval, \
+          location_code, location_sc, boolean_dict, boolean_sc, \
+          DEFAULT_ERROR, DEFAULT_SUCCESS
         
     import thread
     
@@ -41,7 +43,9 @@ if __name__=='pymol.viewing':
 
     scene_action_sc = Shortcut(['store','recall','clear','insert_before',
                                 'insert_after','next','previous',
-                                'start', 'update','rename','delete', 'append'])
+                                'start', 'update','rename','delete',
+                                'order', 'sort', 'first',
+                                'append'])
     scene_action_dict = {}
     scene_action_dict_sc = Shortcut([])
 
@@ -1104,10 +1108,106 @@ SEE ALSO
                         if os.path.exists(new_file):
                             _self.do("_ cmd.load(r'''"+new_file+"''',format='psw')")
                             return 1
-
-                
         return 0
-    
+
+    def scene_order(names,sort=0,location='current',quiet=1,_self=cmd):
+        '''
+DESCRIPTION
+
+    "scene_order" changes the ordering of scenes.
+
+USAGE
+
+    scene_order names, sort, location
+
+ARGUMENTS
+
+    names = string: a space-separated list of names
+
+    sort = yes or no {default: no}
+
+    location = top, current, or bottom {default: current}
+
+EXAMPLES
+
+    scene_order *,yes             
+    scene_order F6 F4 F3 
+    scene_order 003 006 004, location=top
+
+PYMOL API
+
+    cmd.scene_order(string names, string sort, string location)
+
+SEE ALSO
+
+    scene
+    '''
+        pymol=_self._pymol
+
+        r = DEFAULT_ERROR
+        location=location_code[location_sc.auto_err(location,'location')]
+        if is_string(sort):
+            sort=boolean_dict[boolean_sc.auto_err(sort,'sort option')]
+        if is_string(names):
+            if names=='*':
+                names = _scene_validate_list(_self)
+            else:
+                names = names.split()
+        r = DEFAULT_SUCCESS
+        if len(names):
+            name_dict = {}
+            for name in names:
+                if not pymol._scene_dict.has_key(name):
+                    print " Error: scene '%s' is not defined."%name
+                    r = DEFAULT_ERROR
+                name_dict[name] = 1
+            if sort: # special F-key-name aware sort
+                sort_list = [] 
+                fkey_re = re.compile("[fF]([1-9][0-9]*).*")
+                for name in names:
+                    mo = fkey_re.match(name)
+                    if mo != None:
+                        sort_list.append( ("F%02d\n"%int(mo.group(1)),name) )
+                    else:
+                        sort_list.append( (name,name) )
+                sort_list.sort()
+                names = []
+                for name in sort_list:
+                    names.append(name[1])
+            if not is_error(r):
+                old_list = _scene_validate_list(_self)
+                if location < 0: # top
+                    new_list = names
+                    for name in old_list:
+                        if not name_dict.has_key(name):
+                            new_list.append(names)
+                    pymol._scene_order = new_list
+                elif location == 0: # current
+                    start = old_list.index(names[0])
+                    if start >= 0: # guaranteed?
+                        new_list = []
+                        for name in old_list[:start]:
+                            if not name_dict.has_key(name):
+                                new_list.append(name)
+                        new_list.extend(names)
+                        for name in old_list[start:]:
+                            if not name_dict.has_key(name):
+                                new_list.append(name)
+                        pymol._scene_order = new_list
+                else: # bottom
+                    new_list = []
+                    for name in old_list:
+                        if not name_dict.has_key(name):
+                            new_list.append(name)
+                    new_list.extend(names)
+                    pymol._scene_order = new_list
+        if _self._raising(r,_self):
+            raise pymol.CmdException
+        if not quiet and not is_error(r):
+            _self.scene('*')
+        return r
+        
+        
     def scene(key='auto', action='recall', message=None, view=1,
               color=1, active=1, rep=1, frame=1, animate=-1,
               new_key=None, hand=1, quiet=1, _self=cmd):
@@ -1210,8 +1310,10 @@ SEE ALSO
                     pymol._scene_dict_sc = Shortcut(pymol._scene_dict.keys())
                     pymol._scene_order = []
                     _scene_validate_list(_self)
+                elif action in ['sort']:
+                    _self.scene_order(key,1,quiet=quiet)                    
                 else:
-                    print " scene: stored scenes:"
+                    print " scene: current order:"
                     lst = _scene_validate_list(_self)
                     parsing.dump_str_list(lst)
             else:
@@ -1472,6 +1574,13 @@ SEE ALSO
                         if len(lst):
                             _self.disable() # just hide everything
                             _self.wizard()
+                elif action=='order':
+                    _self.scene_order(key,quiet=quiet)
+                elif action=='sort':
+                    _self.scene_order(key,1,quiet=quiet)
+                elif action=='first':
+                    _self.scene_order(key,location='top',quiet=quiet)
+                
         finally:
             _self.unlock(r,_self)
         return r
