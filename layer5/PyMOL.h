@@ -148,7 +148,7 @@ typedef struct {
 } PyMOLreturn_int_array;
 
 
-typedef void PyMOLModalDrawFn(PyMOLGlobals *G);
+typedef void PyMOLModalDrawFn(void *G);
 
 /* creation */
 
@@ -169,9 +169,9 @@ void PyMOL_Stop(CPyMOL *I);
 
 /* upstream invalidation and configuration events */
 
-void PyMOL_NeedFakeDrag(CPyMOL *I);
-void PyMOL_NeedRedisplay(CPyMOL *I);
-void PyMOL_NeedSwap(CPyMOL *I);
+void PyMOL_NeedFakeDrag(CPyMOL *I); 
+void PyMOL_NeedRedisplay(CPyMOL *I); 
+void PyMOL_NeedSwap(CPyMOL *I); 
 void PyMOL_SetClickReady(CPyMOL *I, char *name, int index, int button, int mod,int x,int y);
 void PyMOL_SetPassive(CPyMOL *I, int onOff);
 void PyMOL_NeedReshape(CPyMOL *I,int mode, int x, int y, int width, int height);
@@ -248,7 +248,7 @@ void PyMOL_SetInterrupt(CPyMOL *I, int value);
    to return control to the host in order to get a valid draw callback */
 
 int PyMOL_GetModalDraw(CPyMOL *I);
-void PyMOL_SetModalDraw(CPyMOL *I, PyMOLModalDrawFn *fn);
+void PyMOL_SetModalDraw(CPyMOL *I, PyMOLModalDrawFn *fn); /* for internal use only */
 
 /* developer/transient privates */
 

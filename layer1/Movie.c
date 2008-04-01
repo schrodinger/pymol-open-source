@@ -666,7 +666,7 @@ static void MovieModalDraw(PyMOLGlobals *G)
 
   MovieModalPNG(G,I,&I->Modal);
   if(!I->Modal.complete) /* force modalic return until job is done */
-    PyMOL_SetModalDraw(G->PyMOL, MovieModalDraw);
+    PyMOL_SetModalDraw(G->PyMOL, (PyMOLModalDrawFn*)MovieModalDraw);
 }
 
 int MoviePNG(PyMOLGlobals *G, char *prefix, int save, int start, 
@@ -699,7 +699,7 @@ int MoviePNG(PyMOLGlobals *G, char *prefix, int save, int start,
   M->modal = modal;
 
   if(modal) {
-    PyMOL_SetModalDraw(G->PyMOL, MovieModalDraw);
+    PyMOL_SetModalDraw(G->PyMOL, (PyMOLModalDrawFn*)MovieModalDraw);
   } else {
     while(!M->complete) {
       MovieModalPNG(G,I,&I->Modal);
