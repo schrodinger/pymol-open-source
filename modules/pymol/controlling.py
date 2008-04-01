@@ -21,14 +21,8 @@ if __name__=='pymol.controlling':
     
     from cmd import _cmd, Shortcut, QuietException, is_string, \
           boolean_dict, boolean_sc, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error
-
-    location_code = {
-        'top' : -1,
-        'current' : 0,
-        'bottom' : 1
-    }
-    location_sc = Shortcut(location_code.keys())
+          DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, \
+          location_code, location_sc 
 
     button_code = {
         'left' : 0,

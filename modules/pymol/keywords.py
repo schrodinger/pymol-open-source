@@ -200,6 +200,7 @@ def get_command_keywords(self_cmd=cmd):
         'rms_cur'       : [ self_cmd.rms_cur           , 0 , 0 , ''  , parsing.STRICT ],
         'save'          : [ self_cmd.save              , 0 , 0 , ''  , parsing.SECURE ],
         'scene'         : [ self_cmd.scene             , 0 , 0 , ''  , parsing.STRICT ],
+        'scene_order'   : [ self_cmd.scene_order       , 0 , 0 , ''  , parsing.STRICT ],
         'sculpt_purge'  : [ self_cmd.sculpt_purge      , 0 , 0 , ''  , parsing.STRICT ],   
         'sculpt_deactivate': [ self_cmd.sculpt_deactivate,0, 0 , ''  , parsing.STRICT ],
         'sculpt_activate': [ self_cmd.sculpt_activate  , 0 , 0 , ''  , parsing.STRICT ],
