@@ -294,7 +294,7 @@ if __name__=='pymol.invocation':
                     if sys.platform == 'win32':
                         if os.environ.has_key("HOMEDRIVE") and os.environ.has_key("HOMEPATH"):
                             path = os.environ["HOMEDRIVE"] + os.environ["HOMEPATH"]
-                            if os.path.isdir(path):
+                            if os.path.isdir(path) and os.path.exists(path):
                                 my_docs = os.path.join(path,"Documents") # for VISTA compatibility
                                 if os.path.isdir(my_docs): # start in Documents (if exists)
                                     path = my_docs
@@ -302,11 +302,11 @@ if __name__=='pymol.invocation':
                                     my_docs = os.path.join(path,"My Documents")                                    
                                     if os.path.isdir(my_docs): # start in My Documents (if exists)
                                         path = my_docs
-                                options.deferred.append("_do__ cmd.cd('''%s''')"%string.replace(path,"\\","\\\\"))
+                                options.deferred.append("_do__ cmd.cd('''%s''',complain=0)"%string.replace(path,"\\","\\\\"))
                     elif os.environ.has_key("HOME"):
                         path = os.environ["HOME"]
                         if os.path.isdir(path):
-                            options.deferred.append("_do__ cmd.cd('''%s''')"%string.replace(path,"\\","\\\\"))
+                            options.deferred.append("_do__ cmd.cd('''%s''',complain=0)"%string.replace(path,"\\","\\\\"))
                 if "l" in a:
                     options.deferred.append("_do_spawn %s"%av.pop())
                 if "r" in a:

@@ -20,13 +20,14 @@ if __name__=='pymol.externing':
     import parsing
     import threading
     import cmd
+    import traceback
     
     from glob import glob
     from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
           _feedback,fb_module,fb_mask, exp_path, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
 
-    def cd(dir):
+    def cd(dir,complain=1,quiet=1):
         '''
 DESCRIPTION
 
@@ -41,7 +42,13 @@ SEE ALSO
     pwd, ls, system
         '''
         dir = exp_path(dir)
-        os.chdir(dir)  # raises on error
+        try:
+            os.chdir(dir)  # raises on error
+            if not quiet:
+                print " cd: now in %s"%os.getcwd()
+        except:
+            if complain:
+                traceback.print_exc()
         return DEFAULT_SUCCESS
 
     def pwd():

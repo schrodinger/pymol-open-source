@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-04-04 Warren L. DeLano <warren@delsci.com>	
+
+	* fixed exception on windows when home directory is inaccessible
+	
 2008-03-31 Warren L. DeLano <warren@delsci.com>	
 
 	* scene_order command 
