@@ -2351,7 +2351,7 @@ static void set_protons(AtomInfoType *I,char *elem)
     case 'H': I->protons=cAN_H; break;
     case 'D': I->protons=cAN_H; break;
     case 'Q': I->protons=cAN_H; break; /* for NMR structures */
-    case 'C': I->protons=cAN_C; break;
+    case 'C': I->protons=cAN_C; break;    
     case 'N': I->protons=cAN_N; break;
     case 'O': I->protons=cAN_O; break;
     case 'F': I->protons=cAN_F; break;
@@ -2359,6 +2359,7 @@ static void set_protons(AtomInfoType *I,char *elem)
     case 'P': I->protons=cAN_P; break;
     case 'K': I->protons=cAN_K; break;
     case 'I': I->protons=cAN_I; break;
+    case 'U': I->protons=cAN_U; break;
     default: /* unrecognized element (possible garbage in this column?) */
       if(!elem)
         set_protons(I,I->name);
@@ -2366,28 +2367,65 @@ static void set_protons(AtomInfoType *I,char *elem)
     }
   } else {
     switch(e[0]) {
-    case 'C':
-      switch(e[1]) {
+    case 'A':
+     switch(e[1]) {
+      case 'G':
+      case 'g': I->protons=cAN_Ag; break;
       case 'L':
-      case 'l': I->protons=cAN_Cl; break;
-      case 'A':
-      case 'a': I->protons=cAN_Ca; break;
+      case 'l': I->protons=cAN_Al; break;
+      case 'R':
+      case 'r': I->protons=cAN_Ar; break;
+      case 'S':
+      case 's': I->protons=cAN_As; break;
       case 'U':
-      case 'u': I->protons=cAN_Cu; break;
-      }
-      break;
+      case 'u': I->protons=cAN_Au; break;
+     }
+     break;
     case 'B':
       switch(e[1]) {
-      case 'R':
-      case 'r': I->protons=cAN_Br; break;
       case 'A':
       case 'a': I->protons=cAN_Ba; break;
+      case 'E':
+      case 'e': I->protons=cAN_Be; break;
+      case 'R':
+      case 'r': I->protons=cAN_Br; break;
+      }
+      break;
+    case 'C':
+      switch(e[1]) {
+      case 'A':
+      case 'a': I->protons=cAN_Ca; break;
+      case 'D':
+      case 'd': I->protons=cAN_Cd; break;
+      case 'E':
+      case 'e': I->protons=cAN_Ce; break;
+      case 'L':
+      case 'l': I->protons=cAN_Cl; break;
+      case 'O':
+      case 'o': I->protons=cAN_Co; break;
+      case 'R':
+      case 'r': I->protons=cAN_Cr; break;
+      case 'S':
+      case 's': I->protons=cAN_Cs; break;
+      case 'U':
+      case 'u': I->protons=cAN_Cu; break;
+      default:
+        I->protons=cAN_C;  /* failsafe for wacky carbons */
+        break;
       }
       break;
     case 'F':
       switch(e[1]) {
       case 'E':
       case 'e': I->protons=cAN_Fe; break;
+      }
+      break;
+    case 'G':
+      switch(e[1]) {
+      case 'A':
+      case 'a': I->protons=cAN_Ga; break;
+      case 'E':
+      case 'e': I->protons=cAN_Ge; break;
       }
       break;
     case 'H':
@@ -2401,8 +2439,26 @@ static void set_protons(AtomInfoType *I,char *elem)
         break;
       }
       break;
+    case 'I':
+      switch(e[1]) {
+      case 'N':
+      case 'n': I->protons=cAN_In; break;
+      }
+      break;
+    case 'K': 
+      switch(e[1]) {
+      case 'R':
+      case 'r':
+        I->protons=cAN_Kr; break;
+        break;
+      }
+      break;
     case 'L': 
       switch(e[1]) {
+      case 'I':
+      case 'i':
+        I->protons=cAN_LP; break;
+        break;
       case 'P':
       case 'p':
         I->protons=cAN_LP; break;
@@ -2413,28 +2469,59 @@ static void set_protons(AtomInfoType *I,char *elem)
       switch(e[1]) {
       case 'G':
       case 'g': I->protons=cAN_Mg; break;
+      case 'N':
+      case 'n': I->protons=cAN_Mn; break;
       }
       break;
     case 'N':
       switch(e[1]) {
       case 'A':
       case 'a': I->protons=cAN_Na; break;
+      case 'E':
+      case 'e': I->protons=cAN_Ne; break;
+      case 'I':
+      case 'i': I->protons=cAN_Ni; break;
       }
       break;
-    case 'Z':
+    case 'P':
       switch(e[1]) {
-      case 'N':
-      case 'n': I->protons=cAN_Zn; break;
+      case 'B':
+      case 'b': I->protons=cAN_Pb; break;
+      case 'D':
+      case 'd': I->protons=cAN_Pd; break;
+      case 'T':
+      case 't': I->protons=cAN_Pt; break;
       }
       break;
     case 'S':
       switch(e[1]) {
-      case 'I':
-      case 'i': I->protons=cAN_Si; break;
+      case 'B':
+      case 'b': I->protons=cAN_Sb; break;
       case 'E':
       case 'e': I->protons=cAN_Se; break;
+      case 'I':
+      case 'i': I->protons=cAN_Si; break;
+      case 'N':
+      case 'n': I->protons=cAN_Sn; break;
       case 'R':
       case 'r': I->protons=cAN_Sr; break;
+      }
+      break;
+    case 'T':
+      switch(e[1]) {
+      case 'I':
+      case 'i': I->protons=cAN_Ti; break;
+      case 'E':
+      case 'e': I->protons=cAN_Te; break;
+      case 'L':
+      case 'l': I->protons=cAN_Tl; break;
+      }
+      break;
+
+    case 'Z':
+      switch(e[1]) {
+      case 'N':
+      case 'n': I->protons=cAN_Zn; break;
       }
       break;
     default: /* unrecognized element (possible garbage?) */
@@ -2726,26 +2813,60 @@ void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
 
   switch(I->protons) {
   case cAN_H:  vdw=1.20F; break;
-  case cAN_N:  vdw=1.55F; break;
-  case cAN_Na: vdw=2.27F; break;
-  case cAN_Cu: vdw=1.40F; break; 
-  case cAN_Cl: vdw=1.75F; break;
+  case cAN_He: vdw=1.40F; break;
+
+  case cAN_Li: vdw=1.82F; break;
+
+  case cAN_B:  vdw=1.85F; break; 
   case cAN_C:  vdw=1.70F; break; 
+  case cAN_N:  vdw=1.55F; break;
   case cAN_O:  vdw=1.52F; break;
-  case cAN_I:	vdw=1.98F; break;
-  case cAN_P:	vdw=1.80F; break;
-  case cAN_B:	vdw=1.85F; break; 
-  case cAN_Br:	vdw=1.85F; break; 
-  case cAN_S:  vdw=1.80F; break;
-  case cAN_Se: vdw=1.90F; break;
   case cAN_F:  vdw=1.47F; break;
-  case cAN_Fe: vdw=1.80F; break; 
-  case cAN_K:  vdw=2.75F; break;
-  case cAN_Mn: vdw=1.73F; break;
+  case cAN_Ne: vdw=1.54F; break;
+
+  case cAN_Na: vdw=2.27F; break;
   case cAN_Mg: vdw=1.73F; break;
+  case cAN_Al: vdw=2.00F; break; 
+  case cAN_Si: vdw=2.10F; break;
+  case cAN_P:  vdw=1.80F; break;
+  case cAN_S:  vdw=1.80F; break;
+  case cAN_Cl: vdw=1.75F; break;
+  case cAN_Ar: vdw=1.88F; break;
+
+  case cAN_K:  vdw=2.75F; break;
+
+  case cAN_Mn: vdw=1.73F; break;
+  case cAN_Ni: vdw=1.63F; break;
+  case cAN_Cu: vdw=1.40F; break; 
   case cAN_Zn: vdw=1.39F; break;
+  case cAN_Ga: vdw=1.87F; break;
+
+  case cAN_As: vdw=1.85F; break;
+  case cAN_Se: vdw=1.90F; break;
+  case cAN_Br: vdw=1.85F; break;
+  case cAN_Kr: vdw=2.02F; break;
+ 
+  case cAN_Pd: vdw=1.63F; break;
+  case cAN_Ag: vdw=1.72F; break;
+  case cAN_Cd: vdw=1.58F; break;
+  case cAN_In: vdw=1.93F; break;
+  case cAN_Sn: vdw=2.17F; break;
+
+  case cAN_Te: vdw=2.06F; break;
+  case cAN_I:  vdw=1.98F; break;
+  case cAN_Xe: vdw=2.16F; break;
+
+  case cAN_Pt: vdw=1.75F; break;
+  case cAN_Au: vdw=1.66F; break;
+  case cAN_Hg: vdw=1.55F; break;
+  case cAN_Tl: vdw=1.96F; break;
+  case cAN_Pb: vdw=2.02F; break;
+
+  case cAN_U:  vdw=1.86F; break;
+
   case cAN_LP: vdw=0.5F; break; /* lone pairs @ 0.5 same as MOE? */
-  default: vdw=1.80F; break;
+
+  default: vdw=1.80F; break; /* default radius for known atoms with unknown radii */
   }
   
   if(SettingGet(G,cSetting_legacy_vdw_radii)) { /* ver<0.75, old, incorrect VDW */
@@ -2763,9 +2884,13 @@ void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
 
   if(I->vdw==0.0) /* only assigned if not yet assigned */
     I->vdw = vdw;
+
+#if 0
   if(!I->protons)
     I->protons = cAN_C; /* default assumption */
-  else if(I->protons==cAN_H) 
+#endif
+  
+  if(I->protons==cAN_H) 
     I->hydrogen = true;
   /*  printf("I->name %s I->priority %d\n",I->name,I->priority);*/
 }

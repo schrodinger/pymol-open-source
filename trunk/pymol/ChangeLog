@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-04-11 Warren L. DeLano <warren@delsci.com>	
 
+	* added vdw radii for additional elements
+	
 	* fixed problem with saving session/show file ext on Windows.
 	
 2008-04-04 Warren L. DeLano <warren@delsci.com>	
