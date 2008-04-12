@@ -86,29 +86,65 @@ Z* -------------------------------------------------------------------
 #define cAN_LP  0
 #define cAN_H   1
 #define cAN_He  2
+#define cAN_Li  3
+#define cAN_Be  4
 #define cAN_B   5
 #define cAN_C   6
 #define cAN_N   7
 #define cAN_O   8
 #define cAN_F   9
+#define cAN_Ne 10
 #define cAN_Na 11
 #define cAN_Mg 12
+#define cAN_Al 13
 #define cAN_Si 14
 #define cAN_P  15
 #define cAN_S  16
 #define cAN_Cl 17
+#define cAN_Ar 18
 #define cAN_K  19
 #define cAN_Ca 20
+
+#define cAN_Ti 22
+
+#define cAN_Cr 24
 #define cAN_Mn 25
 #define cAN_Fe 26
+#define cAN_Co 27
+#define cAN_Ni 28
 #define cAN_Cu 29
 #define cAN_Zn 30
+#define cAN_Ga 31
+#define cAN_Ge 32
+#define cAN_As 33
 #define cAN_Se 34
 #define cAN_Br 35
+#define cAN_Kr 36
+
+#define cAN_Rb 37
 #define cAN_Sr 38
+
+#define cAN_Pd 46
+#define cAN_Ag 47
+#define cAN_Cd 48
+#define cAN_In 49
+#define cAN_Sn 50
+#define cAN_Sb 51
+#define cAN_Te 52
 #define cAN_I  53
+#define cAN_Xe 54
+#define cAN_Cs 55
 #define cAN_Ba 56
+
+#define cAN_Ce 58
+
+#define cAN_Pt 78
+#define cAN_Au 79
 #define cAN_Hg 80
+#define cAN_Tl 81
+#define cAN_Pb 82
+
+#define cAN_U  92
 
 typedef char Chain[2];
 typedef char SSType[2];
