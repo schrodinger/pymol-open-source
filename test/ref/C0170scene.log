@@ -107,11 +107,11 @@ PyMOL>scene 4
 Error: unknown scene: '4'. Choices:
   1  2  3  5
 PyMOL>scene *
- scene: stored scenes:
+ scene: current order:
   1  2  3  5
 PyMOL>scene *,clear
 PyMOL>scene *
- scene: stored scenes:
+ scene: current order:
 PyMOL>scene 1
 Error: unknown scene: '1'. Choices:
 PyMOL>hide

@@ -478,14 +478,14 @@ class Normal(PMGSkin):
 
     def log_open(self):
         sfile = asksaveasfilename(initialfile = self.log_file,
-                                          initialdir = self.initialdir,
-                                          filetypes=[
-                                                         ("PyMOL Script","*.pml"),
-                                                         ("PyMOL Program","*.pym"),
-                                                         ("Python Program","*.py"),
-                                                         ("All Files","*.*"),
-                                                         ("All Files","*"),
-                                                         ])
+                                  initialdir = self.initialdir,
+                                  filetypes=[
+            ("PyMOL Script","*.pml"),
+            ("PyMOL Program","*.pym"),
+            ("Python Program","*.py"),
+            ("All Files","*.*"),
+            ("All Files","*"),
+            ])
         if len(sfile):
             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
             self.log_file = re.sub(r"^.*[^\/\\]","",sfile)
@@ -493,15 +493,15 @@ class Normal(PMGSkin):
 
     def log_resume(self,append_only=0):
         ofile = askopenfilename(initialdir = os.getcwd(),
-                         filetypes=[("All Resumable","*.pml"),
-                                        ("All Resumable","*.pym"),
-                                        ("All Resumable","*.py"),
-                                        ("PyMOL Script","*.pml"),
-                                        ("PyMOL Program","*.pym"),
-                                        ("Python Program","*.py"),
-                                        ("All Files","*.*"),                                           
-                                        ("All Files","*"),
-                                        ])
+                                filetypes=[("All Resumable","*.pml"),
+                                           ("All Resumable","*.pym"),
+                                           ("All Resumable","*.py"),
+                                           ("PyMOL Script","*.pml"),
+                                           ("PyMOL Program","*.pym"),
+                                           ("Python Program","*.py"),
+                                           ("All Files","*.*"),                                           
+                                           ("All Files","*"),
+                                           ])
         if len(ofile):
             self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
             self.log_file = re.sub(r"^.*[^\/\\]","",ofile)
@@ -537,9 +537,13 @@ class Normal(PMGSkin):
 
     def session_save_as(self):
         (self.initialdir, self.save_file) = os.path.split(self.cmd.get_setting_text("session_file"))
-        sfile = asksaveasfilename(initialfile = self.save_file,
-                                          initialdir = self.initialdir,
-                                          filetypes=[
+        (save_file, def_ext) = os.path.splitext(self.save_file)
+        if sys.platform != 'win32': 
+            def_ext = None # default extensions don't work right under X11/Tcl/Tk
+        sfile = asksaveasfilename(defaultextension = def_ext,
+                                  initialfile = save_file,  
+                                  initialdir = self.initialdir,
+                                  filetypes=[
             ("PyMOL Session File","*.pse"),
             ("PyMOL Show File","*.psw"),
             ])
@@ -578,18 +582,22 @@ class Normal(PMGSkin):
         else:
             sels = self.dialog.getcurselection()
             if len(sels)!=0:
-                sfile = sels[0] +".pdb"
+                sfile = sels[0] # +".pdb"
                 self.my_withdraw(self.dialog)
                 del self.dialog
                 if result=='OK':
-                    sfile = asksaveasfilename(initialfile = sfile,
-                                                      initialdir = self.initialdir,
-                                                      filetypes=[
-                                                                     ("PDB File","*.pdb"),
-                                                                     ("MOL File","*.mol"),
-                                                                     ("MMD File","*.mmd"),
-                                                                     ("PKL File","*.pkl"),
-                                                                     ])
+                    def_ext = ".pdb"
+                    if sys.platform != 'win32': 
+                        def_ext = None # default extensions don't work right under X11/Tcl/Tk
+                    sfile = asksaveasfilename(defaultextension = def_ext,
+                                              initialfile = sfile,
+                                              initialdir = self.initialdir,
+                                              filetypes=[
+                        ("PDB File","*.pdb"),
+                        ("MOL File","*.mol"),
+                        ("MMD File","*.mmd"),
+                        ("PKL File","*.pkl"),
+                        ])
                     if len(sfile):
                         self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
                         self.cmd.log("save %s,(%s)\n"%(sfile,sels[0]),
