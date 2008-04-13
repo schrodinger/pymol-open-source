@@ -4331,6 +4331,24 @@ static PyObject *CmdCountFrames(PyObject *self, PyObject *args)
   }
   return(APIResultCode(result));
 }
+static PyObject *CmdGetMovieLength(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  int result = 0;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok=APIEnterNotModal(G))) {
+    result = MovieGetLength(G);
+    APIExit(G);
+  }
+  return(APIResultCode(result));
+}
 
 static PyObject *CmdIdentify(PyObject *self, PyObject *args)
 {
@@ -8160,6 +8178,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_mtl_obj",           CmdGetMtlObj,            METH_VARARGS },
   {"get_model",	            CmdGetModel,             METH_VARARGS },
   {"get_moment",	        CmdGetMoment,            METH_VARARGS },
+  {"get_movie_length",      CmdGetMovieLength,       METH_VARARGS },
   {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
   {"get_movie_playing",     CmdGetMoviePlaying,      METH_VARARGS },
   {"get_names",             CmdGetNames,             METH_VARARGS },

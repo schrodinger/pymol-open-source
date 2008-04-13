@@ -96,6 +96,7 @@ from querying import \
       get_extent,         \
       get_model,          \
       get_movie_locked,   \
+      get_movie_length,   \
       get_names,          \
       get_names_of_type,  \
       get_object_matrix,  \

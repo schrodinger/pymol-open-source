@@ -1139,9 +1139,10 @@ int MovieView(PyMOLGlobals *G,int action,int first,
         }
       }
       
-      if(last>=I->NFrame) { /* erase temporary view */
+      if(last>=I->NFrame) { /* now erase temporary views */
         ViewElemArrayPurge(G,I->ViewElem+I->NFrame,(1+last-I->NFrame));
-        UtilZeroMem((void*)(I->ViewElem + I->NFrame), sizeof(CViewElem) * (1+last-I->NFrame));
+        UtilZeroMem((void*)(I->ViewElem + I->NFrame), 
+                    sizeof(CViewElem) * (1+last-I->NFrame));
       }
     }
     break;
