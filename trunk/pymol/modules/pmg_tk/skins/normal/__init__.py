@@ -1394,13 +1394,13 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Movie', 'command', 'Update Program',label=self.pad+'Update Program',
                                  command = lambda s=self: s.mvprg())
         
-        self.menuBar.addcascademenu('Program', 'Simple Loop', 'Simple Loop',
-                                    label='Simple Loop')
+        self.menuBar.addcascademenu('Program', 'Static Loop', 'Static Loop',
+                                    label='Static Loop')
                 
-        self.menuBar.addcascademenu('Simple Loop', 'Nutate', 'Nutate',
+        self.menuBar.addcascademenu('Static Loop', 'Nutate', 'Nutate',
                                     label='Nutate')
 
-        self.menuBar.addmenuitem('Simple Loop', 'separator', '')
+        self.menuBar.addmenuitem('Static Loop', 'separator', '')
 
         self.menuBar.addmenuitem('Nutate', 'command', '15 deg. over 4 sec.',label='15 deg. over 4 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(4,15)"))
@@ -1439,7 +1439,7 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 32 sec.',label='30 deg. over 32 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(32,60)"))
 
-        self.menuBar.addcascademenu('Simple Loop', 'X-Rock', 'X-Rock',
+        self.menuBar.addcascademenu('Static Loop', 'X-Rock', 'X-Rock',
                                     label='X-Rock')
         
         self.menuBar.addmenuitem('X-Rock', 'command', '30 deg. over 2 sec.',label='30 deg. over 2 sec.',
@@ -1495,7 +1495,7 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('X-Rock', 'command', '180 deg. over 48 sec.',label='180 deg. over 48 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_rock(48,179.99,axis='x')"))
 
-        self.menuBar.addcascademenu('Simple Loop', 'X-Roll', 'X-Roll',
+        self.menuBar.addcascademenu('Static Loop', 'X-Roll', 'X-Roll',
                                     label='X-Roll')
 
         self.menuBar.addmenuitem('X-Roll', 'command', '4 seconds',label='4 seconds',
@@ -1510,9 +1510,9 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('X-Roll', 'command', '32 seconds',label='32 seconds',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_roll(32.0,axis='x')"))
 
-        self.menuBar.addmenuitem('Simple Loop', 'separator', '')
+        self.menuBar.addmenuitem('Static Loop', 'separator', '')
 
-        self.menuBar.addcascademenu('Simple Loop', 'Y-Rock', 'Y-Rock',
+        self.menuBar.addcascademenu('Static Loop', 'Y-Rock', 'Y-Rock',
                                     label='Y-Rock')
         
         self.menuBar.addmenuitem('Y-Rock', 'command', '30 deg. over 2 sec.',label='30 deg. over 2 sec.',
@@ -1568,7 +1568,7 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Y-Rock', 'command', '180 deg. over 48 sec.',label='180 deg. over 48 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_rock(48,179.99,axis='y')"))
 
-        self.menuBar.addcascademenu('Simple Loop', 'Y-Roll', 'Y-Roll',
+        self.menuBar.addcascademenu('Static Loop', 'Y-Roll', 'Y-Roll',
                                     label='Y-Roll')
 
         self.menuBar.addmenuitem('Y-Roll', 'command', '4 seconds',label='4 seconds',
