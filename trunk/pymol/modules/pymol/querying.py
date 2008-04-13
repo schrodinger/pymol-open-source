@@ -565,6 +565,40 @@ SEE ALSO
                 print " cmd.count_states: %d states."%r            
         if _raising(r): raise pymol.CmdException
         return r
+    
+    def get_movie_length(quiet=1, images=-1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "get_movie_length" returns the number of frames explicitly defined
+    in the movie, not including molecular states.
+
+PYMOL API
+
+    cmd.count_frames()
+
+SEE ALSO
+
+    frame, count_states, count_frames
+    '''
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _cmd.get_movie_length(_self._COb)
+            if r<0:
+                if images==0:
+                    r = 0
+                elif images<0:
+                    r = -r
+            if images == 1:
+                if r>0:
+                    r = 0
+            if r>=0 and not quiet:
+                print " cmd.get_movie_length: %d frames"%r      
+        finally:
+            _self.unlock(r,_self)
+        if _raising(r): raise pymol.CmdException
+        return r
 
     def count_frames(quiet=1, _self=cmd):
         '''
@@ -746,6 +780,7 @@ DESCRIPTION
                 print " cmd.get_coords: [%8.3f,%8.3f,%8.3f]"%(a)
         if _raising(r): raise pymol.CmdException
         return r
+
     
     def get_position(quiet=1, _self=cmd):
         '''
