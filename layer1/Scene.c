@@ -2098,52 +2098,54 @@ void SceneIdle(PyMOLGlobals *G)
       OrthoDirty(G); /* force an update */
     }
   }
-  if(MoviePlaying(G)) {
-    renderTime = UtilGetSeconds(G) - I->LastFrameTime;
-    {
-      float fps = SettingGet(G,cSetting_movie_fps);
-      if(fps<=0.0F) {
-        if(fps<0.0)
-          minTime = 0.0; /* negative fps means full speed */
-        else /* 0 fps means use movie_delay instead */
-          minTime = SettingGet(G,cSetting_movie_delay)/1000.0;
-        if(minTime>=0)
-          fps = 1.0/minTime;
-        else
-          fps = 1000.0F;
-      } else {
-        minTime = 1.0/fps;
-      }
-      if(renderTime >= (minTime-I->LastFrameAdjust)) {
-        float adjust = (renderTime - minTime);
-        if((fabs(adjust)<minTime) && (fabs(I->LastFrameAdjust)<minTime)) {
-          float new_adjust = (renderTime - minTime) + I->LastFrameAdjust;
-          I->LastFrameAdjust = (new_adjust + fps*I->LastFrameAdjust)/(1+fps);
+  if(!OrthoDeferredWaiting(G)) {
+    if(MoviePlaying(G)) {
+      renderTime = UtilGetSeconds(G) - I->LastFrameTime;
+      {
+        float fps = SettingGet(G,cSetting_movie_fps);
+        if(fps<=0.0F) {
+          if(fps<0.0)
+            minTime = 0.0; /* negative fps means full speed */
+          else /* 0 fps means use movie_delay instead */
+            minTime = SettingGet(G,cSetting_movie_delay)/1000.0;
+          if(minTime>=0)
+            fps = 1.0/minTime;
+          else
+            fps = 1000.0F;
         } else {
-          I->LastFrameAdjust = 0.0F;
+          minTime = 1.0/fps;
         }
-        frameFlag=true;
+        if(renderTime >= (minTime-I->LastFrameAdjust)) {
+          float adjust = (renderTime - minTime);
+          if((fabs(adjust)<minTime) && (fabs(I->LastFrameAdjust)<minTime)) {
+            float new_adjust = (renderTime - minTime) + I->LastFrameAdjust;
+            I->LastFrameAdjust = (new_adjust + fps*I->LastFrameAdjust)/(1+fps);
+          } else {
+            I->LastFrameAdjust = 0.0F;
+          }
+          frameFlag=true;
+        }
+      }
+    } else if(ControlRocking(G)) {
+      renderTime = -I->LastSweepTime + UtilGetSeconds(G);
+      minTime=SettingGet(G,cSetting_rock_delay)/1000.0;
+      if(renderTime>=minTime) {
+        I->LastSweepTime=UtilGetSeconds(G);
+        I->SweepTime+=I->RenderTime;
+        SceneUpdateCameraRock(G,true);
       }
     }
-  } else if(ControlRocking(G)) {
-    renderTime = -I->LastSweepTime + UtilGetSeconds(G);
-    minTime=SettingGet(G,cSetting_rock_delay)/1000.0;
-    if(renderTime>=minTime) {
-      I->LastSweepTime=UtilGetSeconds(G);
-      I->SweepTime+=I->RenderTime;
-      SceneUpdateCameraRock(G,true);
+    
+    if(MoviePlaying(G) && frameFlag) {
+      I->LastFrameTime = UtilGetSeconds(G);
+      if((SettingGetGlobal_i(G,cSetting_frame)-1)==(I->NFrame-1)) {
+        if((int)SettingGet(G,cSetting_movie_loop)) {
+          SceneSetFrame(G,7,0);
+        } else
+          MoviePlay(G,cMovieStop);
+      } else 
+        SceneSetFrame(G,5,1);
     }
-  }
-
-  if(MoviePlaying(G) && frameFlag) {
-    I->LastFrameTime = UtilGetSeconds(G);
-    if((SettingGetGlobal_i(G,cSetting_frame)-1)==(I->NFrame-1)) {
-      if((int)SettingGet(G,cSetting_movie_loop)) {
-        SceneSetFrame(G,7,0);
-      } else
-        MoviePlay(G,cMovieStop);
-    } else 
-      SceneSetFrame(G,5,1);
   }
 }
 /*========================================================================*/
