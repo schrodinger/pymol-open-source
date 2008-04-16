@@ -4,6 +4,12 @@ CHANGE LOG
 
 2008-04-12 Warren L. DeLano <warren@delsci.com>	
 
+	* tweaked behaviors for better ActiveX
+
+	* ESC now exits presentation mode (instead of toggling text)
+	
+2008-04-12 Warren L. DeLano <warren@delsci.com>	
+
 	* added new movie program menus
 	
 2008-04-11 Warren L. DeLano <warren@delsci.com>	

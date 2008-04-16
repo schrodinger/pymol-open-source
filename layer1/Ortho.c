@@ -718,7 +718,7 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
     curLine=add_normal_char(I,k);
   } else switch(k) {
   case 32: /* spacebar */
-    if(SettingGetGlobal_b(G,cSetting_presentation)&&!OrthoTextVisible(G)) {
+    if(SettingGetGlobal_b(G,cSetting_presentation)&&!OrthoTextVisible(G)&&(I->CurChar==I->PromptChar)) {
       PParse(G,"cmd.scene('','next')");
     } else {
       curLine=add_normal_char(I,k);
@@ -823,12 +823,17 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
     }
     break;
   case 27: /* ESCAPE */
-    if(I->SplashFlag) {
-      OrthoRemoveSplash(G);
+    if(SettingGetGlobal_b(G,cSetting_presentation)&&!(mod&(cOrthoCTRL||cOrthoSHIFT))) {
+      PParse(G,"_quit");
     } else {
-      SettingSet(G,cSetting_text,(float)(!((int)SettingGet(G,cSetting_text))));
-      if(mod&cOrthoSHIFT) 
-        SettingSet(G,cSetting_overlay,(float)(!((int)SettingGet(G,cSetting_overlay))));
+      if(I->SplashFlag) {
+        OrthoRemoveSplash(G);
+      } else {
+        if(mod&cOrthoSHIFT) 
+          SettingSet(G,cSetting_overlay,(float)(!((int)SettingGet(G,cSetting_overlay))));
+        else
+          SettingSet(G,cSetting_text,(float)(!((int)SettingGet(G,cSetting_text))));
+      }
     }
     break;
   case 13: /* CTRL M -- carriage return */
