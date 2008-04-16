@@ -99,7 +99,7 @@ extern CPyMOLOptions *MacPyMOLOption;
 #define PYMOL_API_UNLOCK_NO_FLUSH }
 #endif
 #endif
-#define IDLE_AND_READY 2
+#define IDLE_AND_READY 3
 
 typedef struct _CPyMOL {
   PyMOLGlobals *G;
