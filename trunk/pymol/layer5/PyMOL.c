@@ -99,7 +99,7 @@ extern CPyMOLOptions *MacPyMOLOption;
 #define PYMOL_API_UNLOCK_NO_FLUSH }
 #endif
 #endif
-#define IDLE_AND_READY 10
+#define IDLE_AND_READY 2
 
 typedef struct _CPyMOL {
   PyMOLGlobals *G;
@@ -3309,7 +3309,8 @@ int PyMOL_Idle(CPyMOL *I)
 
   I->DraggedFlag = false;
   if(I->IdleAndReady<IDLE_AND_READY) {
-    I->IdleAndReady++;
+    if(I->DrawnFlag)
+      I->IdleAndReady++;
   }
   if(I->FakeDragFlag==1) {
     I->FakeDragFlag = false;
@@ -3442,7 +3443,7 @@ void PyMOL_NeedReshape(CPyMOL *I,int mode, int x, int y, int width, int height)
 
 int PyMOL_GetIdleAndReady(CPyMOL *I)
 {
-	return (I->IdleAndReady==IDLE_AND_READY);
+  return (I->IdleAndReady==IDLE_AND_READY);
 }
 
 int PyMOL_GetReshape(CPyMOL *I)
