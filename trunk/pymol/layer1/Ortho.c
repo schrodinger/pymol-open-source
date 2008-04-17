@@ -875,19 +875,18 @@ void OrthoParseCurrentLine(PyMOLGlobals *G)
   I->Line[curLine][I->CurChar]=0;
   strcpy(buffer,I->Line[curLine]+I->PromptChar);
 #ifndef _PYMOL_NOPY
-  if(buffer[0])
-    {
-      strcpy(I->History[I->HistoryLine],buffer);
-      I->HistoryLine = (I->HistoryLine+1)&OrthoHistoryLines;
-      I->History[I->HistoryLine][0]=0;
-      I->HistoryView=I->HistoryLine;
-      if(WordMatch(G,buffer,"quit",true)==0) /* don't log quit */
-        PLog(G,buffer,cPLog_pml);
-      OrthoNewLine(G,NULL,true);
-      OrthoDirty(G); /* this will force a redraw, if necessary */
-      PParse(G,buffer);
-      OrthoRestorePrompt(G);
-    }
+  if(buffer[0]) {
+    strcpy(I->History[I->HistoryLine],buffer);
+    I->HistoryLine = (I->HistoryLine+1)&OrthoHistoryLines;
+    I->History[I->HistoryLine][0]=0;
+    I->HistoryView=I->HistoryLine;
+    OrthoNewLine(G,NULL,true);
+    if(WordMatch(G,buffer,"quit",true)==0) /* don't log quit */
+      PLog(G,buffer,cPLog_pml);
+    OrthoDirty(G); /* this will force a redraw, if necessary */
+    PParse(G,buffer);
+    OrthoRestorePrompt(G);
+  }
 #endif
   I->CursorChar=-1;
 }
