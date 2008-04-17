@@ -1999,55 +1999,54 @@ void PLog(PyMOLGlobals *G,char *str,int format)
   PyObject *log;
   OrthoLineType buffer="";
   mode = (int)SettingGet(G,cSetting_logging);
-  if(mode)
-    {
-      blocked = PAutoBlock(G);
-      log = PyDict_GetItemString(P_pymol_dict,P_log_file_str);
-      if(log&&(log!=Py_None)) {
-        if(format==cPLog_no_flush) {
-          PyObject_CallMethod(log,"write","s",str); /* maximize responsiveness (for real-time) */
-        } else {
-          switch(mode) {
-          case cPLog_pml: /* .pml file */
-            switch(format) {
-            case cPLog_pml_lf:
-              strcpy(buffer,str);
-              break;
-            case cPLog_pml:
-            case cPLog_pym:
-              strcpy(buffer,str);
-              strcat(buffer,"\n");
-              break;
-            }
+  if(mode) {
+    blocked = PAutoBlock(G);
+    log = PyDict_GetItemString(P_pymol_dict,P_log_file_str);
+    if(log&&(log!=Py_None)) {
+      if(format==cPLog_no_flush) {
+        PyObject_CallMethod(log,"write","s",str); /* maximize responsiveness (for real-time) */
+      } else {
+        switch(mode) {
+        case cPLog_pml: /* .pml file */
+          switch(format) {
+          case cPLog_pml_lf:
+            strcpy(buffer,str);
             break;
-          case cPLog_pym: /* .pym file */
-            if((str[0]=='_')&&(str[1])==' ')
-              str+=2;
-            switch(format) {
-            case cPLog_pml_lf:
-              a =strlen(str);
-              while(a) { /* trim CR/LF etc. */
-                if(*(str+a)>=32) break;
-                *(str+a)=0;
-                a--;
-              }
-            case cPLog_pml:
-              strcpy(buffer,"cmd.do('''");
-              strcat(buffer,str);
-              strcat(buffer,"''')\n");
-              break;
-            case cPLog_pym:
-              strcpy(buffer,str);
-              strcat(buffer,"\n");
-              break;
-            }
+          case cPLog_pml:
+          case cPLog_pym:
+            strcpy(buffer,str);
+            strcat(buffer,"\n");
+            break;
           }
-          PyObject_CallMethod(log,"write","s",buffer);        
-          PyObject_CallMethod(log,"flush","");
+          break;
+        case cPLog_pym: /* .pym file */
+          if((str[0]=='_')&&(str[1])==' ')
+            str+=2;
+          switch(format) {
+          case cPLog_pml_lf:
+            a =strlen(str);
+            while(a) { /* trim CR/LF etc. */
+              if(*(str+a)>=32) break;
+              *(str+a)=0;
+              a--;
+            }
+          case cPLog_pml:
+            strcpy(buffer,"cmd.do('''");
+            strcat(buffer,str);
+            strcat(buffer,"''')\n");
+            break;
+          case cPLog_pym:
+            strcpy(buffer,str);
+            strcat(buffer,"\n");
+            break;
+          }
         }
+        PyObject_CallMethod(log,"write","s",buffer);        
+        PyObject_CallMethod(log,"flush","");
       }
-      PAutoUnblock(G,blocked);
     }
+    PAutoUnblock(G,blocked);
+  }
 }
 
 void PLogFlush(PyMOLGlobals *G)

@@ -794,7 +794,7 @@ SEE ALSO
             _self.unlock(r,_self)
         if is_ok(r):
             if len(r):
-                if (_self.get_setting_legacy("logging")!=0.0) and (output!=3):
+                if (_self.get_setting_legacy("logging")!=0.0) and (output<3):
                     if not quiet:
                         print " get_view: matrix written to log file."
                     _self.log("_ set_view (\\\n","cmd.set_view((\\\n")
@@ -806,7 +806,7 @@ SEE ALSO
                     _self.log("_  %14.9f, %14.9f, %14.9f )\n"%r[22:25] , "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
                     if output<2: # suppress if we have a log file open
                         output=0
-                if output and not quiet and (output!=3):
+                if output and (not quiet) and (output<3):
                     print "### cut below here and paste into script ###"
                     print "set_view (\\"
                     print "  %14.9f, %14.9f, %14.9f,\\"%r[0:3]

@@ -1,0 +1,167 @@
+# simple proof-of-concept exercise in PyMOL synchronization
+
+# NOT FOR PRODUCTION USE!
+
+# in separate shells:
+
+# ./pymol syncmol.py -- recv 8000
+
+# ./pymol syncmol.py -- send 8000
+
+# then work with that second PyMOL...
+
+import threading
+import socket
+import cPickle
+import socket # For gethostbyaddr()
+import SocketServer
+import sys
+import traceback
+import copy
+import os
+import time
+import Queue
+
+class LogInterceptor:
+
+    def __init__(self,fifo):
+        self.fifo = fifo
+    
+    def write(self,command):
+        self.fifo.put(command)
+    
+    def flush(self):
+        pass
+
+    def close(self):
+        pass
+    
+class PyMOLWriter: # this class transmits
+
+    def __init__(self, pymol, host='localhost', port=8000):
+        self.host = host
+        self.port = port
+        self.sock = None
+        self.cmd = pymol.cmd
+        self.fifo = Queue.Queue(0)
+        
+        # NOT KOSHER!
+        
+        pymol._log_file = LogInterceptor(self.fifo)
+        pymol.cmd.set("logging")
+
+        last_view = None
+        while 1:
+            time.sleep(0.1) # update 10x a second
+            view = cmd.get_view(output=4)
+            if view != last_view:
+                self._remote_call("set_view",(view,))
+                last_view = view
+            while not self.fifo.empty():
+                self._remote_call("do",(self.fifo.get(),),{})
+            
+                
+    def _remote_call(self,meth,args=(),kwds={}):
+        result = None
+        if self.sock == None:
+            self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+            self.sock.connect((self.host,self.port))
+            self.send = self.sock.makefile('w')
+            self.recv = self.sock.makefile('r')
+        cPickle.dump(meth,self.send,1) # binary by default
+        cPickle.dump(args,self.send,1)
+        cPickle.dump(kwds,self.send,1)
+        self.send.flush()
+        result = cPickle.load(self.recv)
+        return result
+
+class PyMOLReader: # this class receives
+    
+    def __init__(self,pymol,port):
+
+        sys.setcheckinterval(0)
+        
+        server_address = ('', port)
+
+        ddbs = _PyMOLReader(server_address, _PyMOLRequestHandler)  
+
+        # bind pymol instance to the reader
+        
+        ddbs.cmd = pymol.cmd
+
+        # now serve requests forever
+        ddbs.keep_alive = 1
+        while ddbs.keep_alive:
+            ddbs.handle_request()
+        
+class _PyMOLReader(SocketServer.ThreadingTCPServer):
+
+     def server_bind(self):
+          """Override server_bind to store the server name."""
+          SocketServer.ThreadingTCPServer.server_bind(self)
+          host, port = self.socket.getsockname()
+          if not host or host == '0.0.0.0':
+                host = socket.gethostname()
+          hostname, hostnames, hostaddrs = socket.gethostbyaddr(host)
+          if '.' not in hostname:
+                for host in hostnames:
+                     if '.' in host:
+                          hostname = host
+                          break
+          self.server_name = hostname
+          self.server_port = port
+
+class _PyMOLRequestHandler(SocketServer.StreamRequestHandler):
+
+     def handle(self):
+         while self.server.keep_alive:
+             # get method name from client
+
+             try:
+                 method = cPickle.load(self.rfile)
+             except EOFError,socket.error:
+                 break
+
+             if method == 'shutdown':
+                 self.server.keep_alive = 0
+                 
+             # get arguments from client
+             args = cPickle.load(self.rfile)
+             kw = cPickle.load(self.rfile)
+
+             # get cmd method pointer
+             meth_obj = getattr(self.server.cmd,method)
+#          print method,args,kw
+
+             # call method and return result
+             cPickle.dump(apply(meth_obj,args,kw),self.wfile,1) # binary by default
+             self.wfile.flush()
+             
+if __name__=='pymol':
+    import os
+    import pymol
+    sys.argv.reverse()
+    sys.argv.pop()
+    while len(sys.argv):
+        tok = sys.argv.pop()
+        if tok == 'recv':
+            port = int(sys.argv.pop())
+            _stdin_reader_thread = threading.Thread(target=PyMOLReader,
+                                                    args=(pymol,port))
+            _stdin_reader_thread.setDaemon(1)
+            _stdin_reader_thread.start()
+        elif tok == 'send':
+            addr = string.split(sys.argv.pop(),':')
+            if len(addr)==1:
+                host = 'localhost'
+                port = int(addr[0])
+            else:
+                host = addr[0]
+                port = addr[1]
+            _stdin_reader_thread = threading.Thread(target=PyMOLWriter,
+                                                    args=(pymol,host,port))
+            _stdin_reader_thread.setDaemon(1)
+            _stdin_reader_thread.start()
+
+            
+    
