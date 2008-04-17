@@ -4,9 +4,9 @@
 
 # in separate shells:
 
-# ./pymol syncmol.py -- recv 8000
+# pymol syncmol.py -- recv 8000
 
-# ./pymol syncmol.py -- send 8000
+# pymol syncmol.py -- send 8000
 
 # then work with that second PyMOL...
 
