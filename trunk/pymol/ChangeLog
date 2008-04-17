@@ -4,7 +4,7 @@ CHANGE LOG
 
 2008-04-12 Warren L. DeLano <warren@delsci.com>	
 
-	* tweaked behaviors for better ActiveX
+	* tweaked behaviors for better ActiveX usage
 
 	* ESC now exits presentation mode (instead of toggling text)
 	
