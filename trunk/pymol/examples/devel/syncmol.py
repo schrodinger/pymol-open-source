@@ -1,6 +1,6 @@
 # simple proof-of-concept exercise in PyMOL synchronization
 
-# NOT FOR PRODUCTION USE!
+# NOT FOR PRODUCTION USE! HIGHLY INSECURE!
 
 # in separate shells:
 
