@@ -97,7 +97,7 @@ NOTES
                 finally:
                     _self.unlock(r,_self)
                 try:
-                    session['session'] = copy.deepcopy(pymol.session)
+                    session['session'] = copy.deepcopy(_self._pymol.session)
                     if cache<0:
                         cache = _self.get_setting_int('cache_mode')
                     if cache:

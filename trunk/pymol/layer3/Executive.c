@@ -5913,7 +5913,7 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
       if(mode==cButModeRect) {
         SelectorCreate(G,cLeftButSele,cTempRectSele,NULL,1,NULL);
         if(log_box) {
-          sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,cTempRectSele);
+          sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,cLeftButSele,cTempRectSele);
           PLog(G,buf2,cPLog_no_flush);
         }
       } 
@@ -5930,14 +5930,14 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
           sprintf(buffer,"(?%s or %s(%s))",selName,sel_mode_kw,cTempRectSele);
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
-            sprintf(buf2,"%scmd.select(\"%s\",\"(%s)\")\n",prefix,selName,buffer);
+            sprintf(buf2,"%scmd.select(\"%s\",\"(%s)\",enable=1)\n",prefix,selName,buffer);
             PLog(G,buf2,cPLog_no_flush);
           }
         } else {
           sprintf(buffer,"(%s(?%s) and not %s(%s))",sel_mode_kw,selName,sel_mode_kw,cTempRectSele);
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
-            sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buffer);
+            sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buffer);
             PLog(G,buf2,cPLog_no_flush);
           }
         }
@@ -5946,13 +5946,13 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
           sprintf(buffer,"%s(?%s)",sel_mode_kw,cTempRectSele);
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
-            sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buffer);
+            sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buffer);
             PLog(G,buf2,cPLog_no_flush);
           }
         } else {
           SelectorCreate(G,selName,"(none)",NULL,0,NULL);
           if(log_box) {
-            sprintf(buf2,"%scmd.select(\"%s\",\"(none)\")\n",prefix,selName);
+            sprintf(buf2,"%scmd.select(\"%s\",\"(none)\",enable=1)\n",prefix,selName);
             PLog(G,buf2,cPLog_no_flush);
           }
         }

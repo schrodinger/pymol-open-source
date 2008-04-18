@@ -17,6 +17,18 @@ class Wizard:
         self.prompt = None
         self.panel = None
         self.cmd = _self
+        self._validate_instance() 
+        
+    def _validate_instance(self):
+        _pymol = self.cmd._pymol
+        if not hasattr(_pymol.session, 'wizard_storage'):
+            _pymol.session.wizard_storage = {}
+        wizard_storage = _pymol.session.wizard_storage
+        class_key = str(self.__class__)
+        self.session = wizard_storage.get(class_key,{})
+        # create a dictionary for per-class storage in session
+        if not self.session:
+            wizard_storage[class_key] = self.session
         
     def get_prompt(self):
         return self.prompt

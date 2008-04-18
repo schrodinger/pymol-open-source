@@ -195,8 +195,8 @@ void CharacterRenderOpenGLPrime(PyMOLGlobals *G,RenderInfo *info)
   if(G->HaveGUI &&  G->ValidContext) {
     glEnable(GL_TEXTURE_2D);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    /*    glEnable(GL_BLEND);
+          glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);*/
   }
 }
 
@@ -204,7 +204,7 @@ void CharacterRenderOpenGLDone(PyMOLGlobals *G, RenderInfo *info)
 {
   if(G->HaveGUI &&  G->ValidContext) {
     glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
+    /*    glDisable(GL_BLEND);*/
   } 
 }
 

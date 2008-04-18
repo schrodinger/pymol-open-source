@@ -22,12 +22,12 @@ if __name__=='pymol.commanding':
     import threading
     import traceback
     import parsing
-    
     import cmd
     import pymol
+    
     from cmd import _cmd, Shortcut, QuietException, \
           fb_module, fb_mask, is_list, \
-          DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error
+          DEFAULT_ERROR, DEFAULT_SUCCESS, is_ok, is_error, is_string
 
     def resume(filename, _self=cmd):
         '''
@@ -58,6 +58,21 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
+
+    class QueueFile:
+
+        def __init__(self,queue):
+            self.queue = queue
+
+        def write(self,command):
+            self.queue.put(command)
+
+        def flush(self):
+            pass
+
+        def close(self):
+            del self.queue
+ 
     def log_open(filename='log.pml', mode='w', _self=cmd):
         '''
 DESCRIPTION
@@ -73,33 +88,37 @@ SEE ALSO
     log, log_close
     
         '''
-        pymol=_self._pymol        
-        try:
+        pymol=_self._pymol
+        if not is_string(filename): # we're logging to Queue, not a file.
+            pymol._log_file = QueueFile(filename)
+            _self.set("logging",1,quiet=1)
+        else:
             try:
-                if hasattr(pymol,"_log_file"):
-                    if pymol._log_file!=None:
-                        pymol._log_file.close()
-                        del pymol._log_file
-            except:
-                pass
-            pymol._log_file = open(filename,mode)
-            if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
-                if mode!='a':
-                    print " Cmd: logging to '%s'."%filename
+                try:
+                    if hasattr(pymol,"_log_file"):
+                        if pymol._log_file!=None:
+                            pymol._log_file.close()
+                            del pymol._log_file
+                except:
+                    pass
+                pymol._log_file = open(filename,mode)
+                if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
+                    if mode!='a':
+                        print " Cmd: logging to '%s'."%filename
+                    else:
+                        print " Cmd: appending to '%s'."%filename            
+                if mode=='a':
+                    pymol._log_file.write("\n") # always start on a new line
+                if(re.search(r"\.py$|\.PY$|\.pym$|\.PYM$",filename)):
+                    _self.set("logging",2,quiet=1)
                 else:
-                    print " Cmd: appending to '%s'."%filename            
-            if mode=='a':
-                pymol._log_file.write("\n") # always start on a new line
-            if(re.search(r"\.py$|\.PY$|\.pym$|\.PYM$",filename)):
-                _self.set("logging",2,quiet=1)
-            else:
-                _self.set("logging",1,quiet=1)
-        except:
-            print"Error: unable to open log file '%s'"%filename
-            pymol._log_file = None
-            _self.set("logging",0,quiet=1)
-            traceback.print_exc()
-            raise QuietException
+                    _self.set("logging",1,quiet=1)
+            except:
+                print"Error: unable to open log file '%s'"%filename
+                pymol._log_file = None
+                _self.set("logging",0,quiet=1)
+                traceback.print_exc()
+                raise QuietException
 
     def log(text, alt_text=None, _self=cmd):
         '''

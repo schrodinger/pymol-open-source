@@ -50,7 +50,9 @@ if __name__=='pymol.importing':
                 steal = 1
         elif steal<0:
             steal = 0
-        for a in pymol._session_restore_tasks:
+        # use the pymol instance to store state, not the code module
+        _pymol = _self._pymol
+        for a in _pymol._session_restore_tasks:
             if a==None:
                 try:
                     _self.lock(_self)
@@ -60,21 +62,21 @@ if __name__=='pymol.importing':
                 try:
                     if session.has_key('session'):
                         if steal:
-                            pymol.session = session['session']
+                            _pymol.session = session['session']
                             del session['session']
                         else:
-                            pymol.session = copy.deepcopy(session['session'])
+                            _pymol.session = copy.deepcopy(session['session'])
                     else:
-                        pymol.session = pymol.Session_Storage()
+                        _pymol.session = pymol.Session_Storage()
                     if cache:
                         if session.has_key('cache'):
                             cache = session['cache']
                             if len(cache):
                                 if steal:
-                                    _self._pymol._cache = session['cache']
+                                    _pymol._cache = session['cache']
                                     del session['cache']
                                 else:
-                                    _self._pymol._cache = copy.deepcopy(session['cache'])
+                                    _pymol._cache = copy.deepcopy(session['cache'])
                 except:
                     traceback.print_exc()
             else:

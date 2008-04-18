@@ -2,7 +2,15 @@
 CHANGE LOG
 =========================================================================
 
-2008-04-12 Warren L. DeLano <warren@delsci.com>	
+2008-04-17 Warren L. DeLano <warren@delsci.com>	
+
+	* fixed bug with GL_BLEND for distance labels
+
+	* repaired proper logging for various selection-related actions
+
+	* migrated to session-based storage for the measurement wizard
+	
+2008-04-16 Warren L. DeLano <warren@delsci.com>	
 
 	* tweaked behaviors for better ActiveX usage
 

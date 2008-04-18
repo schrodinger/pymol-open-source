@@ -12,10 +12,6 @@ indi_sele = "_indicate_mw"
 
 obj_prefix = "measure"
 
-default_mode = 'pairs'
-default_object_mode  = 'append'
-meas_count = 0
-
 class Measurement(Wizard):
 
     cutoff = 3.5
@@ -23,16 +19,15 @@ class Measurement(Wizard):
     def __init__(self,_self=cmd):
         Wizard.__init__(self,_self)
 
-        self.cmd.unpick();
-
+        self.cmd.unpick()
         
         self.status = 0 # 0 no atoms selections, 1 atom selected, 2 atoms selected, 3 atoms selected
         self.error = None
         self.object_name = None
 
         # mode selection subsystem
-        
-        self.mode = default_mode
+
+        self.mode = self.session.get('default_mode','pairs')
         self.modes = [
             'pairs',
             'angle',
@@ -59,7 +54,7 @@ class Measurement(Wizard):
 
         # overwrite mode selection subsystem
         
-        self.object_mode=default_object_mode
+        self.object_mode = self.session.get('default_object_mode','append')
         self.object_modes = [
             'merge', 
             'overwr',
@@ -79,7 +74,26 @@ class Measurement(Wizard):
         self.selection_mode = self.cmd.get_setting_legacy("mouse_selection_mode")
         self.cmd.set("mouse_selection_mode",0) # set selection mode to atomic
         self.cmd.deselect() # disable the active selection (if any)
-        
+
+    def _validate_instance(self):
+        Wizard._validate_instance(self)
+        if not hasattr(self,'meas_count'):
+            self.meas_count = self.session.get('meas_count',0)            
+            
+    def get_name(self,untaken=1,increment=1):
+        self._validate_instance()
+        if increment or self.meas_count<1:
+            self.meas_count = self.meas_count + 1
+        obj_name = obj_prefix+"%02d"%self.meas_count
+        if untaken:
+            name_dict = {}
+            for tmp_name in cmd.get_names("all"):
+                name_dict[tmp_name] = None
+            while obj_name in name_dict:
+                self.meas_count = self.meas_count + 1
+                obj_name = obj_prefix+"%02d"%self.meas_count
+        return obj_name
+    
 # generic set routines
 
     def set_mode(self,mode):
@@ -109,9 +123,8 @@ class Measurement(Wizard):
             ]
 
     def cleanup(self):
-        global default_mode, default_object_mode
-        default_mode = self.mode
-        default_object_mode = self.object_mode
+        self.session['default_mode'] = self.mode
+        self.session['default_object_mode'] = self.object_mode
         self.clear_input()
         self.cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode
         
@@ -138,19 +151,20 @@ class Measurement(Wizard):
         return self.prompt
     
     def delete_last(self):
-        global meas_count
+        self._validate_instance()
         if self.status==0:
-            if meas_count>0:
-                self.cmd.delete(obj_prefix+"%02d"%meas_count)
-                meas_count = meas_count - 1
+            if self.meas_count>0:
+                name = self.get_name(0,0)
+                self.cmd.delete(name)
+                self.meas_count = self.meas_count - 1
         self.status=0
         self.error = None
         self.clear_input()
         self.cmd.refresh_wizard()
 
     def delete_all(self):
-        global meas_count
-        meas_count = 0
+        
+        self.meas_count = 0
         self.cmd.delete(obj_prefix+"*")
         self.status=0
         self.error = None
@@ -170,7 +184,6 @@ class Measurement(Wizard):
                 self.cmd.enable(indi_sele)
 
     def do_pick(self,bondFlag):
-        global meas_count
         if bondFlag:
             self.error = "Error: please select an atom, not a bond."
             print self.error
@@ -185,11 +198,10 @@ class Measurement(Wizard):
                     self.status = 1
                     self.error = None
                 elif self.status==1:
-                    if ((self.object_mode=='append') or (not meas_count)):
-                        meas_count = meas_count + 1
-                    elif self.object_mode=='merge':
+                    obj_name  = self.get_name((self.object_mode=='append'),
+                                              (self.object_mode=='append'))
+                    if self.object_mode=='merge':
                         reset = 0
-                    obj_name = obj_prefix + "%02d"%meas_count
                     self.cmd.dist(obj_name,sele_prefix+"0","(pk1)",reset=reset)
                     self.cmd.enable(obj_name)
                     self.clear_input()
@@ -204,11 +216,10 @@ class Measurement(Wizard):
                     self.status = self.status + 1
                     self.error = None
                 else:
-                    if ((self.object_mode=='append') or (not meas_count)):
-                        meas_count = meas_count + 1
-                    elif self.object_mode=='merge':
+                    obj_name = self.get_name((self.object_mode=='append'),
+                                             (self.object_mode=='append'))
+                    if self.object_mode=='merge':
                         reset = 0
-                    obj_name = obj_prefix + "%02d"%meas_count
                     self.cmd.angle(obj_name, sele_prefix+"0", sele_prefix+"1",
                                  "(pk1)", reset=reset)
                     self.cmd.enable(obj_name)
@@ -224,11 +235,10 @@ class Measurement(Wizard):
                     self.status = self.status + 1
                     self.error = None
                 else:
-                    if ((self.object_mode=='append') or (not meas_count)):
-                        meas_count = meas_count + 1
-                    elif self.object_mode=='merge':
+                    obj_name = self.get_name((self.object_mode=='append'),
+                                             (self.object_mode=='append'))
+                    if self.object_mode=='merge':
                         reset = 0
-                    obj_name = obj_prefix + "%02d"%meas_count
                     self.cmd.dihedral(obj_name, sele_prefix+"0", sele_prefix+"1",
                                      sele_prefix+"2", "(pk1)", reset=reset)
                     self.cmd.enable(obj_name)
@@ -237,11 +247,10 @@ class Measurement(Wizard):
                 self.cmd.unpick()
             elif self.mode in ['neigh','polar','heavy']:
                 reset = 1
-                if ((self.object_mode=='append') or (not meas_count)):
-                    meas_count = meas_count + 1
-                elif self.object_mode=='merge':
+                obj_name = self.get_name((self.object_mode=='append'),
+                                             (self.object_mode=='append'))
+                if self.object_mode=='merge':
                     reset = 0
-                obj_name = obj_prefix + "%02d"%meas_count
                 cnt = 0
                 if self.mode == 'neigh':
                     cnt = self.cmd.select(sele_prefix,

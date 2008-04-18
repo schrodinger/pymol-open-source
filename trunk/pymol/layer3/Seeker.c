@@ -139,7 +139,7 @@ static void SeekerSelectionToggleRange(PyMOLGlobals *G,CSeqRow* rowVLA,int row_n
           
           SelectorCreate(G,selName,buf1,NULL,true,NULL);
           {
-            sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buf1);
+            sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buf1);
             PLog(G,buf2,cPLog_no_flush);
           }
         }
@@ -220,7 +220,7 @@ static void SeekerSelectionToggle(PyMOLGlobals *G,CSeqRow* rowVLA,int row_num,
           
           SelectorCreate(G,selName,buf1,NULL,true,NULL);
           {
-            sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buf1);
+            sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buf1);
             PLog(G,buf2,cPLog_no_flush);
           }
         }
@@ -335,7 +335,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
         if(ExecutiveGetActiveSeleName(G,name, false,false)) {
           SelectorCreate(G,name,"none",NULL,true,NULL);
           if(SettingGet(G,cSetting_logging)) {
-            sprintf(buf2,"cmd.select('%s','none')\n",name);
+            sprintf(buf2,"cmd.select('%s','none', enable=1)",name);
             PLog(G,buf2,cPLog_no_flush);
           }
           SeqDirty(G);
