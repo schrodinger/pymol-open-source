@@ -44,21 +44,29 @@ class PyMOLWriter: # this class transmits
         self.sock = None
         self.cmd = pymol.cmd
         self.fifo = Queue.Queue(0)
+        cmd = self.cmd
         
-        # NOT KOSHER!
+#        pymol._log_file = LogInterceptor(self.fifo)
+#        pymol.cmd.set("logging")
+        pymol.cmd.log_open(self.fifo)
         
-        pymol._log_file = LogInterceptor(self.fifo)
-        pymol.cmd.set("logging")
-
         last_view = None
+        last_frame = 0
         while 1:
-            time.sleep(0.1) # update 10x a second
+            time.sleep(0.05) # update 20x a second
+            while not self.fifo.empty():
+                self._remote_call("do",(self.fifo.get(),),{})
             view = cmd.get_view(output=4)
             if view != last_view:
                 self._remote_call("set_view",(view,))
                 last_view = view
-            while not self.fifo.empty():
-                self._remote_call("do",(self.fifo.get(),),{})
+            if not cmd.get_movie_playing():
+                frame = int(cmd.get("frame"))
+                if last_frame != frame:
+                    self._remote_call("frame",(frame,))
+                    last_frame = frame
+            else:
+                last_frame = None
             
                 
     def _remote_call(self,meth,args=(),kwds={}):

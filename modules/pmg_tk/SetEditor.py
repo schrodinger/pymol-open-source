@@ -116,7 +116,7 @@ class SetEditor:
         val = entry.get()
         origVal = self.cmd.get( lab )
         try:
-            self.cmd.set( lab, val, quiet=0 )
+            self.cmd.set( lab, val, quiet=0, log=1 )
             self.index[lab] = val
         except:
             entry.delete( 0,END )

@@ -3922,54 +3922,52 @@ void SelectorLogSele(PyMOLGlobals *G,char *name)
     sele = SelectorIndexByName(G,name);
     if(sele>=0) {
       SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
-      for(a=cNDummyAtoms;a<I->NAtom;a++)
-        {
-          obj=I->Obj[I->Table[a].model];
-          at1=I->Table[a].atom;
-          if(SelectorIsMember(G,obj->AtomInfo[at1].selEntry,sele)) {
-            
-            if(cnt<0) {
-              if(first) {
-                switch(logging) {
-                case cPLog_pml:
-                  sprintf(line,"cmd.select(\"%s\",\"(",name);
-                  break;
-                case cPLog_pym:
-                  sprintf(line,"cmd.select(\"%s\",\"(",name);
-                  break;
-                }
-                append=0;
-                cnt=0;
-                first=0;
-              } else {
-                switch(logging) {
-                case cPLog_pml:
-                  sprintf(line,"cmd.select(\"%s\",\"(%s",name,name);
-                  break;
-                case cPLog_pym:
-                  sprintf(line,"cmd.select(\"%s\",\"(%s",name,name);
-                  break;
-                }
-                append=1;
-                cnt=0;
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
+        obj=I->Obj[I->Table[a].model];
+        at1=I->Table[a].atom;
+        if(SelectorIsMember(G,obj->AtomInfo[at1].selEntry,sele)) {
+          if(cnt<0) {
+            if(first) {
+              switch(logging) {
+              case cPLog_pml:
+                sprintf(line,"_ cmd.select(\"%s\",\"(",name);
+                break;
+              case cPLog_pym:
+                sprintf(line,"cmd.select(\"%s\",\"(",name);
+                break;
               }
-            }
-            if(append) 
-              strcat(line,"|");
-            if(robust) 
-              ObjectMoleculeGetAtomSeleFast(obj,at1,buf1);
-            else 
-              sprintf(buf1,"%s`%d",obj->Obj.Name,at1+1);
-            strcat(line,buf1);
-            append=1;
-            cnt++;
-            if(strlen(line)>(sizeof(OrthoLineType)/2)) {
-              strcat(line,")\")\n");
-              PLog(G,line,cPLog_no_flush);
-              cnt=-1;
+              append=0;
+              cnt=0;
+              first=0;
+            } else {
+              switch(logging) {
+              case cPLog_pml:
+                sprintf(line,"_ cmd.select(\"%s\",\"(%s",name,name);
+                break;
+              case cPLog_pym:
+                sprintf(line,"cmd.select(\"%s\",\"(%s",name,name);
+                break;
+              }
+              append=1;
+              cnt=0;
             }
           }
+          if(append) 
+            strcat(line,"|");
+          if(robust) 
+            ObjectMoleculeGetAtomSeleFast(obj,at1,buf1);
+          else 
+            sprintf(buf1,"%s`%d",obj->Obj.Name,at1+1);
+          strcat(line,buf1);
+          append=1;
+          cnt++;
+          if(strlen(line)>(sizeof(OrthoLineType)/2)) {
+            strcat(line,")\")\n");
+            PLog(G,line,cPLog_no_flush);
+            cnt=-1;
+          }
         }
+      }
       if(cnt>0) {
         strcat(line,")\")\n");
         PLog(G,line,cPLog_no_flush);

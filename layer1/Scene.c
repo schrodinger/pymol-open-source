@@ -3159,8 +3159,8 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
     int release_handled = false;
     if(I->ScrollBarActive) {
       if((x-I->Block->rect.left)<(SceneScrollBarWidth+SceneScrollBarMargin)) {
-    ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
-    release_handled = true;
+        ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
+        release_handled = true;
       }
     }
     if(!release_handled) {
@@ -3635,6 +3635,9 @@ static int SceneClick(Block *block,int button,int x,int y,
           break;
         default:
           EditorInactivate(G);
+          if(SettingGet(G,cSetting_logging)) {
+            PLog(G,"cmd.edit()",cPLog_pym);
+          }
           break;
         }
       }
@@ -3948,7 +3951,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               if(SettingGet(G,cSetting_logging)) {
                 objMol = (ObjectMolecule*)obj;            
                 ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
-                sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf1);
+                sprintf(buffer,"cmd.select('%s',\"%s(%s)\",enable=1)",selName,sel_mode_kw,buf1);
                 PLog(G,buffer,cPLog_pym);
               }
             }
@@ -3968,7 +3971,7 @@ static int SceneClick(Block *block,int button,int x,int y,
                   ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buffer,false);
                   sprintf(buf2,"(((%s) or %s(%s)) and not ((%s(%s)) and %s(%s)))",
                           selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
-                  sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf2);
+                  sprintf(buffer,"cmd.select('%s',\"%s(%s)\",enable=1)",selName,sel_mode_kw,buf2);
                   PLog(G,buffer,cPLog_pym);
                 }
               }
