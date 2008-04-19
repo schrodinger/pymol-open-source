@@ -22,19 +22,6 @@ import os
 import time
 import Queue
 
-class LogInterceptor:
-
-    def __init__(self,fifo):
-        self.fifo = fifo
-    
-    def write(self,command):
-        self.fifo.put(command)
-    
-    def flush(self):
-        pass
-
-    def close(self):
-        pass
     
 class PyMOLWriter: # this class transmits
 
@@ -45,15 +32,14 @@ class PyMOLWriter: # this class transmits
         self.cmd = pymol.cmd
         self.fifo = Queue.Queue(0)
         cmd = self.cmd
-        
-#        pymol._log_file = LogInterceptor(self.fifo)
-#        pymol.cmd.set("logging")
+
+        print " syncmol: writing to %s:%d"%(host,port)
         pymol.cmd.log_open(self.fifo)
         
         last_view = None
         last_frame = 0
         while 1:
-            time.sleep(0.05) # update 20x a second
+            time.sleep(0.1) # update 10x a second
             while not self.fifo.empty():
                 self._remote_call("do",(self.fifo.get(),),{})
             view = cmd.get_view(output=4)
@@ -97,6 +83,7 @@ class PyMOLReader: # this class receives
         
         ddbs.cmd = pymol.cmd
 
+        print " syncmol: reading from port %d"%(port)
         # now serve requests forever
         ddbs.keep_alive = 1
         while ddbs.keep_alive:
