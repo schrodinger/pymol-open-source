@@ -1,2 +1,8 @@
 PyMOL>quit
+================================= HEAP =================================
+OVHeap: Summary: Blocks expected 0, found 0, peaked at 79.
+OVHeap: Summary: Total bytes allocated 0x0 (0.000 MB).
+========================================================================
+Memory: 0 blocks expected, 0 found, 114 maximum allocated.
+Memory: current memory allocated 0 bytes (0.0 MB).
  PyMOL: normal program termination.
