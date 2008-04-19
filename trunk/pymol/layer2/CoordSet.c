@@ -560,7 +560,8 @@ void CoordSetFracToReal(CoordSet *I,CCrystal *cryst)
 }
 
 /*========================================================================*/
-void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType *ai,
+void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,
+                             AtomInfoType *ai,
                              float *v,int cnt,PDBInfoRec *pdb_info)
 {
   char *aType;
@@ -568,6 +569,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
   ResIdent resi; 
   ResName resn;
   Chain chain;
+  char formalCharge[3] = "";
   int rl;
   int literal = (int)SettingGet(G,cSetting_pdb_literal_names);
   int reformat = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
@@ -576,6 +578,14 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
   strcpy(resn,ai->resn); 
   if(SettingGetGlobal_b(G,cSetting_pdb_truncate_residue_name)) {
     resn[3]=0; /* enforce 3-letter residue name in PDB files */
+  }
+
+  if(SettingGetGlobal_b(G,cSetting_pdb_formal_charges)) {
+    if(ai->formalCharge>0) {
+      sprintf(formalCharge,"%d+",ai->formalCharge);
+    } else if(ai->formalCharge<0) {
+      sprintf(formalCharge,"%d-",-ai->formalCharge);
+    }
   }
 
   if(ai->hetatm)
@@ -739,9 +749,9 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
     sprintf(x,"%8.3f",v[0]); x[8]=0;
     sprintf(y,"%8.3f",v[1]); y[8]=0;
     sprintf(z,"%8.3f",v[2]); z[8]=0;
-    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s%6.2f%6.2f      %-4s%2s\n",
+    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s%6.2f%6.2f      %-4s%2s%2s\n",
                   aType,cnt+1,name,ai->alt,resn,
-                  ai->chain,resi,x,y,z,ai->q,ai->b,ai->segi,ai->elem);
+                  ai->chain,resi,x,y,z,ai->q,ai->b,ai->segi,ai->elem,formalCharge);
   } else {
     if(pdb_info->is_pqr_file && pdb_info->pqr_workarounds) {
       int non_num = false;

@@ -619,6 +619,7 @@ if __name__=='pymol.setting':
         cartoon_putty_transform            = 581
         rock                               = 582
         cone_quality                       = 583
+        pdb_formal_charges                 = 584
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

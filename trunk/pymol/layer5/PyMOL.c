@@ -748,6 +748,7 @@ typedef struct _CPyMOL {
   ov_word lex_cartoon_putty_transform;
   ov_word lex_rock;
   ov_word lex_cone_quality;
+  ov_word lex_pdb_formal_charges;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1489,7 +1490,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(cartoon_putty_transform,581);
   LEX_SETTING(rock,582);
   LEX_SETTING(cone_quality,583);
-
+  LEX_SETTING(pdb_formal_charges,584);
  return_OVstatus_SUCCESS;
 }
 

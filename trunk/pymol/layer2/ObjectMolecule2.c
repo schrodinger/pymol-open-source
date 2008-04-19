@@ -2667,6 +2667,15 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
             }
           }
           
+          p=ncopy(cc,p,2);
+          if((cc[1]=='-')||(cc[1]=='+')) {
+            char ctmp = cc[0];
+            cc[0] = cc[1];
+            cc[1] = ctmp;
+          }
+          if(!sscanf(cc,"%d",&ai->formalCharge))
+            ai->formalCharge=0;
+
           for(c=0;c<cRepCnt;c++) {
             ai->visRep[c] = false;
           }

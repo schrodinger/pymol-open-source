@@ -3612,5 +3612,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_cartoon_putty_transform, cPuttyTransformNormalizedNonlinear);
     set_b(I,cSetting_rock,0);
     set_i(I,cSetting_cone_quality, 18);
+    set_b(I,cSetting_pdb_formal_charges,1);
   }
 }
