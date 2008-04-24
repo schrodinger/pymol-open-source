@@ -46,7 +46,7 @@ class PyMOLWriter: # this class transmits
             deferred = 0
             if not self.fifo.empty():
                 if view != last_view:
-                    self._remote_call("do",("_ cmd.set('defer_updates')",))                    
+                    self._remote_call("do",("_ cmd.set('defer_updates')",),{'log':0})                    
                     deferred = 1
                 do_list = []
                 while not self.fifo.empty():
@@ -56,7 +56,7 @@ class PyMOLWriter: # this class transmits
                 self._remote_call("set_view",(view,))
                 last_view = view
                 if deferred:
-                    self._remote_call("do",("_ cmd.unset('defer_updates')",))
+                    self._remote_call("do",("_ cmd.unset('defer_updates')",),{'log':0})
             if not cmd.get_movie_playing():
                 frame = int(cmd.get("frame"))
                 if last_frame != frame:
