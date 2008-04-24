@@ -2,13 +2,22 @@
 
 # NOT FOR PRODUCTION USE! HIGHLY INSECURE!
 
-# in separate shells:
+# You need to launch two PyMOL simultaneously as follows...
+
+# MASTER/SLAVE (on same machine):
 
 # pymol syncmol.py -- recv 8000
-
 # pymol syncmol.py -- send 8000
 
-# then work with that second PyMOL...
+# MUTUAL SYNCHRONIZATION (on same machine):
+
+# pymol syncmol.py -- recv 8001 send 8002
+# pymol syncmol.py -- send 8001 recv 8002
+
+# MUTUAL SYNCHRONIZATION (over a lan):
+
+# on host1: pymol syncmol.py -- recv 8000 send host2:8000
+# on host2: pymol syncmol.py -- recv 8000 send host1:8000
 
 import threading
 import socket
