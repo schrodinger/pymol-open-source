@@ -146,6 +146,9 @@ class Cmd:
         self._validate_color_sc = global_cmd._validate_color_sc
         self._cache_set = global_cmd._cache_set
         self._cache_get = global_cmd._cache_get
+        self._cache_clear = global_cmd._cache_clear
+        self._cache_mark = global_cmd._cache_mark
+        self._cache_purge = global_cmd._cache_purge
 
         # now we create the command langauge
 

@@ -45,26 +45,35 @@ if __name__=='pymol.exporting':
         'read_only'   : 2,
         'clear'       : 3,
         'optimize'    : 4,
-        'rebuild'     : 5
     }
 
     cache_action_sc = Shortcut(cache_action_dict.keys())
 
-    def cache(action, scene='',state=-1,quiet=1):
+    def cache(action, scene='',state=-1,quiet=1,_self=cmd):
         r = DEFAULT_ERROR
         action = cache_action_dict[cache_action_sc.auto_err(str(action),'action')]
         if action == 0: # enable
-            cmd.set('cache_mode',2,quiet=quiet)
+            _self.set('cache_mode',2,quiet=quiet)
         elif action == 1: # disable
-            cmd.set('cache_mode',0,quiet=quiet)
+            _self.set('cache_mode',0,quiet=quiet)
         elif action == 2: # read_only
-            cmd.set('cache_mode',1,quiet=quiet)
+            _self.set('cache_mode',1,quiet=quiet)
         elif action == 3: # clear
-            pass
+            _self._cache_clear(_self=_self)
         elif action == 4: # optimize
-            pass
-        elif action == 5: # rebuild
-            pass
+            _self._cache_mark(_self=_self)
+            scene = str(scene)
+            scene_list = string.split(scene)
+            cache_mode = int(_self.get('cache_mode'))
+            _self.set('cache_mode',2)
+            if not len(scene_list):
+                scene_list = _self.get_scene_list()
+            for scene in scene_list:
+                print " cache: optimizing scene '%s'."%scene
+                cmd.scene(scene)
+                cmd.refresh()            
+            _self._cache_purge(-1,_self=_self)
+            _self.set('cache_mode',cache_mode)
         try:
             _self.lock(_self)
         finally:

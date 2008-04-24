@@ -2554,7 +2554,6 @@ static PyObject *CmdPop(PyObject *self,  PyObject *args)
 
 }
 
-
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;

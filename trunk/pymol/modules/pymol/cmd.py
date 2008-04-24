@@ -200,7 +200,12 @@ if __name__=='pymol.cmd':
         _validate_color_sc = internal._validate_color_sc
         _cache_get = internal._cache_get
         _cache_set = internal._cache_set
-        
+        _cache_clear = internal._cache_clear
+        _cache_purge = internal._cache_purge
+        _cache_mark = internal._cache_mark
+
+        # when adding, remember to also edit cmd2.py
+
         get_feedback = _get_feedback # legacy
         
         #######################################################################

@@ -6172,7 +6172,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
               matrix[ 4],matrix[ 5],matrix[ 6],matrix[ 7],
               matrix[ 8],matrix[ 9],matrix[10],matrix[11],
               matrix[12],matrix[13],matrix[14],matrix[15],
-              inp_state+1,log,sele_str,homogenous);
+              inp_state+1,0,sele_str,homogenous);
       PLog(G,line,cPLog_no_flush);
       break;
     case cPLog_pym:
@@ -6184,7 +6184,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
               matrix[ 4],matrix[ 5],matrix[ 6],matrix[ 7],
               matrix[ 8],matrix[ 9],matrix[10],matrix[11],
               matrix[12],matrix[13],matrix[14],matrix[15],
-              inp_state+1,log,sele_str,homogenous);
+              inp_state+1,0,sele_str,homogenous);
       PLog(G,line,cPLog_no_flush);
       break;
     default:

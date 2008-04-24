@@ -18,26 +18,50 @@ from cmd import DEFAULT_ERROR, loadable, _load2str, Shortcut, \
 
 # cache management:
 
+def _cache_validate(_self=cmd):
+    _pymol = _self._pymol
+    if not hasattr(_pymol,"_cache"):
+        _pymol._cache = []
+    if not hasattr(_pymol,"_cache_memory"):
+        _pymol._cache_memory = 0
+    
 def _cache_clear(_self=cmd):
     _pymol = _self._pymol
     _pymol._cache = []
     _pymol._cache_memory = 0
     
+def _cache_mark(_self=cmd):
+    _pymol = _self._pymol
+    _cache_validate(_self)
+    for entry in _self._pymol._cache: 
+        entry[5] = 0.0
+        
 def _cache_purge(max_size, _self=cmd):
     _pymol = _self._pymol
+    _cache_validate(_self)
     cur_size = reduce(add,map(lambda x:x[0],_pymol._cache))
-    now = time.time()
-    # sort by last access time
-    new_cache = map(lambda x:[(now-x[5])/x[4],x], _pymol._cache)
-    new_cache.sort()
-    new_cache = map(lambda x:x[1],new_cache)
-    # remove oldest entries one by one until size requirement is met
-    while (cur_size>max_size) and (len(new_cache)>1):
-        entry = new_cache.pop() 
-        cur_size = cur_size - entry[0]
-    _pymol._cache = new_cache
-    _pymol._cache_memory = cur_size
-
+    if max_size>=0: # purge to reduce size
+        now = time.time()
+        # sort by last access time
+        new_cache = map(lambda x:[(now-x[5])/x[4],x], _pymol._cache)
+        new_cache.sort()
+        new_cache = map(lambda x:x[1],new_cache)
+        # remove oldest entries one by one until size requirement is met
+        while (cur_size>max_size) and (len(new_cache)>1):
+            entry = new_cache.pop() 
+            cur_size = cur_size - entry[0]
+        _pymol._cache = new_cache
+        _pymol._cache_memory = cur_size
+    else: # purge to eliminate unused entries
+        new_cache = []
+        for entry in _pymol._cache:
+            if entry[5] == 0.0:
+                cur_size = cur_size - entry[0]
+            else:
+                new_cache.append(entry)
+        _pymol._cache = new_cache
+        _pymol._cache_memory = cur_size
+        
 def _cache_get(target, hash_size = None, _self=cmd):
     try:
         if hash_size == None:
@@ -58,10 +82,7 @@ def _cache_get(target, hash_size = None, _self=cmd):
 
 def _cache_set(new_entry, _self=cmd):
     _pymol = _self._pymol
-    if not hasattr(_pymol,"_cache"):
-        _pymol._cache = []
-    if not hasattr(_pymol,"_cache_memory"):
-        _pymol._cache_memory = 0
+    _cache_validate(_self)
     try:
         hash_size = len(new_entry[1])
         key = new_entry[1][0:hash_size]
