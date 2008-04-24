@@ -68,11 +68,16 @@ class PyMOLWriter: # this class transmits
                 
     def _remote_call(self,meth,args=(),kwds={}):
         result = None
-        if self.sock == None:
-            self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-            self.sock.connect((self.host,self.port))
-            self.send = self.sock.makefile('w')
-            self.recv = self.sock.makefile('r')
+        while self.sock == None:
+            try:
+                self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+                self.sock.connect((self.host,self.port))
+                self.send = self.sock.makefile('w')
+                self.recv = self.sock.makefile('r')
+            except:
+                self.sock=None
+                print "retrying..."
+                time.sleep(1)
         cPickle.dump(meth,self.send,1) # binary by default
         cPickle.dump(args,self.send,1)
         cPickle.dump(kwds,self.send,1)
