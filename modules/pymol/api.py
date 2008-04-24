@@ -127,12 +127,13 @@ from selecting import \
 
 #--------------------------------------------------------------------
 from exporting import \
-      png,                \
-      export_coords,      \
       copy_image,         \
+      cache,              \
+      export_coords,      \
       get_pdbstr,         \
       get_session,        \
       multisave,          \
+      png,                \
       save               
 
 #--------------------------------------------------------------------

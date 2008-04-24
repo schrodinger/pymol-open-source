@@ -236,6 +236,30 @@ static PyObject *APIAutoNone(PyObject *result) /* automatically owned Py_None */
   return(result);
 }
 
+#if 0
+static PyObject *CmdCache(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  int action;
+  char *scene;
+  int state;
+  ok = PyArg_ParseTuple(args,"Oisi",&self,&actions,&scene,&state);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if (ok) {
+    if(!ref_object[0]) ref_object = NULL;
+    if( (ok=APIEnterNotModal(G)) ) {
+      APIExit(G);
+    }
+  }
+  return(APIResultOk(ok));
+}
+#endif
+
 static PyObject *CmdPseudoatom(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -8114,6 +8138,7 @@ static PyMethodDef Cmd_methods[] = {
   {"bond",                  CmdBond,                 METH_VARARGS },
   {"busy_draw",             CmdBusyDraw,             METH_VARARGS },
   {"button",                CmdButton,               METH_VARARGS },
+  /*  {"cache",                 CmdCache,                METH_VARARGS },*/
   {"cartoon",               CmdCartoon,              METH_VARARGS },
   {"center",                CmdCenter,               METH_VARARGS },
   {"clip",	                CmdClip,                 METH_VARARGS },

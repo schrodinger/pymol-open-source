@@ -132,7 +132,6 @@ if __name__=='pymol.parser':
         # main parser routine
 
         def parse(self,s,secure):
-
             layer = self.layer[self.nest]
             self.result = None
         # report any uncaught errors...

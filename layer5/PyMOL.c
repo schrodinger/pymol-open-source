@@ -3331,7 +3331,9 @@ int PyMOL_Idle(CPyMOL *I)
     did_work = true;
   }
   
-  PFlush(G);
+  if(PFlush(G)) {
+    did_work = true;
+  }
   
 #ifndef _PYMOL_NOPY
   if(I->PythonInitStage>0) {

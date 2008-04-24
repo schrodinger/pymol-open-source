@@ -1270,10 +1270,8 @@ static void MainBusyIdle(void)
       ENDFD;
 
     if(PyMOL_Idle(PyMOLInstance)) {
-      if(I->IdleMode<2) {
-        I->IdleMode = 2;
-        I->IdleTime = UtilGetSeconds(G);
-      }
+      /* we did some work, so keep PyMOL responsive */
+      I->IdleMode = 1;
     } else if(!I->IdleMode) {
       I->IdleMode = 1;
     } else if(I->IdleMode == 1) {

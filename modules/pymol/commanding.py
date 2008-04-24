@@ -334,8 +334,12 @@ USAGE (PYTHON)
             cmmd_list = commands
         else:
             cmmd_list = [ commands ]
+        n_cmmd = len(cmmd_list)
+        if n_cmmd>1: # if processing a list of commands, defer updates
+            defer = _self.get_setting_legacy("defer_updates")
+            _self.set('defer_updates',1)
         for cmmd in cmmd_list:
-            lst = string.split(string.replace(cmmd,chr(13),chr(10)),chr(10))
+            lst = string.split(string.replace(cmmd,chr(13),chr(10)),chr(10)) 
             if len(lst)<2:
                 for a in lst:
                     if(len(a)):
@@ -344,22 +348,21 @@ USAGE (PYTHON)
                             r = _cmd.do(_self._COb,a,log,echo)
                         finally:
                             _self.unlock(r,_self)
-                        
+
                     else:
                         r = DEFAULT_SUCCESS
             else:
-                defer = _self.get_setting_legacy("defer_updates")
-                _self.set('defer_updates',1)
-                for a in lst:
-                    if(len(a)):
-                        try:
-                            _self.lock(_self)
+                try:
+                    _self.lock(_self)
+                    for a in lst:
+                        if len(a):
                             r = _cmd.do(_self._COb,a,log,echo)
-                        finally:
-                            _self.unlock(r,_self)
-                    else:
-                        r = DEFAULT_SUCCESS
-                _self.set('defer_updates',defer)
+                        else:
+                            r = DEFAULT_SUCCESS
+                finally:
+                    _self.unlock(r,_self)
+        if n_cmmd>1:
+            _self.set('defer_updates',defer)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 

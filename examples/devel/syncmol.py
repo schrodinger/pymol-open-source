@@ -40,12 +40,21 @@ class PyMOLWriter: # this class transmits
         last_frame = 0
         while 1:
             time.sleep(0.1) # update 10x a second
-            while not self.fifo.empty():
-                self._remote_call("do",(self.fifo.get(),),{})
             view = cmd.get_view(output=4)
+            deferred = 0
+            if not self.fifo.empty():
+                if view != last_view:
+                    self._remote_call("do",("_ cmd.set('defer_updates')",))                    
+                    deferred = 1
+                do_list = []
+                while not self.fifo.empty():
+                    do_list.append(self.fifo.get())
+                self._remote_call("do",(do_list,))
             if view != last_view:
                 self._remote_call("set_view",(view,))
                 last_view = view
+                if deferred:
+                    self._remote_call("do",("_ cmd.unset('defer_updates')",))
             if not cmd.get_movie_playing():
                 frame = int(cmd.get("frame"))
                 if last_frame != frame:
@@ -126,7 +135,6 @@ class _PyMOLRequestHandler(SocketServer.StreamRequestHandler):
 
              # get cmd method pointer
              meth_obj = getattr(self.server.cmd,method)
-#          print method,args,kw
 
              # call method and return result
              cPickle.dump(apply(meth_obj,args,kw),self.wfile,1) # binary by default

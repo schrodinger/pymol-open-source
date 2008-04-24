@@ -89,6 +89,9 @@ static PyObject *P_sleep = NULL;
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 
+static void PUnlockAPIWhileBlocked(PyMOLGlobals *G);
+static void PLockAPIWhileBlocked(PyMOLGlobals *G);
+
 #define P_log_file_str "_log_file"
 
 #define xxxPYMOL_NEW_THREADS
@@ -2066,35 +2069,44 @@ void PLogFlush(PyMOLGlobals *G)
     }
 }
 
-void PFlush(PyMOLGlobals *G) {  
+int PFlush(PyMOLGlobals *G) {  
   /* NOTE: ASSUMES unblocked Python threads and a locked API */
   PyObject *err;
   char buffer[OrthoLineLength+1];
-  while(OrthoCommandOut(G,buffer)) {
-    PBlockAndUnlockAPI(G);
-    if(PyErr_Occurred()) {
-      PyErr_Print();
-      PRINTFB(G,FB_Python,FB_Errors)
-        " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
-        ENDFB(G);
+  int did_work = false;
+  if(OrthoCommandWaiting(G)) {
+    did_work = true;
+    PBlock(G);
+    while(OrthoCommandOut(G,buffer)) {
+      PUnlockAPIWhileBlocked(G);
+      if(PyErr_Occurred()) {
+        PyErr_Print();
+        PRINTFB(G,FB_Python,FB_Errors)
+          " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
+          ENDFB(G);
+      }
+      PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0)); 
+      err = PyErr_Occurred();
+      if(err) {
+        PyErr_Print();
+        PRINTFB(G,FB_Python,FB_Errors)
+          " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
+          ENDFB(G);
+      }
+      PLockAPIWhileBlocked(G);
     }
-    PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0)); 
-    err = PyErr_Occurred();
-    if(err) {
-      PyErr_Print();
-      PRINTFB(G,FB_Python,FB_Errors)
-        " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
-        ENDFB(G);
-    }
-    PLockAPIAndUnblock(G);
+    PUnblock(G);
   }
+  return did_work;
 }
 
-void PFlushFast(PyMOLGlobals *G) {
+int PFlushFast(PyMOLGlobals *G) {
   /* NOTE: ASSUMES we currently have blocked Python threads and an unlocked API */ 
   PyObject *err;
   char buffer[OrthoLineLength+1];
+  int did_work = false;
   while(OrthoCommandOut(G,buffer)) {
+    did_work = true;
     PRINTFD(G,FB_Threads)
       " PFlushFast-DEBUG: executing '%s' as thread 0x%x\n",buffer,
       PyThread_get_thread_ident()
@@ -2114,6 +2126,7 @@ void PFlushFast(PyMOLGlobals *G) {
         ENDFB(G);
     }
   }
+  return did_work;
 }
 
 
@@ -2292,6 +2305,16 @@ void PUnlockAPI(PyMOLGlobals *G)
   PUnblock(G);
 }
 
+static void PUnlockAPIWhileBlocked(PyMOLGlobals *G)
+{
+  PXDecRef(PyObject_CallFunction(G->P_inst->unlock,"iO",-1,G->P_inst->cmd));
+}
+
+
+static void PLockAPIWhileBlocked(PyMOLGlobals *G)
+{
+  PXDecRef(PyObject_CallFunction(G->P_inst->lock,"O",G->P_inst->cmd));
+}
 
 int PTryLockAPIAndUnblock(PyMOLGlobals *G)
 {

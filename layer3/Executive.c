@@ -6111,6 +6111,7 @@ int ExecutiveTransformObjectSelection2(PyMOLGlobals *G,CObject *obj,int state,
       } else {
         ObjectMoleculeTransformSelection(objMol,state,sele,matrix,log,s1,homogenous,global);
       }
+      EditorDihedralInvalid(G,objMol);
       SceneInvalidate(G);
     }
     break;
