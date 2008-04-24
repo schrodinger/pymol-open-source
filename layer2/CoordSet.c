@@ -569,21 +569,22 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,
   ResIdent resi; 
   ResName resn;
   Chain chain;
-  char formalCharge[3] = "";
+  char formalCharge[4];
   int rl;
   int literal = (int)SettingGet(G,cSetting_pdb_literal_names);
   int reformat = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
   WordType x,y,z;
 
+  formalCharge[0]=0;
   strcpy(resn,ai->resn); 
   if(SettingGetGlobal_b(G,cSetting_pdb_truncate_residue_name)) {
     resn[3]=0; /* enforce 3-letter residue name in PDB files */
   }
 
   if(SettingGetGlobal_b(G,cSetting_pdb_formal_charges)) {
-    if(ai->formalCharge>0) {
+    if((ai->formalCharge>0)&&(ai->formalCharge<10)) {
       sprintf(formalCharge,"%d+",ai->formalCharge);
-    } else if(ai->formalCharge<0) {
+    } else if((ai->formalCharge<0)&&(ai->formalCharge>-10)) {
       sprintf(formalCharge,"%d-",-ai->formalCharge);
     }
   }

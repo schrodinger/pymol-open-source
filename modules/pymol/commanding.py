@@ -354,9 +354,14 @@ USAGE (PYTHON)
             else:
                 try:
                     _self.lock(_self)
+                    do_flush = ((thread.get_ident() == _self._pymol.glutThread)
+                                and _self.lock_api_allow_flush)
                     for a in lst:
                         if len(a):
                             r = _cmd.do(_self._COb,a,log,echo)
+                            if do_flush:
+                                _self.unlock(r,_self) # flushes
+                                _self.lock(_self)
                         else:
                             r = DEFAULT_SUCCESS
                 finally:
