@@ -26,6 +26,8 @@ import Queue
 class PyMOLWriter: # this class transmits
 
     def __init__(self, pymol, host='localhost', port=8000):
+        host = str(host)
+        port = int(port)
         self.host = host
         self.port = port
         self.sock = None
