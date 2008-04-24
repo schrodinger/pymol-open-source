@@ -51,7 +51,7 @@ class PyMOLWriter: # this class transmits
                 do_list = []
                 while not self.fifo.empty():
                     do_list.append(self.fifo.get())
-                self._remote_call("do",(do_list,))
+                self._remote_call("do",(do_list,),{'log':0})
             if view != last_view:
                 self._remote_call("set_view",(view,))
                 last_view = view
