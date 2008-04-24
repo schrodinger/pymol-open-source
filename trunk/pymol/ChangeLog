@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2008-04-23 Warren L. DeLano <warren@delsci.com>	
+
+	* fixed more logging-related bugs
+
+	* optimized command-queue flushing for better performance
+
 2008-04-19 Warren L. DeLano <warren@delsci.com>	
 
 	* added support for PDB formal charges.

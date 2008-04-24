@@ -98,7 +98,7 @@ def unlock(result=None,_self=cmd): # INTERNAL
             del e
             # then give PyMOL increasingly longer intervals to get its work done...
             w = 0.0005  # NOTE: affects API perf. for "do" and delayed-exec
-            while _cmd.wait_queue(_self._COb): 
+            while _cmd.wait_queue(_self._COb):
                 e = threading.Event() # abdicate control for a 100 usec for quick tasks
                 e.wait(w)
                 del e

@@ -39,6 +39,39 @@ if __name__=='pymol.exporting':
         if _self._raising(r,_self): raise QuietException         
         return r
 
+    cache_action_dict = {
+        'enable'      : 0,
+        'disable'     : 1,
+        'read_only'   : 2,
+        'clear'       : 3,
+        'optimize'    : 4,
+        'rebuild'     : 5
+    }
+
+    cache_action_sc = Shortcut(cache_action_dict.keys())
+
+    def cache(action, scene='',state=-1,quiet=1):
+        r = DEFAULT_ERROR
+        action = cache_action_dict[cache_action_sc.auto_err(str(action),'action')]
+        if action == 0: # enable
+            cmd.set('cache_mode',2,quiet=quiet)
+        elif action == 1: # disable
+            cmd.set('cache_mode',0,quiet=quiet)
+        elif action == 2: # read_only
+            cmd.set('cache_mode',1,quiet=quiet)
+        elif action == 3: # clear
+            pass
+        elif action == 4: # optimize
+            pass
+        elif action == 5: # rebuild
+            pass
+        try:
+            _self.lock(_self)
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise QuietException         
+        return r
+
     def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1,_self=cmd):
         '''
 DESCRIPTION

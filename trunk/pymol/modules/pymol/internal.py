@@ -18,25 +18,33 @@ from cmd import DEFAULT_ERROR, loadable, _load2str, Shortcut, \
 
 # cache management:
 
+def _cache_clear(_self=cmd):
+    _pymol = _self._pymol
+    _pymol._cache = []
+    _pymol._cache_memory = 0
+    
 def _cache_purge(max_size, _self=cmd):
     _pymol = _self._pymol
     cur_size = reduce(add,map(lambda x:x[0],_pymol._cache))
     now = time.time()
+    # sort by last access time
     new_cache = map(lambda x:[(now-x[5])/x[4],x], _pymol._cache)
     new_cache.sort()
     new_cache = map(lambda x:x[1],new_cache)
+    # remove oldest entries one by one until size requirement is met
     while (cur_size>max_size) and (len(new_cache)>1):
-        entry = new_cache.pop()
+        entry = new_cache.pop() 
         cur_size = cur_size - entry[0]
     _pymol._cache = new_cache
     _pymol._cache_memory = cur_size
-    
+
 def _cache_get(target, hash_size = None, _self=cmd):
     try:
         if hash_size == None:
             hash_size = len(target[1])
         key = target[1][0:hash_size]
-        for entry in _self._pymol._cache:
+        # should optimize this with a dictionary lookup, key -> index in _cache
+        for entry in _self._pymol._cache: 
             if entry[1][0:hash_size] == key:
                 if entry[2] == target[2]:
                     while len(entry)<6:
@@ -52,7 +60,7 @@ def _cache_set(new_entry, _self=cmd):
     _pymol = _self._pymol
     if not hasattr(_pymol,"_cache"):
         _pymol._cache = []
-    elif not hasattr(_pymol,"_cache_memory"):
+    if not hasattr(_pymol,"_cache_memory"):
         _pymol._cache_memory = 0
     try:
         hash_size = len(new_entry[1])

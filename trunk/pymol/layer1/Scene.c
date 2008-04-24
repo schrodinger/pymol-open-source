@@ -3732,6 +3732,7 @@ static int SceneClick(Block *block,int button,int x,int y,
         }
       } else {
         EditorInactivate(G);
+        EditorLogState(G,false); 
       }
       SceneInvalidate(G);
       break;

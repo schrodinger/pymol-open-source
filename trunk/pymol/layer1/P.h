@@ -58,8 +58,8 @@ Z* -------------------------------------------------------------------
 #define PBlockAndUnlockAPI(G)
 #define PLockAPIAndUnblock(G)
 #define PTryLockAPIAndUnblock(G)
-#define PFlush(G)
-#define PFlushFast(G)
+#define PFlush(G) 0
+#define PFlushFast(G) 0
 #define PParse(G,s)
 #define PDo(G,s)
 
@@ -147,8 +147,8 @@ void PBlockAndUnlockAPI(PyMOLGlobals *G);
 void PLockAPIAndUnblock(PyMOLGlobals *G);
 int PTryLockAPIAndUnblock(PyMOLGlobals *G);
 
-void PFlush(PyMOLGlobals *G);
-void PFlushFast(PyMOLGlobals *G);
+int PFlush(PyMOLGlobals *G);
+int PFlushFast(PyMOLGlobals *G);
 void PXDecRef(PyObject *obj);
 PyObject *PXIncRef(PyObject *obj);
 void PSGIStereo(PyMOLGlobals *G,int flag);
