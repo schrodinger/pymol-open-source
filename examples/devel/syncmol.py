@@ -43,17 +43,23 @@ class PyMOLWriter: # this class transmits
         while 1:
             time.sleep(0.1) # update 10x a second
             view = cmd.get_view(output=4)
+            try:
+                cmd.lock()
+                if hasattr(cmd,"_last_view"):
+                    last_view = cmd._last_view
+            finally:
+                cmd.unlock(-1)
             deferred = 0
             if not self.fifo.empty():
                 if view != last_view:
-                    self._remote_call("do",("_ cmd.set('defer_updates')",),{'log':0})                    
+                    self._remote_call("do",("_ cmd.set('defer_updates')",),{'log':0})
                     deferred = 1
                 do_list = []
                 while not self.fifo.empty():
                     do_list.append(self.fifo.get())
                 self._remote_call("do",(do_list,),{'log':0})
             if view != last_view:
-                self._remote_call("set_view",(view,))
+                self._remote_call("remote_set_view",(view,))
                 last_view = view
                 if deferred:
                     self._remote_call("do",("_ cmd.unset('defer_updates')",),{'log':0})
@@ -85,8 +91,16 @@ class PyMOLWriter: # this class transmits
         result = cPickle.load(self.recv)
         return result
 
-class PyMOLReader: # this class receives
+def remote_set_view(view,_self=cmd):
+    try:
+        _self.lock()
+        _self._last_view = view
+        _self.set_view(view)
+    finally:
+        _self.unlock(-1)
     
+class PyMOLReader: # this class receives
+
     def __init__(self,pymol,port):
 
         sys.setcheckinterval(0)
@@ -96,7 +110,8 @@ class PyMOLReader: # this class receives
         ddbs = _PyMOLReader(server_address, _PyMOLRequestHandler)  
 
         # bind pymol instance to the reader
-        
+
+        pymol.cmd.remote_set_view = remote_set_view
         ddbs.cmd = pymol.cmd
 
         print " syncmol: reading from port %d"%(port)
