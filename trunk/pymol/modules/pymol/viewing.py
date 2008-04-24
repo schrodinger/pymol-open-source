@@ -864,6 +864,7 @@ SEE ALSO
             try:
                 view = eval(re.sub(r"[^0-9,\-\)\(\.]","",view))
             except:
+                traceback.print_exc()
                 print "Error: bad view argument; should be a sequence of 18 floats."
                 raise QuietException
         if len(view)!=18:
