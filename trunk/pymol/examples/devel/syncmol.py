@@ -106,12 +106,15 @@ class _PyMOLReader(SocketServer.ThreadingTCPServer):
           host, port = self.socket.getsockname()
           if not host or host == '0.0.0.0':
                 host = socket.gethostname()
-          hostname, hostnames, hostaddrs = socket.gethostbyaddr(host)
-          if '.' not in hostname:
-                for host in hostnames:
-                     if '.' in host:
-                          hostname = host
-                          break
+          try:
+              hostname, hostnames, hostaddrs = socket.gethostbyaddr(host)
+              if '.' not in hostname:
+                    for host in hostnames:
+                         if '.' in host:
+                              hostname = host
+                              break
+          except:
+              hostname = 'localhost'
           self.server_name = hostname
           self.server_port = port
 
