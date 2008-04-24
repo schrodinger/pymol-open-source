@@ -6159,10 +6159,8 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
     logging = (int)SettingGet(G,cSetting_logging);
     if(sele>=0) {
       strcat(sele_str,sname);
-      strcat(sele_str,"'");
     }
-    else
-      sele_str[0]=0;
+    strcat(sele_str,"'");
     switch(logging) {
     case cPLog_pml:
       sprintf(line,
