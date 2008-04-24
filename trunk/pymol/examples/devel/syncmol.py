@@ -47,6 +47,7 @@ class PyMOLWriter: # this class transmits
                 cmd.lock()
                 if hasattr(cmd,"_last_view"):
                     last_view = cmd._last_view
+                    del cmd._last_view
             finally:
                 cmd.unlock(-1)
             deferred = 0
