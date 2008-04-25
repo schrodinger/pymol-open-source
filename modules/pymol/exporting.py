@@ -49,7 +49,43 @@ if __name__=='pymol.exporting':
 
     cache_action_sc = Shortcut(cache_action_dict.keys())
 
-    def cache(action, scene='',state=-1,quiet=1,_self=cmd):
+    def cache(action, scenes='',state=-1, quiet=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "cache" manages storage of precomputed results, such as
+    molecular surfaces.
+
+USAGE
+
+    cache action [, scenes [, state ]]
+
+ARGUMENTS
+
+    action = string: enable, disable, read_only, clear, or optimize
+
+    scenes = string: a space-separated list of scene names (default: '')
+
+    state = integer: state index (default: -1)
+
+EXAMPLES
+
+    cache enable
+    cache optimize
+    cache optimize, F1 F2 F5
+
+NOTES
+
+    "cache optimize" will iterate through the list of scenes provided
+    (or all defined scenes), compute any missing surfaces, and store
+    them in the cache for later reuse.
+    
+PYMOL API
+
+    cmd.cache(string action, string scenes, int state, int quiet)
+
+    '''
+        
         r = DEFAULT_ERROR
         action = cache_action_dict[cache_action_sc.auto_err(str(action),'action')]
         if action == 0: # enable
@@ -62,18 +98,22 @@ if __name__=='pymol.exporting':
             _self._cache_clear(_self=_self)
         elif action == 4: # optimize
             _self._cache_mark(_self=_self)
-            scene = str(scene)
-            scene_list = string.split(scene)
+            scenes = str(scenes)
+            scene_list = string.split(scenes)
             cache_mode = int(_self.get('cache_mode'))
             _self.set('cache_mode',2)
             if not len(scene_list):
                 scene_list = _self.get_scene_list()
             for scene in scene_list:
+                scene = string.strip(scene)
                 print " cache: optimizing scene '%s'."%scene
                 cmd.scene(scene)
                 cmd.refresh()            
             _self._cache_purge(-1,_self=_self)
-            _self.set('cache_mode',cache_mode)
+            if cache_mode:
+                _self.set('cache_mode',cache_mode)
+            else:
+                _self.set('cache_mode',1)
         try:
             _self.lock(_self)
         finally:
@@ -140,9 +180,7 @@ NOTES
                     _self.unlock(r,_self)
                 try:
                     session['session'] = copy.deepcopy(_self._pymol.session)
-                    if cache<0:
-                        cache = _self.get_setting_int('cache_mode')
-                    if cache:
+                    if cache and hasattr(_self._pymol,'_cache'):
                         session['cache'] = _self._pymol._cache
                 except:
                     traceback.print_exc()
