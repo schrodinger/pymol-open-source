@@ -6891,10 +6891,9 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       "CmdLoad-DEBUG %s %s %d %d %d %d\n",
       oname,fname,frame,type,finish,discrete
       ENDFD;
-    if(multiplex==-2) /* use setting default value */
+    if(multiplex==-2) /* means use setting default value */
       multiplex = SettingGetGlobal_i(G,cSetting_multiplex);
-    if(multiplex<0) /* default behavior is not to multiplex */
-      multiplex = 0;
+    /* default is -1 -> default/automatic behaviors */
 
     if(discrete<0) {/* use default discrete behavior for the file format 
                      * this will be the case for MOL2 and SDF */ 

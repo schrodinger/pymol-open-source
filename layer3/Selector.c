@@ -3697,22 +3697,20 @@ int SelectorCountStates(PyMOLGlobals *G,int sele)
   ObjectMolecule *obj;
   SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
   if(I->NAtom) {
-    for(a=cNDummyAtoms;a<I->NAtom;a++)
-      {
-        obj=I->Obj[I->Table[a].model];
-        if(obj!=last) {
-          at1=I->Table[a].atom;
-          if(SelectorIsMember(G,obj->AtomInfo[at1].selEntry,sele)) {
-            if(obj->Obj.fGetNFrame) {
-              n_frame=obj->Obj.fGetNFrame((CObject*)obj);
-              if(result<n_frame)
-                result=n_frame;
-            }
-            last=obj;
-          
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+      obj=I->Obj[I->Table[a].model];
+      if(obj!=last) {
+        at1=I->Table[a].atom;
+        if(SelectorIsMember(G,obj->AtomInfo[at1].selEntry,sele)) {
+          if(obj->Obj.fGetNFrame) {
+            n_frame=obj->Obj.fGetNFrame((CObject*)obj);
+            if(result<n_frame)
+              result=n_frame;
           }
+          last=obj;
         }
       }
+    }
   }
   return(result);
 }

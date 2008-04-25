@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2008-04-25 Warren L. DeLano <warren@delsci.com>	
+
+	* adjusted save behavior so that selections exclusively comprised
+	  of static singleton atoms are written out even when the global
+	  state index is not unity
+	
+	* changed behavior of multiplex=0 option for concatenated PDBs
+	
 2008-04-23 Warren L. DeLano <warren@delsci.com>	
 
 	* made additional tweaks to command flushing

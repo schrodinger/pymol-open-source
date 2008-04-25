@@ -1481,7 +1481,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int truncate_resn = SettingGetGlobal_b(G,cSetting_pdb_truncate_residue_name);
   char *tags_in = SettingGetGlobal_s(G,cSetting_pdb_echo_tags), *tag_start[PDB_MAX_TAGS];
   int n_tags = 0;
-  int newModelFlag = false;
+  int foundNextModelFlag = false;
   int ssFlag = false;
   int ss_resv1=0,ss_resv2=0;
   ResIdent ss_resi1="",ss_resi2="";
@@ -1549,7 +1549,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
 
   if(buffer == *restart_model)
     only_read_one_model = true;
-  else if(info && info->multiplex) {
+  else if(info && (info->multiplex>0)) {
     only_read_one_model = true;    
     if(!info->multi_object_status) { /* figure out if this is a multi-object (multi-HEADER) pdb file */
       info->multi_object_status = get_multi_object_status(p);
@@ -1943,13 +1943,21 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
              (pp[1]=='N')&&
              (pp[2]=='D')) {
             (*next_pdb) = check_next_pdb_object(nextline(pp),true);
-            is_end_of_object = true;
+            if(info && (info->multiplex == 0)) {
+              /* multiplex == 0:  FORCED multimodel behavior with concatenated PDB files */
+              (*restart_model) = (*next_pdb);
+              (*next_pdb) = NULL;
+              foundNextModelFlag = true;
+              info->multi_object_status = -1;
+            } else {
+              is_end_of_object = true;
+            }
           } else if((pp[0]=='M')&& /* not a new object...just a new state (model) */
                     (pp[1]=='O')&&
                     (pp[2]=='D')&&
                     (pp[3]=='E')&&
                     (pp[4]=='L')) {
-            if(info && info->multiplex) { /* end object if we're multiplexing */
+            if(info && (info->multiplex>0)) { /* end object if we're multiplexing */
               (*next_pdb) = check_next_pdb_object(pp, true);
               (*restart_model) = NULL;
             } else 
@@ -1979,6 +1987,15 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
              (cc[5] =='L'))) { /* NOTE: this test seems unnecessary given strcmp above...*/
           if(!*next_pdb) {
             (*next_pdb) = check_next_pdb_object(pp, false);
+          }
+          if((*next_pdb) && info && (!info->multiplex) && !(*restart_model)) {
+            /* multiplex == 0:  FORCED multimodel behavior with concatenated PDB files */
+            (*restart_model) = (*next_pdb);
+            (*next_pdb) = NULL;
+            foundNextModelFlag = true;
+            info->multi_object_status = -1; 
+            is_end_of_object = false;
+            break;
           }
           if(*next_pdb) { /* we've found another object... */
             if(*restart_model) 
@@ -2669,17 +2686,18 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           
           p=ncopy(cc,p,2);
           if((cc[1]=='-')||(cc[1]=='+')) {
+            /* only read formal charge when sign is present */
             char ctmp = cc[0];
             cc[0] = cc[1];
             cc[1] = ctmp;
+            if(!sscanf(cc,"%d",&ai->formalCharge))
+              ai->formalCharge=0;
           }
-          if(!sscanf(cc,"%d",&ai->formalCharge))
-            ai->formalCharge=0;
 
           for(c=0;c<cRepCnt;c++) {
             ai->visRep[c] = false;
           }
-           
+          
           /* end normal PDB */
         } else if(info&&info->is_pqr_file) {
           /* PQR file format...not well defined, but basically PDB
@@ -2725,8 +2743,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           ai->segi
           ENDFD;
 
-        a+=3;
-        atomCount++;
+        if(atomCount<(nAtom-1)) { /* safety */
+          a+=3;
+          atomCount++;
+        }
       }
     p=nextline(p);
   }
@@ -2847,25 +2867,29 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   if(atInfoPtr)
 	 *atInfoPtr = atInfo;
 
-  if(*restart_model) { /* if plan on need to reading another object, 
-                    make sure there is another model to read...*/
+  if((*restart_model)&&(!foundNextModelFlag)) {
+    /* if plan on need to reading another model into this object, 
+       make sure there is another model to read...*/
     p=*restart_model;
-    newModelFlag=false;
     while(*p) {
-        
-        if((p[0]== 'M')&&(p[1]=='O')&&(p[2]=='D')&&
-           (p[3]=='E')&&(p[4]=='L')&&(p[5]==' ')) {
-          newModelFlag=true;
-          break;
-        }
-        if((p[0]== 'E')&&(p[1]=='N')&&(p[2]=='D')&&
-           (p[3]=='M')&&(p[4]=='D')&&(p[5]=='L')) {
-          newModelFlag=true;
-          break;
-        }
-        p=nextline(p);
+      if((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='A')&&
+        (p[3]=='D')&&(p[4]=='E')&&(p[5]=='R')) {
+        /* seeing HEADER means we're off the end of the existing file */
+        break;
+      }
+      if((p[0]== 'M')&&(p[1]=='O')&&(p[2]=='D')&&
+         (p[3]=='E')&&(p[4]=='L')&&(p[5]==' ')) {
+        foundNextModelFlag=true;
+        break;
+      }
+      if((p[0]== 'E')&&(p[1]=='N')&&(p[2]=='D')&&
+         (p[3]=='M')&&(p[4]=='D')&&(p[5]=='L')) {
+        foundNextModelFlag=true;
+        break;
+      }
+      p=nextline(p);
     }
-    if(!newModelFlag) {
+    if(!foundNextModelFlag) {
       *restart_model=NULL;
     }
   }

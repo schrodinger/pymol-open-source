@@ -8183,7 +8183,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
     
     if(ok && ! skip_out) {
       
-      if((discrete<0) && (restart) && isNew && (!multiplex)) { 
+      if((discrete<0) && (restart) && isNew && (multiplex<=0)) { 
         /* if default discrete behavior and new object, with
            multi-coordinate set file, and not multiplex, then set
            discrete */
