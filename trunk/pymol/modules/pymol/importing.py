@@ -609,7 +609,7 @@ SEE ALSO
                 go_to_first_scene = 1                
                 ftype = loadable.pse
             elif ftype == loadable.pse:
-                if int(_self.get_setting_legacy("presentation_mode"))!=0:
+                if int(_self.get_setting_legacy("presentation"))!=0:
                     go_to_first_scene = 1
                     
     # get object name
