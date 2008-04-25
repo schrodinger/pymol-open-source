@@ -2985,6 +2985,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
     char *start_at = buffer;
     int is_repeat_pass = false;
     int eff_frame = frame;
+    int is_new = false;
     CObject *tmpObj;
 
     VLACheck(processed,ProcPDBRec,n_processed);
@@ -3003,6 +3004,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
     next_pdb = NULL;
     if(!origObj) {
 
+      is_new = true;
       pdb_name[0]=0;
       model_number = 0;
       obj=(CObject*)ObjectMoleculeReadPDBStr(G,(ObjectMolecule*)origObj,
@@ -3011,32 +3013,58 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
                                              &next_pdb,pdb_info,quiet, 
                                              &model_number);
 
-      if(obj) {
-        if(next_pdb) { /* NOTE: if set, assume that multiple PDBs are present in the file */
-          repeat_flag=true;
-        }
+    } else {
+      model_number = 0;
+      ObjectMoleculeReadPDBStr(G,(ObjectMolecule*)origObj,
+                               start_at,eff_frame,discrete,&current->m4x,
+                               pdb_name,&next_pdb,pdb_info,quiet, &model_number);
+      
+      
+      if(finish) {
+        ExecutiveUpdateObjectSelection(G,origObj);
+        ExecutiveDoZoom(G,origObj,false,zoom,quiet);
+      }
+      if(eff_frame<0)
+        eff_frame = ((ObjectMolecule*)origObj)->NCSet-1;
+      if(buf) {
+        if(!is_string) 
+          sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
+                  fname,oname,eff_frame+1);
+        else
+          sprintf(buf," CmdLoad: PDB-string appended into object \"%s\", state %d.\n",
+                  oname,eff_frame+1);
+      }
+      obj = origObj;
+    }
 
+    if(obj) {
+      if(next_pdb) { /* NOTE: if set, assume that multiple PDBs are present in the file */
+        repeat_flag=true;
+      }
+    }
+
+    if(is_new) {
+      if(obj) {
         if(current->m4x.xname_flag) { /* USER XNAME trumps the PDB Header name */                 
           ObjectSetName(obj,current->m4x.xname); /* from PDB */
           if( (tmpObj = ExecutiveFindObjectByName(G,obj->Name))) {
             if(tmpObj->type != cObjectMolecule)
               ExecutiveDelete(G,current->m4x.xname); /* just in case */
-            else
-              {
-                if(is_repeat_pass) {  /* this is a workaround for when PLANET accidentally duplicates the target */
-                  {
-                    int a;
-                    for(a=0; a<n_processed; a++) {
-                      ProcPDBRec *cur = processed + a;
-                      if(cur->obj == (ObjectMolecule*)tmpObj) {
-                        cur->m4x.invisible = false;
-                      }
+            else {
+              if(is_repeat_pass) {  /* this is a workaround for when PLANET accidentally duplicates the target */
+                {
+                  int a;
+                  for(a=0; a<n_processed; a++) {
+                    ProcPDBRec *cur = processed + a;
+                    if(cur->obj == (ObjectMolecule*)tmpObj) {
+                      cur->m4x.invisible = false;
                     }
                   }
-                  ObjectMoleculeFree((ObjectMolecule*)obj);
-                  obj=NULL;
                 }
+                ObjectMoleculeFree((ObjectMolecule*)obj);
+                obj=NULL;
               }
+            }
           }
         } else if(next_pdb) {
           if(pdb_name[0]==0) {
@@ -3045,7 +3073,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
             } else {
               sprintf(pdb_name,"%s_%04d",oname,n_processed+1);
             }
-          } else if(multiplex) {
+          } else if(multiplex>0) {
             if(pdb_info->multi_object_status == 1 ) { /* this is a multi-object PDB file */
               strcpy(cur_name,pdb_name);
             } else if(cur_name[0]==0) {
@@ -3067,7 +3095,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
               } else {
                 sprintf(pdb_name,"%s_%04d",oname,n_processed+1);
               }
-            } else if(multiplex) { 
+            } else if(multiplex>0) { 
               if(pdb_info->multi_object_status == 1 ) { /* this is a multi-object PDB file */
                 strcpy(cur_name,pdb_name);
               } else if(cur_name[0]==0) {
@@ -3109,27 +3137,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
             
         }
       }
-    } else {
-      model_number = 0;
-      ObjectMoleculeReadPDBStr(G,(ObjectMolecule*)origObj,
-                               start_at,eff_frame,discrete,&current->m4x,
-                               pdb_name,&next_pdb,pdb_info,quiet, &model_number);
-      if(finish) {
-        ExecutiveUpdateObjectSelection(G,origObj);
-        ExecutiveDoZoom(G,origObj,false,zoom,quiet);
-      }
-      if(eff_frame<0)
-        eff_frame = ((ObjectMolecule*)origObj)->NCSet-1;
-      if(buf) {
-        if(!is_string) 
-          sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                  fname,oname,eff_frame+1);
-        else
-          sprintf(buf," CmdLoad: PDB-string appended into object \"%s\", state %d.\n",
-                  oname,eff_frame+1);
-      }
-      obj = origObj;
-    }
+    } 
 
     if(obj&&current) {
       current->obj = (ObjectMolecule*)obj;
@@ -8112,6 +8120,12 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
       break;
     case -2: /* single state */
       actual_state=SceneGetState(G);
+
+      if((actual_state!=0) && (sele1>=0) && SettingGetGlobal_b(G,cSetting_static_singletons)) {
+        if(SelectorCountStates(G,sele1)==1) {
+          actual_state = 0;
+        }
+      }
       break;
     default:
       actual_state = state;

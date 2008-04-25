@@ -696,7 +696,8 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def load_embedded(key=None, name=None, state=0, finish=1, discrete=1, quiet=1, _self=cmd):
+    def load_embedded(key=None, name=None, state=0, finish=1, discrete=1,
+                      quiet=1, zoom=-1, multiplex=-2, _self=cmd):
         '''
 DESCRIPTION
 
@@ -747,11 +748,14 @@ NOTES
                     print "Error: unknown type '%s'",type
                     raise pymol.CmdException
             if ftype==loadable.pdb:
-                r = read_pdbstr(string.join(data,''),name,state,finish,discrete,quiet)
+                r = read_pdbstr(string.join(data,''),name,state,finish,
+                                discrete,quiet,zoom,multiplex)
             elif ftype==loadable.mol:
-                r = read_molstr(string.join(data,''),name,state,finish,discrete,quiet)
+                r = read_molstr(string.join(data,''),name,state,finish,
+                                discrete,quiet,zoom)
             elif ftype==loadable.mol2:
-                r = read_mol2str(string.join(data,''),name,state,finish,discrete,quiet)
+                r = read_mol2str(string.join(data,''),name,state,finish,
+                                 discrete,quiet,zoom,multiplex)
             elif ftype==loadable.xplor:
                 r = read_xplorstr(string.join(data,''),name,state,finish,discrete,quiet)
             elif ftype==loadable.mae:
@@ -759,8 +763,8 @@ NOTES
                     # BEGIN PROPRIETARY CODE SEGMENT
                     from epymol import mae
                     r = mae.read_maestr(string.join(data,''),
-                                        name,state,
-                                        finish,discrete,quiet,multiplex,zoom)
+                                        name,state,finish,discrete,
+                                        quiet,zoom,multiplex)
                     # END PROPRIETARY CODE SEGMENT
                 except ImportError:
                     print "Error: .MAE format not supported by this PyMOL build."
@@ -769,7 +773,8 @@ NOTES
                 sdf = SDF(PseudoFile(data),'pf')
                 r = _processSDF(sdf,name,state,quiet,_self)
             elif ftype==loadable.sdf2: # C-based SDF reader (much faster)
-                r = read_sdfstr(string.join(data,''),name,state,finish,discrete,quiet)
+                r = read_sdfstr(string.join(data,''),name,state,finish,
+                                discrete,quiet,zoom,multiplex)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
@@ -810,7 +815,7 @@ NOTES
         return r
         
     def read_sdfstr(sdfstr,name,state=0,finish=1,discrete=1,quiet=1,
-                         zoom=-1,_self=cmd):
+                         zoom=-1,multiplex=-2,_self=cmd):
         '''
 DESCRIPTION
 
@@ -838,7 +843,7 @@ NOTES
             _self.lock(_self)
             r = _cmd.load(_self._COb,str(name),str(sdfstr),int(state)-1,
                               loadable.sdf2str,int(finish),int(discrete),
-                              int(quiet),0,int(zoom))
+                              int(quiet),int(multiplex),int(zoom))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -914,7 +919,7 @@ DESCRIPTION
         return r
 
     def read_pdbstr(pdb,name,state=0,finish=1,discrete=0,quiet=1,
-                         multiplex=-2,zoom=-1,_self=cmd):
+                         zoom=-1,multiplex=-2,_self=cmd):
         '''
 DESCRIPTION
 
@@ -946,14 +951,14 @@ NOTES
             oname = string.strip(str(name))
             r = _cmd.load(_self._COb,str(oname),pdb,int(state)-1,int(ftype),
                               int(finish),int(discrete),int(quiet),
-                              0,int(zoom))
+                              int(multiplex),int(zoom))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
     def read_mol2str(mol2,name,state=0,finish=1,discrete=0,
-                          quiet=1,zoom=-1,_self=cmd):
+                          quiet=1,zoom=-1,multiplex=-2,_self=cmd):
         '''
 DESCRIPTION
 
@@ -985,7 +990,7 @@ NOTES
             oname = string.strip(str(name))
             r = _cmd.load(_self._COb,str(oname),mol2,int(state)-1,int(ftype),
                               int(finish),int(discrete),int(quiet),
-                              0,int(zoom))
+                              int(multiplex),int(zoom))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -1114,7 +1119,7 @@ PYMOL API
                                     if auto_close_file:
                                         fobj.close()
                                 r = _self.read_pdbstr(pdb_str,name,state,finish,discrete,quiet,
-                                                    multiplex,zoom)
+                                                      zoom,multiplex)
                                 done = 1
                             except IOError:
 #                                print traceback.print_exc()
