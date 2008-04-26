@@ -3291,12 +3291,15 @@ void PyMOL_Special(CPyMOL *I,int k, int x, int y, int modifiers)
     break;
   }
   
+#ifndef _PYMOL_NOPY
   if(!grabbed) {
     sprintf(buffer,"_special %d,%d,%d,%d",k,x,y,modifiers);
     PLog(G,buffer,cPLog_pml);
     PParse(G,buffer);
     PFlush(G);
   }
+#endif
+
   PYMOL_API_UNLOCK
 }
 
@@ -3342,11 +3345,11 @@ int PyMOL_Idle(CPyMOL *I)
     did_work = true;
   }
   
+#ifndef _PYMOL_NOPY
   if(PFlush(G)) {
     did_work = true;
   }
-  
-#ifndef _PYMOL_NOPY
+
   if(I->PythonInitStage>0) {
     if(I->PythonInitStage<2) {
       I->PythonInitStage++;
