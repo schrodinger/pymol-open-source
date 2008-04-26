@@ -6042,6 +6042,7 @@ static PyObject *CmdDraw(PyObject *self, 	PyObject *args)
   int ok = false;
 
   ok = PyArg_ParseTuple(args,"Oiiii",&self,&int1,&int2,&antialias,&quiet);
+  
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -6049,7 +6050,11 @@ static PyObject *CmdDraw(PyObject *self, 	PyObject *args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok=APIEnterNotModal(G))) {
-    ok = ExecutiveDrawCmd(G,int1,int2,antialias,quiet);
+    if(antialias==-2) {
+      ok = ExecutiveDrawCmd(G,0,0,0,true,quiet); /* capture action */
+    } else {
+      ok = ExecutiveDrawCmd(G,int1,int2,antialias,false,quiet);
+    }
     APIExit(G);
   }
   return APIResultOk(ok);

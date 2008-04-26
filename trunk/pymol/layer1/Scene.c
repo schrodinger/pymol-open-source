@@ -96,6 +96,7 @@ typedef struct {
   int quiet;
   int antialias;
   float dpi;
+  int entire_window;
 } DeferredImage;
 
 typedef struct {
@@ -149,7 +150,7 @@ struct _CScene {
   double SweepTime;
   int DirtyFlag;
   int ChangedFlag;
-  int CopyFlag,CopyNextFlag,CopiedFromOpenGL,CopyForced;
+  int CopyType,CopyNextFlag,CopiedFromOpenGL,CopyForced;
   int NFrame,HasMovie;
   ImageType *Image;
   int MovieOwnsImageFlag;
@@ -515,7 +516,7 @@ static void ScenePurgeImage(PyMOLGlobals *G)
     }
     FreeP(I->Image);
   }
-  I->CopyFlag = false;
+  I->CopyType = false;
 }
 
 void SceneInvalidateCopy(PyMOLGlobals *G,int free_buffer)
@@ -528,7 +529,7 @@ void SceneInvalidateCopy(PyMOLGlobals *G,int free_buffer)
     } else if(free_buffer) {
       ScenePurgeImage(G);
     }
-    I->CopyFlag=false;
+    I->CopyType=false;
   }
 }
 
@@ -685,7 +686,7 @@ char *SceneGetSeleModeKeyword(PyMOLGlobals *G)
   return (char*)SelModeKW[0];
 }
 
-void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force);
+static void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force,int entire_window);
 
 unsigned int SceneFindTriplet(PyMOLGlobals *G,int x,int y,GLenum gl_buffer);
 unsigned int *SceneReadTriplets(PyMOLGlobals *G,int x,int y,int w,int h,GLenum gl_buffer);
@@ -1246,6 +1247,39 @@ float *SceneGetMatrix(PyMOLGlobals *G)
   return(I->RotMatrix);
 }
 /*========================================================================*/
+
+int SceneCaptureWindow(PyMOLGlobals *G)
+{
+  register CScene *I=G->Scene;
+  int ok=true;
+  
+  /* check assumptions */
+  
+  if(ok && G->HaveGUI && G->ValidContext) {
+    int draw_both = SceneMustDrawBoth(G);
+
+    ScenePurgeImage(G);
+
+    if(draw_both) {
+      SceneCopy(G,GL_BACK_LEFT,true,true);
+    } else {
+      SceneCopy(G,GL_BACK,true,true);
+    }
+    if(!I->Image)
+        ok=false;
+    
+    if(ok) {
+      I->DirtyFlag = false;
+      I->CopyType = 2; /* suppresses display of copied image */
+      I->CopiedFromOpenGL = false;
+      I->MovieOwnsImageFlag = false;
+    }
+  } else {
+    ok=false;
+  }
+  return ok;
+}
+
 static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
                                int height, int antialias)
 {
@@ -1361,9 +1395,9 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
       ScenePurgeImage(G);
 
       if(draw_both) {
-        SceneCopy(G,GL_BACK_LEFT,true);
+        SceneCopy(G,GL_BACK_LEFT,true,false);
       } else {
-        SceneCopy(G,GL_BACK,true);
+        SceneCopy(G,GL_BACK,true,false);
       }
       if(!I->Image)
         ok=false;
@@ -1400,9 +1434,9 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
             glClearColor(0.0,0.0,0.0,1.0);
             
             if(draw_both) {
-              SceneCopy(G,GL_BACK_LEFT,true);
+              SceneCopy(G,GL_BACK_LEFT,true,false);
             } else {
-              SceneCopy(G,GL_BACK,true);
+              SceneCopy(G,GL_BACK,true,false);
             }
             
             if(I->Image) { /* the image into place */
@@ -1512,7 +1546,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
         I->Image->stereo=false;
         
         I->DirtyFlag = false;
-        I->CopyFlag = true;
+        I->CopyType = true;
         I->CopyForced = true;
 
         I->CopiedFromOpenGL = false;
@@ -1540,7 +1574,7 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
   int reset_alpha = false;
   int save_stereo = (I->StereoMode==1);
   
-  if(!I->CopyFlag) {
+  if(!I->CopyType) {
     unsigned int buffer_size;
 
     buffer_size = 4*I->Width*I->Height;
@@ -2000,9 +2034,9 @@ int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing, int validate) {
       SceneRender(G,NULL,0,0,NULL,0,0,0);
       glClearColor(0.0,0.0,0.0,1.0);
       if(draw_both) {
-        SceneCopy(G,GL_BACK_LEFT,true);
+        SceneCopy(G,GL_BACK_LEFT,true,false);
       } else {
-        SceneCopy(G,GL_BACK,true);
+        SceneCopy(G,GL_BACK,true,false);
       }
       /* insert OpenGL context validation code here? */
     }
@@ -2016,7 +2050,7 @@ int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing, int validate) {
     I->MovieOwnsImageFlag=false;
   }
   if(I->Image)
-    I->CopyFlag=true;
+    I->CopyType=true;
   return valid;
 }
 /*========================================================================*/
@@ -2308,7 +2342,7 @@ int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet
      } else {
        ScenePurgeImage(G);
      }
-    I->CopyFlag=false;
+    I->CopyType=false;
   }
   I->Image=Calloc(ImageType,1);
   if(MyPNGRead(fname,
@@ -2338,7 +2372,7 @@ int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet
       }
     }
         
-    I->CopyFlag=true;
+    I->CopyType=true;
     I->CopyForced=true;
     I->CopiedFromOpenGL = false;
     OrthoRemoveSplash(G);
@@ -2638,7 +2672,7 @@ void SceneDraw(Block *block)
     text = (int)SettingGet(G,cSetting_text);
 
     if(((!text)||overlay) &&
-       I->CopyFlag && 
+       (I->CopyType == true) && 
        I->Image && I->Image->data) {
       
       int show_alpha = SettingGetGlobal_b(G,cSetting_show_alpha_checker);
@@ -5177,8 +5211,9 @@ static int SceneDeferredImage(DeferredImage *di)
   }
   return 1;
 }
+
 int SceneDeferImage(PyMOLGlobals *G,int width, int height, 
-                  char *filename, int antialias, float dpi, int quiet)
+                    char *filename, int antialias, float dpi, int quiet)
 {
   DeferredImage *di = Calloc(DeferredImage,1);
   if(di) {
@@ -5400,7 +5435,7 @@ int  SceneInit(PyMOLGlobals *G)
     I->LastPicked.context.object = NULL;
     I->LastStateBuilt = -1;
     I->CopyNextFlag=true;
-    I->CopyFlag=false;
+    I->CopyType=false;
     I->CopiedFromOpenGL=false;
     I->vendor[0]=0;
     I->renderer[0]=0;
@@ -5486,7 +5521,7 @@ void SceneReshape(Block *block,int width,int height)
   }
   SceneDirty(G);
 
-  if(I->CopyFlag&&(!I->CopyForced)) {
+  if(I->CopyType&&(!I->CopyForced)) {
     SceneInvalidateCopy(G,false);
   }
   /*MovieClearImages(G);*/
@@ -6082,7 +6117,7 @@ void SceneRay(PyMOLGlobals *G,
             FreeP(buffer);
           }
           I->DirtyFlag=false;
-          I->CopyFlag = true;
+          I->CopyType = true;
           I->CopyForced = true;
           I->CopiedFromOpenGL = false;
           I->MovieOwnsImageFlag = false;
@@ -6256,7 +6291,7 @@ void SceneRay(PyMOLGlobals *G,
 
 }
 /*========================================================================*/
-void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
+static void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force,int entire_window)
 {
   register CScene *I=G->Scene;
   unsigned int buffer_size;
@@ -6265,22 +6300,33 @@ void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
                  SettingGet(G,cSetting_stereo_double_pump_mono)||
                  I->ButtonsShown))) {
     /* no copies while in stereo mode */
-    if(force || ((!I->DirtyFlag)&&(!I->CopyFlag))) { 
+    if(force || ((!I->DirtyFlag)&&(!I->CopyType))) { 
+      int x,y,w,h;
+      if(entire_window) {
+        x = 0;
+        y = 0;
+        h = OrthoGetHeight(G);
+        w = OrthoGetWidth(G);
+      } else {
+        x = I->Block->rect.left;
+        y = I->Block->rect.bottom;
+        w = I->Width;
+        h = I->Height;
+      }
       ScenePurgeImage(G);
-      buffer_size = 4*I->Width*I->Height;
+      buffer_size = 4*w*h;
       if(buffer_size) {
         I->Image = Calloc(ImageType,1);
         I->Image->data=(GLvoid*)Alloc(char,buffer_size);
         I->Image->size = buffer_size;
-        I->Image->width = I->Width;
-        I->Image->height = I->Height;
+        I->Image->width = w;
+        I->Image->height = h;
         if(G->HaveGUI && G->ValidContext) {
           glReadBuffer(buffer);
-          PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
-                       GL_RGBA,GL_UNSIGNED_BYTE,I->Image->data);
+          PyMOLReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,I->Image->data);
         }
       }
-      I->CopyFlag = true;
+      I->CopyType = true;
       I->CopiedFromOpenGL = true;
       I->CopyForced = force;
     }
@@ -6493,7 +6539,7 @@ int SceneRenderCached(PyMOLGlobals *G)
         if(I->Image && (!I->MovieOwnsImageFlag))
           ScenePurgeImage(G);
         I->MovieOwnsImageFlag = true;
-        I->CopyFlag = true;
+        I->CopyType = true;
         I->Image = image;
         OrthoDirty(G);
         renderedFlag=true;
@@ -6506,13 +6552,13 @@ int SceneRenderCached(PyMOLGlobals *G)
                NULL,NULL,0.0F,0.0F,false,NULL,true,-1); 
     }  else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_draw_frames)) {
       SceneMakeSizedImage(G,0,0,SettingGetGlobal_i(G,cSetting_antialias));
-    } else if(I->CopyFlag) {
+    } else if(I->CopyType == true) { /* true vs. 2 */
       renderedFlag = true;
     } else {
       renderedFlag = false;
     }
     I->DirtyFlag=false;
-  } else if(I->CopyFlag) {
+  } else if(I->CopyType == true) { /* true vs. 2 */
     renderedFlag=true;
   }
 
@@ -7922,8 +7968,8 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       if((start_time>0.10)||(MainSavingUnderWhileIdle()))
         if(!(ControlIdling(G)))
           if(SettingGet(G,cSetting_cache_display)) {
-            if(!I->CopyFlag) {
-              SceneCopy(G,render_buffer,false);
+            if(!I->CopyType) {
+              SceneCopy(G,render_buffer,false,false);
             }
           }
     } else {

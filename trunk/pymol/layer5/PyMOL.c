@@ -1539,7 +1539,18 @@ PyMOLreturn_status PyMOL_CmdDraw(CPyMOL *I,int width, int height,
 {
   PyMOLreturn_status result;
   PYMOL_API_LOCK
-  result.status = get_status_ok(ExecutiveDrawCmd(I->G,width,height,antialias,quiet));
+  result.status = get_status_ok(ExecutiveDrawCmd(I->G,width,height,antialias,false,quiet));
+  I->ImageRequestedFlag = true;
+  I->ImageReadyFlag = false;
+  PYMOL_API_UNLOCK
+  return result;
+}
+
+PyMOLreturn_status PyMOL_CmdCapture(CPyMOL *I,int quiet)
+{
+  PyMOLreturn_status result;
+  PYMOL_API_LOCK
+  result.status = get_status_ok(ExecutiveDrawCmd(I->G,-1,-1,0,true,quiet));
   I->ImageRequestedFlag = true;
   I->ImageReadyFlag = false;
   PYMOL_API_UNLOCK

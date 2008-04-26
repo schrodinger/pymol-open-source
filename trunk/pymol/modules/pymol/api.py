@@ -277,6 +277,7 @@ from viewing import \
       bg_color,           \
       bg_colour,          \
       cartoon,            \
+      capture,            \
       clip,               \
       color,              \
       colour,             \
