@@ -58,8 +58,8 @@ Z* -------------------------------------------------------------------
 #define PBlockAndUnlockAPI(G)
 #define PLockAPIAndUnblock(G)
 #define PTryLockAPIAndUnblock(G)
-#define PFlush(G) 0
-#define PFlushFast(G) 0
+#define PFlush(G) 
+#define PFlushFast(G) 
 #define PParse(G,s)
 #define PDo(G,s)
 

@@ -2735,11 +2735,11 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
         }
       
         {
+          int found = false;
+#ifndef _PYMOL_NOPY
           PyObject *entry = NULL;
           PyObject *output = NULL;
           PyObject *input = NULL;
-          int found = false;
-#ifndef _PYMOL_NOPY
           int cache_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cache_mode);
           
           if(cache_mode>0) { 
@@ -2774,8 +2774,8 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
               PXDecRef(input); input = NULL;
               PAutoUnblock(G,blocked);
             }
-          }
 #endif
+          }
 #ifndef _PYMOL_NOPY
           if(entry||input||output) {
             int blocked = PAutoBlock(G);
