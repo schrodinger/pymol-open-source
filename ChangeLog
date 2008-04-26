@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-04-25 Warren L. DeLano <warren@delsci.com>	
 
+	* capture command/method for obtaining the entire OpenGL window
+	
 	* adjusted save behavior so that selections exclusively comprised
 	  of static singleton atoms are written out even when the global
 	  state index is not unity

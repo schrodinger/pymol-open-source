@@ -135,6 +135,7 @@ struct _CExecutive {
   int ValidGridSlots;
   PanelRec *Panel;
   int ValidPanel;
+  int CaptureFlag;
 };
 
 /* routines that still need to be updated for Tracker list iteration
@@ -1337,14 +1338,21 @@ int ExecutiveGetUniqueIDObjectOffsetVLADict(PyMOLGlobals *G,
   return 1;
 }
 
-int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int quiet)
+int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int entire_window, int quiet)
 {
+  CExecutive *I = G->Executive;
   if((width<=0)&&(height<=0)) {
     SceneGetWidthHeight(G,&width,&height);
   }
   if(antialias<0)
     antialias = SettingGetGlobal_i(G,cSetting_antialias);
-  SceneDeferImage(G,width,height,NULL,antialias, -1.0, quiet);
+  if(entire_window) {
+    SceneInvalidateCopy(G,false);
+    OrthoDirty(G);
+    I->CaptureFlag = true;
+  } else {
+    SceneDeferImage(G,width,height,NULL,antialias, -1.0, quiet);
+  }
   return 1;
 }
 
@@ -9634,6 +9642,7 @@ int ExecutiveReset(PyMOLGlobals *G,int cmd,char *name)
 /*========================================================================*/
 void ExecutiveDrawNow(PyMOLGlobals *G) 
 {
+  CExecutive *I = G->Executive;
   PRINTFD(G,FB_Executive)
     " ExecutiveDrawNow: entered.\n"
     ENDFD;
@@ -9666,6 +9675,12 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
       OrthoDoDraw(G,0);
     }
 
+    if(G->HaveGUI && G->ValidContext) {
+      if(I->CaptureFlag) {
+        I->CaptureFlag = false;
+        SceneCaptureWindow(G);
+      }
+    }
     PyMOL_NeedSwap(G->PyMOL);
   }
 

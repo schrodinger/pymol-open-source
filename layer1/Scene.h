@@ -153,7 +153,8 @@ void SceneSuppressMovieFrame(PyMOLGlobals *G);
 int SceneDeferClick(Block *block,int button,int x,int y,int mod);
 int SceneDeferRelease(Block *block,int button,int x,int y,int mod);
 int SceneDeferDrag(Block *block,int x,int y,int mod);
-int SceneDeferImage(PyMOLGlobals *G,int width, int height, char *filename,int antialias, float dpi,int quiet);
+int SceneDeferImage(PyMOLGlobals *G,int width, int height, char *filename,
+                    int antialias, float dpi, int quiet);
 char *SceneGetSeleModeKeyword(PyMOLGlobals *G);
 void SceneUpdateStereo(PyMOLGlobals *G);
 void ScenePushRasterMatrix(PyMOLGlobals *G,float *v);
@@ -165,6 +166,7 @@ float SceneGetReflectScaleValue(PyMOLGlobals *G,int limit);
 float SceneGetSpecularValue(PyMOLGlobals *G,float spec,int limit);
 void SceneAbortAnimation(PyMOLGlobals *G);
 void SceneObjectUpdateThread(CObjectUpdateThreadInfo *T);
+int SceneCaptureWindow(PyMOLGlobals *G);
 
 #endif
 

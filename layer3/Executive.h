@@ -236,7 +236,7 @@ void ExecutiveResetMatrix(PyMOLGlobals *G,
                           int   log,  
                           int quiet);
 void ExecutiveDrawNow(PyMOLGlobals *G);
-int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int quiet);
+int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int entire_window, int quiet);
 int ExecutiveCartoon(PyMOLGlobals *G,int type,char *sele);
 void ExecutiveSetAllVisib(PyMOLGlobals *G,int state);
 void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state);

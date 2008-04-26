@@ -2002,6 +2002,9 @@ NOTES
         if _self._raising(r,_self): raise QuietException
         return r
 
+    def capture(quiet=1, _self=cmd):
+        _self.draw(antialias=-2,quiet=quiet)
+        
     def draw(width=0, height=0, antialias=-1, quiet=1, _self=cmd):
     	'''
 DESCRIPTION

@@ -27,6 +27,7 @@ def get_command_keywords(self_cmd=cmd):
         'button'        : [ self_cmd.button            , 0 , 0 , ''  , parsing.STRICT ],
         'cache'         : [ self_cmd.cache             , 0 , 0 , ''  , parsing.STRICT ],
         'cartoon'       : [ self_cmd.cartoon           , 0 , 0 , ''  , parsing.STRICT ],
+        'capture'       : [ self_cmd.capture           , 0 , 0 , ''  , parsing.STRICT ],
         'cd'            : [ self_cmd.cd                , 0 , 0 , ''  , parsing.STRICT ],
         'center'        : [ self_cmd.center            , 0 , 0 , ''  , parsing.STRICT ],     
         'check'         : [ self_cmd.check             , 0 , 0 , ''  , parsing.STRICT ],

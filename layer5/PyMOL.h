@@ -401,6 +401,8 @@ PyMOLreturn_float_array PyMOL_CmdGetView(CPyMOL *I,int quiet);
 PyMOLreturn_status PyMOL_CmdDraw(CPyMOL *I,int width, int height,
                                  int antialias, int quiet);
 
+PyMOLreturn_status PyMOL_CmdCapture(CPyMOL *I, int quiet);
+
 PyMOLreturn_status PyMOL_CmdRay(CPyMOL *I,int width, int height,int antialias,
                                 float angle, float shift,int renderer, int defer, int quiet);
 
