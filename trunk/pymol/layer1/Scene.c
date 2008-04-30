@@ -6098,7 +6098,7 @@ void SceneRay(PyMOLGlobals *G,
             }
             /* merge in the latest rendering */
             if(I->Image && I->Image->data) {
-              unsigned int i,j;
+              int i,j;
               unsigned int *src = buffer;
               unsigned int *dst = (unsigned int*)I->Image->data;
               

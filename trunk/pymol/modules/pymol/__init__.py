@@ -292,9 +292,10 @@ if pymol_launch != 3: # if this isn't a dry run
             # optimize for VISTA
             if sys.platform[0:3]=='win':
                 if sys.getwindowsversion()[0]>5:
-                    cmd.set('texture_fonts') # improves performance 
+                    # improves performance 
+                    cmd.set('texture_fonts') 
                     
-            # optimize for specific hardware
+            # optimize for (or workaround) specific hardware
             (vendor,renderer,version) = cmd.get_renderer()
             if vendor[0:6]=='NVIDIA':
                 cmd.set('ribbon_smooth',0,quiet=1)
@@ -325,8 +326,10 @@ if pymol_launch != 3: # if this isn't a dry run
 
             elif vendor[0:9]=='Parallels':
                 if renderer[0:8]=='Parallel':
-                    cmd.set('texture_fonts',1)
-                    
+                    # this was critical for older Parallels
+                    # but actually slows down current versions
+                    cmd.set('texture_fonts',1) 
+
             elif vendor[0:3]=='ATI':
                 cmd.set('ribbon_smooth',0,quiet=1)
                 if renderer[0:17]=='FireGL2 / FireGL3':

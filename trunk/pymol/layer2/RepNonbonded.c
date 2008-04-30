@@ -144,6 +144,7 @@ static void RepNonbondedRender(RepNonbonded *I,RenderInfo *info)
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
       } else { 
+	    register int nvidia_bugs = (int)SettingGet(G,cSetting_nvidia_bugs);
 
         if(use_dlst) {
           if(!I->R.displayList) {
@@ -160,6 +161,7 @@ static void RepNonbondedRender(RepNonbonded *I,RenderInfo *info)
           glDisable(GL_LIGHTING);
           glBegin(GL_LINES);	 
           SceneResetNormal(G,true);
+
           while(c--) {
 
             if(alpha==1.0) {
@@ -168,6 +170,9 @@ static void RepNonbondedRender(RepNonbonded *I,RenderInfo *info)
               glColor4f(v[0],v[1],v[2],alpha);
             }
             v+=3;
+	    if(nvidia_bugs) {
+	      glFlush();
+	    }
         
             glVertex3fv(v);
             v+=3;
