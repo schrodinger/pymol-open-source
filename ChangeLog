@@ -4,6 +4,10 @@ CHANGE LOG
 
 2008-04-25 Warren L. DeLano <warren@delsci.com>	
 
+	* more fixes for Vista compatibility
+	
+2008-04-25 Warren L. DeLano <warren@delsci.com>	
+
 	* capture command/method for obtaining the entire OpenGL window
 	
 	* adjusted save behavior so that selections exclusively comprised

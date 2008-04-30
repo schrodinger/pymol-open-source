@@ -432,6 +432,7 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
       glEnd();
       (*pick)[0].src.index = i; /* pass the count */
     } else {
+      register int nvidia_bugs = (int)SettingGet(G,cSetting_nvidia_bugs);
       int use_dlst;
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
 
