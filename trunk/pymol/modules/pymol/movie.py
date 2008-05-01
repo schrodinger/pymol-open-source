@@ -426,10 +426,13 @@ def _nutate(mode,first,last,period,pause,_self=cmd):
         spiral = 0
         
 def add_scenes(names=None, pause=8.0, cut=0.0, loop=1,
-               rock=-1, period=4.0, animate=-1, _self=cmd):
+               rock=-1, period=8.0, animate=-1, _self=cmd):
     cmd = _self
     animate = float(animate)
     pause = float(pause)
+    period = float(period)
+    if period>pause:
+        period = pause
     rock = int(rock)
     if animate<0:
         animate = float(cmd.get("scene_animation_duration"))
