@@ -6785,7 +6785,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
             AtomInfoBondCopy(G, ii1, dst_bond);
             dst_bond->index[0] = I->Table[b1].index; /* store what will be the new index */
             dst_bond->index[1] = I->Table[b2].index;
-            /*            printf("DEBUG %d %d\n",dst_bond->index[0],dst_bond->index[1]);*/
+            /*            printf("Selector-DEBUG %d %d\n",dst_bond->index[0],dst_bond->index[1]);*/
             nBond++;
           }
         }
@@ -6816,7 +6816,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
   cs->NTmpBond = nBond;
   bond=NULL;
   
-  /*  printf("DEBUG nAtom %d\n",nAtom);*/
+  /*  printf("Selector-DEBUG nAtom %d\n",nAtom);*/
   ObjectMoleculeMerge(targ,atInfo,cs,false,cAIC_AllMask,true); /* will free atInfo */
   /* cs->IdxToAtm will now have the reverse mapping from the new subset
      to the new merged molecule */

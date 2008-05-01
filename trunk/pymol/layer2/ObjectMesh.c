@@ -587,7 +587,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
               IsosurfGetRange(I->Obj.G, field, oms->Crystal,
                               min_ext,max_ext,ms->Range,true);
             }
-            /*                      printf("DEBUG: %d %d %d %d %d %d\n",
+            /*                      printf("Mesh-DEBUG: %d %d %d %d %d %d\n",
                                     ms->Range[0],
                                     ms->Range[1],
                                     ms->Range[2],

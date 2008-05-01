@@ -8312,7 +8312,7 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
     BondType *bond = cs->TmpBond;
     int i = 0;
     for(i=0;i<cs->NTmpBond;i++) {
-      /*      printf("DEBUG %d %d %d %d %d %d\n",i,bond->index[0],bond->index[1],
+      /*      printf("ObjMol-DEBUG %d %d %d %d %d %d\n",i,bond->index[0],bond->index[1],
              outdex[bond->index[0]],outdex[bond->index[1]],
              cs->NTmpBond);*/
       bond->index[0] = outdex[bond->index[0]];

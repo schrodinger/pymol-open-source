@@ -63,7 +63,8 @@ class ColorEdit:
         self.app = app
         self.parent = parent
         self.name = name
-
+        self.cmd = app.pymol.cmd
+        
         color = tkColorChooser.Chooser(
             initialcolor='#%02x%02x%02x'%(
             int(rgb[0]*255),int(rgb[1]*255),int(rgb[2]*255)),

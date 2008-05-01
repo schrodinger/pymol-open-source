@@ -1285,8 +1285,17 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
       nvc=0;
       for(a=0;a<nc;a++) {
         if(ColorGetStatus(G,a)==1) {
+          WordType buffer;
           tup = PyTuple_New(2);
-          PyTuple_SetItem(tup,0,PyString_FromString(ColorGetName(G,a)));
+          {
+            char *color_name = ColorGetName(G,a);
+            if(color_name) {
+              strcpy(buffer,color_name);
+            } else {
+              buffer[0] = 0;
+            }
+          }
+          PyTuple_SetItem(tup,0,PyString_FromString(buffer));
           PyTuple_SetItem(tup,1,PyInt_FromLong(a));
           PyList_SetItem(result,nvc++,tup);
         }
@@ -1303,8 +1312,17 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
       nvc=0;
       for(a=0;a<nc;a++) {
         if(ColorGetStatus(G,a)) {
+          WordType buffer;
           tup = PyTuple_New(2);
-          PyTuple_SetItem(tup,0,PyString_FromString(ColorGetName(G,a)));
+          {
+            char *color_name = ColorGetName(G,a);
+            if(color_name) {
+              strcpy(buffer,color_name);
+            } else {
+              buffer[0] = 0;
+            }
+          }
+          PyTuple_SetItem(tup,0,PyString_FromString(buffer));
           PyTuple_SetItem(tup,1,PyInt_FromLong(a));
           PyList_SetItem(result,nvc++,tup);
         }
