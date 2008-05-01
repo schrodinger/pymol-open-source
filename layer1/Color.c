@@ -257,12 +257,14 @@ void ColorRegisterExt(PyMOLGlobals *G,char *name,void *ptr,int type)
     VLACheck(I->Ext,ExtRec,I->NExt);
     a = I->NExt;
     I->NExt++;
+	{
     OVreturn_word result = OVLexicon_GetFromCString(I->Lex,name);
     if(OVreturn_IS_OK(result)) {
       I->Ext[a].Name = result.word;
     } else {
       I->Ext[a].Name = 0;
     }
+	}
   }
   if(a>=0) {
     I->Ext[a].Ptr = ptr;
