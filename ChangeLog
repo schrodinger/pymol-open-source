@@ -2,7 +2,13 @@
 CHANGE LOG
 =========================================================================
 
-2008-04-25 Warren L. DeLano <warren@delsci.com>	
+2008-05-01 Warren L. DeLano <warren@delsci.com>	
+
+	* converted color names storage over to a dictionary (lexicon)
+
+	* fixed bug with color redefinition in the external gui
+	
+2008-04-30 Warren L. DeLano <warren@delsci.com>	
 
 	* more fixes for Vista compatibility
 	

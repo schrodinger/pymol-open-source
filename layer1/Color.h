@@ -21,11 +21,10 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"Vector.h"
 #include"PyMOLGlobals.h"
-
+#include"Word.h"
 #include"OVLexicon.h"
 #include"OVOneToOne.h"
 
-typedef char ColorName[64];
 
 #define cColorGadgetRamp  1
 
@@ -42,7 +41,7 @@ typedef char ColorName[64];
 #define cColor_TRGB_Mask  0xC0000000
 
 typedef struct {
-  ColorName Name;
+  int Name;
   Vector3f Color,Clamped;
   char ClampedFlag;
   char Custom, Fixed;
@@ -51,7 +50,7 @@ typedef struct {
 } ColorRec;
 
 typedef struct {
-  ColorName Name;
+  int Name;
   void *Ptr;
   int Type;
   /* not saved */

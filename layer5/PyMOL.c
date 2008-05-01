@@ -2333,7 +2333,7 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *rang
     if(color&&n_color) {
       color_vla = VLAlloc(float,n_color*3);
       if(color_vla) {
-        ColorName colorName;
+        WordType colorName;
         int a;
         for(a=0;a<n_color;a++) {
           color = next_word(color,colorName,sizeof(colorName));
