@@ -786,6 +786,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_rock                       582
 #define cSetting_cone_quality               583
 #define cSetting_pdb_formal_charges         584
+#define cSetting_ati_bugs                   585
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -795,7 +796,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       585
+#define cSetting_INIT                       586
 
 #endif
 

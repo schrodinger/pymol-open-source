@@ -582,8 +582,8 @@ void IsosurfExpand(Isofield *field1, Isofield *field2, CCrystal *cryst,
         for(k=0;k<k_stop;k++) {
           float average = 0.0F;
           int cnt = 0;
-          int n;
-
+          int n,nMat = sym->NSymMat;
+		   
           /* first compute the coordinate */
 
           float *ptr = F4Ptr(field2->points, i,j,k,0);
@@ -592,7 +592,7 @@ void IsosurfExpand(Isofield *field1, Isofield *field2, CCrystal *cryst,
 
           /* then compute the value at the coordinate */
           
-          for(n=-1;n<sym->NSymMat;n++) {
+          for(n=-1;n<nMat;n++) {
             float test_frac[3];
             if(n>=0) {
               transform44f3f(sym->SymMatVLA+(n*16),frac,test_frac);

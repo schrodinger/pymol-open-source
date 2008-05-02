@@ -749,6 +749,7 @@ typedef struct _CPyMOL {
   ov_word lex_rock;
   ov_word lex_cone_quality;
   ov_word lex_pdb_formal_charges;
+  ov_word lex_ati_bugs;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1491,6 +1492,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(rock,582);
   LEX_SETTING(cone_quality,583);
   LEX_SETTING(pdb_formal_charges,584);
+  LEX_SETTING(ati_bugs,585);
  return_OVstatus_SUCCESS;
 }
 
