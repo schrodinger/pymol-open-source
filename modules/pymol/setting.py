@@ -620,7 +620,8 @@ if __name__=='pymol.setting':
         rock                               = 582
         cone_quality                       = 583
         pdb_formal_charges                 = 584
-        
+        ati_bugs                           = 585
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

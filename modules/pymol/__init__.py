@@ -288,7 +288,7 @@ if pymol_launch != 3: # if this isn't a dry run
 
         def adapt_to_hardware(self):
             cmd=self.cmd
-            
+
             # optimize for VISTA
             if sys.platform[0:3]=='win':
                 if sys.getwindowsversion()[0]>5:
@@ -336,6 +336,10 @@ if pymol_launch != 3: # if this isn't a dry run
                     if invocation.options.show_splash:
                         print " Adapting to FireGL hardware."
                     cmd.set('line_width','2',quiet=1)            
+                if sys.platform[0:3]=='win':
+                    if sys.getwindowsversion()[0]>5:
+                        cmd.set('ati_bugs',1) # Ugh, VISTA.
+
             elif vendor[0:9]=='Microsoft':
                 if renderer[0:17]=='GDI Generic':
                     cmd.set('light_count',1)

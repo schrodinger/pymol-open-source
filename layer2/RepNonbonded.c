@@ -144,8 +144,12 @@ static void RepNonbondedRender(RepNonbonded *I,RenderInfo *info)
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
       } else { 
-	    register int nvidia_bugs = (int)SettingGet(G,cSetting_nvidia_bugs);
+	   int nvidia_bugs = SettingGetGlobal_i(G,cSetting_nvidia_bugs);
 
+	if(SettingGetGlobal_i(G,cSetting_ati_bugs)) {
+	    glFlush(); /* eliminate ATI artifacts under VISTA */
+	  }
+	    
         if(use_dlst) {
           if(!I->R.displayList) {
             I->R.displayList = glGenLists(1);
@@ -196,6 +200,7 @@ static void RepNonbondedRender(RepNonbonded *I,RenderInfo *info)
         if(use_dlst&&I->R.displayList) {
           glEndList();
         }
+
       }
     }
   }

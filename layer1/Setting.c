@@ -656,6 +656,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   int use_display_lists = SettingGetGlobal_b(G,cSetting_use_display_lists);
   int max_threads = SettingGetGlobal_i(G,cSetting_max_threads);
   int nvidia_bugs = SettingGetGlobal_b(G,cSetting_nvidia_bugs);
+  int ati_bugs = SettingGetGlobal_b(G,cSetting_ati_bugs);
   int stereo_mode = SettingGetGlobal_i(G,cSetting_stereo_mode);
   int stereo_double_pump_mono = SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono);
   int show_progress = SettingGetGlobal_b(G,cSetting_show_progress);
@@ -688,6 +689,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_b(I,cSetting_use_display_lists, use_display_lists);
   SettingSet_i(I,cSetting_max_threads, max_threads);
   SettingSet_i(I,cSetting_nvidia_bugs, nvidia_bugs);
+  SettingSet_i(I,cSetting_nvidia_bugs, ati_bugs);
   SettingSet_i(I,cSetting_cache_max, cache_max);
   SettingSet_i(I,cSetting_logging, logging);
   
@@ -3613,5 +3615,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_b(I,cSetting_rock,0);
     set_i(I,cSetting_cone_quality, 18);
     set_b(I,cSetting_pdb_formal_charges,1);
+    set_i(I,cSetting_ati_bugs,0);
+
   }
 }
