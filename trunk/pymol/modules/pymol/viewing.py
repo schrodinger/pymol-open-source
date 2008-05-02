@@ -615,8 +615,8 @@ ARGUMENTS
     
     representation = lines, spheres, mesh, ribbon, cartoon, sticks,
         dots, surface, labels, extent, nonbonded, nb_spheres, slice,
-	extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
-	or everything
+        extent, slice, dashes, angles, dihedrals, cgo, cell, callback,
+        or everything
 
     selection = string {default: all}
 
@@ -845,11 +845,11 @@ EXAMPLE
 
     set_view (\
         0.999876618,   -0.000452542,   -0.015699286,\
-	0.000446742,    0.999999821,   -0.000372844,\
-	0.015699454,    0.000365782,    0.999876678,\
-	0.000000000,    0.000000000, -150.258514404,\
-	11.842411041,   20.648729324,    8.775371552,\
-	118.464958191,  182.052062988,    0.000000000 )
+        0.000446742,    0.999999821,   -0.000372844,\
+        0.015699454,    0.000365782,    0.999876678,\
+        0.000000000,    0.000000000, -150.258514404,\
+        11.842411041,   20.648729324,    8.775371552,\
+        118.464958191,  182.052062988,    0.000000000 )
 
 PYMOL API
 
@@ -881,7 +881,7 @@ SEE ALSO
                     float(view[ 9]),float(view[10]),float(view[11]),
                     float(view[12]),float(view[13]),float(view[14]),
                     float(view[15]),float(view[16]),float(view[17])),
-		    int(quiet),float(animate),int(hand))
+                    int(quiet),float(animate),int(hand))
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
@@ -1208,7 +1208,6 @@ SEE ALSO
             _self.scene('*')
         return r
         
-        
     def scene(key='auto', action='recall', message=None, view=1,
               color=1, active=1, rep=1, frame=1, animate=-1,
               new_key=None, hand=1, quiet=1, _self=cmd):
@@ -1270,6 +1269,7 @@ SEE ALSO
         active = int(active)
         frame = int(frame)
         quiet = int(quiet)
+
         if not view:
             animate=0
         elif animate<0:
@@ -1381,8 +1381,8 @@ SEE ALSO
                     if (ll>2) and (frame):
                         if list[2]!=None:
                             if not _self.get_movie_playing(): # don't set frame when movie is already playing
-				if _self.get_frame()!=list[2]: # only set the frame when it isn't already correct
-				    _self.frame(list[2])
+                                if _self.get_frame()!=list[2]: # only set the frame when it isn't already correct
+                                    _self.frame(list[2])
                     if (ll>3) and (color):
                         if list[3]!=None:
                             _self.set_colorection(list[3],key)
@@ -1505,6 +1505,8 @@ SEE ALSO
                             ix = lst.index(key) - 1
                             if ix>=0:
                                 setting.set("scene_current_name",lst[ix],quiet=1,_self=_self)
+                            else:
+                                setting.set("scene_current_name","",quiet=1,_self=_self)                                
                         _self.set("scenes_changed",1,quiet=1);               
                         del pymol._scene_dict[key]
                         name = "_scene_"+key+"_*"
@@ -2006,7 +2008,7 @@ NOTES
         _self.draw(antialias=-2,quiet=quiet)
         
     def draw(width=0, height=0, antialias=-1, quiet=1, _self=cmd):
-    	'''
+        '''
 DESCRIPTION
 
     "draw" creates an OpenGL-based image of the current frame.  
@@ -2174,11 +2176,11 @@ SEE ALSO
         '''
         r = None
         if thread.get_ident() == pymol.glutThread:
-	    try:
-		_self.lock(_self)
-		r = _cmd.refresh_now(_self._COb)
-	    finally:
-		_self.unlock(r,_self)
+            try:
+                _self.lock(_self)
+                r = _cmd.refresh_now(_self._COb)
+            finally:
+                _self.unlock(r,_self)
         else:
             try:
                 _self.lock(_self)
