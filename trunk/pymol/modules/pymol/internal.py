@@ -9,6 +9,7 @@ import thread
 import re
 import viewing
 import time
+import pymol
 from operator import add
 
 from chempy import io
@@ -291,7 +292,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 # END PROPRIETARY CODE SEGMENT
             except ImportError:
                 print "Error: .MOE format not supported by this PyMOL build."
-                if _self._raising(-1,_self): raise _self._pymol.CmdException
+                if _self._raising(-1,_self): raise pymol.CmdException
 
         elif ftype == loadable.mae:
             try:
@@ -307,12 +308,12 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 r = mae.read_maestr(mae_str,str(oname),
                                             int(state),
                                             int(finish),int(discrete),
-                                            int(quiet),int(multiplex),int(zoom))
+                                            int(quiet),int(multiplex),int(zoom),_self=_self)
 
                 # END PROPRIETARY CODE SEGMENT
-            except ImportError:
+            except ValueError:
                 print "Error: .MAE format not supported by this PyMOL build."
-                if _self._raising(-1,_self): raise _self._pymol.CmdException
+                if _self._raising(-1,_self): raise pymol.CmdException
 
         else:
             if ftype in _load2str.keys() and (string.find(finfo,":")>1):
