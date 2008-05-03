@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-05-02 Warren L. DeLano <warren@delsci.com>	
 
+	* fixed nasty crash bug with distance command & multistate objs
+	
 	* incorporated various fixes for pymol2.PyMOL instances.
 	
 2008-05-01 Warren L. DeLano <warren@delsci.com>	
