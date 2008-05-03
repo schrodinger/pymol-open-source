@@ -2170,7 +2170,7 @@ DESCRIPTION
             r = _cmd.set_object_color(_self._COb,str(name),str(color),int(quiet))
         finally:
             _self.unlock(r,_self)      
-        if _raising(r): raise pymol.CmdException
+        if _raising(r,_self): raise pymol.CmdException
         return r
     
     def flag(flag, selection, action="reset", quiet=1, _self=cmd):
