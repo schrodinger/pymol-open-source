@@ -291,7 +291,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 # END PROPRIETARY CODE SEGMENT
             except ImportError:
                 print "Error: .MOE format not supported by this PyMOL build."
-                if _self._raising(-1): raise _self._pymol.CmdException
+                if _self._raising(-1,_self): raise _self._pymol.CmdException
 
         elif ftype == loadable.mae:
             try:
@@ -312,7 +312,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 # END PROPRIETARY CODE SEGMENT
             except ImportError:
                 print "Error: .MAE format not supported by this PyMOL build."
-                if _self._raising(-1): raise _self._pymol.CmdException
+                if _self._raising(-1,_self): raise _self._pymol.CmdException
 
         else:
             if ftype in _load2str.keys() and (string.find(finfo,":")>1):

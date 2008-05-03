@@ -84,14 +84,14 @@ EXAMPLES
         act_kee = fb_action_sc.interpret(action)
         if act_kee == None:
             print "Error: invalid feedback action '%s'."%action
-            if _raising():
+            if _raising(_self=_self):
                 raise QuietException
             else:
                 return None
         elif not is_string(act_kee):
             print "Error: ambiguous feedback action '%s'."%action
             print action_amb
-            if _raising():
+            if _raising(_self=_self):
                 raise QuietException
             else:
                 return None
@@ -125,11 +125,11 @@ EXAMPLES
             mask_kee = fb_mask_sc.interpret(mask)
             if mask_kee == None:
                 print "Error: invalid feedback mask '%s'."%mask
-                if _raising(): raise QuietException
+                if _raising(_self=_self): raise QuietException
                 else: return None
             elif not is_string(mask_kee):
                 print "Error: ambiguous feedback mask '%s'."%mask
-                if _raising(): raise QuietException
+                if _raising(_self=_self): raise QuietException
                 else: return None
             mask_int = int(getattr(fb_mask,mask_kee))
 
@@ -140,11 +140,11 @@ EXAMPLES
             mod_kee = fb_module_sc.interpret(module)
             if mod_kee == None:
                 print "Error: invalid feedback module '%s'."%module
-                if _raising(): raise QuietException
+                if _raising(_self=_self): raise QuietException
                 else: return None
             elif not is_string(mod_kee):
                 print "Error: ambiguous feedback module '%s'."%module
-                if _raising(): raise QuietException
+                if _raising(_self=_self): raise QuietException
                 else: return None
             mod_int = int(getattr(fb_module,mod_kee))
             if mod_int>=0:

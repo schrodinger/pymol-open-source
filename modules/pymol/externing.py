@@ -158,6 +158,6 @@ SEE ALSO
                 if len(a):
                     new_lst.append(a)
             r = _cmd.paste(_self._COb,new_lst)
-        if _raising(r): raise pymol.CmdException
+        if _raising(r,_self): raise pymol.CmdException
         return r 
 
