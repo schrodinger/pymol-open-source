@@ -75,6 +75,7 @@ api_list = [
     'get_bond_print',
     'get_busy',
     'get_chains',
+    'get_color_index',
     'get_color_indices',
     'get_colorection',
     'get_color_tuple',

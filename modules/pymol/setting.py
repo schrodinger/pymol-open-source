@@ -1028,7 +1028,7 @@ SEE ALSO
             raise QuietException
         else:
             if not len(selection):
-                r = set(name,0,'',state,updates,log=0,quiet=quiet)
+                r = set(name,0,'',state,updates,log=0,quiet=quiet,_self=_self)
             else:
                 try:
                     _self.lock(_self)

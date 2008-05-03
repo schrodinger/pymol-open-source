@@ -268,9 +268,17 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.button, a, k)
     
+    def cache(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.cache, a, k)
+    
     def cartoon(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.cartoon, a, k)
+    
+    def capture(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.capture, a, k)
     
     def cd(self, *a, **k):
         k['_self']=self
@@ -500,6 +508,10 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.get_chains, a, k)
     
+    def get_color_index(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_color_index, a, k)
+    
     def get_color_indices(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_color_indices, a, k)
@@ -543,6 +555,10 @@ class Cmd:
     def get_movie_locked(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_movie_locked, a, k)
+    
+    def get_movie_length(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_movie_length, a, k)
     
     def get_mtl_obj(self, *a, **k):
         k['_self']=self
