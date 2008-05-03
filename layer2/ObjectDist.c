@@ -241,17 +241,16 @@ ObjectDist *ObjectDistNewFromM4XBond(PyMOLGlobals *G,ObjectDist *oldObj,
     I->NDSet=0;
   }
   n_state = objMol->NCSet;
-  for(a=0;a<n_state;a++)
-    {
-      VLACheck(I->DSet,DistSet*,a);
-      
-      I->DSet[a] = ObjectDistGetDistSetFromM4XBond(G,objMol,hbond,n_hbond,a,nbr_sele);
-      
-      if(I->DSet[a]) {
-        I->DSet[a]->Obj = I;
+  for(a=0;a<n_state;a++) {
+    VLACheck(I->DSet,DistSet*,a);
+    
+    I->DSet[a] = ObjectDistGetDistSetFromM4XBond(G,objMol,hbond,n_hbond,a,nbr_sele);
+    
+    if(I->DSet[a]) {
+      I->DSet[a]->Obj = I;
         I->NDSet=a+1;
-      }
-    } 
+    }
+  } 
   ObjectDistUpdateExtents(I);
   
   SceneChanged(G);
@@ -529,8 +528,10 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,
         state2=a;
       else
         state2=0;
+
       I->DSet[a] = SelectorGetDistSet(G,I->DSet[a],sele1,state1,sele2,
                                       state2,mode,cutoff,&dist);
+
       if(I->DSet[a]) {
         dist_sum+=dist;
         dist_cnt++;

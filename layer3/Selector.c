@@ -2041,8 +2041,21 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
       HBondCriteria hbcRec,*hbc;
       int *zero=NULL,*scratch=NULL;
 
-      zero=Calloc(int,I->NAtom);
-      scratch=Alloc(int,I->NAtom);
+
+      {
+        int max_n_atom = I->NAtom;
+        ObjectMolecule *lastObj=NULL;
+        for(a=cNDummyAtoms;a<I->NAtom;a++) {
+          ObjectMolecule *obj=I->Obj[I->Table[a].model];
+          if(obj!=lastObj) {
+            if(max_n_atom<obj->NAtom)
+              max_n_atom = obj->NAtom;
+            lastObj = obj;
+          }
+        }
+        zero=Calloc(int,max_n_atom);
+        scratch=Alloc(int,max_n_atom);
+      }
 
       for(a=0;a<n_res;a++) {
         res[a].n_acc = 0;
@@ -10888,12 +10901,15 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
   }
 
   if((mode==1)||(mode==2)||(mode==3)) { /* fill in all the neighbor tables */
+    int max_n_atom = I->NAtom;
     lastObj=NULL;
     for(a=cNDummyAtoms;a<I->NAtom;a++) {
       at=I->Table[a].atom;
       obj=I->Obj[I->Table[a].model];
       s=obj->AtomInfo[at].selEntry;
       if(obj!=lastObj) {
+        if(max_n_atom<obj->NAtom)
+          max_n_atom = obj->NAtom;
         if(SelectorIsMember(G,s,sele1)||
            SelectorIsMember(G,s,sele2)) {
           ObjectMoleculeUpdateNeighbors(obj);
@@ -10903,8 +10919,8 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
         }
       }
     }
-    zero=Calloc(int,I->NAtom);
-    scratch=Alloc(int,I->NAtom);
+    zero=Calloc(int,max_n_atom);
+    scratch=Alloc(int,max_n_atom);
   }
 
   if(mode==2) {
@@ -11029,7 +11045,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
                 
                 dist_cnt++;
                 dist_sum+=dist;
-                VLACheck(vv,float,(nv*3)+5);
+                VLACheck(vv,float,(nv*3)+6);
                 vv0 = vv + (nv*3);
 
                 if((mode==2)&&(don_vv)&&(acc_vv)) {
