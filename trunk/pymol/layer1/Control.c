@@ -53,7 +53,96 @@ struct _CControl {
   double LastClickTime;
   int SkipRelease;
   int NButton;
+
+  /* not saved */
+
+  int sdofActive;
+  double sdofLastIterTime;
+  float sdofTrans[3];
+  float sdofRot[3];
+  
 };
+
+
+int ControlSdofUpdate(PyMOLGlobals *G, float tx,float ty, float tz, float rx, float ry, float rz)
+{
+  CControl *I=G->Control;
+  float tol = 0.0001;
+
+  if(!I->sdofActive) {
+    I->sdofLastIterTime = UtilGetSeconds(G);    
+  }
+
+  I->sdofActive  = (fabs(tx)>=tol) || (fabs(ty)>=tol) || (fabs(tz)>=tol)
+    || (fabs(rx)>=tol) || (fabs(ry)>=tol) || (fabs(rz)>=tol);
+
+  I->sdofTrans[0] = tx;
+  I->sdofTrans[1] = ty;
+  I->sdofTrans[2] = tz;
+  I->sdofRot[0] = rx;
+  I->sdofRot[1] = ry;
+  I->sdofRot[2] = rz;
+  
+  return 1;
+ }
+
+int ControlSdofIterate(PyMOLGlobals *G)
+{
+  CControl *I=G->Control;
+  if(I->sdofActive) {
+    double now = UtilGetSeconds(G);
+    double delta = now - I->sdofLastIterTime;  
+	float rate = delta * 1.0F;  
+    I->sdofLastIterTime = now;
+	
+    {
+      /* suppress small amounts of combined motion using a truncated switching function */
+
+      float len_rot = length3f(I->sdofRot);
+      float len_trans = length3f(I->sdofTrans);
+      float *dom,*sub;
+      if(len_rot>len_trans) {
+        dom = &len_rot;
+        sub = &len_trans;
+      } else {
+        dom = &len_trans;
+        sub = &len_rot;
+      }
+
+      {
+        float expo = 2.0F;
+        float trnc = 0.05F;
+        float sub_fxn = (*sub)/(*dom);
+        if(sub_fxn< trnc) {
+          sub_fxn = 0.0F;
+        } else if(sub_fxn<0.5F) {
+          sub_fxn = (sub_fxn-trnc)/(0.5F-trnc);
+          sub_fxn = (float)pow(sub_fxn,expo);
+        } else {
+          sub_fxn = 1.0F - (float)pow(1.0F - sub_fxn,expo);
+        }
+        *dom = 1.0F;
+        *sub = sub_fxn;
+        scale3f(I->sdofTrans,len_trans,I->sdofTrans);
+        scale3f(I->sdofRot,len_rot,I->sdofRot);
+      }
+    }
+    /* translate */
+    SceneTranslateScaled(G,
+                         delta * I->sdofTrans[0],
+                         -delta * I->sdofTrans[1],
+                         -delta * I->sdofTrans[2]);
+
+    /* rotate */
+    SceneRotateScaled(G,
+                      delta * I->sdofRot[0],
+                      -delta * I->sdofRot[1],
+                      -delta * I->sdofRot[2]);
+  
+    SceneDirty(G);
+	}
+return 1;
+ }
 
 int ControlRocking(PyMOLGlobals *G)
 {
@@ -218,9 +307,11 @@ Block *ControlGetBlock(PyMOLGlobals *G)
 /*========================================================================*/
 int ControlIdling(PyMOLGlobals *G)
 {
-  return(MoviePlaying(G)||
-         SettingGetGlobal_b(G,cSetting_rock)||
-         SettingGet(G,cSetting_sculpting));
+ CControl *I=G->Control;
+ return(I->sdofActive||
+        MoviePlaying(G)||
+        SettingGetGlobal_b(G,cSetting_rock)||
+        SettingGet(G,cSetting_sculpting));
 }
 /*========================================================================*/
 void ControlInterrupt(PyMOLGlobals *G)

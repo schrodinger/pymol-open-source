@@ -534,6 +534,9 @@ def _fake_drag(_self=cmd): # internal
         _self.unlock(-1,_self)
     return 1
 
+def _sdof(tx,ty,tz,rx,ry,rz,_self=cmd):
+    _cmd._sdof(_self._COb,tx,ty,tz,rx,ry,rz)
+    
 # testing tools
 
 # for comparing floating point numbers calculated using

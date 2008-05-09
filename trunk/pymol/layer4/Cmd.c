@@ -4275,6 +4275,25 @@ static PyObject *Cmd_Drag(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *Cmd_Sdof(PyObject *self, 	PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  float tx,ty,tz,rx,ry,rz;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"Offffff",&self,&tx,&ty,&tz,&rx,&ry,&rz);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    PLockAPIAndUnblock(G);
+    ControlSdofUpdate(G,tx,ty,tz,rx,ry,rz);
+    PBlockAndUnlockAPI(G);
+  }
+  return APIResultOk(ok);
+}
 
 static PyObject *CmdRunPyMOL(PyObject *self, PyObject *args)
 {
@@ -5601,6 +5620,7 @@ static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
   }
   return APIAutoNone(result);
 }
+
 
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args)
 {
@@ -8148,6 +8168,7 @@ static PyMethodDef Cmd_methods[] = {
   {"_draw",                 Cmd_Draw,                METH_VARARGS },
   {"_button",               Cmd_Button,              METH_VARARGS },
   {"_drag",                 Cmd_Drag,                METH_VARARGS },
+  {"_sdof",                 Cmd_Sdof,                METH_VARARGS },
   {"accept",	            CmdAccept,               METH_VARARGS },
   {"align",	                CmdAlign,                METH_VARARGS },
   {"alter",	                CmdAlter,                METH_VARARGS },

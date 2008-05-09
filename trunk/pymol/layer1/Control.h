@@ -25,5 +25,8 @@ int ControlIdling(PyMOLGlobals *G);
 void ControlInterrupt(PyMOLGlobals *G);
 int ControlRock(PyMOLGlobals *G,int mode);
 int ControlRocking(PyMOLGlobals *G);
+int ControlSdofUpdate(PyMOLGlobals *G, float tx,float ty, float tz, float rx, float ry, float rz);
+int ControlSdofIterate(PyMOLGlobals *G);
+
 
 #endif

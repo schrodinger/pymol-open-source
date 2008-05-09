@@ -1118,6 +1118,62 @@ void SceneTranslate(PyMOLGlobals *G,float x,float y, float z)
   I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
   SceneInvalidate(G);
 }
+
+void SceneTranslateScaled(PyMOLGlobals *G,float x,float y, float z)
+{
+  register CScene *I=G->Scene;
+  int invalidate = false;
+  if((x!=0.0F)||(y!=0.0F)) {
+    float vScale = SceneGetExactScreenVertexScale(G,NULL);
+    float factor = vScale * (I->Height + I->Width) / 2;
+    I->Pos[0]+=x * factor;
+    I->Pos[1]+=y * factor;
+    invalidate = true;
+    
+  }
+  if(z!=0.0F) {
+    float factor = ((I->FrontSafe+I->BackSafe)/2); /* average distance within visible space */
+    if(factor>0.0F) {
+      factor *= z;
+      I->Pos[2] += factor;
+      I->Front -= factor;
+      I->Back -= factor;
+      I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+      I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
+    }
+    invalidate = true;
+  }
+
+  if(invalidate) {
+    SceneInvalidate(G);
+    if(SettingGetGlobal_b(G,cSetting_roving_origin)) {
+      float v2[3];
+      SceneGetPos(G,v2); /* gets position of center of screen */
+      SceneOriginSet(G,v2,true);
+    }
+    if(SettingGetGlobal_b(G,cSetting_roving_detail)) {    
+      SceneRovingPostpone(G);
+    }
+  }
+}
+
+void SceneRotateScaled(PyMOLGlobals *G,float rx,float ry, float rz)
+{
+  register CScene *I=G->Scene;
+  int invalidate = false;
+  float axis[3];
+  axis[0]=rx;
+  axis[1]=ry;
+  axis[2]=rz;
+  {
+    float angle = length3f(axis);
+    normalize3f(axis);
+    SceneRotate(G,20*cPI*angle,axis[0],axis[1],axis[2]);
+  }
+  if(invalidate) {
+    SceneInvalidate(G);
+  }
+}
 /*========================================================================*/
 
 static void SceneClipSetWithDirty(PyMOLGlobals *G,float front,float back,int dirty)
@@ -5078,24 +5134,23 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
           }
         break;
       case cButModeTransZ:
-        if(I->LastY!=y)
-          {
-            float factor;
-            factor = 200/((I->FrontSafe+I->BackSafe)/2);
-            if(factor>=0.0F) {
-              factor = (((float)y)-I->LastY)/factor;
-              if(!SettingGetGlobal_b(G,cSetting_legacy_mouse_zoom))
-                factor = -factor;
-              I->Pos[2]+=factor;
-              I->Front-=factor;
-              I->Back-=factor;
-              I->FrontSafe = GetFrontSafe(I->Front,I->Back);
-              I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
-            }
-            I->LastY=y;
-            SceneInvalidate(G);
-            adjust_flag=true;
+        if(I->LastY!=y) {
+          float factor;
+          factor = 200/((I->FrontSafe+I->BackSafe)/2);
+          if(factor>=0.0F) {
+            factor = (((float)y)-I->LastY)/factor;
+            if(!SettingGetGlobal_b(G,cSetting_legacy_mouse_zoom))
+              factor = -factor;
+            I->Pos[2]+=factor;
+            I->Front-=factor;
+            I->Back-=factor;
+            I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+            I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
           }
+          I->LastY=y;
+          SceneInvalidate(G);
+          adjust_flag=true;
+        }
         break;
       case cButModeClipNF:
         if(I->LastX!=x)
