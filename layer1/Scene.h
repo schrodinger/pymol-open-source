@@ -102,6 +102,10 @@ void SceneGetEyeNormal(PyMOLGlobals *G,float *v1,float *normal);
 
 void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z);
 void SceneTranslate(PyMOLGlobals *G,float x,float y, float z);
+
+void SceneTranslateScaled(PyMOLGlobals *G,float x,float y, float z);
+void SceneRotateScaled(PyMOLGlobals *G,float rx,float ry, float rz);
+
 void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state);
 void SceneGetImageSize(PyMOLGlobals *G,int *width,int *height);
 

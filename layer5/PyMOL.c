@@ -3337,6 +3337,7 @@ int PyMOL_Idle(CPyMOL *I)
   
   if(ControlIdling(G)) {
     ExecutiveSculptIterateAll(G);
+    ControlSdofIterate(G);
     did_work = true;
   }
   
