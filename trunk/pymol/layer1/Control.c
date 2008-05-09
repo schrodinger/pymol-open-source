@@ -92,7 +92,6 @@ int ControlSdofIterate(PyMOLGlobals *G)
   if(I->sdofActive) {
     double now = UtilGetSeconds(G);
     double delta = now - I->sdofLastIterTime;  
-	float rate = delta * 1.0F;  
     I->sdofLastIterTime = now;
 	
     {
