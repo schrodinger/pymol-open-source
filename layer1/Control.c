@@ -135,9 +135,9 @@ int ControlSdofIterate(PyMOLGlobals *G)
 
     /* rotate */
     SceneRotateScaled(G,
-                      delta * I->sdofRot[0],
-                      -delta * I->sdofRot[1],
-                      -delta * I->sdofRot[2]);
+                       2.0F * delta * I->sdofRot[0],
+                      -2.0F * delta * I->sdofRot[1],
+                      -2.0F * delta * I->sdofRot[2]);
   
     SceneDirty(G);
 	}
