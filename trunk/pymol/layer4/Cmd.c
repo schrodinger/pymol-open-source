@@ -4288,9 +4288,9 @@ static PyObject *Cmd_Sdof(PyObject *self, 	PyObject *args)
     API_HANDLE_ERROR;
   }
   if(ok) {
-    PLockAPIAndUnblock(G);
+    PLockStatus(G);
     ControlSdofUpdate(G,tx,ty,tz,rx,ry,rz);
-    PBlockAndUnlockAPI(G);
+    PUnlockStatus(G);
   }
   return APIResultOk(ok);
 }

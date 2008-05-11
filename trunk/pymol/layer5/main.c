@@ -125,6 +125,7 @@ void MainRunString(char *str)
   PBlock(G);
   PLockStatus(G);
   PRunStringModule(G,str);
+  PUnlockStatus(G);
   PUnblock(G);
 }
 void MainMovieCopyPrepare(int *width,int *height,int *length)
@@ -491,6 +492,7 @@ void MainRunString(char *str)
   MainPushValidContext(G);
   PRunStringModule(G,str);
   MainPopValidContext(G);
+  PUnlockStatus(G);
   PUnblock(G);
 }
 

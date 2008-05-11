@@ -41,6 +41,8 @@ Z* -------------------------------------------------------------------
 
 #define cControlMinWidth 5
 
+#define SDOF_QUEUE_MASK 0x1F
+
 struct _CControl {
   Block *Block;
   int DragFlag;
@@ -60,35 +62,66 @@ struct _CControl {
   double sdofLastIterTime;
   float sdofTrans[3];
   float sdofRot[3];
-  
+  unsigned int sdofWroteTo, sdofReadFrom; /* queue synchronization fields */
+  float sdofBuffer[(SDOF_QUEUE_MASK+1)*6];
 };
 
-
 int ControlSdofUpdate(PyMOLGlobals *G, float tx,float ty, float tz, float rx, float ry, float rz)
-{
+{ 
+  /* may be called asynchronously anytime after CControl has been initialized */
+
   CControl *I=G->Control;
-  float tol = 0.0001;
+  if(I) {
+    if(((I->sdofWroteTo - I->sdofReadFrom) & SDOF_QUEUE_MASK) < SDOF_QUEUE_MASK) { 
+      /* a free slot exists */
+      int slot = (I->sdofWroteTo + 1) & SDOF_QUEUE_MASK;
+      float *buffer = I->sdofBuffer + (6*slot);
 
-  if(!I->sdofActive) {
-    I->sdofLastIterTime = UtilGetSeconds(G);    
+      buffer[0] = tx;
+      buffer[1] = ty;
+      buffer[2] = tz;
+      buffer[3] = rx;
+      buffer[4] = ry;
+      buffer[5] = rz;
+      
+      I->sdofWroteTo = slot;
+      
+      {
+        float tol = 0.0001;
+        int active = (fabs(buffer[0])>=tol) || (fabs(buffer[1])>=tol) || (fabs(buffer[2])>=tol)
+          || (fabs(buffer[3])>=tol) || (fabs(buffer[4])>=tol) || (fabs(buffer[5])>=tol);
+        if(active && !I->sdofActive) {
+          I->sdofLastIterTime = UtilGetSeconds(G);
+        }
+        I->sdofActive = active;
+      }
+      /*printf("wrote %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %d %d %d\n",tx,ty,tz,rx,ry,rz,I->sdofReadFrom,I->sdofWroteTo,slot);*/
+    }
   }
-
-  I->sdofActive  = (fabs(tx)>=tol) || (fabs(ty)>=tol) || (fabs(tz)>=tol)
-    || (fabs(rx)>=tol) || (fabs(ry)>=tol) || (fabs(rz)>=tol);
-
-  I->sdofTrans[0] = tx;
-  I->sdofTrans[1] = ty;
-  I->sdofTrans[2] = tz;
-  I->sdofRot[0] = rx;
-  I->sdofRot[1] = ry;
-  I->sdofRot[2] = rz;
-  
   return 1;
  }
 
 int ControlSdofIterate(PyMOLGlobals *G)
 {
   CControl *I=G->Control;
+  if(I->sdofWroteTo != I->sdofReadFrom) {
+    int slot = I->sdofWroteTo;
+
+    /* new data available */
+    
+    float *buffer = I->sdofBuffer + (6*slot);
+    
+    I->sdofTrans[0] = buffer[0];
+    I->sdofTrans[1] = buffer[1];
+    I->sdofTrans[2] = buffer[2];
+    I->sdofRot[0] = buffer[3];
+    I->sdofRot[1] = buffer[4];
+    I->sdofRot[2] = buffer[5];
+
+    I->sdofReadFrom = slot;
+  }
+  
+
   if(I->sdofActive) {
     double now = UtilGetSeconds(G);
     double delta = now - I->sdofLastIterTime;  
@@ -636,5 +669,4 @@ int ControlInit(PyMOLGlobals *G)
     return 1;
   } else 
     return 0;
-
 }
