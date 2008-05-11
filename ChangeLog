@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-05-09 Warren L. DeLano <warren@delsci.com>	
+
+	* initial 3Dconnexion SpaceNavigator support for Mac (others coming)
+	
 2008-05-02 Warren L. DeLano <warren@delsci.com>	
 
 	* fixed nasty crash bug with distance command & multistate objs
@@ -86,7 +90,7 @@ CHANGE LOG
 	
 2008-03-27 Warren L. DeLano <warren@delsci.com>	
 
-	* Fixed quicky group-dragging behavior
+	* Fixed quirky group-dragging behavior
 	
 2008-03-26 Warren L. DeLano <warren@delsci.com>	
 
