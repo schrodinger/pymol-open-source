@@ -2370,8 +2370,8 @@ int ChampMatch2(CChamp *I,int template,int target,
             int bond_idx2;
             int bond_off2;
             int n_pri;
-            int tmpl_pri[4];
-            int targ_pri[4];
+            int tmpl_pri[MAX_BOND];
+            int targ_pri[MAX_BOND];
             ListTmpl *tmpl_ent2;
             ListTarg *targ_ent2;
             ListBond *tmpl_bd,*targ_bd;
@@ -3964,7 +3964,7 @@ static void ChampStereoToInternal(CChamp *I, int index)
      ListAtom *at1;
      ListBond *bd1;
      int n_bond;
-     int ati[4],pri[4];
+     int ati[MAX_BOND],pri[MAX_BOND];
 
     /* first we need to sweep the molecule in order and assign lexical
        priorities to bonds based on when atoms are written out */
@@ -4014,7 +4014,7 @@ static void ChampStereoToInternal(CChamp *I, int index)
             }
             
             { /* get coordinates into absolute atom order */
-              int idx[4];
+              int idx[MAX_BOND];
               SortIntIndex(4,pri,idx);
               pri_handedness = ChiralHandedness(idx);
               SortIntIndex(4,ati,idx);
@@ -4046,7 +4046,7 @@ static void ChampStereoFromInternal(CChamp *I, int index)
      ListAtom *at1;
      ListBond *bd1;
      int n_bond;
-     int ati[4],pri[4];
+     int ati[MAX_BOND],pri[MAX_BOND];
 
 
     /* first we need to sweep the molecule in order and assign lexical
@@ -4097,7 +4097,7 @@ static void ChampStereoFromInternal(CChamp *I, int index)
             }
             
             { /* get coordinates into absolute atom order */
-              int idx[4];
+              int idx[MAX_BOND];
               SortIntIndex(4,pri,idx);
               pri_handedness = ChiralHandedness(idx);
               SortIntIndex(4,ati,idx);
@@ -4352,10 +4352,10 @@ void ChampDetectChirality(CChamp *I,int index)
      int a;
      ListAtom *at1;
      ListBond *bd1;
-     int pri[4];
+     int pri[MAX_BOND];
      int n_bond;
-     int ati[4];
-     float *vc, *v[4],vd[4][3],vr[4][3],vt[3];
+     int ati[MAX_BOND];
+     float *vc, *v[MAX_BOND],vd[MAX_BOND][3],vr[MAX_BOND][3],vt[3];
 
     /* first we need to sweep the molecule in order and assign lexical
        priorities to bonds based on when atoms are written out */
@@ -4407,7 +4407,7 @@ void ChampDetectChirality(CChamp *I,int index)
           }
 
           { /* get coordinates into lexical rotational order */
-            int idx[4];
+            int idx[MAX_BOND];
             SortIntIndex(4,pri,idx);
             /*
             printf("pri: %d %d %d %d\n",pri[0],pri[1],pri[2],pri[3]);
