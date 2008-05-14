@@ -133,17 +133,18 @@ SEE ALSO
         '''
         pymol=_self._pymol        
         cmd=_self
-        if pymol._log_file!=None:
-            mode = _self.get_setting_legacy("logging")
-            if mode:
-                if mode==1:
-                    pymol._log_file.write(text)
-                elif mode==2:
-                    if alt_text!=None:
-                        pymol._log_file.write(alt_text)
-                    else:
-                        pymol._log_file.write("cmd.do('''%s''')\n"%string.strip(text))
-                pymol._log_file.flush()
+        if hasattr(pymol,"_log_file"):
+            if pymol._log_file!=None:
+                mode = _self.get_setting_legacy("logging")
+                if mode:
+                    if mode==1:
+                        pymol._log_file.write(text)
+                    elif mode==2:
+                        if alt_text!=None:
+                            pymol._log_file.write(alt_text)
+                        else:
+                            pymol._log_file.write("cmd.do('''%s''')\n"%string.strip(text))
+                    pymol._log_file.flush()
 
     def log_close(_self=cmd):
         '''
@@ -162,12 +163,13 @@ SEE ALSO
         '''
         pymol=_self._pymol        
         cmd=_self
-        if pymol._log_file!=None:
-            pymol._log_file.close()
-            del pymol._log_file
-            _self.set("logging",0,quiet=1)
-            if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
-                print " Cmd: log closed."
+        if hasattr(pymol,"_log_file"):
+            if pymol._log_file!=None:
+                pymol._log_file.close()
+                del pymol._log_file
+                _self.set("logging",0,quiet=1)
+                if _self._feedback(fb_module.cmd,fb_mask.details): # redundant
+                    print " Cmd: log closed."
 
     def cls(_self=cmd): 
         '''
