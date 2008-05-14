@@ -325,14 +325,15 @@ class Normal(PMGSkin):
 
     def focus_in(self,event):
         if self.refocus_entry:
-            self.cmd.do("_ cmd.window('defocus')")
+#            self.cmd.do("_ cmd.window('defocus')")
             self.refocus_entry = 0
             self.entry.focus_set()
 
-    def left(self,event):
+    def left(self,event): # this may be obsolete workaround code
         if id(event.widget) == id(self.root):
             if ((event.y>event.widget.winfo_height())):
-                self.cmd.do("_ cmd.window('focus')")
+#                if sys.platform!='darwin':
+#                    self.cmd.do("_ cmd.window('focus')")
                 self.root.focus_set()
                 self.refocus_entry = 1
 
