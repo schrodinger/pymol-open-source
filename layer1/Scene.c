@@ -1159,7 +1159,7 @@ void SceneTranslateScaled(PyMOLGlobals *G,float x,float y, float z)
 
 void SceneRotateScaled(PyMOLGlobals *G,float rx,float ry, float rz)
 {
-  register CScene *I=G->Scene;
+  /*  register CScene *I=G->Scene; */
   int invalidate = false;
   float axis[3];
   axis[0]=rx;

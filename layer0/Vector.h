@@ -77,7 +77,7 @@ void add3d ( double *v1, double *v0, double *v2);
 double distance_line2point3f(float *base,float *normal,float *point,float *alongNormalSq);
 double distance_halfline2point3f(float *base,float *normal,float *point,float *alongNormalSq);
 
-double slow_diffsq3f ( float *v1, float *v2 );
+float slow_diffsq3f ( float *v1, float *v2 );
 double slow_diff3f ( float *v1, float *v2 );
 int slow_within3f(float *v1,float *v2,float dist);
 int slow_within3fsq(float *v1,float *v2,float dist,float dist2);
@@ -337,7 +337,7 @@ __inline__ static double inline_diff3f ( float *v1, float *v2 )
   return(sqrt1d(dx*dx + dy*dy + dz*dz));
 }
 
-__inline__ static double inline_diffsq3f ( float *v1, float *v2 )
+__inline__ static float inline_diffsq3f ( float *v1, float *v2 )
 {
   register double dx,dy,dz;
   dx = (v1[0]-v2[0]);
@@ -345,7 +345,7 @@ __inline__ static double inline_diffsq3f ( float *v1, float *v2 )
   dx = dx * dx;
   dz = (v1[2]-v2[2]);
   dy = dy*dy;
-  return( dz*dz + (dx + dy) );
+  return (float)( dz*dz + (dx + dy) );
 }
 
 __inline__ static int inline_within3f(float *v1,float *v2,float dist)

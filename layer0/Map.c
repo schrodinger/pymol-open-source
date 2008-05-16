@@ -660,20 +660,20 @@ void MapLocus(MapType *I,float *v,int *a,int *b,int *c)
 
 int *MapLocusEStart(MapType *I,float *v)
 {
-	register int a,b,c;
-	float invDiv = I->recipDiv; 
-
-	a=(int)(((v[0]-I->Min[0])*invDiv)+MapBorder);
-	b=(int)(((v[1]-I->Min[1])*invDiv)+MapBorder);
-	c=(int)(((v[2]-I->Min[2])*invDiv)+MapBorder);
-	if(a<I->iMin[0]) a=I->iMin[0];
-	else if(a>I->iMax[0]) a=I->iMax[0];
-	if(b<I->iMin[1]) b=I->iMin[1];
-	else if(b>I->iMax[1]) b=I->iMax[1];
-	if(c<I->iMin[2]) c=I->iMin[2];
-	else if(c>I->iMax[2]) c=I->iMax[2];
-	return (I->EHead + ((a) * I->D1D2) + ((b)*I->Dim[2]) + (c));
+  register int a,b,c;
+  float invDiv = I->recipDiv; 
+  a=(int)( ((v[0] - I->Min[0]) * invDiv) + MapBorder);
+  b=(int)( ((v[1] - I->Min[1]) * invDiv) + MapBorder);
+  c=(int)( ((v[2] - I->Min[2]) * invDiv) + MapBorder);
+  if(a<I->iMin[0]) a = I->iMin[0];
+  else if(a>I->iMax[0]) a = I->iMax[0];
+  if(b<I->iMin[1]) b = I->iMin[1];
+  else if(b>I->iMax[1]) b = I->iMax[1];
+  if(c<I->iMin[2]) c = I->iMin[2];
+  else if(c>I->iMax[2]) c = I->iMax[2];
+  return (I->EHead + ((a) * I->D1D2) + ((b)*I->Dim[2]) + (c));
 }
+
 
 int MapExclLocus(MapType *I,float *v,int *a,int *b,int *c)
 {
