@@ -1187,7 +1187,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   int ramp_above;
   ObjectMolecule *obj;
   float probe_radius;
-  float dist,minDist;
+  float dist;
   float cutoff;
   int inclH;
   int inclInvis;
@@ -1197,6 +1197,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   int *present=NULL;
   int *rc;
   int ramped_flag = false;
+
   int carve_state = 0;
   int carve_flag = false;
   float carve_cutoff;
@@ -1344,8 +1345,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
         float at_transp = transp;
 
         AtomInfoType *ai0 = NULL;
+        float minDist=MAXFLOAT;
         c1=1;
-        minDist=MAXFLOAT;
         i0=-1;
         v0 = I->V+3*a;
         n0 = I->VN+3*a;
@@ -1409,7 +1410,6 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
           
           if(carve_map) {
             
-            minDist=MAXFLOAT;                
             i=*(MapLocusEStart(carve_map,v0));
             if(i) {
               j=carve_map->EList[i++];
@@ -1435,8 +1435,6 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
         }
         if(clear_flag && (*vi)) { /* is point visible, and are we clearing? */
           if(clear_map) {
-            
-            minDist=MAXFLOAT;                
             i=*(MapLocusEStart(clear_map,v0));
             if(i) {
               j=clear_map->EList[i++];
@@ -1826,104 +1824,115 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
           if(sol_dot->nDot) {
             int *dc = sol_dot->dotCode;
             Vector3f *dot = Alloc(Vector3f,sp->nDot);
-            int a,b;
             float *v0,*n0;
-
-            for(b=0;b<sp->nDot;b++) {
-              scale3f(sp->dot[b],probe_radius,dot[b]);
+            
+            {
+              int b;
+              for(b=0;b<sp->nDot;b++) {
+                scale3f(sp->dot[b],probe_radius,dot[b]);
+              }
             }
             v0 = sol_dot->dot;
             n0 = sol_dot->dotNormal;
-            for(a=0;a<sol_dot->nDot;a++) {
-              if(dc[a]||(surface_type<6)) { /* surface type 6 is completely scribed */
-                OrthoBusyFast(G,a+sol_dot->nDot*2,sol_dot->nDot*5); /* 2/5 to 3/5 */
-                for(b=0;b<sp->nDot;b++) {
-                  register int ii;
-                  int flag = true;
-                  v[0]=v0[0]+dot[b][0];
-                  v[1]=v0[1]+dot[b][1];
-                  v[2]=v0[2]+dot[b][2];
-                  ii=*(MapLocusEStart(solv_map,v));
-                  if(ii) {
-                    register int jj;
-                    register int *elist = solv_map->EList;
-                    register float *i_dot = sol_dot->dot;
-                    register float v_0=v[0], v_1=v[1], v_2=v[2];
-                    register float dist=probe_rad_less;
-                    register float dist2=probe_rad_less2;
-                    register float *v1,dx,dy,dz;
-                    jj=elist[ii++];
-                    v1 = i_dot + 3*jj;                          
-                    while(jj>=0) {
-                      if(jj!=a)  { /*&&!(dc[jj]))*/
-                        /* huge bottleneck -- optimized for superscaler processors */
-                        dx = v1[0]-v_0;
-                        dy = v1[1]-v_1;
-                        dz = v1[2]-v_2;
-                        dx = (float)fabs(dx);
-                        dy = (float)fabs(dy);
-                        if(!(dx>dist)) {
-                          dx = dx * dx;
-                          if(!(dy>dist)) {
-                            dz = (float)fabs(dz);
-                            dy = dy * dy;
-                            if(!(dz>dist)) {
-                              dx = dx + dy;
-                              dz = dz * dz;
-                              if(!(dx>dist2)) 
-                                if((dx + dz)<=dist2) {
-                                  flag = false; 
-                                  break; 
+            {
+              int a,b;
+              float dist2 = probe_rad_less2;
+              int sp_nDot = sp->nDot;
+              for(a=0;a<sol_dot->nDot;a++) {
+                if(dc[a]||(surface_type<6)) { /* surface type 6 is completely scribed */
+                  OrthoBusyFast(G,a+sol_dot->nDot*2,sol_dot->nDot*5); /* 2/5 to 3/5 */
+                  for(b=0;b<sp_nDot;b++) {
+                    float *dot_b = dot[b];
+                    v[0] = v0[0] + dot_b[0];
+                    v[1] = v0[1] + dot_b[1];
+                    v[2] = v0[2] + dot_b[2];
+                    {
+                      int flag = true;
+                      register int ii;
+                      if( (ii=*(MapLocusEStart(solv_map,v))) ) {
+                        register int *elist = solv_map->EList;
+                        register float *i_dot = sol_dot->dot;
+                        register float dist = probe_rad_less;
+                        register float v_0 = v[0];
+                        register int jj_next, jj = elist[ii++];
+                        register float v_1 = v[1];
+                        register float *v1 = i_dot + 3*jj;                          
+                        register float v_2 = v[2];
+                        while(jj>=0) {                          
+                          /* huge bottleneck -- optimized for superscaler processors */
+                          register float dx = v1[0], dy, dz;
+                          jj_next = elist[ii++];
+                          dx -= v_0;
+                          if(jj!=a) { 
+                            dx = (dx<0.0F) ? -dx : dx; 
+                            dy = v1[1] - v_1;
+                            if(!(dx>dist)) {
+                              dy = (dy<0.0F) ? -dy : dy; 
+                              dz = v1[2] - v_2;
+                              if(!(dy>dist)) {
+                                dx = dx * dx;
+                                dz = (dz<0.0F) ? -dz : dz; 
+                                dy = dy * dy;
+                                if(!(dz>dist)) {
+                                  dx = dx + dy;
+                                  dz = dz * dz;
+                                  if(!(dx>dist2)) 
+                                    if((dx + dz) <= dist2) {
+                                      flag = false; 
+                                      break; 
+                                    }
                                 }
+                              }
                             }
                           }
+                          v1 = i_dot + 3*jj_next;                          
+                          jj = jj_next;
                         }
                       }
-                      jj=elist[ii++];
-                      v1 = i_dot + 3*jj;                          
-                    }
-                  }
-                  /* at this point, we have points on the interior of the solvent surface,
-                     so now we need to further trim that surface to cover atoms that are present */
-                  
-                  if(flag) {
-                    register int i=*(MapLocusEStart(map,v));
-                    if(i) {
-                      register int j=map->EList[i++];
-                      while(j>=0) {
-                        SurfaceJobAtomInfo *atom_info = I_atom_info + j;
-                        if((!present_vla)||present_vla[j]) {
-                          if(within3f(I_coord+3*j,v,atom_info->vdw+probe_rad_more)) {
-                            flag=false;
-                            break;
+
+                      /* at this point, we have points on the interior of the solvent surface,
+                         so now we need to further trim that surface to cover atoms that are present */
+                      
+                      if(flag) {
+                        register int i=*(MapLocusEStart(map,v));
+                        if(i) {
+                          register int j=map->EList[i++];
+                          while(j>=0) {
+                            SurfaceJobAtomInfo *atom_info = I_atom_info + j;
+                            if((!present_vla)||present_vla[j]) {
+                              if(within3f(I_coord+3*j,v,atom_info->vdw+probe_rad_more)) {
+                                flag=false;
+                                break;
+                              }
+                            }
+                            j=map->EList[i++];
                           }
                         }
-                        j=map->EList[i++];
-                      }
-                    }
-                    if(!flag) { /* compute the normals */
-                      vn[0]=-sp->dot[b][0];
-                      vn[1]=-sp->dot[b][1];
-                      vn[2]=-sp->dot[b][2];
-                      if(I->N<MaxN) {
-                        I->N++;
-                        v+=3;
-                        vn+=3;
-                      } else {
-                        int v_offset = v-I->V;
-                        int vn_offset = vn-I->VN;
-                        MaxN = MaxN*2;
-                        VLASize(I->V,float,(MaxN+1)*3);
-                        VLASize(I->VN,float,(MaxN+1)*3);
-                        v = I->V + v_offset;
-                        vn = I->VN + vn_offset;
+                        if(!flag) { /* compute the normals */
+                          vn[0]=-sp->dot[b][0];
+                          vn[1]=-sp->dot[b][1];
+                          vn[2]=-sp->dot[b][2];
+                          if(I->N<MaxN) {
+                            I->N++;
+                            v+=3;
+                            vn+=3;
+                          } else {
+                            int v_offset = v-I->V;
+                            int vn_offset = vn-I->VN;
+                            MaxN = MaxN*2;
+                            VLASize(I->V,float,(MaxN+1)*3);
+                            VLASize(I->VN,float,(MaxN+1)*3);
+                            v = I->V + v_offset;
+                            vn = I->VN + vn_offset;
+                          }
+                        }
                       }
                     }
                   }
                 }
+                v0 +=3;
+                n0 +=3;
               }
-              v0 +=3;
-              n0 +=3;
             }
             FreeP(dot);
           }

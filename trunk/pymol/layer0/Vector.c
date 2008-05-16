@@ -1739,8 +1739,6 @@ void normalize3d( double *v1 )
 	 }
 } 
 
-
-
 double length3d ( double *v1 )
 {
   return(sqrt1d((v1[0]*v1[0]) + 
@@ -1757,17 +1755,16 @@ double slow_diff3f ( float *v1, float *v2 )
   return(sqrt1d(dx*dx + dy*dy + dz*dz));
 }
 
-double slow_diffsq3f ( float *v1, float *v2 )
+float slow_diffsq3f ( float *v1, float *v2 )
 {
   register double dx,dy,dz;
   dx = (v1[0]-v2[0]);
   dy = (v1[1]-v2[1]);
   dz = (v1[2]-v2[2]);
 
-  return( dx*dx + dy*dy + dz*dz );
+  return (float)( dx*dx + dy*dy + dz*dz );
 
 }
-
 
 int slow_within3f(float *v1,float *v2,float dist)
 {

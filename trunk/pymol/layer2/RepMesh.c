@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"main.h"
 #include"PyMOLGlobals.h"
+#include"Selector.h"
 
 typedef struct RepMesh {
   Rep R;
@@ -319,11 +320,10 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
   lc = I->LastColor;
   cc = cs->Color;
   ai2=obj->AtomInfo;
-  for(a=0;a<cs->NIndex;a++)
-    {
+  for(a=0;a<cs->NIndex;a++) {
       *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepMesh];
       *(lc++) = *(cc++);
-    }
+  }
 
   if(I->mesh_type!=1) {
     I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_width);
@@ -522,19 +522,64 @@ Rep *RepMeshNew(CoordSet *cs,int state)
 
   if(meshFlag) {
 
-	 I->V=VLAMalloc(1000,sizeof(float),9,false);
-	 I->N=VLAMalloc(100,sizeof(int),9,false);
+#if 0
+    int carve_state = 0;
+    int carve_flag = false;
+    float carve_cutoff;
+    char *carve_selection = NULL;
+    float *carve_vla = NULL;
+    MapType *carve_map = NULL;
+    
+    int clear_state = 0;
+    int clear_flag = false;
+    float clear_cutoff;
+    char *clear_selection = NULL;
+    float *clear_vla = NULL;
+    MapType *clear_map = NULL;
 
-	 I->N[0]=0;
-	 
-     for(c=0;c<3;c++)	{
-       /*		  minE[c]=(cs->Obj->Obj.extent[2*c]-MAX_VDW)-0.25;
+    carve_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
+    clear_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_clear_cutoff);
+
+    if(carve_cutoff>0.0F) {
+      carve_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
+      carve_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
+      if(carve_selection) 
+        carve_map = SelectorGetSpacialMapFromSeleCoord(G,
+                                                       SelectorIndexByName(G,carve_selection),
+                                                       carve_state,
+                                                       carve_cutoff,&carve_vla);
+      if(carve_map) {
+        MapSetupExpress(carve_map);
+        carve_flag = true;
+      }
+    }
+    if(clear_cutoff>0.0F) {
+      clear_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_clear_state) - 1;
+      clear_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_surface_clear_selection);
+      if(clear_selection) 
+        clear_map = SelectorGetSpacialMapFromSeleCoord(G,
+                                                       SelectorIndexByName(G,clear_selection),
+                                                       clear_state,
+                                                       clear_cutoff,&clear_vla);
+      if(clear_map) {
+        MapSetupExpress(clear_map);
+        clear_flag = true;
+      }
+    }
+#endif
+    I->V=VLAMalloc(1000,sizeof(float),9,false);
+    I->N=VLAMalloc(100,sizeof(int),9,false);
+    
+    I->N[0]=0;
+	
+    for(c=0;c<3;c++)	{
+      /*		  minE[c]=(cs->Obj->Obj.extent[2*c]-MAX_VDW)-0.25;
                   maxE[c]=(cs->Obj->Obj.extent[2*c+1]+MAX_VDW)+0.25;
-       */
-       minE[c]=MAXFLOAT;
-       maxE[c]=-(MAXFLOAT);
-     } 
-
+      */
+      minE[c]=MAXFLOAT;
+      maxE[c]=-(MAXFLOAT);
+    } 
+    
      for(b=0;b<obj->NCSet;b++) {	 
        ccs=obj->CSet[b];
        if(ccs) {
@@ -676,25 +721,88 @@ Rep *RepMeshNew(CoordSet *cs,int state)
 	 OrthoBusyFast(G,2,3);
      IsosurfVolume(G,NULL,NULL,field,1.0,&I->N,&I->V,NULL,mesh_type,mesh_skip,1.0F);
      IsosurfFieldFree(G,field);
-    
-     /* someday add support for solid mesh representation....
-        if(mesh_type==0||mesh_type==1) {
-        } else {
-        ms->nT=TetsurfVolume(field,
-        1.0F,
-        &I->N,
-        &I->V,
-        NULL,
-        ms->Mode,
-        NULL,
-        NULL,
-        0.0F,
-        0);
-       
-        }
-     */
-	 n=I->N;
-	 I->NTot=0;
+#if 0
+     if(I->N && I->V && (carve_flag||clear_flag)) {
+       int cur_size = VLAGetSize(I->N);
+       if((mesh_type==0) && cur_size) {
+         int *n = I->N;
+         int *new_n = VLACalloc(int,cur_size);
+         int new_size = 0;
+         float *new_v = I->V;
+         float *v = I->V;
+         while( (c=*(n++)) ) {
+           int new_c = 0;
+           float *last_v = NULL;
+           while(c--) {
+             int a_keeper = false;
+             if(carve_map) {
+               register int i=*(MapLocusEStart(carve_map,v));
+               if(i) {
+                 register int j=carve_map->EList[i++];
+                 while(j>=0) {
+                   register float *v_targ = carve_vla+3*j;
+                   if(within3f(v_targ,v,carve_cutoff)) {
+                     a_keeper = true;
+                     break;
+                   }
+                   j=carve_map->EList[i++];
+                 }
+               }
+             } else {
+               a_keeper = true;
+             }
+             if(clear_map) { 
+               register int i=*(MapLocusEStart(clear_map,v));
+               if(i) {
+                 register int j=clear_map->EList[i++];
+                 while(j>=0) {
+                   if(within3f(clear_vla+3*j,v,clear_cutoff)) {
+                     a_keeper = false;
+                     break;
+                   }
+                   j=clear_map->EList[i++];
+                 }
+               }
+             }
+             if(a_keeper) {
+               if(new_c) {
+                 new_c++;
+                 *(new_v++) = *(v++); *(new_v++) = *(v++); *(new_v++) = *(v++);
+               } else {
+                 if(last_v) {
+                   new_c+=2;
+                   *(new_v++) = *(last_v++); *(new_v++) = *(last_v++); *(new_v++) = *(last_v++);
+                   *(new_v++) = *(v++); *(new_v++) = *(v++); *(new_v++) = *(v++);
+                   last_v = NULL;
+                 } else {
+                   last_v = v;
+                   v+=3;
+                 }
+               }
+             } else {
+               v+=3;
+               if(new_c) {
+                 VLACheck(new_n,int,new_size+1); /* extends the zero count sentinel */
+                 new_n[new_size] = new_c;
+                 new_size++;
+                 new_c = 0;
+               }
+             }
+           }
+           if(new_c) {
+             VLACheck(new_n,int,new_size+1); /* extends the zero count sentinel */
+             new_n[new_size] = new_c;
+             new_size++;
+             new_c = 0;
+           }
+         }
+         VLAFreeP(I->N);
+         I->N = new_n;
+       }
+     }
+#endif
+     n=I->N;
+     I->NTot=0;
 	 while(*n) I->NTot+=*(n++);
 	 RepMeshColor(I,cs);
 	 OrthoBusyFast(G,3,4);
