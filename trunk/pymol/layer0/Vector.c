@@ -1757,12 +1757,12 @@ double slow_diff3f ( float *v1, float *v2 )
 
 float slow_diffsq3f ( float *v1, float *v2 )
 {
-  register double dx,dy,dz;
+  register float dx,dy,dz;
   dx = (v1[0]-v2[0]);
   dy = (v1[1]-v2[1]);
   dz = (v1[2]-v2[2]);
 
-  return (float)( dx*dx + dy*dy + dz*dz );
+  return ( dx*dx + dy*dy + dz*dz );
 
 }
 

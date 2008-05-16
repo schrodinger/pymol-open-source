@@ -339,13 +339,13 @@ __inline__ static double inline_diff3f ( float *v1, float *v2 )
 
 __inline__ static float inline_diffsq3f ( float *v1, float *v2 )
 {
-  register double dx,dy,dz;
+  register float dx,dy,dz;
   dx = (v1[0]-v2[0]);
   dy = (v1[1]-v2[1]);
   dx = dx * dx;
   dz = (v1[2]-v2[2]);
   dy = dy*dy;
-  return (float)( dz*dz + (dx + dy) );
+  return ( dz*dz + (dx + dy) );
 }
 
 __inline__ static int inline_within3f(float *v1,float *v2,float dist)
