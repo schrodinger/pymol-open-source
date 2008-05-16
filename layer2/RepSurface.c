@@ -1848,20 +1848,20 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
                     v[2] = v0[2] + dot_b[2];
                     {
                       int flag = true;
-                      register int ii;
+                      int ii;
                       if( (ii=*(MapLocusEStart(solv_map,v))) ) {
-                        register int *elist = solv_map->EList;
                         register float *i_dot = sol_dot->dot;
                         register float dist = probe_rad_less;
+                        register int *elist_ii = solv_map->EList + ii;
                         register float v_0 = v[0];
-                        register int jj_next, jj = elist[ii++];
+                        register int jj_next, jj = *(elist_ii++);
                         register float v_1 = v[1];
-                        register float *v1 = i_dot + 3*jj;                          
+                        register float *v1 = i_dot + 3*jj;
                         register float v_2 = v[2];
                         while(jj>=0) {                          
                           /* huge bottleneck -- optimized for superscaler processors */
                           register float dx = v1[0], dy, dz;
-                          jj_next = elist[ii++];
+                          jj_next = *(elist_ii++);
                           dx -= v_0;
                           if(jj!=a) { 
                             dx = (dx<0.0F) ? -dx : dx; 
@@ -1885,7 +1885,7 @@ static int SurfaceJobRun(PyMOLGlobals *G, SurfaceJob *I)
                               }
                             }
                           }
-                          v1 = i_dot + 3*jj_next;                          
+                          v1 = i_dot + 3*jj_next;
                           jj = jj_next;
                         }
                       }
