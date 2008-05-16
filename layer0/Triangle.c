@@ -771,9 +771,9 @@ static void TriangleBuildObvious(TriangleSurfaceRec *II,int i1,int i2,float *v,f
         if((j!=i1)&&(j!=i2)&&(j!=used)) {
           v0 = v+3*j;
           {
-            double d1 = diffsq3f(v0,v1);
-            double d2 = diffsq3f(v0,v2);
-            float dif2 = (float)( d2 > d1 ? d2 : d1 );
+            float d1 = diffsq3f(v0,v1);
+            float d2 = diffsq3f(v0,v2);
+            float dif2 = ( d2 > d1 ? d2 : d1 );
             if(dif2<minDist2) {
               n0 = vn + 3*j;
               dot1 = dot_product3f(n0,n1);
@@ -953,8 +953,8 @@ static void TriangleBuildSecondPass(TriangleSurfaceRec *II,int i1,int i2,float *
           v0 = v+3*j;
           n0 = vn+3*j;
           {
-            double d1 = diffsq3f(v0,v1);
-            double d2 = diffsq3f(v0,v2);
+            float d1 = diffsq3f(v0,v1);
+            float d2 = diffsq3f(v0,v2);
             float dif2 = ( d2 > d1 ? d2 : d1 );
             if(dif2<minDist2) {
               dot1 = dot_product3f(n0,n1);
@@ -1099,9 +1099,9 @@ static void TriangleBuildSecondSecondPass(TriangleSurfaceRec *II,int i1,int i2,f
           v0 = v+3*j;
           n0 = vn+3*j;
           {
-            double d1 = diffsq3f(v0,v1);
-            double d2 = diffsq3f(v0,v2);
-            float dif2 = (float)( d2 > d1 ? d2 : d1 );
+            float d1 = diffsq3f(v0,v1);
+            float d2 = diffsq3f(v0,v2);
+            float dif2 = ( d2 > d1 ? d2 : d1 );
             if(dif2<minDist2) {
               dot = dot_product3f(n0,n1) + dot_product3f(n0,n2);
               if((dot>cutoff)||((dif2/minDist2)<_25)) {
@@ -1223,9 +1223,9 @@ static void TriangleBuildSingle(TriangleSurfaceRec *II,int i1,int i2,float *v,fl
         if((j!=i1)&&(j!=i2)&&(j!=used)&&(I->vertActive[j])) {
           v0 = v+3*j;
           {
-            double d1 = diffsq3f(v0,v1);
-            double d2 = diffsq3f(v0,v2);
-            float dif2 = (float)( d2 > d1 ? d2 : d1 );
+            float d1 = diffsq3f(v0,v1);
+            float d2 = diffsq3f(v0,v2);
+            float dif2 = ( d2 > d1 ? d2 : d1 );
             if(dif2<minDist2) {
               minDist2 = dif2;
               i0=j; 
@@ -1339,9 +1339,9 @@ static void TriangleBuildThirdPass(TriangleSurfaceRec *II,int i1,int i2,float *v
         if((j!=i1)&&(j!=i2)&&(j!=used)&&(I->vertActive[j])) {
           v0 = v+3*j;
           {
-            double d1 = diffsq3f(v0,v1);
-            double d2 = diffsq3f(v0,v2);
-            float dif2 = (float)( d2 > d1 ? d2 : d1 );
+            float d1 = diffsq3f(v0,v1);
+            float d2 = diffsq3f(v0,v2);
+            float dif2 = ( d2 > d1 ? d2 : d1 );
             if(dif2<minDist2) {
               minDist2 = dif2;
               i0=j; 
@@ -1399,9 +1399,9 @@ static void TriangleBuildLast(TriangleSurfaceRec *II,int i1,int i2,float *v,floa
         if((j!=i1)&&(j!=i2)&&(j!=used)&&(I->vertActive[j]>0)) {
           v0 = v+3*j; 
           {
-            double d1 = diffsq3f(v0,v1);
-            double d2 = diffsq3f(v0,v2);
-            float dif2 = (float)( d2 > d1 ? d2 : d1 );
+            float d1 = diffsq3f(v0,v1);
+            float d2 = diffsq3f(v0,v2);
+            float dif2 = ( d2 > d1 ? d2 : d1 );
             if(dif2<minDist2) {
               minDist2 = dif2;
               i0=j; 
@@ -1518,7 +1518,7 @@ static void TriangleFill(TriangleSurfaceRec *II,float *v,float *vn,int n,int fir
             first_vert = j;
             while(j>=0) {
               if(j!=a) {
-                float dif2=(float)diffsq3f(v+3*j,v0);
+                float dif2 = diffsq3f(v+3*j,v0);
                 if(dif2<minDist2)
                   if(I->vertActive[a]==-1)
                     if(TriangleEdgeStatus(I,a,j)>=0) { /* can we put a triangle here? */

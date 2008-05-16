@@ -682,7 +682,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
                  if(d) {
                    cur=smap->EList[d++];
                    while(cur>=0) {
-                     vLen=(float)diffsq3f(point,I->Dot+(cur*3));
+                     vLen= diffsq3f(point,I->Dot+(cur*3));
                      if(vLen<probe_radius2) { /* within a water radius */
                        inSolvFlag=true;
                        break;
