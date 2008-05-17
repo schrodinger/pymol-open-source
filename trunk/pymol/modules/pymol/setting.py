@@ -621,7 +621,8 @@ if __name__=='pymol.setting':
         cone_quality                       = 583
         pdb_formal_charges                 = 584
         ati_bugs                           = 585
-
+        geometry_export_mode               = 586
+        
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

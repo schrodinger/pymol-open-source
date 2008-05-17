@@ -750,6 +750,7 @@ typedef struct _CPyMOL {
   ov_word lex_cone_quality;
   ov_word lex_pdb_formal_charges;
   ov_word lex_ati_bugs;
+  ov_word lex_geometry_export_mode;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1493,7 +1494,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(cone_quality,583);
   LEX_SETTING(pdb_formal_charges,584);
   LEX_SETTING(ati_bugs,585);
- return_OVstatus_SUCCESS;
+  LEX_SETTING(geometry_export_mode,586);
+  return_OVstatus_SUCCESS;
 }
 
 int PyMOL_NewG3DStream(CPyMOL *I,int **array_ptr)

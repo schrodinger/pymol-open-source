@@ -8,6 +8,8 @@ CHANGE LOG
 	
 2008-05-09 Warren L. DeLano <warren@delsci.com>	
 
+	* new setting: geometry_export_mode partially implemented
+	
 	* initial 3Dconnexion SpaceNavigator support for Mac (others coming)
 	
 2008-05-02 Warren L. DeLano <warren@delsci.com>	
