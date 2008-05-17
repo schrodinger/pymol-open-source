@@ -3616,6 +3616,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_cone_quality, 18);
     set_b(I,cSetting_pdb_formal_charges,1);
     set_i(I,cSetting_ati_bugs,0);
-
+    set_i(I,cSetting_geometry_export_mode,0);
   }
 }

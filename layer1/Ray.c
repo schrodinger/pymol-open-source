@@ -674,7 +674,7 @@ static void RayComputeBox(CRay *I)
   I->max_box[2] = zmax;
 }
 
-static void RayTransformFirst(CRay *I,int perspective)
+static void RayTransformFirst(CRay *I,int perspective,int identity)
 {
   CBasis *basis0,*basis1;
   CPrimitive *prm;
@@ -700,8 +700,12 @@ static void RayTransformFirst(CRay *I,int perspective)
   VLACacheSize(I->G,basis1->Radius,float,basis0->NVertex,1,cCache_basis_radius);
   VLACacheSize(I->G,basis1->Radius2,float,basis0->NVertex,1,cCache_basis_radius2);
   
-  RayApplyMatrix33(basis0->NVertex,(float3*)basis1->Vertex,
-					  I->ModelView,(float3*)basis0->Vertex);
+  if(identity) {
+    UtilCopyMem(basis1->Vertex,basis0->Vertex,basis0->NVertex*sizeof(float)*3);
+  } else {
+    RayApplyMatrix33(basis0->NVertex,(float3*)basis1->Vertex,
+                     I->ModelView,(float3*)basis0->Vertex);
+  }
 
   for(a=0;a<basis0->NVertex;a++) {
     basis1->Radius[a]=basis0->Radius[a];
@@ -712,8 +716,12 @@ static void RayTransformFirst(CRay *I,int perspective)
   basis1->MinVoxel=basis0->MinVoxel;
   basis1->NVertex=basis0->NVertex;
 
-  RayTransformNormals33(basis0->NNormal,(float3*)basis1->Normal,
-					  I->ModelView,(float3*)basis0->Normal);
+  if(identity) {
+    UtilCopyMem(basis1->Normal,basis0->Normal,basis0->NNormal*sizeof(float)*3);
+  } else {
+    RayTransformNormals33(basis0->NNormal,(float3*)basis1->Normal,
+                          I->ModelView,(float3*)basis0->Normal);
+  }
   
   basis1->NNormal=basis0->NNormal;
 
@@ -725,8 +733,7 @@ static void RayTransformFirst(CRay *I,int perspective)
       switch(prm->type) {
       case cPrimTriangle:
       case cPrimCharacter:
-        BasisTrianglePrecomputePerspective(
-                                           basis1->Vertex+prm->vert*3,
+        BasisTrianglePrecomputePerspective(basis1->Vertex+prm->vert*3,
                                            basis1->Vertex+prm->vert*3+3,
                                            basis1->Vertex+prm->vert*3+6,
                                            basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
@@ -739,13 +746,12 @@ static void RayTransformFirst(CRay *I,int perspective)
       switch(prm->type) {
       case cPrimTriangle:
       case cPrimCharacter:
-        
         BasisTrianglePrecompute(basis1->Vertex+prm->vert*3,
                                 basis1->Vertex+prm->vert*3+3,
                                 basis1->Vertex+prm->vert*3+6,
                                 basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
         v0 = basis1->Normal + (basis1->Vert2Normal[prm->vert]*3 + 3);
-        prm->cull = backface_cull&&((v0[2]<0.0F)&&(v0[5]<0.0F)&&(v0[8]<0.0F));
+        prm->cull = (!identity)&&backface_cull&&((v0[2]<0.0F)&&(v0[5]<0.0F)&&(v0[8]<0.0F));
         break;
       case cPrimCone:
       case cPrimSausage:
@@ -852,7 +858,7 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
 #define convert_col(c) (0xFF000000 | (((int)(c[0]*255.0))<<16) | (((int)(c[1]*255.0))<<8) | (((int)(c[2]*255.0))))
 
   RayExpandPrimitives(I);
-  RayTransformFirst(I,0);
+  RayTransformFirst(I,0,false);
 
   if(!quiet) {
     PRINTFB(I->G,FB_Ray,FB_Details)
@@ -937,7 +943,7 @@ void RayRenderVRML1(CRay *I,int width,int height,
   OrthoLineType buffer;
   
   RayExpandPrimitives(I);
-  RayTransformFirst(I,0);
+  RayTransformFirst(I,0,false);
 
   strcpy(buffer,"#VRML V1.0 ascii\n\n");
   UtilConcatVLA(&vla,&cc,buffer);
@@ -1050,8 +1056,10 @@ void RayRenderVRML2(CRay *I,int width,int height,
   OrthoLineType buffer;
   float mid[3]; /*, wid[3];*/
   float h_fov = cPI*(fov*width)/(180*height);
+  int identity = (SettingGetGlobal_i(I->G,cSetting_geometry_export_mode)==1);
+
   RayExpandPrimitives(I);
-  RayTransformFirst(I,0);
+  RayTransformFirst(I,0,identity);
   RayComputeBox(I);
   /*
   mid[0] = (I->max_box[0] + I->min_box[0]) / 2.0;
@@ -1066,32 +1074,34 @@ void RayRenderVRML2(CRay *I,int width,int height,
   UtilConcatVLA(&vla,&cc,
                 "#VRML V2.0 utf8\n" /* WLD: most VRML2 readers req. utf8 */
                 "\n");
-  sprintf(buffer,
-          "Viewpoint {\n"
-          " position 0 0 %6.8f\n"
-          " orientation 1 0 0 0\n"
-          " description \"Z view\"\n"
-          " fieldOfView %8.6f\n" /* WLD: use correct FOV */
-          "}\n"
-          /* WLD: only write the viewpoint which matches PyMOL
-          "Viewpoint {\n"
-          " position %6.8f 0 0\n"
-          " orientation 0 1 0 1.570796\n"
-          " description \"X view\"\n"
-          "}\n"
-          "Viewpoint {\n"
-          " position 0 %6.8f 0\n"
-          " orientation 0 -0.707106 -0.7071061 3.141592\n"
-          " description \"Y view\"\n"
-          "}\n"*/,
-          -z_corr, /* *0.96646  for some reason, PyMOL and C4D cameras differ by about 3.5% ... */
-          h_fov
-          /*(wid[2] + wid[1]),
-            (wid[0] + wid[1]),
-            (wid[1] + wid[2])*/
-          );
-  UtilConcatVLA(&vla,&cc,buffer);
-  {
+  if(!identity) {
+    sprintf(buffer,
+            "Viewpoint {\n"
+            " position 0 0 %6.8f\n"
+            " orientation 1 0 0 0\n"
+            " description \"Z view\"\n"
+            " fieldOfView %8.6f\n" /* WLD: use correct FOV */
+            "}\n"
+            /* WLD: only write the viewpoint which matches PyMOL
+               "Viewpoint {\n"
+               " position %6.8f 0 0\n"
+               " orientation 0 1 0 1.570796\n"
+               " description \"X view\"\n"
+               "}\n"
+               "Viewpoint {\n"
+               " position 0 %6.8f 0\n"
+               " orientation 0 -0.707106 -0.7071061 3.141592\n"
+               " description \"Y view\"\n"
+               "}\n"*/,
+            -z_corr, /* *0.96646  for some reason, PyMOL and C4D cameras differ by about 3.5% ... */
+            h_fov
+            /*(wid[2] + wid[1]),
+              (wid[0] + wid[1]),
+              (wid[1] + wid[2])*/
+            );
+    UtilConcatVLA(&vla,&cc,buffer);
+  }
+  if(!identity) {
     float light[3];
     float *lightv=SettingGetfv(I->G,cSetting_light);
     copy3f(lightv,light);
@@ -1464,13 +1474,15 @@ void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
 {
   char *objVLA = *objVLA_ptr; 
   char *mtlVLA = *mtlVLA_ptr; 
+  int identity = (SettingGetGlobal_i(I->G,cSetting_geometry_export_mode)==1);
+
   ov_size oc = 0; /* obj character count */
   /*  int mc = 0;*/ /* mtl character count */
 
   OrthoLineType buffer;
   
   RayExpandPrimitives(I);
-  RayTransformFirst(I,0);
+  RayTransformFirst(I,0,identity);
 
   { 
     int a;
@@ -1575,6 +1587,8 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   char transmit[64];
   float light[3],*lightv;
   float spec_power = SettingGet(I->G,cSetting_spec_power);
+  int identity = (SettingGetGlobal_i(I->G,cSetting_geometry_export_mode)==1);
+
   if(spec_power<0.0F) {
     spec_power = SettingGet(I->G,cSetting_shininess);
   }
@@ -1629,26 +1643,58 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   bkrd=SettingGetfv(I->G,cSetting_bg_rgb);
 
   RayExpandPrimitives(I);
-  RayTransformFirst(I,0);
+  RayTransformFirst(I,0,identity);
 
   PRINTFB(I->G,FB_Ray,FB_Details)
     " RayRenderPovRay: processed %i graphics primitives.\n",I->NPrimitive 
     ENDFB(I->G);
   base = I->Basis+1;
 
-  if(!SettingGet(I->G,cSetting_ortho)) {
-    sprintf(buffer,"camera {direction<0.0,0.0,%8.3f>\n location <0.0 , 0.0 , 0.0>\n right %12.10f*x up y \n }\n",
-            -57.3F*cos(fov*cPI/(180*2.4))/fov,/* by trial and error */
-            I->Range[0]/I->Range[1]);
-  } else {
-    sprintf(buffer,"camera {orthographic location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> right %12.10f*x up %12.10f*y}\n",
-            front,-I->Range[0],I->Range[1]);
+  {
+    int ortho = SettingGet(I->G,cSetting_ortho);
+    if(!identity) {
+      if(!ortho) {
+        sprintf(buffer,"camera {direction<0.0,0.0,%8.3f>\n location <0.0 , 0.0 , 0.0>\n right %12.10f*x up y \n }\n",
+                -57.3F*cos(fov*cPI/(180*2.4))/fov,/* by trial and error */
+                I->Range[0]/I->Range[1]);
+      } else {
+        sprintf(buffer,"camera {orthographic location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> right %12.10f*x up %12.10f*y}\n",
+                front,-I->Range[0],I->Range[1]);
+      }
+    } else {
+      float look[3];
+      float loc[3] = {0.0F,0.0F,0.0F};
+      SceneViewType view;
+      
+      SceneGetPos(I->G,look);
+      SceneGetView(I->G,view);
+      loc[2] = -view[18];
+      MatrixInvTransformC44fAs33f3f(view,loc,loc);
+      add3f(look,loc,loc);
+
+      if(!ortho) {
+        sprintf(buffer,
+"camera {angle %12.10f sky<%12.10f,%12.10f,%12.10f>\nlocation<%12.10f,%12.10f,%12.10f>\nlook_at<%12.10f,%12.10f,%12.10f> right %12.10f*x up y }\n",
+                fov*I->Range[0]/I->Range[1],
+                view[1],view[5],view[9],
+                loc[0],loc[1],loc[2],
+                look[0], look[1], look[2],
+                -I->Range[0]/I->Range[1]);
+      } else {
+         sprintf(buffer,
+"camera {orthographic sky<%12.10f,%12.10f,%12.10f>\nlocation<%12.10f,%12.10f,%12.10f>\nlook_at<%12.10f,%12.10f,%12.10f> right %12.10f*x up %12.10f*y}\n",
+                 view[1],view[5],view[9],
+                 loc[0],loc[1],loc[2],
+                 look[0], look[1], look[2],
+                 -I->Range[0],I->Range[1]);
+      }
+    }
+    UtilConcatVLA(&headerVLA,&hc,buffer);
   }
-  UtilConcatVLA(&headerVLA,&hc,buffer);
 
   {
-    float ambient =           SettingGet(I->G,cSetting_ambient) + SettingGet(I->G,cSetting_direct);
-    float reflect =           SettingGet(I->G,cSetting_reflect);
+    float ambient = SettingGet(I->G,cSetting_ambient) + SettingGet(I->G,cSetting_direct);
+    float reflect = SettingGet(I->G,cSetting_reflect);
 
     if(ambient>0.5) ambient=0.5;
 
@@ -1661,20 +1707,42 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
             spec_power);
     UtilConcatVLA(&headerVLA,&hc,buffer);
   }
-  if(angle) {
-    float temp[16];
-    identity44f(temp);
-    MatrixRotateC44f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
-    MatrixTransformC44fAs33f3f(temp,light,light);
+
+  if(!identity) {
+    if(angle) {
+      float temp[16];
+      identity44f(temp);
+      MatrixRotateC44f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
+      MatrixTransformC44fAs33f3f(temp,light,light);
+    }
   }
-  sprintf(buffer,"light_source{<%6.4f,%6.4f,%6.4f>  rgb<1.0,1.0,1.0>}\n",
-          -light[0]*10000.0F,
-          -light[1]*10000.0F,
-          -light[2]*10000.0F-front
-          );
-  UtilConcatVLA(&headerVLA,&hc,buffer);
 
   {
+    float lite[3];
+    if(!identity) {
+      lite[0] = -light[0]*10000.0F;
+      lite[1] = -light[1]*10000.0F;
+      lite[2] = -light[2]*10000.0F-front;
+    } else {
+      /* this is not correct unless the camera is in the default orientation */
+      float look[3];
+      SceneViewType view;
+      
+      SceneGetPos(I->G,look);
+      SceneGetView(I->G,view);
+
+      lite[0] = -light[0]*10000.0F;
+      lite[1] = -light[1]*10000.0F;
+      lite[2] = -light[2]*10000.0F;
+      MatrixInvTransformC44fAs33f3f(view,lite,lite);
+      add3f(look,lite,lite);
+    }
+    sprintf(buffer,"light_source{<%6.4f,%6.4f,%6.4f>  rgb<1.0,1.0,1.0>}\n",
+            lite[0],lite[1],lite[2]);
+    UtilConcatVLA(&headerVLA,&hc,buffer);
+  }
+
+  if(!identity) {
     int opaque_back = SettingGetGlobal_i(I->G,cSetting_ray_opaque_background);
     if(opaque_back<0)
       opaque_back			= SettingGetGlobal_i(I->G,cSetting_opaque_background);      
@@ -4007,7 +4075,7 @@ void RayRender(CRay *I,unsigned int *image,double timing,
     }
 
     RayExpandPrimitives(I);
-    RayTransformFirst(I,perspective);
+    RayTransformFirst(I,perspective,false);
 
     OrthoBusyFast(I->G,3,20);
 
