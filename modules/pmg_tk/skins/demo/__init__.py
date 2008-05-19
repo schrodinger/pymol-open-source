@@ -14,8 +14,8 @@ from pmg_tk.skins import PMGSkin
 class Demo(PMGSkin):
 
     def fileOpenDialog(self):
-        if not hasattr(self,'initialDir'):
-            self.openPath = os.getcwd()
+        if not hasattr(self,'fileOpenPath'):
+            self.fileOpenPath = os.getcwd()
         ftypes =  [("All Readable","*.pdb"),
                    ("All Readable","*.ccp4"),
                    ("All Readable","*.xplor"),
@@ -75,12 +75,12 @@ class Demo(PMGSkin):
                    ("ChemDraw3D File","*.cc2"),
                    ("Tinker XYZ File","*.xyz")
                    ]
-        ofile_list = askopenfilename(initialdir = self.openPath,
+        ofile_list = askopenfilename(initialdir = self.fileOpenPath,
                                      filetypes=ftypes,
                                      multiple=1) 
         for ofile in ofile_list:
             if len(ofile):
-                self.openPath = os.path.dirname(ofile)
+                self.fileOpenPath = os.path.dirname(ofile)
                 self.cmd.load(ofile,quiet=0)
 
     def createMenuBar(self):
