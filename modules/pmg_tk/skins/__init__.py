@@ -3,7 +3,8 @@
 class PMGSkin:
 
     def setup(self):
-        if self.app.skin != self: # if a "look" is active, take it down first before starting this one
+        # if a "look" is active, take it down first before starting new one
+        if self.app.skin != self: 
             self.app.skin.takedown()
         self.app.skin = self;
         # (should replace above with accessor calls)
