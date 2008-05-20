@@ -31,7 +31,7 @@ class Demo(PMGSkin):
     def createMenuBar(self):
         self.menuBar = Pmw.MenuBar(self.root, # balloon=self.balloon,
                                    hull_relief=RAISED, hull_borderwidth=1)
-        self.menuBar.pack(fill=X)
+        self.menuBar.pack(fill=X)        
 
         self.menuBar.addmenu('File', 'File Menu',tearoff=TRUE)
 
@@ -70,12 +70,9 @@ class Demo(PMGSkin):
         # create the user interface
         self.createInterface()
 
-        # pack the root window
-        self.app._hull.pack(side=LEFT, fill=BOTH, expand=YES)
-
     def takedown(self):
-        pass
-    
+        self.menuBar.destroy()
+        
     def __init__(self,app):
 
         PMGSkin.__init__(self,app)
