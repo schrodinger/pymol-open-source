@@ -54,11 +54,23 @@ class Preset(PMGSkin):
                                 label='Quit',
                                 command=self.quit)
 
+        self.menuBar.addmenu('Preset', 'Preset Menu',tearoff=TRUE)
+        
+    def buttonAdd(self,frame,text,cmd):
+        newBtn=Button(frame,
+                          text=text,highlightthickness=0,
+                          command=cmd,padx=0,pady=0)
+        newBtn.pack(side=LEFT,fill=BOTH,expand=YES)
+
     def createInterface(self):
 
         # create the menu bar
         self.createMenuBar()
 
+        self.buttonArea = Frame(self.root)
+        self.buttonAdd(self.buttonArea,'Simple',lambda s=self: s.cmd.do("preset.simple('all')"))
+        self.buttonAdd(self.buttonArea,'Pretty',lambda s=self: s.cmd.do("preset.pretty('all')"))
+        self.buttonArea.pack(side=TOP, anchor=W)
 
     def setup(self):
 
@@ -71,11 +83,9 @@ class Preset(PMGSkin):
         # create the user interface
         self.createInterface()
 
-        # pack the root window
-        self.app._hull.pack(side=LEFT, fill=BOTH, expand=YES)
-
     def takedown(self):
-        pass
+        self.menuBar.destroy()
+        self.buttonArea.destroy()
         
     def __init__(self,app):
 
