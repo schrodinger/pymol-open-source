@@ -172,7 +172,7 @@ class PMGApp(Pmw.MegaWidget):
     def execute(self,cmmd):  
         self.fifo.put(cmmd)
 
-    def install_plugin(self):
+    def installPlugin(self):
         plugdir = os.path.split(__file__)[0]
         path = os.path.join(plugdir, "startup", "check_writable")
         ok = 1
@@ -205,7 +205,7 @@ class PMGApp(Pmw.MegaWidget):
                     traceback.print_exc()
                     tkMessageBox.showinfo("Error", "unable to install plugin '%s'" % plugname)
 
-    def initialize_plugins(self):
+    def initializePlugins(self):
         startup_pattern = re.sub(r"[\/\\][^\/\\]*$","/startup/*.py*",__file__)
         # startup_pattern = os.environ['PYMOL_PATH']+"/modules/pmg_tk/startup/*.py*"
         raw_list = glob(startup_pattern)
@@ -233,7 +233,28 @@ class PMGApp(Pmw.MegaWidget):
                     print "Exception in plugin '%s' -- Traceback follows..."%name
                     traceback.print_exc()
                     print "Error: unable to initialize plugin '%s'."%name
-                    
+
+    def addSkinMenuItems(self,menuBar,menuName):
+        if not hasattr(self,'skinNameList'):
+            # find installed skins
+            skin_pattern = re.sub(r"[\/\\][^\/\\]*$","/skins/*/__init__.py*",__file__)
+            print skin_pattern
+            raw_list = glob(skin_pattern)
+            unique = {}
+            for a in raw_list:
+                key = re.sub(r"[\/\\]__init__\.py.*$","",a)
+                unique[re.sub(r".*[\/\\]","",key)] = 1
+            name_list = unique.keys()
+            name_list.sort()
+            self.skinNameList = name_list
+        if hasattr(self,'skinNameList'):
+            for name in self.skinNameList:
+                caps_name = string.upper(name)[0:1]+string.lower(name)[1:]
+                menuBar.addmenuitem(menuName, 'command', name,
+                                    label=caps_name,
+                                    command=lambda s=self,n=name:s.setSkin(n))
+
+        
     def setSkin(self,skin,run=1):
         if isinstance(skin,types.StringType):
             inv = sys.modules.get("pymol.invocation",None)
