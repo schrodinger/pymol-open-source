@@ -83,6 +83,9 @@ class Preset(PMGSkin):
         # create the user interface
         self.createInterface()
 
+        # pack the root window
+        self.app._hull.pack(side=TOP,anchor=CENTER,expand=NO,fill=NONE)
+        
     def takedown(self):
         self.menuBar.destroy()
         self.buttonArea.destroy()

@@ -2619,7 +2619,9 @@ class Normal(PMGSkin):
         self.createInterface()
 
         # pack the root window
-        self.app._hull.pack(side=LEFT, fill=BOTH, expand=YES)
+        #        self.app._hull.pack(side=LEFT, fill=BOTH, expand=YES)
+        self.app._hull.pack()
+        print self.app._hull.pack_info()
 
         # and set focus
         self.entry.focus_set()
