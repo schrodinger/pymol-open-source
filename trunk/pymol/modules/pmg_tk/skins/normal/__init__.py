@@ -53,6 +53,9 @@ class Normal(PMGSkin):
         self.dataArea.pack(side=LEFT, fill=BOTH, expand=YES,
                             padx=1, pady=1)
 
+    def destroyDataArea(self):
+        self.app.destroycomponent('dataarea')
+        
     def createCommandArea(self):
         # Create a command area for application-wide buttons.
         self.commandFrame = self.app.createcomponent('commandframe', (), None,
@@ -64,6 +67,9 @@ class Normal(PMGSkin):
                          padx=1,
                          pady=1)
 
+    def destroyCommandArea(self):
+        self.app.destroycomponent('commandframe')
+        
     def createMessageBar(self):
         # Create the message bar area for help and status messages.
         frame = self.app.createcomponent('bottomtray', (), None,
@@ -78,6 +84,18 @@ class Normal(PMGSkin):
                                                  labelpos=None)
         self.__messageBar.pack(side=LEFT, expand=NO, fill=X)
 
+        self.messageBar = Pmw.MessageBar(self.commandFrame, entry_width = 40,
+             entry_relief='sunken', entry_borderwidth=1) #, labelpos = 'w')
+        
+        self.messageBar.pack(side=BOTTOM, anchor=W, fill=X, expand=1)
+        self.balloon.configure(statuscommand = self.messageBar.helpmessage)
+
+    def destroyMessageBar(self):
+
+        self.messageBar.destroy()
+        self.app.destroycomponent('messagebar')
+        self.app.destroycomponent('bottomtray')
+        
 
     def confirm_quit(self,e=None):
         if int(self.cmd.get_setting_legacy("session_changed")):
@@ -122,6 +140,8 @@ class Normal(PMGSkin):
             traceback.print_exc()
         
     def createButtons(self):
+        self.buttonArea = Frame(self.root)
+        self.buttonArea.pack(side=TOP, anchor=W)
         
         row1 = self.app.createcomponent('row1', (), None,
             Frame,self.commandFrame,bd=0)
@@ -161,8 +181,15 @@ class Normal(PMGSkin):
         self.buildB = self.buttonAdd(row4,'Builder',
                                               lambda s=self:
                                               s.toggleFrame(s.buildFrame))
+#        btn_interrupt = self.buttonAdd(self.commandFrame,'Interrupt',lambda s=self: s.cmd.interrupt())
         
-        
+    def destroyButtonArea(self):
+        self.app.destroycomponent('row1')
+        self.app.destroycomponent('row2')
+        self.app.destroycomponent('row3')
+        self.app.destroycomponent('row4')
+        self.buttonArea.destroy()
+
     def my_show(self,win,center=1):
         if sys.platform!='linux2':
             win.show()
@@ -614,7 +641,7 @@ class Normal(PMGSkin):
         if command != None:
             self.cmd.do(command)
             
-    def about_plugins(self):
+    def aboutPlugins(self):
         about = Pmw.MessageDialog((self.app._hull),
                                           title = 'About Plugins',
                                           message_text =
@@ -637,10 +664,10 @@ class Normal(PMGSkin):
                 print string.strip(open(path).read())
                 return 
         print " Error: no license terms found."
-        
+
     def createMenuBar(self):
         self.menuBar = Pmw.MenuBar(self.root, balloon=self.balloon,
-                                            hull_relief=RAISED, hull_borderwidth=1) 
+                                   hull_relief=RAISED, hull_borderwidth=1) 
         self.menuBar.pack(fill=X)
 
 #        self.menuBar.addmenu('Tutorial', 'Tutorial', side='right')      
@@ -844,7 +871,6 @@ class Normal(PMGSkin):
                                 label=self.pad+'Run...',
                                 command=self.file_run)
 
-
         self.menuBar.addmenuitem('File', 'separator', '')
 
         self.menuBar.addmenuitem('File', 'command', 'Quit PyMOL',
@@ -854,6 +880,13 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('File', 'command', 'Reinitialize PyMOL',
                                 label=self.pad+'Reinitialize',
                                 command=self.cmd.reinitialize)
+
+        self.menuBar.addmenuitem('File', 'separator', '')
+
+        self.menuBar.addcascademenu('File', 'Skin', 'Skin',
+                                             label=self.pad+'Skin')
+
+        self.app.addSkinMenuItems(self.menuBar,'Skin')
 
 #      self.menuBar.addmenuitem('File', 'separator', '')
         
@@ -2557,14 +2590,13 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Plugin', 'command', 'About',
                                          label='About Plugins',
-                                         command = lambda s=self: s.about_plugins())
+                                         command = lambda s=self: s.aboutPlugins())
 
         self.menuBar.addmenuitem('Plugin', 'command', 'Install Plugin',
                                          label='Install Plugin...',
-                                         command = lambda s=self: s.app.install_plugin())
+                                         command = lambda s=self: s.app.installPlugin())
         
         self.menuBar.addmenuitem('Plugin', 'separator', '')
-
 
     def show_about(self):
         Pmw.aboutversion(self.appversion)
@@ -2582,30 +2614,19 @@ class Normal(PMGSkin):
 
         self.createMenuBar()
 
-        self.app.menuBar = self.menuBar # to support legacy plugins
+        self.app.menuBar = self.menuBar # to support legacy plugins    
         
-        self.app.initialize_plugins()
+        self.app.initializePlugins()
         
         self.createDataArea()
 
         self.createCommandArea()
 
-#      self.initPlugins()
-
-        self.buttonArea = Frame(self.root)
-        self.buttonArea.pack(side=TOP, anchor=W)
         self.createButtons()
 
         self.createMessageBar()
-        self.messageBar = Pmw.MessageBar(self.commandFrame, entry_width = 40,
-             entry_relief='sunken', entry_borderwidth=1) #, labelpos = 'w')
-        self.messageBar.pack(side=BOTTOM, anchor=W, fill=X, expand=1)
-#        btn_interrupt = self.buttonAdd(self.commandFrame,'Interrupt',lambda s=self: s.cmd.interrupt())
-                
-        self.balloon.configure(statuscommand = self.messageBar.helpmessage)
 
         self.createConsole()
-
 
     def setup(self):
 
@@ -2619,13 +2640,19 @@ class Normal(PMGSkin):
         self.createInterface()
 
         # pack the root window
-        #        self.app._hull.pack(side=LEFT, fill=BOTH, expand=YES)
-        self.app._hull.pack()
-        print self.app._hull.pack_info()
+        self.app._hull.pack(side=LEFT, fill=BOTH, expand=YES, anchor=CENTER)
 
         # and set focus
-        self.entry.focus_set()
+        if hasattr(self,'entry'): self.entry.focus_set()
 
+    def takedown(self):
+        self.destroyMessageBar()
+        self.destroyDataArea()
+        self.destroyCommandArea()
+        self.destroyButtonArea()
+        self.balloon.destroy()
+        self.menuBar.destroy()
+        
     def __init__(self,app):
 
         PMGSkin.__init__(self,app)
