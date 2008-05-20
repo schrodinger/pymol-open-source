@@ -78,7 +78,7 @@ class Preset(PMGSkin):
         pass
         
     def __init__(self,app):
-        print "preset.__init__"
+
         PMGSkin.__init__(self,app)
         self.app = app
         self.pymol = app.pymol
