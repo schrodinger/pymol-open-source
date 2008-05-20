@@ -21,6 +21,7 @@ import threading
 import traceback
 import Queue
 import __builtin__
+import types
 
 # ensure that PyMOL seach path is used...
 
@@ -46,8 +47,8 @@ class PMGApp(Pmw.MegaWidget):
          # try to get the windows properly aligned...
          
          osFrame = { 'win32' : (4,60), 'irix'   : (0,41),
-                         'darwin': (0,51), 'cygwin' : (0,60),
-                         'linux' : (0,31), 'linux2' : (0,31) }
+                     'darwin': (0,51), 'cygwin' : (0,60),
+                     'linux' : (0,31), 'linux2' : (0,31) }
 
          if sys.platform in osFrame.keys():
              (self.frameXAdjust,self.frameYAdjust) = osFrame[sys.platform]
@@ -233,8 +234,25 @@ class PMGApp(Pmw.MegaWidget):
                     traceback.print_exc()
                     print "Error: unable to initialize plugin '%s'."%name
                     
-    def set_skin(self,skin):
-        self.skin = skin
+    def setSkin(self,skin,run=1):
+        if isinstance(skin,types.StringType):
+            inv = sys.modules.get("pymol.invocation",None)
+            if inv!=None:
+                module_path = inv.options.gui +".skins."+ skin
+                __import__(inv.options.gui +".skins."+ skin)
+                skin = sys.modules[module_path].__init__(self)
+
+        if skin != self.skin:
+            if self.skin != None:
+                self.skin.takedown()
+            self.skin = skin
+
+        if run:
+            self.runSkin()
+            
+    def runSkin(self):
+        if self.skin != None:
+            self.skin.setup()
     
     def __init__(self, pymol_instance, skin):
 
@@ -283,7 +301,7 @@ class PMGApp(Pmw.MegaWidget):
             # - the skin to use
 
             inv = sys.modules.get("pymol.invocation",None)
-            if inv!=None:
+            if inv != None:
                 if skin == None:
                     skin = inv.options.skin
                 self.frameWidth = inv.options.win_x + 220
@@ -291,15 +309,12 @@ class PMGApp(Pmw.MegaWidget):
                 self.frameHeight = inv.options.ext_y
                 self.frameYPos = inv.options.win_py - (
                          self.frameHeight + self.frameYAdjust)
-                module_path = inv.options.gui +".skins."+ skin
-                __import__(inv.options.gui +".skins."+ skin)
-                sys.modules[module_path].__init__(self)
+                self.setSkin(skin,run=0)
                 
             # define the size of the root window
             
             self.root.geometry('%dx%d+%d+%d' % (
                 self.frameWidth, self.frameHeight, self.frameXPos, self.frameYPos))
-
             
             # activate polling on the fifo
 
@@ -308,7 +323,6 @@ class PMGApp(Pmw.MegaWidget):
 
             # and let 'er rip
 
-            if self.skin != None:
-                self.skin.setup()
+            self.runSkin()
 
 

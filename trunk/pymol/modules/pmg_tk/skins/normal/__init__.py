@@ -2635,6 +2635,6 @@ class Normal(PMGSkin):
         self.movie_command = None
         
 def __init__(app):
-    app.set_skin(Normal(app))
+    return Normal(app)
 
     

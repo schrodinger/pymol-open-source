@@ -11,7 +11,7 @@ import Pmw
 
 from pmg_tk.skins import PMGSkin
 
-class Demo(PMGSkin):
+class Preset(PMGSkin):
 
     def fileOpenDialog(self):
         if not hasattr(self,'fileOpenPath'):
@@ -56,17 +56,17 @@ class Demo(PMGSkin):
 
     def createInterface(self):
 
-        print "DEBUG preset.createInterface"
         # create the menu bar
         self.createMenuBar()
-        
+
+
     def setup(self):
-        print "demo.setup"        
+
         # call the parent method
         PMGSkin.setup(self)
         
         # name the application
-        self.root.title("Demonstration PyMOL Skin")
+        self.root.title("Preset PyMOL Skin")
 
         # create the user interface
         self.createInterface()
@@ -75,15 +75,17 @@ class Demo(PMGSkin):
         self.app._hull.pack(side=LEFT, fill=BOTH, expand=YES)
 
     def takedown(self):
-        print "demo.takedown"
-                
+        pass
+        
     def __init__(self,app):
-        print "demo.__init__"        
+        print "preset.__init__"
         PMGSkin.__init__(self,app)
         self.app = app
         self.pymol = app.pymol
         self.cmd = app.pymol.cmd
                 
 def __init__(app):
-    return Demo(app)
+    return Preset(app)
+
+
     
