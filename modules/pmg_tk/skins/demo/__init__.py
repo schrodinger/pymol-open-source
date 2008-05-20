@@ -42,18 +42,17 @@ class Demo(PMGSkin):
         self.menuBar.addcascademenu('File', 'Skin', 'Skin',
                                              label='Skin',tearoff=TRUE)
 
-        self.menuBar.addmenuitem('Skin', 'command', 'Demo',
-                                label='Demo',
-                                command=lambda s=self:s.app.setSkin('demo'))
-
-        self.menuBar.addmenuitem('Skin', 'command', 'Preset',
-                                label='Preset',
-                                command=lambda s=self:s.app.setSkin('preset'))
+        self.app.addSkinMenuItems(self.menuBar,'Skin')
         
         self.menuBar.addmenuitem('File', 'command', 'Quit PyMOL',
                                 label='Quit',
                                 command=self.quit)
 
+    def destroyMenuBar(self):
+        self.menuBar.pack_forget()
+        self.menuBar.destroy()
+        del self.menuBar
+        
     def createInterface(self):
 
         # create the menu bar
@@ -71,10 +70,12 @@ class Demo(PMGSkin):
         self.createInterface()
 
         # pack the root window
-        self.app._hull.pack(side=TOP,anchor=CENTER,expand=NO,fill=NONE)
-
+        self.app._hull.pack(side=TOP, anchor=CENTER, expand=NO, fill=NONE,
+                            padx=0, pady=0, ipadx=0, ipady=0)
+        
     def takedown(self):
-        self.menuBar.destroy()
+        self.destroyMenuBar()
+        PMGSkin.takedown(self)        
         
     def __init__(self,app):
 
