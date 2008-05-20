@@ -56,12 +56,11 @@ class Demo(PMGSkin):
 
     def createInterface(self):
 
-        print "DEBUG preset.createInterface"
         # create the menu bar
         self.createMenuBar()
         
     def setup(self):
-        print "demo.setup"        
+
         # call the parent method
         PMGSkin.setup(self)
         
@@ -75,10 +74,10 @@ class Demo(PMGSkin):
         self.app._hull.pack(side=LEFT, fill=BOTH, expand=YES)
 
     def takedown(self):
-        print "demo.takedown"
-                
+        pass
+    
     def __init__(self,app):
-        print "demo.__init__"        
+
         PMGSkin.__init__(self,app)
         self.app = app
         self.pymol = app.pymol
