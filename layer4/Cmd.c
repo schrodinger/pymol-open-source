@@ -3705,6 +3705,37 @@ static PyObject *CmdBond(PyObject *self, PyObject *args)
   return APIResultOk(ok);  
 }
 
+static PyObject *CmdRevalence(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  char *sele1,*sele2,*source;
+  int source_state, target_state, reset;
+  int quiet;
+  OrthoLineType s1,s2,src;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"Osssiiii",&self,&sele1,&sele2,&source,
+                        &target_state, &source_state, &reset, &quiet);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok=APIEnterNotModal(G))) {
+    ok = ((SelectorGetTmp(G,sele1,s1)>=0) &&
+          (SelectorGetTmp(G,sele2,s2)>=0) &&
+          (SelectorGetTmp(G,source,src)>=0));
+    if(ok) {
+      /*  ok = ExecutiveRevalalence(s1,s2,src,target_state,source_state,reset,quiet); */
+    }
+    SelectorFreeTmp(G,s1);
+    SelectorFreeTmp(G,s2);
+    SelectorFreeTmp(G,src);
+    APIExit(G);
+  }
+  return APIResultOk(ok);  
+}
+
 static PyObject *CmdVdwFit(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -8353,6 +8384,7 @@ static PyMethodDef Cmd_methods[] = {
   {"reset",                 CmdReset,                METH_VARARGS },
   {"reset_rate",	        CmdResetRate,            METH_VARARGS },
   {"reset_matrix",	        CmdResetMatrix,          METH_VARARGS },
+  {"revalence",             CmdRevalence,            METH_VARARGS },
   {"rock",	                CmdRock,                 METH_VARARGS },
   {"runpymol",	            CmdRunPyMOL,             METH_VARARGS },
   {"runwxpymol",	        CmdRunWXPyMOL,           METH_VARARGS },

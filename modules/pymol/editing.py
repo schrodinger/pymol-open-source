@@ -390,6 +390,44 @@ SEE ALSO
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
+
+
+    def revalence(selection1="(all)", selection2='', source='', 
+                  source_state=0, target_state=0,
+                  quiet=1, reset=1, _self=cmd):
+        '''
+DESCRIPTION
+
+    "revalence" 
+    
+USAGE
+
+    revalence organic
+
+PYMOL API
+
+    cmd.revalence(...)
+
+SEE ALSO
+
+    unbond, fuse, attach, replace, remove_picked
+    '''
+        r = DEFAULT_ERROR
+        # preprocess selections
+        if selection2 == '':
+            selection2 = selection1
+        selection1 = selector.process(selection1)
+        selection2 = selector.process(selection2)
+        try:
+            _self.lock(_self)
+            r = _cmd.revalence(_self._COb, selection1, selection2,
+                               str(source), 
+                               int(target_state), int(source_state),
+                               int(reset), int(quiet))
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException            
+        return r
         
     def bond(atom1="(pk1)", atom2="(pk2)", order=1, edit=1, quiet=1, _self=cmd):
         '''

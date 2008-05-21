@@ -4850,16 +4850,16 @@ typedef struct {
   int cyclic, planer, aromatic;
 } ObservedInfo;
 
-static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
+static void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *flag2)
 {
   /* this a hacked 80% solution ...it will get things wrong, but it is
      better than nothing! */
 
   const float planer_cutoff = 0.96F;
-  
   CoordSet *cs = NULL;
   ObservedInfo *obs_atom = NULL;
   ObservedInfo *obs_bond = NULL;
+  int *flag = NULL;
 
 /* WORKAROUND of a possible -funroll-loops inlining optimizer bug in gcc 3.3.3 */
 
@@ -4880,9 +4880,21 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
   if(cs) {
     obs_atom = Calloc(ObservedInfo, I->NAtom);
     obs_bond = Calloc(ObservedInfo, I->NBond);
+    flag = Calloc(int, I->NAtom);
   }
-
-  if(cs && obs_bond && obs_atom) {
+  if(flag && (!flag1)) {
+    int a,*flag_a = flag;
+    AtomInfoType *ai = I->AtomInfo;
+    /* default behavior: only reset hetatm valences */
+    for(a=0;a<I->NAtom;a++) {
+      *(flag_a++) = (ai++)->hetatm;
+    }
+    flag1 = flag;
+  }
+  if(!flag2) {
+    flag2 = flag;
+  }
+  if(cs && obs_bond && obs_atom && flag && flag1 && flag2) {
     int a;
     int *neighbor = I->Neighbor;
     AtomInfoType *atomInfo = I->AtomInfo;
@@ -4890,7 +4902,7 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
     
     for(a=0;a<I->NAtom;a++) {
       AtomInfoType *ai = atomInfo + a;
-      if(ai->hetatm && !ai->chemFlag) {
+      if((!ai->chemFlag) && (flag[a])) {
         /*  determine whether or not atom participates in a planer system with 5 or 6 atoms */
           
         {        
@@ -4992,7 +5004,7 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
 
     for(a=0;a<I->NAtom;a++) {
       AtomInfoType *ai = atomInfo + a;
-      if(ai->hetatm && !ai->chemFlag) {
+      if((!ai->chemFlag) && flag[a]) {
         ObservedInfo *ob_at = obs_atom + a;
 
         {
@@ -5132,44 +5144,57 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                           /* simple amide? */
                           if(o1_len<1.38F) {
                             if(neighbor[neighbor[o1_at]]==1)
-                              bondInfo[o1_bd].order = 2;
+                              if((flag1[a]&&flag2[o1_at])||(flag2[a]&&flag1[o1_at]))
+                                bondInfo[o1_bd].order = 2;
                           }
                         } else if ((n1_at>=0)&&(o1_at>=0)&&(o2_at>=0)) {
                           /* carbamyl */
                           if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1) &&
                              (o2_len<1.38F) && (neighbor[neighbor[o2_at]]==1)) {
-                            bondInfo[o1_bd].order = 4;
-                            bondInfo[o2_bd].order = 4;
-                          } else if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1))
-                            bondInfo[o1_bd].order = 2;
-                          else if((o2_len<1.38F) && (neighbor[neighbor[o2_at]]==1))
-                            bondInfo[o2_bd].order = 2;                        
+                            if((flag1[a]&&flag2[o1_at])||(flag2[a]&&flag1[o1_at]))
+                              bondInfo[o1_bd].order = 4;
+                            if((flag1[a]&&flag2[o2_at])||(flag2[a]&&flag1[o2_at]))
+                              bondInfo[o2_bd].order = 4;
+                          } else if((o1_len<1.38F) && (neighbor[neighbor[o1_at]]==1)) {
+                            if((flag1[a]&&flag2[o1_at])||(flag2[a]&&flag1[o1_at]))
+                              bondInfo[o1_bd].order = 2;
+                          }  else if((o2_len<1.38F) && (neighbor[neighbor[o2_at]]==1))
+                            if((flag1[a]&&flag2[o2_at])||(flag2[a]&&flag1[o2_at]))
+                              bondInfo[o2_bd].order = 2;                        
                         } else if ((n1_at<0)&&(o1_at>=0)&&(o2_at<0)) {
                           /* ketone */
-                          if((o1_len<1.31F) && (neighbor[neighbor[o1_at]]==1))
-                            bondInfo[o1_bd].order = 2;
+                          if((o1_len<1.31F) && (neighbor[neighbor[o1_at]]==1)) {
+                            if((flag1[a]&&flag2[o1_at])||(flag2[a]&&flag1[o1_at]))
+                               bondInfo[o1_bd].order = 2;
+                          }
                         } else if((o1_at>=0)&&(o2_at>=0)&&(n1_at<0)) {
                           /* simple carboxylate? */
                           if((o1_len<1.38F) && (o2_len<1.38F) && 
                              (neighbor[neighbor[o1_at]]==1) &&
                              (neighbor[neighbor[o2_at]]==1)) {
-                            bondInfo[o1_bd].order = 4;
-                            bondInfo[o2_bd].order = 4;
+                            if((flag1[a]&&flag2[o1_at])||(flag2[a]&&flag1[o1_at]))
+                              bondInfo[o1_bd].order = 4;
+                            if((flag1[a]&&flag2[o2_at])||(flag2[a]&&flag1[o2_at]))
+                              bondInfo[o2_bd].order = 4;
                           } else if((o1_len<1.38F)&&(neighbor[neighbor[o1_at]]==1)) { /* esters */
-                            bondInfo[o1_bd].order = 2;
+                            if((flag1[a]&&flag2[o1_at])||(flag2[a]&&flag1[o1_at]))
+                              bondInfo[o1_bd].order = 2;
                           } else if((o2_len<1.38F)&&(neighbor[neighbor[o2_at]]==1)) {
-                            bondInfo[o2_bd].order = 2;
+                            if((flag1[a]&&flag2[o2_at])||(flag2[a]&&flag1[o2_at]))
+                              bondInfo[o2_bd].order = 2;
                           }
                         } else if( (n1_at>=0) && (n2_at>=0) && (n3_at<0) && (c1_at>=0) &&
                                    (n1_len<1.43F) && (n2_len<1.43F) &&
                                    obs_atom[c1_at].planer && obs_atom[c1_at].cyclic && 
                                    (!ob_at->cyclic) &&
                                    (!obs_atom[n1_at].cyclic) && (!obs_atom[n2_at].cyclic)) {
-                          bondInfo[n1_bd].order = 4;
+                          if((flag1[a]&&flag2[n1_at])||(flag2[a]&&flag1[n1_at]))
+                            bondInfo[n1_bd].order = 4;
                           atomInfo[n1_at].valence = 3;
                           atomInfo[n1_at].geom = cAtomInfoPlaner;
                           atomInfo[n1_at].chemFlag = 2;
-                          bondInfo[n2_bd].order = 4;
+                          if((flag1[a]&&flag2[n2_at])||(flag2[a]&&flag1[n2_at]))
+                            bondInfo[n2_bd].order = 4;
                           atomInfo[n2_at].valence = 3;
                           atomInfo[n2_at].geom = cAtomInfoPlaner;
                           atomInfo[n2_at].chemFlag = 2;
@@ -5179,33 +5204,39 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                             if((neighbor[neighbor[n1_at]]==1) &&
                                (neighbor[neighbor[n2_at]]==1) &&
                                (neighbor[neighbor[n3_at]]>=2)) {
-                              bondInfo[n1_bd].order = 4;
+                              if((flag1[a]&&flag2[n1_at])||(flag2[a]&&flag1[n1_at]))
+                                bondInfo[n1_bd].order = 4;
                               atomInfo[n1_at].valence = 3;
                               atomInfo[n1_at].geom = cAtomInfoPlaner;
                               atomInfo[n1_at].chemFlag = 2;
-                              bondInfo[n2_bd].order = 4;
+                              if((flag1[a]&&flag2[n2_at])||(flag2[a]&&flag1[n2_at]))
+                                bondInfo[n2_bd].order = 4;
                               atomInfo[n2_at].valence = 3;
                               atomInfo[n2_at].geom = cAtomInfoPlaner;
                               atomInfo[n2_at].chemFlag = 2;
                             } else if((neighbor[neighbor[n1_at]]==1) &&
                                       (neighbor[neighbor[n2_at]]>=2) &&
                                       (neighbor[neighbor[n3_at]]==1)) {
-                              bondInfo[n1_bd].order = 4;
+                              if((flag1[a]&&flag2[n1_at])||(flag2[a]&&flag1[n1_at]))
+                                bondInfo[n1_bd].order = 4;
                               atomInfo[n1_at].valence = 3;
                               atomInfo[n1_at].geom = cAtomInfoPlaner;
                               atomInfo[n1_at].chemFlag = 2;
-                              bondInfo[n3_bd].order = 4;
+                              if((flag1[a]&&flag2[n3_at])||(flag2[a]&&flag1[n3_at]))
+                                bondInfo[n3_bd].order = 4;
                               atomInfo[n3_at].valence = 3;
                               atomInfo[n3_at].geom = cAtomInfoPlaner;
                               atomInfo[n3_at].chemFlag = 2;
                             } else if((neighbor[neighbor[n1_at]]>=2) &&
                                       (neighbor[neighbor[n2_at]]==1) &&
                                       (neighbor[neighbor[n3_at]]==1)) {
-                              bondInfo[n2_bd].order = 4;
+                              if((flag1[a]&&flag2[n2_at])||(flag2[a]&&flag1[n2_at]))
+                                bondInfo[n2_bd].order = 4;
                               atomInfo[n2_at].valence = 3;
                               atomInfo[n2_at].geom = cAtomInfoPlaner;
                               atomInfo[n2_at].chemFlag = 2;
-                              bondInfo[n3_bd].order = 4;
+                              if((flag1[a]&&flag2[n3_at])||(flag2[a]&&flag1[n3_at]))
+                                bondInfo[n3_bd].order = 4;
                               atomInfo[n3_at].valence = 3;
                               atomInfo[n3_at].geom = cAtomInfoPlaner;
                               atomInfo[n3_at].chemFlag = 2;
@@ -5245,12 +5276,14 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                         }
                       }
                       if(n1_dot_cross>planer_cutoff) {
-                        bondInfo[n1_bd].order = 2;                      
+                        if((flag1[a]&&flag2[n1_at])||(flag2[a]&&flag1[n1_at]))
+                          bondInfo[n1_bd].order = 2;                      
                         if((n1_len<1.24F)&&(c1_at>=0)&&(nn2==1)) {
                           normalize3f(n1_v);
                           normalize3f(c1_v);
                           if(dot_product3f(n1_v,c1_v)< -0.9) {
-                            bondInfo[n1_bd].order=3;
+                            if((flag1[a]&&flag2[n1_at])||(flag2[a]&&flag1[n1_at]))
+                              bondInfo[n1_bd].order=3;
                           }
                         }
                       }
@@ -5263,10 +5296,14 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                       if((avg_dot_cross>planer_cutoff)) {
                         if((o1_at>=0)&&(o2_at>=0)&&(o3_at<0)) {
                           /* nitro */
-                          if(neighbor[neighbor[o1_at]]==1)
-                            bondInfo[o1_bd].order = 4;                        
-                          if(neighbor[neighbor[o2_at]]==1)
-                            bondInfo[o2_bd].order = 4;                        
+                          if(neighbor[neighbor[o1_at]]==1) {
+                            if((flag1[a]&&flag2[o1_at])||(flag2[a]&&flag1[o1_at]))
+                              bondInfo[o1_bd].order = 4;      
+                          }
+                          if(neighbor[neighbor[o2_at]]==1) {
+                            if((flag1[a]&&flag2[o2_at])||(flag2[a]&&flag1[o2_at]))
+                              bondInfo[o2_bd].order = 4;      
+                          }                  
                         }
                       }
                     }
@@ -5276,34 +5313,40 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                     if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at>=0)) {
                       /* sulfate, phosphate */
                       int o1 = -1, o2 = -1, o3 = -1;
+                      int a1 = 0;
                       if(neighbor[neighbor[o1_at]]==1) {
                         o1 = o1_bd;
+                        a1 = o1_at;
                       }
                       if(neighbor[neighbor[o2_at]]==1) {
                         if(o1<0) {
                           o1 = o2_bd;
+                          a1 = o2_at;
                         } else if(o2<0) {
                           o2 = o2_bd;
                         }
                       }
                       if(neighbor[neighbor[o3_at]]==1) {
-                        if(o1<0) 
+                        if(o1<0) {
                           o1 = o3_bd;
-                        else if(o2<0)
+                          a1 = o3_at;
+                        } else if(o2<0)
                           o2 = o3_bd;
                         else if(o3<0)
                           o3 = o3_bd;
                       }
                       if(neighbor[neighbor[o4_at]]==1) {
-                        if(o1<0) 
+                        if(o1<0) {
                           o1 = o4_bd;
-                        else if(o2<0)
+                          a1 = o4_at;
+                        } else if(o2<0)
                           o2 = o4_bd;
                         else if(o3<0)
                           o3 = o4_bd;
                       }
                       if(o2>=0) {
-                        bondInfo[o1].order = 2; 
+                        if((flag1[a]&&flag2[a1])||(flag2[a]&&flag1[a1]))
+                          bondInfo[o1].order = 2; 
                         if(o2 == o2_bd) {
                           atomInfo[o2_at].formalCharge = -1;
                         } else if(o2 == o3_bd) {
@@ -5315,30 +5358,47 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                     } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at>=0)&&(o4_at<0)) {
                       /* sulfonamide */
                       int o1 = -1, o2 = -1;
-                      if(neighbor[neighbor[o1_at]]==1)
+                      int a1 = 0, a2 = 0;
+                      if(neighbor[neighbor[o1_at]]==1) {
                         o1 = o1_bd;
-                      if(neighbor[neighbor[o2_at]]==1) {
-                        if(o1<0) 
+                        a1 = o1_at;
+                      } if(neighbor[neighbor[o2_at]]==1) {
+                        if(o1<0) {
                           o1 = o2_bd;
-                        else if(o2<0)
+                          a1 = o2_at;
+                        }
+                        else if(o2<0) {
                           o2 = o2_bd;
+                          a2 = o2_at;
+                        }
                       }
                       if(neighbor[neighbor[o3_at]]==1) {
-                        if(o1<0) 
+                        if(o1<0) {
                           o1 = o3_bd;
-                        else if(o2<0)
+                          a1 = o3_at;
+                        } else if(o2<0) {
                           o2 = o3_bd;
+                          a2 = o3_at;
+                        }
                       }
-                      if(o1>=0)
-                        bondInfo[o1].order = 2;                        
-                      if(o2>=0) 
-                        bondInfo[o2].order = 2;                        
+                      if(o1>=0) {
+                        if((flag1[a]&&flag2[a1])||(flag2[a]&&flag1[a1]))                        
+                          bondInfo[o1].order = 2;                        
+                      }
+                      if(o2>=0) {
+                        if((flag1[a]&&flag2[a2])||(flag2[a]&&flag1[a2]))                        
+                          bondInfo[o2].order = 2;                        
+                      }
                     } else if((o1_at>=0)&&(o2_at>=0)&&(o3_at<0)) {
                       /* sulphone */
-                      if(neighbor[neighbor[o1_at]]==1)
-                        bondInfo[o1_bd].order = 2;                        
-                      if(neighbor[neighbor[o2_at]]==1)
-                        bondInfo[o2_bd].order = 2;                        
+                      if(neighbor[neighbor[o1_at]]==1) {
+                        if((flag1[a]&&flag2[o1_at])||(flag2[a]&&flag1[o1_at]))
+                          bondInfo[o1_bd].order = 2;      
+                      }
+                      if(neighbor[neighbor[o2_at]]==1) {
+                        if((flag1[a]&&flag2[o2_at])||(flag2[a]&&flag1[o2_at]))
+                          bondInfo[o2_bd].order = 2;      
+                      }
                     }
                     break;
                   }
@@ -5371,7 +5431,8 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                     case cAN_N:              
                     case cAN_O:
                     case cAN_S:
-                      I->Bond[b0].order = 4;
+                      if((flag1[a]&&flag2[a0])||(flag2[a]&&flag1[a0]))
+                        I->Bond[b0].order = 4;
                       break;
                     }
                   }
@@ -5387,8 +5448,9 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
     /* now try to address some simple cases with aromatic nitrogens */
     for(a=0;a<I->NAtom;a++) {
       AtomInfoType *ai = atomInfo + a;
-      if(ai->hetatm && (!ai->chemFlag) && (ai->protons == cAN_N) && 
-         (ai->formalCharge == 0) && obs_atom[a].cyclic && obs_atom[a].aromatic) {
+      if((!ai->chemFlag) && (ai->protons == cAN_N) && 
+         (ai->formalCharge == 0) && flag[a] &&
+         obs_atom[a].cyclic && obs_atom[a].aromatic) {
 
         int n = neighbor[a];
         int nn = neighbor[n++];
@@ -5448,7 +5510,7 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
 
 #if 0
 
-ambiguious -- better to error on the side of tautomeric generality
+ambiguous cases... better to error on the side of tautomeric generality
 
                               /* c1cnnc1 becomes c1cn[H]nc1 */
 
@@ -5517,6 +5579,7 @@ ambiguious -- better to error on the side of tautomeric generality
   }
   FreeP(obs_bond);
   FreeP(obs_atom);
+  FreeP(flag);
 }
 /*========================================================================*/
 
@@ -11438,7 +11501,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       ObjectMoleculeAutoDisableAtomNameWildcard(I);
 
       if(SettingGetGlobal_b(G,cSetting_pdb_hetatm_guess_valences)) {
-        ObjectMoleculeGuessHetatmValences(I,state);
+        ObjectMoleculeGuessValences(I,state,NULL,NULL);
       }
 
       successCnt++;
