@@ -4847,7 +4847,7 @@ static float compute_avg_ring_dot_cross_fn(ObjectMolecule *I, CoordSet *cs,
 }
 
 typedef struct {
-  int cyclic, planer;
+  int cyclic, planer, aromatic;
 } ObservedInfo;
 
 static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
@@ -5365,6 +5365,7 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
                   n+=2;
                   if(obs_atom[a0].cyclic && obs_atom[a0].planer &&
                      obs_bond[b0].cyclic ) {
+                    obs_atom[a0].aromatic = true;
                     switch(I->AtomInfo[a0].protons) {
                     case cAN_C:              
                     case cAN_N:              
@@ -5378,6 +5379,137 @@ static void ObjectMoleculeGuessHetatmValences(ObjectMolecule *I,int state)
               }
               break;
             }
+          }
+        }
+      }
+    }
+
+    /* now try to address some simple cases with aromatic nitrogens */
+    for(a=0;a<I->NAtom;a++) {
+      AtomInfoType *ai = atomInfo + a;
+      if(ai->hetatm && (!ai->chemFlag) && (ai->protons == cAN_N) && 
+         (ai->formalCharge == 0) && obs_atom[a].cyclic && obs_atom[a].aromatic) {
+
+        int n = neighbor[a];
+        int nn = neighbor[n++];
+        
+        if(nn==2) {  /* only two explicit neighbors */
+          
+          int mem[9];
+          int nbr[7];
+          int *atmToIdx = NULL;
+          const int ESCAPE_MAX = 500;
+          
+          register int escape_count; 
+        
+          if(!I->DiscreteFlag) atmToIdx = cs->AtmToIdx;
+        
+          escape_count = ESCAPE_MAX; /* don't get bogged down with structures 
+                                        that have unreasonable connectivity */
+          mem[0] = a;
+          nbr[0]= neighbor[mem[0]]+1;
+          while(((mem[1] = neighbor[nbr[0]])>=0)&&
+                ((!atmToIdx)||(atmToIdx[mem[0]]>=0))) {
+            nbr[1] = neighbor[mem[1]]+1;
+            while(((mem[2] = neighbor[nbr[1]])>=0)&&
+                  ((!atmToIdx)||(atmToIdx[mem[1]]>=0))) {
+              if(mem[2]!=mem[0]) {
+                nbr[2] = neighbor[mem[2]]+1;
+                while(((mem[3] = neighbor[nbr[2]])>=0)&&
+                      ((!atmToIdx)||(atmToIdx[mem[2]]>=0))) {
+                  if(mem[3]!=mem[1]) {
+                    nbr[3] = neighbor[mem[3]]+1;
+                    while(((mem[4] = neighbor[nbr[3]])>=0)&&
+                          ((!atmToIdx)||(atmToIdx[mem[3]]>=0))) {
+                      if((mem[4]!=mem[2])&&(mem[4]!=mem[1])&&(mem[4]!=mem[0])) {            
+                        nbr[4] = neighbor[mem[4]]+1;              
+                        while(((mem[5] = neighbor[nbr[4]])>=0)&&
+                              ((!atmToIdx)||(atmToIdx[mem[4]]>=0))) {
+                          if(!(escape_count--)) goto escape;
+                          if((mem[5]!=mem[3])&&(mem[5]!=mem[2])&&(mem[5]!=mem[1])) { 
+                            if(mem[5]==mem[0] && (!ai->chemFlag)) { 
+
+                              /* unassigned aromatic nitrogen-containing five-cycle */
+                            
+                              /* c1ccnc1 becomes c1ccn[H]c1 */
+
+                              if((atomInfo[mem[1]].protons==cAN_C) &&
+                                 (atomInfo[mem[2]].protons==cAN_C) &&
+                                 (atomInfo[mem[3]].protons==cAN_C) &&
+                                 (atomInfo[mem[4]].protons==cAN_C) && 
+                                 obs_atom[mem[1]].aromatic && 
+                                 obs_atom[mem[2]].aromatic && 
+                                 obs_atom[mem[3]].aromatic && 
+                                 obs_atom[mem[4]].aromatic ) {
+                                ai->valence = 3;
+                                ai->chemFlag = 2;
+                                ai->geom = cAtomInfoPlaner;
+                              }
+
+#if 0
+
+ambiguious -- better to error on the side of tautomeric generality
+
+                              /* c1cnnc1 becomes c1cn[H]nc1 */
+
+                              if((atomInfo[mem[1]].protons==cAN_N) &&
+                                 (atomInfo[mem[1]].formalCharge==0) &&
+                                 (!atomInfo[mem[1]].chemFlag) &&
+                                 (atomInfo[mem[2]].protons==cAN_C) &&
+                                 (atomInfo[mem[3]].protons==cAN_C) &&
+                                 (atomInfo[mem[4]].protons==cAN_C) && 
+                                 obs_atom[mem[1]].aromatic && 
+                                 obs_atom[mem[2]].aromatic && 
+                                 obs_atom[mem[3]].aromatic && 
+                                 obs_atom[mem[4]].aromatic ) {
+
+                                int n2 = neighbor[mem[1]]; 
+                                int nn2 = neighbor[n2++];
+                                if(nn2==2) { /* second nitrogen also ambiguous */
+                                  ai->valence = 3;
+                                  ai->chemFlag = 2;
+                                  ai->geom = cAtomInfoPlaner;
+                                }
+                              }
+
+                              /* c1ncnc1 becomes c1n[H]cnc1 */
+
+                              if((atomInfo[mem[1]].protons==cAN_C) &&
+                                 (atomInfo[mem[2]].protons==cAN_N) &&
+                                 (atomInfo[mem[2]].formalCharge==0) &&
+                                 (!atomInfo[mem[2]].chemFlag) &&
+                                 (atomInfo[mem[3]].protons==cAN_C) &&
+                                 (atomInfo[mem[4]].protons==cAN_C) && 
+                                 obs_atom[mem[1]].aromatic && 
+                                 obs_atom[mem[2]].aromatic && 
+                                 obs_atom[mem[3]].aromatic && 
+                                 obs_atom[mem[4]].aromatic ) {
+
+                                int n2 = neighbor[mem[2]]; 
+                                int nn2 = neighbor[n2++];
+                                if(nn2==2) { /* second nitrogen also ambiguous */
+                                  ai->valence = 3;
+                                  ai->chemFlag = 2;
+                                  ai->geom = cAtomInfoPlaner;
+                                }
+                              }
+
+#endif
+
+                            }
+                          }
+                          nbr[4]+=2;
+                        }
+                      }
+                      nbr[3]+=2;
+                    }
+                  }
+                  nbr[2]+=2;
+                }
+              }
+              nbr[1]+=2;
+            }
+            nbr[0]+=2;
           }
         }
       }
@@ -5506,7 +5638,7 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
         else if(ai->protons==cAN_N)
           {
             if((!ai->chemFlag)||ai->geom!=cAtomInfoLinear) {
-              if(ai->formalCharge==0.0) {
+              if(ai->formalCharge==0) {
                 ai->chemFlag=true; 
                 ai->geom=cAtomInfoPlaner;
                 ai->valence=3;
@@ -5624,7 +5756,7 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
           break;
         case cAN_Cl:
           ai->chemFlag=1;
-          if(ai->formalCharge==0.0) {
+          if(ai->formalCharge==0) {
             ai->geom=cAtomInfoSingle;
             ai->valence=1;
           } else {

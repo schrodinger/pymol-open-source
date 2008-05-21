@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2008-05-20 Warren L. DeLano <warren@delsci.com>	
+
+	* now assumes HETATM c1ccnc1 is c1ccn[H]c1
+	
+2008-05-19 Warren L. DeLano <warren@delsci.com>	
+
+	* skins now working better
+	
 2008-05-15 Warren L. DeLano <warren@delsci.com>	
 
 	* increased surface generation performance

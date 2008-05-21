@@ -238,7 +238,6 @@ class PMGApp(Pmw.MegaWidget):
         if not hasattr(self,'skinNameList'):
             # find installed skins
             skin_pattern = re.sub(r"[\/\\][^\/\\]*$","/skins/*/__init__.py*",__file__)
-            print skin_pattern
             raw_list = glob(skin_pattern)
             unique = {}
             for a in raw_list:
