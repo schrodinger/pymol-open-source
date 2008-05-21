@@ -422,7 +422,7 @@ SEE ALSO
             _self.lock(_self)
             r = _cmd.revalence(_self._COb, selection1, selection2,
                                str(source), 
-                               int(target_state), int(source_state),
+                               int(target_state)-1, int(source_state)-1,
                                int(reset), int(quiet))
         finally:
             _self.unlock(r,_self)
@@ -2181,7 +2181,7 @@ SEE ALSO
     flag_action_sc = Shortcut(flag_action_dict.keys())
 
     def fix_chemistry(selection1="all", selection2="all",
-		      invalidate=0, quiet=1, _self=cmd):
+		      invalidate=1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
    

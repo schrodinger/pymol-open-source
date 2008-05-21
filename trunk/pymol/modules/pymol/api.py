@@ -173,6 +173,7 @@ from editing import \
       remove_picked,      \
       rename,             \
       replace,            \
+      revalence,          \
       rotate,             \
       sculpt_purge,       \
       sculpt_deactivate,  \
