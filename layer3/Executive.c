@@ -7690,6 +7690,60 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
   return(ok);
 }
 /*========================================================================*/
+int ExecutiveRevalence(PyMOLGlobals *G,char *s1,char *s2,char *src,
+                       int target_state,int source_state, int reset, int quiet)
+{
+  /*  register CExecutive *I=G->Executive; */
+  int ok=true;
+  int sele1,sele2;
+
+  sele1=SelectorIndexByName(G,s1);
+  sele2=SelectorIndexByName(G,s2);
+  
+  if((sele1>=0)&&(sele2>=0)) {
+    ObjectMolecule *obj1 = SelectorGetSingleObjectMolecule(G,sele1);
+    ObjectMolecule *obj2 = SelectorGetSingleObjectMolecule(G,sele2);
+
+    if((!obj1)||(!obj2)||(obj1!=obj2)) {
+      ok=false;
+      if(!quiet) {
+        PRINTFB(G,FB_Editor,FB_Warnings)
+          "Editor-Warning: revalence only works on atoms in a single object at a time."
+          ENDFB(G);
+      }
+    }
+    
+    if(src && (!src[0])) src=NULL;
+    
+    if(ok) {
+      if(!src) { /* guess valences */
+        int *flag1 = Calloc(int,obj1->NAtom);
+        int *flag2 = Calloc(int,obj1->NAtom);
+        if(flag1&&flag2) {
+          int a;
+          int *f1=flag1;
+          int *f2=flag2;
+          AtomInfoType *ai = obj1->AtomInfo;
+          for(a=0;a<obj1->NAtom;a++) {
+            *(f1++) = SelectorIsMember(G,ai->selEntry,sele1);
+            *(f2++) = SelectorIsMember(G,ai->selEntry,sele2);
+            ai++;
+          }
+          if(target_state<0) target_state = 0; /* TO DO */
+          ObjectMoleculeGuessValences(obj1,target_state,flag1,flag2,reset);
+          ObjectMoleculeVerifyChemistry(obj1,target_state);
+          ObjectMoleculeInvalidate(obj1,cRepAll,cRepInvBonds,target_state);
+
+        }
+        FreeP(flag1);
+        FreeP(flag2);
+      }
+    }
+  }
+  return ok;
+}
+
+/*========================================================================*/
 int ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int mode,int quiet)
 {
   int ok=true;

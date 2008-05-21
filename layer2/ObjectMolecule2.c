@@ -1,17 +1,17 @@
 /* 
-A* -------------------------------------------------------------------
-B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
-D* -------------------------------------------------------------------
-E* It is unlawful to modify or remove this copyright notice.
-F* -------------------------------------------------------------------
-G* Please see the accompanying LICENSE file for further information. 
-H* -------------------------------------------------------------------
-I* Additional authors of this source file include:
--* 
--* 
--*
-Z* -------------------------------------------------------------------
+   A* -------------------------------------------------------------------
+   B* This file contains source code for the PyMOL computer program
+   C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+   D* -------------------------------------------------------------------
+   E* It is unlawful to modify or remove this copyright notice.
+   F* -------------------------------------------------------------------
+   G* Please see the accompanying LICENSE file for further information. 
+   H* -------------------------------------------------------------------
+   I* Additional authors of this source file include:
+   -* 
+   -* 
+   -*
+   Z* -------------------------------------------------------------------
 */
 
 #include"os_predef.h"
@@ -210,7 +210,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
     }
   }
   {
-  /* match existing properties of the old atom */
+    /* match existing properties of the old atom */
     int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
     int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
     int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
@@ -250,7 +250,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
       AtomInfoAssignColors(I->Obj.G,ai); 
       if((ai->elem[0]=='C')&&(ai->elem[1]==0)) 
         /* carbons are always colored according to the object color */
-      ai->color=I->Obj.Color;
+        ai->color=I->Obj.Color;
     } else {
       ai->color = color;
     }
@@ -622,16 +622,16 @@ int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule *I, float *point, float cut
         for(d=a-1;d<=a+1;d++)
           for(e=b-1;e<=b+1;e++)
             for(f=c-1;f<=c+1;f++) {
-                j = *(MapFirst(map,d,e,f));
-                while(j>=0) {
-                  v = cs->Coord + (3*j);                    
-                  test = diffsq3f(v,point);
-                  if(test<=nearest) {
-                    result = j;
-                    nearest = test;
-                  }
-                  j=MapNext(map,j);
+              j = *(MapFirst(map,d,e,f));
+              while(j>=0) {
+                v = cs->Coord + (3*j);                    
+                test = diffsq3f(v,point);
+                if(test<=nearest) {
+                  result = j;
+                  nearest = test;
                 }
+                j=MapNext(map,j);
+              }
             }
       } else {
         register int j;
@@ -789,6 +789,544 @@ int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele)
   }
   return result;
 }
+
+static int assign_pdb_known_residue(PyMOLGlobals *G, AtomInfoType *ai1, AtomInfoType *ai2, int *bond_order)
+{
+  int order = *(bond_order);
+  char *name1 = ai1->name;
+  char *name2 = ai2->name;
+  char *resn1 = ai1->resn;
+    
+  /* nasty high-speed hack to get bond valences and formal charges 
+     for standard residues */
+  if(((!name1[1])&&(!name2[1]))&&
+     (((name1[0]=='C')&&(name2[0]=='O'))||
+      ((name1[0]=='O')&&(name2[0]=='C')))) {
+    order=2;
+  } else if((!name2[1])&&(name2[0]=='C')&&(!strcmp(name1,"OXT"))) {
+    ai1->formalCharge = -1;
+    ai1->chemFlag = false;
+  } else if((!name1[1])&&(name1[0]=='C')&&(!strcmp(name2,"OXT"))) {
+    ai2->formalCharge = -1;
+    ai2->chemFlag = false;
+  } else {
+    switch(resn1[0]) {
+    case 'A':
+      switch(resn1[1]) {
+      case 'R': 
+        switch(resn1[2]) {   
+        case 'G': /* ARG... */
+          switch(resn1[3]) {   
+          case 0:
+          case 'P': /*  ARG, ARGP */
+            if(!strcmp(name1,"NH1"))  {
+              ai1->formalCharge=1;
+              ai1->chemFlag = false;
+            } else if(!strcmp(name2,"NH1"))  {
+              ai2->formalCharge=1;
+              ai2->chemFlag = false;
+            }
+            break;
+          }
+          if(((!strcmp(name1,"CZ"))&&(!strcmp(name2,"NH1")))||
+             ((!strcmp(name2,"CZ"))&&(!strcmp(name1,"NH1")))) 
+            order=2;
+          break;
+        }
+        break;
+      case 'S': 
+        switch(resn1[2]) {
+        case 'P': /* ASP... */
+          switch(resn1[3]) {
+          case 0:
+          case 'M': /* ASP, ASPM minus assumption */
+            if(!strcmp(name1,"OD2")) {
+              ai1->formalCharge=-1;
+              ai1->chemFlag = false;
+            } else if(!strcmp(name2,"OD2"))  {
+              ai2->formalCharge=-1;
+              ai2->chemFlag = false;
+            }
+            break;
+          }
+          if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"OD1")))||
+             ((!strcmp(name2,"CG"))&&(!strcmp(name1,"OD1")))) 
+            order=2;
+          break;
+        case 'N': /* ASN  */
+          if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"OD1")))||
+             ((!strcmp(name2,"CG"))&&(!strcmp(name1,"OD1")))) 
+            order=2;
+          break;
+        }
+        break;
+      case 0:
+        if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) {
+          ai1->formalCharge=-1;
+          ai1->chemFlag = false;
+        } else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2"))))  {
+          ai2->formalCharge=-1;
+          ai2->chemFlag = false;
+        }
+        if(((!strcmp(name1,"C8"))&&(!strcmp(name2,"N7")))||
+           ((!strcmp(name2,"C8"))&&(!strcmp(name1,"N7")))) 
+          order=2;
+        else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"C5")))||
+                ((!strcmp(name2,"C4"))&&(!strcmp(name1,"C5")))) 
+          order=2;
+          
+        else if(((!strcmp(name1,"C6"))&&(!strcmp(name2,"N1")))||
+                ((!strcmp(name2,"C6"))&&(!strcmp(name1,"N1")))) 
+          order=2;
+        else if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"N3")))||
+                ((!strcmp(name2,"C2"))&&(!strcmp(name1,"N3")))) 
+          order=2;
+        else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+          order=2;
+        break;
+      }
+      break;
+    case 'C':
+      if(resn1[1]==0) {
+        if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) {
+          ai1->formalCharge=-1;
+          ai1->chemFlag = false;
+        } else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2")))) {
+          ai2->formalCharge=-1;
+          ai2->chemFlag = false;          
+        }
+        if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"O2")))||
+           ((!strcmp(name2,"C2"))&&(!strcmp(name1,"O2")))) 
+          order=2;
+        else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"N3")))||
+                ((!strcmp(name2,"C4"))&&(!strcmp(name1,"N3")))) 
+          order=2;
+          
+        else if(((!strcmp(name1,"C5"))&&(!strcmp(name2,"C6")))||
+                ((!strcmp(name2,"C5"))&&(!strcmp(name1,"C6")))) 
+          order=2;
+        else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+          order=2;
+      }
+      break;
+    case 'D': /* deoxy nucleic acids */
+      switch(resn1[1]) {
+      case 'A':
+        if(resn1[2]==0) {
+          if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) {
+            ai1->formalCharge=-1;
+            ai1->chemFlag = false;
+          } else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2")))) {
+            ai2->formalCharge=-1;
+            ai2->chemFlag = false;
+          }
+          if(((!strcmp(name1,"C8"))&&(!strcmp(name2,"N7")))||
+             ((!strcmp(name2,"C8"))&&(!strcmp(name1,"N7")))) 
+            order=2;
+          else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"C5")))||
+                  ((!strcmp(name2,"C4"))&&(!strcmp(name1,"C5")))) 
+            order=2;
+            
+          else if(((!strcmp(name1,"C6"))&&(!strcmp(name2,"N1")))||
+                  ((!strcmp(name2,"C6"))&&(!strcmp(name1,"N1")))) 
+            order=2;
+          else if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"N3")))||
+                  ((!strcmp(name2,"C2"))&&(!strcmp(name1,"N3")))) 
+            order=2;
+          else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                  ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+            order=2;
+        }
+        break;
+      case 'C':
+        if(resn1[2]==0) {
+          if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) {
+            ai1->formalCharge=-1;
+            ai1->chemFlag = false;
+          } else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2"))))  {
+            ai2->formalCharge=-1;
+            ai2->chemFlag = false;
+          }
+          if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"O2")))||
+             ((!strcmp(name2,"C2"))&&(!strcmp(name1,"O2")))) 
+            order=2;
+          else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"N3")))||
+                  ((!strcmp(name2,"C4"))&&(!strcmp(name1,"N3")))) 
+            order=2;
+            
+          else if(((!strcmp(name1,"C5"))&&(!strcmp(name2,"C6")))||
+                  ((!strcmp(name2,"C5"))&&(!strcmp(name1,"C6")))) 
+            order=2;
+          else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                  ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+            order=2;
+        }
+        break;
+      case 'T':
+        if(resn1[2]==0) {
+          if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) 
+            ai1->formalCharge=-1;
+          else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2")))) 
+            ai2->formalCharge=-1;
+            
+          if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"O2")))||
+             ((!strcmp(name2,"C2"))&&(!strcmp(name1,"O2")))) 
+            order=2;
+          else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"O4")))||
+                  ((!strcmp(name2,"C4"))&&(!strcmp(name1,"O4")))) 
+            order=2;
+            
+          else if(((!strcmp(name1,"C5"))&&(!strcmp(name2,"C6")))||
+                  ((!strcmp(name2,"C5"))&&(!strcmp(name1,"C6")))) 
+            order=2;
+          else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                  ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+            order=2;
+        }
+        break;
+      case 'G':
+        if(resn1[2]==0) {
+          if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) {
+            ai1->formalCharge=-1;  
+            ai1->chemFlag = false;
+          } else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2")))) {
+            ai2->formalCharge=-1;
+            ai2->chemFlag = false;
+          }
+          if(((!strcmp(name1,"C6"))&&(!strcmp(name2,"O6")))||
+             ((!strcmp(name2,"C6"))&&(!strcmp(name1,"O6")))) 
+            order=2;
+          else if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"N3")))||
+                  ((!strcmp(name2,"C2"))&&(!strcmp(name1,"N3")))) 
+            order=2;
+          else if(((!strcmp(name1,"C8"))&&(!strcmp(name2,"N7")))||
+                  ((!strcmp(name2,"C8"))&&(!strcmp(name1,"N7")))) 
+            order=2;
+          else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"C5")))||
+                  ((!strcmp(name2,"C4"))&&(!strcmp(name1,"C5")))) 
+            order=2;
+          else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                  ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+            order=2;
+        }
+        break;
+      case 'U':
+        if(resn1[2]==0) {
+          if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) {
+            ai1->formalCharge=-1;
+            ai1->chemFlag = false;
+          } else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2")))) {
+            ai2->formalCharge=-1;
+            ai2->chemFlag = false;
+          }
+                                      
+          if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"O2")))||
+             ((!strcmp(name2,"C2"))&&(!strcmp(name1,"O2")))) 
+            order=2;
+          else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"O4")))||
+                  ((!strcmp(name2,"C4"))&&(!strcmp(name1,"O4")))) 
+            order=2;
+                                      
+          else if(((!strcmp(name1,"C5"))&&(!strcmp(name2,"C6")))||
+                  ((!strcmp(name2,"C5"))&&(!strcmp(name1,"C6")))) 
+            order=2;
+          else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                  ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+            order=2;
+        }
+        break;
+      }
+      break;
+    case 'G':
+      switch(resn1[1]) {
+      case 'L': 
+        switch(resn1[2]) {
+        case 'U': /* GLU missing GLUN, GLUH, GLH handling */
+          switch(resn1[3]) {                                                
+          case 0:
+          case 'M': /* minus */
+            if(!strcmp(name1,"OE2")) {
+              ai1->formalCharge=-1;
+              ai1->chemFlag = false;
+            } else if(!strcmp(name2,"OE2")) {
+              ai2->formalCharge=-1;
+              ai2->chemFlag = false;
+            }
+            break;
+          }
+          if(((!strcmp(name1,"CD"))&&(!strcmp(name2,"OE1")))||
+             ((!strcmp(name2,"CD"))&&(!strcmp(name1,"OE1")))) 
+            order=2;
+          break;
+        case 'N': /* GLN or GLU */
+          if(((!strcmp(name1,"CD"))&&(!strcmp(name2,"OE1")))||
+             ((!strcmp(name2,"CD"))&&(!strcmp(name1,"OE1")))) 
+            order=2;
+          break;
+        }
+        break;
+      case 0:
+        if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) {
+          ai1->formalCharge=-1;
+          ai1->chemFlag = false;
+        } else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2")))) {
+          ai2->formalCharge=-1;
+          ai2->chemFlag = false;
+        }
+                                    
+        if(((!strcmp(name1,"C6"))&&(!strcmp(name2,"O6")))||
+           ((!strcmp(name2,"C6"))&&(!strcmp(name1,"O6")))) 
+          order=2;
+        else if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"N3")))||
+                ((!strcmp(name2,"C2"))&&(!strcmp(name1,"N3")))) 
+          order=2;
+        else if(((!strcmp(name1,"C8"))&&(!strcmp(name2,"N7")))||
+                ((!strcmp(name2,"C8"))&&(!strcmp(name1,"N7")))) 
+          order=2;
+        else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"C5")))||
+                ((!strcmp(name2,"C4"))&&(!strcmp(name1,"C5")))) 
+          order=2;
+        else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+          order=2;
+        break;
+      }
+      break;
+    case 'H':
+      switch(resn1[1]) {
+      case 'I':
+        switch(resn1[2]) {
+        case 'P':
+          if(!strcmp(name1,"ND1")) {
+            ai1->formalCharge=1;
+            ai1->chemFlag = false;
+          } else if(!strcmp(name2,"ND1"))  {
+            ai2->formalCharge=1;
+            ai2->chemFlag = false;
+          }
+          if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"CD2")))||
+             ((!strcmp(name2,"CG"))&&(!strcmp(name1,"CD2")))) 
+            order=2;
+          else if(((!strcmp(name1,"CE1"))&&(!strcmp(name2,"ND1")))||
+                  ((!strcmp(name2,"CE1"))&&(!strcmp(name1,"ND1")))) 
+            order=2;
+          break;
+        case 'S':
+          switch(resn1[3]) {
+          case 'A': /* HISA Gromacs */
+          case 'D': /* HISD Quanta */
+            if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"CD2")))||
+               ((!strcmp(name2,"CG"))&&(!strcmp(name1,"CD2")))) 
+              order=2;
+            else if(((!strcmp(name1,"CE1"))&&(!strcmp(name2,"NE2")))||
+                    ((!strcmp(name2,"CE1"))&&(!strcmp(name1,"NE2")))) 
+              order=2;
+            break;
+          case 0: /* plain HIS */
+          case 'B': /* HISB Gromacs */
+          case 'E': /* HISE Quanta */
+            if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"CD2")))||
+               ((!strcmp(name2,"CG"))&&(!strcmp(name1,"CD2")))) 
+              order=2;
+            else if(((!strcmp(name1,"CE1"))&&(!strcmp(name2,"ND1")))||
+                    ((!strcmp(name2,"CE1"))&&(!strcmp(name1,"ND1")))) 
+              order=2;
+            break;
+          case 'H': /* HISH Gromacs */
+          case 'P': /* HISP Quanta */
+            if(!strcmp(name1,"ND1")) {
+              ai1->formalCharge=1;
+              ai1->chemFlag = false;
+            } else if(!strcmp(name2,"ND1")) {
+              ai2->formalCharge=1;
+              ai2->chemFlag = false;
+            }
+            if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"CD2")))||
+               ((!strcmp(name2,"CG"))&&(!strcmp(name1,"CD2")))) 
+              order=2;
+            else if(((!strcmp(name1,"CE1"))&&(!strcmp(name2,"ND1")))||
+                    ((!strcmp(name2,"CE1"))&&(!strcmp(name1,"ND1")))) 
+              order=2;
+            break;
+          }
+          break;
+        case 'E': /* HIE */
+          if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"CD2")))||
+             ((!strcmp(name2,"CG"))&&(!strcmp(name1,"CD2")))) 
+            order=2;
+          else if(((!strcmp(name1,"CE1"))&&(!strcmp(name2,"ND1")))||
+                  ((!strcmp(name2,"CE1"))&&(!strcmp(name1,"ND1")))) 
+            order=2;
+          break;
+        case 'D': /* HID */
+          if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"CD2")))||
+             ((!strcmp(name2,"CG"))&&(!strcmp(name1,"CD2")))) 
+            order=2;
+          else if(((!strcmp(name1,"CE1"))&&(!strcmp(name2,"NE2")))||
+                  ((!strcmp(name2,"CE1"))&&(!strcmp(name1,"NE2")))) 
+            order=2;
+          break;
+        }
+        break;
+      }
+      break;
+    case 'I':
+      if(resn1[1]==0) {
+        if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) {
+          ai1->formalCharge=-1;
+          ai1->chemFlag = false;
+        } else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2")))) {
+          ai2->formalCharge=-1;
+          ai2->chemFlag = false;
+        }
+        if(((!strcmp(name1,"C8"))&&(!strcmp(name2,"N7")))||
+           ((!strcmp(name2,"C8"))&&(!strcmp(name1,"N7")))) 
+          order=2;
+        else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"C5")))||
+                ((!strcmp(name2,"C4"))&&(!strcmp(name1,"C5")))) 
+          order=2;
+                                              
+        else if(((!strcmp(name1,"C6"))&&(!strcmp(name2,"N1")))||
+                ((!strcmp(name2,"C6"))&&(!strcmp(name1,"N1")))) 
+          order=2;
+        else if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"N3")))||
+                ((!strcmp(name2,"C2"))&&(!strcmp(name1,"N3")))) 
+          order=2;
+        else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+          order=2;
+      }
+      break;
+    case 'P':
+      switch(resn1[1]) {
+      case 'H': /* PHE */
+        if(resn1[2]=='E') {
+          if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"CD1")))||
+             ((!strcmp(name2,"CG"))&&(!strcmp(name1,"CD1")))) 
+            order=2;
+          else if(((!strcmp(name1,"CZ"))&&(!strcmp(name2,"CE1")))||
+                  ((!strcmp(name2,"CZ"))&&(!strcmp(name1,"CE1")))) 
+            order=2;
+                                                
+          else if(((!strcmp(name1,"CE2"))&&(!strcmp(name2,"CD2")))||
+                  ((!strcmp(name2,"CE2"))&&(!strcmp(name1,"CD2")))) 
+            order=2;
+          break; 
+        }
+      }
+      break;
+    case 'L':
+      switch(resn1[1]) {
+      case 'Y':
+        switch(resn1[2]) {
+        case 'S': /* LYS. */
+          switch(resn1[3]) {                                                
+          case 0:
+          case 'P': /* LYS, LYSP */
+            if(!strcmp(name1,"NZ"))  {
+              ai1->formalCharge=1;
+              ai1->chemFlag = false;
+            } else if(!strcmp(name2,"NZ")) {
+              ai2->formalCharge=1;
+              ai2->chemFlag = false;
+            }
+            break;
+          }
+          break;
+        }
+        break;
+      }
+      break;
+    case 'T':
+      switch(resn1[1]) {
+      case 'Y': /* TYR */
+        if(resn1[2]=='R') {
+          if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"CD1")))||
+             ((!strcmp(name2,"CG"))&&(!strcmp(name1,"CD1")))) 
+            order=2;
+          else if(((!strcmp(name1,"CZ"))&&(!strcmp(name2,"CE1")))||
+                  ((!strcmp(name2,"CZ"))&&(!strcmp(name1,"CE1")))) 
+            order=2;
+                                                
+          else if(((!strcmp(name1,"CE2"))&&(!strcmp(name2,"CD2")))||
+                  ((!strcmp(name2,"CE2"))&&(!strcmp(name1,"CD2")))) 
+            order=2;
+          break; 
+        }
+        break;
+      case 'R':
+        if(resn1[2]=='P') {
+          if(((!strcmp(name1,"CG"))&&(!strcmp(name2,"CD1")))||
+             ((!strcmp(name2,"CG"))&&(!strcmp(name1,"CD1")))) 
+            order=2;
+          else if(((!strcmp(name1,"CZ3"))&&(!strcmp(name2,"CE3")))||
+                  ((!strcmp(name2,"CZ3"))&&(!strcmp(name1,"CE3")))) 
+            order=2;
+          else if(((!strcmp(name1,"CZ2"))&&(!strcmp(name2,"CH2")))||
+                  ((!strcmp(name2,"CZ2"))&&(!strcmp(name1,"CH2")))) 
+            order=2;
+          else if(((!strcmp(name1,"CE2"))&&(!strcmp(name2,"CD2")))||
+                  ((!strcmp(name2,"CE2"))&&(!strcmp(name1,"CD2")))) 
+            order=2;
+          break; 
+        }
+        break;
+      case 0:
+        if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) {
+          ai1->formalCharge=-1;
+          ai1->chemFlag = false;
+        } else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2")))) {
+          ai2->formalCharge=-1;
+          ai2->chemFlag = false;
+        }
+                                    
+        if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"O2")))||
+           ((!strcmp(name2,"C2"))&&(!strcmp(name1,"O2")))) 
+          order=2;
+        else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"O4")))||
+                ((!strcmp(name2,"C4"))&&(!strcmp(name1,"O4")))) 
+          order=2;
+                                              
+        else if(((!strcmp(name1,"C5"))&&(!strcmp(name2,"C6")))||
+                ((!strcmp(name2,"C5"))&&(!strcmp(name1,"C6")))) 
+          order=2;
+        else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+          order=2;
+        break;
+      }
+      break;
+    case 'U':
+      if(resn1[1]==0) {
+        if(((!strcmp(name1,"O2P"))||(!strcmp(name1,"OP2")))) {
+          ai1->formalCharge=-1;
+          ai1->chemFlag = false;
+        } else if(((!strcmp(name2,"O2P"))||(!strcmp(name2,"OP2")))) {
+          ai2->formalCharge=-1;
+          ai2->chemFlag = false;
+        }
+        if(((!strcmp(name1,"C2"))&&(!strcmp(name2,"O2")))||
+           ((!strcmp(name2,"C2"))&&(!strcmp(name1,"O2")))) 
+          order=2;
+        else if(((!strcmp(name1,"C4"))&&(!strcmp(name2,"O4")))||
+                ((!strcmp(name2,"C4"))&&(!strcmp(name1,"O4")))) 
+          order=2;
+                                              
+        else if(((!strcmp(name1,"C5"))&&(!strcmp(name2,"C6")))||
+                ((!strcmp(name2,"C5"))&&(!strcmp(name1,"C6")))) 
+          order=2;
+        else if(((!strcmp(name1,"P"))&&(((!strcmp(name2,"O1P"))||(!strcmp(name2,"OP1")))))||
+                ((!strcmp(name2,"P"))&&(((!strcmp(name1,"O1P"))||(!strcmp(name1,"OP1")))))) 
+          order=2;
+      }
+      break;
+    }
+  }
+  *(bond_order) = order;
+}
+
 void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int invalidate) 
 {
   int b;
@@ -812,415 +1350,7 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
       order = -1;
       if(!ai1->resn[3]) { /* Standard disconnected PDB residue */
         if(AtomInfoSameResidue(I->Obj.G,ai1,ai2)) {
-          /* nasty high-speed hack to get bond valences and formal charges 
-             for standard residues */
-          if(((!ai1->name[1])&&(!ai2->name[1]))&&
-             (((ai1->name[0]=='C')&&(ai2->name[0]=='O'))||
-              ((ai1->name[0]=='O')&&(ai2->name[0]=='C')))) {
-            order=2;
-          } else {
-            switch(ai1->resn[0]) {
-            case 'A':
-              switch(ai1->resn[1]) {
-              case 'R': /* ARG */
-                if(!strcmp(ai1->name,"NH1")) {
-                  ai1->formalCharge=1;
-                  ai1->chemFlag=false;
-                } else if(!strcmp(ai2->name,"NH1")) {
-                  ai2->formalCharge=1;
-                  ai2->chemFlag=false;
-                }
-                if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"NH1")))||
-                   ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"NH1")))) 
-                  order=2;
-                break;
-              case 'S': 
-                switch(ai1->resn[2]) {
-                case 'P': /* ASP */
-                  if(!strcmp(ai1->name,"OD2")) {
-                    ai1->formalCharge=-1;
-                    ai1->chemFlag = false;
-                  } else if(!strcmp(ai2->name,"OD2")) {
-                    ai2->formalCharge=-1;
-                    ai2->chemFlag = false;
-                  } 
-                case 'N': /* ASN or ASP */
-                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"OD1")))||
-                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"OD1")))) 
-                    order=2;
-                  break;
-                }
-              case 0:
-                if(ai1->resn[1]==0) {
-                  if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                    ai1->formalCharge=-1;
-                  else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                    ai2->formalCharge=-1;
-                  if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
-                     ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
-                          ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
-                    order=2;
-                  
-                  else if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"N1")))||
-                          ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"N1")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
-                          ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                          ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                    order=2;
-                 
-                }
-                break;
-              }
-              break;
-            case 'C':
-              if(ai1->resn[1]==0) {
-                if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                  ai1->formalCharge=-1;
-                else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                  ai2->formalCharge=-1;
-                if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                   ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"N3")))||
-                        ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"N3")))) 
-                  order=2;
-                
-                else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                        ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                        ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                  order=2;
-              }
-              break;
-            case 'D': /* deoxy nucleic acids */
-              switch(ai1->resn[1]) {
-              case 'A':
-                if(ai1->resn[2]==0) {
-                  if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                    ai1->formalCharge=-1;
-                  else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                    ai2->formalCharge=-1;
-                  if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
-                     ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
-                          ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
-                    order=2;
-                  
-                  else if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"N1")))||
-                          ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"N1")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
-                          ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                          ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                    order=2;
-                }
-                break;
-              case 'C':
-                if(ai1->resn[2]==0) {
-                  if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                    ai1->formalCharge=-1;
-                  else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                    ai2->formalCharge=-1;
-                  
-                  if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                     ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"N3")))||
-                          ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"N3")))) 
-                    order=2;
-                  
-                  else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                          ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                          ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                    order=2;
-                }
-                break;
-              case 'T':
-                if(ai1->resn[2]==0) {
-                  if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                    ai1->formalCharge=-1;
-                  else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                    ai2->formalCharge=-1;
-
-                  if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                     ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
-                          ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
-                    order=2;
-                                      
-                  else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                          ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                          ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                    order=2;
-                }
-                break;
-              case 'G':
-                if(ai1->resn[2]==0) {
-                  if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                    ai1->formalCharge=-1;
-                  else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                    ai2->formalCharge=-1;
-                                    
-                  if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"O6")))||
-                     ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"O6")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
-                          ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
-                          ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
-                          ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                          ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                    order=2;
-                }
-                break;
-              case 'U':
-                if(ai1->resn[2]==0) {
-                  if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                    ai1->formalCharge=-1;
-                  else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                    ai2->formalCharge=-1;
-                                      
-                  if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                     ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
-                          ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
-                    order=2;
-                                      
-                  else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                          ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                          ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                    order=2;
-                }
-                break;
-              }
-              break;
-            case 'G':
-              switch(ai1->resn[1]) {
-              case 'L': 
-                switch(ai1->resn[2]) {
-                case 'U': /* GLU */
-                  if(!strcmp(ai1->name,"OE2")) {
-                    ai1->formalCharge=-1;
-                    ai1->chemFlag = false;
-                  } else if(!strcmp(ai2->name,"OE2")) {
-                    ai2->formalCharge=-1;
-                    ai2->chemFlag = false;
-                  }
-                case 'N': /* GLN or GLU */
-                  if(((!strcmp(ai1->name,"CD"))&&(!strcmp(ai2->name,"OE1")))||
-                     ((!strcmp(ai2->name,"CD"))&&(!strcmp(ai1->name,"OE1")))) 
-                    order=2;
-                  break;
-                }
-                break;
-              case 0:
-                if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                  ai1->formalCharge=-1;
-                else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                  ai2->formalCharge=-1;
-                if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"O6")))||
-                   ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"O6")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
-                        ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
-                        ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
-                        ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                        ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                  order=2;                
-                break;
-              }
-              break;
-            case 'H':
-              switch(ai1->resn[1]) {
-              case 'I':
-                switch(ai1->resn[2]) {
-                case 'P':
-                  if(!strcmp(ai1->name,"ND1")) {
-                    ai1->formalCharge=1;
-                    ai1->chemFlag=false;
-                  } else if(!strcmp(ai2->name,"ND1")) {
-                    ai2->formalCharge=1;
-                    ai2->chemFlag=false;
-                  }
-                case 'S':
-                case 'E':
-                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
-                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
-                          ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
-                    order=2;
-                  break;
-                  break;
-                case 'D':
-                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
-                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"NE2")))||
-                          ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"NE2")))) 
-                    order=2;
-                  break;
-                }
-                break;
-              }
-              break;
-            case 'I':
-              if(ai1->resn[1]==0) {
-                if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                  ai1->formalCharge=-1;
-                else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                  ai2->formalCharge=-1;
-                if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
-                   ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
-                        ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
-                  order=2;
-                
-                else if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"N1")))||
-                        ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"N1")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
-                        ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                        ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                  order=2;
-              }
-              break;
-            case 'P':
-              switch(ai1->resn[1]) {
-              case 'H': /* PHE */
-                if(ai1->resn[2]=='E') {
-                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
-                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"CE1")))||
-                          ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"CE1")))) 
-                    order=2;
-                  
-                  else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
-                          ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
-                    order=2;
-                  break; 
-                }
-              }
-              break;
-            case 'L':
-              if(!strcmp(ai1->name,"NZ")) {
-                ai1->formalCharge=1;
-                ai1->chemFlag = false;
-              } else if(!strcmp(ai2->name,"NZ")) {
-                ai2->formalCharge=1;
-                ai2->chemFlag = false;
-              }
-              break;
-            case 'T':
-              switch(ai1->resn[1]) {
-              case 'Y': /* TYR */
-                if(ai1->resn[2]=='R') {
-                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
-                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"CE1")))||
-                          ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"CE1")))) 
-                    order=2;
-                  
-                  else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
-                          ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
-                    order=2;
-                  break; 
-                }
-                break;
-              case 'R':
-                if(ai1->resn[2]=='P') {
-                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
-                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"CZ3"))&&(!strcmp(ai2->name,"CE3")))||
-                          ((!strcmp(ai2->name,"CZ3"))&&(!strcmp(ai1->name,"CE3")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"CZ2"))&&(!strcmp(ai2->name,"CH2")))||
-                          ((!strcmp(ai2->name,"CZ2"))&&(!strcmp(ai1->name,"CH2")))) 
-                    order=2;
-                  else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
-                          ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
-                    order=2;
-                  break; 
-                }
-                break;
-              case 0:
-                if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                  ai1->formalCharge=-1;
-                else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                  ai2->formalCharge=-1;
-                if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                   ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
-                        ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
-                  order=2;
-                
-                else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                        ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                        ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                  order=2;
-                break;
-              }
-              break;
-            case 'U':
-              if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                ai1->formalCharge=-1;
-              else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                ai2->formalCharge=-1;
-              if(ai1->resn[1]==0) {
-                if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                   ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
-                        ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
-                  order=2;
-                
-                else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                        ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                  order=2;
-                else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                        ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                  order=2;
-              }
-              break;
-            }
-          }
+          assign_pdb_known_residue(I->Obj.G, ai1,ai2,&order);
         }
       }
       if(order>0) {
@@ -3862,479 +3992,10 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                               }
                               break;
                             }
-                          } else if((!ai1->hetatm)) { /* Standard disconnected PDB residue */
-                            if(AtomInfoSameResidue(G,ai1,ai2)) {
-                              /* nasty high-speed hack to get bond valences and formal charges 
-                                 for standard residues */
-                              if(((!ai1->name[1])&&(!ai2->name[1]))&&
-                                 (((ai1->name[0]=='C')&&(ai2->name[0]=='O'))||
-                                  ((ai1->name[0]=='O')&&(ai2->name[0]=='C')))) {
-                                order=2;
-                              } else {
-                                switch(ai1->resn[0]) {
-                                case 'A':
-                                  switch(ai1->resn[1]) {
-                                  case 'R': 
-                                    switch(ai1->resn[2]) {   
-                                    case 'G': /* ARG... */
-                                      switch(ai1->resn[3]) {   
-                                      case 0:
-                                      case 'P': /*  ARG, ARGP */
-                                        if(!strcmp(ai1->name,"NH1")) 
-                                          ai1->formalCharge=1;
-                                        else if(!strcmp(ai2->name,"NH1")) 
-                                          ai2->formalCharge=1;
-                                        break;
-                                      }
-                                      if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"NH1")))||
-                                         ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"NH1")))) 
-                                        order=2;
-                                      break;
-                                    }
-                                    break;
-                                  case 'S': 
-                                    switch(ai1->resn[2]) {
-                                    case 'P': /* ASP... */
-                                      switch(ai1->resn[3]) {
-                                      case 0:
-                                      case 'M': /* ASP, ASPM minus assumption */
-                                        if(!strcmp(ai1->name,"OD2")) 
-                                          ai1->formalCharge=-1;
-                                        else if(!strcmp(ai2->name,"OD2")) 
-                                          ai2->formalCharge=-1;
-                                        break;
-                                      }
-                                      if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"OD1")))||
-                                         ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"OD1")))) 
-                                        order=2;
-                                      break;
-                                    case 'N': /* ASN  */
-                                      if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"OD1")))||
-                                         ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"OD1")))) 
-                                        order=2;
-                                      break;
-                                    }
-                                    break;
-                                  case 0:
-                                    if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                                      ai1->formalCharge=-1;
-                                    else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                                      ai2->formalCharge=-1;
-                                    if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
-                                       ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
-                                            ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
-                                      order=2;
-                                    
-                                    else if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"N1")))||
-                                            ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"N1")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
-                                            ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                            ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                      order=2;
-                                    break;
-                                  }
-                                  break;
-                                case 'C':
-                                  if(ai1->resn[1]==0) {
-                                    if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                                      ai1->formalCharge=-1;
-                                    else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                                      ai2->formalCharge=-1;
-                                    
-                                    if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                                       ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"N3")))||
-                                            ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"N3")))) 
-                                      order=2;
-                                              
-                                    else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                                            ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                            ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                      order=2;
-                                  }
-                                  break;
-                                case 'D': /* deoxy nucleic acids */
-                                  switch(ai1->resn[1]) {
-                                  case 'A':
-                                    if(ai1->resn[2]==0) {
-                                    if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                                      ai1->formalCharge=-1;
-                                    else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                                      ai2->formalCharge=-1;
-                                    if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
-                                       ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
-                                            ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
-                                      order=2;
-                                    
-                                    else if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"N1")))||
-                                            ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"N1")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
-                                            ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                            ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                      order=2;
-                                    }
-                                    break;
-                                  case 'C':
-                                    if(ai1->resn[2]==0) {
-                                      if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                                        ai1->formalCharge=-1;
-                                      else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                                        ai2->formalCharge=-1;
-                                      
-                                      if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                                         ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"N3")))||
-                                              ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"N3")))) 
-                                        order=2;
-                                      
-                                      else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                                              ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                              ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                        order=2;
-                                    }
-                                    break;
-                                  case 'T':
-                                    if(ai1->resn[2]==0) {
-                                      if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                                        ai1->formalCharge=-1;
-                                      else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                                        ai2->formalCharge=-1;
-
-                                      if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                                         ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
-                                              ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
-                                        order=2;
-                                      
-                                      else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                                              ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                              ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                        order=2;
-                                    }
-                                    break;
-                                  case 'G':
-                                    if(ai1->resn[2]==0) {
-                                    if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                                      ai1->formalCharge=-1;
-                                    else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                                      ai2->formalCharge=-1;
-                                    
-                                    if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"O6")))||
-                                       ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"O6")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
-                                            ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
-                                            ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
-                                            ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                            ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                      order=2;
-                                    }
-                                    break;
-                                  case 'U':
-                                    if(ai1->resn[2]==0) {
-                                      if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                                        ai1->formalCharge=-1;
-                                      else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                                        ai2->formalCharge=-1;
-                                      
-                                      if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                                         ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
-                                              ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
-                                        order=2;
-                                      
-                                      else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                                              ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                              ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                        order=2;
-                                    }
-                                    break;
-                                  }
-                                  break;
-                                case 'G':
-                                  switch(ai1->resn[1]) {
-                                  case 'L': 
-                                    switch(ai1->resn[2]) {
-                                    case 'U': /* GLU missing GLUN, GLUH, GLH handling */
-                                      switch(ai1->resn[3]) {                                                
-                                      case 0:
-                                      case 'M': /* minus */
-                                        if(!strcmp(ai1->name,"OE2")) 
-                                          ai1->formalCharge=-1;
-                                        else if(!strcmp(ai2->name,"OE2")) 
-                                          ai2->formalCharge=-1;
-                                        break;
-                                      }
-                                      if(((!strcmp(ai1->name,"CD"))&&(!strcmp(ai2->name,"OE1")))||
-                                         ((!strcmp(ai2->name,"CD"))&&(!strcmp(ai1->name,"OE1")))) 
-                                        order=2;
-                                      break;
-                                    case 'N': /* GLN or GLU */
-                                      if(((!strcmp(ai1->name,"CD"))&&(!strcmp(ai2->name,"OE1")))||
-                                         ((!strcmp(ai2->name,"CD"))&&(!strcmp(ai1->name,"OE1")))) 
-                                        order=2;
-                                      break;
-                                    }
-                                  case 0:
-                                    if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                                      ai1->formalCharge=-1;
-                                    else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                                      ai2->formalCharge=-1;
-                                    
-                                    if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"O6")))||
-                                       ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"O6")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
-                                            ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
-                                            ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
-                                            ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                            ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                      order=2;
-                                    break;
-                                  }
-                                  break;
-                                case 'H':
-                                  switch(ai1->resn[1]) {
-                                  case 'I':
-                                    switch(ai1->resn[2]) {
-                                    case 'P':
-                                      if(!strcmp(ai1->name,"ND1")) 
-                                        ai1->formalCharge=1;
-                                      else if(!strcmp(ai2->name,"ND1")) 
-                                        ai2->formalCharge=1;
-                                      if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
-                                         ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
-                                              ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
-                                        order=2;
-                                      break;
-                                    case 'S':
-                                      switch(ai1->resn[3]) {
-                                      case 'A': /* HISA Gromacs */
-                                      case 'D': /* HISD Quanta */
-                                        if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
-                                           ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
-                                          order=2;
-                                        else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"NE2")))||
-                                                ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"NE2")))) 
-                                          order=2;
-                                        break;
-                                      case 0: /* plain HIS */
-                                      case 'B': /* HISB Gromacs */
-                                      case 'E': /* HISE Quanta */
-                                        if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
-                                           ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
-                                          order=2;
-                                        else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
-                                                ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
-                                          order=2;
-                                        break;
-                                      case 'H': /* HISH Gromacs */
-                                      case 'P': /* HISP Quanta */
-                                        if(!strcmp(ai1->name,"ND1")) 
-                                          ai1->formalCharge=1;
-                                        else if(!strcmp(ai2->name,"ND1")) 
-                                          ai2->formalCharge=1;
-                                        if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
-                                           ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
-                                          order=2;
-                                        else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
-                                                ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
-                                          order=2;
-                                        break;
-                                      }
-                                      break;
-                                    case 'E': /* HIE */
-                                      if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
-                                         ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
-                                              ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
-                                        order=2;
-                                      break;
-                                    case 'D': /* HID */
-                                      if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
-                                         ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"NE2")))||
-                                              ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"NE2")))) 
-                                        order=2;
-                                      break;
-                                    }
-                                    break;
-                                  }
-                                  break;
-                                case 'I':
-                                  if(ai1->resn[1]==0) {
-                                    if(((!strcmp(ai1->name,"C8"))&&(!strcmp(ai2->name,"N7")))||
-                                       ((!strcmp(ai2->name,"C8"))&&(!strcmp(ai1->name,"N7")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"C5")))||
-                                            ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"C5")))) 
-                                      order=2;
-                                              
-                                    else if(((!strcmp(ai1->name,"C6"))&&(!strcmp(ai2->name,"N1")))||
-                                            ((!strcmp(ai2->name,"C6"))&&(!strcmp(ai1->name,"N1")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"N3")))||
-                                            ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"N3")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                            ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                      order=2;
-                                  }
-                                  break;
-                                case 'P':
-                                  switch(ai1->resn[1]) {
-                                  case 'H': /* PHE */
-                                    if(ai1->resn[2]=='E') {
-                                      if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
-                                         ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"CE1")))||
-                                              ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"CE1")))) 
-                                        order=2;
-                                                
-                                      else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
-                                              ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
-                                        order=2;
-                                      break; 
-                                    }
-                                  }
-                                  break;
-                                case 'L':
-                                  switch(ai1->resn[1]) {
-                                  case 'Y':
-                                    switch(ai1->resn[2]) {
-                                    case 'S': /* LYS. */
-                                      switch(ai1->resn[3]) {                                                
-                                      case 0:
-                                      case 'P': /* LYS, LYSP */
-                                        if(!strcmp(ai1->name,"NZ")) 
-                                          ai1->formalCharge=1;
-                                        else if(!strcmp(ai2->name,"NZ")) 
-                                          ai2->formalCharge=1;
-                                        break;
-                                      }
-                                      break;
-                                    }
-                                    break;
-                                  }
-                                  break;
-                                case 'T':
-                                  switch(ai1->resn[1]) {
-                                  case 'Y': /* TYR */
-                                    if(ai1->resn[2]=='R') {
-                                      if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
-                                         ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"CE1")))||
-                                              ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"CE1")))) 
-                                        order=2;
-                                                
-                                      else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
-                                              ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
-                                        order=2;
-                                      break; 
-                                    }
-                                    break;
-                                  case 'R':
-                                    if(ai1->resn[2]=='P') {
-                                      if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
-                                         ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"CZ3"))&&(!strcmp(ai2->name,"CE3")))||
-                                              ((!strcmp(ai2->name,"CZ3"))&&(!strcmp(ai1->name,"CE3")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"CZ2"))&&(!strcmp(ai2->name,"CH2")))||
-                                              ((!strcmp(ai2->name,"CZ2"))&&(!strcmp(ai1->name,"CH2")))) 
-                                        order=2;
-                                      else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
-                                              ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
-                                        order=2;
-                                      break; 
-                                    }
-                                    break;
-                                  case 0:
-                                    if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                                      ai1->formalCharge=-1;
-                                    else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                                      ai2->formalCharge=-1;
-                                    
-                                    if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                                       ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
-                                            ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
-                                      order=2;
-                                              
-                                    else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                                            ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                            ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                      order=2;
-                                    break;
-                                  }
-                                  break;
-                                case 'U':
-                                  if(ai1->resn[1]==0) {
-                                    if(((!strcmp(ai1->name,"O2P"))||(!strcmp(ai1->name,"OP2")))) 
-                                      ai1->formalCharge=-1;
-                                    else if(((!strcmp(ai2->name,"O2P"))||(!strcmp(ai2->name,"OP2")))) 
-                                      ai2->formalCharge=-1;
-                                    if(((!strcmp(ai1->name,"C2"))&&(!strcmp(ai2->name,"O2")))||
-                                       ((!strcmp(ai2->name,"C2"))&&(!strcmp(ai1->name,"O2")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"C4"))&&(!strcmp(ai2->name,"O4")))||
-                                            ((!strcmp(ai2->name,"C4"))&&(!strcmp(ai1->name,"O4")))) 
-                                      order=2;
-                                              
-                                    else if(((!strcmp(ai1->name,"C5"))&&(!strcmp(ai2->name,"C6")))||
-                                            ((!strcmp(ai2->name,"C5"))&&(!strcmp(ai1->name,"C6")))) 
-                                      order=2;
-                                    else if(((!strcmp(ai1->name,"P"))&&(((!strcmp(ai2->name,"O1P"))||(!strcmp(ai2->name,"OP1")))))||
-                                            ((!strcmp(ai2->name,"P"))&&(((!strcmp(ai1->name,"O1P"))||(!strcmp(ai1->name,"OP1")))))) 
-                                      order=2;
-                                  }
-                                  break;
-                                }
-                              }
+                          } else if((!ai1->hetatm)) { 
+                            if(AtomInfoSameResidue(I->Obj.G,ai1,ai2)) {
+                              /* Standard disconnected PDB residue */
+                              assign_pdb_known_residue(G,ai1,ai2,&order);
                             }
                           }
                           (*bond)[nBond].order = -order; /* store tentative valence as negative */

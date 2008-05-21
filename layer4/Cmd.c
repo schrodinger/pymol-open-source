@@ -3721,12 +3721,16 @@ static PyObject *CmdRevalence(PyObject *self, PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
+  if(source[0]) {
+    ok = (SelectorGetTmp(G,source,src)>=0);
+  } else {
+    src[0] = 0;
+  }
   if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,sele1,s1)>=0) &&
-          (SelectorGetTmp(G,sele2,s2)>=0) &&
-          (SelectorGetTmp(G,source,src)>=0));
+          (SelectorGetTmp(G,sele2,s2)>=0));
     if(ok) {
-      /*  ok = ExecutiveRevalalence(s1,s2,src,target_state,source_state,reset,quiet); */
+      ok = ExecutiveRevalence(G,s1,s2,src,target_state,source_state,reset,quiet); 
     }
     SelectorFreeTmp(G,s1);
     SelectorFreeTmp(G,s2);

@@ -74,7 +74,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
 
 
-
 int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at);
 void ObjectMoleculeBracketResidue(ObjectMolecule *I,AtomInfoType *ai,int *st,int *nd);
 
@@ -4850,7 +4849,7 @@ typedef struct {
   int cyclic, planer, aromatic;
 } ObservedInfo;
 
-static void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *flag2)
+void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *flag2,int reset)
 {
   /* this a hacked 80% solution ...it will get things wrong, but it is
      better than nothing! */
@@ -4880,19 +4879,55 @@ static void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,i
   if(cs) {
     obs_atom = Calloc(ObservedInfo, I->NAtom);
     obs_bond = Calloc(ObservedInfo, I->NBond);
-    flag = Calloc(int, I->NAtom);
   }
-  if(flag && (!flag1)) {
-    int a,*flag_a = flag;
-    AtomInfoType *ai = I->AtomInfo;
-    /* default behavior: only reset hetatm valences */
-    for(a=0;a<I->NAtom;a++) {
-      *(flag_a++) = (ai++)->hetatm;
+  flag = Calloc(int, I->NAtom);
+  if(flag) {
+    if(!flag1) {
+      int a,*flag_a = flag;
+      AtomInfoType *ai = I->AtomInfo;
+      /* default behavior: only reset hetatm valences */
+      for(a=0;a<I->NAtom;a++) {
+        *(flag_a++) = (ai++)->hetatm;
+      }
+    } else if(flag1&&flag2) {
+      int a, *flag_a = flag, *flag1_a = flag1, *flag2_a = flag2;
+      for(a=0;a<I->NAtom;a++) {
+        *(flag_a++) = (*(flag1_a++)||*(flag2_a++));
+      }
+    } else if(flag1) {
+      int a, *flag_a = flag, *flag1_a = flag1;
+      for(a=0;a<I->NAtom;a++) {
+        *(flag_a++) = *(flag1_a++);
+      }
     }
-    flag1 = flag;
   }
-  if(!flag2) {
-    flag2 = flag;
+  if(!flag1)
+    flag1=flag;
+  if(!flag2)
+    flag2=flag;
+  if(reset) {
+    /* reset chemistry information and bond orders for selected atoms */
+    {
+      int a;
+      AtomInfoType *ai = I->AtomInfo;
+      for(a=0;a<I->NAtom;a++) {
+        if(flag[a])
+          ai->chemFlag=0;
+        ai++;
+      }
+    }
+    {
+      int b;
+      BondType *bi = I->Bond;
+      for(b=0;b<I->NBond;b++) {
+        int at0 = bi->index[0];
+        int at1 = bi->index[1];
+        if((flag1[at0]&&flag2[at1])||
+           (flag1[at1]&&flag2[at0]))
+          bi->order = 1;
+        bi++;
+      }
+    }
   }
   if(cs && obs_bond && obs_atom && flag && flag1 && flag2) {
     int a;
@@ -5508,9 +5543,27 @@ static void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,i
                                 ai->geom = cAtomInfoPlaner;
                               }
 
-#if 0
+                              /* c1ncnc1 becomes c1n[H]cnc1 */
 
-ambiguous cases... better to error on the side of tautomeric generality
+                              if((atomInfo[mem[1]].protons==cAN_C) &&
+                                 (atomInfo[mem[2]].protons==cAN_N) &&
+                                 (atomInfo[mem[2]].formalCharge==0) &&
+                                 (!atomInfo[mem[2]].chemFlag) &&
+                                 (atomInfo[mem[3]].protons==cAN_C) &&
+                                 (atomInfo[mem[4]].protons==cAN_C) && 
+                                 obs_atom[mem[1]].aromatic && 
+                                 obs_atom[mem[2]].aromatic && 
+                                 obs_atom[mem[3]].aromatic && 
+                                 obs_atom[mem[4]].aromatic ) {
+
+                                int n2 = neighbor[mem[2]]; 
+                                int nn2 = neighbor[n2++];
+                                if(nn2==2) { /* second nitrogen also ambiguous */
+                                  ai->valence = 3;
+                                  ai->chemFlag = 2;
+                                  ai->geom = cAtomInfoPlaner;
+                                }
+                              }
 
                               /* c1cnnc1 becomes c1cn[H]nc1 */
 
@@ -5534,29 +5587,6 @@ ambiguous cases... better to error on the side of tautomeric generality
                                 }
                               }
 
-                              /* c1ncnc1 becomes c1n[H]cnc1 */
-
-                              if((atomInfo[mem[1]].protons==cAN_C) &&
-                                 (atomInfo[mem[2]].protons==cAN_N) &&
-                                 (atomInfo[mem[2]].formalCharge==0) &&
-                                 (!atomInfo[mem[2]].chemFlag) &&
-                                 (atomInfo[mem[3]].protons==cAN_C) &&
-                                 (atomInfo[mem[4]].protons==cAN_C) && 
-                                 obs_atom[mem[1]].aromatic && 
-                                 obs_atom[mem[2]].aromatic && 
-                                 obs_atom[mem[3]].aromatic && 
-                                 obs_atom[mem[4]].aromatic ) {
-
-                                int n2 = neighbor[mem[2]]; 
-                                int nn2 = neighbor[n2++];
-                                if(nn2==2) { /* second nitrogen also ambiguous */
-                                  ai->valence = 3;
-                                  ai->chemFlag = 2;
-                                  ai->geom = cAtomInfoPlaner;
-                                }
-                              }
-
-#endif
 
                             }
                           }
@@ -11501,7 +11531,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       ObjectMoleculeAutoDisableAtomNameWildcard(I);
 
       if(SettingGetGlobal_b(G,cSetting_pdb_hetatm_guess_valences)) {
-        ObjectMoleculeGuessValences(I,state,NULL,NULL);
+        ObjectMoleculeGuessValences(I,state,NULL,NULL,false);
       }
 
       successCnt++;

@@ -335,6 +335,7 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state);
 void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state);
 void ObjectMoleculePurge(ObjectMolecule *I);
 
+void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *flag2,int reset);
 int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order);
 int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele1,int sele2);
 
