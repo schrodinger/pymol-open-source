@@ -7701,64 +7701,55 @@ int ExecutiveRevalence(PyMOLGlobals *G,char *s1,char *s2,char *src,
   sele2=SelectorIndexByName(G,s2);
   
   if((sele1>=0)&&(sele2>=0)) {
-    ObjectMolecule *obj1 = SelectorGetSingleObjectMolecule(G,sele1);
-    ObjectMolecule *obj2 = SelectorGetSingleObjectMolecule(G,sele2);
+   if(src && (!src[0])) src=NULL;
+   
+   if(src) {
+     int sele3=SelectorIndexByName(G,src);
+     if(sele3>=0) {
+       ObjectMolecule *obj3 = SelectorGetSingleObjectMolecule(G,sele3);
+       if(!obj3) {
+         ok=false;
+         PRINTFB(G,FB_Editor,FB_Errors)
+           "Editor-Warning: revalence can only source a single object at a time."
+           ENDFB(G);
+       } else {
+         ObjectMoleculeOpRec op;
+         
+         ObjectMoleculeOpRecInit(&op);
+         op.code = OMOP_RevalenceFromSource;
+         op.i1 = sele1;
+         op.i2 = sele2;
+         op.i3 = target_state;
+         op.obj3 = obj3;
+         op.i4 = sele3;
+         op.i5 = source_state;
+         op.i6 = quiet;
 
-    if((!obj1)||(!obj2)||(obj1!=obj2)) {
-      ok=false;
-      if(!quiet) {
-        PRINTFB(G,FB_Editor,FB_Warnings)
-          "Editor-Warning: revalence can only target single object at a time."
-          ENDFB(G);
-      }
-    }
-    
-    if(src && (!src[0])) src=NULL;
-    
-    if(ok) {
-      if(src) {
-        int sele3=SelectorIndexByName(G,src);
-        if(sele3>=0) {
-          ObjectMolecule *obj3 = SelectorGetSingleObjectMolecule(G,sele3);
-          if(!obj3) {
-            ok=false;
-            PRINTFB(G,FB_Editor,FB_Errors)
-              "Editor-Warning: revalence can only source a single object at a time."
-              ENDFB(G);
-          } else if(obj3==obj1) {
-            ok=false;
-            PRINTFB(G,FB_Editor,FB_Errors)
-              "Editor-Warning: target and source must be different objects."
-              ENDFB(G);
-          } else {
-            if(ObjectMoleculeXferValences(obj1,sele1,sele2,target_state,obj3,sele3,source_state,quiet)) {
-              ObjectMoleculeVerifyChemistry(obj1,target_state);
-              ObjectMoleculeInvalidate(obj1,cRepAll,cRepInvBonds,target_state);
-            }
-          }
-        }
-      } else { /* guess valences */
-        int *flag1 = Calloc(int,obj1->NAtom);
-        int *flag2 = Calloc(int,obj1->NAtom);
-        if(flag1&&flag2) {
-          int a;
-          int *f1=flag1;
-          int *f2=flag2;
-          AtomInfoType *ai = obj1->AtomInfo;
-          for(a=0;a<obj1->NAtom;a++) {
-            *(f1++) = SelectorIsMember(G,ai->selEntry,sele1);
-            *(f2++) = SelectorIsMember(G,ai->selEntry,sele2);
-            ai++;
-          }
-          if(target_state<0) target_state = 0; /* TO DO */
-          ObjectMoleculeGuessValences(obj1,target_state,flag1,flag2,reset);
-          ObjectMoleculeVerifyChemistry(obj1,target_state);
-          ObjectMoleculeInvalidate(obj1,cRepAll,cRepInvBonds,target_state);
-        }
-        FreeP(flag1);
-        FreeP(flag2);
-      }
-    }
+         ExecutiveObjMolSeleOp(G,sele1,&op);
+         
+         /*
+           if(ObjectMoleculeXferValences(obj1,sele1,sele2,target_state,obj3,sele3,source_state,quiet)) {
+             ObjectMoleculeVerifyChemistry(obj1,target_state);
+             ObjectMoleculeInvalidate(obj1,cRepAll,cRepInvBonds,target_state);
+           }
+         */
+
+       }
+     }
+   } else { /* guess valences */
+     ObjectMoleculeOpRec op;
+     
+     ObjectMoleculeOpRecInit(&op);
+     op.code = OMOP_RevalenceByGuessing;
+     op.i1 = sele1;
+     op.i2 = sele2;
+     op.i3 = target_state;
+     op.i4 = reset;
+     op.i6 = quiet;
+     
+     ExecutiveObjMolSeleOp(G,sele1,&op);
+     
+     }
   }
   return ok;
 }

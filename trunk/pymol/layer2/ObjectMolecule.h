@@ -75,13 +75,13 @@ typedef struct ObjectMoleculeOpRec {
   unsigned int code;
   Vector3f v1,v2;
   int cs1,cs2;
-  int i1,i2,i3,i4,*vc1,*i1VLA,*ii1,*vp1;
+  int i1,i2,i3,i4,i5,i6,*vc1,*i1VLA,*ii1,*vp1;
   float f1,f2,*f1VLA,*f2VLA,*ff1;
   double d[3][3],d1;
   float *vv1,*vv2;
   char *charVLA;
   char *s1;
-  ObjectMolecule **obj1VLA;
+  ObjectMolecule **obj1VLA,*obj3;
   AtomInfoType *ai,**ai1VLA;
   PyObject *py_ob1;
   float ttt[16],*mat1;
@@ -175,6 +175,8 @@ typedef struct {
 #define OMOP_Sort 57
 #define OMOP_SetAtomicSetting 58
 #define OMOP_CSetSumSqDistToPt 59
+#define OMOP_RevalenceFromSource 60
+#define OMOP_RevalenceByGuessing 61
 
 #include"CoordSet.h"
 
