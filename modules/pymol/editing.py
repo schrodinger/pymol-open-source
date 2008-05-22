@@ -385,7 +385,7 @@ SEE ALSO
         selection2 = selector.process(selection2)
         try:
             _self.lock(_self)
-            r = _cmd.bond(_self._COb, selection1, selection2, int(order), 2, int(quiet))
+            r = _cmd.bond(_self._COb, "("+selection1+")", "("+selection2+")", int(order), 2, int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
@@ -420,7 +420,9 @@ SEE ALSO
         selection2 = selector.process(selection2)
         try:
             _self.lock(_self)
-            r = _cmd.revalence(_self._COb, selection1, selection2,
+            r = _cmd.revalence(_self._COb,
+                               "("+selection1+")",
+                               "("+selection2+")",
                                str(source), 
                                int(target_state)-1, int(source_state)-1,
                                int(reset), int(quiet))
@@ -461,7 +463,10 @@ SEE ALSO
         atom2 = selector.process(atom2)
         try:
             _self.lock(_self)
-            r = _cmd.bond(_self._COb,atom1,atom2,int(order),1,int(quiet))
+            r = _cmd.bond(_self._COb,
+                          "("+atom1+")",
+                          "("+atom2+")",
+                          int(order),1,int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
@@ -529,7 +534,10 @@ SEE ALSO
         atom2 = selector.process(atom2)   
         try:
             _self.lock(_self)
-            r = _cmd.bond(_self._COb,str(atom1),str(atom2),0,0,int(quiet))
+            r = _cmd.bond(_self._COb,
+                          "("+atom1+")",
+                          "("+atom2+")",
+                          0,0,int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
@@ -1925,7 +1933,7 @@ PYMOL API
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
-            r = _cmd.set_dihe(_self._COb,str(atom1),str(atom2),str(atom3),str(atom4),
+            r = _cmd.set_dihe(_self._COb,atom1,atom2,atom3,atom4,
                                     float(angle),int(state)-1,int(quiet))
         finally:
             _self.unlock(r,_self)

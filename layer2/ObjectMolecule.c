@@ -382,8 +382,9 @@ int ObjectMoleculeXferValences(ObjectMolecule *Ia, int sele1, int sele2, int tar
 {
   int *matched = NULL;
   int match_found = false;
-
   PyMOLGlobals *G = Ia->Obj.G;
+  if(Ia==Ib) return false;
+
   ObjectMoleculeUpdateNeighbors(Ia);
   ObjectMoleculeUpdateNeighbors(Ib);
 
@@ -9220,6 +9221,17 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	case OMOP_FixHydrogens:
       ObjectMoleculeFixSeleHydrogens(I,sele,-1); /* state? */
       break;
+    case OMOP_RevalenceFromSource:
+    case OMOP_RevalenceByGuessing:
+      ai = I->AtomInfo;
+      for(a=0;a<I->NAtom;a++) {
+        if(SelectorIsMember(G,ai->selEntry,sele)) {
+          hit_flag = true;
+          break;
+        }
+        ai++;
+      }
+      break;
 	case OMOP_PrepareFromTemplate:
       ai0=op->ai; /* template atom */
       for(a=0;a<I->NAtom;a++) {
@@ -10639,6 +10651,39 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         break;
       case OMOP_OnOff:
         ExecutiveSetObjVisib(G,I->Obj.Name,op->i1,false);
+        break;
+      case OMOP_RevalenceFromSource:
+        if(ObjectMoleculeXferValences(I,op->i1,op->i2,
+                                      op->i3,op->obj3,op->i4,op->i5,op->i6)) {
+          ObjectMoleculeVerifyChemistry(I,op->i3);
+          ObjectMoleculeInvalidate(I,cRepAll,cRepInvBonds,op->i3);
+        }
+        break;
+      case OMOP_RevalenceByGuessing:
+        {
+          int *flag1 = Calloc(int,I->NAtom);
+          int *flag2 = Calloc(int,I->NAtom);
+          if(flag1&&flag2) {
+            int a;
+            int *f1=flag1;
+            int *f2=flag2;
+            AtomInfoType *ai = I->AtomInfo;
+            for(a=0;a<I->NAtom;a++) {
+              *(f1++) = SelectorIsMember(G,ai->selEntry,op->i1);
+              *(f2++) = SelectorIsMember(G,ai->selEntry,op->i2);
+              ai++;
+            }
+            {
+              int target_state = op->i3;
+              if(target_state<0) target_state = 0; /* TO DO */
+              ObjectMoleculeGuessValences(I,target_state,flag1,flag2,op->i4);
+              ObjectMoleculeVerifyChemistry(I,target_state);
+              ObjectMoleculeInvalidate(I,cRepAll,cRepInvBonds,target_state);
+            }
+            FreeP(flag1);
+            FreeP(flag2);
+          }
+        }
         break;
 	  }
 	}
