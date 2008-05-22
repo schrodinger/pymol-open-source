@@ -354,7 +354,22 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException                     
         return r
 
-    def valence(order, selection1=None, selection2=None, quiet=1, _self=cmd):
+    order_dict = {
+    # simulation 
+        '1'         : 1,
+        '2'         : 2,
+        '3'         : 3,
+        '4'         : 4,
+        'aromatic'  : 4,
+        'guess'     : -1,
+        'copy'      : -2
+    }
+
+    order_sc = Shortcut(order_dict.keys())
+
+    def valence(order, selection1=None, selection2=None, source='',
+                target_state=0, source_state=0, reset=1,
+                quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -373,6 +388,11 @@ SEE ALSO
 
     unbond, fuse, attach, replace, remove_picked
     '''
+        if is_string(order):
+            order = order_sc.auto_err(order,"order")
+            order = order_dict[order]
+        else:
+            order = int(order)
         r = DEFAULT_ERROR
         # preprocess selections
         if selection1 == None:
@@ -383,54 +403,24 @@ SEE ALSO
             selection2 = selection1
         selection1 = selector.process(selection1)
         selection2 = selector.process(selection2)
+        if source!='':
+            source = selector.process(source)
         try:
             _self.lock(_self)
-            r = _cmd.bond(_self._COb, "("+selection1+")", "("+selection2+")", int(order), 2, int(quiet))
+            if order>=0:
+                r = _cmd.bond(_self._COb, "("+selection1+")", "("+selection2+")", int(order), 2, int(quiet))
+            else:
+                r = _cmd.revalence(_self._COb,
+                                   "("+selection1+")",
+                                   "("+selection2+")",
+                                   str(source), 
+                                   int(target_state)-1, int(source_state)-1,
+                                   int(reset), int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-
-    def revalence(selection1="(all)", selection2='', source='', 
-                  source_state=0, target_state=0,
-                  quiet=1, reset=1, _self=cmd):
-        '''
-DESCRIPTION
-
-    "revalence" 
-    
-USAGE
-
-    revalence organic
-
-PYMOL API
-
-    cmd.revalence(...)
-
-SEE ALSO
-
-    unbond, fuse, attach, replace, remove_picked
-    '''
-        r = DEFAULT_ERROR
-        # preprocess selections
-        if selection2 == '':
-            selection2 = selection1
-        selection1 = selector.process(selection1)
-        selection2 = selector.process(selection2)
-        try:
-            _self.lock(_self)
-            r = _cmd.revalence(_self._COb,
-                               "("+selection1+")",
-                               "("+selection2+")",
-                               str(source), 
-                               int(target_state)-1, int(source_state)-1,
-                               int(reset), int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException            
-        return r
-        
     def bond(atom1="(pk1)", atom2="(pk2)", order=1, edit=1, quiet=1, _self=cmd):
         '''
 DESCRIPTION

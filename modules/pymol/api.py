@@ -173,7 +173,6 @@ from editing import \
       remove_picked,      \
       rename,             \
       replace,            \
-      revalence,          \
       rotate,             \
       sculpt_purge,       \
       sculpt_deactivate,  \
@@ -198,6 +197,7 @@ from editing import \
       undo,               \
       unpick,             \
       update,             \
+      order_sc,           \
       valence,            \
       vdw_fit 
 

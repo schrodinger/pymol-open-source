@@ -187,7 +187,6 @@ def get_command_keywords(self_cmd=cmd):
         'remove'        : [ self_cmd.remove            , 0 , 0 , ''  , parsing.STRICT ],
         'remove_picked' : [ self_cmd.remove_picked     , 0 , 0 , ''  , parsing.STRICT ],
         'rename'        : [ self_cmd.rename            , 0 , 0 , ''  , parsing.STRICT ],
-        'revalence'     : [ self_cmd.revalence         , 0 , 0 , ''  , parsing.STRICT ],        
         'order'         : [ self_cmd.order             , 0 , 0 , ''  , parsing.STRICT ],
         'replace'       : [ self_cmd.replace           , 0 , 0 , ''  , parsing.STRICT ],
         'replace_wizard': [ self_cmd.replace_wizard    , 0 , 0 , ''  , parsing.STRICT ],
