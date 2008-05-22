@@ -6761,6 +6761,27 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
       discrete = SelectorIsSelectionDiscrete(G,sele,false);
     targ = ObjectMoleculeNew(G,discrete);
     targ->Bond = VLACalloc(BondType,1);
+    {
+      /* copy object color of previous object (if any) */
+      ObjectMolecule *singleObj = NULL;
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
+        at=I->Table[a].atom;
+        I->Table[a].index=-1;
+        obj=I->Obj[I->Table[a].model];
+        s=obj->AtomInfo[at].selEntry;
+        if(SelectorIsMember(G,s,sele)) {
+          if(!singleObj)
+            obj = singleObj;
+          else if(singleObj && (obj!=singleObj)) {
+            singleObj = NULL;
+            break;
+          }
+        }
+      }
+      if(singleObj) 
+        targ->Obj.Color = singleObj->Obj.Color;
+      /* should also consider copying lots of other stuff from the source object ... */
+    }
   } else {
     isNew=false;
   }

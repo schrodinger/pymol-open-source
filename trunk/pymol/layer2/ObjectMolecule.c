@@ -4492,9 +4492,25 @@ void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
     AtomInfoAssignColors(I->Obj.G,ai);
     if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai0->elem[1]))
       ai->color=ai0->color;
-    else if((ai->elem[0]=='C')&&(ai->elem[1]==0)) 
-      /* carbons are always colored according to the object color */
-      ai->color=I->Obj.Color;
+    else if((ai->elem[0]=='C')&&(ai->elem[1]==0)) {
+      int n,index2;
+      int found = false;
+      ObjectMoleculeUpdateNeighbors(I);
+      n = I->Neighbor[index]+1;
+      while( (index2=I->Neighbor[n]) >=0) {
+        AtomInfoType *ai1 = I->AtomInfo + index2;
+        if(ai1->protons == cAN_C) {
+          ai->color = ai1->color;
+          found = true;
+          break;
+        }
+        n+=2;
+      }
+      if(!found) {
+        /* if no carbon nearby, then color according to the object color */
+        ai->color=I->Obj.Color;
+      }
+    }
     for(a=0;a<cRepCnt;a++)
       ai->visRep[a]=ai0->visRep[a];
     ai->id=-1;

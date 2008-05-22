@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-05-22 Warren L. DeLano <warren@delsci.com>	
+
+	* create copies object color if source atoms are from one object
+	
 2008-05-21 Warren L. DeLano <warren@delsci.com>	
 
 	* valence command enhanced for guessing & copying valences
