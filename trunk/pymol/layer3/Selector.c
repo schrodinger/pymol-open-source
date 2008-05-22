@@ -6771,7 +6771,7 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
         s=obj->AtomInfo[at].selEntry;
         if(SelectorIsMember(G,s,sele)) {
           if(!singleObj)
-            obj = singleObj;
+            singleObj = obj;
           else if(singleObj && (obj!=singleObj)) {
             singleObj = NULL;
             break;
