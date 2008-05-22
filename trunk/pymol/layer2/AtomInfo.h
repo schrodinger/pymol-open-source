@@ -166,6 +166,7 @@ typedef struct {
   int order;
   int id;
   int unique_id; 
+  int temp1; 
   short int stereo; /* to preserve 2D rep */
   short int has_setting; /* setting based on unique_id */
 } BondType;
