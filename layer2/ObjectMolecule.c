@@ -202,6 +202,289 @@ static void dump_jxn(char *lab,char *q)
 }
 #endif
 
+/* find sets of atoms with identical skeletons */
+
+typedef struct {
+  AtomInfoType *ai_a;
+  AtomInfoType *ai_b;
+  BondType *bi_a;
+  BondType *bi_b;
+  int *nbr_a, *nbr_b;
+  int *matched;
+} match_info;
+
+#define recmat3(x,y,z) \
+  (recursive_match(u_a[0],u_b[x],x_a[0],x_b[x],mi) &&   \
+   recursive_match(u_a[1],u_b[y],x_a[1],x_b[y],mi) &&   \
+   recursive_match(u_a[2],u_b[z],x_a[2],x_b[z],mi)) 
+  
+#define recmat4(w,x,y,z)  \
+  (recursive_match(u_a[0],u_b[w],x_a[0],x_b[w],mi) && \
+   recursive_match(u_a[1],u_b[x],x_a[1],x_b[x],mi) && \
+   recursive_match(u_a[2],u_b[y],x_a[2],x_b[y],mi) && \
+   recursive_match(u_a[3],u_b[z],x_a[3],x_b[z],mi))
+
+static void undo_match(int *start, match_info *mi)
+{
+  /* remove the matched atom set */
+  AtomInfoType *ai_a = mi->ai_a;
+  AtomInfoType *ai_b = mi->ai_b;
+  BondType *bi_a = mi->bi_a;
+  BondType *bi_b = mi->bi_b;
+  int *match = mi->matched;
+  while(match>start) {
+    int a = match[-4];
+    int b = match[-3];
+    int aa = match[-2];
+    int bb = match[-1];
+    ai_a[a].temp1 = false;
+    ai_b[b].temp1 = false;
+    bi_a[aa].temp1 = false;
+    bi_b[bb].temp1 = false;
+    match -= 4;
+  }
+  mi->matched = start;
+}
+
+static int recursive_match(int a,int b,int aa,int bb,match_info *mi)
+{
+  if(mi->ai_a[a].temp1 && mi->ai_b[b].temp1) {
+    if((aa>=0) && (bb>=0) &&
+       !(mi->bi_a[aa].temp1 || mi->bi_b[bb].temp1)) {
+      /* note bond */
+      mi->ai_a[a].temp1 = true;
+      mi->ai_b[b].temp1 = true;
+      mi->bi_a[aa].temp1 = true;
+      mi->bi_b[bb].temp1 = true; 
+      mi->matched[0] = a; /* atoms */
+      mi->matched[1] = b;
+      mi->matched[2] = aa; /* bonds */
+      mi->matched[3] = bb;
+      mi->matched += 4;
+    }
+    return true;
+  } else if(mi->ai_a[a].temp1 != mi->ai_b[b].temp1)
+    return false;
+  else if(mi->ai_a[a].protons != mi->ai_b[b].protons)
+    return false;
+  else {
+    int ni_a = mi->nbr_a[a];
+    int ni_b = mi->nbr_b[b];
+    int num_a = mi->nbr_a[ni_a++];
+    int num_b = mi->nbr_b[ni_b++];
+
+    if((num_a!=num_b)||(num_a>4)) /* must have the same number of neighbors (four or less) */
+      return false;
+    else {
+      int match_flag = false;
+      int u_a[4],u_b[4],x_a[4],x_b[4];
+      int n_u_a = 0;
+      int n_u_b = 0;
+      int *before = mi->matched;
+      mi->ai_a[a].temp1 = true;
+      mi->ai_b[b].temp1 = true;
+      mi->bi_a[aa].temp1 = true;
+      mi->bi_b[bb].temp1 = true; 
+      mi->matched[0] = a; /* atoms */
+      mi->matched[1] = b;
+      mi->matched[2] = aa; /* bonds */
+      mi->matched[3] = bb;
+      mi->matched += 4;
+
+      /* collect unvisited bonds */
+
+      while(num_a--) {
+        int i_a = mi->nbr_a[ni_a + 1];
+        if( ! mi->bi_a[i_a].temp1) { /* bond not yet visited */
+          u_a[ n_u_a   ] = mi->nbr_a[ni_a];  /* atom index */
+          x_a[ n_u_a++ ] = i_a; 
+        }
+        ni_a += 2;
+      }
+      
+      while(num_b--) {
+        int i_b = mi->nbr_b[ni_b + 1];
+        if( ! mi->bi_b[i_b].temp1) { 
+          u_b[ n_u_b   ] = mi->nbr_b[ni_b];  
+          x_b[ n_u_b++ ] = i_b;
+        }
+        ni_b += 2;
+      }
+      /* NOTE: implicitly relying upon C short-circuit evaluation */
+      if(n_u_a == n_u_b ) {
+        if(!n_u_a) 
+          match_flag = true;
+        else if(n_u_a == 1) {
+          match_flag = recursive_match(u_a[0],u_b[0],x_a[0],x_b[0],mi);
+        } else if(n_u_a == 2) {
+          match_flag = 
+            (recursive_match(u_a[0],u_b[0],x_a[0],x_b[0],mi) &&
+             recursive_match(u_a[1],u_b[1],x_a[1],x_b[1],mi)) ||
+            (recursive_match(u_a[0],u_b[1],x_a[0],x_b[1],mi) &&
+             recursive_match(u_a[1],u_b[0],x_a[1],x_b[0],mi));
+        } else if(n_u_a == 3) {
+          match_flag = 
+            recmat3(0,1,2) ||
+            recmat3(0,2,1) ||
+            recmat3(1,0,2) ||
+            recmat3(1,2,0) ||
+            recmat3(2,0,1) ||
+            recmat3(2,1,0);
+        } else if(n_u_a == 4) { 
+          match_flag = 
+            recmat4(0,1,2,3) ||
+            recmat4(0,2,1,3) ||
+            recmat4(1,0,2,3) ||
+            recmat4(1,2,0,3) ||
+            recmat4(2,0,1,3) ||
+            recmat4(2,1,0,3);
+          if(!match_flag) {
+            match_flag = 
+              recmat4(0,1,3,2) ||
+              recmat4(0,2,3,1) ||
+              recmat4(1,0,3,2) ||
+              recmat4(1,2,3,0) ||
+              recmat4(2,0,3,1) ||
+              recmat4(2,1,3,0);
+            if(!match_flag) {
+              match_flag = 
+                recmat4(0,3,1,2) ||
+                recmat4(0,3,2,1) ||
+                recmat4(1,3,0,2) ||
+                recmat4(1,3,2,0) ||
+                recmat4(2,3,0,1) ||
+                recmat4(2,3,1,0);
+              if(!match_flag) {
+                match_flag = 
+                  recmat4(3,0,1,2) ||
+                  recmat4(3,0,2,1) ||
+                  recmat4(3,1,0,2) ||
+                  recmat4(3,1,2,0) ||
+                  recmat4(3,2,0,1) ||
+                  recmat4(3,2,1,0);
+              }
+            }
+          }
+        }
+      }
+      if(!match_flag) { /* clean the match tree */
+        undo_match(before,mi);
+      }
+      return match_flag;
+    }
+  }
+}
+
+
+
+int ObjectMoleculeXferValences(ObjectMolecule *Ia, int sele1, int sele2, int target_state,
+                               ObjectMolecule *Ib, int sele3, int source_state, int quiet)
+{
+  int *matched = NULL;
+  int match_found = false;
+
+  PyMOLGlobals *G = Ia->Obj.G;
+  ObjectMoleculeUpdateNeighbors(Ia);
+  ObjectMoleculeUpdateNeighbors(Ib);
+
+  {
+    int max_match = Ia->NAtom+Ia->NBond;
+    if(max_match < (Ib->NAtom+Ib->NBond))
+      max_match = (Ib->NAtom+Ib->NBond);
+    matched = Calloc(int,max_match*4);
+  }
+
+  {
+    int a,b;
+    AtomInfoType *ai_a = Ia->AtomInfo;
+    AtomInfoType *ai_b = Ib->AtomInfo;
+    for(a=0;a<Ia->NAtom;a++) {
+      (ai_a++)->temp1 = false;
+    }
+    for(b=0;b<Ib->NAtom;b++) {
+      (ai_b++)->temp1 = false;
+    }
+  }
+
+  {
+    int a,b;
+    BondType *bi_a = Ia->Bond;
+    BondType *bi_b = Ib->Bond;
+    for(a=0;a<Ia->NBond;a++) {
+      (bi_a++)->temp1 = false;
+    }
+    for(b=0;b<Ib->NBond;b++) {
+      (bi_b++)->temp1 = false;
+    }
+  }
+
+  {
+    int a,b;
+    AtomInfoType *ai_a = Ia->AtomInfo;
+    AtomInfoType *ai_b = Ib->AtomInfo;
+    BondType *bi_a = Ia->Bond;
+    BondType *bi_b = Ib->Bond;
+    
+    match_info mi;
+
+    mi.ai_a = ai_a;
+    mi.ai_b = ai_b;
+    mi.bi_a = bi_a;
+    mi.bi_b = bi_b;
+    mi.nbr_a = Ia->Neighbor;
+    mi.nbr_b = Ib->Neighbor;
+    mi.matched = matched;
+    for(a=0;a<Ia->NAtom;a++) {
+      if(!ai_a[a].temp1) {
+        int a_entry = ai_a[a].selEntry;
+        if(SelectorIsMember(G,a_entry,sele1)||
+           SelectorIsMember(G,a_entry,sele2)) {
+          for(b=0;b<Ib->NAtom;b++) {
+            if(SelectorIsMember(G,ai_b[b].selEntry,sele3)) {
+              if(recursive_match(a,b,-1,-1,&mi)) {
+                int *match = mi.matched;
+                match_found = true;
+                /* now graft bond orders for bonds in matching atoms */
+                
+                while(match>matched) {
+                  int at_a = match[-4];
+                  int at_b = match[-3];
+                  int bd_a = match[-2];
+                  int bd_b = match[-1];
+
+                  if((bd_a>=0) && (bd_a>=0)) {
+                    int a1 = bi_a[bd_a].index[0];
+                    int a2 = bi_a[bd_a].index[1];
+                    
+                    int a1_entry = ai_a[a1].selEntry;
+                    int a2_entry = ai_a[a2].selEntry;
+                    
+                    if((SelectorIsMember(G,a1_entry,sele1) && 
+                        SelectorIsMember(G,a2_entry,sele2))||
+                       (SelectorIsMember(G,a2_entry,sele1) && 
+                        SelectorIsMember(G,a1_entry,sele2))) {
+                      /* only update bonds which actually sit between the two selections */
+                      bi_a[bd_a].order = bi_b[bd_b].order;
+                      ai_a[at_a].chemFlag = false;
+                    }
+                  }
+                  ai_b[at_b].temp1 = false; /* release source for future matching */
+                  if(bd_b>=0) 
+                    bi_b[bd_b].temp1 = false;
+                  match -= 4;
+                }
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  FreeP(matched);
+  return match_found;
+}
+
 void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
 				     int log_trans,int homogenous,int transformed)
 {

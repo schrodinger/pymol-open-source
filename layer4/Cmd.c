@@ -3711,7 +3711,7 @@ static PyObject *CmdRevalence(PyObject *self, PyObject *args)
   char *sele1,*sele2,*source;
   int source_state, target_state, reset;
   int quiet;
-  OrthoLineType s1,s2,src;
+  OrthoLineType s1,s2,s3;
   int ok = false;
   ok = PyArg_ParseTuple(args,"Osssiiii",&self,&sele1,&sele2,&source,
                         &target_state, &source_state, &reset, &quiet);
@@ -3722,19 +3722,19 @@ static PyObject *CmdRevalence(PyObject *self, PyObject *args)
     API_HANDLE_ERROR;
   }
   if(source[0]) {
-    ok = (SelectorGetTmp(G,source,src)>=0);
+    ok = (SelectorGetTmp(G,source,s3)>=0);
   } else {
-    src[0] = 0;
+    s3[0] = 0;
   }
   if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,sele1,s1)>=0) &&
           (SelectorGetTmp(G,sele2,s2)>=0));
     if(ok) {
-      ok = ExecutiveRevalence(G,s1,s2,src,target_state,source_state,reset,quiet); 
+      ok = ExecutiveRevalence(G,s1,s2,s3,target_state,source_state,reset,quiet); 
     }
     SelectorFreeTmp(G,s1);
     SelectorFreeTmp(G,s2);
-    SelectorFreeTmp(G,src);
+    SelectorFreeTmp(G,s3);
     APIExit(G);
   }
   return APIResultOk(ok);  

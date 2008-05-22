@@ -790,7 +790,7 @@ int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele)
   return result;
 }
 
-static int assign_pdb_known_residue(PyMOLGlobals *G, AtomInfoType *ai1, AtomInfoType *ai2, int *bond_order)
+static void assign_pdb_known_residue(PyMOLGlobals *G, AtomInfoType *ai1, AtomInfoType *ai2, int *bond_order)
 {
   int order = *(bond_order);
   char *name1 = ai1->name;
