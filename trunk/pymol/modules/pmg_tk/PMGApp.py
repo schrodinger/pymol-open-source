@@ -68,6 +68,7 @@ class PMGApp(Pmw.MegaWidget):
 
     def getLoadableFileTypes(self):
         return [("All Readable","*.pdb"),
+                ("All Readable","*.pdb1"),                
                 ("All Readable","*.ccp4"),
                 ("All Readable","*.xplor"),
                 ("All Readable","*.mol"),
@@ -98,6 +99,7 @@ class PMGApp(Pmw.MegaWidget):
                 ("All Readable","*.moe"), # proprietary format
                 ("All Readable","*.mae"), # proprietary format
                 ("PDB File","*.pdb"),
+                ("PDB1 File","*.pdb1"),                
                 ("All Files","*.*"),
                 ("All Files","*"),  
                 ("PDB File","*.ent"),
