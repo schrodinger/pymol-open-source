@@ -120,7 +120,7 @@ class PMGApp(Pmw.MegaWidget):
                 ("AVS (MEAD) Field","*.fld"),    
                 ("MOL File","*.mol"),
                 ("MOE File","*.moe"), # proprietary format
-                ("MOE File","*.mae"), # proprietary format  
+                ("MAE File","*.mae"), # proprietary format  
                 ("ChemPy Model","*.pkl"),
                 ("Raster3D Scene","*.r3d"),
                 ("SDF File","*.sdf"),
