@@ -752,6 +752,14 @@ typedef struct _CPyMOL {
   ov_word lex_ati_bugs;
   ov_word lex_geometry_export_mode;
   ov_word lex_mouse_grid;
+  ov_word lex_mesh_cutoff;
+  ov_word lex_mesh_carve_selection;
+  ov_word lex_mesh_carve_state;
+  ov_word lex_mesh_carve_cutoff;
+  ov_word lex_mesh_clear_selection;
+  ov_word lex_mesh_clear_state;
+  ov_word lex_mesh_clear_cutoff;
+  ov_word lex_mesh_grid_max;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1497,6 +1505,15 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ati_bugs,585);
   LEX_SETTING(geometry_export_mode,586);
   LEX_SETTING(mouse_grid,587);
+  LEX_SETTING(mesh_cutoff,588);
+  LEX_SETTING(mesh_carve_selection,589);
+  LEX_SETTING(mesh_carve_state,590);
+  LEX_SETTING(mesh_carve_cutoff,591);
+  LEX_SETTING(mesh_clear_selection,592);
+  LEX_SETTING(mesh_clear_state,593);
+  LEX_SETTING(mesh_clear_cutoff,594);
+  LEX_SETTING(mesh_grid_max,595);
+
   return_OVstatus_SUCCESS;
 }
 
