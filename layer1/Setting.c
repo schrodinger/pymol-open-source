@@ -2001,6 +2001,14 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_min_mesh_spacing:
+  case cSetting_mesh_grid_max:
+  case cSetting_mesh_cutoff:
+  case cSetting_mesh_carve_state:
+  case cSetting_mesh_carve_cutoff:
+  case cSetting_mesh_carve_selection:
+  case cSetting_mesh_clear_state:
+  case cSetting_mesh_clear_cutoff:
+  case cSetting_mesh_clear_selection:
   case cSetting_mesh_mode:
   case cSetting_mesh_type:
   case cSetting_mesh_solvent:
@@ -3621,5 +3629,13 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_ati_bugs,0);
     set_i(I,cSetting_geometry_export_mode,0);
     set_b(I,cSetting_mouse_grid,1);
+    set_s(I,cSetting_mesh_carve_selection,"");
+    set_i(I,cSetting_mesh_carve_state,0);
+    set_f(I,cSetting_mesh_carve_cutoff,0.0F);
+    set_s(I,cSetting_mesh_clear_selection,"");
+    set_i(I,cSetting_mesh_clear_state,0);
+    set_f(I,cSetting_mesh_clear_cutoff,0.0F);
+    set_f(I,cSetting_mesh_cutoff,0.0F);
+    set_i(I,cSetting_mesh_grid_max,80);
   }
 }

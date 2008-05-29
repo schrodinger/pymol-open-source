@@ -623,6 +623,14 @@ if __name__=='pymol.setting':
         ati_bugs                           = 585
         geometry_export_mode               = 586
         mouse_grid                         = 587
+        mesh_cutoff                        = 588
+        mesh_carve_selection               = 589
+        mesh_carve_state                   = 590
+        mesh_carve_cutoff                  = 591
+        mesh_clear_selection               = 592
+        mesh_clear_state                   = 593
+        mesh_clear_cutoff                  = 594
+        mesh_grid_max                      = 595
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

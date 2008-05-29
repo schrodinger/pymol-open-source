@@ -789,6 +789,14 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_ati_bugs                   585
 #define cSetting_geometry_export_mode       586
 #define cSetting_mouse_grid                 587
+#define cSetting_mesh_cutoff                588
+#define cSetting_mesh_carve_selection       589
+#define cSetting_mesh_carve_state           590
+#define cSetting_mesh_carve_cutoff          591
+#define cSetting_mesh_clear_selection       592
+#define cSetting_mesh_clear_state           593
+#define cSetting_mesh_clear_cutoff          594
+#define cSetting_mesh_grid_max              595
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -798,8 +806,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       588
-
+#define cSetting_INIT                       596
 #endif
 
 

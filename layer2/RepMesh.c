@@ -521,28 +521,63 @@ Rep *RepMeshNew(CoordSet *cs,int state)
   meshFlag=true;
 
   if(meshFlag) {
+    float trim_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_cutoff);
+    int trim_flag = false;
+    float *trim_vla = NULL;
+    MapType *trim_map = NULL;
 
-#if 0
     int carve_state = 0;
     int carve_flag = false;
-    float carve_cutoff;
+    float carve_cutoff= SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_carve_cutoff);
     char *carve_selection = NULL;
     float *carve_vla = NULL;
     MapType *carve_map = NULL;
     
     int clear_state = 0;
     int clear_flag = false;
-    float clear_cutoff;
+    float clear_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_clear_cutoff);
     char *clear_selection = NULL;
     float *clear_vla = NULL;
     MapType *clear_map = NULL;
 
-    carve_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_cutoff);
-    clear_cutoff = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_surface_clear_cutoff);
+    int mesh_max = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_grid_max);
+    if(mesh_max<1)
+      mesh_max = 1;
+
+    if(trim_cutoff<0.0F) {
+      trim_cutoff = I->max_vdw + probe_radius;
+    }
+      
+    if(trim_cutoff>0.0F) {
+      int nc=0;
+      trim_vla = VLAlloc(float,cs->NIndex*3);
+      for(c=0;c<cs->NIndex;c++) {
+        ai1 = obj->AtomInfo+cs->IdxToAtm[c]; 
+        if(ai1->visRep[cRepMesh]&&
+           (inclH||(!ai1->hydrogen))&&
+           ((!cullByFlag)||
+            (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exclude))))) {
+          VLACheck(trim_vla,float,nc*3+2);
+          float *src = cs->Coord + 3*c;
+          float *dst = trim_vla + 3*nc;
+          *(dst++) = *(src++);
+          *(dst++) = *(src++);
+          *(dst++) = *(src++); 
+          nc++;
+        }
+      }
+      if(nc) {
+        trim_map = MapNew(G, trim_cutoff, trim_vla, nc, NULL);
+        if(trim_map) {
+          MapSetupExpress(trim_map);
+          trim_flag = true;
+        }
+      }
+    }
 
     if(carve_cutoff>0.0F) {
-      carve_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_state) - 1;
-      carve_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_surface_carve_selection);
+      carve_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_carve_state) - 1;
+      carve_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_carve_selection);
       if(carve_selection) 
         carve_map = SelectorGetSpacialMapFromSeleCoord(G,
                                                        SelectorIndexByName(G,carve_selection),
@@ -554,8 +589,8 @@ Rep *RepMeshNew(CoordSet *cs,int state)
       }
     }
     if(clear_cutoff>0.0F) {
-      clear_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_clear_state) - 1;
-      clear_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_surface_clear_selection);
+      clear_state = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_clear_state) - 1;
+      clear_selection = SettingGet_s(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_clear_selection);
       if(clear_selection) 
         clear_map = SelectorGetSpacialMapFromSeleCoord(G,
                                                        SelectorIndexByName(G,clear_selection),
@@ -566,7 +601,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
         clear_flag = true;
       }
     }
-#endif
+
     I->V=VLAMalloc(1000,sizeof(float),9,false);
     I->N=VLAMalloc(100,sizeof(int),9,false);
     
@@ -611,7 +646,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
 	 if(sizeE[1]>size) size=sizeE[1];
 	 if(sizeE[2]>size) size=sizeE[2];
 	 
-	 gridSize = size/80.0F; /* grid size is the largest axis divided by 25 */
+	 gridSize = size/mesh_max; /* grid size is the largest axis divided by 25 */
 
 	 if(gridSize<min_spacing)
        gridSize=min_spacing;
@@ -716,13 +751,12 @@ Rep *RepMeshNew(CoordSet *cs,int state)
        }	 
      }
 	 MapFree(smap);
-	 MapFree(map);
+     MapFree(map);
 	 FreeP(I->Dot);	 
 	 OrthoBusyFast(G,2,3);
      IsosurfVolume(G,NULL,NULL,field,1.0,&I->N,&I->V,NULL,mesh_type,mesh_skip,1.0F);
      IsosurfFieldFree(G,field);
-#if 0
-     if(I->N && I->V && (carve_flag||clear_flag)) {
+     if(I->N && I->V && (carve_flag||clear_flag||trim_flag)) {
        int cur_size = VLAGetSize(I->N);
        if((mesh_type==0) && cur_size) {
          int *n = I->N;
@@ -735,7 +769,25 @@ Rep *RepMeshNew(CoordSet *cs,int state)
            float *last_v = NULL;
            while(c--) {
              int a_keeper = false;
-             if(carve_map) {
+             if(trim_map) {
+               register int i=*(MapLocusEStart(trim_map,v));
+               if(i) {
+                 register int j=trim_map->EList[i++];
+                 while(j>=0) {
+                   register float *v_targ = trim_vla+3*j;
+                   if(within3f(v_targ,v,trim_cutoff)) {
+                     a_keeper = true;
+                     break;
+                   }
+                   j=trim_map->EList[i++];
+                 }
+               }
+             } else {
+               a_keeper = true;
+             }
+             
+             if(a_keeper && carve_map) {
+               a_keeper = false;
                register int i=*(MapLocusEStart(carve_map,v));
                if(i) {
                  register int j=carve_map->EList[i++];
@@ -748,9 +800,8 @@ Rep *RepMeshNew(CoordSet *cs,int state)
                    j=carve_map->EList[i++];
                  }
                }
-             } else {
-               a_keeper = true;
              }
+
              if(clear_map) { 
                register int i=*(MapLocusEStart(clear_map,v));
                if(i) {
@@ -780,6 +831,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
                  }
                }
              } else {
+               last_v = NULL;
                v+=3;
                if(new_c) {
                  VLACheck(new_n,int,new_size+1); /* extends the zero count sentinel */
@@ -800,7 +852,12 @@ Rep *RepMeshNew(CoordSet *cs,int state)
          I->N = new_n;
        }
      }
-#endif
+     MapFree(trim_map);
+     MapFree(carve_map);
+     MapFree(clear_map);
+     VLAFreeP(trim_vla);
+     VLAFreeP(carve_vla);
+     VLAFreeP(clear_vla);
      n=I->N;
      I->NTot=0;
 	 while(*n) I->NTot+=*(n++);
