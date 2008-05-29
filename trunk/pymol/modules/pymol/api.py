@@ -126,6 +126,7 @@ from selecting import \
       pop
 
 #--------------------------------------------------------------------
+import exporting
 from exporting import \
       copy_image,         \
       cache,              \
