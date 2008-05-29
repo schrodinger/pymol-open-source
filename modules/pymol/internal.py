@@ -20,95 +20,118 @@ from cmd import DEFAULT_ERROR, loadable, _load2str, Shortcut, \
 # cache management:
 
 def _cache_validate(_self=cmd):
-    _pymol = _self._pymol
-    if not hasattr(_pymol,"_cache"):
-        _pymol._cache = []
-    if not hasattr(_pymol,"_cache_memory"):
-        _pymol._cache_memory = 0
-    
+    try:
+        _self.lock_data(_self)
+        _pymol = _self._pymol
+        if not hasattr(_pymol,"_cache"):
+            _pymol._cache = []
+        if not hasattr(_pymol,"_cache_memory"):
+            _pymol._cache_memory = 0
+    finally:
+        _self.unlock_data(_self)
+        
 def _cache_clear(_self=cmd):
-    _pymol = _self._pymol
-    _pymol._cache = []
-    _pymol._cache_memory = 0
+    try:
+        _self.lock_data(_self)
+        _pymol = _self._pymol
+        _pymol._cache = []
+        _pymol._cache_memory = 0
+    finally:
+        _self.unlock_data(_self)
     
 def _cache_mark(_self=cmd):
-    _pymol = _self._pymol
-    _cache_validate(_self)
-    for entry in _self._pymol._cache: 
-        entry[5] = 0.0
-        
+    try:
+        _self.lock_data(_self)
+        _pymol = _self._pymol
+        _cache_validate(_self)
+        for entry in _self._pymol._cache: 
+            entry[5] = 0.0
+    finally:
+        _self.unlock_data(_self)
+       
 def _cache_purge(max_size, _self=cmd):
-    _pymol = _self._pymol
-    _cache_validate(_self)
-    if len(_pymol._cache):
-        cur_size = reduce(add,map(lambda x:x[0],_pymol._cache))
-        if max_size>=0: # purge to reduce size
-            now = time.time()
-            # sort by last access time
-            new_cache = map(lambda x:[(now-x[5])/x[4],x], _pymol._cache)
-            new_cache.sort()
-            new_cache = map(lambda x:x[1],new_cache)
-            # remove oldest entries one by one until size requirement is met
-            while (cur_size>max_size) and (len(new_cache)>1):
-                entry = new_cache.pop() 
-                cur_size = cur_size - entry[0]
-            _pymol._cache = new_cache
-            _pymol._cache_memory = cur_size
-        else: # purge to eliminate unused entries
-            new_cache = []
-            for entry in _pymol._cache:
-                if entry[5] == 0.0:
+    try:
+        _self.lock_data(_self)
+        _pymol = _self._pymol
+        _cache_validate(_self)
+        if len(_pymol._cache):
+            cur_size = reduce(add,map(lambda x:x[0],_pymol._cache))
+            if max_size>=0: # purge to reduce size
+                now = time.time()
+                # sort by last access time
+                new_cache = map(lambda x:[(now-x[5])/x[4],x], _pymol._cache)
+                new_cache.sort()
+                new_cache = map(lambda x:x[1],new_cache)
+                # remove oldest entries one by one until size requirement is met
+                while (cur_size>max_size) and (len(new_cache)>1):
+                    entry = new_cache.pop() 
                     cur_size = cur_size - entry[0]
-                else:
-                    new_cache.append(entry)
-            _pymol._cache = new_cache
-            _pymol._cache_memory = cur_size
+                _pymol._cache = new_cache
+                _pymol._cache_memory = cur_size
+            else: # purge to eliminate unused entries
+                new_cache = []
+                for entry in _pymol._cache:
+                    if entry[5] == 0.0:
+                        cur_size = cur_size - entry[0]
+                    else:
+                        new_cache.append(entry)
+                _pymol._cache = new_cache
+                _pymol._cache_memory = cur_size
+    finally:
+        _self.unlock_data(_self)
         
 def _cache_get(target, hash_size = None, _self=cmd):
+    result = None
     try:
-        if hash_size == None:
-            hash_size = len(target[1])
-        key = target[1][0:hash_size]
-        # should optimize this with a dictionary lookup, key -> index in _cache
-        for entry in _self._pymol._cache: 
-            if entry[1][0:hash_size] == key:
-                if entry[2] == target[2]:
-                    while len(entry)<6:
-                        entry.append(0)
-                    entry[4] = entry[4] + 1 # access count
-                    entry[5] = time.time() # timestamp
-                    return entry[3]
-    except:
-        traceback.print_exc()
-    return None
+        _self.lock_data(_self)
+        try:
+            if hash_size == None:
+                hash_size = len(target[1])
+            key = target[1][0:hash_size]
+            # should optimize this with a dictionary lookup, key -> index in _cache
+            for entry in _self._pymol._cache: 
+                if entry[1][0:hash_size] == key:
+                    if entry[2] == target[2]:
+                        while len(entry)<6:
+                            entry.append(0)
+                        entry[4] = entry[4] + 1 # access count
+                        entry[5] = time.time() # timestamp
+                        result = entry[3]
+        except:
+            traceback.print_exc()
+    finally:
+        _self.unlock_data(_self)
+    return result
 
-def _cache_set(new_entry, _self=cmd):
-    _pymol = _self._pymol
-    _cache_validate(_self)
+def _cache_set(new_entry, max_size, _self=cmd):
     try:
-        hash_size = len(new_entry[1])
-        key = new_entry[1][0:hash_size]
-        count = 0
-        found = 0
-        new_entry[4] = new_entry[4] + 1 # incr access count
-        new_entry[5] = time.time() # timestamp
-        
-        for entry in _pymol._cache: 
-            if entry[1][0:hash_size] == key:
-                if entry[2] == new_entry[2]: # dupe (shouldn't happen)
-                    entry[3] = new_entry[3] 
-                    found = 1
-                    break
-            count = count + 1
-        if not found:
-            _pymol._cache.append(new_entry)
-            _pymol._cache_memory = _pymol._cache_memory + new_entry[0]
-            max_size = _self.get_setting_int("cache_max")
-            if _pymol._cache_memory > max_size:
-                _cache_purge(max_size, _self)
-            
-    except:
-        traceback.print_exc()
+        _self.lock_data(_self)
+        _pymol = _self._pymol
+        _cache_validate(_self)
+        try:
+            hash_size = len(new_entry[1])
+            key = new_entry[1][0:hash_size]
+            count = 0
+            found = 0
+            new_entry[4] = new_entry[4] + 1 # incr access count
+            new_entry[5] = time.time() # timestamp
+            for entry in _pymol._cache: 
+                if entry[1][0:hash_size] == key:
+                    if entry[2] == new_entry[2]: # dupe (shouldn't happen)
+                        entry[3] = new_entry[3] 
+                        found = 1
+                        break
+                count = count + 1
+            if not found:
+                _pymol._cache.append(new_entry)
+                _pymol._cache_memory = _pymol._cache_memory + new_entry[0]
+                if max_size > 0:
+                    if _pymol._cache_memory > max_size:
+                        _cache_purge(max_size, _self)
+        except:
+            traceback.print_exc()
+    finally:
+        _self.unlock_data(_self)
         
 # ray tracing threads
 

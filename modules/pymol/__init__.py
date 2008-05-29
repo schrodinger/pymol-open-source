@@ -108,11 +108,12 @@ def _init_internals(_pymol):
     # these locks are to be shared by all PyMOL instances within a
     # single Python interpeter
         
-    _pymol.lock_api = threading.RLock() # mutex for API 
+    _pymol.lock_api = threading.RLock() # mutex for API calls from the outside
     _pymol.lock_api_c = threading.RLock() # mutex for C management of python threads
     _pymol.lock_api_status = threading.RLock() # mutex for PyMOL status info
-    _pymol.lock_api_glut = threading.RLock() # mutex for avoiding GLUT
-
+    _pymol.lock_api_glut = threading.RLock() # mutex for GLUT avoidance
+    _pymol.lock_api_data = threading.RLock() # mutex for internal data structures
+    
 if hasattr(__main__,'pymol_launch'):
     pymol_launch = __main__.pymol_launch
 else:

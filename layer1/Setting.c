@@ -3608,7 +3608,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_color(I,cSetting_angle_color, "-1");
     set_color(I,cSetting_dihedral_color, "-1");
     set_i(I,cSetting_grid_mode,0);
-    set_i(I,cSetting_cache_max,12500000); /* default: ~50 MB cache */
+    set_i(I,cSetting_cache_max,25000000); /* default: ~100 MB cache */
     set_i(I,cSetting_grid_slot,-1);
     set_i(I,cSetting_grid_max,-1);
     set_i(I,cSetting_cartoon_putty_transform, cPuttyTransformNormalizedNonlinear);
