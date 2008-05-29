@@ -2753,7 +2753,6 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
           
           if(cache_mode>0) { 
             int blocked = PAutoBlock(G);
-            
             input = SurfaceJobInputAsTuple(G,surf_job);
 
             if(PCacheGet(G,&output,&entry,input)==OV_STATUS_YES) {

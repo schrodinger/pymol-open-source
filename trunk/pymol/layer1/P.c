@@ -320,7 +320,7 @@ ov_status PCacheSet(PyMOLGlobals *G, PyObject *entry, PyObject *output)
     PyList_SetItem(entry,0,PyInt_FromLong(tot_size)); /* update total size */
     PyList_SetItem(entry,3,PXIncRef(output));
     PXDecRef(PyObject_CallMethod(G->P_inst->cmd, "_cache_set",
-                                 "OO", entry, G->P_inst->cmd));
+                                 "OiO", entry,SettingGetGlobal_i(G,cSetting_cache_max),G->P_inst->cmd));
     /* compute the hash codes */
   }
   if(PyErr_Occurred()) PyErr_Print();
@@ -2166,7 +2166,7 @@ int PAutoBlock(PyMOLGlobals *G)
 	 ENDFD;
   a = MAX_SAVED_THREAD-1;
   while(a) {
-    if(!((SavedThread+a)->id-id)) { 
+    if(!((SavedThread+a)->id - id)) { 
       /* astoundingly, equality test fails on ALPHA even 
        * though the ints are equal. Must be some kind of optimizer bug
        * or mis-assumption */
@@ -2189,7 +2189,7 @@ int PAutoBlock(PyMOLGlobals *G)
       PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: restoring 0x%x\n",id
       ENDFD;
-      
+
       PyEval_RestoreThread((SavedThread+a)->state);
 #endif
       

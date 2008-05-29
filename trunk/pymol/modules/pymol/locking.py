@@ -16,6 +16,12 @@ def lock_c(_self=cmd):
 def unlock_c(_self=cmd):
     _self.lock_api_c.release()
 
+def lock_data(_self=cmd):
+    _self.lock_api_data.acquire(1)
+
+def unlock_data(_self=cmd):
+    _self.lock_api_data.release()
+    
 def lock_status_attempt(_self=cmd):
     return _self.lock_api_status.acquire(0)
 
