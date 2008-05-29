@@ -13,6 +13,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'button'         : [ self_cmd.controlling.button_sc  , 'button'          , ', ' ],
         'color'          : [ lambda c=self_cmd:c._get_color_sc(c), 'color'           , ', ' ],
         'cartoon'        : [ self_cmd.viewing.cartoon_sc     , 'cartoon'         , ', ' ],
+        'cache'          : [ self_cmd.exporting.cache_action_sc , 'cache mode'  , ', ' ],
         'center'         : [ self_cmd.selection_sc           , 'selection'       , ''   ],   
         'clip'           : [ self_cmd.viewing.clip_action_sc , 'clipping action' , ', ' ],
         'count_atoms'    : [ self_cmd.selection_sc           , 'selection'       , ''   ],
@@ -69,9 +70,10 @@ def get_auto_arg_list(self_cmd=cmd):
 # 2nd
         {
         'align'          : [ self_cmd.selection_sc           , 'selection'       , ''   ],
+        'as'             : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'bond'           : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'button'         : [ self_cmd.controlling.but_mod_sc , 'modifier'        , ', ' ],
-        'as'             : [ self_cmd.selection_sc           , 'selection'       , ''   ],
+        'cache'          : [ self_cmd._pymol._scene_dict_sc  , 'scene'           , ''   ],
         'distance'       : [ self_cmd.selection_sc           , 'selection'       , ''   ],            
         'feedback'       : [ self_cmd.fb_module_sc           , 'module'          , ', ' ],
         'show'           : [ self_cmd.selection_sc           , 'selection'       , ''   ],

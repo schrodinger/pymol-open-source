@@ -40,28 +40,29 @@ def _cache_mark(_self=cmd):
 def _cache_purge(max_size, _self=cmd):
     _pymol = _self._pymol
     _cache_validate(_self)
-    cur_size = reduce(add,map(lambda x:x[0],_pymol._cache))
-    if max_size>=0: # purge to reduce size
-        now = time.time()
-        # sort by last access time
-        new_cache = map(lambda x:[(now-x[5])/x[4],x], _pymol._cache)
-        new_cache.sort()
-        new_cache = map(lambda x:x[1],new_cache)
-        # remove oldest entries one by one until size requirement is met
-        while (cur_size>max_size) and (len(new_cache)>1):
-            entry = new_cache.pop() 
-            cur_size = cur_size - entry[0]
-        _pymol._cache = new_cache
-        _pymol._cache_memory = cur_size
-    else: # purge to eliminate unused entries
-        new_cache = []
-        for entry in _pymol._cache:
-            if entry[5] == 0.0:
+    if len(_pymol._cache):
+        cur_size = reduce(add,map(lambda x:x[0],_pymol._cache))
+        if max_size>=0: # purge to reduce size
+            now = time.time()
+            # sort by last access time
+            new_cache = map(lambda x:[(now-x[5])/x[4],x], _pymol._cache)
+            new_cache.sort()
+            new_cache = map(lambda x:x[1],new_cache)
+            # remove oldest entries one by one until size requirement is met
+            while (cur_size>max_size) and (len(new_cache)>1):
+                entry = new_cache.pop() 
                 cur_size = cur_size - entry[0]
-            else:
-                new_cache.append(entry)
-        _pymol._cache = new_cache
-        _pymol._cache_memory = cur_size
+            _pymol._cache = new_cache
+            _pymol._cache_memory = cur_size
+        else: # purge to eliminate unused entries
+            new_cache = []
+            for entry in _pymol._cache:
+                if entry[5] == 0.0:
+                    cur_size = cur_size - entry[0]
+                else:
+                    new_cache.append(entry)
+            _pymol._cache = new_cache
+            _pymol._cache_memory = cur_size
         
 def _cache_get(target, hash_size = None, _self=cmd):
     try:
