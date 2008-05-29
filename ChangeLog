@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2008-05-28 Warren L. DeLano <warren@delsci.com>	
+
+	* finished .MAE reader (at least for now...)
+
+	* quashed race conditions associated with the geometry cache
+	
 2008-05-22 Warren L. DeLano <warren@delsci.com>	
 
 	* create copies object color if source atoms are from one object
