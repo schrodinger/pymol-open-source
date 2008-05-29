@@ -2437,16 +2437,22 @@ class Normal(PMGSkin):
                                 command = lambda s=self: s.setting.update('virtual_trackball'))
 
         self.menuBar.addmenuitem('Mouse', 'checkbutton',
+                                 'Show Mouse Grid.',
+                                 label=self.pad+'Show Mouse Grid',
+                                variable = self.setting.mouse_grid,
+                                command = lambda s=self: s.setting.update('mouse_grid'))
+
+        self.menuBar.addmenuitem('Mouse', 'checkbutton',
                                  'Roving Origin.',
                                  label=self.pad+'Roving Origin',
                                 variable = self.setting.roving_origin,
                                 command = lambda s=self: s.setting.update('roving_origin'))
 
-        self.menuBar.addmenuitem('Mouse', 'checkbutton',
-                                 'Roving Detail.',
-                                 label=self.pad+'Roving Detail',
-                                variable = self.setting.roving_detail,
-                                command = lambda s=self: s.setting.update('roving_detail'))
+#        self.menuBar.addmenuitem('Mouse', 'checkbutton',
+#                                 'Roving Detail.',
+#                                 label=self.pad+'Roving Detail',
+#                                variable = self.setting.roving_detail,
+#                                command = lambda s=self: s.setting.update('roving_detail'))
 
         self.menuBar.addmenuitem('Mouse', 'separator', '')
         

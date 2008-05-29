@@ -667,7 +667,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   float no_idle = SettingGetGlobal_f(G,cSetting_no_idle);
   float slow_idle = SettingGetGlobal_f(G,cSetting_fast_idle);
   float fast_idle = SettingGetGlobal_f(G,cSetting_slow_idle);
-  
+  int mouse_grid = SettingGetGlobal_b(G,cSetting_mouse_grid);
   register CSetting *I=G->Setting;
   if(list)
     if(PyList_Check(list)) 
@@ -700,6 +700,8 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_b(I,cSetting_defer_updates,defer_updates);
   SettingSet_b(I,cSetting_suspend_updates,suspend_updates);
   SettingSet_b(I,cSetting_session_changed,0); 
+
+  SettingSet_b(I,cSetting_mouse_grid,mouse_grid);
 
   if(G->Option->presentation) {
       SettingSet_b(I,cSetting_full_screen,full_screen);
@@ -2378,6 +2380,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_internal_gui_width:
   case cSetting_internal_gui:
   case cSetting_internal_feedback:
+  case cSetting_mouse_grid:
     sprintf(command,"viewport");
     OrthoCommandIn(G,command);
     break;
@@ -3617,5 +3620,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_b(I,cSetting_pdb_formal_charges,1);
     set_i(I,cSetting_ati_bugs,0);
     set_i(I,cSetting_geometry_export_mode,0);
+    set_b(I,cSetting_mouse_grid,1);
   }
 }
