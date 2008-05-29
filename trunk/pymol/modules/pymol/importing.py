@@ -490,9 +490,9 @@ SEE ALSO
             state = int(state)
             finish = int(finish)
             zoom = int(zoom)
-            if discrete==-1:
+            if discrete == -1:
                 discrete_default = 1
-                discrete=0
+                discrete = 0
             else:
                 discrete_default = 0
                 discrete = int(discrete)
@@ -678,10 +678,10 @@ SEE ALSO
                 if not partial:
                     _self.set("session_file",fname,quiet=1)
                 
-    # special handling for multi-model files (mol2, sdf)
+    # special handling for multi-model files 
 
-            if ftype in ( loadable.mol2, loadable.sdf1, loadable.sdf2 ):
-                if discrete_default==1: # make such files discrete by default
+            if ftype in ( loadable.mol2, loadable.sdf1, loadable.sdf2, loadable.mae ):
+                if discrete_default: # make such files discrete by default
                     discrete = -1
 
     # standard file handling
@@ -762,6 +762,8 @@ NOTES
                 try:
                     # BEGIN PROPRIETARY CODE SEGMENT
                     from epymol import mae
+                    if discrete_default:
+                        discrete = -1
                     r = mae.read_maestr(string.join(data,''),
                                         name,state,finish,discrete,
                                         quiet,zoom,multiplex)
