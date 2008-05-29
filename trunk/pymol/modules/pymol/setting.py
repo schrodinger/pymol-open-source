@@ -622,6 +622,7 @@ if __name__=='pymol.setting':
         pdb_formal_charges                 = 584
         ati_bugs                           = 585
         geometry_export_mode               = 586
+        mouse_grid                         = 587
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

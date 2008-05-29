@@ -55,7 +55,8 @@ Z* -------------------------------------------------------------------
 #define cOrthoLeftMargin 3
 #define cOrthoBottomMargin 5
 
-#define WizardMargin 144
+#define WizardMargin1 144
+#define WizardMargin2 60
 
 #define ButModeMargin 20
 #define ControlMargin 0
@@ -1538,49 +1539,55 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
     }
   }
 
-  if(SettingGet(G,cSetting_internal_gui)) {
-
+  {
+    int WizardMargin = WizardMargin1;
+    
+    if(!SettingGet(G,cSetting_mouse_grid)) {
+      WizardMargin = WizardMargin2;
+    }
+    if(SettingGet(G,cSetting_internal_gui)) {
 
 #ifndef _PYMOL_NOPY
-    block=ExecutiveGetBlock(G);
-    block->active=true;
-    BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
-    block=WizardGetBlock(G);
-    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,WizardMargin,0);
-    block->active=false;
-    block=ButModeGetBlock(G);
-    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
-    block->active=true;
+      block=ExecutiveGetBlock(G);
+      block->active=true;
+      BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
+      block=WizardGetBlock(G);
+      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,WizardMargin,0);
+      block->active=false;
+      block=ButModeGetBlock(G);
+      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
+      block->active=true;
 #else
-    block=ExecutiveGetBlock(G);
-    block->active=true;
-    BlockSetMargin(block,0,width-internal_gui_width,ButModeMargin,0);
-    block=WizardGetBlock(G);
-    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
-    block->active=false;
-    block=ButModeGetBlock(G);
-    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
-    block->active=false;
+      block=ExecutiveGetBlock(G);
+      block->active=true;
+      BlockSetMargin(block,0,width-internal_gui_width,ButModeMargin,0);
+      block=WizardGetBlock(G);
+      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
+      block->active=false;
+      block=ButModeGetBlock(G);
+      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
+      block->active=false;
 #endif
 
-    block=ControlGetBlock(G);
-    BlockSetMargin(block,height-ButModeMargin+1,width-internal_gui_width,ControlMargin,0);
-    block->active=true;
-  } else {
-    block=ExecutiveGetBlock(G);
-    block->active=false;
-    BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
-    block=WizardGetBlock(G);
-    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,WizardMargin,0);
-    block->active=false;
-    block=ButModeGetBlock(G);
-    BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
-    block->active=false;
-    block=ControlGetBlock(G);
-    BlockSetMargin(block,height-ButModeMargin+1,width-internal_gui_width,ControlMargin,0);
-    block->active=false;
-  }
+      block=ControlGetBlock(G);
+      BlockSetMargin(block,height-ButModeMargin+1,width-internal_gui_width,ControlMargin,0);
+      block->active=true;
+    } else {
+      block=ExecutiveGetBlock(G);
+      block->active=false;
+      BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
+      block=WizardGetBlock(G);
+      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,WizardMargin,0);
+      block->active=false;
+      block=ButModeGetBlock(G);
+      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
+      block->active=false;
+      block=ControlGetBlock(G);
+      BlockSetMargin(block,height-ButModeMargin+1,width-internal_gui_width,ControlMargin,0);
+      block->active=false;
+    }
 
+  }
   block=SceneGetBlock(G);
   BlockSetMargin(block,sceneTop,0,sceneBottom,sceneRight);
 
@@ -1606,12 +1613,17 @@ void OrthoReshapeWizard(PyMOLGlobals *G,ov_size wizHeight)
   width=I->Width;
 
   if(SettingGet(G,cSetting_internal_gui)>0.0) {
+    int WizardMargin = WizardMargin1;
     internal_gui_width = (int)SettingGet(G,cSetting_internal_gui_width);
     block=ExecutiveGetBlock(G);
+
+    if(!SettingGet(G,cSetting_mouse_grid)) {
+      WizardMargin = WizardMargin2;
+    }
+
     if(height) {
       int wh=wizHeight;
       if(wh) wh++;
-
       BlockSetMargin(block,0,width-internal_gui_width,WizardMargin+wh,0);
     } else {
       BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);

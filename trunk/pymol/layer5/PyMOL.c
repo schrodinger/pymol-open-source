@@ -751,6 +751,7 @@ typedef struct _CPyMOL {
   ov_word lex_pdb_formal_charges;
   ov_word lex_ati_bugs;
   ov_word lex_geometry_export_mode;
+  ov_word lex_mouse_grid;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1495,6 +1496,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(pdb_formal_charges,584);
   LEX_SETTING(ati_bugs,585);
   LEX_SETTING(geometry_export_mode,586);
+  LEX_SETTING(mouse_grid,587);
   return_OVstatus_SUCCESS;
 }
 

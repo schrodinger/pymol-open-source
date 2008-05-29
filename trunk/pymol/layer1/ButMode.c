@@ -1,17 +1,17 @@
 /* 
-A* -------------------------------------------------------------------
-B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
-D* -------------------------------------------------------------------
-E* It is unlawful to modify or remove this copyright notice.
-F* -------------------------------------------------------------------
-G* Please see the accompanying LICENSE file for further information. 
-H* -------------------------------------------------------------------
-I* Additional authors of this source file include:
--* 
--* 
--*
-Z* -------------------------------------------------------------------
+   A* -------------------------------------------------------------------
+   B* This file contains source code for the PyMOL computer program
+   C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+   D* -------------------------------------------------------------------
+   E* It is unlawful to modify or remove this copyright notice.
+   F* -------------------------------------------------------------------
+   G* Please see the accompanying LICENSE file for further information. 
+   H* -------------------------------------------------------------------
+   I* Additional authors of this source file include:
+   -* 
+   -* 
+   -*
+   Z* -------------------------------------------------------------------
 */
 
 #include"os_predef.h"
@@ -181,132 +181,134 @@ static void ButModeDraw(Block *block)
     /*    TextDrawStrAt(G,"2-Bttn Selecting",x+88,y);*/
     y-=cButModeLineHeight;
 
-
-
-    TextSetColor(G,I->TextColor3);
-    TextDrawStrAt(G,"Buttons",x+6,y);
-    TextSetColor(G,I->TextColor1);
-    /*    TextDrawStrAt(G,"  Left Mddl Rght Scrl",x+48,y);*/
-    TextDrawStrAt(G,"    L    M    R  Wheel",x+43,y);
-
-    y-=cButModeLineHeight;
-    /*    glColor3fv(I->Block->TextColor);
-          TextDrawStrAt(G,"K",x,y-4);*/
-    TextSetColor(G,I->TextColor3);
-    TextDrawStrAt(G,"&",x+12,y);
-    TextDrawStrAt(G,"Keys",x+24,y);
-    TextSetColor(G,I->TextColor2);
-    
-    TextSetPos2i(G,x+64,y);
-    for(a=0;a<3;a++) {
-      mode = I->Mode[a];
-      if(mode<0)
-        TextDrawStr(G,BLANK_STR);
-      else
-        TextDrawStr(G,I->Code[mode]);
-    }
-    mode = I->Mode[12];
-    if(mode<0)
-      TextDrawStr(G,BLANK_STR);
-    else 
-      TextDrawStr(G,I->Code[mode]);
-
-    y-=cButModeLineHeight;
-    /*    TextSetColor(G,I->Block->TextColor);
-          TextDrawStrAt(G,"e",x+5,y-1);*/
-    TextSetColor(G,I->TextColor1);
-
-    TextSetColor(G,I->TextColor1);
-    TextDrawStrAt(G,"Shft ",x+24,y);
-    TextSetColor(G,I->TextColor2);
-    TextSetPos2i(G,x+64,y);
-    for(a=3;a<6;a++) {
-      mode = I->Mode[a];
+    if(SettingGetGlobal_b(G,cSetting_mouse_grid)) {
+      
+      TextSetColor(G,I->TextColor3);
+      TextDrawStrAt(G,"Buttons",x+6,y);
+      TextSetColor(G,I->TextColor1);
+      /*    TextDrawStrAt(G,"  Left Mddl Rght Scrl",x+48,y);*/
+      TextDrawStrAt(G,"    L    M    R  Wheel",x+43,y);
+      
+      y-=cButModeLineHeight;
+      /*    glColor3fv(I->Block->TextColor);
+            TextDrawStrAt(G,"K",x,y-4);*/
+      TextSetColor(G,I->TextColor3);
+      TextDrawStrAt(G,"&",x+12,y);
+      TextDrawStrAt(G,"Keys",x+24,y);
+      TextSetColor(G,I->TextColor2);
+      
+      TextSetPos2i(G,x+64,y);
+      for(a=0;a<3;a++) {
+        mode = I->Mode[a];
+        if(mode<0)
+          TextDrawStr(G,BLANK_STR);
+        else
+          TextDrawStr(G,I->Code[mode]);
+      }
+      mode = I->Mode[12];
       if(mode<0)
         TextDrawStr(G,BLANK_STR);
       else 
         TextDrawStr(G,I->Code[mode]);
-    }
-    mode = I->Mode[13];
-    if(mode<0)
-      TextDrawStr(G,BLANK_STR);
-    else 
-      TextDrawStr(G,I->Code[mode]);
 
-    y-=cButModeLineHeight;
-    /*    glColor3fv(I->Block->TextColor);
-          TextDrawStrAt(G,"y",x+10,y+2);*/
-    TextSetColor(G,I->TextColor1);
-    TextDrawStrAt(G,"Ctrl ",x+24,y);
-    TextSetColor(G,I->TextColor2);
-    TextSetPos2i(G,x+64,y);
-    for(a=6;a<9;a++) {
-      mode = I->Mode[a];
+      y-=cButModeLineHeight;
+      /*    TextSetColor(G,I->Block->TextColor);
+            TextDrawStrAt(G,"e",x+5,y-1);*/
+      TextSetColor(G,I->TextColor1);
+
+      TextSetColor(G,I->TextColor1);
+      TextDrawStrAt(G,"Shft ",x+24,y);
+      TextSetColor(G,I->TextColor2);
+      TextSetPos2i(G,x+64,y);
+      for(a=3;a<6;a++) {
+        mode = I->Mode[a];
+        if(mode<0)
+          TextDrawStr(G,BLANK_STR);
+        else 
+          TextDrawStr(G,I->Code[mode]);
+      }
+      mode = I->Mode[13];
       if(mode<0)
         TextDrawStr(G,BLANK_STR);
-      else
+      else 
         TextDrawStr(G,I->Code[mode]);
-    }
-    mode = I->Mode[14];
-    if(mode<0)
-      TextDrawStr(G,BLANK_STR);
-    else 
-      TextDrawStr(G,I->Code[mode]);
-    y-=cButModeLineHeight;
 
-
-    /*    glColor3fv(I->Block->TextColor);
-          TextDrawStrAt(G,"s",x+15,y+3);*/
-    TextSetColor(G,I->TextColor1);
-    TextSetColor(G,I->TextColor1);
-    TextDrawStrAt(G,"CtSh ",x+24,y);
-    TextSetColor(G,I->TextColor2);
-    TextSetPos2i(G,x+64,y);
-    for(a=9;a<12;a++) {
-      mode = I->Mode[a];
+      y-=cButModeLineHeight;
+      /*    glColor3fv(I->Block->TextColor);
+            TextDrawStrAt(G,"y",x+10,y+2);*/
+      TextSetColor(G,I->TextColor1);
+      TextDrawStrAt(G,"Ctrl ",x+24,y);
+      TextSetColor(G,I->TextColor2);
+      TextSetPos2i(G,x+64,y);
+      for(a=6;a<9;a++) {
+        mode = I->Mode[a];
+        if(mode<0)
+          TextDrawStr(G,BLANK_STR);
+        else
+          TextDrawStr(G,I->Code[mode]);
+      }
+      mode = I->Mode[14];
       if(mode<0)
         TextDrawStr(G,BLANK_STR);
-      else
+      else 
         TextDrawStr(G,I->Code[mode]);
-    }
-    mode = I->Mode[15];
-    if(mode<0)
-      TextDrawStr(G,BLANK_STR);
-    else 
-      TextDrawStr(G,I->Code[mode]);
+      y-=cButModeLineHeight;
 
-    y-=cButModeLineHeight;
 
-    TextSetColor(G,I->Block->TextColor);
-    TextSetColor(G,I->TextColor1);
-    TextDrawStrAt(G," SnglClk",x-8,y);
-    TextSetColor(G,I->TextColor2);
-    TextSetPos2i(G,x+64,y);
-    for(a=19;a<22;a++) {
-      mode = I->Mode[a];
+      /*    glColor3fv(I->Block->TextColor);
+            TextDrawStrAt(G,"s",x+15,y+3);*/
+      TextSetColor(G,I->TextColor1);
+      TextSetColor(G,I->TextColor1);
+      TextDrawStrAt(G,"CtSh ",x+24,y);
+      TextSetColor(G,I->TextColor2);
+      TextSetPos2i(G,x+64,y);
+      for(a=9;a<12;a++) {
+        mode = I->Mode[a];
+        if(mode<0)
+          TextDrawStr(G,BLANK_STR);
+        else
+          TextDrawStr(G,I->Code[mode]);
+      }
+      mode = I->Mode[15];
       if(mode<0)
         TextDrawStr(G,BLANK_STR);
-      else
+      else 
         TextDrawStr(G,I->Code[mode]);
-    }
-    TextSetColor(G,I->Block->TextColor);
-    y-=cButModeLineHeight;
+
+      y-=cButModeLineHeight;
+
+      TextSetColor(G,I->Block->TextColor);
+      TextSetColor(G,I->TextColor1);
+      TextDrawStrAt(G," SnglClk",x-8,y);
+      TextSetColor(G,I->TextColor2);
+      TextSetPos2i(G,x+64,y);
+      for(a=19;a<22;a++) {
+        mode = I->Mode[a];
+        if(mode<0)
+          TextDrawStr(G,BLANK_STR);
+        else
+          TextDrawStr(G,I->Code[mode]);
+      }
+      TextSetColor(G,I->Block->TextColor);
+      y-=cButModeLineHeight;
 
 
-    TextSetColor(G,I->Block->TextColor);
-    TextSetColor(G,I->TextColor1);
-    TextDrawStrAt(G," DblClk",x,y);
-    TextSetColor(G,I->TextColor2);
-    TextSetPos2i(G,x+64,y);
-    for(a=16;a<19;a++) {
-      mode = I->Mode[a];
-      if(mode<0)
-        TextDrawStr(G,BLANK_STR);
-      else
-        TextDrawStr(G,I->Code[mode]);
+      TextSetColor(G,I->Block->TextColor);
+      TextSetColor(G,I->TextColor1);
+      TextDrawStrAt(G," DblClk",x,y);
+      TextSetColor(G,I->TextColor2);
+      TextSetPos2i(G,x+64,y);
+      for(a=16;a<19;a++) {
+        mode = I->Mode[a];
+        if(mode<0)
+          TextDrawStr(G,BLANK_STR);
+        else
+          TextDrawStr(G,I->Code[mode]);
+      }
+      TextSetColor(G,I->Block->TextColor);
+      y-=cButModeLineHeight;
+
     }
-    TextSetColor(G,I->Block->TextColor);
-    y-=cButModeLineHeight;
 
     {
       TextSetColor(G,I->Block->TextColor);
