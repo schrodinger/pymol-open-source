@@ -768,6 +768,10 @@ class Normal(PMGSkin):
 
             self.menuBar.addmenuitem('Help', 'separator', '')        
 
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'Get information on application', 
+                                     label='About PyMOL', command = lambda s=self:s.show_about())
+
             if self.pymol.cmd.splash(2):
                 self.menuBar.addmenuitem('Help', 'command',
                                          'Sponsor PyMOL by becoming a Subscriber',
@@ -776,7 +780,7 @@ class Normal(PMGSkin):
 
             self.menuBar.addmenuitem('Help', 'command',
                                      'Learn How to Cite PyMOL', 
-                                     label='Learn How to Cite PyMOL', command = lambda w=webbrowser:w.open("http://pymol.org/citing"))
+                                     label='How to Cite PyMOL', command = lambda w=webbrowser:w.open("http://pymol.org/citing"))
             
             self.menuBar.addmenuitem('Help', 'separator', '')
 
@@ -785,10 +789,7 @@ class Normal(PMGSkin):
                                      label='Output License Terms',
                                      command = lambda s=self:s.cat_terms())
 
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Get information on application', 
-                                     label='About PyMOL', command = lambda s=self:s.show_about())
-            
+
         except ImportError:
             pass
         
@@ -1980,7 +1981,7 @@ class Normal(PMGSkin):
                                 variable = self.setting.animation,
                                 command = lambda s=self: s.setting.update('animation'))
 
-        self.menuBar.addmenu('Setting', 'Configuration Control',tearoff=TRUE)
+        self.menuBar.addmenu('Setting', 'Settings and Configuration',tearoff=TRUE)
 
         self.menuBar.addmenuitem('Setting', 'command',
                                  'Edit PyMOL Settings',
