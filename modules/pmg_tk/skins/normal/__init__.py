@@ -26,8 +26,8 @@ class Normal(PMGSkin):
     pad = ' ' # extra space in menus
     
     appname        = 'The PyMOL Molecular Graphics System'
-    appversion     = '1.0'
-    copyright      = ('Copyright (C) 2003-2007 \n' +
+    appversion     = '1.1'
+    copyright      = ('Copyright (C) 2003-2008 \n' +
                       'DeLano Scientific LLC.\n'+
                       'All rights reserved.')
     contactweb     = 'http://www.pymol.org'
@@ -692,23 +692,80 @@ class Normal(PMGSkin):
                                      label='Online Documentation',
                                      command = lambda w=webbrowser:w.open("http://delsci.info/dsc"))
 
-            self.menuBar.addmenuitem('Help', 'command',
-                                     'Access the PyMOL Home Page',
-                                     label='PyMOL Home Page',
-                                     command = lambda w=webbrowser:w.open("http://www.pymol.org"))
+
+            self.menuBar.addcascademenu('Help', 'Topics', 'Topics',
+                                             label='Topics',tearoff=FALSE)
+
+            self.menuBar.addmenuitem('Topics', 'command',
+                                     'Introductory Screencasts',
+                                     label='Introductory Screencasts',
+                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/media:intro"))
+
+            self.menuBar.addmenuitem('Topics', 'command',
+                                     'Core Commands',
+                                     label='Core Commands',
+                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/command:core_set"))
+
+            self.menuBar.addmenuitem('Topics', 'separator', '')
+
+            self.menuBar.addmenuitem('Topics', 'command',
+                                     'Settings',
+                                     label='Settings',
+                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/setting"))
+
+            self.menuBar.addmenuitem('Topics', 'command',
+                                     'Atom Selections',
+                                     label='Atom Selections',
+                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/selection"))
+                                    
+            self.menuBar.addmenuitem('Topics', 'command',
+                                     'Commands',
+                                     label='Commands',
+                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/command"))
+            
+            self.menuBar.addmenuitem('Topics', 'command',
+                                     'Launching',
+                                     label='Launching',
+                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/launch"))
+            
+            self.menuBar.addmenuitem('Topics', 'separator', '')
+            
+            self.menuBar.addmenuitem('Topics', 'command',
+                                     'Concepts',
+                                     label='Concepts',
+                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/concept"))
+
+            self.menuBar.addmenuitem('Topics', 'separator', '')
+            
+            self.menuBar.addmenuitem('Topics', 'command',
+                                     'A.P.I. Methods',
+                                     label='A.P.I. Methods',
+                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/api"))
 
             self.menuBar.addmenuitem('Help', 'separator', '')
             
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'Access the community-maintained PyMOL Wiki',
+                                     label='PyMOL Community Wiki',
+                                     command = lambda w=webbrowser:w.open("http://www.pymolwiki.org"))
+
             self.menuBar.addmenuitem('Help', 'command',
                                      'Join or browse the pymol-users mailing list',
                                      label='PyMOL Mailing List',
                                      command = lambda w=webbrowser:w.open("http://www.pymol.org/maillist"))
 
             self.menuBar.addmenuitem('Help', 'command',
-                                     'Access the community-maintained PyMOL Wiki',
-                                     label='PyMOL Community Wiki',
-                                     command = lambda w=webbrowser:w.open("http://www.pymolwiki.org"))
+                                     'Access the PyMOL Home Page',
+                                     label='PyMOL Home Page',
+                                     command = lambda w=webbrowser:w.open("http://www.pymol.org"))
             
+            self.menuBar.addmenuitem('Help', 'separator', '')
+            
+            self.menuBar.addmenuitem('Help', 'command',
+                                     'Email support@delsci.com',
+                                     label='Email support@delsci.com',
+                                     command = lambda w=webbrowser:w.open("mailto:support@delsci.com?subject=PyMOL%20Question"))
+
             self.menuBar.addmenuitem('Help', 'separator', '')        
 
             if self.pymol.cmd.splash(2):
@@ -718,19 +775,19 @@ class Normal(PMGSkin):
                                          command = lambda w=webbrowser:w.open("http://pymol.org/funding.html"))
 
             self.menuBar.addmenuitem('Help', 'command',
-                                     'See a copy of the License Terms',
-                                     label='License Terms',
-                                     command = lambda s=self:s.cat_terms())
-
+                                     'Learn How to Cite PyMOL', 
+                                     label='Learn How to Cite PyMOL', command = lambda w=webbrowser:w.open("http://pymol.org/citing"))
+            
             self.menuBar.addmenuitem('Help', 'separator', '')
 
             self.menuBar.addmenuitem('Help', 'command',
-                                     'How to Cite PyMOL', 
-                                     label='Citing PyMOL', command = lambda w=webbrowser:w.open("http://pymol.org/citing"))
-            
+                                     'Output License Terms',
+                                     label='Output License Terms',
+                                     command = lambda s=self:s.cat_terms())
+
             self.menuBar.addmenuitem('Help', 'command',
                                      'Get information on application', 
-                                     label='About', command = lambda s=self:s.show_about())
+                                     label='About PyMOL', command = lambda s=self:s.show_about())
             
         except ImportError:
             pass
