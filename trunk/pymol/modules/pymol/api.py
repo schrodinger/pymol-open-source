@@ -55,7 +55,6 @@ from commanding import \
       resume,             \
       splash,             \
       reinitialize,       \
-      reinit_sc,          \
       sync
 
 #--------------------------------------------------------------------
@@ -198,7 +197,6 @@ from editing import \
       undo,               \
       unpick,             \
       update,             \
-      order_sc,           \
       valence,            \
       vdw_fit 
 
