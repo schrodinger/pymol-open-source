@@ -230,6 +230,19 @@ int PTruthCallStr1i(PyObject *object,char *method,int argument)
   }
   return(result);
 }
+
+int PTruthCallStr1s(PyObject *object,char *method,char *argument)
+{
+  int result = false;
+  PyObject *tmp;
+  tmp = PyObject_CallMethod(object,method,"s",argument);
+  if(tmp) {
+    if(PyObject_IsTrue(tmp))
+      result = 1;
+    Py_DECREF(tmp);
+  }
+  return(result);
+}
 int PTruthCallStr4i(PyObject *object,char *method,int a1,int a2,int a3,int a4)
 {
   int result = false;
@@ -1233,165 +1246,194 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   /* This routine is called if we are running with an embedded Python interpreter */
   PyObject *args, *pymol;
 
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
     
-  { /* automatically hide the window if this process
-       was started as a vanilla console application */
+  /* Win32 embedded PyMOL currently ships with Python 2.4  */
+
+#ifndef EMBEDDED_PYTHONHOME
+#define EMBEDDED_PYTHONHOME "\\py24"
+#endif
+
+  { /* Automatically hide the window if this process was started as a
+       vanilla console application (by double-clicking).
+       Conveniently, this doesn't hide the window when launched from a
+       command window. */
     HWND hwndFound;         
     if(hwndFound=FindWindow(NULL, argv[0])) {
       ShowWindow(hwndFound,SW_HIDE);
     }
   }
-    
+  
   {/* if PYMOL_PATH and/or PYTHONHOME isn't in the environment coming
       in, then the user may simply have clicked PyMOL.exe, in which
       case we need to consult the registry regarding the location of
       the install */
     
-    /* embedded version of PyMOL currently ships with Python 2.4 */
-#define EMBEDDED_PYTHONHOME "\\py24"
-        
-    OrthoLineType path_buffer;
-    static char line1[8092];
-    static char line2[8092];
-    HKEY phkResult;
-    int lpcbData;
-    int lpType = REG_SZ;
-    int r1,r2;
-    char *pymol_path;
-    char *pythonhome;
-    int pythonhome_set = false;
-    int restart_flag = false;
-        
-        
-    pymol_path = getenv("PYMOL_PATH");
-    pythonhome = getenv("PYTHONHOME");
-    if((!pymol_path)||(!pythonhome)) {
-      lpcbData = sizeof(OrthoLineType)-1;
-      r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,
-                      "Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
-                      0,KEY_EXECUTE,&phkResult);
-      if(r1!=ERROR_SUCCESS) {
-        r1=RegOpenKeyEx(HKEY_CURRENT_USER,
-                        "Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
-                        0,KEY_EXECUTE,&phkResult);
-      }  
-      if(r1==ERROR_SUCCESS) {
-        r2 = RegQueryValueEx(phkResult,"",NULL,
-                             &lpType,path_buffer,&lpcbData);
-        if (r2==ERROR_SUCCESS) {
-          /* use environment variable PYMOL_PATH first, registry entry
-             second */
-          if(!pymol_path) {
-            strcpy(line1,"PYMOL_PATH=");
-            strcat(line1,path_buffer);
-            _putenv(line1);
-            if(!pythonhome) { /* only set PYTHONHOME if already
-                                 setting new PYMOL_PATH */
-              pythonhome_set = true;
-              strcpy(line2,"PYTHONHOME=");
-              strcat(line2,path_buffer);
-              strcat(line2,EMBEDDED_PYTHONHOME); 
-              restart_flag = true;
-              _putenv(line2);
-            }
-          }
-        }
-        RegCloseKey(phkResult);
-      }
-      /* this allows us to just specify PYMOL_PATH with no registry entries */
-      if((!pythonhome_set)&&(pymol_path)&&(!pythonhome)) {
-        strcpy(line2,"PYTHONHOME=");
-        strcat(line2,pymol_path);
-        strcat(line2,EMBEDDED_PYTHONHOME);
-        _putenv(line2);
-        restart_flag = true;
-      }
-    }
-    if(restart_flag && getenv("PYMOL_PATH") && getenv("PYTHONHOME")) { 
-            
-      /* now that we have the environment defined, restart the process
-       * so that Python can use the new environment.  If we don't do
-       * this, then Python won't see the new environment vars. Why not? */
+      static char line1[8092];
+      static char line2[8092];
 
-      /* note that we use CreateProcesss to launch the console
-       * application instead of exec or spawn in order to hide the
-       * console window. Otherwise a console window might appear, and
-       * that would suck. */
-            
-      char command[8092];
-      static char cmd_line[8092];
-      char *p,*q;
-      int a;
-            
-      /* copy arguments, installing quotes around them */
-            
-      sprintf(command,"%s\\pymol.exe",getenv("PYMOL_PATH"));
-      p = cmd_line;
-            
-      sprintf(p,"\"%s\"",command);
-      p+=strlen(p);
-      *(p++)=' ';
-      *p=0;
-            
-      for(a=1;a<=argc;a++) {
-        q = argv[a];
-        if(q) {
-          if(*q!='"') { /* add quotes if not present */
-            *(p++)='"';
-            while(*q) {
-              *(p++)=*(q++);
-            }
-            *(p++)='"'; 
-          } else {
-            while(*q) {
-              *(p++)=*(q++);
-            }
-          }
-          *(p++)=32;
-          *p=0;
-        }
+      {/* If no PYMOL_PATH specific, but we were launched with an
+	* absolute path, then try using that path first.  With embedded
+	* builds, the .EXE should always be located at the root of
+	* $PYMOL_PATH */
+	
+	char *pymol_path = getenv("PYMOL_PATH");
+	if((!pymol_path) && (argc>0) && argv[0][0] && (argv[0][1]==':') && (argv[0][2]=='\\')) {
+	  
+	  
+	  char *p;
+	  strcpy(line1,"PYMOL_PATH=");
+	  strcat(line1,argv[0]);
+	  p=line1 + strlen(line1);
+	  while(*p!='\\') {
+	    *p=0;
+	    p--;
+	  }
+	  *p=0;
+	  putenv(line1);
+	}
       }
-
+      
       {
-        LPSECURITY_ATTRIBUTES lpSA = NULL;
-        PSECURITY_DESCRIPTOR lpSD = NULL;
-        STARTUPINFO si;
-        PROCESS_INFORMATION pi;
-        HANDLE hProcess = GetCurrentProcess();
-                
-        ZeroMemory(&si, sizeof(STARTUPINFO));
-        si.cb = sizeof(STARTUPINFO);
-        si.dwFlags = STARTF_USESHOWWINDOW;
-        si.wShowWindow = SW_HIDE; 
-                
-        if(IsSecurityRequired())
-          {
-            lpSD = GlobalAlloc(GPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
-            InitializeSecurityDescriptor(lpSD, SECURITY_DESCRIPTOR_REVISION);
-            SetSecurityDescriptorDacl(lpSD, -1, 0, 0);
-                    
-            lpSA = GlobalAlloc(GPTR, sizeof(SECURITY_ATTRIBUTES));
-            lpSA->nLength = sizeof(SECURITY_ATTRIBUTES);
-            lpSA->lpSecurityDescriptor = lpSD;
-            lpSA->bInheritHandle = TRUE;
-          }
-                
-        if(CreateProcess(NULL, (LPTSTR)cmd_line, lpSA, NULL, TRUE,
-                         0, NULL, NULL, &si, &pi)) {
-          WaitForSingleObject(pi.hProcess, INFINITE);
-        }
-        if (lpSA != NULL) GlobalFree(lpSA);
-        if (lpSD != NULL) GlobalFree(lpSD);
-        _exit(0);
-      }
-    }
-  }
+	OrthoLineType path_buffer;
+	HKEY phkResult;
+	int lpcbData;
+	int lpType = REG_SZ;
+	int r1,r2;
+	char *pymol_path;
+	char *pythonhome;
+	int pythonhome_set = false;
+	int restart_flag = false;
+        
+	pymol_path = getenv("PYMOL_PATH");
+	pythonhome = getenv("PYTHONHOME");
+	if((!pymol_path)||(!pythonhome)) {
+	  lpcbData = sizeof(OrthoLineType)-1;
+	  r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,
+			  "Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
+			  0,KEY_EXECUTE,&phkResult);
+	  if(r1!=ERROR_SUCCESS) {
+	    r1=RegOpenKeyEx(HKEY_CURRENT_USER,
+			    "Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
+			    0,KEY_EXECUTE,&phkResult);
+	  }  
+	  if(r1==ERROR_SUCCESS) {
+	    r2 = RegQueryValueEx(phkResult,"",NULL,
+				 &lpType,path_buffer,&lpcbData);
+	    if (r2==ERROR_SUCCESS) {
+	      /* use environment variable PYMOL_PATH first, registry entry
+		 second */
+	      if(!pymol_path) {
+		strcpy(line1,"PYMOL_PATH=");
+		strcat(line1,path_buffer);
+		_putenv(line1);
+		if(!pythonhome) { /* only set PYTHONHOME if already
+				     setting new PYMOL_PATH */
+		  pythonhome_set = true;
+		  strcpy(line2,"PYTHONHOME=");
+		  strcat(line2,path_buffer);
+		  strcat(line2,EMBEDDED_PYTHONHOME); 
+		  restart_flag = true;
+		  _putenv(line2);
+		}
+	      }
+	    }
+	    RegCloseKey(phkResult);
+	  }
+	  /* this allows us to just specify PYMOL_PATH with no registry entries */
+	  if((!pythonhome_set)&&(pymol_path)&&(!pythonhome)) {
+	    strcpy(line2,"PYTHONHOME=");
+	    strcat(line2,pymol_path);
+	    strcat(line2,EMBEDDED_PYTHONHOME);
+	    _putenv(line2);
+	    restart_flag = true;
+	  }
+	}
 
+	if(restart_flag && getenv("PYMOL_PATH") && getenv("PYTHONHOME")) { 
+            
+	  /* now that we have the environment defined, restart the process
+	   * so that Python can use the new environment.  If we don't do
+	   * this, then Python won't see the new environment vars. Why not? */
+
+	  /* note that we use CreateProcesss to launch the console
+	   * application instead of exec or spawn in order to hide the
+	   * console window. Otherwise a console window might appear, and
+	   * that would suck. */
+            
+	  char command[8092];
+	  static char cmd_line[8092];
+	  char *p,*q;
+	  int a;
+            
+	  /* copy arguments, installing quotes around them */
+            
+	  sprintf(command,"%s\\pymol.exe",getenv("PYMOL_PATH"));
+	  p = cmd_line;
+            
+	  sprintf(p,"\"%s\"",command);
+	  p+=strlen(p);
+	  *(p++)=' ';
+	  *p=0;
+            
+	  for(a=1;a<=argc;a++) {
+	    q = argv[a];
+	    if(q) {
+	      if(*q!='"') { /* add quotes if not present */
+		*(p++)='"';
+		while(*q) {
+		  *(p++)=*(q++);
+		}
+		*(p++)='"'; 
+	      } else {
+		while(*q) {
+		  *(p++)=*(q++);
+		}
+	      }
+	      *(p++)=32;
+	      *p=0;
+	    }
+	  }
+
+	  {
+	    LPSECURITY_ATTRIBUTES lpSA = NULL;
+	    PSECURITY_DESCRIPTOR lpSD = NULL;
+	    STARTUPINFO si;
+	    PROCESS_INFORMATION pi;
+	    HANDLE hProcess = GetCurrentProcess();
+                
+	    ZeroMemory(&si, sizeof(STARTUPINFO));
+	    si.cb = sizeof(STARTUPINFO);
+	    si.dwFlags = STARTF_USESHOWWINDOW;
+	    si.wShowWindow = SW_HIDE; 
+                
+	    if(IsSecurityRequired())
+	      {
+		lpSD = GlobalAlloc(GPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
+		InitializeSecurityDescriptor(lpSD, SECURITY_DESCRIPTOR_REVISION);
+		SetSecurityDescriptorDacl(lpSD, -1, 0, 0);
+                    
+		lpSA = GlobalAlloc(GPTR, sizeof(SECURITY_ATTRIBUTES));
+		lpSA->nLength = sizeof(SECURITY_ATTRIBUTES);
+		lpSA->lpSecurityDescriptor = lpSD;
+		lpSA->bInheritHandle = TRUE;
+	      }
+                
+	    if(CreateProcess(NULL, (LPTSTR)cmd_line, lpSA, NULL, TRUE,
+			     0, NULL, NULL, &si, &pi)) {
+	      WaitForSingleObject(pi.hProcess, INFINITE);
+	    }
+	    if (lpSA != NULL) GlobalFree(lpSA);
+	    if (lpSD != NULL) GlobalFree(lpSD);
+	    _exit(0);
+	  }
+	}
+      }
+  }
 #endif
 /* END PROPRIETARY CODE SEGMENT */
-
 
   /* compatibility for old compile-time defines */
 
@@ -1427,7 +1469,6 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   {
     static char line1[8092];
     static char line2[8092];
-
     if(!getenv("PYMOL_PATH")) { /* if PYMOL_PATH isn't defined...*/
     
       /* was our startup path absolute? */
@@ -1518,28 +1559,29 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   PyRun_SimpleString("import sys\n");
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
-#if 0
   {
-    OrthoLineType path_buffer,command;
-    HKEY phkResult;
-    int lpcbData;
-    int lpType = REG_SZ;
-    int r1,r2;
-  
-    lpcbData = sizeof(OrthoLineType)-1;
-    r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",0,KEY_EXECUTE,&phkResult);
-    if(r1==ERROR_SUCCESS) {
-      r2 = RegQueryValueEx(phkResult,"",NULL,&lpType,path_buffer,&lpcbData);
-      if (r2==ERROR_SUCCESS) {
-        /* use environment variable PYMOL_PATH first, registry entry second */
-        sprintf(command,"_registry_pymol_path = r'''%s'''\n",path_buffer);
-        PyRun_SimpleString(command);
-        PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=_registry_pymol_path\n");
+    /* getenv('PYMOL_PATH') and os.environ['PYMOL_PATH'] aren't
+       automatically synchronized on Windows, so here we do the job
+       manually... */
+
+    char *pymol_path = getenv("PYMOL_PATH");
+    if(pymol_path) {
+      PyObject *os = PyImport_AddModule("os"); /* borrowed ref */
+      char *buffer = Alloc(char,strlen(pymol_path)+100);
+      if(os && buffer) {
+	PyObject *environ = PyObject_GetAttrString(os,"environ");
+	if(environ) {
+	  if(!PTruthCallStr1s(environ,"has_key","PYMOL_PATH")) {
+	    sprintf(buffer,"os.environ['PYMOL_PATH']=r'''%s'''\n",pymol_path);
+	    PyRun_SimpleString(buffer);
+	  }
+	}
+	PXDecRef(environ);
       }
-      RegCloseKey(phkResult);
+      FreeP(buffer);
     }
-  } 
-#endif
+  }
+  /* ultimate fallback -- try using the current working directory */
   PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
 /* END PROPRIETARY CODE SEGMENT */
@@ -1556,24 +1598,6 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'\n");
 #endif
 
-#if 0
-  /* no longer necessary since we're setting PYTHONHOME */
-#ifdef _PYMOL_SETUP_PY21 
-  /* used by semistatic pymol */
-  PyRun_SimpleString("import string");
-  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'static/ext-static')<0,sys.path)"); /* clean bogus entries in sys.path */
-#endif
-#ifdef _PYMOL_SETUP_PY22
-  /* used by semistatic pymol */
-  PyRun_SimpleString("import string");
-  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'static/ext')<0,sys.path)"); /* clean bogus entries in sys.path */
-#endif
-#ifdef _PYMOL_SETUP_PY23
-  /* used by semistatic pymol */
-  PyRun_SimpleString("import string");
-  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'static/ext')<0,sys.path)"); /* clean bogus entries in sys.path */
-#endif
-#endif
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n");
@@ -1922,13 +1946,11 @@ void PInit(PyMOLGlobals *G,int global_instance)
     /* required environment variables */
 
     PyRun_SimpleString("import os");
-    PyRun_SimpleString(
-                       "if not os.environ.has_key('PYMOL_DATA'): os.environ['PYMOL_DATA']=os.environ['PYMOL_PATH']+'/data'");
-    PyRun_SimpleString(
-                       "os.environ['TUT']=os.environ['PYMOL_DATA']+'/tut'");
 
-    PyRun_SimpleString(
-                       "if not os.environ.has_key('PYMOL_SCRIPTS'): os.environ['PYMOL_SCRIPTS']=os.environ['PYMOL_PATH']+'/scripts'");
+    PyRun_SimpleString("if not os.environ.has_key('PYMOL_DATA'): os.environ['PYMOL_DATA']=os.environ['PYMOL_PATH']+'/data'");
+    PyRun_SimpleString("os.environ['TUT']=os.environ['PYMOL_DATA']+'/tut'");
+
+    PyRun_SimpleString("if not os.environ.has_key('PYMOL_SCRIPTS'): os.environ['PYMOL_SCRIPTS']=os.environ['PYMOL_PATH']+'/scripts'");
 
   }
 }
