@@ -1,17 +1,17 @@
 /* 
-A* -------------------------------------------------------------------
-B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
-D* -------------------------------------------------------------------
-E* It is unlawful to modify or remove this copyright notice.
-F* -------------------------------------------------------------------
-G* Please see the accompanying LICENSE file for further information. 
-H* -------------------------------------------------------------------
-I* Additional authors of this source file include:
--* 
--* 
--*
-Z* -------------------------------------------------------------------
+   A* -------------------------------------------------------------------
+   B* This file contains source code for the PyMOL computer program
+   C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+   D* -------------------------------------------------------------------
+   E* It is unlawful to modify or remove this copyright notice.
+   F* -------------------------------------------------------------------
+   G* Please see the accompanying LICENSE file for further information. 
+   H* -------------------------------------------------------------------
+   I* Additional authors of this source file include:
+   -* 
+   -* 
+   -*
+   Z* -------------------------------------------------------------------
 */
 
 /* meaning of defines 
@@ -32,7 +32,9 @@ the initialization functions for these libraries on startup.
 #ifdef WIN32
 #include<windows.h>
 #include<process.h>
+#ifndef WIN64
 #include<winappc.h>
+#endif
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 
@@ -142,13 +144,13 @@ void my_interrupt(int a);
 char *getprogramname(void);
 
 /*
-PyObject *GetBondsDict(PyMOLGlobals *G)
-{
+  PyObject *GetBondsDict(PyMOLGlobals *G)
+  {
   PyObject *result = NULL;
   result = PyObject_GetAttrString(P_chempy,"bonds");
   if(!result) ErrMessage(G,"PyMOL","can't find 'chempy.bonds.bonds'");
   return(result);
-}
+  }
 */
 
 PyObject *PGetFontDict(PyMOLGlobals *G, float size,int face,int style)
@@ -378,19 +380,19 @@ void PSleepWhileBusy(PyMOLGlobals *G,int usec)
   struct timeval tv;
   PRINTFD(G,FB_Threads)
     " PSleep-DEBUG: napping.\n"
-  ENDFD;
+    ENDFD;
   tv.tv_sec=0;
   tv.tv_usec=usec; 
   select(0,NULL,NULL,NULL,&tv);
   PRINTFD(G,FB_Threads)
     " PSleep-DEBUG: nap over.\n"
-  ENDFD;
+    ENDFD;
 #else
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
   PBlock(G);
   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
   PUnblock(G);
-/* END PROPRIETARY CODE SEGMENT */
+  /* END PROPRIETARY CODE SEGMENT */
 #endif
 }
 
@@ -400,19 +402,19 @@ void PSleepUnlocked(PyMOLGlobals *G,int usec)
   struct timeval tv;
   PRINTFD(G,FB_Threads)
     " PSleep-DEBUG: napping.\n"
-  ENDFD;
+    ENDFD;
   tv.tv_sec=0;
   tv.tv_usec=usec; 
   select(0,NULL,NULL,NULL,&tv);
   PRINTFD(G,FB_Threads)
     " PSleep-DEBUG: nap over.\n"
-  ENDFD;
+    ENDFD;
 #else
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
   PBlock(G);
   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
   PUnblock(G);
-/* END PROPRIETARY CODE SEGMENT */
+  /* END PROPRIETARY CODE SEGMENT */
 #endif
 }
 
@@ -423,25 +425,25 @@ void PSleep(PyMOLGlobals *G,int usec)
   PUnlockAPIAsGlut(G);
   PRINTFD(G,FB_Threads)
     " PSleep-DEBUG: napping.\n"
-  ENDFD;
+    ENDFD;
   tv.tv_sec=0;
   tv.tv_usec=usec; 
   select(0,NULL,NULL,NULL,&tv);
   PRINTFD(G,FB_Threads)
     " PSleep-DEBUG: nap over.\n"
-  ENDFD;
+    ENDFD;
   PLockAPIAsGlut(G,true);
 #else
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
   PBlockAndUnlockAPI(G);
   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
   PLockAPIAndUnblock(G);
-/* END PROPRIETARY CODE SEGMENT */
+  /* END PROPRIETARY CODE SEGMENT */
 #endif
 
 }
 
-static PyObject *PCatchWrite(PyObject *self, 	PyObject *args);
+static PyObject *PCatchWrite(PyObject *self,         PyObject *args);
 
 void my_interrupt(int a)
 {
@@ -1152,9 +1154,9 @@ int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy)
       PBlock(G); 
     } 
 #else
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+    /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
     PXDecRef(PyObject_CallFunction(P_sleep,"f",0.050));
-/* END PROPRIETARY CODE SEGMENT */
+    /* END PROPRIETARY CODE SEGMENT */
 #endif
 
     if(!get_api_lock(G,block_if_busy)) {
@@ -1180,8 +1182,8 @@ int PLockAPIAsGlut(PyMOLGlobals *G,int block_if_busy)
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
 #ifndef _PYMOL_EMBEDDED
 /* 
- *  void	initExtensionClass(void);
- *   void	initsglite(void);
+ *  void        initExtensionClass(void);
+ *   void        initsglite(void);
  */
 void  init_champ(void);
 void    init_opengl(void);
@@ -1197,12 +1199,12 @@ void    initopenglutil_num(void);
 #ifndef _PYMOL_EMBEDDED
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
-void	init_numpy();
-void	initmultiarray();
-void	initarrayfns();
-void	initlapack_lite();
-void	initumath();
-void	initranlib();
+void        init_numpy();
+void        initmultiarray();
+void        initarrayfns();
+void        initlapack_lite();
+void        initumath();
+void        initranlib();
 void  init_champ();
 #endif
 /* END PROPRIETARY CODE SEGMENT */
@@ -1212,9 +1214,9 @@ void  init_champ();
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_EMBEDDED
 /*
- * void	initExtensionClass(void);
- * void	initsglite(void);
-*/
+ * void        initExtensionClass(void);
+ * void        initsglite(void);
+ */
 void  init_champ(void);
 void    init_opengl(void);
 void    init_opengl_num(void);
@@ -1247,7 +1249,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   PyObject *args, *pymol;
 
 
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
     
   /* Win32 embedded PyMOL currently ships with Python 2.4  */
@@ -1271,169 +1273,172 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
       case we need to consult the registry regarding the location of
       the install */
     
-      static char line1[8092];
-      static char line2[8092];
+    static char line1[8092];
+    static char line2[8092];
 
-      {/* If no PYMOL_PATH specific, but we were launched with an
-	* absolute path, then try using that path first.  With embedded
-	* builds, the .EXE should always be located at the root of
-	* $PYMOL_PATH */
-	
-	char *pymol_path = getenv("PYMOL_PATH");
-	if((!pymol_path) && (argc>0) && argv[0][0] && (argv[0][1]==':') && (argv[0][2]=='\\')) {
-	  
-	  
-	  char *p;
-	  strcpy(line1,"PYMOL_PATH=");
-	  strcat(line1,argv[0]);
-	  p=line1 + strlen(line1);
-	  while(*p!='\\') {
-	    *p=0;
-	    p--;
-	  }
-	  *p=0;
-	  putenv(line1);
-	}
-      }
-      
-      {
-	OrthoLineType path_buffer;
-	HKEY phkResult;
-	int lpcbData;
-	int lpType = REG_SZ;
-	int r1,r2;
-	char *pymol_path;
-	char *pythonhome;
-	int pythonhome_set = false;
-	int restart_flag = false;
+    {/* If no PYMOL_PATH specific, but we were launched with an
+      * absolute path, then try using that path first.  With embedded
+      * builds, the .EXE should always be located at the root of
+      * $PYMOL_PATH */
         
-	pymol_path = getenv("PYMOL_PATH");
-	pythonhome = getenv("PYTHONHOME");
-	if((!pymol_path)||(!pythonhome)) {
-	  lpcbData = sizeof(OrthoLineType)-1;
-	  r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,
+      char *pymol_path = getenv("PYMOL_PATH");
+      if((!pymol_path) && (argc>0) && argv[0][0] && (argv[0][1]==':') && (argv[0][2]=='\\')) {
+          
+          
+	char *p;
+	strcpy(line1,"PYMOL_PATH=");
+	strcat(line1,argv[0]);
+	p=line1 + strlen(line1);
+	while(*p!='\\') {
+	  *p=0;
+	  p--;
+	}
+	*p=0;
+	putenv(line1);
+      }
+    }
+      
+    {
+      OrthoLineType path_buffer;
+      HKEY phkResult;
+      int lpcbData;
+      int lpType = REG_SZ;
+      int r1,r2;
+      char *pymol_path;
+      char *pythonhome;
+      int pythonhome_set = false;
+      int restart_flag = false;
+        
+      pymol_path = getenv("PYMOL_PATH");
+      pythonhome = getenv("PYTHONHOME");
+      if((!pymol_path)||(!pythonhome)) {
+	lpcbData = sizeof(OrthoLineType)-1;
+	r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,
+			"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
+			0,KEY_EXECUTE,&phkResult);
+	if(r1!=ERROR_SUCCESS) {
+	  r1=RegOpenKeyEx(HKEY_CURRENT_USER,
 			  "Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
 			  0,KEY_EXECUTE,&phkResult);
-	  if(r1!=ERROR_SUCCESS) {
-	    r1=RegOpenKeyEx(HKEY_CURRENT_USER,
-			    "Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
-			    0,KEY_EXECUTE,&phkResult);
-	  }  
-	  if(r1==ERROR_SUCCESS) {
-	    r2 = RegQueryValueEx(phkResult,"",NULL,
-				 &lpType,path_buffer,&lpcbData);
-	    if (r2==ERROR_SUCCESS) {
-	      /* use environment variable PYMOL_PATH first, registry entry
-		 second */
-	      if(!pymol_path) {
-		strcpy(line1,"PYMOL_PATH=");
-		strcat(line1,path_buffer);
-		_putenv(line1);
-		if(!pythonhome) { /* only set PYTHONHOME if already
-				     setting new PYMOL_PATH */
-		  pythonhome_set = true;
-		  strcpy(line2,"PYTHONHOME=");
-		  strcat(line2,path_buffer);
-		  strcat(line2,EMBEDDED_PYTHONHOME); 
-		  restart_flag = true;
-		  _putenv(line2);
-		}
+	}  
+	if(r1==ERROR_SUCCESS) {
+	  r2 = RegQueryValueEx(phkResult,"",NULL,
+			       &lpType,path_buffer,&lpcbData);
+	  if (r2==ERROR_SUCCESS) {
+	    /* use environment variable PYMOL_PATH first, registry entry
+	       second */
+	    if(!pymol_path) {
+	      strcpy(line1,"PYMOL_PATH=");
+	      strcat(line1,path_buffer);
+	      _putenv(line1);
+	      if(!pythonhome) { /* only set PYTHONHOME if already
+				   setting new PYMOL_PATH */
+		pythonhome_set = true;
+		strcpy(line2,"PYTHONHOME=");
+		strcat(line2,path_buffer);
+		strcat(line2,EMBEDDED_PYTHONHOME); 
+		restart_flag = true;
+		_putenv(line2);
 	      }
 	    }
-	    RegCloseKey(phkResult);
 	  }
-	  /* this allows us to just specify PYMOL_PATH with no registry entries */
-	  if((!pythonhome_set)&&(pymol_path)&&(!pythonhome)) {
-	    strcpy(line2,"PYTHONHOME=");
-	    strcat(line2,pymol_path);
-	    strcat(line2,EMBEDDED_PYTHONHOME);
-	    _putenv(line2);
-	    restart_flag = true;
-	  }
+	  RegCloseKey(phkResult);
 	}
-
-	if(restart_flag && getenv("PYMOL_PATH") && getenv("PYTHONHOME")) { 
-            
-	  /* now that we have the environment defined, restart the process
-	   * so that Python can use the new environment.  If we don't do
-	   * this, then Python won't see the new environment vars. Why not? */
-
-	  /* note that we use CreateProcesss to launch the console
-	   * application instead of exec or spawn in order to hide the
-	   * console window. Otherwise a console window might appear, and
-	   * that would suck. */
-            
-	  char command[8092];
-	  static char cmd_line[8092];
-	  char *p,*q;
-	  int a;
-            
-	  /* copy arguments, installing quotes around them */
-            
-	  sprintf(command,"%s\\pymol.exe",getenv("PYMOL_PATH"));
-	  p = cmd_line;
-            
-	  sprintf(p,"\"%s\"",command);
-	  p+=strlen(p);
-	  *(p++)=' ';
-	  *p=0;
-            
-	  for(a=1;a<=argc;a++) {
-	    q = argv[a];
-	    if(q) {
-	      if(*q!='"') { /* add quotes if not present */
-		*(p++)='"';
-		while(*q) {
-		  *(p++)=*(q++);
-		}
-		*(p++)='"'; 
-	      } else {
-		while(*q) {
-		  *(p++)=*(q++);
-		}
-	      }
-	      *(p++)=32;
-	      *p=0;
-	    }
-	  }
-
-	  {
-	    LPSECURITY_ATTRIBUTES lpSA = NULL;
-	    PSECURITY_DESCRIPTOR lpSD = NULL;
-	    STARTUPINFO si;
-	    PROCESS_INFORMATION pi;
-	    HANDLE hProcess = GetCurrentProcess();
-                
-	    ZeroMemory(&si, sizeof(STARTUPINFO));
-	    si.cb = sizeof(STARTUPINFO);
-	    si.dwFlags = STARTF_USESHOWWINDOW;
-	    si.wShowWindow = SW_HIDE; 
-                
-	    if(IsSecurityRequired())
-	      {
-		lpSD = GlobalAlloc(GPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
-		InitializeSecurityDescriptor(lpSD, SECURITY_DESCRIPTOR_REVISION);
-		SetSecurityDescriptorDacl(lpSD, -1, 0, 0);
-                    
-		lpSA = GlobalAlloc(GPTR, sizeof(SECURITY_ATTRIBUTES));
-		lpSA->nLength = sizeof(SECURITY_ATTRIBUTES);
-		lpSA->lpSecurityDescriptor = lpSD;
-		lpSA->bInheritHandle = TRUE;
-	      }
-                
-	    if(CreateProcess(NULL, (LPTSTR)cmd_line, lpSA, NULL, TRUE,
-			     0, NULL, NULL, &si, &pi)) {
-	      WaitForSingleObject(pi.hProcess, INFINITE);
-	    }
-	    if (lpSA != NULL) GlobalFree(lpSA);
-	    if (lpSD != NULL) GlobalFree(lpSD);
-	    _exit(0);
-	  }
+	/* this allows us to just specify PYMOL_PATH with no registry entries */
+	if((!pythonhome_set)&&(pymol_path)&&(!pythonhome)) {
+	  strcpy(line2,"PYTHONHOME=");
+	  strcat(line2,pymol_path);
+	  strcat(line2,EMBEDDED_PYTHONHOME);
+	  _putenv(line2);
+	  restart_flag = true;
 	}
       }
+      if(restart_flag && getenv("PYMOL_PATH") && getenv("PYTHONHOME")) { 
+            
+	/* now that we have the environment defined, restart the process
+	 * so that Python can use the new environment.  If we don't do
+	 * this, then Python won't see the new environment vars. Why not? */
+
+	/* note that we use CreateProcesss to launch the console
+	 * application instead of exec or spawn in order to hide the
+	 * console window. Otherwise a console window might appear, and
+	 * that would suck. */
+            
+	char command[8092];
+	static char cmd_line[8092];
+	char *p,*q;
+	int a;
+            
+	/* copy arguments, installing quotes around them */
+            
+	sprintf(command,"%s\\pymol.exe",getenv("PYMOL_PATH"));
+	p = cmd_line;
+            
+	sprintf(p,"\"%s\"",command);
+	p+=strlen(p);
+	*(p++)=' ';
+	*p=0;
+            
+	for(a=1;a<=argc;a++) {
+	  q = argv[a];
+	  if(q) {
+	    if(*q!='"') { /* add quotes if not present */
+	      *(p++)='"';
+	      while(*q) {
+		*(p++)=*(q++);
+	      }
+	      *(p++)='"'; 
+	    } else {
+	      while(*q) {
+		*(p++)=*(q++);
+	      }
+	    }
+	    *(p++)=32;
+	    *p=0;
+	  }
+	}
+
+	{
+	  LPSECURITY_ATTRIBUTES lpSA = NULL;
+	  PSECURITY_DESCRIPTOR lpSD = NULL;
+	  STARTUPINFO si;
+	  PROCESS_INFORMATION pi;
+	  HANDLE hProcess = GetCurrentProcess();
+                
+	  ZeroMemory(&si, sizeof(STARTUPINFO));
+	  si.cb = sizeof(STARTUPINFO);
+	  si.dwFlags = STARTF_USESHOWWINDOW;
+	  si.wShowWindow = SW_HIDE; 
+                
+	  if(IsSecurityRequired()) {
+	    lpSD = GlobalAlloc(GPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
+	    InitializeSecurityDescriptor(lpSD, SECURITY_DESCRIPTOR_REVISION);
+	    SetSecurityDescriptorDacl(lpSD, -1, 0, 0);
+                    
+	    lpSA = GlobalAlloc(GPTR, sizeof(SECURITY_ATTRIBUTES));
+	    lpSA->nLength = sizeof(SECURITY_ATTRIBUTES);
+	    lpSA->lpSecurityDescriptor = lpSD;
+	    lpSA->bInheritHandle = TRUE;
+	  }
+	  if(CreateProcess(NULL, (LPTSTR)cmd_line, lpSA, NULL, TRUE,
+			   0, NULL, NULL, &si, &pi)) {
+	    WaitForSingleObject(pi.hProcess, INFINITE);
+	  } else {
+	    printf("ERROR: Unable to restart PyMOL process with new environment:\n");
+	    system("set"); // dump the environment.
+	    printf("CreateProcess FAILED: %s\n",cmd_line);
+	    printf("PyMOL will now terminate.\n");
+                        
+	  }
+	  if (lpSA != NULL) GlobalFree(lpSA);
+	  if (lpSD != NULL) GlobalFree(lpSD);
+	  _exit(0);
+	}
+      }
+    }
   }
 #endif
-/* END PROPRIETARY CODE SEGMENT */
+  /* END PROPRIETARY CODE SEGMENT */
 
   /* compatibility for old compile-time defines */
 
@@ -1535,7 +1540,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
    */
   /* initialize champ */
   init_champ();
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
   /* initialize numeric python */
   init_numpy();
@@ -1545,7 +1550,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   initumath();
   initranlib();
 #endif
-/* END PROPRIETARY CODE SEGMENT */
+  /* END PROPRIETARY CODE SEGMENT */
   init_opengl();
   init_opengl_num();
   init_glu();
@@ -1557,7 +1562,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
 #endif
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
   {
     /* getenv('PYMOL_PATH') and os.environ['PYMOL_PATH'] aren't
@@ -1569,14 +1574,14 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
       PyObject *os = PyImport_AddModule("os"); /* borrowed ref */
       char *buffer = Alloc(char,strlen(pymol_path)+100);
       if(os && buffer) {
-	PyObject *environ = PyObject_GetAttrString(os,"environ");
-	if(environ) {
-	  if(!PTruthCallStr1s(environ,"has_key","PYMOL_PATH")) {
-	    sprintf(buffer,"os.environ['PYMOL_PATH']=r'''%s'''\n",pymol_path);
-	    PyRun_SimpleString(buffer);
-	  }
-	}
-	PXDecRef(environ);
+        PyObject *environ = PyObject_GetAttrString(os,"environ");
+        if(environ) {
+          if(!PTruthCallStr1s(environ,"has_key","PYMOL_PATH")) {
+            sprintf(buffer,"os.environ['PYMOL_PATH']=r'''%s'''\n",pymol_path);
+            PyRun_SimpleString(buffer);
+          }
+        }
+        PXDecRef(environ);
       }
       FreeP(buffer);
     }
@@ -1584,7 +1589,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   /* ultimate fallback -- try using the current working directory */
   PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
-/* END PROPRIETARY CODE SEGMENT */
+  /* END PROPRIETARY CODE SEGMENT */
 
 #ifdef _PYMOL_SETUP_TCLTK83
   /* used by semistatic pymol */
@@ -1598,11 +1603,11 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'\n");
 #endif
 
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n");
 #endif
-/* END PROPRIETARY CODE SEGMENT */
+  /* END PROPRIETARY CODE SEGMENT */
 
   P_main = PyImport_AddModule("__main__");
   if(!P_main) ErrFatal(G,"PyMOL","can't find '__main__'");
@@ -1690,7 +1695,7 @@ void PGetOptions(CPyMOLOptions *rec)
   options = PyObject_GetAttrString(invocation,"options");
   if(!options) {fprintf(stderr,"PyMOL-ERROR: can't get 'invocation.options'.");exit(EXIT_FAILURE);}
 
-   PConvertOptions(rec,options);
+  PConvertOptions(rec,options);
 
   Py_XDECREF(invocation);
   Py_XDECREF(options);
@@ -1711,10 +1716,10 @@ void PInit(PyMOLGlobals *G,int global_instance)
   PyObject *sys,*pcatch;
 
 #ifdef PYMOL_NEW_THREADS
-   PyEval_InitThreads();
+  PyEval_InitThreads();
 #endif
 
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_EMBEDDED
@@ -1722,37 +1727,37 @@ void PInit(PyMOLGlobals *G,int global_instance)
 #endif
 #endif
 #endif
-/* END PROPRIETARY CODE SEGMENT */
+  /* END PROPRIETARY CODE SEGMENT */
 
 #ifdef _PYMOL_INIT_MODULES
-	/* Win32 module build: includes pyopengl, numpy, and sglite */
-	/* sglite 
-     * initExtensionClass();
-     * initsglite();
-    */
-    init_champ();
-	/* initialize numeric python */
-	init_numpy();
-	initmultiarray();
-	initarrayfns();
-	initlapack_lite();
-	initumath();
-	initranlib();
-	/* initialize PyOpenGL */
-    init_opengl();
-    init_opengl_num();
-    init_glu();
-    init_glu_num();
-    init_glut();
-    initopenglutil();
-	initopenglutil_num();
+  /* Win32 module build: includes pyopengl, numpy, and sglite */
+  /* sglite 
+   * initExtensionClass();
+   * initsglite();
+   */
+  init_champ();
+  /* initialize numeric python */
+  init_numpy();
+  initmultiarray();
+  initarrayfns();
+  initlapack_lite();
+  initumath();
+  initranlib();
+  /* initialize PyOpenGL */
+  init_opengl();
+  init_opengl_num();
+  init_glu();
+  init_glu_num();
+  init_glut();
+  initopenglutil();
+  initopenglutil_num();
 #endif
 
   if(global_instance) {
     PCatchInit();   /* setup standard-output catch routine */
   }
 
-/* assumes that pymol module has been loaded via Python or PyRun_SimpleString */
+  /* assumes that pymol module has been loaded via Python or PyRun_SimpleString */
 
   P_pymol = PyImport_AddModule("pymol"); /* get it */
   if(!P_pymol) ErrFatal(G,"PyMOL","can't find module 'pymol'");
@@ -2167,7 +2172,7 @@ void PBlock(PyMOLGlobals *G)
 
   if(!PAutoBlock(G)) {
     int *p=0; *p=0;
-	ErrFatal(G,"PBlock","Threading error detected.  Terminating...");
+    ErrFatal(G,"PBlock","Threading error detected.  Terminating...");
   }
 }
 
@@ -2181,11 +2186,11 @@ int PAutoBlock(PyMOLGlobals *G)
 
   id = PyThread_get_thread_ident();
   PRINTFD(G,FB_Threads)
-	 " PAutoBlock-DEBUG: search 0x%x (0x%x, 0x%x, 0x%x)\n",id,
-	 SavedThread[MAX_SAVED_THREAD-1].id,
-	 SavedThread[MAX_SAVED_THREAD-2].id,
-	 SavedThread[MAX_SAVED_THREAD-3].id
-	 ENDFD;
+    " PAutoBlock-DEBUG: search 0x%x (0x%x, 0x%x, 0x%x)\n",id,
+    SavedThread[MAX_SAVED_THREAD-1].id,
+    SavedThread[MAX_SAVED_THREAD-2].id,
+    SavedThread[MAX_SAVED_THREAD-3].id
+    ENDFD;
   a = MAX_SAVED_THREAD-1;
   while(a) {
     if(!((SavedThread+a)->id - id)) { 
@@ -2195,7 +2200,7 @@ int PAutoBlock(PyMOLGlobals *G)
       
       PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: seeking global lock 0x%x\n",id
-      ENDFD;
+	ENDFD;
 
 #ifdef PYMOL_NEW_THREADS
 
@@ -2203,25 +2208,25 @@ int PAutoBlock(PyMOLGlobals *G)
 
       PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: restoring 0x%x\n",id
-      ENDFD;
+	ENDFD;
       
       PyThreadState_Swap((SavedThread+a)->state);
 
 #else
       PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: restoring 0x%x\n",id
-      ENDFD;
+	ENDFD;
 
       PyEval_RestoreThread((SavedThread+a)->state);
 #endif
       
       PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: restored 0x%x\n",id
-      ENDFD;
+	ENDFD;
 
       PRINTFD(G,FB_Threads)
         " PAutoBlock-DEBUG: clearing 0x%x\n",id
-      ENDFD;
+	ENDFD;
 
       PXDecRef(PyObject_CallFunction(G->P_inst->lock_c,"O",G->P_inst->cmd));
       SavedThread[a].id = -1; 
@@ -2365,26 +2370,26 @@ void PDefineFloat(PyMOLGlobals *G,char *name,float value) {
 /* This function is called by the interpreter to get its own name */
 char *getprogramname(void)
 {
-	return("PyMOL");
+  return("PyMOL");
 }
 
 /* A static module */
 
-static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
+static PyObject *PCatchWrite(PyObject *self,         PyObject *args)
 {
   char *str;
   PyArg_ParseTuple(args,"s",&str);
   if(str[0]) {
- 	  if(SingletonPyMOLGlobals) {
-		  if(Feedback(SingletonPyMOLGlobals,FB_Python,FB_Output)) {
-			  OrthoAddOutput(SingletonPyMOLGlobals,str);
-		  }
-	  }
+    if(SingletonPyMOLGlobals) {
+      if(Feedback(SingletonPyMOLGlobals,FB_Python,FB_Output)) {
+	OrthoAddOutput(SingletonPyMOLGlobals,str);
+      }
+    }
   }
   return PConvAutoNone(Py_None);
 }
 
-static PyObject *PCatchWritelines(PyObject *self, 	PyObject *args)
+static PyObject *PCatchWritelines(PyObject *self,         PyObject *args)
 {
   PyObject *seq;
   int len;
@@ -2400,7 +2405,7 @@ static PyObject *PCatchWritelines(PyObject *self, 	PyObject *args)
             if(Feedback(SingletonPyMOLGlobals,FB_Python,FB_Output)) {
               OrthoAddOutput(SingletonPyMOLGlobals,str);
             }
-		  }
+	  }
         }
         Py_XDECREF(obj);
       }
@@ -2409,7 +2414,7 @@ static PyObject *PCatchWritelines(PyObject *self, 	PyObject *args)
   return PConvAutoNone(Py_None);
 }
 
-static PyObject *PCatchFlush(PyObject *self, 	PyObject *args)
+static PyObject *PCatchFlush(PyObject *self,         PyObject *args)
 {
   fflush(stdout);
   fflush(stderr);
@@ -2417,16 +2422,16 @@ static PyObject *PCatchFlush(PyObject *self, 	PyObject *args)
 }
 
 static PyMethodDef PCatch_methods[] = {
-	{"writelines",	  PCatchWritelines,   METH_VARARGS},
-	{"write",	  PCatchWrite,   METH_VARARGS},
-	{"flush",	  PCatchFlush,   METH_VARARGS},
-	{NULL,		NULL}		/* sentinel */
+  {"writelines",          PCatchWritelines,   METH_VARARGS},
+  {"write",          PCatchWrite,   METH_VARARGS},
+  {"flush",          PCatchFlush,   METH_VARARGS},
+  {NULL,                NULL}                /* sentinel */
 };
 
 void PCatchInit(void)
 {
-	PyImport_AddModule("pcatch");
-	Py_InitModule("pcatch", PCatch_methods);
+  PyImport_AddModule("pcatch");
+  Py_InitModule("pcatch", PCatch_methods);
 }
 #else
 typedef int this_source_file_is_not_empty;
