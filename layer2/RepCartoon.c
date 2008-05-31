@@ -500,7 +500,6 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                          (atomInfo[mem3].protons==cAN_C)) { /* cyclic C */
                         if(WordMatchExact(G,"C5",ai->name,1)&&
                            WordMatchExact(G,"C6",atomInfo[mem1].name,1)) {
-                          printf("found c5\n");
                           c5_linked = mem3;
                           c5 = mem0;
                         }
