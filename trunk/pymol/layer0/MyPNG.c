@@ -115,9 +115,22 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
      png_set_pHYs(png_ptr, info_ptr, dots_per_meter, dots_per_meter, PNG_RESOLUTION_METER);
    }
 
+
    png_set_gamma(png_ptr, SettingGet(G,cSetting_png_screen_gamma), 
                  SettingGet(G,cSetting_png_file_gamma));
+   
+   /* stamp the image as being created by PyMOL we could consider
+    * supporting optional annotations as well: PDB codes, canonical
+    * smiles, INCHIs, and other common identifiers */
 
+   {
+     png_text text;
+     text.compression = PNG_TEXT_COMPRESSION_NONE;
+     text.key = (png_charp) "Software";
+     text.text = (png_charp) "PyMOL";
+     text.text_length = 5;
+     png_set_text(png_ptr, info_ptr, &text, 1);
+   }
 
    /* Write the file header information.  REQUIRED */
    png_write_info(png_ptr, info_ptr);
