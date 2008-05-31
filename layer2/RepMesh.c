@@ -558,12 +558,14 @@ Rep *RepMeshNew(CoordSet *cs,int state)
            ((!cullByFlag)||
             (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exclude))))) {
           VLACheck(trim_vla,float,nc*3+2);
-          float *src = cs->Coord + 3*c;
+          {
+			  float *src = cs->Coord + 3*c;
           float *dst = trim_vla + 3*nc;
           *(dst++) = *(src++);
           *(dst++) = *(src++);
           *(dst++) = *(src++); 
           nc++;
+		  } 
         }
       }
       if(nc) {
@@ -787,8 +789,8 @@ Rep *RepMeshNew(CoordSet *cs,int state)
              }
              
              if(a_keeper && carve_map) {
-               a_keeper = false;
                register int i=*(MapLocusEStart(carve_map,v));
+               a_keeper = false;
                if(i) {
                  register int j=carve_map->EList[i++];
                  while(j>=0) {
