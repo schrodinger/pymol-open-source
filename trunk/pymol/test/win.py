@@ -16,17 +16,6 @@ import time
 
 standard_prefixes = ['C', 'G' ]
 
-# set module path for generic python stuff
-
-ppath = ''
-if os.environ.has_key('PYTHONPATH'):
-   ppath = os.environ['PYTHONPATH'] + ":"
-ppath = ppath + os.getcwd() + "/../modules"
-
-os.environ['PYTHONPATH'] = ppath
-
-#print ppath
-
 # uniform parameter handling
 
 argv = sys.argv
@@ -38,7 +27,7 @@ if len(argv):
 # ---
 
 pymol = "pymol"
-cmmd = "c:\pymolws\pymol.bat "
+cmmd = "c:\pymolws\pymol.exe "
 cmp = "cmp"
 ref = "ref"
 inp = "inp"
@@ -73,10 +62,10 @@ for test in tests:
       
       print " run_tests: "+tst+"..."
       
-      syscmd = cmmd+" -x "+opt+" "+ifil+" > tmp.txt 2>&1"
+      syscmd = cmmd+" -x -d pwd "+opt+" "+ifil+" > tmp.txt 2>&1"
       print syscmd
+      #os.system("c:\\pymolws\\pymol.exe")
       os.system(syscmd)
-
       # generate log file
  
       f = open("tmp.txt")
@@ -111,6 +100,6 @@ for test in tests:
             print ">",lg
 
 print "done"
-time.sleep(60)
+time.sleep(360)
 
 # 
