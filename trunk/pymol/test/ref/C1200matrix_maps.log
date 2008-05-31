@@ -84,7 +84,7 @@ PyMOL>save tmp/C1200.pse
  Save: wrote "tmp/C1200.pse".
 PyMOL>reinit
 PyMOL>load tmp/C1200.pse
- Executive: Loading version 1.00 session...
+ Executive: Loading version 1.10 session...
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  ObjectSurface: updating "s1".
