@@ -59,6 +59,8 @@ class PyMOL:
                     options.external_gui = 0
                     options.internal_feedback = 1
                     options.no_quit = 1
+            else:
+                options.show_splash = 0 # suppress this annoyance by default
                     
             self._COb = _cmd._new(self,self.invocation.options)
 

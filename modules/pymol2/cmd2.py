@@ -169,6 +169,7 @@ class Cmd:
         self.completing = pymol.completing
         self.controlling = pymol.controlling
         self.editing = pymol.editing
+        self.exporting = pymol.exporting
         self.moving = pymol.moving
         self.creating = pymol.creating
         self.viewing = pymol.viewing

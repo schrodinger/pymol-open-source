@@ -11,7 +11,7 @@ PyMOL>a.cmd.reset()
 PyMOL>print a.cmd.count_atoms()
 107
 PyMOL>a.cmd.load("tmp/M0050session.pse",quiet=0)
- Executive: Loading version 1.00 session...
+ Executive: Loading version 1.10 session...
 PyMOL>print a.cmd.count_atoms()
 107
 PyMOL>print cmd.count_atoms()

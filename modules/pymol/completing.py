@@ -64,7 +64,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'unset'          : [ self_cmd.setting.setting_sc     , 'setting'         , ','  ],
         'unset_bond'     : [ self_cmd.setting.setting_sc     , 'setting'         , ','  ],
         'update'         : [ self_cmd.selection_sc           , 'selection'       , ''   ],
-        'valence'        : [ self_cmd.order_sc               , 'order'           , ', '   ],
+        'valence'        : [ self_cmd.editing.order_sc       , 'order'           , ', '   ],
         'view'           : [ self_cmd._pymol._view_dict_sc   , 'view'            , ''   ],                              
         'window'         : [ self_cmd.window_sc              , 'action'          , ','  ],      
         'zoom'           : [ self_cmd.selection_sc           , 'selection'       , ''   ],
