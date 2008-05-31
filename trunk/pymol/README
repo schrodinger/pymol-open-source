@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------
 PyMOL is Copyright (C) 1998-2003 by Warren L. DeLano and Copyright (C)
-2003-2007 DeLano Scientific LLC, Palo Alto, CA, USA.
+2003-2008 DeLano Scientific LLC, Palo Alto, CA, USA.
 http://www.pymol.org EMAIL: warren@delsci.com
 ----------------------------------------------------------------------
 PyMOL is an OPEN SOURCE program distributed under the "Python" license.
@@ -205,7 +205,7 @@ community.
       ATI
       
 ----------------------------------------------------------------------
-Specific Acknowledgments:
+Specific Acknowledgments (last updated around 2005):
 
 * Thanks to Joni W. Lam for making the business work.
 
