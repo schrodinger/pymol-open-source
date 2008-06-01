@@ -631,6 +631,8 @@ if __name__=='pymol.setting':
         mesh_clear_state                   = 593
         mesh_clear_cutoff                  = 594
         mesh_grid_max                      = 595
+        session_cache_optimize             = 596
+        
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

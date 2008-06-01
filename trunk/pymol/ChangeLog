@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2008-06-01 Warren L. DeLano <warren@delsci.com>	
+
+	* session_cache_optimize setting
+
+	* fixed cache optimize
+
+	* added Ctrl-Fkey and Ctrl-PgDn/Up support inside Tcl/Tk
+	
 2008-05-28 Warren L. DeLano <warren@delsci.com>	
 
 	* added mesh_cutoff and related mesh settings 

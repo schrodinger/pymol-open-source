@@ -3637,5 +3637,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_f(I,cSetting_mesh_clear_cutoff,0.0F);
     set_f(I,cSetting_mesh_cutoff,0.0F);
     set_i(I,cSetting_mesh_grid_max,80);
+    set_i(I,cSetting_session_cache_optimize,0); 
   }
 }

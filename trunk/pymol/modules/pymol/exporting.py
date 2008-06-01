@@ -49,7 +49,7 @@ if __name__=='pymol.exporting':
 
     cache_action_sc = Shortcut(cache_action_dict.keys())
 
-    def cache(action, scenes='',state=-1, quiet=1, _self=cmd):
+    def cache(action='optimize', scenes='',state=-1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -88,16 +88,23 @@ PYMOL API
         
         r = DEFAULT_ERROR
         action = cache_action_dict[cache_action_sc.auto_err(str(action),'action')]
+        quiet = int(quiet)
         if action == 0: # enable
-            _self.set('cache_mode',2,quiet=quiet)
+            r = _self.set('cache_mode',2,quiet=quiet)
         elif action == 1: # disable
-            _self.set('cache_mode',0,quiet=quiet)
+            r =_self.set('cache_mode',0,quiet=quiet)
         elif action == 2: # read_only
-            _self.set('cache_mode',1,quiet=quiet)
+            r =_self.set('cache_mode',1,quiet=quiet)
         elif action == 3: # clear
-            _self._cache_clear(_self=_self)
+            r =_self._cache_clear(_self=_self)
         elif action == 4: # optimize
+            r = DEFAULT_SUCCESS
             _self._cache_mark(_self=_self)
+            cur_scene = _self.get('scene_current_name')
+            cache_max = int(_self.get('cache_max'))
+            if cache_max>0:
+                # allow double memory for an optimized cache
+                _self.set('cache_max',cache_max*2) 
             scenes = str(scenes)
             scene_list = string.split(scenes)
             cache_mode = int(_self.get('cache_mode'))
@@ -106,14 +113,30 @@ PYMOL API
                 scene_list = _self.get_scene_list()
             for scene in scene_list:
                 scene = string.strip(scene)
-                print " cache: optimizing scene '%s'."%scene
-                cmd.scene(scene)
-                cmd.refresh()            
-            _self._cache_purge(-1,_self=_self)
+                if not quiet:
+                    print " cache: optimizing scene '%s'."%scene
+                cmd.scene(scene,animate=0)
+                cmd.rebuild()                
+                cmd.refresh()
+            if len(cur_scene):
+                cmd.scene(cur_scene,animate=0)
+            else:
+                scene_list = _self.get_scene_list()
+                if len(scene_list):
+                    cmd.scene(scene_list[0],animate=0)
+                else:
+                    if not quiet:
+                        print " cache: no scenes defined -- optimizing current display."
+                    cmd.rebuild() 
+                    cmd.refresh()
+            usage = _self._cache_purge(-1,_self=_self)
             if cache_mode:
                 _self.set('cache_mode',cache_mode)
             else:
-                _self.set('cache_mode',2)
+                _self.set('cache_mode',2) # hmm... could use 1 here instead.
+            _self.set('cache_max',cache_max) # restore previous limits
+            if not quiet:            
+                print " cache: optimization complete (~%0.1f MB)."%(usage*4/1000000.0)
         try:
             _self.lock(_self)
         finally:
@@ -170,6 +193,14 @@ NOTES
     def get_session(names='', partial=0, quiet=1, compress=-1, cache=-1, _self=cmd):
         session = {}
         r = DEFAULT_SUCCESS
+        cache = int(cache)
+        compress = int(compress)
+        if cache:
+            cache_opt = int(_self.get('session_cache_optimize'))
+            if cache != 0:
+                cache_mode = int(_self.get('cache_mode'))
+                if ((cache_mode > 0) and (cache_opt != 0)) or (cache_opt==1):
+                    _self.cache('optimize')
         for a in _self._pymol._session_save_tasks:
             if a==None:
                 try:
