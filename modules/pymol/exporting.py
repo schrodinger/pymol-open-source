@@ -113,7 +113,7 @@ PYMOL API
             if cache_mode:
                 _self.set('cache_mode',cache_mode)
             else:
-                _self.set('cache_mode',1)
+                _self.set('cache_mode',2)
         try:
             _self.lock(_self)
         finally:
