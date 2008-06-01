@@ -14,12 +14,13 @@ from operator import add
 
 from chempy import io
 
-from cmd import DEFAULT_ERROR, loadable, _load2str, Shortcut, \
+from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, loadable, _load2str, Shortcut, \
    is_string, is_ok
 
 # cache management:
 
 def _cache_validate(_self=cmd):
+    r = DEFAULT_SUCCESS
     try:
         _self.lock_data(_self)
         _pymol = _self._pymol
@@ -31,6 +32,7 @@ def _cache_validate(_self=cmd):
         _self.unlock_data(_self)
         
 def _cache_clear(_self=cmd):
+    r = DEFAULT_SUCCESS
     try:
         _self.lock_data(_self)
         _pymol = _self._pymol
@@ -38,8 +40,10 @@ def _cache_clear(_self=cmd):
         _pymol._cache_memory = 0
     finally:
         _self.unlock_data(_self)
+    return r
     
 def _cache_mark(_self=cmd):
+    r = DEFAULT_SUCCESS
     try:
         _self.lock_data(_self)
         _pymol = _self._pymol
@@ -48,8 +52,10 @@ def _cache_mark(_self=cmd):
             entry[5] = 0.0
     finally:
         _self.unlock_data(_self)
-       
+    return r
+
 def _cache_purge(max_size, _self=cmd):
+    r = DEFAULT_SUCCESS
     try:
         _self.lock_data(_self)
         _pymol = _self._pymol
@@ -77,8 +83,10 @@ def _cache_purge(max_size, _self=cmd):
                         new_cache.append(entry)
                 _pymol._cache = new_cache
                 _pymol._cache_memory = cur_size
+        result = _pymol._cache_memory
     finally:
         _self.unlock_data(_self)
+    return result
         
 def _cache_get(target, hash_size = None, _self=cmd):
     result = None
@@ -104,6 +112,7 @@ def _cache_get(target, hash_size = None, _self=cmd):
     return result
 
 def _cache_set(new_entry, max_size, _self=cmd):
+    r = DEFAULT_SUCCESS
     try:
         _self.lock_data(_self)
         _pymol = _self._pymol
@@ -132,6 +141,7 @@ def _cache_set(new_entry, max_size, _self=cmd):
             traceback.print_exc()
     finally:
         _self.unlock_data(_self)
+    return r
         
 # ray tracing threads
 

@@ -760,6 +760,7 @@ typedef struct _CPyMOL {
   ov_word lex_mesh_clear_state;
   ov_word lex_mesh_clear_cutoff;
   ov_word lex_mesh_grid_max;
+  ov_word lex_session_cache_optimize;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1513,7 +1514,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(mesh_clear_state,593);
   LEX_SETTING(mesh_clear_cutoff,594);
   LEX_SETTING(mesh_grid_max,595);
-
+  LEX_SETTING(session_cache_optimize,596);
   return_OVstatus_SUCCESS;
 }
 
