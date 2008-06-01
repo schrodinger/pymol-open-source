@@ -1694,18 +1694,18 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Movie', 'checkbutton',
                                  'Photorealistic images.',
-                                 label='Ray Rrace Frames',
+                                 label='Ray Trace Frames',
                                  variable = self.setting.ray_trace_frames,
                                  command = lambda s=self: s.setting.update('ray_trace_frames'))
 
         self.menuBar.addmenuitem('Movie', 'checkbutton',
                                  'Save images in memory.',
-                                 label='Cache Frames',
+                                 label='Cache Frame Images',
                                 variable = self.setting.cache_frames,
                                 command = lambda s=self: s.setting.update('cache_frames'))
 
-        self.menuBar.addmenuitem('Movie', 'command', 'Clear Frame Cache',
-                                         label='Clear Frame Cache',
+        self.menuBar.addmenuitem('Movie', 'command', 'Clear Image Cache',
+                                         label='Clear Image Cache',
                                          command = lambda s=self: s.cmd.mclear())
 
         self.menuBar.addmenuitem('Movie', 'separator', '')

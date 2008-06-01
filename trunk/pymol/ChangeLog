@@ -10,6 +10,12 @@ CHANGE LOG
 
 	* added Ctrl-Fkey and Ctrl-PgDn/Up support inside Tcl/Tk
 	
+2008-05-31 Warren L. DeLano <warren@delsci.com>	
+
+	* updated help menu
+
+	* mouse_grid setting
+	
 2008-05-28 Warren L. DeLano <warren@delsci.com>	
 
 	* added mesh_cutoff and related mesh settings 
