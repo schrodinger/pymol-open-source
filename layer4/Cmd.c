@@ -5272,7 +5272,9 @@ static PyObject *CmdBusyDraw(PyObject *self, PyObject *args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok=APIEnterNotModal(G))) {
-    OrthoBusyDraw(G,int1);
+    if(SettingGetGlobal_b(G,cSetting_show_progress)) {
+      OrthoBusyDraw(G,int1);
+    }
     APIExit(G);
   }
   return APIResultOk(ok);

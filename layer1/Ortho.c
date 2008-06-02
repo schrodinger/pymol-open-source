@@ -409,8 +409,8 @@ void OrthoBusySlow(PyMOLGlobals *G,int progress,int total)
       PAutoUnblock(G,blocked);
 #endif
     }
+    OrthoBusyDraw(G,false);
   }
-  OrthoBusyDraw(G,false);
 }
 /*========================================================================*/
 void OrthoBusyFast(PyMOLGlobals *G,int progress,int total)
@@ -436,8 +436,8 @@ void OrthoBusyFast(PyMOLGlobals *G,int progress,int total)
       PAutoUnblock(G,blocked);
 #endif
     }
+    OrthoBusyDraw(G,false);
   }
-  OrthoBusyDraw(G,false);
 }
 /*========================================================================*/
 void OrthoBusyPrime(PyMOLGlobals *G)
