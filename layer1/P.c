@@ -1603,6 +1603,12 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'\n");
 #endif
 
+#ifdef _PYMOL_SETUP_TCLTK85
+  /* used by semistatic pymol */
+  PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tcl8.5'): os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tcl8.5'\n");
+  PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.5'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.5'\n");
+#endif
+
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n");

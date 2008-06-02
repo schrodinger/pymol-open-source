@@ -1428,13 +1428,23 @@ static void MainBusyIdle(void)
 }
 void MainRepositionWindowDefault(PyMOLGlobals *G)
 {
+#ifdef _PYMOL_FINK
+  p_glutPositionWindow(G->Option->winPX,G->Option->winPY-22);
+ /* something is wrong with FinkGlut's window positioning...*/
+#else
   p_glutPositionWindow(G->Option->winPX,G->Option->winPY);
+#endif
+
   p_glutReshapeWindow(G->Option->winX,G->Option->winY);
 }
 void MainSetWindowPosition(PyMOLGlobals *G,int x,int y)
 {
+#ifdef _PYMOL_FINK
+  y -= 22; /* something is wrong with FinkGlut's window positioning...*/
+#endif
   p_glutPositionWindow(x,y);
 }
+
 void MainSetWindowSize(PyMOLGlobals *G,int w,int h)
 {
   G->Main->DeferReshapeDeferral = 1;
