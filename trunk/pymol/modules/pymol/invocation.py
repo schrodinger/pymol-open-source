@@ -71,7 +71,7 @@ if __name__=='pymol.invocation':
     options.no_quit = 0
     
     options.win_py = { 'irix':240,
-                       'darwin': 214,
+                       'darwin': 214, # hmm...need to set to 192 for Leopard?...
                        'linux2': 220,
                        'win32' : 230}.get(sys.platform,200)
 
