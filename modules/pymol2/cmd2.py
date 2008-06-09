@@ -120,11 +120,9 @@ class Cmd:
         # from pymol/internal.py
         
         self._adjust_coord = global_cmd._adjust_coord
-        self._alt = global_cmd._alt
         self._coordset_update_spawn = global_cmd._coordset_update_spawn
         self._coordset_update_thread = global_cmd._coordset_update_thread
         self._copy_image = global_cmd._copy_image
-        self._ctrl = global_cmd._ctrl
         self._do = global_cmd._do
         self._dump_floats = global_cmd._dump_floats
         self._dump_ufloats = global_cmd._dump_ufloats
@@ -146,7 +144,6 @@ class Cmd:
         self._ray_spawn = global_cmd._ray_spawn
         self._refresh = global_cmd._refresh
         self._sgi_stereo = global_cmd._sgi_stereo
-        self._special = global_cmd._special
         self._validate_color_sc = global_cmd._validate_color_sc
         self._cache_set = global_cmd._cache_set
         self._cache_get = global_cmd._cache_get
@@ -207,7 +204,6 @@ class Cmd:
         self.ctrl = keyboard.get_ctrl(self)        
         self.alt = keyboard.get_alt(self)
         
-
 # PUBLIC API METHODS which expect "self" as the first argument
 
 # ========= WARNING WARNING WARNING WARNING ===========
@@ -216,6 +212,18 @@ class Cmd:
     def _feedback(self, *a, **k):
         k['_self']=self
         return apply(global_cmd._feedback, a, k)
+    
+    def _special(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd._special, a, k)
+    
+    def _ctrl(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd._ctrl, a, k)
+    
+    def _alt(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd._alt, a, k)
     
     def accept(self, *a, **k):
         k['_self']=self

@@ -1,6 +1,9 @@
 
 api_list = [
     '_feedback',
+    '_special',
+    '_ctrl',
+    '_alt',
     'accept',
     'alias',
     'align',

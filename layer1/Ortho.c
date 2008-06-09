@@ -636,6 +636,7 @@ void OrthoKeyControl(PyMOLGlobals *G,unsigned char k) {
   /* safer...*/
 
   sprintf(buffer,"cmd._ctrl(chr(%d))",k);
+  /* sprintf(buffer,"_ctrl %c",k); */
   PLog(G,buffer,cPLog_pym);
   PParse(G,buffer);
   PFlush(G);
@@ -653,6 +654,7 @@ void OrthoKeyAlt(PyMOLGlobals *G,unsigned char k) {
     OrthoKey(G,k,0,0,0);
   } else {
     sprintf(buffer,"cmd._alt(chr(%d))",k);
+    /* sprintf(buffer,"_alt %c",k); */
     PLog(G,buffer,cPLog_pym);
     PParse(G,buffer);
     PFlush(G);
