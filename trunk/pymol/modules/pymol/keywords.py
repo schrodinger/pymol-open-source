@@ -15,6 +15,7 @@ def get_command_keywords(self_cmd=cmd):
         'alias'         : [ self_cmd.alias             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
         'align'         : [ self_cmd.align             , 0 , 0 , ''  , parsing.STRICT ],
         'alter'         : [ self_cmd.alter             , 0 , 0 , ''  , parsing.LITERAL1 ], # insecure
+        '_alt'          : [ self_cmd._alt             , 0 , 0 , ''  , parsing.STRICT ],                
         'alter_state'   : [ self_cmd.alter_state       , 0 , 0 , ''  , parsing.LITERAL2 ], # insecure
         'angle'         : [ self_cmd.angle             , 0 , 0 , ''  , parsing.STRICT ],          
         'as'            : [ self_cmd.show_as           , 0 , 0 , ''  , parsing.STRICT ],          
@@ -34,6 +35,7 @@ def get_command_keywords(self_cmd=cmd):
         'class'         : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
         'clip'          : [ self_cmd.clip              , 0 , 0 , ''  , parsing.STRICT ],
         'cls'           : [ self_cmd.cls               , 0 , 0 , ''  , parsing.STRICT ],
+        '_ctrl'         : [ self_cmd._ctrl             , 0 , 0 , ''  , parsing.STRICT ],        
         'color'         : [ self_cmd.color             , 0 , 0 , ''  , parsing.STRICT ],
         'commands'      : [ self_cmd.helping.commands  , 0 , 0 , ''  , parsing.STRICT ],
         'config_mouse'  : [ self_cmd.config_mouse      , 0 , 0 , ''  , parsing.STRICT ],
