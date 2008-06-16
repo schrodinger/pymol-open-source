@@ -1373,12 +1373,9 @@ static void MainBusyIdle(void)
     /* run final initilization code for Python-based PyMOL implementations. */
     
 #define FINAL_INIT_AT 10
-    
-    if(I->FinalInitCounter<FINAL_INIT_AT)
-      {
+    if(I->FinalInitCounter<FINAL_INIT_AT) {
         I->FinalInitCounter=I->FinalInitCounter+1;
         if(I->FinalInitCounter==FINAL_INIT_AT) {
-          
           I->FinalInitTrigger=true;
           PyMOL_NeedRedisplay(PyMOLInstance);
         }

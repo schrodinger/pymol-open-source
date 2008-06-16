@@ -264,7 +264,7 @@ if pymol_launch != 3: # if this isn't a dry run
                     _stdin_reader_thread.setDaemon(1)
                     _stdin_reader_thread.start()
                 except:
-                    trackback.print_exc()
+                    traceback.print_exc()
             try:
                 if cmd.ready():
                     cmd.config_mouse(quiet=1)
@@ -390,26 +390,29 @@ if pymol_launch != 3: # if this isn't a dry run
         # NEED SOME CONTRIBUTIONS HERE!
 
         def launch_gui(self):
-            if sys.platform=='darwin':
-                poll=1
-       	    else:
-                poll=0
-            if self.invocation.options.external_gui==1:
-                __import__(self.invocation.options.gui)
-                sys.modules[self.invocation.options.gui].__init__(self,poll)
-            elif self.invocation.options.external_gui==3:
-                os.environ['DISPLAY']=':0.0'
-                os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+"/ext/lib/tcl8.4"
-                os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+"/ext/lib/tk8.4"
-                __import__(self.invocation.options.gui)
-                sys.modules[self.invocation.options.gui].__init__(self,poll)
+            try:
+                if sys.platform=='darwin':
+                    poll=1
+                else:
+                    poll=0
+                skin = self.invocation.options.skin
+                if self.invocation.options.external_gui==1:
+                    __import__(self.invocation.options.gui)
+                    sys.modules[self.invocation.options.gui].__init__(self,poll,skin)
+                elif self.invocation.options.external_gui==3:
+                    os.environ['DISPLAY']=':0.0'
+                    os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+"/ext/lib/tcl8.4"
+                    os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+"/ext/lib/tk8.4"
+                    __import__(self.invocation.options.gui)
+                    sys.modules[self.invocation.options.gui].__init__(self,poll,skin)
 
-        # -- Greg Landrum's RPC stuff
-            if self.invocation.options.rpcServer:
-                import rpc
-                rpc.launch_XMLRPC()
-        # --
-
+            # -- Greg Landrum's RPC stuff
+                if self.invocation.options.rpcServer:
+                    import rpc
+                    rpc.launch_XMLRPC()
+            # --
+            except:
+                traceback.print_exc()
     def prime_pymol():
         global glutThread
         try:

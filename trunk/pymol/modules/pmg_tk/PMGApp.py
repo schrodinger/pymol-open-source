@@ -263,7 +263,6 @@ class PMGApp(Pmw.MegaWidget):
                 module_path = inv.options.gui +".skins."+ skin
                 __import__(inv.options.gui +".skins."+ skin)
                 skin = sys.modules[module_path].__init__(self)
-
         if skin != self.skin:
             if self.skin != None:
                 self.skin.takedown()
