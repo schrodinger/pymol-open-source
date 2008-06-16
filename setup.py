@@ -39,7 +39,7 @@ elif sys.platform=='cygwin':
     ext_link_args=[]
 #============================================================================
 elif sys.platform=='darwin':
-    using_fink = 0
+    using_fink = "'/sw/" in str(sys.path)
     if using_fink:
         # under Fink, with the following packages installed:
         #
@@ -49,7 +49,7 @@ elif sys.platform=='darwin':
         #  freetype2
         #  freetype2-dev
         #
-        # REMEMBER to compile using Fink's Python!
+        # REMEMBER to use Fink's Python!
         #
         inc_dirs=["ov/src",
                   "layer0","layer1","layer2",
@@ -83,20 +83,26 @@ elif sys.platform=='darwin':
                        "-lpng", 
                        "-L/sw/lib/freetype2/lib", "-lfreetype" ]
     else:
-        # not using Fink -- building as if we were on Linux with "ext" in the current working directory
+        # not using Fink.  Instead, building as if we were on Linux
+        # with the external dependencies compiled into "./ext" in the
+        # current working directory
+        #
+        # REMEMEBER to use "./ext/bin/python ..."
+        #
         EXT = os.getcwd()+"/ext"
         inc_dirs=["ov/src",
                   "layer0","layer1","layer2",
                   "layer3","layer4","layer5", 
                   "/System/Library/Frameworks/OpenGL.framework/Headers",
-                  "/System/Library/Frameworks/GLUT.framework/Headers",
                   "/System/Library/Frameworks/CoreFoundation.framework/Headers",
                   "/System/Library/Frameworks/AppKit.framework/Headers",
                   "/System/Library/Frameworks/ApplicationServices.framework/Headers",
                   "/System/Library/Frameworks/Cocoa.framework/Headers",
                   "/System/Library/Frameworks/IOKit.framework/Headers",
+                  EXT+"/include",
                   EXT+"/include/freetype2",
-                  EXT+"/include"]
+                  EXT+"/include/GL"
+                  ]
         libs=[]
         pyogl_libs = []
         lib_dirs=[]
@@ -113,7 +119,8 @@ elif sys.platform=='darwin':
                        "-framework","Cocoa",
                        "-framework","IOKit",
                        "-L"+EXT+"/lib", "-lpng", "-lglut",
-                       "-L"+EXT+"/lib/freetype2/lib", "-lfreetype" ]
+                       "-L"+EXT+"/lib/freetype2/lib", "-lfreetype"
+                       ]
 #============================================================================
 else: # linux or standard unix
     inc_dirs=["ov/src",
@@ -146,7 +153,7 @@ else: # linux or standard unix
   
 setup ( # Distribution meta-data
     name = "pymol",
-	version = "1.0.0",
+	version = "1.1.0",
 	package_dir = {'' : 'modules'},
 	packages = ['chempy',
                 'chempy/bmin',
