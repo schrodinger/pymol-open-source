@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-06-16 Warren L. DeLano <warren@delsci.com>	
 
+	* fixed missing define when building via autotools
+
 	* improved compatibility when building under OSX/X11 w/o Fink
 	
 2008-06-01 Warren L. DeLano <warren@delsci.com>	
