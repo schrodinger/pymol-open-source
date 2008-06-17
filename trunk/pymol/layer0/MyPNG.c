@@ -14,7 +14,19 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#include"os_predef.h"
+
+/* backwards compatibility */
+
 #ifdef _HAVE_LIBPNG
+#ifndef _PYMOL_LIBPNG
+#define _PYMOL_LIBPNG
+#endif
+#endif
+
+/* do we have libpng? */
+
+#ifdef _PYMOL_LIBPNG
 #include<png.h>
 
  /* The png_jmpbuf() macro, used in error handling, became available in
@@ -29,7 +41,6 @@ Z* -------------------------------------------------------------------
 
 #endif
 
-#include"os_predef.h"
 #include"os_std.h"
 
 #include"Base.h"
@@ -41,7 +52,7 @@ Z* -------------------------------------------------------------------
 int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
                unsigned int width,unsigned int height,float dpi)
 {
-#ifdef _HAVE_LIBPNG
+#ifdef _PYMOL_LIBPNG
 
    FILE *fp;
    png_structp png_ptr;
@@ -166,7 +177,7 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
 int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsigned int *height_ptr)
 {
 
-#ifdef _HAVE_LIBPNG
+#ifdef _PYMOL_LIBPNG
 
   FILE *png_file=NULL;
   png_struct    *png_ptr = NULL;

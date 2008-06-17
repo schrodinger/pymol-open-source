@@ -65,3 +65,6 @@
 
 /* Uses VMD Plugins */
 #undef _PYMOL_VMD_PLUGINS
+
+/* Uses PNG Library */
+#undef _PYMOL_LIBPNG

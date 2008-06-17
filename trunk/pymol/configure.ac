@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([pymol], [1.0.0], [bugs@delsci.com])
+AC_INIT([pymol], [1.1.0], [bugs@delsci.com])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_PROG_CC
@@ -15,7 +15,8 @@ WLD_PATH_PYTHON( [2.0], [
     exit -1
     ])
 
-AC_CHECK_LIB(png, main, [LIBS="$LIBS -lpng"], [
+AC_CHECK_LIB(png, main, [AC_DEFINE(_PYMOL_LIBPNG)
+                         LIBS="$LIBS -lpng"], [
     echo "Missing libpng."
     exit -1             
     ])
@@ -30,7 +31,7 @@ AC_CHECK_LIB(dl, main, [LIBS="$LIBS -ldl"], [
     exit -1             
     ])
 
-AC_CHECK_FT2([2.0], [], [
+AC_CHECK_FT2([2.0], [AC_DEFINE(_PYMOL_FREETYPE)], [
     echo "Missing freetype2."
     exit -1             
     ])
@@ -51,7 +52,6 @@ CPPFLAGS="-I$pythoninc $CPPFLAGS"
 AC_CONFIG_HEADERS([config.h])
 
 AC_DEFINE([_PYMOL_MODULE],[],[Build as a module])
-AC_DEFINE([_PYMOL_FREETYPE],[],[Uses FreeType fonts])
 AC_DEFINE([_PYMOL_VMD_PLUGINS],[],[Uses VMD Plugins])
 
 AC_CONFIG_FILES([
