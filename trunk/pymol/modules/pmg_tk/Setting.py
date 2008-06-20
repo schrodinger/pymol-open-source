@@ -170,6 +170,7 @@ class Setting:
         self.mouse_grid = IntVar()
         self.mouse_grid.set(int(self.cmd.get_setting_legacy('mouse_grid')))
 
+
         self.F=[ None,
                     IntVar(),
                     IntVar(),
