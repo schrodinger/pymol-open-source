@@ -708,6 +708,16 @@ class Normal(PMGSkin):
 
         try:
             import webbrowser
+
+            # workaround for DOA webbrowser module under Mac OS X
+
+            try:
+                if hasattr(webbrowser,'_browsers'):
+                    if (not len(webbrowser._browsers)) and sys.platform == 'darwin':
+                        webbrowser.open = lambda x:os.system("open "+x+" & >/dev/null 2&>1")
+            except:
+                pass
+            
             self.menuBar.addmenuitem('Help', 'command',
                                      'Access the Official PyMOL Documentation online',
                                      label='Online Documentation',
@@ -1482,16 +1492,16 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Nutate', 'separator', '')
 
-        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 8 sec.',label='30 deg. over 8 sec.',
+        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 8 sec.',label='60 deg. over 8 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(8,60)"))
 
-        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 16 sec.',label='30 deg. over 16 sec.',
+        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 16 sec.',label='60 deg. over 16 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(16,60)"))
 
-        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 24 sec.',label='30 deg. over 24 sec.',
+        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 24 sec.',label='60 deg. over 24 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(24,60)"))
 
-        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 32 sec.',label='30 deg. over 32 sec.',
+        self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 32 sec.',label='60 deg. over 32 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(32,60)"))
 
         self.menuBar.addcascademenu('Static Loop', 'X-Rock', 'X-Rock',
@@ -2071,6 +2081,21 @@ class Normal(PMGSkin):
                                  label='Highlight Color',
                                 variable = self.setting.cartoon_highlight_color,
                                 command = lambda s=self: s.setting.update('cartoon_highlight_color'))
+
+        self.menuBar.addcascademenu('Setting', 'Ribbon', 'Ribbon',
+                                             label='Ribbon')
+
+        self.menuBar.addmenuitem('Ribbon', 'checkbutton',
+                                 'Side Chain Helper',
+                                 label='Side Chain Helper',
+                                variable = self.setting.ribbon_side_chain_helper,
+                                command = lambda s=self: s.setting.update('ribbon_side_chain_helper'))
+        
+        self.menuBar.addmenuitem('Ribbon', 'checkbutton',
+                                 'Trace Atoms',
+                                 label='Trace Atoms',
+                                variable = self.setting.ribbon_trace_atoms,
+                                command = lambda s=self: s.setting.update('ribbon_trace_atoms'))
 
 
         self.menuBar.addcascademenu('Setting', 'Transparency', 'Transparency',

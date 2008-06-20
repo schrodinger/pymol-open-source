@@ -102,6 +102,12 @@ class Setting:
         self.cartoon_side_chain_helper = IntVar()
         self.cartoon_side_chain_helper.set(int(self.cmd.get_setting_legacy('cartoon_side_chain_helper')))
 
+        self.ribbon_side_chain_helper = IntVar()
+        self.ribbon_side_chain_helper.set(int(self.cmd.get_setting_legacy('ribbon_side_chain_helper')))
+
+        self.ribbon_trace_atoms = IntVar()
+        self.ribbon_trace_atoms.set(int(self.cmd.get_setting_legacy('ribbon_trace_atoms')))
+
         self.ignore_pdb_segi = IntVar()
         self.ignore_pdb_segi.set(int(self.cmd.get_setting_legacy('ignore_pdb_segi')))
 
@@ -246,6 +252,11 @@ class Setting:
             'cartoon_side_chain_helper'        :
             (lambda s,a: (self.cmd.set(a,("%1.0f" % (s.cartoon_side_chain_helper.get())),log=1))),
 
+            'ribbon_side_chain_helper'        :
+            (lambda s,a: (self.cmd.set(a,("%1.0f" % (s.ribbon_side_chain_helper.get())),log=1))),
+            'ribbon_trace_atoms'        :
+            (lambda s,a: (self.cmd.set(a,("%1.0f" % (s.ribbon_trace_atoms.get())),log=1))),
+
 
             'ignore_pdb_segi'        :
             (lambda s,a: (self.cmd.set(a,("%1.0f" % (s.ignore_pdb_segi.get())),log=1))),
@@ -346,6 +357,12 @@ class Setting:
             (lambda s,t: (s.cartoon_cylindrical_helices.set(t[1][0]!=0))),
             'cartoon_side_chain_helper':
             (lambda s,t: (s.cartoon_side_chain_helper.set(t[1][0]!=0))),
+
+            'ribbon_side_chain_helper':
+            (lambda s,t: (s.ribbon_side_chain_helper.set(t[1][0]!=0))),
+            'ribbon_trace_atoms':
+            (lambda s,t: (s.ribbon_trace_atoms.set(t[1][0]!=0))),
+
             'ignore_pdb_segi':
             (lambda s,t: (s.ignore_pdb_segi.set(t[1][0]!=0))),
             'log_box_selections':
@@ -415,7 +432,9 @@ class Setting:
             self.pymol.setting._get_index("cartoon_discrete_colors"),
             self.pymol.setting._get_index("cartoon_smooth_loops"),
             self.pymol.setting._get_index("cartoon_cylindrical_helices"),
-            self.pymol.setting._get_index("cartoon_side_chain_helper"),                  
+            self.pymol.setting._get_index("cartoon_side_chain_helper"),
+            self.pymol.setting._get_index("ribbon_side_chain_helper"),
+            self.pymol.setting._get_index("ribbon_trace_atoms"),                                          
             self.pymol.setting._get_index("ignore_pdb_segi"),         
             self.pymol.setting._get_index("log_box_selections"),
             self.pymol.setting._get_index("log_conformations"),

@@ -1,6 +1,6 @@
 #ifndef _PyMOL_VERSION
 #ifndef PYMOL_EVAL
-#define _PyMOL_VERSION "1.1r0"
+#define _PyMOL_VERSION "1.1r1pre"
 #else
 #define _PyMOL_VERSION "1.1eval"
 #endif
