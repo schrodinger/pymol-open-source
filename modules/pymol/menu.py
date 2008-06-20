@@ -92,7 +92,13 @@ def mol_show(self_cmd, sele):
          ])
 
     self_cmd.show("lines","(byres (("+sele+" & r. CYS+CYX & n. SG) & bound_to ("+sele+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
-    
+
+def hide_hydro(self_cmd, sele):
+    return ( [[ 2, 'Hide:'     , ''                                ],
+              [ 1, 'all' , 'cmd.hide("('+sele+' and hydro)")'   ],
+              [ 1, 'nonpolar' , 'cmd.hide("('+sele+' and hydro and (elem c extend 1))")' ],                            
+              ] )
+
 def mol_hide(self_cmd, sele):
     return (
         [[ 2, 'Hide:'     , ''                                ],
@@ -104,7 +110,8 @@ def mol_hide(self_cmd, sele):
          [ 1, 'side chain', 'cmd.hide("((byres ('+sele+'))&!(n. ca,c,o,h|(n. n&!r. pro)))")' ],
          [ 1, 'waters'    , 'cmd.hide("(solvent and ('+sele+'))")'     ],                      
          [ 0, ''          , ''                                ],
-         [ 1, 'hydrogens' , 'cmd.hide("('+sele+' and hydro)")'   ],
+         [ 1, 'hydrogens' , hide_hydro(self_cmd, sele) ],
+#         [ 1, 'hydrogens' , 'cmd.hide("('+sele+' and hydro)")'   ],
          [ 0, ''          , ''                                ],           
          [ 1, 'unselected', 'cmd.hide("(not '+sele+')")'         ],
          ]
