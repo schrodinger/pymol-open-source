@@ -556,6 +556,7 @@ class Normal(PMGSkin):
                                   buttons = ('OK', 'Cancel'),
                                               defaultbutton='OK',
                                   scrolledlist_labelpos=N,
+                                  scrolledlist_listbox_selectmode=EXTENDED,
                                   label_text='Which object or selection would you like to save?',
                                   scrolledlist_items = lst,
                                   command = self.file_save2)
@@ -571,7 +572,7 @@ class Normal(PMGSkin):
         else:
             sels = self.dialog.getcurselection()
             if len(sels)!=0:
-                sfile = sels[0] # +".pdb"
+                sfile = string.join(sels,"_") # +".pdb"
                 self.my_withdraw(self.dialog)
                 del self.dialog
                 if result=='OK':
@@ -589,9 +590,10 @@ class Normal(PMGSkin):
                         ])
                     if len(sfile):
                         self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
-                        self.cmd.log("save %s,(%s)\n"%(sfile,sels[0]),
-                                  "cmd.save('%s','(%s)')\n"%(sfile,sels[0]))
-                        self.cmd.save(sfile,"(%s)"%sels[0],quiet=0)
+                        save_sele = string.join(map(lambda x:"("+str(x)+")",sels)," or ")
+                        self.cmd.log("save %s,(%s)\n"%(sfile,save_sele),
+                                  "cmd.save('%s','(%s)')\n"%(sfile,save_sele))
+                        self.cmd.save(sfile,"(%s)"%save_sele,quiet=0)
 
     def hide_sele(self):
         self.cmd.log("util.hide_sele()\n","util.hide_sele()\n")
