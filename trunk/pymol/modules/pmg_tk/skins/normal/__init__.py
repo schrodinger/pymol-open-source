@@ -714,7 +714,7 @@ class Normal(PMGSkin):
             try:
                 if hasattr(webbrowser,'_browsers'):
                     if (not len(webbrowser._browsers)) and sys.platform == 'darwin':
-                        webbrowser.open = lambda x:os.system("open "+x+" >/dev/null 2>&1 &")
+                        webbrowser.open = lambda x:os.system("open "+x+" >/dev/null &")
             except:
                 pass
             
