@@ -2,7 +2,7 @@
 
 import sys, string
 import re
-import thread
+import threading
 import os
 
 from Tkinter import *
@@ -20,7 +20,14 @@ from pmg_tk.ColorEditor import ColorEditor
 from pmg_tk.skins import PMGSkin
 from builder import Builder
 
-
+def _darwin_browser_open(url):
+    os.popen("open "+url,'r').read()
+    
+def darwin_browser_open(url):
+    t = threading.Thread(target=_darwin_browser_open,args=(url,))
+    t.setDaemon(1)
+    t.start()
+    
 class Normal(PMGSkin):
 
     pad = ' ' # extra space in menus
@@ -708,20 +715,22 @@ class Normal(PMGSkin):
 
         try:
             import webbrowser
-
-            # workaround for DOA webbrowser module under Mac OS X
-
+            browser_open = webbrowser.open
+            print browser_open
+            
+            # workaround for problematic webbrowser module under Mac OS X (
             try:
-                if hasattr(webbrowser,'_browsers'):
-                    if (not len(webbrowser._browsers)) and sys.platform == 'darwin':
-                        webbrowser.open = lambda x:os.popen("open "+x+" >/dev/null &",'r')
+                if sys.platform == 'darwin':
+                    browser_open = darwin_browser_open
             except:
                 pass
+            
+            print browser_open
             
             self.menuBar.addmenuitem('Help', 'command',
                                      'Access the Official PyMOL Documentation online',
                                      label='Online Documentation',
-                                     command = lambda w=webbrowser:w.open("http://delsci.info/dsc"))
+                                     command = lambda bo=browser_open:bo("http://delsci.info/dsc"))
 
 
             self.menuBar.addcascademenu('Help', 'Topics', 'Topics',
@@ -730,72 +739,72 @@ class Normal(PMGSkin):
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Introductory Screencasts',
                                      label='Introductory Screencasts',
-                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/media:intro"))
+                                     command = lambda bo=browser_open:bo("http://delsci.info/id/media:intro"))
 
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Core Commands',
                                      label='Core Commands',
-                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/command:core_set"))
+                                     command = lambda bo=browser_open:bo("http://delsci.info/id/command:core_set"))
 
             self.menuBar.addmenuitem('Topics', 'separator', '')
 
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Settings',
                                      label='Settings',
-                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/setting"))
+                                     command = lambda bo=browser_open:bo("http://delsci.info/id/setting"))
 
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Atom Selections',
                                      label='Atom Selections',
-                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/selection"))
+                                     command = lambda bo=browser_open:bo("http://delsci.info/id/selection"))
                                     
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Commands',
                                      label='Commands',
-                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/command"))
+                                     command = lambda bo=browser_open:bo("http://delsci.info/id/command"))
             
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Launching',
                                      label='Launching',
-                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/launch"))
+                                     command = lambda bo=browser_open:bo("http://delsci.info/id/launch"))
             
             self.menuBar.addmenuitem('Topics', 'separator', '')
             
             self.menuBar.addmenuitem('Topics', 'command',
                                      'Concepts',
                                      label='Concepts',
-                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/concept"))
+                                     command = lambda bo=browser_open:bo("http://delsci.info/id/concept"))
 
             self.menuBar.addmenuitem('Topics', 'separator', '')
             
             self.menuBar.addmenuitem('Topics', 'command',
                                      'A.P.I. Methods',
                                      label='A.P.I. Methods',
-                                     command = lambda w=webbrowser:w.open("http://delsci.info/id/api"))
+                                     command = lambda bo=browser_open:bo("http://delsci.info/id/api"))
 
             self.menuBar.addmenuitem('Help', 'separator', '')
             
             self.menuBar.addmenuitem('Help', 'command',
                                      'Access the community-maintained PyMOL Wiki',
                                      label='PyMOL Community Wiki',
-                                     command = lambda w=webbrowser:w.open("http://www.pymolwiki.org"))
+                                     command = lambda bo=browser_open:bo("http://www.pymolwiki.org"))
 
             self.menuBar.addmenuitem('Help', 'command',
                                      'Join or browse the pymol-users mailing list',
                                      label='PyMOL Mailing List',
-                                     command = lambda w=webbrowser:w.open("http://www.pymol.org/maillist"))
+                                     command = lambda bo=browser_open:bo("http://www.pymol.org/maillist"))
 
             self.menuBar.addmenuitem('Help', 'command',
                                      'Access the PyMOL Home Page',
                                      label='PyMOL Home Page',
-                                     command = lambda w=webbrowser:w.open("http://www.pymol.org"))
+                                     command = lambda bo=browser_open:bo("http://www.pymol.org"))
             
             self.menuBar.addmenuitem('Help', 'separator', '')
             
             self.menuBar.addmenuitem('Help', 'command',
                                      'Email support@delsci.com',
                                      label='Email support@delsci.com',
-                                     command = lambda w=webbrowser:w.open("mailto:support@delsci.com?subject=PyMOL%20Question"))
+                                     command = lambda bo=browser_open:bo("mailto:support@delsci.com?subject=PyMOL%20Question"))
 
             self.menuBar.addmenuitem('Help', 'separator', '')        
 
@@ -807,11 +816,11 @@ class Normal(PMGSkin):
                 self.menuBar.addmenuitem('Help', 'command',
                                          'Sponsor PyMOL by becoming a Subscriber',
                                          label='Sponsorship Information',
-                                         command = lambda w=webbrowser:w.open("http://pymol.org/funding.html"))
+                                         command = lambda bo=browser_open:bo("http://pymol.org/funding.html"))
 
             self.menuBar.addmenuitem('Help', 'command',
                                      'Learn How to Cite PyMOL', 
-                                     label='How to Cite PyMOL', command = lambda w=webbrowser:w.open("http://pymol.org/citing"))
+                                     label='How to Cite PyMOL', command = lambda bo=browser_open:bo("http://pymol.org/citing"))
             
             self.menuBar.addmenuitem('Help', 'separator', '')
 
