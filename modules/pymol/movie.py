@@ -55,9 +55,11 @@ def load(*args,**kw):
             apply(_self.load,(a,nam),kw)
 #         _self.load(a,nam)
 
-def rock(first,last,angle=30,phase=0,loop=1,axis='y',_self=cmd):
+def rock(first=1,last=-1,angle=30,phase=0,loop=1,axis='y',_self=cmd):
     first=int(first)
     last=int(last)
+    if last<0:
+        last = _self.count_frames()
     angle=float(angle)
     phase=float(phase)
     loop=int(loop)

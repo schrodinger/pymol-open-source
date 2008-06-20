@@ -144,10 +144,8 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
             if ss:
                 if (cmd.select(tmp1,"?pk1")==1) and (cmd.select(tmp2,"?pk2")==1):
                     if amino_acid[0:3]=='nhh': # fix amide hydrogens
-                        print "here1"
                         if ((cmd.select(tmp3,"(name h1 and neighbor "+tmp1+")")==1) and
                             (cmd.select(tmp4,"(name o and neighbor "+tmp2+")")==1)):
-                            print "here2"
                             cmd.set_dihedral(
                                 tmp4, # O
                                 tmp2, # C
