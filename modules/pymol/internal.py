@@ -97,7 +97,7 @@ def _cache_get(target, hash_size = None, _self=cmd):
                 hash_size = len(target[1])
             key = target[1][0:hash_size]
             # should optimize this with a dictionary lookup, key -> index in _cache
-            for entry in _self._pymol._cache: 
+            for entry in _self._pymol._cache:
                 if entry[1][0:hash_size] == key:
                     if entry[2] == target[2]:
                         while len(entry)<6:
@@ -105,6 +105,7 @@ def _cache_get(target, hash_size = None, _self=cmd):
                         entry[4] = entry[4] + 1 # access count
                         entry[5] = time.time() # timestamp
                         result = entry[3]
+                        break
         except:
             traceback.print_exc()
     finally:

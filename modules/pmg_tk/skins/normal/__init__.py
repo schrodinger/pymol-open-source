@@ -714,7 +714,7 @@ class Normal(PMGSkin):
             try:
                 if hasattr(webbrowser,'_browsers'):
                     if (not len(webbrowser._browsers)) and sys.platform == 'darwin':
-                        webbrowser.open = lambda x:os.system("open "+x+" & >/dev/null 2&>1")
+                        webbrowser.open = lambda x:os.system("open "+x+" >/dev/null 2>&1 &")
             except:
                 pass
             
@@ -1953,6 +1953,21 @@ class Normal(PMGSkin):
                                          label='Maximum Quality',
                                          command = lambda s=self: s.cmd.do("_ util.performance(0)"))
 
+
+        self.menuBar.addcascademenu('Display', 'Grid', 'Grid',
+                                             label='Grid')
+
+        self.menuBar.addmenuitem('Grid', 'command', 'By Object',
+                                         label='By Object',
+                                         command = lambda s=self: s.cmd.do("_ set grid_mode, 1"))
+
+        self.menuBar.addmenuitem('Grid', 'command', 'By State',
+                                         label='By State',
+                                         command = lambda s=self: s.cmd.do("_ set grid_mode, 2"))
+                                 
+        self.menuBar.addmenuitem('Grid', 'command', 'Disable',
+                                         label='Disable',
+                                         command = lambda s=self: s.cmd.do("_ set grid_mode, 0"))
         
         self.menuBar.addmenuitem('Display', 'separator', '')
         
