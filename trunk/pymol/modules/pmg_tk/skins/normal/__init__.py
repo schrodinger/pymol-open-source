@@ -718,7 +718,7 @@ class Normal(PMGSkin):
             browser_open = webbrowser.open
             print browser_open
             
-            # workaround for problematic webbrowser module under Mac OS X (
+            # workaround for problematic webbrowser module under Mac OS X 
             try:
                 if sys.platform == 'darwin':
                     browser_open = darwin_browser_open
