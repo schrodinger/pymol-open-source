@@ -461,7 +461,6 @@ class Normal(PMGSkin):
                                          filetypes=ftypes) ]
         for ofile in ofile_list:
             if len(ofile):
-                print ofile
                 if not tutorial:
                     self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
                 try:
@@ -716,7 +715,6 @@ class Normal(PMGSkin):
         try:
             import webbrowser
             browser_open = webbrowser.open
-            print browser_open
             
             # workaround for problematic webbrowser module under Mac OS X 
             try:
@@ -724,8 +722,6 @@ class Normal(PMGSkin):
                     browser_open = darwin_browser_open
             except:
                 pass
-            
-            print browser_open
             
             self.menuBar.addmenuitem('Help', 'command',
                                      'Access the Official PyMOL Documentation online',
