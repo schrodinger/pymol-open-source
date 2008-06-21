@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2008-06-20 Warren L. DeLano <warren@delsci.com>	
+
+	* fixed problem launching browser under Mac OS X / X11
+
+	* updated the MacPyMOL UI & fixed various glitches
+
+	* added a Grid section to the Display menu
+
 2008-06-17 Warren L. DeLano <warren@delsci.com>	
 
 	* added support for multiple objects/selections in save dialog
