@@ -1252,10 +1252,15 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
     
-  /* Win32 embedded PyMOL currently ships with Python 2.4  */
+  /* Win32 embedded PyMOL currently ships with Python 2.4 whereas
+   * Win64 ships with Python 2.5 (by necessity) */
 
 #ifndef EMBEDDED_PYTHONHOME
+#ifdef WIN64
+#define EMBEDDED_PYTHONHOME "\\py25"
+#else
 #define EMBEDDED_PYTHONHOME "\\py24"
+#endif
 #endif
 
   { /* Automatically hide the window if this process was started as a
@@ -1420,15 +1425,15 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
 	    lpSA->lpSecurityDescriptor = lpSD;
 	    lpSA->bInheritHandle = TRUE;
 	  }
-	  if(CreateProcess(NULL, (LPTSTR)cmd_line, lpSA, NULL, TRUE,
+	  
+	  if(CreateProcessA(NULL, (LPTSTR)cmd_line, lpSA, NULL, TRUE,
 			   0, NULL, NULL, &si, &pi)) {
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	  } else {
 	    printf("ERROR: Unable to restart PyMOL process with new environment:\n");
 	    system("set"); // dump the environment.
-	    printf("CreateProcess FAILED: %s\n",cmd_line);
+	    printf("CreateProcess failed, code %d: %s\n",GetLastError(),cmd_line);
 	    printf("PyMOL will now terminate.\n");
-                        
 	  }
 	  if (lpSA != NULL) GlobalFree(lpSA);
 	  if (lpSD != NULL) GlobalFree(lpSD);
