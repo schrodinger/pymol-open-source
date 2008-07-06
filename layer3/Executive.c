@@ -9391,7 +9391,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                 obj = ObjectAlignmentDefine(G,obj,align_vla,align_state,true,trg_obj,mobile_obj);
                 obj->Obj.Color = ColorGetIndex(G,"yellow");
                 ObjectSetName((CObject*)obj,oname);
-                ExecutiveManageObject(G,(CObject*)obj,0,false);
+                ExecutiveManageObject(G,(CObject*)obj,0,quiet);
                 align_to_update = obj;
                 SceneInvalidate(G);
               }

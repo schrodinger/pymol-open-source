@@ -343,7 +343,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 r = mae.read_maestr(mae_str,str(oname),
                                             int(state),
                                             int(finish),int(discrete),
-                                            int(quiet),int(multiplex),int(zoom),_self=_self)
+                                            int(quiet),int(zoom),int(multiplex),_self=_self)
 
                 # END PROPRIETARY CODE SEGMENT
             except ValueError:
