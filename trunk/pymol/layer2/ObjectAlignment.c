@@ -556,7 +556,7 @@ static int *AlignmentMerge(PyMOLGlobals *G, int *curVLA, int *newVLA, ObjectMole
           
           while( (cur_start<n_cur) && !curVLA[cur_start]) 
             cur_start++;
-          while( (new_start<n_cur) && !newVLA[new_start]) 
+          while( (new_start<n_new) && !newVLA[new_start]) 
             new_start++;
           
           if(newVLA[new_start]) { /* default is to insert new first...*/
