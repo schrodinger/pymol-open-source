@@ -79,7 +79,7 @@ static WordKeyValue rep_names[] = {
 
 
 typedef struct {
-  int level;
+  int level, imp_op_level;
   int type; /* 0 = value 1 = operation 2 = pre-operation */
   unsigned int code; 
   SelectorWordType text;
@@ -136,8 +136,6 @@ typedef struct {
 static int *SelectorSelect(PyMOLGlobals *G,char *sele,int state,int domain);
 static int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
 									  float cutoff,int **vla);
-
-static int SelectorImplicitOr(PyMOLGlobals *G,EvalElem *base); 
 
 static int SelectorGetArrayNCSet(PyMOLGlobals *G,int *array,int no_dummies);
 
@@ -334,6 +332,7 @@ static int SelectorGetObjAtmOffset(CSelector *I,ObjectMolecule *obj,int offset)
 #define SELE_RCLs ( 0x4300 | STYP_SEL1 | 0x80 )
 #define SELE_PTDz ( 0x4400 | STYP_SEL0 | 0x90 )
 #define SELE_MSKz ( 0x4500 | STYP_SEL0 | 0x90 )
+#define SELE_IOR2 ( 0x4600 | STYP_OPR2 | 0x10 )
 
 #define SEL_PREMAX 0x8
 
@@ -7895,22 +7894,21 @@ static int *SelectorSelect(PyMOLGlobals *G,char *sele,int state,int domain)
     ENDFD;
   SelectorUpdateTable(G,state,domain);
   parsed=SelectorParse(G,sele);
-  if(parsed)
-	 {
-      if(Feedback(G,FB_Selector,FB_Debugging)) {
-        SelectorWordType *a;
-        fprintf(stderr,"SelectorSelect-DEBUG: parsed tokens:\n");
-        a = parsed;
-        while(1) {
-          if(!a[0][0]) break;
-          fprintf(stderr,"  \"%s\"\n",(a[0]));
-          a++;
-        }
-        fprintf(stderr,"SelectorSelect-DEBUG: end of tokens.\n");
+  if(parsed) {
+    if(Feedback(G,FB_Selector,FB_Debugging)) {
+      SelectorWordType *a;
+      fprintf(stderr,"SelectorSelect-DEBUG: parsed tokens:\n");
+      a = parsed;
+      while(1) {
+        if(!a[0][0]) break;
+        fprintf(stderr,"  \"%s\"\n",(a[0]));
+        a++;
       }
-		result=SelectorEvaluate(G,parsed,state);
-		VLAFreeP(parsed);
-	 }
+      fprintf(stderr,"SelectorSelect-DEBUG: end of tokens.\n");
+    }
+    result=SelectorEvaluate(G,parsed,state);
+    VLAFreeP(parsed);
+  }
   return(result);
 }
 /*========================================================================*/
@@ -9450,33 +9448,6 @@ static int SelectorSelect2(PyMOLGlobals *G,EvalElem *base)
   return(ok);
 }
 /*========================================================================*/
-static int SelectorImplicitOr(PyMOLGlobals *G,EvalElem *base)
-{
-  register CSelector *I=G->Selector;
-  register int a;
-  register int c=0;
-  register int *base_0_sele_a,*base_1_sele_a;
-  register int n_atom = I->NAtom;
-  
-  base_0_sele_a = base[0].sele;
-  base_1_sele_a = base[1].sele;
-  
-  for(a=0;a<n_atom;a++)
-    {
-      if( ((*base_0_sele_a)= (((*base_0_sele_a) > (*base_1_sele_a)) ?
-                              (*base_0_sele_a) : (*base_1_sele_a))) ) /* use higher tag */
-        c++;
-      base_0_sele_a++;
-      base_1_sele_a++;
-    }
-
-  FreeP(base[1].sele);
-  PRINTFD(G,FB_Selector)
-	 " SelectorImplicitOr: %d atoms selected.\n",c
-    ENDFD;
-  return(1);
-}
-/*========================================================================*/
 static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
 {
   register CSelector *I=G->Selector;
@@ -9922,6 +9893,7 @@ static int SelectorLogic2(PyMOLGlobals *G,EvalElem *base)
   switch(base[1].code) {
     
   case SELE_OR_2:
+  case SELE_IOR2:
     {
       base_0_sele_a = base[0].sele;
       base_2_sele_a = base[2].sele;
@@ -10212,7 +10184,7 @@ static void remove_quotes(char *st)
 /*========================================================================*/
 int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state)
 {
-  int level = 0;
+  int level = 0, imp_op_level = 0;
   int depth = 0;
   int a,b,c = 0;
   int ok=true;
@@ -10256,6 +10228,8 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state)
           level--;
           if(level<0)
             ok=ErrMessage(G,"Selector","Syntax error.");
+          else
+            imp_op_level = level;
         }
         if(ok&&depth) Stack[depth].level--;
         break;
@@ -10265,6 +10239,8 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state)
           VLACheck(Stack,EvalElem,depth);
           e=Stack+depth;
           e->level=(level<<4)+1; /* each nested paren is 16 levels of priority */
+          e->imp_op_level=(imp_op_level<<4)+1; 
+          imp_op_level = level;
           e->type=STYP_VALU;
           cc1 = word[c];
           cc2 = e->text;
@@ -10276,84 +10252,91 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state)
           VLACheck(Stack,EvalElem,depth);
           e=Stack+depth;
           e->level=(level<<4)+1;
+          e->imp_op_level=(imp_op_level<<4)+1; 
+          imp_op_level = level;
           e->type=STYP_PVAL;
           strcpy(e->text,word[c]);
           valueFlag++;
         } else { /* possible keyword... */
           if((word[c][0]=='*')&&(!word[c][1]))
-              code = SELE_ALLz;
-            else
-              code = WordKey(G,Keyword,word[c],4,ignore_case,&exact);
-            if(!code) {
-              b=strlen(word[c])-1;
-              if((b>2)&&(word[c][b]==';')) {
-                /* kludge to accomodate unnec. ';' usage */
-                word[c][b]=0;
-                code=WordKey(G,Keyword,word[c],4,ignore_case,&exact);
-              }
+            code = SELE_ALLz;
+          else
+            code = WordKey(G,Keyword,word[c],4,ignore_case,&exact);
+          if(!code) {
+            b=strlen(word[c])-1;
+            if((b>2)&&(word[c][b]==';')) {
+              /* kludge to accomodate unnec. ';' usage */
+              word[c][b]=0;
+              code=WordKey(G,Keyword,word[c],4,ignore_case,&exact);
             }
-            PRINTFD(G,FB_Selector)
-              " Selector: code %x\n",code
-              ENDFD;
-            if((code>0)&&(!exact))  
-              if(SelectorIndexByName(G,word[c])>=0)
-                code=0; /* favor selections over partial keyword matches */
-            if(code) {
-              /* this is a known operation */
+          }
+          PRINTFD(G,FB_Selector)
+            " Selector: code %x\n",code
+            ENDFD;
+          if((code>0)&&(!exact))  
+            if(SelectorIndexByName(G,word[c])>=0)
+              code=0; /* favor selections over partial keyword matches */
+          if(code) {
+            /* this is a known operation */
+            depth++;
+            VLACheck(Stack,EvalElem,depth);
+            e=Stack+depth;
+            e->code=code;
+            e->level=(level<<4)+((e->code&0xF0)>>4);
+            e->imp_op_level=(imp_op_level<<4)+1; 
+            imp_op_level = level;
+            e->type=(e->code&0xF);
+            switch(e->type)
+              {
+              case STYP_SEL0:
+                valueFlag=0;
+                break;
+              case STYP_SEL1:
+                valueFlag=1;
+                break;
+              case STYP_SEL2:
+                valueFlag=2;
+                break;
+              case STYP_OPR1:
+                valueFlag=0;
+                break;
+              case STYP_OPR2:
+                valueFlag=0;
+                break;
+              case STYP_PRP1: 
+                valueFlag=-1;
+                break;
+              case STYP_OP22: 
+                valueFlag=-2;
+                break;
+              }
+          } else {
+            strcpy(tmpKW,word[c]); /* handle <object-name>[`index] syntax */
+            if((np=strstr(tmpKW,"`"))) { /* must be an object name */
+              *np=0;
               depth++;
               VLACheck(Stack,EvalElem,depth);
               e=Stack+depth;
-              e->code=code;
+              e->code=SELE_MODs;
               e->level=(level<<4)+((e->code&0xF0)>>4);
-              e->type=(e->code&0xF);
-              switch(e->type)
-                {
-                case STYP_SEL0:
-                  valueFlag=0;
-                  break;
-                case STYP_SEL1:
-                  valueFlag=1;
-                  break;
-                case STYP_SEL2:
-                  valueFlag=2;
-                  break;
-                case STYP_OPR1:
-                  valueFlag=0;
-                  break;
-                case STYP_OPR2:
-                  valueFlag=0;
-                  break;
-                case STYP_PRP1: 
-                  valueFlag=-1;
-                  break;
-                case STYP_OP22: 
-                  valueFlag=-2;
-                  break;
-                }
-            } else {
-              strcpy(tmpKW,word[c]); /* handle <object-name>[`index] syntax */
-              if((np=strstr(tmpKW,"`"))) { /* must be an object name */
-                *np=0;
-                depth++;
-                VLACheck(Stack,EvalElem,depth);
-                e=Stack+depth;
-                e->code=SELE_MODs;
-                e->level=(level<<4)+((e->code&0xF0)>>4);
-                e->type=STYP_SEL1;
-                valueFlag=1;
-                c--;
-              } else { /* handle <selection-name> syntax */
-                depth++;
-                VLACheck(Stack,EvalElem,depth);
-                e=Stack+depth;
-                e->code=SELE_SELs;
-                e->level=(level<<4)+((e->code&0xF0)>>4);
-                e->type=STYP_SEL1;
-                valueFlag=1;
-                c--;
-                  
-              }
+              e->imp_op_level=(imp_op_level<<4)+1; 
+              imp_op_level = level;
+              e->type=STYP_SEL1;
+              valueFlag=1;
+              c--;
+            } else { /* handle <selection-name> syntax */
+              depth++;
+              VLACheck(Stack,EvalElem,depth);
+              e=Stack+depth;
+              e->code=SELE_SELs;
+              e->level=(level<<4)+((e->code&0xF0)>>4);
+              e->imp_op_level=(imp_op_level<<4)+1; 
+              imp_op_level = level;
+              e->type=STYP_SEL1;
+              valueFlag=1;
+              c--;
             }
+          }
         }
         break;
     }
@@ -10434,11 +10417,18 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state)
                     /* two adjacent lists at zeroth priority level
                        for the scope (lowest nibble of level is
                        zero) is an implicit OR action */
+                    VLACheck(Stack,EvalElem,totDepth);
+                    for(a=totDepth;a>=depth;a--)
+                      Stack[a+1]=Stack[a];
+                    totDepth++;
+                    Stack[depth].type = STYP_OPR2;
+                    Stack[depth].code = SELE_IOR2;
+                    Stack[depth].level = Stack[depth].imp_op_level;
+                    Stack[depth].sele = NULL;
+                    Stack[depth].text[0] = 0;
+                    if(level<Stack[level].level)
+                      level = Stack[level].level;
                     opFlag=true;
-                    ok=SelectorImplicitOr(G,&Stack[depth-1]);
-                    for(a=depth+1;a<=totDepth;a++) 
-                      Stack[a-1]=Stack[a];
-                    totDepth--;
                   }
                 }
           if(ok)

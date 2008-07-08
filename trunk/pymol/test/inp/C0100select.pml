@@ -118,4 +118,15 @@ count_atoms 1tii
 
 count_atoms HOH`307/ expand 5
 
+# implicit OR
+
+count_atoms a// c//
+count_atoms a// c// d//
+count_atoms (a// c//) d//
+count_atoms a// c//&none
+count_atoms c//&none a//
+count_atoms c//&none (a//&none a//)
+count_atoms (c//&none) a// (a//&none)
+count_atoms (a// (d// c//)) & (e// (b// a//))
+
 /print "END-LOG"

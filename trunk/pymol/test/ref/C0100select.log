@@ -162,3 +162,19 @@ PyMOL>count_atoms 1tii
  count_atoms: 5684 atoms
 PyMOL>count_atoms HOH`307/ expand 5
  count_atoms: 12 atoms
+PyMOL>count_atoms a// c//
+ count_atoms: 1769 atoms
+PyMOL>count_atoms a// c// d//
+ count_atoms: 2509 atoms
+PyMOL>count_atoms (a// c//) d//
+ count_atoms: 2509 atoms
+PyMOL>count_atoms a// c//&none
+ count_atoms: 1479 atoms
+PyMOL>count_atoms c//&none a//
+ count_atoms: 1479 atoms
+PyMOL>count_atoms c//&none (a//&none a//)
+ count_atoms: 1479 atoms
+PyMOL>count_atoms (c//&none) a// (a//&none)
+ count_atoms: 1479 atoms
+PyMOL>count_atoms (a// (d// c//)) & (e// (b// a//))
+ count_atoms: 1479 atoms
