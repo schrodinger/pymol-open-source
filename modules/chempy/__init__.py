@@ -197,9 +197,12 @@ class Storage:
 
 class PseudoFile:
 
-    def __init__(self,list):
+    def __init__(self,list=[]):
         self.list = copy.deepcopy(list)
 
+    def write(self,st):
+        self.list.append(str(st))
+    
     def readline(self):
         try:
             return self.list.pop(0)

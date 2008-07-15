@@ -6687,9 +6687,32 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
               } else {
                 cs0 = NULL;
               }
+
+
+
               if(cs0) {
-                ci0 = cs0->AtmToIdx[at0];
-                ci1 = cs1->AtmToIdx[at1];
+
+                /* old broken code: 
+                   ci0 = cs0->AtmToIdx[at0];
+                   ci1 = cs1->AtmToIdx[at1];
+                */
+
+                if(obj0->DiscreteFlag) {
+                  if(cs0==obj0->DiscreteCSet[at0])
+                    ci0=obj0->DiscreteAtmToIdx[at0];
+                  else
+                    ci0=-1;
+                } else 
+                  ci0 = cs0->AtmToIdx[at0]; 
+                
+                if(obj1->DiscreteFlag) {
+                  if(cs1==obj1->DiscreteCSet[at1])
+                    ci1=obj1->DiscreteAtmToIdx[at1];
+                  else
+                    ci1=-1;
+                } else 
+                  ci1 = cs1->AtmToIdx[at1]; 
+
                 if((ci0>=0)&&(ci1>=0))
                   copy3f(cs1->Coord + 3*ci1,
                          cs0->Coord + 3*ci0);
