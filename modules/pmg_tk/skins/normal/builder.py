@@ -87,6 +87,7 @@ class AtomFrame(GuiFrame):
         self.builder = parent.builder        
         GuiFrame.__init__(self, parent)
         GuiLabel(self, "Atoms")
+        GuiButton(self, "H", lambda s=self: s.replace("H",1,1), "Hydrogen")
         GuiButton(self, "C", lambda s=self: s.replace("C",4,4), "Carbon")
         GuiButton(self, "N", lambda s=self: s.replace("N",4,3), "Nitrogen")
         GuiButton(self, "O", lambda s=self: s.replace("O",4,2), "Oxygen")
@@ -161,7 +162,8 @@ class ModifyFrame(GuiFrame):
         GuiButton(self, "|", lambda s=self: s.setOrder("1"), "Create single bond")
         GuiButton(self, "||", lambda s=self: s.setOrder("2"), "Create double bond")
         GuiButton(self, "|||", lambda s=self: s.setOrder("3"), "Create triple bond")
-        GuiButton(self, "Cycle", lambda: cmd.cycle_valence(1), "Cycle valence (single -> double -> triple")
+#        GuiButton(self, "Cycle", lambda: cmd.cycle_valence(1), "Cycle valence (single -> double -> triple")
+        GuiButton(self, "Arom", lambda s=self: s.setOrder("4"), "Create aromatic bond")
 
     def setCharge(self, charge):
         cmd.alter("pk1","formal_charge=%s" % charge)
@@ -203,6 +205,12 @@ class EditFrame(GuiFrame):
         GuiButton(self, "Delete", self.deleteAtom, "Delete pk1")
         #GuiButton(self, "Reset", self.reset)
         GuiButton(self, "Clear", self.clear, "Delete everything")
+        l = Label(self, text="Structure", width=10)
+        l.grid(row=self.row, column=self.col, sticky=E)
+        self.nextColumn()
+        GuiButton(self, "Clean", self.clean, "Cleanup Structure")
+        GuiButton(self, "Sculpt", self.sculpt, "Molecular Sculpting")
+        GuiButton(self, "Undo", self.undo, "Undo Changes")
 
     def invert(self):
         if getAtoms(3):
@@ -210,9 +218,9 @@ class EditFrame(GuiFrame):
 
     def center(self):
         if "pk1" in cmd.get_names("selections"):
-            cmd.zoom("pk1", 5.0)
+            cmd.zoom("pk1", 5.0, animate=-1)
         else:
-            cmd.zoom("all", 3.0)
+            cmd.zoom("all", 3.0, animate=-1)
 
     def deleteAtom(self):
         if getAtoms(1):
@@ -227,6 +235,14 @@ class EditFrame(GuiFrame):
         if check:
             cmd.delete("all")
 
+    def sculpt(self):
+        print "sculpt: to come"
+
+    def clean(self):
+        print "cleanup: to come"
+
+    def undo(self):
+        print "undo: to come"
 
 ############################################################
 
@@ -368,7 +384,7 @@ class Builder(Frame):
 #        print "zoom",self.autoZoom.get()
         if self.autoZoom.get():
             if "pk1" in cmd.get_names("selections"):
-                cmd.zoom("((neighbor pk1) expand 5)", 5.0)
+                cmd.zoom("((neighbor pk1) extend 4)", 4.0, animate=-1)
 
     def doValence(self, *ignore):
         cmd.set("valence", self.showValence.get())
