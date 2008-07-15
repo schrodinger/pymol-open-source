@@ -245,10 +245,17 @@ if pymol_launch != 3: # if this isn't a dry run
 
         if '' not in sys.path: # make sure cwd is in path like normal Python
             sys.path.insert(0,'') 
-    
+
         sys.setcheckinterval(1) # maximize responsiveness
 
+        # include FREEMOL's libpy in sys.path (if present)
         
+        if os.environ.has_key("FREEMOL"):
+            freemol_libpy = os.path.join(os.environ['FREEMOL'],"libpy")
+            if os.path.exists(freemol_libpy) and os.path.isdir(freemol_libpy):
+                if freemol_libpy not in sys.path:
+                    sys.path.append(freemol_libpy)
+                
         def exec_str(self,st):
             try:
                 exec st in self.__dict__, self.__dict__

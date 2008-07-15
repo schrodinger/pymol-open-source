@@ -284,7 +284,7 @@ class Normal(PMGSkin):
         self.history_cur = 0
 
         self.cmdFrame = Frame(self.dataArea)
-        self.buildFrame = Builder(self.dataArea)
+        self.buildFrame = Builder(self.app, self.dataArea)
         
         self.toggleFrame(self.cmdFrame,startup=1)
 

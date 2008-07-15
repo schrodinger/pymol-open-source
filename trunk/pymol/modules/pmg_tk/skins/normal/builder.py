@@ -3,15 +3,15 @@ import sys
 import os
 from glob import glob
 import traceback
+import string
 
 from Tkinter import *
 import tkMessageBox
 import Pmw
 
-# NOTE: these all need to be converted over to instance.cmd, etc.
-# instead of using global modules
+# NOTE: this entire file needs to be converted over to instance.cmd,
+# etc.  instead of using global modules
 
-from pymol import cmd
 from pymol import editor
 import pymol
 
@@ -84,7 +84,8 @@ class GuiRadiobutton:
 
 class AtomFrame(GuiFrame):
     def __init__(self, parent):
-        self.builder = parent.builder        
+        self.builder = parent.builder
+        self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
         GuiLabel(self, "Atoms")
         GuiButton(self, "H", lambda s=self: s.replace("H",1,1), "Hydrogen")
@@ -99,10 +100,10 @@ class AtomFrame(GuiFrame):
         GuiButton(self, "I", lambda s=self: s.replace("I",1,1), "Iodine")
 
     def replace(self, atom, geometry, valence):
-        if getAtoms(1):
-            if "pk1" in cmd.get_names("selections"):
-                cmd.select(active_sele,"byobj pk1")
-                cmd.replace(atom, geometry, valence)
+        if getAtoms(self.cmd, 1):
+            if "pk1" in self.cmd.get_names("selections"):
+                self.cmd.select(active_sele,"byobj pk1")
+                self.cmd.replace(atom, geometry, valence)
                 self.builder.doAutoPick()
             else:
                 warn("Please select (pk1) first...")
@@ -110,6 +111,7 @@ class AtomFrame(GuiFrame):
 class FragmentFrame(GuiFrame):
     def __init__(self, parent):
         self.builder = parent.builder
+        self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
 
         GuiLabel(self, "Fragments")
@@ -131,21 +133,22 @@ class FragmentFrame(GuiFrame):
         GuiImgButton(self, "aro6", lambda s=self: s.grow("benzene",6,0), "Phenyl")
 
     def grow(self, name, fill, geom):
-        if "pk1" in cmd.get_names("selections"):
-            cmd.select(active_sele,"byobj pk1")            
-            editor.attach_fragment("pk1", name, fill, geom)
+        if "pk1" in self.cmd.get_names("selections"):
+            self.cmd.select(active_sele,"byobj pk1")            
+            editor.attach_fragment("pk1", name, fill, geom, _self=self.cmd)
             self.builder.doAutoPick()
         else:
-            editor.attach_fragment("", name, fill, geom)
-            cmd.unpick()
-            cmd.select(active_sele,name)
+            editor.attach_fragment("", name, fill, geom, _self=self.cmd)
+            self.cmd.unpick()
+            self.cmd.select(active_sele,name)
             self.builder.doAutoPick()            
         
 ##############################################################
 
 class ModifyFrame(GuiFrame):
     def __init__(self, parent):
-        self.builder = parent.builder        
+        self.builder = parent.builder
+        self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
         GuiLabel(self, "Charge")
         GuiButton(self, "+1", lambda s=self: s.setCharge("1.0"), "Positive Charge")
@@ -162,43 +165,85 @@ class ModifyFrame(GuiFrame):
         GuiButton(self, "|", lambda s=self: s.setOrder("1"), "Create single bond")
         GuiButton(self, "||", lambda s=self: s.setOrder("2"), "Create double bond")
         GuiButton(self, "|||", lambda s=self: s.setOrder("3"), "Create triple bond")
-#        GuiButton(self, "Cycle", lambda: cmd.cycle_valence(1), "Cycle valence (single -> double -> triple")
+#        GuiButton(self, "Cycle", lambda s=self: s.cmd.cycle_valence(1), "Cycle valence (single -> double -> triple")
         GuiButton(self, "Arom", lambda s=self: s.setOrder("4"), "Create aromatic bond")
 
     def setCharge(self, charge):
-        cmd.alter("pk1","formal_charge=%s" % charge)
-        cmd.h_fill()
+        self.cmd.alter("pk1","formal_charge=%s" % charge)
+        self.cmd.h_fill()
 
     def createBond(self):
-        if getAtoms(2):
-            if cmd.count_atoms("(pk1 or pk2) and (elem h,f,cl,br)") > 0:
+        if getAtoms(self.cmd, 2):
+            if self.cmd.count_atoms("(pk1 or pk2) and (elem h,f,cl,br)") > 0:
                 warn("Can not create bond")
             else:
-                cmd.bond("pk1", "pk2")
-                cmd.h_fill()
-                cmd.unpick()
+                self.cmd.bond("pk1", "pk2")
+                self.cmd.h_fill()
+                self.cmd.unpick()
 
     def deleteBond(self):
-        if getAtoms(2):
-            cmd.unbond("pk1", "pk2")
-            cmd.h_fill()
-            cmd.unpick()
+        if getAtoms(self.cmd, 2):
+            self.cmd.unbond("pk1", "pk2")
+            self.cmd.h_fill()
+            self.cmd.unpick()
 
     def setOrder(self, order):
-        if getAtoms(2):
-            cmd.unbond("pk1", "pk2")
-            cmd.bond("pk1", "pk2", order)
-            cmd.h_fill()
-            cmd.unpick()
+        if getAtoms(self.cmd, 2):
+            self.cmd.unbond("pk1", "pk2")
+            self.cmd.bond("pk1", "pk2", order)
+            self.cmd.h_fill()
+            self.cmd.unpick()
 
+class CleanJob:
+    def __init__(self,self_cmd,sele):
+        self.cmd = self_cmd
+        # this code will moved elsewhere
+        ok = 1
+        try:
+            from freemol import mengine
+        except:
+            ok = 0
+            print "Error: Unable to import module freemol.mengine"
+        if ok:
+            if not mengine.validate():
+                ok = 0
+                print "Error: Unable to validate freemol.mengine"
+        if not ok:
+            warn("Please be sure that FreeMOL is correctly installed.")
+        else:
+            from chempy import io
+            obj_list = self_cmd.get_object_list("bymol ("+sele+")")
+            ok = 0
+            if len(obj_list)==1:
+                obj_name = obj_list[0]
+                sdf_list = io.mol.toList(self_cmd.get_model(obj_name)) + ["$$$$\n"]
+                result = mengine.run(string.join(sdf_list,''))
+                print result
+                if result != None:
+                    if len(result):
+                        clean_sdf = result[0]
+                        clean_mol = clean_sdf.split("$$$$")[0]
+                        if len(clean_mol):
+                            clean_name = "builder_clean_tmp"
+                            self_cmd.read_molstr(clean_mol, clean_name, zoom=0)
+                            self_cmd.set("retain_order","1",clean_name)
+                            self_cmd.fit(clean_name, obj_name, matchmaker=4)
+                            self_cmd.update(obj_name, clean_name, matchmaker=0)
+                            self_cmd.delete(clean_name)
+                            ok = 1
+            if not ok:
+                warn("Invalid Input")
+
+                            
 class EditFrame(GuiFrame):
     def __init__(self, parent):
         self.builder = parent.builder
+        self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
 
         GuiLabel(self, "Editing")
-        GuiButton(self, "Fix H", lambda: cmd.h_fill(), "Fix hydrogens on pk1")
-        GuiButton(self, "Add H", lambda: cmd.h_add("pkmol"), "Add hydrogens to molecule")
+        GuiButton(self, "Fix H", lambda s=self: s.cmd.h_fill(), "Fix hydrogens on pk1")
+        GuiButton(self, "Add H", lambda s=self: s.cmd.h_add("pkmol"), "Add hydrogens to molecule")
         GuiButton(self, "Invert", self.invert, "Invert stereochemistry around pk1 (pk2 and pk3 will remain fixed)")
         #self.nextRow()
         GuiButton(self, "Center", self.center, "Center pk1 (or molecule)")
@@ -213,49 +258,51 @@ class EditFrame(GuiFrame):
         GuiButton(self, "Undo", self.undo, "Undo Changes")
 
     def invert(self):
-        if getAtoms(3):
-            cmd.invert()
+        if getAtoms(self.cmd, 3):
+            self.cmd.invert()
 
     def center(self):
-        if "pk1" in cmd.get_names("selections"):
-            cmd.zoom("pk1", 5.0, animate=-1)
+        if "pk1" in self.cmd.get_names("selections"):
+            self.cmd.zoom("pk1", 5.0, animate=-1)
         else:
-            cmd.zoom("all", 3.0, animate=-1)
+            self.cmd.zoom("all", 3.0, animate=-1)
 
     def deleteAtom(self):
-        if getAtoms(1):
-            cmd.remove_picked()
-            cmd.unpick()
+        if getAtoms(self.cmd, 1):
+            self.cmd.remove_picked()
+            self.cmd.unpick()
 
     def reset(self):
-        cmd.unpick()
+        self.cmd.unpick()
 
     def clear(self):
         check = tkMessageBox.askokcancel("Confirm", "Really delete everything?")
         if check:
-            cmd.delete("all")
+            self.cmd.delete("all")
 
     def sculpt(self):
         print "sculpt: to come"
 
     def clean(self):
-        print "cleanup: to come"
-
+        if getAtoms(self.cmd, 1):
+            CleanJob(self.cmd,"pk1")
+        
     def undo(self):
-        print "undo: to come"
-
+        print "undo: to come"        
+        
 ############################################################
 
 class AminoAcidFrame(GuiFrame):
     def attach(self, aa):
         try:
-            editor.attach_amino_acid("pk1", aa)
+            editor.attach_amino_acid("pk1", aa, _self=self.cmd)
         except:
             traceback.print_exc()
         self.builder.doZoom()
         
     def __init__(self, parent):
-        self.builder = parent.builder        
+        self.builder = parent.builder
+        self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
         #GuiLabel(self, "Amino Acids")
 
@@ -269,11 +316,12 @@ class AminoAcidFrame(GuiFrame):
 
 class SecStructFrame(GuiFrame):
     def __init__(self, parent):
-        self.builder = parent.builder        
+        self.builder = parent.builder
+        self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
         self.secStructL = ["alpha helix", "parallel beta sheet",
                            "antiparallel beta sheet"]
-        self.ss = int(float(cmd.get("secondary_structure")))-1
+        self.ss = int(float(self.cmd.get("secondary_structure")))-1
         ss = self.secStructL[self.ss]
 
         GuiLabel(self, "Secondary Structure:", WID*4)
@@ -286,7 +334,7 @@ class SecStructFrame(GuiFrame):
         if self.ss == len(self.secStructL):
             self.ss = 0
         self.ssText.configure(text=self.secStructL[self.ss])
-        cmd.set("secondary_structure", "%d" % (self.ss+1))
+        self.cmd.set("secondary_structure", "%d" % (self.ss+1))
 
 
 ############################################################
@@ -324,7 +372,7 @@ class EditorFrame(Frame):
 ############################################################
 
 class Builder(Frame):
-    def __init__(self, parent, *kw, **args):
+    def __init__(self, app, parent, *kw, **args):
         """
         module for constructing tkinter gui & widgets for molecule
         building and editing with PyMol
@@ -333,7 +381,9 @@ class Builder(Frame):
         other widgets for working with chemicals, proteins, etc.
         """
         self.builder = self
-
+        self.app = app
+        self.cmd = app.pymol.cmd
+        
         Frame.__init__(self, parent, *kw, **args)
         self.deferred = 1
         
@@ -364,18 +414,18 @@ class Builder(Frame):
 
     def doAutoPick(self, old_atoms=None):
         if self.autoPik.get():
-            cmd.unpick()
-            if cmd.select(newest_sele,"(byobj "+active_sele+") and not "+active_sele)==0:
-                cmd.select(newest_sele, active_sele)
-            new_list = cmd.index(newest_sele+" and hydro")
+            self.cmd.unpick()
+            if self.cmd.select(newest_sele,"(byobj "+active_sele+") and not "+active_sele)==0:
+                self.cmd.select(newest_sele, active_sele)
+            new_list = self.cmd.index(newest_sele+" and hydro")
             if len(new_list)==0:
-                new_list = cmd.index(newest_sele)                
+                new_list = self.cmd.index(newest_sele)                
             if new_list:
                 index = new_list.pop()
                 try:
-                    cmd.edit("%s`%d" % index)
-                    if cmd.get_wizard()!=None:
-                        cmd.do("_ cmd.get_wizard().do_pick(0)")
+                    self.cmd.edit("%s`%d" % index)
+                    if self.cmd.get_wizard()!=None:
+                        self.cmd.do("_ cmd.get_wizard().do_pick(0)")
                 except pymol.CmdException:
                     print " doAutoPick-Error: exception"
             self.doZoom()
@@ -383,11 +433,11 @@ class Builder(Frame):
     def doZoom(self, *ignore):
 #        print "zoom",self.autoZoom.get()
         if self.autoZoom.get():
-            if "pk1" in cmd.get_names("selections"):
-                cmd.zoom("((neighbor pk1) extend 4)", 4.0, animate=-1)
+            if "pk1" in self.cmd.get_names("selections"):
+                self.cmd.zoom("((neighbor pk1) extend 4)", 4.0, animate=-1)
 
     def doValence(self, *ignore):
-        cmd.set("valence", self.showValence.get())
+        self.cmd.set("valence", self.showValence.get())
 
 ##############################################################
 # main constructor methods
@@ -411,7 +461,7 @@ class Builder(Frame):
         self.autoPik.set(1)
         autoB = Checkbutton(self, text="autopick", 
             borderwidth=1, pady=0, justify=LEFT, variable=self.autoPik, 
-            onvalue=1, offvalue=0, command=cmd.unpick)
+            onvalue=1, offvalue=0, command=self.cmd.unpick)
         autoB.grid(row=4, column=1, sticky=W)
 
         self.autoZoom = IntVar()
@@ -422,7 +472,7 @@ class Builder(Frame):
             sticky=W)
 
         self.showValence = StringVar()
-        self.showValence.set(cmd.get("valence"))
+        self.showValence.set(self.cmd.get("valence"))
         Checkbutton(self, text="valence", 
             borderwidth=1, pady=0, justify=LEFT, variable=self.showValence, 
             onvalue="on", offvalue="off", command=self.doValence).grid(row=6, 
@@ -444,7 +494,7 @@ class Builder(Frame):
 
 ############################################################
 
-def getAtoms(nAtom):
+def getAtoms(self_cmd, nAtom):
     """counts how many atoms are selected by (pk) objects
     @param nAtom: number of atoms to select
     @type nAtom: integer
@@ -453,7 +503,7 @@ def getAtoms(nAtom):
     """
     count = 0
     for i in range(1,5):
-        if "pk%d" % i in cmd.get_names("selections"):
+        if "pk%d" % i in self_cmd.get_names("selections"):
             count += 1
 
     if count == nAtom:
