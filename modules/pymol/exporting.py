@@ -272,7 +272,7 @@ SEE ALSO
     
 PYMOL API
 
-    cmd.png(string filename, int width, int width, float dpi,
+    cmd.png(string filename, int width, int height, float dpi,
             int ray, int quiet)
         '''
         r = DEFAULT_ERROR
