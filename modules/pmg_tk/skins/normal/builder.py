@@ -9,9 +9,6 @@ from Tkinter import *
 import tkMessageBox
 import Pmw
 
-# NOTE: this entire file needs to be converted over to instance.cmd,
-# etc.  instead of using global modules
-
 from pymol import editor
 import pymol
 
@@ -218,7 +215,6 @@ class CleanJob:
                 obj_name = obj_list[0]
                 sdf_list = io.mol.toList(self_cmd.get_model(obj_name)) + ["$$$$\n"]
                 result = mengine.run(string.join(sdf_list,''))
-                print result
                 if result != None:
                     if len(result):
                         clean_sdf = result[0]

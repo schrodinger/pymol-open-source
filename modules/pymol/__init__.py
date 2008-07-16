@@ -248,11 +248,18 @@ if pymol_launch != 3: # if this isn't a dry run
 
         sys.setcheckinterval(1) # maximize responsiveness
 
+        # auto-detect bundled FREEMOL (if present)
+        
+        if not os.environ.has_key("FREEMOL"):
+            test_path = os.path.join(os.environ['PYMOL_PATH'],"freemol")
+            if os.path.isdir(test_path):
+                os.environ['FREEMOL'] = test_path
+                
         # include FREEMOL's libpy in sys.path (if present)
         
         if os.environ.has_key("FREEMOL"):
             freemol_libpy = os.path.join(os.environ['FREEMOL'],"libpy")
-            if os.path.exists(freemol_libpy) and os.path.isdir(freemol_libpy):
+            if os.path.isdir(freemol_libpy):
                 if freemol_libpy not in sys.path:
                     sys.path.append(freemol_libpy)
                 
