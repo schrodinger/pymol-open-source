@@ -211,9 +211,11 @@ class CleanJob:
             from chempy import io
             obj_list = self_cmd.get_object_list("bymol ("+sele+")")
             ok = 0
+            result = None
             if len(obj_list)==1:
                 obj_name = obj_list[0]
-                sdf_list = io.mol.toList(self_cmd.get_model(obj_name)) + ["$$$$\n"]
+                state = self_cmd.get_state()
+                sdf_list = io.mol.toList(self_cmd.get_model(obj_name,state=state)) + ["$$$$\n"]
                 result = mengine.run(string.join(sdf_list,''))
                 if result != None:
                     if len(result):
@@ -223,13 +225,17 @@ class CleanJob:
                             clean_name = "builder_clean_tmp"
                             self_cmd.read_molstr(clean_mol, clean_name, zoom=0)
                             self_cmd.set("retain_order","1",clean_name)
-                            self_cmd.fit(clean_name, obj_name, matchmaker=4)
-                            self_cmd.update(obj_name, clean_name, matchmaker=0)
+                            self_cmd.fit(clean_name, obj_name, matchmaker=4, quiet=0,
+                                         mobile_state=1, target_state=state)
+                            self_cmd.update(obj_name, clean_name, matchmaker=0,
+                                            source_state=1, target_state=state)
                             self_cmd.delete(clean_name)
                             ok = 1
             if not ok:
-                warn("Invalid Input")
-
+                warn("Cleanup failed.  Invalid input or software malfuction?")
+                if result != None:
+                    if len(result)>1:
+                        print result[1]
                             
 class EditFrame(GuiFrame):
     def __init__(self, parent):
