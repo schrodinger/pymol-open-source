@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2008-07-16 Warren L. DeLano <warren@delsci.com>
+
+	* in the process of overhauling builder
+
+	* added support for mengine as part of the "freemol" package
+	
 2008-07-08 Warren L. DeLano <warren@delsci.com>
 
 	* fixed order-of-operations bug with implicit OR in selections

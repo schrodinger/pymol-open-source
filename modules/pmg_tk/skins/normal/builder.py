@@ -10,6 +10,8 @@ import tkMessageBox
 import Pmw
 
 from pymol import editor
+from pymol.wizard import Wizard
+
 import pymol
 
 WID = 5
@@ -17,6 +19,452 @@ MAX_COL = 12
 imgDict = {}
 active_sele = "_builder_active"
 newest_sele = "_builder_added"
+
+#############################################################
+# action-directing Wizards
+
+class ActionWizard(Wizard):
+
+    def __init__(self,_self):
+        Wizard.__init__(self,_self)
+        self.actionHash = str(self.__class__)
+        
+    def setActionHash(self, action_hash):
+        self.actionHash = action_hash
+
+    def activateOrDismiss(self):
+        activate_flag = 1
+        cur_wiz = self.cmd.get_wizard()
+        if cur_wiz != None:
+            if cur_wiz.__class__ == self.__class__:
+                if cur_wiz.actionHash == self.actionHash:
+                    activate_flag = 0
+        if activate_flag:
+            self.cmd.set_wizard(self,replace=1)
+            self.cmd.refresh_wizard()
+        else:
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+    
+class CleanWizard(ActionWizard):
+
+    def do_pick(self, bondFlag):
+        CleanJob(self.cmd,"pk1")
+        self.cmd.unpick()
+        self.cmd.set_wizard()
+        self.cmd.refresh_wizard()
+
+    def toggle(self):
+        self.activateOrDismiss()
+
+    def get_prompt(self):
+        return ["Pick object to clean..."]
+    
+    def get_panel(self):
+        return [
+            [ 1, 'Clean', ''],
+            [ 2, 'Done','cmd.set_wizard()'],
+            ]
+
+class RepeatableActionWizard(ActionWizard):
+
+    def __init__(self,_self):
+        ActionWizard.__init__(self,_self)
+        self.repeating = 0
+
+    def repeat(self):
+        self.repeating = 1
+        self.cmd.refresh_wizard()
+
+    def getRepeating(self):
+        return self.repeating
+
+    def activateRepeatOrDismiss(self):
+        activate_flag = 1
+        cur_wiz = self.cmd.get_wizard()
+        if cur_wiz != None:
+            if cur_wiz.__class__ == self.__class__:
+                if cur_wiz.actionHash == self.actionHash:
+                    if cur_wiz.getRepeating():
+                        activate_flag = 0
+                    else:
+                        self.repeat()
+                elif cur_wiz.getRepeating():
+                    self.repeat()
+        if activate_flag:
+            self.cmd.set_wizard(self,replace=1)
+            self.cmd.refresh_wizard()
+        else:
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+    
+class ReplaceWizard(RepeatableActionWizard):
+
+    def do_pick(self, bondFlag):
+        self.cmd.replace(self.symbol, self.geometry, self.valence)
+        if not self.getRepeating():
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+            
+    def toggle(self, symbol, geometry, valence, text):
+
+        self.symbol = symbol
+        self.geometry = geometry
+        self.valence = valence
+        self.text = text
+        self.setActionHash( (symbol,geometry,valence,text) )
+        self.activateRepeatOrDismiss()
+                                    
+    def get_prompt(self):
+        if self.getRepeating():
+            return ["Pick atoms to replace with %s..."%self.text]
+        else:
+            return ["Pick atom to replace with %s..."%self.text]            
+
+    def get_panel(self):
+        if self.getRepeating():
+            return [
+                [ 1, 'Replacing Multiple Atoms',''],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+        else:
+            return [
+                [ 1, 'Replacing an Atom',''],
+                [ 2, 'Replace Multiple Atoms','cmd.get_wizard().repeat()'],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+
+class AttachWizard(RepeatableActionWizard):
+
+    def do_pick(self, bondFlag):
+        editor.attach_fragment("pk1", self.fragment, self.position, self.geometry, _self=self.cmd)
+        self.cmd.unpick()
+        if not self.getRepeating():
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+            
+    def toggle(self, fragment, position, geometry, text):
+        self.fragment = fragment
+        self.position = position
+        self.geometry = geometry
+        self.text = text
+        self.setActionHash( (fragment, position, geometry, text) )
+        self.activateRepeatOrDismiss()
+
+    def create_new(self):
+        names = self.cmd.get_names("objects")
+        num = 1
+        while 1:
+            name = "obj%02d"%num
+            if name not in names:
+                break
+            num = num + 1
+        self.cmd.fragment(self.fragment, name)
+        if not self.getRepeating():
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+    
+    def get_prompt(self):
+        if self.getRepeating():
+            return ["Pick location to attach %s..."%self.text]
+        else:
+            return ["Pick location to attach %s..."%self.text]            
+
+    def get_panel(self):
+        if self.getRepeating():
+            return [
+                [ 1, 'Attaching Multiple Fragments',''],
+                [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],                
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+        else:
+            return [
+                [ 1, 'Attaching a Fragment',''],
+                [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
+                [ 2, 'Attach Multiple Fragments','cmd.get_wizard().repeat()'],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+
+class AminoAcidWizard(RepeatableActionWizard):
+
+    def do_pick(self, bondFlag):
+        editor.attach_amino_acid("pk1", self.aminoAcid, _self=self.cmd)        
+        self.cmd.unpick()
+        if not self.getRepeating():
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+            
+    def toggle(self, amino_acid):
+        self.aminoAcid = amino_acid
+        self.setActionHash( (amino_acid,) )
+        self.activateRepeatOrDismiss()
+
+    def create_new(self):
+        names = self.cmd.get_names("objects")
+        num = 1
+        while 1:
+            name = "obj%02d"%num
+            if name not in names:
+                break
+            num = num + 1
+        editor.attach_amino_acid("pk1", self.aminoAcid, _self=self.cmd)        
+        if not self.getRepeating():
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+    
+    def get_prompt(self):
+        if self.getRepeating():
+            return ["Pick location to attach %s..."%self.aminoAcid]
+        else:
+            return ["Pick location to attach %s..."%self.aminoAcid]            
+
+    def get_panel(self):
+        if self.getRepeating():
+            return [
+                [ 1, 'Attaching Multiple Residues',''],
+                [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],                
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+        else:
+            return [
+                [ 1, 'Attaching Amino Acid',''],
+                [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
+                [ 2, 'Attach Multiple...','cmd.get_wizard().repeat()'],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+            
+class ValenceWizard(RepeatableActionWizard):
+
+    def cleanup(self):
+        self.cmd.button('single_left','none','PkAt')
+        
+    def do_pick(self, bondFlag):
+        if bondFlag:
+            self.cmd.valence(self.order, "pk1", "pk2")
+            self.cmd.h_fill()
+            self.cmd.unpick()
+        else:
+            self.cmd.button('single_left','none','PkBd')
+            self.cmd.unpick()
+        if not self.getRepeating():
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+            
+    def toggle(self, order, text):
+        self.order = order
+        self.text = text
+        self.setActionHash( (order,text) )
+        self.activateRepeatOrDismiss()
+        if self.cmd.get_wizard() == self:
+            self.cmd.button('single_left','none','PkBd') # get us into bond picking mode...
+                                    
+    def get_prompt(self):
+        if self.getRepeating():
+            return ["Pick bond to set as %s..."%self.text]
+        else:
+            return ["Pick bond to set as %s..."%self.text]            
+
+    def get_panel(self):
+        if self.getRepeating():
+            return [
+                [ 1, 'Setting Multiple Valences',''],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+        else:
+            return [
+                [ 1, 'Set a Bond Valence',''],
+                [ 2, 'Set Multiple Valences','cmd.get_wizard().repeat()'],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+
+class ChargeWizard(RepeatableActionWizard):
+
+    def do_pick(self, bondFlag):
+        self.cmd.alter("pk1","formal_charge=%s" % self.charge)
+        self.cmd.h_fill()
+        if abs(float(self.charge))>0.0001:
+            self.cmd.label("pk1","'''"+self.text+"'''")
+        else:
+            self.cmd.label("pk1")
+        self.cmd.unpick()
+        if not self.getRepeating():
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+            
+    def toggle(self, charge, text):
+        self.charge = charge
+        self.text = text
+        self.setActionHash( (charge,text) )
+        self.activateRepeatOrDismiss()
+                                    
+    def get_prompt(self):
+        if self.getRepeating():
+            return ["Pick atoms to set charge = %s..."%self.text]
+        else:
+            return ["Pick atom to set charge = %s..."%self.text]            
+
+    def get_panel(self):
+        if self.getRepeating():
+            return [
+                [ 1, 'Setting Multiple Charges',''],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+        else:
+            return [
+                [ 1, 'Setting Atom Charge',''],
+                [ 2, 'Modify Multiple Atoms','cmd.get_wizard().repeat()'],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+        
+class BondWizard(RepeatableActionWizard):
+
+    def do_pick(self, bondFlag):
+        picked = collectPicked(self.cmd)
+        if picked == ["pk1","pk2"]:
+            self.cmd.bond("pk1", "pk2")
+            self.cmd.h_fill()
+            self.cmd.unpick()
+            if not self.getRepeating():
+                self.cmd.set_wizard()
+                self.cmd.refresh_wizard()
+            
+    def toggle(self):
+        self.activateRepeatOrDismiss()
+                                    
+    def get_prompt(self):
+        if "pk1" in self.cmd.get_names("selections"):
+            return ["Pick second atom for bond..."]
+        else:
+            return ["Pick first atom for bond..."]
+
+    def get_panel(self):
+        if self.getRepeating():
+            return [
+                [ 1, 'Creating Multiple Bonds',''],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+        else:
+            return [
+                [ 1, 'Creating Bond',''],
+                [ 2, 'Create Multiple Bonds','cmd.get_wizard().repeat()'],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+
+class UnbondWizard(RepeatableActionWizard):
+
+    def cleanup(self):
+        self.cmd.button('single_left','none','PkAt')
+        
+    def do_pick(self, bondFlag):
+        if bondFlag:
+            self.cmd.unbond("pk1", "pk2")
+            self.cmd.h_fill()
+            self.cmd.unpick()
+        else:
+            self.cmd.button('single_left','none','PkBd')
+            self.cmd.unpick()
+        if not self.getRepeating():
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+            
+    def toggle(self):
+        self.activateRepeatOrDismiss()
+        if self.cmd.get_wizard() == self:
+            self.cmd.button('single_left','none','PkBd') # get us into bond picking mode...
+                                    
+    def get_prompt(self):
+        return ["Pick bond to delete..."]
+
+    def get_panel(self):
+        if self.getRepeating():
+            return [
+                [ 1, 'Deleting Multiple Bonds',''],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+        else:
+            return [
+                [ 1, 'Deleting a Bond',''],
+                [ 2, 'Delete Multiple Bonds','cmd.get_wizard().repeat()'],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+
+class HydrogenWizard(RepeatableActionWizard):
+
+    def do_pick(self, bondFlag):
+
+        if self.mode == 'fix':
+            self.cmd.h_fill()
+            self.cmd.unpick()
+        elif self.mode == 'add':
+            self.cmd.h_add("pkmol")
+            self.cmd.unpick()            
+        if not self.getRepeating():
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+            
+    def toggle(self,mode):
+        self.mode = mode
+        self.setActionHash( (mode,) )
+        self.activateRepeatOrDismiss()
+                                    
+    def get_prompt(self):
+        if self.mode == 'fix':
+            return ["Pick atom upon which to fix hydrogens..."]
+        else:
+            return ["Pick molecule upon which to add hydrogens..."]
+
+    def get_panel(self):
+        if self.getRepeating():
+            if self.mode == 'fix':
+                return [
+                    [ 1, 'Fixing Hydrogens',''],
+                    [ 2, 'Done','cmd.set_wizard()'],
+                    ]
+            else:
+                return [
+                    [ 1, 'Adding Hydrogens',''],
+                    [ 2, 'Done','cmd.set_wizard()'],
+                    ]
+        else:
+            if self.mode == 'fix':
+                return [
+                    [ 1, 'Fixing Hydrogens',''],
+                    [ 2, 'Fix Multiple Atoms','cmd.get_wizard().repeat()'],
+                    [ 2, 'Done','cmd.set_wizard()'],
+                    ]
+            else:
+                return [
+                    [ 1, 'Adding Hydrogens',''],
+                    [ 2, 'Add To Multiple...','cmd.get_wizard().repeat()'],
+                    [ 2, 'Done','cmd.set_wizard()'],
+                    ]
+
+class RemoveWizard(RepeatableActionWizard):
+
+    def do_pick(self, bondFlag):
+        self.cmd.remove_picked()
+        if not self.getRepeating():
+            self.cmd.set_wizard()
+            self.cmd.refresh_wizard()
+            
+    def toggle(self):
+        self.activateRepeatOrDismiss()
+                                    
+    def get_prompt(self):
+        return ["Pick atom to delete..."]
+
+    def get_panel(self):
+        if self.getRepeating():
+            return [
+                [ 1, 'Deleting Atoms',''],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+        else:
+            return [
+                [ 1, 'Deleting an Atom',''],
+                [ 2, 'Delete Multiple Atoms','cmd.get_wizard().repeat()'],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
 
 ##############################################################
 # base widgets
@@ -79,32 +527,33 @@ class GuiRadiobutton:
 
 ############################################################
 
+
 class AtomFrame(GuiFrame):
     def __init__(self, parent):
         self.builder = parent.builder
         self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
         GuiLabel(self, "Atoms")
-        GuiButton(self, "H", lambda s=self: s.replace("H",1,1), "Hydrogen")
-        GuiButton(self, "C", lambda s=self: s.replace("C",4,4), "Carbon")
-        GuiButton(self, "N", lambda s=self: s.replace("N",4,3), "Nitrogen")
-        GuiButton(self, "O", lambda s=self: s.replace("O",4,2), "Oxygen")
-        GuiButton(self, "P", lambda s=self: s.replace("P",4,3), "Phosphorous")
-        GuiButton(self, "S", lambda s=self: s.replace("S",2,2), "Sulfur")
-        GuiButton(self, "F", lambda s=self: s.replace("F",1,1), "Fluorine")
-        GuiButton(self, "Cl", lambda s=self: s.replace("Cl",1,1), "Chlorine")
-        GuiButton(self, "Br", lambda s=self: s.replace("Br",1,1), "Bromine")
-        GuiButton(self, "I", lambda s=self: s.replace("I",1,1), "Iodine")
+        GuiButton(self, "H", lambda s=self: s.replace("H",1,1, "Hydrogen"), "Hydrogen")
+        GuiButton(self, "C", lambda s=self: s.replace("C",4,4, "Carbon"), "Carbon")
+        GuiButton(self, "N", lambda s=self: s.replace("N",4,3, "Nitrogen"), "Nitrogen")
+        GuiButton(self, "O", lambda s=self: s.replace("O",4,2, "Oxygen"), "Oxygen")
+        GuiButton(self, "P", lambda s=self: s.replace("P",4,3, "Phosphorous"), "Phosphorous")
+        GuiButton(self, "S", lambda s=self: s.replace("S",2,2, "Sulfur"), "Sulfur")
+        GuiButton(self, "F", lambda s=self: s.replace("F",1,1, "Fluorine"), "Fluorine")
+        GuiButton(self, "Cl",lambda s=self: s.replace("Cl",1,1, "Chlorine"), "Chlorine")
+        GuiButton(self, "Br",lambda s=self: s.replace("Br",1,1, "Bromine"), "Bromine")
+        GuiButton(self, "I", lambda s=self: s.replace("I",1,1, "Iodine"), "Iodine")
 
-    def replace(self, atom, geometry, valence):
-        if getAtoms(self.cmd, 1):
-            if "pk1" in self.cmd.get_names("selections"):
-                self.cmd.select(active_sele,"byobj pk1")
-                self.cmd.replace(atom, geometry, valence)
-                self.builder.doAutoPick()
-            else:
-                warn("Please select (pk1) first...")
-
+    def replace(self, atom, geometry, valence, text):
+        picked = collectPicked(self.cmd)
+        if len(picked):
+            self.cmd.select(active_sele,"byobj "+picked[0])
+            self.cmd.replace(atom, geometry, valence)
+            self.builder.doAutoPick()
+        else:
+            ReplaceWizard(_self=self.cmd).toggle(atom,geometry,valence,text)
+            
 class FragmentFrame(GuiFrame):
     def __init__(self, parent):
         self.builder = parent.builder
@@ -112,33 +561,35 @@ class FragmentFrame(GuiFrame):
         GuiFrame.__init__(self, parent)
 
         GuiLabel(self, "Fragments")
-        GuiButton(self, "CH4", lambda s=self: s.grow("methane",1,0), "Methane")
-        GuiButton(self, "C=C", lambda s=self: s.grow("ethylene",4,0))
-        GuiButton(self, "C#C", lambda s=self: s.grow("acetylene",2,0), "Acetylene")
-        GuiButton(self, "NC=O", lambda s=self: s.grow("formamide",3,1), "N->C amide")
-        GuiButton(self, "C=ON", lambda s=self: s.grow("formamide",5,0), "C->N amide")
-        GuiButton(self, "C=O", lambda s=self: s.grow("formaldehyde",2,0), "Aldehyde")
-        GuiButton(self, "S=O2", lambda s=self: s.grow("sulfone",3,1), "Sulfone")
+        GuiButton(self, "CH4", lambda s=self: s.grow("methane",1,0,"methyl"), "Methane")
+        GuiButton(self, "C=C", lambda s=self: s.grow("ethylene",4,0,"ethyl"), "Ethane")
+        GuiButton(self, "C#C", lambda s=self: s.grow("acetylene",2,0,"alkynl"), "Acetylene")
+        GuiButton(self, "NC=O", lambda s=self: s.grow("formamide",3,1,"N->C amide"), "N->C amide")
+        GuiButton(self, "C=ON", lambda s=self: s.grow("formamide",5,0,"C->N amide"), "C->N amide")
+        GuiButton(self, "C=O", lambda s=self: s.grow("formaldehyde",2,0,"carbonyl",), "Aldehyde")
+        GuiButton(self, "S=O2", lambda s=self: s.grow("sulfone",3,1,"sulfonyl"), "Sulfone")
 
         GuiLabel(self, "Rings")
-        GuiImgButton(self, "cyc4", lambda s=self: s.grow("cyclobutane",4,0), "Cyclobutane")
-        GuiImgButton(self, "cyc5", lambda s=self: s.grow("cyclopentane",5,0), "Cyclopentane")
-        GuiImgButton(self, "cyc6", lambda s=self: s.grow("cyclohexane",7,0), "Cyclohexane")
-        GuiImgButton(self, "cyc7", lambda s=self: s.grow("cycloheptane",8,0), "Cycloheptane")
+        GuiImgButton(self, "cyc4", lambda s=self: s.grow("cyclobutane",4,0,"cyclobutyl"), "Cyclobutane")
+        GuiImgButton(self, "cyc5", lambda s=self: s.grow("cyclopentane",5,0,"cyclopentyl"), "Cyclopentane")
+        GuiImgButton(self, "cyc6", lambda s=self: s.grow("cyclohexane",7,0,"cyclohexyl"), "Cyclohexane")
+        GuiImgButton(self, "cyc7", lambda s=self: s.grow("cycloheptane",8,0,"cycloheptyl"), "Cycloheptane")
         #self.nextRow()
-        GuiImgButton(self, "aro5", lambda s=self: s.grow("cyclopentadiene",5,0), "Cyclopentadiene")
-        GuiImgButton(self, "aro6", lambda s=self: s.grow("benzene",6,0), "Phenyl")
+        GuiImgButton(self, "aro5", lambda s=self: s.grow("cyclopentadiene",5,0,"cyclopentadienyl"), "Cyclopentadiene")
+        GuiImgButton(self, "aro6", lambda s=self: s.grow("benzene",6,0,"phenyl"), "Phenyl")
 
-    def grow(self, name, fill, geom):
+    def grow(self, name, pos, geom, text):
         if "pk1" in self.cmd.get_names("selections"):
             self.cmd.select(active_sele,"byobj pk1")            
-            editor.attach_fragment("pk1", name, fill, geom, _self=self.cmd)
+            editor.attach_fragment("pk1", name, pos, geom, _self=self.cmd)
             self.builder.doAutoPick()
         else:
-            editor.attach_fragment("", name, fill, geom, _self=self.cmd)
             self.cmd.unpick()
-            self.cmd.select(active_sele,name)
-            self.builder.doAutoPick()            
+            AttachWizard(self.cmd).toggle(name, pos, geom, text)
+#            editor.attach_fragment("", name, pos, geom, _self=self.cmd)
+#            self.cmd.unpick()
+#            self.cmd.select(active_sele,name)
+#            self.builder.doAutoPick()            
         
 ##############################################################
 
@@ -148,9 +599,9 @@ class ModifyFrame(GuiFrame):
         self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
         GuiLabel(self, "Charge")
-        GuiButton(self, "+1", lambda s=self: s.setCharge("1.0"), "Positive Charge")
-        GuiButton(self, "0", lambda s=self: s.setCharge("0.0"), "Neutral Charge")
-        GuiButton(self, "-1", lambda s=self: s.setCharge("-1.0"), "Negative Charge")
+        GuiButton(self, "+1", lambda s=self: s.setCharge("1.0","+1"), "Positive Charge")
+        GuiButton(self, "0", lambda s=self: s.setCharge("0.0","neutral"), "Neutral Charge")
+        GuiButton(self, "-1", lambda s=self: s.setCharge("-1.0","-1"), "Negative Charge")
 
         l = Label(self, text="Bond", width=10)
         l.grid(row=self.row, column=self.col, sticky=E)
@@ -159,37 +610,55 @@ class ModifyFrame(GuiFrame):
         GuiButton(self, "Create", self.createBond, "Create bond between pk1 and pk2")
         GuiButton(self, "Delete", self.deleteBond, "Delete bond between pk1 and pk2")
         #self.nextRow()
-        GuiButton(self, "|", lambda s=self: s.setOrder("1"), "Create single bond")
-        GuiButton(self, "||", lambda s=self: s.setOrder("2"), "Create double bond")
-        GuiButton(self, "|||", lambda s=self: s.setOrder("3"), "Create triple bond")
+        GuiButton(self, "|", lambda s=self: s.setOrder("1", "single"), "Create single bond")
+        GuiButton(self, "||", lambda s=self: s.setOrder("2", "double", ), "Create double bond")
+        GuiButton(self, "|||", lambda s=self: s.setOrder("3", "triple"), "Create triple bond")
 #        GuiButton(self, "Cycle", lambda s=self: s.cmd.cycle_valence(1), "Cycle valence (single -> double -> triple")
-        GuiButton(self, "Arom", lambda s=self: s.setOrder("4"), "Create aromatic bond")
+        GuiButton(self, "Arom", lambda s=self: s.setOrder("4", "aromatic"), "Create aromatic bond")
 
-    def setCharge(self, charge):
-        self.cmd.alter("pk1","formal_charge=%s" % charge)
-        self.cmd.h_fill()
-
-    def createBond(self):
-        if getAtoms(self.cmd, 2):
-            if self.cmd.count_atoms("(pk1 or pk2) and (elem h,f,cl,br)") > 0:
-                warn("Can not create bond")
-            else:
-                self.cmd.bond("pk1", "pk2")
+    def setCharge(self, charge, text):
+        picked = collectPicked(self.cmd)
+        if len(picked)>0:
+            for sele in picked:
+                self.cmd.alter(sele,"formal_charge=%s" % charge)
                 self.cmd.h_fill()
-                self.cmd.unpick()
-
-    def deleteBond(self):
-        if getAtoms(self.cmd, 2):
-            self.cmd.unbond("pk1", "pk2")
+                if abs(float(charge))>0.0001:
+                    self.cmd.label(sele,"'''"+text+"'''")
+                else:
+                    self.cmd.label(sele)
+            self.cmd.unpick()
+        else:
+            ChargeWizard(self.cmd).toggle(charge, text)
+                
+    def createBond(self):
+        picked = collectPicked(self.cmd)
+        if picked == ["pk1","pk2"]:
+            self.cmd.bond("pk1", "pk2")
             self.cmd.h_fill()
             self.cmd.unpick()
+        else:
+            BondWizard(self.cmd).toggle()
 
-    def setOrder(self, order):
-        if getAtoms(self.cmd, 2):
+    def deleteBond(self):
+        picked = collectPicked(self.cmd)
+        if picked == ["pk1","pk2"]:
+            self.cmd.bond("pk1", "pk2")
+            self.cmd.h_fill()
+            self.cmd.unpick()
+        else:
+            self.cmd.unpick()
+            UnbondWizard(self.cmd).toggle()
+
+    def setOrder(self, order, text):
+        picked = collectPicked(self.cmd)
+        if picked == ["pk1","pk2"]:
             self.cmd.unbond("pk1", "pk2")
             self.cmd.bond("pk1", "pk2", order)
             self.cmd.h_fill()
             self.cmd.unpick()
+        else:
+            self.cmd.unpick()
+            ValenceWizard(_self=self.cmd).toggle(order,text)        
 
 class CleanJob:
     def __init__(self,self_cmd,sele):
@@ -225,7 +694,7 @@ class CleanJob:
                             clean_name = "builder_clean_tmp"
                             self_cmd.read_molstr(clean_mol, clean_name, zoom=0)
                             self_cmd.set("retain_order","1",clean_name)
-                            self_cmd.fit(clean_name, obj_name, matchmaker=4, quiet=0,
+                            self_cmd.fit(clean_name, obj_name, matchmaker=4,
                                          mobile_state=1, target_state=state)
                             self_cmd.update(obj_name, clean_name, matchmaker=0,
                                             source_state=1, target_state=state)
@@ -244,12 +713,12 @@ class EditFrame(GuiFrame):
         GuiFrame.__init__(self, parent)
 
         GuiLabel(self, "Editing")
-        GuiButton(self, "Fix H", lambda s=self: s.cmd.h_fill(), "Fix hydrogens on pk1")
-        GuiButton(self, "Add H", lambda s=self: s.cmd.h_add("pkmol"), "Add hydrogens to molecule")
+        GuiButton(self, "Fix H", lambda s=self: s.fixH(), "Fix hydrogens on picked atoms.")
+        GuiButton(self, "Add H", lambda s=self: s.addH(), "Add hydrogens to entire molecule")
         GuiButton(self, "Invert", self.invert, "Invert stereochemistry around pk1 (pk2 and pk3 will remain fixed)")
         #self.nextRow()
-        GuiButton(self, "Center", self.center, "Center pk1 (or molecule)")
-        GuiButton(self, "Delete", self.deleteAtom, "Delete pk1")
+#        GuiButton(self, "Center", self.center, "Center pk1 (or molecule)")
+        GuiButton(self, "Delete", self.removeAtom, "Remove atoms")
         #GuiButton(self, "Reset", self.reset)
         GuiButton(self, "Clear", self.clear, "Delete everything")
         l = Label(self, text="Structure", width=10)
@@ -258,6 +727,22 @@ class EditFrame(GuiFrame):
         GuiButton(self, "Clean", self.clean, "Cleanup Structure")
         GuiButton(self, "Sculpt", self.sculpt, "Molecular Sculpting")
         GuiButton(self, "Undo", self.undo, "Undo Changes")
+
+    def fixH(self):
+        picked = collectPicked(self.cmd)
+        if len(picked):
+            self.cmd.h_fill()
+            self.cmd.unpick()
+        else:
+            HydrogenWizard(_self=self.cmd).toggle('fix')
+        
+    def addH(self):
+        picked = collectPicked(self.cmd)
+        if len(picked):
+            self.cmd.h_add("pkmol")
+            self.cmd.unpick()            
+        else:
+            HydrogenWizard(_self=self.cmd).toggle('add')
 
     def invert(self):
         if getAtoms(self.cmd, 3):
@@ -269,11 +754,14 @@ class EditFrame(GuiFrame):
         else:
             self.cmd.zoom("all", 3.0, animate=-1)
 
-    def deleteAtom(self):
-        if getAtoms(self.cmd, 1):
+    def removeAtom(self):
+        picked = collectPicked(self.cmd)
+        if len(picked):
             self.cmd.remove_picked()
             self.cmd.unpick()
-
+        else:
+            RemoveWizard(self.cmd).toggle()
+            
     def reset(self):
         self.cmd.unpick()
 
@@ -283,24 +771,33 @@ class EditFrame(GuiFrame):
             self.cmd.delete("all")
 
     def sculpt(self):
-        print "sculpt: to come"
+        warn("Sorry, the sculpt button is not yet implemented.")
 
     def clean(self):
-        if getAtoms(self.cmd, 1):
-            CleanJob(self.cmd,"pk1")
+        picked = collectPicked(self.cmd)
+        if len(picked):
+            CleanJob(self.cmd,string.join(picked," or "))
+            self.cmd.unpick()
+        else:
+            CleanWizard(_self=self.cmd).toggle()
         
     def undo(self):
-        print "undo: to come"        
+        warn("Sorry, the undo button is not yet implemented.")
         
 ############################################################
 
 class AminoAcidFrame(GuiFrame):
     def attach(self, aa):
-        try:
-            editor.attach_amino_acid("pk1", aa, _self=self.cmd)
-        except:
-            traceback.print_exc()
-        self.builder.doZoom()
+        picked = collectPicked(self.cmd)
+        if len(picked)==1:
+            try:
+                editor.attach_amino_acid(picked[0], aa, _self=self.cmd)
+            except:
+                traceback.print_exc()
+            self.builder.doZoom()
+        else:
+            self.cmd.unpick()
+            AminoAcidWizard(_self=self.cmd).toggle(aa)    
         
     def __init__(self, parent):
         self.builder = parent.builder
@@ -460,7 +957,7 @@ class Builder(Frame):
         self.toggleChemProtein()
 
         self.autoPik = IntVar()
-        self.autoPik.set(1)
+        self.autoPik.set(0)
         autoB = Checkbutton(self, text="autopick", 
             borderwidth=1, pady=0, justify=LEFT, variable=self.autoPik, 
             onvalue=1, offvalue=0, command=self.cmd.unpick)
@@ -496,8 +993,22 @@ class Builder(Frame):
 
 ############################################################
 
+def getSeleDict(self_cmd):
+    result = {}
+    for sele in self_cmd.get_names("selections"):
+        result[sele] = 1
+    return result
+
+def collectPicked(self_cmd):
+    result = []
+    sele_dict = getSeleDict(self_cmd)
+    for sele in ["pk1","pk2","pk3","pk4"]:
+        if sele_dict.has_key(sele):
+            result.append(sele)
+    return result
+
 def getAtoms(self_cmd, nAtom):
-    """counts how many atoms are selected by (pk) objects
+    """counts how many atoms are selected by (pk) selections
     @param nAtom: number of atoms to select
     @type nAtom: integer
     @returns: 1 if number selected == nAtoms, 0 if not
