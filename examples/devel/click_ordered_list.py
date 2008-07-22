@@ -4,6 +4,7 @@
 from pymol.wizard import Wizard
 from pymol import cmd, util
 import pymol
+import traceback
 
 click_sele = "_clicked"
 disp_sele = "_displayed"
@@ -61,7 +62,8 @@ class Clicker(Wizard):
             cmd.refresh_wizard()
         self.cmd.delete(name)
         self.cmd.select(disp_sele,click_sele,enable=1)            
-
+        return 1
+    
     def remove_last(self):
         self.click_list = self.click_list[:-1]
         self.cmd.select(click_sele,"none")
