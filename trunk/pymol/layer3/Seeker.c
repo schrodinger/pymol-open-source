@@ -117,7 +117,10 @@ static void SeekerSelectionToggleRange(PyMOLGlobals *G,CSeqRow* rowVLA,int row_n
         
         if(logging) SelectorLogSele(G,cTempSeekerSele);
         
-        if(!WizardDoSelect(G,cTempSeekerSele)) {
+#if 0
+        if(!WizardDoSelect(G,cTempSeekerSele))
+#endif
+          {
           
           ExecutiveGetActiveSeleName(G,selName,true,logging);
           
@@ -142,6 +145,8 @@ static void SeekerSelectionToggleRange(PyMOLGlobals *G,CSeqRow* rowVLA,int row_n
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buf1);
             PLog(G,buf2,cPLog_no_flush);
           }
+          WizardDoSelect(G,selName);
+
         }
         
         ExecutiveDelete(G,cTempSeekerSele);
@@ -189,7 +194,10 @@ static void SeekerSelectionToggle(PyMOLGlobals *G,CSeqRow* rowVLA,int row_num,
 
         if(logging) SelectorLogSele(G,cTempSeekerSele);
         
-        if(!WizardDoSelect(G,cTempSeekerSele)) {
+#if 0
+        if(!WizardDoSelect(G,cTempSeekerSele)) 
+#endif
+          {
           
           ExecutiveGetActiveSeleName(G,selName,true,logging);
           
@@ -223,6 +231,7 @@ static void SeekerSelectionToggle(PyMOLGlobals *G,CSeqRow* rowVLA,int row_num,
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buf1);
             PLog(G,buf2,cPLog_no_flush);
           }
+          WizardDoSelect(G,selName);
         }
 
         ExecutiveDelete(G,cTempSeekerSele);
