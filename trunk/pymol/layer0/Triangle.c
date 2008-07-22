@@ -299,9 +299,10 @@ static int *TriangleMakeStripVLA(TriangleSurfaceRec *II,float *v,float *vn,int n
   return(strip);
 }
 
-static void TriangleAdjustNormals(TriangleSurfaceRec *II,float *v,float *vn,int n,int final_pass)
+static int TriangleAdjustNormals(TriangleSurfaceRec *II,float *v,float *vn,int n,int final_pass)
 {
   register TriangleSurfaceRec *I=II;
+  int ok=true;
   /* points all normals to the average of the intersecting triangles in order to maximum surface smoothness */
   float *tNorm = NULL,*tWght;
   int *vFlag=NULL;
@@ -434,6 +435,8 @@ static void TriangleAdjustNormals(TriangleSurfaceRec *II,float *v,float *vn,int 
   FreeP(vFlag);
   FreeP(tWght);
   FreeP(tNorm);
+  if(I->G->Interrupt) ok=false;
+  return ok;
 }
 
 
@@ -729,13 +732,14 @@ static void TriangleAdd(TriangleSurfaceRec *II,int i0,int i1,int i2,float *tNorm
 
 }
 
-static void TriangleBuildObvious(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n)
+static int TriangleBuildObvious(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n)
 {
   /* this routine builds obvious, easy triagles where the closest point 
   * to the edge is always tried */
 
   register TriangleSurfaceRec *I=II;
   MapType *map;
+  int ok=true;
   float *v1,*v2,*v0,*v4,vt[3],vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
   int i0,s01=0,s02=0,s12,i,j,h,k,l,i4;
   float dp;
@@ -915,15 +919,17 @@ static void TriangleBuildObvious(TriangleSurfaceRec *II,int i1,int i2,float *v,f
       }
     }
   }
+  if(I->G->Interrupt) ok=false;
+  return ok;
 }
 
-static void TriangleBuildSecondPass(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n)
+static int TriangleBuildSecondPass(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n)
 {
 
   /* in this version, the closest active point is tried.  Closed points
 	  are skipped. */
-
   register TriangleSurfaceRec *I=II;
+  int ok=true;
   MapType *map;
   float *v1,*v2,*v0,*v4,vt[3],vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
   int i0,s01=0,s02=0,s12,i,j,h,k,l,i4;
@@ -1063,15 +1069,17 @@ static void TriangleBuildSecondPass(TriangleSurfaceRec *II,int i1,int i2,float *
       }
     }
   }
+  if(I->G->Interrupt) ok=false;
+  return ok;
 }
 
-static void TriangleBuildSecondSecondPass(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n,float cutoff)
+static int TriangleBuildSecondSecondPass(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n,float cutoff)
 {
-
   /* in this version, the closest active point is tried.  Closed points
 	  are skipped. */
 
   register TriangleSurfaceRec *I=II;
+  int ok=true;
   MapType *map;
   float *v1,*v2,*v0,*v4,vt[3],vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
   int i0,s01=0,s02=0,s12,i,j,h,k,l,i4;
@@ -1195,6 +1203,8 @@ static void TriangleBuildSecondSecondPass(TriangleSurfaceRec *II,int i1,int i2,f
       }
     }
   }
+  if(I->G->Interrupt) ok=false;
+  return ok;
 }
 
 static void TriangleBuildSingle(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n)
@@ -1313,11 +1323,12 @@ static void TriangleBuildSingle(TriangleSurfaceRec *II,int i1,int i2,float *v,fl
 }
 
 
-static void TriangleBuildThirdPass(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n)
+static int TriangleBuildThirdPass(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n)
 {
   /* This routine fills in triangles surrounded by three active edges */
 
   register TriangleSurfaceRec *I=II;
+  int ok = true;
   MapType *map;
   float *v1,*v2,*v0,vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
   int i0,s01,s02,s12,i,j,h,k,l;
@@ -1369,14 +1380,17 @@ static void TriangleBuildThirdPass(TriangleSurfaceRec *II,int i1,int i2,float *v
       }
     }
   }
+  if(I->G->Interrupt) ok=false;
+  return ok;
 }
 
 
-static void TriangleBuildLast(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n)
+static int TriangleBuildLast(TriangleSurfaceRec *II,int i1,int i2,float *v,float *vn,int n)
 {
   /* this routine is a hack to fill in the odd-ball situations */
 
   register TriangleSurfaceRec *I=II;
+  int ok=true;
   MapType *map;
   float *v1,*v2,*v0,vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
   int i0,s01,s02,s12,i,j,h,k,l;
@@ -1430,11 +1444,14 @@ static void TriangleBuildLast(TriangleSurfaceRec *II,int i1,int i2,float *v,floa
       }
     }
   }
+  if(I->G->Interrupt) ok=false;
+  return ok;
 }
 
-static void FollowActives(TriangleSurfaceRec *II,float *v,float *vn,int n,int mode)
+static int FollowActives(TriangleSurfaceRec *II,float *v,float *vn,int n,int mode)
 {
   register TriangleSurfaceRec *I=II;
+  int ok = true;
   int i1,i2;
   
   PRINTFD(I->G,FB_Triangle)
@@ -1471,12 +1488,14 @@ static void FollowActives(TriangleSurfaceRec *II,float *v,float *vn,int n,int mo
     " TriangleFollowActives-Debug: exiting: nTri=%6d nActive=%6d\n",
     I->nTri,I->nActive
     ENDFD;
-
+  if(I->G->Interrupt) ok=false;
+  return ok;
 }
 
-static void TriangleFill(TriangleSurfaceRec *II,float *v,float *vn,int n,int first_time)
+static int TriangleFill(TriangleSurfaceRec *II,float *v,float *vn,int n,int first_time)
 {
   register TriangleSurfaceRec *I=II;
+  int ok=true;
   int lastTri,lastTri2,lastTri3;
   int a,i,j,h,k,l;
   float minDist2,*v0,*n0,*n1;
@@ -1495,18 +1514,18 @@ static void TriangleFill(TriangleSurfaceRec *II,float *v,float *vn,int n,int fir
   cache = &I->map_cache;
 
   lastTri3=-1;
-  while(lastTri3!=I->nTri) {
+  while(ok&&(lastTri3!=I->nTri)) {
     lastTri3=I->nTri;
     n_pass++;
     if(n_pass>(int)SettingGet(I->G,cSetting_triangle_max_passes))
       break;
     
     I->nActive=0;
-    while((!I->nActive)&&(I->nTri==lastTri3)) {
+    while(ok&&(!I->nActive)&&(I->nTri==lastTri3)) {
       i1=-1;
       minDist2 = MAXFLOAT;
       
-      for(a=0;a<n;a++) 
+      for(a=0;a<n;a++) {
         if(!I->edgeStatus[a]) {
           v0=v+a*3;
           n0 = vn+3*a;
@@ -1535,55 +1554,57 @@ static void TriangleFill(TriangleSurfaceRec *II,float *v,float *vn,int n,int fir
             }
           }
         }
-      
-        if(i1>=0) {
-
-          if(!MapCached(cache,first_vert_used)) {
-            MapCache(cache,first_vert_used);
-            if(first_time) {
-              n_pass=n_pass/2; 
-              /* if we've entered a new map quadrant then half the effective number of passes */
-              
-              /* this is a very non-obvious way of making sure that we
-                 don't prematurely terminate when surfacing
-                 discontinuous surfaces that will always require many passes */
-            }
+      }
+      if(i1>=0) {
+        
+        if(!MapCached(cache,first_vert_used)) {
+          MapCache(cache,first_vert_used);
+          if(first_time) {
+            n_pass=n_pass/2; 
+            /* if we've entered a new map quadrant then half the effective number of passes */
+            
+            /* this is a very non-obvious way of making sure that we
+               don't prematurely terminate when surfacing
+               discontinuous surfaces that will always require many passes */
           }
-          
-          if(I->vertActive[i1]<0) I->vertActive[i1]--;
-          VLACheck(I->activeEdge,int,I->nActive*2+1);
-          I->activeEdge[I->nActive*2] = i1;
-          I->activeEdge[I->nActive*2+1] = i2;
-          I->nActive=1;
+        }
+        
+        if(I->vertActive[i1]<0) I->vertActive[i1]--;
+        VLACheck(I->activeEdge,int,I->nActive*2+1);
+        I->activeEdge[I->nActive*2] = i1;
+        I->activeEdge[I->nActive*2+1] = i2;
+        I->nActive=1;
+        lastTri=I->nTri;
+        ok = FollowActives(I,v,vn,n,0);
+        while(ok&&(lastTri!=I->nTri)) {
           lastTri=I->nTri;
-          FollowActives(I,v,vn,n,0);
-          while(lastTri!=I->nTri) {
-            lastTri=I->nTri;
-            for(a=0;a<n;a++) 
-              if(I->vertActive[a])
-                TriangleActivateEdges(I,a);
-            FollowActives(I,v,vn,n,0);
-          }
-        } else break;
+          for(a=0;a<n;a++) 
+            if(I->vertActive[a])
+              TriangleActivateEdges(I,a);
+          ok = FollowActives(I,v,vn,n,0);
+        }
+      } else break;
+      if(I->G->Interrupt) 
+        ok=false;
+      if(!ok) break;
     }
-    
     
     PRINTFD(I->G,FB_Triangle)
       " TriangleFill-Debug: Follow actives 1 nTri=%d\n",I->nTri
       ENDFD;
     lastTri=I->nTri-1;
-    while(lastTri!=I->nTri) {
+    while(ok && (lastTri!=I->nTri)) {
       lastTri=I->nTri;
       for(a=0;a<n;a++) 
         if(I->vertActive[a])
           TriangleActivateEdges(I,a);
-      FollowActives(I,v,vn,n,1);
+      ok = FollowActives(I,v,vn,n,1);
     }	 
     
     lastTri2=I->nTri-1;
-    while(lastTri2!=I->nTri) {
+    while(ok&&(lastTri2!=I->nTri)) {
       lastTri2=I->nTri;
-      for(a=0;a<n;a++) 
+      for(a=0;a<n;a++) {
         if(I->vertActive[a]) {
           TriangleActivateEdges(I,a);
           if(I->nActive) {
@@ -1597,27 +1618,29 @@ static void TriangleFill(TriangleSurfaceRec *II,float *v,float *vn,int n,int fir
             PRINTFD(I->G,FB_Triangle)
               " TriangleFill-Debug: follow actives 1: nTri=%d nActive=%d\n",I->nTri,I->nActive
               ENDFD;
-            FollowActives(I,v,vn,n,1);
+            ok = FollowActives(I,v,vn,n,1);
           }
         }
+        if(!ok) break;
+      }
     }
     
     PRINTFD(I->G,FB_Triangle)
       " TriangleFill-Debug: Follow actives 1 nTri=%d\n",I->nTri
       ENDFD;
     lastTri=I->nTri-1;
-    while(lastTri!=I->nTri) {
+    while(ok && (lastTri!=I->nTri)) {
       lastTri=I->nTri;
       for(a=0;a<n;a++) 
         if(I->vertActive[a])
           TriangleActivateEdges(I,a);
-      FollowActives(I,v,vn,n,2);
+      ok = FollowActives(I,v,vn,n,2);
     }	 
     
     lastTri2=I->nTri-1;
-    while(lastTri2!=I->nTri) {
+    while(ok && (lastTri2!=I->nTri)) {
       lastTri2=I->nTri;
-      for(a=0;a<n;a++) 
+      for(a=0;a<n;a++) {
         if(I->vertActive[a]) {
           TriangleActivateEdges(I,a);
           if(I->nActive) {
@@ -1631,9 +1654,11 @@ static void TriangleFill(TriangleSurfaceRec *II,float *v,float *vn,int n,int fir
             PRINTFD(I->G,FB_Triangle)
               " TriangleFill-Debug: follow actives 2: nTri=%d nActive=%d\n",I->nTri,I->nActive
               ENDFD;
-            FollowActives(I,v,vn,n,2);
+            ok = FollowActives(I,v,vn,n,2);
           }
         }
+        if(!ok) break;
+      }
     }
     
     PRINTFD(I->G,FB_Triangle)
@@ -1643,30 +1668,32 @@ static void TriangleFill(TriangleSurfaceRec *II,float *v,float *vn,int n,int fir
     for(a=0;a<n;a++) 
       if(I->vertActive[a])
         TriangleActivateEdges(I,a);
-    FollowActives(I,v,vn,n,4);
+    ok = FollowActives(I,v,vn,n,4);
     
     PRINTFD(I->G,FB_Triangle)
       " TriangleFill-Debug: follow actives 5: nTri=%d nActive=%d\n",I->nTri,I->nActive
       ENDFD;
     
     lastTri=I->nTri-1;
-    while(lastTri!=I->nTri) {
+    while(ok &&(lastTri!=I->nTri)) {
       lastTri=I->nTri;
       for(a=0;a<n;a++) 
         if(I->vertActive[a])
           TriangleActivateEdges(I,a);
-      FollowActives(I,v,vn,n,5); /* this is a sloppy, forcing tesselation */
+      ok = FollowActives(I,v,vn,n,5); /* this is a sloppy, forcing tesselation */
     }
   }
   PRINTFD(I->G,FB_Triangle)
     " TriangleFill: leaving... nTri=%d nActive=%d\n",I->nTri,I->nActive
     ENDFD;
-  
+  if(I->G->Interrupt) ok=false;
+  return ok;
 }
 
-static void TriangleTxfFolds(TriangleSurfaceRec *II,float *v,float *vn,int n) 
+static int TriangleTxfFolds(TriangleSurfaceRec *II,float *v,float *vn,int n) 
 {
   register TriangleSurfaceRec *I=II;
+  int ok = true;
   int a,b,c,d,l,s01,s02,t1,t2;
   float *v0,*v1,*v2,*v3,d10[3],n10[3],d20[3],d30[3],d21[3],d31[3],d32[3];
   float x1020[3],x1030[3],x2132[3],x2032[3],s2[3],s3[3],nt[3];
@@ -1852,12 +1879,15 @@ static void TriangleTxfFolds(TriangleSurfaceRec *II,float *v,float *vn,int n)
       l=I->link[l].next;
     }
   }
+  if(I->G->Interrupt) ok=false;
+  return ok;
   /*  CGOStop(I->G->DebugCGO);*/
 }
 
-static void TriangleFixProblems(TriangleSurfaceRec *II,float *v,float *vn,int n) 
+static int TriangleFixProblems(TriangleSurfaceRec *II,float *v,float *vn,int n) 
 {
   register TriangleSurfaceRec *I=II;
+  int ok=true;
   int problemFlag;
   int a,l,e;
   int i0,i1,i2,s01=0,s02=0,s12;
@@ -1876,9 +1906,11 @@ static void TriangleFixProblems(TriangleSurfaceRec *II,float *v,float *vn,int n)
 		pFlag[a]=0;
 	 }
   }
-  if(problemFlag) {
+  if(I->G->Interrupt) ok=false;
+
+  if(ok&&problemFlag) {
     a=0;
-    while(a<I->nTri) {
+    while(ok&&(a<I->nTri)) {
       if(((pFlag[I->tri[a*3]]&&(pFlag[I->tri[a*3+1]]))||
           (pFlag[I->tri[a*3+1]]&&(pFlag[I->tri[a*3+2]]))||
           (pFlag[I->tri[a*3]]&&(pFlag[I->tri[a*3+2]])))) {
@@ -1924,51 +1956,64 @@ static void TriangleFixProblems(TriangleSurfaceRec *II,float *v,float *vn,int n)
         vFlag[i2]=true;
       }
       a++;
+      if(I->G->Interrupt) ok=false;
     }
 	
+
     /* now go through the complicated step of resetting vertex activities */
     
-    for(a=0;a<n;a++) 
-      if(vFlag[a]) 
-        I->vertActive[a]=-1;
-    
-    for(a=0;a<n;a++) {
-      l=I->edgeStatus[a]; 
-      while(l) {
-        if(I->link[l].value>0) {
-          if(vFlag[a]) {
-            e=a;
-            if(I->vertActive[e]<0) I->vertActive[e]=0;
-            I->vertActive[e]++;
-          } 
-          if(vFlag[I->link[l].index]) {
-            e=I->link[l].index;
-            if(I->vertActive[e]<0) I->vertActive[e]=0;
-            I->vertActive[e]++;
-          }
-        } if (I->link[l].value<0) {
-          if(vFlag[a]) {
-            e=a;
-            if(I->vertActive[e]<0) I->vertActive[e]=0;
-          } 
-          if(vFlag[I->link[l].index]) {
-            e=I->link[l].index;
-            if(I->vertActive[e]<0) I->vertActive[e]=0;
-          }
-        }
-        l=I->link[l].next;
-      }
+    if(ok) {
+      for(a=0;a<n;a++) 
+        if(vFlag[a]) 
+          I->vertActive[a]=-1;
     }
-    TriangleAdjustNormals(I,v,vn,n,false);
-    TriangleFill(I,v,vn,n,false);
+
+    if(ok) {
+      for(a=0;a<n;a++) {
+        l=I->edgeStatus[a]; 
+        while(l) {
+          if(I->link[l].value>0) {
+            if(vFlag[a]) {
+              e=a;
+              if(I->vertActive[e]<0) I->vertActive[e]=0;
+              I->vertActive[e]++;
+            } 
+            if(vFlag[I->link[l].index]) {
+              e=I->link[l].index;
+              if(I->vertActive[e]<0) I->vertActive[e]=0;
+              I->vertActive[e]++;
+            }
+          } if (I->link[l].value<0) {
+            if(vFlag[a]) {
+              e=a;
+              if(I->vertActive[e]<0) I->vertActive[e]=0;
+            } 
+            if(vFlag[I->link[l].index]) {
+              e=I->link[l].index;
+              if(I->vertActive[e]<0) I->vertActive[e]=0;
+            }
+          }
+          l=I->link[l].next;
+        }
+        if(I->G->Interrupt) {
+          ok=false;
+          break;
+        }
+      }
+      if(ok) ok = TriangleAdjustNormals(I,v,vn,n,false);
+      if(ok) ok = TriangleFill(I,v,vn,n,false);
+    }
   }
   FreeP(vFlag);
   FreeP(pFlag);
+  if(I->G->Interrupt) ok=false;
+  return ok;
 }
 
-static void TriangleBruteForceClosure(TriangleSurfaceRec *II,float *v,float *vn,int n,float cutoff) 
+static int TriangleBruteForceClosure(TriangleSurfaceRec *II,float *v,float *vn,int n,float cutoff) 
 {
   register TriangleSurfaceRec *I=II;
+  int ok=true;
   int a,b,c,d;
   int i0,i1,i2;
   float *v1,*v2,*v0,vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
@@ -1997,7 +2042,7 @@ static void TriangleBruteForceClosure(TriangleSurfaceRec *II,float *v,float *vn,
   }
   if(ac<80) { /* there is a limit to how much we can brute force... */
     a=0;
-    while(a<I->nTri&&(pc<n)) {
+    while(ok&&(a<I->nTri)&&(pc<n)) {
       i0=I->tri[a*3];
       i1=I->tri[a*3+1];
       i2=I->tri[a*3+2];
@@ -2032,46 +2077,56 @@ static void TriangleBruteForceClosure(TriangleSurfaceRec *II,float *v,float *vn,
         pc++;
       }
       a++;
+      if(I->G->Interrupt) {
+        ok=false;
+        break;
+      }
     }
     PRINTFD(I->G,FB_Triangle)
       " Triangle-BFS: ac %d pc %d\n",ac,pc
       ENDFD;
     
-    for(a=0;a<ac;a++) {
-      i0 = active[a];
-      for(b=a+1;b<ac;b++) {
-        i1 = active[b];
-        for(c=b+1;c<ac;c++) { /* consider all three-way possibilities */
-          i2 = active[c];
-          hits = 0;
-          for(d=0;d<pc;d++) {
-            p1 = *(pair + d*2 );
-            p2 = *(pair + d*2 +1);
-            if((p1==i0)&&(p2==i1))
-              hits++;
-            else if((p1==i1)&&(p2==i2))
-              hits++;
-            else if((p1==i0)&&(p2==i2))
-              hits++;
-          }
-          if(hits>=3) {
-            v0=v+i0*3; v1=v+i1*3; v2=v+i2*3;
-            if(within3f(v0,v1,cutoff) &&
-               within3f(v1,v2,cutoff) &&
-               within3f(v0,v2,cutoff)) {
+    if(ok) {
+      for(a=0;a<ac;a++) {
+        i0 = active[a];
+        for(b=a+1;b<ac;b++) {
+          i1 = active[b];
+          for(c=b+1;c<ac;c++) { /* consider all three-way possibilities */
+            i2 = active[c];
+            hits = 0;
+            for(d=0;d<pc;d++) {
+              p1 = *(pair + d*2 );
+              p2 = *(pair + d*2 +1);
+              if((p1==i0)&&(p2==i1))
+                hits++;
+              else if((p1==i1)&&(p2==i2))
+                hits++;
+              else if((p1==i0)&&(p2==i2))
+                hits++;
+            }
+            if(hits>=3) {
+              v0=v+i0*3; v1=v+i1*3; v2=v+i2*3;
+              if(within3f(v0,v1,cutoff) &&
+                 within3f(v1,v2,cutoff) &&
+                 within3f(v0,v2,cutoff)) {
               
-              n0 = vn+3*i0; n1 = vn+3*i1; n2 = vn+3*i2;							 
-              add3f(n0,n1,vt1);
-              add3f(n2,vt1,vt2);
-              subtract3f(v1,v0,vt3);
-              subtract3f(v2,v0,vt4);
-              cross_product3f(vt3,vt4,tNorm); 
-              normalize3f(tNorm); 							 
-              dp = dot_product3f(vt2,tNorm);
-              if(dp<0) scale3f(tNorm,-1.0F,tNorm);
-              TriangleAdd(I,i0,i1,i2,tNorm,v,vn);
+                n0 = vn+3*i0; n1 = vn+3*i1; n2 = vn+3*i2;							 
+                add3f(n0,n1,vt1);
+                add3f(n2,vt1,vt2);
+                subtract3f(v1,v0,vt3);
+                subtract3f(v2,v0,vt4);
+                cross_product3f(vt3,vt4,tNorm); 
+                normalize3f(tNorm); 							 
+                dp = dot_product3f(vt2,tNorm);
+                if(dp<0) scale3f(tNorm,-1.0F,tNorm);
+                TriangleAdd(I,i0,i1,i2,tNorm,v,vn);
+              }
             }
           }
+        }
+        if(I->G->Interrupt) {
+          ok=false;
+          break;
         }
       }
     }
@@ -2079,6 +2134,9 @@ static void TriangleBruteForceClosure(TriangleSurfaceRec *II,float *v,float *vn,
   FreeP(active);
   FreeP(pair);
   FreeP(pFlag);
+  if(I->G->Interrupt) ok=false;
+
+  return ok;
 }
 
 
@@ -2088,6 +2146,7 @@ int *TrianglePointsToSurface(PyMOLGlobals *G, float *v, float *vn, int n,
                              float *extent)
 {
   register TriangleSurfaceRec *I= NULL;
+  int ok=true;
   int *result = NULL;
   MapType *map;
   int a;
@@ -2117,32 +2176,41 @@ int *TrianglePointsToSurface(PyMOLGlobals *G, float *v, float *vn, int n,
       map=I->map;
       MapCacheInit(&I->map_cache,map,0,0);
 
-      I->edgeStatus = Alloc(int,n);
-      for(a=0;a<n;a++) {
-        I->edgeStatus[a]=0;
+      if(G->Interrupt) ok=false;
+
+      if(ok) {
+        I->edgeStatus = Alloc(int,n);
+        for(a=0;a<n;a++) {
+          I->edgeStatus[a]=0;
+        }
+        
+        I->vertActive = Alloc(int,n);
+        for(a=0;a<n;a++) {
+          I->vertActive[a]=-1;
+        }
+
+        I->vertWeight = Alloc(int,n);
+        for(a=0;a<n;a++) {
+          I->vertWeight[a]=2;
+        }
       }
 
-      I->vertActive = Alloc(int,n);
-      for(a=0;a<n;a++) {
-        I->vertActive[a]=-1;
+      if(ok) {
+        ok = TriangleFill(I,v,vn,n,true);
       }
 
-      I->vertWeight = Alloc(int,n);
-      for(a=0;a<n;a++) {
-        I->vertWeight[a]=2;
+      if(ok) {
+        
+        if(Feedback(G,FB_Triangle,FB_Debugging)) {
+          for(a=0;a<n;a++) 
+            if(I->vertActive[a])
+              printf(" TrianglePTS-DEBUG: before fix %i %i\n",a,I->vertActive[a]);
+        }
       }
 
-      TriangleFill(I,v,vn,n,true);
+      if(ok) ok=TriangleTxfFolds(I,v,vn,n);
 
-      if(Feedback(G,FB_Triangle,FB_Debugging)) {
-        for(a=0;a<n;a++) 
-          if(I->vertActive[a])
-            printf(" TrianglePTS-DEBUG: before fix %i %i\n",a,I->vertActive[a]);
-      }
-
-      TriangleTxfFolds(I,v,vn,n);
-
-      TriangleFixProblems(I,v,vn,n);  
+      if(ok) ok=TriangleFixProblems(I,v,vn,n);  
 
       if(Feedback(G,FB_Triangle,FB_Debugging)) {
         for(a=0;a<n;a++) 
@@ -2150,11 +2218,13 @@ int *TrianglePointsToSurface(PyMOLGlobals *G, float *v, float *vn, int n,
             printf(" TrianglePTS-DEBUG: after fix %i %i\n",a,I->vertActive[a]);
       }
 
-      TriangleBruteForceClosure(I,v,vn,n,cutoff*3); /* abandon algorithm, just CLOSE THOSE GAPS! */
+      if(ok) ok=TriangleBruteForceClosure(I,v,vn,n,cutoff*3); /* abandon algorithm, just CLOSE THOSE GAPS! */
 
-      TriangleAdjustNormals(I,v,vn,n,true);
+      if(ok) ok=TriangleAdjustNormals(I,v,vn,n,true);
 
-      *(stripPtr) = TriangleMakeStripVLA(I,v,vn,n);
+      if(ok) {
+        *(stripPtr) = TriangleMakeStripVLA(I,v,vn,n);
+      }
 
       (*nTriPtr)=I->nTri;
       VLAFreeP(I->activeEdge);
@@ -2171,6 +2241,9 @@ int *TrianglePointsToSurface(PyMOLGlobals *G, float *v, float *vn, int n,
     }
     FreeP(I);
   }  
+  if(!ok) {
+    VLAFreeP(result); 
+  }
   return(result);
 }
 

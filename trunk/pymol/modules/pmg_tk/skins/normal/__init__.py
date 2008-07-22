@@ -27,7 +27,12 @@ def darwin_browser_open(url):
     t = threading.Thread(target=_darwin_browser_open,args=(url,))
     t.setDaemon(1)
     t.start()
-    
+
+def _doAsync(self_cmd,cmmd,dirty=0):
+    self_cmd.do(cmmd)
+    if dirty:
+        self_cmd.dirty()
+        
 class Normal(PMGSkin):
 
     pad = ' ' # extra space in menus
@@ -79,21 +84,34 @@ class Normal(PMGSkin):
         
     def createMessageBar(self):
         # Create the message bar area for help and status messages.
-        frame = self.app.createcomponent('bottomtray', (), None,
-                                     Frame,(self.app._hull,), relief=SUNKEN)
-        self.__messageBar = self.app.createcomponent('messagebar',
-                                                  (), None,
-                                                 Pmw.MessageBar, 
-                                                 (frame,),
-                                                 #entry_width = 40,
-                                                 entry_relief=SUNKEN,
-                                                 entry_bd=1,
-                                                 labelpos=None)
-        self.__messageBar.pack(side=LEFT, expand=NO, fill=X)
+#        frame = self.app.createcomponent('bottomtray', (), None,
+#                                     Frame,(self.app._hull,), relief=SUNKEN)
+#        self.__messageBar = self.app.createcomponent('messagebar',
+#                                                  (), None,
+#                                                 Pmw.MessageBar, 
+#                                                 (frame,),
+#                                                 #entry_width = 40,
+#                                                 entry_relief=SUNKEN,
+#                                                 entry_bd=1,
+#                                                 labelpos=None)
+#        self.__messageBar.pack(side=LEFT, expand=NO, fill=X)
 
         self.messageBar = Pmw.MessageBar(self.commandFrame, entry_width = 40,
              entry_relief='sunken', entry_borderwidth=1) #, labelpos = 'w')
-        
+
+
+        self.abortButton=Button(self.commandFrame,
+                      text='Abort',highlightthickness=0,
+#                                state=DISABLED,
+                      command=lambda s=self:self.abort(),padx=0,pady=0)
+        self.abortButton.pack(side=RIGHT,fill=BOTH,expand=YES)
+
+        self.abortButton=Button(self.commandFrame,
+                                text='Rebuild',highlightthickness=0,
+                                #                                state=DISABLED,
+                                command=lambda s=self:self.rebuild(),padx=0,pady=0)
+        self.abortButton.pack(side=RIGHT,fill=BOTH,expand=YES)
+
         self.messageBar.pack(side=BOTTOM, anchor=W, fill=X, expand=1)
         self.balloon.configure(statuscommand = self.messageBar.helpmessage)
 
@@ -126,10 +144,10 @@ class Normal(PMGSkin):
         self.cmd.quit()  # avoid logging this - it is inconvenient...
 
 
-    def buttonAdd(self,frame,text,cmd):
+    def buttonAdd(self,frame,text,cmmd):
         newBtn=Button(frame,
                           text=text,highlightthickness=0,
-                          command=cmd,padx=0,pady=0)
+                          command=cmmd,padx=0,pady=0)
         newBtn.pack(side=LEFT,fill=BOTH,expand=YES)
 
     def get_view(self):
@@ -264,13 +282,20 @@ class Normal(PMGSkin):
         self.command.set(self.history[self.history_cur])
         l = len(self.history[self.history_cur])
         self.entry.icursor(l)
+
+    def doAsync(self,cmmd):
+        t = threading.Thread(target=_doAsync,args=(self.cmd,cmmd))
+        t.setDaemon(1)
+        t.start()
         
-    def do(self,cmmd):
+    def doTypedCommand(self,cmmd):
         self.history[0]=cmmd
         self.history.insert(0,'') # always leave blank at 0
         self.history.pop(self.history_mask+1)
         self.history_cur = 0
-        self.cmd.do(cmmd)
+        t = threading.Thread(target=_doAsync,args=(self.cmd,cmmd,1))
+        t.setDaemon(1)
+        t.start()
 
     def dump(self,event):
         print dir(event)
@@ -295,7 +320,7 @@ class Normal(PMGSkin):
         self.output.pack(side=TOP, fill=BOTH, expand=YES)      
 
         self.entry.bind('<Return>', lambda e, s=self:
-             (s.do(s.command.get()), s.cmd.dirty(), s.command.set('')))
+             (s.doTypedCommand(s.command.get()), s.command.set('')))
         self.entry.bind('<Tab>', lambda e, s=self: s.complete(e))
         self.entry.bind('<Up>', lambda e, s=self: s.back())
         self.entry.bind('<Down>', lambda e, s=self: s.forward())
@@ -408,8 +433,10 @@ class Normal(PMGSkin):
         self.updating = 1
         progress = self.cmd.get_progress()
         if progress>=0.0:
+#            self.abortButton.config(state=NORMAL)
             self.messageBar.message("busy","Progress %d%%..."%int(progress*100))
         else:
+#            self.abortButton.config(state=DISABLED)            
             self.messageBar.resetmessages("busy")
         if self.app.allow_after:
             if feedback == None: # PyMOL busy, so try more aggressively to get lock
@@ -417,6 +444,13 @@ class Normal(PMGSkin):
             else:
                 self.output.after(100,self.update_feedback) # 10X a second
 
+    def abort(self):
+        self.cmd.interrupt()
+#        self.abortButton.config(state=DISABLED)
+
+    def rebuild(self):
+        self.doAsync("_ rebuild")
+        
     def toggleFrame(self, frame, startup=0):
         if frame not in self.dataArea.slaves():
             # clear all frames in dataArea

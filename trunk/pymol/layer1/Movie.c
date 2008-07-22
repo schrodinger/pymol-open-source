@@ -435,6 +435,9 @@ int MoviePlaying(PyMOLGlobals *G)
   register CMovie *I=G->Movie;
   if(I->Locked)
     return false;
+  if(I->Playing && G->Interrupt) {
+    I->Playing = false;
+  }
   return(I->Playing||I->RecursionFlag); 
   /* returns true if movie is playing OR if we're in the process of evaluating
      movie commands */
@@ -527,6 +530,9 @@ static void MovieModalPNG(PyMOLGlobals *G, CMovie *I, CMovieModal *M)
     VLACheck(I->Image,ImageType*,M->nFrame);
     M->frame = 0;
     M->stage = 1;
+    if(G->Interrupt) { 
+      M->stage = 5; /* abort */
+    }
     break;
   case 1: /* RENDER LOOP: advance a frame */
     if(M->frame < M->nFrame) {
@@ -553,6 +559,9 @@ static void MovieModalPNG(PyMOLGlobals *G, CMovie *I, CMovieModal *M)
 
       M->image = MovieFrameToImage(G,M->frame);
       M->stage = 2;
+      if(G->Interrupt) { 
+        M->stage = 5; /* abort */
+      }
     }
     break;
   }
@@ -578,6 +587,9 @@ static void MovieModalPNG(PyMOLGlobals *G, CMovie *I, CMovieModal *M)
       }
     } else { /* we don't need to render this frame */
       M->stage = 4; 
+    }
+    if(G->Interrupt) { 
+        M->stage = 5; /* abort */
     }
     break;
   }
@@ -627,6 +639,9 @@ static void MovieModalPNG(PyMOLGlobals *G, CMovie *I, CMovieModal *M)
         ENDFB(G);
     }
     M->stage = 4;
+    if(G->Interrupt) { 
+      M->stage = 5; /* abort */
+    }
     break;
   }
 
@@ -637,6 +652,9 @@ static void MovieModalPNG(PyMOLGlobals *G, CMovie *I, CMovieModal *M)
       M->stage = 5;
     } else {
       M->stage = 1; /* RESTART LOOP */
+    }
+    if(G->Interrupt) { 
+      M->stage = 5; /* abort */
     }
     break;
   }

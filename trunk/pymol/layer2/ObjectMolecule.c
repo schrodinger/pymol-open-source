@@ -10846,7 +10846,8 @@ static void ObjMolCoordSetUpdateSpawn(PyMOLGlobals *G,CCoordSetUpdateThreadInfo 
 void ObjectMoleculeUpdate(ObjectMolecule *I)
 {
   int a;
-  OrthoBusyPrime(I->Obj.G);
+  PyMOLGlobals *G = I->Obj.G;
+  OrthoBusyPrime(G);
   if(!I->RepVisCacheValid) {
     /* note which representations are active */
     register int b;
@@ -10877,14 +10878,14 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
     int stop = I->NCSet;
        
     ObjectAdjustStateRebuildRange(&I->Obj,&start,&stop);
-    if((I->NCSet==1)&&(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons))) {
+    if((I->NCSet==1)&&(SettingGet_b(G,I->Obj.Setting,NULL,cSetting_static_singletons))) {
       start=0;
       stop=1;
     }
     {
 #ifndef _PYMOL_NOPY
-      int n_thread  = SettingGetGlobal_i(I->Obj.G,cSetting_max_threads);
-      int multithread = SettingGetGlobal_i(I->Obj.G,cSetting_async_builds);
+      int n_thread  = SettingGetGlobal_i(G,cSetting_max_threads);
+      int multithread = SettingGetGlobal_i(G,cSetting_async_builds);
       
       if(multithread&&(n_thread)&&(stop-start)>1) {
         int cnt = 0;
@@ -10906,7 +10907,7 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
                 cnt++;
               }
             }
-            ObjMolCoordSetUpdateSpawn(I->Obj.G,thread_info,n_thread,cnt);
+            ObjMolCoordSetUpdateSpawn(G,thread_info,n_thread,cnt);
             FreeP(thread_info);
           }
           
@@ -10916,12 +10917,12 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
 #endif
         { /* single thread */
           for(a=start;a<stop;a++)
-            if(I->CSet[a]) {	
-              OrthoBusySlow(I->Obj.G,a,I->NCSet);
-              PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Blather)
+            if(I->CSet[a] &&(!G->Interrupt)) {	
+              OrthoBusySlow(G,a,I->NCSet);
+              PRINTFB(G,FB_ObjectMolecule,FB_Blather)
                 " ObjectMolecule-DEBUG: updating representations for state %d of \"%s\".\n" 
                 , a+1, I->Obj.Name
-                ENDFB(I->Obj.G);
+                ENDFB(G);
               if(I->CSet[a]->fUpdate) {
                 I->CSet[a]->fUpdate(I->CSet[a],a);
               }
@@ -10939,7 +10940,7 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
     }
   } 
 
-  PRINTFD(I->Obj.G,FB_ObjectMolecule)
+  PRINTFD(G,FB_ObjectMolecule)
     " ObjectMolecule: updates complete for object %s.\n",I->Obj.Name
     ENDFD;
 }

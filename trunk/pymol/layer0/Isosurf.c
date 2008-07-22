@@ -67,7 +67,7 @@ typedef struct	PointType {
 #define EdgePt(field,P2,P3,P4,P5) (*((PointType*)Fvoid4p(field,P2,P3,P4,P5)))
 
 struct _CIsosurf {
-  
+  PyMOLGlobals *G;
   CField	*VertexCodes;
   CField	*ActiveEdges;
   CField   *Point;
@@ -443,7 +443,7 @@ static CIsosurf *IsosurfNew(PyMOLGlobals *G)
 {
 	int	c;
    register CIsosurf *I = Calloc(CIsosurf,1);
-              
+   I->G = G;
 	I->VertexCodes=NULL;
 	I->ActiveEdges=NULL;
 	I->Point=NULL;
@@ -827,45 +827,52 @@ int	IsosurfVolume(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
         IsosurfPurge(I);
         break;
       default:
-        for(i=0;i<Steps[0];i++)
-          for(j=0;j<Steps[1];j++)
+        for(i=0;i<Steps[0];i++) {
+          for(j=0;j<Steps[1];j++) {
             for(k=0;k<Steps[2];k++) {
-              I->CurOff[0]=IsosurfSubSize*i;
-              I->CurOff[1]=IsosurfSubSize*j;
-              I->CurOff[2]=IsosurfSubSize*k;
-              for(c=0;c<3;c++)
-                I->CurOff[c]+=range[c];
-              for(c=0;c<3;c++)	{
-                I->Max[c]=range[3+c]-I->CurOff[c];
-                if(I->Max[c]>(IsosurfSubSize+1))
-                  I->Max[c]=(IsosurfSubSize+1);
-              }
-              if(!(i||j||k))	{
-                for(x=0;x<I->Max[0];x++)
-                  for(y=0;y<I->Max[1];y++)
-                    for(z=0;z<I->Max[2];z++)
-                      for(c=0;c<3;c++)
-                        EdgePt(I->Point,x,y,z,c).NLink=0;
-              }
-              
-#ifdef Trace
-              for(c=0;c<3;c++)
-                printf(" IsosurfVolume: c: %i CurOff[c]: %i Max[c] %i\n",c,I->CurOff[c],I->Max[c]); 
-#endif
-              
-              if(ok) 
-                switch(mode) { 
-                case 0: /* standard mode - want lines */
-                  ok=IsosurfCurrent(I);
-                  break;
-                case 1: /* point mode - just want points on the isosurface */
-                  ok=IsosurfPoints(I);
-                  break;
-                case 2:
-                  /* reserved */
-                break;
+              if(ok) {
+                I->CurOff[0]=IsosurfSubSize*i;
+                I->CurOff[1]=IsosurfSubSize*j;
+                I->CurOff[2]=IsosurfSubSize*k;
+                for(c=0;c<3;c++)
+                  I->CurOff[c]+=range[c];
+                for(c=0;c<3;c++)	{
+                  I->Max[c]=range[3+c]-I->CurOff[c];
+                  if(I->Max[c]>(IsosurfSubSize+1))
+                    I->Max[c]=(IsosurfSubSize+1);
                 }
+                if(!(i||j||k))	{
+                  for(x=0;x<I->Max[0];x++)
+                    for(y=0;y<I->Max[1];y++)
+                      for(z=0;z<I->Max[2];z++)
+                        for(c=0;c<3;c++)
+                          EdgePt(I->Point,x,y,z,c).NLink=0;
+                }
+                
+#ifdef Trace
+                for(c=0;c<3;c++)
+                  printf(" IsosurfVolume: c: %i CurOff[c]: %i Max[c] %i\n",c,I->CurOff[c],I->Max[c]); 
+#endif
+                
+                if(ok) 
+                  switch(mode) { 
+                  case 0: /* standard mode - want lines */
+                    ok=IsosurfCurrent(I);
+                    break;
+                  case 1: /* point mode - just want points on the isosurface */
+                    ok=IsosurfPoints(I);
+                    break;
+                  case 2:
+                    /* reserved */
+                    break;
+                  }
+                if(G->Interrupt) {
+                  ok=false;
+                }
+              }
             }
+          }
+        }
         IsosurfPurge(I);
         break;
       }
@@ -880,7 +887,11 @@ int	IsosurfVolume(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
         " IsosurfVolume: Surface generated using %d lines.\n",I->NLine
         ENDFB(G);
     }
-    
+
+    if(!ok) {
+      I->NLine = 0;
+      I->NSeg = 0;
+    }
     /* shrinks sizes for more efficient RAM usage */
     
     VLASize(I->Line,float,I->NLine*3);
@@ -914,11 +925,10 @@ static int	IsosurfAlloc(PyMOLGlobals *G,CIsosurf *II)
 	ErrChkPtr(G,I->ActiveEdges);
 	I->Point=FieldNew(G,dim4,4,sizeof(PointType),cFieldOther);
 	ErrChkPtr(G,I->Point);
-	if(!(I->VertexCodes&&I->ActiveEdges&&I->Point))
-		{
-		IsosurfPurge(I);
-		ok=false;
-		}
+	if(!(I->VertexCodes&&I->ActiveEdges&&I->Point)) {
+      IsosurfPurge(I);
+      ok=false;
+    }
 #ifdef Trace
 	printf(" IsosurfAlloc: ok: %i\n",ok);
 #endif
@@ -1418,74 +1428,128 @@ static int	IsosurfDrawPoints(CIsosurf *II)
   int	i,j,k;
   int	ok=true;
   
-  for(i=0;i<(I->Max[0]-1);i++)
-    for(j=0;j<I->Max[1];j++)
-      for(k=0;k<I->Max[2];k++) {		
-        if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i+1,j,k))) {
-          IsosurfInterpolate(I,
-                             O4Ptr(I->Coord,i,j,k,0,I->CurOff),
-                             O3Ptr(I->Data,i,j,k,I->CurOff),
-                             O4Ptr(I->Coord,i+1,j,k,0,I->CurOff),
-                             O3Ptr(I->Data,i+1,j,k,I->CurOff),
-                             &(EdgePt(I->Point,i,j,k,0).Point[0]));
-          
-          VLACheck(I->Line,float,I->NLine*3+2);
-          a=I->Line+(I->NLine*3);
-          b=&(EdgePt(I->Point,i,j,k,0).Point[0]);
-          *(a++)=*(b++);
-          *(a++)=*(b++);
-          *a=*b;
-          I->NLine++;
-        }  else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i+1,j,k))) {
-          IsosurfInterpolate(I,
-                             O4Ptr(I->Coord,i,j,k,0,I->CurOff),
-                             O3Ptr(I->Data,i,j,k,I->CurOff),
-                             O4Ptr(I->Coord,i+1,j,k,0,I->CurOff),
-                             O3Ptr(I->Data,i+1,j,k,I->CurOff),
-                             &(EdgePt(I->Point,i,j,k,0).Point[0]));
-          
-          VLACheck(I->Line,float,I->NLine*3+2);
-          a=I->Line+(I->NLine*3);
-          b=&(EdgePt(I->Point,i,j,k,0).Point[0]);
-          *(a++)=*(b++);
-          *(a++)=*(b++);
-          *a=*b;
-          I->NLine++;
-        } else
-          I4(I->ActiveEdges,i,j,k,0)=0;
+  if(ok) {
+    for(i=0;i<(I->Max[0]-1);i++) {
+      for(j=0;j<I->Max[1];j++) { 
+        for(k=0;k<I->Max[2];k++) {		
+          if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i+1,j,k))) {
+            IsosurfInterpolate(I,
+                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k,I->CurOff),
+                               O4Ptr(I->Coord,i+1,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i+1,j,k,I->CurOff),
+                               &(EdgePt(I->Point,i,j,k,0).Point[0]));
+            
+            VLACheck(I->Line,float,I->NLine*3+2);
+            a=I->Line+(I->NLine*3);
+            b=&(EdgePt(I->Point,i,j,k,0).Point[0]);
+            *(a++)=*(b++);
+            *(a++)=*(b++);
+            *a=*b;
+            I->NLine++;
+          }  else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i+1,j,k))) {
+            IsosurfInterpolate(I,
+                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k,I->CurOff),
+                               O4Ptr(I->Coord,i+1,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i+1,j,k,I->CurOff),
+                               &(EdgePt(I->Point,i,j,k,0).Point[0]));
+            
+            VLACheck(I->Line,float,I->NLine*3+2);
+            a=I->Line+(I->NLine*3);
+            b=&(EdgePt(I->Point,i,j,k,0).Point[0]);
+            *(a++)=*(b++);
+            *(a++)=*(b++);
+            *a=*b;
+            I->NLine++;
+          } else
+            I4(I->ActiveEdges,i,j,k,0)=0;
+        }
       }
+      if(I->G->Interrupt) {
+        ok=false;
+        break;
+      }
+    }
+  }
+
+  if(ok) {
+    for(i=0;i<I->Max[0];i++) {
+      for(j=0;j<(I->Max[1]-1);j++) {
+        for(k=0;k<I->Max[2];k++)  {
+          if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i,j+1,k))) {
+            I4(I->ActiveEdges,i,j,k,1)=2;
+            IsosurfInterpolate(I,
+                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k,I->CurOff),
+                               O4Ptr(I->Coord,i,j+1,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j+1,k,I->CurOff),
+                               &(EdgePt(I->Point,i,j,k,1).Point[0]));
+              
+            VLACheck(I->Line,float,I->NLine*3+2);
+            a=I->Line+(I->NLine*3);
+            b=&(EdgePt(I->Point,i,j,k,1).Point[0]);
+            *(a++)=*(b++);
+            *(a++)=*(b++);
+            *a=*b;
+            I->NLine++;
+              
+          } else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i,j+1,k))) {
+            IsosurfInterpolate(I,
+                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k,I->CurOff),
+                               O4Ptr(I->Coord,i,j+1,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j+1,k,I->CurOff),
+                               &(EdgePt(I->Point,i,j,k,1).Point[0]));
+              
+            VLACheck(I->Line,float,I->NLine*3+2);
+            a=I->Line+(I->NLine*3);
+            b=&(EdgePt(I->Point,i,j,k,1).Point[0]);
+            *(a++)=*(b++);
+            *(a++)=*(b++);
+            *a=*b;
+            I->NLine++;
+              
+          }
+        }
+      }
+      if(I->G->Interrupt) {
+        ok=false;
+        break;
+      }
+    }
+  }
   
-  for(i=0;i<I->Max[0];i++)
-    for(j=0;j<(I->Max[1]-1);j++)
-      for(k=0;k<I->Max[2];k++)  {
-        if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i,j+1,k))) {
-          I4(I->ActiveEdges,i,j,k,1)=2;
+  for(i=0;i<I->Max[0];i++) {
+    for(j=0;j<I->Max[1];j++) {
+      for(k=0;k<(I->Max[2]-1);k++)        {
+        if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i,j,k+1))) {
           IsosurfInterpolate(I,
                              O4Ptr(I->Coord,i,j,k,0,I->CurOff),
                              O3Ptr(I->Data,i,j,k,I->CurOff),
-                             O4Ptr(I->Coord,i,j+1,k,0,I->CurOff),
-                             O3Ptr(I->Data,i,j+1,k,I->CurOff),
-                             &(EdgePt(I->Point,i,j,k,1).Point[0]));
+                             O4Ptr(I->Coord,i,j,k+1,0,I->CurOff),
+                             O3Ptr(I->Data,i,j,k+1,I->CurOff),
+                             &(EdgePt(I->Point,i,j,k,2).Point[0]));
               
           VLACheck(I->Line,float,I->NLine*3+2);
           a=I->Line+(I->NLine*3);
-          b=&(EdgePt(I->Point,i,j,k,1).Point[0]);
+          b=&(EdgePt(I->Point,i,j,k,2).Point[0]);
           *(a++)=*(b++);
           *(a++)=*(b++);
           *a=*b;
           I->NLine++;
               
-        } else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i,j+1,k))) {
+        } else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i,j,k+1))) {
           IsosurfInterpolate(I,
                              O4Ptr(I->Coord,i,j,k,0,I->CurOff),
                              O3Ptr(I->Data,i,j,k,I->CurOff),
-                             O4Ptr(I->Coord,i,j+1,k,0,I->CurOff),
-                             O3Ptr(I->Data,i,j+1,k,I->CurOff),
-                             &(EdgePt(I->Point,i,j,k,1).Point[0]));
+                             O4Ptr(I->Coord,i,j,k+1,0,I->CurOff),
+                             O3Ptr(I->Data,i,j,k+1,I->CurOff),
+                             &(EdgePt(I->Point,i,j,k,2).Point[0]));
               
           VLACheck(I->Line,float,I->NLine*3+2);
           a=I->Line+(I->NLine*3);
-          b=&(EdgePt(I->Point,i,j,k,1).Point[0]);
+          b=&(EdgePt(I->Point,i,j,k,2).Point[0]);
           *(a++)=*(b++);
           *(a++)=*(b++);
           *a=*b;
@@ -1493,50 +1557,19 @@ static int	IsosurfDrawPoints(CIsosurf *II)
               
         }
       }
-  
-  for(i=0;i<I->Max[0];i++)
-    for(j=0;j<I->Max[1];j++)
-      for(k=0;k<(I->Max[2]-1);k++)        {
-          if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i,j,k+1))) {
-              IsosurfInterpolate(I,
-                                 O4Ptr(I->Coord,i,j,k,0,I->CurOff),
-                                 O3Ptr(I->Data,i,j,k,I->CurOff),
-                                 O4Ptr(I->Coord,i,j,k+1,0,I->CurOff),
-                                 O3Ptr(I->Data,i,j,k+1,I->CurOff),
-                                 &(EdgePt(I->Point,i,j,k,2).Point[0]));
-              
-              VLACheck(I->Line,float,I->NLine*3+2);
-              a=I->Line+(I->NLine*3);
-              b=&(EdgePt(I->Point,i,j,k,2).Point[0]);
-              *(a++)=*(b++);
-              *(a++)=*(b++);
-              *a=*b;
-              I->NLine++;
-              
-          } else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i,j,k+1))) {
-            IsosurfInterpolate(I,
-                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
-                               O3Ptr(I->Data,i,j,k,I->CurOff),
-                               O4Ptr(I->Coord,i,j,k+1,0,I->CurOff),
-                               O3Ptr(I->Data,i,j,k+1,I->CurOff),
-                               &(EdgePt(I->Point,i,j,k,2).Point[0]));
-              
-            VLACheck(I->Line,float,I->NLine*3+2);
-            a=I->Line+(I->NLine*3);
-            b=&(EdgePt(I->Point,i,j,k,2).Point[0]);
-            *(a++)=*(b++);
-            *(a++)=*(b++);
-            *a=*b;
-            I->NLine++;
-              
-          }
+      if(I->G->Interrupt) {
+        ok=false;
+        break;
       }
-
-  if(I->NLine!=I->Num[I->NSeg]) { /* any new points? */
-    VLACheck(I->Num,int,I->NSeg+1);
-    I->Num[I->NSeg]=I->NLine-I->Num[I->NSeg];
-    I->NSeg++;
-    I->Num[I->NSeg]=I->NLine;
+    }
+  }
+  if(ok) {
+    if(I->NLine!=I->Num[I->NSeg]) { /* any new points? */
+      VLACheck(I->Num,int,I->NSeg+1);
+      I->Num[I->NSeg]=I->NLine-I->Num[I->NSeg];
+      I->NSeg++;
+      I->Num[I->NSeg]=I->NLine;
+    }
   }
   return(ok);
 }
@@ -1544,316 +1577,329 @@ static int	IsosurfDrawPoints(CIsosurf *II)
 static int	IsosurfDrawLines(CIsosurf *II)
 {
   register CIsosurf *I = II;
-	int	c,i,j,k;
-	float	*a,*b;
-	int	ok=true;
-	PointType	*Cur,*Start,*Next;
-	int	MaxLinks,MaxL,Cnt;
-	int	NLink;
+  int	c,i,j,k;
+  float	*a,*b;
+  int	ok=true;
+  PointType	*Cur,*Start,*Next;
+  int	MaxLinks,MaxL,Cnt;
+  int	NLink;
 #ifdef Trace
-	int	LCount=0;
+  int	LCount=0;
 #endif	
     
-	for(i=0;i<I->Max[0];i++)
-      for(j=0;j<I->Max[1];j++)
-        for(k=0;k<I->Max[2];k++)
-          for(c=0;c<3;c++) {
-            Start=EdgePtPtr(I->Point,i,j,k,c);
-            while(Start->NLink) 	{
-              Cur=Start;
-              VLACheck(I->Line,float,I->NLine*3+2);
-              a=I->Line+(I->NLine*3);
-              b=Cur->Point;
-              *(a++)=*(b++);
-              *(a++)=*(b++);
-              *a=*b;
-              I->NLine++;
-			
-              while(Cur)	{
-				if(Cur->NLink)	{
-                  Cur->NLink--;
-                  NLink=Cur->NLink;
-                  /* Choose point which has most links */
-                  MaxL=NLink;
-                  MaxLinks=Cur->Link[MaxL]->NLink;
-                  Cnt=MaxL-1;
-                  while(Cnt>=0)	{
-                    if((Cur->Link[Cnt]->NLink)>MaxLinks)	{
-                      MaxL=Cnt;
-                      MaxLinks=Cur->Link[Cnt]->NLink;
-                    }
-                    Cnt--;
+  for(i=0;i<I->Max[0];i++) {
+    for(j=0;j<I->Max[1];j++) {
+      for(k=0;k<I->Max[2];k++) {
+        for(c=0;c<3;c++) {
+          Start=EdgePtPtr(I->Point,i,j,k,c);
+          while(Start->NLink) 	{
+            Cur=Start;
+            VLACheck(I->Line,float,I->NLine*3+2);
+            a=I->Line+(I->NLine*3);
+            b=Cur->Point;
+            *(a++)=*(b++);
+            *(a++)=*(b++);
+            *a=*b;
+            I->NLine++;
+              
+            while(Cur)	{
+              if(Cur->NLink)	{
+                Cur->NLink--;
+                NLink=Cur->NLink;
+                /* Choose point which has most links */
+                MaxL=NLink;
+                MaxLinks=Cur->Link[MaxL]->NLink;
+                Cnt=MaxL-1;
+                while(Cnt>=0)	{
+                  if((Cur->Link[Cnt]->NLink)>MaxLinks)	{
+                    MaxL=Cnt;
+                    MaxLinks=Cur->Link[Cnt]->NLink;
                   }
-                  Next=Cur->Link[MaxL];
-                  if(MaxL!=NLink)
-                    Cur->Link[MaxL]=Cur->Link[NLink];
-                  /* Remove double link */
-                  Next->NLink--;
-                  NLink=Next->NLink;
-                  Cnt=NLink;
-                  while(Cnt>=0)	{
-                    if(Next->Link[Cnt]==Cur)
-                      break;
-                    else
-                      Cnt--;
-                  }
-                  if(Cnt>=0)	{
-                    if(Cnt!=NLink)
-                      Next->Link[Cnt]=Next->Link[NLink];
-                  }
-#ifdef Trace
+                  Cnt--;
+                }
+                Next=Cur->Link[MaxL];
+                if(MaxL!=NLink)
+                  Cur->Link[MaxL]=Cur->Link[NLink];
+                /* Remove double link */
+                Next->NLink--;
+                NLink=Next->NLink;
+                Cnt=NLink;
+                while(Cnt>=0)	{
+                  if(Next->Link[Cnt]==Cur)
+                    break;
                   else
-                    printf(" error: IsosurfDrawLines:  can't find double link\n");
+                    Cnt--;
+                }
+                if(Cnt>=0)	{
+                  if(Cnt!=NLink)
+                    Next->Link[Cnt]=Next->Link[NLink];
+                }
+#ifdef Trace
+                else
+                  printf(" error: IsosurfDrawLines:  can't find double link\n");
 #endif
 	
-                  Cur=Next;
-                  VLACheck(I->Line,float,I->NLine*3+2);
-                  a=I->Line+(I->NLine*3);
-                  b=Cur->Point;
-                  *(a++)=*(b++);
-                  *(a++)=*(b++);
-                  *a=*b;
-                  I->NLine++;
-                }	else	{
+                Cur=Next;
+                VLACheck(I->Line,float,I->NLine*3+2);
+                a=I->Line+(I->NLine*3);
+                b=Cur->Point;
+                *(a++)=*(b++);
+                *(a++)=*(b++);
+                *a=*b;
+                I->NLine++;
+              }	else	{
 #ifdef Trace
-                  LCount++;
+                LCount++;
 #endif
-                  Cur=NULL;
-                  if(I->NLine!=I->Num[I->NSeg]) { /* any new lines? */
-                    VLACheck(I->Num,int,I->NSeg+1);
-                    I->Num[I->NSeg]=I->NLine-I->Num[I->NSeg];
-                    I->NSeg++;
-                    VLACheck(I->Num,int,I->NSeg);
-                    I->Num[I->NSeg]=I->NLine;
-                  }
+                Cur=NULL;
+                if(I->NLine!=I->Num[I->NSeg]) { /* any new lines? */
+                  VLACheck(I->Num,int,I->NSeg+1);
+                  I->Num[I->NSeg]=I->NLine-I->Num[I->NSeg];
+                  I->NSeg++;
+                  VLACheck(I->Num,int,I->NSeg);
+                  I->Num[I->NSeg]=I->NLine;
                 }
               }
             }
           }
+        }
+      }
+    }
+    if(I->G->Interrupt) {
+      ok=false;
+      break;
+    }
+  }
 #ifdef Trace
-	printf(" DrawLineCount: %i\n",LCount);
+  if(ok) printf(" DrawLineCount: %i\n",LCount);
 #endif
-
-	return(ok);
+  return(ok);
 }
 /*===========================================================================*/
 static int	IsosurfFindLines(CIsosurf *II)
 {
   register CIsosurf *I = II;
-	int	i,j,k,ip1,jp1,kp1;
-	int	ok=true;
-	int	index,cod;
-	int	Max0m1,Max1m1,Max2m1;
-    int skip = I->Skip;
+  int	i,j,k,ip1,jp1,kp1;
+  int	ok=true;
+  int	index,cod;
+  int	Max0m1,Max1m1,Max2m1;
+  int skip = I->Skip;
 #ifdef Trace
-	int	LCount=0;
+  int	LCount=0;
 #endif
-	PointType	*p1,*p2;
-	
-	Max0m1=I->Max[0]-1;
-	Max1m1=I->Max[1]-1;
-	Max2m1=I->Max[2]-1;
-	for(i=0;i<I->Max[0];i++)
-      for(j=0;j<I->Max[1];j++)
-        for(k=0;k<I->Max[2];k++)	{
-          ip1=i+1;
-          jp1=j+1;
-          kp1=k+1;
-          if((j<Max1m1)&&(k<Max2m1)&&((!skip)||!(i%skip)))	{ /* i-plane */
-            index=I4(I->ActiveEdges,i,j,k,1)<<2;
-            index=(index+I4(I->ActiveEdges,i,jp1,k,2))<<2;
-            index=(index+I4(I->ActiveEdges,i,j,kp1,1))<<2;
-            index=index+I4(I->ActiveEdges,i,j,k,2);
-            if(index)	{
-              cod=I->Code[index];
+  PointType	*p1,*p2;
+  
+  Max0m1=I->Max[0]-1;
+  Max1m1=I->Max[1]-1;
+  Max2m1=I->Max[2]-1;
+  for(i=0;i<I->Max[0];i++) {
+    for(j=0;j<I->Max[1];j++) {
+      for(k=0;k<I->Max[2];k++)	{
+        ip1=i+1;
+        jp1=j+1;
+        kp1=k+1;
+        if((j<Max1m1)&&(k<Max2m1)&&((!skip)||!(i%skip)))	{ /* i-plane */
+          index=I4(I->ActiveEdges,i,j,k,1)<<2;
+          index=(index+I4(I->ActiveEdges,i,jp1,k,2))<<2;
+          index=(index+I4(I->ActiveEdges,i,j,kp1,1))<<2;
+          index=index+I4(I->ActiveEdges,i,j,k,2);
+          if(index)	{
+            cod=I->Code[index];
 #ifdef Trace
-              if(index&&(cod<0))
-                printf("IsosurfFindLines: bad index: %i \n",index);
+            if(index&&(cod<0))
+              printf("IsosurfFindLines: bad index: %i \n",index);
 #endif
-              while(cod>0)	{
+            while(cod>0)	{
+              p1=NULL;
+              p2=NULL;
+              switch(cod)
+                {
+                case 40:
+                case 32:
+                  cod=cod-32;
+                  p1=EdgePtPtr(I->Point,i,j,k,1);
+                  p2=EdgePtPtr(I->Point,i,j,k,2);
+                  break;
+                case 20:
+                case 16:
+                  cod=cod-16;
+                  p1=EdgePtPtr(I->Point,i,j,k,1);
+                  p2=EdgePtPtr(I->Point,i,jp1,k,2);
+                  break;
+                case 8:
+                  cod=cod-8;
+                  p1=EdgePtPtr(I->Point,i,j,kp1,1);
+                  p2=EdgePtPtr(I->Point,i,jp1,k,2);
+                  break;
+                case 4:
+                  cod=cod-4;
+                  p1=EdgePtPtr(I->Point,i,j,kp1,1);
+                  p2=EdgePtPtr(I->Point,i,j,k,2);
+                  break;
+                case 2:
+                  cod=cod-2;
+                  p1=EdgePtPtr(I->Point,i,j,k,1);
+                  p2=EdgePtPtr(I->Point,i,j,kp1,1);
+                  break;
+                case 1:
+                  cod=cod-1;
+                  p1=EdgePtPtr(I->Point,i,j,k,2);
+                  p2=EdgePtPtr(I->Point,i,jp1,k,2);
+                  break;
+                default:
+                  cod=0;
                   p1=NULL;
                   p2=NULL;
-                  switch(cod)
-                    {
-                    case 40:
-                    case 32:
-                      cod=cod-32;
-                      p1=EdgePtPtr(I->Point,i,j,k,1);
-                      p2=EdgePtPtr(I->Point,i,j,k,2);
-                      break;
-                    case 20:
-                    case 16:
-                      cod=cod-16;
-                      p1=EdgePtPtr(I->Point,i,j,k,1);
-                      p2=EdgePtPtr(I->Point,i,jp1,k,2);
-                      break;
-                    case 8:
-                      cod=cod-8;
-                      p1=EdgePtPtr(I->Point,i,j,kp1,1);
-                      p2=EdgePtPtr(I->Point,i,jp1,k,2);
-                      break;
-                    case 4:
-                      cod=cod-4;
-                      p1=EdgePtPtr(I->Point,i,j,kp1,1);
-                      p2=EdgePtPtr(I->Point,i,j,k,2);
-                      break;
-                    case 2:
-                      cod=cod-2;
-                      p1=EdgePtPtr(I->Point,i,j,k,1);
-                      p2=EdgePtPtr(I->Point,i,j,kp1,1);
-                      break;
-                    case 1:
-                      cod=cod-1;
-                      p1=EdgePtPtr(I->Point,i,j,k,2);
-                      p2=EdgePtPtr(I->Point,i,jp1,k,2);
-                      break;
-                    default:
-                      cod=0;
-                      p1=NULL;
-                      p2=NULL;
-                      break;
-                    }
-                  if(p1&&p2)  {
-                    p1->Link[p1->NLink]=p2;
-                    p1->NLink++;
-                    p2->Link[p2->NLink]=p1;
-                    p2->NLink++;
-#ifdef Trace
-                    LCount++;
-#endif
-                  }
+                  break;
                 }
-              }
-            }
-            if((i<Max0m1)&&(j<Max1m1)&&((!skip)||!(k%skip)))	{ /* k-plane */
-              index=I4(I->ActiveEdges,i,j,k,0)<<2;
-              index=(index+I4(I->ActiveEdges,ip1,j,k,1))<<2;
-              index=(index+I4(I->ActiveEdges,i,jp1,k,0))<<2;
-              index=index+I4(I->ActiveEdges,i,j,k,1);
-              if(index)	{
-                cod=I->Code[index];
+              if(p1&&p2)  {
+                p1->Link[p1->NLink]=p2;
+                p1->NLink++;
+                p2->Link[p2->NLink]=p1;
+                p2->NLink++;
 #ifdef Trace
-                if(index&&(cod<0))
-                  printf("IsosurfFindLines: bad index: %i \n",index);
+                LCount++;
 #endif
-                while(cod>0)	{
-                  switch(cod)	{
-                  case 40:
-                  case 32:
-                    cod=cod-32;
-                    p1=EdgePtPtr(I->Point,i,j,k,0);
-                    p2=EdgePtPtr(I->Point,i,j,k,1);
-                    break;
-                  case 20:
-                  case 16:
-                    cod=cod-16;
-                    p1=EdgePtPtr(I->Point,i,j,k,0);
-                    p2=EdgePtPtr(I->Point,ip1,j,k,1);
-                    break;
-                  case 8:
-                    cod=cod-8;
-                    p1=EdgePtPtr(I->Point,i,jp1,k,0);
-                    p2=EdgePtPtr(I->Point,ip1,j,k,1);
-                    break;
-                  case 4:
-                    cod=cod-4;
-                    p1=EdgePtPtr(I->Point,i,jp1,k,0);
-                    p2=EdgePtPtr(I->Point,i,j,k,1);
-                    break;
-                  case 2:
-                    cod=cod-2;
-                    p1=EdgePtPtr(I->Point,i,j,k,0);
-                    p2=EdgePtPtr(I->Point,i,jp1,k,0);
-                    break;
-                  case 1:
-                    cod=cod-1;
-                    p1=EdgePtPtr(I->Point,i,j,k,1);
-                    p2=EdgePtPtr(I->Point,ip1,j,k,1);
-                    break;
-                  default:
-                    cod=0;
-                    p1=NULL;
-                    p2=NULL;
-                    break;
-                  }
-                  if(p1&&p2)  {
-                    p1->Link[p1->NLink]=p2;
-                    p1->NLink++;
-                    p2->Link[p2->NLink]=p1;
-                    p2->NLink++;
-#ifdef Trace
-                    LCount++;
-#endif
-                  }
-                }
-              }
-            }
-            if((i<Max0m1)&&(k<Max2m1)&&((!skip)||!(j%skip)))	{ /* j-plane */
-              index=I4(I->ActiveEdges,i,j,k,0)<<2;
-              index=(index+I4(I->ActiveEdges,ip1,j,k,2))<<2;
-              index=(index+I4(I->ActiveEdges,i,j,kp1,0))<<2;
-              index=index+I4(I->ActiveEdges,i,j,k,2);
-              if(index)      {
-                cod=I->Code[index];
-#ifdef Trace
-                if(index&&(cod<0))
-                  printf("IsosurfFindLines: bad index: %i \n",index);
-#endif
-                while(cod>0)	{
-                  switch(cod)	{
-                  case 40:
-                  case 32:
-                    cod=cod-32;
-                    p1=EdgePtPtr(I->Point,i,j,k,0);
-                    p2=EdgePtPtr(I->Point,i,j,k,2);
-                    break;
-                  case 20:
-                  case 16:
-                    cod=cod-16;
-                    p1=EdgePtPtr(I->Point,i,j,k,0);
-                    p2=EdgePtPtr(I->Point,ip1,j,k,2);
-                    break;
-                  case 8:
-                    cod=cod-8;
-                    p1=EdgePtPtr(I->Point,i,j,k+1,0);
-                    p2=EdgePtPtr(I->Point,ip1,j,k,2);
-                    break;
-                  case 4:
-                    cod=cod-4;
-                    p1=EdgePtPtr(I->Point,i,j,kp1,0);
-                    p2=EdgePtPtr(I->Point,i,j,k,2);
-                    break;
-                  case 2:
-                    cod=cod-2;
-                    p1=EdgePtPtr(I->Point,i,j,k,0);
-                    p2=EdgePtPtr(I->Point,i,j,kp1,0);
-                    break;
-                  case 1:
-                    cod=cod-1;
-                    p1=EdgePtPtr(I->Point,i,j,k,2);
-                    p2=EdgePtPtr(I->Point,ip1,j,k,2);
-                    break;
-                  default:
-                    cod=0;
-                    p1=NULL;
-                    p2=NULL;
-                    break;
-                  }
-                  if(p1&&p2) {
-                    p1->Link[p1->NLink]=p2;
-                    p1->NLink++;
-                    p2->Link[p2->NLink]=p1;
-                    p2->NLink++;
-#ifdef Trace
-                    LCount++;
-#endif
-                  }
-                }
               }
             }
           }
+        }
+        if((i<Max0m1)&&(j<Max1m1)&&((!skip)||!(k%skip)))	{ /* k-plane */
+          index=I4(I->ActiveEdges,i,j,k,0)<<2;
+          index=(index+I4(I->ActiveEdges,ip1,j,k,1))<<2;
+          index=(index+I4(I->ActiveEdges,i,jp1,k,0))<<2;
+          index=index+I4(I->ActiveEdges,i,j,k,1);
+          if(index)	{
+            cod=I->Code[index];
 #ifdef Trace
-    printf(" IsosurfFindLines: %i lines found\n",LCount);
+            if(index&&(cod<0))
+              printf("IsosurfFindLines: bad index: %i \n",index);
+#endif
+            while(cod>0)	{
+              switch(cod)	{
+              case 40:
+              case 32:
+                cod=cod-32;
+                p1=EdgePtPtr(I->Point,i,j,k,0);
+                p2=EdgePtPtr(I->Point,i,j,k,1);
+                break;
+              case 20:
+              case 16:
+                cod=cod-16;
+                p1=EdgePtPtr(I->Point,i,j,k,0);
+                p2=EdgePtPtr(I->Point,ip1,j,k,1);
+                break;
+              case 8:
+                cod=cod-8;
+                p1=EdgePtPtr(I->Point,i,jp1,k,0);
+                p2=EdgePtPtr(I->Point,ip1,j,k,1);
+                break;
+              case 4:
+                cod=cod-4;
+                p1=EdgePtPtr(I->Point,i,jp1,k,0);
+                p2=EdgePtPtr(I->Point,i,j,k,1);
+                break;
+              case 2:
+                cod=cod-2;
+                p1=EdgePtPtr(I->Point,i,j,k,0);
+                p2=EdgePtPtr(I->Point,i,jp1,k,0);
+                break;
+              case 1:
+                cod=cod-1;
+                p1=EdgePtPtr(I->Point,i,j,k,1);
+                p2=EdgePtPtr(I->Point,ip1,j,k,1);
+                break;
+              default:
+                cod=0;
+                p1=NULL;
+                p2=NULL;
+                break;
+              }
+              if(p1&&p2)  {
+                p1->Link[p1->NLink]=p2;
+                p1->NLink++;
+                p2->Link[p2->NLink]=p1;
+                p2->NLink++;
+#ifdef Trace
+                LCount++;
+#endif
+              }
+            }
+          }
+        }
+        if((i<Max0m1)&&(k<Max2m1)&&((!skip)||!(j%skip)))	{ /* j-plane */
+          index=I4(I->ActiveEdges,i,j,k,0)<<2;
+          index=(index+I4(I->ActiveEdges,ip1,j,k,2))<<2;
+          index=(index+I4(I->ActiveEdges,i,j,kp1,0))<<2;
+          index=index+I4(I->ActiveEdges,i,j,k,2);
+          if(index)      {
+            cod=I->Code[index];
+#ifdef Trace
+            if(index&&(cod<0))
+              printf("IsosurfFindLines: bad index: %i \n",index);
+#endif
+            while(cod>0)	{
+              switch(cod)	{
+              case 40:
+              case 32:
+                cod=cod-32;
+                p1=EdgePtPtr(I->Point,i,j,k,0);
+                p2=EdgePtPtr(I->Point,i,j,k,2);
+                break;
+              case 20:
+              case 16:
+                cod=cod-16;
+                p1=EdgePtPtr(I->Point,i,j,k,0);
+                p2=EdgePtPtr(I->Point,ip1,j,k,2);
+                break;
+              case 8:
+                cod=cod-8;
+                p1=EdgePtPtr(I->Point,i,j,k+1,0);
+                p2=EdgePtPtr(I->Point,ip1,j,k,2);
+                break;
+              case 4:
+                cod=cod-4;
+                p1=EdgePtPtr(I->Point,i,j,kp1,0);
+                p2=EdgePtPtr(I->Point,i,j,k,2);
+                break;
+              case 2:
+                cod=cod-2;
+                p1=EdgePtPtr(I->Point,i,j,k,0);
+                p2=EdgePtPtr(I->Point,i,j,kp1,0);
+                break;
+              case 1:
+                cod=cod-1;
+                p1=EdgePtPtr(I->Point,i,j,k,2);
+                p2=EdgePtPtr(I->Point,ip1,j,k,2);
+                break;
+              default:
+                cod=0;
+                p1=NULL;
+                p2=NULL;
+                break;
+              }
+              if(p1&&p2) {
+                p1->Link[p1->NLink]=p2;
+                p1->NLink++;
+                p2->Link[p2->NLink]=p1;
+                p2->NLink++;
+#ifdef Trace
+                LCount++;
+#endif
+              }
+            }
+          }
+        }
+      }
+    }
+    if(I->G->Interrupt) {
+      ok=false;
+      break;
+    }
+    
+  }
+#ifdef Trace
+  printf(" IsosurfFindLines: %i lines found\n",LCount);
 #endif
 	return(ok);
 }
@@ -1861,139 +1907,156 @@ static int	IsosurfFindLines(CIsosurf *II)
 static int	IsosurfFindActiveEdges(CIsosurf *II)
 {
   register CIsosurf *I = II;
-	int	i,j,k;
-	int	ok=true;
+  int	i,j,k;
+  int	ok=true;
 #ifdef Trace
-	int	ECount=0;
+  int	ECount=0;
 #endif
-	
-	for(i=0;i<(I->Max[0]-1);i++)
-	for(j=0;j<I->Max[1];j++)
-	for(k=0;k<I->Max[2];k++)
-		{		
-		if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i+1,j,k)))
-			{
+
+  if(ok) {
+    for(i=0;i<(I->Max[0]-1);i++) {
+      for(j=0;j<I->Max[1];j++) {
+        for(k=0;k<I->Max[2];k++) {
+          if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i+1,j,k))) {
 #ifdef Trace
-ECount++;
+            ECount++;
 #endif
-			I4(I->ActiveEdges,i,j,k,0)=2;
-			IsosurfInterpolate(I,
-				O4Ptr(I->Coord,i,j,k,0,I->CurOff),
-				O3Ptr(I->Data,i,j,k,I->CurOff),
-				O4Ptr(I->Coord,i+1,j,k,0,I->CurOff),
-				O3Ptr(I->Data,i+1,j,k,I->CurOff),
-				&(EdgePt(I->Point,i,j,k,0).Point[0]));
-			}
-		else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i+1,j,k)))
-			{
+            I4(I->ActiveEdges,i,j,k,0)=2;
+            IsosurfInterpolate(I,
+                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k,I->CurOff),
+                               O4Ptr(I->Coord,i+1,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i+1,j,k,I->CurOff),
+                               &(EdgePt(I->Point,i,j,k,0).Point[0]));
+          } else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i+1,j,k))) {
 #ifdef Trace
-ECount++;
+            ECount++;
 #endif
 			I4(I->ActiveEdges,i,j,k,0)=1;
 			IsosurfInterpolate(I,
-				O4Ptr(I->Coord,i,j,k,0,I->CurOff),
-				O3Ptr(I->Data,i,j,k,I->CurOff),
-				O4Ptr(I->Coord,i+1,j,k,0,I->CurOff),
-				O3Ptr(I->Data,i+1,j,k,I->CurOff),
-				&(EdgePt(I->Point,i,j,k,0).Point[0]));
-			}
-		else
-			I4(I->ActiveEdges,i,j,k,0)=0;
-		}
-
-	for(i=0;i<I->Max[0];i++)
-	for(j=0;j<(I->Max[1]-1);j++)
-	for(k=0;k<I->Max[2];k++)
-		{
-		if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i,j+1,k)))
-			{
+                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k,I->CurOff),
+                               O4Ptr(I->Coord,i+1,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i+1,j,k,I->CurOff),
+                               &(EdgePt(I->Point,i,j,k,0).Point[0]));
+          }
+          else
+            I4(I->ActiveEdges,i,j,k,0)=0;
+        }
+      }
+      if(I->G->Interrupt) {
+        ok=false;
+        break;
+      }
+    }
+  }
+  if(ok) {
+    for(i=0;i<I->Max[0];i++) {
+      for(j=0;j<(I->Max[1]-1);j++) {
+        for(k=0;k<I->Max[2];k++) {
+          if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i,j+1,k))) {
 #ifdef Trace
-ECount++;
+            ECount++;
 #endif
-			I4(I->ActiveEdges,i,j,k,1)=2;
-			IsosurfInterpolate(I,
-				O4Ptr(I->Coord,i,j,k,0,I->CurOff),
-				O3Ptr(I->Data,i,j,k,I->CurOff),
-				O4Ptr(I->Coord,i,j+1,k,0,I->CurOff),
-				O3Ptr(I->Data,i,j+1,k,I->CurOff),
-				&(EdgePt(I->Point,i,j,k,1).Point[0]));
-			}
-		else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i,j+1,k)))
-			{
+            I4(I->ActiveEdges,i,j,k,1)=2;
+            IsosurfInterpolate(I,
+                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k,I->CurOff),
+                               O4Ptr(I->Coord,i,j+1,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j+1,k,I->CurOff),
+                               &(EdgePt(I->Point,i,j,k,1).Point[0]));
+          } else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i,j+1,k))) {
 #ifdef Trace
-ECount++;
+            ECount++;
 #endif
-			I4(I->ActiveEdges,i,j,k,1)=1;
-			IsosurfInterpolate(I,
-				O4Ptr(I->Coord,i,j,k,0,I->CurOff),
-				O3Ptr(I->Data,i,j,k,I->CurOff),
-				O4Ptr(I->Coord,i,j+1,k,0,I->CurOff),
-				O3Ptr(I->Data,i,j+1,k,I->CurOff),
-				&(EdgePt(I->Point,i,j,k,1).Point[0]));
-			}
-		else
-			I4(I->ActiveEdges,i,j,k,1)=0;
-		}
-
-	for(i=0;i<I->Max[0];i++)
-	for(j=0;j<I->Max[1];j++)
-	for(k=0;k<(I->Max[2]-1);k++)
-		{
-		if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i,j,k+1)))
-			{
+            I4(I->ActiveEdges,i,j,k,1)=1;
+            IsosurfInterpolate(I,
+                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k,I->CurOff),
+                               O4Ptr(I->Coord,i,j+1,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j+1,k,I->CurOff),
+                               &(EdgePt(I->Point,i,j,k,1).Point[0]));
+          } else {
+            I4(I->ActiveEdges,i,j,k,1)=0;
+          }
+        }
+      }
+      if(I->G->Interrupt) {
+        ok=false;
+        break;
+      }
+    }
+  }
+  if(ok) {
+    for(i=0;i<I->Max[0];i++) {
+      for(j=0;j<I->Max[1];j++) {
+        for(k=0;k<(I->Max[2]-1);k++) {
+          if((I3(I->VertexCodes,i,j,k))&&(!I3(I->VertexCodes,i,j,k+1))) {
 #ifdef Trace
-ECount++;
+            ECount++;
 #endif
-			I4(I->ActiveEdges,i,j,k,2)=2;
-			IsosurfInterpolate(I,
-				O4Ptr(I->Coord,i,j,k,0,I->CurOff),
-				O3Ptr(I->Data,i,j,k,I->CurOff),
-				O4Ptr(I->Coord,i,j,k+1,0,I->CurOff),
-				O3Ptr(I->Data,i,j,k+1,I->CurOff),
-				&(EdgePt(I->Point,i,j,k,2).Point[0]));
-			}
-		else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i,j,k+1)))
-			{
+            I4(I->ActiveEdges,i,j,k,2)=2;
+            IsosurfInterpolate(I,
+                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k,I->CurOff),
+                               O4Ptr(I->Coord,i,j,k+1,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k+1,I->CurOff),
+                               &(EdgePt(I->Point,i,j,k,2).Point[0]));
+          } else if(!(I3(I->VertexCodes,i,j,k))&&(I3(I->VertexCodes,i,j,k+1))) {
 #ifdef Trace
-ECount++;
+            ECount++;
 #endif
-			I4(I->ActiveEdges,i,j,k,2)=1;
-			IsosurfInterpolate(I,
-				O4Ptr(I->Coord,i,j,k,0,I->CurOff),
-				O3Ptr(I->Data,i,j,k,I->CurOff),
-				O4Ptr(I->Coord,i,j,k+1,0,I->CurOff),
-				O3Ptr(I->Data,i,j,k+1,I->CurOff),
-				&(EdgePt(I->Point,i,j,k,2).Point[0]));
-			}
-		else
-			I4(I->ActiveEdges,i,j,k,2)=0;
-		}
+            I4(I->ActiveEdges,i,j,k,2)=1;
+            IsosurfInterpolate(I,
+                               O4Ptr(I->Coord,i,j,k,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k,I->CurOff),
+                               O4Ptr(I->Coord,i,j,k+1,0,I->CurOff),
+                               O3Ptr(I->Data,i,j,k+1,I->CurOff),
+                               &(EdgePt(I->Point,i,j,k,2).Point[0]));
+          } else {
+            I4(I->ActiveEdges,i,j,k,2)=0;
+          }
+        }
+      }
+      if(I->G->Interrupt) {
+        ok=false;
+        break;
+      }
+    }
+  }
 #ifdef Trace
-printf(" IsosurfFindActiveEdges: %i active edges found\n",ECount);
+  printf(" IsosurfFindActiveEdges: %i active edges found\n",ECount);
 #endif
-			
-	return(ok);
+  return(ok);
 }
 /*===========================================================================*/
 static int	IsosurfCodeVertices(CIsosurf *II)
 {
   register CIsosurf *I = II;
-	int	i,j,k;
-	int	VCount=0;
-
-	for(i=0;i<I->Max[0];i++)
-      for(j=0;j<I->Max[1];j++)
-        for(k=0;k<I->Max[2];k++) {
-          if((O3(I->Data,i,j,k,I->CurOff)>I->Level)) {
-            I3(I->VertexCodes,i,j,k)=1;
-            VCount++;
-          } else {
-			I3(I->VertexCodes,i,j,k)=0;
-          }
-		}
+  int	i,j,k;
+  int	VCount=0;
+  int ok=true;
+  for(i=0;i<I->Max[0];i++) {
+    for(j=0;j<I->Max[1];j++) {
+      for(k=0;k<I->Max[2];k++) {
+        if((O3(I->Data,i,j,k,I->CurOff)>I->Level)) {
+          I3(I->VertexCodes,i,j,k)=1;
+          VCount++;
+        } else {
+          I3(I->VertexCodes,i,j,k)=0;
+        }
+      }
+    }
+    if(I->G->Interrupt) {
+      ok=false;
+      break;
+    }
+  }
 #ifdef Trace
-printf(" IsosurfCodeVertices: %i of %i vertices above level\n",VCount,
-I->CurDim[0]*I->CurDim[1]*I->CurDim[2]);
+  printf(" IsosurfCodeVertices: %i of %i vertices above level\n",VCount,
+         I->CurDim[0]*I->CurDim[1]*I->CurDim[2]);
 #endif
-	return(VCount);
+  if(!ok) 
+    VCount = 0;
+  return(VCount);
 }

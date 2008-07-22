@@ -1009,7 +1009,7 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 /*========================================================================*/
 
 #define RepUpdateMacro(I,rep,new_fn,state) {\
-  if(I->Active[rep]) {\
+  if(I->Active[rep]&&(!G->Interrupt)) {\
     if(!I->Rep[rep]) {\
       I->Rep[rep]=new_fn(I,state);\
       if(I->Rep[rep]) \
@@ -1026,10 +1026,12 @@ static void CoordSetUpdate(CoordSet *I,int state)
 {
   int a;
   int i;
+  PyMOLGlobals *G = I->Obj->Obj.G;
+
   ObjectMolecule *obj;
   obj=I->Obj;
   
-  if(Feedback(I->Obj->Obj.G,FB_CoordSet,FB_Blather)) {
+  if(Feedback(G,FB_CoordSet,FB_Blather)) {
     printf(" CoordSetUpdate-Entered: object %s state %d cset %p\n",
            I->Obj->Obj.Name, state, (void*)I);
   }
@@ -1053,7 +1055,7 @@ static void CoordSetUpdate(CoordSet *I,int state)
         }
     }
   }
-  OrthoBusyFast(I->State.G,0,I->NRep);
+  OrthoBusyFast(G,0,I->NRep);
   RepUpdateMacro(I, cRepLine,            RepWireBondNew        , state );
   RepUpdateMacro(I, cRepCyl,             RepCylBondNew         , state );
   RepUpdateMacro(I, cRepDot,             RepDotNew             , state );
@@ -1071,9 +1073,9 @@ static void CoordSetUpdate(CoordSet *I,int state)
     if(!I->Rep[a])
       I->Active[a]=false;
 
-  SceneInvalidate(I->State.G);
-  OrthoBusyFast(I->State.G,1,1);
-  if(Feedback(I->Obj->Obj.G,FB_CoordSet,FB_Blather)) {
+  SceneInvalidate(G);
+  OrthoBusyFast(G,1,1);
+  if(Feedback(G,FB_CoordSet,FB_Blather)) {
     printf(" CoordSetUpdate-Leaving: object %s state %d cset %p\n",
            I->Obj->Obj.Name, state, (void*)I);
   }
