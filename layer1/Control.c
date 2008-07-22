@@ -178,6 +178,9 @@ return 1;
 
 int ControlRocking(PyMOLGlobals *G)
 {
+  if(G->Interrupt) {
+    SettingSetGlobal_b(G,cSetting_rock,false);    
+  }
   return SettingGetGlobal_b(G,cSetting_rock);
 }
 

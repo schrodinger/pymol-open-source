@@ -5356,8 +5356,8 @@ static PyObject *CmdGetProgress(PyObject *self, PyObject *args)
               float old_value = value;
               float old_range = range;
               
-              range = (float)(progress[PYMOL_PROGRESS_FAST+1]);
-              value = (float)(progress[PYMOL_PROGRESS_FAST]);
+              range = (float)(progress[offset+1]);
+              value = (float)(progress[offset]);
               
               value += (1.0F/range)*(old_value/old_range);
               

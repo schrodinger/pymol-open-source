@@ -3396,6 +3396,12 @@ int PyMOL_Idle(CPyMOL *I)
   }
 #endif
 
+  /* reset the interrupt flag if we're not doing anything */
+
+  if(!(did_work||I->ModalDraw))
+    if(PyMOL_GetInterrupt(I,false))
+      PyMOL_SetInterrupt(I,false);
+
   PYMOL_API_UNLOCK_NO_FLUSH
   return (did_work || I->ModalDraw);
 }
@@ -3737,23 +3743,30 @@ void PyMOL_SetBusy(CPyMOL *I, int value)
 
   I->BusyFlag = value;
 
+#if 0
   if(!I->BusyFlag) /* reset the interrupt flag once we're done being busy */
     PyMOL_SetInterrupt(I,false);
+#endif
 }
 
 int PyMOL_GetInterrupt(CPyMOL *I, int reset)
 { /* lock intentionally omitted */
-  int result = I->InterruptFlag;
-
-  if(reset)
-    PyMOL_SetInterrupt(I,false);
-  
-  return result;
+  if(I) {
+    int result = I->InterruptFlag;
+    
+    if(reset)
+      PyMOL_SetInterrupt(I,false);
+    return result;
+  } else 
+    return false;
 }
 
 void PyMOL_SetInterrupt(CPyMOL *I, int value)
 {/* lock intentionally omitted */
-  I->InterruptFlag = value;
+  if(I) {
+    I->InterruptFlag = value;
+    if(I->G) I->G->Interrupt = value;
+  }
 }
 
 void PyMOL_Drag(CPyMOL *I,int x, int y, int modifiers)

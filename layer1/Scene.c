@@ -6332,11 +6332,17 @@ void SceneRay(PyMOLGlobals *G,
     accumTiming += timing; 
     
     if(show_timing && !quiet) {
-      PRINTFB(G,FB_Ray,FB_Details)
-        " Ray: render time: %4.2f sec. = %3.1f frames/hour (%4.2f sec. accum.).\n", 
-        timing,3600/timing, 
-        accumTiming 
-        ENDFB(G);
+      if(!G->Interrupt) {
+        PRINTFB(G,FB_Ray,FB_Details)
+          " Ray: render time: %4.2f sec. = %3.1f frames/hour (%4.2f sec. accum.).\n", 
+          timing,3600/timing, 
+          accumTiming 
+          ENDFB(G);
+      } else {
+         PRINTFB(G,FB_Ray,FB_Details)
+          " Ray: render aborted.\n"
+          ENDFB(G);
+      }
     }
   }
   

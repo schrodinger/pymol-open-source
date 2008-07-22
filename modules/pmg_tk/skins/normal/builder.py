@@ -66,6 +66,33 @@ class CleanWizard(ActionWizard):
             [ 2, 'Done','cmd.set_wizard()'],
             ]
 
+class SculptWizard(ActionWizard):
+
+    def sculpt(self,sele):
+        pass
+        
+    def do_pick(self, bondFlag):
+        obj_list = self.cmd.get_object_list("pk1")
+        if len(obj_list)==1:
+            obj_name = obj_list[0]
+            self.cmd.sculpt_activate(obj_name)
+            self.cmd.set("sculpting",1)
+        self.cmd.unpick()
+        self.cmd.set_wizard()
+        self.cmd.refresh_wizard()
+
+    def toggle(self):
+        self.activateOrDismiss()
+
+    def get_prompt(self):
+        return ["Pick object to sculpt..."]
+    
+    def get_panel(self):
+        return [
+            [ 1, 'Sculpt', ''],
+            [ 2, 'Done','cmd.set_wizard()'],
+            ]
+
 class RepeatableActionWizard(ActionWizard):
 
     def __init__(self,_self):
@@ -207,7 +234,7 @@ class AminoAcidWizard(RepeatableActionWizard):
             if name not in names:
                 break
             num = num + 1
-        editor.attach_amino_acid("pk1", self.aminoAcid, _self=self.cmd)        
+        editor.attach_amino_acid("pk1", self.aminoAcid, object=name, _self=self.cmd)        
         if not self.getRepeating():
             self.cmd.set_wizard()
             self.cmd.refresh_wizard()
@@ -642,7 +669,7 @@ class ModifyFrame(GuiFrame):
     def deleteBond(self):
         picked = collectPicked(self.cmd)
         if picked == ["pk1","pk2"]:
-            self.cmd.bond("pk1", "pk2")
+            self.cmd.unbond("pk1", "pk2")
             self.cmd.h_fill()
             self.cmd.unpick()
         else:
@@ -683,6 +710,9 @@ class CleanJob:
             result = None
             if len(obj_list)==1:
                 obj_name = obj_list[0]
+                self_cmd.sculpt_deactivate(obj_name) # eliminate all sculpting information for object
+                self.cmd.sculpt_purge()
+                self.cmd.set("sculpting",0)
                 state = self_cmd.get_state()
                 sdf_list = io.mol.toList(self_cmd.get_model(obj_name,state=state)) + ["$$$$\n"]
                 result = mengine.run(string.join(sdf_list,''))
@@ -771,7 +801,16 @@ class EditFrame(GuiFrame):
             self.cmd.delete("all")
 
     def sculpt(self):
-        warn("Sorry, the sculpt button is not yet implemented.")
+        picked = collectPicked(self.cmd)
+        if len(picked):
+            obj_list = self.cmd.get_object_list(picked[0])
+            if len(obj_list)==1:
+                obj_name = obj_list[0]
+                self.cmd.sculpt_activate(obj_name)
+                self.cmd.set("sculpting",1)
+            self.cmd.unpick()
+        else:
+            SculptWizard(_self=self.cmd).toggle()
 
     def clean(self):
         picked = collectPicked(self.cmd)

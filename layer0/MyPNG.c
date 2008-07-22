@@ -53,14 +53,14 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
                unsigned int width,unsigned int height,float dpi)
 {
 #ifdef _PYMOL_LIBPNG
-
-   FILE *fp;
-   png_structp png_ptr;
-   png_infop info_ptr;
-	int bit_depth = 8;
-	int bytes_per_pixel = 4;
-   png_uint_32 k;
-   png_byte *image = (png_byte*)p;
+  int ok=true;
+  FILE *fp;
+  png_structp png_ptr;
+  png_infop info_ptr;
+  int bit_depth = 8;
+  int bytes_per_pixel = 4;
+  png_uint_32 k;
+  png_byte *image = (png_byte*)p;
    png_bytep *row_pointers;
 
    row_pointers=Alloc(png_bytep,height);
@@ -68,10 +68,11 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
    /* open the file */
    fp = fopen(file_name, "wb");
    if (fp == NULL) {
-     return 0;
+     ok=false;
+     goto cleanup;
    } else if(feof(fp)) {
-     fclose(fp);
-	 return 0;
+     ok=false;
+     goto cleanup;
    }
    /* Create and initialize the png_struct with the desired error handler
     * functions.  If you want to use the default stderr and longjump method,
@@ -81,30 +82,27 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
     */
    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,NULL,NULL,NULL);
 
-   if (png_ptr == NULL)
-   {
-      fclose(fp);
-      return 0;
+   if (png_ptr == NULL) {
+     ok=false;
+     goto cleanup;
    }
 
    /* Allocate/initialize the image information data.  REQUIRED */
    info_ptr = png_create_info_struct(png_ptr);
-   if (info_ptr == NULL)
-   {
-      fclose(fp);
-      png_destroy_write_struct(&png_ptr,  (png_infopp)NULL);
-      return 0;
+   if (info_ptr == NULL) {
+     png_destroy_write_struct(&png_ptr,  (png_infopp)NULL);
+     ok=false;
+     goto cleanup;
    }
 
    /* Set error handling.  REQUIRED if you aren't supplying your own
     * error handling functions in the png_create_write_struct() call.
     */
-   if (setjmp(png_jmpbuf(png_ptr)))
-   {
-      /* If we get here, we had a problem reading the file */
-      fclose(fp);
-      png_destroy_write_struct(&png_ptr,  (png_infopp)NULL);
-      return 0;
+   if (setjmp(png_jmpbuf(png_ptr))) {
+     /* If we get here, we had a problem reading the file */
+     png_destroy_write_struct(&png_ptr,  (png_infopp)NULL);
+     ok=false;
+     goto cleanup;
    }
 
    /* set up the output control if you are using standard C streams */
@@ -161,15 +159,17 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
    /* clean up after the write, and free any memory allocated */
    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
 
+ cleanup:
+   if(fp) 
    /* close the file */
-   fclose(fp);
-
-	mfree(row_pointers);
+     fclose(fp);
+   
+   mfree(row_pointers);
    /* that's it */
 
-   return 1;
-
+   return ok;
 #else
+
    return 0;
 #endif
 }

@@ -68,7 +68,7 @@ void RepMeshFree(RepMesh *I)
   OOFreeP(I);
 }
 
-void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float probe_radius);
+int RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float probe_radius);
 
 static void RepMeshRender(RepMesh *I,RenderInfo *info)
 {
@@ -434,7 +434,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
   ObjectMolecule *obj;
   CoordSet *ccs;
   int a,b,c,d,h,k,l,*n;
-  MapType *map,*smap;
+  MapType *map = NULL,*smap=NULL;
   /* grid */
   Vector3f minE,maxE,sizeE;
   float size;
@@ -457,6 +457,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
   int solv_acc;
   int mesh_type ;
   int mesh_skip;
+  int ok=true;
 
   AtomInfoType *ai1;
 
@@ -617,7 +618,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
       maxE[c]=-(MAXFLOAT);
     } 
     
-     for(b=0;b<obj->NCSet;b++) {	 
+    for(b=0;b<obj->NCSet;b++) {	 
        ccs=obj->CSet[b];
        if(ccs) {
          for(c=0;c<ccs->NIndex;c++) {
@@ -665,10 +666,12 @@ Rep *RepMeshNew(CoordSet *cs,int state)
 
 	 OrthoBusyFast(G,0,1);
 	 if(!solv_acc)
-       RepMeshGetSolventDots(I,cs,minE,maxE,probe_radius);
-	 smap=MapNew(G,probe_radius,I->Dot,I->NDot,NULL);
-	 map=MapNew(G,I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
-	 if(map&&smap)	{
+       ok = RepMeshGetSolventDots(I,cs,minE,maxE,probe_radius);
+     if(ok) {
+       smap=MapNew(G,probe_radius,I->Dot,I->NDot,NULL);
+       map=MapNew(G,I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
+     }
+	 if(ok&&map&&smap)	{
        MapSetupExpress(smap);
        MapSetupExpress(map);
        for(a=0;a<dims[0];a++)	 {
@@ -750,13 +753,19 @@ Rep *RepMeshNew(CoordSet *cs,int state)
              }
            }
          }
-       }	 
+         if(G->Interrupt) {
+           ok=false;
+           break;
+         }
+       }
      }
 	 MapFree(smap);
      MapFree(map);
 	 FreeP(I->Dot);	 
 	 OrthoBusyFast(G,2,3);
-     IsosurfVolume(G,NULL,NULL,field,1.0,&I->N,&I->V,NULL,mesh_type,mesh_skip,1.0F);
+     if(ok) {
+       IsosurfVolume(G,NULL,NULL,field,1.0,&I->N,&I->V,NULL,mesh_type,mesh_skip,1.0F);
+     }
      IsosurfFieldFree(G,field);
      if(I->N && I->V && (carve_flag||clear_flag||trim_flag)) {
        int cur_size = VLAGetSize(I->N);
@@ -870,11 +879,12 @@ Rep *RepMeshNew(CoordSet *cs,int state)
   return((void*)(struct Rep*)I);
 }
 
-void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float probe_radius)
+int RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float probe_radius)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj=cs->Obj;
   int a,b,c,a1,a2,flag,i,h,k,l,j;
+  int ok=true;
   float *v,*v0,vdw;
   MapType *map;
   int inFlag,*p,*dot_flag;
@@ -961,11 +971,15 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
           maxDot=I->NDot-1;
         }
       }
+      if(G->Interrupt) {
+        ok=false;
+        break;
+      }
     }
     MapFree(map);
   }
 
-  if(cavity_cull>0) {
+  if(ok&&(cavity_cull>0)) {
     dot_flag=Alloc(int,I->NDot);
     ErrChkPtr(G,dot_flag);
     for(a=0;a<I->NDot;a++) {
@@ -1013,6 +1027,10 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
           v+=3;
           p++;
         }
+        if(G->Interrupt) {
+          ok=false;
+          break;
+        }
       }
       MapFree(map);
     }
@@ -1033,6 +1051,11 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
     }
     FreeP(dot_flag);
   }
+  if(!ok) {
+    FreeP(I->Dot);
+    I->NDot = 0;
+  }
+  return ok;
 }
 
 

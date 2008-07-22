@@ -146,6 +146,8 @@ struct _PyMOLGlobals {
   int Ready; /* is the program fully initialized and ready to receive
                    * messages? */
 
+  int Interrupt; /* set when we are attempting to abort time-consuming calculations */
+
   int Terminating; /* is the program shutting down? */
   
   /* note that the following four options are also contained in

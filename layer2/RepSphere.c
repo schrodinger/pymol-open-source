@@ -1194,6 +1194,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
+  int ok=true;
   int a,b,c,a1,c1,a2,i,j,k,h,l;
   float *v,*v0,*vc,vdw,v1[3];
   float restart;
@@ -1790,8 +1791,12 @@ Rep *RepSphereNew(CoordSet *cs,int state)
         I->N++;
         if(nt) nt++;
       }
+      if(G->Interrupt) {
+        ok=false;
+        break;
+      }
     }
-  }  
+  }
   
   if(sp) { /* don't do this if we're trying to conserve RAM */
 
@@ -1827,6 +1832,10 @@ Rep *RepSphereNew(CoordSet *cs,int state)
   FreeP(visFlag);
   FreeP(map_flag);
   if(map)  MapFree(map);
+  if(!ok) {
+    RepSphereFree(I);
+    I=NULL;
+  }
   return((void*)(struct Rep*)I);
 }
 

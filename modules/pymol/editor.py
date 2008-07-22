@@ -36,19 +36,19 @@ def attach_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
                 _self.remove("(hydro and pkmol)")            
         _self.delete(tmp_editor)
         
-def attach_amino_acid(selection,amino_acid,center=0,animate=-1,_self=cmd):
-    if (selection == 'pk1') and (selection not in _self.get_names('all')):
+def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",_self=cmd):
+    if (selection not in _self.get_names('all')):
         # create new object 
         if amino_acid in _self.get_names("objects"):
             print " Error: an object with than name already exists"
             raise QuietException
-        _self.fragment(amino_acid)
+        _self.fragment(amino_acid,object)
         if _self.get_setting_legacy("auto_remove_hydrogens"):
-            _self.remove("(hydro and %s)"%amino_acid)
-        if _self.count_atoms("((%s) and name c)"%amino_acid,quiet=1):
-            _self.edit("((%s) and name c)"%amino_acid)
-        elif _self.count_atoms("((%s) and name n)"%amino_acid,quiet=1):
-            _self.edit("((%s) and name n)"%amino_acid)            
+            _self.remove("(hydro and %s)"%object)
+        if _self.count_atoms("((%s) and name c)"%object,quiet=1):
+            _self.edit("((%s) and name c)"%object)
+        elif _self.count_atoms("((%s) and name n)"%object,quiet=1):
+            _self.edit("((%s) and name n)"%object)
     else:
         ss = int(_self.get_setting_legacy("secondary_structure"))
         if ss:
