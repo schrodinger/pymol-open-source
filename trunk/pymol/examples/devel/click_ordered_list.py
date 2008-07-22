@@ -62,7 +62,6 @@ class Clicker(Wizard):
             cmd.refresh_wizard()
         self.cmd.delete(name)
         self.cmd.select(disp_sele,click_sele,enable=1)            
-        return 1
     
     def remove_last(self):
         self.click_list = self.click_list[:-1]
