@@ -798,6 +798,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_mesh_clear_cutoff          594
 #define cSetting_mesh_grid_max              595
 #define cSetting_session_cache_optimize     596
+#define cSetting_sdof_drag_scale            597
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -807,7 +808,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       597
+#define cSetting_INIT                       598
 #endif
 
 

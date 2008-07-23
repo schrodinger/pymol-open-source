@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"Movie.h"
 #include "Text.h"
 #include "Util.h"
+#include "Ortho.h"
 
 #define cControlBoxSize 17
 #define cControlLeftMargin 8
@@ -60,11 +61,38 @@ struct _CControl {
 
   int sdofActive;
   double sdofLastIterTime;
+  int sdofMode;
   float sdofTrans[3];
   float sdofRot[3];
   unsigned int sdofWroteTo, sdofReadFrom; /* queue synchronization fields */
   float sdofBuffer[(SDOF_QUEUE_MASK+1)*6];
 };
+
+int ControlSdofButton(PyMOLGlobals *G,int button)
+{
+  CControl *I=G->Control;
+  if(I) {
+    if(button == 1) { /* LEFT */
+      if(I->sdofMode != SDOF_DRAG_MODE) {
+        I->sdofMode = SDOF_DRAG_MODE;
+        OrthoAddOutput(G," SDOF: Drag mode.\n");
+      } else {
+        I->sdofMode = SDOF_NORMAL_MODE;
+        OrthoAddOutput(G," SDOF: Normal mode.\n");
+      }
+    } else if(button == 2) { /* RIGHT */
+      if(I->sdofMode != SDOF_CLIP_MODE) {
+        I->sdofMode = SDOF_CLIP_MODE;
+        OrthoAddOutput(G," SDOF: Clip mode.\n");          
+      } else {
+        I->sdofMode = SDOF_NORMAL_MODE;
+        OrthoAddOutput(G," SDOF: Normal mode.\n");
+      }
+    }
+    OrthoDirty(G);
+  }
+  return 1;
+}
 
 int ControlSdofUpdate(PyMOLGlobals *G, float tx,float ty, float tz, float rx, float ry, float rz)
 { 
@@ -163,13 +191,15 @@ int ControlSdofIterate(PyMOLGlobals *G)
     SceneTranslateScaled(G,
                          delta * I->sdofTrans[0],
                          -delta * I->sdofTrans[1],
-                         -delta * I->sdofTrans[2]);
+                         -delta * I->sdofTrans[2],
+                         I->sdofMode);
 
     /* rotate */
     SceneRotateScaled(G,
                        2.0F * delta * I->sdofRot[0],
                       -2.0F * delta * I->sdofRot[1],
-                      -2.0F * delta * I->sdofRot[2]);
+                      -2.0F * delta * I->sdofRot[2],
+                      I->sdofMode);
   
     SceneDirty(G);
 	}

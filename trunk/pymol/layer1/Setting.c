@@ -2185,6 +2185,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_nonbonded_size:
+  case cSetting_nonbonded_transparency:
     ExecutiveInvalidateRep(G,inv_sele,cRepNonbonded,cRepInvRep);
     ExecutiveInvalidateRep(G,inv_sele,cRepNonbondedSphere,cRepInvRep);
     SceneChanged(G);
@@ -3638,5 +3639,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_f(I,cSetting_mesh_cutoff,0.0F);
     set_i(I,cSetting_mesh_grid_max,80);
     set_i(I,cSetting_session_cache_optimize,0); 
+    set_f(I,cSetting_sdof_drag_scale,0.5F);
   }
 }

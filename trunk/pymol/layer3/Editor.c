@@ -1869,62 +1869,24 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
 
   if((index<0)&&(!obj)) obj=I->DragObject;
 
-  state = EditorGetEffectiveState(G,obj,state);
+  if(obj) {
+    state = EditorGetEffectiveState(G,obj,state);
 
-  if((index==I->DragIndex)&&(obj==I->DragObject)) {
-    if(!EditorActive(G)) {
-      int matrix_mode = SettingGet_b(G,I->DragObject->Obj.Setting,
-                                      NULL,cSetting_matrix_mode);
+    if((index==I->DragIndex)&&(obj==I->DragObject)) {
+      if(!EditorActive(G)) {
+        int matrix_mode = SettingGet_b(G,I->DragObject->Obj.Setting,
+                                       NULL,cSetting_matrix_mode);
 
-      /* non-achored actions */
-      switch(mode) {
-      case cButModeRotDrag:
-        if(I->DragHaveBase) {
-          copy3f(I->DragBase,v3);
-        } else {
-          SceneOriginGet(G,v3);
-        }
-        get_rotation_about3f3fTTTf(pt[0], mov, v3, m); 
-        if(matrix_mode&&(I->DragSelection<0)) {
-          switch(matrix_mode) {
-          case 1:
-            ObjectCombineTTT(&obj->Obj,m,false);
-            break;
-          case 2:
-            ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
-            break;
+        /* non-achored actions */
+        switch(mode) {
+        case cButModeRotDrag:
+          if(I->DragHaveBase) {
+            copy3f(I->DragBase,v3);
+          } else {
+            SceneOriginGet(G,v3);
           }
-        } else {
-          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
-                                           m,log_trans,I->DragSeleName,false,true);
-        }
-        SceneInvalidate(G);
-        break;
-      case cButModeRotFrag:
-      case cButModeRotObj:
-      case cButModeRotView:
-        if(I->DragHaveBase) {
-          copy3f(I->DragBase,v3);
-        } else {
-          SceneOriginGet(G,v3);
-        }
-        subtract3f(pt,v3,n0);
-        add3f(pt,mov,n1);
-        subtract3f(n1,v3,n1);
-        normalize3f(n0);
-        normalize3f(n1);
-        cross_product3f(n0,n1,cp);
-        theta = (float)asin(length3f(cp));
-        normalize23f(cp,n2);        
-        get_rotation_about3f3fTTTf(theta, n2, v3, m); 
-        /* matrix m now contains a valid TTT rotation in global
-           coordinate space that could be applied directly to the
-           coordinates to effect the desired rotation */
-        if(mode==cButModeRotView) {
-          /* modify the object's TTT */
-          ObjectCombineTTT(&obj->Obj, m,false);
-        } else {
-          if(matrix_mode) {
+          get_rotation_about3f3fTTTf(pt[0], mov, v3, m); 
+          if(matrix_mode&&(I->DragSelection<0)) {
             switch(matrix_mode) {
             case 1:
               ObjectCombineTTT(&obj->Obj,m,false);
@@ -1937,133 +1899,174 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
             ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
                                              m,log_trans,I->DragSeleName,false,true);
           }
-        }
-        SceneInvalidate(G);
-        break;
-      case cButModeTorFrag:
-        ObjectMoleculeMoveAtom(obj,state,index,mov,1,log_trans);
-        SceneInvalidate(G);
-        break;
-      case cButModeMovView:
-      case cButModeMovViewZ:
-        ObjectTranslateTTT(&obj->Obj,mov);
-        break;
-      case cButModeMovObj:
-      case cButModeMovObjZ:
-      case cButModeMovFrag:
-      case cButModeMovFragZ:
-      case cButModeMovDrag:
-      case cButModeMovDragZ:
-        if(matrix_mode && (I->DragSelection<0)) {
-          identity44f(m);
-          m[3]=mov[0];
-          m[7]=mov[1];
-          m[11]=mov[2];
-          switch(matrix_mode) {
-          case 1:
-            ObjectCombineTTT(&obj->Obj,m,false);
-            break;
-          case 2:
-            ObjectMoleculeTransformState44f(obj,state,m,log_trans,true,true);
-            break;
+          SceneInvalidate(G);
+          break;
+        case cButModeRotFrag:
+        case cButModeRotObj:
+        case cButModeRotView:
+          if(I->DragHaveBase) {
+            copy3f(I->DragBase,v3);
+          } else {
+            SceneOriginGet(G,v3);
           }
-        } else {
-          identity44f(m);
-          copy3f(mov,m+12); /* questionable... */
-          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,
-                                           log_trans,I->DragSeleName,false,true);
-        }
-        SceneInvalidate(G);
-        break;
-      }
-    } else {
-      switch(mode) {
-      case cButModeRotFrag:
-      case cButModeRotObj:
-        if(I->DragHaveBase) {
-          copy3f(I->DragBase,v3);
-        } else {
-          copy3f(I->V0,v3);
-        }
-        if(I->DragSlowFlag) {
-          SceneGetViewNormal(G,v4);
-          scale3f(v4,-1.0F,v4);
-          add3f(v3,v4,v4)
-          subtract3f(pt,v4,n0);
-          add3f(pt,mov,n1);
-          subtract3f(n1,v4,n1);
-        } else {
           subtract3f(pt,v3,n0);
           add3f(pt,mov,n1);
           subtract3f(n1,v3,n1);
-        }
-        normalize3f(n0);
-        normalize3f(n1);
-        cross_product3f(n0,n1,cp);
-        theta = (float)asin(length3f(cp));
-        normalize23f(cp,n2);        
-        
-        get_rotation_about3f3fTTTf(theta, n2, v3, m);
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
-                                         m,log_trans,I->DragSeleName,false,true);
-        SceneInvalidate(G);
-        break;
-      case cButModeTorFrag:
-      case cButModePkTorBnd:
-        if(I->DragHaveAxis) {
-          subtract3f(pt,I->Center,d0);
-          if(dot_product3f(d0,I->Axis)<0.0) {
-            copy3f(I->V0,v1);
-            copy3f(I->V1,v0);
-          } else {
-            copy3f(I->V0,v0);
-            copy3f(I->V1,v1);
-          }          
-          subtract3f(v1,v0,d1);
-          copy3f(d1,n0);
           normalize3f(n0);
-          cross_product3f(n0,d0,n1);
           normalize3f(n1);
-          
-          project3f(d0,n0,v2);
-          add3f(I->Center,v2,v2); /* v2 is the perpendicular point on the axis */
-          subtract3f(pt,v2,d2);
-          opp=(float)length3f(mov);
-          adj=(float)length3f(d2);
-          if(adj>R_SMALL4) {
-            theta=(float)atan(opp/adj);
-            if(dot_product3f(n1,mov)<0.0)
-              theta=-theta;
-            get_rotation_about3f3fTTTf(theta, n0, v1, m);
-            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,
-                                             log_trans,I->DragSeleName,false,true);
+          cross_product3f(n0,n1,cp);
+          theta = (float)asin(length3f(cp));
+          normalize23f(cp,n2);        
+          get_rotation_about3f3fTTTf(theta, n2, v3, m); 
+          /* matrix m now contains a valid TTT rotation in global
+             coordinate space that could be applied directly to the
+             coordinates to effect the desired rotation */
+          if(mode==cButModeRotView) {
+            /* modify the object's TTT */
+            ObjectCombineTTT(&obj->Obj, m,false);
           } else {
-
-            cross_product3f(I->Axis,z_dir,d0);
-            theta = -dot_product3f(d0,mov);
-            get_rotation_about3f3fTTTf(theta, n0, v1, m);
+            if(matrix_mode) {
+              switch(matrix_mode) {
+              case 1:
+                ObjectCombineTTT(&obj->Obj,m,false);
+                break;
+              case 2:
+                ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
+                break;
+              }
+            } else {
+              ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
+                                               m,log_trans,I->DragSeleName,false,true);
+            }
+          }
+          SceneInvalidate(G);
+          break;
+        case cButModeTorFrag:
+          ObjectMoleculeMoveAtom(obj,state,index,mov,1,log_trans);
+          SceneInvalidate(G);
+          break;
+        case cButModeMovView:
+        case cButModeMovViewZ:
+          ObjectTranslateTTT(&obj->Obj,mov);
+          break;
+        case cButModeMovObj:
+        case cButModeMovObjZ:
+        case cButModeMovFrag:
+        case cButModeMovFragZ:
+        case cButModeMovDrag:
+        case cButModeMovDragZ:
+          if(matrix_mode && (I->DragSelection<0)) {
+            identity44f(m);
+            m[3]=mov[0];
+            m[7]=mov[1];
+            m[11]=mov[2];
+            switch(matrix_mode) {
+            case 1:
+              ObjectCombineTTT(&obj->Obj,m,false);
+              break;
+            case 2:
+              ObjectMoleculeTransformState44f(obj,state,m,log_trans,true,true);
+              break;
+            }
+          } else {
+            identity44f(m);
+            copy3f(mov,m+12); /* questionable... */
             ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,
                                              log_trans,I->DragSeleName,false,true);
-            
           }
-          if(I->BondMode && SettingGetGlobal_b(G,cSetting_editor_auto_dihedral))
-            EditorDihedralInvalid(G,NULL);
+          SceneInvalidate(G);
+          break;
         }
+      } else {
+        switch(mode) {
+        case cButModeRotFrag:
+        case cButModeRotObj:
+          if(I->DragHaveBase) {
+            copy3f(I->DragBase,v3);
+          } else {
+            copy3f(I->V0,v3);
+          }
+          if(I->DragSlowFlag) {
+            SceneGetViewNormal(G,v4);
+            scale3f(v4,-1.0F,v4);
+            add3f(v3,v4,v4)
+              subtract3f(pt,v4,n0);
+            add3f(pt,mov,n1);
+            subtract3f(n1,v4,n1);
+          } else {
+            subtract3f(pt,v3,n0);
+            add3f(pt,mov,n1);
+            subtract3f(n1,v3,n1);
+          }
+          normalize3f(n0);
+          normalize3f(n1);
+          cross_product3f(n0,n1,cp);
+          theta = (float)asin(length3f(cp));
+          normalize23f(cp,n2);        
+        
+          get_rotation_about3f3fTTTf(theta, n2, v3, m);
+          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
+                                           m,log_trans,I->DragSeleName,false,true);
+          SceneInvalidate(G);
+          break;
+        case cButModeTorFrag:
+        case cButModePkTorBnd:
+          if(I->DragHaveAxis) {
+            subtract3f(pt,I->Center,d0);
+            if(dot_product3f(d0,I->Axis)<0.0) {
+              copy3f(I->V0,v1);
+              copy3f(I->V1,v0);
+            } else {
+              copy3f(I->V0,v0);
+              copy3f(I->V1,v1);
+            }          
+            subtract3f(v1,v0,d1);
+            copy3f(d1,n0);
+            normalize3f(n0);
+            cross_product3f(n0,d0,n1);
+            normalize3f(n1);
+          
+            project3f(d0,n0,v2);
+            add3f(I->Center,v2,v2); /* v2 is the perpendicular point on the axis */
+            subtract3f(pt,v2,d2);
+            opp=(float)length3f(mov);
+            adj=(float)length3f(d2);
+            if(adj>R_SMALL4) {
+              theta=(float)atan(opp/adj);
+              if(dot_product3f(n1,mov)<0.0)
+                theta=-theta;
+              get_rotation_about3f3fTTTf(theta, n0, v1, m);
+              ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,
+                                               log_trans,I->DragSeleName,false,true);
+            } else {
 
-        SceneInvalidate(G);
-        break;
-      case cButModeMovFrag:
-      case cButModeMovFragZ:
-        identity44f(m);
-        copy3f(mov,m+12); /* questionable */
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
-                                         m,log_trans,I->DragSeleName,false,true);
-        SceneInvalidate(G);
-        break;
+              if(z_dir) { /* NULL-safety */
+                cross_product3f(I->Axis,z_dir,d0);
+                theta = -dot_product3f(d0,mov);
+                get_rotation_about3f3fTTTf(theta, n0, v1, m);
+                ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,
+                                                 log_trans,I->DragSeleName,false,true);
+              }
+            
+            }
+            if(I->BondMode && SettingGetGlobal_b(G,cSetting_editor_auto_dihedral))
+              EditorDihedralInvalid(G,NULL);
+          }
+
+          SceneInvalidate(G);
+          break;
+        case cButModeMovFrag:
+        case cButModeMovFragZ:
+          identity44f(m);
+          copy3f(mov,m+12); /* questionable */
+          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
+                                           m,log_trans,I->DragSeleName,false,true);
+          SceneInvalidate(G);
+          break;
+        }
       }
     }
   }
-
   PRINTFD(G,FB_Editor)
     " EditorDrag-Debug: leaving...\n"
     ENDFD;
