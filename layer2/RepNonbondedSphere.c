@@ -35,7 +35,7 @@ typedef struct RepNonbondedSphere {
   float *VP;
   Pickable *P;
   int NP;
-
+  int VariableAlphaFlag;
 } RepNonbondedSphere;
 
 #include"ObjectMolecule.h"
@@ -67,25 +67,29 @@ static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
   SphereRec *sp;
   int i,j;
   Pickable *p;
-
+  
   float alpha;
-
+  
   alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_nonbonded_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0F;
   
   if(ray) {
+    int variable_alpha = I->VariableAlphaFlag;
     ray->fTransparentf(ray,1.0F-alpha);
-	 v=I->VC;
-	 c=I->NC;
-	 while(c--) {
-		ray->fColor3fv(ray,v);
-		v+=3;
-		ray->fSphere3fv(ray,v,*(v+3));
-		v+=4;
-	 }
-     ray->fTransparentf(ray,0.0);
+    v=I->VC;
+    c=I->NC;
+    while(c--) {
+      if(variable_alpha) {
+        ray->fTransparentf(ray,1.0F-v[3]);
+      }
+      ray->fColor3fv(ray,v);
+      v+=4;
+      ray->fSphere3fv(ray,v,*(v+3));
+      v+=4;
+    }
+    ray->fTransparentf(ray,0.0);
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
 
@@ -137,16 +141,19 @@ static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
       (*pick)[0].src.index = i;
 
     } else {
-
+      int variable_alpha = I->VariableAlphaFlag;
       sp=I->SP;
       while(c--)
         {
-          if(alpha==1.0) {
+          if((alpha==1.0)&&(!variable_alpha)) {
             glColor3fv(v);
           } else {
-            glColor4f(v[0],v[1],v[2],alpha);
+            if(variable_alpha)
+              glColor4f(v[0],v[1],v[2],v[3]);
+            else
+              glColor4f(v[0],v[1],v[2],alpha);
           }
-          v+=3;
+          v+=4;
           for(a=0;a<sp->NStrip;a++) {
             glBegin(GL_TRIANGLE_STRIP);
             cc=sp->StripLen[a];
@@ -166,7 +173,7 @@ static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
 Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
-  ObjectMolecule *obj;
+  ObjectMolecule *obj = cs->Obj;
   int a,c,d,c1;
   float *v,*v0,*vc;
   float nonbonded_size;
@@ -179,8 +186,10 @@ Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
   int a1;
   float *v1;
   float tmpColor[3];
+  int variable_alpha = false;
+  float transp = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_nonbonded_transparency);
+
   OOAlloc(G,RepNonbondedSphere);
-  obj = cs->Obj;
 
   active = Alloc(int,cs->NIndex);
   
@@ -194,7 +203,10 @@ Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
         else
           active[a]=1;
       }
-      if(active[a]) nSphere++;
+      if(active[a]) {
+        float dummy; 
+        nSphere++;
+      }
     }
   if(!nSphere) {
     OOFreeP(I);
@@ -228,41 +240,46 @@ Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
 
   /* raytracing primitives */
 
-  I->VC=(float*)mmalloc(sizeof(float)*nSphere*7);
+  I->VC=(float*)mmalloc(sizeof(float)*nSphere*8);
   ErrChkPtr(G,I->VC);
   I->NC=0;
 
   v=I->VC; 
 
-  for(a=0;a<cs->NIndex;a++)
-	 {
-      if(active[a])
-		  {
-			 I->NC++;
-			 c1=*(cs->Color+a);
-			 v0 = cs->Coord+3*a;			 
-          if(ColorCheckRamped(G,c1)) {
-            ColorGetRamped(G,c1,v0,tmpColor,state);
-            vc = tmpColor;
-          } else {
-            vc = ColorGet(G,c1);
-          }
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 *(v++)=*(v0++);
-			 *(v++)=*(v0++);
-			 *(v++)=*(v0++);
-			 *(v++)=nonbonded_size;
-		  }
-	 }
+  for(a=0;a<cs->NIndex;a++) {
+    if(active[a])  {
+      float at_transp;
+      ai = obj->AtomInfo+cs->IdxToAtm[a];
+      if(AtomInfoGetSetting_f(G, ai, cSetting_nonbonded_transparency, transp, &at_transp))
+          variable_alpha = true;
+        
+      I->NC++;
+      c1=*(cs->Color+a);
+      v0 = cs->Coord+3*a;			 
+      if(ColorCheckRamped(G,c1)) {
+        ColorGetRamped(G,c1,v0,tmpColor,state);
+        vc = tmpColor;
+      } else {
+        vc = ColorGet(G,c1);
+      }
+      *(v++)=*(vc++);
+      *(v++)=*(vc++);
+      *(v++)=*(vc++);
+      *(v++)=1.0F-at_transp;
+      *(v++)=*(v0++);
+      *(v++)=*(v0++);
+      *(v++)=*(v0++);
+      *(v++)=nonbonded_size;
+    }
+  }
 
+  I->VariableAlphaFlag = variable_alpha;
   if(I->NC) 
 	 I->VC=ReallocForSure(I->VC,float,(v-I->VC));
   else
 	 I->VC=ReallocForSure(I->VC,float,1);
 
-  I->V=(float*)mmalloc(sizeof(float)*nSphere*(3+sp->NVertTot*6));
+  I->V=(float*)mmalloc(sizeof(float)*nSphere*(4+sp->NVertTot*6));
   ErrChkPtr(G,I->V);
 
   /* rendering primitives */
@@ -271,45 +288,46 @@ Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
   I->SP=sp;
   v=I->V;
 
-  for(a=0;a<cs->NIndex;a++)
-	 {
-		if(active[a])
-		  {
-			 c1=*(cs->Color+a);
-			 v0 = cs->Coord+3*a;
-			 vc = ColorGet(G,c1);
+  for(a=0;a<cs->NIndex;a++) {
+    if(active[a]) {
+      float at_transp;
+      ai = obj->AtomInfo+cs->IdxToAtm[a];
+      c1=*(cs->Color+a);
+      v0 = cs->Coord+3*a;
+      vc = ColorGet(G,c1);
+      if(AtomInfoGetSetting_f(G, ai, cSetting_nonbonded_transparency, transp, &at_transp))
+          variable_alpha = true;
+      
+      if(ColorCheckRamped(G,c1)) {
+        ColorGetRamped(G,c1,v0,tmpColor,state);
+        vc = tmpColor;
+      } else {
+        vc = ColorGet(G,c1);
+      }
+      
+      *(v++)=*(vc++);
+      *(v++)=*(vc++);
+      *(v++)=*(vc++);
+      *(v++)=1.0F - at_transp;
 
-          if(ColorCheckRamped(G,c1)) {
-            ColorGetRamped(G,c1,v0,tmpColor,state);
-            vc = tmpColor;
-          } else {
-            vc = ColorGet(G,c1);
-          }
-
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-
-          q=sp->Sequence;
-          s=sp->StripLen;
-          
-          for(d=0;d<sp->NStrip;d++)
-            {
-              for(c=0;c<(*s);c++)
-                {
-                  *(v++)=sp->dot[*q][0]; /* normal */
-                  *(v++)=sp->dot[*q][1];
-                  *(v++)=sp->dot[*q][2];
-                  *(v++)=v0[0]+nonbonded_size*sp->dot[*q][0]; /* point */
-                  *(v++)=v0[1]+nonbonded_size*sp->dot[*q][1];
-                  *(v++)=v0[2]+nonbonded_size*sp->dot[*q][2];
-                  q++;
-                }
-              s++;
-            }
-			 I->N++;
-		  }
-	 }
+      q=sp->Sequence;
+      s=sp->StripLen;
+      
+      for(d=0;d<sp->NStrip;d++) {
+        for(c=0;c<(*s);c++) {
+          *(v++)=sp->dot[*q][0]; /* normal */
+          *(v++)=sp->dot[*q][1];
+          *(v++)=sp->dot[*q][2];
+          *(v++)=v0[0]+nonbonded_size*sp->dot[*q][0]; /* point */
+          *(v++)=v0[1]+nonbonded_size*sp->dot[*q][1];
+          *(v++)=v0[2]+nonbonded_size*sp->dot[*q][2];
+          q++;
+        }
+        s++;
+      }
+      I->N++;
+    }
+  }
   
   if(I->N) 
     I->V=ReallocForSure(I->V,float,(v-I->V));

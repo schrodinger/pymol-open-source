@@ -30,6 +30,11 @@ typedef struct {
 } ImageType;
 
 #define cSceneViewSize 25
+
+#define SDOF_NORMAL_MODE 0
+#define SDOF_CLIP_MODE 1
+#define SDOF_DRAG_MODE 2
+
 typedef float SceneViewType[cSceneViewSize];
  
 /* all information required to define the geometry of a particular view,
@@ -103,8 +108,8 @@ void SceneGetEyeNormal(PyMOLGlobals *G,float *v1,float *normal);
 void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z);
 void SceneTranslate(PyMOLGlobals *G,float x,float y, float z);
 
-void SceneTranslateScaled(PyMOLGlobals *G,float x,float y, float z);
-void SceneRotateScaled(PyMOLGlobals *G,float rx,float ry, float rz);
+void SceneTranslateScaled(PyMOLGlobals *G,float x,float y, float z, int sdof_mode);
+void SceneRotateScaled(PyMOLGlobals *G,float rx,float ry, float rz,int sdof_mode);
 
 void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state);
 void SceneGetImageSize(PyMOLGlobals *G,int *width,int *height);

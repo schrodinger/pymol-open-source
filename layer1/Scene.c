@@ -206,6 +206,10 @@ typedef struct {
 
 static void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height);
 
+static void SceneDoRoving(PyMOLGlobals *G,float old_front,
+                          float old_back,float old_origin,
+                          int adjust_flag,int zoom_flag);
+
 static float SceneGetExactScreenVertexScale(PyMOLGlobals *G,float *v1);
 static void SceneRestartPerfTimer(PyMOLGlobals *G);
 static void SceneRotateWithDirty(PyMOLGlobals *G,float angle,float x,float y,float z,int dirty);
@@ -1113,37 +1117,88 @@ void SceneTranslate(PyMOLGlobals *G,float x,float y, float z)
   I->Back-=z;
   I->Front-=z;
   if(I->Front>I->Back)
-     I->Front=I->Back+cSliceMin;
+    I->Front=I->Back+cSliceMin;
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
   I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
   SceneInvalidate(G);
 }
 
-void SceneTranslateScaled(PyMOLGlobals *G,float x,float y, float z)
+void SceneTranslateScaled(PyMOLGlobals *G,float x,float y, float z, int sdof_mode)
 {
   register CScene *I=G->Scene;
   int invalidate = false;
-  if((x!=0.0F)||(y!=0.0F)) {
-    float vScale = SceneGetExactScreenVertexScale(G,NULL);
-    float factor = vScale * (I->Height + I->Width) / 2;
-    I->Pos[0]+=x * factor;
-    I->Pos[1]+=y * factor;
-    invalidate = true;
-    
-  }
-  if(z!=0.0F) {
-    float factor = ((I->FrontSafe+I->BackSafe)/2); /* average distance within visible space */
-    if(factor>0.0F) {
-      factor *= z;
-      I->Pos[2] += factor;
-      I->Front -= factor;
-      I->Back -= factor;
-      I->FrontSafe = GetFrontSafe(I->Front,I->Back);
-      I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
+  
+  switch(sdof_mode) {
+  case SDOF_NORMAL_MODE:
+    if((x!=0.0F)||(y!=0.0F)) {
+      float vScale = SceneGetExactScreenVertexScale(G,NULL);
+      float factor = vScale * (I->Height + I->Width) / 2;
+      I->Pos[0]+=x * factor;
+      I->Pos[1]+=y * factor;
+      invalidate = true;
     }
-    invalidate = true;
-  }
+    if(z!=0.0F) {
+      float factor = ((I->FrontSafe+I->BackSafe)/2); /* average distance within visible space */
+      if(factor>0.0F) {
+        factor *= z;
+        I->Pos[2] += factor;
+        I->Front -= factor;
+        I->Back -= factor;
+        I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+        I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
+      }
+      invalidate = true;
+    }
+    break;
+  case SDOF_CLIP_MODE:
+    if((x!=0.0F)||(y!=0.0F)) {
+      float vScale = SceneGetExactScreenVertexScale(G,NULL);
+      float factor = vScale * (I->Height + I->Width) / 2;
+      I->Pos[0]+=x * factor;
+      I->Pos[1]+=y * factor;
+      invalidate = true;
+    }
+    if(z!=0.0F) {
+      float factor = ((I->FrontSafe+I->BackSafe)/2); /* average distance within visible space */
+      if(factor>0.0F) {
+        factor *= z;
+        {
+          float old_front = I->Front;
+          float old_back = I->Back;
+          float old_origin = -I->Pos[2];
+          SceneClip(G,7,factor,NULL,0);
+          SceneDoRoving(G,old_front,old_back,old_origin,true,true);
+        }
+        invalidate = true;
+      }
+    }
+    break;
+  case SDOF_DRAG_MODE:
+    {
+      float v2[3];
+      float scale = SettingGetGlobal_f(G,cSetting_sdof_drag_scale);
+      
+      { 
+        /* when dragging, we treat all axes proportionately */
+        float vScale = SceneGetExactScreenVertexScale(G,NULL);
+        float factor = vScale * (I->Height + I->Width) / 2;
+        x *= factor;
+        y *= factor;
+        z *= factor;
+      }
 
+      v2[0] = x * scale;
+      v2[1] = y * scale;
+      v2[2] = z * scale;
+      
+      /* transform into model coodinate space */
+      MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
+      
+      EditorDrag(G,NULL,-1,cButModeMovDrag,
+                 SettingGetGlobal_i(G,cSetting_state)-1,NULL,v2,NULL);
+    }
+    break;
+  }
   if(invalidate) {
     SceneInvalidate(G);
     if(SettingGetGlobal_b(G,cSetting_roving_origin)) {
@@ -1157,18 +1212,66 @@ void SceneTranslateScaled(PyMOLGlobals *G,float x,float y, float z)
   }
 }
 
-void SceneRotateScaled(PyMOLGlobals *G,float rx,float ry, float rz)
+void SceneRotateScaled(PyMOLGlobals *G,float rx,float ry, float rz, int sdof_mode)
 {
-  /*  register CScene *I=G->Scene; */
+  register CScene *I=G->Scene; 
   int invalidate = false;
   float axis[3];
-  axis[0]=rx;
-  axis[1]=ry;
-  axis[2]=rz;
-  {
-    float angle = length3f(axis);
-    normalize3f(axis);
-    SceneRotate(G,20*cPI*angle,axis[0],axis[1],axis[2]);
+  switch(sdof_mode) {
+  case SDOF_NORMAL_MODE:
+    axis[0]=rx;
+    axis[1]=ry;
+    axis[2]=rz;
+    {
+      float angle = length3f(axis);
+      normalize3f(axis);
+      SceneRotate(G,60*angle,axis[0],axis[1],axis[2]);
+    }
+    break;
+  case SDOF_CLIP_MODE:
+    if( (fabs(rz)>fabs(rx)) || (fabs(rz)>fabs(rx))) {
+      rx = 0.0;
+      ry = 0.0;
+    } else {
+      rz = 0.0;
+    }
+    axis[0]=rx;
+    axis[1]=ry;
+    axis[2]=0.0;
+    {
+      float angle = length3f(axis);
+      normalize3f(axis);
+      SceneRotate(G,60*angle,axis[0],axis[1],axis[2]);
+    }
+    if(axis[2]!=rz) {
+      SceneClip(G,5,1.0F+rz,NULL,0);
+    }
+    break;
+  case SDOF_DRAG_MODE:
+    {
+      float scale = SettingGetGlobal_f(G,cSetting_sdof_drag_scale);
+      float v1[3],v2[3];
+      axis[0]=rx;
+      axis[1]=ry;
+      axis[2]=rz;
+
+      EditorReadyDrag(G,SettingGetGlobal_i(G,cSetting_state)-1);
+    
+      {
+        float angle = length3f(axis);
+        normalize3f(axis);
+        
+        v1[0] = cPI*(60*angle/180.0F) * scale;
+        
+        /* transform into model coodinate space */
+        MatrixInvTransformC44fAs33f3f(I->RotMatrix,axis,v2); 
+        
+        EditorDrag(G,NULL,-1,cButModeRotDrag,
+                   SettingGetGlobal_i(G,cSetting_state)-1,v1,v2,NULL);
+        invalidate = true;
+      }
+    }
+    break;
   }
   if(invalidate) {
     SceneInvalidate(G);
@@ -1272,6 +1375,11 @@ void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state) /*
     {
       float shift = (I->Front-I->Back)*movement;
       SceneClipSet(G,I->Front+shift,I->Back+shift);    
+    }
+    break;
+  case 7: /* linear movement */
+    {
+      SceneClipSet(G,I->Front+movement,I->Back+movement);    
     }
     break;
   }
