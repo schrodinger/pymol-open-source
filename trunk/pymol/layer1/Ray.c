@@ -2728,7 +2728,7 @@ int RayTraceThread(CRayThreadInfo *T)
               i = BasisHitOrthoscopic( &BasisCall[0] );
             }
                   
-            interior_flag = BasisCall[0].interior_flag;
+            interior_flag = BasisCall[0].interior_flag && (!pass);
                   
             if(((i >= 0) || interior_flag) && (pass < max_pass))  {
               pixel_flag		= true;
