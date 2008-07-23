@@ -2715,9 +2715,9 @@ int RayTraceThread(CRayThreadInfo *T)
             BasisCall[0].front = new_front;
             BasisCall[0].excl_trans = excl_trans;
             BasisCall[0].interior_flag = false;
+            BasisCall[0].pass = pass;
 
             if(perspective) {
-              BasisCall[0].pass = pass;
               if(pass) {
                 add3f(nudge,r1.base,r1.base);
                 copy3f(r1.base,r1.skip);

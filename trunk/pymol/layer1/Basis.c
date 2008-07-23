@@ -1656,7 +1656,7 @@ int BasisHitPerspective(BasisCallRec *BC)
     int n_vert = BI->NVertex, n_eElem = map->NEElem;
     int except1 = BC->except1;
     int except2 = BC->except2;
-    int check_interior_flag   = BC->check_interior;
+    int check_interior_flag = BC->check_interior && !BC->pass;
     float   sph[3],vt[3],tri1=_0,tri2; 
     register CPrimitive *BC_prim = BC->prim;
     register int *BI_Vert2Normal = BI->Vert2Normal;
@@ -2148,7 +2148,7 @@ int BasisHitOrthoscopic(BasisCallRec *BC)
     float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
     CPrimitive *r_prim = NULL;
       
-    check_interior_flag   = BC->check_interior;
+    check_interior_flag = BC->check_interior && (!BC->pass);
       
     /* assumption: always heading in the negative Z direction with our vector... */
     vt[0]         = r->base[0];
@@ -2497,8 +2497,7 @@ int BasisHitShadow(BasisCallRec *BC)
       register float r_trans = _0;
       CPrimitive *r_prim = NULL;
 	  
-      check_interior_flag   = BC->check_interior;
-
+      check_interior_flag = BC->check_interior;
       
       /* assumption: always heading in the negative Z direction with our vector... */
       vt[0]         = r->base[0];
