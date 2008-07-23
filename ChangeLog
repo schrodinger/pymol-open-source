@@ -4,7 +4,7 @@ CHANGE LOG
 
 2008-07-23 Warren L. DeLano <warren@delsci.com>
 
-	* fixed bug with stick_transparency and interior color
+	* fixed bugs with transparency and interior color
 	
 	* nonbonded_tranpsparency now works per atom for nb_spheres
 	
