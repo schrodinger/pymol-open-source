@@ -2161,12 +2161,13 @@ int *TrianglePointsToSurface(PyMOLGlobals *G, float *v, float *vn, int n,
       I->activeEdge=VLAlloc(int,1000);
 
       I->link=VLAlloc(LinkType,n*2);
+      UtilZeroMem(I->link,sizeof(LinkType));
       I->nLink = 1;
-
-      I->nEdge = 1;
 
       I->vNormal=VLAlloc(float,n*2);
       I->edge=VLAlloc(EdgeRec,n*2);
+      UtilZeroMem(I->edge,sizeof(EdgeRec));
+      I->nEdge = 1;
 
       I->tri=VLAlloc(int,n);
       I->nTri = 0;
