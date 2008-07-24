@@ -10225,9 +10225,7 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state)
   SelectorWordType tmpKW;
   Stack = VLAlloc(EvalElem,100);
 
-  Stack[0].sele=NULL;
-  Stack[0].type=0;
-  Stack[0].level=0;
+  UtilZeroMem(Stack,sizeof(EvalElem)); /* blank first entry */
 
   /* converts all keywords into code, adds them into a operation list */
   while(ok&&word[c][0]) {
