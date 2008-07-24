@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-07-24 Warren L. DeLano <warren@delsci.com>
 
+	* fixed bug found in the previous implicit OR bug fix
+	
 	* fixed bug with unitialized memory in surfacing routines
 	
 2008-07-23 Warren L. DeLano <warren@delsci.com>
