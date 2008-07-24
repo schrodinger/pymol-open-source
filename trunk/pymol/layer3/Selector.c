@@ -10449,8 +10449,8 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state)
                     Stack[depth].level = Stack[depth].imp_op_level;
                     Stack[depth].sele = NULL;
                     Stack[depth].text[0] = 0;
-                    if(level<Stack[level].level)
-                      level = Stack[level].level;
+                    if(level<Stack[depth].level)
+                      level = Stack[depth].level;
                     opFlag=true;
                   }
                 }
