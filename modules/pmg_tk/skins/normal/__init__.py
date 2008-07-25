@@ -2471,6 +2471,7 @@ class Normal(PMGSkin):
 #                               label='Append',
 #                               command = lambda s=self: s.cmd.scene('new','store'))
 
+
         self.menuBar.addmenuitem('Scene', 'separator', '')
 
         self.menuBar.addmenuitem('Scene', 'command', 'Delete',
@@ -2517,6 +2518,11 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Scene', 'separator', '')
         
+        self.menuBar.addmenuitem('Scene', 'checkbutton', 'Buttons',
+                                 label='Buttons',
+                                 variable = self.setting.scene_buttons,
+                                 command = lambda s=self: s.setting.update('scene_buttons'))
+
         self.menuBar.addcascademenu('Scene', 'Cache', 'Cache',
                                     label='Cache')
         

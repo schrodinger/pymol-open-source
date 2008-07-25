@@ -3106,7 +3106,8 @@ void SceneDraw(Block *block)
       I->RenderTime += I->LastRender;
 
     }
-    if(SettingGetGlobal_i(G,cSetting_scene_button_mode)==1) {
+    if(SettingGetGlobal_b(G,cSetting_scene_buttons)&&
+       (SettingGetGlobal_i(G,cSetting_scene_buttons_mode)==1)) {
       SceneDrawButtons(block);
     }
   }
@@ -3306,9 +3307,8 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
 {
   PyMOLGlobals *G=block->G;
   register CScene *I=G->Scene;
- 
+  int release_handled = false;
   if(I->ButtonsShown && I->PressMode) {
-    int release_handled = false;
     if(I->ScrollBarActive) {
       if((x-I->Block->rect.left)<(SceneScrollBarWidth+SceneScrollBarMargin)) {
         ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
@@ -3331,8 +3331,8 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
           }
           elem++;
         }
-        
         if(I->Over>=0) {
+          release_handled=true;
           switch(I->PressMode) {
           case 1:
             if(I->Over == I->Pressed) {
@@ -3364,7 +3364,8 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
       I->PressMode = 0;
       OrthoUngrab(G);
     }
-  } else {
+  }
+  if(!release_handled) {
     ObjectMolecule *obj;
     I->LastReleaseTime = when;
     if(I->PossibleSingleClick==1) {
@@ -3397,17 +3398,16 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
             I->SingleClickDelay = 0.0;
         }
       }
-  
-      if(I->LoopFlag)
-        return SceneLoopRelease(block,button,x,y,mod);
-      if(I->SculptingFlag) {
-        /* SettingSet(G,cSetting_sculpting,1); */
-        obj=(ObjectMolecule*)I->LastPicked.context.object;
-        if(obj) {
-          obj->AtomInfo[I->LastPicked.src.index].protekted=I->SculptingSave;
-        }
-        I->SculptingFlag=0;
+    }
+    if(I->LoopFlag)
+      return SceneLoopRelease(block,button,x,y,mod);
+    if(I->SculptingFlag) {
+      /* SettingSet(G,cSetting_sculpting,1); */
+      obj=(ObjectMolecule*)I->LastPicked.context.object;
+      if(obj) {
+        obj->AtomInfo[I->LastPicked.src.index].protekted=I->SculptingSave;
       }
+      I->SculptingFlag=0;
     }
   }
   return 1;
@@ -3634,7 +3634,10 @@ static int SceneClick(Block *block,int button,int x,int y,
               }
             }
             break;
-          case P_GLUT_RIGHT_BUTTON: /* drag or menu? */
+          case P_GLUT_RIGHT_BUTTON: /* drag or menu... */
+            I->Pressed = i;
+            I->PressMode = 3;
+            I->Over = i;
             click_handled = true;
             break;
           }
@@ -4809,7 +4812,34 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
       } else {
         I->Pressed = -1;
       }
+    case 3:
+      if((I->Over>=0)&&(I->Pressed!=I->Over))
+        I->PressMode = 4; /* activate dragging */
       break;
+    }
+    if(I->PressMode == 4) { /* dragging */
+      if((I->Over>=0)&&(I->Pressed!=I->Over)&&(I->Pressed>=0)) {
+        SceneElem *pressed = I->SceneVLA + I->Pressed;
+        OrthoLineType buffer;
+        if(I->Over>0) { /* not over the first scene in list */
+          SceneElem *first = elem-1;
+          SceneElem *second = pressed;
+          if(first >= pressed) {
+            first = elem;
+            second = pressed;
+          }
+          sprintf(buffer,"cmd.scene_order('''%s %s''')",
+                  first->name,
+                  second->name);
+        } else {
+          sprintf(buffer,"cmd.scene_order('''%s''',location='top')",
+                  pressed->name);
+        }
+        PParse(G,buffer);
+        PFlush(G);
+        PLog(G,buffer,cPLog_pym);
+        I->Pressed = I->Over;
+      }
     }
   }
 

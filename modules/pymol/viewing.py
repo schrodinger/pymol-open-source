@@ -1181,7 +1181,7 @@ SEE ALSO
                     new_list = names
                     for name in old_list:
                         if not name_dict.has_key(name):
-                            new_list.append(names)
+                            new_list.append(name)
                     pymol._scene_order = new_list
                 elif location == 0: # current
                     start = old_list.index(names[0])
@@ -1204,6 +1204,7 @@ SEE ALSO
                     pymol._scene_order = new_list
         if _self._raising(r,_self):
             raise pymol.CmdException
+        _scene_validate_list(_self) # force scene buttons to be updated
         if not quiet and not is_error(r):
             _self.scene('*')
         return r

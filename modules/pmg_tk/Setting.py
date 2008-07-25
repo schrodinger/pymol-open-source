@@ -170,6 +170,9 @@ class Setting:
         self.mouse_grid = IntVar()
         self.mouse_grid.set(int(self.cmd.get_setting_legacy('mouse_grid')))
 
+        self.scene_buttons = IntVar()
+        self.scene_buttons.set(int(self.cmd.get_setting_legacy('scene_buttons')))
+
 
         self.F=[ None,
                     IntVar(),
@@ -308,6 +311,8 @@ class Setting:
             (lambda s,a: (self.cmd.set(a,("%d" % s.auto_copy_images.get()),log=1))),
             'mouse_grid'         :
             (lambda s,a: (self.cmd.set(a,("%d" % s.mouse_grid.get()),log=1))),
+            'scene_buttons'         :
+            (lambda s,a: (self.cmd.set(a,("%d" % s.scene_buttons.get()),log=1))),
 
             }
 
@@ -408,6 +413,8 @@ class Setting:
             (lambda s,t: (s.auto_copy_images.set(int(t[1][0])))),
             'mouse_grid':
             (lambda s,t: (s.mouse_grid.set(int(t[1][0])))),
+            'scene_buttons':
+            (lambda s,t: (s.scene_buttons.set(int(t[1][0])))),
             }
         self.active_list = [
             self.pymol.setting._get_index("ray_trace_frames"),
@@ -458,6 +465,7 @@ class Setting:
             self.pymol.setting._get_index("show_alpha_checker"),
             self.pymol.setting._get_index("auto_copy_images"),
             self.pymol.setting._get_index("mouse_grid"),
+            self.pymol.setting._get_index("scene_buttons"),
             ]
 
         self.active_dict = {}
