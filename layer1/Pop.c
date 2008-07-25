@@ -58,7 +58,7 @@ int PopInit(PyMOLGlobals *G)
     I->Block->active = false;
   
     I->Block->rect.top=10;
-    I->Block->rect.bottom=0;
+    I->Block->rect.bottom=14;
     I->Block->rect.left=0;
     I->Block->rect.right=10;
     

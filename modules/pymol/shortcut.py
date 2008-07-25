@@ -32,7 +32,8 @@ if __name__=='pymol.shortcut':
         def __call__(self):
             return self
 
-        def __init__(self,list,filter_leading_underscore=1):
+        def __init__(self,list=[],filter_leading_underscore=1):
+            self.filter_leading_underscore = filter_leading_underscore
             if filter_leading_underscore:
                 self.keywords=filter(lambda x:x[:1]!='_',list)
             else:
@@ -80,7 +81,12 @@ if __name__=='pymol.shortcut':
                         else:
                             hash[sub]=a
 
-        def rebuild(self):
+        def rebuild(self,list=None):
+            if list!=None:
+                if self.filter_leading_underscore:
+                    self.keywords=filter(lambda x:x[:1]!='_',list)
+                else:
+                    self.keywords = copy.deepcopy(list)
             # optimize symbols
             hash = self.shortcut
             self.abbr_dict = {}
