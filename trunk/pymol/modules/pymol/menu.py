@@ -1213,6 +1213,25 @@ def enable_disable(self_cmd, enable):
         
     return result
 
+def scene_buttons(self_cmd):
+    return [[ 2, 'Buttons', '' ],
+            [ 1, 'on', 'cmd.set("scene_buttons")'],
+            [ 1, 'off', 'cmd.unset("scene_buttons")']]
+
+def scene_main(self_cmd):
+    list = self_cmd.get_scene_list()
+    recall_list = [ [2, 'Scenes' , ''] ]
+    for entry in list:
+        recall_list.append([1,entry,'cmd.scene("""'+entry+'""")'])
+    return [
+        [ 2, 'Scene', '' ],
+        [ 1, 'append' , 'cmd.scene("new","append",quiet=0)' ],                
+        [ 1, 'update' , 'cmd.scene("auto","update",quiet=0)' ],
+        [ 0, ''             , ''                      ],
+        [ 1, 'recall' , recall_list ],
+        [ 0, ''             , ''                      ],        
+        [ 1, 'buttons', scene_buttons(self_cmd)] ]
+
 def main_menu(self_cmd):
     return [
         [ 2, 'Main Pop-Up'  , '' ],
@@ -1227,6 +1246,7 @@ def main_menu(self_cmd):
         [ 1, '(all)'      , all_option(self_cmd,"all") ],
         [ 1, '(visible)'      , all_option(self_cmd,"visible") ],
         [ 0, ''             , ''                      ],
+        [ 1, 'scene'           , scene_main(self_cmd) ],
         [ 1, 'ray'           ,'cmd.ray()' ],
         [ 0, ''             , ''                      ],
         [ 1, 'delete all'           ,'cmd.delete("all")' ],
