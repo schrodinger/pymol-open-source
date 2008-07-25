@@ -96,7 +96,7 @@ class Normal(PMGSkin):
 #                                                 labelpos=None)
 #        self.__messageBar.pack(side=LEFT, expand=NO, fill=X)
 
-        self.messageBar = Pmw.MessageBar(self.commandFrame, entry_width = 40,
+        self.messageBar = Pmw.MessageBar(self.commandFrame, entry_width = 25,
              entry_relief='sunken', entry_borderwidth=1) #, labelpos = 'w')
 
 

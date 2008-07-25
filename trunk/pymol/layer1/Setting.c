@@ -3640,5 +3640,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_mesh_grid_max,80);
     set_i(I,cSetting_session_cache_optimize,0); 
     set_f(I,cSetting_sdof_drag_scale,0.5F);
+    set_i(I,cSetting_scene_button_mode,0);
   }
 }
