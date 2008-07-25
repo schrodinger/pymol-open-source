@@ -1973,6 +1973,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_texture_fonts:
 	 SceneInvalidate(G);
 	 break;
+  case cSetting_scene_buttons:
+  case cSetting_scene_buttons_mode:
+	 SceneInvalidate(G);
+	 break;
   case cSetting_dash_round_ends:
   case cSetting_dash_color:
   case cSetting_angle_color:
@@ -3640,6 +3644,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_mesh_grid_max,80);
     set_i(I,cSetting_session_cache_optimize,0); 
     set_f(I,cSetting_sdof_drag_scale,0.5F);
-    set_i(I,cSetting_scene_button_mode,0);
+    set_i(I,cSetting_scene_buttons_mode,1);
+    set_b(I,cSetting_scene_buttons,0);
   }
 }
