@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-07-25 Warren L. DeLano <warren@delsci.com>
 
+	* fixed problem with scene name completion
+	
 	* added buttons options to the scene menu
 
 	* fixed major bug in scene_order command

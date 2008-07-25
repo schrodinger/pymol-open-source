@@ -947,7 +947,7 @@ SEE ALSO
                 pymol._view_dict_sc.append(key)
                 pymol._view_dict[key]=_self.get_view(0)
                 if _feedback(fb_module.scene,fb_mask.actions,_self):
-                    print " view: view stored as \"%s\"."%key
+                    print " view: view "+action+"d as \"%s\"."%key
             elif action=='clear':
                 key = pymol._view_dict_sc.auto_err(key,'view')
                 if pymol._view_dict.has_key(key):
@@ -1077,6 +1077,9 @@ SEE ALSO
             if not new_dict.has_key(a):
                 new_list.append(a)
         pymol._scene_order = new_list
+        # update shortcuts
+        pymol._scene_dict_sc.rebuild(pymol._scene_dict.keys())
+        # update PyMOL internally
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)
@@ -1309,7 +1312,7 @@ SEE ALSO
                         name = "_scene_"+key+"_*"
                         _self.delete(name)
                     pymol._scene_dict = {}
-                    pymol._scene_dict_sc = Shortcut(pymol._scene_dict.keys())
+                    pymol._scene_dict_sc.rebuild( Shortcut(pymol._scene_dict.keys()))
                     pymol._scene_order = []
                     _scene_validate_list(_self)
                 elif action in ['sort']:
@@ -1356,8 +1359,9 @@ SEE ALSO
                         if len(list)>3:
                             _self.set_colorection_name(list[3],key,new_key)
                         print" scene: '%s' renamed to '%s'."%(key,new_key)
-                        pymol._scene_dict_sc = Shortcut(pymol._scene_dict.keys())
+                        pymol._scene_dict_sc.rebuild( pymol._scene_dict.keys())
                         _self.set("session_changed",1,quiet=1)
+                        _scene_validate_list(_self) # force update of scene buttons                        
                 elif action=='insert_after':
                     key = _scene_get_unique_key(_self=_self)            
                     cur_scene = setting.get("scene_current_name",_self=_self)
@@ -1486,7 +1490,7 @@ SEE ALSO
                     entry.append(message)
                     pymol._scene_dict[key]=entry
                     if _feedback(fb_module.scene,fb_mask.actions,_self):
-                        print " scene: scene stored as \"%s\"."%key
+                        print " scene: scene "+action+"d as \"%s\"."%key
                     _scene_validate_list(_self)                        
                     _self.set("scenes_changed",1,quiet=1);
                     _self.set('scene_current_name',key,quiet=1)
@@ -1512,7 +1516,7 @@ SEE ALSO
                         del pymol._scene_dict[key]
                         name = "_scene_"+key+"_*"
                         _self.delete(name)
-                        pymol._scene_dict_sc = Shortcut(pymol._scene_dict.keys())
+                        pymol._scene_dict_sc.rebuild(pymol._scene_dict.keys())
                         _scene_validate_list(_self)
                         if _feedback(fb_module.scene,fb_mask.actions,_self):
                             print " scene: '%s' deleted."%key
@@ -1598,7 +1602,7 @@ SEE ALSO
         pymol=_self._pymol
         if session.has_key('view_dict'):
             pymol._view_dict=copy.deepcopy(session['view_dict'])
-            pymol._view_dict_sc = Shortcut(pymol._view_dict.keys())
+            pymol._view_dict_sc.rebuild(pymol._view_dict.keys())
         return 1
 
 
@@ -1612,7 +1616,7 @@ SEE ALSO
         pymol=_self._pymol        
         if session.has_key('scene_dict'):
             pymol._scene_dict = copy.deepcopy(session['scene_dict'])
-            pymol._scene_dict_sc = Shortcut(pymol._scene_dict.keys())
+            pymol._scene_dict_sc.rebuild(pymol._scene_dict.keys())
         if session.has_key('scene_order'):
             pymol._scene_order = copy.deepcopy(session['scene_order'])
         else:

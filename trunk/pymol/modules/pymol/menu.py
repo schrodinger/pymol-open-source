@@ -1328,7 +1328,7 @@ def pick_menu(self_cmd, sele1, sele2):
             [ 1, 'fragment+joint(s)', pick_option(self_cmd, "((byfrag ("+sele2+")) extend 1)", "Fragment") ],
               ]
         
-def seq_menu(sele2,sele3):
+def seq_menu(sele2,sele3): # obsolete/unused?
     
     return [[ 2, 'Sequence'    , '' ],
               [ 1, 'selection', pick_option(self_cmd, sele3, '('+sele3+')') ],
@@ -1384,3 +1384,13 @@ def seq_option(self_cmd, sele, title, object=0):
             ])
     return result
     
+def scene_menu(self_cmd, name):
+    safe_name = name.replace('"','\\"') # just in case
+    return [[ 2, 'Scene '+name    , '' ],
+            [ 1, 'rename', 'cmd.wizard("renaming","'+name+'",mode="scene")'          ],
+            [ 0, ''             , ''                      ],
+            [ 1, 'update', 'cmd.scene("'+safe_name+'","update")'],
+            [ 0, ''             , ''                      ],
+            [ 1, 'delete', 'cmd.scene("'+safe_name+'","delete")'],
+            ]
+   

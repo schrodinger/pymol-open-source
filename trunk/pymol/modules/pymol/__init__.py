@@ -91,7 +91,7 @@ def _init_internals(_pymol):
     _pymol._view_dict_sc = None
 
     # stored scenes
-    
+
     _pymol._scene_dict = {}
     _pymol._scene_dict_sc = None
     _pymol._scene_order = []
@@ -99,6 +99,7 @@ def _init_internals(_pymol):
     _pymol._scene_quit_on_action = ''
 
     # get us a private invocation pseudo-module
+
     
     _pymol._invocation = Scratch_Storage()
     _pymol._invocation.options = deepcopy(invocation.options)

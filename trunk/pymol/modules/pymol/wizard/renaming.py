@@ -7,12 +7,13 @@ import string
 
 class Renaming(Wizard):
 
-    def __init__(self,old_name,_self=cmd):
+    def __init__(self,old_name,mode='object',_self=cmd):
         Wizard.__init__(self,_self)
         
         self.prefix = 'Renaming \\999%s\\--- to: \\999'%old_name
         self.old_name = old_name
-        self.new_name = ''
+        self.new_name = old_name
+        self.mode = mode
         
     def get_event_mask(self):
         return Wizard.event_mask_key
@@ -20,11 +21,19 @@ class Renaming(Wizard):
     def do_key(self,k,x,y,m):
         if k in [8,127]:
             self.new_name = self.new_name[:-1]
+        elif k==27:
+            cmd.set_wizard()
+            cmd.refresh()
+        elif k==32:
+            self.new_name = self.new_name + "_"
         elif k>32:
             self.new_name= self.new_name + chr(k)
         elif k==10 or k==13:
             self.new_name = string.strip(self.new_name)
-            cmd.do("set_name %s,%s"%(self.old_name,self.new_name),log=0)
+            if self.mode=='object':
+                cmd.do("set_name %s,%s"%(self.old_name,self.new_name),log=0)
+            elif self.mode=='scene':
+                cmd.do("scene %s,rename,new_key=%s"%(self.old_name,self.new_name),log=0)                
             cmd.set_wizard()
             cmd.refresh()
             return 1

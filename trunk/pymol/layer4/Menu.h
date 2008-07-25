@@ -23,6 +23,8 @@ void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
                   int passive, char *name,char *sele);
 void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
                       int passive, char *name);
+void MenuActivate1Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
+                      int passive, char *name, char *arg1);
 void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
                       int passive, char *name,char *sele1,char *sele2);
 

@@ -84,7 +84,8 @@ def _deferred_init_pymol_internals(_pymol):
 
     _pymol._view_dict_sc = Shortcut({})
     _pymol._scene_dict_sc = Shortcut({})
-    
+
+    # 
 if __name__=='pymol.cmd':
 
     import traceback

@@ -2656,7 +2656,7 @@ static void SceneDrawButtons(Block *block)
 #ifndef _PYMOL_NOPY  
   PyMOLGlobals *G=block->G;
   register CScene *I = G->Scene;
-  int x,y,xx,x2,y2;
+  int x,y,xx,x2;
   char *c=NULL;
   float enabledColor[3] = { 0.5F, 0.5F, 0.5F };
   float pressedColor[3] = { 0.7F, 0.7F, 0.7F };
@@ -2737,7 +2737,7 @@ static void SceneDrawButtons(Block *block)
       int n_vis = n_disp;
       if(n_ent<n_vis)
         n_vis = n_ent;
-      y = (I->Block->rect.bottom-SceneBottomMargin)+lineHeight*n_vis;
+      y = (I->Block->rect.bottom+SceneBottomMargin)+(n_vis-1)*lineHeight;
     }
 
     /*    xx = I->Block->rect.right-SceneRightMargin-SceneToggleWidth*(cRepCnt+op_cnt);*/
@@ -2755,7 +2755,6 @@ static void SceneDrawButtons(Block *block)
         } else {
           row++;
           x2=xx;
-          y2=y;
           nChar = max_char;
           
           if((x-SceneToggleMargin)-(xx-SceneToggleMargin)>-10) {
@@ -2767,7 +2766,7 @@ static void SceneDrawButtons(Block *block)
             glColor3fv(toggleColor);
             
             TextSetColor(G,I->Block->TextColor);
-            TextSetPos2i(G,x+2,y2+text_lift);
+            TextSetPos2i(G,x+2,y+text_lift);
             {
               int len;
               char *cur_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
@@ -2776,7 +2775,6 @@ static void SceneDrawButtons(Block *block)
               c = elem->name;
               len = elem->len;
 
-              y2=y;
               x2 = xx;
               if(len>max_char)
                 len = max_char;
@@ -2787,16 +2785,16 @@ static void SceneDrawButtons(Block *block)
               elem->drawn = true;
 
               elem->x1 = x;
-              elem->y1 = y2;
+              elem->y1 = y;
               elem->x2 = x2;
-              elem->y2 = y2+lineHeight;
+              elem->y2 = y+lineHeight;
 
               if((item==I->Pressed)&&(item==I->Over)) {
-                draw_button(x,y2,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,pressedColor);
+                draw_button(x,y,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,pressedColor);
               } else if(cur_name&&elem->name&&(!strcmp(elem->name,cur_name))) {
-                draw_button(x,y2,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,enabledColor);
+                draw_button(x,y,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,enabledColor);
               } else {
-                draw_button(x,y2,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,disabledColor);
+                draw_button(x,y,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,disabledColor);
               }
               
               TextSetColor(G,I->Block->TextColor);
@@ -3316,6 +3314,7 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
       }
     }
     if(!release_handled) {
+      int ungrab=true;
       if(I->PressMode) {
         int i;
         SceneElem *elem = I->SceneVLA;
@@ -3355,6 +3354,14 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
               }
             }
             break;
+          case 3:
+            if(I->Pressed==I->Over) {
+              MenuActivate1Arg(G,I->LastWinX,I->LastWinY+20, /* scene menu */
+                                 I->LastWinX,I->LastWinY,
+                                 true,"scene_menu",elem->name);
+              ungrab=false;
+            }
+            break;
           }
         }
       }
@@ -3362,7 +3369,8 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
       I->Pressed = -1;
       I->Over = -1;
       I->PressMode = 0;
-      OrthoUngrab(G);
+      if(ungrab)
+        OrthoUngrab(G);
     }
   }
   if(!release_handled) {
@@ -3549,23 +3557,53 @@ static int SceneClick(Block *block,int button,int x,int y,
   int click_side = 0;
 
   if(!is_single_click) {
+    int click_handled = false;
 
-    if( ((ButModeTranslate(G,button,mod) == cButModePotentialClick) || (!mod)) 
-        &&((when-I->LastClickTime)<cDoubleTime)) {
-      int dx,dy;
-      dx = abs(I->LastWinX - x);
-      dy = abs(I->LastWinY - y);
-      if((dx<10)&&(dy<10)&&(I->LastButton==button)) {
-        switch(button) {
-        case P_GLUT_LEFT_BUTTON:
-          button = P_GLUT_DOUBLE_LEFT;
-          break;
-        case P_GLUT_MIDDLE_BUTTON:
-          button = P_GLUT_DOUBLE_MIDDLE;
-          break;
-        case P_GLUT_RIGHT_BUTTON:
-          button = P_GLUT_DOUBLE_RIGHT;
-          break;
+    if(I->ButtonsShown) {
+      
+      int i;
+      SceneElem *elem = I->SceneVLA;
+      
+      if(I->ScrollBarActive) {
+        if((x-I->Block->rect.left)<(SceneScrollBarWidth+SceneScrollBarMargin)) {
+          click_handled = true;
+          ScrollBarDoClick(I->ScrollBar,button,x,y,mod);      
+        }
+      } 
+      if(!click_handled) {
+        for(i=0;i<I->NScene;i++) {
+          if(elem->drawn && 
+             (x>=elem->x1) &&
+             (y>=elem->y1) &&
+             (x<elem->x2) &&
+             (y<elem->y2)) {
+            click_handled = true;
+            break;
+          }
+          elem++;
+        }
+      }
+    }
+    if(!click_handled) {
+
+      
+      if( ((ButModeTranslate(G,button,mod) == cButModePotentialClick) || (!mod)) 
+          &&((when-I->LastClickTime)<cDoubleTime)) {
+        int dx,dy;
+        dx = abs(I->LastWinX - x);
+        dy = abs(I->LastWinY - y);
+        if((dx<10)&&(dy<10)&&(I->LastButton==button)) {
+          switch(button) {
+          case P_GLUT_LEFT_BUTTON:
+            button = P_GLUT_DOUBLE_LEFT;
+            break;
+          case P_GLUT_MIDDLE_BUTTON:
+            button = P_GLUT_DOUBLE_MIDDLE;
+            break;
+          case P_GLUT_RIGHT_BUTTON:
+            button = P_GLUT_DOUBLE_RIGHT;
+            break;
+          }
         }
       }
     }
