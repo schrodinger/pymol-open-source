@@ -1616,6 +1616,7 @@ SEE ALSO
             pymol._scene_order = copy.deepcopy(session['scene_order'])
         else:
             pymol._scene_order = []
+        _scene_validate_list(_self=_self)         
         return 1
 
 

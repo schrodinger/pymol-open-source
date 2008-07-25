@@ -762,7 +762,7 @@ typedef struct _CPyMOL {
   ov_word lex_mesh_grid_max;
   ov_word lex_session_cache_optimize;
   ov_word lex_sdof_drag_scale;
-
+  ov_word lex_scene_button_mode;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1518,6 +1518,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(mesh_grid_max,595);
   LEX_SETTING(session_cache_optimize,596);
   LEX_SETTING(sdof_drag_scale,597);
+  LEX_SETTING(scene_button_mode,598);
   return_OVstatus_SUCCESS;
 }
 

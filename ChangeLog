@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-07-24 Warren L. DeLano <warren@delsci.com>
 
+	* added scene_button_mode
+	
 	* fixed bug found in the previous implicit OR bug fix
 	
 	* fixed bug with unitialized memory in surfacing routines
