@@ -965,9 +965,11 @@ class APBSTools:
 
         global APBS_BINARY_LOCATION, APBS_PSIZE_LOCATION
         if APBS_BINARY_LOCATION is None:
+            found = 0
             if 'APBS_BINARY' in os.environ:
                 APBS_BINARY_LOCATION = os.environ['APBS_BINARY']
-            else:
+                found = 1
+            if not found:
                 APBS_BINARY_LOCATION = distutils.spawn.find_executable('apbs')
                 if APBS_BINARY_LOCATION is None:
                     APBS_BINARY_LOCATION = ''
