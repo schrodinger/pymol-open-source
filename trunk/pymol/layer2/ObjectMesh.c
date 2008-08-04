@@ -1003,12 +1003,12 @@ void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
 }
 /*========================================================================*/
 ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
-                                      CSymmetry *sym,
-                                      int map_state,
-                                      int state,float *mn,float *mx,
-                                      float level,int meshMode,
-                                      float carve,float *vert_vla,
-                                      float alt_level,int quiet)
+                                  CSymmetry *sym,
+                                  int map_state,
+                                  int state,float *mn,float *mx,
+                                  float level,int meshMode,
+                                  float carve,float *vert_vla,
+                                  float alt_level,int quiet)
 {
   ObjectMesh *I;
   ObjectMeshState *ms;

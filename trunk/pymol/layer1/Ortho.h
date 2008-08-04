@@ -80,6 +80,8 @@ void OrthoBusyFast(PyMOLGlobals *G,int progress,int total);
 void OrthoBusyPrime(PyMOLGlobals *G);
 void OrthoCommandIn(PyMOLGlobals *G,char *buffer);
 int  OrthoCommandOut(PyMOLGlobals *G,char *buffer);
+void OrthoCommandNest(PyMOLGlobals *G,int dir);
+
 void OrthoFeedbackIn(PyMOLGlobals *G,char *buffer);
 int OrthoFeedbackOut(PyMOLGlobals *G,char *buffer);
 

@@ -70,6 +70,7 @@ class Mutagenesis(Wizard):
         self.n_cap = default_n_cap
         self.c_cap = default_c_cap
         residues = self.ind_library.keys()
+        # could extent with additional fragments manually as below
         residues.extend(['GLY','ALA'])
         residues.extend(['HID','HIE','HIP'])
         residues.extend(['ARGN','LYSN','ASPH','GLUH'])

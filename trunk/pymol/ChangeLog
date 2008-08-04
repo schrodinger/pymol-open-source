@@ -2,6 +2,15 @@
 CHANGE LOG
 =========================================================================
 
+2008-08-04 Warren L. DeLano <warren@delsci.com>
+
+	* fixed problems with out-of-order execution with pasted scripts
+	
+	
+2008-07-28 Warren L. DeLano <warren@delsci.com>
+
+	* added support for apbs provided as part of FreeMOL
+	
 2008-07-25 Warren L. DeLano <warren@delsci.com>
 
 	* fixed problem with scene name completion

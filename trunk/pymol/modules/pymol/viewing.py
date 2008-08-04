@@ -1066,10 +1066,12 @@ SEE ALSO
         pymol=_self._pymol
         new_list = []
         new_dict = {}
+        
         for a in pymol._scene_order:
             if pymol._scene_dict.has_key(a) and not new_dict.has_key(a):
                 new_list.append(a)
                 new_dict[a] = 1
+
         lst = map(lambda x:(scene_sort_dict.get(x,x),x), pymol._scene_dict.keys())
         lst.sort()
         lst = map(lambda x:x[1],lst)
@@ -1078,7 +1080,7 @@ SEE ALSO
                 new_list.append(a)
         pymol._scene_order = new_list
         # update shortcuts
-        pymol._scene_dict_sc.rebuild(pymol._scene_dict.keys())
+        pymol._scene_dict_sc.rebuild( pymol._scene_dict.keys() )
         # update PyMOL internally
         r = DEFAULT_ERROR
         try:
@@ -1312,7 +1314,6 @@ SEE ALSO
                         name = "_scene_"+key+"_*"
                         _self.delete(name)
                     pymol._scene_dict = {}
-                    pymol._scene_dict_sc.rebuild( Shortcut(pymol._scene_dict.keys()))
                     pymol._scene_order = []
                     _scene_validate_list(_self)
                 elif action in ['sort']:
@@ -1516,7 +1517,6 @@ SEE ALSO
                         del pymol._scene_dict[key]
                         name = "_scene_"+key+"_*"
                         _self.delete(name)
-                        pymol._scene_dict_sc.rebuild(pymol._scene_dict.keys())
                         _scene_validate_list(_self)
                         if _feedback(fb_module.scene,fb_mask.actions,_self):
                             print " scene: '%s' deleted."%key
