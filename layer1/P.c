@@ -2116,6 +2116,7 @@ int PFlush(PyMOLGlobals *G) {
     did_work = true;
     PBlock(G);
     while(OrthoCommandOut(G,buffer)) {
+      OrthoCommandNest(G,1);
       PUnlockAPIWhileBlocked(G);
       if(PyErr_Occurred()) {
         PyErr_Print();
@@ -2132,6 +2133,9 @@ int PFlush(PyMOLGlobals *G) {
           ENDFB(G);
       }
       PLockAPIWhileBlocked(G);
+      /* make sure no commands left at this level */
+      while(OrthoCommandWaiting(G)) PFlushFast(G); 
+      OrthoCommandNest(G,-1);
     }
     PUnblock(G);
   }
@@ -2144,6 +2148,7 @@ int PFlushFast(PyMOLGlobals *G) {
   char buffer[OrthoLineLength+1];
   int did_work = false;
   while(OrthoCommandOut(G,buffer)) {
+    OrthoCommandNest(G,1);
     did_work = true;
     PRINTFD(G,FB_Threads)
       " PFlushFast-DEBUG: executing '%s' as thread 0x%x\n",buffer,
@@ -2163,6 +2168,9 @@ int PFlushFast(PyMOLGlobals *G) {
         " PFlushFast: Uncaught exception.  PyMOL may have a bug.\n"
         ENDFB(G);
     }
+    /* make sure no commands left at this level */
+    while(OrthoCommandWaiting(G)) PFlushFast(G); 
+    OrthoCommandNest(G,-1);
   }
   return did_work;
 }

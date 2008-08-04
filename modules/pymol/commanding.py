@@ -312,7 +312,7 @@ SEE ALSO
                         break
             
 
-    def do(commands,log=1,echo=1,flush=1,_self=cmd):
+    def do(commands,log=1,echo=1,flush=0,_self=cmd):
         # WARNING: don't call this routine if you already have the API lock
         # use cmd._do instead
         '''
@@ -341,7 +341,7 @@ USAGE (PYTHON)
             defer = _self.get_setting_legacy("defer_updates")
             _self.set('defer_updates',1)
         for cmmd in cmmd_list:
-            lst = string.split(string.replace(cmmd,chr(13),chr(10)),chr(10)) 
+            lst = string.split(string.replace(cmmd,chr(13),chr(10)),chr(10))
             if len(lst)<2:
                 for a in lst:
                     if(len(a)):
@@ -350,14 +350,13 @@ USAGE (PYTHON)
                             r = _cmd.do(_self._COb,a,log,echo)
                         finally:
                             _self.unlock(r,_self)
-
                     else:
                         r = DEFAULT_SUCCESS
             else:
                 try:
                     _self.lock(_self)
-                    do_flush = ((thread.get_ident() == _self._pymol.glutThread)
-                                and _self.lock_api_allow_flush)
+                    do_flush = flush or ((thread.get_ident() == _self._pymol.glutThread)
+                                         and _self.lock_api_allow_flush)
                     for a in lst:
                         if len(a):
                             r = _cmd.do(_self._COb,a,log,echo)

@@ -970,14 +970,40 @@ class APBSTools:
                 APBS_BINARY_LOCATION = os.environ['APBS_BINARY']
                 found = 1
             if not found:
+                # try FreeMOL-provided apbs
+                try:
+                    from freemol import apbs
+                    APBS_BINARY_LOCATION = apbs.get_exe_path()
+                    if APBS_BINARY_LOCATION is not None:
+                        if os.path.isfile(APBS_BINARY_LOCATION):
+                            found = 1 
+                except:
+                    pass
+            if not found:
                 APBS_BINARY_LOCATION = distutils.spawn.find_executable('apbs')
-                if APBS_BINARY_LOCATION is None:
-                    APBS_BINARY_LOCATION = ''
+                if APBS_BINARY_LOCATION is not None:
+                    found = 1 
+            if (not found) or (APBS_BINARY_LOCATION is None):
+                APBS_BINARY_LOCATION = ''
 
         if APBS_PSIZE_LOCATION is None:
+            found = 0
             if 'APBS_PSIZE' in os.environ:
                 APBS_PSIZE_LOCATION = os.environ['APBS_PSIZE']
-            else:
+                found = 1
+            if not found:
+                # try FreeMOL-provided apbs
+                try:
+                    from freemol import apbs
+                    APBS_PSIZE_LOCATION = apbs.get_psize_path()
+                    if APBS_PSIZE_LOCATION is not None:
+                        if os.path.isfile(APBS_PSIZE_LOCATION):
+                            found = 1 
+                except:
+                    import trackback
+                    traceback.print_exc()
+                    pass
+            if (not found) or (APBS_PSIZE_LOCATION is None):
                 APBS_PSIZE_LOCATION = ''
 
         self.binary = Pmw.EntryField(group.interior(),

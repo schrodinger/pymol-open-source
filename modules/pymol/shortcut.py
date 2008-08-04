@@ -88,6 +88,7 @@ if __name__=='pymol.shortcut':
                 else:
                     self.keywords = copy.deepcopy(list)
             # optimize symbols
+            self.shortcut = {}
             hash = self.shortcut
             self.abbr_dict = {}
             abbr_dict = self.abbr_dict

@@ -29,7 +29,7 @@ def darwin_browser_open(url):
     t.start()
 
 def _doAsync(self_cmd,cmmd,dirty=0):
-    self_cmd.do(cmmd)
+    self_cmd.do(cmmd) # force strict ordering of commands
     if dirty:
         self_cmd.dirty()
         
