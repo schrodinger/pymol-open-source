@@ -3646,5 +3646,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_f(I,cSetting_sdof_drag_scale,0.5F);
     set_i(I,cSetting_scene_buttons_mode,1);
     set_b(I,cSetting_scene_buttons,0);
+    set_b(I,cSetting_map_auto_expand_sym,1);
   }
 }

@@ -635,6 +635,7 @@ if __name__=='pymol.setting':
         sdof_drag_scale                    = 597
         scene_buttons_mode                 = 598
         scene_buttons                      = 599
+        map_auto_expand_sym                = 600
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

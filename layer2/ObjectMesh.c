@@ -248,15 +248,20 @@ static void ObjectMeshStateFree(ObjectMeshState *ms)
       }
     }
   }
-  if(ms->Field)
+  if(ms->Field) {
     IsosurfFieldFree(ms->State.G,ms->Field);
+    ms->Field = NULL;
+  }
   VLAFreeP(ms->N);
   VLAFreeP(ms->V);
   FreeP(ms->VC);
   FreeP(ms->RC);
   VLAFreeP(ms->AtomVertex);
-  if(ms->UnitCellCGO)
+  if(ms->UnitCellCGO) {
     CGOFree(ms->UnitCellCGO);
+    ms->UnitCellCGO = NULL;
+  }
+  ms->Active=false;
 }
 
 static void ObjectMeshFree(ObjectMesh *I) {
@@ -1010,6 +1015,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map
                                   float carve,float *vert_vla,
                                   float alt_level,int quiet)
 {
+  int ok = true;
   ObjectMesh *I;
   ObjectMeshState *ms;
   ObjectMapState *oms;
@@ -1074,7 +1080,7 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map
 
         if( IsosurfGetRange(G,oms->Field,oms->Crystal,min_ext,max_ext,eff_range,false)) {
           int fdim[3];
-          
+          int expand_result;
           /* need to generate symmetry-expanded temporary map */
 
           ms->Crystal = *(oms->Crystal);     
@@ -1083,7 +1089,23 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map
           fdim[2] = eff_range[5] - eff_range[2];
           ms->Field=IsosurfFieldAlloc(I->Obj.G,fdim);
 
-          IsosurfExpand(oms->Field, ms->Field, oms->Crystal, sym, eff_range);
+          expand_result = IsosurfExpand(oms->Field, ms->Field, oms->Crystal, sym, eff_range);
+
+          if(expand_result==0) {
+            ok=false;
+            if(!quiet) {
+              PRINTFB(G,FB_ObjectMesh,FB_Warnings)
+                " ObjectMesh-Warning: no symmetry expanded map points found.\n"
+                ENDFB(G);
+            }
+          } else {
+            if(!quiet) {
+              PRINTFB(G,FB_ObjectMesh,FB_Warnings)
+                " ObjectMesh-Warning: not all symmetry expanded points covered by map.\n"
+                ENDFB(G);
+            }
+          }
+          
           ms->Range[0] = 0;
           ms->Range[1] = 0;
           ms->Range[2] = 0;
@@ -1102,16 +1124,22 @@ ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map
     }
     ms->ExtentFlag = true;
   }
-  if(carve!=0.0) {
-    ms->CarveFlag=true;
-    ms->CarveBuffer = carve;
-    ms->AtomVertex = vert_vla;
+  if(ok) {
+    if(carve!=0.0) {
+      ms->CarveFlag=true;
+      ms->CarveBuffer = carve;
+      ms->AtomVertex = vert_vla;
+    }
+    if(I) {
+      ObjectMeshRecomputeExtent(I);
+    }
+    I->Obj.ExtentFlag=true;
+    /*  printf("Brick %d %d %d %d %d %d\n",I->Range[0],I->Range[1],I->Range[2],I->Range[3],I->Range[4],I->Range[5]);*/
   }
-  if(I) {
-    ObjectMeshRecomputeExtent(I);
+  if(!ok) {
+    ObjectMeshStateFree(ms);
+    I=NULL;
   }
-  I->Obj.ExtentFlag=true;
-  /*  printf("Brick %d %d %d %d %d %d\n",I->Range[0],I->Range[1],I->Range[2],I->Range[3],I->Range[4],I->Range[5]);*/
   SceneChanged(G);
   SceneCountFrames(G);
   return(I);

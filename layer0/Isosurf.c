@@ -533,13 +533,15 @@ int IsosurfInit(PyMOLGlobals *G)
   return 1;
 }
 /*===========================================================================*/
-void IsosurfExpand(Isofield *field1, Isofield *field2, CCrystal *cryst, 
+int IsosurfExpand(Isofield *field1, Isofield *field2, CCrystal *cryst, 
                    CSymmetry *sym, int *range)
 {
   float rmn[3],rmx[3];
   float imn[3],imx[3];
   float fstep[3],frange[3];
   int field1max[3];
+  int expanded = false;
+  int missing = false;
 
   field1max[0] = field1->dimensions[0]-1;
   field1max[1] = field1->dimensions[1]-1;
@@ -592,13 +594,13 @@ void IsosurfExpand(Isofield *field1, Isofield *field2, CCrystal *cryst,
 
           /* then compute the value at the coordinate */
           
-          for(n=-1;n<nMat;n++) {
+          for(n=nMat-1;n>=0;n--) {
+            float *matrix = sym->SymMatVLA+(n*16);
             float test_frac[3];
-            if(n>=0) {
-              transform44f3f(sym->SymMatVLA+(n*16),frac,test_frac);
-            } else {
-              copy3f(frac,test_frac);
-            }
+
+            transform44f3f(matrix,frac,test_frac); 
+
+            /* we're assuming that the identity matrix appears in the list */
             
             test_frac[0] -= imn[0];
             test_frac[1] -= imn[1];
@@ -635,6 +637,19 @@ void IsosurfExpand(Isofield *field1, Isofield *field2, CCrystal *cryst,
                   z += 1.0F;
                 }
                 
+                if(!expanded) {
+                  if((matrix[0]!=1.0F)|| /* not identity matrix */
+                     (matrix[5]!=1.0F)||
+                     (matrix[10]!=1.0F)||
+                     (matrix[15]!=1.0F)||
+                     /* and not inside source map */
+                     ((imn[0]-frac[0])>R_SMALL4) || ((frac[0]-imx[0])>R_SMALL4) ||
+                     ((imn[1]-frac[1])>R_SMALL4) || ((frac[1]-imx[1])>R_SMALL4) ||
+                     ((imn[2]-frac[2])>R_SMALL4) || ((frac[2]-imx[2])>R_SMALL4)) {
+                    expanded = true; 
+                  }
+                  /* found at least one point obtained through symmetry or priodicity */
+                }
                 average += FieldInterpolatef(field1->data,
                                              a, b, c, x, y, z);
                 cnt++;
@@ -645,11 +660,21 @@ void IsosurfExpand(Isofield *field1, Isofield *field2, CCrystal *cryst,
           if(cnt) {
             F3(field2->data,i,j,k) = average/cnt;
           } else {
+            missing = true;
             F3(field2->data,i,j,k) = 0.0F; /* complain? */
           }
         }
       }
     }
+  }
+  if(expanded) {
+    if(missing) {
+      return -1;
+    } else {
+      return 1;
+    }
+  } else {
+    return 0;
   }
 }
 
