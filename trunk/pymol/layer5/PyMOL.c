@@ -764,6 +764,7 @@ typedef struct _CPyMOL {
   ov_word lex_sdof_drag_scale;
   ov_word lex_scene_buttons_mode;
   ov_word lex_scene_buttons;
+  ov_word lex_map_auto_expand_sym;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1521,6 +1522,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(sdof_drag_scale,597);
   LEX_SETTING(scene_buttons_mode,598);
   LEX_SETTING(scene_buttons,599);
+  LEX_SETTING(map_auto_expand_sym,600);
   return_OVstatus_SUCCESS;
 }
 
