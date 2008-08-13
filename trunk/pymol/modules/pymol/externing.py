@@ -27,7 +27,7 @@ if __name__=='pymol.externing':
           _feedback,fb_module,fb_mask, exp_path, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
 
-    def cd(dir,complain=1,quiet=1):
+    def cd(dir="~",complain=1,quiet=1):
         '''
 DESCRIPTION
 
