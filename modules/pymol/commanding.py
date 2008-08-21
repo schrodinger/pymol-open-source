@@ -289,29 +289,39 @@ SEE ALSO
         now = time.time()
         timeout = float(timeout)
         poll = float(poll)
+        # first, make sure there aren't any commands waiting...
         if _cmd.wait_queue(_self._COb): # commands waiting to be executed?
             while 1:
+                if not _cmd.wait_queue(_self._COb):
+                    break
                 e = threading.Event() # using this for portable delay
                 e.wait(poll)
                 del e
-                if not _cmd.wait_queue(_self._COb):
-                    break
-                if (time.time()-now)>timeout:
+                if (timeout>=0.0) and ((time.time()-now)>timeout):
                     break
         if _cmd.wait_deferred(_self._COb): # deferred tasks waiting for a display event?
             if thread.get_ident() == pymol.glutThread:
                 _self.refresh()
             else:
                 while 1:
+                    if not _cmd.wait_queue(_self._COb):
+                        break
                     e = threading.Event() # using this for portable delay
                     e.wait(poll)
                     del e
-                    if not _cmd.wait_queue(_self._COb):
+                    if (timeout>=0.0) and ((time.time()-now)>timeout):
                         break
-                    if (time.time()-now)>timeout:
-                        break
-            
-
+        # then make sure we can grab the API
+        while 1:
+            if _self.lock_attempt(_self):
+                _self.unlock(_self)
+                break
+            e = threading.Event() # using this for portable delay
+            e.wait(poll)
+            del e
+            if (timeout>=0.0) and ((time.time()-now)>timeout):
+                break
+                    
     def do(commands,log=1,echo=1,flush=0,_self=cmd):
         # WARNING: don't call this routine if you already have the API lock
         # use cmd._do instead
