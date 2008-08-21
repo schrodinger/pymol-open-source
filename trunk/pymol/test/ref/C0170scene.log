@@ -205,7 +205,7 @@ PyMOL>color green
  Executive: Colored 107 atoms.
 PyMOL>show spheres
 PyMOL>scene auto, update
- scene: scene stored as "3".
+ scene: scene updated as "3".
 PyMOL>count_atoms rep spheres
  count_atoms: 107 atoms
 PyMOL>count_atoms color green
