@@ -14,8 +14,7 @@ select target, 1oky////CA
 
 # specify the input selection to match across the alignment
 
-#select match_inp, 1oky///86-91/CA
-select match_inp, 1t46////CA
+select match_inp, 1oky///86-91/CA
 
 ##### generic from here down #####
 
@@ -69,3 +68,4 @@ python end
 deselect
 enable match_out
 orient match_out
+zoom match_out, 3
