@@ -5,6 +5,9 @@ CHANGE LOG
 2008-08-21 Warren L. DeLano <warren@delsci.com>
 
 	* fixed indexes output by get_raw_alignment: now 1-based
+
+	* added new cookbook example for grafting selections across
+	alignments: examples/cookbook/seq_match_sele.pml
 	
 2008-08-04 Warren L. DeLano <warren@delsci.com>
 
