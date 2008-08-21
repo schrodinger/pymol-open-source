@@ -167,9 +167,11 @@ class CIFRec:
             if self.line[0:1] == '_': # data name
                 self.parse_name_value()
             elif string.lower(self.line[0:5])=='loop_':
+                print "entering loop",self.line
                 self.line = self.line[5:]
                 self.check_line()
                 self.parse_loop()
+                print "exiting loop",self.line                
             else: # shouldn't happen
                 print "unhandled: [%s]"%self.line
                 self.next_line()

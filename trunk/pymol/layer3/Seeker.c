@@ -1133,7 +1133,7 @@ PyObject *SeekerGetRawAlignment(PyMOLGlobals *G, int align_sele, int active_only
 
                   PyObject *tup = PyTuple_New(2);
                   PyTuple_SetItem(tup,0,PyString_FromString(row->obj->Obj.Name));
-                  PyTuple_SetItem(tup,1,PyInt_FromLong(row->cCol));
+                  PyTuple_SetItem(tup,1,PyInt_FromLong(row->cCol+1)); /* +1, for 1-based PyMOL atom "index" */
                   PyList_SetItem(column_list,n_member,tup);
 
                   row->cCol++; /* advance past this tag */

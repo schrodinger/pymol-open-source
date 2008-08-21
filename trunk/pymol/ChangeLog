@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-08-21 Warren L. DeLano <warren@delsci.com>
+
+	* fixed indexes output by get_raw_alignment: now 1-based
+	
 2008-08-04 Warren L. DeLano <warren@delsci.com>
 
 	* added map_auto_expand_sym setting to optionally prevent expansion

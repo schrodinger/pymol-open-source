@@ -2612,17 +2612,22 @@ static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
     API_HANDLE_ERROR;
   }
   if(ok) {
+    int waiting = 0;
+
     /* called by non-GLUT thread with unlocked API, blocked interpreter */
     if(!G->Terminating) {
       if(APIEnterBlockedNotModal(G)) {
         if(OrthoCommandWaiting(G)
            ||(flush_count>1))
-          result = PyInt_FromLong(1);
-        else
-          result = PyInt_FromLong(0);
+          waiting = 1; /* commands are waiting or we're in nested execution */
         APIExitBlocked(G);
+      } else {
+        waiting = 1; /* we're performing a "modal" task... */
       }
+    } else {
+      waiting = 1; /* we're shutting down... */
     }
+    result = PyInt_FromLong(waiting);
   }
   return APIAutoNone(result);
 }
