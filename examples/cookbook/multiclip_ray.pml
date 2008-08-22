@@ -27,7 +27,6 @@ set opaque_background
 set surface_color, white
 ray
 save image_back.png
-refresh
 
 cmd.clip("near", near_dist)
 cmd.clip("far", far_dist)
@@ -42,4 +41,5 @@ save image_front.png
 
 # now use Photoshop, Gimp, or ImageMagick to combine the images
 
-system composite image_back.png image_front.png image_merged.png
+system composite image_front.png image_back.png image_merged.png
+system display image_merged.png
