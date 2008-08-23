@@ -9473,6 +9473,9 @@ static int SelectorSelect2(PyMOLGlobals *G,EvalElem *base)
 /*========================================================================*/
 static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
 {
+  /* some cases in this function still need to be optimized
+     for performance (see BYR1 for example) */
+
   register CSelector *I=G->Selector;
   register int a,b,tag;
   register int c=0;
@@ -9584,176 +9587,200 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
     }
     FreeP(base[1].sele);
     break;      
-  case SELE_BYR1: /* ASSUMES atoms are sorted by residue */
+  case SELE_BYR1: /* ASSUMES atoms are sorted & grouped by residue */
   case SELE_CAS1: 
-    table_a = i_table + cNDummyAtoms;
-    for(a=cNDummyAtoms;a<n_atom;a++) {
-      
-      if( (tag = base[0].sele[a]) ) {
-        at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
-        b = a-1;
-        while(b>=0) {
-          if(!base[0].sele[b]) {
-            flag = false;
-            if(table_a->model==i_table[b].model) {
-              at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-              if(at1->chain[0]==at2->chain[0])
-                if(at1->resv==at2->resv)
-                  if(at1->discrete_state==at2->discrete_state)
-                    if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
-                      if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
-                        if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                          base[0].sele[b]=tag;
-                          c++;
-                          flag=1;
-                        }
-            }
-            if(!flag)
-              break;
-          }
-          b--;
-        }
-        b = a + 1;
-        while(b<n_atom) {
-          if(!base[0].sele[b]) {
-            flag=false;
-            if(table_a->model==i_table[b].model) {
-              at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-              if(at1->chain[0]==at2->chain[0])
-                if(at1->resv==at2->resv)
-                  if(at1->discrete_state==at2->discrete_state)
-                    if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
-                      if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
-                        if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                          base[0].sele[b]=tag;
-                          c++;
-                          flag=1;
-                        }
-            }
-            if(!flag)
-              break;
-          }
-          b++;
-        }
-      }
-      table_a++;
-    }
-    if(base->code==SELE_CAS1) {
-      c=0;
+    {
+      int *base_0_sele = base[0].sele;
+      int break_atom = -1; 
+      int last_tag = 0;
       table_a = i_table + cNDummyAtoms;
       for(a=cNDummyAtoms;a<n_atom;a++) {
-        if(base[0].sele[a])
-          {
-            base[0].sele[a]=false;
-              
+        if( (tag = base_0_sele[a]) && ((a >= break_atom)|| (base_0_sele[a] != last_tag))) {
+          at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
+          b = a-1;
+          while(b>=0) {
+            if(!base_0_sele[b]) {
+              flag = false;
+              if(table_a->model==i_table[b].model) {
+                at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+                if(at1->chain[0]==at2->chain[0])
+                  if(at1->resv==at2->resv)
+                    if(at1->discrete_state==at2->discrete_state)
+                      if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
+                        if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
+                          if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                            base_0_sele[b]=tag;
+                            c++;
+                            flag=1;
+                          }
+              }
+              if(!flag) {
+                break;
+              }
+            }
+            b--;
+          }
+          b = a + 1;
+          while(b<n_atom) {
+            if(!base_0_sele[b]) {
+              flag=false;
+              if(table_a->model==i_table[b].model) {
+                at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+                if(at1->chain[0]==at2->chain[0])
+                  if(at1->resv==at2->resv)
+                    if(at1->discrete_state==at2->discrete_state)
+                      if(WordMatch(G,at1->resi,at2->resi,ignore_case)<0)
+                        if(WordMatch(G,at1->resn,at2->resn,ignore_case)<0)
+                          if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                            base_0_sele[b]=tag;
+                            c++;
+                            flag=1;
+                          }
+              }
+              if(!flag) {
+                break_atom = b;
+                last_tag = tag;
+                break;
+              }
+            }
+            b++;
+          }
+        }
+        table_a++;
+      }
+      if(base->code==SELE_CAS1) {
+        c=0;
+        table_a = i_table + cNDummyAtoms;
+        for(a=cNDummyAtoms;a<n_atom;a++) {
+          if(base_0_sele[a]) {
+            base_0_sele[a]=false;
+            
             if(i_obj[table_a->model]->AtomInfo[table_a->atom].protons == cAN_C)
               if(WordMatchCommaExact(G,"CA",
                                      i_obj[table_a->model]->AtomInfo[table_a->atom].name,
-                                     ignore_case)<0)
-                {
-                  base[0].sele[a]=true;
-                  c++;
-                }
+                                     ignore_case)<0) {
+                base_0_sele[a]=true;
+                c++;
+              }
           }
+          table_a++;
+        }
+      }
+    }
+    break;
+  case SELE_BYC1: /* ASSUMES atoms are sorted & grouped by chain */
+    { 
+      int *base_0_sele = base[0].sele;
+      int break_atom_high = -1; 
+      int break_atom_low = 0;
+      int last_tag = 0;
+      table_a = i_table + cNDummyAtoms;
+      for(a=cNDummyAtoms;a<n_atom;a++) {
+        if( (tag = base_0_sele[a]) && ((a >= break_atom_high) || (base_0_sele[a] != last_tag))) {
+          if(tag!=last_tag)
+            break_atom_low = 0;
+          at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
+          b = a-1;
+          while(b>=break_atom_low) {
+            if(!base_0_sele[b]) {
+              flag = false;
+              if(table_a->model==i_table[b].model)
+                {
+                  at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+                  if(at1->chain[0]==at2->chain[0])
+                    if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                      base_0_sele[b]=tag;
+                      c++;
+                      flag=1;
+                    }
+                }
+              if(!flag) {
+                break_atom_low = b;
+                break;
+              }
+            }
+            b--;
+          }
+          if(b<0) break_atom_low = -1;
+          b = a + 1;
+          while(b<n_atom) {
+            if(!base_0_sele[b]) {
+              flag=false;
+              if(table_a->model==i_table[b].model) {
+                at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+                if(at1->chain[0]==at2->chain[0])
+                  if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                    base_0_sele[b]=tag;
+                    c++;
+                    flag=1;
+                  }
+              }
+              if(!flag) {
+                break_atom_high = b;
+                last_tag = tag;
+                break;
+              }
+            }
+            b++;
+          }
+        }
         table_a++;
       }
     }
     break;
-  case SELE_BYC1: /* ASSUMES atoms are sorted by chain */
-    table_a = i_table + cNDummyAtoms;
-    for(a=cNDummyAtoms;a<n_atom;a++)
-      {
-        if( (tag=base[0].sele[a]) ) 
-          {
-            at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
-            b = a-1;
-            while(b>=0) {
-              if(!base[0].sele[b]) {
-                flag = false;
-                if(table_a->model==i_table[b].model)
-                  {
-                    at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-                    if(at1->chain[0]==at2->chain[0])
-                      if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                        base[0].sele[b]=tag;
-                        c++;
-                        flag=1;
-                      }
-                  }
-                if(!flag)
-                  break;
+  case SELE_BYS1: /* ASSUMES atoms are sorted & grouped by segi */
+    { 
+      int *base_0_sele = base[0].sele;
+      int break_atom_high = -1; 
+      int break_atom_low = 0;
+      int last_tag = 0;
+      table_a = i_table + cNDummyAtoms;
+      for(a=cNDummyAtoms;a<n_atom;a++) {
+        if( (tag = base_0_sele[a]) && ((a >= break_atom_high) || (base_0_sele[a] != last_tag))) {
+          if(tag!=last_tag)
+            break_atom_low = 0;
+          at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
+          b = a-1;
+          while(b>=break_atom_low) {
+            if(!base_0_sele[b]) {
+              flag = false;
+              if(table_a->model==i_table[b].model) {
+                at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+                if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                  base_0_sele[b]=tag;
+                  c++;
+                  flag=1;
+                }
               }
-              b--;
+              if(!flag)
+                break;
             }
-            b = a + 1;
-            while(b<n_atom) {
-              if(!base[0].sele[b]) {
-                flag=false;
-                if(table_a->model==i_table[b].model)
-                  {
-                    at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-                    if(at1->chain[0]==at2->chain[0])
-                      if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                        base[0].sele[b]=tag;
-                        c++;
-                        flag=1;
-                      }
-                  }
-                if(!flag)
-                  break;
-              }
-              b++;
-            }
+            b--;
           }
+          b = a + 1;
+          while(b<n_atom) {
+            if(!base_0_sele[b]) {
+              flag=false;
+              if(table_a->model==i_table[b].model) {
+                at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
+                if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
+                  base_0_sele[b]=tag;
+                  c++;
+                  flag=1;
+                }
+              }
+              if(!flag) {
+                break_atom_high = b;
+                last_tag = tag;
+                break;
+              }
+            }
+            b++;
+          }
+        }
         table_a++;
       }
-    break;
-  case SELE_BYS1: /* ASSUMES atoms are sorted by segi */
-    table_a = i_table + cNDummyAtoms;
-    for(a=cNDummyAtoms;a<n_atom;a++)
-      {
-        if( (tag=base[0].sele[a] ))
-          {
-            at1=&i_obj[table_a->model]->AtomInfo[table_a->atom];
-            b = a-1;
-            while(b>=0) {
-              if(!base[0].sele[b]) {
-                flag = false;
-                if(table_a->model==i_table[b].model)
-                  {
-                    at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-                    if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                      base[0].sele[b]=tag;
-                      c++;
-                      flag=1;
-                    }
-                  }
-                if(!flag)
-                  break;
-              }
-              b--;
-            }
-            b = a + 1;
-            while(b<n_atom) {
-              if(!base[0].sele[b]) {
-                flag=false;
-                if(table_a->model==i_table[b].model)
-                  {
-                    at2=&i_obj[i_table[b].model]->AtomInfo[i_table[b].atom];
-                    if(WordMatch(G,at1->segi,at2->segi,ignore_case)<0) {
-                      base[0].sele[b]=tag;
-                      c++;
-                      flag=1;
-                    }
-                  }
-                if(!flag)
-                  break;
-              }
-              b++;
-            }
-          }
-        table_a++;
-      }
+    }
     break;
   case SELE_BYF1: /* first, identify all atom by fragment selection */
     {

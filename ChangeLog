@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-08-22 Warren L. DeLano <warren@delsci.com>
 
+	* addressed some performance issues with byres, bychain, & byseg
+	
 	* added a new cookbook example for a composited multi-clip 
 	raytraced image examples/cookbook/multiclip_ray.pml
 	
