@@ -2,13 +2,18 @@
 CHANGE LOG
 =========================================================================
 
+2008-08-22 Warren L. DeLano <warren@delsci.com>
+
+	* added a new cookbook example for a composited multi-clip 
+	raytraced image examples/cookbook/multiclip_ray.pml
+	
 2008-08-21 Warren L. DeLano <warren@delsci.com>
 
 	* fixed indexes output by get_raw_alignment: now 1-based
 
 	* added new cookbook example for grafting selections across
 	alignments: examples/cookbook/seq_match_sele.pml
-	
+
 2008-08-04 Warren L. DeLano <warren@delsci.com>
 
 	* added map_auto_expand_sym setting to optionally prevent expansion
