@@ -577,6 +577,8 @@ SEE ALSO
                     ftype = loadable.cube
                 elif re.search("\.cif$",filename,re.I):
                     ftype = loadable.cif1
+                elif re.search("\.pim$",filename,re.I):
+                    ftype = loadable.pim
                 elif re.search("\.map$",filename,re.I):
                     r = DEFAULT_ERROR
                     print 'Error: .map is ambiguous.  Please add format or use another extension:'
@@ -644,13 +646,20 @@ SEE ALSO
                 r = _self.load_png(str(fname),quiet=quiet)
                 ftype = -1
 
-    # p1m embedded data script files
+    # p1m embedded data script files (more secure)
     
             if ftype == loadable.p1m:
                 _self._do("_ @"+fname)
                 ftype = -1
                 r = DEFAULT_SUCCESS
-                
+
+    # pim import files (unrestricted scripting -- insecure)
+    
+            if ftype == loadable.pim:
+                _self._do("_ @"+fname)
+                ftype = -1
+                r = DEFAULT_SUCCESS
+
     # special handling for trj failes (autodetect AMBER versus GROMACS)
             if ftype == loadable.trj:
                 try: # autodetect gromacs TRJ
