@@ -366,7 +366,7 @@ if __name__=='pymol.parser':
                                                     layer.embed_list = list
                                                     layer.embed_type = 0 # not a python block
                                                 else:
-                                                    print 'Error: embed only legal in p1m files'
+                                                    print 'Error: embed only legal in special files (e.g. p1m)'
                                                     raise None
                                             elif (layer.kw[4]==parsing.SKIP):
                                                 layer.next = ()

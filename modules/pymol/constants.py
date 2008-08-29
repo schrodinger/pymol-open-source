@@ -60,7 +60,7 @@ class loadable:
     pse = 25      # PyMOL session
     xplorstr = 26 # XPLOR map as string
     phi = 27      # Delphi/Grasp
-    fld = 28      # AVS field format (not yet general -- just uniform allowed)
+    fld = 28      # AVS field format (not yet general -- only uniform allowed)
     brix = 29     # BRIX/DSN6/O map format
     grd = 30      # Insight II Grid format
     pqr = 31      # PQR file (modified PDB file for APBS)
@@ -84,6 +84,7 @@ class loadable:
     cube = 48     # cube volume file (via plugin)
     mae = 49      # Schrodinger ".mae" format (proprietary)
     cif1 = 50     # Python-based CIF parser
+    pim = 51      # General-purpose programmatic import (powerful, insecure)
     
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.mol : loadable.molstr,
