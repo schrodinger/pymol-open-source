@@ -56,9 +56,9 @@ class PymolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_header('Content-type',	'image/x-png')
             self.end_headers()
             get_ray(self.wfile)
-        elif "load" in self.path: # load a structure
-            cmd.load("$TUT/1hpv.pdb")
         else:
+            if "load" in self.path: # load a structure
+                cmd.load("$TUT/1hpv.pdb")
             self.send_response(200)
             self.send_header('Content-type',	'text/html')
             self.end_headers()
