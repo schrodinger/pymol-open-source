@@ -9638,7 +9638,7 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
                           }
               }
               if(!flag) {
-                break_atom = b;
+                break_atom = b-1;
                 last_tag = tag;
                 break;
               }
@@ -9695,7 +9695,7 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
                     }
                 }
               if(!flag) {
-                break_atom_low = b;
+                break_atom_low = b+1;
                 break;
               }
             }
@@ -9716,7 +9716,7 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
                   }
               }
               if(!flag) {
-                break_atom_high = b;
+                break_atom_high = b-1;
                 last_tag = tag;
                 break;
               }
@@ -9752,8 +9752,10 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
                   flag=1;
                 }
               }
-              if(!flag)
+              if(!flag) {
+                break_atom_low = b+1;
                 break;
+              }
             }
             b--;
           }
@@ -9770,7 +9772,7 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
                 }
               }
               if(!flag) {
-                break_atom_high = b;
+                break_atom_high = b-1;
                 last_tag = tag;
                 break;
               }
