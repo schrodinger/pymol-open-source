@@ -8,7 +8,7 @@ F* -------------------------------------------------------------------
 G* Please see the accompanying LICENSE file for further information. 
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
--* 
+-* TJO: TJ O'Donnell, under contract for DeLano Scientific LLC
 -* 
 -*
 Z* -------------------------------------------------------------------
@@ -54,26 +54,34 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
 {
 #ifdef _PYMOL_LIBPNG
   int ok=true;
-  FILE *fp;
+  FILE *fp = NULL;
   png_structp png_ptr;
   png_infop info_ptr;
   int bit_depth = 8;
   int bytes_per_pixel = 4;
   png_uint_32 k;
   png_byte *image = (png_byte*)p;
-   png_bytep *row_pointers;
+  png_bytep *row_pointers;
+  int fd = 0;
 
-   row_pointers=Alloc(png_bytep,height);
-
-   /* open the file */
-   fp = fopen(file_name, "wb");
-   if (fp == NULL) {
-     ok=false;
-     goto cleanup;
-   } else if(feof(fp)) {
-     ok=false;
-     goto cleanup;
-   }
+  row_pointers=Alloc(png_bytep,height);
+  
+  /* open the file, allowing use of an encoded file descriptor, with
+     approach adapted from TJO: chr(1) followed by ascii-format integer */
+  if(file_name[0] == 1) {
+    if( sscanf(file_name+1, "%d", &fd) == 1) {
+      fp = fdopen(fd, "wb");
+    }
+  } else {
+    fp = fopen(file_name, "wb");
+  }
+  if (fp == NULL) {
+    ok=false;
+    goto cleanup;
+  } else if(feof(fp)) {
+    ok=false;
+    goto cleanup;
+  }
    /* Create and initialize the png_struct with the desired error handler
     * functions.  If you want to use the default stderr and longjump method,
     * you can supply NULL for the last three parameters.  We also check that
@@ -160,9 +168,10 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
 
  cleanup:
-   if(fp) 
-   /* close the file */
+   if(fp) {
+     /* close the file */
      fclose(fp);
+   }
    
    mfree(row_pointers);
    /* that's it */

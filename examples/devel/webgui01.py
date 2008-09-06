@@ -4,6 +4,7 @@ import BaseHTTPServer
 import time
 import cgi
 import threading
+import traceback
 
 from pymol import cmd
 
@@ -13,14 +14,20 @@ def _shutdown(self_cmd=cmd):
         _server.socket.close()
     self_cmd.quit()
 
-# Note, this handler assumes that PyMOL is running as a global singleton
+# Note, this handler assumes PyMOL is running as a global singleton
 
 def get_status(out, self_cmd=cmd):
-    out.write('<html><body>\n')
+    out.write('<html>\n')
+    out.write('<header>\n')
+    out.write('<script type="text/javascript" src="pymol.js"></script>\n')
+    out.write('</header><body>\n')
     out.write('<h3>PyMOL WebGUI Proof of Concept</h3>\n')
     out.write('<table><tr>\n')
     out.write('<td><form action="./status.pymol"><button type="submit">Refresh</button></form></td>\n')
-    out.write('<td><form target="_new" action="./ray.pymol"><button type="submit">Ray</button></form></td>\n')    
+    out.write('<td><form target="_new" action="./ray.pymol?t=%f"><button type="submit">Ray</button></form></td>\n'%
+              time.time())    
+    out.write('<td><form target="_new" action="./monitor.pymol?t=%f"><button type="submit">Monitor</button></form></td>\n'%
+              time.time())    
     out.write('<td><form action="./quit.pymol"><button type="submit">Quit</button></form></td>\n')
     out.write('</tr></table>')
     out.write('<a href="./status.pymol?load">load $TUT/1hpv.pdb</a>\n')
@@ -32,51 +39,101 @@ def get_status(out, self_cmd=cmd):
         for name in names:
             out.write('<li>%s</li>\n'%name)
         out.write('</ul>\n')
+    out.write('<a href="#" onClick="updateImage()"><img src="./draw.pymol?t=%f">'%time.time()+"</img></a>")
+    out.write('</body></html>\n')
+
+def get_monitor(out, self_cmd=cmd):
+    out.write('<html>\n')
+    out.write('<header>\n')
+    out.write('<script type="text/javascript" src="pymol.js"></script>\n')
+    out.write('</header><body onload="monitorImage()">\n')
+    out.write('<img src="./draw.pymol?t=%f">'%time.time()+"</img>")
     out.write('</body></html>\n')
 
 def get_start(out, self_cmd=cmd):
-    window_open="javascript: window.open('./status.pymol','hello', 'location=no,status=no,toolbar=no,width=400,height=600,top=0,left=880');"
+    window_open="javascript: window.open('./status.pymol','hello', 'location=no,toolbar=no,width=400,height=600,top=0,left=880');"
     out.write('<html><body onload="'+window_open+'">\n')
     out.write('<a href="./start.pymol" onclick="'+window_open+'">Launch WebGUI\n')
     out.write('</body></html>')
 
-def get_ray(out, self_cmd=cmd):
-    
-    self_cmd.ray()
-    self_cmd.png('tmp.png')
+def write_image(out, ray=0, self_cmd=cmd):
+
+    if ray:
+        self_cmd.ray()
+    # encode the file descriptor into the PNG filename
+    self_cmd.png(chr(1)+str(out.fileno()))
+    # and wait for the task to finish 
     self_cmd.sync()
-    # need to work on synchronization...
-    out.write(open('tmp.png').read())
-    
+        
 class PymolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
+    def do_js(self):
+        self.send_response(200)
+        self.send_header('Content-type','text/javascript')
+        self.end_headers()
+        self.wfile.write('''
+            
+function monitorImage()
+{
+    images = document.getElementsByTagName("img");
+    
+    for( var i = 0; i < images.length; i++ ) {
+          images[i].src = "./draw.pymol?t=" + new Date().getTime();
+    }
+}
+
+function updateImage()
+{
+    images = document.getElementsByTagName("img");
+
+    for( var i = 0; i < images.length; i++ ) {
+       images[i].src = "./draw.pymol?t=" + new Date().getTime();
+    }
+    return false;
+}
+
+            ''')
+            
     def do_pymol(self):
         if "ray.pymol" in self.path: # send image
             self.send_response(200)
             self.send_header('Content-type',	'image/x-png')
             self.end_headers()
-            get_ray(self.wfile)
+            write_image(self.wfile,1)
+        elif "draw.pymol" in self.path:
+            self.send_response(200)
+            self.send_header('Content-type',	'image/x-png')
+            self.end_headers()
+            write_image(self.wfile)
         else:
             if "load" in self.path: # load a structure
                 cmd.load("$TUT/1hpv.pdb")
+                cmd.rock()
             self.send_response(200)
             self.send_header('Content-type',	'text/html')
             self.end_headers()
             if "status.pymol" in self.path:
                 get_status(self.wfile)
+            elif "monitor.pymol" in self.path:
+                get_monitor(self.wfile)
             elif "quit.pymol" in self.path:
                 self.wfile.write('<html><body><p>Quitting...</p></body></html>')
                 self.wfile.flush()
                 _shutdown()
             else: # start page
                 get_start(self.wfile)
-        self.wfile.flush()
+            self.wfile.flush()
         
     def do_GET(self):
         try:
             doc = self.path.split('?')[0]
             if doc.endswith('.pymol'): # PyMOL
-                self.do_pymol()
+                try:
+                    self.do_pymol()
+                except:
+                    traceback.print_exc()
+            elif doc.endswith('.js'): # Javascript
+                self.do_js()
             elif doc.endswith('.html'):
                 f = open('.'+self.path) # UNSAFE!!!
                 self.send_response(200)
@@ -119,9 +176,11 @@ def main():
         _server.socket.close()
 
 def open_browser():
+    import webbrowser
     time.sleep(1)
-    import os
-    os.system('open http://localhost:8080/start.pymol')
+    webbrowser.open('http://localhost:8080/status.pymol')
+#    import os
+#    os.system('open http://localhost:8080/start.pymol')
 
 if __name__ == '__main__':
     main()

@@ -443,7 +443,8 @@ def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,_self=cmd):
         _self.lock(_self)   
         fname = a
         if not re.search("\.png$",fname):
-            fname = fname +".png"
+            if a[0:1] != chr(1):
+                fname = fname +".png"
         fname = cmd.exp_path(fname)
         r = _cmd.png(_self._COb,str(fname),int(width),int(height),float(dpi),int(ray),int(quiet))
     finally:
