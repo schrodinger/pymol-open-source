@@ -6,7 +6,7 @@ import parsing
 QuietException = parsing.QuietException
 
 tmp_editor = "_tmp_editor"
-tmp_ed_save = "_tmp_ed_save"
+tmp_ed_save = "tmp_ed_save"
 tmp1 = "_tmp_editor1"
 tmp2 = "_tmp_editor2"
 tmp3 = "_tmp_editor3"
@@ -38,6 +38,8 @@ def attach_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
         
 def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",_self=cmd):
     if (selection not in _self.get_names('all')):
+        if object == "":
+            object = amino_acid
         # create new object 
         if amino_acid in _self.get_names("objects"):
             print " Error: an object with than name already exists"
@@ -178,7 +180,7 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",_self=c
             if _self.count_atoms(sele,quiet=1):
                 _self.edit(sele)
                 _self.center(sele,animate=animate)                
-            _self.delete(tmp_ed_save)
+#            _self.delete(tmp_ed_save)
         elif _self.count_atoms("((%s) and elem h)"%selection,quiet=1):
             print " Error: please pick a nitrogen or carbonyl carbon to grow from."
             _self.delete(tmp_editor)

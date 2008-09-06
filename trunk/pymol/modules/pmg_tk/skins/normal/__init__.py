@@ -38,7 +38,7 @@ class Normal(PMGSkin):
     pad = ' ' # extra space in menus
     
     appname        = 'The PyMOL Molecular Graphics System'
-    appversion     = '1.1'
+    appversion     = '1.2'
     copyright      = ('Copyright (C) 2003-2008 \n' +
                       'DeLano Scientific LLC.\n'+
                       'All rights reserved.')
