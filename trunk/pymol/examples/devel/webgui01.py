@@ -57,16 +57,20 @@ def get_start(out, self_cmd=cmd):
     out.write('</body></html>')
 
 def write_image(out, ray=0, self_cmd=cmd):
-
     if ray:
         self_cmd.ray()
     # encode the file descriptor into the PNG filename
-    self_cmd.png(chr(1)+str(out.fileno()))
-    # and wait for the task to finish 
-    self_cmd.sync()
+    if self_cmd.png(chr(1)+str(out.fileno()),prior=-1) != 1:
+        # no prior image available, so wait for update / finish
+        self_cmd.sync()
         
 class PymolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
+
+    def log_message(self, format, *args):
+        pass
+        # nuke logging feature for the time being
+    
     def do_js(self):
         self.send_response(200)
         self.send_header('Content-type','text/javascript')
@@ -86,7 +90,7 @@ function updateImage()
 
 function monitorOnLoad(event)
 {
-  setInterval('updateImage()',100)
+  setInterval('updateImage()',1000)
 }
 
             ''')
@@ -158,14 +162,10 @@ function monitorOnLoad(event)
         except :
             pass
 
-class ThreadingHTTPServer(SocketServer.ThreadingMixIn,
-                          BaseHTTPServer.HTTPServer):
-    pass
-
 def main():
     try:
         global _server
-        _server = ThreadingHTTPServer(('', 8080), PymolHandler)
+        _server = BaseHTTPServer.HTTPServer(('', 8080), PymolHandler)
         print 'started httpserver...'
         _server.serve_forever()
     except KeyboardInterrupt:
@@ -183,6 +183,9 @@ if __name__ == '__main__':
     main()
 
 if __name__ == 'pymol':
+
+    cmd.set("image_copy_always") # copy all updates into image buffer
+
     t = threading.Thread(target=main)
     t.setDaemon(1)
     t.start()

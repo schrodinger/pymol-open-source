@@ -5878,9 +5878,11 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
   char *str1;
   int ok = false;
   int quiet;
+  int result = 0;
   int width,height,ray;
+  int prior;
   float dpi;
-  ok = PyArg_ParseTuple(args,"Osiifii",&self,&str1,&width,&height,&dpi,&ray,&quiet);
+  ok = PyArg_ParseTuple(args,"Osiifiii",&self,&str1,&width,&height,&dpi,&ray,&quiet,&prior);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -5888,19 +5890,26 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok=APIEnterNotModal(G))) {
-    ExecutiveDrawNow(G);		 /* TODO STATUS */
-    if(ray) {
-      SceneRay(G,width,height,(int)SettingGet(G,cSetting_ray_default_renderer),
-               NULL,NULL,0.0F,0.0F,false,NULL,true,-1); 
-      ScenePNG(G,str1,dpi,quiet);
-    } else if(width||height) {
-      SceneDeferImage(G,width,height,str1,-1,dpi,quiet);
+    if(prior) {
+      if(ScenePNG(G,str1,dpi,quiet,prior))
+        result = 1; /* signal success by returning 1 instead of 0, or -1 for error  */
     } else {
-      ScenePNG(G,str1,dpi,quiet);
+      ExecutiveDrawNow(G);		 /* TODO STATUS */
+      if(ray) {
+        SceneRay(G,width,height,(int)SettingGet(G,cSetting_ray_default_renderer),
+                 NULL,NULL,0.0F,0.0F,false,NULL,true,-1); 
+        ok = ScenePNG(G,str1,dpi,quiet,false);
+      } else if(width||height) {
+        SceneDeferImage(G,width,height,str1,-1,dpi,quiet);
+      } else {
+        ok = ScenePNG(G,str1,dpi,quiet,false);
+      }
     }
     APIExit(G);
   }
-  return APIResultOk(ok);
+  if(!ok)
+    result = -1;
+  return APIResultCode(result);
 }
 
 static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
