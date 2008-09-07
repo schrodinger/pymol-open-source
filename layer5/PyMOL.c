@@ -765,6 +765,7 @@ typedef struct _CPyMOL {
   ov_word lex_scene_buttons_mode;
   ov_word lex_scene_buttons;
   ov_word lex_map_auto_expand_sym;
+  ov_word lex_image_copy_always;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1523,6 +1524,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(scene_buttons_mode,598);
   LEX_SETTING(scene_buttons,599);
   LEX_SETTING(map_auto_expand_sym,600);
+  LEX_SETTING(image_copy_always,601);
   return_OVstatus_SUCCESS;
 }
 
@@ -3819,6 +3821,7 @@ void PyMOL_PushValidContext(CPyMOL *I)
   if(I && I->G)
     I->G->ValidContext++;
 }
+
 void PyMOL_PopValidContext(CPyMOL *I)
 {
   if(I && I->G && (I->G->ValidContext>0))

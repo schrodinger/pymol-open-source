@@ -27,6 +27,7 @@ typedef struct {
   int size;
   int width, height;
   int stereo; /* indicates data actually contains two back to back full-screen images */
+  int needs_alpha_reset; /* needs alpha reset */
 } ImageType;
 
 #define cSceneViewSize 25
@@ -54,7 +55,7 @@ void SceneUpdate(PyMOLGlobals *G);
 int SceneRenderCached(PyMOLGlobals *G);
 void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
                  Multipick *smp,int oversize_width, int oversize_height, 
-                 int click_side);
+                 int click_side,int force_copy);
 void SceneSetFrame(PyMOLGlobals *G,int mode,int frame);
 int SceneSetNames(PyMOLGlobals *G,PyObject *list);
 int SceneGetFrame(PyMOLGlobals *G);
@@ -94,7 +95,7 @@ int SceneDeferRay(PyMOLGlobals *G,
                    int antialias);
 int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing,int validate);
 
-void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet);
+int ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet,int prior_only);
 int SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,
 		      unsigned char *dest,int mode);
 

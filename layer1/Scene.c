@@ -150,7 +150,7 @@ struct _CScene {
   double SweepTime;
   int DirtyFlag;
   int ChangedFlag;
-  int CopyType,CopyNextFlag,CopiedFromOpenGL,CopyForced;
+  int CopyType,CopyNextFlag,CopyForced;
   int NFrame,HasMovie;
   ImageType *Image;
   int MovieOwnsImageFlag;
@@ -980,7 +980,7 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
   register CScene *I=G->Scene;
   int click_side = 0;
   if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
-    SceneRender(G,NULL,0,0,NULL,0,0,0); /* remove overlay if present */
+    SceneRender(G,NULL,0,0,NULL,0,0,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
   if(side_by_side(I->StereoMode)) {
     if(smp->x > (I->Width/2))
@@ -989,7 +989,7 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
       click_side = -1;
     smp->x = smp->x % (I->Width/2);
   }
-  SceneRender(G,NULL,0,0,smp,0,0,click_side);
+  SceneRender(G,NULL,0,0,smp,0,0,click_side,0);
   SceneDirty(G);
   return(1);
 }
@@ -1036,8 +1036,9 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,
   }
   if(animate!=0.0F)
     ScenePrimeAnimation(G);
-  else
+  else {
     SceneAbortAnimation(G);
+  }
 
   p=view;
   for(a=0;a<16;a++)
@@ -1432,10 +1433,11 @@ int SceneCaptureWindow(PyMOLGlobals *G)
     if(!I->Image)
         ok=false;
     
-    if(ok) {
+    if(ok && I->Image) {
       I->DirtyFlag = false;
       I->CopyType = 2; /* suppresses display of copied image */
-      I->CopiedFromOpenGL = false;
+      if(SettingGetGlobal_b(G,cSetting_opaque_background)) 
+        I->Image->needs_alpha_reset = true; 
       I->MovieOwnsImageFlag = false;
     }
   } else {
@@ -1594,7 +1596,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
             glClearColor(v[0],v[1],v[2],alpha);
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             SceneInvalidateCopy(G,false);
-            SceneRender(G,NULL,x_offset,y_offset,NULL,width,height,0);
+            SceneRender(G,NULL,x_offset,y_offset,NULL,width,height,0,0);
             glClearColor(0.0,0.0,0.0,1.0);
             
             if(draw_both) {
@@ -1713,7 +1715,9 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
         I->CopyType = true;
         I->CopyForced = true;
 
-        I->CopiedFromOpenGL = false;
+        if(SettingGetGlobal_b(G,cSetting_opaque_background)) 
+          I->Image->needs_alpha_reset = true;
+
         I->MovieOwnsImageFlag = false;
       }
       FreeP(final_image);
@@ -1731,23 +1735,23 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
 }
 
 /*========================================================================*/
-static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
+static unsigned char *SceneImagePrepare(PyMOLGlobals *G,int prior_only)
 {
   register CScene *I=G->Scene;
-  unsigned char *image;
+  unsigned char *image = NULL;
   int reset_alpha = false;
   int save_stereo = (I->StereoMode==1);
   
-  if(!I->CopyType) {
-    unsigned int buffer_size;
-
-    buffer_size = 4*I->Width*I->Height;
-    if(save_stereo)
-      image = (GLvoid*)Alloc(char,buffer_size*2);
-    else
-      image = (GLvoid*)Alloc(char,buffer_size);
-    ErrChkPtr(G,image);
+  if(!(I->CopyType || prior_only)) {
     if(G->HaveGUI && G->ValidContext) {
+      unsigned int buffer_size;
+      
+      buffer_size = 4*I->Width*I->Height;
+      if(save_stereo)
+        image = (GLvoid*)Alloc(char,buffer_size*2);
+      else
+        image = (GLvoid*)Alloc(char,buffer_size);
+      ErrChkPtr(G,image);
       if(SceneMustDrawBoth(G)||save_stereo) {
         glReadBuffer(GL_BACK_LEFT);
       } else {
@@ -1769,34 +1773,29 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
       I->Image->size = buffer_size;
       if(save_stereo)
         I->Image->stereo = 1;
-
-    } else {
-       PRINTFB(G,FB_Scene,FB_Errors)
-         " ScenePNG-WARNING: invalid context or no image.\n"
-         ENDFB(G);
-     }
-  } else {
-    image=I->Image->data;
-    reset_alpha = I->CopiedFromOpenGL;
-    PRINTFB(G,FB_Scene,FB_Blather)
-      " ScenePNG: writing cached image (reset_alpha=%d).\n",reset_alpha
-      ENDFB(G);
+    }
+  } else if(I->Image) {
+    image = I->Image->data;
+    reset_alpha = I->Image->needs_alpha_reset;
   }
-  {
+  if(image) {
     int opaque_back = SettingGetGlobal_b(G,cSetting_opaque_background);
-
-    if(opaque_back&&reset_alpha&&image) {
+    if(opaque_back && reset_alpha) {
       unsigned char *p = (unsigned char*)image;
       int x,y;
-      for(y=0;y<I->Height;y++) {
-        for(x=0;x<I->Width;x++) {
+      int width = I->Image->width;
+      int height = I->Image->height;
+      if(I->Image && (I->Image->data == (unsigned char*)image))
+        I->Image->needs_alpha_reset = false;
+      for(y=0;y<height;y++) {
+        for(x=0;x<width;x++) {
           p[3]=0xFF;
           p+=4;
         }
       }
       if(save_stereo) {
-        for(y=0;y<I->Height;y++) {
-          for(x=0;x<I->Width;x++) {
+        for(y=0;y<height;y++) {
+          for(x=0;x<width;x++) {
             p[3]=0xFF;
             p+=4;
           }
@@ -1821,19 +1820,21 @@ static void SceneImageFinish(PyMOLGlobals *G,char *image)
 void SceneGetImageSize(PyMOLGlobals *G,int *width,int *height)
 {
   register CScene *I=G->Scene;
-  if(SceneImagePrepare(G) && I->Image) {
+  GLvoid *image = SceneImagePrepare(G,false);
+  if(image && I->Image) {
     *width = I->Image->width;
     *height = I->Image->height;
-    } else {
+  } else {
     *width = I->Width;
     *height = I->Height;
-    }
+  }
+  SceneImageFinish(G,image); /* don't leak if(image != I->Image) */
 }
 
 int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,
                int rowbytes,unsigned char *dest,int mode)
 {
-  GLvoid *image = SceneImagePrepare(G);
+  GLvoid *image = SceneImagePrepare(G,false);
   register CScene *I=G->Scene;
   int result=false;
   int i,j;
@@ -1944,10 +1945,10 @@ static void deinterlace(unsigned int *dst,unsigned int *src,
   }
 }
 
-void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet)
+int ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet,int prior_only)
 {
   register CScene *I=G->Scene;
-  GLvoid *image = SceneImagePrepare(G);
+  GLvoid *image = SceneImagePrepare(G,prior_only);
   if(image && I->Image) {
     int width = I->Image->width;
     int height = I->Image->height;
@@ -1973,11 +1974,11 @@ void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet)
         png
         ENDFB(G);
     }
-
     if(save_image && (save_image!=image))
       FreeP(save_image);
   }
   SceneImageFinish(G,image);  
+  return (image!=NULL);
 }
 /*========================================================================*/
 void ScenePerspective(PyMOLGlobals *G,int flag)
@@ -2195,7 +2196,7 @@ int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing, int validate) {
       glClearColor(v[0],v[1],v[2],alpha);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       /* insert OpenGL context validation code here? */
-      SceneRender(G,NULL,0,0,NULL,0,0,0);
+      SceneRender(G,NULL,0,0,NULL,0,0,0,0);
       glClearColor(0.0,0.0,0.0,1.0);
       if(draw_both) {
         SceneCopy(G,GL_BACK_LEFT,true,false);
@@ -2538,7 +2539,6 @@ int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet
         
     I->CopyType=true;
     I->CopyForced=true;
-    I->CopiedFromOpenGL = false;
     OrthoRemoveSplash(G);
     SettingSet(G,cSetting_text,0.0);
     if(movie_flag&&
@@ -3518,11 +3518,11 @@ static int SceneDoXYPick(PyMOLGlobals *G, int x, int y, int click_side)
 {
   CScene *I=G->Scene;
   if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
-    SceneRender(G,NULL,0,0,NULL,0,0,0); /* remove overlay if present */
+    SceneRender(G,NULL,0,0,NULL,0,0,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
   
   I->LastPicked.context.object = NULL;
-  SceneRender(G,&I->LastPicked,x,y,NULL,0,0,click_side);
+  SceneRender(G,&I->LastPicked,x,y,NULL,0,0,click_side,0);
   return (I->LastPicked.context.object!=NULL);
   /* did we pick something? */
 }
@@ -5502,7 +5502,7 @@ static int SceneDeferredImage(DeferredImage *di)
   PyMOLGlobals *G=di->G;
   SceneMakeSizedImage(G,di->width, di->height,di->antialias);
   if(di->filename) {
-    ScenePNG(G,di->filename, di->dpi, di->quiet);
+    ScenePNG(G,di->filename, di->dpi, di->quiet, false);
     FreeP(di->filename);
   } else if(G->HaveGUI &&
             SettingGetGlobal_b(G,cSetting_auto_copy_images)) {
@@ -5744,7 +5744,6 @@ int  SceneInit(PyMOLGlobals *G)
     I->LastStateBuilt = -1;
     I->CopyNextFlag=true;
     I->CopyType=false;
-    I->CopiedFromOpenGL=false;
     I->vendor[0]=0;
     I->renderer[0]=0;
     I->version[0]=0;
@@ -6427,7 +6426,6 @@ void SceneRay(PyMOLGlobals *G,
           I->DirtyFlag=false;
           I->CopyType = true;
           I->CopyForced = true;
-          I->CopiedFromOpenGL = false;
           I->MovieOwnsImageFlag = false;
         }
         break;
@@ -6641,7 +6639,7 @@ static void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force,int entire_window)
         }
       }
       I->CopyType = true;
-      I->CopiedFromOpenGL = true;
+      I->Image->needs_alpha_reset = true;
       I->CopyForced = force;
     }
   }
@@ -7440,7 +7438,7 @@ void sharp3d_end_stereo(void);
 /*========================================================================*/
 void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
                  Multipick *smp,int oversize_width, int oversize_height,
-                 int click_side)
+                 int click_side,int force_copy)
 {
   /* think in terms of the camera's world */
   register CScene *I=G->Scene;
@@ -8288,6 +8286,10 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           }
     } else {
       I->CopyNextFlag=true;
+    }
+    if(force_copy && !(I->CopyType)) {
+      SceneCopy(G,render_buffer,true,false);      
+      I->CopyType = 2; /* do not display force copies */
     }
   }
   PRINTFD(G,FB_Scene)

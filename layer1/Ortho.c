@@ -1194,7 +1194,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
     ButModeSetRate(G,(float)I->DrawTime); 
     
     if(render&&(render_mode<2))
-      SceneRender(G,NULL,0,0,NULL,0,0,0);
+      SceneRender(G,NULL,0,0,NULL,0,0,0,SettingGetGlobal_b(G,cSetting_image_copy_always));
 
     glClearColor(0.0,0.0,0.0,1.0);
     

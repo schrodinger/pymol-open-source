@@ -436,17 +436,17 @@ def _alt(k,_self=cmd):
 
 # writing PNG files (thread-unsafe)
 
-def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,_self=cmd):
-    # INTERNAL - can only be safely called by GLUT thread 
+def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,prior=0,_self=cmd):
+    # INTERNAL - can only be safely called by GLUT thread (unless prior == 1)
     # WARNING: internal routine, subject to change
     try:
         _self.lock(_self)   
         fname = a
         if not re.search("\.png$",fname):
-            if a[0:1] != chr(1):
+            if a[0:1] != chr(1): # not an encoded file descriptor (integer)
                 fname = fname +".png"
         fname = cmd.exp_path(fname)
-        r = _cmd.png(_self._COb,str(fname),int(width),int(height),float(dpi),int(ray),int(quiet))
+        r = _cmd.png(_self._COb,str(fname),int(width),int(height),float(dpi),int(ray),int(quiet),int(prior))
     finally:
         _self.unlock(-1,_self)
     return r
