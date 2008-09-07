@@ -46,7 +46,7 @@ def get_monitor(out, self_cmd=cmd):
     out.write('<html>\n')
     out.write('<header>\n')
     out.write('<script type="text/javascript" src="pymol.js"></script>\n')
-    out.write('</header><body onload="monitorImage()">\n')
+    out.write('</header><body onload="monitorOnLoad()">\n')
     out.write('<img src="./draw.pymol?t=%f">'%time.time()+"</img>")
     out.write('</body></html>\n')
 
@@ -73,14 +73,6 @@ class PymolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write('''
             
-function monitorImage()
-{
-    images = document.getElementsByTagName("img");
-    
-    for( var i = 0; i < images.length; i++ ) {
-          images[i].src = "./draw.pymol?t=" + new Date().getTime();
-    }
-}
 
 function updateImage()
 {
@@ -90,6 +82,11 @@ function updateImage()
        images[i].src = "./draw.pymol?t=" + new Date().getTime();
     }
     return false;
+}
+
+function monitorOnLoad(event)
+{
+  setInterval('updateImage()',100)
 }
 
             ''')
