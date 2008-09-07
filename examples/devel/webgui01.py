@@ -99,11 +99,15 @@ function monitorOnLoad(event)
         if "ray.pymol" in self.path: # send image
             self.send_response(200)
             self.send_header('Content-type',	'image/x-png')
+            self.send_header('Cache-control', 'no-cache')
+            self.send_header('Pragma', 'no-cache')
             self.end_headers()
             write_image(self.wfile,1)
         elif "draw.pymol" in self.path:
             self.send_response(200)
             self.send_header('Content-type',	'image/x-png')
+            self.send_header('Cache-control', 'no-cache')
+            self.send_header('Pragma', 'no-cache')
             self.end_headers()
             write_image(self.wfile)
         else:
