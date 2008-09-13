@@ -348,6 +348,117 @@ void RepWireBondFree(RepWireBond *I)
   OOFreeP(I);
 }
 
+/* lower memory use and higher performance for
+   display of large trajectories, etc. */
+
+void RepWireBondRenderImmediate(CoordSet *cs, RenderInfo *info)
+{
+  /* performance optimized, so it does not support the following:
+
+  - anything other than opengl
+  - display of bond valences
+  - per-bond & per-atom properties, including color and line-width
+  - half-bonds
+  - helper settings such as cartoon_side_chain_helper
+  - suppression of long bonds
+  - color ramps
+  - atom picking
+  - display lists
+  - transparency 
+  
+  */
+  PyMOLGlobals *G=cs->State.G;
+  if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)) )
+    return;
+  else {
+    ObjectMolecule *obj = cs->Obj;
+    float line_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_width);
+    
+    if(info->width_scale_flag) 
+      glLineWidth(line_width*info->width_scale);
+    else
+      glLineWidth(line_width);
+    glDisable(GL_LIGHTING); 
+    SceneResetNormal(G,true);      
+    glBegin(GL_LINES);	     
+    
+    {
+      int a;
+      int nBond = obj->NBond;
+      BondType *bd = obj->Bond;
+      AtomInfoType *ai = obj->AtomInfo;
+      int *atm2idx = cs->AtmToIdx;
+      int discreteFlag = obj->DiscreteFlag;
+      int last_color = -9;
+      float *coord = cs->Coord;
+      const float _pt5 = 0.5F;
+      
+      for(a=0;a<nBond;a++) {
+        int b1 = bd->index[0];
+        int b2 = bd->index[1];
+        AtomInfoType *ai1, *ai2;
+        bd++;
+        
+        if( (ai1 = ai+b1)->visRep[cRepLine] && (ai2 = ai+b2)->visRep[cRepLine]) {
+          int a1, a2;
+          if(discreteFlag) {
+            /* not optimized */
+            if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+              a1=obj->DiscreteAtmToIdx[b1];
+              a2=obj->DiscreteAtmToIdx[b2];
+            } else {
+              a1=-1;
+              a2=-1;
+            }
+          } else {
+            a1=atm2idx[b1];
+            a2=atm2idx[b2];
+          }
+          
+          if((a1>=0)&&(a2>=0)) {
+            int c1 = ai1->color;
+            int c2 = ai2->color;
+            
+            float *v1 = coord+3 * a1;
+            float *v2 = coord+3 * a2;
+            
+            if(c1 == c2) { /* same colors -> one line */
+              if(c1!=last_color) {
+                last_color = c1;
+                glColor3fv(ColorGet(G,c1));
+              }
+              glVertex3fv(v1);
+              glVertex3fv(v2); /* we done */
+            } else { /* different colors -> two lines */
+              float avg[3];
+              
+              avg[0] = (v1[0]+v2[0]) * _pt5;
+              avg[1] = (v1[1]+v2[1]) * _pt5;
+              avg[2] = (v1[2]+v2[2]) * _pt5;
+              
+              if(c1!=last_color) {
+                last_color = c1;
+                glColor3fv(ColorGet(G,c1));
+              }
+              glVertex3fv(v1);
+              glVertex3fv(avg);
+              
+              if(c2!=last_color) {
+                last_color = c2;
+                glColor3fv(ColorGet(G,c2));
+              }
+              glVertex3fv(avg);
+              glVertex3fv(v2);
+            }
+          }
+        }
+      }
+    }
+    glEnd();
+    glEnable(GL_LIGHTING);
+  }
+}
+
 static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
 {
   PyMOLGlobals *G=I->R.G;
@@ -488,7 +599,6 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
       } 
     }
   }
-
 }
 
 Rep *RepWireBondNew(CoordSet *cs,int state)

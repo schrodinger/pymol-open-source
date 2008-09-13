@@ -51,7 +51,7 @@ typedef float SceneViewType[cSceneViewSize];
 int SceneHasImage(PyMOLGlobals *G);
 int SceneInit(PyMOLGlobals *G);
 void SceneDone(PyMOLGlobals *G);
-void SceneUpdate(PyMOLGlobals *G);
+void SceneUpdate(PyMOLGlobals *G,int force);
 int SceneRenderCached(PyMOLGlobals *G);
 void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
                  Multipick *smp,int oversize_width, int oversize_height, 

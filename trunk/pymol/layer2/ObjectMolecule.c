@@ -10811,9 +10811,21 @@ struct _CCoordSetUpdateThreadInfo {
 
 void CoordSetUpdateThread(CCoordSetUpdateThreadInfo *T)
 {
+#if 0
+  /* this code not yet tested...*/
+
+  CoordSet *cs = T->cs;
+  if(cs) {
+    fUpdateFn fUpdate = cs->fUpdate;
+    if(fUpdate) {
+      fUpdate(cs,T->a);
+    }
+  }
+#else
   if(T->cs && T->cs->fUpdate) {
     T->cs->fUpdate(T->cs,T->a);
   }
+#endif
 }
 
 #ifndef _PYMOL_NOPY

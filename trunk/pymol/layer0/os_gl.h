@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #endif
 
 #else
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef _MACPYMOL_XCODE
 #include <OpenGL/gl.h>
@@ -42,7 +43,7 @@ Z* -------------------------------------------------------------------
 #else
 #include<gl.h>
 #include<glu.h>
-#include <glext.h>
+#include<glext.h>
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 #endif

@@ -21,5 +21,6 @@ Z* -------------------------------------------------------------------
 
 Rep *RepSphereNew(CoordSet *cset,int state);
 void RepSphereInit(void);
+void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info);
 
 #endif
