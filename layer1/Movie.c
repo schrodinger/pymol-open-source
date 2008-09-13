@@ -179,7 +179,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
     i=MovieFrameToImage(G,a);
     VLACheck(I->Image,ImageType*,i);
     if(!I->Image[i]) {
-      SceneUpdate(G);
+      SceneUpdate(G,false);
 	  SceneMakeMovieImage(G,false,false);
     }
     if(!I->Image[i]) {
@@ -573,7 +573,7 @@ static void MovieModalPNG(PyMOLGlobals *G, CMovie *I, CMovieModal *M)
        (M->frame <= M->stop) && 
        (M->file_missing)) { /* ...that don't already exist */
       if(!I->Image[M->image]) {
-        SceneUpdate(G);
+        SceneUpdate(G,false);
         if(SceneMakeMovieImage(G,false,M->modal) || (!M->modal)) {
           M->stage = 3;
         } else {

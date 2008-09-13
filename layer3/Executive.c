@@ -9726,9 +9726,9 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
     }
 
     ExecutiveUpdateSceneMembers(G);
-    SceneUpdate(G);
+    SceneUpdate(G,false);
     if(WizardUpdate(G))
-      SceneUpdate(G);
+      SceneUpdate(G,false);
 
     if(SettingGetGlobal_i(G,cSetting_stereo_mode)==4) {
 
@@ -13270,7 +13270,7 @@ void ExecutiveDump(PyMOLGlobals *G,char *fname,char *obj)
   SpecRec *rec = NULL;
   register CExecutive *I = G->Executive;
 
-  SceneUpdate(G);
+  SceneUpdate(G,false);
 
   while(ListIterate(I->Spec,rec,next))
 	 {

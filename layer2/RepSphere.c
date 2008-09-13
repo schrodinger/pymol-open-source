@@ -33,6 +33,7 @@
 #undef NT
 #endif
 
+
 typedef struct RepSphere {
   Rep R;
   float *V; /* triangle vertices (if any) */
@@ -54,6 +55,10 @@ typedef struct RepSphere {
 #include"ObjectMolecule.h"
 
 #ifdef _PYMOL_OPENGL_SHADERS
+
+#ifndef GL_FRAGMENT_PROGRAM_ARB 
+#define GL_FRAGMENT_PROGRAM_ARB                         0x8804
+#endif
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
@@ -298,7 +303,466 @@ static char *read_file(char *name)
   return buffer;
 }
 #endif
+
+static int load_shader_programs(PyMOLGlobals *G,GLuint *programs)
+{
+  int result = false;
+  char *vp = read_code_str(vert_prog);
+  char *fp = read_code_str(frag_prog);
+      /*                  
+                        char *vp = read_file("vert.txt");
+                        char *fp = read_file("frag.txt");
+    */
+
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+#ifdef WIN32
+  if(!(glGenProgramsARB && glBindProgramARB && 
+       glDeleteProgramsARB && glProgramStringARB && 
+       glProgramEnvParameter4fARB)) {
+    glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
+    glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
+    glDeleteProgramsARB = (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
+    glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
+    glProgramEnvParameter4fARB = (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
+    glGetProgramivARB = (PFNGLGETPROGRAMIVARBPROC) wglGetProcAddress("glGetProgramivARB");
+  }
+  
+  if(glGenProgramsARB && glBindProgramARB && 
+     glDeleteProgramsARB && glProgramStringARB && 
+     glProgramEnvParameter4fARB) 
 #endif
+    {
+      /* END PROPRIETARY CODE SEGMENT */
+      
+      if(vp&&fp) {            
+        int ok=true;
+        glGenProgramsARB(2,programs);
+      
+        /* load the vertex program */
+        glBindProgramARB(GL_VERTEX_PROGRAM_ARB,programs[0]);
+      
+        ok = ok && (ProgramStringIsNative(G,GL_VERTEX_PROGRAM_ARB, 
+                                          GL_PROGRAM_FORMAT_ASCII_ARB, 
+                                          strlen(vp),vp));
+      
+        if(Feedback(G,FB_OpenGL,FB_Debugging))
+          PyMOLCheckOpenGLErr("loading vertex program");
+      
+        /* load the fragment program */
+        glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,programs[1]);
+      
+        ok = ok && (ProgramStringIsNative(G,GL_FRAGMENT_PROGRAM_ARB, 
+                                          GL_PROGRAM_FORMAT_ASCII_ARB, 
+                                          strlen(fp),fp));
+      
+        if(Feedback(G,FB_OpenGL,FB_Debugging))
+          PyMOLCheckOpenGLErr("loading fragment program");
+        if(ok) {
+          result=true;
+        } else {
+          result=false;
+          glDeleteProgramsARB(2,programs);
+        }
+      }
+      FreeP(vp);
+      FreeP(fp);
+    }
+  return result;
+}
+
+#endif
+
+static GLuint programs_kludge[2] = {0,0};
+
+void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
+{
+  PyMOLGlobals *G=cs->State.G;
+  if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)) )
+    return;
+  else {
+    ObjectMolecule *obj = cs->Obj;
+    int sphere_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_mode);
+    float sphere_scale = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_scale);
+    
+    if(sphere_mode>0) { /* point-based modees */
+      register float pixel_scale = 1.0F/info->vertex_scale;
+      
+      switch(sphere_mode) {
+      case 2:
+        glHint(GL_POINT_SMOOTH_HINT,GL_FASTEST);
+        glDisable(GL_POINT_SMOOTH);
+        glDisable(GL_ALPHA_TEST);
+        pixel_scale *= 1.4F;
+        glPointSize(1.0F);
+        break;
+      case 3: 
+        glEnable(GL_POINT_SMOOTH);
+        glAlphaFunc(GL_GREATER, 0.5F);
+        glEnable(GL_ALPHA_TEST);
+        glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
+        glPointSize(1.0F);
+        pixel_scale *= 2.0F;
+        break;
+      case 4:
+        glEnable(GL_POINT_SMOOTH);
+        glEnable(GL_ALPHA_TEST);
+        glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
+        glPointSize(1.0F);
+        pixel_scale *= 2.0F;
+        break;
+      default:
+        glHint(GL_POINT_SMOOTH_HINT,GL_FASTEST);
+        glDisable(GL_POINT_SMOOTH);
+        glDisable(GL_ALPHA_TEST);
+        glPointSize(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_point_size));
+        break;
+      }
+
+#ifdef _PYMOL_OPENGL_SHADERS
+      if(sphere_mode==5) {
+        if(!(programs_kludge[0]||programs_kludge[1])) {
+          load_shader_programs(G,programs_kludge);
+        }
+        if(programs_kludge[0]||programs_kludge[1]) {
+
+          float fog_info[3];
+          float _00[2] = { 0.0F, 0.0F};
+          float _01[2] = { 0.0F, 1.0F};
+          float _11[2] = { 1.0F, 1.0F};
+          float _10[2] = { 1.0F, 0.0F};
+          const float _1 = 1.0F;
+          register float v0,v1,v2,nv0, nv1, nv2, nv3,v3;
+          register float *m = info->pmv_matrix;                  
+          register float cutoff = 1.2F;
+          register float m_cutoff = -cutoff;
+          register float z_front, z_back;
+          /* compute -Ze = (Wc) of fog start */
+          nv3 = (info->front + (info->back - info->front)*SettingGetGlobal_f(G,cSetting_fog_start));
+          /* compute Zc of fog start using std. perspective transformation */
+          nv2 = (nv3 * (info->back + info->front) - 2*(info->back * info->front))/(info->back - info->front);
+          /* compute Zc/Wc to get normalized depth coordinate of fog start */
+          nv0 = (nv2/nv3);
+          fog_info[0] = (nv0*0.5)+0.5;
+
+          fog_info[1] = 1.0F/(1.0-fog_info[0]); /* effective range of fog */
+          
+          z_front = info->stereo_front;
+          z_back = info->back+((info->back+info->front)*0.25);
+          
+          /* load the vertex program */
+          glBindProgramARB(GL_VERTEX_PROGRAM_ARB,programs_kludge[0]);
+          
+          /* load the fragment program */
+          glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,programs_kludge[1]);
+          
+          /* load some safe initial values  */
+          
+          glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+                                     0, 0.0F, 0.0F, 1.0, 0.0F);
+          glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
+                                     0, 0.5F, 2.0F, 0.0F, 0.0F);
+          
+          glEnable(GL_VERTEX_PROGRAM_ARB);
+          glEnable(GL_FRAGMENT_PROGRAM_ARB);
+          
+          glNormal3fv(info->view_normal);
+          glBegin(GL_QUADS);
+
+          {
+            float last_radius = -1.0F, cur_radius;
+            int a;
+            int nIndex = cs->NIndex;
+            AtomInfoType *atomInfo = obj->AtomInfo;
+            int *i2a = cs->IdxToAtm;
+            float *v = cs->Coord;
+            
+            for(a=0;a<nIndex;a++) {
+              AtomInfoType *ai = atomInfo + *(i2a++);
+              if(ai->visRep[ cRepSphere]) {
+                v3 = ai->vdw;
+            
+                v0 = v[0];
+                v1 = v[1];
+                v2 = v[2];
+            
+                if(last_radius!=(cur_radius=v3)) {
+                  glEnd();
+                  glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+                                             0, 0.0F, 0.0F, v3, 0.0F);
+                  glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
+                                             0, fog_info[0], fog_info[1], 0.0F, 0.0F);
+                  glBegin(GL_QUADS);
+                  last_radius = cur_radius;
+                }
+                
+                /*  MatrixTransformC44f4f(info->pmv_matrix, v, nv);*/
+                
+                nv3 = m[ 3]*v0+m[ 7]*v1+m[11]*v2+m[15]; /* compute Wc */ 
+                
+                if(((nv3-cur_radius)>z_front) && (nv3<z_back)) { /* is it within the viewing volume? */
+                  nv0 = m[ 0]*v0+m[ 4]*v1+m[ 8]*v2+m[12];
+                  
+                  nv3 = _1/nv3;
+                  nv1 = m[ 1]*v0+m[ 5]*v1+m[ 9]*v2+m[13];
+                  nv0 *= nv3;
+                  nv1 *= nv3;
+                  
+                  
+                  if((nv0<cutoff)&&(nv0>m_cutoff)&&
+                     (nv1<cutoff)&&(nv1>m_cutoff)) {
+                    
+                    glColor3fv(ColorGet(G,ai->color));
+                    
+                    glTexCoord2fv(_00);
+                    glVertex3fv(v);
+                    
+                    glTexCoord2fv(_10);
+                    glVertex3fv(v);
+                    
+                    glTexCoord2fv(_11);
+                    glVertex3fv(v);
+                    
+                    glTexCoord2fv(_01);
+                    glVertex3fv(v);
+                  }
+                  
+                }
+              }
+              v+=3;
+            }
+            glEnd();
+          }
+          glDisable(GL_FRAGMENT_PROGRAM_ARB);
+          glDisable(GL_VERTEX_PROGRAM_ARB);
+        }
+      } else
+#endif
+
+      if(sphere_mode==4) {
+        int repeat = true;
+        const float _1 = 1.0F;
+        const float _2 = 2.0F;
+        float x_add = 0.0F, y_add = 0.0F, z_add = 0.0F;
+        float z_factor = 0.0F, r_factor = 1.0F;
+        float s_factor = 0.0F;
+        int pass = 0;
+        register float max_size = SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                               cSetting_sphere_point_max_size);
+        register int clamp_size_flag = (max_size>=0.0F);
+
+        
+        while(repeat) {
+
+          int a;
+          int nIndex = cs->NIndex;
+          AtomInfoType *atomInfo = obj->AtomInfo;
+          int *i2a = cs->IdxToAtm;
+          float *v = cs->Coord;
+          float last_radius = -1.0F;
+          float last_size = -1.0;
+          float largest = 0.0F;
+
+          float zz_factor = _1 - (float)pow(_1-z_factor,2);
+          if(zz_factor<0.45F)
+            zz_factor=0.45F;
+          
+          repeat = false;
+          glBegin(GL_POINTS);
+          
+          for(a=0;a<nIndex;a++) {
+            AtomInfoType *ai = atomInfo + *(i2a++);
+            if(ai->visRep[ cRepSphere]) {
+              float cur_radius = ai->vdw;
+
+              if(last_radius!=cur_radius) {
+                float clamp_radius = cur_radius;                        
+                float size = cur_radius*pixel_scale;
+
+                if(clamp_size_flag) 
+                  if(size>max_size) {
+                    size=max_size;
+                    clamp_radius = size / pixel_scale;
+                  }
+                size *= r_factor;
+                if( size != last_size ) {
+                  glEnd();
+                  if(size>largest)
+                    largest = size;
+                  if(size<_2) {
+                    if(!pass) {
+                      zz_factor=1.0F;
+                      s_factor = 0.0F;
+                    }
+                  }
+                  if(size<_1) {
+                    size=_1;
+                    glDisable(GL_POINT_SMOOTH);
+                    glDisable(GL_ALPHA_TEST);
+                  } else {
+                    glEnable(GL_POINT_SMOOTH);
+                    glEnable(GL_ALPHA_TEST);
+                  }
+                  glPointSize(size);
+                  glBegin(GL_POINTS);
+                }
+
+                x_add = z_factor*clamp_radius*info->view_normal[0];
+                y_add = z_factor*clamp_radius*info->view_normal[1];
+                z_add = z_factor*clamp_radius*info->view_normal[2];
+                last_radius = cur_radius;
+                last_size = size;
+              }
+              
+              {
+                float *vc = ColorGet(G,ai->color);
+                float r = zz_factor*vc[0] + s_factor;
+                float g = zz_factor*vc[1] + s_factor;
+                float b = zz_factor*vc[2] + s_factor;
+                
+                glColor3f(r > _1 ? _1 : r,
+                          g > _1 ? _1 : g,
+                          b > _1 ? _1 : b);
+                
+                glVertex3f(v[0]+x_add, v[1]+y_add, v[2]+z_add);
+              }
+            }
+            v+=3;
+          }
+          
+          glEnd();
+          
+          if(largest>2.0F) {
+            float reduce = (largest-2.0F)/largest;
+            r_factor *= reduce;
+            z_factor = (float)sqrt1f(1.0F-(r_factor*r_factor));
+            s_factor = (float)pow(z_factor,20.0F)*0.5F;
+            repeat = true;
+            pass++;
+          }
+        }
+        glDisable(GL_POINT_SMOOTH);
+      } else { 
+        /* sphere_mode is 1, 2, or 3 */
+
+        float max_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                        cSetting_sphere_point_max_size) * 3 * pixel_scale;
+        int clamp_size_flag = (max_radius>=0.0F);
+        
+        int a;
+        int nIndex = cs->NIndex;
+        AtomInfoType *atomInfo = obj->AtomInfo;
+        int *i2a = cs->IdxToAtm;
+        int last_color = -1;
+        float *v = cs->Coord;
+        float last_radius = -1.0F;
+        
+        glDisable(GL_LIGHTING);
+        glBegin(GL_POINTS);
+        
+        for(a=0;a<nIndex;a++) {
+          AtomInfoType *ai = atomInfo + *(i2a++);
+          if(ai->visRep[ cRepSphere]) {
+            int c = ai->color;
+            if(c != last_color) {
+              last_color = c;
+              glColor3fv(ColorGet(G,c));
+            }
+            switch(sphere_mode) {
+            case 1: 
+              glVertex3fv(v);
+              break;
+            case 2:
+            case 3:
+              {
+                float cur_radius = ai->vdw * pixel_scale;
+                if(last_radius != cur_radius) {
+                  glEnd();
+                  if(clamp_size_flag) 
+                    if(cur_radius > max_radius)
+                      cur_radius = max_radius;
+                  glPointSize(cur_radius);
+                  glBegin(GL_POINTS);
+                  last_radius = cur_radius;
+                }
+                glVertex3fv(v);
+              }
+              break;
+            }
+             v+=3;
+          }
+        }
+        glEnd();
+        glEnable(GL_LIGHTING);
+        
+        if(sphere_mode==3) {
+          glDisable(GL_POINT_SMOOTH);
+          glAlphaFunc(GL_GREATER, 0.05F);
+        } else {
+          glEnable(GL_ALPHA_TEST);
+        }
+      }
+    } else { /* triangle-based spheres */
+
+      SphereRec *sp = G->Sphere->Sphere[0];
+      int ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
+      if(ds<0) {
+        sp = NULL;
+      } else {
+        if(ds>4) ds=4;
+        sp = G->Sphere->Sphere[ds];
+      }
+      
+      {
+        int a;
+        int nIndex = cs->NIndex;
+        AtomInfoType *atomInfo = obj->AtomInfo;
+        int *i2a = cs->IdxToAtm;
+        int last_color = -1;
+        float *v = cs->Coord;
+        int *sp_Sequence = sp->Sequence;
+        int *sp_StripLen = sp->StripLen;
+        int sp_NStrip = sp->NStrip;
+        Vector3f *sp_dot = sp->dot;
+        
+        for(a=0;a<nIndex;a++) {
+          AtomInfoType *ai = atomInfo + *(i2a++);
+          if(ai->visRep[ cRepSphere]) {
+            float vdw = ai->vdw * sphere_scale;
+            int c = ai->color;
+            float v0 = v[0];
+            float v1 = v[1];
+            float v2 = v[2];
+            
+            if(c != last_color) {
+              last_color = c;
+              glColor3fv(ColorGet(G,c));
+            }
+            
+            {
+              int *s = sp_StripLen;
+              int *q = sp_Sequence;
+              int b;
+              for(b=0;b<sp_NStrip;b++) {
+                int nc = *(s++);
+                glBegin(GL_TRIANGLE_STRIP);	     
+                for(c=0;c<nc;c++) {
+                  float *sp_dot_q = &sp_dot[*(q++)][0];
+                  glNormal3fv(sp_dot_q); /* normal */
+                  glVertex3f(v0 + vdw*sp_dot_q[0],
+                             v1 + vdw*sp_dot_q[1],
+                             v2 + vdw*sp_dot_q[2]);
+                }
+                glEnd();
+              }
+            }
+          }
+          v+=3;
+        }
+      }
+      glEnd();
+    }
+  }
+}
 
 static void RepSphereRender(RepSphere *I,RenderInfo *info)
 {
@@ -321,69 +785,9 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                                    I->R.obj->Setting,
                                    cSetting_sphere_mode);
     
-    
     if((!ray) && (sphere_mode==5) && G->HaveGUI && G->ValidContext &&
        (!(I->programs[0]||I->programs[1]))) {
-      char *vp = read_code_str(vert_prog);
-      char *fp = read_code_str(frag_prog);
-
-      /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
-#ifdef WIN32
-      if(!(glGenProgramsARB && glBindProgramARB && 
-           glDeleteProgramsARB && glProgramStringARB && 
-           glProgramEnvParameter4fARB)) {
-        glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
-        glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
-        glDeleteProgramsARB = (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
-        glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
-        glProgramEnvParameter4fARB = (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
-        glGetProgramivARB = (PFNGLGETPROGRAMIVARBPROC) wglGetProcAddress("glGetProgramivARB");
-      }
-
-      if(glGenProgramsARB && glBindProgramARB && 
-         glDeleteProgramsARB && glProgramStringARB && 
-         glProgramEnvParameter4fARB)
-#endif
-        /* END PROPRIETARY CODE SEGMENT */
-
-        {
-          /*                  
-                              char *vp = read_file("vert.txt");
-                              char *fp = read_file("frag.txt");
-          */
-          if(vp&&fp) {            
-            int ok=true;
-            glGenProgramsARB(2,(GLuint*)I->programs);
-            
-            /* load the vertex program */
-            glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
-            
-            ok = ok && (ProgramStringIsNative(G,GL_VERTEX_PROGRAM_ARB, 
-                                              GL_PROGRAM_FORMAT_ASCII_ARB, 
-                                              strlen(vp),vp));
-            
-            if(Feedback(G,FB_OpenGL,FB_Debugging))
-              PyMOLCheckOpenGLErr("loading vertex program");
-            
-            /* load the fragment program */
-            glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
-            
-            ok = ok && (ProgramStringIsNative(G,GL_FRAGMENT_PROGRAM_ARB, 
-                                              GL_PROGRAM_FORMAT_ASCII_ARB, 
-                                              strlen(fp),fp));
-            
-            if(Feedback(G,FB_OpenGL,FB_Debugging))
-              PyMOLCheckOpenGLErr("loading fragment program");
-            if(ok) {
-              I->shader_flag=true;
-            } else {
-              I->shader_flag=false;
-              glDeleteProgramsARB(2,(GLuint*)I->programs);
-            }
-          }
-          FreeP(vp);
-          FreeP(fp);
-        }
+      I->shader_flag = load_shader_programs(G,(GLuint*)I->programs);
     }
   }
 #endif

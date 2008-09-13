@@ -1614,7 +1614,7 @@ void ExtrudeComputePuttyScaleFactors(CExtrude *I,ObjectMolecule *obj,int transfo
   int a;
   int *i;
   AtomInfoType *at;
-  float scale;
+  float scale = 1.0F;
   float data_range = max - min;
 
   if(data_range==0.0F) data_range = 1.0F;

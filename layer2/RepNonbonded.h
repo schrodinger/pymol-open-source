@@ -20,5 +20,6 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 
 Rep *RepNonbondedNew(CoordSet *cset,int state);
+void RepNonbondedRenderImmediate(CoordSet *cs, RenderInfo *info);
 
 #endif

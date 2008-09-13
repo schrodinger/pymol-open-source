@@ -1107,164 +1107,174 @@ void CoordSetUpdateCoord2IdxMap(CoordSet *I, float cutoff)
 void CoordSetRender(CoordSet *I,RenderInfo *info)
 {
   PyMOLGlobals *G = I->State.G;
-  int pass = info->pass;
-  CRay *ray = info->ray;
-  Picking **pick = info->pick;
-  int a,aa;
-  Rep *r;
-  int float_labels = SettingGet_i(G,I->Setting,
-                                  I->Obj->Obj.Setting,
-                                  cSetting_float_labels);
-
   PRINTFD(G,FB_CoordSet)
     " CoordSetRender: entered (%p).\n",(void*)I
     ENDFD;
 
-  if((!pass)&&I->SculptCGO&&(I->Obj->Obj.RepVis[cRepCGO])) {
-    if(ray) {
-      CGORenderRay(I->SculptCGO,ray,
-                   ColorGet(G,I->Obj->Obj.Color),
-                   I->Setting,I->Obj->Obj.Setting);
-    } else if(G->HaveGUI && G->ValidContext) {
-      if(!pick) {
-        CGORenderGL(I->SculptCGO,ColorGet(G,I->Obj->Obj.Color),
-                    I->Setting,I->Obj->Obj.Setting,info);
+  if(!(info->ray||info->pick) &&
+     (SettingGet_i(G,I->Setting,I->Obj->Obj.Setting,
+                   cSetting_defer_builds_mode)==5) ) {
+    if(!info->pass) {
+      ObjectUseColor((CObject*)I->Obj);
+      if(I->Active[cRepLine]) RepWireBondRenderImmediate(I, info);
+      if(I->Active[cRepNonbonded]) RepNonbondedRenderImmediate(I, info);
+      if(I->Active[cRepSphere]) RepSphereRenderImmediate(I, info);
+    }
+  } else {
+    int pass = info->pass;
+    CRay *ray = info->ray;
+    Picking **pick = info->pick;
+    int a,aa;
+    Rep *r;
+    int float_labels = SettingGet_i(G,I->Setting,
+                                    I->Obj->Obj.Setting,
+                                    cSetting_float_labels);
+    
+    
+    if((!pass)&&I->SculptCGO&&(I->Obj->Obj.RepVis[cRepCGO])) {
+      if(ray) {
+        CGORenderRay(I->SculptCGO,ray,
+                     ColorGet(G,I->Obj->Obj.Color),
+                     I->Setting,I->Obj->Obj.Setting);
+      } else if(G->HaveGUI && G->ValidContext) {
+        if(!pick) {
+          CGORenderGL(I->SculptCGO,ColorGet(G,I->Obj->Obj.Color),
+                      I->Setting,I->Obj->Obj.Setting,info);
+        }
+      }
+    }
+    
+    for(aa=0;aa<I->NRep;aa++) {
+      if(aa==cRepSurface) { /* reorder */
+        a=cRepCell;
+      } else if(aa==cRepCell) {
+        a=cRepSurface;
+      } else {
+        a = aa;
+      }
+      
+      if(I->Active[a] && I->Rep[a]) {
+        r = I->Rep[a];
+        if(!ray) {
+          ObjectUseColor((CObject*)I->Obj);
+        } else {
+          if(I->Obj) 
+            ray->fWobble(ray,
+                         SettingGet_i(G,I->Setting,
+                                      I->Obj->Obj.Setting,
+                                      cSetting_ray_texture),
+                         SettingGet_3fv(G,I->Setting,
+                                        I->Obj->Obj.Setting,
+                                        cSetting_ray_texture_settings));
+          else
+            ray->fWobble(ray,
+                         SettingGet_i(G,I->Setting,
+                                      NULL,cSetting_ray_texture),
+                         SettingGet_3fv(G,I->Setting, NULL, 
+                                        cSetting_ray_texture_settings));
+          ray->fColor3fv(ray,ColorGet(G,I->Obj->Obj.Color));
+        }
+        
+        if(r->fRender) { /* do OpenGL rendering in three passes */
+          if(ray||pick) {
+            
+            /* here we need to iterate through and apply coordinate set matrices */
+            
+            r->fRender(r,info);
+          } else {
+            
+            /* here we need to iterate through and apply coordinate set matrices */
+            
+            switch(a) {
+            case cRepLabel:
+              if(float_labels && (pass==-1))
+                r->fRender(r,info);
+              else if(pass==1)
+                r->fRender(r,info);                  
+              break;
+            case cRepNonbondedSphere:
+            case cRepRibbon:
+            case cRepDot:
+            case cRepCGO:
+            case cRepCallback:
+              if(pass==1) r->fRender(r,info);
+              break;
+            case cRepLine:
+            case cRepMesh:
+            case cRepDash:
+            case cRepNonbonded:
+            case cRepCell:
+            case cRepExtent:
+              if(!pass) r->fRender(r,info);                
+              break;
+            case cRepCyl: /* render sticks differently depending on transparency */
+              if(SettingGet_f(G,r->cs->Setting,
+                              r->obj->Setting,
+                              cSetting_stick_transparency)>0.0001) {
+                if(pass==-1)
+                  r->fRender(r,info);                                
+              } else if(pass==1)
+                r->fRender(r,info);
+              break;
+            
+            case cRepSurface:
+              if(info->alpha_cgo) {
+                if(pass == 1)
+                  r->fRender(r,info);
+              } else {
+                if(SettingGet_f(G,r->cs->Setting,
+                                r->obj->Setting,
+                                cSetting_transparency)>0.0001) {
+                  if(pass==-1)
+                    r->fRender(r,info);                                
+                } else if(pass==1)
+                  r->fRender(r,info);
+              }
+              break;
+            case cRepSphere: /* render spheres differently depending on transparency */
+              if(SettingGet_f(G,r->cs->Setting,
+                              r->obj->Setting,
+                              cSetting_sphere_transparency)>0.0001) {
+                if(pass==-1)
+                  r->fRender(r,info);                                
+              } else if(pass==1)
+                r->fRender(r,info);
+              break;
+            case cRepEllipsoid: /* render spheres differently depending on transparency */
+              if(SettingGet_f(G,r->cs->Setting,
+                              r->obj->Setting,
+                              cSetting_sphere_transparency)>0.0001) {
+                if(pass==-1)
+                  r->fRender(r,info);                                
+              } else if(pass==1)
+                r->fRender(r,info);
+              break;
+            case cRepCartoon:
+              if(info->alpha_cgo) {
+                if(pass==1)
+                  r->fRender(r,info);
+              } else {
+                if(SettingGet_f(G,r->cs->Setting,
+                                r->obj->Setting,
+                                cSetting_cartoon_transparency)>0.0001) {
+                  if(pass==-1)
+                    r->fRender(r,info);                                
+                } else if(pass==1)
+                  r->fRender(r,info);
+              }
+              break;
+            }
+
+          }
+        }
+        /*          if(ray)
+                    ray->fWobble(ray,0,NULL);*/
       }
     }
   }
-  for(aa=0;aa<I->NRep;aa++) {
-    if(aa==cRepSurface) { /* reorder */
-      a=cRepCell;
-    } else if(aa==cRepCell) {
-      a=cRepSurface;
-    } else {
-      a = aa;
-    }
-      
-    if(I->Active[a])
-      if(I->Rep[a]) 
-        {
-          r = I->Rep[a];
-          if(!ray) {
-            ObjectUseColor((CObject*)I->Obj);
-          } else {
-            if(I->Obj) 
-              ray->fWobble(ray,
-                           SettingGet_i(G,I->Setting,
-                                        I->Obj->Obj.Setting,
-                                        cSetting_ray_texture),
-                           SettingGet_3fv(G,I->Setting,
-                                          I->Obj->Obj.Setting,
-                                          cSetting_ray_texture_settings));
-            else
-              ray->fWobble(ray,
-                           SettingGet_i(G,I->Setting,
-                                        NULL,cSetting_ray_texture),
-                           SettingGet_3fv(G,I->Setting, NULL, 
-                                          cSetting_ray_texture_settings));
-            ray->fColor3fv(ray,ColorGet(G,I->Obj->Obj.Color));
-          }
-        
-          if(r->fRender) { /* do OpenGL rendering in three passes */
-            if(ray||pick) {
-              
-              /* here we need to iterate through and apply coordinate set matrices */
-
-              r->fRender(r,info);
-            } else {
-
-              /* here we need to iterate through and apply coordinate set matrices */
-
-              switch(a) {
-              case cRepLabel:
-                if(float_labels && (pass==-1))
-                  r->fRender(r,info);
-                else if(pass==1)
-                  r->fRender(r,info);                  
-                break;
-              case cRepNonbondedSphere:
-              case cRepRibbon:
-              case cRepDot:
-              case cRepCGO:
-              case cRepCallback:
-                if(pass==1) r->fRender(r,info);
-                break;
-              case cRepLine:
-              case cRepMesh:
-              case cRepDash:
-              case cRepNonbonded:
-              case cRepCell:
-              case cRepExtent:
-                if(!pass) r->fRender(r,info);                
-                break;
-              case cRepCyl: /* render sticks differently depending on transparency */
-                if(SettingGet_f(G,r->cs->Setting,
-                                r->obj->Setting,
-                                cSetting_stick_transparency)>0.0001) {
-                  if(pass==-1)
-                    r->fRender(r,info);                                
-                } else if(pass==1)
-                  r->fRender(r,info);
-                break;
-
-              case cRepSurface:
-                if(info->alpha_cgo) {
-                   if(pass == 1)
-                    r->fRender(r,info);
-                } else {
-                  if(SettingGet_f(G,r->cs->Setting,
-                                  r->obj->Setting,
-                                  cSetting_transparency)>0.0001) {
-                    if(pass==-1)
-                      r->fRender(r,info);                                
-                  } else if(pass==1)
-                    r->fRender(r,info);
-                }
-                break;
-              case cRepSphere: /* render spheres differently depending on transparency */
-                if(SettingGet_f(G,r->cs->Setting,
-                                r->obj->Setting,
-                                cSetting_sphere_transparency)>0.0001) {
-                  if(pass==-1)
-                    r->fRender(r,info);                                
-                } else if(pass==1)
-                  r->fRender(r,info);
-                break;
-              case cRepEllipsoid: /* render spheres differently depending on transparency */
-                if(SettingGet_f(G,r->cs->Setting,
-                                r->obj->Setting,
-                                cSetting_sphere_transparency)>0.0001) {
-                  if(pass==-1)
-                    r->fRender(r,info);                                
-                } else if(pass==1)
-                  r->fRender(r,info);
-                break;
-              case cRepCartoon:
-                if(info->alpha_cgo) {
-                  if(pass==1)
-                    r->fRender(r,info);
-                } else {
-                  if(SettingGet_f(G,r->cs->Setting,
-                                  r->obj->Setting,
-                                  cSetting_cartoon_transparency)>0.0001) {
-                    if(pass==-1)
-                      r->fRender(r,info);                                
-                  } else if(pass==1)
-                    r->fRender(r,info);
-                }
-                break;
-              }
-
-            }
-          }
-          /*          if(ray)
-                      ray->fWobble(ray,0,NULL);*/
-        }
-  }
-  PRINTFD(G,FB_CoordSet)
-    " CoordSetRender: leaving...\n"
-    ENDFD;
-
+    PRINTFD(G,FB_CoordSet)
+      " CoordSetRender: leaving...\n"
+      ENDFD;
 }
 /*========================================================================*/
 CoordSet *CoordSetNew(PyMOLGlobals *G)

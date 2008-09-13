@@ -20,5 +20,6 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 
 Rep *RepWireBondNew(CoordSet *cset,int state);
+void RepWireBondRenderImmediate(CoordSet *cs, RenderInfo *info);
 
 #endif

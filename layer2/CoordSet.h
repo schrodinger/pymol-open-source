@@ -83,6 +83,8 @@ typedef struct CoordSet {
   int objMolOpInvalidated;
 } CoordSet;
 
+typedef void (*fUpdateFn)(CoordSet *,int);
+
 #define cCSet_NoPeriodicity 0
 #define cCSet_Orthogonal 1
 #define cCSet_Octahedral 2

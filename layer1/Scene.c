@@ -979,6 +979,11 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
 {
   register CScene *I=G->Scene;
   int click_side = 0;
+  int defer_builds_mode = SettingGetGlobal_b(G,cSetting_defer_builds_mode);
+
+  if(defer_builds_mode==5) /* force generation of a pickable version */
+    SceneUpdate(G,true);
+
   if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
     SceneRender(G,NULL,0,0,NULL,0,0,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
@@ -2467,7 +2472,7 @@ int SceneObjectDel(PyMOLGlobals *G,CObject *obj)
   if(!obj) { /* deletes all members */
     while(ListIterate(I->Obj,rec,next)) {
       if(rec) {
-        if(defer_builds_mode == 3) { 
+        if(defer_builds_mode >= 3) { 
           /* purge graphics representation when no longer used */
           if(rec->obj->fInvalidate) 
             rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,-1);
@@ -2481,7 +2486,7 @@ int SceneObjectDel(PyMOLGlobals *G,CObject *obj)
       if(rec->obj==obj)
         break;
     if(rec) {
-      if(defer_builds_mode == 3) { 
+      if(defer_builds_mode >= 3) { 
         /* purge graphics representation when no longer used */
         if(rec->obj->fInvalidate) 
           rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,-1);
@@ -3517,6 +3522,11 @@ static void SceneDoRoving(PyMOLGlobals *G,float old_front,
 static int SceneDoXYPick(PyMOLGlobals *G, int x, int y, int click_side)
 {
   CScene *I=G->Scene;
+  int defer_builds_mode = SettingGetGlobal_i(G,cSetting_defer_builds_mode);
+
+  if(defer_builds_mode==5) /* force generation of a pickable version */
+    SceneUpdate(G,true);
+
   if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
     SceneRender(G,NULL,0,0,NULL,0,0,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
@@ -6099,6 +6109,9 @@ void SceneRay(PyMOLGlobals *G,
   ImageType *stereo_image = NULL;
   OrthoLineType prefix = "";
 
+  if(SettingGetGlobal_b(G,cSetting_defer_builds_mode) == 5) 
+    SceneUpdate(G,true);
+  
   int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
   if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
 
@@ -6136,7 +6149,7 @@ void SceneRay(PyMOLGlobals *G,
 
   timing = UtilGetSeconds(G); /* start timing the process */
 
-  SceneUpdate(G);
+  SceneUpdate(G,false);
     
   switch(I->StereoMode) {
   case 1:
@@ -6690,7 +6703,7 @@ static void SceneObjectUpdateSpawn(PyMOLGlobals *G,CObjectUpdateThreadInfo *Thre
 #endif
 
 /*========================================================================*/
-void SceneUpdate(PyMOLGlobals *G)
+void SceneUpdate(PyMOLGlobals *G, int force)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
@@ -6703,83 +6716,89 @@ void SceneUpdate(PyMOLGlobals *G)
 
   OrthoBusyPrime(G);
   EditorUpdate(G);
-  if(I->ChangedFlag || ((cur_state != I->LastStateBuilt) && 
-                        (defer_builds_mode>0))) {
+  if(force || I->ChangedFlag || ((cur_state != I->LastStateBuilt) && 
+                                 (defer_builds_mode>0))) {
     SceneCountFrames(G);
-    PyMOL_SetBusy(G->PyMOL,true); /*  race condition -- may need to be fixed */
-    {
+
+    if(force || (defer_builds_mode!=5)) { /* mode 5 == immediate mode */
+
+      PyMOL_SetBusy(G->PyMOL,true); /*  race condition -- may need to be fixed */
+      {
 #ifndef _PYMOL_NOPY
-      int n_thread  = SettingGetGlobal_i(G,cSetting_max_threads);
-      int multithread = SettingGetGlobal_i(G,cSetting_async_builds);
-      if(multithread && (n_thread>1)) {
-        int min_start = -1;
-        int max_stop = -1;
-        int n_frame = SceneGetNFrame(G,NULL);
-        int n_obj = 0;
-        while(ListIterate(I->Obj,rec,next)) {
-          int start = 0;
-          int stop = n_frame;
-          n_obj++;
-          if(rec->obj->fGetNFrame) {
-            stop = rec->obj->fGetNFrame(rec->obj);
-          } 
-          ObjectAdjustStateRebuildRange(rec->obj,&start,&stop);
-          if(min_start<0) {
-            min_start = start;
-            max_stop = stop;
-          } else {
-            if(min_start>start)
+        int n_thread  = SettingGetGlobal_i(G,cSetting_max_threads);
+        int multithread = SettingGetGlobal_i(G,cSetting_async_builds);
+        if(multithread && (n_thread>1)) {
+          int min_start = -1;
+          int max_stop = -1;
+          int n_frame = SceneGetNFrame(G,NULL);
+          int n_obj = 0;
+          while(ListIterate(I->Obj,rec,next)) {
+            int start = 0;
+            int stop = n_frame;
+            n_obj++;
+            if(rec->obj->fGetNFrame) {
+              stop = rec->obj->fGetNFrame(rec->obj);
+            } 
+            ObjectAdjustStateRebuildRange(rec->obj,&start,&stop);
+            if(min_start<0) {
               min_start = start;
-            if(max_stop<stop)
               max_stop = stop;
+            } else {
+              if(min_start>start)
+                min_start = start;
+              if(max_stop<stop)
+                max_stop = stop;
+            }
           }
-        }
         
-        n_frame = max_stop - min_start;
+          n_frame = max_stop - min_start;
 
-        if( n_frame > n_thread ) {
-          n_thread = 1;
-          /* prevent n_thread * n_thread -- only multithread within
-             individual object states (typically more balanced) */
-        } else if( n_frame > 1 ) {
-          n_thread = n_thread / n_frame;
-        }
-        
-        if(n_thread < 1)
-          n_thread = 1;
-      }
-
-      if(multithread && (n_thread>1)) {
-        /* multi-threaded geometry update */
-        int cnt = 0;
-
-        rec = NULL;
-        while(ListIterate(I->Obj,rec,next))
-          cnt++;
-        
-        if(cnt) {
-          CObjectUpdateThreadInfo *thread_info = Alloc(CObjectUpdateThreadInfo, cnt);
-          if(thread_info) {
-            cnt = 0;
-            while(ListIterate(I->Obj,rec,next))
-              thread_info[cnt++].obj = rec->obj;
-            SceneObjectUpdateSpawn(G,thread_info,n_thread,cnt);
-            FreeP(thread_info);
+          if( n_frame > n_thread ) {
+            n_thread = 1;
+            /* prevent n_thread * n_thread -- only multithread within
+               individual object states (typically more balanced) */
+          } else if( n_frame > 1 ) {
+            n_thread = n_thread / n_frame;
           }
+        
+          if(n_thread < 1)
+            n_thread = 1;
         }
-      } else 
-#endif
-        {
-          /* single-threaded update */
+
+        if(multithread && (n_thread>1)) {
+          /* multi-threaded geometry update */
+          int cnt = 0;
+
           rec = NULL;
           while(ListIterate(I->Obj,rec,next))
-            if(rec->obj->fUpdate) 
-              rec->obj->fUpdate(rec->obj);
-        }
+            cnt++;
+        
+          if(cnt) {
+            CObjectUpdateThreadInfo *thread_info = Alloc(CObjectUpdateThreadInfo, cnt);
+            if(thread_info) {
+              cnt = 0;
+              while(ListIterate(I->Obj,rec,next))
+                thread_info[cnt++].obj = rec->obj;
+              SceneObjectUpdateSpawn(G,thread_info,n_thread,cnt);
+              FreeP(thread_info);
+            }
+          }
+        } else 
+#endif
+          {
+            /* single-threaded update */
+            rec = NULL;
+            while(ListIterate(I->Obj,rec,next))
+              if(rec->obj->fUpdate) 
+                rec->obj->fUpdate(rec->obj);
+          }
+      }
+      PyMOL_SetBusy(G->PyMOL,false); /*  race condition -- may need to be fixed */
     }
-    PyMOL_SetBusy(G->PyMOL,false); /*  race condition -- may need to be fixed */
-     I->ChangedFlag = false;
-    if((defer_builds_mode >= 2) && 
+
+    I->ChangedFlag = false;
+    
+    if((defer_builds_mode >= 2) && (force || (defer_builds_mode !=5)) &&
        (cur_state != I->LastStateBuilt)) { 
       /* purge graphics representation when no longer used */
       if(I->LastStateBuilt>=0) {
