@@ -7430,9 +7430,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
               glNormal3fv(normal);
             if((!grid->active)||(grid->mode!=2)) {
               info.state = ObjectGetCurrentState(rec->obj,false);
-              PyMOLCheckOpenGLErr("DEBUG 3");
               rec->obj->fRender(rec->obj,&info);
-              PyMOLCheckOpenGLErr("DEBUG 4");
             } else if(grid->slot) {
               if ( (info.state = state + grid->slot - 1) >= 0 )
                 rec->obj->fRender(rec->obj,&info);              

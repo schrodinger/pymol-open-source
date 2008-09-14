@@ -691,8 +691,8 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
               }
               break;
             }
-             v+=3;
           }
+          v+=3;
         }
         glEnd();
         glEnable(GL_LIGHTING);
@@ -939,6 +939,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             }
             glBegin(GL_POINTS);
           }
+        PyMOLCheckOpenGLErr("DEBUG 3");
           v=I->VC;
           c=I->NC;
           while(c--) {
@@ -1019,6 +1020,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             }
           }
           if(!sp) {
+            glEnd();
             switch(sphere_mode) {
             case 3:
             case 4:
@@ -1030,7 +1032,6 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               glEnable(GL_ALPHA_TEST);
               break;
             }
-            glEnd();
           }
         }
         (*pick)[0].src.index = i;
