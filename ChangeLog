@@ -4,6 +4,12 @@ CHANGE LOG
 
 2008-09-12 Warren L. DeLano <warren@delsci.com>	
 
+	* added menu option & mechanism for removing plugins
+
+	* fixed bugs with defer_builds_mode 5
+	
+2008-09-12 Warren L. DeLano <warren@delsci.com>	
+
 	* added multipled FSAA to MacPyMOL
 	
 	* added experimental defer_builds_mode 5 for trajectory viewing

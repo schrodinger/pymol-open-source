@@ -207,6 +207,84 @@ class PMGApp(Pmw.MegaWidget):
                     traceback.print_exc()
                     tkMessageBox.showinfo("Error", "unable to install plugin '%s'" % plugname)
 
+
+    def my_show(self,win,center=1):
+        if sys.platform!='linux2':
+            win.show()
+        else: # autocenter, deiconify, and run mainloop
+            # this is a workaround for a bug in the
+            # interaction between Tcl/Tk and common Linux
+            # window managers (namely KDE/Gnome) which causes
+            # an annoying 1-2 second delay in opening windows!
+            if center:
+                tw = win.winfo_reqwidth()+100
+                th = win.winfo_reqheight()+100
+                vw = win.winfo_vrootwidth()
+                vh = win.winfo_vrootheight()
+                x = max(0,(vw-tw)/2)
+                y = max(0,(vh-th)/2)
+                win.geometry(newGeometry="+%d+%d"%(x,y))
+            win.deiconify()
+
+    def my_withdraw(self,win):
+        if sys.platform!='linux2':
+            win.withdraw()
+        else: 
+            win.destroy()
+
+    def removePlugin2(self,result):
+        if result != 'OK':
+            self.my_withdraw(self.dialog)
+            self.dialog = None
+        else:
+            sels = self.dialog.getcurselection()
+            if len(sels)!=0:
+                startup_pattern = re.sub(r"[\/\\][^\/\\]*$","/startup/*.[Pp][Yy]*",__file__)
+                removed = re.sub(r"[\/\\][^\/\\]*$","/startup/removed",__file__)
+                if not os.path.isdir(removed):
+                    try:
+                        os.mkdir(removed,0775)
+                    except:
+                        pass
+                raw_list = glob(startup_pattern)
+                for a in raw_list:
+                    prefix = re.sub(r".*[\/\\]|\.py.*$","",a)
+                    if prefix in sels:
+                        if a.lower()[-3:] == '.py':
+                            try: # create backup copy
+                                dest_path = os.path.join(removed,prefix+".py")
+                                open(dest_path,'wb').write(open(a,'rb').read())
+                            except:
+                                traceback.print_exc()
+                        os.unlink(a)
+                tkMessageBox.showinfo("Success", 
+                                      "One or more plugins have been removed.\nPlease restart PyMOL.")
+            self.my_withdraw(self.dialog)
+            del self.dialog
+    
+    def removePlugin(self):
+        startup_pattern = re.sub(r"[\/\\][^\/\\]*$","/startup/*.py*",__file__)
+        raw_list = glob(startup_pattern)
+        unique = {}
+        for a in raw_list:
+            unique[re.sub(r".*[\/\\]|\.py.*$","",a)] = 1
+        lst = unique.keys()
+        lst = filter(lambda x:x!="__init__",lst)
+        lst.sort()
+        self.dialog = Pmw.SelectionDialog(self.root,title="Remove",
+                                  buttons = ('OK', 'Cancel'),
+                                              defaultbutton='Cancel',
+                                  scrolledlist_labelpos=N,
+                                  scrolledlist_listbox_selectmode=EXTENDED,
+                                  label_text='Which plugin you like to remove?',
+                                  scrolledlist_items = lst,
+                                  command = self.removePlugin2)
+        if len(lst):
+            listbox = self.dialog.component('scrolledlist')      
+            listbox.selection_set(0)
+        self.my_show(self.dialog)
+        
+        
     def initializePlugins(self):
         startup_pattern = re.sub(r"[\/\\][^\/\\]*$","/startup/*.py*",__file__)
         # startup_pattern = os.environ['PYMOL_PATH']+"/modules/pmg_tk/startup/*.py*"
