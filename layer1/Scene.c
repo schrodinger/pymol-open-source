@@ -7345,6 +7345,9 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
     while(ListIterate(I->Obj,rec,next)) {
       if(rec->obj->fRender) {
 
+        if(Feedback(G,FB_OpenGL,FB_Debugging))
+          PyMOLCheckOpenGLErr("Before fRender iteration");
+
         if(SceneGetDrawFlag(grid, slot_vla, rec->obj->grid_slot)) {
           glPushMatrix();
           if(fat)
@@ -7422,11 +7425,14 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
             break;
           case 0: /* context/grid 0 is all slots */
           default:
+        if(Feedback(G,FB_OpenGL,FB_Debugging))
             if(normal) 
               glNormal3fv(normal);
             if((!grid->active)||(grid->mode!=2)) {
               info.state = ObjectGetCurrentState(rec->obj,false);
+              PyMOLCheckOpenGLErr("DEBUG 3");
               rec->obj->fRender(rec->obj,&info);
+              PyMOLCheckOpenGLErr("DEBUG 4");
             } else if(grid->slot) {
               if ( (info.state = state + grid->slot - 1) >= 0 )
                 rec->obj->fRender(rec->obj,&info);              
@@ -7435,6 +7441,9 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
           }
           glPopMatrix();
         }
+        if(Feedback(G,FB_OpenGL,FB_Debugging))
+          PyMOLCheckOpenGLErr("After fRender iteration");
+
       }
     }
   }

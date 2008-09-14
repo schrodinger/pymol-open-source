@@ -371,6 +371,7 @@ void RepWireBondRenderImmediate(CoordSet *cs, RenderInfo *info)
   if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)) )
     return;
   else {
+    int active = false;
     ObjectMolecule *obj = cs->Obj;
     float line_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_width);
     
@@ -401,6 +402,7 @@ void RepWireBondRenderImmediate(CoordSet *cs, RenderInfo *info)
         
         if( (ai1 = ai+b1)->visRep[cRepLine] && (ai2 = ai+b2)->visRep[cRepLine]) {
           int a1, a2;
+          active = true;
           if(discreteFlag) {
             /* not optimized */
             if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
@@ -456,6 +458,8 @@ void RepWireBondRenderImmediate(CoordSet *cs, RenderInfo *info)
     }
     glEnd();
     glEnable(GL_LIGHTING);
+    if(!active)
+      cs->Active[cRepLine] = false;
   }
 }
 

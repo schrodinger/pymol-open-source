@@ -380,6 +380,7 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
   if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)) )
     return;
   else {
+    int repActive = false;
     ObjectMolecule *obj = cs->Obj;
     int sphere_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_mode);
     float sphere_scale = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_scale);
@@ -479,7 +480,8 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
             for(a=0;a<nIndex;a++) {
               AtomInfoType *ai = atomInfo + *(i2a++);
               if(ai->visRep[ cRepSphere]) {
-                v3 = ai->vdw;
+                repActive = true;
+                v3 = ai->vdw * sphere_scale;
             
                 v0 = v[0];
                 v1 = v[1];
@@ -537,7 +539,6 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
         }
       } else
 #endif
-
       if(sphere_mode==4) {
         int repeat = true;
         const float _1 = 1.0F;
@@ -573,6 +574,7 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
             AtomInfoType *ai = atomInfo + *(i2a++);
             if(ai->visRep[ cRepSphere]) {
               float cur_radius = ai->vdw;
+              repActive = true;
 
               if(last_radius!=cur_radius) {
                 float clamp_radius = cur_radius;                        
@@ -663,6 +665,7 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
           AtomInfoType *ai = atomInfo + *(i2a++);
           if(ai->visRep[ cRepSphere]) {
             int c = ai->color;
+            repActive = true;
             if(c != last_color) {
               last_color = c;
               glColor3fv(ColorGet(G,c));
@@ -727,6 +730,7 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
         for(a=0;a<nIndex;a++) {
           AtomInfoType *ai = atomInfo + *(i2a++);
           if(ai->visRep[ cRepSphere]) {
+            repActive = true;
             float vdw = ai->vdw * sphere_scale;
             int c = ai->color;
             float v0 = v[0];
@@ -759,8 +763,10 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
           v+=3;
         }
       }
-      glEnd();
     }
+
+    if(!repActive) /* didn't draw a single sphere, so we can skip this representation next time around */
+      cs->Active[cRepSphere] = false;
   }
 }
 

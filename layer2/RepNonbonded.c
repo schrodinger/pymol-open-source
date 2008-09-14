@@ -53,6 +53,7 @@ void RepNonbondedRenderImmediate(CoordSet *cs, RenderInfo *info)
   if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)) )
     return;
   else {
+    int active=false;
     ObjectMolecule *obj = cs->Obj;
     float line_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_width);
     float nonbonded_size = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_nonbonded_size);
@@ -81,7 +82,7 @@ void RepNonbondedRenderImmediate(CoordSet *cs, RenderInfo *info)
           float v0 = v[0];
           float v1 = v[1];
           float v2 = v[2];
-
+          active = true;
           if(c != last_color) {
             last_color = c;
             glColor3fv(ColorGet(G,c));
@@ -101,6 +102,8 @@ void RepNonbondedRenderImmediate(CoordSet *cs, RenderInfo *info)
     }
     glEnd();
     glEnable(GL_LIGHTING); 
+    if(!active)
+      cs->Active[cRepNonbonded]=true;
   }
 }
 
