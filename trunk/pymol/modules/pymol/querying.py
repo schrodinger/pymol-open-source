@@ -512,7 +512,7 @@ PYMOL API
                     print " version: %s (%8.6f) %d"%r
         return r
     
-    def get_vrml(_self=cmd): 
+    def get_vrml(version=2,_self=cmd): 
         '''
 DESCRIPTION
 
@@ -527,7 +527,7 @@ PYMOL API
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            r = _cmd.get_vrml(_self._COb)
+            r = _cmd.get_vrml(_self._COb,int(version))
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException

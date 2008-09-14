@@ -2706,7 +2706,8 @@ static PyObject *CmdGetVRML(PyObject *self, PyObject *args)
   PyMOLGlobals *G = NULL;
   PyObject *result = NULL;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"O",&self);
+  int ver;
+  ok = PyArg_ParseTuple(args,"Oi",&self,&ver);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -2716,7 +2717,8 @@ static PyObject *CmdGetVRML(PyObject *self, PyObject *args)
   if(ok) {
     char *vla = NULL;
     if( (ok=APIEnterNotModal(G)) ) {
-      SceneRay(G,0,0,4,NULL,
+      SceneRay(G,0,0, (ver == 1)? 6 : 4, /* VRML1 or 2? */
+               NULL,
                &vla,0.0F,0.0F,false,NULL,false,-1);
       APIExit(G);
     }
