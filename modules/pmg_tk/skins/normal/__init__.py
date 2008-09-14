@@ -2782,8 +2782,8 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenu('Plugin', 'Plugin',tearoff=TRUE)      
 
-        self.menuBar.addcascademenu('Plugin', 'PluginAction', 'Manage',
-                                             label='Manage')
+        self.menuBar.addcascademenu('Plugin', 'PluginAction', 'Manage Plugins',
+                                             label='Manage Plugins')
 
         self.menuBar.addmenuitem('PluginAction', 'command', 'Install',
                                          label='Install...',

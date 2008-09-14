@@ -276,7 +276,7 @@ class PMGApp(Pmw.MegaWidget):
                                               defaultbutton='Cancel',
                                   scrolledlist_labelpos=N,
                                   scrolledlist_listbox_selectmode=EXTENDED,
-                                  label_text='Which plugin you like to remove?',
+                                  label_text='Which plugin would you like to remove?',
                                   scrolledlist_items = lst,
                                   command = self.removePlugin2)
         if len(lst):
