@@ -237,7 +237,7 @@ class Normal(PMGSkin):
     def my_withdraw(self,win):
         if sys.platform!='linux2':
             win.withdraw()
-        else: # autocenter, deiconify, and run mainloop
+        else: 
             win.destroy()
 
     def my_activate(self,win,center=1,focus=None):
@@ -2788,7 +2788,11 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Plugin', 'command', 'Install Plugin',
                                          label='Install Plugin...',
                                          command = lambda s=self: s.app.installPlugin())
-        
+
+        self.menuBar.addmenuitem('Plugin', 'command', 'Remove Plugin',
+                                 label='Remove Plugin...',
+                                 command = lambda s=self: s.app.removePlugin())
+
         self.menuBar.addmenuitem('Plugin', 'separator', '')
 
     def show_about(self):
