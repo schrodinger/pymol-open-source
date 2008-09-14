@@ -6503,7 +6503,7 @@ void SceneRay(PyMOLGlobals *G,
           }
         }
         break;
-      case 4: /* VRML */
+      case 4: /* VRML2 */
         {
           char *vla = VLACalloc(char,100000);
           RayRenderVRML2(ray,ray_width,ray_height,&vla,
@@ -6519,6 +6519,14 @@ void SceneRay(PyMOLGlobals *G,
                           I->FrontSafe,I->BackSafe,fov,angle,I->Pos[2]);
           *headerVLA_ptr=objVLA;
           *charVLA_ptr=mtlVLA;
+        }
+        break;
+      case 6: /* VRML1 -- more compatible with tools like blender */
+        {
+          char *vla = VLACalloc(char,100000);
+          RayRenderVRML1(ray,ray_width,ray_height,&vla,
+                         I->FrontSafe,I->BackSafe,fov,angle,I->Pos[2]);
+          *charVLA_ptr=vla;
         }
         break;
       }

@@ -933,10 +933,9 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
   return jprim;
 }
 
-#if 0
 void RayRenderVRML1(CRay *I,int width,int height,
                     char **vla_ptr,float front,float back,
-		    float fov, float angle,float z_corr)
+                    float fov, float angle,float z_corr)
 {
   char *vla = *vla_ptr;
   ov_size cc = 0; /* character count */
@@ -961,16 +960,16 @@ void RayRenderVRML1(CRay *I,int width,int height,
 
     UtilConcatVLA(&vla,&cc,"Separator {\n");
 
-  UtilConcatVLA(&vla,&cc,"MatrixTransform {\n");
-  UtilConcatVLA(&vla,&cc,"matrix 1.0 0.0 0.0 0.0\n");
-  UtilConcatVLA(&vla,&cc,"       0.0 1.0 0.0 0.0\n");
-  UtilConcatVLA(&vla,&cc,"       0.0 0.0 1.0 0.0\n");
-  sprintf(buffer,"    %8.6f %8.6f %8.6f 1.0\n",
-          (I->Volume[0]+I->Volume[1])/2,
-          (I->Volume[2]+I->Volume[3])/2,0.0F);
-  UtilConcatVLA(&vla,&cc,buffer);
-  UtilConcatVLA(&vla,&cc,"}\n");
-
+    UtilConcatVLA(&vla,&cc,"MatrixTransform {\n");
+    UtilConcatVLA(&vla,&cc,"matrix 1.0 0.0 0.0 0.0\n");
+    UtilConcatVLA(&vla,&cc,"       0.0 1.0 0.0 0.0\n");
+    UtilConcatVLA(&vla,&cc,"       0.0 0.0 1.0 0.0\n");
+    sprintf(buffer,"    %8.6f %8.6f %8.6f 1.0\n",
+            (I->Volume[0]+I->Volume[1])/2,
+            (I->Volume[2]+I->Volume[3])/2,0.0F);
+    UtilConcatVLA(&vla,&cc,buffer);
+    UtilConcatVLA(&vla,&cc,"}\n");
+    
     for(a=0;a<I->NPrimitive;a++) {
       prim = I->Primitive+a;
       vert = base->Vertex+3*(prim->vert);
@@ -1004,8 +1003,6 @@ void RayRenderVRML1(CRay *I,int width,int height,
   
   *vla_ptr=vla;
 }
-#endif
-
 
 static int TriangleReverse(CPrimitive *p)
 {
