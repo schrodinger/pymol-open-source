@@ -2753,6 +2753,7 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Demo', 'command', 'Scripted Animation',
                                          label='Scripted Animation',
                                          command = lambda s=self: s.cmd.do(
+
             "_ replace_wizard demo,anime"))
 
 
@@ -2781,17 +2782,22 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenu('Plugin', 'Plugin',tearoff=TRUE)      
 
-        self.menuBar.addmenuitem('Plugin', 'command', 'About',
-                                         label='About Plugins',
-                                         command = lambda s=self: s.aboutPlugins())
+        self.menuBar.addcascademenu('Plugin', 'PluginAction', 'Manage',
+                                             label='Manage')
 
-        self.menuBar.addmenuitem('Plugin', 'command', 'Install Plugin',
-                                         label='Install Plugin...',
+        self.menuBar.addmenuitem('PluginAction', 'command', 'Install',
+                                         label='Install...',
                                          command = lambda s=self: s.app.installPlugin())
 
-        self.menuBar.addmenuitem('Plugin', 'command', 'Remove Plugin',
-                                 label='Remove Plugin...',
+        self.menuBar.addmenuitem('PluginAction', 'command', 'Remove',
+                                 label='Remove...',
                                  command = lambda s=self: s.app.removePlugin())
+
+        self.menuBar.addmenuitem('PluginAction', 'separator', '')
+        
+        self.menuBar.addmenuitem('PluginAction', 'command', 'About',
+                                         label='About',
+                                         command = lambda s=self: s.aboutPlugins())
 
         self.menuBar.addmenuitem('Plugin', 'separator', '')
 
