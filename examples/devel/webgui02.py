@@ -35,8 +35,8 @@ default_token = 0
 def write_table(out, table):
     out.write('<html>\n')
     out.write('<header>\n')
-    out.write('<link rel="stylesheet" type="text/css" href="/pymol.css"/>')
-    out.write('<script type="text/javascript" src="pymol.js"/>\n')
+    out.write('<link rel="stylesheet" type="text/css" href="/pymol.css"></link>')
+    out.write('<script type="text/javascript" src="pymol.js"></script>\n')
     out.write('</header>')
     out.write('<body>\n')
     out.write('<form action="./quit.pymol"><button type="submit">Quit</button></form>\n')     
