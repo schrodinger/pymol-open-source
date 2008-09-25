@@ -2,7 +2,11 @@
 CHANGE LOG
 =========================================================================
 
-2008-09-12 Warren L. DeLano <warren@delsci.com>	
+2008-09-24 Warren L. DeLano <warren@delsci.com>
+
+	* fixed crash bug with blank CGO object
+
+2008-09-12
 
 	* added menu option & mechanism for removing plugins
 

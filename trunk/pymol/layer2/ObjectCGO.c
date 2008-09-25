@@ -287,7 +287,7 @@ static void ObjectCGORender(ObjectCGO *I,RenderInfo *info)
             {
               if(sobj->ray)
                 CGORenderRay(sobj->ray,ray,color,I->Obj.Setting,NULL);
-              else
+              else if(sobj->std)
                 CGORenderRay(sobj->std,ray,color,I->Obj.Setting,NULL);
             }
         } else if(G->HaveGUI && G->ValidContext) {
