@@ -126,7 +126,7 @@ EXAMPLE
 
 SEE ALSO
 
-    super, pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur, super
+    super, pair_fit, fit, rms, rms_cur, intra_rms, intra_rms_cur
         '''
         r = DEFAULT_ERROR
         mobile = selector.process(mobile)
