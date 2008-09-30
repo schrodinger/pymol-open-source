@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-09-29 Warren L. DeLano <warren@delsci.com>
+
+	* fixed subtle div-zero bug in the view interpolation code
+	
 2008-09-24 Warren L. DeLano <warren@delsci.com>
 
 	* fixed crash bug with blank CGO object
