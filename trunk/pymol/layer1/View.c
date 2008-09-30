@@ -653,11 +653,13 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
       if(dot>1.0F) dot=1.0F;
       translate_angle = (float)acos(dot);
       
+
       /* if translation angle > rotation angle then sets translation angle 
        * to same as rotation angle, with proper sign of course */
       
-      if(fabs(translate_angle)>fabs(angle))
-        translate_angle = (float)(fabs(angle)*(translate_angle/fabs(angle)));
+      if((fabs(translate_angle)>fabs(angle)) && (fabs(angle)>R_SMALL4)) {
+	  translate_angle = (float)(fabs(angle)*(translate_angle/fabs(angle))); 
+      }
 
       if(fabs(translate_angle)<0.0001F) {
         linear = true;
@@ -695,6 +697,7 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
              pLen,angle,translate_angle);
     }
   }
+
 
   /* now interpolate */
 
@@ -757,7 +760,6 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
       } else {
         current->post_flag=false;
       }
-
     } else if(linear) {
       int b;
       rotation_matrix3f(fxn*angle,rot_axis[0],rot_axis[1],rot_axis[2],&imat[0][0]);
@@ -773,14 +775,37 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
         imat[4][b] = (float)((1.0-fxn)*rot[3][b] + fxn*rot[4][b]);
       }
       copy3f3d(&imat[4][0],current->post);
-       
     } else {
 
+#if 0
+      dump3f(&rot[0][0],"mat0");
+      dump3f(&rot[1][0],"mat0");
+      dump3f(&rot[2][0],"mat0");
+      dump3f(&rot[3][0],"mat0");
+      dump3f(&rot[4][0],"mat0");
+
+      dump3f(pivot,"pivot_pointt");
+      dump3f(bisect,"bisect_dir");
+      dump3f(rot_axis,"rot_axis");
+      printf("rot_angle %8.3f \n",angle);
+      dump3f(trans_axis,"trans_axis");
+      printf("translate_angle %8.3f \n",translate_angle);
+      printf("fxn %8.3f linearity %8.3f\n",fxn,linearity);
+#endif
+ 
       matrix_interpolate(imat,rot,
                          pivot,bisect,
                          rot_axis,angle,
                          trans_axis,translate_angle,
                          fxn,linearity);
+
+#if 0
+      dump3f(&imat[0][0],"imat0");
+      dump3f(&imat[1][0],"imat0");
+      dump3f(&imat[2][0],"imat0");
+      dump3f(&imat[3][0],"imat0");
+      dump3f(&imat[4][0],"imat0");
+#endif
 
       current->matrix_flag = true;
       multiply33f33f(first3x3,&imat[0][0],inter3x3); 
@@ -793,7 +818,6 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
       copy3f3d(&imat[4][0],current->post);
 
     }
-
     if(debug) {
       if((a==0)||(a==n-1)) {
         float curC44f[16],curRTTT[16],curR44f[16];
