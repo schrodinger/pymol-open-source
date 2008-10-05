@@ -550,6 +550,9 @@ SEE ALSO
             f.flush()
             f.close()
             if not quiet:
+                fov = float(cmd.get("field_of_view"))
+                dist = cmd.get_view()[11]
+                print " 3Daac=%3.1f, 3Droll=0, 3Dc2c=0 0 1, 3Droo=0 0 %1.2f, 3Dcoo=0 0 %1.2f"%(fov,-dist,dist)
                 print " Save: wrote \""+filename+"\"."
             r = DEFAULT_SUCCESS
             
