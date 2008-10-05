@@ -1012,7 +1012,7 @@ static int TriangleReverse(CPrimitive *p)
   subtract3f(p->v3,p->v2,s2);
   cross_product3f(s1,s2,n0);
   
-  if (dot_product3f(p->n0,n0) < 0)
+  if (dot_product3f(p->n0,n0) < 0.0F)
     return 0;
   else
     return 1;
@@ -1463,6 +1463,469 @@ void RayRenderVRML2(CRay *I,int width,int height,
   }
   
   *vla_ptr=vla;
+}
+
+/* refactor into a node/graph hiearchy? */
+
+typedef struct  {
+  int face_count;
+  int position_count;
+  int normal_count;
+  int *face_position_list;
+  int *face_normal_list;
+  int *face_shading_list;
+  float *model_position_list;
+  float *model_normal_list;
+
+  /*
+    int diffuse_color_count;
+    int specular_color_count;
+   */
+} IdtfModelResourceMesh;
+
+static ov_size idtf_dump_file_header(char **vla, ov_size cnt)
+{
+  UtilConcatVLA(vla,&cnt,"FILE_FORMAT \"IDTF\"\nFORMAT_VERSION 100\n\n");
+
+  UtilConcatVLA(vla,&cnt,"NODE \"VIEW\" {\n");
+  UtilConcatVLA(vla,&cnt,"\tNODE_NAME \"DefaultView\"\n");
+  UtilConcatVLA(vla,&cnt,"\tPARENT_LIST {\n");
+  UtilConcatVLA(vla,&cnt,"\t\tPARENT_COUNT 1\n");
+  UtilConcatVLA(vla,&cnt,"\t\tPARENT 0 {\n\t\t\tPARENT_NAME \"<NULL>\"\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\tPARENT_TM {\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t1.000000 0.000000 0.000000  0.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 0.258819 0.965926  0.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 -0.965926 0.258819 0.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 -241.481461 64.704765 1.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+  UtilConcatVLA(vla,&cnt,"\t\t}\n");
+  UtilConcatVLA(vla,&cnt,"\t}\n");
+  UtilConcatVLA(vla,&cnt,"\tRESOURCE_NAME \"SceneViewResource\"\n");
+  UtilConcatVLA(vla,&cnt,"\tVIEW_DATA {\n");
+  UtilConcatVLA(vla,&cnt,"\t\tVIEW_TYPE \"PERSPECTIVE\"\n");
+  UtilConcatVLA(vla,&cnt,"\t\tVIEW_PROJECTION 34.515877\n");
+  UtilConcatVLA(vla,&cnt,"\t}\n");
+  UtilConcatVLA(vla,&cnt,"}\n\n");
+
+  UtilConcatVLA(vla,&cnt,"NODE \"LIGHT\"\n");
+  UtilConcatVLA(vla,&cnt,"{\n");
+  UtilConcatVLA(vla,&cnt,"\tNODE_NAME \"Omni01\"\n");
+  UtilConcatVLA(vla,&cnt,"\tPARENT_LIST {\n");
+  UtilConcatVLA(vla,&cnt,"\t\tPARENT_COUNT 1\n");
+  UtilConcatVLA(vla,&cnt,"\t\tPARENT 0 {\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\tPARENT_NAME \"<NULL>\"\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\tPARENT_TM {\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t1.000000 0.000000 0.000000 0.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 1.000000 0.000000 0.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 0.000000 1.000000 0.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t31.295425 -134.068436 19.701351 1.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+  UtilConcatVLA(vla,&cnt,"\t\t}\n");
+  UtilConcatVLA(vla,&cnt,"\t}\n");
+  UtilConcatVLA(vla,&cnt,"\tRESOURCE_NAME \"DefaultPointLight\"\n");
+  UtilConcatVLA(vla,&cnt,"}\n\n");
+  return cnt;
+}
+
+static ov_size idtf_dump_model_nodes(char **vla, ov_size cnt, 
+                                     IdtfModelResourceMesh *mesh_vla, int n_mesh)
+{
+  int a;
+  IdtfModelResourceMesh *mesh = mesh_vla;
+  for(a=0;a<n_mesh;a++) {
+    OrthoLineType buffer;
+
+    UtilConcatVLA(vla,&cnt,"NODE \"MODEL\" {\n");
+
+    sprintf(buffer,"\tNODE_NAME \"Mesh%d\"\n",a);
+    UtilConcatVLA(vla,&cnt,buffer);
+
+    UtilConcatVLA(vla,&cnt,"\tPARENT_LIST {\n");
+    UtilConcatVLA(vla,&cnt,"\t\tPARENT_COUNT 1\n");
+    UtilConcatVLA(vla,&cnt,"\t\tPARENT 0 {\n");
+    UtilConcatVLA(vla,&cnt,"\t\t\tPARENT_NAME \"<NULL>\"\n");
+    UtilConcatVLA(vla,&cnt,"\t\t\tPARENT_TM {\n");
+    UtilConcatVLA(vla,&cnt,"\t\t\t1.000000 0.000000 0.000000 0.0\n");
+    UtilConcatVLA(vla,&cnt,"\t\t\t0.000000 1.000000 0.000000 0.0\n");
+    UtilConcatVLA(vla,&cnt,"\t\t\t0.000000 0.000000 1.000000 0.0\n");
+    UtilConcatVLA(vla,&cnt,"\t\t\t0.000000 0.000000 0.000000 1.0\n");
+    UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+    UtilConcatVLA(vla,&cnt,"\t\t}\n");
+    UtilConcatVLA(vla,&cnt,"\t}\n");
+    
+    sprintf(buffer,"\tRESOURCE_NAME \"Mesh%d\"\n",a);
+    UtilConcatVLA(vla,&cnt,buffer);
+
+    UtilConcatVLA(vla,&cnt,"}\n\n");
+
+    mesh++;
+  }
+  return cnt;
+}
+
+static ov_size idtf_dump_resource_header(char **vla, ov_size cnt)
+{
+  UtilConcatVLA(vla,&cnt,"RESOURCE_LIST \"VIEW\" {\n");
+  UtilConcatVLA(vla,&cnt,"\tRESOURCE_COUNT 1\n");
+  UtilConcatVLA(vla,&cnt,"\tRESOURCE 0 {\n");
+  UtilConcatVLA(vla,&cnt,"\t\tRESOURCE_NAME \"SceneViewResource\"\n");
+  UtilConcatVLA(vla,&cnt,"\t\tVIEW_PASS_COUNT 1\n");
+  UtilConcatVLA(vla,&cnt,"\t\tVIEW_ROOT_NODE_LIST {\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\tROOT_NODE 0 {\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\tROOT_NODE_NAME \"<NULL>\"\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+  UtilConcatVLA(vla,&cnt,"\t\t}\n");
+  UtilConcatVLA(vla,&cnt,"\t}\n");
+  UtilConcatVLA(vla,&cnt,"}\n\n");
+  UtilConcatVLA(vla,&cnt,"RESOURCE_LIST \"LIGHT\" {\n");
+  UtilConcatVLA(vla,&cnt,"\tRESOURCE_COUNT 1\n");
+  UtilConcatVLA(vla,&cnt,"\tRESOURCE 0 {\n");
+  UtilConcatVLA(vla,&cnt,"\t\tRESOURCE_NAME \"DefaultPointLight\"\n");
+  UtilConcatVLA(vla,&cnt,"\t\tLIGHT_TYPE \"POINT\"\n");
+  UtilConcatVLA(vla,&cnt,"\t\tLIGHT_COLOR 1.000000 1.000000 1.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\tLIGHT_ATTENUATION 1.000000 0.000000 0.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\tLIGHT_INTENSITY 1.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t}\n");
+  UtilConcatVLA(vla,&cnt,"}\n\n");
+  UtilConcatVLA(vla,&cnt,"RESOURCE_LIST \"SHADER\" {\n");
+  UtilConcatVLA(vla,&cnt,"\tRESOURCE_COUNT 1\n");
+  UtilConcatVLA(vla,&cnt,"\tRESOURCE 0 {\n");
+  UtilConcatVLA(vla,&cnt,"\t\tRESOURCE_NAME \"MeshShader\"\n");
+  UtilConcatVLA(vla,&cnt,"\t\tSHADER_MATERIAL_NAME \"Material\"\n");
+  UtilConcatVLA(vla,&cnt,"\t\tSHADER_ACTIVE_TEXTURE_COUNT 0\n");
+  UtilConcatVLA(vla,&cnt,"\t}\n");
+  UtilConcatVLA(vla,&cnt,"}\n\n");
+  UtilConcatVLA(vla,&cnt,"RESOURCE_LIST \"MATERIAL\" {\n");
+  UtilConcatVLA(vla,&cnt,"\tRESOURCE_COUNT 1\n");
+  UtilConcatVLA(vla,&cnt,"\tRESOURCE 0 {\n");
+  UtilConcatVLA(vla,&cnt,"\t\tRESOURCE_NAME \"Material\"\n");
+  UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_AMBIENT 0.180000 0.060000 0.060000\n");
+  UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_DIFFUSE 0.878431 0.560784 0.341176\n");
+  UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_SPECULAR 0.0720000 0.0720000 0.0720000\n");
+  UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_EMISSIVE 0.320000 0.320000 0.320000\n");
+  UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_REFLECTIVITY 0.100000\n");
+  UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_OPACITY 1.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t}\n");
+  UtilConcatVLA(vla,&cnt,"}\n\n");
+  return cnt;
+}
+
+static ov_size idtf_dump_resources(char **vla, ov_size cnt, 
+                                   IdtfModelResourceMesh *mesh_vla, int n_mesh)
+{
+  OrthoLineType buffer;
+  UtilConcatVLA(vla,&cnt,"RESOURCE_LIST \"MODEL\" {\n");
+  
+  sprintf(buffer,"\tRESOURCE_COUNT %d\n",n_mesh);
+  UtilConcatVLA(vla,&cnt,buffer);
+
+  {
+    int a;
+    IdtfModelResourceMesh *mesh = mesh_vla;
+    for(a=0;a<n_mesh;a++) {
+      
+      sprintf(buffer,"\tRESOURCE %d {\n",a);
+      UtilConcatVLA(vla,&cnt,buffer);
+
+      sprintf(buffer,"\t\tRESOURCE_NAME \"Mesh%d\"\n",a);
+      UtilConcatVLA(vla,&cnt,buffer);
+
+      UtilConcatVLA(vla,&cnt,"\t\tMODEL_TYPE \"MESH\"\n");
+      UtilConcatVLA(vla,&cnt,"\t\tMESH {\n");      
+
+      sprintf(buffer,"\t\t\tFACE_COUNT %d\n",mesh->face_count);
+      UtilConcatVLA(vla,&cnt,buffer);
+
+      sprintf(buffer,"\t\t\tMODEL_POSITION_COUNT %d\n",mesh->position_count);
+      UtilConcatVLA(vla,&cnt,buffer);
+
+      sprintf(buffer,"\t\t\tMODEL_NORMAL_COUNT %d\n",mesh->normal_count);
+      UtilConcatVLA(vla,&cnt,buffer);
+     
+      UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_DIFFUSE_COLOR_COUNT 0\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_SPECULAR_COLOR_COUNT 0\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_TEXTURE_COORD_COUNT 0\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_BONE_COUNT 0\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_SHADING_COUNT 1\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_SHADING_DESCRIPTION_LIST {\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\t\tSHADING_DESCRIPTION 0 {\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\t\tTEXTURE_LAYER_COUNT 0\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\t\tSHADER_ID 0\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\t\t}\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+
+      {
+        int b;
+        int *ip = mesh->face_position_list;
+        UtilConcatVLA(vla,&cnt,"\t\t\tMESH_FACE_POSITION_LIST {\n");
+        
+        for(b=0;b<mesh->face_count;b++) {
+          sprintf(buffer,"\t\t\t%d %d %d\n",ip[0],ip[1],ip[2]);
+          UtilConcatVLA(vla,&cnt,buffer);
+          ip+=3;
+        }
+        UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+      }
+
+      {
+        int b;
+        int *ip = mesh->face_normal_list;
+        UtilConcatVLA(vla,&cnt,"\t\t\tMESH_FACE_NORMAL_LIST {\n");
+        
+        for(b=0;b<mesh->face_count;b++) {
+          sprintf(buffer,"\t\t\t%d %d %d\n",ip[0],ip[1],ip[2]);
+          UtilConcatVLA(vla,&cnt,buffer);
+          ip+=3;
+        }
+        UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+      }
+
+      {
+        int b;
+        int *ip = mesh->face_shading_list;
+        UtilConcatVLA(vla,&cnt,"\t\t\tMESH_FACE_SHADING_LIST {\n");
+        
+        for(b=0;b<mesh->face_count;b++) {
+          sprintf(buffer,"\t\t\t%d\n",ip[0]);
+          UtilConcatVLA(vla,&cnt,buffer);
+          ip++;
+        }
+        UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+      }
+
+      {
+        int b;
+        float *fp = mesh->model_position_list;
+        UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_POSITION_LIST {\n");
+        
+        for(b=0;b<mesh->position_count;b++) {
+          sprintf(buffer,"\t\t\t\t%1.6f %1.6f %1.6f\n",fp[0],fp[1],fp[2]);
+          UtilConcatVLA(vla,&cnt,buffer);
+          fp+=3;
+        }
+
+        UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+      }
+
+      {
+        int b;
+        float *fp = mesh->model_normal_list;
+        UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_NORMAL_LIST {\n");
+        
+        for(b=0;b<mesh->normal_count;b++) {
+          sprintf(buffer,"\t\t\t\t%1.6f %1.6f %1.6f\n",fp[0],fp[1],fp[2]);
+          UtilConcatVLA(vla,&cnt,buffer);
+          fp+=3;
+        }
+
+        UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+      }
+
+      UtilConcatVLA(vla,&cnt,"\t\t}\n");      
+      UtilConcatVLA(vla,&cnt,"\t}\n");
+  
+      mesh++;
+    }
+  }
+  UtilConcatVLA(vla,&cnt,"}\n\n");
+
+  {
+    int a;
+    for(a=0;a<n_mesh;a++) {
+ 
+      UtilConcatVLA(vla,&cnt,"MODIFIER \"SHADING\" {\n");
+      sprintf(buffer,"\tMODIFIER_NAME \"Mesh%d\"\n",a);
+      UtilConcatVLA(vla,&cnt,buffer);
+      UtilConcatVLA(vla,&cnt,"\tPARAMETERS {\n");
+      UtilConcatVLA(vla,&cnt,"\t\tSHADER_LIST_COUNT 1\n");
+      UtilConcatVLA(vla,&cnt,"\t\tSHADER_LIST_LIST {\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\tSHADER_LIST 0 {\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\t\tSHADER_COUNT 1\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\t\tSHADER_NAME_LIST {\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\t\t\tSHADER 0 NAME: \"MeshShader\"\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\t\t}\n");
+      UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+      UtilConcatVLA(vla,&cnt,"\t\t}\n");
+      UtilConcatVLA(vla,&cnt,"\t}\n");
+      UtilConcatVLA(vla,&cnt,"}\n\n");
+    }
+  }
+  
+  return cnt;
+}
+/*========================================================================*/
+void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
+{
+  int identity = (SettingGetGlobal_i(I->G,cSetting_geometry_export_mode)==1);
+
+  RayExpandPrimitives(I);
+  RayTransformFirst(I,0,identity);
+
+  { 
+    CBasis *base = I->Basis+1;
+    CPrimitive *prim = I->Primitive;
+    int mesh_cnt = 0;
+    IdtfModelResourceMesh *mesh_vla = VLACalloc(IdtfModelResourceMesh,1);
+    
+    if(mesh_vla) {
+      IdtfModelResourceMesh *mesh = NULL;
+      int mesh_start = 0;
+      int a;
+
+      for(a=0;a<I->NPrimitive;a++) {
+        
+        switch(prim->type) {
+        case cPrimTriangle:
+          if(!mesh) {
+            /* create a new triangle mesh */
+            if(VLACheck(mesh_vla,IdtfModelResourceMesh,mesh_cnt)) {
+              mesh = mesh_vla + mesh_cnt;
+              if( 
+                 (mesh->face_position_list = VLACalloc(int,3)) &&
+                 (mesh->face_normal_list = VLACalloc(int,3)) &&
+                 (mesh->face_shading_list = VLACalloc(int,1)) &&
+
+                 (mesh->model_position_list = VLAlloc(float,3)) &&
+                 (mesh->model_normal_list = VLAlloc(float,3))
+                 ) {
+                mesh_cnt++;
+              } else {
+                mesh = NULL;
+              }
+            }
+            mesh_start = a;
+          }
+          break;
+        default: 
+          if(mesh) {
+            mesh = NULL;
+          }
+          break;
+        }
+
+        switch(prim->type) {
+        case cPrimTriangle:
+          if(mesh) {
+            if( VLACheck(mesh->face_position_list, int, mesh->face_count*3+2) &&
+                VLACheck(mesh->face_normal_list, int, mesh->face_count*3+2) &&
+                VLACheck(mesh->face_shading_list, int, mesh->face_count) &&
+                VLACheck(mesh->model_position_list, float, (mesh->position_count+3)*3) &&
+                VLACheck(mesh->model_normal_list, float, (mesh->normal_count+3)*3 ) ) {
+
+
+              float *vert = base->Vertex+3*(prim->vert);
+              float *norm = base->Normal+3*base->Vert2Normal[prim->vert]+3;
+              float *fp;
+              int *ip;
+              int reverse = TriangleReverse(prim);
+              
+              fp = mesh->model_position_list + mesh->position_count*3;
+              copy3f(vert, fp);
+              vert+=3;
+              if(reverse) {
+                fp+=6;
+                copy3f(vert, fp);
+                vert+=3;
+                fp-=3;
+                copy3f(vert, fp);
+                vert+=3;
+                fp+=6;
+              } else {
+                fp+=3;
+                copy3f(vert, fp);
+                vert+=3;
+                fp+=3;
+                copy3f(vert, fp);
+                vert+=3;
+                fp+=3;
+              }
+
+              fp = mesh->model_normal_list + mesh->normal_count*3;
+              copy3f(norm, fp);
+              norm+=3;
+              if(reverse) {
+                fp+=6;
+                copy3f(norm, fp);
+                norm+=3;
+                fp-=3;
+                copy3f(norm, fp);
+                norm+=3;
+                fp+=6;
+              } else {
+                fp+=3;
+                copy3f(norm, fp);
+                norm+=3;
+                fp+=3;
+                copy3f(norm, fp);
+                norm+=3;
+                fp+=3;
+              }
+
+
+              ip = mesh->face_position_list + mesh->face_count*3;
+              
+              ip[0] = mesh->position_count;
+              ip[1] = ip[0]+1;
+              ip[2] = ip[0]+2;
+
+              ip = mesh->face_normal_list + mesh->face_count*3;
+              
+              ip[0] = mesh->normal_count;
+              ip[1] = ip[0]+1;
+              ip[2] = ip[0]+2;
+
+              ip = mesh->face_shading_list + mesh->face_count;
+              ip[0] = 0;
+
+              mesh->face_count++;
+              mesh->position_count+=3;
+              mesh->normal_count+=3;
+            }
+          }
+          break;
+        case cPrimSphere:
+          break;
+        case cPrimCone:
+          break;
+        case cPrimCylinder:
+        case cPrimSausage:
+          break;
+        }
+
+        /* looping through each primitive */
+        prim++;
+      }
+    }
+
+    {
+      int cnt = 0;
+      cnt = idtf_dump_file_header(node_vla,cnt);
+      cnt = idtf_dump_model_nodes(node_vla,cnt,mesh_vla,mesh_cnt);
+      VLASize( (*node_vla), char, cnt);
+    }
+    {
+      int cnt = 0;
+      cnt = idtf_dump_resource_header(rsrc_vla,cnt);
+      cnt = idtf_dump_resources(rsrc_vla,cnt,mesh_vla,mesh_cnt);
+      VLASize( (*rsrc_vla), char, cnt);
+    }
+
+    {
+      /* refactor into a delete method */
+      IdtfModelResourceMesh *mesh = mesh_vla;
+      int i;
+      for(i=0;i<mesh_cnt;i++) {
+        VLAFreeP(mesh->face_position_list);
+        VLAFreeP(mesh->face_normal_list);
+        VLAFreeP(mesh->face_shading_list);
+        VLAFreeP(mesh->model_position_list);
+        VLAFreeP(mesh->model_normal_list);
+        mesh++;
+      }
+      VLAFreeP(mesh_vla);
+    }
+  }
+
 }
 /*========================================================================*/
 void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,

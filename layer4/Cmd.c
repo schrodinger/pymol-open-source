@@ -2730,6 +2730,35 @@ static PyObject *CmdGetVRML(PyObject *self, PyObject *args)
   return(APIAutoNone(result));
 }
 
+static PyObject *CmdGetIdtf(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = NULL;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    char *node=NULL,*rsrc=NULL;
+    if( (ok=APIEnterNotModal(G)) ) {
+      SceneRay(G, 0, 0, cSceneRay_MODE_IDTF,
+               &node, &rsrc,
+               0.0F,0.0F,false,NULL,false,-1);
+      APIExit(G);
+    }
+    if(node&&rsrc) {
+      result = Py_BuildValue("(ss)",node,rsrc);
+    }
+    VLAFreeP(node);
+    VLAFreeP(rsrc);
+  }
+  return(APIAutoNone(result));
+}
+
 static PyObject *CmdGetPovRay(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -8293,6 +8322,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_editor_scheme",     CmdGetEditorScheme,      METH_VARARGS },
   {"get_frame",             CmdGetFrame,             METH_VARARGS },
   {"get_feedback",          CmdGetFeedback,          METH_VARARGS },
+  {"get_idtf",	            CmdGetIdtf,              METH_VARARGS },
   {"get_matrix",	        CmdGetMatrix,            METH_VARARGS },
   {"get_min_max",           CmdGetMinMax,            METH_VARARGS },
   {"get_mtl_obj",           CmdGetMtlObj,            METH_VARARGS },
