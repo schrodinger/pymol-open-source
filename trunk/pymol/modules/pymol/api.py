@@ -93,6 +93,7 @@ from querying import \
       get_dihedral,       \
       get_distance,       \
       get_extent,         \
+      get_idtf,           \
       get_model,          \
       get_movie_locked,   \
       get_movie_length,   \

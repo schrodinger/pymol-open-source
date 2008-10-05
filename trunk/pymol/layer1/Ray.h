@@ -40,6 +40,12 @@ void RayRender(CRay *I,unsigned int *image,
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA,
                   char **charVLA,float front,float back,float fov,float angle,
                   int antialias);
+
+void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla);
+
+void RayRenderVRML1(CRay *I,int width,int height,
+                    char **vla_ptr,float front,float back,
+                    float fov, float angle,float z_corr);
 void RayRenderVRML2(CRay *I,int width,int height,
                     char **vla_ptr,float front,float back,
 		    float fov, float angle, float z_corr);

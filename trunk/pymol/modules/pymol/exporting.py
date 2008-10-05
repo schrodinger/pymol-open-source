@@ -370,6 +370,8 @@ SEE ALSO
         lc_filename=string.lower(filename)
         if format=='':
             format = 'unknown'
+            # refactor following if/elif cascade 
+            # with a dictionary lookup
             if re.search("\.pdb$|\.ent$",lc_filename):
                 format = 'pdb'
             elif re.search("\.pqr$",lc_filename):
@@ -402,6 +404,8 @@ SEE ALSO
                 format = 'mtl'
             elif re.search("\.wrl$",lc_filename):
                 format = 'wrl'
+            elif re.search("\.idtf$",lc_filename):
+                format = 'idtf'
             else:
                 format = str(format)
         if format=='unknown':
@@ -504,6 +508,7 @@ SEE ALSO
                 print " Save: wrote \""+filename+"\"."
         elif format=='png':
             r = _self.png(filename,quiet=quiet)
+        # refactor below to lift repeated code
         elif format=='pov':
             tup = _self.get_povray()
             f=open(filename,"w")
@@ -537,6 +542,17 @@ SEE ALSO
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
             r = DEFAULT_SUCCESS
+        elif format=='idtf':
+            tup = _self.get_idtf()
+            f=open(filename,"w")
+            f.write(tup[0]);
+            f.write(tup[1]);
+            f.flush()
+            f.close()
+            if not quiet:
+                print " Save: wrote \""+filename+"\"."
+            r = DEFAULT_SUCCESS
+            
         if _self._raising(r,_self): raise QuietException
         return r
 

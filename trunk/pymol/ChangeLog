@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-10-04 Warren L. DeLano <warren@delsci.com>
+
+	* first rough attempt at IDTF export for U3D / 3D-PDF support
+	
 2008-09-29 Warren L. DeLano <warren@delsci.com>
 
 	* fixed subtle div-zero bug in the view interpolation code

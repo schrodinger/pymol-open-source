@@ -6529,6 +6529,14 @@ void SceneRay(PyMOLGlobals *G,
           *charVLA_ptr=vla;
         }
         break;
+      case cSceneRay_MODE_IDTF:
+        {
+          *headerVLA_ptr = VLACalloc(char,10000);
+          *charVLA_ptr = VLACalloc(char,10000);
+          RayRenderIDTF(ray,headerVLA_ptr,charVLA_ptr);
+        }
+        break;
+    
       }
       RayFree(ray);
     }

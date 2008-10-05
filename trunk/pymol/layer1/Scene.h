@@ -36,6 +36,8 @@ typedef struct {
 #define SDOF_CLIP_MODE 1
 #define SDOF_DRAG_MODE 2
 
+#define cSceneRay_MODE_IDTF 7
+
 typedef float SceneViewType[cSceneViewSize];
  
 /* all information required to define the geometry of a particular view,

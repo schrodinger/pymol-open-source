@@ -462,6 +462,27 @@ PYMOL API
         if _raising(r,_self): raise pymol.CmdException
         return r
 
+    def get_idtf(_self=cmd):
+        '''
+DESCRIPTION
+
+    "get_idft" is under development, but should eventually return an
+    idtf file containing multiple objects and scenes.
+
+PYMOL API
+
+    cmd.idtf()
+
+        '''
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)   
+            r = _cmd.get_idtf(_self._COb)
+        finally:
+            _self.unlock(r,_self)
+        if _raising(r,_self): raise pymol.CmdException
+        return r
+
     def get_mtl_obj(_self=cmd):
         '''
 DESCRIPTION
