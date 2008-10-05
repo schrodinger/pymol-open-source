@@ -1493,10 +1493,14 @@ static ov_size idtf_dump_file_header(char **vla, ov_size cnt)
   UtilConcatVLA(vla,&cnt,"\t\tPARENT_COUNT 1\n");
   UtilConcatVLA(vla,&cnt,"\t\tPARENT 0 {\n\t\t\tPARENT_NAME \"<NULL>\"\n");
   UtilConcatVLA(vla,&cnt,"\t\t\tPARENT_TM {\n");
-  UtilConcatVLA(vla,&cnt,"\t\t\t\t1.000000 0.000000 0.000000  0.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t1.000000 0.000000 0.000000 0.0\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 1.000000 0.000000 0.0\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 0.000000 1.000000 0.0\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 0.000000 0.000000 1.0\n");
+  /*  UtilConcatVLA(vla,&cnt,"\t\t\t\t1.000000 0.000000 0.000000  0.000000\n");
   UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 0.258819 0.965926  0.000000\n");
   UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 -0.965926 0.258819 0.000000\n");
-  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 -241.481461 64.704765 1.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 -241.481461 64.704765 1.000000\n");*/
   UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
   UtilConcatVLA(vla,&cnt,"\t\t}\n");
   UtilConcatVLA(vla,&cnt,"\t}\n");
@@ -1518,7 +1522,7 @@ static ov_size idtf_dump_file_header(char **vla, ov_size cnt)
   UtilConcatVLA(vla,&cnt,"\t\t\t\t1.000000 0.000000 0.000000 0.000000\n");
   UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 1.000000 0.000000 0.000000\n");
   UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 0.000000 1.000000 0.000000\n");
-  UtilConcatVLA(vla,&cnt,"\t\t\t\t31.295425 -134.068436 19.701351 1.000000\n");
+  UtilConcatVLA(vla,&cnt,"\t\t\t\t50.000000 -50.00000 50.000000 1.000000\n");
   UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
   UtilConcatVLA(vla,&cnt,"\t\t}\n");
   UtilConcatVLA(vla,&cnt,"\t}\n");
