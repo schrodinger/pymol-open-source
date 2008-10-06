@@ -1465,23 +1465,29 @@ void RayRenderVRML2(CRay *I,int width,int height,
   *vla_ptr=vla;
 }
 
-/* refactor into a node/graph hiearchy? */
+
+#define noIDTF_COLOR
 
 typedef struct  {
   int face_count;
   int position_count;
   int normal_count;
+#ifdef IDTF_COLOR
+  int color_count;
+#endif
   int *face_position_list;
   int *face_normal_list;
+#ifdef IDTF_COLOR
+  int *face_color_list;
+#endif
   int *face_shading_list;
   float *model_position_list;
   float *model_normal_list;
-
-  /*
-    int diffuse_color_count;
-    int specular_color_count;
-   */
+#ifdef IDTF_COLOR
+  float *model_diffuse_color_list;
+#endif
 } IdtfModelResourceMesh;
+
 
 static ov_size idtf_dump_file_header(char **vla, ov_size cnt)
 {
@@ -1497,10 +1503,6 @@ static ov_size idtf_dump_file_header(char **vla, ov_size cnt)
   UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 1.000000 0.000000 0.0\n");
   UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 0.000000 1.000000 0.0\n");
   UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 0.000000 0.000000 1.0\n");
-  /*  UtilConcatVLA(vla,&cnt,"\t\t\t\t1.000000 0.000000 0.000000  0.000000\n");
-  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 0.258819 0.965926  0.000000\n");
-  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 -0.965926 0.258819 0.000000\n");
-  UtilConcatVLA(vla,&cnt,"\t\t\t\t0.000000 -241.481461 64.704765 1.000000\n");*/
   UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
   UtilConcatVLA(vla,&cnt,"\t\t}\n");
   UtilConcatVLA(vla,&cnt,"\t}\n");
@@ -1609,6 +1611,7 @@ static ov_size idtf_dump_resource_header(char **vla, ov_size cnt)
   UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_EMISSIVE 0.320000 0.320000 0.320000\n");
   UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_REFLECTIVITY 0.100000\n");
   UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_OPACITY 1.000000\n");
+
   UtilConcatVLA(vla,&cnt,"\t}\n");
   UtilConcatVLA(vla,&cnt,"}\n\n");
   return cnt;
@@ -1645,9 +1648,16 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
 
       sprintf(buffer,"\t\t\tMODEL_NORMAL_COUNT %d\n",mesh->normal_count);
       UtilConcatVLA(vla,&cnt,buffer);
-     
+#ifdef IDTF_COLOR     
+      sprintf(buffer,"\t\t\tMODEL_DIFFUSE_COLOR_COUNT %d\n",mesh->color_count);
+      UtilConcatVLA(vla,&cnt,buffer);
+
+      sprintf(buffer,"\t\t\tMODEL_SPECULAR_COLOR_COUNT %d\n",mesh->color_count);
+      UtilConcatVLA(vla,&cnt,buffer);
+#else
       UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_DIFFUSE_COLOR_COUNT 0\n");
       UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_SPECULAR_COLOR_COUNT 0\n");
+#endif
       UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_TEXTURE_COORD_COUNT 0\n");
       UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_BONE_COUNT 0\n");
       UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_SHADING_COUNT 1\n");
@@ -1697,6 +1707,33 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
         UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
       }
 
+#ifdef IDTF_COLOR
+      {
+        int b;
+        int *ip = mesh->face_color_list;
+        UtilConcatVLA(vla,&cnt,"\t\t\tMESH_FACE_DIFFUSE_COLOR_LIST {\n");
+        
+        for(b=0;b<mesh->face_count;b++) {
+          sprintf(buffer,"\t\t\t%d %d %d\n",ip[0],ip[1],ip[2]);
+          UtilConcatVLA(vla,&cnt,buffer);
+          ip+=3;
+        }
+        UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+      }
+      {
+        int b;
+        int *ip = mesh->face_color_list;
+        UtilConcatVLA(vla,&cnt,"\t\t\tMESH_FACE_SPECULAR_COLOR_LIST {\n");
+        
+        for(b=0;b<mesh->face_count;b++) {
+          sprintf(buffer,"\t\t\t%d %d %d\n",ip[0],ip[1],ip[2]);
+          UtilConcatVLA(vla,&cnt,buffer);
+          ip+=3;
+        }
+        UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+      }
+#endif
+
       {
         int b;
         float *fp = mesh->model_position_list;
@@ -1724,6 +1761,34 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
 
         UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
       }
+#ifdef IDTF_COLOR
+      {
+        int b;
+        float *fp = mesh->model_diffuse_color_list;
+        UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_DIFFUSE_COLOR_LIST {\n");
+        
+        for(b=0;b<mesh->color_count;b++) {
+          sprintf(buffer,"\t\t\t\t%1.6f %1.6f %1.6f %1.6f\n",fp[0],fp[1],fp[2],fp[3]);
+          UtilConcatVLA(vla,&cnt,buffer);
+          fp+=4;
+        }
+
+        UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+      }
+      {
+        int b;
+        float *fp = mesh->model_diffuse_color_list;
+        UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_SPECULAR_COLOR_LIST {\n");
+        
+        for(b=0;b<mesh->color_count;b++) {
+          sprintf(buffer,"\t\t\t\t%1.6f %1.6f %1.6f %1.6f\n",fp[0],fp[1],fp[2],fp[3]);
+          UtilConcatVLA(vla,&cnt,buffer);
+          fp+=4;
+        }
+
+        UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+      }
+#endif
 
       UtilConcatVLA(vla,&cnt,"\t\t}\n");      
       UtilConcatVLA(vla,&cnt,"\t}\n");
@@ -1787,10 +1852,15 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
               if( 
                  (mesh->face_position_list = VLACalloc(int,3)) &&
                  (mesh->face_normal_list = VLACalloc(int,3)) &&
+#ifdef IDTF_COLOR
+                 (mesh->face_color_list = VLACalloc(int,3)) &&
+#endif
                  (mesh->face_shading_list = VLACalloc(int,1)) &&
-
                  (mesh->model_position_list = VLAlloc(float,3)) &&
-                 (mesh->model_normal_list = VLAlloc(float,3))
+#ifdef IDTF_COLOR
+                 (mesh->model_diffuse_color_list = VLAlloc(float,4)) &&
+#endif
+                 (mesh->model_normal_list = VLAlloc(float,3)) 
                  ) {
                 mesh_cnt++;
               } else {
@@ -1812,9 +1882,16 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
           if(mesh) {
             if( VLACheck(mesh->face_position_list, int, mesh->face_count*3+2) &&
                 VLACheck(mesh->face_normal_list, int, mesh->face_count*3+2) &&
+#ifdef IDTF_COLOR
+                VLACheck(mesh->face_color_list, int, mesh->face_count*3+2) &&
+#endif
                 VLACheck(mesh->face_shading_list, int, mesh->face_count) &&
                 VLACheck(mesh->model_position_list, float, (mesh->position_count+3)*3) &&
-                VLACheck(mesh->model_normal_list, float, (mesh->normal_count+3)*3 ) ) {
+#ifdef IDTF_COLOR
+                VLACheck(mesh->model_diffuse_color_list, float, (mesh->color_count+3)*4) &&
+#endif
+                VLACheck(mesh->model_normal_list, float, (mesh->normal_count+3)*3)
+                ) {
 
 
               float *vert = base->Vertex+3*(prim->vert);
@@ -1864,19 +1941,69 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
                 norm+=3;
                 fp+=3;
               }
-
-
+#ifdef IDTF_COLOR
+              fp = mesh->model_diffuse_color_list + mesh->color_count*4;
+              copy3f(prim->c1, fp);
+              fp[3]=1.0F;
+              if(reverse) {
+                fp+=8;
+                copy3f(prim->c2, fp);
+                fp[3]=1.0F;
+                fp-=4;
+                copy3f(prim->c3, fp);
+                fp[3]=1.0F;
+                fp+=8;
+              } else {
+                fp+=4;
+                copy3f(prim->c2, fp);
+                fp[3]=1.0F;
+                fp+=4;
+                copy3f(prim->c3, fp);
+                fp[3]=1.0F;
+                fp+=4;
+              }
+#endif
+        
               ip = mesh->face_position_list + mesh->face_count*3;
-              
               ip[0] = mesh->position_count;
               ip[1] = ip[0]+1;
               ip[2] = ip[0]+2;
 
+#if 0
+              { /* search & replace with shared vertex position ...
+                 results in "smooth" shading
+                 REFACTOR this using a hash */
+                int *ip = mesh->face_position_list + mesh->face_count*3;
+                int b;
+                
+                for(b=0;b<3;b++) {
+                  float *search = mesh->model_position_list + ip[b]*3;
+
+                  int c;
+                  for(c=0;c<mesh->position_count;c++) {
+                    float *test = mesh->model_position_list + c*3;
+                    if( (test[0]==search[0]) &&
+                        (test[1]==search[1]) &&
+                        (test[2]==search[2])) {
+                      ip[b] = c;
+                      break;
+                    }
+                  }
+                }
+              }
+#endif
+               
               ip = mesh->face_normal_list + mesh->face_count*3;
-              
               ip[0] = mesh->normal_count;
               ip[1] = ip[0]+1;
               ip[2] = ip[0]+2;
+
+#ifdef IDTF_COLOR
+              ip = mesh->face_color_list + mesh->face_count*3;
+              ip[0] = mesh->color_count;
+              ip[1] = ip[0]+1;
+              ip[2] = ip[0]+2;
+#endif
 
               ip = mesh->face_shading_list + mesh->face_count;
               ip[0] = 0;
@@ -1884,6 +2011,9 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
               mesh->face_count++;
               mesh->position_count+=3;
               mesh->normal_count+=3;
+#ifdef IDTF_COLOR
+              mesh->color_count+=3;
+#endif
             }
           }
           break;
@@ -1922,8 +2052,14 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
         VLAFreeP(mesh->face_position_list);
         VLAFreeP(mesh->face_normal_list);
         VLAFreeP(mesh->face_shading_list);
+#ifdef IDTF_COLOR
+        VLAFreeP(mesh->face_color_list);
+#endif
         VLAFreeP(mesh->model_position_list);
         VLAFreeP(mesh->model_normal_list);
+#ifdef IDTF_COLOR
+        VLAFreeP(mesh->model_diffuse_color_list);
+#endif
         mesh++;
       }
       VLAFreeP(mesh_vla);
