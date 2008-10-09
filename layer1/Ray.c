@@ -1465,6 +1465,100 @@ void RayRenderVRML2(CRay *I,int width,int height,
   *vla_ptr=vla;
 }
 
+/* simply write-once, read many hash for float-3 vectors  */
+
+#define VECTOR_HASH_MASK 0xFFFF
+
+typedef struct {
+  float key[3];
+  int value;
+  int next; /* 1-based offsets, 0 = terminal */
+} VectorHashElem;
+
+typedef struct {
+  int first[VECTOR_HASH_MASK+1];
+  VectorHashElem *elem; 
+  int size;
+} VectorHash;
+
+static void VectorHash_Free(VectorHash *I)
+{
+  if(I) {
+    VLAFreeP(I->elem);
+  }
+  FreeP(I);
+}
+
+static VectorHash *VectorHash_New(void)
+{
+  VectorHash *I = Calloc(VectorHash,1);
+  if(I) {
+    I->elem = VLACalloc(VectorHashElem,100);
+    if(!I->elem) {
+      VectorHash_Free(I);
+      I = NULL;
+    }
+  }
+  return I;
+}
+static int VectorHash_GetOrSetKeyValue(VectorHash *I, float *key, int *value)
+{
+  unsigned int hash;
+  /* returns non-zero if the entry is new */
+  {
+    register unsigned int a,b,c;
+
+    a = ((unsigned int*)key)[0];
+    b = ((unsigned int*)key)[1];
+    c = ((unsigned int*)key)[2];
+    
+    /* Robert Jenkin's 96 to 32 bit hash (public domain) 
+       this is probably way overkill */
+    
+    a=a-b;  a=a-c;  a=a^(c >> 13);
+    b=b-c;  b=b-a;  b=b^(a << 8); 
+    c=c-a;  c=c-b;  c=c^(b >> 13);
+    a=a-b;  a=a-c;  a=a^(c >> 12);
+    b=b-c;  b=b-a;  b=b^(a << 16);
+    c=c-a;  c=c-b;  c=c^(b >> 5);
+    a=a-b;  a=a-c;  a=a^(c >> 3);
+    b=b-c;  b=b-a;  b=b^(a << 10);
+    c=c-a;  c=c-b;  c=c^(b >> 15);
+    
+    /* fold those 32 bits to 16 */
+    
+    c ^= (c>>16);
+    
+    /* apply mask */
+
+    hash = c & VECTOR_HASH_MASK;
+  }
+  {
+    int offset = I->first[hash];
+    while(offset) {
+      VectorHashElem *elem = I->elem + offset;
+      float *v = elem->key;
+      if((v[0]==key[0]) && (v[1]==key[1]) && (v[2]==key[2])) {
+        *value = elem->value; /* matched, so return value */
+        return 0; /* key/value exists */
+      }
+      offset = elem->next;
+    }
+    /* not matched -- add new key/value  */
+    if(VLACheck(I->elem, VectorHashElem, ++(I->size))) {
+      VectorHashElem *elem = I->elem + I->size;
+      elem->next = I->first[hash];
+      I->first[hash] = I->size;
+      copy3f(key, elem->key);
+      elem->value = *value;
+      return 1; /* inform caller */
+    } else {
+      I->size--;
+      return -1;
+    }
+  }
+}
+
 
 #define noIDTF_COLOR
 
@@ -1472,19 +1566,18 @@ typedef struct  {
   int face_count;
   int position_count;
   int normal_count;
-#ifdef IDTF_COLOR
-  int color_count;
-#endif
   int *face_position_list;
   int *face_normal_list;
-#ifdef IDTF_COLOR
-  int *face_color_list;
-#endif
   int *face_shading_list;
   float *model_position_list;
   float *model_normal_list;
+  VectorHash *position_hash;
+  VectorHash *normal_hash;
 #ifdef IDTF_COLOR
+  int color_count;
+  int *face_color_list;
   float *model_diffuse_color_list;
+  VectorHash *color_hash;
 #endif
 } IdtfModelResourceMesh;
 
@@ -1596,7 +1689,7 @@ static ov_size idtf_dump_resource_header(char **vla, ov_size cnt)
   UtilConcatVLA(vla,&cnt,"RESOURCE_LIST \"SHADER\" {\n");
   UtilConcatVLA(vla,&cnt,"\tRESOURCE_COUNT 1\n");
   UtilConcatVLA(vla,&cnt,"\tRESOURCE 0 {\n");
-  UtilConcatVLA(vla,&cnt,"\t\tRESOURCE_NAME \"MeshShader\"\n");
+  /*  UtilConcatVLA(vla,&cnt,"\t\tRESOURCE_NAME \"MeshShader\"\n"); */
   UtilConcatVLA(vla,&cnt,"\t\tSHADER_MATERIAL_NAME \"Material\"\n");
   UtilConcatVLA(vla,&cnt,"\t\tSHADER_ACTIVE_TEXTURE_COUNT 0\n");
   UtilConcatVLA(vla,&cnt,"\t}\n");
@@ -1798,6 +1891,7 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
   }
   UtilConcatVLA(vla,&cnt,"}\n\n");
 
+#if 0
   {
     int a;
     for(a=0;a<n_mesh;a++) {
@@ -1819,9 +1913,51 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
       UtilConcatVLA(vla,&cnt,"}\n\n");
     }
   }
-  
+#endif
+
   return cnt;
 }
+
+static void unique_vector_add(VectorHash *vh, float *vector, 
+                             float *vector_array, int *vector_count,
+                             int *index_array, int *index_count)
+{
+  int index = *vector_count;
+  switch( VectorHash_GetOrSetKeyValue(vh, vector, &index) ) {
+  case 1:
+    {
+      float *vector_slot = vector_array + 3*(*vector_count);
+      copy3f(vector,vector_slot);
+      (*vector_count)++;
+    }
+    /* INTENTIONAL omission of break */
+  case 0:
+    index_array[(*index_count)++] = index;
+    break;
+  }
+}
+
+static void unique_color_add(VectorHash *vh, float *vector, 
+                             float *vector_array, int *vector_count,
+                             int *index_array, int *index_count,
+                             float alpha)
+{
+  int index = *vector_count;
+  switch( VectorHash_GetOrSetKeyValue(vh, vector, &index) ) {
+  case 1:
+    {
+      float *vector_slot = vector_array + 4*(*vector_count); /* NOTE 4x spacing */
+      copy3f(vector,vector_slot);
+      vector_slot[3] = alpha;
+      (*vector_count)++;
+    }
+    /* INTENTIONAL omission of break */
+  case 0:
+    index_array[(*index_count)++] = index;
+    break;
+  }
+}
+
 /*========================================================================*/
 void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
 {
@@ -1852,15 +1988,16 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
               if( 
                  (mesh->face_position_list = VLACalloc(int,3)) &&
                  (mesh->face_normal_list = VLACalloc(int,3)) &&
-#ifdef IDTF_COLOR
-                 (mesh->face_color_list = VLACalloc(int,3)) &&
-#endif
-                 (mesh->face_shading_list = VLACalloc(int,1)) &&
+                 (mesh->face_shading_list = VLACalloc(int,1)) && /* defaults to zero */
                  (mesh->model_position_list = VLAlloc(float,3)) &&
 #ifdef IDTF_COLOR
+                 (mesh->face_color_list = VLACalloc(int,3)) &&
                  (mesh->model_diffuse_color_list = VLAlloc(float,4)) &&
+                 ((mesh->color_hash = VectorHash_New())) &&
 #endif
-                 (mesh->model_normal_list = VLAlloc(float,3)) 
+                 (mesh->model_normal_list = VLAlloc(float,3)) &&
+                 ((mesh->position_hash = VectorHash_New())) &&
+                 ((mesh->normal_hash = VectorHash_New())) 
                  ) {
                 mesh_cnt++;
               } else {
@@ -1882,24 +2019,100 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
           if(mesh) {
             if( VLACheck(mesh->face_position_list, int, mesh->face_count*3+2) &&
                 VLACheck(mesh->face_normal_list, int, mesh->face_count*3+2) &&
-#ifdef IDTF_COLOR
-                VLACheck(mesh->face_color_list, int, mesh->face_count*3+2) &&
-#endif
                 VLACheck(mesh->face_shading_list, int, mesh->face_count) &&
                 VLACheck(mesh->model_position_list, float, (mesh->position_count+3)*3) &&
 #ifdef IDTF_COLOR
+                VLACheck(mesh->face_color_list, int, mesh->face_count*3+2) &&
                 VLACheck(mesh->model_diffuse_color_list, float, (mesh->color_count+3)*4) &&
 #endif
                 VLACheck(mesh->model_normal_list, float, (mesh->normal_count+3)*3)
                 ) {
 
-
               float *vert = base->Vertex+3*(prim->vert);
               float *norm = base->Normal+3*base->Vert2Normal[prim->vert]+3;
-              float *fp;
-              int *ip;
               int reverse = TriangleReverse(prim);
               
+#if 1
+              int face_position_count = mesh->face_count*3;
+              int face_normal_count = face_position_count;
+#ifdef IDTF_COLOR
+              int face_color_count = face_position_count;
+#endif
+
+              unique_vector_add(mesh->position_hash, vert,
+                                mesh->model_position_list, &mesh->position_count,
+                                mesh->face_position_list, &face_position_count);
+              unique_vector_add(mesh->normal_hash, norm,
+                                mesh->model_normal_list, &mesh->normal_count,
+                                mesh->face_normal_list, &face_normal_count);
+#ifdef IDTF_COLOR
+              unique_color_add(mesh->normal_hash, prim->c1,
+                               mesh->model_diffuse_color_list, &mesh->color_count,
+                               mesh->face_color_list, &face_color_count, 
+                               1.0F - prim->trans);
+#endif
+             if(reverse) {
+                vert+=6;
+                norm+=6;
+                unique_vector_add(mesh->position_hash, vert,
+                                  mesh->model_position_list, &mesh->position_count,
+                                  mesh->face_position_list, &face_position_count);
+                unique_vector_add(mesh->normal_hash, norm,
+                                  mesh->model_normal_list, &mesh->normal_count,
+                                  mesh->face_normal_list, &face_normal_count);
+#ifdef IDTF_COLOR
+                unique_color_add(mesh->normal_hash, prim->c3,
+                                 mesh->model_diffuse_color_list, &mesh->color_count,
+                                 mesh->face_color_list, &face_color_count, 
+                                 1.0F - prim->trans);
+#endif
+                vert-=3;
+                norm-=3;
+                unique_vector_add(mesh->position_hash, vert,
+                                  mesh->model_position_list, &mesh->position_count,
+                                  mesh->face_position_list, &face_position_count);
+                unique_vector_add(mesh->normal_hash, norm,
+                                  mesh->model_normal_list, &mesh->normal_count,
+                                  mesh->face_normal_list, &face_normal_count);
+#ifdef IDTF_COLOR
+                unique_color_add(mesh->normal_hash, prim->c2,
+                                 mesh->model_diffuse_color_list, &mesh->color_count,
+                                 mesh->face_color_list, &face_color_count, 
+                                 1.0F - prim->trans);
+#endif
+              } else {
+                vert+=3;
+                norm+=3;
+                unique_vector_add(mesh->position_hash, vert,
+                                  mesh->model_position_list, &mesh->position_count,
+                                  mesh->face_position_list, &face_position_count);
+                unique_vector_add(mesh->normal_hash, norm,
+                                  mesh->model_normal_list, &mesh->normal_count,
+                                  mesh->face_normal_list, &face_normal_count);
+#ifdef IDTF_COLOR
+                unique_color_add(mesh->normal_hash, prim->c2,
+                                 mesh->model_diffuse_color_list, &mesh->color_count,
+                                 mesh->face_color_list, &face_color_count, 
+                                 1.0F - prim->trans);
+#endif
+                vert+=3;
+                norm+=3;
+                unique_vector_add(mesh->position_hash, vert,
+                                  mesh->model_position_list, &mesh->position_count,
+                                  mesh->face_position_list, &face_position_count);
+                unique_vector_add(mesh->normal_hash, norm,
+                                  mesh->model_normal_list, &mesh->normal_count,
+                                  mesh->face_normal_list, &face_normal_count);
+#ifdef IDTF_COLOR
+                unique_color_add(mesh->normal_hash, prim->c3,
+                                 mesh->model_diffuse_color_list, &mesh->color_count,
+                                 mesh->face_color_list, &face_color_count, 
+                                 1.0F - prim->trans);
+#endif
+              }
+#else
+              float *fp;
+              int *ip;
               fp = mesh->model_position_list + mesh->position_count*3;
               copy3f(vert, fp);
               vert+=3;
@@ -1921,6 +2134,13 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
                 fp+=3;
               }
 
+              ip = mesh->face_position_list + mesh->face_count*3;
+              ip[0] = mesh->position_count;
+              ip[1] = ip[0]+1;
+              ip[2] = ip[0]+2;
+
+              mesh->position_count+=3;
+
               fp = mesh->model_normal_list + mesh->normal_count*3;
               copy3f(norm, fp);
               norm+=3;
@@ -1941,6 +2161,12 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
                 norm+=3;
                 fp+=3;
               }
+              ip = mesh->face_normal_list + mesh->face_count*3;
+              ip[0] = mesh->normal_count;
+              ip[1] = ip[0]+1;
+              ip[2] = ip[0]+2;
+              mesh->normal_count+=3;
+
 #ifdef IDTF_COLOR
               fp = mesh->model_diffuse_color_list + mesh->color_count*4;
               copy3f(prim->c1, fp);
@@ -1963,57 +2189,18 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
                 fp+=4;
               }
 #endif
-        
-              ip = mesh->face_position_list + mesh->face_count*3;
-              ip[0] = mesh->position_count;
-              ip[1] = ip[0]+1;
-              ip[2] = ip[0]+2;
-
-#if 0
-              { /* search & replace with shared vertex position ...
-                 results in "smooth" shading
-                 REFACTOR this using a hash */
-                int *ip = mesh->face_position_list + mesh->face_count*3;
-                int b;
-                
-                for(b=0;b<3;b++) {
-                  float *search = mesh->model_position_list + ip[b]*3;
-
-                  int c;
-                  for(c=0;c<mesh->position_count;c++) {
-                    float *test = mesh->model_position_list + c*3;
-                    if( (test[0]==search[0]) &&
-                        (test[1]==search[1]) &&
-                        (test[2]==search[2])) {
-                      ip[b] = c;
-                      break;
-                    }
-                  }
-                }
-              }
-#endif
                
-              ip = mesh->face_normal_list + mesh->face_count*3;
-              ip[0] = mesh->normal_count;
-              ip[1] = ip[0]+1;
-              ip[2] = ip[0]+2;
 
 #ifdef IDTF_COLOR
               ip = mesh->face_color_list + mesh->face_count*3;
               ip[0] = mesh->color_count;
               ip[1] = ip[0]+1;
               ip[2] = ip[0]+2;
-#endif
-
-              ip = mesh->face_shading_list + mesh->face_count;
-              ip[0] = 0;
-
-              mesh->face_count++;
-              mesh->position_count+=3;
-              mesh->normal_count+=3;
-#ifdef IDTF_COLOR
               mesh->color_count+=3;
 #endif
+
+#endif
+              mesh->face_count++;
             }
           }
           break;
@@ -2059,7 +2246,11 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
         VLAFreeP(mesh->model_normal_list);
 #ifdef IDTF_COLOR
         VLAFreeP(mesh->model_diffuse_color_list);
+        VectorHash_Free(mesh->color_hash);
 #endif
+        VectorHash_Free(mesh->position_hash);
+        VectorHash_Free(mesh->normal_hash);
+
         mesh++;
       }
       VLAFreeP(mesh_vla);
