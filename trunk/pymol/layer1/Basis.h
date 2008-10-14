@@ -27,6 +27,15 @@ Z* -------------------------------------------------------------------
 #define cPrimEllipsoid 6
 #define cPrimCone 7
 
+/* proposed 
+
+#define cPrimNodePush 8
+#define cPrimNodePop 9
+#define cPrimNodeAdd 10
+#define cPrimBreak 11
+
+*/
+
 #define cCylCapNone 0
 #define cCylCapFlat 1
 #define cCylCapRound 2
