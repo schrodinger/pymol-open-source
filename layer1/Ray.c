@@ -1465,12 +1465,12 @@ void RayRenderVRML2(CRay *I,int width,int height,
   *vla_ptr=vla;
 }
 
-/* simple write-once/read-many hash for float-3 vectors  */
+/* simple write-once/read-many hash for float-3/4 vectors  */
 
 #define VECTOR_HASH_MASK 0xFFFF
 
 typedef struct {
-  float key[3];
+  float key[4];
   int value;
   int next; /* 1-based offsets, 0 = terminal */
 } VectorHashElem;
@@ -1501,7 +1501,8 @@ static VectorHash *VectorHash_New(void)
   }
   return I;
 }
-static int VectorHash_GetOrSetKeyValue(VectorHash *I, float *key, int *value)
+
+static int VectorHash_GetOrSetKeyValue(VectorHash *I, float *key, float *alpha, int *value)
 {
   unsigned int hash;
   /* returns non-zero if the entry is new */
@@ -1511,7 +1512,7 @@ static int VectorHash_GetOrSetKeyValue(VectorHash *I, float *key, int *value)
     a = ((unsigned int*)key)[0];
     b = ((unsigned int*)key)[1];
     c = ((unsigned int*)key)[2];
-    
+
     /* Robert Jenkin's 96 to 32 bit hash (public domain) 
        this is probably way overkill */
     
@@ -1524,7 +1525,14 @@ static int VectorHash_GetOrSetKeyValue(VectorHash *I, float *key, int *value)
     a=a-b;  a=a-c;  a=a^(c >> 3);
     b=b-c;  b=b-a;  b=b^(a << 10);
     c=c-a;  c=c-b;  c=c^(b >> 15);
-    
+
+    /* mix in the fourth key (if present) */
+
+    if(alpha) {
+      unsigned int d = *((unsigned int*)alpha);
+      c = c + d;
+    }
+
     /* fold those 32 bits to 16 */
     
     c ^= (c>>16);
@@ -1539,8 +1547,10 @@ static int VectorHash_GetOrSetKeyValue(VectorHash *I, float *key, int *value)
       VectorHashElem *elem = I->elem + offset;
       float *v = elem->key;
       if((v[0]==key[0]) && (v[1]==key[1]) && (v[2]==key[2])) {
-        *value = elem->value; /* matched, so return value */
-        return 0; /* key/value exists */
+	if((!alpha)||(*alpha==v[3])) {
+	  *value = elem->value; /* matched, so return value */
+	  return 0; /* key/value exists */
+	}
       }
       offset = elem->next;
     }
@@ -1550,6 +1560,8 @@ static int VectorHash_GetOrSetKeyValue(VectorHash *I, float *key, int *value)
       elem->next = I->first[hash];
       I->first[hash] = I->size;
       copy3f(key, elem->key);
+      if(alpha)
+	elem->key[3] = *alpha;
       elem->value = *value;
       return 1; /* inform caller */
     } else {
@@ -1559,6 +1571,46 @@ static int VectorHash_GetOrSetKeyValue(VectorHash *I, float *key, int *value)
   }
 }
 
+static void unique_vector_add(VectorHash *vh, float *vector, 
+                             float *vector_array, int *vector_count,
+                             int *index_array, int *index_count)
+{
+  int index = *vector_count;
+  switch( VectorHash_GetOrSetKeyValue(vh, vector,NULL, &index) ) {
+  case 1:
+    {
+      float *vector_slot = vector_array + 3*(*vector_count);
+      copy3f(vector,vector_slot);
+      (*vector_count)++;
+    }
+    /* INTENTIONAL omission of break */
+  case 0:
+    index_array[(*index_count)++] = index;
+    break;
+  }
+}
+
+static void unique_color_add(VectorHash *vh, float *vector, 
+                             float *vector_array, int *vector_count,
+                             int *index_array, int *index_count,
+                             float alpha)
+{
+  int index = *vector_count;
+
+  switch( VectorHash_GetOrSetKeyValue(vh, vector, &alpha, &index) ) {
+  case 1:
+    {
+      float *vector_slot = vector_array + 4*(*vector_count); /* NOTE 4x spacing */
+      copy3f(vector,vector_slot);
+      vector_slot[3]=alpha;
+      (*vector_count)++;
+    }
+    /* INTENTIONAL omission of break */
+  case 0:
+    index_array[(*index_count)++] = index;
+    break;
+  }
+}
 
 #define noIDTF_COLOR
 
@@ -1577,8 +1629,13 @@ typedef struct  {
   int *face_color_list;
   float *model_diffuse_color_list;
   VectorHash *color_hash;
-} IdtfModelResourceMesh;
+} IdtfResourceMesh;
 
+typedef struct  {
+  float *color_list;
+  int color_count;
+  VectorHash *color_hash;
+} IdtfMaterial;
 
 static ov_size idtf_dump_file_header(char **vla, ov_size cnt)
 {
@@ -1625,10 +1682,10 @@ static ov_size idtf_dump_file_header(char **vla, ov_size cnt)
 }
 
 static ov_size idtf_dump_model_nodes(char **vla, ov_size cnt, 
-                                     IdtfModelResourceMesh *mesh_vla, int n_mesh)
+                                     IdtfResourceMesh *mesh_vla, int n_mesh)
 {
   int a;
-  IdtfModelResourceMesh *mesh = mesh_vla;
+  IdtfResourceMesh *mesh = mesh_vla;
   for(a=0;a<n_mesh;a++) {
     OrthoLineType buffer;
 
@@ -1691,34 +1748,33 @@ static ov_size idtf_dump_resource_header(char **vla, ov_size cnt)
 }
 
 static ov_size idtf_dump_resources(char **vla, ov_size cnt, 
-                                   IdtfModelResourceMesh *mesh_vla, int n_mesh)
+                                   IdtfResourceMesh *mesh_vla, int n_mesh,
+				   IdtfMaterial *material)
 {
-  /* for now, dump a separate shader & material for each mesh */
-
   { 
     OrthoLineType buffer;
+    int n_color = material->color_count;
+
     UtilConcatVLA(vla,&cnt,"RESOURCE_LIST \"SHADER\" {\n");
     
-    sprintf(buffer,"\tRESOURCE_COUNT %d\n",n_mesh);
+    sprintf(buffer,"\tRESOURCE_COUNT %d\n",n_color);
     UtilConcatVLA(vla,&cnt,buffer);
     
     {
-      int a;
-      IdtfModelResourceMesh *mesh = mesh_vla;
-      for(a=0;a<n_mesh;a++) {
+      int c;
+      for(c=0;c<n_color;c++) {
         
-        sprintf(buffer,"\tRESOURCE %d {\n",a);
+        sprintf(buffer,"\tRESOURCE %d {\n",c);
+        UtilConcatVLA(vla,&cnt,buffer);
+	
+        sprintf(buffer,"\t\tRESOURCE_NAME \"Shader%06d\"\n",c);
         UtilConcatVLA(vla,&cnt,buffer);
 
-        sprintf(buffer,"\t\tRESOURCE_NAME \"Shader%06d\"\n",a);
-        UtilConcatVLA(vla,&cnt,buffer);
-
-        sprintf(buffer,"\t\tSHADER_MATERIAL_NAME \"Material%06d\"\n",a);
+        sprintf(buffer,"\t\tSHADER_MATERIAL_NAME \"Material%06d\"\n",c);
         UtilConcatVLA(vla,&cnt,buffer);
 
         UtilConcatVLA(vla,&cnt,"\t\tSHADER_ACTIVE_TEXTURE_COUNT 0\n");
         UtilConcatVLA(vla,&cnt,"\t}\n");
-        mesh++;
       }
     }
     UtilConcatVLA(vla,&cnt,"}\n\n");
@@ -1726,72 +1782,44 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
 
   { 
     OrthoLineType buffer;
+    int n_color = material->color_count;
+
     UtilConcatVLA(vla,&cnt,"RESOURCE_LIST \"MATERIAL\" {\n");
     
-    sprintf(buffer,"\tRESOURCE_COUNT %d\n",n_mesh);
+    sprintf(buffer,"\tRESOURCE_COUNT %d\n",n_color);
     UtilConcatVLA(vla,&cnt,buffer);
     
     {
-      int a;
-      IdtfModelResourceMesh *mesh = mesh_vla;
-      
-      for(a=0;a<n_mesh;a++) {
-#ifdef IDTF_COLORS
-#else
-        float avg_rgba[4] = {1.0F, 1.0F, 1.0F, 1.0F}; /* default is white */
+      int c;
+      float *fp = material->color_list;
 
-        /* compute and use mesh average color for the material */
-
-        {
-          double sum_rgba[4] = {0.0, 0.0, 0.0, 0.0};
-          int sum_cnt = 0;
-          {
-            int b;
-            int *ip = mesh->face_color_list;
-            for(b=0;b<mesh->face_count;b++) {
-              float *fp0 = mesh->model_diffuse_color_list + 4*ip[0];
-              float *fp1 = mesh->model_diffuse_color_list + 4*ip[1];
-              float *fp2 = mesh->model_diffuse_color_list + 4*ip[2];
-              sum_rgba[0] += fp0[0] + fp1[0] + fp2[0];
-              sum_rgba[1] += fp0[1] + fp1[1] + fp2[1];
-              sum_rgba[2] += fp0[2] + fp1[2] + fp2[2];
-              sum_rgba[3] += fp0[3] + fp1[3] + fp2[3];
-              sum_cnt += 3;
-              ip+=3;
-            }
-            if(sum_cnt) {
-              double factor = 1.0/sum_cnt;
-              avg_rgba[0] = (float)(sum_rgba[0]*factor);
-              avg_rgba[1] = (float)(sum_rgba[1]*factor);
-              avg_rgba[2] = (float)(sum_rgba[2]*factor);
-              avg_rgba[3] = (float)(sum_rgba[3]*factor);
-            }
-          }
-        }
-#endif
-        sprintf(buffer,"\tRESOURCE %d {\n",a);
+      for(c=0;c<n_color;c++) {
+        sprintf(buffer,"\tRESOURCE %d {\n",c);
         UtilConcatVLA(vla,&cnt,buffer);
-        sprintf(buffer,"\t\tRESOURCE_NAME \"Material%06d\"\n",a);
+        sprintf(buffer,"\t\tRESOURCE_NAME \"Material%06d\"\n",c);
         UtilConcatVLA(vla,&cnt,buffer);
         
         sprintf(buffer,"\t\tMATERIAL_AMBIENT %0.6f %0.6f %0.6f\n",
-                avg_rgba[0]*0.1F, avg_rgba[1]*0.1F, avg_rgba[2]*0.1F);
+                fp[0]*0, fp[1]*0, fp[2]*0);
         UtilConcatVLA(vla,&cnt,buffer);
         
         sprintf(buffer,"\t\tMATERIAL_DIFFUSE %0.6f %0.6f %0.6f\n",
-                avg_rgba[0], avg_rgba[1], avg_rgba[2]);
+                fp[0], fp[1], fp[2]);
         UtilConcatVLA(vla,&cnt,buffer);
         
-        UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_SPECULAR 0.0720000 0.0720000 0.0720000\n");
-        UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_EMISSIVE 0.000000 0.000000 0.000000\n");
-        UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_REFLECTIVITY 0.000000\n");
+        UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_SPECULAR 0.750000 0.750000 0.750000\n");
 
-        sprintf(buffer,"\t\tMATERIAL_OPACITY %0.6f\n",avg_rgba[3]);
+        sprintf(buffer,"\t\tMATERIAL_EMISSIVE %0.6f %0.6f %0.6f\n",
+                fp[0]*0.13, fp[1]*0.13, fp[2]*0.13);
+        UtilConcatVLA(vla,&cnt,buffer);
+        UtilConcatVLA(vla,&cnt,"\t\tMATERIAL_REFLECTIVITY 0.40000\n");
+
+        sprintf(buffer,"\t\tMATERIAL_OPACITY %0.6f\n",fp[3]);
         UtilConcatVLA(vla,&cnt,buffer);
         
         UtilConcatVLA(vla,&cnt,"\t}\n");
 
-        mesh++;
+	fp+=4;
       }
     }
     UtilConcatVLA(vla,&cnt,"}\n\n");
@@ -1807,7 +1835,7 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
     
     {
       int a;
-      IdtfModelResourceMesh *mesh = mesh_vla;
+      IdtfResourceMesh *mesh = mesh_vla;
       for(a=0;a<n_mesh;a++) {
       
         sprintf(buffer,"\tRESOURCE %d {\n",a);
@@ -1839,18 +1867,43 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
 #endif
         UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_TEXTURE_COORD_COUNT 0\n");
         UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_BONE_COUNT 0\n");
+
+	{
+	  int n_color = material->color_count;
+	  
+	  sprintf(buffer,"\t\t\tMODEL_SHADING_COUNT %d\n",n_color);
+	  UtilConcatVLA(vla,&cnt,buffer);
+	  
+	  UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_SHADING_DESCRIPTION_LIST {\n");
+
+	  {
+	    int c;
+	    for(c=0;c<n_color;c++) {
+	      
+	      sprintf(buffer,"\t\t\t\tSHADING_DESCRIPTION %d {\n",c);
+	      UtilConcatVLA(vla,&cnt,buffer);
+	      
+	      UtilConcatVLA(vla,&cnt,"\t\t\t\tTEXTURE_LAYER_COUNT 0\n");
+	      
+	      sprintf(buffer,"\t\t\t\tSHADER_ID %d\n",c+1);
+	      UtilConcatVLA(vla,&cnt,buffer);
+
+	      UtilConcatVLA(vla,&cnt,"\t\t\t\t}\n");
+	    }
+	  }
+	  UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+	}
+
+#if 0
         UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_SHADING_COUNT 1\n");
         UtilConcatVLA(vla,&cnt,"\t\t\tMODEL_SHADING_DESCRIPTION_LIST {\n");
         UtilConcatVLA(vla,&cnt,"\t\t\t\tSHADING_DESCRIPTION 0 {\n");
         UtilConcatVLA(vla,&cnt,"\t\t\t\tTEXTURE_LAYER_COUNT 0\n");
-
-        /*        UtilConcatVLA(vla,&cnt,"\t\t\t\tSHADER 0\n"); */
-
         sprintf(buffer,"\t\t\t\tSHADER_ID %d\n",a);
         UtilConcatVLA(vla,&cnt,buffer);
-
         UtilConcatVLA(vla,&cnt,"\t\t\t\t}\n");
         UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
+#endif
 
         {
           int b;
@@ -1982,6 +2035,7 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
     }
     UtilConcatVLA(vla,&cnt,"}\n\n");
 
+#if 0
     /* bind shaders with the correct models */
 
     {
@@ -1995,61 +2049,42 @@ static ov_size idtf_dump_resources(char **vla, ov_size cnt,
         UtilConcatVLA(vla,&cnt,"\t\tSHADER_LIST_COUNT 1\n");
         UtilConcatVLA(vla,&cnt,"\t\tSHADER_LIST_LIST {\n");
         UtilConcatVLA(vla,&cnt,"\t\t\tSHADER_LIST 0 {\n");
-        UtilConcatVLA(vla,&cnt,"\t\t\t\tSHADER_COUNT 1\n");
-        UtilConcatVLA(vla,&cnt,"\t\t\t\tSHADER_NAME_LIST {\n");
+	
+	{ 
+	  OrthoLineType buffer;
+	  int n_color = material->color_count;
+	  
+	  sprintf(buffer,"\t\t\t\tSHADER_COUNT %d\n",n_color);
+	  UtilConcatVLA(vla,&cnt,buffer);
 
-        sprintf(buffer,"\t\t\t\t\tSHADER 0 NAME: \"Shader%06d\"\n",a);
-        UtilConcatVLA(vla,&cnt,buffer);
-        UtilConcatVLA(vla,&cnt,"\t\t\t\t}\n");
+	  UtilConcatVLA(vla,&cnt,"\t\t\t\tSHADER_NAME_LIST {\n");
+	  
+	  {
+	    int c;
+	    for(c=0;c<n_color;c++) {
+	      sprintf(buffer,"\t\t\t\t\tSHADER %d NAME: \"Shader%06d\"\n",c,c);
+	      UtilConcatVLA(vla,&cnt,buffer);
+	    }
+	  }
+
+	  UtilConcatVLA(vla,&cnt,"\t\t\t\t}\n");
+	}
+
         UtilConcatVLA(vla,&cnt,"\t\t\t}\n");
         UtilConcatVLA(vla,&cnt,"\t\t}\n");
         UtilConcatVLA(vla,&cnt,"\t}\n");
-        UtilConcatVLA(vla,&cnt,"}\n\n");
+	UtilConcatVLA(vla,&cnt,"}\n\n");
+
       }
+
     }
+
+#endif
+
   }
   return cnt;
 }
 
-static void unique_vector_add(VectorHash *vh, float *vector, 
-                             float *vector_array, int *vector_count,
-                             int *index_array, int *index_count)
-{
-  int index = *vector_count;
-  switch( VectorHash_GetOrSetKeyValue(vh, vector, &index) ) {
-  case 1:
-    {
-      float *vector_slot = vector_array + 3*(*vector_count);
-      copy3f(vector,vector_slot);
-      (*vector_count)++;
-    }
-    /* INTENTIONAL omission of break */
-  case 0:
-    index_array[(*index_count)++] = index;
-    break;
-  }
-}
-
-static void unique_color_add(VectorHash *vh, float *vector, 
-                             float *vector_array, int *vector_count,
-                             int *index_array, int *index_count,
-                             float alpha)
-{
-  int index = *vector_count;
-  switch( VectorHash_GetOrSetKeyValue(vh, vector, &index) ) {
-  case 1:
-    {
-      float *vector_slot = vector_array + 4*(*vector_count); /* NOTE 4x spacing */
-      copy3f(vector,vector_slot);
-      vector_slot[3] = alpha;
-      (*vector_count)++;
-    }
-    /* INTENTIONAL omission of break */
-  case 0:
-    index_array[(*index_count)++] = index;
-    break;
-  }
-}
 
 /*========================================================================*/
 void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
@@ -2063,10 +2098,9 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
     CBasis *base = I->Basis+1;
     CPrimitive *prim = I->Primitive;
     int mesh_cnt = 0;
-    IdtfModelResourceMesh *mesh_vla = VLACalloc(IdtfModelResourceMesh,1);
-    
+    IdtfResourceMesh *mesh_vla = VLACalloc(IdtfResourceMesh,1);
     if(mesh_vla) {
-      IdtfModelResourceMesh *mesh = NULL;
+      IdtfResourceMesh *mesh = NULL;
       int mesh_start = 0;
       int a;
 
@@ -2077,7 +2111,7 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
         case cPrimSphere:
           if(!mesh) {
             /* create a new triangle mesh */
-            if(VLACheck(mesh_vla,IdtfModelResourceMesh,mesh_cnt)) {
+            if(VLACheck(mesh_vla,IdtfResourceMesh,mesh_cnt)) {
               mesh = mesh_vla + mesh_cnt;
               if( 
                  (mesh->face_position_list = VLACalloc(int,3)) &&
@@ -2203,40 +2237,86 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
         /* looping through each primitive */
         prim++;
       }
-    }
 
-    {
-      int cnt = 0;
-      cnt = idtf_dump_file_header(node_vla,cnt);
-      cnt = idtf_dump_model_nodes(node_vla,cnt,mesh_vla,mesh_cnt);
-      VLASize( (*node_vla), char, cnt);
-    }
-    {
-      int cnt = 0;
-      cnt = idtf_dump_resource_header(rsrc_vla,cnt);
-      cnt = idtf_dump_resources(rsrc_vla,cnt,mesh_vla,mesh_cnt);
-      VLASize( (*rsrc_vla), char, cnt);
-    }
+      /* now we need to consolidate materials for each color
+	 combination (creating averages as necessary) and update
+	 mesh->face_shading_list appropriately for each face */
+      
+      {
+	IdtfMaterial *material = Calloc(IdtfMaterial,1);
+	if(material && 
+	   (material->color_list = VLAlloc(float,4)) &&
+	   (material->color_hash = VectorHash_New())) {
+	  
+	  const float one_third = (1/3.0F);
+	  int a;
+	  IdtfResourceMesh *mesh = mesh_vla;
+	  
+	  for(a=0;a<mesh_cnt;a++) {
+            int *ip = mesh->face_color_list;
+	    int shading_count = 0;
+            int b;
+            for(b=0;b<mesh->face_count;b++) {
+              float *fp0 = mesh->model_diffuse_color_list + 4*ip[0];
+              float *fp1 = mesh->model_diffuse_color_list + 4*ip[1];
+              float *fp2 = mesh->model_diffuse_color_list + 4*ip[2];
+	      float avg_rgba[4];
 
-    {
-      /* refactor into a delete method */
-      IdtfModelResourceMesh *mesh = mesh_vla;
-      int i;
-      for(i=0;i<mesh_cnt;i++) {
-        VLAFreeP(mesh->face_position_list);
-        VLAFreeP(mesh->face_normal_list);
-        VLAFreeP(mesh->face_shading_list);
-        VLAFreeP(mesh->face_color_list);
-        VLAFreeP(mesh->model_position_list);
-        VLAFreeP(mesh->model_normal_list);
-        VLAFreeP(mesh->model_diffuse_color_list);
-        VectorHash_Free(mesh->color_hash);
-        VectorHash_Free(mesh->position_hash);
-        VectorHash_Free(mesh->normal_hash);
+	      avg_rgba[0] = (fp0[0] + fp1[0] + fp2[0]) * one_third;
+              avg_rgba[1] = (fp0[1] + fp1[1] + fp2[1]) * one_third;
+              avg_rgba[2] = (fp0[2] + fp1[2] + fp2[2]) * one_third;
+	      avg_rgba[3] = (fp0[3] + fp1[3] + fp2[3]) * one_third;
 
-        mesh++;
+	      if(VLACheck(material->color_list, float, material->color_count*4 + 3)) {
+		unique_color_add(material->color_hash, avg_rgba,
+				 material->color_list, &material->color_count,
+				 mesh->face_shading_list, &shading_count,
+				 avg_rgba[3]);
+	      }
+              ip+=3;
+            }
+	    mesh++;
+          }
+	  
+	  {
+	    int cnt = 0;
+	    cnt = idtf_dump_file_header(node_vla,cnt);
+	    cnt = idtf_dump_model_nodes(node_vla,cnt,mesh_vla,mesh_cnt);
+	    VLASize( (*node_vla), char, cnt);
+	  }
+	  {
+	    int cnt = 0;
+	    cnt = idtf_dump_resource_header(rsrc_vla,cnt);
+	    cnt = idtf_dump_resources(rsrc_vla,cnt,mesh_vla,mesh_cnt,
+				      material);
+	    VLASize( (*rsrc_vla), char, cnt);
+	  }
+	  
+	  VLAFreeP(material->color_list);
+	  VectorHash_Free(material->color_hash);
+	}
+	FreeP(material);
       }
-      VLAFreeP(mesh_vla);
+      
+      {
+	/* refactor into a delete method */
+	IdtfResourceMesh *mesh = mesh_vla;
+	int i;
+	for(i=0;i<mesh_cnt;i++) {
+	  VLAFreeP(mesh->face_position_list);
+	  VLAFreeP(mesh->face_normal_list);
+	  VLAFreeP(mesh->face_shading_list);
+	  VLAFreeP(mesh->face_color_list);
+	  VLAFreeP(mesh->model_position_list);
+	  VLAFreeP(mesh->model_normal_list);
+	  VLAFreeP(mesh->model_diffuse_color_list);
+	  VectorHash_Free(mesh->color_hash);
+	  VectorHash_Free(mesh->position_hash);
+	  VectorHash_Free(mesh->normal_hash);
+	  mesh++;
+	}
+	VLAFreeP(mesh_vla);
+      }
     }
   }
 

@@ -84,8 +84,10 @@ class loadable:
     cube = 48     # cube volume file (via plugin)
     mae = 49      # Schrodinger ".mae" format (proprietary)
     cif1 = 50     # Python-based CIF parser
-    pim = 51      # General-purpose programmatic import (powerful, insecure)
-    
+    phistr = 51   # electrostatic map as a string
+    pim = 52      # General-purpose programmatic import (powerful, insecure)
+    pwg = 53      # PyMOL web gui launch script
+
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.mol : loadable.molstr,
               loadable.xplor : loadable.xplorstr,
