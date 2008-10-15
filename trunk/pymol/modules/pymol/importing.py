@@ -579,6 +579,8 @@ SEE ALSO
                     ftype = loadable.cif1
                 elif re.search("\.pim$",filename,re.I):
                     ftype = loadable.pim
+                elif re.search("\.pwg$",filename,re.I):
+                    ftype = loadable.pwg
                 elif re.search("\.map$",filename,re.I):
                     r = DEFAULT_ERROR
                     print 'Error: .map is ambiguous.  Please add format or use another extension:'
@@ -660,6 +662,14 @@ SEE ALSO
                 ftype = -1
                 r = DEFAULT_SUCCESS
 
+    # pwg launch (PyMOL Web GUI / web server launch )
+    
+            if ftype == loadable.pwg:
+                import pwghttpd
+                pwghttpd.launch(8080)
+                ftype = -1
+                r = DEFAULT_SUCCESS
+
     # special handling for trj failes (autodetect AMBER versus GROMACS)
             if ftype == loadable.trj:
                 try: # autodetect gromacs TRJ
@@ -702,6 +712,7 @@ SEE ALSO
         if go_to_first_scene:
             if int(_self.get_setting_legacy("presentation_auto_start"))!=0:
                 _self.scene("auto","start",animate=0)
+
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
