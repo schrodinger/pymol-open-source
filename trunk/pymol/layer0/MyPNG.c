@@ -148,6 +148,14 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
      text.text_length = 5;
      png_set_text(png_ptr, info_ptr, &text, 1);
    }
+   {
+     png_text text;
+     text.compression = PNG_TEXT_COMPRESSION_NONE;
+     text.key = (png_charp) "URL";
+     text.text = (png_charp) "http://www.pymol.org";
+     text.text_length = 5;
+     png_set_text(png_ptr, info_ptr, &text, 1);
+   }
 
    /* Write the file header information.  REQUIRED */
    png_write_info(png_ptr, info_ptr);
