@@ -1,27 +1,31 @@
 # symshp: create a symmetry-expanded sphere about a selection
 
+# usage:
+#
+#    symexp name [,selection [,cutoff ]]
+
 from pymol import cmd as global_cmd
 
-def symsph(object_name, target_sele="sele", radius=20.0, self_cmd=global_cmd):
-    radius = float(radius)
-    prefix = target_sele+"_symarea_"
-    tmp_obj = target_sele+"_tmp"
-    if target_sele not in self_cmd.get_names("selections"):
-        print " error: '"+target_sele+"' is not defined."
+def symsph(name, selection="sele", cutoff=20.0, self_cmd=global_cmd):
+    cutoff = float(cutoff)
+    prefix = selection+"_symarea_"
+    tmp_obj = selection+"_tmp"
+    if selection not in self_cmd.get_names("selections"):
+        print " error: '"+selection+"' is not defined."
         return self_cmd.DEFAULT_FAILURE
-    if not self_cmd.count_atoms(target_sele):
-        print " error: '"+target_sele+"' contains no atoms."
+    if not self_cmd.count_atoms(selection):
+        print " error: '"+selection+"' contains no atoms."
         return self_cmd.DEFAULT_FAILURE
-    obj_list = self_cmd.get_object_list(target_sele)
+    obj_list = self_cmd.get_object_list(selection)
     if len(obj_list)!=1:
-        print script_name+" error: '"+target_sele+"' must only span one object.'"
+        print script_name+" error: '"+selection+"' must only span one object.'"
         return self_cmd.DEFAULT_FAILURE
     obj = obj_list[0]
-    cmd.center(target_sele)
+    cmd.center(selection)
     cmd.pseudoatom(tmp_obj)
     cmd.delete(prefix+"*")
-    cmd.symexp(prefix,obj,tmp_obj,radius,segi=1)
-    cmd.create("symsph","("+obj+" or "+prefix+"*) within %1.9f of %s"%(radius,tmp_obj))
+    cmd.symexp(prefix,obj,tmp_obj,cutoff,segi=1)
+    cmd.create(name,"("+obj+" or "+prefix+"*) within %1.9f of %s"%(cutoff,tmp_obj))
     cmd.delete(tmp_obj)
     cmd.delete(prefix+"*")
     
