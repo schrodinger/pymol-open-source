@@ -2182,7 +2182,7 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,
   if(nEdge>50)
     nEdge=50;
 
-  subdivide(nEdge,x,y);
+  subdivide(nEdge,x,y); /* NOTE: lift this out...*/
  
   /* direction vector */
   
@@ -2222,23 +2222,22 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,
   
   /* now we have a coordinate system*/
   
-  for(c=nEdge;c>=0;c--)
-	 {
-		v[0] = p1[0]*tube_size*x[c] + p2[0]*tube_size*y[c];
-		v[1] = p1[1]*tube_size*x[c] + p2[1]*tube_size*y[c];
-		v[2] = p1[2]*tube_size*x[c] + p2[2]*tube_size*y[c];
-		
-		v[3] = v1[0] + v[0];
-		v[4] = v1[1] + v[1];
-		v[5] = v1[2] + v[2];
-		
-		v[6] = v[3] + d[0];
-		v[7] = v[4] + d[1];
-		v[8] = v[5] + d[2];
-		
-		normalize3f(v);
-		v+=9;			 
-	 }
+  for(c=nEdge;c>=0;c--) {
+    v[0] = p1[0]*tube_size*x[c] + p2[0]*tube_size*y[c];
+    v[1] = p1[1]*tube_size*x[c] + p2[1]*tube_size*y[c];
+    v[2] = p1[2]*tube_size*x[c] + p2[2]*tube_size*y[c];
+	
+    v[3] = v1[0] + v[0];
+    v[4] = v1[1] + v[1];
+    v[5] = v1[2] + v[2];
+	
+    v[6] = v[3] + d[0];
+    v[7] = v[4] + d[1];
+    v[8] = v[5] + d[2];
+	
+    normalize3f(v);
+    v+=9;			 
+  }
   
   if(frontCap) {
 
@@ -2307,5 +2306,261 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,
   return(v);
 }
 
+static void RepCylinderImmediate(float *v1,float *v2,int nEdge,
+                                 int frontCap, int endCap,
+                                 float overlap,float nub,
+                                 float *x, float *y)
+{
+  float d[3],t[3],p0[3],p1[3],p2[3];
+  float vv1[3],vv2[3];
+  float v[3],vv[3],vvv[3];
+  int c;
+
+  /* direction vector */
+  
+  p0[0] = (v2[0] - v1[0]);
+  p0[1] = (v2[1] - v1[1]);
+  p0[2] = (v2[2] - v1[2]);
+  
+  normalize3f(p0);
+
+  vv1[0]=v1[0] - p0[0]*overlap;
+  vv1[1]=v1[1] - p0[1]*overlap;
+  vv1[2]=v1[2] - p0[2]*overlap;
+  
+  v1 = vv1;
+
+  if(endCap) {
+    vv2[0]=v2[0] + p0[0]*overlap;
+    vv2[1]=v2[1] + p0[1]*overlap;
+    vv2[2]=v2[2] + p0[2]*overlap;
+    v2 = vv2;
+  }
+  
+  d[0] = (v2[0] - v1[0]);
+  d[1] = (v2[1] - v1[1]);
+  d[2] = (v2[2] - v1[2]);
+  
+  get_divergent3f(d,t);
+
+  cross_product3f(d,t,p1);
+  
+  normalize3f(p1);
+  
+  cross_product3f(d,p1,p2);
+  
+  normalize3f(p2);
+  
+  /* now we have a coordinate system*/
+  
+ glBegin(GL_TRIANGLE_STRIP);
+ 
+ for(c=nEdge;c>=0;c--) {
+   v[0] = p1[0]*x[c] + p2[0]*y[c];
+   v[1] = p1[1]*x[c] + p2[1]*y[c];
+   v[2] = p1[2]*x[c] + p2[2]*y[c];
+
+   vv[0] = v1[0] + v[0];
+   vv[1] = v1[1] + v[1];
+   vv[2] = v1[2] + v[2];
+
+   glNormal3fv(v);
+
+   vvv[0] = vv[0] + d[0];
+   vvv[1] = vv[1] + d[1];
+   vvv[2] = vv[2] + d[2];
+
+   glVertex3fv(vv);
+   glVertex3fv(vvv);
+ }
+ glEnd();
+
+ if(frontCap) {
+   
+    glBegin(GL_TRIANGLE_FAN);
+
+    v[0] = -p0[0];
+    v[1] = -p0[1];
+    v[2] = -p0[2];
+    
+    vv[0] = v1[0] - p0[0]*nub;
+    vv[1] = v1[1] - p0[1]*nub;
+    vv[2] = v1[2] - p0[2]*nub;
+
+    glNormal3fv(v);
+    glVertex3fv(vv);
+
+    for(c=nEdge;c>=0;c--) {
+      
+      v[0] = p1[0]*x[c] + p2[0]*y[c];
+      v[1] = p1[1]*x[c] + p2[1]*y[c];
+      v[2] = p1[2]*x[c] + p2[2]*y[c];
+      
+      vv[0] = v1[0] + v[0];
+      vv[1] = v1[1] + v[1];
+      vv[2] = v1[2] + v[2];
+      
+      glNormal3fv(v);
+      glVertex3fv(vv);
+    }
+
+    glEnd();
+ }
+ 
+  if(endCap) {
+
+    v[0] = p0[0];
+    v[1] = p0[1];
+    v[2] = p0[2];
+	
+    vv[0] = v2[0] + p0[0]*nub;
+    vv[1] = v2[1] + p0[1]*nub;
+    vv[2] = v2[2] + p0[2]*nub;
+
+    glBegin(GL_TRIANGLE_FAN);
+    
+    glNormal3fv(v);
+    glVertex3fv(vv);
+	
+    for(c=0;c<=nEdge;c++) {
+      
+      v[0] = p1[0]*x[c] + p2[0]*y[c];
+      v[1] = p1[1]*x[c] + p2[1]*y[c];
+      v[2] = p1[2]*x[c] + p2[2]*y[c];
+      
+      vv[0] = v2[0] + v[0];
+      vv[1] = v2[1] + v[1];
+      vv[2] = v2[2] + v[2];
+      glNormal3fv(v);
+      glVertex3fv(vv);
+    }
+    glEnd();
+  }
+}
+
+void RepCylBondRenderImmediate(CoordSet *cs, RenderInfo *info)
+{
+  /* performance optimized, so it does not support the following:
+
+  - anything other than opengl
+  - display of bond valences
+  - per-bond & per-atom properties
+  - half-bonds
+  - helper settings such as cartoon_side_chain_helper
+  - suppression of long bonds
+  - color ramps
+  - atom picking
+  - display lists
+  - transparency 
+  
+  */
+
+  PyMOLGlobals *G=cs->State.G;
+    if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)) )
+    return;
+  else {
+    int active = false;
+    ObjectMolecule *obj = cs->Obj;
+    int nEdge = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
+    float radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
+    float overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
+    float nub = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
+    float overlap_r = radius*overlap;
+    float nub_r = radius*nub;
+    float x[51],y[51];
+    
+    if(nEdge>50)
+      nEdge=50;
+    
+    subdivide(nEdge,x,y);  
+    {
+      int c;
+      for(c=0;c<=nEdge;c++) {
+        x[c] *= radius;
+        y[c] *= radius;
+      }
+    }
+
+    {
+      int a;
+      int nBond = obj->NBond;
+      BondType *bd = obj->Bond;
+      AtomInfoType *ai = obj->AtomInfo;
+      int *atm2idx = cs->AtmToIdx;
+      int discreteFlag = obj->DiscreteFlag;
+      int last_color = -9;
+      float *coord = cs->Coord;
+      const float _pt5 = 0.5F;
+
+      for(a=0;a<nBond;a++) {
+        int b1 = bd->index[0];
+        int b2 = bd->index[1];
+        AtomInfoType *ai1, *ai2;
+        bd++;
+        
+        if( (ai1 = ai+b1)->visRep[cRepCyl] && (ai2 = ai+b2)->visRep[cRepCyl]) {
+          int a1, a2;
+          active = true;
+          if(discreteFlag) {
+            /* not optimized */
+            if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+              a1=obj->DiscreteAtmToIdx[b1];
+              a2=obj->DiscreteAtmToIdx[b2];
+            } else {
+              a1=-1;
+              a2=-1;
+            }
+          } else {
+            a1=atm2idx[b1];
+            a2=atm2idx[b2];
+          }
+          
+          if((a1>=0)&&(a2>=0)) {
+            int c1 = ai1->color;
+            int c2 = ai2->color;
+            
+            float *v1 = coord+3 * a1;
+            float *v2 = coord+3 * a2;
+            
+            if(c1 == c2) { /* same colors -> one cylinder */
+              if(c1!=last_color) {
+                last_color = c1;
+                glColor3fv(ColorGet(G,c1));
+              }
+              
+              RepCylinderImmediate(v1,v2,nEdge,1,1,
+                                   overlap_r,nub_r,x,y);
+              
+            } else { /* different colors -> two cylinders, no interior */
+              float avg[3];
+              
+              avg[0] = (v1[0]+v2[0]) * _pt5;
+              avg[1] = (v1[1]+v2[1]) * _pt5;
+              avg[2] = (v1[2]+v2[2]) * _pt5;
+              
+              if(c1!=last_color) {
+                last_color = c1;
+                glColor3fv(ColorGet(G,c1));
+              }
+
+              RepCylinderImmediate(v1,avg,nEdge,1,0,
+                                   overlap_r,nub_r,x,y);
+              
+              if(c2!=last_color) {
+                last_color = c2;
+                glColor3fv(ColorGet(G,c2));
+              }
+
+              RepCylinderImmediate(v2,avg,nEdge,1,0,
+                                   overlap_r,nub_r,x,y);
+            }
+          }
+        }
+      }
+    }
+    if(!active)
+      cs->Active[cRepCyl] = false;
+  }
+}
 
 

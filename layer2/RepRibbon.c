@@ -703,4 +703,102 @@ Rep *RepRibbonNew(CoordSet *cs,int state)
 }
 
 
+void RepRibbonRenderImmediate(CoordSet *cs, RenderInfo *info)
+{
+  /* performance optimized to provide a simple C-alpha trace -- no smoothing */
+
+  PyMOLGlobals *G=cs->State.G;
+  if(info->ray || info->pick || (!(G->HaveGUI && G->ValidContext)) )
+    return;
+  else {
+    ObjectMolecule *obj = cs->Obj;
+    int active = false;
+    int nAtIndex = cs->NAtIndex;
+    int a;
+    AtomInfoType *obj_AtomInfo = obj->AtomInfo;
+    AtomInfoType *ai,*last_ai = NULL;
+    int trace=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace_atoms);
+    int trace_mode=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_trace_atoms_mode);
+    int na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_nucleic_acid_mode);
+    float linewidth = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_width);
+    int a1,a2=-1;
+    int color,last_color = -9;
+
+    glLineWidth(linewidth);
+    glDisable(GL_LIGHTING); 
+    SceneResetNormal(G,true);      
+    glBegin(GL_LINE_STRIP);
+    for(a1=0;a1<nAtIndex;a1++) {
+      if(obj->DiscreteFlag) {
+        if(cs==obj->DiscreteCSet[a1]) 
+          a=obj->DiscreteAtmToIdx[a1];
+        else 
+          a=-1;
+      } else 
+        a=cs->AtmToIdx[a1];
+      if(a>=0) {
+        ai = obj->AtomInfo+a1;
+        if(ai->visRep[cRepRibbon]) {
+          if(trace || ((ai->protons==cAN_C)&&
+                       (WordMatch(G,"CA",ai->name,1)<0)&&
+                       !AtomInfoSameResidueP(G,last_ai,ai))) {
+            if(a2>=0) {
+              if(trace) {
+                if(!AtomInfoSequential(G,obj->AtomInfo+a2,obj->AtomInfo+a1,trace_mode))
+                  a2=-1;
+              } else {
+                if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
+                  a2=-1;
+              }
+            }
+            if(a2==-1) {
+              glEnd();
+              glBegin(GL_LINE_STRIP);
+            }
+            color = ai->color;
+            if(color!=last_color) {
+              last_color = color;
+              glColor3fv(ColorGet(G,color));
+            }
+            glVertex3fv(cs->Coord+3*a);
+            active = true;
+            last_ai = ai;
+            a2 = a1;
+          } else if((((na_mode!=1)&&(ai->protons==cAN_P) &&
+                      (WordMatch(G,"P",ai->name,1)<0) ) ||
+                     ((na_mode==1)&&(ai->protons==cAN_C) &&
+                      (WordMatchExact(G,"C4*",ai->name,1) ||
+                       WordMatchExact(G,"C4'",ai->name,1))))&&
+                    !AtomInfoSameResidueP(G,last_ai,ai)) {
+            if(a2>=0) {
+              if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) { /* six bonds between phosphates */
+                a2=-1;
+              }
+            }
+            
+            if(a2==-1) {
+              glEnd();
+              glBegin(GL_LINE_STRIP);
+            }
+            color = ai->color;
+            if(color!=last_color) {
+              last_color = color;
+              glColor3fv(ColorGet(G,color));
+            }
+            glVertex3fv(cs->Coord+3*a);
+            active = true;
+            last_ai = ai;
+            a2=a1;
+          }
+        }
+      }
+    }
+    glEnd();
+    glEnable(GL_LIGHTING);
+    if(!active)
+      cs->Active[cRepRibbon] = false;
+  }
+}
+
+
 

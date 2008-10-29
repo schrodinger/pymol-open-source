@@ -21,5 +21,6 @@ Z* -------------------------------------------------------------------
 
 Rep *RepRibbonNew(CoordSet *cset,int state);
 void RepRibbonInit(void);
+void RepRibbonRenderImmediate(CoordSet *cs, RenderInfo *info);
 
 #endif
