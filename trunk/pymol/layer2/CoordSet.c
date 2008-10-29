@@ -1119,6 +1119,8 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
       if(I->Active[cRepLine]) RepWireBondRenderImmediate(I, info);
       if(I->Active[cRepNonbonded]) RepNonbondedRenderImmediate(I, info);
       if(I->Active[cRepSphere]) RepSphereRenderImmediate(I, info);
+      if(I->Active[cRepCyl]) RepCylBondRenderImmediate(I, info); 
+      if(I->Active[cRepRibbon]) RepRibbonRenderImmediate(I, info); 
     }
   } else {
     int pass = info->pass;

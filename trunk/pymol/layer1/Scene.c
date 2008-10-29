@@ -6810,6 +6810,15 @@ void SceneUpdate(PyMOLGlobals *G, int force)
           }
       }
       PyMOL_SetBusy(G->PyMOL,false); /*  race condition -- may need to be fixed */
+    } else { /* defer builds mode == 5 -- for now, only update non-molecular objects */
+      /* single-threaded update */
+      rec = NULL;
+      while(ListIterate(I->Obj,rec,next)) {
+        if(rec->obj->type != cObjectMolecule) {
+          if(rec->obj->fUpdate) 
+            rec->obj->fUpdate(rec->obj);
+        }
+      }
     }
 
     I->ChangedFlag = false;
@@ -6818,8 +6827,9 @@ void SceneUpdate(PyMOLGlobals *G, int force)
        (cur_state != I->LastStateBuilt)) { 
       /* purge graphics representation when no longer used */
       if(I->LastStateBuilt>=0) {
-        while(ListIterate(I->Obj,rec,next))
-          if(rec->obj->fInvalidate) {
+        while(ListIterate(I->Obj,rec,next)) {
+          if(rec->obj->fInvalidate && 
+             ((rec->obj->type != cObjectMolecule) || force || defer_builds_mode!=5)) {
             int static_singletons = SettingGet_b(G,rec->obj->Setting,NULL,cSetting_static_singletons);
             int async_builds = SettingGet_b(G,rec->obj->Setting,NULL,cSetting_async_builds);
             int max_threads =  SettingGet_i(G,rec->obj->Setting,NULL,cSetting_max_threads); 
@@ -6846,8 +6856,9 @@ void SceneUpdate(PyMOLGlobals *G, int force)
               }
             }
           }
+        }
       }
-    }
+    } 
     I->LastStateBuilt = cur_state;
     WizardDoScene(G);
     if(!MovieDefined(G)) {
