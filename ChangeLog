@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2008-11-05 Warren L. DeLano <warren@delsci.com>
+
+	* added Mac-only menu for configuring X11 click-through behavior
+	
+	* updated open-source splash image
+
 2008-10-04 Warren L. DeLano <warren@delsci.com>
 
 	* first rough attempt at IDTF export for U3D / 3D-PDF support
