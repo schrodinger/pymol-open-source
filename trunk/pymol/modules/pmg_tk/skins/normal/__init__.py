@@ -726,6 +726,17 @@ class Normal(PMGSkin):
                 return 
         print " Error: no license terms found."
 
+    def toggleClickThrough(self, toggle):
+        if toggle:
+            os.system(
+            "defaults write com.apple.x11 wm_click_through -bool true")
+            print "Enabled com.apple.x11 wm_click_through.",
+        else:
+            os.system(
+            "defaults write com.apple.x11 wm_click_through -bool false")
+            print "Disabled com.apple.x11 wm_click_through.",
+        print "Please restart X11."
+
     def createMenuBar(self):
         self.menuBar = Pmw.MenuBar(self.root, balloon=self.balloon,
                                    hull_relief=RAISED, hull_borderwidth=1) 
@@ -2659,6 +2670,23 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Mouse', 'command', 'Setup 2 Button Editing Cycle',
                                          label='2 Button Editing Cycle',
                                          command = lambda s=self: s.cmd.config_mouse('two_button_editing'))
+
+        if sys.platform == 'darwin':
+            self.menuBar.addmenuitem('Mouse', 'separator', '')
+
+            self.menuBar.addcascademenu('Mouse', 'MacX11Focus', 'Mac OS X11',
+                                        label='Mac OS X11')
+            self.menuBar.addmenuitem('MacX11Focus', 'command',
+                                     'Enable Click Through',
+                                     label='Enable Click Through',
+                                     command = lambda s=self: 
+                                     s.toggleClickThrough(1))
+
+            self.menuBar.addmenuitem('MacX11Focus', 'command',
+                                     'Disable Click Through',
+                                     label='Disable Click Through',
+                                     command = lambda s=self: 
+                                     s.toggleClickThrough(0))
 
         self.menuBar.addmenu('Wizard', 'Task Wizards',tearoff=TRUE)
 
