@@ -16,6 +16,7 @@ from importing import \
       loadable,           \
       read_mmodstr,       \
       read_molstr,        \
+      read_sdfstr,        \
       read_pdbstr,        \
       read_xplorstr,      \
       fetch,              \

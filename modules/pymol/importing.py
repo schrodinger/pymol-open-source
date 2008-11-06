@@ -837,7 +837,7 @@ NOTES
         return r
         
     def read_sdfstr(sdfstr,name,state=0,finish=1,discrete=1,quiet=1,
-                         zoom=-1,multiplex=-2,_self=cmd):
+                    zoom=-1,multiplex=-2,_self=cmd):
         '''
 DESCRIPTION
 
