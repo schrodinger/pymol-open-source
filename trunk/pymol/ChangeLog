@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2008-11-10 Warren L. DeLano <warren@delsci.com>
+
+	* further work on the builder
+	
+	* sculpting engine now respects atom flag 3 (fixed atoms)
+	
 2008-11-05 Warren L. DeLano <warren@delsci.com>
 
 	* added Mac-only menu for configuring X11 click-through behavior
