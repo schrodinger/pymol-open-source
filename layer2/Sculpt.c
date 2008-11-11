@@ -1776,12 +1776,15 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
         int *a_ptr = active;
         for(aa=0;aa<n_active;aa++) {
           a = *(a_ptr++);
-          if(obj->AtomInfo[a].protekted!=1) {
-            v2 = cs_coord+3*atm2idx[a];
-            center[4] += *(v2  );
-            center[5] += *(v2+1);
-            center[6] += *(v2+2);
-            center[7] += 1.0F;
+          {
+            register AtomInfoType *ai = obj->AtomInfo + a;
+            if((ai->protekted!=1)&&!(ai->flags&cAtomFlag_fix)) {
+              v2 = cs_coord+3*atm2idx[a];
+              center[4] += *(v2  );
+              center[5] += *(v2+1);
+              center[6] += *(v2+2);
+              center[7] += 1.0F;
+            }
           }
         }
       }
@@ -2152,7 +2155,9 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                                 a1 = atm2idx[b1];
                                 v1 = cs_coord+3*a1;
                                 if(vdw_vis_mode && cgo && 
-                                   (n_cycle<1) && ((!(ai0->protekted&&ai1->protekted))||
+                                   (n_cycle<1) && ((!((ai0->protekted&&ai1->protekted)||
+                                                      (ai0->flags&ai1->flags&cAtomFlag_fix))
+                                                    )||
                                                    (ai0->flags&cAtomFlag_study)||
                                                    (ai1->flags&cAtomFlag_study))) {
                                   SculptCGOBump(v0,v1,ai0->vdw,ai1->vdw,
@@ -2271,7 +2276,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
           register float *lookup_inverse = I->inverse;
           for(aa=0;aa<n_active;aa++) {
             if( (cnt_a = cnt[(a = *(a_ptr++))]) ) {
-              if(!obj->AtomInfo[a].protekted) {
+              AtomInfoType *ai = obj->AtomInfo + a;
+              if(!(ai->protekted||(ai->flags&cAtomFlag_fix))) {
                 v1 = disp+3*a;
                 v2 = cs_coord+3*atm2idx[a];
                 if(!(cnt_a&0xFFFFFF00)) /* don't divide -- too slow */
@@ -2297,12 +2303,15 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
           if(center) 
            for(aa=0;aa<n_active;aa++) {
              a = *(a_ptr++);
-             if(obj->AtomInfo[a].protekted!=1) {
-               v2 = cs_coord+3*atm2idx[a];
-               center[0] += *(v2  );
-               center[1] += *(v2+1);
-               center[2] += *(v2+2);
-               center[3] += 1.0F;
+             {
+               AtomInfoType *ai = obj->AtomInfo + a;
+               if((ai->protekted!=1)&&!(ai->flags&cAtomFlag_fix)) {
+                 v2 = cs_coord+3*atm2idx[a];
+                 center[0] += *(v2  );
+                 center[1] += *(v2+1);
+                 center[2] += *(v2+2);
+                 center[3] += 1.0F;
+               }
              }
            }
           break;

@@ -1084,6 +1084,9 @@ void OrthoDetach(PyMOLGlobals *G,Block *block)
 #ifdef PYMOL_COLL
 #include "OrthoCollMessage.h"
 #endif
+#ifdef _PYMOL_ACTIVEX
+#include "OrthoAxMessage.h"
+#endif
 /* END PROPRIETARY CODE SEGMENT */
 
 void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
@@ -1337,6 +1340,10 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
 #ifdef PYMOL_COLL
       OrthoDrawCollMessage(G);
 #endif
+#ifdef _PYMOL_ACTIVEX
+      OrthoDrawAxMessage(G);
+#endif
+
 /* END PROPRIETARY CODE SEGMENT */
 
 
