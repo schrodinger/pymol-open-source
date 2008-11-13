@@ -803,6 +803,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_scene_buttons              599
 #define cSetting_map_auto_expand_sym        600
 #define cSetting_image_copy_always          601
+#define cSetting_max_ups                    602
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -812,7 +813,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       602
+#define cSetting_INIT                       603
 #endif
 
 

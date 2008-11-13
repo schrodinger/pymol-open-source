@@ -3648,5 +3648,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_b(I,cSetting_scene_buttons,0);
     set_b(I,cSetting_map_auto_expand_sym,1);
     set_b(I,cSetting_image_copy_always,0);
+    set_i(I,cSetting_max_ups,0);
   }
 }

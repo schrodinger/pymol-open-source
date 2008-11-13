@@ -766,6 +766,8 @@ typedef struct _CPyMOL {
   ov_word lex_scene_buttons;
   ov_word lex_map_auto_expand_sym;
   ov_word lex_image_copy_always;
+  ov_word lex_max_ups;
+
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1525,6 +1527,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(scene_buttons,599);
   LEX_SETTING(map_auto_expand_sym,600);
   LEX_SETTING(image_copy_always,601);
+  LEX_SETTING(max_ups,602);
   return_OVstatus_SUCCESS;
 }
 
