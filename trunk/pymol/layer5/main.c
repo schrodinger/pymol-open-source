@@ -249,6 +249,8 @@ struct _CMain {
   int TheWindow;
   int WindowIsVisible;
   double ReshapeTime;
+  double DrawAfter, DrawDelay;
+  int DrawGovernorActive, DrawDeferred, DrawSignalled;
   int DrawnFlag, DeferReshapeDeferral;
   int MaximizeCheck;
   CPyMOLOptions *OwnedOptions;
@@ -893,51 +895,59 @@ static void MainDraw(void)
     ENDFD;
   if(PLockAPIAsGlut(G,false)) {
     CMain *I = G->Main;    
-    int skip = false;
-    if(I->MaximizeCheck) {
-      {
-        /* is the window manager screwing us over??? */
-
-        int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
-        int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
-        int actual_x = p_glutGet(P_GLUT_WINDOW_X);
-        int actual_y = p_glutGet(P_GLUT_WINDOW_Y);
-        
-        I->MaximizeCheck = false;
-        
-        if(actual_x!=0) {
-          width -= 2*actual_x;
-          height -= actual_x;
-        }
-        if(actual_y!=0) {
-          height -= actual_y;
-        }
-        p_glutPositionWindow(0,0);
-        p_glutReshapeWindow(width,height);
-        skip = true;
-      }
-    }
-    if( (!skip) && (!I->DrawnFlag) && I->FinalInitDone) {
-      if(I->DeferReshapeDeferral>0) 
-        I->DeferReshapeDeferral--;
-      else {
-        double time_since_reshape = UtilGetSeconds(G) - I->ReshapeTime;
-        if(time_since_reshape<0.05) { 
-          /* defer screen updates while it's being actively resized */
-          skip = true;
-        }
-      }
-    }
-    if(!skip) {
-      MainDrawLocked();
-      I->DrawnFlag = true;
-      if(PyMOL_GetModalDraw(PyMOLInstance)) {
-        usec_sleep_after_draw = 10000; /* give other threads a chance to run */
-      }
+    if((!I->DrawSignalled) && (UtilGetSeconds(G) < I->DrawAfter)) {
+      I->DrawDeferred = true;
     } else {
-      PyMOL_NeedRedisplay(PyMOLInstance);
+      int skip = false;
+      if(I->MaximizeCheck) {
+	{
+	  /* is the window manager screwing us over??? */
+
+	  int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
+	  int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
+	  int actual_x = p_glutGet(P_GLUT_WINDOW_X);
+	  int actual_y = p_glutGet(P_GLUT_WINDOW_Y);
+        
+	  I->MaximizeCheck = false;
+        
+	  if(actual_x!=0) {
+	    width -= 2*actual_x;
+	    height -= actual_x;
+	  }
+	  if(actual_y!=0) {
+	    height -= actual_y;
+	  }
+	  p_glutPositionWindow(0,0);
+	  p_glutReshapeWindow(width,height);
+	  skip = true;
+	}
+      }
+      if( (!skip) && (!I->DrawnFlag) && I->FinalInitDone) {
+	if(I->DeferReshapeDeferral>0) 
+	  I->DeferReshapeDeferral--;
+	else {
+	  double time_since_reshape = UtilGetSeconds(G) - I->ReshapeTime;
+	  if(time_since_reshape<0.05) { 
+	    /* defer screen updates while it's being actively resized */
+	    skip = true;
+	  }
+	}
+      }
+      if(!skip) {
+	MainDrawLocked();
+	I->DrawnFlag = true;
+	if(PyMOL_GetModalDraw(PyMOLInstance)) {
+	  usec_sleep_after_draw = 10000; /* give other threads a chance to run */
+	}
+      } else {
+	PyMOL_NeedRedisplay(PyMOLInstance);
+      }
+
+      I->DrawAfter = UtilGetSeconds(G) + I->DrawDelay;
+      I->DrawSignalled = false;
+      I->DrawDeferred = false;
+      PUnlockAPIAsGlut(G);
     }
-    PUnlockAPIAsGlut(G);
   } else { /* we're busy -- so try to display a progress indicator */
     MainDrawProgress(G);
   }
@@ -1118,6 +1128,12 @@ static void MainInit(PyMOLGlobals *G)
 
   PyMOL_SetSwapBuffersFn(PyMOLInstance,(PyMOLSwapBuffersFn*)p_glutSwapBuffers);
   I->ReshapeTime= ( I->IdleTime = UtilGetSeconds(G) );
+
+  I->DrawGovernorActive = false;
+  I->DrawSignalled = true;
+  I->DrawDelay = 0.01; /* 100 FPS max */
+  I->DrawAfter = 0.0;
+  I->DrawDeferred = false;
 }
 
 /*========================================================================*/
@@ -1399,6 +1415,28 @@ static void MainBusyIdle(void)
             }
           }
         }
+      }
+    }
+
+    {
+      int max_ups = SettingGetGlobal_i(G,cSetting_max_ups);
+      if(max_ups<1) {
+	I->DrawGovernorActive = false;
+	if(I->DrawDeferred) {
+	  p_glutPostRedisplay();
+	}
+      } else {
+	I->DrawDelay = 1.0/max_ups;
+	I->DrawGovernorActive = true;
+	if(I->DrawDeferred) {
+	  if(UtilGetSeconds(G)>I->DrawAfter) {
+	    I->DrawSignalled = true;
+	  }
+	  if(I->DrawSignalled) {
+	    I->DrawDeferred = false;
+	    p_glutPostRedisplay();
+	  }
+	}
       }
     }
   } else {

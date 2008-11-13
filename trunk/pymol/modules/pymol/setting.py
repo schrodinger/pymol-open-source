@@ -637,7 +637,8 @@ if __name__=='pymol.setting':
         scene_buttons                      = 599
         map_auto_expand_sym                = 600
         image_copy_always                  = 601
-        
+        max_ups                            = 602
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []
