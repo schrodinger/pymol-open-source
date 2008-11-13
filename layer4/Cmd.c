@@ -7684,6 +7684,32 @@ static PyObject *CmdCenter(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdReference(PyObject *self, PyObject *args)
+{
+  int ok = false;
+  PyMOLGlobals *G = NULL;
+  OrthoLineType s1;
+  int action;
+  char *sele1;
+  int state;
+  int quiet;
+  ok = PyArg_ParseTuple(args,"Oisii",&self,&action,&sele1,&state,&quiet);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok=APIEnterNotModal(G))) {
+    ok = (SelectorGetTmp(G,sele1,s1)>=0);
+    if(ok) ok = ExecutiveReference(G,action,s1,state,quiet);
+    SelectorFreeTmp(G,s1);
+    APIExit(G);
+  }
+  return APIResultOk(ok);
+}
+
+
 static PyObject *CmdZoom(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -8423,6 +8449,7 @@ static PyMethodDef Cmd_methods[] = {
   {"ready",                 CmdReady,                METH_VARARGS },
   {"rebuild",               CmdRebuild,              METH_VARARGS },
   {"recolor",               CmdRecolor,              METH_VARARGS },
+  {"reference",             CmdReference,            METH_VARARGS },
   {"refresh",               CmdRefresh,              METH_VARARGS },
   {"refresh_later",         CmdRefreshLater,         METH_VARARGS },
   {"refresh_now",           CmdRefreshNow,           METH_VARARGS },

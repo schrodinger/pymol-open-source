@@ -177,6 +177,8 @@ typedef struct {
 #define OMOP_CSetSumSqDistToPt 59
 #define OMOP_RevalenceFromSource 60
 #define OMOP_RevalenceByGuessing 61
+#define OMOP_ReferenceStore 62
+#define OMOP_ReferenceRecall 63
 
 #include"CoordSet.h"
 

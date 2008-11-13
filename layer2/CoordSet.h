@@ -35,14 +35,14 @@ typedef struct CoordSet {
   void (*fInvalidateRep)(struct CoordSet *I,int type,int level);
   CObjectState State;
   ObjectMolecule *Obj;
-  float *Coord;
+  float *Coord, *RefCoord; /* if RefCoord is not NULL, then it must be
+                              same size as Coord */
   int *Color; 
   int *IdxToAtm;
   int *AtmToIdx;
   int NIndex,NAtIndex;
   Rep *Rep[cRepCnt]; /* an array of pointers to representations */
   int Active[cRepCnt]; /* active flags */
-  int NRep;
   int NTmpBond; /* optional, temporary (for coord set transfers) */
   BondType *TmpBond; /* actual bond info is stored in ObjectMolecule */
   int NTmpLinkBond; /* optional, temporary storage of linkage  info. */
@@ -115,6 +115,8 @@ int CoordSetMoveAtomLabel(CoordSet *I,int at,float *v,int mode);
 
 int CoordSetTransformAtomTTTf(CoordSet *I,int at,float *TTT);
 int CoordSetTransformAtomR44f(CoordSet *I,int at,float *matrix);
+
+int CoordSetValidateRefCoord(CoordSet *I);
 
 void CoordSetPurge(CoordSet *I);
 void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom);

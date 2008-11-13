@@ -86,6 +86,8 @@ typedef struct {
   int offset;
 } ExecutiveObjectOffset;
 
+
+int ExecutiveReference(PyMOLGlobals *G,int action, char *sele, int state, int quiet);
 int ExecutiveGetExpandedGroupList(PyMOLGlobals *G,char *name);
 int ExecutiveGetExpandedGroupListFromPattern(PyMOLGlobals *G,char *name);
 void ExecutiveFreeGroupList(PyMOLGlobals *G,int list_id);
