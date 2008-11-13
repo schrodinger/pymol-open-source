@@ -895,7 +895,8 @@ static void MainDraw(void)
     ENDFD;
   if(PLockAPIAsGlut(G,false)) {
     CMain *I = G->Main;    
-    if((!I->DrawSignalled) && 
+    if(I->DrawGovernorActive &&
+       (!I->DrawSignalled) && 
        (UtilGetSeconds(G) < I->DrawAfter) && 
        I->FinalInitDone) {
       I->DrawDeferred = true;
@@ -948,8 +949,8 @@ static void MainDraw(void)
       I->DrawAfter = UtilGetSeconds(G) + I->DrawDelay;
       I->DrawSignalled = false;
       I->DrawDeferred = false;
-      PUnlockAPIAsGlut(G);
     }
+    PUnlockAPIAsGlut(G);
   } else { /* we're busy -- so try to display a progress indicator */
     MainDrawProgress(G);
   }
