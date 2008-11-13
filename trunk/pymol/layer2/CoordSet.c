@@ -50,7 +50,6 @@ static void CoordSetUpdate(CoordSet *I,int state);
 void CoordSetFree(CoordSet *I);
 void CoordSetRender(CoordSet *I,RenderInfo *info);
 void CoordSetEnumIndices(CoordSet *I);
-void CoordSetStrip(CoordSet *I);
 void CoordSetInvalidateRep(CoordSet *I,int type,int level);
 void CoordSetExtendIndices(CoordSet *I,int nAtom);
 void CoordSetAppendIndices(CoordSet *I,int offset);
@@ -59,6 +58,18 @@ void CoordSetAppendIndices(CoordSet *I,int offset);
 static  char sATOM[]="ATOM  ";
 static  char sHETATM[]="HETATM";
 
+int CoordSetValidateRefCoord(CoordSet *I)
+{
+  if(I->RefCoord) {
+    return true;
+  } else {
+    int ok = true && (I->RefCoord = VLAlloc(float,I->NIndex*3));
+    if(ok) {
+      UtilCopyMem(I->RefCoord, I->Coord, sizeof(float)*I->NIndex);
+    }
+    return ok;
+  }
+}
 /*========================================================================*/
 int BondCompare(BondType *a,BondType *b)
 {
@@ -205,11 +216,17 @@ void CoordSetMerge(CoordSet *I,CoordSet *cs) /* must be non-overlapping */
   nIndex = I->NIndex+cs->NIndex;
   I->IdxToAtm=Realloc(I->IdxToAtm,int,nIndex);
   VLACheck(I->Coord,float,nIndex*3);
+  if(I->RefCoord) {
+    VLACheck(I->RefCoord,float,nIndex*3);
+  }
   for(a=0;a<cs->NIndex;a++) {
     i0 = a+I->NIndex;
     I->IdxToAtm[i0] = cs->IdxToAtm[a];
     I->AtmToIdx[cs->IdxToAtm[a]] = i0;
     copy3f(cs->Coord+a*3,I->Coord+i0*3);
+    if(I->RefCoord && cs->RefCoord) {
+      copy3f(cs->RefCoord+a*3,I->RefCoord+i0*3);
+    }
   }
   if(cs->LabPos) {
     if(!I->LabPos) 
@@ -230,7 +247,7 @@ void CoordSetPurge(CoordSet *I)
   int a,a1,ao;
   AtomInfoType *ai;
   ObjectMolecule *obj;
-  float *c0,*c1;
+  float *c0,*c1,*r0,*r1;
   LabPosType *l0,*l1;
   obj=I->Obj;
 
@@ -239,6 +256,7 @@ void CoordSetPurge(CoordSet *I)
     ENDFD;
 
   c0 = c1 = I->Coord;
+  r0 = r1 = I->RefCoord;
   l0 = l1 = I->LabPos;
 
   for(a=0;a<I->NIndex;a++) {
@@ -254,6 +272,11 @@ void CoordSetPurge(CoordSet *I)
         *(c1++)=*(c0++);
         *(c1++)=*(c0++);
         *(c1++)=*(c0++);
+        if(r1) {
+          *(r1++)=*(r0++);
+          *(r1++)=*(r0++);
+          *(r1++)=*(r0++);
+        }
         if(l0) {
           *(l1++) = *(l0++);
         }
@@ -262,6 +285,10 @@ void CoordSetPurge(CoordSet *I)
     } else {
       c0+=3;
       c1+=3;
+      if(r1) {
+        r0+=3;
+        r1+=3;
+      }
       if(l0) {
         l0++;
         l1++;
@@ -271,8 +298,12 @@ void CoordSetPurge(CoordSet *I)
   if(offset) {
     I->NIndex+=offset;
     VLASize(I->Coord,float,I->NIndex*3);
-    if(I->LabPos)
+    if(I->LabPos) {
       VLASize(I->LabPos,LabPosType,I->NIndex);
+    }
+    if(I->RefCoord) {
+      VLASize(I->RefCoord,float,I->NIndex*3);
+    }
     I->IdxToAtm=Realloc(I->IdxToAtm,int,I->NIndex);
     PRINTFD(I->State.G,FB_CoordSet)
       " CoordSetPurge-Debug: I->IdxToAtm shrunk to %d\n",I->NIndex
@@ -284,7 +315,6 @@ void CoordSetPurge(CoordSet *I)
     " CoordSetPurge-Debug: leaving NAtIndex %d NIndex %d...\n",
     I->NAtIndex,I->NIndex
     ENDFD;
-
 }
 /*========================================================================*/
 int CoordSetTransformAtomTTTf(CoordSet *I,int at,float *TTT)
@@ -945,7 +975,7 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 	 VLAFreeP(I->Color);
 
   if(type>=0) { /* representation specific */
-	 if(type<I->NRep)	{
+	 if(type<cRepCnt)	{
        int eff_level = level;
        a=type;
        if(level==cRepInvPick) {
@@ -973,7 +1003,7 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
          I->Active[type]=true;
 	 }
   } else { /* all representations are affected */
-	 for(a=0;a<I->NRep;a++)	{
+	 for(a=0;a<cRepCnt;a++)	{
        int eff_level = level;
        if(level==cRepInvPick) {
          switch(a) {
@@ -1019,7 +1049,7 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
          I->Rep[rep] = I->Rep[rep]->fUpdate(I->Rep[rep],I,state,rep);\
     }\
   }\
-OrthoBusyFast(I->State.G,rep,I->NRep);\
+OrthoBusyFast(I->State.G,rep,cRepCnt);\
 }
 /*========================================================================*/
 static void CoordSetUpdate(CoordSet *I,int state)
@@ -1055,7 +1085,7 @@ static void CoordSetUpdate(CoordSet *I,int state)
         }
     }
   }
-  OrthoBusyFast(G,0,I->NRep);
+  OrthoBusyFast(G,0,cRepCnt);
   RepUpdateMacro(I, cRepLine,            RepWireBondNew        , state );
   RepUpdateMacro(I, cRepCyl,             RepCylBondNew         , state );
   RepUpdateMacro(I, cRepDot,             RepDotNew             , state );
@@ -1069,7 +1099,7 @@ static void CoordSetUpdate(CoordSet *I,int state)
   RepUpdateMacro(I, cRepNonbondedSphere, RepNonbondedSphereNew , state );
   RepUpdateMacro(I, cRepEllipsoid,       RepEllipsoidNew       , state );
 
-  for(a=0;a<I->NRep;a++) 
+  for(a=0;a<cRepCnt;a++) 
     if(!I->Rep[a])
       I->Active[a]=false;
 
@@ -1146,7 +1176,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
       }
     }
     
-    for(aa=0;aa<I->NRep;aa++) {
+    for(aa=0;aa<cRepCnt;aa++) {
       if(aa==cRepSurface) { /* reorder */
         a=cRepCell;
       } else if(aa==cRepCell) {
@@ -1281,8 +1311,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
 /*========================================================================*/
 CoordSet *CoordSetNew(PyMOLGlobals *G)
 {
-  int a;
-  OOAlloc(G,CoordSet);
+  OOCalloc(G,CoordSet); /* NULL-initializes all fields */
   ObjectStateInit(G,&I->State);
   I->State.G=G;
   I->fFree=CoordSetFree;
@@ -1292,71 +1321,46 @@ CoordSet *CoordSetNew(PyMOLGlobals *G)
   I->fExtendIndices=CoordSetExtendIndices;
   I->fAppendIndices=CoordSetAppendIndices;
   I->fInvalidateRep=CoordSetInvalidateRep;
-  I->NIndex=0;
-  I->NAtIndex=0;
-  I->Coord = NULL;
-  I->Color = NULL;
-  I->AtmToIdx = NULL;
-  I->IdxToAtm = NULL;
-  I->NTmpBond = 0;
-  I->TmpBond = NULL;
-  I->TmpLinkBond = NULL;
-  I->NTmpLinkBond = 0;
-  I->PeriodicBox=NULL;
+
   I->PeriodicBoxType=cCSet_NoPeriodicity;
-  /*  I->Rep=VLAlloc(Rep*,cRepCnt);*/
-  I->NRep=cRepCnt;
-  I->Symmetry = NULL;
-  I->Name[0]=0;
-  I->Obj = NULL;
-  I->Spheroid = NULL;
-  I->SpheroidNormal = NULL;
+
   I->SpheroidSphereSize = I->State.G->Sphere->Sphere[1]->nDot; /* does this make any sense? */
-  for(a=0;a<I->NRep;a++)
-	 I->Rep[a] = NULL;
-  I->Setting = NULL;
-  I->Coord2Idx = NULL;
-  I->NMatrix = 0;
-  I->MatrixVLA = NULL;
-  I->SculptCGO = NULL;
-  I->LabPos = NULL;
+
   return(I);
 }
 /*========================================================================*/
 CoordSet *CoordSetCopy(CoordSet *cs)
 {
-  int a;
   int nAtom;
-  float *v0,*v1;
-  int *i0,*i1;
+
   OOAlloc(cs->State.G,CoordSet);
 
-  (*I)=(*cs);
+  (*I)=(*cs); /* NOTE: must deep-copy all pointers in this struct */
+
   ObjectStateCopy(&cs->State,&I->State);
+
   I->Symmetry=SymmetryCopy(cs->Symmetry);
+
   if(I->PeriodicBox) I->PeriodicBox=CrystalCopy(I->PeriodicBox);
+
   I->Coord = VLAlloc(float,I->NIndex*3);
-  
-  v0=I->Coord;
-  v1=cs->Coord;
-  for(a=0;a<I->NIndex;a++) {
-    *(v0++)=*(v1++);
-    *(v0++)=*(v1++);
-    *(v0++)=*(v1++);
-  }
+  UtilCopyMem(I->Coord, cs->Coord, sizeof(float)*3*I->NIndex);
+
   if(cs->LabPos) {
     I->LabPos = VLACalloc(LabPosType,I->NIndex);
     UtilCopyMem(I->LabPos,cs->LabPos,sizeof(LabPosType)*I->NIndex);
   }
+
+  if(cs->RefCoord) {
+    I->RefCoord = VLAlloc(float,I->NIndex*3);
+    UtilCopyMem(I->RefCoord,cs->RefCoord,sizeof(float)*3*I->NIndex);
+  }
+
   if(I->AtmToIdx) {
     nAtom = cs->Obj->NAtom;
     I->AtmToIdx = Alloc(int,nAtom);
-    i0=I->AtmToIdx;
-    i1=cs->AtmToIdx;
-    for(a=0;a<nAtom;a++)
-      *(i0++)=*(i1++);
+    UtilCopyMem(I->AtmToIdx,cs->AtmToIdx,sizeof(int)*nAtom);
   }
-  
   
   if(cs->MatrixVLA) { /* not used yet */
     I->MatrixVLA = VLAlloc(double,16*cs->NMatrix*sizeof(double));
@@ -1366,19 +1370,9 @@ CoordSet *CoordSetCopy(CoordSet *cs)
   }
 
   I->IdxToAtm = Alloc(int,I->NIndex);
-  i0=I->IdxToAtm;
-  i1=cs->IdxToAtm;
-  for(a=0;a<I->NIndex;a++)
-    *(i0++)=*(i1++);
-  
-  /*  I->Rep=VLAlloc(Rep*,I->NRep); */
-  i0=I->Active;
-  i1=cs->Active;
-  for(a=0;a<I->NRep;a++) {
-    *(i0++)=*(i1++);
-    I->Rep[a] = NULL;
-  }
+  UtilCopyMem(I->IdxToAtm,cs->IdxToAtm,sizeof(int)*I->NIndex);
 
+  UtilZeroMem(I->Rep, sizeof(Rep*)*cRepCnt); 
 
   I->TmpBond=NULL;
   I->Color=NULL;
@@ -1480,21 +1474,12 @@ void CoordSetEnumIndices(CoordSet *I)
   I->NAtIndex = I->NIndex;
 }
 /*========================================================================*/
-void CoordSetStrip(CoordSet *I)
-{
-  int a;
-  for(a=0;a<I->NRep;a++)
-	 if(I->Rep[a])
-		I->Rep[a]->fFree(I->Rep[a]);
-  I->NRep=0;
-}
-/*========================================================================*/
 void CoordSetFree(CoordSet *I)
 {
   int a;
   ObjectMolecule *obj;
   if(I)  {
-  for(a=0;a<I->NRep;a++)
+  for(a=0;a<cRepCnt;a++)
 	 if(I->Rep[a]) 
 		I->Rep[a]->fFree(I->Rep[a]);
     obj=I->Obj;
@@ -1509,7 +1494,7 @@ void CoordSetFree(CoordSet *I)
     VLAFreeP(I->Color);
     MapFree(I->Coord2Idx);
     VLAFreeP(I->Coord);
-    /*    VLAFreeP(I->Rep);*/
+    VLAFreeP(I->RefCoord);
     VLAFreeP(I->TmpBond);
     if(I->Symmetry) SymmetryFree(I->Symmetry);
     if(I->PeriodicBox) CrystalFree(I->PeriodicBox);

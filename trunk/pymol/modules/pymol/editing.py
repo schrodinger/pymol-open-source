@@ -23,6 +23,30 @@ if __name__=='pymol.editing':
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error              
     from chempy import cpv
 
+    ref_action_dict = {
+        'store'     : 1,
+        'recall'    : 2,
+    }
+
+    ref_action_sc = Shortcut(ref_action_dict.keys())
+
+    def reference(action='store', selection='(all)', state=0, quiet=1, _self=cmd):
+        r = DEFAULT_ERROR
+        if is_string(action):
+            action = ref_action_sc.auto_err(action,"action")
+            action = ref_action_dict[action]
+        else:
+            action = int(action)
+        selection = selector.process(selection)           
+        try:
+            _self.lock(_self)
+            r = _cmd.reference(int(action), str(selection),
+                               int(state)-1, int(quiet), _self._COb)
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException            
+        return r
+    
     def sculpt_purge(_self=cmd):
         '''
 DESCRIPTION

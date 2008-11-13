@@ -170,6 +170,7 @@ from editing import \
       matrix_reset,       \
       protect,            \
       push_undo,          \
+      reference,          \
       redo,               \
       remove,             \
       remove_picked,      \
