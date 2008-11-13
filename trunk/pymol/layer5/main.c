@@ -895,7 +895,9 @@ static void MainDraw(void)
     ENDFD;
   if(PLockAPIAsGlut(G,false)) {
     CMain *I = G->Main;    
-    if((!I->DrawSignalled) && (UtilGetSeconds(G) < I->DrawAfter)) {
+    if((!I->DrawSignalled) && 
+       (UtilGetSeconds(G) < I->DrawAfter) && 
+       I->FinalInitDone) {
       I->DrawDeferred = true;
     } else {
       int skip = false;
