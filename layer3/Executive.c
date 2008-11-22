@@ -203,7 +203,7 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals *G,
   float mn[3] = { 0,0,0};
   float mx[3] = { 15,15,15};
   float *vert_vla = NULL;
-  int ok = false;
+  int ok = true;
   ObjectMapState *ms;
   int multi=false;
   /* box_mode 0 = all, 1 = sele + buffer, 2 = vector, 3 = testing */

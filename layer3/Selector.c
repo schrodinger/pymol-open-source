@@ -5359,18 +5359,19 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
   sf[cAN_H][8] =  0.003038;
   sf[cAN_H][9] = 0.0;
 
-  /* LP is treated like H */
+  /* LP currently using scattering factors of carbon 
+     (Roche Pocket viewer relies upon this behavior) */
 
-  sf[cAN_H][0] =  0.493002;
-  sf[cAN_H][1] = 10.510900;
-  sf[cAN_H][2] =  0.322912;
-  sf[cAN_H][3] = 26.125700;
-  sf[cAN_H][4] =  0.140191;
-  sf[cAN_H][5] =  3.142360;
-  sf[cAN_H][6] =  0.040810;
-  sf[cAN_H][7] = 57.799698;
-  sf[cAN_H][8] =  0.003038;
-  sf[cAN_H][9] = 0.0;
+  sf[cAN_LP][0] =  2.310000;
+  sf[cAN_LP][1] = 20.843899;
+  sf[cAN_LP][2] =  1.020000;
+  sf[cAN_LP][3] = 10.207500;
+  sf[cAN_LP][4] =  1.588600;
+  sf[cAN_LP][5] =  0.568700;
+  sf[cAN_LP][6] =  0.865000;
+  sf[cAN_LP][7] = 51.651199;
+  sf[cAN_LP][8] =  0.215600;
+  sf[cAN_LP][9] = 0.0;
 
   sf[cAN_C][0] =  2.310000;
   sf[cAN_C][1] = 20.843899;
@@ -5680,6 +5681,10 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
       
       atom_sf[a][b] = occup[a] * sfa * pow(sqrt1d(4*PI/(sfb+bfact)),3.0);
       atom_sf[a][b+1] = 4*PI*PI/(sfb+bfact);
+
+      if(!a) {
+        printf("%d %8.3f %8.3f \n",b,atom_sf[a][b],atom_sf[a][b+1]);
+      }
     }
     
     rcut2 = max6d(0.0,
