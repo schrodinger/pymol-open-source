@@ -827,7 +827,9 @@ class CleanJob:
                 ok = 0
                 print "Error: Unable to validate freemol.mengine"
         if not ok:
-            warn("Please be sure that FreeMOL is correctly installed.")
+            pass
+            # we can't call warn because this is the not the tcl-tk gui thread
+            # warn("Please be sure that FreeMOL is correctly installed.")
         else:
             from chempy import io
             obj_list = self_cmd.get_object_list("bymol ("+sele+")")
@@ -856,7 +858,8 @@ class CleanJob:
                             self_cmd.delete(clean_name)
                             ok = 1
             if not ok:
-                warn("Cleanup failed.  Invalid input or software malfuction?")
+                # we can't call warn because this is the not the tcl-tk gui thread
+                print "Cleanup failed.  Invalid input or software malfuction?"
                 if result != None:
                     if len(result)>1:
                         print result[1]
