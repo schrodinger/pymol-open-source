@@ -3,42 +3,45 @@
 INSTALLATION VIA COMPILATION 
 ----------------------------------------------------------------------
 
-There is currently only one *supported* approach for building and
-installing PyMOL from the open-source code: 
+There is currently only one officially-supported approach for building
+and installing PyMOL from the open-source code:
 
-    via Python Disutils under an open-source environment, such as:
+    UsingPython Disutils under an open-source environment, such as:
 
         Linux
         FreeBSD
-        Mac OS X under X11 with Fink 
+        Mac OS X under X11 (with Fink or similar)
 
 Note that you must have OpenGL, glut, libpng, tcl/tk, python,
 freetype2, and Pmw already installed on your system for this to work.
-
-    python setup.py build
-    python setup.py install 
+Nowadays, you can typically use the package manager to automatically
+download and install the required components ("apt-get install
+python-pmw" or "yum install freetype-devel", etc.)
+ 
+    python setup.py build install
     python setup2.py install
     ./pymol
 
-    If running under Fink, "python" above must be Fink's python.
+    Note: under Fink, "python" above must be Fink's python.
 
 Good luck!
 
 Warren L. DeLano, Ph.D.
 warren@delsci.com
 
-PS. There are two other *unsupported* approaches intended primarily
-for developer use, with pymol runningly directly out of the source
+PS. There are two other unsupported approaches intended primarily for
+developer use, with pymol runningly directly out of the source
 directory instead of being installed into an external Python or the
 global system Python.
 
   1. GNU autotools: assumes that all of the external dependencies are
      already installed in your system.  NOTE: 'make install' only
-     targets the local "built" directory.  This build approach is not
-     currently intended for a Python-integrated installation --
-     see the above distutils approach for that -- but it could be quite
-     useful in situations where you want to build and maintain multiple
-     PyMOL versions on a single machine, either locally, or system-wide.
+     targets the local directory (.).  This build approach is not
+     currently intended for a Python-integrated installation -- see
+     the above distutils approach for that -- but it could be quite
+     useful in situations where you want to build and maintain
+     multiple PyMOL development versions on a single machine, either
+     locally, or system-wide.
 
     NOTE: This method has only been tested on Linux.
 
@@ -47,9 +50,9 @@ global system Python.
     ./pymol
     make clean (optional, to save space)
 
-  2. DeLano Scientific LLC's internal Makefiles (PROPRIETARY/AS IS):
+  2. DeLano Scientific LLC's internal Makefiles (AS IS/PROPRIETARY):
      assumes that external depencies are already compiled and present
-     in the local ./ext subdirectory.
+     in a local ./ext subdirectory.
     
     cp setup/Rules.xxxxx Rules.delci # (then configure manually)
     make -f Makefile.delsci
