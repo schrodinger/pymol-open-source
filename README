@@ -14,7 +14,7 @@ PyMOL has the following external dependencies:
   3. Python (v 2.1 or better) compiled with threads support
   4. libpng (can compiled without it, but image saves won't work)
   5. Tcl/Tk (for the external GUI)
-  6. Numerical Python (technically optional)
+  6. Numerical Python (technically optional - now using numpy instead)
   7. Python megawidgets (Pmw -- only required for the "external" GUI)
   8. FreeType2 (if you want nice fonts)
 ----------------------------------------------------------------------
@@ -39,7 +39,7 @@ community.
 
    Major Authors (5000+ lines of code):
 
-      Ralf W. Grosse-Kunstleve (SGLite Module)
+      Ralf W. Grosse-Kunstleve (SGLite Module -- inactivated as of 2008)
    
    Minor Authors (500+ lines of code):
 
