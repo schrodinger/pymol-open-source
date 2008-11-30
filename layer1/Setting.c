@@ -2093,6 +2093,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     OrthoDirty(G);
     break;
   case cSetting_stick_radius:
+  case cSetting_stick_h_scale:
     ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
     ExecutiveInvalidateRep(G,inv_sele,cRepCartoon,cRepInvRep); /* base width */
     SceneChanged(G);
@@ -2100,6 +2101,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_stick_ball:
   case cSetting_stick_nub:
   case cSetting_stick_ball_ratio:
+  case cSetting_stick_ball_color:
   case cSetting_stick_fixed_radius:
   case cSetting_stick_valence_scale:
   case cSetting_stick_quality:
@@ -3649,5 +3651,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_b(I,cSetting_map_auto_expand_sym,1);
     set_b(I,cSetting_image_copy_always,0);
     set_i(I,cSetting_max_ups,0);
+    set_i(I,cSetting_auto_overlay,0);
+    set_color(I,cSetting_stick_ball_color,"-1");
+    set_f(I,cSetting_stick_h_scale, 0.4F);
   }
 }

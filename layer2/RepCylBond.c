@@ -1177,7 +1177,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
   int visFlag;
   int maxCyl;
   int ord;
-  int stick_ball;
+  int stick_ball, stick_ball_color=-1;
   float stick_ball_ratio=1.0F;
   unsigned int v_size,vr_size,rp_size,vp_size;
   Pickable *rp;
@@ -1196,7 +1196,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
   float scale_r = 1.0F;
   int variable_alpha = false;
   int n_var_alpha=0, n_var_alpha_ray=0,n_var_alpha_sph=0;
-  float transp;
+  float transp,h_scale;
   int valence_found  = false;
   const float _0p9 = 0.9F;
   OOAlloc(G,RepCylBond);
@@ -1295,7 +1295,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
   radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
   half_bonds = (int)SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);  
   na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
-
+  h_scale = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_h_scale);
   RepInit(G,&I->R);
   I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepCylBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepCylBondFree;
@@ -1364,6 +1364,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
     }
 
     stick_ball = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_stick_ball);
+
     overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
     nub = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
 
@@ -1399,6 +1400,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
     if(stick_ball) {
       int ds;
       stick_ball_ratio = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_ball_ratio);
+      stick_ball_color = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_stick_ball_color);
 
       ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
       if(ds<0) ds=0;
@@ -1450,6 +1452,11 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
         if(variable_alpha) 
           AtomInfoGetBondSetting_f(G,b,cSetting_stick_transparency,transp,&bd_transp);
 
+	if(bd_radius<0.0F) {
+	  bd_radius = -bd_radius;
+	  if((ati1->protons == cAN_H)||(ati2->protons == cAN_H))
+	    bd_radius = bd_radius*h_scale; /* scaling for bonds involving hydrogen */
+	}
         overlap_r = overlap * bd_radius;
         nub_r = nub * bd_radius;
         
@@ -1645,76 +1652,84 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
           if(s1&&(!marked[b1])) { /* just once for each atom... */
             int *q=sp->Sequence;
             int *s=sp->StripLen;
+	    float vdw1 = (vdw>=0) ? vdw : -ati1->vdw * vdw;
+	    int sbc1 = (stick_ball_color==cColorDefault) ? c1 : stick_ball_color;
+
+	    if(sbc1==cColorAtomic)
+	      sbc1 = ati1->color;
+
             marked[b1]=1;
             {
-              if(ColorCheckRamped(G,c1)) {
-                ColorGetRamped(G,c1,vv1,rgb2_buf,state);
+              if(ColorCheckRamped(G,sbc1)) {
+                ColorGetRamped(G,sbc1,vv1,rgb2_buf,state);
                 rgb1 = rgb1_buf;
               } else {
-                rgb1 = ColorGet(G,c1);
+                rgb1 = ColorGet(G,sbc1);
               }
             }
             copy3f(rgb1,vsp);
             vsp+=3;
-            for(d=0;d<sp->NStrip;d++)
-              {
-                for(e=0;e<(*s);e++)
-                  {
-                    *(vsp++)=sp->dot[*q][0]; /* normal */
-                    *(vsp++)=sp->dot[*q][1];
-                    *(vsp++)=sp->dot[*q][2];
-                    *(vsp++)=vv1[0]+vdw*sp->dot[*q][0]; /* point */
-                    *(vsp++)=vv1[1]+vdw*sp->dot[*q][1];
-                    *(vsp++)=vv1[2]+vdw*sp->dot[*q][2];
-                    q++;
-                  }
-                s++;
-              }
+            for(d=0;d<sp->NStrip;d++) {
+	      for(e=0;e<(*s);e++) {
+		*(vsp++)=sp->dot[*q][0]; /* normal */
+		*(vsp++)=sp->dot[*q][1];
+		*(vsp++)=sp->dot[*q][2];
+		*(vsp++)=vv1[0]+vdw1*sp->dot[*q][0]; /* point */
+		*(vsp++)=vv1[1]+vdw1*sp->dot[*q][1];
+		*(vsp++)=vv1[2]+vdw1*sp->dot[*q][2];
+		q++;
+	      }
+	      s++;
+	    }
             I->NSP++;
             copy3f(rgb1,vspc);
             vspc+=3;
             copy3f(vv1,vspc);
             vspc+=3;
-            *(vspc++)=vdw;
+            *(vspc++)=vdw1;
             I->NSPC++;
           }
 
           if(s2&&!(marked[b2])) { /* just once for each atom... */
             int *q=sp->Sequence;
             int *s=sp->StripLen;
+	    float vdw2 = (vdw>=0) ? vdw : -ati2->vdw * vdw;
+	    int sbc2 = (stick_ball_color==cColorDefault) ? c2 : stick_ball_color;
+
             marked[b2]=1;
               
-            if(ColorCheckRamped(G,c2)) {
-              ColorGetRamped(G,c2,vv2,rgb2_buf,state);
+	    if(sbc2==cColorAtomic)
+	      sbc2 = ati2->color;
+
+            if(ColorCheckRamped(G,sbc2)) {
+              ColorGetRamped(G,sbc2,vv2,rgb2_buf,state);
               rgb2 = rgb2_buf;
             } else {
-              rgb2 = ColorGet(G,c2);
+              rgb2 = ColorGet(G,sbc2);
             }
               
             copy3f(rgb2,vsp);
             vsp+=3;
               
-            for(d=0;d<sp->NStrip;d++)
-              {
-                for(e=0;e<(*s);e++)
-                  {
-                    *(vsp++)=sp->dot[*q][0]; /* normal */
-                    *(vsp++)=sp->dot[*q][1];
-                    *(vsp++)=sp->dot[*q][2];
-                    *(vsp++)=vv2[0]+vdw*sp->dot[*q][0]; /* point */
-                    *(vsp++)=vv2[1]+vdw*sp->dot[*q][1];
-                    *(vsp++)=vv2[2]+vdw*sp->dot[*q][2];
-                    q++;
-                  }
-                s++;
-              }
+            for(d=0;d<sp->NStrip;d++) {
+	      for(e=0;e<(*s);e++)  {
+		*(vsp++)=sp->dot[*q][0]; /* normal */
+		*(vsp++)=sp->dot[*q][1];
+		*(vsp++)=sp->dot[*q][2];
+		*(vsp++)=vv2[0]+vdw2*sp->dot[*q][0]; /* point */
+		*(vsp++)=vv2[1]+vdw2*sp->dot[*q][1];
+		*(vsp++)=vv2[2]+vdw2*sp->dot[*q][2];
+		q++;
+	      }
+	      s++;
+	    }
             I->NSP++;
 
             copy3f(rgb2,vspc);
             vspc+=3;
             copy3f(vv2,vspc);
             vspc+=3;
-            *(vspc++)=vdw;
+            *(vspc++)=vdw2;
             I->NSPC++;
           }
         }
@@ -2462,7 +2477,7 @@ void RepCylBondRenderImmediate(CoordSet *cs, RenderInfo *info)
     int active = false;
     ObjectMolecule *obj = cs->Obj;
     int nEdge = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
-    float radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
+    float radius = fabs(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius));
     float overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
     float nub = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
     float overlap_r = radius*overlap;

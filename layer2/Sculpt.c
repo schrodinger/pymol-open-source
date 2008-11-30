@@ -1058,8 +1058,66 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                             (oai[b0].protons == cAN_C)&&
                             (oai[b2].protons == cAN_N)&&
                             (oai[b3].protons == cAN_H)&&single[b3]&&
-                           (!WordMatchExact(G,oai[b2].resn,"PRO",true)))) {
-                          ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,cShakerTorsAmide);
+			    (!WordMatchExact(G,oai[b2].resn,"PRO",true)))) {
+			  int cycle = 0;
+			  /* b1\b0_b2/b3-b4-b5-b6-b7... */
+                          
+			  int b4,b5,b6,b7,b8,b9,b10;
+			  int n3,n4,n5,n6,n7,n8,n9;
+			  n3 = obj->Neighbor[b2]+1;
+			  while((!cycle)&&(b4 = obj->Neighbor[n3])>=0) {
+			    if(b4!=b0) {
+			      n4 = obj->Neighbor[b4]+1;
+			      while((!cycle)&&(b5 = obj->Neighbor[n4])>=0) {
+				if(b5!=b2) {
+				  n5 = obj->Neighbor[b5]+1;
+				  while((!cycle)&&(b6 = obj->Neighbor[n5])>=0) {
+				    if(b6==b0) { /* 4-cycle */
+				      cycle=4;
+				    } else if((b6!=b4)&&(b6!=b2)) {
+				      n6 = obj->Neighbor[b6]+1;
+				      while((!cycle)&&(b7 = obj->Neighbor[n6])>=0) {
+					if(b7==b0) {  /* 5-cycle */
+					  cycle=5;
+					} else if((b7!=b5)&&(b7!=b2)) {
+					  n7 = obj->Neighbor[b7]+1;
+					  while((!cycle)&&(b8 = obj->Neighbor[n7])>=0) {
+					    if(b8==b0) {  /* 6-cycle */
+					      cycle=6;
+					    } else if((b8!=b6)&&(b8!=b2)) {
+					      n8 = obj->Neighbor[b8]+1;
+					      while((!cycle)&&(b9 = obj->Neighbor[n8])>=0) {
+						if(b9==b0) {  /* 7-cycle */
+						  cycle=7;
+						} else if((b9!=b7)&&(b9!=b2)) {
+						  n9 = obj->Neighbor[b9]+1;
+						  while((!cycle)&&(b10 = obj->Neighbor[n9])>=0) {
+						    if(b10==b0) {  /* 8-cycle */
+						      cycle=8;
+						    } 
+						    n9+=2;
+						  }
+						}
+						n8+=2;
+					      }
+					    }
+					    n7+=2;
+					  }
+					}
+					n6+=2;
+				      }
+				    }
+				    n5+=2;
+				  }
+				}
+				n4+=2;
+			      }
+			    }
+			    n3+=2;
+			  }
+			  if(!cycle) { /* don't add special amide constraints within small rings */
+			    ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,cShakerTorsAmide);
+			  }
                         }
                       }
                       /* check 1-4 exclusion */
@@ -1151,126 +1209,66 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                             (oai[b3].protons == cAN_H)&&single[b3]))) 
                           */
                           {
-                            int fixed = false;
-#if 0
+                            int cycle = false;
                             /* look for 4, 5, 6, 7, or 8 cycle that
                                connects back to b1 if found, then this
                                planer system is fixed (either at zero
                                or 180 -- it can't flip it over) */
-                            {
-                              int b4,b5,b6,b7,b8,b9,b10;
-                              int n3,n4,n5,n6,n7,n8,n9;
-                              n3 = obj->Neighbor[b2]+1;
-                              while((!fixed)&&(b4 = obj->Neighbor[n3])>=0) {
-                                if(b4!=b0) {
-                                  n4 = obj->Neighbor[b4]+1;
-                                  while((!fixed)&&(b5 = obj->Neighbor[n4])>=0) {
-                                    if(b5!=b2) {
-                                      n5 = obj->Neighbor[b5]+1;
-                                      while((!fixed)&&(b6 = obj->Neighbor[n5])>=0) {
-                                        if(b6==b0) { /* 4-cycle */
-                                          fixed=true;
-                                        } else if(b6!=b4) {
-                                          n6 = obj->Neighbor[b6]+1;
-                                          while((!fixed)&&(b7 = obj->Neighbor[n6])>=0) {
-                                            if(b7==b0) {  /* 5-cycle */
-                                              fixed=true;
-                                            } else if(b7!=b5) {
-                                              n7 = obj->Neighbor[b7]+1;
-                                              while((!fixed)&&(b8 = obj->Neighbor[n7])>=0) {
-                                                if(b8==b0) {  /* 6-cycle */
-                                                  fixed=true;
-                                                } else if(b8!=b6) {
-                                                  n8 = obj->Neighbor[b8]+1;
-                                                  while((!fixed)&&(b9 = obj->Neighbor[n8])>=0) {
-                                                    if(b9==b0) {  /* 7-cycle */
-                                                      fixed=true;
-                                                    } else if(b9!=b7) {
-                                                      n9 = obj->Neighbor[b9]+1;
-                                                      while((!fixed)&&(b10 = obj->Neighbor[n9])>=0) {
-                                                        if(b10==b0) {  /* 8-cycle */
-                                                          fixed=true;
-                                                        } 
-                                                        n9+=2;
-                                                      }
-                                                    }
-                                                    n8+=2;
-                                                  }
-                                                }
-                                                n7+=2;
-                                              }
-                                            }
-                                            n6+=2;
-                                          }
-                                        }
-                                        n5+=2;
-                                      }
-                                    }
-                                    n4+=2;
-                                  }
-                                }
-                                n3+=2;
-                              }
+			    /* b1\b0_b2/b3-b4-b5-b6-b7... */
+                            
+			    int b4,b5,b6,b7,b8,b9,b10;
+			    int n3,n4,n5,n6,n7,n8,n9;
+			    n3 = obj->Neighbor[b2]+1;
+			    while((!cycle)&&(b4 = obj->Neighbor[n3])>=0) {
+			      if(b4!=b0) {
+				n4 = obj->Neighbor[b4]+1;
+				while((!cycle)&&(b5 = obj->Neighbor[n4])>=0) {
+				  if(b5!=b2) {
+				    n5 = obj->Neighbor[b5]+1;
+				    while((!cycle)&&(b6 = obj->Neighbor[n5])>=0) {
+				      if(b6==b0) { /* 4-cycle */
+					cycle=4;
+				      } else if((b6!=b4)&&(b6!=b2)) {
+					n6 = obj->Neighbor[b6]+1;
+					while((!cycle)&&(b7 = obj->Neighbor[n6])>=0) {
+					  if(b7==b0) {  /* 5-cycle */
+					    cycle=5;
+					  } else if((b7!=b5)&&(b7!=b2)) {
+					    n7 = obj->Neighbor[b7]+1;
+					    while((!cycle)&&(b8 = obj->Neighbor[n7])>=0) {
+					      if(b8==b0) {  /* 6-cycle */
+						cycle=6;
+					      } else if((b8!=b6)&&(b8!=b2)) {
+						n8 = obj->Neighbor[b8]+1;
+						while((!cycle)&&(b9 = obj->Neighbor[n8])>=0) {
+						  if(b9==b0) {  /* 7-cycle */
+						    cycle=7;
+						  } else if((b9!=b7)&&(b9!=b2)) {
+						    n9 = obj->Neighbor[b9]+1;
+						    while((!cycle)&&(b10 = obj->Neighbor[n9])>=0) {
+						      if(b10==b0) {  /* 8-cycle */
+							cycle=8;
+						      } 
+						      n9+=2;
+						    }
+						  }
+						  n8+=2;
+						}
+					      }
+					      n7+=2;
+					    }
+					  }
+					  n6+=2;
+					}
+				      }
+				      n5+=2;
+				    }
+				  }
+				  n4+=2;
+				}
+			      }
+			      n3+=2;
                             }
-#else
-                            {
-                              /* b1\b0_b2/b3-b4-b5-b6-b7... */
-                              
-                              int b4,b5,b6,b7,b8,b9,b10;
-                              int n3,n4,n5,n6,n7,n8,n9;
-                              n3 = obj->Neighbor[b2]+1;
-                              while((!fixed)&&(b4 = obj->Neighbor[n3])>=0) {
-                                if(b4!=b0) {
-                                  n4 = obj->Neighbor[b4]+1;
-                                  while((!fixed)&&(b5 = obj->Neighbor[n4])>=0) {
-                                    if(b5!=b2) {
-                                      n5 = obj->Neighbor[b5]+1;
-                                      while((!fixed)&&(b6 = obj->Neighbor[n5])>=0) {
-                                        if(b6==b0) { /* 4-cycle */
-                                          fixed=true;
-                                        } else if((b6!=b4)&&(b6!=b2)) {
-                                          n6 = obj->Neighbor[b6]+1;
-                                          while((!fixed)&&(b7 = obj->Neighbor[n6])>=0) {
-                                            if(b7==b0) {  /* 5-cycle */
-                                              fixed=true;
-                                            } else if((b7!=b5)&&(b7!=b2)) {
-                                              n7 = obj->Neighbor[b7]+1;
-                                              while((!fixed)&&(b8 = obj->Neighbor[n7])>=0) {
-                                                if(b8==b0) {  /* 6-cycle */
-                                                  fixed=true;
-                                                } else if((b8!=b6)&&(b8!=b2)) {
-                                                  n8 = obj->Neighbor[b8]+1;
-                                                  while((!fixed)&&(b9 = obj->Neighbor[n8])>=0) {
-                                                    if(b9==b0) {  /* 7-cycle */
-                                                      fixed=true;
-                                                    } else if((b9!=b7)&&(b9!=b2)) {
-                                                      n9 = obj->Neighbor[b9]+1;
-                                                      while((!fixed)&&(b10 = obj->Neighbor[n9])>=0) {
-                                                        if(b10==b0) {  /* 8-cycle */
-                                                          fixed=true;
-                                                        } 
-                                                        n9+=2;
-                                                      }
-                                                    }
-                                                    n8+=2;
-                                                  }
-                                                }
-                                                n7+=2;
-                                              }
-                                            }
-                                            n6+=2;
-                                          }
-                                        }
-                                        n5+=2;
-                                      }
-                                    }
-                                    n4+=2;
-                                  }
-                                }
-                                n3+=2;
-                              }
-                            }
-#endif
                             /* don't get jacked by pseudo-planar PRO */
 
                             if(((oai[b0].protons!=cAN_N)||
@@ -1292,7 +1290,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                                                    oai[b3].unique_id,
                                                    d);
                               }
-                              ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3,d,fixed); 
+                              ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3,d,cycle);
                             }
                           }
                         }

@@ -213,140 +213,100 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
                    float *p0,float *p1,float *p2,float *p3,
                    float target, int fixed, float wt)
 {
-
+  
   float result;
+  
+  float d01[3],d12[3],d23[3],d03[3],cp0[3],cp1[3],dp,sc,dev,d0[3],push[3];
+  double s01,s12,s23,s03;
+  
+  subtract3f(v0,v1,d01);
+  subtract3f(v1,v2,d12);
+  subtract3f(v2,v3,d23);
+  subtract3f(v0,v3,d03);    
+  
+  s03 = lengthsq3f(d03);
+  s01 = lengthsq3f(d01);
+  s12 = lengthsq3f(d12);
+  s23 = lengthsq3f(d23);
+  
+  if( (s03<s01) || (s03<s12) || (s03<s23))
+    return 0.0F;
+  
+  cross_product3f(d01,d12,cp0);
+  cross_product3f(d12,d23,cp1);
+  
+  normalize3f(cp0);
+  normalize3f(cp1);
+  
+  dp = dot_product3f(cp0,cp1);
+  
+  result = (dev = 1.0F - (float)fabs(dp));
+  
+  if(dev>R_SMALL4) {
+    
+    /*
+      add3f(cp0,cp1,d0);
+      normalize3f(d0);
+      
+      cross_product3f(cp0,d12,pos);
+      dp2 = dot_product3f(cp1,pos);
+    */
+    
+    if(fixed && (dp*target<0.0F)) {
 
-#if 0
-  float vc[3],d0[3],d1[3],d2[3],cp[3];
-  float push[3];
-  float cur,dev,sc;
+      /* fixed & backwards... */
 
-  average3f(v0,v3,vc);
+      if(dp<0.0F) {
+	sc = -wt*dev*0.5F;
+      } else {
+	sc = wt*dev*0.5F;
+      }
+      sc *= 0.02F; /* weaken considerably to allow resolution of
+		      inconsistencies (folded rings, etc.) */
 
-  subtract3f(v1,vc,d1);
-  normalize3f(d1);
-
-  subtract3f(v2,vc,d2);
-  normalize3f(d2);
-
-  cross_product3f(d1,d2,cp); 
-  normalize3f(cp); /* this is our axis */
-
-  subtract3f(v0,vc,d0);
-  cur = dot_product3f(d0,cp);
-
-  dev = (float)fabs(cur);
-  if((result = (float)fabs(dev))>R_SMALL8) {
-
-    sc = -wt*dev*0.5F;
-
+    } else if(dp>0) {
+      sc = -wt*dev*0.5F;
+    } else {
+      sc = wt*dev*0.5F;
+    }
+    
+    if(fixed && (fixed<7)) {
+      /* in small rings, ramp up the planarity factor */
+      sc *= 8;
+    } else {
+      sc *= 0.2F;
+    }
+    
+    /* pair-wise nudges */
+    
     subtract3f(v0,v3,d0);
     normalize3f(d0);
     scale3f(d0,sc,push);
     add3f(push,p0,p0); 
     subtract3f(p3,push,p3);
-
-    sc = -2.0F*sc ;
-
+    
+    subtract3f(v1,v2,d0);
+    normalize3f(d0);
+    scale3f(d0,sc,push);
+    add3f(push,p1,p1); 
+    subtract3f(p2,push,p2);
+    
+    sc = -sc;
     subtract3f(v0,v2,d0);
     normalize3f(d0);
     scale3f(d0,sc,push);
     add3f(push,p0,p0); 
     subtract3f(p2,push,p2);
-
+    
     subtract3f(v1,v3,d0);
     normalize3f(d0);
     scale3f(d0,sc,push);
     add3f(push,p1,p1); 
     subtract3f(p3,push,p3);
-  } else
-
-#else
     
-    float d01[3],d12[3],d23[3],d03[3],cp0[3],cp1[3],dp,sc,dev,d0[3],push[3];
-  double s01,s12,s23,s03;
-    
-    subtract3f(v0,v1,d01);
-    subtract3f(v1,v2,d12);
-    subtract3f(v2,v3,d23);
-    subtract3f(v0,v3,d03);    
-
-    s03 = lengthsq3f(d03);
-    s01 = lengthsq3f(d01);
-    s12 = lengthsq3f(d12);
-    s23 = lengthsq3f(d23);
-    
-    if( (s03<s01) || (s03<s12) || (s03<s23))
-      return 0.0F;
-
-    cross_product3f(d01,d12,cp0);
-    cross_product3f(d12,d23,cp1);
-    
-    normalize3f(cp0);
-    normalize3f(cp1);
-
-    dp = dot_product3f(cp0,cp1);
-    
-    result = (dev = 1.0F - (float)fabs(dp));
-    
-    if(dev>R_SMALL4) {
-
-      /*
-        add3f(cp0,cp1,d0);
-        normalize3f(d0);
-        
-        cross_product3f(cp0,d12,pos);
-        dp2 = dot_product3f(cp1,pos);
-      */
-      
-      if(fixed && (dp*target<0.0F)) {
-        if(dp<0.0F) {
-          sc = -wt*dev*0.5F;
-        } else {
-          sc = wt*dev*0.5F;
-        }
-      } else if(dp>0) {
-        sc = -wt*dev*0.5F;
-      } else {
-        sc = wt*dev*0.5F;
-      }
-      
-      if(fixed) {
-        sc *= 8;
-      } else {
-        sc *= 0.2F;
-      }
-
-      /* pair-wise nudges */
-
-      subtract3f(v0,v3,d0);
-      normalize3f(d0);
-      scale3f(d0,sc,push);
-      add3f(push,p0,p0); 
-      subtract3f(p3,push,p3);
-
-      subtract3f(v1,v2,d0);
-      normalize3f(d0);
-      scale3f(d0,sc,push);
-      add3f(push,p1,p1); 
-      subtract3f(p2,push,p2);
-
-      sc = -sc;
-      subtract3f(v0,v2,d0);
-      normalize3f(d0);
-      scale3f(d0,sc,push);
-      add3f(push,p0,p0); 
-      subtract3f(p2,push,p2);
-
-      subtract3f(v1,v3,d0);
-      normalize3f(d0);
-      scale3f(d0,sc,push);
-      add3f(push,p1,p1); 
-      subtract3f(p3,push,p3);
-
-    } else
-#endif    
-      result = 0.0;
+  } else {
+    result = 0.0;
+  }
   return result;
 
 }

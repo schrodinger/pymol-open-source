@@ -1564,7 +1564,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
 
   ring_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_width);
   if(ring_width<0.0F) {
-    ring_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius)*0.5F;
+    ring_width = fabs(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius))*0.5F;
   }
 
   ring_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_color);

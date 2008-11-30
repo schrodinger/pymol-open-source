@@ -35,6 +35,19 @@ def attach_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
             if _self.get_setting_legacy("auto_remove_hydrogens"):
                 _self.remove("(hydro and pkmol)")            
         _self.delete(tmp_editor)
+
+def combine_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
+    if selection in _self.get_names("selections"):
+        _self.fragment(fragment,tmp_editor)
+        if _self.count_atoms("((%s) and elem h)"%selection,quiet=1):
+            _self.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",3)
+            if _self.get_setting_legacy("auto_remove_hydrogens"):
+                _self.remove("(hydro and pkmol)")            
+        else:
+            _self.fuse("(%s and id %d)"%(tmp_editor,anchor),"(pk1)",3)
+            if _self.get_setting_legacy("auto_remove_hydrogens"):
+                _self.remove("(hydro and pkmol)")            
+        _self.delete(tmp_editor)
         
 def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",_self=cmd):
     if (selection not in _self.get_names('all')):

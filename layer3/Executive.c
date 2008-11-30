@@ -6704,7 +6704,8 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
     min_width = SettingGetGlobal_f(G,cSetting_selection_width);
     
     if(width_scale>=0.0F) {
-      width = (int)((width_scale*SettingGetGlobal_f(G,cSetting_stick_radius)/
+      width = (int)((width_scale*
+		     fabs(SettingGetGlobal_f(G,cSetting_stick_radius))/
                      SceneGetScreenVertexScale(G,NULL)));
       if(width<min_width)
         width = (int)min_width;
@@ -7206,7 +7207,8 @@ int  ExecutiveInvert(PyMOLGlobals *G,int quiet)
   return(ok);
 }
 /*========================================================================*/
-void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor,int move_flag)
+void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,
+		   int recolor,int move_flag)
 {
   int i0=-1;
   int i1=-1;
@@ -7245,15 +7247,24 @@ void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor,int mo
           ExecutiveObjMolSeleOp(G,sele2,&op);
         }
         SelectorDelete(G,tmp_fuse_sele);
-
-        if((obj0->AtomInfo[i0].protons==1)&&
-           (obj1->AtomInfo[i1].protons==1))
-          ObjectMoleculeFuse(obj1,i1,obj0,i0,0,move_flag);
-        else if((obj0->AtomInfo[i0].protons!=1)&&
-                (obj1->AtomInfo[i1].protons!=1))
-          ObjectMoleculeFuse(obj1,i1,obj0,i0,1,move_flag);
-        else 
-          ErrMessage(G,"Fuse","Can't fuse between a hydrogen and a non-hydrogen");
+	
+	switch(mode) {
+	case 0:
+	case 1:
+	case 2:
+	  if((obj0->AtomInfo[i0].protons==1)&&
+	     (obj1->AtomInfo[i1].protons==1))
+	    ObjectMoleculeFuse(obj1,i1,obj0,i0,0,move_flag);
+	  else if((obj0->AtomInfo[i0].protons!=1)&&
+		  (obj1->AtomInfo[i1].protons!=1))
+	    ObjectMoleculeFuse(obj1,i1,obj0,i0,1,move_flag);
+	  else 
+	    ErrMessage(G,"Fuse","Can't fuse between a hydrogen and a non-hydrogen");
+	  break;
+	case 3:
+	  ObjectMoleculeFuse(obj1,i1,obj0,i0,3,false);
+	  break;
+	}
       }
     }
   }
@@ -7495,40 +7506,36 @@ void ExecutiveRemoveAtoms(PyMOLGlobals *G,char *s1,int quiet)
   int flag = false;
 
   sele=SelectorIndexByName(G,s1);
-  if(sele>=0)
-    {
-      while(ListIterate(I->Spec,rec,next))
-        {
-          if(rec->type==cExecObject)
-            {
-              if(rec->obj->type==cObjectMolecule)
-                {
-                  ObjectMoleculeOpRecInit(&op);
-                  op.code = OMOP_Remove;
-                  op.i1 = 0;
-                  obj=(ObjectMolecule*)rec->obj;
-                  ObjectMoleculeVerifyChemistry(obj,-1); /* remember chemistry for later */
-                  ObjectMoleculeSeleOp(obj,sele,&op);
-                  if(op.i1) {
-                    if(!quiet) {
-                      PRINTFD(G,FB_Editor)
-                        " ExecutiveRemove-Debug: purging %i of %i atoms in %s\n",
-                        op.i1,obj->NAtom,obj->Obj.Name
-                        ENDFD;
-                    }
-                    ObjectMoleculePurge(obj);
-                    if(!quiet) {
-                      PRINTFB(G,FB_Editor,FB_Actions)
-                        " Remove: eliminated %d atoms in model \"%s\".\n",
-                        op.i1,obj->Obj.Name 
-                        ENDFB(G);
-                    }
-                    flag=true;
-                  }
-                }
-            }
-        }
+  if(sele>=0) {
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecObject) {
+	if(rec->obj->type==cObjectMolecule) {
+	  ObjectMoleculeOpRecInit(&op);
+	  op.code = OMOP_Remove;
+	  op.i1 = 0;
+	  obj=(ObjectMolecule*)rec->obj;
+	  ObjectMoleculeVerifyChemistry(obj,-1); /* remember chemistry for later */
+	  ObjectMoleculeSeleOp(obj,sele,&op);
+	  if(op.i1) {
+	    if(!quiet) {
+	      PRINTFD(G,FB_Editor)
+		" ExecutiveRemove-Debug: purging %i of %i atoms in %s\n",
+		op.i1,obj->NAtom,obj->Obj.Name
+		ENDFD;
+	    }
+	    ObjectMoleculePurge(obj);
+	    if(!quiet) {
+	      PRINTFB(G,FB_Editor,FB_Actions)
+		" Remove: eliminated %d atoms in model \"%s\".\n",
+		op.i1,obj->Obj.Name 
+		ENDFB(G);
+	    }
+	    flag=true;
+	  }
+	}
+      }
     }
+  }
   /*  if(!flag) {
       ErrMessage(G,"Remove","no atoms removed.");
       }*/

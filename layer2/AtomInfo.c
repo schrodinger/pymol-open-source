@@ -2812,7 +2812,11 @@ void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
   /* vdw radii */
 
   switch(I->protons) {
-  case cAN_H:  vdw=1.20F; break;
+
+  case cAN_H:  vdw=1.20F; break; 
+    /* NOTE: Rowland and Taylor J. Phys. Chem. 100 (18): 7384–91 suggest
+       1.09 would be more consistent with Hydrogen crystal data */
+
   case cAN_He: vdw=1.40F; break;
 
   case cAN_Li: vdw=1.82F; break;

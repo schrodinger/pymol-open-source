@@ -767,6 +767,9 @@ typedef struct _CPyMOL {
   ov_word lex_map_auto_expand_sym;
   ov_word lex_image_copy_always;
   ov_word lex_max_ups;
+  ov_word lex_auto_overlay;
+  ov_word lex_stick_ball_color;
+  ov_word lex_stick_h_scale;
 
 } _CPyMOL;
 
@@ -1528,6 +1531,9 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(map_auto_expand_sym,600);
   LEX_SETTING(image_copy_always,601);
   LEX_SETTING(max_ups,602);
+  LEX_SETTING(auto_overlay,603);
+  LEX_SETTING(stick_ball_color,604);
+  LEX_SETTING(stick_h_scale,605);
   return_OVstatus_SUCCESS;
 }
 

@@ -638,6 +638,9 @@ if __name__=='pymol.setting':
         map_auto_expand_sym                = 600
         image_copy_always                  = 601
         max_ups                            = 602
+        auto_overlay                       = 603
+        stick_ball_color                   = 604
+        stick_h_scale                      = 605
 
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

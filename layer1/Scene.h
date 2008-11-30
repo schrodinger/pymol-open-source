@@ -62,6 +62,7 @@ void SceneSetFrame(PyMOLGlobals *G,int mode,int frame);
 int SceneSetNames(PyMOLGlobals *G,PyObject *list);
 int SceneGetFrame(PyMOLGlobals *G);
 int SceneGetState(PyMOLGlobals *G);
+int SceneGetButtonMargin(PyMOLGlobals *G);
 
 void SceneDirty(PyMOLGlobals *G); /* scene dirty, but leave the overlay if one exists */
 void SceneInvalidate(PyMOLGlobals *G); /* scene dirty and remove the overlay */

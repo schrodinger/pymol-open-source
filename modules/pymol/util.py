@@ -356,7 +356,6 @@ def performance(mode,_self=cmd):
         cmd.set('stick_ball',0.0)
         cmd.do("rebuild")         
     
-    
 def label_chains(sele="all",_self=cmd):
     pymol=_self._pymol
     cmd=_self
@@ -420,7 +419,6 @@ def hide_sele(_self=cmd):
 #   cmd.dist(name,"((%s) and ((%s) around %4.2f) and elem N,O)"%(a,b,cutoff),
 #            "((%s) and ((%s) around %4.2f) and elem N,O)"%(b,a,cutoff),
 #            cutoff)
-
 
 def cbc(selection='(all)',first_color=7,quiet=1,legacy=0,_self=cmd):
     pymol=_self._pymol

@@ -186,7 +186,7 @@ struct _CScene {
   float FogEnd;
 
   /* Scene Names */
-  int ButtonsShown, ButtonDrag;
+  int ButtonsShown, ButtonDrag, ButtonMargin;
   int Over, Pressed, PressMode, HowFarDown, NSkip;
   int ScrollBarActive;
   int ReorderFlag;
@@ -984,7 +984,7 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
   if(defer_builds_mode==5) /* force generation of a pickable version */
     SceneUpdate(G,true);
 
-  if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
+  if(OrthoGetOverlayStatus(G)||SettingGetGlobal_i(G,cSetting_text))
     SceneRender(G,NULL,0,0,NULL,0,0,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
   if(side_by_side(I->StereoMode)) {
@@ -2588,42 +2588,42 @@ int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet
 #define SceneScrollBarMargin 1
 #define SceneScrollBarWidth 13
 
-static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, float *inside)
+static void draw_button(int x2,int y2, int z, int w, int h, float *light, float *dark, float *inside)
 {
   glColor3fv(light);
   glBegin(GL_POLYGON);
-  glVertex2i(x2,y2);
-  glVertex2i(x2,y2+h);
-  glVertex2i(x2+w,y2+h);
-  glVertex2i(x2+w,y2);
+  glVertex3i(x2,y2,z);
+  glVertex3i(x2,y2+h,z);
+  glVertex3i(x2+w,y2+h,z);
+  glVertex3i(x2+w,y2,z);
   glEnd();
   
   glColor3fv(dark);
   glBegin(GL_POLYGON);
-  glVertex2i(x2+1,y2);
-  glVertex2i(x2+1,y2+h-1);
-  glVertex2i(x2+w,y2+h-1);
-  glVertex2i(x2+w,y2);
+  glVertex3i(x2+1,y2,z);
+  glVertex3i(x2+1,y2+h-1,z);
+  glVertex3i(x2+w,y2+h-1,z);
+  glVertex3i(x2+w,y2,z);
   glEnd();
   
   if(inside) {
     glColor3fv(inside);
     glBegin(GL_POLYGON);
-    glVertex2i(x2+1,y2+1);
-    glVertex2i(x2+1,y2+h-1);
-    glVertex2i(x2+w-1,y2+h-1);
-    glVertex2i(x2+w-1,y2+1);
+    glVertex3i(x2+1,y2+1,z);
+    glVertex3i(x2+1,y2+h-1,z);
+    glVertex3i(x2+w-1,y2+h-1,z);
+    glVertex3i(x2+w-1,y2+1,z);
     glEnd();
   } else { /* rainbow */
     glBegin(GL_POLYGON);
     glColor3f(1.0F,0.1F,0.1F);
-    glVertex2i(x2+1,y2+1);
+    glVertex3i(x2+1,y2+1,z);
     glColor3f(0.1F,1.0F,0.1F);
-    glVertex2i(x2+1,y2+h-1);
+    glVertex3i(x2+1,y2+h-1,z);
     glColor3f(1.0F,1.0F,0.1F);
-    glVertex2i(x2+w-1,y2+h-1);
+    glVertex3i(x2+w-1,y2+h-1,z);
     glColor3f(0.1F,0.1F,1.0F);
-    glVertex2i(x2+w-1,y2+1);
+    glVertex3i(x2+w-1,y2+1,z);
     glEnd();
   }
 
@@ -2794,12 +2794,15 @@ static void SceneDrawButtons(Block *block)
               elem->x2 = x2;
               elem->y2 = y+lineHeight;
 
+	      if(I->ButtonMargin<x2)
+		I->ButtonMargin = x2;
+
               if((item==I->Pressed)&&(item==I->Over)) {
-                draw_button(x,y,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,pressedColor);
+                draw_button(x,y,0,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,pressedColor);
               } else if(cur_name&&elem->name&&(!strcmp(elem->name,cur_name))) {
-                draw_button(x,y,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,enabledColor);
+                draw_button(x,y,0,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,enabledColor);
               } else {
-                draw_button(x,y,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,disabledColor);
+                draw_button(x,y,0,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,disabledColor);
               }
               
               TextSetColor(G,I->Block->TextColor);
@@ -2834,7 +2837,7 @@ void SceneDraw(Block *block)
 
     I->ButtonsShown = false;
 
-    overlay = (int)SettingGet(G,cSetting_overlay);
+    overlay = OrthoGetOverlayStatus(G);
     text = (int)SettingGet(G,cSetting_text);
 
     if(((!text)||overlay) &&
@@ -3112,8 +3115,15 @@ void SceneDraw(Block *block)
     if(SettingGetGlobal_b(G,cSetting_scene_buttons)&&
        (SettingGetGlobal_i(G,cSetting_scene_buttons_mode)==1)) {
       SceneDrawButtons(block);
+    } else {
+      I->ButtonMargin = 0;
     }
   }
+}
+int SceneGetButtonMargin(PyMOLGlobals *G)
+{
+  register CScene *I=G->Scene;
+  return I->ButtonMargin;
 }
 /*========================================================================*/
 
@@ -3527,7 +3537,7 @@ static int SceneDoXYPick(PyMOLGlobals *G, int x, int y, int click_side)
   if(defer_builds_mode==5) /* force generation of a pickable version */
     SceneUpdate(G,true);
 
-  if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
+  if(OrthoGetOverlayStatus(G)||SettingGetGlobal_i(G,cSetting_text))
     SceneRender(G,NULL,0,0,NULL,0,0,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
   

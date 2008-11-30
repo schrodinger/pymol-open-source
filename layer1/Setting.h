@@ -804,7 +804,9 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_map_auto_expand_sym        600
 #define cSetting_image_copy_always          601
 #define cSetting_max_ups                    602
-
+#define cSetting_auto_overlay               603
+#define cSetting_stick_ball_color           604
+#define cSetting_stick_h_scale              605
 /* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -813,7 +815,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       603
+#define cSetting_INIT                       606
 #endif
 
 

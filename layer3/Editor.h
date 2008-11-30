@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #define cEditorFragPref "_pkfrag"
 #define cEditorBasePref "_pkbase"
 #define cEditorSet    "pkset"
+#define cEditorBond   "pkbond"
 #define cEditorRes    "pkresi"
 #define cEditorChain  "pkchain"
 #define cEditorObject "pkobject"

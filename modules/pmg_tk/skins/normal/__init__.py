@@ -466,12 +466,24 @@ class Normal(PMGSkin):
                 # nothing else is visible... might not want this behavior
                 self.cmdFrame.pack(side=BOTTOM, fill=BOTH, expand=YES)
         if not startup:
-            if frame==self.cmdFrame:
-                self.cmd.edit_mode(0)
-            elif frame==self.buildFrame:
+            if frame == self.cmdFrame:
+                if self.edit_mode != None:
+                    self.cmd.edit_mode(self.edit_mode)
+                    self.edit_mode = None
+                if self.auto_overlay != None:
+                    self.cmd.set("auto_overlay",self.auto_overlay)
+                    self.auto_overlay = None
+                if self.valence != None:
+                    self.cmd.set("valence",self.valence)
+            elif frame == self.buildFrame:
                 frame.deferred_activate()
-                self.cmd.edit_mode(1)
+                if "Editing" not in self.cmd.get("button_mode_name"):
+                    self.cmd.edit_mode(1)
+                    self.edit_mode = 0
+                self.valence = self.cmd.get("valence")
                 self.cmd.set("valence","1")
+                self.auto_overlay = self.cmd.get("auto_overlay")
+                self.cmd.set("auto_overlay",1)
             
     def update_menus(self):
         self.setting.refresh()
@@ -2893,7 +2905,10 @@ class Normal(PMGSkin):
         self.cmd = app.pymol.cmd
         self.util = app.pymol.util
         self.movie_command = None
-        
+        self.auto_overlay = None
+        self.edit_mode = None
+        self.valence = None
+
 def __init__(app):
     return Normal(app)
 

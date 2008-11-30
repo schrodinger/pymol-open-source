@@ -868,7 +868,7 @@ void ObjectInit(PyMOLGlobals *G,CObject *I)
     I->ViewElem = NULL;
   */
 
-  OrthoRemoveSplash(G);
+  OrthoRemoveSplash(G); /* HMM... this seems like an inappropriate sideeffect */
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
   I->RepVis[cRepCell]=false;
   I->RepVis[cRepExtent]=false;

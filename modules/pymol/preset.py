@@ -147,17 +147,26 @@ def ligands(selection="(all)",_self=cmd):
     except:
         traceback.print_exc()
 
-def ball_and_stick(selection="(all)",_self=cmd):
+def ball_and_stick(selection="(all)",mode=1,_self=cmd):
     cmd=_self
     s = tmp_sele
     cmd.select(s,selection)
     _prepare(s,_self=cmd)
-    cmd.hide("everything",s)
-    cmd.set_bond("stick_color","white",s,s)
-    cmd.set_bond("stick_radius","0.14",s,s)
-    cmd.set("sphere_scale","0.25",s)
-    cmd.show("sticks",s)
-    cmd.show("spheres",s)
+    if mode == 1:
+        cmd.hide("everything",s)
+        cmd.set_bond("stick_color","white",s,s)
+        cmd.set_bond("stick_radius","0.14",s,s)
+        cmd.set("sphere_scale","0.25",s)
+        cmd.show("sticks",s)
+        cmd.show("spheres",s)
+    elif mode == 2:
+        cmd.hide("everything",s)
+        cmd.set_bond("stick_color","white",s,s)
+        cmd.set_bond("stick_radius","-0.14",s,s)
+        cmd.set("stick_ball","1")
+        cmd.set("stick_ball_ratio",-1.0)
+        cmd.set("stick_ball_color","atomic")
+        cmd.show("sticks",s)
     
 def b_factor_putty(selection="(name ca or name p)",_self=cmd):
     cmd=_self
