@@ -76,6 +76,7 @@ struct _COrtho {
   OrthoLineType History[OrthoHistoryLines+1];
   int HistoryLine,HistoryView;
   int CurLine,CurChar,PromptChar,CursorChar;
+  int AutoOverlayStopLine;
   FILE *Pipe;
   char Prompt[255];
   int ShowLines;
@@ -186,10 +187,13 @@ int OrthoDeferredWaiting(PyMOLGlobals *G)
 void OrthoExecDeferred(PyMOLGlobals *G)
 {
   register COrtho *I=G->Ortho;
+  CDeferred *deferred = I->deferred;
+
+  I->deferred = NULL;
   /* execute all deferred actions that happened to require a
    * valid OpenGL context (such as atom picks, etc.) */
 
-  I->deferred = DeferredExec(I->deferred); 
+  DeferredExec(deferred); 
 }
 
 void OrthoDefer(PyMOLGlobals *G,CDeferred *D)
@@ -311,6 +315,26 @@ int OrthoArrowsGrabbed(PyMOLGlobals *G)
   register COrtho *I=G->Ortho;
   return((I->CurChar>I->PromptChar)&&OrthoTextVisible(G)); 
   /* arrows can't be grabbed if text isn't visible */
+}
+/*========================================================================*/
+int OrthoGetOverlayStatus(PyMOLGlobals *G)
+{
+  register COrtho *I=G->Ortho;
+  int overlay = SettingGetGlobal_i(G,cSetting_overlay);
+  if(!overlay) {
+    if(SettingGetGlobal_i(G,cSetting_auto_overlay)>0) {
+      if(I->CurLine != I->AutoOverlayStopLine) {
+	overlay = -1; /* signal auto overlay */
+      }
+    }
+  }
+  return overlay;
+}
+/*========================================================================*/
+void OrthoRemoveAutoOverlay(PyMOLGlobals *G)
+{
+  register COrtho *I=G->Ortho;
+  I->AutoOverlayStopLine = I->CurLine;
 }
 /*========================================================================*/
 void  OrthoRemoveSplash(PyMOLGlobals *G)
@@ -707,32 +731,27 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
     " Ortho: %c (%d), x %d y %d, mod %d\n",k,k,x,y,mod
     ENDFD;
     
-  if(!I->InputFlag) 
-    {
-      if(I->Saved[0]) 
-		{
-		  if(I->CurChar) {
-            OrthoNewLine(G,NULL,true);
-		  }
-		  curLine = I->CurLine&OrthoSaveLines;
-		  strcpy(I->Line[curLine],I->Saved);
-		  I->Saved[0]=0;
-		  I->CurChar = I->SavedCC;
-		  I->PromptChar = I->SavedPC;
-		} 
-      else 
-		{
-		  if(I->CurChar) 
-            OrthoNewLine(G,I->Prompt,true);
-		  else
-            {
-              curLine = I->CurLine&OrthoSaveLines;
-              strcpy(I->Line[curLine],I->Prompt);
-              I->CurChar = (I->PromptChar = strlen(I->Prompt));
-            }
-		}
-      I->InputFlag=1;
+  if(!I->InputFlag) {
+    if(I->Saved[0]) {
+      if(I->CurChar) {
+	OrthoNewLine(G,NULL,true);
+      }
+      curLine = I->CurLine&OrthoSaveLines;
+      strcpy(I->Line[curLine],I->Saved);
+      I->Saved[0]=0;
+      I->CurChar = I->SavedCC;
+      I->PromptChar = I->SavedPC;
+    } else {
+      if(I->CurChar) {
+	OrthoNewLine(G,I->Prompt,true);
+      } else {
+	curLine = I->CurLine&OrthoSaveLines;
+	strcpy(I->Line[curLine],I->Prompt);
+	I->CurChar = (I->PromptChar = strlen(I->Prompt));
+      }
     }
+    I->InputFlag=1;
+  }
   if(mod==4) { /* alt */
     OrthoKeyAlt(G,k);
   } else if((k>32)&&(k!=127)) {
@@ -892,6 +911,8 @@ void OrthoParseCurrentLine(PyMOLGlobals *G)
   register COrtho *I=G->Ortho;
   char buffer[OrthoLineLength];
   int curLine;
+
+  OrthoRemoveAutoOverlay(G);
   curLine=I->CurLine&OrthoSaveLines;
   I->Line[curLine][I->CurChar]=0;
   strcpy(buffer,I->Line[curLine]+I->PromptChar);
@@ -920,64 +941,60 @@ void OrthoAddOutput(PyMOLGlobals *G,char *str)
   int cc;
   int wrap;
   curLine = I->CurLine&OrthoSaveLines;
-  if(I->InputFlag)
-	 {
-		strcpy(I->Saved,I->Line[curLine]);
-		I->SavedPC=I->PromptChar;
-		I->SavedCC=I->CurChar;
-		I->PromptChar=0;
-		I->CurChar=0;
-		I->Line[curLine][0]=0;
-		I->InputFlag=0;
-	 }
+  if(I->InputFlag) {
+    strcpy(I->Saved,I->Line[curLine]);
+    I->SavedPC=I->PromptChar;
+    I->SavedCC=I->CurChar;
+    I->PromptChar=0;
+    I->CurChar=0;
+    I->Line[curLine][0]=0;
+    I->InputFlag=0;
+  }
   curLine = I->CurLine&OrthoSaveLines;
   p=str;
   q=I->Line[curLine]+I->CurChar;
   cc=I->CurChar;
-  while(*p)
-	 {
-		if(*p>=32)
-		  {
-			 cc++;
-          wrap = (int)SettingGet(G,cSetting_wrap_output);
-
-          if(wrap>0) {
-            if(cc>wrap)
-              {
-                *q=0;
-                I->CurChar = cc;
-                OrthoNewLine(G,NULL,true);
-                cc=0;
-                q=I->Line[I->CurLine&OrthoSaveLines];
-                curLine = I->CurLine&OrthoSaveLines;
-              }
-          } 
-          if(cc>=OrthoLineLength-6) { /* fail safe */
-            *q=0;
-            I->CurChar = cc;
-            OrthoNewLine(G,NULL,false);
-            cc=0;
-            q=I->Line[I->CurLine&OrthoSaveLines];
-            curLine = I->CurLine&OrthoSaveLines;
-          }
-			 *q++=*p++;
-		  }
-		else if((*p==13)||(*p==10))
-		  {
-			 *q=0;
-			 I->CurChar = cc;
-			 OrthoNewLine(G,NULL,true);
-			 q=I->Line[I->CurLine&OrthoSaveLines];
-			 curLine = I->CurLine&OrthoSaveLines;
-			 p++;
-			 cc=0;
-		  }
-		else
-		  p++;
-	 }
+  while(*p) {
+    if(*p>=32) {
+      cc++;
+      wrap = (int)SettingGet(G,cSetting_wrap_output);
+      
+      if(wrap>0) {
+	if(cc>wrap) {
+	  *q=0;
+	  I->CurChar = cc;
+	  OrthoNewLine(G,NULL,true);
+	  cc=0;
+	  q=I->Line[I->CurLine&OrthoSaveLines];
+	  curLine = I->CurLine&OrthoSaveLines;
+	}
+      } 
+      if(cc>=OrthoLineLength-6) { /* fail safe */
+	*q=0;
+	I->CurChar = cc;
+	OrthoNewLine(G,NULL,false);
+	cc=0;
+	q=I->Line[I->CurLine&OrthoSaveLines];
+	curLine = I->CurLine&OrthoSaveLines;
+      }
+      *q++=*p++;
+    } else if((*p==13)||(*p==10)) {
+      *q=0;
+      I->CurChar = cc;
+      OrthoNewLine(G,NULL,true);
+      q=I->Line[I->CurLine&OrthoSaveLines];
+      curLine = I->CurLine&OrthoSaveLines;
+      p++;
+      cc=0;
+    }
+    else
+      p++;
+  }
   *q=0;
   I->CurChar = strlen(I->Line[curLine]);
-  if((SettingGet(G,cSetting_internal_feedback)>1)||SettingGet(G,cSetting_overlay))
+  if((SettingGet(G,cSetting_internal_feedback)>1)||
+     SettingGet(G,cSetting_overlay)||
+     SettingGet(G,cSetting_auto_overlay))
     OrthoDirty(G);
 }
 /*========================================================================*/
@@ -1155,12 +1172,25 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
     internal_feedback=(int)SettingGet(G,cSetting_internal_feedback);
 
     v=SettingGetfv(G,cSetting_bg_rgb);
-    overlay = (int)SettingGet(G,cSetting_overlay);
-    if(overlay==1) {
+    overlay = OrthoGetOverlayStatus(G);
+    switch(overlay) {
+    case -1: /* auto overlay */
+      overlay = I->CurLine - I->AutoOverlayStopLine;
+      if(overlay<0) {
+	overlay += (OrthoSaveLines+1);
+      }
+      if(internal_feedback>1) {
+	overlay -= (internal_feedback-1);
+      }
+      if(overlay<0)
+	overlay = 0;
+      break;
+    case 1: /* default -- user overlay_lines */
       overlay = (int)SettingGet(G,cSetting_overlay_lines);
+      break;
     }
-    text = (int)SettingGet(G,cSetting_text);
 
+    text = (int)SettingGet(G,cSetting_text);
     if(text) overlay=0;
     
     {
@@ -1282,44 +1312,36 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
         if((int)SettingGet(G,cSetting_text)||I->SplashFlag)
           showLines=I->ShowLines;
         else {
-          int overlay2;
-          overlay2 = (int)SettingGet(G,cSetting_overlay);
-          if(overlay2==1) {
-            overlay2 = (int)SettingGet(G,cSetting_overlay_lines);
-          }
-          showLines=internal_feedback+overlay2;
+          showLines=internal_feedback+overlay;
         }
 
         l=(I->CurLine-(lcount+skip_prompt))&OrthoSaveLines;
 
         glColor3fv(I->TextColor);
-        while(l>=0)
-          {
-            lcount++;
-            if(lcount>showLines)
-              break;
-            str = I->Line[l&OrthoSaveLines];
-            if(strncmp(str,I->Prompt,6)==0)
-              TextSetColor(G,I->TextColor);            
-            else
-              TextSetColor(G,I->OverlayColor);
-            TextSetPos2i(G,x,y);
-            if(str)
-              {
-                TextDrawStr(G,str);
-                if((lcount==1)&&(I->InputFlag)) 
-                  {
-                    if(!skip_prompt) {
-                      if(I->CursorChar>=0) {
-                        TextSetPos2i(G,x+8*I->CursorChar,y);
-                      }
-                      TextDrawChar(G,'_');
-                    }
-                  }
-              }
-            l=(I->CurLine-(lcount+skip_prompt))&OrthoSaveLines;
-            y=y+cOrthoLineHeight;
-          }
+        while(l>=0) {
+	  lcount++;
+	  if(lcount>showLines)
+	    break;
+	  str = I->Line[l&OrthoSaveLines];
+	  if(strncmp(str,I->Prompt,6)==0)
+	    TextSetColor(G,I->TextColor);            
+	  else
+	    TextSetColor(G,I->OverlayColor);
+	  TextSetPos2i(G,x,y);
+	  if(str) {
+	      TextDrawStr(G,str);
+	      if((lcount==1)&&(I->InputFlag)) {
+		  if(!skip_prompt) {
+		    if(I->CursorChar>=0) {
+		      TextSetPos2i(G,x+8*I->CursorChar,y);
+		    }
+		    TextDrawChar(G,'_');
+		  }
+		}
+	    }
+	  l=(I->CurLine-(lcount+skip_prompt))&OrthoSaveLines;
+	  y=y+cOrthoLineHeight;
+	}
       }
       
       OrthoDrawWizardPrompt(G);
@@ -1709,6 +1731,7 @@ int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod)
   }
 
   OrthoRemoveSplash(G);
+  OrthoRemoveAutoOverlay(G);
   I->X=x;
   I->Y=y;
   I->LastX = x;
@@ -1883,6 +1906,7 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   I->PromptChar=0;
   I->CurChar=0;
   I->CurLine=0;
+  I->AutoOverlayStopLine=0;
   I->CursorChar=-1;
   I->HistoryLine=0;
   I->HistoryView=0;

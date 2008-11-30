@@ -4659,6 +4659,11 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
     
     if(*bondMode) { 
       if(obj1==obj2) { /* just to be safe */
+
+	pkset1_base[a0]=1;
+	pkset1_base[a1]=1;
+	SelectorEmbedSelection(G,pkset,cEditorBond,NULL,false,-1);                
+
         a0 = index1;
         if(a0>=0) {
           stkDepth=0;
@@ -4683,6 +4688,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
           SelectorEmbedSelection(G,atom,name,NULL,false,-1);
           c = SelectorWalkTree(G,atom1_base,comp1_base,toDo1_base,&stk,stkDepth,obj1,sele1,sele2,-1,-1) + 1;
           sprintf(name,"%s%1d",pref,nFrag+1);
+
           
           /* check for cyclic situation */
           cycFlag=false;
@@ -5682,9 +5688,6 @@ int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
       atom_sf[a][b] = occup[a] * sfa * pow(sqrt1d(4*PI/(sfb+bfact)),3.0);
       atom_sf[a][b+1] = 4*PI*PI/(sfb+bfact);
 
-      if(!a) {
-        printf("%d %8.3f %8.3f \n",b,atom_sf[a][b],atom_sf[a][b+1]);
-      }
     }
     
     rcut2 = max6d(0.0,

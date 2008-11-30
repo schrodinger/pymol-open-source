@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+2008-11-29 Warren L. DeLano <warren@delsci.com>
+
+	* various updates to the builder
+	
+	* auto_overlay setting
+
+	* stick_ball_color, stick_h_scale settings
+
+	* added support for negative stick_radius, stick_ball_ratio
+	
 2008-11-22 Warren L. DeLano <warren@delsci.com>
 
 	* fixed incompatibility with Roche Pocket Viewer

@@ -4,6 +4,7 @@ import os
 from glob import glob
 import traceback
 import string
+import threading
 
 from Tkinter import *
 import tkMessageBox
@@ -17,8 +18,9 @@ import pymol
 WID = 5
 MAX_COL = 12
 imgDict = {}
-active_sele = "_builder_active"
-newest_sele = "_builder_added"
+active_sele = "_builder_active" # object we're working on...
+newest_sele = "_builder_added" # last atom added?
+
 display_sele = "_build_display"
 
 #############################################################
@@ -44,24 +46,72 @@ class ActionWizard(Wizard):
             self.cmd.set_wizard(self,replace=1)
             self.cmd.refresh_wizard()
         else:
-            self.cmd.delete(active_sele)
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
+            self.actionWizardDone()
         return activate_flag
-        
-class CleanWizard(ActionWizard):
 
-    def do_pick(self, bondFlag):
-        CleanJob(self.cmd,"pk1")
+    def actionWizardDone(self):
+        self.cmd.delete(active_sele)
         self.cmd.unpick()
         self.cmd.set_wizard()
         self.cmd.refresh_wizard()
 
+    def activeSeleValid(self):
+        if active_sele in self.cmd.get_names("selections"):
+            if self.cmd.select(active_sele, "byobj "+active_sele)<1:
+                self.cmd.delete(active_sele)
+        elif "pk1" in self.cmd.get_names("selections"):
+            self.cmd.select(active_sele,"byobj pk1")
+        else:
+            obj_list = self.cmd.get_names("objects",enabled_only=1)
+            if len(obj_list)==1:
+                if self.cmd.select(active_sele, obj_list[0])<1:
+                    self.cmd.delete(active_sele)
+        return active_sele in self.cmd.get_names("selections")
+
+class CleanWizard(ActionWizard):
+
+    def __init__(self,_self):
+        self.clean_obj = None
+        ActionWizard.__init__(self,_self)
+
+    def run_job(self):
+        if active_sele in self.cmd.get_names("selections"):
+            obj_list = self.cmd.get_object_list(active_sele)
+            if len(obj_list)==1:
+                self.clean_obj = obj_list[0]
+                self.cmd.refresh_wizard()
+                CleanJob(self.cmd,active_sele)
+
+    def do_pick(self, bondFlag):
+        if active_sele in self.cmd.get_names("selections"):
+            obj_list = self.cmd.get_object_list(active_sele)
+            if len(obj_list)!=1:
+                self.cmd.delete(active_sele)
+        else:
+            self.cmd.select(active_sele, "byobj pk1")
+        self.cmd.unpick()
+        self.cmd.deselect()
+        obj_list = self.cmd.get_object_list(active_sele)
+        if len(obj_list)==1:
+            thread = threading.Thread(target=self.run_job)
+            thread.setDaemon(1)
+            thread.start()
+        else:
+            print "Error: can only clean one object at a time"
+
     def toggle(self):
-        self.activateOrDismiss()
+        if self.activateOrDismiss():
+            if self.activeSeleValid():
+                self.run_job()
+                self.cmd.set_wizard()
+                self.cmd.refresh_wizard()
 
     def get_prompt(self):
-        return ["Pick object to clean..."]
+        if self.clean_obj != None:
+            return ["Cleaning %s..."%self.clean_obj]
+        else:
+            return ["Pick object to clean..."]
+
     
     def get_panel(self):
         return [
@@ -86,6 +136,8 @@ class SculptWizard(ActionWizard):
                 self.cmd.sculpt_activate(obj_name)
                 self.cmd.unpick()
                 self.cmd.refresh_wizard()
+            else:
+                print "Error: cannot sculpt more than one object at a time"
         
     def sculpt_deactivate(self):
         if self.sculpt_object != None:
@@ -98,17 +150,11 @@ class SculptWizard(ActionWizard):
             self.cmd.select(active_sele, "byobj pk1")
             self.sculpt_activate()
         else:
-            return 0
+            return 0 # already sculpting, so handle like a normal edit
         
     def toggle(self):
         if self.activateOrDismiss():
-            if active_sele in self.cmd.get_names("selections"):
-                if self.cmd.select(active_sele, "byobj "+active_sele)<1:
-                    self.cmd.delete(active_sele)
-            elif len(self.cmd.get_names("objects"))==1:
-                if self.cmd.select(active_sele, "(all)")<1:
-                    self.cmd.delete(active_sele)
-            if active_sele in self.cmd.get_names("selections"):
+            if self.activeSeleValid():
                 self.sculpt_activate()
 
     def get_prompt(self):
@@ -123,6 +169,7 @@ class SculptWizard(ActionWizard):
         self.cmd.set("sculpting",0)
         self.cmd.delete(active_sele)
         self.cmd.set_wizard()
+        self.cmd.refresh_wizard()
         
     def get_panel(self):
         return [
@@ -165,20 +212,17 @@ class RepeatableActionWizard(ActionWizard):
             self.cmd.set_wizard(self,replace=1)
             self.cmd.refresh_wizard()
         else:
-            self.cmd.delete(active_sele)
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
+            self.actionWizardDone()
     
 class ReplaceWizard(RepeatableActionWizard):
 
     def do_pick(self, bondFlag):
+        self.cmd.select(active_sele, "bymol pk1") 
         self.cmd.replace(self.symbol, self.geometry, self.valence)
         if not self.getRepeating():
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
-            
-    def toggle(self, symbol, geometry, valence, text):
+            self.actionWizardDone()
 
+    def toggle(self, symbol, geometry, valence, text):
         self.symbol = symbol
         self.geometry = geometry
         self.valence = valence
@@ -207,12 +251,22 @@ class ReplaceWizard(RepeatableActionWizard):
 
 class AttachWizard(RepeatableActionWizard):
 
+    def __init__(self,_self):
+        RepeatableActionWizard.__init__(self,_self)
+        self.mode = 0
+
     def do_pick(self, bondFlag):
-        editor.attach_fragment("pk1", self.fragment, self.position, self.geometry, _self=self.cmd)
-        self.cmd.unpick()
-        if not self.getRepeating():
-            self.cmd.set_wizard()
+        if self.mode == 0:
+            self.cmd.select(active_sele, "bymol pk1") 
+            editor.attach_fragment("pk1", self.fragment, self.position, self.geometry, _self=self.cmd)
+            self.cmd.unpick()
+        elif self.mode == 1:            
+            self.cmd.select(active_sele, "bymol pk1") 
+            editor.combine_fragment("pk1", self.fragment, self.position, self.geometry, _self=self.cmd)
+            self.mode = 0
             self.cmd.refresh_wizard()
+        if not self.getRepeating():
+            self.actionWizardDone()
             
     def toggle(self, fragment, position, geometry, text):
         self.fragment = fragment
@@ -232,38 +286,50 @@ class AttachWizard(RepeatableActionWizard):
             num = num + 1
         self.cmd.fragment(self.fragment, name)
         if not self.getRepeating():
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
+            self.actionWizardDone()
     
     def get_prompt(self):
-        if self.getRepeating():
-            return ["Pick location to attach %s..."%self.text]
+        if self.mode == 0:
+            if self.getRepeating():
+                return ["Pick locations to attach %s..."%self.text]
+            else:
+                return ["Pick location to attach %s..."%self.text]            
         else:
-            return ["Pick location to attach %s..."%self.text]            
+            return ["Pick object to combine %s into..."%self.text]
+
+    def combine(self):
+        self.mode = 1
+        self.cmd.refresh_wizard()
 
     def get_panel(self):
         if self.getRepeating():
             return [
                 [ 1, 'Attaching Multiple Fragments',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],                
+                [ 2, 'Combine Into Existing','cmd.get_wizard().combine()'],                
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
         else:
             return [
                 [ 1, 'Attaching a Fragment',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
+                [ 2, 'Combine Into Existing','cmd.get_wizard().combine()'],                
                 [ 2, 'Attach Multiple Fragments','cmd.get_wizard().repeat()'],
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
 
 class AminoAcidWizard(RepeatableActionWizard):
 
+    def __init__(self,_self):
+        RepeatableActionWizard.__init__(self,_self)
+        self.mode = 0
+
     def do_pick(self, bondFlag):
+        self.cmd.select(active_sele, "bymol pk1") 
         editor.attach_amino_acid("pk1", self.aminoAcid, _self=self.cmd)        
         self.cmd.unpick()
         if not self.getRepeating():
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
+            self.actionWizardDone()
             
     def toggle(self, amino_acid):
         self.aminoAcid = amino_acid
@@ -280,26 +346,34 @@ class AminoAcidWizard(RepeatableActionWizard):
             num = num + 1
         editor.attach_amino_acid("pk1", self.aminoAcid, object=name, _self=self.cmd)        
         if not self.getRepeating():
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
+            self.actionWizardDone()
+
+    def combine(self):
+        self.mode = 1
+        self.cmd.refresh_wizard()
     
     def get_prompt(self):
-        if self.getRepeating():
-            return ["Pick location to attach %s..."%self.aminoAcid]
+        if self.mode == 0:
+            if self.getRepeating():
+                return ["Pick locations to attach %s..."%self.aminoAcid]
+            else:
+                return ["Pick location to attach %s..."%self.aminoAcid]            
         else:
-            return ["Pick location to attach %s..."%self.aminoAcid]            
+            return ["Pick object to combine %s into..."%self.text]
 
     def get_panel(self):
         if self.getRepeating():
             return [
                 [ 1, 'Attaching Multiple Residues',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],                
+                [ 2, 'Combine Into Existing','cmd.get_wizard().combine()'],                
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
         else:
             return [
                 [ 1, 'Attaching Amino Acid',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
+                [ 2, 'Combine Into Existing','cmd.get_wizard().combine()'],                
                 [ 2, 'Attach Multiple...','cmd.get_wizard().repeat()'],
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
@@ -310,6 +384,7 @@ class ValenceWizard(RepeatableActionWizard):
         self.cmd.button('single_left','none','PkAt')
         
     def do_pick(self, bondFlag):
+        self.cmd.select(active_sele, "bymol pk1") 
         if bondFlag:
             self.cmd.valence(self.order, "pk1", "pk2")
             self.cmd.h_fill()
@@ -318,8 +393,8 @@ class ValenceWizard(RepeatableActionWizard):
             self.cmd.button('single_left','none','PkBd')
             self.cmd.unpick()
         if not self.getRepeating():
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
+            self.actionWizardDone()
+
             
     def toggle(self, order, text):
         self.order = order
@@ -331,7 +406,7 @@ class ValenceWizard(RepeatableActionWizard):
                                     
     def get_prompt(self):
         if self.getRepeating():
-            return ["Pick bond to set as %s..."%self.text]
+            return ["Pick bonds to set as %s..."%self.text]
         else:
             return ["Pick bond to set as %s..."%self.text]            
 
@@ -351,6 +426,7 @@ class ValenceWizard(RepeatableActionWizard):
 class ChargeWizard(RepeatableActionWizard):
 
     def do_pick(self, bondFlag):
+        self.cmd.select(active_sele, "bymol pk1") 
         self.cmd.alter("pk1","formal_charge=%s" % self.charge)
         self.cmd.h_fill()
         if abs(float(self.charge))>0.0001:
@@ -359,8 +435,7 @@ class ChargeWizard(RepeatableActionWizard):
             self.cmd.label("pk1")
         self.cmd.unpick()
         if not self.getRepeating():
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
+            self.actionWizardDone()
             
     def toggle(self, charge, text):
         self.charge = charge
@@ -386,18 +461,60 @@ class ChargeWizard(RepeatableActionWizard):
                 [ 2, 'Modify Multiple Atoms','cmd.get_wizard().repeat()'],
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
+
+class InvertWizard(RepeatableActionWizard):
+
+    def do_pick(self, bondFlag):
+        self.cmd.select(active_sele, "bymol pk1") 
+        picked = collectPicked(self.cmd)
+        if picked == ["pk1","pk2","pk3"]:
+            self.cmd.invert()
+            self.cmd.unpick()
+            if not self.getRepeating():
+                self.actionWizardDone()
+            
+    def toggle(self):
+        self.activateRepeatOrDismiss()
+                                    
+    def get_prompt(self):
+        if "pk1" in self.cmd.get_names("selections"):
+            if "pk2" in self.cmd.get_names("selections"):
+                return ["Pick the second stationary atom..."]
+            else:
+                return ["Pick the first stationary atom..."]                
+        else:
+            return ["Pick origin atom for inversion..."]
+
+    def get_panel(self):
+        if self.getRepeating():
+            return [
+                [ 1, 'Inverting Multiple',''],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
+        else:
+            return [
+                [ 1, 'Inverting Stereocenter',''],
+                [ 2, 'Invert Multiple','cmd.get_wizard().repeat()'],
+                [ 2, 'Done','cmd.set_wizard()'],
+                ]
         
 class BondWizard(RepeatableActionWizard):
 
     def do_pick(self, bondFlag):
+        self.cmd.select(active_sele, "bymol pk1") 
         picked = collectPicked(self.cmd)
         if picked == ["pk1","pk2"]:
+            if ((self.cmd.count_atoms("pk1 and hydro") == self.cmd.count_atoms("pk1")) and
+                (self.cmd.count_atoms("(pk1 extend 1) and not hydro")==1) and
+                (self.cmd.count_atoms("pk2 and hydro") == self.cmd.count_atoms("pk2")) and
+                (self.cmd.count_atoms("(pk2 extend 1) and not hydro")==1)):
+                self.cmd.select("pk1","(pk1 extend 1) and not hydro")
+                self.cmd.select("pk2","(pk2 extend 1) and not hydro")
             self.cmd.bond("pk1", "pk2")
             self.cmd.h_fill()
             self.cmd.unpick()
             if not self.getRepeating():
-                self.cmd.set_wizard()
-                self.cmd.refresh_wizard()
+                self.actionWizardDone()
             
     def toggle(self):
         self.activateRepeatOrDismiss()
@@ -427,6 +544,7 @@ class UnbondWizard(RepeatableActionWizard):
         self.cmd.button('single_left','none','PkAt')
         
     def do_pick(self, bondFlag):
+        self.cmd.select(active_sele, "bymol pk1") 
         if bondFlag:
             self.cmd.unbond("pk1", "pk2")
             self.cmd.h_fill()
@@ -435,8 +553,8 @@ class UnbondWizard(RepeatableActionWizard):
             self.cmd.button('single_left','none','PkBd')
             self.cmd.unpick()
         if not self.getRepeating():
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
+            self.actionWizardDone()
+
             
     def toggle(self):
         self.activateRepeatOrDismiss()
@@ -444,7 +562,10 @@ class UnbondWizard(RepeatableActionWizard):
             self.cmd.button('single_left','none','PkBd') # get us into bond picking mode...
                                     
     def get_prompt(self):
-        return ["Pick bond to delete..."]
+        if self.getRepeating():
+            return ["Pick bonds to delete..."]
+        else:
+            return ["Pick bond to delete..."]
 
     def get_panel(self):
         if self.getRepeating():
@@ -461,26 +582,41 @@ class UnbondWizard(RepeatableActionWizard):
 
 class HydrogenWizard(RepeatableActionWizard):
 
-    def do_pick(self, bondFlag):
+    def run_add(self):
+        if self.mode == 'add':
+            self.cmd.h_add(active_sele)
+            self.cmd.delete(active_sele)
 
+    def do_pick(self, bondFlag):
+        self.cmd.select(active_sele, "bymol pk1") 
         if self.mode == 'fix':
             self.cmd.h_fill()
             self.cmd.unpick()
         elif self.mode == 'add':
-            self.cmd.h_add("pkmol")
-            self.cmd.unpick()            
+            self.cmd.unpick()
+            self.run_add()
         if not self.getRepeating():
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
+            self.actionWizardDone()
             
     def toggle(self,mode):
         self.mode = mode
         self.setActionHash( (mode,) )
-        self.activateRepeatOrDismiss()
+
+        if self.mode == 'add':
+            if self.activateOrDismiss():
+                if self.activeSeleValid():
+                    self.run_add()
+                    self.cmd.set_wizard()
+                    self.cmd.refresh_wizard()
+        else:
+            self.activateRepeatOrDismiss()
                                     
     def get_prompt(self):
         if self.mode == 'fix':
-            return ["Pick atom upon which to fix hydrogens..."]
+            if self.getRepeating():           
+                return ["Pick atom upon which to fix hydrogens..."]
+            else:
+                return ["Pick atoms upon which to fix hydrogens..."]
         else:
             return ["Pick molecule upon which to add hydrogens..."]
 
@@ -513,16 +649,24 @@ class HydrogenWizard(RepeatableActionWizard):
 class RemoveWizard(RepeatableActionWizard):
 
     def do_pick(self, bondFlag):
+        cnt = self.cmd.select(active_sele,
+                              "((pk1 and not hydro) extend 1) and not hydro")
         self.cmd.remove_picked()
+        if cnt:
+            self.cmd.fix_chemistry(active_sele)
+            self.cmd.h_add(active_sele)
+        self.cmd.delete(active_sele)
         if not self.getRepeating():
-            self.cmd.set_wizard()
-            self.cmd.refresh_wizard()
+            self.actionWizardDone()
             
     def toggle(self):
         self.activateRepeatOrDismiss()
                                     
     def get_prompt(self):
-        return ["Pick atom to delete..."]
+        if self.getRepeating():
+            return ["Pick atoms to delete..."]
+        else:
+            return ["Pick atom to delete..."]
 
     def get_panel(self):
         if self.getRepeating():
@@ -547,13 +691,12 @@ class AtomFlagWizard(ActionWizard):
             self.cmd.delete(display_sele)
             
     def do_pick(self, bondFlag):
-        if active_sele not in self.cmd.get_names("selections"):
-            self.cmd.select(active_sele, "byobj pk1")
-        else:
+        if not(active_sele not in self.cmd.get_names("selections")):
             if self.cmd.count_atoms("pk1 and flag %d"%self.flag):
                 self.cmd.flag(self.flag,"pk1","clear")
             else:
                 self.cmd.flag(self.flag,"pk1","set")            
+        self.cmd.select(active_sele, "byobj pk1")
         self.cmd.unpick()
         self.cmd.refresh_wizard()        
         self.update_display()
@@ -572,13 +715,7 @@ class AtomFlagWizard(ActionWizard):
     def toggle(self,flag=0):
         self.flag = flag
         if self.activateOrDismiss():
-            if active_sele in self.cmd.get_names("selections"):
-                if self.cmd.select(active_sele, "byobj "+active_sele)<1:
-                    self.cmd.delete(active_sele)
-            elif len(self.cmd.get_names("objects"))==1:
-                if self.cmd.select(active_sele, "(all)")<1:
-                    self.cmd.delete(active_sele)
-            if active_sele in self.cmd.get_names("selections"):
+            if self.activeSeleValid():
                 self.update_display()
             else:
                 self.cmd.deselect()
@@ -589,6 +726,17 @@ class AtomFlagWizard(ActionWizard):
             self.cmd.flag(self.flag,active_sele,"set")
             self.update_display()
         
+    def do_less(self):
+        if active_sele in self.cmd.get_names("selections"):
+            self.cmd.flag(self.flag,"(( byobj " + active_sele + 
+                          " ) and not flag %d) extend 1"%self.flag,"clear")
+            self.update_display()
+
+    def do_more(self):
+        if active_sele in self.cmd.get_names("selections"):
+            self.cmd.flag(self.flag,active_sele + 
+                          " and (flag %d extend 1)"%self.flag,"set")
+            self.update_display()
 
     def do_none(self):
         if active_sele in self.cmd.get_names("selections"):
@@ -604,6 +752,8 @@ class AtomFlagWizard(ActionWizard):
         return [
             [ 1, title, ''],
             [ 2, verb + " All",'cmd.get_wizard().do_all()'],
+            [ 2, verb + " More",'cmd.get_wizard().do_more()'],
+            [ 2, verb + " Less", 'cmd.get_wizard().do_less()'],
             [ 2, verb + " None", 'cmd.get_wizard().do_none()'],
             [ 2, 'Done','cmd.set_wizard()'],
             ]
@@ -714,21 +864,29 @@ class FragmentFrame(GuiFrame):
 
         GuiLabel(self, "Fragments")
         GuiButton(self, "CH4", lambda s=self: s.grow("methane",1,0,"methyl"), "Methane")
-        GuiButton(self, "C=C", lambda s=self: s.grow("ethylene",4,0,"ethyl"), "Ethane")
+        GuiButton(self, "OMe", lambda s=self: s.grow("methanol",5,0,"methoxy"), "Methanol")
+        GuiButton(self, "C=C", lambda s=self: s.grow("ethylene",4,0,"vinyl"), "Enthylene")
         GuiButton(self, "C#C", lambda s=self: s.grow("acetylene",2,0,"alkynl"), "Acetylene")
+        GuiButton(self, "C#N", lambda s=self: s.grow("cyanide",2,0,"cyano"), "Cyanide")
         GuiButton(self, "NC=O", lambda s=self: s.grow("formamide",3,1,"N->C amide"), "N->C amide")
         GuiButton(self, "C=ON", lambda s=self: s.grow("formamide",5,0,"C->N amide"), "C->N amide")
         GuiButton(self, "C=O", lambda s=self: s.grow("formaldehyde",2,0,"carbonyl",), "Aldehyde")
         GuiButton(self, "S=O2", lambda s=self: s.grow("sulfone",3,1,"sulfonyl"), "Sulfone")
+        GuiButton(self, "P=O3", lambda s=self: s.grow("phosphite",4,0,"phosphoryl"), "Phosphite")
 
         GuiLabel(self, "Rings")
+        GuiImgButton(self, "cyc3", lambda s=self: s.grow("cyclopropane",4,0,"cyclopropyl"), "Cyclopropane")
         GuiImgButton(self, "cyc4", lambda s=self: s.grow("cyclobutane",4,0,"cyclobutyl"), "Cyclobutane")
         GuiImgButton(self, "cyc5", lambda s=self: s.grow("cyclopentane",5,0,"cyclopentyl"), "Cyclopentane")
         GuiImgButton(self, "cyc6", lambda s=self: s.grow("cyclohexane",7,0,"cyclohexyl"), "Cyclohexane")
         GuiImgButton(self, "cyc7", lambda s=self: s.grow("cycloheptane",8,0,"cycloheptyl"), "Cycloheptane")
         #self.nextRow()
         GuiImgButton(self, "aro5", lambda s=self: s.grow("cyclopentadiene",5,0,"cyclopentadienyl"), "Cyclopentadiene")
-        GuiImgButton(self, "aro6", lambda s=self: s.grow("benzene",6,0,"phenyl"), "Phenyl")
+        GuiImgButton(self, "aro6", lambda s=self: s.grow("benzene",6,0,"phenyl"), "Benzene")
+        GuiImgButton(self, "aro65",lambda s=self: s.grow("indane",12,0,"indanyl"), "Indane")
+        GuiImgButton(self, "aro66",lambda s=self: s.grow("napthylene",13,0,"napthyl"), "Napthylene")
+        GuiImgButton(self, "aro67",lambda s=self: s.grow("benzocycloheptane",13,0,
+                                                         "benzocycloheptyl"), "Benzocycloheptane")
 
     def grow(self, name, pos, geom, text):
         if "pk1" in self.cmd.get_names("selections"):
@@ -785,6 +943,12 @@ class ModifyFrame(GuiFrame):
     def createBond(self):
         picked = collectPicked(self.cmd)
         if picked == ["pk1","pk2"]:
+            if ((self.cmd.count_atoms("pk1 and hydro") == self.cmd.count_atoms("pk1")) and
+                (self.cmd.count_atoms("(pk1 extend 1) and not hydro")==1) and
+                (self.cmd.count_atoms("pk2 and hydro") == self.cmd.count_atoms("pk2")) and
+                (self.cmd.count_atoms("(pk2 extend 1) and not hydro")==1)):
+                self.cmd.select("pk1","(pk1 extend 1) and not hydro")
+                self.cmd.select("pk2","(pk2 extend 1) and not hydro")
             self.cmd.bond("pk1", "pk2")
             self.cmd.h_fill()
             self.cmd.unpick()
@@ -857,6 +1021,10 @@ class CleanJob:
                                             source_state=1, target_state=state)
                             self_cmd.delete(clean_name)
                             ok = 1
+                self_cmd.delete(active_sele)
+                self_cmd.set_wizard()
+                self_cmd.refresh_wizard()
+
             if not ok:
                 # we can't call warn because this is the not the tcl-tk gui thread
                 print "Cleanup failed.  Invalid input or software malfuction?"
@@ -905,8 +1073,13 @@ class EditFrame(GuiFrame):
             HydrogenWizard(_self=self.cmd).toggle('add')
 
     def invert(self):
-        if getAtoms(self.cmd, 3):
+        picked = collectPicked(self.cmd)
+        if picked == ["pk1","pk2","pk3"]:
             self.cmd.invert()
+            self.cmd.unpick()
+        else:
+            self.cmd.unpick()
+            InvertWizard(self.cmd).toggle()
 
     def center(self):
         if "pk1" in self.cmd.get_names("selections"):
@@ -917,7 +1090,15 @@ class EditFrame(GuiFrame):
     def removeAtom(self):
         picked = collectPicked(self.cmd)
         if len(picked):
+            if self.cmd.count_atoms("?pkbond"):
+                self.cmd.edit("(pk1)","(pk2)",pkbond=0)
+            cnt = self.cmd.select(active_sele,
+                   "(((?pkset or ?pk1) and not hydro) extend 1) and not hydro")
             self.cmd.remove_picked()
+            if cnt:
+                self.cmd.fix_chemistry(active_sele)
+                self.cmd.h_add(active_sele)
+            self.cmd.delete(active_sele)
             self.cmd.unpick()
         else:
             RemoveWizard(self.cmd).toggle()
@@ -939,10 +1120,9 @@ class EditFrame(GuiFrame):
     def clean(self):
         picked = collectPicked(self.cmd)
         if len(picked):
-            CleanJob(self.cmd,string.join(picked," or "))
+            self.cmd.select(active_sele, "pkmol")
             self.cmd.unpick()
-        else:
-            CleanWizard(_self=self.cmd).toggle()
+        CleanWizard(_self=self.cmd).toggle()
         
     def undo(self):
         warn("Sorry, the undo button is not yet implemented.")

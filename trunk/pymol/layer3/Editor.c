@@ -902,47 +902,56 @@ void EditorAttach(PyMOLGlobals *G,char *elem,int geom,int valence,
   VLAFreeP(ai); /* safety */
 }
 /*========================================================================*/
-void EditorRemove(PyMOLGlobals *G,int hydrogen,int quiet)
+void EditorRemove(PyMOLGlobals *G,int hydrogen, int quiet)
 {
-  int sele0,sele1;
-  int i0;
-  int h_flag = false;
-  OrthoLineType buf;
-  ObjectMolecule *obj0=NULL,*obj1=NULL;
-
 #define cEditorRemoveSele "_EditorRemove"
 
   if(EditorActive(G)) {
-    sele0 = SelectorIndexByName(G,cEditorSele1);
-    obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);
+    OrthoLineType buf;
+
+    register CEditor *I = G->Editor;
+    int sele0 = SelectorIndexByName(G,cEditorSele1);
+    ObjectMolecule *obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);
     ObjectMoleculeVerifyChemistry(obj0,-1); /* remember chemistry for later */
     if((sele0>=0)&&obj0) {
-      sele1 = SelectorIndexByName(G,cEditorSele2);
-      obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);
-      if((sele1>=0)&&(obj0==obj1)) {
+      int sele1 = SelectorIndexByName(G,cEditorSele2);
+      ObjectMolecule *obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);
+      if((sele1>=0)&&(obj0==obj1)&&I->BondMode) {
         /* bond mode */
         ObjectMoleculeRemoveBonds(obj0,sele0,sele1);
         EditorInactivate(G);
       } else {
+	int h_flag = false;
 
-        if(hydrogen) {
-          sprintf(buf,"((neighbor %s) and hydro)",cEditorSele1);          
-          h_flag = SelectorCreate(G,cEditorRemoveSele,buf,NULL,false,NULL);
-        }
+	if(SelectorIndexByName(G,cEditorSet)<0) { 
+	  int i0 = 0;
+	  /* only one atom picked */
 
-        if(SelectorGetFastSingleAtomObjectIndex(G,sele0,&i0)) {
-          /* atom mode */
-          if(i0>=0) {
-            ExecutiveRemoveAtoms(G,cEditorSele1,quiet);
-            EditorInactivate(G);
-          }
-        }
+	  if(hydrogen) {
+	    sprintf(buf,"((neighbor %s) and hydro)",cEditorSele1);          
+	    h_flag = SelectorCreate(G,cEditorRemoveSele,buf,NULL,false,NULL);
+	  }
+	  
+	  if(SelectorGetFastSingleAtomObjectIndex(G,sele0,&i0)) {
+	    /* atom mode */
+	    if(i0>=0) {
+	      ExecutiveRemoveAtoms(G,cEditorSele1,quiet);
+	    }
+	  }
+	} else { /* multiple atoms picked */
 
-        if(h_flag) {
-          ExecutiveRemoveAtoms(G,cEditorRemoveSele,quiet);
-          SelectorDelete(G,cEditorRemoveSele);
-        }
-
+	  if(hydrogen) {
+	    sprintf(buf,"((neighbor %s) and hydro)",cEditorSet);          
+	    h_flag = SelectorCreate(G,cEditorRemoveSele,buf,NULL,false,NULL);
+	  }
+	  ExecutiveRemoveAtoms(G,cEditorSet,quiet);
+	}
+	
+	EditorInactivate(G);
+	if(h_flag) {
+	  ExecutiveRemoveAtoms(G,cEditorRemoveSele,quiet);
+	  SelectorDelete(G,cEditorRemoveSele);
+	}
       }
     }
   }
@@ -1493,6 +1502,7 @@ void EditorInactivate(PyMOLGlobals *G)
   ExecutiveDelete(G,cEditorSele3);    
   ExecutiveDelete(G,cEditorSele4);    
   ExecutiveDelete(G,cEditorSet);
+  ExecutiveDelete(G,cEditorBond);
   ExecutiveDelete(G,cEditorRes);
   ExecutiveDelete(G,cEditorChain);  
   ExecutiveDelete(G,cEditorObject);

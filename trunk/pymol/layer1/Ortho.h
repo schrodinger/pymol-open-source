@@ -87,8 +87,12 @@ int OrthoFeedbackOut(PyMOLGlobals *G,char *buffer);
 
 void OrthoSetWizardPrompt(PyMOLGlobals *G,char *vla);
 
+int OrthoGetOverlayStatus(PyMOLGlobals *G);
 void OrthoPasteIn(PyMOLGlobals *G,char *buffer);
+
 void OrthoRemoveSplash(PyMOLGlobals *G);
+void OrthoRemoveAutoOverlay(PyMOLGlobals *G);
+
 void OrthoSplash(PyMOLGlobals *G);
 int OrthoArrowsGrabbed(PyMOLGlobals *G);
 void OrthoSpecial(PyMOLGlobals *G,int k,int x,int y,int mod);

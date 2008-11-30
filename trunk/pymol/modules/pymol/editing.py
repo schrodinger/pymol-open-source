@@ -514,7 +514,7 @@ PYMOL API
             r = _cmd.invert(_self._COb,int(quiet))
         finally:
             _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException            
+        if _self._raising(r,_self): raise pymol.QuietException            
         return r
 
     def unbond(atom1="(pk1)", atom2="(pk2)", quiet=1, _self=cmd):
@@ -701,7 +701,8 @@ PYMOL API
         return r
 
 
-    def fuse(selection1="(pk1)", selection2="(pk2)", mode=0, recolor=1, move=1, _self=cmd):
+    def fuse(selection1="(pk1)", selection2="(pk2)", 
+             mode=0, recolor=1, move=1, _self=cmd):
         '''
 DESCRIPTION
 
