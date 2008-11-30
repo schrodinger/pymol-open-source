@@ -259,12 +259,13 @@ class AttachWizard(RepeatableActionWizard):
         if self.mode == 0:
             self.cmd.select(active_sele, "bymol pk1") 
             editor.attach_fragment("pk1", self.fragment, self.position, self.geometry, _self=self.cmd)
-            self.cmd.unpick()
         elif self.mode == 1:            
             self.cmd.select(active_sele, "bymol pk1") 
-            editor.combine_fragment("pk1", self.fragment, self.position, self.geometry, _self=self.cmd)
+            editor.combine_fragment("pk1", self.fragment, self.position,
+                                    self.geometry, _self=self.cmd)
             self.mode = 0
             self.cmd.refresh_wizard()
+        self.cmd.unpick()
         if not self.getRepeating():
             self.actionWizardDone()
             
