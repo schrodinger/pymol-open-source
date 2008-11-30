@@ -386,8 +386,11 @@ class ValenceWizard(RepeatableActionWizard):
     def do_pick(self, bondFlag):
         self.cmd.select(active_sele, "bymol pk1") 
         if bondFlag:
-            self.cmd.valence(self.order, "pk1", "pk2")
-            self.cmd.h_fill()
+            if self.order>=0:
+                self.cmd.valence(self.order, "pk1", "pk2")
+                self.cmd.h_fill()
+            else:
+                self.cmd.cycle_valence()
             self.cmd.unpick()
         else:
             self.cmd.button('single_left','none','PkBd')
@@ -796,8 +799,12 @@ class GuiLabel:
 
 class GuiButton:
     def __init__(self, frame, text, command, comment="", colspan=1):
+        if(text[0:1]=='|'):
+            width=3*colspan
+        else:
+            width=WID*colspan
         b = Button(frame, text=text, padx=1, pady=1, 
-            width=WID*colspan, borderwidth=2, relief=RIDGE,
+            width=width, borderwidth=2, relief=RIDGE,
             command = command)
         b.grid(row=frame.row, column=frame.col, columnspan=colspan,
             sticky=W+E)
@@ -919,6 +926,7 @@ class ModifyFrame(GuiFrame):
 
         GuiButton(self, "Create", self.createBond, "Create bond between pk1 and pk2")
         GuiButton(self, "Delete", self.deleteBond, "Delete bond between pk1 and pk2")
+        GuiButton(self, "Cycle", self.cycleBond, "Cycle bond valence");
         #self.nextRow()
         GuiButton(self, "|", lambda s=self: s.setOrder("1", "single"), "Create single bond")
         GuiButton(self, "||", lambda s=self: s.setOrder("2", "double", ), "Create double bond")
@@ -955,6 +963,7 @@ class ModifyFrame(GuiFrame):
         else:
             BondWizard(self.cmd).toggle()
 
+
     def deleteBond(self):
         picked = collectPicked(self.cmd)
         if picked == ["pk1","pk2"]:
@@ -964,6 +973,14 @@ class ModifyFrame(GuiFrame):
         else:
             self.cmd.unpick()
             UnbondWizard(self.cmd).toggle()
+
+    def cycleBond(self):
+        picked = collectPicked(self.cmd)
+        if picked == ["pk1","pk2"]:
+            self.cmd.cycle_valence()
+            self.cmd.unpick()
+        else:
+            ValenceWizard(_self=self.cmd).toggle(-1,"Cycle bond")        
 
     def setOrder(self, order, text):
         picked = collectPicked(self.cmd)
