@@ -29,7 +29,6 @@ Z* -------------------------------------------------------------------
 #define cRampMap 1
 #define cRampMol 2
 
-
 typedef struct ObjectGadgetRamp {
   ObjectGadget Gadget;
 
