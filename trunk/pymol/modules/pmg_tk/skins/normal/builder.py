@@ -1002,6 +1002,27 @@ class ModifyFrame(GuiFrame):
             self.cmd.unpick()
             ValenceWizard(_self=self.cmd).toggle(order,text)        
 
+def model_to_sdf_list(model):
+    from chempy import io
+
+    sdf_list = io.mol.toList(model)
+    fixed = []
+    at_id = 1
+    for atom in model.atom:
+        if atom.flags & 8:
+            fixed.append(at_id)
+        at_id = at_id + 1
+    fit_flag = 1
+    if len(fixed):
+        fit_flag = 0
+        sdf_list.append(">  <FIXED_ATOMS>\n")
+        sdf_list.append("+ ATOM\n");
+        for ID in fixed:
+            sdf_list.append("| %4d\n"%ID)
+        sdf_list.append("\n")
+    sdf_list.append("$$$$\n")
+    return (fit_flag, sdf_list)
+
 class CleanJob:
     def __init__(self,self_cmd,sele):
         self.cmd = self_cmd
@@ -1021,7 +1042,6 @@ class CleanJob:
             # we can't call warn because this is the not the tcl-tk gui thread
             # warn("Please be sure that FreeMOL is correctly installed.")
         else:
-            from chempy import io
             obj_list = self_cmd.get_object_list("bymol ("+sele+")")
             ok = 0
             result = None
@@ -1031,7 +1051,8 @@ class CleanJob:
                 self.cmd.sculpt_purge()
                 self.cmd.set("sculpting",0)
                 state = self_cmd.get_state()
-                sdf_list = io.mol.toList(self_cmd.get_model(obj_name,state=state)) + ["$$$$\n"]
+#                sdf_list = io.mol.toList(self_cmd.get_model(obj_name,state=state)) + ["$$$$\n"]
+                (fit_flag, sdf_list) = model_to_sdf_list(self_cmd.get_model(obj_name,state=state))
                 result = mengine.run(string.join(sdf_list,''))
                 if result != None:
                     if len(result):
@@ -1042,8 +1063,9 @@ class CleanJob:
                             self_cmd.read_molstr(clean_mol, clean_name, zoom=0)
                             # need to insert some error checking here
                             self_cmd.set("retain_order","1",clean_name)
-                            self_cmd.fit(clean_name, obj_name, matchmaker=4,
-                                         mobile_state=1, target_state=state)
+                            if fit_flag:
+                                self_cmd.fit(clean_name, obj_name, matchmaker=4,
+                                             mobile_state=1, target_state=state)
                             self_cmd.update(obj_name, clean_name, matchmaker=0,
                                             source_state=1, target_state=state)
                             self_cmd.delete(clean_name)
