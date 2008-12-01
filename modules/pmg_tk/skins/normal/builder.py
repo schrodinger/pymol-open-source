@@ -305,16 +305,16 @@ class AttachWizard(RepeatableActionWizard):
     def get_panel(self):
         if self.getRepeating():
             return [
-                [ 1, 'Attaching Multiple Fragments',''],
+                [ 1, 'Attaching Multiple Fragmnts',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],                
-                [ 2, 'Combine Into Existing','cmd.get_wizard().combine()'],                
+                [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],                
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
         else:
             return [
-                [ 1, 'Attaching a Fragment',''],
+                [ 1, 'Attaching One Fragment',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
-                [ 2, 'Combine Into Existing','cmd.get_wizard().combine()'],                
+                [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],                
                 [ 2, 'Attach Multiple Fragments','cmd.get_wizard().repeat()'],
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
@@ -1033,6 +1033,7 @@ class CleanJob:
                         if len(clean_mol):
                             clean_name = "builder_clean_tmp"
                             self_cmd.read_molstr(clean_mol, clean_name, zoom=0)
+                            # need to insert some error checking here
                             self_cmd.set("retain_order","1",clean_name)
                             self_cmd.fit(clean_name, obj_name, matchmaker=4,
                                          mobile_state=1, target_state=state)
