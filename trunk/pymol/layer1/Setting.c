@@ -3654,5 +3654,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_auto_overlay,0);
     set_color(I,cSetting_stick_ball_color,"-1");
     set_f(I,cSetting_stick_h_scale, 0.4F);
+    set_f(I,cSetting_sculpt_pyra_inv_weight, 10.0F);  
   }
 }

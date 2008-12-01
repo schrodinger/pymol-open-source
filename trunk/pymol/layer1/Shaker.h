@@ -93,7 +93,8 @@ float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1t
 
 float ShakerDoPyra(float targ1,float targ2,
                    float *v0,float *v1,float *v2,float *v3,
-                   float *p0,float *p1,float *p2,float *p3,float wt);
+                   float *p0,float *p1,float *p2,float *p3,
+                   float wt,float inv_wt);
 
 
 float ShakerDoLine(float *v0,float *v1,float *v2,

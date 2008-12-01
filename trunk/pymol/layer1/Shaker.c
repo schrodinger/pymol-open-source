@@ -141,7 +141,8 @@ float ShakerGetPyra(float *targ2, float *v0,float *v1,float *v2,float *v3)
 
 float ShakerDoPyra(float targ1,float targ2, 
                    float *v0,float *v1,float *v2,float *v3,
-                   float *p0,float *p1,float *p2,float *p3,float wt)
+                   float *p0,float *p1,float *p2,float *p3,
+                   float wt, float inv_wt)
 {
   float d0[3],cp[3],d2[3],d3[3];
   float av[3],t0[3],push[3];
@@ -163,8 +164,8 @@ float ShakerDoPyra(float targ1,float targ2,
   result1 = (float)fabs(dev);
   if(result1>R_SMALL8) {
     sc = wt*dev;
-    if(cur*targ1<0.0) /* inverted */
-      sc = sc * 12; /* emphasize fix */
+    if((cur*targ1)<0.0) /* inverted */
+      sc = sc * inv_wt; /* inversion fixing weight */
     scale3f(cp,sc,push);
     add3f(push,p0,p0);
     scale3f(push,0.333333F,push);

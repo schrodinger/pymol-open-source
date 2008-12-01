@@ -989,11 +989,6 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                 v3 = cs->Coord+3*a3;
                 d = ShakerGetPyra(&d2,v0,v1,v2,v3);
 
-                if((oai[b1].protons == cAN_H) ||
-                   (oai[b2].protons == cAN_H) ||
-                   (oai[b2].protons == cAN_H))
-                  d2 = -1.0F; /* term 2 only applies to heavy atoms */
-
                 if(fabs(d)<0.05) {
                   planar[b0]=true;
                 }
@@ -1710,7 +1705,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   float vdw_wt14;
   float bond_wt;
   float angl_wt;
-  float pyra_wt;
+  float pyra_wt,pyra_inv_wt;
   float plan_wt;
   float line_wt;
   float tors_wt;
@@ -1767,6 +1762,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     bond_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_bond_weight);
     angl_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_angl_weight);
     pyra_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_pyra_weight);
+    pyra_inv_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_pyra_inv_weight);
     plan_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_plan_weight);
     line_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_line_weight);
     tri_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_weight);
@@ -2020,7 +2016,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                                          disp+b1*3,
                                          disp+b2*3,
                                          disp+b3*3,
-                                         pyra_wt);
+                                         pyra_wt,
+                                         pyra_inv_wt);
               total_count++;
                 
               cnt[b0]++;

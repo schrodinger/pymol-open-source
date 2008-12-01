@@ -770,7 +770,7 @@ typedef struct _CPyMOL {
   ov_word lex_auto_overlay;
   ov_word lex_stick_ball_color;
   ov_word lex_stick_h_scale;
-
+  ov_word lex_sculpt_pyra_inv_weight;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1534,6 +1534,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(auto_overlay,603);
   LEX_SETTING(stick_ball_color,604);
   LEX_SETTING(stick_h_scale,605);
+  LEX_SETTING(sculpt_pyra_inv_weight,606);
   return_OVstatus_SUCCESS;
 }
 
