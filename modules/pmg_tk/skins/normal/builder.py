@@ -326,8 +326,15 @@ class AminoAcidWizard(RepeatableActionWizard):
         self.mode = 0
 
     def do_pick(self, bondFlag):
-        self.cmd.select(active_sele, "bymol pk1") 
-        editor.attach_amino_acid("pk1", self.aminoAcid, _self=self.cmd)        
+        if self.mode == 0:
+            self.cmd.select(active_sele, "bymol pk1") 
+            editor.attach_amino_acid("pk1", self.aminoAcid, _self=self.cmd)        
+        elif self.mode == 1:
+            self.cmd.select(active_sele, "bymol pk1") 
+            editor.combine_fragment("pk1", self.aminoAcid, 0, 1, _self=self.cmd)
+            self.mode = 0
+            self.cmd.refresh_wizard()
+
         self.cmd.unpick()
         if not self.getRepeating():
             self.actionWizardDone()
@@ -360,21 +367,21 @@ class AminoAcidWizard(RepeatableActionWizard):
             else:
                 return ["Pick location to attach %s..."%self.aminoAcid]            
         else:
-            return ["Pick object to combine %s into..."%self.text]
+            return ["Pick object to combine %s into..."%self.aminoAcid]
 
     def get_panel(self):
         if self.getRepeating():
             return [
                 [ 1, 'Attaching Multiple Residues',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],                
-                [ 2, 'Combine Into Existing','cmd.get_wizard().combine()'],                
+                [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],                
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
         else:
             return [
                 [ 1, 'Attaching Amino Acid',''],
                 [ 2, 'Create As New Object','cmd.get_wizard().create_new()'],
-                [ 2, 'Combine Into Existing','cmd.get_wizard().combine()'],                
+                [ 2, 'Combine w/ Existing Object','cmd.get_wizard().combine()'],                
                 [ 2, 'Attach Multiple...','cmd.get_wizard().repeat()'],
                 [ 2, 'Done','cmd.set_wizard()'],
                 ]
