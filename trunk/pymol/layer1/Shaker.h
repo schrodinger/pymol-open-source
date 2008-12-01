@@ -39,10 +39,11 @@ typedef struct {
 #define cShakerTorsSP3SP3      1
 #define cShakerTorsDisulfide   2
 #define cShakerTorsAmide       3
+#define cShakerTorsFlat        4
 
 typedef struct {
   int at0,at1,at2,at3;
-  float targ;
+  float targ1,targ2;
 } ShakerPyraCon;
 
 typedef struct {
@@ -72,12 +73,12 @@ CShaker *ShakerNew(PyMOLGlobals *G);
 void ShakerReset(CShaker *I);
 void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float dist,int type,float weight);
 void ShakerAddTorsCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,int type);
-void ShakerAddPyraCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float target);
+void ShakerAddPyraCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float targ1,float targ2);
 void ShakerAddPlanCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float target, int fixed);
 
 void ShakerAddLineCon(CShaker *I,int atom0,int atom1,int atom2);
 
-float ShakerGetPyra(float *v0,float *v1,float *v2,float *v3);
+float ShakerGetPyra(float *targ2, float *v0,float *v1,float *v2,float *v3);
 
 /* the following fn's have been inlined in Sculpt.c  
 
@@ -90,7 +91,8 @@ float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1t
 
 */
 
-float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
+float ShakerDoPyra(float targ1,float targ2,
+                   float *v0,float *v1,float *v2,float *v3,
                    float *p0,float *p1,float *p2,float *p3,float wt);
 
 

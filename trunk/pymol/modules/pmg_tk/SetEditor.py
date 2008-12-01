@@ -81,7 +81,7 @@ class SetEditor:
         b = Button( f2, text="Reset", width=5, command=self.onResetFilter )
         b.grid (row=0, column=3 )
 
-        top.focus_set()
+        self.filter.focus_set()
 
     def updateLabels(self, *event):
         """update the labels and values in the window whenever the

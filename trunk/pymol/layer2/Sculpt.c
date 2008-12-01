@@ -162,8 +162,18 @@ static float ShakerDoTors(int type,float *v0,float *v1,float *v2,float *v3,
       result = 1.0F-dp;
     }
     break;
+  case cShakerTorsFlat:
+    if(fabs(dp)<0.5F) /* don't attempt to resolve when ambiguous */
+      return 0.0F;
+    if(dp>0.0F) {
+      result = 1.0F-dp;
+    } else {
+      result = -1.0F-dp;
+    }
+    result *= 5.0F; /* emphasize */
+    break;
   case cShakerTorsAmide: 
-    if(dp>-0.7F) {
+    if(dp>-0.7F) { /* highly biased in favor of the input state */
       result = 1.0F-dp;
     } else {
       result = -1.0F-dp;
@@ -418,14 +428,15 @@ static void add_triangle_limits(ATLCall *ATL, int prev, int cur, float dist, int
 void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_state,int match_by_segment)
 {
   PyMOLGlobals *G=I->G;
-  int a,a0,a1,a2,a3,b0,b1,b2,b3;
+  int a,a0,a1,a2,a3,b0,b1,b2,b3,b4;
   BondType *b;
   float *v0,*v1,*v2,*v3,d,dummy;
   CoordSet *cs;
-  int n0,n1,n2;
-  int *planer = NULL;
+  int n0,n1,n2,n3;
+  int *planar = NULL;
   int *linear = NULL;
   int *single = NULL;
+  int *crdidx = NULL;
   int nex = 1;
   int *j,*k,xhash;
   int ex_type;
@@ -433,6 +444,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
   int xoffset;
   int use_cache = 1;
   
+
   PRINTFD(G,FB_Sculpt)
     " SculptMeasureObject-Debug: entered.\n"
     ENDFD;
@@ -447,928 +459,995 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
   UtilZeroMem(I->NBHash,NB_HASH_SIZE*sizeof(int));
   UtilZeroMem(I->EXHash,EX_HASH_SIZE*sizeof(int));
 
-  if(state<obj->NCSet)
-    if(obj->CSet[state])
-      {
-        oai = obj->AtomInfo;
+  if((state<obj->NCSet) && (obj->CSet[state])) {
+    oai = obj->AtomInfo;
+    
+    VLACheck(I->Don,int,obj->NAtom);
+    VLACheck(I->Acc,int,obj->NAtom);
+    ai = obj->AtomInfo;
+    for(a=0;a<obj->NAtom;a++) {
+      I->Don[a]=false;
+      I->Acc[a]=false;
+      AtomInfoCheckUniqueID(G,ai);
+      ai++;
+    }
+    
+    ObjectMoleculeVerifyChemistry(obj,state);
+    ObjectMoleculeUpdateNeighbors(obj);
+    
+    
+    cs = obj->CSet[state];
+    
+    use_cache = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_memory);
+    if(obj->NBond) {
+      int *neighbor = obj->Neighbor;
+      int n_atom = obj->NAtom;
 
-        VLACheck(I->Don,int,obj->NAtom);
-        VLACheck(I->Acc,int,obj->NAtom);
-        ai = obj->AtomInfo;
-        for(a=0;a<obj->NAtom;a++) {
-          I->Don[a]=false;
-          I->Acc[a]=false;
-          AtomInfoCheckUniqueID(G,ai);
-          ai++;
+      planar=Alloc(int,n_atom);
+      linear=Alloc(int,n_atom);
+      single=Alloc(int,n_atom);
+      crdidx=Alloc(int,n_atom);
+      ai = obj->AtomInfo;
+
+      for(a=0;a<n_atom;a++) {
+        planar[a]=(ai->geom==cAtomInfoPlanar);
+        linear[a]=(ai->geom==cAtomInfoLinear);
+        single[a]=(ai->geom==cAtomInfoSingle);
+
+        if(obj->DiscreteFlag) {
+          if(cs==obj->DiscreteCSet[a]) {
+            a0=obj->DiscreteAtmToIdx[b0];
+          } else {
+            a0=-1;
+          }
+        } else {
+          a0=cs->AtmToIdx[a];
+        }
+        crdidx[a] = a0;
+
+        ai++;
+      }
+      
+      /* brain-dead donor/acceptor assignment
+       * REPLACE later on with pattern-based system */
+      
+      
+      /* pass 1 */
+      
+      b=obj->Bond;
+      for(a=0;a<obj->NBond;a++) {
+        b1 = b->index[0];
+        b2 = b->index[1];
+        
+        ai1=obj->AtomInfo+b1;
+        ai2=obj->AtomInfo+b2;
+        
+        /* make blanket assumption that all nitrogens with 
+           <3 bonds are donors -- we qualify this below...*/
+        
+        if(ai1->protons==cAN_N) {
+          n1 = neighbor[b1];
+          if(neighbor[n1]<3) { /* N with L.P. */
+            I->Don[b1]=true;
+          }
         }
         
-        ObjectMoleculeVerifyChemistry(obj,state);
-        ObjectMoleculeUpdateNeighbors(obj);
-
-        cs = obj->CSet[state];
-
-        use_cache = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_memory);
-        if(obj->NBond) {
-
-          planer=Alloc(int,obj->NAtom);
-          linear=Alloc(int,obj->NAtom);
-          single=Alloc(int,obj->NAtom);
-          ai = obj->AtomInfo;
-          for(a=0;a<obj->NAtom;a++) {
-            planer[a]=(ai->geom==cAtomInfoPlaner);
-            linear[a]=(ai->geom==cAtomInfoLinear);
-            single[a]=(ai->geom==cAtomInfoSingle);
-            ai++;
+        if(ai2->protons==cAN_N) {
+          n2 = neighbor[b2];
+          if(neighbor[n2]<3) { /* N with L.P. */
+            I->Don[b2]=true;
           }
-
-          /* brain-dead donor/acceptor assignment
-           * REPLACE later on with pattern-based system */
-
-
-          /* pass 1 */
-
-          b=obj->Bond;
-          for(a=0;a<obj->NBond;a++)
-            {
-              b1 = b->index[0];
-              b2 = b->index[1];
-              
-              ai1=obj->AtomInfo+b1;
-              ai2=obj->AtomInfo+b2;
-
-              /* make blanket assumption that all nitrogens with 
-                 <3 bonds are donors -- we qualify this below...*/
-              
-              if(ai1->protons==cAN_N) {
-                n1 = obj->Neighbor[b1];
-                if(obj->Neighbor[n1]<3) { /* N with L.P. */
-                  I->Don[b1]=true;
-                }
-              }
-
-              if(ai2->protons==cAN_N) {
-                n2 = obj->Neighbor[b2];
-                if(obj->Neighbor[n2]<3) { /* N with L.P. */
-                  I->Don[b2]=true;
-                }
-              }
-
-              /* assume O is always an acceptor...*/
-              
-              if(ai1->protons==cAN_O) I->Acc[b1]=true;
-              if(ai2->protons==cAN_O) I->Acc[b2]=true;
-              b++;
+        }
+        
+        /* assume O is always an acceptor...*/
+        
+        if(ai1->protons==cAN_O) I->Acc[b1]=true;
+        if(ai2->protons==cAN_O) I->Acc[b2]=true;
+        b++;
+      }
+      
+      /* pass 2 */
+      b=obj->Bond;             
+      for(a=0;a<obj->NBond;a++) {
+        b1 = b->index[0];
+        b2 = b->index[1];
+        
+        /* nitrogens with lone pairs are acceptors 
+           (not donors as assumed above) */
+        
+        ai1=obj->AtomInfo+b1;
+        ai2=obj->AtomInfo+b2;
+        
+        if(ai1->protons==cAN_N) {
+          if(b->order==2) {
+            n1 = neighbor[b1];
+            if(neighbor[n1]<3) { /* N with L.P. */
+              I->Acc[b1]=true;
+              I->Don[b1]=false;
             }
-
-          /* pass 2 */
-          b=obj->Bond;             
-          for(a=0;a<obj->NBond;a++)
-            {
-              b1 = b->index[0];
-              b2 = b->index[1];
-
-              /* nitrogens with lone pairs are acceptors 
-                 (not donors as assumed above) */
-              
-              ai1=obj->AtomInfo+b1;
-              ai2=obj->AtomInfo+b2;
-              
-              if(ai1->protons==cAN_N) {
-                if(b->order==2) {
-                  n1 = obj->Neighbor[b1];
-                  if(obj->Neighbor[n1]<3) { /* N with L.P. */
-                    I->Acc[b1]=true;
-                    I->Don[b1]=false;
-                  }
-                }
-              }
-              if(ai2->protons==cAN_N) {
-                if(b->order==2) {
-                  n2 = obj->Neighbor[b2];
-                  if(obj->Neighbor[n2]<3) { /* N with L.P. */
-                    I->Acc[b2]=true;
-                    I->Don[b2]=false;
-                  }
-                }
-              }
-              b++;
-            }
-
-          /* pass 3 */
-          b=obj->Bond;
-          for(a=0;a<obj->NBond;a++)
-            {
-              b1 = b->index[0];
-              b2 = b->index[1];
-              
-              ai1=obj->AtomInfo+b1;
-              ai2=obj->AtomInfo+b2;
-                     
-              /* however, every NH is a donor, 
-                 even if it's SP2 */
-              
-              if(ai1->protons==cAN_H) {
-                
-                /* donors: any H attached to O, N */
-                switch(ai2->protons) {
-                case cAN_O: 
-                  I->Don[b1]=true; 
-                  I->Don[b2]=true; /* mark heavy atom too... */
-                  break;
-                case cAN_N: 
-                  I->Don[b1]=true; 
-                  I->Don[b2]=true;
-                  break;
-                }
-              } else if(ai2->protons==cAN_H) {
-                switch(ai1->protons) {
-                case cAN_O: 
-                  I->Don[b1]=true; 
-                  I->Don[b2]=true; /* mark heavy atom too... */
-                  break;
-                case cAN_N: 
-                  I->Don[b1]=true; 
-                  I->Don[b2]=true; /* mark heavy atom too... */
-                  break;
-                }
-              }
-
-              b++;
-            }
-
-          /* atom pass */
-          ai1 = obj->AtomInfo;
-          for(a=0;a<obj->NAtom;a++) {
-            /* make sure all nonbonded atoms get categorized */
-
-            n0 = obj->Neighbor[a];
-            if(obj->Neighbor[n0]==0) { /* nonbonded */
-              if(ai1->protons==cAN_O) {
-                I->Don[a] = true;
-                I->Acc[a] = true;
-              } else if(ai1->protons==cAN_N) {
-                I->Don[a] = true;
-              } 
-            }
-            /*            
-            if(I->Acc[a]) {
-              printf("ACC %s %s %s\n",ai1->chain,ai1->resi,ai1->name);
-            }
-            if(I->Don[a]) {
-              printf("DON %s %s %s\n",ai1->chain,ai1->resi,ai1->name);
-              }*/
-
-            ai1++;
           }
-          
-          /*  exclusions */
-          b=obj->Bond;          
-          for(a=0;a<obj->NBond;a++)
-            {
-              b1 = b->index[0];
-              b2 = b->index[1];
-              
-              ai1=obj->AtomInfo+b1;
-              ai2=obj->AtomInfo+b2;
-          
-              xhash = ( (b2>b1) ? ex_hash(b1,b2) : ex_hash(b2,b1));
-              VLACheck(I->EXList,int,nex+3);
-              j = I->EXList+nex;
-              *(j++)=*(I->EXHash+xhash);
-              if(b2>b1) {
-                *(j++)=b1;
-                *(j++)=b2;
-              } else {
-                *(j++)=b2;
-                *(j++)=b1;
-              }
-              *(j++)=2; /* 1-2 exclusion */
-              *(I->EXHash+xhash)=nex;
-              nex+=4;
-
-
-              if(obj->DiscreteFlag) {
-                if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-                  a1=obj->DiscreteAtmToIdx[b1];
-                  a2=obj->DiscreteAtmToIdx[b2];
-                } else {
-                  a1=-1;
-                  a2=-1;
-                }
-              } else {
-                a1=cs->AtmToIdx[b1];
-                a2=cs->AtmToIdx[b2];
-              }
-              if((a1>=0)&&(a2>=0))
-                {
-                  v1 = cs->Coord+3*a1;
-                  v2 = cs->Coord+3*a2;
-                  d = (float)diff3f(v1,v2);
-                  if(use_cache) {
-                    if(!SculptCacheQuery(G,cSculptBond,
-                                         oai[b1].unique_id,
-                                         oai[b2].unique_id,0,0,&d))
-                      SculptCacheStore(G,cSculptBond,
-                                       oai[b1].unique_id,
-                                       oai[b2].unique_id,0,0,d);
-                  }
-                  ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistBond,1.0F); 
-                  /* NOTE: storing atom indices, not coord. ind.! */
-                }
-              b++;
+        }
+        if(ai2->protons==cAN_N) {
+          if(b->order==2) {
+            n2 = neighbor[b2];
+            if(neighbor[n2]<3) { /* N with L.P. */
+              I->Acc[b2]=true;
+              I->Don[b2]=false;
             }
+          }
+        }
+        b++;
+      }
+      
+      /* pass 3 */
+      b=obj->Bond;
+      for(a=0;a<obj->NBond;a++) {
+        b1 = b->index[0];
+        b2 = b->index[1];
+        
+        ai1=obj->AtomInfo+b1;
+        ai2=obj->AtomInfo+b2;
+        
+        /* however, every NH is a donor, 
+           even if it's SP2 */
+        
+        if(ai1->protons==cAN_H) {
+          
+          /* donors: any H attached to O, N */
+          switch(ai2->protons) {
+          case cAN_O: 
+            I->Don[b1]=true; 
+            I->Don[b2]=true; /* mark heavy atom too... */
+            break;
+          case cAN_N: 
+            I->Don[b1]=true; 
+            I->Don[b2]=true;
+            break;
+          }
+        } else if(ai2->protons==cAN_H) {
+          switch(ai1->protons) {
+          case cAN_O: 
+            I->Don[b1]=true; 
+            I->Don[b2]=true; /* mark heavy atom too... */
+            break;
+          case cAN_N: 
+            I->Don[b1]=true; 
+            I->Don[b2]=true; /* mark heavy atom too... */
+            break;
+          }
+        }
+        
+        b++;
+      }
+      
+      /* atom pass */
+      ai1 = obj->AtomInfo;
+      for(a=0;a<n_atom;a++) {
+        /* make sure all nonbonded atoms get categorized */
+        
+        n0 = neighbor[a];
+        if(neighbor[n0]==0) { /* nonbonded */
+          if(ai1->protons==cAN_O) {
+            I->Don[a] = true;
+            I->Acc[a] = true;
+          } else if(ai1->protons==cAN_N) {
+            I->Don[a] = true;
+          } 
+        }
+        /*            
+                      if(I->Acc[a]) {
+                      printf("ACC %s %s %s\n",ai1->chain,ai1->resi,ai1->name);
+                      }
+                      if(I->Don[a]) {
+                      printf("DON %s %s %s\n",ai1->chain,ai1->resi,ai1->name);
+                      }*/
+        
+        ai1++;
+      }
+      
+      /*  exclusions */
+      b=obj->Bond;          
+      for(a=0;a<obj->NBond;a++) {
+        b1 = b->index[0];
+        b2 = b->index[1];
+        
+        ai1=obj->AtomInfo+b1;
+        ai2=obj->AtomInfo+b2;
+        
+        xhash = ( (b2>b1) ? ex_hash(b1,b2) : ex_hash(b2,b1));
+        VLACheck(I->EXList,int,nex+3);
+        j = I->EXList+nex;
+        *(j++)=*(I->EXHash+xhash);
+        if(b2>b1) {
+          *(j++)=b1;
+          *(j++)=b2;
+        } else {
+          *(j++)=b2;
+          *(j++)=b1;
+        }
+        *(j++)=2; /* 1-2 exclusion */
+        *(I->EXHash+xhash)=nex;
+        nex+=4;
+        
+        a1 = crdidx[b1];
+        a2 = crdidx[b2];
 
-          /* triangle relationships */
+        if((a1>=0)&&(a2>=0)) {
+          v1 = cs->Coord+3*a1;
+          v2 = cs->Coord+3*a2;
+          d = (float)diff3f(v1,v2);
+          if(use_cache) {
+            if(!SculptCacheQuery(G,cSculptBond,
+                                 oai[b1].unique_id,
+                                 oai[b2].unique_id,0,0,&d))
+              SculptCacheStore(G,cSculptBond,
+                               oai[b1].unique_id,
+                               oai[b2].unique_id,0,0,d);
+          }
+          ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistBond,1.0F); 
+          /* NOTE: storing atom indices, not coord. ind.! */
+        }
+        b++;
+      }
+      
+      /* triangle relationships */
+      {
+        ATLCall atl;
+        ai1 = obj->AtomInfo;
+        
+        atl.G = I->G;
+        atl.Shaker = I->Shaker;
+        atl.ai = obj->AtomInfo;
+        atl.cSet = cs;
+        
+        if(obj->DiscreteFlag) {
+          atl.atm2idx = obj->DiscreteAtmToIdx;
+          atl.discCSet = obj->DiscreteCSet;
+        } else {
+          atl.atm2idx = cs->AtmToIdx;
+          atl.discCSet = NULL;
+        }
+        atl.coord = cs->Coord;
+        atl.neighbor = neighbor;
+        atl.min =  SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_min);
+        atl.max = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_max);
+        atl.mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_mode); 
+        
+        for(a=0;a<n_atom;a++) {
+          
+          atl.atom0 = a;
+          
+          /* clear the flag -- TODO replace with array */
           {
-            ATLCall atl;
-            ai1 = obj->AtomInfo;
-
-            atl.G = I->G;
-            atl.Shaker = I->Shaker;
-            atl.ai = obj->AtomInfo;
-            atl.cSet = cs;
-            
-            if(obj->DiscreteFlag) {
-              atl.atm2idx = obj->DiscreteAtmToIdx;
-              atl.discCSet = obj->DiscreteCSet;
-            } else {
-              atl.atm2idx = cs->AtmToIdx;
-              atl.discCSet = NULL;
-            }
-            atl.coord = cs->Coord;
-            atl.neighbor = obj->Neighbor;
-            atl.min =  SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_min);
-            atl.max = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_max);
-            atl.mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_mode); 
-
-            for(a=0;a<obj->NAtom;a++) {
-              
-              atl.atom0 = a;
-
-              /* clear the flag -- TODO replace with array */
-              {
-                int aa;
-                ai = obj->AtomInfo;
-                for(aa=0;aa<obj->NAtom;aa++) {
-                  ai->temp1 = false;
-                  ai++;
-                }
-              }
-              
-              ai1->temp1 = true;
-              add_triangle_limits(&atl, a, a, 0.0F, 1);
-              ai1++;
+            int aa;
+            ai = obj->AtomInfo;
+            for(aa=0;aa<n_atom;aa++) {
+              ai->temp1 = false;
+              ai++;
             }
           }
-
-          /* if we have a match state, establish minimum distances */
-          if((match_state>=0)&&(match_state<obj->NCSet)&&(!obj->DiscreteFlag)) {
-            CoordSet *cs2 = obj->CSet[match_state];
-            int n_site = 0;
-            if(cs2) {
-              float minim_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_min);
-              float minim_max = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_max);
-              float maxim_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_max_min);
-              float maxim_max = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_max_max);
-
-              int *site = Calloc(int,obj->NAtom);            
-              float *weight = Calloc(float,obj->NAtom);
-              /* first, find candidate atoms with sufficient connectivity */
-              CountCall cnt;
-
-              cnt.ai = obj->AtomInfo;
-              cnt.neighbor = obj->Neighbor;
-              cnt.atm2idx1 = cs->AtmToIdx;
-              cnt.atm2idx2 = cs2->AtmToIdx;
-
-              {
-                int aa;
-                ai = obj->AtomInfo;
-                for(aa=0;aa<obj->NAtom;aa++) {
-                  ai->temp1 = false;
-                  ai++;
-                }
-              }
-              
-              ai1 = obj->AtomInfo;
-              for(b0=0;b0<obj->NAtom;b0++) {
-                int n_qual_branch = 0,cb;
-                int adj_site = false;
-                ai1->temp1 = true;
-                n0 = obj->Neighbor[b0]+1;
-                while( (b1 = obj->Neighbor[n0]) >=0) {
-                  if(site[b1]) {
-                    adj_site = true;
-                    break;
-                  }
-                  cb = count_branch(&cnt, b1, 3);
-                  if(cb>3) {
-                    n_qual_branch++;
-                  }
-                  n0+=2;
-                }
-                ai1->temp1 = false;
-                if((n_qual_branch>2)&&(!adj_site)) {
-                  site[b0] = 10;
-                } else if(!adj_site) {
-                  switch(ai1->name[0]) {
-                  case 'O':
-                    if(!ai1->name[1])
-                      if(AtomInfoKnownPolymerResName(G,ai1->resn)) site[b0] = 40;  /* main-chain carbonyl */
-                    break;
-                  case 'C':
-                    switch(ai1->name[1]) {
-                    case 'Z':
-                      switch(ai1->name[2]) {
-                      case 0:
-                        if(strcmp(ai1->resn,"ARG")==0) site[b0] = 20;  /* ARG/CZ */
-                        else if(strcmp(ai1->resn,"TYR")==0) site[b0] = 20; /* TYR/CZ */
-                        else if(strcmp(ai1->resn,"PHE")==0) site[b0] = 20; /* PHE/CZ */
-                        break;
-                      }
-                      break;
-                    case 'E':
-                      switch(ai1->name[2]) {
-                      case 0:
-                        if(strcmp(ai1->resn,"LYS")==0) site[b0] = 20;  /* LYS/CE */
-                        break;
-                      }
-                      break;
-                    case 'D':
-                      switch(ai1->name[2]) {
-                      case 0:
-                        if(strcmp(ai1->resn,"GLU")==0) site[b0] = 20;  /* GLU/CD */
-                        else if(strcmp(ai1->resn,"GLN")==0) site[b0] = 20;  /* GLN/CD */
-                        break;
-                      }
-                      break;
-                    case 'G':
-                      switch(ai1->name[2]) {
-                      case 0:
-                        if(strcmp(ai1->resn,"LEU")==0) site[b0] = 20;  /* LEU/CG */
-                        else if(strcmp(ai1->resn,"ASP")==0) site[b0] = 20;  /* ASP/CG */
-                        else if(strcmp(ai1->resn,"ASN")==0) site[b0] = 20;  /* ASN/CG */
-                        break;
-                      }
-                      break;
-                    }
-                    break;
-                  case 'S':
-                    switch(ai1->name[1]) {
-                    case 'D':
-                      switch(ai1->name[2]) {
-                      case 0:
-                        if(strcmp(ai1->resn,"MET")==0) site[b0] = 20;  /* MET/SD */
-                        break;
-                      }
-                      break;
-                    }
-                    break;
-                  }
-                }
-                ai1++;
-              }
-              
-              for(b0=0;b0<obj->NAtom;b0++) {
-                if(site[b0]) {
-                  weight[n_site]=10.0F/site[b0];
-                  site[n_site] = b0;
-                  n_site++;
-                }
-              }
-
-              {
-                
-                for(a0=0;a0<n_site;a0++) {
-                  for(a1=a0+1;a1<n_site;a1++) {
-                    float wt = weight[a0]*weight[a1];
-                    b0 = site[a0];
-                    b1 = site[a1];
-                    
-                    {
-                      int i0a = cs->AtmToIdx[b0];
-                      int i1a = cs->AtmToIdx[b1];
-                      int i0b = cs2->AtmToIdx[b0];
-                      int i1b = cs2->AtmToIdx[b1];
-                      
-                      if((i0a>=0)&&(i1a>=0)&&(i0b>=0)&&(i1b>=0)&&
-                         ((!match_by_segment)||(!strcmp(oai[b0].segi,oai[b1].segi)))) {
-                        float *v0a = cs->Coord + 3*i0a;
-                        float *v1a = cs->Coord + 3*i1a;
-                        float *v0b = cs2->Coord + 3*i0b;
-                        float *v1b = cs2->Coord + 3*i1b;
-                        float dist0,dist1,min_dist,max_dist;
-                        dist0 = diff3f(v0a,v1a);
-                        dist1 = diff3f(v0b,v1b);
-                        min_dist = (dist0<dist1) ? dist0 : dist1;
-                        if((min_dist>=minim_min)&&(min_dist<=minim_max)) {
-                          ShakerAddDistCon(I->Shaker,b0,b1,min_dist,cShakerDistMinim,wt);
-                        }
-                        max_dist = (dist0>dist1) ? dist0 : dist1;
-                        if((max_dist>=maxim_min)&&(max_dist<=maxim_max)) {
-                          ShakerAddDistCon(I->Shaker,b0,b1,max_dist,cShakerDistMaxim,wt);
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-                FreeP(weight);
-              FreeP(site);
-            }
-          }
-          /* now pick up those 1-3 interations */
           
-          /* b1-b0-b2 */
+          ai1->temp1 = true;
+          add_triangle_limits(&atl, a, a, 0.0F, 1);
+          ai1++;
+        }
+      }
+      
+      /* if we have a match state, establish minimum distances */
+      if((match_state>=0)&&(match_state<obj->NCSet)&&(!obj->DiscreteFlag)) {
+        CoordSet *cs2 = obj->CSet[match_state];
+        int n_site = 0;
+        if(cs2) {
+          float minim_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_min);
+          float minim_max = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_min_max);
+          float maxim_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_max_min);
+          float maxim_max = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_max_max);
+          
+          int *site = Calloc(int,n_atom);            
+          float *weight = Calloc(float,n_atom);
+          /* first, find candidate atoms with sufficient connectivity */
+          CountCall cnt;
+          
+          cnt.ai = obj->AtomInfo;
+          cnt.neighbor = neighbor;
+          cnt.atm2idx1 = cs->AtmToIdx;
+          cnt.atm2idx2 = cs2->AtmToIdx;
 
-          for(b0=0;b0<obj->NAtom;b0++) {
-            n0 = obj->Neighbor[b0]+1;
-            while(obj->Neighbor[n0]>=0) {
-              b1 = obj->Neighbor[n0];
-              n1 = n0+2;
-              while(obj->Neighbor[n1]>=0) {
-                b2 = obj->Neighbor[n1];
-
-
-                xhash = ( (b2>b1) ? ex_hash(b1,b2) : ex_hash(b2,b1));
-                VLACheck(I->EXList,int,nex+3);
-                j = I->EXList+nex;
-                *(j++)=*(I->EXHash+xhash);
-                if(b2>b1) {
-                  *(j++)=b1;
-                  *(j++)=b2;
-                } else {
-                  *(j++)=b2;
-                  *(j++)=b1;
-                }
-                *(j++)=3; /* 1-3 exclusion */
-                *(I->EXHash+xhash)=nex;
-                nex+=4;
-
-                if(obj->DiscreteFlag) {
-                  if((cs==obj->DiscreteCSet[b0])&&(cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-                    a0=obj->DiscreteAtmToIdx[b0];
-                    a1=obj->DiscreteAtmToIdx[b1];
-                    a2=obj->DiscreteAtmToIdx[b2];
-                  } else {
-                    a0=-1;
-                    a1=-1;
-                    a2=-1;
-                  }
-                } else {
-                  a0=cs->AtmToIdx[b0];
-                  a1=cs->AtmToIdx[b1];
-                  a2=cs->AtmToIdx[b2];
-                }
-
-                if((a0>=0)&&(a1>=0)&&(a2>=0)) {
-                  v1 = cs->Coord+3*a1;
-                  v2 = cs->Coord+3*a2;
-                  d = (float)diff3f(v1,v2);
-                  if(use_cache) {
-                    if(!SculptCacheQuery(G,cSculptAngl,
-                                         oai[b0].unique_id,
-                                         oai[b1].unique_id,
-                                         oai[b2].unique_id,0,&d))
-                      SculptCacheStore(G,cSculptAngl,
-                                       oai[b0].unique_id,
-                                       oai[b1].unique_id,
-                                       oai[b2].unique_id,0,d);
-                  }
-                  ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistAngle,1.0F); 
-
-
-                  if(linear[b0]&&(linear[b1]||linear[b2])) {
-                    
-                    if(use_cache) {
-                      if(!SculptCacheQuery(G,cSculptLine,
-                                           oai[b1].unique_id,
-                                           oai[b0].unique_id,
-                                           oai[b2].unique_id,0,&dummy))
-                        SculptCacheStore(G,cSculptLine,
-                                         oai[b1].unique_id,
-                                         oai[b0].unique_id,
-                                         oai[b2].unique_id,0,0.0);
-                    }
-                    ShakerAddLineCon(I->Shaker,b1,b0,b2); 
-                  }
-                }
-                n1+=2;
+          {
+            int aa;
+            ai = obj->AtomInfo;
+            for(aa=0;aa<n_atom;aa++) {
+              ai->temp1 = false;
+              ai++;
+            }
+          }
+              
+          ai1 = obj->AtomInfo;
+          for(b0=0;b0<n_atom;b0++) {
+            int n_qual_branch = 0,cb;
+            int adj_site = false;
+            ai1->temp1 = true;
+            n0 = neighbor[b0]+1;
+            while( (b1 = neighbor[n0]) >=0) {
+              if(site[b1]) {
+                adj_site = true;
+                break;
+              }
+              cb = count_branch(&cnt, b1, 3);
+              if(cb>3) {
+                n_qual_branch++;
               }
               n0+=2;
             }
+            ai1->temp1 = false;
+            if((n_qual_branch>2)&&(!adj_site)) {
+              site[b0] = 10;
+            } else if(!adj_site) {
+              switch(ai1->name[0]) {
+              case 'O':
+                if(!ai1->name[1])
+                  if(AtomInfoKnownPolymerResName(G,ai1->resn)) site[b0] = 40;  /* main-chain carbonyl */
+                break;
+              case 'C':
+                switch(ai1->name[1]) {
+                case 'Z':
+                  switch(ai1->name[2]) {
+                  case 0:
+                    if(strcmp(ai1->resn,"ARG")==0) site[b0] = 20;  /* ARG/CZ */
+                    else if(strcmp(ai1->resn,"TYR")==0) site[b0] = 20; /* TYR/CZ */
+                    else if(strcmp(ai1->resn,"PHE")==0) site[b0] = 20; /* PHE/CZ */
+                    break;
+                  }
+                  break;
+                case 'E':
+                  switch(ai1->name[2]) {
+                  case 0:
+                    if(strcmp(ai1->resn,"LYS")==0) site[b0] = 20;  /* LYS/CE */
+                    break;
+                  }
+                  break;
+                case 'D':
+                  switch(ai1->name[2]) {
+                  case 0:
+                    if(strcmp(ai1->resn,"GLU")==0) site[b0] = 20;  /* GLU/CD */
+                    else if(strcmp(ai1->resn,"GLN")==0) site[b0] = 20;  /* GLN/CD */
+                    break;
+                  }
+                  break;
+                case 'G':
+                  switch(ai1->name[2]) {
+                  case 0:
+                    if(strcmp(ai1->resn,"LEU")==0) site[b0] = 20;  /* LEU/CG */
+                    else if(strcmp(ai1->resn,"ASP")==0) site[b0] = 20;  /* ASP/CG */
+                    else if(strcmp(ai1->resn,"ASN")==0) site[b0] = 20;  /* ASN/CG */
+                    break;
+                  }
+                  break;
+                }
+                break;
+              case 'S':
+                switch(ai1->name[1]) {
+                case 'D':
+                  switch(ai1->name[2]) {
+                  case 0:
+                    if(strcmp(ai1->resn,"MET")==0) site[b0] = 20;  /* MET/SD */
+                    break;
+                  }
+                  break;
+                }
+                break;
+              }
+            }
+            ai1++;
+          }
+              
+          for(b0=0;b0<n_atom;b0++) {
+            if(site[b0]) {
+              weight[n_site]=10.0F/site[b0];
+              site[n_site] = b0;
+              n_site++;
+            }
           }
 
-          /* and record the pyramidal and planer geometries */
-          
-          for(b0=0;b0<obj->NAtom;b0++) {
-            n0 = obj->Neighbor[b0]+1;
-            while(obj->Neighbor[n0]>=0) {
-              b1 = obj->Neighbor[n0];
-              n1 = n0+2;
-              while(obj->Neighbor[n1]>=0) {
-                b2 = obj->Neighbor[n1];
-                n2 = n1+2;
-                while(obj->Neighbor[n2]>=0) {
-                  b3 = obj->Neighbor[n2];
-                  
-                                
-                  if(obj->DiscreteFlag) {
-                    if((cs==obj->DiscreteCSet[b0])&&
-                       (cs==obj->DiscreteCSet[b1])&&
-                       (cs==obj->DiscreteCSet[b2])) {
-                      a0=obj->DiscreteAtmToIdx[b0];
-                      a1=obj->DiscreteAtmToIdx[b1];
-                      a2=obj->DiscreteAtmToIdx[b2];
-                      a3=obj->DiscreteAtmToIdx[b3];
-                    } else {
-                      a0=-1;
-                      a1=-1;
-                      a2=-1;
-                      a3=-1;
+          {
+                
+            for(a0=0;a0<n_site;a0++) {
+              for(a1=a0+1;a1<n_site;a1++) {
+                float wt = weight[a0]*weight[a1];
+                b0 = site[a0];
+                b1 = site[a1];
+                    
+                {
+                  int i0a = cs->AtmToIdx[b0];
+                  int i1a = cs->AtmToIdx[b1];
+                  int i0b = cs2->AtmToIdx[b0];
+                  int i1b = cs2->AtmToIdx[b1];
+                      
+                  if((i0a>=0)&&(i1a>=0)&&(i0b>=0)&&(i1b>=0)&&
+                     ((!match_by_segment)||(!strcmp(oai[b0].segi,oai[b1].segi)))) {
+                    float *v0a = cs->Coord + 3*i0a;
+                    float *v1a = cs->Coord + 3*i1a;
+                    float *v0b = cs2->Coord + 3*i0b;
+                    float *v1b = cs2->Coord + 3*i1b;
+                    float dist0,dist1,min_dist,max_dist;
+                    dist0 = diff3f(v0a,v1a);
+                    dist1 = diff3f(v0b,v1b);
+                    min_dist = (dist0<dist1) ? dist0 : dist1;
+                    if((min_dist>=minim_min)&&(min_dist<=minim_max)) {
+                      ShakerAddDistCon(I->Shaker,b0,b1,min_dist,cShakerDistMinim,wt);
                     }
-                  } else {
-                    a0=cs->AtmToIdx[b0];
-                    a1=cs->AtmToIdx[b1];
-                    a2=cs->AtmToIdx[b2];
-                    a3=cs->AtmToIdx[b3];
+                    max_dist = (dist0>dist1) ? dist0 : dist1;
+                    if((max_dist>=maxim_min)&&(max_dist<=maxim_max)) {
+                      ShakerAddDistCon(I->Shaker,b0,b1,max_dist,cShakerDistMaxim,wt);
+                    }
                   }
+                }
+              }
+            }
+          }
+          FreeP(weight);
+          FreeP(site);
+        }
+      }
+      /* now pick up those 1-3 interations */
+      
+      /* b1-b0-b2 */
+      
+      for(b0=0;b0<n_atom;b0++) {
+        n0 = neighbor[b0]+1;
+        while(neighbor[n0]>=0) {
+          b1 = neighbor[n0];
+          n1 = n0+2;
+          while(neighbor[n1]>=0) {
+            b2 = neighbor[n1];
+            
+            xhash = ( (b2>b1) ? ex_hash(b1,b2) : ex_hash(b2,b1));
+            VLACheck(I->EXList,int,nex+3);
+            j = I->EXList+nex;
+            *(j++)=*(I->EXHash+xhash);
+            if(b2>b1) {
+              *(j++)=b1;
+              *(j++)=b2;
+            } else {
+              *(j++)=b2;
+              *(j++)=b1;
+            }
+            *(j++)=3; /* 1-3 exclusion */
+            *(I->EXHash+xhash)=nex;
+            nex+=4;
+            
+            a0=crdidx[b0];
+            a1=crdidx[b1];
+            a2=crdidx[b2];
+            
+            if((a0>=0)&&(a1>=0)&&(a2>=0)) {
+              v1 = cs->Coord+3*a1;
+              v2 = cs->Coord+3*a2;
+              d = (float)diff3f(v1,v2);
+              if(use_cache) {
+                if(!SculptCacheQuery(G,cSculptAngl,
+                                     oai[b0].unique_id,
+                                     oai[b1].unique_id,
+                                     oai[b2].unique_id,0,&d))
+                  SculptCacheStore(G,cSculptAngl,
+                                   oai[b0].unique_id,
+                                   oai[b1].unique_id,
+                                   oai[b2].unique_id,0,d);
+              }
+              
+              ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistAngle,1.0F); 
+              
+              if(linear[b0]&&(linear[b1]||linear[b2])) {
+                
+                if(use_cache) {
+                  if(!SculptCacheQuery(G,cSculptLine,
+                                       oai[b1].unique_id,
+                                       oai[b0].unique_id,
+                                       oai[b2].unique_id,0,&dummy))
+                    SculptCacheStore(G,cSculptLine,
+                                     oai[b1].unique_id,
+                                     oai[b0].unique_id,
+                                     oai[b2].unique_id,0,0.0);
+                }
+                ShakerAddLineCon(I->Shaker,b1,b0,b2); 
+              }
+            }
+            n1+=2;
+          }
+          n0+=2;
+        }
+      }
+      
+      /* and record the pyramidal and planar geometries */
+      
+      /* b1-b0-b2
+       *    |
+       *    b3 */
+
+      for(b0=0;b0<n_atom;b0++) {
+        n0 = neighbor[b0]+1;
+        while(neighbor[n0]>=0) {
+          b1 = neighbor[n0];
+          n1 = n0+2;
+          while(neighbor[n1]>=0) {
+            b2 = neighbor[n1];
+            n2 = n1+2;
+            while(neighbor[n2]>=0) {
+              b3 = neighbor[n2];
+              
+              a0=crdidx[b0];
+              a1=crdidx[b1];
+              a2=crdidx[b2];
+              a3=crdidx[b3];
+              
+              if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+                float d2 = 0.0F;
+
+                v0 = cs->Coord+3*a0;
+                v1 = cs->Coord+3*a1;
+                v2 = cs->Coord+3*a2;
+                v3 = cs->Coord+3*a3;
+                d = ShakerGetPyra(&d2,v0,v1,v2,v3);
+
+                if((oai[b1].protons == cAN_H) ||
+                   (oai[b2].protons == cAN_H) ||
+                   (oai[b2].protons == cAN_H))
+                  d2 = -1.0F; /* term 2 only applies to heavy atoms */
+
+                if(fabs(d)<0.05) {
+                  planar[b0]=true;
+                }
+                if(planar[b0])
+                  d=0.0;
+                if(use_cache) {
+                  if(!SculptCacheQuery(G,cSculptPyra,
+                                       oai[b1].unique_id,
+                                       oai[b0].unique_id,
+                                       oai[b2].unique_id,
+                                       oai[b3].unique_id,
+                                       &d))
+                    SculptCacheStore(G,cSculptPyra,
+                                     oai[b1].unique_id,
+                                     oai[b0].unique_id,
+                                     oai[b2].unique_id,
+                                     oai[b3].unique_id,
+                                     d);
+                  if(!SculptCacheQuery(G,cSculptPyra+1,
+                                       oai[b1].unique_id,
+                                       oai[b0].unique_id,
+                                       oai[b2].unique_id,
+                                       oai[b3].unique_id,
+                                       &d2))
+                    SculptCacheStore(G,cSculptPyra+1,
+                                     oai[b1].unique_id,
+                                     oai[b0].unique_id,
+                                     oai[b2].unique_id,
+                                     oai[b3].unique_id,
+                                     d2);
+                }
+                ShakerAddPyraCon(I->Shaker,b0,b1,b2,b3,d,d2); 
+              }               
+              n2+=2;
+            }
+            n1+=2;
+          }
+          n0+=2;
+        }
+      }
+
+      /* b1\b0_b2/b3 */
+        
+      for(b0=0;b0<n_atom;b0++) {
+        n0 = neighbor[b0]+1;
+        while((b1 = neighbor[n0])>=0) {
+          n1 = neighbor[b0]+1;
+          while((b2 = neighbor[n1])>=0) {
+            if(b1!=b2) {
+              n2 =  neighbor[b2]+1;
+              while((b3 = neighbor[n2])>=0) {
+                if((b3!=b0)&&(b3>b1)) {
+                  if(!(planar[b0]||planar[b2]||linear[b0]||linear[b2])) {
+                    int type;
+                    if((oai[b0].protons == cAN_S)&&
+                       (oai[b2].protons == cAN_S))
+                      type = cShakerTorsDisulfide;
+                    else 
+                      type = cShakerTorsSP3SP3;
+                    ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,type);
+                  } 
+                  if(planar[b0]&&planar[b2]) {
+
+                    /* special extra-rigid torsion for hydrogens on
+                       planar acyclic systems (amides, etc.) */
+
+                    if(((oai[b1].protons == cAN_H)&&single[b1]&&
+                        (oai[b3].protons != cAN_H)&&planar[b3])||
+                       ((oai[b3].protons == cAN_H)&&single[b3]&&
+                        (oai[b1].protons != cAN_H)&&planar[b1])) {
+
+                      int cycle = 0;
+                      /* b1\b0_b2/b3-b4-b5-b6-b7... */
+                          
+                      int b5,b6,b7,b8,b9,b10;
+                      int n4,n5,n6,n7,n8,n9;
+                      n3 = neighbor[b2]+1;
+                      while((!cycle)&&(b4 = neighbor[n3])>=0) {
+                        if(b4!=b0) {
+                          n4 = neighbor[b4]+1;
+                          while((!cycle)&&(b5 = neighbor[n4])>=0) {
+                            if(b5!=b2) {
+                              n5 = neighbor[b5]+1;
+                              while((!cycle)&&(b6 = neighbor[n5])>=0) {
+                                if(b6==b0) { /* 4-cycle */
+                                  cycle=4;
+                                } else if((b6!=b4)&&(b6!=b2)) {
+                                  n6 = neighbor[b6]+1;
+                                  while((!cycle)&&(b7 = neighbor[n6])>=0) {
+                                    if(b7==b0) {  /* 5-cycle */
+                                      cycle=5;
+                                    } else if((b7!=b5)&&(b7!=b2)) {
+                                      n7 = neighbor[b7]+1;
+                                      while((!cycle)&&(b8 = neighbor[n7])>=0) {
+                                        if(b8==b0) {  /* 6-cycle */
+                                          cycle=6;
+                                        } else if((b8!=b6)&&(b8!=b2)) {
+                                          n8 = neighbor[b8]+1;
+                                          while((!cycle)&&(b9 = neighbor[n8])>=0) {
+                                            if(b9==b0) {  /* 7-cycle */
+                                              cycle=7;
+                                            } else if((b9!=b7)&&(b9!=b2)) {
+                                              n9 = neighbor[b9]+1;
+                                              while((!cycle)&&(b10 = neighbor[n9])>=0) {
+                                                if(b10==b0) {  /* 8-cycle */
+                                                  cycle=8;
+                                                } 
+                                                n9+=2;
+                                              }
+                                            }
+                                            n8+=2;
+                                          }
+                                        }
+                                        n7+=2;
+                                      }
+                                    }
+                                    n6+=2;
+                                  }
+                                }
+                                n5+=2;
+                              }
+                            }
+                            n4+=2;
+                          }
+                        }
+                        n3+=2;
+                      }
+                      if(!cycle) { /* don't add special amide constraints within small rings */
+
+                        if(((oai[b1].protons == cAN_H)&&single[b1]&&
+                            (oai[b0].protons == cAN_N)&&
+                            (oai[b2].protons == cAN_C)&&
+                            (oai[b3].protons == cAN_O)&&planar[b3]) ||
+                           ((oai[b1].protons == cAN_H)&&single[b3]&&
+                            (oai[b2].protons == cAN_N)&&
+                            (oai[b0].protons == cAN_C)&&
+                            (oai[b1].protons == cAN_O)&&planar[b1])) {
+                          /* biased, asymmetric term for amides */
+                          ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,cShakerTorsAmide); 
+                        } else { 
+                          /* biased, symmetric term for all others */
+                          ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,cShakerTorsFlat); 
+                        }
+                      }
+                    }
+                  }
+                  /* check 1-4 exclusion */
+                  xhash = ex_hash(b1,b3);
+                      
+                  ex_type = 4; 
+                      
+                  xoffset = *(I->EXHash+xhash);
+                  while(xoffset) {
+                    k = I->EXList + xoffset;
+                    if((abs(*(k+3))==4)&&
+                       (*(k+1)==b1)&&
+                       (*(k+2)==b3)) {
+                      if((b0!=*(k+4))&&
+                         (b2!=*(k+5))) {
+                        if(planar[b0]&&planar[b2]&&
+                           planar[*(k+4)]&&planar[*(k+5)]) {
+                          /* two planar paths -> likely a planar aromatic system */ 
+                          *(k+3)=-4;
+                        }
+                      }
+                      ex_type = 0; /* duplicate, skip */
+                      break;
+                    }
+                    xoffset = *k;
+                  }
+                  if(ex_type) {
+                    VLACheck(I->EXList,int,nex+5);
+                    j = I->EXList+nex;
+                    *(j++)=*(I->EXHash+xhash);
+                    *(j++)=b1;
+                    *(j++)=b3;
+                    if(planar[b0]&&planar[b2])
+                      *(j++)=-4;
+                    else
+                      *(j++)=ex_type;
+                    *(j++)=b0;
+                    *(j++)=b2;
+                    *(I->EXHash+xhash)=nex;
+
+                    nex+=6;
+                  }                      
+
+                  /* planarity */
+                      
+                  a0=crdidx[b0];
+                  a1=crdidx[b1];
+                  a2=crdidx[b2];
+                  a3=crdidx[b3];
+
                   if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
                     v0 = cs->Coord+3*a0;
                     v1 = cs->Coord+3*a1;
                     v2 = cs->Coord+3*a2;
                     v3 = cs->Coord+3*a3;
-                    d = ShakerGetPyra(v0,v1,v2,v3);
-                    if(fabs(d)<0.05) {
-                      planer[b0]=true;
-                    }
-                    if(planer[b0])
-                      d=0.0;
-                    if(use_cache) {
-                      if(!SculptCacheQuery(G,cSculptPyra,
-                                           oai[b1].unique_id,
-                                           oai[b0].unique_id,
-                                           oai[b2].unique_id,
-                                           oai[b3].unique_id,
-                                           &d))
-                        SculptCacheStore(G,cSculptPyra,
-                                         oai[b1].unique_id,
-                                         oai[b0].unique_id,
-                                         oai[b2].unique_id,
-                                         oai[b3].unique_id,
-                                         d);
-                    }
-                    ShakerAddPyraCon(I->Shaker,b0,b1,b2,b3,d); 
-                  }                
-                  n2+=2;
-                }
-                n1+=2;
-              }
-              n0+=2;
-            }
-          }
-
-          /* b1\b0_b2/b3 */
-        
-          for(b0=0;b0<obj->NAtom;b0++) {
-            n0 = obj->Neighbor[b0]+1;
-            while((b1 = obj->Neighbor[n0])>=0) {
-              n1 = obj->Neighbor[b0]+1;
-              while((b2 = obj->Neighbor[n1])>=0) {
-                if(b1!=b2) {
-                  n2 =  obj->Neighbor[b2]+1;
-                  while((b3 = obj->Neighbor[n2])>=0) {
-                    if((b3!=b0)&&(b3>b1)) {
-                      if(!(planer[b0]||planer[b2]||linear[b0]||linear[b2])) {
-                        int type;
-                        if((oai[b0].protons == cAN_S)&&
-                           (oai[b2].protons == cAN_S))
-                          type = cShakerTorsDisulfide;
-                        else 
-                          type = cShakerTorsSP3SP3;
-                        ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,type);
-                      } 
-                      if(planer[b0]&&planer[b2]) {
-                        if(((oai[b1].protons == cAN_H)&&single[b1]&&
-                            (oai[b0].protons == cAN_N)&&
-                            (oai[b2].protons == cAN_C)&&
-                            (oai[b3].protons == cAN_O)&&planer[b3]&&
-                            (!WordMatchExact(G,oai[b0].resn,"PRO",true)))||
-                           ((oai[b1].protons == cAN_O)&&planer[b1]&&
-                            (oai[b0].protons == cAN_C)&&
-                            (oai[b2].protons == cAN_N)&&
-                            (oai[b3].protons == cAN_H)&&single[b3]&&
-			    (!WordMatchExact(G,oai[b2].resn,"PRO",true)))) {
-			  int cycle = 0;
-			  /* b1\b0_b2/b3-b4-b5-b6-b7... */
-                          
-			  int b4,b5,b6,b7,b8,b9,b10;
-			  int n3,n4,n5,n6,n7,n8,n9;
-			  n3 = obj->Neighbor[b2]+1;
-			  while((!cycle)&&(b4 = obj->Neighbor[n3])>=0) {
-			    if(b4!=b0) {
-			      n4 = obj->Neighbor[b4]+1;
-			      while((!cycle)&&(b5 = obj->Neighbor[n4])>=0) {
-				if(b5!=b2) {
-				  n5 = obj->Neighbor[b5]+1;
-				  while((!cycle)&&(b6 = obj->Neighbor[n5])>=0) {
-				    if(b6==b0) { /* 4-cycle */
-				      cycle=4;
-				    } else if((b6!=b4)&&(b6!=b2)) {
-				      n6 = obj->Neighbor[b6]+1;
-				      while((!cycle)&&(b7 = obj->Neighbor[n6])>=0) {
-					if(b7==b0) {  /* 5-cycle */
-					  cycle=5;
-					} else if((b7!=b5)&&(b7!=b2)) {
-					  n7 = obj->Neighbor[b7]+1;
-					  while((!cycle)&&(b8 = obj->Neighbor[n7])>=0) {
-					    if(b8==b0) {  /* 6-cycle */
-					      cycle=6;
-					    } else if((b8!=b6)&&(b8!=b2)) {
-					      n8 = obj->Neighbor[b8]+1;
-					      while((!cycle)&&(b9 = obj->Neighbor[n8])>=0) {
-						if(b9==b0) {  /* 7-cycle */
-						  cycle=7;
-						} else if((b9!=b7)&&(b9!=b2)) {
-						  n9 = obj->Neighbor[b9]+1;
-						  while((!cycle)&&(b10 = obj->Neighbor[n9])>=0) {
-						    if(b10==b0) {  /* 8-cycle */
-						      cycle=8;
-						    } 
-						    n9+=2;
-						  }
-						}
-						n8+=2;
-					      }
-					    }
-					    n7+=2;
-					  }
-					}
-					n6+=2;
-				      }
-				    }
-				    n5+=2;
-				  }
-				}
-				n4+=2;
-			      }
-			    }
-			    n3+=2;
-			  }
-			  if(!cycle) { /* don't add special amide constraints within small rings */
-			    ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,cShakerTorsAmide);
-			  }
-                        }
-                      }
-                      /* check 1-4 exclusion */
-                      xhash = ex_hash(b1,b3);
-                      
-                      ex_type = 4; 
-                      
-                      xoffset = *(I->EXHash+xhash);
-                      while(xoffset) {
-                        k = I->EXList + xoffset;
-                        if((abs(*(k+3))==4)&&
-                           (*(k+1)==b1)&&
-                           (*(k+2)==b3)) {
-                          if((b0!=*(k+4))&&
-                             (b2!=*(k+5))) {
-                            if(planer[b0]&&planer[b2]&&
-                               planer[*(k+4)]&&planer[*(k+5)]) {
-                              /* aromatic */ 
-                              *(k+3)=-4;
-                            }
-                          }
-                          ex_type = 0; /* duplicate, skip */
-                          break;
-                        }
-                        xoffset = *k;
-                      }
-                      if(ex_type) {
-                        VLACheck(I->EXList,int,nex+5);
-                        j = I->EXList+nex;
-                        *(j++)=*(I->EXHash+xhash);
-                        *(j++)=b1;
-                        *(j++)=b3;
-                        if(planer[b0]&&planer[b2])
-                          *(j++)=-4;
-                        else
-                          *(j++)=ex_type;
-                        *(j++)=b0;
-                        *(j++)=b2;
-                        *(I->EXHash+xhash)=nex;
-
-                        nex+=6;
-                      }
-                      
-                      /* planarity */
-                      
-                      if(obj->DiscreteFlag) {
-                        if((cs==obj->DiscreteCSet[b0])&&
-                           (cs==obj->DiscreteCSet[b1])&&
-                           (cs==obj->DiscreteCSet[b2])&&
-                           (cs==obj->DiscreteCSet[b3])) {
-                          a0=obj->DiscreteAtmToIdx[b0];
-                          a1=obj->DiscreteAtmToIdx[b1];
-                          a2=obj->DiscreteAtmToIdx[b2];
-                          a3=obj->DiscreteAtmToIdx[b3];
-                        } else {
-                          a0=-1;
-                          a1=-1;
-                          a2=-1;
-                          a3=-1;
-                        }
-                      } else {
-                        a0=cs->AtmToIdx[b0];
-                        a1=cs->AtmToIdx[b1];
-                        a2=cs->AtmToIdx[b2];
-                        a3=cs->AtmToIdx[b3];
-                      }
-                      if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
-                        v0 = cs->Coord+3*a0;
-                        v1 = cs->Coord+3*a1;
-                        v2 = cs->Coord+3*a2;
-                        v3 = cs->Coord+3*a3;
                         
-                        d = 0.0;
-                        if(planer[b0]&&planer[b2]) {
-                          float deg = get_dihedral3f(v1,v0,v2,v3);
-                          if(fabs(deg)<deg_to_rad(10.0))
-                            d = 1.0; 
-                          else if(fabs(deg)>deg_to_rad(170))
-                            d = -1.0;
+                    d = 0.0;
+                    if(planar[b0]&&planar[b2]) {
+                      float deg = get_dihedral3f(v1,v0,v2,v3);
+                      if(fabs(deg)<deg_to_rad(10.0))
+                        d = 1.0; 
+                      else if(fabs(deg)>deg_to_rad(170))
+                        d = -1.0;
                           
-                          /*
-                            if(!(((oai[b1].protons == cAN_H)&&single[b1]&&
-                            (oai[b0].protons == cAN_N)&&planer[b0]&&
-                            (oai[b2].protons == cAN_C)&&planer[b2]&&
-                            (oai[b3].protons == cAN_O)&&planer[b3])||
-                            ((oai[b1].protons == cAN_O)&&planer[b1]&&
-                            (oai[b0].protons == cAN_C)&&planer[b0]&&
-                            (oai[b2].protons == cAN_N)&&planer[b2]&&
-                            (oai[b3].protons == cAN_H)&&single[b3]))) 
-                          */
-                          {
-                            int cycle = false;
-                            /* look for 4, 5, 6, 7, or 8 cycle that
-                               connects back to b1 if found, then this
-                               planer system is fixed (either at zero
-                               or 180 -- it can't flip it over) */
-			    /* b1\b0_b2/b3-b4-b5-b6-b7... */
+                      {
+                        int cycle = false;
+                        /* look for 4, 5, 6, 7, or 8 cycle that
+                           connects back to b1 if found, then this
+                           planar system is fixed (either at zero
+                           or 180 -- it can't flip it over) */
+                        /* b1\b0_b2/b3-b4-b5-b6-b7... */
                             
-			    int b4,b5,b6,b7,b8,b9,b10;
-			    int n3,n4,n5,n6,n7,n8,n9;
-			    n3 = obj->Neighbor[b2]+1;
-			    while((!cycle)&&(b4 = obj->Neighbor[n3])>=0) {
-			      if(b4!=b0) {
-				n4 = obj->Neighbor[b4]+1;
-				while((!cycle)&&(b5 = obj->Neighbor[n4])>=0) {
-				  if(b5!=b2) {
-				    n5 = obj->Neighbor[b5]+1;
-				    while((!cycle)&&(b6 = obj->Neighbor[n5])>=0) {
-				      if(b6==b0) { /* 4-cycle */
-					cycle=4;
-				      } else if((b6!=b4)&&(b6!=b2)) {
-					n6 = obj->Neighbor[b6]+1;
-					while((!cycle)&&(b7 = obj->Neighbor[n6])>=0) {
-					  if(b7==b0) {  /* 5-cycle */
-					    cycle=5;
-					  } else if((b7!=b5)&&(b7!=b2)) {
-					    n7 = obj->Neighbor[b7]+1;
-					    while((!cycle)&&(b8 = obj->Neighbor[n7])>=0) {
-					      if(b8==b0) {  /* 6-cycle */
-						cycle=6;
-					      } else if((b8!=b6)&&(b8!=b2)) {
-						n8 = obj->Neighbor[b8]+1;
-						while((!cycle)&&(b9 = obj->Neighbor[n8])>=0) {
-						  if(b9==b0) {  /* 7-cycle */
-						    cycle=7;
-						  } else if((b9!=b7)&&(b9!=b2)) {
-						    n9 = obj->Neighbor[b9]+1;
-						    while((!cycle)&&(b10 = obj->Neighbor[n9])>=0) {
-						      if(b10==b0) {  /* 8-cycle */
-							cycle=8;
-						      } 
-						      n9+=2;
-						    }
-						  }
-						  n8+=2;
-						}
-					      }
-					      n7+=2;
-					    }
-					  }
-					  n6+=2;
-					}
-				      }
-				      n5+=2;
-				    }
-				  }
-				  n4+=2;
-				}
-			      }
-			      n3+=2;
-                            }
-                            /* don't get jacked by pseudo-planar PRO */
-
-                            if(((oai[b0].protons!=cAN_N)||
-                                (!WordMatchExact(G,oai[b0].resn,"PRO",true)))&&
-                               ((oai[b2].protons!=cAN_N)||
-                                (!WordMatchExact(G,oai[b2].resn,"PRO",true)))) {
-                                     
-                              if(use_cache) {
-                                if(!SculptCacheQuery(G,cSculptPlan,
-                                                     oai[b1].unique_id,
-                                                     oai[b0].unique_id,
-                                                     oai[b2].unique_id,
-                                                     oai[b3].unique_id,
-                                                     &d))
-                                  SculptCacheStore(G,cSculptPlan,
-                                                   oai[b1].unique_id,
-                                                   oai[b0].unique_id,
-                                                   oai[b2].unique_id,
-                                                   oai[b3].unique_id,
-                                                   d);
+                        int b5,b6,b7,b8,b9,b10;
+                        int n4,n5,n6,n7,n8,n9;
+                        n3 = neighbor[b2]+1;
+                        while((!cycle)&&(b4 = neighbor[n3])>=0) {
+                          if(b4!=b0) {
+                            n4 = neighbor[b4]+1;
+                            while((!cycle)&&(b5 = neighbor[n4])>=0) {
+                              if(b5!=b2) {
+                                n5 = neighbor[b5]+1;
+                                while((!cycle)&&(b6 = neighbor[n5])>=0) {
+                                  if(b6==b0) { /* 4-cycle */
+                                    cycle=4;
+                                  } else if((b6!=b4)&&(b6!=b2)) {
+                                    n6 = neighbor[b6]+1;
+                                    while((!cycle)&&(b7 = neighbor[n6])>=0) {
+                                      if(b7==b0) {  /* 5-cycle */
+                                        cycle=5;
+                                      } else if((b7!=b5)&&(b7!=b2)) {
+                                        n7 = neighbor[b7]+1;
+                                        while((!cycle)&&(b8 = neighbor[n7])>=0) {
+                                          if(b8==b0) {  /* 6-cycle */
+                                            cycle=6;
+                                          } else if((b8!=b6)&&(b8!=b2)) {
+                                            n8 = neighbor[b8]+1;
+                                            while((!cycle)&&(b9 = neighbor[n8])>=0) {
+                                              if(b9==b0) {  /* 7-cycle */
+                                                cycle=7;
+                                              } else if((b9!=b7)&&(b9!=b2)) {
+                                                n9 = neighbor[b9]+1;
+                                                while((!cycle)&&(b10 = neighbor[n9])>=0) {
+                                                  if(b10==b0) {  /* 8-cycle */
+                                                    cycle=8;
+                                                  } 
+                                                  n9+=2;
+                                                }
+                                              }
+                                              n8+=2;
+                                            }
+                                          }
+                                          n7+=2;
+                                        }
+                                      }
+                                      n6+=2;
+                                    }
+                                  }
+                                  n5+=2;
+                                }
                               }
-                              ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3,d,cycle);
+                              n4+=2;
                             }
+                          }
+                          n3+=2;
+                        }
+                        /* don't get jacked by pseudo-planar PRO */
+
+                        if(((oai[b0].protons!=cAN_N)||
+                            (!WordMatchExact(G,oai[b0].resn,"PRO",true)))&&
+                           ((oai[b2].protons!=cAN_N)||
+                            (!WordMatchExact(G,oai[b2].resn,"PRO",true)))) {
+                                     
+                          if(use_cache) {
+                            if(!SculptCacheQuery(G,cSculptPlan,
+                                                 oai[b1].unique_id,
+                                                 oai[b0].unique_id,
+                                                 oai[b2].unique_id,
+                                                 oai[b3].unique_id,
+                                                 &d))
+                              SculptCacheStore(G,cSculptPlan,
+                                               oai[b1].unique_id,
+                                               oai[b0].unique_id,
+                                               oai[b2].unique_id,
+                                               oai[b3].unique_id,
+                                               d);
+                          }
+
+                          ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3,d,cycle);
+
+                          if(planar[b1]&&planar[b3]&&((cycle==5)||(cycle==6))) {
+
+                            /* also add minimum distance constraints to keep small rings from folding */
+
+                            d = (float)diff3f(v1,v3);
+
+#if 0
+                            if(use_cache) {
+                              if(!SculptCacheQuery(G,cSculptBond,
+                                                   oai[b1].unique_id,
+                                                   oai[b2].unique_id,0,0,&d))
+                                SculptCacheStore(G,cSculptBond,
+                                                 oai[b1].unique_id,
+                                                 oai[b2].unique_id,0,0,d);
+                            }
+#endif
+
+                            ShakerAddDistCon(I->Shaker,b1,b3,d,cShakerDistBond,1.0F);
+
                           }
                         }
                       }
                     }
-                    n2+=2;
                   }
                 }
-                n1+=2;
-              }
-              n0+=2;
-            }
-          }
-
-          {
-          /* longer-range exclusions (1-5,1-6,1-7,1-8,1-9) -- only locate & store when needed */
-            
-            int mask = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
-            int max_excl = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_avd_excl);
-            if(max_excl>9)
-              max_excl = 9;
-
-            if((cSculptAvoid & mask)&&(max_excl>4)) {
-              int b_stack[10];
-              int n_stack[10];
-              int stop_depth = max_excl-1;
-              int depth;
-              int bd,skip;
-              for(b0=0;b0<obj->NAtom;b0++) {
-                b_stack[0] = b0;
-                n_stack[0] = obj->Neighbor[b_stack[0]]+1;
-                depth = 0;
-                while(depth>=0) {
-                  if((bd = obj->Neighbor[n_stack[depth]])<0) {
-                    depth--;
-                    if(depth>=0) { /* iterate next atom */
-                      n_stack[depth] += 2;
-                    }
-                  } else {
-                    skip = (depth==stop_depth);
-                    if(!skip) {
-                      for(a=0;a<depth;a++) {
-                        if(b_stack[a]==bd) {
-                          skip=true;
-                          break;
-                        }
-                      }
-                    }
-                    if(!skip) {
-                      depth++;
-                      b_stack[depth] = bd;
-                      n_stack[depth] = obj->Neighbor[bd] + 1;
-                      if((depth>3)&&(b0<bd)) {
-
-                        xhash = ex_hash(b0,bd);
-                      
-                        VLACheck(I->EXList,int,nex+3);
-                        j = I->EXList+nex;
-                        *(j++)=*(I->EXHash+xhash);
-                        *(j++)=b0;
-                        *(j++)=bd;
-                        *(j++)= depth+1; /* 1-5, 1-6, 1-7 etc. */
-                        *(I->EXHash+xhash)=nex;
-                        nex+=4;
-                      }
-                    } else {
-                      n_stack[depth] += 2;
-                    }
-                  }
-                }
+                n2+=2;
               }
             }
+            n1+=2;
           }
-          FreeP(planer);
-          FreeP(linear);
-          FreeP(single);
+          n0+=2;
         }
       }
+
+      /* add 1,5 exclusions for hydrogens off arg-like planar systems */
+
+      /* b1\b0_b2_b3/b4 */
+        
+      for(b0=0;b0<n_atom;b0++) {
+        n0 = neighbor[b0]+1;
+        while((b1 = neighbor[n0])>=0) {
+          if(oai[b1].protons == cAN_H) {
+            n1 = neighbor[b0]+1;
+            while((b2 = neighbor[n1])>=0) {
+              if(b1!=b2) {
+                n2 =  neighbor[b2]+1;
+                while((b3 = neighbor[n2])>=0) {
+                  if(b3!=b0) {
+                    if(planar[b0]&&planar[b2]&&planar[b3]) {
+                      n3 =  neighbor[b3]+1;
+                      while((b4 = neighbor[n3])>=0) {
+                        if( (b4!=b2) && (b4>b1) && (oai[b4].protons == cAN_H)) {
+                          
+                          xhash = ex_hash(b1,b4);
+                        
+                          ex_type = 5; 
+                        
+                          xoffset = *(I->EXHash+xhash);
+                          while(xoffset) {
+                            k = I->EXList + xoffset;
+                            if( ((*(k+3)) == ex_type) &&
+                                (*(k+1) == b1) && (*(k+2) == b4)) {
+                              ex_type = 0; /* duplicate, skip */
+                              break;
+                            }
+                            xoffset = *k;
+                          }
+                          
+                          if(ex_type) {
+                            VLACheck(I->EXList,int,nex+6);
+                            j = I->EXList+nex;
+                            *(j++)=*(I->EXHash+xhash);
+                            *(j++)=b1;
+                            *(j++)=b4;
+                            *(j++)=ex_type;
+                            *(j++)=b0;
+                            *(j++)=b2;
+                            *(j++)=b3;
+                            *(I->EXHash+xhash)=nex;
+                            nex+=6;
+                          }
+                        }
+                        n3+=2;
+                      }
+                    }
+                  }
+                  n2+=2;
+                }
+              }
+              n1+=2;
+            }
+          }
+          n0+=2;
+        }
+      }
+
+      {
+        /* longer-range exclusions (1-5,1-6,1-7,1-8,1-9) -- only locate & store when needed */
+            
+        int mask = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
+        int max_excl = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_avd_excl);
+        if(max_excl>9)
+          max_excl = 9;
+
+        if((cSculptAvoid & mask)&&(max_excl>4)) {
+          int b_stack[10];
+          int n_stack[10];
+          int stop_depth = max_excl-1;
+          int depth;
+          int bd,skip;
+          for(b0=0;b0<n_atom;b0++) {
+            b_stack[0] = b0;
+            n_stack[0] = neighbor[b_stack[0]]+1;
+            depth = 0;
+            while(depth>=0) {
+              if((bd = neighbor[n_stack[depth]])<0) {
+                depth--;
+                if(depth>=0) { /* iterate next atom */
+                  n_stack[depth] += 2;
+                }
+              } else {
+                skip = (depth==stop_depth);
+                if(!skip) {
+                  for(a=0;a<depth;a++) {
+                    if(b_stack[a]==bd) {
+                      skip=true;
+                      break;
+                    }
+                  }
+                }
+                if(!skip) {
+                  depth++;
+                  b_stack[depth] = bd;
+                  n_stack[depth] = neighbor[bd] + 1;
+                  if((depth>3)&&(b0<bd)) {
+
+                    xhash = ex_hash(b0,bd);
+                      
+                    VLACheck(I->EXList,int,nex+3);
+                    j = I->EXList+nex;
+                    *(j++)=*(I->EXHash+xhash);
+                    *(j++)=b0;
+                    *(j++)=bd;
+                    *(j++)= depth+1; /* 1-5, 1-6, 1-7 etc. */
+                    *(I->EXHash+xhash)=nex;
+                    nex+=4;
+                  }
+                } else {
+                  n_stack[depth] += 2;
+                }
+              }
+            }
+          }
+        }
+      }
+      FreeP(planar);
+      FreeP(linear);
+      FreeP(single);
+      FreeP(crdidx);
+    }
+  }
   
   PRINTFB(G,FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NDistCon %d\n",I->Shaker->NDistCon
@@ -1934,7 +2013,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
               v1 = cs_coord+3*a1;
               v2 = cs_coord+3*a2;
               v3 = cs_coord+3*a3;
-              total_strain+=ShakerDoPyra(spc->targ,
+              total_strain+=ShakerDoPyra(spc->targ1,
+                                         spc->targ2,
                                          v0,v1,v2,v3,
                                          disp+b0*3,
                                          disp+b1*3,
@@ -2113,27 +2193,11 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                               }
                             }
                           }
-                          if(ex>3) {
+                          if(ex>3) { 
                             ai1=obj->AtomInfo+b1;
                             cutoff = ai0->vdw+ai1->vdw;
-                          
-                            if(ex==4) { /* 1-4 interation */
-                              cutoff*=vdw14;
-                              wt = vdw_wt14 * vdw_magnified;
-                            
-                              if(cSculptVDW14 & mask) {
-                                a1 = atm2idx[b1];
-                                v1 = cs_coord+3*a1;
-                                if(SculptCheckBump(v0,v1,diff,&len,cutoff)) {
-                                  if(SculptDoBump(cutoff,len,diff,
-                                                  disp+b0*3,disp+b1*3,wt,&total_strain)) {
-                                    cnt[b0]++;
-                                    cnt[b1]++;
-                                    total_count++;
-                                  }
-                                }
-                              }
-                            } else { /* standard interaction */
+
+                            if(ex==10) { /* standard interaction -- no exclusion */
                               if(don_b0&&I->Acc[b1]) { /* h-bond */
                                 if(ai0->protons==cAN_H) {
                                   cutoff-=hb_overlap;
@@ -2172,6 +2236,24 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                                     total_count++;
                                   }
                               }
+                            } else if(ex==4) { /* 1-4 interation */
+                              cutoff*=vdw14;
+                              wt = vdw_wt14 * vdw_magnified;
+                              
+                              if(cSculptVDW14 & mask) {
+                                a1 = atm2idx[b1];
+                                v1 = cs_coord+3*a1;
+                                if(SculptCheckBump(v0,v1,diff,&len,cutoff)) {
+                                  if(SculptDoBump(cutoff,len,diff,
+                                                  disp+b0*3,disp+b1*3,wt,&total_strain)) {
+                                    cnt[b0]++;
+                                    cnt[b1]++;
+                                    total_count++;
+                                  }
+                                }
+                              }
+                            } else if(ex==5) {
+                              /* do nothing */
                             }
                           }
                         }
@@ -2520,20 +2602,20 @@ static int SculptDoBump14(float target,float actual,float *d,
           /* b1-b0-b2-b3-b4 */
 
           for(b0=0;b0<obj->NAtom;b0++) {
-            n0 = obj->Neighbor[b0]+1;
-            while(obj->Neighbor[n0]>=0) {
-              b1 = obj->Neighbor[n0];
-              n1 = obj->Neighbor[b0]+1;
-              while(obj->Neighbor[n1]>=0) {
-                b2 = obj->Neighbor[n1];
+            n0 = neighbor[b0]+1;
+            while(neighbor[n0]>=0) {
+              b1 = neighbor[n0];
+              n1 = neighbor[b0]+1;
+              while(neighbor[n1]>=0) {
+                b2 = neighbor[n1];
                 if(b1!=b2) {
-                  n2 =  obj->Neighbor[b2]+1;
-                  while(obj->Neighbor[n2]>=0) {
-                    b3 = obj->Neighbor[n2];
+                  n2 =  neighbor[b2]+1;
+                  while(neighbor[n2]>=0) {
+                    b3 = neighbor[n2];
                     if(b3!=b0) {
-                      n3 =  obj->Neighbor[b3]+1;
-                      while(obj->Neighbor[n3]>=0) {
-                        b4 = obj->Neighbor[n3];
+                      n3 =  neighbor[b3]+1;
+                      while(neighbor[n3]>=0) {
+                        b4 = neighbor<[n3];
                         if(b2!=b4) {
                           
                           if(obj->DiscreteFlag) {

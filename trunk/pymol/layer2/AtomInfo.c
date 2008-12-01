@@ -1371,7 +1371,7 @@ float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2)
         default: result = 1.20F; break;
         }
         break;
-      case cAtomInfoPlaner: 
+      case cAtomInfoPlanar: 
         switch(a2->protons) { 
         case cAN_I:  result = 2.14F; break; /* normal single bond lengths */
         case cAN_Cl: result = 1.77F; break; 
@@ -1402,7 +1402,7 @@ float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2)
       }
       break;
       
-    case cAtomInfoPlaner: /* planer carbon =============*/
+    case cAtomInfoPlanar: /* planer carbon =============*/
       switch(a2->geom) {
       case cAtomInfoLinear: 
         switch(a2->protons) { 
@@ -1418,7 +1418,7 @@ float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2)
         default: result = 1.54F; break;
         }
         break;
-      case cAtomInfoPlaner: 
+      case cAtomInfoPlanar: 
         switch(a2->protons) {
         case cAN_C: result = 1.34F; break; /* C=^C or ?=C-^C=? */
         case cAN_O: result = 1.20F; break; /* carbonyl */
@@ -1464,8 +1464,8 @@ float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2)
 /* nitrogen ========================= */
 
   case cAN_N:
-    if((a1->geom==cAtomInfoPlaner)&&
-       (a2->geom==cAtomInfoPlaner))
+    if((a1->geom==cAtomInfoPlanar)&&
+       (a2->geom==cAtomInfoPlanar))
       switch(a2->protons) {
       case cAN_N:  result = 1.25F; break;
       case cAN_O:  result = 1.21F; break;
@@ -1485,14 +1485,14 @@ float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2)
 /* oxygen =========================== */
 
   case cAN_O:
-    if((a1->geom==cAtomInfoPlaner)&&
-       (a2->geom==cAtomInfoPlaner))
+    if((a1->geom==cAtomInfoPlanar)&&
+       (a2->geom==cAtomInfoPlanar))
       switch(a2->protons) {
       case cAN_O:  result = 1.35F; break; /* guess */
       case cAN_S:  result = 1.44F; break; /* macromodel */
       default: result = 1.35F; break;
       }
-    else if(a1->geom==cAtomInfoPlaner) {
+    else if(a1->geom==cAtomInfoPlanar) {
       switch(a2->protons) {
       case cAN_O:  result = 1.35F; break; /* guess */
       case cAN_S:  result = 1.44F; break; /* macromodel */
@@ -1522,12 +1522,12 @@ float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2)
     result=0.0;
     switch(a1->geom) {
     case cAtomInfoLinear: result+=1.20F; break;
-    case cAtomInfoPlaner: result+=1.34F; break;
+    case cAtomInfoPlanar: result+=1.34F; break;
     default: result+= 1.54F; break;
     }
     switch(a2->geom) {
     case cAtomInfoLinear: result+=1.20F; break;
-    case cAtomInfoPlaner: result+=1.34F; break;
+    case cAtomInfoPlanar: result+=1.34F; break;
     default: result+= 1.54F; break;
     }    
     result/=2.0F;

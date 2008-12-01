@@ -1537,6 +1537,10 @@ void EditorActivate(PyMOLGlobals *G,int state,int enable_bond)
     ExecutiveDelete(G,cEditorRes);
     ExecutiveDelete(G,cEditorChain);
     ExecutiveDelete(G,cEditorObject);
+    ExecutiveDelete(G,cEditorBond);
+    ExecutiveDelete(G,cEditorDihedral);
+    ExecutiveDelete(G,cEditorDihe1);
+    ExecutiveDelete(G,cEditorDihe2);
     
     I->BondMode = enable_bond;
     I->NFrag = SelectorSubdivide(G,cEditorFragPref,

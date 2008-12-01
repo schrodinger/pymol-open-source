@@ -476,7 +476,8 @@ class InvertWizard(RepeatableActionWizard):
             self.cmd.unpick()
             if not self.getRepeating():
                 self.actionWizardDone()
-            
+        self.cmd.refresh_wizard()
+        
     def toggle(self):
         self.activateRepeatOrDismiss()
                                     
@@ -1184,9 +1185,9 @@ class AminoAcidFrame(GuiFrame):
         GuiFrame.__init__(self, parent)
         #GuiLabel(self, "Amino Acids")
 
-        aaList = ["Ala", "Asp", "Asn", "Arg", "Cys", "Glu", "Gln", "Gly", 
+        aaList = ["Ace", "Ala", "Arg", "Asn", "Asp", "Cys", "Gln", "Glu", "Gly", 
                   "His", "Ile", "Leu", "Lys", "Met", "Phe", "Pro", "Ser", 
-                  "Thr", "Trp", "Tyr", "Val", "Ace", "NMe"]
+                  "Thr", "Trp", "Tyr", "Val", "NMe"]
         for aa in aaList:
             r = aa.lower()
             GuiButton(self, aa, lambda s=self,r=r: s.attach(r), "Build %s residue" % aa)
