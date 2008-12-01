@@ -120,47 +120,78 @@ void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target,int type,float
   I->NDistCon++;
 }
 
-float ShakerGetPyra(float *v0,float *v1,float *v2,float *v3)
+float ShakerGetPyra(float *targ2, float *v0,float *v1,float *v2,float *v3)
 {
   float d0[3],cp[3],d2[3],d3[3];
+  float av[3],t0[3];
+
+  add3f(v1,v2,av);
   subtract3f(v2,v1,d2);
-  /*  normalize3f(d2);*/
+  add3f(v3,av,av);
   subtract3f(v3,v1,d3);
-  /* normalize3f(d3);*/
+  subtract3f(av,v0,t0);
   cross_product3f(d2,d3,cp);
+  scale3f(av,0.33333333F,av);
   normalize3f(cp);
-  subtract3f(v1,v0,d0);
+  subtract3f(av,v0,d0);
+
+  (*targ2) = length3f(d0);
   return(dot_product3f(d0,cp));
 }
 
-
-float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
+float ShakerDoPyra(float targ1,float targ2, 
+                   float *v0,float *v1,float *v2,float *v3,
                    float *p0,float *p1,float *p2,float *p3,float wt)
 {
-  float d0[3],cp[3],d2[3],d3[3],push[3];
-  float cur,dev,sc,result;
-  subtract3f(v2,v1,d2);
-  /*  normalize3f(d2);*/
-  subtract3f(v3,v1,d3);
-  /*  normalize3f(d3);*/
-  cross_product3f(d2,d3,cp); 
-  subtract3f(v1,v0,d0);
-  normalize3f(cp); /* this is our axis */
-  cur = dot_product3f(d0,cp);
+  float d0[3],cp[3],d2[3],d3[3];
+  float av[3],t0[3],push[3];
 
-  dev = cur-target;
-  if((result = (float)fabs(dev))>R_SMALL8) {
+  float cur,dev,sc,result1,result2;
+
+  add3f(v1,v2,av);
+  subtract3f(v2,v1,d2);
+  add3f(v3,av,av);
+  subtract3f(v3,v1,d3);
+  subtract3f(av,v0,t0);
+  cross_product3f(d2,d3,cp);
+  scale3f(av,0.33333333F,av);
+  normalize3f(cp);
+  subtract3f(av,v0,d0);
+
+  cur = dot_product3f(d0,cp);
+  dev = cur-targ1;
+  result1 = (float)fabs(dev);
+  if(result1>R_SMALL8) {
     sc = wt*dev;
+    if(cur*targ1<0.0) /* inverted */
+      sc = sc * 12; /* emphasize fix */
     scale3f(cp,sc,push);
     add3f(push,p0,p0);
-    scale3f(push,1.0F*0.333333F,push);
+    scale3f(push,0.333333F,push);
     subtract3f(p1,push,p1);
     subtract3f(p2,push,p2);
     subtract3f(p3,push,p3);
-  } else
-    dev = 0.0;
-  return result;
+  }
+  
+  if((targ2>=0.0F) && ((cur*targ1>0.0)||(fabs(targ1)<0.1))) {
+    /* so long as we're not inverted...
+       also make sure v0 is the right distance from the average point */
+    cur = length3f(d0);
+    normalize3f(d0);
+    dev = cur-targ2;
+    result2 = (float)fabs(dev);
+    if(result2>R_SMALL4) {
+      sc = wt*dev*2.0F;
+      scale3f(d0,sc,push);
+      add3f(push,p0,p0);
+      scale3f(push,0.333333F,push);
+      subtract3f(p1,push,p1);
+      subtract3f(p2,push,p2);
+      subtract3f(p3,push,p3);
+    }
+  }
 
+  return result1+result2;
 }
 
 
@@ -311,7 +342,7 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
 
 }
 
-void ShakerAddPyraCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float target)
+void ShakerAddPyraCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float targ1,float targ2)
 {
   ShakerPyraCon *spc;
   
@@ -321,9 +352,9 @@ void ShakerAddPyraCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float t
   spc->at1=atom1;
   spc->at2=atom2;
   spc->at3=atom3;
-  spc->targ = target;
+  spc->targ1 = targ1;
+  spc->targ2 = targ2;
   I->NPyraCon++;
-
 }
 
 

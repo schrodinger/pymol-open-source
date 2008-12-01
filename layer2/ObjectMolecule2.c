@@ -138,7 +138,7 @@ static int populate_other(OtherRec *other,int at,AtomInfoType *ai,BondType *bd, 
       return 1;
     }
   }
-  if(ai->geom==cAtomInfoPlaner) {
+  if(ai->geom==cAtomInfoPlanar) {
     if(other->n_planer<cMaxOther) {
       other->planer[other->n_planer++]=at;
       other->score+=4;

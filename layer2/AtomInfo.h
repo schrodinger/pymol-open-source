@@ -78,7 +78,7 @@ Z* -------------------------------------------------------------------
 #define cLabelTypeLen 20
 
 #define cAtomInfoTetrahedral 4
-#define cAtomInfoPlaner 3
+#define cAtomInfoPlanar 3
 #define cAtomInfoLinear 2
 #define cAtomInfoSingle 1
 #define cAtomInfoNone 5

@@ -4004,7 +4004,7 @@ static int get_planer_normal(ObjectMolecule *I,int state,int index,float *normal
       }
     }
     switch(ai->geom) {
-    case cAtomInfoPlaner:
+    case cAtomInfoPlanar:
       if(nOcc>1) {
         cross_product3f(occ,occ+3,normal);
         if(nOcc>2) {
@@ -4104,7 +4104,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
               }
               result = true;
               break;
-            case cAtomInfoPlaner:
+            case cAtomInfoPlanar:
               {
                 if(!seek) {
                   if((last_occ>=0)&&get_planer_normal(I,state,last_occ,n0)) {
@@ -4154,7 +4154,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
               add3f(t,v,v);              
               result = true;
               break;
-            case cAtomInfoPlaner:
+            case cAtomInfoPlanar:
               add3f(occ,occ+3,t);
               scale3f(t,-1.0F,v);
               result = true;
@@ -4974,7 +4974,7 @@ int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at)
          dot_product3f(cp2,cp3)+
          dot_product3f(cp3,cp1))/3.0F;
     if(avg>0.75)
-      result=cAtomInfoPlaner;
+      result=cAtomInfoPlanar;
     else
       result=cAtomInfoTetrahedral;
   } else if(nn==2) {
@@ -5539,12 +5539,12 @@ void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *fla
                           if((flag1[a]&&flag2[n1_at])||(flag2[a]&&flag1[n1_at]))
                             bondInfo[n1_bd].order = 4;
                           atomInfo[n1_at].valence = 3;
-                          atomInfo[n1_at].geom = cAtomInfoPlaner;
+                          atomInfo[n1_at].geom = cAtomInfoPlanar;
                           atomInfo[n1_at].chemFlag = 2;
                           if((flag1[a]&&flag2[n2_at])||(flag2[a]&&flag1[n2_at]))
                             bondInfo[n2_bd].order = 4;
                           atomInfo[n2_at].valence = 3;
-                          atomInfo[n2_at].geom = cAtomInfoPlaner;
+                          atomInfo[n2_at].geom = cAtomInfoPlanar;
                           atomInfo[n2_at].chemFlag = 2;
                         } else if((n1_at>=0)&&(n2_at>=0)&&(n3_at>=0)) {
                           /* guanido with no hydrogens */
@@ -5555,12 +5555,12 @@ void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *fla
                               if((flag1[a]&&flag2[n1_at])||(flag2[a]&&flag1[n1_at]))
                                 bondInfo[n1_bd].order = 4;
                               atomInfo[n1_at].valence = 3;
-                              atomInfo[n1_at].geom = cAtomInfoPlaner;
+                              atomInfo[n1_at].geom = cAtomInfoPlanar;
                               atomInfo[n1_at].chemFlag = 2;
                               if((flag1[a]&&flag2[n2_at])||(flag2[a]&&flag1[n2_at]))
                                 bondInfo[n2_bd].order = 4;
                               atomInfo[n2_at].valence = 3;
-                              atomInfo[n2_at].geom = cAtomInfoPlaner;
+                              atomInfo[n2_at].geom = cAtomInfoPlanar;
                               atomInfo[n2_at].chemFlag = 2;
                             } else if((neighbor[neighbor[n1_at]]==1) &&
                                       (neighbor[neighbor[n2_at]]>=2) &&
@@ -5568,12 +5568,12 @@ void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *fla
                               if((flag1[a]&&flag2[n1_at])||(flag2[a]&&flag1[n1_at]))
                                 bondInfo[n1_bd].order = 4;
                               atomInfo[n1_at].valence = 3;
-                              atomInfo[n1_at].geom = cAtomInfoPlaner;
+                              atomInfo[n1_at].geom = cAtomInfoPlanar;
                               atomInfo[n1_at].chemFlag = 2;
                               if((flag1[a]&&flag2[n3_at])||(flag2[a]&&flag1[n3_at]))
                                 bondInfo[n3_bd].order = 4;
                               atomInfo[n3_at].valence = 3;
-                              atomInfo[n3_at].geom = cAtomInfoPlaner;
+                              atomInfo[n3_at].geom = cAtomInfoPlanar;
                               atomInfo[n3_at].chemFlag = 2;
                             } else if((neighbor[neighbor[n1_at]]>=2) &&
                                       (neighbor[neighbor[n2_at]]==1) &&
@@ -5581,12 +5581,12 @@ void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *fla
                               if((flag1[a]&&flag2[n2_at])||(flag2[a]&&flag1[n2_at]))
                                 bondInfo[n2_bd].order = 4;
                               atomInfo[n2_at].valence = 3;
-                              atomInfo[n2_at].geom = cAtomInfoPlaner;
+                              atomInfo[n2_at].geom = cAtomInfoPlanar;
                               atomInfo[n2_at].chemFlag = 2;
                               if((flag1[a]&&flag2[n3_at])||(flag2[a]&&flag1[n3_at]))
                                 bondInfo[n3_bd].order = 4;
                               atomInfo[n3_at].valence = 3;
-                              atomInfo[n3_at].geom = cAtomInfoPlaner;
+                              atomInfo[n3_at].geom = cAtomInfoPlanar;
                               atomInfo[n3_at].chemFlag = 2;
                             }
                           }
@@ -5853,7 +5853,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *fla
                                  obs_atom[mem[4]].aromatic ) {
                                 ai->valence = 3;
                                 ai->chemFlag = 2;
-                                ai->geom = cAtomInfoPlaner;
+                                ai->geom = cAtomInfoPlanar;
                               }
 
                               /* c1ncnc1 becomes c1n[H]cnc1 */
@@ -5874,7 +5874,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *fla
                                 if(nn2==2) { /* second nitrogen also ambiguous */
                                   ai->valence = 3;
                                   ai->chemFlag = 2;
-                                  ai->geom = cAtomInfoPlaner;
+                                  ai->geom = cAtomInfoPlanar;
                                 }
                               }
 
@@ -5896,7 +5896,7 @@ void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *fla
                                 if(nn2==2) { /* second nitrogen also ambiguous */
                                   ai->valence = 3;
                                   ai->chemFlag = 2;
-                                  ai->geom = cAtomInfoPlaner;
+                                  ai->geom = cAtomInfoPlanar;
                                 }
                               }
 
@@ -5948,7 +5948,7 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
     for(a=0;a<I->NAtom;a++) {
       ai=I->AtomInfo+a;
       if(ai->chemFlag) {
-        if(ai->geom==cAtomInfoPlaner)
+        if(ai->geom==cAtomInfoPlanar)
           if(ai->protons == cAN_C) {
             n = I->Neighbor[a];
             nn = I->Neighbor[n++];
@@ -5976,10 +5976,10 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
                     if(ai0->protons==cAN_O) {
                       if(!ai0->chemFlag) {
                         ai0->chemFlag=true; /* acid */
-                        ai0->geom=cAtomInfoPlaner;
+                        ai0->geom=cAtomInfoPlanar;
                         ai0->valence=1;
                         ai1->chemFlag=true;
-                        ai1->geom=cAtomInfoPlaner;
+                        ai1->geom=cAtomInfoPlanar;
                         ai1->valence=1;
                         changedFlag=true;
                         break;
@@ -5987,16 +5987,16 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
                     } else if(ai0->protons==cAN_N) {
                       if(!ai0->chemFlag) { 
                         ai0->chemFlag=true; /* amide N */ 
-                        ai0->geom=cAtomInfoPlaner;                            
+                        ai0->geom=cAtomInfoPlanar;                            
                         ai0->valence=3;
                         ai1->chemFlag=true; /* amide =O */ 
-                        ai1->geom=cAtomInfoPlaner;
+                        ai1->geom=cAtomInfoPlanar;
                         ai1->valence=1;
                         changedFlag=true;
                         break;
-                      } else if(ai0->geom==cAtomInfoPlaner) {
+                      } else if(ai0->geom==cAtomInfoPlanar) {
                         ai1->chemFlag=true; /* amide =O */
-                        ai1->geom=cAtomInfoPlaner;
+                        ai1->geom=cAtomInfoPlanar;
                         ai1->valence=1;
                         changedFlag=true;
                         break;
@@ -6030,10 +6030,10 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
               ai0 = I->AtomInfo+a0;
               if((ai0->protons==cAN_O)&&(!ai0->chemFlag)) { /* =O */
                 ai->chemFlag=true; 
-                ai->geom=cAtomInfoPlaner;
+                ai->geom=cAtomInfoPlanar;
                 ai->valence=1;
                 ai0->chemFlag=true;
-                ai0->geom=cAtomInfoPlaner;
+                ai0->geom=cAtomInfoPlanar;
                 ai0->valence=3;
                 changedFlag=true;
                 break;
@@ -6046,7 +6046,7 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
             if((!ai->chemFlag)||ai->geom!=cAtomInfoLinear) {
               if(ai->formalCharge==0) {
                 ai->chemFlag=true; 
-                ai->geom=cAtomInfoPlaner;
+                ai->geom=cAtomInfoPlanar;
                 ai->valence=3;
               }
             }
@@ -6070,7 +6070,7 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
   AtomInfoType *ai,*ai2;
 
   carbonVal[cAtomInfoTetrahedral] = 4;
-  carbonVal[cAtomInfoPlaner] = 3;
+  carbonVal[cAtomInfoPlanar] = 3;
   carbonVal[cAtomInfoLinear] = 2;
   
   ObjectMoleculeUpdateNeighbors(I);
@@ -6133,9 +6133,9 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
           }
           break;
         case cAN_N:
-          if(geom==cAtomInfoPlaner) {
+          if(geom==cAtomInfoPlanar) {
             ai->chemFlag=true;
-            ai->geom=cAtomInfoPlaner;
+            ai->geom=cAtomInfoPlanar;
             ai->valence=3;
           } else if(geom==cAtomInfoTetrahedral) {
             ai->chemFlag=true;
@@ -6267,11 +6267,11 @@ void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I)
           ai->hb_acceptor = true;
         } 
         if( delocalized && (neighbor_has_double_bond) && (!has_double_bond) &&
-            (ai->geom==cAtomInfoPlaner) && (nn==2) && (ai->formalCharge>=0)) {
+            (ai->geom==cAtomInfoPlanar) && (nn==2) && (ai->formalCharge>=0)) {
           /* there's a fair chance of a resonance structure with this nitrogen as a donor */
           ai->hb_donor = true; 
         } 
-        if((ai->geom!=cAtomInfoPlaner) && (nn==3) && (ai->formalCharge>=0) && (!delocalized) ) {
+        if((ai->geom!=cAtomInfoPlanar) && (nn==3) && (ai->formalCharge>=0) && (!delocalized) ) {
           /* tertiary amine case -- assume potential donor */
           ai->hb_donor = true;
         }
@@ -6392,8 +6392,8 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
         ai1->chemFlag=true;
       }
     } else if(order==4) {
-      ai0->geom = cAtomInfoPlaner;
-      ai1->geom = cAtomInfoPlaner;
+      ai0->geom = cAtomInfoPlanar;
+      ai1->geom = cAtomInfoPlanar;
       if(ai0->chemFlag!=2) {
         switch(ai0->protons) {
         case cAN_O:
@@ -6457,7 +6457,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
         ai->valence=nn;
         switch(ai->geom) { /* max bond order observed */
         case 0: ai->geom = cAtomInfoNone; break;
-        case 2: ai->geom = cAtomInfoPlaner; break;
+        case 2: ai->geom = cAtomInfoPlanar; break;
         case 3: ai->geom = cAtomInfoLinear; break;
         default: 
           if(expect==1) 
@@ -6470,7 +6470,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
         ai->chemFlag=true;
         ai->valence=nn+(expect-ai->valence); 
         switch(ai->geom) { 
-        case 2: ai->geom = cAtomInfoPlaner; break;
+        case 2: ai->geom = cAtomInfoPlanar; break;
         case 3: ai->geom = cAtomInfoLinear; break;
         default: 
           if(expect==1) 
@@ -6483,7 +6483,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
         ai->chemFlag=true;
         ai->valence=nn;
         switch(ai->geom) { 
-        case 2: ai->geom = cAtomInfoPlaner; break;
+        case 2: ai->geom = cAtomInfoPlanar; break;
         case 3: ai->geom = cAtomInfoLinear; break;
         default: 
           if(expect==1) 
@@ -6517,9 +6517,9 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
                 n+=2;
                 if(a0<0) break;
                 ai0 = I->AtomInfo+a0;
-                if((ai0->chemFlag)&&(ai0->geom==cAtomInfoPlaner)&&
+                if((ai0->chemFlag)&&(ai0->geom==cAtomInfoPlanar)&&
                    ((ai0->protons==cAN_C)||(ai0->protons==cAN_N))) {
-                  ai->geom=cAtomInfoPlaner; /* found probable delocalization */
+                  ai->geom=cAtomInfoPlanar; /* found probable delocalization */
                   ai->valence=3; /* just in case...*/
                   changedFlag=true;
                   break;
@@ -6548,9 +6548,9 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
                 n+=2;
                 if(a0<0) break;
                 ai0 = I->AtomInfo+a0;
-                if((ai0->chemFlag)&&(ai0->geom==cAtomInfoPlaner)&&
+                if((ai0->chemFlag)&&(ai0->geom==cAtomInfoPlanar)&&
                    ((ai0->protons==cAN_C)||(ai0->protons==cAN_N))) {
-                  ai->geom=cAtomInfoPlaner; /* found probable delocalization */
+                  ai->geom=cAtomInfoPlanar; /* found probable delocalization */
                   changedFlag=true;
                   break;
                 }
