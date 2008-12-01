@@ -641,7 +641,8 @@ if __name__=='pymol.setting':
         auto_overlay                       = 603
         stick_ball_color                   = 604
         stick_h_scale                      = 605
-
+        sculpt_pyra_inv_weight             = 606
+        
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []
