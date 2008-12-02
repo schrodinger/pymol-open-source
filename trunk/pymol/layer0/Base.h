@@ -108,6 +108,11 @@ typedef struct {
   float offset[3];
 } LabPosType;
 
+typedef struct {
+  float coord[3];
+  int specified;
+} RefPosType;
+
 /* not a global, but CRay widely used and Ray.h definitely isn't a
  * lightweight include... */
 

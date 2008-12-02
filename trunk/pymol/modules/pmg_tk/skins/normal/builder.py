@@ -697,7 +697,8 @@ class AtomFlagWizard(ActionWizard):
 
     def update_display(self):
         if active_sele in self.cmd.get_names("selections"):
-            self.cmd.select(display_sele,active_sele+" and flag %d"%self.flag)
+            self.cmd.select(display_sele,active_sele+
+                            " and flag %d"%self.flag)
             self.cmd.enable(display_sele)
         else:
             self.cmd.delete(display_sele)
@@ -712,11 +713,19 @@ class AtomFlagWizard(ActionWizard):
         self.cmd.unpick()
         self.cmd.refresh_wizard()        
         self.update_display()
-        
+       
+    def do_select(self,selection):
+        if selection == display_sele:
+            self.cmd.flag(self.flag,active_sele+" and "+display_sele,"set")
+            self.cmd.flag(self.flag,active_sele+" and not "+display_sele,"clear")
+        self.cmd.refresh_wizard()
+        self.update_display()
+
     def get_prompt(self):
         if active_sele not in self.cmd.get_names("selections"):
             return ["Pick object to operate on..."]
         else:
+            self.cmd.reference("validate",active_sele) # overbroad
             if self.flag == 2:
                 return ["Toggle restrained atoms..."]
             elif self.flag ==3:
@@ -755,13 +764,24 @@ class AtomFlagWizard(ActionWizard):
             self.cmd.flag(self.flag,active_sele,"clear")
             self.update_display()
     
+    def do_store(self):
+        if active_sele in self.cmd.get_names("selections"):
+            self.cmd.reference("store",active_sele)
+
+    def do_recall(self):
+        if active_sele in self.cmd.get_names("selections"):
+            self.cmd.reference("recall",active_sele)
+
+    def do_swap(self):
+        if active_sele in self.cmd.get_names("selections"):
+            self.cmd.reference("swap",active_sele)
+
     def get_panel(self):
         title = {2:"Restrained Atoms",
                  3:"Fixed Atoms"}.get(self.flag)
         verb = {2:"Restrain", 3:"Fix"}.get(self.flag)
-        
-        
-        return [
+
+        result = [
             [ 1, title, ''],
             [ 2, verb + " All",'cmd.get_wizard().do_all()'],
             [ 2, verb + " More",'cmd.get_wizard().do_more()'],
@@ -770,6 +790,14 @@ class AtomFlagWizard(ActionWizard):
             [ 2, 'Done','cmd.set_wizard()'],
             ]
 
+        if self.flag == 2:
+            result[-1:-1] = [
+            [ 2, "Store Reference Coords", 'cmd.get_wizard().do_store()'],
+            [ 2, "Recall Reference Coords", 'cmd.get_wizard().do_recall()'],
+            [ 2, "Swap Reference Coords", 'cmd.get_wizard().do_swap()']]
+
+        return result
+ 
     def cleanup(self):
         self.cmd.delete(display_sele)
         Wizard.cleanup(self)
@@ -1011,7 +1039,8 @@ def model_to_sdf_list(model):
     at_id = 1
     for atom in model.atom:
         if atom.flags & 4:
-            restrained.append(at_id)
+            if hasattr(atom,'ref_coord'):
+                restrained.append( [at_id,atom.ref_coord])
         if atom.flags & 8:
             fixed.append(at_id)
         at_id = at_id + 1
@@ -1026,11 +1055,15 @@ def model_to_sdf_list(model):
     if len(restrained):
         fit_flag = 0
         sdf_list.append(">  <RESTRAINED_ATOMS>\n")
-        sdf_list.append("+ ATOM    MIN    MAX F_CONST\n");
-        for ID in restrained:
-            sdf_list.append("| %4d %6.3f %6.3f %6.3f\n"%(ID,0,0,5))
+        sdf_list.append("+ ATOM    MIN    MAX F_CONST         X         Y         Z\n")
+        for entry in restrained:
+            xrd = entry[1]
+            sdf_list.append("| %4d %6.3f %6.3f %6.3f %10.4f %10.4f %10.4f\n"%
+                            (entry[0],0,0,3,xrd[0],xrd[1],xrd[2]))
         sdf_list.append("\n")
     sdf_list.append("$$$$\n")
+#    for line in sdf_list:
+#        print line,
     return (fit_flag, sdf_list)
 
 class CleanJob:
@@ -1062,6 +1095,8 @@ class CleanJob:
                 self.cmd.set("sculpting",0)
                 state = self_cmd.get_state()
 #                sdf_list = io.mol.toList(self_cmd.get_model(obj_name,state=state)) + ["$$$$\n"]
+                if self_cmd.count_atoms(obj_name+" and flag 2"): # any atoms restrained?
+                    self_cmd.reference("validate",obj_name,state) # then we have reference coordinates
                 (fit_flag, sdf_list) = model_to_sdf_list(self_cmd.get_model(obj_name,state=state))
                 result = mengine.run(string.join(sdf_list,''))
                 if result != None:
