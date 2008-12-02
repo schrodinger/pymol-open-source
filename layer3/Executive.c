@@ -165,29 +165,32 @@ int ExecutiveTransformObjectSelection2(PyMOLGlobals *G,CObject *obj,int state,
 
 int ExecutiveReference(PyMOLGlobals *G,int action, char *sele, int state, int quiet)
 {
-  ObjectMolecule **result = NULL;
-#if 0
-
-IN PROGRESS
+  int result = -1;
   int s1=SelectorIndexByName(G,sele);  
   if(s1>=0) {
     ObjectMoleculeOpRec op;
     ObjectMoleculeOpRecInit(&op);
+    
     switch(action) {
-  cs = ObjectMoleculeGetCoordSet(obj0,sta0);
-  int CoordSetValidateRefCoord(CoordSet *I)
-
-      op.code = OMOP_GetObjects;
-      op.obj1VLA=(ObjectMolecule**)VLAlloc(CObject*,10);
-      op.i1 = 0;
+    case 1:
+      op.code = OMOP_ReferenceStore;
+      break;
+    case 2:
+      op.code = OMOP_ReferenceRecall;
+      break;
+    case 3:
+      op.code = OMOP_ReferenceValidate;
+      break;
+    case 4:
+      op.code = OMOP_ReferenceSwap;
+      break;
     }
+    op.i1 = state;
+    op.i2 = 0;
     ExecutiveObjMolSeleOp(G,s1,&op);
-    result = (ObjectMolecule**)op.obj1VLA;
-    VLASize(result,ObjectMolecule*,op.i1);
+    result = op.i2;
   }
-#endif
   return result;
-
 }
 
 int ExecutiveIsosurfaceEtc(PyMOLGlobals *G, 

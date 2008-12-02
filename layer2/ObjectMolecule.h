@@ -179,6 +179,8 @@ typedef struct {
 #define OMOP_RevalenceByGuessing 61
 #define OMOP_ReferenceStore 62
 #define OMOP_ReferenceRecall 63
+#define OMOP_ReferenceValidate 64
+#define OMOP_ReferenceSwap 65
 
 #include"CoordSet.h"
 

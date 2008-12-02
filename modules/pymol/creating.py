@@ -805,9 +805,15 @@ SEE ALSO
         try:
             _self.lock(_self)
             if name==None:
-                sel_cnt = _cmd.get(_self._COb,"sel_counter") + 1.0
-                _cmd.legacy_set(_self._COb,"sel_counter","%1.0f" % sel_cnt)
-                name = "obj%02.0f" % sel_cnt
+                avoid = {}
+                for obj in cmd.get_names("all"):
+                    avoid[obj] = 1
+                while 1:
+                    sel_cnt = _cmd.get(_self._COb,"sel_counter") + 1.0
+                    name = "obj%02.0f" % sel_cnt
+                    if not avoid.has_key(name):
+                        _cmd.legacy_set(_self._COb,"sel_counter","%1.0f" % sel_cnt)
+                        break
             r = _cmd.create(_self._COb,str(name),"("+str(selection)+")",
                             int(source_state)-1,int(target_state)-1,
                             int(discrete),int(zoom),int(quiet),int(singletons))

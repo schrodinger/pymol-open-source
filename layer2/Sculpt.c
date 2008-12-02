@@ -2354,16 +2354,31 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
           for(aa=0;aa<n_active;aa++) {
             if( (cnt_a = cnt[(a = *(a_ptr++))]) ) {
               AtomInfoType *ai = obj->AtomInfo + a;
-              if(!(ai->protekted||(ai->flags&cAtomFlag_fix))) {
+	      RefPosType *cs_refpos = cs->RefPos;
+	      int flags;
+              if(!(ai->protekted||((flags = ai->flags)&cAtomFlag_fix))) {
                 v1 = disp+3*a;
                 v2 = cs_coord+3*atm2idx[a];
-                if(!(cnt_a&0xFFFFFF00)) /* don't divide -- too slow */
+
+		if((flags&cAtomFlag_restrain)&&cs_refpos) {
+		  RefPosType *rp = cs_refpos + atm2idx[a];
+		  if(rp->specified) {
+		    float *v3 = rp->coord;
+		    cnt_a++;
+		    v1[0] += v3[0] - v2[0];
+		    v1[1] += v3[1] - v2[1];
+		    v1[2] += v3[2] - v2[2];
+		  }
+		}
+
+                if(!(cnt_a&0xFFFFFF00)) /* don't divide -- too slow! */
                   inv_cnt = lookup_inverse[cnt_a];
                 else
                   inv_cnt = _1/cnt_a;
-                *(v2  )+=(*(v1  ))*inv_cnt;
-                *(v2+1)+=(*(v1+1))*inv_cnt;
-                *(v2+2)+=(*(v1+2))*inv_cnt;
+		
+		*(v2  ) += (*(v1  ))*inv_cnt;
+		*(v2+1) += (*(v1+1))*inv_cnt;
+		*(v2+2) += (*(v1+2))*inv_cnt;
               }
             }
           }

@@ -9242,8 +9242,69 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        * what if "v" is invalidated by another thread? */
       break;
     }
-    /* */
     switch(op->code) {
+    case OMOP_ReferenceStore:
+    case OMOP_ReferenceRecall:
+    case OMOP_ReferenceValidate:
+    case OMOP_ReferenceSwap:
+      for(b=0;b<I->NCSet;b++) {
+        if(I->CSet[b]) {
+          if((b==op->i1)||(op->i1<0)) {
+	    int inv_flag = false;
+	    cs = I->CSet[b];
+	    if(cs && CoordSetValidateRefPos(cs)) {
+	      for(a=0;a<I->NAtom;a++) {
+		s=I->AtomInfo[a].selEntry;
+		if(SelectorIsMember(G,s,sele)) {
+		  if(I->DiscreteFlag) {
+		    if(cs == I->DiscreteCSet[a])
+		      ind=I->DiscreteAtmToIdx[a];
+		    else
+		      ind=-1;
+		  } else 
+		    ind=cs->AtmToIdx[a];
+		  if(ind>=0) {
+		    float *v = cs->Coord + ind*3;
+		    RefPosType *rp = cs->RefPos + ind;
+		    switch(op->code) {
+		    case OMOP_ReferenceStore:
+		      copy3f(v,rp->coord);
+		      rp->specified = true;
+		      break;
+		    case OMOP_ReferenceRecall:
+		      if(rp->specified) {
+			copy3f(rp->coord,v);
+			inv_flag = true;
+		      }
+		      break;
+		    case OMOP_ReferenceValidate:
+		      if(!rp->specified) {
+			copy3f(v,rp->coord);
+			rp->specified = true;
+		      }
+		      break;
+		    case OMOP_ReferenceSwap:
+		      if(rp->specified) {
+			copy3f(rp->coord,v1);
+			copy3f(v,rp->coord);
+			copy3f(v1,v);
+			inv_flag = true;
+		      }
+		      break;
+		    }
+		    op->i2++;
+		  }
+		}
+	      }
+            }
+	    if(inv_flag && cs){
+	      if(cs->fInvalidateRep)
+		cs->fInvalidateRep(cs,cRepAll,cRepInvRep);
+	    }
+	  }
+        }
+      }
+      break;
     case OMOP_AddHydrogens:
       ObjectMoleculeAddSeleHydrogens(I,sele,-1); /* state? */
       break;
@@ -9329,8 +9390,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         }
       }
       break;
-	case OMOP_PDB1:
-	  for(b=0;b<I->NCSet;b++)
+    case OMOP_PDB1:
+      for(b=0;b<I->NCSet;b++)
         if(I->CSet[b]) {
           if((b==op->i1)||(op->i1<0))
             for(a=0;a<I->NAtom;a++) {
@@ -9350,8 +9411,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
               }
             }
         }
-	  break;
-	case OMOP_AVRT: /* average vertex coordinate */
+      break;
+    case OMOP_AVRT: /* average vertex coordinate */
       {
         register int op_i2 = op->i2;
         register int obj_TTTFlag = I->Obj.TTTFlag;
@@ -9416,7 +9477,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         }
       }
       break;
-	case OMOP_StateVRT: /* state vertex coordinate */
+    case OMOP_StateVRT: /* state vertex coordinate */
       {
         register int op_i2 = op->i2;
         register int obj_TTTFlag = I->Obj.TTTFlag;
@@ -9481,7 +9542,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         }
       }
       break;
-	case OMOP_SFIT: /* state fitting within a single object */
+    case OMOP_SFIT: /* state fitting within a single object */
       vt = Alloc(float,3*op->nvv2); /* temporary (matching) target vertex pointers */
       cnt = 0;
       for(a=0;a<I->NAtom;a++)  {
@@ -9610,7 +9671,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
       }
       FreeP(vt);
       break;
-	case OMOP_SetGeometry: 
+    case OMOP_SetGeometry: 
       for(a=0;a<I->NAtom;a++) {
         s=I->AtomInfo[a].selEntry;
         if(SelectorIsMember(G,s,sele)) {
@@ -9624,7 +9685,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         }
       }
       break;
-	case OMOP_OnOff:
+    case OMOP_OnOff:
       for(a=0;a<I->NAtom;a++) {
         s=I->AtomInfo[a].selEntry;
         if(SelectorIsMember(G,s,sele)) {
@@ -9633,7 +9694,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         }
       }
       break;
-	case OMOP_SaveUndo: /* save undo */
+    case OMOP_SaveUndo: /* save undo */
       for(a=0;a<I->NAtom;a++) {
         s=I->AtomInfo[a].selEntry;
         if(SelectorIsMember(G,s,sele)) {
@@ -9642,7 +9703,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         }
       }
       break;
-	case OMOP_Identify: /* identify atoms */
+    case OMOP_Identify: /* identify atoms */
       for(a=0;a<I->NAtom;a++) {
         s=I->AtomInfo[a].selEntry;
         if(SelectorIsMember(G,s,sele)) {
@@ -9651,7 +9712,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         }
       }
       break;
-	case OMOP_GetBFactors: 
+    case OMOP_GetBFactors: 
       ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++) {
         s=ai->selEntry;
@@ -9662,7 +9723,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         ai++;
       }
       break;
-	case OMOP_GetOccupancies: 
+    case OMOP_GetOccupancies: 
       ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++) {
         s=ai->selEntry;
@@ -9673,7 +9734,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         ai++;
       }
       break;
-	case OMOP_GetPartialCharges: 
+    case OMOP_GetPartialCharges: 
       ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++)   {
         s=ai->selEntry;
@@ -9684,7 +9745,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         ai++;
       }
       break;
-	case OMOP_IdentifyObjects: /* identify atoms */
+    case OMOP_IdentifyObjects: /* identify atoms */
       for(a=0;a<I->NAtom;a++) {
         s=I->AtomInfo[a].selEntry;
         if(SelectorIsMember(G,s,sele)) {
@@ -9696,7 +9757,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         }
       }
       break;
-	case OMOP_Index: /* identify atoms */
+    case OMOP_Index: /* identify atoms */
       for(a=0;a<I->NAtom;a++) {
         s=I->AtomInfo[a].selEntry;
         if(SelectorIsMember(G,s,sele)) {
@@ -9708,7 +9769,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         }
       }
       break;
-	case OMOP_GetObjects: /* identify atoms */
+    case OMOP_GetObjects: /* identify atoms */
       for(a=0;a<I->NAtom;a++)
         {
           s=I->AtomInfo[a].selEntry;
@@ -9721,7 +9782,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
             }
         }
       break;
-	case OMOP_CountAtoms: /* count atoms in object, in selection */
+    case OMOP_CountAtoms: /* count atoms in object, in selection */
       ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++)  {
         s=ai->selEntry;
@@ -9747,7 +9808,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         ai++; 
       }
       break;
-	case OMOP_Cartoon: /* adjust cartoon type */
+    case OMOP_Cartoon: /* adjust cartoon type */
       ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++)  {
         s=ai->selEntry;
@@ -9758,7 +9819,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         ai++; 
       }
       break;
-	case OMOP_Protect: /* protect atoms from movement */
+    case OMOP_Protect: /* protect atoms from movement */
       ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++)  {
         s=ai->selEntry;
@@ -9769,7 +9830,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         ai++;
       }
       break;
-	case OMOP_Mask: /* protect atoms from selection */
+    case OMOP_Mask: /* protect atoms from selection */
       ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++)
         {
@@ -9782,7 +9843,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
           ai++;
         }
       break;
-	case OMOP_SetB: /* set B-value */
+    case OMOP_SetB: /* set B-value */
       ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++)  {
         s=ai->selEntry;
@@ -9793,7 +9854,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
         ai++;
       }
       break;
-	case OMOP_Remove: /* flag atoms for deletion */
+    case OMOP_Remove: /* flag atoms for deletion */
       ai=I->AtomInfo;
       if(I->DiscreteFlag) /* for now, can't remove atoms from discrete objects */
         for(a=0;a<I->NAtom;a++)  {         
@@ -10544,15 +10605,15 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                     } else 
                       a1=cs->AtmToIdx[a];
                     if(a1>=0) {
-                        r=(float)diff3f(op->v1,cs->Coord+(3*a1));
-                        if(r>op->f1)
-                          op->f1=r;
-                      }
+		      r=(float)diff3f(op->v1,cs->Coord+(3*a1));
+		      if(r>op->f1)
+			op->f1=r;
+		    }
                     break;
                   case OMOP_INVA:
                     if(!cs->objMolOpInvalidated) {
-                    /* performance optimization: avoid repeatedly
-                       calling invalidate on the same coord sets */
+		      /* performance optimization: avoid repeatedly
+			 calling invalidate on the same coord sets */
                       if(I->DiscreteFlag) {
                         if(cs==I->DiscreteCSet[a])
                           a1=I->DiscreteAtmToIdx[a];
@@ -10655,15 +10716,15 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
       } /* case: default */
       break;
     }
-	if(hit_flag) {
-	  switch(op->code) {
+    if(hit_flag) {
+      switch(op->code) {
       case OMOP_COLR:
         ExecutiveUpdateColorDepends(I->Obj.G,I);
         break;
-	  case OMOP_TTTF:
+      case OMOP_TTTF:
         ObjectMoleculeTransformTTTf(I,op->ttt,-1);
         break;
-	  case OMOP_LABL:
+      case OMOP_LABL:
         ObjectMoleculeInvalidate(I,cRepLabel,cRepInvText,-1);
         break;
       case OMOP_AlterState: /* overly coarse - doing all states, could do just 1 */
@@ -10716,12 +10777,12 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
           }
         }
         break;
-	  }
-	}
+      }
+    }
 
     /* always run on exit...*/
-	switch(op->code) {
-	case OMOP_ALTR:
+    switch(op->code) {
+    case OMOP_ALTR:
     case OMOP_AlterState:
       PUnblock(G);
       break;

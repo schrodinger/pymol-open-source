@@ -35,8 +35,7 @@ typedef struct CoordSet {
   void (*fInvalidateRep)(struct CoordSet *I,int type,int level);
   CObjectState State;
   ObjectMolecule *Obj;
-  float *Coord, *RefCoord; /* if RefCoord is not NULL, then it must be
-                              same size as Coord */
+  float *Coord;
   int *Color; 
   int *IdxToAtm;
   int *AtmToIdx;
@@ -64,6 +63,8 @@ typedef struct CoordSet {
   LabPosType *LabPos;
 
   /* not saved in state */
+
+  RefPosType *RefPos;
 
   /* idea:  
   int start_atix, stop_atix <-- for discrete objects, we need
@@ -116,7 +117,7 @@ int CoordSetMoveAtomLabel(CoordSet *I,int at,float *v,int mode);
 int CoordSetTransformAtomTTTf(CoordSet *I,int at,float *TTT);
 int CoordSetTransformAtomR44f(CoordSet *I,int at,float *matrix);
 
-int CoordSetValidateRefCoord(CoordSet *I);
+int CoordSetValidateRefPos(CoordSet *I);
 
 void CoordSetPurge(CoordSet *I);
 void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom);

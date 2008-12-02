@@ -26,11 +26,14 @@ if __name__=='pymol.editing':
     ref_action_dict = {
         'store'     : 1,
         'recall'    : 2,
+        'validate'  : 3,
+        'swap'      : 4,
     }
 
     ref_action_sc = Shortcut(ref_action_dict.keys())
 
-    def reference(action='store', selection='(all)', state=0, quiet=1, _self=cmd):
+    def reference(action='validate', selection='(all)',
+                  state=0, quiet=1, _self=cmd):
         r = DEFAULT_ERROR
         if is_string(action):
             action = ref_action_sc.auto_err(action,"action")
@@ -40,8 +43,8 @@ if __name__=='pymol.editing':
         selection = selector.process(selection)           
         try:
             _self.lock(_self)
-            r = _cmd.reference(int(action), str(selection),
-                               int(state)-1, int(quiet), _self._COb)
+            r = _cmd.reference( _self._COb, int(action), str(selection),
+                               int(state)-1, int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
