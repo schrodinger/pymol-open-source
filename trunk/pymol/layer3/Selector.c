@@ -6425,9 +6425,19 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref)
               transform44d3f(matrix,v_ptr,v_tmp);
               v_ptr = v_tmp;
             }
-
-            PyList_SetItem(atom_list,c,
-                           CoordSetAtomToChemPyAtom(G,ai,v_ptr,at));
+            {
+              float *ref_ptr = cs->RefCoord;
+              float ref_tmp[3];
+              if(ref_ptr) {
+                ref_ptr += 3*idx;
+                if(matrix_flag) {
+                  transform44d3f(matrix,ref_ptr,ref_tmp);
+                  ref_ptr = ref_tmp;
+                }
+              }
+              PyList_SetItem(atom_list,c,
+                             CoordSetAtomToChemPyAtom(G,ai,v_ptr,ref_ptr,at));
+            }
             c = c + 1;
           }
         }

@@ -1007,8 +1007,11 @@ def model_to_sdf_list(model):
 
     sdf_list = io.mol.toList(model)
     fixed = []
+    restrained = []
     at_id = 1
     for atom in model.atom:
+        if atom.flags & 4:
+            restrained.append(at_id)
         if atom.flags & 8:
             fixed.append(at_id)
         at_id = at_id + 1
@@ -1019,6 +1022,13 @@ def model_to_sdf_list(model):
         sdf_list.append("+ ATOM\n");
         for ID in fixed:
             sdf_list.append("| %4d\n"%ID)
+        sdf_list.append("\n")
+    if len(restrained):
+        fit_flag = 0
+        sdf_list.append(">  <RESTRAINED_ATOMS>\n")
+        sdf_list.append("+ ATOM    MIN    MAX F_CONST\n");
+        for ID in restrained:
+            sdf_list.append("| %4d %6.3f %6.3f %6.3f\n"%(ID,0,0,5))
         sdf_list.append("\n")
     sdf_list.append("$$$$\n")
     return (fit_flag, sdf_list)

@@ -826,7 +826,8 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,
   
 }
 /*========================================================================*/
-PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int index)
+PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,
+                                   float *ref, int index)
 {
 #ifdef _PYMOL_NOPY
   return NULL;

@@ -106,7 +106,7 @@ void CoordSetTransform33f(CoordSet *I,float *mat);
 void CoordSetRealToFrac(CoordSet *I,CCrystal *cryst);
 void CoordSetFracToReal(CoordSet *I,CCrystal *cryst);
 void CoordSetGetAverage(CoordSet *I,float *v0);
-PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int index);
+PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,float *ref,int index);
 int CoordSetGetAtomVertex(CoordSet *I,int at,float *v);
 int CoordSetGetAtomTxfVertex(CoordSet *I,int at,float *v);
 int CoordSetSetAtomVertex(CoordSet *I,int at,float *v);
