@@ -13,6 +13,7 @@ import Pmw
 from pymol import editor
 from pymol import computing
 from pymol.wizard import Wizard
+from chempy import cpv
 
 import pymol
 
@@ -79,7 +80,8 @@ class CleanWizard(ActionWizard):
         if active_sele in self.cmd.get_names("selections"):
             obj_list = self.cmd.get_object_list(active_sele)
             if len(obj_list)==1:
-                computing.CleanJob(self.cmd,active_sele,message="Cleaning %s..."%obj_list[0])
+                computing.CleanJob(self.cmd,active_sele,
+                                   message="Cleaning %s..."%obj_list[0])
 
     def do_pick(self, bondFlag):
         if active_sele in self.cmd.get_names("selections"):
@@ -135,6 +137,9 @@ class SculptWizard(ActionWizard):
         
     def sculpt_deactivate(self):
         if self.sculpt_object != None:
+            self.cmd.set("sculpt_vdw_vis_mode","0",self.sculpt_object)
+            self.cmd.sculpt_iterate(self.sculpt_object,self.cmd.get_state(),0)
+            self.cmd.unset("sculpt_vdw_vis_mode",self.sculpt_object)
             self.cmd.sculpt_deactivate(self.sculpt_object)
             self.sculpt_object = None
             self.cmd.refresh_wizard()            
@@ -165,17 +170,34 @@ class SculptWizard(ActionWizard):
         self.cmd.set_wizard()
         self.cmd.refresh_wizard()
         
+    def scramble(self):
+        if self.cmd.count_atoms(self.sculpt_object):
+            extent = self.cmd.get_extent(self.sculpt_object+
+                                         " and not (fixed or restrained)")
+            center = self.cmd.get_position(self.sculpt_object+
+                                           " and not (fixed or restrained)")
+            radius = 1.25*cpv.length(cpv.sub(extent[0],extent[1]))
+            self.cmd.alter_state(self.cmd.get_state(),
+                self.sculpt_object + 
+                " and not fixed","(x,y,z)=rsp(pos,rds)",
+                space= { 'rsp' :  cpv.random_displacement,
+                         'pos' : center,
+                         'rds' : radius })
+
     def get_panel(self):
         return [
             [ 1, 'Sculpt', ''],
             [ 2, 'Undo', 'cmd.undo()'],
-            [ 2, 'Switch Object', 'cmd.get_wizard().sculpt_deactivate()'],            
+
+            [ 2, 'Switch Object', 'cmd.get_wizard().sculpt_deactivate()'],
+            [ 2, 'Scramble Free Atoms', 'cmd.get_wizard().scramble()'],
             [ 2, 'Done','cmd.get_wizard().finish_sculpting()'],
             ]
 
     def cleanup(self):
         self.sculpt_deactivate()
         Wizard.cleanup(self)
+
 
 class RepeatableActionWizard(ActionWizard):
 
@@ -204,6 +226,7 @@ class RepeatableActionWizard(ActionWizard):
                     self.repeat()
         if activate_flag:
             self.cmd.set_wizard(self,replace=1)
+            self.repeat() # always repeating for now...
             self.cmd.refresh_wizard()
         else:
             self.actionWizardDone()
@@ -385,6 +408,7 @@ class ValenceWizard(RepeatableActionWizard):
 
     def cleanup(self):
         self.cmd.button('single_left','none','PkAt')
+        self.cmd.button('double_left','none','MovA')
         
     def do_pick(self, bondFlag):
         self.cmd.select(active_sele, "bymol pk1") 
@@ -396,6 +420,7 @@ class ValenceWizard(RepeatableActionWizard):
                 self.cmd.cycle_valence()
             self.cmd.unpick()
         else:
+            self.cmd.button('double_left','none','PkBd')
             self.cmd.button('single_left','none','PkBd')
             self.cmd.unpick()
         if not self.getRepeating():
@@ -406,10 +431,11 @@ class ValenceWizard(RepeatableActionWizard):
         self.order = order
         self.text = text
         self.setActionHash( (order,text) )
-        if self.activateRepeatOrDismiss():
-            self.activateRepeatOrDismiss()
+        self.activateRepeatOrDismiss()
         if self.cmd.get_wizard() == self:
-            self.cmd.button('single_left','none','PkBd') # get us into bond picking mode...
+            # get us into bond picking mode...
+            self.cmd.button('double_left','none','PkBd')
+            self.cmd.button('single_left','none','PkBd') 
                                     
     def get_prompt(self):
         if self.getRepeating():
@@ -614,8 +640,6 @@ class HydrogenWizard(RepeatableActionWizard):
             if self.activateOrDismiss():
                 if self.activeSeleValid():
                     self.run_add()
-                    self.cmd.set_wizard()
-                    self.cmd.refresh_wizard()
         else:
             self.activateRepeatOrDismiss()
                                     
@@ -831,7 +855,7 @@ class GuiLabel:
         frame.nextColumn()
 
 class GuiButton:
-    def __init__(self, frame, text, command, comment="", colspan=1):
+    def __init__(self,frame, text, command, comment="", colspan=1):
         if(text[0:1]=='|'):
             width=3*colspan
         else:
@@ -875,7 +899,7 @@ class AtomFrame(GuiFrame):
         self.builder = parent.builder
         self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
-        GuiLabel(self, "Atoms")
+#        GuiLabel(self, "Atoms")
         GuiButton(self, "H", lambda s=self: s.replace("H",1,1, "Hydrogen"), "Hydrogen")
         GuiButton(self, "C", lambda s=self: s.replace("C",4,4, "Carbon"), "Carbon")
         GuiButton(self, "N", lambda s=self: s.replace("N",4,3, "Nitrogen"), "Nitrogen")
@@ -886,6 +910,9 @@ class AtomFrame(GuiFrame):
         GuiButton(self, "Cl",lambda s=self: s.replace("Cl",1,1, "Chlorine"), "Chlorine")
         GuiButton(self, "Br",lambda s=self: s.replace("Br",1,1, "Bromine"), "Bromine")
         GuiButton(self, "I", lambda s=self: s.replace("I",1,1, "Iodine"), "Iodine")
+        GuiButton(self, "",None,"Unassigned")
+        GuiButton(self, "",None,"Unassigned")
+#        GuiButton(self, "B", lambda s=self: s.replace("B",1,1, "Boron"), "Boron")
 
     def replace(self, atom, geometry, valence, text):
         picked = collectPicked(self.cmd)
@@ -902,19 +929,24 @@ class FragmentFrame(GuiFrame):
         self.cmd = self.builder.cmd
         GuiFrame.__init__(self, parent)
 
-        GuiLabel(self, "Fragments")
+#        GuiLabel(self, "Fragments")
+
         GuiButton(self, "CH4", lambda s=self: s.grow("methane",1,0,"methyl"), "Methane")
-        GuiButton(self, "OMe", lambda s=self: s.grow("methanol",5,0,"methoxy"), "Methanol")
         GuiButton(self, "C=C", lambda s=self: s.grow("ethylene",4,0,"vinyl"), "Enthylene")
         GuiButton(self, "C#C", lambda s=self: s.grow("acetylene",2,0,"alkynl"), "Acetylene")
         GuiButton(self, "C#N", lambda s=self: s.grow("cyanide",2,0,"cyano"), "Cyanide")
-        GuiButton(self, "NC=O", lambda s=self: s.grow("formamide",3,1,"N->C amide"), "N->C amide")
-        GuiButton(self, "C=ON", lambda s=self: s.grow("formamide",5,0,"C->N amide"), "C->N amide")
         GuiButton(self, "C=O", lambda s=self: s.grow("formaldehyde",2,0,"carbonyl",), "Aldehyde")
+        GuiButton(self, "C=ON", lambda s=self: s.grow("formamide",5,0,"C->N amide"), "C->N amide")
+        GuiButton(self, "NC=O", lambda s=self: s.grow("formamide",3,1,"N->C amide"), "N->C amide")
         GuiButton(self, "S=O2", lambda s=self: s.grow("sulfone",3,1,"sulfonyl"), "Sulfone")
         GuiButton(self, "P=O3", lambda s=self: s.grow("phosphite",4,0,"phosphoryl"), "Phosphite")
+        GuiButton(self, "N=O2", lambda s=self: s.grow("nitro",3,0,"nitro"), "Nitro")
+        GuiButton(self, "-CF3", lambda s=self: s.grow("trifluoromethane",4,0,"trifluoro"),
+                  "Trifluoromethane")
+        GuiButton(self, "-OMe", lambda s=self: s.grow("methanol",5,0,"methoxy"), "Methanol")
 
-        GuiLabel(self, "Rings")
+#        GuiLabel(self, "Rings")
+        self.nextRow()
         GuiImgButton(self, "cyc3", lambda s=self: s.grow("cyclopropane",4,0,"cyclopropyl"), "Cyclopropane")
         GuiImgButton(self, "cyc4", lambda s=self: s.grow("cyclobutane",4,0,"cyclobutyl"), "Cyclobutane")
         GuiImgButton(self, "cyc5", lambda s=self: s.grow("cyclopentane",5,0,"cyclopentyl"), "Cyclopentane")
@@ -927,6 +959,8 @@ class FragmentFrame(GuiFrame):
         GuiImgButton(self, "aro66",lambda s=self: s.grow("napthylene",13,0,"napthyl"), "Napthylene")
         GuiImgButton(self, "aro67",lambda s=self: s.grow("benzocycloheptane",13,0,
                                                          "benzocycloheptyl"), "Benzocycloheptane")
+        GuiButton(self, "",None,"Unassigned")
+        GuiButton(self, "",None,"Unassigned")
 
     def grow(self, name, pos, geom, text):
         if "pk1" in self.cmd.get_names("selections"):
@@ -1289,8 +1323,11 @@ class Builder(Frame):
             if "pk1" in self.cmd.get_names("selections"):
                 self.cmd.zoom("((neighbor pk1) extend 4)", 4.0, animate=-1)
 
-    def doValence(self, *ignore):
-        self.cmd.set("valence", self.showValence.get())
+#    def doValence(self, *ignore):
+#        self.cmd.set("valence", self.showValence.get())
+
+    def doVdw(self, *ignore):
+        self.cmd.set("sculpt_vdw_vis_mode", self.showVdw.get())
 
 ##############################################################
 # main constructor methods
@@ -1312,23 +1349,30 @@ class Builder(Frame):
 
         self.autoPik = IntVar()
         self.autoPik.set(0)
-        autoB = Checkbutton(self, text="autopick", 
-            borderwidth=1, pady=0, justify=LEFT, variable=self.autoPik, 
-            onvalue=1, offvalue=0, command=self.cmd.unpick)
-        autoB.grid(row=4, column=1, sticky=W)
+#        autoB = Checkbutton(self, text="autopick", 
+#            borderwidth=1, pady=0, justify=LEFT, variable=self.autoPik, 
+#            onvalue=1, offvalue=0, command=self.cmd.unpick)
+#        autoB.grid(row=4, column=1, sticky=W)
 
         self.autoZoom = IntVar()
         self.autoZoom.set(0)
-        Checkbutton(self, text="autozoom", 
-            borderwidth=1, pady=0, justify=LEFT, variable=self.autoZoom, 
-            onvalue=1, offvalue=0, command=self.doZoom).grid(row=5, column=1,
-            sticky=W)
+#        Checkbutton(self, text="autozoom", 
+#            borderwidth=1, pady=0, justify=LEFT, variable=self.autoZoom, 
+#            onvalue=1, offvalue=0, command=self.doZoom).grid(row=5, column=1,
+#            sticky=W)
 
         self.showValence = StringVar()
         self.showValence.set(self.cmd.get("valence"))
-        Checkbutton(self, text="valence", 
-            borderwidth=1, pady=0, justify=LEFT, variable=self.showValence, 
-            onvalue="on", offvalue="off", command=self.doValence).grid(row=6, 
+#        Checkbutton(self, text="valence", 
+#            borderwidth=1, pady=0, justify=LEFT, variable=self.showValence, 
+#            onvalue="on", offvalue="off", command=self.doValence).grid(row=6, 
+#            column=1, sticky=W)
+
+        self.showVdw = StringVar()
+        self.showVdw.set(self.cmd.get("sculpt_vdw_vis_mode"))
+        Checkbutton(self, text="vdw_vis", 
+            borderwidth=1, pady=0, justify=LEFT, variable=self.showVdw, 
+            onvalue="on", offvalue="off", command=self.doVdw).grid(row=6, 
             column=1, sticky=W)
 
 
