@@ -951,6 +951,7 @@ class FragmentFrame(GuiFrame):
         GuiButton(self, "S=O2", lambda s=self: s.grow("sulfone",3,1,"sulfonyl"), "Sulfone")
         GuiButton(self, "P=O3", lambda s=self: s.grow("phosphite",4,0,"phosphoryl"), "Phosphite")
         GuiButton(self, "N=O2", lambda s=self: s.grow("nitro",3,0,"nitro"), "Nitro")
+        GuiButton(self, "",None,"Unassigned")
 
 #        GuiLabel(self, "Rings")
         self.nextRow()
