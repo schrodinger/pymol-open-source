@@ -910,9 +910,9 @@ class AtomFrame(GuiFrame):
         GuiButton(self, "Cl",lambda s=self: s.replace("Cl",1,1, "Chlorine"), "Chlorine")
         GuiButton(self, "Br",lambda s=self: s.replace("Br",1,1, "Bromine"), "Bromine")
         GuiButton(self, "I", lambda s=self: s.replace("I",1,1, "Iodine"), "Iodine")
-        GuiButton(self, "",None,"Unassigned")
-        GuiButton(self, "",None,"Unassigned")
-#        GuiButton(self, "B", lambda s=self: s.replace("B",1,1, "Boron"), "Boron")
+        GuiButton(self, "-CF3", lambda s=self: s.grow("trifluoromethane",4,0,"trifluoro"),
+                  "Trifluoromethane")
+        GuiButton(self, "-OMe", lambda s=self: s.grow("methanol",5,0,"methoxy"), "Methanol")
 
     def replace(self, atom, geometry, valence, text):
         picked = collectPicked(self.cmd)
@@ -922,6 +922,15 @@ class AtomFrame(GuiFrame):
             self.builder.doAutoPick()
         else:
             ReplaceWizard(_self=self.cmd).toggle(atom,geometry,valence,text)
+
+    def grow(self, name, pos, geom, text):
+        if "pk1" in self.cmd.get_names("selections"):
+            self.cmd.select(active_sele,"byobj pk1")            
+            editor.attach_fragment("pk1", name, pos, geom, _self=self.cmd)
+            self.builder.doAutoPick()
+        else:
+            self.cmd.unpick()
+            AttachWizard(self.cmd).toggle(name, pos, geom, text)
             
 class FragmentFrame(GuiFrame):
     def __init__(self, parent):
@@ -936,14 +945,12 @@ class FragmentFrame(GuiFrame):
         GuiButton(self, "C#C", lambda s=self: s.grow("acetylene",2,0,"alkynl"), "Acetylene")
         GuiButton(self, "C#N", lambda s=self: s.grow("cyanide",2,0,"cyano"), "Cyanide")
         GuiButton(self, "C=O", lambda s=self: s.grow("formaldehyde",2,0,"carbonyl",), "Aldehyde")
+        GuiButton(self, "C=OO", lambda s=self: s.grow("formic",4,0,"carboxyl"), "Formic Acid")
         GuiButton(self, "C=ON", lambda s=self: s.grow("formamide",5,0,"C->N amide"), "C->N amide")
         GuiButton(self, "NC=O", lambda s=self: s.grow("formamide",3,1,"N->C amide"), "N->C amide")
         GuiButton(self, "S=O2", lambda s=self: s.grow("sulfone",3,1,"sulfonyl"), "Sulfone")
         GuiButton(self, "P=O3", lambda s=self: s.grow("phosphite",4,0,"phosphoryl"), "Phosphite")
         GuiButton(self, "N=O2", lambda s=self: s.grow("nitro",3,0,"nitro"), "Nitro")
-        GuiButton(self, "-CF3", lambda s=self: s.grow("trifluoromethane",4,0,"trifluoro"),
-                  "Trifluoromethane")
-        GuiButton(self, "-OMe", lambda s=self: s.grow("methanol",5,0,"methoxy"), "Methanol")
 
 #        GuiLabel(self, "Rings")
         self.nextRow()
