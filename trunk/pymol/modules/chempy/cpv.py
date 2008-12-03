@@ -61,20 +61,37 @@ def length(v):
     return math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
 
 #------------------------------------------------------------------------------
-def random_sphere(v,diameter):
+def random_displacement(v,radius):
+    r_vect = lambda r=random.random:[r()-0.5,r()-0.5,r()-0.5]
     while 1:
-        vect = [random.random(), random.random(), random.random() ]
-        if length(vect)<=1.0:
+        vect = r_vect()
+        v_len = length(vect)
+        if (v_len<=0.5):
             break;
-    return add(v,scale([vect[0]-0.5, vect[1]-0.5, vect[2]-0.5],diameter))
+    if v_len > 0.00000000001:
+        v_len = random.random()*radius / v_len
+        return add(v,scale([vect[0], vect[1], vect[2]],v_len))
+    else:
+        return v
+
+#------------------------------------------------------------------------------
+def random_sphere(v,radius):
+    r_vect = lambda r=random.random:[r()-0.5,r()-0.5,r()-0.5]
+    while 1:
+        vect = r_vect()
+        v_len = length(vect)
+        if (v_len<=0.5) and (v_len!=0.0):
+            break;
+    return add(v,scale([vect[0], vect[1], vect[2]],2*radius/v_len))
 
 #------------------------------------------------------------------------------
 def random_vector():
+    r_vect = lambda r=random.random:[r()-0.5,r()-0.5,r()-0.5]
     while 1:
-        vect = [random.random(), random.random(), random.random() ]
-        if length(vect)<=1.0:
+        vect = r_vect()
+        if length(vect)<=0.5:
             break;
-    return scale([vect[0]-0.5, vect[1]-0.5, vect[2]-0.5],2.0)
+    return scale([vect[0], vect[1], vect[2]],2.0)
 
 #------------------------------------------------------------------------------
 def add(v1,v2):

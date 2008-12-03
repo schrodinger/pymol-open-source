@@ -1443,19 +1443,21 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
         register AtomInfoType *ati1=obj->AtomInfo+b1;
         register AtomInfoType *ati2=obj->AtomInfo+b2;
         int bd_stick_color;        
-        float bd_radius;
+        float bd_radius,bd_radius_full;
         float overlap_r,nub_r;
         float bd_transp;
-
+	
         AtomInfoGetBondSetting_color(G,b,cSetting_stick_color,stick_color,&bd_stick_color);
         AtomInfoGetBondSetting_f(G,b,cSetting_stick_radius,radius,&bd_radius);
         if(variable_alpha) 
           AtomInfoGetBondSetting_f(G,b,cSetting_stick_transparency,transp,&bd_transp);
 
+	bd_radius_full=fabs(bd_radius);
 	if(bd_radius<0.0F) {
 	  bd_radius = -bd_radius;
 	  if((ati1->protons == cAN_H)||(ati2->protons == cAN_H))
 	    bd_radius = bd_radius*h_scale; /* scaling for bonds involving hydrogen */
+
 	}
         overlap_r = overlap * bd_radius;
         nub_r = nub * bd_radius;
@@ -1645,16 +1647,16 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
         }
           
         if(stick_ball) {
-          float vdw = stick_ball_ratio * bd_radius;
           int d,e;
           if(stick_ball_ratio>=1.0F) /* don't use caps if spheres are big enough */
             caps_req = false;
           if(s1&&(!marked[b1])) { /* just once for each atom... */
             int *q=sp->Sequence;
             int *s=sp->StripLen;
+	    float vdw = stick_ball_ratio * ((ati1->protons == cAN_H) ? bd_radius : bd_radius_full);
 	    float vdw1 = (vdw>=0) ? vdw : -ati1->vdw * vdw;
 	    int sbc1 = (stick_ball_color==cColorDefault) ? c1 : stick_ball_color;
-
+	    
 	    if(sbc1==cColorAtomic)
 	      sbc1 = ati1->color;
 
@@ -1693,6 +1695,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
           if(s2&&!(marked[b2])) { /* just once for each atom... */
             int *q=sp->Sequence;
             int *s=sp->StripLen;
+	    float vdw = stick_ball_ratio * ((ati2->protons == cAN_H) ? bd_radius : bd_radius_full);
 	    float vdw2 = (vdw>=0) ? vdw : -ati2->vdw * vdw;
 	    int sbc2 = (stick_ball_color==cColorDefault) ? c2 : stick_ball_color;
 
