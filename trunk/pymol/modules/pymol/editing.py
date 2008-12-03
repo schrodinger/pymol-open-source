@@ -22,7 +22,7 @@ if __name__=='pymol.editing':
           boolean_sc,boolean_dict,safe_list_eval, is_sequence, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error              
     from chempy import cpv
-
+    
     ref_action_dict = {
         'store'     : 1,
         'recall'    : 2,
@@ -31,7 +31,7 @@ if __name__=='pymol.editing':
     }
 
     ref_action_sc = Shortcut(ref_action_dict.keys())
-
+    
     def reference(action='validate', selection='(all)',
                   state=0, quiet=1, _self=cmd):
         r = DEFAULT_ERROR

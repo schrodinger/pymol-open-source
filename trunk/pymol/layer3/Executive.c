@@ -5623,11 +5623,14 @@ int ExecutiveSculptIterateAll(PyMOLGlobals *G)
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           objMol =(ObjectMolecule*)rec->obj;
-          ObjectMoleculeSculptIterate(objMol,state,
-                                      SettingGet_i(G,NULL,objMol->Obj.Setting,
-                                                   cSetting_sculpting_cycles),
-                                      center);
-          active = true;
+          if( SettingGet_b(G,NULL,objMol->Obj.Setting,cSetting_sculpting)) {
+            
+            ObjectMoleculeSculptIterate(objMol,state,
+                                        SettingGet_i(G,NULL,objMol->Obj.Setting,
+                                                     cSetting_sculpting_cycles),
+                                        center);
+            active = true;
+          }
         }
       }
     }
@@ -8928,6 +8931,11 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
   float v1[3],*v2;
   int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
 
+  if(matchmaker == -1) { 
+    /* matchmaker -1 is the same as matchmaker 0 except that the
+       selections are not pre-matched prior to calling of this routine */
+    matchmaker = 0;
+  }
   ObjectAlignment *align_to_update = NULL;
 
   sele1=SelectorIndexByName(G,s1);
@@ -8953,11 +8961,9 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
     if(ordered_selections)
       op1.vp1=VLAlloc(int,1000);
     ExecutiveObjMolSeleOp(G,sele1,&op1);
-    for(a=0;a<op1.nvv1;a++)
-      {
+    for(a=0;a<op1.nvv1;a++) {
         inv=(float)op1.vc1[a]; /* average over coordinate sets */
-        if(inv)
-          {
+        if(inv) {
             f=op1.vv1+(a*3);
             inv=1.0F/inv;
             *(f++)*=inv;
@@ -9018,13 +9024,14 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
         }
       }
       
-      if(ok && op1.nvv1 && op2.nvv1 && (matchmaker>0)) { /* matchmaker 0 is the default */
+      if(ok && op1.nvv1 && op2.nvv1 && (matchmaker>0)) { 
+        /* matchmaker 0 is the default... by internal atom ordering only */
         int *idx1 = Alloc(int,op1.nvv1);
         int *idx2 = Alloc(int,op2.nvv1);
         int sort_flag = false;
         if(!(idx1&&idx2)) ok=false; else {
           switch(matchmaker) {
-          case 1: /* by atom info */
+          case 1: /* by atom info-based ordering */
             UtilSortIndexGlobals(G,op1.nvv1,op1.ai1VLA,idx1,(UtilOrderFnGlobals*)fAtomOrdered);
             UtilSortIndexGlobals(G,op2.nvv1,op2.ai1VLA,idx2,(UtilOrderFnGlobals*)fAtomOrdered);
             sort_flag = true;
@@ -9201,7 +9208,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
       if(n_pair) {
         /* okay -- we're on track to do an alignment */
 
-        if(ordered_selections&&op1.vp1&&op2.vp1) {
+        if(ordered_selections && op1.vp1 && op2.vp1) {
           /* if we expected ordered selections and have priorities, 
              then we may need to sort vertices */
           

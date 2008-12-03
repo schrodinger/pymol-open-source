@@ -32,6 +32,7 @@ def get_command_keywords(self_cmd=cmd):
         'cd'            : [ self_cmd.cd                , 0 , 0 , ''  , parsing.STRICT ],
         'center'        : [ self_cmd.center            , 0 , 0 , ''  , parsing.STRICT ],     
         'check'         : [ self_cmd.check             , 0 , 0 , ''  , parsing.STRICT ],
+        'clean'         : [ self_cmd.clean             , 0 , 0 , ''  , parsing.STRICT ],
         'class'         : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ], 
         'clip'          : [ self_cmd.clip              , 0 , 0 , ''  , parsing.STRICT ],
         'cls'           : [ self_cmd.cls               , 0 , 0 , ''  , parsing.STRICT ],

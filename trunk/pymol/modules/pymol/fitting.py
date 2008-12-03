@@ -336,7 +336,7 @@ SEE ALSO
         b = selector.process(b)
         #
         if object==None: object=''
-        if matchmaker==0:
+        if int(matchmaker)==0:
             sele1 = "((%s) in (%s))" % (str(a),str(b))
             sele2 = "((%s) in (%s))" % (str(b),str(a))
         else:
@@ -381,7 +381,7 @@ SEE ALSO
         b = selector.process(b)
         #
         if object==None: object=''      
-        if matchmaker==0:
+        if int(matchmaker)==0:
             sele1 = "((%s) in (%s))" % (str(a),str(b))
             sele2 = "((%s) in (%s))" % (str(b),str(a))
         else:
@@ -424,7 +424,7 @@ SEE ALSO
         b = selector.process(b)
         #
         if object==None: object=''            
-        if matchmaker==0:
+        if int(matchmaker)==0:
             sele1 = "((%s) in (%s))" % (str(a),str(b))
             sele2 = "((%s) in (%s))" % (str(b),str(a))
         else:

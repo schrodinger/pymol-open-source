@@ -203,6 +203,9 @@ from editing import \
       valence,            \
       vdw_fit 
 
+from computing import \
+      clean              
+
 matrix_transfer = matrix_copy # legacy
 
 #--------------------------------------------------------------------

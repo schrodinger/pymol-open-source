@@ -333,6 +333,8 @@ static int SelectorGetObjAtmOffset(CSelector *I,ObjectMolecule *obj,int offset)
 #define SELE_PTDz ( 0x4400 | STYP_SEL0 | 0x90 )
 #define SELE_MSKz ( 0x4500 | STYP_SEL0 | 0x90 )
 #define SELE_IOR2 ( 0x4600 | STYP_OPR2 | 0x10 )
+#define SELE_FXDz ( 0x4700 | STYP_SEL0 | 0x90 )
+#define SELE_RSTz ( 0x4800 | STYP_SEL0 | 0x90 )
 
 #define SEL_PREMAX 0x8
 
@@ -531,6 +533,12 @@ static WordKeyValue Keyword[] =
   {  "nucseq",  SELE_NUCs },
   {  "ns.",      SELE_NUCs },
   */
+
+  {  "fixed",    SELE_FXDz },
+  {  "fxd.",     SELE_FXDz },
+
+  {  "restrained", SELE_RSTz },
+  {  "rst.",       SELE_RSTz },
 
   {  "polymer",  SELE_POLz },
   {  "pol.",     SELE_POLz },
@@ -6752,6 +6760,7 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
         ObjectMoleculeInvalidate(obj0,cRepAll,cRepInvCoord,-1);
       }
     }
+    SceneChanged(G);
     if(!quiet) {
       PRINTFB(G,FB_Selector,FB_Actions)
         " Update: coordinates updated for %d atoms.\n",ccc 
@@ -8287,6 +8296,14 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
 	 case SELE_HYDz:
        for(a=cNDummyAtoms;a<I->NAtom;a++)
          base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hydrogen;
+       break;
+	 case SELE_FXDz:
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_fix;
+       break;
+	 case SELE_RSTz:
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_restrain;
        break;
 	 case SELE_POLz:
        for(a=cNDummyAtoms;a<I->NAtom;a++)
