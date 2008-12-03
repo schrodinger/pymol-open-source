@@ -486,7 +486,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
       if(ai1->visRep[cRepMesh]&&
          (inclH||(!ai1->hydrogen))&&
          ((!cullByFlag)||
-          (!(ai1->flags&(cAtomFlag_exclude|cAtomFlag_ignore))))) {
+          (!(ai1->flags&(cAtomFlag_exfoliate|cAtomFlag_ignore))))) {
         visFlag=true;
         break;
       }
@@ -557,7 +557,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
         if(ai1->visRep[cRepMesh]&&
            (inclH||(!ai1->hydrogen))&&
            ((!cullByFlag)||
-            (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exclude))))) {
+            (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate))))) {
           VLACheck(trim_vla,float,nc*3+2);
           {
 			  float *src = cs->Coord + 3*c;
@@ -626,7 +626,7 @@ Rep *RepMeshNew(CoordSet *cs,int state)
            if(ai1->visRep[cRepMesh]&&
               (inclH||(!ai1->hydrogen))&&
               ((!cullByFlag)||
-               (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exclude))))) {
+               (!(ai1->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate))))) {
              for(d=0;d<3;d++) {
                if(minE[d]>ccs->Coord[(3*c)+d])
                  minE[d]=ccs->Coord[(3*c)+d];

@@ -23,14 +23,19 @@ Z* -------------------------------------------------------------------
 
 /* FLAG 0 - Atoms of interest - i.e. a ligand in an active site */
 #define cAtomFlag_focus         0x00000001
+
 /* FLAG 1 - Free atoms - those which can move subject to a force-field */
 #define cAtomFlag_free          0x00000002
+
 /* FLAG 2 - Restrained atoms - atoms subject to a harmonic restraint */
 #define cAtomFlag_restrain      0x00000004
+
 /* FLAG 3 - Fixed atoms - no movement allowed */
 #define cAtomFlag_fix           0x00000008
+
 /* FLAG 4 - Exclude these atoms when performing simulation, minimization */
 #define cAtomFlag_exclude       0x00000010
+
 /* FLAG 5 - Study atoms  */
 #define cAtomFlag_study         0x00000020
 
@@ -45,11 +50,13 @@ Z* -------------------------------------------------------------------
 /* FLAGS 24-31 are reserved for PyMOL's internal use */
 
 /* FLAG 24 - don't surface these atoms (waters, ligands, etc.) */
-
 #define cAtomFlag_exfoliate     0x01000000
-/* FLAG 25 - ignore atoms altogether when surfacing */
 
-/* FLAG 26 - ? */
+/* FLAG 25 - ignore atoms altogether when surfacing */
+#define cAtomFlag_ignore        0x02000000
+
+/* FLAG 26 - disable cartoon smoothing for these atoms */
+#define cAtomFlag_no_smooth     0x04000000
 
 /* FLAG 27 - polymer */
 #define cAtomFlag_polymer       0x08000000
@@ -66,8 +73,6 @@ Z* -------------------------------------------------------------------
 #define cAtomFlag_class         0xF8000000
 #define cAtomFlag_class_mask    0x07FFFFFF
 
-#define cAtomFlag_ignore        0x02000000
-#define cAtomFlag_no_smooth     0x04000000
 
 #define cResnLen 5
 #define cResiLen 5

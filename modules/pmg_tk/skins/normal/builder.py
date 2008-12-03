@@ -11,6 +11,7 @@ import tkMessageBox
 import Pmw
 
 from pymol import editor
+from pymol import computing
 from pymol.wizard import Wizard
 
 import pymol
@@ -78,9 +79,7 @@ class CleanWizard(ActionWizard):
         if active_sele in self.cmd.get_names("selections"):
             obj_list = self.cmd.get_object_list(active_sele)
             if len(obj_list)==1:
-                self.clean_obj = obj_list[0]
-                self.cmd.refresh_wizard()
-                CleanJob(self.cmd,active_sele)
+                computing.CleanJob(self.cmd,active_sele,message="Cleaning %s..."%obj_list[0])
 
     def do_pick(self, bondFlag):
         if active_sele in self.cmd.get_names("selections"):
@@ -103,14 +102,9 @@ class CleanWizard(ActionWizard):
         if self.activateOrDismiss():
             if self.activeSeleValid():
                 self.run_job()
-                self.cmd.set_wizard()
-                self.cmd.refresh_wizard()
 
     def get_prompt(self):
-        if self.clean_obj != None:
-            return ["Cleaning %s..."%self.clean_obj]
-        else:
-            return ["Pick object to clean..."]
+        return ["Pick object to clean..."]
 
     
     def get_panel(self):
@@ -213,6 +207,7 @@ class RepeatableActionWizard(ActionWizard):
             self.cmd.refresh_wizard()
         else:
             self.actionWizardDone()
+        return activate_flag
     
 class ReplaceWizard(RepeatableActionWizard):
 
@@ -411,7 +406,8 @@ class ValenceWizard(RepeatableActionWizard):
         self.order = order
         self.text = text
         self.setActionHash( (order,text) )
-        self.activateRepeatOrDismiss()
+        if self.activateRepeatOrDismiss():
+            self.activateRepeatOrDismiss()
         if self.cmd.get_wizard() == self:
             self.cmd.button('single_left','none','PkBd') # get us into bond picking mode...
                                     
@@ -702,7 +698,8 @@ class AtomFlagWizard(ActionWizard):
             self.cmd.enable(display_sele)
         else:
             self.cmd.delete(display_sele)
-            
+        self.cmd.refresh_wizard()
+        
     def do_pick(self, bondFlag):
         if not(active_sele not in self.cmd.get_names("selections")):
             if self.cmd.count_atoms("pk1 and flag %d"%self.flag):
@@ -711,7 +708,6 @@ class AtomFlagWizard(ActionWizard):
                 self.cmd.flag(self.flag,"pk1","set")            
         self.cmd.select(active_sele, "byobj pk1")
         self.cmd.unpick()
-        self.cmd.refresh_wizard()        
         self.update_display()
        
     def do_select(self,selection):
@@ -1029,103 +1025,6 @@ class ModifyFrame(GuiFrame):
         else:
             self.cmd.unpick()
             ValenceWizard(_self=self.cmd).toggle(order,text)        
-
-def model_to_sdf_list(model):
-    from chempy import io
-
-    sdf_list = io.mol.toList(model)
-    fixed = []
-    restrained = []
-    at_id = 1
-    for atom in model.atom:
-        if atom.flags & 4:
-            if hasattr(atom,'ref_coord'):
-                restrained.append( [at_id,atom.ref_coord])
-        if atom.flags & 8:
-            fixed.append(at_id)
-        at_id = at_id + 1
-    fit_flag = 1
-    if len(fixed):
-        fit_flag = 0
-        sdf_list.append(">  <FIXED_ATOMS>\n")
-        sdf_list.append("+ ATOM\n");
-        for ID in fixed:
-            sdf_list.append("| %4d\n"%ID)
-        sdf_list.append("\n")
-    if len(restrained):
-        fit_flag = 0
-        sdf_list.append(">  <RESTRAINED_ATOMS>\n")
-        sdf_list.append("+ ATOM    MIN    MAX F_CONST         X         Y         Z\n")
-        for entry in restrained:
-            xrd = entry[1]
-            sdf_list.append("| %4d %6.3f %6.3f %6.3f %10.4f %10.4f %10.4f\n"%
-                            (entry[0],0,0,3,xrd[0],xrd[1],xrd[2]))
-        sdf_list.append("\n")
-    sdf_list.append("$$$$\n")
-#    for line in sdf_list:
-#        print line,
-    return (fit_flag, sdf_list)
-
-class CleanJob:
-    def __init__(self,self_cmd,sele):
-        self.cmd = self_cmd
-        # this code will moved elsewhere
-        ok = 1
-        try:
-            from freemol import mengine
-        except:
-            ok = 0
-            print "Error: Unable to import module freemol.mengine"
-        if ok:
-            if not mengine.validate():
-                ok = 0
-                print "Error: Unable to validate freemol.mengine"
-        if not ok:
-            pass
-            # we can't call warn because this is the not the tcl-tk gui thread
-            # warn("Please be sure that FreeMOL is correctly installed.")
-        else:
-            obj_list = self_cmd.get_object_list("bymol ("+sele+")")
-            ok = 0
-            result = None
-            if len(obj_list)==1:
-                obj_name = obj_list[0]
-                self_cmd.sculpt_deactivate(obj_name) # eliminate all sculpting information for object
-                self.cmd.sculpt_purge()
-                self.cmd.set("sculpting",0)
-                state = self_cmd.get_state()
-#                sdf_list = io.mol.toList(self_cmd.get_model(obj_name,state=state)) + ["$$$$\n"]
-                if self_cmd.count_atoms(obj_name+" and flag 2"): # any atoms restrained?
-                    self_cmd.reference("validate",obj_name,state) # then we have reference coordinates
-                (fit_flag, sdf_list) = model_to_sdf_list(self_cmd.get_model(obj_name,state=state))
-                result = mengine.run(string.join(sdf_list,''))
-                if result != None:
-                    if len(result):
-                        clean_sdf = result[0]
-                        clean_mol = clean_sdf.split("$$$$")[0]
-                        if len(clean_mol):
-                            clean_name = "builder_clean_tmp"
-                            self_cmd.read_molstr(clean_mol, clean_name, zoom=0)
-                            # need to insert some error checking here
-                            self_cmd.set("retain_order","1",clean_name)
-                            if fit_flag:
-                                self_cmd.fit(clean_name, obj_name, matchmaker=4,
-                                             mobile_state=1, target_state=state)
-                            self_cmd.update(obj_name, clean_name, matchmaker=0,
-                                            source_state=1, target_state=state)
-                            self_cmd.delete(clean_name)
-                            ok = 1
-                self_cmd.delete(active_sele)
-                self_cmd.set_wizard()
-                self_cmd.refresh_wizard()
-
-            if not ok:
-                # we can't call warn because this is the not the tcl-tk gui thread
-                print "Cleanup failed.  Invalid input or software malfuction?"
-                if result != None:
-                    if len(result)>1:
-                        print result[1]
-                            
 class EditFrame(GuiFrame):
     def __init__(self, parent):
         self.builder = parent.builder
