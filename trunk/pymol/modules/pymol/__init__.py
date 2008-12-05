@@ -314,26 +314,27 @@ if pymol_launch != 3: # if this isn't a dry run
             # optimize for (or workaround) specific hardware
             (vendor,renderer,version) = cmd.get_renderer()
             if vendor[0:6]=='NVIDIA':
-                cmd.set('ribbon_smooth',0,quiet=1)
+                cmd.set('ribbon_smooth',0)
                 if renderer[0:7]=='GeForce':
                     if self.invocation.options.show_splash:
                         print " Adapting to GeForce hardware."
-                    cmd.set('line_width','2',quiet=1)
+                    cmd.set('line_width','2')
                 elif renderer=='NVIDIA GPU OpenGL Engine':
                     if sys.platform=='darwin':
                         if self.invocation.options.show_splash:
                             print " Adapting to NVIDIA hardware on Mac."
                             cmd.set('line_smooth',0,quiet=1)
                             cmd.set('fog',0.9,quiet=1)
-                elif renderer=='NVIDIA GeForce4 GPU OpenGL Engine':
+                elif renderer in ['NVIDIA GeForce4 GPU OpenGL Engine',
+                                  'NVIDIA Quadro FX 4500 OpenGL Engine',
+                                  'NVIDIA Quadro FX 5600 OpenGL Engine']:
                     if sys.platform=='darwin':
-                        if invocation.options.show_splash:
-                            cmd.set('stereo_double_pump_mono',1,quiet=1)
-
+                        # mac stereo 3D contexts are missing GL_BACK support
+                        cmd.set('stereo_double_pump_mono',1)
                 elif renderer[0:6]=='Quadro':
                     if invocation.options.show_splash:
                         print " Adapting to Quadro hardware."
-                    cmd.set("stereo_double_pump_mono","1",quiet=1)
+                    cmd.set("stereo_double_pump_mono","1")
                     cmd.set("line_width",1.4,quiet=1)
 
             elif vendor[0:4]=='Mesa':
