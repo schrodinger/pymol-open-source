@@ -2656,7 +2656,7 @@ int SceneSetNames(PyMOLGlobals *G,PyObject *list)
 }
 
 /*========================================================================*/
-static void SceneDrawButtons(Block *block)
+static void SceneDrawButtons(Block *block, int draw_for_real)
 {
 #ifndef _PYMOL_NOPY  
   PyMOLGlobals *G=block->G;
@@ -2677,7 +2677,7 @@ static void SceneDrawButtons(Block *block)
   int text_lift = (lineHeight/2)-5;
   int op_cnt = 1;
   
-  if(G->HaveGUI && G->ValidContext && 
+  if( ((G->HaveGUI && G->ValidContext)|| (!draw_for_real)) && 
      ((block->rect.right-block->rect.left)>6) && (I->NScene)) {
     int max_char;
     int nChar;
@@ -2718,8 +2718,9 @@ static void SceneDrawButtons(Block *block)
       I->NSkip =0;
     }
 
-    max_char = (((I->Block->rect.right-I->Block->rect.left)-(SceneTextLeftMargin+SceneRightMargin+4)) -
-                 (op_cnt*SceneToggleWidth));
+    max_char = (((I->Block->rect.right-I->Block->rect.left)-
+		 (SceneTextLeftMargin+SceneRightMargin+4)) -
+		(op_cnt*SceneToggleWidth));
     if(I->ScrollBarActive) {
       max_char -= (SceneScrollBarMargin+SceneScrollBarWidth);
     }      
@@ -2730,7 +2731,8 @@ static void SceneDrawButtons(Block *block)
                       I->Block->rect.left+SceneScrollBarMargin,
                       I->Block->rect.bottom+2,
                       I->Block->rect.left+SceneScrollBarMargin+SceneScrollBarWidth);
-      ScrollBarDoDraw(I->ScrollBar);
+      if(draw_for_real) 
+	ScrollBarDoDraw(I->ScrollBar);
     }
     
     skip=I->NSkip;
@@ -2768,10 +2770,12 @@ static void SceneDrawButtons(Block *block)
           {
             float toggleColor[3] = { 0.5F, 0.5F, 1.0F };
            
-            glColor3fv(toggleColor);
-            
-            TextSetColor(G,I->Block->TextColor);
-            TextSetPos2i(G,x+2,y+text_lift);
+	    if(draw_for_real) {
+	      glColor3fv(toggleColor);
+	      
+	      TextSetColor(G,I->Block->TextColor);
+	      TextSetPos2i(G,x+2,y+text_lift);
+	    }
             {
               int len;
               char *cur_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
@@ -2797,23 +2801,27 @@ static void SceneDrawButtons(Block *block)
 	      if(I->ButtonMargin<x2)
 		I->ButtonMargin = x2;
 
-              if((item==I->Pressed)&&(item==I->Over)) {
-                draw_button(x,y,0,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,pressedColor);
-              } else if(cur_name&&elem->name&&(!strcmp(elem->name,cur_name))) {
-                draw_button(x,y,0,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,enabledColor);
-              } else {
-                draw_button(x,y,0,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,disabledColor);
-              }
-              
-              TextSetColor(G,I->Block->TextColor);
-              
-              if(c)
-                while(*c) {
-                  if((nChar--)>0)
-                    TextDrawChar(G,*(c++));
-                  else
-                    break;
-                }
+	      if(draw_for_real) {
+	      
+		if((item==I->Pressed)&&(item==I->Over)) {
+		  draw_button(x,y,0,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,pressedColor);
+		} else if(cur_name&&elem->name&&(!strcmp(elem->name,cur_name))) {
+		  draw_button(x,y,0,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,enabledColor);
+		} else {
+		  draw_button(x,y,0,(x2-x)-1,(lineHeight-1),lightEdge,darkEdge,disabledColor);
+		}
+		
+		TextSetColor(G,I->Block->TextColor);
+		
+		if(c) {
+		  while(*c) {
+		    if((nChar--)>0)
+		      TextDrawChar(G,*(c++));
+		    else
+		      break;
+		  }
+		}
+	      }
             }
           }
           y-=lineHeight;
@@ -2826,6 +2834,12 @@ static void SceneDrawButtons(Block *block)
     I->ButtonsValid = true;
   }
 #endif
+}
+
+static void SceneUpdateButtons(PyMOLGlobals *G)
+{
+  register CScene *I=G->Scene;
+  SceneDrawButtons(I->Block,false);
 }
 
 void SceneDraw(Block *block)
@@ -3115,7 +3129,7 @@ void SceneDraw(Block *block)
     }
     if(SettingGetGlobal_b(G,cSetting_scene_buttons)&&
        (SettingGetGlobal_i(G,cSetting_scene_buttons_mode)==1)) {
-      SceneDrawButtons(block);
+      SceneDrawButtons(block,true);
     } else {
       I->ButtonMargin = 0;
     }
@@ -4837,8 +4851,8 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
   if(I->ButtonsShown && I->PressMode) {
     if(!I->ButtonsValid) {
+      SceneUpdateButtons(G);
       /* write the update code here */
-      I->ButtonsValid = true;
     } 
     if(I->ButtonsValid) {
       SceneElem *elem = I->SceneVLA;
@@ -5805,8 +5819,8 @@ int  SceneInit(PyMOLGlobals *G)
     I->SceneNameVLA = VLAlloc(char,10);
     I->SceneVLA = VLAlloc(SceneElem,10);
     I->NScene = 0;
-    I->ButtonsShown = 0;
-    I->ButtonsValid = 0;
+    I->ButtonsShown = false;
+    I->ButtonsValid = false;
     return 1;
   } else 
     return 0;
