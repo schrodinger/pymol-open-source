@@ -239,7 +239,7 @@ class Mutagenesis(Wizard):
         cmd.show('lines',obj_name) # always show lines      
         cmd.show(self.rep,obj_name)
         cmd.refresh_wizard()
-        
+
     def set_c_cap(self,c_cap):
         cmd=self.cmd
         pymol=cmd._pymol
@@ -298,6 +298,9 @@ class Mutagenesis(Wizard):
             [ 2, 'Clear' , 'cmd.get_wizard().clear()'],
             [ 2, 'Done','cmd.set_wizard()'],
             ]
+
+    def get_event_mask(self):
+        return Wizard.event_mask_pick + Wizard.event_mask_select + Wizard.event_mask_state
 
     def cleanup(self):
         cmd=self.cmd
@@ -704,7 +707,14 @@ class Mutagenesis(Wizard):
         cmd.frame(0)
         cmd.unpick()
         cmd.feedback("pop")
-        
+
+    def do_state(self,state):
+        cmd=self.cmd
+        if cmd.get("sculpting")=="on":
+            names = cmd.get_names("all_objects")
+            if (bump_name in names) and (obj_name in names):
+                cmd.update(bump_name,obj_name)
+                
     def do_select(self,selection):
         cmd=self.cmd
         pymol=cmd._pymol

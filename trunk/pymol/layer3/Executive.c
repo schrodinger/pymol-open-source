@@ -5623,9 +5623,14 @@ int ExecutiveSculptIterateAll(PyMOLGlobals *G)
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           objMol =(ObjectMolecule*)rec->obj;
-          if( SettingGet_b(G,NULL,objMol->Obj.Setting,cSetting_sculpting)) {
-            
-            ObjectMoleculeSculptIterate(objMol,state,
+          if(SettingGet_b(G,NULL,objMol->Obj.Setting,cSetting_sculpting)) {
+            int eff_state = state;
+            if(state>objMol->NCSet) {
+              if((objMol->NCSet == 1 ) && SettingGetGlobal_b(G,cSetting_static_singletons)) {
+                eff_state = 0;
+              }
+            }
+            ObjectMoleculeSculptIterate(objMol,eff_state,
                                         SettingGet_i(G,NULL,objMol->Obj.Setting,
                                                      cSetting_sculpting_cycles),
                                         center);
