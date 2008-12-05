@@ -171,19 +171,24 @@ class SculptWizard(ActionWizard):
         self.cmd.set_wizard()
         self.cmd.refresh_wizard()
         
-    def scramble(self):
+    def scramble(self,mode):
         if self.cmd.count_atoms(self.sculpt_object):
-            extent = self.cmd.get_extent(self.sculpt_object+
-                                         " and not (fixed or restrained)")
-            center = self.cmd.get_position(self.sculpt_object+
-                                           " and not (fixed or restrained)")
+            sc_tmp = "_scramble_tmp"
+            if mode == 0:
+                self.cmd.select(sc_tmp,self.sculpt_object+
+                            " and not (fixed or restrained)")
+            if mode == 1:
+                self.cmd.select(sc_tmp,self.sculpt_object+
+                            " and not (fixed)")
+            extent = self.cmd.get_extent(sc_tmp)
+            center = self.cmd.get_position(sc_tmp)
             radius = 1.25*cpv.length(cpv.sub(extent[0],extent[1]))
-            self.cmd.alter_state(self.cmd.get_state(),
-                self.sculpt_object + 
-                " and not fixed","(x,y,z)=rsp(pos,rds)",
+            self.cmd.alter_state(self.cmd.get_state(), sc_tmp,
+                                 "(x,y,z)=rsp(pos,rds)",
                 space= { 'rsp' :  cpv.random_displacement,
                          'pos' : center,
                          'rds' : radius })
+            self.cmd.delete(sc_tmp)
 
     def get_panel(self):
         return [
@@ -191,7 +196,8 @@ class SculptWizard(ActionWizard):
             [ 2, 'Undo', 'cmd.undo()'],
 
             [ 2, 'Switch Object', 'cmd.get_wizard().sculpt_deactivate()'],
-            [ 2, 'Scramble Free Atoms', 'cmd.get_wizard().scramble()'],
+            [ 2, 'Scramble Unrestrained Coords.', 'cmd.get_wizard().scramble(0)'],
+            [ 2, 'Scramble Unfixed Coords.', 'cmd.get_wizard().scramble(1)'],
             [ 2, 'Done','cmd.get_wizard().finish_sculpting()'],
             ]
 
@@ -771,16 +777,44 @@ class AtomFlagWizard(ActionWizard):
             self.cmd.flag(self.flag,active_sele,"set")
             self.update_display()
         
-    def do_less(self):
+    def do_less(self,mode):
         if active_sele in self.cmd.get_names("selections"):
-            self.cmd.flag(self.flag,"(( byobj " + active_sele + 
-                          " ) and not flag %d) extend 1"%self.flag,"clear")
+            if mode == 0:
+                self.cmd.flag(self.flag,"(( byobj " + active_sele + 
+                              " ) and not flag %d) extend 1"%self.flag,"clear")
+            elif mode == 1:
+                self.cmd.flag(self.flag,"byres ((( byobj " + active_sele + 
+                              " ) and not flag %d) extend 1)"%self.flag,"clear")
+#            elif mode == 2:
+#                self.cmd.flag(self.flag,"name ca and byres (byres (( byobj " + active_sele + 
+#                              " ) and not flag %d) extend 1)"%self.flag,"clear")
             self.update_display()
 
-    def do_more(self):
+    def do_cas(self,mode):
         if active_sele in self.cmd.get_names("selections"):
-            self.cmd.flag(self.flag,active_sele + 
-                          " and (flag %d extend 1)"%self.flag,"set")
+            if mode == 1:
+                self.cmd.flag(self.flag,active_sele,"clear")                
+                self.cmd.flag(self.flag,active_sele+" and polymer and name ca","set")                
+            elif mode == 0:
+                self.cmd.flag(self.flag,active_sele+" and polymer and name ca","set")
+                self.cmd.flag(self.flag,active_sele+
+                              " and not (polymer and name ca)","clear")                
+                
+            self.update_display()
+            
+    def do_more(self,mode):
+        if active_sele in self.cmd.get_names("selections"):
+            if mode == 0:
+                self.cmd.flag(self.flag,active_sele + 
+                              " and (flag %d extend 1)"%self.flag,"set")
+            elif mode == 1:
+                self.cmd.flag(self.flag,"byres ("+ active_sele + 
+                              " and (byres flag %d) extend 1)"%self.flag,"set")
+                
+            elif mode == 2:
+                self.cmd.flag(self.flag,"byres ("+ active_sele + 
+                              " and flag %d )"%self.flag,"set")
+                
             self.update_display()
 
     def do_none(self):
@@ -807,18 +841,23 @@ class AtomFlagWizard(ActionWizard):
 
         result = [
             [ 1, title, ''],
-            [ 2, verb + " All",'cmd.get_wizard().do_all()'],
-            [ 2, verb + " More",'cmd.get_wizard().do_more()'],
-            [ 2, verb + " Less", 'cmd.get_wizard().do_less()'],
-            [ 2, verb + " None", 'cmd.get_wizard().do_none()'],
+            [ 2, "All",'cmd.get_wizard().do_all()'],
+            [ 2, "All C-alphas",'cmd.get_wizard().do_cas(1)'],            
+            [ 2, "More (byres)",'cmd.get_wizard().do_more(1)'],
+            [ 2, "More",'cmd.get_wizard().do_more(0)'],
+            [ 2, "Byresidue",'cmd.get_wizard().do_more(2)'],            
+            [ 2, "Less", 'cmd.get_wizard().do_less(0)'],
+            [ 2, "Less (by residue)", 'cmd.get_wizard().do_less(1)'],
+            [ 2, "Only C-alphas",'cmd.get_wizard().do_cas(0)'],                        
+            [ 2, "None", 'cmd.get_wizard().do_none()'],
             [ 2, 'Done','cmd.set_wizard()'],
             ]
 
         if self.flag == 2:
             result[-1:-1] = [
-            [ 2, "Store Reference Coords", 'cmd.get_wizard().do_store()'],
-            [ 2, "Recall Reference Coords", 'cmd.get_wizard().do_recall()'],
-            [ 2, "Swap Reference Coords", 'cmd.get_wizard().do_swap()']]
+            [ 2, "Store Reference Coords.", 'cmd.get_wizard().do_store()'],
+            [ 2, "Recall Reference Coords.", 'cmd.get_wizard().do_recall()'],
+            [ 2, "Swap Reference Coords.", 'cmd.get_wizard().do_swap()']]
 
         return result
  
@@ -1382,7 +1421,7 @@ class Builder(Frame):
 
         self.showVdw = StringVar()
         self.showVdw.set(self.cmd.get("sculpt_vdw_vis_mode"))
-        Checkbutton(self, text="vdw_vis", 
+        Checkbutton(self, text="Bumps", 
             borderwidth=1, pady=0, justify=LEFT, variable=self.showVdw, 
             onvalue="on", offvalue="off", command=self.doVdw).grid(row=6, 
             column=1, sticky=W)

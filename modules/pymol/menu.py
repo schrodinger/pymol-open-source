@@ -869,7 +869,8 @@ def sele_action(self_cmd, sele):
               [ 1, 'center'         ,'cmd.center("'+sele+'",animate=-1)'            ],           
               [ 1, 'origin'         ,'cmd.origin("'+sele+'")'          ],
               [ 0, ''               ,''                             ],
-              [ 1, 'drag'       , 'cmd.drag("'+sele+'")'    ],                        
+              [ 1, 'drag'       , 'cmd.drag("'+sele+'")'    ],
+              [ 1, 'clean'       , 'cmd.clean("'+sele+'")'    ],                                    
               [ 0, ''               ,''                             ],
               [ 1, 'modify', modify_sele(self_cmd, sele) ],
               [ 1, 'preset'         ,presets(self_cmd, sele)         ],
@@ -922,7 +923,8 @@ def mol_action(self_cmd, sele):
               [ 1, 'center'         ,'cmd.center("'+sele+'",animate=-1)'            ],
               [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
               [ 0, ''               ,''                             ],
-              [ 1, 'drag'       , 'cmd.drag("'+sele+'")'    ],            
+              [ 1, 'drag'       , 'cmd.drag("'+sele+'")'    ],
+              [ 1, 'clean'       , 'cmd.clean("'+sele+'")'    ],
               [ 0, ''          ,''                                              ],
               [ 1, 'preset'  ,   presets(self_cmd, sele)       ],
               [ 1, 'find',     find(self_cmd, sele) ],
@@ -1285,6 +1287,7 @@ def pick_sele(self_cmd, sele, title):
         [ 1, 'origin'           ,'cmd.origin("'+sele+'")'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+sele+'")'            ],
+        [ 1, 'clean'             ,'cmd.clean("'+sele+'")'            ],        
         [ 0, ''               ,''                             ],        
         [ 1, 'remove'             ,'cmd.remove("'+sele+'")'            ],
         ]
@@ -1306,6 +1309,7 @@ def pick_option(self_cmd, sele, title, object=0):
         [ 1, 'select'        ,'cmd.select("'+sele+'",enable=1,merge=2)'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+sele+'")'            ],
+        [ 1, 'clean'             ,'cmd.clean("'+sele+'")'            ],        
         [ 1, 'masking'        , masking(self_cmd, sele)         ],
         [ 1, 'movement'       , movement(self_cmd, sele)         ],
         ]
@@ -1385,6 +1389,7 @@ def seq_option(self_cmd, sele, title, object=0):
         [ 1, 'select'    ,'cmd.select("'+sele+'",enable=1,merge=2)'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'      ,'cmd.drag("'+sele+'")'            ],
+        [ 1, 'clean'      ,'cmd.clean("'+sele+'")'            ],        
         ]
     
     if object:

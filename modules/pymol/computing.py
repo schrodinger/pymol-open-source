@@ -75,6 +75,10 @@ class CleanJob:
             if not mengine.validate():
                 ok = 0
                 print "Error: Unable to validate freemol.mengine"
+        if ok:
+            if self_cmd.count_atoms(sele)>999:
+                ok = 0
+                print "Error: Clean is currently limited to 999 atoms"
         if not ok:
             pass
             # we can't call warn because this is the not the tcl-tk gui thread
@@ -124,7 +128,8 @@ class CleanJob:
         if message!=None:
             self_cmd.set_wizard()
 
-def clean(selection, present='', state=-1, fix='', restrain='', method='mmff', async=0, _self=cmd_module):
+def clean(selection, present='', state=-1, fix='', restrain='',
+          method='mmff', async=0, save_undo=1, _self=cmd_module):
     self_cmd = _self
 
     clean1_sele = "clean1_tmp"
@@ -142,13 +147,17 @@ def clean(selection, present='', state=-1, fix='', restrain='', method='mmff', a
 
             self_cmd.create(clean_obj, clean2_sele, zoom=0, source_state=state,target_state=1)
 
-            self_cmd.flag(3,clean_obj+" in ("+clean2_sele+" and not "+clean1_sele+")","set") # fix nearby atoms
+            self_cmd.flag(3,clean_obj+" in ("+clean2_sele+" and not "+clean1_sele+")","set")
+            # fix nearby atoms
 
             self_cmd.h_add(clean_obj) # fill any open valences
 
-            CleanJob(self_cmd, clean_obj, state, message='Cleaning structure.  Please wait...')
-
+            at_cnt = self_cmd.count_atoms(clean_obj)
+            CleanJob(self_cmd, clean_obj, state,
+                     message='Cleaning %d atoms.  Please wait...'%at_cnt)
+            
             self_cmd.set_wizard()
+            self_cmd.push_undo(clean1_sele)
             self_cmd.update(clean1_sele, clean_obj, 
                             source_state=1, target_state=state)
 
