@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2008-12-04 Warren L. DeLano <warren@delsci.com>
+
+	* continued major overhaul of the builder
+
+	* fixed longstanding object name right-dragging bugs
+	
 2008-11-29 Warren L. DeLano <warren@delsci.com>
 
 	* various updates to the builder
