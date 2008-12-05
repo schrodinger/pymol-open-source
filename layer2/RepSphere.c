@@ -730,12 +730,12 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
         for(a=0;a<nIndex;a++) {
           AtomInfoType *ai = atomInfo + *(i2a++);
           if(ai->visRep[ cRepSphere]) {
-            repActive = true;
             float vdw = ai->vdw * sphere_scale;
             int c = ai->color;
             float v0 = v[0];
             float v1 = v[1];
             float v2 = v[2];
+            repActive = true;
             
             if(c != last_color) {
               last_color = c;
