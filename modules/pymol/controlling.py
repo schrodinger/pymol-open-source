@@ -211,7 +211,7 @@ SEE ALSO
 				  ('m','shft','movo'),
 				  ('r','shft','mvoz') ,                 
 				  ('l','ctrl','torf'),
-				  ('m','ctrl','pkat'),
+				  ('m','ctrl','+/-'),
 				  ('r','ctrl','pktb'),                  
 				  ('l','ctsh','mova'),
 				  ('m','ctsh','orig'),

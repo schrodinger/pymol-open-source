@@ -126,6 +126,7 @@ class SculptWizard(ActionWizard):
             obj_list = self.cmd.get_object_list(active_sele)
             if len(obj_list)==1:
                 obj_name = obj_list[0]
+                self.cmd.push_undo(obj_name)
                 self.cmd.sculpt_activate(obj_name)
                 self.cmd.set("sculpting",1)
                 self.sculpt_object = obj_name
@@ -196,8 +197,7 @@ class SculptWizard(ActionWizard):
 
     def cleanup(self):
         self.sculpt_deactivate()
-        Wizard.cleanup(self)
-
+        ActionWizard.cleanup(self)
 
 class RepeatableActionWizard(ActionWizard):
 
@@ -231,7 +231,11 @@ class RepeatableActionWizard(ActionWizard):
         else:
             self.actionWizardDone()
         return activate_flag
-    
+
+    def cleanup(self):
+        self.cmd.unpick()
+        ActionWizard.cleanup(self)
+
 class ReplaceWizard(RepeatableActionWizard):
 
     def do_pick(self, bondFlag):

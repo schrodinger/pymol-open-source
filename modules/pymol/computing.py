@@ -58,7 +58,7 @@ def model_to_sdf_list(model):
     return (fit_flag, sdf_list)
 
 class CleanJob:
-    def __init__(self,self_cmd,sele,message=None,state=-1):
+    def __init__(self,self_cmd,sele,state=-1,message=None):
         self.cmd = self_cmd
         if message != None:
             self.cmd.wizard('message',message)
@@ -107,6 +107,7 @@ class CleanJob:
                             if fit_flag:
                                 self_cmd.fit(clean_name, obj_name, matchmaker=4,
                                              mobile_state=1, target_state=state)
+                            self_cmd.push_undo(obj_name)
                             self_cmd.update(obj_name, clean_name, matchmaker=0,
                                             source_state=1, target_state=state)
                             self_cmd.sculpt_activate(obj_name) 
