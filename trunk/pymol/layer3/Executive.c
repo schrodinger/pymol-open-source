@@ -8930,13 +8930,13 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
   int repeat;
   float v1[3],*v2;
   int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
+  ObjectAlignment *align_to_update = NULL;
 
   if(matchmaker == -1) { 
     /* matchmaker -1 is the same as matchmaker 0 except that the
        selections are not pre-matched prior to calling of this routine */
     matchmaker = 0;
   }
-  ObjectAlignment *align_to_update = NULL;
 
   sele1=SelectorIndexByName(G,s1);
 

@@ -4857,9 +4857,9 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
         if(I->Pressed!=I->Over) {
           char *cur_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
           if(cur_name && elem->name && (strcmp(cur_name, elem->name))) {
+            OrthoLineType buffer;
             int animate=-1;
             if(mod&cOrthoCTRL) animate=0;
-            OrthoLineType buffer;
             sprintf(buffer,"cmd.scene('''%s''',animate=%d)",elem->name,animate);
             PParse(G,buffer);
             PFlush(G);
@@ -6118,11 +6118,11 @@ void SceneRay(PyMOLGlobals *G,
   int grid_mode = SettingGetGlobal_i(G,cSetting_grid_mode);
   ImageType *stereo_image = NULL;
   OrthoLineType prefix = "";
-
+ int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
+  
   if(SettingGetGlobal_b(G,cSetting_defer_builds_mode) == 5) 
     SceneUpdate(G,true);
   
-  int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
   if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
 
   UtilZeroMem(&grid,sizeof(GridInfo));
