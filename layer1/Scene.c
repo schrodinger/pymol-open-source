@@ -186,7 +186,7 @@ struct _CScene {
   float FogEnd;
 
   /* Scene Names */
-  int ButtonsShown, ButtonDrag, ButtonMargin;
+  int ButtonsShown, ButtonDrag, ButtonMargin, ButtonsValid;
   int Over, Pressed, PressMode, HowFarDown, NSkip;
   int ScrollBarActive;
   int ReorderFlag;
@@ -2823,6 +2823,7 @@ static void SceneDrawButtons(Block *block)
       }
     }
     I->HowFarDown = y;
+    I->ButtonsValid = true;
   }
 #endif
 }
@@ -4834,69 +4835,79 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   if(I->LoopFlag)
     return SceneLoopDrag(block,x,y,mod);
 
-  if(I->ButtonsShown && (I->PressMode)) {
-    int i;
-    SceneElem *elem = I->SceneVLA;
-    drag_handled = true;
-    I->Over = -1;
-    for(i=0;i<I->NScene;i++) {
-      if(elem->drawn && 
-         (x>=elem->x1) &&
-         (y>=elem->y1) &&
-         (x<elem->x2) &&
-         (y<elem->y2)) {
-        I->Over = i;
-        OrthoDirty(G);
+  if(I->ButtonsShown && I->PressMode) {
+    if(!I->ButtonsValid) {
+      /* write the update code here */
+      I->ButtonsValid = true;
+    } 
+    if(I->ButtonsValid) {
+      SceneElem *elem = I->SceneVLA;
+      int i;
+      drag_handled = true;
+      I->Over = -1;
+      for(i=0;i<I->NScene;i++) {
+        if(elem->drawn && 
+           (x>=elem->x1) &&
+           (y>=elem->y1) &&
+           (x<elem->x2) &&
+           (y<elem->y2)) {
+          I->Over = i;
+          OrthoDirty(G);
+          break;
+        }
+        elem++;
+      }
+      switch(I->PressMode) {
+      case 2:
+        if(I->Over>=0) {
+          if(I->Pressed!=I->Over) {
+            char *cur_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
+            if(cur_name && elem->name && (strcmp(cur_name, elem->name))) {
+              OrthoLineType buffer;
+              int animate=-1;
+              if(mod&cOrthoCTRL) animate=0;
+              sprintf(buffer,"cmd.scene('''%s''',animate=%d)",elem->name,animate);
+              PParse(G,buffer);
+              PFlush(G);
+              PLog(G,buffer,cPLog_pym);
+            }
+            I->Pressed = I->Over;
+          }
+        } else {
+          I->Pressed = -1;
+        }
+      case 3:
+        if((I->Over>=0)&&(I->Pressed!=I->Over))
+          I->PressMode = 4; /* activate dragging */
         break;
       }
-      elem++;
-    }
-    switch(I->PressMode) {
-    case 2:
-      if(I->Over>=0) {
-        if(I->Pressed!=I->Over) {
-          char *cur_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
-          if(cur_name && elem->name && (strcmp(cur_name, elem->name))) {
-            OrthoLineType buffer;
-            int animate=-1;
-            if(mod&cOrthoCTRL) animate=0;
-            sprintf(buffer,"cmd.scene('''%s''',animate=%d)",elem->name,animate);
-            PParse(G,buffer);
-            PFlush(G);
-            PLog(G,buffer,cPLog_pym);
+
+      if(I->PressMode == 4) { /* dragging */
+        if((I->Over>=0)&&(I->Pressed!=I->Over)&&(I->Pressed>=0)) {
+
+          SceneElem *pressed = I->SceneVLA + I->Pressed;
+          OrthoLineType buffer;
+
+          if(I->Over>0) { /* not over the first scene in list */
+            SceneElem *first = elem-1;
+            SceneElem *second = pressed;
+            if(first >= pressed) {
+              first = elem;
+              second = pressed;
+            }
+            sprintf(buffer,"cmd.scene_order('''%s %s''')",
+                    first->name,
+                    second->name);
+          } else {
+            sprintf(buffer,"cmd.scene_order('''%s''',location='top')",
+                    pressed->name);
           }
-        I->Pressed = I->Over;
+          PParse(G,buffer);
+          PFlush(G);
+          PLog(G,buffer,cPLog_pym);
+          I->Pressed = I->Over;
+          I->ButtonsValid = false;
         }
-      } else {
-        I->Pressed = -1;
-      }
-    case 3:
-      if((I->Over>=0)&&(I->Pressed!=I->Over))
-        I->PressMode = 4; /* activate dragging */
-      break;
-    }
-    if(I->PressMode == 4) { /* dragging */
-      if((I->Over>=0)&&(I->Pressed!=I->Over)&&(I->Pressed>=0)) {
-        SceneElem *pressed = I->SceneVLA + I->Pressed;
-        OrthoLineType buffer;
-        if(I->Over>0) { /* not over the first scene in list */
-          SceneElem *first = elem-1;
-          SceneElem *second = pressed;
-          if(first >= pressed) {
-            first = elem;
-            second = pressed;
-          }
-          sprintf(buffer,"cmd.scene_order('''%s %s''')",
-                  first->name,
-                  second->name);
-        } else {
-          sprintf(buffer,"cmd.scene_order('''%s''',location='top')",
-                  pressed->name);
-        }
-        PParse(G,buffer);
-        PFlush(G);
-        PLog(G,buffer,cPLog_pym);
-        I->Pressed = I->Over;
       }
     }
   }
@@ -5718,7 +5729,6 @@ int  SceneInit(PyMOLGlobals *G)
 
     ListInit(I->Obj);
     
-
     I->LoopFlag = false;
     I->SweepTime=0;
     I->TextColor[0]=0.2F;
@@ -5796,7 +5806,7 @@ int  SceneInit(PyMOLGlobals *G)
     I->SceneVLA = VLAlloc(SceneElem,10);
     I->NScene = 0;
     I->ButtonsShown = 0;
-
+    I->ButtonsValid = 0;
     return 1;
   } else 
     return 0;

@@ -14157,7 +14157,8 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
   int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
   int op_cnt = get_op_cnt(G);
 
-
+  ExecutiveUpdateGroups(G,false);
+  ExecutiveUpdatePanelList(G);
   if(y<I->HowFarDown) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==1) 
       return SceneDeferDrag(SceneGetBlock(G),x,y,mod);
