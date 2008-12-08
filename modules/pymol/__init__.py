@@ -313,42 +313,26 @@ if pymol_launch != 3: # if this isn't a dry run
                     
             # optimize for (or workaround) specific hardware
             (vendor,renderer,version) = cmd.get_renderer()
+
+            # Quadro cards don't support GL_BACK in stereo contexts
             if vendor[0:6]=='NVIDIA':
-                cmd.set('ribbon_smooth',0)
-                if renderer[0:7]=='GeForce':
-                    if self.invocation.options.show_splash:
-                        print " Adapting to GeForce hardware."
-                    cmd.set('line_width','2')
-                elif renderer=='NVIDIA GPU OpenGL Engine':
-                    if sys.platform=='darwin':
-                        if self.invocation.options.show_splash:
-                            print " Adapting to NVIDIA hardware on Mac."
-                            cmd.set('line_smooth',0,quiet=1)
-                            cmd.set('fog',0.9,quiet=1)
-                elif renderer in ['NVIDIA GeForce4 GPU OpenGL Engine',
-                                  'NVIDIA Quadro FX 4500 OpenGL Engine',
-                                  'NVIDIA Quadro FX 5600 OpenGL Engine']:
-                    if sys.platform=='darwin':
-                        # mac stereo 3D contexts are missing GL_BACK support
-                        cmd.set('stereo_double_pump_mono',1)
-                elif renderer[0:6]=='Quadro':
+                if 'Quadro' in renderer:
                     if invocation.options.show_splash:
                         print " Adapting to Quadro hardware."
-                    cmd.set("stereo_double_pump_mono","1")
-                    cmd.set("line_width",1.4,quiet=1)
+                    cmd.set('stereo_double_pump_mono',1)                    
 
             elif vendor[0:4]=='Mesa':
                 if renderer[0:18]=='Mesa GLX Indirect':
-                    cmd.set('ribbon_smooth',0,quiet=1)
+                    pass
 
             elif vendor[0:9]=='Parallels':
                 if renderer[0:8]=='Parallel':
+                    pass
                     # this was critical for older Parallels
                     # but actually slows down current versions
-                    cmd.set('texture_fonts',1) 
+                    # cmd.set('texture_fonts',1) 
 
             elif vendor[0:3]=='ATI':
-                cmd.set('ribbon_smooth',0,quiet=1)
                 if renderer[0:17]=='FireGL2 / FireGL3':
                     if invocation.options.show_splash:
                         print " Adapting to FireGL hardware."
@@ -386,7 +370,8 @@ if pymol_launch != 3: # if this isn't a dry run
                                     elif mem<256000000:
                                         cmd.set("hash_max",70)
                 elif sys.platform[0:5]=='linux':
-                    f=os.popen("egrep -c '^processor[^A-Za-z0-9:]*: [0-9]' /proc/cpuinfo")
+                    f=os.popen(
+         "egrep -c '^processor[^A-Za-z0-9:]*: [0-9]' /proc/cpuinfo")
                     l=f.readlines()
                     f.close()
                     ncpu = int(l[0])
@@ -402,8 +387,6 @@ if pymol_launch != 3: # if this isn't a dry run
                           print " Enabled multithreaded rendering."
             except:
                 pass
-
-        # NEED SOME CONTRIBUTIONS HERE!
 
         def launch_gui(self):
             try:

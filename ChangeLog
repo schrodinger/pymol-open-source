@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-12-07 Warren L. DeLano <warren@delsci.com>
+
+	* updated pymol/__init__.py OpenGL autoconfiguration
+	
 2008-12-04 Warren L. DeLano <warren@delsci.com>
 
 	* continued major overhaul of the builder

@@ -3153,7 +3153,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
 
     set_color(I,cSetting_cartoon_color,"-1"); /* use atom colors by default */
 
-    set_i(I,cSetting_ribbon_smooth,-1);
+    set_i(I,cSetting_ribbon_smooth,0); 
 
     set_b(I,cSetting_auto_color,1);
 
