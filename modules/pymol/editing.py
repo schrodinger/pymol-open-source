@@ -124,6 +124,9 @@ EXAMPLE
         object = str(object)
         if prefix==None:
             prefix = object+"_"
+            prefix_set = 0
+        else:
+            prefix_set = 1
         first=int(first)
         last=int(last)
         n_state = _self.count_states(object)
@@ -135,7 +138,7 @@ EXAMPLE
             for a in range(first,last+1):
                 try:
                     name = _self.get_title(object,a)
-                    if len(name)==0:
+                    if (len(name)==0) or prefix_set:
                         name = prefix+"%04d"%a
                 except:
                     name = prefix+"%04d"%a
