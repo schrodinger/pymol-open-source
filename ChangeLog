@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2008-12-12 Warren L. DeLano <warren@delsci.com>
+
+	* added error message for when align/super atom alignment fails
+	
 2008-12-07 Warren L. DeLano <warren@delsci.com>
 
 	* fixed split_states behavior to allow prefix to override titles
