@@ -3616,7 +3616,6 @@ int  SelectorCreateAlignments(PyMOLGlobals *G,
     for(i=0;i<np;i++) { /* iterate through all pairs of matched residues */
       vi1 = *(p++);
       vi2 = *(p++);
-
         
       /* find positions in the selection arrays */
 
@@ -3648,7 +3647,7 @@ int  SelectorCreateAlignments(PyMOLGlobals *G,
         cnt++;
       } else {
         
-        while(1) { /* match up all atoms in each residue */
+        while(1) { /* match up all matching atom names in each residue */
           cmp = AtomInfoNameOrder(G,ai1a,ai2a);
           if(cmp==0) { /* atoms match */
             index1 = SelectorGetObjAtmOffset(I, obj1, at1a);
@@ -3679,12 +3678,13 @@ int  SelectorCreateAlignments(PyMOLGlobals *G,
           } else if(cmp>0) { /* 1 is after 2 */
             at2a++;
           }
-          if(at1a>=obj1->NAtom) /* make sure we're still in the same residue */
+          if(at1a>=obj1->NAtom) 
             break;
           if(at2a>=obj2->NAtom)
             break;
           ai1a = obj1->AtomInfo+at1a;
           ai2a = obj2->AtomInfo+at2a;
+          /* make sure we're still in the same residue */
           if(!AtomInfoSameResidue(G,ai1a,ai1))
             break;
           if(!AtomInfoSameResidue(G,ai2a,ai2))

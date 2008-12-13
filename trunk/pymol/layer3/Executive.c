@@ -6344,6 +6344,13 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap, f
                 ok = ExecutiveRMS(G,"_align1","_align2",mode,cutoff,cycles,
                                   quiet,oname,
                                   state1,state2,false,0, rms_info);
+              } else {
+                if(!quiet) {
+                  PRINTFB(G,FB_Executive,FB_Actions)
+                    " ExecutiveAlign-Error: atomic alignment failed (mismatched identifiers?).\n"
+                    ENDFB(G);
+                }
+                ok = false;
               }
             }
           }
