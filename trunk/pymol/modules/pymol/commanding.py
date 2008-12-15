@@ -299,7 +299,8 @@ SEE ALSO
                 del e
                 if (timeout>=0.0) and ((time.time()-now)>timeout):
                     break
-        if _cmd.wait_deferred(_self._COb): # deferred tasks waiting for a display event?
+        if _cmd.wait_deferred(_self._COb): 
+            # deferred tasks waiting for a display event?
             if thread.get_ident() == pymol.glutThread:
                 _self.refresh()
             else:

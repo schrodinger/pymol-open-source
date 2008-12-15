@@ -1405,7 +1405,10 @@ static void MainBusyIdle(void)
      * we can have no further input.  Therefore die. */
     
     if(!G->HaveGUI) {
-      if(!OrthoCommandWaiting(G)) {
+      if(!(OrthoCommandWaiting(G)||
+           PyMOL_GetModalDraw(G->PyMOL)||
+           OrthoDeferredWaiting(G)||
+           SettingGetGlobal_b(G,cSetting_keep_alive))) {
         if((!G->Option->keep_thread_alive)&&
            (!G->Option->read_stdin)&&
            (I->FinalInitCounter>=FINAL_INIT_AT)) {
@@ -1418,6 +1421,8 @@ static void MainBusyIdle(void)
             }
           }
         }
+      } else {
+        I->IdleCount=0;
       }
     }
 

@@ -693,7 +693,6 @@ static void MovieModalDraw(PyMOLGlobals *G);
 static void MovieModalDraw(PyMOLGlobals *G)
 {
   register CMovie *I=G->Movie;
-
   MovieModalPNG(G,I,&I->Modal);
   if(!I->Modal.complete) /* force modalic return until job is done */
     PyMOL_SetModalDraw(G->PyMOL, (PyMOLModalDrawFn*)MovieModalDraw);

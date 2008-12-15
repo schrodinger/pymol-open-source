@@ -771,6 +771,7 @@ typedef struct _CPyMOL {
   ov_word lex_stick_ball_color;
   ov_word lex_stick_h_scale;
   ov_word lex_sculpt_pyra_inv_weight;
+  ov_word lex_keep_alive;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1535,6 +1536,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(stick_ball_color,604);
   LEX_SETTING(stick_h_scale,605);
   LEX_SETTING(sculpt_pyra_inv_weight,606);
+  LEX_SETTING(keep_alive,607);
   return_OVstatus_SUCCESS;
 }
 
@@ -3439,13 +3441,13 @@ void PyMOL_ExpireIfIdle(CPyMOL *I)
   if(!G->HaveGUI) {
     if(final_init_done) {
       if(!OrthoCommandWaiting(G)) {
-	if((!G->Option->keep_thread_alive)&&
-	   (!G->Option->read_stdin)) {
-	  I->ExpireCount++;
-	  if(I->ExpireCount==10) {
-	    PParse(G,"_quit");
-	  }
-	}
+        if((!G->Option->keep_thread_alive)&&
+           (!G->Option->read_stdin)) {
+          I->ExpireCount++;
+          if(I->ExpireCount==10) {
+            PParse(G,"_quit");
+          }
+        }
       }
     }
   }
