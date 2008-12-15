@@ -19,6 +19,7 @@ import string
 import os
 import glob
 import threading
+import time
 
 def sweep(pause=0,cycles=1,_self=cmd):
     pause = int(pause)
@@ -522,20 +523,22 @@ def _watch(filename,done_event):
         if done_event.isSet():
             break
             
-def _encode(filename,mode,first,last,preserve,encoder,tmp_path,prefix,quiet,_self=cmd):
+def _encode(filename,mode,first,last,preserve,
+            encoder,tmp_path,prefix,quiet,_self=cmd):
     import os
     while 1: # loop until all of the files have been created...
-        ok = 1
-        # force command to complete
-        _self.sync()
+        done = 1
         # check for the required output files
         for index in range(first,last+1):
             path = os.path.join(tmp_path,prefix+"%04d.ppm"%index)
             if not os.path.exists(path):
-                ok = 0
-        if ok:
+                done = 0
+                break;
+        if done:
             break
-        
+        time.sleep(0.1)
+    _self.sync()
+    ok = 1
     if ok and (encoder == 'mpeg_encode'):
         try:
             from freemol import mpeg_encode
@@ -572,6 +575,7 @@ def _encode(filename,mode,first,last,preserve,encoder,tmp_path,prefix,quiet,_sel
                 else:
                     print " produce: finished."
             
+    _self.unset("keep_alive")
     if preserve<1:
         if os.path.isdir(tmp_path):
             for fil in glob.glob(os.path.join(tmp_path,prefix+"*")):
@@ -606,18 +610,23 @@ def produce(filename, mode='draw', first=0, last=0, preserve=-1,
         os.unlink(filename)
     if not os.path.exists(tmp_path):
         os.mkdir(tmp_path)
+    if preserve<0:
+        preserve = 0
     if os.path.isdir(tmp_path):
         if first <= 0:
             first = 1
         if last <= 0:
             last = _self.count_frames()
+        _self.set("keep_alive")
         _self.mpng(os.path.join(tmp_path,prefix+".ppm"),first,last,
-                   preserve,mode=mode,modal=1,quiet=quiet) # this may run asynchronously
+                   preserve,mode=mode,modal=1,quiet=quiet) 
+        # this may run asynchronously
     else:
         ok = 0
     if ok:
         t = threading.Thread(target=_encode,
-                             args=(filename,mode,first,last,preserve,encoder,tmp_path,prefix,quiet,_self))
+                             args=(filename,mode,first,last,preserve,
+                                   encoder,tmp_path,prefix,quiet,_self))
         t.setDaemon(1)
         t.start()
     if ok:

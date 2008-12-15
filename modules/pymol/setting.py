@@ -642,7 +642,8 @@ if __name__=='pymol.setting':
         stick_ball_color                   = 604
         stick_h_scale                      = 605
         sculpt_pyra_inv_weight             = 606
-        
+        keep_alive                         = 607
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

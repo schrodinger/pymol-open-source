@@ -200,12 +200,6 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *data_ptr,
     {
       FILE *fil=fopen(file_name,"wb");
       unsigned char *buffer = Alloc(unsigned char,3*width*height);
-      int big_endian = false;
-      {
-        unsigned int test = 0xFF000000;
-        unsigned char *testPtr = (unsigned char*)&test;
-        big_endian = (*testPtr)&&1;
-      }
 
       if(fil && buffer) {
         fprintf(fil,"P6\n");
@@ -216,21 +210,11 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *data_ptr,
           unsigned char *q = buffer, *p;
           p = data_ptr + width * 4 * (height-1);
           for(b=0;b<height;b++) {
-            if(big_endian) { /* TO BE TESTED */
-              for(a=0;a<width;a++) {
-                q[0] = p[3];
-                q[1] = p[2];
-                q[2] = p[1];
-                q+=3;
-                p+=4;
-              }
-            } else {
-              for(a=0;a<width;a++) {
-                *(q++) = *(p++);
-                *(q++) = *(p++);
-                *(q++) = *(p++);
-                p++;
-              }
+            for(a=0;a<width;a++) {
+              *(q++) = *(p++);  /* platform-specific ordering? */
+              *(q++) = *(p++);
+              *(q++) = *(p++);
+              p++;
             }
             p -= width * 8;
           }
