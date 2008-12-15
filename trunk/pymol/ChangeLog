@@ -2,7 +2,11 @@
 CHANGE LOG
 =========================================================================
 
-2008-12-12 Warren L. DeLano <warren@delsci.com>
+2008-12-14 Warren L. DeLano <warren@delsci.com>
+
+	* added support for writing ppm files (awkwardly: via png)
+	
+2008-12-13 Warren L. DeLano <warren@delsci.com>
 
 	* added error message for when align/super atom alignment fails
 	

@@ -30,6 +30,7 @@
 #include"ObjectAlignment.h"
 #include"ObjectGroup.h"
 #include"ListMacros.h"
+#include"MyPNG.h"
 #include"Ortho.h"
 #include"Scene.h"
 #include"Selector.h"
@@ -1385,7 +1386,7 @@ int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int e
     OrthoDirty(G);
     I->CaptureFlag = true;
   } else {
-    SceneDeferImage(G,width,height,NULL,antialias, -1.0, quiet);
+    SceneDeferImage(G,width,height,NULL,antialias, -1.0, cMyPNG_FormatPNG, quiet);
   }
   return 1;
 }

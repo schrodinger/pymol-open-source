@@ -95,6 +95,7 @@ from querying import \
       get_distance,       \
       get_extent,         \
       get_idtf,           \
+      get_modal_draw,     \
       get_model,          \
       get_movie_locked,   \
       get_movie_length,   \

@@ -87,6 +87,7 @@ api_list = [
     'get_editor_scheme',
     'get_extent',
     'get_frame',
+    'get_modal_draw',
     'get_model',
     'get_movie_playing',
     'get_movie_locked',

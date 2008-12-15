@@ -283,15 +283,16 @@ def get_command_keywords(self_cmd=cmd):
         'util.ss'       : [ self_cmd.util.ss           , 0 , 0 , ''  , parsing.STRICT ],# secondary structure
         'util.rainbow'  : [ self_cmd.util.rainbow      , 0 , 0 , ''  , parsing.STRICT ],
         # movie programs
+        'movie.load'    : [ self_cmd.movie.load        , 0 , 0 , ''  , parsing.STRICT ],
+        'movie.nutate'  : [ self_cmd.movie.nutate      , 0 , 0 , ''  , parsing.STRICT ],
+        'movie.pause'   : [ self_cmd.movie.pause       , 0 , 0 , ''  , parsing.STRICT ],
+        'movie.produce' : [ self_cmd.movie.produce     , 0 , 0 , ''  , parsing.STRICT ],
         'movie.rock'    : [ self_cmd.movie.rock        , 0 , 0 , ''  , parsing.STRICT ],
         'movie.roll'    : [ self_cmd.movie.roll        , 0 , 0 , ''  , parsing.STRICT ],
-        'movie.load'    : [ self_cmd.movie.load        , 0 , 0 , ''  , parsing.STRICT ],
-        'movie.zoom'    : [ self_cmd.movie.zoom        , 0 , 0 , ''  , parsing.STRICT ],
         'movie.screw'   : [ self_cmd.movie.screw       , 0 , 0 , ''  , parsing.STRICT ],
         'movie.sweep'   : [ self_cmd.movie.sweep       , 0 , 0 , ''  , parsing.STRICT ],
-        'movie.pause'   : [ self_cmd.movie.pause       , 0 , 0 , ''  , parsing.STRICT ],               
-        'movie.nutate'  : [ self_cmd.movie.nutate      , 0 , 0 , ''  , parsing.STRICT ],
         'movie.tdroll'  : [ self_cmd.movie.tdroll      , 0 , 0 , ''  , parsing.STRICT ],
+        'movie.zoom'    : [ self_cmd.movie.zoom        , 0 , 0 , ''  , parsing.STRICT ],
         # activate metaphorics extensions
         #   'metaphorics'   : [ self_cmd.metaphorics       , 0 , 0 , ''  , parsing.STRICT ],
         }

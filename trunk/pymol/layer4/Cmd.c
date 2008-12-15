@@ -236,6 +236,26 @@ static PyObject *APIAutoNone(PyObject *result) /* automatically owned Py_None */
   return(result);
 }
 
+static PyObject *CmdGetModalDraw(PyObject *self, PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  int ok = false;
+  int status = false;
+  ok = PyArg_ParseTuple(args,"O",&self);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    APIEnterBlocked(G);
+    ok = PyMOL_GetModalDraw(G->PyMOL);
+    APIExitBlocked(G);
+  }
+  return APIResultCode(status);
+}
+
 #if 0
 static PyObject *CmdCache(PyObject *self, PyObject *args)
 {
@@ -5437,27 +5457,6 @@ static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args) /* missing? */
   return result;
 }
 
-static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args)
-{
-  PyMOLGlobals *G = NULL;
-  PyObject *result = Py_None;
-  char *str1;
-  int ok = false;
-  ok = PyArg_ParseTuple(args,"Os",&self,&str1);
-  if(ok) {
-    API_SETUP_PYMOL_GLOBALS;
-    ok = (G!=NULL);
-  } else {
-    API_HANDLE_ERROR;
-  }
-  if(ok && (ok=APIEnterBlockedNotModal(G))) {
-    float value=SettingGetNamed(G,str1);
-    APIExitBlocked(G);
-    result = Py_BuildValue("f", value);
-  }
-  return APIAutoNone(result);
-}
-
 static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -5472,7 +5471,8 @@ static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterBlockedNotModal(G)) ) {
+  if(ok) {
+    APIEnterBlocked(G);
     result =  ExecutiveGetSettingTuple(G,int1,str1,int2);
     APIExitBlocked(G);
   }
@@ -5493,7 +5493,8 @@ static PyObject *CmdGetSettingOfType(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterBlockedNotModal(G)) ) {
+  if(ok) {
+    APIEnterBlocked(G);
     result =  ExecutiveGetSettingOfType(G,int1,str1,int2,int3);
     APIExitBlocked(G);
   }
@@ -5514,7 +5515,8 @@ static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterBlockedNotModal(G)) ) {
+  if(ok) {
+    APIEnterBlocked(G);
     result =  ExecutiveGetSettingText(G,int1,str1,int2);
     APIExitBlocked(G);
   }
@@ -5911,9 +5913,9 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
   int quiet;
   int result = 0;
   int width,height,ray;
-  int prior;
+  int prior,format;
   float dpi;
-  ok = PyArg_ParseTuple(args,"Osiifiii",&self,&str1,&width,&height,&dpi,&ray,&quiet,&prior);
+  ok = PyArg_ParseTuple(args,"Osiifiiii",&self,&str1,&width,&height,&dpi,&ray,&quiet,&prior,&format);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -5922,18 +5924,18 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
   }
   if(ok && (ok=APIEnterNotModal(G))) {
     if(prior) {
-      if(ScenePNG(G,str1,dpi,quiet,prior))
+      if(ScenePNG(G,str1,dpi,quiet,prior,format))
         result = 1; /* signal success by returning 1 instead of 0, or -1 for error  */
     } else {
       ExecutiveDrawNow(G);		 /* TODO STATUS */
       if(ray) {
         SceneRay(G,width,height,(int)SettingGet(G,cSetting_ray_default_renderer),
                  NULL,NULL,0.0F,0.0F,false,NULL,true,-1); 
-        ok = ScenePNG(G,str1,dpi,quiet,false);
+        ok = ScenePNG(G,str1,dpi,quiet,false,format);
       } else if(width||height) {
-        SceneDeferImage(G,width,height,str1,-1,dpi,quiet);
+        SceneDeferImage(G,width,height,str1,-1,dpi,quiet,format);
       } else {
-        ok = ScenePNG(G,str1,dpi,quiet,false);
+        ok = ScenePNG(G,str1,dpi,quiet,false,format);
       }
     }
     APIExit(G);
@@ -5947,9 +5949,10 @@ static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   char *str1;
-  int int1,int2,int3,int4;
+  int int1,int2,int3,int4,format,mode,quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"Osiiii",&self,&str1,&int1,&int2,&int3,&int4);
+  ok = PyArg_ParseTuple(args,"Osiiiiiii",&self,&str1,&int1,&int2,
+                        &int3,&int4,&format,&mode,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -5958,7 +5961,7 @@ static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
   }
   if(ok && (ok=APIEnterNotModal(G))) {
     ok = MoviePNG(G,str1,(int)SettingGet(G,cSetting_cache_frames),
-                  int1,int2,int3,int4);
+                  int1,int2,int3,int4,format,mode,quiet);
     /* TODO STATUS */
     APIExit(G);
   }
@@ -6476,8 +6479,10 @@ static PyObject *CmdGet(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterBlockedNotModal(G)) ) {
-    float f=SettingGetNamed(G,sname);
+  if(ok) {
+    float f;
+    APIEnterBlocked(G);
+    f=SettingGetNamed(G,sname);
     APIExitBlocked(G);
     result = Py_BuildValue("f", f);
   }
@@ -8353,6 +8358,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_min_max",           CmdGetMinMax,            METH_VARARGS },
   {"get_mtl_obj",           CmdGetMtlObj,            METH_VARARGS },
   {"get_model",	            CmdGetModel,             METH_VARARGS },
+  {"get_modal_draw",        CmdGetModalDraw,        METH_VARARGS },
   {"get_moment",	        CmdGetMoment,            METH_VARARGS },
   {"get_movie_length",      CmdGetMovieLength,       METH_VARARGS },
   {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
@@ -8370,7 +8376,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_raw_alignment",     CmdGetRawAlignment,      METH_VARARGS },
   {"get_seq_align_str",     CmdGetSeqAlignStr,       METH_VARARGS },
   {"get_session",           CmdGetSession,           METH_VARARGS },
-  {"get_setting",           CmdGetSetting,           METH_VARARGS },
+  {"get_setting",           CmdGet,                  METH_VARARGS }, /* deprecated */
   {"get_setting_of_type",   CmdGetSettingOfType,     METH_VARARGS },
   {"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
   {"get_setting_text",      CmdGetSettingText,       METH_VARARGS },

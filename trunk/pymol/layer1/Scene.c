@@ -97,6 +97,7 @@ typedef struct {
   int antialias;
   float dpi;
   int entire_window;
+  int format;
 } DeferredImage;
 
 typedef struct {
@@ -1950,7 +1951,8 @@ static void deinterlace(unsigned int *dst,unsigned int *src,
   }
 }
 
-int ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet,int prior_only)
+int ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet,
+             int prior_only,int format)
 {
   register CScene *I=G->Scene;
   GLvoid *image = SceneImagePrepare(G,prior_only);
@@ -1966,7 +1968,7 @@ int ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet,int prior_only)
       width *= 2;
     }
     if(dpi<0.0F) dpi = SettingGetGlobal_f(G,cSetting_image_dots_per_inch);
-    if(MyPNGWrite(G,png,save_image,width,height,dpi)) {
+    if(MyPNGWrite(G,png,save_image,width,height,dpi,format,quiet)) {
       if(!quiet) {
         PRINTFB(G,FB_Scene,FB_Actions) 
           " ScenePNG: wrote %dx%d pixel image to file \"%s\".\n",
@@ -2173,7 +2175,8 @@ Block *SceneGetBlock(PyMOLGlobals *G)
   return(I->Block);
 }
 /*========================================================================*/
-int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing, int validate) {
+int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing, 
+                        int validate, int mode) {
   register CScene *I=G->Scene;
   float *v;
   int valid = true;
@@ -2181,35 +2184,57 @@ int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing, int validate) {
     " Scene: Making movie image.\n"
     ENDFB(G);
 
+  switch(mode) {
+  case cSceneImage_Normal:
+  case cSceneImage_Draw:
+  case cSceneImage_Ray:
+    break;
+  default:
+    if(SettingGet(G,cSetting_ray_trace_frames)) {
+      mode = cSceneImage_Ray;
+    } else if(SettingGet(G,cSetting_draw_frames)) {
+      mode = cSceneImage_Draw;
+    } else {
+      mode = cSceneImage_Normal;
+    }
+    break;
+  }
+
   I->DirtyFlag=false;
-  if(SettingGet(G,cSetting_ray_trace_frames)) {
+  switch(mode) {
+  case cSceneImage_Ray:
     SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),
              NULL,NULL,
              0.0F,0.0F,false,NULL,show_timing,-1); 
-  } else if(SettingGet(G,cSetting_draw_frames)) {
+    break;
+  case cSceneImage_Draw:
     SceneMakeSizedImage(G,0,0,SettingGetGlobal_i(G,cSetting_antialias));
-  } else {
-    int draw_both = SceneMustDrawBoth(G);
-    float alpha = (SettingGetGlobal_b(G,cSetting_opaque_background) ? 1.0F : 0.0F);
-    v=SettingGetfv(G,cSetting_bg_rgb);
-    if(G->HaveGUI && G->ValidContext) {
-      if(draw_both) {
-        OrthoDrawBuffer(G,GL_BACK_LEFT);
-      } else {
-        OrthoDrawBuffer(G,GL_BACK);
+    break;
+  case cSceneImage_Normal:
+    {
+      int draw_both = SceneMustDrawBoth(G);
+      float alpha = (SettingGetGlobal_b(G,cSetting_opaque_background) ? 1.0F : 0.0F);
+      v=SettingGetfv(G,cSetting_bg_rgb);
+      if(G->HaveGUI && G->ValidContext) {
+        if(draw_both) {
+          OrthoDrawBuffer(G,GL_BACK_LEFT);
+        } else {
+          OrthoDrawBuffer(G,GL_BACK);
+        }
+        glClearColor(v[0],v[1],v[2],alpha);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        /* insert OpenGL context validation code here? */
+        SceneRender(G,NULL,0,0,NULL,0,0,0,0);
+        glClearColor(0.0,0.0,0.0,1.0);
+        if(draw_both) {
+          SceneCopy(G,GL_BACK_LEFT,true,false);
+        } else {
+          SceneCopy(G,GL_BACK,true,false);
+        }
+        /* insert OpenGL context validation code here? */
       }
-      glClearColor(v[0],v[1],v[2],alpha);
-      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      /* insert OpenGL context validation code here? */
-      SceneRender(G,NULL,0,0,NULL,0,0,0,0);
-      glClearColor(0.0,0.0,0.0,1.0);
-      if(draw_both) {
-        SceneCopy(G,GL_BACK_LEFT,true,false);
-      } else {
-        SceneCopy(G,GL_BACK,true,false);
-      }
-      /* insert OpenGL context validation code here? */
     }
+    break;
   }
   if(I->Image) {
      MovieSetImage(G,
@@ -5547,7 +5572,7 @@ static int SceneDeferredImage(DeferredImage *di)
   PyMOLGlobals *G=di->G;
   SceneMakeSizedImage(G,di->width, di->height,di->antialias);
   if(di->filename) {
-    ScenePNG(G,di->filename, di->dpi, di->quiet, false);
+    ScenePNG(G,di->filename, di->dpi, di->quiet, false, di->format);
     FreeP(di->filename);
   } else if(G->HaveGUI &&
             SettingGetGlobal_b(G,cSetting_auto_copy_images)) {
@@ -5566,7 +5591,8 @@ static int SceneDeferredImage(DeferredImage *di)
 }
 
 int SceneDeferImage(PyMOLGlobals *G,int width, int height, 
-                    char *filename, int antialias, float dpi, int quiet)
+                    char *filename, int antialias, float dpi, 
+                    int format, int quiet)
 {
   DeferredImage *di = Calloc(DeferredImage,1);
   if(di) {
@@ -5577,6 +5603,7 @@ int SceneDeferImage(PyMOLGlobals *G,int width, int height,
     di->antialias = antialias;
     di->deferred.fn = (DeferredFn*)SceneDeferredImage;
     di->dpi = dpi;
+    di->format = format;
     di->quiet = quiet;
     if(filename) {
       int stlen = strlen(filename);
@@ -6936,7 +6963,7 @@ int SceneRenderCached(PyMOLGlobals *G)
         OrthoDirty(G);
         renderedFlag=true;
       } else {
-        SceneMakeMovieImage(G,true,false);
+        SceneMakeMovieImage(G,true,false,cSceneImage_Default);
         renderedFlag=true;
       }
     } else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_ray_trace_frames)) {
