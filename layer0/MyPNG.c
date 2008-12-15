@@ -15,6 +15,7 @@ Z* -------------------------------------------------------------------
 */
 
 #include"os_predef.h"
+#include"MemoryDebug.h"
 
 /* backwards compatibility */
 
@@ -49,9 +50,13 @@ Z* -------------------------------------------------------------------
 #include "Setting.h"
 
 
-int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
-               unsigned int width,unsigned int height,float dpi)
+int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *data_ptr,
+               unsigned int width,unsigned int height,float dpi,
+               int format, int quiet)
 {
+  switch(format) {
+  case cMyPNG_FormatPNG:
+    {
 #ifdef _PYMOL_LIBPNG
   int ok=true;
   FILE *fp = NULL;
@@ -60,7 +65,7 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
   int bit_depth = 8;
   int bytes_per_pixel = 4;
   png_uint_32 k;
-  png_byte *image = (png_byte*)p;
+  png_byte *image = (png_byte*)data_ptr;
   png_bytep *row_pointers;
   int fd = 0;
 
@@ -189,11 +194,62 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
 
    return 0;
 #endif
+    }
+    break;
+  case cMyPNG_FormatPPM:
+    {
+      FILE *fil=fopen(file_name,"wb");
+      unsigned char *buffer = Alloc(unsigned char,3*width*height);
+      int big_endian = false;
+      {
+        unsigned int test = 0xFF000000;
+        unsigned char *testPtr = (unsigned char*)&test;
+        big_endian = (*testPtr)&&1;
+      }
+
+      if(fil && buffer) {
+        fprintf(fil,"P6\n");
+        fprintf(fil,"%d %d\n",width, height);
+        fprintf(fil,"255\n");
+        {
+          int a,b;
+          unsigned char *q = buffer, *p;
+          p = data_ptr + width * 4 * (height-1);
+          for(b=0;b<height;b++) {
+            if(big_endian) { /* TO BE TESTED */
+              for(a=0;a<width;a++) {
+                q[0] = p[3];
+                q[1] = p[2];
+                q[2] = p[1];
+                q+=3;
+                p+=4;
+              }
+            } else {
+              for(a=0;a<width;a++) {
+                *(q++) = *(p++);
+                *(q++) = *(p++);
+                *(q++) = *(p++);
+                p++;
+              }
+            }
+            p -= width * 8;
+          }
+          fwrite(buffer,width,height*3,fil);
+        }
+      }
+      if(fil) {
+        fclose(fil);
+      }
+      FreeP(buffer);
+    }
+    return 1;
+    break;
+  }
 }
 
 int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsigned int *height_ptr)
 {
-
+  
 #ifdef _PYMOL_LIBPNG
 
   FILE *png_file=NULL;

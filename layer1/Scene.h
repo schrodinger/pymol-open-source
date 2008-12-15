@@ -38,6 +38,11 @@ typedef struct {
 
 #define cSceneRay_MODE_IDTF 7
 
+#define cSceneImage_Default -1
+#define cSceneImage_Normal 0
+#define cSceneImage_Draw 1
+#define cSceneImage_Ray 2
+
 typedef float SceneViewType[cSceneViewSize];
  
 /* all information required to define the geometry of a particular view,
@@ -96,9 +101,10 @@ int SceneDeferRay(PyMOLGlobals *G,
                    int quiet,
                    int show_timing,
                    int antialias);
-int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing,int validate);
+int SceneMakeMovieImage(PyMOLGlobals *G,int show_timing,int validate,int mode);
 
-int ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet,int prior_only);
+int ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet,
+             int prior_only, int format);
 int SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,
 		      unsigned char *dest,int mode);
 
@@ -167,7 +173,7 @@ int SceneDeferClick(Block *block,int button,int x,int y,int mod);
 int SceneDeferRelease(Block *block,int button,int x,int y,int mod);
 int SceneDeferDrag(Block *block,int x,int y,int mod);
 int SceneDeferImage(PyMOLGlobals *G,int width, int height, char *filename,
-                    int antialias, float dpi, int quiet);
+                    int antialias, float dpi, int format, int quiet);
 char *SceneGetSeleModeKeyword(PyMOLGlobals *G);
 void SceneUpdateStereo(PyMOLGlobals *G);
 void ScenePushRasterMatrix(PyMOLGlobals *G,float *v);

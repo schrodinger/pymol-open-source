@@ -258,17 +258,26 @@ def _do(cmmd,log=0,echo=1,_self=cmd):
 
 # movie rendering
 
-def _mpng(prefix, first=-1, last=-1, preserve=0, modal=0, _self=cmd): # INTERNAL
+def _mpng(prefix, first=-1, last=-1, preserve=0, modal=0,
+          format=-1, mode=-1, quiet=1, _self=cmd): # INTERNAL
     import sys
+    format = int(format)
     # WARNING: internal routine, subject to change
     try:
         _self.lock(_self)   
         fname = prefix
         if re.search("[0-9]*\.png$",fname): # remove numbering, etc.
             fname = re.sub("[0-9]*\.png$","",fname)
+        if re.search("[0-9]*\.ppm$",fname):
+            if format<0:
+                format = 1 # PPM
+            fname = re.sub("[0-9]*\.ppm$","",fname)
+        if format<0:
+            format = 0 # default = PNG
         fname = cmd.exp_path(fname)
         r = _cmd.mpng_(_self._COb,str(fname),int(first),
-                       int(last),int(preserve),int(modal))
+                       int(last),int(preserve),int(modal),
+                       format,int(mode),int(quiet))
     finally:
         _self.unlock(-1,_self)
     return r
@@ -283,6 +292,7 @@ def _copy_image(_self=cmd,quiet=1):
     finally:
         _self.unlock(r,_self)
     return r
+
 
 # loading
 
@@ -436,17 +446,23 @@ def _alt(k,_self=cmd):
 
 # writing PNG files (thread-unsafe)
 
-def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,prior=0,_self=cmd):
+def _png(a,width=0,height=0,dpi=-1.0,ray=0,quiet=1,prior=0,format=-1,_self=cmd):
     # INTERNAL - can only be safely called by GLUT thread (unless prior == 1)
     # WARNING: internal routine, subject to change
     try:
         _self.lock(_self)   
         fname = a
-        if not re.search("\.png$",fname):
+        if re.search("\.ppm$",fname):
+            if format<0:
+                format = 1 # PPM
+        elif not re.search("\.png$",fname):
             if a[0:1] != chr(1): # not an encoded file descriptor (integer)
                 fname = fname +".png"
+        if format<0:
+            format = 0 # PNG
         fname = cmd.exp_path(fname)
-        r = _cmd.png(_self._COb,str(fname),int(width),int(height),float(dpi),int(ray),int(quiet),int(prior))
+        r = _cmd.png(_self._COb,str(fname),int(width),int(height),
+                     float(dpi),int(ray),int(quiet),int(prior),int(format))
     finally:
         _self.unlock(-1,_self)
     return r

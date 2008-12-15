@@ -29,13 +29,14 @@ class Setting:
         
         while not self.cmd.ready(): # make sure PyMOL is ready for action...
             time.sleep(0.1)
-            
+
+
         self.ray_trace_frames = IntVar()
         self.ray_trace_frames.set(int(self.cmd.get_setting_legacy('ray_trace_frames')))
 
         self.draw_frames = IntVar()
         self.draw_frames.set(int(self.cmd.get_setting_legacy('draw_frames')))
-       
+
         self.cache_frames = IntVar()
         self.cache_frames.set(int(self.cmd.get_setting_legacy('cache_frames')))
 
@@ -148,10 +149,10 @@ class Setting:
         self.virtual_trackball.set(int(self.cmd.get_setting_legacy('virtual_trackball')))
 
         self.stereo = IntVar()
-        
+
         self.seq_view = IntVar()
         self.seq_view.set(int(self.cmd.get_setting_legacy('seq_view')))
-        
+
         self.texture_fonts = IntVar()
         self.texture_fonts.set(int(self.cmd.get_setting_legacy('texture_fonts')))
 
@@ -172,7 +173,6 @@ class Setting:
 
         self.scene_buttons = IntVar()
         self.scene_buttons.set(int(self.cmd.get_setting_legacy('scene_buttons')))
-
 
         self.F=[ None,
                     IntVar(),

@@ -34,6 +34,16 @@ if __name__=='pymol.querying':
                     _self.distance()
         _self.unpick()   
 
+
+    def get_modal_draw(_self=cmd,quiet=1):
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)   
+            r = _cmd.get_modal_draw(_self._COb)
+        finally:
+            _self.unlock(r,_self)
+        return r
+
     def get_object_matrix(object,state=1,_self=cmd):
         '''
 DESCRIPTION

@@ -235,7 +235,8 @@ NOTES
         return r
         
 
-    def png(filename, width=0, height=0, dpi=-1.0, ray=0, quiet=1, prior=0, _self=cmd):
+    def png(filename, width=0, height=0, dpi=-1.0, ray=0,
+            quiet=1, prior=0, format=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -279,15 +280,19 @@ PYMOL API
         prior = int(prior)
         if prior: 
             # fetch the prior image, without doing any work (fast-path / non-GLUT thread-safe)
-            r = _self._png(str(filename),0,0,float(dpi),0,int(quiet),1,_self)            
+            r = _self._png(str(filename),0,0,float(dpi),0,int(quiet),1,
+                           int(format),_self)            
             if r != 1: # no prior image available -- revert to default behavior
                 if prior < 0: # default is to fall back to actual rendering
                     prior = 0
         if not prior:
             if thread.get_ident() == pymol.glutThread:
-                r = _self._png(str(filename),int(width),int(height),float(dpi),int(ray),int(quiet),0,_self)
+                r = _self._png(str(filename),int(width),int(height),float(dpi),
+                               int(ray),int(quiet),0,int(format),_self)
             else:
-                r = _self._do("cmd._png('%s',%d,%d,%1.6f,%d,%d)"%(filename,width,height,dpi,ray,quiet),_self=_self)
+                r = _self._do("cmd._png('%s',%d,%d,%1.6f,%d,%d,%d,%d)"%
+                              (filename,width,height,dpi,
+                               ray,int(quiet),0,int(format)),_self=_self)
         if _self._raising(r,_self): raise QuietException
         return r
 
