@@ -524,7 +524,7 @@ def _watch(filename,done_event):
             break
             
 def _encode(filename,mode,first,last,preserve,
-            encoder,tmp_path,prefix,quiet,_self=cmd):
+            encoder,tmp_path,prefix,quality,quiet,_self=cmd):
     import os
     while 1: # loop until all of the files have been created...
         done = 1
@@ -550,9 +550,11 @@ def _encode(filename,mode,first,last,preserve,
                 ok = 0
                 print "produce-error: Unable to validate freemol.mpeg_encode"
         if ok:
-            input = mpeg_encode.input(filename,tmp_path,prefix,first,last);
+            mpeg_quality = 1+int(((100-quality)*29)/100) # 1 to 30
+            input = mpeg_encode.input(filename,tmp_path,
+                                      prefix,first,last,mpeg_quality);
             if not quiet:
-                print " produce: creating '%s'..."%(filename)
+                print " produce: creating '%s' (in background)..."%(filename)
 
             done_event = None
             if not quiet:
@@ -569,9 +571,9 @@ def _encode(filename,mode,first,last,preserve,
                     done_event.set()
             if not quiet:
                 if not os.path.exists(filename):
-                    print " produce: failed"
                     if result != None:
-                        print result[0], result[1]
+                        print input, result[0], result[1]
+                    print " produce: compression failed"
                 else:
                     print " produce: finished."
             
@@ -591,8 +593,8 @@ produce_mode_dict = {
 produce_mode_sc = cmd.Shortcut(produce_mode_dict.keys())
 
 
-def produce(filename, mode='draw', first=0, last=0, preserve=-1,
-            encoder='mpeg_encode', quiet=1, _self=cmd):
+def produce(filename, mode='draw', first=0, last=0, preserve=0,
+            encoder='mpeg_encode', quality=60, quiet=1, _self=cmd):
     prefix = _prefix
     if _self.is_string(mode):
         mode = produce_mode_sc.auto_err(mode,"mode")
@@ -603,13 +605,21 @@ def produce(filename, mode='draw', first=0, last=0, preserve=-1,
     last = int(last)
     quiet = int(quiet)
     preserve = int(preserve)
-    
+    quality = int(quality)
+    if quality<0:
+        quality = 0
+    if quality>100:
+        quality = 100
     ok = 1
     tmp_path = filename+".tmp"
     if os.path.exists(filename):
         os.unlink(filename)
     if not os.path.exists(tmp_path):
         os.mkdir(tmp_path)
+    elif preserve==0:
+        # get rid of existing frames (if they exist)
+        for fil in glob.glob(os.path.join(tmp_path,prefix+"*")):
+            os.unlink(fil)
     if preserve<0:
         preserve = 0
     if os.path.isdir(tmp_path):
@@ -626,7 +636,7 @@ def produce(filename, mode='draw', first=0, last=0, preserve=-1,
     if ok:
         t = threading.Thread(target=_encode,
                              args=(filename,mode,first,last,preserve,
-                                   encoder,tmp_path,prefix,quiet,_self))
+                                   encoder,tmp_path,prefix,quality,quiet,_self))
         t.setDaemon(1)
         t.start()
     if ok:

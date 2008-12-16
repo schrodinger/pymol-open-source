@@ -1617,17 +1617,46 @@ void ExtrudeComputePuttyScaleFactors(CExtrude *I,ObjectMolecule *obj,int transfo
   float scale = 1.0F;
   float data_range = max - min;
 
-  if(data_range==0.0F) data_range = 1.0F;
-
   if(I->N&&I->Ns) {
-
+    int invalid = false;
     i=I->i;
     sf=I->sf;
 
-    if(stdev>R_SMALL8) {
+    /* guard against invalid inputs that would imply division by zero */
+
+    switch(transform) { 
+    case cPuttyTransformNormalizedNonlinear:  
+    case cPuttyTransformNormalizedLinear:  
+      /* depend on stdev */
+      if(stdev<R_SMALL8) 
+        invalid = true;
+      break;
+    }    
+    switch(transform) {
+    case cPuttyTransformNormalizedNonlinear:  
+    case cPuttyTransformRelativeNonlinear: 
+    case cPuttyTransformScaledNonlinear: 
+    case cPuttyTransformNormalizedLinear:  
+    case cPuttyTransformRelativeLinear: 
+    case cPuttyTransformScaledLinear: 
+      /* depend on range */
+
+      if(fabs(range)<R_SMALL8)
+        invalid = true;
+      break;
+    }
+    switch(transform) {
+    case cPuttyTransformRelativeNonlinear:
+    case cPuttyTransformRelativeLinear: 
+      /* depend on data_range */
+      if(fabs(data_range)<R_SMALL8)
+        invalid = true;
+      break;
+    }
+
+    if(!invalid) {
       for(a=0;a<I->N;a++) {
         at = obj->AtomInfo + (*i);
-        
         switch(transform) {
         case cPuttyTransformNormalizedNonlinear:  
           /* normalized by Z-score, with the range affecting the distribution width */
@@ -1680,7 +1709,7 @@ void ExtrudeComputePuttyScaleFactors(CExtrude *I,ObjectMolecule *obj,int transfo
           scale = (float)(sqrt1d(at->b/8.0)/PI);
           break;
         }
-        if(scale<min_scale)
+        if((scale<min_scale) && (min_scale>=0.0))
           scale=min_scale;
         if((scale>max_scale) && (max_scale>=0.0)) 
           scale=max_scale;
@@ -1688,12 +1717,15 @@ void ExtrudeComputePuttyScaleFactors(CExtrude *I,ObjectMolecule *obj,int transfo
         i++;
       }
     } else {
+      PRINTFB(I->G,FB_RepCartoon,FB_Warnings)
+        " Extrude-Warning: invalid putty settings (division by zero)\n"
+        ENDFB(I->G);
       for(a=0;a<I->N;a++) {
-        *sf = 1.0F;
+        *sf = 0.0F;
         sf++;
       }
     }
-   
+
 
     PRINTFB(I->G,FB_RepCartoon,FB_Blather)
             " Putty: mean %8.3f stdev %8.3f min %8.3f max %8.3f\n",
