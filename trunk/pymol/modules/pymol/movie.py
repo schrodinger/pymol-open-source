@@ -506,7 +506,7 @@ def _watch(filename,done_event):
         tries = tries - 1
         if tries < 0:
             break
-        time.sleep(1)
+        time.sleep(1) 
     if os.path.exists(filename):
         tries = 5
     while os.path.exists(filename):
@@ -514,6 +514,8 @@ def _watch(filename,done_event):
         if size != stat[6]:
             tries = 5
             size = stat[6]
+            if done_event.isSet():
+                break
             print " produce: %d bytes written..."%size
         else:
             tries = tries - 1
@@ -526,6 +528,7 @@ def _watch(filename,done_event):
 def _encode(filename,mode,first,last,preserve,
             encoder,tmp_path,prefix,quality,quiet,_self=cmd):
     import os
+    tries = 10
     while 1: # loop until all of the files have been created...
         done = 1
         # check for the required output files
@@ -536,20 +539,29 @@ def _encode(filename,mode,first,last,preserve,
                 break;
         if done:
             break
-        time.sleep(0.1)
+        elif _self.get_modal_draw(): # keep looping so long as we're rendering...
+            tries = 10
+        else: 
+            tries = tries - 1
+            if tries < 0:
+                done = 0
+                break
+        time.sleep(0.25)
     _self.sync()
     ok = 1
-    if ok and (encoder == 'mpeg_encode'):
+    if done and ok and (encoder == 'mpeg_encode'):
         try:
             from freemol import mpeg_encode
         except:
             ok = 0
-            print "produce-error: Unable to import module freemol.mpeg_encode"
+            print "produce-error: Unable to import module freemol.mpeg_encode."
         if ok:
             if not mpeg_encode.validate():
                 ok = 0
-                print "produce-error: Unable to validate freemol.mpeg_encode"
-        if ok:
+                print "produce-error: Unable to validate freemol.mpeg_encode."
+        if not ok:
+            print "produce-error: Unable to create mpeg file."            
+        else:
             mpeg_quality = 1+int(((100-quality)*29)/100) # 1 to 30
             input = mpeg_encode.input(filename,tmp_path,
                                       prefix,first,last,mpeg_quality);
@@ -576,7 +588,6 @@ def _encode(filename,mode,first,last,preserve,
                     print " produce: compression failed"
                 else:
                     print " produce: finished."
-            
     _self.unset("keep_alive")
     if preserve<1:
         if os.path.isdir(tmp_path):
@@ -593,10 +604,16 @@ produce_mode_dict = {
 produce_mode_sc = cmd.Shortcut(produce_mode_dict.keys())
 
 
-def produce(filename, mode='draw', first=0, last=0, preserve=0,
+def produce(filename, mode='', first=0, last=0, preserve=0,
             encoder='mpeg_encode', quality=60, quiet=1, _self=cmd):
     prefix = _prefix
+
     if _self.is_string(mode):
+        if mode == '':
+            if int(cmd.get_setting_legacy('ray_trace_frames')):
+                mode = 'ray'
+            else:
+                mode = 'draw'
         mode = produce_mode_sc.auto_err(mode,"mode")
         mode = produce_mode_dict[mode]
     else:
@@ -627,6 +644,8 @@ def produce(filename, mode='draw', first=0, last=0, preserve=0,
             first = 1
         if last <= 0:
             last = _self.count_frames()
+        if last <= 1:
+            last = 1
         _self.set("keep_alive")
         _self.mpng(os.path.join(tmp_path,prefix+".ppm"),first,last,
                    preserve,mode=mode,modal=1,quiet=quiet) 

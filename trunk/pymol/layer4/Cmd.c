@@ -250,7 +250,7 @@ static PyObject *CmdGetModalDraw(PyObject *self, PyObject *args)
   }
   if(ok) {
     APIEnterBlocked(G);
-    ok = PyMOL_GetModalDraw(G->PyMOL);
+    status = PyMOL_GetModalDraw(G->PyMOL);
     APIExitBlocked(G);
   }
   return APIResultCode(status);

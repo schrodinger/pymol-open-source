@@ -516,6 +516,9 @@ static void MovieModalPNG(PyMOLGlobals *G, CMovie *I, CMovieModal *M)
     M->nFrame = I->NFrame;
     if(!M->nFrame) {
       M->nFrame=SceneGetNFrame(G,NULL);
+      if(M->nFrame<1) {
+        M->nFrame = 1;
+      }
     }
     if(M->start < 0) M->start = 0;
     if(M->start > M->nFrame) M->start = M->nFrame;
