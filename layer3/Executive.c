@@ -1955,6 +1955,7 @@ int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
     int *index = NULL;
     int n_sel;
     int source_row = -1;
+    int min_row = -1;
     list = Alloc(SpecRec*,n_names);
     subset = Calloc(SpecRec*,n_names);
     sorted = Calloc(SpecRec*,n_names);
@@ -1990,6 +1991,8 @@ int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
             int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
             while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
               if(rec == list[a]) { 
+		if((a<min_row)||(min_row<0))
+		  min_row = a;
                 if(entry<=min_entry) {
                   source_row = a; /* where will new list be inserted...*/
                   min_entry = entry;
@@ -2070,7 +2073,14 @@ int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
             case -1: /* top */
               if(a==1) flag=true;
               break;
-            case 0: 
+	    case -2: /* upper */
+              if(min_row>=0) {
+                if(a==min_row)
+                  flag=true;
+              } else if(!list[a]) 
+                flag=true;
+	      break;
+            case 0: /* current */
               if(source_row>=0) {
                 if(a==source_row)
                   flag=true;
@@ -2113,9 +2123,7 @@ int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
         I->Spec=spec;
         OrthoDirty(G);
         SeqChanged(G);
-
       }
-      
       FreeP(index);
       FreeP(sorted);
       FreeP(list);
@@ -14327,6 +14335,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
               {
                 int group_flag = false;
                 int order_flag = false;
+		int location = 0;
                 char *first = NULL, *second = NULL;
                 int is_child = false;
                 
@@ -14349,6 +14358,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                       first = mov_rec->name;
                       second = new_rec->name;
                       order_flag=true;
+		      location = -2; /* upper */
                     }
                   
                     if(mov_rec->group == new_rec->group) { /* reordering within a group level */
@@ -14413,12 +14423,13 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                 if(order_flag && first && second) {
                   OrthoLineType order_input;
                   sprintf(order_input,"%s %s",first,second);
-                  ExecutiveOrder(G,order_input,false,0);
-                  sprintf(I->ReorderLog,"cmd.order(\"%s\")\n",
-                          order_input);
+                  ExecutiveOrder(G,order_input,false,location);
+                  sprintf(I->ReorderLog,"cmd.order(\"%s\",location=\"%s\")\n",
+                          order_input,
+			  (location==-2) ? "upper":"current");
                   PLog(G,I->ReorderLog,cPLog_no_flush);
-                I->RecoverPressed = mov_rec;
-                I->Pressed = 0;
+		  I->RecoverPressed = mov_rec;
+		  I->Pressed = 0;
                 }
               }
             }

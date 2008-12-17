@@ -4,6 +4,8 @@ CHANGE LOG
 
 2008-12-16 Warren L. DeLano <warren@delsci.com>
 
+	* fixed another object-name-dragging bug
+	
 	* mpeg1 export menu item
 
 	* fixed putty scaling bugs
