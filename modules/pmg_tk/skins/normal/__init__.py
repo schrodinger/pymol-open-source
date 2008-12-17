@@ -696,8 +696,30 @@ class Normal(PMGSkin):
             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
             self.cmd.log("save %s\n"%sfile,"cmd.save('%s')\n"%sfile)
             self.cmd.save(sfile,quiet=0)
+
+    def file_save_mpeg(self):
+        ok = 1
+        try:
+            from freemol import mpeg_encode
+            if not mpeg_encode.validate():
+                ok = 0
+                
+                print "produce-error: Unable to validate freemol.mpeg_encode"
+        except:
+            pass
+        if not ok:
+            tkMessageBox.showerror("Error",
+                "MPEG encoder missing. FreeMOL may not be installed")
+        else:
+            sfile = asksaveasfilename(initialdir = self.initialdir,
+                                      filetypes=[("MPEG movie file","*.mpg")])
+            if len(sfile):
+                self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+                self.cmd.log("movie.produce %s,quiet=0\n"%sfile,
+                             "cmd.movie.produce('''%s''',quiet=0)\n"%sfile)
+                self.cmd.movie.produce(sfile,quiet=0)
         
-    def file_savemovie(self):
+    def file_save_mpng(self):
         sfile = asksaveasfilename(initialdir = self.initialdir,
                                   filetypes=[("Numbered PNG Files","*.png")])
         if len(sfile):
@@ -996,9 +1018,18 @@ class Normal(PMGSkin):
                                 label='POV-Ray...',
                                 command=self.file_save_pov)
 
-        self.menuBar.addmenuitem('File', 'command', 'Save all frames.',
-                                label='Save Movie...',
-                                command=self.file_savemovie)
+        self.menuBar.addcascademenu('File', 'SaveMovieAs', 'Save Movie As',
+                                    label='Save Movie As',tearoff=FALSE)
+
+        self.menuBar.addmenuitem('SaveMovieAs', 'command', 'Save all frames as an MPEG movie.',
+                                label='MPEG...',
+                                command=self.file_save_mpeg)
+
+        self.menuBar.addmenuitem('SaveMovieAs', 'separator', '')
+        
+        self.menuBar.addmenuitem('SaveMovieAs', 'command', 'Save all frames as images.',
+                                label='PNG Images...',
+                                command=self.file_save_mpng)
 
         self.menuBar.addmenuitem('File', 'separator', '')
         
