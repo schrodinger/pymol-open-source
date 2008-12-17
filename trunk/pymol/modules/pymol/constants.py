@@ -268,6 +268,7 @@ palette_sc = Shortcut(palette_dict.keys())
 location_code = {
     'first' : -1,
     'top' : -1,
+    'upper' : -2,
     'current' : 0,
     'bottom' : 1,
     'last' : 1
