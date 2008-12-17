@@ -703,13 +703,13 @@ class Normal(PMGSkin):
             from freemol import mpeg_encode
             if not mpeg_encode.validate():
                 ok = 0
-                
                 print "produce-error: Unable to validate freemol.mpeg_encode"
         except:
+            ok = 0
             pass
         if not ok:
             tkMessageBox.showerror("Error",
-                "MPEG encoder missing. FreeMOL may not be installed")
+                "MPEG encoder missing.\nThe FreeMOL add-ons may not be installed.")
         else:
             sfile = asksaveasfilename(initialdir = self.initialdir,
                                       filetypes=[("MPEG movie file","*.mpg")])
