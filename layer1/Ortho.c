@@ -1101,8 +1101,8 @@ void OrthoDetach(PyMOLGlobals *G,Block *block)
 #ifdef PYMOL_COLL
 #include "OrthoCollMessage.h"
 #endif
-#ifdef _PYMOL_ACTIVEX_FREE
 #include "OrthoAxMessage.h"
+#ifdef _PYMOL_ACTIVEX_EVAL
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 
@@ -1362,7 +1362,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
 #ifdef PYMOL_COLL
       OrthoDrawCollMessage(G);
 #endif
-#ifdef _PYMOL_ACTIVEX_FREE
+#ifdef _PYMOL_ACTIVEX_EVAL
       OrthoDrawAxMessage(G);
 #endif
 
@@ -1826,10 +1826,17 @@ void OrthoSplash(PyMOLGlobals *G)
 #include"OrthoIPSplash.h"
 #else
   if(G->Option->incentive_product) {
+#ifdef _PYMOL_ACTIVEX_EVAL
+    PRINTF " AxPyMOL(TM) Evaluation Product - Copyright (C) 2008 DeLano Scientific LLC.\n \n" ENDF(G);
+    PRINTF " This Executable Build integrates and extends Open-Source PyMOL " ENDF(G);
+    PRINTF _PyMOL_VERSION ENDF(G);
+    PRINTF ".\n" ENDF(G);
+#else
     PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2008 DeLano Scientific LLC.\n \n" ENDF(G);
     PRINTF " This Executable Build integrates and extends Open-Source PyMOL " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
     PRINTF ".\n" ENDF(G);
+#endif
   } else 
 /* END PROPRIETARY CODE SEGMENT */
     {
