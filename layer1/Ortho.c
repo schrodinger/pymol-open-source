@@ -1101,8 +1101,8 @@ void OrthoDetach(PyMOLGlobals *G,Block *block)
 #ifdef PYMOL_COLL
 #include "OrthoCollMessage.h"
 #endif
-#include "OrthoAxMessage.h"
 #ifdef _PYMOL_ACTIVEX_EVAL
+#include "OrthoAxMessage.h"
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 
