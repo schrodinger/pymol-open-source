@@ -29,7 +29,7 @@
 # message.  This is not a bug in PyMOL, as it can be produced with a
 # trivial tcl/tk program.  (Tentatively WORKED AROUND in 0.99beta18!)
 
-from copy import deepcopy
+import copy
 import __main__
 if __name__!='__main__':
     import invocation
@@ -102,7 +102,7 @@ def _init_internals(_pymol):
 
     
     _pymol._invocation = Scratch_Storage()
-    _pymol._invocation.options = deepcopy(invocation.options)
+    _pymol._invocation.options = copy.deepcopy(invocation.options)
     _pymol._invocation.get_user_config = invocation.get_user_config
     _pymol._invocation.parse_args = invocation.parse_args
 
