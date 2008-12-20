@@ -118,8 +118,8 @@ class Normal(PMGSkin):
     def destroyMessageBar(self):
 
         self.messageBar.destroy()
-        self.app.destroycomponent('messagebar')
-        self.app.destroycomponent('bottomtray')
+#        self.app.destroycomponent('messagebar')
+#        self.app.destroycomponent('bottomtray')
         
 
     def confirm_quit(self,e=None):
