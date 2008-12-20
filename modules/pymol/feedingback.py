@@ -3,7 +3,7 @@ import sys
 import cmd
 from cmd import Shortcut, is_string
 from cmd import fb_module, fb_mask, fb_action
-from copy import deepcopy
+import copy
 
 import _cmd
 import string
@@ -11,7 +11,7 @@ import string
 def _feedback(module,mask,_self=cmd): # feedback query routine
     # WARNING: internal routine, subject to change
     if not hasattr(_self,'_fb_dict'):
-        _self._fb_dict = deepcopy(_fb_dict)
+        _self._fb_dict = copy.deepcopy(_fb_dict)
     r = 0
     module = int(module)
     mask = int(mask)
@@ -33,10 +33,10 @@ fb_mask_sc = Shortcut(fb_mask.__dict__.keys())
 
 _fb_dict = {}
 
-for a in fb_module.__dict__.keys():
-    vl = getattr(fb_module,a)
-    if vl<0:
-        _fb_dict[vl] = 0x1F # default mask
+for _a in fb_module.__dict__.keys():
+    _vl = getattr(fb_module,_a)
+    if _vl<0:
+        _fb_dict[_vl] = 0x1F # default mask
 
 def feedback(action="?", module="?", mask="?", _self=cmd):
     '''
@@ -76,7 +76,7 @@ EXAMPLES
 
     # validate action
     if not hasattr(_self,'_fb_dict'):
-        _self._fb_dict = deepcopy(_fb_dict)
+        _self._fb_dict = copy.deepcopy(_fb_dict)
     if action=="?":
         print " feedback: possible actions: \nset, enable, disable"
         act_int = 0

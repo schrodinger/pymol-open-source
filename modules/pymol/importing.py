@@ -1227,11 +1227,11 @@ NOTES
             async = not quiet
         if not int(async):
             try:
-                _self.block_flush()
+                _self.block_flush(_self)
                 r = _multifetch(code,name,state,finish,
                                 discrete,multiplex,zoom,type,path,file,quiet,_self)
             except:
-                _self.unblock_flush()
+                _self.unblock_flush(_self)
         else:
             t = threading.Thread(target=_multifetch,
                                  args=(code,name,state,finish,

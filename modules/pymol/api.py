@@ -242,6 +242,7 @@ from fitting import \
       pair_fit          
 
 #--------------------------------------------------------------------
+# ARE ALL OF THESE UNUSED AND/OR DEPRECATED (?)
 from preset import \
       simple,            \
       technical,         \
