@@ -662,13 +662,17 @@ SEE ALSO
                 ftype = -1
                 r = DEFAULT_SUCCESS
 
-    # pwg launch (PyMOL Web GUI / web server launch )
+    # pwg launch (PyMOL Web GUI / http server launch)
     
             if ftype == loadable.pwg:
-                import pwghttpd
-                pwghttpd.launch(8080)
                 ftype = -1
-                r = DEFAULT_SUCCESS
+                try:
+                    import pwghttpd
+                    pwghttpd.handle_pwg_file(fname)
+                    r = DEFAULT_SUCCESS
+                except:
+                    print "Error: PWG files not supported by this PyMOL build"
+                    r = DEFAULT_ERROR
 
     # special handling for trj failes (autodetect AMBER versus GROMACS)
             if ftype == loadable.trj:
