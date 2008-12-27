@@ -417,6 +417,30 @@ SEE ALSO
         _cmd.finish_object(_self._COb,str(oname))
         if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
             _self._do("zoom (%s)"%oname)
+            
+    def _processPWG(fname):
+        r = DEFAULT_ERROR
+        # temporary binding for web consortium deliverable(s)
+        try:
+            from consortia.web.d0812.pymolhttpd import PymolHttpd
+            for line in open(fname).readlines():
+                input = line.split()
+                if len(input):
+                    keyword = input[0].lower()
+                    if keyword == 'port':
+                        if len(input)>1:
+                            port = int(input[1])
+                            server = PymolHttpd(port)
+                            server.start()
+                            r = DEFAULT_SUCCESS
+                    elif keyword == 'delete':
+                        os.unlink(fname)
+            
+        except ImportError:
+            pass
+        if is_error(r):
+            print "Error: unable to handle PWG file"
+        return r
     
     def load(filename, object='', state=0, format='', finish=1,
              discrete=-1, quiet=1, multiplex=None, zoom=-1, partial=0,
@@ -666,13 +690,7 @@ SEE ALSO
     
             if ftype == loadable.pwg:
                 ftype = -1
-                try:
-                    import pwghttpd
-                    pwghttpd.handle_pwg_file(fname)
-                    r = DEFAULT_SUCCESS
-                except:
-                    print "Error: PWG files not supported by this PyMOL build"
-                    r = DEFAULT_ERROR
+                r = _processPWG(fname)
 
     # special handling for trj failes (autodetect AMBER versus GROMACS)
             if ftype == loadable.trj:
