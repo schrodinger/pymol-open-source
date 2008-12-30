@@ -351,7 +351,7 @@ class Normal(PMGSkin):
             self.my_fw_font=(self.font,10)
                                                                                                          
         text.configure(font = self.my_fw_font)
-        text.configure(width=72)
+        text.configure(width=74)
 
 
         self.balloon.bind(self.entry, 'Command Input Area')
