@@ -978,6 +978,7 @@ class APBSTools:
                         if os.path.isfile(APBS_BINARY_LOCATION):
                             found = 1
                         elif os.path.isfile(APBS_BINARY_LOCATION.replace('"','')):
+                            APBS_BINARY_LOCATION = APBS_BINARY_LOCATION.replace('"','')
                             found = 1
                 except:
                     pass
@@ -1134,7 +1135,11 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
                 except:
                     traceback.print_exc()
                     pass
-            command = "%s %s" % (self.binary.getvalue(),self.pymol_generated_in_filename.getvalue())
+            exe = self.binary.getvalue()
+            if ' ' in exe:
+                if sys.platform == 'win32': 
+                    exe = '"' + exe + '"'
+            command = "%s %s" % (exe, self.pymol_generated_in_filename.getvalue())
             os.system(command)
             pymol.cmd.load(self.pymol_generated_dx_filename.getvalue(),self.map.getvalue())
         elif result == 'Set grid':
