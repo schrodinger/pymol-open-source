@@ -976,7 +976,9 @@ class APBSTools:
                     APBS_BINARY_LOCATION = apbs.get_exe_path()
                     if APBS_BINARY_LOCATION is not None:
                         if os.path.isfile(APBS_BINARY_LOCATION):
-                            found = 1 
+                            found = 1
+                        elif os.path.isfile(APBS_BINARY_LOCATION.replace('"','')):
+                            found = 1
                 except:
                     pass
             if not found:
