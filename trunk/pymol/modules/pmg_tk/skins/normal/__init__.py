@@ -340,8 +340,9 @@ class Normal(PMGSkin):
         self.text = text      
         if sys.platform[:5]=='linux':
             text.tk.call('tk','scaling',1)
-            self.font = 'fixed' # should be available on any X11-based platform
-            self.my_fw_font=(self.font,13)
+            # self.font = 'fixed' # broken by Xft
+            self.font = 'Bitstream Vera Sans Mono'
+            self.my_fw_font=(self.font,9)
         elif sys.platform[:3]=='win': 
             self.font = 'lucida console' # only available on windows
             self.my_fw_font=(self.font,8) 
@@ -349,7 +350,7 @@ class Normal(PMGSkin):
             text.tk.call('tk','scaling',1)
             self.font = 'fixed' # should be available on any X11-based platform
             self.my_fw_font=(self.font,10)
-                                                                                                         
+
         text.configure(font = self.my_fw_font)
         text.configure(width=74)
 
