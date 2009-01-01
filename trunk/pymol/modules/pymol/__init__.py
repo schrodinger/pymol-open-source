@@ -100,7 +100,6 @@ def _init_internals(_pymol):
 
     # get us a private invocation pseudo-module
 
-    
     _pymol._invocation = Scratch_Storage()
     _pymol._invocation.options = copy.deepcopy(invocation.options)
     _pymol._invocation.get_user_config = invocation.get_user_config
