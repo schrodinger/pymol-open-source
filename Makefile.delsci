@@ -88,7 +88,7 @@ semistatic: .includes .depends .update
 	cd contrib/uiuc/plugins/molfile_plugin/src;$(MAKE) -f Makefile.delsci
 	g++ $(BUILD) $(DEST) */*.o ov/src/*.o contrib/uiuc/plugins/molfile_plugin/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)	
 
-freemol:
+free:
 	/bin/rm -rf freemol
 	cp -r $(FREEMOL) freemol
 
