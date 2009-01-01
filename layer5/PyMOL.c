@@ -1856,7 +1856,7 @@ PyMOLreturn_status PyMOL_CmdClip(CPyMOL *I,char *mode, float amount, char *selec
 
 PyMOLreturn_status PyMOL_CmdLabel(CPyMOL *I,char *selection, char *text, int quiet)
 {
-  int ok;
+  int ok=true;
   PYMOL_API_LOCK
   OrthoLineType s1;
   SelectorGetTmp(I->G,selection,s1);
@@ -1868,7 +1868,7 @@ PyMOLreturn_status PyMOL_CmdLabel(CPyMOL *I,char *selection, char *text, int qui
 
 PyMOLreturn_status PyMOL_CmdSelect(CPyMOL *I,char *name, char *selection, int quiet)
 {
-  int ok;
+  int ok=true;
   PYMOL_API_LOCK
   ok = SelectorCreate(I->G,name,selection,NULL,quiet,NULL);
   PYMOL_API_UNLOCK
