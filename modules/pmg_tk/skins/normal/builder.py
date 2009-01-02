@@ -903,7 +903,7 @@ class GuiButton:
             width=3*colspan
         else:
             width=WID*colspan
-        b = Button(frame, text=text, padx=1, pady=1, 
+        b = Button(frame, text=text, padx=1, pady=1, # note pady=0 better with older Xft due to scaling
             width=width, borderwidth=2, relief=RIDGE,
             command = command)
         b.grid(row=frame.row, column=frame.col, columnspan=colspan,
