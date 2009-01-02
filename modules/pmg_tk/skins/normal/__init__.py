@@ -39,7 +39,7 @@ class Normal(PMGSkin):
     
     appname        = 'The PyMOL Molecular Graphics System'
     appversion     = '1.2'
-    copyright      = ('Copyright (C) 2003-2008 \n' +
+    copyright      = ('Copyright (C) 2003-2009 \n' +
                       'DeLano Scientific LLC.\n'+
                       'All rights reserved.')
     contactweb     = 'http://www.pymol.org'
