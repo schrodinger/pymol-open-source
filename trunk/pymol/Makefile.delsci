@@ -121,7 +121,7 @@ unix-beta: unix-mindep
 	cd $(MINDEP);chgrp -R nobody pymol
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
 
-unix-product: unix-mindep
+unix-prep:
 	cp epymol/data/pymol/splash.png $(MDP)/data/pymol/splash.png
 	cp epymol/LICENSE.txt $(MDP)/LICENSE
 	cp -r epymol/modules/epymol $(MDP)/modules/
@@ -130,17 +130,17 @@ unix-product: unix-mindep
 	find $(MINDEP)/pymol -type d -name CVS | awk '{printf "/bin/rm -rf ";print;}' | sh
 	find $(MINDEP)/pymol -type d -name '\.svn' | awk '{printf "/bin/rm -rf ";print;}' | sh
 	/bin/rm -f $(MINDEP)/pymol/test/pdb
-	cd $(MINDEP);chown -R nobody pymol
-	cd $(MINDEP);chgrp -R nobody pymol
-	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
 
-mac-product: unix-mindep
-	cp setup/setup.sh.macosx-x11 $(MDP)/setup.sh
-	cp epymol/data/pymol/splash.png $(MDP)/data/pymol/splash.png
-	cp epymol/LICENSE.txt $(MDP)/LICENSE
+unix-product: unix-mindep unix-prep
 	cd $(MINDEP);chown -R nobody pymol
 	cd $(MINDEP);chgrp -R nobody pymol
-	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
+	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-1_2bX-bin-xxxxx-mindep.tgz
+
+mac-product: unix-mindep unix-prep
+	cp setup/setup.sh.macosx-x11 $(MDP)/setup.sh
+	cd $(MINDEP);chown -R nobody pymol
+	cd $(MINDEP);chgrp -R nobody pymol
+	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-1_2bX-bin-xxxxx-mindep.tgz
 
 unix-helper: unix-mindep-build
 	cp setup/setup.sh.unix-helper $(MDP)/setup.sh
