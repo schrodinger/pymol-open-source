@@ -344,8 +344,19 @@ class Normal(PMGSkin):
                 self.font = 'fixed' # broken by Tk 8.5 / Xft
                 self.my_fw_font=(self.font,10)
             else:
-                self.font = 'Bitstream Vera Sans Mono'
-                self.my_fw_font=(self.font,9)
+                family = 'Bitstream Vera Sans Mono'
+                size = 9
+                # unfortunately, Tk fonts aren't sized reliably,
+                # so here we try to make sure font is actually legible
+                import tkFont
+                test = tkFont.Font()
+                while size<12:
+                    test.configure(family=family,size=size)
+                    if test.measure("PyMOL")<31:
+                        size = size + 1
+                    else:
+                        break
+                self.my_fw_font=(family,size)
         elif sys.platform[:3]=='win': 
             self.font = 'lucida console' # only available on windows
             self.my_fw_font=(self.font,8) 
@@ -356,7 +367,6 @@ class Normal(PMGSkin):
 
         text.configure(font = self.my_fw_font)
         text.configure(width=74)
-
 
         self.balloon.bind(self.entry, 'Command Input Area')
         
