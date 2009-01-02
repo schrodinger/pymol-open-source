@@ -780,10 +780,14 @@ class Normal(PMGSkin):
         if toggle:
             os.system(
             "defaults write com.apple.x11 wm_click_through -bool true")
+            os.system(
+            "defaults write org.x.X11 wm_click_through -bool true")
             print "Enabled com.apple.x11 wm_click_through.",
         else:
             os.system(
             "defaults write com.apple.x11 wm_click_through -bool false")
+            os.system(
+            "defaults write org.x.X11 wm_click_through -bool false")
             print "Disabled com.apple.x11 wm_click_through.",
         print "Please restart X11."
 

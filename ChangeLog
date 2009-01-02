@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2009-01-02 Warren L. DeLano <warren@delsci.com>
+
+	* fixed click-through toggle for Leopard
+
+2009-12-31 Warren L. DeLano <warren@delsci.com>
+
+	* various changes associated with getting 1.2b0 out the door
+	
 2008-12-23 Warren L. DeLano <warren@delsci.com>
 
 	* fixed tk-based session save problems reported by DB
