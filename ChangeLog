@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2009-01-06 Warren L. DeLano <warren@delsci.com>
+	
+	* default .mpg extension handling for MPEG export
+	
 2009-01-02 Warren L. DeLano <warren@delsci.com>
 
 	* fixed click-through toggle for Leopard
