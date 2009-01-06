@@ -415,24 +415,27 @@ class Normal(PMGSkin):
         self.entry.bind('<Control-Next>',lambda e,s=self: s.cmd.do("cmd._special(105,0,0,2)"))
         self.entry.bind('<Home>',lambda e,s=self: s.cmd.do("cmd._special(106,0,0)"))
         self.entry.bind('<End>',lambda e,s=self: s.cmd.do("cmd._special(107,0,0)"))
-        if sys.platform=='darwin':
-            if self.app.pymol.invocation.options.external_gui==3:
-                self.root.bind_all('<Leave>',lambda e,s=self: s.left(e)) # for MacPyMOLX11Hybrid
-                self.root.bind_all('<Enter>',lambda e,s=self: s.focus_in(e))
 
-    def focus_in(self,event):
-        if self.refocus_entry:
-#            self.cmd.do("_ cmd.window('defocus')")
-            self.refocus_entry = 0
-            self.entry.focus_set()
+# obviated by changes made to the X11 OpenGL Window      
+#        if sys.platform=='darwin':
+#            if self.app.pymol.invocation.options.external_gui==3: # PyMOLX11Hybrid focus kludge
+#                self.root.bind_all('<Leave>',lambda e,s=self: s.focus_out(e)) 
+#                self.root.bind_all('<Enter>',lambda e,s=self: s.focus_in(e))
 
-    def left(self,event): # this may be obsolete workaround code
-        if id(event.widget) == id(self.root):
-            if ((event.y>event.widget.winfo_height())):
-#                if sys.platform!='darwin':
-#                    self.cmd.do("_ cmd.window('focus')")
-                self.root.focus_set()
-                self.refocus_entry = 1
+#    def focus_in(self,event): # PyMOLX11Hybrid focus kludge
+#        if self.refocus_entry:
+#            self.cmd.do("_ cmd.window('defocus')") # deactivate MacPyMOL OpenGL window
+#            self.refocus_entry = 0
+#            self.entry.focus_set()
+
+#    def focus_out(self,event): # PyMOLX11Hybrid focus kludge
+#        # necessary so that the OpenGL portion of
+#        # PyMOLX11Hybrid can exhibit click-through behavior        
+#        if id(event.widget) == id(self.root):
+#            if ((event.y>event.widget.winfo_height())):
+#                self.root.focus_set() # (return cursor to entry window)
+#                self.cmd.do("_ cmd.window('focus')") # activate MacPyMOL OpenGL window
+#                self.refocus_entry = 1
 
     def update_feedback(self):
         if self.focus_entry:
@@ -786,13 +789,21 @@ class Normal(PMGSkin):
             "defaults write com.apple.x11 wm_click_through -bool true")
             os.system(
             "defaults write org.x.X11 wm_click_through -bool true")
-            print "Enabled com.apple.x11 wm_click_through.",
+            os.system(
+            "defaults write com.apple.x11 wm_ffm -bool true")
+            os.system(
+            "defaults write org.x.X11 wm_ffm -bool true")
+            print "Enabled wm_click_through and wm_ffm.",
         else:
             os.system(
             "defaults write com.apple.x11 wm_click_through -bool false")
             os.system(
             "defaults write org.x.X11 wm_click_through -bool false")
-            print "Disabled com.apple.x11 wm_click_through.",
+            os.system(
+            "defaults write com.apple.x11 wm_ffm -bool false")
+            os.system(
+            "defaults write org.x.X11 wm_ffm -bool false")
+            print "Disabled wm_click_through and wm_ffm.",
         print "Please restart X11."
 
     def createMenuBar(self):
