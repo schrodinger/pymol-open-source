@@ -628,7 +628,11 @@ def produce(filename, mode='', first=0, last=0, preserve=0,
     if quality>100:
         quality = 100
     ok = 1
-    tmp_path = filename+".tmp"
+    splitext = os.path.splitext(filename)
+    tmp_path = splitext[0]+".tmp"
+    if splitext[1]=='':
+        splitext=(splitext[0],'.mpg')
+    filename = splitext[0]+splitext[1]
     if os.path.exists(filename):
         os.unlink(filename)
     if not os.path.exists(tmp_path):

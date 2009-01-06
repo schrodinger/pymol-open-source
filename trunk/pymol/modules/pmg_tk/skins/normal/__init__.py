@@ -32,7 +32,12 @@ def _doAsync(self_cmd,cmmd,dirty=0):
     self_cmd.do(cmmd) # force strict ordering of commands
     if dirty:
         self_cmd.dirty()
-        
+
+def _def_ext(ext): # platform-specific default extension handling
+    if sys.platform != 'win32': 
+        ext = None # default extensions don't work right under X11/Tcl/Tk
+    return ext
+
 class Normal(PMGSkin):
 
     pad = ' ' # extra space in menus
@@ -594,9 +599,7 @@ class Normal(PMGSkin):
     def session_save_as(self):
         (self.initialdir, self.save_file) = os.path.split(self.cmd.get_setting_text("session_file"))
         (save_file, def_ext) = os.path.splitext(self.save_file)
-        if sys.platform != 'win32': 
-            def_ext = None # default extensions don't work right under X11/Tcl/Tk
-        sfile = asksaveasfilename(defaultextension = def_ext,
+        sfile = asksaveasfilename(defaultextension = _def_ext(def_ext),
                                   initialfile = save_file,  
                                   initialdir = self.initialdir,
                                   filetypes=[
@@ -644,10 +647,7 @@ class Normal(PMGSkin):
                 self.my_withdraw(self.dialog)
                 del self.dialog
                 if result=='OK':
-                    def_ext = ".pdb"
-                    if sys.platform != 'win32': 
-                        def_ext = None # default extensions don't work right under X11/Tcl/Tk
-                    sfile = asksaveasfilename(defaultextension = def_ext,
+                    sfile = asksaveasfilename(defaultextension = _def_ext(".pdb"),
                                               initialfile = sfile,
                                               initialdir = self.initialdir,
                                               filetypes=[
@@ -690,7 +690,8 @@ class Normal(PMGSkin):
                 self.cmd.do("@"+ofile);
 
     def file_save_png(self):
-        sfile = asksaveasfilename(initialdir = self.initialdir,
+        sfile = asksaveasfilename(defaultextension = _def_ext(".png"),
+                                  initialdir = self.initialdir,
                  filetypes=[("PNG File","*.png")])
         if len(sfile):
             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
@@ -698,7 +699,8 @@ class Normal(PMGSkin):
             self.cmd.png(sfile,quiet=0)
 
     def file_save_wrl(self):
-        sfile = asksaveasfilename(initialdir = self.initialdir,
+        sfile = asksaveasfilename(defaultextension = _def_ext(".wrl"),
+                                  initialdir = self.initialdir,
                  filetypes=[("VRML 2 WRL File","*.wrl")])
         if len(sfile):
             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
@@ -706,8 +708,9 @@ class Normal(PMGSkin):
             self.cmd.save(sfile,quiet=0)
             
     def file_save_pov(self):
-        sfile = asksaveasfilename(initialdir = self.initialdir,
-                 filetypes=[("POV File","*.pov")])
+        sfile = asksaveasfilename(defaultextension = _def_ext(".pov"),
+                                  initialdir = self.initialdir,
+                                  filetypes=[("POV File","*.pov")])
         if len(sfile):
             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
             self.cmd.log("save %s\n"%sfile,"cmd.save('%s')\n"%sfile)
@@ -727,7 +730,8 @@ class Normal(PMGSkin):
             tkMessageBox.showerror("Error",
                 "MPEG encoder missing.\nThe FreeMOL add-ons may not be installed.")
         else:
-            sfile = asksaveasfilename(initialdir = self.initialdir,
+            sfile = asksaveasfilename(defaultextension = _def_ext(".mpg"),
+                                      initialdir = self.initialdir,
                                       filetypes=[("MPEG movie file","*.mpg")])
             if len(sfile):
                 self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
