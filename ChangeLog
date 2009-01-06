@@ -2,7 +2,9 @@
 CHANGE LOG
 =========================================================================
 
-2009-01-06 Warren L. DeLano <warren@delsci.com>
+2009-01-05 Warren L. DeLano <warren@delsci.com>
+
+	* removing old X11-hybrid kludge, fixed a few python issues
 	
 	* default .mpg extension handling for MPEG export
 	
