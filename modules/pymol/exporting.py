@@ -290,7 +290,7 @@ PYMOL API
                 r = _self._png(str(filename),int(width),int(height),float(dpi),
                                int(ray),int(quiet),0,int(format),_self)
             else:
-                r = _self._do("cmd._png('%s',%d,%d,%1.6f,%d,%d,%d,%d)"%
+                r = _self._do("cmd._png('''%s''',%d,%d,%1.6f,%d,%d,%d,%d)"%
                               (filename,width,height,dpi,
                                ray,int(quiet),0,int(format)),_self=_self)
         if _self._raising(r,_self): raise QuietException

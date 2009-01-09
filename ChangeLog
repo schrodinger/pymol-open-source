@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2009-01-09 Warren L. DeLano <warren@delsci.com>
+
+	* added PyMOL> prompt to the Tk Window
+
+	* addressed a couple of minor file saving issues
+	
 2009-01-05 Warren L. DeLano <warren@delsci.com>
 
 	* removing old X11-hybrid kludge, fixed a few python issues
