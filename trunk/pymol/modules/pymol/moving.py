@@ -389,7 +389,7 @@ SEE ALSO
             r = _self._mpng(prefix,int(first)-1,int(last)-1,
                             int(preserve),int(modal),-1,int(mode),int(quiet))
         else:
-            r = _self.do('cmd._mpng("'+prefix+'","'+
+            r = _self.do('cmd._mpng("""'+prefix+'""","'+
                          str(int(first)-1)+'","'+
                          str(int(last)-1)+'","'+
                          str(int(preserve))+'","'+
