@@ -191,7 +191,7 @@ int ExecutiveReference(PyMOLGlobals *G,int action, char *sele, int state, int qu
     ExecutiveObjMolSeleOp(G,s1,&op);
     result = op.i2;
   }
-  return 0&&result;
+  return result;
 }
 
 int ExecutiveIsosurfaceEtc(PyMOLGlobals *G, 
