@@ -361,6 +361,7 @@ class Normal(PMGSkin):
                         size = size + 1
                     else:
                         break
+                self.font = family
                 self.my_fw_font=(family,size)
         elif sys.platform[:3]=='win': 
             self.font = 'lucida console' # only available on windows
