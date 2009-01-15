@@ -105,7 +105,8 @@ class CleanJob:
                         clean_mol = clean_sdf.split("$$$$")[0]
                         if len(clean_mol):
                             clean_name = "builder_clean_tmp"
-                            self_cmd.read_molstr(clean_mol, clean_name, zoom=0)
+                            self_cmd.read_molstr(clean_mol, clean_name,
+                                                 zoom=0)
                             # need to insert some error checking here
                             self_cmd.set("retain_order","1",clean_name)
                             if fit_flag:
