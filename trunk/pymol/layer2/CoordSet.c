@@ -615,6 +615,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,
   ResIdent resi; 
   ResName resn;
   Chain chain;
+
   char formalCharge[4];
   int rl;
   int literal = (int)SettingGet(G,cSetting_pdb_literal_names);
@@ -800,6 +801,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,
                   aType,cnt+1,name,ai->alt,resn,
                   ai->chain,resi,x,y,z,ai->q,ai->b,ai->segi,ai->elem,formalCharge);
   } else {
+    Chain alt;
     if(pdb_info->is_pqr_file && pdb_info->pqr_workarounds) {
       int non_num = false;
       char *p = resi;
@@ -820,8 +822,11 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,
             resi[rl+2]=0;
             }
       }
-      chain[0]=0;
+      chain[0] = 0; /* no chain IDs */
+      alt[0] = 0; /* not alt conf identifiers */
     } else {
+      alt[0] = ai->alt[0];
+      alt[1] = 0;
       chain[0] = ai->chain[0];
       chain[1] = 0;
     }
@@ -836,7 +841,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,
     z[8]=0;
       
     (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%-4s%1s%5s   %s%s%s %11.8f %7.3f\n",
-                  aType,cnt+1,name,ai->alt,resn,
+                  aType,cnt+1,name,alt,resn,
                   chain,resi,x,y,z,ai->partialCharge,ai->elec_radius);
   }
   
