@@ -4,6 +4,8 @@ CHANGE LOG
 
 2009-01-14 Warren L. DeLano <warren@delsci.com>
 
+	* found & fixed longstanding issue with psize.py in APBS plugin
+	
 	* eliminated alternative conformation identifiers from PQR files
 	
 2009-01-09 Warren L. DeLano <warren@delsci.com>

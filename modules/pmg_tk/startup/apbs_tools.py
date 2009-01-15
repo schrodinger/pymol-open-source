@@ -1169,9 +1169,9 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
         try:
             if not self.psize.valid():
                 raise NoPsize
-            pdb_filename = self.pymol_generated_pdb_filename.getvalue()
+            pqr_filename = self.pymol_generated_pqr_filename.getvalue()
             try:
-                f = file(pdb_filename,'w')
+                f = file(pqr_filename,'w')
                 f.close()
             except:
                 raise NoPDB
@@ -1184,10 +1184,10 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             # WLD
             sel = "((%s) or (neighbor (%s) and hydro))"%(
                            self.selection.getvalue(), self.selection.getvalue())
-            pymol.cmd.save(pdb_filename,sel)
+            pymol.cmd.save(pqr_filename,sel)
             f.close()
             size = psize.Psize()
-            size.runPsize(pdb_filename)
+            size.runPsize(pqr_filename)
             coarsedim = size.getCoarseGridDims() # cglen
             finedim = size.getFineGridDims() # fglen
             # could use procgrid for multiprocessors
