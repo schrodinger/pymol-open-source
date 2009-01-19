@@ -557,7 +557,8 @@ class BondWizard(RepeatableActionWizard):
             self.cmd.unpick()
             if not self.getRepeating():
                 self.actionWizardDone()
-            
+        self.cmd.refresh_wizard()
+
     def toggle(self):
         self.activateRepeatOrDismiss()
                                     
