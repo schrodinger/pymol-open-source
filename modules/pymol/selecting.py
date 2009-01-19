@@ -110,9 +110,9 @@ SEE ALSO
             r = _cmd.select(_self._COb,str(name),str(selection),int(quiet),int(state)-1,str(domain))
             enable = int(enable)
             if is_ok(r) and enable>0:
-                r = _cmd.onoff(_self._COb,str(name),1,0);
+                _cmd.onoff(_self._COb,str(name),1,0);
             elif enable == 0:
-                r = _cmd.onoff(_self._COb,str(name),0,0)
+                _cmd.onoff(_self._COb,str(name),0,0)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  

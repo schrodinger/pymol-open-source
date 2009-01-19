@@ -20,6 +20,7 @@ from cmd import _cmd, lock, unlock, Shortcut, \
 
 import string
 import traceback
+import threading
 
 def model_to_sdf_list(model):
     from chempy import io
@@ -61,7 +62,7 @@ class CleanJob:
     def __init__(self,self_cmd,sele,state=-1,message=None):
         self.cmd = self_cmd
         if message != None:
-            self.cmd.wizard('message',message)
+            self.cmd.do("_ cmd.wizard('message','''%s''')"%message)
         if state<1:
             state = self_cmd.get_state()
         # this code will moved elsewhere
@@ -127,37 +128,42 @@ class CleanJob:
                     if len(result)>1:
                         print result[1]
         if message!=None:
-            self_cmd.set_wizard()
+            self_cmd.do("_ wizard")
 
-def clean(selection, present='', state=-1, fix='', restrain='',
-          method='mmff', async=0, save_undo=1, _self=cmd_module):
+def _clean(selection, present='', state=-1, fix='', restrain='',
+          method='mmff', async=0, save_undo=1, message=None,
+          _self=cmd_module):
+
     self_cmd = _self
 
-    clean1_sele = "clean1_tmp"
-    clean2_sele = "clean2_tmp"
-    clean_obj = "clean_obj"
+    clean1_sele = "_clean1_tmp"
+    clean2_sele = "_clean2_tmp"
+    clean_obj = "_clean_obj"
     r = DEFAULT_SUCCESS
 
-    if self_cmd.select(clean1_sele,selection)>0:
-
+    if self_cmd.select(clean1_sele,selection,enable=0)>0:
         try:
             if present=='':
-                self_cmd.select(clean2_sele," byres (byres ("+selection+") extend 1)") # go out 2 residues
+                self_cmd.select(clean2_sele," byres (byres ("+selection+") extend 1)",enable=0) # go out 2 residues
             else:
-                self_cmd.select(clean2_sele, clean1_sele+" or ("+present+")")
+                self_cmd.select(clean2_sele, clean1_sele+" or ("+present+")",enable=0)
 
+            self_cmd.set("suspend_updates",1)
             self_cmd.create(clean_obj, clean2_sele, zoom=0, source_state=state,target_state=1)
-
+            self_cmd.disable(clean_obj)
+            self_cmd.set("suspend_updates",0)
+            
             self_cmd.flag(3,clean_obj+" in ("+clean2_sele+" and not "+clean1_sele+")","set")
             # fix nearby atoms
 
             self_cmd.h_add(clean_obj) # fill any open valences
 
-            at_cnt = self_cmd.count_atoms(clean_obj)
-            CleanJob(self_cmd, clean_obj, state,
-                     message='Cleaning %d atoms.  Please wait...'%at_cnt)
+            if message == None:
+                at_cnt = self_cmd.count_atoms(clean_obj)
+                message = 'Cleaning %d atoms.  Please wait...'%at_cnt
+
+            CleanJob(self_cmd, clean_obj, state, message=message)
             
-            self_cmd.set_wizard()
             self_cmd.push_undo(clean1_sele)
             self_cmd.update(clean1_sele, clean_obj, 
                             source_state=1, target_state=state)
@@ -168,3 +174,19 @@ def clean(selection, present='', state=-1, fix='', restrain='',
         except:
             traceback.print_exc()
     return r
+
+def clean(selection, present='', state=-1, fix='', restrain='',
+          method='mmff', async=0, save_undo=1, message=None,
+          _self=cmd_module):
+    if not int(async):
+        return _clean(selection,present,state,fix,restrain,method,async,save_undo,message,_self)
+    else:
+        try:
+            t = threading.Thread(target=_clean,
+                             args=(selection,present,state,fix,restrain,
+                                   method,async,save_undo,message,_self))
+            t.setDaemon(1)
+            t.start()
+        except:
+            traceback.print_exc()
+        return 0
