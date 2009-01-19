@@ -794,7 +794,8 @@ class AtomFlagWizard(ActionWizard):
                 self.cmd.flag(self.flag,active_sele,"clear")                
                 self.cmd.flag(self.flag,active_sele+" and polymer and name ca","set")                
             elif mode == 0:
-                self.cmd.flag(self.flag,active_sele+" and polymer and name ca","set")
+                self.cmd.flag(self.flag,active_sele+
+                              " and flag %d and polymer and name ca"%self.flag,"set")
                 self.cmd.flag(self.flag,active_sele+
                               " and not (polymer and name ca)","clear")                
                 

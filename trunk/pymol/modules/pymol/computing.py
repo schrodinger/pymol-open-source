@@ -95,7 +95,6 @@ class CleanJob:
                 self.cmd.sculpt_purge()
                 self.cmd.set("sculpting",0)
                 state = self_cmd.get_state()
-#                sdf_list = io.mol.toList(self_cmd.get_model(obj_name,state=state)) + ["$$$$\n"]
                 if self_cmd.count_atoms(obj_name+" and flag 2"): # any atoms restrained?
                     self_cmd.reference("validate",obj_name,state) # then we have reference coordinates
                 (fit_flag, sdf_list) = model_to_sdf_list(self_cmd.get_model(obj_name,state=state))
@@ -106,19 +105,23 @@ class CleanJob:
                         clean_mol = clean_sdf.split("$$$$")[0]
                         if len(clean_mol):
                             clean_name = "builder_clean_tmp"
-                            self_cmd.read_molstr(clean_mol, clean_name,
-                                                 zoom=0)
-                            # need to insert some error checking here
-                            self_cmd.set("retain_order","1",clean_name)
-                            if fit_flag:
-                                self_cmd.fit(clean_name, obj_name, matchmaker=4,
-                                             mobile_state=1, target_state=state)
-                            self_cmd.push_undo(obj_name)
-                            self_cmd.update(obj_name, clean_name, matchmaker=0,
-                                            source_state=1, target_state=state)
-                            self_cmd.sculpt_activate(obj_name) 
-                            self_cmd.sculpt_deactivate(obj_name) 
-                            self_cmd.delete(clean_name)
+                            self_cmd.set("suspend_updates")
+                            try:
+                                self_cmd.read_molstr(clean_mol, clean_name, zoom=0)
+                                # need to insert some error checking here
+                                if clean_name in self_cmd.get_names("objects"):
+                                    self_cmd.set("retain_order","1",clean_name)
+                                    if fit_flag:
+                                        self_cmd.fit(clean_name, obj_name, matchmaker=4,
+                                                     mobile_state=1, target_state=state)
+                                    self_cmd.push_undo(obj_name)
+                                    self_cmd.update(obj_name, clean_name, matchmaker=0,
+                                                    source_state=1, target_state=state)
+                                    self_cmd.delete(clean_name)
+                                    self_cmd.sculpt_activate(obj_name) 
+                                    self_cmd.sculpt_deactivate(obj_name) 
+                            finally:
+                                self_cmd.unset("suspend_updates")
                             ok = 1
 
             if not ok:
@@ -148,10 +151,10 @@ def _clean(selection, present='', state=-1, fix='', restrain='',
             else:
                 self_cmd.select(clean2_sele, clean1_sele+" or ("+present+")",enable=0)
 
-            self_cmd.set("suspend_updates",1)
+            self_cmd.set("suspend_updates")
             self_cmd.create(clean_obj, clean2_sele, zoom=0, source_state=state,target_state=1)
             self_cmd.disable(clean_obj)
-            self_cmd.set("suspend_updates",0)
+            self_cmd.unset("suspend_updates")
             
             self_cmd.flag(3,clean_obj+" in ("+clean2_sele+" and not "+clean1_sele+")","set")
             # fix nearby atoms
