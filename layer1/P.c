@@ -33,7 +33,9 @@ the initialization functions for these libraries on startup.
 #include<windows.h>
 #include<process.h>
 #ifndef WIN64
+#if 0
 #include<winappc.h>
+#endif
 #endif
 #endif
 /* END PROPRIETARY CODE SEGMENT */
@@ -1252,15 +1254,11 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
     
-  /* Win32 embedded PyMOL currently ships with Python 2.4 whereas
-   * Win64 ships with Python 2.5 (by necessity) */
+  /* Windows Python now ships with Python 2.5 for both
+	 32 and 64 bit */
 
 #ifndef EMBEDDED_PYTHONHOME
-#ifdef WIN64
 #define EMBEDDED_PYTHONHOME "\\py25"
-#else
-#define EMBEDDED_PYTHONHOME "\\py24"
-#endif
 #endif
 
   { /* Automatically hide the window if this process was started as a
