@@ -440,7 +440,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
   int nex = 1;
   int *j,*k,xhash;
   int ex_type;
-  AtomInfoType *ai,*ai1,*ai2,*oai;
+  AtomInfoType *ai,*ai1,*ai2,*obj_atomInfo;
   int xoffset;
   int use_cache = 1;
   
@@ -459,12 +459,12 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
   UtilZeroMem(I->NBHash,NB_HASH_SIZE*sizeof(int));
   UtilZeroMem(I->EXHash,EX_HASH_SIZE*sizeof(int));
 
-  if((state<obj->NCSet) && (obj->CSet[state])) {
-    oai = obj->AtomInfo;
+  if((state>=0) && (state<obj->NCSet) && (obj->CSet[state])) {
+    obj_atomInfo = obj->AtomInfo;
     
     VLACheck(I->Don,int,obj->NAtom);
     VLACheck(I->Acc,int,obj->NAtom);
-    ai = obj->AtomInfo;
+    ai = obj_atomInfo;
     for(a=0;a<obj->NAtom;a++) {
       I->Don[a]=false;
       I->Acc[a]=false;
@@ -487,7 +487,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
       linear=Alloc(int,n_atom);
       single=Alloc(int,n_atom);
       crdidx=Alloc(int,n_atom);
-      ai = obj->AtomInfo;
+      ai = obj_atomInfo;
 
       for(a=0;a<n_atom;a++) {
         planar[a]=(ai->geom==cAtomInfoPlanar);
@@ -518,9 +518,9 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
       for(a=0;a<obj->NBond;a++) {
         b1 = b->index[0];
         b2 = b->index[1];
-        
-        ai1=obj->AtomInfo+b1;
-        ai2=obj->AtomInfo+b2;
+
+        ai1=obj_atomInfo+b1;
+        ai2=obj_atomInfo+b2;
         
         /* make blanket assumption that all nitrogens with 
            <3 bonds are donors -- we qualify this below...*/
@@ -551,12 +551,12 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
       for(a=0;a<obj->NBond;a++) {
         b1 = b->index[0];
         b2 = b->index[1];
-        
+
         /* nitrogens with lone pairs are acceptors 
            (not donors as assumed above) */
         
-        ai1=obj->AtomInfo+b1;
-        ai2=obj->AtomInfo+b2;
+        ai1=obj_atomInfo+b1;
+        ai2=obj_atomInfo+b2;
         
         if(ai1->protons==cAN_N) {
           if(b->order==2) {
@@ -585,8 +585,8 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
         b1 = b->index[0];
         b2 = b->index[1];
         
-        ai1=obj->AtomInfo+b1;
-        ai2=obj->AtomInfo+b2;
+        ai1=obj_atomInfo+b1;
+        ai2=obj_atomInfo+b2;
         
         /* however, every NH is a donor, 
            even if it's SP2 */
@@ -621,7 +621,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
       }
       
       /* atom pass */
-      ai1 = obj->AtomInfo;
+      ai1 = obj_atomInfo;
       for(a=0;a<n_atom;a++) {
         /* make sure all nonbonded atoms get categorized */
         
@@ -651,8 +651,8 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
         b1 = b->index[0];
         b2 = b->index[1];
         
-        ai1=obj->AtomInfo+b1;
-        ai2=obj->AtomInfo+b2;
+        ai1=obj_atomInfo+b1;
+        ai2=obj_atomInfo+b2;
         
         xhash = ( (b2>b1) ? ex_hash(b1,b2) : ex_hash(b2,b1));
         VLACheck(I->EXList,int,nex+3);
@@ -678,11 +678,11 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
           d = (float)diff3f(v1,v2);
           if(use_cache) {
             if(!SculptCacheQuery(G,cSculptBond,
-                                 oai[b1].unique_id,
-                                 oai[b2].unique_id,0,0,&d))
+                                 obj_atomInfo[b1].unique_id,
+                                 obj_atomInfo[b2].unique_id,0,0,&d))
               SculptCacheStore(G,cSculptBond,
-                               oai[b1].unique_id,
-                               oai[b2].unique_id,0,0,d);
+                               obj_atomInfo[b1].unique_id,
+                               obj_atomInfo[b2].unique_id,0,0,d);
           }
           ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistBond,1.0F); 
           /* NOTE: storing atom indices, not coord. ind.! */
@@ -693,11 +693,11 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
       /* triangle relationships */
       {
         ATLCall atl;
-        ai1 = obj->AtomInfo;
+        ai1 = obj_atomInfo;
         
         atl.G = I->G;
         atl.Shaker = I->Shaker;
-        atl.ai = obj->AtomInfo;
+        atl.ai = obj_atomInfo;
         atl.cSet = cs;
         
         if(obj->DiscreteFlag) {
@@ -720,7 +720,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
           /* clear the flag -- TODO replace with array */
           {
             int aa;
-            ai = obj->AtomInfo;
+            ai = obj_atomInfo;
             for(aa=0;aa<n_atom;aa++) {
               ai->temp1 = false;
               ai++;
@@ -748,21 +748,21 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
           /* first, find candidate atoms with sufficient connectivity */
           CountCall cnt;
           
-          cnt.ai = obj->AtomInfo;
+          cnt.ai = obj_atomInfo;
           cnt.neighbor = neighbor;
           cnt.atm2idx1 = cs->AtmToIdx;
           cnt.atm2idx2 = cs2->AtmToIdx;
 
           {
             int aa;
-            ai = obj->AtomInfo;
+            ai = obj_atomInfo;
             for(aa=0;aa<n_atom;aa++) {
               ai->temp1 = false;
               ai++;
             }
           }
               
-          ai1 = obj->AtomInfo;
+          ai1 = obj_atomInfo;
           for(b0=0;b0<n_atom;b0++) {
             int n_qual_branch = 0,cb;
             int adj_site = false;
@@ -864,7 +864,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                   int i1b = cs2->AtmToIdx[b1];
                       
                   if((i0a>=0)&&(i1a>=0)&&(i0b>=0)&&(i1b>=0)&&
-                     ((!match_by_segment)||(!strcmp(oai[b0].segi,oai[b1].segi)))) {
+                     ((!match_by_segment)||(!strcmp(obj_atomInfo[b0].segi,obj_atomInfo[b1].segi)))) {
                     float *v0a = cs->Coord + 3*i0a;
                     float *v1a = cs->Coord + 3*i1a;
                     float *v0b = cs2->Coord + 3*i0b;
@@ -926,13 +926,13 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
               d = (float)diff3f(v1,v2);
               if(use_cache) {
                 if(!SculptCacheQuery(G,cSculptAngl,
-                                     oai[b0].unique_id,
-                                     oai[b1].unique_id,
-                                     oai[b2].unique_id,0,&d))
+                                     obj_atomInfo[b0].unique_id,
+                                     obj_atomInfo[b1].unique_id,
+                                     obj_atomInfo[b2].unique_id,0,&d))
                   SculptCacheStore(G,cSculptAngl,
-                                   oai[b0].unique_id,
-                                   oai[b1].unique_id,
-                                   oai[b2].unique_id,0,d);
+                                   obj_atomInfo[b0].unique_id,
+                                   obj_atomInfo[b1].unique_id,
+                                   obj_atomInfo[b2].unique_id,0,d);
               }
               
               ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistAngle,1.0F); 
@@ -941,13 +941,13 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                 
                 if(use_cache) {
                   if(!SculptCacheQuery(G,cSculptLine,
-                                       oai[b1].unique_id,
-                                       oai[b0].unique_id,
-                                       oai[b2].unique_id,0,&dummy))
+                                       obj_atomInfo[b1].unique_id,
+                                       obj_atomInfo[b0].unique_id,
+                                       obj_atomInfo[b2].unique_id,0,&dummy))
                     SculptCacheStore(G,cSculptLine,
-                                     oai[b1].unique_id,
-                                     oai[b0].unique_id,
-                                     oai[b2].unique_id,0,0.0);
+                                     obj_atomInfo[b1].unique_id,
+                                     obj_atomInfo[b0].unique_id,
+                                     obj_atomInfo[b2].unique_id,0,0.0);
                 }
                 ShakerAddLineCon(I->Shaker,b1,b0,b2); 
               }
@@ -996,28 +996,28 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                   d=0.0;
                 if(use_cache) {
                   if(!SculptCacheQuery(G,cSculptPyra,
-                                       oai[b1].unique_id,
-                                       oai[b0].unique_id,
-                                       oai[b2].unique_id,
-                                       oai[b3].unique_id,
+                                       obj_atomInfo[b1].unique_id,
+                                       obj_atomInfo[b0].unique_id,
+                                       obj_atomInfo[b2].unique_id,
+                                       obj_atomInfo[b3].unique_id,
                                        &d))
                     SculptCacheStore(G,cSculptPyra,
-                                     oai[b1].unique_id,
-                                     oai[b0].unique_id,
-                                     oai[b2].unique_id,
-                                     oai[b3].unique_id,
+                                     obj_atomInfo[b1].unique_id,
+                                     obj_atomInfo[b0].unique_id,
+                                     obj_atomInfo[b2].unique_id,
+                                     obj_atomInfo[b3].unique_id,
                                      d);
                   if(!SculptCacheQuery(G,cSculptPyra+1,
-                                       oai[b1].unique_id,
-                                       oai[b0].unique_id,
-                                       oai[b2].unique_id,
-                                       oai[b3].unique_id,
+                                       obj_atomInfo[b1].unique_id,
+                                       obj_atomInfo[b0].unique_id,
+                                       obj_atomInfo[b2].unique_id,
+                                       obj_atomInfo[b3].unique_id,
                                        &d2))
                     SculptCacheStore(G,cSculptPyra+1,
-                                     oai[b1].unique_id,
-                                     oai[b0].unique_id,
-                                     oai[b2].unique_id,
-                                     oai[b3].unique_id,
+                                     obj_atomInfo[b1].unique_id,
+                                     obj_atomInfo[b0].unique_id,
+                                     obj_atomInfo[b2].unique_id,
+                                     obj_atomInfo[b3].unique_id,
                                      d2);
                 }
                 ShakerAddPyraCon(I->Shaker,b0,b1,b2,b3,d,d2); 
@@ -1043,8 +1043,8 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                 if((b3!=b0)&&(b3>b1)) {
                   if(!(planar[b0]||planar[b2]||linear[b0]||linear[b2])) {
                     int type;
-                    if((oai[b0].protons == cAN_S)&&
-                       (oai[b2].protons == cAN_S))
+                    if((obj_atomInfo[b0].protons == cAN_S)&&
+                       (obj_atomInfo[b2].protons == cAN_S))
                       type = cShakerTorsDisulfide;
                     else 
                       type = cShakerTorsSP3SP3;
@@ -1055,10 +1055,10 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                     /* special extra-rigid torsion for hydrogens on
                        planar acyclic systems (amides, etc.) */
 
-                    if(((oai[b1].protons == cAN_H)&&single[b1]&&
-                        (oai[b3].protons != cAN_H)&&planar[b3])||
-                       ((oai[b3].protons == cAN_H)&&single[b3]&&
-                        (oai[b1].protons != cAN_H)&&planar[b1])) {
+                    if(((obj_atomInfo[b1].protons == cAN_H)&&single[b1]&&
+                        (obj_atomInfo[b3].protons != cAN_H)&&planar[b3])||
+                       ((obj_atomInfo[b3].protons == cAN_H)&&single[b3]&&
+                        (obj_atomInfo[b1].protons != cAN_H)&&planar[b1])) {
 
                       int cycle = 0;
                       /* b1\b0_b2/b3-b4-b5-b6-b7... */
@@ -1118,14 +1118,14 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                       }
                       if(!cycle) { /* don't add special amide constraints within small rings */
 
-                        if(((oai[b1].protons == cAN_H)&&single[b1]&&
-                            (oai[b0].protons == cAN_N)&&
-                            (oai[b2].protons == cAN_C)&&
-                            (oai[b3].protons == cAN_O)&&planar[b3]) ||
-                           ((oai[b1].protons == cAN_H)&&single[b3]&&
-                            (oai[b2].protons == cAN_N)&&
-                            (oai[b0].protons == cAN_C)&&
-                            (oai[b1].protons == cAN_O)&&planar[b1])) {
+                        if(((obj_atomInfo[b1].protons == cAN_H)&&single[b1]&&
+                            (obj_atomInfo[b0].protons == cAN_N)&&
+                            (obj_atomInfo[b2].protons == cAN_C)&&
+                            (obj_atomInfo[b3].protons == cAN_O)&&planar[b3]) ||
+                           ((obj_atomInfo[b1].protons == cAN_H)&&single[b3]&&
+                            (obj_atomInfo[b2].protons == cAN_N)&&
+                            (obj_atomInfo[b0].protons == cAN_C)&&
+                            (obj_atomInfo[b1].protons == cAN_O)&&planar[b1])) {
                           /* biased, asymmetric term for amides */
                           ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,cShakerTorsAmide); 
                         } else { 
@@ -1260,23 +1260,23 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                         }
                         /* don't get jacked by pseudo-planar PRO */
 
-                        if(((oai[b0].protons!=cAN_N)||
-                            (!WordMatchExact(G,oai[b0].resn,"PRO",true)))&&
-                           ((oai[b2].protons!=cAN_N)||
-                            (!WordMatchExact(G,oai[b2].resn,"PRO",true)))) {
+                        if(((obj_atomInfo[b0].protons!=cAN_N)||
+                            (!WordMatchExact(G,obj_atomInfo[b0].resn,"PRO",true)))&&
+                           ((obj_atomInfo[b2].protons!=cAN_N)||
+                            (!WordMatchExact(G,obj_atomInfo[b2].resn,"PRO",true)))) {
                                      
                           if(use_cache) {
                             if(!SculptCacheQuery(G,cSculptPlan,
-                                                 oai[b1].unique_id,
-                                                 oai[b0].unique_id,
-                                                 oai[b2].unique_id,
-                                                 oai[b3].unique_id,
+                                                 obj_atomInfo[b1].unique_id,
+                                                 obj_atomInfo[b0].unique_id,
+                                                 obj_atomInfo[b2].unique_id,
+                                                 obj_atomInfo[b3].unique_id,
                                                  &d))
                               SculptCacheStore(G,cSculptPlan,
-                                               oai[b1].unique_id,
-                                               oai[b0].unique_id,
-                                               oai[b2].unique_id,
-                                               oai[b3].unique_id,
+                                               obj_atomInfo[b1].unique_id,
+                                               obj_atomInfo[b0].unique_id,
+                                               obj_atomInfo[b2].unique_id,
+                                               obj_atomInfo[b3].unique_id,
                                                d);
                           }
 
@@ -1291,11 +1291,11 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
 #if 0
                             if(use_cache) {
                               if(!SculptCacheQuery(G,cSculptBond,
-                                                   oai[b1].unique_id,
-                                                   oai[b2].unique_id,0,0,&d))
+                                                   obj_atomInfo[b1].unique_id,
+                                                   obj_atomInfo[b2].unique_id,0,0,&d))
                                 SculptCacheStore(G,cSculptBond,
-                                                 oai[b1].unique_id,
-                                                 oai[b2].unique_id,0,0,d);
+                                                 obj_atomInfo[b1].unique_id,
+                                                 obj_atomInfo[b2].unique_id,0,0,d);
                             }
 #endif
 
@@ -1323,7 +1323,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
       for(b0=0;b0<n_atom;b0++) {
         n0 = neighbor[b0]+1;
         while((b1 = neighbor[n0])>=0) {
-          if(oai[b1].protons == cAN_H) {
+          if(obj_atomInfo[b1].protons == cAN_H) {
             n1 = neighbor[b0]+1;
             while((b2 = neighbor[n1])>=0) {
               if(b1!=b2) {
@@ -1333,7 +1333,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
                     if(planar[b0]&&planar[b2]&&planar[b3]) {
                       n3 =  neighbor[b3]+1;
                       while((b4 = neighbor[n3])>=0) {
-                        if( (b4!=b2) && (b4>b1) && (oai[b4].protons == cAN_H)) {
+                        if( (b4!=b2) && (b4>b1) && (obj_atomInfo[b4].protons == cAN_H)) {
                           
                           xhash = ex_hash(b1,b4);
                         

@@ -2742,6 +2742,8 @@ static void init_python(int argc, char *argv[])
 	PyRun_SimpleString("sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')");
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+#if 0
+/* Not currently needed, since we've switched MacPyMOL away from the system Python */
 #ifdef _MACPYMOL_XCODE
     { /* add an architecture-dependent search path for platform-specific binary modules
 		here we're cheating by using endianness instead of figuring out how to get the
@@ -2756,6 +2758,8 @@ static void init_python(int argc, char *argv[])
 		}
 	}
 #endif
+#endif
+
 /* END PROPRIETARY CODE SEGMENT */
 
 	PyRun_SimpleString("import __main__");
