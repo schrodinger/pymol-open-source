@@ -4,7 +4,6 @@ import os
 from glob import glob
 import traceback
 import string
-import threading
 
 from Tkinter import *
 import tkMessageBox
@@ -80,8 +79,9 @@ class CleanWizard(ActionWizard):
         if active_sele in self.cmd.get_names("selections"):
             obj_list = self.cmd.get_object_list(active_sele)
             if len(obj_list)==1:
-                computing.CleanJob(self.cmd,active_sele,
-                                   message="Cleaning %s..."%obj_list[0])
+                self.cmd.do("_ cmd.clean('%s',message='''Cleaning %s...''',async=1)"%(active_sele,obj_list[0]))
+#                computing.CleanJob(self.cmd,active_sele,
+#                                   message="Cleaning %s..."%obj_list[0])
 
     def do_pick(self, bondFlag):
         if active_sele in self.cmd.get_names("selections"):
@@ -94,9 +94,7 @@ class CleanWizard(ActionWizard):
         self.cmd.deselect()
         obj_list = self.cmd.get_object_list(active_sele)
         if len(obj_list)==1:
-            thread = threading.Thread(target=self.run_job)
-            thread.setDaemon(1)
-            thread.start()
+            self.run_job()
         else:
             print "Error: can only clean one object at a time"
 
