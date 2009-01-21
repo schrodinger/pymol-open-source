@@ -657,6 +657,19 @@ void transpose33f33f ( float  *m1, float  *m2)
   m2[8] = m1[8];
 }
 
+void transpose33d33d ( double  *m1, double  *m2)
+{
+  m2[0] = m1[0];
+  m2[1] = m1[3];
+  m2[2] = m1[6];
+  m2[3] = m1[1];
+  m2[4] = m1[4];
+  m2[5] = m1[7];
+  m2[6] = m1[2];
+  m2[7] = m1[5];
+  m2[8] = m1[8];
+}
+
 void transpose44f44f ( float  *m1, float  *m2)
 {
   m2[0 ] = m1[0 ];

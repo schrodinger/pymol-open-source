@@ -127,6 +127,7 @@ void copy3f3d ( float *v1,double *v2);
    the last two matrices can be the same matrix! */
 
 void transpose33f33f ( float  *m1, float  *m2);
+void transpose33d33d ( double  *m1, double  *m2);
 void transpose44f44f ( float  *m1, float  *m2);
 void transpose44d44d ( double  *m1, double  *m2);
 

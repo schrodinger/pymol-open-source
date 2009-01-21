@@ -970,23 +970,19 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
 	coordinates of molecule 2 onto the translated coordinates of molecule 1.
   */
 
-  float *vv1,*vv2;
-  double m[3][3],aa[3][3],x[3],xx[3];
-  double sumwt, tol, sig, gam;
-  double sg, bb, cc, err, etmp, tmp;
-  int a, b, c, maxiter, iters, ix, iy, iz;
+  double m[3][3],aa[3][3];
+  double sumwt, tol;
+  int a, b, c, maxiter;
   double t1[3],t2[3];
 
   /* Initialize arrays. */
 
   for(a=0;a<3;a++) {
 	for(b=0;b<3;b++) {
-	  m[a][b] = 0.0F;
-	  aa[a][b] = 0.0F;
+	  aa[a][b] = 0.0;
 	}
-	m[a][a] = 1.0F;
-	t1[a]=0.0F;
-	t2[a]=0.0F;
+	t1[a]=0.0;
+	t2[a]=0.0;
   }
 
   sumwt = 0.0F;
@@ -995,102 +991,210 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
 
   /* Calculate center-of-mass vectors */
 
-  vv1=v1;
-  vv2=v2;
+  {
+    float *vv1=v1, *vv2=v2;
 
-  if(wt) {
-	for(c=0;c<n;c++) {
-      for(a=0;a<3;a++) {
-        t1[a] += wt[c]*vv1[a];
-        t2[a] += wt[c]*vv2[a];
-      }
-      if (wt[c]!=0.0F) {
-        sumwt = sumwt + wt[c];
-      } else {
-        sumwt = sumwt + 1.0F; /* WHAT IS THIS? */
-      }
-      vv1+=3;
-      vv2+=3;
-    }
-  } else {
-	for(c=0;c<n;c++)
-	  {
-		for(a=0;a<3;a++) {
-		  t1[a] += vv1[a];
-		  t2[a] += vv2[a];
-		}
-		sumwt+=1.0F;
-		vv1+=3;
-		vv2+=3;
-	  }
-  }
-  if(sumwt==0.0F) sumwt = 1.0F;
-  for(a=0;a<3;a++) {
-	t1[a] /= sumwt;
-	t2[a] /= sumwt;
-  }
-  /* Calculate correlation matrix */
-  vv1=v1;
-  vv2=v2;
-  for(c=0;c<n;c++) {
+    
     if(wt) {
-      for(a=0;a<3;a++) {
-        x[a] = wt[c]*(vv1[a] - t1[a]);
-        xx[a] = wt[c]*(vv2[a] - t2[a]);
+      for(c=0;c<n;c++) {
+        for(a=0;a<3;a++) {
+          t1[a] += wt[c]*vv1[a];
+          t2[a] += wt[c]*vv2[a];
+        }
+        if (wt[c]!=0.0F) {
+          sumwt = sumwt + wt[c];
+        } else {
+          sumwt = sumwt + 1.0F; /* WHAT IS THIS? */
+        }
+        vv1+=3;
+        vv2+=3;
       }
     } else {
-      for(a=0;a<3;a++) {
-        x[a] = vv1[a] - t1[a];
-        xx[a] = vv2[a] - t2[a];
-      }
+      for(c=0;c<n;c++)
+        {
+          for(a=0;a<3;a++) {
+            t1[a] += vv1[a];
+            t2[a] += vv2[a];
+          }
+          sumwt+=1.0F;
+          vv1+=3;
+          vv2+=3;
+        }
     }
-    for(a=0;a<3;a++)
-      for(b=0;b<3;b++)
-        aa[a][b] = aa[a][b] + xx[a]*x[b];
-    vv1+=3;
-    vv2+=3;
+    if(sumwt==0.0F) sumwt = 1.0F;
+    for(a=0;a<3;a++) {
+      t1[a] /= sumwt;
+      t2[a] /= sumwt;
+    }
+  }
+
+  {
+      /* Calculate correlation matrix */
+      double x[3],xx[3];
+      float *vv1=v1, *vv2=v2;
+      for(c=0;c<n;c++) {
+        if(wt) {
+          for(a=0;a<3;a++) {
+            x[a] = wt[c]*(vv1[a] - t1[a]);
+            xx[a] = wt[c]*(vv2[a] - t2[a]);
+          }
+        } else {
+          for(a=0;a<3;a++) {
+            x[a] = vv1[a] - t1[a];
+            xx[a] = vv2[a] - t2[a];
+          }
+        }
+        for(a=0;a<3;a++)
+          for(b=0;b<3;b++)
+            aa[a][b] = aa[a][b] + xx[a]*x[b];
+        vv1+=3;
+        vv2+=3;
+      }
   }
   if(n>1) {
-    /* Primary iteration scheme to determine rotation matrix for molecule 2 */
-    iters = 0;
-    while(1) {
-      /*	for(a=0;a<3;a++)
-         {
-         for(b=0;b<3;b++) 
-         printf("%8.3f ",m[a][b]);
-         printf("\n");
-         }
-         for(a=0;a<3;a++)
-         {
-         for(b=0;b<3;b++) 
-         printf("%8.3f ",aa[a][b]);
-         printf("\n");
-         }
-         printf("\n");
-      */
-      
-      /* IX, IY, and IZ rotate 1-2-3, 2-3-1, 3-1-2, etc.*/
-      iz = (iters+1) % 3;
-      iy = (iz+1) % 3;
-      ix = (iy+1) % 3;
-      sig = aa[iz][iy] - aa[iy][iz];
-      gam = aa[iy][iy] + aa[iz][iz];
+    int got_it = false;
 
-      if(iters>=maxiter) {
-        PRINTFB(G,FB_Matrix,FB_Details)
-          " Matrix: Warning: no convergence (%1.8f<%1.8f after %d iterations).\n",(float)tol,(float)gam,iters
-          ENDFB(G);
-        break;
+    if((n>3) && SettingGetGlobal_b(G,cSetting_fit_kabsch)) { 
+      /* Kabsch fails with <4 atoms */
+
+      /* Official Kabsch as per
+         http://en.wikipedia.org/wiki/Kabsch_algorithm
+
+         minimal RMS matrix is (AtA)^(1/2) * A_inverse, where
+         
+         Aij =	Pki Qkj
+         
+         assuming Pki and Qkj are centered about the same origin.
+
+      */
+
+      double At[3][3],AtA[3][3],Ai[3][3];
+
+      /* compute At and At * A */
+
+      transpose33d33d((double*)aa,(double*)At);
+
+      multiply33d33d((double*)At,(double*)aa,(double*)AtA);
+      
+      /* solve A*At */
+
+      {
+        double e_vec[3][3], e_val[3];
+        xx_word n_rot;
+        
+        double V[3][3], D[3][3], Vt[3][3], sqrtAtA[3][3];
+        
+        if(xx_matrix_jacobi_solve((xx_float64*)e_vec, 
+                                  (xx_float64*)e_val,
+                                  &n_rot,
+                                  (xx_float64*)AtA,3)) {
+          
+          for(a=0;a<3;a++)
+            for(b=0;b<3;b++) {
+              if(a==b) 
+                D[a][b] = sqrt1d(e_val[a]);
+              else
+                D[a][b] = 0.0;
+              V[a][b] = e_vec[a][b];
+              Vt[a][b] = e_vec[b][a];
+            }
+          
+          multiply33d33d((double*)D,(double*)Vt,(double*)sqrtAtA);
+          multiply33d33d((double*)V,(double*)sqrtAtA,(double*)sqrtAtA);
+          
+          /* compute Ai */
+      
+          if(xx_matrix_invert((xx_float64*)Ai, (xx_float64*)aa, 3)) {
+
+            /* now compute the rotation matrix  = (AtA)^(1/2) * Ai */
+            
+            multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);
+
+            if((fabs(length3d(m[0])-1.0)<0.001) &&
+               (fabs(length3d(m[1])-1.0)<0.001) &&
+               (fabs(length3d(m[2])-1.0)<0.001)) {
+              
+              got_it = true;
+              
+              recondition33d((double*)m); 
+
+#if 0
+              {
+                float *vv1=v1, *vv2=v2;
+                double etmp,tmp;
+                double err = 0.0;
+                for(c=0;c<n;c++) {
+                  etmp = 0.0;
+                  for(a=0;a<3;a++) {
+                    tmp = m[a][0]*(vv2[0]-t2[0])
+                      + m[a][1]*(vv2[1]-t2[1])
+                      + m[a][2]*(vv2[2]-t2[2]);
+                    tmp = (vv1[a]-t1[a])-tmp;
+                    etmp += tmp*tmp;
+                  }
+                  if(wt)
+                    err += wt[c] * etmp;
+                  else 
+                    err += etmp;
+                  vv1+=3;
+                  vv2+=3;
+                }
+                err=err/sumwt;
+                err=sqrt1d(err);
+                printf("%1.8f\n",(float)err);
+                got_it = false;
+              }
+#endif
+
+            }
+          }
+        }
+      }
+    }
+
+    if(!got_it) {
+
+      /* use PyMOL's original superposition algorithm if
+         Kabsch is disabled or fails to work */
+
+      /* Primary iteration scheme to determine rotation matrix for molecule 2 */
+      double sg, bb, cc;
+      int iters, ix, iy, iz;
+      double sig, gam;
+      double tmp;
+      
+      for(a=0;a<3;a++) {
+        for(b=0;b<3;b++) {
+          m[a][b] = 0.0;
+        }
+        m[a][a] = 1.0;
       }
 
-      /* Determine size of off-diagonal element.  If off-diagonals exceed the
-         diagonal elements * tolerance, perform Jacobi rotation. */
-      tmp = sig*sig + gam*gam;
-      sg = sqrt1d(tmp);
-      if((sg!=0.0F) &&(fabs(sig)>(tol*fabs(gam)))) {
-        sg = 1.0F / sg;
-        for(a=0;a<3;a++)
-          {
+      iters = 0;
+      while(1) {
+
+        /* IX, IY, and IZ rotate 1-2-3, 2-3-1, 3-1-2, etc.*/
+        iz = (iters+1) % 3;
+        iy = (iz+1) % 3;
+        ix = (iy+1) % 3;
+        sig = aa[iz][iy] - aa[iy][iz];
+        gam = aa[iy][iy] + aa[iz][iz];
+        
+        if(iters>=maxiter) {
+          PRINTFB(G,FB_Matrix,FB_Details)
+            " Matrix: Warning: no convergence (%1.8f<%1.8f after %d iterations).\n",
+            (float)tol,(float)gam,iters
+            ENDFB(G);
+          break;
+        }
+        
+        /* Determine size of off-diagonal element.  If off-diagonals exceed the
+           diagonal elements tolerance, perform Jacobi rotation. */
+        tmp = sig*sig + gam*gam;
+        sg = sqrt1d(tmp);
+        if((sg!=0.0F) && (fabs(sig)>(tol*fabs(gam)))) {
+          sg = 1.0F / sg;
+          for(a=0;a<3;a++) {
             bb = gam*aa[iy][a] + sig*aa[iz][a];
             cc = gam*aa[iz][a] - sig*aa[iy][a];
             aa[iy][a] = bb*sg;
@@ -1101,66 +1205,68 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
             m[iy][a] = bb*sg;
             m[iz][a] = cc*sg;
           }
-      } else if(iters>2) {
-        break;
+        } else if(iters>2) {
+          /* only give up if we've iterated through all three planes */
+          break;
+        }
+        iters++;
       }
-      iters++;
+      recondition33d((double*)m); 
     }
   }
+
   /* At this point, we should have a converged rotation matrix (M).  Calculate
 	 the weighted RMS error. */
-  err = 0.0F;
-  vv1=v1;
-  vv2=v2;
-
-  normalize3d(m[0]);
-  normalize3d(m[1]);
-  normalize3d(m[2]);
-  for(c=0;c<n;c++) {
-	etmp = 0.0F;
-	for(a=0;a<3;a++) {
-	  tmp = m[a][0]*(vv2[0]-t2[0])
-		+ m[a][1]*(vv2[1]-t2[1])
-		+ m[a][2]*(vv2[2]-t2[2]);
-	  tmp = (vv1[a]-t1[a])-tmp;
-	  etmp += tmp*tmp;
-	}
-	if(wt)
-	  err += wt[c] * etmp;
-	else 
-	  err += etmp;
-	vv1+=3;
-	vv2+=3;
+  {
+    float *vv1=v1, *vv2=v2;
+    double etmp,tmp;
+    double err = 0.0;
+    for(c=0;c<n;c++) {
+      etmp = 0.0;
+      for(a=0;a<3;a++) {
+        tmp = m[a][0]*(vv2[0]-t2[0])
+          + m[a][1]*(vv2[1]-t2[1])
+          + m[a][2]*(vv2[2]-t2[2]);
+        tmp = (vv1[a]-t1[a])-tmp;
+        etmp += tmp*tmp;
+      }
+      if(wt)
+        err += wt[c] * etmp;
+      else 
+        err += etmp;
+      vv1+=3;
+      vv2+=3;
+    }
+    
+    err=err/sumwt;
+    err=sqrt1d(err);
+    
+    /* NOTE: TTT's are now row-major (to be more like homogenous matrices) */
+    
+    if(ttt) {
+      ttt[ 0]=(float)m[0][0];
+      ttt[ 1]=(float)m[1][0];
+      ttt[ 2]=(float)m[2][0];
+      ttt[ 3]=(float)t2[0];
+      ttt[ 4]=(float)m[0][1];
+      ttt[ 5]=(float)m[1][1];
+      ttt[ 6]=(float)m[2][1];
+      ttt[ 7]=(float)t2[1];
+      ttt[ 8]=(float)m[0][2];
+      ttt[ 9]=(float)m[1][2];
+      ttt[10]=(float)m[2][2];
+      ttt[11]=(float)t2[2];
+      ttt[12]=(float)-t1[0];
+      ttt[13]=(float)-t1[1];
+      ttt[14]=(float)-t1[2];
+    }
+    /* for compatibility with normal 4x4 matrices */
+    
+    if(fabs(err)<R_SMALL4)
+      err=0.0F;
+    
+    return((float)err);
   }
-
-  err=err/sumwt;
-  err=sqrt1d(err);
-
-  /* NOTE: TTT's are now row-major (to be more like homogenous matrices) */
-
-  if(ttt) {
-    ttt[ 0]=(float)m[0][0];
-    ttt[ 1]=(float)m[1][0];
-    ttt[ 2]=(float)m[2][0];
-    ttt[ 3]=(float)t2[0];
-    ttt[ 4]=(float)m[0][1];
-    ttt[ 5]=(float)m[1][1];
-    ttt[ 6]=(float)m[2][1];
-    ttt[ 7]=(float)t2[1];
-    ttt[ 8]=(float)m[0][2];
-    ttt[ 9]=(float)m[1][2];
-    ttt[10]=(float)m[2][2];
-    ttt[11]=(float)t2[2];
-    ttt[12]=(float)-t1[0];
-    ttt[13]=(float)-t1[1];
-    ttt[14]=(float)-t1[2];
-  }
-/* for compatibility with normal 4x4 matrices */
-
-  if(fabs(err)<R_SMALL4)
-    err=0.0F;
-
-  return((float)err);
 }
 
 /*========================================================================*/
