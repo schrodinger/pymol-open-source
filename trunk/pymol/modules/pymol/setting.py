@@ -643,6 +643,7 @@ if __name__=='pymol.setting':
         stick_h_scale                      = 605
         sculpt_pyra_inv_weight             = 606
         keep_alive                         = 607
+        fit_kabsch                         = 608
 
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
