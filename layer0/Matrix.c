@@ -1054,7 +1054,6 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
     int got_it = false;
 
     if((n>3) && SettingGetGlobal_b(G,cSetting_fit_kabsch)) { 
-      /* Kabsch fails with <4 atoms */
 
       /* Official Kabsch as per
          http://en.wikipedia.org/wiki/Kabsch_algorithm
@@ -1066,6 +1065,8 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
          assuming Pki and Qkj are centered about the same origin.
 
       */
+
+      /* NOTE: This Kabsch implementation only works with 4 or more atoms */
 
       double At[3][3],AtA[3][3],Ai[3][3];
 
@@ -1128,16 +1129,28 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
               got_it = true;
 
               recondition33d((double*)m); 
+            } else {
+              PRINTFB(G,FB_Matrix,FB_Warnings)
+                "Matrix-Warning: Kabsch failed: falling back on PyMOL.\n"
+                ENDFB(G);
             }
+          } else {
+            PRINTFB(G,FB_Matrix,FB_Warnings)
+              "Matrix-Warning: Kabsch inversion failed: falling back on PyMOL.\n"
+              ENDFB(G);
           }
+        } else {
+          PRINTFB(G,FB_Matrix,FB_Warnings)
+            "Matrix-Warning: Kabsch decomposition failed: falling back on PyMOL.\n"
+            ENDFB(G);
         }
       }
     }
 
     if(!got_it) {
 
-      /* use PyMOL's original superposition algorithm if
-         Kabsch is disabled or fails to work */
+      /* use PyMOL's original superposition algorithm if Kabsch is
+         disabled or fails to work. */
 
       /* Primary iteration scheme to determine rotation matrix for molecule 2 */
       double sg, bb, cc;
