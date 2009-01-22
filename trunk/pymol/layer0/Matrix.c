@@ -744,7 +744,6 @@ int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2)
                     dev[a] = (float)fabs(diff3f(center1,vv1)-diff3f(center2,vv2))/avg_dev;
                   else
                     dev[a] = 0.0F;
-                  printf("%8.3f\n",dev[a]);
                 }
               }
             }
@@ -1091,10 +1090,11 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
           
           for(a=0;a<3;a++)
             for(b=0;b<3;b++) {
-              if(a==b) 
+              if(a==b) {
                 D[a][b] = sqrt1d(e_val[a]);
-              else
+              } else {
                 D[a][b] = 0.0;
+              }
               V[a][b] = e_vec[a][b];
               Vt[a][b] = e_vec[b][a];
             }
@@ -1109,43 +1109,25 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
             /* now compute the rotation matrix  = (AtA)^(1/2) * Ai */
             
             multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);
-
+            
+            { /* is the rotation matrix left-handed? Then swap the
+                 recomposition so as to avoid the reflection */
+              double cp[3];
+              cross_product3d((double*)m,(double*)m+3,cp);
+              if(dot_product3d((double*)m+6,cp)<0.0F) {
+                multiply33d33d((double*)D,(double*)V,(double*)sqrtAtA);
+                multiply33d33d((double*)Vt,(double*)sqrtAtA,(double*)sqrtAtA);
+                multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);              
+              }
+            }
+                               
             if((fabs(length3d(m[0])-1.0)<0.001) &&
                (fabs(length3d(m[1])-1.0)<0.001) &&
                (fabs(length3d(m[2])-1.0)<0.001)) {
               
               got_it = true;
-              
+
               recondition33d((double*)m); 
-
-#if 0
-              {
-                float *vv1=v1, *vv2=v2;
-                double etmp,tmp;
-                double err = 0.0;
-                for(c=0;c<n;c++) {
-                  etmp = 0.0;
-                  for(a=0;a<3;a++) {
-                    tmp = m[a][0]*(vv2[0]-t2[0])
-                      + m[a][1]*(vv2[1]-t2[1])
-                      + m[a][2]*(vv2[2]-t2[2]);
-                    tmp = (vv1[a]-t1[a])-tmp;
-                    etmp += tmp*tmp;
-                  }
-                  if(wt)
-                    err += wt[c] * etmp;
-                  else 
-                    err += etmp;
-                  vv1+=3;
-                  vv2+=3;
-                }
-                err=err/sumwt;
-                err=sqrt1d(err);
-                printf("%1.8f\n",(float)err);
-                got_it = false;
-              }
-#endif
-
             }
           }
         }
@@ -1214,6 +1196,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
       recondition33d((double*)m); 
     }
   }
+
 
   /* At this point, we should have a converged rotation matrix (M).  Calculate
 	 the weighted RMS error. */
