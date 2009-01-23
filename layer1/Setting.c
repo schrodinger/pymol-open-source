@@ -3049,10 +3049,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
 
     set_s(I,cSetting_batch_prefix,"tmp_pymol");
 
-    if(G->StereoCapable || G->Option->blue_line) {
-      set_i(I,cSetting_stereo_mode, 1); 
-    } else if(G->Option->passive_stereo) {
+    if(G->Option->passive_stereo) {
       set_i(I,cSetting_stereo_mode, 4); 
+    } else if(G->StereoCapable || G->Option->blue_line) {
+      set_i(I,cSetting_stereo_mode, 1); 
     } else {
       set_i(I,cSetting_stereo_mode, 2);
     }
