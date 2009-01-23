@@ -3656,6 +3656,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_f(I,cSetting_stick_h_scale, 0.4F);
     set_f(I,cSetting_sculpt_pyra_inv_weight, 10.0F);  
     set_b(I,cSetting_keep_alive,0);
-    set_b(I,cSetting_fit_kabsch,0);
+    set_i(I,cSetting_fit_kabsch,0);
   }
 }
