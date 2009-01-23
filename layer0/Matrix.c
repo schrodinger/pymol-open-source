@@ -1053,18 +1053,20 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
 
   if(n>1) {
     int got_kabsch = false;
+    int fit_kabsch = SettingGetGlobal_i(G,cSetting_fit_kabsch);
+    if( fit_kabsch) {
 
-    if((n>3) && SettingGetGlobal_b(G,cSetting_fit_kabsch)) { 
+      /* WARNING: Kabsch isn't numerically stable */
 
       /* Kabsch as per
 
-         http://en.wikipedia.org/wiki/Kabsch_algorithm
+      http://en.wikipedia.org/wiki/Kabsch_algorithm
 
-         minimal RMS matrix is (AtA)^(1/2) * A_inverse, where
+      minimal RMS matrix is (AtA)^(1/2) * A_inverse, where
          
-         Aij =	Pki Qkj
+      Aij =	Pki Qkj
          
-         assuming Pki and Qkj are centered about the same origin.
+      assuming Pki and Qkj are centered about the same origin.
 
       */
 
@@ -1078,12 +1080,11 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
 
       multiply33d33d((double*)At,(double*)aa,(double*)AtA);
    
-       /* solve A*At */
+      /* solve A*At (a real symmetric matrix) */
 
       {
         double e_vec[3][3], e_val[3];
         xx_word n_rot;
-        
         
         if(xx_matrix_jacobi_solve((xx_float64*)e_vec, 
                                   (xx_float64*)e_val,
@@ -1091,138 +1092,157 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
                                   (xx_float64*)AtA,3)) {
           double V[3][3], Vt[3][3];
 
-#if 0 
-         /* original Kabsch performs and unnecessary matrix inversion */
+          /* Kabsch requires non-negative eigenvalues */
 
-          /* rot matrix = (AtA)^(1/2) * A^(-1) */
-          
-          double rootD[3][3], sqrtAtA[3][3], Ai[3][3];
+          if((e_val[0]>=0.0) &&
+             (e_val[1]>=0.0) &&
+             (e_val[2]>=0.0)) { 
+            switch(fit_kabsch) {
+            case 1: 
+              {
 
-          for(a=0;a<3;a++)
-            for(b=0;b<3;b++) {
-              if(a==b) {
-                rootD[a][b] = sqrt1d(e_val[a]);
-              } else {
-                rootD[a][b] = 0.0;
-              }
-              V[a][b] = e_vec[a][b];
-              Vt[a][b] = e_vec[b][a];
-            }
+                /* original Kabsch performs an unnecessary matrix inversion */
+
+                /* rot matrix = (AtA)^(1/2) * A^(-1) */
           
-          multiply33d33d((double*)rootD,(double*)Vt,(double*)sqrtAtA);
-          multiply33d33d((double*)V,(double*)sqrtAtA,(double*)sqrtAtA);
-          /* compute Ai */
+                double rootD[3][3], sqrtAtA[3][3], Ai[3][3];
+
+                for(a=0;a<3;a++)
+                  for(b=0;b<3;b++) {
+                    if(a==b) {
+                      rootD[a][b] = sqrt1d(e_val[a]);
+                    } else {
+                      rootD[a][b] = 0.0;
+                    }
+                    V[a][b] = e_vec[a][b];
+                    Vt[a][b] = e_vec[b][a];
+                  }
+          
+                multiply33d33d((double*)rootD,(double*)Vt,(double*)sqrtAtA);
+                multiply33d33d((double*)V,(double*)sqrtAtA,(double*)sqrtAtA);
+                /* compute Ai */
       
-          if(xx_matrix_invert((xx_float64*)Ai, (xx_float64*)aa, 3)) {
+                if(xx_matrix_invert((xx_float64*)Ai, (xx_float64*)aa, 3)) {
 
-            /* now compute the rotation matrix  = (AtA)^(1/2) * Ai */
+                  /* now compute the rotation matrix  = (AtA)^(1/2) * Ai */
             
-            multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);
+                  multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);
             
-            got_kabsch = true;
+                  got_kabsch = true;
 
-            { /* is the rotation matrix left-handed? Then swap the
-                 recomposition so as to avoid the reflection */
-              double cp[3], dp;
-              cross_product3d((double*)m,(double*)m+3,cp);
-              dp = dot_product3d((double*)m+6,cp);
-              if((1.0 - fabs(dp))>R_SMALL4) {
-                got_kabsch = false;
+                  { /* is the rotation matrix left-handed? Then swap the
+                       recomposition so as to avoid the reflection */
+                    double cp[3], dp;
+                    cross_product3d((double*)m,(double*)m+3,cp);
+                    dp = dot_product3d((double*)m+6,cp);
+                    if((1.0 - fabs(dp))>R_SMALL4) { /* not orthonormal? */
+                      got_kabsch = false;
                 
-                PRINTFB(G,FB_Matrix,FB_Warnings)
-                  "Matrix-Warning: Kabsch not normal: falling back on iteration.\n"
-                  ENDFB(G);
+                      PRINTFB(G,FB_Matrix,FB_Warnings)
+                        "Matrix-Warning: Kabsch matrix not orthonormal: falling back on iteration.\n"
+                        ENDFB(G);
                 
-              } else if(dp<0.0F) {
-                multiply33d33d((double*)rootD,(double*)V,(double*)sqrtAtA);
-                multiply33d33d((double*)Vt,(double*)sqrtAtA,(double*)sqrtAtA);
-                multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);              
-              }
-            }
-          } else {
-            PRINTFB(G,FB_Matrix,FB_Warnings)
-              "Matrix-Warning: Kabsch inversion failed: falling back on iteration.\n"
-              ENDFB(G);
-          }
-#else
-          /* improved Kabsch skips the matrix inversion */
-
-          if((fabs(e_val[0])>R_SMALL8) &&
-             (fabs(e_val[0])>R_SMALL8) &&
-             (fabs(e_val[0])>R_SMALL8)) {
-            
-            /* inv rot matrix = U Vt = A V D^(-1/2) Vt
-             * where U from SVD of A = U S Vt 
-             * and where U is known to be = A V D^(-1/2)
-             * where D are eigenvalues of AtA */
-            
-            double invRootD[3][3], Mi[3][3];
-            
-            for(a=0;a<3;a++)
-              for(b=0;b<3;b++) {
-                if(a==b) {
-                  invRootD[a][b] = 1.0/sqrt1d(e_val[a]);
+                    } else if(dp<0.0F) {
+                      multiply33d33d((double*)rootD,(double*)V,(double*)sqrtAtA);
+                      multiply33d33d((double*)Vt,(double*)sqrtAtA,(double*)sqrtAtA);
+                      multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);              
+                    }
+                  }
                 } else {
-                  invRootD[a][b] = 0.0;
+                  PRINTFB(G,FB_Matrix,FB_Warnings)
+                    "Matrix-Warning: Kabsch matrix inversion failed: falling back on iteration.\n"
+                    ENDFB(G);
                 }
-                V[a][b] = e_vec[a][b];
-                Vt[a][b] = e_vec[b][a];
               }
-            
-            /* now compute the rotation matrix directly  */
+              break;
+            case 2:
+              {
+                /* improved Kabsch skips the matrix inversion */
 
-            multiply33d33d((double*)invRootD,(double*)Vt,(double*)Mi);
-            multiply33d33d((double*)V,(double*)Mi,(double*)Mi);
-            multiply33d33d((double*)aa,(double*)Mi,(double*)Mi);
+                if((e_val[0]>R_SMALL8) &&
+                   (e_val[1]>R_SMALL8) &&
+                   (e_val[2]>R_SMALL8)) {
             
-            got_kabsch = true;
+                  /* inv rot matrix = U Vt = A V D^(-1/2) Vt
+                   * where U from SVD of A = U S Vt 
+                   * and where U is known to be = A V D^(-1/2)
+                   * where D are eigenvalues of AtA */
             
-            { /* is the rotation matrix left-handed? Then swap the
-                 recomposition so as to avoid the reflection */
-              double cp[3], dp;
-              cross_product3d((double*)Mi,(double*)Mi+3,cp);
-              dp = dot_product3d((double*)Mi+6,cp);
-              if((1.0 - fabs(dp))>R_SMALL4) {
-                got_kabsch = false;
+                  double invRootD[3][3], Mi[3][3];
+            
+                  for(a=0;a<3;a++)
+                    for(b=0;b<3;b++) {
+                      if(a==b) {
+                        invRootD[a][b] = 1.0/sqrt1d(e_val[a]);
+                      } else {
+                        invRootD[a][b] = 0.0;
+                      }
+                      V[a][b] = e_vec[a][b];
+                      Vt[a][b] = e_vec[b][a];
+                    }
+            
+                  /* now compute the rotation matrix directly  */
+
+                  multiply33d33d((double*)invRootD,(double*)Vt,(double*)Mi);
+                  multiply33d33d((double*)V,(double*)Mi,(double*)Mi);
+                  multiply33d33d((double*)aa,(double*)Mi,(double*)Mi);
+            
+                  got_kabsch = true;
+            
+                  { /* cis the rotation matrix left-handed? Then swap the
+                       recomposition so as to avoid the reflection */
+                    double cp[3], dp;
+                    cross_product3d((double*)Mi,(double*)Mi+3,cp);
+                    dp = dot_product3d((double*)Mi+6,cp);
+                    if((1.0 - fabs(dp))>R_SMALL4) {  /* not orthonormal? */
+                      got_kabsch = false;
                 
-                PRINTFB(G,FB_Matrix,FB_Warnings)
-                  "Matrix-Warning: Kabsch not normal: falling back on iteration.\n"
-                  ENDFB(G);
+                      PRINTFB(G,FB_Matrix,FB_Warnings)
+                        "Matrix-Warning: Kabsch matrix not orthonormal: falling back on iteration.\n"
+                        ENDFB(G);
                 
-              } else if(dp<0.0F) {
-                multiply33d33d((double*)invRootD,(double*)V,(double*)Mi);
-                multiply33d33d((double*)Vt,(double*)Mi,(double*)Mi);
-                multiply33d33d((double*)aa,(double*)Mi,(double*)Mi);
+                    } else if(dp<0.0F) {
+                      multiply33d33d((double*)invRootD,(double*)V,(double*)Mi);
+                      multiply33d33d((double*)Vt,(double*)Mi,(double*)Mi);
+                      multiply33d33d((double*)aa,(double*)Mi,(double*)Mi);
+                    }
+                  }
+
+                  if(got_kabsch) { /* transpose to get the inverse */
+                    transpose33d33d((double*)Mi,(double*)m);
+                  }
+
+                } else {
+                  PRINTFB(G,FB_Matrix,FB_Warnings)
+                    "Matrix-Warning: Kabsch matrix degenerate: falling back on iteration.\n"
+                    ENDFB(G);
+                }
               }
+              break;
             }
+
+            /* validate the result */
 
             if(got_kabsch) {
-              transpose33d33d((double*)Mi,(double*)m);
+
+              if((fabs(length3d(m[0])-1.0)<R_SMALL4) &&
+                 (fabs(length3d(m[1])-1.0)<R_SMALL4) &&
+                 (fabs(length3d(m[2])-1.0)<R_SMALL4)) {
+              
+                recondition33d((double*)m); 
+
+              } else {
+                got_kabsch = false;
+
+                PRINTFB(G,FB_Matrix,FB_Warnings)
+                  "Matrix-Warning: Kabsch matrix not normal: falling back on iteration.\n"
+                  ENDFB(G);
+              }
             }
           } else {
             PRINTFB(G,FB_Matrix,FB_Warnings)
-              "Matrix-Warning: Kabsch degenerate: falling back on iteration.\n"
+              "Matrix-Warning: Kabsch eigenvalue(s) negative: falling back on iteration.\n"
               ENDFB(G);
-          }
-
-#endif            
-          /* validate the result */
-
-          if(got_kabsch) {
-
-            if((fabs(length3d(m[0])-1.0)<R_SMALL4) &&
-               (fabs(length3d(m[1])-1.0)<R_SMALL4) &&
-               (fabs(length3d(m[2])-1.0)<R_SMALL4)) {
-              
-              recondition33d((double*)m); 
-
-            } else {
-              got_kabsch = false;
-
-              PRINTFB(G,FB_Matrix,FB_Warnings)
-                "Matrix-Warning: Kabsch matrix invalid: falling back on iteration.\n"
-                ENDFB(G);
-            }
           }
         } else {
           PRINTFB(G,FB_Matrix,FB_Warnings)
@@ -1231,10 +1251,6 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
         }
       }
     }
-#if 0
-    if(got_kabsch)
-      dump33d(m,"kabsch"); got_kabsch = false;
-#endif
 
     if(!got_kabsch) {
 
@@ -1298,10 +1314,6 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
       recondition33d((double*)m); 
     }
   }
-
-#if 0
-  dump33d(m,"iter");
-#endif
 
   /* At this point, we should have a converged rotation matrix (M).  Calculate
 	 the weighted RMS error. */
