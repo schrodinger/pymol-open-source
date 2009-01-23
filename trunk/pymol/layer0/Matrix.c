@@ -1052,7 +1052,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
   }
 
   if(n>1) {
-    int got_it = false;
+    int got_kabsch = false;
 
     if((n>3) && SettingGetGlobal_b(G,cSetting_fit_kabsch)) { 
 
@@ -1119,13 +1119,21 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
             
             multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);
             
-            got_it = true;
+            got_kabsch = true;
 
             { /* is the rotation matrix left-handed? Then swap the
                  recomposition so as to avoid the reflection */
-              double cp[3];
+              double cp[3], dp;
               cross_product3d((double*)m,(double*)m+3,cp);
-              if(dot_product3d((double*)m+6,cp)<0.0F) {
+              dp = dot_product3d((double*)m+6,cp);
+              if((1.0 - fabs(dp))>R_SMALL4) {
+                got_kabsch = false;
+                
+                PRINTFB(G,FB_Matrix,FB_Warnings)
+                  "Matrix-Warning: Kabsch not normal: falling back on iteration.\n"
+                  ENDFB(G);
+                
+              } else if(dp<0.0F) {
                 multiply33d33d((double*)rootD,(double*)V,(double*)sqrtAtA);
                 multiply33d33d((double*)Vt,(double*)sqrtAtA,(double*)sqrtAtA);
                 multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);              
@@ -1133,80 +1141,105 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
             }
           } else {
             PRINTFB(G,FB_Matrix,FB_Warnings)
-              "Matrix-Warning: Kabsch inversion failed: falling back on PyMOL.\n"
+              "Matrix-Warning: Kabsch inversion failed: falling back on iteration.\n"
               ENDFB(G);
           }
 #else
           /* improved Kabsch skips the matrix inversion */
 
-          /* rot matrix = U Vt = A V D^(-1/2) Vt 
-           * where U from SVD of A = U S Vt 
-           * and where U is known to be = A V D^(-1/2)
-           * where D are eigenvalues of AtA */
-
-          double invRootD[3][3];
-          
-          for(a=0;a<3;a++)
-            for(b=0;b<3;b++) {
-              if(a==b) {
-                invRootD[a][b] = 1.0/sqrt1d(e_val[a]);
-              } else {
-                invRootD[a][b] = 0.0;
+          if((fabs(e_val[0])>R_SMALL8) &&
+             (fabs(e_val[0])>R_SMALL8) &&
+             (fabs(e_val[0])>R_SMALL8)) {
+            
+            /* inv rot matrix = U Vt = A V D^(-1/2) Vt
+             * where U from SVD of A = U S Vt 
+             * and where U is known to be = A V D^(-1/2)
+             * where D are eigenvalues of AtA */
+            
+            double invRootD[3][3], Mi[3][3];
+            
+            for(a=0;a<3;a++)
+              for(b=0;b<3;b++) {
+                if(a==b) {
+                  invRootD[a][b] = 1.0/sqrt1d(e_val[a]);
+                } else {
+                  invRootD[a][b] = 0.0;
+                }
+                V[a][b] = e_vec[a][b];
+                Vt[a][b] = e_vec[b][a];
               }
-              V[a][b] = e_vec[a][b];
-              Vt[a][b] = e_vec[b][a];
+            
+            /* now compute the rotation matrix directly  */
+
+            multiply33d33d((double*)invRootD,(double*)Vt,(double*)Mi);
+            multiply33d33d((double*)V,(double*)Mi,(double*)Mi);
+            multiply33d33d((double*)aa,(double*)Mi,(double*)Mi);
+            
+            got_kabsch = true;
+            
+            { /* is the rotation matrix left-handed? Then swap the
+                 recomposition so as to avoid the reflection */
+              double cp[3], dp;
+              cross_product3d((double*)Mi,(double*)Mi+3,cp);
+              dp = dot_product3d((double*)Mi+6,cp);
+              if((1.0 - fabs(dp))>R_SMALL4) {
+                got_kabsch = false;
+                
+                PRINTFB(G,FB_Matrix,FB_Warnings)
+                  "Matrix-Warning: Kabsch not normal: falling back on iteration.\n"
+                  ENDFB(G);
+                
+              } else if(dp<0.0F) {
+                multiply33d33d((double*)invRootD,(double*)V,(double*)Mi);
+                multiply33d33d((double*)Vt,(double*)Mi,(double*)Mi);
+                multiply33d33d((double*)aa,(double*)Mi,(double*)Mi);
+              }
             }
 
-          /* now compute the rotation matrix directly  */
-
-          multiply33d33d((double*)invRootD,(double*)Vt,(double*)m);
-          multiply33d33d((double*)V,(double*)m,(double*)m);
-          multiply33d33d((double*)aa,(double*)m,(double*)m);
-          
-          got_it = true;
-
-          { /* is the rotation matrix left-handed? Then swap the
-               recomposition so as to avoid the reflection */
-            double cp[3];
-            cross_product3d((double*)m,(double*)m+3,cp);
-            if(dot_product3d((double*)m+6,cp)<0.0F) {
-              multiply33d33d((double*)invRootD,(double*)V,(double*)m);
-              multiply33d33d((double*)Vt,(double*)m,(double*)m);
-              multiply33d33d((double*)aa,(double*)m,(double*)m);              
+            if(got_kabsch) {
+              transpose33d33d((double*)Mi,(double*)m);
             }
+          } else {
+            PRINTFB(G,FB_Matrix,FB_Warnings)
+              "Matrix-Warning: Kabsch degenerate: falling back on iteration.\n"
+              ENDFB(G);
           }
 
 #endif            
           /* validate the result */
 
-          if(got_it) {
+          if(got_kabsch) {
 
-            if((fabs(length3d(m[0])-1.0)<0.001) &&
-               (fabs(length3d(m[1])-1.0)<0.001) &&
-               (fabs(length3d(m[2])-1.0)<0.001)) {
+            if((fabs(length3d(m[0])-1.0)<R_SMALL4) &&
+               (fabs(length3d(m[1])-1.0)<R_SMALL4) &&
+               (fabs(length3d(m[2])-1.0)<R_SMALL4)) {
               
               recondition33d((double*)m); 
 
             } else {
-              got_it = false;
+              got_kabsch = false;
 
               PRINTFB(G,FB_Matrix,FB_Warnings)
-                "Matrix-Warning: Kabsch failed: falling back on PyMOL.\n"
+                "Matrix-Warning: Kabsch matrix invalid: falling back on iteration.\n"
                 ENDFB(G);
             }
           }
         } else {
           PRINTFB(G,FB_Matrix,FB_Warnings)
-            "Matrix-Warning: Kabsch decomposition failed: falling back on PyMOL.\n"
+            "Matrix-Warning: Kabsch decomposition failed: falling back on iteration.\n"
             ENDFB(G);
         }
       }
     }
-    
-    if(!got_it) {
+#if 0
+    if(got_kabsch)
+      dump33d(m,"kabsch"); got_kabsch = false;
+#endif
 
-      /* use PyMOL's original superposition algorithm if Kabsch is
-         disabled or fails to work. */
+    if(!got_kabsch) {
+
+      /* use PyMOL's original iteration algorithm if Kabsch is
+         disabled or fails. */
 
       /* Primary iteration scheme to determine rotation matrix for molecule 2 */
       double sg, bb, cc;
@@ -1266,6 +1299,9 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
     }
   }
 
+#if 0
+  dump33d(m,"iter");
+#endif
 
   /* At this point, we should have a converged rotation matrix (M).  Calculate
 	 the weighted RMS error. */
