@@ -55,7 +55,7 @@ Z* -------------------------------------------------------------------
    for row-major(C) use: (row*size + col)
 */
 
-#define XX_MAT(skip,row,col) (row*skip + col)
+#define XX_MAT(skip,row,col) (((row)*(skip)) + col)
 
 xx_boolean xx_matrix_jacobi_solve(xx_float64 *e_vec, xx_float64 *e_val,
                                   xx_word *n_rot,
@@ -1050,12 +1050,14 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
         vv2+=3;
       }
   }
+
   if(n>1) {
     int got_it = false;
 
     if((n>3) && SettingGetGlobal_b(G,cSetting_fit_kabsch)) { 
 
-      /* Official Kabsch as per
+      /* Kabsch as per
+
          http://en.wikipedia.org/wiki/Kabsch_algorithm
 
          minimal RMS matrix is (AtA)^(1/2) * A_inverse, where
@@ -1068,41 +1070,47 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
 
       /* NOTE: This Kabsch implementation only works with 4 or more atoms */
 
-      double At[3][3],AtA[3][3],Ai[3][3];
+      double At[3][3],AtA[3][3];
 
       /* compute At and At * A */
 
       transpose33d33d((double*)aa,(double*)At);
 
       multiply33d33d((double*)At,(double*)aa,(double*)AtA);
-      
-      /* solve A*At */
+   
+       /* solve A*At */
 
       {
         double e_vec[3][3], e_val[3];
         xx_word n_rot;
         
-        double V[3][3], D[3][3], Vt[3][3], sqrtAtA[3][3];
         
         if(xx_matrix_jacobi_solve((xx_float64*)e_vec, 
                                   (xx_float64*)e_val,
                                   &n_rot,
                                   (xx_float64*)AtA,3)) {
+          double V[3][3], Vt[3][3];
+
+#if 0 
+         /* original Kabsch performs and unnecessary matrix inversion */
+
+          /* rot matrix = (AtA)^(1/2) * A^(-1) */
           
+          double rootD[3][3], sqrtAtA[3][3], Ai[3][3];
+
           for(a=0;a<3;a++)
             for(b=0;b<3;b++) {
               if(a==b) {
-                D[a][b] = sqrt1d(e_val[a]);
+                rootD[a][b] = sqrt1d(e_val[a]);
               } else {
-                D[a][b] = 0.0;
+                rootD[a][b] = 0.0;
               }
               V[a][b] = e_vec[a][b];
               Vt[a][b] = e_vec[b][a];
             }
           
-          multiply33d33d((double*)D,(double*)Vt,(double*)sqrtAtA);
+          multiply33d33d((double*)rootD,(double*)Vt,(double*)sqrtAtA);
           multiply33d33d((double*)V,(double*)sqrtAtA,(double*)sqrtAtA);
-          
           /* compute Ai */
       
           if(xx_matrix_invert((xx_float64*)Ai, (xx_float64*)aa, 3)) {
@@ -1111,33 +1119,81 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
             
             multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);
             
+            got_it = true;
+
             { /* is the rotation matrix left-handed? Then swap the
                  recomposition so as to avoid the reflection */
               double cp[3];
               cross_product3d((double*)m,(double*)m+3,cp);
               if(dot_product3d((double*)m+6,cp)<0.0F) {
-                multiply33d33d((double*)D,(double*)V,(double*)sqrtAtA);
+                multiply33d33d((double*)rootD,(double*)V,(double*)sqrtAtA);
                 multiply33d33d((double*)Vt,(double*)sqrtAtA,(double*)sqrtAtA);
                 multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);              
               }
-            }
-                               
-            if((fabs(length3d(m[0])-1.0)<0.001) &&
-               (fabs(length3d(m[1])-1.0)<0.001) &&
-               (fabs(length3d(m[2])-1.0)<0.001)) {
-              
-              got_it = true;
-
-              recondition33d((double*)m); 
-            } else {
-              PRINTFB(G,FB_Matrix,FB_Warnings)
-                "Matrix-Warning: Kabsch failed: falling back on PyMOL.\n"
-                ENDFB(G);
             }
           } else {
             PRINTFB(G,FB_Matrix,FB_Warnings)
               "Matrix-Warning: Kabsch inversion failed: falling back on PyMOL.\n"
               ENDFB(G);
+          }
+#else
+          /* improved Kabsch skips the matrix inversion */
+
+          /* rot matrix = U Vt = A V D^(-1/2) Vt 
+           * where U from SVD of A = U S Vt 
+           * and where U is known to be = A V D^(-1/2)
+           * where D are eigenvalues of AtA */
+
+          double invRootD[3][3];
+          
+          for(a=0;a<3;a++)
+            for(b=0;b<3;b++) {
+              if(a==b) {
+                invRootD[a][b] = 1.0/sqrt1d(e_val[a]);
+              } else {
+                invRootD[a][b] = 0.0;
+              }
+              V[a][b] = e_vec[a][b];
+              Vt[a][b] = e_vec[b][a];
+            }
+
+          /* now compute the rotation matrix directly  */
+
+          multiply33d33d((double*)invRootD,(double*)Vt,(double*)m);
+          multiply33d33d((double*)V,(double*)m,(double*)m);
+          multiply33d33d((double*)aa,(double*)m,(double*)m);
+          
+          got_it = true;
+
+          { /* is the rotation matrix left-handed? Then swap the
+               recomposition so as to avoid the reflection */
+            double cp[3];
+            cross_product3d((double*)m,(double*)m+3,cp);
+            if(dot_product3d((double*)m+6,cp)<0.0F) {
+              multiply33d33d((double*)invRootD,(double*)V,(double*)m);
+              multiply33d33d((double*)Vt,(double*)m,(double*)m);
+              multiply33d33d((double*)aa,(double*)m,(double*)m);              
+            }
+          }
+
+#endif            
+          /* validate the result */
+
+          if(got_it) {
+
+            if((fabs(length3d(m[0])-1.0)<0.001) &&
+               (fabs(length3d(m[1])-1.0)<0.001) &&
+               (fabs(length3d(m[2])-1.0)<0.001)) {
+              
+              recondition33d((double*)m); 
+
+            } else {
+              got_it = false;
+
+              PRINTFB(G,FB_Matrix,FB_Warnings)
+                "Matrix-Warning: Kabsch failed: falling back on PyMOL.\n"
+                ENDFB(G);
+            }
           }
         } else {
           PRINTFB(G,FB_Matrix,FB_Warnings)
@@ -1146,7 +1202,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
         }
       }
     }
-
+    
     if(!got_it) {
 
       /* use PyMOL's original superposition algorithm if Kabsch is
