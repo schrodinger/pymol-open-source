@@ -3045,7 +3045,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
 
     set_i(I,cSetting_fit_iterations, 1000);
 
-    set_f(I,cSetting_fit_tolerance, 0.00001F);
+    set_f(I,cSetting_fit_tolerance, 0.0000001F);
 
     set_s(I,cSetting_batch_prefix,"tmp_pymol");
 
