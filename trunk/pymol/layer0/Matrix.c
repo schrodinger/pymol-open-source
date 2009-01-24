@@ -1054,7 +1054,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
   if(n>1) {
     int got_kabsch = false;
     int fit_kabsch = SettingGetGlobal_i(G,cSetting_fit_kabsch);
-    if( fit_kabsch) {
+    if(fit_kabsch) {
 
       /* WARNING: Kabsch isn't numerically stable */
 
@@ -1255,17 +1255,20 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
     if(!got_kabsch) {
 
       /* use PyMOL's original iteration algorithm if Kabsch is
-         disabled or fails. */
+         disabled or fails (which is quite common). */
 
       /* Primary iteration scheme to determine rotation matrix for molecule 2 */
       double sg, bb, cc;
-      int iters, ix, iy, iz;
+      int iters, ix, iy, iz, unchanged = 0;
       double sig, gam;
       double tmp;
-      
+      double save[3][3];
+      int perturbed = false;
+
       for(a=0;a<3;a++) {
         for(b=0;b<3;b++) {
           m[a][b] = 0.0;
+          save[a][b] = aa[a][b];
         }
         m[a][a] = 1.0;
       }
@@ -1293,6 +1296,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
         tmp = sig*sig + gam*gam;
         sg = sqrt1d(tmp);
         if((sg!=0.0F) && (fabs(sig)>(tol*fabs(gam)))) {
+          unchanged = 0;
           sg = 1.0F / sg;
           for(a=0;a<3;a++) {
             bb = gam*aa[iy][a] + sig*aa[iz][a];
@@ -1305,9 +1309,41 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
             m[iy][a] = bb*sg;
             m[iz][a] = cc*sg;
           }
-        } else if(iters>2) {
-          /* only give up if we've iterated through all three planes */
-          break;
+        } else {
+          unchanged++;
+          if(unchanged == 3) {
+            double residual = 0.0;
+            for(a=0;a<3;a++) {
+              for(b=0;b<3;b++) {
+                residual += fabs(aa[a][b]-save[a][b]);
+              }
+            }
+            if(residual>R_SMALL4) {
+              /* matrix has changed significantly, so we assume that
+                 we found the minimum */
+              break;
+            } else if(perturbed) {
+              /* we ended up back where we started even after perturbing */
+              break;
+            } else { /* hmm...no change from start... so displace 90
+                        degrees just to make sure we didn't start out
+                        trapped in precisely the opposite direction */
+              for(a=0;a<3;a++) {
+                bb =    aa[iz][a];
+                cc =  - aa[iy][a];
+                aa[iy][a] = bb;
+                aa[iz][a] = cc;
+                
+                bb =   m[iz][a];
+                cc = - m[iy][a];
+                m[iy][a] = bb;
+                m[iz][a] = cc;
+              }
+              perturbed = true;
+              unchanged = 0;
+            }
+            /* only give up if we've iterated through all three planes */
+          }
         }
         iters++;
       }
