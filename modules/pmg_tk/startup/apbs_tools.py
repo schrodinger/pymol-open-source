@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # APBS TOOLS Copyright Notice
 # ============================
 #
