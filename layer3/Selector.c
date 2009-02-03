@@ -6648,12 +6648,16 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
           i0 = vla0[b];
           at0=I->Table[i0].atom;
           obj0=I->Obj[I->Table[i0].model];
-          if(obj0!=obj1)
+          if(obj0!=obj1) {
             if(AtomInfoMatch(G,obj1->AtomInfo + at1,
                              obj0->AtomInfo + at0)) {
               matched_flag=true;
               break;
             }
+	  } else if(at0 == at1) {
+	    matched_flag=true;
+	    break;
+	  }
           b++;
           if(b>=c0)
             b = 0;
@@ -6670,11 +6674,15 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
             i0 = vla0[b];
             at0=I->Table[i0].atom;
             obj0=I->Obj[I->Table[i0].model];
-            if(obj0!=obj1)
+            if(obj0!=obj1) {
               if(obj0->AtomInfo[at0].id==target) {
                 matched_flag=true;
                 break;
               }
+	    } else if(at0 == at1) {
+	      matched_flag=true;
+	      break;
+	    }
             b++;
             if(b>=c0)
               b = 0;
@@ -6692,11 +6700,14 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
             i0 = vla0[b];
             at0=I->Table[i0].atom;
             obj0=I->Obj[I->Table[i0].model];
-            if(obj0!=obj1)
+            if(obj0!=obj1) {
               if(obj0->AtomInfo[at0].rank==target) {
                 matched_flag=true;
                 break;
               }
+	    } else if(at0 == at1) {
+	      matched_flag=true;
+	    }
             b++;
             if(b>=c0)
               b = 0;
@@ -6713,11 +6724,15 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
             i0 = vla0[b];
             at0=I->Table[i0].atom;
             obj0=I->Obj[I->Table[i0].model];
-            if(obj0!=obj1)
+            if(obj0!=obj1) {
               if(at0 == at1) {
                 matched_flag=true;
                 break;
               }
+	    } else if(at0 == at1) {
+	      matched_flag=true;
+	      break;
+	    }
             b++;
             if(b>=c0)
               b = 0;
@@ -6745,8 +6760,6 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
               } else {
                 cs0 = NULL;
               }
-
-
 
               if(cs0) {
 
