@@ -3444,16 +3444,27 @@ int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1)
   return(result);
 }
 /*========================================================================*/
-void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force)
+int ObjectMoleculeRenameAtoms(ObjectMolecule *I,int *flag, int force)
 {
   AtomInfoType *ai;
   int a;
+  int result;
   if(force) {
     ai=I->AtomInfo;
-    for(a=0;a<I->NAtom;a++)
-      (ai++)->name[0]=0;
+    if(!flag) {
+      for(a=0;a<I->NAtom;a++) {
+	(ai++)->name[0]=0;
+      }
+    } else {
+      for(a=0;a<I->NAtom;a++) {
+	if(flag[a])
+	  ai->name[0] = 0;
+	ai++;
+      }
+    }
   }
-  AtomInfoUniquefyNames(I->Obj.G,NULL,0,I->AtomInfo,I->NAtom);  
+  result = AtomInfoUniquefyNames(I->Obj.G,NULL,0,I->AtomInfo,flag,I->NAtom);  
+  return result;
 }
 /*========================================================================*/
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele,int state)
@@ -3535,7 +3546,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele,int state)
           }
           cs->NTmpLinkBond = nH;
 
-          AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,nai,nH);
+          AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,nai,NULL,nH);
 
           ObjectMoleculeMerge(I,nai,cs,false,cAIC_AllMask,true); /* will free nai and cs->TmpLinkBond  */
           ObjectMoleculeExtendIndices(I,state);
@@ -3714,7 +3725,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,
 
     d = AtomInfoGetBondLength(I->Obj.G,ai0+at0,ai1+at1);
 
-    AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,nai,cs->NIndex);
+    AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,nai,NULL,cs->NIndex);
 
     /* set up tags which will enable use to continue editing bond */
 
@@ -4528,7 +4539,7 @@ void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
       ai->visRep[a]=ai0->visRep[a];
     ai->id=-1;
     ai->rank=-1;
-    AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,ai,1);
+    AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,ai,NULL,1);
     AtomInfoAssignParameters(I->Obj.G,ai);
   }
 }

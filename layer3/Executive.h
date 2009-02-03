@@ -286,7 +286,7 @@ void ExecutiveSpheroid(PyMOLGlobals *G,char *name,int average);
 void ExecutiveAddHydrogens(PyMOLGlobals *G,char *s1,int quiet);
 void ExecutiveFixHydrogens(PyMOLGlobals *G,char *s1,int quiet);
 void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor,int move_flag);
-void ExecutiveRenameObjectAtoms(PyMOLGlobals *G,char *name,int force);
+void ExecutiveRenameObjectAtoms(PyMOLGlobals *G,char *name,int force,int quiet);
 int ExecutiveInvert(PyMOLGlobals *G,int quiet);
 char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only,char *s1);
 int ExecutiveGetType(PyMOLGlobals *G,char *name,WordType type);

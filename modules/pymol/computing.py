@@ -152,6 +152,7 @@ def _clean(selection, present='', state=-1, fix='', restrain='',
                 self_cmd.select(clean2_sele, clean1_sele+" or ("+present+")",enable=0)
 
             self_cmd.set("suspend_updates")
+            self_cmd.rename(clean2_sele) # ensure identifiers are unique
             self_cmd.create(clean_obj, clean2_sele, zoom=0, source_state=state,target_state=1)
             self_cmd.disable(clean_obj)
             self_cmd.unset("suspend_updates")
