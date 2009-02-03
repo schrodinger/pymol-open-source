@@ -1092,7 +1092,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
                                   (xx_float64*)AtA,3)) {
           double V[3][3], Vt[3][3];
 
-          /* Kabsch requires non-negative eigenvalues */
+          /* Kabsch requires non-negative eigenvalues (since sqrt is taken) */
 
           if((e_val[0]>=0.0) &&
              (e_val[1]>=0.0) &&
@@ -1255,7 +1255,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
     if(!got_kabsch) {
 
       /* use PyMOL's original iteration algorithm if Kabsch is
-         disabled or fails (which is quite common). */
+         disabled or fails (quite common). */
 
       /* Primary iteration scheme to determine rotation matrix for molecule 2 */
       double sg, bb, cc;
