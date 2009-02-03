@@ -280,7 +280,8 @@ void AtomInfoPurgeBond(PyMOLGlobals *G,BondType *bi);
 void AtomInfoBracketResidue(PyMOLGlobals *G,AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd);
 void AtomInfoBracketResidueFast(PyMOLGlobals *G,AtomInfoType *ai0,int n0,int cur,int *st,int *nd);
 
-void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1);
+int AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,
+			   AtomInfoType *atInfo1,int *flag1, int n1);
 int AtomInfoGetCarbColor(PyMOLGlobals *G);
 int AtomResvFromResi(char *resi);
 

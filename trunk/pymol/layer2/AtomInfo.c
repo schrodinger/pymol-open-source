@@ -1126,12 +1126,13 @@ void AtomInfoCombine(PyMOLGlobals *G,AtomInfoType *dst,AtomInfoType *src,int mas
   }
 }
 /*========================================================================*/
-void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1)
+int AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,
+			   AtomInfoType *atInfo1,int *flag1, int n1)
 {
   /* makes sure all names in atInfo1 are unique WRT 0 and 1 */
 
   /* tricky optimizations to avoid n^2 dependence in this operation */
-
+  int result = 0;
   int a,b,c;
   AtomInfoType *ai0,*ai1,*lai1,*lai0;
   int st1,nd1,st0,nd0; /* starts and ends */
@@ -1155,7 +1156,7 @@ void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfo
 
     if(!ai1->name[0])
       matchFlag=true;
-
+    
     if(!matchFlag) {
       /* check within object 1 */
       
@@ -1211,10 +1212,10 @@ void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfo
         }
       }
     }
-
-    if(matchFlag) {
+    
+    if(matchFlag&&((!flag1)||flag1[ai1 - atInfo1])) {
       if(c<100) {
-        if((c<10)&&ai1->elem[1]) /* try to keep halogens 3 or under */
+	if((c<10)&&ai1->elem[1]) /* try to keep halogens 3 or under */
           sprintf(name,"%2s%1d",ai1->elem,c);
         else 
           sprintf(name,"%1s%02d",ai1->elem,c);
@@ -1223,16 +1224,17 @@ void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfo
       }
       name[4]=0; /* just is case we go over */
       strcpy(ai1->name,name);
+      result++;
       c=c+1;
     } else {
       ai1++;
       b++;
     }
   }
+  return result;
 }
 
 
-/*========================================================================*/
 /*========================================================================*/
 void AtomInfoBracketResidue(PyMOLGlobals *G,AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd)
 {

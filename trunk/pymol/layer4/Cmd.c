@@ -8122,11 +8122,11 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   char *str1;
-  int int1;
+  int int1,int2;
   OrthoLineType s1;
 
   int ok = false;
-  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&int1);
+  ok = PyArg_ParseTuple(args,"Osii",&self,&str1,&int1,&int2);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -8135,7 +8135,7 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
   }
   if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
-    ExecutiveRenameObjectAtoms(G,s1,int1); /* TODO STATUS */
+    ExecutiveRenameObjectAtoms(G,s1,int1,int2); /* TODO STATUS */
     SelectorFreeTmp(G,s1);
     APIExit(G);
   }

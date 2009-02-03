@@ -640,6 +640,34 @@ int SelectorResidueVLAGetDistMat(PyMOLGlobals *G, int *vla,
 }
 #endif
 
+int SelectorRenameObjectAtoms(PyMOLGlobals *G,ObjectMolecule *obj,int sele,int force,int update_table)
+{
+  int result = 0;
+  int obj_nAtom = obj->NAtom;
+
+  if(update_table) {
+    SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);    
+  }
+  if(obj_nAtom)  {
+    int *flag = Calloc(int,obj_nAtom);
+    if(!flag) {
+      result = -1;
+    } else {
+      AtomInfoType *ai=obj->AtomInfo;
+      int a;
+      for(a=0;a<obj_nAtom;a++) {
+	if(SelectorIsMember(G,ai->selEntry,sele)) {
+	  flag[a] = true;
+	}
+	ai++;
+      }
+      result=ObjectMoleculeRenameAtoms(obj,flag,force);
+    }
+    FreeP(flag);
+  }
+  return result;
+}
+
 int SelectorResidueVLAsTo3DMatchScores(PyMOLGlobals *G, CMatch *match,
                                        int *vla1,int n1,int state1,
                                        int *vla2,int n2,int state2,

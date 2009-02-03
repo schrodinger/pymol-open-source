@@ -181,6 +181,7 @@ typedef struct {
 #define OMOP_ReferenceRecall 63
 #define OMOP_ReferenceValidate 64
 #define OMOP_ReferenceSwap 65
+#define OMOP_RenameAtoms 66
 
 #include"CoordSet.h"
 
@@ -365,7 +366,7 @@ int ObjectMoleculeGetTotalAtomValence(ObjectMolecule *I,int atom);
 int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int order);
 void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai);
 void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int index1,int mode,int move_flag);
-void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force);
+int ObjectMoleculeRenameAtoms(ObjectMolecule *I,int *flag, int force);
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1);
 void ObjectGotoState(ObjectMolecule *I,int state);
 float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float *v,float *incoming);

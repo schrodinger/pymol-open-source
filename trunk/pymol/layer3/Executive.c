@@ -7196,35 +7196,28 @@ void ExecutiveUpdateCmd(PyMOLGlobals *G,char *s0,char *s1,int sta0,int sta1,
   }
 }
 /*========================================================================*/
-void ExecutiveRenameObjectAtoms(PyMOLGlobals *G,char *name,int force) 
+void ExecutiveRenameObjectAtoms(PyMOLGlobals *G,char *s,int force,int quiet) 
 {
-  register CExecutive *I = G->Executive;
-  CObject *os=NULL;
-  ObjectMolecule *obj;
-  SpecRec *rec = NULL;
-
-  if(strlen(name)) {
-    os=ExecutiveFindObjectByName(G,name);
-    if(!os)
-      ErrMessage(G," Executive","object not found.");
-    else if(os->type!=cObjectMolecule) {
-      ErrMessage(G," Executive","bad object type.");
-      os = NULL;
-    }
-  }
+  int sele;
   
-  if(os||(!strlen(name))) { /* sort one or all */
-    while(ListIterate(I->Spec,rec,next)) {
-      if(rec->type==cExecObject)
-        if(rec->obj->type==cObjectMolecule)
-          if((!os)||(rec->obj==os)) {
-            obj =(ObjectMolecule*)rec->obj;
-            ObjectMoleculeRenameAtoms(obj,force);  
-          }
+  sele = SelectorIndexByName(G,s);
+  if(sele>=0) {
+    ObjectMoleculeOpRec op;
+    ObjectMoleculeOpRecInit(&op);
+    op.code=OMOP_RenameAtoms;
+    op.i1=0;
+    op.i2=force;
+    ExecutiveObjMolSeleOp(G,sele,&op);
+
+    if(!quiet) {
+      PRINTFB(G,FB_Executive,FB_Actions) 
+	" Rename: renamed %d atoms.\n",op.i1
+	ENDFB(G);
     }
-    SceneChanged(G);
+  } else {
+    ErrMessage(G," Executive","invalid selection.");
   }
-} 
+}
 
 /*========================================================================*/
 int  ExecutiveInvert(PyMOLGlobals *G,int quiet)
@@ -11397,13 +11390,26 @@ void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op)
   register CExecutive *I=G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
+  int update_table = true;
 
   if(sele>=0) {
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           obj=(ObjectMolecule*)rec->obj;
-          ObjectMoleculeSeleOp(obj,sele,op);
+	  switch(op->code) {
+	  case OMOP_RenameAtoms:
+	    {
+	      int result = SelectorRenameObjectAtoms(G,obj,sele,op->i2,update_table);
+	      if(result>0)
+		op->i1 += result;
+	      update_table = false;
+	    }
+	    break;
+	  default:
+	    ObjectMoleculeSeleOp(obj,sele,op);
+	    break;
+	  }
         }
       }
     }

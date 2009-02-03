@@ -255,7 +255,7 @@ int ObjectMoleculeAddPseudoatom(ObjectMolecule *I,int sele_index, char *name,
       ai->color = color;
     }
     AtomInfoAssignParameters(I->Obj.G,ai);
-    AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,ai,1);
+    AtomInfoUniquefyNames(I->Obj.G,I->AtomInfo,I->NAtom,ai,NULL,1);
     if(!quiet) {
       PRINTFB(G,FB_ObjectMolecule,FB_Actions)
         " ObjMol: created %s/%s/%s/%s`%s/%s\n",

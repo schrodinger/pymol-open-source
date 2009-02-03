@@ -1087,7 +1087,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def rename(selection, force=0, _self=cmd):
+    def rename(selection="all", force=0, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -1106,9 +1106,10 @@ SEE ALSO
     alter
     '''
         r = DEFAULT_ERROR   
+        selection = "("+selector.process(selection)+")"
         try:
             _self.lock(_self)   
-            r = _cmd.rename(_self._COb,str(selection),int(force))
+            r = _cmd.rename(_self._COb,str(selection),int(force),int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException            
