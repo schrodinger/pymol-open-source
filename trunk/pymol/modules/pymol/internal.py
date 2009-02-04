@@ -366,8 +366,8 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                     import urllib
                     tmp_file = urllib.urlopen(finfo)
                 except:
-                    print "Error: unable to open URL '%s'"%finfo
-                    traceback.print_exc()
+                    print "Error: unable to open the URL:\nError:   %s"%finfo
+#                    traceback.print_exc()
                     return 0
                 finfo = tmp_file.read(tmp_file) # WARNING: will block and hang -- thread instead?
                 ftype = _load2str[ftype]
