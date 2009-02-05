@@ -392,7 +392,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cStereo_stencil_checkerboard 8 
 #define cStereo_stencil_custom       9 /* for hardware developers to use */
 #define cStereo_anaglyph            10 /* not yet implemented */
-#define cStereo_merged              11 
+#define cStereo_merged_clone        11 
+#define cStereo_merged_adjacent     12
    
 #define cSetting_cgo_sphere_quality          189
 #define cSetting_pdb_literal_names           190

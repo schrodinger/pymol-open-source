@@ -9790,10 +9790,10 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
 
     switch(stereo_mode) {
     case cStereo_geowall:
+    case cStereo_merged_adjacent:
       {
         int width =  G->Option->winX;
         int height = G->Option->winY;
-        
         glViewport(0,0,width/2,height);
         OrthoDoDraw(G,1);
         OrthoDoDraw(G,2);

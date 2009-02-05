@@ -7588,6 +7588,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
   int stereo_mode = I->StereoMode;
   GridInfo grid;
   int grid_mode = SettingGetGlobal_i(G,cSetting_grid_mode);
+  int fog_active = false;
 
   PRINTFD(G,FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
@@ -7748,7 +7749,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       } else {
         switch(stereo_mode) {
         case cStereo_quadbuffer: /* hardware stereo */
-        case cStereo_merged:
+        case cStereo_merged_clone:
           OrthoDrawBuffer(G,GL_BACK_LEFT);
           render_buffer = GL_BACK_LEFT;
           break;
@@ -7932,8 +7933,10 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       glFogfv(GL_FOG_COLOR, fog);
       
       if(SettingGet(G,cSetting_depth_cue)&&SettingGet(G,cSetting_fog)) {
+        fog_active = true;
         glEnable(GL_FOG);
       } else {
+        fog_active = false;
         glDisable(GL_FOG);
       }
       glColor4ub(255,255,255,255);
@@ -8114,7 +8117,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         highBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
         
         nLowBits = VLAGetSize(lowBitVLA);
-        nHighBits = VLAGetSize(highBitVLA);
+/* need to scissor this */        nHighBits = VLAGetSize(highBitVLA);
         nPick=0;
         if(nLowBits&&nHighBits) {
           low = 0;
@@ -8161,8 +8164,11 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
 
       int times = 1;
 
-      if(stereo_mode == cStereo_merged ) {
+      switch(stereo_mode) {
+      case cStereo_merged_clone:
+      case cStereo_merged_adjacent:
         times = 2;
+        break;
       }
 
       PRINTFD(G,FB_Scene)
@@ -8189,13 +8195,6 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           } else switch(stereo_mode) {
           case cStereo_quadbuffer: /* hardware */
             OrthoDrawBuffer(G,GL_BACK_LEFT);
-            break;
-          case cStereo_merged:
-            glClear(GL_ACCUM_BUFFER_BIT);
-            OrthoDrawBuffer(G,GL_BACK_LEFT);
-            if(times) {
-              glAccum(GL_ADD,0.5);
-            }
             break;
           case cStereo_crosseye: /* side by side, crosseye */
             if(oversize_width && oversize_height) {
@@ -8236,6 +8235,32 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             break;
           case cStereo_anaglyph:
             glClear(GL_ACCUM_BUFFER_BIT);
+            break;
+          case cStereo_merged_clone:
+            glClear(GL_ACCUM_BUFFER_BIT);
+            OrthoDrawBuffer(G,GL_BACK_LEFT);
+            if(times) {
+              float vv[4] = {0.75F, 0.75F, 0.75F, 1.0F};
+              glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,vv);
+              glAccum(GL_ADD,0.5);
+              glDisable(GL_FOG);
+            }
+            break;
+           case cStereo_merged_adjacent:
+            if(times) {
+              float vv[4] = {0.75F, 0.75F, 0.75F, 1.0F};
+              glClearAccum(0.5, 0.5, 0.5, 0.5);
+              glClear(GL_ACCUM_BUFFER_BIT);
+              glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,vv);
+              glDisable(GL_FOG);
+              glViewport(I->Block->rect.left+G->Option->winX/2,
+                         I->Block->rect.bottom,I->Width,I->Height);
+            } else {
+              glClearAccum(0.0,0.0,0.0,0.0);
+              glClear(GL_ACCUM_BUFFER_BIT);
+              glViewport(I->Block->rect.left,
+                         I->Block->rect.bottom,I->Width,I->Height);
+            }
             break;
           }
 
@@ -8304,14 +8329,6 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           case cStereo_quadbuffer: /* hardware */
             OrthoDrawBuffer(G,GL_BACK_RIGHT);
             break;
-          case cStereo_merged:
-            if(times) {
-              glAccum(GL_ACCUM,-0.5);
-            } else {
-              glAccum(GL_ACCUM,0.5);
-            }
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            break;
           case cStereo_crosseye: /* side by side, crosseye */
             if(oversize_width && oversize_height) {
               glViewport(I->Block->rect.left+x,
@@ -8350,6 +8367,26 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           case cStereo_anaglyph:
             glAccum(GL_ACCUM,0.5);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            break;
+          case cStereo_merged_clone:
+            if(times) {
+              glAccum(GL_ACCUM,-0.5);
+            } else {
+              glAccum(GL_ACCUM,0.5);
+            }
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            break;
+          case cStereo_merged_adjacent:
+            if(times) {
+              glAccum(GL_ACCUM,-0.5);
+            } else {
+              glAccum(GL_ACCUM,0.5);
+              glEnable(GL_SCISSOR_TEST);
+            }
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+            if(!times) {
+              glDisable(GL_SCISSOR_TEST);
+            }
             break;
           }
 
@@ -8416,15 +8453,6 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
                                                 (avoids problems with cards than can't handle
                                                 use of mono contexts) */
             break;
-          case cStereo_merged:
-            glAccum(GL_ACCUM, 0.5);
-            if(times) {
-              glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-              OrthoDrawBuffer(G,GL_BACK_RIGHT);
-            }
-            glAccum(GL_RETURN, 1.0);
-            OrthoDrawBuffer(G,GL_BACK_LEFT);
-            break;
           case cStereo_crosseye: 
           case cStereo_walleye:
           case cStereo_sidebyside:
@@ -8447,7 +8475,43 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glAccum(GL_RETURN, 1.0);
             OrthoDrawBuffer(G,GL_BACK_LEFT);
             break;
+          case cStereo_merged_clone:
+            glAccum(GL_ACCUM, 0.5);
+            if(times) {
+              float vv[4] = {0.0F,0.0F,0.0F,0.0F};
+              glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,vv);
+              if(fog_active)
+                glEnable(GL_FOG);
+              glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+              OrthoDrawBuffer(G,GL_BACK_RIGHT);
+            }
+            glAccum(GL_RETURN, 1.0);
+            OrthoDrawBuffer(G,GL_BACK_LEFT);
+            break;
+          case cStereo_merged_adjacent:
+            glAccum(GL_ACCUM, 0.5);
+            if(times) {
+              float vv[4] = {0.0F,0.0F,0.0F,0.0F};
+              glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,vv);
+              if(fog_active)
+                glEnable(GL_FOG);
+              glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            }
+            glAccum(GL_RETURN, 1.0);
+            if(times) {
+              glViewport(I->Block->rect.left,
+                         I->Block->rect.bottom,I->Width+2,I->Height+2);
+              glScissor(I->Block->rect.left-1,
+                         I->Block->rect.bottom-1,I->Width+2,I->Height+2);
+              glEnable(GL_SCISSOR_TEST);
+              glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+              glDisable(GL_SCISSOR_TEST);
+            } else {
+              glDisable(GL_SCISSOR_TEST);
+            }
+            break;
           }
+
         } else {
 
           /* MONOSCOPING RENDERING (not double-pumped) */
