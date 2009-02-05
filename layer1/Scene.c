@@ -6227,6 +6227,7 @@ void SceneRay(PyMOLGlobals *G,
   case cStereo_sidebyside:
     stereo_hand=2;
     break;
+
   default:
     break;
   }
@@ -7648,8 +7649,8 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         and windowed is not */
     
     if(must_render_stereo && (stereo_mode<cStereo_crosseye) && !(G->StereoCapable)) {
-        must_render_stereo = false;
-        mono_as_quad_stereo = false;
+      must_render_stereo = false;
+      mono_as_quad_stereo = false;
     }
 
     if(must_render_stereo && stereo_via_stencil(stereo_mode)) {
@@ -7747,6 +7748,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       } else {
         switch(stereo_mode) {
         case cStereo_quadbuffer: /* hardware stereo */
+        case cStereo_merged:
           OrthoDrawBuffer(G,GL_BACK_LEFT);
           render_buffer = GL_BACK_LEFT;
           break;
@@ -7989,11 +7991,9 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       if(pick) {
         /* atom picking HACK - obfuscative coding */
           
-          
         glClearColor(0.0,0.0,0.0,0.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-          
-          
+                    
         pickVLA=VLACalloc(Picking,5000);
         pickVLA[0].src.index = 0;
         pickVLA[0].src.bond = 0;
@@ -8154,11 +8154,16 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       glPopMatrix(); /* 1 */
 
     } else {
-
+      
       /* STANDARD RENDERING */
 
       /* rendering for visualization */
 
+      int times = 1;
+
+      if(stereo_mode == cStereo_merged ) {
+        times = 2;
+      }
 
       PRINTFD(G,FB_Scene)
         " SceneRender: I->StereoMode %d must_render_stereo %d\n    mono_as_quad_stereo %d  StereoCapable %d\n",
@@ -8166,313 +8171,349 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         ENDFD;
 
       start_time = UtilGetSeconds(G);
-      if(must_render_stereo) {
-        /* STEREO RENDERING (real or double-pumped) */
+      while(times--) {
+        if(must_render_stereo) {
+          /* STEREO RENDERING (real or double-pumped) */
 
-        PRINTFD(G,FB_Scene)
-          " SceneRender: left hand stereo...\n"
-          ENDFD;
+          PRINTFD(G,FB_Scene)
+            " SceneRender: left hand stereo...\n"
+            ENDFD;
 
-        if(Feedback(G,FB_OpenGL,FB_Debugging))
-          PyMOLCheckOpenGLErr("before stereo glViewport 1");
+          if(Feedback(G,FB_OpenGL,FB_Debugging))
+            PyMOLCheckOpenGLErr("before stereo glViewport 1");
         
-        /* LEFT HAND STEREO */
+          /* LEFT HAND STEREO */
 
-        if(mono_as_quad_stereo) {
-          OrthoDrawBuffer(G,GL_BACK_LEFT);
-        } else switch(stereo_mode) {
-        case cStereo_quadbuffer: /* hardware */
-          OrthoDrawBuffer(G,GL_BACK_LEFT);
-          break;
-        case cStereo_crosseye: /* side by side, crosseye */
+          if(mono_as_quad_stereo) {
+            OrthoDrawBuffer(G,GL_BACK_LEFT);
+          } else switch(stereo_mode) {
+          case cStereo_quadbuffer: /* hardware */
+            OrthoDrawBuffer(G,GL_BACK_LEFT);
+            break;
+          case cStereo_merged:
+            glClear(GL_ACCUM_BUFFER_BIT);
+            OrthoDrawBuffer(G,GL_BACK_LEFT);
+            if(times) {
+              glAccum(GL_ADD,0.5);
+            }
+            break;
+          case cStereo_crosseye: /* side by side, crosseye */
+            if(oversize_width && oversize_height) {
+              glViewport(I->Block->rect.left+oversize_width/2+x,
+                         I->Block->rect.bottom+y,
+                         oversize_width/2, oversize_height);
+            } else {
+              glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
+            }
+            break;
+          case cStereo_walleye:
+          case cStereo_sidebyside:
+            if(oversize_width && oversize_height) {
+              glViewport(I->Block->rect.left+x,
+                         I->Block->rect.bottom+y,
+                         oversize_width/2, oversize_height);
+            } else {
+              glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
+            }
+            break;
+          case cStereo_geowall:
+            glViewport(I->Block->rect.left,
+                       I->Block->rect.bottom,I->Width,I->Height);
+            break;          
+          case cStereo_stencil_by_row:
+          case cStereo_stencil_by_column:
+          case cStereo_stencil_checkerboard:
+            if(I->StencilValid) {
+              glStencilFunc(GL_EQUAL, 1, 1);
+              glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+              glEnable(GL_STENCIL_TEST);
+            }
+            break;
+          case cStereo_stencil_custom:
+#ifdef _PYMOL_SHARP3D
+            sharp3d_begin_left_stereo();
+#endif
+            break;
+          case cStereo_anaglyph:
+            glClear(GL_ACCUM_BUFFER_BIT);
+            break;
+          }
 
-          if(oversize_width && oversize_height) {
-            glViewport(I->Block->rect.left+oversize_width/2+x,
-                       I->Block->rect.bottom+y,
-                       oversize_width/2, oversize_height);
-          } else {
-            glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
+          /* prepare the stereo transformation matrix */
+        
+          glPushMatrix(); /* 1 */
+          ScenePrepareMatrix(G,stereo_using_mono_matrix ? 0 : 1);
+        
+          if(grid.active)
+            GridGetGLViewport(&grid);
+          {
+            int slot;
+            for(slot=0;slot<=grid.last_slot;slot++) {
+            
+              if(grid.active) { 
+                GridSetGLViewport(&grid,slot);
+              }
+            
+              /* render picked atoms */
+            
+              glPushMatrix(); /* 2 */
+              EditorRender(G,curState);
+              glPopMatrix(); /* 1 */
+            
+              /* render the debugging CGO */
+            
+              glPushMatrix();  /* 2 */
+              glNormal3fv(normal);
+              CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
+              glPopMatrix();  /* 1 */
+            
+              /* render all objects */
+            
+              glPushMatrix(); /* 2 */
+            
+              for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
+                SceneRenderAll(G,&context,normal,NULL,pass,false,width_scale,&grid);
+              }
+              glPopMatrix(); /* 1 */
+            
+              /* render selections */
+              glPushMatrix(); /* 2 */
+              glNormal3fv(normal);
+              ExecutiveRenderSelections(G,curState);
+              glPopMatrix(); /* 1 */
+            
+            }
           }
-          break;
-        case cStereo_walleye:
-        case cStereo_sidebyside:
-          if(oversize_width && oversize_height) {
-            glViewport(I->Block->rect.left+x,
-                       I->Block->rect.bottom+y,
-                       oversize_width/2, oversize_height);
-          } else {
-            glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
-          }
-          break;
-        case cStereo_geowall:
-          glViewport(I->Block->rect.left,
-                     I->Block->rect.bottom,I->Width,I->Height);
-          break;          
-        case cStereo_stencil_by_row:
-        case cStereo_stencil_by_column:
-        case cStereo_stencil_checkerboard:
-          if(I->StencilValid) {
-            glStencilFunc(GL_EQUAL, 1, 1);
+          if(grid.active)
+            GridSetGLViewport(&grid,-1);
+        
+          glPopMatrix(); /* 0 */
+
+          /* RIGHT HAND STEREO */
+        
+          PRINTFD(G,FB_Scene)
+            " SceneRender: right hand stereo...\n"
+            ENDFD;
+        
+          if(Feedback(G,FB_OpenGL,FB_Debugging))
+            PyMOLCheckOpenGLErr("before stereo glViewport 2");
+
+          if(mono_as_quad_stereo) { /* double pumped mono */
+            OrthoDrawBuffer(G,GL_BACK_RIGHT);
+          } else switch(stereo_mode) {
+          case cStereo_quadbuffer: /* hardware */
+            OrthoDrawBuffer(G,GL_BACK_RIGHT);
+            break;
+          case cStereo_merged:
+            if(times) {
+              glAccum(GL_ACCUM,-0.5);
+            } else {
+              glAccum(GL_ACCUM,0.5);
+            }
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            break;
+          case cStereo_crosseye: /* side by side, crosseye */
+            if(oversize_width && oversize_height) {
+              glViewport(I->Block->rect.left+x,
+                         I->Block->rect.bottom+y,
+                         oversize_width/2, oversize_height);
+            } else {
+              glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
+            }
+            break;
+          case cStereo_walleye: /* side by side, walleye */
+          case cStereo_sidebyside:
+            if(oversize_width && oversize_height) {
+              glViewport(I->Block->rect.left+oversize_width/2+x,
+                         I->Block->rect.bottom+y,
+                         oversize_width/2, oversize_height);
+            } else {
+              glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
+            }
+            break;
+          case cStereo_geowall: /* geowall */
+            glViewport(I->Block->rect.left+G->Option->winX/2,
+                       I->Block->rect.bottom,I->Width,I->Height);
+            break;
+          case cStereo_stencil_by_row:
+          case cStereo_stencil_by_column:
+          case cStereo_stencil_checkerboard:
+            glStencilFunc(GL_EQUAL, 0, 1);
             glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
             glEnable(GL_STENCIL_TEST);
-          }
-          break;
-        case cStereo_stencil_custom:
+            break;
+          case cStereo_stencil_custom:
 #ifdef _PYMOL_SHARP3D
-          sharp3d_begin_left_stereo();
+            sharp3d_switch_to_right_stereo();
 #endif
-          break;
-        }
+            break;
+          case cStereo_anaglyph:
+            glAccum(GL_ACCUM,0.5);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            break;
+          }
 
-        /* prepare the stereo transformation matrix */
+          /* prepare the stereo transformation matrix */
         
-        glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,stereo_using_mono_matrix ? 0 : 1);
-        
-        if(grid.active)
-          GridGetGLViewport(&grid);
-        {
-          int slot;
-          for(slot=0;slot<=grid.last_slot;slot++) {
+          glPushMatrix(); /* 1 */
+          ScenePrepareMatrix(G,stereo_using_mono_matrix ? 0 : 2);
+          glClear(GL_DEPTH_BUFFER_BIT) ;
+
+          if(grid.active)
+            GridGetGLViewport(&grid);
             
-            if(grid.active) { 
-              GridSetGLViewport(&grid,slot);
+          {
+            int slot;
+
+            for(slot=0;slot<=grid.last_slot;slot++) {
+            
+              if(grid.active) { 
+                GridSetGLViewport(&grid,slot);
+              }
+
+              /* render picked atoms */
+            
+              glPushMatrix(); /* 2 */
+              EditorRender(G,curState);
+              glPopMatrix(); /* 1 */
+            
+              /* render the debugging CGO */
+            
+              glPushMatrix();  /* 2 */
+              glNormal3fv(normal);
+              CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
+              glPopMatrix();  /* 1 */
+            
+              /* render all objects */
+            
+              glPushMatrix(); /* 2 */
+              for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
+                SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale,&grid);
+              }        
+              glPopMatrix(); /* 1 */
+            
+              /* render selections */
+              glPushMatrix(); /* 2 */
+              glNormal3fv(normal);
+              ExecutiveRenderSelections(G,curState);
+              glPopMatrix(); /* 1 */
+            
             }
-            
-            /* render picked atoms */
-            
-            glPushMatrix(); /* 2 */
-            EditorRender(G,curState);
-            glPopMatrix(); /* 1 */
-            
-            /* render the debugging CGO */
-            
-            glPushMatrix();  /* 2 */
-            glNormal3fv(normal);
-            CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
-            glPopMatrix();  /* 1 */
-            
-            /* render all objects */
-            
-            glPushMatrix(); /* 2 */
-            
-            for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
-              SceneRenderAll(G,&context,normal,NULL,pass,false,width_scale,&grid);
-            }
-            glPopMatrix(); /* 1 */
-            
-            /* render selections */
-            glPushMatrix(); /* 2 */
-            glNormal3fv(normal);
-            ExecutiveRenderSelections(G,curState);
-            glPopMatrix(); /* 1 */
-            
           }
-        }
-        if(grid.active)
-          GridSetGLViewport(&grid,-1);
-        
-        glPopMatrix(); /* 0 */
 
-        /* RIGHT HAND STEREO */
-        
-        PRINTFD(G,FB_Scene)
-          " SceneRender: right hand stereo...\n"
-          ENDFD;
-        
-        if(Feedback(G,FB_OpenGL,FB_Debugging))
-          PyMOLCheckOpenGLErr("before stereo glViewport 2");
-
-        if(mono_as_quad_stereo) { /* double pumped mono */
-          OrthoDrawBuffer(G,GL_BACK_RIGHT);
-        } else switch(stereo_mode) {
-        case cStereo_quadbuffer: /* hardware */
-          OrthoDrawBuffer(G,GL_BACK_RIGHT);
-          break;
-        case cStereo_crosseye: /* side by side, crosseye */
-          if(oversize_width && oversize_height) {
-            glViewport(I->Block->rect.left+x,
-                       I->Block->rect.bottom+y,
-                       oversize_width/2, oversize_height);
-          } else {
-            glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
-          }
-          break;
-       case cStereo_walleye: /* side by side, walleye */
-        case cStereo_sidebyside:
-          if(oversize_width && oversize_height) {
-            glViewport(I->Block->rect.left+oversize_width/2+x,
-                       I->Block->rect.bottom+y,
-                       oversize_width/2, oversize_height);
-          } else {
-            glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
-          }
-          break;
-        case cStereo_geowall: /* geowall */
-          glViewport(I->Block->rect.left+G->Option->winX/2,
-                     I->Block->rect.bottom,I->Width,I->Height);
-          break;
-        case cStereo_stencil_by_row:
-        case cStereo_stencil_by_column:
-        case cStereo_stencil_checkerboard:
-          glStencilFunc(GL_EQUAL, 0, 1);
-          glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-          glEnable(GL_STENCIL_TEST);
-          break;
-        case cStereo_stencil_custom:
-#ifdef _PYMOL_SHARP3D
-          sharp3d_switch_to_right_stereo();
-#endif
-          break;
-        }
-
-        /* prepare the stereo transformation matrix */
-        
-        glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,stereo_using_mono_matrix ? 0 : 2);
-        glClear(GL_DEPTH_BUFFER_BIT) ;
-
-        if(grid.active)
-          GridGetGLViewport(&grid);
-            
-        {
-          int slot;
-
-          for(slot=0;slot<=grid.last_slot;slot++) {
-            
-            if(grid.active) { 
-              GridSetGLViewport(&grid,slot);
-            }
-
-            /* render picked atoms */
-            
-            glPushMatrix(); /* 2 */
-            EditorRender(G,curState);
-            glPopMatrix(); /* 1 */
-            
-            /* render the debugging CGO */
-            
-            glPushMatrix();  /* 2 */
-            glNormal3fv(normal);
-            CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
-            glPopMatrix();  /* 1 */
-            
-            /* render all objects */
-            
-            glPushMatrix(); /* 2 */
-            for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
-              SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale,&grid);
-            }        
-            glPopMatrix(); /* 1 */
-            
-            /* render selections */
-            glPushMatrix(); /* 2 */
-            glNormal3fv(normal);
-            ExecutiveRenderSelections(G,curState);
-            glPopMatrix(); /* 1 */
-            
-          }
-        }
-
-        if(grid.active)
-          GridSetGLViewport(&grid,-1);
+          if(grid.active)
+            GridSetGLViewport(&grid,-1);
           
-        glPopMatrix(); /* 0 */
+          glPopMatrix(); /* 0 */
             
+          /* restore draw buffer */
 
-        /* restore draw buffer */
-
-        if(mono_as_quad_stereo) { /* double pumped mono...can't draw to GL_BACK so stick with LEFT */
-          OrthoDrawBuffer(G,GL_BACK_LEFT);
-        } else switch(stereo_mode) {
-        case cStereo_quadbuffer:
-          OrthoDrawBuffer(G,GL_BACK_LEFT); /* leave us in a stereo context 
-                                         (avoids problems with cards than can't handle
-                                         use of mono contexts) */
-          break;
-        case cStereo_crosseye: 
-        case cStereo_walleye:
-        case cStereo_sidebyside:
-          OrthoDrawBuffer(G,GL_BACK);
-          break;
-        case cStereo_geowall:
-          break;
-        case cStereo_stencil_by_row:
-        case cStereo_stencil_by_column:
-        case cStereo_stencil_checkerboard:
-          glDisable(GL_STENCIL_TEST);
-          break;
-        case cStereo_stencil_custom:
-#ifdef _PYMOL_SHARP3D
-          sharp3d_end_stereo();
-#endif
-          break;
-        }
-      } else {
-
-        /* MONOSCOPING RENDERING (not double-pumped) */
-        if(grid.active)
-          GridGetGLViewport(&grid);
-        
-        if(Feedback(G,FB_OpenGL,FB_Debugging))
-          PyMOLCheckOpenGLErr("Before mono rendering");
-
-        {
-          int slot;
-          for(slot=0;slot<=grid.last_slot;slot++) {
-            
-            if(grid.active) { 
-              GridSetGLViewport(&grid,slot);
-            } 
-
-            /* mono rendering */
-            
-            PRINTFD(G,FB_Scene)
-              " SceneRender: rendering DebugCGO...\n"
-              ENDFD;
-            
-            glPushMatrix();
-            glNormal3fv(normal);
-            CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
-            glPopMatrix();
-            
-            glPushMatrix();
-            PRINTFD(G,FB_Scene)
-              " SceneRender: rendering picked atoms...\n"
-              ENDFD;
-            EditorRender(G,curState);
-            glPopMatrix();
-            
-            PRINTFD(G,FB_Scene)
-              " SceneRender: rendering opaque and antialiased...\n"
-              ENDFD;
-            
-            for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
-              SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale, &grid);
+          if(mono_as_quad_stereo) { /* double pumped mono...can't draw to GL_BACK so stick with LEFT */
+            OrthoDrawBuffer(G,GL_BACK_LEFT);
+          } else switch(stereo_mode) {
+          case cStereo_quadbuffer:
+            OrthoDrawBuffer(G,GL_BACK_LEFT); /* leave us in a stereo context 
+                                                (avoids problems with cards than can't handle
+                                                use of mono contexts) */
+            break;
+          case cStereo_merged:
+            glAccum(GL_ACCUM, 0.5);
+            if(times) {
+              glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+              OrthoDrawBuffer(G,GL_BACK_RIGHT);
             }
-            
-            glPushMatrix();
-            PRINTFD(G,FB_Scene)
-              " SceneRender: rendering selections...\n"
-              ENDFD;
-            
-            glNormal3fv(normal);
-            ExecutiveRenderSelections(G,curState);
-            
-            PRINTFD(G,FB_Scene)
-              " SceneRender: rendering transparent objects...\n"
-              ENDFD;
-            
-            /* render transparent */
-            SceneRenderAll(G,&context,normal,NULL,-1,false, width_scale, &grid);
-            glPopMatrix();
+            glAccum(GL_RETURN, 1.0);
+            OrthoDrawBuffer(G,GL_BACK_LEFT);
+            break;
+          case cStereo_crosseye: 
+          case cStereo_walleye:
+          case cStereo_sidebyside:
+            OrthoDrawBuffer(G,GL_BACK);
+            break;
+          case cStereo_geowall:
+            break;
+          case cStereo_stencil_by_row:
+          case cStereo_stencil_by_column:
+          case cStereo_stencil_checkerboard:
+            glDisable(GL_STENCIL_TEST);
+            break;
+          case cStereo_stencil_custom:
+#ifdef _PYMOL_SHARP3D
+            sharp3d_end_stereo();
+#endif
+            break;
+          case cStereo_anaglyph:
+            glAccum(GL_ACCUM, 0.5);
+            glAccum(GL_RETURN, 1.0);
+            OrthoDrawBuffer(G,GL_BACK_LEFT);
+            break;
           }
+        } else {
+
+          /* MONOSCOPING RENDERING (not double-pumped) */
+          if(grid.active)
+            GridGetGLViewport(&grid);
+        
+          if(Feedback(G,FB_OpenGL,FB_Debugging))
+            PyMOLCheckOpenGLErr("Before mono rendering");
+
+          {
+            int slot;
+            for(slot=0;slot<=grid.last_slot;slot++) {
+            
+              if(grid.active) { 
+                GridSetGLViewport(&grid,slot);
+              } 
+
+              /* mono rendering */
+            
+              PRINTFD(G,FB_Scene)
+                " SceneRender: rendering DebugCGO...\n"
+                ENDFD;
+            
+              glPushMatrix();
+              glNormal3fv(normal);
+              CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
+              glPopMatrix();
+            
+              glPushMatrix();
+              PRINTFD(G,FB_Scene)
+                " SceneRender: rendering picked atoms...\n"
+                ENDFD;
+              EditorRender(G,curState);
+              glPopMatrix();
+            
+              PRINTFD(G,FB_Scene)
+                " SceneRender: rendering opaque and antialiased...\n"
+                ENDFD;
+            
+              for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
+                SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale, &grid);
+              }
+            
+              glPushMatrix();
+              PRINTFD(G,FB_Scene)
+                " SceneRender: rendering selections...\n"
+                ENDFD;
+            
+              glNormal3fv(normal);
+              ExecutiveRenderSelections(G,curState);
+            
+              PRINTFD(G,FB_Scene)
+                " SceneRender: rendering transparent objects...\n"
+                ENDFD;
+            
+              /* render transparent */
+              SceneRenderAll(G,&context,normal,NULL,-1,false, width_scale, &grid);
+              glPopMatrix();
+            }
+          }
+          if(grid.active) {
+            GridSetGLViewport(&grid,-1);
+          }
+          if(Feedback(G,FB_OpenGL,FB_Debugging))
+            PyMOLCheckOpenGLErr("during mono rendering");
         }
-        if(grid.active) {
-          GridSetGLViewport(&grid,-1);
-        }
-      if(Feedback(G,FB_OpenGL,FB_Debugging))
-        PyMOLCheckOpenGLErr("during mono rendering");
       }
     }
     

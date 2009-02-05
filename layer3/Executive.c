@@ -9776,7 +9776,8 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
     OrthoExecDeferred(G);
 
   if(!SettingGet(G,cSetting_suspend_updates)) {
-
+    
+    int stereo_mode = SettingGetGlobal_i(G,cSetting_stereo_mode);
     if(G->HaveGUI && G->ValidContext) {
       glMatrixMode(GL_MODELVIEW); /* why is this necessary?  is it? */
     }
@@ -9786,18 +9787,22 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
     if(WizardUpdate(G))
       SceneUpdate(G,false);
 
-    if(SettingGetGlobal_i(G,cSetting_stereo_mode)==4) {
 
-      int width =  G->Option->winX;
-      int height = G->Option->winY;
-      
-      glViewport(0,0,width/2,height);
-      OrthoDoDraw(G,1);
-      OrthoDoDraw(G,2);
-      glViewport(0,0,width,height);
-
-    } else {
+    switch(stereo_mode) {
+    case cStereo_geowall:
+      {
+        int width =  G->Option->winX;
+        int height = G->Option->winY;
+        
+        glViewport(0,0,width/2,height);
+        OrthoDoDraw(G,1);
+        OrthoDoDraw(G,2);
+        glViewport(0,0,width,height);
+      }
+      break;
+    default:
       OrthoDoDraw(G,0);
+      break;
     }
 
     if(G->HaveGUI && G->ValidContext) {

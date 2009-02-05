@@ -1517,16 +1517,18 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
   int internal_gui_width;
   int internal_feedback;
   int sceneTop = 0;
-
+  
   PRINTFD(G,FB_Ortho)
     " OrthoReshape-Debug: %d %d\n",width,height
     ENDFD;
 
-  if((width>0)&&(SettingGetGlobal_i(G,cSetting_stereo_mode)==4)) {
-    width = width / 2;
-    I->WrapXFlag = true;
-  } else {
-    I->WrapXFlag = false;
+  I->WrapXFlag = false;
+  if(width>0) {
+    int stereo_mode = SettingGetGlobal_i(G,cSetting_stereo_mode);
+    if(stereo_mode == cStereo_geowall) {
+      width = width / 2;
+      I->WrapXFlag = true;
+    }
   }
 
   if((width!=I->Width)||(height!=I->Height)||force) {
