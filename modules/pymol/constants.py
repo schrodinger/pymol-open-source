@@ -124,8 +124,9 @@ toggle_dict = {'on':1,'off':0,'1':1,'0':0,'toggle':-1, '-1':-1}
 toggle_sc = Shortcut(toggle_dict.keys())
 
 stereo_dict = {'on':1,'off':0,'1':1,'0':0,'swap':-1,
-               'crosseye':2,'quadbuffer':3,
-               'walleye':4,'geowall':5,'sidebyside':6}
+               'quadbuffer':2,'crosseye':3,
+               'walleye':4,'geowall':5,'sidebyside':6,
+               'byrow':7, 'bycolumn':8, 'checkerboard':9 }
 
 stereo_sc = Shortcut(stereo_dict.keys())
 

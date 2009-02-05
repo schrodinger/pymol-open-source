@@ -229,7 +229,7 @@ static PyObject * SgOps__setstate__(PyObject *self, PyObject *args)
 
 static void DEL_SgOpsObject(T_SgOps *self)
 {
-  PyMem_DEL(self);
+  PyObject_Del(self);
 }
 
 
@@ -829,7 +829,7 @@ static PyObject *EqMIx__init__(PyObject *self, PyObject *args)
 
 static void DEL_EqMIxObject(T_EqMIx *self)
 {
-  PyMem_DEL(self);
+  PyObject_Del(self);
 }
 
 

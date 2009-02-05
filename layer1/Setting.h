@@ -378,7 +378,22 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_fit_iterations              185
 #define cSetting_fit_tolerance               186
 #define cSetting_batch_prefix                187
+
 #define cSetting_stereo_mode                 188
+
+#define cStereo_default             0
+#define cStereo_quadbuffer          1
+#define cStereo_crosseye            2 
+#define cStereo_walleye             3 
+#define cStereo_geowall             4 
+#define cStereo_sidebyside          5
+#define cStereo_stencil_by_row      6 
+#define cStereo_stencil_by_column   7 
+#define cStereo_stencil_checkerboard 8 
+#define cStereo_stencil_custom      9 /* for hardware developers to use */
+#define cStereo_anaglyph           10 /* not yet implemented */
+#define cStereo_twisted            11 /* not yet implemented */
+
 #define cSetting_cgo_sphere_quality          189
 #define cSetting_pdb_literal_names           190
 #define cSetting_wrap_output                 191

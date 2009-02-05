@@ -49,8 +49,8 @@ struct _CPyMOLOptions {
     defer_builds_mode,
     full_screen,
     sphere_mode,
-	stereo_capable,
-    passive_stereo, /* for informing PyMOL as to the capabilities of the context */
+	stereo_capable, /* for informing PyMOL as to the capabilities of the context */
+    stereo_mode, 
     zoom_mode,
     no_quit; /* prevent any action from quitting or killing PyMOL */
   
@@ -58,7 +58,7 @@ struct _CPyMOLOptions {
      move any fields in the above ...initialization struct in PyMOL.c */
 
   /* WARNING: don't add, delete, or change item order unless you also update
-     PyMOL.c where this global structure is initialized */
+     PyMOL.c "CPyMOLOptions Defaults"where this global structure is initialized */
 };
 
 #ifndef CPyMOLOptions_DEFINED

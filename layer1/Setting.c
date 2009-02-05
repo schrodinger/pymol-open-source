@@ -3049,12 +3049,14 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
 
     set_s(I,cSetting_batch_prefix,"tmp_pymol");
 
-    if(G->Option->passive_stereo) {
-      set_i(I,cSetting_stereo_mode, 4); 
-    } else if(G->StereoCapable || G->Option->blue_line) {
-      set_i(I,cSetting_stereo_mode, 1); 
+    if(!G->Option->stereo_mode) {
+      if(G->StereoCapable || G->Option->blue_line) {
+        set_i(I,cSetting_stereo_mode, 1); /* quadbuffer if we can */
+      } else {
+        set_i(I,cSetting_stereo_mode, 2); /* otherwise crosseye by default */
+      }
     } else {
-      set_i(I,cSetting_stereo_mode, 2);
+      set_i(I,cSetting_stereo_mode, G->Option->stereo_mode);
     }
 
     set_i(I,cSetting_cgo_sphere_quality, 1);

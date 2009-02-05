@@ -154,7 +154,7 @@ static PyObject *gl_SaveTiff(PyObject * self, PyObject * args)
 	}
     }
 
-    PyMem_DEL(buf);
+    PyMem_DEL(buf); /* buf from PyMem_NEW */
 
     TIFFFlushData(tif);
     TIFFClose(tif);
@@ -192,7 +192,7 @@ static PyObject *gl_SavePPM(PyObject * self, PyObject * args)
 	fwrite(pixelbuffer + i * width * 3, 1, width * 3, fp);
 
     fclose(fp);
-    PyMem_DEL(pixelbuffer);
+    PyMem_DEL(pixelbuffer); /* pixelbuffer from PyMem_NEW */
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -332,7 +332,7 @@ static PyObject *gl_SaveEPS(PyObject * self, PyObject * args)
     fprintf(fp, "grestore\n");
 
     fclose(fp);
-    PyMem_DEL(pixels);
+    PyMem_DEL(pixels); /* pixels from PyMem_NEW */
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -1972,7 +1972,7 @@ static PyObjtrackball *Newtrackball(float size, float scale, int renorm)
 }
 static void PyObjtrackball_dealloc(PyObjtrackball * self)
 {
-    PyMem_DEL(self);
+    PyObject_Del(self);
 }
 
 static int PyObjtrackball_print(PyObjtrackball * self)

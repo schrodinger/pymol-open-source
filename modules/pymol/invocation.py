@@ -66,7 +66,7 @@ if __name__=='pymol.invocation':
     options.full_screen = 0
     options.sphere_mode = -1
     options.stereo_capable = 0
-    options.passive_stereo = 0
+    options.stereo_mode = 0
     options.zoom_mode = -1
     options.no_quit = 0
     
@@ -255,12 +255,12 @@ if __name__=='pymol.invocation':
                         options.win_py = 184 
                 if "n" in a:
                     options.incentive_product = 1
-                if "t" in a:
-                    options.gui = 'pmg_tk'
+                if "t" in a: # type of stereo to use
+                    options.stereo_mode = int(av.pop())
                 if "T" in a: # what skin to use? 
                     options.skin = str(av.pop())
-                if "w" in a:
-                    options.gui = 'pmg_wx'
+                if "w" in a: # what gui to use
+                    options.gui = str(av.pop())
                 if "O" in a:
                     options.sphere_mode = int(av.pop())
                 if "z" in a:
@@ -288,7 +288,7 @@ if __name__=='pymol.invocation':
                 if "M" in a: # Force mono on stereo hardware (all)
                     options.force_stereo = -1
                 if "j" in a: # Geowall: two side-by-side images
-                    options.passive_stereo = 1
+                    options.stereo_mode = 4
                     options.deferred.append("_do__ stereo on")
                 if "J" in a: # cd to user's home directory on startup (if possible)
                     if sys.platform == 'win32':
@@ -329,7 +329,7 @@ if __name__=='pymol.invocation':
                     options.deferred.append("_do_png %s"%av.pop())
                 if "C" in a:
                     options.sigint_handler = 0
-                if "U" in a:
+                if "U" in a: #
                     options.reuse_helper = 1
                 if "Q" in a:
                     options.quiet = 1
@@ -355,7 +355,6 @@ if __name__=='pymol.invocation':
                         options.deferred.append("_do_ cmd.get_wizard().ray_trace1()")
                     if a[2:]=='2':
                         options.deferred.append("_do_ cmd.get_wizard().ray_trace2()")
-                        
             else:
                 suffix = string.split(string.lower(a[-4:]),'.')[-1]
                 if suffix == "p5m":

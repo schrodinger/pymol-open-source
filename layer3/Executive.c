@@ -7727,18 +7727,16 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
     
     if(G->HaveGUI) {
       stereo_mode = (int)SettingGet(G,cSetting_stereo_mode);
-      
       switch(stereo_mode) {
+      case 0:
+        break;
       case 1: /* hardware stereo-in-a-window*/
         SceneSetStereo(G,flag);
 #ifndef _PYMOL_NOPY
         PSGIStereo(G,flag); /* does this have any effect anymore? */
 #endif
         break;
-      case 2: /* cross-eye stereo*/
-      case 3: /* wall-eye */
-      case 4: /* geo-wall */
-      case 5: /* side-by-side */
+      default:
         SceneSetStereo(G,flag);
         break;
       }

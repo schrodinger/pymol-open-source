@@ -2690,8 +2690,9 @@ static const CPyMOLOptions Defaults = {
   0, /* full screen mode */
   -1, /* sphere mode */
   0, /* stereo capable */
-  0, /* passive stereo */
+  0, /* stereo mode */
   -1, /* zoom mode */
+  0, /* no quit */
 };
 
 CPyMOLOptions *PyMOLOptions_New(void)
