@@ -1630,12 +1630,12 @@ static void launch(CPyMOLOptions *options,int own_the_options)
           if(display_mode_possible) 
             G->StereoCapable = 1;
           break;
-        case cStereo_merged_clone:
+        case cStereo_clone_bipolar:
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_ACCUM | P_GLUT_STEREO);
           display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
           if(!display_mode_possible) {
             if(!G->Option->quiet) {
-              printf(" Sorry, merged clone stereo 3D not available.\n");
+              printf(" Sorry, clone bipolar stereo 3D not available.\n");
             }
             G->Option->stereo_mode = 0; 
           } else {
@@ -1643,7 +1643,7 @@ static void launch(CPyMOLOptions *options,int own_the_options)
           }
           break;
         case cStereo_anaglyph:
-        case cStereo_merged_adjacent:
+        case cStereo_bipolar:
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_ACCUM);
           display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
           if(!display_mode_possible) {

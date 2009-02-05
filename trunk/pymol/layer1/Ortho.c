@@ -1527,7 +1527,7 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
     int stereo_mode = SettingGetGlobal_i(G,cSetting_stereo_mode);
     switch(stereo_mode) {
     case cStereo_geowall:
-    case cStereo_merged_adjacent:
+    case cStereo_bipolar:
       width = width / 2;
       I->WrapXFlag = true;
       break;

@@ -7749,7 +7749,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       } else {
         switch(stereo_mode) {
         case cStereo_quadbuffer: /* hardware stereo */
-        case cStereo_merged_clone:
+        case cStereo_clone_bipolar:
           OrthoDrawBuffer(G,GL_BACK_LEFT);
           render_buffer = GL_BACK_LEFT;
           break;
@@ -8165,8 +8165,8 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       int times = 1;
 
       switch(stereo_mode) {
-      case cStereo_merged_clone:
-      case cStereo_merged_adjacent:
+      case cStereo_clone_bipolar:
+      case cStereo_bipolar:
         times = 2;
         break;
       }
@@ -8236,7 +8236,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           case cStereo_anaglyph:
             glClear(GL_ACCUM_BUFFER_BIT);
             break;
-          case cStereo_merged_clone:
+          case cStereo_clone_bipolar:
             glClear(GL_ACCUM_BUFFER_BIT);
             OrthoDrawBuffer(G,GL_BACK_LEFT);
             if(times) {
@@ -8246,7 +8246,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
               glDisable(GL_FOG);
             }
             break;
-           case cStereo_merged_adjacent:
+           case cStereo_bipolar:
             if(times) {
               float vv[4] = {0.75F, 0.75F, 0.75F, 1.0F};
               glClearAccum(0.5, 0.5, 0.5, 0.5);
@@ -8368,7 +8368,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glAccum(GL_ACCUM,0.5);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             break;
-          case cStereo_merged_clone:
+          case cStereo_clone_bipolar:
             if(times) {
               glAccum(GL_ACCUM,-0.5);
             } else {
@@ -8376,7 +8376,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             }
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             break;
-          case cStereo_merged_adjacent:
+          case cStereo_bipolar:
             if(times) {
               glAccum(GL_ACCUM,-0.5);
             } else {
@@ -8475,7 +8475,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glAccum(GL_RETURN, 1.0);
             OrthoDrawBuffer(G,GL_BACK_LEFT);
             break;
-          case cStereo_merged_clone:
+          case cStereo_clone_bipolar:
             glAccum(GL_ACCUM, 0.5);
             if(times) {
               float vv[4] = {0.0F,0.0F,0.0F,0.0F};
@@ -8488,7 +8488,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glAccum(GL_RETURN, 1.0);
             OrthoDrawBuffer(G,GL_BACK_LEFT);
             break;
-          case cStereo_merged_adjacent:
+          case cStereo_bipolar:
             glAccum(GL_ACCUM, 0.5);
             if(times) {
               float vv[4] = {0.0F,0.0F,0.0F,0.0F};
