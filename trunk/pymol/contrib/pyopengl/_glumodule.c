@@ -117,7 +117,7 @@ static void gluquadric_delete(gluQuadricObject * op)
 {
     if (op->quad)
 	gluDeleteQuadric(op->quad);
-    PyMem_DEL(op);
+    PyObject_Del(op);
 }
 
 static PyObject *gluquadric_getattr(gluQuadricObject * op, char *name)
@@ -198,7 +198,7 @@ static void glutesselator_delete(gluTesselatorPyObject * op)
 {
     if (op->tess)
 	gluDeleteTess(op->tess);
-    PyMem_DEL(op);
+    PyObject_Del(op);
 }
 
 static PyObject *glutesselator_getattr(gluTesselatorPyObject * op, char *name)

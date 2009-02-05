@@ -1659,16 +1659,8 @@ PYMOL API
         try:
             _self.lock(_self)
             if toggle>1:
-                if toggle==2: # cross-eye
-                    _self.set("stereo_mode","2",quiet=quiet)
-                elif toggle==3: # quad
-                    _self.set("stereo_mode","1",quiet=quiet)
-                elif toggle==4: # wall-eye
-                    _self.set("stereo_mode","3",quiet=quiet)
-                elif toggle==5: # geowall
-                    _self.set("stereo_mode","4",quiet=quiet)
-                elif toggle==6:
-                    _self.set("stereo_mode","5",quiet=quiet)
+                if(toggle>1) :
+                    _self.set("stereo_mode",str(toggle-1),quiet=quiet)
                 toggle=1
             r = _cmd.stereo(_self._COb,toggle)
             if is_error(r):

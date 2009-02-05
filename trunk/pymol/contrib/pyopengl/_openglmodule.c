@@ -175,7 +175,7 @@ static int PyArray_AsShortArray(PyObject ** op, GLshort ** pitems, int *pn)
 
 #include "abstract.h"
 
-#define PyArray_ClearMemory(op, pitems) PyMem_DEL(pitems)
+#define PyArray_ClearMemory(op, pitems) PyMem_DEL(pitems) /* is pitems PyMem or PyObject? */
 
 static int PyArray_AsDoubleArray(PyObject ** op, GLdouble ** pitems, int *pn)
 {
@@ -3385,7 +3385,7 @@ static PyObject *py_gl_GetDoublev(PyObject * self, PyObject * args)
     for (i = 0; i < nitems; i++) {
 	PyTuple_SET_ITEM(params, i, PyFloat_FromDouble(items[i]));
     }
-    PyMem_DEL(items);
+    PyMem_DEL(items); /* items from PyMem_NEW */
 #endif				/* NUMERIC */
     return (PyObject *) params;
 }

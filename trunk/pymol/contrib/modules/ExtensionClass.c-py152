@@ -1589,7 +1589,7 @@ CCL_dealloc(PyExtensionClass *self)
       Py_DECREF(self->bases);
     }
   if (((PyExtensionClass*)self->ob_type) != self) Py_XDECREF(self->ob_type);
-  PyMem_DEL(self);
+  PyObject_Del(self);
 }
   
 static PyObject *
@@ -2999,7 +2999,7 @@ subclass_dealloc(PyObject *self)
   UNLESS(base_dealloced) 
     {
       Py_DECREF(self->ob_type);
-      PyMem_DEL(self);
+      PyObject_Del(self);
     }
 
   PyErr_Restore(t,v,tb);

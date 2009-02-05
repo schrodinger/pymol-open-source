@@ -1144,7 +1144,7 @@ void MainFree(void)
 {
   PyMOLGlobals *G = PyMOL_GetGlobals(PyMOLInstance); /* temporary -- will change */
     
-  int show_splash = G->Option->show_splash;
+  int quiet = G->Option->quiet;
   CPyMOLOptions *owned_options = G->Main->OwnedOptions;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
@@ -1171,7 +1171,7 @@ void MainFree(void)
 
    MemoryDebugDump(); /* this is a no-op unless memory debugging is enabled */
    
-   if(show_splash) {
+   if(!quiet) {
      printf(" PyMOL: normal program termination.\n");
    }
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */   
@@ -1563,136 +1563,167 @@ static void launch(CPyMOLOptions *options,int own_the_options)
 
   PyMOLInstance = PyMOL_NewWithOptions(options);
   G = PyMOL_GetGlobals(PyMOLInstance);
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+  
+  /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef _MACPYMOL_XCODE
   MacPyMOLOption = G->Option;
   MacPyMOLReady = &G->Ready;
 #endif
-/* END PROPRIETARY CODE SEGMENT */
+  /* END PROPRIETARY CODE SEGMENT */
   
   if(G->Option->multisample)
     multisample_mask = P_GLUT_MULTISAMPLE;
-
+  
   /* if were running GLUT, then we have the ability to increase the
    * size of the window in order to accomodate the context */
-
+  
   if(G->Option->internal_gui&&(!G->Option->game_mode))
     G->Option->winX+=cOrthoRightSceneMargin;
-
+  
   if(G->Option->internal_feedback && (!G->Option->game_mode))
     G->Option->winY+= (G->Option->internal_feedback-1)*cOrthoLineHeight + cOrthoBottomSceneMargin;
-
+  
   if(G->HaveGUI) {
-    #ifndef _PYMOL_OSX
+#ifndef _PYMOL_OSX
     atexit(MainOnExit); /* register callback to help prevent crashes
-                                 when GLUT spontaneously kills us */
-    #endif
-
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+                           when GLUT spontaneously kills us */
+#endif
+    
+    /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
-SetConsoleCtrlHandler(
-  HandlerRoutine,  // address of handler function
-  true                          // handler to add or remove
-);
+    SetConsoleCtrlHandler(
+                          HandlerRoutine,  // address of handler function
+                          true                          // handler to add or remove
+                          );
 #endif
-
+    
 #ifdef _PYMOL_SHARP3D
-      sharp3d_prepare_context();
+    sharp3d_prepare_context();
 #endif
+    
+    p_glutInit(&myArgc, myArgv);
+    
+    {
+      int display_mode_possible = false;
+      const char multi_message[] = " Sorry, multisampling not available.\n";
 
-      p_glutInit(&myArgc, myArgv);
-
-    switch(G->Option->force_stereo) {
-
-    case -1: /* force mono */
-      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE );
-      G->StereoCapable = 0;
-      break;
-
-    case 0: /* default/autodetect (stereo on win/unix; mono on macs) */
+      switch(G->Option->force_stereo) {
+      case -1: /* force mono */
+        G->StereoCapable = 0;
+        break;
+      case 0: /* default/autodetect */
 #ifdef _PYMOL_SHARP3D
-      /*      G->Option->winX = 794+220; */
-      /* G->Option->winY = 547; */
-
-      p_glutInitDisplayMode( P_GLUT_RGBA| P_GLUT_DOUBLE| multisample_mask | P_GLUT_STENCIL );
-
-      if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
-        p_glutInitDisplayMode( P_GLUT_RGBA| P_GLUT_DOUBLE | P_GLUT_STENCIL );
-        if(multisample_mask && G->Option->show_splash) {
-          printf(" Sorry, multisampling not available.\n");
+        G->Option->stereo_mode = cStereo_stencil_custom;
+#endif
+        switch(G->Option->stereo_mode) {
+        case cStereo_default:
+        case cStereo_quadbuffer:
+          p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE | P_GLUT_STEREO );
+          display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
+          if(multisample_mask && (!display_mode_possible)) {
+            if(!G->Option->quiet) {
+              printf(multi_message);
+            }
+            p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
+            display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
+          }
+          if(display_mode_possible) 
+            G->StereoCapable = 1;
+          break;
+        case cStereo_anaglyph:
+        case cStereo_twisted:
+          p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_ACCUM);
+          display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
+          if(!display_mode_possible) {
+            if(!G->Option->quiet) {
+              printf(" Sorry, accumulation-based stereo 3D not available.\n");
+            }
+            G->Option->stereo_mode = 0; 
+          }
+          break;
+        case cStereo_stencil_by_row:
+        case cStereo_stencil_by_column:
+        case cStereo_stencil_checkerboard:
+        case cStereo_stencil_custom:
+          p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STENCIL);
+          display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
+          if(!display_mode_possible) {
+            if(!G->Option->quiet) {
+              printf(" Sorry, stencil-based stereo 3D not available.\n");
+            }
+            G->Option->stereo_mode = 0; 
+          }
+          break;
+        default: /* fall through */
+          break;
         }
+        break;
+      case 1: /* force stereo (if possible) */
+        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE | P_GLUT_STEREO);
+        display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
+        if(multisample_mask && (!display_mode_possible)) {
+          if(!G->Option->quiet) {
+            printf(multi_message);
+          }
+          p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
+          display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
+        }
+        if(display_mode_possible) {
+          G->StereoCapable = 1;
+        }
+        break;
+      }
+      /* fallback behavior */
+      
+      if(!display_mode_possible) {
+        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE );
+        display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
+        G->StereoCapable = 0;
       }
       
-      G->StereoCapable = 1;
-#else
-#ifndef _PYMOL_OSX
-      /* don't try stereo on OS X unless asked to do so */
-      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE | P_GLUT_STEREO );
-      if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
-#endif
-        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE );
-        if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
-          if(multisample_mask && G->Option->show_splash) {
-            printf(" Sorry, multisampling not available.\n");
-          }
-          p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
+      if(multisample_mask && (!display_mode_possible)) {
+        if(!G->Option->quiet) {
+          printf(multi_message);
         }
+        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
+        display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
         G->StereoCapable = 0;
-#ifndef _PYMOL_OSX
-      } else {
-        G->StereoCapable = 1;
       }
-#endif
-#endif
-      break;
-
-    case 1: /* force stereo (if possible) */
-      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
-      if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
-
-        G->StereoCapable = 0;
-      } else {
-        G->StereoCapable = 1;
-      }      
-      break;
     }
-
+    
     if(!G->Option->game_mode) {
       if((G->Option->winPX>-10000)&&(G->Option->winPY>-10000)) {
-        #ifndef _PYMOL_FINK
+#ifndef _PYMOL_FINK
         p_glutInitWindowPosition(G->Option->winPX,G->Option->winPY);
-        #else
+#else
         p_glutInitWindowPosition(G->Option->winPX,G->Option->winPY-22); /* somethings wrong with FinkGlut's window positioning...*/
-        #endif
+#endif
       }
+      
       p_glutInitWindowSize(G->Option->winX, G->Option->winY);
-
+      
       if(G->Option->full_screen) {
         int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
         int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
         p_glutInitWindowPosition(0,0);
         p_glutInitWindowSize(width,height);
       }
-
-#ifdef _PYMOL_SHARP3D
-      theWindow = p_glutCreateWindow("PyMOL Molecular Graphics for Sharp 3D Displays - www.pymol.org - DeLano Scientific LLC");
-#else
+      
       theWindow = p_glutCreateWindow("PyMOL Viewer");
-#endif
+
       if(G->Option->window_visible) {
         p_glutShowWindow();
       } else {
         p_glutHideWindow();
       }
-        
+      
     } else {
       char str[255];
       sprintf(str,"%dx%d:32@120",G->Option->winX,G->Option->winY);
       p_glutGameModeString(str);
       p_glutEnterGameMode(); 
     }
-  } 
+  }
 
 #ifdef _PYMOL_SHARP3D
   /* Setup OpenGL */
@@ -1712,9 +1743,7 @@ SetConsoleCtrlHandler(
      PInit(G,true);
      
 #ifdef _PYMOL_SHARP3D
-  /* SettingSetGlobal_b(G,cSetting_overlay,1);
-     SettingSetGlobal_b(G,cSetting_overlay_lines,1); */
-     SettingSetGlobal_f(G,cSetting_stereo_shift,2.5); /* increase strength */
+    SettingSetGlobal_f(G,cSetting_stereo_shift,2.5); /* increase strength */
 #endif
      
      if(G->HaveGUI) {
@@ -1738,7 +1767,7 @@ SetConsoleCtrlHandler(
        PBlock(G); /* if we've gotten here, then we're heading back to Python... */
      } else {
        SceneSetCardInfo(G,"none","ray trace only","none");
-       if(G->Option->show_splash) 
+       if(!G->Option->quiet) 
          printf(" Command mode. No graphics front end.\n");
        MainReshape(G->Option->winX,G->Option->winY);
        MainDraw(); /* for command line processing */
@@ -1782,17 +1811,8 @@ int was_main(void)
    CPyMOLOptions *options = PyMOLOptions_New();
 
    if(options) {
+
      PGetOptions(options);
-
-     /* below need to be phased out by modifying code to use
-        PyMOLOption global */
-     
-#ifdef _PYMOL_SHARP3D
-     /*  InternalGUI = 0; */
-     /*     options->internal_feedback = 0;
-     options->show_splash = 0; */
-#endif
-
 
      launch(options,true); 
      /* this only returns when PyMOL is not running under GLUT */

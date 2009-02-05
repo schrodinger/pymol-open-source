@@ -185,7 +185,7 @@ struct _CScene {
   float VertexScale;
   float FogStart;
   float FogEnd;
-
+  
   /* Scene Names */
   int ButtonsShown, ButtonDrag, ButtonMargin, ButtonsValid;
   int Over, Pressed, PressMode, HowFarDown, NSkip;
@@ -199,6 +199,8 @@ struct _CScene {
   CGO *AlphaCGO;
 
   int *SlotVLA;
+
+  int StencilValid;
 };
 
 typedef struct {
@@ -360,6 +362,13 @@ static void GridUpdate(GridInfo *I, float asp_ratio, int mode, int size)
   }
 }
 
+static void SceneInvalidateStencil(PyMOLGlobals *G)
+{
+  register CScene *I=G->Scene;
+  I->StencilValid = false;
+}
+
+
 static int SceneGetGridSize(PyMOLGlobals *G,int grid_mode)
 {
   CScene *I=G->Scene;
@@ -436,9 +445,27 @@ int SceneMustDrawBoth(PyMOLGlobals *G)
 
 static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when,int mod);
 
-static int side_by_side(int stereo_mode)
+static int stereo_via_adjacent_array(int stereo_mode)
 {
-  return ((stereo_mode>1)&&((stereo_mode<4)||(stereo_mode==5)));
+  switch(stereo_mode) {
+  case cStereo_crosseye:
+  case cStereo_walleye:
+  case cStereo_sidebyside:
+    return true;
+  }
+  return false;
+}
+
+static int stereo_via_stencil(int stereo_mode)
+{
+  switch(stereo_mode) {
+  case cStereo_stencil_by_row:
+  case cStereo_stencil_by_column:
+  case cStereo_stencil_checkerboard:
+  case cStereo_stencil_custom:
+    return true;
+  }
+  return false;
 }
 
 static int get_stereo_x(int x, int *last_x, int width, int *click_side)
@@ -988,7 +1015,7 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
   if(OrthoGetOverlayStatus(G)||SettingGetGlobal_i(G,cSetting_text))
     SceneRender(G,NULL,0,0,NULL,0,0,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
-  if(side_by_side(I->StereoMode)) {
+  if(stereo_via_adjacent_array(I->StereoMode)) {
     if(smp->x > (I->Width/2))
       click_side = 1;
     else
@@ -1112,6 +1139,7 @@ void SceneSetStereo(PyMOLGlobals *G,int flag)
 #endif
   }
   SettingSetGlobal_b(G,cSetting_stereo,flag);
+  SceneInvalidateStencil(G);
   SceneInvalidate(G);
 }
 /*========================================================================*/
@@ -3845,7 +3873,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
     
-      if(side_by_side(I->StereoMode))
+      if(stereo_via_adjacent_array(I->StereoMode))
         x = get_stereo_x(x,NULL,I->Width, NULL);
 
       I->LastX=x;
@@ -3865,7 +3893,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
     
-      if(side_by_side(I->StereoMode))
+      if(stereo_via_adjacent_array(I->StereoMode))
         x = get_stereo_x(x,NULL,I->Width, NULL);
 
       I->LastX=x;
@@ -3874,7 +3902,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     case cButModePickAtom1:
     case cButModePickAtom:
     case cButModeMenu:
-      if(side_by_side(I->StereoMode))
+      if(stereo_via_adjacent_array(I->StereoMode))
         x = get_stereo_x(x,NULL,I->Width, NULL);
 
       if(SceneDoXYPick(G,x,y, click_side)) {
@@ -4000,7 +4028,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       break;
     case cButModePickBond:
     case cButModePkTorBnd:
-      if(side_by_side(I->StereoMode))
+      if(stereo_via_adjacent_array(I->StereoMode))
         x = get_stereo_x(x,NULL,I->Width, &click_side);
 
       if(SceneDoXYPick(G,x,y,click_side)) {
@@ -4103,7 +4131,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     case cButModeTorFrag:
     case cButModeMoveAtom:
     case cButModeMoveAtomZ:
-      if(side_by_side(I->StereoMode))
+      if(stereo_via_adjacent_array(I->StereoMode))
         x = get_stereo_x(x,NULL,I->Width, &click_side);
 
       if(SceneDoXYPick(G,x,y,click_side)) {
@@ -4186,7 +4214,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     case cButModeCent:
     case cButModeDragMol:
     case cButModeDragObj:
-      if(side_by_side(I->StereoMode))
+      if(stereo_via_adjacent_array(I->StereoMode))
         x = get_stereo_x(x,NULL,I->Width, &click_side);
 
       if(SceneDoXYPick(G,x,y,click_side)) {
@@ -4977,7 +5005,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             ObjectGadgetGetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v1);
           
             vScale = SceneGetExactScreenVertexScale(G,v1);
-            if(side_by_side(I->StereoMode)) {
+            if(stereo_via_adjacent_array(I->StereoMode)) {
               x = get_stereo_x(x,&I->LastX,I->Width, NULL);
             }
           
@@ -5015,7 +5043,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
       break;
     case cButModeRotDrag:
       eff_width = I->Width;
-      if(side_by_side(I->StereoMode)) {
+      if(stereo_via_adjacent_array(I->StereoMode)) {
         eff_width = I->Width/2;
         x = get_stereo_x(x,&I->LastX,I->Width, NULL);
       }
@@ -5086,7 +5114,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
         copy3f(I->Origin,v1);
         vScale = SceneGetExactScreenVertexScale(G,v1);
-        if(side_by_side(I->StereoMode)) {
+        if(stereo_via_adjacent_array(I->StereoMode)) {
           x = get_stereo_x(x,&I->LastX,I->Width, NULL);
         }
       
@@ -5145,7 +5173,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               ObjectGadgetGetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v1);
             
               vScale = SceneGetExactScreenVertexScale(G,v1);
-              if(side_by_side(I->StereoMode)) {
+              if(stereo_via_adjacent_array(I->StereoMode)) {
                 x = get_stereo_x(x,&I->LastX,I->Width, NULL);
               }
             
@@ -5183,7 +5211,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
                                               I->LastPicked.src.index,v1)) {
               /* scale properly given the current projection matrix */
               vScale = SceneGetExactScreenVertexScale(G,v1);
-              if(side_by_side(I->StereoMode)) {
+              if(stereo_via_adjacent_array(I->StereoMode)) {
                 x = get_stereo_x(x,&I->LastX,I->Width, NULL);
               }
             
@@ -5241,7 +5269,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
                 vScale = SceneGetExactScreenVertexScale(G,v1);
 
-                if(side_by_side(I->StereoMode)) {
+                if(stereo_via_adjacent_array(I->StereoMode)) {
                   x = get_stereo_x(x,&I->LastX,I->Width, NULL);
                 }
 
@@ -5267,7 +5295,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
                                            I->LastPicked.src.index,v1)) {
               /* scale properly given the current projection matrix */
               vScale = SceneGetExactScreenVertexScale(G,v1);
-              if(side_by_side(I->StereoMode)) {
+              if(stereo_via_adjacent_array(I->StereoMode)) {
                 x = get_stereo_x(x,&I->LastX,I->Width, NULL);
               }
             
@@ -5316,7 +5344,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
       SceneNoteMouseInteraction(G);
 
       vScale = SceneGetExactScreenVertexScale(G,I->Origin);
-      if(side_by_side(I->StereoMode)) {
+      if(stereo_via_adjacent_array(I->StereoMode)) {
 
         x = get_stereo_x(x,&I->LastX,I->Width, NULL);
       }
@@ -5358,13 +5386,12 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     case cButModeClipF:    
     
       SceneNoteMouseInteraction(G);
-
+      
       eff_width = I->Width;
-      if(side_by_side(I->StereoMode)) {
+      if(stereo_via_adjacent_array(I->StereoMode)) {
         eff_width = I->Width/2;
         x = get_stereo_x(x,&I->LastX,I->Width, NULL);
       }
-
      
       if(SettingGet_b(G,NULL,NULL,cSetting_virtual_trackball)) {
         v1[0] = (float)(eff_width/2) - x;
@@ -5764,30 +5791,25 @@ int SceneReinitialize(PyMOLGlobals *G)
 int  SceneInit(PyMOLGlobals *G)
 {
   register CScene *I=NULL;
-  if( (I=(G->Scene=Calloc(CScene,1)))) {
+  if( (I=(G->Scene=Calloc(CScene,1)))) { 
+
+    /* all defaults to zero, so only initialize non-zero elements */
 
     G->DebugCGO = CGONew(G);
 
     ListInit(I->Obj);
     
     I->LoopFlag = false;
-    I->SweepTime=0;
+
     I->TextColor[0]=0.2F;
     I->TextColor[1]=1.0F;
     I->TextColor[2]=0.2F;
-    I->SculptingSave=0;
     
     I->LastClickTime = UtilGetSeconds(G);
-    I->PossibleSingleClick = 0;
-    I->LastReleaseTime = 0.0F;
-    I->LastWinX = 0;
-    I->LastWinY = 0;
-    I->Threshold = 0;
     I->LastPickVertexFlag = false;
     
     SceneSetDefaultView(G);
     
-    I->NFrame = 0;
     I->HasMovie = false;
     I->Scale = 1.0;
     I->Block = OrthoNewBlock(G,NULL);
@@ -5801,53 +5823,33 @@ int  SceneInit(PyMOLGlobals *G)
     OrthoAttach(G,I->Block,cOrthoScene);
     
     I->DirtyFlag = true;
-    I->RovingDirtyFlag = false;
-    I->Image = NULL;
-    I->MovieOwnsImageFlag = false;
-    I->MovieFrameFlag = false;
-    I->RenderTime = 0;
+
     I->LastRender = UtilGetSeconds(G);
     I->LastFrameTime = UtilGetSeconds(G);
-    I->LastFrameAdjust = 0.0F;
+
     I->LastSweepTime = UtilGetSeconds(G);
-    I->SingleClickDelay = 0.0;
+
     I->LastPicked.context.object = NULL;
     I->LastStateBuilt = -1;
     I->CopyNextFlag=true;
-    I->CopyType=false;
-    I->vendor[0]=0;
-    I->renderer[0]=0;
-    I->version[0]=0;
+
     SceneRestartFrameTimer(G);
     SceneRestartPerfTimer(G);
 
     I->Width = 640; /* standard defaults */
     I->Height = 480;
 
-    I->n_ani_elem = 0;
-    I->cur_ani_elem = 0;
-
-    I->AnimationLagTime = 0.0;
-    I->AnimationStartTime = 0.0;
-    I->AnimationStartFlag = false;
-    I->ApproxRenderTime = 0.0;
     I->VertexScale = 0.01F;
 
     /* scene list */
 
-    I->ScrollBarActive = 0;
     I->ScrollBar=ScrollBarNew(G,false);
     I->Pressed = -1;
     I->Over = -1;
-    I->ReorderFlag=false;
-    I->NSkip=0;
-    I->HowFarDown=0;
-    I->PressMode = 0;
+
     I->SceneNameVLA = VLAlloc(char,10);
     I->SceneVLA = VLAlloc(SceneElem,10);
-    I->NScene = 0;
-    I->ButtonsShown = false;
-    I->ButtonsValid = false;
+
     return 1;
   } else 
     return 0;
@@ -5904,7 +5906,7 @@ void SceneReshape(Block *block,int width,int height)
   }
   /*MovieClearImages(G);*/
   MovieSetSize(G,I->Width,I->Height);
-
+  SceneInvalidateStencil(G);
 }
 
 /*========================================================================*/
@@ -6213,16 +6215,16 @@ void SceneRay(PyMOLGlobals *G,
   SceneUpdate(G,false);
     
   switch(I->StereoMode) {
-  case 1:
+  case cStereo_quadbuffer:
     stereo_hand=2;
     break;
-  case 2:
-  case 3:
+  case cStereo_crosseye:
+  case cStereo_walleye:
     ray_width = ray_width/2;
     stereo_hand=2;
     break;
-  case 4:
-  case 6:
+  case cStereo_geowall:
+  case cStereo_sidebyside:
     stereo_hand=2;
     break;
   default:
@@ -6620,8 +6622,8 @@ void SceneRay(PyMOLGlobals *G,
   if(stereo_image) {
     if(I->Image) {
       switch(I->StereoMode) {
-      case 1:
-      case 4:
+      case cStereo_quadbuffer:
+      case cStereo_geowall:
         /* merge the two images into one pointer */
         I->Image->data = Realloc(I->Image->data,unsigned char,I->Image->size*2);
         UtilCopyMem(I->Image->data+I->Image->size,
@@ -6629,8 +6631,8 @@ void SceneRay(PyMOLGlobals *G,
                     I->Image->size);
         I->Image->stereo = true;
         break;
-      case 2:
-      case 3:
+      case cStereo_crosseye:
+      case cStereo_walleye:
         {
           /* merge the two images into one */
           
@@ -7577,7 +7579,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
   float fov;
   int must_render_stereo = false;
   int mono_as_quad_stereo = false;
-  int stereo_as_mono_matrix = false;
+  int stereo_using_mono_matrix = false;
   int debug_pick = 0;
   GLenum render_buffer;
   SceneUnitContext context;
@@ -7607,8 +7609,12 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
     render_buffer = GL_BACK;
   }
 
-  if((stereo_mode>1)&&(stereo_mode<4))
+  switch(stereo_mode) {
+  case cStereo_walleye:
+  case cStereo_crosseye:
     aspRat=aspRat/2;
+    break;
+  }
 
   fov=SettingGet(G,cSetting_field_of_view);
   if(G->HaveGUI && G->ValidContext) {
@@ -7624,14 +7630,14 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             must_render_stereo=true;
         if(stereo_mode==0) {
           mono_as_quad_stereo = true; /* rendering stereo as mono */
-          stereo_as_mono_matrix = true;
+          stereo_using_mono_matrix = true;
         }
       } else {
         int st_mode = SettingGet_i(G,NULL,NULL,cSetting_stereo_mode);
-        if(st_mode==4) {
-          stereo_mode = 4;
+        if(st_mode==cStereo_geowall) {
+          stereo_mode = st_mode;
           must_render_stereo = true;
-          stereo_as_mono_matrix = true;
+          stereo_using_mono_matrix = true;
         }
       }
     }
@@ -7641,9 +7647,97 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         this would happen for instance if fullscreen is stereo-component
         and windowed is not */
     
-    if(must_render_stereo && (stereo_mode<2) && !(G->StereoCapable)) {
-        must_render_stereo=false;
+    if(must_render_stereo && (stereo_mode<cStereo_crosseye) && !(G->StereoCapable)) {
+        must_render_stereo = false;
         mono_as_quad_stereo = false;
+    }
+
+    if(must_render_stereo && stereo_via_stencil(stereo_mode)) {
+      if(!I->StencilValid) {
+        GLint viewport[4];
+        glGetIntegerv(GL_VIEWPORT,viewport);
+    
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(0,viewport[2],0,viewport[3],-10.0,10.0);
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        glTranslatef(0.33F,0.33F,0.0F); 
+        
+        glDisable(GL_ALPHA_TEST);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_FOG);
+        glDisable(GL_NORMALIZE);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_COLOR_MATERIAL);
+        glDisable(GL_LINE_SMOOTH);
+        glDisable(GL_DITHER);
+        glDisable(GL_BLEND);
+        glShadeModel(GL_SMOOTH);
+        glDisable(0x809D); /* GL_MULTISAMPLE_ARB */ 
+
+        glDisable(GL_STENCIL_TEST);
+        glClearStencil(0);
+        glColorMask(false,false,false,false);
+        glDepthMask(false);
+        glClear(GL_STENCIL_BUFFER_BIT);
+
+        glEnable(GL_STENCIL_TEST);
+        glStencilFunc(GL_ALWAYS, 1, 1);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+        {
+          int h = viewport[3], w=viewport[2];
+          glLineWidth(1.0);
+          switch(stereo_mode) {
+          case cStereo_stencil_by_row:
+            {
+              int y;
+              glBegin(GL_LINES);
+              for(y=0;y<h;y+=2) {
+                glVertex2i(0,y);
+                glVertex2i(w,y);
+              }
+              glEnd();
+            }
+            break;
+          case cStereo_stencil_by_column:
+            {
+              int x;
+              glBegin(GL_LINES);
+              for(x=0;x<w;x+=2) {
+                glVertex2i(x,0);
+                glVertex2i(x,h);
+              }
+              glEnd();
+            }
+            break;
+          case cStereo_stencil_checkerboard:
+            {
+              int i,m = 2* ((h>w) ? h : w);
+              glBegin(GL_LINES);
+              for(i=0;i<m;i+=2) {
+                glVertex2i(i,0);
+                glVertex2i(0,i);
+              }
+              glEnd();
+            }
+            break;
+          }
+        }
+
+        glColorMask(true,true,true,true);
+        glDepthMask(true);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+
+        I->StencilValid = true;
+      }
     }
         
     if(must_render_stereo) {
@@ -7652,12 +7746,12 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         render_buffer = GL_BACK_LEFT;
       } else {
         switch(stereo_mode) {
-        case 1: /* hardware stereo */
+        case cStereo_quadbuffer: /* hardware stereo */
           OrthoDrawBuffer(G,GL_BACK_LEFT);
           render_buffer = GL_BACK_LEFT;
           break;
-        default:
-          OrthoDrawBuffer(G,GL_BACK); /* some kind of software stereo */
+        default:  /* some kind of software stereo */
+          OrthoDrawBuffer(G,GL_BACK);
           render_buffer = GL_BACK;
           break;
         }
@@ -7689,8 +7783,12 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           "Scene-Warning: glViewport failure.\n"
           ENDFB(G);
       }
-      if((stereo_mode>3)||(stereo_mode<5)) stereo_mode = 0;
-      stereo_as_mono_matrix = true;
+      switch(stereo_mode) {
+      case cStereo_geowall: 
+        stereo_mode = 0;
+        break;
+      }
+      stereo_using_mono_matrix = true;
       width_scale = ((float)(oversize_width))/I->Width;
     } else {
       glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
@@ -7863,26 +7961,26 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
     if(pick||smp) {
       
       switch(stereo_mode) {
-      case 2:
-      case 3:
-      case 5:
+      case cStereo_crosseye:
+      case cStereo_walleye:
+      case cStereo_sidebyside:
         glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
         break;
-      case 4: /* geowall */
+      case cStereo_geowall:
         click_side = OrthoGetWrapClickSide(G);
         break;
       }
         
       glPushMatrix(); /* 1 */
       {
-        if(!stereo_as_mono_matrix)
+        if(!stereo_using_mono_matrix)
           switch(stereo_mode) {
-          case 2:
+          case cStereo_crosseye:
             ScenePrepareMatrix(G, (click_side > 0) ? 1 : 2 );
             break;
-          case 3:
-          case 4:
-          case 5:
+          case cStereo_walleye:
+          case cStereo_geowall:
+          case cStereo_sidebyside:
             ScenePrepareMatrix(G, (click_side < 0) ? 1 : 2 );
             break;
           }
@@ -8083,14 +8181,10 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         if(mono_as_quad_stereo) {
           OrthoDrawBuffer(G,GL_BACK_LEFT);
         } else switch(stereo_mode) {
-        case 1: /* hardware */
-#ifdef _PYMOL_SHARP3D
-          sharp3d_begin_left_stereo();
-#else
+        case cStereo_quadbuffer: /* hardware */
           OrthoDrawBuffer(G,GL_BACK_LEFT);
-#endif
           break;
-        case 2: /* side by side, crosseye */
+        case cStereo_crosseye: /* side by side, crosseye */
 
           if(oversize_width && oversize_height) {
             glViewport(I->Block->rect.left+oversize_width/2+x,
@@ -8100,8 +8194,8 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           }
           break;
-        case 3: /* side by side, walleye */
-        case 5:
+        case cStereo_walleye:
+        case cStereo_sidebyside:
           if(oversize_width && oversize_height) {
             glViewport(I->Block->rect.left+x,
                        I->Block->rect.bottom+y,
@@ -8110,16 +8204,30 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
           }
           break;
-        case 4: /* geowall */
+        case cStereo_geowall:
           glViewport(I->Block->rect.left,
                      I->Block->rect.bottom,I->Width,I->Height);
           break;          
+        case cStereo_stencil_by_row:
+        case cStereo_stencil_by_column:
+        case cStereo_stencil_checkerboard:
+          if(I->StencilValid) {
+            glStencilFunc(GL_EQUAL, 1, 1);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+            glEnable(GL_STENCIL_TEST);
+          }
+          break;
+        case cStereo_stencil_custom:
+#ifdef _PYMOL_SHARP3D
+          sharp3d_begin_left_stereo();
+#endif
+          break;
         }
 
         /* prepare the stereo transformation matrix */
         
         glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,stereo_as_mono_matrix ? 0 : 1);
+        ScenePrepareMatrix(G,stereo_using_mono_matrix ? 0 : 1);
         
         if(grid.active)
           GridGetGLViewport(&grid);
@@ -8178,14 +8286,10 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         if(mono_as_quad_stereo) { /* double pumped mono */
           OrthoDrawBuffer(G,GL_BACK_RIGHT);
         } else switch(stereo_mode) {
-        case 1: /* hardware */
-#ifdef _PYMOL_SHARP3D
-          sharp3d_switch_to_right_stereo();
-#else
+        case cStereo_quadbuffer: /* hardware */
           OrthoDrawBuffer(G,GL_BACK_RIGHT);
-#endif
           break;
-        case 2: /* side by side, crosseye */
+        case cStereo_crosseye: /* side by side, crosseye */
           if(oversize_width && oversize_height) {
             glViewport(I->Block->rect.left+x,
                        I->Block->rect.bottom+y,
@@ -8194,8 +8298,8 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
           }
           break;
-        case 3: /* side by side, walleye */
-        case 5:
+       case cStereo_walleye: /* side by side, walleye */
+        case cStereo_sidebyside:
           if(oversize_width && oversize_height) {
             glViewport(I->Block->rect.left+oversize_width/2+x,
                        I->Block->rect.bottom+y,
@@ -8204,16 +8308,28 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           }
           break;
-        case 4: /* geowall */
+        case cStereo_geowall: /* geowall */
           glViewport(I->Block->rect.left+G->Option->winX/2,
                      I->Block->rect.bottom,I->Width,I->Height);
+          break;
+        case cStereo_stencil_by_row:
+        case cStereo_stencil_by_column:
+        case cStereo_stencil_checkerboard:
+          glStencilFunc(GL_EQUAL, 0, 1);
+          glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+          glEnable(GL_STENCIL_TEST);
+          break;
+        case cStereo_stencil_custom:
+#ifdef _PYMOL_SHARP3D
+          sharp3d_switch_to_right_stereo();
+#endif
           break;
         }
 
         /* prepare the stereo transformation matrix */
         
         glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,stereo_as_mono_matrix ? 0 : 2);
+        ScenePrepareMatrix(G,stereo_using_mono_matrix ? 0 : 2);
         glClear(GL_DEPTH_BUFFER_BIT) ;
 
         if(grid.active)
@@ -8269,25 +8385,29 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         if(mono_as_quad_stereo) { /* double pumped mono...can't draw to GL_BACK so stick with LEFT */
           OrthoDrawBuffer(G,GL_BACK_LEFT);
         } else switch(stereo_mode) {
-        case 1: /* hardware */
-#ifdef _PYMOL_SHARP3D
-          sharp3d_end_stereo();
-#else
+        case cStereo_quadbuffer:
           OrthoDrawBuffer(G,GL_BACK_LEFT); /* leave us in a stereo context 
                                          (avoids problems with cards than can't handle
                                          use of mono contexts) */
-#endif
           break;
-        case 2: /* side by side */
-        case 3:
-        case 5:
+        case cStereo_crosseye: 
+        case cStereo_walleye:
+        case cStereo_sidebyside:
           OrthoDrawBuffer(G,GL_BACK);
           break;
-        case 4:
+        case cStereo_geowall:
           break;
-          
+        case cStereo_stencil_by_row:
+        case cStereo_stencil_by_column:
+        case cStereo_stencil_checkerboard:
+          glDisable(GL_STENCIL_TEST);
+          break;
+        case cStereo_stencil_custom:
+#ifdef _PYMOL_SHARP3D
+          sharp3d_end_stereo();
+#endif
+          break;
         }
-
       } else {
 
         /* MONOSCOPING RENDERING (not double-pumped) */
