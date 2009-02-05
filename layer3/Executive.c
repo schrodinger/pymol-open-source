@@ -9790,7 +9790,7 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
 
     switch(stereo_mode) {
     case cStereo_geowall:
-    case cStereo_merged_adjacent:
+    case cStereo_bipolar:
       {
         int width =  G->Option->winX;
         int height = G->Option->winY;
