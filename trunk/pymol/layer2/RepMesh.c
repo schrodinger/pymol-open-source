@@ -150,9 +150,10 @@ static void RepMeshRender(RepMesh *I,RenderInfo *info)
       int lighting = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
 
       SceneResetNormal(G,true);
-      if(!lighting)
-        glDisable(GL_LIGHTING);
-    
+      if(!lighting) {
+        if(!info->line_lighting)
+          glDisable(GL_LIGHTING); 
+      }
       switch(I->mesh_type) {
       case 0:
         if(info->width_scale_flag) 

@@ -1097,7 +1097,7 @@ static void ObjectAlignmentRender(ObjectAlignment *I,RenderInfo *info)
               else
                 CGORenderRay(sobj->std,ray,color,I->Obj.Setting,NULL);
             } else if(G->HaveGUI && G->ValidContext) {
-              glDisable(GL_LIGHTING); 
+              if(!info->line_lighting) glDisable(GL_LIGHTING); 
               SceneResetNormal(G,true);      
               if(pick) {
               } else {
@@ -1124,7 +1124,7 @@ static void ObjectAlignmentRender(ObjectAlignment *I,RenderInfo *info)
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
           } else {
-            glDisable(GL_LIGHTING); 
+            if(!info->line_lighting) glDisable(GL_LIGHTING); 
             SceneResetNormal(G,true);      
             if(sobj) {
               if(sobj->std)

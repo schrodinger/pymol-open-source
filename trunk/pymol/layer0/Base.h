@@ -140,6 +140,7 @@ typedef struct {
   float *pmv_matrix;
   int sampling; /* are we supersampling? */
   int ortho; /* orthoscopic projection? */
+  int line_lighting; /* line lighting */
 } RenderInfo;
 
 #define MAXLINELEN 1024

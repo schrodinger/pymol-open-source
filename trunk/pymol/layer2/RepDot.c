@@ -94,10 +94,10 @@ static void RepDotRender(RepDot *I,RenderInfo *info)
 
       if(!normals)
         SceneResetNormal(G,true);
-      if(!lighting)
-        glDisable(GL_LIGHTING);
-      
-      
+      if(!lighting) {
+        if(!info->line_lighting)
+          glDisable(GL_LIGHTING); 
+      }
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
 
       if(info->width_scale_flag) 

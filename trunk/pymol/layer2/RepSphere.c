@@ -658,7 +658,7 @@ void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
         float *v = cs->Coord;
         float last_radius = -1.0F;
         
-        glDisable(GL_LIGHTING);
+        if(!info->line_lighting) glDisable(GL_LIGHTING);
         glBegin(GL_POINTS);
         
         for(a=0;a<nIndex;a++) {
@@ -1078,7 +1078,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             }
           }
             
-          glDisable(GL_LIGHTING);
+          if(!info->line_lighting) glDisable(GL_LIGHTING);
             
           switch(sphere_mode) {
           case 2:

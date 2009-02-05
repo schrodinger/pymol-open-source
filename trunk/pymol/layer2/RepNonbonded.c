@@ -63,7 +63,7 @@ void RepNonbondedRenderImmediate(CoordSet *cs, RenderInfo *info)
     else
       glLineWidth(line_width);
 
-    glDisable(GL_LIGHTING); 
+    if(!info->line_lighting) glDisable(GL_LIGHTING); 
     SceneResetNormal(G,true);      
     glBegin(GL_LINES);	     
 
@@ -223,7 +223,7 @@ static void RepNonbondedRender(RepNonbonded *I,RenderInfo *info)
         v=I->V;
         c=I->N;
         if(c) {
-          glDisable(GL_LIGHTING);
+          if(!info->line_lighting) glDisable(GL_LIGHTING); 
           glBegin(GL_LINES);	 
           SceneResetNormal(G,true);
 

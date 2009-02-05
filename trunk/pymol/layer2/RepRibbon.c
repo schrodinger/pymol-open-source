@@ -190,7 +190,7 @@ static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
         
           int first = true;
         
-          glDisable(GL_LIGHTING);
+          if(!info->line_lighting) glDisable(GL_LIGHTING); 
           glBegin(GL_LINE_STRIP);
           while(c--)
             {
@@ -725,7 +725,7 @@ void RepRibbonRenderImmediate(CoordSet *cs, RenderInfo *info)
     int color,last_color = -9;
 
     glLineWidth(linewidth);
-    glDisable(GL_LIGHTING); 
+    if(!info->line_lighting) glDisable(GL_LIGHTING); 
     SceneResetNormal(G,true);      
     glBegin(GL_LINE_STRIP);
     for(a1=0;a1<nAtIndex;a1++) {

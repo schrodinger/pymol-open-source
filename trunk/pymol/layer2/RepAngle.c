@@ -121,7 +121,8 @@ static void RepAngleRender(RepAngle *I,RenderInfo *info)
         v=I->V;
         c=I->N;
       
-        glDisable(GL_LIGHTING);
+        if(!info->line_lighting)
+          glDisable(GL_LIGHTING); 
         glBegin(GL_LINES);	 
         while(c>0) {
           glVertex3fv(v);
@@ -133,7 +134,6 @@ static void RepAngleRender(RepAngle *I,RenderInfo *info)
         glEnd();
         glEnable(GL_LIGHTING);
 
-        glEnable(GL_LIGHTING);
         if(use_dlst&&I->R.displayList) {
           glEndList();
         }
