@@ -345,9 +345,9 @@ static void DrawBlueLine(PyMOLGlobals *G)
 			    over is about 40% across the screen from the left */
       glVertex3f(0.0f, window_height - 0.5f, 0.0f);
       if(buffer == GL_BACK_LEFT)
-	glVertex3f(window_width * 0.30f, window_height - 0.5f, 0.0f);
+        glVertex3f(window_width * 0.30f, window_height - 0.5f, 0.0f);
       else
-	glVertex3f(window_width * 0.80f, window_height - 0.5f, 0.0f);
+        glVertex3f(window_width * 0.80f, window_height - 0.5f, 0.0f);
       glEnd();
  
       glPopMatrix();
@@ -1630,12 +1630,12 @@ static void launch(CPyMOLOptions *options,int own_the_options)
           if(display_mode_possible) 
             G->StereoCapable = 1;
           break;
-        case cStereo_merged:
+        case cStereo_merged_clone:
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_ACCUM | P_GLUT_STEREO);
           display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
           if(!display_mode_possible) {
             if(!G->Option->quiet) {
-              printf(" Sorry, merged stereo 3D not available.\n");
+              printf(" Sorry, merged clone stereo 3D not available.\n");
             }
             G->Option->stereo_mode = 0; 
           } else {
@@ -1643,6 +1643,7 @@ static void launch(CPyMOLOptions *options,int own_the_options)
           }
           break;
         case cStereo_anaglyph:
+        case cStereo_merged_adjacent:
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_ACCUM);
           display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
           if(!display_mode_possible) {
