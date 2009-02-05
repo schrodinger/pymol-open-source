@@ -120,7 +120,9 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
                                       cSetting_float_labels);
       if(float_text)
         glDisable(GL_DEPTH_TEST);	 
-      glDisable(GL_LIGHTING);
+
+      if(!info->line_lighting)
+        glDisable(GL_LIGHTING); 
     
       TextSetOutlineColor(G,I->OutlineColor);
       color = SettingGet_color(G,I->ds->Setting,I->Obj->Setting,cSetting_label_color);

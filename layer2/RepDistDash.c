@@ -123,7 +123,8 @@ static void RepDistDashRender(RepDistDash *I,RenderInfo *info)
         v=I->V;
         c=I->N;
       
-        glDisable(GL_LIGHTING);
+        if(!info->line_lighting)
+          glDisable(GL_LIGHTING); 
         glBegin(GL_LINES);	 
         while(c>0) {
           glVertex3fv(v);

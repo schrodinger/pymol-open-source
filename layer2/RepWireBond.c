@@ -379,7 +379,7 @@ void RepWireBondRenderImmediate(CoordSet *cs, RenderInfo *info)
       glLineWidth(line_width*info->width_scale);
     else
       glLineWidth(line_width);
-    glDisable(GL_LIGHTING); 
+    if(!info->line_lighting) glDisable(GL_LIGHTING); 
     SceneResetNormal(G,true);      
     glBegin(GL_LINES);	     
     
@@ -571,7 +571,7 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
         v=I->V;
         c=I->N;
       
-        glDisable(GL_LIGHTING); 
+        if(!info->line_lighting) glDisable(GL_LIGHTING); 
         SceneResetNormal(G,true);
         while(c--) {
 

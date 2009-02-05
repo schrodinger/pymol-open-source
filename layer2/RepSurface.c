@@ -332,8 +332,9 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
         int use_dlst;
         if(!normals)
           SceneResetNormal(G,true);
-        if(!lighting)
-          glDisable(GL_LIGHTING);
+        if(!lighting) 
+          if(!info->line_lighting) 
+            glDisable(GL_LIGHTING);
 
         use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
         if(use_dlst&&I->R.displayList) {
@@ -389,7 +390,8 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
         if(!normals)
           SceneResetNormal(G,true);
         if(!lighting)
-          glDisable(GL_LIGHTING);
+          if(!info->line_lighting) 
+            glDisable(GL_LIGHTING);
       
         use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
         if(use_dlst&&I->R.displayList) {

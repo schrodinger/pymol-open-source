@@ -87,7 +87,7 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
       if(c) {
         char *st;
         int float_text = (int)SettingGet(G,cSetting_float_labels);
-        if(float_text)
+        if(float_text) 
           glDisable(GL_DEPTH_TEST);	 
 
         i=(*pick)->src.index;
@@ -119,7 +119,8 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
         int float_text = (int)SettingGet(G,cSetting_float_labels);
         if(float_text)
           glDisable(GL_DEPTH_TEST);	 
-        glDisable(GL_LIGHTING);
+        if(!info->line_lighting)
+          glDisable(GL_LIGHTING); 
         TextSetOutlineColor(G,I->OutlineColor);
         while(c--) {
           if(*l) {

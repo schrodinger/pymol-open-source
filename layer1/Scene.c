@@ -7402,6 +7402,14 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.sampling = 1;
   info.alpha_cgo = I->AlphaCGO;
   info.ortho = SettingGetGlobal_b(G,cSetting_ortho);
+  if(!info.pick) {
+    int stereo_mode = SettingGetGlobal_i(G,cSetting_stereo_mode);
+    switch(stereo_mode) {
+    case cStereo_bipolar:
+    case cStereo_clone_bipolar:
+      info.line_lighting = true;
+    }
+  }
 
   if(I->StereoMode) {
     float buffer;

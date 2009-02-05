@@ -884,7 +884,8 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
                             I->Obj.Setting,NULL,info);
               
 
-              glDisable(GL_LIGHTING); 
+              if(!info->line_lighting)
+                glDisable(GL_LIGHTING); 
               SceneResetNormal(I->Obj.G,false);
               ObjectUseColor(&I->Obj);
               use_dlst = (int)SettingGet(I->Obj.G,cSetting_use_display_lists);
