@@ -556,6 +556,8 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
       else
         glLineWidth(I->Width);
 
+      if(!info->line_lighting) glDisable(GL_LIGHTING); 
+
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
       } else { 
@@ -571,7 +573,6 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
         v=I->V;
         c=I->N;
       
-        if(!info->line_lighting) glDisable(GL_LIGHTING); 
         SceneResetNormal(G,true);
         while(c--) {
 
@@ -596,11 +597,11 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
           glEnd();
           
         }
-        glEnable(GL_LIGHTING);
         if(use_dlst&&I->R.displayList) {
           glEndList();
         }
       } 
+      glEnable(GL_LIGHTING);
     }
   }
 }

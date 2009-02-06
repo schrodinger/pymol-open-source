@@ -7384,7 +7384,7 @@ static void SceneProgramLighting(PyMOLGlobals *G)
 static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
                            float *normal,Picking **pickVLA,
                            int pass,int fat, float width_scale,
-                           GridInfo *grid)
+                           GridInfo *grid, int bipolar_pass)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
@@ -7402,15 +7402,15 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.sampling = 1;
   info.alpha_cgo = I->AlphaCGO;
   info.ortho = SettingGetGlobal_b(G,cSetting_ortho);
-  if(!info.pick) {
+  if(I->StereoMode && bipolar_pass && (!info.pick)) {
     int stereo_mode = SettingGetGlobal_i(G,cSetting_stereo_mode);
     switch(stereo_mode) {
     case cStereo_bipolar:
     case cStereo_clone_bipolar:
       info.line_lighting = true;
+      break;
     }
   }
-
   if(I->StereoMode) {
     float buffer;
     float stAng,stShift;
@@ -8018,7 +8018,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             if(grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
-            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
+            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid,0);
           }
           if(grid.active)
             GridSetGLViewport(&grid,-1);
@@ -8042,7 +8042,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             if(grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
-            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
+            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid,0);
           }
           if(grid.active)
             GridSetGLViewport(&grid,-1);
@@ -8097,7 +8097,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             if(grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
-            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
+            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid,0);
           }
           if(grid.active)
             GridSetGLViewport(&grid,-1);
@@ -8116,7 +8116,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             if(grid.active) { 
               GridSetGLViewport(&grid,slot);
             }
-            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid);
+            SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,&grid,0);
           }
           if(grid.active)
             GridSetGLViewport(&grid,-1);
@@ -8248,7 +8248,11 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glClear(GL_ACCUM_BUFFER_BIT);
             OrthoDrawBuffer(G,GL_BACK_LEFT);
             if(times) {
+              float bipolar_strength = SettingGetGlobal_f(G,cSetting_stereo_bipolar_strength);
               float vv[4] = {0.75F, 0.75F, 0.75F, 1.0F};
+              vv[0] =  bipolar_strength;
+              vv[1] =  bipolar_strength;
+              vv[2] =  bipolar_strength;
               glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,vv);
               glAccum(GL_ADD,0.5);
               glDisable(GL_FOG);
@@ -8256,7 +8260,11 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             break;
            case cStereo_bipolar:
             if(times) {
+              float bipolar_strength = SettingGetGlobal_f(G,cSetting_stereo_bipolar_strength);
               float vv[4] = {0.75F, 0.75F, 0.75F, 1.0F};
+              vv[0] =  bipolar_strength;
+              vv[1] =  bipolar_strength;
+              vv[2] =  bipolar_strength;
               glClearAccum(0.5, 0.5, 0.5, 0.5);
               glClear(GL_ACCUM_BUFFER_BIT);
               glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,vv);
@@ -8305,7 +8313,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
               glPushMatrix(); /* 2 */
             
               for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
-                SceneRenderAll(G,&context,normal,NULL,pass,false,width_scale,&grid);
+                SceneRenderAll(G,&context,normal,NULL,pass,false,width_scale,&grid,times);
               }
               glPopMatrix(); /* 1 */
             
@@ -8433,7 +8441,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             
               glPushMatrix(); /* 2 */
               for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
-                SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale,&grid);
+                SceneRenderAll(G,&context,normal,NULL,pass,false,width_scale,&grid,times);
               }        
               glPopMatrix(); /* 1 */
             
@@ -8560,7 +8568,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
                 ENDFD;
             
               for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
-                SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale, &grid);
+                SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale, &grid,0);
               }
             
               glPushMatrix();
@@ -8576,7 +8584,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
                 ENDFD;
             
               /* render transparent */
-              SceneRenderAll(G,&context,normal,NULL,-1,false, width_scale, &grid);
+              SceneRenderAll(G,&context,normal,NULL,-1,false, width_scale, &grid,0);
               glPopMatrix();
             }
           }
