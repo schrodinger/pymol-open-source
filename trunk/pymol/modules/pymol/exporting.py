@@ -391,6 +391,10 @@ SEE ALSO
                 format = 'pkla'
             elif re.search("\.mmd$",lc_filename):
                 format = 'mmod'
+            elif re.search("\.out$",lc_filename):
+                format = 'mmod'
+            elif re.search("\.dat$",lc_filename):
+                format = 'mmod'
             elif re.search("\.mmod$",lc_filename):
                 format = 'mmod'
             elif re.search("\.pmo$",lc_filename):

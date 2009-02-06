@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2009-02-06 Warren L. DeLano <warren@delsci.com>	
+
+	* saving .dat and .out now also default to mmod format
+	
+	* extensive reworking of stereo 3D code to enable new encodings
+	
 2009-01-14 Warren L. DeLano <warren@delsci.com>
 
 	* found & fixed longstanding issue with psize.py in APBS plugin
