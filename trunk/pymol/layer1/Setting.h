@@ -826,7 +826,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_sculpt_pyra_inv_weight     606
 #define cSetting_keep_alive                 607
 #define cSetting_fit_kabsch                 608
-
+#define cSetting_stereo_bipolar_strength    609
 /* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -835,7 +835,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       609
+#define cSetting_INIT                       610
 #endif
 
 

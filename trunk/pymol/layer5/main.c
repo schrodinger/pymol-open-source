@@ -1607,6 +1607,9 @@ static void launch(CPyMOLOptions *options,int own_the_options)
       int display_mode_possible = false;
       const char multi_message[] = " Sorry, multisampling not available.\n";
 
+      if(G->Option->stereo_mode>1) 
+        G->Option->force_stereo = 0;
+
       switch(G->Option->force_stereo) {
       case -1: /* force mono */
         G->StereoCapable = 0;

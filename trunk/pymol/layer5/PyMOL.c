@@ -773,6 +773,7 @@ typedef struct _CPyMOL {
   ov_word lex_sculpt_pyra_inv_weight;
   ov_word lex_keep_alive;
   ov_word lex_fit_kabsch;
+  ov_word lex_stereo_bipolar_strength;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1539,6 +1540,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(sculpt_pyra_inv_weight,606);
   LEX_SETTING(keep_alive,607);
   LEX_SETTING(fit_kabsch,608);
+  LEX_SETTING(stereo_bipolar_strength,609);
   return_OVstatus_SUCCESS;
 }
 
