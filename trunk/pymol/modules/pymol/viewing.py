@@ -1658,9 +1658,8 @@ PYMOL API
         r = DEFAULT_ERROR      
         try:
             _self.lock(_self)
-            if toggle>1:
-                if(toggle>1) :
-                    _self.set("stereo_mode",str(toggle-1),quiet=quiet)
+            if(toggle>0) : # stereo mode code 
+                _self.set("stereo_mode",str(toggle),quiet=quiet)
                 toggle=1
             r = _cmd.stereo(_self._COb,toggle)
             if is_error(r):

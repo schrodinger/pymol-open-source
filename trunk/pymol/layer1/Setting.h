@@ -392,8 +392,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cStereo_stencil_checkerboard 8 
 #define cStereo_stencil_custom       9 /* for hardware developers to use */
 #define cStereo_anaglyph            10 /* not yet implemented */
-#define cStereo_bipolar             11
-#define cStereo_clone_bipolar       12
+#define cStereo_dynamic             11 /* dynamic polarization */
+#define cStereo_clone_dynamic       12
    
 #define cSetting_cgo_sphere_quality          189
 #define cSetting_pdb_literal_names           190
@@ -826,7 +826,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_sculpt_pyra_inv_weight     606
 #define cSetting_keep_alive                 607
 #define cSetting_fit_kabsch                 608
-#define cSetting_stereo_bipolar_strength    609
+#define cSetting_stereo_dynamic_strength    609
 /* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py

@@ -123,12 +123,12 @@ DEFAULT_SUCCESS = None
 toggle_dict = {'on':1,'off':0,'1':1,'0':0,'toggle':-1, '-1':-1}
 toggle_sc = Shortcut(toggle_dict.keys())
 
-stereo_dict = {'on':1,'off':0,'1':1,'0':0,'swap':-1,
-               'quadbuffer':2,'crosseye':3,
-               'walleye':4,'geowall':5,'sidebyside':6,
-               'byrow':7, 'bycolumn':8, 'checkerboard':9, 
-               'custom': 10, 'anaglyph' : 11, 
-               'bipolar' : 11, 'clonebipolar': 12 }
+stereo_dict = {'on':-2,'off':0,'0':0,'1':-2,'swap':-1,
+               'quadbuffer':1,'crosseye':2,
+               'walleye':3,'geowall':4,'sidebyside':5,
+               'byrow':6, 'bycolumn':7, 'checkerboard':8, 
+               'custom': 9, 'anaglyph' : 10, 
+               'dynamic' : 11, 'clonedynamic': 12 }
 
 stereo_sc = Shortcut(stereo_dict.keys())
 
