@@ -146,7 +146,9 @@ PyMOL>edit (cpy and i;5 & n;ca),(cpy and i;5 and n;cb)
 PyMOL>alter (cpy),name=''
  Alter: modified 93 atoms.
 PyMOL>rename cpy
+ Rename: renamed 93 atoms.
 PyMOL>rename cpy,1
+ Rename: renamed 93 atoms.
 PyMOL>cycle_valence
 PyMOL>cycle_valence
  Remove: eliminated 1 atoms in model "cpy".

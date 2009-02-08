@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2009-02-08 Warren L. DeLano <warren@delsci.com>	
+
+	* GZ compression support for common input formats
+	
+	* confirmed DLP Stereo 3D support
+
+	* fixed ray-tracing for checkboard, byrow, & bycolumn stereo 3D
+	
 2009-02-06 Warren L. DeLano <warren@delsci.com>	
 
 	* saving .dat and .out now also default to mmod format

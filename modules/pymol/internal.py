@@ -362,6 +362,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
 
         else:
             if ftype in _load2str.keys() and (string.find(finfo,":")>1):
+                gz = re.search("\.gz$",finfo,re.I)
                 try:
                     import urllib
                     tmp_file = urllib.urlopen(finfo)
@@ -370,9 +371,17 @@ def _load(oname,finfo,state,ftype,finish,discrete,
 #                    traceback.print_exc()
                     return 0
                 finfo = tmp_file.read(tmp_file) # WARNING: will block and hang -- thread instead?
+                if gz:
+                    import StringIO
+                    fakestream = StringIO.StringIO(finfo)
+                    import gzip
+                    finfo = gzip.GzipFile(fileobj=fakestream).read()
                 ftype = _load2str[ftype]
                 tmp_file.close()
-
+            elif ftype in _load2str.keys() and re.search("\.gz$",finfo,re.I):
+                import gzip
+                finfo = gzip.open(finfo).read()                
+                ftype = _load2str[ftype]
             r = _cmd.load(_self._COb,str(oname),finfo,int(state)-1,int(ftype),
                           int(finish),int(discrete),int(quiet),
                           int(multiplex),int(zoom))
