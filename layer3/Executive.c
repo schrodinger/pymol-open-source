@@ -7720,15 +7720,12 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
   case -1:
     SettingSet(G,cSetting_stereo_shift,
                -SettingGet(G,cSetting_stereo_shift));
-    /* shouldn't have to swap angle -- that's implicit
-       SettingSet(cSetting_stereo_angle,-SettingGet(G,cSetting_stereo_angle));*/
     break;
-  default:
-    
+  default: /* -2 */
     if(G->HaveGUI) {
       stereo_mode = (int)SettingGet(G,cSetting_stereo_mode);
       switch(stereo_mode) {
-      case 0:
+      case 0: /* off */
         break;
       case 1: /* hardware stereo-in-a-window*/
         SceneSetStereo(G,flag);

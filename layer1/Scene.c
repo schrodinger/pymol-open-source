@@ -2929,8 +2929,12 @@ void SceneDraw(Block *block)
         glGetIntegerv(GL_DRAW_BUFFER,(GLint*)&buffer);
         if(buffer==GL_BACK_RIGHT) /* hardware stereo */
           data += I->Image->size; 
-        else if(OrthoGetRenderMode(G)==2) { /* passive/geowall stereo */
-          data += I->Image->size; 
+        else {
+          switch(OrthoGetRenderMode(G)) {
+          case cStereo_geowall:
+            data += I->Image->size; 
+            break;
+          }
         }
         /* if drawing the right buffer, then draw the right image */
       }
@@ -6227,8 +6231,12 @@ void SceneRay(PyMOLGlobals *G,
   case cStereo_sidebyside:
     stereo_hand=2;
     break;
-
-  default:
+  case cStereo_stencil_by_row:
+  case cStereo_stencil_by_column:
+  case cStereo_stencil_checkerboard:
+  case cStereo_stencil_custom:
+  case cStereo_anaglyph:
+    stereo_hand=2;
     break;
   }
 
@@ -6612,7 +6620,7 @@ void SceneRay(PyMOLGlobals *G,
     }
 
     stereo_hand--;
-    if((I->StereoMode==0)||(!stereo_hand))
+    if((I->StereoMode==0)||(stereo_hand<=0))
       break;
     else {
       stereo_image = I->Image;
@@ -6664,6 +6672,56 @@ void SceneRay(PyMOLGlobals *G,
           I->Image->data = merged_image;
           I->Image->width*=2;
           I->Image->size*=2;
+        }
+        break;
+      case cStereo_stencil_by_row:
+      case cStereo_stencil_by_column:
+      case cStereo_stencil_checkerboard:
+        {
+          /* merge the two images into one */
+          
+          unsigned char *merged_image = Alloc(unsigned char,I->Image->size);
+          unsigned int *q=(unsigned int*)merged_image;
+          unsigned int *l;
+          unsigned int *r;
+          register int height,width;
+          register int a,b;
+          
+          l=(unsigned int*)stereo_image->data;
+          r=(unsigned int*)I->Image->data;
+
+          height = I->Image->height;
+          width = I->Image->width;
+          
+          for(a=0;a<height;a++) {
+            for(b=0;b<width;b++) {
+              switch(I->StereoMode) {
+              case cStereo_stencil_by_row:
+                if(a&0x1) {
+                  *(q++) = *(l++); r++;
+                } else {
+                  *(q++) = *(r++); l++;
+                }
+                break;
+              case cStereo_stencil_by_column:
+                if(b&0x1) {
+                  *(q++) = *(l++); r++;
+                } else {
+                  *(q++) = *(r++); l++;
+                }
+                break;
+              case cStereo_stencil_checkerboard:
+                if((a+b)&0x1) {
+                  *(q++) = *(l++); r++;
+                } else {
+                  *(q++) = *(r++); l++;
+                }
+                break;
+              }
+            }
+          }
+          FreeP(I->Image->data);
+          I->Image->data = merged_image;
         }
         break;
       }
@@ -7384,7 +7442,7 @@ static void SceneProgramLighting(PyMOLGlobals *G)
 static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
                            float *normal,Picking **pickVLA,
                            int pass,int fat, float width_scale,
-                           GridInfo *grid, int bipolar_pass)
+                           GridInfo *grid, int dynamic_pass)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
@@ -7402,11 +7460,11 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.sampling = 1;
   info.alpha_cgo = I->AlphaCGO;
   info.ortho = SettingGetGlobal_b(G,cSetting_ortho);
-  if(I->StereoMode && bipolar_pass && (!info.pick)) {
+  if(I->StereoMode && dynamic_pass && (!info.pick)) {
     int stereo_mode = SettingGetGlobal_i(G,cSetting_stereo_mode);
     switch(stereo_mode) {
-    case cStereo_bipolar:
-    case cStereo_clone_bipolar:
+    case cStereo_dynamic:
+    case cStereo_clone_dynamic:
       info.line_lighting = true;
       break;
     }
@@ -7757,7 +7815,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       } else {
         switch(stereo_mode) {
         case cStereo_quadbuffer: /* hardware stereo */
-        case cStereo_clone_bipolar:
+        case cStereo_clone_dynamic:
           OrthoDrawBuffer(G,GL_BACK_LEFT);
           render_buffer = GL_BACK_LEFT;
           break;
@@ -8173,8 +8231,8 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       int times = 1;
 
       switch(stereo_mode) {
-      case cStereo_clone_bipolar:
-      case cStereo_bipolar:
+      case cStereo_clone_dynamic:
+      case cStereo_dynamic:
         times = 2;
         break;
       }
@@ -8244,27 +8302,27 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           case cStereo_anaglyph:
             glClear(GL_ACCUM_BUFFER_BIT);
             break;
-          case cStereo_clone_bipolar:
+          case cStereo_clone_dynamic:
             glClear(GL_ACCUM_BUFFER_BIT);
             OrthoDrawBuffer(G,GL_BACK_LEFT);
             if(times) {
-              float bipolar_strength = SettingGetGlobal_f(G,cSetting_stereo_bipolar_strength);
+              float dynamic_strength = SettingGetGlobal_f(G,cSetting_stereo_dynamic_strength);
               float vv[4] = {0.75F, 0.75F, 0.75F, 1.0F};
-              vv[0] =  bipolar_strength;
-              vv[1] =  bipolar_strength;
-              vv[2] =  bipolar_strength;
+              vv[0] =  dynamic_strength;
+              vv[1] =  dynamic_strength;
+              vv[2] =  dynamic_strength;
               glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,vv);
               glAccum(GL_ADD,0.5);
               glDisable(GL_FOG);
             }
             break;
-           case cStereo_bipolar:
+           case cStereo_dynamic:
             if(times) {
-              float bipolar_strength = SettingGetGlobal_f(G,cSetting_stereo_bipolar_strength);
+              float dynamic_strength = SettingGetGlobal_f(G,cSetting_stereo_dynamic_strength);
               float vv[4] = {0.75F, 0.75F, 0.75F, 1.0F};
-              vv[0] =  bipolar_strength;
-              vv[1] =  bipolar_strength;
-              vv[2] =  bipolar_strength;
+              vv[0] =  dynamic_strength;
+              vv[1] =  dynamic_strength;
+              vv[2] =  dynamic_strength;
               glClearAccum(0.5, 0.5, 0.5, 0.5);
               glClear(GL_ACCUM_BUFFER_BIT);
               glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,vv);
@@ -8384,7 +8442,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glAccum(GL_ACCUM,0.5);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             break;
-          case cStereo_clone_bipolar:
+          case cStereo_clone_dynamic:
             if(times) {
               glAccum(GL_ACCUM,-0.5);
             } else {
@@ -8392,7 +8450,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             }
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             break;
-          case cStereo_bipolar:
+          case cStereo_dynamic:
             if(times) {
               glAccum(GL_ACCUM,-0.5);
             } else {
@@ -8491,7 +8549,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glAccum(GL_RETURN, 1.0);
             OrthoDrawBuffer(G,GL_BACK_LEFT);
             break;
-          case cStereo_clone_bipolar:
+          case cStereo_clone_dynamic:
             glAccum(GL_ACCUM, 0.5);
             if(times) {
               float vv[4] = {0.0F,0.0F,0.0F,0.0F};
@@ -8504,7 +8562,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
             glAccum(GL_RETURN, 1.0);
             OrthoDrawBuffer(G,GL_BACK_LEFT);
             break;
-          case cStereo_bipolar:
+          case cStereo_dynamic:
             glAccum(GL_ACCUM, 0.5);
             if(times) {
               float vv[4] = {0.0F,0.0F,0.0F,0.0F};
