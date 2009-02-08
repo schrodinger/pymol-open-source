@@ -20,7 +20,7 @@ if __name__=='pymol.importing':
     import cmd
     from cmd import _cmd,lock,unlock,Shortcut, \
           _feedback,fb_module,fb_mask, \
-          file_ext_re,safe_oname_re, \
+          file_ext_re,gz_ext_re,safe_oname_re, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
           _load, is_list, space_sc, safe_list_eval, is_string, loadable
     import setting
@@ -374,6 +374,7 @@ SEE ALSO
     # get object name
             if len(str(object))==0:
                 oname = re.sub(r".*\/|.*\\","",filename) # strip path
+                oname = gz_ext_re.sub("",oname) # strip gz
                 oname = file_ext_re.sub("",oname) # strip extension
                 oname = safe_oname_re.sub("_",oname)
                 if not len(oname): # safety
@@ -524,88 +525,88 @@ SEE ALSO
                 multiplex=-2
             fname = _self.exp_path(filename)
             go_to_first_scene = 0
-            
             if not len(str(type)):
+                fname_no_gz = gz_ext_re.sub("",filename) # strip gz
                 # determine file type if possible
-                if re.search("\.pdb$|\.pdb1$|\.ent$|\.p5m",filename,re.I):
+                if re.search("\.pdb$|\.pdb1$|\.ent$|\.p5m",fname_no_gz,re.I):
                     ftype = loadable.pdb
-                elif re.search("\.mol$",filename,re.I):
+                elif re.search("\.mol$",fname_no_gz,re.I):
                     ftype = loadable.mol
-                elif re.search("\.mmod$|\.mmd$|\.dat$|\.out$",filename,re.I):
+                elif re.search("\.mmod$|\.mmd$|\.dat$|\.out$",fname_no_gz,re.I):
                     ftype = loadable.mmod
-                elif re.search("\.xplor$",filename,re.I):
+                elif re.search("\.xplor$",fname_no_gz,re.I):
                     ftype = loadable.xplor
-                elif re.search("\.ccp4$",filename,re.I):
+                elif re.search("\.ccp4$",fname_no_gz,re.I):
                     ftype = loadable.ccp4
-                elif re.search("\.pkl$",filename,re.I):
+                elif re.search("\.pkl$",fname_no_gz,re.I):
                     ftype = loadable.model
-                elif re.search("\.r3d$",filename,re.I):
+                elif re.search("\.r3d$",fname_no_gz,re.I):
                     ftype = loadable.r3d
-                elif re.search("\.xyz$",filename,re.I):
+                elif re.search("\.xyz$",fname_no_gz,re.I):
                     ftype = loadable.xyz
-                elif re.search("\.cc1$|\.cc2$",filename,re.I):
+                elif re.search("\.cc1$|\.cc2$",fname_no_gz,re.I):
                     ftype = loadable.cc1
-                elif re.search("\.xyz_[0-9]*$",filename,re.I):
+                elif re.search("\.xyz_[0-9]*$",fname_no_gz,re.I):
                     ftype = loadable.xyz
-                elif re.search("\.sdf$|\.sd$",filename,re.I): 
+                elif re.search("\.sdf$|\.sd$",fname_no_gz,re.I): 
                     ftype = loadable.sdf2 # now using the C-based SDF reader by default...
-                elif re.search("\.cex$",filename,re.I):
+                elif re.search("\.cex$",fname_no_gz,re.I):
                     ftype = loadable.cex
-                elif re.search("\.pmo$",filename,re.I):
+                elif re.search("\.pmo$",fname_no_gz,re.I):
                     ftype = loadable.pmo
-                elif re.search("\.top$",filename,re.I):
+                elif re.search("\.top$",fname_no_gz,re.I):
                     ftype = loadable.top
-                elif re.search("\.trj$",filename,re.I):
+                elif re.search("\.trj$",fname_no_gz,re.I):
                     ftype = loadable.trj
-                elif re.search("\.trr$",filename,re.I):
+                elif re.search("\.trr$",fname_no_gz,re.I):
                     ftype = loadable.trr
-                elif re.search("\.xtc$",filename,re.I):
+                elif re.search("\.xtc$",fname_no_gz,re.I):
                     ftype = loadable.xtc
-                elif re.search("\.gro$",filename,re.I):
+                elif re.search("\.gro$",fname_no_gz,re.I):
                     ftype = loadable.gro
-                elif re.search("\.g96$",filename,re.I):
+                elif re.search("\.g96$",fname_no_gz,re.I):
                     ftype = loadable.g96
-                elif re.search("\.dcd$",filename,re.I):
+                elif re.search("\.dcd$",fname_no_gz,re.I):
                     ftype = loadable.dcd
-                elif re.search("\.crd$",filename,re.I):
+                elif re.search("\.crd$",fname_no_gz,re.I):
                     ftype = loadable.crd
-                elif re.search("\.rst$",filename,re.I):
+                elif re.search("\.rst$",fname_no_gz,re.I):
                     ftype = loadable.crd
-                elif re.search("\.pse$",filename,re.I):
+                elif re.search("\.pse$",fname_no_gz,re.I):
                     ftype = loadable.pse
-                elif re.search("\.psw$",filename,re.I):
+                elif re.search("\.psw$",fname_no_gz,re.I):
                     ftype = loadable.psw
-                elif re.search("\.phi$",filename,re.I):
+                elif re.search("\.phi$",fname_no_gz,re.I):
                     ftype = loadable.phi
-                elif re.search("\.mol2$",filename,re.I):
+                elif re.search("\.mol2$",fname_no_gz,re.I):
                     ftype = loadable.mol2
-                elif re.search("\.dx$",filename,re.I):
+                elif re.search("\.dx$",fname_no_gz,re.I):
                     ftype = loadable.dx
-                elif re.search("\.fld$",filename,re.I):
+                elif re.search("\.fld$",fname_no_gz,re.I):
                     ftype = loadable.fld
-                elif re.search("\.pqr$",filename,re.I):
+                elif re.search("\.pqr$",fname_no_gz,re.I):
                     ftype = loadable.pqr
-                elif re.search("\.o$|\.dsn6$|\.brix$|\.omap$",filename,re.I):
+                elif re.search("\.o$|\.dsn6$|\.brix$|\.omap$",fname_no_gz,re.I):
                     ftype = loadable.brix
-                elif re.search("\.grd$",filename,re.I):
+                elif re.search("\.grd$",fname_no_gz,re.I):
                     ftype = loadable.grd
-                elif re.search("\.p1m$",filename,re.I):
+                elif re.search("\.p1m$",fname_no_gz,re.I):
                     ftype = loadable.p1m
-                elif re.search("\.png$",filename,re.I):
+                elif re.search("\.png$",fname_no_gz,re.I):
                     ftype = loadable.png
-                elif re.search("\.moe$",filename,re.I):
+                elif re.search("\.moe$",fname_no_gz,re.I):
                     ftype = loadable.moe
-                elif re.search("\.mae$",filename,re.I):
+                elif re.search("\.mae$",fname_no_gz,re.I):
                     ftype = loadable.mae
-                elif re.search("\.cube$",filename,re.I):
+                elif re.search("\.cube$",fname_no_gz,re.I):
                     ftype = loadable.cube
-                elif re.search("\.cif$",filename,re.I):
+                elif re.search("\.cif$",fname_no_gz,re.I):
                     ftype = loadable.cif1
-                elif re.search("\.pim$",filename,re.I):
+                elif re.search("\.pim$",fname_no_gz,re.I):
                     ftype = loadable.pim
-                elif re.search("\.pwg$",filename,re.I):
+                elif re.search("\.pwg$",fname_no_gz,re.I):
                     ftype = loadable.pwg
-                elif re.search("\.map$",filename,re.I):
+                elif re.search("\.map$",fname_no_gz,re.I):
                     r = DEFAULT_ERROR
                     print 'Error: .map is ambiguous.  Please add format or use another extension:'
                     print 'Error: For example, "load fofc.map, format=ccp4" or "load 2fofc.xplor".'
@@ -643,6 +644,7 @@ SEE ALSO
     # get object name
             if len(str(object))==0:
                 oname = re.sub(r".*\/|.*\\","",filename) # strip path
+                oname = gz_ext_re.sub("",oname) # strip gz                
                 oname = file_ext_re.sub("",oname) # strip extension
                 oname = safe_oname_re.sub("_",oname)
                 if not len(oname): # safety

@@ -287,6 +287,7 @@ H
 H
  Iterate: iterated over 36 atoms.
 PyMOL>rename small01
+ Rename: renamed 33 atoms.
 PyMOL>iterate (all),print name
 C01
 C02
