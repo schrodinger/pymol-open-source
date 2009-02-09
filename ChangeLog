@@ -4,6 +4,8 @@ CHANGE LOG
 
 2009-02-08 Warren L. DeLano <warren@delsci.com>	
 
+	* fixed stupid load-from-URL bug
+	
 	* GZ compression support for common input formats
 	
 	* confirmed DLP Stereo 3D support
