@@ -370,7 +370,7 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                     print "Error: unable to open the URL:\nError:   %s"%finfo
 #                    traceback.print_exc()
                     return 0
-                finfo = tmp_file.read(tmp_file) # WARNING: will block and hang -- thread instead?
+                finfo = tmp_file.read() 
                 if gz:
                     import StringIO
                     fakestream = StringIO.StringIO(finfo)
