@@ -14,6 +14,10 @@
 extern "C" {
 #endif
 
+#ifdef _PYMOL_MINGW
+#include <windows.h>
+#endif
+
   /* automatically detect 64-bit machines */
 
 #ifndef OV_32_BIT

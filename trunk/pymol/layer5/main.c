@@ -1810,6 +1810,7 @@ int main(int argc, char *argv[])
   myArgc=argc;
   myArgv=argv;
 
+  fflush(stdout);
   PSetupEmbedded(G,argc,argv);
 
 #else

@@ -100,15 +100,15 @@ Z* -------------------------------------------------------------------
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "comctl32.lib")
 
-// force inclusion of NOLIB.OBJ for /disallowlib directives
+/* force inclusion of NOLIB.OBJ for /disallowlib directives */
 #pragma comment(linker, "/include:__afxForceEXCLUDE")
 
-// force inclusion of DLLMODUL.OBJ for _USRDLL
+/* force inclusion of DLLMODUL.OBJ for _USRDLL */
 #ifdef _USRDLL
 #pragma comment(linker, "/include:__afxForceUSRDLL")
 #endif
 
-// force inclusion of STDAFX.OBJ for precompiled types
+/* force inclusion of STDAFX.OBJ for precompiled types */
 #ifdef _AFXDLL
 #pragma comment(linker, "/include:__afxForceSTDAFX")
 #endif
