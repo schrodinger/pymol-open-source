@@ -25,6 +25,7 @@ the initialization functions for these libraries on startup.
 #ifndef _PYMOL_NOPY
 
 #include"os_predef.h"
+#include"os_std.h"
 #include"Base.h"
 
 
@@ -40,6 +41,9 @@ the initialization functions for these libraries on startup.
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 
+#ifdef _PYMOL_MINGW
+#define putenv _putenv
+#endif
 #include"os_python.h"
 
 #include"os_std.h"
@@ -1201,11 +1205,13 @@ void    initopenglutil_num(void);
 #ifndef _PYMOL_EMBEDDED
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
+#ifdef _PYMOL_NUMPY
 void        init_numpy();
 void        initmultiarray();
 void        initarrayfns();
 void        initlapack_lite();
 void        initumath();
+#endif
 void        initranlib();
 void  init_champ();
 #endif
@@ -1250,11 +1256,10 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   /* This routine is called if we are running with an embedded Python interpreter */
   PyObject *args, *pymol;
 
-
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
     
-  /* Windows Python now ships with Python 2.5 for both
+  /* Windows PyMOL now ships with Python 2.5 for both
 	 32 and 64 bit */
 
 #ifndef EMBEDDED_PYTHONHOME
@@ -1426,13 +1431,15 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
 	  
 	  if(CreateProcessA(NULL, (LPTSTR)cmd_line, lpSA, NULL, TRUE,
 			   0, NULL, NULL, &si, &pi)) {
+
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	  } else {
 	    printf("ERROR: Unable to restart PyMOL process with new environment:\n");
-	    system("set"); // dump the environment.
+	    system("set"); /* dump the environment. */
 	    printf("CreateProcess failed, code %d: %s\n",GetLastError(),cmd_line);
 	    printf("PyMOL will now terminate.\n");
 	  }
+
 	  if (lpSA != NULL) GlobalFree(lpSA);
 	  if (lpSD != NULL) GlobalFree(lpSD);
 	  _exit(0);
@@ -1527,7 +1534,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
     }
   }
 #endif
-
+  
 #ifndef _PYMOL_EMBEDDED
   Py_Initialize();
   PyEval_InitThreads();
@@ -1535,6 +1542,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
 #endif
 
   init_cmd();
+
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_EMBEDDED
   /*
@@ -1543,8 +1551,11 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
    */
   /* initialize champ */
   init_champ();
+
+
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
+#ifdef _PYMOL_NUMPY
   /* initialize numeric python */
   init_numpy();
   initmultiarray();
@@ -1553,6 +1564,8 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   initumath();
   initranlib();
 #endif
+#endif
+
   /* END PROPRIETARY CODE SEGMENT */
   init_opengl();
   init_opengl_num();
@@ -1563,6 +1576,8 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   initopenglutil_num();
 #endif
 #endif
+
+
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
@@ -1577,14 +1592,14 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
       PyObject *os = PyImport_AddModule("os"); /* borrowed ref */
       char *buffer = Alloc(char,strlen(pymol_path)+100);
       if(os && buffer) {
-        PyObject *environ = PyObject_GetAttrString(os,"environ");
-        if(environ) {
-          if(!PTruthCallStr1s(environ,"has_key","PYMOL_PATH")) {
+        PyObject *envir = PyObject_GetAttrString(os,"environ");
+        if(envir) {
+          if(!PTruthCallStr1s(envir,"has_key","PYMOL_PATH")) {
             sprintf(buffer,"os.environ['PYMOL_PATH']=r'''%s'''\n",pymol_path);
             PyRun_SimpleString(buffer);
           }
         }
-        PXDecRef(environ);
+        PXDecRef(envir);
       }
       FreeP(buffer);
     }
@@ -1593,6 +1608,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
   /* END PROPRIETARY CODE SEGMENT */
+
 
 #ifdef _PYMOL_SETUP_TCLTK83
   /* used by semistatic pymol */
@@ -1617,6 +1633,7 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.insert(0,os.environ['PYMOL_PATH']+'/modules')\n");
 #endif
   /* END PROPRIETARY CODE SEGMENT */
+
 
   P_main = PyImport_AddModule("__main__");
   if(!P_main) ErrFatal(G,"PyMOL","can't find '__main__'");
@@ -1746,12 +1763,14 @@ void PInit(PyMOLGlobals *G,int global_instance)
    */
   init_champ();
   /* initialize numeric python */
+#ifdef _PYMOL_NUMPY
   init_numpy();
   initmultiarray();
   initarrayfns();
   initlapack_lite();
   initumath();
   initranlib();
+#endif
   /* initialize PyOpenGL */
   init_opengl();
   init_opengl_num();
