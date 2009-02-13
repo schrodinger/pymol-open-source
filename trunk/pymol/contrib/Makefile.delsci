@@ -12,6 +12,8 @@ static:
 	touch champ/.includes
 	cd champ;$(MAKE) -f Makefile.delsci prime
 	cd champ;$(MAKE) -f Makefile.delsci static
+#	cd pyomm;$(MAKE) -f Makefile.delsci prime
+#	cd pyomm;$(MAKE) -f Makefile.delsci static
 # no longer needed
 #	cd modules;$(MAKE) -f Makefile.static
 #	cd sglite;$(MAKE) -f Makefile.delsci static
@@ -41,6 +43,9 @@ make-pyopengl:
 make-champ:
 	cd champ;$(MAKE) -f Makefile.delsci
 #	mv champ/*.so ../modules/pymol
+
+make-pyomm:
+	cd pyomm;$(MAKE) -f Makefile.delsci
 
 clean: 
 	cd sglite;$(MAKE) -f Makefile.delsci clean

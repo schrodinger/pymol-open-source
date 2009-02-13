@@ -46,7 +46,7 @@ typedef struct {
 
 ExportCoords *ExportCoordsExport(PyMOLGlobals *G,char *name,int state,int order);
 int ExportCoordsImport(PyMOLGlobals *G,char *name,int state,ExportCoords *io,int order);
-void ExportCoordsFree(PyMOLGlobals *G,ExportCoords *io);
+void ExportCoordsFree(ExportCoords *io);
 
 void ExportDeleteMDebug(PyMOLGlobals *G,struct Export *ex); /* for mmalloc/mfree blocks */
 ExportDotsObj *ExportDots(PyMOLGlobals *G,char *sele,int coordSet);

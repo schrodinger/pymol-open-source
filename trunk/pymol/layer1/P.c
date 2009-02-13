@@ -1211,9 +1211,8 @@ void        initmultiarray();
 void        initarrayfns();
 void        initlapack_lite();
 void        initumath();
-#endif
 void        initranlib();
-void  init_champ();
+#endif
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 #endif
@@ -1225,7 +1224,10 @@ void  init_champ();
  * void        initExtensionClass(void);
  * void        initsglite(void);
  */
-void  init_champ(void);
+void    init_champ(void);
+#ifdef _PYMOL_PYOMM
+void    init_pyomm(void);
+#endif
 void    init_opengl(void);
 void    init_opengl_num(void);
 void    init_glu(void);
@@ -1552,6 +1554,9 @@ void PSetupEmbedded(PyMOLGlobals *G,int argc,char **argv)
   /* initialize champ */
   init_champ();
 
+#ifdef _PYMOL_PYOMM
+  init_pyomm();
+#endif
 
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
@@ -1762,6 +1767,10 @@ void PInit(PyMOLGlobals *G,int global_instance)
    * initsglite();
    */
   init_champ();
+#ifdef _PYMOL_PYOMM
+  init_pyomm();
+#endif
+
   /* initialize numeric python */
 #ifdef _PYMOL_NUMPY
   init_numpy();

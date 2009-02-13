@@ -208,11 +208,11 @@ DESCRIPTION
         if _self._raising(r,_self): raise pymol.CmdException                  
         return r
 
-    def import_coords(obj,state,mechio,_self=cmd): # experimental
+    def import_coords(coords,name,state,_self=cmd): # experimental
         r = DEFAULT_ERROR      
         try:
             _self.lock(_self)   
-            r = _cmd.import_coords(_self._COb,str(obj),int(state)-1,mechio)
+            r = _cmd.import_coords(_self._COb,str(name),int(state)-1,coords)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  
