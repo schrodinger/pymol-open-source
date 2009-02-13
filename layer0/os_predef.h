@@ -101,7 +101,9 @@ Z* -------------------------------------------------------------------
 #pragma comment(lib, "comctl32.lib")
 
 /* force inclusion of NOLIB.OBJ for /disallowlib directives */
+#ifndef _PYMOL_PYOMM
 #pragma comment(linker, "/include:__afxForceEXCLUDE")
+#endif
 
 /* force inclusion of DLLMODUL.OBJ for _USRDLL */
 #ifdef _USRDLL

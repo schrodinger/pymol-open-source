@@ -44,17 +44,15 @@ ExportCoords *ExportCoordsExport(PyMOLGlobals *G,char *name,int state,int order)
   float *crd0,*crd1;
 
   obj = ExecutiveFindObjectMoleculeByName(G,name);
-  if(obj&&(state>=0)) {
-    if((state<obj->NCSet)&&(!obj->DiscreteFlag)) {
-      if(obj->CSet[state]) {
-
-        cs=obj->CSet[state];
-
-        io= (ExportCoords*)mmalloc(sizeof(ExportCoords));
-
-        io->nAtom=cs->NIndex;
-        io->coord=Alloc(float,cs->NIndex*3);
-
+  if(obj && (state>=0) && (state<obj->NCSet)&& (!obj->DiscreteFlag) && obj->CSet[state]) {
+    cs=obj->CSet[state];
+    io=(ExportCoords*)mmalloc(sizeof(ExportCoords));
+    
+    if(io) {
+      io->nAtom = cs->NIndex;
+      io->coord = Alloc(float,cs->NIndex*3);
+      
+      if(io->coord) {
         crd0=cs->Coord;
         crd1=io->coord;
         if(order) {
@@ -142,7 +140,7 @@ int ExportCoordsImport(PyMOLGlobals *G,char *name,int state,ExportCoords *io,int
   return(result);
 }
 
-void ExportCoordsFree(PyMOLGlobals *G,ExportCoords *io)
+void ExportCoordsFree(ExportCoords *io)
 {
   if(io) {
     FreeP(io->coord);
