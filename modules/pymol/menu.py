@@ -860,7 +860,7 @@ def modify_sele(self_cmd, sele):
 
               
 def sele_action(self_cmd, sele):
-    return [[ 2, 'Actions:'       ,''                        ],     
+    return [[ 2, 'Action:'       ,''                        ],     
               [ 1, 'delete selection', 'cmd.delete("'+sele+'")'          ],
               [ 1, 'rename selection', 'cmd.wizard("renaming","'+sele+'")'          ],
               [ 0, ''               ,''                             ],
@@ -890,7 +890,7 @@ def sele_action(self_cmd, sele):
 
 
 def sele_action2(self_cmd, sele):
-    return [[ 2, 'Actions:'       ,''                        ],     
+    return [[ 2, 'Action:'       ,''                        ],     
               [ 1, 'delete selection', 'cmd.delete("'+sele+'")'          ],
               [ 1, 'rename selection', 'cmd.wizard("renaming","'+sele+'")'          ],
               [ 0, ''               ,''                             ],
@@ -917,7 +917,7 @@ def sele_action2(self_cmd, sele):
 
     
 def mol_action(self_cmd, sele):
-    return [[ 2, 'Actions:'     , ''                       ],     
+    return [[ 2, 'Action:'     , ''                       ],     
               [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
               [ 1, 'orient'       , 'cmd.orient("'+sele+'",animate=-1)'    ],
               [ 1, 'center'         ,'cmd.center("'+sele+'",animate=-1)'            ],
@@ -948,7 +948,7 @@ def mol_action(self_cmd, sele):
               ]
 
 def slice_action(self_cmd, sele):
-    return [[ 2, 'Actions:'     , ''                       ],
+    return [[ 2, 'Action:'     , ''                       ],
               [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
               [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
               [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],         
@@ -968,7 +968,7 @@ def slice_action(self_cmd, sele):
               ]
 
 def simple_action(self_cmd, sele):
-    return [[ 2, 'Actions:'     , ''                       ],
+    return [[ 2, 'Action:'     , ''                       ],
               [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
               [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
               [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
@@ -1019,7 +1019,7 @@ def map_slice(self_cmd, sele):
             ]
 
 def map_action(self_cmd, sele):
-    return [[ 2, 'Actions:'     , ''                       ],
+    return [[ 2, 'Action:'     , ''                       ],
               [ 1, 'mesh'         , map_mesh(self_cmd, sele)  ],
               [ 1, 'surface'      , map_surface(self_cmd, sele)  ],
               [ 1, 'slice'        , map_slice(self_cmd, sele)  ],
@@ -1054,7 +1054,7 @@ def level(self_cmd, sele):
             ]
 
 def surface_action(self_cmd, sele):
-    return [[ 2, 'Actions:'     , ''                       ],
+    return [[ 2, 'Action:'     , ''                       ],
               [ 1, 'level'         , level(self_cmd, sele)  ],
               [ 0, ''             , ''                       ],
               [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
@@ -1067,7 +1067,7 @@ def surface_action(self_cmd, sele):
               ]
 
 def mesh_action(self_cmd, sele):
-    return [[ 2, 'Actions:'     , ''                       ],
+    return [[ 2, 'Action:'     , ''                       ],
               [ 1, 'level'         , level(self_cmd, sele)  ],
               [ 0, ''             , ''                       ],
               [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
@@ -1080,7 +1080,7 @@ def mesh_action(self_cmd, sele):
               ]
 
 def ramp_action(self_cmd, sele):
-    return [[ 2, 'Actions:'     , ''                       ],
+    return [[ 2, 'Action:'     , ''                       ],
               [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
               ]
 
@@ -1099,7 +1099,7 @@ def test2(self_cmd, sele):
               ]
 
 def all_action(self_cmd, sele):
-    return [[ 2, 'Actions:'     , ''                      ],     
+    return [[ 2, 'Action:'     , ''                      ],     
               [ 1, 'zoom'         , 'cmd.zoom("all",animate=-1)'     ],
               [ 1, 'center'   , 'cmd.center("all",animate=-1)'   ],           
               [ 1, 'origin'   , 'cmd.origin("all")'   ],
