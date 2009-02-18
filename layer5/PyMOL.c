@@ -3269,10 +3269,17 @@ void PyMOL_Draw(CPyMOL *I)
           if(Feedback(G,FB_OpenGL,FB_Blather)) {
             printf("  GL_EXTENSIONS: %s\n",(char*)glGetString(GL_EXTENSIONS));
           }
+
           if(G->StereoCapable) {
-            printf("  Hardware stereo capability detected.\n");
-          } else if((G->Option->force_stereo==1)&&(!G->StereoCapable)) {
-            printf("  Hardware stereo not present (unable to force).\n");
+            printf("  Quad-buffer stereo 3D capability detected.\n");
+          } else if(!G->Option->quiet) {
+            if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_StereoFailed) {
+              OrthoAddOutput(G,"Error: The requested stereo 3D visualization mode is not available.");
+            }
+          }
+          
+          if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_MultisampleFailed) {
+            OrthoAddOutput(G,"Error: The requested multisampling mode is not available.");
           }
         } 
         I->DrawnFlag = true;

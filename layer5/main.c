@@ -1605,8 +1605,6 @@ static void launch(CPyMOLOptions *options,int own_the_options)
     
     {
       int display_mode_possible = false;
-      const char multi_message[] = " Sorry, multisampling not available.\n";
-
       if(G->Option->stereo_mode>1) 
         G->Option->force_stereo = 0;
 
@@ -1624,25 +1622,21 @@ static void launch(CPyMOLOptions *options,int own_the_options)
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE | P_GLUT_STEREO );
           display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
           if(multisample_mask && (!display_mode_possible)) {
-            if(!G->Option->quiet) {
-              printf(multi_message);
-            }
+            G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_MultisampleFailed;
             p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
             display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
           }
           if(display_mode_possible) {
             G->StereoCapable = 1;
-          } else if(!G->Option->quiet) {
-            printf(" Sorry, time-sequential stereo 3D not available.\n");
+          } else if(G->Option->stereo_mode == cStereo_quadbuffer) {
+            G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_StereoFailed;            
           }
           break;
         case cStereo_clone_dynamic:
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_ACCUM | P_GLUT_STEREO);
           display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
           if(!display_mode_possible) {
-            if(!G->Option->quiet) {
-              printf(" Sorry, clone dynamic stereo 3D not available.\n");
-            }
+            G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_StereoFailed;
             G->Option->stereo_mode = 0; 
           } else {
             G->StereoCapable = 1;
@@ -1653,9 +1647,7 @@ static void launch(CPyMOLOptions *options,int own_the_options)
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_ACCUM);
           display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
           if(!display_mode_possible) {
-            if(!G->Option->quiet) {
-              printf(" Sorry, accumulation-based stereo 3D not available.\n");
-            }
+            G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_StereoFailed;
             G->Option->stereo_mode = 0; 
           }
           break;
@@ -1666,9 +1658,7 @@ static void launch(CPyMOLOptions *options,int own_the_options)
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STENCIL);
           display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
           if(!display_mode_possible) {
-            if(!G->Option->quiet) {
-              printf(" Sorry, stencil-based stereo 3D not available.\n");
-            }
+            G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_StereoFailed;
             G->Option->stereo_mode = 0; 
           }
           break;
@@ -1676,20 +1666,18 @@ static void launch(CPyMOLOptions *options,int own_the_options)
           break;
         }
         break;
-      case 1: /* force stereo (if possible) */
+      case 1: /* force quad buffer stereo (if possible) */
         p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE | P_GLUT_STEREO);
         display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
         if(multisample_mask && (!display_mode_possible)) {
-          if(!G->Option->quiet) {
-            printf(multi_message);
-          }
+          G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_MultisampleFailed;
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
           display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
         }
         if(display_mode_possible) {
           G->StereoCapable = 1;
-        } else if(!G->Option->quiet) {
-          printf(" Sorry, time-sequential stereo 3D not available.\n");
+        } else {
+          G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_StereoFailed;
         }
         break;
       }
@@ -1702,9 +1690,7 @@ static void launch(CPyMOLOptions *options,int own_the_options)
       }
       
       if(multisample_mask && (!display_mode_possible)) {
-        if(!G->Option->quiet) {
-          printf(multi_message);
-        }
+        G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_MultisampleFailed;
         p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
         display_mode_possible = p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE);
         G->StereoCapable = 0;
