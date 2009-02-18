@@ -49,7 +49,7 @@ struct _CPyMOLOptions {
     defer_builds_mode,
     full_screen,
     sphere_mode,
-	stereo_capable, /* for informing PyMOL as to the capabilities of the context */
+ 	stereo_capable, /* for informing PyMOL as to the capabilities of the context */
     stereo_mode, 
     zoom_mode,
     no_quit; /* prevent any action from quitting or killing PyMOL */

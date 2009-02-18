@@ -88,6 +88,9 @@ typedef struct _CGO                CGO;
 #define CGO_DEFINED
 #endif
 
+#define cPyMOLGlobals_LaunchStatus_StereoFailed 0x1
+#define cPyMOLGlobals_LaunchStatus_MultisampleFailed 0x2
+
 typedef struct _PyMOLGlobals PyMOLGlobals;
 struct _PyMOLGlobals {
 
@@ -156,7 +159,9 @@ struct _PyMOLGlobals {
 
   int StereoCapable; /* the current graphics context quad buffered? */
   
-  int Security; /* do we warn the use before potentially executing any
+  int LaunchStatus; /* to enable deferred output regarding launch status */
+
+  int Security; /* do we warn before potentially executing any
                  * Python code and ask for their informed consent? */
 
   int DragDirtyFlag; /* do we need an extra callback to handle a mouse drag? */
