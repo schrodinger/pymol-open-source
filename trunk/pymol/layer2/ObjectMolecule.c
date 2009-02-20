@@ -2571,114 +2571,146 @@ ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals *G,ObjectMolecule *obj,ch
   
   return(I);
 }
-
-
 /*========================================================================*/
-int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append)
+int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,
+                            int append,int format,int quiet)
 {
   /* version 1 writes atominfo, coords, spheroid, bonds */
   CRaw *raw = NULL;
   int ok=true;
-  int a,c,a1,a2,b1,b2;
-  BondType *b;
-  CoordSet *cs;
-  BondType *bondVLA = NULL;
-  AtomInfoType *aiVLA = NULL;
-  int start,stop;
-  int nBond;
-  int sph_info[2];
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
     " ObjectMoleculeMultiSave-Debug: entered \"%s\" state=%d\n",fname,state
     ENDFD;
-    
-  if(append) {
-    raw = RawOpenWrite(I->Obj.G,fname);
-  } else {
-    raw = RawOpenAppend(I->Obj.G,fname);
-  }
-  if(raw) {
-    aiVLA = VLAMalloc(1000,sizeof(AtomInfoType),5,true);
-    bondVLA = VLACalloc(BondType,4000);
-    if(state<0) {
-      start=0;
-      stop=I->NCSet;
-    } else {
-      start=state;
-      if(start<0)
-        start=0;
-      stop=state+1;
-      if(stop>I->NCSet)
-        stop=I->NCSet;
-    }
-    for(a=start;a<stop;a++) {
-
-      PRINTFD(I->Obj.G,FB_ObjectMolecule)
-        " ObjectMMSave-Debug: state %d\n",a
-        ENDFD;
-
-      cs=I->CSet[a];
-      if(cs) {
-        VLACheck(aiVLA,AtomInfoType,cs->NIndex);
-        nBond=0;
-
-        /* write atoms */
-        for(c=0;c<cs->NIndex;c++) {
-          a1 = cs->IdxToAtm[c]; /* always valid */
-          aiVLA[c]=I->AtomInfo[a1];
-        }
-        if(ok) ok = RawWrite(raw,cRaw_AtomInfo1,sizeof(AtomInfoType)*cs->NIndex,0,(char*)aiVLA);
-        
-        /* write coords */
-        if(ok) ok = RawWrite(raw,cRaw_Coords1,sizeof(float)*3*cs->NIndex,0,(char*)cs->Coord);
-
-        /* write spheroid (if one exists) */
-        if(cs->Spheroid&&cs->SpheroidNormal) {
-          sph_info[0]=cs->SpheroidSphereSize;
-          sph_info[1]=cs->NSpheroid;
-          if(ok) ok = RawWrite(raw,cRaw_SpheroidInfo1,sizeof(int)*2,0,(char*)sph_info);          
-          if(ok) ok = RawWrite(raw,cRaw_Spheroid1,sizeof(float)*cs->NSpheroid,0,(char*)cs->Spheroid);          
-          if(ok) ok = RawWrite(raw,cRaw_SpheroidNormals1,sizeof(float)*3*cs->NSpheroid,0,(char*)cs->SpheroidNormal); 
-          PRINTFD(I->Obj.G,FB_ObjectMolecule)
-            " ObjectMolPMO2CoorSet: saved spheroid size %d %d\n",cs->SpheroidSphereSize,cs->NSpheroid
-            ENDFD;
-         
-        }
-        
-        /* write bonds */
-        b=I->Bond;
-        for(c=0;c<I->NBond;c++) {
-          b1 = b->index[0];
-          b2 = b->index[1];
-          if(I->DiscreteFlag) {
-            if((cs==I->DiscreteCSet[b1])&&(cs==I->DiscreteCSet[b2])) {
-              a1=I->DiscreteAtmToIdx[b1];
-              a2=I->DiscreteAtmToIdx[b2];
-            } else {
-              a1=-1;
-              a2=-1;
-            }
-          } else {
-            a1=cs->AtmToIdx[b1];
-            a2=cs->AtmToIdx[b2];
-          }
-          if((a1>=0)&&(a2>=0)) { 
-            nBond++;
-            VLACheck(bondVLA,BondType,nBond);
-            bondVLA[nBond-1]=*b;
-            bondVLA[nBond-1].index[0] = a1;
-            bondVLA[nBond-1].index[1] = a2;
-          }
-          b++;
-
-        }
-        /* unique_id handling? */
-        if(ok) ok = RawWrite(raw,cRaw_Bonds1,sizeof(BondType)*nBond,0,(char*)bondVLA);
+  switch(format) {
+  case cLoadTypePDB:
+    {
+      FILE *f = NULL;
+      if(append) {
+        f = fopen(fname,"wba");
+      } else {
+        f = fopen(fname,"wb");
       }
+      if(f) {
+        fprintf(f,"HEADER %s\n",I->Obj.Name);
+        {
+          char *pdb = ExecutiveSeleToPDBStr(I->Obj.G, I->Obj.Name,
+                                            state, true, 0, NULL, 0, quiet);
+          if(pdb) {
+            fwrite(pdb,strlen(pdb),1,f);
+            if(!quiet) {
+              PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Actions) 
+                " Multisave: wrote object '%s'.\n",I->Obj.Name
+                ENDFB(I->Obj.G);
+            }
+          }
+          FreeP(pdb);
+        }
+      }
+      fclose(f);
     }
+    break;
+  case cLoadTypePMO:
+    {
+      int a,c,a1,a2,b1,b2;
+      BondType *b;
+      CoordSet *cs;
+      BondType *bondVLA = NULL;
+      AtomInfoType *aiVLA = NULL;
+      int start,stop;
+      int nBond;
+      int sph_info[2];
+      
+      if(append) {
+        raw = RawOpenWrite(I->Obj.G,fname);
+      } else {
+        raw = RawOpenAppend(I->Obj.G,fname);
+      }
+      if(raw) {
+        aiVLA = VLAMalloc(1000,sizeof(AtomInfoType),5,true);
+        bondVLA = VLACalloc(BondType,4000);
+        if(state<0) {
+          start=0;
+          stop=I->NCSet;
+        } else {
+          start=state;
+          if(start<0)
+            start=0;
+          stop=state+1;
+          if(stop>I->NCSet)
+            stop=I->NCSet;
+        }
+        for(a=start;a<stop;a++) {
+        
+          PRINTFD(I->Obj.G,FB_ObjectMolecule)
+            " ObjectMMSave-Debug: state %d\n",a
+            ENDFD;
+        
+          cs=I->CSet[a];
+          if(cs) {
+            VLACheck(aiVLA,AtomInfoType,cs->NIndex);
+            nBond=0;
+
+            /* write atoms */
+            for(c=0;c<cs->NIndex;c++) {
+              a1 = cs->IdxToAtm[c]; /* always valid */
+              aiVLA[c]=I->AtomInfo[a1];
+            }
+            if(ok) ok = RawWrite(raw,cRaw_AtomInfo1,sizeof(AtomInfoType)*cs->NIndex,0,(char*)aiVLA);
+        
+            /* write coords */
+            if(ok) ok = RawWrite(raw,cRaw_Coords1,sizeof(float)*3*cs->NIndex,0,(char*)cs->Coord);
+
+            /* write spheroid (if one exists) */
+            if(cs->Spheroid&&cs->SpheroidNormal) {
+              sph_info[0]=cs->SpheroidSphereSize;
+              sph_info[1]=cs->NSpheroid;
+              if(ok) ok = RawWrite(raw,cRaw_SpheroidInfo1,sizeof(int)*2,0,(char*)sph_info);          
+              if(ok) ok = RawWrite(raw,cRaw_Spheroid1,sizeof(float)*cs->NSpheroid,0,(char*)cs->Spheroid);          
+              if(ok) ok = RawWrite(raw,cRaw_SpheroidNormals1,sizeof(float)*3*cs->NSpheroid,0,(char*)cs->SpheroidNormal); 
+              PRINTFD(I->Obj.G,FB_ObjectMolecule)
+                " ObjectMolPMO2CoorSet: saved spheroid size %d %d\n",cs->SpheroidSphereSize,cs->NSpheroid
+                ENDFD;
+         
+            }
+        
+            /* write bonds */
+            b=I->Bond;
+            for(c=0;c<I->NBond;c++) {
+              b1 = b->index[0];
+              b2 = b->index[1];
+              if(I->DiscreteFlag) {
+                if((cs==I->DiscreteCSet[b1])&&(cs==I->DiscreteCSet[b2])) {
+                  a1=I->DiscreteAtmToIdx[b1];
+                  a2=I->DiscreteAtmToIdx[b2];
+                } else {
+                  a1=-1;
+                  a2=-1;
+                }
+              } else {
+                a1=cs->AtmToIdx[b1];
+                a2=cs->AtmToIdx[b2];
+              }
+              if((a1>=0)&&(a2>=0)) { 
+                nBond++;
+                VLACheck(bondVLA,BondType,nBond);
+                bondVLA[nBond-1]=*b;
+                bondVLA[nBond-1].index[0] = a1;
+                bondVLA[nBond-1].index[1] = a2;
+              }
+              b++;
+
+            }
+            /* unique_id handling? */
+            if(ok) ok = RawWrite(raw,cRaw_Bonds1,sizeof(BondType)*nBond,0,(char*)bondVLA);
+          }
+        }
+      }
+      if(raw) RawFree(raw);
+      VLAFreeP(aiVLA);
+      VLAFreeP(bondVLA);
+    }
+    break;
   }
-  if(raw) RawFree(raw);
-  VLAFreeP(aiVLA);
-  VLAFreeP(bondVLA);
   return(ok);
 }
 /*========================================================================*/

@@ -27,7 +27,7 @@ if __name__=='pymol.exporting':
     from chempy.sdf import SDF,SDFRec
     from cmd import _feedback,fb_module,fb_mask, \
                      DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
-                     is_list, is_dict, is_tuple
+                     is_list, is_dict, is_tuple, loadable
     import traceback
 
     def copy_image(quiet=1,_self=cmd): # incentive feature / proprietary
@@ -144,7 +144,7 @@ PYMOL API
         if _self._raising(r,_self): raise QuietException         
         return r
 
-    def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1,_self=cmd):
+    def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -168,7 +168,8 @@ NOTES
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            r = _cmd.get_pdb(_self._COb,str(selection),int(state)-1,0,str(ref),int(ref_state),int(quiet))
+            r = _cmd.get_pdb(_self._COb,str(selection),int(state)-1,0,
+                             str(ref),int(ref_state),int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException         
@@ -306,20 +307,35 @@ PYMOL API
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def multisave(filename, object, state=0, _self=cmd): # experimental -- deprecated
+    def multisave(filename, pattern, state=-1,
+                  append=0, format='', quiet=1, _self=cmd): 
         '''
 DESCRIPTION
 
-    "multisave" is an unsupported command that may have something to
-    do with writing multistate coordinate data to fragile version &
-    platform-specific binary (pmo) file.
+    "multisave" is an unsupported command.
     
     '''
         
         r = DEFAULT_ERROR
+        r = DEFAULT_ERROR
+        lc_filename=string.lower(filename)
+        if format=='':
+            # refactor following if/elif cascade 
+            # with a dictionary lookup
+            if re.search("\.pdb$|\.ent$",lc_filename):
+                format = 'pdb'
+            elif re.search("\.pmo$",lc_filename):
+                format = 'pmo'
+        if format == 'pdb':
+            ftype = loadable.pdb
+        elif format == 'pmo':
+            ftype = loadable.pmo
+        else:
+            ftype = loadable.pdb # default
         try:
             _self.lock(_self)
-            r = _cmd.multisave(_self._COb,str(filename),str(object),int(state)-1,0)
+            r = _cmd.multisave(_self._COb, str(filename), str(pattern),
+                               int(state)-1, int(append), int(ftype),int(quiet))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException

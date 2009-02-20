@@ -5788,12 +5788,14 @@ int ExecutiveSetGeometry(PyMOLGlobals *G,char *s1,int geom,int valence)
   return(ok);
 }
 /*========================================================================*/
-int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,int append)
+int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,
+                       int append,int format,int quiet)
 {
   int result=false;
   SpecRec *tRec;
   ObjectMolecule *objMol;
-  
+  int count = 0;
+
   PRINTFD(G,FB_Executive)
     " ExecutiveMultiSave-Debug: entered %s %s.\n",fname,name
     ENDFD;
@@ -5802,12 +5804,19 @@ int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,int appe
     if(tRec->type==cExecObject)
       if(tRec->obj->type==cObjectMolecule) {
         objMol =(ObjectMolecule*)tRec->obj;
-        result = ObjectMoleculeMultiSave(objMol,fname,state,append);
+        result = ObjectMoleculeMultiSave(objMol,fname,state,append,format,quiet);
+        if(result>=0) 
+          count++;
       }
   }
+  if(fname && fname[0] && !quiet) {
+    PRINTFB(G,FB_Executive,FB_Actions) 
+      " Multisave: wrote %d object(s) to '%s'.\n",count,fname
+      ENDFB(G);
+  }
   return(result);
-  
 }
+
 int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level,int state)
 {
   register CExecutive *I = G->Executive;
