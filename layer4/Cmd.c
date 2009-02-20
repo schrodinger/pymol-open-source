@@ -1417,9 +1417,9 @@ static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   char *name,*object;
-  int append,state;
+  int append,state,format,quiet;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"Ossii",&self,&name,&object,&state,&append);
+  ok = PyArg_ParseTuple(args,"Ossiiii",&self,&name,&object,&state,&append,&format,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -1427,7 +1427,7 @@ static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok=APIEnterNotModal(G))) {
-    ok = ExecutiveMultiSave(G,name,object,state,append);
+    ok = ExecutiveMultiSave(G,name,object,state,append,format,quiet);
     APIExit(G);
   }
   return APIResultOk(ok);
