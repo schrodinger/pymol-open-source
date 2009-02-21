@@ -2572,9 +2572,8 @@ ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals *G,ObjectMolecule *obj,ch
   return(I);
 }
 /*========================================================================*/
-int ObjectMoleculeMultiSave(ObjectMolecule *I,FILE *f,int state,int format,int quiet)
+int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname, FILE *f,int state,int append, int format,int quiet)
 {
-  /* version 1 writes atominfo, coords, spheroid, bonds */
   CRaw *raw = NULL;
   int ok=true;
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
@@ -2601,8 +2600,8 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,FILE *f,int state,int format,int q
       }
     }
     break;
-#if 0
-  case cLoadTypePMO:
+  case cLoadTypePMO:  /* version 1 writes atominfo, coords, spheroid, bonds */
+
     {
       int a,c,a1,a2,b1,b2;
       BondType *b;
@@ -2703,7 +2702,6 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,FILE *f,int state,int format,int q
       VLAFreeP(bondVLA);
     }
     break;
-#endif
   }
   return(ok);
 }

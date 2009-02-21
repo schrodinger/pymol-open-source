@@ -5043,11 +5043,12 @@ int SelectorGetSeleNCSet(PyMOLGlobals *G,int sele)
       if(obj!=last_obj) {
         at=I->Table[a].atom;
         s=obj->AtomInfo[at].selEntry;
-        if(SelectorIsMember(G,s,sele))
+        if(SelectorIsMember(G,s,sele)) {
           if(result<obj->NCSet) {
             result=obj->NCSet;
             last_obj = obj;
           }
+        }
       }
     }
   }
@@ -7627,42 +7628,42 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
 
 int SelectorCreateFromTagDict(PyMOLGlobals *G,char *sname, OVOneToAny *id2tag, int exec_managed)
 {
-  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,NULL,0,NULL, NULL,0,id2tag, exec_managed, -2,-1);
+  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,NULL,0,NULL, NULL,0,id2tag, exec_managed, -1,-1);
 }
 
 int SelectorCreateEmpty(PyMOLGlobals *G,char *name,int exec_managed)
 {
-  return _SelectorCreate(G,name, "none", NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL, exec_managed, -2,-1);
+  return _SelectorCreate(G,name, "none", NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL, exec_managed, -1,-1);
 }
 int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele)
 {
-  return _SelectorCreate(G,name, sele, NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL, -1, -2,-1);  
+  return _SelectorCreate(G,name, sele, NULL, 1, NULL, NULL, 0, NULL, 0, 0, NULL, -1, -1,-1);  
 }
 int SelectorCreateFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx)
 {
-  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,-1,NULL, -1, -2,-1); /* n_obj = -1 disables numbered tags */
+  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,-1,NULL, -1, -1,-1); /* n_obj = -1 disables numbered tags */
 }
 int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx)
 {
-  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,0,NULL,-1,-2,-1); /* assigned numbered tags */
+  return _SelectorCreate(G,sname,NULL,&obj,true,NULL,NULL,0,&idx,&n_idx,0,NULL,-1,-1,-1); /* assigned numbered tags */
 }
 int SelectorCreateOrderedFromMultiObjectIdxTag(PyMOLGlobals *G,char *sname, 
                                                ObjectMolecule **obj,
                                                int **idx_tag,
                                                int *n_idx, int n_obj)
 {
-  return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,idx_tag,n_idx,n_obj,NULL,-1,-2,-1);
+  return _SelectorCreate(G,sname,NULL,obj,true,NULL,NULL,0,idx_tag,n_idx,n_obj,NULL,-1,-1,-1);
 }
 #if 0
 static int SelectorCreateFromSeqRowVLA(PyMOLGlobals *G,char *sname,CSeqRow *rowVLA,int nRow)
 {
-  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0,0,NULL,-1,-2,-1);
+  return _SelectorCreate(G,sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0,0,NULL,-1,-1,-1);
 }
 #endif
 
 int SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp)
 {
-  return _SelectorCreate(G,sname,sele,&obj,quiet,mp,NULL,0,NULL,0,0,NULL,-1,-2,-1);
+  return _SelectorCreate(G,sname,sele,&obj,quiet,mp,NULL,0,NULL,0,0,NULL,-1,-1,-1);
 }
 
 int SelectorCreateWithStateDomain(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule *obj,
@@ -7933,7 +7934,7 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
           /* proceed... */
           break;
         case cSelectorUpdateTableCurrentState:
-          state = SceneGetState(G);
+          state = SettingGetGlobal_i(G,cSetting_state)-1;
           break;
         case cSelectorUpdateTableEffectiveStates:
           state = ObjectGetCurrentState(o,true);
