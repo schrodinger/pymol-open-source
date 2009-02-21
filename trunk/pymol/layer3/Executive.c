@@ -5812,52 +5812,53 @@ int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,
   FILE *f = NULL;
   
   PRINTFD(G,FB_Executive)
-    " ExecutiveMultiSave-Debug: entered  %s.\n",fname,name
+    " ExecutiveMultiSave-Debug: entered  %s.\n",name
     ENDFD;
-  if(append) {
-    f = fopen(fname,"ab");
-  } else {
-    f = fopen(fname,"wb");
+  if(format == cLoadTypePDB){
+    if(append) {
+      f = fopen(fname,"ab");
+    } else {
+      f = fopen(fname,"wb");
+    }
   }
-  if(f) {
-    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
-      if(rec) {
-        switch(rec->type) {
-        case cExecAll:
-          rec = NULL;
-          while(ListIterate(I->Spec,rec,next)) {
-            if(rec->type==cExecObject) {
-              if(rec->obj->type==cObjectMolecule) {
-                ObjectMolecule *obj =(ObjectMolecule*)rec->obj;
-                result = ObjectMoleculeMultiSave(obj,f,state,format,quiet);
-                append = true;
-                if(result>=0) 
-                  count++;
-              }
+  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+    if(rec) {
+      switch(rec->type) {
+      case cExecAll:
+        rec = NULL;
+        while(ListIterate(I->Spec,rec,next)) {
+          if(rec->type==cExecObject) {
+            if(rec->obj->type==cObjectMolecule) {
+              ObjectMolecule *obj =(ObjectMolecule*)rec->obj;
+              result = ObjectMoleculeMultiSave(obj,fname,f,state,append,format,quiet);
+              append = true;
+              if(result>=0) 
+                count++;
             }
           }
-        
-          break;
-        case cExecObject:
-          if(rec->obj->type==cObjectMolecule) {
-            ObjectMolecule *obj =(ObjectMolecule*)rec->obj;
-            result = ObjectMoleculeMultiSave(obj,f,state,format,quiet);
-            append = true;
-            if(result>=0) 
-              count++;
-          }
-          break;
         }
+        break;
+      case cExecObject:
+        if(rec->obj->type==cObjectMolecule) {
+          ObjectMolecule *obj =(ObjectMolecule*)rec->obj;
+          result = ObjectMoleculeMultiSave(obj,fname, f,state,append,format,quiet);
+          append = true;
+          if(result>=0) 
+            count++;
+        }
+        break;
       }
     }
+  }
   
-    TrackerDelList(I_Tracker, list_id);
-    TrackerDelIter(I_Tracker, iter_id);
-    if(fname && fname[0] && !quiet) {
-      PRINTFB(G,FB_Executive,FB_Actions) 
-        " Multisave: wrote %d object(s) to '%s'.\n",count,fname
-        ENDFB(G);
-    }
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+  if(fname && fname[0] && !quiet) {
+    PRINTFB(G,FB_Executive,FB_Actions) 
+      " Multisave: wrote %d object(s) to '%s'.\n",count,fname
+      ENDFB(G);
+  }
+  if(f) {
     fclose(f);
   }
   return result;
