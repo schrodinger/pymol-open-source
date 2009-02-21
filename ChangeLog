@@ -4,6 +4,12 @@ CHANGE LOG
 
 2009-02-08 Warren L. DeLano <warren@delsci.com>	
 
+	* refactored multisave commmand
+
+	* improved read-in performance for concatenated PDB files
+	
+2009-02-08 Warren L. DeLano <warren@delsci.com>	
+
 	* fixed stupid load-from-URL bug...
 	
 	* GZ compression support for common input formats
