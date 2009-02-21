@@ -315,9 +315,8 @@ DESCRIPTION
     "multisave" is an unsupported command.
     
     '''
-        
         r = DEFAULT_ERROR
-        r = DEFAULT_ERROR
+        filename = _self.exp_path(filename)        
         lc_filename=string.lower(filename)
         if format=='':
             # refactor following if/elif cascade 

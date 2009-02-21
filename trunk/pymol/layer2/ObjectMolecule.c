@@ -2572,29 +2572,22 @@ ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals *G,ObjectMolecule *obj,ch
   return(I);
 }
 /*========================================================================*/
-int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,
-                            int append,int format,int quiet)
+int ObjectMoleculeMultiSave(ObjectMolecule *I,FILE *f,int state,int format,int quiet)
 {
   /* version 1 writes atominfo, coords, spheroid, bonds */
   CRaw *raw = NULL;
   int ok=true;
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
-    " ObjectMoleculeMultiSave-Debug: entered \"%s\" state=%d\n",fname,state
+    " ObjectMoleculeMultiSave-Debug: entered  state=%d\n",state
     ENDFD;
   switch(format) {
   case cLoadTypePDB:
     {
-      FILE *f = NULL;
-      if(append) {
-        f = fopen(fname,"ab");
-      } else {
-        f = fopen(fname,"wb");
-      }
       if(f) {
         fprintf(f,"HEADER %s\n",I->Obj.Name);
         {
           char *pdb = ExecutiveSeleToPDBStr(I->Obj.G, I->Obj.Name,
-                                            state, true, 0, NULL, 0, quiet);
+                                            state, true, 0, NULL, 0, I, quiet);
           if(pdb) {
             fwrite(pdb,strlen(pdb),1,f);
             if(!quiet) {
@@ -2606,9 +2599,9 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,
           FreeP(pdb);
         }
       }
-      fclose(f);
     }
     break;
+#if 0
   case cLoadTypePMO:
     {
       int a,c,a1,a2,b1,b2;
@@ -2710,6 +2703,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,
       VLAFreeP(bondVLA);
     }
     break;
+#endif
   }
   return(ok);
 }

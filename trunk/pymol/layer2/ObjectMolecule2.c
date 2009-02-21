@@ -3865,26 +3865,32 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
         
         map=MapNew(G,max_cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
         if(map) {
+          int dim12 = map->D1D2;
+          int dim2 = map->Dim[2];
+
           for(i=0;i<cs->NIndex;i++) {
             if(nBond>maxBond)
               break; 
             v1=cs->Coord+(3*i);
+
+            a1=cs->IdxToAtm[i];
+            ai1=ai+a1;
+            
             MapLocus(map,v1,&a,&b,&c);
-            for(d=a-1;d<=a+1;d++)
-              for(e=b-1;e<=b+1;e++)
+            for(d=a-1;d<=a+1;d++) {
+              int *j_ptr1 = map->Head + d * dim12 + (b-1) * dim2;
+              for(e=b-1;e<=b+1;e++) {
+                int *j_ptr2 = j_ptr1 + c-1;
+                j_ptr1 += dim2;
                 for(f=c-1;f<=c+1;f++) {
-                  
-                  j = *(MapFirst(map,d,e,f));
+                  j = *(j_ptr2++); /*  *MapFirst(map,d,e,f)); */
                   while(j>=0) {
                     
                     if(i<j) {
                       v2 = cs->Coord + (3*j);
                       dst = (float)diff3f(v1,v2);										
                       
-                      a1=cs->IdxToAtm[i];
                       a2=cs->IdxToAtm[j];
-                      
-                      ai1=ai+a1;
                       ai2=ai+a2;
                       
                       dst -= ((ai1->vdw+ai2->vdw)/2);
@@ -4006,6 +4012,8 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                     j=MapNext(map,j);
                   }
                 }
+              }
+            }
           }
         do_it_again:
           MapFree(map);

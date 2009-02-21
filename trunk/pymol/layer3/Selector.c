@@ -4174,21 +4174,20 @@ ObjectMolecule *SelectorGetSingleObjectMolecule(PyMOLGlobals *G,int sele)
   int at1;
   SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
 
-  for(a=0;a<I->NAtom;a++)
-    {
-      obj=I->Obj[I->Table[a].model];
-      at1=I->Table[a].atom;
-      if(SelectorIsMember(G,obj->AtomInfo[at1].selEntry,sele)) {
-        if(result) {
-          if(result!=obj) {
-            result=NULL;
-            break;
-          }
-        } else {
-          result=obj;
+  for(a=0;a<I->NAtom;a++) {
+    obj=I->Obj[I->Table[a].model];
+    at1=I->Table[a].atom;
+    if(SelectorIsMember(G,obj->AtomInfo[at1].selEntry,sele)) {
+      if(result) {
+        if(result!=obj) {
+          result=NULL;
+          break;
         }
+      } else {
+        result=obj;
       }
     }
+  }
   return(result);
 }
 /*========================================================================*/
@@ -6111,7 +6110,8 @@ int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,
 
 /*========================================================================*/
 int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
-                   int conectFlag,PDBInfoRec *pdb_info,int *counter, double *ref)
+                   int conectFlag,PDBInfoRec *pdb_info,int *counter, double *ref,
+                   ObjectMolecule *single_object)
 {
   register CSelector *I=G->Selector;
 
@@ -6125,7 +6125,13 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
   CoordSet *cs,*mat_cs = NULL;
   ObjectMolecule *obj,*last_obj=NULL;
   AtomInfoType *atInfo,*ai,*last = NULL;
-  SelectorUpdateTable(G,state,-1);
+  
+  if(!single_object) {
+    SelectorUpdateTable(G,state,-1);
+  } else {
+    SelectorUpdateTableSingleObject(G,single_object,state,
+                                    false,NULL,0,false);
+  }
 
   if(pdb_info->is_pqr_file)
     use_ter = false;

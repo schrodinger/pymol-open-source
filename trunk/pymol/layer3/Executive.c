@@ -5809,48 +5809,56 @@ int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
   SpecRec *rec;
   int count = 0;
-
+  FILE *f = NULL;
+  
   PRINTFD(G,FB_Executive)
-    " ExecutiveMultiSave-Debug: entered %s %s.\n",fname,name
+    " ExecutiveMultiSave-Debug: entered  %s.\n",fname,name
     ENDFD;
-
-  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
-    if(rec) {
-      switch(rec->type) {
-      case cExecAll:
-        rec = NULL;
-        while(ListIterate(I->Spec,rec,next)) {
-          if(rec->type==cExecObject) {
-            if(rec->obj->type==cObjectMolecule) {
-              ObjectMolecule *obj =(ObjectMolecule*)rec->obj;
-              result = ObjectMoleculeMultiSave(obj,fname,state,append,format,quiet);
-              append = true;
-              if(result>=0) 
-                count++;
+  if(append) {
+    f = fopen(fname,"ab");
+  } else {
+    f = fopen(fname,"wb");
+  }
+  if(f) {
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        switch(rec->type) {
+        case cExecAll:
+          rec = NULL;
+          while(ListIterate(I->Spec,rec,next)) {
+            if(rec->type==cExecObject) {
+              if(rec->obj->type==cObjectMolecule) {
+                ObjectMolecule *obj =(ObjectMolecule*)rec->obj;
+                result = ObjectMoleculeMultiSave(obj,f,state,format,quiet);
+                append = true;
+                if(result>=0) 
+                  count++;
+              }
             }
           }
-        }
         
-        break;
-      case cExecObject:
-        if(rec->obj->type==cObjectMolecule) {
-          ObjectMolecule *obj =(ObjectMolecule*)rec->obj;
-          result = ObjectMoleculeMultiSave(obj,fname,state,append,format,quiet);
-          append = true;
-          if(result>=0) 
-            count++;
+          break;
+        case cExecObject:
+          if(rec->obj->type==cObjectMolecule) {
+            ObjectMolecule *obj =(ObjectMolecule*)rec->obj;
+            result = ObjectMoleculeMultiSave(obj,f,state,format,quiet);
+            append = true;
+            if(result>=0) 
+              count++;
+          }
+          break;
         }
-        break;
       }
     }
-  }
   
-  TrackerDelList(I_Tracker, list_id);
-  TrackerDelIter(I_Tracker, iter_id);
-  if(fname && fname[0] && !quiet) {
-    PRINTFB(G,FB_Executive,FB_Actions) 
-      " Multisave: wrote %d object(s) to '%s'.\n",count,fname
-      ENDFB(G);
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+    if(fname && fname[0] && !quiet) {
+      PRINTFB(G,FB_Executive,FB_Actions) 
+        " Multisave: wrote %d object(s) to '%s'.\n",count,fname
+        ENDFB(G);
+    }
+    fclose(f);
   }
   return result;
 }
@@ -8224,7 +8232,9 @@ char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals *G,char *name,int state,int for
 }
 /*========================================================================*/
 char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
-                            int mode,char *ref_object,int ref_state,int quiet)
+                            int mode,char *ref_object,int ref_state,
+                            ObjectMolecule *single_object,
+                            int quiet)
 {
   char *result=NULL;
   ObjectMoleculeOpRec op1;
@@ -8262,7 +8272,10 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
   ObjectMoleculeOpRecInit(&op1);
   sele1=SelectorIndexByName(G,s1);
   if(sele1>=0) {
-    obj = SelectorGetSingleObjectMolecule(G,sele1);
+    if(!single_object) 
+      obj = SelectorGetSingleObjectMolecule(G,sele1);
+    else
+      obj = single_object;
     if(obj)
       if(obj->DiscreteFlag) {
         counter=&count; /* discrete objects need atom counters between states */
@@ -8307,7 +8320,8 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
     
     if(conectFlag) {
       op1.i2=SelectorGetPDB(G,&op1.charVLA,op1.i2,sele1,
-                            actual_state,conectFlag,&pdb_info,counter,ref_mat);
+                            actual_state,conectFlag,&pdb_info,counter,ref_mat,
+                            single_object);
     } else {
       op1.i3 = 0; /* atIndex */
       if(sele1>=0) {
