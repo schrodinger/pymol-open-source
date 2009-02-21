@@ -307,7 +307,7 @@ PYMOL API
         if _self._raising(r,_self): raise QuietException
         return r
 
-    def multisave(filename, pattern, state=-1,
+    def multisave(filename, pattern="all", state=-1,
                   append=0, format='', quiet=1, _self=cmd): 
         '''
 DESCRIPTION
