@@ -2993,6 +2993,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
   ProcPDBRec *current = NULL;
   PDBInfoRec pdb_info_rec;
   int model_number;
+  CObject *deferred_zoom_obj = NULL;
 
   if(!pdb_info) {
     UtilZeroMem(&pdb_info_rec,sizeof(PDBInfoRec));
@@ -3166,6 +3167,11 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
         }
 
         if(obj) {
+          int do_zoom = repeat_flag ? 0 : zoom;
+          if(do_zoom != zoom)
+            deferred_zoom_obj = obj;
+          else
+            deferred_zoom_obj = NULL;
           ExecutiveManageObject(G,obj,zoom,true);
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
@@ -3188,12 +3194,16 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
             
         }
       }
-    } 
+    }
 
     if(obj&&current) {
       current->obj = (ObjectMolecule*)obj;
       n_processed++;
     }
+  }
+
+  if(deferred_zoom_obj) {
+    ExecutiveDoZoom(G,deferred_zoom_obj,true,zoom,true);
   }
 
   /* BEGIN METAPHORICS ANNOTATION AND ALIGNMENT CODE */
