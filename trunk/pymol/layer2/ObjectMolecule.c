@@ -2586,7 +2586,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,
     {
       FILE *f = NULL;
       if(append) {
-        f = fopen(fname,"wba");
+        f = fopen(fname,"ab");
       } else {
         f = fopen(fname,"wb");
       }

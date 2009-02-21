@@ -5802,30 +5802,57 @@ int ExecutiveSetGeometry(PyMOLGlobals *G,char *s1,int geom,int valence)
 int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,
                        int append,int format,int quiet)
 {
-  int result=false;
-  SpecRec *tRec;
-  ObjectMolecule *objMol;
+  register CExecutive *I = G->Executive;
+  int result=true;
+  CTracker *I_Tracker= I->Tracker;
+  int list_id = ExecutiveGetNamesListFromPattern(G,name,true,true);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  SpecRec *rec;
   int count = 0;
 
   PRINTFD(G,FB_Executive)
     " ExecutiveMultiSave-Debug: entered %s %s.\n",fname,name
     ENDFD;
-  tRec = ExecutiveFindSpec(G,name);
-  if(tRec) {
-    if(tRec->type==cExecObject)
-      if(tRec->obj->type==cObjectMolecule) {
-        objMol =(ObjectMolecule*)tRec->obj;
-        result = ObjectMoleculeMultiSave(objMol,fname,state,append,format,quiet);
-        if(result>=0) 
-          count++;
+
+  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+    if(rec) {
+      switch(rec->type) {
+      case cExecAll:
+        rec = NULL;
+        while(ListIterate(I->Spec,rec,next)) {
+          if(rec->type==cExecObject) {
+            if(rec->obj->type==cObjectMolecule) {
+              ObjectMolecule *obj =(ObjectMolecule*)rec->obj;
+              result = ObjectMoleculeMultiSave(obj,fname,state,append,format,quiet);
+              append = true;
+              if(result>=0) 
+                count++;
+            }
+          }
+        }
+        
+        break;
+      case cExecObject:
+        if(rec->obj->type==cObjectMolecule) {
+          ObjectMolecule *obj =(ObjectMolecule*)rec->obj;
+          result = ObjectMoleculeMultiSave(obj,fname,state,append,format,quiet);
+          append = true;
+          if(result>=0) 
+            count++;
+        }
+        break;
       }
+    }
   }
+  
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
   if(fname && fname[0] && !quiet) {
     PRINTFB(G,FB_Executive,FB_Actions) 
       " Multisave: wrote %d object(s) to '%s'.\n",count,fname
       ENDFB(G);
   }
-  return(result);
+  return result;
 }
 
 int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level,int state)
