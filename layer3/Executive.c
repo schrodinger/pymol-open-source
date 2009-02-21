@@ -3172,7 +3172,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
             deferred_zoom_obj = obj;
           else
             deferred_zoom_obj = NULL;
-          ExecutiveManageObject(G,obj,zoom,true);
+          ExecutiveManageObject(G,obj,do_zoom,true);
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
           if(buf) {
