@@ -9273,9 +9273,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
     " ObjectMoleculeSeleOp-DEBUG: sele %d op->code %d\n",sele,op->code
     ENDFD;
   if(sele>=0) {
-    /* SelectorUpdateTableSingleObject(G,I,false,NULL,0);
-    ** WLD 050808 -- why is the above statement present??? */
-    
     /* always run on entry */
     switch(op->code) {
     case OMOP_ALTR: 

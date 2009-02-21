@@ -3374,7 +3374,8 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
   return ok;
 }
 
-int  ExecutiveAssignSS(PyMOLGlobals *G,char *target,int state,char *context,int preserve,int quiet)
+int ExecutiveAssignSS(PyMOLGlobals *G,char *target,int state,char *context,
+                      int preserve,ObjectMolecule *single_object,int quiet)
 {
   int sele0=-1;
   int sele1=-1;
@@ -3387,7 +3388,7 @@ int  ExecutiveAssignSS(PyMOLGlobals *G,char *target,int state,char *context,int 
       sele1 = SelectorIndexByName(G,context);
     }
     if(sele1>=0) {
-      ok =  SelectorAssignSS(G,sele0,sele1,state,preserve,quiet);
+      ok = SelectorAssignSS(G,sele0,sele1,state,preserve,single_object,quiet);
     }
   }
   return(ok);
@@ -13547,7 +13548,7 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
     if(obj->type==cObjectMolecule) {
       ObjectMolecule *objMol = (ObjectMolecule*)obj;
       if(objMol->NCSet==1) {
-        ExecutiveAssignSS(G,obj->Name,0,NULL,1,1);
+        ExecutiveAssignSS(G,obj->Name,0,NULL,true,objMol,true);
       }
     }
   }
