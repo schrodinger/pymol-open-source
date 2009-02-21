@@ -50,8 +50,6 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain);
 #define cSelectorUpdateTableCurrentState -2
 #define cSelectorUpdateTableEffectiveStates -3
 
-int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
-                                     int no_dummies,int *idx,int n_idx,int numbered_tags);
 
 int SelectorIndexByName(PyMOLGlobals *G,char *sele);
 char *SelectorGetNameFromIndex(PyMOLGlobals *G,int index);
@@ -133,7 +131,8 @@ void SelectorReinit(PyMOLGlobals *G);
 PyObject *SelectorSecretsAsPyList(PyMOLGlobals *G);
 int SelectorSecretsFromPyList(PyMOLGlobals *G,PyObject *list);
 void SelectorMemoryDump(PyMOLGlobals *G);
-int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int preserve,int quiet);
+int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,
+                     int preserve,ObjectMolecule *single_object,int quiet);
 
 int SelectorPurgeObjectMembers(PyMOLGlobals *G,ObjectMolecule *obj);
 void SelectorDefragment(PyMOLGlobals *G);

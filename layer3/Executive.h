@@ -361,7 +361,8 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
                            int state,int quiet,int updates);
 
 
-int  ExecutiveAssignSS(PyMOLGlobals *G,char *target,int state,char *context,int preserve,int quiet);
+int  ExecutiveAssignSS(PyMOLGlobals *G,char *target,int state,char *context,int preserve,
+                       ObjectMolecule *single_object,int quiet);
 
 int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,float *range,
                         float *color,int src_state,char *sele,

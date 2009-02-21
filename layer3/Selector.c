@@ -159,6 +159,10 @@ static int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp);
 static int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *obj,int at1,int at2,
                            int *zero,int *scratch);
 
+static int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
+                                            int req_state,
+                                            int no_dummies,int *idx,
+                                            int n_idx,int numbered_tags);
 
 static int SelectorGetObjAtmOffset(CSelector *I,ObjectMolecule *obj,int offset)
 {
@@ -1137,7 +1141,8 @@ int SelectorClassifyAtoms(PyMOLGlobals *G,int sele, int preserve,ObjectMolecule 
   int n_dummies = 0;
 
   if(only_object) {
-    SelectorUpdateTableSingleObject(G,only_object,true,NULL,0,false);  
+    SelectorUpdateTableSingleObject(G,only_object,cSelectorUpdateTableAllStates,
+                                    true,NULL,0,false);  
     n_dummies = 0;
   } else {
     SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
@@ -1398,7 +1403,7 @@ void SelectorComputeFragPos(PyMOLGlobals *G,ObjectMolecule *obj,int state,int n_
   WordType name;
   int *sele;
   int *cnt;
-  SelectorUpdateTableSingleObject(G,obj,true,NULL,0,false);
+  SelectorUpdateTableSingleObject(G,obj,cSelectorUpdateTableAllStates,true,NULL,0,false);
   sele = Alloc(int,n_frag);
   cnt = Calloc(int,n_frag);
   VLACheck(*vla,float,n_frag*3+2);
@@ -1587,7 +1592,7 @@ void SelectorSelectByID(PyMOLGlobals *G,char *name,ObjectMolecule *obj,int *id,i
   /* this routine only works if IDs cover a reasonable range --
      should rewrite using a hash table */
 
-  SelectorUpdateTableSingleObject(G,obj,true,NULL,0,false);
+  SelectorUpdateTableSingleObject(G,obj,cSelectorUpdateTableAllStates,true,NULL,0,false);
   atom = Calloc(int,I->NAtom);
   if(I->NAtom) {
 
@@ -1783,7 +1788,8 @@ typedef struct {
   int present;
 } SSResi;
 
-int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int preserve,int quiet)
+int SelectorAssignSS(PyMOLGlobals *G,int target,int present,
+                     int state_value,int preserve,ObjectMolecule *single_object,int quiet)
 {
 
   /* PyMOL's secondary structure assignment algorithm: 
@@ -1812,18 +1818,22 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
   int first_last_only = false;
   int first_pass = true;
 
-  if(state_value<0) {
-    switch(state_value) {
-    case -2: /* api: state=-1: current global state */
-    case -3: /* api: state=-2: effective object states TO DO! */
+  if(!single_object) {
+    if(state_value<0) {
+      switch(state_value) {
+      case -2: /* api: state=-1: current global state */
+      case -3: /* api: state=-2: effective object states TO DO! */
+        SelectorUpdateTable(G,state_value,-1);
+        break;
+      default:
+        SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
+        break;
+      }
+    } else {
       SelectorUpdateTable(G,state_value,-1);
-      break;
-    default:
-      SelectorUpdateTable(G,cSelectorUpdateTableAllStates,-1);
-      break;
     }
   } else {
-    SelectorUpdateTable(G,state_value,-1);
+    SelectorUpdateTableSingleObject(G,single_object,state_value,false,NULL,0,0);
   }
 
   res = VLACalloc(SSResi,1000);
@@ -1847,7 +1857,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
     CoordSet *cs;
     ObjectMolecule *last_obj = NULL;
     /* first, we need to count the number of residues under consideration */
-  
+
     if(first_pass) {
       for(a=cNDummyAtoms;a<I->NAtom;a++) {
         
@@ -2902,7 +2912,6 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
   }
        
   VLAFreeP(res);
- 
   return 1;
 }
 
@@ -7567,9 +7576,11 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
       if(n_obj<=0) {
         embed_obj = *obj;
         if(obj_idx && n_idx) {
-          atom=SelectorUpdateTableSingleObject(G,embed_obj,false,*obj_idx,*n_idx, (n_obj==0));
+          atom=SelectorUpdateTableSingleObject(G,embed_obj,cSelectorUpdateTableAllStates,
+                                               false,*obj_idx,*n_idx, (n_obj==0));
         } else {
-          atom=SelectorUpdateTableSingleObject(G,embed_obj,false,NULL,0, (n_obj==0));
+          atom=SelectorUpdateTableSingleObject(G,embed_obj,cSelectorUpdateTableAllStates,
+                                               false,NULL,0, (n_obj==0));
         }
       } else {
         atom=SelectorUpdateTableMultiObjectIdxTag(G,obj,false,obj_idx,n_idx,n_obj);
@@ -7687,15 +7698,17 @@ static void SelectorClean(PyMOLGlobals *G)
   I->NAtom = 0;
 }
 /*========================================================================*/
-int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
-                                     int no_dummies,int *idx,
-                                     int n_idx,int numbered_tags)
+static int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
+                                            int req_state,
+                                            int no_dummies,int *idx,
+                                            int n_idx,int numbered_tags)
 {
   int a=0;
   int c=0;
   int modelCnt;
   int *result = NULL;
   int tag=true;
+  int state = req_state;
   register CSelector *I=G->Selector;
 
   PRINTFD(G,FB_Selector)
@@ -7704,7 +7717,31 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
  
   SelectorClean(G);
 
-  I->SeleBaseOffsetsValid = true; /* all states -> all atoms -> offsets valid */
+  switch(req_state) {
+  case cSelectorUpdateTableAllStates:
+    state = req_state;
+    break;
+  case cSelectorUpdateTableEffectiveStates:
+    state = ObjectGetCurrentState(&obj->Obj,true);
+    break;
+  case cSelectorUpdateTableCurrentState:
+    state = SceneGetState(G);
+    break;
+  default: 
+    if(req_state<0) 
+      state = cSelectorUpdateTableAllStates; /* fail safe */
+    break;
+  }
+
+  switch(req_state) {
+  case cSelectorUpdateTableAllStates:
+    I->SeleBaseOffsetsValid = true; /* all states -> all atoms -> offsets valid */
+    break;
+  default:
+    I->SeleBaseOffsetsValid = false; /* not including all atoms, so atom-based offsets are invalid */
+    break;
+  }
+
   I->NCSet = 0;
   if(no_dummies) {
     modelCnt = 0;
@@ -7730,12 +7767,36 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
   I->Obj[modelCnt]=obj;
 
   obj->SeleBase=c; 
-  for(a=0;a<obj->NAtom;a++)
-    {
+
+  if(state<0) {
+    for(a=0;a<obj->NAtom;a++) {
       I->Table[c].model=modelCnt;
       I->Table[c].atom=a;
       c++;
     }
+  } else if(state<obj->NCSet) {
+    register TableRec *rec = I->Table + c;
+    CoordSet *cs = obj->CSet[state];
+    if(cs) {
+      for(a=0;a<obj->NAtom;a++) {
+        int ix;
+        if(obj->DiscreteFlag) {
+          if(cs == obj->DiscreteCSet[a])
+            ix=obj->DiscreteAtmToIdx[a];
+          else
+            ix=-1;
+        } else 
+          ix=cs->AtmToIdx[a];
+        if(ix>=0) {
+          rec->model = modelCnt;
+          rec->atom = a;
+          rec++;
+        }
+      }
+    }
+    c = rec - I->Table;
+  }
+  
   if(idx&&n_idx) {
     result = Calloc(int,c);
     if(n_idx>0) {
@@ -7855,7 +7916,6 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
     state = SceneGetState(G); /* just in case... */
   }
 
-
   while(ExecutiveIterateObject(G,&o,&hidden)) {
     if(o->type==cObjectMolecule) {
       register int skip_flag = false;
@@ -7865,6 +7925,9 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
         case cSelectorUpdateTableAllStates:
           state = -1; /* all states */
           /* proceed... */
+          break;
+        case cSelectorUpdateTableCurrentState:
+          state = SceneGetState(G);
           break;
         case cSelectorUpdateTableEffectiveStates:
           state = ObjectGetCurrentState(o,true);

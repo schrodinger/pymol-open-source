@@ -7607,7 +7607,7 @@ static PyObject *CmdAssignSS(PyObject *self, PyObject *args)
   if(ok && (ok=APIEnterNotModal(G))) {
     ok = ((SelectorGetTmp(G,str1,s1)>=0) &&
           (SelectorGetTmp(G,str2,s2)>=0));
-    if(ok) ok = ExecutiveAssignSS(G,s1,state,s2,preserve,quiet);
+    if(ok) ok = ExecutiveAssignSS(G,s1,state,s2,preserve,NULL,quiet);
     APIExit(G);
   }
   return APIResultOk(ok);
