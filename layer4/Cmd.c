@@ -4788,7 +4788,7 @@ static PyObject *CmdGetPDB(PyObject *self, PyObject *args)
     if(!ref_object[0]) ref_object = NULL;
     if( (ok=APIEnterNotModal(G)) ) {
       ok = (SelectorGetTmp(G,str1,s1)>=0);
-      pdb=ExecutiveSeleToPDBStr(G,s1,state,true,mode,ref_object,ref_state,quiet);
+      pdb=ExecutiveSeleToPDBStr(G,s1,state,true,mode,ref_object,ref_state,NULL,quiet);
       SelectorFreeTmp(G,s1);
       APIExit(G);
     }

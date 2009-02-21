@@ -261,7 +261,9 @@ char *ExecutiveGetChains(PyMOLGlobals *G,char *sele,int state,int *null_chain);
 void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
                      int state,float animate,int complete,float buffer,int quiet);
 char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,
-                            int mode,char *ref_object,int ref_state,int quiet);
+                            int mode,char *ref_object,int ref_state,
+                            ObjectMolecule *single_object,
+                            int quiet);
 char *ExecutiveNameToSeqAlignStrVLA(PyMOLGlobals *G,char *name,int state,int format,int quiet);
 
 int ExecutiveStereo(PyMOLGlobals *G,int flag);

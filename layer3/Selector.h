@@ -59,7 +59,8 @@ void SelectorFreeTmp(PyMOLGlobals *G,char *name);
 int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store);
 int SelectorCheckTmp(PyMOLGlobals *G,char *name);
 int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
-                   int conectFlag,PDBInfoRec *pdb_info,int *counter,double *ref);
+                   int conectFlag,PDBInfoRec *pdb_info,int *counter,double *ref,
+                   ObjectMolecule *single_object);
 PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref);
 float SelectorSumVDWOverlap(PyMOLGlobals *G,int sele1,int state1,
                             int sele2,int state2,float adjust);
