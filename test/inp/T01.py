@@ -81,6 +81,18 @@ t = threading.Thread(target=selector)
 t.setDaemon(1)
 t.start()
 
+def do():
+   while 1:
+      time.sleep(random.random()*0.4)
+      cmd.do("count_atoms")
+      time.sleep(random.random()*0.3)      
+      cmd.do("show sticks")
+      time.sleep(random.random()*0.6)      
+      cmd.do("print len(cmd.get_model().atom)")
+      
+t = threading.Thread(target=do)
+t.setDaemon(1)
+t.start()
 
 def viewport():
    while 1:
@@ -95,7 +107,7 @@ t.start()
 
 def get_model():
    while 1:
-      time.sleep(random.random()*0.1)
+      time.sleep(random.random()*0.3)
       cmd.get_model("?obj1")
       cmd.get_model()
       
