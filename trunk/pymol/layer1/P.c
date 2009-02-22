@@ -2122,15 +2122,14 @@ void PLogFlush(PyMOLGlobals *G)
   PyObject *log;
   int blocked;
   mode = (int)SettingGet(G,cSetting_logging);
-  if(mode)
-    {
-      blocked = PAutoBlock(G);
-      log = PyDict_GetItemString(P_pymol_dict,P_log_file_str);
-      if(log&&(log!=Py_None)) {
-        PyObject_CallMethod(log,"flush","");
-      }
-      PAutoUnblock(G,blocked);
+  if(mode) {
+    blocked = PAutoBlock(G);
+    log = PyDict_GetItemString(P_pymol_dict,P_log_file_str);
+    if(log&&(log!=Py_None)) {
+      PyObject_CallMethod(log,"flush","");
     }
+    PAutoUnblock(G,blocked);
+  }
 }
 
 int PFlush(PyMOLGlobals *G) {  
@@ -2141,27 +2140,30 @@ int PFlush(PyMOLGlobals *G) {
   if(OrthoCommandWaiting(G)) {
     did_work = true;
     PBlock(G);
-    while(OrthoCommandOut(G,buffer)) {
-      OrthoCommandNest(G,1);
-      PUnlockAPIWhileBlocked(G);
-      if(PyErr_Occurred()) {
-        PyErr_Print();
-        PRINTFB(G,FB_Python,FB_Errors)
-          " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
-          ENDFB(G);
+    if(!(PIsGlutThread() && G->P_inst->glut_thread_keep_out)) {
+      /* don't run if we're currently banned */
+      while(OrthoCommandOut(G,buffer)) {
+        OrthoCommandNest(G,1);
+        PUnlockAPIWhileBlocked(G);
+        if(PyErr_Occurred()) {
+          PyErr_Print();
+          PRINTFB(G,FB_Python,FB_Errors)
+            " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
+            ENDFB(G);
+        }
+        PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0)); 
+        err = PyErr_Occurred();
+        if(err) {
+          PyErr_Print();
+          PRINTFB(G,FB_Python,FB_Errors)
+            " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
+            ENDFB(G);
+        }
+        PLockAPIWhileBlocked(G);
+        /* make sure no commands left at this level */
+        while(OrthoCommandWaiting(G)) PFlushFast(G); 
+        OrthoCommandNest(G,-1);
       }
-      PXDecRef(PyObject_CallFunction(G->P_inst->parse,"si",buffer,0)); 
-      err = PyErr_Occurred();
-      if(err) {
-        PyErr_Print();
-        PRINTFB(G,FB_Python,FB_Errors)
-          " PFlush: Uncaught exception.  PyMOL may have a bug.\n"
-          ENDFB(G);
-      }
-      PLockAPIWhileBlocked(G);
-      /* make sure no commands left at this level */
-      while(OrthoCommandWaiting(G)) PFlushFast(G); 
-      OrthoCommandNest(G,-1);
     }
     PUnblock(G);
   }
