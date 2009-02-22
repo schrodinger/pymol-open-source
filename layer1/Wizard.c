@@ -160,7 +160,7 @@ void WizardRefresh(PyMOLGlobals *G)
   blocked = PAutoBlock(G);
   
   /* get the current prompt */
-  if(I->Stack>=0)
+  if(I->Stack>=0) 
     if(I->Wiz[I->Stack]) {
       vla = NULL;
       if(PyObject_HasAttrString(I->Wiz[I->Stack],"get_prompt")) {
@@ -241,14 +241,20 @@ void WizardSet(PyMOLGlobals *G,PyObject *wiz,int replace)
   if(I->Wiz) {
     if((!wiz)||(wiz==Py_None)||((I->Stack>=0)&&replace)) { 
       if(I->Stack>=0) {  /* pop */
-        if(I->Wiz[I->Stack]) {
-          if(PyObject_HasAttrString(I->Wiz[I->Stack],"cleanup")) {
-            PXDecRef(PyObject_CallMethod(I->Wiz[I->Stack],"cleanup",""));
+        PyObject *old_wiz = I->Wiz[I->Stack];
+        
+        /* remove wizard from stack first */
+
+        I->Wiz[I->Stack]=NULL;
+        I->Stack--;
+
+        if(old_wiz) {
+          /* then call cleanup, etc. */
+          if(PyObject_HasAttrString(old_wiz,"cleanup")) {
+            PXDecRef(PyObject_CallMethod(old_wiz,"cleanup",""));
             if(PyErr_Occurred()) PyErr_Print();
           }
-          Py_DECREF(I->Wiz[I->Stack]);
-          I->Wiz[I->Stack]=NULL;
-          I->Stack--;
+          Py_DECREF(old_wiz);
         }
       }
     }

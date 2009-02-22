@@ -34,8 +34,7 @@ static void SculptCacheCheck(PyMOLGlobals *G)
 {
   register CSculptCache *I = G->SculptCache;
   if(!I->Hash) {
-    I->Hash = Alloc(int,CACHE_HASH_SIZE);
-    UtilZeroMem(I->Hash,CACHE_HASH_SIZE*sizeof(int));
+    I->Hash = Calloc(int,CACHE_HASH_SIZE);
   }
 }
 
@@ -56,15 +55,16 @@ int SculptCacheInit(PyMOLGlobals *G)
 void SculptCachePurge(PyMOLGlobals *G)
 {
   register CSculptCache *I=G->SculptCache;
-  if(!I->Hash) SculptCacheCheck(G);
+  if(I->Hash) {
+    FreeP(I->Hash);
+    I->Hash = NULL;
+  }
   I->NCached=1;
-  UtilZeroMem(I->Hash,CACHE_HASH_SIZE*sizeof(int));
 }
 
 void SculptCacheFree(PyMOLGlobals *G) 
 {
   register CSculptCache *I=G->SculptCache;
-  if(!I->Hash) SculptCacheCheck(G);
   FreeP(I->Hash);
   VLAFreeP(I->List);
   FreeP(G->SculptCache);
@@ -77,16 +77,18 @@ int SculptCacheQuery(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int i
   SculptCacheEntry *e;
   int found = false;
   if(!I->Hash) SculptCacheCheck(G);
-  v = I->Hash + cache_hash(id0,id1,id2,id3);
-  i = (*v);
-  while(i) {
-    e = I->List+i;
-    if((e->rest_type==rest_type)&&(e->id0==id0)&&(e->id1==id1)&&(e->id2==id2)&&(e->id3==id3)) {
-      found = true;
-      *value=e->value;
-      break;
+  if(I->Hash) {
+    v = I->Hash + cache_hash(id0,id1,id2,id3);
+    i = (*v);
+    while(i) {
+      e = I->List+i;
+      if((e->rest_type==rest_type)&&(e->id0==id0)&&(e->id1==id1)&&(e->id2==id2)&&(e->id3==id3)) {
+        found = true;
+        *value=e->value;
+        break;
+      }
+      i = e->next;
     }
-    i = e->next;
   }
   return(found);
 }
@@ -98,32 +100,34 @@ void SculptCacheStore(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int 
   SculptCacheEntry *e;
   int found = false;
   if(!I->Hash) SculptCacheCheck(G);
-  v = I->Hash + cache_hash(id0,id1,id2,id3);
-  i = (*v);
-  while(i) {
-    e = I->List+i;;
-    if((e->rest_type==rest_type)&&(e->id0==id0)&&(e->id1==id1)&&(e->id2==id2)&&(e->id3==id3)) {
-      e->value=value;
-      found = true;
-      break;
-    }
-    i = e->next;
-  }
-  if(!found) {
-    VLACheck(I->List,SculptCacheEntry,I->NCached);
+  if(I->Hash) {
     v = I->Hash + cache_hash(id0,id1,id2,id3);
-    e = I->List + I->NCached;
-    e->next = *v;
-    *v=I->NCached; /* become new head of list */
-
-    e->rest_type=rest_type;
-    e->id0=id0;
-    e->id1=id1;
-    e->id2=id2;
-    e->id3=id3;
-    e->value=value;
-
-    I->NCached++;
+    i = (*v);
+    while(i) {
+      e = I->List+i;;
+      if((e->rest_type==rest_type)&&(e->id0==id0)&&(e->id1==id1)&&(e->id2==id2)&&(e->id3==id3)) {
+        e->value=value;
+        found = true;
+        break;
+      }
+      i = e->next;
+    }
+    if(!found) {
+      VLACheck(I->List,SculptCacheEntry,I->NCached);
+      v = I->Hash + cache_hash(id0,id1,id2,id3);
+      e = I->List + I->NCached;
+      e->next = *v;
+      *v=I->NCached; /* become new head of list */
+      
+      e->rest_type=rest_type;
+      e->id0=id0;
+      e->id1=id1;
+      e->id2=id2;
+      e->id3=id3;
+      e->value=value;
+      
+      I->NCached++;
+    }
   }
 }
 
