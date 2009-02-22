@@ -853,10 +853,8 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
-  PyObject *atom;
   int ok = true;
-
-  atom = PyObject_CallMethod(P_chempy,"Atom","");
+  PyObject *atom = PyObject_CallMethod(P_chempy,"Atom","");
   if (!atom) 
     ok = ErrMessage(G,"CoordSetAtomToChemPyAtom","can't create atom");
   else {

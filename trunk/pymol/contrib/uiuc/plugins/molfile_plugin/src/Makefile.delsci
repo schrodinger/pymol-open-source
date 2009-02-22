@@ -7,7 +7,7 @@ include ../../../../../Rules.delsci
 include objects.make
 
 CFLAGS=-I../../include $(CCOPT2)
-CPPFLAGS=-I../../include  $(CCOPT2)
+CPPFLAGS=-I../../include $(CCOPT2)
 
 library: $(OBJS) PlugIOManagerInit.o
 

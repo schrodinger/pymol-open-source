@@ -1046,7 +1046,7 @@ static int *SelectorUpdateTableMultiObjectIdxTag(PyMOLGlobals *G,
     modelCnt++;
   }
   result = Calloc(int,c);
-  I->Table=Alloc(TableRec,c);
+  I->Table=Calloc(TableRec,c);
   ErrChkPtr(G,I->Table);
   I->Obj=Calloc(ObjectMolecule*,modelCnt);
   ErrChkPtr(G,I->Obj);
@@ -6377,131 +6377,138 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref)
 #else
 
   register CSelector *I=G->Selector;
-  PyObject *model=NULL,*bnd=NULL;
-  PyObject *atom_list=NULL,*bond_list=NULL;
-  PyObject *tmp;
-  PyObject *molecule = NULL;
-  int a,b,b1,b2,c,s,idx,at,a1,a2;
-  BondType *ii1;
-  BondType *bond=NULL;
-  int nBond=0;
-  int ok =true;
-  CoordSet *cs,*mat_cs = NULL;
-  double matrix[16];
-  int matrix_flag = false;
-  int single_flag = true;
-  float *v_ptr,v_tmp[3];
-  CoordSet *single_cs = NULL;
-  ObjectMolecule *obj;
-  AtomInfoType *atInfo,*ai;
+  PyObject *model = NULL;
+  int ok = true;
+
   SelectorUpdateTable(G,state,-1);
 
   model = PyObject_CallMethod(P_models,"Indexed","");
   if (!model) 
     ok = ErrMessage(G,"CoordSetAtomToChemPyAtom","can't create model");  
   if(ok) {    
-    c=0;
+    int nAtom = 0;
+    int a;
     for(a=cNDummyAtoms;a<I->NAtom;a++) {
-      at=I->Table[a].atom;
-      I->Table[a].index=0;
-      obj=I->Obj[I->Table[a].model];
-      s=obj->AtomInfo[at].selEntry;
-      if(SelectorIsMember(G,s,sele))
-        {
-          if(state<obj->NCSet) 
-            cs=obj->CSet[state];
-          else
-            cs=NULL;
-          if(cs) {
-            if(obj->DiscreteFlag) {
-              if(cs==obj->DiscreteCSet[at])
-                idx=obj->DiscreteAtmToIdx[at];
-              else
-                idx=-1;
-            } else 
-              idx=cs->AtmToIdx[at];
-            if(idx>=0) {
-              I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
-              c++;
-            }
-          }
-        }
-    }
-    if(c) {
-
-      atom_list = PyList_New(c);
-      PyObject_SetAttrString(model,"atom",atom_list);
-      c=0;
-      for(a=cNDummyAtoms;a<I->NAtom;a++) {
-        if(I->Table[a].index) {
-          at=I->Table[a].atom;
-          obj=I->Obj[I->Table[a].model];
-          cs=obj->CSet[state]; /* assuming this is valid... */
+      int at = I->Table[a].atom;
+      ObjectMolecule *obj = I->Obj[I->Table[a].model];
+      int s = obj->AtomInfo[at].selEntry;
+      I->Table[a].index = 0;
+      if(SelectorIsMember(G,s,sele)) {
+        CoordSet *cs;
+        if(state<obj->NCSet) 
+          cs=obj->CSet[state];
+        else
+          cs=NULL;
+        if(cs) {
+          int idx;
           if(obj->DiscreteFlag) {
-            if(obj->CSet[state]==obj->DiscreteCSet[at])
+            if(cs == obj->DiscreteCSet[at])
               idx=obj->DiscreteAtmToIdx[at];
             else
               idx=-1;
           } else 
             idx=cs->AtmToIdx[at];
           if(idx>=0) {
-
-            if(mat_cs!=cs) {
-              /* compute the effective matrix for output coordinates */
-              
-              matrix_flag = false;
-              if(ObjectGetTotalMatrix(&obj->Obj,state,false,matrix)) {
-                if(ref) {
-                  left_multiply44d44d(ref,matrix);
-                }
-                matrix_flag=true;
-              } else if(ref) {
-                copy44d(ref,matrix);
-                matrix_flag=true;
-              }
-              mat_cs = cs;
-            }
-
-            if(single_flag) { /* remember whether all atoms come from a single coordinate set...*/
-              if(single_cs) {
-                if(single_cs!=cs)
-                  single_flag=false;
-              } else {
-                single_cs = cs;
-              }
-            }
-            ai = obj->AtomInfo+at;
-
-            v_ptr = cs->Coord+(3*idx);
-            if(matrix_flag) {
-              transform44d3f(matrix,v_ptr,v_tmp);
-              v_ptr = v_tmp;
-            }
-            {
-              RefPosType *ref_pos = cs->RefPos; /* could be NULL */
-	      float *ref_ptr = NULL;
-              float ref_tmp[3];
-              if(ref_pos) {
-		ref_pos += idx;
-		if(ref_pos->specified) {
-		  ref_ptr = ref_pos->coord;
-		  if(matrix_flag) {
-		    transform44d3f(matrix,ref_ptr,ref_tmp);
-		    ref_ptr = ref_tmp;
-		  }
-		}
-              }
-              PyList_SetItem(atom_list,c,
-                             CoordSetAtomToChemPyAtom(G,ai,v_ptr,ref_ptr,at));
-            }
-            c = c + 1;
+            I->Table[a].index = nAtom+1; /* NOTE marking with "1" based indexes here */
+            nAtom++;
           }
         }
       }
-      Py_XDECREF(atom_list);
+    }
+
+    if(nAtom) {
+      int single_flag = true;
+      CoordSet *single_cs = NULL;
+      CoordSet *mat_cs = NULL;
+      {
+        int c = 0;
+        PyObject *atom_list = PyList_New(nAtom);
+        PyObject_SetAttrString(model,"atom",atom_list);
+        for(a=cNDummyAtoms;a<I->NAtom;a++) {
+          if(I->Table[a].index) {
+            ObjectMolecule *obj;
+            CoordSet *cs;
+            int idx;
+            int at = I->Table[a].atom;
+            obj = I->Obj[I->Table[a].model];
+            cs = obj->CSet[state]; /* assuming this is valid... */
+            if(obj->DiscreteFlag) {
+              if(obj->CSet[state] == obj->DiscreteCSet[at])
+                idx = obj->DiscreteAtmToIdx[at];
+              else
+                idx = -1;
+            } else 
+              idx = cs->AtmToIdx[at];
+            if(idx>=0) {
+              double matrix[16];
+              int matrix_flag = false;
+
+              if(mat_cs!=cs) {
+                /* compute the effective matrix for output coordinates */
+              
+                matrix_flag = false;
+                if(ObjectGetTotalMatrix(&obj->Obj,state,false,matrix)) {
+                  if(ref) {
+                    left_multiply44d44d(ref,matrix);
+                  }
+                  matrix_flag=true;
+                } else if(ref) {
+                  copy44d(ref,matrix);
+                  matrix_flag=true;
+                }
+                mat_cs = cs;
+              }
+
+              if(single_flag) { /* remember whether all atoms come from a single coordinate set...*/
+                if(single_cs) {
+                  if(single_cs!=cs)
+                    single_flag=false;
+                } else {
+                  single_cs = cs;
+                }
+              }
+
+              {
+                AtomInfoType *ai = obj->AtomInfo + at;
+                float *v_ptr = cs->Coord+(3*idx);
+                float v_tmp[3];
+                if(matrix_flag) {
+                  transform44d3f(matrix,v_ptr,v_tmp);
+                  v_ptr = v_tmp;
+                }
+                {
+                  RefPosType *ref_pos = cs->RefPos; /* could be NULL */
+                  float *ref_ptr = NULL;
+                  float ref_tmp[3];
+                  if(ref_pos) {
+                    ref_pos += idx;
+                    if(ref_pos->specified) {
+                      ref_ptr = ref_pos->coord;
+                      if(matrix_flag) {
+                        transform44d3f(matrix,ref_ptr,ref_tmp);
+                        ref_ptr = ref_tmp;
+                      }
+                    }
+                  }
+                  if(c<nAtom) { /* safety */
+                    PyList_SetItem(atom_list,c,
+                                   CoordSetAtomToChemPyAtom(G,ai,v_ptr,ref_ptr,at));
+                    c = c + 1;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if(c != nAtom) {
+          ok = false;
+        }
+        Py_XDECREF(atom_list); 
+      }
 
       if(single_flag&&single_cs) { /* single coordinate set?  then set coordinate set info */
-        molecule = PyObject_GetAttrString(model,"molecule");
+        PyObject *molecule = PyObject_GetAttrString(model,"molecule");
         if(molecule) {
           if(single_cs->Name[0]) {
             PyObject_SetAttrString(molecule,"title",           /* including name/title */
@@ -6511,55 +6518,59 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref)
         Py_XDECREF(molecule);
       }
 
-      nBond = 0;
-      bond = VLACalloc(BondType,1000);
-      for(a=cNDummyModels;a<I->NModel;a++) {
-        obj=I->Obj[a];
-        ii1=obj->Bond;
-        if(state<obj->NCSet) 
-          cs=obj->CSet[state];
-        else
-          cs=NULL;
-        if(cs) {
-          atInfo=obj->AtomInfo;
-          for(b=0;b<obj->NBond;b++) {
-            b1=ii1->index[0];
-            b2=ii1->index[1];        
-            if(obj->DiscreteFlag) {
-              if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-                a1=obj->DiscreteAtmToIdx[b1];
-                a2=obj->DiscreteAtmToIdx[b2];
+      {
+        BondType *bond = VLACalloc(BondType,1000);
+        int nBond = 0;
+        for(a=cNDummyModels;a<I->NModel;a++) {
+          BondType *ii1;
+          CoordSet *cs;
+          ObjectMolecule *obj = I->Obj[a];
+          ii1=obj->Bond;
+          if(state<obj->NCSet) 
+            cs=obj->CSet[state];
+          else
+            cs=NULL;
+          if(cs) {
+            int b;
+            for(b=0;b<obj->NBond;b++) {
+              int a1,a2;
+              int b1=ii1->index[0];
+              int b2=ii1->index[1];        
+              if(obj->DiscreteFlag) {
+                if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+                  a1=obj->DiscreteAtmToIdx[b1];
+                  a2=obj->DiscreteAtmToIdx[b2];
+                } else {
+                  a1=-1;
+                  a2=-1;
+                }
               } else {
-                a1=-1;
-                a2=-1;
+                a1=cs->AtmToIdx[b1];
+                a2=cs->AtmToIdx[b2];
               }
-            } else {
-              a1=cs->AtmToIdx[b1];
-              a2=cs->AtmToIdx[b2];
-            }
 
-            if((a1>=0)&&(a2>=0)) {
-              int i_b1 = SelectorGetObjAtmOffset(I,obj,b1);
-              int i_b2 = SelectorGetObjAtmOffset(I,obj,b2);
-              if((i_b1>=0)&&(i_b2>=0)) {
-                if(I->Table[i_b1].index&&I->Table[i_b2].index) {
-                  VLACheck(bond,BondType,nBond);
-                  bond[nBond] = *ii1;
-                  b1=I->Table[i_b1].index - 1; /* counteract 1-based */
-                  b2=I->Table[i_b2].index - 1; /* indexing from above */
-                  bond[nBond].index[0] = b1;
-                  bond[nBond].index[1] = b2;
-                  nBond++;
+              if((a1>=0)&&(a2>=0)) {
+                int i_b1 = SelectorGetObjAtmOffset(I,obj,b1);
+                int i_b2 = SelectorGetObjAtmOffset(I,obj,b2);
+                if((i_b1>=0)&&(i_b2>=0)) {
+                  if(I->Table[i_b1].index&&I->Table[i_b2].index) {
+                    VLACheck(bond,BondType,nBond);
+                    bond[nBond] = *ii1;
+                    b1=I->Table[i_b1].index - 1; /* counteract 1-based */
+                    b2=I->Table[i_b2].index - 1; /* indexing from above */
+                    bond[nBond].index[0] = b1;
+                    bond[nBond].index[1] = b2;
+                    nBond++;
+                  }
                 }
               }
+              ii1++;
             }
-            ii1++;
           }
-        }
-        if(cs) {
-          if(c==cs->NIndex) { /* support for experimental spheroids - likely to change */
-            if(cs->Spheroid&&cs->SpheroidNormal) {
-              tmp = PConvFloatArrayToPyList(cs->Spheroid,cs->NSpheroid);
+          
+          if(cs && (nAtom == cs->NIndex)) { /* support for experimental spheroids - likely to change */
+            if(cs->Spheroid && cs->NSpheroid && cs->SpheroidNormal) {
+              PyObject *tmp = PConvFloatArrayToPyList(cs->Spheroid,cs->NSpheroid);
               PyObject_SetAttrString(model,"spheroid",tmp);
               Py_XDECREF(tmp);          
               tmp = PConvFloatArrayToPyList(cs->SpheroidNormal,cs->NSpheroid*3);
@@ -6567,32 +6578,35 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref)
               Py_XDECREF(tmp);          
             }
           }
-        }
 
-        ii1=bond;
-        bond_list = PyList_New(nBond);
-        PyObject_SetAttrString(model,"bond",bond_list);
-        for(b=0;b<nBond;b++) {
-          bnd = PyObject_CallMethod(P_chempy,"Bond","");
-          if(bnd) {
-            PConvInt2ToPyObjAttr(bnd,"index",ii1->index);
-            PConvIntToPyObjAttr(bnd,"order",ii1->order);
-            PConvIntToPyObjAttr(bnd,"id",ii1->id);
-            PConvIntToPyObjAttr(bnd,"stereo",ii1->stereo);
-            PyList_SetItem(bond_list,b,bnd);
+          {
+            PyObject *bond_list = PyList_New(nBond);
+            BondType *ii1 = bond;
+            int b;
+            PyObject_SetAttrString(model,"bond",bond_list);
+            for(b=0;b<nBond;b++) {
+              PyObject *bnd = PyObject_CallMethod(P_chempy,"Bond","");
+              if(bnd) {
+                PConvInt2ToPyObjAttr(bnd,"index",ii1->index);
+                PConvIntToPyObjAttr(bnd,"order",ii1->order);
+                PConvIntToPyObjAttr(bnd,"id",ii1->id);
+                PConvIntToPyObjAttr(bnd,"stereo",ii1->stereo);
+                PyList_SetItem(bond_list,b,bnd); /* steals bnd reference */
+              }
+              ii1++;
+            }
+            Py_XDECREF(bond_list);
           }
-          ii1++;
         }
-        Py_XDECREF(bond_list);
+        VLAFree(bond);
       }
-      VLAFree(bond);
     }
   }
   if(!ok) {
     if(model) {
       Py_DECREF(model);
     }
-    model=NULL;
+    model=NULL; 
   }
   return(model);
 #endif
@@ -7760,7 +7774,7 @@ static int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
   c+=obj->NAtom;
   if(I->NCSet<obj->NCSet) I->NCSet=obj->NCSet;
   modelCnt++;
-  I->Table=Alloc(TableRec,c);
+  I->Table=Calloc(TableRec,c);
   ErrChkPtr(G,I->Table);
   I->Obj=Calloc(ObjectMolecule*,modelCnt);
   ErrChkPtr(G,I->Obj);
@@ -7878,7 +7892,7 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
       modelCnt++;
     }
   }
-  I->Table=Alloc(TableRec,c);
+  I->Table=Calloc(TableRec,c);
   ErrChkPtr(G,I->Table);
   I->Obj=Calloc(ObjectMolecule*,modelCnt);
   ErrChkPtr(G,I->Obj);
