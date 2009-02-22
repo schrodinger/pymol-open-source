@@ -1097,13 +1097,20 @@ static int get_api_lock(PyMOLGlobals *G,int block_if_busy)
     
     if(got_lock) {
       if(!PyInt_AsLong(got_lock)) {
-        PLockStatus(G);
-        if(PyMOL_GetBusy(G->PyMOL,false))
+        if(!G) { /* impossible (unless stack trashed?) */
           result = false;
-        PUnlockStatus(G);
-        
-        if(result) { /* didn't get lock, but not busy, so block and wait for lock */
-          PXDecRef(PyObject_CallFunction(G->P_inst->lock,"O",G->P_inst->cmd));
+        } else {
+          PLockStatus(G);
+          if(PyMOL_GetBusy(G->PyMOL,false))
+            result = false;
+          PUnlockStatus(G);
+          if(!G) { /* impossible (unless stack trashed?) */
+            result = false;
+          } else {
+            if(result) { /* didn't get lock, but not busy, so block and wait for lock */
+              PXDecRef(PyObject_CallFunction(G->P_inst->lock,"O",G->P_inst->cmd));
+            }
+          }
         }
       }
       Py_DECREF(got_lock);
