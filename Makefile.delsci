@@ -200,7 +200,7 @@ partial:
 	$(MAKE) -f Makefile.delsci
 
 clean: 
-	touch .no_fail
+	touch .no_fail layer0/core
 	/bin/rm -f layer*/*.o ov/src/*.o layer*/*.p modules/*/*.pyc modules/*/*/*.pyc \
     contrib/uiuc/plugins/molfile_plugin/src/*.o \
 	layer*/.files layer*/.depends layer*/.includes layerOSX*/src*/*.o \
@@ -237,4 +237,3 @@ xx: ~/jx
 	cd ~/jx;make distclean;make ov
 	cp ~/jx/build/ov*/src/*.[ch] ov/src/
 	$(MAKE) -f Makefile.delsci
-	
