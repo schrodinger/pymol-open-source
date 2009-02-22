@@ -61,6 +61,8 @@ def model_to_sdf_list(model):
 class CleanJob:
     def __init__(self,self_cmd,sele,state=-1,message=None):
         self.cmd = self_cmd
+        if message == '':
+            message = None
         if message != None:
             self.cmd.do("_ cmd.wizard('message','''%s''')"%message)
         if state<1:
