@@ -140,7 +140,7 @@ static void PUnlockGLUT(PyMOLGlobals *G) /* assumes we have the GIL */
   PXDecRef(PyObject_CallFunction(G->P_inst->unlock_glut,"O",G->P_inst->cmd));
 }
 
-unsigned int P_glut_thread_id;
+unsigned int P_glut_thread_id = -1;
 
 /* enables us to keep glut out if by chance it grabs the API
  * in the middle of a nested API based operation */

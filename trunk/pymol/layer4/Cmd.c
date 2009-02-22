@@ -132,7 +132,7 @@ static void APIEnter(PyMOLGlobals *G) /* assumes API is locked */
     exit(0);
   }
 
-  G->P_inst->glut_thread_keep_out++;  
+  if(!PIsGlutThread()) G->P_inst->glut_thread_keep_out++;  
   PUnblock(G);
 }
 
@@ -162,7 +162,7 @@ static void APIEnterBlocked(PyMOLGlobals *G) /* assumes API is locked */
     exit(0);
   }
 
-  G->P_inst->glut_thread_keep_out++;  
+  if(!PIsGlutThread()) G->P_inst->glut_thread_keep_out++;  
 }
 
 static int APIEnterBlockedNotModal(PyMOLGlobals *G) /* assumes API is locked */
@@ -178,7 +178,7 @@ static int APIEnterBlockedNotModal(PyMOLGlobals *G) /* assumes API is locked */
 static void APIExit(PyMOLGlobals *G) /* assumes API is locked */
 {
   PBlock(G);
-  G->P_inst->glut_thread_keep_out--;
+  if(!PIsGlutThread()) G->P_inst->glut_thread_keep_out--;
   PRINTFD(G,FB_API)
     " APIExit-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
     ENDFD;
@@ -187,7 +187,7 @@ static void APIExit(PyMOLGlobals *G) /* assumes API is locked */
 static void APIExitBlocked(PyMOLGlobals *G) /* assumes API is locked */
 {
 
-  G->P_inst->glut_thread_keep_out--;
+  if(!PIsGlutThread()) G->P_inst->glut_thread_keep_out--;
   PRINTFD(G,FB_API)
     " APIExitBlocked-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
     ENDFD;
@@ -4817,11 +4817,11 @@ static PyObject *CmdGetModel(PyObject *self, PyObject *args)
   }
   if (ok) {
     if(!ref_object[0]) ref_object = NULL;
-    if( (ok=APIEnterNotModal(G)) ) {
+    if( (ok=APIEnterBlockedNotModal(G)) ) {
       ok = (SelectorGetTmp(G,str1,s1)>=0);
       if(ok) result=ExecutiveSeleToChemPyModel(G,s1,state,ref_object,ref_state);
       SelectorFreeTmp(G,s1);
-      APIExit(G);
+      APIExitBlocked(G);
     }
   }
   return(APIAutoNone(result));
