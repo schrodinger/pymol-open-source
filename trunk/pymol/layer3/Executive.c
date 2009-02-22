@@ -7245,7 +7245,7 @@ void ExecutiveUpdateCmd(PyMOLGlobals *G,char *s0,char *s1,int sta0,int sta1,
 
   sele0 = SelectorIndexByName(G,s0);
   sele1 = SelectorIndexByName(G,s1);
-  if(!(sele0&&sele1)) {
+  if((sele0<0)||(sele1<0)) {
     ErrMessage(G,"Update","One or more invalid input selections.");
   } else {
     SelectorUpdateCmd(G,sele0,sele1,sta0,sta1,method,quiet);
