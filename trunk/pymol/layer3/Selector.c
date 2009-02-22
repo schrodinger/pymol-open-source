@@ -3283,7 +3283,7 @@ int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list)
   int m,sele;
   ov_size ll;
   PyObject *obj_list=NULL;
-  PyObject *idx_list,*tag_list;
+  PyObject *idx_list=NULL,*tag_list;
   ov_size n_obj=0,n_idx=0;
   int idx,tag;
   char *oname;
@@ -4582,7 +4582,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
                       int *bondMode)
 {
   register CSelector *I=G->Selector;
-  int a0,a1,a2;
+  int a0=0,a1=0,a2;
   int *atom=NULL;
   int *toDo=NULL;
   int *comp=NULL;

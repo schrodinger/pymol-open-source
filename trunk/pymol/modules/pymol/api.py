@@ -386,4 +386,4 @@ import movie
 #  1. stick with Python <=2.5 for as long as possible
 #  2. convert API method to cmd.show_as() and leave "as" in the scripting langauge
 #  3. allow "show_as" in the scripting language
-as = show_as
+globals()['as'] = show_as
