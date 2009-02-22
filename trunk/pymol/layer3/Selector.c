@@ -6553,13 +6553,11 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref)
                 int i_b1 = SelectorGetObjAtmOffset(I,obj,b1);
                 int i_b2 = SelectorGetObjAtmOffset(I,obj,b2);
                 if((i_b1>=0)&&(i_b2>=0)) {
-                  if(I->Table[i_b1].index&&I->Table[i_b2].index) {
+                  if(I->Table[i_b1].index&&I->Table[i_b2].index) { /* selected atoms will be nonzero */
                     VLACheck(bond,BondType,nBond);
-                    bond[nBond] = *ii1;
-                    b1=I->Table[i_b1].index - 1; /* counteract 1-based */
-                    b2=I->Table[i_b2].index - 1; /* indexing from above */
-                    bond[nBond].index[0] = b1;
-                    bond[nBond].index[1] = b2;
+                    bond[nBond] = *ii1; /* copy all fields */
+                    bond[nBond].index[0] = I->Table[i_b1].index - 1; /* counteract 1-based */
+                    bond[nBond].index[1] = I->Table[i_b2].index - 1; /* indexing from above */
                     nBond++;
                   }
                 }
@@ -6581,19 +6579,26 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref)
 
           {
             PyObject *bond_list = PyList_New(nBond);
-            BondType *ii1 = bond;
-            int b;
-            PyObject_SetAttrString(model,"bond",bond_list);
-            for(b=0;b<nBond;b++) {
-              PyObject *bnd = PyObject_CallMethod(P_chempy,"Bond","");
-              if(bnd) {
-                PConvInt2ToPyObjAttr(bnd,"index",ii1->index);
-                PConvIntToPyObjAttr(bnd,"order",ii1->order);
-                PConvIntToPyObjAttr(bnd,"id",ii1->id);
-                PConvIntToPyObjAttr(bnd,"stereo",ii1->stereo);
-                PyList_SetItem(bond_list,b,bnd); /* steals bnd reference */
+            if(bond_list) {
+              BondType *ii1 = bond;
+              int b;
+              PyObject_SetAttrString(model,"bond",bond_list);
+              for(b=0;b<nBond;b++) {
+                PyObject *bnd = PyObject_CallMethod(P_chempy,"Bond","");
+                if(bnd) {
+                  PConvInt2ToPyObjAttr(bnd,"index",ii1->index);
+                  PConvIntToPyObjAttr(bnd,"order",ii1->order);
+                  PConvIntToPyObjAttr(bnd,"id",ii1->id);
+                  PConvIntToPyObjAttr(bnd,"stereo",ii1->stereo);
+                  PyList_SetItem(bond_list,b,bnd); /* steals bnd reference */
+                } else {
+                  ok=false;
+                  break;
+                }
+                ii1++;
               }
-              ii1++;
+            } else {
+              ok=false;
             }
             Py_XDECREF(bond_list);
           }
