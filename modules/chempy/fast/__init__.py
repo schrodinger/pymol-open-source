@@ -64,7 +64,7 @@ class FastModel:
 
             for attrib in ( 'name', 'symbol', 'resn', 'resn_code', 'resi',
                                  'alt', 'chain', 'segi', 'text_type' ):
-                ll = as[attrib]
+                ll = as_[attrib]
                 setattr(at,attrib,string.strip(string.join(txta[ll[0]:ll[1]],'')))
 
             inta = self.inta[c]
@@ -98,44 +98,44 @@ class FastModel:
 
 # text properties
 
-as = {}
+as_ = {}
 as_width = 0
 
-as['name'] = [ as_width ]
+as_['name'] = [ as_width ]
 as_width = as_width + 4
-as['name'].append(as_width)
+as_['name'].append(as_width)
 
-as['symbol'] = [ as_width ]
+as_['symbol'] = [ as_width ]
 as_width = as_width + 2
-as['symbol'].append(as_width)
+as_['symbol'].append(as_width)
 
-as['alt'] = [ as_width ]
+as_['alt'] = [ as_width ]
 as_width = as_width + 1
-as['alt'].append(as_width)
+as_['alt'].append(as_width)
 
-as['resn'] = [ as_width ]
+as_['resn'] = [ as_width ]
 as_width = as_width + 4
-as['resn'].append(as_width)
+as_['resn'].append(as_width)
 
-as['resn_code'] = [ as_width ]
+as_['resn_code'] = [ as_width ]
 as_width = as_width + 1
-as['resn_code'].append(as_width)
+as_['resn_code'].append(as_width)
 
-as['resi'] = [ as_width ]
+as_['resi'] = [ as_width ]
 as_width = as_width + 4
-as['resi'].append(as_width)
+as_['resi'].append(as_width)
 
-as['chain'] = [ as_width ]
+as_['chain'] = [ as_width ]
 as_width = as_width + 1
-as['chain'].append(as_width)
+as_['chain'].append(as_width)
 
-as['segi' ] = [ as_width ]
+as_['segi' ] = [ as_width ]
 as_width = as_width + 4
-as['segi'].append(as_width)
+as_['segi'].append(as_width)
 
-as['text_type'] = [ as_width ]
+as_['text_type'] = [ as_width ]
 as_width = as_width + 20
-as['text_type'].append(as_width)
+as_['text_type'].append(as_width)
 
 # integer properties
 
