@@ -4,6 +4,7 @@ import os
 from glob import glob
 import traceback
 import string
+import types
 
 from Tkinter import *
 import tkMessageBox
@@ -23,6 +24,7 @@ active_sele = "_builder_active" # object we're working on...
 newest_sele = "_builder_added" # last atom added?
 
 display_sele = "_build_display"
+
 
 #############################################################
 # action-directing Wizards
@@ -93,7 +95,7 @@ class CleanWizard(ActionWizard):
         self.cmd.unpick()
         self.cmd.deselect()
         obj_list = self.cmd.get_object_list(active_sele)
-        if len(obj_list)==1:
+        if isinstance(obj_list,types.ListType) and (len(obj_list)==1):
             self.run_job()
         else:
             print "Error: can only clean one object at a time"

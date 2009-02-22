@@ -6491,16 +6491,17 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref)
                     }
                   }
                   if(c<nAtom) { /* safety */
-                    PyList_SetItem(atom_list,c,
-                                   CoordSetAtomToChemPyAtom(G,ai,v_ptr,ref_ptr,at));
-                    c = c + 1;
+                    PyObject *atom =  CoordSetAtomToChemPyAtom(G,ai,v_ptr,ref_ptr,at);
+                    if(atom) {
+                      PyList_SetItem(atom_list,c,atom); /* steals */
+                      c = c + 1;
+                    }
                   }
                 }
               }
             }
           }
         }
-
         if(c != nAtom) {
           ok = false;
         }
@@ -6511,9 +6512,11 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state,double *ref)
         PyObject *molecule = PyObject_GetAttrString(model,"molecule");
         if(molecule) {
           if(single_cs->Name[0]) {
-            PyObject_SetAttrString(molecule,"title",           /* including name/title */
+            PyObject_SetAttrString(molecule,"title", /* including name/title */
                                    PyString_FromString(single_cs->Name)); 
           }
+        } else {
+          ok=false;
         }
         Py_XDECREF(molecule);
       }
