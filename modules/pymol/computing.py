@@ -88,7 +88,6 @@ class CleanJob:
             # warn("Please be sure that FreeMOL is correctly installed.")
         else:
             obj_list = self_cmd.get_object_list("bymol ("+sele+")")
-            return
             ok = 0
             result = None
             if is_list(obj_list) and (len(obj_list)==1):
