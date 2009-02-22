@@ -8391,12 +8391,15 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state,
 
   sele1=SelectorIndexByName(G,s1);
   if(state<0) state=0;
-  PBlock(G); /*   PBlockAndUnlockAPI();*/
-  if(sele1>=0) {
-    result=SelectorGetChemPyModel(G,sele1,state,ref_mat);
+
+  { 
+    int unblock = PAutoBlock(G); /*   PBlock(G);    PBlockAndUnlockAPI();*/
+    if(sele1>=0) {
+      result=SelectorGetChemPyModel(G,sele1,state,ref_mat);
+    }
+    if(PyErr_Occurred()) PyErr_Print();
+    PAutoUnblock(G,unblock); /*    PUnblock(G);  PLockAPIAndUnblock();*/
   }
-  if(PyErr_Occurred()) PyErr_Print();
-  PUnblock(G); /* PLockAPIAndUnblock();*/
   return(result);
 #endif
 }

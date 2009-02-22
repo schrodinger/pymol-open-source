@@ -93,6 +93,17 @@ t = threading.Thread(target=viewport)
 t.setDaemon(1)
 t.start()
 
+def get_model():
+   while 1:
+      time.sleep(random.random()*0.1)
+      cmd.get_model("?obj1")
+      cmd.get_model()
+      
+
+t = threading.Thread(target=get_model)
+t.setDaemon(1)
+t.start()
+
 def sets():
    while 1:
       time.sleep(random.random()*0.50)
