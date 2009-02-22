@@ -131,6 +131,8 @@ class SculptWizard(ActionWizard):
                 self.cmd.set("sculpting",1)
                 self.sculpt_object = obj_name
                 self.cmd.sculpt_activate(obj_name)
+                if int(self.cmd.get("sculpt_vdw_vis_mode")):
+                    self.cmd.show("cgo",obj_name)
                 self.cmd.unpick()
                 self.cmd.refresh_wizard()
             else:
