@@ -88,7 +88,7 @@ class CleanJob:
             obj_list = self_cmd.get_object_list("bymol ("+sele+")")
             ok = 0
             result = None
-            if len(obj_list)==1:
+            if is_list(obj_list) and (len(obj_list)==1):
                 obj_name = obj_list[0]
                 self_cmd.sculpt_deactivate(obj_name) 
                 # eliminate all sculpting information for object
@@ -117,10 +117,10 @@ class CleanJob:
                                     self_cmd.push_undo(obj_name)
                                     self_cmd.update(obj_name, clean_name, matchmaker=0,
                                                     source_state=1, target_state=state)
-                                    self_cmd.delete(clean_name)
                                     self_cmd.sculpt_activate(obj_name) 
                                     self_cmd.sculpt_deactivate(obj_name) 
                             finally:
+                                self_cmd.delete(clean_name)
                                 self_cmd.unset("suspend_updates")
                             ok = 1
 
