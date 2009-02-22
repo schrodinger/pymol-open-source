@@ -288,9 +288,9 @@ CSculpt *SculptNew(PyMOLGlobals *G)
   I->G=G;
   I->Shaker = ShakerNew(G);
   I->NBList = VLAlloc(int,150000);
-  I->NBHash = Alloc(int,NB_HASH_SIZE);
+  I->NBHash = Calloc(int,NB_HASH_SIZE);
   I->EXList = VLAlloc(int,100000);
-  I->EXHash = Alloc(int,EX_HASH_SIZE);
+  I->EXHash = Calloc(int,EX_HASH_SIZE);
   I->Don = VLAlloc(int,1000);
   I->Acc = VLAlloc(int,1000);
   { 
