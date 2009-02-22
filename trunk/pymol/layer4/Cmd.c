@@ -5099,7 +5099,7 @@ static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
   } else {
     API_HANDLE_ERROR;
   }
-  if(ok && (ok=APIEnterNotModal(G))) {
+  if(ok && (ok=APIEnterBlockedNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
     list = ExecutiveGetObjectMoleculeVLA(G, s1);
     if(list) {
@@ -5114,7 +5114,7 @@ static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
       VLAFreeP(list);
     }
     SelectorFreeTmp(G,s1);
-    APIExit(G);
+    APIExitBlocked(G);
   }
   return(APIAutoNone(result));
 }
