@@ -261,9 +261,9 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.angle, a, k)
     
-    def as(self, *a, **k):
+    def show_as(self, *a, **k):
         k['_self']=self
-        return apply(global_cmd.as, a, k)
+        return apply(global_cmd.show_as, a, k)
     
     def attach(self, *a, **k):
         k['_self']=self
