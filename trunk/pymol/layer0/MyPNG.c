@@ -229,6 +229,7 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *data_ptr,
     return 1;
     break;
   }
+  return 0;
 }
 
 int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsigned int *height_ptr)
