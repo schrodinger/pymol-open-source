@@ -1968,9 +1968,10 @@ void OrthoFree(PyMOLGlobals *G)
   {
     int a;
     I->cmdActiveQueue = NULL;
-    for(a=0;a<=CMD_QUEUE_MASK;a++) 
+    for(a=0;a<=CMD_QUEUE_MASK;a++)  {
       QueueFree(I->cmdQueue[a]);
-    I->cmdQueue[a] = NULL;
+      I->cmdQueue[a] = NULL;
+    }
   }
   QueueFree(I->feedback);
   I->feedback=NULL;
