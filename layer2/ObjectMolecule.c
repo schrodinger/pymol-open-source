@@ -12097,7 +12097,8 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
           else if(ai->customType<=61) strcpy(ai->elem,"Du");           
           else if(ai->customType<=62) strcpy(ai->elem,"Z0");
           else if(ai->customType<=63) strcpy(ai->elem,"Lp");
-          else strcpy(ai->elem,"?");
+          else ai->elem[0] = 0;
+          /* else strcpy(ai->elem,"?"); WLD 090305 -- guess instead. */
         }
         for(c=0;c<6;c++) {
           if(ok) {
