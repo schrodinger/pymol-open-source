@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2009-03-06 Warren L. DeLano <warren@delsci.com>	
+
+	* addressed problem reading mmod files
+	
 2009-02-08 Warren L. DeLano <warren@delsci.com>	
 
 	* refactored multisave commmand
