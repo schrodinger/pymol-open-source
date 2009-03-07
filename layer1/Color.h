@@ -42,8 +42,8 @@ Z* -------------------------------------------------------------------
 
 typedef struct {
   int Name;
-  Vector3f Color,Clamped;
-  char ClampedFlag;
+  Vector3f Color,LutColor;
+  char LutColorFlag;
   char Custom, Fixed;
   /* not saved */
   int old_session_index;
@@ -62,6 +62,7 @@ struct _CColor {
   int NColor;
   ExtRec *Ext;
   int NExt;
+  int LUTActive;
   unsigned int *ColorTable;
   float Gamma;
   int BigEndian;
@@ -107,9 +108,9 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore);
 
 int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore);
 PyObject *ColorExtAsPyList(PyMOLGlobals *G);
-int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet);
-void ColorUpdateClamp(PyMOLGlobals *G,int index);
-int ColorClampColor(PyMOLGlobals *G,float *color);
+int ColorTableLoad(PyMOLGlobals *G,char *fname,float gamma,int quiet);
+void ColorUpdateFromLut(PyMOLGlobals *G,int index);
+int ColorLookupColor(PyMOLGlobals *G,float *color);
 void ColorGetBkrdContColor(PyMOLGlobals *G,float *rgb, int invert_flag);
 unsigned int ColorGet32BitWord(PyMOLGlobals *G,float *rgba);
 int ColorGetEncoded(PyMOLGlobals *G,int index,float *color);

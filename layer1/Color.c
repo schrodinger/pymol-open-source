@@ -77,7 +77,7 @@ static int AutoColor[] = {
 };
 
 static int nAutoColor = 40;
-static void clamp_color(CColor *I,float *in, float *out, int big_endian);
+static void lookup_color(CColor *I,float *in, float *out, int big_endian);
 
 void ColorGetBkrdContColor(PyMOLGlobals *G,float *rgb, int invert_flag) 
 {
@@ -209,8 +209,8 @@ int ColorGetRamped(PyMOLGlobals *G,int index,float *vertex,float *color,int stat
     color[0]=1.0;
     color[1]=1.0;
     color[2]=1.0;
-  } else if(I->ColorTable) {
-    clamp_color(I, color, color, I->BigEndian);
+  } else if(I->LUTActive) {
+    lookup_color(I, color, color, I->BigEndian);
   }
   return(ok);
 }
@@ -326,7 +326,7 @@ PyObject *ColorAsPyList(PyMOLGlobals *G)
   int a,c;
   color=I->Color;
   for(a=0;a<I->NColor;a++) {
-    if(color->Custom||color->ClampedFlag)
+    if(color->Custom||color->LutColorFlag)
       n_custom++;
     color++;
   }
@@ -334,7 +334,7 @@ PyObject *ColorAsPyList(PyMOLGlobals *G)
   c=0;
   color=I->Color;
   for(a=0;a<I->NColor;a++) {
-    if(color->Custom||color->ClampedFlag) {
+    if(color->Custom||color->LutColorFlag) {
       list = PyList_New(7);
       {
         char *name = OVLexicon_FetchCString(I->Lex,color->Name);
@@ -343,8 +343,8 @@ PyObject *ColorAsPyList(PyMOLGlobals *G)
       PyList_SetItem(list,1,PyInt_FromLong(a));
       PyList_SetItem(list,2,PConvFloatArrayToPyList(color->Color,3));
       PyList_SetItem(list,3,PyInt_FromLong((int)color->Custom));
-      PyList_SetItem(list,4,PyInt_FromLong((int)color->ClampedFlag));
-      PyList_SetItem(list,5,PConvFloatArrayToPyList(color->Clamped,3));
+      PyList_SetItem(list,4,PyInt_FromLong((int)color->LutColorFlag));
+      PyList_SetItem(list,5,PConvFloatArrayToPyList(color->LutColor,3));
       PyList_SetItem(list,6,PyInt_FromLong((int)color->Fixed));
       PyList_SetItem(result,c,list);
       c++;
@@ -355,6 +355,29 @@ PyObject *ColorAsPyList(PyMOLGlobals *G)
 #endif
 }
 
+#if 0
+/*========================================================================*/
+PyObject *ColorTableAsPyList(PyMOLGlobals *G)
+{
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+  register CColor *I=G->Color;
+  PyObject *result;
+  
+  result = PyList_New(2);
+  PyList_SetItem(result,0,PyFloat_FromDouble(I->Gamma));
+  if(0 && I->ColorTable) { /* for now, we don't embed the color table due to size... */
+    PyList_SetItem(result,1,PConvIntArrayToPyList((int*)(I->ColorTable),512*512));
+  } else {
+    PyList_SetItem(result,1,PConvAutoNone(Py_None));
+  }
+  return result;
+#endif
+}
+#endif
+
+/*========================================================================*/
 int ColorConvertOldSessionIndex(PyMOLGlobals *G,int index)
 {
   register CColor *I=G->Color;
@@ -515,8 +538,8 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
         if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(rec,2),color->Color,3);
         if(PyList_Size(rec)>=6) {
           if(ok) ok=PConvPyIntToChar(PyList_GetItem(rec,3),&color->Custom);
-          if(ok) ok=PConvPyIntToChar(PyList_GetItem(rec,4),&color->ClampedFlag);
-          if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(rec,5),color->Clamped,3);
+          if(ok) ok=PConvPyIntToChar(PyList_GetItem(rec,4),&color->LutColorFlag);
+          if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(rec,5),color->LutColor,3);
         } else {
           if(ok) {color->Custom=true;}
         }
@@ -532,6 +555,46 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
   return(ok);
 #endif
 }
+/*========================================================================*/
+#if 0
+int ColorTableFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+  register CColor *I=G->Color;
+  int ok=true;
+  int ll=0;
+  if(!partial_restore) {
+    if(ok) ok=(list!=NULL);
+    if(ok) ok=PyList_Check(list);
+    if(ok) {
+      ll = PyList_Size(list);
+      if(ll>1) {
+        float tmp_float;
+        if(ok) ok=PConvPyFloatToFloat(PyList_GetItem(list,0),&tmp_float);
+        if(ok) I->Gamma = tmp_float;
+        {
+          PyObject *tmp = PyList_GetItem(list,1);
+          if(tmp && (tmp!=Py_None)) {
+#if 0
+            int PConvPyListToIntArrayInPlace(PyObject *obj,int *ff,ov_size ll);
+            
+            int PConvPyListToIntArrayInPlace(tmp,int *ff,ov_size ll);
+            PyList_SetItem(list,2,PConvIntArrayToPyList(I->ColorTable,512*512));
+
+#endif
+
+            ColorUpdateFromLut(G,-1);
+          }
+        }
+      }
+    }
+  }
+  return ok;
+#endif
+}
+#endif
 
 /*========================================================================*/
 void ColorDef(PyMOLGlobals *G,char *name,float *v,int mode,int quiet)
@@ -593,7 +656,7 @@ void ColorDef(PyMOLGlobals *G,char *name,float *v,int mode,int quiet)
   }
 
   I->Color[color].Custom=true;
-  ColorUpdateClamp(G,color);
+  ColorUpdateFromLut(G,color);
 
   if(!quiet) {
     PRINTFB(G,FB_Executive,FB_Actions)
@@ -2241,179 +2304,188 @@ void ColorReset(PyMOLGlobals *G)
   I->NExt = 0;
 }
 
-int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet)
+int ColorTableLoad(PyMOLGlobals *G,char *fname,float gamma,int quiet)
 {
   register CColor *I=G->Color; 
   int ok=true;
-  int width=512,height=512;
-  unsigned int *table = NULL;
 
-  if(!strcmp(fname,"rgb")) {
-    FreeP(I->ColorTable);
-    PRINTFB(G,FB_Color,FB_Actions)
-      " Color: purged table; restoring RGB colors.\n"
-      ENDFB(G);
-    ColorUpdateClamp(G,-1);    
-    
-  } else if(!strcmp(fname,"pymol")) {
-    
-    int x,y;
-    unsigned int r=0,g=0,b=0;
-    unsigned int *pixel,mask,*p;
-    unsigned int rc,bc,gc;
-    unsigned int gf,bf,rf;
-
-    float green_max=0.75F;
-    float red_max=0.95F;
-    float blue_max=0.97F;
-    
-    float min_factor=0.15F;
-
-    red_max = SettingGet(G,cSetting_pymol_space_max_red);
-    green_max = SettingGet(G,cSetting_pymol_space_max_green);
-    blue_max = SettingGet(G,cSetting_pymol_space_max_blue);
-    min_factor = SettingGet(G,cSetting_pymol_space_min_factor);
-
-    FreeP(I->ColorTable);
-    if(I->BigEndian)
-      mask = 0x000000FF;
-    else
-      mask = 0xFF000000;
-    
-    table = Alloc(unsigned int,512*512);
-    
-    p=(unsigned int*)table; 
-    for(x=0;x<width;x++)
-      for(y=0;y<height;y++)
-        *(p++)=mask;
-    
-    for(y=0;y<height;y++) 
-      for(x=0;x<width;x++) {
-        rc = r;
-        gc = g;
-        bc = b;
-
-        if((r>=g)&&(r>=b)) {
-          if(rc>255*red_max) {
-            rc=(unsigned int)(red_max*255);
-            bc=bc*rc/r;
-            gc=gc*rc/r;
-          }
-        } else if((g>=b)&&(g>=r)) {
-          if(gc>255*green_max) {
-            gc=(unsigned int)(green_max*255);
-            bc=bc*gc/g;
-            rc=rc*gc/g;
-          }
-        } else if((b>=g)&&(b>=r)) {
-          if(bc>255*blue_max) {
-            bc=(unsigned int)(blue_max*255);
-            gc=gc*bc/b;
-            rc=rc*bc/b;
-          }
-        }
-
-        rf = (int)(min_factor*rc+0.49999F);
-        gf = (int)(min_factor*gc+0.49999F);
-        bf = (int)(min_factor*bc+0.49999F);
-        
-        if (rc<gf) rc = (int)gf;
-        if (bc<gf) bc = (int)gf;
-        
-        if (rc<bf) rc = (int)bf;
-        if (gc<bf) gc = (int)bf;
-        
-        if (gc<rf) gc = (int)rf;
-        if (bc<rf) bc = (int)rf;
-    
-        if(rc>255) rc=255;
-        if(bc>255) bc=255;
-        if(gc>255) gc=255;
-
-        pixel = table+((width)*y)+x;
-        if(I->BigEndian) {
-          *(pixel)=
-            mask|(rc<<24)|(gc<<16)|(bc<<8);
-        } else {
-          *(pixel)=
-            mask|(bc<<16)|(gc<<8)|rc;
-        }
-        b = b + 4;
-        if(!(0xFF&b)) { 
-          b=0;
-          g=g+4;
-          if(!(0xFF&g)) {           
-            g=0;
-            r=r+4;
-          }
-        }
-      }
-  
-    I->ColorTable = table;
-    if(!quiet) {
-      PRINTFB(G,FB_Color,FB_Actions)
-        " Color: defined table '%s'.\n",fname
-        ENDFB(G);
-    }
-    
-    ColorUpdateClamp(G,-1);
-    ExecutiveInvalidateRep(G,cKeywordAll,cRepAll,cRepInvColor);
-    SceneChanged(G);
-
+  I->Gamma = gamma;
+  if(!fname[0]) {
+    ColorUpdateFromLut(G,-1);
   } else {
-    if(strlen(fname)) {
-      
-      unsigned int u_width=(unsigned int)width,u_height = (unsigned int)height;
-      unsigned char *u_table = (unsigned char*)table;
-      if(MyPNGRead(fname,
-                   &u_table,
-                   &u_width,
-                   &u_height)) {
-        table = (unsigned int*)u_table;
-        width = (signed int)u_width;
-        height = (signed int)u_height;
-        if((width==512)&&(height==512)) {
-          FreeP(I->ColorTable);
-          I->ColorTable = table;
-          if(!quiet) {
-            PRINTFB(G,FB_Color,FB_Actions)
-              " Color: loaded table '%s'.\n",fname
-              ENDFB(G);
-          }
-          
-          ColorUpdateClamp(G,-1);
+    int width=512,height=512;
+    unsigned int *table = NULL;
 
+    if(!strcmp(fname,"rgb")) {
+      if(I->ColorTable) {
+        FreeP(I->ColorTable);
+        I->ColorTable = NULL;
+        PRINTFB(G,FB_Color,FB_Actions)
+          " Color: purged table; restoring RGB colors.\n"
+          ENDFB(G);
+      }
+      ColorUpdateFromLut(G,-1);    
+    } else if(!strcmp(fname,"pymol")) {
+    
+      int x,y;
+      unsigned int r=0,g=0,b=0;
+      unsigned int *pixel,mask,*p;
+      unsigned int rc,bc,gc;
+      unsigned int gf,bf,rf;
+
+      float green_max=0.75F;
+      float red_max=0.95F;
+      float blue_max=0.97F;
+    
+      float min_factor=0.15F;
+
+      red_max = SettingGet(G,cSetting_pymol_space_max_red);
+      green_max = SettingGet(G,cSetting_pymol_space_max_green);
+      blue_max = SettingGet(G,cSetting_pymol_space_max_blue);
+      min_factor = SettingGet(G,cSetting_pymol_space_min_factor);
+
+      FreeP(I->ColorTable);
+      if(I->BigEndian)
+        mask = 0x000000FF;
+      else
+        mask = 0xFF000000;
+    
+      table = Alloc(unsigned int,512*512);
+    
+      p=(unsigned int*)table; 
+      for(x=0;x<width;x++)
+        for(y=0;y<height;y++)
+          *(p++)=mask;
+    
+      for(y=0;y<height;y++) 
+        for(x=0;x<width;x++) {
+          rc = r;
+          gc = g;
+          bc = b;
+
+          if((r>=g)&&(r>=b)) {
+            if(rc>255*red_max) {
+              rc=(unsigned int)(red_max*255);
+              bc=bc*rc/r;
+              gc=gc*rc/r;
+            }
+          } else if((g>=b)&&(g>=r)) {
+            if(gc>255*green_max) {
+              gc=(unsigned int)(green_max*255);
+              bc=bc*gc/g;
+              rc=rc*gc/g;
+            }
+          } else if((b>=g)&&(b>=r)) {
+            if(bc>255*blue_max) {
+              bc=(unsigned int)(blue_max*255);
+              gc=gc*bc/b;
+              rc=rc*bc/b;
+            }
+          }
+
+          rf = (int)(min_factor*rc+0.49999F);
+          gf = (int)(min_factor*gc+0.49999F);
+          bf = (int)(min_factor*bc+0.49999F);
+        
+          if (rc<gf) rc = (int)gf;
+          if (bc<gf) bc = (int)gf;
+        
+          if (rc<bf) rc = (int)bf;
+          if (gc<bf) gc = (int)bf;
+        
+          if (gc<rf) gc = (int)rf;
+          if (bc<rf) bc = (int)rf;
+    
+          if(rc>255) rc=255;
+          if(bc>255) bc=255;
+          if(gc>255) gc=255;
+
+          pixel = table+((width)*y)+x;
+          if(I->BigEndian) {
+            *(pixel)=
+              mask|(rc<<24)|(gc<<16)|(bc<<8);
+          } else {
+            *(pixel)=
+              mask|(bc<<16)|(gc<<8)|rc;
+          }
+          b = b + 4;
+          if(!(0xFF&b)) { 
+            b=0;
+            g=g+4;
+            if(!(0xFF&g)) {           
+              g=0;
+              r=r+4;
+            }
+          }
+        }
+  
+      I->ColorTable = table;
+      if(!quiet) {
+        PRINTFB(G,FB_Color,FB_Actions)
+          " Color: defined table '%s'.\n",fname
+          ENDFB(G);
+      }
+    
+      ColorUpdateFromLut(G,-1);
+      ExecutiveInvalidateRep(G,cKeywordAll,cRepAll,cRepInvColor);
+      SceneChanged(G);
+
+    } else {
+      if(strlen(fname)) {
+      
+        unsigned int u_width=(unsigned int)width,u_height = (unsigned int)height;
+        unsigned char *u_table = (unsigned char*)table;
+        if(MyPNGRead(fname,
+                     &u_table,
+                     &u_width,
+                     &u_height)) {
+          table = (unsigned int*)u_table;
+          width = (signed int)u_width;
+          height = (signed int)u_height;
+          if((width==512)&&(height==512)) {
+            FreeP(I->ColorTable);
+            I->ColorTable = table;
+            if(!quiet) {
+              PRINTFB(G,FB_Color,FB_Actions)
+                " Color: loaded table '%s'.\n",fname
+                ENDFB(G);
+            }
+          
+            ColorUpdateFromLut(G,-1);
+
+          } else {
+            PRINTFB(G,FB_Color,FB_Errors)
+              " ColorTableLoad-Error: invalid dimensions w x h  = %d x %d; should be 512 x 512.\n",
+              width,height
+              ENDFB(G);
+          
+            ok=false;      
+          }
         } else {
           PRINTFB(G,FB_Color,FB_Errors)
-            " ColorTableLoad-Error: invalid dimensions w x h  = %d x %d; should be 512 x 512.\n",
-            width,height
+            " ColorTableLoad-Error: unable to load '%s'.\n",fname
             ENDFB(G);
-          
-          ok=false;      
+          ok=false;
         }
       } else {
-        PRINTFB(G,FB_Color,FB_Errors)
-          " ColorTableLoad-Error: unable to load '%s'.\n",fname
+        PRINTFB(G,FB_Color,FB_Actions)
+          " Color: purged table; colors unchanged.\n"
           ENDFB(G);
-        ok=false;
+        FreeP(I->ColorTable);
       }
-    } else {
-      PRINTFB(G,FB_Color,FB_Actions)
-        " Color: purged table; colors unchanged.\n"
-        ENDFB(G);
-      FreeP(I->ColorTable);
+    }
+    if(!ok) {
+      FreeP(table);
     }
   }
-  if(!ok) {
-    FreeP(table);
-  } else {
+  if(ok) {
     ExecutiveInvalidateRep(G,cKeywordAll,cRepAll,cRepInvColor);
     SceneChanged(G);
   }
   return(ok);
 }
 #if 0
-static void unclamp_color(unsigned int *table, float *in, float *out, int big_endian)
+static void unlookup_color(unsigned int *table, float *in, float *out, int big_endian)
 {
   /* simple iterative approach to finding closest input for a desired
    output given the current color mapping table */
@@ -2421,7 +2493,7 @@ static void unclamp_color(unsigned int *table, float *in, float *out, int big_en
   float cur_in[3], cur_out[3], diff[3];
   copy3f(in, cur_in);
   for(a=0;a<10;a++) {
-    clamp_color(table,cur_in,cur_out,big_endian);
+    lookup_color(table,cur_in,cur_out,big_endian);
     diff3f(cur_out,in,diff);
     scale3f(0.5,diff,diff);
     subtract3f(cur_in,diff,cur_in);
@@ -2430,7 +2502,7 @@ static void unclamp_color(unsigned int *table, float *in, float *out, int big_en
 }
 #endif
 
-static void clamp_color(CColor *I, float *in, float *out, int big_endian)
+static void lookup_color(CColor *I, float *in, float *out, int big_endian)
 {
   const float _1 = 1.0F;
   unsigned int *table = I->ColorTable;
@@ -2539,8 +2611,6 @@ static void clamp_color(CColor *I, float *in, float *out, int big_endian)
     out[2] = in[2];
   }
   
-#if 0
-  I->Gamma=1.2;
   if((I->Gamma!=1.0F) && (I->Gamma>R_SMALL4)) {
     float inv_gamma = 1.0F / I->Gamma;
     float inp = (out[0]+out[1]+out[2])*(1/3.0F);
@@ -2551,21 +2621,21 @@ static void clamp_color(CColor *I, float *in, float *out, int big_endian)
       out[2] *= sig;
     }
   }
-#endif
 
   if(out[0]>_1) out[0]=_1;
   if(out[1]>_1) out[1]=_1;
   if(out[2]>_1) out[2]=_1;
 
 }
-
 /*========================================================================*/
-void ColorUpdateClamp(PyMOLGlobals *G,int index)
+void ColorUpdateFromLut(PyMOLGlobals *G,int index)
 {
   int i;
   int once=false;
   register CColor *I=G->Color; 
   float *color,*new_color;
+
+  I->LUTActive = (I->ColorTable||(I->Gamma!=1.0F));
 
   i = index;
   if(index>=0) {
@@ -2575,12 +2645,12 @@ void ColorUpdateClamp(PyMOLGlobals *G,int index)
     if(!once) index=i;
    
     if(index<I->NColor) {
-      if(!I->ColorTable) {
-        I->Color[index].ClampedFlag = false;
+      if(!I->LUTActive) {
+        I->Color[index].LutColorFlag = false;
       } else if(!I->Color[index].Fixed) {
         color = I->Color[index].Color;
-        new_color = I->Color[index].Clamped;
-        clamp_color(I, color, new_color, I->BigEndian);
+        new_color = I->Color[index].LutColor;
+        lookup_color(I, color, new_color, I->BigEndian);
         
         PRINTFD(G,FB_Color)
           "%5.3f %5.3f %5.3f -> %5.3f %5.3f %5.3f\n",
@@ -2588,7 +2658,7 @@ void ColorUpdateClamp(PyMOLGlobals *G,int index)
                new_color[0],new_color[1],new_color[2]
           ENDFD;
       
-        I->Color[index].ClampedFlag = true;
+        I->Color[index].LutColorFlag = true;
       }
     }
       
@@ -2596,11 +2666,11 @@ void ColorUpdateClamp(PyMOLGlobals *G,int index)
   }
 }
 /*========================================================================*/
-int ColorClampColor(PyMOLGlobals *G,float *color)
+int ColorLookupColor(PyMOLGlobals *G,float *color)
 {
   register CColor *I=G->Color; 
-  if(I->ColorTable) {
-    clamp_color(I, color, color, I->BigEndian);
+  if(I->LUTActive) {
+    lookup_color(I, color, color, I->BigEndian);
     return true;
   } else {
     return false;
@@ -2620,10 +2690,7 @@ int ColorInit(PyMOLGlobals *G)
     I->BigEndian = (*testPtr)&&1;
     
     I->Color=VLAMalloc(5500,sizeof(ColorRec),5,true);
-    I->NColor=0;
-    I->NExt=0;
     I->Ext=VLAMalloc(2,sizeof(ExtRec),5,true);
-    I->ColorTable=NULL;
     I->Gamma = 1.0F;
 
     ColorReset(G); /* will alloc I->Idx and I->Lex */
@@ -2653,8 +2720,8 @@ float *ColorGet(PyMOLGlobals *G,int index)
   register CColor *I=G->Color;
   float *ptr;
   if((index>=0)&&(index<I->NColor)) {
-    if(I->Color[index].ClampedFlag&&SettingGetGlobal_b(G,cSetting_clamp_colors))
-      ptr = I->Color[index].Clamped;
+    if(I->Color[index].LutColorFlag&&SettingGetGlobal_b(G,cSetting_clamp_colors))
+      ptr = I->Color[index].LutColor;
     else
       ptr = I->Color[index].Color;
     return(ptr);
@@ -2662,8 +2729,8 @@ float *ColorGet(PyMOLGlobals *G,int index)
     I->RGBColor[0] = ((index&0x00FF0000) >> 16) / 255.0F;
     I->RGBColor[1] = ((index&0x0000FF00) >> 8 ) / 255.0F;
     I->RGBColor[2] = ((index&0x000000FF)      ) / 255.0F;
-    if(I->ColorTable)
-      clamp_color(I, I->RGBColor, I->RGBColor, I->BigEndian);
+    if(I->LUTActive)
+      lookup_color(I, I->RGBColor, I->RGBColor, I->BigEndian);
     return I->RGBColor;
   } else {
             /* invalid color id, then simply return white */
@@ -2694,8 +2761,8 @@ int ColorGetEncoded(PyMOLGlobals *G,int index,float *color)
   register CColor *I=G->Color;
   float *ptr;
   if((index>=0)&&(index<I->NColor)) {
-    if(I->Color[index].ClampedFlag&&SettingGetGlobal_b(G,cSetting_clamp_colors))
-       ptr = I->Color[index].Clamped;
+    if(I->Color[index].LutColorFlag&&SettingGetGlobal_b(G,cSetting_clamp_colors))
+       ptr = I->Color[index].LutColor;
      else
        ptr = I->Color[index].Color;
      copy3f(ptr,color);
@@ -2704,8 +2771,8 @@ int ColorGetEncoded(PyMOLGlobals *G,int index,float *color)
      rgb_color[0] = ((index&0x00FF0000) >> 16) / 255.0F;
      rgb_color[1] = ((index&0x0000FF00) >> 8 ) / 255.0F;
      rgb_color[2] = ((index&0x000000FF)      ) / 255.0F;
-     if(I->ColorTable)
-       clamp_color(I, rgb_color, rgb_color, I->BigEndian);
+     if(I->LUTActive)
+       lookup_color(I, rgb_color, rgb_color, I->BigEndian);
      copy3f(rgb_color,color);
    } else if(index<=cColorExtCutoff) {
      color[0]=(float)index;

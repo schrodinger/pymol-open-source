@@ -136,7 +136,7 @@ PYMOL API
         lst.extend(list(arg))
         return apply(_self.load_object,lst,kw)
 
-    def space(space="", quiet=0, _self=cmd):
+    def space(space="", gamma=1.0, quiet=0, _self=cmd):
         '''
 DESCRIPTION
 
@@ -144,12 +144,14 @@ DESCRIPTION
     
 USAGE
 
-    space space
+    space space [, gamma]
 
 ARGUMENTS
 
     space = rgb, cmyk, or pymol: {default: rgb}
 
+    gamma = floating point gamma transformation
+    
 EXAMPLES
 
     space rgb
@@ -180,7 +182,7 @@ NOTES
 
 PYMOL API
 
-    cmd.space(string space)
+    cmd.space(string space, float gamma)
     
 SEE ALSO
 
@@ -189,11 +191,10 @@ SEE ALSO
     '''
         r = DEFAULT_ERROR
         
-        
         tables = { 'cmyk' : "$PYMOL_PATH/data/pymol/cmyk.png",
-                      'pymol' : 'pymol',
-                      'rgb' : 'rgb' }
-
+                   'pymol' : 'pymol',
+                   'rgb' : 'rgb' }
+        
         space_auto = space_sc.interpret(space)
         if (space_auto != None) and not is_list(space_auto):
             space = space_auto
@@ -207,9 +208,10 @@ SEE ALSO
                 filename = None
         if filename!=None:
             try:
-                filename = _self.exp_path(filename)
+                if filename!="":
+                    filename = _self.exp_path(filename)
                 _self.lock(_self)
-                r = _cmd.load_color_table(_self._COb,str(filename),int(quiet))
+                r = _cmd.load_color_table(_self._COb,str(filename),float(gamma),int(quiet))
             finally:
                 _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException

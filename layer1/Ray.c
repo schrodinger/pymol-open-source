@@ -2237,89 +2237,88 @@ void RayRenderIDTF(CRay *I,char **node_vla,char **rsrc_vla)
         /* looping through each primitive */
         prim++;
       }
-
+      
       /* now we need to consolidate materials for each color
-	 combination (creating averages as necessary) and update
-	 mesh->face_shading_list appropriately for each face */
+         combination (creating averages as necessary) and update
+         mesh->face_shading_list appropriately for each face */
       
       {
-	IdtfMaterial *material = Calloc(IdtfMaterial,1);
-	if(material && 
-	   (material->color_list = VLAlloc(float,4)) &&
-	   (material->color_hash = VectorHash_New())) {
-	  
-	  const float one_third = (1/3.0F);
-	  int a;
-	  IdtfResourceMesh *mesh = mesh_vla;
-	  
-	  for(a=0;a<mesh_cnt;a++) {
+        IdtfMaterial *material = Calloc(IdtfMaterial,1);
+        if(material && 
+           (material->color_list = VLAlloc(float,4)) &&
+           (material->color_hash = VectorHash_New())) {
+          
+          const float one_third = (1/3.0F);
+          int a;
+          IdtfResourceMesh *mesh = mesh_vla;
+          
+          for(a=0;a<mesh_cnt;a++) {
             int *ip = mesh->face_color_list;
-	    int shading_count = 0;
+            int shading_count = 0;
             int b;
             for(b=0;b<mesh->face_count;b++) {
               float *fp0 = mesh->model_diffuse_color_list + 4*ip[0];
               float *fp1 = mesh->model_diffuse_color_list + 4*ip[1];
               float *fp2 = mesh->model_diffuse_color_list + 4*ip[2];
-	      float avg_rgba[4];
-
-	      avg_rgba[0] = (fp0[0] + fp1[0] + fp2[0]) * one_third;
+              float avg_rgba[4];
+              
+              avg_rgba[0] = (fp0[0] + fp1[0] + fp2[0]) * one_third;
               avg_rgba[1] = (fp0[1] + fp1[1] + fp2[1]) * one_third;
               avg_rgba[2] = (fp0[2] + fp1[2] + fp2[2]) * one_third;
-	      avg_rgba[3] = (fp0[3] + fp1[3] + fp2[3]) * one_third;
-
-	      if(VLACheck(material->color_list, float, material->color_count*4 + 3)) {
-		unique_color_add(material->color_hash, avg_rgba,
-				 material->color_list, &material->color_count,
-				 mesh->face_shading_list, &shading_count,
-				 avg_rgba[3]);
-	      }
+              avg_rgba[3] = (fp0[3] + fp1[3] + fp2[3]) * one_third;
+              
+              if(VLACheck(material->color_list, float, material->color_count*4 + 3)) {
+                unique_color_add(material->color_hash, avg_rgba,
+                                 material->color_list, &material->color_count,
+                                 mesh->face_shading_list, &shading_count,
+                                 avg_rgba[3]);
+              }
               ip+=3;
             }
-	    mesh++;
+            mesh++;
           }
-	  
-	  {
-	    int cnt = 0;
-	    cnt = idtf_dump_file_header(node_vla,cnt);
-	    cnt = idtf_dump_model_nodes(node_vla,cnt,mesh_vla,mesh_cnt);
-	    VLASize( (*node_vla), char, cnt);
-	  }
-	  {
-	    int cnt = 0;
-	    cnt = idtf_dump_resource_header(rsrc_vla,cnt);
-	    cnt = idtf_dump_resources(rsrc_vla,cnt,mesh_vla,mesh_cnt,
-				      material);
-	    VLASize( (*rsrc_vla), char, cnt);
-	  }
-	  
-	  VLAFreeP(material->color_list);
-	  VectorHash_Free(material->color_hash);
-	}
-	FreeP(material);
+          
+          {
+            int cnt = 0;
+            cnt = idtf_dump_file_header(node_vla,cnt);
+            cnt = idtf_dump_model_nodes(node_vla,cnt,mesh_vla,mesh_cnt);
+            VLASize( (*node_vla), char, cnt);
+          }
+          {
+            int cnt = 0;
+            cnt = idtf_dump_resource_header(rsrc_vla,cnt);
+            cnt = idtf_dump_resources(rsrc_vla,cnt,mesh_vla,mesh_cnt,
+                                      material);
+            VLASize( (*rsrc_vla), char, cnt);
+          }
+          
+          VLAFreeP(material->color_list);
+          VectorHash_Free(material->color_hash);
+        }
+        FreeP(material);
       }
       
       {
-	/* refactor into a delete method */
-	IdtfResourceMesh *mesh = mesh_vla;
-	int i;
-	for(i=0;i<mesh_cnt;i++) {
-	  VLAFreeP(mesh->face_position_list);
-	  VLAFreeP(mesh->face_normal_list);
-	  VLAFreeP(mesh->face_shading_list);
-	  VLAFreeP(mesh->face_color_list);
-	  VLAFreeP(mesh->model_position_list);
-	  VLAFreeP(mesh->model_normal_list);
-	  VLAFreeP(mesh->model_diffuse_color_list);
-	  VectorHash_Free(mesh->color_hash);
-	  VectorHash_Free(mesh->position_hash);
-	  VectorHash_Free(mesh->normal_hash);
-	  mesh++;
-	}
-	VLAFreeP(mesh_vla);
+        /* refactor into a delete method */
+        IdtfResourceMesh *mesh = mesh_vla;
+        int i;
+        for(i=0;i<mesh_cnt;i++) {
+          VLAFreeP(mesh->face_position_list);
+          VLAFreeP(mesh->face_normal_list);
+          VLAFreeP(mesh->face_shading_list);
+          VLAFreeP(mesh->face_color_list);
+          VLAFreeP(mesh->model_position_list);
+          VLAFreeP(mesh->model_normal_list);
+          VLAFreeP(mesh->model_diffuse_color_list);
+          VectorHash_Free(mesh->color_hash);
+          VectorHash_Free(mesh->position_hash);
+          VectorHash_Free(mesh->normal_hash);
+          mesh++;
+        }
+        VLAFreeP(mesh_vla);
       }
     }
   }
-
 }
 /*========================================================================*/
 void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
