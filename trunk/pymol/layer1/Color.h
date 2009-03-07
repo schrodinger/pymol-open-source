@@ -63,6 +63,7 @@ struct _CColor {
   ExtRec *Ext;
   int NExt;
   unsigned int *ColorTable;
+  float Gamma;
   int BigEndian;
   OVLexicon *Lex;
   OVOneToOne *Idx;

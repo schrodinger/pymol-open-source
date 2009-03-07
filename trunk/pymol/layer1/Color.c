@@ -77,7 +77,7 @@ static int AutoColor[] = {
 };
 
 static int nAutoColor = 40;
-static void clamp_color(unsigned int *table, float *in, float *out, int big_endian);
+static void clamp_color(CColor *I,float *in, float *out, int big_endian);
 
 void ColorGetBkrdContColor(PyMOLGlobals *G,float *rgb, int invert_flag) 
 {
@@ -210,7 +210,7 @@ int ColorGetRamped(PyMOLGlobals *G,int index,float *vertex,float *color,int stat
     color[1]=1.0;
     color[2]=1.0;
   } else if(I->ColorTable) {
-    clamp_color(I->ColorTable, color, color, I->BigEndian);
+    clamp_color(I, color, color, I->BigEndian);
   }
   return(ok);
 }
@@ -2430,106 +2430,129 @@ static void unclamp_color(unsigned int *table, float *in, float *out, int big_en
 }
 #endif
 
-static void clamp_color(unsigned int *table, float *in, float *out, int big_endian)
+static void clamp_color(CColor *I, float *in, float *out, int big_endian)
 {
-  unsigned int r,g,b,rr,gr,br;
-  unsigned int ra,ga,ba;
-  unsigned int rc[2][2][2],gc[2][2][2],bc[2][2][2];
-  unsigned int *entry;
-  int x,y,z;  
-  float fr,fg,fb,frm1x, fgm1,fbm1,rct,gct,bct;
-  const float _1 = 1.0F, _2 = 2.0F, _0 = 0.0F, _05 = 0.5F,
-    _04999 = 0.4999F;
-  const float inv255 = 1.0F/255.0F;
+  const float _1 = 1.0F;
+  unsigned int *table = I->ColorTable;
+  if(table) {
+    unsigned int r,g,b,rr,gr,br;
+    unsigned int ra,ga,ba;
+    unsigned int rc[2][2][2],gc[2][2][2],bc[2][2][2];
+    unsigned int *entry;
+    int x,y,z;  
+    float fr,fg,fb,frm1x, fgm1,fbm1,rct,gct,bct;
+    const float _2 = 2.0F, _0 = 0.0F, _05 = 0.5F,
+      _04999 = 0.4999F;
+    const float inv255 = 1.0F/255.0F;
 
-  r = ((int)(255*in[0]+_05))&0xFF;
-  g = ((int)(255*in[1]+_05))&0xFF;
-  b = ((int)(255*in[2]+_05))&0xFF;
+    r = ((int)(255*in[0]+_05))&0xFF;
+    g = ((int)(255*in[1]+_05))&0xFF;
+    b = ((int)(255*in[2]+_05))&0xFF;
 
-  rr = r&0x3;
-  gr = g&0x3;
-  br = b&0x3;
+    rr = r&0x3;
+    gr = g&0x3;
+    br = b&0x3;
   
-  r = (r>>2);
-  g = (g>>2);
-  b = (b>>2);
+    r = (r>>2);
+    g = (g>>2);
+    b = (b>>2);
   
-  /* now for a crude little trilinear */
+    /* now for a crude little trilinear */
   
-  for(x=0;x<2;x++) {
-    ra = r + x;
-    if(ra>63) ra=63;
-    for(y=0;y<2;y++) {
-      ga = g + y;
-      if(ga>63) ga=63;
-      for(z=0;z<2;z++) {
-        ba = b + z;
-        if(ba>63) ba=63;
+    for(x=0;x<2;x++) {
+      ra = r + x;
+      if(ra>63) ra=63;
+      for(y=0;y<2;y++) {
+        ga = g + y;
+        if(ga>63) ga=63;
+        for(z=0;z<2;z++) {
+          ba = b + z;
+          if(ba>63) ba=63;
         
-        entry = table + (ra<<12) + (ga<<6) + ba;
+          entry = table + (ra<<12) + (ga<<6) + ba;
         
-        if(big_endian) {
-          rc[x][y][z] = 0xFF&((*entry)>>24);
-          gc[x][y][z] = 0xFF&((*entry)>>16);
-          bc[x][y][z] = 0xFF&((*entry)>>8);
-        } else {
-          rc[x][y][z] = 0xFF&((*entry)    );
-          gc[x][y][z] = 0xFF&((*entry)>> 8);
-          bc[x][y][z] = 0xFF&((*entry)>>16);
+          if(big_endian) {
+            rc[x][y][z] = 0xFF&((*entry)>>24);
+            gc[x][y][z] = 0xFF&((*entry)>>16);
+            bc[x][y][z] = 0xFF&((*entry)>>8);
+          } else {
+            rc[x][y][z] = 0xFF&((*entry)    );
+            gc[x][y][z] = 0xFF&((*entry)>> 8);
+            bc[x][y][z] = 0xFF&((*entry)>>16);
+          }
         }
       }
     }
+    
+    frm1x = rr/4.0F;
+    fgm1 = gr/4.0F;
+    fbm1 = br/4.0F;
+  
+    fr = 1.0F - frm1x;
+    fg = 1.0F - fgm1;
+    fb = 1.0F - fbm1;
+  
+    rct = _04999 + 
+      (fr   * fg   * fb   * rc[0][0][0]) + 
+      (frm1x * fg   * fb   * rc[1][0][0]) + 
+      (fr   * fgm1 * fb   * rc[0][1][0]) + 
+      (fr   * fg   * fbm1 * rc[0][0][1]) + 
+      (frm1x * fgm1 * fb   * rc[1][1][0]) + 
+      (fr   * fgm1 * fbm1 * rc[0][1][1]) + 
+      (frm1x * fg   * fbm1 * rc[1][0][1]) + 
+      (frm1x * fgm1 * fbm1 * rc[1][1][1]);
+  
+    gct = _04999 + 
+      (fr   * fg   * fb   * gc[0][0][0]) + 
+      (frm1x * fg   * fb   * gc[1][0][0]) + 
+      (fr   * fgm1 * fb   * gc[0][1][0]) + 
+      (fr   * fg   * fbm1 * gc[0][0][1]) + 
+      (frm1x * fgm1 * fb   * gc[1][1][0]) + 
+      (fr   * fgm1 * fbm1 * gc[0][1][1]) + 
+      (frm1x * fg   * fbm1 * gc[1][0][1]) + 
+      (frm1x * fgm1 * fbm1 * gc[1][1][1]);
+  
+    bct = _04999 + 
+      (fr   * fg   * fb   * bc[0][0][0]) + 
+      (frm1x * fg   * fb   * bc[1][0][0]) + 
+      (fr   * fgm1 * fb   * bc[0][1][0]) + 
+      (fr   * fg   * fbm1 * bc[0][0][1]) + 
+      (frm1x * fgm1 * fb   * bc[1][1][0]) + 
+      (fr   * fgm1 * fbm1 * bc[0][1][1]) + 
+      (frm1x * fg   * fbm1 * bc[1][0][1]) + 
+      (frm1x * fgm1 * fbm1 * bc[1][1][1]);
+  
+    if(r>=63) rct+=rr;
+    if(g>=63) gct+=gr;
+    if(b>=63) bct+=br;
+  
+    if(rct<=_2) rct=_0; /* make sure black is black */
+    if(gct<=_2) gct=_0;
+    if(bct<=_2) bct=_0;
+    
+    out[0] = rct*inv255;
+    out[1] = gct*inv255;
+    out[2] = bct*inv255;
+  } else {
+    out[0] = in[0];
+    out[1] = in[1];
+    out[2] = in[2];
   }
   
-  frm1x = rr/4.0F;
-  fgm1 = gr/4.0F;
-  fbm1 = br/4.0F;
-  
-  fr = 1.0F - frm1x;
-  fg = 1.0F - fgm1;
-  fb = 1.0F - fbm1;
-  
-  rct = _04999 + 
-    (fr   * fg   * fb   * rc[0][0][0]) + 
-    (frm1x * fg   * fb   * rc[1][0][0]) + 
-    (fr   * fgm1 * fb   * rc[0][1][0]) + 
-    (fr   * fg   * fbm1 * rc[0][0][1]) + 
-    (frm1x * fgm1 * fb   * rc[1][1][0]) + 
-    (fr   * fgm1 * fbm1 * rc[0][1][1]) + 
-    (frm1x * fg   * fbm1 * rc[1][0][1]) + 
-    (frm1x * fgm1 * fbm1 * rc[1][1][1]);
-  
-  gct = _04999 + 
-    (fr   * fg   * fb   * gc[0][0][0]) + 
-    (frm1x * fg   * fb   * gc[1][0][0]) + 
-    (fr   * fgm1 * fb   * gc[0][1][0]) + 
-    (fr   * fg   * fbm1 * gc[0][0][1]) + 
-    (frm1x * fgm1 * fb   * gc[1][1][0]) + 
-    (fr   * fgm1 * fbm1 * gc[0][1][1]) + 
-    (frm1x * fg   * fbm1 * gc[1][0][1]) + 
-    (frm1x * fgm1 * fbm1 * gc[1][1][1]);
-  
-  bct = _04999 + 
-    (fr   * fg   * fb   * bc[0][0][0]) + 
-    (frm1x * fg   * fb   * bc[1][0][0]) + 
-    (fr   * fgm1 * fb   * bc[0][1][0]) + 
-    (fr   * fg   * fbm1 * bc[0][0][1]) + 
-    (frm1x * fgm1 * fb   * bc[1][1][0]) + 
-    (fr   * fgm1 * fbm1 * bc[0][1][1]) + 
-    (frm1x * fg   * fbm1 * bc[1][0][1]) + 
-    (frm1x * fgm1 * fbm1 * bc[1][1][1]);
-  
-  if(r>=63) rct+=rr;
-  if(g>=63) gct+=gr;
-  if(b>=63) bct+=br;
-  
-  if(rct<=_2) rct=_0; /* make sure black is black */
-  if(gct<=_2) gct=_0;
-  if(bct<=_2) bct=_0;
-        
-  out[0] = rct*inv255;
-  out[1] = gct*inv255;
-  out[2] = bct*inv255;
+#if 0
+  I->Gamma=1.2;
+  if((I->Gamma!=1.0F) && (I->Gamma>R_SMALL4)) {
+    float inv_gamma = 1.0F / I->Gamma;
+    float inp = (out[0]+out[1]+out[2])*(1/3.0F);
+    if(inp >= R_SMALL4) {
+      float sig = (float)(pow(inp,inv_gamma))/inp;
+      out[0] *= sig;
+      out[1] *= sig;
+      out[2] *= sig;
+    }
+  }
+#endif
+
   if(out[0]>_1) out[0]=_1;
   if(out[1]>_1) out[1]=_1;
   if(out[2]>_1) out[2]=_1;
@@ -2557,7 +2580,7 @@ void ColorUpdateClamp(PyMOLGlobals *G,int index)
       } else if(!I->Color[index].Fixed) {
         color = I->Color[index].Color;
         new_color = I->Color[index].Clamped;
-        clamp_color(I->ColorTable, color, new_color, I->BigEndian);
+        clamp_color(I, color, new_color, I->BigEndian);
         
         PRINTFD(G,FB_Color)
           "%5.3f %5.3f %5.3f -> %5.3f %5.3f %5.3f\n",
@@ -2577,7 +2600,7 @@ int ColorClampColor(PyMOLGlobals *G,float *color)
 {
   register CColor *I=G->Color; 
   if(I->ColorTable) {
-    clamp_color(I->ColorTable, color, color, I->BigEndian);
+    clamp_color(I, color, color, I->BigEndian);
     return true;
   } else {
     return false;
@@ -2601,6 +2624,7 @@ int ColorInit(PyMOLGlobals *G)
     I->NExt=0;
     I->Ext=VLAMalloc(2,sizeof(ExtRec),5,true);
     I->ColorTable=NULL;
+    I->Gamma = 1.0F;
 
     ColorReset(G); /* will alloc I->Idx and I->Lex */
 
@@ -2639,7 +2663,7 @@ float *ColorGet(PyMOLGlobals *G,int index)
     I->RGBColor[1] = ((index&0x0000FF00) >> 8 ) / 255.0F;
     I->RGBColor[2] = ((index&0x000000FF)      ) / 255.0F;
     if(I->ColorTable)
-      clamp_color(I->ColorTable, I->RGBColor, I->RGBColor, I->BigEndian);
+      clamp_color(I, I->RGBColor, I->RGBColor, I->BigEndian);
     return I->RGBColor;
   } else {
             /* invalid color id, then simply return white */
@@ -2681,7 +2705,7 @@ int ColorGetEncoded(PyMOLGlobals *G,int index,float *color)
      rgb_color[1] = ((index&0x0000FF00) >> 8 ) / 255.0F;
      rgb_color[2] = ((index&0x000000FF)      ) / 255.0F;
      if(I->ColorTable)
-       clamp_color(I->ColorTable, rgb_color, rgb_color, I->BigEndian);
+       clamp_color(I, rgb_color, rgb_color, I->BigEndian);
      copy3f(rgb_color,color);
    } else if(index<=cColorExtCutoff) {
      color[0]=(float)index;
