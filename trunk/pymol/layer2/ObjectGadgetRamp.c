@@ -705,7 +705,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
           } else {
             float tmp[3],*src = I->Color+3*a;
             copy3f(src,tmp);
-            ColorClampColor(I->Gadget.Obj.G,tmp);
+            ColorLookupColor(I->Gadget.Obj.G,tmp);
             CGOColorv(cgo,tmp);
           }
           
@@ -733,7 +733,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
           } else {
             float tmp[3],*src = I->Color;
             copy3f(src,tmp);
-            ColorClampColor(I->Gadget.Obj.G,tmp);
+            ColorLookupColor(I->Gadget.Obj.G,tmp);
             CGOColorv(cgo,tmp);
           }
           

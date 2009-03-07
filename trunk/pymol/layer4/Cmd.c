@@ -1821,9 +1821,10 @@ static PyObject *CmdLoadColorTable(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
   char *str1;
+  float gamma;
   int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"Osi",&self,&str1,&quiet);
+  ok = PyArg_ParseTuple(args,"Osfi",&self,&str1,&gamma,&quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G!=NULL);
@@ -1831,7 +1832,7 @@ static PyObject *CmdLoadColorTable(PyObject *self, PyObject *args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok=APIEnterNotModal(G))) {
-    ok = ColorTableLoad(G,str1,quiet);
+    ok = ColorTableLoad(G,str1,gamma,quiet);
     APIExit(G);
   }
   return APIResultOk(ok);

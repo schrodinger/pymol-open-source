@@ -271,7 +271,7 @@ static void ObjectSliceStateAssignColors(ObjectSliceState *oss, ObjectGadgetRamp
       for(x=min[0];x<=max[0];x++) {
         if(*flag) {
           ObjectGadgetRampInterpolate(ogr, *value, color);
-          ColorClampColor(oss->G,color);
+          ColorLookupColor(oss->G,color);
         }
         color +=3;
         value++;
