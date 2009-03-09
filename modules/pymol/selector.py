@@ -54,6 +54,7 @@ def process(sele): # expand slash notation into a standard atom selection
             if la>4: model = arg[4]
         # lst
         lst = []
+        model = model.replace('model','(object model)')
         if model!='': lst.append("("+string.replace(model,"+","|")+")")
         if segment!='': lst.append("s;"+string.replace(segment,'+',','))
         if chain!='': lst.append("c;"+string.replace(chain,'+',','))

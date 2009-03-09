@@ -1792,10 +1792,11 @@ DESCRIPTION
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def matrix_copy(source_name, target_name,
+    def matrix_copy(source_name, target_name='',
                     source_mode=-1, target_mode=-1,
                     source_state=1, target_state=1,
-                    target_undo=1, log=0, quiet=1,_self=cmd):
+                    target_undo=1, log=0, quiet=1,
+                    _self=cmd):
         '''
 
 DESCRIPTION
@@ -1818,20 +1819,44 @@ SEE ALSO
 '''
         
         r = DEFAULT_ERROR
-        try:
-            _self.lock(_self)
-            r = _cmd.matrix_copy(_self._COb,str(source_name),
-                                             str(target_name),
-                                             int(source_mode),
-                                             int(target_mode),
-                                             int(source_state)-1,
-                                             int(target_state)-1,
-                                             int(target_undo),
-                                             int(log),
-                                             int(quiet))
-        finally:
-            _self.unlock(r,_self)
-        if _self._raising(r,_self): raise pymol.CmdException            
+        target_name = str(target_name)
+        if target_name == '': # tentative -- create a new command instead?
+            mat = cmd.get_object_matrix(source_name,source_state)
+            view = cmd.get_view()
+            new_view = (
+                mat[ 0]*view[ 0] + mat[ 4]*view[ 3] + mat[ 8]*view[ 6],
+                mat[ 0]*view[ 1] + mat[ 4]*view[ 4] + mat[ 8]*view[ 7],  
+                mat[ 0]*view[ 2] + mat[ 4]*view[ 5] + mat[ 8]*view[ 8],
+                mat[ 1]*view[ 0] + mat[ 5]*view[ 3] + mat[ 9]*view[ 6],
+                mat[ 1]*view[ 1] + mat[ 5]*view[ 4] + mat[ 9]*view[ 7],  
+                mat[ 1]*view[ 2] + mat[ 5]*view[ 5] + mat[ 9]*view[ 8],
+                mat[ 2]*view[ 0] + mat[ 6]*view[ 3] + mat[10]*view[ 6],
+                mat[ 2]*view[ 1] + mat[ 6]*view[ 4] + mat[10]*view[ 7],  
+                mat[ 2]*view[ 2] + mat[ 6]*view[ 5] + mat[10]*view[ 8],
+                view[ 9] ,         view[10] ,         view[11],
+                mat[ 0]*view[12] + mat[ 1]*view[13] + mat[ 2]*view[14] -
+                mat[ 0]* mat[ 3] - mat[ 4]* mat[ 7] - mat[ 8]* mat[11], 
+                mat[ 4]*view[12] + mat[ 5]*view[13] + mat[ 6]*view[14] -
+                mat[ 1]* mat[ 3] - mat[ 5]* mat[ 7] - mat[ 9]* mat[11],
+                mat[ 8]*view[12] + mat[ 9]*view[13] + mat[10]*view[14] -
+                mat[ 2]* mat[ 3] - mat[ 6]* mat[ 7] - mat[10]* mat[11],
+                view[15] ,         view[16] ,         view[17] )
+            r = cmd.set_view(new_view)
+        else:
+            try:
+                _self.lock(_self)
+                r = _cmd.matrix_copy(_self._COb,str(source_name),
+                                                 str(target_name),
+                                                 int(source_mode),
+                                                 int(target_mode),
+                                                 int(source_state)-1,
+                                                 int(target_state)-1,
+                                                 int(target_undo),
+                                                 int(log),
+                                                 int(quiet))
+            finally:
+                _self.unlock(r,_self)
+            if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
     def matrix_reset(name, state=1, mode=-1, log=0, quiet=1,_self=cmd):
