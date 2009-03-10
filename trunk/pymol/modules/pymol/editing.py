@@ -1792,7 +1792,7 @@ DESCRIPTION
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def matrix_copy(source_name, target_name='',
+    def matrix_copy(source_name='', target_name='',
                     source_mode=-1, target_mode=-1,
                     source_state=1, target_state=1,
                     target_undo=1, log=0, quiet=1,
@@ -1819,8 +1819,11 @@ SEE ALSO
 '''
         
         r = DEFAULT_ERROR
-        target_name = str(target_name)
-        if target_name == '': # tentative -- create a new command instead?
+        if source_name == None:
+            source_name = ''
+        target_name = str(target_name).strip()
+        source_name = str(source_name).strip()
+        if (target_name == '' and source_name != ''): # tentative -- create a new command instead?
             mat = cmd.get_object_matrix(source_name,source_state)
             view = cmd.get_view()
             new_view = (

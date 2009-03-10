@@ -1562,10 +1562,12 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
 {
   /*  mode 0: raw coordinates, as per the txf history
       mode 1: object TTT matrix
-      mode 2: state matrix */
+      mode 2: state matrix
+      mode 3 (source only): camera matrix transformation */
+
   register CExecutive *I = G->Executive;
   CTracker *I_Tracker= I->Tracker;
-  SpecRec *src_rec = ExecutiveFindSpec(G,source_name);
+  SpecRec *src_rec = NULL;
   int ok = true;
   int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
   int copy_ttt_too = false;
@@ -1576,7 +1578,12 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
     source_mode = matrix_mode;
   if(target_mode<0)
     target_mode = matrix_mode;
-  
+  if(source_name[0]==0) {
+    source_mode = 3;
+    target_undo = 0;
+  } else
+    src_rec = ExecutiveFindSpec(G,source_name);
+
   switch(source_mode) {
   case 0: /* txf history is the source matrix */
     { 
@@ -1743,6 +1750,91 @@ int ExecutiveMatrixCopy(PyMOLGlobals *G,
                 break;
               }
             }
+          }
+        }
+        TrackerDelList(I_Tracker, list_id);
+        TrackerDelIter(I_Tracker, iter_id);
+      }
+    }
+    break;
+  case 3: /* camera */
+    { 
+      SceneViewType view;
+      double homo[16], *history;
+      int list_id = ExecutiveGetNamesListFromPattern(G,target_name,
+                                                     true,cExecExpandKeepGroups);
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+      SpecRec *rec;
+      SceneGetView(G,view);
+      homo[ 0] = view[ 0];
+      homo[ 1] = view[ 4];
+      homo[ 2] = view[ 8];
+      homo[ 3] = -(view[ 0]*view[19] + view[ 4]*view[20] + view[ 8]*view[21]);
+      homo[ 4] = view[ 1];
+      homo[ 5] = view[ 5];
+      homo[ 6] = view[ 9];
+      homo[ 7] = -(view[ 1]*view[19] + view[ 5]*view[20] + view[ 9]*view[21]);
+      homo[ 8] = view[ 2];
+      homo[ 9] = view[ 6];
+      homo[10] = view[10];
+      homo[11] = -(view[ 2]*view[19] + view[ 6]*view[20] + view[10]*view[21]);
+      homo[12] = 0.0;
+      homo[13] = 0.0;
+      homo[14] = 0.0;
+      homo[15] = 1.0;
+      history = homo;
+      while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+        if(rec && (rec!=src_rec)) {
+          switch(rec->type) {
+          case cExecObject:
+            
+            switch(target_mode) {
+            case 0: /* apply changes to coordinates in the target object */
+              {
+                double temp_inverse[16];
+                if(target_undo) {
+                  double *target_history = NULL;
+                  int target_found =  ExecutiveGetObjectMatrix(G,rec->name,
+                                                               target_state,
+                                                               &target_history,
+                                                               false);
+                  if(target_found && target_history) {
+                    invert_special44d44d(target_history, temp_inverse);
+                    if(history) {
+                      right_multiply44d44d(temp_inverse,history);
+                      history = temp_inverse;
+                    } else {
+                      history = temp_inverse;
+                    }
+                  }
+                }
+                {
+                  float historyf[16];
+                  if(history) {
+                    convert44d44f(history,historyf);
+                  } else {
+                    identity44f(historyf);
+                  }
+                  ExecutiveTransformObjectSelection(G,rec->name, target_state, 
+                                                    "",log,historyf,true,false);
+                }
+              }
+              break;
+            case 1: /* applying changes to the object's TTT matrix */
+              if(history) {
+                float tttf[16];
+                convertR44dTTTf(history,tttf);
+                ExecutiveSetObjectTTT(G,rec->name,tttf,-1,quiet);
+              } else {
+                ExecutiveSetObjectTTT(G,rec->name,NULL,-1,quiet);
+              }
+              /* to do: logging, return values, etc. */
+              break;
+            case 2: /* applying changes to the state matrix */
+              ok = ExecutiveSetObjectMatrix(G,rec->name,target_state,history);
+              break;
+            }
+            break;
           }
         }
         TrackerDelList(I_Tracker, list_id);
