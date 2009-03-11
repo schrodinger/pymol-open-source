@@ -108,7 +108,7 @@ class CleanJob:
                     self_cmd.reference("validate",obj_name,state) # then we have reference coordinates
                 (fit_flag, sdf_list) = model_to_sdf_list(self_cmd,self_cmd.get_model(obj_name,state=state))
                 input_sdf = string.join(sdf_list,'')
-                print input_sdf
+#                print input_sdf
                 result = mengine.run(input_sdf)
                 if result != None:
                     if len(result):
