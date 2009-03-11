@@ -26,6 +26,7 @@ struct _CUtil {
   double StartSec;
 };
 
+
 int UtilInit(PyMOLGlobals *G) 
 {
   G->Util = Calloc(CUtil,1);

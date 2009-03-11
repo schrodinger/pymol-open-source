@@ -63,6 +63,7 @@ static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
   Pickable *p;
   int i,j,ip;
   int last;
+  float line_width = SceneGetDynamicLineWidth(info,I->linewidth);
 
   /* 
 
@@ -81,7 +82,7 @@ static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
     float radius;
     
     if(I->radius==0.0F) {
-      radius = ray->PixelRadius*I->linewidth/2.0F;
+      radius = ray->PixelRadius*line_width/2.0F;
     } else {
       radius = I->radius;
     }
@@ -162,9 +163,9 @@ static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
         glDisable(GL_LINE_SMOOTH);
 
       if(info->width_scale_flag) 
-        glLineWidth(I->linewidth*info->width_scale);
+        glLineWidth(line_width*info->width_scale);
       else
-        glLineWidth(I->linewidth);
+        glLineWidth(line_width);
 
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {

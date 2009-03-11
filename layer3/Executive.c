@@ -1386,6 +1386,10 @@ int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int e
     OrthoDirty(G);
     I->CaptureFlag = true;
   } else {
+    if(SettingGetGlobal_i(G,cSetting_draw_mode)==-1) {
+      ExecutiveSetSettingFromString(G,cSetting_draw_mode,"-2","",-1, true, true);
+      SceneUpdate(G,false);
+    }
     SceneDeferImage(G,width,height,NULL,antialias, -1.0, cMyPNG_FormatPNG, quiet);
   }
   return 1;

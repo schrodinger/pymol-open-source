@@ -59,16 +59,18 @@ static void RepDistDashRender(RepDistDash *I,RenderInfo *info)
   float *vc;
   int round_ends;
   int color = SettingGet_color(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_color);
-  I->linewidth = SettingGet_f(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_width);
+  float line_width = SettingGet_f(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_width);
+                                             
   I->radius = SettingGet_f(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_radius);
   round_ends = SettingGet_b(G,I->ds->Setting,I->ds->Obj->Obj.Setting,cSetting_dash_round_ends);
-
+line_width = SceneGetDynamicLineWidth(info,line_width);
+  
   if(ray) {
 
     float radius;
 
     if(I->radius<=0.0F) {
-      radius = ray->PixelRadius*I->linewidth/2.0F;
+      radius = ray->PixelRadius*line_width/2.0F;
     } else {
       radius = I->radius;
     }
@@ -96,9 +98,9 @@ static void RepDistDashRender(RepDistDash *I,RenderInfo *info)
       int use_dlst;
 
       if(info->width_scale_flag) {
-        glLineWidth(I->linewidth * info->width_scale);
+        glLineWidth(line_width * info->width_scale);
       } else {
-        glLineWidth(I->linewidth);
+        glLineWidth(line_width);
       }
 
       if(color>=0)

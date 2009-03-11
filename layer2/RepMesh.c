@@ -80,13 +80,14 @@ static void RepMeshRender(RepMesh *I,RenderInfo *info)
   int *n=I->N;
   int c;
   float *col=NULL;
+  float line_width = SceneGetDynamicLineWidth(info, I->Width);
 
   if(ray) {
 	 if(n) {
       float radius;
 
       if(I->Radius<=0.0F) {
-        radius = ray->PixelRadius*I->Width/2.0F;
+        radius = ray->PixelRadius*line_width/2.0F;
       } else {
         radius = I->Radius;
       }
@@ -157,9 +158,9 @@ static void RepMeshRender(RepMesh *I,RenderInfo *info)
       switch(I->mesh_type) {
       case 0:
         if(info->width_scale_flag) 
-          glLineWidth(I->Width*info->width_scale);
+          glLineWidth(line_width*info->width_scale);
         else
-          glLineWidth(I->Width);
+          glLineWidth(line_width);
         break;
       case 1: 
         if(info->width_scale_flag) 

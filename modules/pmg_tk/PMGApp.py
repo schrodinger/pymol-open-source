@@ -424,4 +424,3 @@ class PMGApp(Pmw.MegaWidget):
 
             self.runSkin()
 
-

@@ -774,6 +774,11 @@ typedef struct _CPyMOL {
   ov_word lex_keep_alive;
   ov_word lex_fit_kabsch;
   ov_word lex_stereo_dynamic_strength;
+  ov_word lex_dynamic_width;
+  ov_word lex_dynamic_width_factor;
+  ov_word lex_dynamic_width_min;
+  ov_word lex_dynamic_width_max;
+  ov_word lex_draw_mode;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1541,6 +1546,11 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(keep_alive,607);
   LEX_SETTING(fit_kabsch,608);
   LEX_SETTING(stereo_dynamic_strength,609);
+  LEX_SETTING(dynamic_width,610);
+  LEX_SETTING(dynamic_width_factor,611);
+  LEX_SETTING(dynamic_width_min,612);
+  LEX_SETTING(dynamic_width_max,613);
+  LEX_SETTING(draw_mode,614);
   return_OVstatus_SUCCESS;
 }
 
@@ -3231,7 +3241,7 @@ void PyMOL_Draw(CPyMOL *I)
       PyMOL_PopValidContext(I);
     }
   } else {
-    
+
     if(I->DraggedFlag) {
       if(ControlIdling(I->G)) {
         ExecutiveSculptIterateAll(I->G);
@@ -3309,6 +3319,7 @@ void PyMOL_Draw(CPyMOL *I)
       if(!SceneHasImage(G)) 
         I->ImageReadyFlag = false;
     }
+
     if(G->HaveGUI) PyMOL_PopValidContext(I);
   }
   PYMOL_API_UNLOCK

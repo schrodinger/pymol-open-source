@@ -55,6 +55,9 @@ typedef float SceneViewType[cSceneViewSize];
    24    = orthoscopic flag 
 */
 
+float SceneGetDynamicLineWidth(RenderInfo *info, float line_width);
+
+
 int SceneHasImage(PyMOLGlobals *G);
 int SceneInit(PyMOLGlobals *G);
 void SceneDone(PyMOLGlobals *G);

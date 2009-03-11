@@ -125,17 +125,20 @@ static int ButModeClick(Block *block,int button,int x,int y,int mod)
   int forward = (dx>((block->rect.right-block->rect.left)/2));
   /*  register CButMode *I=block->G->ButMode; */
   if(dy<2) {
-    switch(mod) {
-    case cOrthoSHIFT:
-      forward = !forward;
-      break;
-    }
-    if(!forward) {
-      PLog(G,"cmd.mouse('select_backward')",cPLog_pym);
-      OrthoCommandIn(G,"mouse select_backward");
-    } else {
-      PLog(G,"cmd.mouse('select_forward')",cPLog_pym);
-      OrthoCommandIn(G,"mouse select_forward");
+    if (ButModeTranslate(G,P_GLUT_SINGLE_LEFT,0) != cButModePickAtom) {
+      
+      switch(mod) {
+      case cOrthoSHIFT:
+        forward = !forward;
+        break;
+      }
+      if(!forward) {
+        PLog(G,"cmd.mouse('select_backward')",cPLog_pym);
+        OrthoCommandIn(G,"mouse select_backward");
+      } else {
+        PLog(G,"cmd.mouse('select_forward')",cPLog_pym);
+        OrthoCommandIn(G,"mouse select_forward");
+      }
     }
   } else {
     switch(mod) {
@@ -312,30 +315,36 @@ static void ButModeDraw(Block *block)
 
     {
       TextSetColor(G,I->Block->TextColor);
-      TextDrawStrAt(G,"Selecting ",x,y);
-      TextSetColor(G,I->TextColor3);
-      switch(SettingGetGlobal_i(G,cSetting_mouse_selection_mode)) {
-      case 0:
-        TextDrawStrAt(G,"Atoms",x+80,y);        
-        break;
-      case 1:
-        TextDrawStrAt(G,"Residues",x+80,y);        
-        break;
-      case 2:
-        TextDrawStrAt(G,"Chains",x+80,y);        
-        break;
-      case 3:
-        TextDrawStrAt(G,"Segments",x+80,y);        
-        break;
-      case 4:
-        TextDrawStrAt(G,"Objects",x+80,y);        
-        break;
-      case 5:
-        TextDrawStrAt(G,"Molecules",x+80,y);        
-        break;
-      case 6:
-        TextDrawStrAt(G,"C-alphas",x+80,y);        
-        break;
+      if (ButModeTranslate(G,P_GLUT_SINGLE_LEFT,0) == cButModePickAtom) {
+        TextDrawStrAt(G,"Picking ",x,y);
+        TextSetColor(G,I->TextColor3);
+        TextDrawStrAt(G,"Atoms & Joints",x+64,y);
+      } else {
+        TextDrawStrAt(G,"Selecting ",x,y);
+        TextSetColor(G,I->TextColor3);
+        switch(SettingGetGlobal_i(G,cSetting_mouse_selection_mode)) {
+        case 0:
+          TextDrawStrAt(G,"Atoms",x+80,y);        
+          break;
+        case 1:
+          TextDrawStrAt(G,"Residues",x+80,y);        
+          break;
+        case 2:
+          TextDrawStrAt(G,"Chains",x+80,y);        
+          break;
+        case 3:
+          TextDrawStrAt(G,"Segments",x+80,y);        
+          break;
+        case 4:
+          TextDrawStrAt(G,"Objects",x+80,y);        
+          break;
+        case 5:
+          TextDrawStrAt(G,"Molecules",x+80,y);        
+          break;
+        case 6:
+          TextDrawStrAt(G,"C-alphas",x+80,y);        
+          break;
+        }
       }
     }
 
@@ -368,7 +377,7 @@ static void ButModeDraw(Block *block)
         TextDrawStrAt(G,"State ",x,y);
       }
       TextSetColor(G,I->TextColor2);
-      sprintf(rateStr,"[%3d/%3d] %d/sec",SceneGetFrame(G)+1,
+      sprintf(rateStr,"[%3d/%3d] %d Hz",SceneGetFrame(G)+1,
               nf,I->RateShown);
       TextDrawStrAt(G,rateStr,x+48,y);
     }

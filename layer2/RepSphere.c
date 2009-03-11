@@ -39,7 +39,7 @@ typedef struct RepSphere {
   float *V; /* triangle vertices (if any) */
   float *VC; /* sphere centers, colors, alpha, and radii */
   float *VN; /* normals (if any) */
-  SphereRec *SP;
+  SphereRec *SP,*SSP;
   int *NT;
   int N,NC,NP;
   int cullFlag,spheroidFlag;
@@ -1060,6 +1060,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           
         use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
         switch(sphere_mode) {
+        case -1:
+        case 0:
         case 4:
         case 5:
           use_dlst = 0;
@@ -1078,9 +1080,63 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             }
           }
             
-          if(!info->line_lighting) glDisable(GL_LIGHTING);
+          if((sphere_mode>0)&&(!info->line_lighting)) glDisable(GL_LIGHTING);
             
           switch(sphere_mode) {
+          case -1:
+          case 0: /* memory-efficient sphere rendering */
+            if(I->SSP) { 
+              float last_vdw = -1.0F;
+              int dlist = 0;
+              int variable_alpha = I->VariableAlphaFlag;
+              SphereRec *sp = I->SSP;
+              while(c--) {
+                Vector3f *sp_dot = sp->dot;
+                int b,*q,*s;
+                if(variable_alpha)
+                  glColor4f(v[0],v[1],v[2],v[3]);
+                else
+                  glColor4f(v[0],v[1],v[2],alpha);
+                v+=4;
+                {
+                  register float vdw = v[3];
+                  glTranslatef(v[0],v[1],v[2]);
+                  if((vdw!=last_vdw)||(!dlist)) {
+                    last_vdw = vdw;
+                    q=sp->Sequence;
+                    s=sp->StripLen;
+                    if(!dlist)
+                      dlist = glGenLists(1);
+                    if(dlist) {
+                      glNewList(dlist,GL_COMPILE_AND_EXECUTE);
+                    }
+                    for(b=0;b<sp->NStrip;b++) {
+                      int d;
+                      glBegin(GL_TRIANGLE_STRIP);
+                      for(d=0;d<(*s);d++) {
+                        float *norm = sp_dot[*(q++)];
+                        glNormal3fv(norm);
+                        glVertex3f(vdw * norm[0],
+                                   vdw * norm[1],
+                                   vdw * norm[2]);
+                      }
+                      glEnd();
+                      s++;
+                    }
+                    if(dlist) {
+                      glEndList();
+                    }
+                  } else {
+                    glCallList(dlist);
+                  }
+                  glTranslatef(-v[0],-v[1],-v[2]);
+                }
+                v+=4;
+              }
+              if(dlist)
+                glDeleteLists(dlist,1);
+            }
+            break;
           case 2:
           case 3:
           case 4:
@@ -1597,7 +1653,7 @@ int RepSphereSameVis(RepSphere *I,CoordSet *cs)
 
 static int RadiusOrder(float *list,int a,int b)
 {
-  return(list[a*7+6]<=list[b*7+6]);
+  return(list[a*8+7]<=list[b*8+7]);
 }
 
 
@@ -1635,6 +1691,8 @@ Rep *RepSphereNew(CoordSet *cs,int state)
   float vv0[3],vv1[3],vv2[3];
   float tn[3],vt1[3],vt2[3],xtn[3],*tn0,*tn1,*tn2;
 #endif
+  int draw_mode = SettingGetGlobal_i(G,cSetting_draw_mode);
+  int draw_quality = (((draw_mode == 1)||(draw_mode==-2)));
 
   OOCalloc(G,RepSphere);
 
@@ -1662,13 +1720,16 @@ Rep *RepSphereNew(CoordSet *cs,int state)
                              cSetting_sphere_mode);
   if(sphere_mode>0)
     ds = -1;
+
   if(ds<0) {
     sp = NULL;
   } else {
+    if(draw_quality && (ds<3))
+      ds = 3;
     if(ds>4) ds=4;
     sp = G->Sphere->Sphere[ds];
   }
-
+  
   sphere_color=SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
   cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                            cSetting_cartoon_side_chain_helper);
@@ -1808,10 +1869,41 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     I->R.P[0].index = I->NP;
   }
 
+
+  if(variable_alpha) 
+    I->cullFlag = false;
+  else {
+    I->cullFlag = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
+    
+    if(I->cullFlag<0) {
+      I->cullFlag = !(obj->NCSet>1);
+    }
+  }
+  
+  if(draw_quality)
+    I->cullFlag = false;
+  
+  if(spheroidFlag || (!sp) ) I->cullFlag=false;
+  
+  if((I->cullFlag<2)&&
+     (SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpting))) 
+    /* optimize build-time performance when sculpting */
+    I->cullFlag=false;
+  
+  if((I->cullFlag<2)&&
+     (SettingGet(G,cSetting_roving_spheres)!=0.0F))
+    I->cullFlag=false;
+  
+  if(sp && (I->cullFlag<2) && (!spheroidFlag)) {
+    /* don't cull unless forced */
+    I->SSP = sp;
+    sp = NULL;
+  }
+
   if(!sp) { /* if sp==null, then we're drawing a point-based sphere rep */
 
     /* sort the vertices by radius */
-    if(I->NC && I->VC && (!spheroidFlag) && (sphere_mode>1)) {
+    if(I->NC && I->VC && (!spheroidFlag) && (sphere_mode!=1)) {
       int *ix = Alloc(int,I->NC);
       float *vc_tmp = Alloc(float, I->NC*8);
       Pickable *pk_tmp = Alloc(Pickable,I->NP+1);
@@ -1936,23 +2028,6 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     
   } else {
 
-    if(variable_alpha) 
-      I->cullFlag = false;
-    else {
-      I->cullFlag = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
-
-      if(I->cullFlag<0) {
-        I->cullFlag = !(obj->NCSet>1);
-      }
-    }
-    if(spheroidFlag || (!sp) ) I->cullFlag=false;
-    if((I->cullFlag<2)&&
-       (SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpting))) 
-      /* optimize build-time performance when sculpting */
-      I->cullFlag=false;
-    if((I->cullFlag<2)&&
-       (SettingGet(G,cSetting_roving_spheres)!=0.0F))
-      I->cullFlag=false;
     if(I->cullFlag && sp) {
       I->V=(float*)mmalloc(sizeof(float)*I->NC*(sp->NVertTot*31)); /* double check 31 */
       ErrChkPtr(G,I->V);
@@ -2066,7 +2141,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
                 v1[0]=v0[0]+vdw*sp->dot[q0][0];
               v1[1]=v0[1]+vdw*sp->dot[q0][1];
               v1[2]=v0[2]+vdw*sp->dot[q0][2];
-
+              
               v1[0]+=v0[0]+vdw*sp->dot[q1][0];
               v1[1]+=v0[1]+vdw*sp->dot[q1][1];
               v1[2]+=v0[2]+vdw*sp->dot[q1][2];

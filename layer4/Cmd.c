@@ -6177,6 +6177,7 @@ static PyObject *CmdDraw(PyObject *self, 	PyObject *args)
     if(antialias==-2) {
       ok = ExecutiveDrawCmd(G,0,0,0,true,quiet); /* capture action */
     } else {
+
       ok = ExecutiveDrawCmd(G,int1,int2,antialias,false,quiet);
     }
     APIExit(G);

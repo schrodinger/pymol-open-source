@@ -2267,6 +2267,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepRibbon,cRepInvRep);
     SceneChanged(G);
     break;
+  case cSetting_draw_mode:
+    ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepSphere,cRepInvRep);
+    break;
   case cSetting_cartoon_side_chain_helper:
     ExecutiveInvalidateRep(G,inv_sele,cRepCartoon,cRepInvRep);
     ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
@@ -2411,6 +2415,12 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     break;
   case cSetting_state:
   case cSetting_frame:
+    SceneChanged(G);
+    break;
+  case cSetting_dynamic_width:
+  case cSetting_dynamic_width_factor:
+  case cSetting_dynamic_width_min:
+  case cSetting_dynamic_width_max:
     SceneChanged(G);
     break;
   case cSetting_rock:
@@ -2729,10 +2739,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
 
     set_b(I,cSetting_trim_dots, 1);
 
-    if(G->Option->sphere_mode<0) 
-      set_i(I,cSetting_cull_spheres,-1);
-    else
-      set_i(I,cSetting_cull_spheres,0);
+    set_i(I,cSetting_cull_spheres,0);
 
     set_f(I,cSetting_test1, 3.0F);
 
@@ -2888,7 +2895,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
 
     set_f(I,cSetting_ribbon_width, 3.0F);
 
-    set_f(I,cSetting_dash_width, 3.0F);
+    set_f(I,cSetting_dash_width, 2.5F);
 
     set_f(I,cSetting_dash_radius, 0.00F);
 
@@ -3661,5 +3668,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_b(I,cSetting_keep_alive,0);
     set_i(I,cSetting_fit_kabsch,0);
     set_f(I,cSetting_stereo_dynamic_strength,0.5F);
+    set_b(I,cSetting_dynamic_width,1);
+    set_f(I,cSetting_dynamic_width_factor,0.06);
+    set_f(I,cSetting_dynamic_width_min,0.75);
+    set_f(I,cSetting_dynamic_width_max,2.5);
+    set_i(I,cSetting_draw_mode,0);
   }
 }
