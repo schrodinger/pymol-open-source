@@ -1937,6 +1937,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_seq_view_label_color:
     OrthoDirty(G);
     break;
+  case cSetting_show_frame_rate:
+    OrthoDirty(G);
+    break;
   case cSetting_group_full_member_names:
   case cSetting_group_arrow_prefix:
     OrthoDirty(G);
@@ -3676,5 +3679,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_draw_mode,0);
     set_i(I,cSetting_clean_electro_mode,1);
     set_i(I,cSetting_valence_mode,1);
+    set_b(I,cSetting_show_frame_rate,0);
   }
 }

@@ -39,7 +39,7 @@ struct _CButMode {
   int Mode[cButModeInputCount];
   int NBut;
   float Rate;
-  int RateShown;
+  float RateShown;
   float Samples, Delay;
   float TextColor1[3];
   float TextColor2[3];
@@ -357,9 +357,9 @@ static void ButModeDraw(Block *block)
         
         if(I->Delay<=0.0F) {
           if(I->Samples>0.0F) 
-            I->RateShown = (int)(I->Rate/I->Samples);
+            I->RateShown = (I->Rate/I->Samples);
           else 
-            I->RateShown = 0;
+            I->RateShown = 0.0F;
           I->Delay=0.2F;
         }
       }
@@ -377,8 +377,12 @@ static void ButModeDraw(Block *block)
         TextDrawStrAt(G,"State ",x,y);
       }
       TextSetColor(G,I->TextColor2);
-      sprintf(rateStr,"[%3d/%3d] %d Hz",SceneGetFrame(G)+1,
-              nf,I->RateShown);
+      if(SettingGetGlobal_b(G,cSetting_show_frame_rate)) {
+	sprintf(rateStr,"[%5d/%5d]%5.1f Hz",SceneGetFrame(G)+1,
+		nf,I->RateShown);
+      } else {
+	sprintf(rateStr,"[%5d/%5d]",SceneGetFrame(G)+1,nf);
+      }
       TextDrawStrAt(G,rateStr,x+48,y);
     }
   }
@@ -394,7 +398,7 @@ int ButModeInit(PyMOLGlobals *G)
 
     I->Rate=0.0;
     I->Samples = 0.0;
-    I->RateShown=0;
+    I->RateShown=0.0;
     I->Delay = 0.0;
     I->DeferCnt = 0;
     I->DeferTime = 0.0F;
@@ -437,8 +441,8 @@ int ButModeInit(PyMOLGlobals *G)
     strcpy(I->Code[cButModeMenu], "Menu ");
     strcpy(I->Code[cButModeSeleSet], "Sele ");
     strcpy(I->Code[cButModeSeleToggle], "+/-  ");
-    strcpy(I->Code[cButModeSeleAdd], "+Box ");
-    strcpy(I->Code[cButModeSeleSub], "-Box ");  
+    strcpy(I->Code[cButModeSeleAddBox], "+Box ");
+    strcpy(I->Code[cButModeSeleSubBox], "-Box ");  
     strcpy(I->Code[cButModeMoveSlabAndZoom], "MvSZ ");  
     strcpy(I->Code[cButModeSimpleClick], "Clik ");  
     strcpy(I->Code[cButModeRotDrag], "RotD ");  
@@ -454,7 +458,11 @@ int ButModeInit(PyMOLGlobals *G)
     strcpy(I->Code[cButModeMovView], "MovV ");  
     strcpy(I->Code[cButModeMovViewZ], "MvVZ ");
     strcpy(I->Code[cButModeDragObj], "DrgO ");
-
+    strcpy(I->Code[cButModeInvMoveSlabAndZoom], "IMSZ ");  
+    strcpy(I->Code[cButModeInvTransZ], "IMvZ ");
+    strcpy(I->Code[cButModeSeleSetBox], " Box ");  
+    strcpy(I->Code[cButModeInvRotZ], "IRtZ ");  
+    
     I->Block = OrthoNewBlock(G,NULL);
     I->Block->fClick = ButModeClick;
     I->Block->fDraw    = ButModeDraw;
@@ -485,9 +493,31 @@ int ButModeInit(PyMOLGlobals *G)
 
 
 /*========================================================================*/
+int ButModeCheckPossibleSingleClick(PyMOLGlobals *G, int button, int mod)
+{
+  int result = false;
+  int action = ButModeTranslate(G,button,mod);
+  int click_button = -1;
+  switch(button) {
+  case P_GLUT_LEFT_BUTTON:
+    click_button = P_GLUT_SINGLE_LEFT;
+    break;
+  case P_GLUT_MIDDLE_BUTTON:
+    click_button = P_GLUT_SINGLE_MIDDLE;
+    break;
+  case P_GLUT_RIGHT_BUTTON:
+    click_button = P_GLUT_SINGLE_RIGHT;
+    break;
+  }
+  if(click_button<0)
+    return false;
+  else
+    return (ButModeTranslate(G,click_button,mod)>= 0);
+}
+
 int ButModeTranslate(PyMOLGlobals *G,int button, int mod)
 {
-  int mode = 0;
+  int mode = cButModeNothing;
   register CButMode *I=G->ButMode;
   switch(button) {
   case P_GLUT_LEFT_BUTTON:
@@ -537,8 +567,22 @@ int ButModeTranslate(PyMOLGlobals *G,int button, int mod)
         return cButModeMoveSlabAndZoomBackward;
       }
       break;
+    case cButModeInvMoveSlabAndZoom:
+      if(button!=P_GLUT_BUTTON_SCROLL_FORWARD) {
+        return cButModeMoveSlabAndZoomForward;
+      } else {
+        return cButModeMoveSlabAndZoomBackward;
+      }
+      break;
     case cButModeTransZ:
       if(button==P_GLUT_BUTTON_SCROLL_FORWARD) {
+        return cButModeZoomForward;
+      } else {
+        return cButModeZoomBackward;
+      }
+      break;
+    case cButModeInvTransZ:
+      if(button!=P_GLUT_BUTTON_SCROLL_FORWARD) {
         return cButModeZoomForward;
       } else {
         return cButModeZoomBackward;

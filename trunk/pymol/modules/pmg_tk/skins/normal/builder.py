@@ -81,6 +81,9 @@ class CleanWizard(ActionWizard):
         if active_sele in self.cmd.get_names("selections"):
             obj_list = self.cmd.get_object_list(active_sele)
             if len(obj_list)==1:
+                self.cmd.unpick()
+                self.cmd.set_wizard()
+                self.cmd.refresh_wizard()
                 self.cmd.do("_ cmd.clean('%s',message='''Cleaning %s...''',async=1)"%(active_sele,obj_list[0]))
 #                computing.CleanJob(self.cmd,active_sele,
 #                                   message="Cleaning %s..."%obj_list[0])

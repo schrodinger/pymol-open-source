@@ -19,6 +19,8 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 
+#define cButModeNothing -1
+
 #define cButModeRotXYZ   0 
 #define cButModeTransXY  1
 #define cButModeTransZ   2
@@ -52,8 +54,8 @@ Z* -------------------------------------------------------------------
 
 #define cButModeSeleSet  30
 #define cButModeSeleToggle 31
-#define cButModeSeleAdd  32
-#define cButModeSeleSub  33
+#define cButModeSeleAddBox  32
+#define cButModeSeleSubBox  33
 #define cButModeMoveSlabAndZoom 34
 
 /* simple click action for JyMOL -- no selections involved */
@@ -80,7 +82,14 @@ Z* -------------------------------------------------------------------
 #define cButModePotentialClick 48
 #define cButModeDragObj 49
 
-#define cButModeCount    50
+#define cButModeInvMoveSlabAndZoom 50
+#define cButModeInvTransZ 51
+
+#define cButModeSeleSetBox  52
+
+#define cButModeInvRotZ  53
+
+#define cButModeCount       54
 
 /* remainder only used in scene... */
 
@@ -207,5 +216,6 @@ void ButModeSet(PyMOLGlobals *G,int button,int action);
 void ButModeCaption(PyMOLGlobals *G,char *text);
 void ButModeCaptionReset(PyMOLGlobals *G);
 int ButModeTranslate(PyMOLGlobals *G,int button,int mod);
+int ButModeCheckPossibleSingleClick(PyMOLGlobals *G, int button, int mod);
 
 #endif

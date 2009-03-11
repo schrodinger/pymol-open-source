@@ -173,6 +173,8 @@ class Setting:
 
         self.scene_buttons = IntVar()
         self.scene_buttons.set(int(self.cmd.get_setting_legacy('scene_buttons')))
+        self.show_frame_rate = IntVar()
+        self.show_frame_rate.set(int(self.cmd.get_setting_legacy('show_frame_rate')))
 
         self.F=[ None,
                     IntVar(),
@@ -313,6 +315,8 @@ class Setting:
             (lambda s,a: (self.cmd.set(a,("%d" % s.mouse_grid.get()),log=1))),
             'scene_buttons'         :
             (lambda s,a: (self.cmd.set(a,("%d" % s.scene_buttons.get()),log=1))),
+            'show_frame_rate'         :
+            (lambda s,a: (self.cmd.set(a,("%d" % s.show_frame_rate.get()),log=1))),
 
             }
 
@@ -415,6 +419,8 @@ class Setting:
             (lambda s,t: (s.mouse_grid.set(int(t[1][0])))),
             'scene_buttons':
             (lambda s,t: (s.scene_buttons.set(int(t[1][0])))),
+            'show_frame_rate':
+            (lambda s,t: (s.show_frame_rate.set(int(t[1][0])))),
             }
         self.active_list = [
             self.pymol.setting._get_index("ray_trace_frames"),
@@ -466,6 +472,7 @@ class Setting:
             self.pymol.setting._get_index("auto_copy_images"),
             self.pymol.setting._get_index("mouse_grid"),
             self.pymol.setting._get_index("scene_buttons"),
+            self.pymol.setting._get_index("show_frame_rate"),            
             ]
 
         self.active_dict = {}
