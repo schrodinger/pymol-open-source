@@ -271,9 +271,10 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
       radius = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_radius);
 
       if(radius==0.0F) {
-        radius = ray->PixelRadius*SettingGet_f(G,I->R.cs->Setting,
-                                               I->R.obj->Setting,
-                                               cSetting_mesh_width)/2.0F;
+        float line_width = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width);
+        line_width = SceneGetDynamicLineWidth(info, line_width);
+          
+        radius = ray->PixelRadius*line_width/2.0F;
       }
 
       c=I->NT;      
@@ -398,8 +399,10 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
           glCallList(I->R.displayList);
         } else { 
         
-        
-          glLineWidth(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width));
+          float line_width = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width);
+          line_width = SceneGetDynamicLineWidth(info, line_width);
+
+          glLineWidth(line_width);
         
           if(use_dlst) {
             if(!I->R.displayList) {

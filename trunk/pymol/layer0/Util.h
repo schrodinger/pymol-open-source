@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_Util
 
 #include "os_predef.h"
+
 #include "PyMOLGlobals.h"
 
 void UtilZeroMem(void *ptr,ov_size howMuch);
@@ -50,4 +51,6 @@ typedef int UtilOrderFnGlobals(PyMOLGlobals *G,void *array,int l,int r);
 void UtilSortIndexGlobals(PyMOLGlobals *G,int n,void *array,int *x,UtilOrderFnGlobals* fOrdered);
 
 int UtilShouldWePrintQuantity(int quantity);
+
+
 #endif

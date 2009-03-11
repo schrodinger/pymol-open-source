@@ -827,6 +827,12 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_keep_alive                 607
 #define cSetting_fit_kabsch                 608
 #define cSetting_stereo_dynamic_strength    609
+#define cSetting_dynamic_width              610
+#define cSetting_dynamic_width_factor       611
+#define cSetting_dynamic_width_min          612
+#define cSetting_dynamic_width_max          613
+#define cSetting_draw_mode                  614
+
 /* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -835,7 +841,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       610
+#define cSetting_INIT                       615
 #endif
 
 

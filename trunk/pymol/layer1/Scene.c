@@ -746,6 +746,25 @@ static int SceneGetObjState(PyMOLGlobals *G,CObject *obj,int state)
 }
 #endif
 
+float SceneGetDynamicLineWidth(RenderInfo *info, float line_width)
+{
+  if(info && info->dynamic_width) {
+    float factor;
+    if(info->vertex_scale>R_SMALL4) {
+      factor = info->dynamic_width_factor / info->vertex_scale;
+      if(factor > info->dynamic_width_max)
+        factor = info->dynamic_width_max;
+      if(factor < info->dynamic_width_min) {
+        factor = info->dynamic_width_min;
+      }
+    } else {
+      factor = info->dynamic_width_max;
+    }
+    return factor * line_width;
+  }
+  return line_width;
+}
+
 void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem,char *scene_name)
 {
   float *fp;
@@ -1667,7 +1686,15 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
             }
           }
         }
-        
+
+
+        if(!OrthoDeferredWaiting(G)) {
+          if(SettingGetGlobal_i(G,cSetting_draw_mode)==-2) {
+            ExecutiveSetSettingFromString(G,cSetting_draw_mode,"-1","",-1, true, true);
+            SceneUpdate(G,false);
+          }
+        }
+
         SceneInvalidateCopy(G,true);
         
         if(factor) { /* are we oversampling? */
@@ -1737,6 +1764,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
           }
         }
         ScenePurgeImage(G);
+
         I->Image = Calloc(ImageType,1);
         I->Image->data = (unsigned char*)final_image;
         final_image = NULL;
@@ -6404,6 +6432,14 @@ void SceneRay(PyMOLGlobals *G,
         UtilZeroMem(&info,sizeof(RenderInfo));
         info.ray = ray;
         info.ortho = ortho;
+        info.vertex_scale = SceneGetScreenVertexScale(G,NULL);
+
+        if(SettingGetGlobal_b(G,cSetting_dynamic_width)) {
+          info.dynamic_width = true;
+          info.dynamic_width_factor = SettingGetGlobal_f(G,cSetting_dynamic_width_factor);
+          info.dynamic_width_min = SettingGetGlobal_f(G,cSetting_dynamic_width_min);
+          info.dynamic_width_max = SettingGetGlobal_f(G,cSetting_dynamic_width_max);
+        }
 
         while(ListIterate(I->Obj,rec,next)) {
           if(rec->obj->fRender) {
@@ -6854,6 +6890,11 @@ void SceneUpdate(PyMOLGlobals *G, int force)
 
   OrthoBusyPrime(G);
   EditorUpdate(G);
+  if(defer_builds_mode == 0) {
+    if(SettingGetGlobal_i(G,cSetting_draw_mode)==-2) {
+      defer_builds_mode=1;
+    }
+  }
   if(force || I->ChangedFlag || ((cur_state != I->LastStateBuilt) && 
                                  (defer_builds_mode>0))) {
     SceneCountFrames(G);
@@ -7489,6 +7530,13 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
     CGOSetZVector(info.alpha_cgo, I->ModMatrix[2], I->ModMatrix[6], I->ModMatrix[10]);
   }
 
+  if(SettingGetGlobal_b(G,cSetting_dynamic_width)) {
+    info.dynamic_width = true;
+    info.dynamic_width_factor = SettingGetGlobal_f(G,cSetting_dynamic_width_factor);
+    info.dynamic_width_min = SettingGetGlobal_f(G,cSetting_dynamic_width_min);
+    info.dynamic_width_max = SettingGetGlobal_f(G,cSetting_dynamic_width_max);
+  }
+
   if(width_scale!=0.0F) {
     info.width_scale_flag = true;
     info.width_scale = width_scale;
@@ -7874,7 +7922,6 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       glDisable(GL_LINE_SMOOTH);
     }
     glLineWidth(SettingGet(G,cSetting_line_width));
-      
 
     glPointSize(SettingGet(G,cSetting_dot_width));
 

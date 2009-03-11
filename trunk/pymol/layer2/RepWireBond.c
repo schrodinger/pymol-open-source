@@ -374,11 +374,13 @@ void RepWireBondRenderImmediate(CoordSet *cs, RenderInfo *info)
     int active = false;
     ObjectMolecule *obj = cs->Obj;
     float line_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_width);
-    
+    line_width = SceneGetDynamicLineWidth(info,line_width);
+
     if(info->width_scale_flag) 
       glLineWidth(line_width*info->width_scale);
     else
       glLineWidth(line_width);
+    
     if(!info->line_lighting) glDisable(GL_LIGHTING); 
     SceneResetNormal(G,true);      
     glBegin(GL_LINES);	     
@@ -473,13 +475,14 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
   int c=I->N;
   unsigned int i,j;
   Pickable *p;
-  
+  float line_width = SceneGetDynamicLineWidth(info,I->Width);
+
   if(ray) {
 
     float radius;
 
     if(I->Radius<=0.0F) {
-      radius = ray->PixelRadius*I->Width/2.0F;
+      radius = ray->PixelRadius*line_width/2.0F;
     } else {
       vw = NULL;
       radius = I->Radius;
@@ -552,9 +555,10 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
 
       if(info->width_scale_flag) 
-        glLineWidth(I->Width*info->width_scale);
+        glLineWidth(line_width*info->width_scale);
       else
-        glLineWidth(I->Width);
+        glLineWidth(line_width);
+
 
       if(!info->line_lighting) glDisable(GL_LIGHTING); 
 

@@ -1199,6 +1199,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
   float transp,h_scale;
   int valence_found  = false;
   const float _0p9 = 0.9F;
+  
   OOAlloc(G,RepCylBond);
 
   PRINTFD(G,FB_RepCylBond)
@@ -1318,6 +1319,17 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
   I->VarAlphaSph = NULL;
 
   if(obj->NBond) {
+    int draw_mode = SettingGetGlobal_i(G,cSetting_draw_mode);
+    int draw_quality = (((draw_mode == 1)||(draw_mode==-2)));
+      
+    stick_ball = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_stick_ball);
+    overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
+    nub = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
+    
+    if(draw_quality) {
+      nEdge = 16;
+      overlap = 0.05;
+    }
 
     if(cartoon_side_chain_helper || ribbon_side_chain_helper) {
       /* mark atoms that are bonded to atoms without a
@@ -1363,10 +1375,6 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
 
     }
 
-    stick_ball = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_stick_ball);
-
-    overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
-    nub = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
 
     if(valence_found) {/* build list of up to 2 connected atoms for each atom */
       other=ObjectMoleculeGetPrioritizedOtherIndexList(obj,cs);
@@ -1396,15 +1404,21 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
     ErrChkPtr(G,I->VR);
 
     /* spheres for stick & balls */
-	 
-    if(stick_ball) {
-      int ds;
+	if(stick_ball) {
       stick_ball_ratio = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_ball_ratio);
       stick_ball_color = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_stick_ball_color);
+    } else if(draw_quality) {
+      stick_ball = true;
+    }
+    if(stick_ball) {
+      int ds;
 
       ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
       if(ds<0) ds=0;
       if(ds>4) ds=4;
+
+      if(draw_quality && (ds<3)) ds = 3;
+
       sp = G->Sphere->Sphere[ds];
 
       I->SP = sp;
@@ -1653,13 +1667,13 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
           if(s1&&(!marked[b1])) { /* just once for each atom... */
             int *q=sp->Sequence;
             int *s=sp->StripLen;
-	    float vdw = stick_ball_ratio * ((ati1->protons == cAN_H) ? bd_radius : bd_radius_full);
-	    float vdw1 = (vdw>=0) ? vdw : -ati1->vdw * vdw;
-	    int sbc1 = (stick_ball_color==cColorDefault) ? c1 : stick_ball_color;
-	    
-	    if(sbc1==cColorAtomic)
-	      sbc1 = ati1->color;
-
+            float vdw = stick_ball_ratio * ((ati1->protons == cAN_H) ? bd_radius : bd_radius_full);
+            float vdw1 = (vdw>=0) ? vdw : -ati1->vdw * vdw;
+            int sbc1 = (stick_ball_color==cColorDefault) ? c1 : stick_ball_color;
+            
+            if(sbc1==cColorAtomic)
+              sbc1 = ati1->color;
+            
             marked[b1]=1;
             {
               if(ColorCheckRamped(G,sbc1)) {
@@ -1672,17 +1686,17 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
             copy3f(rgb1,vsp);
             vsp+=3;
             for(d=0;d<sp->NStrip;d++) {
-	      for(e=0;e<(*s);e++) {
-		*(vsp++)=sp->dot[*q][0]; /* normal */
-		*(vsp++)=sp->dot[*q][1];
-		*(vsp++)=sp->dot[*q][2];
-		*(vsp++)=vv1[0]+vdw1*sp->dot[*q][0]; /* point */
-		*(vsp++)=vv1[1]+vdw1*sp->dot[*q][1];
-		*(vsp++)=vv1[2]+vdw1*sp->dot[*q][2];
-		q++;
-	      }
-	      s++;
-	    }
+              for(e=0;e<(*s);e++) {
+                *(vsp++)=sp->dot[*q][0]; /* normal */
+                *(vsp++)=sp->dot[*q][1];
+                *(vsp++)=sp->dot[*q][2];
+                *(vsp++)=vv1[0]+vdw1*sp->dot[*q][0]; /* point */
+                *(vsp++)=vv1[1]+vdw1*sp->dot[*q][1];
+                *(vsp++)=vv1[2]+vdw1*sp->dot[*q][2];
+                q++;
+              }
+              s++;
+            }
             I->NSP++;
             copy3f(rgb1,vspc);
             vspc+=3;
@@ -1691,43 +1705,43 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
             *(vspc++)=vdw1;
             I->NSPC++;
           }
-
+          
           if(s2&&!(marked[b2])) { /* just once for each atom... */
             int *q=sp->Sequence;
             int *s=sp->StripLen;
-	    float vdw = stick_ball_ratio * ((ati2->protons == cAN_H) ? bd_radius : bd_radius_full);
-	    float vdw2 = (vdw>=0) ? vdw : -ati2->vdw * vdw;
-	    int sbc2 = (stick_ball_color==cColorDefault) ? c2 : stick_ball_color;
-
+            float vdw = stick_ball_ratio * ((ati2->protons == cAN_H) ? bd_radius : bd_radius_full);
+            float vdw2 = (vdw>=0) ? vdw : -ati2->vdw * vdw;
+            int sbc2 = (stick_ball_color==cColorDefault) ? c2 : stick_ball_color;
+            
             marked[b2]=1;
-              
-	    if(sbc2==cColorAtomic)
-	      sbc2 = ati2->color;
-
+            
+            if(sbc2==cColorAtomic)
+              sbc2 = ati2->color;
+            
             if(ColorCheckRamped(G,sbc2)) {
               ColorGetRamped(G,sbc2,vv2,rgb2_buf,state);
               rgb2 = rgb2_buf;
             } else {
               rgb2 = ColorGet(G,sbc2);
             }
-              
+            
             copy3f(rgb2,vsp);
             vsp+=3;
-              
+            
             for(d=0;d<sp->NStrip;d++) {
-	      for(e=0;e<(*s);e++)  {
-		*(vsp++)=sp->dot[*q][0]; /* normal */
-		*(vsp++)=sp->dot[*q][1];
-		*(vsp++)=sp->dot[*q][2];
-		*(vsp++)=vv2[0]+vdw2*sp->dot[*q][0]; /* point */
-		*(vsp++)=vv2[1]+vdw2*sp->dot[*q][1];
-		*(vsp++)=vv2[2]+vdw2*sp->dot[*q][2];
-		q++;
-	      }
-	      s++;
-	    }
+              for(e=0;e<(*s);e++)  {
+                *(vsp++)=sp->dot[*q][0]; /* normal */
+                *(vsp++)=sp->dot[*q][1];
+                *(vsp++)=sp->dot[*q][2];
+                *(vsp++)=vv2[0]+vdw2*sp->dot[*q][0]; /* point */
+                *(vsp++)=vv2[1]+vdw2*sp->dot[*q][1];
+                *(vsp++)=vv2[2]+vdw2*sp->dot[*q][2];
+                q++;
+              }
+              s++;
+            }
             I->NSP++;
-
+            
             copy3f(rgb2,vspc);
             vspc+=3;
             copy3f(vv2,vspc);

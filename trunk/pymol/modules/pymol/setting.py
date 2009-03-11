@@ -645,6 +645,11 @@ if __name__=='pymol.setting':
         keep_alive                         = 607
         fit_kabsch                         = 608
         stereo_dynamic_strength            = 609
+        dynamic_width                      = 610
+        dynamic_width_factor               = 611
+        dynamic_width_min                  = 612
+        dynamic_width_max                  = 613
+        draw_mode                          = 614
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

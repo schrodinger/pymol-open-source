@@ -777,6 +777,9 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
   int pass = info->pass;  int *n = NULL;
   int c;
   int a=0;
+  float line_width = SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width);
+  line_width = SceneGetDynamicLineWidth(info, line_width);
+
   ObjectMeshState *ms = NULL;
 
    ObjectPrepareContext(&I->Obj,ray);
@@ -810,7 +813,7 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
             radius=SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_radius);
             
             if(radius==0.0F) {
-              radius = ray->PixelRadius*SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width)/2.0F;
+              radius = ray->PixelRadius*line_width/2.0F;
             } 
           } else {
             radius=SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_dot_radius);            
@@ -914,7 +917,7 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
                   if(ms->MeshMode==1) 
                     glPointSize(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_dot_width));
                   else
-                    glLineWidth(SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width));
+                    glLineWidth(line_width);
                   while(*n) {
                     c=*(n++);
                     if(ms->MeshMode==1) 

@@ -216,7 +216,6 @@ int  ExecutiveSetSettingFromString(PyMOLGlobals *G,int index,char *value,
 int  ExecutiveSetObjSettingFromString(PyMOLGlobals *G,
                                       int index,char *value,CObject *obj,
                                       int state,int quiet,int updates);
-
 int ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,
                   float angle,float shift,int quiet,int defer, int antialias);
 int ExecutiveGetDistance(PyMOLGlobals *G,char *s0,char *s1,float *value,int state);

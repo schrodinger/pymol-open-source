@@ -141,6 +141,8 @@ typedef struct {
   int sampling; /* are we supersampling? */
   int ortho; /* orthoscopic projection? */
   int line_lighting; /* line lighting */
+  int dynamic_width;
+  float dynamic_width_factor, dynamic_width_min, dynamic_width_max;
 } RenderInfo;
 
 #define MAXLINELEN 1024
