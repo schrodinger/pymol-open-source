@@ -1582,6 +1582,12 @@ class Normal(PMGSkin):
                                          command = lambda s=self: s.cmd.set("movie_fps","0.3",log=1))
 
         self.menuBar.addmenuitem('Frame Rate', 'separator', '')
+
+        self.menuBar.addmenuitem('Frame Rate', 'checkbutton',
+                                 'Show Frame Frame.',
+                                 label='Show Frame Rate',
+                                 variable = self.setting.show_frame_rate,
+                                 command = lambda s=self: s.setting.update('show_frame_rate'))
         
         self.menuBar.addmenuitem('Frame Rate', 'command', 'Reset Meter',
                                          label='Reset Meter',

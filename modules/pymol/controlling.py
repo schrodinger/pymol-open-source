@@ -108,11 +108,18 @@ if __name__=='pymol.controlling':
         # 48 for internal use only
         
         'drgo' : 49 ,
+
+        'imsz' : 50 ,
+        'imvz' : 51 ,
+        'box'  : 52 ,
+        'irtz' : 53
         }
     
     but_act_sc = Shortcut(but_act_code.keys())
 
     ring_dict = {
+        'maestro' : [   'three_button_maestro' ],
+        
         'three_button' : [   'three_button_viewing',
                              'three_button_editing' ],
         'two_button' : [ 'two_button_viewing',
@@ -168,6 +175,7 @@ SEE ALSO
     mouse_ring = ring_dict['three_button']
 
     mode_name_dict = {
+        'three_button_maestro' : '3-Button Maestro',        
         'three_button_viewing' : '3-Button Viewing',
         'three_button_editing' : '3-Button Editing',
         'three_button_motions':  '3-Button Motions',
@@ -178,7 +186,34 @@ SEE ALSO
         }
 
     mode_dict = {
-        'three_button_viewing' : [ ('l','none','rota'),
+        'three_button_maestro' : [ ('l','none','box'),
+				   ('m','none','rota'),
+				   ('r','none','move'),
+				   ('l','shft','+Box'),
+				   ('m','shft','-Box'),
+				   ('r','shft','clip'),                 
+				   ('l','ctrl','+/-'),
+				   ('m','ctrl','irtz'),
+				   ('r','ctrl','pk1'),                 
+				   ('l','ctsh','Sele'),
+				   ('m','ctsh','orig'),
+				   ('r','ctsh','clip'),
+				   ('l','alt' ,'none'),
+				   ('m','alt' ,'none'),
+				   ('r','alt' ,'none'),
+				   ('w','none','imvz'),
+				   ('w','shft','movs'),
+				   ('w','ctrl','none'), # disable since ctrl-middle is irtz
+				   ('w','ctsh','slab'),
+				   ('double_left','none','menu'),
+				   ('double_middle','none','none'),
+				   ('double_right','none', 'pkat'),
+				   ('single_left','none','sele'),
+				   ('single_middle','none','cent'),
+				   ('single_right','none', 'menu'),
+                                   ('single_left','shft','+/-'),
+				   ],
+          'three_button_viewing' : [ ('l','none','rota'),
 				   ('m','none','move'),
 				   ('r','none','movz'),
 				   ('l','shft','+Box'),

@@ -3516,14 +3516,16 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
           break;
         }
         if(but>0) {
-          int mode=ButModeTranslate(G,but, 0);
+          int mode=ButModeTranslate(G,but,mod);
           if(mode == cButModeNone)
-            I->SingleClickDelay = 0.0;
+            I->SingleClickDelay = 0.0; /* no double-click set? force immediate single click */
         }
       }
     }
-    if(I->LoopFlag)
+    if(I->LoopFlag && (I->PossibleSingleClick!=2))
       return SceneLoopRelease(block,button,x,y,mod);
+    OrthoUngrab(G);
+    I->LoopFlag=false;
     if(I->SculptingFlag) {
       /* SettingSet(G,cSetting_sculpting,1); */
       obj=(ObjectMolecule*)I->LastPicked.context.object;
@@ -3704,33 +3706,31 @@ static int SceneClick(Block *block,int button,int x,int y,
         }
       }
     }
-    if(!click_handled) {
 
+    if(!click_handled) {
       
-      if( ((ButModeTranslate(G,button,mod) == cButModePotentialClick) || (!mod)) 
-          &&((when-I->LastClickTime)<cDoubleTime)) {
-        int dx,dy;
-        dx = abs(I->LastWinX - x);
-        dy = abs(I->LastWinY - y);
-        if((dx<10)&&(dy<10)&&(I->LastButton==button)) {
-          switch(button) {
-          case P_GLUT_LEFT_BUTTON:
-            button = P_GLUT_DOUBLE_LEFT;
-            break;
-          case P_GLUT_MIDDLE_BUTTON:
-            button = P_GLUT_DOUBLE_MIDDLE;
-            break;
-          case P_GLUT_RIGHT_BUTTON:
-            button = P_GLUT_DOUBLE_RIGHT;
-            break;
-          }
-        }
+      if( ((ButModeCheckPossibleSingleClick(G,button,mod) || (!mod))
+	   &&((when-I->LastClickTime)<cDoubleTime))) {
+	int dx,dy;
+	dx = abs(I->LastWinX - x);
+	dy = abs(I->LastWinY - y);
+	if((dx<10)&&(dy<10)&&(I->LastButton==button)) {
+	  switch(button) {
+	  case P_GLUT_LEFT_BUTTON:
+	    button = P_GLUT_DOUBLE_LEFT;
+	    break;
+	  case P_GLUT_MIDDLE_BUTTON:
+	    button = P_GLUT_DOUBLE_MIDDLE;
+	    break;
+	  case P_GLUT_RIGHT_BUTTON:
+	    button = P_GLUT_DOUBLE_RIGHT;
+	    break;
+	  }
+	}
       }
     }
-
-    if(ButModeTranslate(G,button,mod) == cButModePotentialClick) {
-      I->PossibleSingleClick = 1;
-    } else if(!mod) {
+    
+    if(ButModeCheckPossibleSingleClick(G,button,mod) || (!mod)) {
       I->PossibleSingleClick = 1;
     } else {
       char *but_mode_name = SettingGetGlobal_s(G,cSetting_button_mode_name);
@@ -3892,8 +3892,9 @@ static int SceneClick(Block *block,int button,int x,int y,
     case cButModeRectAdd: /* deprecated */
     case cButModeRectSub:/* deprecated */
     case cButModeRect:/* deprecated */
-    case cButModeSeleAdd:
-    case cButModeSeleSub:
+    case cButModeSeleAddBox:
+    case cButModeSeleSetBox:
+    case cButModeSeleSubBox:
       return SceneLoopClick(block,button,x,y,mod);
       break;
     case cButModeRotDrag:
@@ -3919,6 +3920,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     case cButModeClipN:    
     case cButModeClipF:    
     case cButModeRotZ:
+    case cButModeInvRotZ:
       SceneNoteMouseInteraction(G);
       SceneDontCopyNext(G);
 
@@ -4931,9 +4933,9 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     }
   }
 
-  if(I->LoopFlag)
+  if(I->LoopFlag) {
     return SceneLoopDrag(block,x,y,mod);
-
+  }
   if(I->ButtonsShown && I->PressMode) {
     if(!I->ButtonsValid) {
       SceneUpdateButtons(G);
@@ -5412,6 +5414,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
       break;
     case cButModeRotXYZ:
     case cButModeRotZ:
+    case cButModeInvRotZ:
     case cButModeTransZ:
     case cButModeClipNF:
     case cButModeClipN:    
@@ -5514,6 +5517,13 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             I->LastY=y;
             adjust_flag=true;        
           }
+        break;
+      case cButModeInvRotZ:
+        if(I->LastX!=x) {
+	  SceneRotate(G,(I->LastX-x)/2.0F,0.0F,0.0F,1.0F);
+	  I->LastX=x;
+	  adjust_flag=true;        
+	}
         break;
       case cButModeTransZ:
         if(I->LastY!=y) {

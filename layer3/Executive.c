@@ -6137,44 +6137,60 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
         }
       } 
       break;
-    case cButModeSeleAdd:
-    case cButModeSeleSub:
+    case cButModeSeleSetBox:
+    case cButModeSeleAddBox:
+    case cButModeSeleSubBox:
       ExecutiveGetActiveSeleName(G,selName,true,SettingGet(G,cSetting_logging));
       sel_mode_kw = SceneGetSeleModeKeyword(G);        
       /* intentional omission of break! */
     case cButModeRectAdd:
     case cButModeRectSub:
       if(SelectorIndexByName(G,selName)>=0) {
-        if((mode==cButModeRectAdd)||(mode==cButModeSeleAdd)) {
+        if((mode==cButModeRectAdd)||(mode==cButModeSeleAddBox)) {
           sprintf(buffer,"(?%s or %s(%s))",selName,sel_mode_kw,cTempRectSele);
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"(%s)\",enable=1)\n",prefix,selName,buffer);
             PLog(G,buf2,cPLog_no_flush);
           }
-        } else {
+        } else if((mode==cButModeRectSub)||(mode==cButModeSeleSubBox)) {
           sprintf(buffer,"(%s(?%s) and not %s(%s))",sel_mode_kw,selName,sel_mode_kw,cTempRectSele);
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buffer);
             PLog(G,buf2,cPLog_no_flush);
-          }
-        }
+	  }
+	} else {
+          sprintf(buffer,"(%s(?%s))",sel_mode_kw,cTempRectSele);
+          SelectorCreate(G,selName,buffer,NULL,0,NULL);
+          if(log_box) {
+            sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buffer);
+            PLog(G,buf2,cPLog_no_flush);
+	  }
+	}
       } else {
-        if((mode==cButModeRectAdd)||(mode==cButModeSeleAdd)) {
+        if((mode==cButModeRectAdd)||(mode==cButModeSeleAddBox)) {
           sprintf(buffer,"%s(?%s)",sel_mode_kw,cTempRectSele);
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buffer);
             PLog(G,buf2,cPLog_no_flush);
           }
-        } else {
+        } else if((mode==cButModeRectSub)||(mode==cButModeSeleSubBox)) {
           SelectorCreate(G,selName,"(none)",NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"(none)\",enable=1)\n",prefix,selName);
             PLog(G,buf2,cPLog_no_flush);
           }
-        }
+        } else {
+	  printf("here2\n");
+          sprintf(buffer,"%s(?%s)",sel_mode_kw,cTempRectSele);
+          SelectorCreate(G,selName,buffer,NULL,0,NULL);
+          if(log_box) {
+            sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buffer);
+            PLog(G,buf2,cPLog_no_flush);
+          }
+	}
       }
       if(SettingGet(G,cSetting_auto_show_selections)) {
         ExecutiveSetObjVisib(G,selName,true,false);
@@ -6188,6 +6204,23 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
     }
     ExecutiveDelete(G,cTempRectSele);
     WizardDoSelect(G,selName);
+  } else {
+    switch(mode) {
+    case cButModeSeleSetBox:
+      {
+	OrthoLineType buf2;
+	ObjectNameType name;
+	
+	if(ExecutiveGetActiveSeleName(G,name, false,SettingGet(G,cSetting_logging))) {
+	  ExecutiveSetObjVisib(G,name,0,false);
+	  if(SettingGet(G,cSetting_logging)) {
+	    sprintf(buf2,"cmd.disable('%s')\n",name);
+	    PLog(G,buf2,cPLog_no_flush);
+	  }
+	}
+      }
+      break;
+    }
   }
   VLAFreeP(smp.picked);
 }
@@ -14206,7 +14239,9 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
         sprintf(buffer,"cmd.enable('%s')",rec->name);
         PLog(G,buffer,cPLog_pym);
         rec->visible=true; 
+#if 0
       } else if(mod&cOrthoSHIFT) {
+
         if(rec->sele_color<7)
           rec->sele_color=15;
         else {
@@ -14216,6 +14251,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
         }
         /* NO COMMAND EQUIVALENT FOR THIS FUNCTION YET */
         rec->visible=true;
+#endif
       } else {
         
         if(rec->visible&&!new_vis) {

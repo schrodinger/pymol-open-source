@@ -652,7 +652,8 @@ if __name__=='pymol.setting':
         draw_mode                          = 614
         clean_electro_mode                 = 615
         valence_mode                       = 616
-
+        show_frame_rate                    = 617
+        
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []
