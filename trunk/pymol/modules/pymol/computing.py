@@ -22,7 +22,7 @@ import string
 import traceback
 import threading
 
-def model_to_sdf_list(model):
+def model_to_sdf_list(self_cmd,model):
     from chempy import io
 
     sdf_list = io.mol.toList(model)
@@ -52,6 +52,13 @@ def model_to_sdf_list(model):
             xrd = entry[1]
             sdf_list.append("| %4d %6.3f %6.3f %6.3f %10.4f %10.4f %10.4f\n"%
                             (entry[0],0,0,3,xrd[0],xrd[1],xrd[2]))
+        sdf_list.append("\n")
+    electro_mode = int(self_cmd.get('clean_electro_mode'))
+    if electro_mode == 0:
+        fit_flag = 0
+        sdf_list.append(">  <ELECTROSTATICS>\n")
+        sdf_list.append("+ TREATMENT\n")
+        sdf_list.append("| NONE\n")
         sdf_list.append("\n")
     sdf_list.append("$$$$\n")
 #    for line in sdf_list:
@@ -99,8 +106,10 @@ class CleanJob:
                 state = self_cmd.get_state()
                 if self_cmd.count_atoms(obj_name+" and flag 2"): # any atoms restrained?
                     self_cmd.reference("validate",obj_name,state) # then we have reference coordinates
-                (fit_flag, sdf_list) = model_to_sdf_list(self_cmd.get_model(obj_name,state=state))
-                result = mengine.run(string.join(sdf_list,''))
+                (fit_flag, sdf_list) = model_to_sdf_list(self_cmd,self_cmd.get_model(obj_name,state=state))
+                input_sdf = string.join(sdf_list,'')
+                print input_sdf
+                result = mengine.run(input_sdf)
                 if result != None:
                     if len(result):
                         clean_sdf = result[0]

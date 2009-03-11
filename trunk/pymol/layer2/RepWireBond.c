@@ -947,6 +947,11 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                    ((name2[1]=='1')||(name2[1]=='2')||(name2[1]=='3'))
                    &&(name2[0]=='O'))))
                 s1 = s2 = 0; /* suppress P-O1P,O2P,O3P */
+              if((!name1[1])&&(name1[0]=='P')&&
+                 (((name2[3]==0)&&(name2[1]=='P')&&
+                   ((name2[2]=='1')||(name2[2]=='2')||(name2[2]=='3'))
+                   &&(name2[0]=='O'))))
+                s1 = s2 = 0; /* suppress P-OP1,OP2,OP3 */
               else if(na_mode==1) {
                 if((!name1[1])&&(name1[0]=='P')&&
                    (((name2[3]==0)&&
@@ -1012,6 +1017,11 @@ Rep *RepWireBondNew(CoordSet *cs,int state)
                    ((name1[1]=='1')||(name1[1]=='2')||(name1[1]=='3'))&&
                    (name1[0]=='O'))))
                 s1 = s2 = 0; /* suppress P-O1P,O2P,O3P */
+              if((!name2[1])&&(name2[0]=='P')&&
+                 (((name1[3]==0)&&(name1[1]=='P')&&
+                   ((name1[2]=='1')||(name1[2]=='2')||(name1[2]=='3'))&&
+                   (name1[0]=='O'))))
+                s1 = s2 = 0; /* suppress P-OP1,OP2,OP3 */
               else if(na_mode==1) {
                 if((!name2[1])&&(name2[0]=='P')&&
                    (((name1[3]==0)&&

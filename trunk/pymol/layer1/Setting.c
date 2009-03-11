@@ -3673,5 +3673,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_f(I,cSetting_dynamic_width_min,0.75);
     set_f(I,cSetting_dynamic_width_max,2.5);
     set_i(I,cSetting_draw_mode,0);
+    set_i(I,cSetting_clean_electro_mode,1);
   }
 }

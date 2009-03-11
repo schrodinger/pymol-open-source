@@ -1384,6 +1384,10 @@ class Builder(Frame):
     def doVdw(self, *ignore):
         self.cmd.set("sculpt_vdw_vis_mode", self.showVdw.get())
 
+    def doElectro(self, *ignore):
+        self.cmd.set("clean_electro_mode", self.electroMode.get())
+
+
 ##############################################################
 # main constructor methods
 
@@ -1427,9 +1431,15 @@ class Builder(Frame):
         self.showVdw.set(self.cmd.get("sculpt_vdw_vis_mode"))
         Checkbutton(self, text="Bumps", 
             borderwidth=1, pady=0, justify=LEFT, variable=self.showVdw, 
-            onvalue="on", offvalue="off", command=self.doVdw).grid(row=6, 
+            onvalue="on", offvalue="off", command=self.doVdw).grid(row=5, 
             column=1, sticky=W)
 
+        self.electroMode = StringVar()
+        self.electroMode.set(int(self.cmd.get("clean_electro_mode")))
+        Checkbutton(self, text="El-stat", 
+            borderwidth=1, pady=0, justify=LEFT, variable=self.electroMode, 
+            onvalue=1, offvalue=0, command=self.doElectro).grid(row=6, 
+            column=1,sticky=W)
 
     def toggleChemProtein(self):
         if self.chemFrame.grid_info():
