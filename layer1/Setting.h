@@ -832,6 +832,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_dynamic_width_min          612
 #define cSetting_dynamic_width_max          613
 #define cSetting_draw_mode                  614
+#define cSetting_clean_electro_mode         615
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -841,7 +842,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       615
+#define cSetting_INIT                       616
+
 #endif
 
 
