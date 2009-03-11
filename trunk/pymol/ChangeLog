@@ -4,7 +4,11 @@ CHANGE LOG
 
 2009-03-11 Warren L. DeLano <warren@delsci.com>	
 
-	* valence_mode
+	* fixed object duplication deadlock bug
+
+	* show_frame_rate setting
+	
+	* valence_mode=1 setting for nicer valence display
 	
 2009-03-10 Warren L. DeLano <warren@delsci.com>	
 

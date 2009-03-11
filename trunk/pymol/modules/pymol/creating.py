@@ -808,8 +808,9 @@ SEE ALSO
                 avoid = {}
                 for obj in cmd.get_names("all"):
                     avoid[obj] = 1
+                sel_cnt = _cmd.get(_self._COb,"sel_counter") 
                 while 1:
-                    sel_cnt = _cmd.get(_self._COb,"sel_counter") + 1.0
+                    sel_cnt = sel_cnt + 1.0
                     name = "obj%02.0f" % sel_cnt
                     if not avoid.has_key(name):
                         _cmd.legacy_set(_self._COb,"sel_counter","%1.0f" % sel_cnt)
