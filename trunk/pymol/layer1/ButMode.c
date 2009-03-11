@@ -318,7 +318,7 @@ static void ButModeDraw(Block *block)
       if (ButModeTranslate(G,P_GLUT_SINGLE_LEFT,0) == cButModePickAtom) {
         TextDrawStrAt(G,"Picking ",x,y);
         TextSetColor(G,I->TextColor3);
-        TextDrawStrAt(G,"Atoms & Joints",x+64,y);
+        TextDrawStrAt(G,"Atoms (and Joints)",x+64,y);
       } else {
         TextDrawStrAt(G,"Selecting ",x,y);
         TextSetColor(G,I->TextColor3);

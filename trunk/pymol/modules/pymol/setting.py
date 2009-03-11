@@ -651,7 +651,8 @@ if __name__=='pymol.setting':
         dynamic_width_max                  = 613
         draw_mode                          = 614
         clean_electro_mode                 = 615
-        
+        valence_mode                       = 616
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

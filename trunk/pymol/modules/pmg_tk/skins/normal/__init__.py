@@ -492,6 +492,7 @@ class Normal(PMGSkin):
                 # next command will cause command frame to be turned on if
                 # nothing else is visible... might not want this behavior
                 self.cmdFrame.pack(side=BOTTOM, fill=BOTH, expand=YES)
+                frame = self.cmdFrame
         if not startup:
             if frame == self.cmdFrame:
                 if self.edit_mode != None:

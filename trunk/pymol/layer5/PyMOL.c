@@ -780,6 +780,7 @@ typedef struct _CPyMOL {
   ov_word lex_dynamic_width_max;
   ov_word lex_draw_mode;
   ov_word lex_clean_electro_mode;
+  ov_word lex_valence_mode;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1553,6 +1554,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(dynamic_width_max,613);
   LEX_SETTING(draw_mode,614);
   LEX_SETTING(clean_electro_mode,615);
+  LEX_SETTING(valence_mode,616);
   return_OVstatus_SUCCESS;
 }
 

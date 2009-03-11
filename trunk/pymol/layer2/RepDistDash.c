@@ -192,7 +192,53 @@ Rep *RepDistDashNew(DistSet *ds)
       subtract3f(v2,v1,d);
 
       l = (float)length3f(d);
-      
+
+      if(l>R_SMALL4) {
+        
+        copy3f(v1,d1);
+        normalize3f(d);
+        
+        if(dash_gap>R_SMALL4) {
+          float avg[3],proj1[3],proj2[3];
+          float l_left = l/2.0F;
+          float l_used = 0.0F;
+          float half_dash_gap = dash_gap*0.5;
+          
+          average3f(v1,v2,avg);
+          while(l_left>dash_sum) {
+            VLACheck(I->V,float,(n*3)+11);
+            v=I->V+n*3;
+            scale3f(d,l_used+half_dash_gap,proj1);
+            scale3f(d,l_used+dash_len+half_dash_gap,proj2);
+            add3f(avg,proj1,v);
+            add3f(avg,proj2,v+3);
+            subtract3f(avg,proj1,v+6);
+            subtract3f(avg,proj2,v+9);
+            n+=4;
+            l_left-=dash_sum;
+            l_used += dash_sum;
+          }
+          if(l_left>dash_gap) {
+            l_left-=dash_gap;
+            scale3f(d,l_used+half_dash_gap,proj1);
+            scale3f(d,l_used+l_left+half_dash_gap,proj2);
+            VLACheck(I->V,float,(n*3)+11);
+            v=I->V+n*3;
+            add3f(avg,proj1,v);
+            add3f(avg,proj2,v+3);
+            subtract3f(avg,proj1,v+6);
+            subtract3f(avg,proj2,v+9);
+            n+=4;
+          }
+        } else if(dash_len>R_SMALL4) {
+          VLACheck(I->V,float,(n*3)+5);
+          v=I->V+n*3;
+          copy3f(v1,v);
+          copy3f(v2,v+3);
+          n+=2;
+        }
+      }
+#if 0
       l -= dash_gap;
       
       ph = dash_sum-(float)fmod((l+dash_gap)/2.0,dash_sum);
@@ -231,6 +277,8 @@ Rep *RepDistDashNew(DistSet *ds)
           l-=seg;
         }
       }
+#endif
+
     }
     VLASize(I->V,float,n*3);
     I->N=n;
