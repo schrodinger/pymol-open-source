@@ -1771,12 +1771,8 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,
               I->DragHaveBase = true;
               copy3f(I->FavoredOrigin, I->DragBase);
             } else {
-              float mn[3],mx[3];
-
-              if(ExecutiveGetExtent(G,I->DragSeleName,mn,mx,true,state,true)) {
-                average3f(mn,mx,I->DragBase);
-                I->DragHaveBase = true;
-              }
+              copy3f(I->Center,I->DragBase);
+              I->DragHaveBase = true;
             }
           }
 

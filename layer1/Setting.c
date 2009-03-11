@@ -2023,6 +2023,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_valence:
+  case cSetting_valence_mode:
   case cSetting_valence_size:
   case cSetting_half_bonds:
   case cSetting_stick_transparency:
@@ -2791,7 +2792,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
 
     set_f(I,cSetting_dash_length, 0.15F);
 
-    set_f(I,cSetting_dash_gap, 0.35F);
+    set_f(I,cSetting_dash_gap, 0.45F);
 
     set_i(I,cSetting_auto_zoom, G->Option->zoom_mode);
 
@@ -3674,5 +3675,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_f(I,cSetting_dynamic_width_max,2.5);
     set_i(I,cSetting_draw_mode,0);
     set_i(I,cSetting_clean_electro_mode,1);
+    set_i(I,cSetting_valence_mode,1);
   }
 }
