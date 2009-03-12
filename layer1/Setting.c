@@ -1489,7 +1489,6 @@ int SettingSet_color(CSetting *I,int index, char *value)
   if(I) {
     PyMOLGlobals *G=I->G;
     color_index=ColorGetIndex(G,value);
-    printf("color index %d\n",color_index);
     if((color_index==-1)&&(strcmp(value,"-1")&&
                            strcmp(value,"-2")&&
                            strcmp(value,"-3")&&
