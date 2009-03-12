@@ -72,9 +72,9 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
     TextSetOutlineColor(G,I->OutlineColor);
     color = SettingGet_color(G,I->ds->Setting,I->Obj->Setting,cSetting_label_color);
     
-    if(color>=0)
+    if((color>=0)||(color==cColorFront)||(color==cColorBack))
       TextSetColor(G,ColorGet(G,color));
-    else
+    else 
       TextSetColor(G,ColorGet(G,I->Obj->Color));
 
 	 while(c--) {
@@ -127,7 +127,7 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
       TextSetOutlineColor(G,I->OutlineColor);
       color = SettingGet_color(G,I->ds->Setting,I->Obj->Setting,cSetting_label_color);
     
-      if(color>=0)
+      if((color>=0)||(color==cColorFront)||(color==cColorBack))
         TextSetColor(G,ColorGet(G,color));
       else
         TextSetColor(G,ColorGet(G,I->Obj->Color));

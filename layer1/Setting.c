@@ -969,6 +969,12 @@ int SettingGetTextValue(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,
         case cColorObject:
           strcpy(buffer,"object");        
           break;
+        case cColorFront:
+          strcpy(buffer,"front");        
+          break;
+        case cColorBack:
+          strcpy(buffer,"back");
+          break;
         default:
           if(color>cColorExtCutoff) {
             strcpy(buffer,"default");
@@ -1483,10 +1489,12 @@ int SettingSet_color(CSetting *I,int index, char *value)
   if(I) {
     PyMOLGlobals *G=I->G;
     color_index=ColorGetIndex(G,value);
+    printf("color index %d\n",color_index);
     if((color_index==-1)&&(strcmp(value,"-1")&&
                            strcmp(value,"-2")&&
                            strcmp(value,"-3")&&
                            strcmp(value,"-4")&&
+                           strcmp(value,"-5")&&
                            strcmp(value,"default"))) {
       PRINTFB(G,FB_Setting,FB_Errors)
         "Setting-Error: unknown color '%s'\n",value
@@ -2370,9 +2378,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
         vv[2] = v[2]/255.0F;
         SettingSet_3fv(G->Setting,cSetting_bg_rgb,vv);
       }
-
+      ColorUpdateFront(G,v);
     }
-    SceneInvalidate(G);
+    ExecutiveInvalidateRep(G,inv_sele,cRepAll,cRepInvColor);
+    SceneChanged(G);
     break;
   case cSetting_line_smooth:
   case cSetting_ortho:
@@ -2462,8 +2471,10 @@ int SettingSetfv(PyMOLGlobals *G,int index,float *v)
       } else {
         SettingSet_3fv(I,index,v); 
       }
+      ColorUpdateFront(G,v);
     }
-	 SceneInvalidate(G);
+    ExecutiveInvalidateRep(G,"all",cRepAll,cRepInvColor);
+    SceneChanged(G);
     break;
   case cSetting_light:
     SettingSet_3fv(I,index,v);     
@@ -2809,7 +2820,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
 
     set_f(I,cSetting_nonbonded_size, 0.25F);
 
-    set_color(I,cSetting_label_color, "-1");
+    set_color(I,cSetting_label_color, "-6");
 
     set_f(I,cSetting_ray_trace_fog, -1.0F);
 

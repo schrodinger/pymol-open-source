@@ -706,6 +706,10 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
         return cColorAtomic;
       else if(i==cColorObject)
         return cColorObject;
+      else if(i==cColorFront)
+        return cColorFront;
+      else if(i==cColorBack)
+        return cColorBack;
       else if(i==-1)
         return -1;
     }
@@ -729,6 +733,11 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
     return(cColorAtomic);
   if(WordMatch(G,name,"object",true))
     return(cColorObject);
+  if(WordMatch(G,name,"front",true))
+    return(cColorFront);
+  if(WordMatch(G,name,"back",true))
+    return(cColorBack);
+
   if(I->Lex) { /* search for a perfect match (fast!) */
     OVreturn_word result;
     if(OVreturn_IS_OK(result = OVLexicon_BorrowFromCString(I->Lex, name))) 
@@ -2694,13 +2703,24 @@ int ColorInit(PyMOLGlobals *G)
     I->Gamma = 1.0F;
 
     ColorReset(G); /* will alloc I->Idx and I->Lex */
-
+    I->Front[0] = 1.0F;
+    I->Front[1] = 1.0F;
+    I->Front[2] = 1.0F;
     return 1;
   } else {
     return 0;
   }
 }
-
+void ColorUpdateFront(PyMOLGlobals *G,float *back)
+{
+  register CColor *I=G->Color;
+  copy3f(back,I->Back);
+  I->Front[0] = 1.0F - back[0];
+  I->Front[1] = 1.0F - back[1];
+  I->Front[2] = 1.0F - back[2];
+  if(diff3f(I->Front,back)<0.5F)
+    zero3f(I->Front);
+}
 /*========================================================================*/
 float *ColorGetSpecial(PyMOLGlobals *G,int index)
 {
@@ -2732,8 +2752,12 @@ float *ColorGet(PyMOLGlobals *G,int index)
     if(I->LUTActive)
       lookup_color(I, I->RGBColor, I->RGBColor, I->BigEndian);
     return I->RGBColor;
+  } else if(index==cColorFront) {
+    return I->Front;
+  } else if(index==cColorBack) {
+    return I->Back;
   } else {
-            /* invalid color id, then simply return white */
+    /* invalid color id, then simply return white */
 	 return(I->Color[0].Color);
   }
 }
@@ -2778,7 +2802,11 @@ int ColorGetEncoded(PyMOLGlobals *G,int index,float *color)
      color[0]=(float)index;
      color[1]=0.0F;
      color[2]=0.0F;
-   } else {
+  } else if(index==cColorFront) {
+    copy3f(I->Front,color);
+  } else if(index==cColorBack) {
+    copy3f(I->Back,color);
+  } else {
      color[0] = 1.0F;
      color[1] = 1.0F;
      color[2] = 1.0F;
