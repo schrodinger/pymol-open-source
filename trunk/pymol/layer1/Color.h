@@ -33,6 +33,8 @@ Z* -------------------------------------------------------------------
 #define cColorCurAuto     -3
 #define cColorAtomic      -4
 #define cColorObject      -5
+#define cColorFront       -6
+#define cColorBack        -7
 
 #define cColorExtCutoff (-10)
 
@@ -73,6 +75,7 @@ struct _CColor {
   /* not stored */
   int HaveOldSessionColors;
   int HaveOldSessionExtColors;
+  float Front[3],Back[3];
 };
 
 int ColorInit(PyMOLGlobals *G);
@@ -82,6 +85,7 @@ int ColorGetNext(PyMOLGlobals *G);
 int ColorGetCurrent(PyMOLGlobals *G);
 int ColorGetIndex(PyMOLGlobals *G,char *name);
 int ColorConvertOldSessionIndex(PyMOLGlobals *G,int index);
+void ColorUpdateFront(PyMOLGlobals *G,float *back);
 
 float *ColorGet(PyMOLGlobals *G,int index); /* pointer maybe invalid after creating a new color */
 float *ColorGetRaw(PyMOLGlobals *G,int index); /* pointer maybe invalid after creating a new color */

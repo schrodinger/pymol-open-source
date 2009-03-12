@@ -222,7 +222,9 @@ Rep *RepLabelNew(CoordSet *cs,int state)
       */
 
       I->N++;
-      if(at_label_color>=0) 
+      if((at_label_color>=0) ||
+         (at_label_color == cColorFront) ||
+         (at_label_color == cColorBack))
         c1 = at_label_color;
       else
         c1=*(cs->Color+a);

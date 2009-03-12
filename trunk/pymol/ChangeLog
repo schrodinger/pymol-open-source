@@ -4,6 +4,8 @@ CHANGE LOG
 
 2009-03-11 Warren L. DeLano <warren@delsci.com>	
 
+	* front and back colors, label_color now defaults to front
+	
 	* fixed object duplication deadlock bug
 
 	* show_frame_rate setting

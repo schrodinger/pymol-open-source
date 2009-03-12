@@ -10397,8 +10397,20 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
               case cSetting_color:
                 {
                   int color_index=ColorGetIndex(G,PyString_AsString(PyTuple_GetItem(value,0)));
-                  if((color_index<0)&&(color_index>cColorExtCutoff))
-                    color_index = 0;
+                  if((color_index<0)&&(color_index>cColorExtCutoff)) {
+                    switch(color_index) {
+                    case cColorAtomic:
+                      color_index = -1;
+                      break;
+                    case cColorFront:
+                    case cColorBack:
+                    case cColorDefault:
+                      break;
+                    default:
+                      color_index = 0;
+                      break;
+                    }
+                  }
                   *(op.ii1) = color_index;
                   op.i2 = cSetting_color;
                   have_atomic_value = true;
