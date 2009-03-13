@@ -2087,8 +2087,8 @@ int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
             int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
             while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
               if(rec == list[a]) { 
-		if((a<min_row)||(min_row<0))
-		  min_row = a;
+                if((a<min_row)||(min_row<0))
+                  min_row = a;
                 if(entry<=min_entry) {
                   source_row = a; /* where will new list be inserted...*/
                   min_entry = entry;
@@ -2169,13 +2169,13 @@ int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort,int location)
             case -1: /* top */
               if(a==1) flag=true;
               break;
-	    case -2: /* upper */
+            case -2: /* upper */
               if(min_row>=0) {
                 if(a==min_row)
                   flag=true;
               } else if(!list[a]) 
                 flag=true;
-	      break;
+              break;
             case 0: /* current */
               if(source_row>=0) {
                 if(a==source_row)
@@ -6159,15 +6159,15 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buffer);
             PLog(G,buf2,cPLog_no_flush);
-	  }
-	} else {
+          }
+        } else {
           sprintf(buffer,"(%s(?%s))",sel_mode_kw,cTempRectSele);
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buffer);
             PLog(G,buf2,cPLog_no_flush);
-	  }
-	}
+          }
+        }
       } else {
         if((mode==cButModeRectAdd)||(mode==cButModeSeleAddBox)) {
           sprintf(buffer,"%s(?%s)",sel_mode_kw,cTempRectSele);
@@ -6183,14 +6183,14 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
             PLog(G,buf2,cPLog_no_flush);
           }
         } else {
-	  printf("here2\n");
+          printf("here2\n");
           sprintf(buffer,"%s(?%s)",sel_mode_kw,cTempRectSele);
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {
             sprintf(buf2,"%scmd.select(\"%s\",\"%s\",enable=1)\n",prefix,selName,buffer);
             PLog(G,buf2,cPLog_no_flush);
           }
-	}
+        }
       }
       if(SettingGet(G,cSetting_auto_show_selections)) {
         ExecutiveSetObjVisib(G,selName,true,false);
@@ -6208,16 +6208,16 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
     switch(mode) {
     case cButModeSeleSetBox:
       {
-	OrthoLineType buf2;
-	ObjectNameType name;
+        OrthoLineType buf2;
+        ObjectNameType name;
 	
-	if(ExecutiveGetActiveSeleName(G,name, false,SettingGet(G,cSetting_logging))) {
-	  ExecutiveSetObjVisib(G,name,0,false);
-	  if(SettingGet(G,cSetting_logging)) {
-	    sprintf(buf2,"cmd.disable('%s')\n",name);
-	    PLog(G,buf2,cPLog_no_flush);
-	  }
-	}
+        if(ExecutiveGetActiveSeleName(G,name, false,SettingGet(G,cSetting_logging))) {
+          ExecutiveSetObjVisib(G,name,0,false);
+          if(SettingGet(G,cSetting_logging)) {
+            sprintf(buf2,"cmd.disable('%s')\n",name);
+            PLog(G,buf2,cPLog_no_flush);
+          }
+        }
       }
       break;
     }
@@ -6917,7 +6917,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
     
     if(width_scale>=0.0F) {
       width = (int)((width_scale*
-		     fabs(SettingGetGlobal_f(G,cSetting_stick_radius))/
+                     fabs(SettingGetGlobal_f(G,cSetting_stick_radius))/
                      SceneGetScreenVertexScale(G,NULL)));
       if(width<min_width)
         width = (int)min_width;
@@ -7288,46 +7288,47 @@ char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only,char *s0)
 
   while(ListIterate(I->Spec,rec,next)) {
     if(
-       (rec->type==cExecObject&&((!mode)||(mode==1)||(mode==3)||(mode==4)))||
-       (rec->type==cExecSelection&&((!mode)||(mode==2)||(mode==3)||(mode==5))))
-      {
-        if((mode<3)||(rec->name[0]!='_')) {
-          if((!enabled_only)||(rec->visible)) {
-            stlen = strlen(rec->name);
-            if(sele0<0) 
-              incl_flag = 1;
-            else 
-              switch(rec->type) {
-              case cExecObject:
-                if(rec->obj->type == cObjectMolecule) {
-                  int a;
-                  ObjectMolecule *obj_mol = (ObjectMolecule*)rec->obj;
-                  AtomInfoType *ai = obj_mol->AtomInfo;
-                  for(a=0;a<obj_mol->NAtom;a++) {
-                    if(SelectorIsMember(G,ai->selEntry,sele0)) {
-                      incl_flag = 1;
-                      break;
-                    }
-                    ai++;
+       (rec->type==cExecObject&& (((!mode) || (mode==1) || (mode==3) || (mode==4)) ||
+                                  ((rec->obj->type!=cObjectGroup)&&((mode==6)||(mode==8))) ||
+                                  ((rec->obj->type==cObjectGroup)&&((mode==7)||(mode==9))))) ||
+       (rec->type==cExecSelection&&((!mode)||(mode==2)||(mode==3)||(mode==5)))
+       ) {
+      if((mode<3)||(mode>7)||(mode==9)||(rec->name[0]!='_')) {
+        if((!enabled_only)||(rec->visible)) {
+          stlen = strlen(rec->name);
+          if(sele0<0) 
+            incl_flag = 1;
+          else 
+            switch(rec->type) {
+            case cExecObject:
+              if(rec->obj->type == cObjectMolecule) {
+                int a;
+                ObjectMolecule *obj_mol = (ObjectMolecule*)rec->obj;
+                AtomInfoType *ai = obj_mol->AtomInfo;
+                for(a=0;a<obj_mol->NAtom;a++) {
+                  if(SelectorIsMember(G,ai->selEntry,sele0)) {
+                    incl_flag = 1;
+                    break;
                   }
+                  ai++;
                 }
-                break;
-              case cExecSelection:
-                if(SelectorCheckIntersection(G,sele0,SelectorIndexByName(G,rec->name))) {
-                  incl_flag=1;
-                  break;
-                }
+              }
+              break;
+            case cExecSelection:
+              if(SelectorCheckIntersection(G,sele0,SelectorIndexByName(G,rec->name))) {
+                incl_flag=1;
                 break;
               }
-            if(incl_flag) {
-              VLACheck(result,char,size+stlen+1);
-              strcpy(result+size,rec->name);
-              size+=stlen+1;
+              break;
             }
+          if(incl_flag) {
+            VLACheck(result,char,size+stlen+1);
+            strcpy(result+size,rec->name);
+            size+=stlen+1;
           }
         }
       }
-    
+    }
   }
   VLASize(result,char,size);
   return(result);

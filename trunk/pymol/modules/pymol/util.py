@@ -462,7 +462,7 @@ def color_objs(selection='(all)',quiet=1,_self=cmd):
     Color all chains a different color
     '''
     c = 0
-    for a in cmd.get_names(selection=selection):
+    for a in cmd.get_names('public_nongroup_objects',selection=selection):
 	if (selection!='all') and (selection!='(all)'):
             cmd.color(_color_cycle[c],"(?%s and (%s))"%(a,selection),quiet=quiet)
         else:

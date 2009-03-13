@@ -1042,6 +1042,7 @@ SEE ALSO
         '''
         selection = selector.process(selection)
         r = DEFAULT_ERROR
+        # this needs to be replaced with a flag & masking scheme...
         mode = 1
         if type=='objects':
             mode = 1
@@ -1055,6 +1056,17 @@ SEE ALSO
             mode = 4
         elif type=='public_selections':
             mode = 5
+        elif type=='public_nongroup_objects':
+            mode = 6
+        elif type=='public_group_objects':
+            mode = 7
+        elif type=='nongroup_objects':
+            mode = 8
+        elif type=='group_objects':
+            mode = 9
+        else:
+            print "Error: unknown type: '%s'"%str(type)
+            if _raising(-1,_self): raise pymol.CmdException            
         try:
             _self.lock(_self)
             r = _cmd.get_names(_self._COb,int(mode),int(enabled_only),str(selection))
