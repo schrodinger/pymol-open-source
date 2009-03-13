@@ -775,7 +775,7 @@ NOTES
 
     * 16: rear plane distance from the camera
 
-    * 17: orthoscopic flag 
+    * 17: orthoscopic flag (+/-) and field of view (if abs(value) > 1)
 
 PYMOL API
 
@@ -798,12 +798,18 @@ SEE ALSO
                     if not quiet:
                         print " get_view: matrix written to log file."
                     _self.log("_ set_view (\\\n","cmd.set_view((\\\n")
-                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3])
-                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7]  , "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7])
-                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11] , "  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11])
-                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19], "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19])
-                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22], "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22]) 
-                    _self.log("_  %14.9f, %14.9f, %14.9f )\n"%r[22:25] , "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
+                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3]  ,
+                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3])
+                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7]  ,
+                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7])
+                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11] ,
+                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11])
+                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19],
+                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19])
+                    _self.log("_  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22],
+                              "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22]) 
+                    _self.log("_  %14.9f, %14.9f, %14.9f )\n"%r[22:25] ,
+                              "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
                     if output<2: # suppress if we have a log file open
                         output=0
                 if output and (not quiet) and (output<3):
