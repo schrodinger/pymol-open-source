@@ -764,10 +764,10 @@ ARGUMENTS
 NOTES
 
     Contents of the view matrix:
+    
+    * 0  -  8: column-major 3x3 matrix which rotates model space to camera space
 
-    * 0  -  8: column-major 3x3 matrix which rotates model axes to camera axes
-
-    * 9  - 11: origin of rotation relative to the camera (in camera space)
+    * 9  - 11: origin of rotation relative to camera (in camera space)
 
     * 12 - 14: origin of rotation (in model space)
 
@@ -776,6 +776,11 @@ NOTES
     * 16: rear plane distance from the camera
 
     * 17: orthoscopic flag (+/-) and field of view (if abs(value) > 1)
+
+    The camera always looks down -Z with its +X left and its +Y down.
+
+    Therefore, in the default view, model +X is to the observer\'s
+    right, +Y is upward, and +Z points toward the observer.
 
 PYMOL API
 
