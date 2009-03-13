@@ -372,7 +372,10 @@ static int load_shader_programs(PyMOLGlobals *G,GLuint *programs)
 
 #endif
 
+#ifdef _PYMOL_OPENGL_SHADERS
+/* MULTI-INSTSANCE TODO:  isn't this a conflict? */
 static GLuint programs_kludge[2] = {0,0};
+#endif
 
 void RepSphereRenderImmediate(CoordSet *cs, RenderInfo *info)
 {
@@ -1791,11 +1794,13 @@ Rep *RepSphereNew(CoordSet *cs,int state)
     
     if(vis_flag &&
        (!ati1->hetatm) &&
+       (!(ati1->flags & cAtomFlag_solvent)) &&
        ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon]) ||
         (ribbon_side_chain_helper && ati1->visRep[cRepRibbon]))) {
       
       register char *name1=ati1->name;
       register int prot1=ati1->protons;
+
       if(prot1 == cAN_N) { 
         if((!name1[1])&&(name1[0]=='N')) { /* N */
           register char *resn1 = ati1->resn;
@@ -1810,6 +1815,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
           vis_flag=false;
       }
     }
+
     marked[a1] = vis_flag; /* store temporary visibility information */
     
     if(vis_flag) {
@@ -1822,7 +1828,6 @@ Rep *RepSphereNew(CoordSet *cs,int state)
         variable_alpha = true;
       AtomInfoGetSetting_color(G, ati1, cSetting_sphere_color, sphere_color, &at_sphere_color);
 
-        
       if(I->R.P) {
         I->NP++;
         if(!ati1->masked) {
@@ -2170,12 +2175,11 @@ Rep *RepSphereNew(CoordSet *cs,int state)
                   j=map->EList[i++];
                 }
               }
-              if(flag)
-                {
-                  visFlag[q0]=1;
-                  visFlag[q1]=1;
-                  visFlag[q2]=1;
-                }
+              if(flag) {
+                visFlag[q0]=1;
+                visFlag[q1]=1;
+                visFlag[q2]=1;
+              }
               q++;
             }
             s++;
