@@ -769,7 +769,7 @@ NOTES
 
     * 9  - 11: origin of rotation relative to the camera (in camera space)
 
-    * 12 - 14:  origin of rotation (in model space)
+    * 12 - 14: origin of rotation (in model space)
 
     * 15: front plane distance from the camera
 
