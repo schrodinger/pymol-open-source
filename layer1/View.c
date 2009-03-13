@@ -91,7 +91,7 @@ PyObject *ViewElemAsPyList(PyMOLGlobals *G, CViewElem *view)
     
     PyList_SetItem(result,9,PyInt_FromLong(view->ortho_flag));
     if(view->ortho_flag) {
-      PyList_SetItem(result,10,PyInt_FromLong(view->ortho));
+      PyList_SetItem(result,10,PyFloat_FromDouble(view->ortho));
     } else {
       PyList_SetItem(result,10,PConvAutoNone(NULL));
     }
@@ -146,7 +146,14 @@ int ViewElemFromPyList(PyMOLGlobals *G, PyObject *list, CViewElem *view)
   }
 
   if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,9),&view->ortho_flag);
-  if(ok&&view->ortho_flag) ok= PConvPyIntToInt(PyList_GetItem(list,10),&view->ortho_flag);
+  if(ok&&view->ortho_flag) {
+    ok = PConvPyFloatToFloat(PyList_GetItem(list,10),&view->ortho);
+    if(!ok) {
+      int dummy_int;
+      ok = PConvPyIntToInt(PyList_GetItem(list,10),&dummy_int);
+      view->ortho = dummy_int;
+    }
+  }
 
   if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,11),&view->view_mode);
   if(ok) ok= PConvPyIntToInt(PyList_GetItem(list,12),&view->specification_level);
@@ -850,7 +857,19 @@ int ViewElemInterpolate(PyMOLGlobals *G,CViewElem *first,CViewElem *last,
     }
     
     if(first->ortho_flag && last->ortho_flag) {
-      current->ortho = ((first->ortho * fxn_1 + last->ortho * fxn)>0.5F);
+      float approx_ortho = first->ortho * fxn_1 + last->ortho * fxn;
+      if( first->pre_flag && last->pre_flag ) {
+        float first_far = first->pre[2] * tan(cPI*fabs(first->ortho)/360.0);
+        float last_far = last->pre[2] * tan(cPI*fabs(last->ortho)/360.0);
+        
+        float cur_far =  first_far * fxn_1 + last_far * fxn;
+        current->ortho = 360.0 * atan( cur_far/current->pre[2] ) / cPI;
+
+        if( (current->ortho * approx_ortho) < 0) /* fix sign */
+          current->ortho  = -current->ortho;
+      } else {
+        current->ortho = approx_ortho;
+      }
     }
     current->specification_level = 1;
     

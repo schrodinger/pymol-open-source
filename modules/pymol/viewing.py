@@ -767,9 +767,9 @@ NOTES
 
     * 0  -  8: column-major 3x3 matrix which rotates model axes to camera axes
 
-    * 9  - 11: origin or rotation relative to the camera in camera space
+    * 9  - 11: origin of rotation relative to the camera (in camera space)
 
-    * 12 - 14:  origin of rotation in model space
+    * 12 - 14:  origin of rotation (in model space)
 
     * 15: front plane distance from the camera
 
