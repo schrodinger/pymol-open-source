@@ -816,8 +816,9 @@ void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem,char *scene_name)
   elem->back = I->Back;
 
   elem->ortho_flag = true;
-  elem->ortho = SettingGetGlobal_b(G,cSetting_ortho);
- 
+  elem->ortho = SettingGet(G,cSetting_ortho) ? SettingGet(G,cSetting_field_of_view) : 
+    -SettingGet(G,cSetting_field_of_view);
+
   {
     if(elem->scene_flag && elem->scene_name) {
       OVLexicon_DecRef(G->Lexicon,elem->scene_name);
@@ -895,7 +896,17 @@ void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem,int dirty)
     SceneClipSetWithDirty(G,elem->front,elem->back,dirty);
   }
   if(elem->ortho_flag) {
-    SettingSetGlobal_b(G,cSetting_ortho,elem->ortho);
+    if(elem->ortho<0.0F) {
+      SettingSetGlobal_b(G,cSetting_ortho,0);
+      if(elem->ortho<-(1.0F-R_SMALL4)) {
+        SettingSetGlobal_f(G,cSetting_field_of_view,-elem->ortho);
+      }
+    } else {
+      SettingSetGlobal_b(G,cSetting_ortho,(elem->ortho>0.5F));
+      if(elem->ortho>(1.0F+R_SMALL4)) {
+        SettingSetGlobal_f(G,cSetting_field_of_view,elem->ortho);
+      }
+    }
   }
   if(changed_flag) {
 
@@ -1070,7 +1081,9 @@ void SceneGetView(PyMOLGlobals *G,SceneViewType view)
   *(p++) = I->Origin[2];
   *(p++) = I->Front;
   *(p++) = I->Back;
-  *(p++) = SettingGet(G,cSetting_ortho);
+  *(p++) = SettingGet(G,cSetting_ortho) ? SettingGet(G,cSetting_field_of_view) : 
+    -SettingGet(G,cSetting_field_of_view);
+
 }
 /*========================================================================*/
 void SceneSetView(PyMOLGlobals *G,SceneViewType view,
@@ -1111,7 +1124,17 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,
 
   SceneClipSet(G,p[0],p[1]);
   p+=2;
-  SettingSetGlobal_b(G,cSetting_ortho,(p[0]>0.5F));
+  if(p[0]<0.0F) {
+    SettingSetGlobal_b(G,cSetting_ortho,0);
+    if(p[0]<-(1.0F-R_SMALL4)) {
+      SettingSetGlobal_f(G,cSetting_field_of_view,-p[0]);
+    }
+  } else {
+    SettingSetGlobal_b(G,cSetting_ortho,(p[0]>0.5F));
+    if(p[0]>(1.0F+R_SMALL4)) {
+      SettingSetGlobal_f(G,cSetting_field_of_view,p[0]);
+    }
+  }
   if(!quiet) { 
     PRINTFB(G,FB_Scene,FB_Actions)
       " Scene: view updated.\n"

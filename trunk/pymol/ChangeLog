@@ -4,6 +4,11 @@ CHANGE LOG
 
 2009-03-11 Warren L. DeLano <warren@delsci.com>	
 
+	* field_of_view now interpolated via get_view/set_view matrix
+	  (appears to be backwards & forwards compatible)
+	
+2009-03-11 Warren L. DeLano <warren@delsci.com>	
+
 	* front and back colors, label_color now defaults to front
 	
 	* fixed object duplication deadlock bug

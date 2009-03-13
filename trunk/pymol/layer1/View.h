@@ -35,7 +35,7 @@ typedef struct CViewElem {
   float front, back; 
   
   int ortho_flag;
-  int ortho;
+  float ortho;
 
   int state_flag; /* only applies to object views */
   int state;
