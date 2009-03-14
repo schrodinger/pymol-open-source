@@ -28,6 +28,16 @@
 #ifndef ENDIAN_SWAP_H
 #define ENDIAN_SWAP_H
 
+#ifdef __GNUC__
+#if __GNUC__ > 3
+typedef int my_aliased_int __attribute__((may_alias));
+#else
+typedef int my_aliased_int;
+#endif
+#else
+typedef int my_aliased_int;
+#endif
+
 /* works on unaligned 2-byte quantities */
 static void swap2_unaligned(void *v, long ndata) {
   long i;
@@ -108,9 +118,9 @@ static void swap2_aligned(void *v, long ndata) {
 /* Only works with aligned 4-byte quantities, will cause a bus error */
 /* on some platforms if used on unaligned data.                      */
 static void swap4_aligned(void *v, long ndata) {
-  int *data = (int *) v;
+  my_aliased_int *data = (my_aliased_int *) v;
   long i;
-  int *N;
+  my_aliased_int *N;
   for (i=0; i<ndata; i++) {
     N = data + i;
     *N=(((*N>>24)&0xff) | ((*N&0xff)<<24) | 
@@ -125,9 +135,9 @@ static void swap8_aligned(void *v, long ndata) {
   /* Use int* internally to prevent bugs caused by some compilers */
   /* and hardware that would potentially load data into an FP reg */
   /* and hose everything, such as the old "jmemcpy()" bug in NAMD */
-  int *data = (int *) v;  
+  my_aliased_int *data = (my_aliased_int *) v;  
   long i;
-  int *N; 
+  my_aliased_int *N; 
   int t0, t1;
 
   for (i=0; i<ndata; i++) {

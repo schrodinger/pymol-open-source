@@ -495,8 +495,6 @@ int ButModeInit(PyMOLGlobals *G)
 /*========================================================================*/
 int ButModeCheckPossibleSingleClick(PyMOLGlobals *G, int button, int mod)
 {
-  int result = false;
-  int action = ButModeTranslate(G,button,mod);
   int click_button = -1;
   switch(button) {
   case P_GLUT_LEFT_BUTTON:

@@ -126,6 +126,7 @@ typedef struct _CPyMOL CPyMOL;
 
 typedef int PyMOLstatus;
 
+
 typedef struct {
   PyMOLstatus status;
 } PyMOLreturn_status;

@@ -147,7 +147,7 @@ float ShakerDoPyra(float targ1,float targ2,
   float d0[3],cp[3],d2[3],d3[3];
   float av[3],t0[3],push[3];
 
-  float cur,dev,sc,result1,result2;
+  float cur,dev,sc,result1,result2 = 0.0F;
 
   add3f(v1,v2,av);
   subtract3f(v2,v1,d2);

@@ -204,7 +204,6 @@ Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
           active[a]=1;
       }
       if(active[a]) {
-        float dummy; 
         nSphere++;
       }
     }

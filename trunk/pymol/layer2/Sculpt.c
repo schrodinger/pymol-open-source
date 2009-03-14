@@ -496,7 +496,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_stat
 
         if(obj->DiscreteFlag) {
           if(cs==obj->DiscreteCSet[a]) {
-            a0=obj->DiscreteAtmToIdx[b0];
+            a0=obj->DiscreteAtmToIdx[a];
           } else {
             a0=-1;
           }
