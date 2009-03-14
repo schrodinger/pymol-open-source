@@ -738,14 +738,14 @@ void RepRibbonRenderImmediate(CoordSet *cs, RenderInfo *info)
       } else 
         a=cs->AtmToIdx[a1];
       if(a>=0) {
-        ai = obj->AtomInfo+a1;
+        ai = obj_AtomInfo+a1;
         if(ai->visRep[cRepRibbon]) {
           if(trace || ((ai->protons==cAN_C)&&
                        (WordMatch(G,"CA",ai->name,1)<0)&&
                        !AtomInfoSameResidueP(G,last_ai,ai))) {
             if(a2>=0) {
               if(trace) {
-                if(!AtomInfoSequential(G,obj->AtomInfo+a2,obj->AtomInfo+a1,trace_mode))
+                if(!AtomInfoSequential(G,obj_AtomInfo+a2,obj_AtomInfo+a1,trace_mode))
                   a2=-1;
               } else {
                 if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
