@@ -1,5 +1,6 @@
-if 0:
-    print "DANGER DO NOT RUN UNTIL changes to Gromacs.h and gromacsplugin.ccp are handled"
+if 1:
+    print "DANGER DO NOT RUN UNTIL changes to the following files have been backported..."
+    print "dcdplugin.c"
 else:
 
     import re
