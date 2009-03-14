@@ -328,7 +328,6 @@ cmd._dump_floats(cmd.get_view(0))
 zoom m1,state=4
 cmd._dump_floats(cmd.get_view(0))
 
-
 origin m1
 cmd._dump_floats(cmd.get_view(0))
 origin m1,state=0

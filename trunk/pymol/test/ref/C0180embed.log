@@ -83,7 +83,7 @@ PyMOL>set valence
 PyMOL>dist hbond, protein, ligand, mode=2
  Executive: object "hbond" created.
 PyMOL>ray
- RayRenderTest: obtained 875 graphics primitives.
+ RayRenderTest: obtained 868 graphics primitives.
 PyMOL>print cmd.get_state()
 5
 PyMOL>print cmd.get_names()

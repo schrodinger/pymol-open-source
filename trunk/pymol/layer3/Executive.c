@@ -13738,7 +13738,7 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
   }
 
   if(obj->type==cObjectMolecule) {
-	 ExecutiveUpdateObjectSelection(G,obj);
+    ExecutiveUpdateObjectSelection(G,obj);
   }
 
   if(SettingGet(G,cSetting_auto_dss)) {
