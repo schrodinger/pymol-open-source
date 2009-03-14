@@ -11,7 +11,7 @@
  *
  *      $RCSfile: hash.h,v $
  *      $Author: johns $        $Locker:  $             $State: Exp $
- *      $Revision: 1.4 $      $Date: 2006/01/05 00:05:53 $
+ *      $Revision: 1.5 $      $Date: 2008/08/19 19:58:16 $
  *
  ***************************************************************************
  * DESCRIPTION:
@@ -23,11 +23,11 @@
 
 /** hash table top level data structure */
 typedef struct hash_t {
-  struct hash_node_t **bucket;        /* array of hash nodes */
-  int size;                           /* size of the array */
-  int entries;                        /* number of entries in table */
-  int downshift;                      /* shift cound, used in hash function */
-  int mask;                           /* used to select bits for hashing */
+  struct hash_node_t **bucket;      /* array of hash nodes */
+  int size;                         /* size of the array */
+  int entries;                      /* number of entries in table */
+  int downshift;                    /* shift count, used in hash function */
+  int mask;                         /* used to select bits for hashing */
 } hash_t;
 
 #define HASH_FAIL -1

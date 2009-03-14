@@ -8,13 +8,14 @@
  *
  *      $RCSfile: xsfplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.14 $       $Date: 2006/02/23 19:36:46 $
+ *      $Revision: 1.17 $       $Date: 2008/01/09 20:37:47 $
  *
  ***************************************************************************/
 
 //
-// Plugin reader for xsf format files as created by the espresso
-// software package (http://www.pwscf.org/) and XCrySDen (http://www.xcrysden.org/).
+// Molefile plugin for xsf/axsf format files as created by the 
+// Quantum Espresso software package (http://www.quantum-espresso.org) 
+// a.k.a. PWScf (http://www.pwscf.org/) and XCrySDen (http://www.xcrysden.org/
 //
 // a file format description is available at:
 // http://www.xcrysden.org/doc/XSF.html
@@ -569,11 +570,11 @@ static int read_xsf_structure(void *v, int *optflags, molfile_atom_t *atoms) {
           atom = atoms + i;
           j=sscanf(readbuf, "%s %f %f %f", buffer, &coord, &coord, &coord);
           if (k == NULL) {
-            fprintf(stderr, "xsf structure) missing atom(s) in file '%s'\n",xsf->file_name);
-            fprintf(stderr, "xsf structure) expecting '%d' atoms, found only '%d'\n",xsf->numatoms,i+1);
+            fprintf(stderr, "xsfplugin) structure missing atom(s) in file '%s'\n",xsf->file_name);
+            fprintf(stderr, "xsfplugin) expecting '%d' atoms, found only '%d'\n",xsf->numatoms,i+1);
             return MOLFILE_ERROR;
           } else if (j < 4) {
-            fprintf(stderr, "xsf structure) missing type or coordinate(s) in file '%s' for atom '%d'\n",
+            fprintf(stderr, "xsfplugin) missing type or coordinate(s) in file '%s' for atom '%d'\n",
                     xsf->file_name, i+1);
             return MOLFILE_ERROR;
           }
@@ -601,7 +602,7 @@ static int read_xsf_structure(void *v, int *optflags, molfile_atom_t *atoms) {
           atom->chain[0] = '\0';
           atom->segid[0] = '\0';
 #ifdef TEST_PLUGIN
-          fprintf(stderr,"xsf structure) atom %4d: %s  / mass= %f\n", i, atom->name, atom->mass);
+          fprintf(stderr,"xsfplugin) atom %4d: %s  / mass= %f\n", i, atom->name, atom->mass);
 #endif
         }
         
@@ -691,7 +692,7 @@ static int read_xsf_timestep(void *v, int natoms, molfile_timestep_t *ts) {
           if (k == NULL) {
             return MOLFILE_ERROR;
           } else if (j < 4) {
-            fprintf(stderr, "xsf structure) missing type or coordinate(s) in file '%s' for atom '%d'\n",
+            fprintf(stderr, "xsfplugin) missing type or coordinate(s) in file '%s' for atom '%d'\n",
                     xsf->file_name, i+1);
             return MOLFILE_ERROR;
           } else if (j>=3) {
@@ -899,37 +900,34 @@ static void close_xsf_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   // ABI version
-  MOLFILE_PLUGIN_TYPE, 	  // plugin type
-  "xsf",                  // file format description
-  "XSF",                  // file format description
-  "Axel Kohlmeyer, John E. Stone", // author(s)
-  0,                      // major version
-  5,                      // minor version
-  VMDPLUGIN_THREADSAFE,   // is reentrant
-  "xsf",                  // filename extension
-  open_xsf_read,               
-  read_xsf_structure,
-  0,                      // read_bonds
-  read_xsf_timestep,
-  close_xsf_read,
-  0,                      // open_file_write
-  0,                      // write_structure
-  0,                      // write_timestep
-  0,                      // close_file_write
-  read_xsf_metadata,
-  read_xsf_data,
-  0                       // read_rawgraphics
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "xsf";
+  plugin.prettyname = "(Animated) XCrySDen Structure File";
+  plugin.author = "Axel Kohlmeyer, John Stone";
+  plugin.majorv = 0;
+  plugin.minorv = 7;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "axsf,xsf";
+  plugin.open_file_read = open_xsf_read;
+  plugin.read_structure = read_xsf_structure;
+  plugin.read_next_timestep =read_xsf_timestep;
+  plugin.close_file_read = close_xsf_read;
+  plugin.read_volumetric_metadata = read_xsf_metadata;
+  plugin.read_volumetric_data = read_xsf_data;
+  return VMDPLUGIN_SUCCESS;
+}
+
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 
 
 #ifdef TEST_PLUGIN

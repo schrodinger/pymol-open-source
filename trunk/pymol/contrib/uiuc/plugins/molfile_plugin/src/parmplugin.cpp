@@ -16,7 +16,7 @@
  *
  *      $RCSfile: parmplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.28 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.32 $       $Date: 2009/02/20 22:28:41 $
  *
  ***************************************************************************/
 
@@ -37,7 +37,7 @@ static void *open_parm_read(const char *filename, const char *,
   FILE *parm;
   ReadPARM *rp = new ReadPARM;
   if(!(parm = rp->open_parm_file(filename))) {
-    fprintf(stderr, "Cannot open parm file '%s'\n", filename);
+    fprintf(stderr, "parmplugin) Cannot open parm file '%s'\n", filename);
     delete rp;
     return NULL;
   }
@@ -78,7 +78,9 @@ static int read_parm_structure(void *mydata, int *optflags,
   return MOLFILE_SUCCESS;
 }
 
-static int read_parm_bonds(void *v, int *nbonds, int **fromptr, int **toptr, float **bondorderptr) {
+static int read_parm_bonds(void *v, int *nbonds, int **fromptr, int **toptr, 
+                           float **bondorderptr,  int **bondtype, 
+                           int *nbondtypes, char ***bondtypename) {
   parmdata *p = (parmdata *)v;
   ReadPARM *rp = p->rp;
   int i, j;
@@ -94,13 +96,17 @@ static int read_parm_bonds(void *v, int *nbonds, int **fromptr, int **toptr, flo
       p->to[j] = a2;
       j++;
     } else {
-      printf("skipping bond (%d %d)\n", a1, a2); 
+      printf("parmplugin) skipping bond (%d %d)\n", a1, a2); 
     }
   }
   *nbonds = j;
   *fromptr = p->from;
   *toptr = p->to;
   *bondorderptr = NULL; // PARM files don't have bond order information
+  *bondtype = NULL;
+  *nbondtypes = 0;
+  *bondtypename = NULL;
+
   return MOLFILE_SUCCESS;
 }
 
@@ -117,27 +123,30 @@ static void close_parm_read(void *mydata) {
  * Initialization stuff down here
  */
 
-static molfile_plugin_t plugin =  {
-  vmdplugin_ABIVERSION,                                 // ABI version
-  MOLFILE_PLUGIN_TYPE,                                  // type
-  "parm",                                               // short name
-  "AMBER Parm",                                         // pretty name
-  "Justin Gullingsrud, John E. Stone",                  // author
-  0,                                                    // major version
-  4,                                                    // minor version
-  VMDPLUGIN_THREADSAFE,                                 // is_reentrant
-  "parm",                                               // filename extension
-  open_parm_read,        /* open_file_read   */
-  read_parm_structure,   /* read_structure   */
-  read_parm_bonds,
-  0,                     /* read_next_timestep */
-  close_parm_read        /* close_file_read    */
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "parm";
+  plugin.prettyname = "AMBER Parm";
+  plugin.author = "Justin Gullingsrud, John Stone";
+  plugin.majorv = 4;
+  plugin.minorv = 3;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "parm";
+  plugin.open_file_read = open_parm_read;
+  plugin.read_structure = read_parm_structure;
+  plugin.read_bonds = read_parm_bonds;
+  plugin.close_file_read = close_parm_read;
+  return VMDPLUGIN_SUCCESS;
+}
+
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return 0;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

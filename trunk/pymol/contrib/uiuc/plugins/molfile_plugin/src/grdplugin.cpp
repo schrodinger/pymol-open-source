@@ -16,7 +16,7 @@
  *
  *      $RCSfile: grdplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.13 $       $Date: 2006/02/23 19:36:44 $
+ *      $Revision: 1.15 $       $Date: 2008/01/09 20:26:42 $
  *
  ***************************************************************************/
 
@@ -69,7 +69,7 @@ static void *open_grd_read(const char *filepath, const char *filetype,
   
   fd = fopen(filepath, "rb");
   if (!fd) {
-    fprintf(stderr, "Error opening file.\n");
+    fprintf(stderr, "grdplugin) Error opening file.\n");
     return NULL;
   }
 
@@ -77,7 +77,7 @@ static void *open_grd_read(const char *filepath, const char *filetype,
    * integer 20.
    */
   if (fread(&recordSize, 4, 1, fd) != 1) {
-    fprintf(stderr, "Error reading file header: uplbl.\n");
+    fprintf(stderr, "grdplugin) Error reading file header: uplbl.\n");
     return NULL;
   }
   if (recordSize == 20) {
@@ -89,7 +89,7 @@ static void *open_grd_read(const char *filepath, const char *filetype,
       swap = 1;
     }
     else {
-      fprintf(stderr, "Improperly formatted file header: uplbl.\n");
+      fprintf(stderr, "grdplugin) Improperly formatted file header: uplbl.\n");
       return NULL;
     }
   }
@@ -101,7 +101,7 @@ static void *open_grd_read(const char *filepath, const char *filetype,
    */
   if ( (fread(uplbl, 1, 20, fd) != 20) ||
        (fread(&recordSize, 4, 1, fd) != 1) ) {
-    fprintf(stderr, "Error: uplbl does not match.\n");
+    fprintf(stderr, "grdplugin) Error: uplbl does not match.\n");
     return NULL;
   }
 
@@ -111,20 +111,20 @@ static void *open_grd_read(const char *filepath, const char *filetype,
    * the future.
    */ 
   if (fread(&recordSize, 4, 1, fd) != 1) {
-    fprintf(stderr, "Error reading file header: nxtlbl.\n");
+    fprintf(stderr, "grdplugin) Error reading file header: nxtlbl.\n");
     return NULL;
   }
   if (swap) {
     swap4_aligned(&recordSize, 1);
   }
   if (recordSize != 70) {
-    fprintf(stderr, "Improperly formatted file header: nxtlbl.\n");
+    fprintf(stderr, "grdplugin) Improperly formatted file header: nxtlbl.\n");
     return NULL;
   }
   if ( (fread(nxtlbl, 1, 10, fd) != 10) ||
        (fread(toplbl, 1, 60, fd) != 60) ||
        (fread(&recordSize, 4, 1, fd) != 1) ) {
-    fprintf(stderr, "Error reading nxtlbl.\n");
+    fprintf(stderr, "grdplugin) Error reading nxtlbl.\n");
     return NULL;
   }
   
@@ -132,7 +132,7 @@ static void *open_grd_read(const char *filepath, const char *filetype,
    * The next integer gives the number of bytes used to store the data.
    */
   if (fread(&recordSize, 4, 1, fd) != 1) {
-    fprintf(stderr, "Error reading file header: grid.\n");
+    fprintf(stderr, "grdplugin) Error reading file header: grid.\n");
     return NULL;
   }
   if (swap) {
@@ -145,7 +145,7 @@ static void *open_grd_read(const char *filepath, const char *filetype,
    */
   gridSize = (int) (pow((double) iGrid, (double) 1.0/3.0) + 0.5);
   if ((gridSize*gridSize*gridSize) != iGrid) {
-    fprintf(stderr, "Error: non-cube grid.\n");
+    fprintf(stderr, "grdplugin) Error: non-cube grid.\n");
     return NULL;
   }
 
@@ -156,7 +156,7 @@ static void *open_grd_read(const char *filepath, const char *filetype,
        (fread(&midX, sizeof(float), 1, fd) != 1) ||
        (fread(&midY, sizeof(float), 1, fd) != 1) ||
        (fread(&midZ, sizeof(float), 1, fd) != 1) ) {
-    fprintf(stderr, "Error reading scale and midpoint.\n");
+    fprintf(stderr, "grdplugin) Error reading scale and midpoint.\n");
     return NULL;
   }
   if (swap) {
@@ -224,7 +224,7 @@ static int read_grd_data(void *v, int set, float *datablock,
 
   /* Read the densities. Order for file is x fast, y medium, z slow */
   if (fread(datablock, sizeof(float), ndata, fd) != (unsigned int) ndata) {
-    fprintf(stderr, "Error reading grid data.\n");
+    fprintf(stderr, "grdplugin) Error reading grid data.\n");
     return MOLFILE_ERROR;
   }
 
@@ -247,26 +247,30 @@ static void close_grd_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,                /* ABI version */
-  MOLFILE_PLUGIN_TYPE, 	               /* plugin type */
-  "grd",                               /* file format description */
-  "GRASP,Delphi Binary Potential Map", /* file format description */
-  "Eamon Caddigan",                    /* author(s) */
-  0,                                   /* major version */
-  5,                                   /* minor version */
-  VMDPLUGIN_THREADSAFE,                /* is reentrant */
-  "phi,grd"                            /* filename extension */
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { 
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "grd";
+  plugin.prettyname = "GRASP,Delphi Binary Potential Map";
+  plugin.author = "Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 6;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "phi,grd";
   plugin.open_file_read = open_grd_read;
   plugin.read_volumetric_metadata = read_grd_metadata;
   plugin.read_volumetric_data = read_grd_data;
   plugin.close_file_read = close_grd_read;
+  return VMDPLUGIN_SUCCESS; 
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

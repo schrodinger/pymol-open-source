@@ -16,7 +16,7 @@
  *
  *      $RCSfile: ccp4plugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.26 $       $Date: 2006/04/06 20:20:47 $
+ *      $Revision: 1.29 $       $Date: 2007/08/09 19:58:45 $
  *
  ***************************************************************************/
 
@@ -234,6 +234,7 @@ static void *open_ccp4_read(const char *filepath, const char *filetype,
   yScale = cellDimensions[1] / grid[1];
   zScale = cellDimensions[2] / grid[2];
 
+  // calculate non-orthogonal unit cell coordinates
   xaxis[0] = xScale;
   xaxis[1] = 0;
   xaxis[2] = 0;
@@ -249,21 +250,12 @@ static void *open_ccp4_read(const char *filepath, const char *filetype,
   zaxis[1] = z2 * zScale;
   zaxis[2] = z3 * zScale;
 
-#if 1
   ccp4->vol[0].origin[0] = xaxis[0] * origin[xIndex] + 
                            yaxis[0] * origin[yIndex] +
                            zaxis[0] * origin[zIndex];
   ccp4->vol[0].origin[1] = yaxis[1] * origin[yIndex] +
                            zaxis[1] * origin[zIndex];
   ccp4->vol[0].origin[2] = zaxis[2] * origin[zIndex];
-#else
-  ccp4->vol[0].origin[0] = xaxis[0] * (origin[xIndex]+0.5) + 
-                           yaxis[0] * (origin[yIndex]+0.5) +
-                           zaxis[0] * (origin[zIndex]+0.5);
-  ccp4->vol[0].origin[1] = yaxis[1] * (origin[yIndex]+0.5) +
-                           zaxis[1] * (origin[zIndex]+0.5);
-  ccp4->vol[0].origin[2] = zaxis[2] * (origin[zIndex]+0.5);
-#endif
 
   ccp4->vol[0].xaxis[0] = xaxis[0] * (extent[xIndex]-1);
   ccp4->vol[0].xaxis[1] = 0;
@@ -362,26 +354,30 @@ static void close_ccp4_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,               // ABI version
-  MOLFILE_PLUGIN_TYPE,                // plugin type
-  "ccp4",                             // short file format description
-  "CCP4",                             // pretty file format description
-  "Eamon Caddigan, John Stone",       // author(s)
-  1,                                  // major version
-  0,                                  // minor version
-  VMDPLUGIN_THREADSAFE,               // is reentrant
-  "ccp4,mrc,map"                      // filename extension
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { 
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "ccp4";
+  plugin.prettyname = "CCP4, MRC Density Map";
+  plugin.author = "Eamon Caddigan, John Stone";
+  plugin.majorv = 1;
+  plugin.minorv = 2;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "ccp4,mrc,map";
   plugin.open_file_read = open_ccp4_read;
   plugin.read_volumetric_metadata = read_ccp4_metadata;
   plugin.read_volumetric_data = read_ccp4_data;
   plugin.close_file_read = close_ccp4_read;
+  return VMDPLUGIN_SUCCESS; 
+}
+
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }

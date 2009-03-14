@@ -116,7 +116,7 @@ static int read_rawgraphics(void *v, int *nelem,
 
    // XXX This should probably be in open_file_read
    if (!get_line(line, buffer, 199, infile)) {
-      fprintf(stderr, "Raster3D input: error reading file header (line %d)\n",
+      fprintf(stderr, "raster3dplugin) Error reading file header (line %d)\n",
           line);
       return MOLFILE_ERROR;
    }
@@ -124,7 +124,7 @@ static int read_rawgraphics(void *v, int *nelem,
    // tell the user info about the file
    for (i = strlen(buffer) - 1; i >= 0 &&
         (buffer[i] == 10 || buffer[i] == 13); i--) buffer[i] = 0;
-   printf("Raster3D input: scene title: '%s'\n", buffer);
+   printf("raster3dplugin) scene title: '%s'\n", buffer);
 
    // The next 11 lines of text contain more header information
    // about lighting, anti aliasing, image size, etc. This can be
@@ -132,7 +132,7 @@ static int read_rawgraphics(void *v, int *nelem,
    for (count = 0; count < 11; count++) {
       if (!get_line(line, buffer, 199, infile)) {
          fprintf(stderr, 
-             "Raster3D input: error reading file header (line %d)\n", line);
+             "raster3dplugin) error reading file header (line %d)\n", line);
          return MOLFILE_ERROR;
       }
    }
@@ -144,7 +144,7 @@ static int read_rawgraphics(void *v, int *nelem,
       get_line(line, buffer, 199, infile);  // read the whole line into a string
       if (sscanf(buffer, "%f %f %f %f",
 		 &mat[4*i], &mat[4*i+1], &mat[4*i+2], &mat[4*i+3])<4) {
-         fprintf(stderr, "Raster3D input: invalid format in file (line %d)\n",
+         fprintf(stderr, "raster3dplugin) invalid format in file (line %d)\n",
              line);
 	 return MOLFILE_ERROR;
       }
@@ -153,13 +153,13 @@ static int read_rawgraphics(void *v, int *nelem,
    get_line(line, buffer, 199, infile);
    if (sscanf(buffer, "%d", &i) < 1) {
      fprintf(stderr, 
-         "Raster3D input: error reading object input mode (line %d)\n", line);
+         "raster3dplugin) error reading object input mode (line %d)\n", line);
      return MOLFILE_ERROR;
    }
 
    if (i != 3) {
       fprintf(stderr, 
-          "Raster3D input: the specified file is in an unsupported format\n");
+          "raster3dplugin) the specified file is in an unsupported format\n");
       fprintf(stderr, 
           "(object input mode %d). Aborting.\n", i);
       return MOLFILE_ERROR;
@@ -180,7 +180,7 @@ static int read_rawgraphics(void *v, int *nelem,
          if (strcmp(buffer, "*")) break;
       }
       if (count < 3) {  
-        fprintf(stderr, "Raster3D input: Warning: this file contains input in a nonstandard\n");
+        fprintf(stderr, "raster3dplugin) Warning: this file contains input in a nonstandard\n");
         fprintf(stderr, "Fortran format. This is generally not supported, and the read may fail.\n");
       }
       count = 0;
@@ -191,7 +191,7 @@ static int read_rawgraphics(void *v, int *nelem,
          if (!get_line(line, buffer, 199, infile)) continue;
 
          if (sscanf(buffer, "%d", &objtype) != 1) {
-            fprintf(stderr, "Raster3D input: bad data in file (line %d)\n",
+            fprintf(stderr, "raster3dplugin) bad data in file (line %d)\n",
                 line);
             return MOLFILE_ERROR;
          }
@@ -510,26 +510,29 @@ static void close_file_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,  // ABI version
-  MOLFILE_PLUGIN_TYPE, 	 // type of plugin
-  "raster3d",            // short name of plugin
-  "Raster3d Scene File", // pretty name of plugin
-  "Justin Gullingsrud",  // authors
-  0,                     // major version
-  1,                     // minor version
-  VMDPLUGIN_THREADSAFE,  // is reentrant
-  "r3d"                  // filename extension
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "raster3d";
+  plugin.prettyname = "Raster3d Scene File";
+  plugin.author = "Justin Gullingsrud";
+  plugin.majorv = 0;
+  plugin.minorv = 2;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "r3d";
   plugin.open_file_read = open_file_read;
   plugin.read_rawgraphics = read_rawgraphics;
   plugin.close_file_read = close_file_read;
+  return VMDPLUGIN_SUCCESS;
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

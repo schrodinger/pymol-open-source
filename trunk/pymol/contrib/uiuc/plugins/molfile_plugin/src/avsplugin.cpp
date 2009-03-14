@@ -16,7 +16,7 @@
  *
  *      $RCSfile: avsplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.17 $       $Date: 2006/02/23 19:36:43 $
+ *      $Revision: 1.21 $       $Date: 2009/01/29 14:55:41 $
  *
  ***************************************************************************/
 
@@ -76,7 +76,7 @@ enum {AVSFLOAT};                          /* Data types */
 static char *get_string(char *s, int n, FILE *stream) {
   do {
     if (fgets(s, n, stream) == NULL) {
-      fprintf(stderr, "Error reading string.\n");
+      fprintf(stderr, "avsplugin) Error reading string.\n");
       return NULL;
     }
   } while (s[0] == '#');
@@ -102,7 +102,7 @@ static int read_datasource(char *s, datasource_t *data) {
 
   /* The first word should be "coord" or "variable" */
   if ( (strcasecmp(tok, "coord") != 0) && (strcasecmp(tok, "variable") != 0) ) {
-    fprintf(stderr, "Improperly formatted header: expected coord or variable.\n");
+    fprintf(stderr, "avsplugin) Improperly formatted header: expected coord or variable.\n");
     free(src);
     return 1;
   }
@@ -110,7 +110,7 @@ static int read_datasource(char *s, datasource_t *data) {
   /* Next should be the integer ID of the data source */
   tok = strtok(NULL, " \t\n");
   if (!isdigit(*tok)) {
-    fprintf(stderr, "Improperly formatted header: expected ID.\n");
+    fprintf(stderr, "avsplugin) Improperly formatted header: expected ID.\n");
     free(src);
     return 1;
   }
@@ -120,7 +120,7 @@ static int read_datasource(char *s, datasource_t *data) {
   while(tok) {
     value = strchr(tok, '=');
     if (!value) {
-      fprintf(stderr, "Error reading value.\n");
+      fprintf(stderr, "avsplugin) Error reading value.\n");
       free(src);
       return 1;
     }
@@ -139,7 +139,7 @@ static int read_datasource(char *s, datasource_t *data) {
         data->filetype = ASCII;
       }
       else {
-        fprintf(stderr, "Non-ASCII files are not supported.\n");
+        fprintf(stderr, "avsplugin) Non-ASCII files are not supported.\n");
         free(src);
         return 1;
       }
@@ -161,7 +161,7 @@ static int read_datasource(char *s, datasource_t *data) {
       /* XXX - For now, return with an error if there's an unrecognized
        * argument. This should probably be changed.
        */
-      fprintf(stderr, "Unrecognized argument.\n");
+      fprintf(stderr, "avsplugin) Unrecognized argument.\n");
       free(src);
       return 1;
     }
@@ -173,7 +173,7 @@ static int read_datasource(char *s, datasource_t *data) {
 
   /* Make sure the filename and filetype have been set */
   if ((data->filename[0] == '\0') || (data->filetype == NONE)) {
-    fprintf(stderr, "Filename not set in options.\n");
+    fprintf(stderr, "avsplugin) Filename not set in options.\n");
     return 1;
   }
   
@@ -191,19 +191,19 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
 
   fd = fopen(filepath, "rb");
   if (!fd) {
-    fprintf(stderr, "Error opening file.\n");
+    fprintf(stderr, "avsplugin) Error opening file.\n");
     return NULL;
   }
 
   /* Check for an AVS file */
   if (fgets(inbuf, LINESIZE, fd) == NULL) {
     fclose(fd);
-    fprintf(stderr, "Error reading line.\n");
+    fprintf(stderr, "avsplugin) Error reading line.\n");
     return NULL;
   }
   if (strncmp(inbuf, "# AVS", 5) != 0) {
     fclose(fd);
-    fprintf(stderr, "Improperly formatted header.\n");
+    fprintf(stderr, "avsplugin) Improperly formatted header.\n");
     return NULL;
   }
 
@@ -213,12 +213,12 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     return NULL;
   }
   if (sscanf(inbuf, "ndim=%d", &ndim) != 1) {
-    fprintf(stderr, "Error reading ndim.\n");
+    fprintf(stderr, "avsplugin) Error reading ndim.\n");
     fclose(fd);
     return NULL;
   }
   if (ndim != 3) {
-    fprintf(stderr, "Error: ndim must be 3.\n");
+    fprintf(stderr, "avsplugin) Error: ndim must be 3.\n");
     fclose(fd);
     return NULL;
   }
@@ -229,7 +229,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     return NULL;
   }
   if (sscanf(inbuf, "dim1=%d", &xsize) != 1) {
-    fprintf(stderr, "Error reading dim1.\n");
+    fprintf(stderr, "avsplugin) Error reading dim1.\n");
     fclose(fd);
     return NULL;
   }
@@ -238,7 +238,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     return NULL;
   }
   if (sscanf(inbuf, "dim2=%d", &ysize) != 1) {
-    fprintf(stderr, "Error reading dim2.\n");
+    fprintf(stderr, "avsplugin) Error reading dim2.\n");
     fclose(fd);
     return NULL;
   }
@@ -247,7 +247,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     return NULL;
   }
   if (sscanf(inbuf, "dim3=%d", &zsize) != 1) {
-    fprintf(stderr, "Error reading dim3.\n");
+    fprintf(stderr, "avsplugin) Error reading dim3.\n");
     fclose(fd);
     return NULL;
   }
@@ -258,12 +258,12 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     return NULL;
   }
   if (sscanf(inbuf, "nspace=%d", &nspace) != 1) {
-    fprintf(stderr, "Error reading nspace.\n");
+    fprintf(stderr, "avsplugin) Error reading nspace.\n");
     fclose(fd);
     return NULL;
   }
   if (nspace != 3) {
-    fprintf(stderr, "Error: nspace must be 3.\n");
+    fprintf(stderr, "avsplugin) Error: nspace must be 3.\n");
     fclose(fd);
     return NULL;
   }
@@ -275,7 +275,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     return NULL;
   }
   if (sscanf(inbuf, "veclen=%d", &veclen) != 1) {
-    fprintf(stderr, "Error reading veclen.\n");
+    fprintf(stderr, "avsplugin) Error reading veclen.\n");
     fclose(fd);
     return NULL;
   }
@@ -286,7 +286,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     return NULL;
   }
   if (strncmp(inbuf, "data=float", 10) != 0) {
-    fprintf(stderr, "Error reading data type.\n");
+    fprintf(stderr, "avsplugin) Error reading data type.\n");
     fclose(fd);
     return NULL;
   }
@@ -297,7 +297,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     return NULL;
   }
   if (strncmp(inbuf, "field=uniform", 13) != 0) {
-    fprintf(stderr, "Error reading field type.\n");
+    fprintf(stderr, "avsplugin) Error reading field type.\n");
     fclose(fd);
     return NULL;
   }
@@ -317,7 +317,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
       return NULL;
     }
     if ( (sscanf(inbuf, "coord %d", &coord_count) != 1) || (coord_count != i+1) ) {
-    fprintf(stderr, "Error reading coord count.\n");
+    fprintf(stderr, "avsplugin) Error reading coord count.\n");
       delete[] coord;
       fclose(fd);
       return NULL;
@@ -346,7 +346,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
       return NULL;
     }
     if ( (sscanf(inbuf, "variable %d", &var_count) != 1) || (var_count != i+1) ) {
-      fprintf(stderr, "Error reading variable count.\n");
+      fprintf(stderr, "avsplugin) Error reading variable count.\n");
       delete[] coord;
       fclose(fd);
       return NULL;
@@ -375,7 +375,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
       strcpy(current_file, coord[i].filename); /* XXX - unsafe */
       fd = fopen(current_file, "rb");
       if (!fd) {
-        fprintf(stderr, "Error opening file.\n");
+        fprintf(stderr, "avsplugin) Error opening file.\n");
         delete[] coord;
         return NULL;
       }
@@ -388,7 +388,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     /* Skip the "skip" lines */
     for (index = 0; index < coord[i].skip; index++) {
       if (fgets(inbuf, LINESIZE, fd) == NULL) {
-        fprintf(stderr, "Error reading line.\n");
+        fprintf(stderr, "avsplugin) Error reading line.\n");
         fclose(fd);
         delete[] coord;
         return NULL;
@@ -398,7 +398,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     /* Skip the "offset" values */
     for (index = 0; index < coord[i].offset; index++) {
       if (fscanf(fd, " %f", &value) != 1) {
-        fprintf(stderr, "Error skipping offset.\n");
+        fprintf(stderr, "avsplugin) Error skipping offset.\n");
         fclose(fd);
         delete[] coord;
         return NULL;
@@ -407,7 +407,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
 
     /* Read the origin, skip "stride" values, and read the end */
     if (fscanf(fd, " %f", &value) != 1) {
-      fprintf(stderr, "Error reading origin.\n");
+      fprintf(stderr, "avsplugin) Error reading origin.\n");
       fclose(fd);
       delete[] coord;
       return NULL;
@@ -415,7 +415,7 @@ static void *open_avsfield_read(const char *filepath, const char *filetype, int 
     origin[i] = value;
     for (index = 0; index < coord[i].stride; index++) {
       if (fscanf(fd, " %f", &value) != 1) {
-        fprintf(stderr, "Error skipping stride.\n");
+        fprintf(stderr, "avsplugin) Error skipping stride.\n");
         fclose(fd);
         delete[] coord;
         return NULL;
@@ -488,7 +488,7 @@ static int read_avsfield_data(void *v, int set, float *datablock,
   
   fd = fopen(avsfield->data[set].filename, "rb");
   if (!fd) {
-    fprintf(stderr, "Error opening file.\n");
+    fprintf(stderr, "avsplugin) Error opening file.\n");
     return MOLFILE_ERROR; 
   }
 
@@ -502,7 +502,7 @@ static int read_avsfield_data(void *v, int set, float *datablock,
   /* Skip the "skip" lines */
   for (index = 0; index < skip; index++) {
     if (fgets(inbuf, LINESIZE, fd) == NULL) {
-      fprintf(stderr, "Error skipping lines.\n");
+      fprintf(stderr, "avsplugin) Error skipping lines.\n");
       fclose(fd);
       return MOLFILE_ERROR;
     }
@@ -511,7 +511,7 @@ static int read_avsfield_data(void *v, int set, float *datablock,
   /* Skip the "offset" values */
   for (index = 0; index < offset; index++) {
     if (fscanf(fd, " %f", &value) != 1) {
-      fprintf(stderr, "Error skipping offset.\n");
+      fprintf(stderr, "avsplugin) Error skipping offset.\n");
       fclose(fd);
       return MOLFILE_ERROR;
     }
@@ -520,7 +520,7 @@ static int read_avsfield_data(void *v, int set, float *datablock,
   while (count < ndata) {
     /* Read a value into the datablock and skip "stride" values */
     if (fscanf(fd, " %f", &value) != 1) {
-      fprintf(stderr, "Error reading data.\n");
+      fprintf(stderr, "avsplugin) Error reading data.\n");
       fclose(fd);
       return MOLFILE_ERROR;
     }
@@ -530,7 +530,7 @@ static int read_avsfield_data(void *v, int set, float *datablock,
 
     for (index = 0; index < stride-1; index++) {
       if (fscanf(fd, " %f", &value) != 1) {
-        fprintf(stderr, "Error skipping stride.\n");
+        fprintf(stderr, "avsplugin) Error skipping stride.\n");
         fclose(fd);
         return MOLFILE_ERROR;
       }
@@ -554,25 +554,30 @@ static void close_avsfield_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   /* ABI version */
-  MOLFILE_PLUGIN_TYPE, 	  /* plugin type */
-  "fld",                  /* short file format description */
-  "AVS Field",            /* pretty file format description */
-  "Eamon Caddigan",       /* author(s) */
-  0,                      /* major version */
-  3,                      /* minor version */
-  VMDPLUGIN_THREADSAFE,   /* is reentrant */
-  "fld"                   /* filename extension */
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { 
+  memset(&plugin, 0, sizeof(plugin));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "fld";
+  plugin.prettyname = "AVS Field";
+  plugin.author = "Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 5;
+  plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
+  plugin.filename_extension = "fld";
   plugin.open_file_read = open_avsfield_read;
   plugin.read_volumetric_metadata = read_avsfield_metadata;
   plugin.read_volumetric_data = read_avsfield_data;
   plugin.close_file_read = close_avsfield_read;
+
+  return VMDPLUGIN_SUCCESS; 
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }

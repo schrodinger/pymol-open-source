@@ -11,7 +11,7 @@
  *
  *      $RCSfile: largefiles.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.1 $       $Date: 2006/01/20 16:38:17 $
+ *      $Revision: 1.2 $       $Date: 2009/02/20 23:00:24 $
  *
  ***************************************************************************
  * DESCRIPTION:
@@ -28,7 +28,9 @@
  * on 32-bit machines.  These must be defined before inclusion of any
  * system headers.
  */
+#ifndef _LARGEFILE_SOURCE
 #define _LARGEFILE_SOURCE
+#endif
 #define _FILE_OFFSET_BITS 64
 #endif
 

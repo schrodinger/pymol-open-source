@@ -16,7 +16,7 @@
  *
  *      $RCSfile: crdplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.32 $       $Date: 2006/02/23 19:36:44 $
+ *      $Revision: 1.35 $       $Date: 2008/08/05 20:12:08 $
  *
  ***************************************************************************/
 
@@ -154,14 +154,21 @@ static void *open_crd_write(const char *path, const char *filetype,
   
 static int write_crd_timestep(void *v, const molfile_timestep_t *ts) {
   crddata *crd = (crddata *)v;
-  int i;
+  int i, lfdone;
   const int ndata = crd->numatoms * 3;
   for (i=0; i<ndata; i++) {
+    lfdone = 0;
     fprintf(crd->file, "%8.3f", ts->coords[i]);
-    if ((i+1) % 10 == 0) fprintf(crd->file, "\n"); 
+    if ((i+1) % 10 == 0) {
+      fprintf(crd->file, "\n"); 
+      lfdone = 1;
+    }
   }
+  if (!lfdone)
+    fprintf(crd->file, "\n"); 
+    
   if (crd->has_box) {
-    fprintf (crd->file, "\n%8.3f %8.3f %8.3f\n", ts->A, ts->B, ts->C);
+    fprintf (crd->file, "%8.3f %8.3f %8.3f\n", ts->A, ts->B, ts->C);
   }
 
   return MOLFILE_SUCCESS;
@@ -175,53 +182,39 @@ static void close_crd_write(void *v) {
 
 /* registration stuff */
     
-static molfile_plugin_t crdplugin = {
-  vmdplugin_ABIVERSION,                         /* ABI version */
-  MOLFILE_PLUGIN_TYPE,                          /* type */
-  "crd",                                        /* short name */
-  "AMBER Coordinates",                          /* pretty name */
-  "Justin Gullingsrud, John E. Stone",          /* author */
-  0,                                            /* major version */
-  5,                                            /* minor version */
-  VMDPLUGIN_THREADSAFE,                         /* is reentrant */
-  "mdcrd,crd",                                  /* filename extensions */
-  open_crd_read,
-  0,
-  0,
-  read_crd_timestep,
-  close_crd_read,
-  open_crd_write,
-  0,
-  write_crd_timestep,
-  close_crd_write
-};
+static molfile_plugin_t plugin;
+static molfile_plugin_t crdboxplugin;
 
-static molfile_plugin_t crdboxplugin = {
-  vmdplugin_ABIVERSION,                         /* ABI version */
-  MOLFILE_PLUGIN_TYPE,                          /* type */
-  "crdbox",                                     /* short name */
-  "AMBER Coordinates with Periodic Box",        /* pretty name */
-  "Justin Gullingsrud, John E. Stone",          /* author */
-  0,                                            /* major version */
-  4,                                            /* minor version */
-  VMDPLUGIN_THREADSAFE,                         /* is reentrant */
-  "mdcrd,crd",                                  /* filename extensions */
-  open_crd_read,
-  0,
-  0,
-  read_crd_timestep,
-  close_crd_read,
-  open_crd_write,
-  0,
-  write_crd_timestep,
-  close_crd_write
-};
+VMDPLUGIN_API int VMDPLUGIN_init(void) { 
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "crd";
+  plugin.prettyname = "AMBER Coordinates";
+  plugin.author = "Justin Gullingsrud, John Stone";
+  plugin.majorv = 0;
+  plugin.minorv = 7;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "mdcrd,crd";
+  plugin.open_file_read = open_crd_read;
+  plugin.read_next_timestep = read_crd_timestep;
+  plugin.close_file_read = close_crd_read;
+  plugin.open_file_write = open_crd_write;
+  plugin.write_timestep = write_crd_timestep;
+  plugin.close_file_write = close_crd_write;
 
-VMDPLUGIN_API int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_API int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
+  memcpy(&crdboxplugin, &plugin, sizeof(molfile_plugin_t));
+  crdboxplugin.name = "crdbox";
+  crdboxplugin.prettyname = "AMBER Coordinates with Periodic Box";
+
+  return VMDPLUGIN_SUCCESS; 
+}
+
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&crdplugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   (*cb)(v, (vmdplugin_t *)&crdboxplugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_API int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

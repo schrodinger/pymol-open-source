@@ -16,7 +16,7 @@
  *
  *      $RCSfile: mapplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.9 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.13 $       $Date: 2008/01/09 20:31:41 $
  *
  ***************************************************************************/
 
@@ -51,17 +51,17 @@ static char *mapgets(char *s, int n, FILE *stream) {
   char *returnVal;
 
   if (feof(stream)) {
-    fprintf(stderr, "Unexpected end-of-file.\n");
+    fprintf(stderr, "mapplugin) Unexpected end-of-file.\n");
     returnVal = NULL;
   }
   else if (ferror(stream)) {
-    fprintf(stderr, "Error reading file.\n");
+    fprintf(stderr, "mapplugin) Error reading file.\n");
     return NULL;
   }
   else {
     returnVal = fgets(s, n, stream);
     if (returnVal == NULL) {
-      fprintf(stderr, "Error reading line.\n");
+      fprintf(stderr, "mapplugin) Error reading line.\n");
     }
   }
 
@@ -80,7 +80,7 @@ static void *open_map_read(const char *filepath, const char *filetype,
   
   fd = fopen(filepath, "rb");
   if (!fd) {
-    fprintf(stderr, "Error opening file.\n");
+    fprintf(stderr, "mapplugin) Error opening file.\n");
     return NULL;
   }
 
@@ -102,7 +102,7 @@ static void *open_map_read(const char *filepath, const char *filetype,
   if (mapgets(inbuf, LINESIZE, fd) == NULL) 
     return NULL;
   if (sscanf(inbuf, "NELEMENTS %d %d %d", &xsize, &ysize, &zsize) != 3) {
-    fprintf(stderr, "Cannot read NELEMENTS.\n");
+    fprintf(stderr, "mapplugin) Cannot read NELEMENTS.\n");
     return NULL;
   }
 
@@ -201,26 +201,30 @@ static void close_map_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   /* ABI version */
-  MOLFILE_PLUGIN_TYPE, 	  /* plugin type */
-  "map",                  /* short file format description */
-  "Autodock Grid Map",    /* pretty file format description */
-  "Eamon Caddigan",       /* author(s) */
-  0,                      /* major version */
-  5,                      /* minor version */
-  VMDPLUGIN_THREADSAFE,   /* is reentrant */
-  "map"                   /* filename extension */
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "map";
+  plugin.prettyname = "Autodock Grid Map";
+  plugin.author = "Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 6;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "map";
   plugin.open_file_read = open_map_read;
   plugin.read_volumetric_metadata = read_map_metadata;
   plugin.read_volumetric_data = read_map_data;
   plugin.close_file_read = close_map_read;
+  return VMDPLUGIN_SUCCESS; 
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

@@ -16,7 +16,7 @@
  *
  *      $RCSfile: pdbplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.66 $       $Date: 2006/04/13 20:08:33 $
+ *      $Revision: 1.70 $       $Date: 2009/02/20 22:28:41 $
  *
  ***************************************************************************/
 
@@ -201,23 +201,23 @@ static int read_pdb_structure(void *mydata, int *optflags,
   return MOLFILE_SUCCESS;
 }
 
-static int read_bonds(void *v, int *nbonds, int **fromptr, int **toptr, float **
-bondorder) {
+static int read_bonds(void *v, int *nbonds, int **fromptr, int **toptr, 
+                      float ** bondorder,int **bondtype, 
+                      int *nbondtypes, char ***bondtypename) {
   pdbdata *pdb = (pdbdata *)v;
   
   *nbonds = 0;
   *fromptr = NULL;
   *toptr = NULL;
   *bondorder = NULL; /* PDB files don't have bond order information */
+  *bondtype = NULL;
+  *nbondtypes = 0;
+  *bondtypename = NULL;
 
-
-
-
-
-
-
-
-
+/* The newest plugin API allows us to return CONECT records as 
+ * additional bonds above and beyond what the distance search returns.
+ * Without that feature, we otherwise have to check completeness and
+ * ignore them if they don't look to be fully specified for this molecule */
 #if !defined(MOLFILE_BONDSSPECIAL)
   if (pdb->natoms >= 100000) {
     printf("pdbplugin) Warning: more than 99,999 atoms, ignored CONECT records\n");
@@ -574,32 +574,29 @@ static int read_molecule_metadata(void *v, molfile_metadata_t **metadata) {
  * Initialization stuff down here
  */
 
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,                     /* ABI version */
-  MOLFILE_PLUGIN_TYPE,  	            /* type */
-  "pdb",                                    /* short name */
-  "PDB",                                    /* pretty name */
-  "Justin Gullingsrud, John Stone",         /* author */
-  1,                                        /* major version */
-  12,                                       /* minor version */
-  VMDPLUGIN_THREADSAFE,                     /* is_reentrant */
-  "pdb,ent",                                /* filename extensions */
-  open_pdb_read,
-  read_pdb_structure,
-  read_bonds,                               /* read bond list */
-  read_next_timestep,
-  close_pdb_read,
-  open_file_write,
-  write_structure,
-  write_timestep,
-  close_file_write,
-  0,
-  0,
-  0,
-  read_molecule_metadata, 
-};
+static molfile_plugin_t plugin;
  
 VMDPLUGIN_API int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "pdb";
+  plugin.prettyname = "PDB";
+  plugin.author = "Justin Gullingsrud, John Stone";
+  plugin.majorv = 1;
+  plugin.minorv = 15;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "pdb,ent";
+  plugin.open_file_read = open_pdb_read;
+  plugin.read_structure = read_pdb_structure;
+  plugin.read_bonds = read_bonds;
+  plugin.read_next_timestep = read_next_timestep;
+  plugin.close_file_read = close_pdb_read;
+  plugin.open_file_write = open_file_write;
+  plugin.write_structure = write_structure;
+  plugin.write_timestep = write_timestep;
+  plugin.close_file_write = close_file_write;
+  plugin.read_molecule_metadata = read_molecule_metadata;
   return VMDPLUGIN_SUCCESS;
 }
 

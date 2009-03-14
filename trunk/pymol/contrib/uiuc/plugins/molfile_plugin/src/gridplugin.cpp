@@ -16,7 +16,7 @@
  *
  *      $RCSfile: gridplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.11 $       $Date: 2006/02/23 19:36:44 $
+ *      $Revision: 1.13 $       $Date: 2008/01/09 20:27:20 $
  *
  ***************************************************************************/
 
@@ -75,7 +75,7 @@ static void *open_grid_read(const char *filepath, const char *filetype,
   
   fd = fopen(filepath, "rb");
   if (!fd) {
-    fprintf(stderr, "Error opening file.\n");
+    fprintf(stderr, "gridplugin) Error opening file.\n");
     return NULL;
   }
 
@@ -88,7 +88,7 @@ static void *open_grid_read(const char *filepath, const char *filetype,
     if (dataBegin <= 255) {
       swap = 1;
     } else {
-      fprintf(stderr, "Cannot read file: header block is too large.\n");
+      fprintf(stderr, "gridplugin) Cannot read file: header block is too large.\n");
       return NULL;
     }
   }
@@ -101,7 +101,7 @@ static void *open_grid_read(const char *filepath, const char *filetype,
   blocksize = fortread_4(header, 64, swap, fd);
 
   if (blocksize != 40) {
-    fprintf(stderr, "Incorrect header size.\n");
+    fprintf(stderr, "gridplugin) Incorrect header size.\n");
     return NULL;
   }
 
@@ -177,7 +177,7 @@ static int read_grid_data(void *v, int set, float *datablock,
   for (i = 0; i < grid->vol[0].zsize; i++) {
     // read the plane metadata
     if (fortread_4(planeHeader, 3, grid->swap, grid->fd) != 3) {
-      fprintf(stderr, "Error reading plane metadata.\n");
+      fprintf(stderr, "gridplugin) Error reading plane metadata.\n");
       delete [] planeData;
       return MOLFILE_ERROR;
     }
@@ -185,7 +185,7 @@ static int read_grid_data(void *v, int set, float *datablock,
 
     // read the plane data
     if (fortread_4(planeData, planeSize, grid->swap, grid->fd) != planeSize) {
-      fprintf(stderr, "Error reading plane data.\n");
+      fprintf(stderr, "gridplugin) Error reading plane data.\n");
       delete [] planeData;
       return MOLFILE_ERROR;
     }
@@ -210,26 +210,30 @@ static void close_grid_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,              // ABI version
-  MOLFILE_PLUGIN_TYPE,               // plugin type
-  "grid",                            // file format description
-  "GRID,UHBD Binary Potential Map",  // file format description
-  "Eamon Caddigan",                  // author(s)
-  0,                                 // major version
-  2,                                 // minor version
-  VMDPLUGIN_THREADSAFE,              // is reentrant
-  "grid"                             // filename extension
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { 
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "grid";
+  plugin.prettyname = "GRID,UHBD Binary Potential Map";
+  plugin.author = "Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 3;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "grid";
   plugin.open_file_read = open_grid_read;
   plugin.read_volumetric_metadata = read_grid_metadata;
   plugin.read_volumetric_data = read_grid_data;
   plugin.close_file_read = close_grid_read;
+  return VMDPLUGIN_SUCCESS;
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

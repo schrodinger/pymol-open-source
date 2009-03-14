@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2003 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2006 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -11,7 +11,7 @@
  *
  *      $RCSfile: vmdplugin.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.22 $       $Date: 2006/03/09 18:53:41 $
+ *      $Revision: 1.32 $       $Date: 2009/02/24 05:12:35 $
  *
  ***************************************************************************/
 
@@ -63,8 +63,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#if defined(VMDPLUGIN_EXPORTS)
 #if !defined(STATIC_PLUGIN)
+#if defined(VMDPLUGIN_EXPORTS)
 /** 
  *  Only define DllMain for plugins, not in VMD or in statically linked plugins
  *  VMDPLUGIN_EXPORTS is only defined when compiling dynamically loaded plugins
@@ -76,13 +76,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 {
   return TRUE;
 }
-#endif
 
 #define VMDPLUGIN_API __declspec(dllexport)
 #else
-/* #define VMDPLUGIN_API __declspec(dllimport) */
+#define VMDPLUGIN_API __declspec(dllimport)
+#endif /* VMDPLUGIN_EXPORTS */
+#else  /* ! STATIC_PLUGIN */
 #define VMDPLUGIN_API
-#endif
+#endif /* ! STATIC_PLUGIN */
 #else
 /** If we're not compiling on Windows, then this macro is defined empty */
 #define VMDPLUGIN_API 
@@ -143,7 +144,7 @@ typedef struct {
 /**
  * Use this macro to initialize the abiversion member of each plugin
  */
-#define vmdplugin_ABIVERSION   9
+#define vmdplugin_ABIVERSION  16
 
 /*@{*/
 /** Use this macro to indicate a plugin's thread-safety at registration time */

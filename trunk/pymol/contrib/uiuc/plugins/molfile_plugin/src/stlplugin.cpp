@@ -16,7 +16,7 @@
  *
  *      $RCSfile: stlplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.11 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.13 $       $Date: 2008/01/09 19:39:09 $
  *
  ***************************************************************************/
 
@@ -72,7 +72,7 @@ static void *open_file_read(const char *filepath, const char *filetype,
   
   fd = fopen(filepath, "rb");
   if (!fd) {
-    fprintf(stderr, "Error opening file.\n");
+    fprintf(stderr, "stlplugin) Error opening file.\n");
     return NULL;
   }
   stl = new stl_t;
@@ -97,7 +97,7 @@ static int read_rawgraphics(void *v, int *nelem,
     sscanf(line, " %s", keyWord);
     if (strcasecmp(keyWord, "solid") != 0)
     {
-      fprintf(stderr, "STL file error: expected \"solid\".\n");
+      fprintf(stderr, "stlplugin) error: expected \"solid\".\n");
       error = 1;
     }
 
@@ -106,7 +106,7 @@ static int read_rawgraphics(void *v, int *nelem,
     sscanf(line, " %s", keyWord);
     if (strcasecmp(keyWord, "facet") != 0)
     {
-      fprintf(stderr, "STL file error: expected \"facet\".\n");
+      fprintf(stderr, "stlplugin) error: expected \"facet\".\n");
       error = 1;
     }
     else
@@ -125,7 +125,7 @@ static int read_rawgraphics(void *v, int *nelem,
       sscanf(line, " %s", keyWord);
       if (strcasecmp(keyWord, "outer") != 0)
       {
-        fprintf(stderr, "STL file error: expected \"outer\".\n");
+        fprintf(stderr, "stlplugin) error: expected \"outer\".\n");
         error = 1;
         break;
       }
@@ -141,7 +141,7 @@ static int read_rawgraphics(void *v, int *nelem,
         sscanf(line, " %s", keyWord);
         if (strcasecmp(keyWord, "vertex") != 0)
         {
-          fprintf(stderr, "STL file error: expected \"vertex\".\n");
+          fprintf(stderr, "stlplugin) error: expected \"vertex\".\n");
           error = 1;
           break; 
         }
@@ -149,7 +149,7 @@ static int read_rawgraphics(void *v, int *nelem,
                          &(tmpPtr->gItem.data[i++]), 
                          &(tmpPtr->gItem.data[i++])) != 3 )
         {
-          fprintf(stderr, "STL file error: not enough vertices.\n");
+          fprintf(stderr, "stlplugin) error: not enough vertices.\n");
           error = 1;
           break;
         }
@@ -161,7 +161,7 @@ static int read_rawgraphics(void *v, int *nelem,
       sscanf(line, " %s", keyWord);
       if (strcasecmp(keyWord, "endloop") != 0)
       {
-        fprintf(stderr, "STL file error: expected \"endloop\".\n");
+        fprintf(stderr, "stlplugin) error: expected \"endloop\".\n");
         error = 1;
         break;
       }
@@ -171,7 +171,7 @@ static int read_rawgraphics(void *v, int *nelem,
       sscanf(line, " %s", keyWord);
       if (strcasecmp(keyWord, "endfacet") != 0)
       {
-        fprintf(stderr, "STL file error: expected \"endfacet\".\n");
+        fprintf(stderr, "stlplugin) error: expected \"endfacet\".\n");
         error = 1;
         break;
       }
@@ -195,7 +195,7 @@ static int read_rawgraphics(void *v, int *nelem,
       else
       {
         fprintf(stderr, 
-                "STL file error: expected \"facet\" or \"endsolid\".\n");
+                "stlplugin) error: expected \"facet\" or \"endsolid\".\n");
         error = 1;
         break;
       }
@@ -203,7 +203,7 @@ static int read_rawgraphics(void *v, int *nelem,
       // file error
       if(ferror(infile))
       {
-        fprintf(stderr, "STL file error: problem reading file\n");
+        fprintf(stderr, "stlplugin) error: problem reading file\n");
         error = 1;
         break;
       }
@@ -253,26 +253,29 @@ static void close_file_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   // ABI version
-  MOLFILE_PLUGIN_TYPE, 	  // type of plugin
-  "stl",                  // name of plugin
-  "STL Stereolithography Triangle Mesh", // pretty name of plugin
-  "Eamon Caddigan",       // author
-  0,                      // major version
-  1,                      // minor version
-  VMDPLUGIN_THREADSAFE,   // is reentrant
-  "stl"                   // filename extension 
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "stl";
+  plugin.prettyname = "STL Stereolithography Triangle Mesh";
+  plugin.author = "Eamon Caddigan";
+  plugin.minorv = 0;
+  plugin.majorv = 2;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "stl";
   plugin.open_file_read = open_file_read;
   plugin.read_rawgraphics = read_rawgraphics;
   plugin.close_file_read = close_file_read;
+  return VMDPLUGIN_SUCCESS;
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

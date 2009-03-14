@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -10,8 +10,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: gamessplugin.h,v $
- *      $Author: markus $       $Locker:  $             $State: Exp $
- *      $Revision: 1.32 $       $Date: 2006/03/06 16:16:50 $
+ *      $Author: saam $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.63 $       $Date: 2009/02/23 17:33:09 $
  *
  ***************************************************************************/
 /*******************************************************************
@@ -25,14 +25,7 @@
 #define GAMESSPLUGIN_H
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <time.h>
-#include <math.h>
 #include "molfile_plugin.h"
-
 
 /* in order to be able to reserve the proper
  * amount of temporary arrays I have to define an
@@ -50,25 +43,6 @@
  * maybe increase to 5000 later */
 #define MAXBASISFUNCTIONS 1000
 
-
-/* numerical representation of pi, from math.h */
-#define MY_PI 3.1415926535897932384626433832795029L
-
-
-/* convert Bohr to Angstrom */
-#define BOHR_TO_ANGS 0.529177
-
-
-/* convert Hartree into kcal/mol */
-#define HARTREE_TO_KCAL 627.503
-
-
-/* maximum number of points for the orbital
- * grid that the grid optimization code is 
- * allowed to generate */
-#define MAX_GRIDPOINTS 20000
-
-
 /* define macros for true/false to make code 
  * look somewhat nicer; the macro DONE signals
  * that we're done with reading an should return
@@ -82,6 +56,8 @@
 #define OPTIMIZE 2
 #define SADPOINT 3
 #define HESSIAN  4
+#define SURFACE  5
+#define GRADIENT 6
 
 
 /* macros defining the SCFTYP */
@@ -91,203 +67,72 @@
 #define GVB   4
 #define MCSCF 5
 
+typedef struct {
+  float exponent;
+  float contraction_coeff;
+} prim_t;
 
-/* this routine is the main gamess log file
- * parser responsible for static, i.e. 
- * non-trajectory information */
-static int parse_gamess_log_static(void *, int *);
+typedef struct {
+  int numprims;
+  int symmetry;     /* S, P, D, F, ...
+                      * just for convenience when retrieving info */
+  int wave_offset;   /* index into wave_function array */
+  prim_t *prim;      /* array of primitives */
+} shell_t;
 
-
-/* this routine checks if the current run is an
- * actual GAMESS run; returns true/false */
-static int have_gamess(void *);
-
-
-/* this routine extracts the GBASIS; returns
- * true/false */
-static int get_gbasis(void *);
-
-
-/* this routine reads the contrl group and
- * checks the RUNTYP terminating the plugin
- * if it encounters an unsupported one */
-static int check_contrl(void *);
-
-
-/* this routine prints the current date and time,
- * always useful to have that available, in my 
- * opinion at least. */
-static void get_time(char *);
-
-
-/* helper routine to chop spaces/newlines off
- * a C character string 
- *
- * TODO: This function is horrible and should
- *       be replaced by a cleaner solutions */
-char* chop_string_all(char *);
-
-
-/* helper routine to chop newlines off
- * a C character string 
- * 
- * TODO: This function is horrible and should
- *       be replaced by a cleaner solutions */
-char* chop_string_nl(char *);
-
-
-/* this routine renormalizes the orbital
- * coefficients read in from the input file */
-float renorm_coefficient(float, float, char);
-
-
-/* routine to determine the run title of the
- * GAMESS run */
-static int get_runtitle(void *);
-
-
-/* the function get_initial_info provides the atom number,
- * coordinates, and atom types and stores them
- * temporarily. */ 
-static int get_initial_info (void *);
-
-
-/* the function get_basis we also parse the basis function section to
- * determine the number of basis functions, contraction
- * coefficients. For Pople/Huzinga style basis sets
- * this numbers are in principle fixed, and could hence
- * be provided by the the plugin itself; however, the user might
- * define his own basis/contraction coeffients and hence reading
- * them from the input file seem to be somewhat more general. */
-static int get_basis (void *);
-
-
-/* this function reads the number of processors requested */
-static int get_proc_mem(void *);
-
-
-/* read in the guess options */
-static int get_guess(void *);
-
-
-/* this function reads the Gaussian Basis Set information
- * for an individual atom in the output file */
-static int atomic_basis(int, void *, float *, char *, int *, int*);
-
-
-/* this function parses the input file for the final
- * wavefunction and stores it in the appropriate arrays; */
-static int get_wavefunction(void *);
-
-
-/* this function parses the input file and reads the
- * number of orbitals; in the case of UHF this might
- * be two numbers, namely the number of A and B orbitals;
- * it also read the number of GAUSSIAN basis functions */
-static int get_num_orbitals(void *);
-
-
-/* this function is the main driver for computing and
- * handling orbital grid data
- */
-static int orbital_grid_driver(void *);
-
-
-/* this short test routine checks if the 
- * wavefunction/orbital stuff is supported/possible for 
- * the current GBASIS */
-static int have_supported_gbasis(void *);
-
-
-/* this function parses all the stored wavefunctions
- * for the HOMO which is the orbital with the smallest
- * negative energy; NOTE: selecting the HOMO in such
- * a manner might fail for some reasons, but simply is
- * currently the easiest way to implement this.
- * In the future we probably need some sort of GUI such
- * that the user can select whatever orbital they want
- * to look at not just the HOMO !! */
-static int find_homo(void *);
-
-
-/* this subroutine determines the cartesian origin
- * and the dimensions of the system under consideration */
-static int get_system_dimensions(void *);
-
-
-/* given the system dimensions as determined by the
- * get_system_dimension call it evaluates the value
- * of the orbital at the points determined by the 
- * computational grid */
-static int calculate_orbital(void *);
-
-
-/* this subroutine scans the output file for
- * the trajectory information */
-static int get_trajectory(void *, molfile_timestep_t *, int);
-
-
-/* For runtyp=HESSIAN, this subroutine scans the file for 
- * the hessian matrix in internal coordinates 
- * as well as the internal coordinate information */
-static int get_int_coords(void *);
-
-
-/* For runtyp=HESSIAN, this subroutine scans the file for 
- * the cartesian hessian matrix */ 
-static int get_cart_hessian(void *);
-
-
-/* For runtyp=HESSIAN, this subroutine reads the frequencies
- * and intensities of the normal modes */
-static int get_normal_modes(void *);
-
-
-/* this function calculates the value of the wavefunction
- *  * corresponding to a particular orbital at grid point
- *   * grid_x, grid_y, grid_z */
-float orbital_at_grid_xyz(void*, float*, float, float, 
-    float, float);
-
-
-/* this function animates a given normal mode by means of
- * generating mod_num_frames frames away from the equilibrium
- * structure in a direction given by the hessiane */
-static int animate_normal_mode(void*, unsigned int);
-
-
-/* this function generates animated frames for normal
- * mode mode_to_animate */
-static int initialize_animated_mode(void*);
+/* Basis set definition for one atom */
+typedef struct {
+  char name[11];  /* atom name or type */
+  int atomicnum;  /* atomic number (nuclear charge) */
+  int numshells;
+  shell_t *shell;
+} basis_atom_t;
 
 
 /* structure for storing temporary values read in 
  * from the gamess output file */
 typedef struct 
 {
-  char type [8]; /* atom type H,N,O ..... */
+  char type [11]; /* atom name or type */
 
-  float charge; /* array containing charge of atom i */
+  int atomicnum;  /* atomic number (nuclear charge) */
 
-  float x,y,z; /* array containing the coordinate of
-		* atom i*/
-} gamess_temp;
+  float x,y,z;    /* coordinates of atom */
+} qm_atom_t;
 
 
-/* structure for storing an animated normal mode */
-typedef struct
-{
-  double *mode_frames; /* coordinate array containing
-			    frames of an animated normal mode */
+typedef struct {
+  int   idtag;              /**< unique tag to identify this wavefunction over the trajectory */
+  int   type;               /**< CANONICAL, LOCALIZED, OTHER */
+  int   spin;               /**< 0 for alpha, 1 for beta */
+  int   excitation;         /**< 0 for ground state, 1,2,3,... for excited states */
+  char info[MOLFILE_BUFSIZ]; /**< string for additional type info */
 
-  unsigned int mode_num_frames; /* number of frames when animating 
-				   modes */
+  int   num_orbitals;       /**< number of orbitals that was really 
+                             *   present in the output for this step */
+  int   num_coeffs;         /**< number of coefficients per orbital */
+  int   have_energies;      /**< number of orbital energies */
+  int   have_occup;         /**< number of occupancies */
+  float *wave_coeffs;       /**< expansion coefficients for wavefunction in the
+                             *   form {orbital1(c1),orbital1(c2),.....,orbitalM(cN)} */
+  float *orb_energies;      /**< list of orbital energies for wavefunction */
+  float *occupancies;       /**< orbital occupancies */
+} qm_wavefunction_t;
 
-  unsigned int current_mode_frame; /* tracker of current frame 
-				      of an animated mode */
 
-  double mode_scaling; /* scaling factor used for animated modes */
-} mode_data;
+typedef struct {
+  qm_wavefunction_t *wave;
+  int numwave;
+  float *gradient;          /* energy gradient for each atom */
+  int   num_scfiter;        /* number of SCF iterations */
+
+  double *scfenergies;      /* scfenergies per trajectory point */
+  double *mulliken_charges; /* per-atom Mulliken charges */
+  double *lowdin_charges;   /* per-atom Lowdin charges */
+
+  double *esp_charges;      /* per-atom esp charges */
+  double *npa_charges;      /* per-atom npa charges */
+} qm_timestep_t;
 
 
 /* main gamess plugin data structure */
@@ -300,13 +145,6 @@ typedef struct
   char gbasis[10];   /* GBASIS of GAMESS run */
 
   char basis_string[BUFSIZ]; /* basis name as "nice" string */
-  int ngauss;        /* number of gaussian function for 
-			pople style and STO basis */
-  int npfunc;        /* number of p,d,f and diffuse funtions used */ 
-  int ndfunc;        
-  int nffunc;
-  int diffs;
-  int diffsp;
 
   char runtitle[BUFSIZ];  /* title of gamess run */
 
@@ -322,7 +160,12 @@ typedef struct
 		  * version = 0  : this we might set if we
 		  *                detect an unsupported 
 		  *                version and then bomb out */
-
+  int have_pcgamess;  /* this flag is set to 1 if the output
+		       * file is recognized as a PC Gamess output
+		       * file; we might need to introduce a few
+		       * switches in the code depending on if
+		       * the log file is plain Gamess or PC Gamess
+		       */
 
   char *file_name;
 
@@ -331,56 +174,56 @@ typedef struct
    *****************************************************/
 
   int  scftyp;              /* UHF, RHF, ROHF, as in for 
-			       internal use*/
+                             * internal use*/
   char scftyp_string[BUFSIZ]; /* scftyp as string */
-  int *atomic_number;       /* atomic numbers of molecule elements */
-  /* char usertitle[80]; */ /* 80 chars for an user comment */
-  /* char fromcheckfile[80]; */ /* mother checkpoint file */
+  int  dfttyp;              /* UHF, RHF, ROHF, as in for 
+                             * internal use*/
+  char dfttyp_string[BUFSIZ]; /* scftyp as string */
+  int mplevel;
+
   int totalcharge;          /* Total charge of the system */
   int multiplicity;         /* Multiplicity of the system */
   int num_electrons;        /* Number of electrons */
-  int  nimag;           /* Number of imaginary frequencies */
-  int *nimag_modes;           /* List of imaginary modes */
+  int  nimag;               /* Number of imaginary frequencies */
+  int *nimag_modes;         /* List of imaginary modes */
 
-  int num_scfenergies;     /* number of SCF energies */
-  double *scfenergies;     /* Converged SCF energies */
+  float *wavenumbers; /* rotational and translational DoF 
+                        * are included, but can be removed due
+                        * to their zero frequencies */
+  float *intensities; /* Intensities of spectral lines */
 
-  double *wavenumbers; /* rotational and translational DoF 
-                               are included, but can be removed due
-			       to their zero frequencies */
-  double *intensities; /* Intensities of spectral lines */
-
-  double *normal_modes; /* the normal modes themselves */
+  float *normal_modes; /* the normal modes themselves */
 
   int  nproc;           /* Number processors used */
   char memory[256];     /* Amount of memory used, e.g. 1Gb */
-  /* char checkfile[256]; */ /* The checkpoint file */
 
-  /* GAUSSIAN specific */
-  /* char route[1000]; */  /* line: "#..." */
-  /* char geometry[256]; *//* options of the Geom keyword */
-  /* char guess[256];  */  /* options of the Guess keyword */
+  int num_opt_steps;
+  float opt_tol;
 
   /* arrays with atom charges */
   double *mulliken_charges; 
   /* float *mullikengroup; */
   double *esp_charges;
-  /* float *npacharges; */
+  /* float *npa_charges; */
   int   have_mulliken; 
   int   have_esp; 
   /* int   have_npa; */
+
+  int have_normal_modes; /* TRUE/FALSE flag indicating if we
+			  * could properly read normal modes,
+			  * wavenumbers and intensities. */
 
   /******************************************************
    * internal coordinate stuff
    *****************************************************/
 
   int have_internals;  /* TRUE/FALSE flag indicating if we
-			* could properly read the internal
-			* coordinates + internal hessian */
+                        * could properly read the internal
+                        * coordinates + internal hessian */
 
   int have_cart_hessian; /* TRUE/FALSE flag indicating if the
-			  * cartesian Hessian matrix could
-			  * be read from the output file */
+                          * cartesian Hessian matrix could
+                          * be read from the output file */
 
   int nintcoords;    /* Number of internal coordinates */
   int nbonds;        /* Number of bonds */
@@ -398,137 +241,85 @@ typedef struct
   /* the order of force constants has to match the internal
    * coordinates in *bonds, *angles, *dihedrals */
 
-  double *bond_force_const;  /* force constant for bonds */
-  double *angle_force_const; /* force constant for angles */
-  double *dihedral_force_const;  /* force constant for dihedrals */
-  double *improper_force_const;  /* force constant for impropers */
+  double *bond_force_const;     /* force constant for bonds */
+  double *angle_force_const;    /* force constant for angles */
+  double *dihedral_force_const; /* force constant for dihedrals */
+  double *improper_force_const; /* force constant for impropers */
 
   /*******************************************************
    * end internal coordinate stuff
    *******************************************************/
 
   double *carthessian;  /* Hessian matrix in cartesian coordinates,
-		       * dimension (3*numatoms)*(3*numatoms),
-                       * single array of floats 
-		       * (row(1),row(2),...,row(numatoms))
-		       */
+                         * dimension (3*numatoms)*(3*numatoms),
+                         * single array of floats 
+                         * (row(1),row(2),...,row(numatoms))
+                         */
 
   double *inthessian;  /* Hessian matrix in internal coordinates,
-		       * dimension nintcoords*nintcoords,
-                       * single array of floats 
-		       * (row(1),row(2),...,row(nintcoords))
-		       */
-
-  /* float** get_cartesian_hessian(units);
-  float** get_internal_hessian(units);
-  char* get_elements();
-  char* get_names(); */
-
-  /* NBO stuff */
-  /* alpha and beta 
-  int have_nbo; 
-  int** lonepairs;
-  int** singlebonds;
-  int** doublebonds;
-  int** triplebonds; */ 
+                        * dimension nintcoords*nintcoords,
+                        * single array of floats 
+                        * (row(1),row(2),...,row(nintcoords))
+                        */
 
 
   /*********************************************************
    * END OF NEW API data members
    *********************************************************/
 
-  float *system_dimensions; /* stores the minmax xyz dimensions
-                            of the system */
-  float *system_center; /* stores the geometric center of the
-			 * system */
-  float *orbital_grid; /*this is a large array storing the 
-                        * value of the orbitals at each grid
-                        * point; the values are arranged as
-                        * {xmin,ymin,zmin,xmin,ymin,zmin+i,
-                        *  ....xmin,ymin+i,zmin,.....}
-                        *  were i is distance between grid
-                        *  points */
-  int num_gridpoints;  /* number of gridpoints in the orbital
-                        *  grid */
-
-
-  /* this variable flags the presence (1) or
-   * absence (!=1) of volumetric data */
-  int have_volumetric;
- 
-
-  /* this struct holds the volumetric metadata
-   * for the grid used to display the orbitals */
-  molfile_volumetric_t *vol;
-
-
   /* this array of floats stores the contraction coefficients
    * and exponents for the basis functions:
    * { exp(1), c-coeff(1), exp(2), c-coeff(2), .... }
    * This holds also for double-zeta basis functions with
-   * exp(i) = exp(j) and c-coeff(i) != c-coeff(j). 
-   * The array basis_counter holds the number of basis functions
-   * per atom i, in order for them to be assignable to the 
-   * proper real space positions later on. 
-   * the integer num_basis_funcs holds the number of elementary
-   * basis functions present in the basis array */
+   * exp(i) = exp(j) and c-coeff(i) != c-coeff(j). */
   float *basis;
-  int *basis_counter;
+
+  basis_atom_t *basis_set;
+
   int num_basis_funcs;
 
+  int num_basis_atoms;
 
-  /* the array atom_shells stores the number of shells per
-   * atom i */
-  int *atomic_shells;
+  /* atomic number per atom in basis set */
+  int *atomicnum_per_basisatom;
 
+  /* number of shells per atom in basis set */
+  int *num_shells_per_atom;
 
-  /* the array shell_primitives contains the number of 
-   * primitives in shell i */
-  int *shell_primitives;
+  /* the total number of atomic shells */
+  int num_shells;
 
+  /* number of primitives in shell i */
+  int *num_prim_per_shell;
 
-  /* the array orbital_symmetry stores the symmetry type 
-   * (S,L,D,..) of each (exponent, c-coeff) couple */
-  char *orbital_symmetry; 
+  /* symmetry type of each shell */
+  int *shell_symmetry; 
 
-
-  /* the array wave_function contains the expansion coefficients
-   * for the wavefunction in the form:
-   * orbital1(c1,c2,c3,...),orbital2(c1,c2,c3,....) ...... */
-  float *wave_function;
-
-
-  /* the array orbital_energy contains the energies of 
-   * all orbitals */
-  float *orbital_energy;
-
-
-  /* these two variable store the number of A and B orbitals */
+  /* number of spin A and B orbitals */
   int num_orbitals_A;
   int num_orbitals_B;
 
 
-  /* here we store the orbital index of the HOMO */
-  int homo_index;
+  /* Max. size of the wave_function array per orbital.
+   * I.e. this is also the number of contracted
+   * cartesian gaussian basis functions or the size
+   * of the secular equation.
+   * While the actual # of MOs present can be different
+   * for each frame, this is the maximum number of 
+   * possible occupied and virtual orbitals. */
+  int wavef_size;
 
-  /* this variable stores the number of GAUSSIAN basis functions */
-  int num_gauss_basis_funcs;
-
-
-  /* this flags signals if we were successful in reading in 
-   * wavefunction information ( got_wavefunction = 1) or
-   * not ( got_wavefunction = 0). This will help to avoid
-   * doing wavefunction type analysis on arrays that have
-   * not been properly initialized with useful data */
-  int got_wavefunction;
- 
-
-  /* this variable stores the number of orbital read from the
-   * output file */
-  int orbital_counter;
+  /* Array of length 3*num_wave_f containing the exponents 
+   * describing the cartesian components of the angular momentum. 
+   * E.g. S={0 0 0}, Px={1 0 0}, Dxy={1 1 0}, or Fyyz={0 2 1}. */
+  int *angular_momentum;
 
 
-  /* the structure gamess_temp was defined to read in data from
+  /* this flag tells if the geometry search converged */
+  int converged;
+  int opt_status;
+
+  /* the structure qm_atom_t was defined to read in data from
    * the GAMESS output file and store it temporarily;
    * it is then copied into the VMD specific arrays at the
    * appropriate point in time;
@@ -539,39 +330,25 @@ typedef struct
    * which is not really supported by the way the VMD provided
    * function are arranged....this implementation could of
    * course be changed later..... */
-  gamess_temp *temporary;
+  qm_atom_t *initatoms;
 
+  /* per timestep data like wavefunctions and scf iterations */
+  qm_timestep_t *qm_timestep;
 
-  /* pointer to a structure that keeps track-of an animated
-   * normal mode */
-  mode_data *animated_mode;
+  /* flag to indicate wether we are done with reading frames */
+  int done_trajectory;
 
+  /* number of trajectory points; single point corresponds to 1 */
+  int num_frames;
+  int num_frames_sent;
+  int num_frames_read;
 
-  /* flag to indicate wether to read a single point or 
-   * a trajectory */
-  int have_trajectory;
+  int end_of_trajectory;
 
-  /* number of trajectory points; single point corresponds
-   * to 1 */
-  int num_traj_points;
-
+  long *filepos_array;
+  long end_of_traj;
 
 } gamessdata;
 
-/* this is currently a hack and provides a
- * way to access the data read by the
- * plugin from the tcl interface */
-/*gamessdata* tcl_pointer; */
-
-
-/* this will skip one line at a time */
-static void eatline(FILE * fd)
-{
-  char readbuf[1025];
-  fgets(readbuf, 1024, fd);
-}
-
-float calculate_wavefunction(void*, float*, float, float, 
-    float, float);
 
 #endif

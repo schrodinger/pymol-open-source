@@ -1,47 +1,61 @@
-if 1:
+if 0:
     print "DANGER DO NOT RUN UNTIL changes to Gromacs.h and gromacsplugin.ccp are handled"
-else :
+else:
 
     import re
     import string
     import os
     from glob import glob
 
-    molfile_src_path = "/home/warren/06duo/software/vmd/plugins/molfile_plugin/src"
+#    molfile_src_path = "/home/warren/06duo/software/vmd/plugins/molfile_plugin/src"
+    molfile_src_path = "/Users/delwarl/tmp/plugins/molfile_plugin/src"    
 
     src_list=[
         'avsplugin',
-    #    'babelplugin',
+#        'babelplugin', # requires openbabel
+        'basissetplugin', #
+        'basissetplugin', #
         'bgfplugin',
         'binposplugin',
         'biomoccaplugin',
         'brixplugin',
         'carplugin',
         'ccp4plugin',
+#        'cdfplugin', # requires netcdf
         'corplugin',
+        'cpmdlogplugin', #
         'cpmdplugin',
         'crdplugin',
         'cubeplugin',
         'dcdplugin',
         'dlpolyplugin',
         'dsn6plugin',
+        'dtrplugin', #
         'dxplugin',
         'edmplugin',
         'fs4plugin',
         'gamessplugin',
+        'gaussianplugin', #
         'graspplugin',
         'grdplugin',
         'gridplugin',
         'gromacsplugin',
-    ##    'lammpsplugin',
+#        'hoomdplugin', # requires expat
+        'jsplugin', #
+#        'lammpsplugin', # requires gz
+        'maeffplugin', #
         'mapplugin',
         'mdfplugin',
+        'mmcif', #
         'mol2plugin',
         'moldenplugin',
+        'mrcplugin', #
         'msmsplugin',
         'namdbinplugin',
+#        'netcdfplugin', # requires netcdf
         'parm7plugin',
         'parmplugin',
+        'pbeqplugin', #
         'pdbplugin',
         'phiplugin',
         'pltplugin',
@@ -54,9 +68,16 @@ else :
         'stlplugin',
         'tinkerplugin',
         'uhbdplugin',
+        'vaspchgcarplugin', #
+        'vaspoutcarplugin', #
+        'vaspposcarplugin', #
+        'vaspxdatcarplugin', #
+        'vaspxmlplugin', #
+        'vtfplugin', #
+#        'webpdbplugin', # tcl dependent
         'xbgfplugin',
         'xsfplugin',
-        'xyzplugin' ]
+        'xyzplugin']
 
     plugins = [ ]
 
@@ -64,15 +85,16 @@ else :
     api_re = re.compile("VMDPLUGIN_API")
 
     for pref in src_list:
-        in_file = glob(molfile_src_path+"/"+pref+".[cC]")[0]
+        print pref
+        in_file = glob(molfile_src_path+"/"+pref+".[cC]*")[0]
         input = open(in_file).readlines()
 
         out_file = "src/"+pref+".c"
         plugins.append(pref+".o")
-        if in_file[-1:]=='C':
+        if (in_file[-1:]=='C') or (in_file[-3:]=='cxx'):
             out_file = out_file + "pp"
             # fix the extern
-            input = map(lambda x,c=api_re:c.sub("VMDPLUGIN_EXTERN",x),input)        
+            input = map(lambda x,c=api_re:c.sub("VMDPLUGIN_EXTERN",x),input)
         else:
             # get rid of non-ansi C comments
             input = map(lambda x,c=clean_re:c.sub("\n",x),input)
@@ -137,7 +159,7 @@ else :
     ''')
 
 
-
     os.system("/bin/cp %s/*.h src/"%molfile_src_path)
     os.system("/bin/cp %s/hash.c src/"%molfile_src_path)
 
+    os.system("/bin/chmod -x src/*")

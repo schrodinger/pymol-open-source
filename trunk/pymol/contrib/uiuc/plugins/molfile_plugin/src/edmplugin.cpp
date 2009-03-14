@@ -16,7 +16,7 @@
  *
  *      $RCSfile: edmplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.25 $       $Date: 2006/02/23 19:36:44 $
+ *      $Revision: 1.30 $       $Date: 2008/01/09 20:23:48 $
  *
  ***************************************************************************/
 
@@ -68,7 +68,7 @@ static void *open_edm_read(const char *filepath, const char *filetype,
 
   convcnt = fscanf(edm->fd, "%d", &ntitle); // read number of title lines
   if (convcnt != 1) {
-    printf("edmplugin: failed to read in title line count\n");
+    printf("edmplugin) failed to read in title line count\n");
     fclose(edm->fd);
     delete [] edm->vol;
     delete edm;
@@ -86,7 +86,7 @@ static void *open_edm_read(const char *filepath, const char *filetype,
   convcnt = fscanf(edm->fd, "%d %d %d %d %d %d %d %d %d",
          &na, &amin, &amax, &nb, &bmin, &bmax, &nc, &cmin, &cmax);
   if (convcnt != 9) {
-    printf("edmplugin: failed to read in box dimensions\n");
+    printf("edmplugin) failed to read in box dimensions\n");
     fclose(edm->fd);
     delete [] edm->vol;
     delete edm;
@@ -108,13 +108,13 @@ static void *open_edm_read(const char *filepath, const char *filetype,
   convcnt = fscanf(edm->fd, "%f %f %f %f %f %f", 
                    &a, &b, &c, &alpha, &beta, &gamma);
   if (convcnt != 6) {
-    printf("edmplugin: failed to read in box lengths and angles\n");
+    printf("edmplugin) failed to read in box lengths and angles\n");
     fclose(edm->fd);
     delete [] edm->vol;
     delete edm;
     return NULL;
   }
-  eatline(edm->fd);               // go on to next line
+  eatline(edm->fd);            // go on to next line
 
   // find box coordinates 
   xdelta = a / (float) na;
@@ -148,17 +148,17 @@ static void *open_edm_read(const char *filepath, const char *filetype,
   edm->vol[0].origin[1] = yaxis[1] * bmin + zaxis[1] * cmin;
   edm->vol[0].origin[2] = zaxis[2] * cmin;
 
-  edm->vol[0].xaxis[0] = xaxis[0] * xsize;
+  edm->vol[0].xaxis[0] = xaxis[0] * (xsize-1);
   edm->vol[0].xaxis[1] = 0;
   edm->vol[0].xaxis[2] = 0;
 
-  edm->vol[0].yaxis[0] = yaxis[0] * ysize;
-  edm->vol[0].yaxis[1] = yaxis[1] * ysize;
+  edm->vol[0].yaxis[0] = yaxis[0] * (ysize-1);
+  edm->vol[0].yaxis[1] = yaxis[1] * (ysize-1);
   edm->vol[0].yaxis[2] = 0;
 
-  edm->vol[0].zaxis[0] = zaxis[0] * zsize;
-  edm->vol[0].zaxis[1] = zaxis[1] * zsize;
-  edm->vol[0].zaxis[2] = zaxis[2] * zsize;
+  edm->vol[0].zaxis[0] = zaxis[0] * (zsize-1);
+  edm->vol[0].zaxis[1] = zaxis[1] * (zsize-1);
+  edm->vol[0].zaxis[2] = zaxis[2] * (zsize-1);
 
   // Check that the EDM file is stored in the "ZYX" format we expect,
   // and return NULL if it is not a supported file type.
@@ -166,7 +166,7 @@ static void *open_edm_read(const char *filepath, const char *filetype,
   memset(planeorder, 0, sizeof(planeorder));
   convcnt = fscanf(edm->fd, "%3s", planeorder);
   if (convcnt != 1) {
-    printf("edmplugin: failed to read in plane order\n");
+    printf("edmplugin) failed to read in plane order\n");
     fclose(edm->fd);
     delete [] edm->vol;
     delete edm;
@@ -174,7 +174,7 @@ static void *open_edm_read(const char *filepath, const char *filetype,
   }
 
   if (strcmp(planeorder, "ZYX")) { 
-    printf("edmplugin: unsupported plane ordering %s\n", planeorder);
+    printf("edmplugin) unsupported plane ordering %s\n", planeorder);
     fclose(edm->fd);
     delete [] edm->vol;
     delete edm;
@@ -222,8 +222,8 @@ static int read_edm_data(void *v, int set, float *datablock,
     for (c=0; c<nperslice; c++) {
       convcnt = fscanf(edm->fd, "%f", cell);
       if (convcnt != 1) {
-        printf("edmplugin: failed reading cell data\n");
-        printf("edmplugin: cell %d of %d, slice %d\n", c, nperslice, z);
+        printf("edmplugin) failed reading cell data\n");
+        printf("edmplugin) cell %d of %d, slice %d\n", c, nperslice, z);
         return MOLFILE_ERROR; // bad file format encountered
       }
       cell++;
@@ -235,8 +235,8 @@ static int read_edm_data(void *v, int set, float *datablock,
         fgets(readbuf, 13, edm->fd); // read in 12 chars (fgets reads N-1)
         convcnt = sscanf(readbuf, "%f", cell); // convert ascii to float
         if (convcnt != 1) {
-          printf("edmplugin: failed reading cell data\n");
-          printf("edmplugin: cell on line %d cell %d, of %d lines\n", l, c, nlines);
+          printf("edmplugin) failed reading cell data\n");
+          printf("edmplugin) cell on line %d cell %d, of %d lines\n", l, c, nlines);
           return MOLFILE_ERROR; // bad file format encountered
         }
         cell++;
@@ -250,7 +250,7 @@ static int read_edm_data(void *v, int set, float *datablock,
         fgets(readbuf, 13, edm->fd); 
         convcnt = sscanf(readbuf, "%f", cell);
         if (convcnt != 1) {
-          printf("edmplugin: failed reading partial line cell data\n");
+          printf("edmplugin) failed reading partial line cell data\n");
           return MOLFILE_ERROR; // bad file format encountered
         }
         cell++;
@@ -264,7 +264,7 @@ static int read_edm_data(void *v, int set, float *datablock,
   fgets(readbuf, 13, edm->fd);
   sscanf(readbuf, "%d", &sentinel);  
   if (sentinel != -9999) {
-    printf("edmplugin: EOF sentinel != -9999\n");
+    printf("edmplugin) EOF sentinel != -9999\n");
     // return MOLFILE_ERROR; // bad file format encountered, no sentinel record
   }
  
@@ -282,28 +282,32 @@ static void close_edm_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,         // ABI version
-  MOLFILE_PLUGIN_TYPE,          // plugin type
-  "edm",                        // file format description
-  "XPLOR Electron Density Map", // file format description
-  "John E. Stone",              // author(s)
-  0,                            // major version
-  4,                            // minor version
-  VMDPLUGIN_THREADSAFE,         // is reentrant
-  "edm"                         // filename extension
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { 
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "edm";
+  plugin.prettyname = "XPLOR Electron Density Map";
+  plugin.author = "John Stone";
+  plugin.majorv = 0;
+  plugin.minorv = 7;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "cns,edm,xplor";
   plugin.open_file_read = open_edm_read;
   plugin.read_volumetric_metadata = read_edm_metadata;
   plugin.read_volumetric_data = read_edm_data;
   plugin.close_file_read = close_edm_read;
+  return VMDPLUGIN_SUCCESS; 
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 
 
 

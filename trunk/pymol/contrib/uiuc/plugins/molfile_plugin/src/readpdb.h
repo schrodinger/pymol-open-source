@@ -11,7 +11,7 @@
  *
  *      $RCSfile: readpdb.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.39 $       $Date: 2006/04/13 20:06:58 $
+ *      $Revision: 1.40 $       $Date: 2006/11/07 21:28:02 $
  *
  ***************************************************************************/
 
@@ -256,6 +256,26 @@ static void get_pdb_conect(const char *record, int natoms, int *idxmap,
   }
 }
 
+/* ATOM field format according to PDB standard v2.2
+  COLUMNS        DATA TYPE       FIELD         DEFINITION
+---------------------------------------------------------------------------------
+ 1 -  6        Record name     "ATOM  "
+ 7 - 11        Integer         serial        Atom serial number.
+13 - 16        Atom            name          Atom name.
+17             Character       altLoc        Alternate location indicator.
+18 - 20        Residue name    resName       Residue name.
+22             Character       chainID       Chain identifier.
+23 - 26        Integer         resSeq        Residue sequence number.
+27             AChar           iCode         Code for insertion of residues.
+31 - 38        Real(8.3)       x             Orthogonal coordinates for X in Angstroms.
+39 - 46        Real(8.3)       y             Orthogonal coordinates for Y in Angstroms.
+47 - 54        Real(8.3)       z             Orthogonal coordinates for Z in Angstroms.
+55 - 60        Real(6.2)       occupancy     Occupancy.
+61 - 66        Real(6.2)       tempFactor    Temperature factor.
+73 - 76        LString(4)      segID         Segment identifier, left-justified.
+77 - 78        LString(2)      element       Element symbol, right-justified.
+79 - 80        LString(2)      charge        Charge on the atom.
+ */
 
 /* Break a pdb ATOM record into its fields.  The user must provide the
    necessary space to store the atom name, residue name, and segment name.
@@ -333,6 +353,7 @@ static int write_raw_pdb_record(FILE *fd, const char *recordname,
   int rc;
   char indexbuf[32];
   char residbuf[32];
+  char segnamebuf[5];
   char altlocchar;
 
   /* XXX                                                          */
@@ -362,11 +383,16 @@ static int write_raw_pdb_record(FILE *fd, const char *recordname,
   if (altlocchar == '\0') {
     altlocchar = ' ';
   }
+
+  /* make sure the segname does not overflow the format */ 
+  strncpy(segnamebuf,segname,4);
+  segnamebuf[4] = '\0';
+
  
   rc = fprintf(fd,
-         "%s%5s %4s%c%-4s%c%4s%c   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
+         "%-6s%5s %4s%c%-4s%c%4s%c   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
          recordname, indexbuf, atomname, altlocchar, resname, chain[0], 
-         residbuf, insertion[0], x, y, z, occ, beta, segname, elementsymbol);
+         residbuf, insertion[0], x, y, z, occ, beta, segnamebuf, elementsymbol);
 
   return (rc > 0);
 }

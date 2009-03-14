@@ -16,7 +16,7 @@
  *
  *      $RCSfile: dcdplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.70 $       $Date: 2006/04/16 22:07:46 $
+ *      $Revision: 1.72 $       $Date: 2009/01/14 22:16:52 $
  *
  ***************************************************************************
  * DESCRIPTION:
@@ -678,7 +678,7 @@ static int write_dcdstep(fio_fd fd, int curframe, int curstep, int N,
   if (charmm) {
     /* write out optional unit cell */
     if (unitcell != NULL) {
-      out_integer = 48; /* 48 bytes (6 doubles) */
+      out_integer = 48; /* 48 bytes (6 floats) */
       fio_write_int32(fd, out_integer);
       WRITE(fd, unitcell, out_integer);
       fio_write_int32(fd, out_integer);
@@ -1105,33 +1105,30 @@ static void close_file_write(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t dcdplugin = {
-  vmdplugin_ABIVERSION,                         /* ABI version */
-  MOLFILE_PLUGIN_TYPE,                          /* type */
-  "dcd",                                        /* short name */
-  "CHARMM,NAMD,XPLOR DCD Trajectory",           /* pretty name */
-  "Justin Gullingsrud, John Stone",             /* author */
-  1,                                            /* major version */
-  9,                                            /* minor version */
-  VMDPLUGIN_THREADSAFE,                         /* is reentrant  */
-  "dcd",                                        /* filename extension */
-  open_dcd_read,
-  0,
-  0,
-  read_next_timestep,
-  close_file_read,
-  open_dcd_write,
-  0,
-  write_timestep,
-  close_file_write
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_API int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "dcd";
+  plugin.prettyname = "CHARMM,NAMD,XPLOR DCD Trajectory";
+  plugin.author = "Justin Gullingsrud, John Stone";
+  plugin.majorv = 1;
+  plugin.minorv = 10;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "dcd";
+  plugin.open_file_read = open_dcd_read;
+  plugin.read_next_timestep = read_next_timestep;
+  plugin.close_file_read = close_file_read;
+  plugin.open_file_write = open_dcd_write;
+  plugin.write_timestep = write_timestep;
+  plugin.close_file_write = close_file_write;
   return VMDPLUGIN_SUCCESS;
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&dcdplugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
