@@ -16,7 +16,7 @@
  *
  *      $RCSfile: cubeplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.23 $       $Date: 2006/01/05 00:05:52 $
+ *      $Revision: 1.26 $       $Date: 2009/01/29 14:55:15 $
  *
  ***************************************************************************/
 
@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include "molfile_plugin.h"
+#include "unit_conversion.h"
 
 #ifndef M_PI_2
 #define M_PI_2 1.57079632679489661922
@@ -40,7 +41,7 @@
 
 #include "periodic_table.h"
 
-static const float bohr = 0.529177249;
+static const float bohr = BOHR_TO_ANGS;
 
 // A format-independent structure to hold unit cell data
 typedef struct {
@@ -580,36 +581,34 @@ static void close_cube_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   // ABI version
-  MOLFILE_PLUGIN_TYPE, 	  // plugin type
-  "cube",                 // short file format description
-  "Gaussian Cube",        // pretty file format description
-  "Axel Kohlmeyer, John E. Stone", // author(s)
-  0,                      // major version
-  8,                      // minor version
-  VMDPLUGIN_THREADSAFE,   // is reentrant
-  "cube",                 // filename extension
-  open_cube_read,               
-  read_cube_structure,
-  0,                      // read_bonds
-  read_cube_timestep,
-  close_cube_read,
-  0,                      // open_file_write
-  0,                      // write_structure
-  0,                      // write_timestep
-  0,                      // close_file_write
-  read_cube_metadata,
-  read_cube_data,
-  0                       // read_rawgraphics
-};
+static molfile_plugin_t plugin;
 
-int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
+int VMDPLUGIN_init(void) { 
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "cube";
+  plugin.prettyname = "Gaussian Cube";
+  plugin.author = "Axel Kohlmeyer, John Stone";
+  plugin.majorv = 1;
+  plugin.minorv = 0;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "cub,cube";
+  plugin.open_file_read = open_cube_read;
+  plugin.read_structure = read_cube_structure;
+  plugin.read_next_timestep = read_cube_timestep;
+  plugin.close_file_read = close_cube_read;
+  plugin.read_volumetric_metadata = read_cube_metadata;
+  plugin.read_volumetric_data = read_cube_data;
+  return VMDPLUGIN_SUCCESS; 
+}
+
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 
 
 

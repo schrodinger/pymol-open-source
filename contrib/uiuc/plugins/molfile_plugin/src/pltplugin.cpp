@@ -16,7 +16,7 @@
  *
  *      $RCSfile: pltplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.10 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.12 $       $Date: 2008/01/09 19:43:14 $
  *
  ***************************************************************************/
 
@@ -60,7 +60,7 @@ static void *open_plt_read(const char *filepath, const char *filetype,
   
   fd = fopen(filepath, "rb");
   if (!fd) {
-    fprintf(stderr, "Error opening file.\n");
+    fprintf(stderr, "pltplugin) Error opening file.\n");
     return NULL;
   }
 
@@ -73,7 +73,7 @@ static void *open_plt_read(const char *filepath, const char *filetype,
     if (intHeader[0] == 3) 
       swap = 1;
     else {
-      fprintf(stderr, "Incorrect header.\n");
+      fprintf(stderr, "pltplugin) Incorrect header.\n");
       return NULL;
     }
   }
@@ -141,7 +141,7 @@ static int read_plt_data(void *v, int set, float *datablock,
 
   // Read the densities. Order for file is x fast, y medium, z slow
   if ( fread(datablock, sizeof(float), ndata, fd) != ndata ) {
-    fprintf(stderr, "Error reading data, not enough values read.\n");
+    fprintf(stderr, "pltplugin) Error reading data, not enough values read.\n");
     return MOLFILE_ERROR;
   }
 
@@ -163,26 +163,30 @@ static void close_plt_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   // ABI version
-  MOLFILE_PLUGIN_TYPE, 	  // plugin type
-  "plt",                  // short file format description
-  "gOpenmol plt",         // pretty file format description
-  "Eamon Caddigan",       // author(s)
-  0,                      // major version
-  3,                      // minor version
-  VMDPLUGIN_THREADSAFE,   // is reentrant
-  "plt"                   // filename extension
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "plt";
+  plugin.prettyname = "gOpenmol plt";
+  plugin.author = "Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 4;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "plt";
   plugin.open_file_read = open_plt_read;
   plugin.read_volumetric_metadata = read_plt_metadata;
   plugin.read_volumetric_data = read_plt_data;
   plugin.close_file_read = close_plt_read;
+  return VMDPLUGIN_SUCCESS;
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

@@ -16,7 +16,7 @@
  *
  *      $RCSfile: brixplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.16 $       $Date: 2006/03/28 19:08:54 $
+ *      $Revision: 1.18 $       $Date: 2006/11/13 22:15:49 $
  *
  ***************************************************************************/
 
@@ -289,26 +289,31 @@ static void close_brix_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   // ABI version
-  MOLFILE_PLUGIN_TYPE, 	  // plugin type
-  "brix",                 // short file format description
-  "BRIX Density Map",     // pretty file format description
-  "Eamon Caddigan",       // author(s)
-  0,                      // major version
-  6,                      // minor version
-  VMDPLUGIN_THREADSAFE,   // is reentrant
-  "brix"                  // filename extension
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { 
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "brix";
+  plugin.prettyname = "BRIX Density Map";
+  plugin.author = "Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 8;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "brix,brx";
   plugin.open_file_read = open_brix_read;
   plugin.read_volumetric_metadata = read_brix_metadata;
   plugin.read_volumetric_data = read_brix_data;
   plugin.close_file_read = close_brix_read;
+
+  return VMDPLUGIN_SUCCESS; 
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

@@ -16,7 +16,7 @@
  *
  *      $RCSfile: tinkerplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.10 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.12 $       $Date: 2007/02/25 20:23:44 $
  *
  ***************************************************************************/
 
@@ -71,23 +71,26 @@ static void *open_tinker_read(const char *filename, const char *filetype,
   data->numatoms=*natoms;
 
   while (getc(fd) != '\n'); /* skip rest of this line */
-  
+ 
   return data;
 }
 
 static int read_tinker_structure(void *mydata, int *optflags, 
-                              molfile_atom_t *atoms) {
+                                 molfile_atom_t *atoms) {
   int i, j, atomid;
   char *k;
   float coord;
   molfile_atom_t *atom;
   tinkerdata *data = (tinkerdata *)mydata;
 
+  *optflags = MOLFILE_NOOPTIONS;
+
   for (i=0; i<data->numatoms; i++) {
     char buffer[1024], fbuffer[1024];
+    int atomtypeindex=0;
     k = fgets(fbuffer, 1024, data->file);
     atom = atoms + i;
-    j=sscanf(fbuffer, "%d %s %f %f %f", &atomid, buffer, &coord, &coord, &coord);
+    j=sscanf(fbuffer, "%d %s %f %f %f %d", &atomid, buffer, &coord, &coord, &coord, &atomtypeindex);
     if (k == NULL) {
       fprintf(stderr, "tinker structure) missing atom(s) in file '%s'\n", data->file_name);
       fprintf(stderr, "tinker structure) expecting '%d' atoms, found only '%d'\n", data->numatoms, i+1);
@@ -98,7 +101,11 @@ static int read_tinker_structure(void *mydata, int *optflags,
     }
 
     strncpy(atom->name, buffer, sizeof(atom->name));
+#if 0
     strncpy(atom->type, atom->name, sizeof(atom->type));
+#else
+    sprintf(atom->type, "%d", atomtypeindex);
+#endif
     atom->resname[0] = '\0';
     atom->resid = 1;
     atom->chain[0] = '\0';
@@ -154,36 +161,28 @@ static void close_tinker_read(void *mydata) {
 }
 
 /* registration stuff */
-static molfile_plugin_t tinkerplugin = {
-  vmdplugin_ABIVERSION,
-  MOLFILE_PLUGIN_TYPE,                         /* type */
-  "tinker",                                    /* name */
-  "Tinker",                                    /* name */
-  "John E. Stone",                             /* author */
-  0,                                           /* major version */
-  3,                                           /* minor version */
-  VMDPLUGIN_THREADSAFE,                        /* is reentrant */
-  "arc",
-  open_tinker_read,
-  read_tinker_structure,
-  0,
-  read_tinker_timestep,
-  close_tinker_read,
-  0,
-  0,
-  0,
-  0,
-  0,                            /* read_volumetric_metadata */
-  0,                            /* read_volumetric_data */
-  0                             /* read_rawgraphics */
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_API int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "tinker";
+  plugin.prettyname = "Tinker";
+  plugin.author = "John Stone";
+  plugin.majorv = 0;
+  plugin.minorv = 5;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "arc";
+  plugin.open_file_read = open_tinker_read;
+  plugin.read_structure = read_tinker_structure;
+  plugin.read_next_timestep = read_tinker_timestep;
+  plugin.close_file_read = close_tinker_read;
   return VMDPLUGIN_SUCCESS;
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&tinkerplugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

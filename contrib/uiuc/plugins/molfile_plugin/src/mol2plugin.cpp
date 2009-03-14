@@ -16,10 +16,10 @@
  *
  *      $RCSfile: mol2plugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.20 $       $Date: 2006/03/30 02:41:28 $
+ *      $Revision: 1.34 $       $Date: 2009/02/20 22:28:41 $
  *
  ***************************************************************************/
-
+  
 /*
  * mol2 file reader
  * More information on this format is available at
@@ -73,7 +73,7 @@ static void *open_mol2_read(const char *path, const char *filetype,
   do {
     fgets(line, LINESIZE, fd);
     if ( ferror(fd) || feof(fd) ) {
-      fprintf(stderr, "mol2plugin: No molecule record found in file.\n");
+      fprintf(stderr, "mol2plugin) No molecule record found in file.\n");
       return NULL;
     }
   } while ( strncmp(line, "@<TRIPOS>MOLECULE", 17) );
@@ -85,7 +85,7 @@ static void *open_mol2_read(const char *path, const char *filetype,
     nbonds = 0;
   }
   else if (match != 2) {
-    fprintf(stderr, "mol2plugin: Cannot determine the number of atoms.\n");
+    fprintf(stderr, "mol2plugin) Cannot determine the number of atoms.\n");
     return NULL;
   }
   fgets(line, LINESIZE, fd);  // Read and ignore the mol_type
@@ -98,7 +98,8 @@ static void *open_mol2_read(const char *path, const char *filetype,
   }
 
   // Allocate and initialize the mol2 structure
-  mol2 = new mol2data;
+  mol2 =  (mol2data *) malloc(sizeof(mol2data));
+  memset(mol2, 0, sizeof(mol2data));
   mol2->file = fd;
   mol2->natoms = *natoms;
   mol2->nbonds = nbonds;
@@ -125,7 +126,7 @@ static int read_mol2(void *v, int *optflags, molfile_atom_t *atoms) {
   do {
     fgets(line, LINESIZE, mol2->file);
     if ( ferror(mol2->file) || feof(mol2->file) ) {
-      fprintf(stderr, "mol2plugin: No atom record found in file.\n");
+      fprintf(stderr, "mol2plugin) No atom record found in file.\n");
       return MOLFILE_ERROR;
     }
   } while ( strncmp(line, "@<TRIPOS>ATOM", 13) );
@@ -136,18 +137,18 @@ static int read_mol2(void *v, int *optflags, molfile_atom_t *atoms) {
 
     fgets(line, LINESIZE, mol2->file);
     if ( ferror(mol2->file) || feof(mol2->file) ) {
-      fprintf(stderr, "mol2plugin: Error occurred reading atom record.\n");
+      fprintf(stderr, "mol2plugin) Error occurred reading atom record.\n");
       return MOLFILE_ERROR;
     }
 
-    match = sscanf(line, " %*d %s %*f %*f %*f %*s %d %s %f", 
-      atom->name, &atom->resid, atom->resname, &atom->charge);
+    match = sscanf(line, " %*d %s %*f %*f %*f %s %d %s %f", 
+      atom->name, atom->type, &atom->resid, atom->resname, &atom->charge);
 
     // The last three records are optional for mol2 files, supply values if
     // any are missing. Note that these cases are meant to fall through.
     switch (match) {
       case 0: 
-        fprintf(stderr, "mol2plugin: Improperly formatted atom record.\n");
+        fprintf(stderr, "mol2plugin) Improperly formatted atom record.\n");
         return MOLFILE_ERROR;
 
       case 1:
@@ -163,11 +164,12 @@ static int read_mol2(void *v, int *optflags, molfile_atom_t *atoms) {
         break;
     }
 
-    strcpy(atom->type, atom->name);
     // Leave these blank when not provided by the file.
     atom->chain[0] = '\0';
     atom->segid[0] = '\0';
   }
+
+  rewind(mol2->file);
 
   return MOLFILE_SUCCESS;
 }
@@ -175,7 +177,8 @@ static int read_mol2(void *v, int *optflags, molfile_atom_t *atoms) {
 
 
 // Create arrays of one-based bond indicies.
-static int read_mol2_bonds(void *v, int *nbonds, int **fromptr, int **toptr, float **bondorderptr) {
+static int read_mol2_bonds_aux(void *v, int *nbonds, int **fromptr, int **toptr, 
+                               float **bondorderptr) {
   mol2data *mol2 = (mol2data *)v;
   char line[LINESIZE], bond_type[16]; 
   int i, match, bond_from, bond_to, bond_index, current_nbonds;
@@ -188,11 +191,6 @@ static int read_mol2_bonds(void *v, int *nbonds, int **fromptr, int **toptr, flo
     return MOLFILE_SUCCESS;
   }
 
-  // Allocate memory for the from and to arrays. This will be freed in
-  // close_mol2_read
-  mol2->from = new int[mol2->nbonds];
-  mol2->to = new int[mol2->nbonds];
-  mol2->bondorder=new float[mol2->nbonds];
   current_nbonds = mol2->nbonds;
 
   // Find and read the BOND record
@@ -200,7 +198,7 @@ static int read_mol2_bonds(void *v, int *nbonds, int **fromptr, int **toptr, flo
   do {
     fgets(line, LINESIZE, mol2->file);
     if ( ferror(mol2->file) || feof(mol2->file) ) {
-      fprintf(stderr, "mol2plugin: No atom record found in file.\n");
+      fprintf(stderr, "mol2plugin) No bond record found in file.\n");
       return MOLFILE_ERROR;
     }
   } while ( strncmp(line, "@<TRIPOS>BOND", 13) );
@@ -210,7 +208,7 @@ static int read_mol2_bonds(void *v, int *nbonds, int **fromptr, int **toptr, flo
   for (i = 0; i < mol2->nbonds; i++) {
     fgets(line, LINESIZE, mol2->file);
     if ( ferror(mol2->file) || feof(mol2->file) ) {
-      fprintf(stderr, "mol2plugin: Error occurred reading atom record.\n");
+      fprintf(stderr, "mol2plugin) Error occurred reading bond record.\n");
       return MOLFILE_ERROR;
     }
 
@@ -222,18 +220,25 @@ static int read_mol2_bonds(void *v, int *nbonds, int **fromptr, int **toptr, flo
 
     match = sscanf(line, " %*d %d %d %s", &bond_from, &bond_to, bond_type);
     if (match < 3) {
-      fprintf(stderr, "mol2plugin: Improperly formatted bond record.\n");
+      fprintf(stderr, "mol2plugin) Improperly formatted bond record.\n");
       continue;
     }
     if ( strncmp(bond_type, "nc", 2) == 0 ) {
       // Not an actual bond, don't add it to the list
       current_nbonds--;
-    }
-    else {
+    } else if ( strncmp(bond_type, "ar", 2) == 0) {
+       // Aromatic; consider it order 1.5
+       curr_order = 1.5;
+       mol2->from[bond_index] = bond_from;
+       mol2->to[bond_index] = bond_to;
+       mol2->bondorder[bond_index]=curr_order;
+       bond_index++;
+     } else {
       // Add the bond to the list
       curr_order=strtod(bond_type,NULL);
       if (curr_order<1.0 || curr_order>4.0) curr_order=1;
-//      fprintf(stdout,"mol2plugin: Bond from %d to %d of order %f\n", bond_from, bond_to, curr_order);
+      //fprintf(stdout,"mol2plugin: Bond from %d to %d of order %f\n", bond_from, bond_to, curr_order);
+      fflush(stdout);
       mol2->from[bond_index] = bond_from;
       mol2->to[bond_index] = bond_to;
       mol2->bondorder[bond_index]=curr_order;
@@ -253,7 +258,7 @@ static int read_mol2_bonds(void *v, int *nbonds, int **fromptr, int **toptr, flo
     *bondorderptr = NULL; 
   }
     
-//printf("End of read_mol2_bonds\n");
+  rewind(mol2->file);
   return MOLFILE_SUCCESS;
 }
 
@@ -265,19 +270,16 @@ static int read_mol2_timestep(void *v, int natoms, molfile_timestep_t *ts) {
   int i, match;
   float x, y, z;
 
-  // Since the file is rewound when coordinates are read, EOF shouldn't
-  // happen. Instead, use a flag to indicate that the single timestep has
-  // been read
-  if (mol2->coords_read) {
-    return MOLFILE_EOF;
-  }
-
   // Find and read the ATOM record
-  rewind(mol2->file);
   do {
     fgets(line, LINESIZE, mol2->file);
     if ( ferror(mol2->file) || feof(mol2->file) ) {
-      fprintf(stderr, "mol2plugin: No atom record found in file.\n");
+
+      //This is a problem, unless we've read at least one timestep
+      if (mol2->coords_read == 0) {
+        fprintf(stderr, "mol2plugin) No atom record found in file.\n");
+      }
+
       return MOLFILE_ERROR;
     }
   } while ( strncmp(line, "@<TRIPOS>ATOM", 13) );
@@ -286,14 +288,14 @@ static int read_mol2_timestep(void *v, int natoms, molfile_timestep_t *ts) {
   for (i = 0; i < mol2->natoms; i++) {
     fgets(line, LINESIZE, mol2->file);
     if ( ferror(mol2->file) || feof(mol2->file) ) {
-      fprintf(stderr, "mol2plugin: Error occurred reading atom coordinates.\n");
+      fprintf(stderr, "mol2plugin) Error occurred reading atom coordinates.\n");
       return MOLFILE_ERROR;
     }
 
 
     match = sscanf(line, " %*d %*s %f %f %f", &x, &y, &z);
     if (match < 3) {
-      fprintf(stderr, "mol2plugin: Improperly formatted atom coordinates.\n");
+      fprintf(stderr, "mol2plugin) Improperly formatted atom coordinates.\n");
       return MOLFILE_ERROR;
     }
 
@@ -316,14 +318,16 @@ static void *open_mol2_write(const char *filename, const char *filetype,
 
   fd = fopen(filename, "w");
   if (!fd) { 
-    fprintf(stderr, "Error) Unable to open mol2 file %s for writing\n",
+    fprintf(stderr, "mol2plugin) Error: unable to open mol2 file %s for writing\n",
             filename);
     return NULL;
   }
   
-  data = (mol2data *)malloc(sizeof(mol2data));
+  data = (mol2data *) malloc(sizeof(mol2data));
+  memset(data, 0, sizeof(mol2data));
   data->natoms = natoms;
   data->file = fd;
+  data->nbonds = 0;
 //  data->file_name = strdup(filename);
   return data;
 }
@@ -337,6 +341,7 @@ static int write_mol2_structure(void *mydata, int optflags,
   return MOLFILE_SUCCESS;
 }
 
+/*
 void getmol2ff(char* outputtype, const char* psftype) {
 //fprintf(stdout,"Doing ff typing on %s\n",psftype);
   if (strncmp(psftype,"H",1)==0) {
@@ -381,6 +386,7 @@ void getmol2ff(char* outputtype, const char* psftype) {
      return;
   }
 }
+*/
 
 
 
@@ -405,7 +411,7 @@ static int write_mol2_timestep(void *mydata, const molfile_timestep_t *ts) {
   //print header block
   fprintf(data->file, "@<TRIPOS>MOLECULE\n");
   fprintf(data->file, "generated by VMD\n");
-  fprintf(data->file, "%4d %4d 1 0 0\n", data->natoms, data->nbonds);
+  fprintf(data->file, " %4d %4d    1    0    0\n", data->natoms, data->nbonds);
   fprintf(data->file, "SMALL\n");
   // educated guess
   if (chrgsq > 0.0001) {
@@ -420,12 +426,12 @@ static int write_mol2_timestep(void *mydata, const molfile_timestep_t *ts) {
   fprintf(data->file, "@<TRIPOS>ATOM\n");
   atom = data->atomlist;
   pos = ts->coords;
-  char mol2fftype[5];
+  //char mol2fftype[5];
+  //mol2fftype[4] = '\0';
   for (i = 0; i < data->natoms; i++) {
-    getmol2ff(mol2fftype, atom->type);
-    fprintf(data->file, "%7d %-4s      %8.4f  %8.4f  %8.4f %4s %4d  %3s        %8.6f\n",
-            i+1, atom->name, pos[0], pos[1], pos[2], mol2fftype, 
-            atom->resid, atom->resname, atom->charge);
+    //getmol2ff(mol2fftype, atom->type);
+//    fprintf(data->file, "%7d %-4s      %8.4f  %8.4f  %8.4f %4s %4d  %3s        %8.6f\n", i+1, atom->name, pos[0], pos[1], pos[2], mol2fftype, atom->resid, atom->resname, atom->charge);
+    fprintf(data->file, "%7d %-4s      %8.4f  %8.4f  %8.4f %4s %4d  %3s        %8.6f\n", i+1, atom->name, pos[0], pos[1], pos[2], atom->type, atom->resid, atom->resname, atom->charge);
     ++atom; 
     pos += 3;
   }
@@ -439,8 +445,13 @@ static int write_mol2_timestep(void *mydata, const molfile_timestep_t *ts) {
     // For mol2, only write bonds for fromptr[i]<toptr[i]
     // bondorder is either 1, 2, 3 or a textual representation: am,ar,du,un,nc
     // we don't have the info for the text, so we truncate to integer.
-    fprintf(data->file, "%5d %5d %5d %2d\n", l ,data->from[i], data->to[i],
-            (int)data->bondorder[i]);
+    if (data->bondorder != NULL) {
+      fprintf(data->file, "%5d %5d %5d %2d\n", l ,data->from[i], data->to[i],
+              (int)data->bondorder[i]);
+    } else {
+      fprintf(data->file, "%5d %5d %5d %2d\n", l ,data->from[i], data->to[i], 1);
+    }
+
     l++;
   } 
 
@@ -452,18 +463,28 @@ static int write_mol2_timestep(void *mydata, const molfile_timestep_t *ts) {
   return MOLFILE_SUCCESS;
 }
 
-static int write_bonds(void *v, int nbonds, int *fromptr, int *toptr, float *bondorderptr) {
+static int write_mol2_bonds(void *v, int nbonds, int *fromptr, int *toptr, 
+                            float *bondorderptr,  int *bondtype, 
+                            int nbondtypes, char **bondtypename) {
+  printf("*** RUNNING WRITE_MOL2_BONDS\n");
   mol2data *data = (mol2data *)v;
-  data->from = new int[nbonds];
-  data->to = new int[nbonds];
-  data->bondorder = new float[nbonds];
+  data->nbonds = nbonds;
+  data->from = (int *) malloc(nbonds * sizeof(int));
+  data->to = (int *) malloc(nbonds * sizeof(int));
   //set the pointers for use later
   for (int i=0;i<nbonds;i++) {
-	  data->from[i]=fromptr[i];
-	  data->to[i]=toptr[i];
-	  data->bondorder[i]=bondorderptr[i];
+    data->from[i]=fromptr[i];
+    data->to[i]=toptr[i];
   }
+  printf("*** I THINK nbonds is %i\n", nbonds);
   data->nbonds = nbonds;
+  if (bondorderptr != NULL) {
+    data->bondorder = (float *) malloc(nbonds * sizeof(float));
+    for (int i=0;i<nbonds;i++) {
+      data->bondorder[i]=bondorderptr[i];
+    }
+  }
+
   return MOLFILE_SUCCESS;
 }
 
@@ -473,9 +494,14 @@ static void close_mol2_write(void *mydata) {
   if (data) {
     if (data->file) fclose(data->file);
     if (data->from != NULL) free(data->from);
+    data->from = NULL;
     if (data->to != NULL)   free(data->to);
+    data->to = NULL;
     if (data->bondorder != NULL)   free(data->bondorder);
-    delete data;
+    data->bondorder = NULL;
+    if (data->atomlist != NULL) free(data->atomlist);
+    data->atomlist = NULL;
+    free(data);
   }
 }
 
@@ -486,24 +512,35 @@ static void close_mol2_read(void *v) {
   if (mol2) {
     if (mol2->file) fclose(mol2->file);
     if (mol2->from != NULL) free(mol2->from);
+    mol2->from = NULL;
     if (mol2->to != NULL)   free(mol2->to);
+    mol2->to = NULL;
     if (mol2->bondorder != NULL)   free(mol2->bondorder);
-    delete mol2;
+    mol2->bondorder = NULL;
+    free(mol2);
   }
 }
 
 
-static int read_bonds(void *v, int *nbonds, int **fromptr, int **toptr, float **bondorderptr) {
+static int read_mol2_bonds(void *v, int *nbonds, int **fromptr, int **toptr, 
+                           float **bondorderptr, int **bondtype, 
+                      int *nbondtypes, char ***bondtypename) {
   mol2data *mol2 = (mol2data *)v;
 
   /* now read bond data */
 //  *nbonds = start_psf_bonds(psf->fp);
 
   if (mol2->nbonds > 0) {
-    mol2->from = (int *) malloc(*nbonds*sizeof(int));
-    mol2->to = (int *) malloc(*nbonds*sizeof(int));
-    mol2->bondorder = (float *) malloc(*nbonds*sizeof(float));
-    if ((read_mol2_bonds(mol2, nbonds, &(mol2->from), &(mol2->to), &(mol2->bondorder))) != MOLFILE_SUCCESS) {
+    mol2->from = (int *) malloc(mol2->nbonds*sizeof(int));
+    mol2->to = (int *) malloc(mol2->nbonds*sizeof(int));
+    mol2->bondorder = (float *) malloc(mol2->nbonds*sizeof(float));
+    if (mol2->from == NULL || mol2->to == NULL || mol2->bondorder == NULL) {
+      fprintf(stderr, "mol2plugin) ERROR: Failed to allocate memory for bonds\n");
+      fclose(mol2->file);
+      mol2->file = NULL;
+      return MOLFILE_ERROR;
+    }
+    if ((read_mol2_bonds_aux(mol2, nbonds, &(mol2->from), &(mol2->to), &(mol2->bondorder))) != MOLFILE_SUCCESS) {
       fclose(mol2->file);
       mol2->file = NULL;
       return MOLFILE_ERROR;
@@ -511,47 +548,50 @@ static int read_bonds(void *v, int *nbonds, int **fromptr, int **toptr, float **
     *fromptr = mol2->from;
     *toptr = mol2->to;
     *bondorderptr = mol2->bondorder; 
+    *bondtype = NULL;
+    *nbondtypes = 0;
+    *bondtypename = NULL;
   } else {
-    printf("mol2plugin) WARNING: no bonds defined in mol2 file.\n");
+    printf("mol2plugin) WARNING: zero bonds defined in mol2 file.\n");
+    *nbonds = 0;
     *fromptr=NULL;
     *toptr=NULL;
     *bondorderptr=NULL;
+    *bondtype = NULL;
+    *nbondtypes = 0;
+    *bondtypename = NULL;
   }
   return MOLFILE_SUCCESS;
 }
 
-static molfile_plugin_t mol2plugin = {
-  vmdplugin_ABIVERSION,
-  MOLFILE_PLUGIN_TYPE,                         /* type */
-  "mol2",                                      /* short name */
-  "MDL mol2",                                  /* pretty name */
-  "Peter Freddolino and Eamon Caddigan",       /* author */
-  0,                                           /* major version */
-  8,                                           /* minor version */
-  VMDPLUGIN_THREADSAFE,                        /* is reentrant */
-  "mol2",
-  open_mol2_read,		/*open file read*/
-  read_mol2,			/*read structure*/
-  read_bonds,			/* read bond list*/
-  read_mol2_timestep,		/* read next timestep*/
-  close_mol2_read,		/* close_file_read */
-  open_mol2_write,		/* open file for writing */
-  write_mol2_structure,		/* write structure */
-  write_mol2_timestep,		/* write tempestep*/
-  close_mol2_write,		/*close file for writing*/
-  0,                            /* read_volumetric_metadata */
-  0,                            /* read_volumetric_data */
-  0,                            /* read_rawgraphics */
-  0,				/*read molecule metadata */
-  write_bonds			/* write bonds */
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "mol2";
+  plugin.prettyname = "MDL mol2";
+  plugin.author = "Peter Freddolino, Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 16;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "mol2";
+  plugin.open_file_read = open_mol2_read;
+  plugin.read_structure = read_mol2;
+  plugin.read_bonds = read_mol2_bonds;
+  plugin.read_next_timestep = read_mol2_timestep;
+  plugin.close_file_read = close_mol2_read;
+  plugin.open_file_write = open_mol2_write;
+  plugin.write_structure = write_mol2_structure;
+  plugin.write_timestep = write_mol2_timestep;
+  plugin.close_file_write = close_mol2_write;
+  plugin.write_bonds = write_mol2_bonds;
   return VMDPLUGIN_SUCCESS;
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&mol2plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

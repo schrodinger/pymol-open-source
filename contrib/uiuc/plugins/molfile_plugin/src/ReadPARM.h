@@ -2,8 +2,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: ReadPARM.h,v $
- *      $Author: justin $        $Locker:  $                $State: Exp $
- *      $Revision: 1.12 $      $Date: 2003/01/30 00:01:53 $
+ *      $Author: johns $        $Locker:  $                $State: Exp $
+ *      $Revision: 1.13 $      $Date: 2006/07/26 22:03:05 $
  *
  ***************************************************************************
  * DESCRIPTION:
@@ -431,8 +431,10 @@ int ReadPARM::readparm(FILE *file) {
 	 *	(pre-multiplied by an energy factor of 18.2223 == sqrt(332)
 	 *	 for faster force field calculations)
 	 */
-	for (i=0; i<prm->Natom; i++)
+	for (i=0; i<prm->Natom; i++) {
           fscanf(file, " " DBLFMT, &prm->Charges[i]);
+          prm->Charges[i] *= 0.0548778; /* convert back to elementary charge units */
+        }
         readtoeoln(file);
 
 	/* 

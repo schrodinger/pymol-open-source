@@ -16,7 +16,7 @@
  *
  *      $RCSfile: pqrplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.12 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.17 $       $Date: 2006/11/07 21:30:01 $
  *
  ***************************************************************************/
 
@@ -36,7 +36,7 @@
 #define PQR_RECORD_LENGTH 80
 
 /*  record type defines */
-enum {PQR_REMARK, PQR_ATOM, PQR_UNKNOWN, PQR_EOF, PQR_ERROR};
+enum {PQR_REMARK, PQR_ATOM, PQR_UNKNOWN, PQR_END, PQR_EOF, PQR_ERROR, PQR_CRYST1};
 
 /* 
  * read the next record from the specified pqr file, and put the string
@@ -72,8 +72,13 @@ static int read_pqr_record(FILE *f, char *retStr) {
     if (!strncmp(inbuf, "ATOM  ", 6)) {
       strcpy(retStr,inbuf);
       recType = PQR_ATOM;
-    } 
-    else {
+    } else if (!strncmp(inbuf, "CRYST1", 6)) {
+      recType = PQR_CRYST1;
+      strcpy(retStr,inbuf);
+    } else if (!strncmp(inbuf, "END", 3)) {
+      strcpy(retStr,inbuf);
+      recType = PQR_END;
+    } else {
       retStr[0] = '\0';
       recType = PQR_UNKNOWN;
     }
@@ -88,6 +93,29 @@ static int read_pqr_record(FILE *f, char *retStr) {
   }
   
   return recType;
+}
+
+/* Extract the alpha/beta/gamma a/b/c unit cell info from a CRYST1 record */
+static void get_pqr_cryst1(const char *record, 
+                           float *alpha, float *beta, float *gamma, 
+                           float *a, float *b, float *c) {
+  char tmp[PQR_RECORD_LENGTH+3]; /* space for line + cr + lf + NUL */
+  char ch, *s;
+  memset(tmp, 0, sizeof(tmp));
+  strncpy(tmp, record, PQR_RECORD_LENGTH);
+
+  s = tmp+6 ;          ch = tmp[15]; tmp[15] = 0;
+  *a = (float) atof(s);
+  s = tmp+15; *s = ch; ch = tmp[24]; tmp[24] = 0;
+  *b = (float) atof(s);
+  s = tmp+24; *s = ch; ch = tmp[33]; tmp[33] = 0;
+  *c = (float) atof(s);
+  s = tmp+33; *s = ch; ch = tmp[40]; tmp[40] = 0;
+  *alpha = (float) atof(s);
+  s = tmp+40; *s = ch; ch = tmp[47]; tmp[47] = 0;
+  *beta = (float) atof(s);
+  s = tmp+47; *s = ch; ch = tmp[54]; tmp[54] = 0;
+  *gamma = (float) atof(s);
 }
 
 /*
@@ -151,7 +179,7 @@ static int write_pqr_atom(FILE *fd, int index, const molfile_atom_t *atom,
                    float x, float y, float z) {
   int rc;
 
-  rc = fprintf(fd, "ATOM  %5d %-4s %s %5d    %8.3f%8.3f%8.3f %.3f %.3f\n",
+  rc = fprintf(fd, "ATOM  %5d %-4s %s %5d    %8.3f %8.3f %8.3f %.3f %.3f\n",
                index, atom->name, atom->resname, atom->resid, 
                x, y, z, atom->charge, atom->radius);
 
@@ -185,19 +213,18 @@ static void *open_pqr_read(const char *filepath, const char *filetype,
   *natoms=0;
   do {
     record_type = read_pqr_record(pqr->fd, pqr_record);
-    if (record_type == PQR_ATOM)
+    if (record_type == PQR_ATOM) {
       *natoms += 1;
-    else if (record_type == PQR_ERROR) {
-      fprintf(stderr, "Error reading PQR file after opening.\n");
+    } else if (record_type == PQR_ERROR) {
+      printf("pqrplugin) Error reading file after opening.\n");
       free(pqr);
       return NULL;
     }
-    /* else, do nothing */
-  } while (record_type != PQR_EOF);
+  } while ((record_type != PQR_EOF) && (record_type != PQR_END));
 
   /* If no atoms were found, this is probably not a PQR file! */
   if (!*natoms) {
-    fprintf(stderr, "PQR file '%s' contains no atoms.\n", filepath);
+    printf("pqrplugin) file '%s' contains no atoms.\n", filepath);
     free(pqr);
     return NULL;
   }
@@ -225,17 +252,17 @@ static int read_pqr_structure(void *mydata, int *optflags,
   i = 0;
   do {
     record_type = read_pqr_record(pqr->fd, pqr_record);
-    if ( (record_type == PQR_EOF) && (i < pqr->natoms) ) {
-      fprintf(stderr, "Unexpected end-of-file.\n");
+    if (((record_type == PQR_EOF) || (record_type == PQR_END)) 
+        && (i < pqr->natoms)) {
+      printf("pqrplugin) unexpected end-of-file while reading structure.\n");
+printf("XXX: %d of %d \n", i, pqr->natoms);
       return MOLFILE_ERROR;
-    } 
-    else if (record_type == PQR_ERROR) {
-      fprintf(stderr, "Error reading atom coordinates.\n");
+    } else if (record_type == PQR_ERROR) {
+      printf("pqrplugin) error reading atom coordinates.\n");
       return MOLFILE_ERROR;
-    }
-    else if (record_type == PQR_ATOM) {
+    } else if (record_type == PQR_ATOM) {
       if (i >= pqr->natoms) {
-        fprintf(stderr, "Too many atoms.\n");
+        printf("pqrplugin) too many atoms.\n");
         return MOLFILE_ERROR;
       }
       atom = atoms+i;
@@ -246,10 +273,7 @@ static int read_pqr_structure(void *mydata, int *optflags,
       strcpy(atom->type, atom->name);
       i++;
     }
-    else {
-      /* XXX do stuff */
-    }
-  } while(record_type != PQR_EOF);
+  } while((record_type != PQR_EOF) && (record_type != PQR_END));
 
   fseek(pqr->fd, fpos, SEEK_SET);
 
@@ -267,37 +291,44 @@ static int read_pqr_timestep(void *v, int natoms, molfile_timestep_t *ts) {
 
   if (pqr->natoms == 0) 
     return MOLFILE_ERROR; /* EOF */
-  if (ts) {
+
+  if (ts != NULL) {
     x = ts->coords;
     y = x+1;
     z = x+2;
   } else {
-    x = y = z = 0;
+    x = y = z = NULL;
   }
 
   i = 0;
   do {
     record_type = read_pqr_record(pqr->fd, pqr_record);
-    if ( (record_type == PQR_EOF) && (i < pqr->natoms) ) {
-      fprintf(stderr, "Unexpected end-of-file.\n");
+    if (((record_type == PQR_EOF) || (record_type == PQR_END)) 
+        && (i < pqr->natoms)) {
+      if (i == 0) {
+        /* don't emit an error if there're no more timesteps */
+        return MOLFILE_EOF;
+      } else {
+        printf("pqrplugin) unexpected end-of-file while reading timestep.\n");
+        return MOLFILE_ERROR;
+      }
+    } else if (record_type == PQR_ERROR) {
+      printf("pqrplugin) error reading atom coordinates.\n");
       return MOLFILE_ERROR;
-    } 
-    else if (record_type == PQR_ERROR) {
-      fprintf(stderr, "Error reading atom coordinates.\n");
-      return MOLFILE_ERROR;
-    }
-    else if (record_type == PQR_ATOM) {
-      /* just get the coordinates, and store them */
+    } else if (record_type == PQR_CRYST1) {
       if (ts) {
+        get_pqr_cryst1(pqr_record, &ts->alpha, &ts->beta, &ts->gamma,
+                               &ts->A, &ts->B, &ts->C);
+      }
+    } else if (record_type == PQR_ATOM) {
+      /* just get the coordinates, and store them */
+      if (ts != NULL) {
         get_pqr_coordinates(pqr_record, x, y, z);
         x += 3;
         y += 3;
         z += 3;
-        i++;
       } 
-    }
-    else {
-      /* XXX do stuff */
+      i++;
     }
   } while(i < pqr->natoms);
 
@@ -319,7 +350,7 @@ static void *open_pqr_write(const char *path, const char *filetype,
   pqrdata *pqr;
   fd = fopen(path, "w");
   if (!fd) {
-    fprintf(stderr, "Unable to open file %s for writing\n", path);
+    printf("pqrplugin) unable to open file %s for writing\n", path);
     return NULL;
   }
 
@@ -341,14 +372,21 @@ static int write_pqr_structure(void *v, int optflags,
 
   /* If charge and radius aren't given, we assign defaultvalues. */
   if (!(optflags & MOLFILE_CHARGE)) {
+    printf("pqrplugin) Warning no atom charges available, assigning zero\n");
     for (i=0; i<natoms; i++) pqr->atomlist[i].charge = 0.0f;
   }
   if (!(optflags & MOLFILE_RADIUS)) {
+    printf("pqrplugin) Warning no atom radii available, assigning radii of 1.0\n");
     for (i=0; i<natoms; i++) pqr->atomlist[i].radius = 
       get_atom_radius(&(pqr->atomlist[i]));
   }
 
   return MOLFILE_SUCCESS;
+}
+
+static void write_pqr_cryst1(FILE *fd, const molfile_timestep_t *ts) {
+  fprintf(fd, "CRYST1%9.3f%9.3f%9.3f%7.2f%7.2f%7.2f P 1           1\n", 
+    ts->A, ts->B, ts->C, ts->alpha, ts->beta, ts->gamma);
 }
 
 static int write_pqr_timestep(void *v, const molfile_timestep_t *ts) {
@@ -360,18 +398,19 @@ static int write_pqr_timestep(void *v, const molfile_timestep_t *ts) {
   if (pqr->natoms == 0)
     return MOLFILE_SUCCESS;
 
+  write_pqr_cryst1(pqr->fd, ts);
   atom = pqr->atomlist;
   pos = ts->coords;
   for (i=0; i<pqr->natoms; i++) {
     if (!write_pqr_atom(pqr->fd, i+1, atom, pos[0], pos[1], pos[2])) {
-      fprintf(stderr, 
-        "PQR: Error encoutered writing atom %d; file may be incomplete.\n", 
-        i+1);
+      printf("pqrplugin) error writing atom %d; file may be incomplete.\n", i+1);
       return MOLFILE_ERROR;
     }
     atom++;
     pos += 3;
   }
+
+  fprintf(pqr->fd, "END\n");
 
   return MOLFILE_SUCCESS;
 }
@@ -387,28 +426,27 @@ static void close_pqr_write(void *v) {
  * Initialization stuff down here
  */
 
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,         /* ABI version */
-  MOLFILE_PLUGIN_TYPE,          /* type */
-  "pqr",                        /* short name */
-  "PQR",                        /* pretty name */
-  "Eamon Caddigan",             /* author */
-  0,                            /* major version */
-  1,                            /* minor version */
-  VMDPLUGIN_THREADSAFE,         /* is_reentrant */
-  "pqr",                        /* filename extension */
-  open_pqr_read,
-  read_pqr_structure,
-  0,
-  read_pqr_timestep,
-  close_pqr_read,
-  open_pqr_write,
-  write_pqr_structure,
-  write_pqr_timestep,
-  close_pqr_write
-};
- 
+static molfile_plugin_t plugin;
+
 VMDPLUGIN_API int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "pqr";
+  plugin.prettyname = "PQR";
+  plugin.author = "Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 4;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "pqr";
+  plugin.open_file_read = open_pqr_read;
+  plugin.read_structure = read_pqr_structure;
+  plugin.read_next_timestep = read_pqr_timestep;
+  plugin.close_file_read = close_pqr_read;
+  plugin.open_file_write = open_pqr_write;
+  plugin.write_structure = write_pqr_structure;
+  plugin.write_timestep = write_pqr_timestep;
+  plugin.close_file_write = close_pqr_write;
   return VMDPLUGIN_SUCCESS;
 }
 

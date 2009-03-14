@@ -1,8 +1,5 @@
 /* MACHINE GENERATED FILE, DO NOT EDIT! */
 
-/* NOTE: this machine-generated file also contains some
-   hand-edits... */
-
 #define VMDPLUGIN molfile_gromacsplugin
 #define STATIC_PLUGIN 1
 
@@ -19,7 +16,7 @@
  *
  *      $RCSfile: gromacsplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.42 $       $Date: 2006/02/24 00:57:10 $
+ *      $Revision: 1.45 $       $Date: 2008/01/09 20:31:06 $
  *
  ***************************************************************************/
 
@@ -60,7 +57,7 @@ static void *open_gro_read(const char *filename, const char *,
 
     mf = mdio_open(filename, MDFMT_GRO);
     if (!mf) {
-        fprintf(stderr, "Cannot open file '%s', %s\n",
+        fprintf(stderr, "gromacsplugin) Cannot open file '%s', %s\n",
                 filename, mdio_errmsg(mdio_errno()));
         return NULL;
     }
@@ -68,8 +65,8 @@ static void *open_gro_read(const char *filename, const char *,
     // read in the header data (careful not to rewind!)
     if (gro_header(mf, mdh.title, MAX_MDIO_TITLE,
     &mdh.timeval, &mdh.natoms, 0) < 0) {
-        fprintf(stderr, "Cannot read header fromm '%s', %s\n",
-            filename, mdio_errmsg(mdio_errno()));
+        fprintf(stderr, "gromacsplugin) Cannot read header fromm '%s', %s\n",
+                filename, mdio_errmsg(mdio_errno()));
             // XXX should free the file handle...
         return NULL;
     }
@@ -93,8 +90,8 @@ static int read_gro_structure(void *mydata, int *optflags,
   for (int i = 0; i < gmx->natoms; i++) {
     molfile_atom_t *atom = atoms+i; 
     if (gro_rec(gmx->mf, &ma) < 0) {
-      fprintf(stderr, "Error reading atom %d from file, %s\n", i+1, 
-              mdio_errmsg(mdio_errno()));
+      fprintf(stderr, "gromacsplugin) Error reading atom %d from file, %s\n", 
+              i+1, mdio_errmsg(mdio_errno()));
       return MOLFILE_ERROR;
     }
     strcpy(atom->name, ma.atomname);
@@ -106,8 +103,8 @@ static int read_gro_structure(void *mydata, int *optflags,
   }
   
   if (mdio_readline(gmx->mf, buf, MAX_GRO_LINE + 1, 0) < 0) {
-    fprintf(stderr, "Warning, error reading box, %s\n", 
-      mdio_errmsg(mdio_errno())); 
+    fprintf(stderr, "gromacsplugin) Warning, error reading box, %s\n", 
+            mdio_errmsg(mdio_errno())); 
   }
 
   rewind(gmx->mf->f);
@@ -152,22 +149,22 @@ static void *open_g96_read(const char *filename, const char *,
 
     mf = mdio_open(filename, MDFMT_G96);
     if (!mf) {
-        fprintf(stderr, "Cannot open file '%s', %s\n",
+        fprintf(stderr, "gromacsplugin) Cannot open file '%s', %s\n",
                 filename, mdio_errmsg(mdio_errno()));
         return NULL;
     }
     
         // read in the header data
         if (g96_header(mf, mdh.title, MAX_MDIO_TITLE, &mdh.timeval) < 0) {
-            fprintf(stderr, "Cannot read header from '%s', %s\n", 
-              filename, mdio_errmsg(mdio_errno()));
+            fprintf(stderr, "gromacsplugin) Cannot read header from '%s', %s\n",
+                    filename, mdio_errmsg(mdio_errno()));
             return NULL;
         }
 
         // First, look for a timestep block
         if (mdio_readline(mf, gbuf, MAX_G96_LINE + 1) < 0) {
-            fprintf(stderr, "Cannot read header from '%s', %s\n", 
-              filename, mdio_errmsg(mdio_errno()));
+            fprintf(stderr, "gromacsplugin) Cannot read header from '%s', %s\n",
+                    filename, mdio_errmsg(mdio_errno()));
             return NULL;
         }
         if (!strcasecmp(gbuf, "TIMESTEP")) {
@@ -175,13 +172,13 @@ static void *open_g96_read(const char *filename, const char *,
             if (mdio_readline(mf, gbuf, MAX_G96_LINE + 1) < 0 ||
                 mdio_readline(mf, gbuf, MAX_G96_LINE + 1) < 0 ||
                 mdio_readline(mf, gbuf, MAX_G96_LINE + 1) < 0) {
-              fprintf(stderr, "Cannot read header from '%s', %s\n", 
-                filename, mdio_errmsg(mdio_errno()));
+              fprintf(stderr, "gromacsplugin) Cannot read header from '%s', %s\n",
+                      filename, mdio_errmsg(mdio_errno()));
               return NULL;
             }
         }
         if (strcasecmp(gbuf, "POSITION") && strcasecmp(gbuf, "REFPOSITION")) {
-          fprintf(stderr, "No structure information in file %s\n", filename);
+          fprintf(stderr, "gromacsplugin) No structure information in file %s\n", filename);
           return NULL;
         }
         *natoms = g96_countatoms(mf); 
@@ -205,7 +202,7 @@ static int read_g96_structure(void *mydata, int *optflags,
         for (int i = 0; i < gmx->natoms; i++) {
             molfile_atom_t *atom = atoms+i; 
             if (g96_rec(mf, &ma) < 0) {
-                fprintf(stderr, "Error reading atom %d from file, %s\n",
+                fprintf(stderr, "gromacsplugin) Error reading atom %d from file, %s\n",
                   i+1, mdio_errmsg(mdio_errno()));
                 return MOLFILE_ERROR;
             }
@@ -218,7 +215,7 @@ static int read_g96_structure(void *mydata, int *optflags,
         }
         
         if (mdio_readline(mf, gbuf, MAX_G96_LINE + 1) < 0) {
-            fprintf(stderr, "Warning, error reading END record, %s\n",
+            fprintf(stderr, "gromacsplugin) Warning, error reading END record, %s\n",
                 mdio_errmsg(mdio_errno()));
         }
 
@@ -331,14 +328,14 @@ static void *open_trr_read(const char *filename, const char *filetype,
 
     mf = mdio_open(filename, format);
     if (!mf) {
-        fprintf(stderr, "Cannot open file '%s', %s\n",
+        fprintf(stderr, "gromacsplugin) Cannot open file '%s', %s\n",
                 filename, mdio_errmsg(mdio_errno()));
         return NULL;
     }
     if (mdio_header(mf, &mdh) < 0) {
         mdio_close(mf);
-        fprintf(stderr, "Cannot read header fromm '%s', %s\n",
-            filename, mdio_errmsg(mdio_errno()));
+        fprintf(stderr, "gromacsplugin) Cannot read header fromm '%s', %s\n",
+                filename, mdio_errmsg(mdio_errno()));
         return NULL;
     }
     *natoms = mdh.natoms;
@@ -359,12 +356,13 @@ static int read_trr_timestep(void *v, int natoms, molfile_timestep_t *ts) {
       // XXX Lame, why does mdio treat IOERROR like EOF?  
       return MOLFILE_ERROR;
     }
-    fprintf(stderr, "Error reading timestep, %s\n", mdio_errmsg(mdio_errno()));
+    fprintf(stderr, "gromacsplugin) Error reading timestep, %s\n", 
+            mdio_errmsg(mdio_errno()));
     return MOLFILE_ERROR;
   }
   if (mdts.natoms != natoms) {
-    fprintf(stderr, "Timestep in file contains wrong number of atoms\n");
-    fprintf(stderr, "Found %d, expected %d\n", mdts.natoms, natoms);
+    fprintf(stderr, "gromacsplugin) Timestep in file contains wrong number of atoms\n");
+    fprintf(stderr, "gromacsplugin) Found %d, expected %d\n", mdts.natoms, natoms);
     mdio_tsfree(&mdts);
     return MOLFILE_ERROR;
   }
@@ -407,7 +405,7 @@ static void *open_trr_write(const char *filename, const char *filetype,
 
     mf = mdio_open(filename, format, MDIO_WRITE);
     if (!mf) {
-        fprintf(stderr, "Cannot open file '%s', %s\n",
+        fprintf(stderr, "gromacsplugin) Cannot open file '%s', %s\n",
                 filename, mdio_errmsg(mdio_errno()));
         return NULL;
     }
@@ -473,7 +471,7 @@ static int write_trr_timestep(void *mydata, const molfile_timestep_t *ts)
         return MOLFILE_ERROR;
     }
 #ifdef TEST_TRR_PLUGIN
-    fprintf(stderr, "box is:\n %f %f %f\n %f %f %f\n %f %f %f\n\n",
+    fprintf(stderr, "gromacsplugin) box is:\n %f %f %f\n %f %f %f\n %f %f %f\n\n",
             box[0], box[1], box[2], box[3], box[4], box[5], box[6], box[7], box[8]);
 #endif
 
@@ -483,7 +481,7 @@ static int write_trr_timestep(void *mydata, const molfile_timestep_t *ts)
         return MOLFILE_ERROR;
     }
   } else {
-    fprintf(stderr, "only .trr is supported for writing\n");
+    fprintf(stderr, "gromacsplugin) only .trr is supported for writing\n");
     return MOLFILE_ERROR;
   }
 
@@ -499,7 +497,7 @@ static void close_trr_write(void *v) {
 }
 
 #define GROMACS_PLUGIN_MAJOR_VERSION 0
-#define GROMACS_PLUGIN_MINOR_VERSION 8
+#define GROMACS_PLUGIN_MINOR_VERSION 9
 
 //
 // plugin registration stuff below

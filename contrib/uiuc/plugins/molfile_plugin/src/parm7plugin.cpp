@@ -16,7 +16,7 @@
  *
  *      $RCSfile: parm7plugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.22 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.29 $       $Date: 2009/03/06 03:24:53 $
  *
  ***************************************************************************/
 
@@ -36,7 +36,7 @@ static void *open_parm7_read(const char *filename, const char *,int *natoms) {
   FILE *fd;
   int popn = 0;
   if(!(fd = open_parm7_file(filename, &popn))) {
-    fprintf(stderr, "Cannot open parm file '%s'\n", filename);
+    fprintf(stderr, "parm7plugin) Cannot open parm file '%s'\n", filename);
     return NULL;
   }
   parmstruct *prm = read_parm7_header(fd);
@@ -63,14 +63,18 @@ static int read_parm7_structure(void *mydata, int *optflags, molfile_atom_t *ato
   char buf[85];
   char field[85];
   char *resnames = NULL;
-  *optflags = 0;
+
+  *optflags = MOLFILE_NOOPTIONS; /* no optional data to start with */
 
   while (fgets(buf, 85, file)) {
     // find the next line starting with %FLAG, indicating a new section
-    if (strncmp(buf, "%FLAG ", 6)) continue;
+    if (strncmp(buf, "%FLAG ", 6)) 
+      continue;
+
     // parse field and format indicators
     sscanf(buf+6, "%s\n", field); // type of record
     fscanf(file, "%s\n", buf);    // format
+
     if (!strcmp(field, "ATOM_NAME")) {
       if (!parse_parm7_atoms(buf, prm->Natom, atoms, file)) break;
     } else if (!strcmp(field, "CHARGE")) {
@@ -87,12 +91,13 @@ static int read_parm7_structure(void *mydata, int *optflags, molfile_atom_t *ato
     } else if (!strcmp(field, "RESIDUE_POINTER")) {
       if (!resnames) {
         fprintf(stderr, 
-            "PARM7: cannot parse RESIDUE_POINTER before RESIDUE_LABEL\n");
+            "parm7plugin) Cannot parse RESIDUE_POINTER before RESIDUE_LABEL\n");
         continue;
       }
       if (!parse_parm7_respointers(buf, prm->Natom, atoms, 
                                    prm->Nres, resnames, file)) 
         break;
+      // XXX: we could count the bonded parameters and assign bond types.
     } else if (!strcmp(field, "BONDS_WITHOUT_HYDROGEN")) {
       if (!parse_parm7_bonds(buf, prm->Nbona, p->from+p->nbonds,
             p->to+p->nbonds, file)) break;
@@ -114,12 +119,17 @@ static int read_parm7_structure(void *mydata, int *optflags, molfile_atom_t *ato
   return MOLFILE_SUCCESS;
 }
 
-static int read_parm7_bonds(void *v, int *nbonds, int **fromptr, int **toptr, float **bondorderptr){
+static int read_parm7_bonds(void *v, int *nbonds, int **fromptr, int **toptr, 
+                            float **bondorderptr, int **bondtype, 
+                            int *nbondtypes, char ***bondtypename){
   parmdata *p = (parmdata *)v;
   *nbonds = p->nbonds;
   *fromptr = p->from;
   *toptr = p->to;
   *bondorderptr = NULL; // parm files don't contain bond order information
+  *bondtype = NULL;
+  *nbondtypes = 0;
+  *bondtypename = NULL;
   return MOLFILE_SUCCESS;
 }
 
@@ -136,34 +146,31 @@ static void close_parm7_read(void *mydata) {
  * Initialization stuff down here
  */
 
-static molfile_plugin_t parm7plugin = {
-  vmdplugin_ABIVERSION,          // ABI Version
-  MOLFILE_PLUGIN_TYPE,           // type of plugin
-  "parm7",                       // short name of plugin
-  "AMBER7 Parm",                 // pretty name of plugin
-  "Brian Bennion, Justin Gullingsrud, John E. Stone", // authors
-  0,                             // major version
-  7,                             // minor version
-  VMDPLUGIN_THREADUNSAFE,        // is not reentrant
-  "prmtop,parm7",                // filename extensions
-  open_parm7_read,        
-  read_parm7_structure,  
-  read_parm7_bonds,
-  0,                             // read_next_timestep
-  close_parm7_read,     
-  0,
-  0,
-  0,
-  0,
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_init(){
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "parm7";
+  plugin.prettyname = "AMBER7 Parm";
+  plugin.author = "Brian Bennion, Justin Gullingsrud, John Stone";
+  plugin.majorv = 0;
+  plugin.minorv = 13;
+  plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
+  plugin.filename_extension = "prmtop,parm7";
+  plugin.open_file_read = open_parm7_read;
+  plugin.read_structure = read_parm7_structure;
+  plugin.read_bonds = read_parm7_bonds;
+  plugin.close_file_read = close_parm7_read;
   return VMDPLUGIN_SUCCESS;
 }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(){
-  return VMDPLUGIN_SUCCESS;
-}
+
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v,(vmdplugin_t *)&parm7plugin);
+  (*cb)(v,(vmdplugin_t *)&plugin);
+  return VMDPLUGIN_SUCCESS;
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(){
   return VMDPLUGIN_SUCCESS;
 }

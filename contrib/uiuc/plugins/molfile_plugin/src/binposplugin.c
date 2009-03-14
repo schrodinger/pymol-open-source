@@ -16,7 +16,7 @@
  *
  *      $RCSfile: binposplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.9 $       $Date: 2006/02/23 19:36:44 $
+ *      $Revision: 1.10 $       $Date: 2006/05/01 22:34:20 $
  *
  ***************************************************************************/
 
@@ -223,28 +223,25 @@ static void close_file_write(void *v) {
  * Initialization stuff here
  */
 
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,         /* ABI verison */
-  MOLFILE_PLUGIN_TYPE,		/* type of plugin */
-  "binpos",			/* short name of plugin */
-  "Scripps Binpos",		/* pretty name of plugin */
-  "Brian Bennion",	 	/* author */
-  0,				/* major version */
-  3,				/* minor version */
-  VMDPLUGIN_THREADSAFE,         /* is reentrant */
-  "binpos",                     /* same extension */
-  open_binpos_read,
-  0,
-  0,
-  read_next_timestep,
-  close_file_read,
-  open_binpos_write,
-  0,
-  write_timestep,
-  close_file_write
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_API int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "binpos";
+  plugin.prettyname = "Scripps Binpos";
+  plugin.author = "Brian Bennion";
+  plugin.majorv = 0;
+  plugin.minorv = 4;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "binpos";
+  plugin.open_file_read = open_binpos_read;
+  plugin.read_next_timestep = read_next_timestep;
+  plugin.close_file_read = close_file_read;
+  plugin.open_file_write = open_binpos_write;
+  plugin.write_timestep = write_timestep;
+  plugin.close_file_write = close_file_write;
   return VMDPLUGIN_SUCCESS;
 }
 
@@ -256,3 +253,4 @@ VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
 VMDPLUGIN_API int VMDPLUGIN_fini() {
   return VMDPLUGIN_SUCCESS;
 }
+

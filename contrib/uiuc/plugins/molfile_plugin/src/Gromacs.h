@@ -9,7 +9,7 @@
  * RCS INFORMATION:
  *      $RCSfile: Gromacs.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.22 $       $Date: 2006/02/24 00:57:10 $
+ *      $Revision: 1.26 $       $Date: 2009/01/14 22:18:31 $
  ***************************************************************************/
 
 /*
@@ -97,6 +97,7 @@ static int mdio_errcode;	// Last error code
 #define MAX_TRX_TITLE	80	// Maximum length of a title in .trX
 #define MAX_MDIO_TITLE	80	// Maximum supported title length
 #define ANGS_PER_NM	10	// Unit conversion factor
+#define ANGS2_PER_NM2	100	// Unit conversion factor
 
 
 // All the supported file types and their respective extensions
@@ -268,7 +269,7 @@ static const char *mdio_errdescs[] = {
  * detect endiannes of host machine. returns true on little endian machines. */
 static inline int host_is_little_endian(void) 
 {
-  const union { char c[4]; unsigned int i; } 
+  const union { unsigned char c[4]; unsigned int i; } 
   fixed = { { 0x10 , 0x20 , 0x40 , 0x80 } };
   const unsigned int i = 0x80402010U;
         
@@ -430,6 +431,9 @@ static int mdio_readline(md_file *mf, char *buf, int n, int strip) {
 	// File I/O error?
 	if (ferror(mf->f)) return mdio_seterror(MDIO_IOERROR);
 
+        // comment line?
+        if (buf[0] == '#') return mdio_readline(mf,buf,n,strip);
+
 	// Strip whitespace
 	if (strip) strip_white(buf);
 
@@ -513,9 +517,9 @@ static int mdio_readbox(md_box *box, float *x, float *y, float *z) {
   
     // gamma, beta, alpha are the angles between the x & y, x & z, y & z
     // vectors, respectively
-    box->gamma = acos( (x[0]*y[0]+x[1]*y[1]+x[2]*y[2])/(A*B) ) * 90.0/M_PI_2;
-    box->beta = acos( (x[0]*z[0]+x[1]*z[1]+x[2]*z[2])/(A*C) ) * 90.0/M_PI_2;
-    box->alpha = acos( (y[0]*z[0]+y[1]*z[1]+y[2]*z[2])/(B*C) ) * 90.0/M_PI_2; 
+    box->gamma = acos( (x[0]*y[0]+x[1]*y[1]+x[2]*y[2])*ANGS2_PER_NM2/(A*B) ) * 90.0/M_PI_2;
+    box->beta = acos( (x[0]*z[0]+x[1]*z[1]+x[2]*z[2])*ANGS2_PER_NM2/(A*C) ) * 90.0/M_PI_2;
+    box->alpha = acos( (y[0]*z[0]+y[1]*z[1]+y[2]*z[2])*ANGS2_PER_NM2/(B*C) ) * 90.0/M_PI_2; 
   }
   return mdio_seterror(MDIO_SUCCESS);
 }

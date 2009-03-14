@@ -16,7 +16,7 @@
  *
  *      $RCSfile: dsn6plugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.19 $       $Date: 2006/02/23 19:36:44 $
+ *      $Revision: 1.23 $       $Date: 2006/06/19 18:19:44 $
  *
  ***************************************************************************/
 
@@ -292,26 +292,30 @@ static void close_dsn6_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   // ABI version
-  MOLFILE_PLUGIN_TYPE, 	  // plugin type
-  "DSN6",                 // short file format description
-  "DSN6",                 // pretty file format description
-  "Eamon Caddigan",       // author(s)
-  0,                      // major version
-  4,                      // minor version
-  VMDPLUGIN_THREADSAFE,   // is reentrant
-  "ds6"                   // filename extension
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { 
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "DSN6";
+  plugin.prettyname = "DSN6";
+  plugin.author = "Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 6;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "ds6,dsn6,omap";
   plugin.open_file_read = open_dsn6_read;
   plugin.read_volumetric_metadata = read_dsn6_metadata;
   plugin.read_volumetric_data = read_dsn6_data;
   plugin.close_file_read = close_dsn6_read;
+  return VMDPLUGIN_SUCCESS; 
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

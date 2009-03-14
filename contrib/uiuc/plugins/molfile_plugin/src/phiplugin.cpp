@@ -16,7 +16,7 @@
  *
  *      $RCSfile: phiplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.24 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.26 $       $Date: 2008/01/09 19:36:51 $
  *
  ***************************************************************************/
 
@@ -63,17 +63,17 @@ static char *phigets(char *s, int n, FILE *stream) {
   char *returnVal;
 
   if (feof(stream)) {
-    fprintf(stderr, "Unexpected end-of-file.\n");
+    fprintf(stderr, "phiplugin) Unexpected end-of-file.\n");
     returnVal = NULL; 
   }
   else if (ferror(stream)) {
-    fprintf(stderr, "Error reading file.\n");
+    fprintf(stderr, "phiplugin) Error reading file.\n");
     return NULL;
   }
   else {
     returnVal = fgets(s, n, stream);
     if (returnVal == NULL) {
-      fprintf(stderr, "Error reading line.\n");
+      fprintf(stderr, "phiplugin) Error reading line.\n");
     }
   }
 
@@ -92,7 +92,7 @@ static void *open_phi_read(const char *filepath, const char *filetype,
   
   fd = fopen(filepath, "rb");
   if (!fd) {
-    fprintf(stderr, "Error opening file.\n");
+    fprintf(stderr, "phiplugin) Error opening file.\n");
     return NULL;
   }
 
@@ -237,26 +237,30 @@ static void close_phi_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   /* ABI version */
-  MOLFILE_PLUGIN_TYPE, 	  /* plugin type */
-  "delphibig",            /* file format description */
-  "Delphi 'Big' Formatted Potential Map", /* file format description */
-  "Eamon Caddigan",       /* author(s) */
-  0,                      /* major version */
-  6,                      /* minor version */
-  VMDPLUGIN_THREADSAFE,   /* is reentrant */
-  "big"                   /* filename extension */
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "delphibig";
+  plugin.prettyname = "Delphi 'Big' Formatted Potential Map";
+  plugin.author = "Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 7;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "big";
   plugin.open_file_read = open_phi_read;
   plugin.read_volumetric_metadata = read_phi_metadata;
   plugin.read_volumetric_data = read_phi_data;
   plugin.close_file_read = close_phi_read;
+  return VMDPLUGIN_SUCCESS; 
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

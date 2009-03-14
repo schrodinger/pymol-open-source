@@ -16,7 +16,7 @@
  *
  *      $RCSfile: namdbinplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.19 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.20 $       $Date: 2006/06/19 18:19:45 $
  *
  ***************************************************************************/
 
@@ -209,28 +209,25 @@ static void close_file_write(void *v) {
  * Initialization stuff here
  */
 
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,         /* ABI verison */
-  MOLFILE_PLUGIN_TYPE,          /* type of plugin */
-  "namdbin",			/* name of plugin */
-  "NAMD Binary Coordinates",    /* name of plugin */
-  "James Phillips, Justin Gullingsrud",	 /* author */
-  0,				/* major version */
-  1,				/* minor version */
-  VMDPLUGIN_THREADSAFE,         /* is reentrant */
-  "coor",                       /* filename extension */
-  open_namdbin_read,
-  0,
-  0,
-  read_next_timestep,
-  close_file_read,
-  open_namdbin_write,
-  0,
-  write_timestep,
-  close_file_write
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_API int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "namdbin";
+  plugin.prettyname = "NAMD Binary Coordinates";
+  plugin.author = "James Phillips, Justin Gullingsrud";
+  plugin.majorv = 0;
+  plugin.minorv = 2;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "coor";
+  plugin.open_file_read = open_namdbin_read;
+  plugin.read_next_timestep = read_next_timestep;
+  plugin.close_file_read = close_file_read;
+  plugin.open_file_write = open_namdbin_write;
+  plugin.write_timestep = write_timestep;
+  plugin.close_file_write = close_file_write;
   return VMDPLUGIN_SUCCESS;
 }
 

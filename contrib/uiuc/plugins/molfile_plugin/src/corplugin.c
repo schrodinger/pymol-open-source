@@ -16,7 +16,7 @@
  *
  *      $RCSfile: corplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.26 $       $Date: 2006/02/23 19:36:44 $
+ *      $Revision: 1.28 $       $Date: 2008/08/05 20:11:27 $
  *
  ***************************************************************************/
 
@@ -199,16 +199,13 @@ static int get_cor_atom(FILE *f, char *atomName, char *atomType, char
       printf("corplugin) Improperly formatted line: \n%s\n", inbuf);
       return -1;
     }
-    strip_whitespace(resName, sizeof(resName));  
-
+    strip_whitespace(resName, sizeof(resName));  /* strip from long original */
     strip_whitespace(atomName, sizeof(atomName));
     strip_whitespace(segName, sizeof(segName));
-    memcpy(resName, resNameStr, 7);              
-
+    memcpy(resName, resNameStr, 7);              /* XXX truncate extra chars */
     memcpy(atomName, atomNameStr, 7);
     memcpy(segName, segNameStr, 7);
-    resName[7] = '\0';                           
-
+    resName[7] = '\0';                           /* NUL terminate strings.. */
     atomName[7] = '\0';
     segName[7] = '\0';
   } else {
@@ -352,24 +349,23 @@ static void close_cor_read(void *mydata) {
  * Initialization stuff down here
  */
 
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,         /* ABI version */
-  MOLFILE_PLUGIN_TYPE,          /* type */
-  "cor",                        /* short name */
-  "CHARMM Coordinates",         /* pretty name */
-  "Eamon Caddigan, John Stone", /* author */
-  0,                            /* major version */
-  7,                            /* minor version */
-  VMDPLUGIN_THREADSAFE,         /* is_reentrant  */
-  "cor",                        /* filename extensions */
-  open_cor_read,                /* open_file_read     */
-  read_cor_structure,           /* read_structure     */
-  0,                            /* read bond list     */
-  read_cor_timestep,            /* read_next_timestep */
-  close_cor_read                /* close_file_read    */
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_API int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "cor";
+  plugin.prettyname = "CHARMM Coordinates";
+  plugin.author = "Eamon Caddigan, John Stone";
+  plugin.majorv = 0;
+  plugin.minorv = 8;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "cor";
+  plugin.open_file_read = open_cor_read;
+  plugin.read_structure = read_cor_structure;
+  plugin.read_next_timestep = read_cor_timestep;
+  plugin.close_file_read = close_cor_read;
   return VMDPLUGIN_SUCCESS;
 }
 
@@ -381,3 +377,4 @@ VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
 VMDPLUGIN_API int VMDPLUGIN_fini() {
   return VMDPLUGIN_SUCCESS;
 }
+

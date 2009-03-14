@@ -15,8 +15,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: bgfplugin.C,v $
- *      $Author: petefred $       $Locker:  $             $State: Exp $
- *      $Revision: 1.18 $       $Date: 2006/03/22 18:11:56 $
+ *      $Author: johns $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.27 $       $Date: 2009/02/20 22:28:40 $
  *
  ***************************************************************************/
 
@@ -78,7 +78,9 @@ static void *open_bgf_read(const char *path, const char *filetype,
   rewind(fd);
 
   // Allocate and initialize the bgf structure
-  bgf = new bgfdata;
+  bgf = (bgfdata *) malloc(sizeof(bgfdata));
+  memset(bgf, 0, sizeof(bgfdata));
+
   bgf->file = fd;
   bgf->natoms = *natoms;
   bgf->nbonds = nbonds;
@@ -276,13 +278,15 @@ static void *open_bgf_write(const char *filename, const char *filetype,
   bgfdata *data;
 
   if ((fd = fopen(filename, "w")) == NULL) {
-    printf("Error) Unable to open bgf file %s for writing\n", filename);
+    printf("bgfplugin) Error: unable to open bgf file %s for writing\n", filename);
     return NULL;
   }
   
-  data = (bgfdata *)malloc(sizeof(bgfdata));
+  data = (bgfdata *) malloc(sizeof(bgfdata));
+  memset(data, 0, sizeof(bgfdata));
   data->natoms = natoms;
   data->file = fd;
+  data->nbonds = 0;
   return data;
 }
 
@@ -295,7 +299,7 @@ static int write_bgf_structure(void *mydata, int optflags,
   return MOLFILE_SUCCESS;
 }
 
-void getatomfield(char* atomfield, const char* resname) {
+static void getatomfield(char* atomfield, const char* resname) {
   if ((strncmp(resname,"ALA",3) == 0) || (strncmp(resname,"ASP",3) == 0) || (strncmp(resname,"ARG",3) == 0) || (strncmp(resname,"ASN",3) == 0) || (strncmp(resname,"CYS",3) == 0) || (strncmp(resname,"GLN",3) == 0) || (strncmp(resname,"GLU",3) == 0) || (strncmp(resname,"GLY",3) == 0) || (strncmp(resname,"HIS",3) == 0) || (strncmp(resname,"ILE",3) == 0) || (strncmp(resname,"LEU",3) == 0) || (strncmp(resname,"LYS",3) == 0) || (strncmp(resname,"MET",3) == 0) || (strncmp(resname,"PHE",3) == 0) || (strncmp(resname,"PRO",3) == 0) || (strncmp(resname,"SER",3) == 0) || (strncmp(resname,"THR",3) == 0) || (strncmp(resname,"TRP",3) == 0) || (strncmp(resname,"TYR",3) == 0) || (strncmp(resname,"VAL",3) == 0) || (strncmp(resname,"ADE",3) == 0) || (strncmp(resname,"THY",3) == 0) || (strncmp(resname,"GUA",3) == 0) || (strncmp(resname,"CYT",3) == 0) || (strncmp(resname,"URA",3) == 0) || (strncmp(resname,"HSD",3) == 0) || (strncmp(resname,"HSE",3) == 0) || (strncmp(resname,"HSP",3) == 0)) {
     strncpy(atomfield, "ATOM  \0", 7);
   } else {
@@ -303,74 +307,7 @@ void getatomfield(char* atomfield, const char* resname) {
   }
 }
       
-static void getdreiidff(char* outputtype, const char* psftype, int& numbonds, int& lp) {
-  //Note that while this function isn't used yet, it actually IS important, and will be enabled in the future pending dicussion with some bgf users
-  if (strncmp(psftype,"H",1)==0) {
-    //It's a hydrogen
-    //FIXME: Doesn't properly identify acidic hydrogens yet
-    strncpy(outputtype, "H_  ",4);
-    numbonds=1;
-    lp=0;
-    return;
-  } else if (strncmp(psftype,"C",1)==0) {
-    //It's a carbon... probably
-    if (strncmp(psftype,"C ",2)==0 || strncmp(psftype,"CA ",3)==0 || strncmp(psftype,"CPH",3)==0 || strncmp(psftype,"CPT",3)==0 || strncmp(psftype,"CC ",3)==0 || strncmp(psftype,"CD ",3)==0 || strncmp(psftype,"CN1",3)==0 || strncmp(psftype,"CN2",3)==0 || strncmp(psftype,"CN3",3)==0 || strncmp(psftype,"CN4",3)==0 || strncmp(psftype,"CN5",3)==0 || strncmp(psftype,"CNA",3)==0) {
-      strncpy(outputtype, "C_2 ",4);
-      numbonds=3;
-      lp=0;
-      return; 
-    } else {
-      strncpy(outputtype, "C_3 ",4);
-      numbonds=4;
-      lp=0;
-      return; 
-    }  
-  } else if (strncmp(psftype,"N",1)==0) {
-    //It"s probably nitrogen
-    if (strncmp(psftype,"NR",2)==0 || strncmp(psftype,"NH1",3)==0 || strncmp(psftype,"NH2",3)==0 || strncmp(psftype,"NC2",3)==0 || strncmp(psftype,"NY",2)==0 || (strncmp(psftype,"NN",2)==0 && strncmp(psftype,"NN6",3)!=0)) {
-      strncpy(outputtype, "N_R",4);
-      numbonds=3;
-      lp=0;
-      return;
-    } else {
-      strncpy(outputtype, "N_3 ",4);
-      numbonds=3;
-      lp=1;
-      return;
-    }
-  } else if (strncmp(psftype,"O",1)==0) {
-    //Probably an oxygen
-    if (strncmp(psftype,"OH1",3)==0 || strncmp(psftype,"OS",2)==0 || strncmp(psftype,"OT ",3)==0 || strncmp(psftype,"ON4",3)==0 || strncmp(psftype,"ON5",3)==0 || strncmp(psftype,"ON6",3)==0) {
-      strncpy(outputtype, "O_3 ",4);
-      numbonds=2;
-      lp=2;
-      return;
-   } else {
-      strncpy(outputtype, "O_2 ",4);
-      numbonds=1;
-      lp=2;
-      return;
-    }
-  } else if (strncmp(psftype,"S",1)==0) {
-    strncpy(outputtype, "S_3 ",4);
-    numbonds=2;
-    lp=2;
-    return;
-  } else if (strncmp(psftype,"P",1)==0) {
-    strncpy(outputtype, "P_3 ",4);
-    numbonds=6;
-    lp=0;
-    return;
-  } else {
-    strncpy(outputtype, "X_  ",4);
-    numbonds=0;
-    lp=0;
-    return;
-  }
-}
-
-
-static int read_bgf_bonds(void *v, int *nbonds, int **fromptr, int **toptr, float **bondorderptr) {
+static int read_bgf_bonds_aux(void *v, int *nbonds, int **fromptr, int **toptr, float **bondorderptr) {
   bgfdata *bgf = (bgfdata *)v;
   char line[LINESIZE]; 
   char nextline[LINESIZE]; 
@@ -380,12 +317,6 @@ static int read_bgf_bonds(void *v, int *nbonds, int **fromptr, int **toptr, floa
     *toptr = NULL;
     return MOLFILE_SUCCESS;
   }
-
-  // Allocate memory for the from and to arrays. This will be freed in
-  // close_mol2_read
-  bgf->from = new int[bgf->nbonds];
-  bgf->to = new int[bgf->nbonds];
-  bgf->bondorder = new float[bgf->nbonds];
 
   // Find and read the BOND record
   rewind(bgf->file);
@@ -439,6 +370,7 @@ static int read_bgf_bonds(void *v, int *nbonds, int **fromptr, int **toptr, floa
       numords=0;
       strncpy(currbond,bondptr,6);
       j=atoi(currbond);
+      printf("bond: %i\n", j);
       numfields--;
       bondptr += 6;
 
@@ -447,6 +379,7 @@ static int read_bgf_bonds(void *v, int *nbonds, int **fromptr, int **toptr, floa
         numfields--;
         bondptr += 6;
         bonds[numbonds]=atoi(currbond);
+        printf("bond: %i\n", bonds[numbonds]);
         numbonds++;
       }
 
@@ -501,7 +434,9 @@ static int read_bgf_bonds(void *v, int *nbonds, int **fromptr, int **toptr, floa
 }
 
 
-static int read_bonds(void *v, int *nbonds, int **fromptr, int **toptr, float **bondorderptr) {
+static int read_bgf_bonds(void *v, int *nbonds, int **fromptr, int **toptr, 
+                          float **bondorderptr, int **bondtype, 
+                          int *nbondtypes, char ***bondtypename) {
   bgfdata *bgf = (bgfdata *)v;
 
   *nbonds=bgf->nbonds;
@@ -510,7 +445,7 @@ static int read_bonds(void *v, int *nbonds, int **fromptr, int **toptr, float **
     bgf->to = (int *) malloc(*nbonds*sizeof(int));
     bgf->bondorder = (float *) malloc(*nbonds*sizeof(float));
 
-    if ((read_bgf_bonds(bgf, nbonds, &(bgf->from), &(bgf->to), &(bgf->bondorder))) != MOLFILE_SUCCESS) {
+    if ((read_bgf_bonds_aux(bgf, nbonds, &(bgf->from), &(bgf->to), &(bgf->bondorder))) != MOLFILE_SUCCESS) {
       fclose(bgf->file);
       bgf->file = NULL;
       return MOLFILE_ERROR;
@@ -524,6 +459,9 @@ static int read_bonds(void *v, int *nbonds, int **fromptr, int **toptr, float **
     *fromptr = NULL;
     *toptr = NULL;
     *bondorderptr = NULL;
+    *bondtype = NULL;
+    *nbondtypes = 0;
+    *bondtypename = NULL;
   }
 
   return MOLFILE_SUCCESS;
@@ -573,7 +511,12 @@ static int write_bgf_timestep(void *mydata, const molfile_timestep_t *ts) {
   for (i=0;i<data->nbonds;i++) {
     j=data->from[i];
     k=data->to[i];
-    o=data->bondorder[i];
+
+    if (data->bondorder != NULL)
+      o=data->bondorder[i];
+    else
+      o=1.0f;
+
     numcons[j]++;
     numcons[k]++;
     if (numcons[j]>6) {
@@ -633,17 +576,24 @@ static int write_bgf_timestep(void *mydata, const molfile_timestep_t *ts) {
   return MOLFILE_SUCCESS;
 }
 
-static int write_bonds(void *v, int nbonds, int *fromptr, int *toptr, float *bondorderptr) {
+static int write_bgf_bonds(void *v, int nbonds, int *fromptr, int *toptr, 
+                           float *bondorderptr,  int *bondtype, 
+                           int nbondtypes, char **bondtypename) {
   bgfdata *data = (bgfdata *)v;
-  data->from = new int[nbonds];
-  data->to = new int[nbonds];
-  data->bondorder = new float[nbonds];
+  data->from = (int*) malloc(nbonds * sizeof(int));
+  data->to = (int*) malloc(nbonds * sizeof(int));
 
   //set the pointers for use later
   for (int i=0;i<nbonds;i++) {
     data->from[i]=fromptr[i];
     data->to[i]=toptr[i];
-    data->bondorder[i]=bondorderptr[i];
+  }
+
+  if (bondorderptr != NULL) {  
+    data->bondorder = (float*) malloc(nbonds * sizeof(float));
+    for (int i=0;i<nbonds;i++) {
+      data->bondorder[i]=bondorderptr[i];
+    }
   }
 
   data->nbonds = nbonds;
@@ -654,11 +604,15 @@ static void close_bgf_write(void *mydata) {
   bgfdata *data = (bgfdata *)mydata;
   if (data) {
     if (data->file != NULL) fclose(data->file);
-
+    data->file = NULL;
     if (data->atomlist != NULL) free(data->atomlist);
+    data->atomlist = NULL;
     if (data->from != NULL) free(data->from);
+    data->from = NULL;
     if (data->to != NULL) free(data->to);
+    data->to = NULL;
     if (data->bondorder != NULL) free(data->bondorder);
+    data->bondorder = NULL;
     free(data);
   }
 }
@@ -669,46 +623,46 @@ static void close_bgf_read(void *v) {
   bgfdata *bgf = (bgfdata *)v;
   if (bgf) {
     if (bgf->file != NULL) fclose(bgf->file);
+    bgf->file = NULL;
     if (bgf->from != NULL) free(bgf->from);
+    bgf->from = NULL;
     if (bgf->to != NULL)   free(bgf->to);
+    bgf->to = NULL;
     if (bgf->bondorder != NULL)   free(bgf->bondorder);
-    delete bgf;
+    bgf->bondorder = NULL;
+    free(bgf);
   }
 }
 
 
-static molfile_plugin_t bgfplugin = {
-  vmdplugin_ABIVERSION,
-  MOLFILE_PLUGIN_TYPE,                      
-  "bgf",                                    
-  "MSI Biograf Format",
-  "Peter Freddolino ",    
-  0,                                        
-  10,                                        
-  VMDPLUGIN_THREADSAFE,                     
-  "bgf",
-  open_bgf_read,
-  read_bgf_structure,
-  read_bonds,
-  read_bgf_timestep,
-  close_bgf_read,
-  open_bgf_write,
-  write_bgf_structure,
-  write_bgf_timestep,
-  close_bgf_write,
-  0,                            
-  0,                            
-  0,
-  0,
-  write_bonds  
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "bgf";
+  plugin.prettyname = "MSI Biograf Format";
+  plugin.author = "Peter Freddolino ";
+  plugin.majorv = 0;
+  plugin.minorv = 16;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "bgf";
+  plugin.open_file_read = open_bgf_read;
+  plugin.read_structure = read_bgf_structure;
+  plugin.read_bonds = read_bgf_bonds;
+  plugin.read_next_timestep = read_bgf_timestep;
+  plugin.close_file_read = close_bgf_read;
+  plugin.open_file_write = open_bgf_write;
+  plugin.write_structure = write_bgf_structure;
+  plugin.write_timestep = write_bgf_timestep;
+  plugin.close_file_write = close_bgf_write;
+  plugin.write_bonds = write_bgf_bonds;
   return VMDPLUGIN_SUCCESS;
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&bgfplugin);
+  (*cb)(v, (vmdplugin_t *) &plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

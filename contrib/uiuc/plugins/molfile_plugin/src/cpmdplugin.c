@@ -16,7 +16,7 @@
  *
  *      $RCSfile: cpmdplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.11 $       $Date: 2006/02/23 19:36:44 $
+ *      $Revision: 1.13 $       $Date: 2009/01/28 15:02:34 $
  *
  ***************************************************************************/
 
@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "molfile_plugin.h"
+#include "unit_conversion.h"
 
 typedef struct {
   FILE *file;
@@ -129,7 +130,7 @@ static int read_cpmd_timestep(void *mydata, int natoms, molfile_timestep_t *ts) 
   int i, j, nfi_first, nfi_current;
   char fbuffer[1024];
   float x, y, z;
-  const float bohr=0.529177249;
+  const float bohr=BOHR_TO_ANGS;
   char *k;
   
   cpmddata *data = (cpmddata *)mydata;
@@ -174,38 +175,28 @@ static void close_cpmd_read(void *mydata) {
 }
 
 
-/* registration stuff */
-static molfile_plugin_t cpmdplugin = {
-  vmdplugin_ABIVERSION,
-  MOLFILE_PLUGIN_TYPE,                         /* type */
-  "cpmd",                                      /* short name */
-  "CPMD",                                      /* pretty name */
-  "Axel Kohlmeyer, John E. Stone",             /* author */
-  0,                                           /* major version */
-  3,                                           /* minor version */
-  VMDPLUGIN_THREADSAFE,                        /* is reentrant */
-  "cpmd",
-  open_cpmd_read,
-/*  read_cpmd_structure */
-  0,
-  0,
-  read_cpmd_timestep,
-  close_cpmd_read,
-/*  open_cpmd_write, */
-  0,
-  0,
-/*  write_cpmd_timestep, */
-  0,
-/*  close_cpmd_write */
-  0
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_API int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "cpmd";
+  plugin.prettyname = "CPMD";
+  plugin.author = "Axel Kohlmeyer, John Stone";
+  plugin.majorv = 0;
+  plugin.minorv = 4;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "cpmd";
+  plugin.open_file_read = open_cpmd_read;
+/*  plugin.read_structure = read_cpmd_structure; */
+  plugin.read_next_timestep = read_cpmd_timestep;
+  plugin.close_file_read = close_cpmd_read;
   return VMDPLUGIN_SUCCESS;
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&cpmdplugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

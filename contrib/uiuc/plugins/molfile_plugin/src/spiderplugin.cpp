@@ -16,7 +16,7 @@
  *
  *      $RCSfile: spiderplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.11 $       $Date: 2006/03/30 02:35:18 $
+ *      $Revision: 1.14 $       $Date: 2008/01/09 20:37:47 $
  *
  ***************************************************************************/
 
@@ -94,7 +94,7 @@ static void *open_spider_read(const char *filepath, const char *filetype,
  
   fd = fopen(filepath, "rb");
   if (!fd) {
-    fprintf(stderr, "Error opening file.\n");
+    fprintf(stderr, "spiderplugin) Error opening file.\n");
     return NULL;
   }
 
@@ -304,26 +304,30 @@ static void close_spider_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   /* ABI version */
-  MOLFILE_PLUGIN_TYPE, 	  /* plugin type */
-  "spider",               /* short file format description */
-  "SPIDER Density Map",   /* pretty file format description */
-  "John Stone",           /* author(s) */
-  0,                      /* major version */
-  4,                      /* minor version */
-  VMDPLUGIN_THREADSAFE,   /* is reentrant */
-  "spider"                /* filename extension */
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "spider";
+  plugin.prettyname = "SPIDER Density Map";
+  plugin.author = "John Stone";
+  plugin.majorv = 0;
+  plugin.minorv = 6;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "spi,spider";
   plugin.open_file_read = open_spider_read;
   plugin.read_volumetric_metadata = read_spider_metadata;
   plugin.read_volumetric_data = read_spider_data;
   plugin.close_file_read = close_spider_read;
+  return VMDPLUGIN_SUCCESS;
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 

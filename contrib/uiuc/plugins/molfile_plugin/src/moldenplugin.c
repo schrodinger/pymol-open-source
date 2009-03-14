@@ -16,7 +16,7 @@
  *
  *      $RCSfile: moldenplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.12 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.13 $       $Date: 2006/06/19 18:19:45 $
  *
  ***************************************************************************/
 
@@ -333,33 +333,28 @@ static void close_molden_read(void *mydata) {
 
 
 /* registration stuff */
-static molfile_plugin_t moldenplugin = {
-  vmdplugin_ABIVERSION,
-  MOLFILE_PLUGIN_TYPE,                         /* type */
-  "molden",                                    /* short name */
-  "Molden",                                    /* pretty name */
-  "Markus Dittrich",                           /* author */
-  0,                                           /* major version */
-  1,                                           /* minor version */
-  VMDPLUGIN_THREADSAFE,                        /* is reentrant */
-  "molden",
-  open_molden_read,
-  read_molden_structure,
-  0,
-  read_next_timestep, 
-  close_molden_read,
-  0,
-  0,
-  0, 
-  0,
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_API int VMDPLUGIN_init() {
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "molden";
+  plugin.prettyname = "Molden";
+  plugin.author = "Markus Dittrich";
+  plugin.majorv = 0;
+  plugin.minorv = 2;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "molden";
+  plugin.open_file_read = open_molden_read;
+  plugin.read_structure = read_molden_structure;
+  plugin.read_next_timestep = read_next_timestep;
+  plugin.close_file_read = close_molden_read;
   return VMDPLUGIN_SUCCESS;
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&moldenplugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

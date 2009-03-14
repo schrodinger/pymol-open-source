@@ -3,7 +3,7 @@
  *
  *      $RCSfile: periodic_table.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.10 $       $Date: 2005/08/22 22:00:27 $
+ *      $Revision: 1.12 $       $Date: 2009/01/21 17:45:41 $
  *
  ***************************************************************************/
 
@@ -13,7 +13,7 @@
  * all tables and functions are declared static, so that it
  * can be safely included by all plugins that may need it.
  *
- * 2002-2005 axel.kohlmeyer@theochem.ruhr-uni-bochum.de, vmd@ks.uiuc.edu
+ * 2002-2009 akohlmey@cmm.chem.upenn.edu, vmd@ks.uiuc.edu
  */
 
 #include <string.h>
@@ -65,18 +65,20 @@ static const float pte_mass[] = {
  * except the value for H, which is taken from R.S. Rowland & R. Taylor, 
  * J.Phys.Chem., 100, 7384 - 7391, 1996. Radii that are not available in 
  * either of these publications have RvdW = 2.00 Å.
+ * The radii for Ions (Na, K, Cl, Ca, Mg, and Cs are based on the CHARMM27 
+ * Rmin/2 parameters for (SOD, POT, CLA, CAL, MG, CES) by default.
  */
 static const float pte_vdw_radius[] = { 
     /* X  */ 1.5, 1.2, 1.4, 1.82, 2.0, 2.0,  
     /* C  */ 1.7, 1.55, 1.52, 1.47, 1.54, 
-    /* Na */ 2.27, 1.73, 2.0, 2.1, 1.8,
-    /* S  */ 1.8, 1.75, 1.88, 2.75, 2.0, 2.0,
+    /* Na */ 1.36, 1.18, 2.0, 2.1, 1.8,
+    /* S  */ 1.8, 2.27, 1.88, 1.76, 1.37, 2.0,
     /* Ti */ 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
     /* Ni */ 1.63, 1.4, 1.39, 1.07, 2.0, 1.85,
     /* Se */ 1.9, 1.85, 2.02, 2.0, 2.0, 2.0, 
     /* Zr */ 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
     /* Pd */ 1.63, 1.72, 1.58, 1.93, 2.17, 2.0, 
-    /* Te */ 2.06, 1.98, 2.16, 2.0, 2.0,
+    /* Te */ 2.06, 1.98, 2.16, 2.1, 2.0,
     /* La */ 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
     /* Eu */ 2.0, 2.0, 2.0, 2.0, 2.0,
     /* Er */ 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
@@ -144,6 +146,8 @@ static int get_pte_idx(const char *label)
         atom[0] = (char) toupper((int) label[0]);
         atom[1] = (char) tolower((int) label[1]);
     }
+    /* discard numbers in atom label */
+    if (isdigit(atom[1])) atom[1] = (char) 0;
     
     for (i=0; i < nr_pte_entries; ++i) {
         if ( (pte_label[i][0] == atom[0])

@@ -16,7 +16,7 @@
  *
  *      $RCSfile: rst7plugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.16 $       $Date: 2006/02/23 19:36:45 $
+ *      $Revision: 1.17 $       $Date: 2006/06/19 18:19:45 $
  *
  ***************************************************************************/
 
@@ -192,34 +192,32 @@ static void close_rst_write(void *v) {
 }
 
 /* registration stuff */
-static molfile_plugin_t rst7plugin = {
-    vmdplugin_ABIVERSION,   /* ABI version */
-    MOLFILE_PLUGIN_TYPE,    /* type of plugin */
-    "rst7",                 /* short name of plugin */
-    "AMBER7 Restart",       /* pretty name of plugin */
-    "Brian Bennion",        /* authors */
-    0,                      /* major version */
-    2,                      /* minor version */
-    VMDPLUGIN_THREADUNSAFE, /* is not reentrant */
-    "rst7",                 /* filename extension */
-    open_rst_read,
-    0,
-    0,
-    read_rst_timestep,
-    close_rst_read,
-    open_rst_write,
-    0,
-    write_rst_timestep,
-    close_rst_write
-};
+static molfile_plugin_t plugin;
 
 VMDPLUGIN_API int VMDPLUGIN_init(){
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "rst7";
+  plugin.prettyname = "AMBER7 Restart";
+  plugin.author = "Brian Bennion";
+  plugin.majorv = 0;
+  plugin.minorv = 3;
+  plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
+  plugin.filename_extension = "rst7";
+  plugin.open_file_read = open_rst_read;
+  plugin.read_next_timestep = read_rst_timestep;
+  plugin.close_file_read = close_rst_read;
+  plugin.open_file_write = open_rst_write;
+  plugin.write_timestep = write_rst_timestep;
+  plugin.close_file_write = close_rst_write;
   return VMDPLUGIN_SUCCESS;
 }
-VMDPLUGIN_API int VMDPLUGIN_fini(){
-  return VMDPLUGIN_SUCCESS;
-}
+
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&rst7plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_API int VMDPLUGIN_fini(){ return VMDPLUGIN_SUCCESS; }
+

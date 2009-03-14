@@ -16,7 +16,7 @@
  *
  *      $RCSfile: fs4plugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.18 $       $Date: 2006/02/23 19:36:44 $
+ *      $Revision: 1.21 $       $Date: 2008/01/09 20:25:27 $
  *
  ***************************************************************************/
 
@@ -70,7 +70,7 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
 
   fd = fopen(filepath, "rb");
   if (!fd) {
-    fprintf(stderr, "Error opening file.\n");
+    fprintf(stderr, "fs4plugin) Error opening file.\n");
     return NULL;
   }
 
@@ -83,7 +83,7 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
     if (dataBegin <= 255) {
       swap = 1;
     } else {
-      fprintf(stderr, "Cannot read file: header block is too large.\n");
+      fprintf(stderr, "fs4plugin) Cannot read file: header block is too large.\n");
       return NULL;
     }
   }
@@ -94,13 +94,13 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
 
   // Handle files produced by old versions of (cns|ccp)2fsfour
   if (blocksize == 28) {
-    printf("Recognized %s cns2fsfour map.\n", 
+    printf("fs4plugin) Recognized %s cns2fsfour map.\n", 
         swap ? "opposite-endian" : "same-endian");
 
     // Read the geometry block
     blocksize = fortread_4(geom, 16, swap, fd);
     if (blocksize != 7) {
-      fprintf(stderr, "Incorrect size for geometry block.\n");
+      fprintf(stderr, "fs4plugin) Incorrect size for geometry block.\n");
       return NULL;
     }
 
@@ -110,7 +110,7 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
     norn = geom[4];
 
     // Warn about assumptions
-    printf("Warning: file does not contain unit cell lengths or angles.\n");
+    printf("fs4plugin) Warning: file does not contain unit cell lengths or angles.\n");
 
     scale = 50.0;
     fmsCellSize[0] = 1.0;
@@ -123,7 +123,7 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
 
   // Handle standard fsfour files
   else if (blocksize == 31) {
-    printf("Recognize standard fsfour map.\n");
+    printf("fs4plugin) Recognize standard fsfour map.\n");
 
     fmsCellSize[0] = header[21];
     fmsCellSize[1] = header[22];
@@ -135,13 +135,13 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
     // Skip the symmetry block if one present
     blocksize = fortread_4(geom, 16, swap, fd);
     if (blocksize == 9) {
-      printf("Skipping symmetry block.\n");
+      printf("fs4plugin) Skipping symmetry block.\n");
       blocksize = fortread_4(geom, 16, swap, fd);
     }
 
     // Read the geometry block
     if (blocksize != 13) {
-      fprintf(stderr, "Incorrect size for geometry block.\n");
+      fprintf(stderr, "fs4plugin) Incorrect size for geometry block.\n");
       return NULL;
     }
 
@@ -156,14 +156,14 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
 
     norn = geom[4];
     if ((norn < 0) || (norn > 2)) {
-      fprintf(stderr, "norn out of range.\n");
+      fprintf(stderr, "fs4plugin) norn out of range.\n");
       return NULL;
     }
   }
 
   // Unrecognized format
   else {
-    fprintf(stderr, "Unrecognized map format.\n");
+    fprintf(stderr, "fs4plugin) Unrecognized map format.\n");
     return NULL;
   }
 
@@ -173,7 +173,7 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
   gamma *= M_PI / 180.0;
 
   // Warn about assumptions
-  printf("Warning: file does not contain molecule center.\nCentering at <0, 0, 0>\n");
+  printf("fs4plugin) Warning: file does not contain molecule center.\nCentering at <0, 0, 0>\n");
 
   // Allocate and initialize the fs4 structure
   fs4 = new fs4_t;
@@ -280,7 +280,7 @@ static int read_fs4_data(void *v, int set, float *dstBlock,
 
       // Read one row of data
       if (fortread_4(srcBlock, colSize, fs4->swap, fs4->fd) != colSize) {
-        fprintf(stderr, "Error reading data: incorrect record size.\n");
+        fprintf(stderr, "fs4plugin) Error reading data: incorrect record size.\n");
         delete [] srcBlock;
         return MOLFILE_ERROR;
       }
@@ -312,28 +312,32 @@ static void close_fs4_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin = {
-  vmdplugin_ABIVERSION,   // ABI version
-  MOLFILE_PLUGIN_TYPE, 	  // plugin type
-  "fs",                   // short file format description
-  "FS4 Density Map",      // pretty file format description
-  "Eamon Caddigan",       // author(s)
-  0,                      // major version
-  5,                      // minor version
-  VMDPLUGIN_THREADSAFE,   // is reentrant
-  "fs,fs4"                // filename extension
-};
+static molfile_plugin_t plugin;
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) { 
+  memset(&plugin, 0, sizeof(molfile_plugin_t));
+  plugin.abiversion = vmdplugin_ABIVERSION;
+  plugin.type = MOLFILE_PLUGIN_TYPE;
+  plugin.name = "fs";
+  plugin.prettyname = "FS4 Density Map";
+  plugin.author = "Eamon Caddigan";
+  plugin.majorv = 0;
+  plugin.minorv = 6;
+  plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  plugin.filename_extension = "fs,fs4";
   plugin.open_file_read = open_fs4_read;
   plugin.read_volumetric_metadata = read_fs4_metadata;
   plugin.read_volumetric_data = read_fs4_data;
   plugin.close_file_read = close_fs4_read;
+  return VMDPLUGIN_SUCCESS; 
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) { return VMDPLUGIN_SUCCESS; }
 
 #ifdef TEST_FS4_PLUGIN
 

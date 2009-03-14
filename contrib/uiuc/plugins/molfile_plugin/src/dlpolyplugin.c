@@ -16,7 +16,7 @@
  *
  *      $RCSfile: dlpolyplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.15 $       $Date: 2006/03/30 03:28:43 $
+ *      $Revision: 1.20 $       $Date: 2007/03/24 21:21:35 $
  *
  ***************************************************************************/
 
@@ -43,9 +43,8 @@
 
 typedef struct {
   FILE *file;
+  int dlpolyversion;
   int numatoms;
-  char *file_name;
-  molfile_atom_t *atomlist;
   int cellwarnflag;
 } dlpolydata;
  
@@ -55,13 +54,21 @@ static void *open_dlpoly_read(const char *filename, const char *filetype,
   FILE *fd;
   dlpolydata *data;
   char fbuffer[4096], buf[4096];
-  int scancount, nstep, keytrj, atomcount;
+  int dlpolyversion, scancount, nstep, keytrj, atomcount;
 
   fd = fopen(filename, "rb");
   if (!fd) return NULL;
 
   if (NULL == fgets(fbuffer, 1024, fd))  
     return NULL;
+
+  if (!strcmp(filetype, "dlpolyhist")) {
+    dlpolyversion=2;
+  } else if (!strcmp(filetype, "dlpoly3hist")) {
+    dlpolyversion=3;
+  } else {
+    dlpolyversion=2;
+  }
  
   /* check to see if the first line is a "timestep" record */ 
   scancount = sscanf(fbuffer, "%s %d %d", buf, &nstep, natoms);
@@ -92,26 +99,28 @@ static void *open_dlpoly_read(const char *filename, const char *filetype,
   }
  
   data = (dlpolydata *) malloc(sizeof(dlpolydata));
+  memset(data, 0, sizeof(dlpolydata));
   data->file = fd;
-  data->file_name = strdup(filename);
   data->numatoms= *natoms;
   data->cellwarnflag = 0;
+  data->dlpolyversion = dlpolyversion;
 
   rewind(data->file); /* prepare for first read_timestep call */
-
   return data;
 }
 
 
 static int read_dlpoly_structure(void *mydata, int *optflags,
                               molfile_atom_t *atoms) {
-  int i;
   char fbuffer[4096], buf[4096];
-  float x, y, z;
-  int nstep, atomcount, keytrj, imcon, scancount, atomid, atomcount2;
+  float rsd, x, y, z;
+  int i, nstep, atomcount, keytrj, imcon, scancount, atomid, atomcount2;
   float tstep, mass, charge;
-  
   dlpolydata *data = (dlpolydata *)mydata;
+ 
+  /* we don't read any optional data */
+  *optflags = MOLFILE_NOOPTIONS;
+
 
   /* if we get nothing, assume we hit end of file */
   if (NULL == fgets(fbuffer, 1024, data->file))  
@@ -179,10 +188,23 @@ static int read_dlpoly_structure(void *mydata, int *optflags,
     molfile_atom_t *atom = atoms + i;
 
     /* read the coordinates */
-    if (7 != fscanf(data->file, "%s %d %f %f %f %f %f",
-           buf, &atomid, &mass, &charge, &x, &y, &z)) {
-      printf("dlpoly structure) failed reading atom coordinates\n");
-      return MOLFILE_ERROR;
+    switch (data->dlpolyversion) {
+      case 3:
+        if (8 != fscanf(data->file, "%s %d %f %f %f %f %f %f",
+               buf, &atomid, &mass, &charge, &rsd, &x, &y, &z)) {
+          printf("dlpoly structure v3) failed parsing atom coordinates\n");
+          return MOLFILE_ERROR;
+        }
+        break;
+
+      case 2:
+      default: 
+        if (7 != fscanf(data->file, "%s %d %f %f %f %f %f",
+               buf, &atomid, &mass, &charge, &x, &y, &z)) {
+          printf("dlpoly structure v2) failed parsing atom coordinates\n");
+          return MOLFILE_ERROR;
+        }
+        break;
     }
 
     /* read the velocities */
@@ -217,46 +239,81 @@ static int read_dlpoly_structure(void *mydata, int *optflags,
 
 
 static int read_dlpoly_timestep(void *mydata, int natoms, molfile_timestep_t *ts) {
-  int i;
   char fbuffer[4096], buf[4096];
-  float x, y, z;
-  int nstep, atomcount, keytrj, imcon, scancount, atomid, atomcount2;
-  float tstep, mass, charge;
-  
+  float rsd, x, y, z;
+  int i, nstep, atomcount, keytrj, imcon, scancount, atomid, atomcount2;
+  float tstep, mass, charge, elapsedps;
   dlpolydata *data = (dlpolydata *)mydata;
 
   /* if we get nothing, assume we hit end of file */
   if (NULL == fgets(fbuffer, 1024, data->file))  
     return MOLFILE_EOF;
 
-  scancount = sscanf(fbuffer, "%s %d %d %d %d %f", buf, 
-                     &nstep, &atomcount, &keytrj, &imcon, &tstep);
-  if (scancount != 6 || strcmp(buf, "timestep") != 0) {
-    /* if not a timestep, it might have the normal header on it      */
-    /* in which case we'll skip the first line, and parse the second */
-    if (NULL == fgets(fbuffer, 1024, data->file))
-      return MOLFILE_EOF;
-    scancount = sscanf(fbuffer, "%d %d %d", &keytrj, &nstep, &atomcount);
-    if (scancount != 3) {
-      printf("dlpoly timestep) unrecognized header record\n");
-      return MOLFILE_ERROR;
-    } 
+  switch (data->dlpolyversion) {
+    case 3:
+      scancount = sscanf(fbuffer, "%s %d %d %d %d %f %f", buf, 
+                    &nstep, &atomcount, &keytrj, &imcon, &tstep, &elapsedps);
+      if (scancount != 7 || strcmp(buf, "timestep") != 0) {
+        /* if not a timestep, it might have the normal header on it      */
+        /* in which case we'll skip the first line, and parse the second */
+        if (NULL == fgets(fbuffer, 1024, data->file))
+          return MOLFILE_EOF;
+        scancount = sscanf(fbuffer, "%d %d %d", &keytrj, &nstep, &atomcount);
+        if (scancount != 3) {
+          printf("dlpoly timestep v3) unrecognized header record\n");
+          return MOLFILE_ERROR;
+        } 
 
-    /* now check the first timestep record for safety */
-    if (NULL == fgets(fbuffer, 1024, data->file))
-      return MOLFILE_EOF;
-    scancount = sscanf(fbuffer, "%s %d %d %d %d %f", buf, 
-                       &nstep, &atomcount2, &keytrj, &imcon, &tstep);
-    if (scancount != 6 || strcmp(buf, "timestep") != 0) {
-      printf("dlpoly timestep) unrecognized timestep record\n");
-      return MOLFILE_ERROR;
-    }
+        /* now check the first timestep record for safety */
+        if (NULL == fgets(fbuffer, 1024, data->file))
+          return MOLFILE_EOF;
+        scancount = sscanf(fbuffer, "%s %d %d %d %d %f %f", buf, 
+                    &nstep, &atomcount2, &keytrj, &imcon, &tstep, &elapsedps);
+        if (scancount != 7 || strcmp(buf, "timestep") != 0) {
+          printf("dlpoly timestep v3) unrecognized timestep record\n");
+          return MOLFILE_ERROR;
+        }
 
-    /* check atom count */
-    if (atomcount != atomcount2) {
-      printf("dlpoly timestep) header/timestep mismatched atom count\n");
-      return MOLFILE_ERROR;
-    }
+        /* check atom count */
+        if (atomcount != atomcount2) {
+          printf("dlpoly timestep v3) header/timestep mismatched atom count\n");
+          return MOLFILE_ERROR;
+        }
+      }
+      break;
+
+    case 2:
+    default: 
+      scancount = sscanf(fbuffer, "%s %d %d %d %d %f", buf, 
+                         &nstep, &atomcount, &keytrj, &imcon, &tstep);
+      if (scancount != 6 || strcmp(buf, "timestep") != 0) {
+        /* if not a timestep, it might have the normal header on it      */
+        /* in which case we'll skip the first line, and parse the second */
+        if (NULL == fgets(fbuffer, 1024, data->file))
+          return MOLFILE_EOF;
+        scancount = sscanf(fbuffer, "%d %d %d", &keytrj, &nstep, &atomcount);
+        if (scancount != 3) {
+          printf("dlpoly timestep v2) unrecognized header record\n");
+          return MOLFILE_ERROR;
+        } 
+
+        /* now check the first timestep record for safety */
+        if (NULL == fgets(fbuffer, 1024, data->file))
+          return MOLFILE_EOF;
+        scancount = sscanf(fbuffer, "%s %d %d %d %d %f", buf, 
+                           &nstep, &atomcount2, &keytrj, &imcon, &tstep);
+        if (scancount != 6 || strcmp(buf, "timestep") != 0) {
+          printf("dlpoly timestep v2) unrecognized timestep record\n");
+          return MOLFILE_ERROR;
+        }
+
+        /* check atom count */
+        if (atomcount != atomcount2) {
+          printf("dlpoly timestep v2) header/timestep mismatched atom count\n");
+          return MOLFILE_ERROR;
+        }
+      }
+      break;
   }
 
   /* check atom count */
@@ -286,29 +343,45 @@ static int read_dlpoly_timestep(void *mydata, int natoms, molfile_timestep_t *ts
       return MOLFILE_ERROR;
     }
 
-    if (xaxis[1] != 0.0 || xaxis[2] != 0.0 || 
-        yaxis[0] != 0.0 || yaxis[2] != 0.0 || 
-        zaxis[0] != 0.0 || xaxis[1] != 0.0) {
-      if (data->cellwarnflag != 1)
-        printf("dlpoly timestep) non-orthogonal DLPOLY periodic cell data unsupported\n");
-      data->cellwarnflag = 1;
-    } else {
-      ts->A = xaxis[0];
-      ts->B = yaxis[1];
-      ts->C = zaxis[2];
-      if (data->cellwarnflag != 2)
-        printf("dlpoly timestep) converting DLPOLY periodic cell data\n");
-      data->cellwarnflag = 2;
+    /* check and copy in periodic cell info */
+    if (ts != NULL) {
+      if (xaxis[1] != 0.0 || xaxis[2] != 0.0 || 
+          yaxis[0] != 0.0 || yaxis[2] != 0.0 || 
+          zaxis[0] != 0.0 || xaxis[1] != 0.0) {
+        if (data->cellwarnflag != 1)
+          printf("dlpoly timestep) non-orthogonal DLPOLY periodic cell data unsupported\n");
+        data->cellwarnflag = 1;
+      } else {
+        ts->A = xaxis[0];
+        ts->B = yaxis[1];
+        ts->C = zaxis[2];
+        if (data->cellwarnflag != 2)
+          printf("dlpoly timestep) converting DLPOLY periodic cell data\n");
+        data->cellwarnflag = 2;
+      }
     }
   }
 
   /* read all per-atom data */
   for (i=0; i<natoms; i++) {
     /* read the coordinates */
-    if (7 != fscanf(data->file, "%s %d %f %f %f %f %f",
-           buf, &atomid, &mass, &charge, &x, &y, &z)) {
-      printf("dlpoly timestep) failed parsing atom coordinates\n");
-      return MOLFILE_ERROR;
+    switch (data->dlpolyversion) {
+      case 3:
+        if (8 != fscanf(data->file, "%s %d %f %f %f %f %f %f",
+               buf, &atomid, &mass, &charge, &rsd, &x, &y, &z)) {
+          printf("dlpoly timestep v3) failed parsing atom coordinates\n");
+          return MOLFILE_ERROR;
+        }
+        break;
+
+      case 2:
+      default: 
+        if (7 != fscanf(data->file, "%s %d %f %f %f %f %f",
+               buf, &atomid, &mass, &charge, &x, &y, &z)) {
+          printf("dlpoly timestep v2) failed parsing atom coordinates\n");
+          return MOLFILE_ERROR;
+        }
+        break;
     }
 
     /* read the velocities */
@@ -343,8 +416,8 @@ static int read_dlpoly_timestep(void *mydata, int natoms, molfile_timestep_t *ts
     } 
   }
 
-  /* eat LF character */
-  fgetc(data->file);
+  /* eat remaining spaces and LF character */
+  fgets(fbuffer, 1024, data->file);
 
   return MOLFILE_SUCCESS;
 }
@@ -352,42 +425,51 @@ static int read_dlpoly_timestep(void *mydata, int natoms, molfile_timestep_t *ts
 static void close_dlpoly_read(void *mydata) {
   dlpolydata *data = (dlpolydata *)mydata;
   fclose(data->file);
-  free(data->file_name);
   free(data);
 }
 
 
 /* registration stuff */
-static molfile_plugin_t dlpolyplugin = {
-  vmdplugin_ABIVERSION,
-  MOLFILE_PLUGIN_TYPE,                         /* type */
-  "dlpolyhist",                                /* short name */
-  "DLPOLY History",                            /* pretty name */
-  "John E. Stone",                             /* author */
-  0,                                           /* major version */
-  5,                                           /* minor version */
-  VMDPLUGIN_THREADSAFE,                        /* is reentrant */
-  "dlpolyhist",
-  open_dlpoly_read,
-  read_dlpoly_structure,
-  0,
-  read_dlpoly_timestep,
-  close_dlpoly_read,
-  0,                            /* write... */
-  0,
-  0,
-  0,
-  0,                            /* read_volumetric_metadata */
-  0,                            /* read_volumetric_data */
-  0                             /* read_rawgraphics */
-};
+static molfile_plugin_t dlpoly2plugin;
+static molfile_plugin_t dlpoly3plugin;
 
 VMDPLUGIN_API int VMDPLUGIN_init() {
+  memset(&dlpoly2plugin, 0, sizeof(molfile_plugin_t));
+  dlpoly2plugin.abiversion = vmdplugin_ABIVERSION;
+  dlpoly2plugin.type = MOLFILE_PLUGIN_TYPE;
+  dlpoly2plugin.name = "dlpolyhist";
+  dlpoly2plugin.prettyname = "DLPOLY V2 History";
+  dlpoly2plugin.author = "John Stone";
+  dlpoly2plugin.majorv = 0;
+  dlpoly2plugin.minorv = 8;
+  dlpoly2plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  dlpoly2plugin.filename_extension = "dlpolyhist";
+  dlpoly2plugin.open_file_read = open_dlpoly_read;
+  dlpoly2plugin.read_structure = read_dlpoly_structure;
+  dlpoly2plugin.read_next_timestep = read_dlpoly_timestep;
+  dlpoly2plugin.close_file_read = close_dlpoly_read;
+
+  memset(&dlpoly3plugin, 0, sizeof(molfile_plugin_t));
+  dlpoly3plugin.abiversion = vmdplugin_ABIVERSION;
+  dlpoly3plugin.type = MOLFILE_PLUGIN_TYPE;
+  dlpoly3plugin.name = "dlpoly3hist";
+  dlpoly3plugin.prettyname = "DLPOLY V3 History";
+  dlpoly3plugin.author = "John Stone";
+  dlpoly3plugin.majorv = 0;
+  dlpoly3plugin.minorv = 8;
+  dlpoly3plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
+  dlpoly3plugin.filename_extension = "dlpolyhist";
+  dlpoly3plugin.open_file_read = open_dlpoly_read;
+  dlpoly3plugin.read_structure = read_dlpoly_structure;
+  dlpoly3plugin.read_next_timestep = read_dlpoly_timestep;
+  dlpoly3plugin.close_file_read = close_dlpoly_read;
+
   return VMDPLUGIN_SUCCESS;
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&dlpolyplugin);
+  (*cb)(v, (vmdplugin_t *)&dlpoly2plugin);
+  (*cb)(v, (vmdplugin_t *)&dlpoly3plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
