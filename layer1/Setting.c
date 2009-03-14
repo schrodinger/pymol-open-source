@@ -147,22 +147,22 @@ static int SettingUniqueGetTypedValue(PyMOLGlobals *G,int unique_id,int setting_
       entry = I->entry + offset;
       if(entry->setting_id == setting_id) {
         if(entry->type == setting_type) {
-          *(int*)value = entry->value;
+          *(int*)value = entry->int_value;
         } else switch(setting_type) {
         case cSetting_int:
         case cSetting_color:
         case cSetting_boolean:
           switch(entry->type) {
           case cSetting_float:
-            *(int*)value = (int)(*(float*)&entry->value);            
+            *(int*)value = (int)(*(float*)&entry->float_value);            
             break;
           default:
-            *(int*)value = entry->value;
+            *(int*)value = entry->int_value;
             break;
           }
           break;
         case cSetting_float:
-          *(float*)value = (float)(*(int*)&entry->value);
+          *(float*)value = (float)(*(int*)&entry->int_value);
           break;
         }
         return 1;
@@ -205,7 +205,7 @@ void SettingUniqueSetTypedValue(PyMOLGlobals *G,int unique_id,int setting_id,int
       if(entry->setting_id == setting_id) {
         found = true; /* this setting is already defined */
         if(value) { /* if redefining value */
-          entry->value = *(int*)value;
+          entry->int_value = *(int*)value;
           entry->type = setting_type;
         } else { /* or NULL value means delete this setting */
           if(!prev) { /* if first entry in list */
@@ -237,12 +237,12 @@ void SettingUniqueSetTypedValue(PyMOLGlobals *G,int unique_id,int setting_id,int
           if(prev) { /* append onto existing list */
             I->entry[prev].next = offset;
             entry->type = setting_type;
-            entry->value = *(int*)value;
+            entry->int_value = *(int*)value;
             entry->setting_id = setting_id;
           } else if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, unique_id, offset))) {
             /* create new list */
             entry->type = setting_type;
-            entry->value = *(int*)value;
+            entry->int_value = *(int*)value;
             entry->setting_id = setting_id;
           }
         }
@@ -258,7 +258,7 @@ void SettingUniqueSetTypedValue(PyMOLGlobals *G,int unique_id,int setting_id,int
       if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, unique_id, offset))) {
         I->next_free = entry->next;
         entry->type = setting_type;
-        entry->value = *(int*)value;
+        entry->int_value = *(int*)value;
         entry->setting_id = setting_id;
         entry->next = 0;
       }
@@ -326,7 +326,7 @@ int SettingUniqueCopyAll(PyMOLGlobals *G,int src_unique_id, int dst_unique_id)
         {
           int setting_id = src_entry->setting_id;
           int setting_type = src_entry->type;
-          int setting_value = src_entry->value;
+          int setting_value = src_entry->int_value;
           int dst_offset = dst_result.word;
           int prev = 0;
           int found = false;
@@ -334,7 +334,7 @@ int SettingUniqueCopyAll(PyMOLGlobals *G,int src_unique_id, int dst_unique_id)
             SettingUniqueEntry *dst_entry = I->entry + dst_offset;
             if(dst_entry->setting_id == setting_id) {
               found = true; /* this setting is already defined */
-              dst_entry->value = setting_value;
+              dst_entry->int_value = setting_value;
               dst_entry->type = setting_type;
               break;
             }
@@ -353,12 +353,12 @@ int SettingUniqueCopyAll(PyMOLGlobals *G,int src_unique_id, int dst_unique_id)
                 if(prev) { /* append onto existing list */
                   I->entry[prev].next = dst_offset;
                   dst_entry->type = setting_type;
-                  dst_entry->value = setting_value;
+                  dst_entry->int_value = setting_value;
                   dst_entry->setting_id = setting_id;
                 } else if(OVreturn_IS_OK(OVOneToOne_Set(I->id2offset, dst_unique_id, dst_offset))) {
                   /* create new list */
                   dst_entry->type = setting_type;
-                  dst_entry->value = setting_value;
+                  dst_entry->int_value = setting_value;
                   dst_entry->setting_id = setting_id;
                 }
               }
@@ -382,7 +382,7 @@ int SettingUniqueCopyAll(PyMOLGlobals *G,int src_unique_id, int dst_unique_id)
           {
           int setting_id = src_entry->setting_id;
           int setting_type = src_entry->type;
-          int setting_value = src_entry->value;
+          int setting_value = src_entry->int_value;
           if(I->next_free) {
             int dst_offset = I->next_free;
             SettingUniqueEntry *dst_entry = I->entry + dst_offset;
@@ -398,7 +398,7 @@ int SettingUniqueCopyAll(PyMOLGlobals *G,int src_unique_id, int dst_unique_id)
 
             if(ok) {
               dst_entry->type = setting_type;
-              dst_entry->value = setting_value;
+              dst_entry->int_value = setting_value;
               dst_entry->setting_id = setting_id;
               dst_entry->next = 0;
             }
@@ -597,10 +597,10 @@ PyObject *SettingUniqueAsPyList(PyMOLGlobals *G)
             case cSetting_int:
             case cSetting_color:
             case cSetting_boolean:
-              PyList_SetItem(setting_entry,2,PyInt_FromLong(entry->value));
+              PyList_SetItem(setting_entry,2,PyInt_FromLong(entry->int_value));
               break;
             case cSetting_float:
-              PyList_SetItem(setting_entry,2,PyFloat_FromDouble(*(float*)&entry->value));
+              PyList_SetItem(setting_entry,2,PyFloat_FromDouble(*(float*)&entry->float_value));
               break;
             }
             PyList_SetItem(setting_list,n_set,setting_entry);

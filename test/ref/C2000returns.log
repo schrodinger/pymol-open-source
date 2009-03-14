@@ -65,7 +65,6 @@ cmd.space("rgb")
  Color: purged table; restoring RGB colors.
 None
 cmd.space()
- Color: purged table; colors unchanged.
 None
 chempy.models.Indexed
 107

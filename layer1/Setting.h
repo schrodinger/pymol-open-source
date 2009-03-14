@@ -27,7 +27,10 @@ typedef char SettingName[255];
 typedef struct {
   int setting_id;
   int type; /* must be cSetting_boolean, cSetting_int, cSetting_float, or cSetting_color */
-  int value;
+  union {
+  int int_value;
+  float float_value;
+  };
   int next; /* for per-atom setting lists & memory management */
 } SettingUniqueEntry;
 

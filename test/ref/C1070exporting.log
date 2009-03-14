@@ -16,6 +16,7 @@ PyMOL>save tmp/small01.mmd
 PyMOL>save tmp/small01.pdb
  Save: wrote "tmp/small01.pdb".
 PyMOL>multisave tmp/small01.pmo,small01
+ Multisave: wrote 1 object(s) to 'tmp/small01.pmo'.
 PyMOL>dele all
 PyMOL>load tmp/small01.pmo
  CmdLoad: "tmp/small01.pmo" loaded as "small01".
