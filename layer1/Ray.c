@@ -3128,9 +3128,10 @@ int RayTraceThread(CRayThreadInfo *T)
   BasisCallRec BasisCall[MAX_BASIS];
   float border_offset;
   int edge_sampling = false;
-  unsigned int edge_avg[4],edge_alpha_avg[4];
+  unsigned int edge_avg[4] = {0,0,0,0};
+  unsigned int edge_alpha_avg[4] = {0,0,0,0};
   int edge_cnt=0;
-  float edge_base[2];
+  float edge_base[2] = {0.0F, 0.0F};
   float interior_normal[3];
   float edge_width = 0.35356F;
   float edge_height = 0.35356F;
@@ -3149,7 +3150,9 @@ int RayTraceThread(CRayThreadInfo *T)
   float BasisFudge0,BasisFudge1;
   int perspective = T->perspective;
   float eye[3];
-  float start[3],nudge[3],back_pact[3];
+  float start[3] = { 0.0F, 0.0F, 0.0F};
+  float nudge[3] = { 0.0F, 0.0F, 0.0F};
+  float back_pact[3];
   float *depth = T->depth;
   float ray_scatter = SettingGetGlobal_f(I->G,cSetting_ray_scatter);
   const float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);

@@ -1603,7 +1603,7 @@ int PyMOL_FreeResultArray(CPyMOL *I,void *array)
 PyMOLreturn_status PyMOL_CmdDraw(CPyMOL *I,int width, int height,
                                  int antialias, int quiet)
 {
-  PyMOLreturn_status result;
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK
   result.status = get_status_ok(ExecutiveDrawCmd(I->G,width,height,antialias,false,quiet));
   I->ImageRequestedFlag = true;
@@ -1614,7 +1614,7 @@ PyMOLreturn_status PyMOL_CmdDraw(CPyMOL *I,int width, int height,
 
 PyMOLreturn_status PyMOL_CmdCapture(CPyMOL *I,int quiet)
 {
-  PyMOLreturn_status result;
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK
   result.status = get_status_ok(ExecutiveDrawCmd(I->G,-1,-1,0,true,quiet));
   I->ImageRequestedFlag = true;
@@ -1626,7 +1626,7 @@ PyMOLreturn_status PyMOL_CmdCapture(CPyMOL *I,int quiet)
 PyMOLreturn_status PyMOL_CmdRay(CPyMOL *I,int width, int height,int antialias,
                                 float angle, float shift,int renderer, int defer, int quiet)
 {
-  PyMOLreturn_status result;
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK
   
   if(renderer<0) renderer=SettingGetGlobal_i(I->G,cSetting_ray_default_renderer);
@@ -1650,7 +1650,7 @@ PyMOLreturn_status PyMOL_CmdRay(CPyMOL *I,int width, int height,int antialias,
 PyMOLreturn_status PyMOL_CmdSetView(CPyMOL *I, float *view, int view_len,
                                     float animate, int quiet)
 {
-  PyMOLreturn_status result;
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   SceneViewType tmp;
   PYMOL_API_LOCK
   if(view_len>=18) {
@@ -1676,7 +1676,7 @@ PyMOLreturn_status PyMOL_CmdSetView(CPyMOL *I, float *view, int view_len,
 
 PyMOLreturn_float_array PyMOL_CmdGetView(CPyMOL *I,int quiet)
 {
-  PyMOLreturn_float_array result;
+  PyMOLreturn_float_array result = { PyMOLstatus_FAILURE };
   SceneViewType tmp;
   PYMOL_API_LOCK
   result.size = 18;
@@ -1705,7 +1705,7 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
                                  char *object, char *matrix, int source_state, int target_state, 
                                  int quiet, int max_skip, int transform, int reset) 
 {
-  PyMOLreturn_float_array result;
+  PyMOLreturn_float_array result = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK
   OrthoLineType s2="",s3="";
   int ok = false;
@@ -2216,7 +2216,7 @@ PyMOLreturn_status PyMOL_CmdIsodot(CPyMOL *I, char *name, char *map_name, float 
 {
   int ok=true;
   OrthoLineType s1="";
-  PyMOLreturn_status result;
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   int box_mode = 0;
   PYMOL_API_LOCK
   
@@ -2243,7 +2243,7 @@ PyMOLreturn_status PyMOL_CmdIsomesh(CPyMOL *I, char *name, char *map_name, float
 {
   int ok=true;
   OrthoLineType s1="";
-  PyMOLreturn_status result;
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   int box_mode = 0;
   PYMOL_API_LOCK
   
@@ -2269,7 +2269,7 @@ PyMOLreturn_status PyMOL_CmdIsosurface(CPyMOL *I, char *name, char *map_name, fl
 {
   int ok=true;
   OrthoLineType s1="";
-  PyMOLreturn_status result;
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   int box_mode = 0;
   PYMOL_API_LOCK
   
@@ -2296,7 +2296,7 @@ PyMOLreturn_status PyMOL_CmdGradient(CPyMOL *I, char *name, char *map_name, floa
 {
   int ok=true;
   OrthoLineType s1="";
-  PyMOLreturn_status result;
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   int box_mode = 0;
   PYMOL_API_LOCK
   
@@ -2378,7 +2378,7 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL *I,char *name, char *map, float *rang
 
 {
   int ok = true;
-  PyMOLreturn_status result;
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   OrthoLineType s1="";
   float *color_vla = NULL;
   float *range_vla = NULL;
@@ -2617,7 +2617,7 @@ PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,
                                  int discrete, int finish, 
                                  int quiet, int multiplex, int zoom)
 {
-  PyMOLreturn_status status;
+  PyMOLreturn_status status = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK
   status = Loader(I,content, content_type, -1, content_format, object_name, 
                 state, discrete, finish, quiet, multiplex, zoom);
@@ -2632,7 +2632,7 @@ PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL *I,char *content,
                                     int discrete, int finish, 
                                     int quiet, int multiplex, int zoom)
 {
-  PyMOLreturn_status status;
+  PyMOLreturn_status status = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK
   status = Loader(I,content, "raw", content_length, content_format,
                 object_name, state, discrete, finish, quiet, multiplex, zoom);
@@ -2645,7 +2645,7 @@ PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL *I,float *content,
                                     char *object_name, int state, 
                                     int quiet, int zoom)
 {
-  PyMOLreturn_status status;
+  PyMOLreturn_status status = { PyMOLstatus_FAILURE };
   PYMOL_API_LOCK
   status = Loader(I, (char*)content, "cgo", content_length, "cgo",
                   object_name, state, 0, 1, quiet, 0, zoom);

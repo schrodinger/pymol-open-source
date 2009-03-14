@@ -118,7 +118,7 @@ else:
     g.write('/* prototypes */')
     for pref in src_list:
         g.write("int molfile_%s_init(void);\n"%pref)
-        g.write("int molfile_%s_register(void *,vmdplugin_register_cb *);\n"%pref)
+        g.write("int molfile_%s_register(void *,vmdplugin_register_cb);\n"%pref)
         g.write("int molfile_%s_fini(void);\n"%pref)
     g.write('''
 
@@ -136,7 +136,7 @@ else:
        if(ok) {
     ''')
     for pref in src_list:
-        g.write("if(ok) ok = ok && (molfile_%s_register(G,(vmdplugin_register_cb*)PlugIOManagerRegister) == VMDPLUGIN_SUCCESS);\n"%pref)
+        g.write("if(ok) ok = ok && (molfile_%s_register(G,(vmdplugin_register_cb)PlugIOManagerRegister) == VMDPLUGIN_SUCCESS);\n"%pref)
     g.write('''
        }
        return ok;

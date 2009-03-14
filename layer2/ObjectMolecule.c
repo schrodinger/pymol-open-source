@@ -3619,7 +3619,9 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,
   BondType *b0,*b1;
   float *backup = NULL;
   float d,*f0,*f1;
-  float va0[3],vh0[3],va1[3],vh1[3];
+  float va0[3] = {0.0F,0.0F,0.0F};
+  float va1[3] = {0.0F,0.0F,0.0F};
+  float vh0[3],vh1[3];
   float x0[3],y0[3],z0[3];
   float x1[3],y1[3],z1[3];
   float x[3],y[3],z[3];

@@ -1341,7 +1341,7 @@ int ChampModelToPat(CChamp *I,PyObject *model)
   ListAtom *at;
   int cur_bond=0,last_bond = 0;
   ListBond *bd;
-  int charge,order;
+  int charge=0,order=1;
   int result = 0;
   int atom1,atom2;
   int *atom_index = NULL;
@@ -1610,7 +1610,6 @@ int ChampModelToPat(CChamp *I,PyObject *model)
           case 2: bd->order = cH_Double; break;
           case 3: bd->order = cH_Triple; break;
           case 4: bd->order = cH_Single; bd->class = cH_Aromatic|cH_Pi; break;
-
           }
           Py_XDECREF(tmp);
         }
