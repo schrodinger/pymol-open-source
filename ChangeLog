@@ -2,7 +2,13 @@
 CHANGE LOG
 =========================================================================
 
-2009-03-11 Warren L. DeLano <warren@delsci.com>	
+2009-03-14 Warren L. DeLano <warren@delsci.com>	
+
+	* updated the vmd molfile plugin code from current UIUC cvs
+
+	* addressing various strict-aliasing issues for GCC
+	
+2009-03-13 Warren L. DeLano <warren@delsci.com>	
 
 	* field_of_view now interpolated via get_view/set_view matrix
 	  (appears to be backwards & forwards compatible)
