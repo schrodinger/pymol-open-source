@@ -1853,8 +1853,12 @@ void OrthoSplash(PyMOLGlobals *G)
       
       PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF(G);
       
-      PRINTF "    Other Major Authors and Contributors:\n\n" ENDF(G);
-      PRINTF "       Ralf W. Grosse-Kunstleve, Ph.D.\n \n" ENDF(G); /* note: sglite no longer used */
+      /* PRINTF " Other Major Authors and Contributors:\n\n" ENDF(G);
+       * PRINTF " Ralf W. Grosse-Kunstleve, Ph.D.\n \n" ENDF(G);
+       * 
+       * NOTICE: Enduring thanks to Ralf, but in point of fact, his
+       * sglite module is no longer used by PyMOL, and thus we should
+       * not mislead everyone by asserting otherwise... */
       
       PRINTF "    PyMOL is user-supported open-source software.  Although some versions\n" ENDF(G);
       PRINTF "    are freely available, PyMOL is not in the public domain.\n \n" ENDF(G);
