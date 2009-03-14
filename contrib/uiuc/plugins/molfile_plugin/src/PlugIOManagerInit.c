@@ -395,4 +395,5 @@ if(ok) ok = ok && (molfile_xyzplugin_fini() == VMDPLUGIN_SUCCESS);
 
        return ok;
     }
+
     

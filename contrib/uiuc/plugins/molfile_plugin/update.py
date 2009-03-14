@@ -156,8 +156,7 @@ else:
 
     g.write('''
        return ok;
-    }
-    ''')
+    }\n''')
 
 
     os.system("/bin/cp %s/*.h src/"%molfile_src_path)
