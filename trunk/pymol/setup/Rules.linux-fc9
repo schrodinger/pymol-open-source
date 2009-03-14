@@ -1,13 +1,10 @@
-# NOTE: This file is old and outdated
 #---------------------------------------------------------------------
-# PyMOL Makefile Rules
+# PyMOL Makefile Rules 
 #---------------------------------------------------------------------
-#
-# This version is for Tru64 Unix with Numeric Python
 #
 #- Building ----------------------------------------------------------
 #--- Tell "make" how to get to PyMOL 
-PYMOL_PATH = /net/cci/warren/pymol
+PYMOL_PATH = /delsci/pymol
 #---------------------------------------------------------------------
 #
 #- Dependencies ------------------------------------------------------
@@ -15,46 +12,52 @@ PYMOL_PATH = /net/cci/warren/pymol
 XLIB_DIR = -L/usr/X11R6/lib
 XINC_DIR = -I/usr/X11R6/include
 #--- Python
-PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
-PYTHON_LIB = -lpython2.0
+PYTHON_EXE = /usr/bin/python
+PYTHON_LIB =
 PYTHON_LIB_DIR = 
-PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.0
+PYTHON_INC_DIR = -I/usr/include/python2.5
 #--- Other external dependencies
-EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include
-EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
+EXT_INC_DIR = 
+EXT_LIB_DIR =
 #---------------------------------------------------------------------
 #
-#--- Build for ALPHA as an importable module
+#- Build for LINUX as an importable module ---------------------------
 #--- System libraries
-LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
-#--- PyMOL configuration 
-DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY 
+LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
+#--- PyMOL configuration
+DEFS = -D_PYMOL_MODULE -D_PYMOL_INLINE -D_PYMOL_VMD_PLUGINS
 #--- How we build shared libraries
-BUILD = -shared -o modules/_cmd.so
+BUILD = -shared 
 #--- What are we trying to build?
 DEST = -o modules/pymol/_cmd.so
-#--- CC options
-CCOPT1 = 
+#--- Gcc Options for Linux
+CCOPT1 = -ffast-math -Wall -Wmissing-prototypes
 #--- libraries for PyOpenGL 
 PYOGL_LIB =  -lglut -lGL -lGLU -lXmu -lXi
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
+#--- GCC Optimized
+CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer -finline-limit=10000 
+#--- GCC Profiling
+#CCOPT2 = -pg -O3 -funroll-loops
 #--- Debugging
-#CCOPT2 = -g
-#--- Optimized
-CCOPT2 = -O3
+#CCOPT2 = -g -D_MemoryDebug_ON
+CCOPT2 = -g
 #---------------------------------------------------------------------
 #
-#-- Choose One --------------------------------------------------------
-BUGS =
+#- Choose One --------------------------------------------------------
+#--- Workaround for XFree86/DRI linux dll problem for module build
+BUGS = -D_DRI_WORKAROUND
+#---
+#BUGS =
 #---------------------------------------------------------------------
 #
 #- Choose One Pair ---------------------------------------------------
-#--- Libpng2 in system libraries (/usr/include,/usr/lib)
+#--- Libpng2 available and contains zlib 
 #PNG = -D_HAVE_LIBPNG 
 #ZLIB = 
-#--- Libpng2 in local user files (pymol/ext/...)
+#--- Libpng2 available but needs zlib 
 PNG = -D_HAVE_LIBPNG 
 ZLIB = -lz
 #--- Libpng2 not available
@@ -72,12 +75,14 @@ LIB_DIRS = $(EXT_LIB_DIR) $(PYTHON_LIB_DIR) $(XLIB_DIR)
 
 # Enable source files to find headers
 PYMOL_INC_DIRS = -I../layer0 -I../layer1 -I../layer2 \
-   -I../layer3 -I../layer4 -I../layer5 
+   -I../layer3 -I../layer4 -I../layer5 \
+   -I../contrib/uiuc/plugins/include
 
 C_FLAGS = $(CCOPT1) $(CCOPT2) $(EXT_INC_DIR) $(PYTHON_INC_DIR) \
    $(XINC_DIR) $(PNG) $(DEFS) $(BUGS)
 
 CFLAGS = $(C_FLAGS)
+
 
 
 
