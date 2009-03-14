@@ -152,9 +152,12 @@ Rep *RepDistDashNew(DistSet *ds)
   PyMOLGlobals *G=ds->State.G;
   int a;
   int n;
-  float *v,*v1,*v2,d[3],d1[3],d2[3];
-  float l,ph;
-  float dash_len,dash_gap,dash_sum,seg;
+  float *v,*v1,*v2,d[3],d1[3];
+  float l;
+  float dash_len,dash_gap,dash_sum;
+#if 0
+  float d2[3], ph, seg;
+#endif
 
   OOAlloc(G,RepDistDash);
 

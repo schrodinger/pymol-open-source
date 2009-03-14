@@ -778,11 +778,10 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
   int c;
   int a=0;
   float line_width = SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width);
-  line_width = SceneGetDynamicLineWidth(info, line_width);
-
   ObjectMeshState *ms = NULL;
-
-   ObjectPrepareContext(&I->Obj,ray);
+  line_width = SceneGetDynamicLineWidth(info, line_width);
+  
+  ObjectPrepareContext(&I->Obj,ray);
   
   if(state>=0) 
     if(state<I->NState) 
