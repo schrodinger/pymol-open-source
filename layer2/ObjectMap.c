@@ -3688,7 +3688,13 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
   int n_pts = 0;
   int ascii = true;
   int little_endian = 1,map_endian = 0;
-  int block_len  = 0;
+  union int_or_char_array {
+   int block_len;
+   char rev[4];
+  };
+  union int_or_char_array rev_union;
+  rev_union.block_len  = 0;
+
   if(state<0) state=I->NState;
   if(I->NState<=state) {
     VLACheck(I->State,ObjectMapState,state);
@@ -3717,7 +3723,6 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state,in
   if(ascii) {
     p = ParseNCopy(cc,p,100);
   } else {
-    char rev[4];
 
 /* 
 
@@ -3777,18 +3782,17 @@ end d
     }
     
     if(little_endian!=map_endian) {
-      rev[0]=p[3];
-      rev[1]=p[2];
-      rev[2]=p[1];
-      rev[3]=p[0];
+      rev_union.rev[0]=p[3];
+      rev_union.rev[1]=p[2];
+      rev_union.rev[2]=p[1];
+      rev_union.rev[3]=p[0];
     } else {
-      rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
-      rev[1]=p[1];
-      rev[2]=p[2];
-      rev[3]=p[3];
+      rev_union.rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
+      rev_union.rev[1]=p[1];
+      rev_union.rev[2]=p[2];
+      rev_union.rev[3]=p[3];
     }
-    block_len = *((int*)rev);
-    ParseNCopy(cc,p+4,block_len);
+    ParseNCopy(cc,p+4,rev_union.block_len);
     /* now flip file to correct endianess */
     if(little_endian!=map_endian) {
       char *c = p;
@@ -3807,7 +3811,7 @@ end d
         cnt--;
       }
     }
-    p += 4 + block_len;
+    p += 4 + rev_union.block_len;
     f = (float*)p;
   }
 
@@ -3830,13 +3834,13 @@ end d
       
       block_len_check = *((int*)(f++));
 
-      if(block_len != block_len_check) {
+      if(rev_union.block_len != block_len_check) {
         PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
           " ObjectMapGRD-Warning: block length not matched -- not a true GRD binary?\n"
           ENDFB(I->Obj.G);
       }
 
-      block_len = *((int*)(f++));
+      rev_union.block_len = *((int*)(f++));
       ivary = *((int*)(f++));
       nbyte = *((int*)(f++));
       intdat = *((int*)(f++));
@@ -3973,7 +3977,7 @@ end d
       int block_len_check;
       
       block_len_check = *((int*)(f++));
-      if(block_len != block_len_check) {
+      if(rev_union.block_len != block_len_check) {
         PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
           " ObjectMapGRD-Warning: block length not matched -- not a true GRD binary?\n"
           ENDFB(I->Obj.G);
