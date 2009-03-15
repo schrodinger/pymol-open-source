@@ -386,7 +386,8 @@ if pymol_launch != 3: # if this isn't a dry run
                           print " Enabled multithreaded rendering."
             except:
                 pass
-
+            cmd.reinitialize("store") # store our adapted state as default
+            
         def launch_gui(self):
             try:
                 if sys.platform=='darwin':
