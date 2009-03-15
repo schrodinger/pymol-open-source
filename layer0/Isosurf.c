@@ -1141,6 +1141,7 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
 
         int a; 
         int *start_locus = order; 
+        float prev_grad_normal[3] = {0.0F,0.0F,0.0F};
         for(a=0;a<range_size;a++) {
           int n_active_cell = 0; /* how many cells have we traversed */
           float walk = max_walk; /* distance remaining to travel */
@@ -1156,7 +1157,6 @@ static int IsosurfGradients(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
           for(pass=0;pass<2;pass++) { /* one pass down the gradient, one up */
 
             int have_prev = false;  /* flag & storage for previous gradient & locus */
-            float prev_grad_normal[3]; 
             int *prev_locus = NULL;
 
             int locus[3]; /* what cell are we in? */
