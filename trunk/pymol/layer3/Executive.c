@@ -8668,7 +8668,7 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
   const float _0 = 0.0F;
   int a,b;
 
-  if(!MatrixEigensolveC33d(G,mi,egval,egvali,(double*)evect)) {
+  if(!MatrixEigensolveC33d(G,mi,egval,egvali,(double*)(void*)evect)) {
 
 	 normalize3d(evect[0]);
 	 normalize3d(evect[1]);
