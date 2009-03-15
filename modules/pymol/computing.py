@@ -129,11 +129,11 @@ class CleanJob:
                                     self_cmd.update(obj_name, clean_name, matchmaker=0,
                                                     source_state=1, target_state=state)
                                     self_cmd.sculpt_activate(obj_name) 
-                                    self_cmd.sculpt_deactivate(obj_name) 
+                                    self_cmd.sculpt_deactivate(obj_name)
+                                    ok = 1
                             finally:
                                 self_cmd.delete(clean_name)
                                 self_cmd.unset("suspend_updates")
-                            ok = 1
 
             if not ok:
                 # we can't call warn because this is the not the tcl-tk gui thread
