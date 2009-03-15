@@ -1,6 +1,6 @@
 if 1:
     print "DANGER DO NOT RUN UNTIL changes to the following files have been backported..."
-    print "dcdplugin.c"
+    print "dcdplugin.c, gridplugin.c, endianswap.h"
 else:
 
     import re
