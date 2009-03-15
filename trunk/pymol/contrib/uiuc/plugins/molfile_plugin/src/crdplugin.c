@@ -211,8 +211,8 @@ VMDPLUGIN_API int VMDPLUGIN_init(void) {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&plugin);
-  (*cb)(v, (vmdplugin_t *)&crdboxplugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&crdboxplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

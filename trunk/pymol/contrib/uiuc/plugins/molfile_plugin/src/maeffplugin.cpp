@@ -1917,7 +1917,8 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  cb(v,reinterpret_cast<vmdplugin_t*>(&maeff));
+  //  cb(v,reinterpret_cast<vmdplugin_t*>(&maeff));
+  cb(v,(vmdplugin_t*)(void*)&maeff);
   return VMDPLUGIN_SUCCESS;
 }
 

@@ -347,7 +347,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
   plugin.read_volumetric_metadata = read_mrc_metadata;
   plugin.read_volumetric_data = read_mrc_data;
   plugin.close_file_read = close_mrc_read;
-  (*cb)(v, (vmdplugin_t *)&plugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

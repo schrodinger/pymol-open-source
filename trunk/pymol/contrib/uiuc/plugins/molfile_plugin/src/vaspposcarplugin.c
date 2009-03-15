@@ -398,7 +398,7 @@ int VMDPLUGIN_init() {
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&vaspposcarplugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&vaspposcarplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

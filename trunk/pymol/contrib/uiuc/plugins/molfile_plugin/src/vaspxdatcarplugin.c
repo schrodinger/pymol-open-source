@@ -297,7 +297,7 @@ int VMDPLUGIN_init() {
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&vaspxdatcarplugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&vaspxdatcarplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

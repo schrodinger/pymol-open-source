@@ -947,9 +947,9 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&vsfplugin);
-  (*cb)(v, (vmdplugin_t *)&vcfplugin);
-  (*cb)(v, (vmdplugin_t *)&vtfplugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&vsfplugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&vcfplugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&vtfplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

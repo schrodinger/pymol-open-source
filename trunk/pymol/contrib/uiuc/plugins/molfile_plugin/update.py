@@ -1,6 +1,7 @@
 if 1:
     print "DANGER DO NOT RUN UNTIL changes to the following files have been backported..."
-    print "dcdplugin.c, gridplugin.c, endianswap.h"
+    print "dcdplugin.c, gridplugin.c, endianswap.h, "
+    print "dtrplugin.cpp, fs4plugin.cpp, maeffplugin.cpp"
 else:
 
     import re
@@ -104,7 +105,9 @@ else:
         g.write("/* MACHINE GENERATED FILE, DO NOT EDIT! */\n\n")
         g.write("#define VMDPLUGIN molfile_%s\n"%pref)
         g.write("#define STATIC_PLUGIN 1\n\n")    
-        g.write(string.join(input,''))
+        output = string.join(input,'')
+        output.replace('(vmdplugin_t *)','(vmdplugin_t *)(void*)')
+        g.write(output)
         g.close()
         g = open("src/objects.make",'w')
         g.write("OBJS="+string.join(plugins,' ')+"\n")
