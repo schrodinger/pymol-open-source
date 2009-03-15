@@ -328,6 +328,6 @@ int VMDPLUGIN_fini(void) {
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&vaspchgcarplugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&vaspchgcarplugin);
   return VMDPLUGIN_SUCCESS;
 }

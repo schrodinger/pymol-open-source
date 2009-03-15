@@ -129,6 +129,9 @@ CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list)
   int ok=true;
   unsigned int n_elem;
   int ll;
+  int *I_dim = NULL;
+  int *I_stride = NULL;
+
   OOAlloc(G,CField);
 
   if(ok) ok=(list!=NULL);
@@ -138,9 +141,11 @@ CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list)
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&I->n_dim);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,2),(int*)&I->base_size);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,3),(int*)&I->size);
-  if(ok) ok=PConvPyListToIntArray(PyList_GetItem(list,4),(int**)&I->dim);
-  if(ok) ok=PConvPyListToIntArray(PyList_GetItem(list,5),(int**)&I->stride);
-  
+  if(ok) ok=PConvPyListToIntArray(PyList_GetItem(list,4),&I_dim);
+  if(ok) I->dim = (unsigned int*)I_dim; 
+  if(ok) ok=PConvPyListToIntArray(PyList_GetItem(list,5),&I_stride);
+  if(ok) I->stride = (unsigned int*)I_stride;
+
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */
 
@@ -148,10 +153,18 @@ CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list)
     n_elem = I->size/I->base_size;
     switch(I->type) {
     case cFieldInt:
-      ok=PConvPyListToIntArray(PyList_GetItem(list,6),(int**)&I->data);
+      {
+	int *I_data;
+	ok=PConvPyListToIntArray(PyList_GetItem(list,6),&I_data);
+	I->data = (char*)I_data;
+      }
       break;
     case cFieldFloat:
-      ok=PConvPyListToFloatArray(PyList_GetItem(list,6),(float**)&I->data);
+      {
+	float *I_data;
+	ok=PConvPyListToFloatArray(PyList_GetItem(list,6),&I_data);
+	I->data = (char*)I_data;
+      }
       break;
     default:
       I->data=(char*)mmalloc(I->size);

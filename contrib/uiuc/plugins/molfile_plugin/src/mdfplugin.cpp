@@ -400,7 +400,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&plugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

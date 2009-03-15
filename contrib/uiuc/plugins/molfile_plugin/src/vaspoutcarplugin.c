@@ -299,7 +299,7 @@ int VMDPLUGIN_init() {
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&vaspoutcarplugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&vaspoutcarplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

@@ -5417,13 +5417,13 @@ void ObjectMoleculeGuessValences(ObjectMolecule *I,int state,int *flag1,int *fla
                 int o1_at=-1, o2_at=-1, o3_at=-1, o4_at=-1;
                 int o1_bd=0, o2_bd=0, o3_bd=0, o4_bd=0;
                 float o1_len=0.0F, o2_len=0.0F, o3_len=0.0F, o4_len=0.0F;
-                float n1_v[3];
+                float n1_v[3] = {0.0F,0.0F,0.0F};
                 int n1_at=-1, n2_at=-1, n3_at=-1;
                 int n1_bd=0, n2_bd=0, n3_bd=0;
                 float n1_len=0.0F, n2_len=0.0F, n3_len=0.0F;
                 int c1_at=-1, c2_at=-1, c1_bd=0, c2_bd=0;
                 float c1_len=0.0F, c2_len=0.0F;
-                float c1_v[3];
+                float c1_v[3] = {0.0F, 0.0F, 0.0F};
                 float *v0 = NULL;
                 
                 {

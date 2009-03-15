@@ -5187,7 +5187,7 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
 
     if(ok) {
       if (strcmp(format,"CObjectZYXfloat")==0) {
-        ok = PConvAttrToPtr(Map,"c_object",(void**)&cobj);
+        ok = PConvAttrToPtr(Map,"c_object",(void**)(void*)&cobj);
         if(!ok)
           ErrMessage(G,"LoadChemPyMap","CObject unreadable.");        
       } else {

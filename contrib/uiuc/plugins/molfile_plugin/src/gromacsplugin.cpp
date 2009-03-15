@@ -627,11 +627,11 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init() {
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&gro_plugin);
-  (*cb)(v, (vmdplugin_t *)&g96_plugin);
-  (*cb)(v, (vmdplugin_t *)&trr_plugin);
-  (*cb)(v, (vmdplugin_t *)&trj_plugin);
-  (*cb)(v, (vmdplugin_t *)&xtc_plugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&gro_plugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&g96_plugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&trr_plugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&trj_plugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&xtc_plugin);
   return 0;
 }
 

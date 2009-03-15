@@ -490,7 +490,8 @@ int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
         if(ok) ok = (PyList_Size(id_list)>1);
         if(ok) ok = PConvPyIntToInt(PyList_GetItem(id_list,0),&unique_id);
         if(ok && partial_restore) {
-          if(AtomInfoIsUniqueIDActive(G,unique_id)) { /* if this ID is already active, then we need a substitute */
+          if(AtomInfoIsUniqueIDActive(G,unique_id)) { 
+	    /* if this ID is already active, then we need a substitute */
             int old_unique_id = unique_id;
             unique_id = AtomInfoGetNewUniqueID(G);
             OVOneToOne_Set(I->old2new,old_unique_id,unique_id);
@@ -511,23 +512,31 @@ int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore)
               if(ok) {
                 int setting_id;
                 int setting_type;
-                int value_store;
-                if(ok) ok = PConvPyIntToInt(PyList_GetItem(entry_list,0),&setting_id);
-                if(ok) ok = PConvPyIntToInt(PyList_GetItem(entry_list,1),&setting_type);
+		union {
+		  int int_;
+		  float float_;
+		} value_store;
+                if(ok) ok = PConvPyIntToInt(PyList_GetItem(entry_list,0),
+					    &setting_id);
+                if(ok) ok = PConvPyIntToInt(PyList_GetItem(entry_list,1),
+					    &setting_type);
                 if(ok) 
                   switch(setting_type) {
                   
                   case cSetting_int:
                   case cSetting_color:
                   case cSetting_boolean:
-                    ok = PConvPyIntToInt(PyList_GetItem(entry_list,2),&value_store);
+                    ok = PConvPyIntToInt(PyList_GetItem(entry_list,2),
+					 &value_store.int_);
                     break;
                   case cSetting_float:
-                    ok = PConvPyFloatToFloat(PyList_GetItem(entry_list,2),(float*)&value_store);
+		    ok = PConvPyFloatToFloat(PyList_GetItem(entry_list,2),
+					     &value_store.float_);
                     break;
                   }
                 if(ok) {
-                  SettingUniqueSetTypedValue(G,unique_id, setting_id, setting_type, &value_store);
+                  SettingUniqueSetTypedValue(G,unique_id, setting_id,
+					     setting_type, &value_store.int_);
                 }
               }
             }

@@ -468,8 +468,8 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&dlpoly2plugin);
-  (*cb)(v, (vmdplugin_t *)&dlpoly3plugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&dlpoly2plugin);
+  (*cb)(v, (vmdplugin_t *)(void *)&dlpoly3plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

@@ -1724,8 +1724,10 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  cb(v,reinterpret_cast<vmdplugin_t*>(&desmond));
-  cb(v,reinterpret_cast<vmdplugin_t*>(&desmond_vel));
+  cb(v,(vmdplugin_t*)(void*)&desmond);
+  cb(v,(vmdplugin_t*)(void*)&desmond_vel);
+  //  cb(v,reinterpret_cast<vmdplugin_t*>(plugin_desmond));
+  //  cb(v,reinterpret_cast<vmdplugin_t*>(plugin_desmond_vel));
   return VMDPLUGIN_SUCCESS;
 }
 
