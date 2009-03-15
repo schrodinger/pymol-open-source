@@ -71,7 +71,8 @@ static void *open_grid_read(const char *filepath, const char *filetype,
   FILE *fd;
   grid_t *grid;
   float header[64], ra, rx, ry, rz;
-  int dataBegin, swap, blocksize, nnx, nny, nnz;
+  int dataBegin, swap, blocksize; 
+  my_aliased_int nnx, nny, nnz;
   
   fd = fopen(filepath, "rb");
   if (!fd) {
@@ -106,9 +107,9 @@ static void *open_grid_read(const char *filepath, const char *filetype,
   }
 
   // number of planes in each dimension
-  nnx = ((int *)header)[25];
-  nny = ((int *)header)[26];
-  nnz = ((int *)header)[27];
+  nnx = ((my_aliased_int *)header)[25];
+  nny = ((my_aliased_int* )header)[26];
+  nnz = ((my_aliased_int *)header)[27];
 
   // grid spacing in angstroms
   ra = header[28];
