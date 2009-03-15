@@ -1573,7 +1573,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
     int shift = 0;
     int max_dim[2];
 
-    glGetIntegerv(GL_MAX_VIEWPORT_DIMS,(GLint*)max_dim);
+    glGetIntegerv(GL_MAX_VIEWPORT_DIMS,(GLint*)(void*)max_dim);
 
     /* clamp to what this OpenGL implementation can do */
     if(width>max_dim[0]) {
@@ -7914,7 +7914,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
     if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 1");
 
-    glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
+    glGetIntegerv(GL_VIEWPORT,(GLint*)(void*)view_save);
 
     if(oversize_width && oversize_height) {
       int want_view[4];
@@ -7924,7 +7924,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       want_view[2] = oversize_width;
       want_view[3] = oversize_height;
       glViewport(want_view[0],want_view[1],want_view[2],want_view[3]);
-      glGetIntegerv(GL_VIEWPORT,(GLint*)got_view);
+      glGetIntegerv(GL_VIEWPORT,(GLint*)(void*)got_view);
       if((got_view[0]!=want_view[0])||
          (got_view[1]!=want_view[1])||
          (got_view[2]!=want_view[2])||

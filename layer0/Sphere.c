@@ -203,7 +203,7 @@ void SphereInit(PyMOLGlobals *G)
   I->Array[0].nDot = Sphere0_nDot;
   I->Array[0].Tri = Sphere0_Tri;
   I->Array[0].NTri = Sphere0_NTri;
-  I->Array[0].Mesh = (int*)mesh;
+  I->Array[0].Mesh = (int*)(void*)mesh;
   I->Array[0].NMesh = 30;
 
   I->Array[1].area = Sphere1_area;

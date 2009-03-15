@@ -1076,9 +1076,9 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
 
       /* compute At and At * A */
 
-      transpose33d33d((double*)aa,(double*)At);
+      transpose33d33d((double*)(void*)aa,(double*)(void*)At);
 
-      multiply33d33d((double*)At,(double*)aa,(double*)AtA);
+      multiply33d33d((double*)(void*)At,(double*)(void*)aa,(double*)(void*)AtA);
    
       /* solve A*At (a real symmetric matrix) */
 
@@ -1086,10 +1086,10 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
         double e_vec[3][3], e_val[3];
         xx_word n_rot;
         
-        if(xx_matrix_jacobi_solve((xx_float64*)e_vec, 
-                                  (xx_float64*)e_val,
+        if(xx_matrix_jacobi_solve((xx_float64*)(void*)e_vec, 
+                                  (xx_float64*)(void*)e_val,
                                   &n_rot,
-                                  (xx_float64*)AtA,3)) {
+                                  (xx_float64*)(void*)AtA,3)) {
           double V[3][3], Vt[3][3];
 
           /* Kabsch requires non-negative eigenvalues (since sqrt is taken) */
@@ -1118,23 +1118,25 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
                     Vt[a][b] = e_vec[b][a];
                   }
           
-                multiply33d33d((double*)rootD,(double*)Vt,(double*)sqrtAtA);
-                multiply33d33d((double*)V,(double*)sqrtAtA,(double*)sqrtAtA);
+                multiply33d33d((double*)(void*)rootD,(double*)(void*)Vt,(double*)(void*)sqrtAtA);
+                multiply33d33d((double*)(void*)V,(double*)(void*)sqrtAtA,(double*)(void*)sqrtAtA);
                 /* compute Ai */
       
-                if(xx_matrix_invert((xx_float64*)Ai, (xx_float64*)aa, 3)) {
+                if(xx_matrix_invert((xx_float64*)(void*)Ai,
+				    (xx_float64*)(void*)aa, 3)) {
 
                   /* now compute the rotation matrix  = (AtA)^(1/2) * Ai */
             
-                  multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);
+	      multiply33d33d((double*)(void*)sqrtAtA,
+			     (double*)(void*)Ai,(double*)(void*)m);
             
                   got_kabsch = true;
 
                   { /* is the rotation matrix left-handed? Then swap the
                        recomposition so as to avoid the reflection */
                     double cp[3], dp;
-                    cross_product3d((double*)m,(double*)m+3,cp);
-                    dp = dot_product3d((double*)m+6,cp);
+                    cross_product3d((double*)(void*)m,(double*)(void*)m+3,cp);
+                    dp = dot_product3d((double*)(void*)m+6,cp);
                     if((1.0 - fabs(dp))>R_SMALL4) { /* not orthonormal? */
                       got_kabsch = false;
                 
@@ -1143,9 +1145,9 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
                         ENDFB(G);
                 
                     } else if(dp<0.0F) {
-                      multiply33d33d((double*)rootD,(double*)V,(double*)sqrtAtA);
-                      multiply33d33d((double*)Vt,(double*)sqrtAtA,(double*)sqrtAtA);
-                      multiply33d33d((double*)sqrtAtA,(double*)Ai,(double*)m);              
+                      multiply33d33d((double*)(void*)rootD,(double*)(void*)V,(double*)(void*)sqrtAtA);
+                      multiply33d33d((double*)(void*)Vt,(double*)(void*)sqrtAtA,(double*)(void*)sqrtAtA);
+                      multiply33d33d((double*)(void*)sqrtAtA,(double*)(void*)Ai,(double*)(void*)m);              
                     }
                   }
                 } else {
@@ -1183,17 +1185,17 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
             
                   /* now compute the rotation matrix directly  */
 
-                  multiply33d33d((double*)invRootD,(double*)Vt,(double*)Mi);
-                  multiply33d33d((double*)V,(double*)Mi,(double*)Mi);
-                  multiply33d33d((double*)aa,(double*)Mi,(double*)Mi);
+                  multiply33d33d((double*)(void*)invRootD,(double*)(void*)Vt,(double*)(void*)Mi);
+                  multiply33d33d((double*)(void*)V,(double*)(void*)Mi,(double*)(void*)Mi);
+                  multiply33d33d((double*)(void*)aa,(double*)(void*)Mi,(double*)(void*)Mi);
             
                   got_kabsch = true;
             
                   { /* cis the rotation matrix left-handed? Then swap the
                        recomposition so as to avoid the reflection */
                     double cp[3], dp;
-                    cross_product3d((double*)Mi,(double*)Mi+3,cp);
-                    dp = dot_product3d((double*)Mi+6,cp);
+                    cross_product3d((double*)(void*)Mi,(double*)(void*)Mi+3,cp);
+                    dp = dot_product3d((double*)(void*)Mi+6,cp);
                     if((1.0 - fabs(dp))>R_SMALL4) {  /* not orthonormal? */
                       got_kabsch = false;
                 
@@ -1202,14 +1204,14 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
                         ENDFB(G);
                 
                     } else if(dp<0.0F) {
-                      multiply33d33d((double*)invRootD,(double*)V,(double*)Mi);
-                      multiply33d33d((double*)Vt,(double*)Mi,(double*)Mi);
-                      multiply33d33d((double*)aa,(double*)Mi,(double*)Mi);
+                      multiply33d33d((double*)(void*)invRootD,(double*)(void*)V,(double*)(void*)Mi);
+                      multiply33d33d((double*)(void*)Vt,(double*)(void*)Mi,(double*)(void*)Mi);
+                      multiply33d33d((double*)(void*)aa,(double*)(void*)Mi,(double*)(void*)Mi);
                     }
                   }
 
                   if(got_kabsch) { /* transpose to get the inverse */
-                    transpose33d33d((double*)Mi,(double*)m);
+                    transpose33d33d((double*)(void*)Mi,(double*)(void*)m);
                   }
 
                 } else {
@@ -1229,7 +1231,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
                  (fabs(length3d(m[1])-1.0)<R_SMALL4) &&
                  (fabs(length3d(m[2])-1.0)<R_SMALL4)) {
               
-                recondition33d((double*)m); 
+                recondition33d((double*)(void*)m); 
 
               } else {
                 got_kabsch = false;
@@ -1347,7 +1349,7 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
         }
         iters++;
       }
-      recondition33d((double*)m); 
+      recondition33d((double*)(void*)m); 
     }
   }
 
