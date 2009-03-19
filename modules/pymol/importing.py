@@ -421,26 +421,79 @@ SEE ALSO
         if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
             _self._do("zoom (%s)"%oname)
             
-    def _processPWG(fname):
+    def _processPWG(fname,_self=cmd):
         r = DEFAULT_ERROR
-        # temporary binding for web consortium deliverable(s)
         try:
             from consortia.web.d0903.pymolhttpd import PymolHttpd
+            browser_flag = 0
+            launch_flag = 0
+            report_url = None
+            root = None
+            port = 0
             for line in open(fname).readlines():
-                input = line.split()
-                if len(input):
-                    keyword = input[0].lower()
-                    if keyword == 'port':
-                        if len(input)>1:
-                            port = int(input[1])
-                            server = PymolHttpd(port)
-                            server.start()
-                            r = DEFAULT_SUCCESS
-                    elif keyword == 'delete':
-                        os.unlink(fname)
-            
+                line = line.strip()
+                if len(line) and line[0:1] != '#':
+                    input = line.split(None,1)
+                    if len(input) and input[0]!='#':
+                        keyword = input[0].lower()
+                        if keyword == 'port': # will be assigned dynamically if not specified
+                            if len(input)>1:
+                                port = int(input[1].strip())
+                                launch_flag = 1
+                        elif keyword == 'root': # must encode a valid filesystem path to local content
+                            if len(input)>1:
+                                root = input[1].strip()
+                                root = _self.exp_path(root) # allow for env var substitution
+                                if os.path.exists(root):
+                                    launch_flag = 1
+                                else:
+                                    print "Error: requested path '%s' does not exist."%root
+                            else:
+                                print "Error: missing path to root content"
+                        elif keyword == 'browser':
+                            # could interpret a brower name here
+                            browser_flag = 1
+                        elif keyword == 'launch': # launch the module named in the file (must exist!)
+                            if len(input)>1:
+                                mod_name = input[1]
+                                try:
+                                    __builtin__.__import__(mod_name)
+                                    mod = sys.modules[mod_name]
+                                    if hasattr(mod,'__launch__'):
+                                        mod.__launch__(self)
+                                        r = DEFAULT_SUCCESS
+                                except:
+                                    traceback.print_exc()
+                                    print "Error: unable to launch web application'%s'."%mode_name
+                        elif keyword == 'report':
+                            if len(input)>1:
+                                report_url = input[1]
+                        elif keyword == 'delete':
+                            os.unlink(fname)
+                        else:
+                            print "Error: unrecognized input '%s'"%input
+            if launch_flag:
+                server = PymolHttpd(port,root)
+                if port == 0:
+                    port = server.port # get the dynamically assigned port number
+                server.start()
+                if browser_flag: # fire up the browser
+                    import webbrowser
+                    webbrowser.open("http://localhost:%d"%port)
+                    r = DEFAULT_SUCCESS
+                else:
+                    r = DEFAULT_SUCCESS
+                if report_url != None: # report port back to server url (is this secure?)
+                    import urllib
+                    try:
+                        report_url = report_url + str(port)
+                        print " Reporting back pymol port via: '%s'"%report_url
+                        urllib.urlretrieve(report_url)
+                    except:
+                        print " Report attempt may have failed."
         except ImportError:
-            pass
+            traceback.print_exc()
+
         if is_error(r):
             print "Error: unable to handle PWG file"
         return r
