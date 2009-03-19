@@ -425,7 +425,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         # temporary binding for web consortium deliverable(s)
         try:
-            from consortia.web.d0812.pymolhttpd import PymolHttpd
+            from consortia.web.d0903.pymolhttpd import PymolHttpd
             for line in open(fname).readlines():
                 input = line.split()
                 if len(input):
