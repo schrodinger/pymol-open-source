@@ -1734,7 +1734,6 @@ void PGetOptions(CPyMOLOptions *rec)
   if(!options) {fprintf(stderr,"PyMOL-ERROR: can't get 'invocation.options'.");exit(EXIT_FAILURE);}
 
   PConvertOptions(rec,options);
-
   Py_XDECREF(invocation);
   Py_XDECREF(options);
 }
