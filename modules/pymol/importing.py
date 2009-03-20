@@ -451,7 +451,7 @@ SEE ALSO
                             else:
                                 print "Error: missing path to root content"
                         elif keyword == 'browser':
-                            # could interpret a brower name here
+                            # could perhaps interpret a browser name here
                             browser_flag = 1
                         elif keyword == 'launch': # launch the module named in the file (must exist!)
                             if len(input)>1:
@@ -477,7 +477,7 @@ SEE ALSO
                 if port == 0:
                     port = server.port # get the dynamically assigned port number
                 server.start()
-                if browser_flag: # fire up the browser
+                if browser_flag: # fire up a local browser
                     import webbrowser
                     webbrowser.open("http://localhost:%d"%port)
                     r = DEFAULT_SUCCESS

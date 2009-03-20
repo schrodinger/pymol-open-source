@@ -1773,7 +1773,7 @@ static void launch(CPyMOLOptions *options,int own_the_options)
        PBlock(G); /* if we've gotten here, then we're heading back to Python... */
      } else {
        SceneSetCardInfo(G,"none","ray trace only","none");
-       if(!G->Option->quiet) 
+       if(G->Option->show_splash && !G->Option->quiet) 
          printf(" Command mode. No graphics front end.\n");
        MainReshape(G->Option->winX,G->Option->winY);
        MainDraw(); /* for command line processing */
