@@ -2,7 +2,17 @@
 CHANGE LOG
 =========================================================================
 
-2009-03-14 Warren L. DeLano <warren@delsci.com>	
+2009-03-21 Warren L. DeLano <warren@delsci.com>	
+
+	* added simple fasta output
+	
+	* fixed major bug with 'domain' argument to select
+		
+	* greatly improved the performance of the peptide builder
+
+	* fab command
+	
+2009-03-20 Warren L. DeLano <warren@delsci.com>	
 
 	* very rough FASTA & ALN read support (full peptide builds)
 	

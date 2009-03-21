@@ -156,19 +156,19 @@ PyMOL>cycle_valence
 PyMOL>cycle_valence
 PyMOL>remove_picked
 PyMOL>edit (cpy and i;11 &n;n)
-Editor-Error: Invalid input.
+Editor-Error: Invalid input selection(s).
 PyMOL>cmd.attach("H",1,1)
 PyMOL>create tmp = (cpy&i;5)
  Selector: found 13 atoms.
  Executive: object "tmp" created.
 PyMOL>fuse (cpy&i;11&n;cb),(tmp&n;cb)
 PyMOL>edit (cpy and i;10 & n;n)
-Editor-Error: Invalid input.
+Editor-Error: Invalid input selection(s).
 PyMOL>h_fill
 PyMOL>h_fill
 PyMOL>h_add (cpy)
 PyMOL>edit (cpy and i;8 &n;o)
-Editor-Error: Invalid input.
+Editor-Error: Invalid input selection(s).
 PyMOL>cmd.replace("S",3,1)
  Error: you must first pick an atom to replace.
 PyMOL>delete tmp

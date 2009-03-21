@@ -3,18 +3,22 @@ import pymol
 import cmd
 import setting
 import parsing
+import threading
 
 from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, \
-     is_list,  is_string
+     is_list,  is_string, is_error
 
 QuietException = parsing.QuietException
 
-tmp_editor = "_tmp_editor"
-tmp_ed_save = "_tmp_ed_save"
-tmp1 = "_tmp_editor1"
-tmp2 = "_tmp_editor2"
-tmp3 = "_tmp_editor3"
-tmp4 = "_tmp_editor4"
+_prefix = "_tmp_editor"
+tmp_wild = _prefix + "*"
+tmp_editor = _prefix + "0"
+tmp_connect = _prefix + "_con"
+tmp_domain = _prefix + "_dom"
+tmp1 = _prefix + "1"
+tmp2 = _prefix + "2"
+tmp3 = _prefix + "3"
+tmp4 = _prefix + "4"
 
 # routines to assist in molecular editing
 
@@ -52,24 +56,45 @@ def combine_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
             if _self.get_setting_legacy("auto_remove_hydrogens"):
                 _self.remove("(hydro and pkmol)")            
         _self.delete(tmp_editor)
-        
-def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",_self=cmd):
+
+#from time import time as ___time
+#___total = 0.0
+#___seg1 = 0.0
+#___seg2 = 0.0
+#___seg3 = 0.0
+#___pass = 0
+#___last = ___time()
+
+def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",ss=-1,_self=cmd):
+#    global ___total, ___seg1, ___seg2, ___seg3, ___pass, ___last
+#    ___mark0 = ___time()
+#    ___mark1 = ___time()
+#    ___mark2 = ___time()
+#    ___entry = ___time()
+    r = DEFAULT_SUCCESS
+    ss = int(ss)
+    center = int(center)
     if (selection not in _self.get_names('all')):
         if object == "":
             object = amino_acid
         # create new object 
         if amino_acid in _self.get_names("objects"):
-            print " Error: an object with than name already exists"
+            print "Error: an object with than name already exists"
             raise QuietException
-        _self.fragment(amino_acid,object)
+        r = _self.fragment(amino_acid,object)
         if _self.get_setting_legacy("auto_remove_hydrogens"):
             _self.remove("(hydro and %s)"%object)
-        if _self.count_atoms("((%s) and name c)"%object,quiet=1):
+        if _self.count_atoms("((%s) and name c)"%object):
             _self.edit("((%s) and name c)"%object)
-        elif _self.count_atoms("((%s) and name n)"%object,quiet=1):
+        elif _self.count_atoms("((%s) and name n)"%object):
             _self.edit("((%s) and name n)"%object)
+    elif _self.select(tmp_connect,"(%s) & name N,C"%selection) != 1:
+        print "Error: invalid connection selection: must be one atom, name N or C."
+        _self.delete(tmp_wild)
+        raise QuietException
     else:
-        ss = int(_self.get_setting_legacy("secondary_structure"))
+        if ss<0:
+            ss = int(_self.get_setting_legacy("secondary_structure"))
         if ss:
             if ss==1: # helix
                 phi=-57.0
@@ -84,38 +109,36 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",_self=c
                 phi=180.0
                 psi=180.0
         _self.fragment(amino_acid,tmp_editor)
-        if _self.count_atoms("((%s) and elem n)"%selection,quiet=1):
-            _self.select(tmp_ed_save,"(%s)"%selection)
-            _self.iterate("(%s)"%selection,"stored.resv=resv")
-            pymol.stored.resi = str(pymol.stored.resv-1)
-            _self.alter(tmp_editor,"resi=stored.resi")
-            _self.fuse("(%s and name C)"%(tmp_editor),tmp_ed_save,2)
+        if _self.count_atoms("elem n",domain=tmp_connect):
+            tmp = [ None ]
+            _self.iterate(tmp_connect,"tmp[0]=resv", space={ 'tmp' : tmp })
+            tmp[0] = str(tmp[0]-1) # counting down
+            _self.alter(tmp_editor,"resi=tmp[0]",space={ 'tmp' : tmp})
+            _self.fuse("(%s and name C)"%(tmp_editor),tmp_connect,2)
+            _self.select(tmp_domain, "byresi (pk1 | pk2)")
+
             if _self.get_setting_legacy("auto_remove_hydrogens"):
                 _self.remove("(pkmol and hydro)")
-            if ((_self.count_atoms("(name ca,ch3 and neighbor ?pk1)")==1) and
-                (_self.count_atoms("(name ca and neighbor ?pk2)"))):
-                _self.set_dihedral("(name ca and neighbor pk2)",
-                                 "(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
-            if (_self.select(tmp1,"?pk1")==1) and (_self.select(tmp2,"?pk2")==1):
-            
-                if 0:
-                    if ((_self.select(tmp3,"(name ca and neighbor "+tmp2+"))")>0) and
-                        (_self.select(tmp4,"(name ca and neighbor "+tmp1+")")>0)):
-                        _self.set_dihedral( # PHI
-                            tmp3, # CA +0
-                            tmp2, # N +0 
-                            tmp1, # C -1
-                            tmp4, # CA -1
-                            180.0) # insure that the peptide is planer
+
+            if ((_self.select(tmp1,"?pk1",domain=tmp_domain)==1) and
+                (_self.select(tmp2,"?pk2",domain=tmp_domain)==1)):
+
+                if ((_self.select(tmp3,"(name ca,ch3 & nbr. ?pk1)",domain=tmp_domain)==1) and
+                    (_self.select(tmp4,"(name ca,ch3 & nbr. ?pk2)",domain=tmp_domain)==1)):
+                    _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0) 
 
                 _self.set_geometry(tmp2,3,3) # make nitrogen planer
-    
+
+                _self.h_fix(tmp2) # fix hydrogen position
+
                 if ss:
                     if amino_acid[0:3]!='pro':
                         if ((_self.select(tmp4,
-                                        "((!r;pro) and name c and neighbor (name ca and neighbor "
-                                        +tmp2+"))")==1) and
-                            (_self.select(tmp3,"((!r;pro) and name ca and neighbor "+tmp2+")")==1)):
+                                          "((!r;pro) & name c  & nbr. (name ca & nbr. "+tmp2+"))",
+                                          domain=tmp_domain)==1) and
+                            (_self.select(tmp3,
+                                          "((!r;pro) & name ca & nbr. "+tmp2+")",
+                                          domain=tmp_domain)==1)):
                             _self.set_dihedral( # PHI
                                 tmp4, # C
                                 tmp3, # CA 
@@ -123,49 +146,44 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",_self=c
                                 tmp1, # C
                                 phi)
 
-                    if ((_self.select(tmp4,"(name n and neighbor (name ca and neighbor "+tmp1+"))")==1) and
-                        (_self.select(tmp3,"(name ca and neighbor "+tmp1+")")==1)):
+                    if ((_self.select(tmp4,"(name n & nbr. (name ca & nbr. "+tmp1+"))",
+                                      domain=tmp_domain)==1) and
+                        (_self.select(tmp3,"(name ca & nbr. "+tmp1+")",domain=tmp_domain)==1)):
                         _self.set_dihedral( # PSI (n-1)
                             tmp2, # N
                             tmp1, # C
                             tmp3, # CA
                             tmp4, # N
                             psi)
-                _self.h_fix(tmp2) # fix hydrogen position
-                        
-            _self.delete(tmp1)
-            _self.delete(tmp2)
-            _self.delete(tmp3)
-            _self.delete(tmp4)
-                
-            sele = ("(name N and (byres neighbor %s) and not (byres %s))"%
-                      (tmp_ed_save,tmp_ed_save))
-            if _self.count_atoms(sele,quiet=1):
-                _self.edit(sele)
+
+            sele = ("(name N & (byres nbr. %s) &! (byres %s))"% (tmp_connect,tmp_connect))
+            if _self.select(tmp1,sele,domain=tmp_domain):
+                _self.edit(tmp1)
                 if center:
-                    _self.center(sele,animate=animate)
-            _self.delete(tmp_ed_save)
-                    
-        elif _self.count_atoms("((%s) and elem c)"%selection,quiet=1): # forward
-            _self.select(tmp_ed_save,"(%s)"%selection)
-            _self.iterate("(%s)"%selection,"stored.resv=resv")
-            pymol.stored.resi = str(pymol.stored.resv+1)
-            _self.alter(tmp_editor,"resi=stored.resi")
-            _self.fuse("(%s and name N)"%(tmp_editor),tmp_ed_save,2)
+                    _self.center(tmp1,animate=animate)
+        elif _self.count_atoms("elem c",domain=tmp_connect): # forward
+            tmp = [ None ]
+            _self.iterate(tmp_connect,"tmp[0]=resv", space={ 'tmp' : tmp })
+            tmp[0] = str(tmp[0]+1) # counting up
+            _self.alter(tmp_editor,"resi=tmp[0]",space={ 'tmp' : tmp})
+            _self.fuse("(%s and name N)"%tmp_editor,tmp_connect,2)
+            _self.select(tmp_domain, "byresi (pk1 | pk2)")
             if _self.get_setting_legacy("auto_remove_hydrogens"):
-                _self.remove("(pkmol and hydro)")
-            if (_self.count_atoms("(name ca,ch3 and neighbor ?pk1)") and
-                _self.count_atoms("(name ca,ch3 and neighbor ?pk2)")):
-                _self.set_dihedral("(name ca,ch3 and neighbor pk2)",
-                                 "(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
-            if "pk1" in _self.get_names('selections'):
+                _self.remove("(pkmol and hydro)") 
+
+            if (( _self.select(tmp1,"?pk1",domain=tmp_domain)==1) and
+                ( _self.select(tmp2,"?pk2",domain=tmp_domain)==1)):
+
+#                ___mark1 = ___time()
+                if ((_self.select(tmp3,"(name ca,ch3 & nbr. ?pk1)",domain=tmp_domain)==1) and
+                    (_self.select(tmp4,"(name ca,ch3 & nbr. ?pk2)",domain=tmp_domain)==1)):
+                    _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0) 
                 _self.set_geometry("pk1",3,3) # make nitrogen planer
                 _self.h_fix("pk1") # fix hydrogen position
-            if ss:
-                if (_self.select(tmp1,"?pk1")==1) and (_self.select(tmp2,"?pk2")==1):
+                if ss:
                     if amino_acid[0:3]=='nhh': # fix amide hydrogens
-                        if ((_self.select(tmp3,"(name h1 and neighbor "+tmp1+")")==1) and
-                            (_self.select(tmp4,"(name o and neighbor "+tmp2+")")==1)):
+                        if ((_self.select(tmp3,"(name h1 & nbr. "+tmp1+")",domain=tmp_domain)==1) and
+                            (_self.select(tmp4,"(name o & nbr. "+tmp2+")",domain=tmp_domain)==1)):
                             _self.set_dihedral(
                                 tmp4, # O
                                 tmp2, # C
@@ -173,42 +191,52 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",_self=c
                                 tmp3, # H1
                                 180)
                     if amino_acid[0:3]!='pro':
-                        if ((_self.select(tmp3,"(name ca and neighbor "+tmp1+")")==1) and
-                            (_self.select(tmp4,"(name c and neighbor (name ca and neighbor "+tmp1+"))")==1)):
+                        if ((_self.select(tmp3,"(name ca & nbr. "+tmp1+")",domain=tmp_domain)==1) and
+                            (_self.select(tmp4,"(name c & nbr. (name ca & nbr. "+tmp1+"))",domain=tmp_domain)==1)):
                             _self.set_dihedral( # PHI
                                 tmp2, # C
                                 tmp1, # N
                                 tmp3, # CA 
                                 tmp4, # C
                                 phi)
-                    if ((_self.select(tmp3,"(name ca and neighbor "+tmp2+")")==1) and
-                        (_self.select(tmp4,"(name n and neighbor (name ca and neighbor "+tmp2+"))")==1)):
+                    if ((_self.select(tmp3,"(name ca & nbr. "+tmp2+")",domain=tmp_domain)==1) and
+                        (_self.select(tmp4,"(name n & nbr. (name ca & nbr. "+tmp2+"))",domain=tmp_domain)==1)):
                         _self.set_dihedral( # PSI (n-1)
                             tmp4, # N
                             tmp3, # CA
                             tmp2, # C
                             tmp1, # N
                             psi)
-                _self.delete(tmp1)
-                _self.delete(tmp2)
-                _self.delete(tmp3)
-                _self.delete(tmp4)                               
-            sele = ("(name C and (byres neighbor %s) and not (byres %s))"%
-                      (tmp_ed_save,tmp_ed_save))
-            if _self.count_atoms(sele,quiet=1):
-                _self.edit(sele)
+#            ___mark2 = ___time()
+            sele = ("(name C & (byres nbr. %s) & !(byres %s))"% (tmp_connect,tmp_connect))
+            if _self.select(tmp1,sele,domain=tmp_domain):
+                _self.edit(tmp1)
                 if center:
-                    _self.center(sele,animate=animate)
+                    _self.center(tmp1,animate=animate)
             else:
                 _self.unpick()
-            _self.delete(tmp_ed_save)
-        elif _self.count_atoms("((%s) and elem h)"%selection,quiet=1):
-            print " Error: please pick a nitrogen or carbonyl carbon to grow from."
-            _self.delete(tmp_editor)
-            raise QuietException
+        elif _self.count_atoms("((%s) and elem h)"%selection):
+            print "Error: please pick a nitrogen or carbonyl carbon to grow from."
+            _self.delete(tmp_wild)
+            raise QuietException            
         else:
-            print " Error: unable to attach fragment."
-    _self.delete(tmp_editor)
+            print "Error: unable to attach fragment."
+            _self.delete(tmp_wild)
+            raise QuietException
+    _self.delete(tmp_wild)
+
+#    ___exit = ___time()
+#    ___seg1 = ___seg1 + ___mark1 - ___entry
+#    ___seg2 = ___seg2 + ___mark2 - ___mark1
+#    ___seg3 = ___seg3 + ___exit  - ___mark2
+#    ___total = ___total + ___exit - ___entry
+#    ___pass = ___pass + 1
+#    print "%0.3f %0.3f %0.3f / %0.3f + %0.3f + %0.3f = %0.3f vs %0.3f"%(___seg1/___total,___seg2/___total,___seg3/___total,
+#                                                          ___seg1/___pass, ___seg2/___pass, ___seg3/___pass,
+#                                                          ___total/___pass, (___time()-___last) - (___exit - ___entry))
+#    ___last = ___time()
+
+    return r
 
 _aa_codes =  {
     'A' : 'ala',
@@ -240,7 +268,8 @@ _fab_codes = {
     }
 
 _pure_number = re.compile("[0-9]+")
-def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,dir=1,_self=cmd):
+
+def _fab(input,name,mode,resi,chain,segi,state,dir,ss,_self=cmd):
     r = DEFAULT_ERROR
     code = _fab_codes.get(mode,None)
 
@@ -297,12 +326,21 @@ def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,dir=1,_s
                         if not _self.count_atoms("?pk1"):
                             break
                         else:
-                            attach_amino_acid("pk1",code[sequence.pop()],animate=0,_self=_self)
+                            attach_amino_acid("pk1",code[sequence.pop()],animate=0,ss=ss,_self=_self)
                             if dir>0:
                                 resi = resi + 1
                             else:
                                 resi = resi - 1
     if not len(sequence):
+        r = DEFAULT_SUCCESS
+
+def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,dir=-1,ss=0,async=-1,_self=cmd):
+    if async<1:
+        r = _fab(input,name,mode,resi,chain,segi,state,dir,ss)
+    else:
+        fab_thread = threading.Thread(target=_fab, args=(input,name,mode,resi,chain,segi,state,dir,ss,_self))
+        fab_thread.setDaemon(1)
+        fab_thread.start()
         r = DEFAULT_SUCCESS
     return r
 

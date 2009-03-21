@@ -13,6 +13,8 @@ import Pmw
 from pymol import editor
 from pymol import computing
 from pymol.wizard import Wizard
+from pymol.parsing import QuietException
+
 from chempy import cpv
 
 import pymol
@@ -361,7 +363,10 @@ class AminoAcidWizard(RepeatableActionWizard):
     def do_pick(self, bondFlag):
         if self.mode == 0:
             self.cmd.select(active_sele, "bymol pk1") 
-            editor.attach_amino_acid("pk1", self.aminoAcid, _self=self.cmd)        
+            try:
+                editor.attach_amino_acid("pk1", self.aminoAcid, _self=self.cmd)        
+            except QuietException:
+                pass
         elif self.mode == 1:
             self.cmd.select(active_sele, "bymol pk1") 
             editor.combine_fragment("pk1", self.aminoAcid, 0, 1, _self=self.cmd)

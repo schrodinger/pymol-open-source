@@ -792,8 +792,11 @@ int EditorSelect(PyMOLGlobals *G,char *s0,char *s1,char *s2,
 
   } else {
     EditorInactivate(G);
-    if(s0&&s0[0])
-      ErrMessage(G,"Editor","Invalid input.");    
+    if(s0&&s0[0]) {
+      PRINTFB(G, FB_Editor, FB_Errors) 
+        "Editor-Error: Invalid input selection(s).\n"
+        ENDFB(G);
+    }
   }
   return(result);
 }

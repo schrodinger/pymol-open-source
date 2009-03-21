@@ -7795,8 +7795,8 @@ static int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
 
   if(state<0) {
     for(a=0;a<obj->NAtom;a++) {
-      I->Table[c].model=modelCnt;
-      I->Table[c].atom=a;
+      I->Table[c].model = modelCnt;
+      I->Table[c].atom = a;
       c++;
     }
   } else if(state<obj->NCSet) {
@@ -7983,14 +7983,22 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
               } 
             } else {
               register AtomInfoType *ai = obj->AtomInfo;
+              int included_one = false;
+              int excluded_one = false;
               for(a=0;a<n_atom;a++) {
                 if(SelectorIsMember(G,ai->selEntry,domain)) {
                   rec->model = modelCnt;
                   rec->atom = a;
                   rec++;
+                  included_one = true;
+                } else {
+                  excluded_one = true;
                 }
                 ai++;
               }
+              if(included_one && excluded_one)
+                I->SeleBaseOffsetsValid = false; /* partial objects in domain, so
+                                                    base offsets are invalid */
             }
           } else { /* specific states */
             register CoordSet *cs;
@@ -9687,17 +9695,17 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
           lastObj = i_obj[table_a->model];
           ObjectMoleculeUpdateNeighbors(lastObj);
         }
-        a0= table_a->atom;
-        n=lastObj->Neighbor[a0];
+        a0 = table_a->atom;
+        n = lastObj->Neighbor[a0];
         n++;
         while(1) {
-          a1=lastObj->Neighbor[n];
+          a1 = lastObj->Neighbor[n];
           if(a1<0) break;
           if( (a2 = SelectorGetObjAtmOffset(I,lastObj,a1)) >= 0 ) {
             if(!base[1].sele[a2])
               base[0].sele[a2] = tag;
-            n+=2;
           }
+          n+=2;
         }
       }
       table_a++;
