@@ -89,7 +89,9 @@ class loadable:
     phistr = 51   # electrostatic map as a string
     pim = 52      # General-purpose programmatic import (powerful, insecure)
     pwg = 53      # PyMOL web gui launch script
-
+    aln = 54      # CLUSTALW alignment file
+    fasta = 55    # FASTA sequence file
+    
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.mol : loadable.molstr,
               loadable.xplor : loadable.xplorstr,

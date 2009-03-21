@@ -4,6 +4,10 @@ CHANGE LOG
 
 2009-03-14 Warren L. DeLano <warren@delsci.com>	
 
+	* very rough FASTA & ALN read support (full peptide builds)
+	
+2009-03-14 Warren L. DeLano <warren@delsci.com>	
+
 	* updated the vmd molfile plugin code from current UIUC cvs
 
 	* addressing various strict-aliasing issues for GCC
