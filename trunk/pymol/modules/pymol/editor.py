@@ -334,7 +334,7 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,ss,_self=cmd):
     if not len(sequence):
         r = DEFAULT_SUCCESS
 
-def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,dir=-1,ss=0,async=-1,_self=cmd):
+def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,dir=1,ss=0,async=-1,_self=cmd):
     if async<1:
         r = _fab(input,name,mode,resi,chain,segi,state,dir,ss)
     else:
