@@ -1258,7 +1258,7 @@ class AminoAcidFrame(GuiFrame):
 
         aaList = ["Ace", "Ala", "Arg", "Asn", "Asp", "Cys", "Gln", "Glu", "Gly", 
                   "His", "Ile", "Leu", "Lys", "Met", "Phe", "Pro", "Ser", 
-                  "Thr", "Trp", "Tyr", "Val", "NMe"]
+                  "Thr", "Trp", "Tyr", "Val", "NMe", "NHH", ]
         for aa in aaList:
             r = aa.lower()
             GuiButton(self, aa, lambda s=self,r=r: s.attach(r), "Build %s residue" % aa)
