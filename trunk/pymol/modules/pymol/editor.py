@@ -65,7 +65,7 @@ def combine_fragment(selection,fragment,hydrogen,anchor,_self=cmd):
 #___pass = 0
 #___last = ___time()
 
-def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",ss=-1,_self=cmd):
+def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",hydro=-1,ss=-1,_self=cmd):
 #    global ___total, ___seg1, ___seg2, ___seg3, ___pass, ___last
 #    ___mark0 = ___time()
 #    ___mark1 = ___time()
@@ -74,6 +74,8 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",ss=-1,_
     r = DEFAULT_SUCCESS
     ss = int(ss)
     center = int(center)
+    if hydro<0:
+        hydro = not int(_self.get_setting_legacy("auto_remove_hydrogens"))
     if (selection not in _self.get_names('all')):
         if object == "":
             object = amino_acid
@@ -82,14 +84,22 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",ss=-1,_
             print "Error: an object with than name already exists"
             raise QuietException
         r = _self.fragment(amino_acid,object)
-        if _self.get_setting_legacy("auto_remove_hydrogens"):
+        if not hydro:
             _self.remove("(hydro and %s)"%object)
         if _self.count_atoms("((%s) and name c)"%object):
             _self.edit("((%s) and name c)"%object)
         elif _self.count_atoms("((%s) and name n)"%object):
             _self.edit("((%s) and name n)"%object)
     elif _self.select(tmp_connect,"(%s) & name N,C"%selection) != 1:
-        print "Error: invalid connection selection: must be one atom, name N or C."
+        print "Error: invalid connection point: must be one atom, name N or C."
+        _self.delete(tmp_wild)
+        raise QuietException
+    elif amino_acid in ["nhh","nme"] and _self.select(tmp_connect,"(%s) & name C"%selection) != 1:
+        print "Error: invalid connection point: must be C for residue '%s'"%(amino_acid)
+        _self.delete(tmp_wild)
+        raise QuietException
+    elif amino_acid in ["ace"] and _self.select(tmp_connect,"(%s) & name C"%selection) != 1:
+        print "Error: invalid connection point: must be N for residue '%s'"%(amino_acid)
         _self.delete(tmp_wild)
         raise QuietException
     else:
@@ -117,7 +127,7 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",ss=-1,_
             _self.fuse("(%s and name C)"%(tmp_editor),tmp_connect,2)
             _self.select(tmp_domain, "byresi (pk1 | pk2)")
 
-            if _self.get_setting_legacy("auto_remove_hydrogens"):
+            if not hydro:
                 _self.remove("(pkmol and hydro)")
 
             if ((_self.select(tmp1,"?pk1",domain=tmp_domain)==1) and
@@ -129,7 +139,8 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",ss=-1,_
 
                 _self.set_geometry(tmp2,3,3) # make nitrogen planer
 
-                _self.h_fix(tmp2) # fix hydrogen position
+                if hydro:
+                    _self.h_fix(tmp2) # fix hydrogen position
 
                 if ss:
                     if amino_acid[0:3]!='pro':
@@ -168,7 +179,8 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",ss=-1,_
             _self.alter(tmp_editor,"resi=tmp[0]",space={ 'tmp' : tmp})
             _self.fuse("(%s and name N)"%tmp_editor,tmp_connect,2)
             _self.select(tmp_domain, "byresi (pk1 | pk2)")
-            if _self.get_setting_legacy("auto_remove_hydrogens"):
+
+            if not hydro:
                 _self.remove("(pkmol and hydro)") 
 
             if (( _self.select(tmp1,"?pk1",domain=tmp_domain)==1) and
@@ -179,9 +191,10 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",ss=-1,_
                     (_self.select(tmp4,"(name ca,ch3 & nbr. ?pk2)",domain=tmp_domain)==1)):
                     _self.set_dihedral(tmp4,tmp2,tmp1,tmp3,180.0) 
                 _self.set_geometry("pk1",3,3) # make nitrogen planer
-                _self.h_fix("pk1") # fix hydrogen position
+                if hydro:
+                    _self.h_fix("pk1") # fix hydrogen position
                 if ss:
-                    if amino_acid[0:3]=='nhh': # fix amide hydrogens
+                    if hydro and amino_acid[0:3]=='nhh': # fix amide hydrogens
                         if ((_self.select(tmp3,"(name h1 & nbr. "+tmp1+")",domain=tmp_domain)==1) and
                             (_self.select(tmp4,"(name o & nbr. "+tmp2+")",domain=tmp_domain)==1)):
                             _self.set_dihedral(
@@ -269,7 +282,7 @@ _fab_codes = {
 
 _pure_number = re.compile("[0-9]+")
 
-def _fab(input,name,mode,resi,chain,segi,state,dir,ss,_self=cmd):
+def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,_self=cmd):
     r = DEFAULT_ERROR
     code = _fab_codes.get(mode,None)
 
@@ -326,7 +339,7 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,ss,_self=cmd):
                         if not _self.count_atoms("?pk1"):
                             break
                         else:
-                            attach_amino_acid("pk1",code[sequence.pop()],animate=0,ss=ss,_self=_self)
+                            attach_amino_acid("pk1",code[sequence.pop()],animate=0,ss=ss,hydro=hydro,_self=_self)
                             if dir>0:
                                 resi = resi + 1
                             else:
@@ -334,11 +347,13 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,ss,_self=cmd):
     if not len(sequence):
         r = DEFAULT_SUCCESS
 
-def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,dir=1,ss=0,async=-1,_self=cmd):
+def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,dir=1,
+        hydro=-1,ss=0,async=-1,_self=cmd):
     if async<1:
         r = _fab(input,name,mode,resi,chain,segi,state,dir,ss)
     else:
-        fab_thread = threading.Thread(target=_fab, args=(input,name,mode,resi,chain,segi,state,dir,ss,_self))
+        fab_thread = threading.Thread(target=_fab, args=(input,name,mode,resi,chain,
+                                                         segi,state,dir,hydro,ss,_self))
         fab_thread.setDaemon(1)
         fab_thread.start()
         r = DEFAULT_SUCCESS
