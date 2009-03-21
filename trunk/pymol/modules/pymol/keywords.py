@@ -74,6 +74,7 @@ def get_command_keywords(self_cmd=cmd):
         'exec'          : [ self_cmd.python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
         'export_dots'   : [ self_cmd.export_dots       , 0 , 0 , ''  , parsing.STRICT ],
         'extend'        : [ self_cmd.extend            , 0 , 0 , ''  , parsing.STRICT ],
+        'fab'           : [ self_cmd.fab               , 0 , 0 , ''  , parsing.STRICT ],
         'fast_minimize' : [ self_cmd.fast_minimize     , 1,  4 , ',' , parsing.SIMPLE ], # TO REMOVE
         'feedback'      : [ self_cmd.feedback          , 0,  0 , ''  , parsing.STRICT ],
         'fetch'         : [ self_cmd.fetch             , 0,  0 , ''  , parsing.STRICT ],

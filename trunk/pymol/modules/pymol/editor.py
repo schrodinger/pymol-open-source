@@ -1,7 +1,11 @@
+import re
 import pymol
 import cmd
 import setting
 import parsing
+
+from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, \
+     is_list,  is_string
 
 QuietException = parsing.QuietException
 
@@ -138,10 +142,11 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",_self=c
                       (tmp_ed_save,tmp_ed_save))
             if _self.count_atoms(sele,quiet=1):
                 _self.edit(sele)
-                _self.center(sele,animate=animate)
+                if center:
+                    _self.center(sele,animate=animate)
             _self.delete(tmp_ed_save)
                     
-        elif _self.count_atoms("((%s) and elem c)"%selection,quiet=1):
+        elif _self.count_atoms("((%s) and elem c)"%selection,quiet=1): # forward
             _self.select(tmp_ed_save,"(%s)"%selection)
             _self.iterate("(%s)"%selection,"stored.resv=resv")
             pymol.stored.resi = str(pymol.stored.resv+1)
@@ -192,7 +197,10 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",_self=c
                       (tmp_ed_save,tmp_ed_save))
             if _self.count_atoms(sele,quiet=1):
                 _self.edit(sele)
-                _self.center(sele,animate=animate)                
+                if center:
+                    _self.center(sele,animate=animate)
+            else:
+                _self.unpick()
             _self.delete(tmp_ed_save)
         elif _self.count_atoms("((%s) and elem h)"%selection,quiet=1):
             print " Error: please pick a nitrogen or carbonyl carbon to grow from."
@@ -227,7 +235,78 @@ _aa_codes =  {
     'Z' : 'nme',
     }
 
-def build_peptide(sequence):
+_fab_codes = {
+    'peptide' : _aa_codes,
+    }
+
+_pure_number = re.compile("[0-9]+")
+def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,dir=1,_self=cmd):
+    r = DEFAULT_ERROR
+    code = _fab_codes.get(mode,None)
+
+    if (mode == 'peptide') and is_string(input): # '123/ ADC B/234/ AFCD' to [ '123/','A','D','C','B/234/','F','C','D' ]
+        frags = input.split()
+        input = []
+        for frag in frags:
+            if '/' in frag:
+                input.append(frag)
+            else:
+                input.extend(list(frag))
+                input.append("/") # breaks chain
+    if name == None:
+        name = _self.get_unused_name("obj")
+#    if mode in [ 'smiles' ]: # small molecule (FUTURE)
+#        from chempy.champ import Champ
+#        ch = Champ()
+#        ch.insert_pattern_string(input)
+    if mode in [ 'peptide' ]:  # polymers
+        input.reverse()
+        sequence = input
+        if code != None:
+            while len(sequence):
+                while len(sequence) and '/' in sequence[-1]:
+                    part = sequence.pop().split('/')
+                    if len(part)>1:
+                        if len(part[-2]):
+                            resi = int(part[-2])
+                    if len(part)>2:
+                        chain = part[-3]
+                    if len(part)>3:
+                        segi = part[-4]
+                if len(sequence) and not _self.count_atoms("?pk1"): # new polymer segment
+                    tmp_obj = _self.get_unused_name()
+                    first = sequence.pop()
+                    _self.fragment(code[first], tmp_obj)
+                    _self.alter(tmp_obj,'resi="""%s""";chain="""%s""";segi="""%s"""'%(resi,chain,segi))
+                    _self.create(name,tmp_obj+" or ?"+name,1,state,zoom=0)
+                    tmp_sel = _self.get_unused_name()
+                    if mode == 'peptide':
+                        if dir>0:
+                            _self.select(tmp_sel,"name c and "+tmp_obj)
+                            resi = resi + 1
+                        else:
+                            _self.select(tmp_sel,"name n and "+tmp_obj)
+                            resi = resi - 1
+                    _self.edit(name+" in "+tmp_sel) # set the editor's pk1 selection
+                    _self.delete(tmp_sel+" "+tmp_obj)
+                if mode == 'peptide':
+                    while len(sequence):
+                        if '/' in sequence[-1]:
+                            _self.unpick() # break chain at this point
+                            break
+                        if not _self.count_atoms("?pk1"):
+                            break
+                        else:
+                            attach_amino_acid("pk1",code[sequence.pop()],animate=0,_self=_self)
+                            if dir>0:
+                                resi = resi + 1
+                            else:
+                                resi = resi - 1
+    if not len(sequence):
+        r = DEFAULT_SUCCESS
+    return r
+
+def build_peptide(sequence,_self=cmd): # legacy
     for aa in sequence:
         attach_amino_acid("pk1",_aa_codes[aa])
         

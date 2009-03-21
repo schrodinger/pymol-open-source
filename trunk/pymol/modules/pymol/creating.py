@@ -771,7 +771,7 @@ DESCRIPTION
 
 USAGE
 
-    create name, (selection) [,source_state [,target_state ] ]
+    create name, selection [,source_state [,target_state ] ]
 
 ARGUMENTS
 

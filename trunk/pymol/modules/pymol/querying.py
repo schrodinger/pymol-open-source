@@ -34,7 +34,24 @@ if __name__=='pymol.querying':
                     _self.distance()
         _self.unpick()   
 
-
+    def get_unused_name(prefix="tmp",_self=cmd):
+        r = DEFAULT_ERROR        
+        # should replace this with a C function
+        try:
+            _self.lock(_self)  
+            avoid_dict = {}
+            for name in  _self.get_names('all'):
+                avoid_dict[name] = None
+            counter = 1
+            while 1:
+                r = prefix + "%02d"%counter
+                if not avoid_dict.has_key(r):
+                    break
+                counter = counter + 1
+        finally:
+            _self.unlock(r,_self)
+        return r
+    
     def get_modal_draw(_self=cmd,quiet=1):
         r = DEFAULT_ERROR
         try:
@@ -1070,6 +1087,16 @@ SEE ALSO
         try:
             _self.lock(_self)
             r = _cmd.get_names(_self._COb,int(mode),int(enabled_only),str(selection))
+        finally:
+            _self.unlock(r,_self)
+        if _raising(r,_self): raise pymol.CmdException
+        return r
+
+    def get_legal_name(name,_self=cmd):
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)
+            r = _cmd.get_legal_name(_self._COb,str(name))
         finally:
             _self.unlock(r,_self)
         if _raising(r,_self): raise pymol.CmdException

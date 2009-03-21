@@ -13014,6 +13014,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
       CTracker *I_Tracker= I->Tracker;
       int list_id = ExecutiveGetNamesListFromPattern(G,name,true,true);
       int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+
       while( TrackerIterNextCandInList(I_Tracker, iter_id, 
 				       (TrackerRef**)(void*)&rec) ) {
         if(rec) {

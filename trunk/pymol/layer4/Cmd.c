@@ -236,6 +236,7 @@ static PyObject *APIAutoNone(PyObject *result) /* automatically owned Py_None */
   return(result);
 }
 
+
 static PyObject *CmdGetModalDraw(PyObject *self, PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -2344,6 +2345,31 @@ static PyObject *CmdGetType(PyObject *self, 	PyObject *args)
   else
     return APIResultOk(ok);
 }
+
+static PyObject *CmdGetLegalName(PyObject *self, 	PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  WordType name;
+  PyObject *result = Py_None;
+  int ok = false;
+  char *str0;
+  ok = PyArg_ParseTuple(args,"Os",&self,&str0);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    APIEnter(G);
+    UtilNCopy(name,str0,sizeof(WordType));
+    ObjectMakeValidName(name);    
+    APIExit(G);
+    result = PyString_FromString(name);
+  }
+  return(APIAutoNone(result));
+}
+
 static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
 {
   PyMOLGlobals *G = NULL;
@@ -8356,6 +8382,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_frame",             CmdGetFrame,             METH_VARARGS },
   {"get_feedback",          CmdGetFeedback,          METH_VARARGS },
   {"get_idtf",	            CmdGetIdtf,              METH_VARARGS },
+  {"get_legal_name",        CmdGetLegalName,         METH_VARARGS },
   {"get_matrix",	        CmdGetMatrix,            METH_VARARGS },
   {"get_min_max",           CmdGetMinMax,            METH_VARARGS },
   {"get_mtl_obj",           CmdGetMtlObj,            METH_VARARGS },

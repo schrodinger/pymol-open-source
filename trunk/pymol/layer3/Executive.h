@@ -72,8 +72,10 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeXYZStr 49
 /* 50 is CIFStr */
 #define cLoadTypePHIStr 51
-/* 51 is PIM */
-/* 52 is PWG */
+/* 52 is PIM */
+/* 53 is PWG */
+/* 54 is ALN */
+/* 55 is FASTA */
 
 /* NOTE: if you add new content/object type above, then be sure to add
    corresponding code in: CmdLoad ExecutiveGetExistingCompatible

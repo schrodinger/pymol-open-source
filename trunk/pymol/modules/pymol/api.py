@@ -101,6 +101,8 @@ from querying import \
       get_movie_length,   \
       get_names,          \
       get_names_of_type,  \
+      get_legal_name,     \
+      get_unused_name,    \
       get_object_matrix,  \
       get_mtl_obj,        \
       get_phipsi,         \
@@ -204,6 +206,9 @@ from editing import \
       valence,            \
       vdw_fit 
 
+from editor import \
+      fab
+      
 from computing import \
       clean              
 

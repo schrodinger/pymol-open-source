@@ -420,7 +420,52 @@ SEE ALSO
         _cmd.finish_object(_self._COb,str(oname))
         if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
             _self._do("zoom (%s)"%oname)
-            
+
+    def _processALN(fname,_self=cmd):
+        legal_dict = {}
+        seq_dict = {}
+        seq_order = []
+        header_seen = 0
+        for line in open(fname).readlines():
+            if not header_seen:
+                if line[0:7]=='CLUSTAL':
+                    header_seen = 1
+            else:
+                key = line[0:16].strip()
+                legal_key = _self.get_legal_name(key)
+                if not legal_dict.has_key(key):
+                    seq_order.append(legal_key)
+                legal_dict[key] = legal_key
+                key = legal_key
+                if key!='':
+                    seq = line[16:].strip()
+                    if seq != '':
+                        seq_dict[key] = seq_dict.get(key,'') + seq
+        for key in seq_order:
+            raw_seq = seq_dict[key].replace('-','')
+            _self.fab(raw_seq, key)
+
+    def _processFASTA(fname,_self=cmd):
+        legal_dict = {}
+        seq_dict = {}
+        seq_order = []
+        for line in open(fname).readlines():
+            line = line.strip()
+            if len(line):
+                if line[0:1] == '>':
+                    key = line[1:].strip()
+                    legal_key = _self.get_legal_name(key)
+                    if not legal_dict.has_key(key):
+                        seq_order.append(legal_key)
+                    legal_dict[key] = legal_key
+                    key = legal_key
+                elif key:
+                    seq = line
+                    seq_dict[key] = seq_dict.get(key,'') + seq
+        for key in seq_order:
+            raw_seq = seq_dict[key].replace('-','')
+            _self.fab(raw_seq, key)
+        
     def _processPWG(fname,_self=cmd):
         r = DEFAULT_ERROR
         try:
@@ -661,6 +706,10 @@ SEE ALSO
                     ftype = loadable.pim
                 elif re.search("\.pwg$",fname_no_gz,re.I):
                     ftype = loadable.pwg
+                elif re.search("\.aln$",fname_no_gz,re.I):
+                    ftype = loadable.aln
+                elif re.search("\.fasta$",fname_no_gz,re.I):
+                    ftype = loadable.fasta
                 elif re.search("\.map$",fname_no_gz,re.I):
                     r = DEFAULT_ERROR
                     print 'Error: .map is ambiguous.  Please add format or use another extension:'
@@ -748,6 +797,18 @@ SEE ALSO
             if ftype == loadable.pwg:
                 ftype = -1
                 r = _processPWG(fname)
+
+    # aln CLUSTAL
+    
+            if ftype == loadable.aln:
+                ftype = -1
+                r = _processALN(fname)
+
+    # fasta
+    
+            if ftype == loadable.fasta:
+                ftype = -1
+                r = _processFASTA(fname)
 
     # special handling for trj failes (autodetect AMBER versus GROMACS)
             if ftype == loadable.trj:
