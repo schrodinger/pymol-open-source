@@ -144,6 +144,53 @@ PYMOL API
         if _self._raising(r,_self): raise QuietException         
         return r
 
+    _resn_to_aa =  {
+            'ALA' : 'A',
+            'CYS' : 'C',
+            'ASP' : 'D',
+            'GLU' : 'E',
+            'PHE' : 'F',
+            'GLY' : 'G',
+            'HIS' : 'H',
+            'ILE' : 'I',
+            'LYS' : 'K',
+            'LEU' : 'L',
+            'MET' : 'M',
+            'ASN' : 'N',
+            'PRO' : 'P',
+            'GLN' : 'Q',
+            'ARG' : 'R',
+            'SER' : 'S',
+            'THR' : 'T',
+            'VAL' : 'V',
+            'TRP' : 'W',
+            'TYR' : 'Y',
+            }
+    
+    def get_fastastr(selection="all", state=-1, quiet=1, _self=cmd):
+        dict = { 'seq' : {} }
+        _self.iterate("("+selection+") and polymer and name ca",
+                    "seq[model]=seq.get(model,[]);seq[model].append(resn)",space=dict)
+        seq = dict['seq']
+        result = []
+        for obj in _self.get_names("objects",selection='('+selection+')'):
+            if seq.has_key(obj):
+                seq = map(lambda x:_resn_to_aa.get(x,'?'),seq[obj])
+                result.append(">%s"%obj)
+                seq = string.join(seq,'')
+                while len(seq):
+                    if len(seq)>=70:
+                        result.append(seq[0:70])
+                        seq=seq[70:]
+                    else:
+                        result.append(seq)
+                        break
+        print result
+        result = string.join(result,'\n')
+        if len(result):
+            result = result + '\n'
+        return result
+
     def get_pdbstr(selection="all", state=-1, ref='', ref_state=-1, quiet=1, _self=cmd):
         '''
 DESCRIPTION
@@ -422,6 +469,8 @@ SEE ALSO
                 format = 'pse'
             elif re.search("\.aln$",lc_filename):
                 format = 'aln'
+            elif re.search("\.fasta$",lc_filename):
+                format = 'fasta'
             elif re.search("\.obj$",lc_filename):
                 format = 'obj'
             elif re.search("\.mtl$",lc_filename):
@@ -463,6 +512,17 @@ SEE ALSO
             finally:
                 _self.unlock(r,_self)
             if st!=None:
+                f=open(filename,"w")
+                f.write(st)
+                f.close()
+                if not quiet:
+                    print " Save: wrote \""+filename+"\"."
+            else:
+                r = DEFAULT_ERROR
+        elif format=='fasta':
+            st = _self.get_fastastr(selection)
+            if st != None:
+                r = DEFAULT_SUCCESS
                 f=open(filename,"w")
                 f.write(st)
                 f.close()

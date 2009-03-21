@@ -137,6 +137,7 @@ from exporting import \
       export_coords,      \
       get_pdbstr,         \
       get_session,        \
+      get_fastastr,       \
       multisave,          \
       png,                \
       save               

@@ -15,7 +15,7 @@ class Message(Wizard):
             else:
                 self.message.extend(a)
         for a in self.message:
-            print a
+            print " "+a
         self.dismiss = int(kw.get("dismiss",1))
 
     def get_prompt(self):

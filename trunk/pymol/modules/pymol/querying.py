@@ -1330,7 +1330,7 @@ USAGE
         return r
 
 
-    def count_atoms(selection="(all)",quiet=1,state=0,_self=cmd):
+    def count_atoms(selection="(all)",quiet=1,state=0,domain='',_self=cmd):
         '''
 DESCRIPTION
 
@@ -1351,7 +1351,7 @@ PYMOL API
         #
         try:
             _self.lock(_self)   
-            r = _cmd.select(_self._COb,"_count_tmp","("+str(selection)+")",1,int(state)-1,'')
+            r = _cmd.select(_self._COb,"_count_tmp","("+str(selection)+")",1,int(state)-1,str(domain))
             _cmd.delete(_self._COb,"_count_tmp")
         finally:
             _self.unlock(r,_self)

@@ -3769,60 +3769,60 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,
     for(a=0;a<I->NCSet;a++) { /* add coordinate into the coordinate set */
       tcs = I->CSet[a];
       if(tcs) {
-	if(mode==3) {
-	  f0=backup;
-	  f1=cs->Coord;
-	  for(b=0;b<cs->NIndex;b++) { /* brute force transformation */
-	    copy3f(f0,f1);
-	  }
-	  f0+=3;
-	  f1+=3;
-	} else {
-	  switch(mode) {
-	  case 0:
-	    ca0 = tcs->AtmToIdx[at0]; /* anchor */
-	    ch0 = tcs->AtmToIdx[index0]; /* hydrogen */
+        if(mode==3) {
+          f0=backup;
+          f1=cs->Coord;
+          for(b=0;b<cs->NIndex;b++) { /* brute force transformation */
+            copy3f(f0,f1);
+          }
+          f0+=3;
+          f1+=3;
+        } else {
+          switch(mode) {
+          case 0:
+            ca0 = tcs->AtmToIdx[at0]; /* anchor */
+            ch0 = tcs->AtmToIdx[index0]; /* hydrogen */
 
-	    if((ca0>=0)&&(ch0>=0)) {
-	      copy3f(tcs->Coord+3*ca0,va0);
-	      copy3f(tcs->Coord+3*ch0,vh0);
-	      subtract3f(vh0,va0,x0);
-	      get_system1f3f(x0,y0,z0);
+            if((ca0>=0)&&(ch0>=0)) {
+              copy3f(tcs->Coord+3*ca0,va0);
+              copy3f(tcs->Coord+3*ch0,vh0);
+              subtract3f(vh0,va0,x0);
+              get_system1f3f(x0,y0,z0);
 
-	    }
-	    break;
-	  case 1:
-	    ca0 = tcs->AtmToIdx[at0]; /* anchor */
+            }
+            break;
+          case 1:
+            ca0 = tcs->AtmToIdx[at0]; /* anchor */
 
-	    if(ca0>=0) {
-	      ObjectMoleculeFindOpenValenceVector(I,a,at0,x0,NULL,-1);
-	      copy3f(tcs->Coord+3*ca0,va0);
-	      get_system1f3f(x0,y0,z0);
+            if(ca0>=0) {
+              ObjectMoleculeFindOpenValenceVector(I,a,at0,x0,NULL,-1);
+              copy3f(tcs->Coord+3*ca0,va0);
+              get_system1f3f(x0,y0,z0);
             
-	    }
-	    break;
-	  }
-	  scale3f(x0,d,t2);
-	  add3f(va0,t2,t2);
+            }
+            break;
+          }
+          scale3f(x0,d,t2);
+          add3f(va0,t2,t2);
         
-	  f0=backup;
-	  f1=cs->Coord;
-	  for(b=0;b<cs->NIndex;b++) { /* brute force transformation */
-	    if(move_flag) {
-	      subtract3f(f0,va1,t);
-	      scale3f(x0,dot_product3f(t,x1),x);
-	      scale3f(y0,dot_product3f(t,y1),y);
-	      scale3f(z0,dot_product3f(t,z1),z);
-	      add3f(x,y,y);
-	      add3f(y,z,f1);
-	      add3f(t2,f1,f1);
-	    } else {
-	      copy3f(f0,f1);
-	    }
-	    f0+=3;
-	    f1+=3;
-	  }
-	}
+          f0=backup;
+          f1=cs->Coord;
+          for(b=0;b<cs->NIndex;b++) { /* brute force transformation */
+            if(move_flag) {
+              subtract3f(f0,va1,t);
+              scale3f(x0,dot_product3f(t,x1),x);
+              scale3f(y0,dot_product3f(t,y1),y);
+              scale3f(z0,dot_product3f(t,z1),z);
+              add3f(x,y,y);
+              add3f(y,z,f1);
+              add3f(t2,f1,f1);
+            } else {
+              copy3f(f0,f1);
+            }
+            f0+=3;
+            f1+=3;
+          }
+        }
         CoordSetMerge(tcs,cs); 
       }
     }
