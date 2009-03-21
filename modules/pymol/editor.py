@@ -306,7 +306,7 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
 #        ch.insert_pattern_string(input)
     if mode in [ 'peptide' ]:  # polymers
         if (seq_len>50) and not quiet:
-            print " Generating a %d residue peptide. Please wait..."%seq_len
+            print " Generating a %d residue peptide from sequence..."%seq_len
         input.reverse()
         sequence = input
         if code != None:
