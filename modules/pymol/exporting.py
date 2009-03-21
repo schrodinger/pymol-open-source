@@ -185,7 +185,6 @@ PYMOL API
                     else:
                         result.append(seq)
                         break
-        print result
         result = string.join(result,'\n')
         if len(result):
             result = result + '\n'
