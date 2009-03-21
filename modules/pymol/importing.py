@@ -421,7 +421,7 @@ SEE ALSO
         if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
             _self._do("zoom (%s)"%oname)
 
-    def _processALN(fname,_self=cmd):
+    def _processALN(fname,quiet=1,_self=cmd):
         legal_dict = {}
         seq_dict = {}
         seq_order = []
@@ -432,20 +432,20 @@ SEE ALSO
                     header_seen = 1
             else:
                 key = line[0:16].strip()
-                legal_key = _self.get_legal_name(key)
-                if not legal_dict.has_key(key):
-                    seq_order.append(legal_key)
-                legal_dict[key] = legal_key
-                key = legal_key
                 if key!='':
+                    legal_key = _self.get_legal_name(key)
+                    if not legal_dict.has_key(key):
+                        seq_order.append(legal_key)
+                    legal_dict[key] = legal_key
+                    key = legal_key
                     seq = line[16:].strip()
                     if seq != '':
                         seq_dict[key] = seq_dict.get(key,'') + seq
         for key in seq_order:
             raw_seq = seq_dict[key].replace('-','')
-            _self.fab(raw_seq, key)
+            _self.fab(raw_seq, key, quiet=quiet)
 
-    def _processFASTA(fname,_self=cmd):
+    def _processFASTA(fname,quiet=1,_self=cmd):
         legal_dict = {}
         seq_dict = {}
         seq_order = []
@@ -464,7 +464,7 @@ SEE ALSO
                     seq_dict[key] = seq_dict.get(key,'') + seq
         for key in seq_order:
             raw_seq = seq_dict[key].replace('-','')
-            _self.fab(raw_seq, key)
+            _self.fab(raw_seq, key, quiet=quiet)
         
     def _processPWG(fname,_self=cmd):
         r = DEFAULT_ERROR
@@ -802,13 +802,13 @@ SEE ALSO
     
             if ftype == loadable.aln:
                 ftype = -1
-                r = _processALN(fname)
+                r = _processALN(fname,quiet=quiet)
 
     # fasta
     
             if ftype == loadable.fasta:
                 ftype = -1
-                r = _processFASTA(fname)
+                r = _processFASTA(fname,quiet=quiet)
 
     # special handling for trj failes (autodetect AMBER versus GROMACS)
             if ftype == loadable.trj:

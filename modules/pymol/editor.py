@@ -282,17 +282,20 @@ _fab_codes = {
 
 _pure_number = re.compile("[0-9]+")
 
-def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,_self=cmd):
+def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
     r = DEFAULT_ERROR
     code = _fab_codes.get(mode,None)
-
-    if (mode == 'peptide') and is_string(input): # '123/ ADC B/234/ AFCD' to [ '123/','A','D','C','B/234/','F','C','D' ]
+    quiet = int(quiet)
+    seq_len = 0
+    if (mode == 'peptide') and is_string(input):
+        # '123/ ADC B/234/ AFCD' to [ '123/','A','D','C','B/234/','F','C','D' ]
         frags = input.split()
         input = []
         for frag in frags:
             if '/' in frag:
                 input.append(frag)
             else:
+                seq_len = seq_len + len(frag)
                 input.extend(list(frag))
                 input.append("/") # breaks chain
     if name == None:
@@ -302,6 +305,8 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,_self=cmd):
 #        ch = Champ()
 #        ch.insert_pattern_string(input)
     if mode in [ 'peptide' ]:  # polymers
+        if (seq_len>50) and not quiet:
+            print " Generating a %d residue peptide. Please wait..."%seq_len
         input.reverse()
         sequence = input
         if code != None:
@@ -347,13 +352,16 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,_self=cmd):
     if not len(sequence):
         r = DEFAULT_SUCCESS
 
-def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,dir=1,
-        hydro=-1,ss=0,async=-1,_self=cmd):
+def fab(input,name=None,mode='peptide',resi=1,chain='',segi='',state=-1,
+        dir=1,hydro=-1,ss=0,async=-1,quiet=1,_self=cmd):
     if async<1:
-        r = _fab(input,name,mode,resi,chain,segi,state,dir,ss)
+        r = _fab(input,name,mode,resi,chain,segi,
+                 state,dir,hydro,ss,quiet,_self)
     else:
-        fab_thread = threading.Thread(target=_fab, args=(input,name,mode,resi,chain,
-                                                         segi,state,dir,hydro,ss,_self))
+        fab_thread = threading.Thread(target=_fab, args=(input,name,mode,
+                                                         resi,chain,
+                                                         segi,state,dir,
+                                                         hydro,ss,quiet,_self))
         fab_thread.setDaemon(1)
         fab_thread.start()
         r = DEFAULT_SUCCESS
