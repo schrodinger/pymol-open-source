@@ -1570,6 +1570,8 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2,RenderInfo *i
     register int op;
     register CCGORenderer *R = G->CGORenderer;
     register float _1 = 1.0F;
+
+    SceneResetNormal(I->G,true);
     if(I->c) {
       R->alpha = 1.0F - SettingGet_f(I->G,set1,set2,cSetting_cgo_transparency);
       if(color) 
