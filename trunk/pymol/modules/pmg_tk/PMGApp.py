@@ -98,6 +98,8 @@ class PMGApp(Pmw.MegaWidget):
                 ("All Readable","*.cif"),
                 ("All Readable","*.moe"), # proprietary format
                 ("All Readable","*.mae"), # proprietary format
+                ("All Readable","*.fasta"),
+                ("All Readable","*.aln"),                 
                 ("PDB File","*.pdb"),
                 ("PDB1 File","*.pdb1"),                
                 ("All Files","*.*"),
@@ -126,7 +128,9 @@ class PMGApp(Pmw.MegaWidget):
                 ("SDF File","*.sdf"),
                 ("ChemDraw3D File","*.cc1"),
                 ("ChemDraw3D File","*.cc2"),
-                ("Tinker XYZ File","*.xyz")
+                ("Tinker XYZ File","*.xyz"),
+                ("Fasta File","*.fasta"),
+                ("CLUSTAL file","*.aln"),                 
                 ]
 
     def initializeTk_colors_common(self):
