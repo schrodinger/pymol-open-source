@@ -187,6 +187,7 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *optio
         case '+':
           if((option->lists)&&(option->allow_plus))
             needed=true;
+          break;
         case ',': /* list operators */
           if(option->lists)
             needed=true;

@@ -283,7 +283,7 @@ static int SelectorGetObjAtmOffset(CSelector *I,ObjectMolecule *obj,int offset)
 #define SELE_RSIs ( 0x0F00 | STYP_SEL1 | 0x80 )
 #define SELE_CHNs ( 0x1000 | STYP_SEL1 | 0x80 )
 #define SELE_SEGs ( 0x1100 | STYP_SEL1 | 0x80 )
-#define SELE_MODs ( 0x1200 | STYP_SEL1 | 0x80 ) 
+#define SELE_MODs ( 0x1200 | STYP_SEL1 | 0x80 )
 #define SELE_IDXs ( 0x1300 | STYP_SEL1 | 0x80 )
 #define SELE_RSNs ( 0x1400 | STYP_SEL1 | 0x80 )
 #define SELE_SELs ( 0x1500 | STYP_SEL1 | 0x80 )
@@ -339,6 +339,7 @@ static int SelectorGetObjAtmOffset(CSelector *I,ObjectMolecule *obj,int offset)
 #define SELE_IOR2 ( 0x4600 | STYP_OPR2 | 0x10 )
 #define SELE_FXDz ( 0x4700 | STYP_SEL0 | 0x90 )
 #define SELE_RSTz ( 0x4800 | STYP_SEL0 | 0x90 )
+#define SELE_ANT2 ( 0x4900 | STYP_OPR2 | 0x60 )
 
 #define SEL_PREMAX 0x8
 
@@ -391,6 +392,8 @@ static WordKeyValue Keyword[] =
   {  "and",      SELE_AND2 },
   {  "&",        SELE_AND2 },
   {  "or",       SELE_OR_2 },
+  {  "+",        SELE_OR_2 }, /* added to mitigate damage caused by the obj1+obj2 parser bug */
+  {  "-",        SELE_ANT2 }, /* added to provide natural complement to the above: an AND NOT or SUBTRACT operation*/ 
   {  "|",        SELE_OR_2 },
   {  "in",       SELE_IN_2 },
 
@@ -9326,7 +9329,10 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
               for(a=cNDummyAtoms;a<I_NAtom;a++)
                 base[0].sele[a]=false;
             } else {
-              ok=ErrMessage(G,"Selector","Invalid Selection Name.");          
+              PRINTFB(G,FB_Selector,FB_Errors)
+                "Selector-Error: Invalid selection name \"%s\".\n",word
+                ENDFB(G);
+              ok = false;
             }
           }
         }
@@ -9350,9 +9356,8 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
        
        {
          CWordMatchOptions options;
-         
          WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
-         
+
          if( (matcher = WordMatcherNew(G,base[1].text,&options,false))) {
            
            int obj_matches = false;
@@ -10146,6 +10151,20 @@ static int SelectorLogic2(PyMOLGlobals *G,EvalElem *base)
       base_2_sele_a++;
     }
     break;
+  case SELE_ANT2:
+    base_0_sele_a = base[0].sele;
+    base_2_sele_a = base[2].sele;
+    
+    for(a=0;a<n_atom;a++) {
+      if( (*base_0_sele_a) && ! (*base_2_sele_a) ) {
+        c++;
+      } else {
+        (*base_0_sele_a) = 0;
+      }
+      base_0_sele_a++;
+      base_2_sele_a++;
+    }
+    break;
   case SELE_IN_2:
     {
       register int *base_2_sele_b;
@@ -10365,7 +10384,7 @@ static void remove_quotes(char *st)
   char active_quote = 0;
   p = st;
   q = store;
-  /*  printf("input [%s]\n",st);*/
+  /*  printf("DEBUG remove_quotes: input [%s]\n",st); */
 
   while(*p) {
     if(((*p)==34)||((*p)==39)) {
@@ -10390,16 +10409,18 @@ static void remove_quotes(char *st)
         *(q++)=*(p++);
       }
     } else {
+      /* UNWORKABLE -- hopelly getting rid of this kludge will not cause major grief 
       if((*p=='+')&&(!quote_start))
         if(!((*(p+1)==0)||(*(p+1)==',')||(*(p+1)=='+')))
           *p=',';
+      */
       *(q++)=*(p++);
     }
   }
   *(q++) = 0;
   strcpy(st,store);
 
-  /*  printf("output [%s]\n",st);*/
+  /*  printf("DEBUG remove_quotes: output [%s]\n",st);*/
 }
 
 /*========================================================================*/
@@ -10541,7 +10562,7 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state)
               e->imp_op_level=(imp_op_level<<4)+1; 
               imp_op_level = level;
               e->type=STYP_SEL1;
-              valueFlag=1;
+              valueFlag = 1;
               c--;
             } else { /* handle <selection-name> syntax */
               depth++;
@@ -10552,7 +10573,7 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state)
               e->imp_op_level=(imp_op_level<<4)+1; 
               imp_op_level = level;
               e->type=STYP_SEL1;
-              valueFlag=1;
+              valueFlag = 1;
               c--;
             }
           }
