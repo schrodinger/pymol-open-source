@@ -4250,20 +4250,19 @@ int SelectorGetSingleAtomObjectIndex(PyMOLGlobals *G,int sele,ObjectMolecule **i
   int a;
   void *hidden = NULL;
   ObjectMolecule *obj;
-  while(ExecutiveIterateObject(G,(CObject**)&obj,&hidden)) {
-    if(obj->Obj.type == cObjectMolecule) {
-      int n_atom = obj->NAtom;
-      AtomInfoType *ai = obj->AtomInfo;
-      for(a=0;a<n_atom;a++) {
-        register int s = (ai++)->selEntry;
-        if(SelectorIsMember(G,s,sele)) {
-          if(found_it){
-            return false; /* ADD'L EXIT POINT */
-          } else {
-            found_it = true;
-            (*in_obj) = obj;
-            (*index) = a;
-          }
+
+  while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
+    int n_atom = obj->NAtom;
+    AtomInfoType *ai = obj->AtomInfo;
+    for(a=0;a<n_atom;a++) {
+      register int s = (ai++)->selEntry;
+      if(SelectorIsMember(G,s,sele)) {
+        if(found_it){
+          return false; /* ADD'L EXIT POINT */
+        } else {
+          found_it = true;
+          (*in_obj) = obj;
+          (*index) = a;
         }
       }
     }
@@ -7168,7 +7167,7 @@ static void SelectorPurgeMembers(PyMOLGlobals *G,int sele)
     register MemberType *I_Member = I->Member;
     register int I_FreeMember = I->FreeMember;
 
-    while(ExecutiveIterateObject(G,(CObject**)&obj,&hidden)) {
+    while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
       if(obj->Obj.type == cObjectMolecule) {
         register AtomInfoType *ai = obj->AtomInfo;
         register int a, n_atom = obj->NAtom;
@@ -7871,9 +7870,8 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
   register ov_size c=0;
   register int modelCnt;
   register int state = req_state;
-  CObject *o = NULL;
   void *hidden = NULL;
-  ObjectMolecule *obj;
+  ObjectMolecule *obj = NULL;
 
   register CSelector *I=G->Selector;
 
@@ -7888,13 +7886,10 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
 
   modelCnt=cNDummyModels;
   c=cNDummyAtoms;
-  while(ExecutiveIterateObject(G,&o,&hidden)) {
-    if(o->type==cObjectMolecule) {
-      obj=(ObjectMolecule*)o;
-      c+=obj->NAtom;
-      if(I->NCSet<obj->NCSet) I->NCSet=obj->NCSet;
-      modelCnt++;
-    }
+  while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
+    c+=obj->NAtom;
+    if(I->NCSet<obj->NCSet) I->NCSet=obj->NCSet;
+    modelCnt++;
   }
   I->Table=Calloc(TableRec,c);
   ErrChkPtr(G,I->Table);
@@ -7941,125 +7936,122 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
     state = SceneGetState(G); /* just in case... */
   }
 
-  while(ExecutiveIterateObject(G,&o,&hidden)) {
-    if(o->type==cObjectMolecule) {
-      register int skip_flag = false;
-      obj=(ObjectMolecule*)o;
-      if(req_state<0) {
-        switch(req_state) {
-        case cSelectorUpdateTableAllStates:
-          state = -1; /* all states */
-          /* proceed... */
-          break;
-        case cSelectorUpdateTableCurrentState:
-          state = SettingGetGlobal_i(G,cSetting_state)-1;
-          break;
-        case cSelectorUpdateTableEffectiveStates:
-          state = ObjectGetCurrentState(o,true);
-          break;
-        default: /* unknown input -- fail safe (all states)*/
-          state = -1;
-          break;
-        }
-      } else {
-        if(state>=obj->NCSet) 
-          skip_flag=true;
-        else if(!obj->CSet[state]) 
-          skip_flag=true;
+  while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
+    register int skip_flag = false;
+    if(req_state<0) {
+      switch(req_state) {
+      case cSelectorUpdateTableAllStates:
+        state = -1; /* all states */
+        /* proceed... */
+        break;
+      case cSelectorUpdateTableCurrentState:
+        state = SettingGetGlobal_i(G,cSetting_state)-1;
+        break;
+      case cSelectorUpdateTableEffectiveStates:
+        state = ObjectGetCurrentState(&obj->Obj,true);
+        break;
+      default: /* unknown input -- fail safe (all states)*/
+        state = -1;
+        break;
       }
+    } else {
+      if(state>=obj->NCSet) 
+        skip_flag=true;
+      else if(!obj->CSet[state]) 
+        skip_flag=true;
+    }
       
-      if(!skip_flag) {
-        I->Obj[modelCnt]=obj;
-        { 
-          register int n_atom = obj->NAtom;
-          register TableRec *rec = I->Table + c;
-          TableRec *start_rec = rec;
-          if(state<0) { /* all states */
-            if(domain<0) { /* domain=all */
-              for(a=0;a<n_atom;a++) {
+    if(!skip_flag) {
+      I->Obj[modelCnt]=obj;
+      { 
+        register int n_atom = obj->NAtom;
+        register TableRec *rec = I->Table + c;
+        TableRec *start_rec = rec;
+        if(state<0) { /* all states */
+          if(domain<0) { /* domain=all */
+            for(a=0;a<n_atom;a++) {
+              rec->model = modelCnt;
+              rec->atom = a;
+              rec++;
+            } 
+          } else {
+            register AtomInfoType *ai = obj->AtomInfo;
+            int included_one = false;
+            int excluded_one = false;
+            for(a=0;a<n_atom;a++) {
+              if(SelectorIsMember(G,ai->selEntry,domain)) {
                 rec->model = modelCnt;
                 rec->atom = a;
                 rec++;
-              } 
-            } else {
-              register AtomInfoType *ai = obj->AtomInfo;
-              int included_one = false;
-              int excluded_one = false;
-              for(a=0;a<n_atom;a++) {
-                if(SelectorIsMember(G,ai->selEntry,domain)) {
+                included_one = true;
+              } else {
+                excluded_one = true;
+              }
+              ai++;
+            }
+            if(included_one && excluded_one)
+              I->SeleBaseOffsetsValid = false; /* partial objects in domain, so
+                                                  base offsets are invalid */
+          }
+        } else { /* specific states */
+          register CoordSet *cs;
+          register int idx;
+          if(domain<0) {
+            for(a=0;a<n_atom;a++) {
+              /* does coordinate exist for this atom in the requested state? */
+              if(state<obj->NCSet) 
+                cs=obj->CSet[state];
+              else
+                cs=NULL;
+              if(cs) {
+                if(obj->DiscreteFlag) {
+                  if(cs==obj->DiscreteCSet[a])
+                    idx=obj->DiscreteAtmToIdx[a];
+                  else
+                    idx=-1;
+                } else 
+                  idx=cs->AtmToIdx[a];
+                if(idx>=0) {
                   rec->model = modelCnt;
                   rec->atom = a;
                   rec++;
-                  included_one = true;
-                } else {
-                  excluded_one = true;
                 }
-                ai++;
               }
-              if(included_one && excluded_one)
-                I->SeleBaseOffsetsValid = false; /* partial objects in domain, so
-                                                    base offsets are invalid */
             }
-          } else { /* specific states */
-            register CoordSet *cs;
-            register int idx;
-            if(domain<0) {
-              for(a=0;a<n_atom;a++) {
-                /* does coordinate exist for this atom in the requested state? */
-                if(state<obj->NCSet) 
-                  cs=obj->CSet[state];
-                else
-                  cs=NULL;
-                if(cs) {
-                  if(obj->DiscreteFlag) {
-                    if(cs==obj->DiscreteCSet[a])
-                      idx=obj->DiscreteAtmToIdx[a];
-                    else
-                      idx=-1;
-                  } else 
-                    idx=cs->AtmToIdx[a];
-                  if(idx>=0) {
+          } else {
+            register AtomInfoType *ai = obj->AtomInfo;
+            for(a=0;a<n_atom;a++) {
+              /* does coordinate exist for this atom in the requested state? */
+              if(state<obj->NCSet) 
+                cs=obj->CSet[state];
+              else
+                cs=NULL;
+              if(cs) {
+                if(obj->DiscreteFlag) {
+                  if(cs==obj->DiscreteCSet[a])
+                    idx=obj->DiscreteAtmToIdx[a];
+                  else
+                    idx=-1;
+                } else 
+                  idx=cs->AtmToIdx[a];
+                if(idx>=0) {
+                  if(SelectorIsMember(G,ai->selEntry,domain)) {
                     rec->model = modelCnt;
                     rec->atom = a;
                     rec++;
                   }
                 }
               }
-            } else {
-              register AtomInfoType *ai = obj->AtomInfo;
-              for(a=0;a<n_atom;a++) {
-                /* does coordinate exist for this atom in the requested state? */
-                if(state<obj->NCSet) 
-                  cs=obj->CSet[state];
-                else
-                  cs=NULL;
-                if(cs) {
-                  if(obj->DiscreteFlag) {
-                    if(cs==obj->DiscreteCSet[a])
-                      idx=obj->DiscreteAtmToIdx[a];
-                    else
-                      idx=-1;
-                  } else 
-                    idx=cs->AtmToIdx[a];
-                  if(idx>=0) {
-                    if(SelectorIsMember(G,ai->selEntry,domain)) {
-                      rec->model = modelCnt;
-                      rec->atom = a;
-                      rec++;
-                    }
-                  }
-                }
-                ai++;
-              }
+              ai++;
             }
           }
-          if(rec!=start_rec) { /* skip excluded models */
-            modelCnt++;
-            obj->SeleBase=c; /* make note of where this object starts */
-            c+=(rec-start_rec);
-          } else {
-            obj->SeleBase=0;
-          }
+        }
+        if(rec!=start_rec) { /* skip excluded models */
+          modelCnt++;
+          obj->SeleBase=c; /* make note of where this object starts */
+          c+=(rec-start_rec);
+        } else {
+          obj->SeleBase=0;
         }
       }
     }
