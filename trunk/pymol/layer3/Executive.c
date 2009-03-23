@@ -15168,44 +15168,30 @@ static void ExecutiveDraw(Block *block)
 /*========================================================================*/
 int ExecutiveIterateObject(PyMOLGlobals *G,CObject **obj,void **hidden)
 {
-  int result;
-  register CExecutive *I = G->Executive;
-  int flag=false;
-  SpecRec **rec=(SpecRec**)hidden;
-  while(!flag) {
-    result = (ListIterate(I->Spec,(*rec),next))!=NULL;
-    if(!(*rec))
-      flag=true;
-    else if((*rec)->type==cExecObject)
-      flag=true;
+  register SpecRec **rec=(SpecRec**)hidden, *I_Spec = G->Executive->Spec;
+  while(ListIterate(I_Spec,(*rec),next)) {
+    if( (*rec)->type == cExecObject)
+      break;
   }
   if(*rec)
-	 (*obj)=(*rec)->obj;
+	 (*obj) = (*rec)->obj;
   else
-	 (*obj)=NULL;
-  return(result);
+	 (*obj) = NULL;
+  return((*rec) != NULL);
 }
 /*========================================================================*/
 int ExecutiveIterateObjectMolecule(PyMOLGlobals *G,ObjectMolecule **obj,void **hidden)
 {
-  int result;
-  register CExecutive *I = G->Executive;
-  int flag=false;
-  SpecRec **rec=(SpecRec**)hidden;
-  while(!flag)
-	 {
-		result = (ListIterate(I->Spec,(*rec),next))!=NULL;
-		if(!(*rec))
-		  flag=true;
-		else if((*rec)->type==cExecObject)
-        if((*rec)->obj->type==cObjectMolecule)
-          flag=true;
-	 }
+  register SpecRec **rec=(SpecRec**)hidden, *I_Spec = G->Executive->Spec;
+  while(ListIterate(I_Spec,(*rec),next)) {
+    if(((*rec)->type == cExecObject) && ((*rec)->obj->type == cObjectMolecule))
+      break;
+  }
   if(*rec)
-	 (*obj)=(ObjectMolecule*)(*rec)->obj;
+    (*obj) = (ObjectMolecule*)(*rec)->obj;
   else
-	 (*obj)=NULL;
-  return(result);
+    (*obj) = NULL;
+  return((*rec) != NULL);
 }
 /*========================================================================*/
 static void ExecutiveReshape(Block *block,int width,int height)
