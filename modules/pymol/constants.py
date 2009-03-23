@@ -100,7 +100,7 @@ _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.ccp4 : loadable.ccp4str,
               loadable.sdf2 : loadable.sdf2str}
 
-safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
+safe_oname_re = re.compile(r"\ |\(|\)|\||\&|\!|\,")  # quash reserved characters
 sanitize_list_re = re.compile(r"[^0-9\.\-\[\]\,]+")
 sanitize_alpha_list_re = re.compile(r"[^a-zA-Z0-9_\'\"\.\-\[\]\,]+")
 nt_hidden_path_re = re.compile(r"\$[\/\\]")

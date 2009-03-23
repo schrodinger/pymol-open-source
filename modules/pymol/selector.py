@@ -11,6 +11,7 @@ def is_tuple(obj):
     return isinstance(obj,types.TupleType)
 
 def process(sele): # expand slash notation into a standard atom selection
+    print sele
     # convert object/index tuples into selection strings
     if is_tuple(sele):
         sele="%s`%d"%sele
@@ -55,7 +56,7 @@ def process(sele): # expand slash notation into a standard atom selection
         # lst
         lst = []
         model = model.replace('model','(object model)')
-        if model!='': lst.append("("+string.replace(model,"+","|")+")")
+        if model!='': lst.append("("+(model.replace("+","|")).replace("\\|","+")+")")
         if segment!='': lst.append("s;"+string.replace(segment,'+',','))
         if chain!='': lst.append("c;"+string.replace(chain,'+',','))
         if residue!='':
@@ -99,5 +100,6 @@ def process(sele): # expand slash notation into a standard atom selection
         else:
             st = reduce(lambda x,y:x+"&"+y,lst)
         sele = bef+"("+st+")"+aft
+    print sele
     return sele
 
