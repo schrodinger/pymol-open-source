@@ -209,7 +209,10 @@ PYMOL API
         try:
             _self.lock(_self)   
             r = _cmd.select(_self._COb,"indicate","("+str(selection)+")",1,-1,'')
-            _self.enable("indicate")
+            if is_error(r):
+                _self.delete("indicate")
+            else:
+                _self.enable("indicate")
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException                  

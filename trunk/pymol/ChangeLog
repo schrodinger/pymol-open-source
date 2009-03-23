@@ -4,6 +4,8 @@ CHANGE LOG
 
 2009-03-23 Warren L. DeLano <warren@delsci.com>	
 
+	* fixed problem unintentionally quashing "+" from filenames
+	
 	* fixed selector bug parsing one+object as two + object
 
 	* added " + " selection operator to mitigate impact of bug
