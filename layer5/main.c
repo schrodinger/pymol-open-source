@@ -1144,8 +1144,9 @@ void MainFree(void)
 {
   PyMOLGlobals *G = PyMOL_GetGlobals(PyMOLInstance); /* temporary -- will change */
     
-  int quiet = G->Option->quiet;
   CPyMOLOptions *owned_options = G->Main->OwnedOptions;
+
+  int show_message = G->Option->show_splash && ! G->Option->quiet;
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef WIN32
@@ -1170,8 +1171,8 @@ void MainFree(void)
      PyMOLOptions_Free(owned_options); /* clean up launch options if we're supposed to */
 
    MemoryDebugDump(); /* this is a no-op unless memory debugging is enabled */
-   
-   if(!quiet) {
+
+   if(show_message) {
      printf(" PyMOL: normal program termination.\n");
    }
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */   
