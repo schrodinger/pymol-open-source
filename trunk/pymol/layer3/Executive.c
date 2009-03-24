@@ -10148,6 +10148,7 @@ int *ExecutiveGetG3d(PyMOLGlobals *G)
   SceneRay(G,0,0,3,NULL,NULL,0.0F,0.0F,true,(G3dPrimitive**)(void*)&result,false,-1);
   return result;
 }
+
 /*========================================================================*/
 int  ExecutiveSetBondSetting(PyMOLGlobals *G,int index,PyObject *tuple,
                              char *s1,char *s2,
@@ -10191,7 +10192,7 @@ int  ExecutiveSetBondSetting(PyMOLGlobals *G,int index,PyObject *tuple,
         have_value = true;
         break;
       case cSetting_float:
-        *(float*)value_ptr = (float)PyFloat_AsDouble(PyTuple_GetItem(value,0));
+        *(aliased_float*)value_ptr = (float)PyFloat_AsDouble(PyTuple_GetItem(value,0));
         value_type = cSetting_float;
         have_value = true;
         break;

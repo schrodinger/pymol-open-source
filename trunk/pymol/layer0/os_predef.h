@@ -27,6 +27,21 @@ Z* -------------------------------------------------------------------
 #undef _FORTIFY_SOURCE
 #endif
 
+/* Alias-able typedefs */
+
+#ifdef __GNUC__
+#if __GNUC__ > 3
+typedef int aliased_int __attribute__((may_alias));
+typedef float aliased_float __attribute__((may_alias));
+#else
+typedef int aliased_int
+typedef float aliased_float;
+#endif
+#else
+typedef int aliased_int
+typedef float aliased_float;
+#endif
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 
 #ifdef WIN32
