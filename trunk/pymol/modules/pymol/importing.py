@@ -505,7 +505,7 @@ SEE ALSO
                                     __builtin__.__import__(mod_name)
                                     mod = sys.modules[mod_name]
                                     if hasattr(mod,'__launch__'):
-                                        mod.__launch__(self)
+                                        mod.__launch__(_self)
                                         r = DEFAULT_SUCCESS
                                 except:
                                     traceback.print_exc()
