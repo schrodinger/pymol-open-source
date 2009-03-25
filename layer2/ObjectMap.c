@@ -377,6 +377,8 @@ static int ObjectMapStateTrim(PyMOLGlobals *G, ObjectMapState *ms,
   case cMapSourceFLD:
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
+  case cMapSourceVMDPlugin:
+  case cMapSourceACNT:
     {
       int hit_flag = false;
       float *origin = ms->Origin;
@@ -552,6 +554,7 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
   case cMapSourceVMDPlugin:
+  case cMapSourceACNT:
     for(a=0;a<3;a++) {
       grid[a]=ms->Grid[a]/2.0F;
       min[a]=ms->Min[a]*2;
@@ -740,6 +743,7 @@ static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms,int smooth)
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
   case cMapSourceVMDPlugin:
+  case cMapSourceACNT:
     for(a=0;a<3;a++) {
       grid[a]=ms->Grid[a]*2.0F;
       min[a]=ms->Min[a]/2;
@@ -891,6 +895,7 @@ int ObjectMapStateContainsPoint(ObjectMapState *ms,float *point)
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
   case cMapSourceVMDPlugin:
+  case cMapSourceACNT:
     x = (point[0] - ms->Origin[0])/ms->Grid[0];
     y = (point[1] - ms->Origin[1])/ms->Grid[1];
     z = (point[2] - ms->Origin[2])/ms->Grid[2];
@@ -1021,6 +1026,7 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
   case cMapSourceVMDPlugin:
+  case cMapSourceACNT:
     while(n--) {
 
       x = (inp[0] - ms->Origin[0])/ms->Grid[0];
@@ -1118,6 +1124,7 @@ void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
   case cMapSourceDesc:
   case cMapSourceChempyBrick:
   case cMapSourceVMDPlugin:
+  case cMapSourceACNT:
     for(c=0;c<ms->FDim[2];c++) {
       v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
       for(b=0;b<ms->FDim[1];b++) {
@@ -4726,6 +4733,246 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int st
         }
       }
     }
+  return(I);
+
+}
+/*========================================================================*/
+static int ObjectMapACNTStrToMap(ObjectMap *I,char *ACNTStr,int bytes,int state,int quiet) {
+
+  int n_items = 0;
+
+  char *p;
+  float dens;
+  int a,b,c,d,e;
+  float v[3],maxd,mind;
+  int ok = true;
+
+  int stage = 0;
+
+  ObjectMapState *ms;
+
+  char cc[MAXLINELEN];
+
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectMapState,state);
+    I->NState=state+1;
+  }
+
+  ms=&I->State[state];
+  ObjectMapStateInit(I->Obj.G,ms);
+
+  ms->Origin=Alloc(float,3);
+  ms->Grid = Alloc(float,3);
+
+  maxd = -FLT_MAX;
+  mind = FLT_MAX;
+  p=ACNTStr;
+
+  /* skip header */
+
+  p = ParseNextLine(p);
+
+  /* get the origin, spacing, and dimensions */
+
+  ms->FDim[3] = 3;
+
+  /* read the map info */
+
+  {
+    int i;
+    for(i=0;i<3;i++) {
+      int ii = (4-i) % 3; /* y, x , z */
+      p = ParseWordCopy(cc,p,MAXLINELEN);      
+      if(sscanf(cc,"%f",&ms->Origin[ii])==1) {
+        p = ParseWordCopy(cc,p,MAXLINELEN);      
+        if(sscanf(cc,"%f",&ms->Grid[ii])==1) {
+          p = ParseWordCopy(cc,p,MAXLINELEN); 
+          if(sscanf(cc,"%d",&ms->FDim[ii])==1) {
+            p = ParseNextLine(p);
+            stage++;
+          }
+        }
+      }
+    }
+  }
+  
+  /* skip the angles (ignored -- should probably check instead */
+
+  p = ParseNextLine(p);
+
+  /* read the data block */
+
+  if(ok && (stage == 3)) {
+
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
+      " ACNTStrToMap: Dimensions: %d %d %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
+      ENDFB(I->Obj.G);
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
+      " ACNTStrToMap: Origin %8.3f %8.3f %8.3f\n",ms->Origin[0],ms->Origin[1],ms->Origin[2]
+      ENDFB(I->Obj.G);
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
+      " ACNTStrToMap: Grid %8.3f %8.3f %8.3f\n",ms->Grid[0],ms->Grid[1],ms->Grid[2]
+      ENDFB(I->Obj.G);
+
+    n_items = ms->FDim[0] * ms->FDim[1] * ms->FDim[2];
+
+    if(ok&&(stage==1)) {
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
+        " ACNTStrToMap: %d data points.\n",n_items
+        ENDFB(I->Obj.G);
+    }
+    
+    ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
+    ms->MapSource = cMapSourceACNT;
+    ms->Field->save_points=false;
+    
+    for(a=0;a<3;a++) {
+      ms->Div[a] = ms->FDim[a] - 1;
+      ms->Min[a] = 0;
+      ms->Max[a] = ms->FDim[a] - 1;
+    }
+    
+    
+    for(c=0;c<ms->FDim[2];c++) { 
+      for(a=0;a<ms->FDim[0];a++) {
+        for(b=0;b<ms->FDim[1];b++) {
+          p = ParseWordCopy(cc,p,MAXLINELEN);      
+          p = ParseNextLine(p);           
+          if(sscanf(cc,"%f",&dens)==1) {
+            if(maxd<dens) maxd = dens;
+            if(mind>dens) mind = dens;
+            F3(ms->Field->data,a,b,c) = dens;
+          } else {
+            ok=false;
+          }
+        }
+      }
+    }
+    
+    for(e=0;e<3;e++) {
+      ms->ExtentMin[e] = ms->Origin[e]+ms->Grid[e]*ms->Min[e];
+      ms->ExtentMax[e] = ms->Origin[e]+ms->Grid[e]*ms->Max[e];
+    }
+    
+    for(c=0;c<ms->FDim[2];c++) {
+      v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+      for(b=0;b<ms->FDim[1];b++) {
+        v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+        for(a=0;a<ms->FDim[0];a++) {
+          v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+          for(e=0;e<3;e++) {
+            F4(ms->Field->points,a,b,c,e) = v[e];
+          }
+        }
+      }
+    }
+    
+    d=0;
+    for(c=0;c<ms->FDim[2];c+=ms->FDim[2]-1) {
+      v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+      
+      for(b=0;b<ms->FDim[1];b+=ms->FDim[1]-1) {
+        v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+        
+        for(a=0;a<ms->FDim[0];a+=ms->FDim[0]-1) {
+          v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+          copy3f(v,ms->Corner+3*d);
+          d++;
+        }
+      }
+    }
+
+    if(ok)
+      stage = 4;
+  }
+
+  if(stage!=4)
+    ok=false;
+
+  if(!ok) {
+    ErrMessage(I->Obj.G,"ObjectMap","Error reading map");
+  } else {
+    ms->Active=true;
+    ObjectMapUpdateExtents(I);
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap, FB_Results) 
+        " ObjectMap: Map read.  Range: %5.3f to %5.3f\n",mind,maxd
+        ENDFB(I->Obj.G);
+    }
+  }
+  return(ok);
+}
+
+static ObjectMap *ObjectMapReadACNTStr(PyMOLGlobals *G,ObjectMap *I,
+                                       char *MapStr,int bytes,int state,int quiet)
+{
+  int ok=true;
+  int isNew = true;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+  if(ok) {
+	 if(isNew) {
+		I=(ObjectMap*)ObjectMapNew(G);
+		isNew = true;
+	 } else {
+		isNew = false;
+	 }
+    ObjectMapACNTStrToMap(I,MapStr,bytes,state,quiet);
+    SceneChanged(G);
+    SceneCountFrames(G);
+  }
+  return(I);
+}
+
+ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet)
+{
+  ObjectMap *I = NULL;
+  int ok=true;
+  FILE *f;
+  long size;
+  char *buffer,*p;
+  float mat[9];
+
+  f=fopen(fname,"rb");
+  if(!f) {
+	 ok=ErrMessage(G,"ObjectMapLoadACNTFile","Unable to open file!");
+     PRINTFB(G,FB_ObjectMap,FB_Errors)
+       "ObjectMapLoadACNTFile: Does '%s' exist?\n",fname
+       ENDFB(G);
+  } else {
+    if(Feedback(G,FB_ObjectMap,FB_Actions))
+      {
+        printf(" ObjectMapLoadACNTFile: Loading from '%s'.\n",fname);
+      }
+    
+    fseek(f,0,SEEK_END);
+    size=ftell(f);
+    fseek(f,0,SEEK_SET);
+    
+    buffer=(char*)mmalloc(size);
+    ErrChkPtr(G,buffer);
+    p=buffer;
+    fseek(f,0,SEEK_SET);
+    fread(p,size,1,f);
+    fclose(f);
+    
+    I=ObjectMapReadACNTStr(G,obj,buffer,size,state,quiet);
+    
+    mfree(buffer);
+    if(state<0)
+      state=I->NState-1;
+    if(state<I->NState) {
+      ObjectMapState *ms;
+      ms = &I->State[state];
+      if(ms->Active) {
+        multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
+      }
+    }
+  }
   return(I);
 
 }

@@ -76,6 +76,7 @@ Z* -------------------------------------------------------------------
 /* 53 is PWG */
 /* 54 is ALN */
 /* 55 is FASTA */
+#define cLoadTypeACNTMap 56
 
 /* NOTE: if you add new content/object type above, then be sure to add
    corresponding code in: CmdLoad ExecutiveGetExistingCompatible

@@ -34,11 +34,11 @@ Z* -------------------------------------------------------------------
 typedef int aliased_int __attribute__((may_alias));
 typedef float aliased_float __attribute__((may_alias));
 #else
-typedef int aliased_int
+typedef int aliased_int;
 typedef float aliased_float;
 #endif
 #else
-typedef int aliased_int
+typedef int aliased_int;
 typedef float aliased_float;
 #endif
 
