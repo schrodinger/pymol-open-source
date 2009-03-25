@@ -7477,6 +7477,21 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
                 fname,valid_name);
       }
       break;
+    case cLoadTypeACNTMap:
+      PRINTFD(G,FB_CCmd) " CmdLoad-DEBUG: loading ACNT Map\n" ENDFD;
+      if(!origObj) {
+        obj=(CObject*)ObjectMapLoadACNTFile(G,NULL,fname,frame,quiet);
+        if(obj) {
+          ObjectSetName(obj,valid_name);
+          ExecutiveManageObject(G,(CObject*)obj,zoom,true);
+          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,valid_name);
+        }
+      } else {
+        ObjectMapLoadACNTFile(G,(ObjectMap*)origObj,fname,frame,quiet);
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
+                fname,valid_name);
+      }
+      break;
     }
     if(!quiet && buf[0]) {
       PRINTFB(G,FB_Executive,FB_Actions) 

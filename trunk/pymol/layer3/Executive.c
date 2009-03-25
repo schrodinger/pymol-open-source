@@ -5360,6 +5360,7 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
                         case cMapSourceDesc:
                         case cMapSourceChempyBrick:
                         case cMapSourceVMDPlugin:
+                        case cMapSourceACNT:
                           {
                             int b;
                             for(b=0;b<3;b++) {
@@ -7313,13 +7314,14 @@ char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only,char *s0)
   int size = 0;
   int stlen;
   int sele0 = -1;
-  int incl_flag = 0;
+  int incl_flag;
   if(s0[0]) {
     sele0 = SelectorIndexByName(G,s0);    
   }
   result=VLAlloc(char,1000);
 
   while(ListIterate(I->Spec,rec,next)) {
+    incl_flag = 0;
     if(
        (rec->type==cExecObject&& (((!mode) || (mode==1) || (mode==3) || (mode==4)) ||
                                   ((rec->obj->type!=cObjectGroup)&&((mode==6)||(mode==8))) ||
@@ -7329,6 +7331,7 @@ char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only,char *s0)
       if((mode<3)||(mode>7)||(mode==9)||(rec->name[0]!='_')) {
         if((!enabled_only)||(rec->visible)) {
           stlen = strlen(rec->name);
+          incl_flag = 0;
           if(sele0<0) 
             incl_flag = 1;
           else 

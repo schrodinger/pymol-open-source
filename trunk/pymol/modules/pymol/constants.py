@@ -32,7 +32,8 @@ file_ext_re = re.compile(string.join([
     r"\.fld$|", # FLD format (AVS)
     r"\.trj$|\.trr$|\.xtc$|\.gro$|\.g96$|\.dcd$|", # Trajectories
     r"\.o$|\.omap$|\.dsn6$|\.brix$|", # BRIX/O format
-    r"\.grd$", # InsightII Grid format
+    r"\.grd$|", # InsightII Grid format
+    r"\.acnt$", # Tripos / Sybyl ACNT format
     ],''), re.I)
 
 class loadable:
@@ -91,6 +92,7 @@ class loadable:
     pwg = 53      # PyMOL web gui launch script
     aln = 54      # CLUSTALW alignment file
     fasta = 55    # FASTA sequence file
+    acnt = 56     # Tripos/Sybyl acnt grid file (proposed)
     
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.mol : loadable.molstr,

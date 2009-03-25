@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+2009-03-26 Warren L. DeLano <warren@delsci.com>	
+
+	* acnt map support
+	
+	* fixed bug with selection argument to cmd.get_names
+	
 2009-03-23 Warren L. DeLano <warren@delsci.com>	
 
 	* fixed problem unintentionally quashing "+" from filenames

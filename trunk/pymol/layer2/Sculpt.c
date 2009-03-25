@@ -1721,8 +1721,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   float total_strain=0.0F,strain;
   int total_count=1;
   CGO *cgo = NULL;
-  float good_color[3] = { 0.2, 1.0, 0.2};
-  float bad_color[3] = { 1.0, 0.2, 0.2};
+  float good_color[3] = { 0.2, 1.0, 0.2 };
+  float bad_color[3] = { 1.0, 0.2, 0.2 };
   int vdw_vis_mode;
   float vdw_vis_min=0.0F,vdw_vis_mid=0.0F,vdw_vis_max=0.0F;
   float tri_sc, tri_wt;

@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #define cMapSourceGRD 7
 #define cMapSourceChempyBrick 8
 #define cMapSourceVMDPlugin 9
+#define cMapSourceACNT 10
 
 typedef struct ObjectMapState {
   CObjectState State;
@@ -99,6 +100,7 @@ ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int st
 ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet);
 ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet);
 ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet);
+ObjectMap *ObjectMapLoadACNTFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int quiet);
 
 ObjectMap *ObjectMapLoad(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
 ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,

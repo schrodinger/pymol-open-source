@@ -690,6 +690,8 @@ SEE ALSO
                     ftype = loadable.brix
                 elif re.search("\.grd$",fname_no_gz,re.I):
                     ftype = loadable.grd
+                elif re.search("\.acnt$",fname_no_gz,re.I):
+                    ftype = loadable.acnt
                 elif re.search("\.p1m$",fname_no_gz,re.I):
                     ftype = loadable.p1m
                 elif re.search("\.png$",fname_no_gz,re.I):
