@@ -495,7 +495,7 @@ ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals *G,ObjectMap *obj,
   ms->Max[2] = ms->Div[2];
 
   ms->Field=IsosurfFieldAlloc(obj->Obj.G,ms->FDim);
-  ms->MapSource = cMapSourcePHI;
+  ms->MapSource = cMapSourceGeneral;
   ms->Field->save_points=false;
 
 
