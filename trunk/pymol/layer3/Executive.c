@@ -5354,22 +5354,13 @@ int ExecutiveMapSet(PyMOLGlobals *G,char *name,int operator,char *operands,
                               desc.MaxCorner[b]=ms->ExtentMax[b];
                           }
                         }
-                        switch(ms->MapSource) {
-                        case cMapSourcePHI:
-                        case cMapSourceFLD:
-                        case cMapSourceDesc:
-                        case cMapSourceChempyBrick:
-                        case cMapSourceVMDPlugin:
-                        case cMapSourceACNT:
-                          {
-                            int b;
-                            for(b=0;b<3;b++) {
-                              grid_sum[b] += ms->Grid[b];
-                            }
+                        if(!ObjectMapStateValidXtal(ms)) {
+                          /* other general-purpose maps currently handled */
+                          int b;
+                          for(b=0;b<3;b++) {
+                            grid_sum[b] += ms->Grid[b];
                           }
                           grid_count++;
-                          break;
-                          /* other map state types not currently handled... */
                         }
                       }
                     }

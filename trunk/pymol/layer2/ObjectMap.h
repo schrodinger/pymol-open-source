@@ -24,16 +24,21 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 
 #define cMapSourceUndefined 0
-#define cMapSourceXPLOR 1
+
+/* in order to achieve better backwards compatibility
+ * with session files, future map source should be either:
+ * cMapSourceCrystallographic or cMapSourceGeneralPurpose */
+
+#define cMapSourceCrystallographic 1
 #define cMapSourceCCP4 2
-#define cMapSourcePHI 3
+#define cMapSourceGeneralPurpose 3
 #define cMapSourceDesc 4
 #define cMapSourceFLD 5
 #define cMapSourceBRIX 6
 #define cMapSourceGRD 7
 #define cMapSourceChempyBrick 8
 #define cMapSourceVMDPlugin 9
-#define cMapSourceACNT 10
+#define cMapSourceObsolete   10
 
 typedef struct ObjectMapState {
   CObjectState State;
@@ -82,6 +87,7 @@ int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *ver
                                    float beyond, float within, float *level);
 
 int ObjectMapValidXtal(ObjectMap *I, int state);
+int ObjectMapStateValidXtal(ObjectMapState *ms);
 
 int ObjectMapStateGetRange(PyMOLGlobals *G,ObjectMapState *ms,float *range);
 

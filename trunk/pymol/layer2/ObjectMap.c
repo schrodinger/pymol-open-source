@@ -51,21 +51,31 @@ typedef struct {
 #endif
 #endif
 
+int ObjectMapStateValidXtal(ObjectMapState *ms)
+{
+  if(ms && ms->Active) {
+    switch(ms->MapSource) {
+      /* these are the only formats which are known to contain xtal
+         information */
+    case cMapSourceCrystallographic:
+    case cMapSourceCCP4:
+    case cMapSourceBRIX:
+    case cMapSourceGRD:
+      return true;
+      break;
+    
+    }
+  }
+  return false;
+}
+
 int ObjectMapValidXtal(ObjectMap *I, int state)
 {
   if((state>=0)&&(state<I->NState)) {
     ObjectMapState *ms = I->State + state;
-    if(ms->Active) {
-      switch(ms->MapSource) {
-      case cMapSourceXPLOR:
-      case cMapSourceCCP4:
-      case cMapSourceBRIX:
-      case cMapSourceGRD:
-        return 1;
-      }
-    }
+    return ObjectMapStateValidXtal(ms);
   }
-  return 0;
+  return false;
 }
 
 static int ObjectMapIsStateValidActive(ObjectMap *I, int state)
@@ -242,242 +252,227 @@ static int ObjectMapStateTrim(PyMOLGlobals *G, ObjectMapState *ms,
   int result = true;
   float orig_size = 1.0F;
   float new_size = 1.0F;
-  switch(ms->MapSource) {
-  case cMapSourceXPLOR:
-  case cMapSourceCCP4:
-  case cMapSourceBRIX:
-  case cMapSourceGRD:
+  
+  if(ObjectMapStateValidXtal(ms)) {
+    float tst[3],frac_tst[3];
+    float frac_mn[3];
+    float frac_mx[3];
+    int hit_flag = false;
 
-    {
-      float tst[3],frac_tst[3];
-      float frac_mn[3];
-      float frac_mx[3];
-      int hit_flag = false;
+    /* compute the limiting box extents in fractional space */
 
-      /* compute the limiting box extents in fractional space */
-
-      for(a=0;a<8;a++) {
-        tst[0] = (a&0x1) ? mn[0] : mx[0];
-        tst[1] = (a&0x2) ? mn[1] : mx[1];
-        tst[2] = (a&0x4) ? mn[2] : mx[2];
-        transform33f3f(ms->Crystal->RealToFrac, tst,frac_tst);
-        if(!a) {
-          copy3f(frac_tst,frac_mn);
-          copy3f(frac_tst,frac_mx);
-        } else {
-          for(b=0;b<3;b++) {
-            frac_mn[b] = (frac_mn[b]>frac_tst[b]) ? frac_tst[b] : frac_mn[b];
-            frac_mx[b] = (frac_mx[b]<frac_tst[b]) ? frac_tst[b] : frac_mx[b];
-          }
+    for(a=0;a<8;a++) {
+      tst[0] = (a&0x1) ? mn[0] : mx[0];
+      tst[1] = (a&0x2) ? mn[1] : mx[1];
+      tst[2] = (a&0x4) ? mn[2] : mx[2];
+      transform33f3f(ms->Crystal->RealToFrac, tst,frac_tst);
+      if(!a) {
+        copy3f(frac_tst,frac_mn);
+        copy3f(frac_tst,frac_mx);
+      } else {
+        for(b=0;b<3;b++) {
+          frac_mn[b] = (frac_mn[b]>frac_tst[b]) ? frac_tst[b] : frac_mn[b];
+          frac_mx[b] = (frac_mx[b]<frac_tst[b]) ? frac_tst[b] : frac_mx[b];
         }
-      }
-      for(a=0;a<3;a++) {
-        div[a]=ms->Div[a];
-        min[a]=ms->Min[a];
-        max[a]=ms->Max[a];
-        fdim[a]=ms->FDim[a];
-      }
-      fdim[3]=3;
-
-      {
-        int first_flag[3] = {false,false,false};
-        for(d=0;d<3;d++) {
-          int tst_min,tst_max;
-          float v_min, v_max;
-          for(c=0;c<(fdim[d]-1);c++) {
-            tst_min = c+min[d];
-            tst_max = tst_min+1;
-            v_min=tst_min/((float)div[d]);
-            v_max=tst_max/((float)div[d]);
-            if(((v_min>=frac_mn[d]) && (v_min<=frac_mx[d]))||
-               ((v_max>=frac_mn[d]) && (v_max<=frac_mx[d]))) {
-              if(!first_flag[d]) {
-                first_flag[d]=true;
-                new_min[d] = tst_min;
-                new_max[d] = tst_max;
-              } else {
-                new_min[d] = (new_min[d] > tst_min) ? tst_min : new_min[d];
-                new_max[d] = (new_max[d] < tst_max) ? tst_max : new_max[d];
-              }
-            }
-          }
-          new_fdim[d] = (new_max[d] - new_min[d]) + 1;
-        }
-        hit_flag = first_flag[0] && first_flag[1] & first_flag[2];
-      }
-
-      if(hit_flag) 
-        hit_flag = (new_fdim[0]!=fdim[0])||(new_fdim[1]!=fdim[1])||
-          (new_fdim[2]!=fdim[2]);
-
-      if(hit_flag) {
-        orig_size = fdim[0]*fdim[1]*fdim[2];
-        new_size = new_fdim[0]*new_fdim[1]*new_fdim[2];
-        
-        field=IsosurfFieldAlloc(G,new_fdim);
-        field->save_points = ms->Field->save_points;
-
-
-        for(c=0;c<new_fdim[2];c++) {
-          f = c+(new_min[2] - min[2]);
-          for(b=0;b<new_fdim[1];b++) {
-            e = b+(new_min[1] - min[1]);
-            for(a=0;a<new_fdim[0];a++) {
-              d = a+(new_min[0] - min[0]);
-              vt = F4Ptr(field->points,a,b,c,0);
-              vr = F4Ptr(ms->Field->points,d,e,f,0);
-              copy3f(vr,vt);
-              F3(field->data,a,b,c) = F3(ms->Field->data,d,e,f);
-            }
-          }
-        }
-        IsosurfFieldFree(G,ms->Field);
-        for(a=0;a<3;a++) {
-          ms->Min[a]=new_min[a];
-          ms->Max[a]=new_max[a];
-          ms->FDim[a]=new_fdim[a];
-        }
-        ms->Field = field;
-        
-        /* compute new extents */
-        v[2]=(ms->Min[2])/((float)ms->Div[2]);
-        v[1]=(ms->Min[1])/((float)ms->Div[1]);
-        v[0]=(ms->Min[0])/((float)ms->Div[0]);
-        
-        transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
-        
-        v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
-        v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
-        v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
-        
-        transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
-        
-        /* new corner */
-        {
-          float vv[3];
-          d = 0;
-          for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1)) {
-            v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
-            for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
-              v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
-              for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
-                v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
-                transform33f3f(ms->Crystal->FracToReal,v,vv);
-                copy3f(vv,ms->Corner+3*d);
-                d++;
-              }
-            }
-          }
-        }
-        result=true;
       }
     }
-    break;
-  case cMapSourcePHI:
-  case cMapSourceFLD:
-  case cMapSourceDesc:
-  case cMapSourceChempyBrick:
-  case cMapSourceVMDPlugin:
-  case cMapSourceACNT:
+    for(a=0;a<3;a++) {
+      div[a]=ms->Div[a];
+      min[a]=ms->Min[a];
+      max[a]=ms->Max[a];
+      fdim[a]=ms->FDim[a];
+    }
+    fdim[3]=3;
+
     {
-      int hit_flag = false;
-      float *origin = ms->Origin;
-
-      for(a=0;a<3;a++) {
-        min[a]=ms->Min[a];
-        grid[a]=ms->Grid[a];
-        max[a]=ms->Max[a];
-        fdim[a]=ms->FDim[a];
-      }
-      fdim[3]=3;
-
-      {
-        int first_flag[3] = {false,false,false};
-        for(d=0;d<3;d++) {
-          int tst_min,tst_max;
-          float v_min, v_max;
-          for(c=0;c<(fdim[d]-1);c++) {
-            tst_min = c+min[d];
-            tst_max = tst_min+1;
-            v_min=origin[d]+grid[d]*(tst_min);
-            v_max=origin[d]+grid[d]*(tst_max);
-            if(((v_min>=mn[d]) && (v_min<=mx[d]))||
-               ((v_max>=mn[d]) && (v_max<=mx[d]))) {
-              if(!first_flag[d]) {
-                first_flag[d]=true;
-                hit_flag=true;
-                new_min[d] = tst_min;
-                new_max[d] = tst_max;
-              } else {
-                new_min[d] = (new_min[d] > tst_min) ? tst_min : new_min[d];
-                new_max[d] = (new_max[d] < tst_max) ? tst_max : new_max[d];
-              }
-            }
-          }
-          new_fdim[d] = (new_max[d] - new_min[d]) + 1;
-        }
-        hit_flag = first_flag[0] && first_flag[1] & first_flag[2];
-      }
-
-      if(hit_flag) 
-        hit_flag = (new_fdim[0]!=fdim[0])||(new_fdim[1]!=fdim[1])||
-          (new_fdim[2]!=fdim[2]);
-
-      if(hit_flag) {
-
-        orig_size = fdim[0]*fdim[1]*fdim[2];
-        new_size = new_fdim[0]*new_fdim[1]*new_fdim[2];
-
-        field=IsosurfFieldAlloc(G,new_fdim);
-        field->save_points = ms->Field->save_points;
-
-        for(c=0;c<new_fdim[2];c++) {
-          f = c+(new_min[2] - min[2]);
-          for(b=0;b<new_fdim[1];b++) {
-            e = b+(new_min[1] - min[1]);
-            for(a=0;a<new_fdim[0];a++) {
-              d = a+(new_min[0] - min[0]);
-              vt = F4Ptr(field->points,a,b,c,0);
-              vr = F4Ptr(ms->Field->points,d,e,f,0);
-              copy3f(vr,vt);
-              F3(field->data,a,b,c) = F3(ms->Field->data,d,e,f);
+      int first_flag[3] = {false,false,false};
+      for(d=0;d<3;d++) {
+        int tst_min,tst_max;
+        float v_min, v_max;
+        for(c=0;c<(fdim[d]-1);c++) {
+          tst_min = c+min[d];
+          tst_max = tst_min+1;
+          v_min=tst_min/((float)div[d]);
+          v_max=tst_max/((float)div[d]);
+          if(((v_min>=frac_mn[d]) && (v_min<=frac_mx[d]))||
+             ((v_max>=frac_mn[d]) && (v_max<=frac_mx[d]))) {
+            if(!first_flag[d]) {
+              first_flag[d]=true;
+              new_min[d] = tst_min;
+              new_max[d] = tst_max;
+            } else {
+              new_min[d] = (new_min[d] > tst_min) ? tst_min : new_min[d];
+              new_max[d] = (new_max[d] < tst_max) ? tst_max : new_max[d];
             }
           }
         }
-        IsosurfFieldFree(G,ms->Field);
-        for(a=0;a<3;a++) {
-          ms->Min[a]=new_min[a];
-          ms->Max[a]=new_max[a];
-          ms->FDim[a]=new_fdim[a];
-          if(ms->Dim) 
-            ms->Dim[a]=new_fdim[a];
-        }
+        new_fdim[d] = (new_max[d] - new_min[d]) + 1;
+      }
+      hit_flag = first_flag[0] && first_flag[1] & first_flag[2];
+    }
 
-        ms->Field = field;
+    if(hit_flag) 
+      hit_flag = (new_fdim[0]!=fdim[0])||(new_fdim[1]!=fdim[1])||
+        (new_fdim[2]!=fdim[2]);
 
-        for(e=0;e<3;e++) {
-          ms->ExtentMin[e] = ms->Origin[e]+ms->Grid[e]*ms->Min[e];
-          ms->ExtentMax[e] = ms->Origin[e]+ms->Grid[e]*ms->Max[e];
-        }
+    if(hit_flag) {
+      orig_size = fdim[0]*fdim[1]*fdim[2];
+      new_size = new_fdim[0]*new_fdim[1]*new_fdim[2];
         
-        d=0;
-        for(c=0;c<ms->FDim[2];c+=ms->FDim[2]-1) {
-          v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
-          
-          for(b=0;b<ms->FDim[1];b+=ms->FDim[1]-1) {
-            v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
-            
-            for(a=0;a<ms->FDim[0];a+=ms->FDim[0]-1) {
-              v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
-              copy3f(v,ms->Corner+3*d);
+      field=IsosurfFieldAlloc(G,new_fdim);
+      field->save_points = ms->Field->save_points;
+
+
+      for(c=0;c<new_fdim[2];c++) {
+        f = c+(new_min[2] - min[2]);
+        for(b=0;b<new_fdim[1];b++) {
+          e = b+(new_min[1] - min[1]);
+          for(a=0;a<new_fdim[0];a++) {
+            d = a+(new_min[0] - min[0]);
+            vt = F4Ptr(field->points,a,b,c,0);
+            vr = F4Ptr(ms->Field->points,d,e,f,0);
+            copy3f(vr,vt);
+            F3(field->data,a,b,c) = F3(ms->Field->data,d,e,f);
+          }
+        }
+      }
+      IsosurfFieldFree(G,ms->Field);
+      for(a=0;a<3;a++) {
+        ms->Min[a]=new_min[a];
+        ms->Max[a]=new_max[a];
+        ms->FDim[a]=new_fdim[a];
+      }
+      ms->Field = field;
+        
+      /* compute new extents */
+      v[2]=(ms->Min[2])/((float)ms->Div[2]);
+      v[1]=(ms->Min[1])/((float)ms->Div[1]);
+      v[0]=(ms->Min[0])/((float)ms->Div[0]);
+        
+      transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
+        
+      v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
+      v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
+      v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
+        
+      transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
+        
+      /* new corner */
+      {
+        float vv[3];
+        d = 0;
+        for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1)) {
+          v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+          for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
+            v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+            for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
+              v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+              transform33f3f(ms->Crystal->FracToReal,v,vv);
+              copy3f(vv,ms->Corner+3*d);
               d++;
             }
           }
         }
-        result=true;
       }
+      result=true;
     }
-    break;
+  } else { /* not a crystal map */
+    int hit_flag = false;
+    float *origin = ms->Origin;
+
+    for(a=0;a<3;a++) {
+      min[a]=ms->Min[a];
+      grid[a]=ms->Grid[a];
+      max[a]=ms->Max[a];
+      fdim[a]=ms->FDim[a];
+    }
+    fdim[3]=3;
+
+    {
+      int first_flag[3] = {false,false,false};
+      for(d=0;d<3;d++) {
+        int tst_min,tst_max;
+        float v_min, v_max;
+        for(c=0;c<(fdim[d]-1);c++) {
+          tst_min = c+min[d];
+          tst_max = tst_min+1;
+          v_min=origin[d]+grid[d]*(tst_min);
+          v_max=origin[d]+grid[d]*(tst_max);
+          if(((v_min>=mn[d]) && (v_min<=mx[d]))||
+             ((v_max>=mn[d]) && (v_max<=mx[d]))) {
+            if(!first_flag[d]) {
+              first_flag[d]=true;
+              hit_flag=true;
+              new_min[d] = tst_min;
+              new_max[d] = tst_max;
+            } else {
+              new_min[d] = (new_min[d] > tst_min) ? tst_min : new_min[d];
+              new_max[d] = (new_max[d] < tst_max) ? tst_max : new_max[d];
+            }
+          }
+        }
+        new_fdim[d] = (new_max[d] - new_min[d]) + 1;
+      }
+      hit_flag = first_flag[0] && first_flag[1] & first_flag[2];
+    }
+
+    if(hit_flag) 
+      hit_flag = (new_fdim[0]!=fdim[0])||(new_fdim[1]!=fdim[1])||
+        (new_fdim[2]!=fdim[2]);
+
+    if(hit_flag) {
+
+      orig_size = fdim[0]*fdim[1]*fdim[2];
+      new_size = new_fdim[0]*new_fdim[1]*new_fdim[2];
+
+      field=IsosurfFieldAlloc(G,new_fdim);
+      field->save_points = ms->Field->save_points;
+
+      for(c=0;c<new_fdim[2];c++) {
+        f = c+(new_min[2] - min[2]);
+        for(b=0;b<new_fdim[1];b++) {
+          e = b+(new_min[1] - min[1]);
+          for(a=0;a<new_fdim[0];a++) {
+            d = a+(new_min[0] - min[0]);
+            vt = F4Ptr(field->points,a,b,c,0);
+            vr = F4Ptr(ms->Field->points,d,e,f,0);
+            copy3f(vr,vt);
+            F3(field->data,a,b,c) = F3(ms->Field->data,d,e,f);
+          }
+        }
+      }
+      IsosurfFieldFree(G,ms->Field);
+      for(a=0;a<3;a++) {
+        ms->Min[a]=new_min[a];
+        ms->Max[a]=new_max[a];
+        ms->FDim[a]=new_fdim[a];
+        if(ms->Dim) 
+          ms->Dim[a]=new_fdim[a];
+      }
+
+      ms->Field = field;
+
+      for(e=0;e<3;e++) {
+        ms->ExtentMin[e] = ms->Origin[e]+ms->Grid[e]*ms->Min[e];
+        ms->ExtentMax[e] = ms->Origin[e]+ms->Grid[e]*ms->Max[e];
+      }
+        
+      d=0;
+      for(c=0;c<ms->FDim[2];c+=ms->FDim[2]-1) {
+        v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+          
+        for(b=0;b<ms->FDim[1];b+=ms->FDim[1]-1) {
+          v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+            
+          for(a=0;a<ms->FDim[0];a+=ms->FDim[0]-1) {
+            v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+            copy3f(v,ms->Corner+3*d);
+            d++;
+          }
+        }
+      }
+      result=true;
+    }
   }
   if(result&&(!quiet)) {
     PRINTFB(G,FB_ObjectMap,FB_Actions)
@@ -502,11 +497,7 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
 
   Isofield *field;
 
-  switch(ms->MapSource) {
-  case cMapSourceXPLOR:
-  case cMapSourceCCP4:
-  case cMapSourceBRIX:
-  case cMapSourceGRD:
+  if(ObjectMapStateValidXtal(ms)) {
     for(a=0;a<3;a++) {
       div[a]=ms->Div[a]*2;
       min[a]=ms->Min[a]*2;
@@ -548,13 +539,7 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
     }
 
     ms->Field = field;
-    break;
-  case cMapSourcePHI:
-  case cMapSourceFLD:
-  case cMapSourceDesc:
-  case cMapSourceChempyBrick:
-  case cMapSourceVMDPlugin:
-  case cMapSourceACNT:
+  } else {
     for(a=0;a<3;a++) {
       grid[a]=ms->Grid[a]/2.0F;
       min[a]=ms->Min[a]*2;
@@ -599,8 +584,6 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
         ms->Grid[a]=grid[a];
     }
     ms->Field = field;
-
-    break;
   }
   return 1;
 }
@@ -619,131 +602,119 @@ static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms,int smooth)
 
   Isofield *field;
 
-  switch(ms->MapSource) {
-  case cMapSourceXPLOR:
-  case cMapSourceCCP4:
-  case cMapSourceBRIX:
-  case cMapSourceGRD:
-    {
-      int *old_div,*old_min,*old_max;
-      int a_2, b_2, c_2;
+  if(ObjectMapStateValidXtal(ms)) {
+    int *old_div,*old_min,*old_max;
+    int a_2, b_2, c_2;
 
-      for(a=0;a<3;a++) {
-        div[a]=ms->Div[a]/2; 
-        /* note that when Div is odd, a one-cell extrapolation will
-           occur in order to preserve map size and get us onto a even
-           number of sampling intervals for the cell */
+    for(a=0;a<3;a++) {
+      div[a]=ms->Div[a]/2; 
+      /* note that when Div is odd, a one-cell extrapolation will
+         occur in order to preserve map size and get us onto a even
+         number of sampling intervals for the cell */
 
-        min[a]=ms->Min[a]/2;
-        max[a]=ms->Max[a]/2;
-        while((min[a]*2)<ms->Min[a])
-          min[a]++;
-        while((max[a]*2)>ms->Max[a]) 
-          max[a]--;
+      min[a]=ms->Min[a]/2;
+      max[a]=ms->Max[a]/2;
+      while((min[a]*2)<ms->Min[a])
+        min[a]++;
+      while((max[a]*2)>ms->Max[a]) 
+        max[a]--;
  
-        fdim[a]=(max[a]-min[a])+1;
-      }
-      fdim[3]=3;
-      old_div = ms->Div;
-      old_min = ms->Min;
-      old_max = ms->Max;
+      fdim[a]=(max[a]-min[a])+1;
+    }
+    fdim[3]=3;
+    old_div = ms->Div;
+    old_min = ms->Min;
+    old_max = ms->Max;
       
-      if(smooth) 
-        FieldSmooth3f(ms->Field->data);
+    if(smooth) 
+      FieldSmooth3f(ms->Field->data);
 
-      field=IsosurfFieldAlloc(G,fdim);
-      field->save_points = ms->Field->save_points;
+    field=IsosurfFieldAlloc(G,fdim);
+    field->save_points = ms->Field->save_points;
       
-      /*
-        printf("old_div %d %d %d\n",old_div[0],old_div[1],old_div[2]);
-        printf("old_min %d %d %d\n",old_min[0],old_min[1],old_min[2]);
-        printf("min %d %d %d\n",min[0],min[1],min[2]);
-        printf("%d %d %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]);
-      */
+    /*
+      printf("old_div %d %d %d\n",old_div[0],old_div[1],old_div[2]);
+      printf("old_min %d %d %d\n",old_min[0],old_min[1],old_min[2]);
+      printf("min %d %d %d\n",min[0],min[1],min[2]);
+      printf("%d %d %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]);
+    */
 
-      for(c=0;c<fdim[2];c++) {
-        v[2]=(c+min[2])/((float)div[2]);
-        c_2 = (c+min[2])*2 - old_min[2];
+    for(c=0;c<fdim[2];c++) {
+      v[2]=(c+min[2])/((float)div[2]);
+      c_2 = (c+min[2])*2 - old_min[2];
+      z = (v[2] - ((c_2 + old_min[2])/(float)old_div[2]))*old_div[2];
+      if(c_2>=old_max[2]) {
+        c_2 = old_max[2]-1;
         z = (v[2] - ((c_2 + old_min[2])/(float)old_div[2]))*old_div[2];
-        if(c_2>=old_max[2]) {
-          c_2 = old_max[2]-1;
-          z = (v[2] - ((c_2 + old_min[2])/(float)old_div[2]))*old_div[2];
-        }
-        for(b=0;b<fdim[1];b++) {
-          v[1]=(b+min[1])/((float)div[1]);        
-          b_2 = (b+min[1])*2 - old_min[1];
+      }
+      for(b=0;b<fdim[1];b++) {
+        v[1]=(b+min[1])/((float)div[1]);        
+        b_2 = (b+min[1])*2 - old_min[1];
+        y = (v[1] - ((b_2 + old_min[1])/(float)old_div[1]))*old_div[1];
+        if(b_2>=old_max[1]) {
+          b_2 = old_max[1]-1;
           y = (v[1] - ((b_2 + old_min[1])/(float)old_div[1]))*old_div[1];
-          if(b_2>=old_max[1]) {
-            b_2 = old_max[1]-1;
-            y = (v[1] - ((b_2 + old_min[1])/(float)old_div[1]))*old_div[1];
-          }
-          for(a=0;a<fdim[0];a++) {
-            v[0]=(a+min[0])/((float)div[0]);
-            a_2 = (a+min[0])*2 - old_min[0];
+        }
+        for(a=0;a<fdim[0];a++) {
+          v[0]=(a+min[0])/((float)div[0]);
+          a_2 = (a+min[0])*2 - old_min[0];
+          x = (v[0] - ((a_2 + old_min[0])/(float)old_div[0]))*old_div[0];
+          if(a_2>=old_max[0]) {
+            a_2 = old_max[0]-1;
             x = (v[0] - ((a_2 + old_min[0])/(float)old_div[0]))*old_div[0];
-            if(a_2>=old_max[0]) {
-              a_2 = old_max[0]-1;
-              x = (v[0] - ((a_2 + old_min[0])/(float)old_div[0]))*old_div[0];
-            }
-            transform33f3f(ms->Crystal->FracToReal,v,vr);
-            vt = F4Ptr(field->points,a,b,c,0);
-            copy3f(vr,vt);
-            F3(field->data,a,b,c) = FieldInterpolatef(ms->Field->data,
-                                                      a_2,
-                                                      b_2,
-                                                      c_2,x,y,z);
           }
+          transform33f3f(ms->Crystal->FracToReal,v,vr);
+          vt = F4Ptr(field->points,a,b,c,0);
+          copy3f(vr,vt);
+          F3(field->data,a,b,c) = FieldInterpolatef(ms->Field->data,
+                                                    a_2,
+                                                    b_2,
+                                                    c_2,x,y,z);
         }
       }
-      IsosurfFieldFree(G,ms->Field);
-      for(a=0;a<3;a++) {
-        ms->Min[a]=min[a];
-        ms->Max[a]=max[a];
-        ms->FDim[a]=fdim[a];
-        ms->Div[a]=div[a];
-      }
+    }
+    IsosurfFieldFree(G,ms->Field);
+    for(a=0;a<3;a++) {
+      ms->Min[a]=min[a];
+      ms->Max[a]=max[a];
+      ms->FDim[a]=fdim[a];
+      ms->Div[a]=div[a];
+    }
       
-      ms->Field = field;
+    ms->Field = field;
       
-      /* compute new extents */
-      v[2]=(ms->Min[2])/((float)ms->Div[2]);
-      v[1]=(ms->Min[1])/((float)ms->Div[1]);
-      v[0]=(ms->Min[0])/((float)ms->Div[0]);
+    /* compute new extents */
+    v[2]=(ms->Min[2])/((float)ms->Div[2]);
+    v[1]=(ms->Min[1])/((float)ms->Div[1]);
+    v[0]=(ms->Min[0])/((float)ms->Div[0]);
       
-      transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
+    transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
       
-      v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
-      v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
-      v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
+    v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
+    v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
+    v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
       
-      transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
+    transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
       
-      /* new corner */
-      {
-        float vv[3];
-        int d=0;
+    /* new corner */
+    {
+      float vv[3];
+      int d=0;
                   
-        for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1)) {
-          v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
-          for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
-            v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
-            for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
-              v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
-              transform33f3f(ms->Crystal->FracToReal,v,vv);
-              copy3f(vv,ms->Corner+3*d);
-              d++;
-            }
+      for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1)) {
+        v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+        for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
+          v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+          for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
+            v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+            transform33f3f(ms->Crystal->FracToReal,v,vv);
+            copy3f(vv,ms->Corner+3*d);
+            d++;
           }
         }
       }
     }
-    break;
-  case cMapSourcePHI:
-  case cMapSourceFLD:
-  case cMapSourceDesc:
-  case cMapSourceChempyBrick:
-  case cMapSourceVMDPlugin:
-  case cMapSourceACNT:
+  } else {
     for(a=0;a<3;a++) {
       grid[a]=ms->Grid[a]*2.0F;
       min[a]=ms->Min[a]/2;
@@ -779,7 +750,6 @@ static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms,int smooth)
     }
     ms->Field = field;
 
-    break;
   }
   return 1;
 }
@@ -864,38 +834,26 @@ int ObjectMapStateContainsPoint(ObjectMapState *ms,float *point)
   register int x_floor, y_floor, z_floor;
   register int x_ceil, y_ceil, z_ceil;
 
-  switch(ms->MapSource) {
-  case cMapSourceXPLOR:
-  case cMapSourceCCP4:
-  case cMapSourceBRIX:
-  case cMapSourceGRD:
-    {
-      float frac[3];
+  if(ObjectMapStateValidXtal(ms)) {
+    float frac[3];
 
-      transform33f3f(ms->Crystal->RealToFrac,point,frac); 
+    transform33f3f(ms->Crystal->RealToFrac,point,frac); 
       
-      x = (ms->Div[0] * frac[0]);
-      y = (ms->Div[1] * frac[1]);
-      z = (ms->Div[2] * frac[2]);
-      x_floor= floor(x);
-      x_ceil = ceil(x);
-      y_floor = floor(y);
-      y_ceil = ceil(y);
-      z_floor = floor(z);
-      z_ceil = ceil(z);
+    x = (ms->Div[0] * frac[0]);
+    y = (ms->Div[1] * frac[1]);
+    z = (ms->Div[2] * frac[2]);
+    x_floor= floor(x);
+    x_ceil = ceil(x);
+    y_floor = floor(y);
+    y_ceil = ceil(y);
+    z_floor = floor(z);
+    z_ceil = ceil(z);
 
-      if((x_floor>=ms->Min[0])&&(x_ceil<=ms->Max[0])&&
-         (y_floor>=ms->Min[1])&&(y_ceil<=ms->Max[1])&&
-         (z_floor>=ms->Min[2])&&(z_ceil<=ms->Max[2]))
-        result = true;
-    }
-    break;
-  case cMapSourcePHI:
-  case cMapSourceFLD:
-  case cMapSourceDesc:
-  case cMapSourceChempyBrick:
-  case cMapSourceVMDPlugin:
-  case cMapSourceACNT:
+    if((x_floor>=ms->Min[0])&&(x_ceil<=ms->Max[0])&&
+       (y_floor>=ms->Min[1])&&(y_ceil<=ms->Max[1])&&
+       (z_floor>=ms->Min[2])&&(z_ceil<=ms->Max[2]))
+      result = true;
+  } else {
     x = (point[0] - ms->Origin[0])/ms->Grid[0];
     y = (point[1] - ms->Origin[1])/ms->Grid[1];
     z = (point[2] - ms->Origin[2])/ms->Grid[2];
@@ -916,8 +874,7 @@ int ObjectMapStateContainsPoint(ObjectMapState *ms,float *point)
        (y>=ms->Min[1])&&(y<=ms->Max[1])&&
        (z>=ms->Min[2])&&(z<=ms->Max[2]))
       result = true;
-    break;
-    }
+  }
   return(result);
 }
 
@@ -931,102 +888,91 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
   inp = array;
   out = result;
   
-  switch(ms->MapSource) {
-  case cMapSourceXPLOR:
-  case cMapSourceCCP4:
-  case cMapSourceBRIX:
-  case cMapSourceGRD:
-    {
-      float frac[3];
+  if(ObjectMapStateValidXtal(ms)) {
+    float frac[3];
 
-      while(n--) {
+    while(n--) {
         
-        /* get the fractional coordinate */
-        transform33f3f(ms->Crystal->RealToFrac,inp,frac); 
+      /* get the fractional coordinate */
+      transform33f3f(ms->Crystal->RealToFrac,inp,frac); 
         
-        inp+=3;
+      inp+=3;
 
-        /* compute the effective lattice offset as a function of cell spacing */
+      /* compute the effective lattice offset as a function of cell spacing */
 
-        x = (ms->Div[0] * frac[0]);
-        y = (ms->Div[1] * frac[1]);
-        z = (ms->Div[2] * frac[2]);
+      x = (ms->Div[0] * frac[0]);
+      y = (ms->Div[1] * frac[1]);
+      z = (ms->Div[2] * frac[2]);
         
-        /* now separate the integral and fractional parts for interpolation */
+      /* now separate the integral and fractional parts for interpolation */
            
-        a=(int)floor(x);
-        b=(int)floor(y);
-        c=(int)floor(z);
-        x-=a;
-        y-=b;
-        z-=c;
+      a=(int)floor(x);
+      b=(int)floor(y);
+      c=(int)floor(z);
+      x-=a;
+      y-=b;
+      z-=c;
         
-        if(flag) *flag = 1;
-        /* wrap into the map */
+      if(flag) *flag = 1;
+      /* wrap into the map */
 
-        if(a<ms->Min[0]) {
-          if(x<0.99F) {
-            ok=false;
-            if(flag) *flag = 0;
-          }
-          x=0.0F;
-          a=ms->Min[0];
-        } else if(a>=ms->FDim[0]+ms->Min[0]-1) {
-          if(x>0.01F) {
-            ok=false;
-            if(flag) *flag = 0;
-          }
-          x=0.0F;
-          a=ms->FDim[0]+ms->Min[0]-1;
+      if(a<ms->Min[0]) {
+        if(x<0.99F) {
+          ok=false;
+          if(flag) *flag = 0;
         }
-        
-        if(b<ms->Min[1]) {
-          if(y<0.99F) {
-            ok=false;
-            if(flag) *flag = 0;
-          }
-          y=0.0F;
-          b=ms->Min[1];
-        } else if(b>=ms->FDim[1]+ms->Min[1]-1) {
-          if(y>0.01F) {
-            ok=false;
-            if(flag) *flag = 0;
-          }
-          y=0.0F;
-          b=ms->FDim[1]+ms->Min[1]-1;
+        x=0.0F;
+        a=ms->Min[0];
+      } else if(a>=ms->FDim[0]+ms->Min[0]-1) {
+        if(x>0.01F) {
+          ok=false;
+          if(flag) *flag = 0;
         }
-        
-        if(c<ms->Min[2]) {
-          if(z<0.99F) {
-            ok=false;
-            if(flag) *flag = 0;
-          }
-          z=0.0F;
-          c=ms->Min[2];
-        } else if(c>=ms->FDim[2]+ms->Min[2]-1) {
-          if(z>0.01) {
-            ok=false;
-            if(flag) *flag = 0;
-          }
-          z=0.0F;
-          c=ms->FDim[2]+ms->Min[2]-1;
-        }
-        /*      printf("%d %d %d %8.3f %8.3f %8.3f\n",a,b,c,x,y,z);*/
-        *(result++)=FieldInterpolatef(ms->Field->data,
-                                      a-ms->Min[0],
-                                      b-ms->Min[1],
-                                      c-ms->Min[2],x,y,z);
-        if(flag) flag++;
-
+        x=0.0F;
+        a=ms->FDim[0]+ms->Min[0]-1;
       }
+        
+      if(b<ms->Min[1]) {
+        if(y<0.99F) {
+          ok=false;
+          if(flag) *flag = 0;
+        }
+        y=0.0F;
+        b=ms->Min[1];
+      } else if(b>=ms->FDim[1]+ms->Min[1]-1) {
+        if(y>0.01F) {
+          ok=false;
+          if(flag) *flag = 0;
+        }
+        y=0.0F;
+        b=ms->FDim[1]+ms->Min[1]-1;
+      }
+        
+      if(c<ms->Min[2]) {
+        if(z<0.99F) {
+          ok=false;
+          if(flag) *flag = 0;
+        }
+        z=0.0F;
+        c=ms->Min[2];
+      } else if(c>=ms->FDim[2]+ms->Min[2]-1) {
+        if(z>0.01) {
+          ok=false;
+          if(flag) *flag = 0;
+        }
+        z=0.0F;
+        c=ms->FDim[2]+ms->Min[2]-1;
+      }
+      /*      printf("%d %d %d %8.3f %8.3f %8.3f\n",a,b,c,x,y,z);*/
+      *(result++)=FieldInterpolatef(ms->Field->data,
+                                    a-ms->Min[0],
+                                    b-ms->Min[1],
+                                    c-ms->Min[2],x,y,z);
+      if(flag) flag++;
+
     }
-    break;
-  case cMapSourcePHI:
-  case cMapSourceFLD:
-  case cMapSourceDesc:
-  case cMapSourceChempyBrick:
-  case cMapSourceVMDPlugin:
-  case cMapSourceACNT:
+  } else {
+
     while(n--) {
 
       x = (inp[0] - ms->Origin[0])/ms->Grid[0];
@@ -1084,12 +1030,8 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
                                     c-ms->Min[2],x,y,z);
       if(flag) flag++;
     }
-    break;
-  default:
-    ok=false;
-    break;
   }
-    return(ok);
+  return(ok);
 }
 
 #ifndef _PYMOL_NOPY
@@ -1100,31 +1042,21 @@ void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
 {
   int a,b,c,e;
   float v[3],vr[3];
-  switch(ms->MapSource) {
-  case cMapSourceXPLOR:
-  case cMapSourceCCP4:
-  case cMapSourceBRIX:
-  case cMapSourceGRD:
-    for(c=0;c<ms->FDim[2];c++)
-      {
-        v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
-        for(b=0;b<ms->FDim[1];b++) {
-          v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
-          for(a=0;a<ms->FDim[0];a++) {
-            v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
-            transform33f3f(ms->Crystal->FracToReal,v,vr);
-            for(e=0;e<3;e++) 
-              F4(ms->Field->points,a,b,c,e) = vr[e];
-          }
+
+  if(ObjectMapStateValidXtal(ms)) {
+    for(c=0;c<ms->FDim[2];c++) {
+      v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+      for(b=0;b<ms->FDim[1];b++) {
+        v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+        for(a=0;a<ms->FDim[0];a++) {
+          v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+          transform33f3f(ms->Crystal->FracToReal,v,vr);
+          for(e=0;e<3;e++) 
+            F4(ms->Field->points,a,b,c,e) = vr[e];
         }
       }
-    break;
-  case cMapSourcePHI:
-  case cMapSourceFLD:
-  case cMapSourceDesc:
-  case cMapSourceChempyBrick:
-  case cMapSourceVMDPlugin:
-  case cMapSourceACNT:
+    }
+  } else {
     for(c=0;c<ms->FDim[2];c++) {
       v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
       for(b=0;b<ms->FDim[1];b++) {
@@ -1136,9 +1068,7 @@ void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
           }
         }
       }
-  }
-  default: 
-    break;
+    }
   }
 }
 
@@ -1875,6 +1805,7 @@ void ObjectMapStateInit(PyMOLGlobals *G,ObjectMapState *I)
   I->Dim = NULL;
   I->Range = NULL;
   I->Grid = NULL;
+  I->MapSource = cMapSourceUndefined;
   I->have_range = false;
 }
 int ObjectMapGetNStates(ObjectMap *I)     
@@ -2564,7 +2495,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state,in
   ms->Max[2] = ms->Div[2];
 
   ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
-  ms->MapSource = cMapSourcePHI;
+  ms->MapSource = cMapSourceGeneralPurpose;
   ms->Field->save_points=false;
 
 
@@ -2820,7 +2751,7 @@ static int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state,int quie
     else {
       CrystalUpdate(ms->Crystal);
       ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
-      ms->MapSource = cMapSourceXPLOR;
+      ms->MapSource = cMapSourceCrystallographic;
       ms->Field->save_points=false;
       for(c=0;c<ms->FDim[2];c++)
         {
@@ -4017,7 +3948,7 @@ end d
     ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
     ms->MapSource = cMapSourceGRD;
     ms->Field->save_points=false;
-
+    
     switch(fast_axis) {
     case 3: /* Fast Y - BROKEN! */
       PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
@@ -4579,7 +4510,7 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state,int 
     }
     
     ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
-    ms->MapSource = cMapSourcePHI;
+    ms->MapSource = cMapSourceGeneralPurpose;
     ms->Field->save_points=false;
     
     for(a=0;a<3;a++) {
@@ -4824,7 +4755,7 @@ static int ObjectMapACNTStrToMap(ObjectMap *I,char *ACNTStr,int bytes,int state,
     }
     
     ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
-    ms->MapSource = cMapSourceACNT;
+    ms->MapSource = cMapSourceGeneralPurpose;
     ms->Field->save_points=false;
     
     for(a=0;a<3;a++) {
