@@ -524,7 +524,7 @@ SEE ALSO
                 server.start()
                 if browser_flag: # fire up a local browser
                     import webbrowser
-                    webbrowser.open("http://localhost:%d"%port)
+                    webbrowser.open("http://localhost:%d"%port,new=1)
                     r = DEFAULT_SUCCESS
                 else:
                     r = DEFAULT_SUCCESS
