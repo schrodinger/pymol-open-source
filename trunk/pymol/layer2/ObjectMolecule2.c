@@ -1806,9 +1806,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
         } else if((p[0]== 'U')&&(p[1]=='S')&&(p[2]=='E')&&
                 (p[3]=='R')&&(!*restart_model)) {
 
-          /* Metaphorics key 'USER     '*/
-          if((p[4]==' ')&&(p[5]==' ')&&(p[6]==' ')&&
-             (p[7]==' ')&&(p[8]==' ')&&m4x) {
+          /* Metaphorics key now 'USER M4X ', changed from 'USER    '*/
+          if((p[4]==' ')&&(p[5]=='M')&&(p[6]=='4')&&
+             (p[7]=='X')&&(p[8]==' ')&&m4x) {
             p = nskip(p,10);
             p = ntrim(cc,p,6);
             m4x->annotated_flag = true;
@@ -2249,12 +2249,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               (p[2]=='E')&&
               (p[3]=='R')&&
               (!*restart_model)) {
-      /* Metaphorics key 'USER     ' */
+      /* Metaphorics key 'USER M4X ' was 'USER     ' */
       if((p[4]==' ')&&
-         (p[5]==' ')&&
-         (p[6]==' ')&&
-         
-         (p[7]==' ')&&
+         (p[5]=='M')&&
+         (p[6]=='4')&&
+         (p[7]=='X')&&
          (p[8]==' ')&&
          m4x) {
         
