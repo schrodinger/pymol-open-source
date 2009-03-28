@@ -473,6 +473,7 @@ SEE ALSO
             browser_flag = 0
             launch_flag = 0
             report_url = None
+            logging = 1
             root = None
             port = 0
             for line in open(fname).readlines():
@@ -485,6 +486,9 @@ SEE ALSO
                             if len(input)>1:
                                 port = int(input[1].strip())
                                 launch_flag = 1
+                        elif keyword == 'logging': 
+                            if len(input)>1:
+                                logging = int(input[1].strip())
                         elif keyword == 'root': # must encode a valid filesystem path to local content
                             if len(input)>1:
                                 root = input[1].strip()
@@ -518,7 +522,7 @@ SEE ALSO
                         else:
                             print "Error: unrecognized input '%s'"%input
             if launch_flag:
-                server = PymolHttpd(port,root)
+                server = PymolHttpd(port,root,logging)
                 if port == 0:
                     port = server.port # get the dynamically assigned port number
                 server.start()
