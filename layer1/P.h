@@ -29,6 +29,8 @@ Z* -------------------------------------------------------------------
 #define cPLog_pym       2
 #define cPLog_no_flush  3
 
+int PLabelAtomAlt(PyMOLGlobals *G, AtomInfoType *at,char *model,char *expr,int index);
+
 #ifdef _PYMOL_NOPY
 
 #define PRunStringInstance(G,x)
@@ -86,6 +88,7 @@ Z* -------------------------------------------------------------------
 
 #define PAlterAtom(G,a,b,c,d,e,f) 0
 #define PLabelAtom(G,a,b,c,d) 0
+
 #define PAlterAtomState(G,a,b,c,d,e,f,g) 0
 
 #else

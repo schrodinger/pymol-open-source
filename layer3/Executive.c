@@ -1,3 +1,4 @@
+
 /* 
    A* -------------------------------------------------------------------
    B* This fil econtains source code for the PyMOL computer program
@@ -8763,7 +8764,7 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
   }
 }
 /*========================================================================*/
-int ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr, int quiet, int eval)
+int ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr, int quiet, int eval_mode)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
@@ -8775,7 +8776,7 @@ int ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr, int quiet, int eval)
     op1.code = OMOP_LABL;
     op1.s1 = expr;
     op1.i1 = 0;
-    op1.i2 = eval;
+    op1.i2 = eval_mode;
     ExecutiveObjMolSeleOp(G,sele1,&op1);
     cnt = op1.i1;
     op1.code=OMOP_VISI;

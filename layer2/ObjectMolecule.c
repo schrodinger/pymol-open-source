@@ -10277,29 +10277,43 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                     ai->visRep[cRepLabel]=false;
                     hit_flag=true;
                   } else {
-                    if(op->i2) {
+                    switch(op->i2) {
+                    case cExecutiveLabelEvalOn:
                       /* python label expression evaluation */
                       if(PLabelAtom(I->Obj.G,&I->AtomInfo[a],I->Obj.Name,op->s1,a)) {
                         op->i1++;
                         ai->visRep[cRepLabel]=true;
                         hit_flag=true;
-                      } else
-                        ok=false;
-                    } else {
-                      /* simple string label text */
-                      AtomInfoType *ai = I->AtomInfo + a;
-                      char *label = op->s1;
-                      if(ai->label) {
-                        OVLexicon_DecRef(I->Obj.G->Lexicon,ai->label);
+                      } else {
+                        ok = false;
                       }
-                      ai->label = 0;
-                      if(label && label[0]) {
-                        OVreturn_word ret = OVLexicon_GetFromCString(
-                                                                     G->Lexicon,label);
-                        if(OVreturn_IS_OK(ret)) {
-                          ai->label = ret.word;
+                      break;
+                    case cExecutiveLabelEvalAlt:
+                      if(PLabelAtomAlt(I->Obj.G,&I->AtomInfo[a],I->Obj.Name,op->s1,a)) {
+                        op->i1++;
+                        ai->visRep[cRepLabel]=true;
+                        hit_flag=true;
+                      } else {
+                        ok = false;
+                      }
+                      break;
+                    case cExecutiveLabelEvalOff:
+                      {
+                        /* simple string label text */
+                        AtomInfoType *ai = I->AtomInfo + a;
+                        char *label = op->s1;
+                        if(ai->label) {
+                          OVLexicon_DecRef(I->Obj.G->Lexicon,ai->label);
+                        }
+                        ai->label = 0;
+                        if(label && label[0]) {
+                          OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon,label);
+                          if(OVreturn_IS_OK(ret)) {
+                            ai->label = ret.word;
+                          }
                         }
                       }
+                      break;
                     }
                   }
                 }

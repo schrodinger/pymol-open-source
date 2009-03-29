@@ -485,7 +485,7 @@ SEE ALSO
 
         # for aliasing compound commands to a single keyword
 
-    def alias(name, command, _self=cmd):
+    def alias(name, command, _self=cmd): 
         '''
 DESCRIPTION
 
@@ -517,7 +517,8 @@ SEE ALSO
 
     extend, api
             '''
-        _self.keyword[name] = [eval("lambda :do('''%s ''')"%command), 0,0,',',parsing.STRICT]
+        _self.keyword[name] = [eval("lambda :do('''%s ''')"%command.replace("'''","")), 
+                               0,0,',',parsing.STRICT]
         _self.kwhash.append(name)
 
     def dummy(*arg):
