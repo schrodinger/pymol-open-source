@@ -22,7 +22,6 @@ the initialization functions for these libraries on startup.
 
 */
 
-#ifndef _PYMOL_NOPY
 
 #include"os_predef.h"
 #include"os_std.h"
@@ -41,10 +40,12 @@ the initialization functions for these libraries on startup.
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 
+#ifndef _PYMOL_NOPY
 #ifdef _PYMOL_MINGW
 #define putenv _putenv
 #endif
 #include"os_python.h"
+#endif
 
 #include"os_std.h"
 #include"os_time.h"
@@ -64,6 +65,15 @@ the initialization functions for these libraries on startup.
 #include"Executive.h"
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
+
+
+int PLabelAtomAlt(PyMOLGlobals *G, AtomInfoType *at,char *model,char *expr,int index)
+{ /* alternate C implementation which bypasses Python expressions -- works
+     only for simple label formats "..."+symbol+... */
+  return 0;
+}
+
+#ifndef _PYMOL_NOPY
 
 /* all of the following Python objects must be invariant & global for the application */
 
@@ -958,6 +968,7 @@ int PAlterAtom(PyMOLGlobals *G,
   return(result);
 }
 
+
 int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *model,char *expr,int index)
 {
   PyObject *dict;
@@ -971,8 +982,6 @@ int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *model,char *expr,int inde
   else
     strcpy(atype,"ATOM");
   PBlock(G);
-  /* PBlockAndUnlockAPI() is not safe.
-   * what if "at" is destroyed by another thread? */
   dict = PyDict_New();
 
   PConvStringToPyDictItem(dict,"model",model);
@@ -2486,8 +2495,6 @@ void PCatchInit(void)
   PyImport_AddModule("pcatch");
   Py_InitModule("pcatch", PCatch_methods);
 }
-#else
-typedef int this_source_file_is_not_empty;
 #endif
 
 

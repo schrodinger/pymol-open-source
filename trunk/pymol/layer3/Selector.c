@@ -4251,10 +4251,10 @@ int SelectorGetSingleAtomObjectIndex(PyMOLGlobals *G,int sele,ObjectMolecule **i
 
   int found_it = false;
   int a;
-  void *hidden = NULL;
-  ObjectMolecule *obj;
+  void *iterator = NULL;
+  ObjectMolecule *obj = NULL;
 
-  while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
+  while(ExecutiveIterateObjectMolecule(G,&obj,&iterator)) {
     int n_atom = obj->NAtom;
     AtomInfoType *ai = obj->AtomInfo;
     for(a=0;a<n_atom;a++) {
@@ -7163,14 +7163,14 @@ int SelectorIndexByName(PyMOLGlobals *G,char *sname)
 static void SelectorPurgeMembers(PyMOLGlobals *G,int sele) 
 {
   register CSelector *I=G->Selector;
-  void *hidden = NULL;
-  ObjectMolecule *obj;
+  void *iterator = NULL;
+  ObjectMolecule *obj = NULL;
   
   if(I->Member) {
     register MemberType *I_Member = I->Member;
     register int I_FreeMember = I->FreeMember;
 
-    while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
+    while(ExecutiveIterateObjectMolecule(G,&obj,&iterator)) {
       if(obj->Obj.type == cObjectMolecule) {
         register AtomInfoType *ai = obj->AtomInfo;
         register int a, n_atom = obj->NAtom;
@@ -7873,7 +7873,7 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
   register ov_size c=0;
   register int modelCnt;
   register int state = req_state;
-  void *hidden = NULL;
+  void *iterator = NULL;
   ObjectMolecule *obj = NULL;
 
   register CSelector *I=G->Selector;
@@ -7889,7 +7889,7 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
 
   modelCnt=cNDummyModels;
   c=cNDummyAtoms;
-  while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
+  while(ExecutiveIterateObjectMolecule(G,&obj,&iterator)) {
     c+=obj->NAtom;
     if(I->NCSet<obj->NCSet) I->NCSet=obj->NCSet;
     modelCnt++;
@@ -7939,7 +7939,7 @@ int SelectorUpdateTable(PyMOLGlobals *G,int req_state,int domain)
     state = SceneGetState(G); /* just in case... */
   }
 
-  while(ExecutiveIterateObjectMolecule(G,&obj,&hidden)) {
+  while(ExecutiveIterateObjectMolecule(G,&obj,&iterator)) {
     register int skip_flag = false;
     if(req_state<0) {
       switch(req_state) {

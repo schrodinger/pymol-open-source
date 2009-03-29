@@ -3866,12 +3866,33 @@ static PyObject *CmdLabel(PyObject *self,   PyObject *args)
   }
   if(ok && (ok=APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G,str1,s1)>=0);
-    if(ok) ok=ExecutiveLabel(G,s1,str2,quiet,true); /* TODO STATUS */
+    if(ok) ok=ExecutiveLabel(G,s1,str2,quiet,cExecutiveLabelEvalOn);
     SelectorFreeTmp(G,s1);
     APIExit(G);
   }
   return APIResultOk(ok);
+}
 
+static PyObject *CmdLabel2(PyObject *self,   PyObject *args)
+{
+  PyMOLGlobals *G = NULL;
+  char *str1,*str2;
+  OrthoLineType s1;
+  int quiet;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"Ossi",&self,&str1,&str2,&quiet);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G!=NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok=APIEnterNotModal(G))) {
+    ok = (SelectorGetTmp(G,str1,s1)>=0);
+    if(ok) ok=ExecutiveLabel(G,s1,str2,quiet,cExecutiveLabelEvalAlt);
+    APIExit(G);
+  }
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdAlter(PyObject *self,   PyObject *args)
@@ -8452,6 +8473,7 @@ static PyMethodDef Cmd_methods[] = {
   {"wait_deferred",         CmdWaitDeferred,         METH_VARARGS },
   {"wait_queue",            CmdWaitQueue,            METH_VARARGS },
   {"label",                 CmdLabel,                METH_VARARGS },
+  {"label2",                CmdLabel2,               METH_VARARGS },
   {"load",	                CmdLoad,                 METH_VARARGS },
   {"load_color_table",	    CmdLoadColorTable,       METH_VARARGS },
   {"load_coords",           CmdLoadCoords,           METH_VARARGS },

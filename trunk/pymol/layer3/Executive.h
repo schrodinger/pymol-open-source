@@ -186,7 +186,12 @@ int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet
 int ExecutiveIterateList(PyMOLGlobals *G,char *s1,PyObject *list,int read_only,int quiet,PyObject *space);
 int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,
                         int *list,int list_len,int state, int mode, int quiet);
-int ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr,int quiet,int eval);
+
+#define cExecutiveLabelEvalOff    0
+#define cExecutiveLabelEvalOn     1
+#define cExecutiveLabelEvalAlt    2
+
+int ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr,int quiet,int eval_mode);
 void ExecutiveIterateState(PyMOLGlobals *G,int i1,char *s1,char *expr,int read_only,
                            int atomic_props,int quiet,PyObject *space);
 int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet);
