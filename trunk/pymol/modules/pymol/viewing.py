@@ -1834,6 +1834,22 @@ NOTES
         if _self._raising(r,_self): raise QuietException
         return r
 
+    def label2(selection="(all)", expression="", quiet=1,_self=cmd):
+        # preprocess selection
+        selection = selector.process(selection)
+        #
+        r = DEFAULT_ERROR      
+        try:
+            _self.lock(_self)
+            if len(str(expression))==0:
+                r= _cmd.label2(_self._COb,"("+str(selection)+")",'',quiet)
+            else:
+                r = _cmd.label2(_self._COb,"("+str(selection)+")",str(expression),quiet)
+        finally:
+            _self.unlock(r,_self)   
+        if _self._raising(r,_self): raise QuietException
+        return r
+
     def window(action='show', x=0, y=0, width=0, height=0, _self=cmd):
         '''
 DESCRIPTION

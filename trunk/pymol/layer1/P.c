@@ -66,11 +66,213 @@ the initialization functions for these libraries on startup.
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
 
+static int label_copy_text(char *dst, char *src, int len, int max)
+{
+  dst += len;
+  while(len<max) {
+    if(!*src) 
+      break;
+    *(dst++) = *(src++);
+    len++;
+  }
+  *dst = 0;
+  return len;
+}
+
+static int label_next_token(WordType dst, char **expr)
+{
+  char *p = *expr;
+  char *q = dst;
+  char ch;
+  int tok_len = 0;
+  int tok_max = sizeof(WordType) - 1;
+
+  /* skip leading whitespace (if any) */
+
+  while( (ch = *p) ) {
+    if(ch > 33) 
+      break;
+    p++;
+  }
+  
+  /* copy the token */
+
+  while( (ch = *p) ) {
+    if( ((ch >= 'a') && (ch <= 'z')) ||
+        ((ch >= 'A') && (ch <= 'Z')) ||
+        ((ch >= '0') && (ch <= '9')) ||
+        ((ch == '_')) ) {
+      if(tok_len < tok_max) {
+        *(q++) = ch;
+        tok_len ++;
+      }
+    } else {
+      break;
+    }
+    p++;
+  }
+  *q = 0;
+  if(p != *expr)
+    *expr = p;
+  else if(*p)
+    *expr = p+1; /* always advance input by at least one character */
+
+  /* let caller know whether we read anything */
+
+  return (q != dst);
+}
 
 int PLabelAtomAlt(PyMOLGlobals *G, AtomInfoType *at,char *model,char *expr,int index)
-{ /* alternate C implementation which bypasses Python expressions -- works
-     only for simple label formats "..."+symbol+... */
-  return 0;
+{ 
+  /* alternate C implementation which bypasses Python expressions -- works
+     only for simple label formats "..."+property+... */
+
+  int result = true;
+  OrthoLineType label;
+  int label_len = 0;
+  int label_max = sizeof(OrthoLineType);
+  OrthoLineType buffer;
+  char ch, quote = 0;
+  int escaped = false;
+
+  label[0] = 0;
+  while( (ch = *(expr++)) ) {
+    if(!quote) {
+      if(ch == '\'') {
+        quote = ch;
+      } else if(ch == '"') {
+        quote = ch;
+      } else if( (ch < 33) || (ch == '+') || (ch == '(') || (ch == ')')) {
+        /* nop */
+      } else if(ch > 32) { 
+        WordType tok;
+        expr--;
+        if( label_next_token(tok,&expr) ) {
+          /* brain-dead linear string matching */
+          buffer[0] = 0;
+          if(!strcmp(tok,"model")) {
+            label_len = label_copy_text(label, model, label_len, label_max);
+          } else if(!strcmp(tok,"index")) {
+            sprintf(buffer,"%d",index+1);
+          } else if(!strcmp(tok,"type")) {
+            if(at->hetatm)
+              label_len = label_copy_text(label, "HETATM", label_len, label_max);
+            else
+              label_len = label_copy_text(label, "ATOM", label_len, label_max);
+          } else if(!strcmp(tok,"name")) {
+            label_len = label_copy_text(label, at->name, label_len, label_max);
+          } else if(!strcmp(tok,"resn")) {
+            label_len = label_copy_text(label, at->resn, label_len, label_max);
+          } else if(!strcmp(tok,"resi")) {
+            label_len = label_copy_text(label, at->resi, label_len, label_max);
+          } else if(!strcmp(tok,"resv")) {
+            sprintf(buffer,"%d", at->resv);
+          } else if(!strcmp(tok,"chain")) {
+            label_len = label_copy_text(label, at->chain, label_len, label_max);
+          } else if(!strcmp(tok,"alt")) {
+            label_len = label_copy_text(label, at->alt, label_len, label_max);
+          } else if(!strcmp(tok,"segi")) {
+            label_len = label_copy_text(label, at->segi, label_len, label_max);
+          } else if(!strcmp(tok,"ss")) {
+            label_len = label_copy_text(label, at->ssType, label_len, label_max);
+          } else if(!strcmp(tok,"vdw")) {
+            sprintf(buffer,"%1.2f",at->vdw);
+          } else if(!strcmp(tok,"elec_radius")) {
+            sprintf(buffer,"%1.2f",at->elec_radius);
+          } else if(!strcmp(tok,"text_type")) {
+            char null_st[1] = "";
+            char *st = null_st;
+            if(at->textType) st = OVLexicon_FetchCString(G->Lexicon,at->textType);
+            label_len = label_copy_text(label, st, label_len, label_max);
+          } else if(!strcmp(tok,"elem")) {
+            label_len = label_copy_text(label, at->elem, label_len, label_max);
+          } else if(!strcmp(tok,"geom")) {
+            sprintf(buffer,"%d", at->geom);
+          } else if(!strcmp(tok,"valence")) {
+            sprintf(buffer,"%d", at->valence);
+          } else if(!strcmp(tok,"rank")) {
+            sprintf(buffer,"%d", at->rank);
+          } else if(!strcmp(tok,"flags")) {
+            if(at->flags) {
+              sprintf(buffer,"%X",at->flags);
+            } else {
+              strcpy(buffer,"0");
+            }
+          } else if(!strcmp(tok,"q")) {
+            sprintf(buffer,"%1.2f",at->q);
+          } else if(!strcmp(tok,"b")) {
+            sprintf(buffer,"%1.2f",at->b);
+          } else if(!strcmp(tok,"numeric_type")) {
+            if(at->customType!=cAtomInfoNoType)
+              sprintf(buffer,"%d",at->customType);
+            else {
+              strcpy(buffer,"?");
+            }
+          } else if(!strcmp(tok,"partial_charge")) {
+            sprintf(buffer,"%1.3f",at->partialCharge);
+          } else if(!strcmp(tok,"formal_charge")) {
+            sprintf(buffer,"%d",at->formalCharge);
+          } else if(!strcmp(tok,"color")) {
+            sprintf(buffer,"%d",at->color);
+          } else if(!strcmp(tok,"cartoon")) {
+            sprintf(buffer,"%d",at->cartoon);
+          } else if(!strcmp(tok,"ID")) {
+            sprintf(buffer,"%d",at->id);
+          } else if(!strcmp(tok,"str")) {
+            /* nop */
+          }
+          if(buffer[0]) {
+            label_len = label_copy_text(label, buffer, label_len, label_max);
+          }
+        } else {
+          label_len = label_copy_text(label, "?", label_len, label_max);
+          label_len = label_copy_text(label, tok, label_len, label_max);
+        }
+      } else {
+        if(label_len < label_max) {
+          label[label_len] = '?';
+          label_len++;
+        }      
+      }
+    } else {
+      if(ch == quote) {
+        quote = 0;
+      } else if(ch == '\\') {
+        if(!escaped) {
+          escaped = true;
+        } else {
+          if(label_len < label_max) {
+            label[label_len] = ch;
+            label_len++;
+          }
+          escaped = false;
+        }
+      } else {
+        if(label_len < label_max) {
+          label[label_len] = ch;
+          label_len++;
+          label[label_len] = 0;
+        }
+      }
+    }
+  }
+  
+  if(result) { 
+    if(at->label) {
+      OVLexicon_DecRef(G->Lexicon,at->label);
+      at->label = 0;
+    }
+    
+    if(label[0]) {
+      OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon,label);
+      if(OVreturn_IS_OK(ret)) {
+        at->label = ret.word;
+      }
+    }
+  } else {
+    ErrMessage(G,"Label","Aborting on error. Labels may be incomplete.");
+  }
+  return(result);
 }
 
 #ifndef _PYMOL_NOPY
