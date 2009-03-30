@@ -308,6 +308,7 @@ from viewing import \
       get_scene_list,     \
       hide,               \
       label,              \
+      label2,             \
       load_png,           \
       meter_reset,        \
       move,               \
