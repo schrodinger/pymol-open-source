@@ -34,6 +34,7 @@ class Cmd:
         self.fb_module = global_cmd.fb_module
         self.fb_debug = global_cmd.fb_debug # this cannot be right...
         self.file_ext_re = global_cmd.file_ext_re
+        self.gz_ext_re = global_cmd.gz_ext_re
         self.loadable = global_cmd.loadable
         self.nt_hidden_path_re = global_cmd.nt_hidden_path_re
         self.palette_dict = global_cmd.palette_dict
@@ -261,10 +262,6 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.angle, a, k)
     
-    def show_as(self, *a, **k):
-        k['_self']=self
-        return apply(global_cmd.show_as, a, k)
-    
     def attach(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.attach, a, k)
@@ -477,6 +474,10 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.extract, a, k)
     
+    def fab(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.fab, a, k)
+    
     def feedback(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.feedback, a, k)
@@ -585,6 +586,10 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.get_extent, a, k)
     
+    def get_fastastr(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_fastastr, a, k)
+    
     def get_frame(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_frame, a, k)
@@ -592,6 +597,10 @@ class Cmd:
     def get_idtf(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_idtf, a, k)
+    
+    def get_legal_name(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_legal_name, a, k)
     
     def get_modal_draw(self, *a, **k):
         k['_self']=self
@@ -721,6 +730,10 @@ class Cmd:
         k['_self']=self
         return apply(global_cmd.get_type, a, k)
     
+    def get_unused_name(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.get_unused_name, a, k)
+    
     def get_version(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.get_version, a, k)
@@ -840,6 +853,10 @@ class Cmd:
     def label(self, *a, **k):
         k['_self']=self
         return apply(global_cmd.label, a, k)
+    
+    def label2(self, *a, **k):
+        k['_self']=self
+        return apply(global_cmd.label2, a, k)
     
     def load(self, *a, **k):
         k['_self']=self

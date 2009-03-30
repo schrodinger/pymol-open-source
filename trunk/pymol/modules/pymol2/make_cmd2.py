@@ -15,7 +15,6 @@ if 1:
         'alter_list',
         'alter_state',
         'angle',
-        'as',
         'attach',
         'auto_measure',
         'backward',
@@ -69,6 +68,7 @@ if 1:
         'export_dots',
         'extend',
         'extract',
+        'fab',
         'feedback',
         'fetch',
         'find_pairs',
@@ -96,8 +96,10 @@ if 1:
         'get_distance',
         'get_editor_scheme',
         'get_extent',
+        'get_fastastr',
         'get_frame',
         'get_idtf',
+        'get_legal_name',
         'get_modal_draw',
         'get_model',
         'get_movie_length',
@@ -130,6 +132,7 @@ if 1:
         'get_symmetry',
         'get_title',
         'get_type',
+        'get_unused_name',
         'get_version',
         'get_view',
         'get_vis',
@@ -160,6 +163,7 @@ if 1:
         'iterate',
         'iterate_state',
         'label',
+        'label2',        
         'load',
         'load_brick',
         'load_callback',
@@ -344,7 +348,6 @@ if __name__=='pymol':
     # the following symbols are either unneeded or provided elsewhere...
     
     exclude = [
-
         'DEFAULT_ERROR',
         'DEFAULT_SUCCESS',
         'QuietException',
@@ -399,6 +402,7 @@ if __name__=='pymol':
         '_validate_color_sc',
         'alt',
         'alt_special',
+        'as',
         'auto_arg',
         'block_flush',
         'boolean_dict',
@@ -429,6 +433,7 @@ if __name__=='pymol':
         'fb_module_sc',
         'file_ext_re',
         'get_feedback', # legacy
+        'gz_ext_re',
         'help_only',
         'help_sc',
         'helping',
