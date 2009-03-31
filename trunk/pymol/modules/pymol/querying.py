@@ -1342,7 +1342,7 @@ USAGE
 
 PYMOL API
 
-    cmd.count(string selection)
+    cmd.count_atoms(string selection)
 
         '''
         r = DEFAULT_ERROR
