@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2009-04-03 Warren L. DeLano <warren@delsci.com>	
+
+	* ack! clumsy blunder in get_modal_draw
+		
 2009-03-26 Warren L. DeLano <warren@delsci.com>	
 
 	* acnt map support
