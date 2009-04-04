@@ -986,8 +986,8 @@ def map_mesh(self_cmd, sele):
             [ 1, '@ level 3.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",3.0)'      ],            
             [ 0, ''             , ''                       ],            
             [ 1, '@ level 0.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",0.0)'      ],
-            [ 1, '@ level -1.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",1.0)'      ],
-            [ 1, '@ level -2.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",2.0)'      ],
+            [ 1, '@ level -1.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",-1.0)'      ],
+            [ 1, '@ level -2.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",-2.0)'      ],
             [ 1, '@ level -3.0'         , 'cmd.isomesh("'+sele+'_mesh","'+sele+'",-3.0)'      ],
             ]
 
