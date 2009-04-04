@@ -141,6 +141,7 @@ static int APIEnterNotModal(PyMOLGlobals *G) /* assumes API is locked */
   if(PyMOL_GetModalDraw(G->PyMOL)) {
     return false;
   } else {
+    APIEnter(G);
     return true;
   }
 }
