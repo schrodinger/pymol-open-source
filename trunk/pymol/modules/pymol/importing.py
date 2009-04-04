@@ -476,7 +476,12 @@ SEE ALSO
             logging = 1
             root = None
             port = 0
-            for line in open(fname).readlines():
+            if (string.find(fname,":")>1):
+                import urllib
+                lines = urllib.urlopen(fname).readlines()
+            else:
+                lines = open(fname).readlines()
+            for line in lines:
                 line = line.strip()
                 if len(line) and line[0:1] != '#':
                     input = line.split(None,1)
