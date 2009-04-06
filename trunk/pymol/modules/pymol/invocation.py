@@ -69,7 +69,7 @@ if __name__=='pymol.invocation':
     options.stereo_mode = 0
     options.zoom_mode = -1
     options.no_quit = 0
-    
+
     options.win_py = { 'irix':240,
                        'darwin': 214, # hmm...need to set to 192 for Leopard?...
                        'linux2': 220,

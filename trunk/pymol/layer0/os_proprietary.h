@@ -19,26 +19,28 @@ Z* -------------------------------------------------------------------
 
 /* PROPRIETARY CODE SEGMENT DISCLAIMER:
  *
- * DeLano Scientific LLC supports and strongly encourages compilation
- * of open-source PyMOL source code on open-source operating systems
- * with open-source development tools (e.g. Linux/XFree86 with GCC
- * using Python's distutils or perhaps the GNU Build System).
+ * DeLano Scientific LLC supports and encourages compilation of
+ * open-source PyMOL source code on open-source operating systems
+ * using open-source development tools (e.g. Linux/X11 using GCC and
+ * either Python's distutils or the GNU Build System).
  *
  * We do not support, but nor do we necessarily preclude, compilation
  * of open-source PyMOL source code on proprietary operating systems
- * such as Microsoft Windows using proprietary development tools such
- * as Microsoft Visual Studio.  Such activities are simply beyond the
- * scope of the PyMOL Open-Source Project as we choose to define it.
+ * such as Microsoft Windows or Mac OS X, using proprietary
+ * development tools like Microsoft Visual Studio or Apple's Xcode.
+ * Such activities are merely beyond the scope of the PyMOL
+ * Open-Source Project as we choose to define it.
  *
  * Please note that we generally view compilation of PyMOL source code
- * on proprietary platforms as the obvious and logical foundation for
- * productive business relationships with defined and mutual benefits.
- * In other words, if you depend on PyMOL to run well on proprietary
- * operating systems, then it is in your interest to engage our
- * business on business-like terms, such as through paid software
- * subscriptions and licenses, through software development
- * partnerships, or by participating in collaborations and joint
- * ventures. 
+ * on proprietary platforms as the appropriate logical foundation for
+ * productive business relationships with defined mutual benefits.  In
+ * other words, if you depend on PyMOL to run well on proprietary
+ * operating systems in your profession or business, then it is likely
+ * in your interest to gain access to our proprietary builds by
+ * engaging DeLano Scientific LLC on business-like terms, such as
+ * through paid software subscriptions and licenses, through software
+ * development partnerships, or by participating in one or more of our
+ * consortium projects.
  *
  * If, however, you still feel that you absolutely must compile
  * open-source PyMOL source code on proprietary operating systems,

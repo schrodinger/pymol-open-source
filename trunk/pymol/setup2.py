@@ -107,7 +107,7 @@ try:
          if python_exe[0:2]=="./":
             python_exe=os.getcwd()+"/"+python_exe[2:]
          if sys.platform!='win32':
-            f.write(python_exe+" "+pymol_file+" $*\n")
+            f.write(python_exe+" "+pymol_file+" \"$@\"\n")
          else:
             f.write('"%s" "%s" %%1 %%2 %%3 %%4 %%5 %%6 %%7 %%8 %%9\n'%(python_exe,pymol_file))
          f.close()
