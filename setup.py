@@ -167,6 +167,7 @@ setup ( # Distribution meta-data
                 'pmg_tk/skins/normal',                    
                 'pmg_wx',
                 'pymol',
+                'pymol/contrib',                
                 'pymol/opengl',
                 'pymol/opengl/gl',
                 'pymol/opengl/glu',
