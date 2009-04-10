@@ -3,7 +3,7 @@ from pymol import cmd
 from random import random, seed
 from chempy import cpv
 
-# CGO ellipsoids
+# CGO cones
 
 # first draw some walls
 
