@@ -132,6 +132,7 @@ except ImportError:
      python setup2.py install
      python setup2.py uninstall    
  '''
-
+   print "Error: Unable to import pymol.  Have you run setup.py?"
+   
 
 
