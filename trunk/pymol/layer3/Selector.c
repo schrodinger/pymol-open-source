@@ -143,7 +143,7 @@ static int SelectorModulate1(PyMOLGlobals *G,EvalElem *base,int state);
 static int SelectorSelect0(PyMOLGlobals *G,EvalElem *base);
 static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base);
 static int SelectorSelect2(PyMOLGlobals *G,EvalElem *base);
-static int SelectorLogic1(PyMOLGlobals *G,EvalElem *base);
+static int SelectorLogic1(PyMOLGlobals *G,EvalElem *base, int state);
 static int SelectorLogic2(PyMOLGlobals *G,EvalElem *base);
 static int SelectorOperator22(PyMOLGlobals *G,EvalElem *base,int state);
 static int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state);
@@ -340,6 +340,7 @@ static int SelectorGetObjAtmOffset(CSelector *I,ObjectMolecule *obj,int offset)
 #define SELE_FXDz ( 0x4700 | STYP_SEL0 | 0x90 )
 #define SELE_RSTz ( 0x4800 | STYP_SEL0 | 0x90 )
 #define SELE_ANT2 ( 0x4900 | STYP_OPR2 | 0x60 )
+#define SELE_BYX1 ( 0x4A00 | STYP_OPR1 | 0x20 )
 
 #define SEL_PREMAX 0x8
 
@@ -570,8 +571,10 @@ static WordKeyValue Keyword[] =
   {  "r.",       SELE_RSNs },
 
   {  "%",        SELE_SELs },
-  {  "b",        SELE_BVLx, }, /* 2 operand selection operator */ 
-  {  "q",        SELE_QVLx, }, /* 2 operand selection operator */ 
+  {  "b",        SELE_BVLx }, /* 2 operand selection operator */ 
+  {  "q",        SELE_QVLx }, /* 2 operand selection operator */ 
+
+  {  "bycell",   SELE_BYX1 },
   {  "", 0 }
 };
 
@@ -9646,7 +9649,7 @@ static int SelectorSelect2(PyMOLGlobals *G,EvalElem *base)
   return(ok);
 }
 /*========================================================================*/
-static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
+static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base,int state)
 {
   /* some cases in this function still need to be optimized
      for performance (see BYR1 for example) */
@@ -10070,6 +10073,117 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
       FreeP(base[1].sele);
       VLAFreeP(stk);
     }
+    break;
+  case SELE_BYX1: /* by cell */
+    base[1].sele=base[0].sele;
+    base[0].sele=Calloc(int,n_atom);
+    {		
+      ObjectMolecule *obj;
+      CoordSet *cs;
+      int d,n1,at;
+      for(d=0;d<I->NCSet;d++) {
+        if((state<0)||(d==state)) {
+          n1=0;
+          for(a=0;a<I->NAtom;a++) {
+            I->Flag1[a]=false;
+            at=I->Table[a].atom;
+            obj=I->Obj[I->Table[a].model];
+            if(d<obj->NCSet) 
+              cs=obj->CSet[d];
+            else
+              cs=NULL;
+            if(cs) {
+              CCrystal *cryst = cs->PeriodicBox;
+              if((!cryst) && (obj->Symmetry))
+                cryst = obj->Symmetry->Crystal;
+              if(cryst) {
+                int idx;
+                if(obj->DiscreteFlag) {
+                  if(cs == obj->DiscreteCSet[at])
+                    idx = obj->DiscreteAtmToIdx[at];
+                  else
+                    idx = -1;
+                } else 
+                  idx = cs->AtmToIdx[at];
+                if(idx >= 0) {
+                  transform33f3f(cryst->RealToFrac, cs->Coord+(3*idx), I->Vertex+3*a);
+
+                  dump3f(I->Vertex+3*a,"input");
+                  I->Flag1[a]=true;
+                  n1++;
+                }
+              }
+            }
+          }
+          if(n1) {
+            MapType *map=MapNewFlagged(G,-1.1,I->Vertex,I->NAtom,NULL,I->Flag1);
+            if(map) {
+              int e, nCSet;
+              MapSetupExpress(map);
+              nCSet=SelectorGetArrayNCSet(G,base[1].sele,false);
+              for(e=0;e<nCSet;e++) {
+                if((state<0)||(e==state)) {
+                  for(a=0;a<I->NAtom;a++) {
+                    if(base[1].sele[a]) {
+                      at=I->Table[a].atom;
+                      obj=I->Obj[I->Table[a].model];
+                      if(e<obj->NCSet) 
+                        cs=obj->CSet[e];
+                      else
+                        cs=NULL;
+                      if(cs) {
+                        CCrystal *cryst = cs->PeriodicBox;
+                        if((!cryst) && (obj->Symmetry))
+                          cryst = obj->Symmetry->Crystal;
+                        if(cryst) {
+                          int idx;
+                          if(obj->DiscreteFlag) {
+                            if(cs==obj->DiscreteCSet[at])
+                              idx=obj->DiscreteAtmToIdx[at];
+                            else
+                              idx=-1;
+                          } else 
+                            idx=cs->AtmToIdx[at];
+                          if(idx>=0) {
+                            float probe[3], probe_i[3];
+                            int h,i,j,k,l;
+                            
+                            transform33f3f(cryst->RealToFrac, cs->Coord+(3*idx), probe);
+                            MapLocus(map,probe,&h,&k,&l);
+                            i=*(MapEStart(map,h,k,l));
+                            if(i) {
+                              probe_i[0] = (int)floor(probe[0]);
+                              probe_i[1] = (int)floor(probe[1]);
+                              probe_i[2] = (int)floor(probe[2]);
+
+                              dump3f(I->Vertex+3*a,"output");
+                              j=map->EList[i++];
+                              while(j>=0) {
+                                if( (!base[0].sele[j]) && (obj == I->Obj[I->Table[j].model]) ) { 
+                                  /* both must be in same object */
+                                  float *tst = I->Vertex + 3*j;
+                                  
+                                  base[0].sele[j] = ((probe_i[0] == (int)floor(tst[0])) &&
+                                                     (probe_i[1] == (int)floor(tst[1])) &&
+                                                     (probe_i[2] == (int)floor(tst[2])));
+                                }
+                                j=map->EList[i++];
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              MapFree(map);
+            }
+          }
+        }
+      }
+    }
+    FreeP(base[1].sele);
     break;
   case SELE_FST1: 
     base[1].sele=base[0].sele;
@@ -10646,7 +10760,7 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word,int state)
                           &&(Stack[depth].type==STYP_LIST)) {
                      /* 1 argument logical operator */
                       opFlag=true;
-                      ok=SelectorLogic1(G,&Stack[depth-1]);
+                      ok=SelectorLogic1(G,&Stack[depth-1],state);
                       for(a=depth+1;a<=totDepth;a++) 
                         Stack[a-1]=Stack[a];
                       totDepth--;
