@@ -37,8 +37,8 @@ if __name__!='__main__':
 # Global variable "__main__.pymol_launch" tracks how we're launching PyMOL:
 #
 # 0: old way, now obsolete (e.g. "python launch_pymol.py")
-# 1: new way, spawn thread on import: (e.g. from "import pymol")
-# 2: new way, consume main thread: (e.g. from "python pymol/__init__.py")
+# 1: new way, consume main thread: (e.g. from "python pymol/__init__.py")
+# 2: new way, spawn own thread: (e.g."import pymol; pymol.finish_launching()")
 # 3: dry run -- just get PyMOL environment information
 # 4: monolithic (embedded) PyMOL.  Prime, but don't start.
 # 5: Python embedded launch from within the PyMOL API
@@ -117,8 +117,8 @@ def _init_internals(_pymol):
 if hasattr(__main__,'pymol_launch'):
     pymol_launch = __main__.pymol_launch
 else:
-    pymol_launch = 2 
-    
+    pymol_launch = 2 # default is standard threaded launch (unless overridden)
+
 if pymol_launch != 3: # if this isn't a dry run
 
     import thread 
@@ -166,7 +166,8 @@ if pymol_launch != 3: # if this isn't a dry run
             __main__.pymol_argv = sys.argv
 
         pymol_launch = -1 # non-threaded launch import flag
-
+        # NOTE: overrides current value (if any)
+        
         try_again = 0
 
         try:
@@ -174,7 +175,7 @@ if pymol_launch != 3: # if this isn't a dry run
         except ImportError:
             try_again = 1
 
-        if try_again:
+        if try_again: # insert directory with this file into search path
             try:
                 sys.exc_clear()
                 sys.path.insert(0,os.path.dirname(os.path.dirname(__file__)))
@@ -182,16 +183,16 @@ if pymol_launch != 3: # if this isn't a dry run
                 pass
             import pymol
         
-        pymol_launch = 1
+        pymol_launch = 1 # consume main thread for use by PyMOL
     
-    elif pymol_launch==-1:
+    elif pymol_launch == -1: # just passing through
 
         if hasattr(__main__,"pymol_argv"):
             pymol_argv = __main__.pymol_argv
         else:
             pymol_argv = [ "pymol", "-q" ]
 
-    elif pymol_launch==2:
+    elif pymol_launch == 2: # standard threaded launch
 
         if hasattr(__main__,"pymol_argv"):
             pymol_argv = __main__.pymol_argv
@@ -412,6 +413,7 @@ if pymol_launch != 3: # if this isn't a dry run
             # --
             except:
                 traceback.print_exc()
+
     def prime_pymol():
         global glutThread
         try:
@@ -443,8 +445,8 @@ if pymol_launch != 3: # if this isn't a dry run
         from pymol import invocation
         invocation.parse_args(pa)
         start_pymol(1)
-
-    if pymol_launch==1: # standard launch (absorb main thread)
+    
+    if pymol_launch == 1: # standard launch (consume main thread)
         cmd._COb = _cmd._get_global_C_object()
         if __name__=='pymol':
             _COb = cmd._COb
@@ -454,20 +456,15 @@ if pymol_launch != 3: # if this isn't a dry run
         invocation.parse_args(pymol_argv)            
         start_pymol(0)
 
-    elif pymol_launch==2: # threaded launch (create new thread)
+    elif pymol_launch == 2: # threaded launch (create new thread)
         cmd._COb = _cmd._get_global_C_object()
         if __name__=='pymol':
             _COb = cmd._COb
         else:
             pymol._COb = cmd._COb
-        global glutThreadObject
-        cmd.reaper = threading.currentThread()
-        glutThreadObject = threading.Thread(target=thread_launch,
-          args=(pymol_argv+["-K"],)) # keep PyMOL thread alive
-                                              # even w/o GUI
-        glutThreadObject.start()
-
-    elif pymol_launch==4: # monolithic (embedded) launch
+        # don't do anything else yet...wait for finish_launching() call
+        
+    elif pymol_launch == 4: # monolithic (embedded) launch
         cmd._COb = _cmd._get_global_C_object()
         if __name__=='pymol':
             _COb = cmd._COb
@@ -478,10 +475,20 @@ if pymol_launch != 3: # if this isn't a dry run
         prime_pymol()
         # count on host process to actually start PyMOL
 
-    if os.environ.has_key('DISPLAY'):
+    if os.environ.has_key('DISPLAY'): # get X-window support
         from xwin import *
 
-    def finish_launching():
+    def finish_launching(args=None):
+        if args == None:
+            args = pymol_argv+["-K"] # keep PyMOL thread alive
+        else:
+            args = list(args)
+        if pymol_launch == 2: # spawn thread -- 'import pymol'
+            global glutThreadObject
+            cmd.reaper = threading.currentThread()
+            glutThreadObject = threading.Thread(target=thread_launch,
+              args=(args,)) 
+            glutThreadObject.start()
         _COb = _cmd._get_global_C_object()
         e=threading.Event()
         import pymol # wait for import to complete
