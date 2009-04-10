@@ -62,10 +62,6 @@ def random_conic(box, size, min_axis):
 for count in range(50):
     obj.extend( random_conic(10.0, 1.5, 0.2) )
 
-# use more triangles when drawing ellipsoids
-
-cmd.set('cgo_ellipsoid_quality', 2)
-
 # then we load it into PyMOL
 
 cmd.load_cgo(obj,'cgo08')
