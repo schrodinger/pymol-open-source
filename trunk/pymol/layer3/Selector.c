@@ -10108,7 +10108,7 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base,int state)
                 if(idx >= 0) {
                   transform33f3f(cryst->RealToFrac, cs->Coord+(3*idx), I->Vertex+3*a);
 
-                  dump3f(I->Vertex+3*a,"input");
+                  /*                  dump3f(I->Vertex+3*a,"input");*/
                   I->Flag1[a]=true;
                   n1++;
                 }
@@ -10156,11 +10156,11 @@ static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base,int state)
                               probe_i[1] = (int)floor(probe[1]);
                               probe_i[2] = (int)floor(probe[2]);
 
-                              dump3f(I->Vertex+3*a,"output");
+                              /*                              dump3f(I->Vertex+3*a,"output");*/
                               j=map->EList[i++];
                               while(j>=0) {
-                                if( (!base[0].sele[j]) && (obj == I->Obj[I->Table[j].model]) ) { 
-                                  /* both must be in same object */
+                                if( !base[0].sele[j] ) { 
+
                                   float *tst = I->Vertex + 3*j;
                                   
                                   base[0].sele[j] = ((probe_i[0] == (int)floor(tst[0])) &&
