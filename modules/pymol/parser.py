@@ -302,44 +302,46 @@ if __name__=='pymol.parser':
                                                 #                           
                                             elif layer.kw[4]==parsing.SPAWN:
                                                 if not secure:
+                                                    path = exp_path(layer.args[0])                                                    
+                                                    if re.search("\.pml$",path) != None:
+                                                        if self.cmd._feedback(fb_module.parser,fb_mask.warnings):
+                                                            print "Warning: use '@' instead of 'spawn' with PyMOL command scripts?"
                                                     # spawn command
                                                     if len(layer.args)==1: # default: module
-                                                        parsing.run_file_as_module(exp_path(layer.args[0]),spawn=1)
+                                                        parsing.run_file_as_module(path,spawn=1)
                                                     elif layer.args[1]=='main':
-                                                        parsing.spawn_file(exp_path(layer.args[0]),
-                                                                                     __main__.__dict__,
-                                                                                     __main__.__dict__)
+                                                        parsing.spawn_file(path,__main__.__dict__,__main__.__dict__)
                                                     elif layer.args[1]=='private':
-                                                        parsing.spawn_file(exp_path(layer.args[0]),
-                                                                                     __main__.__dict__,
-                                                                                     {})
+                                                        parsing.spawn_file(path,__main__.__dict__,{})
                                                     elif layer.args[1]=='local':
-                                                        parsing.spawn_file(exp_path(layer.args[0]),
-                                                                                     self.pymol_names,{})
+                                                        parsing.spawn_file(path,self.pymol_names,{})
                                                     elif layer.args[1]=='global':
-                                                        parsing.spawn_file(exp_path(layer.args[0]),
-                                                                                     self.pymol_names,self.pymol_names)
+                                                        parsing.spawn_file(path,self.pymol_names,self.pymol_names)
                                                     elif layer.args[1]=='module':
-                                                        parsing.run_file_as_module(exp_path(layer.args[0]),spawn=1)
+                                                        parsing.run_file_as_module(path,spawn=1)
                                                 else:
                                                     layer.next = ()                                    
                                                     print 'Error: spawn disallowed in this file.'
                                                     return None
                                             elif layer.kw[4]==parsing.RUN: # synchronous
                                                 if not secure:
+                                                    path = exp_path(layer.args[0])
+                                                    if re.search("\.pml$",path) != None:
+                                                        if self.cmd._feedback(fb_module.parser,fb_mask.warnings):
+                                                            print "Warning: use '@' instead of 'run' with PyMOL command scripts?"
                                                     # run command
                                                     if len(layer.args)==1: # default: global
-                                                        parsing.run_file(exp_path(layer.args[0]),self.pymol_names,self.pymol_names)
+                                                        parsing.run_file(path,self.pymol_names,self.pymol_names)
                                                     elif layer.args[1]=='main':
-                                                        parsing.run_file(exp_path(layer.args[0]),__main__.__dict__,__main__.__dict__)
+                                                        parsing.run_file(path,__main__.__dict__,__main__.__dict__)
                                                     elif layer.args[1]=='private':
-                                                        parsing.run_file(exp_path(layer.args[0]),__main__.__dict__,{})
+                                                        parsing.run_file(path,__main__.__dict__,{})
                                                     elif layer.args[1]=='local':
-                                                        parsing.run_file(exp_path(layer.args[0]),self.pymol_names,{})
+                                                        parsing.run_file(path,self.pymol_names,{})
                                                     elif layer.args[1]=='global':
-                                                        parsing.run_file(exp_path(layer.args[0]),self.pymol_names,self.pymol_names)
+                                                        parsing.run_file(path,self.pymol_names,self.pymol_names)
                                                     elif layer.args[1]=='module':
-                                                        parsing.run_file_as_module(exp_path(layer.args[0]),spawn=0)
+                                                        parsing.run_file_as_module(path,spawn=0)
                                                     self.cmd._pymol.__script__ = layer.sc_path
                                                 else:
                                                     layer.next = ()                                    
@@ -415,6 +417,9 @@ if __name__=='pymol.parser':
                                             nest_securely = 1
                                         else:
                                             nest_securely = secure
+                                        if re.search("\.py$|\.pym$",path) != None:
+                                            if self.cmd._feedback(fb_module.parser,fb_mask.warnings):
+                                                print "Warning: use 'run' instead of '@' with Python files?"
                                         layer.script = open(path,'r')
                                         self.cmd._pymol.__script__ = path
                                         self.nest=self.nest+1
