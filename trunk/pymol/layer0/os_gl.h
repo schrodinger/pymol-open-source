@@ -44,6 +44,11 @@ Z* -------------------------------------------------------------------
 #include<gl.h>
 #include<glu.h>
 #include<glext.h>
+
+#ifndef GL_TEXTURE_RECTANGLE_EXT
+#define GL_TEXTURE_RECTANGLE_EXT 0x84F5
+#endif
+
 #endif
 /* END PROPRIETARY CODE SEGMENT */
 #endif

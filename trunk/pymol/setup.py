@@ -3,13 +3,15 @@
 # This script only applies if you are performing a Python Distutils-based
 # installation of PyMOL.
 #
-# It assumes that all of PyMOL's external dependencies are pre-installed.
+# It may assume that all of PyMOL's external dependencies are
+# pre-installed into the system.
 
 from distutils.core import setup, Extension
-import sys,os
+import sys, os
 
 #============================================================================
-if sys.platform=='win32':
+if sys.platform=='win32': 
+    # NOTE: this branch not tested in years and may not work...
     inc_dirs=["ov/src",
               "layer0","layer1","layer2",
               "layer3","layer4","layer5",
@@ -19,12 +21,13 @@ if sys.platform=='win32':
     lib_dirs=["win32/lib"]
     def_macros=[("_PYMOL_MODULE",None),
                 ("WIN32",None),
-                ("_HAVE_LIBPNG",None),
+                ("_PYMOL_LIBPNG",None),
                 ]
     ext_comp_args=[]
     ext_link_args=['/NODEFAULTLIB:"LIBC"']
 #============================================================================
 elif sys.platform=='cygwin':
+    # NOTE: this branch not tested in years and may not work...
     inc_dirs=["ov/src",
               "layer0","layer1","layer2",
               "layer3","layer4","layer5"]
@@ -34,13 +37,15 @@ elif sys.platform=='cygwin':
     def_macros=[("_PYMOL_MODULE",None),
 #                        ("_PYMOL_NUMPY",None),
                 ("CYGWIN",None),
-                ("_HAVE_LIBPNG",None)]
+                ("_PYMOL_LIBPNG",None)]
     ext_comp_args=[]
     ext_link_args=[]
 #============================================================================
 elif sys.platform=='darwin':
     using_fink = "'/sw/" in str(sys.path)
     if using_fink:
+        # NOTE: this code not tested in years and may not work...
+        #
         # under Fink, with the following packages installed:
         #
         #  python24
@@ -69,7 +74,7 @@ elif sys.platform=='darwin':
         lib_dirs=[]
         def_macros=[("_PYMOL_MODULE",None),
                     ("_PYMOL_OSX",None),
-                    ("_HAVE_LIBPNG",None),
+                    ("_PYMOL_LIBPNG",None),
                     ("_PYMOL_FREETYPE",None),
                     ]
         ext_comp_args=[]
@@ -80,12 +85,12 @@ elif sys.platform=='darwin':
                        "-framework","Cocoa",
                        "-framework","IOKit",
                        "-framework","GLUT",
-                       "-lpng", 
+                       "-lpng",
                        "-L/sw/lib/freetype2/lib", "-lfreetype" ]
     else:
-        # not using Fink.  Instead, building as if we were on Linux
-        # with the external dependencies compiled into "./ext" in the
-        # current working directory
+        # Not using Fink -- building as if we are on Linux/X11 with
+        # the external dependencies compiled into "./ext" in the
+        # current working directory,
         #
         # REMEMEBER to use "./ext/bin/python ..."
         #
@@ -93,34 +98,23 @@ elif sys.platform=='darwin':
         inc_dirs=["ov/src",
                   "layer0","layer1","layer2",
                   "layer3","layer4","layer5", 
-                  "/System/Library/Frameworks/OpenGL.framework/Headers",
-                  "/System/Library/Frameworks/CoreFoundation.framework/Headers",
-                  "/System/Library/Frameworks/AppKit.framework/Headers",
-                  "/System/Library/Frameworks/ApplicationServices.framework/Headers",
-                  "/System/Library/Frameworks/Cocoa.framework/Headers",
-                  "/System/Library/Frameworks/IOKit.framework/Headers",
+                  "/usr/X11R6/include",
                   EXT+"/include",
+                  EXT+"/include/GL",
                   EXT+"/include/freetype2",
-                  EXT+"/include/GL"
                   ]
         libs=[]
         pyogl_libs = []
         lib_dirs=[]
         def_macros=[("_PYMOL_MODULE",None),
-                    ("_PYMOL_OSX",None),
-                    ("_HAVE_LIBPNG",None),
+                    ("_PYMOL_LIBPNG",None),
                     ("_PYMOL_FREETYPE",None),
                     ]
         ext_comp_args=[]
-        ext_link_args=["-framework","OpenGL",
-                       "-framework","AppKit",
-                       "-framework","ApplicationServices",
-                       "-framework","CoreFoundation",
-                       "-framework","Cocoa",
-                       "-framework","IOKit",
-                       "-L"+EXT+"/lib", "-lpng", "-lglut",
-                       "-L"+EXT+"/lib/freetype2/lib", "-lfreetype"
-                       ]
+        ext_link_args=[
+	               "-L/usr/X11R6/lib", "-lGL", "-lXxf86vm",
+                   "-L"+EXT+"/lib", "-lpng", "-lglut", "-lfreetype"
+                   ]
 #============================================================================
 else: # linux or standard unix
     inc_dirs=["ov/src",
@@ -147,7 +141,7 @@ else: # linux or standard unix
 #                        ("_PYMOL_NUMPY",None),
 # VMD plugin support                    
 #                    ("_PYMOL_VMD_PLUGINS",None),
-                    ("_HAVE_LIBPNG",None)]
+                    ("_PYMOL_LIBPNG",None)]
     ext_comp_args=["-ffast-math","-funroll-loops","-O3"]
     ext_link_args=[]
   

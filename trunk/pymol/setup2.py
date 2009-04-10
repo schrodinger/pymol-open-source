@@ -117,7 +117,7 @@ try:
             os.system("tar -C %s -zxvf modules/pmg_tk/pmw.tgz"%site_packages)
             
          print '''
- Created "%s" which can be used to launch PyMOL.  You may wish to copy
+ Created "./%s" which can be used to launch PyMOL.  You may wish to copy
  this file into a standard location such as /usr/bin or /usr/local/bin.
    '''%launch_script
       
