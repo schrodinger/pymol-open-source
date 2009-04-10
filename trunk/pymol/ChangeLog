@@ -2,6 +2,14 @@
 CHANGE LOG
 =========================================================================
 
+2009-04-10 Warren L. DeLano <warren@delsci.com>	
+
+	* added warnings for pml/py/pym run/@ confusion
+
+2009-04-09 Warren L. DeLano <warren@delsci.com>	
+
+	* added bycell selection operator
+	
 2009-03-26 Warren L. DeLano <warren@delsci.com>	
 
 	* acnt map support
