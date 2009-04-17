@@ -398,13 +398,13 @@ if pymol_launch != 3: # if this isn't a dry run
                 skin = self.invocation.options.skin
                 if self.invocation.options.external_gui==1:
                     __import__(self.invocation.options.gui)
-                    sys.modules[self.invocation.options.gui].__init__(self,poll,skin)
                 elif self.invocation.options.external_gui==3:
-                    os.environ['DISPLAY']=':0.0'
+                    if not os.environ.has_key('DISPLAY'):
+                        os.environ['DISPLAY']=':0.0'
                     os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+"/ext/lib/tcl8.4"
                     os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+"/ext/lib/tk8.4"
                     __import__(self.invocation.options.gui)
-                    sys.modules[self.invocation.options.gui].__init__(self,poll,skin)
+                sys.modules[self.invocation.options.gui].__init__(self,poll,skin)
 
             # -- Greg Landrum's RPC stuff
                 if self.invocation.options.rpcServer:
