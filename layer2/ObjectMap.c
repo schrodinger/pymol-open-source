@@ -229,8 +229,36 @@ int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *
   int ok=false;
   if(state<0) state=0;
   if(state<I->NState)
-    if(I->State[state].Active)
-      ok = ObjectMapStateInterpolate(&I->State[state],array,result,flag,n);
+    if(I->State[state].Active) {
+      double *matrix;
+      int ret_ok = ObjectMapGetMatrix(I,state,&matrix);
+      if(ret_ok && matrix) {
+        /* we have to back-transform points */
+        float txf_buffer[1],*txf;
+        txf = txf_buffer;
+        if(n>1) {
+          txf=Alloc(float,3*n);
+        }
+        {
+          int nn = n;
+          int *ff = flag;
+          float *src = array, *dst = txf;
+          while(nn--) {
+            if(!flag || *ff) {
+              inverse_transform44d3f(matrix,src,dst);
+            }
+            src+=3;
+            dst+=3;
+            ff++;
+          }
+        }
+        if(txf) ObjectMapStateInterpolate(&I->State[state],txf,result,flag,n);            
+        if(txf!=txf_buffer)
+          FreeP(txf);
+      } else {
+          ok = ObjectMapStateInterpolate(&I->State[state],array,result,flag,n);
+      }
+    }
   return(ok);
 }
 
@@ -892,7 +920,6 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
     float frac[3];
 
     while(n--) {
-        
       /* get the fractional coordinate */
       transform33f3f(ms->Crystal->RealToFrac,inp,frac); 
         
