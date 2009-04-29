@@ -230,11 +230,11 @@ int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *
   if(state<0) state=0;
   if(state<I->NState)
     if(I->State[state].Active) {
-      double *matrix;
+      double *matrix = NULL;
       int ret_ok = ObjectMapGetMatrix(I,state,&matrix);
       if(ret_ok && matrix) {
         /* we have to back-transform points */
-        float txf_buffer[1],*txf;
+        float txf_buffer[3],*txf;
         txf = txf_buffer;
         if(n>1) {
           txf=Alloc(float,3*n);
@@ -249,10 +249,9 @@ int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *
             }
             src+=3;
             dst+=3;
-            ff++;
           }
         }
-        if(txf) ObjectMapStateInterpolate(&I->State[state],txf,result,flag,n);            
+        if(txf) ok = ObjectMapStateInterpolate(&I->State[state],txf,result,flag,n);            
         if(txf!=txf_buffer)
           FreeP(txf);
       } else {
