@@ -1219,5 +1219,5 @@ def colors(scheme="",_self=cmd):
         cmd.set_color("sulfur",[1.000,1.000,0.189])
         cmd.color("carbon","elem c")
         cmd.recolor()
-        
-                          
+
+

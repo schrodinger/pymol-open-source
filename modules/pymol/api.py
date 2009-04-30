@@ -387,6 +387,7 @@ from experimenting import \
 
 import util
 import movie
+import gui
 
 # dang! Python 2.6 will break PyMOL's "as" method. 
 # Proposal:
