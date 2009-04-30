@@ -1289,6 +1289,7 @@ static void RepValence(float *v,float *v1,float *v2,int *other,
 
   float d[3],t[3],p0[3],p1[3],p2[3],*vv;
   int a3;
+  const float indent = tube_size;
 
   v[0] = color[0];
   v[1] = color[1];
@@ -1373,9 +1374,9 @@ static void RepValence(float *v,float *v1,float *v2,int *other,
         v[14] = v1[2] - 2*t[2];
       } else {
         if(half_state==1)
-          f = 0.28F;
+          f = indent * 2;
         else
-          f = 0.14F;
+          f = indent;
           
         f_1 = 1.0F-f;
         
@@ -1391,9 +1392,9 @@ static void RepValence(float *v,float *v1,float *v2,int *other,
          
       } else {
         if(half_state==2)
-          f = 0.72F;
+          f = 1.0 - 2*indent;
         else
-          f = 0.86F;
+          f = 1.0 - indent;
         f_1 = 1.0F-f;
         v[15] = (f_1*v1[0]+f*v2[0]) - 2*t[0];
         v[16] = (f_1*v1[1]+f*v2[1]) - 2*t[1];
@@ -1436,9 +1437,9 @@ static void RepValence(float *v,float *v1,float *v2,int *other,
         v[5] = v1[2] - t[2];
       } else {
         if(half_state==1)
-          f = 0.28F;
+          f = indent * 2;
         else
-          f = 0.14F;
+          f = indent;
       
         f_1 = 1.0F-f;
       
@@ -1454,9 +1455,9 @@ static void RepValence(float *v,float *v1,float *v2,int *other,
       
       } else {
         if(half_state==2)
-          f = 0.72F;
+          f = 1.0 - 2*indent;
         else
-          f = 0.86F;
+          f = 1.0 - indent;
         f_1 = 1.0F-f;
         v[6] = (f_1*v1[0]+f*v2[0]) - t[0];
         v[7] = (f_1*v1[1]+f*v2[1]) - t[1];
@@ -1469,9 +1470,9 @@ static void RepValence(float *v,float *v1,float *v2,int *other,
         v[14] = v1[2] + t[2];
       } else {
         if(half_state==1)
-          f = 0.28F;
+          f = indent * 2;
         else
-          f = 0.14F;
+          f = indent;
       
         f_1 = 1.0F-f;
       
@@ -1486,9 +1487,9 @@ static void RepValence(float *v,float *v1,float *v2,int *other,
         v[17] = v2[2] + t[2];
       } else {
         if(half_state==2)
-          f = 0.72F;
+          f = 1.0 - 2*indent;
         else
-          f = 0.86F;
+          f = 1.0 - indent;
         f_1 = 1.0F-f;
         v[15] = (f_1*v1[0]+f*v2[0]) + t[0];
         v[16] = (f_1*v1[1]+f*v2[1]) + t[1];
