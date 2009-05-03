@@ -5,6 +5,10 @@ CHANGE LOG
 2009-04-28 Warren L. DeLano <warren@delsci.com>	
 
 	* fixed ramp bug for transformed maps
+
+2009-04-26 Warren L. DeLano <warren@delsci.com>	
+	
+	* fixed bug with clicking on the sphere representation
 	
 2009-04-10 Warren L. DeLano <warren@delsci.com>	
 
