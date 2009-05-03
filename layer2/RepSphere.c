@@ -915,6 +915,13 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           
           if(!sp) {
             switch(sphere_mode) {
+            case -1:
+            case 0:
+                break;
+            case 1:
+            case 6:
+              glBegin(GL_POINTS);            
+              break;
             case 5: 
             case 4:
             case 3:
@@ -925,6 +932,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
               glPointSize(1.0F);
               pixel_scale *= 2.0F;
+              glBegin(GL_POINTS);
               break;
             case 2:
             case 7:
@@ -932,15 +940,16 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               glDisable(GL_POINT_SMOOTH);
               glDisable(GL_ALPHA_TEST);
               pixel_scale *= 1.4F;
+              glBegin(GL_POINTS);
               break;
             default:
               glHint(GL_POINT_SMOOTH_HINT,GL_FASTEST);
               glDisable(GL_POINT_SMOOTH);
               glDisable(GL_ALPHA_TEST);
               glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_point_size));
+              glBegin(GL_POINTS);
               break;
             }
-            glBegin(GL_POINTS);
           }
 
           v=I->VC;
@@ -992,6 +1001,36 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               v+=8;
             } else {
               switch(sphere_mode) {
+              case -1:
+              case 0: /* memory-efficient sphere rendering */
+                if(I->SSP) { 
+                  SphereRec *sp = I->SSP;
+                  Vector3f *sp_dot = sp->dot;
+                  int b,*q,*s;
+                  v+=4;
+                  if(!skip) {
+                    register float vdw = v[3];
+                    glTranslatef(v[0],v[1],v[2]);
+                    q=sp->Sequence;
+                    s=sp->StripLen;
+                    for(b=0;b<sp->NStrip;b++) {
+                      int d;
+                      glBegin(GL_TRIANGLE_STRIP);
+                      for(d=0;d<(*s);d++) {
+                        float *norm = sp_dot[*(q++)];
+                        glNormal3fv(norm);
+                        glVertex3f(vdw * norm[0],
+                                   vdw * norm[1],
+                                   vdw * norm[2]);
+                      }
+                      glEnd();
+                      s++;
+                    }
+                    glTranslatef(-v[0],-v[1],-v[2]);
+                  }
+                  v+=4;
+                }
+                break;
               case 2:
               case 3:
               case 4:
@@ -1023,15 +1062,19 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             }
           }
           if(!sp) {
-            glEnd();
             switch(sphere_mode) {
+            case -1:
+            case 0:
+              break;
             case 3:
             case 4:
             case 8:
               glDisable(GL_POINT_SMOOTH);
               glAlphaFunc(GL_GREATER, 0.05F);
+              glEnd();
               break;
             default:
+              glEnd();
               glEnable(GL_ALPHA_TEST);
               break;
             }
