@@ -685,14 +685,22 @@ static void WizardDraw(Block *block)
   float menuColor[3] = { 0.0,0.0,0.0};
   int LineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int text_lift = (LineHeight/2)-5;
-  float *text_color ;
+  float *text_color, *text_color2 = I->Block->TextColor;
 
   text_color = menuColor;
 
   if(G->HaveGUI && G->ValidContext && ((block->rect.right-block->rect.left)>6)) {
 
-    glColor3fv(I->Block->BackColor);
-    BlockFill(I->Block);
+    if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==0) {
+      glColor3fv(I->Block->BackColor);
+      BlockFill(I->Block);
+      BlockDrawLeftEdge(I->Block);
+    } else {
+      BlockDrawLeftEdge(I->Block);
+      glColor3f(0.5,0.5,0.5);
+      BlockDrawTopEdge(I->Block);
+      text_color2 = OrthoGetOverlayColor(G);
+    }
     
     glColor3fv(I->Block->TextColor);
     
@@ -713,9 +721,8 @@ static void WizardDraw(Block *block)
       } else {
         switch(I->Line[a].type) {
         case cWizTypeText:
-
-          glColor3fv(I->Block->TextColor);
-          text_color = I->Block->TextColor;
+          text_color = text_color2;
+          glColor3fv(text_color2);
           break;
         case cWizTypeButton:
           draw_button(I->Block->rect.left+1,y,

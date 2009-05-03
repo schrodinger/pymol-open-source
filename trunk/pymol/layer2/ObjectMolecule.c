@@ -375,7 +375,23 @@ static int recursive_match(int a,int b,int aa,int bb,match_info *mi)
   }
 }
 
+#if 0
+int ObjectMoleculeCluster(ObjectMolecule *I, int first, int n_state)
+{
+  /* TODO: check and confirm that all states have the same set of coordinates */
+ 
+  /* create neighborhood lists for each atom */
 
+  
+  ObjectMoleculeUpdateNeighbors(I);
+  {
+    int at, n_atom = I->NAtom;
+    for(at=0;at<n_atom;at++) {
+      
+    }
+  }  
+}
+#endif
 
 int ObjectMoleculeXferValences(ObjectMolecule *Ia, int sele1, int sele2, int target_state,
                                ObjectMolecule *Ib, int sele3, int source_state, int quiet)

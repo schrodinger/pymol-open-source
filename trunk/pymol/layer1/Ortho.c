@@ -1084,6 +1084,11 @@ void OrthoDetach(PyMOLGlobals *G,Block *block)
     I->GrabbedBy = NULL;
   ListDetach(I->Blocks,block,next,Block);
 }
+float *OrthoGetOverlayColor(PyMOLGlobals *G)
+{
+  register COrtho *I=G->Ortho;
+  return I->OverlayColor;
+}
 /*========================================================================*/
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef PYMOL_EVAL
@@ -1124,6 +1129,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
   float *bg_color;
   int skip_prompt = 0;
   int render = false;
+  int internal_gui_mode = SettingGetGlobal_i(G,cSetting_internal_gui_mode);
 
   I->RenderMode = render_mode;
   if(SettingGetGlobal_b(G,cSetting_seq_view)) {
@@ -1177,13 +1183,13 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
     case -1: /* auto overlay */
       overlay = I->CurLine - I->AutoOverlayStopLine;
       if(overlay<0) {
-	overlay += (OrthoSaveLines+1);
+        overlay += (OrthoSaveLines+1);
       }
       if(internal_feedback>1) {
-	overlay -= (internal_feedback-1);
+        overlay -= (internal_feedback-1);
       }
       if(overlay<0)
-	overlay = 0;
+        overlay = 0;
       break;
     case 1: /* default -- user overlay_lines */
       overlay = (int)SettingGet(G,cSetting_overlay_lines);
@@ -1251,22 +1257,36 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       x = I->X;
       y = I->Y;
       
-      
       if(I->DrawText&&internal_feedback) { /* moved to avoid conflict with menus */
-        glColor3f(0.0,0.0,0.0);
-        glBegin(GL_POLYGON);
         height=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
+        if(!internal_gui_mode) {
+          glColor3f(0.2,0.2,0.2);
+          glBegin(GL_POLYGON);
+          glVertex2i(I->Width-rightSceneMargin,height-1);
+          glVertex2i(I->Width-rightSceneMargin,0);
+          glVertex2i(0,0);
+          glVertex2i(0,height-1);
+          glEnd();
+        }
+        glColor3f(0.3,0.3,0.3);
+        glBegin(GL_LINES);
         glVertex2i(I->Width-rightSceneMargin,height-1);
-        glVertex2i(I->Width-rightSceneMargin,0);
-        glVertex2i(0,0);
-        glVertex2i(0,cOrthoBottomSceneMargin-1);
+        glVertex2i(0,height-1);
         glEnd();
       }
-
       
       PRINTFD(G,FB_Ortho)
         " OrthoDoDraw: drawing blocks...\n"
         ENDFD;
+
+      if(SettingGet(G,cSetting_internal_gui)) {      
+        int internal_gui_width = (int)SettingGet(G,cSetting_internal_gui_width);
+        glColor3f(0.4,0.4,0.4);
+        glBegin(GL_LINES);
+        glVertex2i(I->Width-internal_gui_width,0);
+        glVertex2i(I->Width-internal_gui_width,I->Height);
+        glEnd();
+      }
 
       if((int)SettingGet(G,cSetting_text)||I->SplashFlag) {
         Block *block;
@@ -1279,7 +1299,8 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       } else {
         BlockRecursiveDraw(I->Blocks);
       }
-      
+
+
       PRINTFD(G,FB_Ortho)
         " OrthoDoDraw: blocks drawn.\n"
         ENDFD;
@@ -1298,11 +1319,12 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       OrthoRestorePrompt(G);
       
       if(I->DrawText) {	 
+        int adjust_at = 0;
         /* now print the text */
         
         lcount = 0;
         x = cOrthoLeftMargin;
-        y = cOrthoBottomMargin;
+        y = cOrthoBottomMargin-1;
 
 #ifdef _PYMOL_SHARP3D
         if(SceneGetStereo(G)&&SettingGetGlobal_b(G,cSetting_overlay)) {
@@ -1314,39 +1336,45 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
         else {
           showLines=internal_feedback+overlay;
         }
+        if(internal_feedback)
+          adjust_at = internal_feedback + 1;
 
         l=(I->CurLine-(lcount+skip_prompt))&OrthoSaveLines;
 
         glColor3fv(I->TextColor);
         while(l>=0) {
-	  lcount++;
-	  if(lcount>showLines)
-	    break;
-	  str = I->Line[l&OrthoSaveLines];
-	  if(strncmp(str,I->Prompt,6)==0)
-	    TextSetColor(G,I->TextColor);            
-	  else
-	    TextSetColor(G,I->OverlayColor);
-	  TextSetPos2i(G,x,y);
-	  if(str) {
-	      TextDrawStr(G,str);
-	      if((lcount==1)&&(I->InputFlag)) {
-		  if(!skip_prompt) {
-		    if(I->CursorChar>=0) {
-		      TextSetPos2i(G,x+8*I->CursorChar,y);
-		    }
-		    TextDrawChar(G,'_');
-		  }
-		}
-	    }
-	  l=(I->CurLine-(lcount+skip_prompt))&OrthoSaveLines;
-	  y=y+cOrthoLineHeight;
-	}
+          lcount++;
+          if(lcount>showLines)
+            break;
+          if(lcount == adjust_at)
+            y+=3;
+          str = I->Line[l&OrthoSaveLines];
+          if(internal_gui_mode ) {
+            TextSetColor(G,I->OverlayColor);
+          } else if(strncmp(str,I->Prompt,6)==0)
+            TextSetColor(G,I->TextColor);            
+          else
+            TextSetColor(G,I->OverlayColor);
+          TextSetPos2i(G,x,y);
+          if(str) {
+            TextDrawStr(G,str);
+            if((lcount==1)&&(I->InputFlag)) {
+              if(!skip_prompt) {
+                if(I->CursorChar>=0) {
+                  TextSetPos2i(G,x+8*I->CursorChar,y);
+                }
+                TextDrawChar(G,'_');
+              }
+            }
+          }
+          l=(I->CurLine-(lcount+skip_prompt))&OrthoSaveLines;
+          y=y+cOrthoLineHeight;
+        }
       }
       
       OrthoDrawWizardPrompt(G);
  
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+      /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
 #ifdef PYMOL_EVAL
       OrthoDrawEvalMessage(G);
 #endif
@@ -1366,7 +1394,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       OrthoDrawAxMessage(G);
 #endif
 
-/* END PROPRIETARY CODE SEGMENT */
+      /* END PROPRIETARY CODE SEGMENT */
 
 
       OrthoPopMatrix(G);
@@ -1399,10 +1427,15 @@ static void OrthoDrawWizardPrompt(PyMOLGlobals *G)
   int maxLen;
   BlockRect rect;
   int prompt_mode = SettingGetGlobal_i(G,cSetting_wizard_prompt_mode);
+  int gui_mode = SettingGetGlobal_b(G,cSetting_internal_gui_mode);
+  float *text_color = I->WizardTextColor;
+  float black[3] = {0.0F,0.0F,0.0F};
 
   if(I->WizardPromptVLA && prompt_mode) {
     vla = I->WizardPromptVLA;
-    
+
+    if(gui_mode)
+      text_color = black;
     nLine = UtilCountStringVLA(vla);
     if(nLine) {
       nChar = VLAGetSize(I->WizardPromptVLA);
@@ -1450,9 +1483,12 @@ static void OrthoDrawWizardPrompt(PyMOLGlobals *G)
       rect.bottom = rect.top-(nLine*cOrthoLineHeight+2*cWizardBorder)-2;
       rect.right = rect.left + cOrthoCharWidth*maxLen + 2*cWizardBorder+1;
       
-      if(prompt_mode==1) {
-        glColor3fv(I->WizardBackColor);
-        
+      if(prompt_mode==1) { 
+        if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)) {
+          glColor3f(1.0,1.0F,1.0F);
+        } else {
+          glColor3fv(I->WizardBackColor);
+        }
         glBegin(GL_POLYGON);
         glVertex2i(rect.right,rect.top);
         glVertex2i(rect.right,rect.bottom);
@@ -1461,7 +1497,7 @@ static void OrthoDrawWizardPrompt(PyMOLGlobals *G)
         glEnd();
       }
 
-      glColor3fv(I->WizardTextColor);
+      glColor3fv(text_color);
       
       x = rect.left+cWizardBorder;
       y = rect.top-(cWizardBorder+cOrthoLineHeight);
@@ -1470,7 +1506,7 @@ static void OrthoDrawWizardPrompt(PyMOLGlobals *G)
       
       /* count max line length */
       
-      TextSetColor(G,I->WizardTextColor);
+      TextSetColor(G,text_color);
       TextSetPos2i(G,x,y);
       xx = x;
       p = vla;
@@ -1480,7 +1516,7 @@ static void OrthoDrawWizardPrompt(PyMOLGlobals *G)
         if(*p) {
           if((*p=='\\')&&(*(p+1))&&(*(p+2))&&(*(p+3))) {
             if(*(p+1)=='-') {
-              TextSetColor(G,I->WizardTextColor);
+              TextSetColor(G,text_color);
               p+=4;
               c-=4;
             } else {
@@ -1554,7 +1590,7 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
     sceneRight = 0;
   } else {
     switch(SettingGetGlobal_i(G,cSetting_internal_gui_mode)) {
-    case 1:
+    case 2:
       sceneRight = 0;
       break;
     default:
@@ -1600,6 +1636,7 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
       WizardMargin = WizardMargin2;
     }
     if(SettingGet(G,cSetting_internal_gui)) {
+
 
 #ifndef _PYMOL_NOPY
       block=ExecutiveGetBlock(G);
