@@ -49,6 +49,18 @@ void BlockFill(Block *I)
   }
 }
 /*========================================================================*/
+void BlockDrawLeftEdge(Block *I) 
+{
+  register PyMOLGlobals *G = I->G;
+  if(G->HaveGUI && G->ValidContext) {
+    glColor3f(0.3,0.3,0.3);
+    glBegin(GL_LINES);
+    glVertex2i(I->rect.left,I->rect.bottom);
+    glVertex2i(I->rect.left,I->rect.top);
+    glEnd();
+  }
+}
+/*========================================================================*/
 void BlockOutline(Block *I) 
 {
   register PyMOLGlobals *G = I->G;
@@ -57,6 +69,18 @@ void BlockOutline(Block *I)
     glVertex2i(I->rect.right,I->rect.top);
     glVertex2i(I->rect.right,I->rect.bottom);
     glVertex2i(I->rect.left,I->rect.bottom);
+    glVertex2i(I->rect.left,I->rect.top);
+    glEnd();
+  }
+}
+/*========================================================================*/
+void BlockDrawTopEdge(Block *I) 
+{
+  register PyMOLGlobals *G = I->G;
+  if(G->HaveGUI && G->ValidContext) {
+    glColor3f(0.3,0.3,0.3);
+    glBegin(GL_LINES);
+    glVertex2i(I->rect.right,I->rect.top);
     glVertex2i(I->rect.left,I->rect.top);
     glEnd();
   }

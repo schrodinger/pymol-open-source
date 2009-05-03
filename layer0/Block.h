@@ -47,9 +47,11 @@ Block *BlockRecursiveFind(Block *block,int x,int y);
 void BlockSetMargin(Block *block,int t,int l,int b,int r);
 void BlockReshape(Block *block,int width, int height);
 void BlockFill(Block *I);
+void BlockDrawLeftEdge(Block *I);
 void BlockGetSize(Block *I,int *width,int *height);
 void BlockOutline(Block *I);
 void BlockInit(PyMOLGlobals *G,Block *I);
 void BlockTranslate(Block *I,int dx,int dy);
+void BlockDrawTopEdge(Block *I);
 
 #endif

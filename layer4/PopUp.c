@@ -99,6 +99,7 @@ Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
   PyObject *elem;
   char *str,*c;
   int blocked = PAutoBlock(G);
+  int ui_light_bg = SettingGetGlobal_b(G,cSetting_internal_gui_mode);
   OOAlloc(G,CPopUp);
 
   I->Block = OrthoNewBlock(G,NULL);
@@ -114,6 +115,15 @@ Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
   I->Block->BackColor[0]=0.1F;
   I->Block->BackColor[1]=0.1F;
   I->Block->BackColor[2]=0.1F;
+
+  if(ui_light_bg) {
+    I->Block->TextColor[0]=0.0F;
+    I->Block->TextColor[1]=0.0F;
+    I->Block->TextColor[2]=0.0F;
+    I->Block->BackColor[0]=1.0F;
+    I->Block->BackColor[1]=1.0F;
+    I->Block->BackColor[2]=1.0F;
+  }
 
   I->Parent = parent;
   I->Child = NULL;
@@ -614,9 +624,6 @@ void PopUpDraw(Block *block)
     glEnd();
 
 
-
-
-
     glColor3fv(block->BackColor);
     BlockFill(block);
     glColor3fv(block->TextColor);
@@ -636,8 +643,12 @@ void PopUpDraw(Block *block)
     }
 
     if(I->Code[0]==2) { /* menu name */
-        
-      glColor3f(0.3F,0.3F,0.6F);
+
+      if(!SettingGetGlobal_i(G,cSetting_internal_gui_mode)) {
+        glColor3f(0.3F,0.3F,0.6F);
+      } else {
+        glColor3f(1.0F, 1.0F, 1.0F);
+      }
       x = I->Block->rect.left;
       y = I->Block->rect.top;
       
@@ -693,24 +704,23 @@ void PopUpDraw(Block *block)
 
           if(I->Sub[a]) {
 
-            
             glBegin(GL_POLYGON);
             glColor3f(0.4F,0.4F,0.4F);
-            glVertex2i(I->Block->rect.left-2,y+1);
+            glVertex2i(I->Block->rect.left-3,y+1);
             glColor3f(0.1F,0.1F,0.1F);
             glVertex2i(I->Block->rect.left,y+1);
             glVertex2i(I->Block->rect.left,y+((cPopUpLineHeight))-4);
             glColor3f(0.4F,0.4F,0.4F);
-            glVertex2i(I->Block->rect.left-2,y+((cPopUpLineHeight))-4);
+            glVertex2i(I->Block->rect.left-3,y+((cPopUpLineHeight))-4);
             glEnd();
             
             glBegin(GL_POLYGON);
-            glColor3f(0.1F,0.1F,0.1F);
+            glColor3f(0.1F,0.2F,0.2F);
             glVertex2i(I->Block->rect.right,y+1);
             glColor3f(0.4F,0.4F,0.4F);
-            glVertex2i(I->Block->rect.right+2,y+1);
-            glVertex2i(I->Block->rect.right+2,y+((cPopUpLineHeight))-4);
-            glColor3f(0.1F,0.1F,0.1F);
+            glVertex2i(I->Block->rect.right+3,y+1);
+            glVertex2i(I->Block->rect.right+3,y+((cPopUpLineHeight))-4);
+            glColor3f(0.1F,0.2F,0.2F);
             glVertex2i(I->Block->rect.right,y+((cPopUpLineHeight))-4);
             glEnd();
 

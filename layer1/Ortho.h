@@ -108,6 +108,7 @@ void OrthoSetLoop(PyMOLGlobals *G,int flag, int l, int r, int t, int b);
 int OrthoGetRenderMode(PyMOLGlobals *G);
 void OrthoDrawBuffer(PyMOLGlobals *G,GLenum mode);
 int OrthoGetWrapClickSide(PyMOLGlobals *G);
+float *OrthoGetOverlayColor(PyMOLGlobals *G);
 
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];

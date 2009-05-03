@@ -165,19 +165,28 @@ static void ButModeDraw(Block *block)
   char rateStr[255];
   int mode;
   int nf;
-
+  float *textColor = I->Block->TextColor;
+  float *textColor2 = I->TextColor2;
+  
 #define BLANK_STR "     "
 
   if(G->HaveGUI && G->ValidContext && ((block->rect.right-block->rect.left)>6)) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==0) {
       glColor3fv(I->Block->BackColor);
       BlockFill(I->Block);
+      BlockDrawLeftEdge(I->Block);
+    } else {
+      BlockDrawLeftEdge(I->Block);
+      glColor3f(0.5,0.5,0.5);
+      BlockDrawTopEdge(I->Block);
+      textColor2 = OrthoGetOverlayColor(G);
+      textColor = textColor2;
     }
 
     x = I->Block->rect.left+cButModeLeftMargin;
     y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
 
-    TextSetColor(G,I->Block->TextColor);
+    TextSetColor(G,textColor);
     TextDrawStrAt(G,"Mouse Mode ",x+1,y);
     TextSetColor(G,I->TextColor3);
     TextDrawStrAt(G,SettingGetGlobal_s(G,cSetting_button_mode_name),x+88,y);
@@ -198,7 +207,7 @@ static void ButModeDraw(Block *block)
       TextSetColor(G,I->TextColor3);
       TextDrawStrAt(G,"&",x+12,y);
       TextDrawStrAt(G,"Keys",x+24,y);
-      TextSetColor(G,I->TextColor2);
+      TextSetColor(G,textColor2);
       
       TextSetPos2i(G,x+64,y);
       for(a=0;a<3;a++) {
@@ -221,7 +230,7 @@ static void ButModeDraw(Block *block)
 
       TextSetColor(G,I->TextColor1);
       TextDrawStrAt(G,"Shft ",x+24,y);
-      TextSetColor(G,I->TextColor2);
+      TextSetColor(G,textColor2);
       TextSetPos2i(G,x+64,y);
       for(a=3;a<6;a++) {
         mode = I->Mode[a];
@@ -241,7 +250,7 @@ static void ButModeDraw(Block *block)
             TextDrawStrAt(G,"y",x+10,y+2);*/
       TextSetColor(G,I->TextColor1);
       TextDrawStrAt(G,"Ctrl ",x+24,y);
-      TextSetColor(G,I->TextColor2);
+      TextSetColor(G,textColor2);
       TextSetPos2i(G,x+64,y);
       for(a=6;a<9;a++) {
         mode = I->Mode[a];
@@ -263,7 +272,7 @@ static void ButModeDraw(Block *block)
       TextSetColor(G,I->TextColor1);
       TextSetColor(G,I->TextColor1);
       TextDrawStrAt(G,"CtSh ",x+24,y);
-      TextSetColor(G,I->TextColor2);
+      TextSetColor(G,textColor2);
       TextSetPos2i(G,x+64,y);
       for(a=9;a<12;a++) {
         mode = I->Mode[a];
@@ -283,7 +292,7 @@ static void ButModeDraw(Block *block)
       TextSetColor(G,I->Block->TextColor);
       TextSetColor(G,I->TextColor1);
       TextDrawStrAt(G," SnglClk",x-8,y);
-      TextSetColor(G,I->TextColor2);
+      TextSetColor(G,textColor2);
       TextSetPos2i(G,x+64,y);
       for(a=19;a<22;a++) {
         mode = I->Mode[a];
@@ -299,7 +308,7 @@ static void ButModeDraw(Block *block)
       TextSetColor(G,I->Block->TextColor);
       TextSetColor(G,I->TextColor1);
       TextDrawStrAt(G," DblClk",x,y);
-      TextSetColor(G,I->TextColor2);
+      TextSetColor(G,textColor2);
       TextSetPos2i(G,x+64,y);
       for(a=16;a<19;a++) {
         mode = I->Mode[a];
@@ -314,7 +323,7 @@ static void ButModeDraw(Block *block)
     }
 
     {
-      TextSetColor(G,I->Block->TextColor);
+      TextSetColor(G,textColor);
       if (ButModeTranslate(G,P_GLUT_SINGLE_LEFT,0) == cButModePickAtom) {
         TextDrawStrAt(G,"Picking ",x,y);
         TextSetColor(G,I->TextColor3);
@@ -370,13 +379,13 @@ static void ButModeDraw(Block *block)
       nf = SceneGetNFrame(G, &has_movie);
       if(nf==0)
         nf=1;
-      TextSetColor(G,I->Block->TextColor);
+      TextSetColor(G,textColor);
       if(has_movie) {
         TextDrawStrAt(G,"Frame ",x,y);
       } else {
         TextDrawStrAt(G,"State ",x,y);
       }
-      TextSetColor(G,I->TextColor2);
+      TextSetColor(G,textColor2);
       if(SettingGetGlobal_b(G,cSetting_show_frame_rate)) {
 	sprintf(rateStr,"[%5d/%5d]%5.1f Hz",SceneGetFrame(G)+1,
 		nf,I->RateShown);

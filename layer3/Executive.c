@@ -14897,6 +14897,7 @@ static void ExecutiveDraw(Block *block)
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==0) {
       glColor3fv(I->Block->BackColor);
       BlockFill(I->Block);
+      BlockDrawLeftEdge(I->Block);
     }
 
     if(I->ScrollBarActive) {
