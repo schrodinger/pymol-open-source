@@ -5323,6 +5323,12 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
           OrthoAddOutput(G,str1);
           OrthoNewLine(G,NULL,true);
         }
+        if((str1[0] == 'P') && (str1[1] == 'y') && (str1[2] == 'M') && 
+           (str1[3] == 'O') && (str1[4] == 'L') && (str1[5] == '>')) {
+          /* ignore pasted-in /PyMOL>\s?/ for sake of end-user convenience */
+          str1+=6;
+          if(str1[0]==' ') str1++;
+        }
         if(log) 
           if(WordMatch(G,str1,"quit",true)==0) /* don't log quit */
             PLog(G,str1,cPLog_pml);
