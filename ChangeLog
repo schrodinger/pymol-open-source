@@ -1,6 +1,14 @@
 =========================================================================
 CHANGE LOG
 =========================================================================
+ 
+2009-05-03 Warren L. DeLano <warren@delsci.com>	
+
+	* fixed internal_gui_mode, 1 and 2; added 2 rows to viewer window
+	
+	* fixed bond color problem from maestro
+	
+	* fixed 'ace' builder bug
 
 2009-04-28 Warren L. DeLano <warren@delsci.com>	
 

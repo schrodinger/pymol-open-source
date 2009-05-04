@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoALT 4
 
 #define cOrthoRightSceneMargin 220
-#define cOrthoBottomSceneMargin 16
+#define cOrthoBottomSceneMargin 18
 #define cOrthoLineHeight 12
 
 #include"os_gl.h"

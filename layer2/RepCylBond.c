@@ -432,7 +432,7 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
         
         add3f(v1,t,v1t);
         add3f(v2,t,v2t);
-        
+
         v=RepCylinder(v,v1t,v2t,n_edge,1,1,radius,
                       overlap_r,nub_r);
         n++;
@@ -1766,10 +1766,10 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
             AtomInfoGetBondSetting_b(G,b,cSetting_valence,valence_flag,&bd_valence_flag);
             
             if((bd_valence_flag)&&(ord>1)&&(ord<5)) {
+
                   
               if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1))) {
 
-                    
                 v0 = ColorGet(G,c1);
 
                 RepValence(&v,&I->N,
@@ -1784,28 +1784,27 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
                            fixed_radius,
                            scale_r);
               } else {
-
                 rgb1 = NULL;
                 if(s1) {
                   if(ColorCheckRamped(G,c1)) {
                     ColorGetRamped(G,c1,vv1,rgb1_buf,state);
-                    rgb1 = rgb1_buf;
                   } else {
                     rgb1 = ColorGet(G,c1);
+                    copy3f(rgb1, rgb1_buf);
                   }
+                  rgb1 = rgb1_buf;
                 }
 
                 rgb2 = NULL;
-                if(s2) 
-                  {
-                    if(ColorCheckRamped(G,c2)) {
-                      ColorGetRamped(G,c2,vv2,rgb2_buf,state);
-                      rgb2 = rgb2_buf;
-                    } else {
-                      rgb2 = ColorGet(G,c2);
-                    }
+                if(s2) {
+                  if(ColorCheckRamped(G,c2)) {
+                    ColorGetRamped(G,c2,vv2,rgb2_buf,state);
+                  } else {
+                    rgb2 = ColorGet(G,c2);
+                    copy3f(rgb2, rgb2_buf);
                   }
-                    
+                  rgb2 = rgb2_buf;
+                }
                 RepValence(&v,&I->N,
                            &vr,&I->NR,
                            vv1,vv2,other,

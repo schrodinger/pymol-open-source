@@ -2417,7 +2417,6 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     OrthoDirty(G);
     break;
   case cSetting_internal_gui_mode:
-    break;
   case cSetting_internal_gui_width:
   case cSetting_internal_gui:
   case cSetting_internal_feedback:
