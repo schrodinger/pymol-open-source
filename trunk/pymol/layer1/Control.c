@@ -541,130 +541,160 @@ static void ControlDraw(Block *block)
     y = I->Block->rect.top-cControlTopMargin;
     
     for(but_num=0;but_num<nButton;but_num++) {
-      int but_width;
-      int but_left;
-      int but_bottom;
-      int but_height;
-
-      but_left = I->Block->rect.left + cControlLeftMargin + (but_num*control_width)/nButton;
-      but_width = (((but_num+1)*control_width/nButton) - 
-                   ((but_num)*control_width/nButton)) - 1;
-      
-      but_bottom = y-(cControlBoxSize-1);
-      but_height = cControlBoxSize;
-      
-
-      if( ( but_num==I->Active ) ) {
-        draw_button(but_left,but_bottom,
-                    but_width, but_height, lightEdge,darkEdge,pushed);
-      } else if(((but_num==6)&&((int)SettingGet(G,cSetting_seq_view))) ||
-                ((but_num==3)&&(MoviePlaying(G))) ||
-                ((but_num==7)&&(SettingGetGlobal_b(G,cSetting_rock))) ||
-                ((but_num==8)&&(SettingGetGlobal_b(G,cSetting_full_screen)))) {
-        draw_button(but_left,but_bottom,
-                    but_width, but_height, lightEdge,darkEdge,I->ActiveColor);
-      } else {
-        draw_button(but_left,but_bottom,
-                    but_width, but_height, lightEdge,darkEdge,I->ButtonColor);
-      }
-
-      if(control_width>100) {
-      x = but_left + (but_width-cControlBoxSize)/2;
-
-      glColor3fv(I->Block->TextColor);
-      switch(but_num) {
-      case 0:
-        glBegin(GL_TRIANGLES);
-        glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
-        glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-                   y-(cControlBoxSize-1)+cControlInnerMargin);
-        glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
-        glEnd();
-        glBegin(GL_LINES);
-        glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
-        glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
-        glEnd();
-        break;
-        
-      case 1:
-
-        glBegin(GL_POLYGON);
-        glVertex2i(x+cControlBoxSize/2+2,
-                   y-(cControlBoxSize/2));  
-        glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-                   y-cControlInnerMargin);
-        glVertex2i(x+cControlInnerMargin,
-                   y-(cControlBoxSize/2));  
-        glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-                   y-(cControlBoxSize-1)+cControlInnerMargin);
-        glEnd();
-        break;
-      case 2:
-        glBegin(GL_POLYGON);
-        glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
-        glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
-        glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-                   y-(cControlBoxSize-1)+cControlInnerMargin);
-        glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
-        glEnd();
-        break;
-
-      case 3:
-        glBegin(GL_TRIANGLES);
-        glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin+1);
-        glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin-1);
-        glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
-                   y-(cControlBoxSize/2));  
-        glEnd();
-        break;
-      case 4:
-        glBegin(GL_POLYGON);
-        glVertex2i(x+cControlBoxSize/2-2,
-                   y-(cControlBoxSize/2));  
-        glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
-        glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-                   y-(cControlBoxSize/2));  
-        glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
-        glEnd();
-
-        break;
-      case 5:
-        glBegin(GL_TRIANGLES);
-        glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
-        glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
-        glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-                   y-(cControlBoxSize/2));  
-        glEnd();
-        glBegin(GL_LINES);
-        glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
-        glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-                   y-(cControlBoxSize-1)+cControlInnerMargin);
-        glEnd();
-        break;
-      case 6:
-        TextDrawStrAt(G,"S",x+cControlInnerMargin,
-                    y-cControlBoxSize+cControlInnerMargin+1);
-        break;
-      case 7:
-        /*
-        TextDrawStrAt(G,"R",x+cControlInnerMargin,
-        y-cControlBoxSize+cControlInnerMargin+1);*/
+		int but_width;
+		int but_left;
+		int but_bottom;
+		int but_height;
+		
+		but_left = I->Block->rect.left + cControlLeftMargin + (but_num*control_width)/nButton;
+		but_width = (((but_num+1)*control_width/nButton) - 
+					 ((but_num)*control_width/nButton)) - 1;
+		
+		but_bottom = y-(cControlBoxSize-1);
+		but_height = cControlBoxSize;
+		
+		
+		if( ( but_num==I->Active ) ) {
+			draw_button(but_left,but_bottom,
+						but_width, but_height, lightEdge,darkEdge,pushed);
+		} else if(((but_num==6)&&((int)SettingGet(G,cSetting_seq_view))) ||
+				  ((but_num==3)&&(MoviePlaying(G))) ||
+				  ((but_num==7)&&(SettingGetGlobal_b(G,cSetting_rock))) ||
+				  ((but_num==8)&&(SettingGetGlobal_b(G,cSetting_full_screen)))) {
+			draw_button(but_left,but_bottom,
+						but_width, but_height, lightEdge,darkEdge,I->ActiveColor);
+		} else {
+			draw_button(but_left,but_bottom,
+						but_width, but_height, lightEdge,darkEdge,I->ButtonColor);
+		}
+		
+		if(control_width>100) {
+			x = but_left + (but_width-cControlBoxSize)/2;
+			
+			glColor3fv(I->Block->TextColor);
+			switch(but_num) {
+				case 0:
+					glBegin(GL_TRIANGLES);
+					glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
+					glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+							   y-(cControlBoxSize-1)+cControlInnerMargin);
+					glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
+					glEnd();
+					glBegin(GL_LINES);
+					glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
+					glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
+					glEnd();
+					break;
+					
+				case 1:
+					
+					glBegin(GL_POLYGON);
+					glVertex2i(x+cControlBoxSize/2+2,
+							   y-(cControlBoxSize/2));  
+					glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+							   y-cControlInnerMargin);
+					glVertex2i(x+cControlInnerMargin,
+							   y-(cControlBoxSize/2));  
+					glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+							   y-(cControlBoxSize-1)+cControlInnerMargin);
+					glEnd();
+					break;
+				case 2:
+					glBegin(GL_POLYGON);
+					glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
+					glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
+					glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+							   y-(cControlBoxSize-1)+cControlInnerMargin);
+					glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
+					glEnd();
+					break;
+					
+				case 3:
+					glBegin(GL_TRIANGLES);
+					glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin+1);
+					glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin-1);
+					glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
+							   y-(cControlBoxSize/2));  
+					glEnd();
+					break;
+				case 4:
+					glBegin(GL_POLYGON);
+					glVertex2i(x+cControlBoxSize/2-2,
+							   y-(cControlBoxSize/2));  
+					glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
+					glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+							   y-(cControlBoxSize/2));  
+					glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
+					glEnd();
+					
+					break;
+				case 5:
+					glBegin(GL_TRIANGLES);
+					glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
+					glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
+					glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+							   y-(cControlBoxSize/2));  
+					glEnd();
+					glBegin(GL_LINES);
+					glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
+					glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+							   y-(cControlBoxSize-1)+cControlInnerMargin);
+					glEnd();
+					break;
+				case 6:
+					TextDrawStrAt(G,"S",x+cControlInnerMargin,
+								  y-cControlBoxSize+cControlInnerMargin+1);
+					break;
+				case 7:
+					/*
+					 TextDrawStrAt(G,"R",x+cControlInnerMargin,
+								   y-cControlBoxSize+cControlInnerMargin+1);*/
                     glBegin(GL_POLYGON);
-        glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
-                   y-cControlInnerMargin);
-        glVertex2i(x+(cControlBoxSize/2),
-                   y-(cControlBoxSize)+cControlInnerMargin);
-        glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
-                   y-cControlInnerMargin);
-                   glEnd();
-        break;
-      case 8:
-        TextDrawStrAt(G,"F",x+cControlInnerMargin,
-                    y-cControlBoxSize+cControlInnerMargin+1);
-        break;
-      }
-    }
-    }
+					glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
+							   y-cControlInnerMargin);
+					glVertex2i(x+(cControlBoxSize/2),
+							   y-(cControlBoxSize)+cControlInnerMargin);
+					glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
+							   y-cControlInnerMargin);
+					glEnd();
+					break;
+				case 8:
+					TextDrawStrAt(G,"F",x+cControlInnerMargin,
+								  y-cControlBoxSize+cControlInnerMargin+1);
+					break;
+			}
+		}
+	}
+	#ifdef _MACPYMOL_XCODE
+	{
+	  int x1 = I->Block->rect.right+1;
+      int y1 = I->Block->rect.bottom+2;
+	  int x2 = I->Block->rect.right-2;
+      int y2 = I->Block->rect.bottom-1;
+	  
+      glColor3f(0.0F,0.0F,0.0F);
+      glBegin(GL_LINES);
+      glVertex2i(x1,y1);
+      glVertex2i(x2,y2);
+	  x2-=4;
+	  y1+=4;
+      glVertex2i(x1,y1);
+      glVertex2i(x2,y2);
+	  x2-=4;
+	  y1+=4;
+      glVertex2i(x1,y1);
+      glVertex2i(x2,y2);
+	  x2-=4;
+	  y1+=4;
+      glVertex2i(x1,y1);
+      glVertex2i(x2,y2);
+	  x2-=4;
+	  y1+=4;
+	  glEnd();
+	  
+      
+	}
+#endif
   }
 }
 
