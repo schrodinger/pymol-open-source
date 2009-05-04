@@ -1272,8 +1272,8 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
         case 1:
           glColor3f(0.3,0.3,0.3);
           glBegin(GL_LINES);
-          glVertex2i(I->Width-rightSceneMargin,height-1);
-          glVertex2i(0,height-1);
+          glVertex2i(1+I->Width-rightSceneMargin,height-1);
+          glVertex2i(-1,height-1);
           glEnd();
           break;
         }
@@ -1353,7 +1353,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
           if(lcount>showLines)
             break;
           if(lcount == adjust_at)
-            y+=3;
+            y+=4;
           str = I->Line[l&OrthoSaveLines];
           if(internal_gui_mode ) {
             TextSetColor(G,I->OverlayColor);
