@@ -1259,7 +1259,8 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       
       if(I->DrawText&&internal_feedback) { /* moved to avoid conflict with menus */
         height=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
-        if(!internal_gui_mode) {
+        switch(internal_gui_mode) {
+        case 0:
           glColor3f(0.2,0.2,0.2);
           glBegin(GL_POLYGON);
           glVertex2i(I->Width-rightSceneMargin,height-1);
@@ -1267,12 +1268,15 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
           glVertex2i(0,0);
           glVertex2i(0,height-1);
           glEnd();
+          /* deliberate fall-through */
+        case 1:
+          glColor3f(0.3,0.3,0.3);
+          glBegin(GL_LINES);
+          glVertex2i(I->Width-rightSceneMargin,height-1);
+          glVertex2i(0,height-1);
+          glEnd();
+          break;
         }
-        glColor3f(0.3,0.3,0.3);
-        glBegin(GL_LINES);
-        glVertex2i(I->Width-rightSceneMargin,height-1);
-        glVertex2i(0,height-1);
-        glEnd();
       }
       
       PRINTFD(G,FB_Ortho)
@@ -1281,11 +1285,13 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
 
       if(SettingGet(G,cSetting_internal_gui)) {      
         int internal_gui_width = (int)SettingGet(G,cSetting_internal_gui_width);
-        glColor3f(0.4,0.4,0.4);
-        glBegin(GL_LINES);
-        glVertex2i(I->Width-internal_gui_width,0);
-        glVertex2i(I->Width-internal_gui_width,I->Height);
-        glEnd();
+        if(internal_gui_mode!=2) {
+          glColor3f(0.3,0.3,0.3);
+          glBegin(GL_LINES);
+          glVertex2i(I->Width-internal_gui_width,0);
+          glVertex2i(I->Width-internal_gui_width,I->Height);
+          glEnd();
+        }
       }
 
       if((int)SettingGet(G,cSetting_text)||I->SplashFlag) {
@@ -1324,7 +1330,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
         
         lcount = 0;
         x = cOrthoLeftMargin;
-        y = cOrthoBottomMargin-1;
+        y = cOrthoBottomMargin;
 
 #ifdef _PYMOL_SHARP3D
         if(SceneGetStereo(G)&&SettingGetGlobal_b(G,cSetting_overlay)) {
@@ -1592,6 +1598,7 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
     switch(SettingGetGlobal_i(G,cSetting_internal_gui_mode)) {
     case 2:
       sceneRight = 0;
+      sceneBottom = 0;
       break;
     default:
       sceneRight = internal_gui_width;
@@ -1636,8 +1643,6 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
       WizardMargin = WizardMargin2;
     }
     if(SettingGet(G,cSetting_internal_gui)) {
-
-
 #ifndef _PYMOL_NOPY
       block=ExecutiveGetBlock(G);
       block->active=true;
@@ -1646,7 +1651,7 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
       BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,WizardMargin,0);
       block->active=false;
       block=ButModeGetBlock(G);
-      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
+      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin-1,0);
       block->active=true;
 #else
       block=ExecutiveGetBlock(G);
@@ -1656,7 +1661,7 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
       BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
       block->active=false;
       block=ButModeGetBlock(G);
-      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
+      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin-1,0);
       block->active=false;
 #endif
 

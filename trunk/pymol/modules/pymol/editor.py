@@ -98,7 +98,7 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1,object="",hydro=-
         print "Error: invalid connection point: must be C for residue '%s'"%(amino_acid)
         _self.delete(tmp_wild)
         raise QuietException
-    elif amino_acid in ["ace"] and _self.select(tmp_connect,"(%s) & name C"%selection) != 1:
+    elif amino_acid in ["ace"] and _self.select(tmp_connect,"(%s) & name N"%selection) != 1:
         print "Error: invalid connection point: must be N for residue '%s'"%(amino_acid)
         _self.delete(tmp_wild)
         raise QuietException

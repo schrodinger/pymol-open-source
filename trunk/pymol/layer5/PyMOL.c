@@ -2963,8 +2963,8 @@ void PyMOL_Start(CPyMOL *I)
   PlugIOManagerInit(G);
   SphereInit(G);
   OrthoInit(G,G->Option->show_splash);
-  WizardInit(G); /* must come after ortho */
   SceneInit(G);
+  WizardInit(G); /* must come after ortho & scene */
   MovieInit(G);
   SelectorInit(G);
   SeqInit(G);
