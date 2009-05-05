@@ -1355,11 +1355,18 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
           if(lcount == adjust_at)
             y+=4;
           str = I->Line[l&OrthoSaveLines];
-          if(internal_gui_mode ) {
+          if(internal_gui_mode) {
             TextSetColor(G,I->OverlayColor);
-          } else if(strncmp(str,I->Prompt,6)==0)
-            TextSetColor(G,I->TextColor);            
-          else
+          } else if(strncmp(str,I->Prompt,6)==0) {
+            if(lcount<adjust_at)
+              TextSetColor(G,I->TextColor);            
+            else {
+              if(length3f(I->OverlayColor)<0.5)
+                TextSetColor(G,I->OverlayColor);
+              else
+                TextSetColor(G,I->TextColor);            
+            }
+          } else
             TextSetColor(G,I->OverlayColor);
           TextSetPos2i(G,x,y);
           if(str) {
@@ -1954,8 +1961,8 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   I->ClickedIn = NULL;
   I->DrawText=1;
   I->HaveSeqViewer = false;
-  I->TextColor[0]=0.82F;
-  I->TextColor[1]=0.82F;
+  I->TextColor[0]=0.85F;
+  I->TextColor[1]=0.85F;
   I->TextColor[2]=1.0;
   I->OverlayColor[0]=1.0;
   I->OverlayColor[1]=1.0;
