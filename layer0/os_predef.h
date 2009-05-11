@@ -174,7 +174,6 @@ typedef float aliased_float;
 #endif
 #endif
 
-
 /* END PROPRIETARY CODE SEGMENT */
 
 #ifdef __linux__
