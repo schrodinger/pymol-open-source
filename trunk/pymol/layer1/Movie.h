@@ -28,13 +28,14 @@ int MovieFromPyList(PyMOLGlobals *G,PyObject *list,int *warning);
 PyObject *MovieAsPyList(PyMOLGlobals *G);
 
 int MovieInit(PyMOLGlobals *G);
+Block *MovieGetBlock(PyMOLGlobals *G);
 void MovieFree(PyMOLGlobals *G);
 void MovieReset(PyMOLGlobals *G);
 void MovieDump(PyMOLGlobals *G);
 void MovieAppendSequence(PyMOLGlobals *G,char *seq,int start_from);
 int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop,
              int missing_only,int modal,int format,int mode, int quiet);
-
+void MovieSetScrollBarFrame(PyMOLGlobals *G,int frame);
 void MovieSetCommand(PyMOLGlobals *G,int frame,char *command);
 void MovieAppendCommand(PyMOLGlobals *G,int frame,char *command);
 
@@ -58,6 +59,7 @@ ImageType *MovieGetImage(PyMOLGlobals *G,int image);
 void MovieSetImage(PyMOLGlobals *G,int index,ImageType *image);
 
 int MovieGetLength(PyMOLGlobals *G);
+int MovieGetPanelHeight(PyMOLGlobals *G);
 int MovieFrameToImage(PyMOLGlobals *G,int frame);
 int MovieFrameToIndex(PyMOLGlobals *G,int frame);
 int MovieLocked(PyMOLGlobals *G);

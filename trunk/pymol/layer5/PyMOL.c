@@ -782,6 +782,7 @@ typedef struct _CPyMOL {
   ov_word lex_clean_electro_mode;
   ov_word lex_valence_mode;
   ov_word lex_show_frame_rate;
+  ov_word lex_movie_panel;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1557,6 +1558,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(clean_electro_mode,615);
   LEX_SETTING(valence_mode,616);
   LEX_SETTING(show_frame_rate,617);
+  LEX_SETTING(movie_panel,618);
   return_OVstatus_SUCCESS;
 }
 

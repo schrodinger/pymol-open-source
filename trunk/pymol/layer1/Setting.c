@@ -2421,8 +2421,8 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_internal_gui:
   case cSetting_internal_feedback:
   case cSetting_mouse_grid:
-    sprintf(command,"viewport");
-    OrthoCommandIn(G,command);
+  case cSetting_movie_panel:
+    OrthoCommandIn(G,"viewport");
     break;
   case cSetting_suspend_updates:
     if(!SettingGet(G,cSetting_suspend_updates)) {
@@ -3626,7 +3626,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_f(I,cSetting_gradient_step_size,0.25F);
     set_i(I,cSetting_gradient_spacing,3);
     set_f(I,cSetting_gradient_symmetry,0.0F);
-    set_color(I,cSetting_ray_trace_color,"black");
+    set_color(I,cSetting_ray_trace_color,"-6");
     set_b(I,cSetting_group_arrow_prefix, 0);
     set_b(I,cSetting_suppress_hidden,true);
     set_b(I,cSetting_session_compression,0);
@@ -3698,5 +3698,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default)
     set_i(I,cSetting_clean_electro_mode,1);
     set_i(I,cSetting_valence_mode,1);
     set_b(I,cSetting_show_frame_rate,0);
+    set_i(I,cSetting_movie_panel,0);
   }
 }

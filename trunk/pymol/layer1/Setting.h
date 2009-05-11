@@ -839,6 +839,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_clean_electro_mode         615
 #define cSetting_valence_mode               616
 #define cSetting_show_frame_rate            617
+#define cSetting_movie_panel                618
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -848,7 +849,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       618
+#define cSetting_INIT                       619
 
 #endif
 

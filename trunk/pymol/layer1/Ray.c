@@ -3149,7 +3149,7 @@ int RayTraceThread(CRayThreadInfo *T)
   int max_pass;
   float BasisFudge0,BasisFudge1;
   int perspective = T->perspective;
-  float eye[3];
+  float eye[3] = {0.0F, 0.0F, 0.0F};
   float start[3] = { 0.0F, 0.0F, 0.0F};
   float nudge[3] = { 0.0F, 0.0F, 0.0F};
   float back_pact[3];
@@ -3326,8 +3326,6 @@ int RayTraceThread(CRayThreadInfo *T)
 
   if(perspective) {
     float height_range, width_range;
-
-    zero3f(eye);
 
     /* subpixel-offsets for antialiasing naturally correspond to
        effective pixel sizes at the front of the visible slab...*/
@@ -4840,9 +4838,9 @@ void RayRender(CRay *I,unsigned int *image,double timing,
       register float inp;
       register float sig;
       int trace_color = SettingGetGlobal_color(I->G,cSetting_ray_trace_color);
-      float trgb[3], *trgb_v = ColorGet(I->G,trace_color);
+      float trgb[3],*trgb_v = ColorGet(I->G,trace_color);
+
       copy3f(trgb_v,trgb);
-      
       inp = (trgb[0]+trgb[1]+trgb[2])/3.0F;
       if(inp < R_SMALL4) 
         sig = 1.0F;

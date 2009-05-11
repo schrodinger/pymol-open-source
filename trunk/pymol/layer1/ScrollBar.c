@@ -28,6 +28,7 @@ typedef struct CScrollBar {
   int ListSize;
   int DisplaySize;
   int BarSize;
+  int StartPos;
   float ExactBarSize;
   float Value;
   float StartValue;
@@ -35,7 +36,8 @@ typedef struct CScrollBar {
   int BarRange;
   int BarMin;
   int BarMax;
-  int StartPos;
+  int Grabbed;
+
 } CScrollBar;
 
 void ScrollBarMaxOut(struct CScrollBar *I)
@@ -54,7 +56,7 @@ int ScrollBarIsMaxed(struct CScrollBar *I)
     return false;
 }
 
-void ScrollBarUpdate(struct CScrollBar *I)
+static void ScrollBarUpdate(struct CScrollBar *I)
 {
   int range;
 
@@ -70,12 +72,11 @@ void ScrollBarUpdate(struct CScrollBar *I)
   I->BarRange = range - I->BarSize;
   if(I->BarRange<2)
     I->BarRange=2;
-  I->ValueMax = (float)I->ListSize-I->DisplaySize;
-  if(I->ValueMax<1)
-    I->ValueMax=1;
-  if(I->Value>I->ValueMax)
+  I->ValueMax = (float)I->ListSize - I->DisplaySize;
+  if(I->ValueMax < 1)
+    I->ValueMax = 1;
+  if(I->Value > I->ValueMax)
     I->Value=(float)I->ValueMax;
-
 }
 
 static  void ScrollBarDraw(Block *block)
@@ -91,18 +92,18 @@ static  void ScrollBarDraw(Block *block)
   ScrollBarUpdate(I);
 
   value = I->Value;
-  if(value>I->ValueMax)
-    value=I->ValueMax;
+  if(value > I->ValueMax)
+    value = I->ValueMax;
 
   if(I->HorV) {
     top = block->rect.top-1;
     bottom = block->rect.bottom+1;
-    left = (int)(block->rect.left+(I->BarRange*value)/I->ValueMax);
+    left = (int)(block->rect.left+(I->BarRange*value) / I->ValueMax);
     right = left+I->BarSize;
     I->BarMin = left;
     I->BarMax = right;
   } else {
-    top = (int)(block->rect.top-(I->BarRange*value)/I->ValueMax);
+    top = (int)(block->rect.top-(I->BarRange*value) / I->ValueMax);
     bottom = top-I->BarSize;
     left = block->rect.left+1;
     right = block->rect.right-1;
@@ -210,10 +211,9 @@ void ScrollBarDrawHandle(struct CScrollBar *I,float alpha)
   }
 }
 
-
 void ScrollBarSetValue(struct CScrollBar *I,float value)
 {
-  I->Value=value;
+  I->Value = value;
   ScrollBarUpdate(I);
 }
 float ScrollBarGetValue(struct CScrollBar *I)
@@ -222,6 +222,10 @@ float ScrollBarGetValue(struct CScrollBar *I)
 }
 static void ScrollBarReshape(Block *block,int width,int height)
 {
+}
+int ScrollBarGrabbed(struct CScrollBar *I)
+{
+  return OrthoGrabbedBy(I->Block->G,I->Block);
 }
 
 static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
@@ -234,7 +238,8 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
       switch(button) {
       case P_GLUT_MIDDLE_BUTTON:
         {
-          I->Value= (I->ListSize*(x-block->rect.left))/(block->rect.right - block->rect.left) - I->DisplaySize*0.5F;
+          I->Value= (I->ListSize*(x-block->rect.left))/
+            (block->rect.right - block->rect.left) - I->DisplaySize*0.5F;
           if(I->Value > I->ValueMax)
             I->Value = I->ValueMax;
           OrthoGrab(G,I->Block);
@@ -253,7 +258,8 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
       switch(button) {
       case P_GLUT_MIDDLE_BUTTON:
         {
-          I->Value= (I->ListSize*(x-block->rect.left))/(block->rect.right - block->rect.left) - I->DisplaySize*0.5F;
+          I->Value= (I->ListSize*(x-block->rect.left))/
+            (block->rect.right - block->rect.left) - I->DisplaySize*0.5F;
           if(I->Value<0.0)
             I->Value=0.0F;
           OrthoGrab(G,I->Block);
@@ -278,7 +284,8 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
       switch(button) {
       case P_GLUT_MIDDLE_BUTTON:
         {
-          I->Value= (I->ListSize*(y-block->rect.top))/(block->rect.bottom - block->rect.top) - I->DisplaySize*0.5F;
+          I->Value= (I->ListSize*(y-block->rect.top))/
+            (block->rect.bottom - block->rect.top) - I->DisplaySize*0.5F;
           if(I->Value<0.0)
             I->Value=0.0F;
           OrthoGrab(G,I->Block);
@@ -296,7 +303,8 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
       switch(button) {
       case P_GLUT_MIDDLE_BUTTON:
         {
-          I->Value= (I->ListSize*(y-block->rect.top))/(block->rect.bottom - block->rect.top) - I->DisplaySize*0.5F;
+          I->Value= (I->ListSize*(y-block->rect.top))/
+            (block->rect.bottom - block->rect.top) - I->DisplaySize*0.5F;
           if(I->Value > I->ValueMax)
             I->Value = I->ValueMax;
           OrthoGrab(G,I->Block);
@@ -329,7 +337,7 @@ static int ScrollBarDrag(Block *block,int x,int y,int mod)
     displ = I->StartPos-x;
   else 
     displ = y-I->StartPos;    
-  I->Value = I->StartValue - (I->ValueMax*displ)/I->BarRange;
+  I->Value = I->StartValue - (I->ValueMax * displ)/I->BarRange;
   /*  if(displ>0.0)
     I->Value-=0.5;
   else
@@ -345,6 +353,7 @@ static int ScrollBarRelease(Block *block,int button,int x,int y,int mod)
 {
   PyMOLGlobals *G=block->G;
   OrthoUngrab(G);
+  OrthoDirty(G);
   return 0;
 }
 

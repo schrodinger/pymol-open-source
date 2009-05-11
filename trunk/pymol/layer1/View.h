@@ -31,7 +31,8 @@ typedef struct CViewElem {
   int post_flag; /* post-transformation translation */
   double post[3];
 
-  int clip_flag; /* clip planes (only useful for top-level views...only applied through Scene) */
+  int clip_flag; /* clip planes (only useful for top-level views...
+                    only applied through Scene) */
   float front, back; 
   
   int ortho_flag;
