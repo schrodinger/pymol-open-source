@@ -217,5 +217,6 @@ void ButModeCaption(PyMOLGlobals *G,char *text);
 void ButModeCaptionReset(PyMOLGlobals *G);
 int ButModeTranslate(PyMOLGlobals *G,int button,int mod);
 int ButModeCheckPossibleSingleClick(PyMOLGlobals *G, int button, int mod);
+int ButModeGetHeight(PyMOLGlobals *G);
 
 #endif

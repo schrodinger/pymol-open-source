@@ -30,9 +30,8 @@ void ScrollBarDoDrag(struct CScrollBar *I,int x,int y,int mod);
 Block *ScrollBarGetBlock(struct CScrollBar *);
 float ScrollBarGetValue(struct CScrollBar *I);
 void ScrollBarMaxOut(struct CScrollBar *I);
-void ScrollBarUpdate(struct CScrollBar *I);
 int ScrollBarIsMaxed(struct CScrollBar *I);
 void ScrollBarDrawHandle(struct CScrollBar *I,float alpha);
-
+int ScrollBarGrabbed(struct CScrollBar *I);
 #endif
 

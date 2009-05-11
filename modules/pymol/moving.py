@@ -147,6 +147,7 @@ SEE ALSO
         'reinterpolate' : 3,
         'smooth'   : 4,
         'reset'    : 5,
+        'uninterpolate' : 6,
         }
 
     mview_action_sc = Shortcut(mview_action_dict.keys())
@@ -187,7 +188,7 @@ SEE ALSO
         if last<0:
             last = _self.count_frames() + last + 1
         action = mview_action_dict[mview_action_sc.auto_err(action,'action')]
-        if scene==None:
+        if (scene==None) or (scene=='auto'):
             scene = _self.get("scene_current_name")
         scene = str(scene)
         if (scene!=''):
@@ -520,7 +521,9 @@ SEE ALSO
         try:
             _self.lock(_self)
             output=[]
-            input = string.split(string.strip(specification))
+            input = specification.replace("x"," x");
+            input = input.replace("-"," -");
+            input = string.split(string.strip(input))
             last = -1
             for x in input:
                 if x[0]>"9" or x[0]<"0":

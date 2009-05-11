@@ -2188,7 +2188,7 @@ void SceneSetFrame(PyMOLGlobals *G,int mode,int frame)
     SettingSetGlobal_i(G,cSetting_frame,newFrame+1);
     SettingSetGlobal_i(G,cSetting_state,newState+1);
   }
-
+  MovieSetScrollBarFrame(G,newFrame);
   SceneInvalidate(G);
   PRINTFD(G,FB_Scene)
     " SceneSetFrame: leaving...\n"

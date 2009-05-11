@@ -653,6 +653,7 @@ if __name__=='pymol.setting':
         clean_electro_mode                 = 615
         valence_mode                       = 616
         show_frame_rate                    = 617
+        movie_panel                        = 618
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

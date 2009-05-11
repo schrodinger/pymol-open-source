@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 #include"Text.h"
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
+#include"Movie.h"
 
 #ifndef true
 #define true 1
@@ -55,11 +56,6 @@ Z* -------------------------------------------------------------------
 #define cOrthoLeftMargin 3
 #define cOrthoBottomMargin 5
 
-#define WizardMargin1 144
-#define WizardMargin2 60
-
-#define ButModeMargin 20
-#define ControlMargin 0
 
 #define CMD_QUEUE_MASK 0x3
 
@@ -103,8 +99,11 @@ struct _COrtho {
   GLenum ActiveGLBuffer;
   double DrawTime, LastDraw;
   int WrapClickSide; /* ugly kludge for finding click side in geowall stereo mode */
-};
 
+  /* packing information */
+  int WizardHeight;
+  int TextBottom;
+};
 
 void OrthoParseCurrentLine(PyMOLGlobals *G);
 static void OrthoDrawWizardPrompt(PyMOLGlobals *G);
@@ -1048,6 +1047,11 @@ void OrthoGrab(PyMOLGlobals *G,Block *block)
   register COrtho *I=G->Ortho;
   I->GrabbedBy = block;
 }
+int OrthoGrabbedBy(PyMOLGlobals *G,Block *block)
+{
+  register COrtho *I=G->Ortho;
+  return I->GrabbedBy == block;
+}
 /*========================================================================*/
 void OrthoUngrab(PyMOLGlobals *G)
 {
@@ -1258,10 +1262,11 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       y = I->Y;
       
       if(I->DrawText&&internal_feedback) { /* moved to avoid conflict with menus */
-        height=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
+        Block *block = SceneGetBlock(G);
+        height = block->rect.bottom;
         switch(internal_gui_mode) {
         case 0:
-          glColor3f(0.2,0.2,0.2);
+          glColor3f(0.0,0.0,0.0);
           glBegin(GL_POLYGON);
           glVertex2i(I->Width-rightSceneMargin,height-1);
           glVertex2i(I->Width-rightSceneMargin,0);
@@ -1330,7 +1335,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
         
         lcount = 0;
         x = cOrthoLeftMargin;
-        y = cOrthoBottomMargin;
+        y = cOrthoBottomMargin + MovieGetPanelHeight(G);
 
 #ifdef _PYMOL_SHARP3D
         if(SceneGetStereo(G)&&SettingGetGlobal_b(G,cSetting_overlay)) {
@@ -1556,6 +1561,71 @@ static void OrthoDrawWizardPrompt(PyMOLGlobals *G)
   }
 }
 
+static void OrthoLayoutPanel(PyMOLGlobals *G,
+                              int m_top, int m_left, int m_bottom, int m_right) 
+{
+  register COrtho *I=G->Ortho;
+  Block *block = NULL;
+
+  int controlHeight = 20;
+  int butModeHeight = ButModeGetHeight(G);
+  int wizardHeight = I->WizardHeight;
+  
+  int controlBottom = m_bottom;
+  int butModeBottom = controlBottom + controlHeight;
+  int wizardBottom = butModeBottom + butModeHeight;
+  int executiveBottom = wizardBottom + wizardHeight;
+
+  int height = I->Height;
+
+  if(SettingGet(G,cSetting_internal_gui)) {
+#ifndef _PYMOL_NOPY
+    block=ExecutiveGetBlock(G);
+    BlockSetMargin(block, m_top, m_left, executiveBottom, m_right);
+    block->active=true;
+
+    block=WizardGetBlock(G);
+    BlockSetMargin(block, height-executiveBottom+1, m_left, wizardBottom, m_right);
+    block->active=false;
+    
+    block=ButModeGetBlock(G);
+    BlockSetMargin(block, height-wizardBottom+1, m_left, butModeBottom, m_right);
+    block->active=true;
+#else
+    block=ExecutiveGetBlock(G);
+    BlockSetMargin(block, m_top, m_left, wizardTop, m_right);
+    block->active=true; 
+    
+    block=WizardGetBlock(G);
+    BlockSetMargin(block, height-executiveBottom+1, m_left, wizardBottom, m_right);
+    block->active=false;
+    
+    block=ButModeGetBlock(G);
+    BlockSetMargin(block, height-wizardBottom+1, m_left, butModeBottom, m_right);
+    block->active=false;
+#endif
+    
+    block=ControlGetBlock(G);
+    BlockSetMargin(block, height-butModeBottom+1, m_left, controlBottom, m_right);
+    block->active=true;
+  } else {
+    block=ExecutiveGetBlock(G);
+    BlockSetMargin(block,m_right, m_bottom, m_right, m_bottom);
+    block->active=false;
+
+    block=WizardGetBlock(G);
+    BlockSetMargin(block,m_right, m_bottom, m_right, m_bottom);
+    block->active=false;
+
+    block=ButModeGetBlock(G);
+    BlockSetMargin(block,m_right, m_bottom, m_right, m_bottom);
+    block->active=false;
+
+    block=ControlGetBlock(G);
+    BlockSetMargin(block,m_right, m_bottom, m_right, m_bottom);
+    block->active=false;
+  }
+}
 /*========================================================================*/
 void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
 {
@@ -1563,6 +1633,7 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
 
   Block *block = NULL;
   int sceneBottom,sceneRight = 0;
+  int textBottom = 0;
   int internal_gui_width;
   int internal_feedback;
   int sceneTop = 0;
@@ -1591,12 +1662,15 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
   I->Width=width;
   I->ShowLines = height/cOrthoLineHeight;
   
+  textBottom += MovieGetPanelHeight(G);
+  I->TextBottom = textBottom;
+
   internal_feedback = (int)SettingGet(G,cSetting_internal_feedback);
   if(internal_feedback)
-    sceneBottom = (internal_feedback-1)*cOrthoLineHeight + cOrthoBottomSceneMargin;
+    sceneBottom = textBottom + (internal_feedback-1)*cOrthoLineHeight + cOrthoBottomSceneMargin;
   else
-    sceneBottom = 0;
-    
+    sceneBottom = textBottom;
+  
   internal_gui_width = (int)SettingGet(G,cSetting_internal_gui_width);
   if(!SettingGetGlobal_b(G,cSetting_internal_gui)) {
     internal_gui_width = 0;
@@ -1613,12 +1687,13 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
     }
   }
 
-
   {
     int seqHeight;
     block=SeqGetBlock(G);
     block->active=true;
     
+    /* reloate the sequence viewer as necessary */
+
     if(SettingGetGlobal_b(G,cSetting_seq_view_location)) {
       
       BlockSetMargin(block,height-sceneBottom-10,0,sceneBottom,sceneRight);
@@ -1643,54 +1718,12 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
     }
   }
 
-  {
-    int WizardMargin = WizardMargin1;
-    
-    if(!SettingGet(G,cSetting_mouse_grid)) {
-      WizardMargin = WizardMargin2;
-    }
-    if(SettingGet(G,cSetting_internal_gui)) {
-#ifndef _PYMOL_NOPY
-      block=ExecutiveGetBlock(G);
-      block->active=true;
-      BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
-      block=WizardGetBlock(G);
-      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,WizardMargin,0);
-      block->active=false;
-      block=ButModeGetBlock(G);
-      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin-1,0);
-      block->active=true;
-#else
-      block=ExecutiveGetBlock(G);
-      block->active=true;
-      BlockSetMargin(block,0,width-internal_gui_width,ButModeMargin,0);
-      block=WizardGetBlock(G);
-      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
-      block->active=false;
-      block=ButModeGetBlock(G);
-      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin-1,0);
-      block->active=false;
-#endif
+  OrthoLayoutPanel(G,0,width-internal_gui_width,textBottom,0);
+  
+  block=MovieGetBlock(G);
+  BlockSetMargin(block,height - textBottom,0,0,0);
+  block->active = (textBottom && true);
 
-      block=ControlGetBlock(G);
-      BlockSetMargin(block,height-ButModeMargin+1,width-internal_gui_width,ControlMargin,0);
-      block->active=true;
-    } else {
-      block=ExecutiveGetBlock(G);
-      block->active=false;
-      BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
-      block=WizardGetBlock(G);
-      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,WizardMargin,0);
-      block->active=false;
-      block=ButModeGetBlock(G);
-      BlockSetMargin(block,height-WizardMargin+1,width-internal_gui_width,ButModeMargin,0);
-      block->active=false;
-      block=ControlGetBlock(G);
-      BlockSetMargin(block,height-ButModeMargin+1,width-internal_gui_width,ControlMargin,0);
-      block->active=false;
-    }
-
-  }
   block=SceneGetBlock(G);
   BlockSetMargin(block,sceneTop,0,sceneBottom,sceneRight);
 
@@ -1707,23 +1740,33 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
 /*========================================================================*/
 void OrthoReshapeWizard(PyMOLGlobals *G,ov_size wizHeight)
 {
-  Block *block;
   register COrtho *I=G->Ortho;
-  int height,width;
-  int internal_gui_width;
-
-  height=I->Height;
-  width=I->Width;
-
+  I->WizardHeight = wizHeight;
+  
   if(SettingGet(G,cSetting_internal_gui)>0.0) {
-    int WizardMargin = WizardMargin1;
-    internal_gui_width = (int)SettingGet(G,cSetting_internal_gui_width);
-    block=ExecutiveGetBlock(G);
+    Block *block;
+    int internal_gui_width = (int)SettingGet(G,cSetting_internal_gui_width);
+#if 1
+    OrthoLayoutPanel(G,0,I->Width - internal_gui_width,I->TextBottom,0);
 
+    block=ExecutiveGetBlock(G);
+    block->fReshape(block, I->Width, I->Height);
+    block=WizardGetBlock(G);
+    block->fReshape(block, I->Width, I->Height);
+    block->active = (wizHeight && true);
+#else
+    int height,width;
+    height=I->Height;
+    width=I->Width;
+    
+    int WizardMargin = WizardMargin1;
+    
+    block=ExecutiveGetBlock(G);
+    
     if(!SettingGet(G,cSetting_mouse_grid)) {
       WizardMargin = WizardMargin2;
     }
-
+    
     if(height) {
       int wh=wizHeight;
       if(wh) wh++;
@@ -1732,9 +1775,9 @@ void OrthoReshapeWizard(PyMOLGlobals *G,ov_size wizHeight)
       BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
     }
     block->fReshape(block,width,height);
-
+    
     block=WizardGetBlock(G);
-
+    
     if(wizHeight) {
       BlockSetMargin(block,height-(WizardMargin+wizHeight),width-internal_gui_width,WizardMargin,0);
       block->active=true;
@@ -1743,6 +1786,7 @@ void OrthoReshapeWizard(PyMOLGlobals *G,ov_size wizHeight)
       block->active=false;
     }
     block->fReshape(block,width,height);
+#endif
   }
 }
 
@@ -1961,8 +2005,8 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   I->ClickedIn = NULL;
   I->DrawText=1;
   I->HaveSeqViewer = false;
-  I->TextColor[0]=0.85F;
-  I->TextColor[1]=0.85F;
+  I->TextColor[0]=0.83F;
+  I->TextColor[1]=0.83F;
   I->TextColor[2]=1.0;
   I->OverlayColor[0]=1.0;
   I->OverlayColor[1]=1.0;

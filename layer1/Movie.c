@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Parse.h"
 #include"PyMOL.h"
+#include"ScrollBar.h"
 
 typedef struct {
   int stage; 
@@ -57,6 +58,7 @@ typedef struct {
 } CMovieModal;
 
 struct _CMovie {
+  Block *Block;
   ImageType **Image;
   int *Sequence;
   MovieCmdType *Cmd;
@@ -71,6 +73,10 @@ struct _CMovie {
   int RecursionFlag;
   int RealtimeFlag;
   CMovieModal Modal;
+
+  int Width, Height;
+  struct CScrollBar *ScrollBar;
+  
 };
 
 void MovieSetRealtime(PyMOLGlobals *G, int realtime)
@@ -118,11 +124,11 @@ void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length)
 	{ 
       int uniform_height = -1;
       int uniform_width = -1;
-		int uniform_flag = false;
-		int scene_match = true;
-		int a;
-		ImageType *image;
-		/* make sure all the movie frames match the screen size or are pre-rendered and are already the same size */
+      int uniform_flag = false;
+      int scene_match = true;
+      int a;
+      ImageType *image;
+      /* make sure all the movie frames match the screen size or are pre-rendered and are already the same size */
 		for(a=0;a<nFrame;a++) {
 			image = I->Image[a];
 			if(image) {
@@ -748,8 +754,9 @@ void MovieAppendSequence(PyMOLGlobals *G,char *str,int start_from)
   register CMovie *I=G->Movie;
   int c=0;
   int i;
+  int old_NFrame = I->NFrame;
   char *s,number[20];
- 
+
   if(start_from<0)
     start_from = I->NFrame;
 
@@ -814,6 +821,12 @@ void MovieAppendSequence(PyMOLGlobals *G,char *str,int start_from)
     " MovieSequence: leaving... I->NFrame%d\n",I->NFrame
     ENDFB(G);
 
+#if 0
+  /* this causes problems...*/
+  if((I->NFrame && true) != (old_NFrame && true)) {
+    OrthoCommandIn(G,"viewport");
+  }
+#endif
 }
 /*========================================================================*/
 int MovieFrameToImage(PyMOLGlobals *G,int frame)
@@ -1100,6 +1113,24 @@ int MovieView(PyMOLGlobals *G,int action,int first,
       I->ViewElem = VLACalloc(CViewElem, size);
     }
     break;
+  case 6: /* uninterpolate */
+    if(I->ViewElem) {
+      if(first<0)
+        first = SceneGetFrame(G);
+      if(last<0) {
+        last = SceneGetNFrame(G,NULL)-1;
+      }
+      for(frame=first;frame<=last;frame++) {
+        if((frame>=0)&&(frame<I->NFrame)) {
+          VLACheck(I->ViewElem,CViewElem,frame);
+          if(I->ViewElem[frame].specification_level<2) {
+            ViewElemArrayPurge(G,I->ViewElem+frame,1);
+            UtilZeroMem((void*)(I->ViewElem+frame),sizeof(CViewElem));
+          }
+        }
+      }
+    }
+    break;
   }
   return 1;
 }
@@ -1162,14 +1193,13 @@ void MovieClearImages(PyMOLGlobals *G)
   PRINTFB(G,FB_Movie,FB_Blather)
     " MovieClearImages: clearing...\n"
     ENDFB(G);
-  for(a=0;a<I->NImage;a++)
-	 {
-		if(I->Image[a]) {
-		  FreeP(I->Image[a]->data);
-		  FreeP(I->Image[a]);
-		  I->Image[a]=NULL;
-		}
-	 }
+  for(a=0;a<I->NImage;a++) {
+    if(I->Image[a]) {
+      FreeP(I->Image[a]->data);
+      FreeP(I->Image[a]);
+      I->Image[a]=NULL;
+    }
+  }
   I->NImage=0;
   SceneInvalidate(G);
   SceneSuppressMovieFrame(G);
@@ -1197,7 +1227,154 @@ void MovieFree(PyMOLGlobals *G)
   VLAFreeP(I->ViewElem);
   VLAFreeP(I->Cmd);
   VLAFreeP(I->Sequence);
+  OrthoFreeBlock(G,I->Block);
   FreeP(G->Movie);
+}
+Block *MovieGetBlock(PyMOLGlobals *G)
+{
+  CMovie *I=G->Movie;
+  return(I->Block);
+}
+
+static int MovieRelease(Block *block,int button,int x,int y,int mod)
+{
+  PyMOLGlobals *G=block->G;
+  CMovie *I=G->Movie;
+  ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
+  return 1;
+}
+
+static int MovieClick(Block *block,int button,int x,int y,int mod)
+{
+  PyMOLGlobals *G=block->G;
+  CMovie *I=G->Movie;
+  ScrollBarDoClick(I->ScrollBar,button,x,y,mod);      
+  return 1;
+}
+static int MovieDrag(Block *block,int x,int y,int mod)
+{
+  return 1;
+}
+int MovieGetPanelHeight(PyMOLGlobals *G)
+{
+  int movie_panel = SettingGetGlobal_i(G,cSetting_movie_panel);
+  if(movie_panel<0) {
+    if(MovieGetLength(G)) {
+      movie_panel = 1;
+    } else {
+      movie_panel = 0;
+    }
+  }
+  if(movie_panel) {
+    return 15; /* default movie panel height */
+  } else {
+    return 0;
+  }
+}
+static void MovieDraw(Block *block)
+{
+  PyMOLGlobals *G=block->G;
+  CMovie *I=G->Movie;
+  int n_frame = MovieGetLength(G);
+  int frame = SceneGetFrame(G);
+  if(MovieGetPanelHeight(G)) {
+    if(!n_frame) {
+      ScrollBarSetLimits(I->ScrollBar,1,1);
+      ScrollBarSetValue(I->ScrollBar,0);
+    } else {
+      float scroll_value = ScrollBarGetValue(I->ScrollBar);
+      int new_frame = (int)(scroll_value + 0.5F);
+      if(new_frame != frame) {
+        frame = new_frame;
+        SceneSetFrame(G,7,frame);
+      }
+      if(!ScrollBarGrabbed(I->ScrollBar)) {
+        ScrollBarSetValue(I->ScrollBar, frame);
+      }
+      ScrollBarSetLimits(I->ScrollBar, n_frame,1);
+    }
+    ScrollBarSetBox(I->ScrollBar,I->Block->rect.top,
+                    I->Block->rect.left,
+                    I->Block->rect.bottom,
+                    I->Block->rect.right);
+    ScrollBarDoDraw(I->ScrollBar);
+    /* draw key frames */
+    if(I->NFrame && I->ViewElem) {
+      VLACheck(I->ViewElem,CViewElem,I->NFrame-1);
+      if(G->HaveGUI && G->ValidContext ) {
+        float width = (float)(I->Block->rect.right - I->Block->rect.left);
+        float start = 0.0F,stop;
+        CViewElem *view_elem = I->ViewElem;
+        int offset = 0;
+        int first = 0;
+        int last = I->NFrame;
+        int nDrawn = I->NFrame;
+
+        float top = I->Block->rect.top;
+        float bot = I->Block->rect.bottom;
+        float mid_top = (3*top+3*bot)/5;
+        float mid_bot = (2*top+2*bot)/5;
+        float color[3] = { 0.3, 0.3, 0.9 };
+        int cur_level = -1, last_level = -1;
+        int cur;
+
+        glColor3fv(color);
+      
+        for(cur=first;cur<=last;cur++) { 
+          if(cur<last) {
+            cur_level = view_elem->specification_level;
+          } else {
+            cur_level = -1;
+          }
+          if(cur_level != last_level) {
+            stop = (width*(cur - offset))/nDrawn;
+            switch(last_level) {
+            case 0:
+              break;
+            case 1:
+              glBegin(GL_POLYGON);
+              glVertex2f(start,mid_bot);
+              glVertex2f(start,mid_top);
+              glVertex2f(stop,mid_top);
+              glVertex2f(stop,mid_bot);
+              glEnd();
+              break;
+            case 2:
+              glBegin(GL_POLYGON);
+              glVertex2f(start,bot);
+              glVertex2f(start,top);
+              glVertex2f(stop,top);
+              glVertex2f(stop,bot);
+              glEnd();
+              break;
+            }
+            if(last_level>0) {
+            }
+            start = (width*(cur - offset))/nDrawn;
+          }
+          last_level = cur_level;
+          view_elem++;
+        }
+        ScrollBarDrawHandle(I->ScrollBar,0.3F);
+      }
+    }
+  }
+}
+void MovieSetScrollBarFrame(PyMOLGlobals *G,int frame)
+{
+  CMovie *I=G->Movie;
+  if(!ScrollBarGrabbed(I->ScrollBar)) {
+    ScrollBarSetValue(I->ScrollBar, frame);    
+  }
+}
+
+static void MovieReshape(Block *block, int width, int height)
+{
+  PyMOLGlobals *G=block->G;
+  CMovie *I=G->Movie;
+  BlockReshape(block,width,height);
+  I->Width = block->rect.right-block->rect.left+1;
+  I->Height = block->rect.top-block->rect.bottom+1;
 }
 /*========================================================================*/
 int MovieInit(PyMOLGlobals *G)
@@ -1206,6 +1383,16 @@ int MovieInit(PyMOLGlobals *G)
 
   if( (I=(G->Movie=Calloc(CMovie,1)))) {
     int a;
+    I->Block = OrthoNewBlock(G,NULL);
+    I->Block->fRelease = MovieRelease;
+    I->Block->fClick   = MovieClick;
+    I->Block->fDrag    = MovieDrag;
+    I->Block->fDraw    = MovieDraw;
+    I->Block->fReshape = MovieReshape;
+    I->Block->active = true;
+    I->ScrollBar=ScrollBarNew(G,true);
+    OrthoAttach(G,I->Block,cOrthoTool);
+
     I->Playing=false;
     I->Image=VLAMalloc(10,sizeof(ImageType),5,true); /* auto-zero */
     I->Sequence=NULL;

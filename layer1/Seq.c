@@ -544,36 +544,56 @@ static void SeqDraw(Block *block)
           }
         }
       }
-      if(I->ScrollBarActive)
-        {
-          int real_count = n_real;
-          int mode = 0;
-          float width = (float)(I->Block->rect.right - I->Block->rect.left);
-          float start=0,stop;
-          int right=0;
-          float bot,top,cent;
-          float height = (float)(I->ScrollBarWidth - I->ScrollBarMargin);
-          int last_color = -1;
-          cur_color = blue;
-          for(a=0;a<I->NRow;a++) {
-            row = I->Row+a;
-            if(!row->label_flag) {
-              top =  I->Block->rect.bottom + I->ScrollBarMargin + (height*real_count)/n_real; 
-              real_count--;
-              bot = I->Block->rect.bottom + I->ScrollBarMargin + (height*real_count)/n_real;
-              mode = 0;
-              for(b=0;b<row->nCol;b++) {
-                col = row->col+b;
-                if(col->inverse&&(!mode)) {
-                  start = (width*col->offset)/max_len;
-                  right = col->offset + (col->stop-col->start);
-                  mode=1;
-                  last_color = col->color;
-                  if(row->label_flag) 
-                    cur_color = overlay_color;
-                  else 
-                    cur_color = ColorGet(G,col->color); /* is this safe? should be for single-threading */ 
-                } else if((!col->inverse)&&(mode)) {
+      if(I->ScrollBarActive) {
+        int real_count = n_real;
+        int mode = 0;
+        float width = (float)(I->Block->rect.right - I->Block->rect.left);
+        float start=0,stop;
+        int right=0;
+        float bot,top,cent;
+        float height = (float)(I->ScrollBarWidth - I->ScrollBarMargin);
+        int last_color = -1;
+        cur_color = blue;
+        for(a=0;a<I->NRow;a++) {
+          row = I->Row+a;
+          if(!row->label_flag) {
+            top =  I->Block->rect.bottom + I->ScrollBarMargin + (height*real_count)/n_real; 
+            real_count--;
+            bot = I->Block->rect.bottom + I->ScrollBarMargin + (height*real_count)/n_real;
+            mode = 0;
+            for(b=0;b<row->nCol;b++) {
+              col = row->col+b;
+              if(col->inverse&&(!mode)) {
+                start = (width*col->offset)/max_len;
+                right = col->offset + (col->stop-col->start);
+                mode=1;
+                last_color = col->color;
+                if(row->label_flag) 
+                  cur_color = overlay_color;
+                else 
+                  cur_color = ColorGet(G,col->color); /* is this safe? should be for single-threading */ 
+              } else if((!col->inverse)&&(mode)) {
+                if(b) {
+                  stop = (width*(col[-1].offset+col[-1].stop-col[-1].start))/max_len;
+                } else {
+                  stop = (width*col->offset)/max_len;
+                }
+                if((stop-start)<1.0F) {
+                  cent = (stop+start)*0.5F;
+                  start = cent-0.5F;
+                  stop = cent+0.5F;
+                }
+
+                glColor3fv(cur_color);
+                glBegin(GL_POLYGON);
+                glVertex2f(start,bot);
+                glVertex2f(start,top);
+                glVertex2f(stop,top);
+                glVertex2f(stop,bot);
+                glEnd();
+                mode = 0;
+              } else if(col->inverse&&mode) {
+                if(last_color!=col->color) {
                   if(b) {
                     stop = (width*(col[-1].offset+col[-1].stop-col[-1].start))/max_len;
                   } else {
@@ -584,7 +604,6 @@ static void SeqDraw(Block *block)
                     start = cent-0.5F;
                     stop = cent+0.5F;
                   }
-
                   glColor3fv(cur_color);
                   glBegin(GL_POLYGON);
                   glVertex2f(start,bot);
@@ -592,66 +611,41 @@ static void SeqDraw(Block *block)
                   glVertex2f(stop,top);
                   glVertex2f(stop,bot);
                   glEnd();
-                  mode = 0;
-                } else if(col->inverse&&mode) {
-                  if(last_color!=col->color) {
-                    if(b) {
-                      stop = (width*(col[-1].offset+col[-1].stop-col[-1].start))/max_len;
-                    } else {
-                      stop = (width*col->offset)/max_len;
-                    }
-                    if((stop-start)<1.0F) {
-                      cent = (stop+start)*0.5F;
-                      start = cent-0.5F;
-                      stop = cent+0.5F;
-                    }
-                    glColor3fv(cur_color);
-                    glBegin(GL_POLYGON);
-                    glVertex2f(start,bot);
-                    glVertex2f(start,top);
-                    glVertex2f(stop,top);
-                    glVertex2f(stop,bot);
-                    glEnd();
-                    start = (width*col->offset)/max_len;
-                    last_color = col->color;
-                    if(row->label_flag) 
-                      cur_color = overlay_color;
-                    else 
-                      cur_color = ColorGet(G,col->color); /* is this safe? should be for single-threading */ 
-                  }
-                  right = col->offset + (col->stop-col->start);
+                  start = (width*col->offset)/max_len;
+                  last_color = col->color;
+                  if(row->label_flag) 
+                    cur_color = overlay_color;
+                  else 
+                    cur_color = ColorGet(G,col->color); /* is this safe? should be for single-threading */ 
+                }
+                right = col->offset + (col->stop-col->start);
 
-                }
               }
-              
-              if(mode) {
-                stop = width*right/max_len;
-                if((stop-start)<1.0F) {
-                  cent = (stop+start)*0.5F;
-                  start = cent-0.5F;
-                  stop = cent+0.5F;
-                }
-                glColor3fv(cur_color);
-                glBegin(GL_POLYGON);
-                glVertex2f(start,bot);
-                glVertex2f(start,top);
-                glVertex2f(stop,top);
-                glVertex2f(stop,bot);
-                glEnd();
-              }
-              
             }
+              
+            if(mode) {
+              stop = width*right/max_len;
+              if((stop-start)<1.0F) {
+                cent = (stop+start)*0.5F;
+                start = cent-0.5F;
+                stop = cent+0.5F;
+              }
+              glColor3fv(cur_color);
+              glBegin(GL_POLYGON);
+              glVertex2f(start,bot);
+              glVertex2f(start,top);
+              glVertex2f(stop,top);
+              glVertex2f(stop,bot);
+              glEnd();
+            }
+              
           }
-          
-          ScrollBarDrawHandle(I->ScrollBar,0.35F);
         }
-      
+          
+        ScrollBarDrawHandle(I->ScrollBar,0.35F);
+      }      
     }
-    
   }
-
-
-
 }
 
 int SeqInit(PyMOLGlobals *G)

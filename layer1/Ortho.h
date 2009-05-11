@@ -63,6 +63,7 @@ void OrthoNewLine(PyMOLGlobals *G,char *prompt,int crlf);
 int OrthoDrag(PyMOLGlobals *G,int x,int y,int mod);
 
 void OrthoGrab(PyMOLGlobals *G,Block *block);
+int OrthoGrabbedBy(PyMOLGlobals *G,Block *block);
 void OrthoUngrab(PyMOLGlobals *G);
 void OrthoSetLoopRect(PyMOLGlobals *G,int flag, BlockRect *rect);
 

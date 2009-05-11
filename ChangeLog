@@ -1,7 +1,13 @@
 =========================================================================
 CHANGE LOG
 =========================================================================
- 
+
+2009-05-11 Warren L. DeLano <warren@delsci.com>	
+
+	* experimental movie_panel setting
+
+	* changed internal_gui_mode=0 appearance again
+	
 2009-05-03 Warren L. DeLano <warren@delsci.com>	
 
 	* fixed internal_gui_mode, 1 and 2; added 2 rows to viewer window

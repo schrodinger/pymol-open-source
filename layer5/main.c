@@ -47,6 +47,7 @@
 #include "Seq.h"
 #include "Util.h"
 #include "Control.h"
+#include "Movie.h"
 
 #ifdef _PYMOL_NO_MAIN
 
@@ -1095,6 +1096,7 @@ void MainDoReshape(int width, int height) /* called internally */
         height+=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
       if(SettingGetGlobal_b(G,cSetting_seq_view)&&!SettingGetGlobal_b(G,cSetting_seq_view_overlay))
         height+=SeqGetHeight(G);
+      height+=MovieGetPanelHeight(G);
       force = true;
     }
     

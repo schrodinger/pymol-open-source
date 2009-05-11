@@ -54,6 +54,14 @@ Block *ButModeGetBlock(PyMOLGlobals *G)
   register CButMode *I=G->ButMode;
   {return(I->Block);}
 }
+
+int ButModeGetHeight(PyMOLGlobals *G)
+{
+  if(SettingGetGlobal_b(G,cSetting_mouse_grid))
+    return 124;
+  else
+    return 40;
+}
 /*========================================================================*/
 int ButModeGet(PyMOLGlobals *G,int button)
 {
