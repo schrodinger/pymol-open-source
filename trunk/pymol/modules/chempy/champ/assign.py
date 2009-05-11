@@ -83,7 +83,7 @@ def formal_charges(selection="(all)",quiet=0,_self=cmd):
                             formal_charge = rule[1][tag]
                             # the following expression both changes the formal charge and resets flag 23
                             alter_list.append([atom_tag[0],
-                                                     "formal_charge=%d;flags=flags&0x-8388609"%formal_charge])
+                                                     "formal_charge=%d;flags=flags&-8388609"%formal_charge])
 
     if 1: # n-terminal amine
         # non-proline 
