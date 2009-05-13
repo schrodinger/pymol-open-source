@@ -6,10 +6,21 @@ import types
 sele_re = re.compile(r'^[^\(].*[ \(\)\!\&\|]') # unwrapped selection?
 pat_re = re.compile(r'[^ \(\)\!\&\|]*\/[^ \(\)\!\&\|]*')
 num_re = re.compile(r'1|2|3|4|5|6|7|8|9|0')
+obj_name_re = re.compile(r'([A-Za-z0-9_\+\-]+)')
 
 def is_tuple(obj):
     return isinstance(obj,types.TupleType)
 
+def work_around_model(model): # ugly workaround to support use of 'model' as object name
+    list = obj_name_re.split(model)
+    new_list = []
+    for entry in list:
+        if entry == 'model':
+            new_list.append("(object model)")
+        else:
+            new_list.append(entry)
+    return string.join(new_list,'')
+    
 def process(sele): # expand slash notation into a standard atom selection
     # convert object/index tuples into selection strings
     if is_tuple(sele):
@@ -54,8 +65,10 @@ def process(sele): # expand slash notation into a standard atom selection
             if la>4: model = arg[4]
         # lst
         lst = []
-        model = model.replace('model','(object model)')
-        if model!='': lst.append("("+(model.replace("+","|")).replace("\\|","+")+")")
+        if model!='':
+            model = (model.replace("+","|")).replace("\\|","+")
+            model = work_around_model(model)
+            lst.append("("+model+")")
         if segment!='': lst.append("s;"+string.replace(segment,'+',','))
         if chain!='': lst.append("c;"+string.replace(chain,'+',','))
         if residue!='':
