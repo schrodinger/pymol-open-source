@@ -1227,6 +1227,7 @@ void MovieFree(PyMOLGlobals *G)
   VLAFreeP(I->ViewElem);
   VLAFreeP(I->Cmd);
   VLAFreeP(I->Sequence);
+  ScrollBarFree(I->ScrollBar);
   OrthoFreeBlock(G,I->Block);
   FreeP(G->Movie);
 }

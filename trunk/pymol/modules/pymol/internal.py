@@ -298,7 +298,8 @@ def _copy_image(_self=cmd,quiet=1):
 
 
 def _load(oname,finfo,state,ftype,finish,discrete,
-             quiet=1,multiplex=0,zoom=-1,_self=cmd):
+          quiet=1,multiplex=0,zoom=-1,mimic=1,
+          _self=cmd):
     # WARNING: internal routine, subject to change
     # caller must already hold API lock
     # NOTE: state index assumes 1-based state
@@ -351,9 +352,11 @@ def _load(oname,finfo,state,ftype,finish,discrete,
                 mae_str = mae_file.read()
                 mae_file.close()
                 r = mae.read_maestr(mae_str,str(oname),
-                                            int(state),
-                                            int(finish),int(discrete),
-                                            int(quiet),int(zoom),int(multiplex),_self=_self)
+                                    int(state),
+                                    int(finish),int(discrete),
+                                    int(quiet),int(zoom),int(multiplex),
+                                    int(mimic),
+                                    _self=_self)
 
                 # END PROPRIETARY CODE SEGMENT
             except ValueError:

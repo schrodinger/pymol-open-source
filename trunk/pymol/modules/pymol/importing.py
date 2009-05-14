@@ -401,8 +401,8 @@ SEE ALSO
             rec = cif.read()
             if not rec: break
             if len(rec.model.atom):
-                r = cmd.load_model(rec.model,oname,state,quiet=quiet,
-                                   _self=_self,discrete=discrete)
+                r = _self.load_model(rec.model,oname,state,quiet=quiet,
+                                     discrete=discrete)
         del cif
 #        _cmd.finish_object(_self._COb,str(oname))
 #        if _cmd.get_setting(_self._COb,"auto_zoom")==1.0:
@@ -554,7 +554,7 @@ SEE ALSO
     
     def load(filename, object='', state=0, format='', finish=1,
              discrete=-1, quiet=1, multiplex=None, zoom=-1, partial=0,
-             _self=cmd):
+             mimic=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -857,7 +857,7 @@ SEE ALSO
     # standard file handling
             if ftype>=0:
                 r = _load(oname,fname,state,ftype,finish,
-                          discrete,quiet,multiplex,zoom,_self=_self)
+                          discrete,quiet,multiplex,zoom,mimic,_self=_self)
         finally:
             _self.unlock(r,_self)
         if go_to_first_scene:
@@ -937,7 +937,7 @@ NOTES
                         discrete = -1
                     r = mae.read_maestr(string.join(data,''),
                                         name,state,finish,discrete,
-                                        quiet,zoom,multiplex)
+                                        quiet,zoom,multiplex,mimic)
                     # END PROPRIETARY CODE SEGMENT
                 except ImportError:
                     print "Error: .MAE format not supported by this PyMOL build."
@@ -1250,7 +1250,7 @@ PYMOL API
         if fname and not fobj:
             if os.path.exists(fname):
                 return _self.load(fname,name,state,'pdb',finish,discrete,quiet,
-                                multiplex,zoom)
+                                  multiplex,zoom)
         tries = 0
         r = DEFAULT_ERROR
         done = 0
@@ -1291,8 +1291,8 @@ PYMOL API
                                     fobj.flush()
                                     if auto_close_file:
                                         fobj.close()
-                                r = _self.read_pdbstr(pdb_str,name,state,finish,discrete,quiet,
-                                                      zoom,multiplex)
+                                r = _self.read_pdbstr(pdb_str,name,state,finish,
+                                                      discrete,quiet,zoom,multiplex)
                                 done = 1
                             except IOError:
 #                                print traceback.print_exc()
