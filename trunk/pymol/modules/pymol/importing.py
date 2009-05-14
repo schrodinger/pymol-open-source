@@ -469,7 +469,7 @@ SEE ALSO
     def _processPWG(fname,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            from consortia.web.d0903.pymolhttpd import PymolHttpd
+            from consortia.web.d0906.pymolhttpd import PymolHttpd
             browser_flag = 0
             launch_flag = 0
             report_url = None
