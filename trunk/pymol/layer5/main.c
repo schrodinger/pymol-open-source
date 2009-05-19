@@ -210,7 +210,6 @@ PyObject *MainComplete(char *str)
 {
   PyMOLGlobals *G = SingletonPyMOLGlobals;
   PyObject *result = NULL;
-  printf("complete %s\n",str);
   result = PyObject_CallFunction(G->P_inst->complete,"s",str);
   return(result);
 }

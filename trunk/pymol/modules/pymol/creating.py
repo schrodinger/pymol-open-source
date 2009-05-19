@@ -868,7 +868,7 @@ SEE ALSO
             return s[1:-1]
         return s
     
-    def pseudoatom(object, selection='', name='PS1', resn='PSD', resi='1', chain='P',
+    def pseudoatom(object='', selection='', name='PS1', resn='PSD', resi='1', chain='P',
                    segi='PSDO', elem='PS', vdw=-1.0, hetatm=1, b=0.0, q=0.0, color='',
                    label='', pos=None, state=0, mode='rms', quiet=1,_self=cmd):
         '''
@@ -897,6 +897,9 @@ NOTES
             color = _self.get_color_index(str(color))
         else:
             color = -1 # default
+        object = str(object)
+        if not len(object):
+            object = _self.get_unused_name(prefix="pseudo")
         selection = selector.process(selection)
         mode = pseudoatom_mode_dict[pseudoatom_mode_sc.auto_err(str(mode),'pseudoatom mode')]
         

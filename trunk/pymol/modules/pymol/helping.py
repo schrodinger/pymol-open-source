@@ -612,30 +612,16 @@ DESCRIPTION
         '''
 DESCRIPTION
 
-    PovRay: Persistance of Vision Support Information (EXPERIMENTAL)
+    PovRay: Persistance of Vision Support Information 
 
     The built-in ray-tracer (technically a ray-caster) is as fast or
-    faster than PovRay for most figures (provided that hash_max is
-    tuned for your system).  However, PovRay blows PyMOL away when it
-    comes to rendering images without using lots of RAM, and with
-    PovRay you get the ability use perspective, textures, reflections,
-    infinite objects, and a superior lighting model.
+    faster than PovRay for many figures (provided that hash_max is
+    tuned appropriately for your content).  However, PovRay blows
+    PyMOL away when it comes to rendering images without using lots of
+    RAM, and with PovRay you get the ability use perspective,
+    textures, reflections, infinite objects, and a superior lighting
+    model.
 
-    PovRay does not include interpolated colors within triangles (!!),
-    so you must patch the source code in order to obtain this basic
-    functionality required for rendering molecular surfaces.  Details
-    can be found on the DINO website.
-
-        http://www.biozentrum.unibas.ch/~xray/dino
-
-    To use PovRay, you must be running under Unix and have x-povray in
-    your path.  Unfortunately, the developers of PovRay do not share
-    PyMOL's open-source philosophy, so you will need to download,
-    configure, patch (for smooth_color_triangles), and install it
-    yourself.  Despite being free and open-source, PovRay's license
-    prevents it from being modified or conveniently combined with
-    PyMOL, and thus it serves as a textbook example for why open-source
-    licenses should be wholly non-restrictive.
 
     Assuming that PovRay is built and in your path...
 
@@ -645,10 +631,7 @@ DESCRIPTION
     ray                        # will now use PovRay by default
 
     cmd.get_povray() # will give you a tuple of PovRay input strings
-                          # which you can manipulate from Python
-
-    set smooth_color_triangles = 1 # is required in order to get decent
-        surfaces in PovRay.  You must patch PovRay first.
+                     # which you can manipulate from Python
 
         '''
         _self.help('povray')

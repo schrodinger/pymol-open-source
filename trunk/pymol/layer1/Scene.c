@@ -169,7 +169,7 @@ struct _CScene {
   double RovingLastUpdate;
   int Threshold, ThresholdX, ThresholdY;
   CView *View;
-  float LastPickVertex[3];
+  float LastPickVertex[3], LastClickVertex[3];
   int LastPickVertexFlag;
   int LoopFlag;
   int LoopMod;
@@ -3772,6 +3772,18 @@ static int SceneClick(Block *block,int button,int x,int y,
   I->LastMod = mod;
   I->Threshold = 0;
   
+  
+  SceneGetPos(G,I->LastClickVertex);
+  {
+    float vScale = SceneGetExactScreenVertexScale(G,I->LastClickVertex);
+    float v[3];
+    v[0] = -(I->Width/2-(x-I->Block->rect.left))*vScale;
+    v[1] = -(I->Height/2-(y-I->Block->rect.bottom))*vScale;
+    v[2] = 0;
+    MatrixInvTransformC44fAs33f3f(I->RotMatrix,v,v); 
+    add3f(v,I->LastClickVertex,I->LastClickVertex);
+  }
+
   if(I->ButtonsShown) {
     int i;
     SceneElem *elem = I->SceneVLA;
@@ -4069,9 +4081,10 @@ static int SceneClick(Block *block,int button,int x,int y,
       } else { /* no atom picked */
         switch(mode) {
         case cButModeMenu:
-          MenuActivate0Arg(G,I->LastWinX,I->LastWinY,
-                           I->LastWinX,I->LastWinY,
-                           is_single_click,"main_menu");
+           
+          MenuActivate3fv(G,I->LastWinX,I->LastWinY,
+                          I->LastWinX,I->LastWinY,
+                          is_single_click,"main_menu",I->LastClickVertex);
           break;
         default:
           EditorInactivate(G);
