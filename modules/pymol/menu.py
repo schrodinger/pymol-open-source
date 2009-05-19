@@ -1234,9 +1234,25 @@ def scene_main(self_cmd):
         [ 0, ''             , ''                      ],        
         [ 1, 'buttons', scene_buttons(self_cmd)] ]
 
-def main_menu(self_cmd):
+def main_pseudoatom_sub(self_cmd,pos):
+    return [
+        [ 2, 'Pseudoatom' ,'' ],
+        [ 1, 'label' ,'cmd.wizard("pseudoatom","label",pos=[%1.7f,%1.7f,%1.7f])'%pos ],
+        [ 0, ''             , ''                      ],
+        [ 1, 'single ', 'cmd.pseudoatom(pos=[%1.7f,%1.7f,%1.7f])'%pos ],
+        ]
+
+def main_pseudoatom(self_cmd,pos):
+    return [
+        [ 2, 'New'  , '' ],
+        [ 1, 'pseudoatom' , main_pseudoatom_sub(self_cmd,pos) ],
+        ]
+
+def main_menu(self_cmd,pos):
     return [
         [ 2, 'Main Pop-Up'  , '' ],
+        [ 1, 'new'             , main_pseudoatom(self_cmd,pos) ],        
+        [ 0, ''             , ''                      ],
         [ 1, 'zoom (vis)'           ,'cmd.zoom("visible",animate=-1)'            ],
         [ 1, 'orient (vis)'           ,'cmd.orient("visible",animate=-1)'            ],
         [ 1, 'center (vis)'           ,'cmd.center("visible",animate=-1)'            ],      

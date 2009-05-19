@@ -45,6 +45,25 @@ void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
 
 }
 
+void MenuActivate3fv(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
+                      char *name,float *xyz)
+{
+#ifndef _PYMOL_NOPY
+  PyObject *list;
+
+  PBlock(G); 
+
+  list = PyObject_CallMethod(P_menu,name,"O(fff)",G->P_inst->cmd,xyz[0],xyz[1],xyz[2]);
+  if(PyErr_Occurred()) PyErr_Print();
+  if(list) {
+    PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
+    Py_DECREF(list);
+  }
+  PUnblock(G);
+#endif
+}
+
+
 void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
                       char *name,char *sele1,char *sele2)
 {

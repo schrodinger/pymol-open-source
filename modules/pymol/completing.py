@@ -36,6 +36,7 @@ def get_auto_arg_list(self_cmd=cmd):
         'iterate'        : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'iterate_state'  : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'indicate'       : [ self_cmd.selection_sc           , 'selection'       , ''   ],
+        'label'          : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'map_set'        : [ self_cmd.map_sc                 , 'map'             , ''   ],
         'mask'           : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'mview'          : [ self_cmd.moving.mview_action_sc , 'action'          , ''   ],

@@ -34,20 +34,23 @@ if __name__=='pymol.querying':
                     _self.distance()
         _self.unpick()   
 
-    def get_unused_name(prefix="tmp",_self=cmd):
+    def get_unused_name(prefix="tmp",alwaysnumber=1,_self=cmd):
         r = DEFAULT_ERROR        
         # should replace this with a C function
         try:
             _self.lock(_self)  
             avoid_dict = {}
-            for name in  _self.get_names('all'):
+            for name in _self.get_names('all'):
                 avoid_dict[name] = None
-            counter = 1
-            while 1:
-                r = prefix + "%02d"%counter
-                if not avoid_dict.has_key(r):
-                    break
-                counter = counter + 1
+            if alwaysnumber or avoid_dict.has_key(prefix):
+                counter = 1
+                while 1:
+                    r = prefix + "%02d"%counter
+                    if not avoid_dict.has_key(r):
+                        break
+                    counter = counter + 1
+            else:
+                r=prefix
         finally:
             _self.unlock(r,_self)
         return r
