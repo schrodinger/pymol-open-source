@@ -1912,7 +1912,6 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
 {
   char all[] = "all";
   char *inv_sele;
-  OrthoLineType command;
   if(!sele) {
     inv_sele = all;
   } else if(sele[0]==0) {
