@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2009-06-09 Warren L. DeLano <warren@delsci.com>	
+
+	* fixed rounding error bug with symmetry expansion of maps.
+	
 2009-05-18 Warren L. DeLano <warren@delsci.com>	
 
 	* pseudoatom labeling via main menu right-click
