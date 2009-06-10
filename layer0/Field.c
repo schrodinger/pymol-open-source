@@ -236,6 +236,25 @@ float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z)
 
 }
 
+/*
+float FieldExtrapolatef(CField *I,int a,int b,int c,float x,float y,float z)
+{
+  float ix = (x > 1.0F) ? 1.0F : 0.0F;
+  float iy = (y > 1.0F) ? 1.0F : 0.0F;
+  float iz = (z > 1.0F) ? 1.0F : 0.0F;
+
+  x -= ix;
+  y -= iy;
+  z -= iz;
+
+  {
+    float base = FieldInterpolatef(I,a,b,c,ix,iy,iz) - FieldInterpolatef(I,a,b,c,0.0F,0.0F,0.0F);
+    float offset = FieldInterpolatef(I,a,b,c,x,y,z);
+    return base + offset;
+  }
+}
+*/
+
 void FieldInterpolate3f(CField *I,int *locus,float *fract, float *result)
 {
   /* basic trilinear interpolation */

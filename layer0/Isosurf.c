@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -606,57 +607,62 @@ int IsosurfExpand(Isofield *field1, Isofield *field2, CCrystal *cryst,
             test_frac[1] -= imn[1];
             test_frac[2] -= imn[2];
 
-            test_frac[0] -= (int)floor(test_frac[0]);
-            test_frac[1] -= (int)floor(test_frac[1]);
-            test_frac[2] -= (int)floor(test_frac[2]);
-
-            if((test_frac[0]<=frange[0]) &&
-               (test_frac[1]<=frange[1]) &&
-               (test_frac[2]<=frange[2])) {
+            test_frac[0] -= (int)floor(test_frac[0]+R_SMALL4);
+            test_frac[1] -= (int)floor(test_frac[1]+R_SMALL4);
+            test_frac[2] -= (int)floor(test_frac[2]+R_SMALL4);
+            
+            {
               int a,b,c;
               float x,y,z;
-              a = (int) (test_frac[0] / fstep[0]);
+              a = (int) (test_frac[0] / fstep[0]); 
               b = (int) (test_frac[1] / fstep[1]);
               c = (int) (test_frac[2] / fstep[2]);
               x = (test_frac[0] / fstep[0]) - a;
               y = (test_frac[1] / fstep[1]) - b;
               z = (test_frac[2] / fstep[2]) - c;
-
+            
               if((a>=0) && (b>=0) && (c>=0)&&
-                 (a<=field1max[0]) && (b<=field1max[1]) && (c<=field1max[2])) {
-                if(a == field1max[0]) {
-                  a = field1max[0]-1;
+                 (a<=(field1max[0]+1)) && (b<=(field1max[1]+1)) && (c<=(field1max[2]+1))) {
+                while(a >= field1max[0]) {
+                  a--;
                   x += 1.0F;
                 }
-                if(b == field1max[1]) {
-                  b = field1max[1]-1;
+                while(b >= field1max[1]) {
+                  b--;
                   y += 1.0F;
                 }
-                if(c == field1max[2]) {
-                  c = field1max[2]-1;
+                while(c >= field1max[2]) {
+                  c--;
                   z += 1.0F;
                 }
                 
-                if(!expanded) {
-                  if((matrix[0]!=1.0F)|| /* not identity matrix */
-                     (matrix[5]!=1.0F)||
-                     (matrix[10]!=1.0F)||
-                     (matrix[15]!=1.0F)||
-                     /* and not inside source map */
-                     ((imn[0]-frac[0])>R_SMALL4) || ((frac[0]-imx[0])>R_SMALL4) ||
-                     ((imn[1]-frac[1])>R_SMALL4) || ((frac[1]-imx[1])>R_SMALL4) ||
-                     ((imn[2]-frac[2])>R_SMALL4) || ((frac[2]-imx[2])>R_SMALL4)) {
-                    expanded = true; 
+                {
+                  const float sloppy_1 = 1.0F + R_SMALL4;
+                  if((x<=sloppy_1) && (y<=sloppy_1) && (z<=sloppy_1)) {
+                    if(!expanded) {
+                      if((matrix[0]!=1.0F)|| /* not identity matrix */
+                         (matrix[5]!=1.0F)||
+                         (matrix[10]!=1.0F)||
+                         (matrix[15]!=1.0F)||
+                         /* and not inside source map */
+                         ((imn[0]-frac[0])>R_SMALL4) || ((frac[0]-imx[0])>R_SMALL4) ||
+                         ((imn[1]-frac[1])>R_SMALL4) || ((frac[1]-imx[1])>R_SMALL4) ||
+                         ((imn[2]-frac[2])>R_SMALL4) || ((frac[2]-imx[2])>R_SMALL4)) {
+                        expanded = true; 
+                      }
+                    }
+                    /* found at least one point obtained through symmetry or priodicity */
+                    if(x>1.0F) x = 1.0F;
+                    if(y>1.0F) y = 1.0F;
+                    if(z>1.0F) z = 1.0F;
+                    average += FieldInterpolatef(field1->data,
+                                                 a, b, c, x, y, z);
+                    cnt++;
                   }
-                  /* found at least one point obtained through symmetry or priodicity */
                 }
-                average += FieldInterpolatef(field1->data,
-                                             a, b, c, x, y, z);
-                cnt++;
               }
             }
           }
-
           if(cnt) {
             F3(field2->data,i,j,k) = average/cnt;
           } else {
