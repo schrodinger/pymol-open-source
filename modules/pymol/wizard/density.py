@@ -109,7 +109,7 @@ class Density(Wizard):
         sele_name = "_dw"
         if sele_name not in cmd.get_names('selections'):
             sele_name = "center"
-        if sele_name in cmd.get_names('selections'):        
+        if 1:
             save = self.cmd.get_setting_text('auto_zoom')
             self.cmd.set('auto_zoom',0,quiet=1)                     
             c = 0
@@ -134,26 +134,26 @@ class Density(Wizard):
             save = self.cmd.set('auto_zoom',save,quiet=1)            
             if self.track==0:
                 if zoom:
-                    self.cmd.zoom(sele_name,self.radius,animate=0.5)
+                    self.cmd.zoom(sele_name,self.radius,animate=0.67)
             elif self.track==1:
                 if zoom:
-                    self.cmd.center(sele_name,animate=0.5)
+                    self.cmd.center(sele_name,animate=0.67)
             elif self.track==2:
                 if zoom:
-                    self.cmd.origin(sele_name,animate=0.5)
+                    self.cmd.origin(sele_name,animate=0.67)
         self.cmd.refresh_wizard()      
 # generic set routines
 
     def zoom(self):
         if '_dw' in self.cmd.get_names('selections'):
-            self.cmd.zoom("(_dw)",self.radius,animate=0.5)
+            self.cmd.zoom("(_dw)",self.radius,animate=0.67)
         else:
             c = 0
             for a in self.map:
                 oname = 'w'+str(c+1)+'_'+a
                 if len(a):
                     if a in self.cmd.get_names('objects'):
-                        self.cmd.zoom(oname,animate=0.5)
+                        self.cmd.zoom(oname,animate=0.67)
 
                 c = c + 1
                 
