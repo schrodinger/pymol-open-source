@@ -131,6 +131,9 @@ unix-prep:
 	find $(MINDEP)/pymol -type d -name '\.svn' | awk '{printf "/bin/rm -rf ";print;}' | sh
 	/bin/rm -f $(MINDEP)/pymol/test/pdb
 
+p4m-eval: unix-product
+	cd epymol/integrate/p4m; $(MAKE)
+
 unix-product: unix-mindep unix-prep
 	cd $(MINDEP);chown -R nobody pymol
 	cd $(MINDEP);chgrp -R nobody pymol

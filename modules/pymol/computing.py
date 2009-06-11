@@ -80,7 +80,8 @@ class CleanJob:
             from freemol import mengine
         except:
             ok = 0
-            print "Error: Unable to import module freemol.mengine"
+            print "Error: unable to import module freemol.mengine"
+            print "This PyMOL build may not include full modeling capabilities."
         if ok:
             if not mengine.validate():
                 ok = 0
