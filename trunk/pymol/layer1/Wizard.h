@@ -36,6 +36,8 @@ int WizardDoScene(PyMOLGlobals *G);
 int WizardDoState(PyMOLGlobals *G);
 int WizardDoFrame(PyMOLGlobals *G);
 int WizardDoDirty(PyMOLGlobals *G);
+int WizardDoView(PyMOLGlobals *G,int force);
+int WizardDoPosition(PyMOLGlobals *G,int force);
 
 void WizardDirty(PyMOLGlobals *G);
 int WizardUpdate(PyMOLGlobals *G);

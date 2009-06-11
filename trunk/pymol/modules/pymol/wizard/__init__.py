@@ -10,7 +10,9 @@ class Wizard:
     event_mask_scene   = 16 # scene changed
     event_mask_state   = 32 # state changed
     event_mask_frame   = 64 # frame changed
-    event_mask_dirty   = 128 # anything changed (via OrthoDirty)
+    event_mask_dirty   = 128 # anything changed (BEWARE FEEDBACK!)
+    event_mask_view    = 256 # view (matrix) changed
+    event_mask_position = 512 # center of the view changed
     
     def __init__(self,_self=cmd):
         self.menu = {}
@@ -40,6 +42,12 @@ class Wizard:
         return Wizard.event_mask_pick + Wizard.event_mask_select
 
     def do_scene(self):
+        return None
+
+    def do_view(self):
+        return None
+
+    def do_position(self):
         return None
 
     def do_state(self,state):

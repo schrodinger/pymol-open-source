@@ -232,6 +232,15 @@ typedef struct {
   SceneUnitContext context; /* for whole-window display */
 } GridInfo;
 
+int SceneViewEqual(SceneViewType left,SceneViewType right)
+{
+  int i;
+  for(i=0;i<cSceneViewSize;i++) {
+    if(fabs(left[i] - right[i])>R_SMALL4)
+      return false;
+  }
+  return true;
+}
 static void GridSetRayViewport(GridInfo *I, int slot, int *x, int *y, int *width, int *height)
 {
   if(slot)
@@ -6935,6 +6944,8 @@ void SceneUpdate(PyMOLGlobals *G, int force)
     ENDFD;
 
   OrthoBusyPrime(G);
+  WizardDoPosition(G,false);
+  WizardDoView(G,false);
   EditorUpdate(G);
   if(defer_builds_mode == 0) {
     if(SettingGetGlobal_i(G,cSetting_draw_mode)==-2) {
