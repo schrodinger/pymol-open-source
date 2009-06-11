@@ -446,6 +446,7 @@ int ExecutiveIsomeshEtc(PyMOLGlobals *G,
           ENDFB(G);
         if(sele_obj && SettingGet_b(G,NULL,sele_obj->Obj.Setting,cSetting_map_auto_expand_sym) &&
            (sele_obj->Symmetry) && ObjectMapValidXtal(mapObj,state)) { 
+
           obj=(CObject*)ObjectMeshFromXtalSym(G,(ObjectMesh*)origObj,mapObj,
                                            sele_obj->Symmetry,
                                            map_state,state,mn,mx,lvl,mesh_mode,

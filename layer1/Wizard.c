@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"PopUp.h"
 
 #include"Wizard.h"
+#include"Scene.h"
 
 #include"Executive.h"
 #include"Block.h"
@@ -45,6 +46,8 @@ Z* -------------------------------------------------------------------
 #define cWizEventState   32
 #define cWizEventFrame   64
 #define cWizEventDirty  128
+#define cWizEventView   256
+#define cWizEventPosition 512
 
 typedef struct {
   int type;
@@ -63,7 +66,8 @@ struct _CWizard {
   int Dirty;
   int LastUpdatedState;
   int LastUpdatedFrame;
-  
+  float LastUpdatedPosition[3];
+  SceneViewType LastUpdatedView;
 };
 
 #define cWizardLeftMargin 2
@@ -88,23 +92,25 @@ int WizardUpdate(PyMOLGlobals *G)
 
   {
     int frame = SettingGetGlobal_i(G,cSetting_frame);
-    int state = SettingGetGlobal_i(G,cSetting_state);
     if(frame!=I->LastUpdatedFrame) {
       I->LastUpdatedFrame = frame;
       WizardDoFrame(G);
     }
+  }
+  {
+    int state = SettingGetGlobal_i(G,cSetting_state);
     if(state!=I->LastUpdatedState) {
       I->LastUpdatedState = state;
       WizardDoState(G);
     }
   }
-
+  WizardDoPosition(G,false);
+  WizardDoView(G,false);
   if(I->Dirty) {
     WizardRefresh(G);
     I->Dirty=false;
     result = true;
   }
-
   return result;
 }
 
@@ -340,6 +346,74 @@ int WizardDoKey(PyMOLGlobals *G,unsigned char k, int x, int y, int mod)
             }
           }
         PUnblock(G);
+      }
+  return result;
+#endif
+}
+
+int WizardDoPosition(PyMOLGlobals *G,int force)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+  register CWizard *I=G->Wizard;
+  int result=false;
+  if(I->EventMask & cWizEventPosition)
+    if(I->Stack>=0) 
+      if(I->Wiz[I->Stack]) {
+        int changed = force;
+        if(!changed) {
+          float pos[3];
+          SceneGetPos(G,pos);
+          changed = ((fabs(pos[0] - I->LastUpdatedPosition[0])>R_SMALL4)||
+                     (fabs(pos[1] - I->LastUpdatedPosition[1])>R_SMALL4)||
+                     (fabs(pos[2] - I->LastUpdatedPosition[2])>R_SMALL4));
+        }
+        if(changed) {
+          SceneGetPos(G,I->LastUpdatedPosition);
+          PBlock(G); 
+          if(I->Stack>=0)
+            if(I->Wiz[I->Stack]) {
+              if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_position")) {
+                result = PTruthCallStr0(I->Wiz[I->Stack],"do_position");
+                if(PyErr_Occurred()) PyErr_Print();
+              }
+            }
+          PUnblock(G);
+        }
+      }
+  return result;
+#endif
+}
+
+int WizardDoView(PyMOLGlobals *G,int force)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+  register CWizard *I=G->Wizard;
+  int result=false;
+  if(I->EventMask & cWizEventView)
+    if(I->Stack>=0) 
+      if(I->Wiz[I->Stack]) {
+        int changed = force;
+        if(!changed) {
+          SceneViewType view;
+          SceneGetView(G,view);
+          changed = ! SceneViewEqual(view,I->LastUpdatedView);
+        }
+        if(changed) {
+          SceneGetView(G,I->LastUpdatedView);
+          PBlock(G); 
+          if(I->Stack>=0)
+            if(I->Wiz[I->Stack]) {
+              if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_view")) {
+                result = PTruthCallStr0(I->Wiz[I->Stack],"do_view");
+                if(PyErr_Occurred()) PyErr_Print();
+              }
+            }
+          PUnblock(G);
+        }
       }
   return result;
 #endif

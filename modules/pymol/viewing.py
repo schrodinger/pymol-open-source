@@ -118,7 +118,7 @@ SEE ALSO
         try:
             _self.lock(_self)   
             r = _cmd.zoom(_self._COb,str(selection),float(buffer),
-                              int(state)-1,int(complete),int(animate))
+                              int(state)-1,int(complete),float(animate))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
@@ -168,7 +168,7 @@ SEE ALSO
         #
         try:
             _self.lock(_self)   
-            r = _cmd.center(_self._COb,str(selection),int(state)-1,int(origin),int(animate))
+            r = _cmd.center(_self._COb,str(selection),int(state)-1,int(origin),float(animate))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise QuietException
