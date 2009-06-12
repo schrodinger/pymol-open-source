@@ -465,7 +465,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def madd(specification=""):
+    def madd(specification="",_self=cmd):
         '''
 DESCRIPTION
 
@@ -477,7 +477,7 @@ SEE ALSO
     mset, mdo, mplay, mclear
 
     '''
-        mset(specification,0)
+        mset(specification,0,_self=_self)
         
     def mset(specification="",frame=1,_self=cmd):
         '''
@@ -517,7 +517,8 @@ SEE ALSO
     mdo, mplay, mclear
         '''
         r = DEFAULT_ERROR
-        cur_state = _self.get_state()-1 # use the current state 
+        cur_state = _self.get_state()-1 # use the current state
+        specification = str(specification)
         try:
             _self.lock(_self)
             output=[]
