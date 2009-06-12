@@ -3554,8 +3554,10 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
         }
       }
     }
-    if(I->LoopFlag && (I->PossibleSingleClick!=2))
+    if(I->LoopFlag) {
+      I->PossibleSingleClick = 0;
       return SceneLoopRelease(block,button,x,y,mod);
+    }
     OrthoUngrab(G);
     I->LoopFlag=false;
     if(I->SculptingFlag) {
