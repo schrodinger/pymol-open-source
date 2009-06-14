@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include "config.h"
 #endif
 
+
 /* Macros used by Fortify source in GCC 4.1.x are incompatible with
    PyMOL's Feedback system... */
 
@@ -27,12 +30,13 @@ Z* -------------------------------------------------------------------
 #undef _FORTIFY_SOURCE
 #endif
 
+
 /* Alias-able typedefs */
 
 #ifdef __GNUC__
 #if __GNUC__ > 3
-typedef int aliased_int __attribute__((may_alias));
-typedef float aliased_float __attribute__((may_alias));
+typedef int aliased_int __attribute__ ((may_alias));
+typedef float aliased_float __attribute__ ((may_alias));
 #else
 typedef int aliased_int;
 typedef float aliased_float;
@@ -42,7 +46,8 @@ typedef int aliased_int;
 typedef float aliased_float;
 #endif
 
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 
 #ifdef WIN32
 #define __inline__ __inline
@@ -51,58 +56,58 @@ typedef float aliased_float;
 #ifndef _PYMOL_MINGW
 #ifdef _WIN32
 #ifndef _AFXDLL
-	#ifndef _UNICODE
-		#ifdef _DEBUG
-			#pragma comment(lib, "nafxcwd.lib")
-		#else
-			#pragma comment(lib, "nafxcw.lib")
-		#endif
-	#else
-		#ifdef _DEBUG
-			#pragma comment(lib, "uafxcwd.lib")
-		#else
-			#pragma comment(lib, "uafxcw.lib")
-		#endif
-	#endif
+#ifndef _UNICODE
+#ifdef _DEBUG
+#pragma comment(lib, "nafxcwd.lib")
 #else
-	#ifndef _UNICODE
-		#ifdef _DEBUG
-			#pragma comment(lib, "mfc42d.lib")
-			#pragma comment(lib, "mfcs42d.lib")
-		#else
-			#pragma comment(lib, "mfc42.lib")
-			#pragma comment(lib, "mfcs42.lib")
-		#endif
-	#else
-		#ifdef _DEBUG
-			#pragma comment(lib, "mfc42ud.lib")
-			#pragma comment(lib, "mfcs42ud.lib")
-		#else
-			#pragma comment(lib, "mfc42u.lib")
-			#pragma comment(lib, "mfcs42u.lib")
-		#endif
-	#endif
+#pragma comment(lib, "nafxcw.lib")
+#endif
+#else
+#ifdef _DEBUG
+#pragma comment(lib, "uafxcwd.lib")
+#else
+#pragma comment(lib, "uafxcw.lib")
+#endif
+#endif
+#else
+#ifndef _UNICODE
+#ifdef _DEBUG
+#pragma comment(lib, "mfc42d.lib")
+#pragma comment(lib, "mfcs42d.lib")
+#else
+#pragma comment(lib, "mfc42.lib")
+#pragma comment(lib, "mfcs42.lib")
+#endif
+#else
+#ifdef _DEBUG
+#pragma comment(lib, "mfc42ud.lib")
+#pragma comment(lib, "mfcs42ud.lib")
+#else
+#pragma comment(lib, "mfc42u.lib")
+#pragma comment(lib, "mfcs42u.lib")
+#endif
+#endif
 #endif
 
 #ifdef _DLL
-	#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
-		#pragma comment(lib, "msvcrtd.lib")
-	#else
-		#pragma comment(lib, "msvcrt.lib")
-	#endif
+#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
+#pragma comment(lib, "msvcrtd.lib")
+#else
+#pragma comment(lib, "msvcrt.lib")
+#endif
 #else
 #ifdef _MT
-	#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
-		#pragma comment(lib, "libcmtd.lib")
-	#else
-		#pragma comment(lib, "libcmt.lib")
-	#endif
+#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
+#pragma comment(lib, "libcmtd.lib")
 #else
-	#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
-		#pragma comment(lib, "libcd.lib")
-	#else
-		#pragma comment(lib, "libc.lib")
-	#endif
+#pragma comment(lib, "libcmt.lib")
+#endif
+#else
+#if !defined(_AFX_NO_DEBUG_CRT) && defined(_DEBUG)
+#pragma comment(lib, "libcd.lib")
+#else
+#pragma comment(lib, "libc.lib")
+#endif
 #endif
 #endif
 
@@ -115,15 +120,18 @@ typedef float aliased_float;
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "comctl32.lib")
 
+
 /* force inclusion of NOLIB.OBJ for /disallowlib directives */
 #ifndef _PYMOL_PYOMM
 #pragma comment(linker, "/include:__afxForceEXCLUDE")
 #endif
 
+
 /* force inclusion of DLLMODUL.OBJ for _USRDLL */
 #ifdef _USRDLL
 #pragma comment(linker, "/include:__afxForceUSRDLL")
 #endif
+
 
 /* force inclusion of STDAFX.OBJ for precompiled types */
 #ifdef _AFXDLL
@@ -132,6 +140,7 @@ typedef float aliased_float;
 
 #endif
 #endif
+
 
 /* commercial product */
 
@@ -144,6 +153,7 @@ typedef float aliased_float;
 #endif
 #endif
 
+
 /* collaboration product (placarded) */
 
 #ifdef PYMOL_COLL
@@ -154,6 +164,7 @@ typedef float aliased_float;
 #define _PYMOL_IP_EXTRAS
 #endif
 #endif
+
 
 /* educational product (placarded) */
 
@@ -166,6 +177,7 @@ typedef float aliased_float;
 #endif
 #endif
 
+
 /* evaluation product (placarded) */
 
 #ifdef PYMOL_EVAL
@@ -173,6 +185,7 @@ typedef float aliased_float;
 #define _PYMOL_IP_SPLASH
 #endif
 #endif
+
 
 /* END PROPRIETARY CODE SEGMENT */
 
@@ -185,5 +198,3 @@ typedef float aliased_float;
 #include "ov_types.h"
 
 #endif
-
-

@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,14 +20,14 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 #include"CGO.h"
 
-int VFontInit(PyMOLGlobals *G);
-void VFontFree(PyMOLGlobals *G);
+int VFontInit(PyMOLGlobals * G);
+void VFontFree(PyMOLGlobals * G);
 
-int VFontLoad(PyMOLGlobals *G,float size,int face,int style,int can_load_new);
-int VFontWriteToCGO(PyMOLGlobals *G,int font_id,CGO *cgo,char *text,
-                    float *pos,float *scale, float *matrix);
+int VFontLoad(PyMOLGlobals * G, float size, int face, int style, int can_load_new);
+int VFontWriteToCGO(PyMOLGlobals * G, int font_id, CGO * cgo, char *text,
+                    float *pos, float *scale, float *matrix);
 
-int VFontIndent(PyMOLGlobals *G,int font_id,char *text,
-                 float *pos,float *scale, float *matrix, float dir);
+int VFontIndent(PyMOLGlobals * G, int font_id, char *text,
+                float *pos, float *scale, float *matrix, float dir);
 
 #endif

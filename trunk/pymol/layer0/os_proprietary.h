@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -16,6 +18,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_proprietary
 
 #include "os_predef.h"
+
 
 /* PROPRIETARY CODE SEGMENT DISCLAIMER:
  *
@@ -67,10 +70,13 @@ Z* -------------------------------------------------------------------
  * CODE SEGMENTS.
  */
 
+
 /* BEGIN PROPRIETARY CODE SEGMENT */
 #ifdef WIN32
-#include<windows.h> 
+#include<windows.h>
 #endif
+
+
 /* END PROPRIETARY CODE SEGMENT */
 
 #endif

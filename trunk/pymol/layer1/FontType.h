@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,6 +20,6 @@ Z* -------------------------------------------------------------------
 
 #include"Font.h"
 
-CFont* FontTypeNew(PyMOLGlobals *G,unsigned char *dat, unsigned int len);
+CFont *FontTypeNew(PyMOLGlobals * G, unsigned char *dat, unsigned int len);
 
 #endif

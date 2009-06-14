@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -21,8 +23,9 @@ Z* -------------------------------------------------------------------
 #define cMyPNG_FormatPNG 0
 #define cMyPNG_FormatPPM 1
 
-int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
-               unsigned int width,unsigned int height,float dpi,int format, int quiet);
-int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsigned int *height_ptr);
+int MyPNGWrite(PyMOLGlobals * G, char *file_name, unsigned char *p,
+               unsigned int width, unsigned int height, float dpi, int format, int quiet);
+int MyPNGRead(char *file_name, unsigned char **p_ptr, unsigned int *width_ptr,
+              unsigned int *height_ptr);
 
 #endif

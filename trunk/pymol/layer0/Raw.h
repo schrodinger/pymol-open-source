@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -18,16 +20,18 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLGlobals.h"
 
+
 /* interface class for device-independent, raw binary I/O */
 
-typedef struct { 
+typedef struct {
   PyMOLGlobals *G;
-  int mode; 
+  int mode;
   FILE *f;
   char *bufVLA;
   int swap;
   int header[4];
-} CRaw; 
+} CRaw;
+
 
 /* object types */
 
@@ -38,6 +42,7 @@ typedef struct {
 #define cRaw_SpheroidNormals1        4
 #define cRaw_SpheroidInfo1           5
 #define cRaw_Bonds1                  6
+
 
 /* FYI: file format;
 
@@ -53,28 +58,20 @@ followed by any number of records with the following header...
 
 */
 
-CRaw *RawOpenRead(PyMOLGlobals *G,char *fname);
-CRaw *RawOpenWrite(PyMOLGlobals *G,char *fname);
-CRaw *RawOpenAppend(PyMOLGlobals *G,char *fname);
-void RawFree(CRaw *I);
+CRaw *RawOpenRead(PyMOLGlobals * G, char *fname);
+CRaw *RawOpenWrite(PyMOLGlobals * G, char *fname);
+CRaw *RawOpenAppend(PyMOLGlobals * G, char *fname);
+void RawFree(CRaw * I);
 
-int RawWrite(CRaw *I,int type,unsigned int size,int serial,char *bytes);
+int RawWrite(CRaw * I, int type, unsigned int size, int serial, char *bytes);
 
-int RawGetNext(CRaw *I,int *size,int *version);
+int RawGetNext(CRaw * I, int *size, int *version);
 
-char *RawRead(CRaw *I,int *type,unsigned int *size,int *serial);
-char *RawReadPtr(CRaw *I,int type,int *size);
-char *RawReadVLA(CRaw *I,int type,unsigned int rec_size,int grow_factor,int auto_zero);
-int RawReadInto(CRaw *I,int type,unsigned int size,char *buffer);
-int RawReadSkip(CRaw *I);
+char *RawRead(CRaw * I, int *type, unsigned int *size, int *serial);
+char *RawReadPtr(CRaw * I, int type, int *size);
+char *RawReadVLA(CRaw * I, int type, unsigned int rec_size, int grow_factor,
+                 int auto_zero);
+int RawReadInto(CRaw * I, int type, unsigned int size, char *buffer);
+int RawReadSkip(CRaw * I);
 
 #endif
-
-
-
-
-
-
-
-
-

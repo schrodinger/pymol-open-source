@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -30,9 +31,9 @@ typedef struct ObjectCallback {
   int NState;
 } ObjectCallback;
 
-ObjectCallback *ObjectCallbackNew(PyMOLGlobals *G);
-ObjectCallback *ObjectCallbackDefine(PyMOLGlobals *G,ObjectCallback *obj,PyObject *PObj,int state);
-void ObjectCallbackRecomputeExtent(ObjectCallback *I);
+ObjectCallback *ObjectCallbackNew(PyMOLGlobals * G);
+ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,
+                                     PyObject * PObj, int state);
+void ObjectCallbackRecomputeExtent(ObjectCallback * I);
 
 #endif
-

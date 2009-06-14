@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -24,20 +26,20 @@ typedef struct SphereRec {
   Vector3f *dot;
   int *StripLen;
   int *Sequence;
-  int NStrip,NVertTot;
+  int NStrip, NVertTot;
   int nDot;
   int *Tri;
   int NTri;
   int *Mesh;
   int NMesh;
-} SphereRec,*SphereRecPtr;
+} SphereRec, *SphereRecPtr;
 
 struct _CSphere {
   SphereRecPtr Sphere[5];
   SphereRec *Array;
 };
 
-void SphereInit(PyMOLGlobals *G);
-void SphereFree(PyMOLGlobals *G);
+void SphereInit(PyMOLGlobals * G);
+void SphereFree(PyMOLGlobals * G);
 
 #endif

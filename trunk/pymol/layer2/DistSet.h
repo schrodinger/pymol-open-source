@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -22,15 +23,15 @@ Z* -------------------------------------------------------------------
 #include"PyMOLObject.h"
 
 typedef struct DistSet {
-  void (*fUpdate)(struct DistSet *I,int state);
-  void (*fRender)(struct DistSet *I,RenderInfo *);
-  void (*fFree)(struct DistSet *I);
-  void (*fInvalidateRep)(struct DistSet *I,int type,int level);
+  void (*fUpdate) (struct DistSet * I, int state);
+  void (*fRender) (struct DistSet * I, RenderInfo *);
+  void (*fFree) (struct DistSet * I);
+  void (*fInvalidateRep) (struct DistSet * I, int type, int level);
   CObjectState State;
   struct ObjectDist *Obj;
   float *Coord;
   int NIndex;
-  Rep **Rep; /* an array of pointers to representations */
+  Rep **Rep;                    /* an array of pointers to representations */
   int NRep;
   CSetting *Setting;
   /* extended for mobile distance labels */
@@ -46,12 +47,11 @@ typedef struct DistSet {
 
 #include"ObjectDist.h"
 
-DistSet *DistSetNew(PyMOLGlobals *G);
-PyObject *DistSetAsPyList(DistSet *I);
-int DistSetFromPyList(PyMOLGlobals *G,PyObject *list,DistSet **cs);
-int DistSetGetExtent(DistSet *I,float *mn,float *mx);
-int DistSetMoveLabel(DistSet *I,int at,float *v,int mode);
-int DistSetGetLabelVertex(DistSet *I,int at, float *v);
+DistSet *DistSetNew(PyMOLGlobals * G);
+PyObject *DistSetAsPyList(DistSet * I);
+int DistSetFromPyList(PyMOLGlobals * G, PyObject * list, DistSet ** cs);
+int DistSetGetExtent(DistSet * I, float *mn, float *mx);
+int DistSetMoveLabel(DistSet * I, int at, float *v, int mode);
+int DistSetGetLabelVertex(DistSet * I, int at, float *v);
 
 #endif
-

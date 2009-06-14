@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,7 +21,7 @@ Z* -------------------------------------------------------------------
 #include "os_predef.h"
 
 #ifdef PYMOL_ICC_LINUX
-#include"/usr/include/bits/types.h" 
+#include"/usr/include/bits/types.h"
 #endif
 
 #ifdef _PYMOL_NOPY
@@ -29,6 +31,3 @@ typedef int PyObject;
 #endif
 
 #endif
-
-
-

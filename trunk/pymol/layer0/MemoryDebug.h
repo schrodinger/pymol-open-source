@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include "PyMOLGlobals.h"
 
 #ifdef OV_JENARIX
+
 
 /* NEW Jenarix-based MemoryDebug wrapper */
 
@@ -69,14 +72,17 @@ Z* -------------------------------------------------------------------
 
 #define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
 
-OV_INLINE_STATIC void MemoryZero(char *p,char *q)
+OV_INLINE_STATIC void MemoryZero(char *p, char *q)
 {
-  if(q>p) 
-    ov_os_memset(p,0,q-p);
+  if(q > p)
+    ov_os_memset(p, 0, q - p);
 }
 
 #else
+
+
 /* OLD proven MemoryDebug implementation */
+
 
 /* This file can be included by C and C++ programs for
    debugging of malloc, realloc, free in C and in addition,
@@ -93,25 +99,28 @@ OV_INLINE_STATIC void MemoryZero(char *p,char *q)
 
 */
 
+
 /* ==================== Master Switch ============================= 
  * Define _MemoryDebug_ON to enable the debugging system...*/
+
 
 /* WARNING!!! MemoryDebug is not thread safe...it must be disabled
    for stable multi-threaded operation within the PyMOL core */
 
 #define _MemoryDebug_OFF
 
+
 /* ================================================================ 
  * Don't touch below unless you know what you are doing */
 
-
-void UtilMemCpy(void *dst,void *src,unsigned int *size);
+void UtilMemCpy(void *dst, void *src, unsigned int *size);
 
 typedef struct VLARec {
   ov_size size, unit_size;
   float grow_factor;
   int auto_zero;
 } VLARec;
+
 
 /* NOTE: in VLACheck, rec is a zero based array index, not a record count */
 #define VLACheck(ptr,type,rec) (ptr=(type*)(((((ov_size)rec)>=((VLARec*)(ptr))[-1].size) ? VLAExpand(ptr,((ov_size)rec)) : (ptr))))
@@ -129,29 +138,30 @@ typedef struct VLARec {
 
 #define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
 
-void *VLAExpand(void *ptr,ov_size rec); /* NOTE: rec is index (total-1) */
+void *VLAExpand(void *ptr, ov_size rec);        /* NOTE: rec is index (total-1) */
 void *MemoryReallocForSure(void *ptr, unsigned int newSize);
 void *MemoryReallocForSureSafe(void *ptr, unsigned int newSize, unsigned int oldSize);
 
 #ifndef _MemoryDebug_ON
-void *VLAMalloc(ov_size init_size,ov_size unit_size,unsigned int grow_factor,int auto_zero); /*growfactor 1-10*/
+void *VLAMalloc(ov_size init_size, ov_size unit_size, unsigned int grow_factor, int auto_zero); /*growfactor 1-10 */
 
 #else
 #define VLAMalloc(a,b,c,d) _VLAMalloc(__FILE__,__LINE__,a,b,c,d)
 
-void *_VLAMalloc(const char *file,int line,ov_size init_size,ov_size unit_size,unsigned int grow_factor,int auto_zero); /*growfactor 1-10*/
+void *_VLAMalloc(const char *file, int line, ov_size init_size, ov_size unit_size, unsigned int grow_factor, int auto_zero);    /*growfactor 1-10 */
 #endif
 
-
 void VLAFree(void *ptr);
-void *VLASetSize(void *ptr,unsigned int newSize);
-void *VLASetSizeForSure(void *ptr,unsigned int newSize);
+void *VLASetSize(void *ptr, unsigned int newSize);
+void *VLASetSizeForSure(void *ptr, unsigned int newSize);
 
 unsigned int VLAGetSize(void *ptr);
 void *VLANewCopy(void *ptr);
-void MemoryZero(char *p,char *q);
+void MemoryZero(char *p, char *q);
 
 #ifndef _MemoryDebug_ON
+
+
 /* _MemoryDebug_ON not defined */
 
 #define mcalloc calloc
@@ -172,8 +182,9 @@ void MemoryZero(char *p,char *q);
 #define MD_FILE_LINE_Nest
 #define MD_FILE_LINE_PTR_Call
 
-
 #else
+
+
 /* _MemoryDebug_ON is defined */
 
 #ifdef __cplusplus
@@ -196,25 +207,23 @@ extern "C" {
 #define ReallocForSureSafe(ptr,type,size,old_size) (type*)MemoryDebugReallocForSureSafe(ptr,sizeof(type)*(size),\
                     sizeof(type)*(old_size),__FILE__,__LINE__,_MDPointer)
 
-void *MemoryDebugMalloc(size_t size,const char *file,int line,int type);
-void *MemoryDebugCalloc(size_t nmemb,size_t size,const char *file,int line,int type);
-void *MemoryDebugRealloc(void *ptr,size_t size,
-			 const char *file,int line,int type);
-void *MemoryDebugReallocForSure(void *ptr,size_t size,const char *file,
-                                int line,int type);
-void *MemoryDebugReallocForSureSafe(void *ptr,size_t size,size_t old_size,
-                                    const char *file,int line,int type);
+  void *MemoryDebugMalloc(size_t size, const char *file, int line, int type);
+  void *MemoryDebugCalloc(size_t nmemb, size_t size, const char *file, int line,
+                          int type);
+  void *MemoryDebugRealloc(void *ptr, size_t size, const char *file, int line, int type);
+  void *MemoryDebugReallocForSure(void *ptr, size_t size, const char *file,
+                                  int line, int type);
+  void *MemoryDebugReallocForSureSafe(void *ptr, size_t size, size_t old_size,
+                                      const char *file, int line, int type);
 
-void MemoryDebugFree(void *ptr,const char *file,int line,int type);
-void MemoryDebugQuietFree(void *ptr,int type);
+  void MemoryDebugFree(void *ptr, const char *file, int line, int type);
+  void MemoryDebugQuietFree(void *ptr, int type);
 
-void MemoryDebugDump(void);
-int MemoryDebugUsage(void);
+  void MemoryDebugDump(void);
+  int MemoryDebugUsage(void);
 
 #ifdef __cplusplus
-}
-
-void *operator new(size_t size, const char *file,int line);
+} void *operator   new(size_t size, const char *file, int line);
 
 #define mnew new(__FILE__,__LINE__)
 
@@ -224,10 +233,3 @@ void *operator new(size_t size, const char *file,int line);
 #endif
 
 #endif
-
-
-
-
-
-
-

@@ -1,3 +1,4 @@
+
 /* MACHINE PROCESSED SOURCE CODE -- DO NOT EDIT */
 
 #ifndef _H_ov_port
@@ -8,6 +9,7 @@
 #include "ov_public.h"
 
 #else
+
 /* headers */
 
 #include <stdio.h>
@@ -25,12 +27,14 @@
 #include "ov_defines.h"
 #include "ov_status.h"
 
+
 /* memory management */
 
 #define ov_os_malloc malloc
 #define ov_os_calloc calloc
 #define ov_os_realloc realloc
 #define ov_os_free free
+
 
 /* termination */
 
@@ -39,5 +43,3 @@
 
 #endif
 #endif
-
-

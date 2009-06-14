@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -18,9 +20,8 @@ Z* -------------------------------------------------------------------
 
 #include "PyMOLGlobals.h"
 
-int TextureInit(PyMOLGlobals *G);
-void TextureFree(PyMOLGlobals *G);
-int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent);
-
+int TextureInit(PyMOLGlobals * G);
+void TextureFree(PyMOLGlobals * G);
+int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent);
 
 #endif

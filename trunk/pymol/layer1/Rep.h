@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -33,6 +34,7 @@ Z* -------------------------------------------------------------------
 #define cRepAll       -1
 #define cRepNone      -2
 
+
 /* WARNING: don't change these -- you'll break sessions!
    (you can add to them however, I think) */
 
@@ -59,68 +61,81 @@ Z* -------------------------------------------------------------------
 
 #define cRepCnt        20
 
+
 /* Hierarchical invalidation scheme - 
  * each higher level event implies all of the lower levels 
  * These used to be used just for graphics, but are now
  * used by the molecular editor as well */
 
+
 /* invalite display (list) */
 
 #define cRepInvDisplay 1
+
 /* precomputed extents (can change if matrix changes) */
 #define cRepInvExtents 5
+
 /* invalidate pickable atoms */
 #define cRepInvPick  9
+
 /* invalidate external atom colors */
 #define cRepInvExtColor  10
+
 /* invalidate atom colors */
 #define cRepInvColor  15
+
 /* invalidate label text */
 #define cRepInvText   16
+
 /* invalidate visible atoms */
 #define cRepInvVisib  20
 #define cRepInvVisib2 21
+
 /* invalidate atomic properties */
 #define cRepInvProp   22
+
 /* invalidate coordinates */
 #define cRepInvCoord  30
+
 /* invalidate graphic representation */
 #define cRepInvRep    35
+
 /* invalidate bond structure */
 #define cRepInvBonds  40
+
 /* invalidate atomic structure */
 #define cRepInvAtoms  50
+
 /* invalidate everything about a structure */
 #define cRepInvAll    100
+
 /* invalidate and furthermore, purge existing representations */
 #define cRepInvPurge  110
 
 struct CoordSet;
 struct Object;
 
-
-
 typedef struct Rep {
   PyMOLGlobals *G;
-  void            (*fRender)(struct Rep *I,RenderInfo *info);
-  struct Rep     *(*fUpdate)(struct Rep *I,struct CoordSet *cs,int state,int rep);
-  void        (*fInvalidate)(struct Rep *I,struct CoordSet *cs,int level);
-  void              (*fFree)(struct Rep* I);
-  int MaxInvalid,Active;
+  void (*fRender) (struct Rep * I, RenderInfo * info);
+  struct Rep *(*fUpdate) (struct Rep * I, struct CoordSet * cs, int state, int rep);
+  void (*fInvalidate) (struct Rep * I, struct CoordSet * cs, int level);
+  void (*fFree) (struct Rep * I);
+  int MaxInvalid, Active;
   CObject *obj;
   struct CoordSet *cs;
   Pickable *P;
   PickContext context;
   /* private */
-  void        (*fRecolor)(struct Rep *I,struct CoordSet *cs);
-  int         (*fSameVis)(struct Rep *I,struct CoordSet *cs);
-  struct Rep *(*fRebuild)(struct Rep *I,struct CoordSet *cs,int state,int rep);
-  struct Rep *(*fNew)(struct CoordSet *cs,int state);
+  void (*fRecolor) (struct Rep * I, struct CoordSet * cs);
+  int (*fSameVis) (struct Rep * I, struct CoordSet * cs);
+  struct Rep *(*fRebuild) (struct Rep * I, struct CoordSet * cs, int state, int rep);
+  struct Rep *(*fNew) (struct CoordSet * cs, int state);
   int displayList;
   int displayListInvalid;
 } Rep;
 
-void RepInit(PyMOLGlobals *G,Rep *I);
-void RepPurge(Rep *I);
+void RepInit(PyMOLGlobals * G, Rep * I);
+void RepPurge(Rep * I);
 
 #endif

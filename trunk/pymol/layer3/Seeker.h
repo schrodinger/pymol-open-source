@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,12 +20,11 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"ObjectMolecule.h"
 
-int SeekerInit(PyMOLGlobals *G);
-void SeekerFree(PyMOLGlobals *G);
-void SeekerUpdate(PyMOLGlobals *G);
-char SeekerGetAbbr(PyMOLGlobals *G,char *abbr,char water,char unknown);
+int SeekerInit(PyMOLGlobals * G);
+void SeekerFree(PyMOLGlobals * G);
+void SeekerUpdate(PyMOLGlobals * G);
+char SeekerGetAbbr(PyMOLGlobals * G, char *abbr, char water, char unknown);
 
-PyObject *SeekerGetRawAlignment(PyMOLGlobals *G, int align_sele, int active_only);
-
+PyObject *SeekerGetRawAlignment(PyMOLGlobals * G, int align_sele, int active_only);
 
 #endif

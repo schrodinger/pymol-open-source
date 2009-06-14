@@ -1,3 +1,4 @@
+
 /* 
  * COPYRIGHT NOTICE: This file contains original source code from the
  * Jenarix (TM) Library, Copyright (C) 2007-8 by Warren L. Delano of
@@ -9,6 +10,7 @@
 */
 #ifndef _H_ov_status
 #define _H_ov_status
+
 
 /* 
    Maintenance of status is a major headache in C due to the lack of
@@ -52,24 +54,29 @@
 
 */
 
+
 /* macros for interpreting status results: */
 
 #define OV_OK(s) ((s)>=0)
 #define OV_ERR(s) ((s)<0)
 
+
 /* asserting non-NULL pointer */
 
 #define OV_PTR(p) ( (p) ? OV_SUCCESS : OV_STATUS_NULL_PTR )
+
 
 /* successful returns are always >=0, and function or method results
    (if any) must be valid */
 
 #define OV_STATUS_SUCCESS 0
 
+
 /* default success status is also passively negative */
 
 #define OV_STATUS_YES     1
 #define OV_STATUS_NO      OV_STATUS_SUCCESS
+
 
 /* error returns are always <0 */
 
@@ -101,11 +108,13 @@
 #define OV_STATUS_TLS_ERROR                  -26
 #define OV_STATUS_IMPOSSIBLE_CONVERSION      -27
 
+
 /* status codes below this number are dynamic exception identifiers
    which consume resources owned by the local environment
    (e.g. ov_node) */
 
 #define OV_STATUS_EXCEPTION_START         -1024
+
 
 /* convenience aliases */
 

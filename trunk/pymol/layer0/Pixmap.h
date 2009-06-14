@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -18,32 +20,29 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLGlobals.h"
 
+
 /* for the sake of simplicity, all pixmaps are 32-bit RGBA */
 
 typedef struct {
   PyMOLGlobals *G;
-  int height,width;
+  int height, width;
   unsigned char *buffer;
 } CPixmap;
 
-void PixmapInit(PyMOLGlobals *G,CPixmap *I,int width,int height);
+void PixmapInit(PyMOLGlobals * G, CPixmap * I, int width, int height);
 
-CPixmap *PixmapNew(PyMOLGlobals *G,int width,int height);
-void PixmapInitFromBitmap(PyMOLGlobals *G,CPixmap *I,
+CPixmap *PixmapNew(PyMOLGlobals * G, int width, int height);
+void PixmapInitFromBitmap(PyMOLGlobals * G, CPixmap * I,
                           int width,
                           int height,
-                          unsigned char *bitmap,
-                          unsigned char *rgba,int sampling);
-void PixmapInitFromBytemap(PyMOLGlobals *G,CPixmap *I,
+                          unsigned char *bitmap, unsigned char *rgba, int sampling);
+void PixmapInitFromBytemap(PyMOLGlobals * G, CPixmap * I,
                            int width,
                            int height,
                            int pitch,
                            unsigned char *bitmap,
-                           unsigned char *rgba,
-                           unsigned char *outline_rgb,
-                           int flat);
-void PixmapPurge(CPixmap *I);
-void PixmapFreeP(CPixmap *I);
+                           unsigned char *rgba, unsigned char *outline_rgb, int flat);
+void PixmapPurge(CPixmap * I);
+void PixmapFreeP(CPixmap * I);
 
 #endif
-

@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,6 +21,7 @@ Z* -------------------------------------------------------------------
 
 #include "PyMOLGlobals.h"
 
+
 /* Tracker is a generic data structure for tracking lists of
    candidates in a manner that:
 
@@ -34,44 +37,48 @@ typedef struct _CTracker CTracker;
 
 typedef void *TrackerRef;
 
-CTracker *TrackerNew(PyMOLGlobals *G);
-void TrackerFree(CTracker *I);
+CTracker *TrackerNew(PyMOLGlobals * G);
+void TrackerFree(CTracker * I);
+
 
 /* creating and deleting candidates, lists, and iterators */
 
-int TrackerNewCand(CTracker *I, TrackerRef *ref);
-int TrackerDelCand(CTracker *I, int cand_id);
+int TrackerNewCand(CTracker * I, TrackerRef * ref);
+int TrackerDelCand(CTracker * I, int cand_id);
 
-int TrackerNewList(CTracker *I, TrackerRef *ref);
-int TrackerDelList(CTracker *I, int list_id);
-int TrackerNewListCopy(CTracker *I, int list_id, TrackerRef *ref);
+int TrackerNewList(CTracker * I, TrackerRef * ref);
+int TrackerDelList(CTracker * I, int list_id);
+int TrackerNewListCopy(CTracker * I, int list_id, TrackerRef * ref);
 
-int TrackerNewIter(CTracker *I, int cand_id, int list_id);
-int TrackerDelIter(CTracker *I, int iter_id);
+int TrackerNewIter(CTracker * I, int cand_id, int list_id);
+int TrackerDelIter(CTracker * I, int iter_id);
+
 
 /* creating and destroying links */
 
-int TrackerLink(CTracker *I, int cand_id, int list_id, int priority);
-int TrackerUnlink(CTracker *I, int cand_id, int list_id);
+int TrackerLink(CTracker * I, int cand_id, int list_id, int priority);
+int TrackerUnlink(CTracker * I, int cand_id, int list_id);
+
 
 /* querying */
 
-int TrackerGetNList(CTracker *I);
-int TrackerGetNCand(CTracker *I);
-int TrackerGetNLink(CTracker *I);
-int TrackerGetNIter(CTracker *I);
-int TrackerGetNListForCand(CTracker *I,int cand_id);
-int TrackerGetNCandForList(CTracker *I,int list_id);
+int TrackerGetNList(CTracker * I);
+int TrackerGetNCand(CTracker * I);
+int TrackerGetNLink(CTracker * I);
+int TrackerGetNIter(CTracker * I);
+int TrackerGetNListForCand(CTracker * I, int cand_id);
+int TrackerGetNCandForList(CTracker * I, int list_id);
 
-int TrackerGetCandRef(CTracker *I,int cand_id, TrackerRef **ref_ret);
+int TrackerGetCandRef(CTracker * I, int cand_id, TrackerRef ** ref_ret);
+
 
 /* iterating */
 
-int TrackerIterNextCandInList(CTracker *I, int iter_id, TrackerRef **ref_ret);
-int TrackerIterNextListInCand(CTracker *I, int iter_id, TrackerRef **ref_ret);
+int TrackerIterNextCandInList(CTracker * I, int iter_id, TrackerRef ** ref_ret);
+int TrackerIterNextListInCand(CTracker * I, int iter_id, TrackerRef ** ref_ret);
 
 #ifdef TRACKER_UNIT_TEST
-int TrackerUnitTest(PyMOLGlobals *G);
+int TrackerUnitTest(PyMOLGlobals * G);
 #endif
 
 #endif

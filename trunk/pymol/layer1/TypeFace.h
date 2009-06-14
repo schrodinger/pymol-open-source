@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,24 +20,17 @@ Z* -------------------------------------------------------------------
 #include "PyMOLGlobals.h"
 #include "Character.h"
 
-
-int TypeInit(PyMOLGlobals *G);
-void TypeFree(PyMOLGlobals *G);
-
+int TypeInit(PyMOLGlobals * G);
+void TypeFree(PyMOLGlobals * G);
 
 typedef struct _CTypeFace CTypeFace;
 
+CTypeFace *TypeFaceLoad(PyMOLGlobals * G, unsigned char *dat, unsigned int len);
+void TypeFaceFree(CTypeFace * face);
 
-CTypeFace *TypeFaceLoad(PyMOLGlobals *G,unsigned char *dat, unsigned int len);
-void TypeFaceFree(CTypeFace *face);
+int TypeFaceCharacterNew(CTypeFace * I, CharFngrprnt * fprnt, float size);
 
-int TypeFaceCharacterNew(CTypeFace *I,
-                         CharFngrprnt *fprnt,
-                         float size);
-
-float TypeFaceGetKerning(CTypeFace *I,
-                         unsigned int last, 
-                         unsigned int current,
-                         float size);
+float TypeFaceGetKerning(CTypeFace * I,
+                         unsigned int last, unsigned int current, float size);
 
 #endif

@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,6 +20,6 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"DistSet.h"
 
-Rep *RepDihedralNew(DistSet *ds);
+Rep *RepDihedralNew(DistSet * ds);
 
 #endif

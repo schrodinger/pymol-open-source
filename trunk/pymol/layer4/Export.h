@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -16,20 +17,23 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Export
 #define _H_Export
 
+
 /* routines for packing pymol data into forms useful for other
  * python or C modules */
+
 
 /* this is the base class for all these object
  * which provides for a deallocation method */
 
 typedef struct Export {
-  void (*fFree)(struct Export *ex);
+  void (*fFree) (struct Export * ex);
 } Export;
+
 
 /*--------------------------------------------------------------------- */
 typedef char ExportAtomType[5];
 
-typedef struct { 
+typedef struct {
   Export export;
   float *point;
   float *normal;
@@ -44,16 +48,15 @@ typedef struct {
   float *coord;
 } ExportCoords;
 
-ExportCoords *ExportCoordsExport(PyMOLGlobals *G,char *name,int state,int order);
-int ExportCoordsImport(PyMOLGlobals *G,char *name,int state,ExportCoords *io,int order);
-void ExportCoordsFree(ExportCoords *io);
+ExportCoords *ExportCoordsExport(PyMOLGlobals * G, char *name, int state, int order);
+int ExportCoordsImport(PyMOLGlobals * G, char *name, int state, ExportCoords * io,
+                       int order);
+void ExportCoordsFree(ExportCoords * io);
 
-void ExportDeleteMDebug(PyMOLGlobals *G,struct Export *ex); /* for mmalloc/mfree blocks */
-ExportDotsObj *ExportDots(PyMOLGlobals *G,char *sele,int coordSet);
+void ExportDeleteMDebug(PyMOLGlobals * G, struct Export *ex);   /* for mmalloc/mfree blocks */
+ExportDotsObj *ExportDots(PyMOLGlobals * G, char *sele, int coordSet);
+
 
 /*--------------------------------------------------------------------- */
 
 #endif
-
-
-

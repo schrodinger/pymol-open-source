@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,10 +22,10 @@ Z* -------------------------------------------------------------------
 #include"CGO.h"
 #include"os_python.h"
 
-typedef struct { 
+typedef struct {
   PyMOLGlobals *G;
   float Dim[3];
-  float Angle[3]; /* stored in degrees for convenience */
+  float Angle[3];               /* stored in degrees for convenience */
   float RealToFrac[9];
   float FracToReal[9];
   float UnitCellVolume;
@@ -31,24 +33,15 @@ typedef struct {
   float RecipDim[3];
 } CCrystal;
 
-void CrystalFree(CCrystal *I);
-void CrystalInit(PyMOLGlobals *G,CCrystal *I);
-CCrystal *CrystalNew(PyMOLGlobals *G);
-CCrystal *CrystalCopy(CCrystal *I);
-void CrystalUpdate(CCrystal *I);
-void CrystalDump(CCrystal *I);
-CGO *CrystalGetUnitCellCGO(CCrystal *I);
-CCrystal *CrystalNewFromPyList(PyMOLGlobals *G,PyObject *list);
-int CrystalFromPyList(CCrystal *I,PyObject *list);
-PyObject *CrystalAsPyList(CCrystal *I);
+void CrystalFree(CCrystal * I);
+void CrystalInit(PyMOLGlobals * G, CCrystal * I);
+CCrystal *CrystalNew(PyMOLGlobals * G);
+CCrystal *CrystalCopy(CCrystal * I);
+void CrystalUpdate(CCrystal * I);
+void CrystalDump(CCrystal * I);
+CGO *CrystalGetUnitCellCGO(CCrystal * I);
+CCrystal *CrystalNewFromPyList(PyMOLGlobals * G, PyObject * list);
+int CrystalFromPyList(CCrystal * I, PyObject * list);
+PyObject *CrystalAsPyList(CCrystal * I);
 
 #endif
-
-
-
-
-
-
-
-
-

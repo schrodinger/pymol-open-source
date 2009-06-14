@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepMeshNew(CoordSet *cset,int state);
+Rep *RepMeshNew(CoordSet * cset, int state);
 void RepMeshInit(void);
 
 #define cRepMesh_by_flags     0

@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -21,7 +22,7 @@ Z* -------------------------------------------------------------------
 
 #define cButModeNothing -1
 
-#define cButModeRotXYZ   0 
+#define cButModeRotXYZ   0
 #define cButModeTransXY  1
 #define cButModeTransZ   2
 #define cButModeClipNF   3
@@ -29,8 +30,8 @@ Z* -------------------------------------------------------------------
 #define cButModeClipN    5
 #define cButModeClipF    6
 #define cButModeLB       7
-#define cButModeMB       8  
-#define cButModeRB       9  
+#define cButModeMB       8
+#define cButModeRB       9
 #define cButModeAddToLB 10
 #define cButModeAddToMB 11
 #define cButModeAddToRB 12
@@ -58,9 +59,11 @@ Z* -------------------------------------------------------------------
 #define cButModeSeleSubBox  33
 #define cButModeMoveSlabAndZoom 34
 
+
 /* simple click action for JyMOL -- no selections involved */
 
 #define cButModeSimpleClick 35
+
 
 /* new drag actions */
 
@@ -91,6 +94,7 @@ Z* -------------------------------------------------------------------
 
 #define cButModeCount       54
 
+
 /* remainder only used in scene... */
 
 #define cButModeScaleSlabShrink 101
@@ -101,6 +105,7 @@ Z* -------------------------------------------------------------------
 #define cButModeMoveSlabAndZoomBackward 106
 #define cButModeZoomForward 107
 #define cButModeZoomBackward 108
+
 
 /* conversion */
 
@@ -206,17 +211,17 @@ Z* -------------------------------------------------------------------
 
 typedef char CodeType[10];
 
-int ButModeInit(PyMOLGlobals *G);
-void ButModeFree(PyMOLGlobals *G);
-Block *ButModeGetBlock(PyMOLGlobals *G);
-void ButModeSetRate(PyMOLGlobals *G,float renderTime);
-void ButModeResetRate(PyMOLGlobals *G);
-int ButModeGet(PyMOLGlobals *G,int button);
-void ButModeSet(PyMOLGlobals *G,int button,int action);
-void ButModeCaption(PyMOLGlobals *G,char *text);
-void ButModeCaptionReset(PyMOLGlobals *G);
-int ButModeTranslate(PyMOLGlobals *G,int button,int mod);
-int ButModeCheckPossibleSingleClick(PyMOLGlobals *G, int button, int mod);
-int ButModeGetHeight(PyMOLGlobals *G);
+int ButModeInit(PyMOLGlobals * G);
+void ButModeFree(PyMOLGlobals * G);
+Block *ButModeGetBlock(PyMOLGlobals * G);
+void ButModeSetRate(PyMOLGlobals * G, float renderTime);
+void ButModeResetRate(PyMOLGlobals * G);
+int ButModeGet(PyMOLGlobals * G, int button);
+void ButModeSet(PyMOLGlobals * G, int button, int action);
+void ButModeCaption(PyMOLGlobals * G, char *text);
+void ButModeCaptionReset(PyMOLGlobals * G);
+int ButModeTranslate(PyMOLGlobals * G, int button, int mod);
+int ButModeCheckPossibleSingleClick(PyMOLGlobals * G, int button, int mod);
+int ButModeGetHeight(PyMOLGlobals * G);
 
 #endif

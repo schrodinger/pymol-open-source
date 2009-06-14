@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -33,21 +34,21 @@ Z* -------------------------------------------------------------------
 
 typedef struct _CFont CFont;
 
-typedef char *FontRenderOpenGLFn(RenderInfo *info, CFont *,char *text,float size,float *rpos);
-typedef char *FontRenderRayFn(CRay *ray,CFont *,char *text,float size,float *rpos);
+typedef char *FontRenderOpenGLFn(RenderInfo * info, CFont *, char *text, float size,
+                                 float *rpos);
+typedef char *FontRenderRayFn(CRay * ray, CFont *, char *text, float size, float *rpos);
 
 struct _CFont {
   PyMOLGlobals *G;
   int TextID;
-  void (*fFree)(CFont *);
+  void (*fFree) (CFont *);
   FontRenderOpenGLFn *fRenderOpenGL;
   FontRenderOpenGLFn *fRenderOpenGLFlat;
   FontRenderRayFn *fRenderRay;
 };
 
-int FontInit(PyMOLGlobals *G,CFont *I);
+int FontInit(PyMOLGlobals * G, CFont * I);
 
-void FontPurge(CFont *I);
+void FontPurge(CFont * I);
 
 #endif
-

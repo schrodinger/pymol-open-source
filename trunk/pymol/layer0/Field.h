@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -33,7 +35,6 @@ typedef struct {
   unsigned int base_size;
 } CField;
 
-
 #define Ffloat3(f,a,b,c) (*((float*)((f)->data + \
                                      (a)*(f)->stride[0] + \
                                      (b)*(f)->stride[1] + \
@@ -43,7 +44,6 @@ typedef struct {
                                    (a)*(f)->stride[0] + \
                                    (b)*(f)->stride[1] + \
                                    (c)*(f)->stride[2]))
-
 
 #define Ffloat4(f,a,b,c,d) (*((float*)((f)->data + \
                                      (a)*(f)->stride[0] + \
@@ -65,8 +65,7 @@ typedef struct {
 #define Fint3p(f,a,b,c) ((int*)((f)->data + \
                                    (a)*(f)->stride[0] + \
                                    (b)*(f)->stride[1] + \
-                                   (c)*(f)->stride[2])) 
-
+                                   (c)*(f)->stride[2]))
 
 #define Fint4(f,a,b,c,d) (*((int*)((f)->data + \
                                      (a)*(f)->stride[0] + \
@@ -86,15 +85,15 @@ typedef struct {
                                      (c)*(f)->stride[2] + \
                                      (d)*(f)->stride[3]))
 
-CField *FieldNew(PyMOLGlobals *G,int *dim,int n_dim,unsigned int base_size,int type);
-void FieldZero(CField *I);
-void FieldFree(CField *I);
-float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z);
-void FieldInterpolate3f(CField *I,int *locus,float *fract, float *result);
+CField *FieldNew(PyMOLGlobals * G, int *dim, int n_dim, unsigned int base_size, int type);
+void FieldZero(CField * I);
+void FieldFree(CField * I);
+float FieldInterpolatef(CField * I, int a, int b, int c, float x, float y, float z);
+void FieldInterpolate3f(CField * I, int *locus, float *fract, float *result);
 
-PyObject *FieldAsPyList(CField *I);
-CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list);
-CField *FieldNewCopy(PyMOLGlobals *G,CField *src);
-int FieldSmooth3f(CField *I);
+PyObject *FieldAsPyList(CField * I);
+CField *FieldNewFromPyList(PyMOLGlobals * G, PyObject * list);
+CField *FieldNewCopy(PyMOLGlobals * G, CField * src);
+int FieldSmooth3f(CField * I);
 
 #endif

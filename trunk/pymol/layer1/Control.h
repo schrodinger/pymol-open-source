@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -18,15 +19,16 @@ Z* -------------------------------------------------------------------
 
 #include"Ortho.h"
 
-int ControlInit(PyMOLGlobals *G);
-void ControlFree(PyMOLGlobals *G);
-Block *ControlGetBlock(PyMOLGlobals *G);
-int ControlIdling(PyMOLGlobals *G);
-void ControlInterrupt(PyMOLGlobals *G);
-int ControlRock(PyMOLGlobals *G,int mode);
-int ControlRocking(PyMOLGlobals *G);
-int ControlSdofUpdate(PyMOLGlobals *G, float tx,float ty, float tz, float rx, float ry, float rz);
-int ControlSdofIterate(PyMOLGlobals *G);
-int ControlSdofButton(PyMOLGlobals *G,int button);
+int ControlInit(PyMOLGlobals * G);
+void ControlFree(PyMOLGlobals * G);
+Block *ControlGetBlock(PyMOLGlobals * G);
+int ControlIdling(PyMOLGlobals * G);
+void ControlInterrupt(PyMOLGlobals * G);
+int ControlRock(PyMOLGlobals * G, int mode);
+int ControlRocking(PyMOLGlobals * G);
+int ControlSdofUpdate(PyMOLGlobals * G, float tx, float ty, float tz, float rx, float ry,
+                      float rz);
+int ControlSdofIterate(PyMOLGlobals * G);
+int ControlSdofButton(PyMOLGlobals * G, int button);
 
 #endif

@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,60 +20,79 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"Setting.h"
 
+
 /* FLAGS 0-3 have the following conventional usage for molecular modeling */
+
 
 /* FLAG 0 - Atoms of interest - i.e. a ligand in an active site */
 #define cAtomFlag_focus         0x00000001
 
+
 /* FLAG 1 - Free atoms - those which can move subject to a force-field */
 #define cAtomFlag_free          0x00000002
+
 
 /* FLAG 2 - Restrained atoms - atoms subject to a harmonic restraint */
 #define cAtomFlag_restrain      0x00000004
 
+
 /* FLAG 3 - Fixed atoms - no movement allowed */
 #define cAtomFlag_fix           0x00000008
+
 
 /* FLAG 4 - Exclude these atoms when performing simulation, minimization */
 #define cAtomFlag_exclude       0x00000010
 
+
 /* FLAG 5 - Study atoms  */
 #define cAtomFlag_study         0x00000020
 
+
 /* FLAGS 4-7 are reserved for additional molecular modeling tasks */
 
+
 /* FLAGS 8-15 are free for end users to manipulate */
- 
+
+
 /* FLAGS 16-21 are reserved for external GUIs and linked applications */
+
 
 /* FLAGS 22-23 are for temporary use only (inside of self-contained loops) */
 
+
 /* FLAGS 24-31 are reserved for PyMOL's internal use */
+
 
 /* FLAG 24 - don't surface these atoms (waters, ligands, etc.) */
 #define cAtomFlag_exfoliate     0x01000000
 
+
 /* FLAG 25 - ignore atoms altogether when surfacing */
 #define cAtomFlag_ignore        0x02000000
+
 
 /* FLAG 26 - disable cartoon smoothing for these atoms */
 #define cAtomFlag_no_smooth     0x04000000
 
+
 /* FLAG 27 - polymer */
 #define cAtomFlag_polymer       0x08000000
+
 /* FLAG 28 - waters */
 #define cAtomFlag_solvent       0x10000000
+
 /* FLAG 29 - organics */
 #define cAtomFlag_organic       0x20000000
+
 /* FLAG 30 - inorganics */
 #define cAtomFlag_inorganic     0x40000000
+
 
 /* FLAG 31 - guide atom: e.g. CA in proteins */
 #define cAtomFlag_guide         0x80000000
 
 #define cAtomFlag_class         0xF8000000
 #define cAtomFlag_class_mask    0x07FFFFFF
-
 
 #define cResnLen 5
 #define cResiLen 5
@@ -153,15 +173,15 @@ Z* -------------------------------------------------------------------
 
 typedef char Chain[2];
 typedef char SSType[2];
-typedef char SegIdent[cSegiLen+1];
-typedef char ResIdent[cResiLen+1];
-typedef char ResName[cResnLen+1];
-typedef char AtomName[cAtomNameLen+1];
+typedef char SegIdent[cSegiLen + 1];
+typedef char ResIdent[cResiLen + 1];
+typedef char ResName[cResnLen + 1];
+typedef char AtomName[cAtomNameLen + 1];
 
-typedef char ElemName[cElemNameLen+1];
+typedef char ElemName[cElemNameLen + 1];
 #if 0
-typedef char TextType[cTextTypeLen+1];
-typedef char LabelType[cLabelTypeLen+1];
+typedef char TextType[cTextTypeLen + 1];
+typedef char LabelType[cLabelTypeLen + 1];
 #endif
 
 #define cAtomInfoNoType -9999
@@ -170,41 +190,41 @@ typedef struct {
   int index[2];
   int order;
   int id;
-  int unique_id; 
-  int temp1; 
-  short int stereo; /* to preserve 2D rep */
-  short int has_setting; /* setting based on unique_id */
+  int unique_id;
+  int temp1;
+  short int stereo;             /* to preserve 2D rep */
+  short int has_setting;        /* setting based on unique_id */
 } BondType;
 
 typedef struct AtomInfoType {
   int resv;
   int customType;
   int priority;
-  float b,q,vdw,partialCharge;
+  float b, q, vdw, partialCharge;
   int formalCharge;
-  int atom;       /* obsolete?? */
+  int atom;                     /* obsolete?? */
   int selEntry;
   int color;
-  int id; 
+  int id;
   unsigned int flags;
-  int temp1; /* kludge fields - to remove */
-  int unique_id; /* introduced in version 0.77 */
-  int discrete_state; /* state+1 for atoms in discrete objects */
-  float elec_radius; /* radius for PB calculations */
+  int temp1;                    /* kludge fields - to remove */
+  int unique_id;                /* introduced in version 0.77 */
+  int discrete_state;           /* state+1 for atoms in discrete objects */
+  float elec_radius;            /* radius for PB calculations */
   int rank;
-  int atomic_color; /* what color was this atom originally assigned? */
+  int atomic_color;             /* what color was this atom originally assigned? */
   int textType;
   int label;
 
   /* be careful not to write at these as (int*) */
 
-  signed char visRep[cRepCnt]; 
-  signed char stereo; /* for 2D representation */
+  signed char visRep[cRepCnt];
+  signed char stereo;           /* for 2D representation */
   signed char hydrogen;
-  signed char cartoon; /* 0 = default which is auto (use ssType) */
+  signed char cartoon;          /* 0 = default which is auto (use ssType) */
 
   signed char hetatm;
-  signed char bonded; 
+  signed char bonded;
   signed char chemFlag;
   signed char geom;
 
@@ -214,9 +234,9 @@ typedef struct AtomInfoType {
   signed char protekted;
 
   signed char protons;
-  signed char hb_donor; 
+  signed char hb_donor;
   signed char hb_acceptor;
-  signed char has_setting; /* setting based on unique_id */
+  signed char has_setting;      /* setting based on unique_id */
   Chain chain;
   Chain alt;
   ResIdent resi;
@@ -224,70 +244,83 @@ typedef struct AtomInfoType {
   ResName resn;
   AtomName name;
   ElemName elem;
-  SSType ssType; /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
+  SSType ssType;                /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
   float U11, U22, U33, U12, U13, U23;
 } AtomInfoType;
 
-void AtomInfoFree(PyMOLGlobals *G);
-int AtomInfoInit(PyMOLGlobals *G);
-void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai);
-void AtomInfoCopy(PyMOLGlobals *G,AtomInfoType *src,AtomInfoType *dst);
-int AtomInfoReserveUniqueID(PyMOLGlobals *G,int unique_id);
-int AtomInfoIsUniqueIDActive(PyMOLGlobals *G,int unique_id);
-int AtomInfoGetNewUniqueID(PyMOLGlobals *G);
+void AtomInfoFree(PyMOLGlobals * G);
+int AtomInfoInit(PyMOLGlobals * G);
+void AtomInfoPurge(PyMOLGlobals * G, AtomInfoType * ai);
+void AtomInfoCopy(PyMOLGlobals * G, AtomInfoType * src, AtomInfoType * dst);
+int AtomInfoReserveUniqueID(PyMOLGlobals * G, int unique_id);
+int AtomInfoIsUniqueIDActive(PyMOLGlobals * G, int unique_id);
+int AtomInfoGetNewUniqueID(PyMOLGlobals * G);
 void AtomInfoCleanAtomName(char *name);
 
-int AtomInfoCheckSetting(PyMOLGlobals *G, AtomInfoType *ai, int setting_id);
-int AtomInfoGetSetting_b(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
-int AtomInfoGetSetting_i(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
-int AtomInfoGetSetting_f(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, float current, float *effective);
-int AtomInfoGetSetting_color(PyMOLGlobals *G, AtomInfoType *ai, int setting_id, int current, int *effective);
+int AtomInfoCheckSetting(PyMOLGlobals * G, AtomInfoType * ai, int setting_id);
+int AtomInfoGetSetting_b(PyMOLGlobals * G, AtomInfoType * ai, int setting_id, int current,
+                         int *effective);
+int AtomInfoGetSetting_i(PyMOLGlobals * G, AtomInfoType * ai, int setting_id, int current,
+                         int *effective);
+int AtomInfoGetSetting_f(PyMOLGlobals * G, AtomInfoType * ai, int setting_id,
+                         float current, float *effective);
+int AtomInfoGetSetting_color(PyMOLGlobals * G, AtomInfoType * ai, int setting_id,
+                             int current, int *effective);
 
-void AtomInfoBondCopy(PyMOLGlobals *G, BondType *src, BondType *dst);
+void AtomInfoBondCopy(PyMOLGlobals * G, BondType * src, BondType * dst);
 
-int AtomInfoCheckBondSetting(PyMOLGlobals *G, BondType *bi, int setting_id);
-int AtomInfoGetBondSetting_b(PyMOLGlobals *G, BondType *ai, int setting_id, int current, int *effective);
-int AtomInfoGetBondSetting_i(PyMOLGlobals *G, BondType *ai, int setting_id, int current, int *effective);
-int AtomInfoGetBondSetting_f(PyMOLGlobals *G, BondType *ai, int setting_id, float current, float *effective);
-int AtomInfoGetBondSetting_color(PyMOLGlobals *G, BondType *ai, int setting_id, int current, int *effective);
+int AtomInfoCheckBondSetting(PyMOLGlobals * G, BondType * bi, int setting_id);
+int AtomInfoGetBondSetting_b(PyMOLGlobals * G, BondType * ai, int setting_id, int current,
+                             int *effective);
+int AtomInfoGetBondSetting_i(PyMOLGlobals * G, BondType * ai, int setting_id, int current,
+                             int *effective);
+int AtomInfoGetBondSetting_f(PyMOLGlobals * G, BondType * ai, int setting_id,
+                             float current, float *effective);
+int AtomInfoGetBondSetting_color(PyMOLGlobals * G, BondType * ai, int setting_id,
+                                 int current, int *effective);
 
-int AtomInfoCheckUniqueID(PyMOLGlobals *G, AtomInfoType *ai);
-int *AtomInfoGetSortedIndex(PyMOLGlobals *G,CObject *obj,AtomInfoType *rec,int n,int **outdex);
-void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I);
-void AtomInfoFreeSortedIndexes(PyMOLGlobals *G,int *index,int *outdex);
-void AtomInfoPrimeColors(PyMOLGlobals *G);
-void AtomInfoAssignColors(PyMOLGlobals *G,AtomInfoType *at1);
-int AtomInfoGetColor(PyMOLGlobals *G,AtomInfoType *at1);
-int AtomInfoGetExpectedValence(PyMOLGlobals *G,AtomInfoType *I);
-int AtomInfoIsFreeCation(PyMOLGlobals *G,AtomInfoType *I);
-PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *at);
-int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *at,PyObject *list);
-int AtomInfoMatch(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoCompareIgnoreRank(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoCompareIgnoreRankHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2);
-int AtomInfoSameResidue(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoSameResidueP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoSameChainP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoSameSegmentP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoSequential(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2,int mode);
+int AtomInfoCheckUniqueID(PyMOLGlobals * G, AtomInfoType * ai);
+int *AtomInfoGetSortedIndex(PyMOLGlobals * G, CObject * obj, AtomInfoType * rec, int n,
+                            int **outdex);
+void AtomInfoAssignParameters(PyMOLGlobals * G, AtomInfoType * I);
+void AtomInfoFreeSortedIndexes(PyMOLGlobals * G, int *index, int *outdex);
+void AtomInfoPrimeColors(PyMOLGlobals * G);
+void AtomInfoAssignColors(PyMOLGlobals * G, AtomInfoType * at1);
+int AtomInfoGetColor(PyMOLGlobals * G, AtomInfoType * at1);
+int AtomInfoGetExpectedValence(PyMOLGlobals * G, AtomInfoType * I);
+int AtomInfoIsFreeCation(PyMOLGlobals * G, AtomInfoType * I);
+PyObject *AtomInfoAsPyList(PyMOLGlobals * G, AtomInfoType * at);
+int AtomInfoFromPyList(PyMOLGlobals * G, AtomInfoType * at, PyObject * list);
+int AtomInfoMatch(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoCompare(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoCompareIgnoreRank(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoCompareIgnoreHet(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoCompareIgnoreRankHet(PyMOLGlobals * G, AtomInfoType * at1,
+                                 AtomInfoType * at2);
+float AtomInfoGetBondLength(PyMOLGlobals * G, AtomInfoType * ai1, AtomInfoType * ai2);
+int AtomInfoSameResidue(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoSameResidueP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoSameChainP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoSameSegmentP(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoSequential(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2,
+                       int mode);
 
-int AtomInfoCheckUniqueBondID(PyMOLGlobals *G, BondType *bi);
-void AtomInfoPurgeBond(PyMOLGlobals *G,BondType *bi);
+int AtomInfoCheckUniqueBondID(PyMOLGlobals * G, BondType * bi);
+void AtomInfoPurgeBond(PyMOLGlobals * G, BondType * bi);
 
-void AtomInfoBracketResidue(PyMOLGlobals *G,AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd);
-void AtomInfoBracketResidueFast(PyMOLGlobals *G,AtomInfoType *ai0,int n0,int cur,int *st,int *nd);
+void AtomInfoBracketResidue(PyMOLGlobals * G, AtomInfoType * ai0, int n0,
+                            AtomInfoType * ai, int *st, int *nd);
+void AtomInfoBracketResidueFast(PyMOLGlobals * G, AtomInfoType * ai0, int n0, int cur,
+                                int *st, int *nd);
 
-int AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,
-			   AtomInfoType *atInfo1,int *flag1, int n1);
-int AtomInfoGetCarbColor(PyMOLGlobals *G);
+int AtomInfoUniquefyNames(PyMOLGlobals * G, AtomInfoType * atInfo0, int n0,
+                          AtomInfoType * atInfo1, int *flag1, int n1);
+int AtomInfoGetCarbColor(PyMOLGlobals * G);
 int AtomResvFromResi(char *resi);
 
-int AtomInfoKnownWaterResName(PyMOLGlobals *G,char *resn);
-int AtomInfoKnownPolymerResName(PyMOLGlobals *G,char *resn);
-void AtomInfoGetPDB3LetHydroName(PyMOLGlobals *G,char *resn, char *iname, char *oname);
+int AtomInfoKnownWaterResName(PyMOLGlobals * G, char *resn);
+int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn);
+void AtomInfoGetPDB3LetHydroName(PyMOLGlobals * G, char *resn, char *iname, char *oname);
 
 #define cAIC_ct        0x0001
 #define cAIC_fc        0x0002
@@ -306,17 +339,16 @@ void AtomInfoGetPDB3LetHydroName(PyMOLGlobals *G,char *resn, char *iname, char *
 #define cAIC_MOLMask (cAIC_fc|cAIC_id|cAIC_rank)
 #define cAIC_AllMask 0xFFFF
 
-void AtomInfoCombine(PyMOLGlobals *G,AtomInfoType *dst,AtomInfoType *src,int mask);
-int AtomInfoNameOrder(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoUpdateAutoColor(PyMOLGlobals *G);
+void AtomInfoCombine(PyMOLGlobals * G, AtomInfoType * dst, AtomInfoType * src, int mask);
+int AtomInfoNameOrder(PyMOLGlobals * G, AtomInfoType * at1, AtomInfoType * at2);
+int AtomInfoUpdateAutoColor(PyMOLGlobals * G);
 
-typedef struct  {
-  int resv1,resv2;
-  ResIdent resi1,resi2;
-  unsigned char chain1,chain2;
+typedef struct {
+  int resv1, resv2;
+  ResIdent resi1, resi2;
+  unsigned char chain1, chain2;
   unsigned char type;
   int next;
 } SSEntry;
-
 
 #endif

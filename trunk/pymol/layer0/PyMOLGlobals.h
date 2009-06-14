@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -16,7 +18,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_PyMOLGlobals
 #define _H_PyMOLGlobals
 
+
 /* all of the private singleton classes associated with a PyMOL instance */
+
 
 /* this gets included in virtually every PyMOL source file, so keep it
    short and sweet */
@@ -31,8 +35,8 @@ typedef struct _CColor CColor;
 typedef struct _CMovie CMovie;
 typedef struct _CControl CControl;
 typedef struct _CButMode CButMode;
-typedef struct _COrtho  COrtho;
-typedef struct _CWord  CWord;
+typedef struct _COrtho COrtho;
+typedef struct _CWord CWord;
 typedef struct _CCGORenderer CCGORenderer;
 typedef struct _CCharacter CCharacter;
 typedef struct _CPop CPop;
@@ -84,7 +88,7 @@ typedef struct _CPyMOL CPyMOL;
 #endif
 
 #ifndef CGO_DEFINED
-typedef struct _CGO                CGO;
+typedef struct _CGO CGO;
 #define CGO_DEFINED
 #endif
 
@@ -96,42 +100,42 @@ struct _PyMOLGlobals {
 
   /* singleton objects */
 
-  CMemoryCache *MemoryCache; /* could probably eliminate this... */
-  CIsosurf  *Isosurf;
-  CTetsurf  *Tetsurf;
-  CSphere   *Sphere;
+  CMemoryCache *MemoryCache;    /* could probably eliminate this... */
+  CIsosurf *Isosurf;
+  CTetsurf *Tetsurf;
+  CSphere *Sphere;
   CFeedback *Feedback;
-  CUtil     *Util;
-  CColor    *Color;
-  CMovie    *Movie;
-  CControl  *Control;
-  CButMode  *ButMode;
-  COrtho    *Ortho;
-  CWord     *Word;
+  CUtil *Util;
+  CColor *Color;
+  CMovie *Movie;
+  CControl *Control;
+  CButMode *ButMode;
+  COrtho *Ortho;
+  CWord *Word;
   CCGORenderer *CGORenderer;
-  CCharacter   *Character;
-  CPop      *Pop;
-  CScene    *Scene;
-  CGO       *DebugCGO; /* for debugging rendering */
-  CSeq      *Seq;
-  CSetting  *Setting, *Default;
+  CCharacter *Character;
+  CPop *Pop;
+  CScene *Scene;
+  CGO *DebugCGO;                /* for debugging rendering */
+  CSeq *Seq;
+  CSetting *Setting, *Default;
   CSettingUnique *SettingUnique;
-  CText     *Text;
-  CWizard   *Wizard;
+  CText *Text;
+  CWizard *Wizard;
   CAtomInfo *AtomInfo;
   CSculptCache *SculptCache;
-  CVFont    *VFont;
-  CEditor   *Editor;
+  CVFont *VFont;
+  CEditor *Editor;
   CExecutive *Executive;
-  CSeeker   *Seeker;
+  CSeeker *Seeker;
   CSelector *Selector;
-  CTexture  *Texture;
-  CType     *Type;
+  CTexture *Texture;
+  CType *Type;
   OVContext *Context;
-  CMain     *Main; /* host/platform-specific "main" code */
-  CPyMOLOptions *Option; 
-  CPyMOL    *PyMOL; /* the instance */
-  OVLexicon *Lexicon; /* lexicon for data (e.g. label) strings */
+  CMain *Main;                  /* host/platform-specific "main" code */
+  CPyMOLOptions *Option;
+  CPyMOL *PyMOL;                /* the instance */
+  OVLexicon *Lexicon;           /* lexicon for data (e.g. label) strings */
   CPlugIOManager *PlugIOManager;
 
 #ifndef _PYMOL_NOPY
@@ -140,34 +144,34 @@ struct _PyMOLGlobals {
 
   /* global variables */
 
-  int HaveGUI; /* do we have an OpenGL graphics window or are we
-                * command-line only? */
+  int HaveGUI;                  /* do we have an OpenGL graphics window or are we
+                                 * command-line only? */
 
-  int ValidContext; /* are we guaranteed to have a valid OpenGL
-                     * context at this exact moment? */
+  int ValidContext;             /* are we guaranteed to have a valid OpenGL
+                                 * context at this exact moment? */
 
-  int Ready; /* is the program fully initialized and ready to receive
-                   * messages? */
+  int Ready;                    /* is the program fully initialized and ready to receive
+                                 * messages? */
 
-  int Interrupt; /* set when we are attempting to abort time-consuming calculations */
+  int Interrupt;                /* set when we are attempting to abort time-consuming calculations */
 
-  int Terminating; /* is the program shutting down? */
-  
+  int Terminating;              /* is the program shutting down? */
+
   /* note that the following four options are also contained in
    * PyMOLOption global -- they exist here as independent globals only
    * because changes haven't yet been made throughout code */
 
-  int StereoCapable; /* the current graphics context quad buffered? */
-  
-  int LaunchStatus; /* to enable deferred output regarding launch status */
+  int StereoCapable;            /* the current graphics context quad buffered? */
 
-  int Security; /* do we warn before potentially executing any
-                 * Python code and ask for their informed consent? */
+  int LaunchStatus;             /* to enable deferred output regarding launch status */
 
-  int DragDirtyFlag; /* do we need an extra callback to handle a mouse drag? */
+  int Security;                 /* do we warn before potentially executing any
+                                 * Python code and ask for their informed consent? */
 
+  int DragDirtyFlag;            /* do we need an extra callback to handle a mouse drag? */
 
 };
+
 
 /* if we're running PyMOL as a global singleton (old way / backward
    compatible) then this global variable will contain a pointer to
@@ -178,4 +182,3 @@ extern PyMOLGlobals *SingletonPyMOLGlobals;
 #endif
 
 #endif
-

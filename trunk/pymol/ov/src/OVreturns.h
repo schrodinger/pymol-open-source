@@ -5,8 +5,8 @@ typedef struct {
   ov_word status;
 } OVstatus;
 
-/* a few very common result codes */
 
+/* a few very common result codes */
 
 #define OVstatus_NO_EFFECT         2
 #define OVstatus_YES               1
@@ -46,6 +46,5 @@ typedef struct {
   ov_word status;
   ov_size size;
 } OVreturn_size;
-
 
 #endif

@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,40 +22,22 @@ Z* -------------------------------------------------------------------
 #define PYMOL_MAX_OPT_STR 1025
 
 struct _CPyMOLOptions {
-  int pmgui, 
-    internal_gui, 
-    show_splash,
-    internal_feedback, 
-    security, 
-    game_mode,
-    force_stereo, /* 1 = force stereo (if possible); -1 = force mono; 0 = autodetect */
-    winX, 
-    winY, 
+  int pmgui, internal_gui, show_splash, internal_feedback, security, game_mode, force_stereo,   /* 1 = force stereo (if possible); -1 = force mono; 0 = autodetect */
+   
+    winX,
+    winY,
     blue_line,
-    winPX, 
-    winPY, 
-    external_gui, 
+    winPX,
+    winPY,
+    external_gui,
     siginthand,
-    reuse_helper, 
-    auto_reinitialize, 
-    keep_thread_alive, 
-    quiet, 
-    incentive_product;
+    reuse_helper, auto_reinitialize, keep_thread_alive, quiet, incentive_product;
 
   char after_load_script[PYMOL_MAX_OPT_STR];
-  
-  int multisample,
-    window_visible, 
-    read_stdin, 
-    presentation, 
-    defer_builds_mode,
-    full_screen,
-    sphere_mode,
- 	stereo_capable, /* for informing PyMOL as to the capabilities of the context */
-    stereo_mode, 
-    zoom_mode,
-    no_quit; /* prevent any action from quitting or killing PyMOL */
-  
+
+  int multisample, window_visible, read_stdin, presentation, defer_builds_mode, full_screen, sphere_mode, stereo_capable,       /* for informing PyMOL as to the capabilities of the context */
+    stereo_mode, zoom_mode, no_quit;    /* prevent any action from quitting or killing PyMOL */
+
   /* WARNING: for the sake of forward compability, never delete or
      move any fields in the above ...initialization struct in PyMOL.c */
 

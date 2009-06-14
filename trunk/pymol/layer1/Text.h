@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -18,6 +19,7 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLGlobals.h"
 #include"Base.h"
+
 
 /* Here are the issues:
 
@@ -61,48 +63,48 @@ Z* -------------------------------------------------------------------
 
 */
 
+
 /* font_sources */
 
 #define cTextSrcGeneral   0
 #define cTextSrcGLUT      1
 #define cTextSrcFreeType  2
 
-int TextInit(PyMOLGlobals *G);
-int TextGetFontID(PyMOLGlobals *G,int src, int code, char *name,int size_mode, int style);
+int TextInit(PyMOLGlobals * G);
+int TextGetFontID(PyMOLGlobals * G, int src, int code, char *name, int size_mode,
+                  int style);
 
-void TextFree(PyMOLGlobals *G);
+void TextFree(PyMOLGlobals * G);
 
-void TextSetLabPos(PyMOLGlobals *G,float *pos, LabPosType *labpos, char *text);
-void TextSetPickColor(PyMOLGlobals *G,int index, int pass);
+void TextSetLabPos(PyMOLGlobals * G, float *pos, LabPosType * labpos, char *text);
+void TextSetPickColor(PyMOLGlobals * G, int index, int pass);
 
-void TextSetPos(PyMOLGlobals *G,float *pos);
+void TextSetPos(PyMOLGlobals * G, float *pos);
 
-void TextSetColor(PyMOLGlobals *G,float *color);
-void TextSetColor3f(PyMOLGlobals *G,float red, float green, float blue);
-void TextGetOutlineColor(PyMOLGlobals *G,
+void TextSetColor(PyMOLGlobals * G, float *color);
+void TextSetColor3f(PyMOLGlobals * G, float red, float green, float blue);
+void TextGetOutlineColor(PyMOLGlobals * G,
                          unsigned char *red,
-                         unsigned char *green, 
-                         unsigned char *blue,
-                         unsigned char *alpha);
-void TextSetOutlineColor(PyMOLGlobals *G,int color);
-void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color);
-float *TextGetColor(PyMOLGlobals *G);
-float *TextGetPos(PyMOLGlobals *G);
-void TextGetColorUChar(PyMOLGlobals *G,unsigned char *red,
-                       unsigned char *green, 
-                       unsigned char *blue,
-                       unsigned char *alpha);
+                         unsigned char *green, unsigned char *blue, unsigned char *alpha);
+void TextSetOutlineColor(PyMOLGlobals * G, int color);
+void TextSetPosNColor(PyMOLGlobals * G, float *pos, float *color);
+float *TextGetColor(PyMOLGlobals * G);
+float *TextGetPos(PyMOLGlobals * G);
+void TextGetColorUChar(PyMOLGlobals * G, unsigned char *red,
+                       unsigned char *green, unsigned char *blue, unsigned char *alpha);
 
-char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,float size, float *rpos);
-char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st,float size, float *rpos);
+char *TextRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int text_id, char *st,
+                       float size, float *rpos);
+char *TextRenderRay(PyMOLGlobals * G, CRay * ray, int text_id, char *st, float size,
+                    float *rpos);
 
-void TextDrawStrAt(PyMOLGlobals *G,char *st, int x, int y);
-void TextDrawStr(PyMOLGlobals *G,char *st);
-void TextIndent(PyMOLGlobals *G,float x,float y);
-void TextAdvance(PyMOLGlobals *G,float advance);
-void TextSetPos2i(PyMOLGlobals *G,int x,int y);
-void TextDrawChar(PyMOLGlobals *G,char ch);
-void TextDrawSubStrFast(PyMOLGlobals *G,char *c,int x,int y,int start,int n);
-void TextDrawCharRepeat(PyMOLGlobals *G,char c,int x,int y,int start,int n);
+void TextDrawStrAt(PyMOLGlobals * G, char *st, int x, int y);
+void TextDrawStr(PyMOLGlobals * G, char *st);
+void TextIndent(PyMOLGlobals * G, float x, float y);
+void TextAdvance(PyMOLGlobals * G, float advance);
+void TextSetPos2i(PyMOLGlobals * G, int x, int y);
+void TextDrawChar(PyMOLGlobals * G, char ch);
+void TextDrawSubStrFast(PyMOLGlobals * G, char *c, int x, int y, int start, int n);
+void TextDrawCharRepeat(PyMOLGlobals * G, char c, int x, int y, int start, int n);
 
 #endif

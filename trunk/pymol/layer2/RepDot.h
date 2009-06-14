@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -27,17 +28,17 @@ typedef struct RepDot {
   float dotSize;
   float *V;
   float *VC;
-  float *A; /* area */
-  float *VN; /* vector normal */
-  int *T; /* custom type */
-  int *F; /* flags */
-  int N,NC;
-  int *Atom; /* atom */
+  float *A;                     /* area */
+  float *VN;                    /* vector normal */
+  int *T;                       /* custom type */
+  int *F;                       /* flags */
+  int N, NC;
+  int *Atom;                    /* atom */
   float Width;
 } RepDot;
 
-Rep *RepDotNew(CoordSet *cset,int state);
-Rep *RepDotDoNew(CoordSet *cs,int mode,int state);
+Rep *RepDotNew(CoordSet * cset, int state);
+Rep *RepDotDoNew(CoordSet * cs, int mode, int state);
 void RepDotInit(void);
 
 #endif

@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -21,5 +23,3 @@ Z* -------------------------------------------------------------------
 #include<sys/types.h>
 
 #endif
-
-

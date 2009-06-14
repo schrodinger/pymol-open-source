@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -22,13 +24,14 @@ Z* -------------------------------------------------------------------
 #include<sys/time.h>
 #include<unistd.h>
 #else
-/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */ 
+
+
+/* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #include <sys/timeb.h>
 #include <time.h>
 #endif
+
+
 /* END PROPRIETARY CODE SEGMENT */
 
 #endif
-
-
-

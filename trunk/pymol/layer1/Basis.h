@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -27,6 +28,7 @@ Z* -------------------------------------------------------------------
 #define cPrimEllipsoid 6
 #define cPrimCone 7
 
+
 /* proposed 
 
 #define cPrimNodePush 8
@@ -40,53 +42,52 @@ Z* -------------------------------------------------------------------
 #define cCylCapFlat 1
 #define cCylCapRound 2
 
-
 typedef struct {
   int vert;
-  float v1[3],v2[3],v3[3];
-  float n0[3],n1[3],n2[3],n3[3];
-  float c1[3],c2[3],c3[3],ic[3],tr[3]; /* ic = interior color, tr = transparency */
-  float r1,r2,l1; 
+  float v1[3], v2[3], v3[3];
+  float n0[3], n1[3], n2[3], n3[3];
+  float c1[3], c2[3], c3[3], ic[3], tr[3];      /* ic = interior color, tr = transparency */
+  float r1, r2, l1;
   float trans;
   int char_id;
-  char type,cap1,cap2,cull;
-  char wobble,ramped;
+  char type, cap1, cap2, cull;
+  char wobble, ramped;
   /* float wobble_param[3] eliminated to save space */
-} CPrimitive; /* currently 172 bytes -> appoximately 6.5 million primitives per gigabyte */
+} CPrimitive;                   /* currently 172 bytes -> appoximately 6.5 million primitives per gigabyte */
 
 typedef struct {
   PyMOLGlobals *G;
   MapType *Map;
-  float *Vertex,*Normal,*Precomp;
-  float *Radius,*Radius2,MaxRadius,MinVoxel;
+  float *Vertex, *Normal, *Precomp;
+  float *Radius, *Radius2, MaxRadius, MinVoxel;
   int *Vert2Normal;
   int NVertex;
   int NNormal;
-  float LightNormal[3]; /* for lights - this is the direction of the light rays */
-  float SpecNormal[3]; /* for computing specular reflections */
-  float Color[3]; /* for lights */
+  float LightNormal[3];         /* for lights - this is the direction of the light rays */
+  float SpecNormal[3];          /* for computing specular reflections */
+  float Color[3];               /* for lights */
   Matrix33f Matrix;
 } CBasis;
 
 typedef struct {
-  float base[3]; /* where is this light ray starting from */
+  float base[3];                /* where is this light ray starting from */
   CPrimitive *prim;
   float impact[3];
-  float tri1,tri2;
-  float sphere[3]; /* sphere location if reflecting off of one */
-  float surfnormal[3]; /* normal of reflecting surface */
+  float tri1, tri2;
+  float sphere[3];              /* sphere location if reflecting off of one */
+  float surfnormal[3];          /* normal of reflecting surface */
   float dist;
-  float dotgle,flat_dotgle;
+  float dotgle, flat_dotgle;
   float reflect[3];
   float trans;
-  float dir[3]; /* what is the direction of this light ray? */
+  float dir[3];                 /* what is the direction of this light ray? */
   float skip[3];
 } RayInfo;
 
 typedef struct {
   CBasis *Basis;
   RayInfo *rr;
-  int except1,except2; /* primitives to avoid */
+  int except1, except2;         /* primitives to avoid */
   int *vert2prim;
   int shadow;
   float front;
@@ -98,38 +99,35 @@ typedef struct {
   int label_shadow_mode;
   CPrimitive *prim;
   MapCache cache;
-  float fudge0,fudge1;
+  float fudge0, fudge1;
   /* returns */
-  int interior_flag; 
+  int interior_flag;
   int pass;
   float back_dist;
-} BasisCallRec; 
+} BasisCallRec;
 
-
-void BasisInit(PyMOLGlobals *G,CBasis *I,int group_id);
-void BasisFinish(CBasis *I,int group_id);
-void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim, int n_prim,
+void BasisInit(PyMOLGlobals * G, CBasis * I, int group_id);
+void BasisFinish(CBasis * I, int group_id);
+void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
                   float *volume,
-                  int group_id,int block_base,
-                  int perspective,float front,float size_hint);
+                  int group_id, int block_base,
+                  int perspective, float front, float size_hint);
 
-void BasisSetupMatrix(CBasis *I);
-void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc,int perspective);
-void BasisGetEllipsoidNormal(CBasis *I,RayInfo *r,int i,int perspective);
-void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);
-void BasisTrianglePrecomputePerspective(float *v1,float *v2,float *v3,float *pre);
+void BasisSetupMatrix(CBasis * I);
+void BasisGetTriangleNormal(CBasis * I, RayInfo * r, int i, float *fc, int perspective);
+void BasisGetEllipsoidNormal(CBasis * I, RayInfo * r, int i, int perspective);
+void BasisTrianglePrecompute(float *v1, float *v2, float *v3, float *pre);
+void BasisTrianglePrecomputePerspective(float *v1, float *v2, float *v3, float *pre);
 
-int BasisHitPerspective(BasisCallRec *BC);
-int BasisHitOrthoscopic(BasisCallRec *BC);
-int BasisHitShadow(BasisCallRec *BC);
+int BasisHitPerspective(BasisCallRec * BC);
+int BasisHitOrthoscopic(BasisCallRec * BC);
+int BasisHitShadow(BasisCallRec * BC);
 
-void BasisGetTriangleFlatDotgle(CBasis *I,RayInfo *r,int i);
-void BasisGetTriangleFlatDotglePerspective(CBasis *I,RayInfo *r,int i);
+void BasisGetTriangleFlatDotgle(CBasis * I, RayInfo * r, int i);
+void BasisGetTriangleFlatDotglePerspective(CBasis * I, RayInfo * r, int i);
 
-void BasisCylinderSausagePrecompute(float *dir,float *pre);
+void BasisCylinderSausagePrecompute(float *dir, float *pre);
 
 #define PROFILE_BASIS_OFF
 
 #endif
-
-
