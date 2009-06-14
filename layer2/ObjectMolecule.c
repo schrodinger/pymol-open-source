@@ -1,4 +1,5 @@
 
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -570,7 +571,9 @@ static void ObjectMoleculeFixSeleHydrogens(ObjectMolecule * I, int sele, int sta
               ai1 = I->AtomInfo + h_idx;
               if(ai1->hydrogen) {
                 for(b = 0; b < I->NCSet; b++) { /* iterate through each coordinate set */
-                  if(ObjectMoleculeGetAtomVertex(I, b, a, v0) && ObjectMoleculeGetAtomVertex(I, b, h_idx, v1)) {        /* current direction */
+                  if(ObjectMoleculeGetAtomVertex(I, b, a, v0) &&
+                     ObjectMoleculeGetAtomVertex(I, b, h_idx, v1)) {
+                    /* current direction */
                     float l;
                     subtract3f(v1, v0, sought);
                     l = length3f(sought);       /* use the current length */
@@ -920,7 +923,8 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals * G, ObjectMolecule * I,
                       *(fp++) /= n_avg;
                     }
                   }
-                  if(periodic && image) {       /* Perform residue-based period image transformation */
+                  if(periodic && image) {       
+                    /* Perform residue-based period image transformation */
                     i = 0;
                     r_cnt = 0;
                     r_act = 0;  /* 0 unspec, 1=load, 2=image, 3=leave */
@@ -3893,7 +3897,8 @@ void ObjectMoleculeFuse(ObjectMolecule * I, int index0, ObjectMolecule * src,
       I->AtomInfo[at0].temp1 = 1;
     }
 
-    ObjectMoleculeMerge(I, nai, cs, false, cAIC_AllMask, true); /* will free nai, cs->TmpBond and cs->TmpLinkBond  */
+    ObjectMoleculeMerge(I, nai, cs, false, cAIC_AllMask, true);
+    /* will free nai, cs->TmpBond and cs->TmpLinkBond  */
 
     ObjectMoleculeExtendIndices(I, -1);
     ObjectMoleculeUpdateNeighbors(I);
@@ -6778,7 +6783,8 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
       if(ai->chemFlag) {
         if(ai->protons == cAN_O)
           if(ai->formalCharge == -1)
-            if((ai->geom == cAtomInfoTetrahedral) || (ai->geom == cAtomInfoSingle)) {   /* search for anionic tetrahedral oxygen */
+            if((ai->geom == cAtomInfoTetrahedral) || (ai->geom == cAtomInfoSingle)) {
+              /* search for anionic tetrahedral oxygen */
               n = I->Neighbor[a] + 1;
               while(1) {
                 a0 = I->Neighbor[n];
@@ -7625,7 +7631,8 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals * G,
         AtomInfoAssignColors(G, ai);
       }
 
-      if(ok && PyObject_HasAttrString(atom, "trgb")) {  /* were we given a Transparency-Red-Blue-Green value? */
+      if(ok && PyObject_HasAttrString(atom, "trgb")) {
+        /* were we given a Transparency-Red-Blue-Green value? */
         unsigned int trgb;
         tmp = PyObject_GetAttrString(atom, "trgb");
         if(tmp) {
@@ -7968,6 +7975,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals * G, ObjectMolecule * I,
       f = cset->Coord;
       for(a = 0; a < l; a++) {
         v = PyList_GetItem(coords, a);
+
 
 /* no error checking */
         *(f++) = (float) PyFloat_AsDouble(PyList_GetItem(v, 0));
@@ -8801,7 +8809,8 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals * G,
                       resv_flag = true;
                     }
                   }
-                } else {        /* normal mode: assume that the substructure ID is a vanilla residue identifier */
+                } else {
+                  /* normal mode: assume that the substructure ID is a vanilla residue identifier */
 
                   char *pp = subst_name;
 
@@ -9030,7 +9039,8 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(isNew) {
         I->AtomInfo = atInfo;   /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
-        ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_MOLMask, false);       /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_MOLMask, false);
+        /* NOTE: will release atInfo */
       }
 
       if(isNew)
@@ -9415,6 +9425,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals * G, ObjectMolecule * obj
 }
 #endif
 
+
 /*========================================================================*/
 void ObjectMoleculeAppendAtoms(ObjectMolecule * I, AtomInfoType * atInfo, CoordSet * cs)
 {
@@ -9748,7 +9759,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
               if(op->ai1VLA) {
                 VLACheck(op->ai1VLA, AtomInfoType *, op->nvv1);
                 op->ai1VLA[op->nvv1] = I->AtomInfo + a;
-                I->AtomInfo[a].temp1 = a;       /* KLUDGE ALERT!!! storing atom index in the temp1 field... */
+                I->AtomInfo[a].temp1 = a;
+                /* KLUDGE ALERT!!! storing atom index in the temp1 field... */
               }
               op->nvv1++;
             }
@@ -9814,7 +9826,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
               if(op->ai1VLA) {
                 VLACheck(op->ai1VLA, AtomInfoType *, op->nvv1);
                 op->ai1VLA[op->nvv1] = I->AtomInfo + a;
-                I->AtomInfo[a].temp1 = a;       /* KLUDGE ALERT!!! storing atom index in the temp1 field... */
+                I->AtomInfo[a].temp1 = a;
+                /* KLUDGE ALERT!!! storing atom index in the temp1 field... */
               }
               op->nvv1++;
             }
@@ -10713,7 +10726,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                         coord = v1;
                       }
                     }
-                    MatrixTransformC44fAs33f3f(op->mat1, coord, v1);    /* convert to view-space */
+                    MatrixTransformC44fAs33f3f(op->mat1, coord, v1);
+                    /* convert to view-space */
                     coord = v1;
                     if(op->i1) {
                       for(c = 0; c < 3; c++) {
@@ -10815,7 +10829,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
               }
             }
             break;
-          default:             /* coord-set based properties, iterating as all coordsets within atoms */
+          default:
+            /* coord-set based properties, iterating as all coordsets within atoms */
             for(b = 0; b < I->NCSet; b++) {
               if(I->DiscreteFlag) {
                 cs = I->DiscreteCSet[a];
@@ -10849,7 +10864,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                           coord = v1;
                         }
                       }
-                      MatrixTransformC44fAs33f3f(op->mat1, coord, v1);  /* convert to view-space */
+                      MatrixTransformC44fAs33f3f(op->mat1, coord, v1);
+                      /* convert to view-space */
                       coord = v1;
                       if(op->i1) {
                         for(c = 0; c < 3; c++) {
@@ -10943,7 +10959,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                       op->nvv1++;
                     }
                     break;
-                  case OMOP_SVRT:      /* gives us only vertices for a specific coordinate set */
+                  case OMOP_SVRT:
+                    /* gives us only vertices for a specific coordinate set */
                     if(b == op->i1) {
                       if(I->DiscreteFlag) {
                         if(cs == I->DiscreteCSet[a])
@@ -10965,8 +10982,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                       }
                     }
                     break;
-                    /* Moment of inertia tensor - unweighted - assumes v1 is center of molecule */
                   case OMOP_MOME:
+                    /* Moment of inertia tensor - unweighted - assumes v1 is center of molecule */
                     if(I->DiscreteFlag) {
                       if(cs == I->DiscreteCSet[a])
                         a1 = I->DiscreteAtmToIdx[a];
@@ -10990,8 +11007,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                     break;
                   }
                 }
-                switch (op->code) {     /* full coord-set based */
-                case OMOP_INVA:        /* shouldn't this be calling the object invalidation routine instead? */
+                switch (op->code) {
+                  /* full coord-set based */
+                case OMOP_INVA:
+                  /* shouldn't this be calling the object invalidation routine instead? */
                   if(inv_flag) {
                     cs->objMolOpInvalidated = true;
                     if(op->i1 < 0) {
@@ -11006,8 +11025,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
                   }
                   break;
                 }
-                if(I->DiscreteFlag)     /* don't iterate every coordinate set for discrete objects! */
+                if(I->DiscreteFlag) {
+                  /* don't iterate every coordinate set for discrete objects! */
                   break;
+                }
               }
             }                   /* end coordset section */
             break;
@@ -11292,9 +11313,9 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
       if(multithread && (n_thread) && (stop - start) > 1) {
         int cnt = 0;
 
-        ObjectMoleculeUpdateNeighbors(I);       /* must precalculate to
-                                                   avoid race-condition since this isn't mutexed yet and
-                                                   neighbors are needed by cartoons */
+        ObjectMoleculeUpdateNeighbors(I);
+        /* must precalculate to avoid race-condition since this isn't
+           mutexed yet and neighbors are needed by cartoons */
 
         for(a = start; a < stop; a++)
           if(I->CSet[a])
@@ -11586,6 +11607,7 @@ int ***ObjectMoleculeGetBondPrint(ObjectMolecule * I, int max_bond, int max_type
 /*========================================================================*/
 float ObjectMoleculeGetAvgHBondVector(ObjectMolecule * I, int atom,
                                       int state, float *v, float *incoming)
+
 
 /* computes average / optima hydrogen bonding vector for an atom */
 {
@@ -12049,7 +12071,8 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals * G, ObjectMolecule * I,
     I = (ObjectMolecule *) ObjectMoleculeNew(G, discrete);
     atInfo = I->AtomInfo;
   } else {
-    atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);      /* autozero here is important */
+    atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);
+    /* autozero here is important */
   }
 
   if(isNew) {
@@ -12091,7 +12114,8 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals * G, ObjectMolecule * I,
       I->AtomInfo = atInfo;     /* IMPORTANT to reassign: this VLA may have moved! */
       I->NAtom = nAtom;
     } else {
-      ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_MMDMask, true);  /* NOTE: will release atInfo */
+      ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_MMDMask, true);
+      /* NOTE: will release atInfo */
     }
     if(frame < 0)
       frame = I->NCSet;
@@ -12242,7 +12266,8 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals * G, ObjectMolecule * I,
       if(isNew) {
         I->AtomInfo = atInfo;   /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
-        ObjectMoleculeMerge(I, atInfo, cset, true, aic_mask, true);     /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I, atInfo, cset, true, aic_mask, true);
+        /* NOTE: will release atInfo */
       }
       if(isNew)
         I->NAtom = nAtom;
@@ -12433,8 +12458,10 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, char *buffer,
       VLACheck(atInfo, AtomInfoType, nAtom);
   }
 
-  if(!atInfo)
-    ErrFatal(G, "MMDStr2CoordSet", "need atom information record!");    /* failsafe for old version.. */
+  if(!atInfo) {
+    ErrFatal(G, "MMDStr2CoordSet", "need atom information record!");
+    /* failsafe for old version.. */
+  }
 
   nBond = 0;
   if(ok) {
@@ -12565,7 +12592,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals * G, char *buffer,
           ai->visRep[c] = false;
         }
         ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
-        ai->visRep[cRepNonbonded] = auto_show_nonbonded;        /* show lines by default */
+        ai->visRep[cRepNonbonded] = auto_show_nonbonded;
         ai->visRep[cRepSphere] = auto_show_spheres;
       }
       if(ok) {
@@ -12677,7 +12704,8 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals * G, ObjectMolecule * I,
       if(isNew) {
         I->AtomInfo = atInfo;   /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
-        ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_MOLMask, false);       /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_MOLMask, false);
+        /* NOTE: will release atInfo */
       }
 
       if(isNew)
@@ -12721,7 +12749,8 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals * G, ObjectMolecule * I,
       frame = frame + 1;
     }
   }
-  if(deferred_tasks && I) {     /* defer time-consuming tasks until all states have been loaded */
+  if(deferred_tasks && I) {
+    /* defer time-consuming tasks until all states have been loaded */
     SceneCountFrames(G);
     ObjectMoleculeInvalidate(I, cRepAll, cRepInvAll, -1);
     ObjectMoleculeUpdateIDNumbers(I);
@@ -12758,7 +12787,8 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
     atInfo = I->AtomInfo;
     isNew = true;
   } else {
-    atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);      /* autozero here is important */
+    atInfo = VLAMalloc(10, sizeof(AtomInfoType), 2, true);
+    /* autozero here is important */
     isNew = false;
   }
 
@@ -12799,7 +12829,8 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals * G, ObjectMolecule * I,
     if(isNew) {
       I->AtomInfo = atInfo;     /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
-      ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_MOLMask, finish);        /* NOTE: will release atInfo */
+      ObjectMoleculeMerge(I, atInfo, cset, false, cAIC_MOLMask, finish);
+      /* NOTE: will release atInfo */
     }
 
     if(isNew)

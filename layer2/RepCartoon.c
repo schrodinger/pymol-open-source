@@ -334,7 +334,11 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
 
                                 nbr[4] = neighbor[mem4] + 1;
                                 while((mem5 = neighbor[nbr[4]]) >= 0) {
-                                  if((mem5 != mem3) && (mem5 != mem2) && (mem5 != mem1) && (mem5 != mem0) && (atomInfo[mem5].protons == cAN_N) && (marked[mem5])) {     /* must be in a mapped ring */
+                                  if((mem5 != mem3) && (mem5 != mem2) && (mem5 != mem1)
+                                     && (mem5 != mem0)
+                                     && (atomInfo[mem5].protons == cAN_N)
+                                     && (marked[mem5])) {
+                                    /* must be in a mapped ring */
                                     /* clear flag here */
                                     purine_flag = false;
 
@@ -456,7 +460,10 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                                 }
                                 nbr[4] += 2;
                               }
-                            } else if(((atomInfo[mem4].protons == cAN_C) || (atomInfo[mem4].protons == cAN_O)) && (marked[mem4])) {     /* pyrimidine case */
+                            } else if(((atomInfo[mem4].protons == cAN_C)
+                                       || (atomInfo[mem4].protons == cAN_O))
+                                      && (marked[mem4])) {
+                              /* pyrimidine case */
 
                               nbr[4] = neighbor[mem4] + 1;
                               while((mem5 = neighbor[nbr[4]]) >= 0) {
@@ -504,10 +511,14 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                  (!marked[mem1])) {
                 nbr[1] = neighbor[mem1] + 1;
                 while((mem2 = neighbor[nbr[1]]) >= 0) {
-                  if((mem2 != mem0) && (!marked[mem2]) && (atomInfo[mem2].protons == cAN_O)) {  /* exocyclic O */
+                  if((mem2 != mem0) && (!marked[mem2])
+                     && (atomInfo[mem2].protons == cAN_O)) {
+                    /* exocyclic O */
                     nbr[2] = neighbor[mem2] + 1;
                     while((mem3 = neighbor[nbr[2]]) >= 0) {
-                      if((mem3 != mem1) && (mem3 != mem0) && (marked[mem3]) && (atomInfo[mem3].protons == cAN_C)) {     /* cyclic C */
+                      if((mem3 != mem1) && (mem3 != mem0) && (marked[mem3])
+                         && (atomInfo[mem3].protons == cAN_C)) {
+                        /* cyclic C */
                         if(WordMatchExact(G, "C5", ai->name, 1) &&
                            WordMatchExact(G, "C6", atomInfo[mem1].name, 1)) {
                           c5_linked = mem3;
@@ -523,7 +534,8 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                         (!marked[mem1])) {
                 nbr[1] = neighbor[mem1] + 1;
                 while((mem2 = neighbor[nbr[1]]) >= 0) {
-                  if((mem2 != mem0) && (marked[mem2]) && (atomInfo[mem2].protons == cAN_C)) {   /* cyclic C */
+                  if((mem2 != mem0) && (marked[mem2])
+                     && (atomInfo[mem2].protons == cAN_C)) {
                     /* cyclic C */
                     if(WordMatchExact(G, "C1", ai->name, 1)) {
                       c1_linked = mem2;
@@ -538,16 +550,22 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                       c4_linked = mem2;
                       c4 = mem0;
                     }
-                  } else if((mem2 != mem0) && (!marked[mem2]) && (atomInfo[mem2].protons == cAN_C)) {   /* exocyclic C */
+                  } else if((mem2 != mem0) && (!marked[mem2])
+                            && (atomInfo[mem2].protons == cAN_C)) {
+                    /* exocyclic C */
                     nbr[2] = neighbor[mem2] + 1;
                     while((mem3 = neighbor[nbr[2]]) >= 0) {
-                      if((mem3 != mem1) && (mem3 != mem0) && (marked[mem3]) && (atomInfo[mem3].protons == cAN_C)) {     /* cyclic C */
+                      if((mem3 != mem1) && (mem3 != mem0) && (marked[mem3])
+                         && (atomInfo[mem3].protons == cAN_C)) {
+                        /* cyclic C */
                         if(WordMatchExact(G, "C5", atomInfo[mem3].name, 1) &&
                            WordMatchExact(G, "C6", atomInfo[mem2].name, 1)) {
                           c5 = mem0;
                           c5_linked = mem3;
                         }
-                      } else if((mem3 != mem1) && (mem3 != mem0) && (!marked[mem3]) && (atomInfo[mem3].protons == cAN_C)) {     /* exocyclic */
+                      } else if((mem3 != mem1) && (mem3 != mem0) && (!marked[mem3])
+                                && (atomInfo[mem3].protons == cAN_C)) {
+                        /* exocyclic */
                         if(WordMatchExact(G, "C1", ai->name, 1) &&
                            WordMatchExact(G, "CA", atomInfo[mem3].name, 1)) {
                           c1 = mem0;
@@ -563,13 +581,19 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                         (!marked[mem1])) {
                 nbr[1] = neighbor[mem1] + 1;
                 while((mem2 = neighbor[nbr[1]]) >= 0) {
-                  if((mem2 != mem0) && (!marked[mem2]) && (atomInfo[mem2].protons == cAN_C)) {  /* exocyclic C */
+                  if((mem2 != mem0) && (!marked[mem2])
+                     && (atomInfo[mem2].protons == cAN_C)) {
+                    /* exocyclic C */
                     nbr[2] = neighbor[mem2] + 1;
                     while((mem3 = neighbor[nbr[2]]) >= 0) {
-                      if((mem3 != mem1) && (mem3 != mem0) && (!marked[mem3]) && (atomInfo[mem3].protons == cAN_C)) {    /* exocyclic */
+                      if((mem3 != mem1) && (mem3 != mem0) && (!marked[mem3])
+                         && (atomInfo[mem3].protons == cAN_C)) {
+                        /* exocyclic */
                         nbr[3] = neighbor[mem3] + 1;
                         while((mem4 = neighbor[nbr[3]]) >= 0) {
-                          if((mem4 != mem2) && (mem3 != mem1) && (!marked[mem4]) && (atomInfo[mem4].protons == cAN_C)) {        /* exocyclic */
+                          if((mem4 != mem2) && (mem3 != mem1) && (!marked[mem4])
+                             && (atomInfo[mem4].protons == cAN_C)) {
+                            /* exocyclic */
                             if(WordMatchExact(G, "C1", ai->name, 1) &&
                                WordMatchExact(G, "CA", atomInfo[mem4].name, 1)) {
                               c1 = mem0;
@@ -750,7 +774,8 @@ static void do_ring(PyMOLGlobals * G, int n_atom, int *atix, ObjectMolecule * ob
                        (!marked[g2]))) {
                     g2p = moved + 3 * g2;
                   }
-                  if((ring_mode == 0) || (ring_mode == 4) || (ring_mode == 5)) {        /* ring center */
+                  if((ring_mode == 0) || (ring_mode == 4) || (ring_mode == 5)) {
+                    /* ring center */
                     int i;
                     /* compute average coordinate and mark atoms so that ring is only drawn once */
                     zero3f(avg);
@@ -2202,7 +2227,8 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
             if(obj->CSet[i]) {
               n_set++;
               if(n_set > 1)
-                refine_normals = 0;     /* default behavior is to not refine normals for multi-state objects */
+                refine_normals = 0;
+              /* default behavior is to not refine normals for multi-state objects */
             }
         }
       }
@@ -2215,8 +2241,9 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
         vo = pvo + 3;
         s = seg + 1;
         for(a = 1; a < (nAt - 1); a++) {
-          if((*s == *(s - 1)) && (*s == *(s + 1))) {    /* only operate on vectors within the cartoon itself --
-                                                           not the end vectors */
+          if((*s == *(s - 1)) && (*s == *(s + 1))) {
+            /* only operate on vectors within the cartoon itself --
+               not the end vectors */
 
             remove_component3f(vo, v1, t0);
             normalize23f(t0, vo);
@@ -2241,9 +2268,11 @@ Rep *RepCartoonNew(CoordSet * cs, int state)
 
           /* inverse */
           copy3f(vo, va);
-          if(*ss != 1)
-            invert3f(va);       /* for helix, don't allow inversion of normals, 
-                                   since that would confuse the inside & outside of the helix  */
+          if(*ss != 1) {
+            invert3f(va);
+            /* for helix, don't allow inversion of normals, since that
+               would confuse the inside & outside of the helix  */
+          }
           va += 3;
 
           /* go on to next vertex */
