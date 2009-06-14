@@ -1629,7 +1629,7 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
   car = Alloc(int,cs->NAtIndex);
   sstype = Alloc(int,cs->NAtIndex);
   sampling_tmp = Alloc(float,sampling*3);
-  flag_tmp = Alloc(int,cs->NAtIndex);
+  flag_tmp = Calloc(int,cs->NAtIndex);
   nuc_flag = Calloc(int,cs->NAtIndex);
   if(ring_mode || ladder_mode) {
     ring_anchor = VLAlloc(int,cs->NAtIndex/10+1);
