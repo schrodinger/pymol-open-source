@@ -2,6 +2,10 @@
 CHANGE LOG
 =========================================================================
 
+2009-06-14 Warren L. DeLano <warren@delsci.com>	
+
+	* ugly workarounds added for Radeon HD hardware -- warns user
+	
 2009-06-10 Warren L. DeLano <warren@delsci.com>	
 
 	* updated the density wizard to reflect the current API
