@@ -333,13 +333,33 @@ if pymol_launch != 3: # if this isn't a dry run
                     # cmd.set('texture_fonts',1) 
 
             elif vendor[0:3]=='ATI':
-                if renderer[0:17]=='FireGL2 / FireGL3':
+                if renderer[0:17]=='FireGL2 / FireGL3':  # obsolete ?
                     if invocation.options.show_splash:
                         print " Adapting to FireGL hardware."
                     cmd.set('line_width','2',quiet=1)            
+
                 if sys.platform[0:3]=='win':
                     if sys.getwindowsversion()[0]>5:
-                        cmd.set('ati_bugs',1) # Ugh, VISTA.
+                        # prevent color corruption by calling glFlush etc.
+                        cmd.set('ati_bugs',1) 
+                        
+                if 'Radeon HD' in renderer:
+                    print "Warning: Radeon HD graphics cards do not run PyMOL well."
+                    print " For better results, use nVidia or Intel hardware."
+                    print " Attempting to compensate for known issues..."
+
+                    # use display lists to minimize use of OpenGL
+                    # immediate mode rendering (unreasonably slow on
+                    # Radeon HD cards!)
+                    cmd.set("use_display_lists") 
+
+                    # disable line smooothing to prevent various
+                    # bizarre screen-update and drawing artifacts
+                    cmd.unset("line_smooth")
+
+                    # limit frame rate to 30 fps to avoid ATI "jello"
+                    # where screen updates fall way behind the user.
+                    cmd.set("max_ups",30) 
 
             elif vendor[0:9]=='Microsoft':
                 if renderer[0:17]=='GDI Generic':
