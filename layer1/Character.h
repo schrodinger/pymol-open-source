@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -21,16 +22,15 @@ Z* -------------------------------------------------------------------
 
 typedef unsigned char CharColor[4];
 
-
 typedef struct {
-  int text_id; /* 32 bits (+ 2)*/
-  unsigned int ch; /* 32 bits (+ 2)*/
-  short int size; /* 16 bits (+ 1) */
-  CharColor color; /* 32 bits (+ 2)*/
-  CharColor outline_color; /* 32 bits (+ 2)*/
-  short int flat; /* 16 bits (+ 1) */
-} CharInfo; /* 10 short ints 
-             * if you change this, update hash functions in Character.c */
+  int text_id;                  /* 32 bits (+ 2) */
+  unsigned int ch;              /* 32 bits (+ 2) */
+  short int size;               /* 16 bits (+ 1) */
+  CharColor color;              /* 32 bits (+ 2) */
+  CharColor outline_color;      /* 32 bits (+ 2) */
+  short int flat;               /* 16 bits (+ 1) */
+} CharInfo;                     /* 10 short ints 
+                                 * if you change this, update hash functions in Character.c */
 
 typedef struct {
   unsigned short int data[10];
@@ -52,10 +52,10 @@ typedef struct {
   int Width;
   int Height;
   float Advance;
-  float XOrig,YOrig;
-  int Next,Prev,HashNext,HashPrev;
+  float XOrig, YOrig;
+  int Next, Prev, HashNext, HashPrev;
   CharFngrprnt Fngrprnt;
-  float extent[2]; /* texture extent */
+  float extent[2];              /* texture extent */
 } CharRec;
 
 struct _CCharacter {
@@ -64,42 +64,41 @@ struct _CCharacter {
   int NewestUsed;
   int OldestUsed;
   int NUsed;
-  int TargetMaxUsage; /* don't store more than this many pixmaps in RAM */
+  int TargetMaxUsage;           /* don't store more than this many pixmaps in RAM */
   int *Hash;
   int RetainAll;
   CharRec *Char;
 };
 
-int CharacterInit(PyMOLGlobals *G);
-void CharacterFree(PyMOLGlobals *G);
+int CharacterInit(PyMOLGlobals * G);
+void CharacterFree(PyMOLGlobals * G);
 
-int CharacterGetNew(PyMOLGlobals *G);
-int CharacterGetWidth(PyMOLGlobals *G,int id);
-int CharacterGetHeight(PyMOLGlobals *G,int id);
-int CharacterGetGeometry(PyMOLGlobals *G,int id,
-                         int *width, int *height, 
+int CharacterGetNew(PyMOLGlobals * G);
+int CharacterGetWidth(PyMOLGlobals * G, int id);
+int CharacterGetHeight(PyMOLGlobals * G, int id);
+int CharacterGetGeometry(PyMOLGlobals * G, int id,
+                         int *width, int *height,
                          float *xorig, float *yorig, float *advance);
-float CharacterGetAdvance(PyMOLGlobals *G,int sampling, int id);
+float CharacterGetAdvance(PyMOLGlobals * G, int sampling, int id);
 
-int CharacterNewFromBitmap(PyMOLGlobals *G,int width, int height,
+int CharacterNewFromBitmap(PyMOLGlobals * G, int width, int height,
                            unsigned char *bitmap,
                            float x_orig, float y_orig, float advance,
-                           CharFngrprnt *fprnt,int sampling);
+                           CharFngrprnt * fprnt, int sampling);
 
-int CharacterNewFromBytemap(PyMOLGlobals *G, int width, int height,
-                            int pitch, unsigned char *bytemap, 
+int CharacterNewFromBytemap(PyMOLGlobals * G, int width, int height,
+                            int pitch, unsigned char *bytemap,
                             float x_orig, float y_orig, float advance,
-                            CharFngrprnt *fprnt);
+                            CharFngrprnt * fprnt);
 
-int CharacterFind(PyMOLGlobals *G,CharFngrprnt *fprnt);
+int CharacterFind(PyMOLGlobals * G, CharFngrprnt * fprnt);
 
-float CharacterInterpolate(PyMOLGlobals *G,int id,float *v);
-void CharacterSetRetention(PyMOLGlobals *G,int retail_all);
-unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals *G,int id);
+float CharacterInterpolate(PyMOLGlobals * G, int id, float *v);
+void CharacterSetRetention(PyMOLGlobals * G, int retail_all);
+unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals * G, int id);
 
-void CharacterRenderOpenGLPrime(PyMOLGlobals *G,RenderInfo *info);
-void CharacterRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int id);
-void CharacterRenderOpenGLDone(PyMOLGlobals *G, RenderInfo *info);
+void CharacterRenderOpenGLPrime(PyMOLGlobals * G, RenderInfo * info);
+void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id);
+void CharacterRenderOpenGLDone(PyMOLGlobals * G, RenderInfo * info);
 
 #endif
-

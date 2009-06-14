@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,39 +21,26 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLObject.h"
 
-
 typedef struct ObjectGroup {
   CObject Obj;
   int OpenOrClosed;
-  CObjectState State; /* groups only have one state */
+  CObjectState State;           /* groups only have one state */
 
 } ObjectGroup;
 
+ObjectGroup *ObjectGroupNew(PyMOLGlobals * G);
 
-ObjectGroup *ObjectGroupNew(PyMOLGlobals *G);
+void ObjectGroupRecomputeExtent(ObjectGroup * I);
 
-void ObjectGroupRecomputeExtent(ObjectGroup *I);
+PyObject *ObjectGroupAsPyList(ObjectGroup * I);
 
-PyObject *ObjectGroupAsPyList(ObjectGroup *I);
+int ObjectGroupNewFromPyList(PyMOLGlobals * G, PyObject * list,
+                             ObjectGroup ** result, int version);
 
-int ObjectGroupNewFromPyList(PyMOLGlobals *G,PyObject *list,
-                                 ObjectGroup **result,int version);
+void ObjectGroupResetMatrix(ObjectGroup * I, int state);
+int ObjectGroupGetMatrix(ObjectGroup * I, int state, double **matrix);
+int ObjectGroupSetMatrix(ObjectGroup * I, int state, double *matrix);
 
-void ObjectGroupResetMatrix(ObjectGroup *I, int state);
-int ObjectGroupGetMatrix(ObjectGroup *I,int state,double **matrix);
-int ObjectGroupSetMatrix(ObjectGroup *I,int state,double *matrix);
-
-void ObjectGroupTransformMatrix(ObjectGroup *I, int state, double *matrix);
+void ObjectGroupTransformMatrix(ObjectGroup * I, int state, double *matrix);
 
 #endif
-
-
-
-
-
-
-
-
-
-
-

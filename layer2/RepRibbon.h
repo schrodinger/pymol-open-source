@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,8 +20,8 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepRibbonNew(CoordSet *cset,int state);
+Rep *RepRibbonNew(CoordSet * cset, int state);
 void RepRibbonInit(void);
-void RepRibbonRenderImmediate(CoordSet *cs, RenderInfo *info);
+void RepRibbonRenderImmediate(CoordSet * cs, RenderInfo * info);
 
 #endif

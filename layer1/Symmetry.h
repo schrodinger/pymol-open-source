@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,7 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"os_python.h"
 
-typedef struct { 
+typedef struct {
   PyMOLGlobals *G;
   CCrystal *Crystal;
   WordType PDBSpaceGroup;
@@ -33,24 +34,15 @@ typedef struct {
 
 } CSymmetry;
 
-int SymmetryAttemptGeneration(CSymmetry *I,int quiet);
-void SymmetryFree(CSymmetry *I);
-CSymmetry *SymmetryNew(PyMOLGlobals *G);
-void SymmetryUpdate(CSymmetry *I);
-void SymmetryDump(CSymmetry *I);
-CSymmetry *SymmetryCopy(CSymmetry *other);
-PyObject *SymmetryAsPyList(CSymmetry *I);
-int SymmetryFromPyList(CSymmetry *I,PyObject *list);
-CSymmetry *SymmetryNewFromPyList(PyMOLGlobals *G,PyObject *list);
-void SymmetryReset(CSymmetry *I);
+int SymmetryAttemptGeneration(CSymmetry * I, int quiet);
+void SymmetryFree(CSymmetry * I);
+CSymmetry *SymmetryNew(PyMOLGlobals * G);
+void SymmetryUpdate(CSymmetry * I);
+void SymmetryDump(CSymmetry * I);
+CSymmetry *SymmetryCopy(CSymmetry * other);
+PyObject *SymmetryAsPyList(CSymmetry * I);
+int SymmetryFromPyList(CSymmetry * I, PyObject * list);
+CSymmetry *SymmetryNewFromPyList(PyMOLGlobals * G, PyObject * list);
+void SymmetryReset(CSymmetry * I);
 
 #endif
-
-
-
-
-
-
-
-
-

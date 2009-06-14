@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -18,10 +19,10 @@ Z* -------------------------------------------------------------------
 
 #include"Block.h"
 
-int PopInit(PyMOLGlobals *G);
-void PopFree(PyMOLGlobals *G);
-void PopFitBlock(Block *block);
-Block *PopGetBlock(PyMOLGlobals *G);
-int PopPlaceChild(Block *block,int left_x,int right_x,int row_y,int affinity);
+int PopInit(PyMOLGlobals * G);
+void PopFree(PyMOLGlobals * G);
+void PopFitBlock(Block * block);
+Block *PopGetBlock(PyMOLGlobals * G);
+int PopPlaceChild(Block * block, int left_x, int right_x, int row_y, int affinity);
 
 #endif

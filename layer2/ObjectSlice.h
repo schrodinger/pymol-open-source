@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -31,14 +32,14 @@ typedef struct {
   float ExtentMin[3];
   float ExtentMax[3];
   int ExtentFlag;
-  
-  float origin[3]; /* the origin of the plane */
-  float system[9]; /* x, y, and z of the system */
+
+  float origin[3];              /* the origin of the plane */
+  float system[9];              /* x, y, and z of the system */
 
   /* not stored in session */
 
   int RefreshFlag;
-  int min[2],max[2]; /* extents of the arrays */
+  int min[2], max[2];           /* extents of the arrays */
   int displayList;
   int displayListInvalid;
   float last_scale;
@@ -48,12 +49,12 @@ typedef struct {
 
   float *values;
   float *points;
-  int   *flags;
+  int *flags;
   float *colors;
   float *normals;
 
-  int   n_strips;
-  int   *strips;
+  int n_strips;
+  int *strips;
 
 } ObjectSliceState;
 
@@ -63,17 +64,20 @@ typedef struct ObjectSlice {
   int NState;
 } ObjectSlice;
 
-ObjectSlice *ObjectSliceFromMap(PyMOLGlobals *G,ObjectSlice * obj, ObjectMap* map,int state,int map_state);
+ObjectSlice *ObjectSliceFromMap(PyMOLGlobals * G, ObjectSlice * obj, ObjectMap * map,
+                                int state, int map_state);
+
 /*void ObjectSliceDump(ObjectSlice *I,char *fname,int state);*/
 
-PyObject *ObjectSliceAsPyList(ObjectSlice *I);
-int ObjectSliceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSlice **result);
+PyObject *ObjectSliceAsPyList(ObjectSlice * I);
+int ObjectSliceNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectSlice ** result);
 
-ObjectSliceState *ObjectSliceStateGetActive(ObjectSlice *I,int state);
-void ObjectSliceStateValue2RGB(ObjectSliceState * s,float normalized_value,float * result);
-int ObjectSliceGetOrigin(ObjectSlice *I,int state,float *origin);
-void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov, float *z_dir);
-int ObjectSliceGetVertex(ObjectSlice *I,int index,int base, float *v);
+ObjectSliceState *ObjectSliceStateGetActive(ObjectSlice * I, int state);
+void ObjectSliceStateValue2RGB(ObjectSliceState * s, float normalized_value,
+                               float *result);
+int ObjectSliceGetOrigin(ObjectSlice * I, int state, float *origin);
+void ObjectSliceDrag(ObjectSlice * I, int state, int mode, float *pt, float *mov,
+                     float *z_dir);
+int ObjectSliceGetVertex(ObjectSlice * I, int index, int base, float *v);
 
 #endif
-

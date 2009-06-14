@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -21,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"Color.h"
 
+
 /* NOTE: "Dist" names & symbols should be updated to "Measurement" */
 
 typedef struct ObjectDist {
@@ -30,44 +32,34 @@ typedef struct ObjectDist {
   int CurDSet;
 } ObjectDist;
 
-ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,
-                                  int sele1,int sele2,int mode,float cutoff,
-                                  int labels,int reset,float *result,int state);
+ObjectDist *ObjectDistNewFromSele(PyMOLGlobals * G, ObjectDist * oldObj,
+                                  int sele1, int sele2, int mode, float cutoff,
+                                  int labels, int reset, float *result, int state);
 
-ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals *G,ObjectDist *oldObj,
-                                       int sele1,int sele2,int sele3, int mode,
-                                       int labels,float *result, int reset,int state);
+ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals * G, ObjectDist * oldObj,
+                                       int sele1, int sele2, int sele3, int mode,
+                                       int labels, float *result, int reset, int state);
 
-ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals *G,ObjectDist *oldObj,
+ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals * G, ObjectDist * oldObj,
                                           int sele1, int sele2, int sele3, int sele4,
                                           int mode, int labels, float *result,
                                           int reset, int state);
 
-int ObjectDistGetLabelTxfVertex(ObjectDist *I,int state,int index,float *v);
-int ObjectDistMoveLabel(ObjectDist *I,int state,int index,float *v,int mode,int log);
+int ObjectDistGetLabelTxfVertex(ObjectDist * I, int state, int index, float *v);
+int ObjectDistMoveLabel(ObjectDist * I, int state, int index, float *v, int mode,
+                        int log);
 
-ObjectDist *ObjectDistNew(PyMOLGlobals *G);
-void ObjectDistInvalidateRep(ObjectDist *I,int rep);
-PyObject *ObjectDistAsPyList(ObjectDist *I);
-int ObjectDistNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectDist **result);
+ObjectDist *ObjectDistNew(PyMOLGlobals * G);
+void ObjectDistInvalidateRep(ObjectDist * I, int rep);
+PyObject *ObjectDistAsPyList(ObjectDist * I);
+int ObjectDistNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectDist ** result);
 
 struct M4XBondType;
 struct ObjectMolecule;
 
-ObjectDist *ObjectDistNewFromM4XBond(PyMOLGlobals *G,ObjectDist *oldObj,                                      
+ObjectDist *ObjectDistNewFromM4XBond(PyMOLGlobals * G, ObjectDist * oldObj,
                                      struct ObjectMolecule *objMol,
-                                     struct M4XBondType *hbond,int n_hbond,
+                                     struct M4XBondType *hbond, int n_hbond,
                                      int nbr_sele);
 
 #endif
-
-
-
-
-
-
-
-
-
-
-

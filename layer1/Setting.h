@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -22,17 +23,17 @@ Z* -------------------------------------------------------------------
 
 typedef char SettingName[255];
 
-/* for atomic settings */
 
+/* for atomic settings */
 
 typedef struct {
   int setting_id;
-  int type; /* must be cSetting_boolean, cSetting_int, cSetting_float, or cSetting_color */
+  int type;                     /* must be cSetting_boolean, cSetting_int, cSetting_float, or cSetting_color */
   union {
-  int int_;
-  float float_;
+    int int_;
+    float float_;
   } value;
-  int next; /* for per-atom setting lists & memory management */
+  int next;                     /* for per-atom setting lists & memory management */
 } SettingUniqueEntry;
 
 struct _CSettingUnique {
@@ -65,131 +66,142 @@ struct _CSetting {
 #define cSetting_color       5
 #define cSetting_string      6
 
+
 /* Atomic Settings */
 
-void SettingUniqueDetachChain(PyMOLGlobals *G,int index);
+void SettingUniqueDetachChain(PyMOLGlobals * G, int index);
+
 /* New API 
  * NOTE: get commands are not range-checked, so be careful
  * in contrast, set commands expand the current list 
  */
 
-void SettingUniqueSet_b(PyMOLGlobals *G,int unique_id,int setting_id,int value);
-void SettingUniqueSet_i(PyMOLGlobals *G,int unique_id,int setting_id,int value);
-void SettingUniqueSet_f(PyMOLGlobals *G,int unique_id,int setting_id,float value);
-void SettingUniqueSet_color(PyMOLGlobals *G,int unique_id,int setting_id,int value);
-void SettingUniqueSetTypedValue(PyMOLGlobals *G,int unique_id,int setting_id,int setting_type, void *value);
+void SettingUniqueSet_b(PyMOLGlobals * G, int unique_id, int setting_id, int value);
+void SettingUniqueSet_i(PyMOLGlobals * G, int unique_id, int setting_id, int value);
+void SettingUniqueSet_f(PyMOLGlobals * G, int unique_id, int setting_id, float value);
+void SettingUniqueSet_color(PyMOLGlobals * G, int unique_id, int setting_id, int value);
+void SettingUniqueSetTypedValue(PyMOLGlobals * G, int unique_id, int setting_id,
+                                int setting_type, void *value);
 
-int SettingUniqueCheck(PyMOLGlobals *G,int unique_id,int setting_id);
-int SettingUniqueGet_b(PyMOLGlobals *G,int unique_id,int setting_id,int *value);
-int SettingUniqueGet_i(PyMOLGlobals *G,int unique_id,int setting_id,int *value);
-int SettingUniqueGet_f(PyMOLGlobals *G,int unique_id,int setting_id,float *value);
-int SettingUniqueGet_color(PyMOLGlobals *G,int unique_id,int setting_id,int *value);
+int SettingUniqueCheck(PyMOLGlobals * G, int unique_id, int setting_id);
+int SettingUniqueGet_b(PyMOLGlobals * G, int unique_id, int setting_id, int *value);
+int SettingUniqueGet_i(PyMOLGlobals * G, int unique_id, int setting_id, int *value);
+int SettingUniqueGet_f(PyMOLGlobals * G, int unique_id, int setting_id, float *value);
+int SettingUniqueGet_color(PyMOLGlobals * G, int unique_id, int setting_id, int *value);
 
-void SettingUniqueResetAll(PyMOLGlobals *G);
-PyObject *SettingUniqueAsPyList(PyMOLGlobals *G);
-int SettingUniqueFromPyList(PyMOLGlobals *G,PyObject *list,int partial_restore);
-int SettingUniqueConvertOldSessionID(PyMOLGlobals *G,int old_unique_id);
+void SettingUniqueResetAll(PyMOLGlobals * G);
+PyObject *SettingUniqueAsPyList(PyMOLGlobals * G);
+int SettingUniqueFromPyList(PyMOLGlobals * G, PyObject * list, int partial_restore);
+int SettingUniqueConvertOldSessionID(PyMOLGlobals * G, int old_unique_id);
 
-int SettingUniqueCopyAll(PyMOLGlobals *G, int src_unique_id, int dst_unique_id);
-void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui,int use_default);
-void SettingStoreDefault(PyMOLGlobals *G);
-void SettingPurgeDefault(PyMOLGlobals *G);
+int SettingUniqueCopyAll(PyMOLGlobals * G, int src_unique_id, int dst_unique_id);
+void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_default);
+void SettingStoreDefault(PyMOLGlobals * G);
+void SettingPurgeDefault(PyMOLGlobals * G);
 
-void SettingFreeGlobal(PyMOLGlobals *G);
+void SettingFreeGlobal(PyMOLGlobals * G);
 
+CSetting *SettingNew(PyMOLGlobals * G);
+void SettingFreeP(CSetting * I);
+void SettingInit(PyMOLGlobals * G, CSetting * I);
+void SettingPurge(CSetting * I);
+void SettingCheckHandle(PyMOLGlobals * G, CSetting ** handle);
 
-CSetting *SettingNew(PyMOLGlobals *G);
-void SettingFreeP(CSetting *I);
-void SettingInit(PyMOLGlobals *G,CSetting *I);
-void SettingPurge(CSetting *I);
-void SettingCheckHandle(PyMOLGlobals *G,CSetting **handle);
+int SettingSet_b(CSetting * I, int index, int value);
+int SettingSet_i(CSetting * I, int index, int value);
+int SettingSet_f(CSetting * I, int index, float value);
+int SettingSet_s(CSetting * I, int index, char *value);
+int SettingSet_3f(CSetting * I, int index, float value1, float value2, float value3);
+int SettingSet_3fv(CSetting * I, int index, float *value);
 
-int SettingSet_b(CSetting *I,int index, int value);
-int SettingSet_i(CSetting *I,int index, int value);
-int SettingSet_f(CSetting *I,int index, float value);
-int SettingSet_s(CSetting *I,int index, char *value);
-int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3);
-int SettingSet_3fv(CSetting *I,int index, float *value);
+int SettingGetTextValue(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index,
+                        char *buffer);
 
-int SettingGetTextValue(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,char *buffer);
+int SettingUnset(CSetting * I, int index);
 
-int SettingUnset(CSetting *I,int index);
+void SettingClear(CSetting * I, int index);     /* don't call this for the global list! */
 
-void SettingClear(CSetting *I,int index); /* don't call this for the global list! */
+int SettingGetType(PyMOLGlobals * G, int index);        /* based on global types, always succeeds */
 
-int SettingGetType(PyMOLGlobals *G,int index); /* based on global types, always succeeds */
+int SettingGetGlobal_b(PyMOLGlobals * G, int index);    /* always succeed */
+int SettingGetGlobal_i(PyMOLGlobals * G, int index);    /* always succeed */
+float SettingGetGlobal_f(PyMOLGlobals * G, int index);  /* always succeed */
+char *SettingGetGlobal_s(PyMOLGlobals * G, int index);  /* always succeeds */
+int SettingGetGlobal_color(PyMOLGlobals * G, int index);        /* always succeed */
 
-int   SettingGetGlobal_b(PyMOLGlobals *G,int index); /* always succeed */
-int   SettingGetGlobal_i(PyMOLGlobals *G,int index); /* always succeed */
-float SettingGetGlobal_f(PyMOLGlobals *G,int index); /* always succeed */
-char *SettingGetGlobal_s(PyMOLGlobals *G,int index); /* always succeeds */
-int   SettingGetGlobal_color(PyMOLGlobals *G,int index); /* always succeed */
+void SettingGetGlobal_3f(PyMOLGlobals * G, int index, float *value);    /* always succeeds */
+float *SettingGetGlobal_3fv(PyMOLGlobals * G, int index);       /* always succeed */
 
-void  SettingGetGlobal_3f(PyMOLGlobals *G,int index,float *value); /* always succeeds */
-float *SettingGetGlobal_3fv(PyMOLGlobals *G,int index); /* always succeed */
-
-int   SettingSetGlobal_b(PyMOLGlobals *G,int index,int value);
-int   SettingSetGlobal_i(PyMOLGlobals *G,int index,int value);
-int   SettingSetGlobal_f(PyMOLGlobals *G,int index,float value);
-int   SettingSetGlobal_3f(PyMOLGlobals *G,int index, float value1,float value2,float value3);
-int   SettingSetSmart_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index, int value);
-/* more to come */
-
-int SettingGetIfDefined_i(PyMOLGlobals *G,CSetting *set1,int index,int *value);
-int SettingGetIfDefined_b(PyMOLGlobals *G,CSetting *set1,int index,int *value);
-int SettingGetIfDefined_f(PyMOLGlobals *G,CSetting *set1,int index,float *value);
-int SettingGetIfDefined_s(PyMOLGlobals *G,CSetting *set1,int index,char **value);
-int SettingGetIfDefined_3fv(PyMOLGlobals *G,CSetting *set1,int index,float **value);
-int SettingGetIfDefined_color(PyMOLGlobals *G,CSetting *set1,int index,int *value);
+int SettingSetGlobal_b(PyMOLGlobals * G, int index, int value);
+int SettingSetGlobal_i(PyMOLGlobals * G, int index, int value);
+int SettingSetGlobal_f(PyMOLGlobals * G, int index, float value);
+int SettingSetGlobal_3f(PyMOLGlobals * G, int index, float value1, float value2,
+                        float value3);
+int SettingSetSmart_i(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index,
+                      int value);
 
 /* more to come */
 
-int SettingSet_color(CSetting *I,int index, char *value);
+int SettingGetIfDefined_i(PyMOLGlobals * G, CSetting * set1, int index, int *value);
+int SettingGetIfDefined_b(PyMOLGlobals * G, CSetting * set1, int index, int *value);
+int SettingGetIfDefined_f(PyMOLGlobals * G, CSetting * set1, int index, float *value);
+int SettingGetIfDefined_s(PyMOLGlobals * G, CSetting * set1, int index, char **value);
+int SettingGetIfDefined_3fv(PyMOLGlobals * G, CSetting * set1, int index, float **value);
+int SettingGetIfDefined_color(PyMOLGlobals * G, CSetting * set1, int index, int *value);
 
 
-int   SettingGet_b(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
-int   SettingGet_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
-float SettingGet_f(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
-char  *SettingGet_s(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
-void  SettingGet_3f(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,float *value);
-float *SettingGet_3fv(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
-int   SettingGet_color(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
+/* more to come */
 
-int SettingSetFromString(PyMOLGlobals *G,CSetting *I,int index,char *st);
-int SettingStringToTypedValue(PyMOLGlobals *G,int index,char *st, int *type, int *value);
+int SettingSet_color(CSetting * I, int index, char *value);
+
+int SettingGet_b(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
+int SettingGet_i(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
+float SettingGet_f(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
+char *SettingGet_s(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
+void SettingGet_3f(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index,
+                   float *value);
+float *SettingGet_3fv(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
+int SettingGet_color(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);
+
+int SettingSetFromString(PyMOLGlobals * G, CSetting * I, int index, char *st);
+int SettingStringToTypedValue(PyMOLGlobals * G, int index, char *st, int *type,
+                              int *value);
 
 #ifndef _PYMOL_NOPY
-int SettingSetFromTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple);
-PyObject *SettingGetTuple(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
-PyObject *SettingGetDefinedTuple(PyMOLGlobals *G,CSetting *set1,int index);
-PyObject *SettingGetUpdateList(PyMOLGlobals *G,CSetting *I);
+int SettingSetFromTuple(PyMOLGlobals * G, CSetting * I, int index, PyObject * tuple);
+PyObject *SettingGetTuple(PyMOLGlobals * G, CSetting * set1, CSetting * set2, int index);       /* (type,(value,)) */
+PyObject *SettingGetDefinedTuple(PyMOLGlobals * G, CSetting * set1, int index);
+PyObject *SettingGetUpdateList(PyMOLGlobals * G, CSetting * I);
 #endif
 
-void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state);
+void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int state);
+
 
 /* Legacy API below */
 
-int SettingGetIndex(PyMOLGlobals *G,char *name);
-float SettingGet(PyMOLGlobals *G,int index);
-int SettingSet(PyMOLGlobals *G,int index,float v);
-int SettingSetfv(PyMOLGlobals *G,int index,float *value);
-float *SettingGetfv(PyMOLGlobals *G,int index);
-int SettingSetNamed(PyMOLGlobals *G,char *name,char *value);
-float SettingGetNamed(PyMOLGlobals *G,char *name);
-int SettingGetName(PyMOLGlobals *G,int index,SettingName name);
+int SettingGetIndex(PyMOLGlobals * G, char *name);
+float SettingGet(PyMOLGlobals * G, int index);
+int SettingSet(PyMOLGlobals * G, int index, float v);
+int SettingSetfv(PyMOLGlobals * G, int index, float *value);
+float *SettingGetfv(PyMOLGlobals * G, int index);
+int SettingSetNamed(PyMOLGlobals * G, char *name, char *value);
+float SettingGetNamed(PyMOLGlobals * G, char *name);
+int SettingGetName(PyMOLGlobals * G, int index, SettingName name);
 
-PyObject *SettingAsPyList(CSetting *I);
-int SettingFromPyList(CSetting *I,PyObject *list);
+PyObject *SettingAsPyList(CSetting * I);
+int SettingFromPyList(CSetting * I, PyObject * list);
 
-int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list);
-PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals *G);
+int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list);
+PyObject *SettingGetGlobalsAsPyList(PyMOLGlobals * G);
+
 
 /* proposed...
 PyObject *SettingGetDefaultsAsPyList(PyMOLGlobals *G);
 int SettingSetDefaultsFromPyList(PyMOLGlobals *G,PyObject *list);
 */
 
-CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
+CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
+
 
 /* WARNING: do not delete or change indices
    since they are used in session objects */
@@ -385,20 +397,20 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 #define cSetting_stereo_mode                 188
 
-#define cStereo_default              0 
+#define cStereo_default              0
 #define cStereo_quadbuffer           1
-#define cStereo_crosseye             2 
-#define cStereo_walleye              3 
-#define cStereo_geowall              4 
+#define cStereo_crosseye             2
+#define cStereo_walleye              3
+#define cStereo_geowall              4
 #define cStereo_sidebyside           5
-#define cStereo_stencil_by_row       6 
-#define cStereo_stencil_by_column    7 
-#define cStereo_stencil_checkerboard 8 
-#define cStereo_stencil_custom       9 /* for hardware developers to use */
-#define cStereo_anaglyph            10 /* not yet implemented */
-#define cStereo_dynamic             11 /* dynamic polarization */
+#define cStereo_stencil_by_row       6
+#define cStereo_stencil_by_column    7
+#define cStereo_stencil_checkerboard 8
+#define cStereo_stencil_custom       9  /* for hardware developers to use */
+#define cStereo_anaglyph            10  /* not yet implemented */
+#define cStereo_dynamic             11  /* dynamic polarization */
 #define cStereo_clone_dynamic       12
-   
+
 #define cSetting_cgo_sphere_quality          189
 #define cSetting_pdb_literal_names           190
 #define cSetting_wrap_output                 191
@@ -408,7 +420,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_ray_shadows                 195
 #define cSetting_ribbon_trace_atoms          196
 #define cSetting_security                    197
-#define cSetting_stick_transparency          198 
+#define cSetting_stick_transparency          198
 #define cSetting_ray_transparency_shadows    199
 #define cSetting_session_version_check       200
 #define cSetting_ray_transparency_specular   201
@@ -504,7 +516,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_h_bond_power_b              285
 #define cSetting_h_bond_cone                 286
 
-#define cSetting_ss_helix_psi_target         287 
+#define cSetting_ss_helix_psi_target         287
 #define cSetting_ss_helix_psi_include        288
 #define cSetting_ss_helix_psi_exclude        289
 
@@ -559,7 +571,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_mesh_type                  335
 #define cSetting_dot_lighting               336
 #define cSetting_mesh_lighting              337
-#define cSetting_surface_solvent            338 
+#define cSetting_surface_solvent            338
 #define cSetting_triangle_max_passes        339
 #define cSetting_ray_interior_reflect       340
 #define cSetting_internal_gui_mode          341
@@ -590,7 +602,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_wizard_prompt_mode         366
 #define cSetting_coulomb_cutoff             367
 #define cSetting_slice_track_camera         368
-#define cSetting_slice_height_scale         369 
+#define cSetting_slice_height_scale         369
 #define cSetting_slice_height_map           370
 #define cSetting_slice_grid                 371
 #define cSetting_slice_dynamic_grid         372
@@ -704,7 +716,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_pdb_unbond_cations         480
 #define cSetting_sculpt_tri_scale           481
 #define cSetting_sculpt_tri_weight          482
-#define cSetting_sculpt_tri_min             483 
+#define cSetting_sculpt_tri_min             483
 #define cSetting_sculpt_tri_max             484
 #define cSetting_sculpt_tri_mode            485
 #define cSetting_pdb_echo_tags              486
@@ -841,16 +853,16 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_show_frame_rate            617
 #define cSetting_movie_panel                618
 
+
 /* when you add a new setting also remember:
    layer1/Setting.c
    modules/pymol/setting.py
   layer5/PyMOL.c 
 */
 
+
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
 #define cSetting_INIT                       619
 
 #endif
-
-

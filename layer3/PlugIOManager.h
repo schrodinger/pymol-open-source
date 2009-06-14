@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -21,14 +22,14 @@ Z* -------------------------------------------------------------------
 #include "ObjectMolecule.h"
 #include "ObjectMap.h"
 
-int PlugIOManagerInit(PyMOLGlobals *G);
-int PlugIOManagerFree(PyMOLGlobals *G);
-int PlugIOManagerLoadTraj(PyMOLGlobals *G,ObjectMolecule *obj,
-                          char *fname,int frame,
-                          int interval,int average,int start,
-                          int stop,int max,char *sele,int image,
-                          float *shift,int quiet,char *plugin_type);
-ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals *G,ObjectMap *obj,
-                         char *fname,int state, int quiet,char *plugin_type);
+int PlugIOManagerInit(PyMOLGlobals * G);
+int PlugIOManagerFree(PyMOLGlobals * G);
+int PlugIOManagerLoadTraj(PyMOLGlobals * G, ObjectMolecule * obj,
+                          char *fname, int frame,
+                          int interval, int average, int start,
+                          int stop, int max, char *sele, int image,
+                          float *shift, int quiet, char *plugin_type);
+ObjectMap *PlugIOManagerLoadVol(PyMOLGlobals * G, ObjectMap * obj,
+                                char *fname, int state, int quiet, char *plugin_type);
 
 #endif

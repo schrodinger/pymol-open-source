@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -18,6 +19,6 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLGlobals.h"
 
-int TestPyMOLRun(PyMOLGlobals *G,int group,int test);
+int TestPyMOLRun(PyMOLGlobals * G, int group, int test);
 
 #endif

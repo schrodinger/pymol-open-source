@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -24,6 +26,7 @@ struct _CFeedback {
   char *Stack;
   int Depth;
 };
+
 
 /* 
 
@@ -80,13 +83,14 @@ function name.
 */
 
 
-
 /* WARNING: The following constants are replicated in Python for the purpose
  * of minimize program startup time */
 
+
 /* Discrete Systems and/or Code Modules */
 
-#define FB_All               0 /* only used for setting */
+#define FB_All               0  /* only used for setting */
+
 
 /* NOTE, the following don't have to be packed, or in order -- we just
    need to record what the maximum index is.  Rember that that
@@ -94,8 +98,8 @@ function name.
    inconvenience... 
  */
 
-/* layer 0 */
 
+/* layer 0 */
 
 #define FB_Isomesh                   1
 #define FB_Map                       2
@@ -107,13 +111,14 @@ function name.
 #define FB_Isosurface                8
 #define FB_OpenGL                    9
 
+
 /* layer 1 */
 
 #define FB_Color                     10
 #define FB_CGO                       11
 #define FB_Feedback                  12
 #define FB_Scene                     13
-#define FB_Threads                   14  /* part of P.c */
+#define FB_Threads                   14 /* part of P.c */
 #define FB_Symmetry                  15
 #define FB_Ray                       16
 #define FB_Setting                   17
@@ -125,6 +130,7 @@ function name.
 #define FB_Rep                       23
 #define FB_Shaker                    24
 
+
 /* layer 2 */
 
 #define FB_CoordSet                  25
@@ -134,7 +140,7 @@ function name.
 #define FB_ObjectMolecule            30
 #define FB_ObjectMap                 31
 #define FB_ObjectMesh                32
-#define FB_ObjectDist                33 
+#define FB_ObjectDist                33
 #define FB_ObjectCGO                 34
 #define FB_ObjectCallback            35
 #define FB_ObjectSurface             36
@@ -160,6 +166,7 @@ function name.
 #define FB_Sculpt                    59
 #define FB_VFont                     60
 
+
 /* layer 3 */
 
 #define FB_Executive                 70
@@ -167,54 +174,66 @@ function name.
 #define FB_Editor                    72
 #define FB_Nag                       73
 
+
 /* layer 4 */
 
 #define FB_Export                    75
-#define FB_CCmd                      76  /* "cmd" is just the python version */
-#define FB_API                       77  /* APIEntry/Exit */
+#define FB_CCmd                      76 /* "cmd" is just the python version */
+#define FB_API                       77 /* APIEntry/Exit */
+
 
 /* layer 5 */
 
-#define FB_Main                      80  
+#define FB_Main                      80
 
 #define FB_Total                     81 /* highest index + 1 */
+
 
 /* Feedback level bit masks */
 
 #define FB_None            0x00
 
 #define FB_Output          0x01
+
+
 /* python/text output */
 #define FB_Results         0x02
+
+
 /* limited to actual results of an operation...requested measurements, etc. */
 #define FB_Errors          0x04
 #define FB_Actions         0x08
+
+
 /* advisories regarding the completion of a */
 #define FB_Warnings        0x10
 #define FB_Details         0x20
 #define FB_Blather         0x40
 #define FB_Debugging       0x80
 
-#define FB_Everything      0xFF 
+#define FB_Everything      0xFF
 
-int FeedbackInit(PyMOLGlobals *G,int quiet);
-void FeedbackFree(PyMOLGlobals *G);
-void FeedbackPush(PyMOLGlobals *G);
-void FeedbackPop(PyMOLGlobals *G);
+int FeedbackInit(PyMOLGlobals * G, int quiet);
+void FeedbackFree(PyMOLGlobals * G);
+void FeedbackPush(PyMOLGlobals * G);
+void FeedbackPop(PyMOLGlobals * G);
 
-void FeedbackAutoAdd(PyMOLGlobals *G,unsigned int sysmod,unsigned char mask,char *str);
-void FeedbackAdd(PyMOLGlobals *G,char *str);
+void FeedbackAutoAdd(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask,
+                     char *str);
+void FeedbackAdd(PyMOLGlobals * G, char *str);
 
-void FeedbackSetMask(PyMOLGlobals *G,unsigned int sysmod,unsigned char mask);
-void FeedbackDisable(PyMOLGlobals *G,unsigned int sysmod,unsigned char mask);
-void FeedbackEnable(PyMOLGlobals *G,unsigned int sysmod,unsigned char mask);
+void FeedbackSetMask(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);
+void FeedbackDisable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);
+void FeedbackEnable(PyMOLGlobals * G, unsigned int sysmod, unsigned char mask);
+
 
 /* Mechanism: a high-speed bit test, with no range checking 
  * in order to avoid penalizing performance-senstive code
  * modules which may contain live debugging code.  
  */
 
-#define Feedback(G,sysmod,mask) (G->Feedback->Mask[sysmod]&mask) 
+#define Feedback(G,sysmod,mask) (G->Feedback->Mask[sysmod]&mask)
+
 
 /* FEEDBACK_MAX_OUTPUT should be as small as is reasonable
  * since this much space gets consumed on the stack
@@ -224,6 +243,7 @@ void FeedbackEnable(PyMOLGlobals *G,unsigned int sysmod,unsigned char mask);
 
 #define FEEDBACK_MAX_OUTPUT 255
 typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
+
 
 /* Print Feedback Macros -- this the most flexible and cross-OS
  * portable solution I've come up with for sending output with
@@ -236,10 +256,12 @@ typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
 #define PRINTF { FeedbackLineType _FBstr; (sprintf)( _FBstr,
 #define ENDF(G)  ); FeedbackAdd(G,_FBstr);}
 
+
 /* debugging: goes to stderr */
 
 #define PRINTFD(G,sysmod) {if(Feedback(G,sysmod,FB_Debugging)) { fprintf(stderr,
 #define ENDFD   );fflush(stderr);}}
+
 
 /* convenient vector dumping routine */
 

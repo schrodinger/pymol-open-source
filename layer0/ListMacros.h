@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -15,6 +17,7 @@ Z* -------------------------------------------------------------------
 */
 #ifndef _H_ListMacros
 #define _H_ListMacros
+
 
 /* simplest possible single-linked list */
 
@@ -109,6 +112,7 @@ Z* -------------------------------------------------------------------
 #define ListIterate(List,Counter,Link) \
    ( (Counter) = ((List) ? (((Counter) ? (Counter)->Link : (List))) : NULL))
 
+
 /* Elem handling routines */
 
 #define ListElemAlloc(G,Elem,ElemType) \
@@ -128,10 +132,8 @@ if(!(Elem)) \
   } \
 }
 
-
 #define ListElemInit(List,Link) (List)->Link = NULL
 
 #define ListElemFree(Elem) { mfree(Elem); Elem = NULL; }
-
 
 #endif

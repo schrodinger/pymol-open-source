@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,11 +21,10 @@ Z* -------------------------------------------------------------------
 
 typedef struct SculptCacheEntry {
   int rest_type;
-  int id0,id1,id2,id3;
+  int id0, id1, id2, id3;
   float value;
   int next;
 } SculptCacheEntry;
-
 
 struct _CSculptCache {
   int NCached;
@@ -32,13 +32,13 @@ struct _CSculptCache {
   SculptCacheEntry *List;
 };
 
-int SculptCacheInit(PyMOLGlobals *G);
-void SculptCacheFree(PyMOLGlobals *G);
-void SculptCachePurge(PyMOLGlobals *G);
+int SculptCacheInit(PyMOLGlobals * G);
+void SculptCacheFree(PyMOLGlobals * G);
+void SculptCachePurge(PyMOLGlobals * G);
 
-int SculptCacheQuery(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int id3,float *value);
-void SculptCacheStore(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int id3,float value);
+int SculptCacheQuery(PyMOLGlobals * G, int rest_type, int id0, int id1, int id2, int id3,
+                     float *value);
+void SculptCacheStore(PyMOLGlobals * G, int rest_type, int id0, int id1, int id2, int id3,
+                      float value);
 
 #endif
-
-

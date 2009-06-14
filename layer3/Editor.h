@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -42,47 +43,53 @@ Z* -------------------------------------------------------------------
 #define EDITOR_SCHEME_FRAG 2
 #define EDITOR_SCHEME_DRAG 3
 
-int EditorInit(PyMOLGlobals *G);
-int EditorActive(PyMOLGlobals *G); 
-void EditorRender(PyMOLGlobals *G,int state);
-int EditorLogState(PyMOLGlobals *G,int pkresi);
-void EditorFavorOrigin(PyMOLGlobals *G, float *v1);
+int EditorInit(PyMOLGlobals * G);
+int EditorActive(PyMOLGlobals * G);
+void EditorRender(PyMOLGlobals * G, int state);
+int EditorLogState(PyMOLGlobals * G, int pkresi);
+void EditorFavorOrigin(PyMOLGlobals * G, float *v1);
 
-void EditorFree(PyMOLGlobals *G);
-void EditorSetDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int quiet,int state);
-void EditorReadyDrag(PyMOLGlobals *G,int state);
-void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int index,int state, int mode);
-void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state,
-                float *pt,float *mov,float *z_dir);
+void EditorFree(PyMOLGlobals * G);
+void EditorSetDrag(PyMOLGlobals * G, ObjectMolecule * obj, int sele, int quiet,
+                   int state);
+void EditorReadyDrag(PyMOLGlobals * G, int state);
+void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj, int sele, int index,
+                       int state, int mode);
+void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int state,
+                float *pt, float *mov, float *z_dir);
 
-void EditorActivate(PyMOLGlobals *G,int state,int enable_bond);
-ObjectMolecule *EditorDragObject(PyMOLGlobals *G);
-void EditorReplace(PyMOLGlobals *G,char *elem,int geom,int valence,char *name,int quiet);
-void EditorAttach(PyMOLGlobals *G,char *elem,int geom,int valence,char *name,int quiet);
-void EditorRemove(PyMOLGlobals *G,int hydrogen,int quiet);
-void EditorHFill(PyMOLGlobals *G,int quiet);
-void EditorHFix(PyMOLGlobals *G,char *sele,int quiet);
-void EditorCycleValence(PyMOLGlobals *G,int quiet);
-void EditorInactivate(PyMOLGlobals *G);
-void EditorUpdateState(PyMOLGlobals *G);
+void EditorActivate(PyMOLGlobals * G, int state, int enable_bond);
+ObjectMolecule *EditorDragObject(PyMOLGlobals * G);
+void EditorReplace(PyMOLGlobals * G, char *elem, int geom, int valence, char *name,
+                   int quiet);
+void EditorAttach(PyMOLGlobals * G, char *elem, int geom, int valence, char *name,
+                  int quiet);
+void EditorRemove(PyMOLGlobals * G, int hydrogen, int quiet);
+void EditorHFill(PyMOLGlobals * G, int quiet);
+void EditorHFix(PyMOLGlobals * G, char *sele, int quiet);
+void EditorCycleValence(PyMOLGlobals * G, int quiet);
+void EditorInactivate(PyMOLGlobals * G);
+void EditorUpdateState(PyMOLGlobals * G);
 
-int EditorIsAnActiveObject(PyMOLGlobals *G,ObjectMolecule *obj);
+int EditorIsAnActiveObject(PyMOLGlobals * G, ObjectMolecule * obj);
 
-int EditorSelect(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,int pkresi,int pkbond,int quiet);
-int EditorTorsion(PyMOLGlobals *G,float angle);
-int EditorInvert(PyMOLGlobals *G,int quiet);
+int EditorSelect(PyMOLGlobals * G, char *s0, char *s1, char *s2, char *s3, int pkresi,
+                 int pkbond, int quiet);
+int EditorTorsion(PyMOLGlobals * G, float angle);
+int EditorInvert(PyMOLGlobals * G, int quiet);
 
-PyObject *EditorAsPyList(PyMOLGlobals *G);
-int EditorFromPyList(PyMOLGlobals *G,PyObject *list);
-void EditorGetNextMultiatom(PyMOLGlobals *G,char *name);
-int EditorGetSinglePicked(PyMOLGlobals *G,char *name);
-int EditorIsBondMode(PyMOLGlobals *G);
-int EditorDeselectIfSelected(PyMOLGlobals *G,ObjectMolecule *obj,int index,int update);
-void EditorDefineExtraPks(PyMOLGlobals *G);
-int EditorGetNFrag(PyMOLGlobals *G);
-void EditorUpdate(PyMOLGlobals *G);
-void EditorMouseInvalid(PyMOLGlobals *G);
-int EditorGetScheme(PyMOLGlobals *G);
-void EditorDihedralInvalid(PyMOLGlobals *G,ObjectMolecule *obj);
+PyObject *EditorAsPyList(PyMOLGlobals * G);
+int EditorFromPyList(PyMOLGlobals * G, PyObject * list);
+void EditorGetNextMultiatom(PyMOLGlobals * G, char *name);
+int EditorGetSinglePicked(PyMOLGlobals * G, char *name);
+int EditorIsBondMode(PyMOLGlobals * G);
+int EditorDeselectIfSelected(PyMOLGlobals * G, ObjectMolecule * obj, int index,
+                             int update);
+void EditorDefineExtraPks(PyMOLGlobals * G);
+int EditorGetNFrag(PyMOLGlobals * G);
+void EditorUpdate(PyMOLGlobals * G);
+void EditorMouseInvalid(PyMOLGlobals * G);
+int EditorGetScheme(PyMOLGlobals * G);
+void EditorDihedralInvalid(PyMOLGlobals * G, ObjectMolecule * obj);
 
 #endif

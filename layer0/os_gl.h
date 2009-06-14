@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -35,6 +37,7 @@ Z* -------------------------------------------------------------------
 
 #else
 
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef _MACPYMOL_XCODE
 #include <OpenGL/gl.h>
@@ -50,8 +53,11 @@ Z* -------------------------------------------------------------------
 #endif
 
 #endif
+
+
 /* END PROPRIETARY CODE SEGMENT */
 #endif
+
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
@@ -60,22 +66,17 @@ Z* -------------------------------------------------------------------
 #include<GL/glext.h>
 #endif
 #endif
+
+
 /* END PROPRIETARY CODE SEGMENT */
 
 void PyMOLReadPixels(GLint x,
-                  GLint y,
-                  GLsizei width,
-                  GLsizei height,
-                  GLenum format,
-                  GLenum type,
-                      GLvoid *pixels);
-
+                     GLint y,
+                     GLsizei width,
+                     GLsizei height, GLenum format, GLenum type, GLvoid * pixels);
 
 void PyMOLDrawPixels(GLsizei width,
-                  GLsizei height,
-                  GLenum format,
-                  GLenum type,
-                  const GLvoid *pixels);
+                     GLsizei height, GLenum format, GLenum type, const GLvoid * pixels);
 
 #define P_GLUT_BUTTON_SCROLL_FORWARD  3
 #define P_GLUT_BUTTON_SCROLL_BACKWARD 4
@@ -88,6 +89,7 @@ void PyMOLDrawPixels(GLsizei width,
 
 int PyMOLCheckOpenGLErr(char *pos);
 
+
 /* determine whether or not we have a real GLUT */
 
 #ifdef _PYMOL_NO_GLUT
@@ -97,6 +99,7 @@ int PyMOLCheckOpenGLErr(char *pos);
 #ifdef _PYMOL_ACTIVEX_OLD
 #define _PYMOL_WX_GLUT
 #endif
+
 
 /*
 #ifdef _EPYMOL
@@ -120,6 +123,7 @@ int PyMOLCheckOpenGLErr(char *pos);
 
 #ifndef _PYMOL_PRETEND_GLUT
 
+
 /* ============ REAL GLUT BEING USED ============= */
 
 #ifndef _PYMOL_OSX
@@ -132,26 +136,27 @@ int PyMOLCheckOpenGLErr(char *pos);
 #include<GL/freeglut_ext.h>
 #endif
 
+
 /* These are the only glut constants and functions that PyMOL uses ... */
 
-#define P_GLUT_ACTIVE_ALT               GLUT_ACTIVE_ALT                 
-#define P_GLUT_ACTIVE_CTRL              GLUT_ACTIVE_CTRL                
-#define P_GLUT_ACTIVE_SHIFT             GLUT_ACTIVE_SHIFT               
-#define P_GLUT_BITMAP_8_BY_13           GLUT_BITMAP_8_BY_13             
+#define P_GLUT_ACTIVE_ALT               GLUT_ACTIVE_ALT
+#define P_GLUT_ACTIVE_CTRL              GLUT_ACTIVE_CTRL
+#define P_GLUT_ACTIVE_SHIFT             GLUT_ACTIVE_SHIFT
+#define P_GLUT_BITMAP_8_BY_13           GLUT_BITMAP_8_BY_13
 #define P_GLUT_DEPTH                    GLUT_DEPTH
-#define P_GLUT_DISPLAY_MODE_POSSIBLE    GLUT_DISPLAY_MODE_POSSIBLE      
-#define P_GLUT_DOUBLE                   GLUT_DOUBLE                     
-#define P_GLUT_DOWN                     GLUT_DOWN                       
-#define P_GLUT_KEY_DOWN                 GLUT_KEY_DOWN                   
-#define P_GLUT_KEY_LEFT                 GLUT_KEY_LEFT                   
-#define P_GLUT_KEY_RIGHT                GLUT_KEY_RIGHT                  
-#define P_GLUT_KEY_UP                   GLUT_KEY_UP                     
-#define P_GLUT_LEFT_BUTTON              GLUT_LEFT_BUTTON                
-#define P_GLUT_MIDDLE_BUTTON            GLUT_MIDDLE_BUTTON              
+#define P_GLUT_DISPLAY_MODE_POSSIBLE    GLUT_DISPLAY_MODE_POSSIBLE
+#define P_GLUT_DOUBLE                   GLUT_DOUBLE
+#define P_GLUT_DOWN                     GLUT_DOWN
+#define P_GLUT_KEY_DOWN                 GLUT_KEY_DOWN
+#define P_GLUT_KEY_LEFT                 GLUT_KEY_LEFT
+#define P_GLUT_KEY_RIGHT                GLUT_KEY_RIGHT
+#define P_GLUT_KEY_UP                   GLUT_KEY_UP
+#define P_GLUT_LEFT_BUTTON              GLUT_LEFT_BUTTON
+#define P_GLUT_MIDDLE_BUTTON            GLUT_MIDDLE_BUTTON
 #define P_GLUT_RGBA                     GLUT_RGBA
-#define P_GLUT_RIGHT_BUTTON             GLUT_RIGHT_BUTTON               
-#define P_GLUT_STEREO                   GLUT_STEREO                     
-#define P_GLUT_UP                       GLUT_UP                           
+#define P_GLUT_RIGHT_BUTTON             GLUT_RIGHT_BUTTON
+#define P_GLUT_STEREO                   GLUT_STEREO
+#define P_GLUT_UP                       GLUT_UP
 #define P_GLUT_MULTISAMPLE              GLUT_MULTISAMPLE
 #define P_GLUT_STENCIL                  GLUT_STENCIL
 #define P_GLUT_ACCUM                    GLUT_ACCUM
@@ -204,6 +209,7 @@ int PyMOLCheckOpenGLErr(char *pos);
 
 #else
 
+
 /* ============ GLUT EMULATION MODE ============= */
 
 #ifndef _PYMOL_NO_GLUT
@@ -217,19 +223,20 @@ int PyMOLCheckOpenGLErr(char *pos);
 #define P_GLUT_SPECIAL_EVENT         6
 #define P_GLUT_PASSIVE_MOTION_EVENT  7
 
-
 typedef struct {
   int event_code;
-  int x,y;
-  int input,state,mod;
+  int x, y;
+  int input, state, mod;
 } p_glut_event;
+
 
 /* here is the pretend GLUT event handler */
 
-void p_glutHandleEvent(p_glut_event *ev); 
+void p_glutHandleEvent(p_glut_event * ev);
 int p_glutGetRedisplay(void);
 
 #endif
+
 
 /* here is the interface and constants for pretend or no GLUT */
 
@@ -283,44 +290,43 @@ int p_glutGetRedisplay(void);
 #define P_GLUT_WINDOW_BORDER_WIDTH             11
 #define P_GLUT_WINDOW_HEADER_HEIGHT            12
 
-
 #ifndef _PYMOL_NO_GLUT
-void     p_glutGameModeString(char *str);
-void     p_glutEnterGameMode(void);
-void     p_glutLeaveGameMode(void);
+void p_glutGameModeString(char *str);
+void p_glutEnterGameMode(void);
+void p_glutLeaveGameMode(void);
 
-void     p_glutBitmapCharacter(void *font, int character);
-void     p_glutSwapBuffers(void);
+void p_glutBitmapCharacter(void *font, int character);
+void p_glutSwapBuffers(void);
 
-int      p_glutCreateWindow(const char *title); /* NOTE: once this function called,
+int p_glutCreateWindow(const char *title);      /* NOTE: once this function called,
                                                  * we need to have a valid GL rendering context */
-void     p_glutPopWindow(void);
-void     p_glutShowWindow(void);
-void     p_glutReshapeWindow(int width, int height);
-void     p_glutDestroyWindow(int theWindow);
+void p_glutPopWindow(void);
+void p_glutShowWindow(void);
+void p_glutReshapeWindow(int width, int height);
+void p_glutDestroyWindow(int theWindow);
 
-void     p_glutFullScreen(void);
-void     p_glutPostRedisplay(void);
+void p_glutFullScreen(void);
+void p_glutPostRedisplay(void);
 
-void     p_glutInit(int *argcp, char **argv);
-void     p_glutInitDisplayMode(unsigned int mode);
-void     p_glutInitDisplayString(const char *string);
-void     p_glutInitWindowPosition(int x, int y);
-void     p_glutInitWindowSize(int width, int height);
+void p_glutInit(int *argcp, char **argv);
+void p_glutInitDisplayMode(unsigned int mode);
+void p_glutInitDisplayString(const char *string);
+void p_glutInitWindowPosition(int x, int y);
+void p_glutInitWindowSize(int width, int height);
 
-int      p_glutGet(GLenum type);
-int      p_glutGetModifiers(void);
+int p_glutGet(GLenum type);
+int p_glutGetModifiers(void);
 
-void     p_glutDisplayFunc(void (*func)(void));
-void     p_glutReshapeFunc(void (*func)(int width, int height));
-void     p_glutKeyboardFunc(void (*func)(unsigned char key, int x, int y));
-void     p_glutMouseFunc(void (*func)(int button, int state, int x, int y));
-void     p_glutMotionFunc(void (*func)(int x, int y));
-void     p_glutSpecialFunc(void (*func)(int key, int x, int y));
-void     p_glutIdleFunc(void (*func)(void));
+void p_glutDisplayFunc(void (*func) (void));
+void p_glutReshapeFunc(void (*func) (int width, int height));
+void p_glutKeyboardFunc(void (*func) (unsigned char key, int x, int y));
+void p_glutMouseFunc(void (*func) (int button, int state, int x, int y));
+void p_glutMotionFunc(void (*func) (int x, int y));
+void p_glutSpecialFunc(void (*func) (int key, int x, int y));
+void p_glutIdleFunc(void (*func) (void));
 
-void     p_glutPositionWindow(int x,int y);
-void     p_glutMainLoop(void);
+void p_glutPositionWindow(int x, int y);
+void p_glutMainLoop(void);
 
 #endif
 

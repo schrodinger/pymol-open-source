@@ -6,6 +6,7 @@
 
 #ifdef OV_JENARIX
 
+
 /* NEW Jenarix-based OVHeap wrapper */
 
 #ifdef XX_HEAP_TRACKER
@@ -19,13 +20,14 @@
 
 typedef int *OVHeap;
 #define OVHeap_New()   ((OVHeap*)1)
-#define OVHeap_Del(x) 
+#define OVHeap_Del(x)
 #define OVHeap_Malloc(I,size) OV_HEAP_MALLOC_RAW_VOID(size)
 #define OVHeap_Calloc(I,num,size) OV_HEAP_CALLOC_RAW_VOID((ov_size)(num)*(ov_size)(size))
 #define OVHeap_Realloc(I,ptr,size) OV_HEAP_REALLOC_RAW_VOID(ptr,size)
 #define OVHeap_Free(I,ptr) OV_HEAP_FREE_RAW(ptr)
 #define OVHeap_Dump(I,flags) ov_heap_dump(flags)
 #define OVHeap_Usage(I) ov_heap_usage()
+
 
 /* convenience macros */
 
@@ -37,39 +39,45 @@ typedef int *OVHeap;
 #define OVHeap_FREE_AUTO_NULL(I,ptr) { if(ptr) {OVHeap_Free(I,ptr); ptr = NULL;}}
 
 #else
+
 /* OLD proven OVHeap implementation */
 
 #ifdef OVHeap_TRACKING
 
-struct _OVHeap;  typedef struct _OVHeap OVHeap;
+struct _OVHeap;
+typedef struct _OVHeap OVHeap;
+
 
 /* what kinds of blocks do we keep track of? */
 
 #define OVHeap_BLOCK_TYPE 0
 #define OVHeap_ARRAY_TYPE 1
 
+
 /* how do we want the dump printed? */
 
 #define OVHeap_DUMP_FILES_TOO      0x1
 #define OVHeap_DUMP_NO_ADDRESSES   0x2
+
 
 /* constructor/destructor */
 
 #define OVHeap_New()   _OVHeap_New()
 #define OVHeap_Del(x)  _OVHeap_Del(x)
 
+
 /* implementation -- available for use by derivative memory managers */
 
 OVHeap *_OVHeap_New(void);
-void    _OVHeap_Del(OVHeap *I);
+void _OVHeap_Del(OVHeap * I);
 
-void   *_OVHeap_Malloc(OVHeap *I,ov_size size,const char *file,
-                     int line,int type);
-void   *_OVHeap_Calloc(OVHeap *I,ov_size num,ov_size size,
-                     const char *file,int line,int type);
-void   *_OVHeap_Realloc(OVHeap *I,void *ptr,ov_size size,
-                      const char *file,int line,int type);
-void    _OVHeap_Free(OVHeap *I,void *ptr,const char *file,int line,int type);
+void *_OVHeap_Malloc(OVHeap * I, ov_size size, const char *file, int line, int type);
+void *_OVHeap_Calloc(OVHeap * I, ov_size num, ov_size size,
+                     const char *file, int line, int type);
+void *_OVHeap_Realloc(OVHeap * I, void *ptr, ov_size size,
+                      const char *file, int line, int type);
+void _OVHeap_Free(OVHeap * I, void *ptr, const char *file, int line, int type);
+
 
 /* macros for tracking */
 
@@ -82,18 +90,18 @@ void    _OVHeap_Free(OVHeap *I,void *ptr,const char *file,int line,int type);
 #define OVHeap_Free(I,ptr) \
        _OVHeap_Free(I,ptr,__FILE__,__LINE__,OVHeap_BLOCK_TYPE)
 
-
-void OVHeap_Dump(OVHeap *I,ov_uint32 flags);
-int  OVHeap_Usage(OVHeap *I);
+void OVHeap_Dump(OVHeap * I, ov_uint32 flags);
+int OVHeap_Usage(OVHeap * I);
 
 #else
 
 typedef int *OVHeap;
 
+
 /* macros without tracking */
 
 #define OVHeap_New()            ((void*)1)
-#define OVHeap_Del(I)      
+#define OVHeap_Del(I)
 
 #define OVHeap_Malloc(I,size)    malloc(size)
 #define OVHeap_Calloc(I,num,size)  calloc(num,size)
@@ -103,6 +111,7 @@ typedef int *OVHeap;
 #define OVHeap_Dump(I,log_to_files)
 
 #endif
+
 
 /* convenience macros */
 
@@ -115,10 +124,3 @@ typedef int *OVHeap;
 
 #endif
 #endif
-
-
-
-
-
-
-

@@ -14,11 +14,9 @@
 #define _PyMOL_VERSION_double 1.20
 #endif
 
+
 /* for session file compatibility */
 
-#ifndef _PyMOL_VERSION_int 
+#ifndef _PyMOL_VERSION_int
 #define _PyMOL_VERSION_int 120
 #endif
-
-
-

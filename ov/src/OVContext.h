@@ -7,9 +7,10 @@ typedef struct _OVContext OVContext;
 #endif
 
 OVContext *OVContext_New(void);
-void OVContext_Del(OVContext *I);
+void OVContext_Del(OVContext * I);
 
 #include "OVHeap.h"
+
 
 /* should only be accessed by special methods */
 

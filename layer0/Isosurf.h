@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -38,26 +40,27 @@ typedef struct {
 #define F4(field,P1,P2,P3,P4) Ffloat4(field,P1,P2,P3,P4)
 #define F4Ptr(field,P1,P2,P3,P4) Ffloat4p(field,P1,P2,P3,P4)
 
-Isofield *IsosurfFieldAlloc(PyMOLGlobals *G,int *dims);
-void IsosurfFieldFree(PyMOLGlobals *G,Isofield *field);
+Isofield *IsosurfFieldAlloc(PyMOLGlobals * G, int *dims);
+void IsosurfFieldFree(PyMOLGlobals * G, Isofield * field);
 
-int	IsosurfVolume(PyMOLGlobals *G,CSetting *set1,CSetting *set2,
-                  Isofield *field,float level,int **num,
-                  float **vert,int *range,int mode,int skip,float alt_level);
+int IsosurfVolume(PyMOLGlobals * G, CSetting * set1, CSetting * set2,
+                  Isofield * field, float level, int **num,
+                  float **vert, int *range, int mode, int skip, float alt_level);
 
-int IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,
-                     float *mn,float *mx,int *range,int clamp);
-int IsosurfExpand(Isofield *field1, Isofield *field2,
-                   CCrystal *cryst, CSymmetry *sym, int *range);
+int IsosurfGetRange(PyMOLGlobals * G, Isofield * field, CCrystal * cryst,
+                    float *mn, float *mx, int *range, int clamp);
+int IsosurfExpand(Isofield * field1, Isofield * field2,
+                  CCrystal * cryst, CSymmetry * sym, int *range);
 
-int	IsosurfInit(PyMOLGlobals *G);
-void  IsosurfFree(PyMOLGlobals *G);
+int IsosurfInit(PyMOLGlobals * G);
+void IsosurfFree(PyMOLGlobals * G);
+
 
 /* isofield operations -- not part of Isosurf */
 
-void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field);
-PyObject *IsosurfAsPyList(Isofield *I);
-Isofield *IsosurfNewFromPyList(PyMOLGlobals *G,PyObject *list);
-Isofield *IsosurfNewCopy(PyMOLGlobals *G,Isofield *src);
+void IsofieldComputeGradients(PyMOLGlobals * G, Isofield * field);
+PyObject *IsosurfAsPyList(Isofield * I);
+Isofield *IsosurfNewFromPyList(PyMOLGlobals * G, PyObject * list);
+Isofield *IsosurfNewCopy(PyMOLGlobals * G, Isofield * src);
 
 #endif

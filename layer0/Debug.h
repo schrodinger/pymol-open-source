@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -15,6 +17,7 @@ Z* -------------------------------------------------------------------
 */
 #ifndef _H_DEBUG
 #define _H_DEBUG
+
 
 /* OBSOLETE -- USE THE FEEDBACK FACILITY */
 

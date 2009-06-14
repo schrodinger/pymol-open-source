@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,11 +22,11 @@ Z* -------------------------------------------------------------------
 
 typedef struct _CDeferred CDeferred;
 
-typedef int DeferredFn(CDeferred *D);
+typedef int DeferredFn(CDeferred * D);
 
-void DeferredInit(PyMOLGlobals *G, CDeferred *I);
-void DeferredFree(CDeferred *I);
-CDeferred *DeferredExec(CDeferred *I);
+void DeferredInit(PyMOLGlobals * G, CDeferred * I);
+void DeferredFree(CDeferred * I);
+CDeferred *DeferredExec(CDeferred * I);
 
 struct _CDeferred {
   PyMOLGlobals *G;

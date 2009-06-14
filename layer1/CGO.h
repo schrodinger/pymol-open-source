@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,12 +21,14 @@ Z* -------------------------------------------------------------------
 #include"Ray.h"
 #include"Setting.h"
 
+
 /* Compiled Graphics Library for simple graphics objects
    in floating point three-space, with the goal of achieving
    quick and easy rendering in multiple environments without the
    headaches of OpenGL arrays.
 
 */
+
 
 /* Supported functions:
  * stop
@@ -52,8 +55,9 @@ struct _CGO {
   int z_flag;
   float z_min, z_max;
   float z_vector[3];
-  int *i_start,i_size;
+  int *i_start, i_size;
 };
+
 
 /* instructions and data segment sizes */
 
@@ -96,18 +100,18 @@ struct _CGO {
 #define CGO_ELLIPSOID            0x12
 #define CGO_ELLIPSOID_SZ         13
 #define CGO_FONT                 0x13
-#define CGO_FONT_SZ              3   /*  size, face, style */
-#define CGO_FONT_SCALE           0x14 
-#define CGO_FONT_SCALE_SZ        2 
-#define CGO_FONT_VERTEX          0x15 
-#define CGO_FONT_VERTEX_SZ       3   /*  principle axes (zeros -> use camera x y z */
-#define CGO_FONT_AXES            0x16 
-#define CGO_FONT_AXES_SZ         9   /*  principle axes (zeros -> use camera x y z */
+#define CGO_FONT_SZ              3      /*  size, face, style */
+#define CGO_FONT_SCALE           0x14
+#define CGO_FONT_SCALE_SZ        2
+#define CGO_FONT_VERTEX          0x15
+#define CGO_FONT_VERTEX_SZ       3      /*  principle axes (zeros -> use camera x y z */
+#define CGO_FONT_AXES            0x16
+#define CGO_FONT_AXES_SZ         9      /*  principle axes (zeros -> use camera x y z */
 #define CGO_CHAR                 0x17
 #define CGO_CHAR_SZ              1
 #define CGO_INDENT               0x18
 #define CGO_INDENT_SZ            2
-#define CGO_ALPHA                0x19 
+#define CGO_ALPHA                0x19
 #define CGO_ALPHA_SZ             1
 #define CGO_QUADRIC              0x1A
 #define CGO_QUADRIC_SZ           14
@@ -121,84 +125,86 @@ struct _CGO {
 
 #define CGO_LIGHTING             0x0B50
 
-int CGORendererInit(PyMOLGlobals *G);
-void CGORendererFree(PyMOLGlobals *G);
-CGO *CGONew(PyMOLGlobals *G);
-CGO *CGONewSized(PyMOLGlobals *G,int size);
-int CGOGetExtent(CGO *I,float *mn,float *mx);
+int CGORendererInit(PyMOLGlobals * G);
+void CGORendererFree(PyMOLGlobals * G);
+CGO *CGONew(PyMOLGlobals * G);
+CGO *CGONewSized(PyMOLGlobals * G, int size);
+int CGOGetExtent(CGO * I, float *mn, float *mx);
 
-void CGOFree(CGO *I);
-CGO *CGODrawText(CGO *I,int est,float *camera);
+void CGOFree(CGO * I);
+CGO *CGODrawText(CGO * I, int est, float *camera);
 
-CGO *CGOSimplify(CGO *I,int est);
+CGO *CGOSimplify(CGO * I, int est);
 
-void CGOReserve(CGO *ptr,int est);
+void CGOReserve(CGO * ptr, int est);
 
-int CGOCheckComplex(CGO *I);
-int CGOPreloadFonts(CGO *I);
+int CGOCheckComplex(CGO * I);
+int CGOPreloadFonts(CGO * I);
 
-int CGOCheckForText(CGO *I);
+int CGOCheckForText(CGO * I);
 
-int CGOFromFloatArray(CGO *I,float *src,int len);
+int CGOFromFloatArray(CGO * I, float *src, int len);
 
-void CGOBegin(CGO *I,int mode);
-void CGOEnd(CGO *I);
+void CGOBegin(CGO * I, int mode);
+void CGOEnd(CGO * I);
 
-void CGOSphere(CGO *I,float *v1, float r);
-void CGOEllipsoid(CGO *I,float *v1, float r, float *n1, float *n2, float *n3);
-void CGOQuadric(CGO *I,float *v1, float r, float *p); /* NOT WORKING YET */
-void CGOSausage(CGO *I,float *v1,float *v2,float r,float *c1,float *c2);
-void CGOVertex(CGO *I,float v1,float v2,float v3);
-void CGOVertexv(CGO *I,float *v);
-void CGOAlpha(CGO *I,float alpha);
-void CGOColor(CGO *I,float v1,float v2,float v3);
-void CGOColorv(CGO *I,float *v);
-void CGONormal(CGO *I,float v1,float v2,float v3);
-void CGONormalv(CGO *I,float *v);
-void CGOResetNormal(CGO *I,int mode);
-void CGOLinewidth(CGO *I,float v);
-void CGODotwidth(CGO *I,float v);
-void CGOChar(CGO *I,char c);
-void CGOFontVertex(CGO *I,float x,float y,float z);
-void CGOFontVertexv(CGO *I,float *v);
-void CGOFontScale(CGO *I,float v1,float v2);
-void CGOChar(CGO *I,char c);
-void CGOIndent(CGO *I,char c,float dir);
-void CGOWrite(CGO *I,char *str);
-void CGOWriteLeft(CGO *I,char *str);
-void CGOWriteIndent(CGO *I,char *str,float indent);
+void CGOSphere(CGO * I, float *v1, float r);
+void CGOEllipsoid(CGO * I, float *v1, float r, float *n1, float *n2, float *n3);
+void CGOQuadric(CGO * I, float *v1, float r, float *p); /* NOT WORKING YET */
+void CGOSausage(CGO * I, float *v1, float *v2, float r, float *c1, float *c2);
+void CGOVertex(CGO * I, float v1, float v2, float v3);
+void CGOVertexv(CGO * I, float *v);
+void CGOAlpha(CGO * I, float alpha);
+void CGOColor(CGO * I, float v1, float v2, float v3);
+void CGOColorv(CGO * I, float *v);
+void CGONormal(CGO * I, float v1, float v2, float v3);
+void CGONormalv(CGO * I, float *v);
+void CGOResetNormal(CGO * I, int mode);
+void CGOLinewidth(CGO * I, float v);
+void CGODotwidth(CGO * I, float v);
+void CGOChar(CGO * I, char c);
+void CGOFontVertex(CGO * I, float x, float y, float z);
+void CGOFontVertexv(CGO * I, float *v);
+void CGOFontScale(CGO * I, float v1, float v2);
+void CGOChar(CGO * I, char c);
+void CGOIndent(CGO * I, char c, float dir);
+void CGOWrite(CGO * I, char *str);
+void CGOWriteLeft(CGO * I, char *str);
+void CGOWriteIndent(CGO * I, char *str, float indent);
+
 
 /*void CGOFontScale(CGO *I,float v);
   void CGOFont(CGO *I,float size,int face,int style);*/
 
-void CGOEnable(CGO *I,int mode);
-void CGODisable(CGO *I,int mode);
+void CGOEnable(CGO * I, int mode);
+void CGODisable(CGO * I, int mode);
 
-void CGOStop(CGO *I);
+void CGOStop(CGO * I);
 
-void CGOCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2);
-void CGOCustomCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2,
-                        float cap1,float cap2);
-void CGOConev(CGO *I,float *p1,float *p2,float r1,float r2,float *c1,float *c2, float cap1,float cap2);
+void CGOCylinderv(CGO * I, float *p1, float *p2, float r, float *c1, float *c2);
+void CGOCustomCylinderv(CGO * I, float *p1, float *p2, float r, float *c1, float *c2,
+                        float cap1, float cap2);
+void CGOConev(CGO * I, float *p1, float *p2, float r1, float r2, float *c1, float *c2,
+              float cap1, float cap2);
 
-void CGOAlphaTriangle(CGO *I,
+void CGOAlphaTriangle(CGO * I,
                       float *v1, float *v2, float *v3,
                       float *n1, float *n2, float *n3,
                       float *c1, float *c2, float *c3,
-                      float a1, float a2, float a3,
-                      int reverse);
-void CGOSetZVector(CGO *I, float z0, float z1, float z2);
+                      float a1, float a2, float a3, int reverse);
+void CGOSetZVector(CGO * I, float z0, float z1, float z2);
 struct GadgetSet;
-CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result);
-void CGORenderGLPicking(CGO *I,Picking **pick,
-                         PickContext *context,CSetting *set1,CSetting *set2);
-void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2,RenderInfo *info);
-void CGORenderGLAlpha(CGO *I,RenderInfo *info);
-void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2);
-void CGOReset(CGO *I);
+CGO *CGOProcessShape(CGO * I, struct GadgetSet *gs, CGO * result);
+void CGORenderGLPicking(CGO * I, Picking ** pick,
+                        PickContext * context, CSetting * set1, CSetting * set2);
+void CGORenderGL(CGO * I, float *color, CSetting * set1, CSetting * set2,
+                 RenderInfo * info);
+void CGORenderGLAlpha(CGO * I, RenderInfo * info);
+void CGORenderRay(CGO * I, CRay * ray, float *color, CSetting * set1, CSetting * set2);
+void CGOReset(CGO * I);
 
-PyObject *CGOAsPyList(CGO *I);
-CGO *CGONewFromPyList(PyMOLGlobals *G,PyObject *list,int version);
-void CGOPickColor(CGO *I,int index,int bond);
+PyObject *CGOAsPyList(CGO * I);
+CGO *CGONewFromPyList(PyMOLGlobals * G, PyObject * list, int version);
+void CGOPickColor(CGO * I, int index, int bond);
 
 #endif

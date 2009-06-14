@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -23,8 +24,6 @@ Z* -------------------------------------------------------------------
 
 #include"GadgetSet.h"
 
-
-
 typedef struct ObjectGadget {
   CObject Obj;
   struct GadgetSet **GSet;
@@ -34,41 +33,33 @@ typedef struct ObjectGadget {
   int Changed;
 } ObjectGadget;
 
-
 #define cGadgetPlain 0
 #define cGadgetRamp 1
 
-ObjectGadget *ObjectGadgetNew(PyMOLGlobals *G);
-void ObjectGadgetInit(PyMOLGlobals *G,ObjectGadget *I);
-void ObjectGadgetPurge(ObjectGadget *I);
-void ObjectGadgetFree(ObjectGadget *I);
-ObjectGadget *ObjectGadgetDefine(PyMOLGlobals *G,ObjectGadget *obj,PyObject *pycgo,int state);
-ObjectGadget *ObjectGadgetFromCGO(PyMOLGlobals *G,ObjectGadget *obj,CGO *cgo,int state);
-void ObjectGadgetRecomputeExtent(ObjectGadget *I);
+ObjectGadget *ObjectGadgetNew(PyMOLGlobals * G);
+void ObjectGadgetInit(PyMOLGlobals * G, ObjectGadget * I);
+void ObjectGadgetPurge(ObjectGadget * I);
+void ObjectGadgetFree(ObjectGadget * I);
+ObjectGadget *ObjectGadgetDefine(PyMOLGlobals * G, ObjectGadget * obj, PyObject * pycgo,
+                                 int state);
+ObjectGadget *ObjectGadgetFromCGO(PyMOLGlobals * G, ObjectGadget * obj, CGO * cgo,
+                                  int state);
+void ObjectGadgetRecomputeExtent(ObjectGadget * I);
 
-PyObject *ObjectGadgetAsPyList(ObjectGadget *I);
-PyObject *ObjectGadgetAsPyList(ObjectGadget *I);
-PyObject *ObjectGadgetPlainAsPyList(ObjectGadget *I);
+PyObject *ObjectGadgetAsPyList(ObjectGadget * I);
+PyObject *ObjectGadgetAsPyList(ObjectGadget * I);
+PyObject *ObjectGadgetPlainAsPyList(ObjectGadget * I);
 
-int ObjectGadgetNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget **result,int version);
-int ObjectGadgetInitFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget *I,int version);
+int ObjectGadgetNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget ** result,
+                              int version);
+int ObjectGadgetInitFromPyList(PyMOLGlobals * G, PyObject * list, ObjectGadget * I,
+                               int version);
 
-ObjectGadget *ObjectGadgetTest(PyMOLGlobals *G);
-int ObjectGadgetGetVertex(ObjectGadget *I,int index,int base, float *v); /* in current state */
-int ObjectGadgetSetVertex(ObjectGadget *I,int index,int base, float *v); /* in current state */
-void ObjectGadgetUpdate(ObjectGadget *I);
-void ObjectGadgetUpdateExtents(ObjectGadget *I);
-void ObjectGadgetUpdateStates(ObjectGadget *I);
+ObjectGadget *ObjectGadgetTest(PyMOLGlobals * G);
+int ObjectGadgetGetVertex(ObjectGadget * I, int index, int base, float *v);     /* in current state */
+int ObjectGadgetSetVertex(ObjectGadget * I, int index, int base, float *v);     /* in current state */
+void ObjectGadgetUpdate(ObjectGadget * I);
+void ObjectGadgetUpdateExtents(ObjectGadget * I);
+void ObjectGadgetUpdateStates(ObjectGadget * I);
 
 #endif
-
-
-
-
-
-
-
-
-
-
-

@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -24,16 +25,16 @@ typedef struct {
   int MapState;
   CCrystal Crystal;
   int Active;
-  int *N,nT,base_n_V;
+  int *N, nT, base_n_V;
   float *V;
   float *VC;
   int *RC;
   int OneColor;
   int VCsize;
   int Range[6];
-  float ExtentMin[3],ExtentMax[3];
+  float ExtentMin[3], ExtentMax[3];
   int ExtentFlag;
-  float Level,Radius;
+  float Level, Radius;
   int RefreshFlag;
   int ResurfaceFlag;
   int RecolorFlag;
@@ -41,7 +42,7 @@ typedef struct {
   float *AtomVertex;
   int CarveFlag;
   float CarveBuffer;
-  int Mode; /* 0 dots, 1 lines, 2 triangles */
+  int Mode;                     /* 0 dots, 1 lines, 2 triangles */
   int DotFlag;
   CGO *UnitCellCGO;
   int Side;
@@ -55,18 +56,17 @@ typedef struct ObjectSurface {
   int NState;
 } ObjectSurface;
 
-ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals *G,ObjectSurface *obj,ObjectMap *map,
-                                    int map_state,
-                                    int state,float *mn,float *mx,
-                                    float level,int mode,
-                                    float carve,float *vert_vla,int side,int quiet);
-void ObjectSurfaceDump(ObjectSurface *I,char *fname,int state);
+ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals * G, ObjectSurface * obj,
+                                    ObjectMap * map, int map_state, int state, float *mn,
+                                    float *mx, float level, int mode, float carve,
+                                    float *vert_vla, int side, int quiet);
+void ObjectSurfaceDump(ObjectSurface * I, char *fname, int state);
 
-int ObjectSurfaceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSurface **result);
-PyObject *ObjectSurfaceAsPyList(ObjectSurface *I);
-int ObjectSurfaceSetLevel(ObjectSurface *I,float level,int state,int quiet);
-int ObjectSurfaceGetLevel(ObjectSurface *I,int state,float *result);
-int ObjectSurfaceInvalidateMapName(ObjectSurface *I,char *name);
+int ObjectSurfaceNewFromPyList(PyMOLGlobals * G, PyObject * list,
+                               ObjectSurface ** result);
+PyObject *ObjectSurfaceAsPyList(ObjectSurface * I);
+int ObjectSurfaceSetLevel(ObjectSurface * I, float level, int state, int quiet);
+int ObjectSurfaceGetLevel(ObjectSurface * I, int state, float *result);
+int ObjectSurfaceInvalidateMapName(ObjectSurface * I, char *name);
 
 #endif
-

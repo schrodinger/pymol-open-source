@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,15 +20,15 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 #include"PyMOLGlobals.h"
 
-void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
-                  int passive, char *name,char *sele);
-void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
+void MenuActivate(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
+                  int passive, char *name, char *sele);
+void MenuActivate0Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                       int passive, char *name);
-void MenuActivate1Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
+void MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
                       int passive, char *name, char *arg1);
-void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
-                      int passive, char *name,char *sele1,char *sele2);
-void MenuActivate3fv(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
-                      char *name,float *xyz);
+void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
+                      int passive, char *name, char *sele1, char *sele2);
+void MenuActivate3fv(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
+                     char *name, float *xyz);
 
 #endif

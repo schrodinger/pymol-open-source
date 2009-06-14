@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -45,13 +46,12 @@ typedef struct CSculpt {
   float inverse[256];
 } CSculpt;
 
-CSculpt *SculptNew(PyMOLGlobals *G);
-void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state,int match_state,int match_by_segment);
-float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
-                          int state,int n_cycle,float *center);
+CSculpt *SculptNew(PyMOLGlobals * G);
+void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match_state,
+                         int match_by_segment);
+float SculptIterateObject(CSculpt * I, ObjectMolecule * obj, int state, int n_cycle,
+                          float *center);
 
-void SculptFree(CSculpt *I);
+void SculptFree(CSculpt * I);
 
 #endif
-
-

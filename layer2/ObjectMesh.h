@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -26,13 +27,13 @@ typedef struct {
   int MapState;
   CCrystal Crystal;
   int Active;
-  int *N,*RC,VCsize,base_n_V;
+  int *N, *RC, VCsize, base_n_V;
   int OneColor;
-  float *V,*VC;
+  float *V, *VC;
   int Range[6];
-  float ExtentMin[3],ExtentMax[3];
+  float ExtentMin[3], ExtentMax[3];
   int ExtentFlag;
-  float Level,Radius;
+  float Level, Radius;
   int RefreshFlag;
   int ResurfaceFlag;
   int quiet;
@@ -47,7 +48,7 @@ typedef struct {
   WordType caption;
   float AltLevel;
   /* not stored */
-  Isofield *Field;  
+  Isofield *Field;
 } ObjectMeshState;
 
 typedef struct ObjectMesh {
@@ -56,26 +57,24 @@ typedef struct ObjectMesh {
   int NState;
 } ObjectMesh;
 
-
-ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap* map,
+ObjectMesh *ObjectMeshFromBox(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,
                               int map_state,
-                              int state,float *mn,float *mx,
-                              float level,int meshMode,
-                              float carve,float *vert_vla,float alt_level,int quiet);
-ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
-                                  CSymmetry *sym,
+                              int state, float *mn, float *mx,
+                              float level, int meshMode,
+                              float carve, float *vert_vla, float alt_level, int quiet);
+ObjectMesh *ObjectMeshFromXtalSym(PyMOLGlobals * G, ObjectMesh * obj, ObjectMap * map,
+                                  CSymmetry * sym,
                                   int map_state,
-                                  int state,float *mn,float *mx,
-                                  float level,int meshMode,
-                                  float carve,float *vert_vla,
-                                  float alt_level,int quiet);
-void ObjectMeshDump(ObjectMesh *I,char *fname,int state);
+                                  int state, float *mn, float *mx,
+                                  float level, int meshMode,
+                                  float carve, float *vert_vla,
+                                  float alt_level, int quiet);
+void ObjectMeshDump(ObjectMesh * I, char *fname, int state);
 
-PyObject *ObjectMeshAsPyList(ObjectMesh *I);
-int ObjectMeshNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMesh **result);
-int ObjectMeshSetLevel(ObjectMesh *I,float level,int state,int quiet);
-int ObjectMeshGetLevel(ObjectMesh *I,int state, float *result);
-int ObjectMeshInvalidateMapName(ObjectMesh *I,char *name);
+PyObject *ObjectMeshAsPyList(ObjectMesh * I);
+int ObjectMeshNewFromPyList(PyMOLGlobals * G, PyObject * list, ObjectMesh ** result);
+int ObjectMeshSetLevel(ObjectMesh * I, float level, int state, int quiet);
+int ObjectMeshGetLevel(ObjectMesh * I, int state, float *result);
+int ObjectMeshInvalidateMapName(ObjectMesh * I, char *name);
 
 #endif
-

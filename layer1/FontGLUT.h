@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -19,8 +20,10 @@ Z* -------------------------------------------------------------------
 
 #include"Font.h"
 
+
 /* GLUT font codes */
-   
+
+
 /* BEGIN GLUT EXCERPT.  THE FOLLOWING CODE IS:
 
  * Copyright (c) Mark J. Kilgard, 1994. 
@@ -46,10 +49,11 @@ typedef struct {
   const char *name;
   const int num_chars;
   const int first;
-  const FontGLUTBitmapCharRec * const *ch;
+  const FontGLUTBitmapCharRec *const *ch;
 } FontGLUTBitmapFontRec, *FontGLUTBitmapFontPtr;
 
 typedef void *GLUTbitmapFont;
+
 
 /* end GLUT Excerpt */
 
@@ -58,7 +62,6 @@ typedef void *GLUTbitmapFont;
 #define cFontGLUTHel10  2
 #define cFontGLUTHel12  3
 #define cFontGLUTHel18  4
-
 
 extern FontGLUTBitmapFontRec FontGLUTBitmap8By13;
 extern FontGLUTBitmapFontRec FontGLUTBitmap9By15;
@@ -76,7 +79,7 @@ typedef struct {
 
 } CFontGLUT;
 
-CFont* FontGLUTNew(PyMOLGlobals *G,int font_code);
-void FontGLUTFree(CFont *I);
+CFont *FontGLUTNew(PyMOLGlobals * G, int font_code);
+void FontGLUTFree(CFont * I);
 
 #endif

@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -26,7 +27,7 @@ Z* -------------------------------------------------------------------
 typedef struct ObjectAlignmentState {
   CObjectState state;
   int *alignVLA;
-  WordType guide; 
+  WordType guide;
   /* not stored */
   int valid;
   OVOneToAny *id2tag;
@@ -38,38 +39,26 @@ typedef struct ObjectAlignment {
   CObject Obj;
   ObjectAlignmentState *State;
   int NState;
-  int SelectionState,ForceState;
+  int SelectionState, ForceState;
 } ObjectAlignment;
 
-void ObjectAlignmentUpdate(ObjectAlignment *I);
+void ObjectAlignmentUpdate(ObjectAlignment * I);
 
-ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals *G,
-                                       ObjectAlignment *obj,
+ObjectAlignment *ObjectAlignmentDefine(PyMOLGlobals * G,
+                                       ObjectAlignment * obj,
                                        int *align_vla,
-                                       int state, 
+                                       int state,
                                        int merge,
-                                       ObjectMolecule *guide,
-                                       ObjectMolecule *flush);
+                                       ObjectMolecule * guide, ObjectMolecule * flush);
 
+void ObjectAlignmentRecomputeExtent(ObjectAlignment * I);
 
-void ObjectAlignmentRecomputeExtent(ObjectAlignment *I);
+PyObject *ObjectAlignmentAsPyList(ObjectAlignment * I);
 
-PyObject *ObjectAlignmentAsPyList(ObjectAlignment *I);
+int ObjectAlignmentNewFromPyList(PyMOLGlobals * G, PyObject * list,
+                                 ObjectAlignment ** result, int version);
 
-int ObjectAlignmentNewFromPyList(PyMOLGlobals *G,PyObject *list,
-                                 ObjectAlignment **result,int version);
-
-int ObjectAlignmentAsStrVLA(PyMOLGlobals *G,ObjectAlignment *I, int state,int format, char **str_vla);
+int ObjectAlignmentAsStrVLA(PyMOLGlobals * G, ObjectAlignment * I, int state, int format,
+                            char **str_vla);
 
 #endif
-
-
-
-
-
-
-
-
-
-
-

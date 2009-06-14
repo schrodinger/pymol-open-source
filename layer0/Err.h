@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -18,9 +20,9 @@ Z* -------------------------------------------------------------------
 
 #include "PyMOLGlobals.h"
 
-void ErrFatal(PyMOLGlobals *G,const char *where,const char *what);
-void ErrPointer(PyMOLGlobals *G,const char *file,int line);
-int ErrMessage(PyMOLGlobals *G,const char *where,const char *what);
+void ErrFatal(PyMOLGlobals * G, const char *where, const char *what);
+void ErrPointer(PyMOLGlobals * G, const char *file, int line);
+int ErrMessage(PyMOLGlobals * G, const char *where, const char *what);
 
 #define ErrChkPtr(G,p) {if(!p) ErrPointer(G,__FILE__,__LINE__);}
 #endif
