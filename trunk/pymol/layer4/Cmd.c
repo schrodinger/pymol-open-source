@@ -1,4 +1,5 @@
 
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -128,10 +129,12 @@ static void APIEnter(PyMOLGlobals * G)
 
   if(G->Terminating) {          /* try to bail */
 
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
     abort();
 #endif
+
 
 /* END PROPRIETARY CODE SEGMENT */
     exit(0);
@@ -161,10 +164,12 @@ static void APIEnterBlocked(PyMOLGlobals * G)
 
   if(G->Terminating) {          /* try to bail */
 
+
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
     abort();
 #endif
+
 
 /* END PROPRIETARY CODE SEGMENT */
     exit(0);
@@ -2095,11 +2100,15 @@ static PyObject *CmdGetView(PyObject * self, PyObject * args)
   if(ok && (ok = APIEnterNotModal(G))) {
     SceneGetView(G, view);
     APIExit(G);
-    return (Py_BuildValue("(fffffffffffffffffffffffff)", view[0], view[1], view[2], view[3],    /* 4x4 mat */
-                          view[4], view[5], view[6], view[7], view[8], view[9], view[10], view[11], view[12], view[13], view[14], view[15], view[16], view[17], view[18],       /* pos */
-                          view[19], view[20], view[21], /* origin */
-                          view[22], view[23],   /* clip */
-                          view[24]      /* orthoscopic */
+    return (Py_BuildValue
+            ("(fffffffffffffffffffffffff)", view[0], view[1], view[2], view[3],
+             /* 4x4 mat */
+             view[4], view[5], view[6], view[7], view[8], view[9], view[10], view[11],
+             view[12], view[13], view[14], view[15], view[16], view[17], view[18],
+             /* pos */
+             view[19], view[20], view[21],      /* origin */
+             view[22], view[23],        /* clip */
+             view[24]           /* orthoscopic */
             ));
   } else {
     return (APIAutoNone(NULL));
@@ -7695,6 +7704,7 @@ static PyObject *CmdSort(PyObject * self, PyObject * args)
 
 static PyObject *CmdAssignSS(PyObject * self, PyObject * args)
 
+
 /* EXPERIMENTAL */
 {
   PyMOLGlobals *G = NULL;
@@ -7720,6 +7730,7 @@ static PyObject *CmdAssignSS(PyObject * self, PyObject * args)
 }
 
 static PyObject *CmdSpheroid(PyObject * self, PyObject * args)
+
 
 /* EXPERIMENTAL */
 {
