@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -28,37 +29,42 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"Setting.h"
 
-static void ObjectCallbackFree(ObjectCallback *I);
+static void ObjectCallbackFree(ObjectCallback * I);
+
 
 /*========================================================================*/
 
-static void ObjectCallbackFree(ObjectCallback *I) {
+static void ObjectCallbackFree(ObjectCallback * I)
+{
 #ifndef _PYMOL_NOPY
   int a;
   PyMOLGlobals *G = I->Obj.G;
   PBlock(G);
-  for(a=0;a<I->NState;a++) {
+  for(a = 0; a < I->NState; a++) {
     if(I->State[a].PObj) {
       Py_DECREF(I->State[a].PObj);
-      I->State[a].PObj=NULL;
+      I->State[a].PObj = NULL;
     }
   }
   PUnblock(G);
-#endif 
+#endif
   VLAFreeP(I->State);
   ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
 
+
 /*========================================================================*/
 
-static void ObjectCallbackUpdate(ObjectCallback *I) {
+static void ObjectCallbackUpdate(ObjectCallback * I)
+{
   SceneInvalidate(I->Obj.G);
 }
 
+
 /*========================================================================*/
 
-static void ObjectCallbackRender(ObjectCallback *I,RenderInfo *info)
+static void ObjectCallbackRender(ObjectCallback * I, RenderInfo * info)
 {
 #ifndef _PYMOL_NOPY
   int state = info->state;
@@ -73,23 +79,23 @@ static void ObjectCallbackRender(ObjectCallback *I,RenderInfo *info)
 
   if(!pass) {
 
-    ObjectPrepareContext(&I->Obj,ray);
+    ObjectPrepareContext(&I->Obj, ray);
     if(I->Obj.RepVis[cRepCallback]) {
-      if(state<I->NState) {
-        sobj = I->State+state;
+      if(state < I->NState) {
+        sobj = I->State + state;
       }
-      if(state<0) {
+      if(state < 0) {
         if(I->State) {
           PBlock(G);
-          for(a=0;a<I->NState;a++) {
-            sobj = I->State+a;
-            pobj=sobj->PObj;
-            if(ray) {    
+          for(a = 0; a < I->NState; a++) {
+            sobj = I->State + a;
+            pobj = sobj->PObj;
+            if(ray) {
             } else if(G->HaveGUI && G->ValidContext) {
               if(pick) {
               } else {
-                if(PyObject_HasAttrString(pobj,"__call__")) {
-                  Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
+                if(PyObject_HasAttrString(pobj, "__call__")) {
+                  Py_XDECREF(PyObject_CallMethod(pobj, "__call__", ""));
                 }
                 if(PyErr_Occurred())
                   PyErr_Print();
@@ -100,18 +106,18 @@ static void ObjectCallbackRender(ObjectCallback *I,RenderInfo *info)
         }
       } else {
         if(!sobj) {
-          if(I->NState&&SettingGet(G,cSetting_static_singletons)) 
+          if(I->NState && SettingGet(G, cSetting_static_singletons))
             sobj = I->State;
         }
-        if(ray) {    
+        if(ray) {
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
           } else {
             if(sobj) {
-              pobj=sobj->PObj;
+              pobj = sobj->PObj;
               PBlock(G);
-              if(PyObject_HasAttrString(pobj,"__call__")) {
-                Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
+              if(PyObject_HasAttrString(pobj, "__call__")) {
+                Py_XDECREF(PyObject_CallMethod(pobj, "__call__", ""));
               }
               if(PyErr_Occurred())
                 PyErr_Print();
@@ -125,32 +131,38 @@ static void ObjectCallbackRender(ObjectCallback *I,RenderInfo *info)
 #endif
 }
 
-/*========================================================================*/
-static int ObjectCallbackGetNStates(ObjectCallback *I)
-{
-  return(I->NState);
-}
-/*========================================================================*/
-ObjectCallback *ObjectCallbackNew(PyMOLGlobals *G)
-{
-  OOAlloc(G,ObjectCallback);
-  
-  ObjectInit(G,(CObject*)I);
 
-  I->State=VLAMalloc(10,sizeof(ObjectCallbackState),5,true); /* autozero */
-  I->NState=0;
-  
+/*========================================================================*/
+static int ObjectCallbackGetNStates(ObjectCallback * I)
+{
+  return (I->NState);
+}
+
+
+/*========================================================================*/
+ObjectCallback *ObjectCallbackNew(PyMOLGlobals * G)
+{
+  OOAlloc(G, ObjectCallback);
+
+  ObjectInit(G, (CObject *) I);
+
+  I->State = VLAMalloc(10, sizeof(ObjectCallbackState), 5, true);       /* autozero */
+  I->NState = 0;
+
   I->Obj.type = cObjectCallback;
-  I->Obj.fFree = (void (*)(CObject *))ObjectCallbackFree;
-  I->Obj.fUpdate =  (void (*)(CObject *)) ObjectCallbackUpdate;
-  I->Obj.fRender =(void (*)(CObject *, RenderInfo *))
+  I->Obj.fFree = (void (*)(CObject *)) ObjectCallbackFree;
+  I->Obj.fUpdate = (void (*)(CObject *)) ObjectCallbackUpdate;
+  I->Obj.fRender = (void (*)(CObject *, RenderInfo *))
     ObjectCallbackRender;
   I->Obj.fGetNFrame = (int (*)(CObject *)) ObjectCallbackGetNStates;
 
-  return(I);
+  return (I);
 }
+
+
 /*========================================================================*/
-ObjectCallback *ObjectCallbackDefine(PyMOLGlobals *G,ObjectCallback *obj,PyObject *pobj,int state)
+ObjectCallback *ObjectCallbackDefine(PyMOLGlobals * G, ObjectCallback * obj,
+                                     PyObject * pobj, int state)
 {
 #ifdef _PYMOL_NOPY
   return NULL;
@@ -158,59 +170,62 @@ ObjectCallback *ObjectCallbackDefine(PyMOLGlobals *G,ObjectCallback *obj,PyObjec
   ObjectCallback *I = NULL;
 
   if(!obj) {
-    I=ObjectCallbackNew(G);
+    I = ObjectCallbackNew(G);
   } else {
-    I=obj;
+    I = obj;
   }
 
-  if(state<0) state=I->NState;
-  if(I->NState<=state) {
-    VLACheck(I->State,ObjectCallbackState,state);
-    I->NState=state+1;
+  if(state < 0)
+    state = I->NState;
+  if(I->NState <= state) {
+    VLACheck(I->State, ObjectCallbackState, state);
+    I->NState = state + 1;
   }
 
   if(I->State[state].PObj) {
     Py_DECREF(I->State[state].PObj);
   }
-  I->State[state].PObj=pobj;
+  I->State[state].PObj = pobj;
   Py_INCREF(pobj);
-  if(I->NState<=state)
-    I->NState=state+1;
+  if(I->NState <= state)
+    I->NState = state + 1;
 
   if(I) {
     ObjectCallbackRecomputeExtent(I);
   }
   SceneChanged(G);
   SceneCountFrames(G);
-  return(I);
+  return (I);
 #endif
 }
+
+
 /*========================================================================*/
 
-void ObjectCallbackRecomputeExtent(ObjectCallback *I)
+void ObjectCallbackRecomputeExtent(ObjectCallback * I)
 {
   int extent_flag = false;
 
 #ifndef _PYMOL_NOPY
-  float mx[3],mn[3];
+  float mx[3], mn[3];
   int a;
   PyObject *py_ext;
 
-  for(a=0;a<I->NState;a++) 
+  for(a = 0; a < I->NState; a++)
     if(I->State[a].PObj) {
-      if(PyObject_HasAttrString(I->State[a].PObj,"get_extent")) {
-        py_ext = PyObject_CallMethod(I->State[a].PObj,"get_extent","");
+      if(PyObject_HasAttrString(I->State[a].PObj, "get_extent")) {
+        py_ext = PyObject_CallMethod(I->State[a].PObj, "get_extent", "");
         if(PyErr_Occurred())
           PyErr_Print();
         if(py_ext) {
-          if(PConvPyListToExtent(py_ext,mn,mx)) {
+          if(PConvPyListToExtent(py_ext, mn, mx)) {
             if(!extent_flag) {
-              extent_flag=true;
-              copy3f(mx,I->Obj.ExtentMax);
-              copy3f(mn,I->Obj.ExtentMin);
+              extent_flag = true;
+              copy3f(mx, I->Obj.ExtentMax);
+              copy3f(mn, I->Obj.ExtentMin);
             } else {
-              max3f(mx,I->Obj.ExtentMax,I->Obj.ExtentMax);
-              min3f(mn,I->Obj.ExtentMin,I->Obj.ExtentMin);
+              max3f(mx, I->Obj.ExtentMax, I->Obj.ExtentMax);
+              min3f(mn, I->Obj.ExtentMin, I->Obj.ExtentMin);
             }
           }
           Py_DECREF(py_ext);
@@ -218,6 +233,6 @@ void ObjectCallbackRecomputeExtent(ObjectCallback *I)
       }
     }
 #endif
-  I->Obj.ExtentFlag=extent_flag;
+  I->Obj.ExtentFlag = extent_flag;
 
 }
