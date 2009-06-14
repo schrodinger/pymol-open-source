@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -13,6 +14,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+
 
 /* Module for internal C-level PyMOL tests...*/
 
@@ -36,55 +38,55 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOL.h"
 
-static int TestPyMOL_00_00(PyMOLGlobals *G)
+static int TestPyMOL_00_00(PyMOLGlobals * G)
 {
   ObjectMap *obj;
-  ObjectMapDesc _md,*md;
-  ObjectMapState *ms =NULL;
+  ObjectMapDesc _md, *md;
+  ObjectMapState *ms = NULL;
 
   int a;
 
-  md=&_md;
+  md = &_md;
 
   md->mode = cObjectMap_OrthoMinMaxGrid;
 
-  for(a=0;a<3;a++) {
+  for(a = 0; a < 3; a++) {
     md->Grid[a] = 0.1F;
     md->MinCorner[a] = 0.0F;
-    md->MaxCorner[a] = a+1.0F;
+    md->MaxCorner[a] = a + 1.0F;
   }
   md->init_mode = -2;
-  
+
   obj = ObjectMapNew(G);
   if(obj) {
-    ms = ObjectMapNewStateFromDesc(G,obj,md,0,true);    
-    ms->Active=true;
+    ms = ObjectMapNewStateFromDesc(G, obj, md, 0, true);
+    ms->Active = true;
   }
   if(obj) {
-    ObjectSetName((CObject*)obj,"00_00");
-    ExecutiveManageObject(G,(CObject*)obj,-1,false);
+    ObjectSetName((CObject *) obj, "00_00");
+    ExecutiveManageObject(G, (CObject *) obj, -1, false);
   }
-  return (obj!=NULL);
+  return (obj != NULL);
 }
 
 #define STR_MAX 100
 
 static char *get_st(const char array[][STR_MAX])
 {
-  char *result=NULL,*p;
-  size_t c=0,l=0;
+  char *result = NULL, *p;
+  size_t c = 0, l = 0;
   while(array[c][0]) {
-    l+=strlen(array[c]);
+    l += strlen(array[c]);
     c++;
   }
-  result = Alloc(char,l+1);
-  p=result;
+  result = Alloc(char, l + 1);
+  p = result;
 
-  l=0;
-  c=0;
+  l = 0;
+  c = 0;
   while(array[c][0]) {
-    strcpy(result+l,array[c]);
-    l+=strlen(array[c]);
+    strcpy(result + l, array[c]);
+    l += strlen(array[c]);
     c++;
   }
   return result;
@@ -199,123 +201,125 @@ static const char pdb_01_01[][STR_MAX] = {
   "ATOM    106  O   THR E  13       5.962 -19.432  22.570  1.00 41.54      E    O\n",
   "ATOM    107  OXT THR E  13       6.606 -20.331  20.602  1.00 43.02      E    O\n",
   "END\n",
-  ""};
+  ""
+};
 
 static const char mol_01_02[][STR_MAX] = {
-"MFCD02681585\n",
-"  ChemPy            3D                             0\n",
-"\n",
-" 36 39  0  0  1  0  0  0  0  0999 V2000\n",
-"   52.5122   32.1815   21.0164 O   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   53.1716   32.3766   20.0197 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   54.4517   31.7147   19.8169 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   54.7302   30.3758   20.0244 N   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   56.0228   30.0429   19.7805 N   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   56.5952   31.1894   19.3737 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   55.6544   32.2488   19.3610 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   58.0576   31.2220   18.9914 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   58.8985   30.2129   19.7561 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   58.1952   30.8995   17.4763 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   58.6099   32.6423   19.2418 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   53.8260   29.3227   20.4323 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   54.0916   28.8513   21.8755 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   53.2812   29.2854   22.9295 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   53.4667   28.8569   24.2265 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   52.5554   29.3273   25.3339 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   54.5278   27.9533   24.4780 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   55.3346   27.5330   23.4437 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   55.1252   27.9853   22.1551 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   52.8162   33.2369   18.9768 N   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   51.5459   33.8650   18.8063 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   50.7291   34.3547   19.8196 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   49.4781   34.9470   19.5308 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   48.6170   35.3669   20.6527 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   49.0272   35.8529   21.7164 O   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   47.3132   35.1061   20.3115 O   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   46.3612   35.5386   21.2706 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   49.0388   35.0753   18.1950 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   49.8568   34.5421   17.1857 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   51.0846   33.9564   17.4684 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   47.7773   35.7058   17.8640 N   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   46.9256   35.1276   16.8017 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   45.5301   35.6792   16.9429 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   45.5107   37.1034   16.9789 O   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   46.2587   37.5980   18.0839 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"   47.7345   37.1658   17.9831 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
-"  1  2  2  0  0  0  0\n",
-"  2  3  1  0  0  0  0\n",
-"  2 20  1  0  0  0  0\n",
-"  3  4  4  0  0  0  0\n",
-"  3  7  4  0  0  0  0\n",
-"  4  5  4  0  0  0  0\n",
-"  4 12  1  0  0  0  0\n",
-"  5  6  4  0  0  0  0\n",
-"  6  7  4  0  0  0  0\n",
-"  6  8  1  0  0  0  0\n",
-"  8  9  1  0  0  0  0\n",
-"  8 10  1  0  0  0  0\n",
-"  8 11  1  0  0  0  0\n",
-" 12 13  1  0  0  0  0\n",
-" 13 14  4  0  0  0  0\n",
-" 13 19  4  0  0  0  0\n",
-" 14 15  4  0  0  0  0\n",
-" 15 16  1  0  0  0  0\n",
-" 15 17  4  0  0  0  0\n",
-" 17 18  4  0  0  0  0\n",
-" 18 19  4  0  0  0  0\n",
-" 20 21  1  0  0  0  0\n",
-" 21 22  4  0  0  0  0\n",
-" 21 30  4  0  0  0  0\n",
-" 22 23  4  0  0  0  0\n",
-" 23 24  1  0  0  0  0\n",
-" 23 28  4  0  0  0  0\n",
-" 24 25  2  0  0  0  0\n",
-" 24 26  1  0  0  0  0\n",
-" 26 27  1  0  0  0  0\n",
-" 28 29  4  0  0  0  0\n",
-" 28 31  1  0  0  0  0\n",
-" 29 30  4  0  0  0  0\n",
-" 31 32  1  0  0  0  0\n",
-" 31 36  1  0  0  0  0\n",
-" 32 33  1  0  0  0  0\n",
-" 33 34  1  0  0  0  0\n",
-" 34 35  1  0  0  0  0\n",
-" 35 36  1  0  0  0  0\n",
-"M  END\n"};
+  "MFCD02681585\n",
+  "  ChemPy            3D                             0\n",
+  "\n",
+  " 36 39  0  0  1  0  0  0  0  0999 V2000\n",
+  "   52.5122   32.1815   21.0164 O   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   53.1716   32.3766   20.0197 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   54.4517   31.7147   19.8169 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   54.7302   30.3758   20.0244 N   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   56.0228   30.0429   19.7805 N   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   56.5952   31.1894   19.3737 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   55.6544   32.2488   19.3610 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   58.0576   31.2220   18.9914 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   58.8985   30.2129   19.7561 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   58.1952   30.8995   17.4763 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   58.6099   32.6423   19.2418 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   53.8260   29.3227   20.4323 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   54.0916   28.8513   21.8755 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   53.2812   29.2854   22.9295 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   53.4667   28.8569   24.2265 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   52.5554   29.3273   25.3339 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   54.5278   27.9533   24.4780 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   55.3346   27.5330   23.4437 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   55.1252   27.9853   22.1551 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   52.8162   33.2369   18.9768 N   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   51.5459   33.8650   18.8063 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   50.7291   34.3547   19.8196 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   49.4781   34.9470   19.5308 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   48.6170   35.3669   20.6527 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   49.0272   35.8529   21.7164 O   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   47.3132   35.1061   20.3115 O   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   46.3612   35.5386   21.2706 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   49.0388   35.0753   18.1950 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   49.8568   34.5421   17.1857 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   51.0846   33.9564   17.4684 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   47.7773   35.7058   17.8640 N   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   46.9256   35.1276   16.8017 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   45.5301   35.6792   16.9429 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   45.5107   37.1034   16.9789 O   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   46.2587   37.5980   18.0839 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "   47.7345   37.1658   17.9831 C   0  0  0  0  0  0  0  0  0  0  0  0\n",
+  "  1  2  2  0  0  0  0\n",
+  "  2  3  1  0  0  0  0\n",
+  "  2 20  1  0  0  0  0\n",
+  "  3  4  4  0  0  0  0\n",
+  "  3  7  4  0  0  0  0\n",
+  "  4  5  4  0  0  0  0\n",
+  "  4 12  1  0  0  0  0\n",
+  "  5  6  4  0  0  0  0\n",
+  "  6  7  4  0  0  0  0\n",
+  "  6  8  1  0  0  0  0\n",
+  "  8  9  1  0  0  0  0\n",
+  "  8 10  1  0  0  0  0\n",
+  "  8 11  1  0  0  0  0\n",
+  " 12 13  1  0  0  0  0\n",
+  " 13 14  4  0  0  0  0\n",
+  " 13 19  4  0  0  0  0\n",
+  " 14 15  4  0  0  0  0\n",
+  " 15 16  1  0  0  0  0\n",
+  " 15 17  4  0  0  0  0\n",
+  " 17 18  4  0  0  0  0\n",
+  " 18 19  4  0  0  0  0\n",
+  " 20 21  1  0  0  0  0\n",
+  " 21 22  4  0  0  0  0\n",
+  " 21 30  4  0  0  0  0\n",
+  " 22 23  4  0  0  0  0\n",
+  " 23 24  1  0  0  0  0\n",
+  " 23 28  4  0  0  0  0\n",
+  " 24 25  2  0  0  0  0\n",
+  " 24 26  1  0  0  0  0\n",
+  " 26 27  1  0  0  0  0\n",
+  " 28 29  4  0  0  0  0\n",
+  " 28 31  1  0  0  0  0\n",
+  " 29 30  4  0  0  0  0\n",
+  " 31 32  1  0  0  0  0\n",
+  " 31 36  1  0  0  0  0\n",
+  " 32 33  1  0  0  0  0\n",
+  " 33 34  1  0  0  0  0\n",
+  " 34 35  1  0  0  0  0\n",
+  " 35 36  1  0  0  0  0\n",
+  "M  END\n"
+};
 
-int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
+int TestPyMOLRun(PyMOLGlobals * G, int group, int test)
 {
-  switch(group) {
-  case 0: /* development tests */
-    switch(test) {
+  switch (group) {
+  case 0:                      /* development tests */
+    switch (test) {
     case 0:
-      TestPyMOL_00_00(G); 
+      TestPyMOL_00_00(G);
       break;
-    case 1: 
+    case 1:
       PBlock(G);
-      VFontLoad(G,1,0,0,true); 
+      VFontLoad(G, 1, 0, 0, true);
       PUnblock(G);
       break;
-    case 2: 
+    case 2:
       {
         CObject *obj = NULL;
-        float pos[3] = {0.0,0.0,0.0};
+        float pos[3] = { 0.0, 0.0, 0.0 };
         PBlock(G);
-        obj = (CObject*)ObjectCGONewVFontTest(G,"hello",pos);
+        obj = (CObject *) ObjectCGONewVFontTest(G, "hello", pos);
         PUnblock(G);
         if(obj) {
-          ObjectSetName(obj,"hello");
-          ExecutiveManageObject(G,obj,-1,false);
+          ObjectSetName(obj, "hello");
+          ExecutiveManageObject(G, obj, -1, false);
         }
       }
       break;
-    case 3: 
+    case 3:
       {
         CObject *obj = NULL;
-        obj = (CObject*)ObjectGadgetTest(G);
-        if(obj)  {
-          ObjectSetName(obj,"gadget");
-          ExecutiveManageObject(G,obj,-1,false);
+        obj = (CObject *) ObjectGadgetTest(G);
+        if(obj) {
+          ObjectSetName(obj, "gadget");
+          ExecutiveManageObject(G, obj, -1, false);
         }
       }
       break;
@@ -323,122 +327,131 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
       {
         /* try to match G3D */
 
-        SettingSetGlobal_b(G,cSetting_ortho,1);
-        SettingSet_3f(G->Setting,cSetting_light, 1.0F, -1.0F, -2.5F);;
+        SettingSetGlobal_b(G, cSetting_ortho, 1);
+        SettingSet_3f(G->Setting, cSetting_light, 1.0F, -1.0F, -2.5F);;
       }
       break;
     }
     break;
-  case 1: 
+  case 1:
     /* set up for test usage as a simple viewer */
-    
+
     PyMOL_SetDefaultMouse(G->PyMOL);
 
-    switch(test) {
-    case 1: 
+    switch (test) {
+    case 1:
       {
         char *st = get_st(pdb_01_01);
 
-        PyMOL_CmdLoad(G->PyMOL, st, "string", "pdb", "test_01_01", 0, false, true, true, false, PYMOL_DEFAULT);
-        ExecutiveSetRepVisib(G,"test_01_01",cRepCyl,1);
-        ExecutiveSetRepVisib(G,"test_01_01",cRepLine,0);
-        SettingSetGlobal_f(G,cSetting_sweep_speed,3.0F);
-        ControlRock(G,1);
+        PyMOL_CmdLoad(G->PyMOL, st, "string", "pdb", "test_01_01", 0, false, true, true,
+                      false, PYMOL_DEFAULT);
+        ExecutiveSetRepVisib(G, "test_01_01", cRepCyl, 1);
+        ExecutiveSetRepVisib(G, "test_01_01", cRepLine, 0);
+        SettingSetGlobal_f(G, cSetting_sweep_speed, 3.0F);
+        ControlRock(G, 1);
         FreeP(st);
         break;
       }
       break;
-    case 2: 
+    case 2:
       {
         char *st = get_st(pdb_01_01);
-        PyMOL_CmdLoad(G->PyMOL,st, "string", "pdb", "test_01_02", 0, false, true, true, false, PYMOL_DEFAULT);
-        ExecutiveSetRepVisib(G,"test_01_02",cRepLine,0);
-        ExecutiveSetRepVisib(G,"test_01_02",cRepSurface,1);
-        ControlRock(G,1);
+        PyMOL_CmdLoad(G->PyMOL, st, "string", "pdb", "test_01_02", 0, false, true, true,
+                      false, PYMOL_DEFAULT);
+        ExecutiveSetRepVisib(G, "test_01_02", cRepLine, 0);
+        ExecutiveSetRepVisib(G, "test_01_02", cRepSurface, 1);
+        ControlRock(G, 1);
         FreeP(st);
         break;
       }
       break;
-    case 3: 
+    case 3:
       {
         char *st = get_st(pdb_01_01);
-        PyMOL_CmdLoad(G->PyMOL,st, "string", "pdb", "test_01_03", 0, false, true, true, false, PYMOL_DEFAULT);
-        ExecutiveSetRepVisib(G,"test_01_03",cRepLine,0);
-        ExecutiveSetRepVisib(G,"test_01_03",cRepCartoon,1);
-        SettingSetGlobal_f(G,cSetting_sweep_speed,1.50F);
-        ControlRock(G,1);
+        PyMOL_CmdLoad(G->PyMOL, st, "string", "pdb", "test_01_03", 0, false, true, true,
+                      false, PYMOL_DEFAULT);
+        ExecutiveSetRepVisib(G, "test_01_03", cRepLine, 0);
+        ExecutiveSetRepVisib(G, "test_01_03", cRepCartoon, 1);
+        SettingSetGlobal_f(G, cSetting_sweep_speed, 1.50F);
+        ControlRock(G, 1);
         FreeP(st);
         break;
       }
       break;
-    case 4: 
+    case 4:
       {
         char *st = get_st(pdb_01_01);
-        PyMOL_CmdLoad(G->PyMOL,st, "string", "pdb", "test_01_04", 0, false, true, true, false, PYMOL_DEFAULT);
-        ExecutiveSetRepVisib(G,"test_01_04",cRepLine,0);
-        ExecutiveSetRepVisib(G,"test_01_04",cRepDot,1);
-        SettingSetGlobal_f(G,cSetting_sweep_speed,1.50F);
-        ControlRock(G,1);
+        PyMOL_CmdLoad(G->PyMOL, st, "string", "pdb", "test_01_04", 0, false, true, true,
+                      false, PYMOL_DEFAULT);
+        ExecutiveSetRepVisib(G, "test_01_04", cRepLine, 0);
+        ExecutiveSetRepVisib(G, "test_01_04", cRepDot, 1);
+        SettingSetGlobal_f(G, cSetting_sweep_speed, 1.50F);
+        ControlRock(G, 1);
         FreeP(st);
         break;
       }
       break;
-    case 5: 
+    case 5:
       {
         char *st = get_st(pdb_01_01);
-        PyMOL_CmdLoad(G->PyMOL,st, "string", "pdb", "test_01_05", 0, false, true, true, false, PYMOL_DEFAULT);
-        ExecutiveSetRepVisib(G,"test_01_05",cRepLine,0);
-        ExecutiveSetRepVisib(G,"test_01_05",cRepSphere,1);
-        SettingSetGlobal_f(G,cSetting_sweep_speed,4.50F);
-        ControlRock(G,1);
+        PyMOL_CmdLoad(G->PyMOL, st, "string", "pdb", "test_01_05", 0, false, true, true,
+                      false, PYMOL_DEFAULT);
+        ExecutiveSetRepVisib(G, "test_01_05", cRepLine, 0);
+        ExecutiveSetRepVisib(G, "test_01_05", cRepSphere, 1);
+        SettingSetGlobal_f(G, cSetting_sweep_speed, 4.50F);
+        ControlRock(G, 1);
         FreeP(st);
         break;
       }
       break;
-    case 6: 
+    case 6:
       {
         char *st = get_st(pdb_01_01);
-        PyMOL_CmdLoad(G->PyMOL,st, "string", "pdb", "test_01_06", 0, false, true, true, false, PYMOL_DEFAULT);
-        SettingSetGlobal_f(G,cSetting_sweep_speed,4.50F);
-        ControlRock(G,1);
+        PyMOL_CmdLoad(G->PyMOL, st, "string", "pdb", "test_01_06", 0, false, true, true,
+                      false, PYMOL_DEFAULT);
+        SettingSetGlobal_f(G, cSetting_sweep_speed, 4.50F);
+        ControlRock(G, 1);
         FreeP(st);
         break;
       }
       break;
-    case 7: 
+    case 7:
       {
         char *st = get_st(mol_01_02);
-        ExecutiveLoad(G,NULL,st,-1,cLoadTypeMOLStr,"test_01_07",0,-1,0,1,0,1,NULL);
-        ExecutiveSetRepVisib(G,"test_01_07",cRepCyl,1);
-        ExecutiveSetRepVisib(G,"test_01_07",cRepLine,0);
-        SettingSetGlobal_b(G,cSetting_valence,1);
-        SettingSetGlobal_f(G,cSetting_sweep_speed,0.25F);
-        SettingSetGlobal_f(G,cSetting_sweep_angle,180.0F);
-        ControlRock(G,1);
+        ExecutiveLoad(G, NULL, st, -1, cLoadTypeMOLStr, "test_01_07", 0, -1, 0, 1, 0, 1,
+                      NULL);
+        ExecutiveSetRepVisib(G, "test_01_07", cRepCyl, 1);
+        ExecutiveSetRepVisib(G, "test_01_07", cRepLine, 0);
+        SettingSetGlobal_b(G, cSetting_valence, 1);
+        SettingSetGlobal_f(G, cSetting_sweep_speed, 0.25F);
+        SettingSetGlobal_f(G, cSetting_sweep_angle, 180.0F);
+        ControlRock(G, 1);
         FreeP(st);
         break;
       }
       break;
-    case 8: 
+    case 8:
       {
         char *st = get_st(mol_01_02);
-        ExecutiveLoad(G,NULL,st,-1,cLoadTypeMOLStr,"test_01_08",0,-1,0,1,0,1,NULL);
-        SettingSetGlobal_b(G,cSetting_valence,1);
-        ControlRock(G,1);
+        ExecutiveLoad(G, NULL, st, -1, cLoadTypeMOLStr, "test_01_08", 0, -1, 0, 1, 0, 1,
+                      NULL);
+        SettingSetGlobal_b(G, cSetting_valence, 1);
+        ControlRock(G, 1);
         FreeP(st);
         break;
       }
       break;
-    case 9: 
+    case 9:
       {
         char *st = get_st(mol_01_02);
-        ExecutiveLoad(G,NULL,st,-1,cLoadTypeMOLStr,"test_01_09",0,-1,0,1,0,1,NULL);
-        ExecutiveSetRepVisib(G,"test_01_09",cRepMesh,1);
-        ExecutiveSetRepVisib(G,"test_01_09",cRepLine,0);
-        SettingSetGlobal_b(G,cSetting_valence,1);
-        SettingSetGlobal_f(G,cSetting_sweep_speed,0.50F);
-        SettingSetGlobal_f(G,cSetting_sweep_angle,90.0F);
-        ControlRock(G,1);
+        ExecutiveLoad(G, NULL, st, -1, cLoadTypeMOLStr, "test_01_09", 0, -1, 0, 1, 0, 1,
+                      NULL);
+        ExecutiveSetRepVisib(G, "test_01_09", cRepMesh, 1);
+        ExecutiveSetRepVisib(G, "test_01_09", cRepLine, 0);
+        SettingSetGlobal_b(G, cSetting_valence, 1);
+        SettingSetGlobal_f(G, cSetting_sweep_speed, 0.50F);
+        SettingSetGlobal_f(G, cSetting_sweep_angle, 90.0F);
+        ControlRock(G, 1);
         FreeP(st);
         break;
       }
@@ -447,9 +460,3 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
   }
   return 1;
 }
-
-
-
-
-
-

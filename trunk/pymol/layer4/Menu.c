@@ -1,4 +1,5 @@
 
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -25,19 +26,19 @@ Z* -------------------------------------------------------------------
 #include "P.h"
 #include "Ortho.h"
 
-
-void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
-                  char *name,char *sele)
+void MenuActivate(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
+                  char *name, char *sele)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
 
-  PBlock(G); 
- 
-  list = PyObject_CallMethod(P_menu,name,"Os",G->P_inst->cmd,sele); 
-  if(PyErr_Occurred()) PyErr_Print();
+  PBlock(G);
+
+  list = PyObject_CallMethod(P_menu, name, "Os", G->P_inst->cmd, sele);
+  if(PyErr_Occurred())
+    PyErr_Print();
   if(list) {
-    PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
+    PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
     Py_DECREF(list);
   }
   PUnblock(G);
@@ -45,76 +46,79 @@ void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
 
 }
 
-void MenuActivate3fv(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
-                      char *name,float *xyz)
+void MenuActivate3fv(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
+                     char *name, float *xyz)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
 
-  PBlock(G); 
+  PBlock(G);
 
-  list = PyObject_CallMethod(P_menu,name,"O(fff)",G->P_inst->cmd,xyz[0],xyz[1],xyz[2]);
-  if(PyErr_Occurred()) PyErr_Print();
+  list =
+    PyObject_CallMethod(P_menu, name, "O(fff)", G->P_inst->cmd, xyz[0], xyz[1], xyz[2]);
+  if(PyErr_Occurred())
+    PyErr_Print();
   if(list) {
-    PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
+    PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
     Py_DECREF(list);
   }
   PUnblock(G);
 #endif
 }
 
-
-void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
-                      char *name,char *sele1,char *sele2)
+void MenuActivate2Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
+                      char *name, char *sele1, char *sele2)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
 
-  PBlock(G); 
+  PBlock(G);
 
-  list = PyObject_CallMethod(P_menu,name,"Oss",G->P_inst->cmd,sele1,sele2); 
-  if(PyErr_Occurred()) PyErr_Print();
+  list = PyObject_CallMethod(P_menu, name, "Oss", G->P_inst->cmd, sele1, sele2);
+  if(PyErr_Occurred())
+    PyErr_Print();
   if(list) {
-    PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
-    Py_DECREF(list);
-  }
-  PUnblock(G);
-#endif
-}
-void MenuActivate1Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
-                      char *name,char *arg1)
-{
-#ifndef _PYMOL_NOPY
-  PyObject *list;
-
-  PBlock(G); 
-
-  list = PyObject_CallMethod(P_menu,name,"Os",G->P_inst->cmd,arg1); 
-  if(PyErr_Occurred()) PyErr_Print();
-  if(list) {
-    PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
+    PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
     Py_DECREF(list);
   }
   PUnblock(G);
 #endif
 }
 
+void MenuActivate1Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
+                      char *name, char *arg1)
+{
+#ifndef _PYMOL_NOPY
+  PyObject *list;
 
-void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
+  PBlock(G);
+
+  list = PyObject_CallMethod(P_menu, name, "Os", G->P_inst->cmd, arg1);
+  if(PyErr_Occurred())
+    PyErr_Print();
+  if(list) {
+    PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
+    Py_DECREF(list);
+  }
+  PUnblock(G);
+#endif
+}
+
+void MenuActivate0Arg(PyMOLGlobals * G, int x, int y, int last_x, int last_y, int passive,
                       char *name)
 {
 #ifndef _PYMOL_NOPY
   PyObject *list;
 
-  PBlock(G); 
+  PBlock(G);
 
-  list = PyObject_CallMethod(P_menu,name,"O",G->P_inst->cmd);
-  if(PyErr_Occurred()) PyErr_Print();
+  list = PyObject_CallMethod(P_menu, name, "O", G->P_inst->cmd);
+  if(PyErr_Occurred())
+    PyErr_Print();
   if(list) {
-    PopUpNew(G,x,y,last_x,last_y,passive,list,NULL);
+    PopUpNew(G, x, y, last_x, last_y, passive, list, NULL);
     Py_DECREF(list);
   }
   PUnblock(G);
 #endif
 }
-

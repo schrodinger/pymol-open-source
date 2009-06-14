@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,39 +22,39 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Feedback.h"
 
-void ErrFatal(PyMOLGlobals *G,const char *where,const char *what)
+void ErrFatal(PyMOLGlobals * G, const char *where, const char *what)
 {
-  fprintf(stderr,"%s-Error: %s\n",where,what);
+  fprintf(stderr, "%s-Error: %s\n", where, what);
   fflush(stderr);
   exit(1);
 }
 
-int ErrMessage(PyMOLGlobals *G,const char *where,const char *what)
+int ErrMessage(PyMOLGlobals * G, const char *where, const char *what)
 {
   char buffer[1024];
-  if(Feedback(G,FB_Executive,FB_Errors)) {
+  if(Feedback(G, FB_Executive, FB_Errors)) {
 
     /* unclassified errors are assigned to the Executive catch-all */
 
-    sprintf(buffer,"%s-Error: %s\n",where,what);
-    OrthoAddOutput(G,buffer);
+    sprintf(buffer, "%s-Error: %s\n", where, what);
+    OrthoAddOutput(G, buffer);
     OrthoRestorePrompt(G);
   }
-  return(0);
+  return (0);
 }
 
-void ErrPointer(PyMOLGlobals *G,const char *file,int line)
+void ErrPointer(PyMOLGlobals * G, const char *file, int line)
 {
-  fprintf(stderr,"NULL-POINTER-ERROR: in %s line %i\n",file,line);
-  printf("****************************************************************************\n");
-  printf("*** EEK!  PyMOL just ran out of memory and crashed.  To get around this, ***\n");
-  printf("*** you may need to reduce the quality, size, or complexity of the scene ***\n");
-  printf("*** that you are viewing or rendering.    Sorry for the inconvenience... ***\n");
-  printf("****************************************************************************\n");
+  fprintf(stderr, "NULL-POINTER-ERROR: in %s line %i\n", file, line);
+  printf
+    ("****************************************************************************\n");
+  printf
+    ("*** EEK!  PyMOL just ran out of memory and crashed.  To get around this, ***\n");
+  printf
+    ("*** you may need to reduce the quality, size, or complexity of the scene ***\n");
+  printf
+    ("*** that you are viewing or rendering.    Sorry for the inconvenience... ***\n");
+  printf
+    ("****************************************************************************\n");
   exit(EXIT_FAILURE);
 }
-
-
-
-
-

@@ -1,3 +1,4 @@
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -14,18 +15,17 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-
 #include"Util.h"
 #include"Font.h"
 
-int FontInit(PyMOLGlobals *G,CFont *I)
+int FontInit(PyMOLGlobals * G, CFont * I)
 {
-  UtilZeroMem(I,sizeof(CFont));
+  UtilZeroMem(I, sizeof(CFont));
   I->G = G;
   return 1;
 }
 
-void FontPurge(CFont *I)
+void FontPurge(CFont * I)
 {
-  
+
 }

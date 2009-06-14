@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -16,7 +18,7 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"Debug.h"
 
-/* OBSOLETE -- USE THE FEEDBACK FACILITY */
 
+/* OBSOLETE -- USE THE FEEDBACK FACILITY */
 
 typedef int this_source_file_is_not_empty;

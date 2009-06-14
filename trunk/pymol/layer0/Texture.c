@@ -1,3 +1,5 @@
+
+
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -35,84 +37,81 @@ struct _CTexture {
   int max_active;
 };
 
-int TextureInit(PyMOLGlobals *G)
+int TextureInit(PyMOLGlobals * G)
 {
-  OOAlloc(G,CTexture);  
+  OOAlloc(G, CTexture);
 
   I->max_active = 2500;
 
   I->next_slot = 0;
   I->ch2tex = OVOneToOne_New(G->Context->heap);
   I->id_list = OVHeapArray_CALLOC(G->Context->heap, int, I->max_active);
-  
+
   G->Texture = I;
   return (I && I->ch2tex && I->id_list);
 }
 
-
-int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
+int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
 {
   OVreturn_word result;
-  CTexture *I=G->Texture;
+  CTexture *I = G->Texture;
   int is_new = false;
   int tex_dim = 16;
 
   if(G->HaveGUI && G->ValidContext) {
-    if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->ch2tex,char_id))) {
-      if(glIsTexture(result.word)) 
-		  return result.word;
-       else {
-		  OVOneToOne_DelReverse(I->ch2tex,result.word);
-	   }
-	}
-	{
-      unsigned char *buffer = CharacterGetPixmapBuffer(G,char_id);
+    if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->ch2tex, char_id))) {
+      if(glIsTexture(result.word))
+        return result.word;
+      else {
+        OVOneToOne_DelReverse(I->ch2tex, result.word);
+      }
+    }
+    {
+      unsigned char *buffer = CharacterGetPixmapBuffer(G, char_id);
       if(buffer) {
-        int w = CharacterGetWidth(G,char_id);
-        int h = CharacterGetHeight(G,char_id);
+        int w = CharacterGetWidth(G, char_id);
+        int h = CharacterGetHeight(G, char_id);
         GLuint texture_id = 0;
-        unsigned char *temp_buffer,scratch[32][32][4];
-        while((tex_dim<w)||(tex_dim<h)) {
-          tex_dim = (tex_dim<<1);
+        unsigned char *temp_buffer, scratch[32][32][4];
+        while((tex_dim < w) || (tex_dim < h)) {
+          tex_dim = (tex_dim << 1);
         }
-        if(tex_dim<33)
-          temp_buffer = (unsigned char*)scratch;
+        if(tex_dim < 33)
+          temp_buffer = (unsigned char *) scratch;
         else
-          temp_buffer = Alloc(unsigned char,tex_dim*tex_dim*4);
-        
+          temp_buffer = Alloc(unsigned char, tex_dim * tex_dim * 4);
+
         {
-          int a,b;
-          unsigned char *p = buffer,*q;
-          UtilZeroMem(temp_buffer,tex_dim*tex_dim*4);
-          for(b=0;b<h;b++) {
-            for(a=0;a<w;a++)
-              {
-                q = temp_buffer + (4*tex_dim*b) + 4*a;
-                *(q++) = *(p++);
-                *(q++) = *(p++);
-                *(q++) = *(p++);
-                *(q++) = *(p++);
-              }
+          int a, b;
+          unsigned char *p = buffer, *q;
+          UtilZeroMem(temp_buffer, tex_dim * tex_dim * 4);
+          for(b = 0; b < h; b++) {
+            for(a = 0; a < w; a++) {
+              q = temp_buffer + (4 * tex_dim * b) + 4 * a;
+              *(q++) = *(p++);
+              *(q++) = *(p++);
+              *(q++) = *(p++);
+              *(q++) = *(p++);
+            }
           }
-          extent[0]=w/(float)tex_dim;
-          extent[1]=h/(float)tex_dim;
+          extent[0] = w / (float) tex_dim;
+          extent[1] = h / (float) tex_dim;
         }
-        
+
         if(!I->id_list[I->next_slot]) {
-          glGenTextures(1,&texture_id);
+          glGenTextures(1, &texture_id);
           is_new = true;
           I->id_list[I->next_slot] = texture_id;
         } else {
           texture_id = I->id_list[I->next_slot];
-          OVOneToOne_DelReverse(I->ch2tex,texture_id);
+          OVOneToOne_DelReverse(I->ch2tex, texture_id);
         }
         I->next_slot++;
-        if(I->next_slot>=I->max_active)
+        if(I->next_slot >= I->max_active)
           I->next_slot = 0;
-        
-        if(texture_id &&
-           OVreturn_IS_OK(OVOneToOne_Set(I->ch2tex,char_id,texture_id))) {
-          
+
+        if(texture_id && OVreturn_IS_OK(OVOneToOne_Set(I->ch2tex, char_id, texture_id))) {
+
           glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
           glBindTexture(GL_TEXTURE_2D, texture_id);
           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -120,23 +119,14 @@ int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
           if(is_new) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 
-                         tex_dim,
-                         tex_dim,
-                         0,
-                         GL_RGBA,
-                         GL_UNSIGNED_BYTE,
-                         temp_buffer);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                         tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_buffer);
           } else {
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-                            tex_dim,
-                            tex_dim,
-                            GL_RGBA,
-                            GL_UNSIGNED_BYTE,
-                            temp_buffer);
+                            tex_dim, tex_dim, GL_RGBA, GL_UNSIGNED_BYTE, temp_buffer);
           }
         }
-        if(temp_buffer!=(unsigned char*)scratch) 
+        if(temp_buffer != (unsigned char *) scratch)
           FreeP(temp_buffer);
         return texture_id;
       }
@@ -145,9 +135,9 @@ int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
   return 0;
 }
 
-void TextureFree(PyMOLGlobals *G)
+void TextureFree(PyMOLGlobals * G)
 {
-  CTexture *I=G->Texture;
+  CTexture *I = G->Texture;
   /* TODO -- free all the resident textures */
 
   OVOneToOne_DEL_AUTO_NULL(I->ch2tex);
