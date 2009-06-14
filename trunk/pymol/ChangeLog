@@ -4,6 +4,8 @@ CHANGE LOG
 
 2009-06-14 Warren L. DeLano <warren@delsci.com>	
 
+	* reindented source code using GNU indent for better readability 
+	
 	* ugly workarounds added for Radeon HD hardware -- warns user
 	
 2009-06-10 Warren L. DeLano <warren@delsci.com>	
