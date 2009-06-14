@@ -684,8 +684,12 @@ static PanelRec *PanelListGroup(PyMOLGlobals * G, PanelRec * panel, SpecRec * gr
     if((rec->name[0] != '_') || (!hide_underscore)) {   /* not hidden */
       if((rec->group == group) && (!rec->in_panel)) {
         int group_name_len = strlen(rec->group_name);
-        if((!hide_underscore) || !((strncmp(rec->name, rec->group_name, group_name_len) == 0) &&        /* named with proper group prefix */
-                                   (rec->name[group_name_len] == '.') && (rec->name[group_name_len + 1] == '_'))) {     /* and not hidden inside group */
+        if((!hide_underscore)
+           || !((strncmp(rec->name, rec->group_name, group_name_len) == 0) &&
+                /* named with proper group prefix */
+                (rec->name[group_name_len] == '.')
+                && (rec->name[group_name_len + 1] == '_'))) {
+          /* and not hidden inside group */
 
           PanelRec *new_panel = NULL;
           ListElemCalloc(G, new_panel, PanelRec);
@@ -906,7 +910,8 @@ static int ExecutiveGetObjectParentList(PyMOLGlobals * G, SpecRec * child)
         if(OVreturn_IS_OK((result = OVOneToOne_GetForward(I->Key, result.word)))) {
           if(TrackerGetCandRef(I_Tracker, result.word,
                                (TrackerRef **) (void *) &group_rec)) {
-            if(TrackerLink(I_Tracker, result.word, list_id, priority++)) {      /* checking this prevents infinite loops */
+            if(TrackerLink(I_Tracker, result.word, list_id, priority++)) {
+              /* checking this prevents infinite loops */
               if(group_rec->group) {
                 repeat_flag = true;
                 child = group_rec;
@@ -3201,7 +3206,8 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
     }
 
     if(obj) {
-      if(next_pdb) {            /* NOTE: if set, assume that multiple PDBs are present in the file */
+      if(next_pdb) {
+        /* NOTE: if set, assume that multiple PDBs are present in the file */
         repeat_flag = true;
       }
     }
@@ -3214,7 +3220,8 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
             if(tmpObj->type != cObjectMolecule)
               ExecutiveDelete(G, current->m4x.xname);   /* just in case */
             else {
-              if(is_repeat_pass) {      /* this is a workaround for when PLANET accidentally duplicates the target */
+              if(is_repeat_pass) {
+                /* this is a workaround for when PLANET accidentally duplicates the target */
                 {
                   int a;
                   for(a = 0; a < n_processed; a++) {
@@ -3470,7 +3477,8 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
         char align_script[] = "@$PYMOL_SCRIPTS/metaphorics/alignment.pml";
         char *script_file = NULL;
 
-        if(a == (n_processed - 1)) {    /* for multi-PDB files, don't execute script until after the last file */
+        if(a == (n_processed - 1)) {
+          /* for multi-PDB files, don't execute script until after the last file */
           switch (m4x_mode) {
           case 0:
             script_file = annotate_script;
@@ -3481,9 +3489,11 @@ int ExecutiveProcessPDBFile(PyMOLGlobals * G, CObject * origObj, char *fname,
           }
         }
 
-        if((current != target_rec) || (!current->m4x.invisible))        /* suppress annotations if target invisible */
+        if((current != target_rec) || (!current->m4x.invisible)) {
+          /* suppress annotations if target invisible */
           ObjectMoleculeM4XAnnotate(current->obj, &current->m4x, script_file,
                                     (m4x_mode == 1), nbr_sele);
+        }
         M4XAnnoPurge(&current->m4x);
       }
     }
@@ -4438,15 +4448,16 @@ static void ExecutiveMigrateSession(PyMOLGlobals * G, int session_version)
       ColorDef(G, "sulfur", old_sulfur, 0, true);
     }
   }
-  if(session_version < 98) {    /* produce expected rendering quality & performance with old sessions */
+  if(session_version < 98) {
+    /* produce expected rendering quality & performance with old sessions */
     SettingSetGlobal_b(G, cSetting_ray_orthoscopic, 1);
   }
   if(session_version < 96) {
     SettingSetGlobal_f(G, cSetting_ray_transparency_contrast, 1.0F);
   }
   if(session_version < 95) {
-
-    {                           /* adjust fog to reflect current importance of seeing to the Z-slab center w/o fog */
+    {
+      /* adjust fog to reflect current importance of seeing to the Z-slab center w/o fog */
 
       float fog_start = SettingGetGlobal_f(G, cSetting_fog_start);
       float ray_trace_fog_start = SettingGetGlobal_f(G, cSetting_ray_trace_fog_start);
@@ -4457,7 +4468,6 @@ static void ExecutiveMigrateSession(PyMOLGlobals * G, int session_version)
          || (ray_trace_fog_start == 0.35F)) {
         SettingSetGlobal_f(G, cSetting_ray_trace_fog_start, 0.50F);
       }
-
     }
 
     {                           /* adjust GUI width */
@@ -5125,7 +5135,8 @@ int ExecutiveSmooth(PyMOLGlobals * G, char *name, int cycles,
                 st = b + offset;
                 if((st >= end_skip) && (st < (n_state - end_skip))) {
                   /* if(c==0) printf("dumping into slot %d\n",st); */
-                  flag1[(n_atom * st) + c] = flag0[(n_atom * st) + c];  /* don't flag states that weren't originally flagged */
+                  flag1[(n_atom * st) + c] = flag0[(n_atom * st) + c];
+                  /* don't flag states that weren't originally flagged */
                   i_cnt = 1.0F / cnt;
                   v1 = coord1 + 3 * ((n_atom * st) + c);
                   scale3f(sum, i_cnt, v1);
@@ -7721,7 +7732,7 @@ void ExecutiveUndo(PyMOLGlobals * G, int dir)
 
   o = ExecutiveGetLastObjectEdited(G);
   PRINTFB(G, FB_Executive, FB_Debugging)
-    " ExecutiveUndo: last object %p\n", (void *) o ENDFB(G);
+  " ExecutiveUndo: last object %p\n", (void *) o ENDFB(G);
   if(o)
     if(o->type == cObjectMolecule)
       obj = (ObjectMolecule *) o;
@@ -12663,8 +12674,10 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
               ExecutiveInvalidateSceneMembers(G);
             }
           }
-          if((tRec->type != cExecSelection) || (!onoff))        /* hide all selections, but show all */
+          if((tRec->type != cExecSelection) || (!onoff)) {
+            /* hide all selections, but show all */
             tRec->visible = !tRec->visible;
+          }
         }
       }
     } else {
@@ -13502,7 +13515,9 @@ void ExecutiveSymExp(PyMOLGlobals * G, char *name,
                           break;
                       }
                     }
-                    if(keepFlag) {      /* make sure that we don't aren't simply duplicating the template coordinates */
+                    if(keepFlag) {
+                      /* make sure that we don't aren't simply 
+                         duplicating the template coordinates */
                       keepFlag = false;
                       v1 = os->Coord;
                       v2 = cs->Coord;
@@ -13783,13 +13798,16 @@ void ExecutiveDoZoom(PyMOLGlobals * G, CObject * obj, int is_new, int zoom, int 
     switch (zoom) {
     case 1:                    /* zoom when new */
       if(is_new)
-        ExecutiveWindowZoom(G, obj->Name, 0.0, -1, 0, 0, quiet);        /* (all states) */
+        ExecutiveWindowZoom(G, obj->Name, 0.0, -1, 0, 0, quiet);       
+      /* (all states) */
       break;
     case 2:                    /* zoom always */
-      ExecutiveWindowZoom(G, obj->Name, 0.0, -1, 0, 0, quiet);  /* (all states) */
+      ExecutiveWindowZoom(G, obj->Name, 0.0, -1, 0, 0, quiet);  
+      /* (all states) */
       break;
     case 3:                    /* always zoom current state */
-      ExecutiveWindowZoom(G, obj->Name, 0.0, ObjectGetCurrentState(obj, false), 0, 0, quiet);   /* (all states) */
+      ExecutiveWindowZoom(G, obj->Name, 0.0, ObjectGetCurrentState(obj, false), 0, 0, quiet);  
+      /* (all states) */
       break;
     case 4:                    /* zoom all objects */
       ExecutiveWindowZoom(G, cKeywordAll, 0.0, -1, 0, 0, quiet);
@@ -14306,8 +14324,8 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                     I->LastZoomed = rec;
                     if(mod & cOrthoSHIFT) {     /* exclusive */
                       I->ToggleMode = 6;
-
-                      ExecutiveSetObjVisib(G, cKeywordAll, false, false);       /* need to log this */
+                      ExecutiveSetObjVisib(G, cKeywordAll, false, false);       
+                      /* need to log this */
                       if(!rec->visible)
                         ExecutiveSpecSetVisibility(G, rec, true, 0, false);
                     }
