@@ -1698,7 +1698,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
 {
   PyMOLGlobals *G = I->G;
   register CShaker *shk;
-  register int a, a0, a1, a2, a3, b0, b1, b2, b3;
+  register int a0, a1, a2, a3, b0, b3;
   int aa;
   CoordSet *cs;
   float *disp = NULL;
@@ -1837,28 +1837,31 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
 
     n_active = 0;
     ai0 = obj->AtomInfo;
-    for(a = 0; a < obj->NAtom; a++) {
-      if(ai0->flags & cAtomFlag_exclude) {
-        exclude[a] = true;
-        a1 = -1;
-      } else {
-        if(obj->DiscreteFlag) {
-          if(cs == obj->DiscreteCSet[a]) {
-            a1 = obj->DiscreteAtmToIdx[a];
-          } else {
-            a1 = -1;
-          }
+    {
+      register int a;
+      for(a = 0; a < obj->NAtom; a++) {
+        if(ai0->flags & cAtomFlag_exclude) {
+          exclude[a] = true;
+          a1 = -1;
         } else {
-          a1 = cs->AtmToIdx[a];
+          if(obj->DiscreteFlag) {
+            if(cs == obj->DiscreteCSet[a]) {
+              a1 = obj->DiscreteAtmToIdx[a];
+            } else {
+              a1 = -1;
+            }
+          } else {
+            a1 = cs->AtmToIdx[a];
+          }
         }
+        if(a1 >= 0) {
+          active_flag = true;
+          active[n_active] = a;
+          n_active++;
+        }
+        atm2idx[a] = a1;
+        ai0++;
       }
-      if(a1 >= 0) {
-        active_flag = true;
-        active[n_active] = a;
-        n_active++;
-      }
-      atm2idx[a] = a1;
-      ai0++;
     }
 
     if(active_flag) {
@@ -1872,6 +1875,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
 
       if(center) {
         int *a_ptr = active;
+        int a;
         for(aa = 0; aa < n_active; aa++) {
           a = *(a_ptr++);
           {
@@ -1896,7 +1900,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         v = disp;
         i = cnt;
         for(aa = 0; aa < n_active; aa++) {
-          a = active[aa];
+          int a = active[aa];
           v = disp + a * 3;
           cnt[a] = 0;
           *(v) = 0.0F;
@@ -1908,12 +1912,13 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
 
         {
           register ShakerDistCon *sdc = shk->DistCon;
-          int ndc = shk->NDistCon;
+          register int a,ndc = shk->NDistCon;
           for(a = 0; a < ndc; a++) {
-            b1 = sdc->at0;
-            b2 = sdc->at1;
+            int sdc_type = sdc->type;
+            int b1 = sdc->at0;
+            int b2 = sdc->at1;
 
-            switch (sdc->type) {
+            switch (sdc_type) {
             case cShakerDistBond:
               eval_flag = cSculptBond & mask;
               wt = bond_wt;
@@ -1940,13 +1945,13 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
               break;
             }
 
-            if(eval_flag) {
+            if(eval_flag && !(exclude[b1] || exclude[b2])) {
               a1 = atm2idx[b1]; /* coordinate set indices */
               a2 = atm2idx[b2];
-              if((a1 >= 0) && (a2 >= 0) && !(exclude[b1] || exclude[b2])) {
+              if((a1 >= 0) && (a2 >= 0)) {
                 v1 = cs_coord + 3 * a1;
                 v2 = cs_coord + 3 * a2;
-                switch (sdc->type) {
+                switch (sdc_type) {
                 case cShakerDistLimit:
                   strain =
                     ShakerDoDistLimit(sdc->targ * tri_sc, v1, v2, disp + b1 * 3,
@@ -1997,6 +2002,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         if(cSculptLine & mask) {
           register ShakerLineCon *slc = shk->LineCon;
           int nlc = shk->NLineCon;
+          int a,b1,b2;
           for(a = 0; a < nlc; a++) {
             b0 = slc->at0;
             b1 = slc->at1;
@@ -2027,6 +2033,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         if(cSculptPyra & mask) {
           register ShakerPyraCon *spc = shk->PyraCon;
           int npc = shk->NPyraCon;
+          int a,b1,b2;
           for(a = 0; a < npc; a++) {
 
             b0 = spc->at0;
@@ -2065,6 +2072,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         if(cSculptPlan & mask) {
           register ShakerPlanCon *snc = shk->PlanCon;
           int npc = shk->NPlanCon;
+          int a,b1,b2;
           /* apply planarity constraints */
 
           snc = shk->PlanCon;
@@ -2107,6 +2115,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         if(cSculptTors & mask) {
           register ShakerTorsCon *stc = shk->TorsCon;
           int ntc = shk->NTorsCon;
+          int a,b1,b2;
           /* apply planarity constraints */
 
           for(a = 0; a < ntc; a++) {
@@ -2153,7 +2162,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
           int x0i;
           int don_b0;
           int acc_b0;
-
+          int b1;
           vdw_magnified = vdw_magnify;
           vdw_magnify = 1.0F;
 
@@ -2376,7 +2385,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
         /* average the displacements */
 
         if(n_cycle >= 0) {
-          int cnt_a;
+          int cnt_a,a;
           float _1 = 1.0F;
           register float inv_cnt;
           int *a_ptr = active;
@@ -2424,7 +2433,7 @@ float SculptIterateObject(CSculpt * I, ObjectMolecule * obj,
           int *a_ptr = active;
           if(center)
             for(aa = 0; aa < n_active; aa++) {
-              a = *(a_ptr++);
+              int a = *(a_ptr++);
               {
                 AtomInfoType *ai = obj->AtomInfo + a;
                 if((ai->protekted != 1) && !(ai->flags & cAtomFlag_fix)) {
