@@ -21,6 +21,7 @@ from cmd import _cmd, lock, unlock, Shortcut, \
 import string
 import traceback
 import threading
+import os
 
 def model_to_sdf_list(self_cmd,model):
     from chempy import io
@@ -138,10 +139,21 @@ class CleanJob:
 
             if not ok:
                 # we can't call warn because this is the not the tcl-tk gui thread
-                print "Cleanup failed.  Invalid input or software malfuction?"
                 if result != None:
                     if len(result)>1:
                         print result[1]
+                failed_file = "cleanup_failed.sdf"
+                print "Clean-Error: Structure cleanup failed.  Invalid input or software malfuction?"
+
+                try:
+                    open(failed_file,'wb').write(input_sdf)
+                    print "Clean-Error: Wrote SD file '%s' into the directory:"%failed_file
+                    print "Clean-Error: '%s'."%os.getcwd()
+                    print "Clean-Error: If you think PyMOL should be able to handle this structure"
+                    print "Clean-Error: then please email that SD file to support@delsci.com. Thanks!"
+                except IOError:
+                    print "Unabled to write '%s"%failed_file
+                    
         if message!=None:
             self_cmd.do("_ wizard")
 
