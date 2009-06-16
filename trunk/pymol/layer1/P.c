@@ -1562,11 +1562,19 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
       if((!pymol_path) || (!pythonhome)) {
         lpcbData = sizeof(OrthoLineType) - 1;
         r1 = RegOpenKeyEx(HKEY_CLASSES_ROOT,
-                          "Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
+#ifdef PYMOL_EVAL
+			"Software\\DeLano Scientific\\PyMOL Eval\\PYMOL_PATH",
+#else
+			"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
+#endif
                           0, KEY_EXECUTE, &phkResult);
         if(r1 != ERROR_SUCCESS) {
           r1 = RegOpenKeyEx(HKEY_CURRENT_USER,
-                            "Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
+#ifdef PYMOL_EVAL
+			"Software\\DeLano Scientific\\PyMOL Eval\\PYMOL_PATH",
+#else
+			"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",
+#endif
                             0, KEY_EXECUTE, &phkResult);
         }
         if(r1 == ERROR_SUCCESS) {
