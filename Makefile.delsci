@@ -8,6 +8,8 @@ PRIME = ls *.c | sed 's/.c$$/.o/'| awk 'BEGIN{printf("OBJS=")}{printf("%s ",$$1)
 MINDEP=$(PYMOL_PATH)/products/unix-mindep
 MDP=$(MINDEP)/pymol
 
+MAKE_FAST=$(MAKE) -j8
+
 .includes:
 	cd ov/src;$(PRIME)
 	cd layer0;$(PRIME)
@@ -19,35 +21,14 @@ MDP=$(MINDEP)/pymol
 	touch .includes
 
 .update:
-	cd ov/src;$(MAKE) -f Makefile.delsci
-	cd layer0;$(MAKE) -f Makefile.delsci
-	cd layer1;$(MAKE) -f Makefile.delsci
-	cd layer2;$(MAKE) -f Makefile.delsci
-	cd layer3;$(MAKE) -f Makefile.delsci
-	cd layer4;$(MAKE) -f Makefile.delsci
-	cd layer5;$(MAKE) -f Makefile.delsci
+	cd ov/src;$(MAKE_FAST) -f Makefile.delsci
+	cd layer0;$(MAKE_FAST) -f Makefile.delsci
+	cd layer1;$(MAKE_FAST) -f Makefile.delsci
+	cd layer2;$(MAKE_FAST) -f Makefile.delsci
+	cd layer3;$(MAKE_FAST) -f Makefile.delsci
+	cd layer4;$(MAKE_FAST) -f Makefile.delsci
+	cd layer5;$(MAKE_FAST) -f Makefile.delsci
 	touch .update
-
-ov: 
-	cd ov/src;$(MAKE) -f Makefile.delsci
-
-0:
-	cd layer0;$(MAKE) -f Makefile.delsci
-
-1:
-	cd layer1;$(MAKE) -f Makefile.delsci
-
-2:
-	cd layer2;$(MAKE) -f Makefile.delsci
-
-3:
-	cd layer3;$(MAKE) -f Makefile.delsci
-
-4:
-	cd layer4;$(MAKE) -f Makefile.delsci
-
-5:
-	cd layer5;$(MAKE) -f Makefile.delsci
 
 .depends: 
 	/bin/rm -f .includes

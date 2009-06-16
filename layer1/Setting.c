@@ -696,6 +696,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
   float slow_idle = SettingGetGlobal_f(G, cSetting_fast_idle);
   float fast_idle = SettingGetGlobal_f(G, cSetting_slow_idle);
   int mouse_grid = SettingGetGlobal_b(G, cSetting_mouse_grid);
+  int mouse_z_scale = SettingGetGlobal_i(G,cSetting_mouse_scale);
   register CSetting *I = G->Setting;
   if(list)
     if(PyList_Check(list))
@@ -730,7 +731,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
   SettingSet_b(I, cSetting_session_changed, 0);
 
   SettingSet_b(I, cSetting_mouse_grid, mouse_grid);
-
+  SettingSet_i(I, cSetting_mouse_z_scale, mouse_z_scale);
   if(G->Option->presentation) {
     SettingSet_b(I, cSetting_full_screen, full_screen);
     SettingSet_b(I, cSetting_presentation, 1);
@@ -3840,5 +3841,6 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_i(I, cSetting_valence_mode, 1);
     set_b(I, cSetting_show_frame_rate, 0);
     set_i(I, cSetting_movie_panel, 0);
+    set_f(I, cSetting_mouse_z_scale,1.0);
   }
 }
