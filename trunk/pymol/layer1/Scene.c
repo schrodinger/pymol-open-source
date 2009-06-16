@@ -5661,10 +5661,10 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
         break;
       case cButModeTransZ:
         if(I->LastY != y) {
-          float factor;
-          factor = 200 / ((I->FrontSafe + I->BackSafe) / 2);
+          float factor = 400 / ((I->FrontSafe + I->BackSafe) / 2);
           if(factor >= 0.0F) {
-            factor = (((float) y) - I->LastY) / factor;
+            factor = SettingGetGlobal_f(G, cSetting_mouse_z_scale) * 
+              (((float) y) - I->LastY) / factor;
             if(!SettingGetGlobal_b(G, cSetting_legacy_mouse_zoom))
               factor = -factor;
             I->Pos[2] += factor;

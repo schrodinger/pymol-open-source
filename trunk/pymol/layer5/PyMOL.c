@@ -789,6 +789,7 @@ typedef struct _CPyMOL {
   ov_word lex_valence_mode;
   ov_word lex_show_frame_rate;
   ov_word lex_movie_panel;
+  ov_word lex_mouse_z_scale;
 } _CPyMOL;
 
 
@@ -1567,6 +1568,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(valence_mode, 616);
   LEX_SETTING(show_frame_rate, 617);
   LEX_SETTING(movie_panel, 618);
+  LEX_SETTING(mouse_z_scale, 619);
+
   return_OVstatus_SUCCESS;
 }
 
