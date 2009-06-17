@@ -3233,7 +3233,7 @@ void PyMOL_Draw(CPyMOL * I)
         SceneSetCardInfo(G, (char *) glGetString(GL_VENDOR),
                          (char *) glGetString(GL_RENDERER),
                          (char *) glGetString(GL_VERSION));
-        if(G->Option->show_splash) {
+        if(G->Option->show_splash && !G->Option->quiet) {
 
           printf(" OpenGL graphics engine:\n");
           printf("  GL_VENDOR: %s\n", (char *) glGetString(GL_VENDOR));
@@ -3241,20 +3241,6 @@ void PyMOL_Draw(CPyMOL * I)
           printf("  GL_VERSION: %s\n", (char *) glGetString(GL_VERSION));
           if(Feedback(G, FB_OpenGL, FB_Blather)) {
             printf("  GL_EXTENSIONS: %s\n", (char *) glGetString(GL_EXTENSIONS));
-          }
-
-          if(G->StereoCapable) {
-            printf("  Quad-buffer stereo 3D capability detected.\n");
-          } else if(!G->Option->quiet) {
-            if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_StereoFailed) {
-              OrthoAddOutput(G,
-                             "Error: The requested stereo 3D visualization mode is not available.");
-            }
-          }
-
-          if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_MultisampleFailed) {
-            OrthoAddOutput(G,
-                           "Error: The requested multisampling mode is not available.");
           }
         }
         I->DrawnFlag = true;
@@ -3391,9 +3377,33 @@ int PyMOL_Idle(CPyMOL * I)
       PXDecRef(PyObject_CallMethod(G->P_inst->obj, "launch_gui", "O", G->P_inst->obj));
 #endif
       /* END PROPRIETARY CODE SEGMENT */
+
       PXDecRef(PyObject_CallMethod
                (G->P_inst->obj, "adapt_to_hardware", "O", G->P_inst->obj));
+      
+      if(PyErr_Occurred())
+        PyErr_Print();
+
+      if(G->StereoCapable) {
+        OrthoAddOutput(G,
+                       " Quad-buffer Stereo 3D detected and enabled!\n");;
+      } else {
+        if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_StereoFailed) {
+          OrthoAddOutput(G,
+                         "Error: The requested stereo 3D visualization mode is not available.");
+        }
+      }
+      
+      if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_MultisampleFailed) {
+        OrthoAddOutput(G,
+                       "Error: The requested multisampling mode is not available.");
+      }
+
       PXDecRef(PyObject_CallMethod(G->P_inst->obj, "exec_deferred", "O", G->P_inst->obj));
+
+      if(PyErr_Occurred())
+        PyErr_Print();
+
       PUnblock(G);
       PFlush(G);
     }

@@ -755,6 +755,21 @@ static void MainDrawLocked(void)
     if(PyErr_Occurred())
       PyErr_Print();
 
+    if(G->StereoCapable) {
+      OrthoAddOutput(G,
+                     " Quad-buffer Stereo 3D detected and enabled!\n");;
+      } else {
+        if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_StereoFailed) {
+          OrthoAddOutput(G,
+                         "Error: The requested stereo 3D visualization mode is not available.");
+        }
+      }
+    
+    if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_MultisampleFailed) {
+      OrthoAddOutput(G,
+                     "Error: The requested multisampling mode is not available.");
+    }
+
     if(G->Option->incentive_product) {  /* perform incentive product initialization (if any) */
       PyRun_SimpleString("try:\n   import ipymol\nexcept:\n   pass\n");
       if(PyErr_Occurred())
