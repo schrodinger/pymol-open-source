@@ -1001,8 +1001,6 @@ class APBSTools:
                         if os.path.isfile(APBS_PSIZE_LOCATION):
                             found = 1 
                 except:
-                    import traceback
-                    traceback.print_exc()
                     pass
             if (not found) or (APBS_PSIZE_LOCATION is None):
                 APBS_PSIZE_LOCATION = ''
