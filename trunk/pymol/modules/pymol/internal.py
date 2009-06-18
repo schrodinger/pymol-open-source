@@ -432,8 +432,12 @@ def _special(k,x,y,m=0,_self=cmd): # INTERNAL (invoked when special key is press
                 key = ('','SHFT-','CTRL-','CTSH-','ALT-')[m] + key
             if pymol._scene_dict.has_key(key): 
                 _self.scene(key)
-            elif pymol._view_dict.has_key(key): 
+            elif is_string(pymol._scene_dict_sc.interpret(key+"-")):
+                _self.scene(pymol._scene_dict_sc[key+"-"])
+            elif pymol._view_dict.has_key(key):
                 _self.view(key)
+            elif is_string(pymol._view_dict_sc.interpret(key+"-")):
+                _self.view(pymol._view_dict_sc[key+"-"])
     return None
 
 # control keys
