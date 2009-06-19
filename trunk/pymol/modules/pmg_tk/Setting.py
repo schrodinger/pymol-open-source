@@ -148,6 +148,9 @@ class Setting:
         self.virtual_trackball = IntVar()
         self.virtual_trackball.set(int(self.cmd.get_setting_legacy('virtual_trackball')))
 
+        self.movie_panel = IntVar()
+        self.movie_panel.set(int(self.cmd.get_setting_legacy('movie_panel')))
+
         self.stereo = IntVar()
 
         self.seq_view = IntVar()
@@ -296,6 +299,9 @@ class Setting:
             'virtual_trackball'         :
             (lambda s,a: (self.cmd.set(a,("%1.0f" % s.virtual_trackball.get()),log=1))),
             
+            'movie_panel'         :
+            (lambda s,a: (self.cmd.set(a,("%d" % s.movie_panel.get()),log=1))),
+
             'seq_view'         :
             (lambda s,a: (self.cmd.set(a,("%d" % s.seq_view.get()),log=1))),
             'texture_fonts'         :
@@ -401,6 +407,8 @@ class Setting:
             (lambda s,t: (s.use_display_lists.set(t[1][0]!=0))),
             'virtual_trackball':
             (lambda s,t: (s.virtual_trackball.set(t[1][0]!=0))),
+            'movie_panel':
+            (lambda s,t: (s.movie_panel.set(t[1][0]!=0))),
             'seq_view':
             (lambda s,t: (s.seq_view.set(t[1][0]!=0))),
             'texture_fonts':
@@ -463,6 +471,7 @@ class Setting:
             self.pymol.setting._get_index("scenes_changed"),
             self.pymol.setting._get_index("use_display_lists"),
             self.pymol.setting._get_index("virtual_trackball"),
+            self.pymol.setting._get_index("movie_panel"),
             self.pymol.setting._get_index("seq_view"),
             self.pymol.setting._get_index("texture_fonts"),
             self.pymol.setting._get_index("stereo"),
