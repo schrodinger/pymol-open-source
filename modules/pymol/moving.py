@@ -155,7 +155,7 @@ SEE ALSO
     def mview(action='store', first=0, last=0, power=1.4,
               bias=1.0, simple=0, linear=0.0, object='',
               wrap=-1, hand=1, window=5, cycles=1, scene='',
-              cut=0.5, quiet=1, _self=cmd):
+              cut=0.5, quiet=1, auto=-1, _self=cmd):
 
         '''
 DESCRIPTION
@@ -181,6 +181,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         first = int(first)
         last = int(last)
+        auto = int(auto)
         if first<0:
             first = _self.count_frames() + first + 1
             if last == 0:
@@ -200,6 +201,13 @@ SEE ALSO
                            int(simple), float(linear),str(object),
                            int(wrap),int(hand),int(window),int(cycles),
                            str(scene),float(cut),int(quiet))
+            if (auto>0) or ((auto<0) and (_self.get_setting_int("movie_auto_interpolate")>0)):
+                if action in [0,1]:
+                    _cmd.mview(_self._COb,3,-1,-1,
+                               float(power),float(bias),
+                               int(simple), float(linear),str(object),
+                               int(wrap),int(hand),int(window),int(cycles),
+                               str(scene),float(cut),int(quiet))                    
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException

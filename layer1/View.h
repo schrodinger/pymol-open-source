@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 
 #include"Ray.h"
+#include"Block.h"
 
 typedef struct CViewElem {
 
@@ -83,5 +84,6 @@ int ViewElemSmooth(CViewElem * first, CViewElem * last, int window, int loop);
 int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
                         float power, float bias,
                         int simple, float linearity, int hand, float cut);
+void ViewElemDraw(PyMOLGlobals *G, CViewElem * src, BlockRect *rect, int frames);
 
 #endif

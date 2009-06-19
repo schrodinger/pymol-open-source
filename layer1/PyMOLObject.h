@@ -103,8 +103,8 @@ void ObjectPrepareContext(CObject * I, CRay * ray);
 void ObjectSetTTT(CObject * I, float *ttt, int state);
 int ObjectGetTTT(CObject * I, float **ttt, int state);
 int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix);
-void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order);
-void ObjectTranslateTTT(CObject * T, float *v);
+void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order, int store);
+void ObjectTranslateTTT(CObject * T, float *v,int store);
 void ObjectSetTTTOrigin(CObject * I, float *origin);
 void ObjectResetTTT(CObject * I);
 PyObject *ObjectAsPyList(CObject * I);
@@ -115,7 +115,8 @@ int ObjectView(CObject * I, int action, int first,
                int last, float power, float bias,
                int simple, float linear, int wrap,
                int hand, int window, int cycles, int quiet);
-
+int ObjectGetSpecLevel(CObject * I, int frame);
+void ObjectDrawViewElem(CObject *I, BlockRect *rect, int frames);
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I);
 void ObjectStateCopy(CObjectState * dst, CObjectState * src);
 void ObjectStatePurge(CObjectState * I);

@@ -80,6 +80,18 @@ struct _CMovie {
 
 };
 
+int MovieGetSpecLevel(PyMOLGlobals *G,int frame)
+{
+  register CMovie *I = G->Movie;
+  if(I->ViewElem) {
+    int size = VLAGetSize(I->ViewElem);
+    if(frame<size)
+      return I->ViewElem[frame].specification_level;
+    return 0;
+  }
+  return -1;
+}
+
 void MovieSetRealtime(PyMOLGlobals * G, int realtime)
 {
   register CMovie *I = G->Movie;
@@ -776,7 +788,7 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from)
   register CMovie *I = G->Movie;
   int c = 0;
   int i;
-  int old_NFrame = I->NFrame;
+  /*  int old_NFrame = I->NFrame; */
   char *s, number[20];
 
   if(start_from < 0)
@@ -836,6 +848,9 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from)
   } else if(!str[0]) {
     I->NFrame = start_from;
   }
+
+  if(SettingGetGlobal_b(G,cSetting_movie_auto_interpolate)) 
+    ExecutiveReinterpolateMotions(G);
 
   VLACheck(I->Image, ImageType *, I->NFrame);
   PRINTFB(G, FB_Movie, FB_Debugging)
@@ -1009,11 +1024,9 @@ int MovieView(PyMOLGlobals * G, int action, int first,
       if(first > I->NFrame) {
         first = I->NFrame - 1;
       }
-
       /* note that we're leaving a blank frame at the end... */
-
       if(last < 0) {
-        last = SceneGetNFrame(G, NULL);
+        last = MovieGetLength(G);
         if(last) {
           if(!wrap)
             last--;
@@ -1033,7 +1046,6 @@ int MovieView(PyMOLGlobals * G, int action, int first,
         if(last && (!wrap))
           last--;
       }
-
       VLACheck(I->ViewElem, CViewElem, last);
 
       if(wrap && (last >= I->NFrame)) {
@@ -1098,12 +1110,14 @@ int MovieView(PyMOLGlobals * G, int action, int first,
         }
       }
 
-      if(wrap && (last >= I->NFrame)) {
-        /* if we're interpolating beyond the last frame, then wrap by
-           copying the last frames back over the early frames */
-        int a;
-        for(a = I->NFrame; a <= last; a++) {
-          ViewElemCopy(G, I->ViewElem + a, I->ViewElem + a - I->NFrame);
+      if(first_view) {
+        if(wrap && (last >= I->NFrame)) {
+          /* if we're interpolating beyond the last frame, then wrap by
+             copying the last frames back over the early frames */
+          int a;
+          for(a = I->NFrame; a <= last; a++) {
+            ViewElemCopy(G, I->ViewElem + a, I->ViewElem + a - I->NFrame);
+          }
         }
       }
 
@@ -1144,7 +1158,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
   case 6:                      /* uninterpolate */
     if(I->ViewElem) {
       if(first < 0)
-        first = SceneGetFrame(G);
+        first = 0;
       if(last < 0) {
         last = SceneGetNFrame(G, NULL) - 1;
       }
@@ -1309,9 +1323,17 @@ int MovieGetPanelHeight(PyMOLGlobals * G)
     }
   }
   if(movie_panel) {
-    return 15;                  /* default movie panel height */
+    return 15 * ExecutiveCountMotions(G); /* default movie panel height */
   } else {
     return 0;
+  }
+}
+
+void MovieDrawViewElem(PyMOLGlobals *G, BlockRect *rect,int frames)
+{
+  CMovie *I = G->Movie;
+  if(I->ViewElem) {
+    ViewElemDraw(G,I->ViewElem,rect,frames);
   }
 }
 
@@ -1321,7 +1343,8 @@ static void MovieDraw(Block * block)
   CMovie *I = G->Movie;
   int n_frame = MovieGetLength(G);
   int frame = SceneGetFrame(G);
-  if(MovieGetPanelHeight(G)) {
+  int count = ExecutiveCountMotions(G);
+  if(count) {
     if(!n_frame) {
       ScrollBarSetLimits(I->ScrollBar, 1, 1);
       ScrollBarSetValue(I->ScrollBar, 0);
@@ -1340,66 +1363,8 @@ static void MovieDraw(Block * block)
     ScrollBarSetBox(I->ScrollBar, I->Block->rect.top,
                     I->Block->rect.left, I->Block->rect.bottom, I->Block->rect.right);
     ScrollBarDoDraw(I->ScrollBar);
-    /* draw key frames */
-    if(I->NFrame && I->ViewElem) {
-      VLACheck(I->ViewElem, CViewElem, I->NFrame - 1);
-      if(G->HaveGUI && G->ValidContext) {
-        float width = (float) (I->Block->rect.right - I->Block->rect.left);
-        float start = 0.0F, stop;
-        CViewElem *view_elem = I->ViewElem;
-        int offset = 0;
-        int first = 0;
-        int last = I->NFrame;
-        int nDrawn = I->NFrame;
-
-        float top = I->Block->rect.top;
-        float bot = I->Block->rect.bottom;
-        float mid_top = (3 * top + 3 * bot) / 5;
-        float mid_bot = (2 * top + 2 * bot) / 5;
-        float color[3] = { 0.3, 0.3, 0.9 };
-        int cur_level = -1, last_level = -1;
-        int cur;
-
-        glColor3fv(color);
-
-        for(cur = first; cur <= last; cur++) {
-          if(cur < last) {
-            cur_level = view_elem->specification_level;
-          } else {
-            cur_level = -1;
-          }
-          if(cur_level != last_level) {
-            stop = (width * (cur - offset)) / nDrawn;
-            switch (last_level) {
-            case 0:
-              break;
-            case 1:
-              glBegin(GL_POLYGON);
-              glVertex2f(start, mid_bot);
-              glVertex2f(start, mid_top);
-              glVertex2f(stop, mid_top);
-              glVertex2f(stop, mid_bot);
-              glEnd();
-              break;
-            case 2:
-              glBegin(GL_POLYGON);
-              glVertex2f(start, bot);
-              glVertex2f(start, top);
-              glVertex2f(stop, top);
-              glVertex2f(stop, bot);
-              glEnd();
-              break;
-            }
-            if(last_level > 0) {
-            }
-            start = (width * (cur - offset)) / nDrawn;
-          }
-          last_level = cur_level;
-          view_elem++;
-        }
-        ScrollBarDrawHandle(I->ScrollBar, 0.3F);
-      }
-    }
+    ExecutiveDrawMotions(G,&I->Block->rect,count);
+    ScrollBarDrawHandle(I->ScrollBar, 0.3F);
   }
 }
 

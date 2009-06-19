@@ -260,7 +260,19 @@ def timed_roll(period=12.0,cycles=1,axis='y',_self=cmd):
             _self.turn(axis,deg)
             _self.mview('store',frame)
             frame = frame + 1
-    
+
+# blank frames to be specified by the user
+
+def add_blank(duration=12.0,_self=cmd):
+    cmd = _self
+    start_frame = cmd.get_movie_length()+1
+    duration = float(duration)
+    fps = float(cmd.get('movie_fps'))
+    n_frame = int(round(fps * duration))
+    if n_frame > 0:
+        cmd.madd("1 x%d"%n_frame)
+        cmd.frame("1")
+
 # new matrix-based camera interpolation routines
 
 def add_roll(duration=12.0,loop=1,axis='y',_self=cmd):

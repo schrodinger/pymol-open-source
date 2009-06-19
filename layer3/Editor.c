@@ -1987,7 +1987,7 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
           if(matrix_mode && (I->DragSelection < 0)) {
             switch (matrix_mode) {
             case 1:
-              ObjectCombineTTT(&obj->Obj, m, false);
+              ObjectCombineTTT(&obj->Obj, m, false, SettingGetGlobal_b(G,cSetting_movie_auto_store));
               break;
             case 2:
               ObjectMoleculeTransformState44f(obj, state, m, log_trans, false, true);
@@ -2021,12 +2021,14 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
              coordinates to effect the desired rotation */
           if(mode == cButModeRotView) {
             /* modify the object's TTT */
-            ObjectCombineTTT(&obj->Obj, m, false);
+            ObjectCombineTTT(&obj->Obj, m, false, 
+                             SettingGetGlobal_b(G,cSetting_movie_auto_store));
           } else {
             if(matrix_mode) {
               switch (matrix_mode) {
               case 1:
-                ObjectCombineTTT(&obj->Obj, m, false);
+                ObjectCombineTTT(&obj->Obj, m, false, 
+                                 SettingGetGlobal_b(G,cSetting_movie_auto_store));
                 break;
               case 2:
                 ObjectMoleculeTransformState44f(obj, state, m, log_trans, false, true);
@@ -2046,7 +2048,7 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
           break;
         case cButModeMovView:
         case cButModeMovViewZ:
-          ObjectTranslateTTT(&obj->Obj, mov);
+          ObjectTranslateTTT(&obj->Obj, mov, SettingGetGlobal_b(G,cSetting_movie_auto_store));
           break;
         case cButModeMovObj:
         case cButModeMovObjZ:
@@ -2061,7 +2063,7 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
             m[11] = mov[2];
             switch (matrix_mode) {
             case 1:
-              ObjectCombineTTT(&obj->Obj, m, false);
+              ObjectCombineTTT(&obj->Obj, m, false, SettingGetGlobal_b(G,cSetting_movie_auto_store));
               break;
             case 2:
               ObjectMoleculeTransformState44f(obj, state, m, log_trans, true, true);

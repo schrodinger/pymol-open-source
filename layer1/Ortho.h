@@ -49,7 +49,7 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force);
 int OrthoGetWidth(PyMOLGlobals * G);
 int OrthoGetHeight(PyMOLGlobals * G);
 void OrthoDoDraw(PyMOLGlobals * G, int render_mode);
-
+void OrthoDoViewportWhenReleased(PyMOLGlobals *G);
 void OrthoPushMatrix(PyMOLGlobals * G);
 void OrthoPopMatrix(PyMOLGlobals * G);
 int OrthoGetPushed(PyMOLGlobals * G);

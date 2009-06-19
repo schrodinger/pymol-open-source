@@ -3842,5 +3842,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_show_frame_rate, 0);
     set_i(I, cSetting_movie_panel, 0);
     set_f(I, cSetting_mouse_z_scale,1.0);
+    set_b(I, cSetting_movie_auto_store, 1);
+    set_b(I, cSetting_movie_auto_interpolate, 1);
   }
 }

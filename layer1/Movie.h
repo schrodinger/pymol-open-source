@@ -27,6 +27,8 @@ typedef char MovieCmdType[OrthoLineLength];
 
 int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning);
 PyObject *MovieAsPyList(PyMOLGlobals * G);
+int MovieGetSpecLevel(PyMOLGlobals *G,int frame);
+void MovieDrawViewElem(PyMOLGlobals *G, BlockRect *rect,int frames);
 
 int MovieInit(PyMOLGlobals * G);
 Block *MovieGetBlock(PyMOLGlobals * G);

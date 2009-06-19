@@ -199,6 +199,8 @@ int ExecutiveSelectList(PyMOLGlobals * G, char *sele_name, char *s1, int *list,
 #define cExecutiveLabelEvalAlt    2
 
 int ExecutiveLabel(PyMOLGlobals * G, char *s1, char *expr, int quiet, int eval_mode);
+
+int ExecutiveCountMotions(PyMOLGlobals * G);
 void ExecutiveIterateState(PyMOLGlobals * G, int i1, char *s1, char *expr, int read_only,
                            int atomic_props, int quiet, PyObject * space);
 int ExecutiveColor(PyMOLGlobals * G, char *name, char *color, int flags, int quiet);
@@ -458,5 +460,8 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
                            char *sele, float fbuf, int state,
                            float carve, int map_state, int side,
                            int quiet, int surf_mode, int box_mode);
+void ExecutiveDrawMotions(PyMOLGlobals * G, BlockRect *rect, int expected);
+void ExecutiveReinterpolateMotions(PyMOLGlobals * G);
+
 
 #endif

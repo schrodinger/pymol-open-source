@@ -11,11 +11,11 @@ def get_auto_arg_list(self_cmd=cmd):
         'as'             : [ self_cmd.repres_sc              , 'representation'  , ', ' ],
         'bg_color'       : [ lambda c=self_cmd:c._get_color_sc(c), 'color'        , ''   ],      
         'button'         : [ self_cmd.controlling.button_sc  , 'button'          , ', ' ],
-        
         'cartoon'        : [ self_cmd.viewing.cartoon_sc     , 'cartoon'         , ', ' ],
         'cache'          : [ self_cmd.exporting.cache_action_sc , 'cache mode'   , ', ' ],
         'center'         : [ self_cmd.selection_sc           , 'selection'       , ''   ],
         'color'          : [ lambda c=self_cmd:c._get_color_sc(c), 'color'       , ', ' ],
+        'config_mouse'   : [ self_cmd.controlling.ring_dict_sc, 'mouse cycle'   , ''   ],
         'clean'          : [ self_cmd.selection_sc           , 'selection'       , ', ' ],
         'clip'           : [ self_cmd.viewing.clip_action_sc , 'clipping action' , ', ' ],
         'count_atoms'    : [ self_cmd.selection_sc           , 'selection'       , ''   ],

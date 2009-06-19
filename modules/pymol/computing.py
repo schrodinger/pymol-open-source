@@ -71,8 +71,6 @@ class CleanJob:
         self.cmd = self_cmd
         if message == '':
             message = None
-        if message != None:
-            self.cmd.do("_ cmd.wizard('message','''%s''')"%message)
         if state<1:
             state = self_cmd.get_state()
         # this code will moved elsewhere
@@ -81,8 +79,8 @@ class CleanJob:
             from freemol import mengine
         except:
             ok = 0
-            print "Error: unable to import module freemol.mengine"
-            print "This PyMOL build may not include full modeling capabilities."
+            print "Error: unable to import freemol.mengine module."
+            print "This PyMOL build appear not to include full modeling capabilities."
         if ok:
             if not mengine.validate():
                 ok = 0
@@ -96,6 +94,8 @@ class CleanJob:
             # we can't call warn because this is the not the tcl-tk gui thread
             # warn("Please be sure that FreeMOL is correctly installed.")
         else:
+            if message != None:
+                self.cmd.do("_ cmd.wizard('message','''%s''')"%message)
             obj_list = self_cmd.get_object_list("bymol ("+sele+")")
             ok = 0
             result = None

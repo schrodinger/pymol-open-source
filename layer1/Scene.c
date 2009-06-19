@@ -203,6 +203,9 @@ struct _CScene {
   int *SlotVLA;
 
   int StencilValid;
+  int ReinterpolateFlag;
+  CObject *ReinterpolateObj;
+  
 };
 
 typedef struct {
@@ -3641,6 +3644,15 @@ static int SceneRelease(Block * block, int button, int x, int y, int mod, double
       I->SculptingFlag = 0;
     }
   }
+  if(I->ReinterpolateFlag && I->ReinterpolateObj) {
+    if(ExecutiveValidateObjectPtr(G, I->ReinterpolateObj, cObjectMolecule)) {
+      ObjectView(I->ReinterpolateObj, 3, -1, -1,1.4F,
+                 1.0F, 0, 0.0F, -1, 1, 5, 1, 1); 
+      /* should instread read these from per-object settings... */
+    }
+    I->ReinterpolateFlag = true;
+    I->ReinterpolateObj = NULL;
+  }
   return 1;
 }
 
@@ -5413,6 +5425,17 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
                 if((mode != cButModeMoveAtom) && (mode != cButModeMoveAtomZ)) {
                   EditorDrag(G, (ObjectMolecule *) obj, I->LastPicked.src.index, mode,
                              SettingGetGlobal_i(G, cSetting_state) - 1, v1, v2, v3);
+                  switch(mode) {
+                  case cButModeMovViewZ:
+                  case cButModeRotView:
+                  case cButModeMovView:
+                    if(SettingGetGlobal_i(G,cSetting_movie_auto_store) && 
+                       SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+                      I->ReinterpolateFlag = true;
+                      I->ReinterpolateObj = obj;
+                    }
+                    break;
+                  }
                 } else {
                   int log_trans = (int) SettingGet(G, cSetting_log_conformations);
                   ObjectMoleculeMoveAtom((ObjectMolecule *) obj,
