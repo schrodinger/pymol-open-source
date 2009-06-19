@@ -138,6 +138,7 @@ struct _CExecutive {
   PanelRec *Panel;
   int ValidPanel;
   int CaptureFlag;
+  int LastMotionCount;
 };
 
 
@@ -167,6 +168,84 @@ static int ExecutiveGetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
 int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int state,
                                        char *s1, int log, float *matrix, int homogenous,
                                        int global);
+
+void ExecutiveReinterpolateMotions(PyMOLGlobals * G)
+{
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec, rec, next)) {
+    switch(rec->type) {
+    case cExecAll:
+      if(MovieGetSpecLevel(G,0)>=0) {
+        printf("reinter\n");
+        MovieView(G, 3, -1, -1, 1.4F, 1.0F, 0, 0.0F, -1, 1, 5, 1, NULL, 0.5, 1); 
+      }
+      break;
+    case cExecObject:
+      if(ObjectGetSpecLevel(rec->obj,0)>=0)
+        ObjectView(rec->obj, 3, -1, -1,1.4F,1.0F, 0, 0.0F, -1, 1, 5, 1, 1); 
+      break;
+    }
+  }
+}
+
+
+int ExecutiveCountMotions(PyMOLGlobals * G)
+{
+  int count = 0;
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec, rec, next)) {
+    switch(rec->type) {
+    case cExecAll:
+      if(MovieGetSpecLevel(G,0)>=0)
+        count++;
+      break;
+    case cExecObject:
+      if(ObjectGetSpecLevel(rec->obj,0)>=0)
+        count++;
+      break;
+    }
+  }
+  if(count != I->LastMotionCount) {
+    if(SettingGetGlobal_i(G,cSetting_movie_panel)) {
+      OrthoDoViewportWhenReleased(G);
+    }
+    I->LastMotionCount = count;
+  }
+  return (count);
+}
+
+void ExecutiveDrawMotions(PyMOLGlobals * G, BlockRect *rect, int expected)
+{
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  int frames = MovieGetLength(G);
+  BlockRect draw_rect = *rect;
+  int count = 0;
+  int height = rect->top - rect->bottom;
+  
+  while(ListIterate(I->Spec, rec, next)) {
+    switch(rec->type) {
+    case cExecAll:
+      if(MovieGetSpecLevel(G,0)>=0) {
+        draw_rect.top = rect->top - (height * count) / expected;
+        draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
+        MovieDrawViewElem(G,&draw_rect,frames);
+        count++;
+      }
+      break;
+    case cExecObject:
+      if(ObjectGetSpecLevel(rec->obj,0)>=0) {
+        draw_rect.top = rect->top - (height * count) / expected;
+        draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
+        ObjectDrawViewElem(rec->obj,&draw_rect,frames);
+        count++;
+      }
+      break;
+    }
+  }
+}
 
 int ExecutiveReference(PyMOLGlobals * G, int action, char *sele, int state, int quiet)
 {
@@ -943,8 +1022,7 @@ int ExecutiveVdwFit(PyMOLGlobals * G, char *s1, int state1, char *s2, int state2
 static int get_op_cnt(PyMOLGlobals * G)
 {
   int result = 5;
-  if((SettingGetGlobal_i(G, cSetting_button_mode) == 2) &&
-     !strcmp(SettingGetGlobal_s(G, cSetting_button_mode_name), "3-Button Motions"))
+  if(!strcmp(SettingGetGlobal_s(G, cSetting_button_mode_name), "3-Button Motions"))
     result = 6;
   return result;
 }
@@ -6377,7 +6455,7 @@ int ExecutiveCombineObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int reve
       "Error: object %s not found.\n", name ENDFB(G);
     ok = false;
   } else {
-    ObjectCombineTTT(obj, ttt, reverse_order);
+    ObjectCombineTTT(obj, ttt, reverse_order, false);
     if(obj->fInvalidate)
       obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
     SceneInvalidate(G);
@@ -14998,6 +15076,8 @@ static void ExecutiveDraw(Block * block)
   float lightEdge[3] = { 0.6F, 0.6F, 0.6F };
   float darkEdge[3] = { 0.35F, 0.35F, 0.35F };
   float captionColor[3] = { 0.3F, 0.9F, 0.3F };
+  float activeColor[3] = { 0.9F, 0.9F, 1.0F };
+
 #ifndef _PYMOL_NOPY
   float toggleColor3[3] = { 0.6F, 0.6F, 0.8F };
 #endif
@@ -15158,8 +15238,28 @@ static void ExecutiveDraw(Block * block)
                 draw_button_char(G, x2, y2 + text_lift, 'C');
                 break;
               case 5:
-                draw_button(x2, y2, ExecToggleSize, (ExecLineHeight - 1),
-                            toggleLightEdge, toggleDarkEdge, toggleColor3);
+                {
+                  float *button_color = toggleColor2;
+                  int spec_level = 0;
+                  /* choose color / brightness based on specification level */
+                  
+                  if(rec->type == cExecAll) {
+                    spec_level = MovieGetSpecLevel(G,SceneGetFrame(G));
+                  } else if(rec->type == cExecObject) {
+                    spec_level = ObjectGetSpecLevel(rec->obj,SceneGetFrame(G));
+                  }
+                  switch(spec_level) {
+                    case 1:
+                      button_color = toggleColor3;
+                      break;
+                    case 2:
+                      button_color = activeColor;
+                      break;
+                  }
+                  draw_button(x2, y2, ExecToggleSize, (ExecLineHeight - 1),
+                              toggleLightEdge, toggleDarkEdge, button_color);
+                }
+
                 draw_button_char(G, x2, y2 + text_lift, 'M');
                 break;
               }

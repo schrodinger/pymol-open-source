@@ -1601,6 +1601,36 @@ class Normal(PMGSkin):
         
         self.menuBar.addcascademenu('Program', 'Static Loop', 'Static Loop',
                                     label='Static Loop')
+
+        self.menuBar.addcascademenu('Static Loop', 'Blank', 'Blank',
+                                    label='Blank')
+
+        self.menuBar.addmenuitem('Blank', 'command', '4 seconds',label='4 seconds',
+                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(4.0)"))
+
+        self.menuBar.addmenuitem('Blank', 'command', '8 seconds',label='8 seconds',
+                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(8.0)"))
+
+        self.menuBar.addmenuitem('Blank', 'command', '12 seconds',label='12 seconds',
+                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(12.0)"))
+
+        self.menuBar.addmenuitem('Blank', 'command', '18 seconds',label='18 seconds',
+                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(12.0)"))
+
+        self.menuBar.addmenuitem('Blank', 'command', '24 seconds',label='24 seconds',
+                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(24.0)"))
+
+        self.menuBar.addmenuitem('Blank', 'command', '30 seconds',label='30 seconds',
+                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(12.0)"))
+
+        self.menuBar.addmenuitem('Blank', 'command', '48 seconds',label='48 seconds',
+                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(48.0)"))
+
+        self.menuBar.addmenuitem('Blank', 'command', '60 seconds',label='60 seconds',
+                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(60.0)"))
+
+
+        self.menuBar.addmenuitem('Static Loop', 'separator', '')
                 
         self.menuBar.addcascademenu('Static Loop', 'Nutate', 'Nutate',
                                     label='Nutate')
@@ -2692,29 +2722,70 @@ class Normal(PMGSkin):
                                          s.cmd.do("_ set mouse_selection_mode,6,quiet=1"))
 
         self.menuBar.addmenuitem('Mouse', 'separator', '')
-        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Viewing Mode',
-                                         label='3 Button Viewing Mode',
+
+        self.menuBar.addcascademenu('Mouse', 'ThreeButton', '3 Button Modes',
+                                             label='3 Button Modes')
+
+        self.menuBar.addmenuitem('ThreeButton', 'command', 'Viewing',
+                                         label='Viewing',
                                          command = lambda s=self: s.cmd.mouse('three_button_viewing'))
 
-        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Editing Mode',
-                                         label='3 Button Editing Mode',
+        self.menuBar.addmenuitem('ThreeButton', 'command', 'Editing',
+                                         label='Editing',
                                          command = lambda s=self: s.cmd.mouse('three_button_editing'))
 
-        self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing Mode',
-                                         label='2 Button Viewing Mode',
+        self.menuBar.addmenuitem('ThreeButton', 'command', 'Motions',
+                                         label='Motions',
+                                         command = lambda s=self: s.cmd.mouse('three_button_motions'))
+
+        self.menuBar.addmenuitem('ThreeButton', 'separator', '')
+
+        self.menuBar.addmenuitem('ThreeButton', 'command', 'Maestro',
+                                         label='Maestro',
+                                         command = lambda s=self: s.cmd.mouse('three_button_maestro'))
+
+        self.menuBar.addcascademenu('Mouse', 'TwoButton', '2 Button Modes',
+                                             label='2 Button Modes')
+
+        self.menuBar.addmenuitem('TwoButton', 'command', 'Viewing',
+                                         label='Viewing',
                                          command = lambda s=self: s.cmd.mouse('two_button_viewing'))
 
-        self.menuBar.addmenuitem('Mouse', 'command', '2 Button Selecting Mode',
-                                         label='2 Button Selecting Mode',
+        self.menuBar.addmenuitem('TwoButton', 'command', 'Selecting',
+                                         label='Selecting',
                                          command = lambda s=self: s.cmd.mouse('two_button_selecting'))
 
-        self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing Mode',
-                                         label='2 Button Editing Mode',
+        self.menuBar.addmenuitem('TwoButton', 'command', 'Editing',
+                                         label='Editing',
                                          command = lambda s=self: s.cmd.mouse('two_button_editing'))
 
         self.menuBar.addmenuitem('Mouse', 'command', '1 Button Viewing Mode',
                                          label='1 Button Viewing Mode',
                                          command = lambda s=self: s.cmd.mouse('one_button_viewing'))
+
+        self.menuBar.addmenuitem('Mouse', 'separator', '')
+        
+        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Editing Cycle',
+                                         label='3 Button Editing Cycle',
+                                         command = lambda s=self: s.cmd.config_mouse('three_button'))
+
+        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Motions Cycle',
+                                         label='3 Button Motions Cycle',
+                                         command = lambda s=self: s.cmd.config_mouse('three_button_motions'))
+
+        self.menuBar.addmenuitem('Mouse', 'command', '3 Button All Modes Cycle',
+                                         label='3 Button All Modes Cycle',
+                                         command = lambda s=self: s.cmd.config_mouse('three_button_all_modes'))
+
+        self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing Cycle',
+                                         label='2 Button Viewing Cycle',
+                                         command = lambda s=self: s.cmd.config_mouse('two_button'))
+
+        self.menuBar.addmenuitem('Mouse', 'command', '2 Button Editing Cycle',
+                                         label='2 Button Editing Cycle',
+                                         command = lambda s=self: s.cmd.config_mouse('two_button_editing'))
+
+
 
         self.menuBar.addmenuitem('Mouse', 'separator', '')
 
@@ -2741,25 +2812,6 @@ class Normal(PMGSkin):
 #                                 label='Roving Detail',
 #                                variable = self.setting.roving_detail,
 #                                command = lambda s=self: s.setting.update('roving_detail'))
-
-        self.menuBar.addmenuitem('Mouse', 'separator', '')
-        
-
-        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Editing Cycle',
-                                         label='3 Button Editing Cycle',
-                                         command = lambda s=self: s.cmd.config_mouse('three_button'))
-
-#        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Motions Cycle',
-#                                         label='3 Button Motions Cycle',
-#                                         command = lambda s=self: s.cmd.config_mouse('three_button_motions'))
-
-        self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing Cycle',
-                                         label='2 Button Viewing Cycle',
-                                         command = lambda s=self: s.cmd.config_mouse('two_button'))
-
-        self.menuBar.addmenuitem('Mouse', 'command', 'Setup 2 Button Editing Cycle',
-                                         label='2 Button Editing Cycle',
-                                         command = lambda s=self: s.cmd.config_mouse('two_button_editing'))
 
         if sys.platform == 'darwin':
             self.menuBar.addmenuitem('Mouse', 'separator', '')

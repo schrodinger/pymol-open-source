@@ -26,6 +26,65 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"OVLexicon.h"
 
+void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames)
+{
+  if(G->HaveGUI && G->ValidContext && view_elem) {
+    int size = VLAGetSize(view_elem);
+    float width = (float) (rect->right - rect->left);
+    float start = 0.0F, stop;
+    int offset = 0;
+    int first = 0;
+    int last = size;
+    int nDrawn = frames;
+    float top = rect->top - 1;
+    float bot = rect->bottom + 1;
+    float mid_top = (3 * top + 2 * bot) / 5;
+    float mid_bot = (2 * top + 3 * bot) / 5;
+    float color[3] = { 0.3, 0.3, 0.9 };
+    int cur_level = -1, last_level = -1;
+    int cur;
+    
+    glColor3fv(color);
+    for(cur = first; cur <= last; cur++) {
+      if(cur>=size)
+        break;
+      if(cur < last) {
+        cur_level = view_elem->specification_level;
+      } else {
+        cur_level = -1;
+      }
+      if(cur_level != last_level) {
+        stop = (width * (cur - offset)) / nDrawn;
+        switch (last_level) {
+        case 0:
+          break;
+        case 1:
+          glBegin(GL_POLYGON);
+          glVertex2f(start, mid_bot);
+          glVertex2f(start, mid_top);
+          glVertex2f(stop, mid_top);
+          glVertex2f(stop, mid_bot);
+          glEnd();
+          break;
+        case 2:
+          if((stop - start) < 1.0F)
+            stop = start+1.0F;
+          glBegin(GL_POLYGON);
+          glVertex2f(start, bot);
+          glVertex2f(start, top);
+          glVertex2f(stop, top);
+          glVertex2f(stop, bot);
+          glEnd();
+          break;
+        }
+        start = (width * (cur - offset)) / nDrawn;
+      }
+      last_level = cur_level;
+      view_elem++;
+    }
+  }
+}
+
 void ViewElemCopy(PyMOLGlobals * G, CViewElem * src, CViewElem * dst)
 {
   if(dst->scene_flag && dst->scene_name) {

@@ -155,10 +155,10 @@ static int ButModeClick(Block * block, int button, int x, int y, int mod)
       }
       if(!forward) {
         PLog(G, "cmd.mouse('select_backward')", cPLog_pym);
-        OrthoCommandIn(G, "mouse select_backward");
+        OrthoCommandIn(G, "mouse select_backward,quiet=1");
       } else {
         PLog(G, "cmd.mouse('select_forward')", cPLog_pym);
-        OrthoCommandIn(G, "mouse select_forward");
+        OrthoCommandIn(G, "mouse select_forward,quiet=1");
       }
     }
   } else {
@@ -169,10 +169,10 @@ static int ButModeClick(Block * block, int button, int x, int y, int mod)
     }
     if(!forward) {
       PLog(G, "cmd.mouse('backward')", cPLog_pym);
-      OrthoCommandIn(G, "mouse backward");
+      OrthoCommandIn(G, "mouse backward,quiet=1");
     } else {
       PLog(G, "cmd.mouse('forward')", cPLog_pym);
-      OrthoCommandIn(G, "mouse forward");
+      OrthoCommandIn(G, "mouse forward,quiet=1");
     }
   }
   return (1);

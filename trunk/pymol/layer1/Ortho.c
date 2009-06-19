@@ -103,6 +103,8 @@ struct _COrtho {
   /* packing information */
   int WizardHeight;
   int TextBottom;
+
+  int IssueViewportWhenReleased;
 };
 
 void OrthoParseCurrentLine(PyMOLGlobals * G);
@@ -1104,6 +1106,14 @@ int OrthoGrabbedBy(PyMOLGlobals * G, Block * block)
   return I->GrabbedBy == block;
 }
 
+void OrthoDoViewportWhenReleased(PyMOLGlobals *G)
+{
+  register COrtho *I = G->Ortho;
+  if(!(I->GrabbedBy||I->ClickedIn))
+    OrthoCommandIn(G, "viewport");
+  else
+    I->IssueViewportWhenReleased = true;
+}
 
 /*========================================================================*/
 void OrthoUngrab(PyMOLGlobals * G)
@@ -1927,6 +1937,11 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
       }
     }
   } else if(state == P_GLUT_UP) {
+    if(I->IssueViewportWhenReleased) {
+      OrthoCommandIn(G, "viewport");
+      I->IssueViewportWhenReleased = false;
+    }
+    
     if(I->GrabbedBy) {
       block = I->GrabbedBy;
       if(block->fRelease)

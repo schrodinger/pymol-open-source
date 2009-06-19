@@ -1255,7 +1255,7 @@ static PyObject *CmdTranslateObjectTTT(PyObject * self, PyObject * args)
     {
       CObject *obj = ExecutiveFindObjectByName(G, name);
       if(obj) {
-        ObjectTranslateTTT(obj, mov);
+        ObjectTranslateTTT(obj, mov, false);
         SceneInvalidate(G);
       } else
         ok = false;
@@ -6140,9 +6140,10 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
           h += (int) (SettingGet(G, cSetting_internal_feedback) - 1) * cOrthoLineHeight +
             cOrthoBottomSceneMargin;
         }
-        {
-          h += MovieGetPanelHeight(G);
-        }
+      }
+      {
+        printf("here\n");
+        h += MovieGetPanelHeight(G);
       }
     } else {
       w = -1;

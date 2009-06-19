@@ -26,8 +26,13 @@ def all_motion(self_cmd, sele):
             [ 1, 'store'         , 'cmd.mview("store")'      ],
             [ 1, 'clear'       ,   'cmd.mview("clear")'      ],
             [ 0, ''               ,''                             ],
+            [ 1, 'smooth'       ,   'cmd.mview("smooth")'      ],
+            [ 0, ''               ,''                             ],
             [ 1, 'interpolate'   , 'cmd.mview("interpolate")'   ],
             [ 1, 'reinterpolate'   , 'cmd.mview("reinterpolate")'   ],            
+            [ 1, 'uninterpolate'   , 'cmd.mview("uninterpolate")'   ],            
+            [ 0, ''               ,''                             ],
+            [ 1, 'reset'   , 'cmd.mview("reset")'   ],            
             ]
 
 def mol_motion(self_cmd, sele):
@@ -35,8 +40,13 @@ def mol_motion(self_cmd, sele):
             [ 1, 'store'         , 'cmd.mview("store",object="'+sele+'")'      ],
             [ 1, 'clear'       ,   'cmd.mview("clear",object="'+sele+'")'    ],
             [ 0, ''               ,''                             ],
+            [ 1, 'smooth'         , 'cmd.mview("smooth",object="'+sele+'")'      ],
+            [ 0, ''               ,''                             ],
             [ 1, 'interpolate'   ,   'cmd.mview("interpolate",object="'+sele+'")'    ],
             [ 1, 'reinterpolate'   ,   'cmd.mview("reinterpolate",object="'+sele+'")'    ],
+            [ 1, 'uninterpolate'   ,   'cmd.mview("uninterpolate",object="'+sele+'")'    ],
+            [ 0, ''               ,''                             ],
+            [ 1, 'reset'       ,   'cmd.mview("reset",object="'+sele+'")'    ],
             ]
 
 def rep_action(self_cmd, sele, action) :

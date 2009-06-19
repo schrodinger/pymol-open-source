@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"MemoryDebug.h"
 #include"Movie.h"
+#include"View.h"
 
 #include"Executive.h"
 
@@ -136,6 +137,24 @@ static void TTTFromViewElem(float *TTT, CViewElem * elem)
   fp[15] = 1.0F;
 }
 
+int ObjectGetSpecLevel(CObject * I, int frame)
+{
+  if(I->ViewElem) {
+    int size = VLAGetSize(I->ViewElem);
+    if(frame<size)
+      return I->ViewElem[frame].specification_level;
+    return 0;
+  }
+  return -1;
+}
+
+void ObjectDrawViewElem(CObject *I, BlockRect *rect,int frames)
+{
+  if(I->ViewElem) {
+    ViewElemDraw(I->G,I->ViewElem,rect,frames);
+  }
+}
+
 int ObjectView(CObject * I, int action, int first,
                int last, float power, float bias,
                int simple, float linear, int wrap,
@@ -205,27 +224,43 @@ int ObjectView(CObject * I, int action, int first,
 
       if(first < 0)
         first = 0;
-      if(last < 0)
-        last = nFrame;
-      /* note that we're leaving a blank frame at the end... */
+      if(first > nFrame) {
+        first = nFrame - 1;
+      }
 
       if(last < 0) {
         last = nFrame;
-        if(last && !wrap)
-          last--;
-      }
-      if(last >= nFrame) {
-        last = nFrame;
-        if(last && !wrap)
-          last--;
+        if(last) {
+          if(!wrap)
+            last--;
+          else {
+            int frame = 0;
+            VLACheck(I->ViewElem, CViewElem, last);
+            for(frame = 0; frame < last; frame++) {
+              if(I->ViewElem[frame].specification_level > 1) {
+                last += frame;
+                break;
+              }
+            }
+          }
+        }
+      } else {
+        if(last >= nFrame) {
+          last = nFrame;
+          if(last && !wrap)
+            last--;
+        }
       }
 
       VLACheck(I->ViewElem, CViewElem, last);
 
-      if(wrap && (last == nFrame)) {    /* if we're interpolating beyond the
-                                           last frame, then wrap by copying
-                                           first to last */
-        ViewElemCopy(G, I->ViewElem, I->ViewElem + last);
+      if(wrap && (last >= nFrame)) {
+        /* if we're interpolating beyond the last frame, then wrap by
+           copying early frames to last frames */
+        int a;
+        for(a = nFrame; a <= last; a++) {
+          ViewElemCopy(G, I->ViewElem + a - nFrame, I->ViewElem + a);
+        }
         zero_flag = last;
       }
 
@@ -280,8 +315,22 @@ int ObjectView(CObject * I, int action, int first,
           }
         }
       }
-      if(zero_flag >= 0) {      /* erase temporary view */
-        UtilZeroMem((void *) (I->ViewElem + last), sizeof(CViewElem));
+
+      if(first_view) {
+        if(wrap && (last >= nFrame)) {
+          /* if we're interpolating beyond the last frame, then wrap by
+             copying the last frames back over the early frames */
+          int a;
+          for(a = nFrame; a <= last; a++) {
+            ViewElemCopy(G, I->ViewElem + a, I->ViewElem + a - nFrame);
+          }
+        }
+      }
+
+      if(last >= nFrame) {   /* now erase temporary views */
+        ViewElemArrayPurge(G, I->ViewElem + nFrame, (1 + last - nFrame));
+        UtilZeroMem((void *) (I->ViewElem + nFrame),
+                    sizeof(CViewElem) * (1 + last - nFrame));
       }
     }
     break;
@@ -310,6 +359,24 @@ int ObjectView(CObject * I, int action, int first,
       int size = VLAGetSize(I->ViewElem);
       VLAFreeP(I->ViewElem);
       I->ViewElem = VLACalloc(CViewElem, size);
+    }
+    break;
+  case 6:                      /* uninterpolate */
+    if(I->ViewElem) {
+      if(first < 0)
+        first = 0;
+      if(last < 0) {
+        last = nFrame - 1;
+      }
+      for(frame = first; frame <= last; frame++) {
+        if((frame >= 0) && (frame <= last)) {
+          VLACheck(I->ViewElem, CViewElem, frame);
+          if(I->ViewElem[frame].specification_level < 2) {
+            ViewElemArrayPurge(G, I->ViewElem + frame, 1);
+            UtilZeroMem((void *) (I->ViewElem + frame), sizeof(CViewElem));
+          }
+        }
+      }
     }
     break;
 
@@ -556,7 +623,7 @@ int ObjectCopyHeader(CObject * I, CObject * src)
 
 
 /*========================================================================*/
-void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order)
+void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order, int store)
 {
   float cpy[16];
   if(!I->TTTFlag) {
@@ -570,13 +637,23 @@ void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order)
   } else {
     combineTTT44f44f(ttt, cpy, I->TTT);
   }
+
+  if(store) {
+    if(!I->ViewElem)  
+      I->ViewElem = VLACalloc(CViewElem, 0);
+    if(I->ViewElem) { /* update motion path waypoint, if active */
+      int frame = SceneGetFrame(I->G);
+      if(frame >= 0) {
+        VLACheck(I->ViewElem, CViewElem, frame);
+        TTTToViewElem(I->TTT, I->ViewElem + frame);
+        I->ViewElem[frame].specification_level = 2;
+      }
+    }
+  }
 }
-
-
 /*========================================================================*/
-void ObjectTranslateTTT(CObject * I, float *v)
+void ObjectTranslateTTT(CObject * I, float *v, int store)
 {
-#if 1
   if(!I->TTTFlag) {
     I->TTTFlag = true;
     initializeTTT44f(I->TTT);
@@ -584,17 +661,19 @@ void ObjectTranslateTTT(CObject * I, float *v)
   I->TTT[3] += v[0];
   I->TTT[7] += v[1];
   I->TTT[11] += v[2];
-#else
-  float cpy[16];
-  if(!I->TTTFlag) {
-    I->TTTFlag = true;
-    initializeTTT44f(cpy);
-  } else {
-    UtilCopyMem(cpy, I->TTT, sizeof(float) * 16);
-  }
-  combineTTT44f44f(ttt, cpy, I->TTT);
-#endif
 
+  if(store) {
+    if(!I->ViewElem)  
+      I->ViewElem = VLACalloc(CViewElem, 0);
+    if(I->ViewElem) { /* update motion path waypoint, if active */
+      int frame = SceneGetFrame(I->G);
+      if(frame >= 0) {
+        VLACheck(I->ViewElem, CViewElem, frame);
+        TTTToViewElem(I->TTT, I->ViewElem + frame);
+        I->ViewElem[frame].specification_level = 2;
+      }
+    }
+  }
 }
 
 

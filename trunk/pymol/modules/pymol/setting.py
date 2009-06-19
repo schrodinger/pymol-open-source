@@ -655,7 +655,9 @@ if __name__=='pymol.setting':
         show_frame_rate                    = 617
         movie_panel                        = 618
         mouse_z_scale                      = 619
-        
+        movie_auto_store                   = 620
+        movie_auto_interpolate             = 621
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

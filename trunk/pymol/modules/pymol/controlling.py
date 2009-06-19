@@ -121,20 +121,30 @@ if __name__=='pymol.controlling':
         'maestro' : [   'three_button_maestro' ],
         
         'three_button' : [   'three_button_viewing',
-                             'three_button_editing' ],
+                             'three_button_editing'  ], # LEGACY
+
+        'three_button_editing' : [  'three_button_editing', 
+                                    'three_button_viewing', ],
+
         'two_button' : [ 'two_button_viewing',
-                         'two_button_selecting',
-                         ],
+                         'two_button_selecting' ],
 
         'two_button_editing' : [ 'two_button_viewing',
                                  'two_button_selecting',
                                  'two_button_editing',
                                  ],
-        'three_button_motions' : [   'three_button_viewing',
-                                     'three_button_editing',
-                                     'three_button_motions' ],
+
+        'three_button_motions' : [   'three_button_motions',
+                                     'three_button_viewing', ],
+
+        'three_button_all_modes' : [ 'three_button_editing',
+                                     'three_button_motions',
+                                     'three_button_viewing',
+                                      ],
+
         'one_button' : [   'one_button_viewing' ],
         }
+    ring_dict_sc = Shortcut(ring_dict.keys())
 
     def config_mouse(ring='three_button', quiet=1, _self=cmd):
 
@@ -163,12 +173,13 @@ SEE ALSO
     '''
         
         global mouse_ring
+        ring=ring_dict_sc.auto_err(ring,'mouse cycle')
         if ring_dict.has_key(ring):
+            _self.set("button_mode",0);
             mouse_ring = ring_dict[ring]
             if not quiet:
                 print " config_mouse: %s"%ring
             _self.mouse(quiet=1,_self=_self)
-
         else:
             print " Error: unrecognized mouse ring: '%s'"%ring
 
@@ -184,6 +195,18 @@ SEE ALSO
         'two_button_editing'   : '2-Button Editing',
         'one_button_viewing'   : '1-Button Viewing',
         }
+
+    mode_name_list = [ 
+        'three_button_viewing',
+        'three_button_editing',
+        'three_button_motions',
+        'three_button_maestro' ,        
+        'two_button_viewing' ,
+        'two_button_selecting' ,
+        'two_button_editing',
+        'one_button_viewing' , 
+        # okay to append new mode name, but don't insert: order & position matter
+        ]
 
     mode_dict = {
         'three_button_maestro' : [ ('l','none','box'),
@@ -509,17 +532,28 @@ USAGE
             
             mode_list = None
             if action==None:
-                bm = _cmd.get_setting(_self._COb,"button_mode")
-                bm = int(bm) % len(mouse_ring)
-                mode = mouse_ring[bm]
-                _self.set("button_mode_name",mode_name_dict.get(mode,mode))
-                mode_list = mode_dict[mode]
-            elif action in mode_dict.keys():
+                bm = int(_cmd.get_setting(_self._COb,"button_mode"))
+                if bm>=0:
+                    bm = bm % len(mouse_ring)
+                    mode = mouse_ring[bm]
+                    _self.set("button_mode_name",mode_name_dict.get(mode,mode))
+                    mode_list = mode_dict[mode]
+                else:
+                    bm = (-1-bm) % len(mode_name_list)
+                    mode = mode_name_list[bm]
+                    _self.set("button_mode_name",mode_name_dict.get(mode,mode))
+                    mode_list = mode_dict[mode]                    
+            elif action in mouse_ring:
                 mode = action
                 _self.set("button_mode_name",mode_name_dict.get(mode,mode))
-                if mode in mouse_ring:
-                    bm = mouse_ring.index(mode)
-                    _self.set("button_mode",bm)
+                bm = mouse_ring.index(mode)
+                _self.set("button_mode",bm)
+                mode_list = mode_dict[mode]
+            elif mode_dict.has_key(action):
+                mode = action
+                _self.set("button_mode_name",mode_name_dict.get(mode,mode))
+                bm = -1 - mode_name_list.index(action)
+                _self.set("button_mode",bm)
                 mode_list = mode_dict[mode]
             if mode_list!=None:
                 kw_dict = {'_self':_self}
