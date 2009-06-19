@@ -4328,6 +4328,21 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
             }
           }
 
+	  switch(mode) {
+	  case cButModeMovViewZ:
+	  case cButModeRotView:
+	  case cButModeMovView:
+	    {
+	      float mov[3] = {0.0,0.0,0.0};
+	      if(SettingGetGlobal_b(G,cSetting_movie_auto_store)) {
+		ObjectTranslateTTT(obj, mov,true);
+		I->ReinterpolateFlag = true;
+		I->ReinterpolateObj = obj;
+	      }
+	    }
+	    break;
+	  }
+
           if(I->LastPicked.src.bond >= cPickableAtom) {
             if(Feedback(G, FB_Scene, FB_Results)) {
               if(obj->fDescribeElement)
