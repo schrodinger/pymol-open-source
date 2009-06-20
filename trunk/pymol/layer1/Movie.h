@@ -73,7 +73,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
               int last, float power, float bias,
               int simple, float linear, int wrap,
               int hand, int window, int cycles,
-              char *scene_name, float scene_cut, int quiet);
+              char *scene_name, float scene_cut, int state, int quiet);
 void MovieFlushCommands(PyMOLGlobals * G);
 void MovieSetRealtime(PyMOLGlobals * G, int realtime);
 int MovieGetRealtime(PyMOLGlobals * G);

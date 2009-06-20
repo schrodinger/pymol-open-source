@@ -21,9 +21,18 @@ def extract(self_cmd, sele):
             [ 1, 'byres extend 1', 'cmd.create(None,"byres (('+sele+') extend 1)",extract="'+sele+'",zoom=0)' ],            
             ]
 
+def all_store_with_scene(self_cmd):
+    list = self_cmd.get_scene_list()[0:40] # keep this practical
+    result = [[ 2, 'Scene:', '']]
+    for a in list:
+        result.append([1,a,'cmd.mview("store",scene="'+a+'")'])
+    return result
+
+
 def all_motion(self_cmd, sele):
     return [[ 2, 'Camera Motions:'     , ''                       ],     
             [ 1, 'store'         , 'cmd.mview("store")'      ],
+            [ 1, 'store with scene' , all_store_with_scene(self_cmd) ],
             [ 1, 'clear'       ,   'cmd.mview("clear")'      ],
             [ 0, ''               ,''                             ],
             [ 1, 'smooth'       ,   'cmd.mview("smooth")'      ],

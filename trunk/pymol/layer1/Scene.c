@@ -3647,7 +3647,8 @@ static int SceneRelease(Block * block, int button, int x, int y, int mod, double
   if(I->ReinterpolateFlag && I->ReinterpolateObj) {
     if(ExecutiveValidateObjectPtr(G, I->ReinterpolateObj, cObjectMolecule)) {
       ObjectView(I->ReinterpolateObj, 3, -1, -1,1.4F,
-                 1.0F, 0, 0.0F, -1, 1, 5, 1, 1); 
+                 1.0F, 0, 0.0F, SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0,
+		 1, 5, 1, -1, 1); 
       /* should instread read these from per-object settings... */
     }
     I->ReinterpolateFlag = true;

@@ -171,7 +171,6 @@ SEE ALSO
 
     mouse, button
     '''
-        
         global mouse_ring
         ring=ring_dict_sc.auto_err(ring,'mouse cycle')
         if ring_dict.has_key(ring):

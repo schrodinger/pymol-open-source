@@ -1551,47 +1551,51 @@ class Normal(PMGSkin):
                                  label='Make (pk1) Neutral [Ctrl-U]',
                                  command = lambda s=self: s.cmd.do("_ alter pk1,formal_charge=-0.0"))
 
-        
         self.menuBar.addmenu('Movie', 'Movie Control',tearoff=TRUE)
         
-        self.menuBar.addcascademenu('Movie', 'Frame Rate', 'Playback Frame Rate',
-                                    label='Frame Rate')
+        self.menuBar.addmenuitem('Movie', 'checkbutton',
+                                 'Movie Panel',
+                                 label='Movie Panel',
+                                 variable = self.setting.movie_panel,
+                                 command = lambda s=self: s.setting.update('movie_panel'))
 
-        self.menuBar.addmenuitem('Frame Rate', 'command', 'Maximum',
-                                         label='Maximum',
-                                         command = lambda s=self: s.cmd.set("movie_fps","-1",log=1))
+        self.menuBar.addmenuitem('Movie', 'separator', '')
 
-        self.menuBar.addmenuitem('Frame Rate', 'command', '30 FPS',
-                                         label='30 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_fps","30",log=1))
+        self.menuBar.addcascademenu('Movie', 'Add', 'Add',
+                                    label='Add')
 
-        self.menuBar.addmenuitem('Frame Rate', 'command', '15 FPS',
-                                         label='15 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_fps","15",log=1))
+        self.menuBar.addmenuitem('Add', 'command', '1 second',label='1 second',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(1.0)"))
 
-        self.menuBar.addmenuitem('Frame Rate', 'command', '5 FPS',
-                                         label='5 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_fps","5",log=1))
+        self.menuBar.addmenuitem('Add', 'command', '2 seconds',label='2 seconds',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(2.0)"))
 
-        self.menuBar.addmenuitem('Frame Rate', 'command', '1 FPS',
-                                         label='1 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_fps","1",log=1))
+        self.menuBar.addmenuitem('Add', 'command', '3 seconds',label='3 seconds',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(3.0)"))
 
-        self.menuBar.addmenuitem('Frame Rate', 'command', '0.3 FPS',
-                                         label='0.3 FPS',
-                                         command = lambda s=self: s.cmd.set("movie_fps","0.3",log=1))
+        self.menuBar.addmenuitem('Add', 'command', '4 seconds',label='4 seconds',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(4.0)"))
 
-        self.menuBar.addmenuitem('Frame Rate', 'separator', '')
+        self.menuBar.addmenuitem('Add', 'command', '8 seconds',label='8 seconds',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(8.0)"))
 
-        self.menuBar.addmenuitem('Frame Rate', 'checkbutton',
-                                 'Show Frame Frame.',
-                                 label='Show Frame Rate',
-                                 variable = self.setting.show_frame_rate,
-                                 command = lambda s=self: s.setting.update('show_frame_rate'))
-        
-        self.menuBar.addmenuitem('Frame Rate', 'command', 'Reset Meter',
-                                         label='Reset Meter',
-                                         command = lambda s=self: s.cmd.do("_ meter_reset"))
+        self.menuBar.addmenuitem('Add', 'command', '12 seconds',label='12 seconds',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(12.0)"))
+
+        self.menuBar.addmenuitem('Add', 'command', '18 seconds',label='18 seconds',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(12.0)"))
+
+        self.menuBar.addmenuitem('Add', 'command', '24 seconds',label='24 seconds',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(24.0)"))
+
+        self.menuBar.addmenuitem('Add', 'command', '30 seconds',label='30 seconds',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(12.0)"))
+
+        self.menuBar.addmenuitem('Add', 'command', '48 seconds',label='48 seconds',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(48.0)"))
+
+        self.menuBar.addmenuitem('Add', 'command', '60 seconds',label='60 seconds',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(60.0)"))
 
         self.menuBar.addcascademenu('Movie', 'Program', 'Program',
                                     label='Program')
@@ -1599,43 +1603,17 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Movie', 'command', 'Update Program',label='Update Program',
                                  command = lambda s=self: s.mvprg())
         
-        self.menuBar.addcascademenu('Program', 'Static Loop', 'Static Loop',
-                                    label='Static Loop')
-
-        self.menuBar.addcascademenu('Static Loop', 'Blank', 'Blank',
-                                    label='Blank')
-
-        self.menuBar.addmenuitem('Blank', 'command', '4 seconds',label='4 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(4.0)"))
-
-        self.menuBar.addmenuitem('Blank', 'command', '8 seconds',label='8 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(8.0)"))
-
-        self.menuBar.addmenuitem('Blank', 'command', '12 seconds',label='12 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(12.0)"))
-
-        self.menuBar.addmenuitem('Blank', 'command', '18 seconds',label='18 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(12.0)"))
-
-        self.menuBar.addmenuitem('Blank', 'command', '24 seconds',label='24 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(24.0)"))
-
-        self.menuBar.addmenuitem('Blank', 'command', '30 seconds',label='30 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(12.0)"))
-
-        self.menuBar.addmenuitem('Blank', 'command', '48 seconds',label='48 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(48.0)"))
-
-        self.menuBar.addmenuitem('Blank', 'command', '60 seconds',label='60 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_blank(60.0)"))
+        self.menuBar.addcascademenu('Program', 'Loop', 'Loop',
+                                    label='Loop')
 
 
-        self.menuBar.addmenuitem('Static Loop', 'separator', '')
+
+        self.menuBar.addmenuitem('Loop', 'separator', '')
                 
-        self.menuBar.addcascademenu('Static Loop', 'Nutate', 'Nutate',
+        self.menuBar.addcascademenu('Loop', 'Nutate', 'Nutate',
                                     label='Nutate')
 
-        self.menuBar.addmenuitem('Static Loop', 'separator', '')
+        self.menuBar.addmenuitem('Loop', 'separator', '')
 
         self.menuBar.addmenuitem('Nutate', 'command', '15 deg. over 4 sec.',label='15 deg. over 4 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(4,15)"))
@@ -1674,7 +1652,7 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 32 sec.',label='60 deg. over 32 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(32,60)"))
 
-        self.menuBar.addcascademenu('Static Loop', 'X-Rock', 'X-Rock',
+        self.menuBar.addcascademenu('Loop', 'X-Rock', 'X-Rock',
                                     label='X-Rock')
         
         self.menuBar.addmenuitem('X-Rock', 'command', '30 deg. over 2 sec.',label='30 deg. over 2 sec.',
@@ -1730,7 +1708,7 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('X-Rock', 'command', '180 deg. over 48 sec.',label='180 deg. over 48 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_rock(48,179.99,axis='x')"))
 
-        self.menuBar.addcascademenu('Static Loop', 'X-Roll', 'X-Roll',
+        self.menuBar.addcascademenu('Loop', 'X-Roll', 'X-Roll',
                                     label='X-Roll')
 
         self.menuBar.addmenuitem('X-Roll', 'command', '4 seconds',label='4 seconds',
@@ -1745,9 +1723,9 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('X-Roll', 'command', '32 seconds',label='32 seconds',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_roll(32.0,axis='x')"))
 
-        self.menuBar.addmenuitem('Static Loop', 'separator', '')
+        self.menuBar.addmenuitem('Loop', 'separator', '')
 
-        self.menuBar.addcascademenu('Static Loop', 'Y-Rock', 'Y-Rock',
+        self.menuBar.addcascademenu('Loop', 'Y-Rock', 'Y-Rock',
                                     label='Y-Rock')
         
         self.menuBar.addmenuitem('Y-Rock', 'command', '30 deg. over 2 sec.',label='30 deg. over 2 sec.',
@@ -1803,7 +1781,7 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Y-Rock', 'command', '180 deg. over 48 sec.',label='180 deg. over 48 sec.',
                                  command = lambda s=self: s.mvprg("_ mset;movie.add_rock(48,179.99,axis='y')"))
 
-        self.menuBar.addcascademenu('Static Loop', 'Y-Roll', 'Y-Roll',
+        self.menuBar.addcascademenu('Loop', 'Y-Roll', 'Y-Roll',
                                     label='Y-Roll')
 
         self.menuBar.addmenuitem('Y-Roll', 'command', '4 seconds',label='4 seconds',
@@ -1865,8 +1843,57 @@ class Normal(PMGSkin):
         
         self.menuBar.addmenuitem('Program', 'command', 'Reset',label='Reset',
                                  command = lambda s=self: s.cmd.do("_ mset;rewind;"))
+
+        self.menuBar.addmenuitem('Movie', 'separator', '')
+
+        self.menuBar.addcascademenu('Movie', 'Frame Rate', 'Playback Frame Rate',
+                                    label='Frame Rate')
+
+        self.menuBar.addmenuitem('Frame Rate', 'command', 'Maximum',
+                                         label='Maximum',
+                                         command = lambda s=self: s.cmd.set("movie_fps","-1",log=1))
+
+        self.menuBar.addmenuitem('Frame Rate', 'command', '30 FPS',
+                                         label='30 FPS',
+                                         command = lambda s=self: s.cmd.set("movie_fps","30",log=1))
+
+        self.menuBar.addmenuitem('Frame Rate', 'command', '15 FPS',
+                                         label='15 FPS',
+                                         command = lambda s=self: s.cmd.set("movie_fps","15",log=1))
+
+        self.menuBar.addmenuitem('Frame Rate', 'command', '5 FPS',
+                                         label='5 FPS',
+                                         command = lambda s=self: s.cmd.set("movie_fps","5",log=1))
+
+        self.menuBar.addmenuitem('Frame Rate', 'command', '1 FPS',
+                                         label='1 FPS',
+                                         command = lambda s=self: s.cmd.set("movie_fps","1",log=1))
+
+        self.menuBar.addmenuitem('Frame Rate', 'command', '0.3 FPS',
+                                         label='0.3 FPS',
+                                         command = lambda s=self: s.cmd.set("movie_fps","0.3",log=1))
+
+        self.menuBar.addmenuitem('Frame Rate', 'separator', '')
+
+        self.menuBar.addmenuitem('Frame Rate', 'checkbutton',
+                                 'Show Frame Frame.',
+                                 label='Show Frame Rate',
+                                 variable = self.setting.show_frame_rate,
+                                 command = lambda s=self: s.setting.update('show_frame_rate'))
+        
+        self.menuBar.addmenuitem('Frame Rate', 'command', 'Reset Meter',
+                                         label='Reset Meter',
+                                         command = lambda s=self: s.cmd.do("_ meter_reset"))
+
+
         
         self.menuBar.addmenuitem('Movie', 'separator', '')
+
+        self.menuBar.addmenuitem('Movie', 'checkbutton',
+                                 'Loop Frames',
+                                 label='Loop Frames',
+                                 variable = self.setting.movie_loop,
+                                 command = lambda s=self: s.setting.update('movie_loop'))
 
         self.menuBar.addmenuitem('Movie', 'checkbutton',
                                  'Photorealistic images.',

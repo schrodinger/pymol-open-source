@@ -114,7 +114,7 @@ void ObjectAdjustStateRebuildRange(CObject * I, int *start, int *stop);
 int ObjectView(CObject * I, int action, int first,
                int last, float power, float bias,
                int simple, float linear, int wrap,
-               int hand, int window, int cycles, int quiet);
+               int hand, int window, int cycles, int state, int quiet);
 int ObjectGetSpecLevel(CObject * I, int frame);
 void ObjectDrawViewElem(CObject *I, BlockRect *rect, int frames);
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I);

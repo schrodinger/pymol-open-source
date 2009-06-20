@@ -36,8 +36,8 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
     int first = 0;
     int last = size;
     int nDrawn = frames;
-    float top = rect->top - 1;
-    float bot = rect->bottom + 1;
+    float top = rect->top - 2;
+    float bot = rect->bottom + 2;
     float mid_top = (3 * top + 2 * bot) / 5;
     float mid_bot = (2 * top + 3 * bot) / 5;
     float color[3] = { 0.3, 0.3, 0.9 };
@@ -54,7 +54,7 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
         cur_level = -1;
       }
       if(cur_level != last_level) {
-        stop = (width * (cur - offset)) / nDrawn;
+        stop = (int)(rect->left + (width * (cur - offset)) / nDrawn);
         switch (last_level) {
         case 0:
           break;
@@ -77,7 +77,7 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
           glEnd();
           break;
         }
-        start = (width * (cur - offset)) / nDrawn;
+        start = (int)(rect->left + (width * (cur - offset)) / nDrawn);
       }
       last_level = cur_level;
       view_elem++;
@@ -573,6 +573,8 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
   int parabolic = true;
   int timing_flag;
   double timing = 0.0F;
+  int state_flag;
+  int state;
   float pre[3];
   float firstC44f[16], firstRTTT[16], firstR44f[16];
   float lastC44f[16], lastRTTT[16], lastR44f[16];
@@ -797,6 +799,8 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
 
   /* now interpolate */
 
+  state_flag = first->state_flag && last->state_flag;
+
   timing_flag = first->timing_flag && last->timing_flag;
 
   current = first + 1;
@@ -810,6 +814,10 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
 
     if(timing_flag) {
       timing = (first->timing * (1.0F - fxn) + (last->timing * fxn));
+    }
+
+    if(state_flag) { /* states are interpolated linearly by default */
+      state = (int)(first->state * (1.0F - fxn) + (last->state * fxn) + 0.499F);
     }
 
     if(bias != 1.0F) {
@@ -962,10 +970,16 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
     }
     current->specification_level = 1;
 
+    if(state_flag) {
+      current->state_flag = true;
+      current->state = state;
+    }
+
     if(timing_flag) {
       current->timing_flag = true;
       current->timing = timing;
     }
+
 
     if(first->scene_flag && last->scene_flag) {
       if(current->scene_name) {

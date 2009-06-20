@@ -1509,24 +1509,27 @@ int SettingSet_b(CSetting * I, int index, int value)
 {
   int ok = true;
   if(I) {
-    int setting_type = I->info[index].type;
-    PyMOLGlobals *G = I->G;
-    switch (setting_type) {
-    case cSetting_blank:
-    case cSetting_boolean:
-    case cSetting_int:
-    case cSetting_color:
-      *((int *) SettingPtr(I, index, sizeof(int))) = value;
-      if(setting_type == cSetting_blank)
-        I->info[index].type = cSetting_boolean;
-      break;
-    case cSetting_float:
-      *((float *) SettingPtr(I, index, sizeof(float))) = (float) value;
-      break;
-    default:
-      PRINTFB(G, FB_Setting, FB_Errors)
-        "Setting-Error: type set mismatch (boolean) %d\n", index ENDFB(G);
-      ok = false;
+    VLACheck(I->info, SettingRec, index);
+    {
+      int setting_type = I->info[index].type;
+      PyMOLGlobals *G = I->G;
+      switch (setting_type) {
+      case cSetting_blank:
+      case cSetting_boolean:
+      case cSetting_int:
+      case cSetting_color:
+	*((int *) SettingPtr(I, index, sizeof(int))) = value;
+	if(setting_type == cSetting_blank)
+	  I->info[index].type = cSetting_boolean;
+	break;
+      case cSetting_float:
+	*((float *) SettingPtr(I, index, sizeof(float))) = (float) value;
+	break;
+      default:
+	PRINTFB(G, FB_Setting, FB_Errors)
+	  "Setting-Error: type set mismatch (boolean) %d\n", index ENDFB(G);
+	ok = false;
+      }
     }
   } else {
     ok = false;
@@ -1541,23 +1544,26 @@ int SettingSet_i(CSetting * I, int index, int value)
   int ok = true;
   if(I) {
     PyMOLGlobals *G = I->G;
-    int setting_type = I->info[index].type;
-    switch (setting_type) {
-    case cSetting_blank:
-    case cSetting_boolean:
-    case cSetting_int:
-    case cSetting_color:
-      *((int *) SettingPtr(I, index, sizeof(int))) = value;
-      if(setting_type == cSetting_blank)
-        I->info[index].type = cSetting_int;
-      break;
-    case cSetting_float:
-      *((float *) SettingPtr(I, index, sizeof(float))) = (float) value;
-      break;
-    default:
-      PRINTFB(G, FB_Setting, FB_Errors)
-        "Setting-Error: type set mismatch (integer)\n" ENDFB(G);
-      ok = false;
+    VLACheck(I->info, SettingRec, index);
+    {
+      int setting_type = I->info[index].type;
+      switch (setting_type) {
+      case cSetting_blank:
+      case cSetting_boolean:
+      case cSetting_int:
+      case cSetting_color:
+	*((int *) SettingPtr(I, index, sizeof(int))) = value;
+	if(setting_type == cSetting_blank)
+	  I->info[index].type = cSetting_int;
+	break;
+      case cSetting_float:
+	*((float *) SettingPtr(I, index, sizeof(float))) = (float) value;
+	break;
+      default:
+	PRINTFB(G, FB_Setting, FB_Errors)
+	  "Setting-Error: type set mismatch (integer)\n" ENDFB(G);
+	ok = false;
+      }
     }
   } else {
     ok = false;
@@ -1584,24 +1590,26 @@ int SettingSet_color(CSetting * I, int index, char *value)
       ok = false;
 
     } else {
-
-      int setting_type = I->info[index].type;
-      switch (setting_type) {
-      case cSetting_blank:
-      case cSetting_boolean:
-      case cSetting_int:
-      case cSetting_color:
-        *((int *) SettingPtr(I, index, sizeof(int))) = color_index;
-        if(setting_type == cSetting_blank)
-          I->info[index].type = cSetting_color;
-        break;
-      case cSetting_float:
-        *((float *) SettingPtr(I, index, sizeof(float))) = (float) color_index;
-        break;
-      default:
-        PRINTFB(G, FB_Setting, FB_Errors)
-          "Setting-Error: type set mismatch (color)\n" ENDFB(G);
-        ok = false;
+      VLACheck(I->info, SettingRec, index);
+      {
+	int setting_type = I->info[index].type;
+	switch (setting_type) {
+	case cSetting_blank:
+	case cSetting_boolean:
+	case cSetting_int:
+	case cSetting_color:
+	  *((int *) SettingPtr(I, index, sizeof(int))) = color_index;
+	  if(setting_type == cSetting_blank)
+	    I->info[index].type = cSetting_color;
+	  break;
+	case cSetting_float:
+	  *((float *) SettingPtr(I, index, sizeof(float))) = (float) color_index;
+	  break;
+	default:
+	  PRINTFB(G, FB_Setting, FB_Errors)
+	    "Setting-Error: type set mismatch (color)\n" ENDFB(G);
+	  ok = false;
+	}
       }
     }
   }
@@ -1615,23 +1623,26 @@ int SettingSet_f(CSetting * I, int index, float value)
   int ok = true;
   if(I) {
     PyMOLGlobals *G = I->G;
-    int setting_type = I->info[index].type;
-    switch (setting_type) {
-    case cSetting_boolean:
-    case cSetting_int:
-    case cSetting_color:
-      *((int *) SettingPtr(I, index, sizeof(int))) = (int) value;
-      break;
-    case cSetting_blank:
-    case cSetting_float:
-      *((float *) SettingPtr(I, index, sizeof(float))) = value;
-      if(setting_type == cSetting_blank)
-        I->info[index].type = cSetting_float;
-      break;
-    default:
-      PRINTFB(G, FB_Setting, FB_Errors)
-        "Setting-Error: type set mismatch (float)\n" ENDFB(G);
-      ok = false;
+    VLACheck(I->info, SettingRec, index);
+    {
+      int setting_type = I->info[index].type;
+      switch (setting_type) {
+      case cSetting_boolean:
+      case cSetting_int:
+      case cSetting_color:
+	*((int *) SettingPtr(I, index, sizeof(int))) = (int) value;
+	break;
+      case cSetting_blank:
+      case cSetting_float:
+	*((float *) SettingPtr(I, index, sizeof(float))) = value;
+	if(setting_type == cSetting_blank)
+	  I->info[index].type = cSetting_float;
+	break;
+      default:
+	PRINTFB(G, FB_Setting, FB_Errors)
+	  "Setting-Error: type set mismatch (float)\n" ENDFB(G);
+	ok = false;
+      }
     }
   } else {
     ok = false;
@@ -1646,21 +1657,24 @@ int SettingSet_s(CSetting * I, int index, char *value)
   int ok = true;
   if(I) {
     PyMOLGlobals *G = I->G;
-    int setting_type = I->info[index].type;
-    switch (setting_type) {
-    case cSetting_blank:
-    case cSetting_string:
-      strcpy(((char *) SettingPtr(I, index, strlen(value) + 1)), value);
+    VLACheck(I->info, SettingRec, index);
+    {
+      int setting_type = I->info[index].type;
+      switch (setting_type) {
+      case cSetting_blank:
+      case cSetting_string:
+	strcpy(((char *) SettingPtr(I, index, strlen(value) + 1)), value);
+	if(setting_type == cSetting_blank)
+	  I->info[index].type = cSetting_string;
+	break;
+      default:
+	PRINTFB(G, FB_Setting, FB_Errors)
+	  "Setting-Error: type set mismatch (string)\n" ENDFB(G);
+	ok = false;
+      }
       if(setting_type == cSetting_blank)
-        I->info[index].type = cSetting_string;
-      break;
-    default:
-      PRINTFB(G, FB_Setting, FB_Errors)
-        "Setting-Error: type set mismatch (string)\n" ENDFB(G);
-      ok = false;
+	I->info[index].type = cSetting_string;
     }
-    if(setting_type == cSetting_blank)
-      I->info[index].type = cSetting_string;
   } else {
     ok = false;
   }
@@ -1675,21 +1689,24 @@ int SettingSet_3f(CSetting * I, int index, float value1, float value2, float val
   float *ptr;
   if(I) {
     PyMOLGlobals *G = I->G;
-    int setting_type = I->info[index].type;
-    switch (setting_type) {
-    case cSetting_blank:
-    case cSetting_float3:
-      ptr = (float *) SettingPtr(I, index, sizeof(float) * 3);
-      ptr[0] = value1;
-      ptr[1] = value2;
-      ptr[2] = value3;
-      if(setting_type == cSetting_blank)
-        I->info[index].type = cSetting_float3;
-      break;
-    default:
-      PRINTFB(G, FB_Setting, FB_Errors)
-        "Setting-Error: type set mismatch (float3)\n" ENDFB(G);
-      ok = false;
+    VLACheck(I->info, SettingRec, index);
+    {
+      int setting_type = I->info[index].type;
+      switch (setting_type) {
+      case cSetting_blank:
+      case cSetting_float3:
+	ptr = (float *) SettingPtr(I, index, sizeof(float) * 3);
+	ptr[0] = value1;
+	ptr[1] = value2;
+	ptr[2] = value3;
+	if(setting_type == cSetting_blank)
+	  I->info[index].type = cSetting_float3;
+	break;
+      default:
+	PRINTFB(G, FB_Setting, FB_Errors)
+	  "Setting-Error: type set mismatch (float3)\n" ENDFB(G);
+	ok = false;
+      }
     }
   } else {
     ok = false;
@@ -3840,7 +3857,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_i(I, cSetting_clean_electro_mode, 1);
     set_i(I, cSetting_valence_mode, 1);
     set_b(I, cSetting_show_frame_rate, 0);
-    set_i(I, cSetting_movie_panel, 0);
+    set_i(I, cSetting_movie_panel, 1);
     set_f(I, cSetting_mouse_z_scale,1.0);
     set_b(I, cSetting_movie_auto_store, 1);
     set_b(I, cSetting_movie_auto_interpolate, 1);
