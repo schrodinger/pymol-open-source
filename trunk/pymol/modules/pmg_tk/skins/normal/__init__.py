@@ -1553,14 +1553,6 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenu('Movie', 'Movie Control',tearoff=TRUE)
         
-        self.menuBar.addmenuitem('Movie', 'checkbutton',
-                                 'Movie Panel',
-                                 label='Movie Panel',
-                                 variable = self.setting.movie_panel,
-                                 command = lambda s=self: s.setting.update('movie_panel'))
-
-        self.menuBar.addmenuitem('Movie', 'separator', '')
-
         self.menuBar.addcascademenu('Movie', 'Add', 'Add',
                                     label='Add')
 
@@ -1881,9 +1873,13 @@ class Normal(PMGSkin):
                                          label='Reset Meter',
                                          command = lambda s=self: s.cmd.do("_ meter_reset"))
 
-
-        
         self.menuBar.addmenuitem('Movie', 'separator', '')
+
+        self.menuBar.addmenuitem('Movie', 'checkbutton',
+                                 'Show Panel',
+                                 label='Show Panel',
+                                 variable = self.setting.movie_panel,
+                                 command = lambda s=self: s.setting.update('movie_panel'))
 
         self.menuBar.addmenuitem('Movie', 'checkbutton',
                                  'Loop Frames',

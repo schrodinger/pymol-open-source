@@ -574,7 +574,7 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
   int timing_flag;
   double timing = 0.0F;
   int state_flag;
-  int state;
+  int state = 0;
   float pre[3];
   float firstC44f[16], firstRTTT[16], firstR44f[16];
   float lastC44f[16], lastRTTT[16], lastR44f[16];
