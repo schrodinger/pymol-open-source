@@ -172,7 +172,7 @@ int ObjectView(CObject * I, int action, int first,
   }
 
   switch (action) {
-  case 0:                      /* set */
+  case 0:                      /* store */
     if(!I->TTTFlag) {
       float mn[3], mx[3], orig[3];
       if(ExecutiveGetExtent(G, I->Name, mn, mx, true, -1, true)) {
@@ -189,29 +189,36 @@ int ObjectView(CObject * I, int action, int first,
       if(last < 0)
         last = first;
       {
-	int state_tmp=0, state_flag = false;
-	if(state>=0) {
-	  state_tmp = state;
-	  state_flag = true;
-	} else if(SettingGetIfDefined_i(G, I->Setting, cSetting_state, &state_tmp)) {
-	  state_flag = true;
-	}
-      
-	for(frame = first; frame <= last; frame++) {
-	  if((frame >= 0) && (frame < nFrame)) {
-	    VLACheck(I->ViewElem, CViewElem, frame);
-	    if(!quiet) {
-	      PRINTFB(G, FB_Object, FB_Details)
-		" ObjectView: Setting frame %d.\n", frame + 1 ENDFB(G);
-	    }
-	    TTTToViewElem(I->TTT, I->ViewElem + frame);
-	    I->ViewElem[frame].specification_level = 2;
-	    if(state_flag) {
-	      I->ViewElem[frame].state_flag = state_flag;
-	      I->ViewElem[frame].state = state_tmp - 1;
-	    }
-	  }
-	}
+        int state_tmp=0, state_flag = false;
+        if(state>=0) {
+          state_tmp = state;
+          state_flag = true;
+        } else if(SettingGetIfDefined_i(G, I->Setting, cSetting_state, &state_tmp)) {
+          state_flag = true;
+        }
+        
+        for(frame = first; frame <= last; frame++) {
+          if((frame >= 0) && (frame < nFrame)) {
+            VLACheck(I->ViewElem, CViewElem, frame);
+            if(!quiet) {
+              PRINTFB(G, FB_Object, FB_Details)
+                " ObjectView: Setting frame %d.\n", frame + 1 ENDFB(G);
+            }
+            TTTToViewElem(I->TTT, I->ViewElem + frame);
+
+            if(state_flag) {
+              I->ViewElem[frame].state_flag = state_flag;
+              I->ViewElem[frame].state = state_tmp - 1;
+            }
+
+            if(power!=0.0F) {
+              I->ViewElem[frame].power_flag = true;
+              I->ViewElem[frame].power = power;
+            }
+            I->ViewElem[frame].specification_level = 2;
+          }
+
+        }
       }
     }
     break;
@@ -370,9 +377,9 @@ int ObjectView(CObject * I, int action, int first,
     }
   case 5:                      /* reset */
     if(I->ViewElem) {
-      int size = VLAGetSize(I->ViewElem);
       VLAFreeP(I->ViewElem);
     }
+    I->ViewElem = VLACalloc(CViewElem, 0);
     break;
   case 6:                      /* uninterpolate */
     if(I->ViewElem) {
@@ -392,7 +399,11 @@ int ObjectView(CObject * I, int action, int first,
       }
     }
     break;
-
+  case 9:
+    if(I->ViewElem) {
+      VLAFreeP(I->ViewElem);
+    }
+    break;
   }
   return 1;
 }

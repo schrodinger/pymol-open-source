@@ -6047,8 +6047,8 @@ static PyObject *CmdMSet(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *str1;
   int ok = false;
-  int start_from;
-  ok = PyArg_ParseTuple(args, "Osi", &self, &str1, &start_from);
+  int start_from,freeze;
+  ok = PyArg_ParseTuple(args, "Osii", &self, &str1, &start_from,&freeze);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -6056,7 +6056,7 @@ static PyObject *CmdMSet(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    MovieAppendSequence(G, str1, start_from);
+    MovieAppendSequence(G, str1, start_from,freeze);
     SceneCountFrames(G);
     APIExit(G);
   }

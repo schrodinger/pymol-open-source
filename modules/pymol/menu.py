@@ -35,7 +35,7 @@ def all_store_with_state(self_cmd):
               [ 1, 'current','cmd.mview("store",state=-1)'],
               [ 0, ''               ,''                   ],
               [ 1, '1', 'cmd.mview("store",state=1)'         ],
-]
+              ]
     if (n_state>1):
         result.extend([
               [ 1, str(n_state),'cmd.mview("store",state=%d)'%n_state],
@@ -59,6 +59,7 @@ def all_motion(self_cmd, sele):
             [ 1, 'clear'       ,   'cmd.mview("clear")'      ],
             [ 0, ''               ,''                             ],
             [ 1, 'smooth'       ,   'cmd.mview("smooth")'      ],
+            [ 1, 'smooth more'   ,   'cmd.mview("smooth",window=30)'      ],
             [ 0, ''               ,''                             ],
             [ 1, 'interpolate'   , 'cmd.mview("interpolate")'   ],
             [ 1, 'reinterpolate'   , 'cmd.mview("reinterpolate")'   ],            
@@ -73,12 +74,14 @@ def mol_motion(self_cmd, sele):
             [ 1, 'clear'       ,   'cmd.mview("clear",object="'+sele+'")'    ],
             [ 0, ''               ,''                             ],
             [ 1, 'smooth'         , 'cmd.mview("smooth",object="'+sele+'")'      ],
+            [ 1, 'smooth more'         , 'cmd.mview("smooth",window=30,object="'+sele+'")'      ],
             [ 0, ''               ,''                             ],
             [ 1, 'interpolate'   ,   'cmd.mview("interpolate",object="'+sele+'")'    ],
             [ 1, 'reinterpolate'   ,   'cmd.mview("reinterpolate",object="'+sele+'")'    ],
             [ 1, 'uninterpolate'   ,   'cmd.mview("uninterpolate",object="'+sele+'")'    ],
             [ 0, ''               ,''                             ],
             [ 1, 'reset'       ,   'cmd.mview("reset",object="'+sele+'")'    ],
+            [ 1, 'purge'       ,   'cmd.mview("purge",object="'+sele+'")'    ],
             ]
 
 def rep_action(self_cmd, sele, action) :

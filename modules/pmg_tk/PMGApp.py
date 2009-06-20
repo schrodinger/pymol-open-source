@@ -131,7 +131,7 @@ class PMGApp(Pmw.MegaWidget):
                 ("SDF File","*.sdf"),
                 ("ChemDraw3D File","*.cc1"),
                 ("ChemDraw3D File","*.cc2"),
-                ("Tinker XYZ File","*.xyz"),
+                ("XYZ File","*.xyz"),
                 ("Fasta File","*.fasta"),
                 ("CLUSTAL file","*.aln"),
                 ("ACNT Map","*.acnt"),                 
@@ -192,7 +192,8 @@ class PMGApp(Pmw.MegaWidget):
             os.unlink(path)
         except:
             ok = 0
-            tkMessageBox.showinfo("Error", "Unable to write to the plugin directory.\nPerhaps you have insufficient privileges?")
+            tkMessageBox.showinfo("Error",
+ "Unable to write to the plugin directory.\nPerhaps you have insufficient privileges?")
         if ok:
             ofile = askopenfilename(title="Install Plugin",
                 initialdir = os.getcwd(),

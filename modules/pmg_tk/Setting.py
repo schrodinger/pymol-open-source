@@ -154,6 +154,9 @@ class Setting:
         self.movie_loop = IntVar()
         self.movie_loop.set(int(self.cmd.get_setting_legacy('movie_loop')))
 
+        self.movie_auto_interpolate = IntVar()
+        self.movie_auto_interpolate.set(int(self.cmd.get_setting_legacy('movie_auto_interpolate')))
+
         self.stereo = IntVar()
 
         self.seq_view = IntVar()
@@ -308,6 +311,9 @@ class Setting:
             'movie_loop'         :
             (lambda s,a: (self.cmd.set(a,("%d" % s.movie_loop.get()),log=1))),
 
+            'movie_auto_interpolate'         :
+            (lambda s,a: (self.cmd.set(a,("%d" % s.movie_auto_interpolate.get()),log=1))),
+
             'seq_view'         :
             (lambda s,a: (self.cmd.set(a,("%d" % s.seq_view.get()),log=1))),
             'texture_fonts'         :
@@ -418,6 +424,9 @@ class Setting:
             (lambda s,t: (s.movie_panel.set(t[1][0]!=0))),
             'movie_loop':
             (lambda s,t: (s.movie_loop.set(t[1][0]!=0))),
+            'movie_auto_interpolate':
+            (lambda s,t: (s.movie_auto_interpolate.set(t[1][0]!=0))),
+
             'seq_view':
             (lambda s,t: (s.seq_view.set(t[1][0]!=0))),
             'texture_fonts':
@@ -482,6 +491,7 @@ class Setting:
             self.pymol.setting._get_index("virtual_trackball"),
             self.pymol.setting._get_index("movie_panel"),
             self.pymol.setting._get_index("movie_loop"),
+            self.pymol.setting._get_index("movie_auto_interpolate"),
             self.pymol.setting._get_index("seq_view"),
             self.pymol.setting._get_index("texture_fonts"),
             self.pymol.setting._get_index("stereo"),
