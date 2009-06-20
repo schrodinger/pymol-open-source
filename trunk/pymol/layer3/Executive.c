@@ -177,14 +177,14 @@ void ExecutiveReinterpolateMotions(PyMOLGlobals * G)
     switch(rec->type) {
     case cExecAll:
       if(MovieGetSpecLevel(G,0)>=0) {
-        MovieView(G, 3, -1, -1, 1.4F, 1.0F, 0, 0.0F, 
+        MovieView(G, 3, -1, -1, 0.0F, 1.0F, 0, 0.0F, 
 		  SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0 ,
 		  1, 5, 1, NULL, 0.5, -1, 1); 
       }
       break;
     case cExecObject:
       if(ObjectGetSpecLevel(rec->obj,0)>=0)
-        ObjectView(rec->obj, 3, -1, -1,1.4F,1.0F, 0, 0.0F,  
+        ObjectView(rec->obj, 3, -1, -1,0.0F,1.0F, 0, 0.0F,  
 		   SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0,
 		   1, 5, 1, -1, 1); 
       break;

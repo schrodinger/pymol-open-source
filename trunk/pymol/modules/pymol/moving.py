@@ -149,15 +149,17 @@ SEE ALSO
         'reset'    : 5,
         'uninterpolate' : 6,
         'toggle'    : 7,
-        'toggle_interp' : 8
+        'toggle_interp' : 8, 
+        'purge'      : 9
         }
 
     mview_action_sc = Shortcut(mview_action_dict.keys())
 
-    def mview(action='store', first=0, last=0, power=1.4,
+    def mview(action='store', first=0, last=0, power=0.0,
               bias=1.0, simple=0, linear=0.0, object='',
               wrap=-1, hand=1, window=5, cycles=1, scene='',
-              cut=0.5, quiet=1, auto=-1, state=0, _self=cmd):
+              cut=0.5, quiet=1, auto=-1, state=0, freeze=0,
+              _self=cmd):
 
         '''
 DESCRIPTION
@@ -184,6 +186,7 @@ SEE ALSO
         first = int(first)
         last = int(last)
         auto = int(auto)
+        freeze = int(freeze)
         if first<0:
             first = _self.count_frames() + first + 1
             if last == 0:
@@ -203,7 +206,9 @@ SEE ALSO
                            int(simple), float(linear),str(object),
                            int(wrap),int(hand),int(window),int(cycles),
                            str(scene),float(cut),int(quiet),int(state)-1)
-            if (auto>0) or ((auto<0) and (_self.get_setting_int("movie_auto_interpolate")>0)):
+            if (not freeze and 
+                ((auto>0) or ((auto<0) and 
+                              (_self.get_setting_int("movie_auto_interpolate")>0)))):
                 if action in [0,1,7]:
                     _cmd.mview(_self._COb,3,-1,-1,
                                float(power),float(bias),
@@ -475,7 +480,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def madd(specification="",_self=cmd):
+    def madd(specification="",frame=0,freeze=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -487,9 +492,9 @@ SEE ALSO
     mset, mdo, mplay, mclear
 
     '''
-        mset(specification,0,_self=_self)
+        mset(specification,frame,freeze,_self=_self)
         
-    def mset(specification="",frame=1,_self=cmd):
+    def mset(specification="",frame=1,freeze=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -560,7 +565,7 @@ SEE ALSO
                     val = int(x) - 1
                     output.append(str(val))
                     last=val
-            r = _cmd.mset(_self._COb,string.join(output," "),int(frame)-1)
+            r = _cmd.mset(_self._COb,string.join(output," "),int(frame)-1,int(freeze))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException

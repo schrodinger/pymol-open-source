@@ -1556,6 +1556,12 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Movie', 'Add', 'Add',
                                     label='Add')
 
+        self.menuBar.addmenuitem('Add', 'command', '0.25 second',label='0.25 second',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(0.25)"))
+
+        self.menuBar.addmenuitem('Add', 'command', '0.5 second',label='0.5 second',
+                                 command = lambda s=self: s.mvprg("_ movie.add_blank(0.5)"))
+
         self.menuBar.addmenuitem('Add', 'command', '1 second',label='1 second',
                                  command = lambda s=self: s.mvprg("_ movie.add_blank(1.0)"))
 
@@ -1595,194 +1601,194 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Movie', 'command', 'Update Program',label='Update Program',
                                  command = lambda s=self: s.mvprg())
         
-        self.menuBar.addcascademenu('Program', 'Loop', 'Loop',
-                                    label='Loop')
+        self.menuBar.addcascademenu('Program', 'Camera', 'Camera',
+                                    label='Camera')
 
-        self.menuBar.addcascademenu('Loop', 'Nutate', 'Nutate',
+        self.menuBar.addcascademenu('Camera', 'Nutate', 'Nutate',
                                     label='Nutate')
 
-        self.menuBar.addmenuitem('Loop', 'separator', '')
+        self.menuBar.addmenuitem('Camera', 'separator', '')
 
         self.menuBar.addmenuitem('Nutate', 'command', '15 deg. over 4 sec.',label='15 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(4,15)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(4,15)"))
 
         self.menuBar.addmenuitem('Nutate', 'command', '15 deg. over 8 sec.',label='15 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(8,15)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(8,15)"))
 
         self.menuBar.addmenuitem('Nutate', 'command', '15 deg. over 12 sec.',label='15 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(12,15)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(12,15)"))
 
         self.menuBar.addmenuitem('Nutate', 'separator', '')
 
         self.menuBar.addmenuitem('Nutate', 'command', '30 deg. over 4 sec.',label='30 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(4,30)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(4,30)"))
 
         self.menuBar.addmenuitem('Nutate', 'command', '30 deg. over 8 sec.',label='30 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(8,30)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(8,30)"))
 
         self.menuBar.addmenuitem('Nutate', 'command', '30 deg. over 12 sec.',label='30 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(12,30)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(12,30)"))
 
         self.menuBar.addmenuitem('Nutate', 'command', '30 deg. over 16 sec.',label='30 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(16,30)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(16,30)"))
 
         self.menuBar.addmenuitem('Nutate', 'separator', '')
 
         self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 8 sec.',label='60 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(8,60)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(8,60)"))
 
         self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 16 sec.',label='60 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(16,60)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(16,60)"))
 
         self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 24 sec.',label='60 deg. over 24 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(24,60)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(24,60)"))
 
         self.menuBar.addmenuitem('Nutate', 'command', '60 deg. over 32 sec.',label='60 deg. over 32 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_nutate(32,60)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_nutate(32,60)"))
 
-        self.menuBar.addcascademenu('Loop', 'X-Rock', 'X-Rock',
+        self.menuBar.addcascademenu('Camera', 'X-Rock', 'X-Rock',
                                     label='X-Rock')
         
         self.menuBar.addmenuitem('X-Rock', 'command', '30 deg. over 2 sec.',label='30 deg. over 2 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(2,30,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(2,30,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'command', '30 deg. over 4 sec.',label='30 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(4,30,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(4,30,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'command', '30 deg. over 8 sec.',label='30 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(8,30,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,30,axis='x')"))
         
         self.menuBar.addmenuitem('X-Rock', 'separator', '')
         
         self.menuBar.addmenuitem('X-Rock', 'command', '60 deg. over 4 sec.',label='60 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(4,60,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(4,60,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'command', '60 deg. over 8 sec.',label='60 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(8,60,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,60,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'command', '60 deg. over 16 sec.',label='60 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(16,60,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(16,60,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'separator', '')
         
         self.menuBar.addmenuitem('X-Rock', 'command', '90 deg. over 6 sec.',label='90 deg. over 6 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(6,90,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(6,90,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'command', '90 deg. over 12 sec.',label='90 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(12,90,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(12,90,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'command', '90 deg. over 24 sec.',label='90 deg. over 24 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(24,90,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(24,90,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'separator', '')
         
         self.menuBar.addmenuitem('X-Rock', 'command', '120 deg. over 8 sec.',label='120 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(8,120,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,120,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'command', '120 deg. over 16 sec.',label='120 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(16,120,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(16,120,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'command', '120 deg. over 32 sec.',label='120 deg. over 32 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(32,120,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(32,120,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'separator', '')
         
         self.menuBar.addmenuitem('X-Rock', 'command', '180 deg. over 12 sec.',label='180 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(12,179.99,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(12,179.99,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'command', '180 deg. over 24 sec.',label='180 deg. over 24 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(24,179.99,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(24,179.99,axis='x')"))
 
         self.menuBar.addmenuitem('X-Rock', 'command', '180 deg. over 48 sec.',label='180 deg. over 48 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(48,179.99,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(48,179.99,axis='x')"))
 
-        self.menuBar.addcascademenu('Loop', 'X-Roll', 'X-Roll',
+        self.menuBar.addcascademenu('Camera', 'X-Roll', 'X-Roll',
                                     label='X-Roll')
 
         self.menuBar.addmenuitem('X-Roll', 'command', '4 seconds',label='4 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_roll(4.0,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_roll(4.0,axis='x')"))
 
         self.menuBar.addmenuitem('X-Roll', 'command', '8 seconds',label='8 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_roll(8.0,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_roll(8.0,axis='x')"))
         
         self.menuBar.addmenuitem('X-Roll', 'command', '16 seconds',label='16 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_roll(16.0,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_roll(16.0,axis='x')"))
         
         self.menuBar.addmenuitem('X-Roll', 'command', '32 seconds',label='32 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_roll(32.0,axis='x')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_roll(32.0,axis='x')"))
 
-        self.menuBar.addmenuitem('Loop', 'separator', '')
+        self.menuBar.addmenuitem('Camera', 'separator', '')
 
-        self.menuBar.addcascademenu('Loop', 'Y-Rock', 'Y-Rock',
+        self.menuBar.addcascademenu('Camera', 'Y-Rock', 'Y-Rock',
                                     label='Y-Rock')
         
         self.menuBar.addmenuitem('Y-Rock', 'command', '30 deg. over 2 sec.',label='30 deg. over 2 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(2,30,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(2,30,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'command', '30 deg. over 4 sec.',label='30 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(4,30,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(4,30,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'command', '30 deg. over 8 sec.',label='30 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(8,30,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,30,axis='y')"))
         
         self.menuBar.addmenuitem('Y-Rock', 'separator', '')
         
         self.menuBar.addmenuitem('Y-Rock', 'command', '60 deg. over 4 sec.',label='60 deg. over 4 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(4,60,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(4,60,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'command', '60 deg. over 8 sec.',label='60 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(8,60,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,60,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'command', '60 deg. over 16 sec.',label='60 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(16,60,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(16,60,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'separator', '')
         
         self.menuBar.addmenuitem('Y-Rock', 'command', '90 deg. over 6 sec.',label='90 deg. over 6 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(6,90,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(6,90,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'command', '90 deg. over 12 sec.',label='90 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(12,90,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(12,90,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'command', '90 deg. over 24 sec.',label='90 deg. over 24 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(24,90,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(24,90,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'separator', '')
         
         self.menuBar.addmenuitem('Y-Rock', 'command', '120 deg. over 8 sec.',label='120 deg. over 8 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(8,120,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(8,120,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'command', '120 deg. over 16 sec.',label='120 deg. over 16 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(16,120,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(16,120,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'command', '120 deg. over 32 sec.',label='120 deg. over 32 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(32,120,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(32,120,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'separator', '')
         
         self.menuBar.addmenuitem('Y-Rock', 'command', '180 deg. over 12 sec.',label='180 deg. over 12 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(12,179.99,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(12,179.99,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'command', '180 deg. over 24 sec.',label='180 deg. over 24 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(24,179.99,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(24,179.99,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Rock', 'command', '180 deg. over 48 sec.',label='180 deg. over 48 sec.',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_rock(48,179.99,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_rock(48,179.99,axis='y')"))
 
-        self.menuBar.addcascademenu('Loop', 'Y-Roll', 'Y-Roll',
+        self.menuBar.addcascademenu('Camera', 'Y-Roll', 'Y-Roll',
                                     label='Y-Roll')
 
         self.menuBar.addmenuitem('Y-Roll', 'command', '4 seconds',label='4 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_roll(4.0,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_roll(4.0,axis='y')"))
 
         self.menuBar.addmenuitem('Y-Roll', 'command', '8 seconds',label='8 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_roll(8.0,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_roll(8.0,axis='y')"))
         
         self.menuBar.addmenuitem('Y-Roll', 'command', '16 seconds',label='16 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_roll(16.0,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_roll(16.0,axis='y')"))
         
         self.menuBar.addmenuitem('Y-Roll', 'command', '32 seconds',label='32 seconds',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_roll(32.0,axis='y')"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_roll(32.0,axis='y')"))
 
         self.menuBar.addmenuitem('Program', 'separator', '')
         
@@ -1793,19 +1799,19 @@ class Normal(PMGSkin):
                                     label='Nutate')
 
         self.menuBar.addmenuitem('Nutate2', 'command', '4 seconds each',label='4 seconds each',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_scenes(None,4.0,rock=4)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,4.0,rock=4)"))
 
         self.menuBar.addmenuitem('Nutate2', 'command', '8 seconds each',label='8 seconds each',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_scenes(None,8.0,rock=4)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,8.0,rock=4)"))
 
         self.menuBar.addmenuitem('Nutate2', 'command', '12 seconds each',label='12 seconds each',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_scenes(None,12.0,rock=4)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,12.0,rock=4)"))
 
         self.menuBar.addmenuitem('Nutate2', 'command', '16 seconds each',label='16 seconds each',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_scenes(None,16.0,rock=4)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,16.0,rock=4)"))
 
         self.menuBar.addmenuitem('Nutate2', 'command', '24 seconds each',label='24 seconds each',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_scenes(None,24.0,rock=4)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=4)"))
 
         self.menuBar.addmenuitem('Scene Loop', 'separator', '')
 
@@ -1813,19 +1819,19 @@ class Normal(PMGSkin):
                                     label='Y-Rock')
 
         self.menuBar.addmenuitem('Y-Rock2', 'command', '4 seconds each',label='4 seconds each',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_scenes(None,4.0,rock=1)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,4.0,rock=1)"))
 
         self.menuBar.addmenuitem('Y-Rock2', 'command', '8 seconds each',label='8 seconds each',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_scenes(None,8.0,rock=1)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,8.0,rock=1)"))
 
         self.menuBar.addmenuitem('Y-Rock2', 'command', '12 seconds each',label='12 seconds each',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_scenes(None,12.0,rock=1)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,12.0,rock=1)"))
 
         self.menuBar.addmenuitem('Y-Rock2', 'command', '16 seconds each',label='16 seconds each',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_scenes(None,16.0,rock=1)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,16.0,rock=1)"))
 
         self.menuBar.addmenuitem('Y-Rock2', 'command', '24 seconds each',label='24 seconds each',
-                                 command = lambda s=self: s.mvprg("_ mset;movie.add_scenes(None,24.0,rock=1)"))
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=1)"))
 
         self.menuBar.addmenuitem('Program', 'separator', '')
         
@@ -1876,6 +1882,12 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Movie', 'separator', '')
 
         self.menuBar.addmenuitem('Movie', 'checkbutton',
+                                 'Auto Interpolate',
+                                 label='Auto Interpolate',
+                                 variable = self.setting.movie_auto_interpolate,
+                                 command = lambda s=self: s.setting.update('movie_loop'))
+
+        self.menuBar.addmenuitem('Movie', 'checkbutton',
                                  'Show Panel',
                                  label='Show Panel',
                                  variable = self.setting.movie_panel,
@@ -1886,6 +1898,7 @@ class Normal(PMGSkin):
                                  label='Loop Frames',
                                  variable = self.setting.movie_loop,
                                  command = lambda s=self: s.setting.update('movie_loop'))
+
 
         self.menuBar.addmenuitem('Movie', 'checkbutton',
                                  'Photorealistic images.',

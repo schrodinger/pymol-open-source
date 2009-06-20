@@ -53,6 +53,9 @@ typedef struct CViewElem {
   int scene_flag;               /* only applies to main movie view */
   int scene_name;               /* lexicon key */
 
+  int power_flag;
+  float power;
+
 } CViewElem;
 
 PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view);

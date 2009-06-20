@@ -791,7 +791,7 @@ int MoviePNG(PyMOLGlobals * G, char *prefix, int save, int start,
 
 
 /*========================================================================*/
-void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from)
+void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
 {
   register CMovie *I = G->Movie;
   int c = 0;
@@ -861,8 +861,10 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from)
   PRINTFB(G, FB_Movie, FB_Debugging)
     " MovieSequence: leaving... I->NFrame%d\n", I->NFrame ENDFB(G);
 
-  if(SettingGetGlobal_b(G,cSetting_movie_auto_interpolate)) 
-    ExecutiveReinterpolateMotions(G);
+  if(!freeze) {
+    if(SettingGetGlobal_b(G,cSetting_movie_auto_interpolate)) 
+      ExecutiveReinterpolateMotions(G);
+  }
 
 #if 0
   /* this causes problems... */
@@ -1035,10 +1037,16 @@ int MovieView(PyMOLGlobals * G, int action, int first,
           if(scene_name && (!scene_name[0]))
             scene_name = NULL;
           SceneToViewElem(G, I->ViewElem + frame, scene_name);
-	  if(state>=0) {
-	    I->ViewElem[frame].state = state;
-	    I->ViewElem[frame].state_flag = true;
-	  }
+          if(state>=0) {
+            I->ViewElem[frame].state = state;
+            I->ViewElem[frame].state_flag = true;
+          }
+
+          if(power!=0.0F) {
+            I->ViewElem[frame].power_flag = true;
+            I->ViewElem[frame].power = power;
+          }
+
           I->ViewElem[frame].specification_level = 2;
         }
       }

@@ -46,10 +46,11 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
     
     glColor3fv(color);
     for(cur = first; cur <= last; cur++) {
-      if(cur>=size)
-        break;
       if(cur < last) {
-        cur_level = view_elem->specification_level;
+        if(cur>=size)
+          cur_level = -1;
+        else
+          cur_level = view_elem->specification_level;
       } else {
         cur_level = -1;
       }
@@ -59,7 +60,7 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
         case 0:
           break;
         case 1:
-	  glBegin(GL_POLYGON);
+          glBegin(GL_POLYGON);
           glVertex2f(start, mid_bot);
           glVertex2f(start, mid_top);
           glVertex2f(stop, mid_top);
@@ -69,7 +70,7 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
         case 2:
           if((stop - start) < 1.0F)
             stop = start+1.0F;
-	  glBegin(GL_POLYGON);
+          glBegin(GL_POLYGON);
           glVertex2f(start, bot);
           glVertex2f(start, top);
           glVertex2f(stop, top);
@@ -116,7 +117,7 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view)
 #else
   PyObject *result = NULL;
 
-  result = PyList_New(15);
+  result = PyList_New(17);
 
   if(result) {
     PyList_SetItem(result, 0, PyInt_FromLong(view->matrix_flag));
@@ -171,6 +172,14 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view)
     } else {
       PyList_SetItem(result, 14, PyInt_FromLong(0));
     }
+
+    PyList_SetItem(result, 15, PyInt_FromLong(view->power_flag));
+    if(view->ortho_flag) {
+      PyList_SetItem(result, 16, PyFloat_FromDouble(view->power));
+    } else {
+      PyList_SetItem(result, 16, PConvAutoNone(NULL));
+    }
+
   }
 
   return PConvAutoNone(result);
@@ -580,6 +589,27 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
   float lastC44f[16], lastRTTT[16], lastR44f[16];
   int linear = false;
   int debug = false;
+
+  if(power == 0.0F) {
+    if(first->power_flag && last->power_flag) {
+      if(((first->power > 0.0F) && (last->power > 0.0F)) ||
+         ((first->power < 0.0F) && (last->power < 0.0F))) {
+        power = (first->power + last->power) / 2.0F;
+      } else if(fabs(first->power) > fabs(last->power)) {
+        power = first->power;
+      } else if(last->power < 0.0F) {
+        power = last->power;
+      } else {
+        power = first->power;
+      }
+    } else if(first->power_flag) {
+      power = first->power;
+    } else if(last->power_flag) {
+      power = last->power;
+    } else {
+      power = 1.4F; /* default */
+    }
+  }
 
   if(power < 0.0F) {
     parabolic = false;
