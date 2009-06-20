@@ -6067,12 +6067,12 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int ok = false;
-  int action, first, last, simple, wrap, window, cycles, quiet;
+  int action, first, last, simple, wrap, window, cycles, quiet, state;
   float power, bias, linear, hand, scene_cut;
   char *object, *scene_name;
-  ok = PyArg_ParseTuple(args, "Oiiiffifsiiiisfi", &self, &action, &first, &last, &power,
+  ok = PyArg_ParseTuple(args, "Oiiiffifsiiiisfii", &self, &action, &first, &last, &power,
                         &bias, &simple, &linear, &object, &wrap, &hand,
-                        &window, &cycles, &scene_name, &scene_cut, &quiet);
+                        &window, &cycles, &scene_name, &scene_cut, &quiet, &state);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -6091,13 +6091,13 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
         if(simple < 0)
           simple = 0;
         ok = ObjectView(obj, action, first, last, power, bias,
-                        simple, linear, wrap, hand, window, cycles, quiet);
+                        simple, linear, wrap, hand, window, cycles, state, quiet);
       }
     } else {
       simple = true;            /* force this because camera matrix does't work like a TTT */
       ok = MovieView(G, action, first, last, power,
                      bias, simple, linear, wrap, hand, window, cycles,
-                     scene_name, scene_cut, quiet);
+                     scene_name, scene_cut, state,quiet);
     }
     APIExit(G);
   }
@@ -6142,7 +6142,6 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
         }
       }
       {
-        printf("here\n");
         h += MovieGetPanelHeight(G);
       }
     } else {

@@ -1228,7 +1228,6 @@ SEE ALSO
     def scene(key='auto', action='recall', message=None, view=1,
               color=1, active=1, rep=1, frame=1, animate=-1,
               new_key=None, hand=1, quiet=1, _self=cmd):
-
         '''
 DESCRIPTION
 

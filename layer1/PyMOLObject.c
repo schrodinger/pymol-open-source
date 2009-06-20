@@ -158,7 +158,7 @@ void ObjectDrawViewElem(CObject *I, BlockRect *rect,int frames)
 int ObjectView(CObject * I, int action, int first,
                int last, float power, float bias,
                int simple, float linear, int wrap,
-               int hand, int window, int cycles, int quiet)
+               int hand, int window, int cycles, int state, int quiet)
 {
   register PyMOLGlobals *G = I->G;
   int frame;
@@ -188,16 +188,30 @@ int ObjectView(CObject * I, int action, int first,
         first = SceneGetFrame(G);
       if(last < 0)
         last = first;
-      for(frame = first; frame <= last; frame++) {
-        if((frame >= 0) && (frame < nFrame)) {
-          VLACheck(I->ViewElem, CViewElem, frame);
-          if(!quiet) {
-            PRINTFB(G, FB_Object, FB_Details)
-              " ObjectView: Setting frame %d.\n", frame + 1 ENDFB(G);
-          }
-          TTTToViewElem(I->TTT, I->ViewElem + frame);
-          I->ViewElem[frame].specification_level = 2;
-        }
+      {
+	int state_tmp=0, state_flag = false;
+	if(state>=0) {
+	  state_tmp = state;
+	  state_flag = true;
+	} else if(SettingGetIfDefined_i(G, I->Setting, cSetting_state, &state_tmp)) {
+	  state_flag = true;
+	}
+      
+	for(frame = first; frame <= last; frame++) {
+	  if((frame >= 0) && (frame < nFrame)) {
+	    VLACheck(I->ViewElem, CViewElem, frame);
+	    if(!quiet) {
+	      PRINTFB(G, FB_Object, FB_Details)
+		" ObjectView: Setting frame %d.\n", frame + 1 ENDFB(G);
+	    }
+	    TTTToViewElem(I->TTT, I->ViewElem + frame);
+	    I->ViewElem[frame].specification_level = 2;
+	    if(state_flag) {
+	      I->ViewElem[frame].state_flag = state_flag;
+	      I->ViewElem[frame].state = state_tmp - 1;
+	    }
+	  }
+	}
       }
     }
     break;
@@ -358,7 +372,6 @@ int ObjectView(CObject * I, int action, int first,
     if(I->ViewElem) {
       int size = VLAGetSize(I->ViewElem);
       VLAFreeP(I->ViewElem);
-      I->ViewElem = VLACalloc(CViewElem, size);
     }
     break;
   case 6:                      /* uninterpolate */
@@ -759,6 +772,11 @@ void ObjectPrepareContext(CObject * I, CRay * ray)
       if(I->ViewElem[frame].specification_level) {
         TTTFromViewElem(I->TTT, I->ViewElem + frame);
         I->TTTFlag = true;
+      }
+      if(I->ViewElem[frame].state_flag) {
+	if(I->Setting) {
+	  SettingSet_i(I->Setting,cSetting_state,I->ViewElem[frame].state + 1);
+	}
       }
     }
   }

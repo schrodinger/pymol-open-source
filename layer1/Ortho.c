@@ -810,9 +810,17 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
   } else
     switch (k) {
     case 32:                   /* spacebar */
-      if(SettingGetGlobal_b(G, cSetting_presentation) && !OrthoTextVisible(G)
-         && (I->CurChar == I->PromptChar)) {
-        PParse(G, "cmd.scene('','next')");
+      if(!OrthoArrowsGrabbed(G)) {
+	if(SettingGetGlobal_b(G, cSetting_presentation)) {
+	  PParse(G, "cmd.scene('','next')");
+	} else if(SettingGetGlobal_b(G, cSetting_movie_panel) && MovieGetLength(G)) {
+	  if(mod & cOrthoSHIFT)
+	    OrthoCommandIn(G,"mview toggle_interp");	    
+	  else
+	    OrthoCommandIn(G,"mview toggle");
+	} else {
+	  curLine = add_normal_char(I, k);
+	}
       } else {
         curLine = add_normal_char(I, k);
       }
@@ -894,7 +902,7 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
     case 9:                    /* CTRL I -- tab */
       if(mod & cOrthoCTRL) {
         OrthoKeyControl(G, (unsigned char) (k + 64));
-      } else {
+      } else {   
         curLine = I->CurLine & OrthoSaveLines;
         if(I->PromptChar) {
           strcpy(buffer, I->Line[curLine]);
@@ -925,7 +933,15 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
       }
       break;
     case 13:                   /* CTRL M -- carriage return */
-      OrthoParseCurrentLine(G);
+      if(OrthoArrowsGrabbed(G)) 
+	OrthoParseCurrentLine(G);
+      else {
+	if(mod & cOrthoSHIFT) {
+	  OrthoCommandIn(G,"rewind;mplay");
+	} else {
+	  OrthoCommandIn(G,"mtoggle");
+	}
+      }
       break;
     case 11:                   /* CTRL K -- truncate */
       if(OrthoArrowsGrabbed(G)) {

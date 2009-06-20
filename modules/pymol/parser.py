@@ -88,7 +88,8 @@ if __name__=='pymol.parser':
             self.sc_path = "toplevel"
             self.embed_sentinel = None
             self.embed_dict = {}
-            
+            self.next = []
+
     class Parser:
 
         def __init__(self,cmd):
@@ -132,7 +133,7 @@ if __name__=='pymol.parser':
         # main parser routine
 
         def parse(self,s,secure):
-            layer = self.layer[self.nest]
+            layer = self.layer.get(self.nest,None)
             self.result = None
         # report any uncaught errors...
             if sys.exc_info()!=(None,None,None):
@@ -185,7 +186,9 @@ if __name__=='pymol.parser':
                             layer.com1 = layer.cont + "\n" + layer.com1
                             layer.cont = ''
         # this routine splits up the line first based on semicolon 
-                        layer.next = parsing.split(layer.com1,';',1)
+                        
+                        layer.next = parsing.split(layer.com1,';',1) + layer.next[1:]
+                        
         # layer.com2 now a full non-compound command            
                         layer.com2 = layer.next[0]
                         layer.input = string.split(layer.com2,' ',1)
@@ -231,14 +234,14 @@ if __name__=='pymol.parser':
                                         layer.com2=string.replace(layer.com2,'\n','')
 
                                         if layer.kw[4]>=parsing.LITERAL: # treat literally
-                                            layer.next = ()
+                                            layer.next = []
                                             if not secure:
                                                 layer.com2=layer.com1
                                             else:
                                                 print 'Error: Python expressions disallowed in this file.  '
                                                 return 0
                                         if secure and (layer.kw[4]==parsing.SECURE):
-                                            layer.next = ()
+                                            layer.next = []
                                             print 'Error: Command disallowed in this file.'
                                             return None
                                         else:
@@ -255,7 +258,7 @@ if __name__=='pymol.parser':
                                                 if not secure:
                                                     exec(layer.com2+"\n",self.pymol_names,self.pymol_names)
                                                 else:
-                                                    layer.next = ()                                    
+                                                    layer.next = []                                    
                                                     print 'Error: Python expressions disallowed in this file.'
                                                     return None
                                     else:
@@ -265,7 +268,7 @@ if __name__=='pymol.parser':
                                         if layer.kw[4]==parsing.ABORT:
                                             return None # SCRIPT ABORT EXIT POINT
                                         if layer.kw[4]==parsing.MOVIE: # copy literal single line, no breaks
-                                            layer.next = ()
+                                            layer.next = []
                                             if not secure:
                                                 layer.input = string.split(layer.com1,' ',1)
                                             else:
@@ -320,7 +323,7 @@ if __name__=='pymol.parser':
                                                     elif layer.args[1]=='module':
                                                         parsing.run_file_as_module(path,spawn=1)
                                                 else:
-                                                    layer.next = ()                                    
+                                                    layer.next = []                                    
                                                     print 'Error: spawn disallowed in this file.'
                                                     return None
                                             elif layer.kw[4]==parsing.RUN: # synchronous
@@ -344,11 +347,11 @@ if __name__=='pymol.parser':
                                                         parsing.run_file_as_module(path,spawn=0)
                                                     self.cmd._pymol.__script__ = layer.sc_path
                                                 else:
-                                                    layer.next = ()                                    
+                                                    layer.next = []                                    
                                                     print 'Error: run disallowed in this file.'
                                                     return None                                    
                                             elif (layer.kw[4]==parsing.EMBED):
-                                                layer.next = ()
+                                                layer.next = []
                                                 if secure or self.nest==0: # only legal on top level and p1m files
                                                     l = len(layer.args)
                                                     if l>0:
@@ -371,7 +374,7 @@ if __name__=='pymol.parser':
                                                     print 'Error: embed only legal in special files (e.g. p1m)'
                                                     raise None
                                             elif (layer.kw[4]==parsing.SKIP):
-                                                layer.next = ()
+                                                layer.next = []
                                                 arg = parsing.apply_arg(
                                                     parsing.parse_arg(layer.com2,_self=self.cmd),
                                                     ('sentinel',),
@@ -385,7 +388,7 @@ if __name__=='pymol.parser':
                                                     layer.embed_type = 2 # skip block
                                                     layer.embed_line = 0
                                             elif (layer.kw[4]==parsing.PYTHON_BLOCK):
-                                                layer.next = ()
+                                                layer.next = []
                                                 if not secure:
                                                     arg = parsing.apply_arg(
                                                         parsing.parse_arg(layer.com2,_self=self.cmd),
@@ -466,7 +469,7 @@ if __name__=='pymol.parser':
                             self.layer[self.nest] = NestLayer()
                             layer=self.layer[self.nest]
                             layer.com0 = self.layer[self.nest-1].next[1]
-                            self.layer[self.nest-1].next=()
+                            self.layer[self.nest-1].next=[]
                             layer.cont=''
                             layer.embed_sentinel=None
                             p_result = self.parse(layer.com0,secure) # RECURSION

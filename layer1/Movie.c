@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"Parse.h"
 #include"PyMOL.h"
 #include"ScrollBar.h"
+#include"Menu.h"
 
 typedef struct {
   int stage;
@@ -487,6 +488,13 @@ void MoviePlay(PyMOLGlobals * G, int cmd)
   switch (cmd) {
   case cMovieToggle:
     I->Playing = !I->Playing;
+    if(I->Playing && !(int) SettingGet(G, cSetting_movie_loop)) {
+      /* if not looping, and at end of movie, then automatically rewind
+         and force execution of the first movie command */
+      if((SettingGetGlobal_i(G, cSetting_frame)) == (SceneGetNFrame(G, NULL))) {
+        SceneSetFrame(G, 7, 0);
+      }
+    }
     break;
   case cMovieStop:
     I->Playing = false;
@@ -849,12 +857,12 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from)
     I->NFrame = start_from;
   }
 
-  if(SettingGetGlobal_b(G,cSetting_movie_auto_interpolate)) 
-    ExecutiveReinterpolateMotions(G);
-
   VLACheck(I->Image, ImageType *, I->NFrame);
   PRINTFB(G, FB_Movie, FB_Debugging)
     " MovieSequence: leaving... I->NFrame%d\n", I->NFrame ENDFB(G);
+
+  if(SettingGetGlobal_b(G,cSetting_movie_auto_interpolate)) 
+    ExecutiveReinterpolateMotions(G);
 
 #if 0
   /* this causes problems... */
@@ -885,15 +893,17 @@ int MovieFrameToIndex(PyMOLGlobals * G, int frame)
 {
   register CMovie *I = G->Movie;
   if(I->Sequence && I->NFrame) {
-    if(frame < I->NFrame)
-      return (I->Sequence[frame]);
-    else
-      return (I->Sequence[I->NFrame - 1]);
-  } else
+    if(frame >= I->NFrame) {
+      frame = I->NFrame - 1;
+    }
+    if(I->ViewElem && I->ViewElem[frame].state_flag) {
+      return I->ViewElem[frame].state;
+    }
+    return (I->Sequence[frame]);
+  } else {
     return (frame);
+  }
 }
-
-
 /*========================================================================*/
 void MovieSetImage(PyMOLGlobals * G, int index, ImageType * image)
 {
@@ -931,7 +941,7 @@ void MovieDoFrameCommand(PyMOLGlobals * G, int frame)
 #ifndef _PYMOL_NOPY
             PBlock(G);
             PXDecRef(PyObject_CallMethod(G->P_inst->cmd, "scene",
-                                         "sssiiiii", st, "recall", NULL, 0, 1, 1, 1, 0));
+                                         "sssiiiii", st, "recall", NULL, 0, 1, 1, 1, 0, 0));
             if(PyErr_Occurred()) {
               PyErr_Clear();
             }
@@ -972,17 +982,49 @@ int MovieView(PyMOLGlobals * G, int action, int first,
               int last, float power, float bias,
               int simple, float linear, int wrap,
               int hand, int window, int cycles,
-              char *scene_name, float scene_cut, int quiet)
+              char *scene_name, float scene_cut, int state, int quiet)
 {
   register CMovie *I = G->Movie;
   int frame;
+  if((action == 7) || (action == 8)) { /* toggle */
+    frame = first;
+   if(first < 0)
+     frame = SceneGetFrame(G);
+   VLACheck(I->ViewElem, CViewElem, frame);
+   if(action == 7) {
+     if(I->ViewElem[frame].specification_level>1) {
+       action = 1;
+     } else {
+       action = 0;
+     }
+   } else if(action == 8) {
+     if(I->ViewElem[frame].specification_level>1) {
+       int frame;
+       action = 3;
+       for(frame=0;frame<I->NFrame;frame++) {
+	 if(I->ViewElem[frame].specification_level==1) {
+	   action = 6;
+	   break;
+	 }
+       }
+     }
+     else if(I->ViewElem[frame].specification_level>0) {
+       action = 6;
+     } else {
+       action = 3;
+     }
+   }
+  }
   switch (action) {
-  case 0:                      /* set */
+  case 0:                      /* store */
     if(I->ViewElem) {
       if(first < 0)
         first = SceneGetFrame(G);
       if(last < 0)
         last = first;
+
+      VLACheck(I->ViewElem, CViewElem, frame);
+
       for(frame = first; frame <= last; frame++) {
         if((frame >= 0) && (frame < I->NFrame)) {
           VLACheck(I->ViewElem, CViewElem, frame);
@@ -993,7 +1035,10 @@ int MovieView(PyMOLGlobals * G, int action, int first,
           if(scene_name && (!scene_name[0]))
             scene_name = NULL;
           SceneToViewElem(G, I->ViewElem + frame, scene_name);
-
+	  if(state>=0) {
+	    I->ViewElem[frame].state = state;
+	    I->ViewElem[frame].state_flag = true;
+	  }
           I->ViewElem[frame].specification_level = 2;
         }
       }
@@ -1016,7 +1061,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
     break;
   case 2:                      /* interpolate & reinterpolate */
   case 3:
-    {
+    if(I->ViewElem) {
       CViewElem *first_view = NULL, *last_view = NULL;
       if(first < 0)
         first = 0;
@@ -1129,7 +1174,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
     }
     break;
   case 4:                      /* smooth */
-    {
+    if(I->ViewElem) {
       if(first < 0)
         first = 0;
 
@@ -1174,6 +1219,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
     }
     break;
   }
+  SceneSetFrame(G,1,0);
   return 1;
 }
 
@@ -1303,7 +1349,11 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
-  ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+  if(button == P_GLUT_RIGHT_BUTTON) {
+    MenuActivate(G, x, y, x, y, false, "all_motion", "");
+  } else {
+    ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+  }
   return 1;
 }
 

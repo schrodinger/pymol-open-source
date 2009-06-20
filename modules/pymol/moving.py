@@ -148,6 +148,8 @@ SEE ALSO
         'smooth'   : 4,
         'reset'    : 5,
         'uninterpolate' : 6,
+        'toggle'    : 7,
+        'toggle_interp' : 8
         }
 
     mview_action_sc = Shortcut(mview_action_dict.keys())
@@ -155,7 +157,7 @@ SEE ALSO
     def mview(action='store', first=0, last=0, power=1.4,
               bias=1.0, simple=0, linear=0.0, object='',
               wrap=-1, hand=1, window=5, cycles=1, scene='',
-              cut=0.5, quiet=1, auto=-1, _self=cmd):
+              cut=0.5, quiet=1, auto=-1, state=0, _self=cmd):
 
         '''
 DESCRIPTION
@@ -200,14 +202,14 @@ SEE ALSO
                            float(power),float(bias),
                            int(simple), float(linear),str(object),
                            int(wrap),int(hand),int(window),int(cycles),
-                           str(scene),float(cut),int(quiet))
+                           str(scene),float(cut),int(quiet),int(state)-1)
             if (auto>0) or ((auto<0) and (_self.get_setting_int("movie_auto_interpolate")>0)):
-                if action in [0,1]:
+                if action in [0,1,7]:
                     _cmd.mview(_self._COb,3,-1,-1,
                                float(power),float(bias),
                                int(simple), float(linear),str(object),
                                int(wrap),int(hand),int(window),int(cycles),
-                               str(scene),float(cut),int(quiet))                    
+                               str(scene),float(cut),int(quiet),int(state)-1)                    
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
