@@ -6097,7 +6097,7 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
       simple = true;            /* force this because camera matrix does't work like a TTT */
       ok = MovieView(G, action, first, last, power,
                      bias, simple, linear, wrap, hand, window, cycles,
-                     scene_name, scene_cut, state,quiet);
+                     scene_name, scene_cut, state, quiet);
     }
     APIExit(G);
   }

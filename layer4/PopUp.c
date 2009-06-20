@@ -173,10 +173,12 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
   mx = 1;
   for(a = 0; a < I->NLine; a++) {
     PyObject *command = (PyList_GetItem(PyList_GetItem(list, a), 2));
-    if(PyString_Check(command)) {
-      l = PyString_Size(command);
-      if(l > mx)
-        mx = l;
+    if(command) {
+      if(PyString_Check(command)) {
+	l = PyString_Size(command);
+	if(l > mx)
+	  mx = l;
+      }
     }
   }
   dim[0] = I->NLine + 1;
@@ -192,11 +194,13 @@ Block *PopUpNew(PyMOLGlobals * G, int x, int y, int last_x, int last_y,
     I->Code[a] = PyInt_AsLong(PyList_GetItem(elem, 0));
     strcpy(I->Text[a], PyString_AsString(PyList_GetItem(elem, 1)));
     command = PyList_GetItem(elem, 2);
-    if(PyString_Check(command)) {
-      strcpy(I->Command[a], PyString_AsString(command));
-    } else if(PyList_Check(command)) {
-      Py_INCREF(command);
-      I->Sub[a] = command;
+    if(command) {
+      if(PyString_Check(command)) {
+	strcpy(I->Command[a], PyString_AsString(command));
+      } else if(PyList_Check(command)) {
+	Py_INCREF(command);
+	I->Sub[a] = command;
+      }
     }
   }
 

@@ -4324,6 +4324,9 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
             case cButModeRotFrag:
             case cButModeMovFrag:
             case cButModeMovFragZ:
+	    case cButModeMovViewZ:
+	    case cButModeRotView:
+	    case cButModeMovView:
               I->LastPicked.src.bond = cPickableAtom;
               break;
             }
