@@ -231,7 +231,6 @@ void ExecutiveDrawMotions(PyMOLGlobals * G, BlockRect *rect, int expected)
   BlockRect draw_rect = *rect;
   int count = 0;
   int height = rect->top - rect->bottom;
-  
   while(ListIterate(I->Spec, rec, next)) {
     switch(rec->type) {
     case cExecAll:

@@ -209,7 +209,7 @@ SEE ALSO
                                float(power),float(bias),
                                int(simple), float(linear),str(object),
                                int(wrap),int(hand),int(window),int(cycles),
-                               str(scene),float(cut),int(quiet),int(state)-1)                    
+                               str(scene),float(cut),int(quiet),-1)                    
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException

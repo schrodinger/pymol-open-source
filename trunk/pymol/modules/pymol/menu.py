@@ -28,11 +28,34 @@ def all_store_with_scene(self_cmd):
         result.append([1,a,'cmd.mview("store",scene="'+a+'")'])
     return result
 
+def all_store_with_state(self_cmd):
+    list = self_cmd.get_scene_list()[0:40] # keep this practical
+    n_state = self_cmd.count_states()
+    result = [[ 2, 'State:', ''],
+              [ 1, 'current','cmd.mview("store",state=-1)'],
+              [ 0, ''               ,''                   ],
+              [ 1, '1', 'cmd.mview("store",state=1)'         ],
+]
+    if (n_state>1):
+        result.extend([
+              [ 1, str(n_state),'cmd.mview("store",state=%d)'%n_state],
+              [ 0, ''               ,''                   ],
+              [ 1, str(1+n_state/4), 'cmd.mview("store",state=%d)'%(1+n_state/4) ],
+              [ 1, str(1+n_state/3), 'cmd.mview("store",state=%d)'%(1+n_state/3) ],
+              [ 1, str(n_state/2), 'cmd.mview("store",state=%d)'%(n_state/2) ],
+              [ 1, str(1+n_state/2), 'cmd.mview("store",state=%d)'%(1+n_state/2) ],
+              [ 1, str((2*n_state)/3), 'cmd.mview("store",state=%d)'%((2*n_state)/3) ],
+              [ 1, str((3*n_state)/4), 'cmd.mview("store",state=%d)'%((3*n_state)/4) ],
+              ])
+
+    return result
+
 
 def all_motion(self_cmd, sele):
     return [[ 2, 'Camera Motions:'     , ''                       ],     
             [ 1, 'store'         , 'cmd.mview("store")'      ],
             [ 1, 'store with scene' , all_store_with_scene(self_cmd) ],
+            [ 1, 'store with state' , all_store_with_state(self_cmd) ],
             [ 1, 'clear'       ,   'cmd.mview("clear")'      ],
             [ 0, ''               ,''                             ],
             [ 1, 'smooth'       ,   'cmd.mview("smooth")'      ],

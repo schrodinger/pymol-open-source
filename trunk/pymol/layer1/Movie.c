@@ -988,32 +988,32 @@ int MovieView(PyMOLGlobals * G, int action, int first,
   int frame;
   if((action == 7) || (action == 8)) { /* toggle */
     frame = first;
-   if(first < 0)
-     frame = SceneGetFrame(G);
-   VLACheck(I->ViewElem, CViewElem, frame);
-   if(action == 7) {
-     if(I->ViewElem[frame].specification_level>1) {
-       action = 1;
-     } else {
-       action = 0;
-     }
-   } else if(action == 8) {
-     if(I->ViewElem[frame].specification_level>1) {
-       int frame;
-       action = 3;
-       for(frame=0;frame<I->NFrame;frame++) {
-	 if(I->ViewElem[frame].specification_level==1) {
-	   action = 6;
-	   break;
-	 }
-       }
-     }
-     else if(I->ViewElem[frame].specification_level>0) {
-       action = 6;
-     } else {
-       action = 3;
-     }
-   }
+    if(first < 0)
+      frame = SceneGetFrame(G);
+    VLACheck(I->ViewElem, CViewElem, frame);
+    if(action == 7) {
+      if(I->ViewElem[frame].specification_level>1) {
+	action = 1;
+      } else {
+	action = 0;
+      }
+    } else if(action == 8) {
+      if(I->ViewElem[frame].specification_level>1) {
+	int frame;
+	action = 3;
+	for(frame=0;frame<I->NFrame;frame++) {
+	  if(I->ViewElem[frame].specification_level==1) {
+	    action = 6;
+	    break;
+	  }
+	}
+      }
+      else if(I->ViewElem[frame].specification_level>0) {
+	action = 6;
+      } else {
+	action = 3;
+      }
+    }
   }
   switch (action) {
   case 0:                      /* store */
@@ -1023,7 +1023,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
       if(last < 0)
         last = first;
 
-      VLACheck(I->ViewElem, CViewElem, frame);
+      VLACheck(I->ViewElem, CViewElem, last);
 
       for(frame = first; frame <= last; frame++) {
         if((frame >= 0) && (frame < I->NFrame)) {
@@ -1072,6 +1072,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
       /* note that we're leaving a blank frame at the end... */
       if(last < 0) {
         last = MovieGetLength(G);
+
         if(last) {
           if(!wrap)
             last--;

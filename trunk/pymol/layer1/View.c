@@ -59,7 +59,7 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
         case 0:
           break;
         case 1:
-          glBegin(GL_POLYGON);
+	  glBegin(GL_POLYGON);
           glVertex2f(start, mid_bot);
           glVertex2f(start, mid_top);
           glVertex2f(stop, mid_top);
@@ -69,7 +69,7 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
         case 2:
           if((stop - start) < 1.0F)
             stop = start+1.0F;
-          glBegin(GL_POLYGON);
+	  glBegin(GL_POLYGON);
           glVertex2f(start, bot);
           glVertex2f(start, top);
           glVertex2f(stop, top);

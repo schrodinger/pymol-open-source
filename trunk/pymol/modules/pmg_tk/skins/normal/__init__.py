@@ -1606,10 +1606,6 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Program', 'Loop', 'Loop',
                                     label='Loop')
 
-
-
-        self.menuBar.addmenuitem('Loop', 'separator', '')
-                
         self.menuBar.addcascademenu('Loop', 'Nutate', 'Nutate',
                                     label='Nutate')
 

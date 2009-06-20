@@ -813,13 +813,12 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
       if(!OrthoArrowsGrabbed(G)) {
 	if(SettingGetGlobal_b(G, cSetting_presentation)) {
 	  PParse(G, "cmd.scene('','next')");
-	} else if(SettingGetGlobal_b(G, cSetting_movie_panel) && MovieGetLength(G)) {
-	  if(mod & cOrthoSHIFT)
-	    OrthoCommandIn(G,"mview toggle_interp");	    
-	  else
-	    OrthoCommandIn(G,"mview toggle");
 	} else {
-	  curLine = add_normal_char(I, k);
+	  if(mod & cOrthoSHIFT) {
+	    OrthoCommandIn(G,"rewind;mplay");
+	  } else {
+	    OrthoCommandIn(G,"mtoggle");
+	  }
 	}
       } else {
         curLine = add_normal_char(I, k);
@@ -935,12 +934,11 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
     case 13:                   /* CTRL M -- carriage return */
       if(OrthoArrowsGrabbed(G)) 
 	OrthoParseCurrentLine(G);
-      else {
-	if(mod & cOrthoSHIFT) {
-	  OrthoCommandIn(G,"rewind;mplay");
-	} else {
-	  OrthoCommandIn(G,"mtoggle");
-	}
+      else if(SettingGetGlobal_b(G, cSetting_movie_panel) && MovieGetLength(G)) {
+	if(mod & cOrthoSHIFT) 
+	  OrthoCommandIn(G,"mview toggle_interp");	    
+	else
+	  OrthoCommandIn(G,"mview toggle");
       }
       break;
     case 11:                   /* CTRL K -- truncate */
@@ -1390,32 +1388,6 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
         }
       }
 
-      if((int) SettingGet(G, cSetting_text) || I->SplashFlag) {
-        Block *block;
-        int active_tmp;
-        block = SeqGetBlock(G);
-        active_tmp = block->active;
-        block->active = false;
-        BlockRecursiveDraw(I->Blocks);
-        block->active = active_tmp;
-      } else {
-        BlockRecursiveDraw(I->Blocks);
-      }
-
-      PRINTFD(G, FB_Ortho)
-        " OrthoDoDraw: blocks drawn.\n" ENDFD;
-
-      if(I->LoopFlag) {
-        glColor3f(1.0, 1.0, 1.0);
-        glBegin(GL_LINE_LOOP);
-        glVertex2i(I->LoopRect.left, I->LoopRect.top);
-        glVertex2i(I->LoopRect.right, I->LoopRect.top);
-        glVertex2i(I->LoopRect.right, I->LoopRect.bottom);
-        glVertex2i(I->LoopRect.left, I->LoopRect.bottom);
-        glVertex2i(I->LoopRect.left, I->LoopRect.top);
-        glEnd();
-      }
-
       OrthoRestorePrompt(G);
 
       if(I->DrawText) {
@@ -1480,6 +1452,33 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
       }
 
       OrthoDrawWizardPrompt(G);
+
+      if((int) SettingGet(G, cSetting_text) || I->SplashFlag) {
+        Block *block;
+        int active_tmp;
+        block = SeqGetBlock(G);
+        active_tmp = block->active;
+        block->active = false;
+        BlockRecursiveDraw(I->Blocks);
+        block->active = active_tmp;
+      } else {
+        BlockRecursiveDraw(I->Blocks);
+      }
+
+      PRINTFD(G, FB_Ortho)
+        " OrthoDoDraw: blocks drawn.\n" ENDFD;
+
+      if(I->LoopFlag) {
+        glColor3f(1.0, 1.0, 1.0);
+        glBegin(GL_LINE_LOOP);
+        glVertex2i(I->LoopRect.left, I->LoopRect.top);
+        glVertex2i(I->LoopRect.right, I->LoopRect.top);
+        glVertex2i(I->LoopRect.right, I->LoopRect.bottom);
+        glVertex2i(I->LoopRect.left, I->LoopRect.bottom);
+        glVertex2i(I->LoopRect.left, I->LoopRect.top);
+        glEnd();
+      }
+
 
       /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef PYMOL_EVAL
