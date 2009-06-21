@@ -285,31 +285,25 @@ def add_roll(duration=12.0,loop=1,axis='y',start=0,_self=cmd):
     n_frame = int(round(fps * duration))
     if n_frame > 0:
         cmd.mset("1 x%d"%n_frame,start,freeze=1)
-        cmd.frame(start)
-        cmd.mview("store",power=1,freeze=1)
-        cmd.frame(start+n_frame/3)
+        cmd.mview("store",start,power=1,freeze=1)
         cmd.turn(axis,120)
-        cmd.mview("store",power=1,freeze=1)
-        cmd.frame(start+(2*n_frame)/3)
+        cmd.mview("store",start+n_frame/3,power=1,freeze=1)
         cmd.turn(axis,120)
-        cmd.mview("store",power=1,freeze=1)
+        cmd.mview("store",start+(2*n_frame)/3,power=1,freeze=1)
         if loop:
             if (start == 1):
                 cmd.mview("interpolate",wrap=1)
-                cmd.frame(start+n_frame-1)
-                cmd.mview("store",power=1,freeze=1)
+                cmd.mview("store",start+n_frame-1,power=1,freeze=1)
                 cmd.turn(axis,120)
             else:
                 adjustment = 360.0/n_frame
-                cmd.frame(start+n_frame-1)
                 cmd.turn(axis,120 - adjustment)
-                cmd.mview("store",power=1,freeze=1)
+                cmd.mview("store",start+n_frame-1,power=1,freeze=1)
                 cmd.mview("interpolate")
                 cmd.turn(axis,adjustment) 
         else:
-            cmd.frame(start+n_frame-1)
             cmd.turn(axis,120)
-            cmd.mview("store",power=1,freeze=1)
+            cmd.mview("store",start+n_frame-1,power=1,freeze=1)
             cmd.mview("interpolate")
         cmd.frame(start)
         
@@ -359,10 +353,9 @@ def add_nutate(duration=8.0, angle=30.0, spiral=0, loop=1,
             ang_cur = math.pi*phase/180.0 + (2*math.pi*index)/n_frame
             x_rot = sp_angle * math.sin(ang_cur)/2
             y_rot = sp_angle * math.sin(ang_cur+shift)/2      
-            cmd.frame(start+index)
             cmd.turn('x',x_rot)
             cmd.turn('y',y_rot)
-            cmd.mview('store',freeze=1)
+            cmd.mview('store',start+index,freeze=1)
             cmd.turn('y',-y_rot)
             cmd.turn('x',-x_rot)
     
@@ -383,20 +376,15 @@ def _rock_y(mode,first,last,period,pause,_self=cmd):
         direction = 0
         for frame in frame_list:
             if not direction:
-                cmd.frame(frame)
                 cmd.turn(axis,angle/2.0)
-                cmd.mview("store",power=-1,freeze=1)
+                cmd.mview("store",frame,power=-1,freeze=1)
                 direction = -1
             else:
-                cmd.frame(frame)
                 cmd.turn(axis, direction * angle)
-                cmd.mview("store",power=-1,freeze=1)
+                cmd.mview("store",frame,power=-1,freeze=1)
                 direction = -direction
-
-        cmd.frame(last)
         cmd.turn(axis,direction * angle/2.0)
-        cmd.mview("store",power=-1,freeze=1)
-
+        cmd.mview("store",last,power=-1,freeze=1)
         cmd.mview("interpolate",first,last)
 
 def _nutate_sub(start_frame, stop_frame, angle=15.0, spiral=0, loop=1, 
@@ -419,10 +407,9 @@ def _nutate_sub(start_frame, stop_frame, angle=15.0, spiral=0, loop=1,
             ang_cur = math.pi*phase/180.0 + (2*math.pi*index)/n_frame
             x_rot = sp_angle * math.sin(ang_cur)/2
             y_rot = sp_angle * math.sin(ang_cur+shift)/2      
-            cmd.frame(start_frame+index)
             cmd.turn('x',x_rot)
             cmd.turn('y',y_rot)
-            cmd.mview('store',freeze=1)
+            cmd.mview('store',start_frame+index,freeze=1)
             cmd.turn('y',-y_rot)
             cmd.turn('x',-x_rot)
     
@@ -483,8 +470,7 @@ def add_scenes(names=None, pause=8.0, cut=0.0, loop=1,
         cnt = 0
         for scene in names:
             frame = start+int((cnt*n_frame)/n_scene)
-            cmd.frame(frame)
-            cmd.mview("store",scene=scene,freeze=1)
+            cmd.mview("store",frame,scene=scene,freeze=1)
             if rock:
                 cmd.mview("interpolate",cut=cut,wrap=0)
                 sweep_first = frame + 1
@@ -502,8 +488,7 @@ def add_scenes(names=None, pause=8.0, cut=0.0, loop=1,
             frame = start+int(pause*fps+(cnt*n_frame)/n_scene)
             if frame <= act_n_frame:
                 if sweep_mode!=3:
-                    cmd.frame(frame)
-                    cmd.mview("store",scene=scene,freeze=1)
+                    cmd.mview("store",frame,scene=scene,freeze=1)
             cnt = cnt + 1
         cmd.mview("interpolate",cut=cut,wrap=loop)
         if rock:
