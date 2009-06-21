@@ -87,6 +87,7 @@ struct _CObject {
 
   /* not pickled */
   int grid_slot;
+  int Grabbed;
 };
 
 void ObjectInit(PyMOLGlobals * G, CObject * I);
@@ -111,10 +112,10 @@ PyObject *ObjectAsPyList(CObject * I);
 int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I);
 int ObjectGetCurrentState(CObject * I, int ignore_all_states);
 void ObjectAdjustStateRebuildRange(CObject * I, int *start, int *stop);
-int ObjectView(CObject * I, int action, int first,
-               int last, float power, float bias,
-               int simple, float linear, int wrap,
-               int hand, int window, int cycles, int state, int quiet);
+int ObjectMotion(CObject * I, int action, int first,
+                 int last, float power, float bias,
+                 int simple, float linear, int wrap,
+                 int hand, int window, int cycles, int state, int quiet);
 int ObjectGetSpecLevel(CObject * I, int frame);
 void ObjectDrawViewElem(CObject *I, BlockRect *rect, int frames);
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I);
@@ -131,6 +132,8 @@ void ObjectStatePopMatrix(CObjectState * I, RenderInfo * info);
 void ObjectStateRightCombineMatrixR44d(CObjectState * I, double *matrix);
 void ObjectStateLeftCombineMatrixR44d(CObjectState * I, double *matrix);
 void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix);
+int ObjectMotionModify(CObject *I,int action, int index, int count,int freeze);
+void ObjectMotionReinterpolate(CObject *I);
 
 typedef struct _CObjectUpdateThreadInfo CObjectUpdateThreadInfo;
 

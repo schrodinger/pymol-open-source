@@ -1,5 +1,3 @@
-
-
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -20,6 +18,8 @@ Z* -------------------------------------------------------------------
 /* This file can be compiled under C as a .c file, or under C++ as a .cc file*/
 
 #include"os_predef.h"
+#include"ov_port.h"
+
 #ifndef OV_JENARIX
 
 #include"MemoryDebug.h"
@@ -397,6 +397,75 @@ void *VLASetSize(void *ptr, unsigned int new_size)
       MemoryZero(start, stop);
   }
   return ((void *) &(vla[1]));
+}
+
+void *VLADeleteRaw(void *ptr, int index, unsigned int count)
+{
+  if(ptr) {
+    VLARec *vla = ((VLARec *) ptr) - 1;
+    ov_size old_size = vla->size;
+
+    /* failsafe range-handling logic */
+
+    if(index<0) {
+      if(index < -old_size)
+        index = 0;
+      else
+        index = old_size + 1 + index;
+      if(index<0) index = 0;
+    }
+
+    if((count+index) > vla->size) {
+      count = vla->size - index;
+    }
+      
+    if((index >= 0) && (count > 0) &&
+       (index < vla->size) && ((count + index) <= vla->size)) {
+      ov_size new_size = old_size - count;
+      ov_char *base = (ov_char *) ptr;
+      ov_os_memmove(base + index * vla->unit_size,
+                    base + (count + index) * vla->unit_size,
+                    ((vla->size - index) - count) * vla->unit_size);
+      ptr = VLASetSize(ptr,new_size);
+    }
+  }
+  return ptr;
+}
+
+void *VLAInsertRaw(void *ptr, int index, unsigned int count)
+{
+  if(ptr) {
+    VLARec *vla = ((VLARec *) ptr) - 1;
+    ov_size old_size = vla->size;
+
+    /* failsafe range-handling logic */
+
+    if(index<0) {
+      if(index < -old_size)
+        index = 0;
+      else
+        index = old_size + 1 + index;
+      if(index<0) index = 0;
+    }
+    
+    if(index > old_size)
+      index = old_size;
+
+    if((index >= 0) && (count > 0) && (index <= old_size)) {
+      ov_int new_size = old_size + count;
+
+      ptr = VLASetSize(ptr,new_size);
+      if(ptr) {
+        ov_char *base = (ov_char *) ptr;
+        VLARec *vla = ((VLARec *) ptr) - 1;
+        ov_os_memmove(base + (index + count) * vla->unit_size,
+                base + index * vla->unit_size, (old_size - index) * vla->unit_size);
+        if(vla->auto_zero) 
+          ov_os_memset(base + index * vla->unit_size, 0, vla->unit_size * count);
+      }
+    }
+  }
+  return ptr;
 }
 
 void *VLASetSizeForSure(void *ptr, unsigned int new_size)

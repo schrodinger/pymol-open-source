@@ -259,6 +259,8 @@ from preset import \
 import moving
 from moving import \
       madd,              \
+      mdelete,           \
+      minsert,           \
       mset,              \
       mclear,            \
       mdo,               \

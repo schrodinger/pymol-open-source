@@ -81,6 +81,38 @@ struct _CMovie {
 
 };
 
+void MovieViewReinterpolate(PyMOLGlobals *G)
+{
+  MovieView(G, 3, -1, -1, 0.0F, 1.0F, 0, 0.0F, 
+            SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0 ,
+            1, 5, 1, NULL, 0.5, -1, 1); 
+}
+
+int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int freeze)
+{
+  register CMovie *I = G->Movie;
+  int ok = true;
+  MovieClearImages(G);
+  if( (ok = ViewElemModify(G,&I->ViewElem, action, index, count)) ) {
+    switch(action) {
+    case cViewElemModifyInsert: 
+      VLAInsert(I->Sequence,int,index,count);
+      VLAInsert(I->Cmd,MovieCmdType,index,count);
+      break;
+    case cViewElemModifyDelete:
+      VLADelete(I->Sequence,int,index,count);
+      VLADelete(I->Cmd,MovieCmdType,index,count);
+      break;
+    }
+  }
+  I->NFrame = VLAGetSize(I->Sequence);
+
+  if(ok && (!freeze) && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+    MovieViewReinterpolate(G);
+  }
+  return ok;
+}
+
 int MovieGetSpecLevel(PyMOLGlobals *G,int frame)
 {
   register CMovie *I = G->Movie;
@@ -857,7 +889,7 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
     I->NFrame = start_from;
   }
 
-  VLACheck(I->Image, ImageType *, I->NFrame);
+  VLASize(I->Image, ImageType *, I->NFrame);
   PRINTFB(G, FB_Movie, FB_Debugging)
     " MovieSequence: leaving... I->NFrame%d\n", I->NFrame ENDFB(G);
 
@@ -865,7 +897,6 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
     if(SettingGetGlobal_b(G,cSetting_movie_auto_interpolate)) 
       ExecutiveReinterpolateMotions(G);
   }
-
 #if 0
   /* this causes problems... */
   if((I->NFrame && true) != (old_NFrame && true)) {
@@ -1228,6 +1259,10 @@ int MovieView(PyMOLGlobals * G, int action, int first,
     }
     break;
   }
+  /* adjust VLA to current movie length */
+  if(I->ViewElem) {
+    VLASize(I->ViewElem,CViewElem,I->NFrame);
+  }
   SceneSetFrame(G,1,0);
   return 1;
 }
@@ -1296,11 +1331,13 @@ void MovieClearImages(PyMOLGlobals * G)
 
   PRINTFB(G, FB_Movie, FB_Blather)
     " MovieClearImages: clearing...\n" ENDFB(G);
-  for(a = 0; a < I->NImage; a++) {
-    if(I->Image[a]) {
-      FreeP(I->Image[a]->data);
-      FreeP(I->Image[a]);
-      I->Image[a] = NULL;
+  if(I->Image) {
+    for(a = 0; a < I->NImage; a++) {
+      if(I->Image[a]) {
+        FreeP(I->Image[a]->data);
+        FreeP(I->Image[a]);
+        I->Image[a] = NULL;
+      }
     }
   }
   I->NImage = 0;
@@ -1382,7 +1419,8 @@ int MovieGetPanelHeight(PyMOLGlobals * G)
     }
   }
   if(movie_panel) {
-    return 15 * ExecutiveCountMotions(G); /* default movie panel height */
+    return SettingGetGlobal_i(G,cSetting_movie_panel_row_height) *
+      ExecutiveCountMotions(G); 
   } else {
     return 0;
   }
@@ -1392,7 +1430,7 @@ void MovieDrawViewElem(PyMOLGlobals *G, BlockRect *rect,int frames)
 {
   CMovie *I = G->Movie;
   if(I->ViewElem) {
-    ViewElemDraw(G,I->ViewElem,rect,frames);
+    ViewElemDraw(G,I->ViewElem,rect,frames,"camera");
   }
 }
 
@@ -1403,7 +1441,9 @@ static void MovieDraw(Block * block)
   int n_frame = MovieGetLength(G);
   int frame = SceneGetFrame(G);
   int count = ExecutiveCountMotions(G);
+  BlockRect rect = block->rect;
   if(count) {
+    rect.right -= 8 * 8;
     if(!n_frame) {
       ScrollBarSetLimits(I->ScrollBar, 1, 1);
       ScrollBarSetValue(I->ScrollBar, 0);
@@ -1419,10 +1459,10 @@ static void MovieDraw(Block * block)
       }
       ScrollBarSetLimits(I->ScrollBar, n_frame, 1);
     }
-    ScrollBarSetBox(I->ScrollBar, I->Block->rect.top,
-                    I->Block->rect.left, I->Block->rect.bottom, I->Block->rect.right);
+    ScrollBarSetBox(I->ScrollBar, rect.top,
+                    rect.left, rect.bottom, rect.right);
     ScrollBarDoDraw(I->ScrollBar);
-    ExecutiveDrawMotions(G,&I->Block->rect,count);
+    ExecutiveDrawMotions(G,&rect,count);
     ScrollBarDrawHandle(I->ScrollBar, 0.3F);
   }
 }

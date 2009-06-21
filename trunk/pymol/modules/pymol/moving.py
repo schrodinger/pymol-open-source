@@ -480,6 +480,64 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
+    def mdelete(count,frame=0,freeze=0,object='',quiet=1,_self=cmd):
+        '''
+DESCRIPTION
+
+    "mdelete" removes frames from camera view and object motions.
+
+SEE ALSO
+
+    mdelete
+
+    '''
+        r = DEFAULT_ERROR
+        frame = int(frame)
+        count = int(count)
+        freeze = int(freeze)
+        object = str(object)
+        try:
+            _self.lock(_self)
+            if not frame:
+                frame = -1 - count
+            else:
+                frame -= 1
+            r = _cmd.mmodify(_self._COb,-1,frame,count,
+                             freeze,object,quiet)
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
+        return r
+
+    def minsert(count,frame=0,freeze=0,object='',quiet=1,_self=cmd):
+        '''
+DESCRIPTION
+
+    "minsert" adds frames into camera view and object motions.
+
+SEE ALSO
+
+    mdelete
+
+    '''
+        r = DEFAULT_ERROR
+        frame = int(frame)
+        count = int(count)
+        freeze = int(freeze)
+        object = str(object)
+        try:
+            _self.lock(_self)
+            if not frame:
+                frame = -1 - count
+            else:
+                frame -= 1
+            r = _cmd.mmodify(_self._COb,1,frame,count,
+                             freeze,object,quiet)
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
+        return r
+
     def madd(specification="",frame=0,freeze=0,_self=cmd):
         '''
 DESCRIPTION

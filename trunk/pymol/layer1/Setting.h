@@ -855,6 +855,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_mouse_z_scale              619
 #define cSetting_movie_auto_store           620
 #define cSetting_movie_auto_interpolate     621
+#define cSetting_movie_panel_row_height     622
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -865,6 +866,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       622
+#define cSetting_INIT                       623
 
 #endif

@@ -78,7 +78,7 @@ void OVOneToAny_Dump(OVOneToAny * up)
       if(up->elem[a].active) {
         fprintf(stderr,
                 " OVOneToAny_Dump: Elements %d:    %d (->%d)    %d \n",
-                a + 1,
+                (int) a + 1,
                 (int) up->elem[a].forward_value,
                 (int) up->elem[a].forward_next, (int) up->elem[a].reverse_value);
         empty = OV_FALSE;

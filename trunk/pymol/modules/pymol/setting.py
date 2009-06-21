@@ -657,6 +657,7 @@ if __name__=='pymol.setting':
         mouse_z_scale                      = 619
         movie_auto_store                   = 620
         movie_auto_interpolate             = 621
+        movie_panel_row_height             = 622
 
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

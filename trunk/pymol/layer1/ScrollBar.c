@@ -67,7 +67,7 @@ static void ScrollBarUpdate(struct CScrollBar *I)
     range = (I->Block->rect.top - I->Block->rect.bottom);
   }
   I->ExactBarSize = (range * I->DisplaySize) / (float) I->ListSize;
-  I->BarSize = (int) I->ExactBarSize;
+  I->BarSize = (int) (0.499F + I->ExactBarSize);
   if(I->BarSize < 4)
     I->BarSize = 4;
   I->BarRange = range - I->BarSize;
@@ -99,12 +99,12 @@ static void ScrollBarDraw(Block * block)
   if(I->HorV) {
     top = block->rect.top - 1;
     bottom = block->rect.bottom + 1;
-    left = (int) (block->rect.left + (I->BarRange * value) / I->ValueMax);
+    left = (int) (0.499F + block->rect.left + (I->BarRange * value) / I->ValueMax);
     right = left + I->BarSize;
     I->BarMin = left;
     I->BarMax = right;
   } else {
-    top = (int) (block->rect.top - (I->BarRange * value) / I->ValueMax);
+    top = (int) (0.499F + block->rect.top - (I->BarRange * value) / I->ValueMax);
     bottom = top - I->BarSize;
     left = block->rect.left + 1;
     right = block->rect.right - 1;
@@ -162,10 +162,10 @@ void ScrollBarDrawHandle(struct CScrollBar *I, float alpha)
   if(I->HorV) {
     top = block->rect.top - 1;
     bottom = block->rect.bottom + 1;
-    left = (int) (block->rect.left + (I->BarRange * value) / I->ValueMax);
+    left = (int) (0.499F + block->rect.left + (I->BarRange * value) / I->ValueMax);
     right = left + I->BarSize;
   } else {
-    top = (int) (block->rect.top - (I->BarRange * value) / I->ValueMax);
+    top = (int) (0.499F + block->rect.top - (I->BarRange * value) / I->ValueMax);
     bottom = top - I->BarSize;
     left = block->rect.left + 1;
     right = block->rect.right - 1;

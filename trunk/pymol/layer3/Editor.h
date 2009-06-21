@@ -55,11 +55,12 @@ void EditorSetDrag(PyMOLGlobals * G, ObjectMolecule * obj, int sele, int quiet,
 void EditorReadyDrag(PyMOLGlobals * G, int state);
 void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj, int sele, int index,
                        int state, int mode);
+int EditorDraggingObjectMatrix(PyMOLGlobals *G);
 void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int state,
                 float *pt, float *mov, float *z_dir);
 
 void EditorActivate(PyMOLGlobals * G, int state, int enable_bond);
-ObjectMolecule *EditorDragObject(PyMOLGlobals * G);
+CObject *EditorDragObject(PyMOLGlobals * G);
 void EditorReplace(PyMOLGlobals * G, char *elem, int geom, int valence, char *name,
                    int quiet);
 void EditorAttach(PyMOLGlobals * G, char *elem, int geom, int valence, char *name,

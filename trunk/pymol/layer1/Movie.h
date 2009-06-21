@@ -86,6 +86,8 @@ int MovieGetRealtime(PyMOLGlobals * G);
 
 int MovieMatrix(PyMOLGlobals * G, int action);  /* 0 clear, 1 remember, 2 recall */
 
+int MovieViewModify(PyMOLGlobals *G,int action, int index, int count, int freeze);
+void MovieViewReinterpolate(PyMOLGlobals *G);
 
 /*void MovieSave(char *fname);
   void MovieLoad(char *fname);*/
