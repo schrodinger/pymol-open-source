@@ -79,6 +79,7 @@ def all_motion(self_cmd, sele):
             [ 1, 'uninterpolate'   , 'cmd.mview("uninterpolate")'   ],            
             [ 0, ''               ,''                             ],
             [ 1, 'reset'   , 'cmd.mview("reset")'   ],            
+            [ 1, 'purge'   , 'cmd.mset()'   ],            
             ]
 
 def mol_motion(self_cmd, sele):

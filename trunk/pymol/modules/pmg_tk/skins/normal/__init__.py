@@ -764,7 +764,6 @@ class Normal(PMGSkin):
             self.cmd.ending()
         else:
             command = self.movie_command
-        print command
         if command != None:
             self.cmd.do(command)
             
