@@ -205,7 +205,8 @@ struct _CScene {
   int StencilValid;
   int ReinterpolateFlag;
   CObject *ReinterpolateObj;
-  
+  CObject *MotionGrabbedObj;
+
 };
 
 typedef struct {
@@ -3645,14 +3646,17 @@ static int SceneRelease(Block * block, int button, int x, int y, int mod, double
     }
   }
   if(I->ReinterpolateFlag && I->ReinterpolateObj) {
-    if(ExecutiveValidateObjectPtr(G, I->ReinterpolateObj, cObjectMolecule)) {
-      ObjectView(I->ReinterpolateObj, 3, -1, -1,0.0F,
-                 1.0F, 0, 0.0F, SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0,
-		 1, 5, 1, -1, 1); 
-      /* should instread read these from per-object settings... */
+    if(ExecutiveValidateObjectPtr(G, I->ReinterpolateObj, 0)) {
+      ObjectMotionReinterpolate(I->ReinterpolateObj);
     }
     I->ReinterpolateFlag = true;
     I->ReinterpolateObj = NULL;
+  }
+  if(I->MotionGrabbedObj) {
+    if(ExecutiveValidateObjectPtr(G, I->MotionGrabbedObj, 0)) {
+      I->MotionGrabbedObj->Grabbed = false;
+      I->MotionGrabbedObj = NULL;
+    }
   }
   return 1;
 }
@@ -4044,6 +4048,23 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
       I->LastX = x;
       I->LastY = y;
       EditorReadyDrag(G, SettingGetGlobal_i(G, cSetting_state) - 1);
+
+      if(EditorDraggingObjectMatrix(G)) {
+        obj = EditorDragObject(G);
+        if(obj) {
+          if(SettingGetGlobal_b(G,cSetting_movie_auto_store)) {
+            ObjectTranslateTTT(obj, NULL, true);
+            I->MotionGrabbedObj = obj;
+            obj->Grabbed = true;
+            if(SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+              I->ReinterpolateFlag = true;
+              I->ReinterpolateObj = obj;
+            }
+          } else {
+            ObjectTranslateTTT(obj,NULL,false);
+          }
+        }
+      }
       break;
     case cButModeRotXYZ:
     case cButModeTransXY:
@@ -4312,11 +4333,11 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
         I->LastY = y;
         switch (obj->type) {
         case cObjectMolecule:
-
+          
           if(I->LastPicked.src.bond == cPickableLabel) {
             /* if user picks a label with move object/move fragment,
                then move the object/fragment, not the label */
-
+            
             switch (mode) {
             case cButModeRotObj:
             case cButModeMovObj:
@@ -4324,29 +4345,34 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
             case cButModeRotFrag:
             case cButModeMovFrag:
             case cButModeMovFragZ:
-	    case cButModeMovViewZ:
-	    case cButModeRotView:
-	    case cButModeMovView:
+            case cButModeMovViewZ:
+            case cButModeRotView:
+            case cButModeMovView:
               I->LastPicked.src.bond = cPickableAtom;
               break;
             }
           }
 
-	  switch(mode) {
-	  case cButModeMovViewZ:
-	  case cButModeRotView:
-	  case cButModeMovView:
-	    {
-	      float mov[3] = {0.0,0.0,0.0};
-	      if(SettingGetGlobal_b(G,cSetting_movie_auto_store)) {
-		ObjectTranslateTTT(obj, mov,true);
-		I->ReinterpolateFlag = true;
-		I->ReinterpolateObj = obj;
-	      }
-	    }
-	    break;
-	  }
-
+          switch(mode) {
+          case cButModeMovViewZ:
+          case cButModeRotView:
+          case cButModeMovView:
+            {
+              if(SettingGetGlobal_b(G,cSetting_movie_auto_store)) {
+                ObjectTranslateTTT(obj, NULL, true);
+                I->MotionGrabbedObj = obj;
+                obj->Grabbed = true;
+                if(SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+                  I->ReinterpolateFlag = true;
+                  I->ReinterpolateObj = obj;
+                }
+              } else {
+                ObjectTranslateTTT(obj, NULL, false);
+              }
+            }
+            break;
+          }
+          
           if(I->LastPicked.src.bond >= cPickableAtom) {
             if(Feedback(G, FB_Scene, FB_Results)) {
               if(obj->fDescribeElement)

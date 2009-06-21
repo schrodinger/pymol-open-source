@@ -50,7 +50,21 @@ def all_store_with_state(self_cmd):
 
     return result
 
+def mouse_config(self_cmd):
+    result = [[ 1, '3-Button Motions',
+                'cmd.config_mouse("three_button_motions")' ],
+              [ 1, '3-Button Editing',
+                'cmd.config_mouse("three_button_editing")' ],
+              [ 1, '3-Button All Modes',
+                'cmd.config_mouse("three_button_all_modes")' ],
+              ]
+    return result
 
+def smooth(self_cmd,extra=''):
+    return [[ 1, 'a little'  ,   'cmd.mview("smooth"%s)'%extra            ],
+            [ 1, 'more'     ,   'cmd.mview("smooth",window=15%s)'%extra ],
+            [ 1, 'a lot'   ,   'cmd.mview("smooth",window=30%s)'%extra ]]
+              
 def all_motion(self_cmd, sele):
     return [[ 2, 'Camera Motions:'     , ''                       ],     
             [ 1, 'store'         , 'cmd.mview("store")'      ],
@@ -58,8 +72,7 @@ def all_motion(self_cmd, sele):
             [ 1, 'store with state' , all_store_with_state(self_cmd) ],
             [ 1, 'clear'       ,   'cmd.mview("clear")'      ],
             [ 0, ''               ,''                             ],
-            [ 1, 'smooth'       ,   'cmd.mview("smooth")'      ],
-            [ 1, 'smooth more'   ,   'cmd.mview("smooth",window=30)'      ],
+            [ 1, 'smooth'       ,   smooth(self_cmd)     ],
             [ 0, ''               ,''                             ],
             [ 1, 'interpolate'   , 'cmd.mview("interpolate")'   ],
             [ 1, 'reinterpolate'   , 'cmd.mview("reinterpolate")'   ],            
@@ -73,8 +86,7 @@ def mol_motion(self_cmd, sele):
             [ 1, 'store'         , 'cmd.mview("store",object="'+sele+'")'      ],
             [ 1, 'clear'       ,   'cmd.mview("clear",object="'+sele+'")'    ],
             [ 0, ''               ,''                             ],
-            [ 1, 'smooth'         , 'cmd.mview("smooth",object="'+sele+'")'      ],
-            [ 1, 'smooth more'         , 'cmd.mview("smooth",window=30,object="'+sele+'")'      ],
+            [ 1, 'smooth'         , smooth(self_cmd,'object="'+sele+'"') ],
             [ 0, ''               ,''                             ],
             [ 1, 'interpolate'   ,   'cmd.mview("interpolate",object="'+sele+'")'    ],
             [ 1, 'reinterpolate'   ,   'cmd.mview("reinterpolate",object="'+sele+'")'    ],

@@ -2559,6 +2559,7 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_internal_gui:
   case cSetting_internal_feedback:
   case cSetting_mouse_grid:
+  case cSetting_movie_panel_row_height:
   case cSetting_movie_panel:
     OrthoCommandIn(G, "viewport");
     break;
@@ -3861,5 +3862,6 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_f(I, cSetting_mouse_z_scale,1.0);
     set_b(I, cSetting_movie_auto_store, 1);
     set_b(I, cSetting_movie_auto_interpolate, 1);
+    set_i(I, cSetting_movie_panel_row_height, 15);
   }
 }

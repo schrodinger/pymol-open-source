@@ -34,7 +34,8 @@
 #define ov_os_calloc calloc
 #define ov_os_realloc realloc
 #define ov_os_free free
-
+#define ov_os_memmove memmove
+#define ov_os_memset memset
 
 /* termination */
 

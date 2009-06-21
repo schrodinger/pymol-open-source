@@ -169,6 +169,29 @@ int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int stat
                                        char *s1, int log, float *matrix, int homogenous,
                                        int global);
 
+void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
+                               int index, int count, int freeze, int quiet)
+{
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec, rec, next)) {
+    switch(rec->type) {
+    case cExecAll:
+      if(MovieGetSpecLevel(G,0)>=0) {
+        MovieViewModify(G, action, index, count, freeze);
+      }
+      break;
+    case cExecObject: 
+      if(ObjectGetSpecLevel(rec->obj,0)>=0) {
+        /* only modify objects with motion matrices */
+        ObjectMotionModify(rec->obj, action, index, count, freeze);
+      }
+      break;
+    }
+  }
+}
+
+
 void ExecutiveReinterpolateMotions(PyMOLGlobals * G)
 {
   register CExecutive *I = G->Executive;
@@ -177,16 +200,13 @@ void ExecutiveReinterpolateMotions(PyMOLGlobals * G)
     switch(rec->type) {
     case cExecAll:
       if(MovieGetSpecLevel(G,0)>=0) {
-        MovieView(G, 3, -1, -1, 0.0F, 1.0F, 0, 0.0F, 
-		  SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0 ,
-		  1, 5, 1, NULL, 0.5, -1, 1); 
+        MovieViewReinterpolate(G);
       }
       break;
     case cExecObject:
-      if(ObjectGetSpecLevel(rec->obj,0)>=0)
-        ObjectView(rec->obj, 3, -1, -1,0.0F,1.0F, 0, 0.0F,  
-		   SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0,
-		   1, 5, 1, -1, 1); 
+      if(ObjectGetSpecLevel(rec->obj,0)>=0) {
+        ObjectMotionReinterpolate(rec->obj);
+      }        
       break;
     }
   }
@@ -3981,7 +4001,7 @@ int ExecutiveValidateObjectPtr(PyMOLGlobals * G, CObject * ptr, int object_type)
   while(ListIterate(I->Spec, rec, next)) {
     if(rec->obj == ptr) {
       if(rec->type == cExecObject) {
-        if(rec->obj->type == object_type) {
+        if((!object_type) || (rec->obj->type == object_type)) {
           ok = true;
           break;
         }

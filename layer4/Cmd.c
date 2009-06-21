@@ -6063,6 +6063,28 @@ static PyObject *CmdMSet(PyObject * self, PyObject * args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdMModify(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  char *object;
+  int ok = false;
+  int action,index,count,freeze,quiet;
+  ok = PyArg_ParseTuple(args, "Oiiiisi",  &self, &action, &index,
+                        &count, &freeze, &object, &quiet);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok && (ok = APIEnterNotModal(G))) {
+    ExecutiveMotionViewModify(G,action,index,count,freeze,quiet);
+    SceneCountFrames(G);
+    APIExit(G);
+  }
+  return APIResultOk(ok);
+}
+
 static PyObject *CmdMView(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
@@ -6090,8 +6112,8 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
       } else {
         if(simple < 0)
           simple = 0;
-        ok = ObjectView(obj, action, first, last, power, bias,
-                        simple, linear, wrap, hand, window, cycles, state, quiet);
+        ok = ObjectMotion(obj, action, first, last, power, bias,
+                          simple, linear, wrap, hand, window, cycles, state, quiet);
       }
     } else {
       simple = true;            /* force this because camera matrix does't work like a TTT */
@@ -8552,6 +8574,7 @@ static PyMethodDef Cmd_methods[] = {
   {"mdo", CmdMDo, METH_VARARGS},
   {"mdump", CmdMDump, METH_VARARGS},
   {"mem", CmdMem, METH_VARARGS},
+  {"mmodify", CmdMModify, METH_VARARGS},
   {"move", CmdMove, METH_VARARGS},
   {"mset", CmdMSet, METH_VARARGS},
   {"mplay", CmdMPlay, METH_VARARGS},

@@ -129,9 +129,9 @@ if __name__=='pymol.controlling':
         'two_button' : [ 'two_button_viewing',
                          'two_button_selecting' ],
 
-        'two_button_editing' : [ 'two_button_viewing',
+        'two_button_editing' : [ 'two_button_editing',
+                                 'two_button_viewing',
                                  'two_button_selecting',
-                                 'two_button_editing',
                                  ],
 
         'three_button_motions' : [   'three_button_motions',

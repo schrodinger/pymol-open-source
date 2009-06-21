@@ -25,8 +25,30 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"PConv.h"
 #include"OVLexicon.h"
+#include"Text.h"
 
-void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames)
+int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, int count)
+{
+  int ok = true;
+  CViewElem *vla = *handle;
+  if(!vla) {
+    vla = VLACalloc(CViewElem, 0);
+  }
+  if(vla) {
+    switch(action) {
+    case cViewElemModifyInsert: 
+      VLAInsert(vla,CViewElem,index,count);
+      break;
+    case cViewElemModifyDelete:
+      VLADelete(vla,CViewElem,index,count);
+      break;
+    }
+  }
+  *handle = vla;
+  return ok;
+}
+
+void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames, char *title)
 {
   if(G->HaveGUI && G->ValidContext && view_elem) {
     int size = VLAGetSize(view_elem);
@@ -38,8 +60,8 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
     int nDrawn = frames;
     float top = rect->top - 2;
     float bot = rect->bottom + 2;
-    float mid_top = (3 * top + 2 * bot) / 5;
-    float mid_bot = (2 * top + 3 * bot) / 5;
+    float mid_top = (int)(0.499F+(3 * top + 2 * bot) / 5);
+    float mid_bot = (int)(0.499F+(2 * top + 3 * bot) / 5);
     float color[3] = { 0.3, 0.3, 0.9 };
     int cur_level = -1, last_level = -1;
     int cur;
@@ -83,6 +105,9 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
       last_level = cur_level;
       view_elem++;
     }
+
+    if(title)
+      TextDrawStrAt(G, title, rect->right + 1, (rect->bottom+rect->top)/2 - 3);
   }
 }
 
@@ -257,7 +282,14 @@ int ViewElemFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem * view)
       }
     }
   }
-
+  if(ok && (ll>16)) {
+    ok = PConvPyIntToInt(PyList_GetItem(list, 15), &view->power_flag);
+    if(ok && view->power_flag) {
+      ok = PConvPyFloatToFloat(PyList_GetItem(list, 16), &view->power);
+    } else {
+      view->power = 0.0F;
+    }
+  }
   return ok;
 #endif
 }

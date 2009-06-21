@@ -461,7 +461,11 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
                            float carve, int map_state, int side,
                            int quiet, int surf_mode, int box_mode);
 void ExecutiveDrawMotions(PyMOLGlobals * G, BlockRect *rect, int expected);
+
 void ExecutiveReinterpolateMotions(PyMOLGlobals * G);
+
+void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
+                               int index, int count, int freeze, int quiet);
 
 
 #endif

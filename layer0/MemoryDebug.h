@@ -131,6 +131,8 @@ typedef struct VLARec {
 #define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,size);}
 #define VLASizeForSure(ptr,type,size) {ptr=(type*)VLASetSizeForSure(ptr,size);}
 #define VLACopy(ptr,type) (type*)VLANewCopy(ptr);
+#define VLAInsert(ptr,type,index,count) {ptr=(type*)VLAInsertRaw(ptr,index,count);}
+#define VLADelete(ptr,type,index,count) {ptr=(type*)VLADeleteRaw(ptr,index,count);}
 
 #define Alloc(type,size) (type*)mmalloc(sizeof(type)*(size))
 #define Calloc(type,size) (type*)mcalloc(sizeof(type),size)
@@ -141,6 +143,9 @@ typedef struct VLARec {
 void *VLAExpand(void *ptr, ov_size rec);        /* NOTE: rec is index (total-1) */
 void *MemoryReallocForSure(void *ptr, unsigned int newSize);
 void *MemoryReallocForSureSafe(void *ptr, unsigned int newSize, unsigned int oldSize);
+
+void *VLADeleteRaw(void *ptr, int index, unsigned int count);
+void *VLAInsertRaw(void *ptr, int index, unsigned int count);
 
 #ifndef _MemoryDebug_ON
 void *VLAMalloc(ov_size init_size, ov_size unit_size, unsigned int grow_factor, int auto_zero); /*growfactor 1-10 */

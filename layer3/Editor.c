@@ -158,7 +158,9 @@ static void EditorConfigMouse(PyMOLGlobals * G)
   int scheme = EditorGetScheme(G);
   char *mouse_mode = SettingGetGlobal_s(G, cSetting_button_mode_name);
 
-  if(mouse_mode && ((!strcmp(mouse_mode, "3-Button Editing") == 0) || (!strcmp(mouse_mode, "3-Button Motions") == 0))) {        /* WEAK! */
+  if(mouse_mode && ((!strcmp(mouse_mode, "3-Button Editing") == 0) ||
+                    (!strcmp(mouse_mode, "3-Button Motions") == 0))) {        
+    /* WEAK! */
     int button;
 
     button = cButModeMiddleShft;
@@ -456,10 +458,10 @@ int EditorActive(PyMOLGlobals * G)
   return (I->Active);
 }
 
-ObjectMolecule *EditorDragObject(PyMOLGlobals * G)
+CObject *EditorDragObject(PyMOLGlobals * G)
 {
   register CEditor *I = G->Editor;
-  return (I->DragObject);
+  return &I->DragObject->Obj;
 }
 
 static void subdivide(int n, float *x, float *y);
@@ -1948,6 +1950,18 @@ void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
     I->DragHaveAxis, I->DragHaveBase, I->DragBondFlag, I->DragSlowFlag, seleFlag ENDFD;
 }
 
+int EditorDraggingObjectMatrix(PyMOLGlobals *G)
+{
+  register CEditor *I = G->Editor;
+  if(I->DragObject && (I->DragSelection < 0) && (I->DragIndex == -1)) {
+    int matrix_mode = SettingGet_b(G, I->DragObject->Obj.Setting,NULL, cSetting_matrix_mode);
+    if(matrix_mode == 1) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int state,
                 float *pt, float *mov, float *z_dir)
 {
@@ -1974,7 +1988,6 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
       if(!EditorActive(G)) {
         int matrix_mode = SettingGet_b(G, I->DragObject->Obj.Setting,
                                        NULL, cSetting_matrix_mode);
-
         /* non-achored actions */
         switch (mode) {
         case cButModeRotDrag:

@@ -44,6 +44,22 @@ void ObjectPurgeSettings(CObject * I)
   I->Setting = NULL;
 }
 
+void ObjectMotionReinterpolate(CObject *I)
+{
+  ObjectMotion(I, 3, -1, -1,0.0F,1.0F, 0, 0.0F,  
+             SettingGetGlobal_b(I->G,cSetting_movie_loop) ? 1 : 0,
+             1, 5, 1, -1, 1);
+}
+
+int ObjectMotionModify(CObject *I,int action, int index, int count,int freeze)
+{
+  int ok = ViewElemModify(I->G, &I->ViewElem,action,index,count);
+  if(ok && (!freeze) && SettingGetGlobal_i(I->G,cSetting_movie_auto_interpolate)) {
+    ObjectMotionReinterpolate(I);
+  }
+  return ok;
+}
+
 static void TTTToViewElem(float *TTT, CViewElem * elem)
 {
   register float *fp = TTT;
@@ -151,11 +167,11 @@ int ObjectGetSpecLevel(CObject * I, int frame)
 void ObjectDrawViewElem(CObject *I, BlockRect *rect,int frames)
 {
   if(I->ViewElem) {
-    ViewElemDraw(I->G,I->ViewElem,rect,frames);
+    ViewElemDraw(I->G,I->ViewElem,rect,frames,I->Name);
   }
 }
 
-int ObjectView(CObject * I, int action, int first,
+int ObjectMotion(CObject * I, int action, int first,
                int last, float power, float bias,
                int simple, float linear, int wrap,
                int hand, int window, int cycles, int state, int quiet)
@@ -202,7 +218,7 @@ int ObjectView(CObject * I, int action, int first,
             VLACheck(I->ViewElem, CViewElem, frame);
             if(!quiet) {
               PRINTFB(G, FB_Object, FB_Details)
-                " ObjectView: Setting frame %d.\n", frame + 1 ENDFB(G);
+                " ObjectMotion: Setting frame %d.\n", frame + 1 ENDFB(G);
             }
             TTTToViewElem(I->TTT, I->ViewElem + frame);
 
@@ -290,21 +306,21 @@ int ObjectView(CObject * I, int action, int first,
         if(action == 2) {
           if(last == nFrame) {
             PRINTFB(G, FB_Object, FB_Details)
-              " ObjectView: interpolating unspecified frames %d to %d (wrapping).\n",
+              " ObjectMotion: interpolating unspecified frames %d to %d (wrapping).\n",
               first + 1, last ENDFB(G);
           } else {
             PRINTFB(G, FB_Object, FB_Details)
-              " ObjectView: interpolating unspecified frames %d to %d.\n", first + 1,
+              " ObjectMotion: interpolating unspecified frames %d to %d.\n", first + 1,
               last + 1 ENDFB(G);
           }
         } else {
           if(last == nFrame) {
             PRINTFB(G, FB_Object, FB_Details)
-              " ObjectView: reinterpolating all frames %d to %d (wrapping).\n", first + 1,
+              " ObjectMotion: reinterpolating all frames %d to %d (wrapping).\n", first + 1,
               last ENDFB(G);
           } else {
             PRINTFB(G, FB_Object, FB_Details)
-              " ObjectView: reinterpolating all frames %d to %d.\n", first + 1, last + 1
+              " ObjectMotion: reinterpolating all frames %d to %d.\n", first + 1, last + 1
               ENDFB(G);
           }
         }
@@ -404,6 +420,9 @@ int ObjectView(CObject * I, int action, int first,
       VLAFreeP(I->ViewElem);
     }
     break;
+  }
+  if(I->ViewElem) {
+    VLASize(I->ViewElem,CViewElem,nFrame);
   }
   return 1;
 }
@@ -682,10 +701,11 @@ void ObjectTranslateTTT(CObject * I, float *v, int store)
     I->TTTFlag = true;
     initializeTTT44f(I->TTT);
   }
-  I->TTT[3] += v[0];
-  I->TTT[7] += v[1];
-  I->TTT[11] += v[2];
-
+  if(v) {
+    I->TTT[3] += v[0];
+    I->TTT[7] += v[1];
+    I->TTT[11] += v[2];
+  }
   if(store) {
     if(!I->ViewElem)  
       I->ViewElem = VLACalloc(CViewElem, 0);
@@ -779,15 +799,20 @@ void ObjectPrepareContext(CObject * I, CRay * ray)
     int frame = SceneGetFrame(I->G);
     if(frame >= 0) {
       VLACheck(I->ViewElem, CViewElem, frame);
-
-      if(I->ViewElem[frame].specification_level) {
-        TTTFromViewElem(I->TTT, I->ViewElem + frame);
-        I->TTTFlag = true;
-      }
-      if(I->ViewElem[frame].state_flag) {
-	if(I->Setting) {
-	  SettingSet_i(I->Setting,cSetting_state,I->ViewElem[frame].state + 1);
-	}
+      
+      if(I->Grabbed) {
+        TTTToViewElem(I->TTT, I->ViewElem + frame);
+        I->ViewElem[frame].specification_level = 2;
+      } else {
+        if(I->ViewElem[frame].specification_level) {
+          TTTFromViewElem(I->TTT, I->ViewElem + frame);
+          I->TTTFlag = true;
+        }
+        if(I->ViewElem[frame].state_flag) {
+          if(I->Setting) {
+            SettingSet_i(I->Setting,cSetting_state,I->ViewElem[frame].state + 1);
+          }
+        }
       }
     }
   }

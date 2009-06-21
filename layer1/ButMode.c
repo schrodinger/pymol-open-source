@@ -28,6 +28,7 @@
 #include "Setting.h"
 #include "P.h"
 #include "Text.h"
+#include "Menu.h"
 
 #define cButModeLineHeight 12
 #define cButModeLeftMargin 2
@@ -147,7 +148,6 @@ static int ButModeClick(Block * block, int button, int x, int y, int mod)
   /*  register CButMode *I=block->G->ButMode; */
   if(dy < 2) {
     if(ButModeTranslate(G, P_GLUT_SINGLE_LEFT, 0) != cButModePickAtom) {
-
       switch (mod) {
       case cOrthoSHIFT:
         forward = !forward;
@@ -162,17 +162,21 @@ static int ButModeClick(Block * block, int button, int x, int y, int mod)
       }
     }
   } else {
-    switch (mod) {
-    case cOrthoSHIFT:
-      forward = !forward;
-      break;
-    }
-    if(!forward) {
-      PLog(G, "cmd.mouse('backward')", cPLog_pym);
-      OrthoCommandIn(G, "mouse backward,quiet=1");
+    if(button == P_GLUT_RIGHT_BUTTON) {
+      MenuActivate0Arg(G,x,y,x,y,false,"mouse_config");
     } else {
-      PLog(G, "cmd.mouse('forward')", cPLog_pym);
-      OrthoCommandIn(G, "mouse forward,quiet=1");
+      switch (mod) {
+      case cOrthoSHIFT:
+        forward = !forward;
+        break;
+      }
+      if(!forward) {
+        PLog(G, "cmd.mouse('backward')", cPLog_pym);
+        OrthoCommandIn(G, "mouse backward,quiet=1");
+      } else {
+        PLog(G, "cmd.mouse('forward')", cPLog_pym);
+        OrthoCommandIn(G, "mouse forward,quiet=1");
+      }
     }
   }
   return (1);
@@ -415,11 +419,11 @@ static void ButModeDraw(Block * block)
       }
       TextDrawStrAt(G, rateStr, x + 48, y);
       if(has_movie && !frame_rate) {
-	TextSetColor(G, textColor);
-	TextDrawStrAt(G, "State ", x + 128, y);
-	TextSetColor(G, textColor2);
-	sprintf(rateStr," %4d",SceneGetState(G)+1);
-	TextDrawStrAt(G, rateStr, x + 168, y);
+        TextSetColor(G, textColor);
+        TextDrawStrAt(G, "State ", x + 128, y);
+        TextSetColor(G, textColor2);
+        sprintf(rateStr," %4d",SceneGetState(G)+1);
+        TextDrawStrAt(G, rateStr, x + 168, y);
       }
     }
   }

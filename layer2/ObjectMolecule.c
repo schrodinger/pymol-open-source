@@ -4225,7 +4225,7 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule * I, int state,
   int last_occ = -1;
   int n;
   int a1;
-  float v0[3], v1[3], n0[3], t[3];
+  float v0[3], v1[3], n0[3] = {0.0F,0.0F,0.0F}, t[3];
   int result = false;
   AtomInfoType *ai, *ai1;
   float y[3], z[3];
