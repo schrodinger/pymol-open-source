@@ -482,6 +482,13 @@ class FileDialogButtonClassFactory:
         return FileDialogButton
     get = staticmethod(get)
 
+apbs_plea = ("IMPORTANT REQUEST: If you have not already done so, please register\n"
+             "your use of the open-source Adaptive Poisson-Boltzmann Solver (APBS) at\n"
+             "-> http://agave.wustl.edu/apbs/download\n"
+             "Such proof of usage is vital in securing funding for APBS development!\n")
+
+apbs_message = """You must have APBS installed on your system."""
+
 class VisualizationGroup(Pmw.Group):
     def __init__(self,*args,**kwargs):
         Pmw.Group.__init__(self,*args,**kwargs)
@@ -695,7 +702,7 @@ class APBSTools:
         
         # Create the dialog.
         self.dialog = Pmw.Dialog(parent,
-                                 buttons = ('Run APBS','Set grid', 'Exit APBS tools'),
+                                 buttons = ('Register APBS Use', 'Set grid', 'Run APBS', 'Exit APBS tools'),
                                  #defaultbutton = 'Run APBS',
                                  title = 'PyMOL APBS Tools',
                                  command = self.execute)
@@ -703,7 +710,7 @@ class APBSTools:
         Pmw.setbusycursorattributes(self.dialog.component('hull'))
 
         w = Tkinter.Label(self.dialog.interior(),
-                                text = 'PyMOL APBS Tools\nMichael Lerner, 2004 - www.umich.edu/~mlerner/Pymol\n(incorporates modifications by WLD)',
+                                text = 'PyMOL APBS Tools\nMichael Lerner, 2004 - www.umich.edu/~mlerner/Pymol\n(incorporates modifications by Warren L. DeLano)',
                                 background = 'black',
                                 foreground = 'white',
                                 #pady = 20,
@@ -978,6 +985,11 @@ class APBSTools:
                         elif os.path.isfile(APBS_BINARY_LOCATION.replace('"','')):
                             APBS_BINARY_LOCATION = APBS_BINARY_LOCATION.replace('"','')
                             found = 1
+                    if found:
+                        print "Located Open-Source APBS inside the FreeMOL bundle (http://freemol.org).\n"+apbs_plea
+                        global apbs_message
+                        apbs_message = apbs_plea
+                        
                 except:
                     pass
             if not found:
@@ -1004,7 +1016,6 @@ class APBSTools:
                     pass
             if (not found) or (APBS_PSIZE_LOCATION is None):
                 APBS_PSIZE_LOCATION = ''
-
         self.binary = Pmw.EntryField(group.interior(),
                                      labelpos='w',
                                      label_pyclass = FileDialogButtonClassFactory.get(self.setBinaryLocation),
@@ -1021,11 +1032,12 @@ class APBSTools:
                                      label_text = 'APBS psize.py location:',
                                      )
         self.psize.pack(fill = 'x', padx = 20, pady = 10)
+
+                
         label = Tkinter.Label(group.interior(),
                               pady = 10,
                               justify=LEFT,
-                              text = """You must have APBS installed on your system.
-
+                              text = apbs_message + """
 The PyMOL APBS tools can calculate proper grid dimensions and spacing (we ensure the the
 fine mesh spacing is 0.5A or finer).  If you wish to use APBS's psize.py to set up the
 grid, make sure that the path is set correctly above.
@@ -1112,12 +1124,16 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
         self.showAppModal()
          
     def showAppModal(self):
-        #self.dialog.activate(geometry = 'centerscreenalways', globalMode = 'nograb')
+        self.dialog.activate(geometry = 'centerscreenfirst', globalMode = 'nograb')
         self.dialog.show()
         #self.dialog.activate(geometry = 'centerscreenalways')
 
     def execute(self, result):
-        if result == 'Run APBS':
+        if result == 'Register APBS Use':
+            import webbrowser
+            webbrowser.open("http://agave.wustl.edu/apbs/download")
+            
+        elif result == 'Run APBS':
             good = self.generateApbsInputFile()
             if not good:
                 return False

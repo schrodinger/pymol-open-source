@@ -1,8 +1,8 @@
 #ifndef _PyMOL_VERSION
 #ifndef PYMOL_EVAL
-#define _PyMOL_VERSION "1.2b7"
+#define _PyMOL_VERSION "1.2b8"
 #else
-#define _PyMOL_VERSION "1.2.7"
+#define _PyMOL_VERSION "1.2.8"
 #endif
 #endif
 
