@@ -658,6 +658,7 @@ if __name__=='pymol.setting':
         movie_auto_store                   = 620
         movie_auto_interpolate             = 621
         movie_panel_row_height             = 622
+        scene_frame_mode                   = 623
 
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

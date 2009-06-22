@@ -273,6 +273,41 @@ void ExecutiveDrawMotions(PyMOLGlobals * G, BlockRect *rect, int expected)
   }
 }
 
+void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int x, int y)
+{
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  BlockRect draw_rect = *rect;
+  int count = 0;
+  int height = rect->top - rect->bottom;
+  while(ListIterate(I->Spec, rec, next)) {
+    switch(rec->type) {
+    case cExecAll:
+      if(MovieGetSpecLevel(G,0)>=0) {
+        draw_rect.top = rect->top - (height * count) / expected;
+        draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
+        if((y>draw_rect.bottom) && (y<draw_rect.top)) {
+          MenuActivate0Arg(G, x, y, x, y, false, "camera_motion");
+          break;
+        }
+        count++;
+      }
+      break;
+    case cExecObject:
+      if(ObjectGetSpecLevel(rec->obj,0)>=0) {
+        draw_rect.top = rect->top - (height * count) / expected;
+        draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
+        if((y>draw_rect.bottom) && (y<draw_rect.top)) {
+          MenuActivate(G, x, y, x, y, false, "obj_motion", rec->obj->Name);
+          break;
+        }
+        count++;
+      }
+      break;
+    }
+  }
+}
+
 int ExecutiveReference(PyMOLGlobals * G, int action, char *sele, int state, int quiet)
 {
   int result = -1;
@@ -14354,13 +14389,13 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                 switch (rec->type) {
                 case cExecAll:
                 case cExecSelection:
-                  MenuActivate(G, mx, my, x, y, false, "all_motion", rec->name);
+                  MenuActivate0Arg(G, mx, my, x, y, false, "camera_motion");
                   break;
                 case cExecObject:
                   switch (rec->obj->type) {
                   case cObjectGroup:
                   case cObjectMolecule:
-                    MenuActivate(G, mx, my, x, y, false, "mol_motion", rec->obj->Name);
+                    MenuActivate(G, mx, my, x, y, false, "obj_motion", rec->obj->Name);
                     break;
                     /*
                        case cObjectMeasurement:
