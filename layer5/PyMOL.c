@@ -793,6 +793,8 @@ typedef struct _CPyMOL {
   ov_word lex_movie_auto_store;
   ov_word lex_movie_auto_interpolate;
   ov_word lex_movie_panel_row_height;
+  ov_word lex_scene_frame_mode;
+
 } _CPyMOL;
 
 
@@ -1575,6 +1577,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(movie_auto_store, 620);
   LEX_SETTING(movie_auto_interpolate, 621);
   LEX_SETTING(movie_panel_row_height, 622);
+  LEX_SETTING(scene_frame_mode, 623);
 
   return_OVstatus_SUCCESS;
 }

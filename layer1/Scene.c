@@ -935,8 +935,11 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
       }
     }
   }
+  if(elem->state_flag&&!MovieDefined(G)) {
+    printf("%d\n",elem->state+1);
+    SettingSetGlobal_i(G, cSetting_state, (elem->state)+1);
+  }
   if(changed_flag) {
-
     SceneRestartSweepTimer(G);
     I->RockFrame = 0;
     SceneRovingDirty(G);

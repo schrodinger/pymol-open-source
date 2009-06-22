@@ -441,7 +441,7 @@ PYMOL API
         return r
 
 
-    def frame(frame,_self=cmd):
+    def frame(frame,trigger=-1,scene=0,_self=cmd):
         '''
 DESCRIPTION
 
@@ -474,13 +474,13 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            r = _cmd.frame(_self._COb,int(frame))
+            r = _cmd.frame(_self._COb,int(frame),int(trigger),int(scene))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
-    def mdelete(count,frame=0,freeze=0,object='',quiet=1,_self=cmd):
+    def mdelete(count=-1,frame=0,freeze=0,object='',quiet=1,_self=cmd):
         '''
 DESCRIPTION
 
@@ -492,16 +492,17 @@ SEE ALSO
 
     '''
         r = DEFAULT_ERROR
-        frame = int(frame)
         count = int(count)
         freeze = int(freeze)
         object = str(object)
+        if not frame: # 0 means use current frame
+            frame = _self.get_frame() - 1
+        else:
+            frame -= 1
+        if count < 0: # negative count means delete to end
+            count = 1 + _self.count_frames() - _self.get_frame()
         try:
             _self.lock(_self)
-            if not frame:
-                frame = -1 - count
-            else:
-                frame -= 1
             r = _cmd.mmodify(_self._COb,-1,frame,count,
                              freeze,object,quiet)
         finally:
@@ -525,12 +526,12 @@ SEE ALSO
         count = int(count)
         freeze = int(freeze)
         object = str(object)
+        if not frame: # 0 means use current frame
+            frame = _self.get_frame() - 1
+        else:
+            frame -= 1
         try:
             _self.lock(_self)
-            if not frame:
-                frame = -1 - count
-            else:
-                frame -= 1
             r = _cmd.mmodify(_self._COb,1,frame,count,
                              freeze,object,quiet)
         finally:

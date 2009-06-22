@@ -85,7 +85,7 @@ void MovieViewReinterpolate(PyMOLGlobals *G)
 {
   MovieView(G, 3, -1, -1, 0.0F, 1.0F, 0, 0.0F, 
             SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0 ,
-            1, 5, 1, NULL, 0.5, -1, 1); 
+            1, 5, 1, NULL, 0.5, -1, 0); 
 }
 
 int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int freeze)
@@ -1071,6 +1071,9 @@ int MovieView(PyMOLGlobals * G, int action, int first,
           if(state>=0) {
             I->ViewElem[frame].state = state;
             I->ViewElem[frame].state_flag = true;
+          } else if(state==-2) {
+            I->ViewElem[frame].state = SceneGetState(G);
+            I->ViewElem[frame].state_flag = true;
           }
 
           if(power!=0.0F) {
@@ -1396,7 +1399,9 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
   PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
   if(button == P_GLUT_RIGHT_BUTTON) {
-    MenuActivate(G, x, y, x, y, false, "all_motion", "");
+    int count = ExecutiveCountMotions(G);
+    BlockRect rect = block->rect;
+    ExecutiveMotionMenuActivate(G,&rect,count,x,y);
   } else {
     ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
   }

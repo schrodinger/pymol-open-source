@@ -467,5 +467,6 @@ void ExecutiveReinterpolateMotions(PyMOLGlobals * G);
 void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
                                int index, int count, int freeze, int quiet);
 
+void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int x, int y);
 
 #endif

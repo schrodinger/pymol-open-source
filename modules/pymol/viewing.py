@@ -1398,7 +1398,7 @@ SEE ALSO
                         if list[2]!=None:
                             if not _self.get_movie_playing(): # don't set frame when movie is already playing
                                 if _self.get_frame()!=list[2]: # only set the frame when it isn't already correct
-                                    _self.frame(list[2])
+                                    _self.frame(list[2],scene=1) # let frame know that it is being set by a scene
                     if (ll>3) and (color):
                         if list[3]!=None:
                             _self.set_colorection(list[3],key)

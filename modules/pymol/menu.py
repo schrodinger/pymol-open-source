@@ -65,7 +65,7 @@ def smooth(self_cmd,extra=''):
             [ 1, 'more'     ,   'cmd.mview("smooth",window=15%s)'%extra ],
             [ 1, 'a lot'   ,   'cmd.mview("smooth",window=30%s)'%extra ]]
               
-def all_motion(self_cmd, sele):
+def camera_motion(self_cmd):
     return [[ 2, 'Camera Motions:'     , ''                       ],     
             [ 1, 'store'         , 'cmd.mview("store")'      ],
             [ 1, 'store with scene' , all_store_with_scene(self_cmd) ],
@@ -82,19 +82,19 @@ def all_motion(self_cmd, sele):
             [ 1, 'purge'   , 'cmd.mset()'   ],            
             ]
 
-def mol_motion(self_cmd, sele):
+def obj_motion(self_cmd, obj):
     return [[ 2, 'Object Motions:'     , ''                       ],     
-            [ 1, 'store'         , 'cmd.mview("store",object="'+sele+'")'      ],
-            [ 1, 'clear'       ,   'cmd.mview("clear",object="'+sele+'")'    ],
+            [ 1, 'store'         , 'cmd.mview("store",object="'+obj+'")'      ],
+            [ 1, 'clear'       ,   'cmd.mview("clear",object="'+obj+'")'    ],
             [ 0, ''               ,''                             ],
-            [ 1, 'smooth'         , smooth(self_cmd,'object="'+sele+'"') ],
+            [ 1, 'smooth'         , smooth(self_cmd,'object="'+obj+'"') ],
             [ 0, ''               ,''                             ],
-            [ 1, 'interpolate'   ,   'cmd.mview("interpolate",object="'+sele+'")'    ],
-            [ 1, 'reinterpolate'   ,   'cmd.mview("reinterpolate",object="'+sele+'")'    ],
-            [ 1, 'uninterpolate'   ,   'cmd.mview("uninterpolate",object="'+sele+'")'    ],
+            [ 1, 'interpolate'   ,   'cmd.mview("interpolate",object="'+obj+'")'    ],
+            [ 1, 'reinterpolate'   ,   'cmd.mview("reinterpolate",object="'+obj+'")'    ],
+            [ 1, 'uninterpolate'   ,   'cmd.mview("uninterpolate",object="'+obj+'")'    ],
             [ 0, ''               ,''                             ],
-            [ 1, 'reset'       ,   'cmd.mview("reset",object="'+sele+'")'    ],
-            [ 1, 'purge'       ,   'cmd.mview("purge",object="'+sele+'")'    ],
+            [ 1, 'reset'       ,   'cmd.mview("reset",object="'+obj+'")'    ],
+            [ 1, 'purge'       ,   'cmd.mview("purge",object="'+obj+'")'    ],
             ]
 
 def rep_action(self_cmd, sele, action) :

@@ -5656,9 +5656,9 @@ static PyObject *CmdSetFrame(PyObject * self, PyObject * args)
 static PyObject *CmdFrame(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
-  int frm;
+  int frm,trigger,from_scene;
   int ok = false;
-  ok = PyArg_ParseTuple(args, "Oi", &self, &frm);
+  ok = PyArg_ParseTuple(args, "Oiii", &self, &frm,&trigger,&from_scene);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -5670,7 +5670,15 @@ static PyObject *CmdFrame(PyObject * self, PyObject * args)
     if(frm < 0)
       frm = 0;
     if((ok = APIEnterNotModal(G))) {
-      SceneSetFrame(G, 4, frm);
+      int suppress = 0;
+      int scene_frame_mode = SettingGetGlobal_i(G,cSetting_scene_frame_mode);
+      if(from_scene) {
+        if((scene_frame_mode == 0) ||
+           ((scene_frame_mode<0) && MovieDefined(G)))
+          suppress = true;
+      }
+      if(!suppress)
+        SceneSetFrame(G, trigger ? 4 : 0, frm);
       APIExit(G);
     }
   }

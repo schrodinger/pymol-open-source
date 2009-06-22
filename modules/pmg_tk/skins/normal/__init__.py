@@ -1555,46 +1555,46 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenu('Movie', 'Movie Control',tearoff=TRUE)
         
-        self.menuBar.addcascademenu('Movie', 'Add', 'Add',
-                                    label='Add')
+        self.menuBar.addcascademenu('Movie', 'Append', 'Append',
+                                    label='Append')
 
-        self.menuBar.addmenuitem('Add', 'command', '0.25 second',label='0.25 second',
+        self.menuBar.addmenuitem('Append', 'command', '0.25 second',label='0.25 second',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(0.25)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '0.5 second',label='0.5 second',
+        self.menuBar.addmenuitem('Append', 'command', '0.5 second',label='0.5 second',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(0.5)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '1 second',label='1 second',
+        self.menuBar.addmenuitem('Append', 'command', '1 second',label='1 second',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(1.0)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '2 seconds',label='2 seconds',
+        self.menuBar.addmenuitem('Append', 'command', '2 seconds',label='2 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(2.0)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '3 seconds',label='3 seconds',
+        self.menuBar.addmenuitem('Append', 'command', '3 seconds',label='3 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(3.0)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '4 seconds',label='4 seconds',
+        self.menuBar.addmenuitem('Append', 'command', '4 seconds',label='4 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(4.0)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '8 seconds',label='8 seconds',
+        self.menuBar.addmenuitem('Append', 'command', '8 seconds',label='8 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(8.0)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '12 seconds',label='12 seconds',
+        self.menuBar.addmenuitem('Append', 'command', '12 seconds',label='12 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(12.0)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '18 seconds',label='18 seconds',
+        self.menuBar.addmenuitem('Append', 'command', '18 seconds',label='18 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(12.0)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '24 seconds',label='24 seconds',
+        self.menuBar.addmenuitem('Append', 'command', '24 seconds',label='24 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(24.0)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '30 seconds',label='30 seconds',
+        self.menuBar.addmenuitem('Append', 'command', '30 seconds',label='30 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(12.0)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '48 seconds',label='48 seconds',
+        self.menuBar.addmenuitem('Append', 'command', '48 seconds',label='48 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(48.0)"))
 
-        self.menuBar.addmenuitem('Add', 'command', '60 seconds',label='60 seconds',
+        self.menuBar.addmenuitem('Append', 'command', '60 seconds',label='60 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(60.0)"))
 
         self.menuBar.addcascademenu('Movie', 'Program', 'Program',
