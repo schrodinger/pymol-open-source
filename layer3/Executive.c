@@ -288,7 +288,7 @@ void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected
         draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
         if((y>draw_rect.bottom) && (y<draw_rect.top)) {
           MenuActivate0Arg(G, x, y, x, y, false, "camera_motion");
-          break;
+          goto done;
         }
         count++;
       }
@@ -299,13 +299,15 @@ void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected
         draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
         if((y>draw_rect.bottom) && (y<draw_rect.top)) {
           MenuActivate(G, x, y, x, y, false, "obj_motion", rec->obj->Name);
-          break;
+          goto done;
         }
         count++;
       }
       break;
     }
   }
+ done:
+  return;
 }
 
 int ExecutiveReference(PyMOLGlobals * G, int action, char *sele, int state, int quiet)
