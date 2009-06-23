@@ -818,10 +818,10 @@ void SceneToViewElem(PyMOLGlobals * G, CViewElem * elem, char *scene_name)
   *(dp++) = (double) *(fp++);
   *(dp++) = (double) *(fp++);
 
-  *(dp++) = (double) *(fp++);
-  *(dp++) = (double) *(fp++);
-  *(dp++) = (double) *(fp++);
-  *(dp++) = (double) *(fp++);
+  *(dp++) = 0.0F;
+  *(dp++) = 0.0F;
+  *(dp++) = 0.0F;
+  *(dp++) = 1.0F;
 
   /* copy position */
   elem->pre_flag = true;

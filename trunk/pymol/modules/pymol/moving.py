@@ -493,14 +493,20 @@ SEE ALSO
     '''
         r = DEFAULT_ERROR
         count = int(count)
+        frame = int(frame)
         freeze = int(freeze)
         object = str(object)
+        cur_len = _self.count_frames()
         if not frame: # 0 means use current frame
             frame = _self.get_frame() - 1
+        elif frame<0:
+            frame = _self.count_frames() + 1 + frame
+            if (count>0) and (frame + count) > cur_len:
+                frame = cur_len - count
         else:
             frame -= 1
         if count < 0: # negative count means delete to end
-            count = 1 + _self.count_frames() - _self.get_frame()
+            count = 1 + cur_len - _self.get_frame()
         try:
             _self.lock(_self)
             r = _cmd.mmodify(_self._COb,-1,frame,count,
