@@ -47,15 +47,21 @@ void ObjectPurgeSettings(CObject * I)
 void ObjectMotionReinterpolate(CObject *I)
 {
   ObjectMotion(I, 3, -1, -1,0.0F,1.0F, 0, 0.0F,  
-             SettingGetGlobal_b(I->G,cSetting_movie_loop) ? 1 : 0,
-             1, 5, 1, -1, 1);
+               SettingGetGlobal_b(I->G,cSetting_movie_loop) ? 1 : 0,
+               1, 5, 1, -1, 1);
 }
 
 int ObjectMotionModify(CObject *I,int action, int index, int count,int freeze)
 {
-  int ok = ViewElemModify(I->G, &I->ViewElem,action,index,count);
-  if(ok && (!freeze) && SettingGetGlobal_i(I->G,cSetting_movie_auto_interpolate)) {
-    ObjectMotionReinterpolate(I);
+  int ok;
+
+  if(I->type == cObjectGroup) { /* propagate */
+    ok = ExecutiveGroupMotionModify(I->G,I,action,index,count,freeze);
+  } else {
+    ok = ViewElemModify(I->G, &I->ViewElem,action,index,count);
+    if(ok && (!freeze) && SettingGetGlobal_i(I->G,cSetting_movie_auto_interpolate)) {
+      ObjectMotionReinterpolate(I);
+    }
   }
   return ok;
 }
@@ -177,252 +183,257 @@ int ObjectMotion(CObject * I, int action, int first,
                int hand, int window, int cycles, int state, int quiet)
 {
   register PyMOLGlobals *G = I->G;
-  int frame;
-  int nFrame = MovieGetLength(I->G);
+  if(I->type == cObjectGroup) { /* propagate */
+    return ExecutiveGroupMotion(G,I,action,first,last, power,bias,simple,linear,wrap,hand,window,cycles,state,quiet);
+  } else {
+    
+    int frame;
+    int nFrame = MovieGetLength(I->G);
 
-  if(nFrame < 0)
-    nFrame = -nFrame;
+    if(nFrame < 0)
+      nFrame = -nFrame;
 
-  if(!I->ViewElem) {
-    I->ViewElem = VLACalloc(CViewElem, 0);
-  }
-
-  switch (action) {
-  case 0:                      /* store */
-    if(!I->TTTFlag) {
-      float mn[3], mx[3], orig[3];
-      if(ExecutiveGetExtent(G, I->Name, mn, mx, true, -1, true)) {
-        average3f(mn, mx, orig);
-        ObjectSetTTTOrigin(I, orig);
-      } else {
-        initializeTTT44f(I->TTT);
-        I->TTTFlag = true;
-      }
+    if(!I->ViewElem) {
+      I->ViewElem = VLACalloc(CViewElem, 0);
     }
-    if(I->ViewElem && I->TTTFlag) {
-      if(first < 0)
-        first = SceneGetFrame(G);
-      if(last < 0)
-        last = first;
-      {
-        int state_tmp=0, state_flag = false;
-        if(state>=0) {
-          state_tmp = state;
-          state_flag = true;
-        } else if(SettingGetIfDefined_i(G, I->Setting, cSetting_state, &state_tmp)) {
-          state_flag = true;
+
+    switch (action) {
+    case 0:                      /* store */
+      if(!I->TTTFlag) {
+        float mn[3], mx[3], orig[3];
+        if(ExecutiveGetExtent(G, I->Name, mn, mx, true, -1, true)) {
+          average3f(mn, mx, orig);
+          ObjectSetTTTOrigin(I, orig);
+        } else {
+          initializeTTT44f(I->TTT);
+          I->TTTFlag = true;
         }
+      }
+      if(I->ViewElem && I->TTTFlag) {
+        if(first < 0)
+          first = SceneGetFrame(G);
+        if(last < 0)
+          last = first;
+        {
+          int state_tmp=0, state_flag = false;
+          if(state>=0) {
+            state_tmp = state;
+            state_flag = true;
+          } else if(SettingGetIfDefined_i(G, I->Setting, cSetting_state, &state_tmp)) {
+            state_flag = true;
+          }
         
-        for(frame = first; frame <= last; frame++) {
-          if((frame >= 0) && (frame < nFrame)) {
-            VLACheck(I->ViewElem, CViewElem, frame);
-            if(!quiet) {
-              PRINTFB(G, FB_Object, FB_Details)
-                " ObjectMotion: Setting frame %d.\n", frame + 1 ENDFB(G);
-            }
-            TTTToViewElem(I->TTT, I->ViewElem + frame);
-
-            if(state_flag) {
-              I->ViewElem[frame].state_flag = state_flag;
-              I->ViewElem[frame].state = state_tmp - 1;
-            }
-
-            if(power!=0.0F) {
-              I->ViewElem[frame].power_flag = true;
-              I->ViewElem[frame].power = power;
-            }
-            I->ViewElem[frame].specification_level = 2;
-          }
-
-        }
-      }
-    }
-    break;
-  case 1:                      /* clear */
-    if(I->ViewElem) {
-      if(first < 0)
-        first = SceneGetFrame(G);
-      if(last < 0)
-        last = first;
-      for(frame = first; frame <= last; frame++) {
-        if((frame >= 0) && (frame < nFrame)) {
-          VLACheck(I->ViewElem, CViewElem, frame);
-          ViewElemArrayPurge(G, I->ViewElem + frame, 1);
-          UtilZeroMem((void *) (I->ViewElem + frame), sizeof(CViewElem));
-        }
-      }
-    }
-    break;
-  case 2:                      /* interpolate & reinterpolate */
-  case 3:
-    {
-      CViewElem *first_view = NULL, *last_view = NULL;
-      int zero_flag = -1;
-
-      if(first < 0)
-        first = 0;
-      if(first > nFrame) {
-        first = nFrame - 1;
-      }
-
-      if(last < 0) {
-        last = nFrame;
-        if(last) {
-          if(!wrap)
-            last--;
-          else {
-            int frame = 0;
-            VLACheck(I->ViewElem, CViewElem, last);
-            for(frame = 0; frame < last; frame++) {
-              if(I->ViewElem[frame].specification_level > 1) {
-                last += frame;
-                break;
+          for(frame = first; frame <= last; frame++) {
+            if((frame >= 0) && (frame < nFrame)) {
+              VLACheck(I->ViewElem, CViewElem, frame);
+              if(!quiet) {
+                PRINTFB(G, FB_Object, FB_Details)
+                  " ObjectMotion: Setting frame %d.\n", frame + 1 ENDFB(G);
               }
-            }
-          }
-        }
-      } else {
-        if(last >= nFrame) {
-          last = nFrame;
-          if(last && !wrap)
-            last--;
-        }
-      }
+              TTTToViewElem(I->TTT, I->ViewElem + frame);
 
-      VLACheck(I->ViewElem, CViewElem, last);
-
-      if(wrap && (last >= nFrame)) {
-        /* if we're interpolating beyond the last frame, then wrap by
-           copying early frames to last frames */
-        int a;
-        for(a = nFrame; a <= last; a++) {
-          ViewElemCopy(G, I->ViewElem + a - nFrame, I->ViewElem + a);
-        }
-        zero_flag = last;
-      }
-
-      VLACheck(I->ViewElem, CViewElem, last);
-      if(!quiet) {
-        if(action == 2) {
-          if(last == nFrame) {
-            PRINTFB(G, FB_Object, FB_Details)
-              " ObjectMotion: interpolating unspecified frames %d to %d (wrapping).\n",
-              first + 1, last ENDFB(G);
-          } else {
-            PRINTFB(G, FB_Object, FB_Details)
-              " ObjectMotion: interpolating unspecified frames %d to %d.\n", first + 1,
-              last + 1 ENDFB(G);
-          }
-        } else {
-          if(last == nFrame) {
-            PRINTFB(G, FB_Object, FB_Details)
-              " ObjectMotion: reinterpolating all frames %d to %d (wrapping).\n", first + 1,
-              last ENDFB(G);
-          } else {
-            PRINTFB(G, FB_Object, FB_Details)
-              " ObjectMotion: reinterpolating all frames %d to %d.\n", first + 1, last + 1
-              ENDFB(G);
-          }
-        }
-      }
-      for(frame = first; frame <= last; frame++) {
-        if(!first_view) {
-          if(I->ViewElem[frame].specification_level == 2) {     /* specified */
-            first_view = I->ViewElem + frame;
-          }
-        } else {
-          CViewElem *view;
-          int interpolate_flag = false;
-          if(I->ViewElem[frame].specification_level == 2) {     /* specified */
-            last_view = I->ViewElem + frame;
-            if(action == 2) {   /* interpolate */
-              for(view = first_view + 1; view < last_view; view++) {
-                if(!view->specification_level)
-                  interpolate_flag = true;
+              if(state_flag) {
+                I->ViewElem[frame].state_flag = state_flag;
+                I->ViewElem[frame].state = state_tmp - 1;
               }
-            } else {
-              interpolate_flag = true;
+
+              if(power!=0.0F) {
+                I->ViewElem[frame].power_flag = true;
+                I->ViewElem[frame].power = power;
+              }
+              I->ViewElem[frame].specification_level = 2;
             }
-            if(interpolate_flag) {
-              ViewElemInterpolate(G, first_view, last_view,
-                                  power, bias, simple, linear, hand, 0.0F);
-            }
-            first_view = last_view;
-            last_view = NULL;
+
           }
-        }
-      }
-
-      if(first_view) {
-        if(wrap && (last >= nFrame)) {
-          /* if we're interpolating beyond the last frame, then wrap by
-             copying the last frames back over the early frames */
-          int a;
-          for(a = nFrame; a <= last; a++) {
-            ViewElemCopy(G, I->ViewElem + a, I->ViewElem + a - nFrame);
-          }
-        }
-      }
-
-      if(last >= nFrame) {   /* now erase temporary views */
-        ViewElemArrayPurge(G, I->ViewElem + nFrame, (1 + last - nFrame));
-        UtilZeroMem((void *) (I->ViewElem + nFrame),
-                    sizeof(CViewElem) * (1 + last - nFrame));
-      }
-    }
-    break;
-  case 4:                      /* smooth */
-    {
-      if(first < 0)
-        first = 0;
-
-      if(last < 0) {
-        last = nFrame;
-      }
-      if(last >= nFrame) {
-        last = nFrame - 1;
-      }
-      if(first <= last) {
-        int a;
-        VLACheck(I->ViewElem, CViewElem, last);
-        for(a = 0; a < cycles; a++) {
-          ViewElemSmooth(I->ViewElem + first, I->ViewElem + last, window, wrap);
         }
       }
       break;
-    }
-  case 5:                      /* reset */
-    if(I->ViewElem) {
-      VLAFreeP(I->ViewElem);
-    }
-    I->ViewElem = VLACalloc(CViewElem, 0);
-    break;
-  case 6:                      /* uninterpolate */
-    if(I->ViewElem) {
-      if(first < 0)
-        first = 0;
-      if(last < 0) {
-        last = nFrame - 1;
-      }
-      for(frame = first; frame <= last; frame++) {
-        if((frame >= 0) && (frame <= last)) {
-          VLACheck(I->ViewElem, CViewElem, frame);
-          if(I->ViewElem[frame].specification_level < 2) {
+    case 1:                      /* clear */
+      if(I->ViewElem) {
+        if(first < 0)
+          first = SceneGetFrame(G);
+        if(last < 0)
+          last = first;
+        for(frame = first; frame <= last; frame++) {
+          if((frame >= 0) && (frame < nFrame)) {
+            VLACheck(I->ViewElem, CViewElem, frame);
             ViewElemArrayPurge(G, I->ViewElem + frame, 1);
             UtilZeroMem((void *) (I->ViewElem + frame), sizeof(CViewElem));
           }
         }
       }
+      break;
+    case 2:                      /* interpolate & reinterpolate */
+    case 3:
+      {
+        CViewElem *first_view = NULL, *last_view = NULL;
+        int zero_flag = -1;
+
+        if(first < 0)
+          first = 0;
+        if(first > nFrame) {
+          first = nFrame - 1;
+        }
+
+        if(last < 0) {
+          last = nFrame;
+          if(last) {
+            if(!wrap)
+              last--;
+            else {
+              int frame = 0;
+              VLACheck(I->ViewElem, CViewElem, last);
+              for(frame = 0; frame < last; frame++) {
+                if(I->ViewElem[frame].specification_level > 1) {
+                  last += frame;
+                  break;
+                }
+              }
+            }
+          }
+        } else {
+          if(last >= nFrame) {
+            last = nFrame;
+            if(last && !wrap)
+              last--;
+          }
+        }
+
+        VLACheck(I->ViewElem, CViewElem, last);
+
+        if(wrap && (last >= nFrame)) {
+          /* if we're interpolating beyond the last frame, then wrap by
+             copying early frames to last frames */
+          int a;
+          for(a = nFrame; a <= last; a++) {
+            ViewElemCopy(G, I->ViewElem + a - nFrame, I->ViewElem + a);
+          }
+          zero_flag = last;
+        }
+
+        VLACheck(I->ViewElem, CViewElem, last);
+        if(!quiet) {
+          if(action == 2) {
+            if(last == nFrame) {
+              PRINTFB(G, FB_Object, FB_Details)
+                " ObjectMotion: interpolating unspecified frames %d to %d (wrapping).\n",
+                first + 1, last ENDFB(G);
+            } else {
+              PRINTFB(G, FB_Object, FB_Details)
+                " ObjectMotion: interpolating unspecified frames %d to %d.\n", first + 1,
+                last + 1 ENDFB(G);
+            }
+          } else {
+            if(last == nFrame) {
+              PRINTFB(G, FB_Object, FB_Details)
+                " ObjectMotion: reinterpolating all frames %d to %d (wrapping).\n", first + 1,
+                last ENDFB(G);
+            } else {
+              PRINTFB(G, FB_Object, FB_Details)
+                " ObjectMotion: reinterpolating all frames %d to %d.\n", first + 1, last + 1
+                ENDFB(G);
+            }
+          }
+        }
+        for(frame = first; frame <= last; frame++) {
+          if(!first_view) {
+            if(I->ViewElem[frame].specification_level == 2) {     /* specified */
+              first_view = I->ViewElem + frame;
+            }
+          } else {
+            CViewElem *view;
+            int interpolate_flag = false;
+            if(I->ViewElem[frame].specification_level == 2) {     /* specified */
+              last_view = I->ViewElem + frame;
+              if(action == 2) {   /* interpolate */
+                for(view = first_view + 1; view < last_view; view++) {
+                  if(!view->specification_level)
+                    interpolate_flag = true;
+                }
+              } else {
+                interpolate_flag = true;
+              }
+              if(interpolate_flag) {
+                ViewElemInterpolate(G, first_view, last_view,
+                                    power, bias, simple, linear, hand, 0.0F);
+              }
+              first_view = last_view;
+              last_view = NULL;
+            }
+          }
+        }
+
+        if(first_view) {
+          if(wrap && (last >= nFrame)) {
+            /* if we're interpolating beyond the last frame, then wrap by
+               copying the last frames back over the early frames */
+            int a;
+            for(a = nFrame; a <= last; a++) {
+              ViewElemCopy(G, I->ViewElem + a, I->ViewElem + a - nFrame);
+            }
+          }
+        }
+
+        if(last >= nFrame) {   /* now erase temporary views */
+          ViewElemArrayPurge(G, I->ViewElem + nFrame, (1 + last - nFrame));
+          UtilZeroMem((void *) (I->ViewElem + nFrame),
+                      sizeof(CViewElem) * (1 + last - nFrame));
+        }
+      }
+      break;
+    case 4:                      /* smooth */
+      {
+        if(first < 0)
+          first = 0;
+
+        if(last < 0) {
+          last = nFrame;
+        }
+        if(last >= nFrame) {
+          last = nFrame - 1;
+        }
+        if(first <= last) {
+          int a;
+          VLACheck(I->ViewElem, CViewElem, last);
+          for(a = 0; a < cycles; a++) {
+            ViewElemSmooth(I->ViewElem + first, I->ViewElem + last, window, wrap);
+          }
+        }
+        break;
+      }
+    case 5:                      /* reset */
+      if(I->ViewElem) {
+        VLAFreeP(I->ViewElem);
+      }
+      I->ViewElem = VLACalloc(CViewElem, 0);
+      break;
+    case 6:                      /* uninterpolate */
+      if(I->ViewElem) {
+        if(first < 0)
+          first = 0;
+        if(last < 0) {
+          last = nFrame - 1;
+        }
+        for(frame = first; frame <= last; frame++) {
+          if((frame >= 0) && (frame <= last)) {
+            VLACheck(I->ViewElem, CViewElem, frame);
+            if(I->ViewElem[frame].specification_level < 2) {
+              ViewElemArrayPurge(G, I->ViewElem + frame, 1);
+              UtilZeroMem((void *) (I->ViewElem + frame), sizeof(CViewElem));
+            }
+          }
+        }
+      }
+      break;
+    case 9:
+      if(I->ViewElem) {
+        VLAFreeP(I->ViewElem);
+      }
+      break;
     }
-    break;
-  case 9:
     if(I->ViewElem) {
-      VLAFreeP(I->ViewElem);
+      VLASize(I->ViewElem,CViewElem,nFrame);
     }
-    break;
-  }
-  if(I->ViewElem) {
-    VLASize(I->ViewElem,CViewElem,nFrame);
   }
   return 1;
 }
@@ -668,28 +679,31 @@ int ObjectCopyHeader(CObject * I, CObject * src)
 /*========================================================================*/
 void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order, int store)
 {
-  float cpy[16];
-  if(!I->TTTFlag) {
-    I->TTTFlag = true;
-    initializeTTT44f(cpy);
+  if(I->type == cObjectGroup) {
+    ExecutiveGroupCombineTTT(I->G, I, ttt, reverse_order,store);
   } else {
-    UtilCopyMem(cpy, I->TTT, sizeof(float) * 16);
-  }
-  if(reverse_order) {
-    combineTTT44f44f(cpy, ttt, I->TTT);
-  } else {
-    combineTTT44f44f(ttt, cpy, I->TTT);
-  }
-
-  if(store) {
-    if(!I->ViewElem)  
-      I->ViewElem = VLACalloc(CViewElem, 0);
-    if(I->ViewElem) { /* update motion path waypoint, if active */
-      int frame = SceneGetFrame(I->G);
-      if(frame >= 0) {
-        VLACheck(I->ViewElem, CViewElem, frame);
-        TTTToViewElem(I->TTT, I->ViewElem + frame);
-        I->ViewElem[frame].specification_level = 2;
+    float cpy[16];
+    if(!I->TTTFlag) {
+      I->TTTFlag = true;
+      initializeTTT44f(cpy);
+    } else {
+      UtilCopyMem(cpy, I->TTT, sizeof(float) * 16);
+    }
+    if(reverse_order) {
+      combineTTT44f44f(cpy, ttt, I->TTT);
+    } else {
+      combineTTT44f44f(ttt, cpy, I->TTT);
+    }
+    if(store && MovieDefined(I->G)) {
+      if(!I->ViewElem)  
+        I->ViewElem = VLACalloc(CViewElem, 0);
+      if(I->ViewElem) { /* update motion path waypoint, if active */
+        int frame = SceneGetFrame(I->G);
+        if(frame >= 0) {
+          VLACheck(I->ViewElem, CViewElem, frame);
+          TTTToViewElem(I->TTT, I->ViewElem + frame);
+          I->ViewElem[frame].specification_level = 2;
+        }
       }
     }
   }
@@ -697,24 +711,28 @@ void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order, int store)
 /*========================================================================*/
 void ObjectTranslateTTT(CObject * I, float *v, int store)
 {
-  if(!I->TTTFlag) {
-    I->TTTFlag = true;
-    initializeTTT44f(I->TTT);
-  }
-  if(v) {
-    I->TTT[3] += v[0];
-    I->TTT[7] += v[1];
-    I->TTT[11] += v[2];
-  }
-  if(store) {
-    if(!I->ViewElem)  
-      I->ViewElem = VLACalloc(CViewElem, 0);
-    if(I->ViewElem) { /* update motion path waypoint, if active */
-      int frame = SceneGetFrame(I->G);
-      if(frame >= 0) {
-        VLACheck(I->ViewElem, CViewElem, frame);
-        TTTToViewElem(I->TTT, I->ViewElem + frame);
-        I->ViewElem[frame].specification_level = 2;
+  if(I->type == cObjectGroup) {
+    ExecutiveGroupTranslateTTT(I->G, I, v, store);
+  } else {
+    if(!I->TTTFlag) {
+      I->TTTFlag = true;
+      initializeTTT44f(I->TTT);
+    }
+    if(v) {
+      I->TTT[3] += v[0];
+      I->TTT[7] += v[1];
+      I->TTT[11] += v[2];
+    }
+    if(store && MovieDefined(I->G)) {
+      if(!I->ViewElem)  
+        I->ViewElem = VLACalloc(CViewElem, 0);
+      if(I->ViewElem) { /* update motion path waypoint, if active */
+        int frame = SceneGetFrame(I->G);
+        if(frame >= 0) {
+          VLACheck(I->ViewElem, CViewElem, frame);
+          TTTToViewElem(I->TTT, I->ViewElem + frame);
+          I->ViewElem[frame].specification_level = 2;
+        }
       }
     }
   }
@@ -754,8 +772,9 @@ int ObjectGetTTT(CObject * I, float **ttt, int state)
 
 
 /*========================================================================*/
-void ObjectResetTTT(CObject * I)
+void ObjectResetTTT(CObject * I,int store)
 {
+  
   I->TTTFlag = false;
 }
 

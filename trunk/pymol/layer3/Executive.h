@@ -378,7 +378,7 @@ float ExecutiveSculptIterate(PyMOLGlobals * G, char *name, int state, int n_cycl
 int ExecutiveMapNew(PyMOLGlobals * G, char *name, int type, float *grid, char *sele,
                     float buffer, float *minCorner, float *maxCorner,
                     int state, int have_corners, int quiet, int zoom, int normalize,
-                    float clamp_floor, float clamp_ceiling);
+                    float clamp_floor, float clamp_ceiling, float resolution);
 
 int ***ExecutiveGetBondPrint(PyMOLGlobals * G, char *name, int max_bond, int max_type,
                              int *dim);
@@ -421,7 +421,7 @@ int ExecutiveSetObjectColor(PyMOLGlobals * G, char *name, char *color, int quiet
 int ExecutiveGetObjectColorIndex(PyMOLGlobals * G, char *name);
 int ExecutiveSetOnOffBySele(PyMOLGlobals * G, char *name, int onoff);
 int ExecutiveSetName(PyMOLGlobals * G, char *old_name, char *new_name);
-int ExecutiveSetDrag(PyMOLGlobals * G, char *name, int quiet);
+int ExecutiveSetDrag(PyMOLGlobals * G, char *name, int quiet,int mode);
 int ExecutiveGetActiveSeleName(PyMOLGlobals * G, char *name, int create_new, int log);
 int ExecutiveGetActiveSele(PyMOLGlobals * G);
 int ExecutiveGetActiveAlignmentSele(PyMOLGlobals * G);
@@ -468,5 +468,14 @@ void ExecutiveMotionViewModify(PyMOLGlobals *G, int action,
                                int index, int count, int freeze, int quiet);
 
 void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int x, int y);
+int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action, 
+                               int index, int count, int freeze);
+int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
+                         int last, float power, float bias,
+                         int simple, float linear, int wrap,
+                         int hand, int window, int cycles, int state, int quiet);
+int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, float *ttt, int reverse_order, int store);
+int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int store);
+
 
 #endif

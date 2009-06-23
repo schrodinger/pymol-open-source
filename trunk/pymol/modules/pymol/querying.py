@@ -64,6 +64,15 @@ if __name__=='pymol.querying':
             _self.unlock(r,_self)
         return r
 
+    def get_drag_object_name(_self=cmd):
+        r = DEFAULT_ERROR
+        try:
+            _self.lock(_self)   
+            r = _cmd.get_drag_object_name(_self._COb)
+        finally:
+            _self.unlock(r,_self)
+        return r
+
     def get_object_matrix(object,state=1,_self=cmd):
         '''
 DESCRIPTION

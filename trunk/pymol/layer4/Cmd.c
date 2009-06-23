@@ -1519,7 +1519,7 @@ static PyObject *CmdMapNew(PyObject * self, PyObject * args)
   char *name;
   float minCorner[3], maxCorner[3];
   float grid[3];
-  float buffer, floor, ceiling;
+  float buffer, floor, ceiling, resolution;
   int type;
   int state;
   int have_corners;
@@ -1528,12 +1528,12 @@ static PyObject *CmdMapNew(PyObject * self, PyObject * args)
   char *selection;
   OrthoLineType s1 = "";
   int ok = false;
-  ok = PyArg_ParseTuple(args, "Osifsf(ffffff)iiiiiff",
+  ok = PyArg_ParseTuple(args, "Osifsf(ffffff)iiiiifff",
                         &self, &name, &type, &grid[0], &selection, &buffer,
                         &minCorner[0], &minCorner[1], &minCorner[2],
                         &maxCorner[0], &maxCorner[1], &maxCorner[2],
                         &state, &have_corners, &quiet, &zoom, &normalize,
-                        &floor, &ceiling);
+                        &floor, &ceiling, &resolution);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -1547,7 +1547,7 @@ static PyObject *CmdMapNew(PyObject * self, PyObject * args)
     if(ok)
       ok = ExecutiveMapNew(G, name, type, grid, s1, buffer,
                            minCorner, maxCorner, state, have_corners, quiet, zoom,
-                           normalize, floor, ceiling);
+                           normalize, floor, ceiling, resolution);
     SelectorFreeTmp(G, s1);
     APIExit(G);
 
@@ -2373,6 +2373,35 @@ static PyObject *CmdGetType(PyObject * self, PyObject * args)
     return (Py_BuildValue("s", type));
   else
     return APIResultOk(ok);
+}
+
+static PyObject *CmdGetDragObjectName(PyObject * self, PyObject * args)
+{
+  PyMOLGlobals *G = NULL;
+  PyObject *result = Py_None;
+  int ok = false;
+  ok = PyArg_ParseTuple(args, "O", &self);
+  if(ok) {
+    API_SETUP_PYMOL_GLOBALS;
+    ok = (G != NULL);
+  } else {
+    API_HANDLE_ERROR;
+  }
+  if(ok) {
+    char *name = NULL;
+    APIEnter(G);
+    {
+      CObject *obj = EditorDragObject(G);    
+      if(obj)
+        name = obj->Name;
+    }
+    APIExit(G);
+    if(name) 
+      result = PyString_FromString(name);
+    else
+      result = PyString_FromString("");
+  }
+  return (APIAutoNone(result));
 }
 
 static PyObject *CmdGetLegalName(PyObject * self, PyObject * args)
@@ -6147,45 +6176,51 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok) {
-    if(((w > 0) && (h <= 0)) || ((h > 0) && (w <= 0))) {
-      int cw, ch;
-      SceneGetWidthHeight(G, &cw, &ch);
-      if(h <= 0) {
-        h = (w * ch) / cw;
-      }
-      if(w <= 0) {
-        w = (h * cw) / ch;
-      }
-    }
-    if((w > 0) && (h > 0)) {
-      if(w < 10)
-        w = 10;
-      if(h < 10)
-        h = 10;
-      if(!SettingGet(G, cSetting_full_screen)) {
-        if(SettingGet(G, cSetting_internal_gui)) {
-          w += (int) SettingGet(G, cSetting_internal_gui_width);
-        }
-        if(SettingGet(G, cSetting_internal_feedback)) {
-          h += (int) (SettingGet(G, cSetting_internal_feedback) - 1) * cOrthoLineHeight +
-            cOrthoBottomSceneMargin;
-        }
-      }
-      {
-        h += MovieGetPanelHeight(G);
-      }
-    } else {
-      w = -1;
-      h = -1;
-    }
     if((ok = APIEnterNotModal(G))) {
+      if(!SettingGetGlobal_b(G,cSetting_full_screen)) {
+      
+        
+        if(((w > 0) && (h <= 0)) || ((h > 0) && (w <= 0))) {
+          int cw, ch;
+          SceneGetWidthHeight(G, &cw, &ch);
+          if(h <= 0) {
+            h = (w * ch) / cw;
+          }
+          if(w <= 0) {
+            w = (h * cw) / ch;
+          }
+        }
+        if((w > 0) && (h > 0)) {
+          if(w < 10)
+            w = 10;
+          if(h < 10)
+            h = 10;
+          if(!SettingGet(G, cSetting_full_screen)) {
+            if(SettingGet(G, cSetting_internal_gui)) {
+              w += (int) SettingGet(G, cSetting_internal_gui_width);
+            }
+            if(SettingGet(G, cSetting_internal_feedback)) {
+              h += (int) (SettingGet(G, cSetting_internal_feedback) - 1) * cOrthoLineHeight +
+                cOrthoBottomSceneMargin;
+            }
+          }
+          {
+            h += MovieGetPanelHeight(G);
+          }
+        } else {
+          w = -1;
+          h = -1;
+        }
 #ifndef _PYMOL_NO_MAIN
-      if(G->Main) {
-        MainDoReshape(w, h);    /* should be moved into Executive */
-      }
+        if(G->Main) {
+          MainDoReshape(w, h);    /* should be moved into Executive */
+        }
 #else
-      PyMOL_NeedReshape(G->PyMOL, 2, 0, 0, w, h);
+        PyMOL_NeedReshape(G->PyMOL, 2, 0, 0, w, h);
 #endif
+      } else {
+        MainDoReshape(0,0);
+      }
       APIExit(G);
     }
   }
@@ -8256,7 +8291,8 @@ static PyObject *CmdDrag(PyObject * self, PyObject * args)
   OrthoLineType s0 = "";
   int ok = false;
   int quiet;
-  ok = PyArg_ParseTuple(args, "Osi", &self, &str0, &quiet);
+  int mode;
+  ok = PyArg_ParseTuple(args, "Osii", &self, &str0, &quiet,&mode);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -8266,7 +8302,7 @@ static PyObject *CmdDrag(PyObject * self, PyObject * args)
   if(ok && (ok = APIEnterNotModal(G))) {
     ok = (SelectorGetTmp(G, str0, s0) >= 0);
     if(ok) {
-      ok = ExecutiveSetDrag(G, s0, quiet);
+      ok = ExecutiveSetDrag(G, s0, quiet,mode);
       SelectorFreeTmp(G, s0);
     }
     APIExit(G);
@@ -8505,6 +8541,7 @@ static PyMethodDef Cmd_methods[] = {
   {"get_colorection", CmdGetColorection, METH_VARARGS},
   {"get_distance", CmdGetDistance, METH_VARARGS},
   {"get_dihe", CmdGetDihe, METH_VARARGS},
+  {"get_drag_object_name", CmdGetDragObjectName, METH_VARARGS},
   {"get_editor_scheme", CmdGetEditorScheme, METH_VARARGS},
   {"get_frame", CmdGetFrame, METH_VARARGS},
   {"get_feedback", CmdGetFeedback, METH_VARARGS},

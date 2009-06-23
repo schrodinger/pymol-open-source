@@ -2,7 +2,7 @@
 import sys
 import cmd
 from cmd import Shortcut, is_string
-from cmd import fb_module, fb_mask, fb_action
+from cmd import fb_module, fb_mask, fb_action,_raising
 import copy
 
 import _cmd

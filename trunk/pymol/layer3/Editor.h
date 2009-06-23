@@ -50,13 +50,13 @@ int EditorLogState(PyMOLGlobals * G, int pkresi);
 void EditorFavorOrigin(PyMOLGlobals * G, float *v1);
 
 void EditorFree(PyMOLGlobals * G);
-void EditorSetDrag(PyMOLGlobals * G, ObjectMolecule * obj, int sele, int quiet,
+void EditorSetDrag(PyMOLGlobals * G, CObject * obj, int sele, int quiet,
                    int state);
 void EditorReadyDrag(PyMOLGlobals * G, int state);
-void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj, int sele, int index,
+void EditorPrepareDrag(PyMOLGlobals * G, CObject * obj, int sele, int index,
                        int state, int mode);
 int EditorDraggingObjectMatrix(PyMOLGlobals *G);
-void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int state,
+void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
                 float *pt, float *mov, float *z_dir);
 
 void EditorActivate(PyMOLGlobals * G, int state, int enable_bond);

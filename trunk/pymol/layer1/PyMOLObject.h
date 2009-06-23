@@ -107,7 +107,7 @@ int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix);
 void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order, int store);
 void ObjectTranslateTTT(CObject * T, float *v,int store);
 void ObjectSetTTTOrigin(CObject * I, float *origin);
-void ObjectResetTTT(CObject * I);
+void ObjectResetTTT(CObject * I,int store);
 PyObject *ObjectAsPyList(CObject * I);
 int ObjectFromPyList(PyMOLGlobals * G, PyObject * list, CObject * I);
 int ObjectGetCurrentState(CObject * I, int ignore_all_states);

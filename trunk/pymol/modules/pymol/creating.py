@@ -160,7 +160,7 @@ SEE ALSO
     
     def map_new(name, type='gaussian', grid=None, selection="(all)",
                 buffer=None, box=None, state=0, quiet=1, zoom=0,
-                normalize=-1, clamp=[1.0,-1.0], _self=cmd):
+                normalize=-1, clamp=[1.0,-1.0], resolution=0.0, _self=cmd):
 
         '''
 
@@ -235,7 +235,7 @@ NOTES
             r = _cmd.map_new(_self._COb,str(name),int(type),grid,str(selection),
                              float(buffer),box,int(state)-1,
                              int(box_flag),int(quiet),int(zoom),int(normalize),
-                             float(clamp[0]),float(clamp[1]))
+                             float(clamp[0]),float(clamp[1]),float(resolution))
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException         

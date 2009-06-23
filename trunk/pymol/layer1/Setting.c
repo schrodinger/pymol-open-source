@@ -3675,7 +3675,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_opaque_background, 1);
     set_b(I, cSetting_draw_frames, 0);
     set_b(I, cSetting_show_alpha_checker, 1);
-    set_i(I, cSetting_matrix_mode, 0);  /* 0: coordinates (pre-1.0 legacy default mode)
+    set_i(I, cSetting_matrix_mode, -1);  /* 0: coordinates (pre-1.0 legacy default mode)
                                            1: per-object matrices (TTTs: version 1.0 default mode?)
                                            2: per-state matrices (partially implemented)
                                            3: per-group matrices (may come in the future) */

@@ -55,8 +55,15 @@ def mouse_config(self_cmd):
                 'cmd.config_mouse("three_button_motions")' ],
               [ 1, '3-Button Editing',
                 'cmd.config_mouse("three_button_editing")' ],
+              [ 1, '3-Button Viewing',
+                'cmd.mouse("three_button_viewing")' ],
               [ 1, '3-Button All Modes',
                 'cmd.config_mouse("three_button_all_modes")' ],
+              [ 0, '', ''],
+              [ 1, '2-Button Editing',
+                'cmd.config_mouse("two_button_editing")' ],
+              [ 1, '2-Button Viewing',
+                'cmd.config_mouse("two_button_viewing")' ],
               ]
     return result
 
@@ -66,7 +73,7 @@ def smooth(self_cmd,extra=''):
             [ 1, 'a lot'   ,   'cmd.mview("smooth",window=30%s)'%extra ]]
               
 def camera_motion(self_cmd):
-    return [[ 2, 'Camera Motions:'     , ''                       ],     
+    return [[ 2, 'Camera Motion:'     , ''                       ],     
             [ 1, 'store'         , 'cmd.mview("store")'      ],
             [ 1, 'store with scene' , all_store_with_scene(self_cmd) ],
             [ 1, 'store with state' , all_store_with_state(self_cmd) ],
@@ -83,7 +90,7 @@ def camera_motion(self_cmd):
             ]
 
 def obj_motion(self_cmd, obj):
-    return [[ 2, 'Object Motions:'     , ''                       ],     
+    return [[ 2, 'Object "'+obj+'" Motion:'     , ''                       ],     
             [ 1, 'store'         , 'cmd.mview("store",object="'+obj+'")'      ],
             [ 1, 'clear'       ,   'cmd.mview("clear",object="'+obj+'")'    ],
             [ 0, ''               ,''                             ],
@@ -927,7 +934,7 @@ def sele_action(self_cmd, sele):
               [ 1, 'center'         ,'cmd.center("'+sele+'",animate=-1)'            ],           
               [ 1, 'origin'         ,'cmd.origin("'+sele+'")'          ],
               [ 0, ''               ,''                             ],
-              [ 1, 'drag'       , 'cmd.drag("'+sele+'")'    ],
+              [ 1, 'drag coordinates'     , 'cmd.drag("'+sele+'")'    ],
               [ 1, 'clean'       , 'cmd.clean("'+sele+'")'    ],                                    
               [ 0, ''               ,''                             ],
               [ 1, 'modify', modify_sele(self_cmd, sele) ],
@@ -973,31 +980,63 @@ def sele_action2(self_cmd, sele):
               ]
 
 
+def group_action(self_cmd, sele):
+    return [[ 2, 'Action:'     , ''                       ],     
+            [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+            [ 1, 'orient'       , 'cmd.orient("'+sele+'",animate=-1)'    ],
+            [ 1, 'center'         ,'cmd.center("'+sele+'",animate=-1)'            ],
+            [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
+            [ 0, ''               ,''                             ],
+            [ 1, 'drag' , 'cmd.drag("'+sele+'")' ],
+            [ 1, 'reset' , 'cmd.reset(object="'+sele+'")' ],
+            [ 0, ''               ,''                             ],            
+            [ 1, 'preset'  ,   presets(self_cmd, sele)       ],
+            [ 1, 'find',     find(self_cmd, sele) ],
+            [ 1, 'align',     mol_align(self_cmd, sele) ],                      
+            [ 1, 'generate'  ,   mol_generate(self_cmd, sele)       ],           
+            [ 0, ''               ,''                             ],
+            [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
+            [ 0, ''             , ''                       ],
+            [ 1, 'rename group', 'cmd.wizard("renaming","'+sele+'")'          ],
+            [ 1, 'delete groupt'       , 'cmd.delete("'+sele+'")'    ],
+            [ 0, ''          ,''                                              ],
+            [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],           
+            [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+sele+'))")'     ],
+            [ 0, ''          ,''                                              ],
+            [ 1, 'state'          , state(self_cmd, sele)         ],                      
+            [ 1, 'masking'        , masking(self_cmd, sele)         ],
+            [ 1, 'sequence'       , sequence(self_cmd, sele)         ],                      
+            [ 1, 'movement'       , movement(self_cmd, sele)         ],           
+            [ 1, 'compute'        , compute(self_cmd, sele)         ],
+            ]
     
 def mol_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                       ],     
-              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
-              [ 1, 'orient'       , 'cmd.orient("'+sele+'",animate=-1)'    ],
-              [ 1, 'center'         ,'cmd.center("'+sele+'",animate=-1)'            ],
-              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
-              [ 0, ''               ,''                             ],
-              [ 1, 'drag'       , 'cmd.drag("'+sele+'")'    ],
-              [ 1, 'clean'       , 'cmd.clean("'+sele+'")'    ],
-              [ 0, ''          ,''                                              ],
-              [ 1, 'preset'  ,   presets(self_cmd, sele)       ],
-              [ 1, 'find',     find(self_cmd, sele) ],
-              [ 1, 'align',     mol_align(self_cmd, sele) ],                      
-              [ 1, 'generate'  ,   mol_generate(self_cmd, sele)       ],           
-              [ 0, ''               ,''                             ],
-              [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
-              [ 0, ''             , ''                       ],
-              [ 1, 'rename object', 'cmd.wizard("renaming","'+sele+'")'          ],
-              [ 1, 'duplicate object'    ,'cmd.create(None,"'+sele+'")'     ],           
-              [ 1, 'delete object'       , 'cmd.delete("'+sele+'")'    ],
-              [ 0, ''          ,''                                              ],
-              [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],           
-              [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+sele+'))")'     ],
-              [ 0, ''          ,''                                              ],
+            [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+            [ 1, 'orient'       , 'cmd.orient("'+sele+'",animate=-1)'    ],
+            [ 1, 'center'         ,'cmd.center("'+sele+'",animate=-1)'            ],
+            [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
+            [ 0, ''               ,''                             ],
+            [ 1, 'drag matrix' , 'cmd.drag("'+sele+'")' ],
+            [ 1, 'reset matrix' , 'cmd.reset(object="'+sele+'")' ],
+            [ 0, ''               ,''                             ],            
+            [ 1, 'drag coordinates' , 'cmd.drag("('+sele+')")' ],
+            [ 1, 'clean'       , 'cmd.clean("'+sele+'")'    ],
+            [ 0, ''          ,''                                              ],
+            [ 1, 'preset'  ,   presets(self_cmd, sele)       ],
+            [ 1, 'find',     find(self_cmd, sele) ],
+            [ 1, 'align',     mol_align(self_cmd, sele) ],                      
+            [ 1, 'generate'  ,   mol_generate(self_cmd, sele)       ],           
+            [ 0, ''               ,''                             ],
+            [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
+            [ 0, ''             , ''                       ],
+            [ 1, 'rename object', 'cmd.wizard("renaming","'+sele+'")'          ],
+            [ 1, 'duplicate object'    ,'cmd.create(None,"'+sele+'")'     ],           
+            [ 1, 'delete object'       , 'cmd.delete("'+sele+'")'    ],
+            [ 0, ''          ,''                                              ],
+            [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],           
+            [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+sele+'))")'     ],
+            [ 0, ''          ,''                                              ],
               [ 1, 'state'          , state(self_cmd, sele)         ],                      
               [ 1, 'masking'        , masking(self_cmd, sele)         ],
               [ 1, 'sequence'       , sequence(self_cmd, sele)         ],                      
@@ -1027,13 +1066,17 @@ def slice_action(self_cmd, sele):
 
 def simple_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                       ],
-              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
-              [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
-              [ 0, ''             , ''                       ],
-              [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
-              [ 0, ''             , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+            [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+            [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
+            [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
+            
+            [ 0, ''             , ''                       ],
+            [ 1, 'drag'       , 'cmd.drag("'+sele+'")'          ],
+            [ 1, 'reset'       , 'cmd.reset(object="'+sele+'")'          ],           
+            [ 0, ''             , ''                       ],
+            [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
+            [ 0, ''             , ''                       ],
+            [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
               ]
 
 def map_mesh(self_cmd, sele):
@@ -1078,19 +1121,22 @@ def map_slice(self_cmd, sele):
 
 def map_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                       ],
-              [ 1, 'mesh'         , map_mesh(self_cmd, sele)  ],
-              [ 1, 'surface'      , map_surface(self_cmd, sele)  ],
-              [ 1, 'slice'        , map_slice(self_cmd, sele)  ],
-              [ 1, 'gradient'     , map_gradient(self_cmd, sele)  ],                                    
-              [ 0, ''             , ''                       ],
-              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
-              [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
-              [ 0, ''             , ''                       ],
-              [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
-              [ 0, ''             , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
-              ]
+            [ 1, 'mesh'         , map_mesh(self_cmd, sele)  ],
+            [ 1, 'surface'      , map_surface(self_cmd, sele)  ],
+            [ 1, 'slice'        , map_slice(self_cmd, sele)  ],
+            [ 1, 'gradient'     , map_gradient(self_cmd, sele)  ],                                    
+            [ 0, ''             , ''                       ],
+            [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+            [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
+            [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
+            [ 0, ''             , ''                       ],
+            [ 1, 'drag' , 'cmd.drag("'+sele+'")' ],
+            [ 1, 'reset'       , 'cmd.reset(object="'+sele+'")'          ],                       
+            [ 0, ''             , ''                       ],
+            [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
+            [ 0, ''             , ''                       ],
+            [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+            ]
 
 def level(self_cmd, sele):
     return [[ 2, 'Level',  '' ],
@@ -1113,29 +1159,35 @@ def level(self_cmd, sele):
 
 def surface_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                       ],
-              [ 1, 'level'         , level(self_cmd, sele)  ],
-              [ 0, ''             , ''                       ],
-              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
-              [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
-              [ 0, ''             , ''                       ],
-              [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
-              [ 0, ''             , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
-              ]
+            [ 1, 'level'         , level(self_cmd, sele)  ],
+            [ 0, ''             , ''                       ],
+            [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+            [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
+            [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
+            [ 0, ''             , ''                       ],
+            [ 1, 'drag' , 'cmd.drag("'+sele+'")' ],
+            [ 1, 'reset'       , 'cmd.reset(object="'+sele+'")'          ],                       
+            [ 0, ''             , ''                       ],
+            [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
+            [ 0, ''             , ''                       ],
+            [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+            ]
 
 def mesh_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                       ],
-              [ 1, 'level'         , level(self_cmd, sele)  ],
-              [ 0, ''             , ''                       ],
-              [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
-              [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
-              [ 0, ''             , ''                       ],
-              [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
-              [ 0, ''             , ''                       ],
-              [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
-              ]
+            [ 1, 'level'         , level(self_cmd, sele)  ],
+            [ 0, ''             , ''                       ],
+            [ 1, 'zoom'         , 'cmd.zoom("'+sele+'",animate=-1)'      ],
+            [ 1, 'center'       , 'cmd.center("'+sele+'",animate=-1)'    ],           
+            [ 1, 'origin'       , 'cmd.origin("'+sele+'")'    ],
+            [ 0, ''             , ''                       ],
+            [ 1, 'drag' , 'cmd.drag("'+sele+'")' ],
+            [ 1, 'reset'       , 'cmd.reset(object="'+sele+'")'          ],                       
+            [ 0, ''             , ''                       ],
+            [ 1, 'rename'       , 'cmd.wizard("renaming","'+sele+'")'          ],           
+            [ 0, ''             , ''                       ],
+            [ 1, 'delete'       , 'cmd.delete("'+sele+'")'    ],
+            ]
 
 def ramp_action(self_cmd, sele):
     return [[ 2, 'Action:'     , ''                       ],
@@ -1368,6 +1420,11 @@ def pick_sele(self_cmd, sele, title):
     return result
     
 def pick_option(self_cmd, sele, title, object=0):
+    if object:
+        save_sele = sele
+        sele = "(byobj ("+sele+"))"
+    else:
+        save_sele = sele
     result = [
         [ 2, title, '' ],
         [ 1, 'color'      , mol_color(self_cmd, sele) ],
@@ -1381,12 +1438,19 @@ def pick_option(self_cmd, sele, title, object=0):
         [ 1, 'center'           ,'cmd.center("'+sele+'",animate=-1)'            ],
         [ 1, 'origin'           ,'cmd.origin("'+sele+'")'            ],
         [ 1, 'select'        ,'cmd.select("'+sele+'",enable=1,merge=2)'            ],
-        [ 0, ''               ,''                             ],        
-        [ 1, 'drag'             ,'cmd.drag("'+sele+'")'            ],
+        [ 0, ''               ,''                             ]]
+
+    if object:
+        result.append([ 1, 'drag'             ,   [[ 1, 'coordinates', 'cmd.drag("'+sele+'")'],
+                                     [ 1, 'matrix', 'cmd.drag("'+save_sele+'",mode=1)']]])
+    else:
+        result.append([ 1, 'drag'   ,  'cmd.drag("'+sele+'")'])
+
+    result.extend([
         [ 1, 'clean'             ,'cmd.clean("'+sele+'")'            ],        
         [ 1, 'masking'        , masking(self_cmd, sele)         ],
         [ 1, 'movement'       , movement(self_cmd, sele)         ],
-        ]
+        ])
   
     if object:
         result.extend([
@@ -1418,7 +1482,7 @@ def pick_menu(self_cmd, sele1, sele2):
             [ 1, 'residue' , pick_option(self_cmd, "(byres ("+sele2+"))", "Residue") ],
             [ 1, 'chain'   , pick_option(self_cmd, "(bychain ("+sele2+"))", "Chain") ],
             [ 1, 'segment' , pick_option(self_cmd, "(byseg ("+sele2+"))", "Segment") ],
-            [ 1, 'object'  , pick_option(self_cmd, "(byobject ("+sele2+"))", "Object",1) ],
+            [ 1, 'object'  , pick_option(self_cmd, sele2, "Object",1) ],
             [ 0, ''             , ''                      ],
             [ 1, 'molecule', pick_option(self_cmd, "(bymol ("+sele2+"))", "Molecule") ],
             [ 0, ''             , ''                      ],

@@ -153,6 +153,8 @@ ExecutiveRenameObjectAtoms
 ExecutiveSpheroid
 
 */
+static int ExecutiveGetNamesListFromPattern(PyMOLGlobals * G, char *name,
+                                            int allow_partial, int expand_groups);
 
 static void ExecutiveSpecEnable(PyMOLGlobals * G, SpecRec * rec, int parents, int log);
 static void ExecutiveToggleAllRepVisib(PyMOLGlobals * G, int rep);
@@ -168,6 +170,106 @@ static int ExecutiveGetObjectMatrix2(PyMOLGlobals * G, CObject * obj, int state,
 int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int state,
                                        char *s1, int log, float *matrix, int homogenous,
                                        int global);
+
+int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action, 
+                                int index, int count, int freeze)
+{
+  register CExecutive *I = G->Executive;
+  int result = true;
+  CTracker *I_Tracker = I->Tracker;
+  int list_id = ExecutiveGetExpandedGroupList(G,group->Name);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  SpecRec *rec;
+  while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+    if(rec) {
+      switch (rec->type) {
+      case cExecObject:
+        if(rec->obj->type != cObjectGroup) {
+          ObjectMotionModify(rec->obj, action, index,count,freeze);
+        }
+        break;
+      }
+    }
+  }
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+  return result;
+}
+
+int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
+                         int last, float power, float bias,
+                         int simple, float linear, int wrap,
+                         int hand, int window, int cycles, int state, int quiet)
+{
+  register CExecutive *I = G->Executive;
+  int result = true;
+  CTracker *I_Tracker = I->Tracker;
+  int list_id = ExecutiveGetExpandedGroupList(G,group->Name);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  SpecRec *rec;
+  while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+    if(rec) {
+      switch (rec->type) {
+      case cExecObject:
+        if(rec->obj->type != cObjectGroup) {
+          ObjectMotion(rec->obj,action,first,last,power,bias,simple,linear,wrap,hand,window,cycles,state,quiet);
+        }
+        break;
+      }
+    }
+  }
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+  return result;
+}
+
+int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, float *ttt, int reverse_order, int store)
+{
+  register CExecutive *I = G->Executive;
+  int result = true;
+  CTracker *I_Tracker = I->Tracker;
+  int list_id = ExecutiveGetExpandedGroupList(G,group->Name);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  SpecRec *rec;
+  while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+    if(rec) {
+      switch (rec->type) {
+      case cExecObject:
+        if(rec->obj->type != cObjectGroup) {
+          ObjectCombineTTT(rec->obj, ttt, reverse_order, store);
+        }
+        break;
+      }
+    }
+  }
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+  return result;
+}
+
+int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int store)
+{
+  register CExecutive *I = G->Executive;
+  int result = true;
+  CTracker *I_Tracker = I->Tracker;
+  int list_id = ExecutiveGetExpandedGroupList(G,group->Name);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  SpecRec *rec;
+  while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+    if(rec) {
+      switch (rec->type) {
+      case cExecObject:
+        if(rec->obj->type != cObjectGroup) {
+          ObjectTranslateTTT(rec->obj,v, store);
+        }
+        break;
+      }
+    }
+  }
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+  return result;
+}
 
 void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
                                int index, int count, int freeze, int quiet)
@@ -1576,6 +1678,8 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
   if((source_mode < 0) && (target_mode < 0)) {
     copy_ttt_too = true;
   }
+  if(matrix_mode < 0)
+    matrix_mode = 0; /* for now */
   if(source_mode < 0)
     source_mode = matrix_mode;
   if(target_mode < 0)
@@ -1741,6 +1845,9 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
   if((source_mode < 0) && (target_mode < 0)) {
     copy_ttt_too = true;
   }
+  if(matrix_mode < 0)
+    matrix_mode = 0; /* for now */
+
   if(source_mode < 0)
     source_mode = matrix_mode;
   if(target_mode < 0)
@@ -2047,8 +2154,11 @@ void ExecutiveResetMatrix(PyMOLGlobals * G,
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
   SpecRec *rec;
 
+  if(matrix_mode < 0)
+    matrix_mode = 0; /* for now */
   if(mode < 0)
     mode = matrix_mode;
+
   while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
     if(rec && (rec->type == cExecObject)) {
       /*  CObject *obj = ExecutiveFindObjectByName(G,name); */
@@ -2072,7 +2182,7 @@ void ExecutiveResetMatrix(PyMOLGlobals * G,
             }
             break;
           case 1:              /* operate on the TTT display matrix */
-            ObjectResetTTT(obj);
+            ObjectResetTTT(obj,SettingGetGlobal_b(G,cSetting_movie_auto_store));
             if(obj->fInvalidate)
               obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
 
@@ -2435,15 +2545,15 @@ typedef struct {
   ObjectMolecule *obj;
 } ProcPDBRec;
 
-int ExecutiveSetDrag(PyMOLGlobals * G, char *name, int quiet)
+int ExecutiveSetDrag(PyMOLGlobals * G, char *name, int quiet,int mode)
 {
   char drag_name[] = cEditorDrag;
   int set_flag = false;
+  int need_sele = true;
   int result = true;
   if(name[0]) {
-    ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G, name);
+    CObject *obj = ExecutiveFindObjectByName(G, name);
     if(obj) {
-      SelectorCreate(G, drag_name, obj->Obj.Name, obj, true, NULL);     /* for indication only */
       EditorSetDrag(G, obj, -1, quiet, SceneGetState(G));
       set_flag = true;
     } else {
@@ -2451,11 +2561,14 @@ int ExecutiveSetDrag(PyMOLGlobals * G, char *name, int quiet)
       if(rec) {
         if(rec->type == cExecSelection) {
           SelectorCreate(G, drag_name, name, NULL, true, NULL);
+          need_sele = false;
           {
             int sele = SelectorIndexByName(G, drag_name);
-            obj = SelectorGetSingleObjectMolecule(G, sele);
-            if(obj) {
-              EditorSetDrag(G, obj, sele, quiet, SceneGetState(G));
+            ObjectMolecule *objMol = SelectorGetSingleObjectMolecule(G, sele);
+            if(objMol) {
+              if(mode>0) 
+                sele = -1; /* force drag by matrix */
+              EditorSetDrag(G, &objMol->Obj, sele, quiet, SceneGetState(G));
               set_flag = true;
             } else {
               PRINTFB(G, FB_Executive, FB_Errors)
@@ -2468,8 +2581,9 @@ int ExecutiveSetDrag(PyMOLGlobals * G, char *name, int quiet)
             PRINTFB(G, FB_Executive, FB_Errors)
               " Drag-Error: cannot drag group objects yet.\n" ENDFB(G);
             break;
-
+            
           }
+          result = false;
         }
       }
     }
@@ -2478,6 +2592,10 @@ int ExecutiveSetDrag(PyMOLGlobals * G, char *name, int quiet)
       EditorInactivate(G);
       PRINTFB(G, FB_Executive, FB_Errors)
         " Drag-Error: invalid or empty selection." ENDFB(G);
+    } else if(EditorDraggingObjectMatrix(G)) {
+      SelectorCreate(G, drag_name, "none", NULL, true, NULL);    
+    } else if(need_sele && (obj->type == cObjectMolecule) && (!EditorDraggingObjectMatrix(G))) {
+      SelectorCreate(G, drag_name, obj->Name, (ObjectMolecule*)(void*)obj, true, NULL);     /* for indication only */
     }
   } else {
     EditorInactivate(G);
@@ -5803,7 +5921,7 @@ int ExecutiveMapNew(PyMOLGlobals * G, char *name, int type, float *grid,
                     float *minCorner,
                     float *maxCorner, int state, int have_corners,
                     int quiet, int zoom, int normalize, float clamp_floor,
-                    float clamp_ceiling)
+                    float clamp_ceiling, float resolution)
 {
   CObject *origObj = NULL;
   ObjectMap *objMap;
@@ -5911,7 +6029,7 @@ int ExecutiveMapNew(PyMOLGlobals * G, char *name, int type, float *grid,
                 SelectorMapCoulomb(G, sele0, ms, 0.0F, state, false, false, 1.0F);
                 break;
               case 2:          /* gaussian */
-                SelectorMapGaussian(G, sele0, ms, 0.0F, state, normalize, false, quiet);
+                SelectorMapGaussian(G, sele0, ms, 0.0F, state, normalize, false, quiet, resolution);
                 break;
               case 3:          /* coulomb_neutral */
                 SelectorMapCoulomb(G, sele0, ms, 0.0F, state, true, false, 1.0F);
@@ -5922,7 +6040,7 @@ int ExecutiveMapNew(PyMOLGlobals * G, char *name, int type, float *grid,
                                    false, true, 2.0F);
                 break;
               case 5:          /* gaussian_max */
-                SelectorMapGaussian(G, sele0, ms, 0.0F, state, normalize, true, quiet);
+                SelectorMapGaussian(G, sele0, ms, 0.0F, state, normalize, true, quiet, resolution);
                 break;
               }
               if(!ms->Active)
@@ -9468,6 +9586,9 @@ int ExecutiveRMS(PyMOLGlobals * G, char *s1, char *s2, int mode, float refine,
   int matrix_mode = SettingGetGlobal_b(G, cSetting_matrix_mode);
   ObjectAlignment *align_to_update = NULL;
 
+  if(matrix_mode < 0)
+    matrix_mode = 0; /* for now */
+
   if(matchmaker == -1) {
     /* matchmaker -1 is the same as matchmaker 0 except that the
        selections are not pre-matched prior to calling of this routine */
@@ -10013,7 +10134,7 @@ int ExecutiveRMS(PyMOLGlobals * G, char *s1, char *s2, int mode, float refine,
 #endif
         }
         if(ok && mode == 2) {
-          if(matrix_mode) {
+          if(matrix_mode>0) {
 
             ObjectMolecule *src_obj, *trg_obj;
             src_obj = SelectorGetFirstObjectMolecule(G, sele1); /* get at least one object */
@@ -10312,7 +10433,7 @@ int ExecutiveReset(PyMOLGlobals * G, int cmd, char *name)
     if(!obj)
       ok = false;
     else {
-      ObjectResetTTT(obj);
+      ObjectResetTTT(obj, SettingGetGlobal_b(G,cSetting_movie_auto_store));
       if(obj->fInvalidate)
         obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
 
@@ -14229,6 +14350,8 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
                 case cExecObject:
                   switch (rec->obj->type) {
                   case cObjectGroup:
+                    MenuActivate(G, mx, my, x, y, false, "group_action", rec->obj->Name);
+                    break;
                   case cObjectMolecule:
                     MenuActivate(G, mx, my, x, y, false, "mol_action", rec->obj->Name);
                     break;

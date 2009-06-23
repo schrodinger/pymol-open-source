@@ -5456,7 +5456,8 @@ typedef double AtomSF[11];
 
 /*========================================================================*/
 int SelectorMapGaussian(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
-                        float buffer, int state, int normalize, int use_max, int quiet)
+                        float buffer, int state, int normalize, int use_max, int quiet,
+                        float resolution)
 {
   register CSelector *I = G->Selector;
   MapType *map;
@@ -5489,10 +5490,13 @@ int SelectorMapGaussian(PyMOLGlobals * G, int sele1, ObjectMapState * oMap,
   float blur_factor = 1.0F;
 
   {
-    float resolution = SettingGet(G, cSetting_gaussian_resolution);
-    if(resolution < 2.0)
-      resolution = 2.0;
-    blur_factor = 2.0F / resolution;    /* a gaussion_resolution of 2.0 is considered perfect */
+    if(fabs(resolution) < R_SMALL4) 
+      resolution = SettingGet(G, cSetting_gaussian_resolution);
+    if(resolution < 1.0 ) 
+      resolution = 1.0F;
+    blur_factor = 2.0F / resolution;    
+    /* a gaussian_resolution of 2.0 is considered perfect ? Hmm...where is this from??? */
+
   }
 
   if(b_adjust > 500.0)
