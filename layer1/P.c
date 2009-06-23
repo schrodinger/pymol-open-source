@@ -1438,7 +1438,7 @@ void initopenglutil_num(void);
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
-#ifdef _PYMOL_NUMPY
+#ifdef _PYMOL_NUMPY_INIT
 void init_numpy();
 void initmultiarray();
 void initarrayfns();
@@ -1813,7 +1813,7 @@ void PSetupEmbedded(PyMOLGlobals * G, int argc, char **argv)
 
   /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef WIN32
-#ifdef _PYMOL_NUMPY
+#ifdef _PYMOL_NUMPY_INIT
   /* initialize numeric python */
   init_numpy();
   initmultiarray();
@@ -2047,7 +2047,7 @@ void PInit(PyMOLGlobals * G, int global_instance)
 #endif
 
   /* initialize numeric python */
-#ifdef _PYMOL_NUMPY
+#ifdef _PYMOL_NUMPY_INIT
   init_numpy();
   initmultiarray();
   initarrayfns();
