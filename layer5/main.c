@@ -1152,7 +1152,7 @@ void MainDoReshape(int width, int height)
       if(SettingGetGlobal_b(G, cSetting_internal_gui))
         width += SettingGetGlobal_i(G, cSetting_internal_gui_width);
       force = true;
-    }
+    } 
 
     /* if height is negative, force a reshape based on the current height */
 
@@ -1166,24 +1166,32 @@ void MainDoReshape(int width, int height)
         height += SeqGetHeight(G);
       height += MovieGetPanelHeight(G);
       force = true;
-    }
+    } 
 
     /* if we have a GUI, for a reshape event */
 
-    if(G->HaveGUI && G->ValidContext) {
+    if(G->HaveGUI && G->ValidContext && width && height) {
       p_glutReshapeWindow(width, height);
       glViewport(0, 0, (GLint) width, (GLint) height);
     }
 
-    PyMOL_Reshape(G->PyMOL, width, height, force);
+    if((!width)||(!height)) {
+      int actual_width = width ? width : G->Option->winX;
+      int actual_height = height ? height : G->Option->winY;
 
-    if(G->Main) {
-      G->Main->DeferReshapeDeferral = 1;
-    }
-    /* do we need to become full-screen? */
+      PyMOL_Reshape(G->PyMOL, actual_width, actual_height, true);
 
-    if(SettingGet(G, cSetting_full_screen) && G->HaveGUI && G->ValidContext) {
-      p_glutFullScreen();
+    } else {
+      PyMOL_Reshape(G->PyMOL, width, height, force);
+      if(G->Main) {
+        G->Main->DeferReshapeDeferral = 1;
+      }
+
+      /* do we need to become full-screen? */
+
+      if(SettingGet(G, cSetting_full_screen) && G->HaveGUI && G->ValidContext) {
+        p_glutFullScreen();
+      }
     }
   }
 

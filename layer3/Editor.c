@@ -47,7 +47,7 @@ struct _CEditor {
   int PickMode;                 /* 1 = atom, 2 = bond, 3 = multiatom */
   int NextPickSele;
   int BondMode;
-  ObjectMolecule *DragObject;
+  CObject *DragObject;
   int NFrag;
   float V0[3], V1[3], Axis[3], Center[3], DragBase[3];
   float *PosVLA;
@@ -297,21 +297,24 @@ void EditorUpdate(PyMOLGlobals * G)
   }
 }
 
-static int EditorGetEffectiveState(PyMOLGlobals * G, ObjectMolecule * obj, int state)
+static int EditorGetEffectiveState(PyMOLGlobals * G, CObject * obj, int state)
 {
-  if(!obj)
-    obj = SelectorGetFastSingleObjectMolecule(G, SelectorIndexByName(G, cEditorSele1));
-  if(!obj)
-    obj = SelectorGetFastSingleObjectMolecule(G, SelectorIndexByName(G, cEditorSele2));
-  if(!obj)
-    obj = SelectorGetFastSingleObjectMolecule(G, SelectorIndexByName(G, cEditorSele3));
-  if(!obj)
-    obj = SelectorGetFastSingleObjectMolecule(G, SelectorIndexByName(G, cEditorSele4));
-
-  if(obj) {
-    if((obj->NCSet == 1) && (state > 0))
-      if(SettingGet_i(G, NULL, obj->Obj.Setting, cSetting_static_singletons))
-        return 0;
+  if(obj && (obj->type == cObjectMolecule)) {
+    ObjectMolecule *objMol = (ObjectMolecule*)(void*)obj;
+    if(!objMol)
+      objMol = SelectorGetFastSingleObjectMolecule(G, SelectorIndexByName(G, cEditorSele1));
+    if(!objMol)
+      objMol = SelectorGetFastSingleObjectMolecule(G, SelectorIndexByName(G, cEditorSele2));
+    if(!objMol)
+      objMol = SelectorGetFastSingleObjectMolecule(G, SelectorIndexByName(G, cEditorSele3));
+    if(!objMol)
+      objMol = SelectorGetFastSingleObjectMolecule(G, SelectorIndexByName(G, cEditorSele4));
+    
+    if(objMol) {
+      if((objMol->NCSet == 1) && (state > 0))
+        if(SettingGet_i(G, NULL, objMol->Obj.Setting, cSetting_static_singletons))
+          return 0;
+    }
   }
   return state;
 }
@@ -461,7 +464,7 @@ int EditorActive(PyMOLGlobals * G)
 CObject *EditorDragObject(PyMOLGlobals * G)
 {
   register CEditor *I = G->Editor;
-  return &I->DragObject->Obj;
+  return I->DragObject;
 }
 
 static void subdivide(int n, float *x, float *y);
@@ -1660,12 +1663,19 @@ void EditorActivate(PyMOLGlobals * G, int state, int enable_bond)
 
 
 /*========================================================================*/
-void EditorSetDrag(PyMOLGlobals * G, ObjectMolecule * obj, int sele, int quiet, int state)
+void EditorSetDrag(PyMOLGlobals * G, CObject * obj, int sele, int quiet, int state)
 {
   EditorInactivate(G);
   state = EditorGetEffectiveState(G, obj, state);
-  if(ObjectMoleculeCheckFullStateSelection(obj, sele, state)) {
-    sele = -1;
+  if(obj->type == cObjectMolecule) {
+    ObjectMolecule *objMol = (ObjectMolecule*)(void*)obj;
+    if(ObjectMoleculeCheckFullStateSelection(objMol, sele, state)) {
+      int matrix_mode = SettingGet_b(G, obj->Setting, NULL, cSetting_matrix_mode);
+      if(matrix_mode>=1) {
+        /* force / coerce object matrix drags? */
+        sele = -1;
+      }
+    }
   }
   EditorPrepareDrag(G, obj, sele, -1, state, 0);
 }
@@ -1680,7 +1690,7 @@ void EditorReadyDrag(PyMOLGlobals * G, int state)
 
 
 /*========================================================================*/
-void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
+void EditorPrepareDrag(PyMOLGlobals * G, CObject * obj,
                        int sele, int index, int state, int mode)
 {
   int frg;
@@ -1692,14 +1702,19 @@ void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
   register CEditor *I = G->Editor;
   int log_trans = (int) SettingGet(G, cSetting_log_conformations);
   int drag_sele = -1;
+  ObjectMolecule *objMol = NULL;
+
   PRINTFD(G, FB_Editor)
-    " EditorPrepareDrag-Debug: entered. obj %p index %d", (void *) obj, index ENDFD;
+    " EditorPrepareDrag-Debug: entered. obj %p index %d\n", (void *) obj, index ENDFD;
+
+  if(obj->type == cObjectMolecule)
+    objMol = (ObjectMolecule*)(void*)obj;
 
   state = EditorGetEffectiveState(G, obj, state);
 
   /* TODO: if user is drags label, then the editor must be deactivated */
 
-  if(!EditorActive(G)) {
+  if((!EditorActive(G))||(!objMol)) {
     /* non-anchored dragging of objects and now selections */
 
     float mn[3], mx[3];
@@ -1732,22 +1747,21 @@ void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
           I->DragHaveBase = true;
           copy3f(I->FavoredOrigin, I->DragBase);
         } else {
-          if(ExecutiveGetExtent(G, obj->Obj.Name, mn, mx, true, state, true)) {
+          if(ExecutiveGetExtent(G, obj->Name, mn, mx, true, state, true)) {
             average3f(mn, mx, I->DragBase);
             I->DragHaveBase = true;
           }
         }
       }
     }
-
   } else {
-
+    
     /* anchored / fragment dragging  */
     for(frg = 1; frg <= I->NFrag; frg++) {
       sprintf(name, "%s%1d", cEditorFragPref, frg);
       drag_sele = SelectorIndexByName(G, name);
       if(drag_sele >= 0) {
-        s = obj->AtomInfo[index].selEntry;
+        s = objMol->AtomInfo[index].selEntry;
         seleFlag = SelectorIsMember(G, s, drag_sele);
       }
       if(seleFlag) {
@@ -1771,9 +1785,9 @@ void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
       sprintf(name, "%s%1d", cEditorBasePref, frg);     /* get relevant base vertex of bond */
       sele1 = SelectorIndexByName(G, name);
       if(sele1 >= 0) {
-        i1 = ObjectMoleculeGetAtomIndex(obj, sele1);
+        i1 = ObjectMoleculeGetAtomIndex(objMol, sele1);
         if(i1 >= 0) {
-          ObjectMoleculeGetAtomTxfVertex(obj, state, i1, I->DragBase);
+          ObjectMoleculeGetAtomTxfVertex(objMol, state, i1, I->DragBase);
           I->DragHaveBase = true;
           /*printf("base %s\n",name); */
         }
@@ -1785,34 +1799,34 @@ void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
         int cnt = 0;
 
         if((sele0 = SelectorIndexByName(G, cEditorSele1)) >= 0) {
-          if(SelectorIsAtomBondedToSele(G, obj, sele0, drag_sele))
+          if(SelectorIsAtomBondedToSele(G, objMol, sele0, drag_sele))
             cnt++;
           else
             sele0 = -1;
         }
         if((sele1 = SelectorIndexByName(G, cEditorSele2)) >= 0) {
-          if(SelectorIsAtomBondedToSele(G, obj, sele1, drag_sele))
+          if(SelectorIsAtomBondedToSele(G, objMol, sele1, drag_sele))
             cnt++;
           else
             sele1 = -1;
         }
         if((sele2 = SelectorIndexByName(G, cEditorSele3)) >= 0) {
-          if(SelectorIsAtomBondedToSele(G, obj, sele2, drag_sele))
+          if(SelectorIsAtomBondedToSele(G, objMol, sele2, drag_sele))
             cnt++;
           else
             sele2 = -1;
         }
         if((sele3 = SelectorIndexByName(G, cEditorSele4)) >= 0) {
-          if(SelectorIsAtomBondedToSele(G, obj, sele3, drag_sele))
+          if(SelectorIsAtomBondedToSele(G, objMol, sele3, drag_sele))
             cnt++;
           else
             sele3 = -1;
         }
 
-        i0 = ObjectMoleculeGetAtomIndex(obj, sele0);
-        i1 = ObjectMoleculeGetAtomIndex(obj, sele1);
-        i2 = ObjectMoleculeGetAtomIndex(obj, sele2);
-        i3 = ObjectMoleculeGetAtomIndex(obj, sele3);
+        i0 = ObjectMoleculeGetAtomIndex(objMol, sele0);
+        i1 = ObjectMoleculeGetAtomIndex(objMol, sele1);
+        i2 = ObjectMoleculeGetAtomIndex(objMol, sele2);
+        i3 = ObjectMoleculeGetAtomIndex(objMol, sele3);
 
         if(cnt > 1) {           /* bond/multiatom mode */
 
@@ -1820,29 +1834,29 @@ void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
 
           zero3f(I->Center);
           if(i0 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i0, I->V0);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i0, I->V0);
           } else if(i1 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i1, I->V0);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i1, I->V0);
           } else if(i2 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i2, I->V0);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i2, I->V0);
           } else if(i3 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i3, I->V0);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i3, I->V0);
           }
 
           if(i0 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i0, I->V1);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i0, I->V1);
             add3f(I->V1, I->Center, I->Center);
           }
           if(i1 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i1, I->V1);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i1, I->V1);
             add3f(I->V1, I->Center, I->Center);
           }
           if(i2 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i2, I->V1);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i2, I->V1);
             add3f(I->V1, I->Center, I->Center);
           }
           if(i3 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i3, I->V1);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i3, I->V1);
             add3f(I->V1, I->Center, I->Center);
           }
 
@@ -1869,13 +1883,13 @@ void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
         } else {                /* atom mode */
 
           if(i0 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i0, I->V0);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i0, I->V0);
           } else if(i1 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i1, I->V0);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i1, I->V0);
           } else if(i2 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i2, I->V0);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i2, I->V0);
           } else if(i3 >= 0) {
-            ObjectMoleculeGetAtomTxfVertex(obj, state, i3, I->V0);
+            ObjectMoleculeGetAtomTxfVertex(objMol, state, i3, I->V0);
           }
           if(I->DragHaveBase) {
 
@@ -1901,7 +1915,7 @@ void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
       if(sele0 < 0)
         sele0 = SelectorIndexByName(G, cEditorSele4);
       if(sele0 >= 0) {
-        s = obj->AtomInfo[index].selEntry;
+        s = objMol->AtomInfo[index].selEntry;
         seleFlag = SelectorIsMember(G, s, sele0);
       }
 
@@ -1918,9 +1932,9 @@ void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
       I->DragSlowFlag = true;
 
       if(sele0 >= 0) {          /* just provide a base vector, no valid axis exists */
-        i1 = ObjectMoleculeGetAtomIndex(obj, sele0);
+        i1 = ObjectMoleculeGetAtomIndex(objMol, sele0);
         if(i1 >= 0) {
-          ObjectMoleculeGetAtomTxfVertex(obj, state, i1, I->DragBase);
+          ObjectMoleculeGetAtomTxfVertex(objMol, state, i1, I->DragBase);
           I->DragHaveBase = true;
           I->DragBondFlag = true;
         }
@@ -1934,11 +1948,13 @@ void EditorPrepareDrag(PyMOLGlobals * G, ObjectMolecule * obj,
   }
   if(I->DragObject) {
     I->ShowFrags = false;
-    ObjectMoleculeSaveUndo(I->DragObject, state, log_trans);
-    if(SettingGet(G, cSetting_auto_sculpt)) {
-      SettingSet(G, cSetting_sculpting, 1);
-      if(!I->DragObject->Sculpt)
-        ObjectMoleculeSculptImprint(I->DragObject, state, -1, 0);
+    if(objMol) {
+      ObjectMoleculeSaveUndo(objMol, state, log_trans);
+      if(SettingGet(G, cSetting_auto_sculpt)) {
+        SettingSet(G, cSetting_sculpting, 1);
+        if(!objMol->Sculpt)
+          ObjectMoleculeSculptImprint(objMol, state, -1, 0);
+      }
     }
   }
   if(log_trans)
@@ -1954,15 +1970,12 @@ int EditorDraggingObjectMatrix(PyMOLGlobals *G)
 {
   register CEditor *I = G->Editor;
   if(I->DragObject && (I->DragSelection < 0) && (I->DragIndex == -1)) {
-    int matrix_mode = SettingGet_b(G, I->DragObject->Obj.Setting,NULL, cSetting_matrix_mode);
-    if(matrix_mode == 1) {
       return true;
-    }
   }
   return false;
 }
 
-void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int state,
+void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
                 float *pt, float *mov, float *z_dir)
 {
   register CEditor *I = G->Editor;
@@ -1982,12 +1995,23 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
     obj = I->DragObject;
 
   if(obj) {
+    ObjectMolecule *objMol = NULL;
+    if(obj->type == cObjectMolecule)
+      objMol = (ObjectMolecule*)(void*)obj;
+
     state = EditorGetEffectiveState(G, obj, state);
 
     if((index == I->DragIndex) && (obj == I->DragObject)) {
       if(!EditorActive(G)) {
-        int matrix_mode = SettingGet_b(G, I->DragObject->Obj.Setting,
+        int matrix_mode = SettingGet_b(G, I->DragObject->Setting,
                                        NULL, cSetting_matrix_mode);
+        if(matrix_mode<0)
+          matrix_mode = EditorDraggingObjectMatrix(G) ? 1 : 0;
+        
+        /* always force use of matrix mode for non-molecular objects */
+        if((!objMol)&&(!matrix_mode))
+          matrix_mode = 1; 
+
         /* non-achored actions */
         switch (mode) {
         case cButModeRotDrag:
@@ -1996,19 +2020,22 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
           } else {
             SceneOriginGet(G, v3);
           }
+
           get_rotation_about3f3fTTTf(pt[0], mov, v3, m);
           if(matrix_mode && (I->DragSelection < 0)) {
             switch (matrix_mode) {
             case 1:
-              ObjectCombineTTT(&obj->Obj, m, false, SettingGetGlobal_b(G,cSetting_movie_auto_store));
+              ObjectCombineTTT(obj, m, false, SettingGetGlobal_b(G,cSetting_movie_auto_store));
               break;
             case 2:
-              ObjectMoleculeTransformState44f(obj, state, m, log_trans, false, true);
+              if(objMol)
+                ObjectMoleculeTransformState44f(objMol, state, m, log_trans, false, true);
               break;
             }
           } else {
-            ObjectMoleculeTransformSelection(obj, state, I->DragSelection,
-                                             m, log_trans, I->DragSeleName, false, true);
+            if(objMol)
+              ObjectMoleculeTransformSelection(objMol, state, I->DragSelection,
+                                               m, log_trans, I->DragSeleName, false, true);
           }
           SceneInvalidate(G);
           break;
@@ -2034,34 +2061,38 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
              coordinates to effect the desired rotation */
           if(mode == cButModeRotView) {
             /* modify the object's TTT */
-            ObjectCombineTTT(&obj->Obj, m, false, 
+            ObjectCombineTTT(obj, m, false, 
                              SettingGetGlobal_b(G,cSetting_movie_auto_store));
           } else {
             if(matrix_mode) {
               switch (matrix_mode) {
               case 1:
-                ObjectCombineTTT(&obj->Obj, m, false, 
+                ObjectCombineTTT(obj, m, false, 
                                  SettingGetGlobal_b(G,cSetting_movie_auto_store));
                 break;
               case 2:
-                ObjectMoleculeTransformState44f(obj, state, m, log_trans, false, true);
+                if(objMol)
+                  ObjectMoleculeTransformState44f(objMol, state, m, log_trans, false, true);
                 break;
               }
             } else {
-              ObjectMoleculeTransformSelection(obj, state, I->DragSelection,
-                                               m, log_trans, I->DragSeleName, false,
-                                               true);
+              if(objMol)
+                ObjectMoleculeTransformSelection(objMol, state, I->DragSelection,
+                                                 m, log_trans, I->DragSeleName, false,
+                                                 true);
             }
           }
           SceneInvalidate(G);
           break;
         case cButModeTorFrag:
-          ObjectMoleculeMoveAtom(obj, state, index, mov, 1, log_trans);
-          SceneInvalidate(G);
+          if(objMol) {
+            ObjectMoleculeMoveAtom(objMol, state, index, mov, 1, log_trans);
+            SceneInvalidate(G);
+          }
           break;
         case cButModeMovView:
         case cButModeMovViewZ:
-          ObjectTranslateTTT(&obj->Obj, mov, SettingGetGlobal_b(G,cSetting_movie_auto_store));
+          ObjectTranslateTTT(obj, mov, SettingGetGlobal_b(G,cSetting_movie_auto_store));
           break;
         case cButModeMovObj:
         case cButModeMovObjZ:
@@ -2076,17 +2107,19 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
             m[11] = mov[2];
             switch (matrix_mode) {
             case 1:
-              ObjectCombineTTT(&obj->Obj, m, false, SettingGetGlobal_b(G,cSetting_movie_auto_store));
+              ObjectCombineTTT(obj, m, false, SettingGetGlobal_b(G,cSetting_movie_auto_store));
               break;
             case 2:
-              ObjectMoleculeTransformState44f(obj, state, m, log_trans, true, true);
+              if(objMol)
+                ObjectMoleculeTransformState44f(objMol, state, m, log_trans, true, true);
               break;
             }
           } else {
             identity44f(m);
             copy3f(mov, m + 12);        /* questionable... */
-            ObjectMoleculeTransformSelection(obj, state, I->DragSelection, m,
-                                             log_trans, I->DragSeleName, false, true);
+            if(objMol) 
+              ObjectMoleculeTransformSelection(objMol, state, I->DragSelection, m,
+                                               log_trans, I->DragSeleName, false, true);
           }
           SceneInvalidate(G);
           break;
@@ -2119,9 +2152,11 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
           normalize23f(cp, n2);
 
           get_rotation_about3f3fTTTf(theta, n2, v3, m);
-          ObjectMoleculeTransformSelection(obj, state, I->DragSelection,
-                                           m, log_trans, I->DragSeleName, false, true);
-          SceneInvalidate(G);
+          if(objMol) {
+            ObjectMoleculeTransformSelection(objMol, state, I->DragSelection,
+                                             m, log_trans, I->DragSeleName, false, true);
+            SceneInvalidate(G);
+          }
           break;
         case cButModeTorFrag:
         case cButModePkTorBnd:
@@ -2150,16 +2185,18 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
               if(dot_product3f(n1, mov) < 0.0)
                 theta = -theta;
               get_rotation_about3f3fTTTf(theta, n0, v1, m);
-              ObjectMoleculeTransformSelection(obj, state, I->DragSelection, m,
-                                               log_trans, I->DragSeleName, false, true);
+              if(objMol)
+                ObjectMoleculeTransformSelection(objMol, state, I->DragSelection, m,
+                                                 log_trans, I->DragSeleName, false, true);
             } else {
 
               if(z_dir) {       /* NULL-safety */
                 cross_product3f(I->Axis, z_dir, d0);
                 theta = -dot_product3f(d0, mov);
                 get_rotation_about3f3fTTTf(theta, n0, v1, m);
-                ObjectMoleculeTransformSelection(obj, state, I->DragSelection, m,
-                                                 log_trans, I->DragSeleName, false, true);
+                if(objMol)
+                  ObjectMoleculeTransformSelection(objMol, state, I->DragSelection, m,
+                                                   log_trans, I->DragSeleName, false, true);
               }
 
             }
@@ -2173,7 +2210,8 @@ void EditorDrag(PyMOLGlobals * G, ObjectMolecule * obj, int index, int mode, int
         case cButModeMovFragZ:
           identity44f(m);
           copy3f(mov, m + 12);  /* questionable */
-          ObjectMoleculeTransformSelection(obj, state, I->DragSelection,
+          if(objMol)
+            ObjectMoleculeTransformSelection(objMol, state, I->DragSelection,
                                            m, log_trans, I->DragSeleName, false, true);
           SceneInvalidate(G);
           break;

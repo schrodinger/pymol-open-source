@@ -4286,7 +4286,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
               switch (obj->type) {
               case cObjectMolecule:
                 objMol = (ObjectMolecule *) obj;
-                EditorPrepareDrag(G, objMol, -1, I->LastPicked.src.index,
+                EditorPrepareDrag(G, obj, -1, I->LastPicked.src.index,
                                   SettingGetGlobal_i(G, cSetting_state) - 1, mode);
                 I->SculptingFlag = 1;
                 I->SculptingSave = objMol->AtomInfo[I->LastPicked.src.index].protekted;
@@ -4385,7 +4385,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
             }
           }
           objMol = (ObjectMolecule *) obj;
-          EditorPrepareDrag(G, objMol, -1, I->LastPicked.src.index,
+          EditorPrepareDrag(G, obj, -1, I->LastPicked.src.index,
                             SettingGetGlobal_i(G, cSetting_state) - 1, mode);
 
           if(I->LastPicked.src.bond >= cPickableAtom) {
@@ -5471,7 +5471,7 @@ static int SceneDrag(Block * block, int x, int y, int mod, double when)
 
               if(I->LastPicked.src.bond >= cPickableAtom) {
                 if((mode != cButModeMoveAtom) && (mode != cButModeMoveAtomZ)) {
-                  EditorDrag(G, (ObjectMolecule *) obj, I->LastPicked.src.index, mode,
+                  EditorDrag(G, obj, I->LastPicked.src.index, mode,
                              SettingGetGlobal_i(G, cSetting_state) - 1, v1, v2, v3);
                   switch(mode) {
                   case cButModeMovViewZ:

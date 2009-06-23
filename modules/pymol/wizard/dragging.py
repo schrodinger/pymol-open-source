@@ -26,8 +26,13 @@ class Dragging(Wizard):
 
     def recount(self):
         self.atom_count = self.cmd.count_atoms(drag_sele)
-        self.obj = self.cmd.get_object_list(drag_sele)[0]
-        print ' Dragging %s atoms in object "%s".'%(self.atom_count,self.obj)
+        if self.atom_count:
+            obj_list = self.cmd.get_object_list(drag_sele)
+            self.obj = obj_list[0]
+            print ' Dragging %s atoms in object "%s".'%(self.atom_count,self.obj)
+        else:
+            self.obj = self.cmd.get_drag_object_name();
+            print ' Dragging whole object "%s".'%self.obj
         self.cmd.refresh_wizard()
 #        self.cmd.enable(drag_sele)
 #        t = threading.Thread(target=delayed_disable,args=(drag_sele,0.5))
@@ -72,17 +77,26 @@ class Dragging(Wizard):
     
     def get_panel(self):
         if self.check_valid():
-            panel = [
-                [ 1, 'Dragging %d atoms in'%self.atom_count, ''],
-                [ 1, 'object "'+self.obj+'"', ''],
-                [ 2, 'Undo (CTRL-Z)', 
-                  'cmd.undo()'],
-                [ 2, 'Redo (CTRL-A)', 
-                  'cmd.redo()'],
-                [ 2, 'Indicate', 
-                  'cmd.get_wizard().indicate()'],
-                [ 2, 'Done', 'cmd.set_wizard()' ]
+            if self.atom_count:
+                panel = [
+                    [ 1, 'Dragging %d atoms in'%self.atom_count, ''],
+                    [ 1, 'object "'+self.obj+'"', ''],
+                    [ 2, 'Undo (CTRL-Z)', 
+                      'cmd.undo()'],
+                    [ 2, 'Redo (CTRL-A)', 
+                      'cmd.redo()'],
+                    [ 2, 'Indicate', 
+                      'cmd.get_wizard().indicate()'],
+                    [ 2, 'Done', 'cmd.set_wizard()' ]
                     ]
+            else:
+                panel = [
+                    [ 1, 'Dragging matrix for',''],
+                    [ 1, 'object "'+self.obj+'"', ''],
+                    [ 2, 'Reset', 'cmd.reset(object="%s")'%self.obj],
+                    [ 2, 'Done', 'cmd.set_wizard()' ]
+                    ]
+                
         else:
             panel = None
         return panel

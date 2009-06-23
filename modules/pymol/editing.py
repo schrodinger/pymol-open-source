@@ -779,7 +779,7 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException            
         return r
 
-    def drag(selection=None, wizard=1, edit=1, quiet=1,_self=cmd):
+    def drag(selection=None, wizard=1, edit=1, quiet=1, mode=-1, _self=cmd):
         '''
 DESCRIPTION
 
@@ -820,7 +820,7 @@ NOTES
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            r = _cmd.drag(_self._COb,str(selection),int(quiet))
+            r = _cmd.drag(_self._COb,str(selection),int(quiet),int(mode))
         finally:
             _self.unlock(r,_self)
         if not is_error(r):

@@ -501,6 +501,7 @@ void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, float *matri
   int use_matrices = SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
   float tmp_matrix[16];
   CoordSet *cs;
+  if(use_matrices<0) use_matrices = 0;
   if(!use_matrices) {
     ObjectMoleculeTransformSelection(I, state, -1, matrix, log_trans, I->Obj.Name,
                                      homogenous, true);
@@ -3058,6 +3059,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
 
   float tmp_matrix[16], v_tmp[3], *matrix = NULL;
 
+  if(use_matrices<0) use_matrices = 0;
   if(G->HaveGUI && G->ValidContext) {
     register AtomInfoType *atInfo = I->AtomInfo, *ai;
 
@@ -6845,6 +6847,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
         int use_matrices = SettingGet_b(G, I->Obj.Setting,
                                         NULL, cSetting_matrix_mode);
 
+        if(use_matrices<0) use_matrices = 0;
         if(global &&!homogenous) {      /* convert matrix to homogenous */
           convertTTTfR44f(matrix, homo_matrix);
           matrix = homo_matrix;
@@ -9705,9 +9708,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       {
         register int op_i2 = op->i2;
         register int obj_TTTFlag = I->Obj.TTTFlag;
-        if(op_i2)
+        if(op_i2) {
           use_matrices =
             SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
+          if(use_matrices<0) use_matrices = 0;
+        }
         for(a = 0; a < I->NAtom; a++) {
           s = I->AtomInfo[a].selEntry;
           if((priority = SelectorIsMember(G, s, sele))) {
@@ -9772,10 +9777,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
       {
         register int op_i2 = op->i2;
         register int obj_TTTFlag = I->Obj.TTTFlag;
-        if(op_i2)
+        if(op_i2) {
           use_matrices =
             SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
-
+          if(use_matrices<0) use_matrices = 0;
+        }
         for(a = 0; a < I->NAtom; a++) {
           s = I->AtomInfo[a].selEntry;
           if((priority = SelectorIsMember(G, s, sele))) {
@@ -10338,9 +10344,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         register int i_NAtom = I->NAtom;
         register int i_DiscreteFlag = I->DiscreteFlag;
         register CoordSet **i_CSet = I->CSet;
-        if(op_i2)
+        if(op_i2) {
           use_matrices =
             SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
+  if(use_matrices<0) use_matrices = 0;
+        }
         ai = I->AtomInfo;
         for(a = 0; a < i_NAtom; a++) {
           s = ai->selEntry;
@@ -10390,10 +10398,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         register int i_NAtom = I->NAtom;
         register int i_DiscreteFlag = I->DiscreteFlag;
         register CoordSet **i_CSet = I->CSet;
-        if(op_i2)
+        if(op_i2) {
           use_matrices =
             SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
-
+          if(use_matrices<0) use_matrices = 0;
+        }
         ai = I->AtomInfo;
         for(a = 0; a < i_NAtom; a++) {
           s = ai->selEntry;
@@ -10466,6 +10475,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
           break;
         }
         use_matrices = SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
+        if(use_matrices<0) use_matrices = 0;
         ai = I->AtomInfo;
         for(a = 0; a < I->NAtom; a++) {
           switch (op->code) {
@@ -11763,7 +11773,7 @@ static void ObjectMoleculeRender(ObjectMolecule * I, RenderInfo * info)
   int use_matrices = SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
   CoordSet *cs;
   int pop_matrix = false;
-
+  if(use_matrices<0) use_matrices = 0;
   PRINTFD(I->Obj.G, FB_ObjectMolecule)
     " ObjectMolecule: rendering %s pass %d...\n", I->Obj.Name, pass ENDFD;
 

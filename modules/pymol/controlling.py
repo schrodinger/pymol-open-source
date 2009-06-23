@@ -126,8 +126,11 @@ if __name__=='pymol.controlling':
         'three_button_editing' : [  'three_button_editing', 
                                     'three_button_viewing', ],
 
-        'two_button' : [ 'two_button_viewing',
+        'two_button' : [ 'two_button_viewing', # LEGACY
                          'two_button_selecting' ],
+
+        'two_button_viewing' : [ 'two_button_viewing', 
+                                 'two_button_selecting' ],
 
         'two_button_editing' : [ 'two_button_editing',
                                  'two_button_viewing',

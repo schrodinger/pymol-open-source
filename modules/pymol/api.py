@@ -93,6 +93,7 @@ from querying import \
       get_atom_coords,    \
       get_dihedral,       \
       get_distance,       \
+      get_drag_object_name, \
       get_extent,         \
       get_idtf,           \
       get_modal_draw,     \
