@@ -6543,6 +6543,8 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
       {
         int c = 0;
         PyObject *atom_list = PyList_New(nAtom);
+        double matrix[16];
+        int matrix_flag = false;
         PyObject_SetAttrString(model, "atom", atom_list);
         for(a = cNDummyAtoms; a < I->NAtom; a++) {
           if(I->Table[a].index) {
@@ -6560,8 +6562,6 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
             } else
               idx = cs->AtmToIdx[at];
             if(idx >= 0) {
-              double matrix[16];
-              int matrix_flag = false;
 
               if(mat_cs != cs) {
                 /* compute the effective matrix for output coordinates */
@@ -6578,7 +6578,6 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals * G, int sele, int state, double *
                 }
                 mat_cs = cs;
               }
-
               if(single_flag) { /* remember whether all atoms come from a single coordinate set... */
                 if(single_cs) {
                   if(single_cs != cs)

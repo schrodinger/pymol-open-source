@@ -782,7 +782,7 @@ void ObjectResetTTT(CObject * I,int store)
 /*========================================================================*/
 int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
 {
-  int result = 0;
+  int result = false;
   if(I->TTTFlag) {
     convertTTTfR44d(I->TTT, matrix);
     result = true;
@@ -790,6 +790,7 @@ int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
 
   {
     int use_matrices = SettingGet_b(I->G, I->Setting, NULL, cSetting_matrix_mode);
+    if(use_matrices<0) use_matrices = 0;
     if(use_matrices || history) {
       if(I->fGetObjectState) {
         CObjectState *obj_state = I->fGetObjectState(I, state);
