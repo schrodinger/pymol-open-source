@@ -94,7 +94,7 @@ def obj_motion(self_cmd, obj):
             [ 1, 'store'         , 'cmd.mview("store",object="'+obj+'")'      ],
             [ 1, 'clear'       ,   'cmd.mview("clear",object="'+obj+'")'    ],
             [ 0, ''               ,''                             ],
-            [ 1, 'smooth'         , smooth(self_cmd,'object="'+obj+'"') ],
+            [ 1, 'smooth'         , smooth(self_cmd,',object="'+obj+'"') ],
             [ 0, ''               ,''                             ],
             [ 1, 'interpolate'   ,   'cmd.mview("interpolate",object="'+obj+'")'    ],
             [ 1, 'reinterpolate'   ,   'cmd.mview("reinterpolate",object="'+obj+'")'    ],
