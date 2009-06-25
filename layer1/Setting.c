@@ -3675,10 +3675,11 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_opaque_background, 1);
     set_b(I, cSetting_draw_frames, 0);
     set_b(I, cSetting_show_alpha_checker, 1);
-    set_i(I, cSetting_matrix_mode, -1);  /* 0: coordinates (pre-1.0 legacy default mode)
-                                           1: per-object matrices (TTTs: version 1.0 default mode?)
-                                           2: per-state matrices (partially implemented)
-                                           3: per-group matrices (may come in the future) */
+    set_i(I, cSetting_matrix_mode, -1); /* -1: automatic behavior based on implied intent
+                                            0: coordinates (pre-1.0 legacy default mode)
+                                            1: per-object matrices (TTTs: version 1.0 default mode?)
+                                            2: per-state matrices (partially implemented)
+                                            3: per-group matrices (may come in the future) */
     set_b(I, cSetting_editor_auto_origin, 1);
     set_s(I, cSetting_session_file, "");
     set_f(I, cSetting_cgo_transparency, 0.0F);

@@ -1670,7 +1670,7 @@ void EditorSetDrag(PyMOLGlobals * G, CObject * obj, int sele, int quiet, int sta
   if(obj->type == cObjectMolecule) {
     ObjectMolecule *objMol = (ObjectMolecule*)(void*)obj;
     if(ObjectMoleculeCheckFullStateSelection(objMol, sele, state)) {
-      int matrix_mode = SettingGet_b(G, obj->Setting, NULL, cSetting_matrix_mode);
+      int matrix_mode = SettingGet_i(G, obj->Setting, NULL, cSetting_matrix_mode);
       if(matrix_mode>=1) {
         /* force / coerce object matrix drags? */
         sele = -1;
@@ -2003,7 +2003,7 @@ void EditorDrag(PyMOLGlobals * G, CObject * obj, int index, int mode, int state,
 
     if((index == I->DragIndex) && (obj == I->DragObject)) {
       if(!EditorActive(G)) {
-        int matrix_mode = SettingGet_b(G, I->DragObject->Setting,
+        int matrix_mode = SettingGet_i(G, I->DragObject->Setting,
                                        NULL, cSetting_matrix_mode);
         if(matrix_mode<0)
           matrix_mode = EditorDraggingObjectMatrix(G) ? 1 : 0;

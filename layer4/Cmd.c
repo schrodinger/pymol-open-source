@@ -1794,7 +1794,8 @@ static PyObject *CmdTransformObject(PyObject * self, PyObject * args)
   if(ok) {
     if(PConvPyListToFloatArrayInPlace(m, matrix, 16) > 0) {
       if((ok = APIEnterNotModal(G))) {
-        int matrix_mode = SettingGetGlobal_b(G, cSetting_matrix_mode);
+        int matrix_mode = SettingGetGlobal_i(G, cSetting_matrix_mode);
+        if(matrix_mode<0) matrix_mode = 0;
         if((matrix_mode == 0) || (sele[0] != 0)) {
           ok = ExecutiveTransformObjectSelection(G, name,
                                                  state, sele, log, matrix, homo, true);

@@ -498,9 +498,9 @@ void ObjectMoleculeTransformState44f(ObjectMolecule * I, int state, float *matri
                                      int log_trans, int homogenous, int transformed)
 {
   int a;
-  int use_matrices = SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
   float tmp_matrix[16];
   CoordSet *cs;
+  int use_matrices = SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
   if(use_matrices<0) use_matrices = 0;
   if(!use_matrices) {
     ObjectMoleculeTransformSelection(I, state, -1, matrix, log_trans, I->Obj.Name,
@@ -3051,15 +3051,14 @@ void ObjectMoleculeRenderSele(ObjectMolecule * I, int curState, int sele, int vi
   register CoordSet *cs;
   register int a, *idx2atm, nIndex;
   register float *coord, *v;
-  register int use_matrices =
-    SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
   register int flag = true;
   register int all_vis = !vis_only;
   register signed char *visRep;
-
   float tmp_matrix[16], v_tmp[3], *matrix = NULL;
-
+  register int use_matrices =
+    SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
   if(use_matrices<0) use_matrices = 0;
+
   if(G->HaveGUI && G->ValidContext) {
     register AtomInfoType *atInfo = I->AtomInfo, *ai;
 
@@ -6844,10 +6843,10 @@ int ObjectMoleculeTransformSelection(ObjectMolecule * I, int state,
     if(state < I->NCSet) {
       cs = I->CSet[state];
       if(cs) {
-        int use_matrices = SettingGet_b(G, I->Obj.Setting,
+        int use_matrices = SettingGet_i(G, I->Obj.Setting,
                                         NULL, cSetting_matrix_mode);
-
         if(use_matrices<0) use_matrices = 0;
+
         if(global &&!homogenous) {      /* convert matrix to homogenous */
           convertTTTfR44f(matrix, homo_matrix);
           matrix = homo_matrix;
@@ -9710,7 +9709,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         register int obj_TTTFlag = I->Obj.TTTFlag;
         if(op_i2) {
           use_matrices =
-            SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
+            SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
           if(use_matrices<0) use_matrices = 0;
         }
         for(a = 0; a < I->NAtom; a++) {
@@ -9779,7 +9778,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         register int obj_TTTFlag = I->Obj.TTTFlag;
         if(op_i2) {
           use_matrices =
-            SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
+            SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
           if(use_matrices<0) use_matrices = 0;
         }
         for(a = 0; a < I->NAtom; a++) {
@@ -10346,8 +10345,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         register CoordSet **i_CSet = I->CSet;
         if(op_i2) {
           use_matrices =
-            SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
-  if(use_matrices<0) use_matrices = 0;
+            SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
+          if(use_matrices<0) use_matrices = 0;
         }
         ai = I->AtomInfo;
         for(a = 0; a < i_NAtom; a++) {
@@ -10400,7 +10399,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
         register CoordSet **i_CSet = I->CSet;
         if(op_i2) {
           use_matrices =
-            SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
+            SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
           if(use_matrices<0) use_matrices = 0;
         }
         ai = I->AtomInfo;
@@ -10474,7 +10473,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule * I, int sele, ObjectMoleculeOpRec * op
           }
           break;
         }
-        use_matrices = SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
+        use_matrices = SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
         if(use_matrices<0) use_matrices = 0;
         ai = I->AtomInfo;
         for(a = 0; a < I->NAtom; a++) {
@@ -11770,9 +11769,9 @@ static void ObjectMoleculeRender(ObjectMolecule * I, RenderInfo * info)
   Picking **pick = info->pick;
   int pass = info->pass;
   int a;
-  int use_matrices = SettingGet_b(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
   CoordSet *cs;
   int pop_matrix = false;
+  int use_matrices = SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_matrix_mode);
   if(use_matrices<0) use_matrices = 0;
   PRINTFD(I->Obj.G, FB_ObjectMolecule)
     " ObjectMolecule: rendering %s pass %d...\n", I->Obj.Name, pass ENDFD;
