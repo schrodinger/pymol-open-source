@@ -282,6 +282,7 @@ if pymol_launch != 3: # if this isn't a dry run
                 except:
                     traceback.print_exc()
             try:
+                socket_error = 0
                 if cmd.ready():
                     cmd.config_mouse(quiet=1)
                     for a in self.invocation.options.deferred:
@@ -301,16 +302,17 @@ if pymol_launch != 3: # if this isn't a dry run
                 traceback.print_exc()
                 print "Error: Argument processing aborted due to exception (above)."
             except socket.error:
+                socket_error = 1
+
+            if socket_error:
                 # this (should) only happen if we're opening a PWG file on startup
                 # and the port is busy.  For now, simply bail...
-                cmd.wizard("message",["Socket.error: ",
-                                      "   \\999Assigned socket in use.","",
+                cmd.wizard("message",["Socket.error: ","",
+                                      "\\999Assigned socket in use.","",
                                       "\\779Is PyMOL already launched?","",
                                       "\\966Shutting down..."])
                 cmd.refresh()
-                cmd.do("time.sleep(2);quit")
-            except:
-                traceback.print_exc()
+                cmd.do("time.sleep(2);cmd.quit()")
 
         def adapt_to_hardware(self):
             cmd=self.cmd

@@ -135,10 +135,11 @@ if __name__=='pymol.parser':
         def parse(self,s,secure):
             layer = self.layer.get(self.nest,None)
             self.result = None
-        # report any uncaught errors...
-            if sys.exc_info()!=(None,None,None):
-                traceback.print_exc()
-                sys.exc_clear()
+# report any uncaught errors...
+# WLD: this is problematic if parse is called inside an exception...removed.
+#            if sys.exc_info()!=(None,None,None):
+#                traceback.print_exc()
+#                sys.exc_clear()
             if layer.embed_sentinel!=None:
                 if string.strip(s) == layer.embed_sentinel:
                     etn = layer.embed_type
