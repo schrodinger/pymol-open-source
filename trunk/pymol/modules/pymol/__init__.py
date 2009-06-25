@@ -303,7 +303,8 @@ if pymol_launch != 3: # if this isn't a dry run
             except socket.error:
                 # this (should) only happen if we're opening a PWG file on startup
                 # and the port is busy.  For now, simply bail...
-                cmd.wizard("message",["Socket.error: ','   \\999Assigned socket in use.","",
+                cmd.wizard("message",["Socket.error: ",
+                                      "   \\999Assigned socket in use.","",
                                       "\\779Is PyMOL already launched?","",
                                       "\\966Shutting down..."])
                 cmd.refresh()
