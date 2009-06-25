@@ -272,6 +272,7 @@ if pymol_launch != 3: # if this isn't a dry run
             return None
 
         def exec_deferred(self):
+            import socket
             cmd=self.cmd
             if self.invocation.options.read_stdin:
                 try:
@@ -299,6 +300,14 @@ if pymol_launch != 3: # if this isn't a dry run
             except CmdException:
                 traceback.print_exc()
                 print "Error: Argument processing aborted due to exception (above)."
+            except socket.error:
+                # this (should) only happen if we're opening a PWG file on startup
+                # and the port is busy.  For now, simply bail...
+                cmd.wizard("message",["Socket.error: ','   \\999Assigned socket in use.","",
+                                      "\\779Is PyMOL already launched?","",
+                                      "\\966Shutting down..."])
+                cmd.refresh()
+                cmd.do("time.sleep(2);quit")
             except:
                 traceback.print_exc()
 

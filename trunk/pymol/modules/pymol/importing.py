@@ -469,7 +469,7 @@ SEE ALSO
     def _processPWG(fname,_self=cmd):
         r = DEFAULT_ERROR
         try:
-            from consortia.web.d0906.pymolhttpd import PymolHttpd
+            from consortia.web.pymolhttpd import PymolHttpd
             browser_flag = 0
             launch_flag = 0
             report_url = None
@@ -524,8 +524,10 @@ SEE ALSO
                                 report_url = input[1]
                         elif keyword == 'delete':
                             os.unlink(fname)
+                        elif keyword == 'options':
+                            os.unlink(fname)
                         else:
-                            print "Error: unrecognized input '%s'"%input
+                            print "Error: unrecognized input:  %s"%str(input)
             if launch_flag:
                 server = PymolHttpd(port,root,logging)
                 if port == 0:
