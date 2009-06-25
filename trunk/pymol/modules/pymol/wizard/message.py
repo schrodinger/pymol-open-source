@@ -3,6 +3,9 @@ from pymol import cmd
 import pymol
 import types
 
+import re
+_nuke_color_re = re.compile(r"\\[0-9][0-9][0-9]")
+
 class Message(Wizard):
 
     def __init__(self,*arg,**kw):
@@ -15,7 +18,7 @@ class Message(Wizard):
             else:
                 self.message.extend(a)
         for a in self.message:
-            print " "+a
+            print " " + _nuke_color_re.sub('',a)
         self.dismiss = int(kw.get("dismiss",1))
 
     def get_prompt(self):
