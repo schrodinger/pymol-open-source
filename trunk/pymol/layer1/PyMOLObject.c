@@ -789,7 +789,7 @@ int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix)
   }
 
   {
-    int use_matrices = SettingGet_b(I->G, I->Setting, NULL, cSetting_matrix_mode);
+    int use_matrices = SettingGet_i(I->G, I->Setting, NULL, cSetting_matrix_mode);
     if(use_matrices<0) use_matrices = 0;
     if(use_matrices || history) {
       if(I->fGetObjectState) {

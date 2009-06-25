@@ -1673,13 +1673,14 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
      mode 2: state matrix */
 
   int ok = true;
-  int matrix_mode = SettingGetGlobal_b(G, cSetting_matrix_mode);
   int copy_ttt_too = false;
+  int matrix_mode = SettingGetGlobal_i(G, cSetting_matrix_mode);
+  if(matrix_mode < 0)
+    matrix_mode = 0; /* for now */
+
   if((source_mode < 0) && (target_mode < 0)) {
     copy_ttt_too = true;
   }
-  if(matrix_mode < 0)
-    matrix_mode = 0; /* for now */
   if(source_mode < 0)
     source_mode = matrix_mode;
   if(target_mode < 0)
@@ -1840,13 +1841,14 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
   CTracker *I_Tracker = I->Tracker;
   SpecRec *src_rec = NULL;
   int ok = true;
-  int matrix_mode = SettingGetGlobal_b(G, cSetting_matrix_mode);
   int copy_ttt_too = false;
+  int matrix_mode = SettingGetGlobal_i(G, cSetting_matrix_mode);
+  if(matrix_mode < 0)
+    matrix_mode = 0; /* for now */
+
   if((source_mode < 0) && (target_mode < 0)) {
     copy_ttt_too = true;
   }
-  if(matrix_mode < 0)
-    matrix_mode = 0; /* for now */
 
   if(source_mode < 0)
     source_mode = matrix_mode;
@@ -2149,13 +2151,13 @@ void ExecutiveResetMatrix(PyMOLGlobals * G,
 {
   register CExecutive *I = G->Executive;
   CTracker *I_Tracker = I->Tracker;
-  int matrix_mode = SettingGetGlobal_b(G, cSetting_matrix_mode);
   int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
   SpecRec *rec;
-
+  int matrix_mode = SettingGetGlobal_i(G, cSetting_matrix_mode);
   if(matrix_mode < 0)
     matrix_mode = 0; /* for now */
+
   if(mode < 0)
     mode = matrix_mode;
 
@@ -9583,9 +9585,9 @@ int ExecutiveRMS(PyMOLGlobals * G, char *s1, char *s2, int mode, float refine,
   int ok = true;
   int repeat;
   float v1[3], *v2;
-  int matrix_mode = SettingGetGlobal_b(G, cSetting_matrix_mode);
   ObjectAlignment *align_to_update = NULL;
 
+  int matrix_mode = SettingGetGlobal_i(G, cSetting_matrix_mode);
   if(matrix_mode < 0)
     matrix_mode = 0; /* for now */
 

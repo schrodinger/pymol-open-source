@@ -537,9 +537,9 @@ int CoordSetGetAtomTxfVertex(CoordSet * I, int at, float *v)
   if(a1 >= 0) {
     result = 1;
     copy3f(I->Coord + 3 * a1, v);
-    if(I->State.Matrix && SettingGet_b(I->State.G,
-                                       obj->Obj.Setting, I->Setting,
-                                       cSetting_matrix_mode) > 0) {
+    if(I->State.Matrix && (SettingGet_i(I->State.G,
+                                  obj->Obj.Setting, I->Setting,
+                                  cSetting_matrix_mode) > 0)) {
       /* apply state transformation */
       transform44d3f(I->State.Matrix, v, v);
     }
