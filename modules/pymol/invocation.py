@@ -25,6 +25,7 @@ if __name__=='pymol.invocation':
     import glob
     import string
     import sys
+    import traceback
     
     pymolrc_pat1 = '.pymolrc*'
     pymolrc_pat2 = 'pymolrc*'
@@ -129,17 +130,19 @@ if __name__=='pymol.invocation':
         second.sort()
         return first+second
 
-    def parse_args(argv,_pymol=None):
-        global _argv
-        _argv = copy.deepcopy(argv) # pymol.invocation._argv
+    def parse_args(argv, _pymol=None, options=None, restricted=0):
+        if not restricted:
+            global _argv
+            _argv = copy.deepcopy(argv) # pymol.invocation._argv
+            global global_options
+            if options == None:
+                if _pymol==None:
+                    options = global_options
+                else:
+                    options = _pymol.invocation.options
         av = copy.deepcopy(argv)
         av = av[1:] # throw out the executable path
         av.reverse()
-        global global_options
-        if _pymol==None:
-            options = global_options
-        else:
-            options = _pymol.invocation.options
         once_dict = {}
         options.deferred = []
         final_actions = []
@@ -153,7 +156,7 @@ if __name__=='pymol.invocation':
             a = av.pop()
             a = re.sub(r'''^"|"$|^'|'$''','',a) # strip extra quotes
             if a[0:1]=='-':
-                if a[1:2]=='-':
+                if (a[1:2]=='-'):
                     # double hypen signals end of PyMOL arguments
                     if python_script == None:
                         python_script = argv[0]
@@ -208,9 +211,6 @@ if __name__=='pymol.invocation':
                     # ===============================================
                     new_args.reverse()
                     av = av + new_args
-                if "c" in a:
-                    options.no_gui=1
-                    options.external_gui=0
                 if "1" in a[1:2]:
                     options.deferred.append("_do__ config_mouse one_button")
                 if "2" in a[1:2]:
@@ -245,14 +245,6 @@ if __name__=='pymol.invocation':
                     options.gui = av.pop()
                 if "x" in a:
                     options.external_gui = 0
-                if "m" in a: # mac external GUI
-                    if options.external_gui == 2:
-                        options.external_gui = 3
-                        if options.win_py == 184: # mac external GUI default
-                            options.win_py = 216
-                    else:
-                        options.external_gui = 2
-                        options.win_py = 184 
                 if "n" in a:
                     options.incentive_product = 1
                 if "t" in a: # type of stereo to use
@@ -269,66 +261,94 @@ if __name__=='pymol.invocation':
                     options.zoom_mode = int(av.pop())
                     if options.zoom_mode==5:
                         final_actions.append("_do__ zoom")
-                if "d" in a:
-                    options.deferred.append(
-                        "_do_%s"%string.replace(av.pop(),'%',' '))
-                if "e" in a:
-                    options.full_screen = 1
-                    options.deferred.append("_do__ full_screen on")
-                if "G" in a: # Game mode (reqd for Mac stereo)
-                    options.game_mode = 1
-                    options.win_x = 1024
-                    options.win_y = 768
-                if "S" in a: # Force stereo on stereo hardware (OSX only)
-                    options.force_stereo = 1
-                    options.deferred.append("_do__ stereo on")
-                    if sys.platform=='darwin': 
+                if not restricted:
+                    if "c" in a:
+                        options.no_gui=1
+                        options.external_gui=0
+                    if "m" in a: # mac external GUI
+                        if options.external_gui == 2:
+                            options.external_gui = 3
+                            if options.win_py == 184: # mac external GUI default
+                                options.win_py = 216
+                        else:
+                            options.external_gui = 2
+                            options.win_py = 184 
+                    
+                    if "e" in a:
+                        options.full_screen = 1
+                        options.deferred.append("_do__ full_screen on")
+                    if "G" in a: # Game mode (reqd for Mac stereo)
+                        options.game_mode = 1
+                        options.win_x = 1024
+                        options.win_y = 768
+                    if "S" in a: # Force stereo on stereo hardware (OSX only)
+                        options.force_stereo = 1
+
+                        if sys.platform=='darwin': 
+                            options.deferred.append(
+                              "_do__ set stereo_double_pump_mono,1,quiet=1")
+                    if "M" in a: # Force mono on stereo hardware (all)
+                        options.force_stereo = -1
+                    if "j" in a: # Geowall: two side-by-side images
+                        options.stereo_mode = 4
+                        options.deferred.append("_do__ stereo on")
+                    if ("d" in a):
                         options.deferred.append(
-                          "_do__ set stereo_double_pump_mono,1,quiet=1")
-                if "M" in a: # Force mono on stereo hardware (all)
-                    options.force_stereo = -1
-                if "j" in a: # Geowall: two side-by-side images
-                    options.stereo_mode = 4
-                    options.deferred.append("_do__ stereo on")
-                if "J" in a: # cd to user's home directory on startup (if possible)
-                    if sys.platform == 'win32':
-                        if os.environ.has_key("HOMEDRIVE") and os.environ.has_key("HOMEPATH"):
-                            path = os.environ["HOMEDRIVE"] + os.environ["HOMEPATH"]
-                            if os.path.isdir(path) and os.path.exists(path):
-                                my_docs = os.path.join(path,"Documents") # for VISTA compatibility
-                                if os.path.isdir(my_docs): # start in Documents (if exists)
-                                    path = my_docs
-                                else:
-                                    my_docs = os.path.join(path,"My Documents")                                    
-                                    if os.path.isdir(my_docs): # start in My Documents (if exists)
+                            "_do_%s"%string.replace(av.pop(),'%',' '))
+                    if ("J" in a): # cd to user's home directory on startup (if possible)
+                        if sys.platform == 'win32':
+                            if os.environ.has_key("HOMEDRIVE") and os.environ.has_key("HOMEPATH"):
+                                path = os.environ["HOMEDRIVE"] + os.environ["HOMEPATH"]
+                                if os.path.isdir(path) and os.path.exists(path):
+                                    my_docs = os.path.join(path,"Documents") # for VISTA compatibility
+                                    if os.path.isdir(my_docs): # start in Documents (if exists)
                                         path = my_docs
+                                    else:
+                                        my_docs = os.path.join(path,"My Documents")                                    
+                                        if os.path.isdir(my_docs): # start in My Documents (if exists)
+                                            path = my_docs
+                                    options.deferred.append("_do__ cmd.cd('''%s''',complain=0)"%string.replace(path,"\\","\\\\"))
+                        elif os.environ.has_key("HOME"):
+                            path = os.environ["HOME"]
+                            if os.path.isdir(path):
                                 options.deferred.append("_do__ cmd.cd('''%s''',complain=0)"%string.replace(path,"\\","\\\\"))
-                    elif os.environ.has_key("HOME"):
-                        path = os.environ["HOME"]
-                        if os.path.isdir(path):
-                            options.deferred.append("_do__ cmd.cd('''%s''',complain=0)"%string.replace(path,"\\","\\\\"))
-                if "l" in a:
-                    options.deferred.append("_do_spawn %s"%av.pop())
-                if "r" in a:
-                    options.deferred.append("_do_run %s,main"%av.pop())
-                if "u" in a:
-                    options.deferred.append("_do_resume %s"%av.pop())
-                if "s" in a:
-                    options.deferred.append("_do_log_open %s"%av.pop())
-                if "p" in a:
-                    options.read_stdin = 1
-                if "o" in a:
-                    options.security = 0
-                if "R" in a:
-                    options.rpcServer = 1
-                if "K" in a:
-                    options.keep_thread_alive = 1
+                    if ("l" in a):
+                        options.deferred.append("_do_spawn %s"%av.pop())
+                    if ("r" in a):
+                        options.deferred.append("_do_run %s,main"%av.pop())
+                    if ("u" in a):
+                        options.deferred.append("_do_resume %s"%av.pop())
+                    if ("s" in a):
+                        options.deferred.append("_do_log_open %s"%av.pop())
+                    if ("o" in a):
+                        options.security = 0
+                    if ("R" in a):
+                        options.rpcServer = 1
+                    if ("g" in a):
+                        options.deferred.append("_do_png %s"%av.pop())
+                    if ("C" in a):
+                        options.sigint_handler = 0
+                    if ("L" in a):
+                        options.after_load_script = av.pop()
+                    if ("b" in a): # CPU benchmark
+                        options.deferred.append("_do__ feedback disable,all,everything")
+                        options.deferred.append("_do__ feedback enable,python,output")
+                        options.deferred.append("_do_ wizard benchmark")
+                        if a[2:]=='':
+                            options.deferred.append("_do_ cmd.get_wizard().run_cpu()")
+                        if a[2:]=='0':
+                            options.deferred.append("_do_ cmd.get_wizard().ray_trace0()")
+                        if a[2:]=='1':
+                            options.deferred.append("_do_ cmd.get_wizard().ray_trace1()")
+                        if a[2:]=='2':
+                            options.deferred.append("_do_ cmd.get_wizard().ray_trace2()")
+                        
+                    if "p" in a:
+                        options.read_stdin = 1
+                    if "K" in a:
+                        options.keep_thread_alive = 1
                 if "k" in a: # suppress reading of .pymolrc and related files
                     pymolrc = None
-                if "g" in a:
-                    options.deferred.append("_do_png %s"%av.pop())
-                if "C" in a:
-                    options.sigint_handler = 0
                 if "U" in a: #
                     options.reuse_helper = 1
                 if "Q" in a:
@@ -336,26 +356,12 @@ if __name__=='pymol.invocation':
                     options.show_splash = 0
                 if "I" in a:
                     options.auto_reinitialize = 1
-                if "L" in a:
-                    options.after_load_script = av.pop()
                 if "h" in a: # generic helper application
                     options.internal_gui = 0
                     options.external_gui = 0
                     options.internal_feedback = 0
                     options.show_splash = 1
-                if "b" in a: # CPU benchmark
-                    options.deferred.append("_do__ feedback disable,all,everything")
-                    options.deferred.append("_do__ feedback enable,python,output")
-                    options.deferred.append("_do_ wizard benchmark")
-                    if a[2:]=='':
-                        options.deferred.append("_do_ cmd.get_wizard().run_cpu()")
-                    if a[2:]=='0':
-                        options.deferred.append("_do_ cmd.get_wizard().ray_trace0()")
-                    if a[2:]=='1':
-                        options.deferred.append("_do_ cmd.get_wizard().ray_trace1()")
-                    if a[2:]=='2':
-                        options.deferred.append("_do_ cmd.get_wizard().ray_trace2()")
-            else:
+            elif not restricted:
                 suffix = string.split(string.lower(a[-4:]),'.')[-1]
                 if suffix == "p5m":
                     # mode 5 helper application 
@@ -365,6 +371,23 @@ if __name__=='pymol.invocation':
                     av.append("-A6")
                 elif suffix in [ 'pym' ,'py', 'pyc' ]:
                     python_script = a
+                elif suffix in [ 'pwg' ]:
+                    try:
+                        lines = open(a,'rb').readlines()
+                        pseudo_argv = ["pymol"]
+                        for line in lines:
+                            line = line.strip()
+                            if len(line) and line[0:1] != '#':
+                                input = line.split(None,1)
+                                if len(input) and input[0]!='#':
+                                    keyword = input[0].lower()
+                                    if keyword == 'options':
+                                        if len(input)>1:
+                                            pseudo_argv = ['pymol'] + input[1].split()
+                                            parse_args(pseudo_argv, _pymol=_pymol,
+                                                       options=options, restricted=1)
+                    except:
+                        traceback.print_exc()
                 options.deferred.append(a)
                 loaded_something = 1
         if pymolrc != None:
@@ -372,6 +395,6 @@ if __name__=='pymol.invocation':
         if loaded_something and (options.after_load_script!=""):
             options.deferred.append(options.after_load_script)
         options.deferred.extend(final_actions)
-        if options.show_splash and not options.no_gui:
+        if options.show_splash and not options.no_gui and not restricted:
             options.deferred.insert(0,"_do__ cmd.splash(1)")
         
