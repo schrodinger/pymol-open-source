@@ -864,6 +864,8 @@ void ObjectPrepareContext(CObject * I, CRay * ray)
           I->TTTFlag = true;
         }
         if(I->ViewElem[frame].state_flag) {
+           SettingCheckHandle(I->G,&I->Setting);
+
           if(I->Setting) {
             SettingSet_i(I->Setting,cSetting_state,I->ViewElem[frame].state + 1);
           }

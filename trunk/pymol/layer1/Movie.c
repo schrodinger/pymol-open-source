@@ -1476,6 +1476,8 @@ void MoviePrepareDrag(PyMOLGlobals *G, BlockRect * rect,
     I->DragRect.bottom = I->Block->rect.bottom + 1;
   }
   I->DragStartFrame = ViewElemXtoFrame(G,I->ViewElem,rect,MovieGetLength(G),x,nearest);
+  if(I->DragStartFrame > MovieGetLength(G))
+    I->DragStartFrame = MovieGetLength(G);
   I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,rect,MovieGetLength(G),x,nearest);
   I->DragNearest = nearest;
 }
@@ -1501,7 +1503,7 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
       I->DragMenu = true;
       OrthoDirty(G);
     } else {
-      ExecutiveMotionMenuActivate(G,&rect,count,false,x,y);
+      ExecutiveMotionMenuActivate(G,&rect,count,false,x,y,I->DragColumn);
     }
   } else switch(mod) {
   case cOrthoSHIFT: /* TEMPORAL SELECTIONS -- TO COME in PYMOL 1.3+ */
@@ -1578,8 +1580,7 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
           int count = ExecutiveCountMotions(G);
           BlockRect rect = block->rect;
           rect.right -= 8 * 8;
-
-          ExecutiveMotionMenuActivate(G,&rect,count,true,x,y);
+          ExecutiveMotionMenuActivate(G,&rect,count,true,x,y,I->DragColumn);
           I->DragMenu = false;
         } else if(I->DragDraw &&
                   (I->DragCurFrame!=I->DragStartFrame) && 
@@ -1593,7 +1594,7 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
         if(I->DragCurFrame>I->DragStartFrame) {
           int first = I->DragStartFrame + 1;
           if(first<0) first = 0;
-          sprintf(buffer,"cmd.minsert(%d,%d%s)", I->DragCurFrame - I->DragStartFrame, first+1, extra);
+          sprintf(buffer,"cmd.minsert(%d,%d%s)", I->DragCurFrame - I->DragStartFrame, first, extra);
         } else {
           int first = I->DragCurFrame;
           if(first<0) first = 0;

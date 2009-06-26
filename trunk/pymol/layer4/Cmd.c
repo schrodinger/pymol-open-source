@@ -6149,6 +6149,11 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
+#if 1
+    ok = ExecutiveMotionView(G, action, first, last, power, bias, simple, 
+                             linear, object, wrap, hand, window, cycles, 
+                             scene_name, scene_cut, state, quiet);
+#else
     if(wrap < 0) {
       wrap = SettingGetGlobal_b(G, cSetting_movie_loop);
     }
@@ -6168,6 +6173,8 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
                      bias, simple, linear, wrap, hand, window, cycles,
                      scene_name, scene_cut, state, quiet);
     }
+#endif
+
     APIExit(G);
   }
   return APIResultOk(ok);
