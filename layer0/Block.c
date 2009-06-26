@@ -108,7 +108,6 @@ void BlockSetMargin(Block * block, int t, int l, int b, int r)
   block->margin.right = r;
 }
 
-
 /*========================================================================*/
 void BlockReshape(Block * I, int width, int height)
 {
@@ -161,4 +160,10 @@ Block *BlockRecursiveFind(Block * block, int x, int y)
         block = check;
   }
   return (block);
+}
+
+int BlockRectXYInside(BlockRect *rect, int x, int y)
+{
+  return ((y <= rect->top) && (y >= rect->bottom) &&
+          (x <= rect->right) && (x >= rect->left));
 }

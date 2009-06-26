@@ -3395,7 +3395,7 @@ int PyMOL_Idle(CPyMOL * I)
 
       if(G->StereoCapable) {
         OrthoAddOutput(G,
-                       " Quad-buffer Stereo 3D detected and enabled!\n");;
+                       " OpenGL quad-buffer stereo 3D detected and enabled!\n");;
       } else {
         if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_StereoFailed) {
           OrthoAddOutput(G,

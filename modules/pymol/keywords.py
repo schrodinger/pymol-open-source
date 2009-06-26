@@ -152,6 +152,7 @@ def get_command_keywords(self_cmd=cmd):
         'mem'           : [ self_cmd.mem               , 0 , 0 , ''  , parsing.STRICT ],
         'meter_reset'   : [ self_cmd.meter_reset       , 0 , 0 , ''  , parsing.STRICT ],
         'minsert'       : [ self_cmd.minsert           , 0 , 0 , ''  , parsing.STRICT ],
+        'mmove'         : [ self_cmd.mmove             , 0 , 0 , ''  , parsing.STRICT ],        
         'move'          : [ self_cmd.move              , 0 , 0 , ''  , parsing.STRICT ],
         'mset'          : [ self_cmd.mset              , 0 , 0 , ''  , parsing.STRICT ],
         'mdo'           : [ self_cmd.mdo               , 2 , 2 , ':' , parsing.MOVIE  ],

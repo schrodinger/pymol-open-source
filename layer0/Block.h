@@ -55,5 +55,5 @@ void BlockOutline(Block * I);
 void BlockInit(PyMOLGlobals * G, Block * I);
 void BlockTranslate(Block * I, int dx, int dy);
 void BlockDrawTopEdge(Block * I);
-
+int BlockRectXYInside(BlockRect *rect, int x, int y);
 #endif

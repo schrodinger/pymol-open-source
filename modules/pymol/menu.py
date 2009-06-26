@@ -21,31 +21,31 @@ def extract(self_cmd, sele):
             [ 1, 'byres extend 1', 'cmd.create(None,"byres (('+sele+') extend 1)",extract="'+sele+'",zoom=0)' ],            
             ]
 
-def all_store_with_scene(self_cmd):
+def camera_store_with_scene(self_cmd,frame):
     list = self_cmd.get_scene_list()[0:40] # keep this practical
     result = [[ 2, 'Scene:', '']]
     for a in list:
-        result.append([1,a,'cmd.mview("store",scene="'+a+'")'])
+        result.append([1,a,'cmd.mview("store",scene="'+a+'",first=%s)'%frame])
     return result
 
-def all_store_with_state(self_cmd):
+def camera_store_with_state(self_cmd,frame):
     list = self_cmd.get_scene_list()[0:40] # keep this practical
     n_state = self_cmd.count_states()
     result = [[ 2, 'State:', ''],
-              [ 1, 'current','cmd.mview("store",state=-1)'],
+              [ 1, 'current','cmd.mview("store",state=-1,first=%s)'%(frame)],
               [ 0, ''               ,''                   ],
-              [ 1, '1', 'cmd.mview("store",state=1)'         ],
+              [ 1, '1', 'cmd.mview("store",state=1,first=%s)'%(frame)   ],
               ]
     if (n_state>1):
         result.extend([
-              [ 1, str(n_state),'cmd.mview("store",state=%d)'%n_state],
+              [ 1, str(n_state),'cmd.mview("store",state=%d,first=%s)'%(n_state,frame)],
               [ 0, ''               ,''                   ],
-              [ 1, str(1+n_state/4), 'cmd.mview("store",state=%d)'%(1+n_state/4) ],
-              [ 1, str(1+n_state/3), 'cmd.mview("store",state=%d)'%(1+n_state/3) ],
-              [ 1, str(n_state/2), 'cmd.mview("store",state=%d)'%(n_state/2) ],
-              [ 1, str(1+n_state/2), 'cmd.mview("store",state=%d)'%(1+n_state/2) ],
-              [ 1, str((2*n_state)/3), 'cmd.mview("store",state=%d)'%((2*n_state)/3) ],
-              [ 1, str((3*n_state)/4), 'cmd.mview("store",state=%d)'%((3*n_state)/4) ],
+              [ 1, str(1+n_state/4), 'cmd.mview("store",state=%d,first=%s)'%(1+n_state/4,frame) ],
+              [ 1, str(1+n_state/3), 'cmd.mview("store",state=%d,first=%s)'%(1+n_state/3,frame) ],
+              [ 1, str(n_state/2), 'cmd.mview("store",state=%d,first=%s)'%(n_state/2,frame) ],
+              [ 1, str(1+n_state/2), 'cmd.mview("store",state=%d,first=%s)'%(1+n_state/2,frame) ],
+              [ 1, str((2*n_state)/3), 'cmd.mview("store",state=%d,first=%s)'%((2*n_state)/3,frame) ],
+              [ 1, str((3*n_state)/4), 'cmd.mview("store",state=%d,first=%s)'%((3*n_state)/4,frame) ],
               ])
 
     return result
@@ -72,27 +72,30 @@ def smooth(self_cmd,extra=''):
             [ 1, 'more'     ,   'cmd.mview("smooth",window=15%s)'%extra ],
             [ 1, 'a lot'   ,   'cmd.mview("smooth",window=30%s)'%extra ]]
               
-def camera_motion(self_cmd):
+def camera_motion(self_cmd, frame=0):
     return [[ 2, 'Camera Motion:'     , ''                       ],     
-            [ 1, 'store'         , 'cmd.mview("store")'      ],
-            [ 1, 'store with scene' , all_store_with_scene(self_cmd) ],
-            [ 1, 'store with state' , all_store_with_state(self_cmd) ],
-            [ 1, 'clear'       ,   'cmd.mview("clear")'      ],
+            [ 1, 'store'         , 'cmd.mview("store",first='+frame+')'      ],
+            [ 1, 'store with scene' , camera_store_with_scene(self_cmd,frame) ],
+            [ 1, 'store with state' , camera_store_with_state(self_cmd,frame) ],
+            [ 1, 'clear'       ,   'cmd.mview("clear",first='+frame+')'      ],
+            [ 0, ''               ,''                             ],
+            [ 1, 'reset'   , 'cmd.mview("reset")'   ],            
+            [ 1, 'purge'   , 'cmd.mset()'   ],            
             [ 0, ''               ,''                             ],
             [ 1, 'smooth'       ,   smooth(self_cmd)     ],
             [ 0, ''               ,''                             ],
             [ 1, 'interpolate'   , 'cmd.mview("interpolate")'   ],
             [ 1, 'reinterpolate'   , 'cmd.mview("reinterpolate")'   ],            
             [ 1, 'uninterpolate'   , 'cmd.mview("uninterpolate")'   ],            
-            [ 0, ''               ,''                             ],
-            [ 1, 'reset'   , 'cmd.mview("reset")'   ],            
-            [ 1, 'purge'   , 'cmd.mset()'   ],            
             ]
 
-def obj_motion(self_cmd, obj):
+def obj_motion(self_cmd, obj, frame=0):
     return [[ 2, 'Object "'+obj+'" Motion:'     , ''                       ],     
-            [ 1, 'store'         , 'cmd.mview("store",object="'+obj+'")'      ],
-            [ 1, 'clear'       ,   'cmd.mview("clear",object="'+obj+'")'    ],
+            [ 1, 'store'         , 'cmd.mview("store",object="'+obj+'",first='+frame+')'      ],
+            [ 1, 'clear'       ,   'cmd.mview("clear",object="'+obj+'",first='+frame+')'    ],
+            [ 0, ''               ,''                             ],
+            [ 1, 'reset'       ,   'cmd.mview("reset",object="'+obj+'")'    ],
+            [ 1, 'purge'       ,   'cmd.mview("purge",object="'+obj+'")'    ],
             [ 0, ''               ,''                             ],
             [ 1, 'drag'       ,   'cmd.drag("'+obj+'")'    ],
             [ 0, ''               ,''                             ],
@@ -101,9 +104,6 @@ def obj_motion(self_cmd, obj):
             [ 1, 'interpolate'   ,   'cmd.mview("interpolate",object="'+obj+'")'    ],
             [ 1, 'reinterpolate'   ,   'cmd.mview("reinterpolate",object="'+obj+'")'    ],
             [ 1, 'uninterpolate'   ,   'cmd.mview("uninterpolate",object="'+obj+'")'    ],
-            [ 0, ''               ,''                             ],
-            [ 1, 'reset'       ,   'cmd.mview("reset",object="'+obj+'")'    ],
-            [ 1, 'purge'       ,   'cmd.mview("purge",object="'+obj+'")'    ],
             ]
 
 def rep_action(self_cmd, sele, action) :
@@ -158,7 +158,8 @@ def mol_show(self_cmd, sele):
             ") & r. CYS+CYX & n. SG) & bound_to (("+sele+") & r. CYS+CYX & n. SG))) & n. CA+CB+SG") ]
          ])
 
-    self_cmd.show("lines","(byres (("+sele+" & r. CYS+CYX & n. SG) & bound_to ("+sele+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
+    self_cmd.show("lines","(byres ((" + sele + " & r. CYS+CYX & n. SG) & bound_to ("
+                  + sele + " & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
 
 def hide_hydro(self_cmd, sele):
     return ( [[ 2, 'Hide:'     , ''                                ],
@@ -1490,7 +1491,10 @@ def pick_menu(self_cmd, sele1, sele2):
             [ 0, ''             , ''                      ],
             [ 1, 'fragment', pick_option(self_cmd, "(byfrag ("+sele2+"))", "Fragment") ],
             [ 1, 'fragment+joint(s)', pick_option(self_cmd, "((byfrag ("+sele2+")) extend 1)", "Fragment") ],
-              ]
+            [ 0, ''             , ''                      ],
+            [ 1, 'object drag matrix'      ,'cmd.drag("(byobj ('+sele2+'))",mode=1)'            ],
+            [ 1, 'object drag coords.'      ,'cmd.drag("(byobj ('+sele2+'))")'            ],            
+            ]
         
 def seq_menu(sele2,sele3): # obsolete/unused?
     

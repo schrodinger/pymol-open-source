@@ -591,7 +591,7 @@ void copy44d44f(double *src, float *dst)
 
 void copy33f44d(float *src, double *dst)
 {
-  const float _0 = 0.0;
+  const double _0 = 0.0;
   *(dst++) = (double) *(src++);
   *(dst++) = (double) *(src++);
   *(dst++) = (double) *(src++);

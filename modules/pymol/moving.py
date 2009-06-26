@@ -480,6 +480,50 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
+    def mmove(target,source=0,count=-1,freeze=0,object='',quiet=1,_self=cmd):
+        '''
+DESCRIPTION
+
+    "mmove" moves key frames and movie commands
+
+SEE ALSO
+
+    mdelete, minsert
+
+    '''
+        r = DEFAULT_ERROR
+        count = int(count)
+        source = int(source)
+        target = int(target)
+        freeze = int(freeze)
+        object = str(object)
+        quiet = int(quiet)
+        cur_len = _self.count_frames()
+        if not source: # 0 means use current frame
+            source = _self.get_frame() - 1
+        elif source<0:
+            source = _self.count_sources() + 1 + source
+            if (count>0) and (source + count) > cur_len:
+                source = cur_len - count
+        else:
+            source -= 1
+        if not target: # 0 means use current frame
+            target = _self.get_frame() - 1
+        elif target<0:
+            target = _self.count_targets() + 1 + target
+            if (count>0) and (target + count) > cur_len:
+                target = cur_len - count
+        else:
+            target -= 1
+        try:
+            _self.lock(_self)
+            r = _cmd.mmodify(_self._COb,2,source,count,
+                             target,object,freeze,quiet)
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
+        return r
+
     def mdelete(count=-1,frame=0,freeze=0,object='',quiet=1,_self=cmd):
         '''
 DESCRIPTION
@@ -488,7 +532,7 @@ DESCRIPTION
 
 SEE ALSO
 
-    mdelete
+    minsert, mmove
 
     '''
         r = DEFAULT_ERROR
@@ -496,6 +540,7 @@ SEE ALSO
         frame = int(frame)
         freeze = int(freeze)
         object = str(object)
+        quiet = int(quiet)
         cur_len = _self.count_frames()
         if not frame: # 0 means use current frame
             frame = _self.get_frame() - 1
@@ -510,7 +555,7 @@ SEE ALSO
         try:
             _self.lock(_self)
             r = _cmd.mmodify(_self._COb,-1,frame,count,
-                             freeze,object,quiet)
+                             0,object,freeze,quiet)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -524,7 +569,7 @@ DESCRIPTION
 
 SEE ALSO
 
-    mdelete
+    mdelete, mmove
 
     '''
         r = DEFAULT_ERROR
@@ -532,6 +577,7 @@ SEE ALSO
         count = int(count)
         freeze = int(freeze)
         object = str(object)
+        quiet = int(quiet)        
         if not frame: # 0 means use current frame
             frame = _self.get_frame() - 1
         else:
@@ -539,7 +585,7 @@ SEE ALSO
         try:
             _self.lock(_self)
             r = _cmd.mmodify(_self._COb,1,frame,count,
-                             freeze,object,quiet)
+                             0,object,freeze,quiet)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException

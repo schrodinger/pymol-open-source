@@ -172,7 +172,7 @@ int ExecutiveTransformObjectSelection2(PyMOLGlobals * G, CObject * obj, int stat
                                        int global);
 
 int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action, 
-                                int index, int count, int freeze)
+                                int index, int count, int target, int freeze)
 {
   register CExecutive *I = G->Executive;
   int result = true;
@@ -185,7 +185,7 @@ int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action,
       switch (rec->type) {
       case cExecObject:
         if(rec->obj->type != cObjectGroup) {
-          ObjectMotionModify(rec->obj, action, index,count,freeze);
+          ObjectMotionModify(rec->obj, action, index, count, target, freeze, true);
         }
         break;
       }
@@ -272,29 +272,54 @@ int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int st
 }
 
 void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
-                               int index, int count, int freeze, int quiet)
+                               int index, int count, int target, char *name,
+                               int freeze,int quiet)
 {
   register CExecutive *I = G->Executive;
-  SpecRec *rec = NULL;
-  while(ListIterate(I->Spec, rec, next)) {
-    switch(rec->type) {
-    case cExecAll:
-      if(MovieGetSpecLevel(G,0)>=0) {
-        MovieViewModify(G, action, index, count, freeze);
+  if((!name)||(!name[0])||(!strcmp(name,cKeywordNone))) { 
+    /* camera */
+    if(MovieGetSpecLevel(G,0)>=0) {
+      MovieViewModify(G, action, index, count, target, true, true);
+    }
+    if((!name) || strcmp(name, cKeywordNone)) {
+      /* also do all other objects */
+      SpecRec *rec = NULL;
+      while(ListIterate(I->Spec, rec, next)) {
+        switch(rec->type) {
+        case cExecObject:
+          if(ObjectGetSpecLevel(rec->obj,0)>=0) {
+            ObjectMotionModify(rec->obj, action, index, count, target, true, true);
+          }        
+          break;
+        }
       }
-      break;
-    case cExecObject: 
-      if(ObjectGetSpecLevel(rec->obj,0)>=0) {
-        /* only modify objects with motion matrices */
-        ObjectMotionModify(rec->obj, action, index, count, freeze);
+    }
+    if((!freeze) && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+      ExecutiveMotionTrim(G);
+      ExecutiveMotionReinterpolate(G);
+    }
+  } else { /* pattern */
+    CTracker *I_Tracker = I->Tracker;
+    SpecRec *rec = NULL;
+    int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+      if(rec) {
+        switch (rec->type) {
+        case cExecObject: 
+          if(ObjectGetSpecLevel(rec->obj,0)>=0) {
+            /* only modify objects with motion matrices */
+            ObjectMotionModify(rec->obj, action, index, count, target, freeze, false);
+          }
+        }
       }
-      break;
+      TrackerDelList(I_Tracker, list_id);
+      TrackerDelIter(I_Tracker, iter_id);
     }
   }
 }
 
-
-void ExecutiveReinterpolateMotions(PyMOLGlobals * G)
+void ExecutiveMotionReinterpolate(PyMOLGlobals * G)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
@@ -314,6 +339,21 @@ void ExecutiveReinterpolateMotions(PyMOLGlobals * G)
   }
 }
 
+void ExecutiveMotionTrim(PyMOLGlobals * G)
+{
+  int n_frame = MovieGetLength(G);
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec, rec, next)) {
+    switch(rec->type) {
+    case cExecObject:
+      if(ObjectGetSpecLevel(rec->obj,0)>=0) {
+        ObjectMotionTrim(rec->obj,n_frame);
+      }        
+      break;
+    }
+  }
+}
 
 int ExecutiveCountMotions(PyMOLGlobals * G)
 {
@@ -324,17 +364,17 @@ int ExecutiveCountMotions(PyMOLGlobals * G)
     while(ListIterate(I->Spec, rec, next)) {
       switch(rec->type) {
       case cExecAll:
-	if(MovieGetSpecLevel(G,0)>=0)
-	  count++;
-	break;
+        if(MovieGetSpecLevel(G,0)>=0)
+          count++;
+        break;
       case cExecObject:
-	if(ObjectGetSpecLevel(rec->obj,0)>=0)
-	  count++;
-	break;
+        if(ObjectGetSpecLevel(rec->obj,0)>=0)
+          count++;
+        break;
       }
     }
   }
-
+  
   if(count != I->LastMotionCount) {
     if(SettingGetGlobal_i(G,cSetting_movie_panel)) {
       OrthoDoViewportWhenReleased(G);
@@ -345,7 +385,7 @@ int ExecutiveCountMotions(PyMOLGlobals * G)
   return (count);
 }
 
-void ExecutiveDrawMotions(PyMOLGlobals * G, BlockRect *rect, int expected)
+void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
@@ -375,7 +415,7 @@ void ExecutiveDrawMotions(PyMOLGlobals * G, BlockRect *rect, int expected)
   }
 }
 
-void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int x, int y)
+void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int passive, int x, int y)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
@@ -389,7 +429,13 @@ void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected
         draw_rect.top = rect->top - (height * count) / expected;
         draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
         if((y>draw_rect.bottom) && (y<draw_rect.top)) {
-          MenuActivate0Arg(G, x, y, x, y, false, "camera_motion");
+          int n_frame = MovieGetLength(G);
+          int frame = MovieXtoFrame(G, &draw_rect, n_frame, x, false);
+          WordType frame_str = "0";
+          if((frame>=0) && (frame<n_frame)) {
+            sprintf(frame_str,"%d",frame+1);
+          }
+          MenuActivate1Arg(G, x, y, x, y, passive, "camera_motion",frame_str);
           goto done;
         }
         count++;
@@ -400,7 +446,51 @@ void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected
         draw_rect.top = rect->top - (height * count) / expected;
         draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
         if((y>draw_rect.bottom) && (y<draw_rect.top)) {
-          MenuActivate(G, x, y, x, y, false, "obj_motion", rec->obj->Name);
+          int n_frame = MovieGetLength(G);
+          int frame = MovieXtoFrame(G, &draw_rect, n_frame, x, false);
+          WordType frame_str = "0";
+          if((frame>=0) && (frame<n_frame)) {
+            sprintf(frame_str,"%d",frame+1);
+          }
+          MenuActivate2Arg(G, x, y, x, y, passive, "obj_motion", rec->obj->Name, frame_str);
+          goto done;
+        }
+        count++;
+      }
+      break;
+    }
+  }
+ done:
+  return;
+}
+
+void ExecutiveMotionClick(PyMOLGlobals * G, BlockRect *rect,int mode, int expected, int x, int y, int nearest)
+{
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  BlockRect draw_rect = *rect;
+  int count = 0;
+  int height = rect->top - rect->bottom;
+  while(ListIterate(I->Spec, rec, next)) {
+    switch(rec->type) {
+    case cExecAll:
+      if(MovieGetSpecLevel(G,0)>=0) {
+        draw_rect.top = rect->top - (height * count) / expected;
+        draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
+        if((y>draw_rect.bottom) && (y<draw_rect.top)) {
+          MoviePrepareDrag(G,&draw_rect,NULL,mode,x,y,nearest);
+          goto done;
+        }
+        count++;
+      }
+      break;
+    case cExecObject:
+      if(ObjectGetSpecLevel(rec->obj,0)>=0) {
+        MoviePrepareDrag(G,rect,NULL,mode,x,y,nearest);
+        draw_rect.top = rect->top - (height * count) / expected;
+        draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
+        if((y>draw_rect.bottom) && (y<draw_rect.top)) {
+          MoviePrepareDrag(G,&draw_rect,rec->obj,mode,x,y,nearest);
           goto done;
         }
         count++;

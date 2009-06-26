@@ -460,22 +460,24 @@ int ExecutiveIsosurfaceEtc(PyMOLGlobals * G,
                            char *sele, float fbuf, int state,
                            float carve, int map_state, int side,
                            int quiet, int surf_mode, int box_mode);
-void ExecutiveDrawMotions(PyMOLGlobals * G, BlockRect *rect, int expected);
+void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected);
 
-void ExecutiveReinterpolateMotions(PyMOLGlobals * G);
+void ExecutiveMotionReinterpolate(PyMOLGlobals * G);
 
 void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
-                               int index, int count, int freeze, int quiet);
+                               int index, int count, int target, char *name, int freeze, int quiet);
 
-void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int x, int y);
+void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected,int passive, int x, int y);
 int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action, 
-                               int index, int count, int freeze);
+                               int index, int count, int target, int freeze);
 int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
                          int last, float power, float bias,
                          int simple, float linear, int wrap,
                          int hand, int window, int cycles, int state, int quiet);
 int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, float *ttt, int reverse_order, int store);
 int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int store);
+void ExecutiveMotionClick(PyMOLGlobals * G, BlockRect *rect, int mode, int expected, int x, int y, int nearest);
+void ExecutiveMotionTrim(PyMOLGlobals * G);
 
 
 #endif
