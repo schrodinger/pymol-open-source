@@ -117,6 +117,7 @@ int ObjectMotion(CObject * I, int action, int first,
                  int simple, float linear, int wrap,
                  int hand, int window, int cycles, int state, int quiet);
 int ObjectGetSpecLevel(CObject * I, int frame);
+void ObjectMotionTrim(CObject *I, int n_frame);
 void ObjectDrawViewElem(CObject *I, BlockRect *rect, int frames);
 void ObjectStateInit(PyMOLGlobals * G, CObjectState * I);
 void ObjectStateCopy(CObjectState * dst, CObjectState * src);
@@ -132,7 +133,7 @@ void ObjectStatePopMatrix(CObjectState * I, RenderInfo * info);
 void ObjectStateRightCombineMatrixR44d(CObjectState * I, double *matrix);
 void ObjectStateLeftCombineMatrixR44d(CObjectState * I, double *matrix);
 void ObjectStateCombineMatrixTTT(CObjectState * I, float *matrix);
-int ObjectMotionModify(CObject *I,int action, int index, int count,int freeze);
+int ObjectMotionModify(CObject *I,int action, int index, int count,int target, int freeze, int localize);
 void ObjectMotionReinterpolate(CObject *I);
 
 typedef struct _CObjectUpdateThreadInfo CObjectUpdateThreadInfo;

@@ -6106,9 +6106,9 @@ static PyObject *CmdMModify(PyObject * self, PyObject * args)
   PyMOLGlobals *G = NULL;
   char *object;
   int ok = false;
-  int action,index,count,freeze,quiet;
-  ok = PyArg_ParseTuple(args, "Oiiiisi",  &self, &action, &index,
-                        &count, &freeze, &object, &quiet);
+  int action,index,count,target,freeze,quiet;
+  ok = PyArg_ParseTuple(args, "Oiiiisii",  &self, &action, &index,
+                        &count, &target, &object, &freeze, &quiet);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -6116,7 +6116,7 @@ static PyObject *CmdMModify(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ExecutiveMotionViewModify(G,action,index,count,freeze,quiet);
+    ExecutiveMotionViewModify(G,action,index,count,target,object,freeze,quiet);
     SceneCountFrames(G);
     APIExit(G);
   }

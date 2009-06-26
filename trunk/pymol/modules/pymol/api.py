@@ -261,6 +261,7 @@ import moving
 from moving import \
       madd,              \
       mdelete,           \
+      mmove,             \
       minsert,           \
       mset,              \
       mclear,            \

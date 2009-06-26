@@ -44,6 +44,13 @@ void ObjectPurgeSettings(CObject * I)
   I->Setting = NULL;
 }
 
+void ObjectMotionTrim(CObject *I, int n_frame)
+{
+  if(I->ViewElem) {
+    VLASize(I->ViewElem,CViewElem,n_frame);
+  }
+}
+
 void ObjectMotionReinterpolate(CObject *I)
 {
   ObjectMotion(I, 3, -1, -1,0.0F,1.0F, 0, 0.0F,  
@@ -51,16 +58,27 @@ void ObjectMotionReinterpolate(CObject *I)
                1, 5, 1, -1, 1);
 }
 
-int ObjectMotionModify(CObject *I,int action, int index, int count,int freeze)
+int ObjectMotionModify(CObject *I,int action, int index, int count,int target,int freeze,int localize)
 {
   int ok;
 
   if(I->type == cObjectGroup) { /* propagate */
-    ok = ExecutiveGroupMotionModify(I->G,I,action,index,count,freeze);
+    ok = ExecutiveGroupMotionModify(I->G,I,action,index,count,target,freeze);
   } else {
-    ok = ViewElemModify(I->G, &I->ViewElem,action,index,count);
-    if(ok && (!freeze) && SettingGetGlobal_i(I->G,cSetting_movie_auto_interpolate)) {
-      ObjectMotionReinterpolate(I);
+    ok = ViewElemModify(I->G, &I->ViewElem,action,index,count,target);
+    if(ok && I->ViewElem) {
+      int size = VLAGetSize(I->ViewElem);
+      int n_frame = MovieGetLength(I->G);
+      if(n_frame < size) { 
+        /* extend entire movie */
+        if(!localize)
+          MovieViewModify(I->G,1,-1,size - n_frame,0,true,true);
+        if((!freeze) && SettingGetGlobal_i(I->G,cSetting_movie_auto_interpolate)) {
+          ExecutiveMotionReinterpolate(I->G);
+        }
+      } else if((!freeze) && SettingGetGlobal_i(I->G,cSetting_movie_auto_interpolate)) {
+        ObjectMotionReinterpolate(I);
+      }
     }
   }
   return ok;

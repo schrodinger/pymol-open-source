@@ -27,7 +27,7 @@ Z* -------------------------------------------------------------------
 #include"OVLexicon.h"
 #include"Text.h"
 
-int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, int count)
+int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, int count, int target)
 {
   int ok = true;
   CViewElem *vla = *handle;
@@ -35,6 +35,7 @@ int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, i
     vla = VLACalloc(CViewElem, 0);
   }
   if(vla) {
+    int n_frame = VLAGetSize(vla);
     switch(action) {
     case cViewElemModifyInsert: 
       VLAInsert(vla,CViewElem,index,count);
@@ -42,10 +43,74 @@ int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, i
     case cViewElemModifyDelete:
       VLADelete(vla,CViewElem,index,count);
       break;
+    case cViewElemModifyMove:
+      if((index>=0) && (target>=0) && (index<n_frame) && (target<n_frame)) {
+        int i;
+        for(i=0;i<count;i++) {
+          if( ((i+index)<n_frame) && ((i+target)<n_frame)) {
+            int src,dst;
+            if(index>target) {
+              src = index+i;
+              dst = target+i;
+            } else {
+              src = index+(count-1)-i;
+              dst = target+(count-1)-i;
+            }
+            memcpy(vla + dst, vla + src, sizeof(CViewElem));
+            memset(vla + src, 0, sizeof(CViewElem));
+          }
+        }
+      }
+      break;
     }
   }
   *handle = vla;
   return ok;
+}
+
+int ViewElemXtoFrame(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames, int x, int nearest)
+{
+  int nDrawn = frames;
+  int offset = 0;
+  float width = (float) (rect->right - rect->left);
+  float extra = (nearest ? 0.4999F : 0.0F);
+  int frame = (int)(extra + (nDrawn * (x - rect->left )) / width + offset);
+  return frame;
+}
+
+void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect, int first, int last,
+                     int frames, float *color4,int fill)
+{  
+  if(G->HaveGUI && G->ValidContext && rect) {
+    int nDrawn = frames;
+    int offset = 0;
+    float width = (float) (rect->right - rect->left);
+    float top = rect->top - 1;
+    float bot = rect->bottom + 1;
+    float start = (int)(rect->left + (width * (first - offset)) / nDrawn);
+    float stop = (int)(rect->left + (width * (last - offset)) / nDrawn);
+    glColor4fv(color4);
+    if((stop - start) < 1.0F)
+      stop = start+1.0F;
+    if(fill) {
+      glEnable(GL_BLEND);
+
+      glBegin(GL_POLYGON);
+      glVertex2f(start, bot);
+      glVertex2f(start, top);
+      glVertex2f(stop, top);
+      glVertex2f(stop, bot);
+      glEnd();
+      glDisable(GL_BLEND);
+    } else {
+      glBegin(GL_LINE_LOOP);
+      glVertex2f(start, bot);
+      glVertex2f(start, top);
+      glVertex2f(stop, top);
+      glVertex2f(stop, bot);
+      glEnd();
+    }
+  }
 }
 
 void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames, char *title)
@@ -622,6 +687,18 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
   int linear = false;
   int debug = false;
 
+  if(debug) {
+    printf("ViewElemInterpolate: %8.3f %8.3f %d %8.3f %d %8.3f\n",
+           power, bias, simple, linearity, hand, cut);
+    dump44d(first->matrix,"first->matrix");
+    dump44d(last->matrix,"last->matrix");
+    printf("first->pre_flag %d first->post_flag %d\n",first->pre_flag, first->post_flag);
+    dump3d(first->pre,"first->pre");
+    dump3d(first->post,"first->post");
+    printf("last->pre_flag %d last->post_flag %d\n",last->pre_flag, last->post_flag);
+    dump3d(last->pre,"last->pre");
+    dump3d(last->post,"last->post");
+  }
   if(power == 0.0F) {
     if(first->power_flag && last->power_flag) {
       if(((first->power > 0.0F) && (last->power > 0.0F)) ||
@@ -914,6 +991,7 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
 */
       current->matrix_flag = true;
       multiply33f33f(first3x3, &imat[0][0], inter3x3);
+
       copy33f44d(inter3x3, current->matrix);
 
       if(first->pre_flag && last->pre_flag) {
@@ -933,6 +1011,7 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
       rotation_matrix3f(fxn * angle, rot_axis[0], rot_axis[1], rot_axis[2], &imat[0][0]);
       current->matrix_flag = true;
       multiply33f33f(first3x3, &imat[0][0], inter3x3);
+
       copy33f44d(inter3x3, current->matrix);
 
       current->pre_flag = true;
@@ -975,6 +1054,7 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
 
       current->matrix_flag = true;
       multiply33f33f(first3x3, &imat[0][0], inter3x3);
+
       copy33f44d(inter3x3, current->matrix);
 
       current->pre_flag = true;

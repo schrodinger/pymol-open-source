@@ -37,6 +37,9 @@ Z* -------------------------------------------------------------------
 #include"ScrollBar.h"
 #include"Menu.h"
 
+#define cMovieDragModeMoveKey   1
+#define cMovieDragModeInsDel    2
+
 typedef struct {
   int stage;
 
@@ -75,40 +78,74 @@ struct _CMovie {
   int RecursionFlag;
   int RealtimeFlag;
   CMovieModal Modal;
-
   int Width, Height;
   struct CScrollBar *ScrollBar;
-
+  int DragMode;
+  int Dragging;
+  CObject *DragObj; /* if not dragging all */
+  BlockRect DragRect;
+  int DragX, DragY, DragMenu;
+  int DragStartFrame, DragCurFrame, DragNearest, DragDraw;
+  int DragColumn;
 };
 
 void MovieViewReinterpolate(PyMOLGlobals *G)
 {
-  MovieView(G, 3, -1, -1, 0.0F, 1.0F, 0, 0.0F, 
+  MovieView(G, 3, -1, -1, 0.0F, 1.0F, 1, /* note simple = 1 for camera motion...*/
+            0.0F, 
             SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0 ,
-            1, 5, 1, NULL, 0.5, -1, 0); 
+            1, 5, 1, NULL, 0.5, -1, 1); 
 }
 
-int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int freeze)
+int MovieXtoFrame(PyMOLGlobals *G, BlockRect *rect, int frames, int x, int nearest)
+{
+  register CMovie *I = G->Movie;
+  return ViewElemXtoFrame(G,I->ViewElem,rect,frames,x,nearest);
+}
+int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target, int freeze, int localize)
 {
   register CMovie *I = G->Movie;
   int ok = true;
   MovieClearImages(G);
-  if( (ok = ViewElemModify(G,&I->ViewElem, action, index, count)) ) {
+  if( (ok = ViewElemModify(G,&I->ViewElem, action, index, count, target)) ) {
     switch(action) {
     case cViewElemModifyInsert: 
       VLAInsert(I->Sequence,int,index,count);
       VLAInsert(I->Cmd,MovieCmdType,index,count);
+      I->NFrame = VLAGetSize(I->Sequence);
       break;
     case cViewElemModifyDelete:
       VLADelete(I->Sequence,int,index,count);
       VLADelete(I->Cmd,MovieCmdType,index,count);
+      I->NFrame = VLAGetSize(I->Sequence);
+      break;
+    case cViewElemModifyMove:
+      if((index>=0) && (target>=0) && (index<I->NFrame) && (target<I->NFrame)) {
+        int i;
+        for(i=0;i<count;i++) {
+          if( ((i+index)<I->NFrame) && ((i+target)<I->NFrame)) {
+            int src,dst;
+            if(index>target) {
+              src = index+i;
+              dst = target+i;
+            } else {
+              src = index+(count-1)-i;
+              dst = target+(count-1)-i;
+            }
+            I->Sequence[dst] = I->Sequence[src];
+            memcpy(I->Cmd + dst, I->Cmd + src, sizeof(MovieCmdType));
+            I->Cmd[src][0]=0;
+          }
+        }
+      }
       break;
     }
   }
-  I->NFrame = VLAGetSize(I->Sequence);
-
   if(ok && (!freeze) && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
-    MovieViewReinterpolate(G);
+    ExecutiveMotionReinterpolate(G);
+  } else {
+    if(!localize)
+      ExecutiveMotionTrim(G);
   }
   return ok;
 }
@@ -895,7 +932,7 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
 
   if(!freeze) {
     if(SettingGetGlobal_b(G,cSetting_movie_auto_interpolate)) 
-      ExecutiveReinterpolateMotions(G);
+      ExecutiveMotionReinterpolate(G);
   }
 #if 0
   /* this causes problems... */
@@ -1026,25 +1063,25 @@ int MovieView(PyMOLGlobals * G, int action, int first,
     VLACheck(I->ViewElem, CViewElem, frame);
     if(action == 7) {
       if(I->ViewElem[frame].specification_level>1) {
-	action = 1;
+        action = 1;
       } else {
-	action = 0;
+        action = 0;
       }
     } else if(action == 8) {
       if(I->ViewElem[frame].specification_level>1) {
-	int frame;
-	action = 3;
-	for(frame=0;frame<I->NFrame;frame++) {
-	  if(I->ViewElem[frame].specification_level==1) {
-	    action = 6;
-	    break;
-	  }
-	}
+        int frame;
+        action = 3;
+        for(frame=0;frame<I->NFrame;frame++) {
+          if(I->ViewElem[frame].specification_level==1) {
+            action = 6;
+            break;
+          }
+        }
       }
       else if(I->ViewElem[frame].specification_level>0) {
-	action = 6;
+        action = 6;
       } else {
-	action = 3;
+        action = 3;
       }
     }
   }
@@ -1104,6 +1141,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
   case 2:                      /* interpolate & reinterpolate */
   case 3:
     if(I->ViewElem) {
+      int view_found = false;
       CViewElem *first_view = NULL, *last_view = NULL;
       if(first < 0)
         first = 0;
@@ -1134,6 +1172,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
         if(last && (!wrap))
           last--;
       }
+      
       VLACheck(I->ViewElem, CViewElem, last);
 
       if(wrap && (last >= I->NFrame)) {
@@ -1174,6 +1213,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
         if(!first_view) {
           if(I->ViewElem[frame].specification_level == 2) {     /* specified */
             first_view = I->ViewElem + frame;
+            view_found = true;
           }
         } else {
           CViewElem *view;
@@ -1209,6 +1249,10 @@ int MovieView(PyMOLGlobals * G, int action, int first,
         }
       }
 
+      if((!view_found) && (last>=first) && (first>=0) && (last<=I->NFrame)) {
+      
+        UtilZeroMem(I->ViewElem + first, sizeof(CViewElem) * (1 + (last-first)));
+      }
       if(last >= I->NFrame) {   /* now erase temporary views */
         ViewElemArrayPurge(G, I->ViewElem + I->NFrame, (1 + last - I->NFrame));
         UtilZeroMem((void *) (I->ViewElem + I->NFrame),
@@ -1266,7 +1310,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
   if(I->ViewElem) {
     VLASize(I->ViewElem,CViewElem,I->NFrame);
   }
-  SceneSetFrame(G,1,0);
+  SceneSetFrame(G,1,0); /* force frame update */
   return 1;
 }
 
@@ -1386,30 +1430,158 @@ Block *MovieGetBlock(PyMOLGlobals * G)
   return (I->Block);
 }
 
-static int MovieRelease(Block * block, int button, int x, int y, int mod)
+
+void MoviePrepareDrag(PyMOLGlobals *G, BlockRect * rect, 
+                      CObject * obj, int mode, int x, int y, int nearest)
 {
-  PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
-  ScrollBarDoRelease(I->ScrollBar, button, x, y, mod);
-  return 1;
+  I->DragMode = mode;
+  I->DragObj = obj;
+  I->DragX = x;
+  I->DragY = y;
+  I->DragRect = *rect;
+  if(I->DragColumn) {
+    I->DragRect.top = I->Block->rect.top - 1;
+    I->DragRect.bottom = I->Block->rect.bottom + 1;
+  }
+  I->DragStartFrame = ViewElemXtoFrame(G,I->ViewElem,rect,MovieGetLength(G),x,nearest);
+  I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,rect,MovieGetLength(G),x,nearest);
+  I->DragNearest = nearest;
 }
 
 static int MovieClick(Block * block, int button, int x, int y, int mod)
 {
   PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
+  int count = ExecutiveCountMotions(G);
+  BlockRect rect = block->rect;
+  rect.right -= 8 * 8;
+
+  if(button == P_GLUT_MIDDLE_BUTTON)
+    mod = 0;
+
   if(button == P_GLUT_RIGHT_BUTTON) {
-    int count = ExecutiveCountMotions(G);
-    BlockRect rect = block->rect;
-    ExecutiveMotionMenuActivate(G,&rect,count,x,y);
-  } else {
+    int n_frame = MovieGetLength(G);
+    if(mod == (cOrthoCTRL | cOrthoSHIFT))
+      I->DragColumn = true;
+    ExecutiveMotionClick(G,&rect,cMovieDragModeMoveKey,count,x,y,false);
+    if(I->DragStartFrame<n_frame) {
+      I->DragDraw = true;
+      I->DragMenu = true;
+      OrthoDirty(G);
+    } else {
+      ExecutiveMotionMenuActivate(G,&rect,count,false,x,y);
+    }
+  } else switch(mod) {
+  case cOrthoSHIFT: /* TEMPORAL SELECTIONS -- TO COME in PYMOL 1.3+ */
+    break;
+  case (cOrthoSHIFT | cOrthoCTRL): 
+    I->DragColumn = true;
+    ExecutiveMotionClick(G,&rect,cMovieDragModeInsDel,count,x,y, true);
+    I->DragDraw = true;
+    OrthoDirty(G);
+    break;
+  case cOrthoCTRL:
+    ExecutiveMotionClick(G,&rect,cMovieDragModeInsDel,count,x,y, true);
+    I->DragDraw = true;
+    OrthoDirty(G);
+    break;
+  default:
     ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+    break;
   }
   return 1;
 }
 
 static int MovieDrag(Block * block, int x, int y, int mod)
 {
+  PyMOLGlobals *G = block->G;
+
+  CMovie *I = G->Movie;
+  if(I->DragMode) {
+    I->DragDraw = ((y < (block->rect.top + 50)) && (y > (block->rect.bottom - 50)));
+    switch(I->DragMode) {
+    case cMovieDragModeMoveKey:
+      {
+        int n_frame = MovieGetLength(G);
+        I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,&I->DragRect,n_frame,x,false);
+        if(I->DragStartFrame<n_frame) {
+          if((abs(x-I->DragX)>3) ||
+             (abs(y-I->DragY)>5)) {
+            I->DragMenu = false;
+          }
+          OrthoDirty(G);
+        }
+      }
+      break;
+    case cMovieDragModeInsDel:
+      I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,&I->DragRect,MovieGetLength(G),x,true);
+      OrthoDirty(G);
+      break;
+    }
+  }
+  return 1;
+}
+
+static int MovieRelease(Block * block, int button, int x, int y, int mod)
+{
+  PyMOLGlobals *G = block->G;
+  CMovie *I = G->Movie;
+  ScrollBarDoRelease(I->ScrollBar, button, x, y, mod);
+  if(I->DragMode) {
+    OrthoLineType buffer = "";
+    OrthoLineType extra  = "";
+    
+    int n_frame = MovieGetLength(G);
+    
+    if(I->DragObj && ExecutiveValidateObjectPtr(G,I->DragObj,0)) {
+      sprintf(extra,",object='%s'",I->DragObj->Name);
+    } else if(I->DragColumn) {
+      sprintf(extra,",object=''");
+    } else {
+      sprintf(extra,",object='none'");
+    }
+    switch(I->DragMode) {
+    case cMovieDragModeMoveKey:
+        if((I->DragCurFrame == I->DragStartFrame) && (I->DragMenu)) {
+          int count = ExecutiveCountMotions(G);
+          BlockRect rect = block->rect;
+          rect.right -= 8 * 8;
+
+          ExecutiveMotionMenuActivate(G,&rect,count,true,x,y);
+          I->DragMenu = false;
+        } else if(I->DragDraw &&
+                  (I->DragCurFrame!=I->DragStartFrame) && 
+                  (I->DragCurFrame >= 0) && 
+                  (I->DragCurFrame < n_frame)) {
+          sprintf(buffer,"cmd.mmove(%d,%d,%d%s)", 1+I->DragCurFrame, 1+I->DragStartFrame, 1, extra);
+        }
+      break;
+    case cMovieDragModeInsDel:
+      if(I->DragDraw) {
+        if(I->DragCurFrame>I->DragStartFrame) {
+          int first = I->DragStartFrame + 1;
+          if(first<0) first = 0;
+          sprintf(buffer,"cmd.minsert(%d,%d%s)", I->DragCurFrame - I->DragStartFrame, first+1, extra);
+        } else {
+          int first = I->DragCurFrame;
+          if(first<0) first = 0;
+          sprintf(buffer,"cmd.mdelete(%d,%d%s)", I->DragStartFrame - I->DragCurFrame, first+1, extra);
+        }
+      }
+      break;
+    }
+    if(buffer[0]) {
+      PParse(G, buffer);
+      PFlush(G);
+      PLog(G, buffer, cPLog_pym);
+    }
+  }
+  I->DragMode = 0;
+  I->DragDraw = false;
+  I->DragMenu = false;
+  I->DragColumn = false;
+
   return 1;
 }
 
@@ -1449,6 +1621,18 @@ static void MovieDraw(Block * block)
   BlockRect rect = block->rect;
   if(count) {
     rect.right -= 8 * 8;
+
+    if(G->HaveGUI && G->ValidContext) {
+      float black[3] = {0.0F,0.0F,0.0F};
+      glColor3fv(black);
+      glBegin(GL_POLYGON);
+      glVertex2f(rect.right, rect.bottom);
+      glVertex2f(rect.right, rect.top);
+      glVertex2f(block->rect.right, rect.top);
+      glVertex2f(block->rect.right, rect.bottom);
+      glEnd();
+    }
+
     if(!n_frame) {
       ScrollBarSetLimits(I->ScrollBar, 1, 1);
       ScrollBarSetValue(I->ScrollBar, 0);
@@ -1467,8 +1651,41 @@ static void MovieDraw(Block * block)
     ScrollBarSetBox(I->ScrollBar, rect.top,
                     rect.left, rect.bottom, rect.right);
     ScrollBarDoDraw(I->ScrollBar);
-    ExecutiveDrawMotions(G,&rect,count);
+    ExecutiveMotionDraw(G,&rect,count);
     ScrollBarDrawHandle(I->ScrollBar, 0.3F);
+
+    /* drag selection box */
+    if(I->DragDraw) {
+
+      float white[4] = {1.0F, 1.0F, 1.0F,0.5F};
+
+      switch(I->DragMode) {
+      case cMovieDragModeMoveKey:
+        {
+          float grey[4] = {0.75F,0.75F,0.75f,0.5};
+          if(I->DragStartFrame<n_frame) 
+            ViewElemDrawBox(G,&I->DragRect, I->DragStartFrame, I->DragStartFrame+1, n_frame, white, false);        
+          if((I->DragCurFrame>=0) && (I->DragCurFrame<n_frame)) {
+            ViewElemDrawBox(G,&I->DragRect, I->DragCurFrame, I->DragCurFrame+1, n_frame, grey, true);
+          }
+          OrthoDirty(G);
+        }
+        break;
+      case cMovieDragModeInsDel:
+        if(I->DragCurFrame==I->DragStartFrame) {
+          ViewElemDrawBox(G,&I->DragRect, I->DragStartFrame, I->DragStartFrame, n_frame, white, true);        
+        } else if(I->DragCurFrame>=I->DragStartFrame) {
+          float green[4] = {0.5F, 1.0F, 0.5F,0.5F};
+          ViewElemDrawBox(G,&I->DragRect, I->DragStartFrame, I->DragCurFrame, n_frame, green, true);        
+        } else {
+          float red[4] = {1.0F, 0.5F, 0.5F,0.5F};          
+          ViewElemDrawBox(G,&I->DragRect, I->DragCurFrame, I->DragStartFrame, n_frame, red, true);        
+        }
+        OrthoDirty(G);
+        break;
+      }
+
+    }
   }
 }
 
