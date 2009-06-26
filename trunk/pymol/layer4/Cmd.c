@@ -6220,7 +6220,13 @@ static PyObject *CmdViewport(PyObject * self, PyObject * args)
         PyMOL_NeedReshape(G->PyMOL, 2, 0, 0, w, h);
 #endif
       } else {
-        MainDoReshape(0,0);
+#ifndef _PYMOL_NO_MAIN
+        if(G->Main) {
+          MainDoReshape(0, 0);    /* should be moved into Executive */
+        }
+#else
+        PyMOL_NeedReshape(G->PyMOL, 2, 0, 0, 0, 0);
+#endif
       }
       APIExit(G);
     }
