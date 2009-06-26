@@ -467,7 +467,7 @@ void ExecutiveMotionReinterpolate(PyMOLGlobals * G);
 void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
                                int index, int count, int target, char *name, int freeze, int quiet);
 
-void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected,int passive, int x, int y);
+void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected,int passive, int x, int y, int all);
 int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action, 
                                int index, int count, int target, int freeze);
 int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,
@@ -479,6 +479,10 @@ int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int st
 void ExecutiveMotionClick(PyMOLGlobals * G, BlockRect *rect, int mode, int expected, int x, int y, int nearest);
 void ExecutiveMotionTrim(PyMOLGlobals * G);
 void ExecutiveMotionExtend(PyMOLGlobals * G, int freeze);
-
+int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
+                        int last, float power, float bias,
+                        int simple, float linear, char *name, int wrap,
+                        int hand, int window, int cycles,
+                        char *scene_name, float scene_cut, int state, int quiet);
 
 #endif

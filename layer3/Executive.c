@@ -271,6 +271,63 @@ int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int st
   return result;
 }
 
+
+int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
+              int last, float power, float bias,
+              int simple, float linear, char *name, int wrap,
+              int hand, int window, int cycles,
+              char *scene_name, float scene_cut, int state, int quiet)
+{
+  int ok = true;
+  register CExecutive *I = G->Executive;
+
+  if(wrap < 0) {
+    wrap = SettingGetGlobal_b(G, cSetting_movie_loop);
+  }
+
+  if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))) { 
+    /* camera */
+
+    ok = MovieView(G, action, first, last, power,
+                   bias, true, linear, wrap, hand, window, cycles,
+                   scene_name, scene_cut, state, quiet);
+
+    if((name) && !strcmp(name, cKeywordAll)) {
+      /* also do all other objects */
+      SpecRec *rec = NULL;
+      while(ListIterate(I->Spec, rec, next)) {
+        switch(rec->type) {
+        case cExecObject:
+          ok = ObjectMotion(rec->obj, action, first, last, power, bias,
+                            simple < 0 ? 0 : 1, 
+                            linear, wrap, hand, window, cycles, state, quiet);
+          break;
+        }
+      }
+    }
+  } else { /* pattern */
+    CTracker *I_Tracker = I->Tracker;
+    SpecRec *rec = NULL;
+    int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+      if(rec) {
+        switch (rec->type) {
+        case cExecObject: 
+          ok = ObjectMotion(rec->obj, action, first, last, power, bias,
+                            simple < 0 ? 0 : 1, 
+                            linear, wrap, hand, window, cycles, state, quiet);
+        }
+      }
+      TrackerDelList(I_Tracker, list_id);
+      TrackerDelIter(I_Tracker, iter_id);
+    }
+  }
+  return ok;
+}
+
+
+
 void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
                                int index, int count, int target, char *name,
                                int freeze,int quiet)
@@ -455,13 +512,25 @@ void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected)
   }
 }
 
-void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int passive, int x, int y)
+void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int passive, 
+                                 int x, int y, int all)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   BlockRect draw_rect = *rect;
   int count = 0;
   int height = rect->top - rect->bottom;
+  if(all) {
+    if(MovieGetSpecLevel(G,0)>=0) {
+      int n_frame = MovieGetLength(G);
+      int frame = MovieXtoFrame(G, &draw_rect, n_frame, x, false);
+      WordType frame_str = "0";
+      if((frame>=0) && (frame<n_frame)) {
+        sprintf(frame_str,"%d",frame+1);
+      }
+      MenuActivate2Arg(G, x, y, x, y, passive, "obj_motion","all",frame_str);
+    }
+  } else {
   while(ListIterate(I->Spec, rec, next)) {
     switch(rec->type) {
     case cExecAll:
@@ -499,6 +568,7 @@ void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected
       }
       break;
     }
+  }
   }
  done:
   return;
