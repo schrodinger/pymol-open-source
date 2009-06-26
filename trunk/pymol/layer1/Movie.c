@@ -102,6 +102,31 @@ int MovieXtoFrame(PyMOLGlobals *G, BlockRect *rect, int frames, int x, int neare
   register CMovie *I = G->Movie;
   return ViewElemXtoFrame(G,I->ViewElem,rect,frames,x,nearest);
 }
+
+void MovieViewTrim(PyMOLGlobals *G,int n_frame)
+{
+  register CMovie *I = G->Movie;
+  if(n_frame>=0) {
+    if(!I->Sequence) {
+      I->Sequence = VLACalloc(int, n_frame);
+    } else {
+      VLASize(I->Sequence, int, n_frame);
+    }
+    if(!I->Cmd) {
+      I->Cmd = VLACalloc(MovieCmdType, n_frame);
+    } else {
+      VLASize(I->Cmd, MovieCmdType, n_frame);
+    }
+    if(!I->ViewElem) {
+      I->ViewElem = VLACalloc(CViewElem, n_frame);
+    } else {
+      VLASize(I->ViewElem, CViewElem, n_frame);
+    }
+    I->NFrame = n_frame;
+  }
+}
+
+
 int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target, int freeze, int localize)
 {
   register CMovie *I = G->Movie;
@@ -141,11 +166,8 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
       break;
     }
   }
-  if(ok && (!freeze) && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
-    ExecutiveMotionReinterpolate(G);
-  } else {
-    if(!localize)
-      ExecutiveMotionTrim(G);
+  if(ok && ((!freeze)&&(!localize))) {
+    ExecutiveMotionExtend(G,freeze);
   }
   return ok;
 }
@@ -155,7 +177,16 @@ int MovieGetSpecLevel(PyMOLGlobals *G,int frame)
   register CMovie *I = G->Movie;
   if(I->ViewElem) {
     int size = VLAGetSize(I->ViewElem);
-    if(frame<size)
+    if(frame<0) {
+      int max_level = 0;
+      int i;
+      for(i=0;i<size;i++) {
+        if(max_level < I->ViewElem[i].specification_level)
+          max_level = I->ViewElem[i].specification_level;
+      }
+      return max_level;
+    }
+    if((frame>=0) && (frame<size))
       return I->ViewElem[frame].specification_level;
     return 0;
   }
@@ -1534,10 +1565,10 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
     
     int n_frame = MovieGetLength(G);
     
-    if(I->DragObj && ExecutiveValidateObjectPtr(G,I->DragObj,0)) {
-      sprintf(extra,",object='%s'",I->DragObj->Name);
-    } else if(I->DragColumn) {
+    if(I->DragColumn) {
       sprintf(extra,",object=''");
+    } else if(I->DragObj && ExecutiveValidateObjectPtr(G,I->DragObj,0)) {
+      sprintf(extra,",object='%s'",I->DragObj->Name);
     } else {
       sprintf(extra,",object='none'");
     }

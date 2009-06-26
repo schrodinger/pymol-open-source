@@ -5886,6 +5886,15 @@ static PyObject *CmdMDo(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
+    if(frame < 0) {
+      if(frame == -1) {
+        frame = SceneGetFrame(G);
+      } else {
+        frame = MovieGetLength(G) + 2 + frame;
+        if(frame<0)
+          frame = 0;
+      }
+    }
     if(append) {
       MovieAppendCommand(G, frame, cmd);
     } else {

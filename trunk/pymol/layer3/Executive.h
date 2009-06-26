@@ -478,6 +478,7 @@ int ExecutiveGroupCombineTTT(PyMOLGlobals *G, CObject *group, float *ttt, int re
 int ExecutiveGroupTranslateTTT(PyMOLGlobals *G, CObject *group, float *v, int store);
 void ExecutiveMotionClick(PyMOLGlobals * G, BlockRect *rect, int mode, int expected, int x, int y, int nearest);
 void ExecutiveMotionTrim(PyMOLGlobals * G);
+void ExecutiveMotionExtend(PyMOLGlobals * G, int freeze);
 
 
 #endif

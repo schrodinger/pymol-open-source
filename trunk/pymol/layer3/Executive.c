@@ -293,9 +293,12 @@ void ExecutiveMotionViewModify(PyMOLGlobals *G, int action,
           break;
         }
       }
-    }
-    if((!freeze) && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
       ExecutiveMotionTrim(G);
+    } else {
+      ExecutiveMotionExtend(G,true);
+    }
+    
+    if((!freeze) && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
       ExecutiveMotionReinterpolate(G);
     }
   } else { /* pattern */
@@ -352,6 +355,43 @@ void ExecutiveMotionTrim(PyMOLGlobals * G)
       }        
       break;
     }
+  }
+}
+
+void ExecutiveMotionExtend(PyMOLGlobals * G, int freeze)
+{
+  int n_frame = 0;
+  int max_length = 0;
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  if(MovieGetSpecLevel(G,-1)>0)
+    n_frame = MovieGetLength(G);
+  while(ListIterate(I->Spec, rec, next)) {
+    switch(rec->type) {
+    case cExecObject:
+      if(ObjectGetSpecLevel(rec->obj,-1)>0) {
+        int length = ObjectMotionGetLength(rec->obj);
+        if(max_length < length)
+          max_length = length;
+      }
+      break;
+    }
+  }
+  if(max_length) {
+    if(n_frame < max_length)
+      MovieViewTrim(G,max_length);
+    while(ListIterate(I->Spec, rec, next)) {
+      switch(rec->type) {
+      case cExecObject:
+        if(ObjectGetSpecLevel(rec->obj,-1)>0) {
+          ObjectMotionTrim(rec->obj,max_length);
+        }        
+        break;
+      }
+    }
+  }
+  if((!freeze) && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+    ExecutiveMotionReinterpolate(G);
   }
 }
 
