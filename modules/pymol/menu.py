@@ -72,7 +72,7 @@ def smooth(self_cmd,extra=''):
             [ 1, 'more'     ,   'cmd.mview("smooth",window=15%s)'%extra ],
             [ 1, 'a lot'   ,   'cmd.mview("smooth",window=30%s)'%extra ]]
               
-def camera_motion(self_cmd, frame=0):
+def camera_motion(self_cmd, frame="0"):
     return [[ 2, 'Camera Motion:'     , ''                       ],     
             [ 1, 'store'         , 'cmd.mview("store",first='+frame+')'      ],
             [ 1, 'store with scene' , camera_store_with_scene(self_cmd,frame) ],
@@ -89,7 +89,7 @@ def camera_motion(self_cmd, frame=0):
             [ 1, 'uninterpolate'   , 'cmd.mview("uninterpolate")'   ],            
             ]
 
-def obj_motion(self_cmd, obj, frame=0):
+def obj_motion(self_cmd, obj, frame="0"):
     return [[ 2, 'Object "'+obj+'" Motion:'     , ''                       ],     
             [ 1, 'store'         , 'cmd.mview("store",object="'+obj+'",first='+frame+')'      ],
             [ 1, 'clear'       ,   'cmd.mview("clear",object="'+obj+'",first='+frame+')'    ],
@@ -1481,6 +1481,9 @@ def pick_menu(self_cmd, sele1, sele2):
     else:
         title = sele1
     return [[ 2, title     , '' ],
+            [ 1, 'drag object matrix'      ,'cmd.drag("(byobj ('+sele2+'))",mode=1)'            ],
+            [ 1, 'drag object coords.'      ,'cmd.drag("(byobj ('+sele2+'))")'            ],
+            [ 0, ''             , ''                      ],
             [ 1, 'atom'    , pick_option(self_cmd, sele2, "Atom") ],
             [ 1, 'residue' , pick_option(self_cmd, "(byres ("+sele2+"))", "Residue") ],
             [ 1, 'chain'   , pick_option(self_cmd, "(bychain ("+sele2+"))", "Chain") ],
@@ -1491,9 +1494,6 @@ def pick_menu(self_cmd, sele1, sele2):
             [ 0, ''             , ''                      ],
             [ 1, 'fragment', pick_option(self_cmd, "(byfrag ("+sele2+"))", "Fragment") ],
             [ 1, 'fragment+joint(s)', pick_option(self_cmd, "((byfrag ("+sele2+")) extend 1)", "Fragment") ],
-            [ 0, ''             , ''                      ],
-            [ 1, 'object drag matrix'      ,'cmd.drag("(byobj ('+sele2+'))",mode=1)'            ],
-            [ 1, 'object drag coords.'      ,'cmd.drag("(byobj ('+sele2+'))")'            ],            
             ]
         
 def seq_menu(sele2,sele3): # obsolete/unused?

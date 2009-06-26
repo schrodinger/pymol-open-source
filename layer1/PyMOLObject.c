@@ -51,6 +51,14 @@ void ObjectMotionTrim(CObject *I, int n_frame)
   }
 }
 
+int ObjectMotionGetLength(CObject *I)
+{
+  if(I->ViewElem) {
+    return VLAGetSize(I->ViewElem);
+  }
+  return 0;
+}
+
 void ObjectMotionReinterpolate(CObject *I)
 {
   ObjectMotion(I, 3, -1, -1,0.0F,1.0F, 0, 0.0F,  
@@ -69,10 +77,10 @@ int ObjectMotionModify(CObject *I,int action, int index, int count,int target,in
     if(ok && I->ViewElem) {
       int size = VLAGetSize(I->ViewElem);
       int n_frame = MovieGetLength(I->G);
-      if(n_frame < size) { 
+      if(n_frame != size) { 
         /* extend entire movie */
         if(!localize)
-          MovieViewModify(I->G,1,-1,size - n_frame,0,true,true);
+          ExecutiveMotionExtend(I->G,true);
         if((!freeze) && SettingGetGlobal_i(I->G,cSetting_movie_auto_interpolate)) {
           ExecutiveMotionReinterpolate(I->G);
         }
@@ -181,7 +189,16 @@ int ObjectGetSpecLevel(CObject * I, int frame)
 {
   if(I->ViewElem) {
     int size = VLAGetSize(I->ViewElem);
-    if(frame<size)
+    if(frame<0) {
+      int max_level = 0;
+      int i;
+      for(i=0;i<size;i++) {
+        if(max_level < I->ViewElem[i].specification_level)
+          max_level = I->ViewElem[i].specification_level;
+      }
+      return max_level;
+    }
+    if((frame>=0) && (frame<size))
       return I->ViewElem[frame].specification_level;
     return 0;
   }

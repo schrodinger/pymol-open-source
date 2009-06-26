@@ -114,7 +114,7 @@ void ViewElemDrawBox(PyMOLGlobals *G, BlockRect *rect, int first, int last,
 }
 
 void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames, char *title)
-{
+{ 
   if(G->HaveGUI && G->ValidContext && view_elem) {
     int size = VLAGetSize(view_elem);
     float width = (float) (rect->right - rect->left);
@@ -127,11 +127,13 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
     float bot = rect->bottom + 2;
     float mid_top = (int)(0.499F+(3 * top + 2 * bot) / 5);
     float mid_bot = (int)(0.499F+(2 * top + 3 * bot) / 5);
-    float color[3] = { 0.3, 0.3, 0.9 };
+    float top_color[3] = { 0.6, 0.6, 1.0 };
+    float key_color[3] = { 0.4, 0.4, 0.8 };
+    float bar_color[3] = { 0.3, 0.3, 0.6 };
+    float bot_color[3] = { 0.2, 0.2, 0.4 };
     int cur_level = -1, last_level = -1;
     int cur;
     
-    glColor3fv(color);
     for(cur = first; cur <= last; cur++) {
       if(cur < last) {
         if(cur>=size)
@@ -147,21 +149,44 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int f
         case 0:
           break;
         case 1:
+          glColor3fv(bar_color);
           glBegin(GL_POLYGON);
           glVertex2f(start, mid_bot);
           glVertex2f(start, mid_top);
           glVertex2f(stop, mid_top);
           glVertex2f(stop, mid_bot);
           glEnd();
+          glColor3fv(key_color);
+          glBegin(GL_LINES);
+          glVertex2f(start,mid_top);
+          glVertex2f(stop,mid_top);
+          glColor3fv(bot_color);
+          glVertex2f(start,mid_bot);
+          glVertex2f(stop,mid_bot);
+          glEnd();
+
           break;
         case 2:
           if((stop - start) < 1.0F)
             stop = start+1.0F;
+          glColor3fv(key_color);
           glBegin(GL_POLYGON);
           glVertex2f(start, bot);
           glVertex2f(start, top);
           glVertex2f(stop, top);
           glVertex2f(stop, bot);
+          glEnd();
+          glColor3fv(top_color);
+          glBegin(GL_LINES);
+          glVertex2f(start,top);
+          glVertex2f(stop,top);
+          glVertex2f(start,bot);
+          glVertex2f(start,top);
+          glColor3fv(bot_color);
+          glVertex2f(start,bot);
+          glVertex2f(stop,bot);
+          glVertex2f(stop,bot);
+          glVertex2f(stop,top);
           glEnd();
           break;
         }
