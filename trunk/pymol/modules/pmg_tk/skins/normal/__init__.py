@@ -1576,6 +1576,9 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Append', 'command', '4 seconds',label='4 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(4.0)"))
 
+        self.menuBar.addmenuitem('Append', 'command', '6 seconds',label='6 seconds',
+                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(6.0)"))
+
         self.menuBar.addmenuitem('Append', 'command', '8 seconds',label='8 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(8.0)"))
 
@@ -1583,13 +1586,13 @@ class Normal(PMGSkin):
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(12.0)"))
 
         self.menuBar.addmenuitem('Append', 'command', '18 seconds',label='18 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(12.0)"))
+                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(18.0)"))
 
         self.menuBar.addmenuitem('Append', 'command', '24 seconds',label='24 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(24.0)"))
 
         self.menuBar.addmenuitem('Append', 'command', '30 seconds',label='30 seconds',
-                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(12.0)"))
+                                 command = lambda s=self: s.cmd.do("_ movie.add_blank(30.0)"))
 
         self.menuBar.addmenuitem('Append', 'command', '48 seconds',label='48 seconds',
                                  command = lambda s=self: s.cmd.do("_ movie.add_blank(48.0)"))

@@ -6053,7 +6053,7 @@ static PyObject *CmdPNG(PyObject * self, PyObject * args)
         result = 1;             /* signal success by returning 1 instead of 0, or -1 for error  */
     } else {
       ExecutiveDrawNow(G);      /* TODO STATUS */
-      if(ray) {
+      if(ray || !G->HaveGUI) {
         SceneRay(G, width, height, (int) SettingGet(G, cSetting_ray_default_renderer),
                  NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
         ok = ScenePNG(G, str1, dpi, quiet, false, format);

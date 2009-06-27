@@ -37,7 +37,7 @@ struct _CPyMOLOptions {
 
   int multisample, window_visible, read_stdin, presentation, defer_builds_mode, full_screen, sphere_mode, stereo_capable,       /* for informing PyMOL as to the capabilities of the context */
     stereo_mode, zoom_mode, no_quit;    /* prevent any action from quitting or killing PyMOL */
-
+  
   /* WARNING: for the sake of forward compability, never delete or
      move any fields in the above ...initialization struct in PyMOL.c */
 
