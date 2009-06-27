@@ -10659,7 +10659,6 @@ static void remove_quotes(char *st)
   char active_quote = 0;
   p = st;
   q = store;
-  /*  printf("DEBUG remove_quotes: input [%s]\n",st); */
 
   while(*p) {
     if(((*p) == 34) || ((*p) == 39)) {
@@ -10695,7 +10694,6 @@ static void remove_quotes(char *st)
   *(q++) = 0;
   strcpy(st, store);
 
-  /*  printf("DEBUG remove_quotes: output [%s]\n",st); */
 }
 
 
