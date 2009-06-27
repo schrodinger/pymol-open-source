@@ -1910,9 +1910,13 @@ int OrthoGetWrapClickSide(PyMOLGlobals * G)
 int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
 {
   register COrtho *I = G->Ortho;
-
   Block *block = NULL;
   int handled = 0;
+
+  PRINTFB(G, FB_Ortho, FB_Blather)
+    "OrthoButton: button:%d, state=%d, x=%d, y=%d, mod=%d\n", 
+    button,state,x,y,mod
+    ENDFB(G);
 
   switch (button) {
   case 3:
