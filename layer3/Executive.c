@@ -318,7 +318,6 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
 
         switch (rec->type) {
         case cExecObject: 
-          printf("DEBUG :%s]n",rec->obj->Name);
           ok = ObjectMotion(rec->obj, action, first, last, power, bias,
                             simple < 0 ? 0 : 1, 
                             linear, wrap, hand, window, cycles, state, quiet);
