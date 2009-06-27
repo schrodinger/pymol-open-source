@@ -1803,8 +1803,8 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Scene Loop', 'Nutate2', 'Nutate',
                                     label='Nutate')
 
-        self.menuBar.addmenuitem('Nutate2', 'command', '4 seconds each',label='4 seconds each',
-                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,4.0,rock=4,start=%d)"))
+        self.menuBar.addmenuitem('Nutate2', 'command', '4 seconds each',label='2 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,2.0,rock=4,start=%d)"))
 
         self.menuBar.addmenuitem('Nutate2', 'command', '8 seconds each',label='8 seconds each',
                                  command = lambda s=self: s.mvprg("_ movie.add_scenes(None,8.0,rock=4,start=%d)"))
@@ -1823,6 +1823,9 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Scene Loop', 'Y-Rock2', 'Y-Rock',
                                     label='Y-Rock')
 
+        self.menuBar.addmenuitem('Y-Rock2', 'command', '2 seconds each',label='2 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,2.0,rock=1,start=%d)"))
+
         self.menuBar.addmenuitem('Y-Rock2', 'command', '4 seconds each',label='4 seconds each',
                                  command = lambda s=self: s.mvprg("_ movie.add_scenes(None,4.0,rock=1,start=%d)"))
 
@@ -1837,6 +1840,29 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Y-Rock2', 'command', '24 seconds each',label='24 seconds each',
                                  command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=1,start=%d)"))
+
+        self.menuBar.addmenuitem('Scene Loop', 'separator', '')
+
+        self.menuBar.addcascademenu('Scene Loop', 'No-Motion', 'Steady',
+                                    label='Steady')
+
+        self.menuBar.addmenuitem('No-Motion', 'command', '2 seconds each',label='2 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,2.0,rock=0,start=%d)"))
+
+        self.menuBar.addmenuitem('No-Motion', 'command', '4 seconds each',label='4 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,4.0,rock=0,start=%d)"))
+
+        self.menuBar.addmenuitem('No-Motion', 'command', '8 seconds each',label='8 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,8.0,rock=0,start=%d)"))
+
+        self.menuBar.addmenuitem('No-Motion', 'command', '12 seconds each',label='12 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,12.0,rock=0,start=%d)"))
+
+        self.menuBar.addmenuitem('No-Motion', 'command', '16 seconds each',label='16 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,16.0,rock=0,start=%d)"))
+
+        self.menuBar.addmenuitem('No-Motion', 'command', '24 seconds each',label='24 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=0,start=%d)"))
 
         self.menuBar.addmenuitem('Program', 'separator', '')
         
