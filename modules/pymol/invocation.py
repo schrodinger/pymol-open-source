@@ -325,7 +325,11 @@ if __name__=='pymol.invocation':
                     if ("R" in a):
                         options.rpcServer = 1
                     if ("g" in a):
-                        options.deferred.append("_do_png %s"%av.pop())
+                        filename = av.pop()
+                        if '.png' in filename:
+                            options.deferred.append("_do__ cmd.png('''%s''')"%filename)
+                        elif '.mpg' in filename:
+                            options.deferred.append("_do__ movie.produce('''%s''')"%filename)
                     if ("C" in a):
                         options.sigint_handler = 0
                     if ("L" in a):
@@ -333,15 +337,15 @@ if __name__=='pymol.invocation':
                     if ("b" in a): # CPU benchmark
                         options.deferred.append("_do__ feedback disable,all,everything")
                         options.deferred.append("_do__ feedback enable,python,output")
-                        options.deferred.append("_do_ wizard benchmark")
+                        options.deferred.append("_do_wizard benchmark")
                         if a[2:]=='':
-                            options.deferred.append("_do_ cmd.get_wizard().run_cpu()")
+                            options.deferred.append("_do__ cmd.get_wizard().run_cpu()")
                         if a[2:]=='0':
-                            options.deferred.append("_do_ cmd.get_wizard().ray_trace0()")
+                            options.deferred.append("_do__ cmd.get_wizard().ray_trace0()")
                         if a[2:]=='1':
-                            options.deferred.append("_do_ cmd.get_wizard().ray_trace1()")
+                            options.deferred.append("_do__ cmd.get_wizard().ray_trace1()")
                         if a[2:]=='2':
-                            options.deferred.append("_do_ cmd.get_wizard().ray_trace2()")
+                            options.deferred.append("_do__ cmd.get_wizard().ray_trace2()")
                         
                     if "p" in a:
                         options.read_stdin = 1

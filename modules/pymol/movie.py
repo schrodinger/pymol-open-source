@@ -309,7 +309,6 @@ def add_roll(duration=12.0,loop=1,axis='y',start=0,_self=cmd):
         
 def add_rock(duration=8.0,angle=30.0,loop=1,axis='y',start=0,_self=cmd):
     cmd = _self
-    print start
     if not start:
         start = cmd.get_movie_length()+1
     duration = float(duration)
@@ -329,8 +328,51 @@ def add_rock(duration=8.0,angle=30.0,loop=1,axis='y',start=0,_self=cmd):
             cmd.mview("interpolate")
         cmd.frame(start)
 
+def add_sweep(pause=2.0,factor=1,first=-1,last=-1,loop=1,start=0,_self=cmd):
+    cmd = _self
+    if not start:
+        start = cmd.get_movie_length() + 1
+    loop = int(loop)
+    fps = float(cmd.get('movie_fps'))
+    n_state = cmd.count_states()
+    duration = (2 * pause) + (2 * factor * n_state) / fps
+    n_frame = int(round(fps * duration))
+    if n_frame > 0:
+        cmd.mset("1 x%d"%n_frame, start, freeze=1)
+        cmd.mview("store",start, state=1, freeze=1)
+        cmd.mview("store",start + (n_frame * pause) / duration, state=1, freeze=1)
+        cmd.mview("store",start + n_state * factor + (n_frame * pause) / duration - 1, state=n_state, freeze=1)
+        cmd.mview("store",start + n_state * factor + (2 * n_frame * pause) / duration, state=n_state, freeze=1)
+        cmd.mview("store",start + n_frame-1, state=1, freeze=1)
+        if loop and (start == 1):
+            cmd.mview("interpolate",wrap=1)
+        else:
+            cmd.mview("interpolate")
+        cmd.frame(start)
+
+def add_loop(pause=2.0,factor=1,first=-1,last=-1,loop=1,start=0,_self=cmd):
+    cmd = _self
+    if not start:
+        start = cmd.get_movie_length() + 1
+    loop = int(loop)
+    fps = float(cmd.get('movie_fps'))
+    n_state = cmd.count_states()
+    duration = (pause) + (factor * n_state) / fps
+    n_frame = int(round(fps * duration))
+    if n_frame > 0:
+        cmd.mset("1 x%d"%n_frame, start, freeze=1)
+        cmd.mview("store",start, state=1, freeze=1)
+        cmd.mview("store",start + (n_frame * pause * 0.5) / duration, state=1, freeze=1)
+        cmd.mview("store",start + n_state * factor + (n_frame * pause * 0.5) / duration, state=n_state, freeze=1)
+        cmd.mview("store",start + n_frame-1, state=n_state, freeze=1)
+        if loop and (start == 1):
+            cmd.mview("interpolate",wrap=1)
+        else:
+            cmd.mview("interpolate")
+        cmd.frame(start)
+
 def add_nutate(duration=8.0, angle=30.0, spiral=0, loop=1, 
-               offset=0, phase=0, shift=math.pi/2.0,start=0,
+               offset=0, phase=0, shift=math.pi/2.0, start=0,
                _self=cmd):
     cmd = _self
     if not start:
@@ -612,6 +654,8 @@ def produce(filename, mode='', first=0, last=0, preserve=0,
     if _self.is_string(mode):
         if mode == '':
             if int(cmd.get_setting_legacy('ray_trace_frames')):
+                mode = 'ray'
+            elif cmd._pymol.invocation.options.no_gui:
                 mode = 'ray'
             else:
                 mode = 'draw'
