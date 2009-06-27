@@ -358,9 +358,10 @@ int ExecutiveMultiSave(PyMOLGlobals * G, char *fname, char *name, int state,
                        int append, int format, int quiet);
 int ExecutiveIdentifyObjects(PyMOLGlobals * G, char *s1, int mode, int **indexVLA,
                              ObjectMolecule *** objVLA);
+int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, char *name, float *trans, int store, int quiet);
 int ExecutiveCombineObjectTTT(PyMOLGlobals * G, char *name, float *ttt,
-                              int reverse_order);
-int ExecutiveSetObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int state, int quiet);
+                              int reverse_order, int store);
+int ExecutiveSetObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int state, int quiet, int store);
 int ExecutiveGetObjectTTT(PyMOLGlobals * G, char *name, float **ttt, int state,
                           int quiet);
 int ExecutiveGetObjectMatrix(PyMOLGlobals * G, char *name, int state, double **matrix,
@@ -467,7 +468,8 @@ void ExecutiveMotionReinterpolate(PyMOLGlobals * G);
 void ExecutiveMotionViewModify(PyMOLGlobals *G, int action, 
                                int index, int count, int target, char *name, int freeze, int quiet);
 
-void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected,int passive, int x, int y, int all);
+void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected,int passive, 
+                                 int x, int y, int same);
 int ExecutiveGroupMotionModify(PyMOLGlobals *G, CObject *group, int action, 
                                int index, int count, int target, int freeze);
 int ExecutiveGroupMotion(PyMOLGlobals *G, CObject *group,int action, int first,

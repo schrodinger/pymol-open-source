@@ -1281,9 +1281,9 @@ int MovieView(PyMOLGlobals * G, int action, int first,
       }
 
       if((!view_found) && (last>=first) && (first>=0) && (last<=I->NFrame)) {
-      
         UtilZeroMem(I->ViewElem + first, sizeof(CViewElem) * (1 + (last-first)));
       }
+
       if(last >= I->NFrame) {   /* now erase temporary views */
         ViewElemArrayPurge(G, I->ViewElem + I->NFrame, (1 + last - I->NFrame));
         UtilZeroMem((void *) (I->ViewElem + I->NFrame),

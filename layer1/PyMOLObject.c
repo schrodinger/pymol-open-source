@@ -303,6 +303,7 @@ int ObjectMotion(CObject * I, int action, int first,
       {
         CViewElem *first_view = NULL, *last_view = NULL;
         int zero_flag = -1;
+        int view_found = false;
 
         if(first < 0)
           first = 0;
@@ -374,6 +375,7 @@ int ObjectMotion(CObject * I, int action, int first,
           if(!first_view) {
             if(I->ViewElem[frame].specification_level == 2) {     /* specified */
               first_view = I->ViewElem + frame;
+              view_found = true;
             }
           } else {
             CViewElem *view;
@@ -407,6 +409,10 @@ int ObjectMotion(CObject * I, int action, int first,
               ViewElemCopy(G, I->ViewElem + a, I->ViewElem + a - nFrame);
             }
           }
+        }
+
+        if((!view_found) && (last>=first) && (first>=0) && (last<=nFrame)) {
+          UtilZeroMem(I->ViewElem + first, sizeof(CViewElem) * (1 + (last-first)));
         }
 
         if(last >= nFrame) {   /* now erase temporary views */
@@ -729,6 +735,8 @@ void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order, int store)
     } else {
       combineTTT44f44f(ttt, cpy, I->TTT);
     }
+    if(store<0) 
+      store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
         I->ViewElem = VLACalloc(CViewElem, 0);
@@ -758,6 +766,8 @@ void ObjectTranslateTTT(CObject * I, float *v, int store)
       I->TTT[7] += v[1];
       I->TTT[11] += v[2];
     }
+    if(store<0) 
+      store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
     if(store && MovieDefined(I->G)) {
       if(!I->ViewElem)  
         I->ViewElem = VLACalloc(CViewElem, 0);
@@ -775,7 +785,7 @@ void ObjectTranslateTTT(CObject * I, float *v, int store)
 
 
 /*========================================================================*/
-void ObjectSetTTT(CObject * I, float *ttt, int state)
+void ObjectSetTTT(CObject * I, float *ttt, int state, int store)
 {
   if(state < 0) {
     if(ttt) {
@@ -784,11 +794,24 @@ void ObjectSetTTT(CObject * I, float *ttt, int state)
     } else {
       I->TTTFlag = false;
     }
+    if(store<0) 
+      store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
+    if(store && MovieDefined(I->G)) {
+      if(!I->ViewElem)  
+        I->ViewElem = VLACalloc(CViewElem, 0);
+      if(I->ViewElem) { /* update motion path waypoint, if active */
+        int frame = SceneGetFrame(I->G);
+        if(frame >= 0) {
+          VLACheck(I->ViewElem, CViewElem, frame);
+          TTTToViewElem(I->TTT, I->ViewElem + frame);
+          I->ViewElem[frame].specification_level = 2;
+        }
+      }
+    }
   } else {
     /* to do */
   }
 }
-
 
 /*========================================================================*/
 int ObjectGetTTT(CObject * I, float **ttt, int state)
@@ -800,6 +823,7 @@ int ObjectGetTTT(CObject * I, float **ttt, int state)
     } else {
       *ttt = NULL;
     }
+
   } else {
   }
   return 0;
@@ -811,6 +835,21 @@ void ObjectResetTTT(CObject * I,int store)
 {
   
   I->TTTFlag = false;
+  if(store<0) 
+    store = SettingGet_i(I->G, I->Setting, NULL, cSetting_movie_auto_store);
+  if(store && MovieDefined(I->G)) {
+    if(!I->ViewElem)  
+      I->ViewElem = VLACalloc(CViewElem, 0);
+    if(I->ViewElem) { /* update motion path waypoint, if active */
+      int frame = SceneGetFrame(I->G);
+      if(frame >= 0) {
+        identity44f(I->TTT);
+        VLACheck(I->ViewElem, CViewElem, frame);
+        TTTToViewElem(I->TTT, I->ViewElem + frame);
+        I->ViewElem[frame].specification_level = 2;
+      }
+    }
+  }
 }
 
 

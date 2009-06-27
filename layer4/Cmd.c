@@ -1231,7 +1231,7 @@ static PyObject *CmdSetObjectTTT(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    ExecutiveSetObjectTTT(G, name, ttt, state, quiet);
+    ExecutiveSetObjectTTT(G, name, ttt, state, quiet, SettingGetGlobal_i(G, cSetting_movie_auto_store));
     APIExit(G);
   }
   return APIResultOk(ok);
@@ -1252,14 +1252,17 @@ static PyObject *CmdTranslateObjectTTT(PyObject * self, PyObject * args)
     API_HANDLE_ERROR;
   }
   if(ok && (ok = APIEnterNotModal(G))) {
-    {
-      CObject *obj = ExecutiveFindObjectByName(G, name);
-      if(obj) {
-        ObjectTranslateTTT(obj, mov, false);
-        SceneInvalidate(G);
-      } else
-        ok = false;
+#if 1
+    ok = ExecutiveTranslateObjectTTT(G, name, mov, SettingGetGlobal_i(G, cSetting_movie_auto_store), true);
+#else
+    CObject *obj = ExecutiveFindObjectByName(G, name);
+    if(obj) {
+      ObjectTranslateTTT(obj, mov, false);
+      SceneInvalidate(G);
+    } else {
+      ok = false;
     }
+#endif
     APIExit(G);
   }
   return APIResultOk(ok);
@@ -1282,7 +1285,7 @@ static PyObject *CmdCombineObjectTTT(PyObject * self, PyObject * args)
   if(ok) {
     if(PConvPyListToFloatArrayInPlace(m, ttt, 16) > 0) {
       if((ok = APIEnterNotModal(G))) {
-        ok = ExecutiveCombineObjectTTT(G, name, ttt, false);
+        ok = ExecutiveCombineObjectTTT(G, name, ttt, false, -1);
         APIExit(G);
       }
     } else {
@@ -1801,7 +1804,8 @@ static PyObject *CmdTransformObject(PyObject * self, PyObject * args)
                                                  state, sele, log, matrix, homo, true);
         } else {
           /* state? */
-          ok = ExecutiveCombineObjectTTT(G, name, matrix, false);
+          ok = ExecutiveCombineObjectTTT(G, name, matrix, false, 
+                                         SettingGetGlobal_i(G, cSetting_movie_auto_store));
         }
         APIExit(G);
       }
