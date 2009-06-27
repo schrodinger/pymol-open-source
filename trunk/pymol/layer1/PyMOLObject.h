@@ -101,7 +101,7 @@ void ObjectUseColor(CObject * I);
 void ObjectSetRepVis(CObject * I, int rep, int state);
 void ObjectToggleRepVis(CObject * I, int rep);
 void ObjectPrepareContext(CObject * I, CRay * ray);
-void ObjectSetTTT(CObject * I, float *ttt, int state);
+void ObjectSetTTT(CObject * I, float *ttt, int state,int store);
 int ObjectGetTTT(CObject * I, float **ttt, int state);
 int ObjectGetTotalMatrix(CObject * I, int state, int history, double *matrix);
 void ObjectCombineTTT(CObject * I, float *ttt, int reverse_order, int store);

@@ -285,22 +285,25 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
     wrap = SettingGetGlobal_b(G, cSetting_movie_loop);
   }
 
-  if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))) { 
+  if((!name)||(!name[0])||(!strcmp(name,cKeywordNone))||
+     (!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
     /* camera */
 
     ok = MovieView(G, action, first, last, power,
                    bias, true, linear, wrap, hand, window, cycles,
                    scene_name, scene_cut, state, quiet);
 
-    if((name) && !strcmp(name, cKeywordAll)) {
+    if(name && name[0] && strcmp(name, cKeywordNone)) {
       /* also do all other objects */
       SpecRec *rec = NULL;
       while(ListIterate(I->Spec, rec, next)) {
         switch(rec->type) {
         case cExecObject:
-          ok = ObjectMotion(rec->obj, action, first, last, power, bias,
-                            simple < 0 ? 0 : 1, 
-                            linear, wrap, hand, window, cycles, state, quiet);
+          if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
+            ok = ObjectMotion(rec->obj, action, first, last, power, bias,
+                              simple < 0 ? 0 : 1, 
+                              linear, wrap, hand, window, cycles, state, quiet);
+          }
           break;
         }
       }
@@ -312,16 +315,19 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
       if(rec) {
+
         switch (rec->type) {
         case cExecObject: 
+          printf("DEBUG :%s]n",rec->obj->Name);
           ok = ObjectMotion(rec->obj, action, first, last, power, bias,
                             simple < 0 ? 0 : 1, 
                             linear, wrap, hand, window, cycles, state, quiet);
+          break;
         }
       }
-      TrackerDelList(I_Tracker, list_id);
-      TrackerDelIter(I_Tracker, iter_id);
     }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
   }
   return ok;
 }
@@ -333,7 +339,10 @@ void ExecutiveMotionViewModify(PyMOLGlobals *G, int action,
                                int freeze,int quiet)
 {
   register CExecutive *I = G->Executive;
-  if((!name)||(!name[0])||(!strcmp(name,cKeywordNone))) { 
+  if((!name)||(!name[0])||
+     (!strcmp(name,cKeywordNone))||
+     (!strcmp(name,cKeywordSame))||
+     (!strcmp(name,cKeywordAll))) {
     /* camera */
     if(MovieGetSpecLevel(G,0)>=0) {
       MovieViewModify(G, action, index, count, target, true, true);
@@ -373,9 +382,9 @@ void ExecutiveMotionViewModify(PyMOLGlobals *G, int action,
           }
         }
       }
-      TrackerDelList(I_Tracker, list_id);
-      TrackerDelIter(I_Tracker, iter_id);
     }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
   }
 }
 
@@ -513,14 +522,14 @@ void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected)
 }
 
 void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int passive, 
-                                 int x, int y, int all)
+                                 int x, int y, int same)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   BlockRect draw_rect = *rect;
   int count = 0;
   int height = rect->top - rect->bottom;
-  if(all) {
+  if(same) {
     if(MovieGetSpecLevel(G,0)>=0) {
       int n_frame = MovieGetLength(G);
       int frame = MovieXtoFrame(G, &draw_rect, n_frame, x, false);
@@ -528,7 +537,7 @@ void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected
       if((frame>=0) && (frame<n_frame)) {
         sprintf(frame_str,"%d",frame+1);
       }
-      MenuActivate2Arg(G, x, y, x, y, passive, "obj_motion","all",frame_str);
+      MenuActivate2Arg(G, x, y, x, y, passive, "obj_motion","same",frame_str);
     }
   } else {
   while(ListIterate(I->Spec, rec, next)) {
@@ -587,7 +596,7 @@ void ExecutiveMotionClick(PyMOLGlobals * G, BlockRect *rect,int mode, int expect
       if(MovieGetSpecLevel(G,0)>=0) {
         draw_rect.top = rect->top - (height * count) / expected;
         draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
-        if((y>draw_rect.bottom) && (y<draw_rect.top)) {
+        if((y>=draw_rect.bottom) && (y<=draw_rect.top)) {
           MoviePrepareDrag(G,&draw_rect,NULL,mode,x,y,nearest);
           goto done;
         }
@@ -599,7 +608,7 @@ void ExecutiveMotionClick(PyMOLGlobals * G, BlockRect *rect,int mode, int expect
         MoviePrepareDrag(G,rect,NULL,mode,x,y,nearest);
         draw_rect.top = rect->top - (height * count) / expected;
         draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
-        if((y>draw_rect.bottom) && (y<draw_rect.top)) {
+        if((y>=draw_rect.bottom) && (y<=draw_rect.top)) {
           MoviePrepareDrag(G,&draw_rect,rec->obj,mode,x,y,nearest);
           goto done;
         }
@@ -1926,7 +1935,7 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
               float *tttf;
               int found = ObjectGetTTT(source_obj, &tttf, -1);
               if(found) {
-                ObjectSetTTT(target_obj, tttf, -1);
+                ObjectSetTTT(target_obj, tttf, -1, -1);
                 if(target_obj->fInvalidate)
                   target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
               }
@@ -1937,9 +1946,9 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
           if(history) {
             float tttf[16];
             convertR44dTTTf(history, tttf);
-            ObjectSetTTT(target_obj, tttf, -1);
+            ObjectSetTTT(target_obj, tttf, -1, -1);
           } else {
-            ObjectSetTTT(target_obj, NULL, -1);
+            ObjectSetTTT(target_obj, NULL, -1, -1);
           }
           if(target_obj->fInvalidate)
             target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
@@ -1966,7 +1975,7 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
           /* should complain */
           break;
         case 1:                /* TTT */
-          ObjectSetTTT(target_obj, tttf, -1);
+          ObjectSetTTT(target_obj, tttf, -1, -1);
           if(target_obj->fInvalidate)
             target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
           break;
@@ -1996,11 +2005,11 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
           if(homo) {
             float tttf[16];
             convertR44dTTTf(homo, tttf);
-            ObjectSetTTT(target_obj, tttf, -1);
+            ObjectSetTTT(target_obj, tttf, -1, -1);
             if(target_obj->fInvalidate)
               target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
           } else {
-            ObjectSetTTT(target_obj, NULL, -1);
+            ObjectSetTTT(target_obj, NULL, -1, -1);
             if(target_obj->fInvalidate)
               target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
           }
@@ -2011,7 +2020,7 @@ int ExecutiveMatrixCopy2(PyMOLGlobals * G,
             float *tttf;
             int found = ObjectGetTTT(source_obj, &tttf, -1);
             if(found) {
-              ObjectSetTTT(target_obj, tttf, -1);
+              ObjectSetTTT(target_obj, tttf, -1, -1);
               if(target_obj->fInvalidate)
                 target_obj->fInvalidate(target_obj, cRepNone, cRepInvExtents, -1);
             }
@@ -2112,7 +2121,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
                     float *tttf;
                     int found = ExecutiveGetObjectTTT(G, source_name, &tttf, -1, quiet);
                     if(found) {
-                      ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet);
+                      ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet, -1);
                     }
                   }
                 }
@@ -2121,9 +2130,9 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
                 if(history) {
                   float tttf[16];
                   convertR44dTTTf(history, tttf);
-                  ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet);
+                  ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet, -1);
                 } else {
-                  ExecutiveSetObjectTTT(G, rec->name, NULL, -1, quiet);
+                  ExecutiveSetObjectTTT(G, rec->name, NULL, -1, quiet, -1);
                 }
                 /* to do: logging, return values, etc. */
                 break;
@@ -2167,7 +2176,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
                 /* should complain */
                 break;
               case 1:          /* TTT */
-                ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet);
+                ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet, -1);
                 break;
               case 2:          /* State */
                 if(tttf) {
@@ -2213,9 +2222,9 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
                 if(homo) {
                   float tttf[16];
                   convertR44dTTTf(homo, tttf);
-                  ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet);
+                  ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet, -1);
                 } else {
-                  ExecutiveSetObjectTTT(G, rec->name, NULL, -1, quiet);
+                  ExecutiveSetObjectTTT(G, rec->name, NULL, -1, quiet, -1);
                 }
                 break;
               case 2:          /* State */
@@ -2224,7 +2233,7 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
                   float *tttf;
                   int found = ExecutiveGetObjectTTT(G, source_name, &tttf, -1, quiet);
                   if(found) {
-                    ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet);
+                    ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet, -1);
                   }
                 }
                 break;
@@ -2304,9 +2313,9 @@ int ExecutiveMatrixCopy(PyMOLGlobals * G,
               if(history) {
                 float tttf[16];
                 convertR44dTTTf(history, tttf);
-                ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet);
+                ExecutiveSetObjectTTT(G, rec->name, tttf, -1, quiet, -1);
               } else {
-                ExecutiveSetObjectTTT(G, rec->name, NULL, -1, quiet);
+                ExecutiveSetObjectTTT(G, rec->name, NULL, -1, quiet, -1);
               }
               /* to do: logging, return values, etc. */
               break;
@@ -6828,29 +6837,193 @@ int ExecutiveTranslateAtom(PyMOLGlobals * G, char *sele, float *v, int state, in
   return (ok);
 }
 
-int ExecutiveCombineObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int reverse_order)
+int ExecutiveCombineObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int reverse_order, int store)
 {
-  CObject *obj = ExecutiveFindObjectByName(G, name);
   int ok = true;
+#if 1
+  register CExecutive *I = G->Executive;
+  if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
+    SpecRec *rec = NULL;
+    while(ListIterate(I->Spec, rec, next)) {
+      switch(rec->type) {
+      case cExecObject:
+        {
+          CObject *obj = rec->obj;
+          if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
+            ObjectCombineTTT(obj, ttt, reverse_order, store);
+            if(obj->fInvalidate)
+              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+          }
+        }
+        break;
+      }
+    }
+    if(store && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+      ExecutiveMotionReinterpolate(G);
+    }
+  } else { /* pattern */
+    CTracker *I_Tracker = I->Tracker;
+    SpecRec *rec = NULL;
+    int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+      if(rec) {
+
+        switch (rec->type) {
+        case cExecObject: 
+          {
+            CObject *obj = rec->obj;
+            ObjectCombineTTT(obj, ttt, reverse_order, store);
+            if(obj->fInvalidate)
+              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+          }
+          break;
+        }
+      }
+    }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+    if(store && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+      ExecutiveMotionReinterpolate(G);
+    }
+
+  }
+  SceneInvalidate(G);
+#else
+  CObject *obj = ExecutiveFindObjectByName(G, name);
 
   if(!obj) {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       "Error: object %s not found.\n", name ENDFB(G);
     ok = false;
   } else {
-    ObjectCombineTTT(obj, ttt, reverse_order, false);
+    ObjectCombineTTT(obj, ttt, reverse_order, store);
     if(obj->fInvalidate)
       obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
     SceneInvalidate(G);
   }
-  return (ok);
+#endif
+  return ok;
 }
 
-int ExecutiveSetObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int state, int quiet)
+int ExecutiveTranslateObjectTTT(PyMOLGlobals * G, char *name, float *trans, int store, int quiet)
 {
-  CObject *obj = ExecutiveFindObjectByName(G, name);
   int ok = true;
+#if 1
+  register CExecutive *I = G->Executive;
+  if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
+    SpecRec *rec = NULL;
+    while(ListIterate(I->Spec, rec, next)) {
+      switch(rec->type) {
+      case cExecObject:
+        {
+          CObject *obj = rec->obj;
+          if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
+            ObjectTranslateTTT(obj, trans, store);
+            if(obj->fInvalidate)
+              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+          }
+        }
+        break;
+      }
+    }
+    if(store && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+      ExecutiveMotionReinterpolate(G);
+    }
+  } else { /* pattern */
+    CTracker *I_Tracker = I->Tracker;
+    SpecRec *rec = NULL;
+    int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+      if(rec) {
+        switch (rec->type) {
+        case cExecObject: 
+          {
+            CObject *obj = rec->obj;
+            ObjectTranslateTTT(obj, trans, store);
+            if(obj->fInvalidate)
+              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+          }
+          break;
+        }
+      }
+    }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+    if(store && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+      ExecutiveMotionReinterpolate(G);
+    }
+  }
+  SceneInvalidate(G);
+#else
+  CObject *obj = ExecutiveFindObjectByName(G, name);
+  if(!obj) {
+    PRINTFB(G, FB_ObjectMolecule, FB_Errors)
+      "Error: object %s not found.\n", name ENDFB(G);
+    ok = false;
+  } else {
+    ObjectTranslateTTT(obj, trans, store);
+    if(obj->fInvalidate)
+      obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+  }
+#endif
+  return ok;
+}
 
+int ExecutiveSetObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int state, int quiet, int store)
+{
+  int ok = true;
+#if 1
+  register CExecutive *I = G->Executive;
+  if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
+    SpecRec *rec = NULL;
+    while(ListIterate(I->Spec, rec, next)) {
+      switch(rec->type) {
+      case cExecObject:
+        {
+          CObject *obj = rec->obj;
+          if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
+            ObjectSetTTT(obj, ttt, state, store);
+            if(obj->fInvalidate)
+              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+          }
+        }
+        break;
+      }
+    }
+    if(store && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+      ExecutiveMotionReinterpolate(G);
+    }
+  } else { /* pattern */
+    CTracker *I_Tracker = I->Tracker;
+    SpecRec *rec = NULL;
+    int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+      if(rec) {
+
+        switch (rec->type) {
+        case cExecObject: 
+          {
+            CObject *obj = rec->obj;
+             ObjectSetTTT(obj, ttt, state, store);
+            if(obj->fInvalidate)
+              obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+          }
+          break;
+        }
+      }
+    }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+    if(store && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+      ExecutiveMotionReinterpolate(G);
+    }
+  }
+  SceneInvalidate(G);
+#else
+  CObject *obj = ExecutiveFindObjectByName(G, name);
   if(!obj) {
     PRINTFB(G, FB_ObjectMolecule, FB_Errors)
       "Error: object %s not found.\n", name ENDFB(G);
@@ -6860,7 +7033,8 @@ int ExecutiveSetObjectTTT(PyMOLGlobals * G, char *name, float *ttt, int state, i
     if(obj->fInvalidate)
       obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
   }
-  return (ok);
+#endif
+  return ok;
 }
 
 int ExecutiveGetObjectTTT(PyMOLGlobals * G, char *name, float **ttt, int state, int quiet)
@@ -10355,7 +10529,7 @@ int ExecutiveRMS(PyMOLGlobals * G, char *s1, char *s2, int mode, float refine,
 
               switch (matrix_mode) {
               case 1:          /* TTTs */
-                ExecutiveCombineObjectTTT(G, src_obj->Obj.Name, op2.ttt, true);
+                ExecutiveCombineObjectTTT(G, src_obj->Obj.Name, op2.ttt, true, -1);
                 break;
               case 2:
                 {
@@ -10626,21 +10800,77 @@ void ExecutiveUpdateObjectSelection(PyMOLGlobals * G, CObject * obj)
 int ExecutiveReset(PyMOLGlobals * G, int cmd, char *name)
 {
   int ok = true;
-  CObject *obj;
+  int store = SettingGetGlobal_i(G, cSetting_movie_auto_store);
+
   if(!name[0]) {
     SceneResetMatrix(G);
     ExecutiveWindowZoom(G, cKeywordAll, 0.0, -1, 0, 0, true);   /* reset does all states */
   } else {
-    obj = ExecutiveFindObjectByName(G, name);
-    if(!obj)
-      ok = false;
-    else {
-      ObjectResetTTT(obj, SettingGetGlobal_b(G,cSetting_movie_auto_store));
-      if(obj->fInvalidate)
-        obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
-
-      SceneInvalidate(G);
+#if 1
+    register CExecutive *I = G->Executive;
+    if((!name)||(!name[0])||(!strcmp(name,cKeywordAll))||(!strcmp(name,cKeywordSame))) { 
+      SpecRec *rec = NULL;
+      while(ListIterate(I->Spec, rec, next)) {
+        switch(rec->type) {
+        case cExecObject:
+          {
+            CObject *obj = rec->obj;
+            if((ObjectGetSpecLevel(rec->obj,0)>=0)||(!strcmp(name,cKeywordAll))) {
+              ObjectResetTTT(obj, SettingGetGlobal_b(G,cSetting_movie_auto_store));
+              if(obj->fInvalidate)
+                obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+            }
+          }
+          break;
+        }
+      }
+      if(store && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+        ExecutiveMotionReinterpolate(G);
+      }
+    } else { /* pattern */
+      CTracker *I_Tracker = I->Tracker;
+      SpecRec *rec = NULL;
+      int list_id = ExecutiveGetNamesListFromPattern(G, name, true, true);
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+      while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef **) (void *) &rec)) {
+        if(rec) {
+          
+          switch (rec->type) {
+          case cExecObject: 
+            {
+              CObject *obj = rec->obj;
+              ObjectResetTTT(obj, SettingGetGlobal_b(G,cSetting_movie_auto_store));
+              if(obj->fInvalidate)
+                obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+            }
+            break;
+          }
+        }
+      }
+      TrackerDelList(I_Tracker, list_id);
+      TrackerDelIter(I_Tracker, iter_id);
+      if(store && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
+        ExecutiveMotionReinterpolate(G);
+      }
     }
+    SceneInvalidate(G);
+#else
+    {
+      CObject *obj;
+      
+      obj = ExecutiveFindObjectByName(G, name);
+      if(!obj)
+        ok = false;
+      else {
+        ObjectResetTTT(obj, SettingGetGlobal_b(G,cSetting_movie_auto_store));
+        if(obj->fInvalidate)
+          obj->fInvalidate(obj, cRepNone, cRepInvExtents, -1);
+        
+        SceneInvalidate(G);
+      }
+    }
+#endif
+  return ok;
   }
   return (ok);
 }

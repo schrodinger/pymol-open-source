@@ -80,7 +80,8 @@ def camera_motion(self_cmd, frame="0"):
             [ 1, 'store with state' , store_with_state(self_cmd,'',frame) ],
             [ 1, 'clear'       ,   'cmd.mview("clear",first='+frame+')'      ],
             [ 0, ''               ,''                             ],
-            [ 1, 'reset camera frames'   , 'cmd.mview("reset")'   ],            
+            [ 1, 'reset camera motions'   , 'cmd.mview("reset")'   ],
+            [ 0, ''               ,''                             ],
             [ 1, 'purge entire movie'   , 'cmd.mset()'   ],            
             [ 0, ''               ,''                             ],
             [ 1, 'smooth'       ,   smooth(self_cmd)     ],
@@ -96,8 +97,7 @@ def obj_motion(self_cmd, obj, frame="0"):
             [ 0, ''               ,''                             ],
             [ 1, 'store'         , 'cmd.mview("store",object="'+obj+'",first='+frame+')'      ],
             [ 1, 'store with state' , store_with_state(self_cmd,obj,frame) ],            
-            [ 1, 'reset'       ,   ';cmd.reset(object="'+obj+
-              '");cmd.mview("store",object="'+obj+'",first='+frame+ ')'    ],
+            [ 1, 'reset'       ,   ';cmd.reset(object="'+obj+'");'    ],
             [ 1, 'clear'       ,   'cmd.mview("clear",object="'+obj+'",first='+frame+')'    ],
             [ 0, ''               ,''                             ],
             [ 1, 'reset object motions'       ,   'cmd.mview("reset",object="'+obj+'")'    ],
@@ -1452,7 +1452,7 @@ def pick_option(self_cmd, sele, title, object=0):
                                      [ 1, 'matrix', 'cmd.drag("'+save_sele+'",mode=1)']]])
     else:
         result.append([ 1, 'drag'   ,  'cmd.drag("'+sele+'")'])
-
+        
     result.extend([
         [ 1, 'clean'             ,'cmd.clean("'+sele+'")'            ],        
         [ 1, 'masking'        , masking(self_cmd, sele)         ],
