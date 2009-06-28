@@ -758,14 +758,20 @@ class Normal(PMGSkin):
 
     def mvprg(self, command=None):
         if command != None:
-            command = str(command)
-            command = command % (self.cmd.get_movie_length()+1)
-            self.movie_command = command
-            self.cmd.ending()
+            if command == -1:
+                self.cmd.do("_ mdelete -1,%d"%self.movie_start)
+                command = None
+            else:
+                command = str(command)
+                self.movie_start = (self.cmd.get_movie_length()+1)
+                command = command % self.movie_start
+                self.movie_command = command
+                self.cmd.do("_ ending")
         else:
             command = self.movie_command
         if command != None:
             self.cmd.do(command)
+
             
     def aboutPlugins(self):
         about = Pmw.MessageDialog((self.app._hull),
@@ -1603,9 +1609,12 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Movie', 'Program', 'Program',
                                     label='Program')
 
-        self.menuBar.addmenuitem('Movie', 'command', 'Update Program',label='Update Program',
+        self.menuBar.addmenuitem('Movie', 'command', 'Update Last Program',label='Update Last Program',
                                  command = lambda s=self: s.mvprg())
-        
+
+        self.menuBar.addmenuitem('Movie', 'command', 'Remove Last Program',label='Remove Last Program',
+                                 command = lambda s=self: s.mvprg(-1))
+
         self.menuBar.addcascademenu('Program', 'Camera', 'Camera',
                                     label='Camera')
 
@@ -1818,7 +1827,26 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Nutate2', 'command', '24 seconds each',label='24 seconds each',
                                  command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=4,start=%d)"))
 
-        self.menuBar.addmenuitem('Scene Loop', 'separator', '')
+        self.menuBar.addcascademenu('Scene Loop', 'X-Rock2', 'X-Rock',
+                                    label='X-Rock')
+
+        self.menuBar.addmenuitem('X-Rock2', 'command', '2 seconds each',label='2 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,2.0,rock=2,start=%d)"))
+
+        self.menuBar.addmenuitem('X-Rock2', 'command', '4 seconds each',label='4 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,4.0,rock=2,start=%d)"))
+
+        self.menuBar.addmenuitem('X-Rock2', 'command', '8 seconds each',label='8 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,8.0,rock=2,start=%d)"))
+
+        self.menuBar.addmenuitem('X-Rock2', 'command', '12 seconds each',label='12 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,12.0,rock=2,start=%d)"))
+
+        self.menuBar.addmenuitem('X-Rock2', 'command', '16 seconds each',label='16 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,16.0,rock=2,start=%d)"))
+
+        self.menuBar.addmenuitem('X-Rock2', 'command', '24 seconds each',label='24 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=2,start=%d)"))
 
         self.menuBar.addcascademenu('Scene Loop', 'Y-Rock2', 'Y-Rock',
                                     label='Y-Rock')
@@ -1841,10 +1869,11 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Y-Rock2', 'command', '24 seconds each',label='24 seconds each',
                                  command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=1,start=%d)"))
 
-        self.menuBar.addmenuitem('Scene Loop', 'separator', '')
-
         self.menuBar.addcascademenu('Scene Loop', 'No-Motion', 'Steady',
                                     label='Steady')
+
+        self.menuBar.addmenuitem('No-Motion', 'command', '1 second each',label='1 second each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,1.0,rock=0,start=%d)"))
 
         self.menuBar.addmenuitem('No-Motion', 'command', '2 seconds each',label='2 seconds each',
                                  command = lambda s=self: s.mvprg("_ movie.add_scenes(None,2.0,rock=0,start=%d)"))
@@ -1863,6 +1892,62 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('No-Motion', 'command', '24 seconds each',label='24 seconds each',
                                  command = lambda s=self: s.mvprg("_ movie.add_scenes(None,24.0,rock=0,start=%d)"))
+
+        self.menuBar.addmenuitem('Program', 'separator', '')
+
+        self.menuBar.addcascademenu('Program', 'StateLoop', 'State Loop',
+                                    label='State Loop')
+
+        self.menuBar.addmenuitem('StateLoop', 'command', 'full speed + 2 second pause',
+                                 label='full speed + 2 second pause',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(1,2.0,start=%d)"))
+
+        self.menuBar.addmenuitem('StateLoop', 'command', 'half speed + 2 second pause',
+                                 label='half speed + 2 second pause',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(2,2.0,start=%d)"))
+
+        self.menuBar.addmenuitem('StateLoop', 'command', 'one-third speed + 2 second pause',
+                                 label='one-third speed + 2 second pause',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(3,2.0,start=%d)"))
+
+        self.menuBar.addmenuitem('StateLoop', 'command', 'quarter speed + 2 second pause',
+                                 label='quarter speed + 2 second pause',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(4,2.0,start=%d)"))
+
+        self.menuBar.addmenuitem('StateLoop', 'command', 'one-eigth speed + 2 second pause',
+                                 label='one-eighth speed + 2 second pause',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(8,2.0,start=%d)"))
+
+        self.menuBar.addmenuitem('StateLoop', 'command', 'one-sixteenth speed + 2 second pause',
+                                 label='one-sixteenth speed + 2 second pause',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(16,2.0,start=%d)"))
+
+        self.menuBar.addcascademenu('Program', 'StateSweep', 'State Sweep',
+                                    label='State Sweep')
+
+        self.menuBar.addmenuitem('StateSweep', 'command', 'full speed + 2 second pauses',
+                                 label='full speed + 2 second pauses',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(1,2.0,start=%d)"))
+
+        self.menuBar.addmenuitem('StateSweep', 'command', 'half speed + 2 second pauses',
+                                 label='half speed + 2 second pauses',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(2,2.0,start=%d)"))
+
+        self.menuBar.addmenuitem('StateSweep', 'command', 'one-third speed + 2 second pauses',
+                                 label='one-third speed + 2 second pauses',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(3,2.0,start=%d)"))
+
+        self.menuBar.addmenuitem('StateSweep', 'command', 'quarter speed + 2 second pauses',
+                                 label='quarter speed + 2 second pauses',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(4,2.0,start=%d)"))
+
+        self.menuBar.addmenuitem('StateSweep', 'command', 'one-eigth speed + 2 second pauses',
+                                 label='one-eighth speed + 2 second pauses',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(8,2.0,start=%d)"))
+
+        self.menuBar.addmenuitem('StateSweep', 'command', 'one-sixteenth speed + 2 second pauses',
+                                 label='one-sixteenth speed + 2 second pauses',
+                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(16,2.0,start=%d)"))
 
         self.menuBar.addmenuitem('Program', 'separator', '')
         
@@ -2272,14 +2357,182 @@ class Normal(PMGSkin):
                                  label='Colors...',
                                          command = lambda s=self: ColorEditor(s))
 
+        self.menuBar.addcascademenu('Setting', 'Label', 'Label',
+                                             label='Label')
+
+        self.menuBar.addcascademenu('Label', 'LabelSize', 'Size',
+                                             label='Size',tearoff=TRUE)
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '10 Point',
+                                 label='10 Point',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 10)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '14 Point',
+                                 label='14 Point',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 14)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '18 Point',
+                                 label='18 Point',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 18)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '24 Point',
+                                 label='24 Point',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 24)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '36 Point',
+                                 label='36 Point',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 36)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '48 Point',
+                                 label='48 Point',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 48)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '72 Point',
+                                 label='72 Point',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', 72)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'separator', '')
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '0.3 Angstrom',
+                                 label='0.3 Angstrom',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', -0.3)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '0.5 Angstrom',
+                                 label='0.5 Angstrom',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', -0.5)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '1 Angstrom',
+                                 label='1 Angstrom',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', -1)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '2 Angstrom',
+                                 label='2 Angstrom',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', -2)"))
+
+        self.menuBar.addmenuitem('LabelSize', 'command', '4 Angstrom',
+                                 label='4 Angstrom',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_size', -4)"))
+
+
+        self.menuBar.addcascademenu('Label', 'LabelFont', 'Font',
+                                    label='Font', tearoff=TRUE)
+        
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSans',
+                                 label='DevaVuSans',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',5)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSans Oblique',
+                                 label='DevaVuSans Oblique',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',6)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSans Bold',
+                                 label='DevaVuSans Bold',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',7)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSans Bold Oblique',
+                                 label='DevaVuSans Bold Oblique',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',8)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSerif',
+                                 label='DevaVuSerif',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',9)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSerif Bold',
+                                 label='DevaVuSerif Bold',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',10)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSerif Oblique',
+                                 label='DevaVuSerif Oblique',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',17)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSerif Bold Oblique',
+                                 label='DevaVuSerif Bold Oblique',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',18)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSansMono',
+                                 label='DevaVuSansMono',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',11)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSansMono Oblique',
+                                 label='DevaVuSansMono Oblique',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',12)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSansMono Bold',
+                                 label='DevaVuSansMono Bold',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',13)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'DejaVuSansMono Bold Oblique',
+                                 label='DevaVuSansMono Bold Oblique',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',14)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'Gentium Roman',
+                                 label='Gentium Roman',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',15)"))
+
+        self.menuBar.addmenuitem('LabelFont', 'command', 'Gentium Italic',
+                                 label='Gentium Italic',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('label_font_id',16)"))
+
         self.menuBar.addcascademenu('Setting', 'Cartoon', 'Cartoon',
                                              label='Cartoon')
+
+        self.menuBar.addcascademenu('Cartoon', 'Rings', 'Rings & Bases',
+                                             label='Rings & Bases')
+
+        self.menuBar.addmenuitem('Rings', 'command', 'Filled Rings (Round Edges)',
+                                 label='Filled Rings (Round Edges)',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_mode', 1)"))
+
+        self.menuBar.addmenuitem('Rings', 'command', 'Filled Rings (Flat Edges)',
+                                 label='Filled Rings (Flat Edges)',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_mode', 2)"))
+
+        self.menuBar.addmenuitem('Rings', 'command', 'Filled Rings (With Border)',
+                                 label='Filled Rings (with Border)',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_mode', 3)"))
+
+        self.menuBar.addmenuitem('Rings', 'command', 'Spheres',
+                                 label='Spheres',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_mode', 4)"))
+
+        self.menuBar.addmenuitem('Rings', 'command', 'Base Ladders',
+                                 label='Base Ladders',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_mode', 0)"))
+
+        self.menuBar.addmenuitem('Rings', 'separator', '')
+
+        self.menuBar.addmenuitem('Rings', 'command', 'Bases & Sugars',
+                                 label='Bases & Sugars',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_finder', 1)"))
+
+        self.menuBar.addmenuitem('Rings', 'command', 'Bases Only',
+                                 label='Bases Only',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_finder', 2)"))
+
+
+        self.menuBar.addmenuitem('Rings', 'command', 'Non-protein Rings',
+                                 label='Non-protein Rings',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_finder', 3)"))
+
+        self.menuBar.addmenuitem('Rings', 'command', 'All Rings',
+                                 label='All Rings',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_finder', 4)"))
 
         self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                                  'Side Chain Helper',
                                  label='Side Chain Helper',
                                 variable = self.setting.cartoon_side_chain_helper,
                                 command = lambda s=self: s.setting.update('cartoon_side_chain_helper'))
+
+        self.menuBar.addmenuitem('Rings', 'separator', '')
+
+        self.menuBar.addmenuitem('Rings', 'command', 'Transparent Rings',
+                                 label='Transparent Rings',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_transparency', 0.5)"))
+
+        self.menuBar.addmenuitem('Rings', 'command', 'Default',
+                                 label='Default',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('cartoon_ring_transparency', -1)"))
 
         self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                                  'Round Helices',
@@ -2387,8 +2640,8 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Surface', 'separator', '')
         
-        self.menuBar.addmenuitem('Surface', 'command', 'Cavities & Pockets',
-                                 label='Cavities & Pockets',
+        self.menuBar.addmenuitem('Surface', 'command', 'Cavities & Pockets Only',
+                                 label='Cavities & Pockets Only',
                                  command = lambda s=self:
                                  s.cmd.do("_ cmd.set('surface_cavity_mode',1)"))
 
@@ -2460,7 +2713,7 @@ class Normal(PMGSkin):
                                  s.cmd.do("_ cmd.set('surface_cavity_cutoff',-4)"))
 
         self.menuBar.addmenuitem('Cutoff', 'command', '5 Solvent Radii',
-                                 label='4 Solvent Radii',
+                                 label='5 Solvent Radii',
                                  command = lambda s=self:
                                  s.cmd.do("_ cmd.set('surface_cavity_cutoff',-5)"))
 
@@ -3224,6 +3477,7 @@ class Normal(PMGSkin):
         self.cmd = app.pymol.cmd
         self.util = app.pymol.util
         self.movie_command = None
+        self.movie_start = 1
         self.auto_overlay = None
         self.edit_mode = None
         self.valence = None

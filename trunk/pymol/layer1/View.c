@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"OVLexicon.h"
 #include"Text.h"
+#include"Feedback.h"
 
 int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, int count, int target)
 {
@@ -45,37 +46,43 @@ int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, i
       break;
     case cViewElemModifyMove:
       if((index>=0) && (target>=0) && (index<n_frame) && (target<n_frame)) {
-        int i;
-        for(i=0;i<count;i++) {
-          if( ((i+index)<n_frame) && ((i+target)<n_frame)) {
-            int src,dst;
-            if(index>target) {
-              src = index+i;
-              dst = target+i;
-            } else {
-              src = index+(count-1)-i;
-              dst = target+(count-1)-i;
+        if((count>1)||(vla[index].specification_level>1)) {
+          
+          int i;
+          for(i=0;i<count;i++) {
+            if( ((i+index)<n_frame) && ((i+target)<n_frame)) {
+              int src,dst;
+              if(index>target) {
+                src = index+i;
+                dst = target+i;
+              } else {
+                src = index+(count-1)-i;
+                dst = target+(count-1)-i;
+              }
+              memcpy(vla + dst, vla + src, sizeof(CViewElem));
+              memset(vla + src, 0, sizeof(CViewElem));
             }
-            memcpy(vla + dst, vla + src, sizeof(CViewElem));
-            memset(vla + src, 0, sizeof(CViewElem));
           }
         }
+
       }
       break;
     case cViewElemModifyCopy:
       if((index>=0) && (target>=0) && (index<n_frame) && (target<n_frame)) {
-        int i;
-        for(i=0;i<count;i++) {
-          if( ((i+index)<n_frame) && ((i+target)<n_frame)) {
-            int src,dst;
-            if(index>target) {
-              src = index+i;
-              dst = target+i;
-            } else {
-              src = index+(count-1)-i;
-              dst = target+(count-1)-i;
-            }
+        if((count>1)||(vla[index].specification_level>1)) {
+          int i;
+          for(i=0;i<count;i++) {
+            if( ((i+index)<n_frame) && ((i+target)<n_frame)) {
+              int src,dst;
+              if(index>target) {
+                src = index+i;
+                dst = target+i;
+              } else {
+                src = index+(count-1)-i;
+                dst = target+(count-1)-i;
+              }
             memcpy(vla + dst, vla + src, sizeof(CViewElem));
+            }
           }
         }
       }
@@ -250,7 +257,7 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view)
 #else
   PyObject *result = NULL;
 
-  result = PyList_New(17);
+  result = PyList_New(19);
 
   if(result) {
     PyList_SetItem(result, 0, PyInt_FromLong(view->matrix_flag));
@@ -311,6 +318,13 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view)
       PyList_SetItem(result, 16, PyFloat_FromDouble(view->power));
     } else {
       PyList_SetItem(result, 16, PConvAutoNone(NULL));
+    }
+
+    PyList_SetItem(result, 17, PyInt_FromLong(view->bias_flag));
+    if(view->bias_flag) {
+      PyList_SetItem(result, 18, PyFloat_FromDouble(view->bias));
+    } else {
+      PyList_SetItem(result, 18, PConvAutoNone(NULL));
     }
 
   }
@@ -396,6 +410,14 @@ int ViewElemFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem * view)
       ok = PConvPyFloatToFloat(PyList_GetItem(list, 16), &view->power);
     } else {
       view->power = 0.0F;
+    }
+  }
+  if(ok && (ll>18)) {
+    ok = PConvPyIntToInt(PyList_GetItem(list, 17), &view->bias_flag);
+    if(ok && view->bias_flag) {
+      ok = PConvPyFloatToFloat(PyList_GetItem(list, 18), &view->bias);
+    } else {
+      view->bias = 1.0F;
     }
   }
   return ok;
@@ -727,7 +749,10 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
   float firstC44f[16], firstRTTT[16], firstR44f[16];
   float lastC44f[16], lastRTTT[16], lastR44f[16];
   int linear = false;
-  int debug = false;
+  int debug = Feedback(G,FB_Movie, FB_Debugging);
+  
+  if(hand == 0)
+    hand = 1;
 
   if(debug) {
     printf("ViewElemInterpolate: %8.3f %8.3f %d %8.3f %d %8.3f\n",
@@ -761,10 +786,33 @@ int ViewElemInterpolate(PyMOLGlobals * G, CViewElem * first, CViewElem * last,
       power = 1.4F; /* default */
     }
   }
-
   if(power < 0.0F) {
     parabolic = false;
     power = -power;
+  }
+
+  if(bias < 0.0F) { /* default */
+    if(first->bias_flag && last->bias_flag) {
+      if((first->bias > 0.0F) && (last->bias > 0.0F)) {
+        bias = (first->bias * 1.0F/last->bias);
+      } else if(fabs(first->bias) > 0.0) {
+        bias = first->bias;
+      } else if(last->bias > 0.0F) {
+        bias = 1.0F/last->bias;
+      } else {
+        bias = 1.0F;
+      }
+    } else if(first->bias_flag) {
+      bias = first->bias;
+    } else if(last->bias_flag) {
+      bias = 1.0F/last->bias;
+    } else {
+      bias = 1.0F; /* default */
+    }
+  }
+
+  if(bias <= 0.0F) {
+    bias = 1.0F;
   }
 
   /* WARNING: this routine is operating on column-major matrices!!! */

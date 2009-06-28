@@ -328,7 +328,7 @@ def add_rock(duration=8.0,angle=30.0,loop=1,axis='y',start=0,_self=cmd):
             cmd.mview("interpolate")
         cmd.frame(start)
 
-def add_sweep(pause=2.0,factor=1,first=-1,last=-1,loop=1,start=0,_self=cmd):
+def add_state_sweep(factor=1,pause=2.0,first=-1,last=-1,loop=1,start=0,_self=cmd):
     cmd = _self
     if not start:
         start = cmd.get_movie_length() + 1
@@ -350,7 +350,7 @@ def add_sweep(pause=2.0,factor=1,first=-1,last=-1,loop=1,start=0,_self=cmd):
             cmd.mview("interpolate")
         cmd.frame(start)
 
-def add_loop(pause=2.0,factor=1,first=-1,last=-1,loop=1,start=0,_self=cmd):
+def add_state_loop(factor=1,pause=2.0,first=-1,last=-1,loop=1,start=0,_self=cmd):
     cmd = _self
     if not start:
         start = cmd.get_movie_length() + 1
@@ -401,10 +401,9 @@ def add_nutate(duration=8.0, angle=30.0, spiral=0, loop=1,
             cmd.turn('y',-y_rot)
             cmd.turn('x',-x_rot)
     
-def _rock_y(mode,first,last,period,pause,_self=cmd):
+def _rock(mode,axis,first,last,period,pause,_self=cmd):
     cmd = _self
     n_frame = last - first + 1
-    axis = 'y'
     angle = 10
     if (period * 1.5) < pause:
         n_cyc = int(round(pause / period))
@@ -521,8 +520,11 @@ def add_scenes(names=None, pause=8.0, cut=0.0, loop=1,
                     sweep_last = act_n_frame
                 n_sweep_frame = sweep_last - sweep_first + 1
                 if n_sweep_frame > 0:
-                    if sweep_mode<3: # y-axis rock
-                        _rock_y(sweep_mode, sweep_first, sweep_last,
+                    if sweep_mode==1: # x-axis rock
+                        _rock(sweep_mode, 'x', sweep_first, sweep_last,
+                                period, pause, _self=_self)
+                    elif sweep_mode<3: # y-axis rock                        
+                        _rock(sweep_mode, 'y', sweep_first, sweep_last,
                                 period, pause, _self=_self)
                     elif sweep_mode == 3:
                         _nutate(sweep_mode, sweep_first, sweep_last,

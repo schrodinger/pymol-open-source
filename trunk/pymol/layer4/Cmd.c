@@ -6140,12 +6140,12 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
 {
   PyMOLGlobals *G = NULL;
   int ok = false;
-  int action, first, last, simple, wrap, window, cycles, quiet, state;
+  int action, first, last, simple, wrap, window, cycles, quiet, state, autogen;
   float power, bias, linear, hand, scene_cut;
   char *object, *scene_name;
-  ok = PyArg_ParseTuple(args, "Oiiiffifsiiiisfii", &self, &action, &first, &last, &power,
+  ok = PyArg_ParseTuple(args, "Oiiiffifsiiiisfiii", &self, &action, &first, &last, &power,
                         &bias, &simple, &linear, &object, &wrap, &hand,
-                        &window, &cycles, &scene_name, &scene_cut, &quiet, &state);
+                        &window, &cycles, &scene_name, &scene_cut, &quiet, &state, &autogen);
   if(ok) {
     API_SETUP_PYMOL_GLOBALS;
     ok = (G != NULL);
@@ -6156,7 +6156,7 @@ static PyObject *CmdMView(PyObject * self, PyObject * args)
 #if 1
     ok = ExecutiveMotionView(G, action, first, last, power, bias, simple, 
                              linear, object, wrap, hand, window, cycles, 
-                             scene_name, scene_cut, state, quiet);
+                             scene_name, scene_cut, state, quiet, autogen);
 #else
     if(wrap < 0) {
       wrap = SettingGetGlobal_b(G, cSetting_movie_loop);

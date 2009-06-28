@@ -93,10 +93,15 @@ struct _CMovie {
 
 void MovieViewReinterpolate(PyMOLGlobals *G)
 {
-  MovieView(G, 3, -1, -1, 0.0F, 1.0F, 1, /* note simple = 1 for camera motion...*/
-            0.0F, 
+  float power  = SettingGetGlobal_f(G, cSetting_motion_power);
+  float bias   = SettingGetGlobal_f(G, cSetting_motion_bias);
+  float linear = SettingGetGlobal_f(G, cSetting_motion_linear);
+  int hand     = SettingGetGlobal_i(G, cSetting_motion_hand);
+
+  MovieView(G, 3, -1, -1, power, bias, 1, /* note simple always = 1 for camera motion...*/
+            linear, 
             SettingGetGlobal_b(G,cSetting_movie_loop) ? 1 : 0 ,
-            1, 5, 1, NULL, 0.5, -1, 1); 
+            hand, 5, 1, NULL, 0.5, -1, 1); 
 }
 
 int MovieXtoFrame(PyMOLGlobals *G, BlockRect *rect, int frames, int x, int nearest)
@@ -167,7 +172,7 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
             }
             I->Sequence[dst] = I->Sequence[src];
             memcpy(I->Cmd + dst, I->Cmd + src, sizeof(MovieCmdType));
-            I->Cmd[src][0]=0;
+              I->Cmd[src][0]=0;
           }
         }
       }
@@ -1113,6 +1118,10 @@ int MovieView(PyMOLGlobals * G, int action, int first,
 {
   register CMovie *I = G->Movie;
   int frame;
+  
+  if(wrap<0) {
+    wrap = SettingGetGlobal_b(G,cSetting_movie_loop);
+  }
   if((action == 7) || (action == 8)) { /* toggle */
     frame = first;
     if(first < 0)
@@ -1144,6 +1153,7 @@ int MovieView(PyMOLGlobals * G, int action, int first,
   }
   if(action == 4) {
     if(I->ViewElem) {
+      int save_last = last;
       if(first < 0)
         first = 0;
       
@@ -1160,8 +1170,11 @@ int MovieView(PyMOLGlobals * G, int action, int first,
           ViewElemSmooth(I->ViewElem + first, I->ViewElem + last, window, wrap);
         }
       }
+      if(SettingGetGlobal_b(G, cSetting_movie_auto_interpolate)) {
+        action = 3; /* reinterpolate */
+        last = save_last;
+      }
     }
-    action = 3; /* reinterpolate */
   }
   switch (action) {
   case 0:                      /* store */
@@ -1194,6 +1207,11 @@ int MovieView(PyMOLGlobals * G, int action, int first,
           if(power!=0.0F) {
             I->ViewElem[frame].power_flag = true;
             I->ViewElem[frame].power = power;
+          }
+
+          if(bias > 0.0F) {
+            I->ViewElem[frame].bias_flag = true;
+            I->ViewElem[frame].bias = bias;
           }
 
           I->ViewElem[frame].specification_level = 2;
@@ -1259,6 +1277,17 @@ int MovieView(PyMOLGlobals * G, int action, int first,
         int a;
         for(a = I->NFrame; a <= last; a++) {
           ViewElemCopy(G, I->ViewElem + a - I->NFrame, I->ViewElem + a);
+        }
+      } else if(!wrap) { 
+        /* if we're not wrapping, then make sure we nuke any stray / old
+           interpolated frames */
+        frame = I->NFrame - 1;
+        while(frame>=0) {
+          if(I->ViewElem[frame].specification_level > 1) 
+            break;
+          else
+            UtilZeroMem((void *) (I->ViewElem + frame), sizeof(CViewElem));
+          frame--;
         }
       }
 
@@ -1422,8 +1451,6 @@ int MovieGetLength(PyMOLGlobals * G)
     len = -I->NImage;
   else
     len = I->NFrame;
-  PRINTFD(G, FB_Movie)
-    " MovieGetLength: leaving...result %d\n", len ENDFD;
   return (len);
 }
 
@@ -1677,6 +1704,8 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
       break;
     case cMovieDragModeInsDel:
       if(I->DragDraw) {
+        if(I->DragCurFrame<0) 
+          I->DragCurFrame = 0;
         if(I->DragCurFrame>I->DragStartFrame) {
           int first = I->DragStartFrame + 1;
           if(first<0) first = 0;

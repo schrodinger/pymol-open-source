@@ -935,9 +935,12 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
       if(OrthoArrowsGrabbed(G)) 
         OrthoParseCurrentLine(G);
       else if(SettingGetGlobal_b(G, cSetting_movie_panel) && MovieGetLength(G)) {
-        if(mod & cOrthoSHIFT) 
-          OrthoCommandIn(G,"mview toggle_interp,quiet=1");	    
-        else if(mod & cOrthoCTRL) {
+        if(mod & cOrthoSHIFT) {
+          if(mod & cOrthoCTRL) 
+            OrthoCommandIn(G,"mview toggle_interp,quiet=1,object=same");	    
+          else
+            OrthoCommandIn(G,"mview toggle_interp,quiet=1");	    
+        } else if(mod & cOrthoCTRL) {
           OrthoCommandIn(G,"mview toggle,freeze=1,quiet=1");
         } else {
           OrthoCommandIn(G,"mview toggle,quiet=1");

@@ -19,7 +19,7 @@ if __name__=='pymol.moving':
 
     import selector
     import pymol
-
+    import re
     import cmd
     from cmd import _cmd,Shortcut, \
           toggle_dict,toggle_sc, \
@@ -156,8 +156,8 @@ SEE ALSO
     mview_action_sc = Shortcut(mview_action_dict.keys())
 
     def mview(action='store', first=0, last=0, power=0.0,
-              bias=1.0, simple=0, linear=0.0, object='',
-              wrap=-1, hand=1, window=5, cycles=1, scene='',
+              bias=-1.0, simple=-1, linear=0.0, object='',
+              wrap=-1, hand=0, window=5, cycles=1, scene='',
               cut=0.5, quiet=1, auto=-1, state=0, freeze=0,
               _self=cmd):
 
@@ -205,16 +205,16 @@ SEE ALSO
                            float(power),float(bias),
                            int(simple), float(linear),str(object),
                            int(wrap),int(hand),int(window),int(cycles),
-                           str(scene),float(cut),int(quiet),int(state)-1)
+                           str(scene),float(cut),int(quiet),int(state)-1,0)
             if (not freeze and 
                 ((auto>0) or ((auto<0) and 
                               (_self.get_setting_int("movie_auto_interpolate")>0)))):
-                if action in [0,1,7]:
+                if action in [0,1,7]: # reinterpolate after store, clear, or toggle
                     _cmd.mview(_self._COb,3,-1,-1,
                                float(power),float(bias),
                                int(simple), float(linear),str(object),
                                int(wrap),int(hand),int(window),int(cycles),
-                               str(scene),float(cut),int(quiet),-1)                    
+                               str(scene),float(cut),int(quiet),-1,1)                    
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -595,7 +595,7 @@ SEE ALSO
         else:
             frame -= 1
         if count < 0: # negative count means delete to end
-            count = 1 + cur_len - _self.get_frame()
+            count = 1 + cur_len - frame
         try:
             _self.lock(_self)
             r = _cmd.mmodify(_self._COb,-1,frame,count,
@@ -692,8 +692,11 @@ SEE ALSO
         try:
             _self.lock(_self)
             output=[]
-            input = specification.replace("x"," x");
+            input = re.sub("\s"," ",specification)
+            input = input.replace("x"," x");
             input = input.replace("-"," -");
+            input = input.replace("x ","x");
+            input = input.replace("- ","-");
             input = string.split(string.strip(input))
             last = -1
             for x in input:

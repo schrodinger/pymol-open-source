@@ -485,6 +485,6 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
                         int last, float power, float bias,
                         int simple, float linear, char *name, int wrap,
                         int hand, int window, int cycles,
-                        char *scene_name, float scene_cut, int state, int quiet);
+                        char *scene_name, float scene_cut, int state, int quiet, int autogen);
 
 #endif

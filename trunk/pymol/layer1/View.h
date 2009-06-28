@@ -56,6 +56,9 @@ typedef struct CViewElem {
   int power_flag;
   float power;
 
+  int bias_flag;
+  float bias;
+
 } CViewElem;
 
 PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view);
