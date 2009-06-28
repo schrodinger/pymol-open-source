@@ -61,9 +61,21 @@ int ObjectMotionGetLength(CObject *I)
 
 void ObjectMotionReinterpolate(CObject *I)
 {
-  ObjectMotion(I, 3, -1, -1,0.0F,1.0F, 0, 0.0F,  
+  float power  = SettingGet_f(I->G, NULL, I->Setting, cSetting_motion_power);
+  float bias   = SettingGet_f(I->G, NULL, I->Setting, cSetting_motion_bias);
+  int simple   = SettingGet_i(I->G, NULL, I->Setting, cSetting_motion_simple);
+  float linear = SettingGet_f(I->G, NULL, I->Setting, cSetting_motion_linear);
+  int hand     = SettingGet_i(I->G, NULL, I->Setting, cSetting_motion_hand);
+
+  /* 
+     int ObjectMotion(CObject * I, int action, int first,
+                 int last, float power, float bias,
+                 int simple, float linear, int wrap,
+                 int hand, int window, int cycles, int state, int quiet);
+  */
+  ObjectMotion(I, 3, -1, -1, power, bias, simple, linear,
                SettingGetGlobal_b(I->G,cSetting_movie_loop) ? 1 : 0,
-               1, 5, 1, -1, 1);
+               hand, 5, 1, -1, 1);
 }
 
 int ObjectMotionModify(CObject *I,int action, int index, int count,int target,int freeze,int localize)
@@ -226,14 +238,49 @@ int ObjectMotion(CObject * I, int action, int first,
     int frame;
     int nFrame = MovieGetLength(I->G);
 
+    if(wrap<0) {
+      wrap = SettingGet_b(I->G,NULL, I->Setting, cSetting_movie_loop);
+    }
+
     if(nFrame < 0)
       nFrame = -nFrame;
 
     if(!I->ViewElem) {
       I->ViewElem = VLACalloc(CViewElem, 0);
     }
+    
+    if((action == 7) || (action == 8)) { /* toggle */
+      frame = first;
+      if(first < 0)
+        frame = SceneGetFrame(G);
+      VLACheck(I->ViewElem, CViewElem, frame);
+      if(action == 7) {
+        if(I->ViewElem[frame].specification_level>1) {
+          action = 1;
+        } else {
+          action = 0;
+        }
+      } else if(action == 8) {
+        if(I->ViewElem[frame].specification_level>1) {
+          int frame;
+          action = 3;
+          for(frame=0;frame<nFrame;frame++) {
+            if(I->ViewElem[frame].specification_level==1) {
+              action = 6;
+              break;
+            }
+          }
+        }
+        else if(I->ViewElem[frame].specification_level>0) {
+          action = 6;
+        } else {
+          action = 3;
+        }
+      }
+    }
 
     if(action == 4) {   /* smooth */
+      int save_last = last;
       if(first < 0)
         first = 0;
       
@@ -250,7 +297,10 @@ int ObjectMotion(CObject * I, int action, int first,
             ViewElemSmooth(I->ViewElem + first, I->ViewElem + last, window, wrap);
           }
       }
-      action = 3; /* reinterpolate */
+      if(SettingGet_b(I->G, NULL, I->Setting, cSetting_movie_auto_interpolate)){
+        action = 3; /* reinterpolate */
+        last = save_last;
+      }
     }
     switch (action) {
     case 0:                      /* store */
@@ -296,6 +346,12 @@ int ObjectMotion(CObject * I, int action, int first,
                 I->ViewElem[frame].power_flag = true;
                 I->ViewElem[frame].power = power;
               }
+
+              if(bias > 0.0F) {
+                I->ViewElem[frame].bias_flag = true;
+                I->ViewElem[frame].bias = bias;
+              }
+
               I->ViewElem[frame].specification_level = 2;
             }
 
@@ -365,8 +421,18 @@ int ObjectMotion(CObject * I, int action, int first,
             ViewElemCopy(G, I->ViewElem + a - nFrame, I->ViewElem + a);
           }
           zero_flag = last;
+        } else if(!wrap) { 
+          /* if we're not wrapping, then make sure we nuke any stray / old
+             interpolated frames */
+          frame = nFrame - 1;
+          while(frame>=0) {
+            if(I->ViewElem[frame].specification_level > 1) 
+              break;
+            else
+              UtilZeroMem((void *) (I->ViewElem + frame), sizeof(CViewElem));
+            frame--;
+          }
         }
-
         VLACheck(I->ViewElem, CViewElem, last);
         if(!quiet) {
           if(action == 2) {

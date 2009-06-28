@@ -2592,6 +2592,16 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_sweep_speed:
     SceneRestartSweepTimer(G);
     break;
+  case cSetting_motion_power:
+  case cSetting_motion_bias:
+  case cSetting_motion_simple:
+  case cSetting_motion_linear:
+  case cSetting_motion_hand:
+  case cSetting_movie_loop:
+    if(SettingGetGlobal_b(G, cSetting_movie_auto_interpolate)) {
+      ExecutiveMotionReinterpolate(G);
+    }
+    break;
   default:
     break;
   }
@@ -3871,5 +3881,10 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_i(I, cSetting_surface_cavity_mode,0);
     set_f(I, cSetting_surface_cavity_radius, 7.0F);
     set_f(I, cSetting_surface_cavity_cutoff, -3.0F);
+    set_f(I, cSetting_motion_power, 0.0F);
+    set_f(I, cSetting_motion_bias, -1.0F);
+    set_i(I, cSetting_motion_simple, 0);
+    set_f(I, cSetting_motion_linear, 0.0F);
+    set_i(I, cSetting_motion_hand, 1);
   }
 }

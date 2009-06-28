@@ -797,6 +797,11 @@ typedef struct _CPyMOL {
   ov_word lex_surface_cavity_mode;
   ov_word lex_surface_cavity_radius;
   ov_word lex_surface_cavity_cutoff;
+  ov_word lex_motion_power;
+  ov_word lex_motion_bias;
+  ov_word lex_motion_simple;
+  ov_word lex_motion_linear;
+  ov_word lex_motion_hand;
 
 } _CPyMOL;
 
@@ -1584,6 +1589,11 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(surface_cavity_mode, 624);
   LEX_SETTING(surface_cavity_radius, 625);
   LEX_SETTING(surface_cavity_cutoff, 626);
+  LEX_SETTING(motion_power, 627);
+  LEX_SETTING(motion_bias, 628);
+  LEX_SETTING(motion_simple, 629);
+  LEX_SETTING(motion_linear, 630);
+  LEX_SETTING(motion_hand, 631);
 
   return_OVstatus_SUCCESS;
 }

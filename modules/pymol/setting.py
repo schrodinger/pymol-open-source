@@ -662,7 +662,12 @@ if __name__=='pymol.setting':
         surface_cavity_mode                = 624
         surface_cavity_radius              = 625
         surface_cavity_cutoff              = 626
-
+        motion_power                       = 627
+        motion_bias                        = 628
+        motion_simple                      = 629
+        motion_linear                      = 630
+        motion_hand                        = 631
+        
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

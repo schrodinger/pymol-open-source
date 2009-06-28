@@ -860,6 +860,11 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_surface_cavity_mode        624
 #define cSetting_surface_cavity_radius      625
 #define cSetting_surface_cavity_cutoff      626
+#define cSetting_motion_power               627
+#define cSetting_motion_bias                628
+#define cSetting_motion_simple              629
+#define cSetting_motion_linear              630
+#define cSetting_motion_hand                631
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -870,6 +875,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       627
+#define cSetting_INIT                       632
 
 #endif
