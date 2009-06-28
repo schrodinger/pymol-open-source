@@ -260,6 +260,7 @@ from preset import \
 import moving
 from moving import \
       madd,              \
+      mcopy,             \
       mdelete,           \
       mmove,             \
       minsert,           \

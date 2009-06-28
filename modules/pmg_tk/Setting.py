@@ -159,6 +159,9 @@ class Setting:
 
         self.stereo = IntVar()
 
+        self.surface_solvent = IntVar()
+        self.surface_solvent.set(int(self.cmd.get_setting_legacy('surface_solvent')))
+
         self.seq_view = IntVar()
         self.seq_view.set(int(self.cmd.get_setting_legacy('seq_view')))
 
@@ -314,6 +317,8 @@ class Setting:
             'movie_auto_interpolate'         :
             (lambda s,a: (self.cmd.set(a,("%d" % s.movie_auto_interpolate.get()),log=1))),
 
+            'surface_solvent'         :
+            (lambda s,a: (self.cmd.set(a,("%d" % s.surface_solvent.get()),log=1))),
             'seq_view'         :
             (lambda s,a: (self.cmd.set(a,("%d" % s.seq_view.get()),log=1))),
             'texture_fonts'         :
@@ -427,6 +432,8 @@ class Setting:
             'movie_auto_interpolate':
             (lambda s,t: (s.movie_auto_interpolate.set(t[1][0]!=0))),
 
+            'surface_solvent':
+            (lambda s,t: (s.surface_solvent.set(t[1][0]!=0))),
             'seq_view':
             (lambda s,t: (s.seq_view.set(t[1][0]!=0))),
             'texture_fonts':
@@ -492,6 +499,7 @@ class Setting:
             self.pymol.setting._get_index("movie_panel"),
             self.pymol.setting._get_index("movie_loop"),
             self.pymol.setting._get_index("movie_auto_interpolate"),
+            self.pymol.setting._get_index("surface_solvent"),
             self.pymol.setting._get_index("seq_view"),
             self.pymol.setting._get_index("texture_fonts"),
             self.pymol.setting._get_index("stereo"),

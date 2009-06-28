@@ -794,6 +794,9 @@ typedef struct _CPyMOL {
   ov_word lex_movie_auto_interpolate;
   ov_word lex_movie_panel_row_height;
   ov_word lex_scene_frame_mode;
+  ov_word lex_surface_cavity_mode;
+  ov_word lex_surface_cavity_radius;
+  ov_word lex_surface_cavity_cutoff;
 
 } _CPyMOL;
 
@@ -1578,6 +1581,9 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(movie_auto_interpolate, 621);
   LEX_SETTING(movie_panel_row_height, 622);
   LEX_SETTING(scene_frame_mode, 623);
+  LEX_SETTING(surface_cavity_mode, 624);
+  LEX_SETTING(surface_cavity_radius, 625);
+  LEX_SETTING(surface_cavity_cutoff, 626);
 
   return_OVstatus_SUCCESS;
 }

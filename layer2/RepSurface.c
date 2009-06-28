@@ -96,13 +96,16 @@ typedef struct {
   int flags;
 } SurfaceJobAtomInfo;
 
-static SolventDot *SolventDotNew(PyMOLGlobals * G, float *coord,
+static SolventDot *SolventDotNew(PyMOLGlobals * G,
+                                 float *coord,
                                  SurfaceJobAtomInfo * atom_info,
                                  float probe_radius, SphereRec * sp,
                                  int *present,
                                  int circumscribe, int surface_mode,
                                  int surface_solvent, int cavity_cull,
-                                 int all_visible_flag, float max_vdw);
+                                 int all_visible_flag, float max_vdw,
+                                 int cavity_mode, float cavity_radius, 
+                                 float cavity_cutoff);
 
 static void SolventDotFree(SolventDot * I)
 {
@@ -1651,6 +1654,10 @@ typedef struct {
   float trimCutoff;
   float trimFactor;
 
+  int cavityMode;
+  float cavityRadius;
+  float cavityCutoff;
+
   /* results */
   float *V, *VN;
   int N, *T, *S, NT;
@@ -1741,6 +1748,11 @@ OV_INLINE_STATIC PyObject *SurfaceJobInputAsTuple(PyMOLGlobals * G, SurfaceJob *
     PyTuple_SetItem(result, 18, PyFloat_FromDouble(I->pointSep));
     PyTuple_SetItem(result, 19, PyFloat_FromDouble(I->trimCutoff));
     PyTuple_SetItem(result, 20, PyFloat_FromDouble(I->trimFactor));
+
+    PyTuple_SetItem(result, 21, PyInt_FromLong(I->cavityMode));
+    PyTuple_SetItem(result, 22, PyFloat_FromDouble(I->cavityRadius));
+    PyTuple_SetItem(result, 23, PyFloat_FromDouble(I->cavityCutoff));
+    
   }
   return result;
 }
@@ -1858,7 +1870,8 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
     sol_dot = SolventDotNew(G, I->coord, I->atomInfo, probe_radius,
                             ssp, present_vla,
                             circumscribe, I->surfaceMode, I->surfaceSolvent,
-                            I->cavityCull, I->allVisibleFlag, I->maxVdw);
+                            I->cavityCull, I->allVisibleFlag, I->maxVdw,
+                            I->cavityMode, I->cavityRadius, I->cavityCutoff);
 
     if((!sol_dot) || (G->Interrupt))
       ok = false;
@@ -2512,7 +2525,8 @@ static int SurfaceJobRun(PyMOLGlobals * G, SurfaceJob * I)
         float cutoff = point_sep * 5.0F;
         if((cutoff > probe_radius) && (!I->surfaceSolvent))
           cutoff = probe_radius;
-        I->T = TrianglePointsToSurface(G, I->V, I->VN, I->N, cutoff, &I->NT, &I->S, NULL);
+        I->T = TrianglePointsToSurface(G, I->V, I->VN, I->N, cutoff, &I->NT, &I->S, NULL, 
+                                       I->cavityMode);
         PRINTFB(G, FB_RepSurface, FB_Blather)
           " RepSurface: %i triangles.\n", I->NT ENDFB(G);
       }
@@ -2595,6 +2609,10 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
       char *carve_selection = NULL;
       float *carve_vla = NULL;
       MapType *carve_map = NULL;
+
+      int cavity_mode = SettingGet_i(G, cs->Setting, obj->Obj.Setting, cSetting_surface_cavity_mode);
+      float cavity_radius = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_surface_cavity_radius);
+      float cavity_cutoff = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_surface_cavity_cutoff);
 
       I->Type = surface_type;
 
@@ -2910,6 +2928,10 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
             surf_job->trimCutoff = trim_cutoff;
             surf_job->trimFactor = trim_factor;
 
+            surf_job->cavityMode = cavity_mode;
+            surf_job->cavityRadius = cavity_radius;
+            surf_job->cavityCutoff = cavity_cutoff;
+
             if(carve_vla)
               surf_job->carveVla = VLACopy(carve_vla, float);
             surf_job->carveCutoff = carve_cutoff;
@@ -3033,17 +3055,18 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
                                  int *present,
                                  int circumscribe, int surface_mode,
                                  int surface_solvent, int cavity_cull,
-                                 int all_visible_flag, float max_vdw)
+                                 int all_visible_flag, float max_vdw,
+                                 int cavity_mode, float cavity_radius, 
+                                 float cavity_cutoff)
 {
   int ok = true;
   int b;
   float vdw;
-  int skip_flag;
   float probe_radius_plus;
-  int dotCnt = 0, maxCnt, maxDot = 0;
-  int cnt;
+  int maxDot = 0;
   int stopDot;
   int n_coord = VLAGetSize(atom_info);
+  Vector3f *sp_dot = sp->dot;
   OOCalloc(G, SolventDot);
 
   /*  printf("%p %p %p %f %p %p %p %d %d %d %d %d %f\n",
@@ -3066,6 +3089,7 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
 
   I->nDot = 0;
   {
+    int dotCnt = 0;
     MapType *map =
       MapNewFlagged(G, max_vdw + probe_radius, coord, n_coord, NULL, present);
     if(G->Interrupt)
@@ -3074,18 +3098,19 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
       float *v = I->dot;
       float *n = I->dotNormal;
       int *dc = I->dotCode;
+      int maxCnt = 0;
 
       MapSetupExpress(map);
-      maxCnt = 0;
       {
         int a;
+        int skip_flag;
+
         SurfaceJobAtomInfo *a_atom_info = atom_info;
         for(a = 0; a < n_coord; a++) {
           OrthoBusyFast(G, a, n_coord * 5);
           if((!present) || (present[a])) {
             register int i;
             float *v0 = coord + 3 * a;
-            dotCnt = 0;
             vdw = a_atom_info->vdw + probe_radius;
 
             skip_flag = false;
@@ -3108,11 +3133,12 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
             }
             if(!skip_flag) {
               for(b = 0; b < sp->nDot; b++) {
+                float *sp_dot_b = (float*)(sp_dot + b);
                 register int i;
                 int flag = true;
-                v[0] = v0[0] + vdw * (n[0] = sp->dot[b][0]);
-                v[1] = v0[1] + vdw * (n[1] = sp->dot[b][1]);
-                v[2] = v0[2] + vdw * (n[2] = sp->dot[b][2]);
+                v[0] = v0[0] + vdw * (n[0] = sp_dot_b[0]);
+                v[1] = v0[1] + vdw * (n[1] = sp_dot_b[1]);
+                v[2] = v0[2] + vdw * (n[2] = sp_dot_b[2]);
                 i = *(MapLocusEStart(map, v));
                 if(i) {
                   register int j = map->EList[i++];
@@ -3169,13 +3195,14 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
         if(map2 && ok) {
           /*        CGOBegin(G->DebugCGO,GL_LINES); */
           int a;
+          int skip_flag;
+
           SurfaceJobAtomInfo *a_atom_info = atom_info;
           MapSetupExpress(map2);
           for(a = 0; a < n_coord; a++) {
             if((!present) || present[a]) {
               register int i;
               float vdw2;
-
               float *v0 = coord + 3 * a;
               vdw = a_atom_info->vdw + probe_radius;
               vdw2 = vdw * vdw;
@@ -3324,11 +3351,174 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
     /*    CGOEnd(G->DebugCGO); */
   }
 
-  if(ok && (cavity_cull > 0) && (probe_radius > 0.75F) && (!surface_solvent)) {
+  if(cavity_mode) {
+    float *cavityDot = VLAlloc(float, (stopDot + 1) * 3);
+    int nCavityDot = 0;
+    int dotCnt = 0;
+    if(cavity_radius<0.0F) {
+      cavity_radius = - probe_radius * cavity_radius;
+    }
+    if(cavity_cutoff<0.0F) {
+      cavity_cutoff = cavity_radius - cavity_cutoff * probe_radius;
+    }
+    {
+      MapType *map =
+        MapNewFlagged(G, max_vdw + cavity_radius, coord, n_coord, NULL, present);
+      if(G->Interrupt)
+        ok = false;
+      if(map && ok) {
+        float *v = cavityDot;
+        MapSetupExpress(map);
+        {
+          int a;
+          int skip_flag;
+          SurfaceJobAtomInfo *a_atom_info = atom_info;
+          for(a = 0; a < n_coord; a++) {
+            if((!present) || (present[a])) {
+              register int i;
+              float *v0 = coord + 3 * a;
+              vdw = a_atom_info->vdw + cavity_radius;
+              skip_flag = false;
+              i = *(MapLocusEStart(map, v0));
+              if(i) {
+                register int j = map->EList[i++];
+                while(j >= 0) {
+                  SurfaceJobAtomInfo *j_atom_info = atom_info + j;
+                  if(j > a)       /* only check if this is atom trails */
+                    if((!present) || present[j]) {
+                      if((j_atom_info->vdw == a_atom_info->vdw)) {        /* handle singularities */
+                        float *v1 = coord + 3 * j;
+                        if((v0[0] == v1[0]) && (v0[1] == v1[1]) && (v0[2] == v1[2]))
+                          skip_flag = true;
+                      }
+                    }
+                  j = map->EList[i++];
+                }
+              }
+              if(!skip_flag) {
+                for(b = 0; b < sp->nDot; b++) {
+                  float *sp_dot_b = (float*)(sp_dot + b);
+                  register int i;
+                  int flag = true;
+                  v[0] = v0[0] + vdw * (sp_dot_b[0]);
+                  v[1] = v0[1] + vdw * (sp_dot_b[1]);
+                  v[2] = v0[2] + vdw * (sp_dot_b[2]);
+                  i = *(MapLocusEStart(map, v));
+                  if(i) {
+                    register int j = map->EList[i++];
+                    while(j >= 0) {
+                      SurfaceJobAtomInfo *j_atom_info = atom_info + j;
+                      if((!present) || present[j]) {
+                        if(j != a) {
+                          skip_flag = false;
+                          if(j_atom_info->vdw == a_atom_info->vdw) {
+                            /* handle singularities */
+                            float *v1 = coord + 3 * j;
+                            if((v0[0] == v1[0]) && (v0[1] == v1[1]) && (v0[2] == v1[2]))
+                              skip_flag = true;
+                          }
+                          if(!skip_flag) {
+                            if(within3f(coord + 3 * j, v, j_atom_info->vdw + cavity_radius)) {
+                              flag = false;
+                              break;
+                            }
+                          }
+                        }
+                      }
+                      j = map->EList[i++];
+                    }
+                  }
+                  if(flag && (dotCnt < stopDot)) {
+                    v += 3;
+                    nCavityDot++;
+                    dotCnt++;
+                  }
+                }
+              }
+            }
+            a_atom_info++;
+          }
+        }
+      }
+      MapFree(map);
+    }
+    {
+      int *dot_flag = Calloc(int, I->nDot);
+      ErrChkPtr(G, dot_flag);
+      {
+        MapType *map = MapNew(G, cavity_cutoff, cavityDot, nCavityDot, NULL);
+        if(map) {
+          MapSetupExpress(map);
+          {
+            int *p = dot_flag;
+            float *v = I->dot;
+            int a;
+            for(a = 0; a < I->nDot; a++) {
+              register int i = *(MapLocusEStart(map, v));
+              if(i) {
+                register int j = map->EList[i++];
+                while(j >= 0) {
+                  if(within3f(cavityDot + (3 * j), v, cavity_cutoff)) {
+                    *p = true;
+                    break;
+                  }
+                  j = map->EList[i++];
+                }
+              }
+              v += 3;
+              p++;
+              if(G->Interrupt) {
+                ok = false;
+                break;
+              }
+            }
+          }
+        }
+        MapFree(map);
+      }
+      
+      {
+        float *v0 = I->dot;
+        float *n0 = I->dotNormal;
+        int *dc0 = I->dotCode;
+        int *p = dot_flag;
+        int c = I->nDot;
+        float *n = n0;
+        float *v = v0;
+        int *dc = dc0;
+        int a;
+        I->nDot = 0;
+        for(a = 0; a < c; a++) {
+          if(!*(p++)) {
+            *(v0++) = *(v++);
+            *(n0++) = *(n++);
+            *(v0++) = *(v++);
+            *(n0++) = *(n++);
+            *(v0++) = *(v++);
+            *(n0++) = *(n++);
+            *(dc0++) = *(dc++);
+            I->nDot++;
+          } else {
+            v += 3;
+            n += 3;
+          }
+        }
+        PRINTFD(G, FB_RepSurface)
+          " SolventDotNew-DEBUG: %d->%d\n", c, I->nDot ENDFD;
+      }
+      FreeP(dot_flag);
+    }
+    VLAFreeP(cavityDot);
+
+  } 
+  if(ok && (cavity_mode != 1) && (cavity_cull > 0) && 
+     (probe_radius > 0.75F) && (!surface_solvent)) {
     int *dot_flag = Calloc(int, I->nDot);
     ErrChkPtr(G, dot_flag);
 
+#if 0
     dot_flag[maxDot] = 1;       /* this guarantees that we have a valid dot */
+#endif
 
     {
       MapType *map = MapNew(G, probe_radius_plus, I->dot, I->nDot, NULL);
@@ -3343,7 +3533,8 @@ static SolventDot *SolventDotNew(PyMOLGlobals * G,
           for(a = 0; a < I->nDot; a++) {
             if(!dot_flag[a]) {
               register int i = *(MapLocusEStart(map, v));
-              cnt = 0;
+              int cnt = 0;
+
               if(i) {
                 register int j = map->EList[i++];
                 while(j >= 0) {

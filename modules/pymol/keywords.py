@@ -148,6 +148,7 @@ def get_command_keywords(self_cmd=cmd):
         'matrix_reset'  : [ self_cmd.matrix_reset      , 0 , 0 , ''  , parsing.STRICT ],         
         'matrix_copy'   : [ self_cmd.matrix_copy       , 0 , 0 , ''  , parsing.STRICT ],
         'matrix_transfer': [ self_cmd.matrix_copy       , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
+        'mcopy'         : [ self_cmd.mcopy             , 0 , 0 , ''  , parsing.STRICT ],                
         'mdelete'       : [ self_cmd.mdelete           , 0 , 0 , ''  , parsing.STRICT ],
         'mem'           : [ self_cmd.mem               , 0 , 0 , ''  , parsing.STRICT ],
         'meter_reset'   : [ self_cmd.meter_reset       , 0 , 0 , ''  , parsing.STRICT ],

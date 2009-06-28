@@ -857,6 +857,9 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_movie_auto_interpolate     621
 #define cSetting_movie_panel_row_height     622
 #define cSetting_scene_frame_mode           623
+#define cSetting_surface_cavity_mode        624
+#define cSetting_surface_cavity_radius      625
+#define cSetting_surface_cavity_cutoff      626
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -867,6 +870,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       624
+#define cSetting_INIT                       627
 
 #endif

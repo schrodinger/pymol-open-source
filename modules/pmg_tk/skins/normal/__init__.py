@@ -2345,6 +2345,159 @@ class Normal(PMGSkin):
                                 variable = self.setting.ribbon_trace_atoms,
                                 command = lambda s=self: s.setting.update('ribbon_trace_atoms'))
 
+        self.menuBar.addcascademenu('Setting', 'Surface', 'Surface',
+                                             label='Surface')
+
+        self.menuBar.addcascademenu('Surface', 'Surface Color', 'Color',
+                                    label='Color')
+
+        self.menuBar.addmenuitem('Surface Color', 'command', 'White',
+                                 label='White',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_color', 'white')"))
+
+        self.menuBar.addmenuitem('Surface Color', 'command', 'Light Grey',
+                                 label='Light Grey',
+                                 command = lambda s=self: s.cmd.do("_ cmd.set('surface_color', 'grey80')"))
+        
+        self.menuBar.addmenuitem('Surface Color', 'command', 'Grey',
+                                 label='Grey',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_color', 'grey')"))
+
+        self.menuBar.addmenuitem('Surface Color', 'command', 'Default (Atomic)',
+                                 label='Default (Atomic)',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_color', -1)"))
+
+        self.menuBar.addmenuitem('Surface', 'command', 'Dot',
+                                 label='Dot',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_type',1)"))
+
+        self.menuBar.addmenuitem('Surface', 'command', 'Wireframe',
+                                 label='Wireframe',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_type',2)"))
+
+        self.menuBar.addmenuitem('Surface', 'command', 'Solid',
+                                 label='Solid',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_type',0)"))
+
+        self.menuBar.addmenuitem('Surface', 'separator', '')
+        
+        self.menuBar.addmenuitem('Surface', 'command', 'Cavities & Pockets',
+                                 label='Cavities & Pockets',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_mode',1)"))
+
+        self.menuBar.addmenuitem('Surface', 'command', 'Cavities & Pockets (Culled)',
+                                 label='Cavities & Pockets (Culled)',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_mode',2)"))
+
+        self.menuBar.addcascademenu('Surface', 'Detection', 'Cavity Detection Radius',
+                                    label='Cavity Detection Radius')
+
+        self.menuBar.addmenuitem('Detection', 'command', '3 Solvent Radii',
+                                 label='3 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-3)"))
+
+        self.menuBar.addmenuitem('Detection', 'command', '4 Solvent Radii',
+                                 label='4 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-4)"))
+
+        self.menuBar.addmenuitem('Detection', 'command', '5 Solvent Radii',
+                                 label='5 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-5)"))
+
+        self.menuBar.addmenuitem('Detection', 'command', '6 Solvent Radii',
+                                 label='6 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-6)"))
+
+        self.menuBar.addmenuitem('Detection', 'command', '8 Solvent Radii',
+                                 label='8 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-8)"))
+
+        self.menuBar.addmenuitem('Detection', 'command', '10 Solvent Radii',
+                                 label='10 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-10)"))
+
+        self.menuBar.addmenuitem('Detection', 'command', '20 Solvent Radii',
+                                 label='20 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_radius',-20)"))
+
+        self.menuBar.addcascademenu('Surface', 'Cutoff', 'Cavity Detection Cutoff',
+                                    label='Cavity Detection Cutoff')
+
+        self.menuBar.addmenuitem('Cutoff', 'command', '1 Solvent Radius',
+                                 label='1 Solvent Radius',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_cutoff',-1)"))
+
+        self.menuBar.addmenuitem('Cutoff', 'command', '2 Solvent Radii',
+                                 label='2 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_cutoff',-2)"))
+
+
+        self.menuBar.addmenuitem('Cutoff', 'command', '3 Solvent Radii',
+                                 label='3 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_cutoff',-3)"))
+
+        self.menuBar.addmenuitem('Cutoff', 'command', '4 Solvent Radii',
+                                 label='4 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_cutoff',-4)"))
+
+        self.menuBar.addmenuitem('Cutoff', 'command', '5 Solvent Radii',
+                                 label='4 Solvent Radii',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_cutoff',-5)"))
+
+        self.menuBar.addmenuitem('Surface', 'command', 'Exterior (Normal)',
+                                 label='Exterior (Normal)',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_cavity_mode',0)"))
+
+        self.menuBar.addmenuitem('Surface', 'separator', '')
+
+        self.menuBar.addmenuitem('Surface', 'checkbutton',
+                                 'Solvent Accessible',
+                                 label='Solvent Accessible',
+                                 variable = self.setting.surface_solvent,
+                                 command = lambda s=self: s.setting.update('surface_solvent'))
+
+        self.menuBar.addmenuitem('Surface', 'separator', '')
+        
+        self.menuBar.addmenuitem('Surface', 'command', 'Ignore None',
+                                 label='Ignore None',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_mode',1)"))
+
+        self.menuBar.addmenuitem('Surface', 'command', 'Ignore HETATMs',
+                                 label='Ignore HETATMs',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_mode',0)"))
+
+        self.menuBar.addmenuitem('Surface', 'command', 'Ignore Hydrogens',
+                                 label='Ignore Hydrogens',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_mode',2)"))
+
+        self.menuBar.addmenuitem('Surface', 'command', 'Ignore Unsurfaced',
+                                 label='Ignore Unsurfaced',
+                                 command = lambda s=self:
+                                 s.cmd.do("_ cmd.set('surface_mode',3)"))
 
         self.menuBar.addcascademenu('Setting', 'Transparency', 'Transparency',
                                              label='Transparency')
