@@ -524,6 +524,50 @@ SEE ALSO
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
+    def mcopy(target,source=0,count=-1,freeze=0,object='',quiet=1,_self=cmd):
+        '''
+DESCRIPTION
+
+    "mmove" copies key frames and movie commands
+
+SEE ALSO
+
+    mdelete, minsert
+
+    '''
+        r = DEFAULT_ERROR
+        count = int(count)
+        source = int(source)
+        target = int(target)
+        freeze = int(freeze)
+        object = str(object)
+        quiet = int(quiet)
+        cur_len = _self.count_frames()
+        if not source: # 0 means use current frame
+            source = _self.get_frame() - 1
+        elif source<0:
+            source = _self.count_sources() + 1 + source
+            if (count>0) and (source + count) > cur_len:
+                source = cur_len - count
+        else:
+            source -= 1
+        if not target: # 0 means use current frame
+            target = _self.get_frame() - 1
+        elif target<0:
+            target = _self.count_targets() + 1 + target
+            if (count>0) and (target + count) > cur_len:
+                target = cur_len - count
+        else:
+            target -= 1
+        try:
+            _self.lock(_self)
+            r = _cmd.mmodify(_self._COb,3,source,count,
+                             target,object,freeze,quiet)
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
+        return r
+
     def mdelete(count=-1,frame=0,freeze=0,object='',quiet=1,_self=cmd):
         '''
 DESCRIPTION

@@ -62,6 +62,24 @@ int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, i
         }
       }
       break;
+    case cViewElemModifyCopy:
+      if((index>=0) && (target>=0) && (index<n_frame) && (target<n_frame)) {
+        int i;
+        for(i=0;i<count;i++) {
+          if( ((i+index)<n_frame) && ((i+target)<n_frame)) {
+            int src,dst;
+            if(index>target) {
+              src = index+i;
+              dst = target+i;
+            } else {
+              src = index+(count-1)-i;
+              dst = target+(count-1)-i;
+            }
+            memcpy(vla + dst, vla + src, sizeof(CViewElem));
+          }
+        }
+      }
+      break;
     }
   }
   *handle = vla;
@@ -570,7 +588,6 @@ int ViewElemSmooth(CViewElem * first, CViewElem * last, int window, int loop)
 {
   ov_diff n = (last - first) + 1;
   int delta;
-  loop = 0;                     /* FOR NOW */
   if(window > n)
     window = (int) n;
   delta = (window - 1) / 2;
@@ -582,7 +599,7 @@ int ViewElemSmooth(CViewElem * first, CViewElem * last, int window, int loop)
     if(loop) {
       for(a = 0; a < delta; a++) {
         memcpy(cpy + a, last - delta + a, sizeof(CViewElem));
-        memcpy(cpy + (delta + n) + a, first + delta - a, sizeof(CViewElem));
+        memcpy(cpy + (delta + n) + a, first + a, sizeof(CViewElem));
       }
     } else {
       for(a = 0; a < delta; a++) {

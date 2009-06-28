@@ -1486,7 +1486,7 @@ def pick_menu(self_cmd, sele1, sele2):
         title = sele1
     return [[ 2, title     , '' ],
             [ 1, 'drag object matrix'      ,'cmd.drag("(byobj ('+sele2+'))",mode=1)'            ],
-            [ 1, 'drag object coords.'      ,'cmd.drag("(byobj ('+sele2+'))")'            ],
+            [ 1, 'drag object coords'      ,'cmd.drag("(byobj ('+sele2+'))")'            ],
             [ 0, ''             , ''                      ],
             [ 1, 'atom'    , pick_option(self_cmd, sele2, "Atom") ],
             [ 1, 'residue' , pick_option(self_cmd, "(byres ("+sele2+"))", "Residue") ],

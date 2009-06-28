@@ -219,7 +219,8 @@ int ObjectMotion(CObject * I, int action, int first,
 {
   register PyMOLGlobals *G = I->G;
   if(I->type == cObjectGroup) { /* propagate */
-    return ExecutiveGroupMotion(G,I,action,first,last, power,bias,simple,linear,wrap,hand,window,cycles,state,quiet);
+    return ExecutiveGroupMotion(G,I,action,first,last, power,bias,simple,linear,
+                                wrap,hand,window,cycles,state,quiet);
   } else {
     
     int frame;
@@ -232,6 +233,25 @@ int ObjectMotion(CObject * I, int action, int first,
       I->ViewElem = VLACalloc(CViewElem, 0);
     }
 
+    if(action == 4) {   /* smooth */
+      if(first < 0)
+        first = 0;
+      
+      if(last < 0) {
+        last = nFrame;
+      }
+      if(last >= nFrame) {
+        last = nFrame - 1;
+      }
+      if(first <= last) {
+        int a;
+        VLACheck(I->ViewElem, CViewElem, last);
+          for(a = 0; a < cycles; a++) {
+            ViewElemSmooth(I->ViewElem + first, I->ViewElem + last, window, wrap);
+          }
+      }
+      action = 3; /* reinterpolate */
+    }
     switch (action) {
     case 0:                      /* store */
       if(!I->TTTFlag) {
@@ -422,26 +442,6 @@ int ObjectMotion(CObject * I, int action, int first,
         }
       }
       break;
-    case 4:                      /* smooth */
-      {
-        if(first < 0)
-          first = 0;
-
-        if(last < 0) {
-          last = nFrame;
-        }
-        if(last >= nFrame) {
-          last = nFrame - 1;
-        }
-        if(first <= last) {
-          int a;
-          VLACheck(I->ViewElem, CViewElem, last);
-          for(a = 0; a < cycles; a++) {
-            ViewElemSmooth(I->ViewElem + first, I->ViewElem + last, window, wrap);
-          }
-        }
-        break;
-      }
     case 5:                      /* reset */
       if(I->ViewElem) {
         VLAFreeP(I->ViewElem);

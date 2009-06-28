@@ -2391,6 +2391,9 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_surface_circumscribe:
   case cSetting_surface_solvent:
   case cSetting_surface_proximity:
+  case cSetting_surface_cavity_mode:   
+  case cSetting_surface_cavity_radius:
+  case cSetting_surface_cavity_cutoff:   
   case cSetting_cavity_cull:
     ExecutiveInvalidateRep(G, inv_sele, cRepSurface, cRepInvRep);
     SceneChanged(G);
@@ -3176,7 +3179,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 
     set_f(I, cSetting_sphere_scale, 1.0F);
 
-    set_b(I, cSetting_two_sided_lighting, 0);
+    set_b(I, cSetting_two_sided_lighting, -1);
 
     set_f(I, cSetting_secondary_structure, 2.0F);       /* unused? */
 
@@ -3865,5 +3868,8 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_b(I, cSetting_movie_auto_interpolate, 1);
     set_i(I, cSetting_movie_panel_row_height, 15);
     set_i(I, cSetting_scene_frame_mode,-1);
+    set_i(I, cSetting_surface_cavity_mode,0);
+    set_f(I, cSetting_surface_cavity_radius, 7.0F);
+    set_f(I, cSetting_surface_cavity_cutoff, -3.0F);
   }
 }

@@ -68,6 +68,7 @@ typedef struct {
   LinkType *link;
   int nLink;
   int N;
+  float maxEdgeLenSq;
 } TriangleSurfaceRec;
 
 int TriangleDegenerate(float *v1, float *n1, float *v2, float *n2, float *v3, float *n3)
@@ -986,7 +987,7 @@ static int TriangleBuildSecondPass(TriangleSurfaceRec * II, int i1, int i2, floa
   if(s12 > 0)
     used = I->edge[s12].vert3;
   if(s12 >= 0) {
-    minDist2 = MAXFLOAT;
+    minDist2 = I->maxEdgeLenSq;
     maxDot = _plus;
     i0 = -1;
     v1 = v + i1 * 3;
@@ -1157,7 +1158,7 @@ static int TriangleBuildSecondSecondPass(TriangleSurfaceRec * II, int i1, int i2
   if(s12 > 0)
     used = I->edge[s12].vert3;
   if(s12 >= 0) {
-    minDist2 = MAXFLOAT;
+    minDist2 = I->maxEdgeLenSq;
     i0 = -1;
     v1 = v + i1 * 3;
     v2 = v + i2 * 3;
@@ -1308,7 +1309,7 @@ static void TriangleBuildSingle(TriangleSurfaceRec * II, int i1, int i2, float *
   if(s12 > 0)
     used = I->edge[s12].vert3;
   if(s12 >= 0) {
-    minDist2 = MAXFLOAT;
+    minDist2 = I->maxEdgeLenSq;
     i0 = -1;
     v1 = v + i1 * 3;
     v2 = v + i2 * 3;
@@ -1443,7 +1444,7 @@ static int TriangleBuildThirdPass(TriangleSurfaceRec * II, int i1, int i2, float
   if(s12 > 0)
     used = I->edge[s12].vert3;
   if(s12 >= 0) {
-    minDist2 = MAXFLOAT;
+    minDist2 = I->maxEdgeLenSq;
     i0 = -1;
     v1 = v + i1 * 3;
     v2 = v + i2 * 3;
@@ -1512,7 +1513,7 @@ static int TriangleBuildLast(TriangleSurfaceRec * II, int i1, int i2, float *v, 
   if(s12 > 0)
     used = I->edge[s12].vert3;
   if(s12 >= 0) {
-    minDist2 = MAXFLOAT;
+    minDist2 = I->maxEdgeLenSq;
     i0 = -1;
     both_active = (I->vertActive[i1] && I->vertActive[i2]);
     v1 = v + i1 * 3;
@@ -1639,7 +1640,7 @@ static int TriangleFill(TriangleSurfaceRec * II, float *v, float *vn, int n,
     I->nActive = 0;
     while(ok && (!I->nActive) && (I->nTri == lastTri3)) {
       i1 = -1;
-      minDist2 = MAXFLOAT;
+      minDist2 = I->maxEdgeLenSq;
 
       for(a = 0; a < n; a++) {
         if(!I->edgeStatus[a]) {
@@ -2241,7 +2242,8 @@ static int TriangleBruteForceClosure(TriangleSurfaceRec * II, float *v, float *v
               v1 = v + i1 * 3;
               v2 = v + i2 * 3;
               if(within3f(v0, v1, cutoff) &&
-                 within3f(v1, v2, cutoff) && within3f(v0, v2, cutoff)) {
+                 within3f(v1, v2, cutoff) && 
+                 within3f(v0, v2, cutoff)) {
 
                 n0 = vn + 3 * i0;
                 n1 = vn + 3 * i1;
@@ -2277,7 +2279,8 @@ static int TriangleBruteForceClosure(TriangleSurfaceRec * II, float *v, float *v
 }
 
 int *TrianglePointsToSurface(PyMOLGlobals * G, float *v, float *vn, int n,
-                             float cutoff, int *nTriPtr, int **stripPtr, float *extent)
+                             float cutoff, int *nTriPtr, int **stripPtr,
+                             float *extent, int cavity_mode)
 {
   register TriangleSurfaceRec *I = NULL;
   int ok = true;
@@ -2288,7 +2291,8 @@ int *TrianglePointsToSurface(PyMOLGlobals * G, float *v, float *vn, int n,
   if(n >= 3) {
     I = Alloc(TriangleSurfaceRec, 1);
     if(I) {
-
+      float maxEdgeLen = 0.0F;
+  
       I->G = G;
       I->N = n;
       I->nActive = 0;
@@ -2305,6 +2309,13 @@ int *TrianglePointsToSurface(PyMOLGlobals * G, float *v, float *vn, int n,
 
       I->tri = VLAlloc(int, n);
       I->nTri = 0;
+
+      if(cavity_mode) {
+        maxEdgeLen = (cutoff*1.414F);
+        I->maxEdgeLenSq = maxEdgeLen * maxEdgeLen;
+      } else {
+        I->maxEdgeLenSq = MAXFLOAT;
+      }
 
       I->map = MapNew(I->G, cutoff, v, n, extent);
       MapSetupExpress(I->map);
@@ -2356,8 +2367,15 @@ int *TrianglePointsToSurface(PyMOLGlobals * G, float *v, float *vn, int n,
             printf(" TrianglePTS-DEBUG: after fix %i %i\n", a, I->vertActive[a]);
       }
 
-      if(ok)
-        ok = TriangleBruteForceClosure(I, v, vn, n, cutoff * 3);        /* abandon algorithm, just CLOSE THOSE GAPS! */
+      if(ok) {
+        if(cavity_mode) {
+          ok = TriangleBruteForceClosure(I, v, vn, n, maxEdgeLen);
+        } else {
+          ok = TriangleBruteForceClosure(I, v, vn, n, cutoff * 3);       
+        }
+      }
+                                                           
+      /* abandon algorithm, just CLOSE THOSE GAPS! */
 
       if(ok)
         ok = TriangleAdjustNormals(I, v, vn, n, true);

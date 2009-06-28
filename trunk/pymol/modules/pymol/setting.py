@@ -659,6 +659,9 @@ if __name__=='pymol.setting':
         movie_auto_interpolate             = 621
         movie_panel_row_height             = 622
         scene_frame_mode                   = 623
+        surface_cavity_mode                = 624
+        surface_cavity_radius              = 625
+        surface_cavity_cutoff              = 626
 
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     

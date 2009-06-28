@@ -7499,11 +7499,22 @@ static void SceneProgramLighting(PyMOLGlobals * G)
       direct = 1.0F;
   }
 
-  if(SettingGet(G, cSetting_two_sided_lighting) ||
-     (SettingGetGlobal_i(G, cSetting_transparency_mode) == 1)) {
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-  } else {
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+  {
+    int two_sided_lighting = SettingGetGlobal_b(G, cSetting_two_sided_lighting);
+    if(two_sided_lighting<0) {
+      if(SettingGetGlobal_i(G, cSetting_surface_cavity_mode))
+        two_sided_lighting = true;
+      else
+        two_sided_lighting = false;
+    }
+
+
+    if(two_sided_lighting ||
+       (SettingGetGlobal_i(G, cSetting_transparency_mode) == 1)) {
+      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    } else {
+      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    }
   }
 
   /* ambient lighting */

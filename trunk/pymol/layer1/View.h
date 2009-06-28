@@ -92,6 +92,7 @@ void ViewElemDraw(PyMOLGlobals *G, CViewElem * src, BlockRect *rect, int frames,
 #define cViewElemModifyInsert 1
 #define cViewElemModifyDelete -1
 #define cViewElemModifyMove    2
+#define cViewElemModifyCopy    3
 
 int ViewElemModify(PyMOLGlobals *G, CViewElem **handle, int action, int index, int count, int target);
 int ViewElemXtoFrame(PyMOLGlobals *G, CViewElem * view_elem, BlockRect *rect, int frames, int x, int nearest);

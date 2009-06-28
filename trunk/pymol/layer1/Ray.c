@@ -690,12 +690,20 @@ static void RayTransformFirst(CRay * I, int perspective, int identity)
   int a;
   float *v0;
   int backface_cull;
+  int two_sided_lighting = SettingGetGlobal_b(I->G, cSetting_two_sided_lighting);
+
+  if(two_sided_lighting<0) {
+    if(SettingGetGlobal_i(I->G, cSetting_surface_cavity_mode))
+      two_sided_lighting = true;
+    else
+      two_sided_lighting = false;
+  }
 
   backface_cull = (int) SettingGet(I->G, cSetting_backface_cull);
 
-  if((SettingGet(I->G, cSetting_two_sided_lighting) ||
-      (SettingGet(I->G, cSetting_transparency_mode) == 1) ||
-      (SettingGet(I->G, cSetting_ray_interior_color) != -1) || I->CheckInterior))
+  if(two_sided_lighting ||
+     (SettingGet(I->G, cSetting_transparency_mode) == 1) ||
+     (SettingGet(I->G, cSetting_ray_interior_color) != -1) || I->CheckInterior)
     backface_cull = 0;
 
   basis0 = I->Basis;
@@ -3193,7 +3201,15 @@ int RayTraceThread(CRayThreadInfo * T)
   opaque_back = SettingGetGlobal_i(I->G, cSetting_ray_opaque_background);
   if(opaque_back < 0)
     opaque_back = SettingGetGlobal_i(I->G, cSetting_opaque_background);
+
   two_sided_lighting = SettingGetGlobal_i(I->G, cSetting_two_sided_lighting);
+  if(two_sided_lighting<0) {
+    if(SettingGetGlobal_i(I->G, cSetting_surface_cavity_mode))
+      two_sided_lighting = true;
+    else
+      two_sided_lighting = false;
+  }
+  
   ray_trans_spec = SettingGet(I->G, cSetting_ray_transparency_specular);
   ray_lab_spec = SettingGet(I->G, cSetting_ray_label_specular);
   trans_cont = SettingGetGlobal_f(I->G, cSetting_ray_transparency_contrast);

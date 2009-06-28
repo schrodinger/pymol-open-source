@@ -39,6 +39,8 @@ Z* -------------------------------------------------------------------
 
 #define cMovieDragModeMoveKey   1
 #define cMovieDragModeInsDel    2
+#define cMovieDragModeCopyKey   3
+#define cMovieDragModeOblate    4
 
 typedef struct {
   int stage;
@@ -138,6 +140,12 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
       VLAInsert(I->Sequence,int,index,count);
       VLAInsert(I->Cmd,MovieCmdType,index,count);
       I->NFrame = VLAGetSize(I->Sequence);
+      {
+        int frame = SceneGetFrame(G);
+        if(frame >= index) {
+          SceneSetFrame(G,0,frame + count);
+        }
+      }
       break;
     case cViewElemModifyDelete:
       VLADelete(I->Sequence,int,index,count);
@@ -160,6 +168,24 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
             I->Sequence[dst] = I->Sequence[src];
             memcpy(I->Cmd + dst, I->Cmd + src, sizeof(MovieCmdType));
             I->Cmd[src][0]=0;
+          }
+        }
+      }
+      break;
+    case cViewElemModifyCopy:
+      if((index>=0) && (target>=0) && (index<I->NFrame) && (target<I->NFrame)) {
+        int i;
+        for(i=0;i<count;i++) {
+          if( ((i+index)<I->NFrame) && ((i+target)<I->NFrame)) {
+            int src,dst;
+            if(index>target) {
+              src = index+i;
+              dst = target+i;
+            } else {
+              src = index+(count-1)-i;
+              dst = target+(count-1)-i;
+            }
+            memcpy(I->Cmd + dst, I->Cmd + src, sizeof(MovieCmdType));
           }
         }
       }
@@ -1116,6 +1142,27 @@ int MovieView(PyMOLGlobals * G, int action, int first,
       }
     }
   }
+  if(action == 4) {
+    if(I->ViewElem) {
+      if(first < 0)
+        first = 0;
+      
+      if(last < 0) {
+        last = SceneGetNFrame(G, NULL) - 1;
+      }
+      if(last >= I->NFrame) {
+        last = I->NFrame - 1;
+      }
+      if(first <= last) {
+        int a;
+        VLACheck(I->ViewElem, CViewElem, last);
+        for(a = 0; a < cycles; a++) {
+          ViewElemSmooth(I->ViewElem + first, I->ViewElem + last, window, wrap);
+        }
+      }
+    }
+    action = 3; /* reinterpolate */
+  }
   switch (action) {
   case 0:                      /* store */
     if(I->ViewElem) {
@@ -1288,26 +1335,6 @@ int MovieView(PyMOLGlobals * G, int action, int first,
         ViewElemArrayPurge(G, I->ViewElem + I->NFrame, (1 + last - I->NFrame));
         UtilZeroMem((void *) (I->ViewElem + I->NFrame),
                     sizeof(CViewElem) * (1 + last - I->NFrame));
-      }
-    }
-    break;
-  case 4:                      /* smooth */
-    if(I->ViewElem) {
-      if(first < 0)
-        first = 0;
-
-      if(last < 0) {
-        last = SceneGetNFrame(G, NULL) - 1;
-      }
-      if(last >= I->NFrame) {
-        last = I->NFrame - 1;
-      }
-      if(first <= last) {
-        int a;
-        VLACheck(I->ViewElem, CViewElem, last);
-        for(a = 0; a < cycles; a++) {
-          ViewElemSmooth(I->ViewElem + first, I->ViewElem + last, window, wrap);
-        }
       }
     }
     break;
@@ -1490,37 +1517,62 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
   BlockRect rect = block->rect;
   rect.right -= 8 * 8;
 
-  if(button == P_GLUT_MIDDLE_BUTTON)
-    mod = 0;
-
-  if(button == P_GLUT_RIGHT_BUTTON) {
-    int n_frame = MovieGetLength(G);
-    if(mod == (cOrthoCTRL | cOrthoSHIFT))
-      I->DragColumn = true;
-    ExecutiveMotionClick(G,&rect,cMovieDragModeMoveKey,count,x,y,false);
-    if(I->DragStartFrame<n_frame) {
-      I->DragDraw = true;
-      I->DragMenu = true;
-      OrthoDirty(G);
-    } else {
-      ExecutiveMotionMenuActivate(G,&rect,count,false,x,y,I->DragColumn);
+  switch(button) {
+  case P_GLUT_RIGHT_BUTTON:
+    {
+      int n_frame = MovieGetLength(G);
+      if(mod == (cOrthoCTRL | cOrthoSHIFT))
+        I->DragColumn = true;
+      if(mod == (cOrthoSHIFT)) 
+        ExecutiveMotionClick(G,&rect,cMovieDragModeCopyKey,count,x,y,false);
+      else
+        ExecutiveMotionClick(G,&rect,cMovieDragModeMoveKey,count,x,y,false);
+      if(I->DragStartFrame<n_frame) {
+        I->DragDraw = true;
+        I->DragMenu = true;
+        OrthoDirty(G);
+      } else {
+        ExecutiveMotionMenuActivate(G,&rect,count,false,x,y,I->DragColumn);
+      }
     }
-  } else switch(mod) {
-  case cOrthoSHIFT: /* TEMPORAL SELECTIONS -- TO COME in PYMOL 1.3+ */
     break;
-  case (cOrthoSHIFT | cOrthoCTRL): 
-    I->DragColumn = true;
-    ExecutiveMotionClick(G,&rect,cMovieDragModeInsDel,count,x,y, true);
-    I->DragDraw = true;
-    OrthoDirty(G);
+  case P_GLUT_LEFT_BUTTON:
+    {
+      switch(mod) {
+      case cOrthoSHIFT: /* TEMPORAL SELECTIONS -- TO COME in PYMOL 1.3+ */
+        break;
+      case (cOrthoSHIFT | cOrthoCTRL): 
+        I->DragColumn = true;
+        ExecutiveMotionClick(G,&rect,cMovieDragModeInsDel,count,x,y, true);
+        I->DragDraw = true;
+        OrthoDirty(G);
+        break;
+      case cOrthoCTRL:
+        ExecutiveMotionClick(G,&rect,cMovieDragModeInsDel,count,x,y, true);
+        I->DragDraw = true;
+        OrthoDirty(G);
+        break;
+      default:
+        ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+        break;
+      }
+    }
     break;
-  case cOrthoCTRL:
-    ExecutiveMotionClick(G,&rect,cMovieDragModeInsDel,count,x,y, true);
-    I->DragDraw = true;
-    OrthoDirty(G);
-    break;
-  default:
-    ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+  case P_GLUT_MIDDLE_BUTTON:
+    {
+      switch(mod) {
+      case (cOrthoCTRL | cOrthoSHIFT):
+        I->DragColumn = true;
+        /* intentional fall-through */
+      case cOrthoCTRL: 
+        I->DragDraw = true;
+        ExecutiveMotionClick(G,&rect,cMovieDragModeOblate,count,x,y,false);
+        break;
+      default:
+        ScrollBarDoClick(I->ScrollBar, button, x, y, mod);
+        break;
+      }
+    }
     break;
   }
   return 1;
@@ -1535,6 +1587,7 @@ static int MovieDrag(Block * block, int x, int y, int mod)
     I->DragDraw = ((y < (block->rect.top + 50)) && (y > (block->rect.bottom - 50)));
     switch(I->DragMode) {
     case cMovieDragModeMoveKey:
+    case cMovieDragModeCopyKey:
       {
         int n_frame = MovieGetLength(G);
         I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,&I->DragRect,n_frame,x,false);
@@ -1546,6 +1599,10 @@ static int MovieDrag(Block * block, int x, int y, int mod)
           OrthoDirty(G);
         }
       }
+      break;
+    case cMovieDragModeOblate:
+      I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,&I->DragRect,MovieGetLength(G),x,false);
+      OrthoDirty(G);
       break;
     case cMovieDragModeInsDel:
       I->DragCurFrame = ViewElemXtoFrame(G,I->ViewElem,&I->DragRect,MovieGetLength(G),x,true);
@@ -1588,6 +1645,35 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
                   (I->DragCurFrame < n_frame)) {
           sprintf(buffer,"cmd.mmove(%d,%d,%d%s)", 1+I->DragCurFrame, 1+I->DragStartFrame, 1, extra);
         }
+      break;
+    case cMovieDragModeCopyKey:
+        if((I->DragCurFrame == I->DragStartFrame) && (I->DragMenu)) {
+          int count = ExecutiveCountMotions(G);
+          BlockRect rect = block->rect;
+          rect.right -= 8 * 8;
+          ExecutiveMotionMenuActivate(G,&rect,count,true,x,y,I->DragColumn);
+          I->DragMenu = false;
+        } else if(I->DragDraw &&
+                  (I->DragCurFrame!=I->DragStartFrame) && 
+                  (I->DragCurFrame >= 0) && 
+                  (I->DragCurFrame < n_frame)) {
+          sprintf(buffer,"cmd.mcopy(%d,%d,%d%s)", 1+I->DragCurFrame, 1+I->DragStartFrame, 1, extra);
+        }
+      break;
+    case cMovieDragModeOblate:
+      if(I->DragDraw) {
+        int min_frame = (I->DragStartFrame < I->DragCurFrame) ? I->DragStartFrame : I->DragCurFrame;
+        int max_frame = (I->DragStartFrame > I->DragCurFrame) ? I->DragStartFrame : I->DragCurFrame;
+        if(min_frame<0) min_frame = 0;
+        if(max_frame<0) max_frame = 0;
+        if(min_frame>=n_frame) min_frame = n_frame - 1;
+        if(max_frame>=n_frame) max_frame = n_frame - 1;
+        if(I->DragColumn) {
+          sprintf(extra,",object='all'");
+        }
+        sprintf(buffer,"cmd.mview('clear',first=%d,last=%d%s)", 
+                1 + min_frame, 1 + max_frame, extra);
+      }
       break;
     case cMovieDragModeInsDel:
       if(I->DragDraw) {
@@ -1693,6 +1779,7 @@ static void MovieDraw(Block * block)
 
       switch(I->DragMode) {
       case cMovieDragModeMoveKey:
+      case cMovieDragModeCopyKey:
         {
           float grey[4] = {0.75F,0.75F,0.75f,0.5};
           if(I->DragStartFrame<n_frame) 
@@ -1700,7 +1787,20 @@ static void MovieDraw(Block * block)
           if((I->DragCurFrame>=0) && (I->DragCurFrame<n_frame)) {
             ViewElemDrawBox(G,&I->DragRect, I->DragCurFrame, I->DragCurFrame+1, n_frame, grey, true);
           }
-          OrthoDirty(G);
+        }
+        break;
+      case cMovieDragModeOblate:
+        {
+          float grey[4] = {0.75F,0.75F,0.75f,0.5};
+
+          int min_frame = (I->DragStartFrame < I->DragCurFrame) ? I->DragStartFrame : I->DragCurFrame;
+          int max_frame = (I->DragStartFrame > I->DragCurFrame) ? I->DragStartFrame : I->DragCurFrame;
+          if(min_frame<0) min_frame = 0;
+          if(max_frame<0) max_frame = 0;
+          if(min_frame>=n_frame) min_frame = n_frame - 1;
+          if(max_frame>=n_frame) max_frame = n_frame - 1;
+          ViewElemDrawBox(G,&I->DragRect, min_frame, max_frame+1, n_frame, white, false);        
+          ViewElemDrawBox(G,&I->DragRect, min_frame, max_frame+1, n_frame, grey, true);
         }
         break;
       case cMovieDragModeInsDel:
@@ -1713,7 +1813,6 @@ static void MovieDraw(Block * block)
           float red[4] = {1.0F, 0.5F, 0.5F,0.5F};          
           ViewElemDrawBox(G,&I->DragRect, I->DragCurFrame, I->DragStartFrame, n_frame, red, true);        
         }
-        OrthoDirty(G);
         break;
       }
 
