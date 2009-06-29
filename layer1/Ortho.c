@@ -811,7 +811,11 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
     case 32:                   /* spacebar */
       if(!OrthoArrowsGrabbed(G)) {
         if(SettingGetGlobal_b(G, cSetting_presentation)) {
-          PParse(G, "cmd.scene('','next')");
+          if(mod & cOrthoSHIFT) {
+            OrthoCommandIn(G,"rewind;mplay");
+          } else {
+            PParse(G, "cmd.scene('','next')");
+          }
         } else {
           if(mod & cOrthoSHIFT) {
             OrthoCommandIn(G,"rewind;mplay");
@@ -933,7 +937,9 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
     case 13:                   /* CTRL M -- carriage return */
       if(I->CurChar > I->PromptChar)
         OrthoParseCurrentLine(G);
-      else if(SettingGetGlobal_b(G, cSetting_movie_panel) && MovieGetLength(G)) {
+      else if(((SettingGetGlobal_b(G, cSetting_movie_panel) ||
+                SettingGetGlobal_b(G, cSetting_presentation)) 
+               && MovieGetLength(G))) {
         if(mod & cOrthoSHIFT) {
           if(mod & cOrthoCTRL) 
             OrthoCommandIn(G,"mview toggle_interp,quiet=1,object=same");	    
@@ -942,7 +948,11 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
         } else if(mod & cOrthoCTRL) {
           OrthoCommandIn(G,"mview toggle,freeze=1,quiet=1");
         } else {
-          OrthoCommandIn(G,"mview toggle,quiet=1");
+          if(SettingGetGlobal_b(G, cSetting_presentation)) {
+            OrthoCommandIn(G,"mtoggle");  
+          } else {
+            OrthoCommandIn(G,"mview toggle,quiet=1");
+          }
         }
       }
       break;

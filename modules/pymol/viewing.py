@@ -1522,7 +1522,7 @@ SEE ALSO
                             if ix>=0:
                                 setting.set("scene_current_name",lst[ix],quiet=1,_self=_self)
                             else:
-                                setting.set("scene_current_name","",quiet=1,_self=_self)                                
+                                setting.set("scene_current_name","",quiet=1,_self=_self) 
                         _self.set("scenes_changed",1,quiet=1);               
                         del pymol._scene_dict[key]
                         name = "_scene_"+key+"_*"
@@ -1530,9 +1530,12 @@ SEE ALSO
                         _scene_validate_list(_self)
                         if _feedback(fb_module.scene,fb_mask.actions,_self):
                             print " scene: '%s' deleted."%key
-                    _self.set("session_changed",1,quiet=1)                                                                    
+                    _self.set("session_changed",1,quiet=1)
                 elif action=='next':
                     lst = _scene_validate_list(_self)
+                    if (len(lst)==0) and cmd.get_movie_length()>0:
+                        _self.do("mtoggle") # alternate SPACEBAR behavior if no scenes defined...
+                        return
                     cur_scene = setting.get('scene_current_name',quiet=1,_self=_self)
                     if cur_scene in lst:
                         ix = lst.index(cur_scene) + 1
