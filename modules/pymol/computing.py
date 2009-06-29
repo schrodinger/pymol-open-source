@@ -108,7 +108,8 @@ class CleanJob:
                 state = self_cmd.get_state()
                 if self_cmd.count_atoms(obj_name+" and flag 2"): # any atoms restrained?
                     self_cmd.reference("validate",obj_name,state) # then we have reference coordinates
-                (fit_flag, sdf_list) = model_to_sdf_list(self_cmd,self_cmd.get_model(obj_name,state=state))
+                input_model = self_cmd.get_model(obj_name,state=state)
+                (fit_flag, sdf_list) = model_to_sdf_list(self_cmd,input_model)
                 input_sdf = string.join(sdf_list,'')
 #                print input_sdf
                 result = mengine.run(input_sdf)
@@ -138,22 +139,29 @@ class CleanJob:
                                 self_cmd.unset("suspend_updates")
 
             if not ok:
+                
                 # we can't call warn because this is the not the tcl-tk gui thread
                 if result != None:
                     if len(result)>1:
-                        print result[1]
+                        print "\n=== mengine errors below === "
+                        print result[1].replace("\n\n","\n"),
+                        print "=== mengine errors above ===\n"
                 failed_file = "cleanup_failed.sdf"
                 print "Clean-Error: Structure cleanup failed.  Invalid input or software malfuction?"
-
+                aromatic = 0
+                for bond in input_model.bond:
+                    if bond.order == 4:
+                        aromatic = 1
                 try:
                     open(failed_file,'wb').write(input_sdf)
                     print "Clean-Error: Wrote SD file '%s' into the directory:"%failed_file
                     print "Clean-Error: '%s'."%os.getcwd()
-                    print "Clean-Error: If you think PyMOL should be able to handle this structure"
-                    print "Clean-Error: then please email that SD file to support@delsci.com. Thanks!"
+                    print "Clean-Error: If you believe PyMOL should be able to handle this structure"
+                    print "Clean-Error: then please email that SD file to support@delsci.com. Thank you!"
                 except IOError:
                     print "Unabled to write '%s"%failed_file
-                    
+                if aromatic:
+                    print "Clean-Warning: Please eliminate aromatic bonds and then try again."                    
         if message!=None:
             self_cmd.do("_ wizard")
 
