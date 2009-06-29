@@ -1615,8 +1615,8 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Movie', 'command', 'Remove Last Program',label='Remove Last Program',
                                  command = lambda s=self: s.mvprg(-1))
 
-        self.menuBar.addcascademenu('Program', 'Camera', 'Camera',
-                                    label='Camera')
+        self.menuBar.addcascademenu('Program', 'Camera', 'Camera Loop',
+                                    label='Camera Loop')
 
         self.menuBar.addcascademenu('Camera', 'Nutate', 'Nutate',
                                     label='Nutate')

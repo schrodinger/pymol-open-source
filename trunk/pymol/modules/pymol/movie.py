@@ -293,6 +293,7 @@ def add_roll(duration=12.0,loop=1,axis='y',start=0,_self=cmd):
         if loop:
             if (start == 1):
                 cmd.mview("interpolate",wrap=1)
+                cmd.turn(axis,120)                
                 cmd.mview("store",start+n_frame-1,power=1,freeze=1)
                 cmd.turn(axis,120)
             else:
