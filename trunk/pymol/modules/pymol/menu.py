@@ -1344,6 +1344,8 @@ def scene_main(self_cmd):
         recall_list.append([1,entry,'cmd.scene("""'+entry+'""")'])
     return [
         [ 2, 'Scene', '' ],
+        [ 1, 'next' , 'cmd.scene()' ],
+        [ 0, ''             , ''                      ],
         [ 1, 'append' , 'cmd.scene("new","append",quiet=0)' ],                
         [ 1, 'update' , 'cmd.scene("auto","update",quiet=0)' ],
         [ 0, ''             , ''                      ],
@@ -1365,6 +1367,22 @@ def main_pseudoatom(self_cmd,pos):
         [ 1, 'pseudoatom' , main_pseudoatom_sub(self_cmd,pos) ],
         ]
 
+def movie_panel(self_cmd):
+    return [[ 2, 'Panel', '' ],
+            [ 1, 'on', 'cmd.set("movie_panel")'],
+            [ 1, 'off', 'cmd.unset("movie_panel")']]
+
+def movie_main(self_cmd):
+    return [
+        [ 2, 'Movie', ''],
+        [ 1, 'play', 'cmd.mplay()'],
+        [ 1, 'stop', 'cmd.mstop()'],
+        [ 0, '', '' ],
+        [ 1, 'rewind', 'cmd.rewind()'],
+        [ 0, '', '' ],
+        [ 1, 'panel', movie_panel(self_cmd) ]
+        ]
+
 def main_menu(self_cmd,pos):
     return [
         [ 2, 'Main Pop-Up'  , '' ],
@@ -1375,13 +1393,15 @@ def main_menu(self_cmd,pos):
         [ 1, 'center (vis)'           ,'cmd.center("visible",animate=-1)'            ],      
         [ 1, 'reset'           ,'cmd.reset()'            ],
         [ 0, ''             , ''                      ],
+        [ 1, 'movie'           , movie_main(self_cmd) ],
+        [ 1, 'scene'           , scene_main(self_cmd) ],
+        [ 0, ''             , ''                      ],
         [ 1, 'enable', enable_disable(self_cmd, 1) ],
         [ 1, 'disable', enable_disable(self_cmd,0) ],   
         [ 0, ''             , ''                      ],           
         [ 1, '(all)'      , all_option(self_cmd,"all") ],
         [ 1, '(visible)'      , all_option(self_cmd,"visible") ],
         [ 0, ''             , ''                      ],
-        [ 1, 'scene'           , scene_main(self_cmd) ],
         [ 1, 'ray'           ,'cmd.ray()' ],
         [ 0, ''             , ''                      ],
         [ 1, 'delete all'           ,'cmd.delete("all")' ],
