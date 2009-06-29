@@ -90,6 +90,7 @@ struct _CMovie {
   int DragStartFrame, DragCurFrame, DragNearest, DragDraw;
   int DragColumn;
   int LabelIndent;
+  int PanelActive;
 };
 
 void MovieViewReinterpolate(PyMOLGlobals *G)
@@ -173,7 +174,7 @@ int MovieViewModify(PyMOLGlobals *G,int action, int index, int count,int target,
             }
             I->Sequence[dst] = I->Sequence[src];
             memcpy(I->Cmd + dst, I->Cmd + src, sizeof(MovieCmdType));
-              I->Cmd[src][0]=0;
+            I->Cmd[src][0]=0;
           }
         }
       }
@@ -584,15 +585,15 @@ PyObject *MovieAsPyList(PyMOLGlobals * G)
   }
 
 
-/*   ImageType *Image;
-  int *Sequence;
-  MovieCmdType *Cmd;
-  int NImage,NFrame;
-  unsigned Width,Height;
-  int MatrixFlag;
-  float Matrix[16];
-  int Playing;
-*/
+  /*   ImageType *Image;
+       int *Sequence;
+       MovieCmdType *Cmd;
+       int NImage,NFrame;
+       unsigned Width,Height;
+       int MatrixFlag;
+       float Matrix[16];
+       int Playing;
+  */
   return (PConvAutoNone(result));
 #endif
 }
@@ -1661,32 +1662,32 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
     }
     switch(I->DragMode) {
     case cMovieDragModeMoveKey:
-        if((I->DragCurFrame == I->DragStartFrame) && (I->DragMenu)) {
-          int count = ExecutiveCountMotions(G);
-          BlockRect rect = block->rect;
-          rect.right -= I->LabelIndent;
-          ExecutiveMotionMenuActivate(G,&rect,count,true,x,y,I->DragColumn);
-          I->DragMenu = false;
-        } else if(I->DragDraw &&
-                  (I->DragCurFrame!=I->DragStartFrame) && 
-                  (I->DragCurFrame >= 0) && 
-                  (I->DragCurFrame < n_frame)) {
-          sprintf(buffer,"cmd.mmove(%d,%d,%d%s)", 1+I->DragCurFrame, 1+I->DragStartFrame, 1, extra);
-        }
+      if((I->DragCurFrame == I->DragStartFrame) && (I->DragMenu)) {
+        int count = ExecutiveCountMotions(G);
+        BlockRect rect = block->rect;
+        rect.right -= I->LabelIndent;
+        ExecutiveMotionMenuActivate(G,&rect,count,true,x,y,I->DragColumn);
+        I->DragMenu = false;
+      } else if(I->DragDraw &&
+                (I->DragCurFrame!=I->DragStartFrame) && 
+                (I->DragCurFrame >= 0) && 
+                (I->DragCurFrame < n_frame)) {
+        sprintf(buffer,"cmd.mmove(%d,%d,%d%s)", 1+I->DragCurFrame, 1+I->DragStartFrame, 1, extra);
+      }
       break;
     case cMovieDragModeCopyKey:
-        if((I->DragCurFrame == I->DragStartFrame) && (I->DragMenu)) {
-          int count = ExecutiveCountMotions(G);
-          BlockRect rect = block->rect;
-          rect.right -= I->LabelIndent;
-          ExecutiveMotionMenuActivate(G,&rect,count,true,x,y,I->DragColumn);
-          I->DragMenu = false;
-        } else if(I->DragDraw &&
-                  (I->DragCurFrame!=I->DragStartFrame) && 
-                  (I->DragCurFrame >= 0) && 
-                  (I->DragCurFrame < n_frame)) {
-          sprintf(buffer,"cmd.mcopy(%d,%d,%d%s)", 1+I->DragCurFrame, 1+I->DragStartFrame, 1, extra);
-        }
+      if((I->DragCurFrame == I->DragStartFrame) && (I->DragMenu)) {
+        int count = ExecutiveCountMotions(G);
+        BlockRect rect = block->rect;
+        rect.right -= I->LabelIndent;
+        ExecutiveMotionMenuActivate(G,&rect,count,true,x,y,I->DragColumn);
+        I->DragMenu = false;
+      } else if(I->DragDraw &&
+                (I->DragCurFrame!=I->DragStartFrame) && 
+                (I->DragCurFrame >= 0) && 
+                (I->DragCurFrame < n_frame)) {
+        sprintf(buffer,"cmd.mcopy(%d,%d,%d%s)", 1+I->DragCurFrame, 1+I->DragStartFrame, 1, extra);
+      }
       break;
     case cMovieDragModeOblate:
       if(I->DragDraw) {
@@ -1736,6 +1737,7 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
 int MovieGetPanelHeight(PyMOLGlobals * G)
 {
   int movie_panel = SettingGetGlobal_i(G, cSetting_movie_panel);
+  CMovie *I = G->Movie;
   if(movie_panel < 0) {
     if(MovieGetLength(G)) {
       movie_panel = 1;
@@ -1745,13 +1747,15 @@ int MovieGetPanelHeight(PyMOLGlobals * G)
   }
   if(movie_panel) {
     int row_height = SettingGetGlobal_i(G,cSetting_movie_panel_row_height);
+    I->PanelActive = true;
     if(SettingGetGlobal_b(G, cSetting_presentation)) { 
-      /* only show camera line when in presentation mode */
+      /* show camera line only when in presentation mode */
       return row_height;
     } else {
       return row_height * ExecutiveCountMotions(G); 
     }
   } else {
+    I->PanelActive = false;
     return 0;
   }
 }
@@ -1768,89 +1772,91 @@ static void MovieDraw(Block * block)
 {
   PyMOLGlobals *G = block->G;
   CMovie *I = G->Movie;
-  int n_frame = MovieGetLength(G);
-  int frame = SceneGetFrame(G);
-  int count = ExecutiveCountMotions(G);
-  BlockRect rect = block->rect;
-  if(count) {
-    rect.right -= I->LabelIndent;
+  if(I->PanelActive) {
+    int n_frame = MovieGetLength(G);
+    int frame = SceneGetFrame(G);
+    int count = ExecutiveCountMotions(G);
+    BlockRect rect = block->rect;
+    if(count) {
+      rect.right -= I->LabelIndent;
 
-    if(G->HaveGUI && G->ValidContext) {
-      float black[3] = {0.0F,0.0F,0.0F};
-      glColor3fv(black);
-      glBegin(GL_POLYGON);
-      glVertex2f(rect.right, rect.bottom);
-      glVertex2f(rect.right, rect.top);
-      glVertex2f(block->rect.right, rect.top);
-      glVertex2f(block->rect.right, rect.bottom);
-      glEnd();
-    }
-
-    if(!n_frame) {
-      ScrollBarSetLimits(I->ScrollBar, 1, 1);
-      ScrollBarSetValue(I->ScrollBar, 0);
-    } else {
-      float scroll_value = ScrollBarGetValue(I->ScrollBar);
-      int new_frame = (int) (scroll_value + 0.5F);
-      if(new_frame != frame) {
-        frame = new_frame;
-        SceneSetFrame(G, 7, frame);
+      if(G->HaveGUI && G->ValidContext) {
+        float black[3] = {0.0F,0.0F,0.0F};
+        glColor3fv(black);
+        glBegin(GL_POLYGON);
+        glVertex2f(rect.right, rect.bottom);
+        glVertex2f(rect.right, rect.top);
+        glVertex2f(block->rect.right, rect.top);
+        glVertex2f(block->rect.right, rect.bottom);
+        glEnd();
       }
-      if(!ScrollBarGrabbed(I->ScrollBar)) {
-        ScrollBarSetValue(I->ScrollBar, frame);
+
+      if(!n_frame) {
+        ScrollBarSetLimits(I->ScrollBar, 1, 1);
+        ScrollBarSetValue(I->ScrollBar, 0);
+      } else {
+        float scroll_value = ScrollBarGetValue(I->ScrollBar);
+        int new_frame = (int) (scroll_value + 0.5F);
+        if(new_frame != frame) {
+          frame = new_frame;
+          SceneSetFrame(G, 7, frame);
+        }
+        if(!ScrollBarGrabbed(I->ScrollBar)) {
+          ScrollBarSetValue(I->ScrollBar, frame);
+        }
+        ScrollBarSetLimits(I->ScrollBar, n_frame, 1);
       }
-      ScrollBarSetLimits(I->ScrollBar, n_frame, 1);
-    }
-    ScrollBarSetBox(I->ScrollBar, rect.top,
-                    rect.left, rect.bottom, rect.right);
-    ScrollBarDoDraw(I->ScrollBar);
-    ExecutiveMotionDraw(G,&rect,count);
-    ScrollBarDrawHandle(I->ScrollBar, 0.3F);
+      ScrollBarSetBox(I->ScrollBar, rect.top,
+                      rect.left, rect.bottom, rect.right);
+      ScrollBarDoDraw(I->ScrollBar);
+      ExecutiveMotionDraw(G,&rect,count);
+      ScrollBarDrawHandle(I->ScrollBar, 0.3F);
 
-    /* drag selection box */
-    if(I->DragDraw) {
+      /* drag selection box */
+      if(I->DragDraw) {
 
-      float white[4] = {1.0F, 1.0F, 1.0F,0.5F};
+        float white[4] = {1.0F, 1.0F, 1.0F,0.5F};
 
-      switch(I->DragMode) {
-      case cMovieDragModeMoveKey:
-      case cMovieDragModeCopyKey:
-        {
-          float grey[4] = {0.75F,0.75F,0.75f,0.5};
-          if(I->DragStartFrame<n_frame) 
-            ViewElemDrawBox(G,&I->DragRect, I->DragStartFrame, I->DragStartFrame+1, n_frame, white, false);        
-          if((I->DragCurFrame>=0) && (I->DragCurFrame<n_frame)) {
-            ViewElemDrawBox(G,&I->DragRect, I->DragCurFrame, I->DragCurFrame+1, n_frame, grey, true);
+        switch(I->DragMode) {
+        case cMovieDragModeMoveKey:
+        case cMovieDragModeCopyKey:
+          {
+            float grey[4] = {0.75F,0.75F,0.75f,0.5};
+            if(I->DragStartFrame<n_frame) 
+              ViewElemDrawBox(G,&I->DragRect, I->DragStartFrame, I->DragStartFrame+1, n_frame, white, false);        
+            if((I->DragCurFrame>=0) && (I->DragCurFrame<n_frame)) {
+              ViewElemDrawBox(G,&I->DragRect, I->DragCurFrame, I->DragCurFrame+1, n_frame, grey, true);
+            }
           }
-        }
-        break;
-      case cMovieDragModeOblate:
-        {
-          float grey[4] = {0.75F,0.75F,0.75f,0.5};
+          break;
+        case cMovieDragModeOblate:
+          {
+            float grey[4] = {0.75F,0.75F,0.75f,0.5};
 
-          int min_frame = (I->DragStartFrame < I->DragCurFrame) ? I->DragStartFrame : I->DragCurFrame;
-          int max_frame = (I->DragStartFrame > I->DragCurFrame) ? I->DragStartFrame : I->DragCurFrame;
-          if(min_frame<0) min_frame = 0;
-          if(max_frame<0) max_frame = 0;
-          if(min_frame>=n_frame) min_frame = n_frame - 1;
-          if(max_frame>=n_frame) max_frame = n_frame - 1;
-          ViewElemDrawBox(G,&I->DragRect, min_frame, max_frame+1, n_frame, white, false);        
-          ViewElemDrawBox(G,&I->DragRect, min_frame, max_frame+1, n_frame, grey, true);
+            int min_frame = (I->DragStartFrame < I->DragCurFrame) ? I->DragStartFrame : I->DragCurFrame;
+            int max_frame = (I->DragStartFrame > I->DragCurFrame) ? I->DragStartFrame : I->DragCurFrame;
+            if(min_frame<0) min_frame = 0;
+            if(max_frame<0) max_frame = 0;
+            if(min_frame>=n_frame) min_frame = n_frame - 1;
+            if(max_frame>=n_frame) max_frame = n_frame - 1;
+            ViewElemDrawBox(G,&I->DragRect, min_frame, max_frame+1, n_frame, white, false);        
+            ViewElemDrawBox(G,&I->DragRect, min_frame, max_frame+1, n_frame, grey, true);
+          }
+          break;
+        case cMovieDragModeInsDel:
+          if(I->DragCurFrame==I->DragStartFrame) {
+            ViewElemDrawBox(G,&I->DragRect, I->DragStartFrame, I->DragStartFrame, n_frame, white, true);        
+          } else if(I->DragCurFrame>=I->DragStartFrame) {
+            float green[4] = {0.5F, 1.0F, 0.5F,0.5F};
+            ViewElemDrawBox(G,&I->DragRect, I->DragStartFrame, I->DragCurFrame, n_frame, green, true);        
+          } else {
+            float red[4] = {1.0F, 0.5F, 0.5F,0.5F};          
+            ViewElemDrawBox(G,&I->DragRect, I->DragCurFrame, I->DragStartFrame, n_frame, red, true);        
+          }
+          break;
         }
-        break;
-      case cMovieDragModeInsDel:
-        if(I->DragCurFrame==I->DragStartFrame) {
-          ViewElemDrawBox(G,&I->DragRect, I->DragStartFrame, I->DragStartFrame, n_frame, white, true);        
-        } else if(I->DragCurFrame>=I->DragStartFrame) {
-          float green[4] = {0.5F, 1.0F, 0.5F,0.5F};
-          ViewElemDrawBox(G,&I->DragRect, I->DragStartFrame, I->DragCurFrame, n_frame, green, true);        
-        } else {
-          float red[4] = {1.0F, 0.5F, 0.5F,0.5F};          
-          ViewElemDrawBox(G,&I->DragRect, I->DragCurFrame, I->DragStartFrame, n_frame, red, true);        
-        }
-        break;
+
       }
-
     }
   }
 }
