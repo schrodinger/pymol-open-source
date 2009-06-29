@@ -1190,7 +1190,15 @@ void MainDoReshape(int width, int height)
       /* do we need to become full-screen? */
 
       if(SettingGet(G, cSetting_full_screen) && G->HaveGUI && G->ValidContext) {
+#ifndef __APPLE__
         p_glutFullScreen();
+#else
+        int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
+        int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
+        height = height - 44;
+        p_glutInitWindowPosition(0, 0);
+        p_glutInitWindowSize(width, height);
+#endif
       }
     }
   }
@@ -1803,6 +1811,9 @@ static void launch(CPyMOLOptions * options, int own_the_options)
       if(G->Option->full_screen) {
         int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
         int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
+#ifdef __APPLE__
+        height = height - 44;
+#endif
         p_glutInitWindowPosition(0, 0);
         p_glutInitWindowSize(width, height);
       }

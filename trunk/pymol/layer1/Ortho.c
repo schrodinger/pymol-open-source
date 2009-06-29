@@ -333,7 +333,6 @@ int OrthoArrowsGrabbed(PyMOLGlobals * G)
   /* arrows can't be grabbed if text isn't visible */
 }
 
-
 /*========================================================================*/
 int OrthoGetOverlayStatus(PyMOLGlobals * G)
 {
@@ -811,15 +810,15 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
     switch (k) {
     case 32:                   /* spacebar */
       if(!OrthoArrowsGrabbed(G)) {
-	if(SettingGetGlobal_b(G, cSetting_presentation)) {
-	  PParse(G, "cmd.scene('','next')");
-	} else {
-	  if(mod & cOrthoSHIFT) {
-	    OrthoCommandIn(G,"rewind;mplay");
-	  } else {
-	    OrthoCommandIn(G,"mtoggle");
-	  }
-	}
+        if(SettingGetGlobal_b(G, cSetting_presentation)) {
+          PParse(G, "cmd.scene('','next')");
+        } else {
+          if(mod & cOrthoSHIFT) {
+            OrthoCommandIn(G,"rewind;mplay");
+          } else {
+            OrthoCommandIn(G,"mtoggle");
+          }
+        }
       } else {
         curLine = add_normal_char(I, k);
       }
@@ -932,7 +931,7 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
       }
       break;
     case 13:                   /* CTRL M -- carriage return */
-      if(OrthoArrowsGrabbed(G)) 
+      if(I->CurChar > I->PromptChar)
         OrthoParseCurrentLine(G);
       else if(SettingGetGlobal_b(G, cSetting_movie_panel) && MovieGetLength(G)) {
         if(mod & cOrthoSHIFT) {

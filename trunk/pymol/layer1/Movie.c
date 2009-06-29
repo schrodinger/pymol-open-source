@@ -89,6 +89,7 @@ struct _CMovie {
   int DragX, DragY, DragMenu;
   int DragStartFrame, DragCurFrame, DragNearest, DragDraw;
   int DragColumn;
+  int LabelIndent;
 };
 
 void MovieViewReinterpolate(PyMOLGlobals *G)
@@ -1542,7 +1543,7 @@ static int MovieClick(Block * block, int button, int x, int y, int mod)
   CMovie *I = G->Movie;
   int count = ExecutiveCountMotions(G);
   BlockRect rect = block->rect;
-  rect.right -= 8 * 8;
+  rect.right -= I->LabelIndent;
 
   switch(button) {
   case P_GLUT_RIGHT_BUTTON:
@@ -1663,7 +1664,7 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
         if((I->DragCurFrame == I->DragStartFrame) && (I->DragMenu)) {
           int count = ExecutiveCountMotions(G);
           BlockRect rect = block->rect;
-          rect.right -= 8 * 8;
+          rect.right -= I->LabelIndent;
           ExecutiveMotionMenuActivate(G,&rect,count,true,x,y,I->DragColumn);
           I->DragMenu = false;
         } else if(I->DragDraw &&
@@ -1677,7 +1678,7 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
         if((I->DragCurFrame == I->DragStartFrame) && (I->DragMenu)) {
           int count = ExecutiveCountMotions(G);
           BlockRect rect = block->rect;
-          rect.right -= 8 * 8;
+          rect.right -= I->LabelIndent;
           ExecutiveMotionMenuActivate(G,&rect,count,true,x,y,I->DragColumn);
           I->DragMenu = false;
         } else if(I->DragDraw &&
@@ -1743,8 +1744,13 @@ int MovieGetPanelHeight(PyMOLGlobals * G)
     }
   }
   if(movie_panel) {
-    return SettingGetGlobal_i(G,cSetting_movie_panel_row_height) *
-      ExecutiveCountMotions(G); 
+    int row_height = SettingGetGlobal_i(G,cSetting_movie_panel_row_height);
+    if(SettingGetGlobal_b(G, cSetting_presentation)) { 
+      /* only show camera line when in presentation mode */
+      return row_height;
+    } else {
+      return row_height * ExecutiveCountMotions(G); 
+    }
   } else {
     return 0;
   }
@@ -1767,7 +1773,7 @@ static void MovieDraw(Block * block)
   int count = ExecutiveCountMotions(G);
   BlockRect rect = block->rect;
   if(count) {
-    rect.right -= 8 * 8;
+    rect.right -= I->LabelIndent;
 
     if(G->HaveGUI && G->ValidContext) {
       float black[3] = {0.0F,0.0F,0.0F};
@@ -1864,6 +1870,11 @@ static void MovieReshape(Block * block, int width, int height)
   BlockReshape(block, width, height);
   I->Width = block->rect.right - block->rect.left + 1;
   I->Height = block->rect.top - block->rect.bottom + 1;
+  if(SettingGetGlobal_b(G, cSetting_presentation)) { 
+    I->LabelIndent = 0;
+  } else {
+    I->LabelIndent = 8 * 8;
+  }
 }
 
 
