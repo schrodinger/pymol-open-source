@@ -7122,6 +7122,16 @@ void SceneUpdate(PyMOLGlobals * G, int force)
     if(force || (defer_builds_mode != 5)) {     /* mode 5 == immediate mode */
 
       PyMOL_SetBusy(G->PyMOL, true);    /*  race condition -- may need to be fixed */
+
+      /* update all gadgets first (single-threaded since they're thread-unsafe) */
+      rec = NULL;
+      while(ListIterate(I->Obj, rec, next)) {
+        if((rec->obj->type == cObjectGadget)) {
+          if(rec->obj->fUpdate)
+            rec->obj->fUpdate(rec->obj);
+        }
+      }
+
       {
 #ifndef _PYMOL_NOPY
         int n_thread = SettingGetGlobal_i(G, cSetting_max_threads);
@@ -7170,14 +7180,18 @@ void SceneUpdate(PyMOLGlobals * G, int force)
 
           rec = NULL;
           while(ListIterate(I->Obj, rec, next))
-            cnt++;
+            if(rec->obj->type != cObjectGadget) {
+              cnt++;
+            }
 
           if(cnt) {
             CObjectUpdateThreadInfo *thread_info = Alloc(CObjectUpdateThreadInfo, cnt);
             if(thread_info) {
               cnt = 0;
-              while(ListIterate(I->Obj, rec, next))
-                thread_info[cnt++].obj = rec->obj;
+              while(ListIterate(I->Obj, rec, next)) {
+                if(rec->obj->type != cObjectGadget)
+                  thread_info[cnt++].obj = rec->obj;
+              }
               SceneObjectUpdateSpawn(G, thread_info, n_thread, cnt);
               FreeP(thread_info);
             }
@@ -7193,7 +7207,7 @@ void SceneUpdate(PyMOLGlobals * G, int force)
         }
       }
       PyMOL_SetBusy(G->PyMOL, false);   /*  race condition -- may need to be fixed */
-    } else {                    /* defer builds mode == 5 -- for now, only update non-molecular objects */
+    } else { /* defer builds mode == 5 -- for now, only update non-molecular objects */
       /* single-threaded update */
       rec = NULL;
       while(ListIterate(I->Obj, rec, next)) {
