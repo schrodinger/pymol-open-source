@@ -80,7 +80,7 @@ class CleanJob:
         except:
             ok = 0
             print "Error: unable to import freemol.mengine module."
-            print "This PyMOL build appear not to include full modeling capabilities."
+            print "This PyMOL build appears not to include full modeling capabilities."
         if ok:
             if not mengine.validate():
                 ok = 0
@@ -88,7 +88,7 @@ class CleanJob:
         if ok:
             if self_cmd.count_atoms(sele)>999:
                 ok = 0
-                print "Error: Clean is currently limited to 999 atoms"
+                print "Error: Sorry, clean is currently limited to 999 atoms"
         if not ok:
             pass
             # we can't call warn because this is the not the tcl-tk gui thread
