@@ -64,12 +64,19 @@ class ActionWizard(Wizard):
         if active_sele in self.cmd.get_names("selections"):
             if self.cmd.select(active_sele, "byobj "+active_sele)<1:
                 self.cmd.delete(active_sele)
-        elif "pk1" in self.cmd.get_names("selections"):
+            else:
+                enabled_list = self.cmd.get_names("objects",enabled_only=1)
+                active_obj_list = self.cmd.get_object_list(active_sele)
+                if len(active_obj_list) != 1:
+                    self.cmd.delete(active_sele)
+                elif active_obj_list[0] not in enabled_list:
+                    self.cmd.delete(active_sele)                
+        if "pk1" in self.cmd.get_names("selections"):
             self.cmd.select(active_sele,"byobj pk1")
         else:
-            obj_list = self.cmd.get_names("objects",enabled_only=1)
-            if len(obj_list)==1:
-                if self.cmd.select(active_sele, obj_list[0])<1:
+            enabled_list = self.cmd.get_names("objects",enabled_only=1)
+            if len(enabled_list)==1:
+                if self.cmd.select(active_sele, enabled_list[0])<1:
                     self.cmd.delete(active_sele)
         return active_sele in self.cmd.get_names("selections")
 

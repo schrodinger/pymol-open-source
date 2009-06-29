@@ -6630,10 +6630,12 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule * I, int state)
           break;
         case cAN_N:
           ai0->valence = 2;
-
           break;
         case cAN_C:
           ai0->valence = 3;
+          break;
+        case cAN_S:
+          ai0->valence = 2;
           break;
         default:
           ai0->valence = 4;
