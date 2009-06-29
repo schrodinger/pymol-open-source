@@ -525,10 +525,18 @@ void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected)
     switch(rec->type) {
     case cExecAll:
       if(MovieGetSpecLevel(G,0)>=0) {
+        int presentation = SettingGetGlobal_b(G, cSetting_presentation);
+        if(presentation) { 
+          expected = 1;
+        }
         draw_rect.top = rect->top - (height * count) / expected;
         draw_rect.bottom = rect->top - (height * (count + 1)) / expected;
         MovieDrawViewElem(G,&draw_rect,frames);
         count++;
+        if(presentation) { 
+          goto done;
+        }
+          
       }
       break;
     case cExecObject:
@@ -541,6 +549,8 @@ void ExecutiveMotionDraw(PyMOLGlobals * G, BlockRect *rect, int expected)
       break;
     }
   }
+ done:
+  return;
 }
 
 void ExecutiveMotionMenuActivate(PyMOLGlobals * G, BlockRect *rect, int expected, int passive, 
@@ -13459,7 +13469,15 @@ void ExecutiveFullScreen(PyMOLGlobals * G, int flag)
 
       SettingSet(G, cSetting_full_screen, (float) flag);
       if(flag) {
+#ifndef __APPLE__
         p_glutFullScreen();
+#else
+        int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
+        int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
+        height = height - 44;
+        p_glutInitWindowPosition(0, 0);
+        p_glutInitWindowSize(width, height);
+#endif
       } else {
         if(I->sizeFlag) {
           p_glutPositionWindow(I->oldPX, I->oldPY);
