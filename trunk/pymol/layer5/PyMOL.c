@@ -3351,7 +3351,7 @@ void PyMOL_Reshape(CPyMOL * I, int width, int height, int force)
 
   G->Option->winX = width;
   G->Option->winY = height;
-
+  
   OrthoReshape(G, width, height, force);
 PYMOL_API_UNLOCK}
 
@@ -3483,7 +3483,7 @@ void PyMOL_NeedSwap(CPyMOL * I)
 }
 
 void PyMOL_NeedReshape(CPyMOL * I, int mode, int x, int y, int width, int height)
-{
+{ 
   PyMOLGlobals *G = I->G;
   if(width < 0) {
     int h;
@@ -3502,8 +3502,10 @@ void PyMOL_NeedReshape(CPyMOL * I, int mode, int x, int y, int width, int height
     if(internal_feedback)
       height += (internal_feedback - 1) * cOrthoLineHeight + cOrthoBottomSceneMargin;
     if(SettingGetGlobal_b(G, cSetting_seq_view)
-       && !SettingGetGlobal_b(G, cSetting_seq_view_overlay))
+       && !SettingGetGlobal_b(G, cSetting_seq_view_overlay)) {
       height += SeqGetHeight(G);
+    }
+    height += MovieGetPanelHeight(G);
   }
 
   if(G->HaveGUI) {
