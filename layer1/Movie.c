@@ -1738,13 +1738,14 @@ int MovieGetPanelHeight(PyMOLGlobals * G)
 {
   int movie_panel = SettingGetGlobal_i(G, cSetting_movie_panel);
   CMovie *I = G->Movie;
-  if(movie_panel < 0) {
+  if(movie_panel != 0) {
     if(MovieGetLength(G)) {
       movie_panel = 1;
     } else {
       movie_panel = 0;
     }
   }
+  
   if(movie_panel) {
     int row_height = SettingGetGlobal_i(G,cSetting_movie_panel_row_height);
     I->PanelActive = true;
