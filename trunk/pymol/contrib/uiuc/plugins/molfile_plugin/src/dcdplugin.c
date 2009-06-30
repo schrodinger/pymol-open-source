@@ -164,7 +164,7 @@ static int read_dcdheader(fio_fd fd, int *N, int *NSET, int *ISTART,
 {
   unsigned int input_integer[2];  /* buffer space */
   int i, ret_val, rec_scale;
-  union hdrbuf_union {
+  union hdrufb_union {
   char charvalue[84];    /* char buffer used to store header */
   int intvalue;
   };
@@ -238,12 +238,12 @@ static int read_dcdheader(fio_fd fd, int *N, int *NSET, int *ISTART,
   /* header, which is unused by X-PLOR, to its version number.  */
   /* Checking if this is nonzero tells us this is a CHARMm file */
   /* and to look for other CHARMm flags.                        */
-  if (*((int *) (hdrbuf.intvalue + 76)) != 0) {
+  if (*((int *) (hdrbuf.charvalue + 76)) != 0) {
     (*charmm) = DCD_IS_CHARMM;
-    if (*((int *) (hdrbuf.intvalue + 40)) != 0)
+    if (*((int *) (hdrbuf.charvalue + 40)) != 0)
       (*charmm) |= DCD_HAS_EXTRA_BLOCK;
 
-    if (*((int *) (hdrbuf.intvalue + 44)) == 1)
+    if (*((int *) (hdrbuf.charvalue + 44)) == 1)
       (*charmm) |= DCD_HAS_4DIMS;
 
     if (rec_scale == RECSCALE64BIT)
@@ -262,32 +262,32 @@ static int read_dcdheader(fio_fd fd, int *N, int *NSET, int *ISTART,
   }
 
   /* Store the number of sets of coordinates (NSET) */
-  (*NSET) = *((int *)(hdrbuf.intvalue)); 
+  (*NSET) = *((int *)(hdrbuf.charvalue)); 
   if (*reverseEndian) swap4_unaligned(NSET, 1);
 
   /* Store ISTART, the starting timestep */
-  (*ISTART) = *((int *) (hdrbuf.intvalue + 4));
+  (*ISTART) = *((int *) (hdrbuf.charvalue + 4));
   if (*reverseEndian) swap4_unaligned(ISTART, 1);
 
   /* Store NSAVC, the number of timesteps between dcd saves */
-  (*NSAVC) = *((int *) (hdrbuf.intvalue + 8));
+  (*NSAVC) = *((int *) (hdrbuf.charvalue + 8));
   if (*reverseEndian) swap4_unaligned(NSAVC, 1);
 
   /* Store NAMNF, the number of fixed atoms */
-  (*NAMNF) = *((int *) (hdrbuf.intvalue + 32));
+  (*NAMNF) = *((int *) (hdrbuf.charvalue + 32));
   if (*reverseEndian) swap4_unaligned(NAMNF, 1);
 
   /* Read in the timestep, DELTA */
   /* Note: DELTA is stored as a double with X-PLOR but as a float with CHARMm */
   if ((*charmm) & DCD_IS_CHARMM) {
     float ftmp;
-    ftmp = *((float *)(hdrbuf.intvalue+36)); /* is this safe on Alpha? */
+    ftmp = *((float *)(hdrbuf.charvalue+36)); /* is this safe on Alpha? */
     if (*reverseEndian)
       swap4_aligned(&ftmp, 1);
 
     *DELTA = (double)ftmp;
   } else {
-    (*DELTA) = *((double *)(hdrbuf.intvalue + 36));
+    (*DELTA) = *((double *)(hdrbuf.charvalue + 36));
     if (*reverseEndian) swap8_unaligned(DELTA, 1);
   }
 
