@@ -8,13 +8,13 @@
  *
  *      $RCSfile: vaspoutcarplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.6 $       $Date: 2009/01/29 14:56:59 $
+ *      $Revision: 1.8 $       $Date: 2009/06/22 19:50:38 $
  *
  ***************************************************************************/
 
 /*
  *  VASP plugins for VMD
- *  Sung Sakong, Dept. of Theo. Chem., Univsity of Ulm 
+ *  Sung Sakong, Dept. of Phys., Univsity Duisburg-Essen
  *  
  *  VASP manual   
  *  http:
@@ -272,8 +272,8 @@ static molfile_plugin_t vaspoutcarplugin = {
   "VASP_OUTCAR",              /* pretty name */
   "Sung Sakong",              /* author */
   0,                          /* major version */
-  3,                          /* minor version */
-  VMDPLUGIN_THREADUNSAFE,     /* is not reentrant */
+  6,                          /* minor version */
+  VMDPLUGIN_THREADUNSAFE,     /* is reentrant */
 
   "OUTCAR",                   /* filename_extension */
   open_vaspoutcar_read,       /* open_file_read */
@@ -299,7 +299,7 @@ int VMDPLUGIN_init() {
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&vaspoutcarplugin);
+  (*cb)(v, (vmdplugin_t *)&vaspoutcarplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

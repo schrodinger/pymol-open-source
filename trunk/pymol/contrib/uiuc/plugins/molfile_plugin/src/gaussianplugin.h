@@ -10,8 +10,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: gaussianplugin.h,v $
- *      $Author: saam $       $Locker:  $             $State: Exp $
- *      $Revision: 1.5 $       $Date: 2009/02/20 22:36:21 $
+ *      $Author: akohlmey $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.9 $       $Date: 2009/06/21 23:39:31 $
  *
  ***************************************************************************/
 /*******************************************************************
@@ -27,12 +27,11 @@
 #include "molfile_plugin.h"
 
 /* define macros for true/false to make code 
- * look somewhat nicer; the macro DONE signals
- * that we're done with reading an should return
- * with what we have */
+* look somewhat nicer; the macro DONE signals
+* that we're done with reading an should return
+* with what we have */
 #define FALSE 0
 #define TRUE  1
-
 
 /** macros describing the RUNTYP */
 #define RUNTYP_UNKNOWN    0     /**< not set.  */
@@ -44,7 +43,6 @@
 #define RUNTYP_DYNAMICS   6     /**< molecular dynamics or monte carlo  */
 #define RUNTYP_PROPERTIES 7     /**< wavefunction analysis  */
 
-
 /** macros defining the SCFTYP */
 #define SCFTYP_UNKNOWN 0        /**< not set. */
 #define SCFTYP_RHF   1          /**< closed shell or restricted wfn.  */
@@ -54,6 +52,8 @@
 #define SCFTYP_MCSCF 5          /**< multi-configuration SCF.  */
 #define SCFTYP_FF    6          /**< force field calculation.  */
 
+/** XXX: check if this can go away. */
+#define MAX_NUM_WAVE 10
 
 typedef struct {
   float exponent;
@@ -62,18 +62,16 @@ typedef struct {
 
 
 typedef struct {
-  int numprims;
-  int symmetry;     /* S, P, D, F, ...
-                      * just for convenience when retrieving info */
-  int wave_offset;   /* index into wave_function array */
-  prim_t *prim;      /* array of primitives */
+  int symmetry;                 /* symmetry of this shell (S, P, D, ...) */
+  int numprims;                 /* number of primitive basis functions */
+  prim_t *prim;                 /* array of primitives */
 } shell_t;
 
 
 /** Basis set definition for one atom */
 typedef struct {
-  char name[20];
-  /* int nuclearcharge; */
+  char name[20];                /* atom name or type (pseudopotentialfile?) */
+  int atomicnum;                /* atomic number (nuclear charge XXX) */
   int numshells;
   shell_t *shell;
 } basis_atom_t;
@@ -90,11 +88,28 @@ typedef struct
 
 
 typedef struct {
-  int   orbital_counter;    /* number of orbitals written out */
-  float *orbital_energies;  /* list of orbital energies for wavefunction */
-  float *wave_function;     /* expansion coefficients for wavefunction in the form {orbital1(c1),orbital1(c2),.....,orbi talM(cN)} */
+  int   idtag;              /**< unique tag to identify this wavefunction over the trajectory */
+  int   type;               /**< CANONICAL, LOCALIZED, OTHER */
+  int   spin;               /**< 0 for alpha, 1 for beta */
+  int   cartesian;          /**< 1 if cartesian, 0 if pure  */
+  int   excitation;         /**< 0 for ground state, 1,2,3,... for excited states */
+  char info[MOLFILE_BUFSIZ]; /**< string for additional type info */
 
-  int   num_scfiter;            /* number of SCF iterations */
+  int   num_orbitals;       /**< number of orbitals that were really 
+                             *   present in the output for this step */
+  int   *orb_indices;       /**< list of orbital indices for wavefunction */
+  float *occupancies;       /**< list of orbital occupancies for wavefunction */
+  float *orb_energies;      /**< list of orbital energies for wavefunction */
+  float *wave_coeffs;       /**< expansion coefficients for wavefunction in the
+                             *   form {orbital1(c1),orbital1(c2),.....,orbitalM(cN)} */
+} qm_wavefunction_t;
+
+
+typedef struct {
+  qm_wavefunction_t *wave;  /**<  */
+  int numwave;              /**< number of independent wavefunctions  */
+  int num_orbitals;         /**< number of orbitals per wavefunction  */
+  int num_scfiter;          /**< number of SCF iterations for this step */
   double *scfenergies;      /* scfenergies per trajectory point 
                              * XXX: how about post-HF calculations?
                              *      we have the HF, MP2, CASSCF, CCS,
@@ -114,21 +129,23 @@ typedef struct
 {
   FILE *file;
   int numatoms;
-  int runtyp;   /* RUNTYP of Gaussian as int for internal use */
-  char gbasis[20];   /* GBASIS of Gaussian run. */
+  int runtyp;        /* run type of this job as int for internal use */
+  char gbasis[20];   /* canonicalized basis set string
+                        for loading and external basis set. */
 
   char basis_string[MOLFILE_BUFSIZ]; /* basis name as "nice" string */
 
-  char runtitle[MOLFILE_BUFSIZ];  /* title of gaussian run */
+  char runtitle[MOLFILE_BUFSIZ];  /* title/info section of run */
 
   char geometry[MOLFILE_BUFSIZ];  /* either UNIQUE, CART or ZMP/ZMTMPC */
   char guess[MOLFILE_BUFSIZ];    /* type of guess method used */
 
-  char version_string[MOLFILE_BUFSIZ]; /* Gaussian version used for run */
-  int  version;  /* 
+  char version_string[MOLFILE_BUFSIZ]; /* full version string of binary used for run */
+  int  version;  /* gaussian version code;
+                  * canonicalized and set up for integer comparisons.
                   * here we keep track the exact Gaussian version,
                   * since the log file format keeps changing all
-                  * the time. this allows to use numerical comparisons.
+                  * the time. 
                   * Format is Year/Revision/Patchlevel: YYYYRRPP
                   * with:
                   * YYYY: g94 -> 1994, g98 -> 1998, g03 -> 2003
@@ -187,6 +204,10 @@ typedef struct
                           *  0 = none (can only visualize up to P)
                           *  1 = have cartesian (6 instead of 5) d-functions)
                           *  2 = have cartesian (10 instead of 7) f-functions)
+                          *  4 = have cartesian (XX instead of X) g-functions)
+                          *  basis transferred to VMD is always cartesian,
+                          *  so wavefunctions expanded in pure atomic orbitals
+                          *  will have to be converted.
                           */
 
   /* arrays with atom charges */
@@ -210,6 +231,16 @@ typedef struct
                           * be read from the output file */
 
   int nintcoords;    /* Number of internal coordinates */
+  int nbonds;        /* Number of bonds */
+  int nangles;       /* Number of angles */
+  int ndiheds;       /* Number of dihedrals */
+  int nimprops;      /* Number of impropers */
+
+  int *bonds;        /* bond list (atom tuples) */
+  int *angles;       /* angle list (atom triples) */
+  int *dihedrals;    /* dihedral list (atom quadrupels) */
+  int *impropers;    /* improper list (atom quadrupels) */
+
   double *internal_coordinates; /* value of internal coordinates */ 
   
   /*******************************************************
@@ -232,14 +263,20 @@ typedef struct
    * END OF NEW API data members
    *********************************************************/
 
-  int num_basis_funcs;  /* total number of basis functions */
-  /** this array of floats stores the contraction coefficients
+  /* this array of floats stores the contraction coefficients
    * and exponents for the basis functions:
    * { exp(1), c-coeff(1), exp(2), c-coeff(2), .... }
    * This holds also for double-zeta basis functions with
-   * exp(i) == exp(j) and c-coeff(i) != c-coeff(j). */
-  float *basis; 
+   * exp(i) = exp(j) and c-coeff(i) != c-coeff(j). */
+  float *basis;
+
   basis_atom_t *basis_set;
+
+  int num_basis_funcs;          /** total number of primitive basis functions */
+  int num_basis_atoms;          /** total number of atoms with basis functions */
+
+  /** atomic number per atom in basis set */
+  int *atomicnum_per_basisatom;
 
   /** the total number of atomic shells */
   int num_shells;
@@ -250,17 +287,16 @@ typedef struct
   /** symmetry type of each shell */
   int *shell_symmetry; 
 
-  /** number of spin A and B orbitals */
-  int num_orbitals_A;
-  int num_orbitals_B;
+  /** number of occupied spin alpha and beta orbitals */
+  int occ_orbitals_A;
+  int occ_orbitals_B;
 
-  /** Max. size of the wave_function array per orbital.
-   * This is the number of contracted cartesian gaussian 
-   * basis functions or the size of the secular equation.
+  /** Max. rank of the wave_function matrix.
    * While the actual number of MOs present can be different
    * for each frame, this is the maximum number of 
    * possible occupied and virtual orbitals. */
   int wavef_size;
+  int num_orbitals;      /* number of orbitals in file. can be less if pure WF. */
 
   /** Array of length 3*num_wave_f containing the exponents 
    *  describing the cartesian components of the angular momentum. 
@@ -299,7 +335,5 @@ typedef struct
   int end_of_trajectory;
 
 } gaussiandata;
-
-
 
 #endif

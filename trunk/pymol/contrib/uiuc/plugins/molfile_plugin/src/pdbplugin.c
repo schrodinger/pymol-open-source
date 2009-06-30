@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: pdbplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.70 $       $Date: 2009/02/20 22:28:41 $
+ *      $Revision: 1.72 $       $Date: 2009/04/29 15:45:32 $
  *
  ***************************************************************************/
 
@@ -584,7 +584,7 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
   plugin.prettyname = "PDB";
   plugin.author = "Justin Gullingsrud, John Stone";
   plugin.majorv = 1;
-  plugin.minorv = 15;
+  plugin.minorv = 16;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "pdb,ent";
   plugin.open_file_read = open_pdb_read;
@@ -601,7 +601,7 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

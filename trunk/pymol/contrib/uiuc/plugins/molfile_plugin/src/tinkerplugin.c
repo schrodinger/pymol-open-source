@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: tinkerplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.12 $       $Date: 2007/02/25 20:23:44 $
+ *      $Revision: 1.13 $       $Date: 2009/04/29 15:45:34 $
  *
  ***************************************************************************/
 
@@ -182,7 +182,7 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

@@ -1,14 +1,14 @@
 /* MACHINE GENERATED FILE, DO NOT EDIT! */
 
-#define VMDPLUGIN molfile_vaspchgcarplugin
+#define VMDPLUGIN molfile_vaspparchgplugin
 #define STATIC_PLUGIN 1
 
 /***************************************************************************
  * RCS INFORMATION:
  *
- *      $RCSfile: vaspchgcarplugin.c,v $
+ *      $RCSfile: vaspparchgplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.12 $       $Date: 2009/06/22 19:50:38 $
+ *      $Revision: 1.1 $       $Date: 2009/06/23 20:01:57 $
  *
  ***************************************************************************/
 
@@ -22,15 +22,15 @@
 
  * 
  *  LINUX
- *  g++ -O2 -Wall -I. -I$VMDBASEDIR/plugins/include -c vaspchgcarplugin.c
- *  ld -shared -o vaspchgcarplugin.so vaspchgcarplugin.o
+ *  g++ -O2 -Wall -I. -I$VMDBASEDIR/plugins/include -c vaspparchgplugin.c
+ *  ld -shared -o vaspparchgplugin.so vaspparchgplugin.o
  *
  *  MACOSX
- *  c++ -O2 -Wall -I. -I$VMDBASEDIR/plugins/include -c vaspchgcarplugin.c
- *  c++ -bundle -o vaspchgcarplugin.so vaspchgcarplugin.o
+ *  c++ -O2 -Wall -I. -I$VMDBASEDIR/plugins/include -c vaspparchgplugin.c
+ *  c++ -bundle -o vaspparchgplugin.so vaspparchgplugin.o
  *
  *  Install
- *  copy vaspchgcarplugin.so $VMDBASEDIR/plugins/$ARCH/molfile
+ *  copy vaspparchgplugin.so $VMDBASEDIR/plugins/$ARCH/molfile
  */
 
 #include <stdio.h>
@@ -42,7 +42,7 @@
 #include "vaspplugin.h"
 
 
-static void *open_vaspchgcar_read(const char *filename, const char *filetype, int *natoms)
+static void *open_vaspparchg_read(const char *filename, const char *filetype, int *natoms)
 {
   vasp_plugindata_t *data;
   char lineptr[LINESIZE];
@@ -124,7 +124,7 @@ static void *open_vaspchgcar_read(const char *filename, const char *filetype, in
 
   if (data->numatoms == 0) {
     vasp_plugindata_free(data);
-    fprintf(stderr, "\n\nVASP CHGCAR read) ERROR: file '%s' does not contain list of atom numbers.\n", filename);
+    fprintf(stderr, "\n\nVASP PARCHG read) ERROR: file '%s' does not contain list of atom numbers.\n", filename);
     return NULL;
   }
 
@@ -137,7 +137,7 @@ static void *open_vaspchgcar_read(const char *filename, const char *filetype, in
 }
 
 
-static int read_vaspchgcar_metadata(void *mydata, int *nvolsets, molfile_volumetric_t **metadata)
+static int read_vaspparchg_metadata(void *mydata, int *nvolsets, molfile_volumetric_t **metadata)
 {
   vasp_plugindata_t *data = (vasp_plugindata_t *)mydata;
   char lineptr[LINESIZE];
@@ -150,11 +150,11 @@ static int read_vaspchgcar_metadata(void *mydata, int *nvolsets, molfile_volumet
   /* Read the grid size */
   fgets(lineptr, LINESIZE, data->file);
   if (3 != sscanf(lineptr, "%d %d %d", &gridx, &gridy, &gridz)) {
-     fprintf(stderr, "\n\nVASP CHGCAR read) ERROR: file '%s' does not contain grid dimensions.\n", data->filename);
+     fprintf(stderr, "\n\nVASP PARCHG read) ERROR: file '%s' does not contain grid dimensions.\n", data->filename);
      return MOLFILE_ERROR;
   }
 
-  fprintf(stderr, "\n\nVASP CHGCAR read) found grid data block...\n");
+  fprintf(stderr, "\n\nVASP PARCHG read) found grid data block...\n");
 
   /* Initialize the volume set list with 4 entries:
    * spin up+down : always present
@@ -164,7 +164,7 @@ static int read_vaspchgcar_metadata(void *mydata, int *nvolsets, molfile_volumet
   data->nvolsets = 4;
   data->vol = (molfile_volumetric_t *)malloc(data->nvolsets * sizeof(molfile_volumetric_t));
   if (!data->vol) {
-     fprintf(stderr, "\n\nVASP CHGCAR read) ERROR: Cannot allocate space for volume data.\n");
+     fprintf(stderr, "\n\nVASP PARCHG read) ERROR: Cannot allocate space for volume data.\n");
      return MOLFILE_ERROR;
   }
 
@@ -204,7 +204,8 @@ static int read_vaspchgcar_metadata(void *mydata, int *nvolsets, molfile_volumet
   return MOLFILE_SUCCESS;
 }
 
-static int read_vaspchgcar_data(void *mydata, int set, float *datablock, float *colorblock)
+
+static int read_vaspparchg_data(void *mydata, int set, float *datablock, float *colorblock)
 {
   vasp_plugindata_t *data = (vasp_plugindata_t *)mydata;
   char lineptr[LINESIZE];
@@ -217,14 +218,14 @@ static int read_vaspchgcar_data(void *mydata, int set, float *datablock, float *
 
   if (strstr(data->filename, "LOCPOT") == NULL && strstr(data->filename, "ELFCAR") == NULL) {
     chargedensity = 1;
-    fprintf(stderr, "\nVASP CHGCAR read) Charge density is assumed. Each value will be divided by unit cell volume.\n");
+    fprintf(stderr, "\nVASP PARCHG read) Charge density is assumed. Each value will be divided by unit cell volume.\n");
   } else {
     if (set == 1) {
-      fprintf(stderr, "\n\nVASP CHGCAR read) ERROR: ELF or local potential do not include spin difference information.\n");
+      fprintf(stderr, "\n\nVASP PARCHG read) ERROR: ELF or local potential do not include spin difference information.\n");
       return MOLFILE_ERROR;
     }
     chargedensity = 0;
-    fprintf(stderr, "\nVASP CHGCAR read) ELF or local potential is assumed.\n");
+    fprintf(stderr, "\nVASP PARCHG read) ELF or local potential is assumed.\n");
   }
 
   volume = fabs(
@@ -245,7 +246,7 @@ static int read_vaspchgcar_data(void *mydata, int set, float *datablock, float *
     int const numberOfDatapoints = (xsize - 1) * (ysize - 1) * (zsize - 1);
     int ix, iy, iz;
 
-    fprintf(stderr, "\nVASP CHGCAR read) Patience! Reading volume set %d (%d points): %s\n", iset + 1, numberOfDatapoints, dataname);
+    fprintf(stderr, "\nVASP PARCHG read) Patience! Reading volume set %d (%d points): %s\n", iset + 1, numberOfDatapoints, dataname);
 
     for (n = iz = 0; iz < zsize; ++iz) {
       for (iy = 0; iy < ysize; ++iy) {
@@ -269,71 +270,51 @@ static int read_vaspchgcar_data(void *mydata, int set, float *datablock, float *
       }
     }
 
-    /* Skip paw-augmentation part 
-     * augmentation parts are found only in CHGCAR not in PARCHG
-     * I have no good idea for that */
-    for (iy = 0; iy < data->numatoms; ++iy) {
-      int numaug;
-      if (1 != fscanf(data->file, "%*s %*s %*d %d", &numaug)) error = 1;
-      
-      for (ix = 0; ix < numaug && !error; ++ix) {
-	float val;
-	if (1 != fscanf(data->file, "%f", &val)) error = 2;
-      }
-      fgets(lineptr, LINESIZE, data->file);
-    }
-
-    /* After the charge density data there are floating numbers (times of atoms)
-     * and a line with three grid integers, all of which should be skipped. */
-    if(iset==0){
-      for (iy = 0; iy < data->numatoms; ++iy) {
-	float val;
-	if (1 != fscanf(data->file, "%f", &val)) error = 2;
-      }
+    if(iset == 0){
       for (iy = 0; iy < 3; ++iy) {
 	int ival;
 	if (1 != fscanf(data->file, "%d", &ival)) error = 2;
       }
     }
 
-    fprintf(stderr, "\nVASP CHGCAR read) %s finished.\n", dataname);
+    fprintf(stderr, "\nVASP PARCHG read) %s finished.\n", dataname);
   }
 
-  if (error) fprintf(stderr, "\nVASP CHGCAR read) PAW-augmentation part is incomplete, but it is ignored anyway.\n");
+  if (error) fprintf(stderr, "\nVASP PARCHG read) PAW-augmentation part is incomplete, but it is ignored anyway.\n");
 
   return MOLFILE_SUCCESS;
 }
 
 
-static void close_vaspchgcar_read(void *mydata)
+static void close_vaspparchg_read(void *mydata)
 {
   vasp_plugindata_t *data = (vasp_plugindata_t *)mydata;
   vasp_plugindata_free(data);
 }
 
 
-static molfile_plugin_t vaspchgcarplugin = {
+static molfile_plugin_t vaspparchgplugin = {
   vmdplugin_ABIVERSION,
   MOLFILE_PLUGIN_TYPE,       /* type */ 	
-  "CHGCAR",                  /* name */
-  "VASP_CHGCAR",             /* pretty name */
+  "PARCHG",                  /* name */
+  "VASP_PARCHG",             /* pretty name */
   "Sung Sakong",             /* author */
   0,                         /* major version */
   6,                         /* minor version */
   VMDPLUGIN_THREADUNSAFE,    /* is reentrant */
 
-  "CHGCAR",                  /* filename_extension */
-  open_vaspchgcar_read,      /* open_file_read */          
+  "PARCHG",                  /* filename_extension */
+  open_vaspparchg_read,      /* open_file_read */          
   0,                         /* read_structure */
   0,                         /* read_bonds */
   0,                         /* read_next_timestep */
-  close_vaspchgcar_read,     /* close_file_read */
+  close_vaspparchg_read,     /* close_file_read */
   0,                         /* open_file_write */
   0,                         /* write_structure */
   0,                         /* write_timestep */
   0,                         /* close_file_write */
-  read_vaspchgcar_metadata,  /* read_volumetric_metadata */
-  read_vaspchgcar_data,      /* read_volumetric_data */
+  read_vaspparchg_metadata,  /* read_volumetric_metadata */
+  read_vaspparchg_data,      /* read_volumetric_data */
   0,                         
   0,                         
   0                          /* read_rawgraphics */
@@ -350,6 +331,6 @@ int VMDPLUGIN_fini(void) {
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)&vaspchgcarplugin);
+  (*cb)(v, (vmdplugin_t *)&vaspparchgplugin);
   return VMDPLUGIN_SUCCESS;
 }

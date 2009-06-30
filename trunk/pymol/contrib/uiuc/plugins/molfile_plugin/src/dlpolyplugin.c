@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: dlpolyplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.20 $       $Date: 2007/03/24 21:21:35 $
+ *      $Revision: 1.21 $       $Date: 2009/04/29 15:45:29 $
  *
  ***************************************************************************/
 
@@ -468,8 +468,8 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&dlpoly2plugin);
-  (*cb)(v, (vmdplugin_t *)(void *)&dlpoly3plugin);
+  (*cb)(v, (vmdplugin_t *)&dlpoly2plugin);
+  (*cb)(v, (vmdplugin_t *)&dlpoly3plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

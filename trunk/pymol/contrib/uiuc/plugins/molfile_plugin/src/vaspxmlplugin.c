@@ -8,13 +8,13 @@
  *
  *      $RCSfile: vaspxmlplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.5 $       $Date: 2008/08/05 20:13:49 $
+ *      $Revision: 1.7 $       $Date: 2009/06/22 19:50:39 $
  *
  ***************************************************************************/
 
 /*
  *  VASP plugins for VMD
- *  Sung Sakong, Dept. of Theo. Chem., Univsity of Ulm 
+ *  Sung Sakong, Dept. of Phys., Univsity Duisburg-Essen
  *  
  *  VASP manual   
  *  http:
@@ -241,7 +241,7 @@ static molfile_plugin_t vaspxmlplugin = {
   "VASP_xml",              /* pretty name */
   "Sung Sakong",           /* author */
   0,                       /* major version */
-  3,                       /* minor version */
+  6,                       /* minor version */
   VMDPLUGIN_THREADSAFE,    /* is reentrant */
 
   "xml",                   /* filename_extension */
@@ -268,7 +268,7 @@ int VMDPLUGIN_init() {
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&vaspxmlplugin);
+  (*cb)(v, (vmdplugin_t *)&vaspxmlplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

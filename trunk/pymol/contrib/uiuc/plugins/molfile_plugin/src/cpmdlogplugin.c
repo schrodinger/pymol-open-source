@@ -14,11 +14,11 @@
 
 /* *******************************************************
  *
- *          CPMD output file Plugin
+ *          CPMD Output File Reader Plugin
  *
- * This plugin allows VMD to read CPMD output files.
- * So far only supports PROPERTIES and specially
- * modified MOLECULAR DYNAMICS BO runs.
+ * This plugin allows VMD to read some CPMD output files.
+ * So far only PROPERTIES and specially modified 
+ * MOLECULAR DYNAMICS BO runs.
  *
  * ********************************************************/
 #include <stdlib.h>
@@ -38,8 +38,11 @@
 /*
  * Error reporting macro for use in DEBUG mode
  */
+#ifndef CPMDLOG_DEBUG
 #define CPMDLOG_DEBUG 0
+#endif
 #define CPMDLOG_BASIS_DEBUG 1
+
 #if CPMDLOG_DEBUG
 #define PRINTERR vmdcon_printf(VMDCON_ERROR,                            \
                                "\n In file %s, line %d: \n %s \n \n",   \
@@ -67,8 +70,7 @@
   if (ptr == NULL) {                                                \
     PRINTERR;                                                       \
     return MOLFILE_ERROR;                                           \
-  }                                                                 \
-  
+  }
 
 #define UNK_SHELL -666
 #define SPD_D_SHELL -5
@@ -83,6 +85,9 @@
 #define G_SHELL 4
 #define H_SHELL 5
 #define I_SHELL 6
+
+#define SPIN_ALPHA 0
+#define SPIN_BETA  1
 
 #define STATUS_UNKNOWN       -1
 #define STATUS_CONVERGED      0
@@ -135,7 +140,7 @@ static int find_traj_end(gaussiandata *);
 
 /* this function parses the input file for the final
  * wavefunction and stores it in the appropriate arrays; */
-static int get_wavefunction(gaussiandata *, qm_timestep_t *);
+static int get_wavefunction(gaussiandata *, qm_timestep_t *, qm_wavefunction_t *);
 
 /** read in mulliken charges */
 static int get_population(gaussiandata *, qm_timestep_t *);
@@ -286,9 +291,6 @@ static int read_cpmdlog_metadata(void *mydata,
   gaussian_metadata->num_shells      = data->num_shells;
   gaussian_metadata->wavef_size      = data->wavef_size;  
 
-  /* trajectory information */
-  gaussian_metadata->num_traj_points = data->num_frames;
-
 #if vmdplugin_ABIVERSION > 11
   /* charges */
   gaussian_metadata->have_esp = 0;
@@ -320,14 +322,13 @@ static int read_cpmdlog_rundata(void *mydata,
   /* fill in molfile_qm_sysinfo_t */
   sys_data->nproc = data->nproc;
   sys_data->memory = data->memory; 
-  sys_data->runtyp = data->runtyp;
-  sys_data->scftyp = data->scftyp;
+  sys_data->runtype = data->runtyp;
+  sys_data->scftype = data->scftyp;
   sys_data->totalcharge = data->totalcharge;
   sys_data->multiplicity = data->multiplicity;
-/*   sys_data->wavef_size = data->wavef_size; */
   sys_data->num_electrons = data->num_electrons;
-  sys_data->num_orbitals_A = data->num_orbitals_A;
-  sys_data->num_orbitals_B = data->num_orbitals_B;
+  sys_data->num_occupied_A = data->occ_orbitals_A;
+  sys_data->num_occupied_B = data->occ_orbitals_B;
 
   strncpy(sys_data->basis_string, data->basis_string,
           sizeof(sys_data->basis_string));
@@ -387,7 +388,7 @@ static int read_timestep_metadata(void *mydata,
  ***********************************************************/
 static int read_qm_timestep_metadata(void *mydata,
                                     molfile_qm_timestep_metadata_t *meta) {
-  int have = 0;
+  int i, have = 0;
   gaussiandata *data = (gaussiandata *)mydata;
 
 #if CPMDLOG_DEBUG
@@ -421,12 +422,21 @@ static int read_qm_timestep_metadata(void *mydata,
                   data->num_frames_sent);
 #endif
     meta->num_scfiter  = 0;
-    meta->num_orbitals_per_wavef[0] = cur_qm_ts->orbital_counter;
+
+    for (i=0; (i<MAX_NUM_WAVE && i<cur_qm_ts->numwave); i++) { 
+#if CPMDLOG_DEBUG
+      vmdcon_printf(VMDCON_INFO,
+                    "cpmdlogplugin) num_orbitals_per_wavef[%d/%d]=%d\n",
+                    i+1, cur_qm_ts->numwave, cur_qm_ts->wave[i].num_orbitals);
+#endif
+      meta->num_orbitals_per_wavef[i] = cur_qm_ts->wave[i].num_orbitals;
+    }
     meta->wavef_size = data->wavef_size;
 
   } else {
     meta->num_scfiter = 0;
     meta->num_orbitals_per_wavef[0] = 0;
+    meta->num_wavef = 0;
     meta->wavef_size = 0;
 
     data->end_of_trajectory = TRUE;
@@ -482,12 +492,16 @@ static int read_timestep(void *mydata, int natoms,
   }
 
   /* store the wave function and orbital energies */
-  if (cur_qm_ts->wave_function && cur_qm_ts->orbital_counter) {
-    memcpy(qm_ts->wave_function, cur_qm_ts->wave_function,
-	    cur_qm_ts->orbital_counter*data->wavef_size*sizeof(float));
-    
-    memcpy(qm_ts->orbital_energies, cur_qm_ts->orbital_energies,
-	    cur_qm_ts->orbital_counter*sizeof(float));
+  if (cur_qm_ts->wave) {
+    for (i=0; i<cur_qm_ts->numwave; i++) {
+      qm_wavefunction_t *wave = &cur_qm_ts->wave[i];
+      if (wave->wave_coeffs && wave->orb_energies) {
+        memcpy(qm_ts->wave[i].wave_coeffs, wave->wave_coeffs,
+               wave->num_orbitals*data->wavef_size*sizeof(float));
+        memcpy(qm_ts->wave[i].orbital_energies, wave->orb_energies,
+               wave->num_orbitals*sizeof(float));
+      }
+    }
   }
 
   if (data->runtyp == RUNTYP_ENERGY || data->runtyp == RUNTYP_HESSIAN) {
@@ -538,10 +552,14 @@ static void close_cpmdlog_read(void *mydata) {
 
   for (i=0; i<data->num_frames_read; i++) {
     free(data->qm_timestep[i].scfenergies);
-    free(data->qm_timestep[i].orbital_energies);
-    free(data->qm_timestep[i].wave_function);
     free(data->qm_timestep[i].gradient);
     free(data->qm_timestep[i].mulliken_charges);
+    for (j=0; j<data->qm_timestep[i].numwave; j++) {
+      free(data->qm_timestep[i].wave[j].wave_coeffs);
+      free(data->qm_timestep[i].wave[j].orb_energies);
+/*       free(data->qm_timestep[i].wave[j].occupancies); */
+    }
+    free(data->qm_timestep[i].wave);
   }
   free(data->qm_timestep);
   
@@ -759,12 +777,12 @@ static int parse_static_data(gaussiandata *data, int *natoms)
 
   switch (data->scftyp) {
     case SCFTYP_RHF:
-      data->num_orbitals_A = numstates;
-      data->num_orbitals_B = 0;
+      data->occ_orbitals_A = numstates;
+      data->occ_orbitals_B = 0;
       break;
     case SCFTYP_UHF:            /* XXX: this is most likely wrong. check! */
-      data->num_orbitals_A = numstates/2;
-      data->num_orbitals_B = numstates/2;
+      data->occ_orbitals_A = numstates/2;
+      data->occ_orbitals_B = numstates/2;
       break;
     default:
       break;
@@ -862,7 +880,7 @@ static int read_first_frame(gaussiandata *data) {
    * the array size wavef_size already from the basis set
    * statistics */
   vmdcon_printf(VMDCON_INFO, 
-                "cpmdlogplugin) Allocating data for %d wavefunctions\n",
+                "cpmdlogplugin) Reserving storage for %d cartesian atomic basis functions\n",
                 data->wavef_size);
   SAFE_CALLOC(data->angular_momentum,int,3*data->wavef_size);
 
@@ -889,7 +907,7 @@ static int read_first_frame(gaussiandata *data) {
                   "####################################\n");
     /* Try to read wavefunction and orbital energies */
     SAFE_CALLOC(data->qm_timestep,qm_timestep_t,1);
-    if (get_wavefunction(data, data->qm_timestep) == FALSE) {
+    if (get_wavefunction(data, data->qm_timestep, NULL) == FALSE) {
       vmdcon_printf(VMDCON_INFO, "cpmdlogplugin) No wavefunction present for timestep %d\n", data->num_frames_read);
       free(data->qm_timestep);
       data->qm_timestep=NULL;
@@ -899,7 +917,7 @@ static int read_first_frame(gaussiandata *data) {
       data->num_frames=1;
     }
   } else {
-    /* don't copy coordinates yet. we have the newer version
+    /* don't copy coordinates yet. we have the newer version of CPMD
      * that prints them right before each projection. */
     data->num_frames = 0;
   }
@@ -1043,13 +1061,13 @@ int get_internal_basis(gaussiandata *data) {
           data->wavef_size += 4;
           break;
         case D_SHELL:
-          data->wavef_size += 5;  /* XXX: handle pure vs. cartesian */
+          data->wavef_size += 6;  /* cartesian representation! */
           break;
         case SPD_S_SHELL:
-          data->wavef_size += 9;  /* XXX: handle pure vs. cartesian */
+          data->wavef_size += 10;  /* cartesian representation! */
           break;
         case F_SHELL:
-          data->wavef_size += 7;  /* XXX: handle pure vs. cartesian */
+          data->wavef_size += 10;  /* cartesian representation! */
           break;
         default:
           break;
@@ -1296,7 +1314,7 @@ static int get_traj_frame(gaussiandata *data) {
          (strcmp(word[3],"ORBITAL"      ) == 0) ) {
 
       /* Try to read wavefunction and orbital energies */
-      if (get_wavefunction(data, cur_qm_ts) == FALSE) {
+      if (get_wavefunction(data, cur_qm_ts, NULL) == FALSE) {
           vmdcon_printf(VMDCON_WARN, "cpmdlogplugin) No wavefunction present for timestep %d\n", data->num_frames_read);
           /* XXX: add flag to ignore wfn */
       }
@@ -1346,7 +1364,8 @@ static int get_traj_frame(gaussiandata *data) {
  * punched at the end of the log file
  *
  **********************************************************/
-static int get_wavefunction(gaussiandata *data, qm_timestep_t *ts)
+static int get_wavefunction(gaussiandata *data, qm_timestep_t *ts, 
+                            qm_wavefunction_t *wf)
 {
   float *orbital_energies;
   float *wave_function;
@@ -1355,10 +1374,19 @@ static int get_wavefunction(gaussiandata *data, qm_timestep_t *ts)
   char word[ORBSPERBLOCK+1][MOLFILE_BUFSIZ];
   int orbital_counter = 0;
   int i = 0, j = 0, num_values = 0;
-  int num_orbs = data->num_orbitals_A + data->num_orbitals_B;
+  int total_orbs = data->occ_orbitals_A + data->occ_orbitals_B;
+  int num_orbs;
 
+  if (wf == NULL) {
+    PRINTERR;
+    return FALSE;
+  }
+
+  wf->type = MOLFILE_WAVE_CANON;
+  wf->spin = SPIN_ALPHA;
+  
   buffer[0] = '\0';
-  for (i=0; i<ORBSPERBLOCK+1; i++) word[i][0] = '\0';
+  for (i=0; i <= ORBSPERBLOCK ; i++) word[i][0] = '\0';
   /*
    * Scan for something like this:
       ORBITAL      1       2       3       4       5       6       7       8
@@ -1385,10 +1413,13 @@ static int get_wavefunction(gaussiandata *data, qm_timestep_t *ts)
    * Accordingly, for the energies I use the number of A orbitals 
    * In gaussian the number of alpha and beta orbitals is always 
    * the same. */
+
+#if 0
   SAFE_CALLOC(wave_function,float,data->wavef_size*num_orbs);
   SAFE_CALLOC(orbital_energies,float,num_orbs);
   ts->wave_function    = wave_function;
   ts->orbital_energies = orbital_energies;
+
 
   while (orbital_counter < num_orbs) {
     /* read up to line of orbital indices */
@@ -1472,7 +1503,7 @@ static int get_wavefunction(gaussiandata *data, qm_timestep_t *ts)
         wave_function[j*data->wavef_size+i] = atof(word[j+1]);
       }
     }
-    /* move wavefunction pointer to start of next five orbitals */
+    /* move wavefunction pointer to start of next block of orbitals */
     wave_function = wave_function + num_orbs*data->wavef_size;
     /* XXX: FIXME test with open shell run */
     if ((data->scftyp == SCFTYP_UHF) && (orbital_counter==data->wavef_size)) {
@@ -1481,12 +1512,13 @@ static int get_wavefunction(gaussiandata *data, qm_timestep_t *ts)
   }
 
   /* store the number of orbitals read in */
-  ts->orbital_counter = orbital_counter;
+  ts->wavef_size = orbital_counter;
+#endif
 
 #if CPMDLOG_DEBUG
   vmdcon_printf(VMDCON_INFO, 
                 "cpmdlogplugin) Number of orbitals scanned: %d \n",
-                ts->orbital_counter);
+                orbital_counter);
 #endif
   return TRUE;
 }
@@ -1551,8 +1583,10 @@ VMDPLUGIN_API int VMDPLUGIN_init(void) {
   plugin.read_qm_metadata = read_cpmdlog_metadata;
   plugin.read_qm_rundata  = read_cpmdlog_rundata;
 
-#if vmdplugin_ABIVERSION > 11
+#if vmdplugin_ABIVERSION > 10
   plugin.read_timestep_metadata    = read_timestep_metadata;
+#endif
+#if vmdplugin_ABIVERSION > 11
   plugin.read_qm_timestep_metadata = read_qm_timestep_metadata;
   plugin.read_timestep = read_timestep;
 #endif
@@ -1561,7 +1595,7 @@ VMDPLUGIN_API int VMDPLUGIN_init(void) {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
@@ -1573,12 +1607,15 @@ VMDPLUGIN_API int VMDPLUGIN_fini(void) {
 #ifdef TEST_PLUGIN
 
 int main(int argc, char *argv[]) {
-  int numatoms, i, optflags;
+  int numatoms, i, j, optflags;
   molfile_atom_t *atoms;
   molfile_timestep_t timestep;
+  molfile_metadata_t metadata;
+  molfile_timestep_metadata_t ts_metadata;
+  molfile_qm_timestep_metadata_t qm_ts_metadata;
   molfile_qm_metadata_t qm_metadata;
   molfile_qm_timestep_t qm_ts;
-    
+ 
   void *v;
 
   while (--argc) {
@@ -1595,7 +1632,34 @@ int main(int argc, char *argv[]) {
 
     i = 0;
     timestep.coords = (float *)malloc(3*sizeof(float)*numatoms);
-    while (!read_timestep(v, numatoms, &timestep, &qm_metadata, &qm_ts)) {
+
+    
+    while (1) {
+      memset(&ts_metadata, 0, sizeof(molfile_timestep_metadata_t));
+      read_timestep_metadata(v, &ts_metadata);
+      memset(&qm_metadata, 0, sizeof(molfile_qm_metadata_t));
+      read_qm_timestep_metadata(v, &qm_ts_metadata);
+      qm_ts.scfenergies = (double *)malloc(qm_ts_metadata.num_scfiter*sizeof(double));
+      qm_ts.wave        = (molfile_qm_wavefunction_t *)malloc(qm_ts_metadata.num_wavef
+                                                              *sizeof(molfile_qm_wavefunction_t));
+      memset(qm_ts.wave, 0, qm_ts_metadata.num_wavef*sizeof(molfile_qm_wavefunction_t));
+      for (j=0; (j<10 && j<qm_ts_metadata.num_wavef); j++) {
+        qm_ts.wave[j].wave_coeffs = (float *) malloc(qm_ts_metadata.num_orbitals_per_wavef[j]
+                                                     * qm_ts_metadata.wavef_size * sizeof(float));
+        qm_ts.wave[j].orbital_energies = (float *) malloc(qm_ts_metadata.num_orbitals_per_wavef[j]*sizeof(float));
+      }
+      qm_ts.gradient = (float *) malloc(3*numatoms*sizeof(float));
+      if (read_timestep(v, numatoms, &timestep, &qm_metadata, &qm_ts)) break;
+      /* do something with data */
+      /* XXX */
+
+      free(qm_ts.gradient);
+      for (j=0; (j<10 && j<qm_ts_metadata.num_wavef); j++) {
+        free(qm_ts.wave[j].wave_coeffs);
+        free(qm_ts.wave[j].orbital_energies);
+      }
+      free(qm_ts.wave);
+      free(qm_ts.scfenergies);
       i++;
     }
     fprintf(stderr, "ended read_timestep on frame %d\n", i);

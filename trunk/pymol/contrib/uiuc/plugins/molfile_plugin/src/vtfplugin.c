@@ -4,7 +4,7 @@
 #define STATIC_PLUGIN 1
 
 /* VTF plugin by Olaf Lenz <olenz@fias.uni-frankfurt.de> */
-/* $Id: vtfplugin.c,v 1.11 2009/02/24 23:34:54 johns Exp $ */
+/* $Id: vtfplugin.c,v 1.13 2009/05/18 05:01:56 johns Exp $ */
 
 /*
 VMD file reader plugin for:
@@ -19,7 +19,7 @@ VMD file reader plugin for:
 #include <ctype.h>
 #include <string.h>
 
-#if defined(HAVE_ZLIB) || defined(_USE_ZLIB)
+#ifdef _USE_ZLIB
 #include <zlib.h>
 #define VTFFILE gzFile
 #define fopen gzopen
@@ -31,7 +31,7 @@ VMD file reader plugin for:
 #endif
 
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 2
+#define VERSION_MINOR 3
 
 /* TODO:
 - volumetric/graphics format
@@ -65,11 +65,16 @@ typedef struct {
 
   /* TIMESTEP DATA (used by get_next_timestep) */
   /* reading mode for the next timestep */
-  int next_indexed;
+  int timestep_mode;
   /* last timestep */
   float A, B, C, alpha, beta, gamma;
   float *coords;
 } vtf_data;
+
+/* constants for timestep_mode */
+#define TIMESTEP_INDEXED 0
+#define TIMESTEP_ORDERED 1
+#define TIMESTEP_VCFSTART 2
 
 /* global variable: contains the line number of the file */
 static int vtf_lineno = 0;
@@ -78,8 +83,17 @@ static int vtf_lineno = 0;
  * Print an error message.
  ***************************************************/
 static void vtf_error(const char *msg, const char *line) {
-  fprintf(stderr, "vtfplugin:%d: error: %s: %-20s\n", 
+  char message[200];
+  sprintf(message, "vtfplugin:%d: error: %s: %-20s\n", 	  
 	  vtf_lineno, msg, line);
+
+/* #if vmdplugin_ABIVERSION > 13 */
+/*   if (cons_fputs) */
+/*     cons_fputs(VMDCON_ERROR, message); */
+/*   else */
+/* #else */
+    printf(message);
+/* #endif */
 }
 
 /***************************************************
@@ -293,7 +307,7 @@ static int vtf_parse_atom(char *line, vtf_data *d) {
 	  return MOLFILE_ERROR;
 	}
       }
-    }
+    } /* if "chain" is not recognized, continue with next case */
     case 'q': {
       /* q and charge */
       if (strlen(keyword) == 1 ||
@@ -515,7 +529,7 @@ static int vtf_parse_pbc(char *line, vtf_data *d) {
 
   if (sscanf(line, "%f %f %f %n", 
     &d->A, &d->B, &d->C, &n) < 3) {
-    s=line;
+    s = line;
     vtf_error("Couldn't parse unit cell dimensions", s);
     return MOLFILE_ERROR;
   }
@@ -534,11 +548,11 @@ static int vtf_parse_pbc(char *line, vtf_data *d) {
    MOLFILE_ERROR if an error occured. */
 static int vtf_parse_timestep(char *line, vtf_data *d) {
   if (strlen(line) == 0) {
-    d->next_indexed = 0;
+    d->timestep_mode = TIMESTEP_ORDERED;
   } else {
     switch (tolower(line[0])) {
-    case 'o': { d->next_indexed = 0; break; }
-    case 'i': { d->next_indexed = 1; break; }
+    case 'o': { d->timestep_mode = TIMESTEP_ORDERED; break; }
+    case 'i': { d->timestep_mode = TIMESTEP_INDEXED; break; }
     default: {
       vtf_error("bad timestep line", line);
       return MOLFILE_ERROR;
@@ -568,14 +582,6 @@ static void vtf_parse_structure(vtf_data *d) {
   default_atom.mass = 1.0;
   default_atom.charge = 0.0;
   default_atom.radius = 1.0;
-
-  /* initialize the data structure */
-  d->optflags = MOLFILE_NOOPTIONS;
-  d->natoms = MOLFILE_NUMATOMS_NONE;
-  d->atoms = NULL;
-  d->nbonds = 0;
-  d->from = NULL;
-  d->to = NULL;
 
   do {
     line = vtf_getline(d->file);
@@ -669,8 +675,8 @@ static void vtf_parse_structure(vtf_data *d) {
    will do the parsing and save the information in the handle.
 */
 static void *vtf_open_file_read(const char *filepath, 
-			 const char *filetype, 
-			 int *natoms) {
+				const char *filetype, 
+				int *natoms) {
   vtf_data *d;
 
   /* printf("Loading file %s\n  of type %s using vtfplugin v%i.%i.\n", 
@@ -686,13 +692,21 @@ static void *vtf_open_file_read(const char *filepath,
   if (d->file == NULL) {
     /* Could not open file */
     perror("vtfplugin");
-    d->return_code = MOLFILE_ERROR;
+    free(d);
     return NULL;
   }
   d->return_code = MOLFILE_SUCCESS;
 
+  /* initialize structure data */
+  d->optflags = MOLFILE_NOOPTIONS;
+  d->natoms = 0;
+  d->atoms = NULL;
+  d->nbonds = 0;
+  d->from = NULL;
+  d->to = NULL;
+
   /* initialize timestep data */
-  d->next_indexed = 0;
+  d->timestep_mode = TIMESTEP_ORDERED;
   d->coords = NULL;
   d->A = 0.0;
   d->B = 0.0;
@@ -702,7 +716,10 @@ static void *vtf_open_file_read(const char *filepath,
   d->gamma = 90.0;
 
   if (strcmp(filetype, "vcf") == 0) {
+    d->timestep_mode = TIMESTEP_VCFSTART;
+    d->natoms = MOLFILE_NUMATOMS_UNKNOWN;
     *natoms = MOLFILE_NUMATOMS_UNKNOWN;
+    d->return_code = MOLFILE_NOSTRUCTUREDATA;
   } else {
     vtf_parse_structure(d);
     
@@ -710,24 +727,32 @@ static void *vtf_open_file_read(const char *filepath,
       free(d);
       return NULL;
     }
-    
+   
     *natoms = d->natoms;
-  } 
+  }
 
   return d;
 }
 
 static int vtf_read_next_timestep(void *data, 
-			   int natoms, 
-			   molfile_timestep_t *ts) {
+				  int natoms, 
+				  molfile_timestep_t *ts) {
   vtf_data *d;
-  int size;
   char *line;
   static char s[255];
   float x,y,z;
-  char c;
-  int aid;
+  unsigned int aid;
   int n;
+
+  if (data == NULL) {
+    vtf_error("Internal error: data==NULL in vtf_read_next_timestep", 0);
+    return MOLFILE_ERROR;
+  }
+
+  if (natoms <= 0) {
+    vtf_error("Internal error: natoms <= 0 in vtf_read_next_timestep", 0);
+    return MOLFILE_ERROR;
+  }
 
   errno = 0;
 
@@ -757,19 +782,49 @@ static int vtf_read_next_timestep(void *data,
       break;
     } 
 
+    /* At the beginning of a vcf file, skip a timestep line */
+    if (d->timestep_mode == TIMESTEP_VCFSTART) {
+      switch (tolower(line[0])) {
+      case 'c': 
+      case 't':
+	/* Remove the "timestep" or "coordinates" keyword */
+	sscanf(line, "%255s %n", s, &n);
+	line += n;
+      case 'i': 
+      case 'o': 
+	if (vtf_parse_timestep(line, d) != MOLFILE_SUCCESS)
+	  return MOLFILE_ERROR;
+	line = vtf_getline(d->file);
+	break;
+      default:
+	/* if this is already a coordinate line, expect an ordered block */
+	d->timestep_mode = TIMESTEP_ORDERED;
+      }
+    }
+
     /* parse timestep data */
-    if (!d->next_indexed && 
-	sscanf(line, "%f %f %f", 
-	       &d->coords[aid*3],
-	       &d->coords[aid*3+1],
-	       &d->coords[aid*3+2]) == 3) {
-      aid++;
-    } else if (d->next_indexed &&
-	       sscanf(line, "%d%[ \t\f\v\n\r] %f %f %f", 
-		      &aid, &c, &x, &y, &z) == 5) {
-      d->coords[aid*3] = x;
-      d->coords[aid*3+1] = y;
-      d->coords[aid*3+2] = z;
+    if (d->timestep_mode == TIMESTEP_ORDERED 
+	&& sscanf(line, " %f %f %f", &x, &y, &z) == 3) {
+      if (aid < natoms) {
+	d->coords[aid*3] = x;
+	d->coords[aid*3+1] = y;
+	d->coords[aid*3+2] = z;
+	aid++;
+      } else {
+	vtf_error("too many atom coordinates in ordered timestep block", line);
+	return MOLFILE_ERROR;
+      }
+    } else if (d->timestep_mode == TIMESTEP_INDEXED 
+	       && sscanf(line, " %u %f %f %f", 
+			 &aid, &x, &y, &z) == 4) {
+      if (aid < natoms) {
+	d->coords[aid*3] = x;
+	d->coords[aid*3+1] = y;
+	d->coords[aid*3+2] = z;
+      } else {
+	vtf_error("atom id too large in indexed timestep block", line);
+	return MOLFILE_ERROR;
+      }
     } else switch (tolower(line[0])) {
       /* PBC/UNITCELL RECORD */
     case 'u':
@@ -793,12 +848,12 @@ static int vtf_read_next_timestep(void *data,
     case 'o': { 
       if (vtf_parse_timestep(line, d) != MOLFILE_SUCCESS)
 	return MOLFILE_ERROR;
-      line = NULL;
+      line = NULL; /* indicate end of this timestep */
       break;
     }
 
     default: { 
-      if (d->next_indexed)
+      if (d->timestep_mode == TIMESTEP_INDEXED)
 	vtf_error("unknown line in indexed timestep block", line);
       else
 	vtf_error("unknown line in ordered timestep block", line);
@@ -818,6 +873,8 @@ static int vtf_read_next_timestep(void *data,
     ts->beta = d->beta;
     ts->gamma = d->gamma;
     memcpy(ts->coords, d->coords, natoms*3*sizeof(float));
+    ts->velocities = NULL;
+    ts->physical_time = 0.0;
   }
   
   return MOLFILE_SUCCESS;
@@ -827,18 +884,20 @@ static int vtf_read_next_timestep(void *data,
  * Copy the info collected in vtf_open_file_read
  ***************************************************/
 static int vtf_read_structure(void *data, 
-		       int *optflags, 
-		       molfile_atom_t *atoms) {
+			      int *optflags, 
+			      molfile_atom_t *atoms) {
   vtf_data *d;
   d = (vtf_data*)data;
 
-  if (d->return_code != MOLFILE_SUCCESS) return d->return_code;
+  if (d->return_code != MOLFILE_SUCCESS) 
+    return d->return_code;
 
   if (d->natoms > 0) {
     /* copy the data parsed in vtf_open_file_read() */
     memcpy(atoms, d->atoms, d->natoms*sizeof(molfile_atom_t));
     /* free the data parsed in vtf_open_file_read() */
     free(d->atoms);
+    d->atoms = NULL;
   }
 
   *optflags = d->optflags;
@@ -847,20 +906,25 @@ static int vtf_read_structure(void *data,
 }
 
 static int vtf_read_bonds(void *data, 
-		   int *nbonds, 
-		   int **from, 
-		   int **to,
-           float **bondorder, 
-           int **bondtype, 
-           int *nbondtypes, 
-           char ***bondtypename) {
+			  int *nbonds, 
+			  int **from, 
+			  int **to,
+			  float **bondorder, 
+			  int **bondtype, 
+			  int *nbondtypes, 
+			  char ***bondtypename) {
   vtf_data *d;
+  if (!data) {
+    vtf_error("Internal error: data==NULL in vtf_read_bonds", 0);
+    return MOLFILE_ERROR;
+  }
+
   d = (vtf_data*)data;
 
   *nbonds = d->nbonds;
   *from = d->from;
   *to = d->to;
-  bondorder = NULL;
+  *bondorder = NULL;
   *bondtype = NULL;
   *nbondtypes = 0;
   *bondtypename = NULL;
@@ -870,6 +934,8 @@ static int vtf_read_bonds(void *data,
 
 static void vtf_close_file_read(void *data) {
   vtf_data *d;
+
+  if (data == NULL) return;
   d = (vtf_data*)data;
 
   /* printf("Finished reading file.\n"); */
@@ -947,9 +1013,9 @@ VMDPLUGIN_API int VMDPLUGIN_init() {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&vsfplugin);
-  (*cb)(v, (vmdplugin_t *)(void *)&vcfplugin);
-  (*cb)(v, (vmdplugin_t *)(void *)&vtfplugin);
+  (*cb)(v, (vmdplugin_t *)&vsfplugin);
+  (*cb)(v, (vmdplugin_t *)&vcfplugin);
+  (*cb)(v, (vmdplugin_t *)&vtfplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

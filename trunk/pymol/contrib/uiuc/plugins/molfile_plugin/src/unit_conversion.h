@@ -2,8 +2,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: unit_conversion.h,v $
- *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.1 $       $Date: 2009/01/27 18:01:11 $
+ *      $Author: akohlmey $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.3 $       $Date: 2009/06/26 01:13:39 $
  *
  ***************************************************************************/
 /******************************************************************
@@ -28,6 +28,8 @@
 /* convert Hartree into kcal/mol */
 #define HARTREE_TO_KCAL 627.5094706142
 
+/* convert Hartree into eV */
+#define HARTREE_TO_EV    27.211383860484776
 
 #endif /* UNIT_CONVERSION */
 

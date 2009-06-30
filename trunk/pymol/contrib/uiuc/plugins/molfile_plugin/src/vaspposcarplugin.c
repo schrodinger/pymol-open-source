@@ -8,13 +8,13 @@
  *
  *      $RCSfile: vaspposcarplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.6 $       $Date: 2009/01/29 14:57:00 $
+ *      $Revision: 1.8 $       $Date: 2009/06/22 19:50:38 $
  *
  ***************************************************************************/
 
 /*
  *  VASP plugins for VMD
- *  Sung Sakong, Dept. of Theo. Chem., Univsity of Ulm 
+ *  Sung Sakong, Dept. of Phys., Univsity Duisburg-Essen
  *  
  *  VASP manual   
  *  http:
@@ -29,7 +29,7 @@
  *  c++ -bundle -o vaspposcarplugin.so vaspposcarplugin.o
  *
  *  Install
- *  copy vaspxatcarplugin.so $VMDBASEDIR/plugins/$ARCH/molfile
+ *  copy vaspposcarplugin.so $VMDBASEDIR/plugins/$ARCH/molfile
  */
 
 #include <stdio.h>
@@ -56,6 +56,8 @@ static void *open_vaspposcar_read(const char *filename, const char *filetype, in
   data = vasp_plugindata_malloc();
   if (!data) return NULL;
 
+  /* VASP4 is assumed in default */
+  data->version = 4;
   data->file = fopen(filename, "rb");
   if (!data->file) {
     vasp_plugindata_free(data);
@@ -74,13 +76,33 @@ static void *open_vaspposcar_read(const char *filename, const char *filetype, in
   /* Read the number of atoms per atom type */
   data->numatoms = 0;
   for (i = 0; i < MAXATOMTYPES; ++i) {
+    char const *tmplineptr = strdup(lineptr);
     char const *token = (i == 0 ? strtok(lineptr, " ") : strtok(NULL, " "));
     int const n = (token ? atoi(token) : -1);
 
-    if (n <= 0) break;
+    /* if fails to read number of atoms, then assume VASP5 */
+    if (i == 0 && n <= 0) {
+      data->version = 5;
+      data->titleline =  strdup(tmplineptr);
+      fgets(lineptr, LINESIZE, data->file);
+      break;
+    }else if (n <= 0) break;
 
     data->eachatom[i] = n;
     data->numatoms += n;
+  }
+
+  if (data->version == 5) {
+    data->numatoms = 0;
+    for (i = 0; i < MAXATOMTYPES; ++i) {
+      char const *token = (i == 0 ? strtok(lineptr, " ") : strtok(NULL, " "));
+      int const n = (token ? atoi(token) : -1);
+      
+      if (n <= 0) break;
+      
+      data->eachatom[i] = n;
+      data->numatoms += n;
+    }
   }
 
   if (data->numatoms == 0) {
@@ -170,7 +192,7 @@ static int read_vaspposcar_structure(void *mydata, int *optflags, molfile_atom_t
   }
 
  /* Ignore header until X,Y,Z-coordinates */
- for (i = 0; i < 7; ++i) fgets(lineptr, LINESIZE, data->file);
+ for (i = 0; i < data->version + 3; ++i) fgets(lineptr, LINESIZE, data->file);
 
  /* Ignore selective tag-line, starting with either 's' or 'S'. */
  if (tolower(lineptr[0]) == 's') fgets(lineptr, LINESIZE, data->file);
@@ -221,7 +243,7 @@ static int read_vaspposcar_timestep(void *mydata, int natoms, molfile_timestep_t
   vasp_buildrotmat(data);
 
   /* Skip numbers of atom types */
-  for (i = 0; i < 2; ++i) fgets(lineptr, LINESIZE, data->file);
+  for (i = 0; i < data->version - 2; ++i) fgets(lineptr, LINESIZE, data->file);
 
   /* Skip selective tag-line, starting with 's' or 'S'. */
   if (tolower(lineptr[0]) == 's') fgets(lineptr, LINESIZE, data->file);
@@ -345,11 +367,12 @@ static int write_vaspposcar_timestep(void *mydata, const molfile_timestep_t *ts)
 
   for (i = 0; i <= maxtype; ++i) fprintf(data->file, " %d ", eachatom[i]);
 
-  fprintf(data->file, "\nCartesian\n");
+  fprintf(data->file, "\nDirect\n");
 
   for (i = 0; i < data->numatoms; ++i) {
     float const *pos = ts->coords + 3*i;
-    fprintf(data->file, "%20.12f %20.12f %20.12f \n", pos[0], pos[1], pos[2]);
+    /* in direct coordinate */
+    fprintf(data->file, "%20.12f %20.12f %20.12f \n", pos[0]/x1, -x2*pos[0]/(x1*y2) + pos[1]/y2, (-y2*x3+x2*y3)*pos[0]/(x1*y2*z3) - y3*pos[1]/(y2*z3) + pos[2]/z3);
   }
 
   return MOLFILE_SUCCESS;
@@ -371,8 +394,8 @@ static molfile_plugin_t vaspposcarplugin = {
   "VASP_POSCAR",               /* pretty name */
   "Sung Sakong",               /* author */
   0,                           /* major version */
-  3,                           /* minor version */
-  VMDPLUGIN_THREADUNSAFE,      /* is not reentrant */
+  6,                           /* minor version */
+  VMDPLUGIN_THREADUNSAFE,      /* is reentrant */
 
   "POSCAR",                    /* filename_extension */
   open_vaspposcar_read,        /* open_file_read */
@@ -398,7 +421,7 @@ int VMDPLUGIN_init() {
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&vaspposcarplugin);
+  (*cb)(v, (vmdplugin_t *)&vaspposcarplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

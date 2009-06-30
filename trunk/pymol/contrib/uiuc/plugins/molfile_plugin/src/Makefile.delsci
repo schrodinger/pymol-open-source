@@ -6,7 +6,8 @@ all: library
 include ../../../../../Rules.delsci
 include objects.make
 
-CFLAGS=-I../../include $(CCOPT2)
+CFLAGS=-I../../include -I. $(CCOPT2)
+CXXFLAGS=-I../../include -I. $(CCOPT2)
 CPPFLAGS=-I../../include $(CCOPT2)
 
 library: $(OBJS) PlugIOManagerInit.o

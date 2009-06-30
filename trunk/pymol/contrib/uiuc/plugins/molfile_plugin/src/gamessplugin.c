@@ -16,7 +16,7 @@
  *
  *      $RCSfile: gamessplugin.c,v $
  *      $Author: saam $       $Locker:  $             $State: Exp $
- *      $Revision: 1.120 $       $Date: 2009/02/23 21:22:57 $
+ *      $Revision: 1.144 $       $Date: 2009/06/27 00:47:00 $
  *
  ***************************************************************************/
 
@@ -42,8 +42,10 @@
  
 #define ANGSTROM 0
 #define BOHR     1
-#define SPIN_ALPHA 0
-#define SPIN_BETA  1
+#define SPIN_ALPHA  0
+#define SPIN_BETA   1
+
+/* #define DEBUGGING 1 */
 
 /*
  * Error reporting macro for use in DEBUG mode
@@ -78,12 +80,6 @@
 
 #define FOUND   1
 #define STOPPED 2
-
-#define UNKNOWN       -1
-#define CONVERGED      0
-#define SCF_NOT_CONV   1
-#define TOO_MANY_STEPS 2
-#define BROKEN_OFF     3
 
 
 /* ######################################################## */
@@ -140,7 +136,7 @@ static int get_guess_options(gamessdata *);
 /* the function get_initial_info provides the atom number,
  * coordinates, and atom types and stores them
  * temporarily. */ 
-static int get_final_info (gamessdata *);
+static int get_final_properties (gamessdata *);
 
 static int get_coordinates(FILE *file, qm_atom_t **atoms, int unit,
                            int *numatoms);
@@ -174,7 +170,7 @@ static int get_traj_frame(gamessdata *, qm_atom_t *, int);
 
 
 /* returns 1 if the optimization has converged */
-static int find_traj_end(gamessdata *);
+static int analyze_traj(gamessdata *);
 
 /* read the number of scf iterations and the scf energies
  * for the current timestep. */
@@ -184,6 +180,10 @@ static int get_scfdata(gamessdata *, qm_timestep_t *);
 /* this function parses the input file for the final
  * wavefunction and stores it in the appropriate arrays; */
 static int get_wavefunction(gamessdata *, qm_timestep_t *, qm_wavefunction_t *);
+static int read_coeff_block(FILE *file, int wavef_size,
+                              float *wave_coeff, int *angular_momentum);
+
+static int read_localized_orbitals(gamessdata *data);
 
 static int get_population(gamessdata *, qm_timestep_t *);
 
@@ -216,11 +216,29 @@ static int get_normal_modes(gamessdata *);
 static char* chop_string_all(char *);
 
 static char* trimleft(char *);
-static int goto_keystring(FILE *file, const char *keystring,
-                                const char *stopstring);
+static char* trimright(char *);
+static void eatwhitelines(FILE *fd);
+
+static int goto_keyline(FILE *file, const char *keystring,
+                        const char *stopstring);
+static int pass_keyline(FILE *file, const char *keystring,
+                          const char *stopstring);
 static int goto_keystring2(FILE *file, const char *keystring,
         const char *stopstring1, const char *stopstring2);
 static void whereami(FILE *file);
+
+static void thisline(FILE *file) {
+  char buffer[BUFSIZ];
+  long filepos;
+  filepos = ftell(file);
+  if (!fgets(buffer, sizeof(buffer), file)) {
+    if (feof(file)) printf("HERE) EOF\n");
+    else printf("HERE) ????\n");
+    return;
+  }
+  printf("HERE) %s\n", buffer);
+  fseek(file, filepos, SEEK_SET);
+}
 
 /* helper routine to chop newlines off
  * a C character string 
@@ -230,7 +248,7 @@ static void whereami(FILE *file);
 static char* chop_string_nl(char *);
 
 
-/* this will skip one line at a time */
+/* skip n line at a time */
 static void eatline(FILE * fd, int n)
 {
   int i;
@@ -240,16 +258,56 @@ static void eatline(FILE * fd, int n)
   }
 }
 
-static void copy_wavefunction(qm_wavefunction_t *w1, qm_wavefunction_t *w2) {
-  memcpy(w1, w2, sizeof(qm_wavefunction_t));
+
+/* Increase wavefunction array in ts by one. */
+static qm_wavefunction_t* add_wavefunction(qm_timestep_t *ts) {
+  if (ts->numwave) {
+    /* Add a new wavefunction */
+    ts->wave = (qm_wavefunction_t *)realloc(ts->wave,
+                        (ts->numwave+1)*sizeof(qm_wavefunction_t));
+    ts->numwave++;
+  } else {
+    /* We have no wavefunction for this timestep so create one */
+    ts->wave = (qm_wavefunction_t *)calloc(1, sizeof(qm_wavefunction_t));
+    ts->numwave = 1;
+  }
+  memset(&ts->wave[ts->numwave-1], 0, sizeof(qm_wavefunction_t));
+
+  return &ts->wave[ts->numwave-1];
 }
 
-static void free_wavefunction(qm_wavefunction_t *w) {
-  free(w->wave_coeffs);
-  free(w->orb_energies);
-  free(w->occupancies);
-  free(w);
+/* Replace the n-th wavefunction in ts with the last
+ * one and decrease the array length by one. */
+static void replace_wavefunction(qm_timestep_t *ts, int n) {
+  if (ts->numwave>=2 && n>=0 && n<ts->numwave-1) {
+    qm_wavefunction_t *w1, *w2;
+    w2 = &ts->wave[n];
+    w1 = &ts->wave[ts->numwave-1];
+    free(w2->wave_coeffs);
+    free(w2->orb_energies);
+    free(w2->occupancies);
+    memcpy(w2, w1, sizeof(qm_wavefunction_t));
+    ts->wave = (qm_wavefunction_t *) realloc(ts->wave,
+                   (ts->numwave-1)*sizeof(qm_wavefunction_t));
+    ts->numwave--;
+  }
 }
+
+
+/* Delete the last wavefunction in ts */
+static void del_wavefunction(qm_timestep_t *ts) {
+  if (ts->numwave) {
+    qm_wavefunction_t *w;
+    w = &ts->wave[ts->numwave-1];
+    free(w->wave_coeffs);
+    free(w->orb_energies);
+    free(w->occupancies);
+    ts->numwave--;
+    ts->wave = (qm_wavefunction_t *)realloc(ts->wave,
+                        ts->numwave*sizeof(qm_wavefunction_t));    
+  }
+}
+
 
 /* ######################################################## */
 /* Functions that are needed by the molfile_plugin          */
@@ -290,15 +348,18 @@ static void *open_gamess_read(const char *filename,
     return NULL;
   }
 
-  data->runtyp = 0;
+  data->runtype = NONE;
+  data->scftype = NONE;
+  data->dfttype = NONE;
+  data->citype  = NONE;
   data->num_shells = 0;
   data->num_basis_funcs = 0;
   data->num_basis_atoms = 0;
-  data->done_trajectory = 1; 
   data->num_frames = 0;
   data->num_frames_sent = 0;
   data->num_frames_read = 0;
-  data->end_of_trajectory = FALSE;
+  data->trajectory_done = FALSE;
+  data->opt_status = MOLFILE_QM_STATUS_UNKNOWN;
   data->have_internals = FALSE;
   data->have_cart_hessian = FALSE;
   data->have_normal_modes = FALSE;
@@ -321,7 +382,6 @@ static void *open_gamess_read(const char *filename,
 
   /* store file pointer and filename in gamess struct */
   data->file = fd;
-  data->file_name = strdup(filename);
 
 
   /* check if the file is GAMESS format; if yes
@@ -386,7 +446,9 @@ static int read_gamess_structure(void *mydata, int *optflags,
     atom->chain[0] = '\0';
     atom->segid[0] = '\0';
     atom->atomicnumber = cur_atom->atomicnum;
+#ifdef DEBUGGING
     printf("gamessplugin) atomicnum[%d] = %d\n", i, atom->atomicnumber);
+#endif
 
     if (data->have_mulliken)
       atom->charge = data->qm_timestep->mulliken_charges[i];
@@ -410,7 +472,7 @@ static int read_gamess_metadata(void *mydata,
 
   gamessdata *data = (gamessdata *)mydata;
 
-  if (data->runtyp == HESSIAN) {
+  if (data->runtype == HESSIAN) {
     metadata->ncart = (3*data->numatoms);
     metadata->nimag = data->nimag;             
    
@@ -431,10 +493,6 @@ static int read_gamess_metadata(void *mydata,
   metadata->num_basis_atoms = data->num_basis_atoms;
   metadata->num_shells      = data->num_shells;
   metadata->wavef_size      = data->wavef_size;  
-
-  /* trajectory information */
-  /* XXX needed here or better in read_qm_timestep_metadata()? */
-  metadata->num_traj_points = data->num_frames;
 
 #if vmdplugin_ABIVERSION > 11
   /* system and run info */
@@ -473,7 +531,7 @@ static int read_gamess_rundata(void *mydata,
   molfile_qm_sysinfo_t *sys_data     = &qm_data->run;
 
   /* fill in molfile_qm_hessian_t */
-  if (data->runtyp == HESSIAN) {
+  if (data->runtype == HESSIAN) {
     ncart = 3*data->numatoms;
 
     /* Hessian matrix in cartesian coordinates */
@@ -511,17 +569,18 @@ static int read_gamess_rundata(void *mydata,
   }
 
   /* fill in molfile_qm_sysinfo_t */
-  sys_data->runtyp = data->runtyp;
+  sys_data->runtype = data->runtype;
+  sys_data->scftype = data->scftype;
   sys_data->nproc = data->nproc;
-/*   sys_data->num_wave_f = data->wavef_size; */
   sys_data->num_electrons = data->num_electrons;
   sys_data->totalcharge = data->totalcharge;
   sys_data->multiplicity = data->multiplicity;
-  sys_data->num_orbitals_A = data->num_orbitals_A;
-  sys_data->num_orbitals_B = data->num_orbitals_B;
-  sys_data->scftyp = data->scftyp;
+  sys_data->num_occupied_A = data->num_occupied_A;
+  sys_data->num_occupied_B = data->num_occupied_B;
 
 #if vmdplugin_ABIVERSION > 11
+  sys_data->status = data->opt_status;
+
   if (data->have_esp) {
     for (i=0; i<data->numatoms; i++) {
       sys_data->esp_charges[i] = data->esp_charges[i];
@@ -614,20 +673,23 @@ static int read_qm_timestep_metadata(void *mydata,
 
   if (have) {
     int i;
-    qm_timestep_t *cur_qm_ts;
+    qm_timestep_t *cur_ts;
 
     /* get a pointer to the current qm timestep */
-    cur_qm_ts = data->qm_timestep+data->num_frames_sent;
+    cur_ts = data->qm_timestep+data->num_frames_sent;
     printf("gamessplugin) Approved timestep %i\n", data->num_frames_sent);
     
-    meta->num_scfiter  = cur_qm_ts->num_scfiter;
+    meta->num_scfiter  = cur_ts->num_scfiter;
 
-    for (i=0; (i<10 && i<cur_qm_ts->numwave); i++) {
-      printf("gamessplugin) num_orbitals_per_wavef[%d/%d]=%d\n",
-             i+1, cur_qm_ts->numwave, cur_qm_ts->wave[i].num_orbitals);
-      meta->num_orbitals_per_wavef[i] = cur_qm_ts->wave[i].num_orbitals;
+    for (i=0; (i<MOLFILE_MAXWAVEPERTS && i<cur_ts->numwave); i++) {
+      char typestr[MOLFILE_BUFSIZ];
+      strcpy(typestr, cur_ts->wave[i].info);
+      
+      printf("gamessplugin) num_orbitals_per_wavef[%d/%d]=%3d type=%s\n",
+             i+1, cur_ts->numwave, cur_ts->wave[i].num_orbitals, typestr);
+      meta->num_orbitals_per_wavef[i] = cur_ts->wave[i].num_orbitals;
     }
-    meta->num_wavef  = cur_qm_ts->numwave;
+    meta->num_wavef  = cur_ts->numwave;
     meta->wavef_size = data->wavef_size;
 
   } else {
@@ -636,7 +698,7 @@ static int read_qm_timestep_metadata(void *mydata,
     meta->num_wavef = 0;
     meta->wavef_size = 0;
 
-    data->end_of_trajectory = TRUE;
+    data->trajectory_done = TRUE;
   }
 
   return MOLFILE_SUCCESS;
@@ -659,9 +721,9 @@ static int read_timestep(void *mydata, int natoms,
   gamessdata *data = (gamessdata *)mydata;
   qm_atom_t *cur_atom;
   int i = 0;
-  qm_timestep_t *cur_qm_ts;
+  qm_timestep_t *cur_ts;
 
-  if (data->end_of_trajectory == TRUE) return MOLFILE_ERROR;
+  if (data->trajectory_done == TRUE) return MOLFILE_ERROR;
 
   printf("gamessplugin) Sending timestep %i\n", data->num_frames_sent);
 
@@ -677,17 +739,22 @@ static int read_timestep(void *mydata, int natoms,
   }    
   
   /* get a convenient pointer to the current qm timestep */
-  cur_qm_ts = data->qm_timestep+data->num_frames_sent;
+  cur_ts = data->qm_timestep+data->num_frames_sent;
 
   /* store the SCF energies */
-  for (i=0; i<cur_qm_ts->num_scfiter; i++) {
-    qm_ts->scfenergies[i] = cur_qm_ts->scfenergies[i];
+  for (i=0; i<cur_ts->num_scfiter; i++) {
+    qm_ts->scfenergies[i] = cur_ts->scfenergies[i];
   }
 
   /* store the wave function and orbital energies */
-  if (cur_qm_ts->wave) {
-    for (i=0; i<cur_qm_ts->numwave; i++) {
-      qm_wavefunction_t *wave = &cur_qm_ts->wave[i];
+  if (cur_ts->wave) {
+    for (i=0; i<cur_ts->numwave; i++) {
+      qm_wavefunction_t *wave = &cur_ts->wave[i];
+      qm_ts->wave[i].type        = wave->type;
+      qm_ts->wave[i].spin        = wave->spin;
+      qm_ts->wave[i].excitation  = wave->exci;
+      strncpy(qm_ts->wave[i].info, wave->info, MOLFILE_BUFSIZ);
+
       if (wave->wave_coeffs && wave->orb_energies) {
         memcpy(qm_ts->wave[i].wave_coeffs, wave->wave_coeffs,
                wave->num_orbitals*data->wavef_size*sizeof(float));
@@ -697,9 +764,9 @@ static int read_timestep(void *mydata, int natoms,
     }
   }
 
-  if (data->runtyp == ENERGY || data->runtyp == HESSIAN) {
+  if (data->runtype == ENERGY || data->runtype == HESSIAN) {
     /* We have only a single point */
-    data->end_of_trajectory = TRUE;
+    data->trajectory_done = TRUE;
   }
 
   data->num_frames_sent++;
@@ -722,7 +789,6 @@ static void close_gamess_read(void *mydata) {
   int i, j;
   fclose(data->file);
 
-  free(data->file_name);
   free(data->initatoms);
   free(data->basis);
   free(data->shell_symmetry);
@@ -758,14 +824,14 @@ static void close_gamess_read(void *mydata) {
     free(data->basis_set);
   }
 
-  for (i=0; i<data->num_frames_read; i++) {
+  for (i=0; i<data->num_frames; i++) {
     free(data->qm_timestep[i].scfenergies);
     free(data->qm_timestep[i].gradient);
     free(data->qm_timestep[i].mulliken_charges);
     for (j=0; j<data->qm_timestep[i].numwave; j++) {
       free(data->qm_timestep[i].wave[j].wave_coeffs);
       free(data->qm_timestep[i].wave[j].orb_energies);
-/*       free(data->qm_timestep[i].wave[j].occupancies); */
+      free(data->qm_timestep[i].wave[j].occupancies);
     }
     free(data->qm_timestep[i].wave);
   }
@@ -822,22 +888,36 @@ static int parse_static_data(gamessdata *data, int *natoms)
   /* Read symmetry point group and highest axis */
   if (!get_symmetry(data))         return FALSE;
 
+  /* Read the $GUESS options */
+  if (!get_guess_options(data))    return FALSE;
+
+  /* Find the end of the trajectory and count the
+   * frames on the way.
+   * If no regular end is found we won't find any
+   * properties to read and return. */
+  if (!analyze_traj(data)) {
+    printf("gamessplugin) WARNING: Truncated or abnormally terminated file!\n\n");
+  }
+
+
+
   /* provide VMD with the proper number of atoms */
   *natoms = data->numatoms;
 
+  /* Read the first frame*/
   read_first_frame(data);
 
 
-  /* XXX bad comment! now call routine get_initial_info to obtain 
-   * the number of atoms, the atom types, and the
-   * coordinates, which will be stored in qm_atom_t */
-  get_final_info(data);
+  /* Read the properties at the end of a calculation */
+  get_final_properties(data);
 
   printf("gamessplugin) num_frames_read = %i\n", data->num_frames_read);
   printf("gamessplugin) num_frames_sent = %i\n", data->num_frames_sent);
 
+#ifdef DEBUGGING 
   /* Test print the parsed data in same format as logfile */
   print_input_data(data);
+#endif
 
   return TRUE;
 }
@@ -933,8 +1013,8 @@ static void print_input_data(gamessdata *data) {
   printf(" NUMBER OF ELECTRONS                          =%5d\n", data->num_electrons);
   printf(" CHARGE OF MOLECULE                           =%5d\n", data->totalcharge);
   printf(" SPIN MULTIPLICITY                            =%5d\n", data->multiplicity);
-  printf(" NUMBER OF OCCUPIED ORBITALS (ALPHA)          =%5d\n", data->num_orbitals_A);
-  printf(" NUMBER OF OCCUPIED ORBITALS (BETA )          =%5d\n", data->num_orbitals_B);
+  printf(" NUMBER OF OCCUPIED ORBITALS (ALPHA)          =%5d\n", data->num_occupied_A);
+  printf(" NUMBER OF OCCUPIED ORBITALS (BETA )          =%5d\n", data->num_occupied_B);
   printf(" TOTAL NUMBER OF ATOMS                        =%5i\n", data->numatoms);
   printf("\n");
 }
@@ -1127,14 +1207,13 @@ static int get_basis_options(gamessdata *data) {
   rewind(data->file);
 
   /* start scanning */
-  do {
-    GET_LINE(buffer, data->file);
-    sscanf(buffer,"%s %s",&word[0][0],&word[1][0]);
+  if (!goto_keyline(data->file, "BASIS OPTIONS", "RUN TITLE")) {
+    /* No Basis options section found
+     * (basis was entered explicitly) */
+    return TRUE;
+  }
 
-  } while((strcmp(&word[0][0],"BASIS")) || 
-          (strcmp(&word[1][0],"OPTIONS")));
-
-  eatline(data->file, 1);
+  eatline(data->file, 2);
 
 
   /* the first string in the current line contains the
@@ -1340,12 +1419,13 @@ static int get_input_structure(gamessdata *data) {
  **********************************************************/
 static int get_contrl(gamessdata *data) {
 
-  char word[2][BUFSIZ];
+  char word[3][BUFSIZ];
   char buffer[BUFSIZ];
   char *temp;
 
   word[0][0] = '\0';
   word[1][0] = '\0';
+  word[2][0] = '\0';
   buffer[0] = '\0';
 
 
@@ -1365,116 +1445,99 @@ static int get_contrl(gamessdata *data) {
   sscanf(buffer,"%s %s",&word[0][0],&word[1][0]);
 
   /* check for supported RUNTYPs */
-  if (!strcmp(&word[1][0],"RUNTYP=ENERGY")) {
-    printf("gamessplugin) File generated via %s \n",&word[1][0]);
-    data->runtyp = ENERGY;
-    strncpy(data->runtyp_string,"Single point",
-            sizeof(data->runtyp_string));
+  if      (!strcmp(&word[1][0],"RUNTYP=ENERGY")) {
+    data->runtype = ENERGY;
   }
   else if (!strcmp(&word[1][0],"RUNTYP=OPTIMIZE")) {
-    printf("gamessplugin) File generated via %s \n",&word[1][0]);
-    data->runtyp = OPTIMIZE;
-    strncpy(data->runtyp_string,"Geometry optimization",
-            sizeof(data->runtyp_string));
+    data->runtype = OPTIMIZE;
   }
   else if (!strcmp(&word[1][0],"RUNTYP=SADPOINT")) {
-    printf("gamessplugin) File generated via %s \n",&word[1][0]);
-    data->runtyp = SADPOINT;
-    strncpy(data->runtyp_string,"Saddle point search",
-            sizeof(data->runtyp_string));
+    data->runtype = SADPOINT;
   }
   else if (!strcmp(&word[1][0],"RUNTYP=HESSIAN")) {
-    printf("gamessplugin) File generated via %s \n",&word[1][0]);
-    data->runtyp = HESSIAN;
-    strncpy(data->runtyp_string,"Hessian calculation",
-            sizeof(data->runtyp_string));
+    data->runtype = HESSIAN;
   }
   else if (!strcmp(&word[1][0],"RUNTYP=SURFACE")) {
-    printf("gamessplugin) File generated via %s \n",&word[1][0]);
-    data->runtyp = SURFACE;
-    strncpy(data->runtyp_string,"Potential energy surface scan",
-            sizeof(data->runtyp_string));
+    data->runtype = SURFACE;
   }
   else if (!strcmp(&word[1][0],"RUNTYP=GRADIENT")) {
-    printf("gamessplugin) File generated via %s \n",&word[1][0]);
-    data->runtyp = GRADIENT;
-    strncpy(data->runtyp_string,"Gradient calculation",
-            sizeof(data->runtyp_string));
+    data->runtype = GRADIENT;
   }
   else {
     printf("gamessplugin) The %s is currently not supported \n",
            &word[1][0]);
-    return FALSE;
+  /*   return FALSE; */
   }
+  printf("gamessplugin) File generated via %s \n",&word[1][0]);
+
 
   /* determine SCFTYP */
   if (!strcmp(&word[0][0],"SCFTYP=RHF")) {
-    printf("gamessplugin) Type of wavefunction used %s \n",
-           &word[0][0]);
-    data->scftyp = RHF;
-    strncpy(data->scftyp_string,"RHF",sizeof(data->scftyp_string));
+    data->scftype = RHF;
   }
   else if (!strcmp(&word[0][0],"SCFTYP=UHF")) {
-    printf("gamessplugin) Type of wavefunction used %s \n",
-           &word[0][0]);
-    data->scftyp = UHF;
-    strncpy(data->scftyp_string,"UHF",sizeof(data->scftyp_string));
+    data->scftype = UHF;
   }
   else if (!strcmp(&word[0][0],"SCFTYP=ROHF")) {
-    printf("gamessplugin) Type of wavefunction used %s \n",
-           &word[0][0]);
-    data->scftyp = ROHF;
-    strncpy(data->scftyp_string,"ROHF",sizeof(data->scftyp_string));
+    data->scftype = ROHF;
   }
   else if (!strcmp(&word[0][0],"SCFTYP=GVB")) {
-    printf("gamessplugin) Type of wavefunction used %s \n",
-           &word[0][0]);
-    data->scftyp = GVB;
-    strncpy(data->scftyp_string,"GVB",sizeof(data->scftyp_string));
+    data->scftype = GVB;
   }
   else if (!strcmp(&word[0][0],"SCFTYP=MCSCF")) {
-    printf("gamessplugin) Type of wavefunction used %s \n",
-           &word[0][0]);
-    data->scftyp = MCSCF;
-    strncpy(data->scftyp_string,"MCSCF",sizeof(data->scftyp_string));
+    data->scftype = MCSCF;
+  }
+  else if (!strcmp(&word[0][0],"SCFTYP=NONE")) {
+    data->scftype = NONE;
   }
   else {
     /* if we don't find a supported SCFTYP we bomb out; this
      * might be a little drastic */
     printf("gamessplugin) %s is currently not supported \n",
            &word[0][0]);
-    strncpy(data->scftyp_string,"\0",sizeof(data->scftyp_string));
     return FALSE;
   }
+  printf("gamessplugin) Type of wavefunction used %s \n",
+         &word[0][0]);
 
-  /* current line contains MPLEVL, CITYP, CCTYP, VBTYP info; scan it */
+  /* scan for MPLEVL, CITYP, CCTYP, VBTYP info; */
   GET_LINE(buffer, data->file);
-  sscanf(buffer,"%s %s",&word[0][0],&word[1][0]);
+  sscanf(buffer,"%s %s %*s %s",&word[0][0],&word[1][0],&word[2][0]);
 
   if (!strcmp(&word[0][0],"MPLEVL=")) {
+    /* Moller-Plesset perturbation level */
     printf("gamessplugin) MP perturbation level %s \n",&word[1][0]);
     data->mplevel = atoi(&word[1][0]);
-    strncpy(data->runtyp_string,"Single point",
-            sizeof(data->runtyp_string));
+
+    /* determine CITYP */
+    if      (!strcmp(&word[2][0],"=NONE"))  data->citype = NONE;
+    else if (!strcmp(&word[2][0],"=CIS"))   data->citype = CIS;
+    else if (!strcmp(&word[2][0],"=ALDET")) data->citype = ALDET;
+    else if (!strcmp(&word[2][0],"=ORMAS")) data->citype = ORMAS;
+    else if (!strcmp(&word[2][0],"=GUGA"))  data->citype = GUGA;
+    else if (!strcmp(&word[2][0],"=FSOCI")) data->citype = FSOCI;
+    else if (!strcmp(&word[2][0],"=GENCI")) data->citype = GENCI;
+    else                                    data->citype = UNKNOWN;
+    printf("gamessplugin) CI method %s \n",&word[2][1]);
+
+    GET_LINE(buffer, data->file);
+    sscanf(buffer,"%s %s",&word[0][0],&word[1][0]);
   }
 
-  /* current line contains DFTTYP, TDDFT info; scan it */
-  GET_LINE(buffer, data->file);
-  sscanf(buffer,"%s %s",&word[0][0],&word[1][0]);
-
+  /* scan for DFTTYP, TDDFT info; */
   if (!strncmp(&word[0][0],"DFTTYP=", 7)) {
     printf("gamessplugin) Density functional used is %s \n",&word[0][7]);
-    strncpy(data->dfttyp_string, &word[0][7],
-            sizeof(data->dfttyp_string));
+    GET_LINE(buffer, data->file);
   }
 
-  /* advance until we find the coordinate type */
-  GET_LINE(buffer, data->file);
+
+  /* find the coordinate type in next line */
   while ( (temp=strstr(buffer,"COORD =")) == NULL ) {
     GET_LINE(buffer, data->file);;
   }
   strncpy(data->geometry,chop_string_all(temp+7),
           sizeof(data->geometry)); 
+  printf("gamessplugin) Coordinate type used is %s \n", data->geometry);
 
   return TRUE;
 }
@@ -1499,88 +1562,19 @@ static int get_symmetry(gamessdata *data) {
 
 
 static int read_first_frame(gamessdata *data) {
-  char buffer[BUFSIZ];
-
-  if (data->runtyp==OPTIMIZE || data->runtyp==SADPOINT) {
-    goto_keystring(data->file,
-                   "PARAMETERS CONTROLLING GEOMETRY SEARCH", NULL);
-    eatline(data->file, 2);
-
-    GET_LINE(buffer, data->file);
-    sscanf(buffer, "NSTEP  = %i", &data->num_opt_steps);
-    eatline(data->file, 3);
-    GET_LINE(buffer, data->file);
-    sscanf(buffer, "OPTTOL = %f", &data->opt_tol);
-
-    /* The $STATP options are followed by the coordinates 
-     * but we can skip them here because we rewind after
-     * get_guess_options() and try to read them in
-     * get_traj_frame(). */
-  }
-  else if (data->runtyp==SURFACE) {
-    if (goto_keystring(data->file,
-                        "POTENTIAL SURFACE MAP INPUT", NULL)) {
-      
-      int coord1[2];
-      int mplevel1=-1, nstep1;
-      float origin1, disp1;
-      char runtyp1[BUFSIZ];
-      char scftyp1[BUFSIZ];
-      char dfttyp1[BUFSIZ];
-      char *tmp;
-        
-      eatline(data->file, 1);
-
-      GET_LINE(buffer, data->file);
-      /* int n=sscanf(buffer, "JOB 1 IS RUNTYP=%s SCFTYP=%s CITYP=%*s",
-         runtyp1, scftyp1); */
-      tmp = strstr(buffer, "RUNTYP=") + 7;
-      sscanf(tmp, "%s", runtyp1);
-      tmp = strstr(buffer, "SCFTYP=") + 7;
-      sscanf(tmp, "%s", scftyp1);
-      printf("gamessplugin) JOB 1 IS RUNTYP=%s SCFTYP=%s\n", runtyp1, scftyp1);
-
-      GET_LINE(buffer, data->file);
-      sscanf(buffer, "MPLEVL= %i", &mplevel1);
-      tmp = strstr(buffer, "DFTTYP=") + 7;
-      sscanf(tmp, "%s", dfttyp1);
-      printf("gamessplugin) MPLEVL= %i DFTTYP=%s\n", mplevel1, dfttyp1);
-
-      GET_LINE(buffer, data->file);
-      sscanf(buffer, "COORD 1 LYING ALONG ATOM PAIR %i %i",
-             coord1, coord1+1);
-      GET_LINE(buffer, data->file);
-      tmp = strstr(buffer, "ORIGIN=") + 7;
-      sscanf(tmp, "%f", &origin1);
-      tmp = strstr(buffer, "DISPLACEMENT=") + 13;
-      sscanf(tmp, "%f", &disp1);
-      tmp = strstr(buffer, "AND") + 3;
-      sscanf(tmp, "%i STEPS.", &nstep1);
-      printf("gamessplugin) origin=%f, displacement=%f nstep=%i\n", origin1, disp1, nstep1);
-    }
-  }
-  /* Read the $GUESS options */
-  if (!get_guess_options(data)) return FALSE;
-
-  /* Create timestep array that will be realloc'ed
-   * in get_traj_frame() */
-  data->qm_timestep = (qm_timestep_t *)calloc(1, sizeof(qm_timestep_t));
-  data->qm_timestep->numwave = 0;
-  memset(data->qm_timestep, 0, sizeof(qm_timestep_t));
-
-  data->filepos_array = (long* )calloc(1, sizeof(long ));
-
   /* the angular momentum is populated in get_wavefunction 
    * which is called by get_traj_frame(). We have obtained
    * the array size wavef_size already from the basis set
    * statistics */
   data->angular_momentum = (int*)calloc(3*data->wavef_size, sizeof(int));
 
+  /* Try reading the first frame. 
+   * If there is only one frame then also read the
+   * final wavefunction. */
   if (!get_traj_frame(data, data->initatoms, data->numatoms)) {
     return FALSE;
   }
 
-  data->num_frames = 1;
   return TRUE;
 }
 
@@ -1595,29 +1589,24 @@ static int read_first_frame(gamessdata *data) {
  * later.
  *
  ******************************************************/
-static int get_final_info(gamessdata *data) {
+static int get_final_properties(gamessdata *data) {
   long filepos;
   filepos = ftell(data->file);
 
-  if (data->runtyp == OPTIMIZE || data->runtyp == SADPOINT ||
-      data->runtyp == SURFACE) {
-    /* Try to advance to the end of the geometry
-     * optimization. If no regular end is found we
-     * won't find any propertiies to read and return. */
-    if (!find_traj_end(data)) return FALSE;
-  }
+  /* Go to end of trajectory */
+  fseek(data->file, data->end_of_traj, SEEK_SET);
+
 
   if (get_esp_charges(data)) {
     printf("gamessplugin) ESP charges found!\n");
   }
 
-  if (data->runtyp == GRADIENT) {
+  if (data->runtype == GRADIENT) {
     /* get_singlepoint_gradient(data); */
   }
 
 
-
-  if (data->runtyp == HESSIAN) {
+  if (data->runtype == HESSIAN) {
     /* try reading the hessian matrix in internal and
      * cartesian coordinates as well as the internal
      * coordinates together with their associated
@@ -1645,8 +1634,50 @@ static int get_final_info(gamessdata *data) {
     }
   }
 
+  /* Read localized orbitals if there are any */
+  read_localized_orbitals(data);
+
+
   fseek(data->file, filepos, SEEK_SET);
   return TRUE; 
+}
+
+
+static int read_localized_orbitals(gamessdata *data) {
+  int i;
+  qm_timestep_t *ts;
+  qm_wavefunction_t *wavef;
+
+  /* Move past the listing of the canonical MOs */
+  goto_keyline(data->file, "ENERGY COMPONENTS", NULL);
+  eatline(data->file, 1);
+
+  ts = data->qm_timestep + data->num_frames-1;
+
+  for (i=0; i<2; i++) {
+    wavef = add_wavefunction(ts);
+
+    if (get_wavefunction(data, ts, wavef) == FALSE ||
+        (wavef->type!=MOLFILE_WAVE_BOYS &&
+         wavef->type!=MOLFILE_WAVE_PIPEK &&
+         wavef->type!=MOLFILE_WAVE_RUEDEN)) {
+      del_wavefunction(ts);
+      return FALSE;
+    }
+    else {
+      char typestr[64];
+      if (wavef->spin==SPIN_ALPHA) {
+        strcpy(typestr, "alpha");
+      }
+      else if (wavef->spin==SPIN_BETA) {
+        strcpy(typestr, "beta");
+      }
+      printf("gamessplugin) Localized orbitals (%s) found for timestep %d\n",
+             typestr, data->num_frames-1);
+    }
+  }
+
+  return TRUE;
 }
 
 
@@ -1722,7 +1753,7 @@ static int get_basis_stats(gamessdata *data) {
   for (i=0; i<7; i++) word[i][0] = '\0';
 
   /* look for the orbital/charge/... info section */
-  goto_keystring(data->file, "TOTAL NUMBER OF BASIS", NULL);
+  pass_keyline(data->file, "TOTAL NUMBER OF BASIS", NULL);
 
 
   /* go ahead reading the info */
@@ -1751,12 +1782,12 @@ static int get_basis_stats(gamessdata *data) {
   /* note the different number of items per line for A/B orbitals
    * due to "(ALPHA)" and "(BETA )" !! */
   sscanf(buffer,"%*s %*s %*s %*s %*s %*s %d",
-         &(data->num_orbitals_A)); 
+         &(data->num_occupied_A)); 
     
   /* read number of B orbitals */
   GET_LINE(buffer, data->file);
   sscanf(buffer,"%*s %*s %*s %*s %*s %*s %*s %d",
-         &(data->num_orbitals_B)); 
+         &(data->num_occupied_B)); 
 
 
   printf("gamessplugin) Number of Electrons: %d \n",
@@ -1768,8 +1799,8 @@ static int get_basis_stats(gamessdata *data) {
   printf("gamessplugin) Multiplicity of Wavefunction: %d \n",
       data->multiplicity);
 
-  printf("gamessplugin) Number of A / B orbitals: %d / %d \n",\
-      data->num_orbitals_A, data->num_orbitals_B);
+  printf("gamessplugin) Number of occupied A / B orbitals: %d / %d \n",\
+      data->num_occupied_A, data->num_occupied_B);
 
   printf("gamessplugin) Number of gaussian basis functions: %d \n",\
       data->wavef_size);
@@ -1798,7 +1829,7 @@ static int get_guess_options(gamessdata *data)
   for (i=0; i<2; i++) word[i][0] = '\0';
 
   /* parse for GUESS field */
-  if (!goto_keystring(data->file, "GUESS OPTIONS", NULL)) {
+  if (!pass_keyline(data->file, "GUESS OPTIONS", NULL)) {
     printf("gamessplugin) No GUESS OPTIONS found!\n");
     fseek(data->file, filepos, SEEK_SET);
     return FALSE;
@@ -1857,7 +1888,7 @@ int get_basis(gamessdata *data) {
   
   /* Search for "ATOMIC BASIS SET" line */
   /* XXX what is a good stopstring? */
-  if (!goto_keystring(data->file, "ATOMIC BASIS SET", NULL))
+  if (!pass_keyline(data->file, "ATOMIC BASIS SET", NULL))
     printf("gamessplugin) No basis set found!\n");
 
 
@@ -2210,192 +2241,206 @@ static int read_shell_primitives(gamessdata *data, prim_t **prim, char *shellsym
  * *****************************************************/
 static int get_traj_frame(gamessdata *data, qm_atom_t *atoms,
                           int natoms) {
-  qm_timestep_t *cur_qm_ts;
+  qm_timestep_t *cur_ts;
   qm_wavefunction_t *wavef_alpha;
   char buffer[BUFSIZ];
   char word[BUFSIZ];
   buffer[0] = '\0';
-  word[0] = '\0';
+  word[0]   = '\0';
 
-  printf("gamessplugin) Timestep %i:\n=======================\n", data->num_frames_read);
+  printf("gamessplugin) Timestep %i:\n", data->num_frames_read);
+  printf("gamessplugin) ============\n");
 
-  if (data->runtyp==OPTIMIZE || data->runtyp==SADPOINT) {
-    /* scan for the next optimized geometry */
-    GET_LINE(buffer, data->file);
-        
-    /* at this point we have to distinguish between
-     * pre="27 JUN 2005 (R2)" and "27 JUN 2005 (R2)"
-     * versions since the output format for geometry
-     * optimizations has changed */
-    if (data->version==1) {
-      goto_keystring(data->file, "1NSERCH=", NULL);
-    }
-    
-    else if (data->version==2) {
-      int ret = goto_keystring(data->file,
-                    "BEGINNING GEOMETRY SEARCH POINT NSERCH=",
-                    "***** EQUILIBRIUM GEOMETRY LOCATED");
-      if (ret==STOPPED) {
-        data->converged = 1;
-        printf("***** EQUILIBRIUM GEOMETRY LOCATED *****\n");
-        return FALSE;
-      }
-    }
-    eatline(data->file, 1);
-    
-    /* next we need to check that we're reading the 
-     * coordinates of all atoms not only the symmetry
-     * unique ones in case the point group is not C1 */
-    GET_LINE(buffer, data->file);
-    sscanf(buffer," COORDINATES OF %s", word);
+  fseek(data->file, data->filepos_array[data->num_frames_read], SEEK_SET);
 
-    /* if symmetry unique atoms follow we have to advance
-     * some more */
-    if (!strcmp(word, "SYMMETRY")) {
-      GET_LINE(buffer, data->file);
-        
-      goto_keystring(data->file, "COORDINATES", NULL);
-    }
+
+  if (data->runtype==OPTIMIZE || data->runtype==SADPOINT) {
+
+    pass_keyline(data->file, "COORDINATES OF ALL ATOMS", NULL);
     eatline(data->file, 2);
 
     if (!get_coordinates(data->file, &data->initatoms, ANGSTROM, &natoms)) {
       printf("gamessplugin) Couldn't find coordinates for timestep %i\n", data->num_frames_read);
     }
 
-  } /* END OPTIMIZE */
-
-  else if (data->runtyp==SURFACE) {
-    if (!goto_keystring(data->file, "---- SURFACE MAPPING GEOMETRY", NULL)) {
+  }
+  else if (data->runtype==SURFACE) {
+    if (!pass_keyline(data->file, "---- SURFACE MAPPING GEOMETRY", NULL)) {
       return FALSE;
     }
   }
 
-
-  if (data->num_frames_read>0) {
-    /* allocate more memory for the timestep array */
-    data->qm_timestep = (qm_timestep_t *)realloc(data->qm_timestep,
-                (data->num_frames_read+1)*sizeof(qm_timestep_t));
-  }
-
+ 
   /* get a convenient pointer to the current qm timestep */
-  cur_qm_ts = data->qm_timestep+data->num_frames_read;
-  memset(cur_qm_ts, 0, sizeof(qm_timestep_t));
+  cur_ts = data->qm_timestep + data->num_frames_read;
 
   /* read the SCF energies */
-  if (get_scfdata(data, cur_qm_ts) == FALSE) {
+  if (get_scfdata(data, cur_ts) == FALSE) {
     printf("gamessplugin) Couldn't find SCF iterations for timestep %i\n", data->num_frames_read);
   }
 
+  /* Allocate memory for new wavefunction */
+  wavef_alpha = add_wavefunction(cur_ts);
+
   /* Try to read wavefunction and orbital energies */
-  if (!cur_qm_ts->numwave) {
-    cur_qm_ts->wave = (qm_wavefunction_t *)calloc(1, sizeof(qm_wavefunction_t));
+  if (get_wavefunction(data, cur_ts, wavef_alpha) == FALSE) {
+    /* Free the last wavefunction again. */
+    del_wavefunction(cur_ts);
+    printf("gamessplugin) No canonical wavefunction present for timestep %i\n", data->num_frames_read);
+
   } else {
-    cur_qm_ts->wave = (qm_wavefunction_t *)realloc(cur_qm_ts->wave, (cur_qm_ts->numwave+1)*sizeof(qm_wavefunction_t));
-    memset(cur_qm_ts->wave, 0, sizeof(qm_wavefunction_t));
-  }
-  wavef_alpha = &cur_qm_ts->wave[cur_qm_ts->numwave]; 
+    char typestr[64];
+    strcpy(typestr, wavef_alpha->info);
+    if (data->scftype==UHF) {
+      strcat(typestr, ", alpha");
+    }
+    printf("gamessplugin) Wavefunction (%s) found for timestep %i\n", typestr, data->num_frames_read);
 
-  if (get_wavefunction(data, cur_qm_ts, wavef_alpha) == FALSE) {
-    
-
-    cur_qm_ts->wave = (qm_wavefunction_t *)realloc(cur_qm_ts->wave, (cur_qm_ts->numwave)*sizeof(qm_wavefunction_t));
-    printf("gamessplugin) No wavefunction present for timestep %i\n", data->num_frames_read);
-  } else {
-    printf("gamessplugin) Wavefunction (alpha) found for timestep %i\n", data->num_frames_read);
-
-    cur_qm_ts->numwave++;
-    wavef_alpha->type = MOLFILE_WAVE_CANON;
-
-    if (data->scftyp==UHF) {
+    if (data->scftype==UHF || data->scftype==GVB || data->scftype==MCSCF) {
+      /* Try to read second wavefunction
+       * (spin beta or GI orbitals or MCSCF optimized orbs) */
       qm_wavefunction_t *wavef_beta;
-      cur_qm_ts->wave = (qm_wavefunction_t *)realloc(cur_qm_ts->wave, (cur_qm_ts->numwave+1)*sizeof(qm_wavefunction_t));
-      wavef_beta = &cur_qm_ts->wave[cur_qm_ts->numwave];
-      memset(wavef_beta, 0, sizeof(qm_wavefunction_t));
+      wavef_beta = add_wavefunction(cur_ts);
 
-      if (get_wavefunction(data, cur_qm_ts, wavef_beta) == FALSE) {
-        
+      if (get_wavefunction(data, cur_ts, wavef_beta) == FALSE) {
+        /* Free the last wavefunction again. */
+        del_wavefunction(cur_ts);
 
-        cur_qm_ts->wave = (qm_wavefunction_t *)realloc(cur_qm_ts->wave, (cur_qm_ts->numwave+1)*sizeof(qm_wavefunction_t));
         printf("gamessplugin) No beta wavefunction present for timestep %i\n", data->num_frames_read);
       } else {
-        printf("gamessplugin) Wavefunction (beta)  found for timestep %i\n", data->num_frames_read);
-        printf("cur_qm_ts->numwave=%d\n", cur_qm_ts->numwave);
-
-        cur_qm_ts->numwave++;
-        wavef_beta->type = MOLFILE_WAVE_CANON;
+        strcpy(typestr, wavef_beta->info);
+        if (data->scftype==UHF) {
+          strcat(typestr, ", beta");
+        }
+        printf("gamessplugin) Wavefunction (%s)  found for timestep %i\n", typestr, data->num_frames_read);
       }
     }
   }
 
-  if (get_population(data, cur_qm_ts)) {
+  if (get_population(data, cur_ts)) {
     printf("gamessplugin) Mulliken charges found\n");
   }
 
-  if (get_gradient(data, cur_qm_ts) == FALSE) {
+  if (data->citype!=NONE) {
+    if (pass_keyline(data->file, "CI DENSITY MATRIX AND NATURAL ORBITALS",
+                       "GRADIENT (HARTREE/BOHR)")) {
+      int i, numstates=0;
+      qm_wavefunction_t *wave_ci;
+      goto_keyline(data->file, "NUMBER OF STATES", NULL);
+      GET_LINE(buffer, data->file);
+      trimleft(buffer);
+      sscanf(buffer, " NUMBER OF STATES = %d", &numstates);
+      printf("gamessplugin) Number of CI states = %d\n", numstates);
+
+      for (i=0; i<numstates; i++) {
+        float cienergy = 0.f;
+        goto_keyline(data->file, "CI EIGENSTATE", NULL);
+        GET_LINE(buffer, data->file);
+        sscanf(buffer,"%*s %*s %*d %*s %*s %*s %f", &cienergy);
+        printf("gamessplugin) CI energy[%d] = %f\n", i, cienergy);
+
+        wave_ci = add_wavefunction(cur_ts);
+
+        if (get_wavefunction(data, cur_ts, wave_ci) == FALSE) {
+          del_wavefunction(cur_ts);      
+        }
+        else {
+          int j, canon =-1;
+          wave_ci->exci = i;
+          printf("gamessplugin) Found CI natural orbitals for timestep %d\n", data->num_frames_read);
+
+          for (j=0; j<cur_ts->numwave; j++) {
+            if (cur_ts->wave[j].type==MOLFILE_WAVE_CANON &&
+                cur_ts->wave[j].spin==wave_ci->spin) {
+              canon = j;
+              break;
+            }
+          }
+          if (canon>=0) {
+            /* Replace existing canonical wavefunction for this step */
+            replace_wavefunction(cur_ts, canon);
+          }
+        }
+      }
+    }
+  }
+
+
+  if (get_gradient(data, cur_ts) == FALSE) {
     printf("gamessplugin) No energy gradient present for timestep %i\n", data->num_frames_read);
   } else {
     printf("gamessplugin) Energy gradient found for timestep %i\n", data->num_frames_read);
   }
 
-  /* Read ahead to see if the equilibrium has been reached.
-   * If so, the file pointer will be put in the right position
-   * to parse the final info block. */
-  if ((data->runtyp == OPTIMIZE || data->runtyp == SADPOINT) &&
-      data->num_frames_read+1 == data->num_frames &&
-      (data->opt_status == CONVERGED ||
-       data->opt_status == TOO_MANY_STEPS)) {
+  /* If this is the last frame of the trajectory and the file
+   * wasn't truncated and the program didn't terminate
+   * abnormally then read the final wavefunction. */
+  if ((data->runtype == OPTIMIZE || data->runtype == SADPOINT) &&
+      (data->num_frames_read+1 == data->num_frames &&
+       (data->opt_status == MOLFILE_QM_STATUS_UNKNOWN || 
+        data->opt_status == MOLFILE_QM_OPT_CONVERGED ||
+        data->opt_status == MOLFILE_QM_OPT_NOT_CONV))) {
     qm_wavefunction_t *wave_final;
 
     /* We need to jump over the end of the trajectory because 
      * this is also the keystring for get_wavefunction() to
      * bail out. */
-    if (data->opt_status == CONVERGED) {
-      fseek(data->file, data->end_of_traj, SEEK_SET);
-    }
-    else if (data->opt_status == TOO_MANY_STEPS) {
+    if (data->opt_status == MOLFILE_QM_OPT_CONVERGED || 
+        data->opt_status == MOLFILE_QM_OPT_NOT_CONV) {
       fseek(data->file, data->end_of_traj, SEEK_SET);
     }
 
     /* Try to read final wavefunction and orbital energies
      * Any wavefunction previously stored for the final
-     * timestep will be overwritten.
-     * XXX when orbital localization was requested this final
-     * dataset will be the localized wavefunction and we want
-     * to store these data in a separate array. */
-    wave_final = (qm_wavefunction_t *)calloc(1, sizeof(qm_wavefunction_t));
+     * timestep will be overwritten. */
+    wave_final = add_wavefunction(cur_ts);
 
-    if (get_wavefunction(data, cur_qm_ts, wave_final) == FALSE) {
+    if (get_wavefunction(data, cur_ts, wave_final) == FALSE) {
       printf("gamessplugin) No final wavefunction present for timestep %d\n", data->num_frames_read);
-      free_wavefunction(wave_final);
+      /* Free the the pointer an the contents of the last wfn */
+      del_wavefunction(cur_ts);
+
     } else {
-      if (cur_qm_ts->numwave) {
-        if (wave_final->type==MOLFILE_WAVE_CANON) {
-          
+      char typestr[MOLFILE_BUFSIZ];
 
-          wavef_alpha = &cur_qm_ts->wave[cur_qm_ts->numwave-1];
-        } else {
-          
-
-          cur_qm_ts->wave = (qm_wavefunction_t *)realloc(cur_qm_ts->wave,
-                               (cur_qm_ts->numwave+1)*sizeof(qm_wavefunction_t));
-          wavef_alpha = &cur_qm_ts->wave[cur_qm_ts->numwave]; 
-          memset(wavef_alpha, 0, sizeof(qm_wavefunction_t));
-          cur_qm_ts->numwave++;
+      /* if there exists a canonical wavefunction of the same spin
+       * we'll replace it */
+      if (cur_ts->numwave>1 && wave_final->type==MOLFILE_WAVE_CANON) {
+        int i, found =-1;
+        for (i=0; i<cur_ts->numwave; i++) {
+          if (cur_ts->wave[i].type==wave_final->type &&
+              cur_ts->wave[i].spin==wave_final->spin &&
+              cur_ts->wave[i].exci==wave_final->exci &&
+              !strncmp(cur_ts->wave[i].info, wave_final->info, MOLFILE_BUFSIZ)) {
+            found = i;
+            break;
+          }
         }
-
-      } else {
-        
-
-        cur_qm_ts->wave = (qm_wavefunction_t *)calloc(1, sizeof(qm_wavefunction_t));
-        wavef_alpha = &cur_qm_ts->wave[0]; 
-        cur_qm_ts->numwave++;
+        if (found>=0) {
+          /* If the new wavefunction has more orbitals we 
+           * replace the old one for this step. */
+          if (wave_final->num_orbitals > 
+              cur_ts->wave[found].num_orbitals) {
+            /* Replace existing wavefunction for this step */
+            replace_wavefunction(cur_ts, found);
+          } else {
+            /* Delete last wavefunction again */
+            del_wavefunction(cur_ts);
+          }
+          wave_final = &cur_ts->wave[cur_ts->numwave-1];
+        }
       }
-      copy_wavefunction(wavef_alpha, wave_final);
-      free(wave_final);
 
-      printf("gamessplugin) Final wavefunction (type=%d) found for timestep %d\n",
-             wavef_alpha->type, data->num_frames_read);
+
+      strcpy(typestr, wave_final->info);
+      if (data->scftype==UHF) {
+        strcat(typestr, ", alpha");
+      }
+
+      printf("gamessplugin) Final wavefunction (%s) found for timestep %d\n",
+             typestr, data->num_frames_read);
     }
+
   }
 
   data->num_frames_read++;
@@ -2404,35 +2449,141 @@ static int get_traj_frame(gamessdata *data, qm_atom_t *atoms,
 }
 
 
-/* Look for the "EQUILIBRIUM GEOMETRY LOCATED" line thereby
- * advancing the file pointer so that the final info block
- * can be parsed.
- * If we don't find this line before the next geometry
- * the file pointer will be set back to where the search
- * started. */
-static int find_traj_end(gamessdata *data) {
-  char buffer[BUFSIZ];
+/* Analyze the trajectory.
+ * Read the parameters comtrolling geometry search and
+ * find the end of the trajectory, couinting the frames
+ * on the way. Store the filepointer for the beginning of
+ * each frame in *filepos_array. */
+static int analyze_traj(gamessdata *data) {
+  char buffer[BUFSIZ], nserch[BUFSIZ];
   char *line;
   long filepos;
   filepos = ftell(data->file);
+
+  data->filepos_array = (long* )calloc(1, sizeof(long ));
+
+
+  if (data->runtype==OPTIMIZE || data->runtype==SADPOINT) {
+    pass_keyline(data->file,
+                   "PARAMETERS CONTROLLING GEOMETRY SEARCH", NULL);
+    eatline(data->file, 2);
+
+    GET_LINE(buffer, data->file);
+    sscanf(buffer, "NSTEP  = %i", &data->max_opt_steps);
+    eatline(data->file, 3);
+    GET_LINE(buffer, data->file);
+    sscanf(buffer, "OPTTOL = %f", &data->opt_tol);
+
+    /* The $STATP options are followed by the coordinates 
+     * but we can skip them here because we rewind after
+     * get_guess_options() and try to read them in
+     * get_traj_frame(). */
+  }
+  else if (data->runtype==SURFACE) {
+    if (pass_keyline(data->file,
+                        "POTENTIAL SURFACE MAP INPUT", NULL)) {
+      
+      int coord1[2];
+      int mplevel1=-1, nstep1;
+      float origin1, disp1;
+      char runtype1[BUFSIZ];
+      char scftype1[BUFSIZ];
+      char dfttyp1[BUFSIZ];
+      char *tmp;
+        
+      eatline(data->file, 1);
+
+      GET_LINE(buffer, data->file);
+      /* int n=sscanf(buffer, "JOB 1 IS RUNTYP=%s SCFTYP=%s CITYP=%*s",
+         runtype1, scftype1); */
+      tmp = strstr(buffer, "RUNTYP=") + 7;
+      sscanf(tmp, "%s", runtype1);
+      tmp = strstr(buffer, "SCFTYP=") + 7;
+      sscanf(tmp, "%s", scftype1);
+      printf("gamessplugin) JOB 1 IS RUNTYP=%s SCFTYP=%s\n", runtype1, scftype1);
+
+      GET_LINE(buffer, data->file);
+      sscanf(buffer, "MPLEVL= %i", &mplevel1);
+      tmp = strstr(buffer, "DFTTYP=") + 7;
+      sscanf(tmp, "%s", dfttyp1);
+      printf("gamessplugin) MPLEVL= %i DFTTYP=%s\n", mplevel1, dfttyp1);
+
+      GET_LINE(buffer, data->file);
+      sscanf(buffer, "COORD 1 LYING ALONG ATOM PAIR %i %i",
+             coord1, coord1+1);
+      GET_LINE(buffer, data->file);
+      tmp = strstr(buffer, "ORIGIN=") + 7;
+      sscanf(tmp, "%f", &origin1);
+      tmp = strstr(buffer, "DISPLACEMENT=") + 13;
+      sscanf(tmp, "%f", &disp1);
+      tmp = strstr(buffer, "AND") + 3;
+      sscanf(tmp, "%i STEPS.", &nstep1);
+      printf("gamessplugin) origin=%f, displacement=%f nstep=%i\n", origin1, disp1, nstep1);
+    }
+  }
+  else {
+    /* We have just one frame */
+    data->num_frames = 1;
+    pass_keyline(data->file, "1 ELECTRON INTEGRALS",
+                 "ENERGY COMPONENTS");
+    data->filepos_array[0] = ftell(data->file);
+
+    /* Check wether SCF has converged */
+    if (pass_keyline(data->file, "SCF IS UNCONVERGED, TOO MANY ITERATIONS",
+                     "ENERGY COMPONENTS")==FOUND) {
+      printf("gamessplugin) SCF IS UNCONVERGED, TOO MANY ITERATIONS\n");
+      data->opt_status = MOLFILE_QM_SCF_NOT_CONV;
+    } else {
+      data->opt_status = MOLFILE_QM_OPT_CONVERGED;
+      fseek(data->file, data->filepos_array[0], SEEK_SET);
+    }
+
+    pass_keyline(data->file, "ENERGY COMPONENTS", NULL);
+    data->end_of_traj = ftell(data->file);
+
+    /* Allocate memory for the frame */
+    data->qm_timestep = (qm_timestep_t *)calloc(1, sizeof(qm_timestep_t));
+    memset(data->qm_timestep, 0, sizeof(qm_timestep_t));
+    
+    return TRUE;
+  }
+
+  printf("gamessplugin) Analyzing trajectory...\n");
+  data->opt_status = MOLFILE_QM_STATUS_UNKNOWN;
 
   while (1) {
     if (!fgets(buffer, sizeof(buffer), data->file)) break;
     line = trimleft(buffer);
 
-    if (strstr(line, "BEGINNING GEOMETRY SEARCH POINT NSERCH=") ||
+    /* at this point we have to distinguish between
+     * pre="27 JUN 2005 (R2)" and "27 JUN 2005 (R2)"
+     * versions since the output format for geometry
+     * optimizations has changed */
+    if (data->version==1) {
+      strcpy(nserch, "1NSERCH=");
+    }
+    else if (data->version==2) {
+      strcpy(nserch, "BEGINNING GEOMETRY SEARCH POINT NSERCH=");
+    }
+
+    if (strstr(line, nserch) ||
         strstr(line, "---- SURFACE MAPPING GEOMETRY")) {
       printf("gamessplugin) %s", line);
-      data->filepos_array = (long*)realloc(data->filepos_array,
+
+      if (data->num_frames > 0) {
+        data->filepos_array = (long*)realloc(data->filepos_array,
                                 (data->num_frames+1)*sizeof(long));
+      }
       data->filepos_array[data->num_frames] = ftell(data->file);
 
       /* Make sure that we have at least a complete coordinate
          block in order to consider this a new frame. */
-      if (goto_keystring(data->file, "COORDINATES OF",
-              "BEGINNING GEOMETRY SEARCH POINT NSERCH=") == FOUND) {
-        if (goto_keystring(data->file, "INTERNUCLEAR DISTANCES",
-                           "1 ELECTRON INTEGRALS")) {
+      if (pass_keyline(data->file, "COORDINATES OF",
+               "BEGINNING GEOMETRY SEARCH POINT NSERCH=") == FOUND) {
+        if (pass_keyline(data->file, "INTERNUCLEAR DISTANCES",
+                           "1 ELECTRON INTEGRALS") ||
+            pass_keyline(data->file, "1 ELECTRON INTEGRALS",
+               "BEGINNING GEOMETRY SEARCH POINT NSERCH=")) {
           data->num_frames++;
         }
       }
@@ -2440,35 +2591,45 @@ static int find_traj_end(gamessdata *data) {
     else if (strstr(line, "***** EQUILIBRIUM GEOMETRY LOCATED") ||
              strstr(line, "... DONE WITH POTENTIAL SURFACE SCAN")) {
       printf("gamessplugin) ==== End of trajectory. ====\n");
-      data->opt_status = CONVERGED;
-      data->end_of_traj = ftell(data->file);
-      return TRUE;
+      data->opt_status = MOLFILE_QM_OPT_CONVERGED;
+      break;
     }
     else if (strstr(line, "***** FAILURE TO LOCATE STATIONARY POINT,")) {
       printf("gamessplugin) %s\n", line);
       if (strstr(strchr(line, ','), "SCF HAS NOT CONVERGED")) {
-        data->opt_status = SCF_NOT_CONV;
-        data->end_of_traj = ftell(data->file);
-        return FALSE;
+        data->opt_status = MOLFILE_QM_SCF_NOT_CONV;
+        break;
       }
       else if (strstr(strchr(line, ','), "TOO MANY STEPS TAKEN")) {
-        data->opt_status = TOO_MANY_STEPS;
-        data->end_of_traj = ftell(data->file);
-        return TRUE;
+        data->opt_status = MOLFILE_QM_OPT_NOT_CONV;
+        break;
       }
-      data->opt_status = UNKNOWN;
-      data->end_of_traj = ftell(data->file);
-      return FALSE;
     }
   }
 
-  /* We didn't find any of the regular key strings,
-   * the run was most likely broken off and we have an
-   * incomplete file. */
-  data->opt_status = BROKEN_OFF;
-
+  data->end_of_traj = ftell(data->file);
   fseek(data->file, filepos, SEEK_SET);
-  return FALSE;  
+
+  if (data->opt_status == MOLFILE_QM_STATUS_UNKNOWN) {
+    /* We didn't find any of the regular key strings,
+     * the run was most likely broken off and we have an
+     * incomplete file. */
+    data->opt_status = MOLFILE_QM_FILE_TRUNCATED;
+  }
+
+
+  /* Allocate memory for all frames */
+  data->qm_timestep = (qm_timestep_t *)calloc(data->num_frames,
+                                              sizeof(qm_timestep_t));
+  memset(data->qm_timestep, 0, data->num_frames*sizeof(qm_timestep_t));
+
+
+  if (data->opt_status == MOLFILE_QM_SCF_NOT_CONV ||
+      data->opt_status == MOLFILE_QM_FILE_TRUNCATED) {
+    return FALSE;  
+  }
+
+  return TRUE;
 }
 
 
@@ -2503,8 +2664,10 @@ static int get_scfdata(gamessdata *data, qm_timestep_t *ts) {
     GET_LINE(buffer, data->file);
     sscanf(buffer,"%s %s %s", &word[0][0], &word[1][0],
 	   &word[2][0]);
-  } while (strcmp(&word[0][0],"ITER") || strcmp(&word[1][0],"EX"));
+  } while (!(!strcmp(&word[0][0],"ITER") &&
+             (!strcmp(&word[1][0],"EX") || !strcmp(&word[1][0],"TOTAL"))));
 
+  
   /* store current file position since we first have to count iterations */
   filepos = ftell(data->file);
 
@@ -2556,16 +2719,16 @@ static int get_scfdata(gamessdata *data, qm_timestep_t *ts) {
  **********************************************************/
 static int get_wavefunction(gamessdata *data, qm_timestep_t *ts, qm_wavefunction_t *wf)
 {
-  float *orb_energies;
+  float *orb_energies, orben[5];
   float *wave_coeff;
   char buffer[BUFSIZ];
   char word[6][BUFSIZ];
   int num_orbitals = 0;
-  int i = 0, j = 0, num_values = 0;
+  int i = 0, num_values = 0;
   long filepos;
   char *line;
-  int key = 0;
-  int truncated = 0;
+  int have_orben = 0;
+  int n[5];
 
   buffer[0] = '\0';
   for (i=0; i<6; i++) word[i][0] = '\0';
@@ -2575,8 +2738,10 @@ static int get_wavefunction(gamessdata *data, qm_timestep_t *ts, qm_wavefunction
     return FALSE;
   }
 
-  wf->type = MOLFILE_WAVE_CANON;
+  wf->type = MOLFILE_WAVE_UNKNOWN;
   wf->spin = SPIN_ALPHA;
+  wf->exci = 0;
+  strncpy(wf->info, "unknown", MOLFILE_BUFSIZ);
 
   /*
    * Scan for something like this:
@@ -2608,42 +2773,79 @@ static int get_wavefunction(gamessdata *data, qm_timestep_t *ts, qm_wavefunction
   * 
   */
 
-  /* remember position in order to go back if no wave function was found */
+  /* Remember position in order to go back if no wave function was found */
   filepos = ftell(data->file);
 
   do {
     GET_LINE(buffer, data->file);
-      line = trimleft(buffer);
-    if      (strstr(line, "----- ALPHA SET -----"))
-      wf->spin = SPIN_ALPHA;
-    else if (strstr(line, "----- BETA SET -----"))
-      wf->spin = SPIN_BETA;
-    else if (strstr(line, "EIGENVECTORS"))
-      key = 1;
-    else if (strstr(line, "MOLECULAR ORBITALS")) 
-      key = 2;
-    else if (strstr(line, "LOCALIZED ORBITALS")) {
-      key = 3;
-      if (strstr(line, "BOYS"))   wf->type = MOLFILE_WAVE_BOYS;
-      if (strstr(line, "RUEDEN")) wf->type = MOLFILE_WAVE_RUEDEN;
-      if (strstr(line, "POP")) wf->type = MOLFILE_WAVE_PIPEK; /* XXX check this! */
+
+    line = trimleft(buffer);
+    if      (strstr(line, "----- ALPHA SET -----")) {
+      wf->type = MOLFILE_WAVE_CANON;
+      strncpy(wf->info, "canonical", MOLFILE_BUFSIZ);
+      pass_keyline(data->file, "EIGENVECTORS", NULL);
     }
-  } while(!key && !(key==0 && strstr(line, "NSERCH=")) &&
-          !strstr(line, "PROPERTY VALUES") &&
+    else if (strstr(line, "----- BETA SET -----")) {
+      wf->type = MOLFILE_WAVE_CANON;
+      wf->spin = SPIN_BETA;
+      strncpy(wf->info, "canonical", MOLFILE_BUFSIZ);
+      pass_keyline(data->file, "EIGENVECTORS", NULL);
+    }
+    else if (strstr(line, "***** BETA ORBITAL LOCALIZATION *****")) {
+      wf->spin = SPIN_BETA;
+    }
+    else if (strstr(line, "EIGENVECTORS")==line) {
+      wf->type = MOLFILE_WAVE_CANON;
+      strncpy(wf->info, "canonical", MOLFILE_BUFSIZ);
+    }
+    else if (strstr(line, "MOLECULAR ORBITALS") &&
+             !strstr(line, "LOCALIZED")) {
+      wf->type = MOLFILE_WAVE_CANON;
+      strncpy(wf->info, "canonical", MOLFILE_BUFSIZ);
+    }
+    else if (strstr(line, "LOCALIZED ORBITALS ARE")) {
+      if (strstr(line, "BOYS"))   {
+        wf->type = MOLFILE_WAVE_BOYS;
+        strncpy(wf->info, "Boys localized", MOLFILE_BUFSIZ);
+      }
+      else if (strstr(line, "RUEDEN")) {
+        wf->type = MOLFILE_WAVE_RUEDEN;
+        strncpy(wf->info, "Ruedenberg localized", MOLFILE_BUFSIZ);
+      }
+      else if (strstr(line, "PIPEK-MEZEY")) {
+        wf->type = MOLFILE_WAVE_PIPEK;
+        strncpy(wf->info, "Pipek-Mezey localized", MOLFILE_BUFSIZ);
+      }
+    }
+    else if (strstr(line, "GI ORBITALS")) {
+      wf->type = MOLFILE_WAVE_GEMINAL;
+      strncpy(wf->info, "GVB geminal pairs", MOLFILE_BUFSIZ);
+    }
+    else if (strstr(line, "MCSCF NATURAL ORBITALS")) {
+      wf->type = MOLFILE_WAVE_MCSCFNAT;
+      strncpy(wf->info, "MCSCF natural orbitals", MOLFILE_BUFSIZ);
+    }
+    else if (strstr(line, "MCSCF OPTIMIZED ORBITALS")) {
+      wf->type = MOLFILE_WAVE_MCSCFOPT;
+      strncpy(wf->info, "MCSCF optimized orbitals", MOLFILE_BUFSIZ);
+    }
+    else if (strstr(line, "NATURAL ORBITALS IN ATOMIC")==line) {
+      wf->type = MOLFILE_WAVE_CINATUR;
+      strncpy(wf->info, "CI natural orbitals", MOLFILE_BUFSIZ);
+    }
+  } while(wf->type==MOLFILE_WAVE_UNKNOWN &&
+          !strstr(line, "ENERGY COMPONENTS") &&
           !strstr(line, "***** EQUILIBRIUM GEOMETRY LOCATED") &&
           !strstr(line, "**** THE GEOMETRY SEARCH IS NOT CONVERGED!"));
 
 
-  /* if we reach the last line of the rhf section without finding 
-   * the keyword ("EIGENVECTORS"|"MOLECULAR ORBITALS"|"LOCALIZED ORBITALS")
-   * then there is no wavefunction present for this step and we return.*/
-  if (key==0) {
+  /* If we reach the last line of the rhf section without finding 
+   * one of the keywords marking the beginning of a wavefunction
+   * table then we return.*/
+  if (wf->type==MOLFILE_WAVE_UNKNOWN) {
     fseek(data->file, filepos, SEEK_SET);
     return FALSE;
   }
-
-
-  eatline(data->file, 3);
 
   /* Reserve space for arrays storing wavefunction and orbital
    * energies. we reserve the max. space (num_orbitals==wavef_size)
@@ -2664,112 +2866,105 @@ static int get_wavefunction(gamessdata *data, qm_timestep_t *ts, qm_wavefunction
     return FALSE;
   }
 
-  /* store the pointers in gamessdata */
-/*   ts->wave_function    = wave_coeff; */
-/*   ts->orbital_energies = orb_energies; */
-
+  /* store the pointers */
   wf->wave_coeffs  = wave_coeff;
   wf->orb_energies = orb_energies;
 
-  filepos = ftell(data->file);
+  /* skip the next line which here is typically "-------" */
+  eatline(data->file, 1);
 
-  /* read first line of orbital energies */
-  GET_LINE(buffer, data->file);
-  num_values = sscanf(buffer,"%s %s %s %s %s",&word[0][0],
-      &word[1][0],&word[2][0],&word[3][0],&word[4][0]);
+  while (1) {
+    int over=0;
+    float coeff[5];
 
-  /* read until we find a line starting with 
-   * TOTAL or PROPERTY or PROPERTIES or if we
-   * reach the beginning of the BETA section */
-  while (strcmp(&word[0][0],"TOTAL") && 
-         strncmp(&word[0][0],"PROPERT",7) &&
-         strcmp(&word[1][0], "BETA")) {
-    if (key!=3) {
+    if (wf->type == MOLFILE_WAVE_GEMINAL) {
+      /* Skip over "PAIR x" header line */
+      pass_keyline(data->file, "PAIR ", NULL);
+    }
+
+    eatwhitelines(data->file);
+
+    filepos = ftell(data->file);
+    GET_LINE(buffer, data->file);
+    num_values = sscanf(buffer, "%d %d %d %d %d",
+                          &n[0], &n[1], &n[2], &n[3], &n[4]);
+
+    /* If we didn't find this line then coefficient table
+     * is complete. */
+    if (!num_values) {
+      fseek(data->file, filepos, SEEK_SET);
+      break;
+    }
+
+    eatwhitelines(data->file);
+
+    /* Read first line of orbital energies */
+    filepos = ftell(data->file);
+    GET_LINE(buffer, data->file);
+    have_orben = sscanf(buffer,"%f %f %f %f %f", &orben[0],
+                        &orben[1], &orben[2], &orben[3], &orben[4]);
+    /* Make sure this is not the first line containing coeffs */
+    i = sscanf(buffer, " 1 %*s 1 %*s %f %f %f %f %f",
+               &coeff[0], &coeff[1], &coeff[2], &coeff[3], &coeff[4]);
+    if (i==num_values) have_orben = 0;
+
+    if (have_orben) {
       /* store the orbital energies in the appropriate arrays 
        * read them until we encounter an empty string */
       for(i=0; i<num_values; i++) {
-        *(orb_energies+i) = atof(&word[i][0]);
+        *(orb_energies+i) = orben[i];
       }
       
       /* increase orbital energy pointer */
       orb_energies = orb_energies+5;
-      
-      /* skip the next line */
-      eatline(data->file, 1);
+    }      
+    else {
+      /* No orbital energies present, go back one line */
+      fseek(data->file, filepos, SEEK_SET);
     }
 
     num_orbitals += num_values;
 
-    /* read in the wavefunction */
-    /* XXX This will fail for truncated files */
-    for (i=0; i<data->wavef_size; i++) {
-      int xexp=0, yexp=0, zexp=0;
-
-      GET_LINE(buffer, data->file);
-      
-      /* read in the wavefunction coefficients for 5
-       * orbitals at a time line by line */
-      num_values = sscanf(buffer,"%*5i%*4s%*2i%4s %s %s %s %s %s", 
-                          &word[0][0], &word[1][0], &word[2][0],
-                          &word[3][0], &word[4][0], &word[5][0]);
-
-      if (num_values==0) {
-        /* The file must have been truncated! */
-        truncated = 1;
-        break;
+    /* Find first line containing coefficients */
+    filepos = ftell(data->file);
+    while (fgets(buffer, sizeof(buffer), data->file)) {
+      trimleft(buffer);
+      if (strstr(line, "ENERGY COMPONENTS") ||
+          strstr(line, "---") ||
+          strstr(line, "...")) {
+        over = 1; break;
       }
-
-      for (j=0; j<strlen(&word[0][0]); j++) {
-        switch (word[0][j]) {
-          case 'X':
-            xexp++;
-            break;
-          case 'Y':
-            yexp++;
-            break;
-          case 'Z':
-            zexp++;
-            break;
-        }
-      }
-      data->angular_momentum[3*i  ] = xexp;
-      data->angular_momentum[3*i+1] = yexp;
-      data->angular_momentum[3*i+2] = zexp;
-
-      /* each orbital has data->wavef_size entries, 
-       * hence we have to use this number as offset when storing 
-       * them in groups of five */
-      for (j=0 ; j<num_values-1; j++) {
-        wave_coeff[j*data->wavef_size+i] = atof(&word[j+1][0]);
-      }
+      i = sscanf(buffer, " 1 %*s 1 %*s %f %f %f %f %f",
+             &coeff[0], &coeff[1], &coeff[2], &coeff[3], &coeff[4]);
+      if (i==num_values) break;
+      filepos = ftell(data->file);
     }
+    fseek(data->file, filepos, SEEK_SET);
 
-    if (truncated) break;
+    if (over) break;
+
+
+    /* Read the wave function coefficient block for up to 5
+     * orbitals per line. */
+    read_coeff_block(data->file, data->wavef_size,
+                     wave_coeff, data->angular_momentum);
+
 
     /* move wavefunction pointer to start of next five orbitals */
-    wave_coeff = wave_coeff + 5*data->wavef_size;
-
-    eatline(data->file, 2);
-
-    filepos = ftell(data->file);
-
-    /* read next line to allow do/while loop to decide if
-     * wavefunction data is over */
-    GET_LINE(buffer, data->file);
-      num_values = sscanf(buffer,"%s %s %s %s %s", &word[0][0],
-                          &word[1][0], &word[2][0], &word[3][0],
-                          &word[4][0]);
+    if (wf->type == MOLFILE_WAVE_GEMINAL) {
+      wave_coeff = wave_coeff + 2*data->wavef_size;
+    } else {
+      wave_coeff = wave_coeff + 5*data->wavef_size;
+    }
   }
 
-  if (strcmp(&word[1][0], "BETA")) {
-    /* Go back one line so that in the next call of
-     * get_wavefunction() we can determine the spin. */
-    fseek(data->file, filepos, SEEK_SET);   
-  }
+
+  if (!num_orbitals) return FALSE;
 
   /* resize the array to the actual number of read orbitals */
   if (data->wavef_size!=num_orbitals) {
-    wf->orb_energies = (float *)realloc(wf->orb_energies, num_orbitals*sizeof(float));
+    wf->orb_energies = (float *)realloc(wf->orb_energies,
+          num_orbitals*sizeof(float));
 
     wf->wave_coeffs  = (float *)realloc(wf->wave_coeffs, data->wavef_size*
 					num_orbitals*sizeof(float)); 
@@ -2777,7 +2972,6 @@ static int get_wavefunction(gamessdata *data, qm_timestep_t *ts, qm_wavefunction
 
 
   /* store the number of orbitals read in */
-  /*ts->orbital_counter = num_orbitals;*/
   wf->num_orbitals  = num_orbitals;
   wf->have_energies = TRUE;
   wf->have_occup    = FALSE;
@@ -2789,6 +2983,69 @@ static int get_wavefunction(gamessdata *data, qm_timestep_t *ts, qm_wavefunction
 }
 
 
+/* Read the wave function coefficient block for up to 5
+ * orbitals per line:
+ *  1  C  1  S    0.989835   0.155361   0.000000  -0.214258   0.000000
+ *  2  C  1  S    0.046228  -0.548915   0.000000   0.645267   0.000000
+ *  3  C  1  X    0.000000   0.000000   1.030974   0.000000   0.000000
+ */
+static int read_coeff_block(FILE *file, int wavef_size,
+                            float *wave_coeff, int *angular_momentum) {
+  int i, j;
+  int truncated = 0;
+  char buffer[BUFSIZ];
+  /* read in the wavefunction */
+  /* XXX This will fail for truncated files */
+  for (i=0; i<wavef_size; i++) {
+    int xexp=0, yexp=0, zexp=0;
+    char symm[BUFSIZ];
+    float coeff[5];
+    int num_values = 0;
+    
+    GET_LINE(buffer, file);
+    
+    /* read in the wavefunction coefficients for 5
+     * orbitals at a time line by line */
+    num_values = sscanf(buffer,"%*5i%*4s%*2i%4s %f %f %f %f %f", 
+                        symm, &coeff[0], &coeff[1], &coeff[2],
+                        &coeff[3], &coeff[4]);
+    
+    if (num_values==0) {
+      /* The file must have been truncated! */
+      truncated = 1;
+      break;
+    }
+    
+    for (j=0; j<strlen(symm); j++) {
+      switch (symm[j]) {
+      case 'X':
+        xexp++;
+        break;
+      case 'Y':
+        yexp++;
+        break;
+      case 'Z':
+        zexp++;
+        break;
+      }
+    }
+    angular_momentum[3*i  ] = xexp;
+    angular_momentum[3*i+1] = yexp;
+    angular_momentum[3*i+2] = zexp;
+    
+    /* each orbital has data->wavef_size entries, 
+     * hence we have to use this number as offset when storing 
+     * them in groups of five */
+    for (j=0 ; j<num_values-1; j++) {
+      wave_coeff[j*wavef_size+i] = coeff[j];
+    }
+  }
+  
+  if (truncated) return 0;
+  
+  return 1;
+}
+
 /* Read the population analysis section.
  * Currently we parse only the Mulliken charges
  * but we might want to add support for populations
@@ -2798,7 +3055,7 @@ static int get_population(gamessdata *data, qm_timestep_t *ts) {
   char buffer[BUFSIZ];
   data->have_mulliken = FALSE;
 
-  if (goto_keystring(data->file,
+  if (pass_keyline(data->file,
                      "TOTAL MULLIKEN AND LOWDIN ATOMIC POPULATIONS",
                      "NSERCH=") != FOUND) {
     return FALSE;
@@ -2842,7 +3099,7 @@ static int get_esp_charges(gamessdata *data) {
   char buffer[BUFSIZ];
   data->have_esp = FALSE;
 
-  if (goto_keystring(data->file,
+  if (pass_keyline(data->file,
            "ATOM                CHARGE    E.S.D.",
            "...... END OF PROPERTY EVALUATION ") != FOUND) {
     return FALSE;
@@ -2919,7 +3176,7 @@ static int get_gradient(gamessdata *data, qm_timestep_t *ts) {
   } while(numread==4);
 
   if (i!=data->numatoms) {
-    printf("Number of gradients != number of atoms!");
+    printf("gamessplugin) Number of gradients != number of atoms!\n");
     fseek(data->file, filepos, SEEK_SET);
     return FALSE;
   }
@@ -3781,6 +4038,16 @@ static char* trimleft(char* the_string)
   return new_string;
 }
 
+static char* trimright(char* s)
+{
+  int i;
+  for (i=strlen(s)-1; i>=0; i--) {
+    if (!isspace(s[i])) break;
+  }
+  s[i+1] = '\0';
+
+  return s;
+}
 
 /* Advances the file pointer until the first appearance
  * of a line beginning with the given keystring. Leading
@@ -3791,7 +4058,38 @@ static char* trimleft(char* the_string)
  * the file is rewound to the position where the search
  * started. If stopstring is NULL then the search stops
  * at EOF. */
-static int goto_keystring(FILE *file, const char *keystring,
+static int goto_keyline(FILE *file, const char *keystring,
+        const char *stopstring) {
+  char buffer[BUFSIZ];
+  char *line;
+  int found = 0;
+  long filepos, curline;
+  filepos = ftell(file);
+
+  do {
+    curline = ftell(file);
+    if (!fgets(buffer, sizeof(buffer), file)) {
+      fseek(file, filepos, SEEK_SET);
+      return 0;
+    }
+    line = trimleft(buffer);
+    if (strstr(line, keystring)) {
+      found = 1;
+      fseek(file, curline, SEEK_SET);
+      break;
+    }
+  } while (!stopstring || !strstr(line, stopstring));
+    
+  if (!found) {
+    fseek(file, filepos, SEEK_SET);
+    return STOPPED;
+  }
+
+  return FOUND;
+}
+
+/* places file pointer AFTER the line containing the string */
+static int pass_keyline(FILE *file, const char *keystring,
         const char *stopstring) {
   char buffer[BUFSIZ];
   char *line;
@@ -3845,6 +4143,21 @@ static int goto_keystring2(FILE *file, const char *keystring,
   return 1;
 }
 
+static void eatwhitelines(FILE *file) {
+  char buffer[BUFSIZ];
+  long filepos;
+  filepos = ftell(file);
+  while (fgets(buffer, sizeof(buffer), file)) {
+    if (strlen(trimright(buffer))) {
+      fseek(file, filepos, SEEK_SET);
+      break;
+    }
+    filepos = ftell(file);
+  }
+}
+
+
+
 static void whereami(FILE *file) {
   char buffer[BUFSIZ];
   char *line;
@@ -3897,7 +4210,7 @@ VMDPLUGIN_API int VMDPLUGIN_init(void) {
   plugin.prettyname = "GAMESS";
   plugin.author = "Markus Dittrich, Jan Saam";
   plugin.majorv = 0;
-  plugin.minorv = 10;
+  plugin.minorv = 11;
   plugin.is_reentrant = VMDPLUGIN_THREADUNSAFE;
   plugin.filename_extension = "log";
   plugin.open_file_read = open_gamess_read;
@@ -3917,7 +4230,7 @@ VMDPLUGIN_API int VMDPLUGIN_init(void) {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

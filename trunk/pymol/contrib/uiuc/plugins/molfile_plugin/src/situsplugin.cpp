@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -15,8 +15,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: situsplugin.C,v $
- *      $Author: ltrabuco $       $Locker:  $             $State: Exp $
- *      $Revision: 1.14 $       $Date: 2009/01/20 00:50:59 $
+ *      $Author: johns $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.15 $       $Date: 2009/04/29 15:45:33 $
  *
  ***************************************************************************/
 
@@ -376,7 +376,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

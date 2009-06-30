@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -15,8 +15,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: cubeplugin.C,v $
- *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.26 $       $Date: 2009/01/29 14:55:15 $
+ *      $Author: akohlmey $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.29 $       $Date: 2009/05/19 20:33:46 $
  *
  ***************************************************************************/
 
@@ -40,6 +40,9 @@
 #endif
 
 #include "periodic_table.h"
+
+#define THISPLUGIN plugin
+#include "vmdconio.h"
 
 static const float bohr = BOHR_TO_ANGS;
 
@@ -242,10 +245,11 @@ static void *open_cube_read(const char *filepath, const char *filetype,
   // print warning, if the rotation will be significant:
   if ((fabs((double) a[1]) + fabs((double) a[2]) + fabs((double) b[2]))
       > 0.001) {
-    fprintf(stderr, "cubeplugin) WARNING: Coordinates will be rotated to comply \n"
-            "cubeplugin) with VMD's conventions for periodic display...\n");
+    vmdcon_printf(VMDCON_WARN, 
+            "cubeplugin) Coordinates will be rotated to comply \n");
+    vmdcon_printf(VMDCON_WARN, 
+            "cubeplugin) with VMD's conventions for periodic display.\n");
   }
-  
 
   // all dimensional units are always in Bohr
   // so scale axes and origin correctly.
@@ -312,7 +316,8 @@ static void *open_cube_read(const char *filepath, const char *filetype,
 
   // store the unit cell information for later perusal.
   if (cube_readbox(&(cube->box), voltmpl.xaxis, voltmpl.yaxis, voltmpl.zaxis)) {
-	  fprintf(stderr, "cubeplugin) Calculation of unit cell size failed. Trying to continue...\n");
+	  vmdcon_printf(VMDCON_WARN, "cubeplugin) Calculation of unit cell "
+                                     "size failed. Continuing anyways...\n");
   }
 
   cube->crdpos = ftell(cube->fd); // and record beginning of coordinates
@@ -344,7 +349,7 @@ static void *open_cube_read(const char *filepath, const char *filetype,
     }
       
     fscanf(cube->fd, "%d", &cube->nsets);
-    fprintf(stderr, "\ncubeplugin) found %d orbitals\n", cube->nsets);
+    vmdcon_printf(VMDCON_INFO, "cubeplugin) found %d orbitals\n", cube->nsets);
     cube->vol = new molfile_volumetric_t[cube->nsets];
     for (i=0; i < cube->nsets; ++i) {
       int orb;
@@ -375,27 +380,27 @@ static int read_cube_structure(void *v, int *optflags, molfile_atom_t *atoms) {
   // XXX fseek()/ftell() are incompatible with 64-bit LFS I/O implementations, 
   // hope we don't read any files >= 2GB...
 
-  /* set mass and radius from PTE. */
-  *optflags = MOLFILE_ATOMICNUMBER | MOLFILE_MASS | MOLFILE_RADIUS; 
+  /* set mass and radius from PTE, charge from atoms section of cube file. */
+  *optflags = MOLFILE_ATOMICNUMBER | MOLFILE_MASS | MOLFILE_RADIUS | MOLFILE_CHARGE; 
 
   for(i=0;i<cube->numatoms;i++) {
     int idx;
-    float chrg, coord;
+    float chrg;
     char fbuffer[1024];
 
     atom = atoms + i;
 
     k = fgets(fbuffer, 1024, cube->fd);
-    j=sscanf(fbuffer, "%d %f %f %f %f", &idx, &chrg, &coord, &coord, &coord);
+    j=sscanf(fbuffer, "%d %f %*f %*f %*f", &idx, &chrg);
     if (k == NULL) {
-      fprintf(stderr, "cube structure) missing atom(s) in "
-              "file '%s'\n",cube->file_name);
-      fprintf(stderr, "cube structure) expecting '%d' atoms,"
-              " found only '%d'\n",cube->numatoms,i+1);
+      vmdcon_printf(VMDCON_ERROR, "cube structure) missing atom(s) in "
+                                  "file '%s'\n",cube->file_name);
+      vmdcon_printf(VMDCON_ERROR, "cube structure) expecting '%d' atoms,"
+                                  " found only '%d'\n",cube->numatoms,i+1);
       return MOLFILE_ERROR;
-    } else if (j < 5) {
-      fprintf(stderr, "cube structure) missing type or coordinate(s)"
-              " in file '%s' for atom '%d'\n",cube->file_name,i+1);
+    } else if (j < 2) {
+      vmdcon_printf(VMDCON_INFO, "cube structure) missing atom data in file"
+                                 " '%s' for atom '%d'\n",cube->file_name,i+1);
       return MOLFILE_ERROR;
     }
 
@@ -409,6 +414,7 @@ static int read_cube_structure(void *v, int *optflags, molfile_atom_t *atoms) {
     atom->resid = 1;
     atom->chain[0] = '\0';
     atom->segid[0] = '\0';
+    atom->charge = chrg;
     /* skip to the end of line */
   }
 
@@ -441,7 +447,8 @@ static int read_cube_timestep(void *v, int natoms, molfile_timestep_t *ts) {
     if (k == NULL) {
       return MOLFILE_ERROR;
     } else if (j < 3) {
-      fprintf(stderr, "cube timestep) missing type or coordinate(s) in file '%s' for atom '%d'\n",cube->file_name,i+1);
+      vmdcon_printf(VMDCON_ERROR, "cube timestep) missing type or coordinate(s)"
+                    " in file '%s' for atom '%d'\n",cube->file_name,i+1);
       return MOLFILE_ERROR;
     } else if (j>=3) {
       if (ts != NULL) { 
@@ -492,7 +499,7 @@ static int read_cube_metadata(void *v, int *nsets,
 static int read_cube_data(void *v, int set, float *datablock, float *colorblock) {
   cube_t *cube = (cube_t *)v;
 
-  fprintf(stderr, "cubeplugin) trying to read cube data set %d\n", set);
+  vmdcon_printf(VMDCON_INFO, "cubeplugin) trying to read cube data set %d\n", set);
 
   int xsize = cube->vol[set].xsize; 
   int ysize = cube->vol[set].ysize;
@@ -534,8 +541,8 @@ static int read_cube_data(void *v, int set, float *datablock, float *colorblock)
       int i;
 
       // let people know what is going on.
-      fprintf(stderr, "\ncubeplugin) creating %d MByte cube orbital cache.\n", 
-              (int) (points*sizeof(float)) / 1048576);
+      vmdcon_printf(VMDCON_INFO, "cubeplugin) creating %d MByte cube orbital"
+                    " cache.\n", (int) (points*sizeof(float)) / 1048576);
       cube->datacache = new float[points];
             
       for (i=0; i < points; ++i) {
@@ -544,6 +551,8 @@ static int read_cube_data(void *v, int set, float *datablock, float *colorblock)
         }
 
         // print an ascii progress bar so impatient people do not get scared.
+        // this does not translate well with vmdcon, so we keep it.
+        // we'd need some way to flag replacing a line instead of writing it.
         if ((i % (1048576/sizeof(float))) == 0) {  // one dot per MB.
           fprintf(stderr, "."); 
         }
@@ -571,7 +580,7 @@ static void close_cube_read(void *v) {
   }
   free(cube->file_name);
   if (cube->datacache) { 
-    fprintf(stderr, "\ncubeplugin) freeing cube orbital cache.\n");
+    vmdcon_printf(VMDCON_INFO, "cubeplugin) freeing cube orbital cache.\n");
     delete[] cube->datacache; 
   }  
 
@@ -581,7 +590,6 @@ static void close_cube_read(void *v) {
 /*
  * Initialization stuff here
  */
-static molfile_plugin_t plugin;
 
 int VMDPLUGIN_init(void) { 
   memset(&plugin, 0, sizeof(molfile_plugin_t));
@@ -591,7 +599,7 @@ int VMDPLUGIN_init(void) {
   plugin.prettyname = "Gaussian Cube";
   plugin.author = "Axel Kohlmeyer, John Stone";
   plugin.majorv = 1;
-  plugin.minorv = 0;
+  plugin.minorv = 1;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "cub,cube";
   plugin.open_file_read = open_cube_read;
@@ -604,7 +612,7 @@ int VMDPLUGIN_init(void) {
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
