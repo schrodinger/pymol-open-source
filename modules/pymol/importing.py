@@ -864,8 +864,9 @@ SEE ALSO
             _self.unlock(r,_self)
         if go_to_first_scene:
             if int(_self.get_setting_legacy("presentation_auto_start"))!=0:
-                _self.scene("auto","start",animate=0)
-
+                if(_self.get_movie_length()): # rewind movie
+                    _self.rewind()
+                _self.scene("auto","start",animate=0) # go to first scene
         if _self._raising(r,_self): raise pymol.CmdException
         return r
 
