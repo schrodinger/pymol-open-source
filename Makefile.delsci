@@ -106,6 +106,8 @@ unix-prep:
 	cp epymol/data/pymol/splash.png $(MDP)/data/pymol/splash.png
 	cp epymol/LICENSE.txt $(MDP)/LICENSE
 	cp -r epymol/modules/epymol $(MDP)/modules/
+	cp -r epymol/rigimol/examples $(MDP)/examples/rigimol
+	cp -r epymol/rigimol/src/rigimol.exe $(MDP)/modules/epymol/rigimol/
 	if [ -d "freemol" ]; then cp -r freemol $(MDP); fi;
 	/bin/rm $(MDP)/modules/epymol/*.py $(MDP)/modules/epymol/*/*.py
 	find $(MINDEP)/pymol -type d -name CVS | awk '{printf "/bin/rm -rf ";print;}' | sh
