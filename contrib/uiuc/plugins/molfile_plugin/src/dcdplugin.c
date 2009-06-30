@@ -167,8 +167,7 @@ static int read_dcdheader(fio_fd fd, int *N, int *NSET, int *ISTART,
   union hdrufb_union {
   char charvalue[84];    /* char buffer used to store header */
   int intvalue;
-  };
-  union hdrbuf_union hdrbuf;
+  } hdrbuf;
   int NTITLE;
   int dcdcordmagic;
   char *corp = (char *) &dcdcordmagic;

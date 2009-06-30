@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: fs4plugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.21 $       $Date: 2008/01/09 20:25:27 $
+ *      $Revision: 1.22 $       $Date: 2009/04/29 15:45:30 $
  *
  ***************************************************************************/
 
@@ -66,11 +66,8 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
   fs4_t *fs4;
   FILE *fd;
   float header[32], scale, fmsCellSize[3], alpha, beta, gamma, z1, z2, z3;
-  int dataBegin, blocksize, fmsGridSize[3], norn, swap=0;
-  union {
-    int int_[16];
-    float float_[16];
-  } geom;
+  int dataBegin, blocksize, geom[16], fmsGridSize[3], norn, swap=0;
+
   fd = fopen(filepath, "rb");
   if (!fd) {
     fprintf(stderr, "fs4plugin) Error opening file.\n");
@@ -101,16 +98,16 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
         swap ? "opposite-endian" : "same-endian");
 
     // Read the geometry block
-    blocksize = fortread_4(geom.int_, 16, swap, fd);
+    blocksize = fortread_4(geom, 16, swap, fd);
     if (blocksize != 7) {
       fprintf(stderr, "fs4plugin) Incorrect size for geometry block.\n");
       return NULL;
     }
 
-    fmsGridSize[0] = geom.int_[0];
-    fmsGridSize[1] = geom.int_[1];
-    fmsGridSize[2] = geom.int_[2];
-    norn = geom.int_[4];
+    fmsGridSize[0] = geom[0];
+    fmsGridSize[1] = geom[1];
+    fmsGridSize[2] = geom[2];
+    norn = geom[4];
 
     // Warn about assumptions
     printf("fs4plugin) Warning: file does not contain unit cell lengths or angles.\n");
@@ -136,10 +133,10 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
     gamma = header[26];
     
     // Skip the symmetry block if one present
-    blocksize = fortread_4(geom.int_, 16, swap, fd);
+    blocksize = fortread_4(geom, 16, swap, fd);
     if (blocksize == 9) {
       printf("fs4plugin) Skipping symmetry block.\n");
-      blocksize = fortread_4(geom.int_, 16, swap, fd);
+      blocksize = fortread_4(geom, 16, swap, fd);
     }
 
     // Read the geometry block
@@ -148,16 +145,16 @@ static void *open_fs4_read(const char *filepath, const char *filetype,
       return NULL;
     }
 
-    fmsGridSize[0] = geom.int_[0];
-    fmsGridSize[1] = geom.int_[1];
-    fmsGridSize[2] = geom.int_[2];
+    fmsGridSize[0] = geom[0];
+    fmsGridSize[1] = geom[1];
+    fmsGridSize[2] = geom[2];
 
-    scale = geom.float_[3]; // *((float *) geom + 3);
+    scale = *((float *) geom + 3);
     if (scale == 0) {
       scale = 50;
     }
 
-    norn = geom.int_[4];
+    norn = geom[4];
     if ((norn < 0) || (norn > 2)) {
       fprintf(stderr, "fs4plugin) norn out of range.\n");
       return NULL;
@@ -336,7 +333,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

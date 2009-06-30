@@ -8,13 +8,13 @@
  *
  *      $RCSfile: vaspxdatcarplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.6 $       $Date: 2009/01/29 14:57:00 $
+ *      $Revision: 1.9 $       $Date: 2009/06/22 21:37:42 $
  *
  ***************************************************************************/
 
 /*
  *  VASP plugins for VMD
- *  Sung Sakong, Dept. of Theo. Chem., Univsity of Ulm 
+ *  Sung Sakong, Dept. of Phys., Univsity Duisburg-Essen
  *  
  *  VASP manual   
  *  http:
@@ -77,6 +77,8 @@ static void *open_vaspxdatcar_read(const char *filename, const char *filetype, i
   data = vasp_plugindata_malloc();
   if (!data) return NULL;
 
+  /* VASP4 is assumed in default */
+  data->version = 4;
   data->file = fopen(filename, "rb");
   if (!data->file) {
     vasp_plugindata_free(data);
@@ -109,13 +111,35 @@ static void *open_vaspxdatcar_read(const char *filename, const char *filetype, i
   data->numatoms = 0;
   fgets(lineptr, LINESIZE, poscar);
   for (i = 0; i < MAXATOMTYPES; ++i) {
-    char *token = (i == 0 ? strtok(lineptr, " ") : strtok(NULL, " "));
+    char const *tmplineptr = strdup(lineptr);
+    char const *token = (i == 0 ? strtok(lineptr, " ") : strtok(NULL, " "));
     int const n = (token ? atoi(token) : -1);
 
-    if (n <= 0) break;
+    /* if fails to read number of atoms, then assume VASP5 */
+    if (i == 0 && n <= 0) {
+      data->version = 5;
+      data->titleline =  strdup(tmplineptr);
+      fgets(lineptr, LINESIZE, poscar);
+      break;
+    }else if (n <= 0) break;
+
     data->eachatom[i] = n;
     data->numatoms += n;
   }
+
+  if (data->version == 5) {
+    data->numatoms = 0;
+    for (i = 0; i < MAXATOMTYPES; ++i) {
+      char const *token = (i == 0 ? strtok(lineptr, " ") : strtok(NULL, " "));
+      int const n = (token ? atoi(token) : -1);
+      
+      if (n <= 0) break;
+      
+      data->eachatom[i] = n;
+      data->numatoms += n;
+    }
+  }
+
   fclose(poscar);
 
   if (data->numatoms == 0) {
@@ -202,7 +226,17 @@ static int read_vaspxdatcar_structure(void *mydata, int *optflags, molfile_atom_
   }
 
   /* Ignore header until X,Y,Z-coordinates */
-  for (i = 0; i < 6; ++i) fgets(lineptr, LINESIZE, data->file);
+  for (i = 0; i < 4; ++i) fgets(lineptr, LINESIZE, data->file);
+
+ /* Determine VASP4 and VASP5 */
+  if (tolower(lineptr[0]) == 'd'){
+    data->version = 5;
+    fgets(lineptr, LINESIZE, data->file);
+  }
+  else {
+      data->version = 4;
+      for (i = 0; i < 2; ++i)  fgets(lineptr, LINESIZE, data->file);
+    }
 
   /* Check whether all coordinates are present in the file */
   for (i = 0; i < data->numatoms && fgets(lineptr, LINESIZE, data->file); ++i) {
@@ -216,7 +250,7 @@ static int read_vaspxdatcar_structure(void *mydata, int *optflags, molfile_atom_
 
   /* Set file pointer to the line of the atoms' coordinates */
   rewind(data->file);
-  for (i = 0; i < 6; ++i) fgets(lineptr, LINESIZE, data->file);
+  for (i = 0; i < 10 - data->version; ++i) fgets(lineptr, LINESIZE, data->file);
 
   return MOLFILE_SUCCESS;
 }
@@ -270,8 +304,8 @@ static molfile_plugin_t vaspxdatcarplugin = {
   "VASP_XDATCAR",              /* pretty name */
   "Sung Sakong",               /* author */
   0,                           /* major version */
-  3,                           /* minor version */
-  VMDPLUGIN_THREADUNSAFE,      /* is not reentrant */
+  6,                           /* minor version */
+  VMDPLUGIN_THREADUNSAFE,      /* is reentrant */
 
   "XDATCAR",                   /* filename_extension */
   open_vaspxdatcar_read,       /* open_file_read */
@@ -297,7 +331,7 @@ int VMDPLUGIN_init() {
 }
 
 int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&vaspxdatcarplugin);
+  (*cb)(v, (vmdplugin_t *)&vaspxdatcarplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

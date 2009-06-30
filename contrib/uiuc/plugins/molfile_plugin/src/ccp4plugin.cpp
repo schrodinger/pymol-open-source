@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,12 +16,13 @@
  *
  *      $RCSfile: ccp4plugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.29 $       $Date: 2007/08/09 19:58:45 $
+ *      $Revision: 1.32 $       $Date: 2009/05/12 16:31:02 $
  *
  ***************************************************************************/
 
 /*
  * CCP4 electron density map file format description:
+ *   http://www2.mrc-lmb.cam.ac.uk/image2000.html
  *   http://www.ccp4.ac.uk/html/maplib.html
  *   http://iims.ebi.ac.uk/3dem-mrc-maps/distribution/mrc_maps.txt
  *
@@ -58,7 +59,8 @@ static void *open_ccp4_read(const char *filepath, const char *filetype,
   FILE *fd;
   ccp4_t *ccp4;
   char mapString[4], symData[81];
-  int origin[3], extent[3], grid[3], crs2xyz[3], mode, symBytes;
+  int nxyzstart[3], extent[3], grid[3], crs2xyz[3], mode, symBytes;
+  float origin2k[3];
   int swap, i, xIndex, yIndex, zIndex;
   long dataOffset, filesize;
   float cellDimensions[3], cellAngles[3], xaxis[3], yaxis[3], zaxis[3];
@@ -72,7 +74,7 @@ static void *open_ccp4_read(const char *filepath, const char *filetype,
 
   if ( (fread(extent, sizeof(int), 3, fd) != 3) ||
        (fread(&mode, sizeof(int), 1, fd) != 1) ||
-       (fread(origin, sizeof(int), 3, fd) != 3) ||
+       (fread(nxyzstart, sizeof(int), 3, fd) != 3) ||
        (fread(grid, sizeof(int), 3, fd) != 3) ||
        (fread(cellDimensions, sizeof(float), 3, fd) != 3) ||
        (fread(cellAngles, sizeof(float), 3, fd) != 3) ||
@@ -82,14 +84,22 @@ static void *open_ccp4_read(const char *filepath, const char *filetype,
   }
 
   // Check the number of bytes used for storing symmetry operators
-  fseek(fd, 92, SEEK_SET);
+  // (word 23, byte 92)
+  fseek(fd, 23 * 4, SEEK_SET);
   if ((fread(&symBytes, sizeof(int), 1, fd) != 1) ) {
     printf("ccp4plugin) Error: Failed reading symmetry bytes record.\n");
     return NULL;
   }
 
-  // Check for the string "MAP" at byte 208, indicating a CCP4 file.
-  fseek(fd, 208, SEEK_SET);
+  // read MRC2000 Origin record at word 49, byte 196, and use it if necessary
+  // http://www2.mrc-lmb.cam.ac.uk/image2000.html
+  fseek(fd, 49 * 4, SEEK_SET);
+  if (fread(origin2k, sizeof(float), 3, fd) != 3) {
+    printf("ccp4plugin) Error: unable to read ORIGIN records at offset 196.\n");
+  }
+
+  // Check for the string "MAP" at word 52 byte 208, indicating a CCP4 file.
+  fseek(fd, 52 * 4, SEEK_SET);
   if ( (fgets(mapString, 4, fd) == NULL) ||
        (strcmp(mapString, "MAP") != 0) ) {
     printf("ccp4plugin) Error: 'MAP' string missing, not a valid CCP4 file.\n");
@@ -112,7 +122,8 @@ static void *open_ccp4_read(const char *filepath, const char *filetype,
   // Swap all the information obtained from the header
   if (swap == 1) {
     swap4_aligned(extent, 3);
-    swap4_aligned(origin, 3);
+    swap4_aligned(nxyzstart, 3);
+    swap4_aligned(origin2k, 3);
     swap4_aligned(grid, 3);
     swap4_aligned(cellDimensions, 3);
     swap4_aligned(cellAngles, 3);
@@ -121,17 +132,21 @@ static void *open_ccp4_read(const char *filepath, const char *filetype,
   }
 
 
-#if 1
-  printf("ccp4plugin) extent: %d x %d x %d\n", extent[0], extent[1], extent[2]);
-  printf("ccp4plugin) origin: %d x %d x %d\n", origin[0], origin[1], origin[2]);
-  printf("ccp4plugin)   grid: %d x %d x %d\n", grid[0], grid[1], grid[2]);
-  printf("ccp4plugin) celldim: %f x %f x %f\n", 
+#if 0
+  printf("ccp4plugin)    extent: %d x %d x %d\n",
+         extent[0], extent[1], extent[2]);
+  printf("ccp4plugin) nxyzstart: %d x %d x %d\n", 
+         nxyzstart[0], nxyzstart[1], nxyzstart[2]);
+  printf("ccp4plugin)  origin2k: %f x %f x %f\n", 
+         origin2k[0], origin2k[1], origin2k[2]);
+  printf("ccp4plugin)      grid: %d x %d x %d\n", grid[0], grid[1], grid[2]);
+  printf("ccp4plugin)   celldim: %f x %f x %f\n", 
          cellDimensions[0], cellDimensions[1], cellDimensions[2]);
   printf("cpp4plugin)cellangles: %f, %f, %f\n", 
          cellAngles[0], cellAngles[1], cellAngles[2]);
-  printf("ccp4plugin) crs2xyz: %d %d %d\n", 
+  printf("ccp4plugin)   crs2xyz: %d %d %d\n", 
          crs2xyz[0], crs2xyz[1], crs2xyz[2]);
-  printf("ccp4plugin) symBytes: %d\n", symBytes);
+  printf("ccp4plugin)  symBytes: %d\n", symBytes);
 #endif
 
 
@@ -250,12 +265,43 @@ static void *open_ccp4_read(const char *filepath, const char *filetype,
   zaxis[1] = z2 * zScale;
   zaxis[2] = z3 * zScale;
 
-  ccp4->vol[0].origin[0] = xaxis[0] * origin[xIndex] + 
-                           yaxis[0] * origin[yIndex] +
-                           zaxis[0] * origin[zIndex];
-  ccp4->vol[0].origin[1] = yaxis[1] * origin[yIndex] +
-                           zaxis[1] * origin[zIndex];
-  ccp4->vol[0].origin[2] = zaxis[2] * origin[zIndex];
+#if 1
+  // Handle both MRC-2000 and older MRC maps
+  if (origin2k[0] == 0.0f && origin2k[1] == 0.0f && origin2k[2] == 0.0f) {
+    printf("ccp4plugin) using old MRC n[xyz]start origin\n");
+    ccp4->vol[0].origin[0] = xaxis[0] * nxyzstart[xIndex] + 
+                             yaxis[0] * nxyzstart[yIndex] +
+                             zaxis[0] * nxyzstart[zIndex];
+    ccp4->vol[0].origin[1] = yaxis[1] * nxyzstart[yIndex] +
+                             zaxis[1] * nxyzstart[zIndex];
+    ccp4->vol[0].origin[2] = zaxis[2] * nxyzstart[zIndex];
+  } else {
+    // Use ORIGIN records rather than old n[xyz]start records
+    //   http://www2.mrc-lmb.cam.ac.uk/image2000.html
+    // XXX the ORIGIN field is only used by the EM community, and
+    //     has undefined meaning for non-orthogonal maps and/or
+    //     non-cubic voxels, etc.
+    printf("ccp4plugin) using MRC2000 origin\n");
+    ccp4->vol[0].origin[0] = origin2k[xIndex];
+    ccp4->vol[0].origin[1] = origin2k[yIndex];
+    ccp4->vol[0].origin[2] = origin2k[zIndex];
+  }
+#else
+  // old code that only pays attention to old MRC nxstart/nystart/nzstart
+  ccp4->vol[0].origin[0] = xaxis[0] * nxyzstart[xIndex] + 
+                           yaxis[0] * nxyzstart[yIndex] +
+                           zaxis[0] * nxyzstart[zIndex];
+  ccp4->vol[0].origin[1] = yaxis[1] * nxyzstart[yIndex] +
+                           zaxis[1] * nxyzstart[zIndex];
+  ccp4->vol[0].origin[2] = zaxis[2] * nxyzstart[zIndex];
+#endif
+
+#if 0
+  printf("ccp4plugin) origin: %.3f %.3f %.3f\n",
+         ccp4->vol[0].origin[0],
+         ccp4->vol[0].origin[1],
+         ccp4->vol[0].origin[2]);
+#endif
 
   ccp4->vol[0].xaxis[0] = xaxis[0] * (extent[xIndex]-1);
   ccp4->vol[0].xaxis[1] = 0;
@@ -364,7 +410,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
   plugin.prettyname = "CCP4, MRC Density Map";
   plugin.author = "Eamon Caddigan, John Stone";
   plugin.majorv = 1;
-  plugin.minorv = 2;
+  plugin.minorv = 4;
   plugin.is_reentrant = VMDPLUGIN_THREADSAFE;
   plugin.filename_extension = "ccp4,mrc,map";
   plugin.open_file_read = open_ccp4_read;
@@ -376,7 +422,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
 
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

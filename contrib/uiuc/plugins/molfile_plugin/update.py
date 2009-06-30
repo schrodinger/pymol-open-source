@@ -1,4 +1,4 @@
-if 1:
+if 0:
     print "DANGER DO NOT RUN UNTIL changes to the following files have been backported..."
     print "dcdplugin.c, gridplugin.c, endianswap.h, "
     print "dtrplugin.cpp, fs4plugin.cpp, maeffplugin.cpp"
@@ -9,8 +9,8 @@ else:
     import os
     from glob import glob
 
-#    molfile_src_path = "/home/warren/06duo/software/vmd/plugins/molfile_plugin/src"
-    molfile_src_path = "/Users/delwarl/tmp/plugins/molfile_plugin/src"    
+    molfile_src_path = "/home/warren/tmp/plugins/molfile_plugin/src"
+#    molfile_src_path = "/Users/delwarl/tmp/plugins/molfile_plugin/src"    
 
     src_list=[
         'avsplugin',
@@ -51,7 +51,7 @@ else:
         'mmcif', #
         'mol2plugin',
         'moldenplugin',
-        'mrcplugin', #
+#        'mrcplugin', # gone?
         'msmsplugin',
         'namdbinplugin',
 #        'netcdfplugin', # requires netcdf
@@ -72,6 +72,7 @@ else:
         'uhbdplugin',
         'vaspchgcarplugin', #
         'vaspoutcarplugin', #
+        'vaspparchgplugin', #
         'vaspposcarplugin', #
         'vaspxdatcarplugin', #
         'vaspxmlplugin', #

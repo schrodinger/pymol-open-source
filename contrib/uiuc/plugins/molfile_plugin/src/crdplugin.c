@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: crdplugin.c,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.35 $       $Date: 2008/08/05 20:12:08 $
+ *      $Revision: 1.36 $       $Date: 2009/04/29 15:45:28 $
  *
  ***************************************************************************/
 
@@ -211,8 +211,8 @@ VMDPLUGIN_API int VMDPLUGIN_init(void) {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
-  (*cb)(v, (vmdplugin_t *)(void *)&crdboxplugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&crdboxplugin);
   return VMDPLUGIN_SUCCESS;
 }
 

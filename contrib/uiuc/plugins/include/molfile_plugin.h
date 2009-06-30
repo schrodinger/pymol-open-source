@@ -10,8 +10,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: molfile_plugin.h,v $
- *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.74 $       $Date: 2009/02/24 02:25:18 $
+ *      $Author: saam $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.86 $       $Date: 2009/06/27 00:44:25 $
  *
  ***************************************************************************/
 
@@ -50,6 +50,15 @@
  */
 #define MOLFILE_BUFSIZ           81   /**< maximum chars in string data  */
 #define MOLFILE_BIGBUFSIZ        4096 /**< maximum chars in long strings */
+
+#define MOLFILE_MAXWAVEPERTS     25   /**< maximum number of wavefunctions
+                                       *   per timestep */
+
+#define MOLFILE_QM_STATUS_UNKNOWN  -1
+#define MOLFILE_QM_OPT_CONVERGED    0
+#define MOLFILE_QM_SCF_NOT_CONV     1
+#define MOLFILE_QM_OPT_NOT_CONV     2
+#define MOLFILE_QM_FILE_TRUNCATED   3
 
 
 /**
@@ -136,11 +145,11 @@ typedef struct molfile_qm_timestep_metadata {
   unsigned int count;                  /**< total # timesteps; -1 if unknown */
   unsigned int avg_bytes_per_timestep; /** bytes per timestep                */
   int has_gradient;                    /**< if timestep contains gradient    */
-  int num_scfiter;                /**< # scf iterations for this ts     */
-  int num_orbitals_per_wavef[10]; /**< # orbitals for each wavefunction */
-  int num_wavef ;                 /**< # wavefunctions in this ts     */
-  int wavef_size;                 /**< size of one wavefunction 
-                                   *   (# of gaussian basis fctns)    */
+  int num_scfiter;                     /**< # scf iterations for this ts     */
+  int num_orbitals_per_wavef[MOLFILE_MAXWAVEPERTS]; /**< # orbitals for each wavefunction */
+  int num_wavef ;                      /**< # wavefunctions in this ts     */
+  int wavef_size;                      /**< size of one wavefunction 
+                                        *   (# of gaussian basis fctns)    */
 } molfile_qm_timestep_metadata_t;
 #endif
 
@@ -228,9 +237,6 @@ typedef struct {
                                  *   gaussian basis functions */
 
   /* everything else */
-  int num_traj_points;          /**< number of trajectory points,
-                                 * 1 for single point runs */
-
   int have_sysinfo;
   int have_esp;                 /**< ESP charges available?  */
   int have_npa;                 /**< XXX: ??? data?   */
@@ -246,15 +252,15 @@ typedef struct {
  * XXX: do we really need doubles here??
  */
 typedef struct {
-  double *carthessian;      /**< hessian matrix in cartesian coordinates (ncart)*(ncart)
-                             *   as a single array of doubles (row(1), ...,row(natoms)) */
-  int *imag_modes;          /**< list(nimag) of imaginary modes */
-  double *inthessian;       /**< hessian matrix in internal coordinates
-                             *   (nintcoords*nintcoords) as a single array of
-                             *   doubles (row(1), ...,row(nintcoords)) */
-  float *wavenumbers;      /**< array(ncart) of wavenumbers of normal modes */
-  float *intensities;      /**< array(ncart) of intensities of normal modes */
-  float *normalmodes;      /**< matrix(ncart*ncart) of normal modes  */
+  double *carthessian;  /**< hessian matrix in cartesian coordinates (ncart)*(ncart)
+                         *   as a single array of doubles (row(1), ...,row(natoms)) */
+  int    *imag_modes;   /**< list(nimag) of imaginary modes */
+  double *inthessian;   /**< hessian matrix in internal coordinates
+                         *   (nintcoords*nintcoords) as a single array of
+                         *   doubles (row(1), ...,row(nintcoords)) */
+  float *wavenumbers;   /**< array(ncart) of wavenumbers of normal modes */
+  float *intensities;   /**< array(ncart) of intensities of normal modes */
+  float *normalmodes;   /**< matrix(ncart*ncart) of normal modes  */
 } molfile_qm_hessian_t;
 
 
@@ -266,16 +272,16 @@ typedef struct {
   int *num_shells_per_atom; /**< number of shells per atom */
   int *num_prim_per_shell;  /**< number of shell primitives shell */
 
-  float *basis;              /**< contraction coeffients and exponents for
-                              *   the basis functions in the form
-                              *   { exp(1), c-coeff(1), exp(2), c-coeff(2), ....};
-                              *   size=2*num_basis_funcs */
-  int *atomic_number;        /**< atomic numbers (chem. element) of atoms in basis set */
-  int *angular_momentum;     /**< 3 ints per wave function coefficient do describe the 
-                              *   cartesian components of the angular momentum.
-                              *   E.g. S={0 0 0}, Px={1 0 0}, Dxy={1 1 0}, or Fyyz={0 2 1}. 
-                              */
-  int *shell_symmetry;       /**< symmetry type per shell in basis */
+  float *basis;             /**< contraction coeffients and exponents for
+                             *   the basis functions in the form
+                             *   { exp(1), c-coeff(1), exp(2), c-coeff(2), ....};
+                             *   size=2*num_basis_funcs */
+  int *atomic_number;       /**< atomic numbers (chem. element) of atoms in basis set */
+  int *angular_momentum;    /**< 3 ints per wave function coefficient do describe the 
+                             *   cartesian components of the angular momentum.
+                             *   E.g. S={0 0 0}, Px={1 0 0}, Dxy={1 1 0}, or Fyyz={0 2 1}. 
+                             */
+  int *shell_symmetry;      /**< symmetry type per shell in basis */
 } molfile_qm_basis_t;
 
 
@@ -283,42 +289,42 @@ typedef struct {
  * QM run info. Parameters that stay unchanged during a single file.
  */ 
 typedef struct {
-  int nproc;                    /**< number of processors used. XXX:? */
-  int memory;                   /**< amount of memory used in Mbyte. XXX:? */ 
+  int nproc;             /**< number of processors used. XXX:? */
+  int memory;            /**< amount of memory used in Mbyte. XXX:? */ 
+  int runtype;           /**< flag indicating the calculation method. */
+  int scftype;           /**< SCF type: RHF, UHF, ROHF, GVB or MCSCF wfn. */
+  int status;            /**< indicates wether SCF and geometry optimization
+                          *   have converged properly. */
+  int num_electrons;     /**< number of electrons.    XXX: can be fractional in some DFT codes */
+  int totalcharge;       /**< total charge of system. XXX: can be fractional in some DFT codes */
+  int multiplicity;      /**< multiplicity of system */
+  int num_occupied_A;    /**< number of occupied alpha orbitals */
+  int num_occupied_B;    /**< number of occupied beta orbitals */
 
-  int runtyp;                   /**< run type flag. indicates what the "trajectory" contains.
-                                 */
-  int scftyp;                   /**< scf type flag. indicates restricted, unrestricted, 
-                                 *   restricted open shell wfn. not the "level of theory" */
-  int num_electrons;            /**< number of electrons.    XXX: can be fractional in some DFT codes */
-  int totalcharge;              /**< total charge of system. XXX: can be fractional in some DFT codes */
-  int multiplicity;             /**< multiplicity of system */
-  int num_orbitals_A;           /**< number of alpha orbitals */
-  int num_orbitals_B;           /**< number of beta orbitals */
+  double *nuc_charge;    /**< array(natom) containing the nuclear charge of atom i */
+  double *esp_charges;   /**< per-atom esp charges */
+  double *npa_charges;   /**< per-atom npa charges */
 
-  double *nuc_charge;           /**< array(natom) containing the nuclear charge of atom i */
-  double *esp_charges;          /**< per-atom esp charges */
-  double *npa_charges;          /**< per-atom npa charges */
-
-  char basis_string[MOLFILE_BUFSIZ];    /**< basis name as "nice" string.   XXX: remove? */
-  char runtitle[MOLFILE_BIGBUFSIZ];     /**< title of run.                  XXX: remove? */
-  char geometry[MOLFILE_BUFSIZ];        /**< typ of provided geometry,      XXX: remove?
-                                         * e.g. UNIQUE, ZMT, CART, ... */
-  char version_string[MOLFILE_BUFSIZ];  /**< QM code version information.   XXX: remove? */
+  char basis_string[MOLFILE_BUFSIZ];    /**< basis name as "nice" string. */
+  char runtitle[MOLFILE_BIGBUFSIZ];     /**< title of run.                */
+  char geometry[MOLFILE_BUFSIZ];        /**< type of provided geometry,   XXX: remove?
+                                         * e.g. UNIQUE, ZMT, CART, ...    */
+  char version_string[MOLFILE_BUFSIZ];  /**< QM code version information. */
 } molfile_qm_sysinfo_t;
 
 
 typedef struct {
-  int   idtag;              /**< unique tag to identify this wavefunction over the trajectory */
   int   type;               /**< CANONICAL, LOCALIZED, OTHER */
-  int   spin;               /**< 0 for alpha, 1 for beta */
+  int   spin;               /**< 1 for alpha, -1 for beta */
   int   excitation;         /**< 0 for ground state, 1,2,3,... for excited states */
   char info[MOLFILE_BUFSIZ]; /**< string for additional type info */
 
-  float *wave_coeffs;    /**< expansion coefficients for wavefunction in the
+  float *wave_coeffs;       /**< expansion coefficients for wavefunction in the
                              *   form {orbital1(c1),orbital1(c2),.....,orbitalM(cN)} */
   float *orbital_energies;  /**< list of orbital energies for wavefunction */
   float *occupancies;       /**< orbital occupancies */
+  int   *orbital_ids;       /**< orbital ID numbers; If NULL then VMD will
+                             *   assume 1,2,3,...num_orbs.     */
 } molfile_qm_wavefunction_t;
 
 
@@ -327,14 +333,11 @@ typedef struct {
  */
 typedef struct {
   molfile_qm_wavefunction_t *wave; /**< array of wavefunction objects */
-  float *wave_function;
-  float *orbital_energies;  /**< list of orbital energies for wavefunction */
-  float *occupancies;       /**< orbital occupancies */
-  float *gradient;          /**< force on each atom (=gradient of energy) */
+  float  *gradient;         /**< force on each atom (=gradient of energy) */
 
   double *scfenergies;      /**< scfenergy per trajectory point. */
-  double *mulliken_charges; /* per-atom Mulliken charges */
-  double *lowdin_charges;   /* per-atom Lowdin charges */
+  double *mulliken_charges; /** per-atom Mulliken charges  */
+  double *lowdin_charges;   /** per-atom Lowdin charges    */
 } molfile_qm_timestep_t;
 
 
@@ -352,35 +355,38 @@ typedef struct {
  *  Enumeration of all of the wavefunction types that can be read
  *  from QM file reader plugins.
  *
- * CANON  = canonical (i.e diagonalized) wavefunction
- * BOYS   = Boys localization
- * RUEDEN = Ruedenberg localization
- * PIPEK  = Pipek-Mezey population localization
-
+ * CANON    = canonical (i.e diagonalized) wavefunction
+ * GEMINAL  = GVB-ROHF geminal pairs
+ * MCSCFNAT = Multi-Configuration SCF natural orbitals
+ * MCSCFOPT = Multi-Configuration SCF optimized orbitals
+ * CINATUR  = Configuration-Interaction natural orbitals
+ * BOYS     = Boys localization
+ * RUEDEN   = Ruedenberg localization
+ * PIPEK    = Pipek-Mezey population localization
+ *
  * NBO related localizations:
  * --------------------------
- * NAO     = Natural Atomic Orbitals
- * PNAO    = pre-orthogonal NAOs
- * NBO     = Natural Bond Orbitals
- * PNBO    = pre-orthogonal NBOs
- * NHO     = Natural Hybrid Orbitals
- * PNHO    = pre-orthogonal NHOs
- * NLMO    = Natural Localized Molecular Orbitals
- * PNLMO   = pre-orthogonal NLMOs
+ * NAO      = Natural Atomic Orbitals
+ * PNAO     = pre-orthogonal NAOs
+ * NBO      = Natural Bond Orbitals
+ * PNBO     = pre-orthogonal NBOs
+ * NHO      = Natural Hybrid Orbitals
+ * PNHO     = pre-orthogonal NHOs
+ * NLMO     = Natural Localized Molecular Orbitals
+ * PNLMO    = pre-orthogonal NLMOs
  *
- * OTHER   = Use this for any type not listed here
- *           You can use the string field for description
- * UNKNOWN = It is completely unknown what kind of wavefunction
- *           was loaded.
+ * UNKNOWN  = Use this for any type not listed here
+ *            You can use the string field for description
  */
 enum molfile_qm_wavefunc_type {
-  MOLFILE_WAVE_CANON,
+  MOLFILE_WAVE_CANON,    MOLFILE_WAVE_GEMINAL,
+  MOLFILE_WAVE_MCSCFNAT, MOLFILE_WAVE_MCSCFOPT,
+  MOLFILE_WAVE_CINATUR,
   MOLFILE_WAVE_PIPEK,  MOLFILE_WAVE_BOYS, MOLFILE_WAVE_RUEDEN,
   MOLFILE_WAVE_NAO,    MOLFILE_WAVE_PNAO, MOLFILE_WAVE_NHO, 
   MOLFILE_WAVE_PNHO,   MOLFILE_WAVE_NBO,  MOLFILE_WAVE_PNBO, 
   MOLFILE_WAVE_PNLMO,  MOLFILE_WAVE_NLMO, MOLFILE_WAVE_MOAO, 
-  MOLFILE_WAVE_NATO,   MOLFILE_WAVE_OTHER, 
-  MOLFILE_WAVE_UNKNOWN
+  MOLFILE_WAVE_NATO,   MOLFILE_WAVE_UNKNOWN
 };
 
 #endif

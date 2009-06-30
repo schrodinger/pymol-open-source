@@ -11,7 +11,7 @@
  *
  *      $RCSfile: gamessplugin.h,v $
  *      $Author: saam $       $Locker:  $             $State: Exp $
- *      $Revision: 1.63 $       $Date: 2009/02/23 17:33:09 $
+ *      $Revision: 1.73 $       $Date: 2009/06/27 01:09:57 $
  *
  ***************************************************************************/
 /*******************************************************************
@@ -27,22 +27,6 @@
 #include <stdio.h>
 #include "molfile_plugin.h"
 
-/* in order to be able to reserve the proper
- * amount of temporary arrays I have to define an
- * upper limit for the number of atoms in the QM
- * system; 1000 atoms should be sufficient for all
- * but abnoxiously large systems; hopefully there will
- * eventually be a more elegant way to circumvent 
- * this */
-#define MAXQMATOMS 1000
-
-
-/* maximum number of Gaussian basis functions;
- * 1000 seems to be a proper upper limit for now;
- * state-of-the-art simulation could do more, hence
- * maybe increase to 5000 later */
-#define MAXBASISFUNCTIONS 1000
-
 /* define macros for true/false to make code 
  * look somewhat nicer; the macro DONE signals
  * that we're done with reading an should return
@@ -50,6 +34,7 @@
 #define FALSE 0
 #define TRUE  1
 
+#define NONE  0
 
 /* macros describing the RUNTYP */
 #define ENERGY   1
@@ -67,25 +52,36 @@
 #define GVB   4
 #define MCSCF 5
 
+/* macros defining CITYP */
+#define UNKNOWN -1
+#define CIS   1
+#define ALDET 2
+#define ORMAS 3
+#define GUGA  4
+#define FSOCI 5
+#define GENCI 6
+
+/* Basis set definition for a primitive */
 typedef struct {
   float exponent;
   float contraction_coeff;
 } prim_t;
 
+/* Basis set definition for a shell */
 typedef struct {
-  int numprims;
-  int symmetry;     /* S, P, D, F, ...
+  int numprims;      /* number of primitives in this shell */
+  int symmetry;      /* S, P, D, F, ...
                       * just for convenience when retrieving info */
   int wave_offset;   /* index into wave_function array */
   prim_t *prim;      /* array of primitives */
 } shell_t;
 
-/* Basis set definition for one atom */
+/* Basis set definition for an atom */
 typedef struct {
   char name[11];  /* atom name or type */
   int atomicnum;  /* atomic number (nuclear charge) */
-  int numshells;
-  shell_t *shell;
+  int numshells;  /* number of shells for this atom */
+  shell_t *shell; /* array of shells */
 } basis_atom_t;
 
 
@@ -102,29 +98,28 @@ typedef struct
 
 
 typedef struct {
-  int   idtag;              /**< unique tag to identify this wavefunction over the trajectory */
-  int   type;               /**< CANONICAL, LOCALIZED, OTHER */
-  int   spin;               /**< 0 for alpha, 1 for beta */
-  int   excitation;         /**< 0 for ground state, 1,2,3,... for excited states */
+  int   type;           /**< CANONICAL, LOCALIZED, OTHER */
+  int   spin;           /**< 0 for alpha, 1 for beta */
+  int   exci;           /**< 0 for ground state, 1,2,3,... for excited states */
   char info[MOLFILE_BUFSIZ]; /**< string for additional type info */
 
-  int   num_orbitals;       /**< number of orbitals that was really 
-                             *   present in the output for this step */
-  int   num_coeffs;         /**< number of coefficients per orbital */
-  int   have_energies;      /**< number of orbital energies */
-  int   have_occup;         /**< number of occupancies */
-  float *wave_coeffs;       /**< expansion coefficients for wavefunction in the
-                             *   form {orbital1(c1),orbital1(c2),.....,orbitalM(cN)} */
-  float *orb_energies;      /**< list of orbital energies for wavefunction */
-  float *occupancies;       /**< orbital occupancies */
+  int   num_orbitals;   /**< number of orbitals that was really 
+                         *   present in the output for this step */
+  int   num_coeffs;     /**< number of coefficients per orbital */
+  int   have_energies;  /**< number of orbital energies */
+  int   have_occup;     /**< number of occupancies */
+  float *wave_coeffs;   /**< expansion coefficients for wavefunction in the
+                         *   form {orbital1(c1),orbital1(c2),.....,orbitalM(cN)} */
+  float *orb_energies;  /**< list of orbital energies for wavefunction */
+  float *occupancies;   /**< orbital occupancies */
 } qm_wavefunction_t;
 
 
 typedef struct {
   qm_wavefunction_t *wave;
-  int numwave;
-  float *gradient;          /* energy gradient for each atom */
-  int   num_scfiter;        /* number of SCF iterations */
+  int     numwave;          /* number of wavefunctions for this ts */
+  float  *gradient;         /* energy gradient for each atom */
+  int     num_scfiter;      /* number of SCF iterations */
 
   double *scfenergies;      /* scfenergies per trajectory point */
   double *mulliken_charges; /* per-atom Mulliken charges */
@@ -138,80 +133,82 @@ typedef struct {
 /* main gamess plugin data structure */
 typedef struct 
 {
-  FILE *file;
-  int numatoms;
-  int runtyp;   /* RUNTYP of GAMESS as int for internal use */
-  char runtyp_string[BUFSIZ];  /* RUNTYP as string */  
-  char gbasis[10];   /* GBASIS of GAMESS run */
+  FILE *file;       /* the file we are reading */
+
+  int numatoms;     /* number of atoms in structure */
+  int runtype;      /* type of calculation 
+                     * (ENERGY, OPTIMIZE, GRADIENT, ...) */
+  int scftype;      /* UHF, RHF, ROHF, ... */
+  int dfttype;      /* NONE, B3LYP, ...,   */
+  int citype;       /* NONE, GUGA, ...     */
+
+  int mplevel;      /* Moller-Plesset perturbation level */
+
+  char gbasis[10];  /* GBASIS of GAMESS run */
 
   char basis_string[BUFSIZ]; /* basis name as "nice" string */
 
   char runtitle[BUFSIZ];  /* title of gamess run */
 
   char geometry[BUFSIZ];  /* either UNIQUE, CART or ZMP/ZMTMPC */
-  char guess[BUFSIZ];    /* type of guess method used */
+  char guess[BUFSIZ];     /* type of guess method used */
 
   char version_string[BUFSIZ]; /* GAMESS version used for run */
-  int  version;  /* here we track the GAMESS versions, since the
-		  * file format has changed with 
-		  * version 27 JUN 2005 (R2);
-		  * version = 1  : pre-27 JUN 2005 (R2)
-		  * version = 2  : 27 JUN 2005 (R2)
-		  * version = 0  : this we might set if we
-		  *                detect an unsupported 
-		  *                version and then bomb out */
-  int have_pcgamess;  /* this flag is set to 1 if the output
-		       * file is recognized as a PC Gamess output
-		       * file; we might need to introduce a few
-		       * switches in the code depending on if
-		       * the log file is plain Gamess or PC Gamess
-		       */
+  int  version; /* here we track the GAMESS versions, since the
+                 * file format has changed with 
+                 * version 27 JUN 2005 (R2);
+                 * version = 1  : pre-27 JUN 2005 (R2)
+                 * version = 2  : 27 JUN 2005 (R2)
+                 * version = 0  : this we might set if we
+                 *                detect an unsupported 
+                 *                version and then bomb out */
 
-  char *file_name;
+  int have_pcgamess; /* this flag is set to 1 if the output
+                      * file is recognized as a PC Gamess output
+                      * file; we might need to introduce a few
+                      * switches in the code depending on if
+                      * the log file is plain Gamess or PC Gamess
+                      */
+  
+  int  nproc;          /* Number processors used */
+  char memory[256];    /* Amount of memory used, e.g. 1Gb */
 
-  /******************************************************
-   * new API functions
-   *****************************************************/
+  int totalcharge;     /* Total charge of the system */
+  int multiplicity;    /* Multiplicity of the system */
+  int num_electrons;   /* Number of electrons */
 
-  int  scftyp;              /* UHF, RHF, ROHF, as in for 
-                             * internal use*/
-  char scftyp_string[BUFSIZ]; /* scftyp as string */
-  int  dfttyp;              /* UHF, RHF, ROHF, as in for 
-                             * internal use*/
-  char dfttyp_string[BUFSIZ]; /* scftyp as string */
-  int mplevel;
 
-  int totalcharge;          /* Total charge of the system */
-  int multiplicity;         /* Multiplicity of the system */
-  int num_electrons;        /* Number of electrons */
-  int  nimag;               /* Number of imaginary frequencies */
-  int *nimag_modes;         /* List of imaginary modes */
 
-  float *wavenumbers; /* rotational and translational DoF 
-                        * are included, but can be removed due
-                        * to their zero frequencies */
-  float *intensities; /* Intensities of spectral lines */
-
-  float *normal_modes; /* the normal modes themselves */
-
-  int  nproc;           /* Number processors used */
-  char memory[256];     /* Amount of memory used, e.g. 1Gb */
-
-  int num_opt_steps;
-  float opt_tol;
+  int max_opt_steps;   /* Max. number of geom. opt. steps */
+  float opt_tol;       /* gradient convergence tolerance,
+                        * in Hartree/Bohr. */
 
   /* arrays with atom charges */
   double *mulliken_charges; 
-  /* float *mullikengroup; */
+
   double *esp_charges;
-  /* float *npa_charges; */
   int   have_mulliken; 
   int   have_esp; 
-  /* int   have_npa; */
+
+
+  /******************************************************
+   * normal modes
+   *****************************************************/
 
   int have_normal_modes; /* TRUE/FALSE flag indicating if we
-			  * could properly read normal modes,
-			  * wavenumbers and intensities. */
+                          * could properly read normal modes,
+                          * wavenumbers and intensities. */
+
+  int  nimag;          /* Number of imaginary frequencies */
+  int *nimag_modes;    /* List of imaginary modes */
+
+  float *wavenumbers;  /* rotational and translational DoF 
+                        * are included, but can be removed due
+                        * to their zero frequencies */
+  float *intensities;  /* Intensities of spectral lines */
+
+  float *normal_modes; /* the normal modes themselves */
+
 
   /******************************************************
    * internal coordinate stuff
@@ -247,7 +244,7 @@ typedef struct
   double *improper_force_const; /* force constant for impropers */
 
   /*******************************************************
-   * end internal coordinate stuff
+   * Hessian matrices
    *******************************************************/
 
   double *carthessian;  /* Hessian matrix in cartesian coordinates,
@@ -264,7 +261,7 @@ typedef struct
 
 
   /*********************************************************
-   * END OF NEW API data members
+   * Basis set data
    *********************************************************/
 
   /* this array of floats stores the contraction coefficients
@@ -274,10 +271,13 @@ typedef struct
    * exp(i) = exp(j) and c-coeff(i) != c-coeff(j). */
   float *basis;
 
+  /* hierarchical basis set structures for each atom */
   basis_atom_t *basis_set;
 
+  /* number of uncontracted basis functions in basis array */
   int num_basis_funcs;
 
+  /* number of atoms listed in basis set */
   int num_basis_atoms;
 
   /* atomic number per atom in basis set */
@@ -295,9 +295,9 @@ typedef struct
   /* symmetry type of each shell */
   int *shell_symmetry; 
 
-  /* number of spin A and B orbitals */
-  int num_orbitals_A;
-  int num_orbitals_B;
+  /* number of occupied spin A and B orbitals */
+  int num_occupied_A;
+  int num_occupied_B;
 
 
   /* Max. size of the wave_function array per orbital.
@@ -315,10 +315,6 @@ typedef struct
   int *angular_momentum;
 
 
-  /* this flag tells if the geometry search converged */
-  int converged;
-  int opt_status;
-
   /* the structure qm_atom_t was defined to read in data from
    * the GAMESS output file and store it temporarily;
    * it is then copied into the VMD specific arrays at the
@@ -335,17 +331,23 @@ typedef struct
   /* per timestep data like wavefunctions and scf iterations */
   qm_timestep_t *qm_timestep;
 
-  /* flag to indicate wether we are done with reading frames */
-  int done_trajectory;
+  /* this flag tells if scf cycle and the geometry search converged */
+  int opt_status;
 
-  /* number of trajectory points; single point corresponds to 1 */
+
+  /* number of trajectory frames; single point corresponds to 1 */
   int num_frames;
   int num_frames_sent;
   int num_frames_read;
 
-  int end_of_trajectory;
+  /* flag to indicate wether we are done with reading frames */
+  int trajectory_done;
 
+  /* file pointers to the beginning of each trajectory frame */
   long *filepos_array;
+
+  /* file pointer to the beginning of final section printed after
+   * the last trajectory frame */
   long end_of_traj;
 
 } gamessdata;

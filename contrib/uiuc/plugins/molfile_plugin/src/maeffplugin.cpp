@@ -5,7 +5,7 @@
 
 //
 // Version info for VMD plugin tree:
-//   $Id: maeffplugin.cxx,v 1.16 2009/02/26 21:28:53 johns Exp $
+//   $Id: maeffplugin.cxx,v 1.19 2009/05/18 16:09:21 johns Exp $
 //
 // Version info for last sync with D. E. Shaw Research:
 //  //depot/desrad/main/sw/libs/vmd_plugins,DIST/maeffplugin.cxx#6
@@ -71,6 +71,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ssize_t int
 #define M_PI (3.1415926535897932385)
 #define M_PI_2 (1.5707963267948966192)
+
+#if defined(_MSC_VER)
+#ifndef snprintf
+#define snprintf _snprintf
+#endif
+#endif
+
 #endif
 
 namespace {
@@ -591,6 +598,8 @@ namespace {
     std::vector<site>           sites;
     std::vector<bond_t>         bonds;
 
+    std::map<size_t,int> atommap, pseudomap;
+
     VirtualsMap virtuals;
     ct_data() : natoms(0), npseudos(0) {}
   };
@@ -633,6 +642,7 @@ namespace {
     int nparticles;
     std::vector<int> bond_from, bond_to;
     std::vector<float> bond_order;
+    std::vector<molfile_atom_t> particles; // for writing
     CtMap ctmap;
 
     Handle() 
@@ -811,6 +821,11 @@ namespace {
         strncpy( a.name, 
                  find_element_by_atomic_number(a.atomicnumber).second,
                  sizeof(a.name) );
+      }
+      
+      // if we didn't get a segid, encode the ct index.
+      if (!strlen(a.segid)) {
+        snprintf(a.segid, 4, "C%d", m_ct);
       }
       atoms.push_back(a);
       natoms += 1;
@@ -1273,11 +1288,11 @@ namespace {
     for (i=0; i<3; i++) output << "  " << C[i] << std::endl;
   }
   void write_ct_atoms(  std::ofstream &output,
-                        int natoms,
-                        const molfile_atom_t *atoms,
+                        const std::map<size_t,int>& atommap,
+                        const std::vector<molfile_atom_t> &atoms,
                         const float *pos, const float *vel ) {
 
-    output << "  m_atom[" << natoms << "] {\n";
+    output << "  m_atom[" << atommap.size() << "] {\n";
     output << "    s_m_pdb_atom_name\n";
     output << "    s_m_pdb_residue_name\n";
     output << "    s_m_chain_name\n";
@@ -1295,46 +1310,66 @@ namespace {
     output << "    i_m_mmod_type\n";
     output << "    i_m_color\n";
     output << "    i_m_visibility\n";
+    output << "    i_m_formal_charge\n";
+    output << "    r_m_charge1\n";
+    output << "    r_m_charge2\n";
+    output << "    s_m_mmod_res\n";
+    output << "    s_m_grow_name\n";
+    output << "    s_m_insertion_code\n";
     output << "    :::\n";
-    for (int i=0; i<natoms; i++) {
-      const molfile_atom_t &a = atoms[i];
-      output << "    " << i+1 << ' '
+
+    for (std::map<size_t,int>::const_iterator i=atommap.begin(); 
+        i!=atommap.end(); ++i) {
+      const molfile_atom_t &a = atoms[i->first];
+      output << "    " << i->second << ' '
              << quotify(a.name) << ' '
              << quotify(a.resname) << ' '
              << quotify(a.chain) << ' '
              << quotify(a.segid) << ' '
              << a.resid << ' '
-             << pos[0] << ' '
-             << pos[1] << ' '
-             << pos[2] << ' ';
-      pos += 3;
+             << pos[0+3*i->first] << ' '
+             << pos[1+3*i->first] << ' '
+             << pos[2+3*i->first] << ' ';
       if (vel) {
-        output << vel[0] << ' '
-               << vel[1] << ' '
-               << vel[2] << ' ';
-        vel += 3;
+        output << vel[0+3*i->first] << ' '
+               << vel[1+3*i->first] << ' '
+               << vel[2+3*i->first] << ' ';
       }
       // get atomic number from mass if not provided explicitly.
       int anum = a.atomicnumber;
       if (anum < 1) anum = find_element_by_amu(a.mass).first;
       // the other setting make Maestro happy
       int color=2; // gray
+      int mmod=64; // mmod_type; 64="any atom"
       switch  (anum) {
-        case 1:  color=21; break;  // H
-        case 6:  color=2 ; break;  // C
-        case 7:  color=43; break;  // N
-        case 8:  color=70; break;  // O
-        case 9:  color=8;  break;  // F
-        case 14: color=14; break;  // Si
-        case 15: color=15; break;  // P
-        case 16: color=13; break;  // S
-        case 17: color=9;  break;  // Cl
+        case 1:  color=21; mmod=48; break;  // H
+        case 3:  color=4;  mmod=11; break;  // Li+ ion
+        case 6:  color=2 ; mmod=14; break;  // C
+        case 7:  color=43; mmod=40; break;  // N
+        case 8:  color=70; mmod=23; break;  // O
+        case 9:  color=8;  mmod=56; break;  // F
+        case 11: color=4;  mmod=66; break;  // Na+ ion
+        case 12: color=4;  mmod=72; break;  // Mg2+ ion
+        case 14: color=14; mmod=60; break;  // Si
+        case 15: color=15; mmod=53; break;  // P
+        case 16: color=13; mmod=52; break;  // S
+        case 17: color=13; mmod=102; break;  // Cl- ion
+        case 19: color=4;  mmod=67; break;  // K+ ion
+        case 20: color=4;  mmod=70; break;  // Ca2+ ion
         default: ;
       }
+      static const std::string blank("\" \"");
       output << anum << ' '
-             << 1 << ' '
-             << color << ' '
-             << 1 << "\n";
+             << mmod << ' '       // mmod_type
+             << color << ' '   // m_color
+             << 1 << ' '       // m_visibility
+             << 0   << ' '     // formal charge
+             << 0.0 << ' '     // charge1
+             << 0.0 << ' '     // charge2
+             << blank << ' '  // mmod_res
+             << blank << ' '  // m_grow_name
+             << quotify(a.insertion) << ' ' // m_insertion_code
+             << std::endl;    
     }
     output << "    :::\n";
     output << "  }\n";
@@ -1343,6 +1378,8 @@ namespace {
   void write_ct_bonds( std::ofstream &output, 
                        const std::vector<bond_t> &bonds ) {
 
+    // don't write 0-element m_bond (ev85392)
+    if (!bonds.size()) return;
     output << "  m_bond[" << bonds.size() << "] {\n"
            << "    i_m_from\n"
            << "    i_m_to\n"
@@ -1367,29 +1404,30 @@ namespace {
     output << "  }\n";
   }
 
-  void write_ct_sites( std::ofstream &output, int nparticles, 
-                       const molfile_atom_t *atoms ) {
+  void write_ct_sites( std::ofstream &output, 
+                       const std::vector<site>& sites ) {
 
-    output << "    ffio_sites[" << nparticles << "] {\n"
+    output << "    ffio_sites[" << sites.size() << "] {\n"
            << "      s_ffio_type\n"
            << "      r_ffio_charge\n"
            << "      r_ffio_mass\n"
            << "      :::\n";
-    for (int i=0; i<nparticles; i++) {
+    for (size_t i=0; i<sites.size(); i++) {
       output << "      " << i+1 << ' '
-             << "atom "
-             << atoms[i].charge << ' '
-             << atoms[i].mass << "\n";
+             << (sites[i].pseudo ? "pseudo " : "atom ")
+             << sites[i].charge << ' '
+             << sites[i].mass << "\n";
     }
     output << "      :::\n";
     output << "    }\n";
   }
 
-  void write_ct_pseudos( std::ofstream &output, int npseudos,
-                         const molfile_atom_t *pseudos,
+  void write_ct_pseudos( std::ofstream &output,
+                         const std::map<size_t,int> &pseudos,
+                         const std::vector<molfile_atom_t> &particles,
                          const float *pos, const float *vel ) {
-    if (!npseudos) return;
-    output << "    ffio_pseudo[" << npseudos << "] {\n"
+    if (!pseudos.size()) return;
+    output << "    ffio_pseudo[" << pseudos.size() << "] {\n"
            << "      r_ffio_x_coord\n"
            << "      r_ffio_y_coord\n"
            << "      r_ffio_z_coord\n"
@@ -1402,23 +1440,23 @@ namespace {
                     << "      r_ffio_z_vel\n";
     output << "      :::\n";
 
-    for (int i=0; i<npseudos; i++) {
+    for (std::map<size_t,int>::const_iterator i=pseudos.begin(); 
+        i!=pseudos.end(); ++i) {
+      const molfile_atom_t &a = particles[i->first];
       output << "      " 
-             << i+1 << ' '
-             << pos[0] << ' ' 
-             << pos[1] << ' ' 
-             << pos[2] << ' ' 
-             << quotify(pseudos[i].name) << ' '
-             << quotify(pseudos[i].chain) << ' '
-             << quotify(pseudos[i].segid) << ' '
-             << pseudos[i].resid;
-      pos += 3;
+             << i->second << ' '
+             << pos[0+3*i->first] << ' ' 
+             << pos[1+3*i->first] << ' ' 
+             << pos[2+3*i->first] << ' ' 
+             << quotify(a.name) << ' '
+             << quotify(a.chain) << ' '
+             << quotify(a.segid) << ' '
+             << a.resid;
       if (vel) { 
         output << ' ' 
-               << vel[0] << ' ' 
-               << vel[1] << ' ' 
-               << vel[2];
-        vel += 3;
+               << vel[0+3*i->first] << ' ' 
+               << vel[1+3*i->first] << ' ' 
+               << vel[2+3*i->first];
       }
       output << "\n";
     }
@@ -1515,6 +1553,10 @@ namespace {
           // copy site as well
           stage1.sites.push_back( stage2.sites.at(aj-1));
           stage1.sites[stage1.sites.size()-1].charge = 0.0;
+          
+          // copy position and velocity
+          stage1.position.push_back( stage2.position.at(aj-1) );
+          stage1.velocity.push_back( stage2.velocity.at(aj-1) );
 
 	} else {
           fprintf(stderr, "ai(%d) and aj(%d) < 0 in atommap\n", ai, aj);
@@ -1743,13 +1785,14 @@ namespace {
       return NULL;
     }
     h->nparticles = natoms;
+    h->particles.resize(natoms);
     return h;
   }
 
   int write_structure(void *v, int optflags, const molfile_atom_t *atoms) {
     Handle *h = reinterpret_cast<Handle *>(v);
     h->optflags = optflags;
-    //memcpy( &h->atoms[0], atoms, h->atoms.size() * sizeof(molfile_atom_t) );
+    memcpy(&h->particles[0], atoms, h->particles.size()*sizeof(molfile_atom_t));
 
     // assign ct for each particle, and count ct atoms and pseudos
     std::vector<int> atom_ct(h->nparticles);
@@ -1763,19 +1806,19 @@ namespace {
         ++ct;
       }
       atom_ct[i] = ct;
-      h->ctmap[ct].particles.push_back(a);
-      if (!strncmp(a.name, "pseudo", strlen(a.name))) 
-        h->ctmap[ct].npseudos += 1;
-      else
-        h->ctmap[ct].natoms += 1;
-    }
+      ct_data &data = h->ctmap[ct];
+      site s;
+      s.charge = a.charge;
+      s.mass = a.mass;
 
-    // compute offset of start of each ct
-    std::vector<int> ct_offset;
-    int offset=0;
-    for (CtMap::const_iterator it=h->ctmap.begin(); it!=h->ctmap.end(); ++it) {
-      ct_offset.push_back(offset);
-      offset += it->second.natoms + it->second.npseudos;
+      if ((optflags & MOLFILE_ATOMICNUMBER) && a.atomicnumber<1) {
+        data.pseudomap[i] = ++data.npseudos;
+        s.pseudo = true;
+      } else {
+        data.atommap[i] = ++data.natoms;
+        s.pseudo = false;
+      }
+      data.sites.push_back(s);
     }
 
     // add bonds to their proper ct
@@ -1791,13 +1834,12 @@ namespace {
         continue;
       }
       // map 0-based bond index to 1-based ct index
-      int offset = ct_offset[ct-1] - 1;
-      from -= offset;
-      to -= offset;
+      ct_data &data = h->ctmap[ct];
       // add the bond only if it's between atoms, not pseudos
-      int natoms = h->ctmap[ct].natoms;
-      if (from <= natoms && to <= natoms)
-        h->ctmap[ct].bonds.push_back(bond_t(from, to, order));
+      std::map<size_t,int>::const_iterator ifrom=data.atommap.find(from);
+      std::map<size_t,int>::const_iterator ito=data.atommap.find(to);
+      if (ifrom != data.atommap.end() && ito != data.atommap.end())
+        data.bonds.push_back(bond_t(ifrom->second, ito->second, order));
       else 
         ++skipped;
     }
@@ -1840,29 +1882,18 @@ namespace {
       h->set_box(ts);
 
       write_meta(h->output);
-      const float *pos = ts->coords;
-      const float *vel = ts->velocities;
-
       for (CtMap::const_iterator i=h->ctmap.begin(); i!=h->ctmap.end(); ++i) {
-        int natoms = i->second.natoms;
-        int npseudos = i->second.npseudos;
-        int nparticles = natoms + npseudos;
-        const molfile_atom_t *atoms = &i->second.particles[0];
-
+        const ct_data &data = i->second;
         write_ct_header( h->output, h->A, h->B, h->C );
-        write_ct_atoms(  h->output, natoms, atoms, pos, vel );
-        write_ct_bonds(  h->output, h->ctmap[i->first].bonds );
+        write_ct_atoms(  h->output, data.atommap, h->particles, ts->coords, ts->velocities );
+        write_ct_bonds(  h->output, data.bonds );
 
         write_ct_ffio_header( h->output );
-          write_ct_sites( h->output, nparticles, atoms );
-          write_ct_pseudos( h->output, npseudos, atoms + natoms,
-                            pos+3*natoms, vel ? vel+3*natoms : NULL );
+          write_ct_sites( h->output, data.sites );
+          write_ct_pseudos( h->output, data.pseudomap, h->particles, ts->coords, ts->velocities );
         write_ct_ffio_footer( h->output );
 
         write_ct_footer( h->output );
-
-        pos += 3*nparticles;
-        if (vel) vel += 3*nparticles;
       }
     }
     catch (std::exception &e) {
@@ -1896,7 +1927,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
   maeff.prettyname = "Maestro File";
   maeff.author = "D. E. Shaw Research";
   maeff.majorv = 3;
-  maeff.minorv = 2;
+  maeff.minorv = 3;
   maeff.is_reentrant = VMDPLUGIN_THREADUNSAFE;
 
   maeff.filename_extension = "mae,maeff,cms";
@@ -1917,8 +1948,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  //  cb(v,reinterpret_cast<vmdplugin_t*>(&maeff));
-  cb(v,(vmdplugin_t*)(void*)&maeff);
+  cb(v,reinterpret_cast<vmdplugin_t*>(&maeff));
   return VMDPLUGIN_SUCCESS;
 }
 

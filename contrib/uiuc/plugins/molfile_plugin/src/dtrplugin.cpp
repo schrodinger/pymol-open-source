@@ -5,7 +5,7 @@
 
 //
 // Version info for VMD plugin tree:
-//   $Id: dtrplugin.cxx,v 1.15 2009/03/02 15:59:47 johns Exp $
+//   $Id: dtrplugin.cxx,v 1.16 2009/05/18 15:56:50 johns Exp $
 //
 // Version info for last sync with D. E. Shaw Research:
 //  //depot/desrad/main/sw/libs/vmd_plugins,DIST/dtrplugin.cxx#3
@@ -44,39 +44,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#if defined(_MSC_VER)
-#ifndef DESRES_WIN32
-#define DESRES_WIN32
-#endif
-#endif
+#include "dtrplugin.hxx"
 
-#include <stdio.h>
-#ifdef DESRES_WIN32
-#include <io.h>
-#include <direct.h>
-#include <fcntl.h>
-#include <windows.h>
-typedef int int32_t;
-typedef unsigned char uint8_t;
-typedef unsigned int uint32_t;
-#if 1
-typedef unsigned __int64 uint64_t;    // This also works with MVSC6
-#else
-typedef unsigned long long uint64_t;
-#endif
-typedef unsigned short uint16_t;
-typedef unsigned int ssize_t;
-typedef int mode_t;
-#define mkdir(a,b) _mkdir(a)
-#define rmdir(a)   _rmdir(a)
-#define ftello(a)  ftell(a)
-#else
-#define O_BINARY 0
-#include <inttypes.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#endif
+using namespace desres::molfile;
+
 #include <sstream>
 #include <ios>
 #include <iomanip>
@@ -89,6 +60,7 @@ typedef int mode_t;
 #include <ios>
 #include <set>
 #include <iostream>
+#include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/stat.h>
@@ -120,8 +92,12 @@ static const char s_sep = '/';
 #define M_PI (3.1415926535897932385)
 #define M_PI_2 (1.5707963267948966192)
 
+#ifndef S_ISREG
+#define S_ISREG(x) (((x) & S_IFMT) == S_IFREG)
+#endif
+
 #ifndef S_ISDIR
-#define S_ISDIR(m) (((m) & _S_IFDIR) == _S_IFDIR)
+#define S_ISDIR(x) (((x) & S_IFMT) == S_IFDIR)
 #endif
 
 static const char s_sep = '\\';
@@ -151,6 +127,27 @@ static int munmap(void *start, size_t length) {
 #endif
 
 namespace {
+
+  const double PEAKmassInAmu = 418.4;
+
+  double sfxp_ulp32flt(int32_t x) {
+    return ldexp(((double) x),-31);
+  }
+
+
+  uint64_t assemble64( uint32_t lo, uint32_t hi) {
+    uint64_t hi64 = hi; 
+    return (hi64 << 32) | lo; 
+  }
+  
+  double assembleDouble(uint32_t lo, uint32_t hi) {
+    union {
+      uint64_t ival;
+      double   dval;
+    } u;
+    u.ival = assemble64(lo,hi);
+    return u.dval;
+  }
 
   /// definitions of binary representation of frameset files
 
@@ -204,15 +201,6 @@ namespace {
     uint32_t frames_per_file; /* Number of frames in each file */
     uint32_t key_record_size; /* The size of each key record */
   } key_prologue_t;
-
-  typedef struct key_record {
-    uint32_t time_lo;       /* Time associated with this file (low bytes). */
-    uint32_t time_hi;       /* Time associated with this file (high bytes). */
-    uint32_t offset_lo;     /* Zero in the 1 frame/file case (low bytes) */
-    uint32_t offset_hi;     /* Zero in the 1 frame/file case (high bytes) */
-    uint32_t framesize_lo;  /* Number of bytes in frame (low bytes) */
-    uint32_t framesize_hi;  /* Number of bytes in frame (high bytes) */
-  } key_record_t;
 
 
   //// utility routines
@@ -305,6 +293,11 @@ namespace {
     sum1 = (sum1 & 0xffff) + (sum1 >> 16);
     sum2 = (sum2 & 0xffff) + (sum2 >> 16);
     return sum2 << 16 | sum1;
+  }
+
+  bool isfile(const std::string &name) {
+    struct stat statbuf;
+    return (stat(name.c_str(),&statbuf) == 0 && S_ISREG(statbuf.st_mode));
   }
 
   /*!
@@ -407,7 +400,6 @@ namespace {
 
 }
 
-
 namespace {
   struct Blob {
     std::string type;
@@ -490,20 +482,6 @@ static const uint32_t s_lrosetta_lo = 0x89abcdef;
 static const uint32_t s_lrosetta_hi = 0x01234567;
 static const uint32_t s_blocksize   = 4096;
 static const uint32_t s_alignsize   = 8;
-
-static uint64_t assemble64( uint32_t lo, uint32_t hi) {
-  uint64_t hi64 = hi; 
-  return (hi64 << 32) | lo; 
-}
-
-static double assembleDouble(uint32_t lo, uint32_t hi) {
-  union {
-    uint64_t ival;
-    double   dval;
-  } u;
-  u.ival = assemble64(lo,hi);
-  return u.dval;
-}
 
 static inline std::string addslash(const std::string& s){
     return (s.rbegin()[0] == '/') ? s : s + "/";
@@ -735,19 +713,25 @@ static void *map_file( int fd, off_t offset, size_t &framesize ) {
   return mapping;
 }
 
-namespace {
-
+uint64_t key_record_t::size() const {
+  return assemble64(ntohl(framesize_lo), ntohl(framesize_hi));
+}
+uint64_t key_record_t::offset() const {
+  return assemble64(ntohl(offset_lo), ntohl(offset_hi));
+}
+double key_record_t::time() const {
+  return assembleDouble(ntohl(time_lo), ntohl(time_hi));
 }
 
-static void get_rmass(const std::string &metafile, std::vector<float> &rmass) {
+std::vector<float> get_rmass(const std::string &metafile) {
 
-  rmass.resize(0);
+  std::vector<float> rmass;
   int meta_fd = open(metafile.c_str(), O_RDONLY|O_BINARY);
   size_t framesize=0;
   void *meta_mapping = map_file( meta_fd, 0, framesize );
   if (meta_mapping==MAP_FAILED) {
     close(meta_fd);
-    return;
+    return rmass;
   }
   BlobMap meta_blobs = read_frame( meta_mapping );
   if (meta_blobs.find("INVMASS")!=meta_blobs.end()) {
@@ -773,50 +757,112 @@ static void get_rmass(const std::string &metafile, std::vector<float> &rmass) {
   }
   ::munmap(MMAPTYPE(meta_mapping), framesize);
   close(meta_fd);
+  return rmass;
 }
 
-
-///// Plugin interface
-#include <molfile_plugin.h>
-
-namespace {
-  struct Handle {
-    std::string dtr;
-    std::vector<key_record_t> keys;  // one per frame
-    std::vector<float> rmass;   // could be empty vector!
-    const uint32_t natoms;
-    const uint32_t frames_per_file;
-    const int ndir1;
-    const int ndir2;
-    uint32_t curframe;
-    bool with_velocity;
-
-    int frame_fd; // for writing
-
-    Handle( const std::string &path, uint32_t natoms_,
-            uint32_t frames_per_file_, int n1, int n2 )
-    : dtr(path), natoms(natoms_), frames_per_file(frames_per_file_),
-      ndir1(n1), ndir2(n2),
-      curframe(0), with_velocity(false)
-    {}
-
-    ~Handle() { }
-  };
+bool StkReader::recognizes(const std::string &path) {
+      return path.size()>4 && 
+             path.substr(path.size()-4)==".stk" &&
+             isfile(path);
 }
 
-static void *
-open_file_read( const char *filename, const char *filetype, int *natoms ) {
+StkReader::StkReader(DtrReader *reader) {
+  dtr=reader->path();
+  framesets.push_back(reader);
+  curframeset=0;
+}
 
-  // check for "clickme.dtr"
-  std::string fname(filename);
-  std::string::size_type pos = fname.rfind( "clickme.dtr" );
-  if (pos != std::string::npos) {
-    fname.resize(pos);
-    filename = fname.c_str();
+bool StkReader::init(const std::string &path) {
+  framesets.clear();
+  curframeset=0;
+  dtr=path;
+
+  std::string fname;
+  std::ifstream input(path.c_str());
+  if (!input) {
+    fprintf(stderr, "Cannot open '%s' for reading\n", path.c_str());
+    return false;
   }
+  while (std::getline(input, fname)) {
+    DtrReader *reader = new DtrReader;
+    if (!reader->init(fname)) {
+      printf("Failed opening frameset at %s\n", fname.c_str());
+      delete reader;
+      return false;
+    }
+    if (!reader->size()) {
+      delete reader;
+      continue;
+    }
+    framesets.push_back(reader);
+  }
+  if (!framesets.size()) {
+    fprintf(stderr, "Empty stk file\n");
+    return false;
+  }
+  natoms=framesets[0]->natoms;
 
+  // now remove overlaps
+  double first=framesets.back()->keys[0].time();
+  size_t i=framesets.size()-1;
+  while (i--) {
+    std::vector<key_record_t> &cur = framesets[i]->keys;
+    std::vector<key_record_t>::reverse_iterator r=cur.rbegin();
+    while (r!=cur.rend()) {
+      if (r->time() < first) break;
+      ++r;
+    }
+    cur.erase( cur.begin() + (cur.rend()-r), cur.end() );
+    if (cur.size()) {
+      if (cur.begin()->time() < first) first=cur.begin()->time();
+    }
+  }
+  return true;
+}
+
+ssize_t StkReader::size() const {
+  ssize_t result=0;
+  for (size_t i=0; i<framesets.size(); i++) 
+    result += framesets[i]->keys.size();
+  return result;
+}
+
+int StkReader::next(molfile_timestep_t *ts) {
+  int rc=MOLFILE_EOF;
+  while (curframeset < framesets.size() && 
+         (rc=framesets[curframeset]->next(ts))==MOLFILE_EOF) {
+    ++curframeset;
+  }
+  return rc;
+}
+
+const DtrReader * StkReader::component(ssize_t &n) const {
+  for (size_t i=0; i<framesets.size(); i++) {
+    ssize_t size = framesets[i]->size();
+    if (n < size) return framesets[i];
+    n -= size;
+  }
+  return NULL;
+}
+
+int StkReader::frame(ssize_t n, molfile_timestep_t *ts) const {
+  const DtrReader *comp = component(n);
+  if (!comp) return MOLFILE_EOF;
+  return comp->frame(n, ts);
+}
+
+StkReader::~StkReader() {
+  for (size_t i=0; i<framesets.size(); i++) 
+    delete framesets[i];
+}
+
+std::string DtrReader::framefile(ssize_t n) const {
+  return ::framefile( dtr, n, frames_per_file, ndir1, ndir2 );
+}
+
+bool DtrReader::init(const std::string &path) {
+  dtr = path;
   /* Read the timekeys file */
-  const std::string dtr = filename;
   FILE *fd=0;
   std::string timekeys_path = dtr;
   timekeys_path += s_sep;
@@ -825,7 +871,7 @@ open_file_read( const char *filename, const char *filetype, int *natoms ) {
   if (!fd) {
     fprintf(stderr, "Could not find timekeys file at %s\n", 
         timekeys_path.c_str());
-    return NULL;
+    return false;
   }
 
 
@@ -835,19 +881,20 @@ open_file_read( const char *filename, const char *filetype, int *natoms ) {
     fprintf(stderr, "Failed to read key prologue from %s\n",
         timekeys_path.c_str());
     fclose(fd);
-    return NULL;
+    return false;
   }
   prologue->magic = htonl(prologue->magic);
   if (prologue->magic != magic_timekey) {
     fprintf(stderr, "timekeys magic number %x doesn't match %x\n",
         prologue->magic, magic_timekey);
     fclose(fd);
-    return NULL;
+    return false;
   }
 
   /* get frames per file and key record size */
   prologue->frames_per_file = ntohl( prologue->frames_per_file );
   prologue->key_record_size = ntohl( prologue->key_record_size );
+  frames_per_file = prologue->frames_per_file;
 
   /* read all key records */
   fseek(fd, 0, SEEK_END);
@@ -857,28 +904,25 @@ open_file_read( const char *filename, const char *filetype, int *natoms ) {
   if (!nframes) {
     fprintf(stderr, "Error, empty trajectory\n");
     fclose(fd);
-    return NULL;
+    return false;
   }
 
-  std::vector<key_record_t> keys(nframes);
+  keys.resize(nframes);
   fseek(fd, sizeof(key_prologue_t), SEEK_SET);
   if (fread(&keys[0], sizeof(key_record_t), nframes, fd)!=nframes) {
     fprintf(stderr, "Failed to read all timekeys records: %s\n",
         strerror(errno));
     fclose(fd);
-    return NULL;
+    return false;
   }
   fclose(fd);
 
-  int n1, n2;
-  DDgetparams(dtr, &n1, &n2);
+  DDgetparams(dtr, &ndir1, &ndir2);
 
   // read the first frame to see how many atoms there are, and whether 
   // there are any velocities.
-  *natoms = -1;
-  bool has_velocities=false;
   {
-    std::string fname=framefile(dtr, 0, prologue->frames_per_file, n1, n2);
+    std::string fname=::framefile(dtr, 0, prologue->frames_per_file, ndir1, ndir2);
     int fd = open(fname.c_str(), O_RDONLY|O_BINARY);
     size_t framesize=0;
     unsigned i;
@@ -886,7 +930,7 @@ open_file_read( const char *filename, const char *filetype, int *natoms ) {
     if (mapping==MAP_FAILED)  {
       fprintf(stderr, "Failed to find frame at %s\n", fname.c_str());
       close(fd);
-      return NULL;
+      return false;
     }
     BlobMap blobs = read_frame(mapping);
 
@@ -897,7 +941,7 @@ open_file_read( const char *filename, const char *filetype, int *natoms ) {
     const char *posnames[] = { "POSN", "POSITION", "POS" };
     for (i=0; i<3; i++) {
       if (blobs.find(posnames[i])!=blobs.end()) {
-        *natoms = blobs[posnames[i]].count / 3;
+        natoms = blobs[posnames[i]].count / 3;
         break;
       }
     }
@@ -905,7 +949,7 @@ open_file_read( const char *filename, const char *filetype, int *natoms ) {
     const char *velnames[] = { "MOMENTUM", "VELOCITY" };
     for (i=0; i<2; i++) {
       if (blobs.find(velnames[i])!=blobs.end()) {
-        has_velocities=true;
+        with_velocity=true;
         break;
       }
     }
@@ -913,22 +957,11 @@ open_file_read( const char *filename, const char *filetype, int *natoms ) {
     close(fd);
   }
 
-
-  Handle *handle = new Handle(dtr, *natoms, prologue->frames_per_file, n1, n2);
-  handle->keys = keys;
-
   // get the reciprocal mass, if present
-  get_rmass( dtr + s_sep + "metadata", handle->rmass );
-  handle->with_velocity = has_velocities && !strcmp(filetype, "dtrv");
-  return handle;
-}
+  rmass=get_rmass( dtr + s_sep + "metadata" );
 
-static int 
-read_timestep_metadata(void *v, molfile_timestep_metadata *m) {
-  Handle* handle = reinterpret_cast<Handle*>(v);
-  m->has_velocities = handle->with_velocity;
-  m->count = handle->keys.size();
-  return MOLFILE_SUCCESS;
+  return true;
+
 }
 
 static double dotprod(const double *x, const double *y) {
@@ -1005,28 +1038,31 @@ void write_homebox( const molfile_timestep_t * ts,
   box[2] = C[0]; box[5] = C[1]; box[8] = C[2];
 }
 
-static int handle_wrapped_v2(const Handle *h,
-                             BlobMap &blobs,
-                             molfile_timestep_t *ts) {
+static int handle_wrapped_v2(
+    BlobMap &blobs,
+    uint32_t natoms,
+    bool with_velocity, 
+    const std::vector<float>& rmass,
+    molfile_timestep_t *ts ) {
 
   // just read POSITION in either single or double precision
   if (blobs.find("POSITION")==blobs.end()) {
-    fprintf(stderr, "ERROR, Missing POSITION field in frame %d\n", h->curframe);
+    fprintf(stderr, "ERROR, Missing POSITION field in frame\n");
     return MOLFILE_ERROR;
   }
   Blob pos=blobs["POSITION"];
-  if (pos.count != 3*h->natoms) {
+  if (pos.count != 3*natoms) {
     fprintf(stderr, "ERROR, Expected %d elements in POSITION; got %ld\n",
-        3*h->natoms, pos.count);
+        3*natoms, pos.count);
     return MOLFILE_ERROR;
   }
   pos.get_float(ts->coords);
 
-  if (h->with_velocity && ts->velocities && blobs.find("VELOCITY")!=blobs.end()) {
+  if (with_velocity && ts->velocities && blobs.find("VELOCITY")!=blobs.end()) {
     Blob vel=blobs["VELOCITY"];
-    if (vel.count != 3*h->natoms) {
+    if (vel.count != 3*natoms) {
       fprintf(stderr, "ERROR, Expected %d elements in VELOCITY; got %ld\n",
-          3*h->natoms, vel.count);
+          3*natoms, vel.count);
       return MOLFILE_ERROR;
     }
     vel.get_float(ts->velocities);
@@ -1167,9 +1203,12 @@ namespace {
   }
 }
 
-static int handle_posn_momentum_v1(const Handle *h,
-                                   BlobMap &blobs,
-                                   molfile_timestep_t *ts) {
+static int handle_posn_momentum_v1(
+    BlobMap &blobs,
+    uint32_t natoms,
+    bool with_velocity, 
+    const std::vector<float>& rmass,
+    molfile_timestep_t *ts ) {
 
   int32_t nx, ny, nz;
   double home_box[9], box[9];
@@ -1185,11 +1224,11 @@ static int handle_posn_momentum_v1(const Handle *h,
   Blob posblob=blobs["POSN"];
   Blob mtmblob=blobs["MOMENTUM"];
 
-  if (gidblob.count != h->natoms) {
+  if (gidblob.count != natoms) {
     fprintf(stderr, "Missing GID field\n");
     return MOLFILE_ERROR;
   }
-  if (posblob.count != 3*h->natoms) {
+  if (posblob.count != 3*natoms) {
     fprintf(stderr, "Missing POSN field\n");
     return MOLFILE_ERROR;
   }
@@ -1202,11 +1241,11 @@ static int handle_posn_momentum_v1(const Handle *h,
   nppblob.get_uint32(&npp[0]);
   posblob.get_float(&pos[0]);
 
-  if (h->rmass.size() && h->with_velocity) mtmblob.get_float(&mtm[0]);
+  if (rmass.size() && with_velocity) mtmblob.get_float(&mtm[0]);
 
-  posn_momentum_v_1( nx, ny, nz, h->natoms, home_box, 
+  posn_momentum_v_1( nx, ny, nz, natoms, home_box, 
                      &gid[0], &npp[0], 
-                     h->rmass.size() ? &h->rmass[0] : NULL,
+                     rmass.size() ? &rmass[0] : NULL,
                      &pos[0],
                      &mtm[0],
                      ts->coords,
@@ -1217,9 +1256,13 @@ static int handle_posn_momentum_v1(const Handle *h,
   return MOLFILE_SUCCESS;
 }
 
-static int handle_wrapped_v1(const Handle *h,
-                             BlobMap &blobs,
-                             molfile_timestep_t *ts) {
+static int handle_wrapped_v1(
+    BlobMap &blobs,
+    uint32_t natoms,
+    bool with_velocity, 
+    const std::vector<float>& rmass,
+    molfile_timestep_t *ts ) {
+
   {
     // homebox
     double home_box[9], box[9];
@@ -1246,7 +1289,7 @@ static int handle_wrapped_v1(const Handle *h,
   Blob velblob=blobs["VELOCITY"];
 
   // get positions
-  if (posblob.count != 3*h->natoms) {
+  if (posblob.count != 3*natoms) {
     fprintf(stderr, "Missing POSN field\n");
     return MOLFILE_ERROR;
   }
@@ -1254,9 +1297,9 @@ static int handle_wrapped_v1(const Handle *h,
   
   // if required, get velocities
   if (ts->velocities && velblob.count > 0) {
-    if (velblob.count != 3*h->natoms) {
-      fprintf(stderr, "VELOCITY field has %d values; expected %d\n",
-          velblob.count, 3*h->natoms);
+    if (velblob.count != 3*natoms) {
+      fprintf(stderr, "VELOCITY field has %ld values; expected %d\n",
+          velblob.count, 3*natoms);
       return MOLFILE_ERROR;
     }
     velblob.get_float(ts->velocities);
@@ -1264,66 +1307,160 @@ static int handle_wrapped_v1(const Handle *h,
   return MOLFILE_SUCCESS;
 }
 
-static int read_next_timestep(void *v, int natoms, molfile_timestep_t *ts) {
-  Handle *h = reinterpret_cast<Handle *>(v);
-  if (h->curframe >= h->keys.size()) return MOLFILE_EOF;
+static int handle_anton_sfxp_v3(
+    BlobMap &blobs,
+    uint32_t natoms,
+    bool with_velocity, 
+    const std::vector<float>& rmass,
+    molfile_timestep_t *ts ) {
+
+  if (rmass.size() != natoms) {
+    fprintf(stderr, "rmass size %ld != %d\n", rmass.size(), natoms);
+    return MOLFILE_ERROR;
+  }
+
+  double positionScale=0, momentumScale=0;
+  // position scale...
+  {
+    Blob blob = blobs["POSITIONSCALE"];
+    if (blob.count != 1) {
+      fprintf(stderr, "Missing POSITIONSCALE field\n");
+      return MOLFILE_ERROR;
+    }
+    blob.get_double(&positionScale);
+  }
+  // momentum scale
+  if (ts->velocities) {
+    Blob blob = blobs["MOMENTUMSCALE"];
+    if (blob.count != 1) {
+      fprintf(stderr, "Missing MOMENTUMSCALE field\n");
+      return MOLFILE_ERROR;
+    }
+    blob.get_double(&momentumScale);
+    momentumScale *= PEAKmassInAmu;
+  }
+
+  // box
+  {
+    double box[9] = { 0,0,0, 0,0,0, 0,0,0 };
+    uint32_t anton_box[3];
+    Blob boxblob = blobs["BOX"];
+    if (boxblob.count != 3) {
+      fprintf(stderr, "Missing BOX field\n");
+      return MOLFILE_ERROR;
+    }
+    boxblob.get_uint32(anton_box);
+    box[0] = sfxp_ulp32flt(anton_box[0])*positionScale;
+    box[4] = sfxp_ulp32flt(anton_box[1])*positionScale;
+    box[8] = sfxp_ulp32flt(anton_box[2])*positionScale;
+    read_homebox( box, ts );
+  }
+
+  // velocities
+  std::vector<int32_t> vel;
+  if (ts->velocities) {
+    Blob velblob = blobs["MOMENTUM"];
+    if (velblob.count != 3*natoms) {
+      fprintf(stderr, "Missing MOMENTUM field\n");
+      return MOLFILE_ERROR;
+    }
+    vel.resize(3*natoms);
+    velblob.get_int32(&vel[0]);
+  }
+
+  // positions
+  std::vector<int32_t> pos(3*natoms);
+  {
+    Blob posblob = blobs["POS"];
+    if (posblob.count != 3*natoms) {
+      fprintf(stderr, "Missing POS field\n");
+      return MOLFILE_ERROR;
+    }
+    posblob.get_int32(&pos[0]);
+  }
+  // convert and read into supplied storage
+  for (unsigned i=0; i<natoms; i++) {
+    ts->coords[3*i  ] = sfxp_ulp32flt(pos[3*i+0])*positionScale;
+    ts->coords[3*i+1] = sfxp_ulp32flt(pos[3*i+1])*positionScale;
+    ts->coords[3*i+2] = sfxp_ulp32flt(pos[3*i+2])*positionScale;
+    if (ts->velocities) {
+      const double rm = rmass[i] * momentumScale; // includes PEAKmassInAmu
+      ts->velocities[3*i  ] = (float)(rm * sfxp_ulp32flt(vel[3*i  ]));
+      ts->velocities[3*i+1] = (float)(rm * sfxp_ulp32flt(vel[3*i+1]));
+      ts->velocities[3*i+2] = (float)(rm * sfxp_ulp32flt(vel[3*i+2]));
+    }
+  }
+  return MOLFILE_SUCCESS;
+}
+
+int DtrReader::next(molfile_timestep_t *ts) {
+
+  if (eof()) return MOLFILE_EOF;
   if (!ts) {
-    ++h->curframe;
+    ++m_curframe;
     return MOLFILE_SUCCESS;
   }
-  uint32_t iframe = h->curframe;
-  const std::vector<key_record_t> &keys = h->keys;
+  ssize_t iframe = m_curframe;
+  ++m_curframe;
+  return frame(iframe, ts);
+}
+
+int DtrReader::frame(ssize_t iframe, molfile_timestep_t *ts) const {
   int rc = MOLFILE_SUCCESS;
   {
     off_t offset=0;
     size_t framesize=0;
-    if (h->frames_per_file != 1) {
+    if (frames_per_file != 1) {
       offset = assemble64( ntohl(keys[iframe].offset_lo), 
                            ntohl(keys[iframe].offset_hi) );
       framesize = assemble64( ntohl(keys[iframe].framesize_lo), 
                               ntohl(keys[iframe].framesize_hi) );
 
     }
-    ts->physical_time = assembleDouble(ntohl(keys[iframe].time_lo),
-                                       ntohl(keys[iframe].time_hi));
+    ts->physical_time = keys[iframe].time();
 
-    std::string fname = framefile( h->dtr, iframe, h->frames_per_file, 
-        h->ndir1, h->ndir2 );
+    std::string fname=::framefile(dtr, iframe, frames_per_file, ndir1, ndir2);
     int fd = open(fname.c_str(), O_RDONLY|O_BINARY);
+    if (fd<0) return MOLFILE_EOF;
     void *mapping = map_file( fd, offset, framesize );
-    BlobMap blobs = read_frame(mapping);
-
-    // Now, dispatch to routines based on format
-    std::string format = blobs["FORMAT"].str();
-    if (format=="WRAPPED_V_2" || format == "DBL_WRAPPED_V_2") {
-      rc = handle_wrapped_v2(h, blobs, ts);
-
-    } else if (format=="POSN_MOMENTUM_V_1" || format=="DBL_POSN_MOMENTUM_V_1") {
-      rc = handle_posn_momentum_v1(h, blobs, ts);
-
-    } else if (format=="WRAPPED_V_1" || format == "DBL_WRAPPED_V_1") {
-      rc = handle_wrapped_v1(h, blobs, ts);
-
-    } else {
-      fprintf(stderr, "ERROR, can't handle format %s\n", format.c_str());
-      rc = MOLFILE_ERROR;
+    if (mapping==MAP_FAILED) {
+      close(fd);
+      return MOLFILE_EOF;
     }
+
+    rc = frame_from_bytes( mapping, ts );
+
     munmap(MMAPTYPE(mapping), framesize);
     close(fd);
   }
-  ++h->curframe;
   return rc;
 }
 
+int DtrReader::frame_from_bytes(const void *buf, molfile_timestep_t *ts) const {
 
-static void close_file_read( void *v ) {
-  Handle *h = reinterpret_cast<Handle *>(v);
-  delete h;
+  BlobMap blobs = read_frame(buf);
+
+  // Now, dispatch to routines based on format
+  std::string format = blobs["FORMAT"].str();
+  if (format=="WRAPPED_V_2" || format == "DBL_WRAPPED_V_2") {
+    return handle_wrapped_v2(blobs, natoms, with_velocity, rmass, ts);
+
+  } else if (format=="POSN_MOMENTUM_V_1" || format=="DBL_POSN_MOMENTUM_V_1") {
+    return handle_posn_momentum_v1(blobs, natoms, with_velocity, rmass, ts);
+
+  } else if (format=="WRAPPED_V_1" || format == "DBL_WRAPPED_V_1") {
+    return handle_wrapped_v1(blobs, natoms, with_velocity, rmass, ts);
+
+  } else if (format=="ANTON_SFXP_V3") {
+    return handle_anton_sfxp_v3(blobs, natoms, with_velocity, rmass, ts);
+  }
+  fprintf(stderr, "ERROR, can't handle format %s\n", format.c_str());
+  return MOLFILE_ERROR;
 }
 
-static void *open_file_write(const char *path, const char *type, int natoms) {
+bool DtrWriter::init(const std::string &path) {
 
-  Handle *h = NULL;
+  dtr=path;
   try {
     std::string m_directory(path);
     char cwd[4096];
@@ -1377,21 +1514,12 @@ static void *open_file_write(const char *path, const char *type, int natoms) {
 
     fwrite( base, framesize, 1, fd );
     fclose(fd);
-
-    h = new Handle( m_directory, natoms, 1, 0, 0 );
-    h->with_velocity = !strcmp(type, "dtrv");
-
-    // we're going to write all timesteps to a single frame
-    std::string filepath = framefile( m_directory, 0, 1, 0, 0 );
-    h->frame_fd = open(filepath.c_str(),O_WRONLY|O_CREAT|O_BINARY,0666);
-    if (h->frame_fd<0) throw std::runtime_error(strerror(errno));
   }
   catch (std::exception &e) {
-    delete h; h=NULL;
     fprintf(stderr, "%s\n", e.what());
-    return NULL;
+    return false;
   }
-  return h;
+  return true;
 }
 
 namespace {
@@ -1446,13 +1574,9 @@ namespace {
   }
 }
 
-static int write_timestep(void *v, const molfile_timestep_t *ts) {
-  Handle *h = reinterpret_cast<Handle *>(v);
+int DtrWriter::next(const molfile_timestep_t *ts) {
+
   try {
-
-    int natoms = h->natoms;
-    bool with_velocity = h->with_velocity;
-
     static const char *format = "WRAPPED_V_2";
     static const char *title = "written by VMD";
     float box[9];
@@ -1581,17 +1705,26 @@ static int write_timestep(void *v, const molfile_timestep_t *ts) {
     }
     *crc = fletcher(reinterpret_cast<uint16_t*>(base),offset_crc_block/2);
     
+    uint64_t keys_in_file = keys.size() % frames_per_file;
+    uint64_t framefile_offset = keys_in_file * framesize;
+
+    if (!keys_in_file) {
+      if (frame_fd>0) ::close(frame_fd);
+
+      std::string filepath=framefile(dtr, keys.size(), frames_per_file, 0, 0);
+      frame_fd = open(filepath.c_str(),O_WRONLY|O_CREAT|O_BINARY,0666);
+      if (frame_fd<0) throw std::runtime_error(strerror(errno));
+    }
 
     // write the data to disk
     ssize_t n;
     do {
-      n = ::write(h->frame_fd, base, framesize );
+      n = ::write(frame_fd, base, framesize );
     } while (n<0 && errno == EINTR);
     delete [] base;
     if (n<0)
       throw std::runtime_error(std::string("writing frame: ")+strerror(errno));
 
-    uint64_t framefile_offset = h->keys.size() * framesize;
 
     // add an entry to the keyfile list
     key_record_t timekey;
@@ -1601,7 +1734,7 @@ static int write_timestep(void *v, const molfile_timestep_t *ts) {
     timekey.offset_hi = htonl(hibytes(framefile_offset));
     timekey.framesize_lo = htonl(lobytes(framesize));
     timekey.framesize_hi = htonl(hibytes(framesize));
-    h->keys.push_back(timekey);
+    keys.push_back(timekey);
   } 
   catch (std::exception &e) {
     fprintf(stderr, "Write failed: %s\n",e.what());
@@ -1610,25 +1743,214 @@ static int write_timestep(void *v, const molfile_timestep_t *ts) {
   return MOLFILE_SUCCESS;
 }
 
-static void close_file_write( void * v ) {
-  Handle *h = reinterpret_cast<Handle *>(v);
-
-  std::string timekeys_path = h->dtr + s_sep + "timekeys";
-  FILE *fd = fopen( timekeys_path.c_str(), "wb" );
-  if (!fd) {
-    fprintf(stderr, "Opening timekeys failed: %s\n", strerror(errno));
-  } else {
-    key_prologue_t prologue[1];
-    prologue->magic = htonl(magic_timekey);
-    prologue->frames_per_file = htonl(h->keys.size());
-    prologue->key_record_size = htonl(sizeof(key_record_t));
-    fwrite( prologue, sizeof(key_prologue_t), 1, fd );
-    fwrite( &h->keys[0], sizeof(key_record_t), h->keys.size(), fd );
-    fclose(fd);
+DtrWriter::~DtrWriter() {
+  if (frame_fd>0) {
+    std::string timekeys_path = dtr + s_sep + "timekeys";
+    FILE *fd = fopen( timekeys_path.c_str(), "wb" );
+    if (!fd) {
+      fprintf(stderr, "Opening timekeys failed: %s\n", strerror(errno));
+    } else {
+      key_prologue_t prologue[1];
+      prologue->magic = htonl(magic_timekey);
+      prologue->frames_per_file = htonl(frames_per_file);
+      prologue->key_record_size = htonl(sizeof(key_record_t));
+      fwrite( prologue, sizeof(key_prologue_t), 1, fd );
+      fwrite( &keys[0], sizeof(key_record_t), keys.size(), fd );
+      fclose(fd);
+    }
+    ::close(frame_fd);
   }
-  ::close(h->frame_fd);
+}
+
+std::ostream& DtrReader::dump(std::ostream &out) const {
+  out << dtr << ' '
+      << natoms << ' '
+      << with_velocity << ' '
+      << rmass.size() << ' ';
+  if (rmass.size()) {
+    const char *buf = reinterpret_cast<const char *>(&rmass[0]);
+    out.write(buf, rmass.size() * sizeof(rmass[0]));
+  }
+  out << frames_per_file << ' '
+      << ndir1 << ' '
+      << ndir2 << ' '
+      << keys.size() << ' ';
+  if (keys.size()) {
+    const char *buf = reinterpret_cast<const char *>(&keys[0]);
+    out.write(buf, keys.size() * sizeof(keys[0]));
+  }
+  return out;
+}
+std::istream& DtrReader::load(std::istream &in) {
+  size_t size;
+  char c;
+  in >> dtr
+     >> natoms
+     >> with_velocity;
+  in >> size; rmass.resize(size);
+  in.get(c);
+  if (rmass.size()) {
+    char *buf = reinterpret_cast<char *>(&rmass[0]);
+    in.read(buf, rmass.size() * sizeof(rmass[0]));
+  }
+  in >> frames_per_file
+     >> ndir1
+     >> ndir2;
+  in >> size; keys.resize(size);
+  in.get(c); // eat the trailing whitespace
+  if (keys.size()) {
+    char *buf = reinterpret_cast<char *>(&keys[0]);
+    in.read(buf, keys.size() * sizeof(keys[0]));
+  }
+  return in;
+}
+
+std::ostream& StkReader::dump(std::ostream &out) const {
+  out << dtr << ' '
+      << framesets.size() << ' ';
+  for (size_t i=0; i<framesets.size(); i++) framesets[i]->dump(out);
+  return out;
+}
+
+std::istream& StkReader::load(std::istream &in) {
+  in >> dtr;
+  size_t size; in >> size; framesets.resize(size);
+  char c; in.get(c);
+  for (size_t i=0; i<framesets.size(); i++) {
+    delete framesets[i];
+    framesets[i] = new DtrReader;
+    framesets[i]->load(in);
+  }
+  return in;
+}
+
+
+///////////////////////////////////////////////////////////////////
+//
+// Plugin Interface
+//
+// ////////////////////////////////////////////////////////////////
+
+static void *
+open_file_read( const char *filename, const char *filetype, int *natoms ) {
+
+  FrameSetReader *h = NULL;
+
+  // check for .stk file
+  if (StkReader::recognizes(filename)) {
+    h = new StkReader;
+
+  } else {
+    h = new DtrReader;
+    // check for "clickme.dtr"
+    std::string fname(filename);
+    std::string::size_type pos = fname.rfind( "clickme.dtr" );
+    if (pos != std::string::npos) {
+      fname.resize(pos);
+      filename = fname.c_str();
+    }
+  }
+
+  if (!h->init(filename)) {
+    delete h;
+    return NULL;
+  }
+  *natoms = h->natoms;
+
+  // ignore velocities unless filetype requires them
+  if ( strcmp(filetype, "dtrv") ) h->with_velocity = false;
+  return h;
+}
+
+static int 
+read_timestep_metadata(void *v, molfile_timestep_metadata *m) {
+  FrameSetReader* handle = reinterpret_cast<FrameSetReader*>(v);
+  m->has_velocities = handle->has_velocities();
+  m->count = handle->size();
+  return MOLFILE_SUCCESS;
+}
+
+static int read_next_timestep(void *v, int natoms, molfile_timestep_t *ts) {
+  FrameSetReader *h = reinterpret_cast<FrameSetReader *>(v);
+  return h->next(ts);
+}
+
+static int read_timestep2(void *v, ssize_t n, molfile_timestep_t *ts) {
+  FrameSetReader *h = reinterpret_cast<FrameSetReader *>(v);
+  return h->frame(n, ts);
+}
+
+static void close_file_read( void *v ) {
+  FrameSetReader *h = reinterpret_cast<FrameSetReader *>(v);
   delete h;
 }
+
+static void *open_file_write(const char *path, const char *type, int natoms) {
+  DtrWriter *h = new DtrWriter(natoms, !strcmp(type, "dtrv"));
+  if (!h->init(path)) {
+    delete h;
+    h=NULL;
+  }
+  return h;
+}
+
+static int write_timestep(void *v, const molfile_timestep_t *ts) {
+  DtrWriter *h = reinterpret_cast<DtrWriter *>(v);
+  return h->next(ts);
+}
+
+static void close_file_write( void * v ) {
+  DtrWriter *h = reinterpret_cast<DtrWriter *>(v);
+  delete h;
+}
+
+
+static molfile_plugin_t desmond;
+static molfile_plugin_t desmond_vel;
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
+  /* Plugin for desmond trajectory files */
+  ::memset(&desmond,0,sizeof(desmond));
+  desmond.abiversion = vmdplugin_ABIVERSION;
+  desmond.type = MOLFILE_PLUGIN_TYPE;
+  desmond.name = "dtr";
+  desmond.prettyname = "Desmond Trajectory";
+  desmond.author = "D.E. Shaw Research";
+  desmond.majorv = 2;
+  desmond.minorv = 0;
+  desmond.is_reentrant = VMDPLUGIN_THREADUNSAFE;
+
+  desmond.filename_extension = "dtr,dtr/,stk";
+  desmond.open_file_read = open_file_read;
+  desmond.read_timestep_metadata = read_timestep_metadata;
+  desmond.read_next_timestep = read_next_timestep;
+#if defined(DESRES_READ_TIMESTEP2)
+  desmond.read_timestep2 = read_timestep2;
+#endif
+  desmond.close_file_read = close_file_read;
+
+  desmond.open_file_write = open_file_write;
+  desmond.write_structure = NULL;
+  desmond.write_timestep = write_timestep;
+  desmond.close_file_write = close_file_write;
+
+  desmond_vel = desmond;
+  desmond_vel.name = "dtrv";
+  desmond_vel.prettyname = "Desmond Trajectory (with velocity)";
+
+  return VMDPLUGIN_SUCCESS;
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
+  cb(v,reinterpret_cast<vmdplugin_t*>(&desmond));
+  cb(v,reinterpret_cast<vmdplugin_t*>(&desmond_vel));
+  return VMDPLUGIN_SUCCESS;
+}
+
+VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) {
+  return VMDPLUGIN_SUCCESS;
+}
+
 
 #if defined(TEST_DTRPLUGIN)
 
@@ -1684,55 +2006,21 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-///////////////////////////////////////////////////////////////////
-//
-// Plugin Interface
-//
-// ////////////////////////////////////////////////////////////////
+#if defined(TEST_DTR_DUMP)
+int main(int argc, char *argv[]) {
 
-static molfile_plugin_t desmond;
-static molfile_plugin_t desmond_vel;
+  StkReader src, dst;
+  src.init(argv[1]);
 
-VMDPLUGIN_EXTERN int VMDPLUGIN_init (void) {
-  /* Plugin for desmond trajectory files */
-  ::memset(&desmond,0,sizeof(desmond));
-  desmond.abiversion = vmdplugin_ABIVERSION;
-  desmond.type = MOLFILE_PLUGIN_TYPE;
-  desmond.name = "dtr";
-  desmond.prettyname = "Desmond Trajectory";
-  desmond.author = "D.E. Shaw Research";
-  desmond.majorv = 2;
-  desmond.minorv = 1;
-  desmond.is_reentrant = VMDPLUGIN_THREADUNSAFE;
+  std::ostringstream out;
+  src.dump(out);
+  assert(out);
 
-  desmond.filename_extension = "dtr,dtr/";
-  desmond.open_file_read = open_file_read;
-  desmond.read_timestep_metadata = read_timestep_metadata;
-  desmond.read_next_timestep = read_next_timestep;
-  desmond.close_file_read = close_file_read;
+  std::istringstream in(out.str());
+  dst.load(in);
+  assert(in);
 
-  desmond.open_file_write = open_file_write;
-  desmond.write_structure = NULL;
-  desmond.write_timestep = write_timestep;
-  desmond.close_file_write = close_file_write;
-
-  desmond_vel = desmond;
-  desmond_vel.name = "dtrv";
-  desmond_vel.prettyname = "Desmond Trajectory (with velocity)";
-
-  return VMDPLUGIN_SUCCESS;
+  return 0;
 }
-
-VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  cb(v,(vmdplugin_t*)(void*)&desmond);
-  cb(v,(vmdplugin_t*)(void*)&desmond_vel);
-  //  cb(v,reinterpret_cast<vmdplugin_t*>(plugin_desmond));
-  //  cb(v,reinterpret_cast<vmdplugin_t*>(plugin_desmond_vel));
-  return VMDPLUGIN_SUCCESS;
-}
-
-VMDPLUGIN_EXTERN int VMDPLUGIN_fini(void) {
-  return VMDPLUGIN_SUCCESS;
-}
-
+#endif
 

@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: gromacsplugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.45 $       $Date: 2008/01/09 20:31:06 $
+ *      $Revision: 1.46 $       $Date: 2009/04/29 15:45:30 $
  *
  ***************************************************************************/
 
@@ -627,11 +627,11 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init() {
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&gro_plugin);
-  (*cb)(v, (vmdplugin_t *)(void *)&g96_plugin);
-  (*cb)(v, (vmdplugin_t *)(void *)&trr_plugin);
-  (*cb)(v, (vmdplugin_t *)(void *)&trj_plugin);
-  (*cb)(v, (vmdplugin_t *)(void *)&xtc_plugin);
+  (*cb)(v, (vmdplugin_t *)&gro_plugin);
+  (*cb)(v, (vmdplugin_t *)&g96_plugin);
+  (*cb)(v, (vmdplugin_t *)&trr_plugin);
+  (*cb)(v, (vmdplugin_t *)&trj_plugin);
+  (*cb)(v, (vmdplugin_t *)&xtc_plugin);
   return 0;
 }
 

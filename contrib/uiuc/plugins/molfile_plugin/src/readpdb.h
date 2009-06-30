@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -11,7 +11,7 @@
  *
  *      $RCSfile: readpdb.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.40 $       $Date: 2006/11/07 21:28:02 $
+ *      $Revision: 1.42 $       $Date: 2009/04/29 15:45:33 $
  *
  ***************************************************************************/
 
@@ -354,6 +354,7 @@ static int write_raw_pdb_record(FILE *fd, const char *recordname,
   char indexbuf[32];
   char residbuf[32];
   char segnamebuf[5];
+  char resnamebuf[5];
   char altlocchar;
 
   /* XXX                                                          */
@@ -384,14 +385,16 @@ static int write_raw_pdb_record(FILE *fd, const char *recordname,
     altlocchar = ' ';
   }
 
-  /* make sure the segname does not overflow the format */ 
+  /* make sure the segname or resname do not overflow the format */ 
   strncpy(segnamebuf,segname,4);
   segnamebuf[4] = '\0';
+  strncpy(resnamebuf,resname,4);
+  resnamebuf[4] = '\0';
 
  
   rc = fprintf(fd,
          "%-6s%5s %4s%c%-4s%c%4s%c   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
-         recordname, indexbuf, atomname, altlocchar, resname, chain[0], 
+         recordname, indexbuf, atomname, altlocchar, resnamebuf, chain[0], 
          residbuf, insertion[0], x, y, z, occ, beta, segnamebuf, elementsymbol);
 
   return (rc > 0);

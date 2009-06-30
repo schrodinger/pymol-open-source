@@ -3,7 +3,7 @@
  *
  *      $RCSfile: vaspplugin.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.4 $       $Date: 2006/08/07 15:54:59 $
+ *      $Revision: 1.5 $       $Date: 2009/06/22 19:45:49 $
  *
  ***************************************************************************/
 
@@ -26,6 +26,7 @@ typedef struct {
   FILE *file;
   char *filename;
   char *titleline;              /* Comment line provides system information */
+  int version;                  /* VASP version control */
   int numatoms;                 /* total number of atoms */
   int eachatom[MAXATOMTYPES];   /* number of atoms per atom type */
   molfile_atom_t *atomlist;
@@ -36,7 +37,6 @@ typedef struct {
   /* volumetric variables for charge density data */
   int nvolsets;                 /* number of volumetric datasets */
   molfile_volumetric_t *vol;    /* volume set metadata */
-
 } vasp_plugindata_t;
 
 

@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2005 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: graspplugin.C,v $
  *      $Author: johns $       $:  $             $State: Exp $
- *      $Revision: 1.20 $       $Date: 2006/11/13 23:34:49 $
+ *      $Revision: 1.21 $       $Date: 2009/04/29 15:45:30 $
  *
  ***************************************************************************/
 
@@ -515,7 +515,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(void) {
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

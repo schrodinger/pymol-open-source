@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -11,7 +11,7 @@
  *
  *      $RCSfile: hash.c,v $
  *      $Author: johns $        $Locker:  $             $State: Exp $
- *      $Revision: 1.4 $      $Date: 2006/01/05 00:05:53 $
+ *      $Revision: 1.5 $      $Date: 2009/04/29 15:45:30 $
  *
  ***************************************************************************
  * DESCRIPTION:

@@ -15,8 +15,8 @@
  * RCS INFORMATION:
  *
  *      $RCSfile: basissetplugin.c,v $
- *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.2 $       $Date: 2009/02/21 05:52:53 $
+ *      $Author: saam $       $Locker:  $             $State: Exp $
+ *      $Revision: 1.4 $       $Date: 2009/06/27 00:45:27 $
  *
  ***************************************************************************/
 
@@ -119,20 +119,6 @@ static int fill_basis_arrays(gamessdata *);
 static char* trimleft(char *);
 static int goto_keystring(FILE *file, const char *keystring,
                                 const char *stopstring);
-static int goto_keystring2(FILE *file, const char *keystring,
-        const char *stopstring1, const char *stopstring2);
-static void whereami(FILE *file);
-
-
-/* this will skip one line at a time */
-static void eatline(FILE * fd, int n)
-{
-  int i;
-  for (i=0; i<n; i++) {
-    char readbuf[1025];
-    fgets(readbuf, 1024, fd);
-  }
-}
 
 
 /* ######################################################## */
@@ -185,7 +171,6 @@ static void *open_basis_read(const char *filename,
 
   /* store file pointer and filename in gamess struct */
   data->file = fd;
-  data->file_name = strdup(filename);
 
   /* Read the basis set */
   if (!get_basis(data)) return NULL; 
@@ -291,7 +276,6 @@ static void close_basis_read(void *mydata) {
   int i, j;
   fclose(data->file);
 
-  free(data->file_name);
   free(data->initatoms);
   free(data->basis);
   free(data->shell_symmetry);
@@ -769,50 +753,6 @@ static int goto_keystring(FILE *file, const char *keystring,
   return FOUND;
 }
 
-static int goto_keystring2(FILE *file, const char *keystring,
-        const char *stopstring1, const char *stopstring2) {
-  char buffer[BUFSIZ];
-  char *line;
-  int found = 0;
-  long filepos;
-  filepos = ftell(file);
-
-  do {
-    if (!fgets(buffer, sizeof(buffer), file)) break;
-    line = trimleft(buffer);
-    if (strstr(line, keystring)) {
-      found = 1;
-      break;
-    }
-  } while (!stopstring1 || !strstr(line, stopstring1) || 
-           !stopstring2 || !strstr(line, stopstring2));
-    
-  if (!found) {
-    fseek(file, filepos, SEEK_SET);
-    return 0;
-  }
-
-  return 1;
-}
-
-static void whereami(FILE *file) {
-  char buffer[BUFSIZ];
-  char *line;
-  long filepos;
-  filepos = ftell(file);
-  do {
-    if (!fgets(buffer, sizeof(buffer), file)) {
-      if (feof(file)) printf("HERE) EOF\n");
-      else printf("HERE) ????\n");
-      return;
-    }
-    line = trimleft(buffer);
-  } while (!strlen(line));
-
-  printf("HERE) %s\n", buffer);
-  fseek(file, filepos, SEEK_SET);
-}
-
 
 
 /*************************************************************
@@ -850,7 +790,7 @@ VMDPLUGIN_API int VMDPLUGIN_init(void) {
 }
 
 VMDPLUGIN_API int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v, (vmdplugin_t *)(void *)&plugin);
+  (*cb)(v, (vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 

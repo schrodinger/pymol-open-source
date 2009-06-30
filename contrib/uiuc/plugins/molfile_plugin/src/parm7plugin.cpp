@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2006 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2009 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -16,7 +16,7 @@
  *
  *      $RCSfile: parm7plugin.C,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.29 $       $Date: 2009/03/06 03:24:53 $
+ *      $Revision: 1.30 $       $Date: 2009/04/29 15:45:32 $
  *
  ***************************************************************************/
 
@@ -167,7 +167,7 @@ VMDPLUGIN_EXTERN int VMDPLUGIN_init(){
 }
 
 VMDPLUGIN_EXTERN int VMDPLUGIN_register(void *v, vmdplugin_register_cb cb) {
-  (*cb)(v,(vmdplugin_t *)(void *)&plugin);
+  (*cb)(v,(vmdplugin_t *)&plugin);
   return VMDPLUGIN_SUCCESS;
 }
 
