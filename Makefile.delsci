@@ -120,13 +120,13 @@ p4m-eval: unix-product
 unix-product: unix-mindep unix-prep
 	cd $(MINDEP);chown -R nobody pymol
 	cd $(MINDEP);chgrp -R nobody pymol
-	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-1_2bX-bin-xxxxx-mindep.tgz
+	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-1_2rX-bin-xxxxx-mindep.tgz
 
 mac-product: unix-mindep unix-prep
 	cp setup/setup.sh.macosx-x11 $(MDP)/setup.sh
 	cd $(MINDEP);chown -R nobody pymol
 	cd $(MINDEP);chgrp -R nobody pymol
-	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-1_2bX-bin-xxxxx-mindep.tgz
+	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-1_2rX-bin-xxxxx-mindep.tgz
 
 unix-helper: unix-mindep-build
 	cp setup/setup.sh.unix-helper $(MDP)/setup.sh
