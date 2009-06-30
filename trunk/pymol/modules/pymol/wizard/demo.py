@@ -105,6 +105,7 @@ class DemoInfo:
             if not cleanup:
                 self.cmd.disable()
                 self.cmd.set("suspend_updates",1,quiet=1)
+                self.cmd.unset("movie_panel")
                 self.cmd.load("$PYMOL_DATA/demo/pept.pdb","rep1")
                 self.cmd.alter("rep1///1-5+8-13/","ss='S'")
                 self.cmd.cartoon("auto")
@@ -166,6 +167,7 @@ class DemoInfo:
                 self.cmd.load_cgo(cgo,'reps')
                 self.cmd.set("auto_zoom",1)
             else:
+                self.cmd.set("movie_panel",1)
                 self.cmd.delete("rep*")
                 self.cmd.mset()
                 self.cmd.mstop()
