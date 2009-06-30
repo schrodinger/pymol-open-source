@@ -1,6 +1,6 @@
 /***************************************************************************
  *cr
- *cr            (C) Copyright 1995-2009 The Board of Trustees of the
+ *cr            (C) Copyright 1995-2006 The Board of Trustees of the
  *cr                        University of Illinois
  *cr                         All Rights Reserved
  *cr
@@ -11,7 +11,7 @@
  *
  *      $RCSfile: vmddir.h,v $
  *      $Author: johns $       $Locker:  $             $State: Exp $
- *      $Revision: 1.8 $       $Date: 2009/04/29 15:45:35 $
+ *      $Revision: 1.7 $       $Date: 2006/01/05 00:05:55 $
  *
  ***************************************************************************/
 
@@ -35,7 +35,6 @@ typedef struct {
 #endif
 
 
-
 static VMDDIR * vmd_opendir(const char *);
 static char * vmd_readdir(VMDDIR *);
 static void vmd_closedir(VMDDIR *);
@@ -45,12 +44,12 @@ static int vmd_file_is_executable(const char * filename);
 #define VMD_FILENAME_MAX 1024
 
 #if defined(_MSC_VER) 
-
 /* Windows version */
 
 static VMDDIR * vmd_opendir(const char * filename) {
   VMDDIR * d;
-  char dirname[VMD_FILENAME_MAX];
+ #if 0
+ char dirname[VMD_FILENAME_MAX];
 
   strcpy(dirname, filename);
   strcat(dirname, "\\*");
@@ -62,20 +61,25 @@ static VMDDIR * vmd_opendir(const char * filename) {
       return NULL;
     }
   }
+#endif
   return d;
 }
 
 static char * vmd_readdir(VMDDIR * d) {
+#if 0
   if (FindNextFile(d->h, &(d->fd))) {
     return d->fd.cFileName; 
   }
+#endif
   return NULL;     
 }
 
 static void vmd_closedir(VMDDIR * d) {
+#if 0
   if (d->h != NULL) {
     FindClose(d->h);
   }
+#endif
   free(d);
 }
 
