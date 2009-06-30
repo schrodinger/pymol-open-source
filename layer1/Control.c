@@ -686,10 +686,10 @@ static void ControlDraw(Block * block)
       }
     }
 #ifdef _MACPYMOL_XCODE
-    {
+    if(I->Block->rect.bottom==0) {
       int x1 = I->Block->rect.right + 1;
-      int y1 = I->Block->rect.bottom + 2;
-      int x2 = I->Block->rect.right - 2;
+      int y1 = I->Block->rect.bottom + 3;
+      int x2 = I->Block->rect.right - 3;
       int y2 = I->Block->rect.bottom - 1;
 
       glColor3f(0.0F, 0.0F, 0.0F);
