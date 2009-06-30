@@ -1,6 +1,6 @@
-if 0:
+if 1:
     print "DANGER DO NOT RUN UNTIL changes to the following files have been backported..."
-    print "dcdplugin.c, gridplugin.c, endianswap.h, "
+    print "dcdplugin.c, gridplugin.c, endianswap.h, fastio.h, vmddir.h "
     print "dtrplugin.cpp, fs4plugin.cpp, maeffplugin.cpp"
 else:
 
