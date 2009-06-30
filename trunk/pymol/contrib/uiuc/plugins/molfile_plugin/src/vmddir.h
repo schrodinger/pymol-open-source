@@ -23,7 +23,7 @@
 
 typedef struct {
   HANDLE h;
-  WIN32_FIND_DATA fd;
+  LPWIN32_FIND_DATAA fd;
 } VMDDIR;
 
 #else
@@ -48,38 +48,32 @@ static int vmd_file_is_executable(const char * filename);
 
 static VMDDIR * vmd_opendir(const char * filename) {
   VMDDIR * d;
- #if 0
  char dirname[VMD_FILENAME_MAX];
 
   strcpy(dirname, filename);
   strcat(dirname, "\\*");
   d = (VMDDIR *) malloc(sizeof(VMDDIR));
   if (d != NULL) {
-    d->h = FindFirstFile(dirname, &(d->fd));
+    d->h = FindFirstFileA((char*)dirname, d->fd);
     if (d->h == ((HANDLE)(-1))) {
       free(d);
       return NULL;
     }
   }
-#endif
   return d;
 }
 
 static char * vmd_readdir(VMDDIR * d) {
-#if 0
-  if (FindNextFile(d->h, &(d->fd))) {
-    return d->fd.cFileName; 
+  if (FindNextFileA(d->h, d->fd)) {
+    return d->fd->cFileName; 
   }
-#endif
   return NULL;     
 }
 
 static void vmd_closedir(VMDDIR * d) {
-#if 0
   if (d->h != NULL) {
     FindClose(d->h);
   }
-#endif
   free(d);
 }
 
