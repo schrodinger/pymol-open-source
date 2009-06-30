@@ -75,8 +75,11 @@ static int fio_open(const char *filename, int mode, fio_fd *fd) {
   DWORD createmode;
   DWORD flags;
 
+#if 0
+WLD
   if (fio_win32convertfilename(filename, winfilename, sizeof(winfilename)))
     return -1;  
+#endif
 
   access = 0;
   if (mode & FIO_READ)
@@ -98,7 +101,12 @@ static int fio_open(const char *filename, int mode, fio_fd *fd) {
 
   flags = FILE_ATTRIBUTE_NORMAL;
 
+#if 0
+WLD
   fp = CreateFile(winfilename, access, sharing, security, 
+                  createmode, flags, NULL);
+#endif
+  fp = CreateFileA(filename, access, sharing, security, 
                   createmode, flags, NULL);
 
   if (fp == NULL) {
@@ -128,6 +136,7 @@ static fio_size_t fio_fread(void *ptr, fio_size_t size,
   len = size * nitems;
 
   rc = ReadFile(fd, ptr, len, &readlen, NULL);
+
   if (rc) {
     if (readlen == len)
       return nitems;
