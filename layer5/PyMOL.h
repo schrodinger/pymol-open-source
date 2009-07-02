@@ -138,6 +138,11 @@ typedef struct {
 
 typedef struct {
   PyMOLstatus status;
+  int value;
+} PyMOLreturn_int;
+
+typedef struct {
+  PyMOLstatus status;
   float value;
 } PyMOLreturn_float;
 
@@ -357,6 +362,8 @@ PyMOLreturn_status PyMOL_CmdSelect(CPyMOL * I, char *name, char *selection, int 
 
 PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL * I, char *name, char *object, int *list,
                                        int list_len, int state, char *mode, int quiet);
+
+PyMOLreturn_int PyMOL_CmdGetMovieLength(CPyMOL * I,int quiet);
 
 PyMOLreturn_float PyMOL_CmdGetDistance(CPyMOL * I,
                                        char *selection1,
