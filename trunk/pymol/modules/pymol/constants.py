@@ -93,7 +93,8 @@ class loadable:
     aln = 54      # CLUSTALW alignment file
     fasta = 55    # FASTA sequence file
     acnt = 56     # Tripos/Sybyl acnt grid file (proposed)
-    
+    dtr = 57      # DESRES / Desmond    
+
 _load2str = { loadable.pdb : loadable.pdbstr,
               loadable.mol : loadable.molstr,
               loadable.xplor : loadable.xplorstr,

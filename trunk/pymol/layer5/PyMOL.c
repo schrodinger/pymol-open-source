@@ -2021,6 +2021,21 @@ PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL * I, char *what, char *object_na
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
+PyMOLreturn_int PyMOL_CmdGetMovieLength(CPyMOL * I,int quiet)
+{
+  int ok = true;
+  PyMOLreturn_int result;
+  PYMOL_API_LOCK
+  if(ok) {
+    result.value = MovieGetLength(I->G);
+    result.status = get_status_ok(ok);
+  } else {
+    result.status = PyMOLstatus_FAILURE;
+    result.value = 0;
+  }
+  PYMOL_API_UNLOCK return result;
+}
+
 PyMOLreturn_float PyMOL_CmdGetDistance(CPyMOL * I,
                                        char *selection1,
                                        char *selection2, int state, int quiet)

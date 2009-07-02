@@ -349,6 +349,9 @@ SEE ALSO
                 elif re.search("\.trr$",filename,re.I):
                     ftype = loadable.trr
                     if plugin=="": plugin = "trr"
+                elif re.search("\.dtr$",filename,re.I):
+                    ftype = loadable.dtr
+                    if plugin=="": plugin = "dtr"
                 elif re.search("\.gro$",filename,re.I):
                     ftype = loadable.gro
                     if plugin=="": plugin = "gro"
@@ -671,6 +674,8 @@ SEE ALSO
                     ftype = loadable.trj
                 elif re.search("\.trr$",fname_no_gz,re.I):
                     ftype = loadable.trr
+                elif re.search("\.dtr$",fname_no_gz,re.I):
+                    ftype = loadable.dtr
                 elif re.search("\.xtc$",fname_no_gz,re.I):
                     ftype = loadable.xtc
                 elif re.search("\.gro$",fname_no_gz,re.I):
