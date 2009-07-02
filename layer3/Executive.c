@@ -351,6 +351,7 @@ int ExecutiveMotionView(PyMOLGlobals *G, int action, int first,
     TrackerDelList(I_Tracker, list_id);
     TrackerDelIter(I_Tracker, iter_id);
   }
+  ExecutiveCountMotions(G);
   return ok;
 }
 
@@ -408,6 +409,7 @@ void ExecutiveMotionViewModify(PyMOLGlobals *G, int action,
     TrackerDelList(I_Tracker, list_id);
     TrackerDelIter(I_Tracker, iter_id);
   }
+  ExecutiveCountMotions(G);
 }
 
 void ExecutiveMotionReinterpolate(PyMOLGlobals * G)
@@ -481,6 +483,7 @@ void ExecutiveMotionExtend(PyMOLGlobals * G, int freeze)
   if((!freeze) && SettingGetGlobal_i(G,cSetting_movie_auto_interpolate)) {
     ExecutiveMotionReinterpolate(G);
   }
+
 }
 
 int ExecutiveCountMotions(PyMOLGlobals * G)

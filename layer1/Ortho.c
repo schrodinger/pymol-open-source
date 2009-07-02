@@ -1138,10 +1138,12 @@ int OrthoGrabbedBy(PyMOLGlobals * G, Block * block)
 void OrthoDoViewportWhenReleased(PyMOLGlobals *G)
 {
   register COrtho *I = G->Ortho;
-  if(!(I->GrabbedBy||I->ClickedIn))
+  if(!(I->GrabbedBy||I->ClickedIn)) {
     OrthoCommandIn(G, "viewport");
-  else
+    OrthoDirty(G);
+  } else {
     I->IssueViewportWhenReleased = true;
+  }
 }
 
 /*========================================================================*/
