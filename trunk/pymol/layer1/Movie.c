@@ -998,12 +998,7 @@ void MovieAppendSequence(PyMOLGlobals * G, char *str, int start_from,int freeze)
     if(SettingGetGlobal_b(G,cSetting_movie_auto_interpolate)) 
       ExecutiveMotionReinterpolate(G);
   }
-#if 0
-  /* this causes problems... */
-  if((I->NFrame && true) != (old_NFrame && true)) {
-    OrthoCommandIn(G, "viewport");
-  }
-#endif
+  ExecutiveCountMotions(G);
 }
 
 

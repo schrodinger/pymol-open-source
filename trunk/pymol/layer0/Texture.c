@@ -30,9 +30,13 @@ Z* -------------------------------------------------------------------
 #include "Character.h"
 #include "Util.h"
 
+typedef struct  {
+  int id,dim;
+} texture_info;
+
 struct _CTexture {
   OVOneToOne *ch2tex;
-  int *id_list;
+  texture_info *info_list;
   int next_slot;
   int max_active;
 };
@@ -45,10 +49,10 @@ int TextureInit(PyMOLGlobals * G)
 
   I->next_slot = 0;
   I->ch2tex = OVOneToOne_New(G->Context->heap);
-  I->id_list = OVHeapArray_CALLOC(G->Context->heap, int, I->max_active);
+  I->info_list = OVHeapArray_CALLOC(G->Context->heap, texture_info, I->max_active);
 
   G->Texture = I;
-  return (I && I->ch2tex && I->id_list);
+  return (I && I->ch2tex && I->info_list);
 }
 
 int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
@@ -98,12 +102,12 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
           extent[1] = h / (float) tex_dim;
         }
 
-        if(!I->id_list[I->next_slot]) {
+        if(!I->info_list[I->next_slot].id) {
           glGenTextures(1, &texture_id);
           is_new = true;
-          I->id_list[I->next_slot] = texture_id;
+          I->info_list[I->next_slot].id = texture_id;
         } else {
-          texture_id = I->id_list[I->next_slot];
+          texture_id = I->info_list[I->next_slot].id;
           OVOneToOne_DelReverse(I->ch2tex, texture_id);
         }
         I->next_slot++;
@@ -118,12 +122,13 @@ int TextureGetFromChar(PyMOLGlobals * G, int char_id, float *extent)
           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
           glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-          if(is_new) {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                         tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_buffer);
+          if(is_new || (tex_dim != I->info_list[I->next_slot].dim)) {
+	      I->info_list[I->next_slot].dim = tex_dim;
+	      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+			   tex_dim, tex_dim, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_buffer);
           } else {
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-                            tex_dim, tex_dim, GL_RGBA, GL_UNSIGNED_BYTE, temp_buffer);
+	      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+			      tex_dim, tex_dim, GL_RGBA, GL_UNSIGNED_BYTE, temp_buffer);
           }
         }
         if(temp_buffer != (unsigned char *) scratch)
@@ -141,7 +146,7 @@ void TextureFree(PyMOLGlobals * G)
   /* TODO -- free all the resident textures */
 
   OVOneToOne_DEL_AUTO_NULL(I->ch2tex);
-  OVHeapArray_FREE_AUTO_NULL(I->id_list);
+  OVHeapArray_FREE_AUTO_NULL(I->info_list);
 
   OOFreeP(I);
 }
