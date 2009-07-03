@@ -2718,6 +2718,7 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
         for(a = 0; a < cs_NIndex; a++) {
           register AtomInfoType *ai1 = obj_AtomInfo + *(idx_to_atm++);
           if(ai1->visRep[cRepSurface] &&
+             (inclH || (!ai1->hydrogen)) &&
              ((!cullByFlag) || (!(ai1->flags &
                                   (cAtomFlag_exfoliate | cAtomFlag_ignore)))))
             surface_flag = true;
@@ -2809,7 +2810,9 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
             for(a = 0; a < cs->NIndex; a++)
               if(!present_vla[a]) {
                 AtomInfoType *ai1 = obj->AtomInfo + cs->IdxToAtm[a];
-                if((!cullByFlag) || !(ai1->flags & cAtomFlag_ignore)) {
+                if((inclH || (!ai1->hydrogen)) &&
+                   ((!cullByFlag) || 
+                    !(ai1->flags & cAtomFlag_ignore))) {
                   float *v0 = cs->Coord + 3 * a;
                   int i = *(MapLocusEStart(map, v0));
                   if(optimize) {
