@@ -1399,6 +1399,8 @@ SEE ALSO
                             if not _self.get_movie_playing(): # don't set frame when movie is already playing
                                 if _self.get_frame()!=list[2]: # only set the frame when it isn't already correct
                                     _self.frame(list[2],scene=1) # let frame know that it is being set by a scene
+                            else:
+                                _self.set_frame(1,10) # seek scene
                     if (ll>3) and (color):
                         if list[3]!=None:
                             _self.set_colorection(list[3],key)
@@ -1565,7 +1567,8 @@ SEE ALSO
                         if not chained: # and len(lst):
                             _self.disable() # just hide everything
                             _self.wizard()
-                            
+                            _self.mstop() # and stop movie from playing...
+
                 elif action=='previous':
                     lst = _scene_validate_list(_self)            
                     cur_scene = setting.get('scene_current_name',quiet=1,_self=_self)
@@ -1578,6 +1581,9 @@ SEE ALSO
                              (setting.get("presentation",_self=_self)=="on") and 
                              (setting.get("presentation_auto_quit",_self=_self)=="on")):
                             _self.quit()
+                        elif setting.get("presentation",_self=_self)=="on":
+                            if _self.get_movie_length()>0:
+                                _self.mplay() # restart movie
                     if ix>=0:
                         scene_name = lst[ix]
                         scene(scene_name,'recall',animate=animate,hand=-1,_self=_self)

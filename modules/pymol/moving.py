@@ -115,7 +115,8 @@ DESCRIPTION
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
         return r
-    
+
+
     def mstop(_self=cmd):
         '''
 DESCRIPTION
@@ -798,7 +799,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            r = _cmd.setframe(_self._COb,5,1)
+            r = _cmd.set_frame(_self._COb,5,1)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -825,7 +826,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            r = _cmd.setframe(_self._COb,5,-1)
+            r = _cmd.set_frame(_self._COb,5,-1)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -849,7 +850,21 @@ PYMOL API
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            r = _cmd.setframe(_self._COb,4,0)
+            r = _cmd.set_frame(_self._COb,4,0)
+        finally:
+            _self.unlock(r,_self)
+        if _self._raising(r,_self): raise pymol.CmdException
+        return r
+
+
+    def set_frame(frame=1, mode=0, _self=cmd):
+        '''
+internal
+        '''
+        r = DEFAULT_ERROR      
+        try:
+            _self.lock(_self)   
+            r=_cmd.set_frame(_self._COb, int(mode), int(frame)-1)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -872,7 +887,7 @@ PYMOL API
         r = DEFAULT_ERROR      
         try:
             _self.lock(_self)   
-            r=_cmd.setframe(_self._COb,6,0)
+            r=_cmd.set_frame(_self._COb,6,0)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
@@ -895,7 +910,7 @@ PYMOL API
         r = DEFAULT_ERROR
         try:
             _self.lock(_self)   
-            r = _cmd.setframe(_self._COb,3,0)
+            r = _cmd.set_frame(_self._COb,3,0)
         finally:
             _self.unlock(r,_self)
         if _self._raising(r,_self): raise pymol.CmdException
