@@ -229,8 +229,8 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id)
   if(G->HaveGUI && G->ValidContext && texture_id) {
     if(info)
       sampling = (float) info->sampling;
+    if(texture_id) {
     /*    if(glIsTexture(texture_id)) -- BAD -- impacts performance */
-    {
       float *v, v0[3];
       float v1[3];
       glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -252,8 +252,8 @@ void CharacterRenderOpenGL(PyMOLGlobals * G, RenderInfo * info, int id)
       glTexCoord2f(rec->extent[0], 0.0F);
       glVertex3f(v1[0], v0[1], v0[2]);
       glEnd();
-      TextAdvance(G, rec->Advance / sampling);
     }
+     TextAdvance(G, rec->Advance / sampling);
   }
 }
 
