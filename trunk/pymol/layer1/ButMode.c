@@ -412,18 +412,21 @@ static void ButModeDraw(Block * block)
         TextDrawStrAt(G, "State ", x, y);
       }
       TextSetColor(G, textColor2);
-      if(frame_rate) {
-        sprintf(rateStr, "%4d/%4d,%5.1f Hz", SceneGetFrame(G) + 1, nf, I->RateShown);
-      } else {
-        sprintf(rateStr, "%4d/%4d ", SceneGetFrame(G) + 1, nf);
-      }
+      sprintf(rateStr, "%4d/%4d ", SceneGetFrame(G) + 1, nf);
       TextDrawStrAt(G, rateStr, x + 48, y);
-      if(has_movie && !frame_rate) {
+      if(frame_rate) {
+        sprintf(rateStr,"%5.1f",I->RateShown);
+        TextDrawStrAt(G, rateStr, x + 144, y);
+        TextSetColor(G, textColor);
+        TextDrawStrAt(G, "Hz ", x + 192, y);
+        TextSetColor(G, textColor2);
+      } else if(has_movie) {
         TextSetColor(G, textColor);
         TextDrawStrAt(G, "State ", x + 128, y);
         TextSetColor(G, textColor2);
         sprintf(rateStr," %4d",SceneGetState(G)+1);
         TextDrawStrAt(G, rateStr, x + 168, y);
+      } else if(frame_rate) {
       }
     }
   }

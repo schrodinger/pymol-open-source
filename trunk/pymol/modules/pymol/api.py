@@ -286,6 +286,7 @@ from moving import \
       mray,              \
       frame,             \
       get_movie_playing, \
+      set_frame,         \
       get_state,         \
       get_frame         
 

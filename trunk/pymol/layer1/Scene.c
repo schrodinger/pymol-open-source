@@ -2187,6 +2187,8 @@ void SceneSetFrame(PyMOLGlobals * G, int mode, int frame)
   int newFrame;
   int newState = 0;
   int movieCommand = false;
+  int suppress = false;
+
   newFrame = SettingGetGlobal_i(G, cSetting_frame) - 1;
   PRINTFD(G, FB_Scene)
     " SceneSetFrame: entered.\n" ENDFD;
@@ -2231,35 +2233,48 @@ void SceneSetFrame(PyMOLGlobals * G, int mode, int frame)
     newFrame = I->NFrame - 1;
     movieCommand = true;
     break;
-  }
-  SceneCountFrames(G);
-  if(mode >= 0) {
-    if(newFrame >= I->NFrame)
-      newFrame = I->NFrame - 1;
-    if(newFrame < 0)
-      newFrame = 0;
-    newState = MovieFrameToIndex(G, newFrame);
-    if(newFrame == 0) {
-      if(MovieMatrix(G, cMovieMatrixRecall)) {
-        SceneAbortAnimation(G); /* if we have a programmed initial
-                                   orientation, don't allow animation
-                                   to override it */
+  case 10:  /* seek forward to current scene (if present) */
+    {
+      frame = MovieSeekScene(G,true);
+      if(frame>=0) {
+	newFrame = frame;
+	movieCommand = true;
+      } else {
+	suppress = true;  
       }
     }
-    SettingSetGlobal_i(G, cSetting_frame, newFrame + 1);
-    SettingSetGlobal_i(G, cSetting_state, newState + 1);
-    if(movieCommand) {
-      MovieDoFrameCommand(G, newFrame);
-      MovieFlushCommands(G);
-    }
-    if(SettingGet(G, cSetting_cache_frames))
-      I->MovieFrameFlag = true;
-  } else {
-    SettingSetGlobal_i(G, cSetting_frame, newFrame + 1);
-    SettingSetGlobal_i(G, cSetting_state, newState + 1);
+    break;
   }
-  MovieSetScrollBarFrame(G, newFrame);
-  SceneInvalidate(G);
+  if(!suppress) {
+    SceneCountFrames(G);
+    if(mode >= 0) {
+      if(newFrame >= I->NFrame)
+	newFrame = I->NFrame - 1;
+      if(newFrame < 0)
+	newFrame = 0;
+      newState = MovieFrameToIndex(G, newFrame);
+      if(newFrame == 0) {
+	if(MovieMatrix(G, cMovieMatrixRecall)) {
+	  SceneAbortAnimation(G); /* if we have a programmed initial
+				     orientation, don't allow animation
+				     to override it */
+	}
+      }
+      SettingSetGlobal_i(G, cSetting_frame, newFrame + 1);
+      SettingSetGlobal_i(G, cSetting_state, newState + 1);
+      if(movieCommand) {
+	MovieDoFrameCommand(G, newFrame);
+	MovieFlushCommands(G);
+      }
+      if(SettingGet(G, cSetting_cache_frames))
+	I->MovieFrameFlag = true;
+    } else {
+      SettingSetGlobal_i(G, cSetting_frame, newFrame + 1);
+      SettingSetGlobal_i(G, cSetting_state, newState + 1);
+    }
+    MovieSetScrollBarFrame(G, newFrame);
+    SceneInvalidate(G);
+  }
   PRINTFD(G, FB_Scene)
     " SceneSetFrame: leaving...\n" ENDFD;
 
@@ -3202,7 +3217,8 @@ void SceneDraw(Block * block)
                           x_pos + I->Block->rect.left, y_pos + I->Block->rect.bottom);
           }
         }
-      } else if(((width < I->Width) || (height < I->Height)) && ((I->Width - width) > 2) && ((I->Height - height) > 2)) {       /* but a border around image */
+      } else if(((width < I->Width) || (height < I->Height)) && ((I->Width - width) > 2) && ((I->Height - height) > 2)) {
+	/* but a border around image */
 
         unsigned int color_word;
         float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };

@@ -528,6 +528,8 @@ int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
   }
   if(!ok) {
     MovieReset(G);
+  } else if(MovieDefined(G)) {
+    OrthoReshape(G,0,0,true);
   }
   return (ok);
 #endif
@@ -1049,6 +1051,41 @@ void MovieSetImage(PyMOLGlobals * G, int index, ImageType * image)
     I->NImage = index + 1;
 }
 
+int MovieSeekScene(PyMOLGlobals * G, int loop)
+{
+  register CMovie *I = G->Movie;
+  int result = -1;
+  OVreturn_word ret;
+  char *scene_name = SettingGetGlobal_s(G,cSetting_scene_current_name);
+  if(OVreturn_IS_OK
+     ((ret = OVLexicon_BorrowFromCString
+       (G->Lexicon, scene_name)))) {
+    if(I->ViewElem) {
+      int i,len = MovieGetLength(G);
+      for(i = SceneGetFrame(G); i < len; i++) {
+	if(I->ViewElem[i].scene_flag) {
+	  if(I->ViewElem[i].scene_name == ret.word) {
+	    result = i;
+	    break;
+	  }
+	}
+      }
+      if(loop) {
+	len = SceneGetFrame(G);
+	for(i = 0; i < len; i++ ) {
+	  if(I->ViewElem[i].scene_flag) {
+	    if(I->ViewElem[i].scene_name == ret.word) {
+	      result = i;
+	      break;
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  return result;
+}
 
 /*========================================================================*/
 void MovieDoFrameCommand(PyMOLGlobals * G, int frame)
