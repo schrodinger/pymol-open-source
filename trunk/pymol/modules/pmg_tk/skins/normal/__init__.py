@@ -1812,8 +1812,11 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Scene Loop', 'Nutate2', 'Nutate',
                                     label='Nutate')
 
-        self.menuBar.addmenuitem('Nutate2', 'command', '4 seconds each',label='2 seconds each',
+        self.menuBar.addmenuitem('Nutate2', 'command', '2 seconds each',label='2 seconds each',
                                  command = lambda s=self: s.mvprg("_ movie.add_scenes(None,2.0,rock=4,start=%d)"))
+
+        self.menuBar.addmenuitem('Nutate2', 'command', '4 seconds each',label='4 seconds each',
+                                 command = lambda s=self: s.mvprg("_ movie.add_scenes(None,4.0,rock=4,start=%d)"))
 
         self.menuBar.addmenuitem('Nutate2', 'command', '8 seconds each',label='8 seconds each',
                                  command = lambda s=self: s.mvprg("_ movie.add_scenes(None,8.0,rock=4,start=%d)"))
@@ -1898,56 +1901,43 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Program', 'StateLoop', 'State Loop',
                                     label='State Loop')
 
-        self.menuBar.addmenuitem('StateLoop', 'command', 'full speed + 2 second pause',
-                                 label='full speed + 2 second pause',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(1,2.0,start=%d)"))
-
-        self.menuBar.addmenuitem('StateLoop', 'command', 'half speed + 2 second pause',
-                                 label='half speed + 2 second pause',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(2,2.0,start=%d)"))
-
-        self.menuBar.addmenuitem('StateLoop', 'command', 'one-third speed + 2 second pause',
-                                 label='one-third speed + 2 second pause',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(3,2.0,start=%d)"))
-
-        self.menuBar.addmenuitem('StateLoop', 'command', 'quarter speed + 2 second pause',
-                                 label='quarter speed + 2 second pause',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(4,2.0,start=%d)"))
-
-        self.menuBar.addmenuitem('StateLoop', 'command', 'one-eigth speed + 2 second pause',
-                                 label='one-eighth speed + 2 second pause',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(8,2.0,start=%d)"))
-
-        self.menuBar.addmenuitem('StateLoop', 'command', 'one-sixteenth speed + 2 second pause',
-                                 label='one-sixteenth speed + 2 second pause',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_loop(16,2.0,start=%d)"))
-
         self.menuBar.addcascademenu('Program', 'StateSweep', 'State Sweep',
                                     label='State Sweep')
 
-        self.menuBar.addmenuitem('StateSweep', 'command', 'full speed + 2 second pauses',
-                                 label='full speed + 2 second pauses',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(1,2.0,start=%d)"))
+        speed_list = [ 1, 2, 3, 4, 8, 16 ]
+        pause_list = [ 0, 1, 2, 4 ]
+        
+        for speed in speed_list:
+            submenu1_id = 'StateLoop' + '%d'%speed
+            submenu2_id = 'StateSweep' + '%d'%speed
 
-        self.menuBar.addmenuitem('StateSweep', 'command', 'half speed + 2 second pauses',
-                                 label='half speed + 2 second pauses',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(2,2.0,start=%d)"))
+            if speed==1:
+                submenu_title = "Full Speed"
+            else:
+                submenu_title = "1/%d Speed"%speed
 
-        self.menuBar.addmenuitem('StateSweep', 'command', 'one-third speed + 2 second pauses',
-                                 label='one-third speed + 2 second pauses',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(3,2.0,start=%d)"))
+            self.menuBar.addcascademenu('StateLoop', submenu1_id, label=submenu_title)
+            self.menuBar.addcascademenu('StateSweep', submenu2_id, label=submenu_title)
+              
+            for pause in pause_list:
+                if not pause:
+                    item_name = "no pause"
+                else:
+                    item_name = "%d second pause"%pause
+                
+                self.menuBar.addmenuitem(submenu1_id, 'command', item_name,
+                                         label=item_name,
+                                         command = lambda
+                                         s=self, st="_ movie.%s(%d,%d"%
+                                          ("add_state_loop", speed, pause): 
+                                         s.mvprg(st+",start=%d)"))
 
-        self.menuBar.addmenuitem('StateSweep', 'command', 'quarter speed + 2 second pauses',
-                                 label='quarter speed + 2 second pauses',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(4,2.0,start=%d)"))
-
-        self.menuBar.addmenuitem('StateSweep', 'command', 'one-eigth speed + 2 second pauses',
-                                 label='one-eighth speed + 2 second pauses',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(8,2.0,start=%d)"))
-
-        self.menuBar.addmenuitem('StateSweep', 'command', 'one-sixteenth speed + 2 second pauses',
-                                 label='one-sixteenth speed + 2 second pauses',
-                                 command = lambda s=self: s.mvprg("_ movie.add_state_sweep(16,2.0,start=%d)"))
+                self.menuBar.addmenuitem(submenu2_id, 'command', item_name,
+                                         label=item_name,
+                                         command = lambda
+                                         s=self, st="_ movie.%s(%d,%d"%
+                                          ("add_state_sweep", speed, pause): 
+                                         s.mvprg(st+",start=%d)"))
 
         self.menuBar.addmenuitem('Program', 'separator', '')
         
