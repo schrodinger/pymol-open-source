@@ -1939,9 +1939,9 @@ class Normal(PMGSkin):
                                           ("add_state_sweep", speed, pause): 
                                          s.mvprg(st+",start=%d)"))
 
-        self.menuBar.addmenuitem('Program', 'separator', '')
-        
-        self.menuBar.addmenuitem('Program', 'command', 'Reset',label='Reset',
+        self.menuBar.addmenuitem('Movie', 'separator', '')
+
+        self.menuBar.addmenuitem('Movie', 'command', 'Reset',label='Reset',
                                  command = lambda s=self: s.cmd.do("_ mset;rewind;"))
 
         self.menuBar.addmenuitem('Movie', 'separator', '')
