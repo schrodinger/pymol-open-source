@@ -25,15 +25,16 @@ class Dragging(Wizard):
             self.recount()
 
     def recount(self):
-        self.atom_count = self.cmd.count_atoms(drag_sele)
-        if self.atom_count:
-            obj_list = self.cmd.get_object_list(drag_sele)
-            self.obj = obj_list[0]
-            print ' Dragging %s atoms in object "%s".'%(self.atom_count,self.obj)
-        else:
-            self.obj = self.cmd.get_drag_object_name();
-            print ' Dragging whole object "%s".'%self.obj
-        self.cmd.refresh_wizard()
+        if self.check_valid():
+            self.atom_count = self.cmd.count_atoms(drag_sele)
+            if self.atom_count:
+                obj_list = self.cmd.get_object_list(drag_sele)
+                self.obj = obj_list[0]
+                print ' Dragging %s atoms in object "%s".'%(self.atom_count,self.obj)
+            else:
+                self.obj = self.cmd.get_drag_object_name();
+                print ' Dragging whole object "%s".'%self.obj
+            self.cmd.refresh_wizard()
 #        self.cmd.enable(drag_sele)
 #        t = threading.Thread(target=delayed_disable,args=(drag_sele,0.5))
 #        t.setDaemon(1)
@@ -44,7 +45,9 @@ class Dragging(Wizard):
             self.check_valid()
         
     def check_valid(self):
-        if self.cmd.get_editor_scheme()!=3:
+        if (not hasattr(self,"cmd")) or self.cmd == None:
+            return 0
+        elif self.cmd.get_editor_scheme()!=3:
             if self.valid:
                 self.valid = 0
                 self.cmd.do("_ cmd.set_wizard()")
@@ -60,14 +63,16 @@ class Dragging(Wizard):
         self.old_button_mode = button_mode
         
     def indicate(self):
-        self.check_valid()
-        if drag_sele in self.cmd.get_names("all",enabled_only=1):
-            self.cmd.disable(drag_sele)
-        else:
-            self.cmd.enable(drag_sele)
-        self.cmd.refresh_wizard()
+        if self.check_valid():
+            if drag_sele in self.cmd.get_names("all",enabled_only=1):
+                self.cmd.disable(drag_sele)
+            else:
+                self.cmd.enable(drag_sele)
+            self.cmd.refresh_wizard()
 
     def cleanup(self):
+        if (not hasattr(self,"cmd")) or self.cmd == None:
+            return
         self.cmd.drag()
         if drag_sele in self.cmd.get_names("all",enabled_only=1):
             self.cmd.disable(drag_sele)

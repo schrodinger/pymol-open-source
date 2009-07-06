@@ -1730,7 +1730,7 @@ static int MovieRelease(Block * block, int button, int x, int y, int mod)
         if(min_frame>=n_frame) min_frame = n_frame - 1;
         if(max_frame>=n_frame) max_frame = n_frame - 1;
         if(I->DragColumn) {
-          sprintf(extra,",object='all'");
+          sprintf(extra,",object='same'");
         }
         sprintf(buffer,"cmd.mview('clear',first=%d,last=%d%s)", 
                 1 + min_frame, 1 + max_frame, extra);
