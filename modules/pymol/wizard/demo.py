@@ -167,10 +167,10 @@ class DemoInfo:
                 self.cmd.load_cgo(cgo,'reps')
                 self.cmd.set("auto_zoom",1)
             else:
-                self.cmd.set("movie_panel",1)
                 self.cmd.delete("rep*")
                 self.cmd.mset()
                 self.cmd.mstop()
+                self.cmd.set("movie_panel",1)
         except:
             traceback.print_exc()
             
