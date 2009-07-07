@@ -1,8 +1,9 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([pymol], [1.1.0], [bugs@delsci.com])
+AC_INIT([pymol], [1.2.0], [bugs@delsci.com])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_INSTALL
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
@@ -49,7 +50,7 @@ fi
 LIBS="$GL_LIBS $LIBS"
 CPPFLAGS="-I$pythoninc $CPPFLAGS"
 
-AC_CONFIG_HEADERS([config.h])
+AM_CONFIG_HEADER([config.h])
 
 AC_DEFINE([_PYMOL_MODULE],[],[Build as a module])
 AC_DEFINE([_PYMOL_VMD_PLUGINS],[],[Uses VMD Plugins])
