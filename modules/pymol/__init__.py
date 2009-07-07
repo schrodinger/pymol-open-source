@@ -357,7 +357,7 @@ if pymol_launch != 3: # if this isn't a dry run
                         
                 if 'Radeon HD' in renderer:
                     print " Note: Radeon HD cards tend not to run PyMOL well."
-                    print " For better results, use nVidia or Intel hardware."
+                    print " Use nVidia or Intel instead, if OpenGL glitches occur."
                     print " Attempting to compensate for known issues..."
 
                     # use display lists to minimize use of OpenGL
