@@ -1,12 +1,14 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT([pymol], [1.2.0], [bugs@delsci.com])
+AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
-AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
+AC_DEFINE([_PYMOL_FREETYPE], [], [Description])
+AC_DEFINE([_PYMOL_LIBPNG], [], [Description])
 
 AC_PATH_XTRA
 
@@ -65,8 +67,6 @@ AC_CONFIG_FILES([
     layer4/Makefile
     layer5/Makefile
     contrib/champ/Makefile
-    contrib/modules/Makefile
-    contrib/sglite/Makefile
     contrib/pyopengl/Makefile
     contrib/uiuc/plugins/molfile_plugin/src/Makefile
     ])  

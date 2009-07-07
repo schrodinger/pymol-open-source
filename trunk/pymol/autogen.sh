@@ -1,8 +1,10 @@
 #!/bin/sh
-which aclocal
-aclocal
-which automake
-automake -a
-which autoconf
-autoconf
+which autoreconf
+autoreconf
+#which aclocal
+#aclocal
+#which automake
+#automake -a
+#which autoconf
+#autoconf
 

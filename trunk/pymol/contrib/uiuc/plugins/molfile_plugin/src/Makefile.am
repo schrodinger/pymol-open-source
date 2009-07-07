@@ -58,7 +58,7 @@ stlplugin.cpp \
 tinkerplugin.c \
 uhbdplugin.cpp \
 vaspchgcarplugin.c \
-vaspparchplugin.c \
+vaspparchgplugin.c \
 vaspoutcarplugin.c \
 vaspposcarplugin.c \
 vaspxdatcarplugin.c \

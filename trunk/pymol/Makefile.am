@@ -1,3 +1,5 @@
+ACLOCAL_AMFLAGS = -I m4
+
 SUBDIRS = ov/src layer0 layer1 layer2 layer3 layer4 layer5 \
   contrib/uiuc/plugins/molfile_plugin/src \
   contrib/champ contrib/pyopengl 
