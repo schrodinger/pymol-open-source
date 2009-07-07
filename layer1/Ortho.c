@@ -1935,7 +1935,7 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
   switch (button) {
   case 3:
   case 4:
-    if((button != I->ActiveButton)) {
+    if((button != I->ActiveButton) && (I->ActiveButton>=0)) {
       /* suppress wheel events when a button is already pushed */
       return 1;
     }
