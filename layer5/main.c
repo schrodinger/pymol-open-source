@@ -625,7 +625,7 @@ static void MainButton(int button, int state, int x, int y)
 
     I->IdleMode = 0;            /* restore responsiveness */
 
-    if(PyMOL_GetPassive(PyMOLInstance, true)) {
+    if(PyMOL_GetPassive(PyMOLInstance, (button < 3) ? true : false)) {
       MainDrag(x, y);
     } else {
       /* stay blocked here because Clicks->SexFrame->PParse */
@@ -664,11 +664,12 @@ static void MainPassive(int x, int y)
                                                    mouse motion */
 
     if(PLockAPIAsGlut(G, false)) {
-
       if((y < -PASSIVE_EDGE) || (x < -PASSIVE_EDGE) ||
          (x > (G->Option->winX + PASSIVE_EDGE)) ||
          (y > (G->Option->winY + PASSIVE_EDGE))) {
-        /* release passive drag if mouse leaves window... */
+
+        /* release passive drag if mouse leaves window... 
+           [IF we continue to receive mouse events...] */
 
         y = G->Option->winY - y;
 

@@ -1935,6 +1935,10 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
   switch (button) {
   case 3:
   case 4:
+    if((button != I->ActiveButton)) {
+      /* suppress wheel events when a button is already pushed */
+      return 1;
+    }
     block = SceneGetBlock(G);
     break;
   }
@@ -1990,6 +1994,7 @@ int OrthoButton(PyMOLGlobals * G, int button, int state, int x, int y, int mod)
         handled = block->fRelease(block, button, x, y, mod);
       I->ClickedIn = NULL;
     }
+    I->ActiveButton = -1;
   }
 #if 0
   if(block && !handled) {
@@ -2120,6 +2125,7 @@ int OrthoInit(PyMOLGlobals * G, int showSplash)
 
     ListInit(I->Blocks);
 
+    I->ActiveButton = -1;
     I->Pushed = 0;
     {
       int a;
