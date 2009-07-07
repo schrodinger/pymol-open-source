@@ -260,6 +260,10 @@ void OrthoSpecial(PyMOLGlobals * G, int k, int x, int y, int mod)
 {
   register COrtho *I = G->Ortho;
   int curLine = I->CurLine & OrthoSaveLines;
+
+  PRINTFB(G, FB_Ortho, FB_Blather)
+    " OrthoSpecial: %c (%d), x %d y %d, mod %d\n", k, k, x, y, mod ENDFB(G);
+
   switch (k) {
   case P_GLUT_KEY_DOWN:
     if(I->CurChar && (I->HistoryView == I->HistoryLine)) {
@@ -778,8 +782,8 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
   char buffer[OrthoLineLength];
   int curLine;
 
-  PRINTFD(G, FB_Ortho)
-    " Ortho: %c (%d), x %d y %d, mod %d\n", k, k, x, y, mod ENDFD;
+  PRINTFB(G, FB_Ortho, FB_Blather)
+    " OrthoKey: %c (%d), x %d y %d, mod %d\n", k, k, x, y, mod ENDFB(G);
 
   if(!I->InputFlag) {
     if(I->Saved[0]) {
