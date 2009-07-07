@@ -30,6 +30,10 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Name of package */
 #undef PACKAGE
 
@@ -57,14 +61,14 @@
 /* Define to 1 if the X Window System is missing or not being used. */
 #undef X_DISPLAY_MISSING
 
-/* Uses FreeType fonts */
+/* Description */
 #undef _PYMOL_FREETYPE
+
+/* Description */
+#undef _PYMOL_LIBPNG
 
 /* Build as a module */
 #undef _PYMOL_MODULE
 
 /* Uses VMD Plugins */
 #undef _PYMOL_VMD_PLUGINS
-
-/* Uses PNG Library */
-#undef _PYMOL_LIBPNG

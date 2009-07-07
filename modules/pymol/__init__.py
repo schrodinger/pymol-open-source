@@ -356,7 +356,7 @@ if pymol_launch != 3: # if this isn't a dry run
                         cmd.set('ati_bugs',1) 
                         
                 if 'Radeon HD' in renderer:
-                    print "Warning: Radeon HD graphics cards do not run PyMOL well."
+                    print " Note: Radeon HD cards tend not to run PyMOL well."
                     print " For better results, use nVidia or Intel hardware."
                     print " Attempting to compensate for known issues..."
 
