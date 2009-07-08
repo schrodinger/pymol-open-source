@@ -686,13 +686,13 @@ static void ControlDraw(Block * block)
       }
     }
 #ifdef _MACPYMOL_XCODE
-    if(I->Block->rect.bottom==0) {
+    if((I->Block->rect.bottom==0) && (!SettingGetGlobal_b(G,cSetting_full_screen))) {
       int x1 = I->Block->rect.right + 1;
-      int y1 = I->Block->rect.bottom + 3;
+      int y1 = I->Block->rect.bottom - 1;
       int x2 = I->Block->rect.right - 3;
-      int y2 = I->Block->rect.bottom - 1;
+      int y2 = I->Block->rect.bottom - 5;
 
-      glColor3f(0.0F, 0.0F, 0.0F);
+      glColor3f(0.3F, 0.3F, 0.3F);
       glBegin(GL_LINES);
       glVertex2i(x1, y1);
       glVertex2i(x2, y2);
@@ -708,8 +708,88 @@ static void ControlDraw(Block * block)
       y1 += 4;
       glVertex2i(x1, y1);
       glVertex2i(x2, y2);
+      y2 += 4;
+      x1 -= 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      y2 += 4;
+      x1 -= 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      y2 += 4;
+      x1 -= 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      glEnd();
+
+      x1 = I->Block->rect.right + 1;
+      y1 = I->Block->rect.bottom - 2;
+      x2 = I->Block->rect.right - 2;
+      y2 = I->Block->rect.bottom - 5;
+
+      glColor3f(0.85F, 0.85F, 0.85F);
+      glBegin(GL_LINES);
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
       x2 -= 4;
       y1 += 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      x2 -= 4;
+      y1 += 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      x2 -= 4;
+      y1 += 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      y2 += 4;
+      x1 -= 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      y2 += 4;
+      x1 -= 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      y2 += 4;
+      x1 -= 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      glEnd();
+
+      x1 = I->Block->rect.right + 1;
+      y1 = I->Block->rect.bottom - 3;
+      x2 = I->Block->rect.right - 1;
+      y2 = I->Block->rect.bottom - 5;
+
+      glColor3f(0.7F, 0.7F, 0.7F);
+      glBegin(GL_LINES);
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      x2 -= 4;
+      y1 += 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      x2 -= 4;
+      y1 += 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      x2 -= 4;
+      y1 += 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      y2 += 4;
+      x1 -= 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      y2 += 4;
+      x1 -= 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      y2 += 4;
+      x1 -= 4;
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
       glEnd();
 
     }
