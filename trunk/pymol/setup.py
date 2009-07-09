@@ -138,6 +138,8 @@ else: # linux or other unix
                 ("_PYMOL_INLINE",None),
                 ("_PYMOL_FREETYPE",None),
                 ("_PYMOL_LIBPNG",None),
+# OpenGL shaders
+#               ("_PYMOL_OPENGL_SHADERS",None),
 # Numeric Python support                    
 #                ("_PYMOL_NUMPY",None),
 # VMD plugin support           
