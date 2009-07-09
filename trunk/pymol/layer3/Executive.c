@@ -6327,7 +6327,6 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
-  int state = SceneGetState(G);
   CGOReset(G->DebugCGO);
 
   if(SettingGet(G, cSetting_sculpting)) {
@@ -6339,14 +6338,16 @@ int ExecutiveSculptIterateAll(PyMOLGlobals * G)
         if(rec->obj->type == cObjectMolecule) {
           objMol = (ObjectMolecule *) rec->obj;
           if(SettingGet_b(G, NULL, objMol->Obj.Setting, cSetting_sculpting)) {
-            int eff_state = state;
-            if(state > objMol->NCSet) {
+            int state = ObjectGetCurrentState(rec->obj, true);
+            if(state<0)
+              state = SceneGetState(G);
+            if((state > objMol->NCSet) ) {
               if((objMol->NCSet == 1)
                  && SettingGetGlobal_b(G, cSetting_static_singletons)) {
-                eff_state = 0;
+                state = 0;
               }
             }
-            ObjectMoleculeSculptIterate(objMol, eff_state,
+            ObjectMoleculeSculptIterate(objMol, state,
                                         SettingGet_i(G, NULL, objMol->Obj.Setting,
                                                      cSetting_sculpting_cycles), center);
             active = true;
