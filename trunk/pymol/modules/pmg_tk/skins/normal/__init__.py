@@ -319,7 +319,7 @@ class Normal(PMGSkin):
         self.toggleFrame(self.cmdFrame,startup=1)
 
         self.entryFrame = Frame(self.cmdFrame)
-        self.entryFrame.pack(side=BOTTOM,expand=YES,fill=X)
+        self.entryFrame.pack(side=BOTTOM,expand=NO,fill=X)
         self.entry_label = Label(self.entryFrame, text="PyMOL>", padx=1, pady=1, justify=RIGHT)
         self.entry_label.pack(side=LEFT,expand=NO,fill=X)        
         self.entry = Entry(self.entryFrame, justify=LEFT, width=70,
