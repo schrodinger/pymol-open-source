@@ -105,6 +105,7 @@ class DemoInfo:
             if not cleanup:
                 self.cmd.disable()
                 self.cmd.set("suspend_updates",1,quiet=1)
+                self.cmd.mset()
                 self.cmd.unset("movie_panel")
                 self.cmd.load("$PYMOL_DATA/demo/pept.pdb","rep1")
                 self.cmd.alter("rep1///1-5+8-13/","ss='S'")
