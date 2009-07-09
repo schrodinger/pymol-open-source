@@ -3563,6 +3563,7 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals * G, char *oname, int type)
     case cLoadTypeSDF2Str:
     case cLoadTypePQR:
     case cLoadTypeXTC:
+    case cLoadTypeDTR:
     case cLoadTypeTRR:
     case cLoadTypeGRO:
     case cLoadTypeTRJ2:
