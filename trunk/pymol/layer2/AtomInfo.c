@@ -672,6 +672,13 @@ int AtomInfoKnownWaterResName(PyMOLGlobals * G, char *resn)
         break;
       }
       break;
+    case 'P':
+      switch (resn[2]) {
+      case 'C':
+        return true;
+        break;
+      }
+      break;
     }
     break;
   }
