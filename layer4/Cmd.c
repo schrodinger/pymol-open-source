@@ -7269,10 +7269,11 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
     case cLoadTypeG96:
     case cLoadTypeTRJ2:
     case cLoadTypeDCD:
+    case cLoadTypeDTR:
       {
         char *plugin = NULL;
         char xtc[] = "xtc", trr[] = "trr", gro[] = "gro", g96[] = "g96", trj[] =
-          "trj", dcd[] = "dcd";
+          "trj", dcd[] = "dcd", dtr[] = "dtr";
         switch (type) {
         case cLoadTypeXTC:
           plugin = xtc;
@@ -7291,6 +7292,9 @@ static PyObject *CmdLoad(PyObject * self, PyObject * args)
           break;
         case cLoadTypeDCD:
           plugin = dcd;
+          break;
+        case cLoadTypeDTR:
+          plugin = dtr;
           break;
         }
         if(plugin) {
@@ -7715,6 +7719,7 @@ static PyObject *CmdLoadTraj(PyObject * self, PyObject * args)
       case cLoadTypeG96:
       case cLoadTypeTRJ2:
       case cLoadTypeDCD:
+      case cLoadTypeDTR:
         PlugIOManagerLoadTraj(G, (ObjectMolecule *) origObj, fname, frame,
                               interval, average, start, stop, max, s1, image, shift,
                               quiet, plugin);
