@@ -1843,7 +1843,7 @@ static void MovieDraw(Block * block)
                       rect.left, rect.bottom, rect.right);
       ScrollBarDoDraw(I->ScrollBar);
       ExecutiveMotionDraw(G,&rect,count);
-      ScrollBarDrawHandle(I->ScrollBar, 0.3F);
+      ScrollBarDrawHandle(I->ScrollBar, 0.35F);
 
       /* drag selection box */
       if(I->DragDraw) {
