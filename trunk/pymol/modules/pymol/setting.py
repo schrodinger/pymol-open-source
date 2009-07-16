@@ -667,7 +667,8 @@ if __name__=='pymol.setting':
         motion_simple                      = 629
         motion_linear                      = 630
         motion_hand                        = 631
-        
+        pdb_ignore_conect                  = 632
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
     
     index_list = []

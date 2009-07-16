@@ -1647,7 +1647,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
   SSEntry *sst;
   int ssi = 0;
   int only_read_one_model = false;
-  int ignore_conect = false;
+  int ignore_conect = SettingGetGlobal_b(G, cSetting_pdb_ignore_conect);
   int have_bond_order = false;
   int seen_model, in_model = false;
   int seen_conect = false;
@@ -1812,7 +1812,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals * G,
         }
       } else if((p[0] == 'C') && (p[1] == 'O') && (p[2] == 'N') && (p[3] == 'E') && (p[4] == 'C') && (p[5] == 'T')) {   /* CONECT */
         have_conect = true;
-        bondFlag = true;
+        if(!ignore_conect) 
+          bondFlag = true;
       } else if((p[0] == 'U') && (p[1] == 'S') && (p[2] == 'E') &&
                 (p[3] == 'R') && (!*restart_model)) {
 

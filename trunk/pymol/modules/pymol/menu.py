@@ -1005,7 +1005,7 @@ def group_action(self_cmd, sele):
             [ 1, 'assign sec. struc.'  ,'cmd.dss("'+sele+'")'        ],
             [ 0, ''             , ''                       ],
             [ 1, 'rename group', 'cmd.wizard("renaming","'+sele+'")'          ],
-            [ 1, 'delete groupt'       , 'cmd.delete("'+sele+'")'    ],
+            [ 1, 'delete group'       , 'cmd.delete("'+sele+'")'    ],
             [ 0, ''          ,''                                              ],
             [ 1, 'hydrogens' , hydrogens(self_cmd, sele)    ],           
             [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+sele+'))")'     ],
