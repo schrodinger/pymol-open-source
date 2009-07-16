@@ -802,6 +802,7 @@ typedef struct _CPyMOL {
   ov_word lex_motion_simple;
   ov_word lex_motion_linear;
   ov_word lex_motion_hand;
+  ov_word lex_pdb_ignore_conect;
 
 } _CPyMOL;
 
@@ -1594,6 +1595,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL * I)
   LEX_SETTING(motion_simple, 629);
   LEX_SETTING(motion_linear, 630);
   LEX_SETTING(motion_hand, 631);
+  LEX_SETTING(pdb_ignore_conect, 632);
 
   return_OVstatus_SUCCESS;
 }
