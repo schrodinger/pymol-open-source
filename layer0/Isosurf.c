@@ -631,7 +631,9 @@ int IsosurfExpand(Isofield * field1, Isofield * field2, CCrystal * cryst,
         frac[1] = imn[1] + fstep[1] * (j + range[1]);
         for(k = 0; k < k_stop; k++) {
           float average = 0.0F;
+          float extrapolate_average = 0.0F;
           int cnt = 0;
+          int extrapolate_cnt = 0;
           int n, nMat = sym->NSymMat;
 
           /* first compute the coordinate */
@@ -710,6 +712,20 @@ int IsosurfExpand(Isofield * field1, Isofield * field2, CCrystal * cryst,
                       z = 1.0F;
                     average += FieldInterpolatef(field1->data, a, b, c, x, y, z);
                     cnt++;
+                  } else {
+                    /* allow 1 cell of extrapolation -- this saves us
+                       when someone issues map_double and is then technically
+                       missing a plane of data at the edge of the cell */
+                    if(((x-1.0F) < sloppy_1) && ((y-1.0F) < sloppy_1) && ((z-1.0F) < sloppy_1)) {
+                      if(x > 1.0F)
+                        x = 1.0F;
+                      if(y > 1.0F)
+                        y = 1.0F;
+                      if(z > 1.0F)
+                        z = 1.0F;
+                      extrapolate_average += FieldInterpolatef(field1->data, a, b, c, x, y, z);
+                      extrapolate_cnt++;
+                    }
                   }
                 }
               }
@@ -717,6 +733,8 @@ int IsosurfExpand(Isofield * field1, Isofield * field2, CCrystal * cryst,
           }
           if(cnt) {
             F3(field2->data, i, j, k) = average / cnt;
+          } else if(extrapolate_cnt) {
+            F3(field2->data, i, j, k) = extrapolate_average / extrapolate_cnt;
           } else {
             missing = true;
             F3(field2->data, i, j, k) = 0.0F;   /* complain? */
