@@ -2111,6 +2111,10 @@ class Normal(PMGSkin):
         self.menuBar.addcascademenu('Display', 'Stereo', 'Stereo Mode',
                                          label='Stereo Mode')
 
+        self.menuBar.addmenuitem('Stereo', 'command', 'Anaglyph Stereo',
+                                         label='Anaglyph Stereo',
+                                         command = lambda s=self: s.cmd.do("_ stereo anaglyph"))
+
         self.menuBar.addmenuitem('Stereo', 'command', 'Cross-Eye Stereo',
                                          label='Cross-Eye Stereo',
                                          command = lambda s=self: s.cmd.do("_ stereo crosseye"))

@@ -2575,6 +2575,58 @@ int ColorTableLoad(PyMOLGlobals * G, char *fname, float gamma, int quiet)
           " Color: purged table; restoring RGB colors.\n" ENDFB(G);
       }
       ColorUpdateFromLut(G, -1);
+    } else if(!strcmp(fname, "greyscale")) {
+
+      int x, y;
+      unsigned int r = 0, g = 0, b = 0;
+      unsigned int *pixel, mask, *p;
+      unsigned int rc;
+
+      FreeP(I->ColorTable);
+      if(I->BigEndian)
+        mask = 0x000000FF;
+      else
+        mask = 0xFF000000;
+
+      table = Alloc(unsigned int, 512 * 512);
+
+      p = (unsigned int *) table;
+      for(x = 0; x < width; x++)
+        for(y = 0; y < height; y++)
+          *(p++) = mask;
+
+      for(y = 0; y < height; y++)
+        for(x = 0; x < width; x++) {
+          rc = (r + g + b)/3;
+
+          pixel = table + ((width) * y) + x;
+          if(I->BigEndian) {
+            *(pixel) = mask | (rc << 24) | (rc << 16) | (rc << 8);
+          } else {
+            *(pixel) = mask | (rc << 16) | (rc << 8) | rc;
+          }
+          b = b + 4;
+          if(!(0xFF & b)) {
+            b = 0;
+            g = g + 4;
+            if(!(0xFF & g)) {
+              g = 0;
+              r = r + 4;
+            }
+          }
+        }
+
+      I->ColorTable = table;
+      if(!quiet) {
+        PRINTFB(G, FB_Color, FB_Actions)
+          " Color: defined table '%s'.\n", fname ENDFB(G);
+      }
+
+      ColorUpdateFromLut(G, -1);
+      ExecutiveInvalidateRep(G, cKeywordAll, cRepAll, cRepInvColor);
+      SceneChanged(G);
+
+
     } else if(!strcmp(fname, "pymol")) {
 
       int x, y;

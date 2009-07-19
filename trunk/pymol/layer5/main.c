@@ -1738,7 +1738,6 @@ static void launch(CPyMOLOptions * options, int own_the_options)
             G->StereoCapable = 1;
           }
           break;
-        case cStereo_anaglyph:
         case cStereo_dynamic:
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE |
                                 P_GLUT_ACCUM);
@@ -1759,6 +1758,9 @@ static void launch(CPyMOLOptions * options, int own_the_options)
             G->LaunchStatus |= cPyMOLGlobals_LaunchStatus_StereoFailed;
             G->Option->stereo_mode = 0;
           }
+          break;
+        case cStereo_anaglyph: /* nothing special required for anaglyph */
+          G->StereoCapable = 1;
           break;
         default:               /* fall through */
           break;
