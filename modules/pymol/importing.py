@@ -193,7 +193,8 @@ SEE ALSO
         
         tables = { 'cmyk' : "$PYMOL_PATH/data/pymol/cmyk.png",
                    'pymol' : 'pymol',
-                   'rgb' : 'rgb' }
+                   'rgb' : 'rgb',
+                   'greyscale': 'greyscale' }
         
         space_auto = space_sc.interpret(space)
         if (space_auto != None) and not is_list(space_auto):

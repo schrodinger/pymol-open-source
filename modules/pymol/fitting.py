@@ -25,7 +25,7 @@ if __name__=='pymol.fitting':
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
     def super(mobile, target, cutoff=2.0, cycles=5,
-              gap=-1.5, extend=-0.7, max_gap=50, object=None,                            
+              gap=-1.5, extend=-0.7, max_gap=50, object=None,
               matrix="BLOSUM62", mobile_state=0, target_state=0, 
               quiet=1, max_skip=0, transform=1, reset=0,
               seq=0.0, radius=12.0, scale=17.0, base=0.65,
