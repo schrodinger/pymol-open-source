@@ -281,9 +281,8 @@ if __name__=='pymol.invocation':
                         options.game_mode = 1
                         options.win_x = 1024
                         options.win_y = 768
-                    if "S" in a: # Force stereo on stereo hardware (OSX only)
+                    if "S" in a: # Force stereo context on stereo-capable hardware
                         options.force_stereo = 1
-
                         if sys.platform=='darwin': 
                             options.deferred.append(
                               "_do__ set stereo_double_pump_mono,1,quiet=1")

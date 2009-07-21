@@ -762,13 +762,13 @@ static void MainDrawLocked(void)
       } else {
         if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_StereoFailed) {
           OrthoAddOutput(G,
-                         "Error: The requested stereo 3D visualization mode is not available.");
+                         "Error: The requested stereo 3D visualization mode is not available.\n");
         }
       }
     
     if(G->LaunchStatus & cPyMOLGlobals_LaunchStatus_MultisampleFailed) {
       OrthoAddOutput(G,
-                     "Error: The requested multisampling mode is not available.");
+                     "Error: The requested multisampling mode is not available.\n");
     }
 
     if(G->Option->incentive_product) {  /* perform incentive product initialization (if any) */
