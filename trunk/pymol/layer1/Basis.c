@@ -1578,22 +1578,22 @@ __inline__
 #endif
 int BasisHitPerspective(BasisCallRec * BC)
 {
-  register CBasis *BI = BC->Basis;
-  register MapType *map = BI->Map;
-  register int iMin0 = map->iMin[0];
-  register int iMin1 = map->iMin[1];
-  register int iMin2 = map->iMin[2];
-  register int iMax0 = map->iMax[0];
-  register int iMax1 = map->iMax[1];
-  register int iMax2 = map->iMax[2];
-  register int a, b, c;
+  CBasis *BI = BC->Basis;
+  MapType *map = BI->Map;
+  int iMin0 = map->iMin[0];
+  int iMin1 = map->iMin[1];
+  int iMin2 = map->iMin[2];
+  int iMax0 = map->iMax[0];
+  int iMax1 = map->iMax[1];
+  int iMax2 = map->iMax[2];
+  int a, b, c;
 
-  register float iDiv = map->recipDiv;
-  register float base0, base1, base2;
+  float iDiv = map->recipDiv;
+  float base0, base1, base2;
 
-  register float min0 = map->Min[0] * iDiv;
-  register float min1 = map->Min[1] * iDiv;
-  register float min2 = map->Min[2] * iDiv;
+  float min0 = map->Min[0] * iDiv;
+  float min1 = map->Min[1] * iDiv;
+  float min2 = map->Min[2] * iDiv;
 
   int new_ray = !BC->pass;
   RayInfo *r = BC->rr;
@@ -1627,12 +1627,12 @@ int BasisHitPerspective(BasisCallRec * BC)
   }
 
   {
-    register int last_a = -1, last_b = -1, last_c = -1;
-    register int allow_break;
-    register int minIndex = -1;
+    int last_a = -1, last_b = -1, last_c = -1;
+    int allow_break;
+    int minIndex = -1;
 
-    register float step0, step1, step2;
-    register float back_dist = BC->back_dist;
+    float step0, step1, step2;
+    float back_dist = BC->back_dist;
 
     const float _0 = 0.0F, _1 = 1.0F;
     float r_tri1 = _0, r_tri2 = _0, r_dist, dist;       /* zero inits to suppress compiler warnings */
@@ -1655,10 +1655,10 @@ int BasisHitPerspective(BasisCallRec * BC)
     int except2 = BC->except2;
     int check_interior_flag = BC->check_interior && !BC->pass;
     float sph[3], vt[3], tri1 = _0, tri2;
-    register CPrimitive *BC_prim = BC->prim;
-    register int *BI_Vert2Normal = BI->Vert2Normal;
-    register float *BI_Vertex = BI->Vertex;
-    register float *BI_Precomp = BI->Precomp;
+    CPrimitive *BC_prim = BC->prim;
+    int *BI_Vert2Normal = BI->Vert2Normal;
+    float *BI_Vertex = BI->Vertex;
+    float *BI_Precomp = BI->Precomp;
     float *BI_Normal = BI->Normal;
     float *BI_Radius = BI->Radius;
     float *BI_Radius2 = BI->Radius2;
@@ -1678,7 +1678,7 @@ int BasisHitPerspective(BasisCallRec * BC)
     MapCacheReset(cache);
 
     {                           /* take steps with a Z-size equil to the grid spacing */
-      register float div = iDiv * (-MapGetDiv(BI->Map) / r->dir[2]);
+      float div = iDiv * (-MapGetDiv(BI->Map) / r->dir[2]);
       step0 = r->dir[0] * div;
       step1 = r->dir[1] * div;
       step2 = r->dir[2] * div;
@@ -1691,7 +1691,7 @@ int BasisHitPerspective(BasisCallRec * BC)
     allow_break = false;
     while(1) {
       int inside_code;
-      register int clamped;
+      int clamped;
 
       a = ((int) base0);
       b = ((int) base1);
@@ -1735,7 +1735,6 @@ int BasisHitPerspective(BasisCallRec * BC)
           clamped = true;
         }
       }
-
       if(c < iMin2) {
         if((iMin2 - c) > EDGE_ALLOWANCE)
           break;
@@ -1752,8 +1751,8 @@ int BasisHitPerspective(BasisCallRec * BC)
         }
       }
       if(inside_code && (((a != last_a) || (b != last_b) || (c != last_c)))) {
-        register int new_min_index;
-        h = *(ehead + (a * d1d2) + (b * d2) + c);
+        int new_min_index;
+        h = *(ehead + (d1d2 * a) + (d2 * b) + c);
 
         new_min_index = -1;
 
@@ -1775,16 +1774,17 @@ int BasisHitPerspective(BasisCallRec * BC)
           last_c = c;
 
           while(do_loop) {      /* n_vert checking is a bug workaround */
-            ii = *(ip++);
+            CPrimitive *prm;
             v2p = vert2prim[i];
+            ii = *(ip++);
+            prm = BC_prim + v2p;
             do_loop = ((ii >= 0) && (ii < n_vert));
-            if((v2p != except1) && (v2p != except2) && (!MapCached(cache, v2p))) {
-              register CPrimitive *prm = BC_prim + v2p;
-              int prm_type;
+            //            if((v2p != except1) && (v2p != except2) && (!MapCached(cache, v2p))) {
+            if((v2p != except1) && (v2p != except2) && (!cache_cache[v2p])) {
+              int prm_type = prm->type;
 
               /*MapCache(cache,v2p); */
               cache_cache[v2p] = 1;
-              prm_type = prm->type;
               cache_CacheLink[v2p] = cache->CacheStart;
               cache->CacheStart = v2p;
 
