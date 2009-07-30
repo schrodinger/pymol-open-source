@@ -85,6 +85,7 @@ unix-mindep: semistatic
 	cp -r examples $(MDP)
 	/bin/rm -rf $(MDP)/examples/package
 	cp -r scripts $(MDP)
+	/bin/rm -rf $(MDP)/scripts/metaphorics
 	cp -r pymol.exe $(MDP)
 	cp -r ext/lib/python2.5 $(MDP)/ext/lib
 	cp -r ext/lib/tcl8.5 $(MDP)/ext/lib
@@ -107,7 +108,9 @@ unix-prep:
 	cp epymol/LICENSE.txt $(MDP)/LICENSE
 	cp -r epymol/modules/epymol $(MDP)/modules/
 	cp -r epymol/rigimol/examples $(MDP)/examples/rigimol
-	cp -r epymol/rigimol/src/rigimol.exe $(MDP)/modules/epymol/rigimol/
+	/bin/mkdir $(MDP)/scripts/maestro
+	cp epymol/integrate/p4m/pymol4maestro.py $(MDP)/scripts/maestro	
+	cp epymol/integrate/p4m/README.TXT $(MDP)/scripts/maestro	
 	if [ -d "freemol" ]; then cp -r freemol $(MDP); fi;
 	/bin/rm $(MDP)/modules/epymol/*.py $(MDP)/modules/epymol/*/*.py
 	find $(MINDEP)/pymol -type d -name CVS | awk '{printf "/bin/rm -rf ";print;}' | sh
