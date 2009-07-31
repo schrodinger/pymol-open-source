@@ -58,7 +58,7 @@ typedef float SceneViewType[cSceneViewSize];
 */
 
 float SceneGetDynamicLineWidth(RenderInfo * info, float line_width);
-
+void SceneInvalidateStencil(PyMOLGlobals * G);
 int SceneHasImage(PyMOLGlobals * G);
 int SceneInit(PyMOLGlobals * G);
 void SceneDone(PyMOLGlobals * G);
