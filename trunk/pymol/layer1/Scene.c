@@ -7353,7 +7353,7 @@ int SceneRenderCached(PyMOLGlobals * G)
   register CScene *I = G->Scene;
   ImageType *image;
   int renderedFlag = false;
-
+  int draw_mode = SettingGetGlobal_i(G, cSetting_draw_mode);
   PRINTFD(G, FB_Scene)
     " SceneRenderCached: entered.\n" ENDFD;
 
@@ -7377,11 +7377,15 @@ int SceneRenderCached(PyMOLGlobals * G)
         SceneMakeMovieImage(G, true, false, cSceneImage_Default);
         renderedFlag = true;
       }
-    } else if((moviePlaying && SettingGetGlobal_b(G, cSetting_ray_trace_frames)) ||
-              (SettingGetGlobal_i(G, cSetting_draw_mode) == 3)) {
+    } else if(draw_mode == 3) {
+      int show_progress = SettingSetGlobal_i(G,cSetting_show_progress,0);
+      SceneRay(G, 0, 0, (int) SettingGet(G, cSetting_ray_default_renderer),
+               NULL, NULL, 0.0F, 0.0F, false, NULL, false, -1);
+      SettingSetGlobal_i(G,cSetting_show_progress, show_progress);
+    } else if(moviePlaying && SettingGetGlobal_b(G, cSetting_ray_trace_frames)) {
       SceneRay(G, 0, 0, (int) SettingGet(G, cSetting_ray_default_renderer),
                NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
-    } else if(moviePlaying && SettingGetGlobal_b(G, cSetting_draw_frames)) {
+    } else if((moviePlaying && SettingGetGlobal_b(G, cSetting_draw_frames)) || (draw_mode == 2)) {
       SceneMakeSizedImage(G, 0, 0, SettingGetGlobal_i(G, cSetting_antialias));
     } else if(I->CopyType == true) {    /* true vs. 2 */
       renderedFlag = true;

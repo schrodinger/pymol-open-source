@@ -1277,7 +1277,7 @@ Rep *RepCylBondNew(CoordSet * cs, int state)
 
   if(obj->NBond) {
     int draw_mode = SettingGetGlobal_i(G, cSetting_draw_mode);
-    int draw_quality = (((draw_mode == 1) || (draw_mode == -2)));
+    int draw_quality = (((draw_mode == 1) || (draw_mode == -2) || (draw_mode == 2)));
 
     stick_ball = SettingGet_b(G, cs->Setting, obj->Obj.Setting, cSetting_stick_ball);
     overlap = SettingGet_f(G, cs->Setting, obj->Obj.Setting, cSetting_stick_overlap);
