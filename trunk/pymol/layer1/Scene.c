@@ -383,7 +383,7 @@ static void GridUpdate(GridInfo * I, float asp_ratio, int mode, int size)
   }
 }
 
-static void SceneInvalidateStencil(PyMOLGlobals * G)
+void SceneInvalidateStencil(PyMOLGlobals * G)
 {
   register CScene *I = G->Scene;
   I->StencilValid = false;

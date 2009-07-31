@@ -1114,7 +1114,7 @@ void MainReshape(int width, int height)
           if(draw_both) {
             OrthoDrawBuffer(G, GL_FRONT_LEFT);
             glClear(GL_COLOR_BUFFER_BIT);
-            OrthoDrawBuffer(G, GL_FRONT_LEFT);
+            OrthoDrawBuffer(G, GL_FRONT_RIGHT);
             glClear(GL_COLOR_BUFFER_BIT);
             OrthoDrawBuffer(G, GL_BACK_LEFT);
             glClear(GL_COLOR_BUFFER_BIT);

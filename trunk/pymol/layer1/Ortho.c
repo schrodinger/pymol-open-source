@@ -1848,6 +1848,7 @@ void OrthoReshape(PyMOLGlobals * G, int width, int height, int force)
 
     WizardRefresh(G);           /* safe to call even if no wizard exists */
   }
+  SceneInvalidateStencil(G);
   OrthoDirty(G);
 }
 
