@@ -7377,7 +7377,8 @@ int SceneRenderCached(PyMOLGlobals * G)
         SceneMakeMovieImage(G, true, false, cSceneImage_Default);
         renderedFlag = true;
       }
-    } else if(moviePlaying && SettingGetGlobal_b(G, cSetting_ray_trace_frames)) {
+    } else if((moviePlaying && SettingGetGlobal_b(G, cSetting_ray_trace_frames)) ||
+              (SettingGetGlobal_i(G, cSetting_draw_mode) == 3)) {
       SceneRay(G, 0, 0, (int) SettingGet(G, cSetting_ray_default_renderer),
                NULL, NULL, 0.0F, 0.0F, false, NULL, true, -1);
     } else if(moviePlaying && SettingGetGlobal_b(G, cSetting_draw_frames)) {
