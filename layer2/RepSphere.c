@@ -1749,7 +1749,7 @@ Rep *RepSphereNew(CoordSet * cs, int state)
   float tn[3], vt1[3], vt2[3], xtn[3], *tn0, *tn1, *tn2;
 #endif
   int draw_mode = SettingGetGlobal_i(G, cSetting_draw_mode);
-  int draw_quality = (((draw_mode == 1) || (draw_mode == -2)));
+  int draw_quality = (((draw_mode == 1) || (draw_mode == -2) || (draw_mode == 2)));
 
   OOCalloc(G, RepSphere);
 
