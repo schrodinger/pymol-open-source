@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 
 static const float kR_SMALL4 = 0.0001F;
 static const float kR_SMALL5 = 0.0001F;
-#define EPSILON 0.000001
+#define EPSILON 0.000001F
 
 
 /*========================================================================*/
@@ -1795,6 +1795,7 @@ int BasisHitPerspective(BasisCallRec * BC)
                   float *dir = r->dir;
                   float *d10 = BI_Precomp + BI_Vert2Normal[i] * 3;
                   float *d20 = d10 + 3;
+                  float *v0;
                   register float det, inv_det;
                   register float pvec0, pvec1, pvec2;
                   register float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
@@ -1811,8 +1812,8 @@ int BasisHitPerspective(BasisCallRec * BC)
 
                   det = pvec0 * d10_0 + pvec1 * d10_1 + pvec2 * d10_2;
 
-                  if(fabs(det) >= EPSILON) {
-                    float *v0 = BI_Vertex + prm->vert * 3;
+                  v0 = BI_Vertex + prm->vert * 3;
+                  if((det >= EPSILON) || (det <= -EPSILON)) {
                     register float tvec0, tvec1, tvec2;
                     register float qvec0, qvec1, qvec2;
 
@@ -3135,45 +3136,48 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
    * require expanding the map cutoff to the size of the largest object*/
   if(remapMode) {
     register int a, b, c;
-
+    
     if(sep < size_hint)         /* this keeps us from wasting time & memory on unnecessary subdivision */
       sep = size_hint;
+    
+    {
+      register int *vert2prim_a = vert2prim;
+      for(a = 0; a < I->NVertex; a++) {
+        prm = prim + *(vert2prim_a++);
 
-    for(a = 0; a < I->NVertex; a++) {
-      prm = prim + vert2prim[a];
-
-      switch (prm->type) {
-      case cPrimTriangle:
-      case cPrimCharacter:
-        if(a == prm->vert) {    /* only do this calculation for one of the three vertices */
-          l1 = (float) length3f(I->Precomp + I->Vert2Normal[a] * 3);
-          l2 = (float) length3f(I->Precomp + I->Vert2Normal[a] * 3 + 3);
-          if((l1 >= sep) || (l2 >= sep)) {
-            b = (int) ceil(l1 / sep) + 1;
-            c = (int) ceil(l2 / sep) + 1;
-            extra_vert += 4 * b * c;
+        switch (prm->type) {
+        case cPrimTriangle:
+        case cPrimCharacter:
+          if(a == prm->vert) {    /* only do this calculation for one of the three vertices */
+            l1 = (float) length3f(I->Precomp + I->Vert2Normal[a] * 3);
+            l2 = (float) length3f(I->Precomp + I->Vert2Normal[a] * 3 + 3);
+            if((l1 >= sep) || (l2 >= sep)) {
+              b = (int) ceil(l1 / sep) + 1;
+              c = (int) ceil(l2 / sep) + 1;
+              extra_vert += 4 * b * c;
+            }
           }
-        }
-        break;
+          break;
 
-      case cPrimCone:
-      case cPrimCylinder:
-      case cPrimSausage:
-        if((prm->l1 + 2 * prm->r1) >= sep) {
-          q = ((int) (2 * (floor(prm->r1 / sep) + 1))) + 1;
-          q = q * q * ((int) ceil((prm->l1 + 2 * prm->r1) / sep) + 2);
-          extra_vert += q;
+        case cPrimCone:
+        case cPrimCylinder:
+        case cPrimSausage:
+          if((prm->l1 + 2 * prm->r1) >= sep) {
+            q = ((int) (2 * (floor(prm->r1 / sep) + 1))) + 1;
+            q = q * q * ((int) ceil((prm->l1 + 2 * prm->r1) / sep) + 2);
+            extra_vert += q;
+          }
+          break;
+        case cPrimEllipsoid:
+        case cPrimSphere:
+          if(prm->r1 >= sep) {
+            b = (int) (2 * floor(prm->r1 / sep) + 1);
+            extra_vert += (b * b * b);
+          }
+          break;
         }
-        break;
-      case cPrimEllipsoid:
-      case cPrimSphere:
-        if(prm->r1 >= sep) {
-          b = (int) (2 * floor(prm->r1 / sep) + 1);
-          extra_vert += (b * b * b);
-        }
-        break;
-      }
-    }                           /* for */
+      }                           /* for */
+    }
 
     extra_vert += I->NVertex;
     tempVertex =
@@ -3187,6 +3191,8 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
 
     {
       register float *vv, *d;
+      int *vert2prim_a = vert2prim;
+
       n = I->NVertex;
 
       v = tempVertex;
@@ -3198,7 +3204,7 @@ void BasisMakeMap(CBasis * I, int *vert2prim, CPrimitive * prim, int n_prim,
 
       for(a = 0; a < I->NVertex; a++) {
 
-        prm = prim + vert2prim[a];
+        prm = prim + *(vert2prim_a++);
 
         switch (prm->type) {
         case cPrimTriangle:
