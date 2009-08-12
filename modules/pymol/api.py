@@ -226,6 +226,7 @@ from externing import \
       system
 
 #--------------------------------------------------------------------
+import wizarding
 from wizarding import \
       get_wizard,         \
       get_wizard_stack,   \
