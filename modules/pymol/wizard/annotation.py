@@ -18,6 +18,7 @@ class Annotation(Wizard):
             
     def get_prompt(self):
         prompt = []
+        pymol = self.cmd._pymol
         if hasattr(pymol.session,'annotation'):
             anno_dict = pymol.session.annotation
             for obj in self.cmd.get_names('objects',1): # enabled objects
