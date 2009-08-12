@@ -194,9 +194,4 @@ DESCRIPTION
                     print "Session-Warning: unable to restore wizard."
         return 1
 
-    if session_restore_wizard not in pymol._session_restore_tasks:
-        pymol._session_restore_tasks.append(session_restore_wizard)
-
-    if session_save_wizard not in pymol._session_save_tasks:
-        pymol._session_save_tasks.append(session_save_wizard)
 
