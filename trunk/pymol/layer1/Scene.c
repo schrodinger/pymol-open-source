@@ -2669,7 +2669,7 @@ int SceneObjectIsActive(PyMOLGlobals * G, CObject * obj)
   return result;
 }
 
-int SceneObjectDel(PyMOLGlobals * G, CObject * obj)
+int SceneObjectDel(PyMOLGlobals * G, CObject * obj, int allow_purge)
 {
   register CScene *I = G->Scene;
   ObjRec *rec = NULL;
@@ -2678,7 +2678,7 @@ int SceneObjectDel(PyMOLGlobals * G, CObject * obj)
   if(!obj) {                    /* deletes all members */
     while(ListIterate(I->Obj, rec, next)) {
       if(rec) {
-        if(defer_builds_mode >= 3) {
+        if(allow_purge && (defer_builds_mode >= 3)) {
           /* purge graphics representation when no longer used */
           if(rec->obj->fInvalidate)
             rec->obj->fInvalidate(rec->obj, cRepAll, cRepInvPurge, -1);
@@ -2692,7 +2692,7 @@ int SceneObjectDel(PyMOLGlobals * G, CObject * obj)
       if(rec->obj == obj)
         break;
     if(rec) {
-      if(defer_builds_mode >= 3) {
+      if(allow_purge && (defer_builds_mode >= 3)) {
         /* purge graphics representation when no longer used */
         if(rec->obj->fInvalidate)
           rec->obj->fInvalidate(rec->obj, cRepAll, cRepInvPurge, -1);
