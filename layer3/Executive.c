@@ -1243,7 +1243,7 @@ static void ExecutiveUpdateSceneMembers(PyMOLGlobals * G)
             group_rec = group_rec->group;
         }
         if(rec->in_scene && !visible) {
-          rec->in_scene = SceneObjectDel(G, rec->obj);
+          rec->in_scene = SceneObjectDel(G, rec->obj, true);
         } else if(visible && !rec->in_scene) {
           rec->in_scene = SceneObjectAdd(G, rec->obj);
         }
@@ -4122,7 +4122,7 @@ int ExecutiveSetVisFromPyDict(PyMOLGlobals * G, PyObject * dict)
     ok = PyDict_Check(dict);
   if(ok) {
 
-    SceneObjectDel(G, NULL);    /* remove all objects from scene */
+    SceneObjectDel(G, NULL, true);    /* remove all objects from scene */
     ExecutiveInvalidateSceneMembers(G);
 
     while(PyDict_Next(dict, &pos, &key, &list)) {
@@ -13330,7 +13330,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
               if(onoff != tRec->visible) {
                 if(tRec->type == cExecObject) {
                   if(tRec->visible) {
-                    tRec->in_scene = SceneObjectDel(G, tRec->obj);
+                    tRec->in_scene = SceneObjectDel(G, tRec->obj, true);
                     ExecutiveInvalidateSceneMembers(G);
                     tRec->visible = !tRec->visible;
                   } else {
@@ -13364,7 +13364,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
           } else {              /* disable */
             if(rec->visible) {
               if(rec->in_scene)
-                rec->in_scene = SceneObjectDel(G, rec->obj);
+                rec->in_scene = SceneObjectDel(G, rec->obj, true);
               rec->visible = false;
               ExecutiveInvalidateSceneMembers(G);
             }
@@ -13398,7 +13398,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
         if(onoff != tRec->visible) {
           if(tRec->type == cExecObject) {
             if(tRec->visible) {
-              tRec->in_scene = SceneObjectDel(G, tRec->obj);
+              tRec->in_scene = SceneObjectDel(G, tRec->obj, true);
               ExecutiveInvalidateSceneMembers(G);
             } else {
               tRec->in_scene = SceneObjectAdd(G, tRec->obj);
@@ -13417,7 +13417,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals * G, char *name, int onoff, int parents)
         if(tRec->type == cExecObject) {
           if(tRec->visible != onoff) {
             if(tRec->visible) {
-              tRec->in_scene = SceneObjectDel(G, tRec->obj);
+              tRec->in_scene = SceneObjectDel(G, tRec->obj, true);
               ExecutiveInvalidateSceneMembers(G);
             } else {
               tRec->in_scene = SceneObjectAdd(G, tRec->obj);
@@ -14367,7 +14367,7 @@ static void ExecutivePurgeSpec(PyMOLGlobals * G, SpecRec * rec)
         EditorInactivate(G);
     SeqChanged(G);
     if(rec->visible) {
-      SceneObjectDel(G, rec->obj);
+      SceneObjectDel(G, rec->obj, false);
       ExecutiveInvalidateSceneMembers(G);
     }
     ExecutiveDelKey(I, rec);
@@ -14452,7 +14452,7 @@ void ExecutiveDelete(PyMOLGlobals * G, char *name)
             EditorInactivate(G);
         SeqChanged(G);
         if(rec->visible) {
-          SceneObjectDel(G, rec->obj);
+          SceneObjectDel(G, rec->obj, false);
           ExecutiveInvalidateSceneMembers(G);
         }
         ExecutiveDelKey(I, rec);
@@ -14628,7 +14628,7 @@ void ExecutiveManageObject(PyMOLGlobals * G, CObject * obj, int zoom, int quiet)
     }
     if(rec) {                   /* another object of this type already exists */
       /* purge it */
-      SceneObjectDel(G, rec->obj);
+      SceneObjectDel(G, rec->obj, false);
       ExecutiveInvalidateSceneMembers(G);
       rec->obj->fFree(rec->obj);
       rec->obj = NULL;
@@ -15171,7 +15171,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals * G, SpecRec * rec,
     if(rec->visible && !new_vis) {
       if(logging)
         sprintf(buffer, "cmd.disable('%s')", rec->obj->Name);
-      SceneObjectDel(G, rec->obj);
+      SceneObjectDel(G, rec->obj, true);
       ExecutiveInvalidateSceneMembers(G);
       rec->visible = new_vis;
     } else if((!rec->visible) && new_vis) {

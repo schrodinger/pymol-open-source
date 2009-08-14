@@ -12015,7 +12015,7 @@ void ObjectMoleculeFree(ObjectMolecule * I)
 {
   int a;
 
-  SceneObjectDel(I->Obj.G, (CObject *) I);
+  SceneObjectDel(I->Obj.G, (CObject *) I, false);
   SelectorPurgeObjectMembers(I->Obj.G, I);
   for(a = 0; a < I->NCSet; a++)
     if(I->CSet[a]) {
