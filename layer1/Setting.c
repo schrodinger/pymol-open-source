@@ -718,7 +718,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
   SettingSet_b(I, cSetting_use_display_lists, use_display_lists);
   SettingSet_i(I, cSetting_max_threads, max_threads);
   SettingSet_i(I, cSetting_nvidia_bugs, nvidia_bugs);
-  SettingSet_i(I, cSetting_nvidia_bugs, ati_bugs);
+  SettingSet_i(I, cSetting_ati_bugs, ati_bugs);
   SettingSet_i(I, cSetting_cache_max, cache_max);
   SettingSet_i(I, cSetting_logging, logging);
 
@@ -741,6 +741,11 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals * G, PyObject * list)
   if(G->Option->no_quit) {
     SettingSet_b(I, cSetting_presentation_auto_quit, 0);
   }
+
+#ifdef _PYMOL_ACTIVEX
+  SettingSet_i(I, cSetting_max_threads, 1);
+  SettingSet_b(I, cSetting_async_builds, 0);
+#endif
   return (ok);
 #endif
 }
@@ -3439,6 +3444,9 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_i(I, cSetting_cartoon_flat_cycles, 4);
 
 #ifdef WIN32
+#ifdef _PYMOL_ACTIVEX
+    set_i(I, cSetting_max_threads, 1);
+#else
     /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
     {
       SYSTEM_INFO SysInfo;
@@ -3453,6 +3461,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
       }
     }
     /* END PROPRIETARY CODE SEGMENT */
+#endif
 #else
     set_i(I, cSetting_max_threads, 1);
 #endif
