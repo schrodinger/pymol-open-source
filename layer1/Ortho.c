@@ -1701,7 +1701,7 @@ static void OrthoLayoutPanel(PyMOLGlobals * G,
     block->active = true;
 #else
     block = ExecutiveGetBlock(G);
-    BlockSetMargin(block, m_top, m_left, wizardTop, m_right);
+    BlockSetMargin(block, m_top, m_left, executiveBottom, m_right);
     block->active = true;
 
     block = WizardGetBlock(G);
