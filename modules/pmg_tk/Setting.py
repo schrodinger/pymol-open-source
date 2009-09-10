@@ -119,7 +119,7 @@ class Setting:
         self.log_conformations.set(int(self.cmd.get_setting_legacy('log_conformations')))
 
         self.two_sided_lighting = IntVar()
-        self.two_sided_lighting.set(int(self.cmd.get_setting_legacy('two_sided_lighting')))
+        self.two_sided_lighting.set(int(self.cmd.get_setting_legacy('two_sided_lighting'))>0)
 
         self.auto_remove_hydrogens = IntVar()
         self.auto_remove_hydrogens.set(int(self.cmd.get_setting_legacy('auto_remove_hydrogens')))
@@ -403,7 +403,7 @@ class Setting:
             'log_conformations':
             (lambda s,t: (s.log_conformations.set(t[1][0]!=0))),
             'two_sided_lighting':
-            (lambda s,t: (s.two_sided_lighting.set(t[1][0]!=0))),
+            (lambda s,t: (s.two_sided_lighting.set(t[1][0]>0))),
             'auto_remove_hydrogens':
             (lambda s,t: (s.auto_remove_hydrogens.set(t[1][0]!=0))),
             'auto_sculpt':

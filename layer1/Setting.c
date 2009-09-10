@@ -3194,7 +3194,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 
     set_f(I, cSetting_sphere_scale, 1.0F);
 
-    set_b(I, cSetting_two_sided_lighting, -1);
+    set_i(I, cSetting_two_sided_lighting, -1);
 
     set_f(I, cSetting_secondary_structure, 2.0F);       /* unused? */
 
