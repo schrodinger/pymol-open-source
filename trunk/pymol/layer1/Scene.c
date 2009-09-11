@@ -3054,11 +3054,12 @@ static void SceneUpdateButtons(PyMOLGlobals * G)
   SceneDrawButtons(I->Block, false);
 }
 
-void SceneDraw(Block * block)
+void SceneDraw(Block * block) /* returns true if scene was drawn (using a cached image) */
 {
   PyMOLGlobals *G = block->G;
   register CScene *I = G->Scene;
   int overlay, text;
+  int drawn = false; 
 
   if(G->HaveGUI && G->ValidContext) {
 
@@ -3194,6 +3195,7 @@ void SceneDraw(Block * block)
                             (int) ((I->Height - tmp_height) / 2 + I->Block->rect.bottom),
                             -10);
               PyMOLDrawPixels(tmp_width, tmp_height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+              drawn = true;
             }
             FreeP(buffer);
           }
@@ -3276,7 +3278,7 @@ void SceneDraw(Block * block)
                         (int) ((I->Height - tmp_height) / 2 + I->Block->rect.bottom),
                         -10);
           PyMOLDrawPixels(tmp_width, tmp_height, GL_RGBA, GL_UNSIGNED_BYTE, tmp_buffer);
-
+          drawn = true;
         }
         FreeP(tmp_buffer);
       } else if(I->CopyForced) {        /* near-exact fit */
@@ -3325,13 +3327,15 @@ void SceneDraw(Block * block)
         glRasterPos3i((int) ((I->Width - width) / 2 + I->Block->rect.left),
                       (int) ((I->Height - height) / 2 + I->Block->rect.bottom), -10);
         PyMOLDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, tmp_buffer);
+        drawn = true;
         FreeP(tmp_buffer);
       } else {                  /* not a forced copy, so don't show/blend alpha */
         glRasterPos3i((int) ((I->Width - width) / 2 + I->Block->rect.left),
                       (int) ((I->Height - height) / 2 + I->Block->rect.bottom), -10);
         PyMOLDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
+        drawn = true;
       }
+
       I->RenderTime = -I->LastRender;
       I->LastRender = UtilGetSeconds(G);
       I->RenderTime += I->LastRender;
@@ -3344,6 +3348,10 @@ void SceneDraw(Block * block)
       I->ButtonMargin = 0;
     }
   }
+  if(drawn)
+    OrthoDrawWizardPrompt(G); /* ugly hack necessitated because wizard
+                                 prompt is overwritten when image is drawn */
+
 }
 
 int SceneGetButtonMargin(PyMOLGlobals * G)
