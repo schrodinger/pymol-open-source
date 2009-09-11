@@ -108,7 +108,6 @@ struct _COrtho {
 };
 
 void OrthoParseCurrentLine(PyMOLGlobals * G);
-static void OrthoDrawWizardPrompt(PyMOLGlobals * G);
 
 Block *OrthoFindBlock(PyMOLGlobals * G, int x, int y);
 void OrthoKeyControl(PyMOLGlobals * G, unsigned char k);
@@ -1541,7 +1540,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 
 /*========================================================================*/
 
-static void OrthoDrawWizardPrompt(PyMOLGlobals * G)
+void OrthoDrawWizardPrompt(PyMOLGlobals * G)
 {
   /* assumes PMGUI */
 
