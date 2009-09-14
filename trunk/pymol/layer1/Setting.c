@@ -2557,6 +2557,9 @@ void SettingGenerateSideEffects(PyMOLGlobals * G, int index, char *sele, int sta
   case cSetting_sculpting:
     OrthoDirty(G);
     break;
+  case cSetting_auto_overlay:
+    OrthoRemoveAutoOverlay(G); /* always start clean */
+    break;
   case cSetting_overlay:
   case cSetting_overlay_lines:
   case cSetting_text:

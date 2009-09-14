@@ -31,9 +31,11 @@ class Renaming(Wizard):
         elif k==10 or k==13:
             self.new_name = string.strip(self.new_name)
             if self.mode=='object':
-                cmd.do("set_name %s,%s"%(self.old_name,self.new_name),log=0)
+                cmd.do("set_name %s,%s"%
+                       (self.old_name,self.new_name),log=0)
             elif self.mode=='scene':
-                cmd.do("scene %s,rename,new_key=%s"%(self.old_name,self.new_name),log=0)                
+                cmd.do("scene %s,rename,new_key=%s"%
+                       (self.old_name,self.new_name),log=0)                
             cmd.set_wizard()
             cmd.refresh()
             return 1

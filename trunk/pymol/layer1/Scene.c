@@ -936,7 +936,6 @@ void SceneFromViewElem(PyMOLGlobals * G, CViewElem * elem, int dirty)
     }
   }
   if(elem->state_flag&&!MovieDefined(G)) {
-    printf("%d\n",elem->state+1);
     SettingSetGlobal_i(G, cSetting_state, (elem->state)+1);
   }
   if(changed_flag) {
@@ -7196,8 +7195,21 @@ void SceneUpdate(PyMOLGlobals * G, int force)
       defer_builds_mode = 1;
     }
   }
+  /*
+  if(defer_builds_mode) {
+    rec = NULL;
+    while(ListIterate(I->Obj, rec, next)) {
+      if(ObjectGetCurrentState(rec->obj, false) != cur_state) {
+        force = true;  
+        break;
+      }
+    }
+  }
+*/
+
   if(force || I->ChangedFlag || ((cur_state != I->LastStateBuilt) &&
                                  (defer_builds_mode > 0))) {
+
     SceneCountFrames(G);
 
     if(force || (defer_builds_mode != 5)) {     /* mode 5 == immediate mode */

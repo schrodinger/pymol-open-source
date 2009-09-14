@@ -339,7 +339,7 @@ int ObjectMotion(CObject * I, int action, int first,
 
               if(state_flag) {
                 I->ViewElem[frame].state_flag = state_flag;
-                I->ViewElem[frame].state = state_tmp - 1;
+                I->ViewElem[frame].state = state_tmp;
               }
 
               if(power!=0.0F) {
@@ -552,6 +552,7 @@ void ObjectAdjustStateRebuildRange(CObject * I, int *start, int *stop)
     SettingGet_i(I->G, NULL, I->Setting, cSetting_defer_builds_mode);
   int async_builds = SettingGet_b(I->G, NULL, I->Setting, cSetting_async_builds);
   int max_threads = SettingGet_i(I->G, NULL, I->Setting, cSetting_max_threads);
+  int dummy;
   if(defer_builds_mode >= 3) {
     if(SceneObjectIsActive(I->G, I))
       defer_builds_mode = 2;
@@ -559,26 +560,40 @@ void ObjectAdjustStateRebuildRange(CObject * I, int *start, int *stop)
   switch (defer_builds_mode) {
   case 1:                      /* defer geometry builds until needed */
   case 2:                      /* defer and destroy continuously for increase memory conservation */
-    {
+    if(SettingGetIfDefined_i(I->G, I->Setting, cSetting_state, &dummy)) {  
+      /* decoupled...so always build all states.  Otherwise, geometry
+      may not be there when we need it... unfortunately, this defeats
+      the purpose of defer_builds_mode! */
+    } else {
       int min = *start;
       int max = *stop;
-
-      *start = ObjectGetCurrentState(I, false);
-      if((!async_builds) || (max_threads < 1)) {
+      int global_state = SceneGetState(I->G);
+      int obj_state = ObjectGetCurrentState(I, false);
+      
+      *start = obj_state;
+      if((obj_state != global_state) || (!async_builds) || (max_threads < 1)) {
         *stop = *start + 1;
+        if(*stop > max )
+          *stop = max;
       } else {
         int base = (*start / max_threads);
         *start = (base) * max_threads;
         *stop = (base + 1) * max_threads;
+        if(*start < min)
+          *start = min;
+        if(*start > max)
+          *start = max;
+        if(*stop < min)
+          *stop = min;
+        if(*stop > max)
+          *stop = max;
       }
-      if(*start < min)
-        *start = min;
-      if(*start > max)
-        *start = max;
-      if(*stop < min)
-        *stop = min;
-      if(*stop > max)
-        *stop = max;
+      if(*start > obj_state)
+        *start = obj_state;
+      if(*stop <= obj_state)
+        *stop = obj_state + 1;
+      if(*start < 0)
+        *start = 0;
     }
     break;
   case 3:                      /* object not active, so do not rebuild anything */
@@ -969,9 +984,11 @@ void ObjectPrepareContext(CObject * I, CRay * ray)
           I->TTTFlag = true;
         }
         if(I->ViewElem[frame].state_flag) {
-           SettingCheckHandle(I->G,&I->Setting);
-
+          SettingCheckHandle(I->G,&I->Setting);
           if(I->Setting) {
+            /* note: this assumes that the state has already been
+               calculated and can thus be displayed.  How can we
+               guarantee this to be true? */
             SettingSet_i(I->Setting,cSetting_state,I->ViewElem[frame].state + 1);
           }
         }
