@@ -257,7 +257,7 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view)
 #else
   PyObject *result = NULL;
 
-  result = PyList_New(19);
+  result = PyList_New(21);
 
   if(result) {
     PyList_SetItem(result, 0, PyInt_FromLong(view->matrix_flag));
@@ -325,6 +325,13 @@ PyObject *ViewElemAsPyList(PyMOLGlobals * G, CViewElem * view)
       PyList_SetItem(result, 18, PyFloat_FromDouble(view->bias));
     } else {
       PyList_SetItem(result, 18, PConvAutoNone(NULL));
+    }
+
+    PyList_SetItem(result, 19, PyInt_FromLong(view->state_flag));
+    if(view->state_flag) {
+      PyList_SetItem(result, 20, PyInt_FromLong(view->state));
+    } else {
+      PyList_SetItem(result, 20, PConvAutoNone(NULL));
     }
 
   }
@@ -418,6 +425,14 @@ int ViewElemFromPyList(PyMOLGlobals * G, PyObject * list, CViewElem * view)
       ok = PConvPyFloatToFloat(PyList_GetItem(list, 18), &view->bias);
     } else {
       view->bias = 1.0F;
+    }
+  }
+  if(ok && (ll>20)) {
+    ok = PConvPyIntToInt(PyList_GetItem(list, 19), &view->state_flag);
+    if(ok && view->state_flag) {
+      ok = PConvPyIntToInt(PyList_GetItem(list, 20), &view->state);
+    } else {
+      view->state = 0;
     }
   }
   return ok;
