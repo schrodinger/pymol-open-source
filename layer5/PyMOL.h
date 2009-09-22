@@ -450,6 +450,12 @@ PyMOLreturn_status PyMOL_CmdRampNew(CPyMOL * I, char *name, char *map, float *ra
                                     float beyond, float within, float sigma,
                                     int zero, int calc_mode, int quiet);
 
+PyMOLreturn_status PyMOL_CmdPseudoatom(CPyMOL * I, char *object_name, char *sele,
+			   char *name, char *resn, char *resi, char *chain,
+			   char *segi, char *elem, float vdw, int hetatm,
+			   float b, float q, char *label, float *pos, int color,
+				       int state, int mode, int quiet);
+
 
 /* releasing returned values */
 
