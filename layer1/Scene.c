@@ -4557,8 +4557,18 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
           }
           switch (mode) {
           case cButModeSimpleClick:
-            PyMOL_SetClickReady(G->PyMOL, obj->Name, I->LastPicked.src.index,
-                                button, mod, I->LastWinX, I->Height - (I->LastWinY + 1));
+	    {
+	      float pos_store[3], *pos = pos_store;
+	      int index = I->LastPicked.src.index; /* 1-based */
+	      int state = ObjectGetCurrentState(obj, true);
+	      if(!( (obj->type == cObjectMolecule) &&
+		    (I->LastPicked.src.index >= 0 ) &&
+		    ObjectMoleculeGetAtomTxfVertex((ObjectMolecule *)obj,-1,index, pos)))
+		pos = NULL;
+	      PyMOL_SetClickReady(G->PyMOL, obj->Name, I->LastPicked.src.index,
+				  button, mod, I->LastWinX, I->Height - (I->LastWinY + 1),
+				  pos, state + 1); /* send a 1-based state index */
+	    }
             break;
           case cButModeLB:
           case cButModeMB:
@@ -4665,7 +4675,7 @@ static int SceneClick(Block * block, int button, int x, int y, int mod, double w
           break;
         case cButModeSimpleClick:
           PyMOL_SetClickReady(G->PyMOL, "", -1, button, mod, I->LastWinX,
-                              I->Height - (I->LastWinY + 1));
+                              I->Height - (I->LastWinY + 1), NULL, 0);
           break;
         }
         PRINTFB(G, FB_Scene, FB_Blather)

@@ -118,7 +118,8 @@ typedef struct _CPyMOL {
   int ClickReadyFlag;
   int DrawnFlag;
   ObjectNameType ClickedObject;
-  int ClickedIndex, ClickedButton, ClickedModifiers, ClickedX, ClickedY;
+  int ClickedIndex, ClickedButton, ClickedModifiers, ClickedX, ClickedY, ClickedHavePos, ClickedPosState;
+  float ClickedPos[3];
   int ImageRequestedFlag, ImageReadyFlag;
   int DraggedFlag;
   int Reshape[PYMOL_RESHAPE_SIZE];
@@ -2662,7 +2663,7 @@ PyMOLreturn_status PyMOL_CmdCreate(CPyMOL * I, char *name,
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdPseudoatom(CPyMOL * I, char *object_name, char *sele,
+PyMOLreturn_status PyMOL_CmdPseudoatom(CPyMOL * I, char *object_name, char *selection,
 			   char *name, char *resn, char *resi, char *chain,
 			   char *segi, char *elem, float vdw, int hetatm,
 			   float b, float q, char *label, float *pos, int color,
@@ -3601,7 +3602,7 @@ void PyMOL_SetPassive(CPyMOL * I, int onOff)
 }
 
 void PyMOL_SetClickReady(CPyMOL * I, char *name, int index, int button, int mod, int x,
-                         int y)
+                         int y, float *pos, int state)
 {
 
   if(name && name[0] && (index >= 0)) {
@@ -3620,6 +3621,15 @@ void PyMOL_SetClickReady(CPyMOL * I, char *name, int index, int button, int mod,
     I->ClickedIndex = index;
     I->ClickedButton = button;
     I->ClickedModifiers = mod;
+  }
+  if(pos) {
+    I->ClickedHavePos = true;
+    copy3f(pos, I->ClickedPos);
+    I->ClickedPosState = state; 
+  } else {
+    I->ClickedHavePos = false;
+    zero3f(I->ClickedPos);
+    I->ClickedPosState = 0;
   }
 }
 
@@ -3641,7 +3651,7 @@ char *PyMOL_GetClickString(CPyMOL * I, int reset)
   if(ready) {
     result = Alloc(char, OrthoLineLength + 1);
     if(result) {
-      WordType butstr = "left", modstr = "";
+      WordType butstr = "left", modstr = "", posstr = "";
       result[0] = 0;
       switch (I->ClickedButton) {
       case P_GLUT_SINGLE_LEFT:
@@ -3678,16 +3688,19 @@ char *PyMOL_GetClickString(CPyMOL * I, int reset)
           strcat(modstr, " ");
         strcat(modstr, "shift");
       }
+      if(I->ClickedHavePos) {
+	sprintf(posstr,"px=%.7g\npy=%.7g\npz=%.7g\nstate=%d",I->ClickedPos[0],I->ClickedPos[1],I->ClickedPos[2],I->ClickedPosState);
+      }
       if(!I->ClickedObject[0]) {
         sprintf(result,
-                "type=none\nclick=%s\nmod_keys=%s\nx=%d\ny=%d\n",
-                butstr, modstr, I->ClickedX, I->ClickedY);
+                "type=none\nclick=%s\nmod_keys=%s\nx=%d\ny=%d\n%s",
+                butstr, modstr, I->ClickedX, I->ClickedY,posstr);
       } else {
         ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(I->G, I->ClickedObject);
         if(obj && (I->ClickedIndex < obj->NAtom)) {
           AtomInfoType *ai = obj->AtomInfo + I->ClickedIndex;
           sprintf(result,
-                  "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\nclick=%s\nmod_keys=%s\nx=%d\ny=%d\n",
+                  "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\nclick=%s\nmod_keys=%s\nx=%d\ny=%d\n%s",
                   I->ClickedObject,
                   I->ClickedIndex + 1,
                   ai->rank,
@@ -3695,7 +3708,7 @@ char *PyMOL_GetClickString(CPyMOL * I, int reset)
                   ai->segi,
                   ai->chain,
                   ai->resn,
-                  ai->resi, ai->name, ai->alt, butstr, modstr, I->ClickedX, I->ClickedY);
+                  ai->resi, ai->name, ai->alt, butstr, modstr, I->ClickedX, I->ClickedY, posstr);
         }
       }
     }
