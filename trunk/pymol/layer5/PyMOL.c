@@ -2666,19 +2666,19 @@ PyMOLreturn_status PyMOL_CmdCreate(CPyMOL * I, char *name,
 PyMOLreturn_status PyMOL_CmdPseudoatom(CPyMOL * I, char *object_name, char *selection,
 				       char *name, char *resn, char *resi, char *chain,
 				       char *segi, char *elem, float vdw, int hetatm,
-				       float b, float q, char *label, 
-				       int set_xyz, float x, float y, float z,
-				       int color,
+				       float b, float q, char *color, char *label, 
+				       int use_xyz, float x, float y, float z,
 				       int state, int mode, int quiet)
 {
   int ok = true;
   PYMOL_API_LOCK
   if(ok) {
     OrthoLineType s1;
+    int color_index = ColorGetIndex(I->G, color);
     ok = (SelectorGetTmp(I->G, selection, s1)) >= 0;
     if(ok) {
       float pos_tmp[3], *pos = pos_tmp;
-      if(set_xyz) {
+      if(use_xyz) {
 	pos[0] = x;
 	pos[1] = y;
 	pos[2] = z;
@@ -2687,14 +2687,12 @@ PyMOLreturn_status PyMOL_CmdPseudoatom(CPyMOL * I, char *object_name, char *sele
       }
       ok = ExecutivePseudoatom(I->G, object_name, s1, name, resn, resi, 
 			       chain, segi, elem, vdw, hetatm, b, q, label, 
-			       pos,
-			       color, state, mode, quiet);
+			       pos, color_index, state - 1, mode, quiet);
     }
     SelectorFreeTmp(I->G, s1);
   }
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
-
 
 static const CPyMOLOptions Defaults = {
   true,                         /* pmgui */
