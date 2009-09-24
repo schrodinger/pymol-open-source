@@ -1779,7 +1779,7 @@ int BasisHitPerspective(BasisCallRec * BC)
             ii = *(ip++);
             prm = BC_prim + v2p;
             do_loop = ((ii >= 0) && (ii < n_vert));
-            //            if((v2p != except1) && (v2p != except2) && (!MapCached(cache, v2p))) {
+            /*            if((v2p != except1) && (v2p != except2) && (!MapCached(cache, v2p))) { */
             if((v2p != except1) && (v2p != except2) && (!cache_cache[v2p])) {
               int prm_type = prm->type;
 

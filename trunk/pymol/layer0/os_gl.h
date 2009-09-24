@@ -208,7 +208,8 @@ int PyMOLCheckOpenGLErr(char *pos);
 #define p_glutMainLoop             glutMainLoop
 
 #else
-
+/* we're pretending we have glut...*/
+int p_glutGet(GLenum type);
 
 /* ============ GLUT EMULATION MODE ============= */
 
@@ -234,6 +235,7 @@ typedef struct {
 
 void p_glutHandleEvent(p_glut_event * ev);
 int p_glutGetRedisplay(void);
+
 
 #endif
 
@@ -289,6 +291,7 @@ int p_glutGetRedisplay(void);
 #define P_GLUT_SCREEN_HEIGHT            10
 #define P_GLUT_WINDOW_BORDER_WIDTH             11
 #define P_GLUT_WINDOW_HEADER_HEIGHT            12
+
 
 #ifndef _PYMOL_NO_GLUT
 void p_glutGameModeString(char *str);
