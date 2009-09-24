@@ -1,4 +1,3 @@
-
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
@@ -8710,7 +8709,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 #endif
               break;
             case cStereo_anaglyph:
-              //glClear(GL_ACCUM_BUFFER_BIT);
+              /* glClear(GL_ACCUM_BUFFER_BIT); */
               glColorMask(true, false, false, true);
               break;
             case cStereo_clone_dynamic:
@@ -8855,7 +8854,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
 #endif
               break;
             case cStereo_anaglyph:
-              //              glAccum(GL_ACCUM, 0.5);
+              /* glAccum(GL_ACCUM, 0.5); */
               glColorMask(false, true, true, true);
               glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
               break;
@@ -8965,8 +8964,8 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
               break;
             case cStereo_anaglyph:
               glColorMask(true, true, true, true);
-              //              glAccum(GL_ACCUM, 0.5);
-              //              glAccum(GL_RETURN, 1.0);
+              /*              glAccum(GL_ACCUM, 0.5);
+                              glAccum(GL_RETURN, 1.0); */
               OrthoDrawBuffer(G, GL_BACK_LEFT);
               break;
             case cStereo_clone_dynamic:
