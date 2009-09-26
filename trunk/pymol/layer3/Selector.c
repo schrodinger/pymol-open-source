@@ -7478,10 +7478,11 @@ int SelectorCheckTmp(PyMOLGlobals * G, char *name)
 /*========================================================================*/
 void SelectorFreeTmp(PyMOLGlobals * G, char *name)
 {                               /* remove temporary selections */
-  if(name && name[0])
+  if(name && name[0]) {
     if(strncmp(name, cSelectorTmpPrefix, strlen(cSelectorTmpPrefix)) == 0) {
       ExecutiveDelete(G, name);
     }
+  }
 }
 
 

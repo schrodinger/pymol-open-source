@@ -11075,7 +11075,132 @@ int *ExecutiveGetG3d(PyMOLGlobals * G)
   return result;
 }
 
-
+int ExecutiveSetBondSettingFromString(PyMOLGlobals * G,
+                                      int index, char *value,
+                                      char *s1, char *s2, int state,
+                                      int quiet, int updates)
+{
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  ObjectMolecule *obj = NULL;
+  int sele1, sele2;
+  SettingName name;
+  int ok = true;
+  int side_effects = false;
+  int value_storage[3], *value_ptr;
+  float float_storage[3];
+  int value_type = 0;
+  PRINTFD(G, FB_Executive)
+    " ExecutiveSetBondSettingFromString: entered. '%s' '%s'\n", s1, s2 ENDFD;
+  sele1 = SelectorIndexByName(G, s1);
+  sele2 = SelectorIndexByName(G, s2);
+  value_ptr = &value_storage[0];
+  if((sele1 >= 0) && (sele2 >= 0)) {
+    int have_value = false;
+    int type = SettingGetType(G, index);
+    switch (type) {
+    case cSetting_boolean:
+      {
+        if((!*value) || (*value == '0') || (*value == 'F') || WordMatchExact(G, value, "on", true)
+           || WordMatchExact(G, value, "false", true))
+          *(value_ptr) = 0;
+        else
+          *(value_ptr) = 1;
+        value_type = cSetting_boolean;
+        have_value = true;
+      }
+      break;
+    case cSetting_int:
+      {
+        if(sscanf(value, "%d", value_ptr) == 1) {
+          value_type = cSetting_int;
+          have_value = true;
+        } else {
+          ok = false;
+        }
+      }
+      break;
+    case cSetting_float:
+      {
+        if(sscanf(value, "%f", &float_storage[0]) == 1) {
+          value_ptr = (int*) (void*) &float_storage[0];
+          value_type = cSetting_float;
+          have_value = true;
+        } else {
+          ok = false;
+        }
+      }
+      break;
+    case cSetting_float3:
+      if(sscanf(value, "%f%f%f", &float_storage[0],
+                &float_storage[1], &float_storage[2]) == 3) {
+        value_ptr = (int*) (void*) &float_storage[0];
+        value_type = cSetting_float3;
+        have_value = true;
+      } else {
+        ok = false;
+      }
+      break;
+    case cSetting_color:
+      {
+        int color_index = ColorGetIndex(G, value);
+        if((color_index < 0) && (color_index > cColorExtCutoff))
+          color_index = 0;
+        *(value_ptr) = color_index;
+        value_type = cSetting_color;
+        have_value = true;
+      }
+      break;
+      /* cSetting_string? */
+    default:
+      ok = false;
+      break;
+    }
+    
+    if(ok && have_value) {
+      rec = NULL;
+      while((ListIterate(I->Spec, rec, next))) {
+        if((rec->type == cExecObject) && (rec->obj->type == cObjectMolecule)) {
+          obj = (ObjectMolecule *) rec->obj;
+          {
+            int a, nBond = obj->NBond;
+            int nSet = 0;
+            BondType *bi = obj->Bond;
+            AtomInfoType *ai1, *ai2, *ai = obj->AtomInfo;
+            for(a = 0; a < nBond; a++) {
+              ai1 = ai + bi->index[0];
+              ai2 = ai + bi->index[1];
+              if((SelectorIsMember(G, ai1->selEntry, sele1) &&
+                  SelectorIsMember(G, ai2->selEntry, sele2)) ||
+                 (SelectorIsMember(G, ai2->selEntry, sele1) &&
+                  SelectorIsMember(G, ai1->selEntry, sele2))) {
+                
+                int uid = AtomInfoCheckUniqueBondID(G, bi);
+                bi->has_setting = true;
+                SettingUniqueSetTypedValue(G, uid, index, value_type, value_ptr);
+                if(updates)
+                  side_effects = true;
+                nSet++;
+              }
+              bi++;
+            }
+            if(nSet && !quiet) {
+              SettingGetName(G, index, name);
+              PRINTF
+                " Setting: %s set for %d bonds in object \"%s\".\n",
+                name, nSet, obj->Obj.Name ENDF(G);
+            }
+          }
+        }
+      }
+    }
+  }
+  if(side_effects) {
+    SettingGenerateSideEffects(G, index, s1, state); /* not strickly correct */
+    /*    SettingGenerateSideEffects(G,index,s2,state); */
+  }
+  return (ok);
+}
 /*========================================================================*/
 int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
                             char *s1, char *s2, int state, int quiet, int updates)
@@ -11174,7 +11299,7 @@ int ExecutiveSetBondSetting(PyMOLGlobals * G, int index, PyObject * tuple,
     }
   }
   if(side_effects) {
-    SettingGenerateSideEffects(G, index, s1, state);
+    SettingGenerateSideEffects(G, index, s1, state);  /* not strickly correct */
     /*    SettingGenerateSideEffects(G,index,s2,state); */
   }
 
@@ -11192,13 +11317,13 @@ int ExecutiveUnsetBondSetting(PyMOLGlobals * G, int index, char *s1, char *s2,
   SpecRec *rec = NULL;
   ObjectMolecule *obj = NULL;
   SettingName name;
-  int unblock;
+  /*  int unblock; */
   int ok = true;
   int side_effects = false;
   int sele1, sele2;
   PRINTFD(G, FB_Executive)
     " ExecutiveSetSetting: entered. sele '%s' '%s'\n", s1, s2 ENDFD;
-  unblock = PAutoBlock(G);
+  /* unblock = PAutoBlock(G); */
   sele1 = SelectorIndexByName(G, s1);
   sele2 = SelectorIndexByName(G, s2);
   if((sele1 >= 0) && (sele2 >= 0)) {
@@ -11241,7 +11366,7 @@ int ExecutiveUnsetBondSetting(PyMOLGlobals * G, int index, char *s1, char *s2,
     SettingGenerateSideEffects(G, index, s1, state);
     /*    SettingGenerateSideEffects(G,index,s2,state); */
   }
-  PAutoUnblock(G, unblock);
+  /* PAutoUnblock(G, unblock); */
   return (ok);
 }
 
@@ -11684,7 +11809,7 @@ int ExecutiveSetSettingFromString(PyMOLGlobals * G,
           }
           break;
         case cExecSelection:
-#if 0
+#if 1
           /* this code has not yet been tested... */
 
           sele1 = SelectorIndexByName(G, rec->name);
@@ -15739,9 +15864,9 @@ static void ExecutiveDraw(Block * block)
   float lightEdge[3] = { 0.6F, 0.6F, 0.6F };
   float darkEdge[3] = { 0.35F, 0.35F, 0.35F };
   float captionColor[3] = { 0.3F, 0.9F, 0.3F };
-  float activeColor[3] = { 0.9F, 0.9F, 1.0F };
 
 #ifndef _PYMOL_NOPY
+  float activeColor[3] = { 0.9F, 0.9F, 1.0F };
   float toggleColor3[3] = { 0.6F, 0.6F, 0.8F };
 #endif
 

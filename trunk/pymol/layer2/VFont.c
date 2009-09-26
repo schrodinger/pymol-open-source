@@ -214,7 +214,7 @@ static int VFontRecLoad(PyMOLGlobals * G, VFontRec * I, PyObject * dict)
           I->pen[used + n_float] = -1.0F;       /* sentinel */
           PRINTFD(G, FB_VFont)
             " VFontRecLoad-Debug: Added '%c' adv: %0.3f n_float: %d\n", code[0], adv,
-            n_float ENDFD;
+            (int)n_float ENDFD;
           if(ok)
             used += n_float + 1;
 
