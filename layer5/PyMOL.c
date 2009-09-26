@@ -1979,7 +1979,7 @@ PyMOLreturn_status PyMOL_CmdDisable(CPyMOL * I, char *name, int quiet)
 {
   int ok = false;
   PYMOL_API_LOCK if(name[0] == '(') {
-    OrthoLineType s1;
+    OrthoLineType s1 = "";
     ok = (SelectorGetTmp(I->G, name, s1) >= 0);
     if(ok)
       ok = ExecutiveSetOnOffBySele(I->G, s1, false);
@@ -1990,14 +1990,98 @@ PyMOLreturn_status PyMOL_CmdDisable(CPyMOL * I, char *name, int quiet)
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }
 
-PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I, char *setting, char *value, char *selection,
+PyMOLreturn_status PyMOL_CmdSetBond(CPyMOL * I, char *setting, char *value,
+                                    char *selection1, char *selection2,
+                                    int state, int quiet, int side_effects)
+{
+  int ok = true;
+  PYMOL_API_LOCK {
+    OVreturn_word setting_id;
+    OrthoLineType s1 = "";
+    OrthoLineType s2 = "";
+    if(ok) ok = OVreturn_IS_OK((setting_id = get_setting_id(I, setting)));
+    if(ok) ok = (SelectorGetTmp(I->G, selection1, s1) >= 0);
+    if(ok) {
+      if(selection2 && selection2[0]) {
+        ok = (SelectorGetTmp(I->G, selection2, s2) >= 0);
+      } else {
+        ok = (SelectorGetTmp(I->G, selection1, s2) >= 0);
+      }
+    }
+    if(ok) {
+      ok = ExecutiveSetBondSettingFromString(I->G, setting_id.word, value,
+                                             s1, s2,
+                                             state - 1, quiet, side_effects);
+    }
+    SelectorFreeTmp(I->G, s1);
+    SelectorFreeTmp(I->G, s2);
+  } PYMOL_API_UNLOCK 
+      return return_status_ok(ok);
+}
+
+PyMOLreturn_status PyMOL_CmdUnsetBond(CPyMOL * I, char *setting,
+                                      char *selection1, char *selection2,
+                                      int state, int quiet, int side_effects)
+{
+  int ok = true;
+  PYMOL_API_LOCK {
+    OVreturn_word setting_id;
+    OrthoLineType s1 = "";
+    OrthoLineType s2 = "";
+    if(ok) ok = OVreturn_IS_OK((setting_id = get_setting_id(I, setting)));
+    if(ok) ok = (SelectorGetTmp(I->G, selection1, s1) >= 0);
+    if(ok) {
+      if(selection2 && selection2[0]) {
+        ok = (SelectorGetTmp(I->G, selection2, s1) >= 0);
+      } else {
+        ok = (SelectorGetTmp(I->G, selection1, s2) >= 0);
+      }
+    }
+    if(ok) {
+      ok = ExecutiveUnsetBondSetting(I->G, setting_id.word, 
+                                     s1, s2,
+                                     state - 1, quiet, side_effects);
+    }
+    SelectorFreeTmp(I->G, s1);
+    SelectorFreeTmp(I->G, s2);
+  } PYMOL_API_UNLOCK 
+      return return_status_ok(ok);
+}
+
+PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I, char *setting, char *value,
+                                char *selection,
                                 int state, int quiet, int side_effects)
 {
   int ok = true;
-  PYMOL_API_LOCK OVreturn_word setting_id;
-  if(OVreturn_IS_OK((setting_id = get_setting_id(I, setting)))) {
-    ExecutiveSetSettingFromString(I->G, setting_id.word, value, selection,
-                                  state - 1, quiet, side_effects);
+  PYMOL_API_LOCK {
+    OVreturn_word setting_id;
+    OrthoLineType s1 = "";
+    if(ok) ok = OVreturn_IS_OK((setting_id = get_setting_id(I, setting)));
+    if(ok) ok = (SelectorGetTmp(I->G, selection, s1) >= 0);
+    
+    if(ok) {
+      ExecutiveSetSettingFromString(I->G, setting_id.word, value, s1,
+                                    state - 1, quiet, side_effects);
+    }
+    SelectorFreeTmp(I->G, s1);
+  }
+  PYMOL_API_UNLOCK return return_status_ok(ok);
+}
+
+PyMOLreturn_status PyMOL_CmdUnset(CPyMOL * I, char *setting, char *selection,
+                                  int state, int quiet, int side_effects)
+{
+  int ok = true;
+  PYMOL_API_LOCK {
+    OVreturn_word setting_id;
+    OrthoLineType s1 = "";
+    if(ok) ok = OVreturn_IS_OK((setting_id = get_setting_id(I, setting)));
+    if(ok) ok = (SelectorGetTmp(I->G, selection, s1) >= 0);
+    if(ok) {
+      ExecutiveUnsetSetting(I->G, setting_id.word, s1,
+                            state - 1, quiet, side_effects);
+    }
+    SelectorFreeTmp(I->G, s1);
   }
   PYMOL_API_UNLOCK return return_status_ok(ok);
 }

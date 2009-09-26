@@ -350,8 +350,20 @@ PyMOLreturn_status PyMOL_CmdDisable(CPyMOL * I, char *name, int quiet);
 
 PyMOLreturn_status PyMOL_CmdDelete(CPyMOL * I, char *name, int quiet);
 
-PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I, char *setting, char *value, char *selection,
+PyMOLreturn_status PyMOL_CmdSet(CPyMOL * I, char *setting, char *value,
+                                char *selection,
                                 int state, int quiet, int side_effects);
+
+PyMOLreturn_status PyMOL_CmdUnset(CPyMOL * I, char *setting, char *selection,
+                                  int state, int quiet, int side_effects);
+
+PyMOLreturn_status PyMOL_CmdSetBond(CPyMOL * I, char *setting, char *value,
+                                    char *selection1, char *selection2,
+                                    int state, int quiet, int side_effects);
+
+PyMOLreturn_status PyMOL_CmdUnsetBond(CPyMOL * I, char *setting,
+                                      char *selection1, char *selection2,
+                                      int state, int quiet, int side_effects);
 
 PyMOLreturn_status PyMOL_CmdColor(CPyMOL * I, char *color, char *selection, int flags,
                                   int quiet);

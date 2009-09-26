@@ -2788,7 +2788,7 @@ int SceneLoadPNG(PyMOLGlobals * G, char *fname, int movie_flag, int stereo, int 
 #define SceneTextLeftMargin 1
 #define SceneScrollBarMargin 1
 #define SceneScrollBarWidth 13
-
+#ifndef _PYMOL_NOPY
 static void draw_button(int x2, int y2, int z, int w, int h, float *light, float *dark,
                         float *inside)
 {
@@ -2828,8 +2828,8 @@ static void draw_button(int x2, int y2, int z, int w, int h, float *light, float
     glVertex3i(x2 + w - 1, y2 + 1, z);
     glEnd();
   }
-
 }
+#endif
 
 int SceneSetNames(PyMOLGlobals * G, PyObject * list)
 {
