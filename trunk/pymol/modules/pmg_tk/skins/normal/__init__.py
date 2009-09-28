@@ -599,8 +599,10 @@ class Normal(PMGSkin):
         if self.save_file!='':
             self.cmd.log("save %s,format=pse\n"%(self.save_file),
                       "cmd.save('%s',format='pse')\n"%(self.save_file))
-            self.cmd.save(self.save_file,"","pse",quiet=0)
-            self.cmd.set("session_changed",0)
+#            self.cmd.save(self.save_file,"","pse",quiet=0)
+#            self.cmd.set("session_changed",0)
+            self.cmd.do("_ cmd.save('''%s''','','pse',quiet=0)"%self.save_file) # do this in the main thread to block cmd.quit, etc.
+            self.cmd.do("_ cmd.set('session_changed',0)")
             return 1
         else:
             return self.session_save_as()
@@ -621,10 +623,12 @@ class Normal(PMGSkin):
             self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
             self.cmd.log("save %s,format=pse\n"%(sfile),
                       "cmd.save('%s',format='pse')\n"%(sfile))
-            self.cmd.save(sfile,"",format='pse',quiet=0)
+#            self.cmd.save(sfile,"",format='pse',quiet=0)
+#            self.cmd.set("session_changed",0)
             self.save_file = sfile
             self.cmd.set("session_file",self.save_file)
-            self.cmd.set("session_changed",0)
+            self.cmd.do("_ cmd.save('''%s''','','pse',quiet=0)"%self.save_file) # do this in the main thread to block cmd.quit, etc.
+            self.cmd.do("_ cmd.set('session_changed',0)")
             return 1
         else:
             return 0
