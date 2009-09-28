@@ -3035,7 +3035,7 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
 
     set_b(I, cSetting_normal_workaround, 0);
 
-    set_b(I, cSetting_backface_cull, 1);
+    set_b(I, cSetting_backface_cull, 0); 
 
     set_f(I, cSetting_gamma, 1.0F);
 
