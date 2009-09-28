@@ -706,6 +706,7 @@ static void RayTransformFirst(CRay * I, int perspective, int identity)
      (SettingGet(I->G, cSetting_ray_interior_color) != -1) || I->CheckInterior)
     backface_cull = 0;
 
+
   basis0 = I->Basis;
   basis1 = I->Basis + 1;
 
