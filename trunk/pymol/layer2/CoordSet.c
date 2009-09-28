@@ -1247,8 +1247,11 @@ void CoordSetRender(CoordSet * I, RenderInfo * info)
     int float_labels = SettingGet_i(G, I->Setting,
                                     I->Obj->Obj.Setting,
                                     cSetting_float_labels);
-
-    if((!pass) && I->SculptCGO && (I->Obj->Obj.RepVis[cRepCGO])) {
+    int sculpt_vdw_vis_mode = SettingGet_i(G, I->Setting,
+					   I->Obj->Obj.Setting,
+					   cSetting_sculpt_vdw_vis_mode);
+    if((!pass) && sculpt_vdw_vis_mode && 
+       I->SculptCGO && (I->Obj->Obj.RepVis[cRepCGO])) {
       if(ray) {
         CGORenderRay(I->SculptCGO, ray,
                      ColorGet(G, I->Obj->Obj.Color), I->Setting, I->Obj->Obj.Setting);
