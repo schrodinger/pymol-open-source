@@ -188,6 +188,7 @@ class Sculpting(Wizard):
         self.cmd.sculpt_deactivate("all")
         if self.status == HAVE_SELECTIONS:
             util.cbag("(byobj %s)"%cent_sele, _self=self.cmd)
+            self.cmd.flag("exclude","(byobj %s)"%cent_sele,"clear")
         self.status = NO_SELECTIONS
         self.cmd.delete(sele_pre+"*")
         self.cmd.refresh_wizard()
