@@ -529,7 +529,7 @@ int MovieFromPyList(PyMOLGlobals * G, PyObject * list, int *warning)
   if(!ok) {
     MovieReset(G);
   } else if(MovieDefined(G)) {
-    OrthoReshape(G,0,0,true);
+    OrthoReshape(G,-1,-1,true);
   }
   return (ok);
 #endif
