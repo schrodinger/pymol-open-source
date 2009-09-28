@@ -1151,7 +1151,7 @@ class EditFrame(GuiFrame):
         GuiButton(self, "Sculpt", self.sculpt, "Molecular Sculpting")
         GuiButton(self, "Fix", self.fix, "Fix Atom Positions")
         GuiButton(self, "Rest", self.rest, "Restrain Atom Positions")
-        GuiButton(self, "Undo", self.undo, "Undo Changes")
+#        GuiButton(self, "Undo", self.undo, "Undo Changes")
 
     def fixH(self):
         picked = collectPicked(self.cmd)
