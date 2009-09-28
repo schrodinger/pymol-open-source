@@ -559,6 +559,8 @@ SEE ALSO
             _self.set("session_file",filename,quiet=1)
             if '(' in input_selection: # ignore selections 
                 input_selection=''
+            if not quiet:
+                print " Save: Please wait -- writing session file..."
             io.pkl.toFile(_self.get_session(str(input_selection),int(partial),int(quiet)),filename)
             r = DEFAULT_SUCCESS
             if not quiet:
