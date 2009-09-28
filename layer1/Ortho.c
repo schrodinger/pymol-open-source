@@ -812,7 +812,8 @@ void OrthoKey(PyMOLGlobals * G, unsigned char k, int x, int y, int mod)
   } else
     switch (k) {
     case 32:                   /* spacebar */
-      if(!OrthoArrowsGrabbed(G)) {
+      if((!OrthoArrowsGrabbed(G)) &&
+	 (I->CurChar == I->PromptChar)) { /* no text entered yet... */
         if(SettingGetGlobal_b(G, cSetting_presentation)) {
           if(mod & cOrthoSHIFT) {
             OrthoCommandIn(G,"rewind;mplay");
