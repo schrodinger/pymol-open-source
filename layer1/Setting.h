@@ -866,6 +866,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 #define cSetting_motion_linear              630
 #define cSetting_motion_hand                631
 #define cSetting_pdb_ignore_conect          632
+#define cSetting_editor_bond_cycle_mode     633
 
 /* when you add a new setting also remember:
    layer1/Setting.c
@@ -876,6 +877,6 @@ CSetting *SettingNewFromPyList(PyMOLGlobals * G, PyObject * list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       633
+#define cSetting_INIT                       634
 
 #endif
