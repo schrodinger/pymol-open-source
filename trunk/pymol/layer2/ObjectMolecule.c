@@ -4956,9 +4956,34 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule * I, int sele0, int sele1, int mode
         cnt++;
         switch (mode) {
         case 0:                /* cycle */
-          b0->order++;
-          if(b0->order > 3)
-            b0->order = 1;
+          switch(SettingGet_i(I->Obj.G, I->Obj.Setting, NULL, cSetting_editor_bond_cycle_mode)) {
+          case 1: /* 1 arom 2 3 */
+            switch(b0->order) {
+            case 1:
+              b0->order = 4;
+              break;
+            case 4:
+              b0->order = 2;
+              break;
+            case 2:
+              b0->order = 3;
+              break;
+            default:
+              b0->order = 1;
+              break;
+            }
+            break;
+          case 2: /* 1 2 3 arom */
+            b0->order++;
+            if(b0->order > 4)
+              b0->order = 1;
+            break;
+          default: /* old way -> 1 2 3 */
+            b0->order++;
+            if(b0->order > 3)
+              b0->order = 1;
+            break;
+          }
           I->AtomInfo[a0].chemFlag = false;
           I->AtomInfo[a1].chemFlag = false;
           break;

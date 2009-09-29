@@ -3899,5 +3899,6 @@ void SettingInitGlobal(PyMOLGlobals * G, int alloc, int reset_gui, int use_defau
     set_f(I, cSetting_motion_linear, 0.0F);
     set_i(I, cSetting_motion_hand, 1);
     set_b(I, cSetting_pdb_ignore_conect, 0);
+    set_b(I, cSetting_editor_bond_cycle_mode, 1); /* >0 -> include aromatic */
   }
 }
