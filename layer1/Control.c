@@ -219,6 +219,12 @@ static void ControlReshape(Block * block, int width, int height)
   PyMOLGlobals *G = block->G;
   register CControl *I = G->Control;
   BlockReshape(block, width, height);
+  /* this is a pragmatic workaround for mac X11 where the nub gets
+     hidden by the window expansion tab */
+
+  if((block->rect.right - block->rect.left) < 20) {
+    block->rect.top = block->rect.top + 10;
+  }
 
   I->ExtraSpace = ((block->rect.right - block->rect.left) - cControlSize);
   if(I->ExtraSpace < 0)

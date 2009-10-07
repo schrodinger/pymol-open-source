@@ -3921,19 +3921,31 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
                           cutoff = cutoff_s;
                         else
                           cutoff = cutoff_v;
-                        if((dst <= cutoff) &&
-                           (!(ai1->hydrogen && ai2->hydrogen)) &&
-                           (water_flag || (!cs->TmpBond) ||
-                            ((!(ai1->hetatm && ai2->hetatm) ||
-                              (connect_mode == 3)))) &&
-                           ((discrete_chains < 1) ||
-                            ai1->chain[0] == ai2->chain[0]) &&
-                           (connect_bonded || (!(ai1->bonded && ai2->bonded)))) {
+
+			/* here's our complex atomic connectivity allow / disallow */
+
+                        if((dst <= cutoff) && /* too close to be non-covalent, AND*/ 
+			  
+                           (!(ai1->hydrogen && ai2->hydrogen)) && /* not both hydrogen (what about H2?), AND */
+
+                           (water_flag ||  /* known to be a water */
+			    (!cs->TmpBond) || /* or no connectivity information present in file */
+                            ((!(ai1->hetatm && ai2->hetatm) || /* or not both PDB HETATMS */
+			      (connect_mode == 3)))) && /* or we're no excluding HETATM -> HETATM bonds, AND*/
+			   
+                           ((discrete_chains < 1) || /* we allow intra-chain bonds */
+                            (ai1->chain[0] == ai2->chain[0])) && /* or atoms are in the same chain, AND */
+
+                           (connect_bonded || /* we're allowing explicitly bonded atoms to be auto-connected */
+			    (!(ai1->bonded && ai2->bonded))) /* or neither atom was previously bonded */
+
+			   ) {
+			  
                           flag = true;
                           if(water_flag)
-                            if(!AtomInfoSameResidue(G, ai1, ai2))
+                            if(!AtomInfoSameResidue(G, ai1, ai2)) /* don't connect water atoms in different residues */
                               flag = false;
-
+			  
                           if(flag) {
                             if(ai1->alt[0] != ai2->alt[0]) {    /* handle alternate conformers */
                               if(ai1->alt[0] && ai2->alt[0])
@@ -3946,7 +3958,6 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
                                                    alt conformations in 
                                                    different residues */
                           }
-
                           if(flag) {
                             if(ai1->alt[0] || ai2->alt[0])
                               if(water_flag)    /* hack to clean up water bonds */
