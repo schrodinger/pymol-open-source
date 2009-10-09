@@ -15115,23 +15115,21 @@ static int ExecutiveClick(Block * block, int button, int x, int y, int mod)
               case 5:
                 switch (rec->type) {
                 case cExecAll:
-                case cExecSelection:
                   MenuActivate0Arg(G, mx, my, x, y, false, "camera_motion");
                   break;
-                case cExecObject:
+                case cExecSelection: /* not relevant at present */
+		  break;
+                case cExecObject: /* this kinds of objects can be animated */
                   switch (rec->obj->type) {
-                  case cObjectGroup:
+                  case cObjectGroup: /* however, this just groups motions for a set of objects */
                   case cObjectMolecule:
+		  case cObjectMeasurement:
+		  case cObjectMap:
+		  case cObjectSurface:
+		  case cObjectCGO:
+		  case cObjectMesh:
                     MenuActivate(G, mx, my, x, y, false, "obj_motion", rec->obj->Name);
                     break;
-                    /*
-                       case cObjectMeasurement:
-                       case cObjectMap:
-                       case cObjectSurface:
-                       case cObjectCGO:
-                       case cObjectMesh:
-                       MenuActivate(G,mx,my,x,y,false,"obj_motion",rec->obj->Name);
-                       break; */
                   }
                   break;
                 }
