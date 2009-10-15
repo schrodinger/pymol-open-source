@@ -1726,7 +1726,7 @@ OV_INLINE_STATIC SurfaceJobAtomInfo *SurfaceJobAtomInfoVLAFromPyTuple(PyObject *
 
 OV_INLINE_STATIC PyObject *SurfaceJobInputAsTuple(PyMOLGlobals * G, SurfaceJob * I)
 {
-  PyObject *result = PyTuple_New(21);
+  PyObject *result = PyTuple_New(24);
   if(result) {
     PyTuple_SetItem(result, 0, PyString_FromString("SurfaceJob"));
     PyTuple_SetItem(result, 1, PyInt_FromLong(1));      /* version */
@@ -2976,7 +2976,6 @@ Rep *RepSurfaceNew(CoordSet * cs, int state)
               }
               if(PyErr_Occurred())
                 PyErr_Print();
-
               PAutoUnblock(G, blocked);
             }
 #endif
