@@ -1,5 +1,7 @@
 #include"OVHeapArray.h"
-#ifndef OV_JENARIX
+
+#ifndef OV_JX
+
 #include"ov_utility.h"
 
 #define OVHeapArray_COMPLAIN

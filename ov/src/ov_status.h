@@ -82,32 +82,6 @@
 
 #define OV_STATUS_FAILURE                     -1
 #define OV_STATUS_NULL_PTR                    -2
-#define OV_STATUS_OUT_OF_MEMORY               -3
-#define OV_STATUS_NOT_FOUND                   -4
-#define OV_STATUS_DUPLICATE                   -5
-#define OV_STATUS_NO_EFFECT                   -6
-#define OV_STATUS_MISMATCH                    -7
-#define OV_STATUS_INVALID_INC_REF             -8
-#define OV_STATUS_INVALID_DEC_REF             -9
-#define OV_STATUS_BAD_PTR_OR_CORRUPT_HEAP    -10
-#define OV_STATUS_IMPOSSIBLE_CAST            -11
-#define OV_STATUS_THREAD_CREATION_FAILURE    -12
-#define OV_STATUS_THREADING_ERROR            -13
-#define OV_STATUS_MUTEX_ERROR                -14
-#define OV_STATUS_COND_ERROR                 -15
-#define OV_STATUS_RLOCK_ERROR                -16
-#define OV_STATUS_OS_ERROR                   -17
-#define OV_STATUS_INVALID_PIPE               -18
-#define OV_STATUS_BROKEN_PIPE                -19
-#define OV_STATUS_PIPE_TRANSPORT_ERROR       -20
-#define OV_STATUS_INVALID_HANDLE             -21
-#define OV_STATUS_ACTIVE_HANDLE_FREED_ERROR  -22
-#define OV_STATUS_INVALID_OBJECT             -23
-#define OV_STATUS_BUFFER_EXHAUSTED           -24
-#define OV_STATUS_INVALID_IDENTIFIER         -25
-#define OV_STATUS_TLS_ERROR                  -26
-#define OV_STATUS_IMPOSSIBLE_CONVERSION      -27
-
 
 /* status codes below this number are dynamic exception identifiers
    which consume resources owned by the local environment

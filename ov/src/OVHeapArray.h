@@ -1,21 +1,21 @@
 #ifndef _H_OVHeapArray
 #define _H_OVHeapArray
 
-#ifdef OV_JENARIX
+#ifdef OV_JX
 
 /* NEW Jenarix-based OVHeapArray wrapper */
-#define _OVHeapArray Ov_HeapVLA
+#define _OVHeapArray jx_heap_vla
 
-#ifdef OV_HEAP_TRACKER
-#define _OVHeapArray_Alloc(h,u,s,z,f,l) ov_heap_VlaAllocRaw(u,s,z,f,l)
+#ifdef JX_HEAP_TRACKER
+#define _OVHeapArray_Alloc(h,u,s,z,f,l) jx_heap_VlaAllocRaw(u,s,z,f,l)
 #else
-#define _OVHeapArray_Alloc(h,u,s,z) ov_heap_VlaAllocRaw(u,s,z)
+#define _OVHeapArray_Alloc(h,u,s,z) jx_heap_VlaAllocRaw(u,s,z)
 #endif
 
-#define _OVHeapArray_Check ov_heap_VlaAddIndexRaw
-#define _OVHeapArray_Free ov_heap_VlaFreeRaw
-#define _OVHeapArray_SetSize ov_heap_VlaSetSizeRaw
-#define OVHeapArray_GetSize ov_heap_VlaGetSizeRaw
+#define _OVHeapArray_Check jx_heap_VlaAddIndexRaw
+#define _OVHeapArray_Free jx_heap_VlaFreeRaw
+#define _OVHeapArray_SetSize jx_heap_VlaSetSizeRaw
+#define OVHeapArray_GetSize jx_heap_VlaGetSizeRaw
 
 #else
 

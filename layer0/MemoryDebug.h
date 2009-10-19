@@ -21,61 +21,68 @@ Z* -------------------------------------------------------------------
 #include "os_std.h"
 #include "PyMOLGlobals.h"
 
-#ifdef OV_JENARIX
-
+#ifdef OV_JX
 
 /* NEW Jenarix-based MemoryDebug wrapper */
 
 #include "ov_port.h"
+#include "jx_heap.h"
 
-#define mmalloc(size) OV_HEAP_MALLOC_RAW_VOID(size)
-#define mcalloc(num,size) OV_HEAP_CALLOC_RAW_VOID((num)*(ov_size)(size))
-#define mrealloc(ptr,size) OV_HEAP_REALLOC_RAW_VOID(ptr,size)
-#define mfree(ptr) OV_HEAP_FREE_RAW(ptr)
+#define mmalloc(size) JX_HEAP_MALLOC_RAW_VOID(size)
+#define mcalloc(num,size) JX_HEAP_CALLOC_RAW_VOID((num)*(jx_size)(size))
+#define mrealloc(ptr,size) JX_HEAP_REALLOC_RAW_VOID(ptr,size)
+#define mfree(ptr) JX_HEAP_FREE_RAW(ptr)
 
-#define ReallocForSure(ptr,type,size) OV_HEAP_REALLOC_RAW_RECOPY(ptr,type,size,size)
-#define ReallocForSureSafe(ptr,type,size,old_size) OV_HEAP_REALLOC_RAW_RECOPY(ptr,type,size,old_size)
+#define ReallocForSure(ptr,type,size) JX_HEAP_REALLOC_RAW_RECOPY(ptr,type,size,size)
+#define ReallocForSureSafe(ptr,type,size,old_size) JX_HEAP_REALLOC_RAW_RECOPY(ptr,type,size,old_size)
 
-#define MemoryDebugDump() ov_heap_dump(0)
-#define MemoryDebugUsage() ov_heap_usage()
+#define MemoryDebugDump() jx_heap_dump(0)
+#define MemoryDebugUsage() jx_heap_usage()
 
-#define VLAlloc(type,init_size) OV_HEAP_VLA_MALLOC_RAW(type, init_size)
+#define VLAlloc(type,init_size) JX_HEAP_VLA_MALLOC_RAW(type, init_size)
 
-#ifndef OV_HEAP_TRACKER
+#ifndef JX_HEAP_TRACKER
+
 #define VLAMalloc(init_size, unit_size, grow_factor, auto_zero) \
-    ov_heap_VlaAllocRaw(unit_size, init_size, auto_zero)
+    jx_heap_VlaAllocRaw(unit_size, init_size, auto_zero)
 #define VLACheck(vla,type,idx) \
-   (vla=(type*)(((((ov_size)idx)>=((Ov_HeapVLA*)(vla))[-1].size) ? \
-    ov_heap_VlaAddIndexRaw(vla,((ov_size)idx)) : (vla))))
+   (vla=(type*)(((((jx_size)idx)>=((jx_heap_vla*)(vla))[-1].size) ? \
+    jx_heap_VlaAddIndexRaw(vla,((jx_size)idx)) : (vla))))
+
 #else
-#define VLAMalloc(init_size, unit_size, grow_factor, auto_zero) \
-    ov_heap_VlaAllocRaw(unit_size, init_size, auto_zero, OV__FILE__, OV__LINE__)
-#define VLACheck(vla,type,idx) \
-   (vla=(type*)(((((ov_size)idx)>=((Ov_HeapVLA*)(vla))[-1].size) ? \
-    ov_heap_VlaAddIndexRaw(vla,((ov_size)idx), OV__FILE__, OV__LINE__) : (vla))))
-#endif
 
-#define VLACalloc(type,init_size) OV_HEAP_VLA_CALLOC_RAW(type, init_size)
-#define VLAFreeP(ptr) {if(ptr) {OV_HEAP_VLA_FREE_RAW(ptr);ptr=NULL;}}
-#define VLAFree(ptr) OV_HEAP_VLA_FREE_RAW(ptr)
-#define VLASize(ptr,type,size) {ptr=(type*)OV_HEAP_VLA_SET_SIZE_RAW(ptr,size);}
-#define VLASetSize(ptr,size) OV_HEAP_VLA_SET_SIZE_RAW(ptr,size)
-#define VLAGetSize(ptr) OV_HEAP_VLA_GET_SIZE_RAW(ptr)
-#define VLASizeForSure(ptr,type,size) {ptr=(type*)OV_HEAP_VLA_SET_SIZE_RAW_RECOPY(ptr,size);}
-#define VLASetSizeForSure(ptr,size) OV_HEAP_VLA_SET_SIZE_RAW_RECOPY(ptr,size);
-#define VLACopy(ptr,type) (type*)OV_HEAP_VLA_CLONE_RAW(ptr)
-#define VLANewCopy(ptr) OV_HEAP_VLA_CLONE_RAW(ptr)
+#define VLAMalloc(init_size, unit_size, grow_factor, auto_zero) \
+    jx_heap_VlaAllocRaw(unit_size, init_size, auto_zero, JX__FILE__, JX__LINE__)
+#define VLACheck(vla,type,idx) \
+   (vla=(type*)(((((jx_size)idx)>=((jx_heap_vla*)(vla))[-1].size) ? \
+    jx_heap_VlaAddIndexRaw(vla,((jx_size)idx), JX__FILE__, JX__LINE__) : (vla))))
+
+#endif
+/* end ifndef JX_HEAP_TRACKER, else clause */
+
+#define VLACalloc(type,init_size) JX_HEAP_VLA_CALLOC_RAW(type, init_size)
+#define VLAFreeP(ptr) {if(ptr) {JX_HEAP_VLA_FREE_RAW(ptr);ptr=NULL;}}
+#define VLAFree(ptr) JX_HEAP_VLA_FREE_RAW(ptr)
+#define VLASize(ptr,type,size) {ptr=(type*)JX_HEAP_VLA_SET_SIZE_RAW(ptr,size);}
+#define VLASetSize(ptr,size) JX_HEAP_VLA_SET_SIZE_RAW(ptr,size)
+#define VLAGetSize(ptr) JX_HEAP_VLA_GET_SIZE_RAW(ptr)
+#define VLASizeForSure(ptr,type,size) {ptr=(type*)JX_HEAP_VLA_SET_SIZE_RAW_RECOPY(ptr,size);}
+#define VLASetSizeForSure(ptr,size) JX_HEAP_VLA_SET_SIZE_RAW_RECOPY(ptr,size);
+#define VLACopy(ptr,type) (type*)JX_HEAP_VLA_CLONE_RAW(ptr)
+#define VLANewCopy(ptr) JX_HEAP_VLA_CLONE_RAW(ptr)
+#define VLAInsert(ptr,type,index,count) {ptr=(type*)JX_HEAP_VLA_INSERT_RAW(ptr,index,count);}
+#define VLADelete(ptr,type,index,count) {ptr=(type*)JX_HEAP_VLA_DELETE_RAW(ptr,index,count);}
 
 #define Alloc(type,size) ((type*)mmalloc(sizeof(type)*(size)))
 #define Calloc(type,size) ((type*)mcalloc(sizeof(type),size))
-#define Realloc(ptr,type,size) ((type*)mrealloc(ptr,sizeof(type)*(size))
+#define Realloc(ptr,type,size) ((type*)mrealloc(ptr,sizeof(type)*(size)))
 
 #define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
 
-OV_INLINE_STATIC void MemoryZero(char *p, char *q)
+JX_INLINE void MemoryZero(char *p, char *q)
 {
   if(q > p)
-    ov_os_memset(p, 0, q - p);
+    jx_os_memset(p, 0, q - p);
 }
 
 #else

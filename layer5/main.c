@@ -1262,7 +1262,9 @@ void MainFree(void)
   if(owned_options)
     PyMOLOptions_Free(owned_options);   /* clean up launch options if we're supposed to */
 
+#ifndef OV_JX
   MemoryDebugDump();            /* this is a no-op unless memory debugging is enabled */
+#endif
 
   if(show_message) {
     printf(" PyMOL: normal program termination.\n");
