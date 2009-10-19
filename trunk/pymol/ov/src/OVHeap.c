@@ -1,6 +1,6 @@
 #include"OVHeap.h"
 
-#ifndef OV_JENARIX
+#ifndef OV_JX
 #ifdef OVHeap_TRACKING
 
 
@@ -68,7 +68,7 @@ OVHeap *_OVHeap_New(void)
 
 void _OVHeap_Del(OVHeap * I)
 {
-#ifndef OV_JENARIX
+#ifndef OV_JX
 #ifdef OVHeap_TRACKING
   OVHeap_Dump(I, 0);
 #endif

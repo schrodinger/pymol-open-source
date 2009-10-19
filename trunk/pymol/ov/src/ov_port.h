@@ -4,9 +4,10 @@
 #ifndef _H_ov_port
 #define _H_ov_port
 
-#ifdef OV_JENARIX
+#ifdef OV_JX
 
-#include "ov_public.h"
+#include "jx_public.h"
+#include "ov_jx.h"
 
 #else
 

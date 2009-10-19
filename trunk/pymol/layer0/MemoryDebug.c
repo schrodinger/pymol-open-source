@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"ov_port.h"
 
-#ifndef OV_JENARIX
+#ifndef OV_JX
 
 #include"MemoryDebug.h"
 #include"MemoryCache.h"

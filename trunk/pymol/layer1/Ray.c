@@ -5676,7 +5676,8 @@ void RayRender(CRay * I, unsigned int *image, double timing,
     OrthoBusyFast(I->G, 5, 20);
     now = UtilGetSeconds(I->G) - timing;
 
-#ifdef _MemoryDebug_ON
+#if 0
+    /* was ifdef _MemoryDebug_ON */
     if(Feedback(I->G, FB_Ray, FB_Debugging)) {
       MemoryDebugDump();
     }
@@ -5709,7 +5710,6 @@ void RayRender(CRay * I, unsigned int *image, double timing,
         I->Basis[1].Map->Div, I->Basis[1].Map->Dim[0],
         I->Basis[1].Map->Dim[1], I->Basis[1].Map->Dim[2], now ENDFB(I->G);
     }
-
 #endif
     /* IMAGING */
 
