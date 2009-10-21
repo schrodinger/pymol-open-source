@@ -1219,7 +1219,7 @@ float *OrthoGetOverlayColor(PyMOLGlobals * G)
 #ifdef PYMOL_COLL
 #include "OrthoCollMessage.h"
 #endif
-#ifdef _PYMOL_ACTIVEX_EVAL
+#ifdef AXPYMOL_EVAL
 #include "OrthoAxMessage.h"
 #endif
 
@@ -1517,7 +1517,7 @@ void OrthoDoDraw(PyMOLGlobals * G, int render_mode)
 #ifdef PYMOL_COLL
       OrthoDrawCollMessage(G);
 #endif
-#ifdef _PYMOL_ACTIVEX_EVAL
+#ifdef AXPYMOL_EVAL
       OrthoDrawAxMessage(G);
 #endif
 
@@ -2062,7 +2062,7 @@ void OrthoSplash(PyMOLGlobals * G)
 #include"OrthoIPSplash.h"
 #else
   if(G->Option->incentive_product) {
-#ifdef _PYMOL_ACTIVEX_EVAL
+#ifdef AXPYMOL_EVAL
     PRINTF
       " AxPyMOL(TM) Evaluation Product - Copyright (C) 2009 DeLano Scientific LLC.\n \n"
       ENDF(G);
