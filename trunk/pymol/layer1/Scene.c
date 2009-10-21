@@ -8130,6 +8130,7 @@ void SceneRender(PyMOLGlobals * G, Picking * pick, int x, int y,
     if(must_render_stereo && stereo_via_stencil(stereo_mode)) {
       if(!I->StencilValid) {
         GLint viewport[4];
+
         glGetIntegerv(GL_VIEWPORT, viewport);
 
         glMatrixMode(GL_PROJECTION);
