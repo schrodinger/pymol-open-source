@@ -286,6 +286,10 @@ def _fab(input,name,mode,resi,chain,segi,state,dir,hydro,ss,quiet,_self=cmd):
     r = DEFAULT_ERROR
     code = _fab_codes.get(mode,None)
     quiet = int(quiet)
+    resi = int(resi)
+    state = int(state)
+    dir = int(dir)
+    
     seq_len = 0
     if (mode == 'peptide') and is_string(input):
         # '123/ ADC B/234/ AFCD' to [ '123/','A','D','C','B/234/','F','C','D' ]
