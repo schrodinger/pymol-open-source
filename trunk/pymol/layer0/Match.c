@@ -59,9 +59,27 @@ CMatch *MatchNew(PyMOLGlobals * G, unsigned int na, unsigned int nb, int dist_ma
   }
 
   /* scoring matrix is always 128^2 */
-  dim[0] = 128;
-  dim[1] = 128;
+  dim[0] = dim[1] = 128;
   I->smat = (float **) UtilArrayCalloc(dim, 2, sizeof(float));
+
+  {
+    /* lay down an 10/-1 identity matrix to cover matches for known
+       residues other than amino acids (dna, rna, as 1,2,3,4 etc.)
+       these values will be overwritten by the matrix */
+
+    int i,j;
+    
+    for(i=0;i<dim[0];i++) {
+      for(j=0;j<dim[1];j++) {
+        I->smat[i][j] = -1.0F; 
+      }
+    }
+
+    for(i=0;i<dim[0];i++) {
+      I->smat[i][i] = 10.0F; /* these values will be overwritten by BLOSUM, etc. */
+    }
+
+  }
 
   if(!(I->mat && I->smat && ((!dist_mats) || (I->da && I->db)))) {
     MatchFree(I);
@@ -73,7 +91,7 @@ CMatch *MatchNew(PyMOLGlobals * G, unsigned int na, unsigned int nb, int dist_ma
 int MatchResidueToCode(CMatch * I, int *vla, int n)
 {
 
-#define cNRES 35
+#define cNRES 39
   PyMOLGlobals *G = I->G;
   int ok = true;
   int a, b, c;
@@ -81,17 +99,32 @@ int MatchResidueToCode(CMatch * I, int *vla, int n)
   int rcode[cNRES], rname[cNRES];
   int *trg;
   char res[][4] = {
-    "A", "A",
-    "ADE", "A",
-    "C", "C",
-    "CYT", "C",
-    "G", "G",
 
-    "GUA", "G",
-    "T", "T",
-    "THY", "T",
-    "U", "T",
-    "URA", "T",
+    /* IF YOU ADD HERE, BE SURE TO UPDATE cNRES above!!! */
+
+    /* using numbers to prevent nucleic acids from getting confounded with
+       protein scores */
+
+    "A", "1", 
+    "DA", "1",
+    "ADE", "1",
+
+    "C", "2",
+    "DC", "2",
+    "CYT", "2",
+
+    "G", "3",
+    "DG", "3",
+    "GUA", "3",
+
+    "T", "4",
+    "DT", "4",
+    "THY", "4",
+
+    "U", "4",
+    "URA", "4",
+
+    /* these should correspond to the matrix being read */
 
     "ALA", "A",
     "CYS", "C",
@@ -173,6 +206,8 @@ int MatchPreScore(CMatch * I, int *vla1, int n1, int *vla2, int n2, int quiet)
   for(a = 0; a < n1; a++) {
     for(b = 0; b < n2; b++) {
       I->mat[a][b] = I->smat[0x7F & vla1[a * 3 + 2]][0x7F & vla2[b * 3 + 2]];
+      /*      printf("%d %d %c %c %8.1f\n",a,b,0x7F & vla1[a * 3 + 2], 0x7F & vla2[b * 3 + 2], 
+              I->smat[0x7F & vla1[a * 3 + 2]][0x7F & vla2[b * 3 + 2]]);*/
     }
   }
   return 1;
