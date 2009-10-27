@@ -1195,7 +1195,7 @@ int SelectorClassifyAtoms(PyMOLGlobals * G, int sele, int preserve,
       a1--;
 
       mask = 0;
-      if(AtomInfoKnownPolymerResName(G, ai->resn))
+      if(AtomInfoKnownPolymerResName(ai->resn) && (!ai->hetatm))
         mask = cAtomFlag_polymer;
       else if(AtomInfoKnownWaterResName(G, ai->resn))
         mask = cAtomFlag_solvent;

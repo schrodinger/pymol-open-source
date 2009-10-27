@@ -319,7 +319,7 @@ int AtomInfoGetCarbColor(PyMOLGlobals * G);
 int AtomResvFromResi(char *resi);
 
 int AtomInfoKnownWaterResName(PyMOLGlobals * G, char *resn);
-int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn);
+int AtomInfoKnownPolymerResName(char *resn);
 void AtomInfoGetPDB3LetHydroName(PyMOLGlobals * G, char *resn, char *iname, char *oname);
 
 #define cAIC_ct        0x0001

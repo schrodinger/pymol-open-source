@@ -796,7 +796,7 @@ void SculptMeasureObject(CSculpt * I, ObjectMolecule * obj, int state, int match
               switch (ai1->name[0]) {
               case 'O':
                 if(!ai1->name[1])
-                  if(AtomInfoKnownPolymerResName(G, ai1->resn))
+                  if(AtomInfoKnownPolymerResName(ai1->resn))
                     site[b0] = 40;      /* main-chain carbonyl */
                 break;
               case 'C':

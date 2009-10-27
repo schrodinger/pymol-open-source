@@ -3929,18 +3929,25 @@ int ObjectMoleculeConnect(ObjectMolecule * I, BondType ** bond, AtomInfoType * a
                            (!(ai1->hydrogen && ai2->hydrogen)) && /* not both hydrogen (what about H2?), AND */
 
                            (water_flag ||  /* known to be a water */
-			    (!cs->TmpBond) || /* or no connectivity information present in file */
+                            (!cs->TmpBond) || /* or no connectivity information present in file */
                             ((!(ai1->hetatm && ai2->hetatm) || /* or not both PDB HETATMS */
-			      (connect_mode == 3)))) && /* or we're no excluding HETATM -> HETATM bonds, AND*/
-			   
+                              (connect_mode == 3))) || 
+
+                            ((ai1->hetatm && ai2->hetatm) && /* both hetatms, and both recognized polymer residue? */
+                             AtomInfoKnownPolymerResName(ai1->resn) && /* (new PDB rule allows these to be HETATMs */
+                             AtomInfoKnownPolymerResName(ai2->resn))
+
+                            ) && /* or we're no excluding HETATM -> HETATM bonds, AND*/
+                           
+                           
                            ((discrete_chains < 1) || /* we allow intra-chain bonds */
                             (ai1->chain[0] == ai2->chain[0])) && /* or atoms are in the same chain, AND */
-
+                           
                            (connect_bonded || /* we're allowing explicitly bonded atoms to be auto-connected */
-			    (!(ai1->bonded && ai2->bonded))) /* or neither atom was previously bonded */
-
-			   ) {
-			  
+                            (!(ai1->bonded && ai2->bonded))) /* or neither atom was previously bonded */
+                           
+                           ) {
+                          
                           flag = true;
                           if(water_flag)
                             if(!AtomInfoSameResidue(G, ai1, ai2)) /* don't connect water atoms in different residues */
