@@ -11341,6 +11341,9 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
       start = 0;
       stop = 1;
     }
+    if(stop > I->NCSet)
+      stop = I->NCSet;
+
     {
 #ifndef _PYMOL_NOPY
       int n_thread = SettingGetGlobal_i(G, cSetting_max_threads);
@@ -11354,14 +11357,14 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
            mutexed yet and neighbors are needed by cartoons */
 
         for(a = start; a < stop; a++)
-          if(I->CSet[a])
+          if((a<I->NCSet) && I->CSet[a])
             cnt++;
         {
           CCoordSetUpdateThreadInfo *thread_info = Alloc(CCoordSetUpdateThreadInfo, cnt);
           if(thread_info) {
             cnt = 0;
             for(a = start; a < stop; a++) {
-              if(I->CSet[a]) {
+              if((a<I->NCSet) && I->CSet[a]) {
                 thread_info[cnt].cs = I->CSet[a];
                 thread_info[cnt].a = a;
                 cnt++;
@@ -11376,8 +11379,8 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
       } else
 #endif
       {                         /* single thread */
-        for(a = start; a < stop; a++)
-          if(I->CSet[a] && (!G->Interrupt)) {
+        for(a = start; a < stop; a++) {
+          if((a<I->NCSet) && I->CSet[a] && (!G->Interrupt)) {
             OrthoBusySlow(G, a, I->NCSet);
             PRINTFB(G, FB_ObjectMolecule, FB_Blather)
               " ObjectMolecule-DEBUG: updating representations for state %d of \"%s\".\n",
@@ -11386,6 +11389,7 @@ void ObjectMoleculeUpdate(ObjectMolecule * I)
               I->CSet[a]->fUpdate(I->CSet[a], a);
             }
           }
+        }
       }
     }
     if(I->Obj.RepVis[cRepCell]) {
