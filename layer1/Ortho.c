@@ -1142,11 +1142,11 @@ int OrthoGrabbedBy(PyMOLGlobals * G, Block * block)
 void OrthoDoViewportWhenReleased(PyMOLGlobals *G)
 {
   register COrtho *I = G->Ortho;
-  if(!(I->GrabbedBy||I->ClickedIn)) {
-    OrthoCommandIn(G, "viewport");
+  if(!(I->GrabbedBy||I->ClickedIn)) { /* no active UI element? */
+    OrthoCommandIn(G, "viewport"); /* then issue viewport refresh */
     OrthoDirty(G);
   } else {
-    I->IssueViewportWhenReleased = true;
+    I->IssueViewportWhenReleased = true; /* otherwise, defer */
   }
 }
 
