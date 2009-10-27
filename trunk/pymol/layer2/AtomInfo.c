@@ -685,27 +685,34 @@ int AtomInfoKnownWaterResName(PyMOLGlobals * G, char *resn)
   return false;
 }
 
-int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
+int AtomInfoKnownPolymerResName(char *resn)
 {
   switch (resn[0]) {
   case 'A':
     switch (resn[1]) {
-    case 0:
+    case 0: /*  A*/
       return true;
+      break;
     case 'L':
-      if(resn[2] == 'A')
+      switch (resn[2]) {
+      case 'A': /* ALA */
         return true;
+        break;
+      }
       break;
     case 'R':
-      if(resn[2] == 'G')
+      switch (resn[2]) {
+      case 'G': /* ARG */
         return true;
+        break;
+      }
       break;
     case 'S':
       switch (resn[2]) {
-      case 'P':
+      case 'P': /* ASP */
         return true;
         break;
-      case 'N':
+      case 'N': /* ASN */
         return true;
         break;
       }
@@ -714,32 +721,60 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
     break;
   case 'C':
     switch (resn[1]) {
-    case 0:
+    case 0: /* C */
       return true;
     case 'Y':
       switch (resn[2]) {
-      case 'S':
-      case 'X':
+      case 'S': /* CYS */
+      case 'X': /* CYX */
         return true;
         break;
       }
       break;
     }
     break;
+  case 'D':
+    switch (resn[1]) {
+    case 'G': /* DG */
+      switch (resn[2]) {
+      case 0:
+        return true;
+        break;
+      }
+    case 'C': /* DC */
+      switch (resn[2]) {
+      case 0:
+        return true;
+        break;
+      }
+    case 'T': /* DT */
+      switch (resn[2]) {
+      case 0:
+        return true;
+        break;
+      }
+    case 'A': /* DA */
+      switch (resn[2]) {
+      case 0:
+        return true;
+        break;
+      }
+    }
+    break;
   case 'G':
     switch (resn[1]) {
-    case 0:
+    case 0: /* G */
       return true;
       break;
     case 'L':
       switch (resn[2]) {
-      case 'N':
+      case 'N': /* GLN */
         return true;
         break;
-      case 'U':
+      case 'U': /* GLU */
         return true;
         break;
-      case 'Y':
+      case 'Y': /* GLY */
         return true;
         break;
       }
@@ -749,10 +784,10 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
     switch (resn[1]) {
     case 'I':
       switch (resn[2]) {
-      case 'S':
-      case 'D':
-      case 'E':
-      case 'P':
+      case 'S': /* HIS */
+      case 'D': /* HID */
+      case 'E': /* HIE */
+      case 'P': /* HIP */
         return true;
         break;
       }
@@ -762,9 +797,9 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
     switch (resn[1]) {
     case 'L':
       switch (resn[2]) {
-      case 'E':
+      case 'E': /* ILE */
         return true;
-        break;
+        break; 
       }
     }
     break;
@@ -772,7 +807,7 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
     switch (resn[1]) {
     case 'E':
       switch (resn[2]) {
-      case 'U':
+      case 'U': /* LEU */
         return true;
         break;
       }
@@ -781,7 +816,7 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
       switch (resn[2]) {
       case 'S':
         return true;
-        break;
+        break; /* LYS */
       }
       break;
     }
@@ -790,13 +825,13 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
     switch (resn[1]) {
     case 'E':
       switch (resn[2]) {
-      case 'T':
+      case 'T': /* MET */
         return true;
         break;
       }
     case 'S':
       switch (resn[2]) {
-      case 'E':
+      case 'E': /* MSE */
         return true;
         break;
       }
@@ -806,14 +841,21 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
     switch (resn[1]) {
     case 'H':
       switch (resn[2]) {
-      case 'E':
+      case 'E': /* PHE */
         return true;
         break;
       }
       break;
     case 'R':
       switch (resn[2]) {
-      case 'O':
+      case 'O': /* PRO */
+        return true;
+        break;
+      }
+      break;
+    case 'T':
+      switch (resn[2]) {
+      case 'R': /* PTR */
         return true;
         break;
       }
@@ -824,7 +866,7 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
     switch (resn[1]) {
     case 'E':
       switch (resn[2]) {
-      case 'R':
+      case 'R': /* SER */
         return true;
         break;
       }
@@ -833,25 +875,25 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
     break;
   case 'T':
     switch (resn[1]) {
-    case 0:
+    case 0: /* T */
       return true;
     case 'H':
       switch (resn[2]) {
-      case 'R':
+      case 'R': /* THR */
         return true;
         break;
       }
       break;
     case 'R':
       switch (resn[2]) {
-      case 'P':
+      case 'P': /* TRP */
         return true;
         break;
       }
       break;
     case 'Y':
       switch (resn[2]) {
-      case 'R':
+      case 'R': /* TYR */
         return true;
         break;
       }
@@ -860,7 +902,7 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
     break;
   case 'U':
     switch (resn[1]) {
-    case 0:
+    case 0: /* U */
       return true;
       break;
     }
@@ -869,7 +911,7 @@ int AtomInfoKnownPolymerResName(PyMOLGlobals * G, char *resn)
     switch (resn[1]) {
     case 'A':
       switch (resn[2]) {
-      case 'L':
+      case 'L': /* VAL */
         return true;
         break;
       }
