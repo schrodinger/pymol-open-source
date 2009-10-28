@@ -556,6 +556,7 @@ SEE ALSO
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
         elif format=='pse': # PyMOL session
+            filename = filename.replace("\\","/") # always use unix-like path separators	
             _self.set("session_file",filename,quiet=1)
             if '(' in input_selection: # ignore selections 
                 input_selection=''

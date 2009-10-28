@@ -126,10 +126,18 @@ class Normal(PMGSkin):
 #        self.app.destroycomponent('messagebar')
 #        self.app.destroycomponent('bottomtray')
         
+    def get_current_session_file(self):
+        session_file = self.cmd.get_setting_text("session_file")        
+        session_file = session_file.replace("\\","/") # always use unix-like path separators
+        return session_file
+
+    def set_current_session_file(self, session_file):
+        session_file = session_file.replace("\\","/") # always use unix-like path separators
+        self.cmd.set("session_file",session_file)
 
     def confirm_quit(self,e=None):
         if int(self.cmd.get_setting_legacy("session_changed")):
-            session_file = self.cmd.get_setting_text("session_file")
+            session_file = self.get_current_session_file()
             if session_file != '':
                 message = "Save the current session '%s'?"%os.path.split(session_file)[1]
             else:
@@ -595,7 +603,7 @@ class Normal(PMGSkin):
             self.cmd.log_open(ofile,'a')
 
     def session_save(self):
-        self.save_file = self.cmd.get_setting_text("session_file")
+        self.save_file = self.get_current_session_file()
         if self.save_file!='':
             self.cmd.log("save %s,format=pse\n"%(self.save_file),
                       "cmd.save('%s',format='pse')\n"%(self.save_file))
@@ -608,7 +616,7 @@ class Normal(PMGSkin):
             return self.session_save_as()
 
     def session_save_as(self):
-        (self.initialdir, self.save_file) = os.path.split(self.cmd.get_setting_text("session_file"))
+        (self.initialdir, self.save_file) = os.path.split(self.get_current_session_file())
         (save_file, def_ext) = os.path.splitext(self.save_file)
         sfile = asksaveasfilename(defaultextension = _def_ext(def_ext),
                                   initialfile = save_file,  
@@ -626,8 +634,10 @@ class Normal(PMGSkin):
 #            self.cmd.save(sfile,"",format='pse',quiet=0)
 #            self.cmd.set("session_changed",0)
             self.save_file = sfile
-            self.cmd.set("session_file",self.save_file)
-            self.cmd.do("_ cmd.save('''%s''','','pse',quiet=0)"%self.save_file) # do this in the main thread to block cmd.quit, etc.
+#            self.cmd.set("session_file",self.save_file)
+            self.set_current_session_file(self.save_file)
+            # do this in the main thread to block cmd.quit, etc.
+            self.cmd.do("_ cmd.save('''%s''','','pse',quiet=0)"%self.save_file) 
             self.cmd.do("_ cmd.set('session_changed',0)")
             return 1
         else:
