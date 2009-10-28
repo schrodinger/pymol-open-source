@@ -88,8 +88,10 @@ unix-mindep: semistatic
 	/bin/rm -rf $(MDP)/scripts/metaphorics
 	cp -r pymol.exe $(MDP)
 	cp -r ext/lib/python2.5 $(MDP)/ext/lib
-	cp -r ext/lib/tcl8.5 $(MDP)/ext/lib
-	cp -r ext/lib/tk8.5 $(MDP)/ext/lib
+#	cp -r ext/lib/tcl8.5 $(MDP)/ext/lib
+	cp -r ext/lib/tcl8.4 $(MDP)/ext/lib
+#	cp -r ext/lib/tk8.5 $(MDP)/ext/lib
+	cp -r ext/lib/tk8.4 $(MDP)/ext/lib
 	/bin/rm -f $(MDP)/ext/lib/python2.5/config/libpython2.5.a
 	/bin/rm -rf $(MDP)/ext/lib/python2.5/test
 	cp LICENSE $(MDP)
