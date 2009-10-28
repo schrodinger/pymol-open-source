@@ -854,6 +854,7 @@ SEE ALSO
                 r = _self.set_session(io.pkl.fromFile(fname),quiet=quiet,
                                       partial=partial,steal=1)
                 if not partial:
+                    fname = fname.replace("\\","/") # always use unix-like path separators	
                     _self.set("session_file",fname,quiet=1)
                 
     # special handling for multi-model files 
