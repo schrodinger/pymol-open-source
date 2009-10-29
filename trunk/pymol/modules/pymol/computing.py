@@ -66,6 +66,22 @@ def model_to_sdf_list(self_cmd,model):
 #        print line,
     return (fit_flag, sdf_list)
 
+def get_energy_from_rec(rec):
+    # we really need to replace this with a proper SD parser...
+    result = 9999.00
+    try:
+        rec_list = rec.splitlines()
+        read_energy = 0
+        for line in rec_list:
+            if read_energy == 1:
+                result = float(line.strip())
+                break
+            if line.strip() == '> <MMFF94 energy>':
+                read_energy = 1
+    except:
+        traceback.print_exc()
+    return result
+    
 class CleanJob:
     def __init__(self,self_cmd,sele,state=-1,message=None):
         self.cmd = self_cmd
@@ -86,7 +102,7 @@ class CleanJob:
                 ok = 0
                 print "Error: Unable to validate freemol.mengine"
         if ok:
-            if self_cmd.count_atoms(sele)>999:
+            if self_cmd.count_atoms(sele) > 999:
                 ok = 0
                 print "Error: Sorry, clean is currently limited to 999 atoms"
         if not ok:
@@ -116,12 +132,13 @@ class CleanJob:
                 if result != None:
                     if len(result):
                         clean_sdf = result[0]
-                        clean_mol = clean_sdf.split("$$$$")[0]
-                        if len(clean_mol):
+                        clean_rec = clean_sdf.split("$$$$")[0]
+                        energy = get_energy_from_rec(clean_rec)
+                        if len(clean_rec) and int(energy) != 9999:
                             clean_name = "builder_clean_tmp"
                             self_cmd.set("suspend_updates")
                             try:
-                                self_cmd.read_molstr(clean_mol, clean_name, zoom=0)
+                                self_cmd.read_molstr(clean_rec, clean_name, zoom=0)
                                 # need to insert some error checking here
                                 if clean_name in self_cmd.get_names("objects"):
                                     self_cmd.set("retain_order","1",clean_name)
@@ -137,9 +154,7 @@ class CleanJob:
                             finally:
                                 self_cmd.delete(clean_name)
                                 self_cmd.unset("suspend_updates")
-
             if not ok:
-                
                 # we can't call warn because this is the not the tcl-tk gui thread
                 if result != None:
                     if len(result)>1:

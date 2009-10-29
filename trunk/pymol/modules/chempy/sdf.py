@@ -163,7 +163,7 @@ class SDF:
                 return SDFRec(cur)
             else:
                 cur.append(s)
-            
+
     def close(self):
         self.file.close()
         
