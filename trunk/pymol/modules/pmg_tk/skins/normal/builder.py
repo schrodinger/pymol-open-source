@@ -151,7 +151,8 @@ class SculptWizard(ActionWizard):
                 print "Error: cannot sculpt more than one object at a time"
         
     def sculpt_deactivate(self):
-        if self.sculpt_object != None:
+        if ((self.sculpt_object != None) and
+            self.sculpt_object in self.cmd.get_names()):
             self.cmd.set("sculpt_vdw_vis_mode","0",self.sculpt_object)
             self.cmd.sculpt_iterate(self.sculpt_object,self.cmd.get_state(),0)
             self.cmd.unset("sculpt_vdw_vis_mode",self.sculpt_object)
