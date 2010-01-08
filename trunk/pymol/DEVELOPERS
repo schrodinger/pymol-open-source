@@ -8,7 +8,7 @@ There are three ways in which software developers can contribute to
 the PyMOL Molecular Graphics Project.
 
 (1) Work on the main source tree.  As a practical matter, you must
-transfer copyright of such improvements to DeLano Scientific LLC and
+transfer copyright of such improvements to Schrodinger, LLC and
 attach no conditions to your work beyond those specified in the PyMOL
 LICENSE file.  Essentially you are giving everyone the right to use
 your code for all purposes without restriction.  To explicitly
@@ -75,10 +75,4 @@ the official PyMOL package, then you will need to release it under the
 (not GPL).
 
 Thanks for your participation in the PyMOL Open-Source Project!
-
-Warren L. DeLano, Ph.D.
-warren@delanoscientific.com
-
-
-
 
