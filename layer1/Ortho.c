@@ -2064,13 +2064,13 @@ void OrthoSplash(PyMOLGlobals * G)
   if(G->Option->incentive_product) {
 #ifdef AXPYMOL_EVAL
     PRINTF
-      " AxPyMOL(TM) Evaluation Product - Copyright (C) 2009 DeLano Scientific LLC.\n \n"
+      " AxPyMOL(TM) Evaluation Product - Copyright (c) Schrodinger, LLC.\n \n"
       ENDF(G);
     PRINTF " This Executable Build integrates and extends Open-Source PyMOL " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
     PRINTF ".\n" ENDF(G);
 #else
-    PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2009 DeLano Scientific LLC.\n \n"
+    PRINTF " PyMOL(TM) Incentive Product - Copyright (c) Schrodinger, LLC.\n \n"
       ENDF(G);
     PRINTF " This Executable Build integrates and extends Open-Source PyMOL " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
@@ -2084,7 +2084,7 @@ void OrthoSplash(PyMOLGlobals * G)
     PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
     PRINTF ".\n" ENDF(G);
-    PRINTF " Copyright (C) 2009 by DeLano Scientific LLC.\n All Rights Reserved.\n \n"
+    PRINTF " Copyright (c) Schrodinger, LLC.\n All Rights Reserved.\n \n"
       ENDF(G);
 
     PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF(G);

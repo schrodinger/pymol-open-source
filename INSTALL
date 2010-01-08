@@ -26,9 +26,6 @@ python-pmw" or "yum install freetype-devel", etc.)
 
 Good luck!
 
-Warren L. DeLano, Ph.D.
-warren@delsci.com
-
 PS. There are two other unsupported approaches intended primarily for
 developer use, with pymol runningly directly out of the source
 directory instead of being installed into an external Python or the
@@ -50,7 +47,7 @@ global system Python.
     ./pymol
     make clean (optional, to save space)
 
-  2. DeLano Scientific LLC's internal Makefiles (AS IS/PROPRIETARY):
+  2. Schrodinger, LLC's internal Makefiles (AS IS/PROPRIETARY):
      assumes that external depencies are already compiled and present
      in a local ./ext subdirectory.
     
