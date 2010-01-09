@@ -193,7 +193,7 @@ class PMGApp(Pmw.MegaWidget):
         except:
             ok = 0
             tkMessageBox.showinfo("Error",
- "Unable to write to the plugin directory.\nPerhaps you have insufficient privileges?")
+ "Unable to write to the plugin directory.\nPerhaps you have insufficient privileges?  Please ensure that you have permission to write to:\n%s" % path)
         if ok:
             ofile = askopenfilename(title="Install Plugin",
                 initialdir = os.getcwd(),

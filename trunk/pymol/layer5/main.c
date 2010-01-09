@@ -320,7 +320,7 @@ static void DrawBlueLine(PyMOLGlobals * G)
 
 /* BEGIN PROPRIETARY CODE SEGMENT (see disclaimer in "os_proprietary.h") */
 #ifdef _PYMOL_OSX
-    glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
+    //glDisable(GL_SHARED_TEXTURE_PALETTE_EXT);
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_TEXTURE_3D);
