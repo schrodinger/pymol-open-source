@@ -2,7 +2,7 @@
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+C* Copyright (c) Schrodinger, LLC. 
 D* -------------------------------------------------------------------
 E* It is unlawful to modify or remove this copyright notice.
 F* -------------------------------------------------------------------
@@ -22,11 +22,11 @@ Z* -------------------------------------------------------------------
 /* WARNING: DO NOT DEVELOP APPLICATIONS AGAINST THIS PyMOL_* API.  
  * 
  * This is a internal interface to PyMOL for the exclusive use of
- * DeLano Scientific LLC in development of PyMOL itself, for
+ * Schrodinger, LLC in development of PyMOL itself, for
  * development of "wrapped" PyMOL products, and for use as foundation
  * layer for support of stable public APIs.
  *
- * DeLano Scientific LLC changes this interface regularly and without
+ * Schrodinger, LLC changes this interface regularly and without
  * notice.  It may even vanish altogether.  Code you develop against
  * this interface is likely to be fragile, time-consuming, and
  * expensive to maintain.
@@ -36,7 +36,7 @@ Z* -------------------------------------------------------------------
  * (#2) the new "from pymol2 import PyMOL; cmd=PyMOL().cmd"
  * instance-based interface.  If you need a C, C++, Java, or
  * ActiveX/COM interface or widget for molecular visualization, then
- * please contact sales@delsci.com about obtaining access to our
+ * please contact sales@pymol.org about obtaining access to our
  * independent developer and/or OEM product APIs (e.g. JyMOL).
  * 
  * If you feel that you absolutely must rely upon this PyMOL_* API,

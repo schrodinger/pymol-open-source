@@ -44,11 +44,10 @@ class Normal(PMGSkin):
     
     appname        = 'The PyMOL Molecular Graphics System'
     appversion     = '1.2'
-    copyright      = ('Copyright (C) 2003-2009 \n' +
-                      'DeLano Scientific LLC.\n'+
+    copyright      = ('Copyright (C) Schrodinger, LLC \n' +
                       'All rights reserved.')
     contactweb     = 'http://www.pymol.org'
-    contactemail   = 'sales@delsci.com'
+    contactemail   = 'help@schrodinger.com'
     
     # responsible for setup and takedown of the normal skin
 
@@ -868,7 +867,7 @@ class Normal(PMGSkin):
             self.menuBar.addmenuitem('Help', 'command',
                                      'Access the Official PyMOL Documentation online',
                                      label='Online Documentation',
-                                     command = lambda bo=browser_open:bo("http://delsci.info/dsc"))
+                                     command = lambda bo=browser_open:bo("http://pymol.org/dsc"))
 
 
             self.menuBar.addcascademenu('Help', 'Topics', 'Topics',
@@ -940,9 +939,9 @@ class Normal(PMGSkin):
             self.menuBar.addmenuitem('Help', 'separator', '')
             
             self.menuBar.addmenuitem('Help', 'command',
-                                     'Email support@delsci.com',
-                                     label='Email support@delsci.com',
-                                     command = lambda bo=browser_open:bo("mailto:support@delsci.com?subject=PyMOL%20Question"))
+                                     'Email help@schrodinger.com',
+                                     label='Email help@schrodinger.com',
+                                     command = lambda bo=browser_open:bo("mailto:help@schrodinger.com?subject=PyMOL%20Question"))
 
             self.menuBar.addmenuitem('Help', 'separator', '')        
 

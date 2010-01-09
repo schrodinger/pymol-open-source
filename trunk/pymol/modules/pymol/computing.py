@@ -1,6 +1,6 @@
 #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
-#C* Copyright (C) 2008 DeLano Scientific LLC
+#C* Copyright (c) Schrodinger, LLC
 #D* -------------------------------------------------------------------
 #E* It is unlawful to modify or remove this copyright notice.
 #F* -------------------------------------------------------------------
@@ -172,7 +172,7 @@ class CleanJob:
                     print "Clean-Error: Wrote SD file '%s' into the directory:"%failed_file
                     print "Clean-Error: '%s'."%os.getcwd()
                     print "Clean-Error: If you believe PyMOL should be able to handle this structure"
-                    print "Clean-Error: then please email that SD file to support@delsci.com. Thank you!"
+                    print "Clean-Error: then please email that SD file to help@schrodinger.com. Thank you!"
                 except IOError:
                     print "Unabled to write '%s"%failed_file
                 if aromatic:

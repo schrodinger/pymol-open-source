@@ -3,7 +3,7 @@
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+C* Copyright (c) Schrodinger, LLC. 
 D* -------------------------------------------------------------------
 E* It is unlawful to modify or remove this copyright notice.
 F* -------------------------------------------------------------------
@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 
 /* PROPRIETARY CODE SEGMENT DISCLAIMER:
  *
- * DeLano Scientific LLC supports and encourages compilation of
+ * Schrodinger, LLC supports and encourages compilation of
  * open-source PyMOL source code on open-source operating systems
  * using open-source development tools (e.g. Linux/X11 using GCC and
  * either Python's distutils or the GNU Build System).
@@ -32,15 +32,14 @@ Z* -------------------------------------------------------------------
  * such as Microsoft Windows or Mac OS X, using proprietary
  * development tools like Microsoft Visual Studio or Apple's Xcode.
  * Such activities are merely beyond the scope of the PyMOL
- * Open-Source Project as we choose to define it.
+ * Open-Source Project as defined.
  *
  * Please note that we generally view compilation of PyMOL source code
  * on proprietary platforms as the appropriate logical foundation for
  * productive business relationships with defined mutual benefits.  In
  * other words, if you depend on PyMOL to run well on proprietary
  * operating systems in your profession or business, then it is likely
- * in your interest to gain access to our proprietary builds by
- * engaging DeLano Scientific LLC on business-like terms, such as
+ * in your interest to gain access to our proprietary builds 
  * through paid software subscriptions and licenses, through software
  * development partnerships, or by participating in one or more of our
  * consortium projects.
@@ -58,12 +57,12 @@ Z* -------------------------------------------------------------------
  * PROVIDED AS IS AND FOR USE AT YOUR OWN RISK WITH NO ASSURANCES OF
  * FUTURE FUNCTION OR AVAILABILITY.  WE STRONGLY CAUTION THAT YOU DO
  * NOT RELY UPON PROPRIETARY CODE SEGMENTS SINCE THEY MAY BE ALTERED
- * OR REMOVED AT ANY TIME AND WITHOUT NOTICE OF ANY KIND.  WARREN
- * LYFORD DELANO AND DELANO SCIENTIFIC LLC DISCLAIM ALL WARRANTIES
- * WITH REGARD TO PROPRIETARY CODE SEGMENTS, INCLUDING ALL IMPLIED
+ * OR REMOVED AT ANY TIME AND WITHOUT NOTICE OF ANY KIND.   
+ * SCHRODINGER, LLC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO PROPRIETARY CODE SEGMENTS, INCLUDING ALL IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL
- * WARREN LYFORD DELANO OR DELANO SCIENTIFIC LLC BE LIABLE FOR ANY
- * SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * SCHRODINGER, LLC BE LIABLE FOR ANY SPECIAL, 
+ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF PROPRIETARY
