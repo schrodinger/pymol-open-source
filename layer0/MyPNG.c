@@ -3,14 +3,14 @@
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+C* Copyright (c) Schrodinger, LLC. 
 D* -------------------------------------------------------------------
 E* It is unlawful to modify or remove this copyright notice.
 F* -------------------------------------------------------------------
 G* Please see the accompanying LICENSE file for further information. 
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
--* TJO: TJ O'Donnell, under contract for DeLano Scientific LLC
+-* TJO: TJ O'Donnell, under contract for Schrodinger, LLC
 -* 
 -*
 Z* -------------------------------------------------------------------

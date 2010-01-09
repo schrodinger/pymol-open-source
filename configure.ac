@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([pymol], [1.2.0], [bugs@delsci.com])
+AC_INIT([pymol], [1.2.0], [help@schrodinger.com])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
