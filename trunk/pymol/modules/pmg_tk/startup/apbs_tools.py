@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 # TODO:
-#  - get_default_location has a hack for apbs.exe breaking on newer Macs
 #  - provide diff for pdb2pqr freemol
 #  - use remove_alt to count alternate atom locations and warn the user
+#
+#  - Note to users that they should remove freemol's pymol.exe on OS X.
 
 ### (all) and resn glu and resi 154+157
 ### flag ignore, atom-selection, clear
@@ -71,11 +72,25 @@ Features under consideration:
                 [ 1, 'default'         , 'cmd.gradient("'+sele+'_grad","'+sele+'");cmd.ramp_new("'+sele+
                   '_grad_ramp","'+sele+'");cmd.color("'+sele+'_grad_ramp","'+sele+'_grad");' ]
                 ]
+
+Known hacks:
+
+
+1. (code in execute() )There's a bug in the version of APBS shipped
+   with Ubuntu 9.10 (version 1.1.0) that causes the name to become
+   foo-PE0.dx instead of foo.dx. This would normally only occur in
+   mg-para calcs or MPI versions of apbs. It's clearly bug-possible,
+   but we will check for foo-PE0 if we can't find foo.dx.
+
+2. We look for dylib errors in the APBS executable that's shipped with
+freemol on OS X. Code in get_default()'s verify().
+
 """
-
-
 from __future__ import division
 from __future__ import generators
+
+global DEBUG
+DEBUG = 1
 
 APBS_DEFAULT=True
 
@@ -88,88 +103,12 @@ import distutils.spawn # used for find_executable
 import traceback
 import pymol
 
-try:
-    import freemol
-    from freemol import apbs
-# This should be done as a patch in apbs, but we'll do it here for now TODO: FIXME:
-except ImportError:
-    class apbs:
-        pass
-    apbs = apbs()
-    
-
-if 0:
-    # This should go directly into freemol/apbs.
-    def validate():
-        '''
-        make sure that the FREEMOL environment variable is defined and
-        that it contains a valid directory path
-
-        returns 1 if valid, 0 if not
-        '''
-        
-        ok = 0
-        global _apbs_exe, _psize_py, _pdb2pdb_py
-
-        if 'FREEMOL' in os.environ:
-            freeMOLFromEnv = os.environ["FREEMOL"]
-        else:
-            freeMOLFromEnv = None
-
-        if _apbs_exe != None: # _apbs_exe assigned, so presume valid
-            ok = 1
-        elif freeMOLFromEnv != None:
-            test_path = os.path.join(freeMOLFromEnv,"bin","apbs.exe")
-            if os.path.exists(test_path) and os.path.isfile(test_path):
-                _apbs_exe = freemol.quote_exe(test_path)
-                ok = 1
-                
-        if _psize_py != None: # _psize_py assigned, so presume valid
-            ok = 1
-        elif freeMOLFromEnv != None:
-            test_path = os.path.join(freeMOLFromEnv,"share","apbs","psize.py")
-            if os.path.exists(test_path) and os.path.isfile(test_path):
-                _psize_py = test_path
-                ok = 1
-                
-        if _pdb2pqr_py != None: # _pdb2pqr_py assigned, so presume valid
-            ok = 1
-        elif freeMOLFromEnv != None:
-            test_path = os.path.join(freeMOLFromEnv,"share","pdb2pqr","pdb2pqr.py")
-            if os.path.exists(test_path) and os.path.isfile(test_path):
-                _pdb2pqr_py = test_path
-                ok = 1
-        return ok
-    def get_pdb2pqr_path():
-        if _pdb2pqr_py == None:
-            validate()
-        return _pdb2pqr_py
-    apbs.get_pdb2pqr_path = get_pdb2pqr_path
-    apbs.validate = validate
-
-    try:
-        apbs.get_pdb2pqr_path
-    except NameError:
-        def get_pdb2pqr_path():
-            _pdb2pqr_py = None
-            if "FREEMOL" in os.environ:
-                test_path = os.path.join(os.environ['FREEMOL'],"share","pdb2pqr","pdb2pqr.py")
-                if os.path.exists(test_path) and os.path.isfile(test_path):
-                    _pdb2pqr_py = test_path
-                    ok = 1
-                else:
-                    print "trouble with",test_path
-            return _pdb2pqr_py
-        apbs.get_pdb2pqr_path = get_pdb2pqr_path
-        
-
 #
 # Global config variables
 #
 # To change the default locations, change these to something like
 # APBS_BINARY_LOCATION = '/opt/bin/apbs'
 #
-
 APBS_BINARY_LOCATION = None
 APBS_PSIZE_LOCATION = None
 APBS_PDB2PQR_LOCATION = None
@@ -187,130 +126,46 @@ pdb2pqr_plea = ("IMPORTANT REQUEST: If you have not already done so, please regi
 global apbs_message, pdb2pqr_message
 apbs_message = """You must have APBS installed on your system."""
 pdb2pqr_message = """PDB2PQR can be used to generate .PQR files."""
-if APBS_BINARY_LOCATION is None:
-    found = 0
-    if 'APBS_BINARY' in os.environ:
-        APBS_BINARY_LOCATION = os.environ['APBS_BINARY']
-        found = 1
-    if not found and sys.platform != 'darwin':
-        # try FreeMOL-provided apbs
-        try:
-            from freemol import apbs
-            APBS_BINARY_LOCATION = apbs.get_exe_path()
-            if APBS_BINARY_LOCATION is not None:
-                if os.path.isfile(APBS_BINARY_LOCATION):
-                    found = 1
-                elif os.path.isfile(APBS_BINARY_LOCATION.replace('"','')):
-                    APBS_BINARY_LOCATION = APBS_BINARY_LOCATION.replace('"','')
-                    found = 1
-            if found:
-                print "Located Open-Source APBS inside the FreeMOL bundle (http://freemol.org).\n"+apbs_plea
-                apbs_message = apbs_plea
-        except ImportError:
-            pass
-    if not found:
-        APBS_BINARY_LOCATION = distutils.spawn.find_executable('apbs')
-        if APBS_BINARY_LOCATION is not None:
-            found = 1 
-    if (not found) or (APBS_BINARY_LOCATION is None):
-        APBS_BINARY_LOCATION = ''
 
-if APBS_PSIZE_LOCATION is None:
-    found = 0
-    if 'APBS_PSIZE' in os.environ:
-        APBS_PSIZE_LOCATION = os.environ['APBS_PSIZE']
-        found = 1
-    if not found:
-        # try FreeMOL-provided apbs
-        try:
-            from freemol import apbs
-            APBS_PSIZE_LOCATION = apbs.get_psize_path()
-            if APBS_PSIZE_LOCATION is not None:
-                if os.path.isfile(APBS_PSIZE_LOCATION):
-                    found = 1 
-        except:
-            import traceback
-            traceback.print_exc()
-            pass
-    if (not found) or (APBS_PSIZE_LOCATION is None):
-        APBS_PSIZE_LOCATION = ''
+def get_default_location(name):
+    """
+    Given the name of an APBS-related binary, look in
+        * pymol path,
+        * freemol path,
+        * user defined places,
+        * the system path,
+        * Known other paths (/usr/local/bin and /opt/local/bin)
+    for the parameter, name.
 
-if APBS_PDB2PQR_LOCATION is None:
-    found = 0
-    if 'APBS_PDB2PQR' in os.environ:
-        APBS_PDB2PQR_LOCATION = os.environ['APBS_PDB2PQR']
-        found = 1
-    if not found:
-        # try FreeMOL-provided apbs
-        try:
-            from freemol import apbs
-            APBS_PDB2PQR_LOCATION = apbs.get_pdb2pqr_path()
-            if APBS_PDB2PQR_LOCATION is not None:
-                if os.path.isfile(APBS_PDB2PQR_LOCATION):
-                    found = 1
-                elif os.path.isfile(APBS_PDB2PQR_LOCATION.replace('"','')):
-                    APBS_PDB2PQR_LOCATION = APBS_PDB2PQR_LOCATION.replace('"','')
-                    found = 1
-            if found:
-                print "Located Open-Source PDB2PQR inside the FreeMOL bundle (http://freemol.org).\n"+pdb2pqr_plea
-                pdb2pqr_message = pdb2pqr_plea
-        except:
-            pass
-    if not found:
-        APBS_PDB2PQR_LOCATION = distutils.spawn.find_executable('apbs')
-        if APBS_PDB2PQR_LOCATION is not None:
-            found = 1 
-    if (not found) or (APBS_PDB2PQR_LOCATION is None):
-        APBS_PDB2PQR_LOCATION = ''
-
-
-#
-# Default locations for programs are searched in this order:
-#
-# 1) environment variables
-# 2) the global config variables above
-# 3) something in the PATH
-# 4) known default locations, in order
-#
-# These are defined in the tuples below, in that order.
-#
-default_locations = {'apbs_binary':(
-        'APBS_BINARY',
-        APBS_BINARY_LOCATION,
-        'apbs',
-        '/sw/bin/apbs',
-        '/opt/local/bin/apbs',
-        os.path.join(os.environ['PYMOL_PATH'],'ext/bin/apbs'),
-        ),
-        'apbs_psize': (
-        'APBS_PSIZE',
-        APBS_PSIZE_LOCATION,
-        'psize.py',
-        '/sw/share/apbs/tools/manip/psize.py',
-        os.path.join(os.environ['PYMOL_PATH'],'ext/bin/psize.py'),
-        ),
-        'pdb2pqr':    (
-        'APBS_PDB2PQR',
-        APBS_PDB2PQR_LOCATION,
-        'pdb2pqr.py',
-        # Note: subprocess.call really doesn't like
-        # the way /sw/bin/pdb2pqr wraps pdb2pqr.py
-        #'/sw/bin/pdb2pqr',
-        '/sw/share/pdb2pqr/pdb2pqr.py',
-        '/opt/local/share/pdb2pqr/pdb2pqr.py',
-        os.path.join(os.environ['PYMOL_PATH'],'ext/bin/pdb2pqr'),
-        ),
-        'temp':       (
-        'TEMP',
-        TEMPORARY_FILE_DIR,
-        None, # None means don't look for an executable
-        #os.path.abspath(os.path.curdir),
-        './', #avoid long filenames that break apbs
-        ),
-                     }
-
-def jv_get_default_location(name):
-    searchDirs = string.split(os.environ["PATH"], ":")
+    Some programs are verified with additional tests. In particular,
+    some versions of PyMOL ship with a broken apbs.exe, so we verify
+    that it can be run.
+    
+    PARAMS
+        name, (string) the basename of the file we're looking for
+    EXAMPLE
+        get_default_location("apbs.exe")
+    RETURNS
+        (string) path/to/file on success or "" on failure
+    NOTES
+        For any program name <foo>.exe we will also search for
+        <foo>. We'll search for the .exe version first. We do not
+        automatically check for .exe versions of programs when .exe is
+        not specified.
+    """
+    def verify(name,f):
+        if name in 'apbs.exe apbs'.split():
+            # You'd think we could just check the return code, but
+            # APBS doesn't return zero on success. Instead, it returns
+            # things like 3328. It seems to return 5 or -5 in this
+            # particular failure case, but I'm not sure we can depend
+            # on that always.
+            (retcode,prog_out) = run(f,'--version')
+            if 'dyld: Library not loaded' in prog_out:
+                print "Skipping",f,"because it appears to be broken (dyld)"
+                return False
+        return True
+    searchDirs = []
     if "FREEMOL" in os.environ:
         searchDirs.append(os.environ["FREEMOL"])
     if "PYMOL_PATH" in os.environ:
@@ -328,60 +183,38 @@ def jv_get_default_location(name):
         searchDirs.append("/tmp")
         searchDirs.append(".")
 
-    #if DEBUG:
-    #    print "jv_get_default_location will search the following: ", searchDirs
+    searchDirs.extend(string.split(os.environ["PATH"], ":"))
+    searchDirs.append(os.path.join("/usr", "local", "bin"))
+    searchDirs.append(os.path.join("/opt", "local", "bin"))
+
+    print "Search dirs",searchDirs
+
+    if DEBUG:
+        print "get_default_location will search the following: ", searchDirs
     for d in searchDirs:
         if name=="temp":
             f = d           # just search for the directory
         else:
             f = os.path.join( d, name )  # make path/name.py
-        if os.path.exists(f):
-            print "Found %s in %s" % (name,f)
-            return f
+            print "trying",f
+            if os.path.exists(f) and verify(name,f):
+                return f
+            elif name.endswith('.exe'):
+                f = os.path.join( d, name[:-4] )  # make path/name.py
+                if os.path.exists(f) and verify(name,f):
+                    return f
         
     print "Could not find default location for file: %s" % name
     return ""
-        
-    
-    
-def get_default_location(name,fileordir='file',default_locations=default_locations):
-    """
-    This searches through a tuple.  In order, the elements of the tuple are
-    1) The name of an environment variable
-    2) A global config variable
-    3) The name of an executable.  We search PATH for it.
-    3-whatever) known default locations, searched in order
-
-    If any of those are set to None, they'll be skipped.  E.g. we set 3) to
-    None for the temporary file directory, as there's no executable
-    associated with it.
-
-    This isn't a perfectly elegant solution, but I don't think the problem
-    warrants anything more heavyweight than this.
-    """
-    verbose = True
-    choices = default_locations[name]
-    correct = {'file':os.path.isfile,
-               'dir':os.path.isdir,}[fileordir]
-    if (choices[0] in os.environ) and correct(choices[0]):
-        if verbose: print "default location for",name,os.environ[choices[0]],"environment var"
-        return os.environ[choices[0]]
-    elif (choices[1] is not None) and correct(choices[1]):
-        if verbose: print "default location for",name,choices[1],"global var"
-        return choices[1]
-    elif choices[2] is not None:
-        result = distutils.spawn.find_executable(choices[2])
-        if (result is not None) and correct(result):
-            if verbose: print "default location for",name,result,"in path"
-            return result
-    for choice in choices[3:]:
-        if correct(choice):
-            if verbose: print "default location for",name,choice,"found default installation"
-            return choice
-    if verbose: print "default location for",name,"is not found"
-    return ''
 
 def __init__(self):
+    """
+    Init PyMOL, by adding APBSTools to the GUI under Plugins
+    
+    Creates the APBS widget/notebook.  Once the event is received,
+    we create a new instance of APBSTools2 which is a Pmw, which upon
+    creation shows itself.
+    """
     self.menuBar.addmenuitem('Plugin', 'command',
                              'Launch APBS Tools2',
                              label='APBS Tools2...',
@@ -400,7 +233,6 @@ def run(prog,args):
 
     (retval,prog_out) = run("/bin/ls","-al /tmp/myusername")
     '''
-    verbose=True
     import subprocess,tempfile
 
     if type(args) == type(''):
@@ -408,15 +240,19 @@ def run(prog,args):
     elif type(args) in (type([]),type(())):
         args = tuple(args)
     args = (prog,) + args
-    print "Args is %s" % str(args)
-    output_file = tempfile.TemporaryFile(mode="w+")
-    if verbose:
-        print "Running",args
+    
+    try:
+        output_file = tempfile.TemporaryFile(mode="w+")  # <-- shouldn't this point to the temp dir
+    except IOError:
+        print "Error opening output_file when trying to run the APBS command."
+
+    print "Running:\n\tprog=%s\n\targs=%s" % (prog,args)
     retcode = subprocess.call(args,stdout=output_file.fileno(),stderr=subprocess.STDOUT)
     output_file.seek(0)
-    prog_out = output_file.read()
+    #prog_out = output_file.read()
+    prog_out = ''.join(output_file.readlines())
     output_file.close() #windows doesn't do this automatically
-    if verbose:
+    if DEBUG:
         print "Results were:"
         print "Return value:",retcode
         print "Output:"
@@ -437,6 +273,11 @@ class util:
         """returns all maps that PyMOL knows about"""
         return [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map']
     getMaps = staticmethod(getMaps)
+    #def hasAlt(sel):
+    #    """returns true if non-standard locations (rotamers) are present for this selection"""
+    #    return cmd.count_atoms(sel + " and not alt ''")!=0
+    #hasAlt = staticmethod(hasAlt)
+
 util = util()
 
 ##############################################################################
@@ -507,10 +348,10 @@ elec
                      #  4 => Focusing
                      #
     #ion 1 0.000 2.0 # Counterion declaration:
-    ion  1 %f %f     # Counterion declaration:
-    ion -1 %f %f     # ion <charge> <conc (M)> <radius>
-    ion  2 %f %f     # ion <charge> <conc (M)> <radius>
-    ion -2 %f %f     # ion <charge> <conc (M)> <radius>
+    ion charge  1 conc %f radius %f     # Counterion declaration:
+    ion charge -1 conc %f radius %f     # ion <charge> <conc (M)> <radius>
+    ion charge  2 conc %f radius %f     # ion <charge> <conc (M)> <radius>
+    ion charge -2 conc %f radius %f     # ion <charge> <conc (M)> <radius>
     pdie %f          # Solute dielectric
     sdie %f          # Solvent dielectric
     chgm %s          # Charge disc method
@@ -521,16 +362,16 @@ elec
                      #  0 => Mol surface for epsilon;
                      #       inflated VdW for kappa; no
                      #       smoothing
-                     #  1 => As 0 with harmoic average
+                     #  1 => As 0 with harmoinc average
                      #       smoothing
                      #  2 => Cubic spline 
     srad %f          # Solvent radius (1.4 for water)
     swin 0.3         # Surface cubic spline window .. default 0.3
     temp %f          # System temperature (298.15 default)
     sdens %f         # Specify the number of grid points per square-angstrom to use in Vacc object. Ignored when srad is 0.0 (see srad) or srfm is spl2 (see srfm). There is a direct correlation between the value used for the Vacc sphere density, the accuracy of the Vacc object, and the APBS calculation time. APBS default value is 10.0.
-    gamma 0.105      # Surface tension parameter for apolar forces (in kJ/mol/A^2)
+    #gamma 0.105      # Surface tension parameter for apolar forces (in kJ/mol/A^2)
                      # only used for force calculations, so we don't care, but
-                     # it's always required, and 0.105 is the default
+                     # it *used to be* always required, and 0.105 is the default
     calcenergy no    # Energy I/O to stdout
                      #  0 => don't write out energy
                      #  1 => write out total energy
@@ -919,7 +760,6 @@ class APBSTools2:
         page = self.notebook.add('Program Locations')
         group = Pmw.Group(page,tag_text='Locations')
         group.pack(fill = 'both', expand = 1, padx = 10, pady = 5)
-
         def quickFileValidation(s):
             if s == '': return Pmw.PARTIAL
             elif os.path.isfile(s): return Pmw.OK
@@ -938,7 +778,7 @@ class APBSTools2:
                                      labelpos='w',
                                      label_pyclass = FileDialogButtonClassFactory.get(self.setBinaryLocation),
                                      validate = {'validator':quickFileValidation,},
-                                     value = jv_get_default_location('apbs.exe'),
+                                     value = get_default_location('apbs.exe'),
                                      label_text = 'APBS binary location:',
                                      )
         self.binary.pack(fill = 'x', padx = 20, pady = 10)
@@ -947,7 +787,7 @@ class APBSTools2:
                                      label_pyclass = FileDialogButtonClassFactory.get(self.setPsizeLocation),
                                      validate = {'validator':quickFileValidation,},
                                      #value = '/usr/local/apbs-0.3.1/tools/manip/psize.py',
-                                     value = jv_get_default_location('psize.py'),
+                                     value = get_default_location('psize.py'),
                                      label_text = 'APBS psize.py location:',
                                      )
         self.psize.pack(fill = 'x', padx = 20, pady = 10)
@@ -955,7 +795,7 @@ class APBSTools2:
                                        labelpos='w',
                                        label_pyclass = FileDialogButtonClassFactory.get(self.setPdb2pqrLocation),
                                        validate = {'validator':quickFileValidation,},
-                                       value = jv_get_default_location('pdb2pqr.py'),
+                                       value = get_default_location('pdb2pqr.py'),
                                        label_text = 'pdb2pqr location:',
                                        )
         self.pdb2pqr.pack(fill = 'x', padx = 20, pady = 10)
@@ -988,7 +828,7 @@ variables APBS_BINARY, APBS_PSIZE and APBS_PDB2PQR to point to them respectively
                                                            label_pyclass = FileDialogButtonClassFactory.get(self.setPymolGeneratedPqrFilename),
                                                            validate = {'validator':quickFileDirValidation,},
                                                            label_text = 'Temporary PQR file: ',
-                                                           value = os.path.join(jv_get_default_location('temp'),'pymol-generated.pqr'),
+                                                           value = os.path.join(get_default_location('temp'),'pymol-generated.pqr'),
                                                            )
         self.pymol_generated_pqr_filename.pack(fill = 'x', padx = 20, pady = 10)
         
@@ -997,7 +837,7 @@ variables APBS_BINARY, APBS_PSIZE and APBS_PDB2PQR to point to them respectively
                                                            label_pyclass = FileDialogButtonClassFactory.get(self.setPymolGeneratedPdbFilename),
                                                            validate = {'validator':quickFileDirValidation,},
                                                            label_text = 'Temporary PDB file: ',
-                                                           value = os.path.join(jv_get_default_location('temp'),'pymol-generated.pdb'),
+                                                           value = os.path.join(get_default_location('temp'),'pymol-generated.pdb'),
                                                            )
         self.pymol_generated_pdb_filename.pack(fill = 'x', padx = 20, pady = 10)
 
@@ -1006,7 +846,7 @@ variables APBS_BINARY, APBS_PSIZE and APBS_PDB2PQR to point to them respectively
                                                           label_pyclass = FileDialogButtonClassFactory.get(self.setPymolGeneratedDxFilename),
                                                           validate = {'validator':quickFileDirValidation,},
                                                           label_text = 'Temporary DX file: ',
-                                                          value = os.path.join(jv_get_default_location('temp'),'pymol-generated.dx'),
+                                                          value = os.path.join(get_default_location('temp'),'pymol-generated.dx'),
                                                           )
         self.pymol_generated_dx_filename.pack(fill = 'x', padx = 20, pady = 10)
 
@@ -1015,7 +855,7 @@ variables APBS_BINARY, APBS_PSIZE and APBS_PDB2PQR to point to them respectively
                                                            labelpos='w',
                                                            label_pyclass = FileDialogButtonClassFactory.get(self.setPymolGeneratedInFilename),
                                                            validate = {'validator':quickFileDirValidation,},
-                                                           value = os.path.join(jv_get_default_location('temp'),'pymol-generated.in'),
+                                                           value = os.path.join(get_default_location('temp'),'pymol-generated.in'),
                                                            label_text = 'APBS input file:')
         self.pymol_generated_in_filename.pack(fill = 'x', padx = 20, pady = 10)
         label = Tkinter.Label(group.interior(),
@@ -1104,7 +944,7 @@ Citation for PDB2PQR:
         self.showAppModal()
 
     def showAppModal(self):
-        #self.dialog.activate(geometry = 'centerscreenfirst', globalMode = 'nograb')
+        #self.dialog.activate() #geometry = 'centerscreenfirst',globalMode = 'nograb')
         self.dialog.show()
     def execute(self, result, refocus=True):
         if result == 'Register APBS Use':
@@ -1116,18 +956,27 @@ Citation for PDB2PQR:
         elif result == 'Run APBS':
             good = self.generateApbsInputFile()
             if not good:
-                print "generateApbsInputFile failed."
+                if DEBUG:
+                    print "ERROR: Something went wrong trying to generate the APBS input file."
                 return False
             if self.radiobuttons.getvalue() == 'Use another PQR':
                 pass
             elif self.radiobuttons.getvalue() == 'Use PDB2PQR':
+                if DEBUG: print "GENERATING PQR FILE via PDB2PQR"
                 good = self.generatePdb2pqrPqrFile()
                 if not good:
+                    if DEBUG:
+                        print "Could not generate PDB2PQR file.  generatePdb2pqrPqrFile failed."
                     return False
+                if DEBUG: print "GENERATED"
             else: # it's one of the pymol-generated options
+                if DEBUG: print "GENERATING PQR FILE via PyMOL"
                 good = self.generatePymolPqrFile()
                 if not good:
+                    if DEBUG:
+                        print "Could not generate the PyMOL-basd PQR file.  generatePyMOLPqrFile failed."
                     return False
+                if DEBUG: print "GENERATED"
             if os.path.exists(self.pymol_generated_dx_filename.getvalue()):
                 try:
                     os.unlink(self.pymol_generated_dx_filename.getvalue())
@@ -1144,7 +993,20 @@ Citation for PDB2PQR:
             #
             (retval,progout) = run(self.binary.getvalue(),(self.pymol_generated_in_filename.getvalue(),))
             if refocus:
-                pymol.cmd.load(self.pymol_generated_dx_filename.getvalue(),self.map.getvalue())
+                #
+                # There's a bug in the version of APBS shipped with
+                # Ubuntu 9.10 (version 1.1.0) that causes the name to
+                # become foo-PE0.dx instead of foo.dx. This would
+                # normally only occur in mg-para calcs or MPI versions
+                # of apbs. It's clearly bug-possible, but we will
+                # check for foo-PE0 if we can't find foo.dx.
+                #
+                fname = self.pymol_generated_dx_filename.getvalue()
+                if not os.path.isfile(fname):
+                    print "Could not find",fname,"so searching for",
+                    fname = '-PE0'.join(os.path.splitext(fname))
+                    print fname
+                pymol.cmd.load(fname)
                 self.visualization_group_1.refresh()
                 self.visualization_group_2.refresh()
                 self.notebook.tab('Visualization (1)').focus_set()
@@ -1156,24 +1018,12 @@ Citation for PDB2PQR:
             # Doing it this way takes care of clicking on the x in the top of the
             # window, which as result set to None.
             #
-            if __name__ == '__main__':
-                #
-                # dies with traceback, but who cares
-                #
-                self.parent.destroy()  # <--- wouldn't this kill PyMOL?
-            else:
-                #self.dialog.deactivate(result)
-                global APBS_BINARY_LOCATION, APBS_PSIZE_LOCATION
-                APBS_BINARY_LOCATION = self.binary.getvalue()
-                APBS_PSIZE_LOCATION = self.psize.getvalue()
-                #self.dialog.withdraw()
-                self.dialog.destroy() # stops CPU hogging, perhaps fixes Ubuntu bug MGL
-                self.quit()
+            global APBS_BINARY_LOCATION, APBS_PSIZE_LOCATION
+            APBS_BINARY_LOCATION = self.binary.getvalue()
+            APBS_PSIZE_LOCATION = self.psize.getvalue()
+            self.quit()
     def quit(self):
-        self.dialog.quit()
-        self.parent.quit()
-        #self.dialog.withdraw()
-        #self.dialog.destroy()
+        self.dialog.destroy() # stops CPU hogging, perhaps fixes Ubuntu bug MGL
 
     def runPsize(self):
         class NoPsize(Exception):
@@ -1198,6 +1048,9 @@ Citation for PDB2PQR:
             # WLD
             sel = "((%s) or (neighbor (%s) and hydro))"%(
                            self.selection.getvalue(), self.selection.getvalue())
+            
+            if pymol.cmd.count_atoms( self.selection.getvalue() + " and not alt ''")!=0:
+                print "WARNING: You have alternate locations for some of your atoms!"
             pymol.cmd.save(pqr_filename,sel)
             f.close()
             size = psize.Psize()
@@ -1508,12 +1361,18 @@ Citation for PDB2PQR:
                                                float(self.sdens.getvalue()),
                                                dx_filename,
                                                )
+            if DEBUG:
+                print "GOT THE APBS INPUT FILE"
+                                                
             #
             # write out the input text
             #
-            f = file(self.pymol_generated_in_filename.getvalue(),'w')
-            f.write(apbs_input_text)
-            f.close()
+            try:
+                f = file(self.pymol_generated_in_filename.getvalue(),'w')
+                f.write(apbs_input_text)
+                f.close()
+            except IOError:
+                print "ERROR: Got the input file from APBS, but failed when trying to write to %s" % self.pymol_generated_in_filename.getvalue()
             return True
         else:
             self.checkInput()
@@ -1648,13 +1507,36 @@ Citation for PDB2PQR:
 ##        print "RAN",command_line
 ##        result = os.system(command_line)
         #
-        # We have to be a little cute about args, because pdb2pqr_options could have several options in it.
+        # We have to be a little cute about args, because _options could have several options in it.
+
+        print "TESTING"
+        #run('/tmp/tmp.py',())
+        print "DONE TESTING"
         args = '%s %s %s' %(self.pdb2pqr_options.getvalue(),
                             pdb_filename,
                             self.pymol_generated_pqr_filename.getvalue(),
-                            ) 
-        (retval,progout) = run(self.pdb2pqr.getvalue(),args)
-        
+                            )
+        if type(args) == type(''):
+            args = tuple(args.split())
+        elif type(args) in (type([]),type(())):
+            args = tuple(args)
+        args = (self.pdb2pqr.getvalue(),) + args
+        try:
+            sys.path.append(os.path.dirname(os.path.dirname(self.pdb2pqr.getvalue())))
+            print "Appended", os.path.dirname(os.path.dirname(self.pdb2pqr.getvalue()))
+            import pdb2pqr.pdb2pqr
+            sys.path.append(os.path.dirname(self.pdb2pqr.getvalue()))
+            print "Appended", os.path.dirname(self.pdb2pqr.getvalue())
+            print "Imported pdb2pqr"
+            print "args are: ", args
+            from pdb2pqr import main
+            print "Imported main"
+            main.mainCommand(args)
+            print "ran main.mainCommand"
+            retval = 0
+        except:
+            print "Unexpected error:", sys.exc_info()
+
 
         if retval != 0:
             show_error('Could not run pdb2pqr: %s %s\n\n%s'%(self.pdb2pqr.getvalue(),
@@ -1670,6 +1552,7 @@ Citation for PDB2PQR:
             print "Unassigned atom IDs",unassigned_atoms
             show_error(message_text)
             return False
+        print "I WILL RETURN TRUE YO!"
         return True
         
         
@@ -1682,7 +1565,14 @@ Citation for PDB2PQR:
 
         To make it worse, APBS seems to freak out when there are chain ids.  So,
         this gets rid of the chain ids.
+
         """
+        # CHAMP will break in many cases if retain_order is set. So,
+        # we unset it here and reset it later. Note that it's fine to
+        # reset it before things are written out.
+        ret_order = pymol.cmd.get('retain_order')
+        pymol.cmd.set('retain_order',0)
+
         # WLD
         sel = "((%s) or (neighbor (%s) and hydro))"%(
             self.selection.getvalue(), self.selection.getvalue())
@@ -1710,6 +1600,8 @@ Citation for PDB2PQR:
             # new_hydros = '(hydro and neighbor %s)'%sel
             # sel = '%s or %s' % (sel,new_hydros)
         assign.amber99(sel)
+        pymol.cmd.set('retain_order',ret_order)
+
         # WLD (code now unnecessary)
         # if not self.selection.getvalue() in '(all) all'.split():
         #     self.selection.setvalue(sel)
